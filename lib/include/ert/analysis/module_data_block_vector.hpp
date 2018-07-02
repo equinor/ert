@@ -1,7 +1,7 @@
 /*
-   Copyright (C) 2018 Equinor ASA, Norway.
+   Copyright (C) 2016  Statoil ASA, Norway.
 
-   The file 'module_data_block_vector.hpp' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'module_data_block_vector.h' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,30 @@
 
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
-
-
 */
-#include <ert/analysis/module_data_block_vector.h>
+#ifndef ERT_MODULE_DATA_BLOCK_VECTOR_H
+#define ERT_MODULE_DATA_BLOCK_VECTOR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+
+#include <ert/analysis/module_data_block.hpp>
+
+  typedef struct module_data_block_vector_struct module_data_block_vector_type;
+
+  module_data_block_vector_type   * module_data_block_vector_alloc();
+  void                              module_data_block_vector_add_data_block( module_data_block_vector_type * module_data_block_vector , const module_data_block_type * data_block);
+  module_data_block_type          * module_data_block_vector_iget_module_data_block(const module_data_block_vector_type * module_data_block_vector, int index);
+  int                               module_data_block_vector_get_size(const module_data_block_vector_type * module_data_block_vector);
+
+  void                              module_data_block_vector_free( module_data_block_vector_type * module_data_block_vector );
+
+  UTIL_IS_INSTANCE_HEADER( module_data_block_vector );
+
+#ifdef __cplusplus
+}
+#endif
+#endif

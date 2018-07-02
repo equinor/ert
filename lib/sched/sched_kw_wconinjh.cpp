@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'sched_kw_wconinjh.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'sched_kw_wconinjh.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -65,7 +65,7 @@ struct wconinjh_state_struct {
   UTIL_TYPE_ID_DECLARATION;
   const time_t_vector_type * time;
   int_vector_type          * phase;                  /* Contains values from sched_phase_enum */
-  int_vector_type          * state;                  /* Contains values from the well_status_enum. */ 
+  int_vector_type          * state;                  /* Contains values from the well_status_enum. */
   double_vector_type       * injection_rate;
   double_vector_type       * bhp;
   double_vector_type       * thp;
@@ -106,9 +106,9 @@ static wconinjh_well_type * sched_kw_wconinjh_get_well( const sched_kw_wconinjh_
   int index = 0;
   do {
     wconinjh_well_type * iwell = (wconinjh_well_type*)vector_iget( kw->wells , index);
-    if (strcmp( well_name , iwell->name ) == 0) 
+    if (strcmp( well_name , iwell->name ) == 0)
       well = iwell;
-    
+
     index++;
   } while ((well == NULL) && (index < size));
   return well;
@@ -141,7 +141,7 @@ static wconinjh_well_type * wconinjh_well_alloc_from_tokens(const stringlist_typ
 
   wconinjh_well_type * well = wconinjh_well_alloc_empty();
   sched_util_init_default( line_tokens , well->def );
-  
+
   well->name      = util_alloc_string_copy(stringlist_iget(line_tokens , 0));
   well->inj_phase = sched_phase_type_from_string(stringlist_iget(line_tokens , 1));
   well->status    = sched_types_get_status_from_string(stringlist_iget(line_tokens , 2));
@@ -150,7 +150,7 @@ static wconinjh_well_type * wconinjh_well_alloc_from_tokens(const stringlist_typ
   well->thp       = sched_util_atof(stringlist_iget(line_tokens , 5));
   well->vfptable  = sched_util_atoi(stringlist_iget(line_tokens , 6));
   well->vapdiscon = sched_util_atof(stringlist_iget(line_tokens , 7));
-  
+
   return well;
 }
 
@@ -214,9 +214,9 @@ sched_kw_wconinjh_type * sched_kw_wconinjh_alloc(const stringlist_type * tokens 
       wconinjh_well_type * well = wconinjh_well_alloc_from_tokens( line_tokens );
       sched_kw_wconinjh_add_well( kw , well );
       stringlist_free( line_tokens );
-    } 
+    }
   } while (!eokw);
-  return kw;  
+  return kw;
 }
 
 
@@ -231,7 +231,7 @@ void sched_kw_wconinjh_free(sched_kw_wconinjh_type * kw)
 void sched_kw_wconinjh_fprintf(const sched_kw_wconinjh_type * kw, FILE * stream)
 {
   int size = vector_get_size(kw->wells);
-    
+
   fprintf(stream, "WCONINJH\n");
   for(int i=0; i<size; i++)
   {
@@ -253,7 +253,7 @@ hash_type * sched_kw_wconinjh_alloc_well_obs_hash(const sched_kw_wconinjh_type *
   hash_type * well_hash = hash_alloc();
 
   int num_wells = vector_get_size(kw->wells);
-  
+
   for(int well_nr=0; well_nr<num_wells; well_nr++)
   {
     const wconinjh_well_type * well = (const wconinjh_well_type*)vector_iget_const(kw->wells, well_nr);
@@ -308,7 +308,7 @@ UTIL_SAFE_CAST_FUNCTION( wconinjh_state , WCONINJH_TYPE_ID )
 UTIL_SAFE_CAST_FUNCTION_CONST( wconinjh_state , WCONINJH_TYPE_ID )
 
 void wconinjh_state_free( wconinjh_state_type * wconinjh ) {
-  
+
   int_vector_free( wconinjh->phase );
   int_vector_free( wconinjh->state );
   double_vector_free( wconinjh->injection_rate );
@@ -316,7 +316,7 @@ void wconinjh_state_free( wconinjh_state_type * wconinjh ) {
   double_vector_free( wconinjh->thp );
   int_vector_free( wconinjh->vfp_table_nr );
   double_vector_free( wconinjh->vapoil );
-  
+
   free( wconinjh );
 }
 
@@ -419,13 +419,13 @@ void sched_kw_wconinjh_close_state(wconinjh_state_type * state , int report_step
 void sched_kw_wconinjh_update_state( const sched_kw_wconinjh_type * kw , wconinjh_state_type * state , const char * well_name , int report_step ) {
   wconinjh_well_type * well = sched_kw_wconinjh_get_well( kw , well_name );
   if (well != NULL) {
-    int_vector_iset_default(state->phase             , report_step , well->inj_phase );  
-    int_vector_iset_default(state->state             , report_step , well->status );          
-    double_vector_iset_default(state->injection_rate , report_step , well->inj_rate);    
-    double_vector_iset_default(state->bhp            , report_step , well->bhp);      
-    double_vector_iset_default(state->thp            , report_step , well->thp);      
-    int_vector_iset_default(state->vfp_table_nr      , report_step , well->vfptable);    
-    double_vector_iset_default(state->vapoil         , report_step , well->vapdiscon);     
+    int_vector_iset_default(state->phase             , report_step , well->inj_phase );
+    int_vector_iset_default(state->state             , report_step , well->status );
+    double_vector_iset_default(state->injection_rate , report_step , well->inj_rate);
+    double_vector_iset_default(state->bhp            , report_step , well->bhp);
+    double_vector_iset_default(state->thp            , report_step , well->thp);
+    int_vector_iset_default(state->vfp_table_nr      , report_step , well->vfptable);
+    double_vector_iset_default(state->vapoil         , report_step , well->vapdiscon);
   }
 }
 

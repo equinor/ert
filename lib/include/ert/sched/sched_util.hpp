@@ -1,7 +1,7 @@
 /*
-   Copyright (C) 2018  Statoil ASA, Norway.
+   Copyright (C) 2011  Statoil ASA, Norway.
 
-   The file 'sched_util.hpp' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'sched_util.h' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,36 @@
 
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
-
-
 */
-#include <ert/sched/sched_util.h>
 
+#ifndef ERT_SCHED_UTIL_H
+#define ERT_SCHED_UTIL_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <stdbool.h>
+#include <time.h>
+
+#include <ert/util/stringlist.hpp>
+
+#define SCHED_KW_DEFAULT_ITEM "*"
+
+char            * sched_util_alloc_line(FILE *, bool *);
+void              sched_util_parse_line(const char * , int * , char *** , int , bool *);
+
+
+void              sched_util_fprintf_int(bool ,          int , int , FILE *);
+void              sched_util_fprintf_dbl(bool , double , int , int , FILE *);
+double            sched_util_atof(const char *);
+int               sched_util_atoi(const char *);
+void              sched_util_fprintf_qst(bool , const char * , int , FILE *);
+void              sched_util_fprintf_tokenlist(int num_token , const char ** token_list , const bool * def);
+void              sched_util_skip_trailing_tokens( const stringlist_type * tokens , int * __token_index );
+void              sched_util_skip_newline( const stringlist_type * tokens , int * __token_index );
+stringlist_type * sched_util_alloc_line_tokens( const stringlist_type * tokens , bool untyped , int num_tokens , int * __token_index);
+void              sched_util_init_default(const stringlist_type * line_tokens , bool * def);
+
+#ifdef __cplusplus
+}
+#endif
+#endif

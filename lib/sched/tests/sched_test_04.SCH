@@ -11,7 +11,7 @@ DRSDT
 --
 --     WELL   GROUP LOCATION  BHP   PI
 --     NAME   NAME    I  J   DEPTH DEFN
---			      m 	
+--			      m
 WELSPECS
   'WWI1'  'G'  1  1  -1  'WATER'  /
   'WP1'  'G'  30 30 -1 'OIL' /
@@ -22,7 +22,7 @@ WELSPECS
 --
 --     WELL     -LOCATION-    OPEN/ SAT CONN  WELL
 --     NAME     I  J K1 K2    SHUT  TAB FACT  DIAM
---					       m2	
+--					       m2
 COMPDAT
       'WWI1'     1  1  1  5   'OPEN'  0   -1   0.5  -1  0  0 /
       'WP1'    30 30  1  5   'OPEN'  0   -1   0.5  -1  0  0 /

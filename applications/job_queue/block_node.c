@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'block_node.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'block_node.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -25,9 +25,9 @@
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
 #include <ert/util/vector.h>
-#include <ert/res_util/res_env.h>
 
-#include <ert/job_queue/lsf_driver.h>
+#include <ert/res_util/res_env.hpp>
+#include <ert/job_queue/lsf_driver.hpp>
 
 #define BLOCK_COMMAND        "/project/res/bin/block-job"
 #define STATOIL_LSF_REQUEST  "select[cs && x86_64Linux]"
@@ -79,7 +79,7 @@ void block_job_free( block_job_type * block_job ) {
   stringlist_free( block_job->hostlist );
   if (block_job->lsf_job)
     lsf_job_free( block_job->lsf_job );
-  
+
   free( block_job );
 }
 
@@ -88,13 +88,13 @@ const char * block_job_get_hostname( const block_job_type * block_job ) {
   return stringlist_iget( block_job->hostlist , 0 );
 }
 
-  
+
 
 void update_job_status( block_job_type * job ) {
   if (!job->running) {
     int lsf_status = lsf_driver_get_job_status_lsf( lsf_driver , job->lsf_job );
     if (lsf_status == JOB_STAT_RUN) {
-      lsf_job_export_hostnames( job->lsf_job , job->hostlist ); 
+      lsf_job_export_hostnames( job->lsf_job , job->hostlist );
       {
         int ihost;
         for (ihost = 0; ihost < stringlist_get_size( job->hostlist ); ihost++) {
@@ -187,14 +187,14 @@ void block_node_exit( int signal ) {
   print_status();
   for (job_nr = 0; job_nr < vector_get_size( job_pool ); job_nr++) {
     block_job_type * job = vector_iget( job_pool , job_nr );
-    
+
     if (job->block_job) {
       printf("Job:%ld is running on host: ", lsf_job_get_jobnr( job->lsf_job ));
       stringlist_fprintf( job->hostlist , " " , stdout );
       printf("\n");
     } else
       lsf_driver_kill_job( lsf_driver , job->lsf_job );
-    
+
     block_job_free( job );
   }
   printf("Remember to kill these jobs when the BLOCK is no longer needed\n");
@@ -206,31 +206,31 @@ void block_node_exit( int signal ) {
 int main( int argc, char ** argv) {
   if (argc == 1)
     util_exit("block_node  node1  node2  node3:2  \n");
-  
+
   /* Initialize lsf environment */
   util_setenv( "LSF_BINDIR"    , "/prog/LSF/9.1/linux2.6-glibc2.3-x86_64/bin" );
   util_setenv( "LSF_LINDIR"    , "/prog/LSF/9.1/linux2.6-glibc2.3-x86_64/lib" );
   util_setenv( "XLSF_UIDDIR"   , "/prog/LSF/9.1/linux2.6-glibc2.3-x86_64/lib/uid" );
   util_setenv( "LSF_SERVERDIR" , "/prog/LSF/9.1/linux2.6-glibc2.3-x86_64/etc");
   util_setenv( "LSF_ENVDIR"    , "/prog/LSF/conf");
-  
+
   util_update_path_var( "PATH"               , "/prog/LSF/9.1/linux2.6-glibc2.3-x86_64/bin" , false);
   util_update_path_var( "LD_LIBRARY_PATH"    , "/prog/LSF/9.1/linux2.6-glibc2.3-x86_64/lib" , false);
 
-  
+
   lsf_driver = lsf_driver_alloc();
   if (lsf_driver_get_submit_method( lsf_driver ) != LSF_SUBMIT_INTERNAL)
     util_exit("Sorry - the block_node program must be invoked on a proper LSF node \n");
 
   {
-    
+
     int iarg;
     int total_blocked_target = 0;
     nodes       = hash_alloc();
     for (iarg = 1; iarg < argc; iarg++) {
       char   *node_name;
       int    num_slots;
-      
+
       {
         char * num_slots_string;
         util_binary_split_string( argv[iarg] , ":" , true , &node_name , &num_slots_string);
@@ -239,7 +239,7 @@ int main( int argc, char ** argv) {
         else
           num_slots = 1;
       }
-      
+
       if (!hash_has_key( nodes , node_name))
         hash_insert_hash_owned_ref( nodes , node_name , count_pair_alloc() , free);
 
@@ -254,10 +254,10 @@ int main( int argc, char ** argv) {
     {
       const int sleep_time    = 5;
       const int chunk_size    = 10;    /* We submit this many at a time. */
-      const int max_pool_size = 1000;  /* The absolute total maximum of jobs we will submit. */  
+      const int max_pool_size = 1000;  /* The absolute total maximum of jobs we will submit. */
 
       bool           cont        = true;
-      int            pending     = 0;   
+      int            pending     = 0;
       bool           all_blocked;
       job_pool                   = vector_alloc_new();
 
@@ -268,7 +268,7 @@ int main( int argc, char ** argv) {
           if (vector_get_size( job_pool ) < max_pool_size)
             add_jobs( chunk_size );
         }
-        
+
         update_pool_status( &all_blocked , &pending);
         print_status();
 
@@ -277,7 +277,7 @@ int main( int argc, char ** argv) {
       }
       if (!all_blocked)
         printf("Sorry - failed to block all the nodes \n");
-      
+
       block_node_exit( 0 );
       hash_free( nodes );
     }

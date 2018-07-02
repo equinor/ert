@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'rms_util.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'rms_util.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdbool.h>
@@ -25,7 +25,7 @@
 
 #include <ert/rms/rms_util.hpp>
 
-#include <ert/ecl/ecl_util.hpp>
+#include <ert/ecl/ecl_util.h>
 
 
 
@@ -34,7 +34,7 @@
   This translates from the RMS data layout to "Fortan / ECLIPSE" data
   layout.
 
-  RMS: k index is running fastest *AND* backwards.  
+  RMS: k index is running fastest *AND* backwards.
   F90: i is running fastest, and k is running the 'normal' way.
 
   This function should be *THE ONLY* place in the code where explicit mention
@@ -52,7 +52,7 @@ void rms_util_set_fortran_data(void *_f90_data , const void * _rms_data, int siz
   char *f90_data       = (char *)       _f90_data;
   const char *rms_data = (const char *) _rms_data;
   int i,j,k,rms_index, f90_index;
-  for (i=0; i < nx; i++) 
+  for (i=0; i < nx; i++)
     for (j=0; j < ny; j++)
       for (k= 0; k < nz; k++) {
         rms_index  = rms_util_global_index_from_eclipse_ijk(nx,ny,nz,i,j,k);
@@ -68,7 +68,7 @@ void rms_util_read_fortran_data(const void *_f90_data , void * _rms_data, int si
   char *rms_data       = (char *)       _rms_data;
   int i,j,k,rms_index, f90_index;
 
-  for (i=0; i < nx; i++) 
+  for (i=0; i < nx; i++)
     for (j=0; j < ny; j++)
       for (k= 0; k < nz; k++) {
         rms_index  = rms_util_global_index_from_eclipse_ijk(nx,ny,nz,i,j,k);
@@ -96,7 +96,7 @@ void rms_util_fskip_string(FILE *stream) {
     fread(&c , 1 , 1 , stream);
     if (c == 0)
       cont = false;
-  } 
+  }
 }
 
 
@@ -132,9 +132,9 @@ bool rms_util_fread_string(char *string , int max_length , FILE *stream) {
           cont = false;
         }
       }
-    } 
-  } 
-  
+    }
+  }
+
   return read_ok;
 }
 

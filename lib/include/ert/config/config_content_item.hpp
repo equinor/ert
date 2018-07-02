@@ -1,7 +1,7 @@
 /*
-   Copyright (C) 2018 Equinor ASA, Norway.
+   Copyright (C) 2012  Statoil ASA, Norway.
 
-   The file 'config_content_item.hpp' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'config_content_item.h' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,57 @@
 
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
-
-
 */
-#include <ert/config/config_content_item.h>
 
+
+#ifndef ERT_CONFIG_CONTENT_ITEM_H
+#define ERT_CONFIG_CONTENT_ITEM_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <ert/util/hash.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/type_macros.hpp>
+
+#include <ert/config/config_error.hpp>
+#include <ert/config/config_schema_item.hpp>
+#include <ert/config/config_path_elm.hpp>
+#include <ert/config/config_content_node.hpp>
+
+typedef struct config_content_item_struct config_content_item_type;
+
+  int                              config_content_item_get_size(const config_content_item_type * item);
+  config_content_node_type       * config_content_item_get_last_node(const config_content_item_type * item);
+  config_content_node_type       * config_content_item_iget_node(const config_content_item_type * item , int index);
+  const config_content_node_type * config_content_item_get_last_node_const(const config_content_item_type * item);
+  const config_content_node_type * config_content_item_iget_node_const(const config_content_item_type * item , int index);
+  char                           * config_content_item_ialloc_joined_string(const config_content_item_type * item , const char * sep , int occurence);
+  char                           * config_content_item_alloc_joined_string(const config_content_item_type * item , const char * sep);
+  const stringlist_type          * config_content_item_iget_stringlist_ref(const config_content_item_type * item, int occurence);
+  const stringlist_type          * config_content_item_get_stringlist_ref(const config_content_item_type * item);
+  stringlist_type                * config_content_item_alloc_complete_stringlist(const config_content_item_type * item, bool copy);
+  stringlist_type                * config_content_item_alloc_stringlist(const config_content_item_type * item, bool copy);
+  hash_type                      * config_content_item_alloc_hash(const config_content_item_type * item , bool copy);
+  const char                     * config_content_item_iget(const config_content_item_type * item , int occurence , int index);
+  bool                             config_content_item_iget_as_bool(const config_content_item_type * item, int occurence , int index);
+  int                              config_content_item_iget_as_int(const config_content_item_type * item, int occurence , int index);
+  double                           config_content_item_iget_as_double(const config_content_item_type * item, int occurence , int index);
+  void                             config_content_item_clear( config_content_item_type * item );
+  void                             config_content_item_free( config_content_item_type * item );
+  void                             config_content_item_free__( void * arg );
+  config_content_item_type       * config_content_item_alloc( const config_schema_item_type * schema , const config_path_elm_type * path_elm);
+  void                             config_content_item_validate(const config_content_item_type * item, config_error_type * error);
+  config_content_node_type       * config_content_item_alloc_node( const config_content_item_type * item , const config_path_elm_type * path_elm);
+  const config_schema_item_type  * config_content_item_get_schema( const config_content_item_type * item );
+  const config_path_elm_type     * config_content_item_get_path_elm( const config_content_item_type * item );
+  const char* config_content_item_get_key( const config_content_item_type * item);
+
+  UTIL_IS_INSTANCE_HEADER( config_content_item );
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

@@ -97,17 +97,17 @@ class EnKFTest(ResTest):
 
 
     def test_enum(self):
-        self.assertEnumIsFullyDefined(EnkfVarType, "enkf_var_type", "lib/include/ert/enkf/enkf_types.h")
-        self.assertEnumIsFullyDefined(ErtImplType, "ert_impl_type", "lib/include/ert/enkf/enkf_types.h")
-        self.assertEnumIsFullyDefined(EnkfInitModeEnum, "init_mode_type", "lib/include/ert/enkf/enkf_types.h")
-        self.assertEnumIsFullyDefined(RealizationStateEnum, "realisation_state_enum", "lib/include/ert/enkf/enkf_types.h")
-        self.assertEnumIsFullyDefined(EnkfTruncationType, "truncation_type", "lib/include/ert/enkf/enkf_types.h")
-        self.assertEnumIsFullyDefined(EnkfRunType, "run_mode_type" , "lib/include/ert/enkf/enkf_types.h")
+        self.assertEnumIsFullyDefined(EnkfVarType, "enkf_var_type", "lib/include/ert/enkf/enkf_types.hpp")
+        self.assertEnumIsFullyDefined(ErtImplType, "ert_impl_type", "lib/include/ert/enkf/enkf_types.hpp")
+        self.assertEnumIsFullyDefined(EnkfInitModeEnum, "init_mode_type", "lib/include/ert/enkf/enkf_types.hpp")
+        self.assertEnumIsFullyDefined(RealizationStateEnum, "realisation_state_enum", "lib/include/ert/enkf/enkf_types.hpp")
+        self.assertEnumIsFullyDefined(EnkfTruncationType, "truncation_type", "lib/include/ert/enkf/enkf_types.hpp")
+        self.assertEnumIsFullyDefined(EnkfRunType, "run_mode_type" , "lib/include/ert/enkf/enkf_types.hpp")
 
-        self.assertEnumIsFullyDefined(EnkfObservationImplementationType, "obs_impl_type", "lib/include/ert/enkf/obs_vector.h")
-        self.assertEnumIsFullyDefined(LoadFailTypeEnum, "load_fail_type", "lib/include/ert/enkf/summary_config.h")
-        self.assertEnumIsFullyDefined(EnkfFieldFileFormatEnum, "field_file_format_type", "lib/include/ert/enkf/field_config.h" )
-        self.assertEnumIsFullyDefined(ActiveMode , "active_mode_type" , "lib/include/ert/enkf/enkf_types.h")
+        self.assertEnumIsFullyDefined(EnkfObservationImplementationType, "obs_impl_type", "lib/include/ert/enkf/obs_vector.hpp")
+        self.assertEnumIsFullyDefined(LoadFailTypeEnum, "load_fail_type", "lib/include/ert/enkf/summary_config.hpp")
+        self.assertEnumIsFullyDefined(EnkfFieldFileFormatEnum, "field_file_format_type", "lib/include/ert/enkf/field_config.hpp")
+        self.assertEnumIsFullyDefined(ActiveMode , "active_mode_type" , "lib/include/ert/enkf/enkf_types.hpp")
 
 
     def test_observations(self):

@@ -1,22 +1,22 @@
 /*
-   Copyright (C) 2012  Statoil ASA, Norway. 
-    
-   The file 'template_loop.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2012  Statoil ASA, Norway.
+
+   The file 'template_loop.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
-#include <ert/util/ert_api_config.h>
+#include <ert/util/ert_api_config.hpp>
 
 #include <ctype.h>
 #include <sys/types.h>
@@ -51,7 +51,7 @@ struct loop_struct {
   int               body_offset;
   int               body_length;
 
-  bool              replace_substring; 
+  bool              replace_substring;
   int               var_length;
   char            * loop_var;
   stringlist_type * items;
@@ -75,10 +75,10 @@ static loop_type * loop_alloc( const char * buffer , int global_offset , regmatc
 
   loop->opentag_offset  = global_offset + tag_offset.rm_so;
   loop->opentag_length  = tag_offset.rm_eo - tag_offset.rm_so;
-  
+
   loop->endtag_offset  = -1;
   loop->endtag_length  = -1;
-  
+
   loop->body_offset = loop->opentag_offset + loop->opentag_length;
   loop->body_length = -1;
   {
@@ -136,13 +136,13 @@ static void loop_eval( const loop_type * loop , const char * body , buffer_type 
     int value_length = strlen( value );
     int shift        = value_length - loop->var_length;
     int search_offset = 0;
-    
-    
+
+
     while (true) {
       char * data = (char*)buffer_get_data( var_expansion );
       char * match_ptr = strstr( &data[search_offset] , loop->loop_var );
-      
-      if (match_ptr == NULL) 
+
+      if (match_ptr == NULL)
         break;
       else {
 
@@ -150,12 +150,12 @@ static void loop_eval( const loop_type * loop , const char * body , buffer_type 
            string, or alternatively NOT preceeded by alphanumeric
            character. If the variable starts with a '$' we ignore this
            test.
-        */  
+        */
         if (!loop->replace_substring) {
           if (match_ptr != &data[search_offset]) { char
               pre_char = match_ptr[-1]; if (isalnum( pre_char )) {
               search_offset = match_ptr - data + 1;
-              
+
               if (search_offset >= strlen(data))
                 break;
               else
@@ -164,21 +164,21 @@ static void loop_eval( const loop_type * loop , const char * body , buffer_type 
           }
 
 
-          /* 
+          /*
              Check that the match is at the very end of the string, or
              alternatively followed by a NON alphanumeric character. */
           if (strlen(match_ptr) > loop->var_length) {
             char end_char = match_ptr[ loop->var_length ];
-            if (isalnum( end_char )) 
+            if (isalnum( end_char ))
               break;
           }
         }
-          
+
         /* OK - this is a valid match; update the string buffer. */
         {
           int write_offset = match_ptr - data;
           int shift_offset = write_offset + loop->var_length;
-          
+
           replace_1var( var_expansion , shift , write_offset , shift_offset , value );
           search_offset = write_offset + loop->var_length;
         }
@@ -212,7 +212,7 @@ int template_eval_loop( const template_type * _template , buffer_type * buffer ,
         loop_type * sub_loop = loop_alloc( search_data , search_offset , match_list_loop[0] , match_list_loop[1] , match_list_loop[2]);
         global_offset = template_eval_loop( _template , buffer , global_offset , sub_loop );
       }
-    } 
+    }
 
     /*****************************************************************/
     /* We have completed the sub loops; the buffer has (possibly)
@@ -225,7 +225,7 @@ int template_eval_loop( const template_type * _template , buffer_type * buffer ,
       if (end_match == REG_NOMATCH)
         util_exit("Fatal error - have lost a {% endfor %} marker \n");
     }
-    
+
     /* This loop is the inner loop - expand it. */
     loop_set_endmatch( loop , search_offset , match_list_end[0]);
     {
@@ -235,12 +235,12 @@ int template_eval_loop( const template_type * _template , buffer_type * buffer ,
         char * body = util_alloc_substring_copy( src_data , loop->body_offset , loop->body_length );
         buffer_type * var_expansion = buffer_alloc( 0 );
         int ivar;
-        
+
         for (ivar =0; ivar < stringlist_get_size( loop->items ); ivar++) {
           loop_eval(loop , body , var_expansion , ivar );
           buffer_strcat( loop_expansion , (const char*)buffer_get_data( var_expansion ));
         }
-        
+
         buffer_free( var_expansion );
         free( body );
       }
@@ -248,11 +248,11 @@ int template_eval_loop( const template_type * _template , buffer_type * buffer ,
         int tag_length = loop->endtag_offset + loop->endtag_length - loop->opentag_offset;
         int offset = loop->endtag_offset + loop->endtag_length;
         int shift = buffer_get_string_size( loop_expansion ) - tag_length;
-        
+
         buffer_memshift( buffer , offset , shift );
         buffer_fseek( buffer , loop->opentag_offset , SEEK_SET );
         buffer_fwrite( buffer , buffer_get_data( loop_expansion ) , 1 , buffer_get_string_size( loop_expansion ));
-        
+
         global_offset = loop->opentag_offset + buffer_get_string_size( loop_expansion );
       }
       buffer_free( loop_expansion );
@@ -286,7 +286,7 @@ void template_eval_loops( const template_type * _template , buffer_type * buffer
           fprintf(stderr,"** Warning ** : found {%% for .... %%} loop construct without mathcing {%% endfor %%}\n");
           break;
         }
-      } else if (match == REG_NOMATCH) 
+      } else if (match == REG_NOMATCH)
         break;
     }
   }

@@ -1,18 +1,18 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-   The file 'history.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+   The file 'history.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdio.h>
@@ -24,9 +24,9 @@
 #include <ert/util/stringlist.hpp>
 #include <ert/util/bool_vector.hpp>
 
-#include <ert/ecl/ecl_sum.hpp>
-#include <ert/ecl/ecl_util.hpp>
-#include <ert/ecl/ecl_smspec.hpp>
+#include <ert/ecl/ecl_sum.h>
+#include <ert/ecl/ecl_util.h>
+#include <ert/ecl/ecl_smspec.h>
 
 #include <ert/sched/gruptree.hpp>
 #include <ert/sched/sched_history.hpp>
@@ -71,7 +71,7 @@ const char * history_get_source_string( history_source_type history_source ) {
   case(SCHEDULE ):
     return "SCHEDULE";
     break;
-  default: 
+  default:
     util_abort("%s: internal fuck up \n",__func__);
     return NULL;
   }
@@ -85,7 +85,7 @@ static history_type * history_alloc_empty(  )
 {
   history_type * history = (history_type*)util_malloc(sizeof * history);
   UTIL_TYPE_ID_INIT( history , HISTORY_TYPE_ID );
-  history->refcase       = NULL; 
+  history->refcase       = NULL;
   history->sched_history = NULL;
   history->sched_file    = NULL;
   return history;
@@ -101,7 +101,7 @@ void history_free(history_type * history)
 {
   if (history->sched_history != NULL)
     sched_history_free( history->sched_history );
-  
+
   free(history);
 }
 
@@ -113,7 +113,7 @@ history_type * history_alloc_from_sched_file(const char * sep_string , const sch
   history->sched_history = sched_history_alloc( sep_string );
   sched_history_update( history->sched_history , sched_file );
   history->source = SCHEDULE;
-  
+
   return history;
 }
 
@@ -126,7 +126,7 @@ history_type * history_alloc_from_refcase(const ecl_sum_type * refcase , bool us
     history->source = REFCASE_HISTORY;
   else
     history->source = REFCASE_SIMULATED;
-  
+
   return history;
 }
 
@@ -143,7 +143,7 @@ history_source_type history_get_source(const history_type * history) {
 int history_get_last_restart(const history_type * history) {
   if (history->refcase != NULL)
     return ecl_sum_get_last_report_step( history->refcase);
-  else 
+  else
     return sched_history_get_last_history( history->sched_history );
 }
 
@@ -160,9 +160,9 @@ bool history_init_ts( const history_type * history , const char * summary_key , 
   double_vector_reset( value );
   bool_vector_reset( valid );
   bool_vector_set_default( valid , false);
-  
+
   if (history->source == SCHEDULE) {
-    
+
     for (int tstep = 0; tstep <= sched_history_get_last_history(history->sched_history); tstep++) {
       if (sched_history_open( history->sched_history , summary_key , tstep)) {
         initOK = true;
@@ -179,13 +179,13 @@ bool history_init_ts( const history_type * history , const char * summary_key , 
     if (history->source == REFCASE_HISTORY) {
       /* Must create a new key with 'H' for historical values. */
       const ecl_smspec_type * smspec      = ecl_sum_get_smspec( history->refcase );
-      const char            * join_string = ecl_smspec_get_join_string( smspec ); 
+      const char            * join_string = ecl_smspec_get_join_string( smspec );
       ecl_smspec_var_type           var_type = ecl_smspec_identify_var_type( summary_key );
-      
+
       if ((var_type == ECL_SMSPEC_WELL_VAR) || (var_type == ECL_SMSPEC_GROUP_VAR))
-        local_key = util_alloc_sprintf( "%sH%s%s" , 
-                                        ecl_sum_get_keyword( history->refcase , summary_key ) , 
-                                        join_string , 
+        local_key = util_alloc_sprintf( "%sH%s%s" ,
+                                        ecl_sum_get_keyword( history->refcase , summary_key ) ,
+                                        join_string ,
                                         ecl_sum_get_wgname( history->refcase , summary_key ));
       else if (var_type == ECL_SMSPEC_FIELD_VAR)
         local_key = util_alloc_sprintf( "%sH" , ecl_sum_get_keyword( history->refcase , summary_key ));
@@ -207,7 +207,7 @@ bool history_init_ts( const history_type * history , const char * summary_key , 
         initOK = true;
       }
 
-      if (history->source == REFCASE_HISTORY) 
+      if (history->source == REFCASE_HISTORY)
         free( local_key );
     }
   }
@@ -224,7 +224,7 @@ time_t history_get_start_time( const history_type * history ) {
 
 
 
-/* Uncertain about the first node - offset problems +++ ?? 
+/* Uncertain about the first node - offset problems +++ ??
    Changed to use node_end_time() at svn ~ 2850
 
    Changed to sched_history at svn ~2940

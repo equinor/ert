@@ -16,7 +16,7 @@ class EnKFFSTest(ResTest):
 
 
     def test_id_enum(self):
-        self.assertEnumIsFullyDefined(EnKFFSType, "fs_driver_impl", "lib/include/ert/enkf/fs_types.h")
+        self.assertEnumIsFullyDefined(EnKFFSType, "fs_driver_impl", "lib/include/ert/enkf/fs_types.hpp")
 
 
     def test_create(self):

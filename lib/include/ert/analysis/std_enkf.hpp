@@ -1,21 +1,57 @@
-/*
-   Copyright (C) 2018 Equinor ASA, Norway.
+#ifndef ERT_STD_ENKF_H
+#define ERT_STD_ENKF_H
 
-   The file 'std_enkf.hpp' is part of ERT - Ensemble based Reservoir Tool.
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-   ERT is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
+#include <stdbool.h>
 
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or
-   FITNESS FOR A PARTICULAR PURPOSE.
+#include <ert/res_util/matrix.hpp>
+#include <ert/util/rng.hpp>
 
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
-   for more details.
+#define  DEFAULT_ENKF_TRUNCATION_  0.98
+#define  ENKF_TRUNCATION_KEY_      "ENKF_TRUNCATION"
+#define  ENKF_NCOMP_KEY_           "ENKF_NCOMP"
+#define  USE_EE_KEY_               "USE_EE"
+#define  USE_GE_KEY_               "USE_GE"
+#define  ANALYSIS_SCALE_DATA_KEY_  "ANALYSIS_SCALE_DATA"
+
+  typedef struct std_enkf_data_struct std_enkf_data_type;
 
 
-*/
-#include <ert/analysis/std_enkf.h>
+  bool     std_enkf_set_double( void * arg , const char * var_name , double value);
 
+  int      std_enkf_get_subspace_dimension( std_enkf_data_type * data );
+  void     std_enkf_set_truncation( std_enkf_data_type * data , double truncation );
+  void     std_enkf_set_subspace_dimension( std_enkf_data_type * data , int subspace_dimension);
+  void     std_enkf_set_lambda0( std_enkf_data_type * data , double lambda0 );
+  bool     std_enkf_has_var( const void * arg, const char * var_name);
+
+  double   std_enkf_get_truncation( std_enkf_data_type * data );
+  void   * std_enkf_data_alloc( );
+  void     std_enkf_data_free( void * module_data );
+
+  bool   std_enkf_get_bool( const void * arg, const char * var_name);
+  int    std_enkf_get_int( const void * arg, const char * var_name);
+  double std_enkf_get_double( const void * arg, const char * var_name);
+  bool   std_enkf_has_var( const void * arg, const char * var_name);
+  long   std_enkf_get_options( void * arg , long flag );
+  bool   std_enkf_set_bool( void * arg , const char * var_name , bool value);
+  bool   std_enkf_set_int( void * arg , const char * var_name , int value);
+  bool   std_enkf_set_double( void * arg , const char * var_name , double value);
+  void   std_enkf_initX(void * module_data ,
+                        matrix_type * X ,
+                        matrix_type * A ,
+                        matrix_type * S ,
+                        matrix_type * R ,
+                        matrix_type * dObs ,
+                        matrix_type * E ,
+                        matrix_type * D,
+                        rng_type * rng);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

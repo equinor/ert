@@ -1,7 +1,7 @@
 /*
-   Copyright (C) 2018  Statoil ASA, Norway.
+   Copyright (C) 2011  Statoil ASA, Norway.
 
-   The file 'sched_kw_wconprod.hpp' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'sched_kw_wconprod.h' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,29 @@
 
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
-
-
 */
-#include <ert/sched/sched_kw_wconprod.h>
 
+#ifndef ERT_SCHED_KW_WCONPROD_H
+#define ERT_SCHED_KW_WCONPROD_H
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <ert/sched/sched_macros.hpp>
+
+
+  typedef struct sched_kw_wconprod_struct sched_kw_wconprod_type;
+
+
+  char   ** sched_kw_wconprod_alloc_wells_copy( const sched_kw_wconprod_type * , int * );
+  void      sched_kw_wconprod_init_well_list( const sched_kw_wconprod_type * kw , stringlist_type * well_list);
+
+
+
+KW_HEADER(wconprod)
+
+#ifdef __cplusplus
+}
+#endif
+#endif

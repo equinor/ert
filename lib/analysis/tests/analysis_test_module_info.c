@@ -16,9 +16,9 @@
    for more details.
 */
 
-#include <ert/util/test_util.h>
+#include <ert/util/test_util.hpp>
 
-#include <ert/analysis/module_info.h>
+#include <ert/analysis/module_info.hpp>
 
 
 int main(int argc , char ** argv) {

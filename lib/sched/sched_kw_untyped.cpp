@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'sched_kw_untyped.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'sched_kw_untyped.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <string.h>
@@ -31,7 +31,7 @@
 
 
 struct sched_kw_untyped_struct {
-  int        rec_len;   
+  int        rec_len;
   char      *kw_name;  /* The name of the current keyword. */
   char      *buffer;   /* The content of the keyword is just appended in one char * pointer. */
 };
@@ -42,7 +42,7 @@ struct sched_kw_untyped_struct {
 
 //static int get_fixed_record_length(const char * kw_name)
 //{
-//  
+//
 //   if( strcmp(kw_name , "RPTSCHED") == 0) { return  1;}
 //   if( strcmp(kw_name , "DRSDT"   ) == 0) { return  1;}
 //   if( strcmp(kw_name , "SKIPREST") == 0) { return  0;}
@@ -54,8 +54,8 @@ struct sched_kw_untyped_struct {
 //   if( strcmp(kw_name , "NETBALAN") == 0) { return  1;}
 //   if( strcmp(kw_name , "WPAVE"   ) == 0) { return  1;}
 //   if( strcmp(kw_name , "VFPTABL" ) == 0) { return  1;}
-//   if( strcmp(kw_name , "GUIDERAT") == 0) { return  1;} 
-//   
+//   if( strcmp(kw_name , "GUIDERAT") == 0) { return  1;}
+//
 //   return -1;  /* Can not use 0 - because some KW actually have 0 as a valid fixed value. */
 //}
 
@@ -65,7 +65,7 @@ sched_kw_untyped_type * sched_kw_untyped_alloc_empty(const char * kw_name , int 
   sched_kw_untyped_type * kw = (sched_kw_untyped_type*)util_malloc(sizeof *kw );
   kw->kw_name   = util_alloc_string_copy(kw_name);
   kw->rec_len   = rec_len;
-  kw->buffer    = NULL; 
+  kw->buffer    = NULL;
   return kw;
 }
 
@@ -112,8 +112,8 @@ sched_kw_untyped_type * sched_kw_untyped_alloc(const stringlist_type * tokens , 
     if (kw_name == NULL)
       util_abort("%s: internal error - failed to identify untyped kw name \n",__func__);
   }
-  
-  
+
+
   {
     bool eokw                  = false;
     sched_kw_untyped_type * kw = sched_kw_untyped_alloc_empty( kw_name , rec_len);
@@ -129,10 +129,10 @@ sched_kw_untyped_type * sched_kw_untyped_alloc(const stringlist_type * tokens , 
         sched_kw_untyped_add_tokens( kw , line_tokens );
         stringlist_free( line_tokens );
       }
-      
+
       if (line_nr == kw->rec_len)
         eokw = true;
-      
+
     } while (!eokw);
     return kw;
   }
@@ -146,7 +146,7 @@ void sched_kw_untyped_fprintf(const sched_kw_untyped_type *kw , FILE *stream) {
   {
     if (kw->buffer != NULL)
       fprintf(stream , "%s" , kw->buffer);
-    
+
     if(kw->rec_len < 0)
       fprintf(stream , "/\n\n");
     else
@@ -169,8 +169,8 @@ sched_kw_untyped_type * sched_kw_untyped_copyc(const sched_kw_untyped_type * kw)
 
 /*****************************************************************/
 
-KW_FREE_IMPL(untyped)         
-KW_FPRINTF_IMPL(untyped)   
+KW_FREE_IMPL(untyped)
+KW_FPRINTF_IMPL(untyped)
 KW_COPYC_IMPL(untyped)
 
 

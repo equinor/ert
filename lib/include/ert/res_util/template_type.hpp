@@ -1,21 +1,43 @@
-/*
-   Copyright (C) 2018  Statoil ASA, Norway.
+#ifndef ERT_TEMPLATE_TYPE_H
+#define ERT_TEMPLATE_TYPE_H
 
-   The file 'template_type.hpp' is part of ERT - Ensemble based Reservoir Tool.
+#include <ert/util/ert_api_config.hpp>
 
-   ERT is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
+#include <ert/res_util/subst_list.hpp>
 
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or
-   FITNESS FOR A PARTICULAR PURPOSE.
+#ifdef ERT_HAVE_REGEXP
+#include <regex.h>
+#endif //ERT_HAVE_REGEXP
 
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
-   for more details.
+#define TEMPLATE_TYPE_ID 7781045
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct template_struct {
+  UTIL_TYPE_ID_DECLARATION;
+  char            * template_file;           /* The template file - if internalize_template == false this filename can contain keys which will be replaced at instantiation time. */
+  char            * template_buffer;         /* The content of the template buffer; only has valid content if internalize_template == true. */
+  bool              internalize_template;    /* Should the template be loadad and internalized at template_alloc(). */
+  subst_list_type * arg_list;                /* Key-value mapping established at alloc time. */
+  char            * arg_string;              /* A string representation of the arguments - ONLY used for a _get_ function. */
+  #ifdef ERT_HAVE_REGEXP
+  regex_t start_regexp;
+  regex_t end_regexp;
+  #endif
+};
+
+#ifdef ERT_HAVE_REGEXP
+typedef struct loop_struct loop_type;
+void template_init_loop_regexp( struct template_struct* );
+int template_eval_loop( const struct template_struct* , buffer_type * buffer , int global_offset , struct loop_struct * );
+void template_eval_loops( const struct template_struct* template_ , buffer_type * buffer );
+#endif //ERT_HAVE_REGEXP
+
+#endif //ERT_TEMPLATE_TYPE_H
 
 
-*/
-#include <ert/res_util/template_type.h>
-
+#ifdef __cplusplus
+}
+#endif

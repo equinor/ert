@@ -1,6 +1,6 @@
 GRUPTREE
   FOO FIELD /
-/ 
+/
 
 
 WCONHIST

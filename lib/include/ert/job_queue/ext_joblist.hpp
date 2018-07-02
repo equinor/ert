@@ -1,7 +1,7 @@
 /*
-   Copyright (C) 2018 Equinor ASA, Norway.
+   Copyright (C) 2011  Statoil ASA, Norway.
 
-   The file 'ext_joblist.hpp' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'ext_joblist.h' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,40 @@
 
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
-
-
 */
-#include <ert/job_queue/ext_joblist.h>
+
+#ifndef ERT_EXT_JOBLIST_H
+#define ERT_EXT_JOBLIST_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <stdbool.h>
+
+#include <ert/util/hash.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/res_util/subst_list.hpp>
+
+#include <ert/job_queue/ext_job.hpp>
+
+
+typedef struct ext_joblist_struct ext_joblist_type;
+
+ext_joblist_type * ext_joblist_alloc();
+void               ext_joblist_free(ext_joblist_type * );
+void               ext_joblist_add_job(ext_joblist_type * joblist , const char * name , ext_job_type * new_job);
+ext_job_type     * ext_joblist_get_job(const ext_joblist_type * , const char * );
+ext_job_type     * ext_joblist_get_job_copy(const ext_joblist_type *  , const char * );
+//void               ext_joblist_python_fprintf(const ext_joblist_type * , const stringlist_type * , const char * , const subst_list_type *);
+bool               ext_joblist_has_job(const ext_joblist_type *  , const char * );
+stringlist_type  * ext_joblist_alloc_list( const ext_joblist_type * joblist);
+bool               ext_joblist_del_job( ext_joblist_type * joblist , const char * job_name );
+void               ext_joblist_add_jobs_in_directory(ext_joblist_type * joblist  , const char * path, const char * license_root_path, bool user_mode, bool search_path );
+int                ext_joblist_get_size( const ext_joblist_type * joblist );
+
+hash_type        * ext_joblist_get_jobs( const ext_joblist_type * joblist );
+
+#ifdef __cplusplus
+}
+#endif
+#endif
 

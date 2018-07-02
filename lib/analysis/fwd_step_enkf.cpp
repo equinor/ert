@@ -296,7 +296,7 @@ void fwd_step_enkf_updateA(void * module_data ,
       }
 
       int kw,i;
-      
+
       /* This is to avoid a global-to-block search function since the number of parameters could be very large*/
       int_vector_type * kw_list = int_vector_alloc(nx, -1);
       int_vector_type * local_index_list = int_vector_alloc(nx, -1);

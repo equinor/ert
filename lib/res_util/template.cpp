@@ -20,7 +20,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include <ert/util/ert_api_config.h>
+#include <ert/util/ert_api_config.hpp>
 
 #include <ert/util/util.hpp>
 #include <ert/util/stringlist.hpp>

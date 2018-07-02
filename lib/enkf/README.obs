@@ -1,4 +1,4 @@
-/** 
+/**
 
 Observations/measurements are handled by three different (toplevel)
 objects:
@@ -19,7 +19,7 @@ observation, that can typically be to get an historical rate from the
 history; the data is pushed onto an instance of obs_data_type. measure
 on the other is used to extract information from the ensemble state,
 i.e. measure for instance a simulated rate or a pressure, and push the
-data onto a meas_vector_type instance. 
+data onto a meas_vector_type instance.
 
 Several obs_node instances are collected in the enkf_obs type, which
 is mostly a hash table of obs_node instances.
@@ -37,7 +37,7 @@ obs_data_type instance is reset.
 
 
 meas_vector_type / meas_matrix_type
------------------------------------ 
+-----------------------------------
 This data type is used in the same way as the obs_data_type, for
 measurements. When an eclipse integration is complete the
 obs_node->measure function is called, and the measurements are pushed

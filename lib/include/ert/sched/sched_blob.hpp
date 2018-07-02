@@ -1,7 +1,7 @@
 /*
-   Copyright (C) 2018  Statoil ASA, Norway.
+   Copyright (C) 2011  Statoil ASA, Norway.
 
-   The file 'sched_blob.hpp' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'sched_blob.h' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,25 @@
 
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
-
-
 */
-#include <ert/sched/sched_blob.h>
 
+#ifndef ERT_SCHED_BLOB_H
+#define ERT_SCHED_BLOB_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <stdlib.h>
+
+typedef struct sched_blob_struct sched_blob_type;
+
+
+void              sched_blob_append_token( sched_blob_type * blob , const char * token );
+sched_blob_type * sched_blob_alloc( );
+void              sched_blob_free( sched_blob_type * blob );
+void              sched_blob_fprintf( const sched_blob_type * blob , FILE * stream );
+int               sched_blob_get_size( const sched_blob_type * blob );
+
+#ifdef __cplusplus
+}
+#endif
+#endif

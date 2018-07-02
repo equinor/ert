@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'gruptree.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'gruptree.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdbool.h>
@@ -91,9 +91,9 @@
   gruptree_type * tree_two = gruptree_copyc(tree_one);
   gruptree_register_grup(tree_two, "INJE", "GRPB");
   gruptree_register_grup(tree_two, "PROD", "GRPA");
-  
-  ..... 
-  ..... 
+
+  .....
+  .....
 
   gruptree_free(tree_one);
   gruptree_free(tree_two);
@@ -211,14 +211,14 @@ static const char * well_get_parent_name(const well_type * well)
 
 
 /**
-   This function is called recursively ... 
+   This function is called recursively ...
 */
 static void gruptree_well_hash_iter__(gruptree_type * gruptree, const char * grupname, hash_type * well_hash)
 {
 
   if(!hash_has_key(gruptree->grups, grupname))
     util_abort("%s: Internal error - grupname %s is not in hash.\n", __func__, grupname);
-  
+
   grup_type * grup = (grup_type*)hash_get(gruptree->grups, grupname);
   if(grup->isfield)
     util_abort("%s: Internal error - no support for grups with isfield flag.\n", __func__);
@@ -228,7 +228,7 @@ static void gruptree_well_hash_iter__(gruptree_type * gruptree, const char * gru
     int size = hash_get_size(grup->children);
     char ** keylist = hash_alloc_keylist(grup->children);
 
-    for(int i=0; i<size; i++) 
+    for(int i=0; i<size; i++)
       gruptree_well_hash_iter__(gruptree, keylist[i], well_hash);  /* Recursive call - should NOT use hash_iter interface.*/
 
     util_free_stringlist(keylist, size);
@@ -376,7 +376,7 @@ bool gruptree_has_grup(const gruptree_type * gruptree, const char * grupname)
 char ** gruptree_alloc_grup_well_list(gruptree_type * gruptree, const char * grupname, int * num_wells)
 {
   char ** well_names;
-  
+
   if(!hash_has_key(gruptree->grups, grupname))
     util_abort("%s: Group %s is not present in the gruptree.\n", __func__, grupname);
 
@@ -430,7 +430,7 @@ gruptree_type * gruptree_copyc(const gruptree_type * gruptree)
     util_free_stringlist(well_list, num_wells);
 
   }
-  
+
   return gruptree_new;
 }
 
@@ -474,7 +474,7 @@ void gruptree_fwrite(const gruptree_type * gruptree, FILE * stream)
     util_free_stringlist(well_list, num_wells);
 
   }
-  
+
 }
 
 
@@ -531,7 +531,7 @@ void gruptree_printf_grup_wells(gruptree_type * gruptree, const char * grupname)
 
   printf("WELLS IN GROUP %s:\n", grupname);
   printf("-----------------------\n");
-  
+
   for(int i=0; i<num_wells; i++)
     printf("%s\n", well_names[i]);
 

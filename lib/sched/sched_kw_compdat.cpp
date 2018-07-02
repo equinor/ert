@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'sched_kw_compdat.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'sched_kw_compdat.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -29,10 +29,10 @@
 #include <ert/sched/sched_util.hpp>
 
 
-#define COMPDAT_NUM_KW        14   
+#define COMPDAT_NUM_KW        14
 #define SCHED_KW_COMPDAT_ID   771882
 
-typedef enum {X, Y , Z , FX , FY}   well_dir_type; 
+typedef enum {X, Y , Z , FX , FY}   well_dir_type;
 #define WELL_DIR_DEFAULT     Z
 #define WELL_DIR_X_STRING   "X"
 #define WELL_DIR_Y_STRING   "Y"
@@ -59,14 +59,14 @@ typedef struct  {
   int               i,j,k1,k2;       /* The i,j,k coordinated of the perforated cell.          */
   well_dir_type     well_dir;        /* Which direction does the well penetrate the grid block */
   comp_state_type   state;           /* What state is this completion in: AUTO|SHUT|OPEN       */
-  int               sat_table;    
+  int               sat_table;
   double            conn_factor;
-  double            well_diameter;     
-  double            eff_perm;          
-  double            skin_factor;       
-  double            D_factor;          
-  double            r0;                   
-  
+  double            well_diameter;
+  double            eff_perm;
+  double            skin_factor;
+  double            D_factor;
+  double            r0;
+
   /*
     def : Read as defaulted, not as defined.
   */
@@ -192,32 +192,32 @@ static comp_type * comp_alloc_empty( ) {
 static comp_type * comp_alloc_from_tokens( const stringlist_type * line_tokens ) {
   comp_type * comp = comp_alloc_empty();
   sched_util_init_default( line_tokens , comp->def );
-  
-  
-  comp->well         = util_alloc_string_copy(stringlist_iget( line_tokens , 0)); 
+
+
+  comp->well         = util_alloc_string_copy(stringlist_iget( line_tokens , 0));
   comp->i            = sched_util_atoi(stringlist_iget( line_tokens , 1));
   comp->j            = sched_util_atoi(stringlist_iget( line_tokens , 2));
   comp->k1           = sched_util_atoi(stringlist_iget( line_tokens , 3));
   comp->k2           = sched_util_atoi(stringlist_iget( line_tokens , 4));
 
-  if (comp->def[5]) 
+  if (comp->def[5])
     comp->state = COMP_DEFAULT_STATE;
-  else 
+  else
     comp->state = comp_get_state_from_string( stringlist_iget( line_tokens , 5 ));
-  
+
   comp->sat_table       = sched_util_atoi(stringlist_iget( line_tokens , 6));
   comp->conn_factor     = sched_util_atof(stringlist_iget( line_tokens , 7));
-  comp->well_diameter   = sched_util_atof(stringlist_iget( line_tokens , 8));     
-  comp->eff_perm        = sched_util_atof(stringlist_iget( line_tokens , 9));          
-  comp->skin_factor     = sched_util_atof(stringlist_iget( line_tokens , 10));       
-  comp->D_factor        = sched_util_atof(stringlist_iget( line_tokens , 11));         
+  comp->well_diameter   = sched_util_atof(stringlist_iget( line_tokens , 8));
+  comp->eff_perm        = sched_util_atof(stringlist_iget( line_tokens , 9));
+  comp->skin_factor     = sched_util_atof(stringlist_iget( line_tokens , 10));
+  comp->D_factor        = sched_util_atof(stringlist_iget( line_tokens , 11));
 
-  if (comp->def[12]) 
+  if (comp->def[12])
     comp->well_dir = WELL_DIR_DEFAULT;
   else
     comp->well_dir = comp_get_well_dir_from_string( stringlist_iget( line_tokens , 12 ));
-  
-  comp->r0 = sched_util_atof(stringlist_iget( line_tokens , 13));                
+
+  comp->r0 = sched_util_atof(stringlist_iget( line_tokens , 13));
   return comp;
 }
 
@@ -278,14 +278,14 @@ sched_kw_compdat_type * sched_kw_compdat_alloc(const stringlist_type * tokens , 
       comp_type * comp = comp_alloc_from_tokens( line_tokens );
       sched_kw_compdat_add_comp( kw , comp );
       stringlist_free( line_tokens );
-    } 
+    }
   }
-  
+
   while (!eokw);
   return kw;
 }
 
-      
+
 
 
 

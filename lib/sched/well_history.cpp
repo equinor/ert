@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'well_history.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'well_history.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -50,11 +50,11 @@
        Example
        -------
 
-       DATES 
+       DATES
           1  'JAN'  2000 /
 
-       WCONHIST 
-           'OP_1'      'OPEN'      'ORAT'   7996.000      4.000 1.46402E+006  5* / 
+       WCONHIST
+           'OP_1'      'OPEN'      'ORAT'   7996.000      4.000 1.46402E+006  5* /
        /
 
        DATES
@@ -92,10 +92,10 @@ struct well_history_struct {
   char                * well_name;
   int_vector_type     * kw_type;         /* This enum should be one of: NONE(default), WCONHIST , WCONINJE and WCONINJH (sched_kw_type_enum in sched_types.h). */
   size_t_vector_type  * active_state;    /* Contains pointer to the currently active of the xxx_state objects. The size_t_vector instance is abused to store pointer values (i.e. addresses). */
-  wconhist_state_type * wconhist_state;         
-  wconinje_state_type * wconinje_state;       
+  wconhist_state_type * wconhist_state;
+  wconinje_state_type * wconinje_state;
   wconinjh_state_type * wconinjh_state;
-  size_t_vector_type  * parent; 
+  size_t_vector_type  * parent;
   bool_vector_type    * well_open;
 };
 
@@ -156,9 +156,9 @@ void well_history_free__( void * arg ) {
  void well_history_add_keyword( well_history_type * well_history, const sched_kw_type * sched_kw , int  report_step ) {
    sched_kw_type_enum new_type     = sched_kw_get_type( sched_kw );
    sched_kw_type_enum current_type = (sched_kw_type_enum)int_vector_safe_iget( well_history->kw_type , report_step );
-   
+
    if ((new_type != current_type) && (current_type != NONE)) {
-     /* 
+     /*
         The well is changing type and we must "close" the current
         status first.
      */
@@ -176,7 +176,7 @@ void well_history_free__( void * arg ) {
        break;
      }
    }
-   
+
    int_vector_iset_default( well_history->kw_type , report_step , new_type );
    switch( new_type ) {
    case(WCONHIST):
@@ -248,7 +248,7 @@ double well_history_iget( well_index_type * index , int report_step ) {
   const well_history_type * well_history  = well_history_safe_cast_const( well_index_get_state( index ));
   sched_kw_type_enum current_type         = (sched_kw_type_enum)int_vector_safe_iget( well_history->kw_type , report_step );
   sched_history_callback_ftype * func     = well_index_get_callback( index , current_type );
-  
+
   if (func != NULL) {
     void * state_ptr = (void *) size_t_vector_safe_iget( well_history->active_state , report_step );
     return func( state_ptr , report_step );

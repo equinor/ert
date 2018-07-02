@@ -1,26 +1,26 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'well_index.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'well_index.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
 
 #include <ert/util/size_t_vector.hpp>
 #include <ert/util/int_vector.hpp>
-#include <ert/util/util.hpp>  
+#include <ert/util/util.hpp>
 
 #include <ert/sched/sched_types.hpp>
 #include <ert/sched/well_index.hpp>
@@ -38,7 +38,7 @@ struct well_index_struct {
                                           variable, as that is the most correct way to access the values of the
                                           schedule file. */
   int_vector_type         * kw_type;
-  size_t_vector_type      * func;   
+  size_t_vector_type      * func;
 };
 
 
@@ -59,15 +59,15 @@ void well_index_add_type( well_index_type * index , sched_kw_type_enum kw_type ,
 
 well_index_type * well_index_alloc( const char * well_name , const char * variable , const void * state_ptr , sched_kw_type_enum kw_type , sched_history_callback_ftype * func ) {
   well_index_type * well_index = (well_index_type*)util_malloc( sizeof * well_index );
-  
+
   UTIL_TYPE_ID_INIT( well_index , WELL_INDEX_TYPE_ID );
-  
+
   well_index->well_name = util_alloc_string_copy( well_name );
-  well_index->variable  = util_alloc_string_copy( variable ); 
+  well_index->variable  = util_alloc_string_copy( variable );
   well_index->kw_type   = int_vector_alloc( 0 , 0 );
   well_index->func      = size_t_vector_alloc( 0 , 0 );
   well_index->state_ptr = state_ptr;
-  
+
   well_index_add_type( well_index , kw_type , func );
   return well_index;
 }
@@ -105,13 +105,13 @@ sched_history_callback_ftype * well_index_get_callback( const well_index_type * 
       func = ( sched_history_callback_ftype *) size_t_vector_iget( well_index->func , iindex );
       break;
     }
-    
-    
+
+
     iindex++;
     if (iindex == int_vector_size( well_index->kw_type ))
       break;
   }
-  
+
   return func;
 }
 

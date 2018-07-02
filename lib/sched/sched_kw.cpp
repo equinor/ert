@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'sched_kw.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'sched_kw.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <string.h>
@@ -72,7 +72,7 @@
        sched_kw_untyped.c
 
     3. Keywords which are not implemented and have a
-       variable record length. These are handled 
+       variable record length. These are handled
        automatically by sched_kw_untyped.c.
 
 */
@@ -92,17 +92,17 @@ struct data_handlers_struct {
 
 
 struct sched_kw_struct {
-  char                    * kw_name; 
+  char                    * kw_name;
   sched_kw_type_enum        type;
   int                       restart_nr;  /* The block nr owning this instance. */
-  
+
 
   /* Function pointers to work on the data pointer. */
   data_token_alloc_proto  * alloc;
   data_free_proto         * free;
   data_fprintf_proto      * fprintf;
   alloc_copy_proto        * copyc;
-  
+
   void                    * data;        /* A void point pointer to a detailed implementation - i.e. sched_kw_wconhist. */
 };
 
@@ -124,7 +124,7 @@ static sched_kw_type * sched_kw_alloc_empty( const char * kw_name ) {
   sched_kw_type * kw = (sched_kw_type*)util_malloc(sizeof * kw);
   kw->kw_name = util_alloc_string_copy( kw_name );
   kw->type    = sched_kw_type_from_string( kw_name );
-  
+
   switch( kw->type ) {
   case(WCONHIST):
     kw->alloc   = sched_kw_wconhist_alloc__;
@@ -169,12 +169,12 @@ static sched_kw_type * sched_kw_alloc_empty( const char * kw_name ) {
     kw->copyc   = sched_kw_include_copyc__;
     break;
   case(UNTYPED):
-    /** 
+    /**
         Observe that the untyped keyword uses a custom allocator
         function, because it needs to get the keyword length as extra
-        input. 
+        input.
     */
-    kw->alloc   = NULL;    
+    kw->alloc   = NULL;
     kw->free    = sched_kw_untyped_free__;
     kw->fprintf = sched_kw_untyped_fprintf__;
     kw->copyc   = sched_kw_untyped_copyc__;
@@ -222,12 +222,12 @@ static sched_kw_type * sched_kw_alloc_empty( const char * kw_name ) {
    RPTSCHED
     arg1 arg2 arg2 ....
 
-   
+
    Invalid:
-   ------------------- 
+   -------------------
    RPTSCHED arg1 arg2 arg3 ...
 
-   Quite naive .... 
+   Quite naive ....
 */
 static void sched_kw_name_assert(const char * kw_name , FILE * stream)
 {
@@ -235,11 +235,11 @@ static void sched_kw_name_assert(const char * kw_name , FILE * stream)
     fprintf(stderr,"** Parsing SCHEDULE file line-nr: %d \n",util_get_current_linenr(stream));
     util_abort("%s: Internal error - trying to dereference NULL pointer.\n",__func__);
   }
-  
+
   {
     bool valid_kw = true;
     for (int i = 0; i < strlen(kw_name); i++)
-      if (isspace(kw_name[i])) 
+      if (isspace(kw_name[i]))
         valid_kw = false;
 
     if (!valid_kw) {
@@ -257,23 +257,23 @@ static sched_kw_type ** sched_kw_tstep_split_alloc(const sched_kw_type * sched_k
 {
   *num_steps = sched_kw_tstep_get_size((const sched_kw_tstep_type*)sched_kw->data);
   sched_kw_type ** sched_kw_tsteps = (sched_kw_type**)util_malloc(*num_steps * sizeof * sched_kw_tsteps);
-  
+
   for(int i=0; i<*num_steps; i++) {
     sched_kw_tsteps[i] = sched_kw_alloc_empty( "TSTEP" );
     double step = sched_kw_tstep_iget_step((const sched_kw_tstep_type *) sched_kw->data, i);
     sched_kw_tsteps[i]->data = sched_kw_tstep_alloc_from_double(step);
   }
-  
+
   return sched_kw_tsteps;
 }
 
 
 
-static sched_kw_type ** sched_kw_dates_split_alloc(const sched_kw_type * sched_kw, int * num_steps) 
+static sched_kw_type ** sched_kw_dates_split_alloc(const sched_kw_type * sched_kw, int * num_steps)
 {
   *num_steps = sched_kw_dates_get_size((const sched_kw_dates_type*)sched_kw->data);
   sched_kw_type ** sched_kw_dates = (sched_kw_type**)util_malloc(*num_steps * sizeof * sched_kw_dates);
-  
+
   for(int i=0; i<*num_steps; i++) {
     sched_kw_dates[i] = sched_kw_alloc_empty( "DATES" );
     time_t date = sched_kw_dates_iget_date((const sched_kw_dates_type *) sched_kw->data, i);
@@ -294,7 +294,7 @@ const char * sched_kw_get_type_name( const sched_kw_type * sched_kw ) {
 
 sched_kw_type_enum sched_kw_get_type(const sched_kw_type * sched_kw)
 {
-  return sched_kw->type;  
+  return sched_kw->type;
 }
 
 
@@ -319,15 +319,15 @@ sched_kw_type * sched_kw_token_alloc(const stringlist_type * token_list, int * t
     if (strcmp(kw_name,"END") == 0) {
       if (foundEND != NULL)
         *foundEND = true;
-      
+
       return NULL;
     } else {
       sched_kw_type * sched_kw = sched_kw_alloc_empty( kw_name );
       sched_kw->restart_nr     = -1;
-      
+
       sched_util_skip_newline( token_list , token_index );
       sched_kw_alloc_data( sched_kw , token_list , token_index , fixed_length_table);
-      
+
       return sched_kw;
     }
   }
@@ -509,8 +509,8 @@ void sched_kw_alloc_child_parent_list(const sched_kw_type * sched_kw, char *** c
 }
 
 
-/** 
-    Only WCONHIST 
+/**
+    Only WCONHIST
 */
 
 bool sched_kw_has_well( const sched_kw_type * sched_kw , const char * well ) {
@@ -525,7 +525,7 @@ bool sched_kw_has_well( const sched_kw_type * sched_kw , const char * well ) {
 
 
 
-/** 
+/**
     Only WCONHIST & WCONINJE
 */
 
@@ -543,7 +543,7 @@ bool sched_kw_well_open( const sched_kw_type * sched_kw , const char * well ) {
 
 sched_kw_type * sched_kw_alloc_copy(const sched_kw_type * src) {
   sched_kw_type * target = NULL;
-  
+
   return target;
 }
 

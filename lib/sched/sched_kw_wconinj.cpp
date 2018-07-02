@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'sched_kw_wconinj.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'sched_kw_wconinj.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -41,7 +41,7 @@
    implementation is PURE COPY AND PASTE from the WCONPROD
    implementation.
 */
-   
+
 
 
 
@@ -60,7 +60,7 @@ static sched_kw_wconinj_type * sched_kw_wconinj_alloc_empty(bool alloc_untyped)
   sched_kw_wconinj_type * kw = (sched_kw_wconinj_type*)util_malloc(sizeof * kw);
   kw->wells      = stringlist_alloc_new();
   if (alloc_untyped)
-    kw->untyped_kw = sched_kw_untyped_alloc_empty("WCONINJ" ,  -1 /* -1: Variable length keyword */ );  
+    kw->untyped_kw = sched_kw_untyped_alloc_empty("WCONINJ" ,  -1 /* -1: Variable length keyword */ );
   else
     kw->untyped_kw = NULL;
   return kw;
@@ -96,8 +96,8 @@ sched_kw_wconinj_type * sched_kw_wconinj_alloc(const stringlist_type * tokens , 
       sched_kw_untyped_add_tokens(kw->untyped_kw , line_tokens);
       stringlist_free( line_tokens );
       free( well );
-    } 
-    
+    }
+
   } while (!eokw);
   return kw;
 }
@@ -123,4 +123,4 @@ sched_kw_wconinj_type * sched_kw_wconinj_copyc(const sched_kw_wconinj_type * kw)
 /*****************************************************************/
 
 KW_IMPL(wconinj)
-     
+

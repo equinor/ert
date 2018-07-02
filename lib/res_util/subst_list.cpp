@@ -20,15 +20,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/util.h>
-#include <ert/util/hash.h>
-#include <ert/util/vector.h>
-#include <ert/util/node_data.h>
-#include <ert/util/buffer.h>
-#include <ert/util/parser.h>
+#include <ert/util/util.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/vector.hpp>
+#include <ert/util/node_data.hpp>
+#include <ert/util/buffer.hpp>
+#include <ert/util/parser.hpp>
 
-#include <ert/res_util/subst_func.h>
-#include <ert/res_util/subst_list.h>
+#include <ert/res_util/subst_func.hpp>
+#include <ert/res_util/subst_list.hpp>
 
 /**
    This file implements a small support struct for search-replace

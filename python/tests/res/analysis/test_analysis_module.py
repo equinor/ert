@@ -32,7 +32,7 @@ class AnalysisModuleTest(ResTest):
         return AnalysisModule(lib_name = self.libname)
 
     def test_load_status_enum(self):
-        source_file_path = "lib/include/ert/analysis/analysis_module.h"
+        source_file_path = "lib/include/ert/analysis/analysis_module.hpp"
         self.assertEnumIsFullyDefined(AnalysisModuleLoadStatusEnum, "analysis_module_load_status_enum", source_file_path)
 
     def test_analysis_module(self):

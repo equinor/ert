@@ -3,4 +3,4 @@ TYPES_KEY    100   0.75   True   String
 TYPES_KEY    100   0.75X  True   String
 TYPES_KEY    100X  0.75   True   String
 SHORT_KEY    100   100
-LONG_KEY     100   100    
+LONG_KEY     100   100

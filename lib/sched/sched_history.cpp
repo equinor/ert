@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'sched_history.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'sched_history.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 #include <stdlib.h>
 
@@ -42,8 +42,8 @@
 
 struct sched_history_struct {
   hash_type           * well_history;   /* Hash table of well_history_type instances. */
-  hash_type           * group_history;   
-  time_t_vector_type  * time;            
+  hash_type           * group_history;
+  time_t_vector_type  * time;
   hash_type           * index;
   char                * sep_string;
   bool_vector_type    * historical;    /* This is meant to flag whether a certain report_step is "historical", or
@@ -74,17 +74,17 @@ static void sched_history_install_well_index( sched_history_type * sched_history
 
   while ( var != NULL ) {
     gen_key = util_realloc_sprintf( gen_key , "%s%s%s" , var , sched_history->sep_string , well_name );
-    
+
     if (first) {
       first = false;
       hash_insert_hash_owned_ref( sched_history->index , gen_key , well_index , well_index_free__);
     } else
       hash_insert_ref( sched_history->index , gen_key , well_index );
-    
+
     index++;
     var  = var_list[ index ];
   }
-  
+
   if (first)
     util_abort("%s: internal error - empty var_list \n",__func__);
   free( gen_key );
@@ -100,17 +100,17 @@ static void sched_history_install_group_index( sched_history_type * sched_histor
 
   while ( var != NULL ) {
     gen_key = util_realloc_sprintf( gen_key , "%s%s%s" , var , sched_history->sep_string , group_name );
-    
+
     if (first) {
       first = false;
       hash_insert_hash_owned_ref( sched_history->index , gen_key , group_index , group_index_free__);
     } else
       hash_insert_ref( sched_history->index , gen_key , group_index );
-    
+
     index++;
     var  = var_list[ index ];
   }
-  
+
   if (first)
     util_abort("%s: internal error - empty var_list \n",__func__);
   free( gen_key );
@@ -129,31 +129,31 @@ void sched_history_install_index( sched_history_type * sched_history ) {
     while (!hash_iter_is_complete( well_iter )) {
       const char * well_name         = hash_iter_get_next_key( well_iter );
       const well_history_type * well = (const well_history_type*)hash_get( sched_history->well_history , well_name );
-      
+
       /* WOPR */
       {
         well_index_type * well_index = well_index_alloc( well_name , "WOPRH" , well , WCONHIST , wconhist_state_iget_WOPRH );
         const char * varlist[3] = {"WOPR" , "WOPRH", NULL};
         sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
-      
-      
+
+
       /* WGPR */
       {
         well_index_type * well_index = well_index_alloc( well_name , "WGPRH" , well , WCONHIST , wconhist_state_iget_WGPRH );
         const char * varlist[3] = {"WGPR" , "WGPRH", NULL};
         sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
-      
-      
+
+
       /* WWPR */
       {
         well_index_type * well_index = well_index_alloc( well_name , "WWPRH" , well , WCONHIST , wconhist_state_iget_WWPRH );
         const char * varlist[3] = {"WWPR" , "WWPRH", NULL};
         sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
-      
-      
+
+
       /* WWCT */
       {
         well_index_type * well_index = well_index_alloc( well_name , "WWCTH" , well , WCONHIST , wconhist_state_iget_WWCTH );
@@ -181,7 +181,7 @@ void sched_history_install_index( sched_history_type * sched_history ) {
         const char * varlist[3] = {"WOPT" , "WOPTH", NULL};
         sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
-      
+
       /* WWPT */
       {
         well_index_type * well_index = well_index_alloc( well_name , "WWPTH" , well , WCONHIST , wconhist_state_iget_WWPTH );
@@ -196,7 +196,7 @@ void sched_history_install_index( sched_history_type * sched_history ) {
         sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
 
-      
+
       /* WWIRH - this can be got from _either_ the WCONINJH keyowrord
          or the WCONINJE keyword (provided the latter is in rate
          controlled mode. ) */
@@ -206,7 +206,7 @@ void sched_history_install_index( sched_history_type * sched_history ) {
         const char * varlist[3] = {"WWIRH" , "WWIR", NULL};
         sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
-      
+
       /* WGIRH - this can be got from _either_ the WCONINJH keyowrord
          or the WCONINJE keyword (provided the latter is in rate
          controlled mode. ) */
@@ -228,7 +228,7 @@ void sched_history_install_index( sched_history_type * sched_history ) {
     while (!hash_iter_is_complete( group_iter )) {
       const char * group_name          = hash_iter_get_next_key( group_iter );
       const group_history_type * group = (const group_history_type*)hash_get( sched_history->group_history , group_name );
-      
+
       /* GOPR */
       {
         group_index_type * group_index = group_index_alloc( group_name , "GOPRH" , group , group_history_iget_GOPRH );
@@ -246,7 +246,7 @@ void sched_history_install_index( sched_history_type * sched_history ) {
       /* GWPR */
       {
         group_index_type * group_index = group_index_alloc( group_name , "GWPRH" , group , group_history_iget_GWPRH );
-        const char * varlist[3] = {"GWPR" , "GWPRH", NULL}; 
+        const char * varlist[3] = {"GWPR" , "GWPRH", NULL};
         sched_history_install_group_index( sched_history , group_index , varlist , group_name);
       }
 
@@ -277,7 +277,7 @@ void sched_history_install_index( sched_history_type * sched_history ) {
         const char * varlist[3] = {"GGPT" , "GGPTH", NULL};
         sched_history_install_group_index( sched_history , group_index , varlist , group_name);
       }
-      
+
       /* GWPT */
       {
         group_index_type * group_index = group_index_alloc( group_name , "GWPTH" , group , group_history_iget_GWPTH );
@@ -293,7 +293,7 @@ void sched_history_install_index( sched_history_type * sched_history ) {
   {
     const group_history_type * group = (const group_history_type*)hash_get( sched_history->group_history , FIELD_GROUP );
     const char * group_name          = FIELD_GROUP;
-    
+
     /* FWPRH */
     {
       group_index_type * group_index   = group_index_alloc( group_name , "GWPRH" , group , group_history_iget_GWPRH );
@@ -360,7 +360,7 @@ double sched_history_iget( const sched_history_type * sched_history , const char
   void * index = hash_get( sched_history->index , key );
   if (!bool_vector_safe_iget( sched_history->historical , report_step ))
     fprintf(stderr,"** Warning - report step:%d is in the prediction phase - can NOT ask for historical data! \n",report_step);
-  
+
   if (well_index_is_instance( index ))
     return well_history_iget( (well_index_type*)index , report_step );
   else if (group_index_is_instance( index ))
@@ -393,18 +393,18 @@ static void sched_history_realloc( sched_history_type * sched_history ) {
   if (sched_history->well_history != NULL)
     hash_free( sched_history->well_history );
   sched_history->well_history = hash_alloc();
-  
+
   if (sched_history->group_history != NULL)
     hash_free( sched_history->group_history );
   sched_history->group_history = hash_alloc();
-  
+
   if (sched_history->historical != NULL)
     bool_vector_free( sched_history->historical );
   sched_history->historical = bool_vector_alloc( 0 , true );
 
   if (sched_history->time != NULL)
     time_t_vector_free(sched_history->time);
-  sched_history->time         = time_t_vector_alloc( 0 , 0 ); 
+  sched_history->time         = time_t_vector_alloc( 0 , 0 );
   sched_history->last_history_step = 0;
 }
 
@@ -425,7 +425,7 @@ sched_history_type * sched_history_alloc( const char * sep_string ) {
   sched_history->index         = hash_alloc();
   sched_history->sep_string    = util_alloc_string_copy( sep_string );
   sched_history_realloc( sched_history );
-  
+
   return sched_history;
 }
 
@@ -457,14 +457,14 @@ group_history_type * sched_history_get_group( const sched_history_type * sched_h
 static void sched_history_add_wells( sched_history_type * sched_history , const sched_kw_welspecs_type * welspecs , const stringlist_type * wells) {
   for (int iw = 0; iw < stringlist_get_size( wells ); iw++) {
     const char * well = stringlist_iget( wells , iw );
-    if (!hash_has_key( sched_history->well_history , well)) 
+    if (!hash_has_key( sched_history->well_history , well))
       hash_insert_hash_owned_ref( sched_history->well_history , well , well_history_alloc( well , sched_history->time ), well_history_free__ );
-    
+
     /* Could possibly extract more information from the welspecs
        keyword and update well_history object here, but it does not
        seem to contain any more interesting info???
     */
-    
+
   }
 }
 
@@ -473,7 +473,7 @@ static void sched_history_add_group( sched_history_type * sched_history , group_
   hash_insert_hash_owned_ref( sched_history->group_history , group_history_get_name( new_group ) , new_group , group_history_free__ );
   if (parent_group == NULL)
     parent_group = sched_history_get_group( sched_history , FIELD_GROUP );
-  
+
   group_history_add_child( parent_group , new_group , group_history_get_name( new_group ) , report_step );
 }
 
@@ -502,11 +502,11 @@ static void sched_history_add_groups_gruptree( sched_history_type * sched_histor
     group_history_type * child_group;
 
 
-    if (!hash_has_key( sched_history->group_history , parent_group_name )) 
+    if (!hash_has_key( sched_history->group_history , parent_group_name ))
       sched_history_add_group( sched_history , group_history_alloc( parent_group_name , sched_history->time , report_step) , NULL , report_step );
     parent_group = sched_history_get_group( sched_history , parent_group_name );
 
-    if (!hash_has_key( sched_history->group_history , child_group_name )) 
+    if (!hash_has_key( sched_history->group_history , child_group_name ))
       sched_history_add_group( sched_history , group_history_alloc( child_group_name , sched_history->time , report_step ) , parent_group , report_step );
     child_group = sched_history_get_group( sched_history , child_group_name );
 
@@ -530,7 +530,7 @@ static void sched_history_set_historical( sched_history_type * sched_history , i
    When new wells are added with the WELSPECS keyword their parent
    group is implicitly introduced as the second argument of the
    WELSPEC keyword, in addition the GRUPTREE keyword will also
-   implicitly introduce groups. 
+   implicitly introduce groups.
 
    This functions creates group_history objects for all the groups
    introduced by the WELSPECS keyword, and attach wells to them (the
@@ -546,9 +546,9 @@ static void sched_history_add_groups_welspecs( sched_history_type * sched_histor
     const char * well_name   = stringlist_iget( wells , i );
     well_history_type * well = sched_history_get_well( sched_history , well_name );
     group_history_type * group;
-    if (!hash_has_key( sched_history->group_history , group_name )) 
+    if (!hash_has_key( sched_history->group_history , group_name ))
       sched_history_add_group( sched_history , group_history_alloc( group_name , sched_history->time , report_step ) , NULL , report_step );
-    
+
     group = sched_history_get_group( sched_history , group_name );
     group_history_add_child( group , well , well_name , report_step);
   }
@@ -558,12 +558,12 @@ static void sched_history_add_groups_welspecs( sched_history_type * sched_histor
 
 
 void sched_history_update( sched_history_type * sched_history, const sched_file_type * sched_file ) {
-  
+
   sched_history_realloc( sched_history );
   sched_history_add_FIELD_group( sched_history );
   {
     int block_nr;
-    stringlist_type * well_list  = stringlist_alloc_new();    
+    stringlist_type * well_list  = stringlist_alloc_new();
     stringlist_type * group_list = stringlist_alloc_new();
 
     for (block_nr = 0; block_nr < sched_file_get_num_restart_files( sched_file ); block_nr++) {
@@ -589,12 +589,12 @@ void sched_history_update( sched_history_type * sched_history, const sched_file_
             }
           }
           sched_history_set_historical( sched_history , block_nr );
-          break; 
+          break;
         case(WCONPROD):    /* This is only added to turn the well OFF from WCONHIST behaviour.  It is currently not
                               possible to query the well for anything when it is in WCONPROD state. */
 
-          { 
-            const sched_kw_wconprod_type * wconprod = (const sched_kw_wconprod_type*)sched_kw_get_data( kw ); 
+          {
+            const sched_kw_wconprod_type * wconprod = (const sched_kw_wconprod_type*)sched_kw_get_data( kw );
             sched_kw_wconprod_init_well_list( wconprod , well_list );
             int iw;
             for (iw = 0; iw < stringlist_get_size( well_list ); iw++) {
@@ -660,7 +660,7 @@ void sched_history_update( sched_history_type * sched_history, const sched_file_
 
 
 const char * sched_history_get_join_string( const sched_history_type * sched_history ) {
-  return sched_history->sep_string; 
+  return sched_history->sep_string;
 }
 
 
@@ -758,10 +758,10 @@ void sched_history_fprintf( const sched_history_type * sched_history , const str
         //fprintf(stream , "%02d-%02d-%4d  " , mday , month , year );
         fprintf(stream , " %5.0f " , days);
       }
-      
-      for (int ikey =0; ikey < stringlist_get_size( key_list ); ikey++) 
+
+      for (int ikey =0; ikey < stringlist_get_size( key_list ); ikey++)
         fprintf(stream , "%16.3f " , sched_history_iget( sched_history , stringlist_iget( key_list , ikey) , step));
-      
+
       fprintf( stream, "\n");
     } else
       break; // We have completed the historical period - and switched to prediction

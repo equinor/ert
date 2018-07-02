@@ -1,7 +1,7 @@
 /*
-   Copyright (C) 2018  Statoil ASA, Norway.
+   Copyright (C) 2011  Statoil ASA, Norway.
 
-   The file 'sched_kw_gruptree.hpp' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'sched_kw_gruptree.h' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,34 @@
 
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
-
-
 */
-#include <ert/sched/sched_kw_gruptree.h>
 
+#ifndef ERT_SCHED_KW_GRUPTREE_H
+#define ERT_SCHED_KW_GRUPTREE_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <stdio.h>
+
+#include <ert/util/stringlist.hpp>
+
+#include <ert/sched/sched_macros.hpp>
+
+typedef struct sched_kw_gruptree_struct sched_kw_gruptree_type;
+
+//void                     sched_kw_gruptree_free        (sched_kw_gruptree_type *);
+//void                     sched_kw_gruptree_fprintf     (const sched_kw_gruptree_type *, FILE * );
+void                     sched_kw_gruptree_alloc_child_parent_list(const sched_kw_gruptree_type *, char ***, char ***, int *);
+void                     sched_kw_gruptree_init_child_parent_list( const sched_kw_gruptree_type * kw , stringlist_type * child , stringlist_type * parent);
+
+/*******************************************************************/
+
+
+
+KW_HEADER(gruptree)
+
+
+#ifdef __cplusplus
+}
+#endif
+#endif

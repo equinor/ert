@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'sched_time.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'sched_time.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -33,7 +33,7 @@
    keywords; they are both related to stepping forward in time. For a
    reasonable control over the timestepping we need (at least) two
    pieces of information:
-    
+
      1. What is true time at the start/end of the current step.
      2. How long is the step.
 
@@ -88,7 +88,7 @@ time_t sched_time_get_date( const sched_time_type * time_node ) {
 
 time_t sched_time_get_target( const sched_time_type * time_node , time_t current_time) {
   time_t target;
-  
+
   switch( time_node->time_type ) {
   case( DATES_TIME ):
     target = time_node->date;
@@ -100,7 +100,7 @@ time_t sched_time_get_target( const sched_time_type * time_node , time_t current
   default:
     util_abort("%s: invalid time_type value:%d \n",__func__ , time_node->time_type );
   }
-  
+
   return target;
 }
 

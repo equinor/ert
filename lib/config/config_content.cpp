@@ -17,19 +17,19 @@
 */
 #include <stdlib.h>
 
-#include <ert/util/type_macros.h>
-#include <ert/util/hash.h>
-#include <ert/util/set.h>
-#include <ert/util/vector.h>
-#include <ert/res_util/subst_list.h>
+#include <ert/util/type_macros.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/set.hpp>
+#include <ert/util/vector.hpp>
+#include <ert/res_util/subst_list.hpp>
 
-#include <ert/config/config_root_path.h>
-#include <ert/config/config_path_elm.h>
-#include <ert/config/config_path_stack.h>
-#include <ert/config/config_content.h>
-#include <ert/config/config_content_item.h>
-#include <ert/config/config_schema_item.h>
-#include <ert/config/config_error.h>
+#include <ert/config/config_root_path.hpp>
+#include <ert/config/config_path_elm.hpp>
+#include <ert/config/config_path_stack.hpp>
+#include <ert/config/config_content.hpp>
+#include <ert/config/config_content_item.hpp>
+#include <ert/config/config_schema_item.hpp>
+#include <ert/config/config_error.hpp>
 
 
 #define CONFIG_CONTENT_TYPE_ID 6612520
@@ -438,5 +438,5 @@ void config_content_pop_path_stack( config_content_type * content ) {
 
 
 stringlist_type * config_content_alloc_keys(const config_content_type * content) {
-  return hash_alloc_stringlist(content->items); 
+  return hash_alloc_stringlist(content->items);
 }

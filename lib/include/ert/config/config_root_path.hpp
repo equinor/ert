@@ -1,7 +1,7 @@
 /*
-   Copyright (C) 2018 Equinor ASA, Norway.
+   Copyright (C) 2013  Statoil ASA, Norway.
 
-   The file 'config_root_path.hpp' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'config_root_path.h' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,26 @@
 
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
-
-
 */
-#include <ert/config/config_root_path.h>
 
+#ifndef ERT_CONFIG_ROOT_PATH_H
+#define ERT_CONFIG_ROOT_PATH_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+typedef struct config_root_path_struct config_root_path_type;
+
+void                    config_root_path_free( config_root_path_type * root_path );
+config_root_path_type * config_root_path_alloc( const char * input_path );
+void                    config_root_path_printf( const config_root_path_type * root_path );
+const char *            config_root_path_get_input_path( const config_root_path_type * root_path );
+const char *            config_root_path_get_rel_path( const config_root_path_type * root_path );
+const char *            config_root_path_get_abs_path( const config_root_path_type * root_path );
+
+#ifdef __cplusplus
+}
+#endif
+#endif

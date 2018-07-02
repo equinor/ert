@@ -18,7 +18,7 @@ QUEUE_SYSTEM xHydro_LSF
 -- and keys. Adding support for sourced
 -- file.
 --
--- Example A: 
+-- Example A:
 SUBSTITUTION my_own_hack
 {
   FILENAME = "my_magic_file.txt";
@@ -57,13 +57,13 @@ JOB STEINFYSIKK
 
 
   PLATFORM_EXE x86_64
-  { 
-    EXE       = "/bin/x86_64/bein.exe"; 
+  {
+    EXE       = "/bin/x86_64/bein.exe";
   };
 
 
-  PLATFORM_EXE ia64   
-  { 
+  PLATFORM_EXE ia64
+  {
     EXE = "/bin/ia64/bein.exe";
 
     -- Special arguments and env for this platform.
@@ -127,7 +127,7 @@ SIMULATION_SCHEDULE my_schedule
     END              = 200;
     UPDATE           = NO;
   };
-  
+
 };
 
 
@@ -205,7 +205,7 @@ PARAMETER permx
 {
   ECL_OUTPUT    = "ECLBIN";
   KEYWORD       = "PERMX";
-  TARGET_FILE   = "PERMX.BIN"; 
+  TARGET_FILE   = "PERMX.BIN";
   PRIOR_SAMPLES = "permx-%d.roff";
 };
 -- Example C, subsituting GEN_PARAM.
@@ -228,11 +228,11 @@ STATE pres
   KEYWORD      = PRESSURE;
   MIN          = 100;
   -- Specify UPDATE_SPACE instead of
-  -- input and output transform. 
+  -- input and output transform.
   UPDATE_SPACE = LOG10;
 };
 -- Example B, replacing SUMMARY.
-STATE region_pressure; 
+STATE region_pressure;
 {
   ECL_SOURCE   = SUMMARY;
   KEYWORD      = RPR:10;

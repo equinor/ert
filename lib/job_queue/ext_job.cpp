@@ -81,7 +81,7 @@
       COPY_FILE(SRC_FILE = file2 , TARGET_FILE = /tmp/file2)
 
 */
-/* 
+/*
   More on STDOUT/STDERR
   ---------------------
   If STDOUT/STDERR is is not defined, output is directed to:
@@ -614,7 +614,7 @@ int ext_job_get_max_running_minutes( const ext_job_type * ext_job ) {
 }
 
 static void ext_job_set_min_arg(ext_job_type * ext_job, int min_arg) {
-  ext_job->min_arg = min_arg;  
+  ext_job->min_arg = min_arg;
 }
 
 static void ext_job_set_max_arg(ext_job_type * ext_job, int max_arg) {
@@ -764,7 +764,7 @@ static void __fprintf_python_argList(FILE * stream,
                                      const char * suffix,
                                      const subst_list_type * global_args) {
 
-  stringlist_type * argv;  
+  stringlist_type * argv;
   if (ext_job->deprecated_argv)
     argv = ext_job->deprecated_argv;
   else

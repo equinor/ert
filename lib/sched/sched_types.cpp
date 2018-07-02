@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'sched_types.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'sched_types.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <string.h>
@@ -99,8 +99,8 @@ sched_kw_type_enum sched_kw_type_from_string(const char * kw_name)
   else if( strcmp(kw_name, WCONINJE_STRING ) == 0) kw_type = WCONINJE ;
   else if( strcmp(kw_name, WCONINJH_STRING ) == 0) kw_type = WCONINJH ;
   else if( strcmp(kw_name, WCONPROD_STRING ) == 0) kw_type = WCONPROD ;
-  else if( strcmp(kw_name, COMPDAT_STRING  ) == 0) kw_type = COMPDAT  ;   
-  
+  else if( strcmp(kw_name, COMPDAT_STRING  ) == 0) kw_type = COMPDAT  ;
+
   return kw_type;
 }
 
@@ -117,7 +117,7 @@ const char * sched_kw_type_name(sched_kw_type_enum kw_type) {
   else if ( kw_type == WCONINJE ) return WCONINJE_STRING ;
   else if ( kw_type == WCONINJH ) return WCONINJH_STRING ;
   else if ( kw_type == WCONPROD ) return WCONPROD_STRING ;
-  else if ( kw_type == COMPDAT  ) return COMPDAT_STRING  ;   
+  else if ( kw_type == COMPDAT  ) return COMPDAT_STRING  ;
 
   return UNTYPED_STRING; /* Unknown type */
 }
@@ -131,11 +131,11 @@ const char * sched_kw_type_name(sched_kw_type_enum kw_type) {
 #define STATUS_AUTO_STRING "AUTO"
 
 
-const char * sched_types_get_status_string(well_status_enum status) 
+const char * sched_types_get_status_string(well_status_enum status)
 {
   switch(status) {
   case(OPEN):
-    return STATUS_OPEN_STRING; 
+    return STATUS_OPEN_STRING;
   case(STOP):
     return STATUS_STOP_STRING;
   case(SHUT):
@@ -154,20 +154,20 @@ const char * sched_types_get_status_string(well_status_enum status)
 
 well_status_enum sched_types_get_status_from_string(const char * st_string)
 {
-  if (strcmp( st_string , SCHED_KW_DEFAULT_ITEM ) == 0) 
-    return DEFAULT;   
-  /* 
+  if (strcmp( st_string , SCHED_KW_DEFAULT_ITEM ) == 0)
+    return DEFAULT;
+  /*
      Must be checked by calling scope whether DEFAULT is a valid
      return - and then subsequently apply the correct value.
   */
   else if( strcmp(st_string, STATUS_OPEN_STRING) == 0)
-    return OPEN; 
+    return OPEN;
   else if( strcmp(st_string, STATUS_STOP_STRING) == 0)
-    return STOP; 
+    return STOP;
   else if( strcmp(st_string, STATUS_SHUT_STRING) == 0)
-    return SHUT; 
+    return SHUT;
   else if( strcmp(st_string, STATUS_AUTO_STRING) == 0)
-    return AUTO; 
+    return AUTO;
   else
   {
     util_abort("%s: Could not recognize %s as a well status.\n", __func__, st_string);
@@ -253,7 +253,7 @@ well_cm_enum sched_types_get_cm_from_string(const char * cm_string , bool wconhi
     else if(strncmp(cm_string, CM_GRUP_STRING , 4) == 0)
       return GRUP;
     else {
-      util_abort("%s: Could not recognize \'%s\' as a control mode. Valid values are: [%s, %s, %s, %s, %s] \n", __func__, cm_string, 
+      util_abort("%s: Could not recognize \'%s\' as a control mode. Valid values are: [%s, %s, %s, %s, %s] \n", __func__, cm_string,
                  CM_RATE_STRING , CM_RESV_STRING , CM_BHP_STRING, CM_THP_STRING, CM_GRUP_STRING);
       return (well_cm_enum)0;
     }

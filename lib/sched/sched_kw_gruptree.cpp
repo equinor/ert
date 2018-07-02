@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'sched_kw_gruptree.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'sched_kw_gruptree.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <string.h>
@@ -47,7 +47,7 @@ static sched_kw_gruptree_type * sched_kw_gruptree_alloc_empty()
 {
   sched_kw_gruptree_type * kw = (sched_kw_gruptree_type*)util_malloc(sizeof * kw);
   kw->gruptree_hash = hash_alloc();
-  
+
   return kw;
 };
 
@@ -66,14 +66,14 @@ sched_kw_gruptree_type * sched_kw_gruptree_alloc(const stringlist_type * tokens 
     else {
       const char * parent_group = "FIELD";
       const char * child_group  =  stringlist_iget( line_tokens , 0 );
-      if (stringlist_get_size( line_tokens ) == 2) 
+      if (stringlist_get_size( line_tokens ) == 2)
         parent_group = stringlist_iget( line_tokens , 1 );
-      
+
       sched_kw_gruptree_add_well(kw , child_group , parent_group );
-      
+
       stringlist_free( line_tokens );
-    } 
-    
+    }
+
   } while (!eokw);
   return kw;
 }
@@ -116,7 +116,7 @@ void sched_kw_gruptree_init_child_parent_list( const sched_kw_gruptree_type * kw
     while (!hash_iter_is_complete( iter )) {
       const char * child_group  = hash_iter_get_next_key( iter );
       const char * parent_group = hash_get_string( kw->gruptree_hash , child_group );
-      
+
       stringlist_append_copy( child , child_group );       /* <- The iterator keys go out of scope when hash_iter_free() is called. */
       stringlist_append_ref( parent , parent_group );
     }

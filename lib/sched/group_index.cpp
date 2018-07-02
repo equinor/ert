@@ -1,26 +1,26 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'group_index.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'group_index.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
 
 #include <ert/util/size_t_vector.hpp>
 #include <ert/util/int_vector.hpp>
-#include <ert/util/util.hpp>  
+#include <ert/util/util.hpp>
 
 #include <ert/sched/sched_types.hpp>
 #include <ert/sched/group_index.hpp>
@@ -34,7 +34,7 @@ struct group_index_struct {
   char                         * group_name;
   char                         * variable;
   const void                   * group_history;
-  sched_history_callback_ftype * func;                 
+  sched_history_callback_ftype * func;
 };
 
 
@@ -47,15 +47,15 @@ UTIL_SAFE_CAST_FUNCTION_CONST( group_index , GROUP_INDEX_TYPE_ID )
 
 group_index_type * group_index_alloc( const char * group_name , const char * variable , const void * group_history , sched_history_callback_ftype * func ) {
   group_index_type * group_index = (group_index_type*)util_malloc( sizeof * group_index );
-  
+
   UTIL_TYPE_ID_INIT( group_index , GROUP_INDEX_TYPE_ID );
-  
+
   group_index->func      = func;
   group_index->group_history = group_history;
   group_index->group_name    = util_alloc_string_copy( group_name );
   group_index->variable      = util_alloc_string_copy( variable );
 
-  
+
   return group_index;
 }
 

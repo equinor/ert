@@ -1,7 +1,7 @@
 /*
-   Copyright (C) 2018 Equinor ASA, Norway.
+   Copyright (C) 2011  Statoil ASA, Norway.
 
-   The file 'conf_util.hpp' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'conf_util.h' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,19 @@
 
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
-
-
 */
-#include <ert/config/conf_util.h>
 
+#ifndef ERT_CONF_UTIL_H
+#define ERT_CONF_UTIL_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+char * conf_util_fscanf_alloc_token_buffer(  const char * file_name );
+
+char * conf_util_alloc_next_token(  char ** buffer_position  );
+
+#ifdef __cplusplus
+}
+#endif
+#endif

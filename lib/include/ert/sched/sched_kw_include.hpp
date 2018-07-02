@@ -1,7 +1,7 @@
 /*
-   Copyright (C) 2018  Statoil ASA, Norway.
+   Copyright (C) 2011  Statoil ASA, Norway.
 
-   The file 'sched_kw_include.hpp' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'sched_kw_include.h' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,30 @@
 
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
-
-
 */
-#include <ert/sched/sched_kw_include.h>
 
+#ifndef ERT_SCHED_KW_INCLUDE_H
+#define ERT_SCHED_KW_INCLDUE_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <ert/util/stringlist.hpp>
+
+#include <ert/sched/sched_macros.hpp>
+
+typedef struct sched_kw_include_struct sched_kw_include_type;
+
+
+sched_kw_include_type  * sched_kw_include_fscanf_alloc( FILE *, bool *, const char *);
+void                     sched_kw_include_free(sched_kw_include_type * );
+void                     sched_kw_include_fprintf(const sched_kw_include_type * , FILE *);
+void                     sched_kw_include_fwrite(const sched_kw_include_type *, FILE *);
+sched_kw_include_type  * sched_kw_include_fread_alloc( FILE *);
+
+KW_HEADER(include)
+
+#ifdef __cplusplus
+}
+#endif
+#endif

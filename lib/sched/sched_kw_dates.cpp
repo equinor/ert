@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'sched_kw_dates.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'sched_kw_dates.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -24,7 +24,7 @@
 #include <ert/util/util.hpp>
 #include <ert/util/stringlist.hpp>
 
-#include <ert/ecl/ecl_util.hpp>
+#include <ert/ecl/ecl_util.h>
 
 #include <ert/sched/sched_util.hpp>
 #include <ert/sched/sched_kw_dates.hpp>
@@ -87,7 +87,7 @@ static time_t parse_time_t(const char * day_string , const char * month_string ,
 
   if (util_sscanf_int(day_string , &mday) && util_sscanf_int(year_string , &year))
     time = util_make_date_utc(mday , month , year);
-  else 
+  else
     util_abort("%s: fatal error when extracting date from:%s %s %s \n", __func__, day_string , month_string , year_string);
 
   return time;
@@ -125,8 +125,8 @@ sched_kw_dates_type * sched_kw_dates_alloc(const stringlist_type * tokens , int 
         util_abort("%s: malformed DATES keyword\n",__func__);
       }
       stringlist_free( line_tokens );
-    } 
-    
+    }
+
   } while (!eokw);
   return kw;
 }
@@ -145,7 +145,7 @@ void sched_kw_dates_fprintf(const sched_kw_dates_type *kw , FILE *stream) {
         int day, month, year;
         util_set_date_values_utc(date, &day, &month, &year);
         fprintf(stream , DATES_FMT , day, get_month_string_from_int(month), year );
-      } else 
+      } else
         util_abort("%s: internal type fuckup \n",__func__);
     }
     fprintf(stream , "/\n\n");
@@ -200,4 +200,4 @@ sched_kw_dates_type * sched_kw_dates_copyc(const sched_kw_dates_type * kw) {
 
 
 KW_IMPL(dates)
-     
+

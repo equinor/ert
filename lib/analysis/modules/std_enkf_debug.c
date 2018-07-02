@@ -20,16 +20,16 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
-#include <ert/res_util/matrix.h>
-#include <ert/res_util/matrix_blas.h>
-#include <ert/util/rng.h>
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
+#include <ert/res_util/matrix.hpp>
+#include <ert/res_util/matrix_blas.hpp>
+#include <ert/util/rng.hpp>
 
-#include <ert/analysis/analysis_module.h>
-#include <ert/analysis/analysis_table.h>
-#include <ert/analysis/enkf_linalg.h>
-#include <ert/analysis/std_enkf.h>
+#include <ert/analysis/analysis_module.hpp>
+#include <ert/analysis/analysis_table.hpp>
+#include <ert/analysis/enkf_linalg.hpp>
+#include <ert/analysis/std_enkf.hpp>
 
 #define PREFIX_KEY      "PREFIX"
 #define DEFAULT_PREFIX  "debug"

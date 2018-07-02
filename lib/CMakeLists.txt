@@ -113,102 +113,102 @@ add_library(res res_util/res_log.cpp
                 job_queue/job_kw_definitions.cpp
                 ${lsb}
 
-                enkf/active_list.c
-                enkf/time_map.c
-                enkf/analysis_config.c
-                enkf/analysis_iter_config.c
-                enkf/block_fs_driver.c
-                enkf/block_obs.c
-                enkf/callback_arg.c
-                enkf/cases_config.c
-                enkf/container.c
-                enkf/container_config.c
-                enkf/custom_kw.c
-                enkf/custom_kw_config.c
-                enkf/custom_kw_config_set.c
-                enkf/data_ranking.c
-                enkf/ecl_config.c
-                enkf/ecl_refcase_list.c
-                enkf/enkf_analysis.c
-                enkf/enkf_config_node.c
-                enkf/enkf_defaults.c
-                enkf/enkf_fs.c
-                enkf/enkf_main.c
-                enkf/enkf_main_jobs.c
-                enkf/enkf_node.c
-                enkf/enkf_obs.c
-                enkf/enkf_plot_data.c
-                enkf/enkf_plot_gendata.c
-                enkf/enkf_plot_gen_kw.c
-                enkf/enkf_plot_gen_kw_vector.c
-                enkf/enkf_plot_genvector.c
-                enkf/enkf_plot_tvector.c
-                enkf/enkf_serialize.c
-                enkf/enkf_state.c
-                enkf/enkf_types.c
-                enkf/enkf_util.c
-                enkf/ensemble_config.c
-                enkf/ert_run_context.c
-                enkf/ert_template.c
-                enkf/ert_test_context.c
-                enkf/ert_workflow_list.c
-                enkf/ext_param.c
-                enkf/ext_param_config.c
-                enkf/field.c
-                enkf/field_config.c
-                enkf/field_trans.c
-                enkf/forward_load_context.c
-                enkf/fs_driver.c
-                enkf/fs_types.c
-                enkf/gen_common.c
-                enkf/gen_data.c
-                enkf/gen_data_config.c
-                enkf/gen_kw.c
-                enkf/gen_kw_config.c
-                enkf/value_export.c
-                enkf/gen_obs.c
-                enkf/hook_manager.c
-                enkf/hook_workflow.c
-                enkf/local_config.c
-                enkf/local_context.c
-                enkf/local_dataset.c
-                enkf/local_ministep.c
-                enkf/local_obsdata.c
-                enkf/local_obsdata_node.c
-                enkf/local_updatestep.c
-                enkf/meas_data.c
-                enkf/misfit_ensemble.c
-                enkf/misfit_member.c
-                enkf/misfit_ranking.c
-                enkf/misfit_ts.c
-                enkf/model_config.c
-                enkf/obs_data.c
-                enkf/obs_vector.c
-                enkf/pca_plot_data.c
-                enkf/pca_plot_vector.c
-                enkf/plain_driver.c
-                enkf/plot_settings.c
-                enkf/queue_config.c
-                enkf/ranking_table.c
-                enkf/rng_config.c
-                enkf/run_arg.c
-                enkf/runpath_list.c
-                enkf/site_config.c
-                enkf/rng_manager.c
-                enkf/res_config.c
-                enkf/state_map.c
-                enkf/state_map.c
-                enkf/summary.c
-                enkf/summary_config.c
-                enkf/summary_key_matcher.c
-                enkf/summary_key_set.c
-                enkf/summary_obs.c
-                enkf/surface.c
-                enkf/surface_config.c
-                enkf/trans_func.c
-                enkf/subst_config.c
-                enkf/log_config.c
-                enkf/config_keys.c
+                enkf/active_list.cpp
+                enkf/time_map.cpp
+                enkf/analysis_config.cpp
+                enkf/analysis_iter_config.cpp
+                enkf/block_fs_driver.cpp
+                enkf/block_obs.cpp
+                enkf/callback_arg.cpp
+                enkf/cases_config.cpp
+                enkf/container.cpp
+                enkf/container_config.cpp
+                enkf/custom_kw.cpp
+                enkf/custom_kw_config.cpp
+                enkf/custom_kw_config_set.cpp
+                enkf/data_ranking.cpp
+                enkf/ecl_config.cpp
+                enkf/ecl_refcase_list.cpp
+                enkf/enkf_analysis.cpp
+                enkf/enkf_config_node.cpp
+                enkf/enkf_defaults.cpp
+                enkf/enkf_fs.cpp
+                enkf/enkf_main.cpp
+                enkf/enkf_main_jobs.cpp
+                enkf/enkf_node.cpp
+                enkf/enkf_obs.cpp
+                enkf/enkf_plot_data.cpp
+                enkf/enkf_plot_gendata.cpp
+                enkf/enkf_plot_gen_kw.cpp
+                enkf/enkf_plot_gen_kw_vector.cpp
+                enkf/enkf_plot_genvector.cpp
+                enkf/enkf_plot_tvector.cpp
+                enkf/enkf_serialize.cpp
+                enkf/enkf_state.cpp
+                enkf/enkf_types.cpp
+                enkf/enkf_util.cpp
+                enkf/ensemble_config.cpp
+                enkf/ert_run_context.cpp
+                enkf/ert_template.cpp
+                enkf/ert_test_context.cpp
+                enkf/ert_workflow_list.cpp
+                enkf/ext_param.cpp
+                enkf/ext_param_config.cpp
+                enkf/field.cpp
+                enkf/field_config.cpp
+                enkf/field_trans.cpp
+                enkf/forward_load_context.cpp
+                enkf/fs_driver.cpp
+                enkf/fs_types.cpp
+                enkf/gen_common.cpp
+                enkf/gen_data.cpp
+                enkf/gen_data_config.cpp
+                enkf/gen_kw.cpp
+                enkf/gen_kw_config.cpp
+                enkf/value_export.cpp
+                enkf/gen_obs.cpp
+                enkf/hook_manager.cpp
+                enkf/hook_workflow.cpp
+                enkf/local_config.cpp
+                enkf/local_context.cpp
+                enkf/local_dataset.cpp
+                enkf/local_ministep.cpp
+                enkf/local_obsdata.cpp
+                enkf/local_obsdata_node.cpp
+                enkf/local_updatestep.cpp
+                enkf/meas_data.cpp
+                enkf/misfit_ensemble.cpp
+                enkf/misfit_member.cpp
+                enkf/misfit_ranking.cpp
+                enkf/misfit_ts.cpp
+                enkf/model_config.cpp
+                enkf/obs_data.cpp
+                enkf/obs_vector.cpp
+                enkf/pca_plot_data.cpp
+                enkf/pca_plot_vector.cpp
+                enkf/plain_driver.cpp
+                enkf/plot_settings.cpp
+                enkf/queue_config.cpp
+                enkf/ranking_table.cpp
+                enkf/rng_config.cpp
+                enkf/run_arg.cpp
+                enkf/runpath_list.cpp
+                enkf/site_config.cpp
+                enkf/rng_manager.cpp
+                enkf/res_config.cpp
+                enkf/state_map.cpp
+                enkf/state_map.cpp
+                enkf/summary.cpp
+                enkf/summary_config.cpp
+                enkf/summary_key_matcher.cpp
+                enkf/summary_key_set.cpp
+                enkf/summary_obs.cpp
+                enkf/surface.cpp
+                enkf/surface_config.cpp
+                enkf/trans_func.cpp
+                enkf/subst_config.cpp
+                enkf/log_config.cpp
+                enkf/config_keys.cpp
 )
 
 #-----------------------------------------------------------------
@@ -280,7 +280,7 @@ foreach(name ert_util_logh
              test_thread_pool
              res_util_PATH)
 
-       add_executable(${name} res_util/tests/${name}.c)
+       add_executable(${name} res_util/tests/${name}.cpp)
        target_link_libraries(${name} res)
        add_test(NAME ${name} COMMAND ${name})
 endforeach()
@@ -300,7 +300,7 @@ foreach(name config_content_node
              config_config
              config_schema_item)
 
-    add_executable(${name} config/tests/${name}.c)
+    add_executable(${name} config/tests/${name}.cpp)
     target_link_libraries(${name} res)
     add_test(NAME ${name} COMMAND ${name})
 endforeach()
@@ -316,7 +316,7 @@ foreach(name config_append_test
              config_define
              config_argc)
 
-    add_executable(${name} config/tests/${name}.c)
+    add_executable(${name} config/tests/${name}.cpp)
     target_link_libraries(${name} res)
 endforeach()
 
@@ -348,13 +348,13 @@ add_test(NAME config_argc
 
 #-----------------------------------------------------------------
 
-add_executable(sched_history_summary sched/tests/sched_history_summary.c)
+add_executable(sched_history_summary sched/tests/sched_history_summary.cpp)
 target_link_libraries(sched_history_summary res)
 
-add_executable(rms_file_test rms/tests/rms_file_test.c)
+add_executable(rms_file_test rms/tests/rms_file_test.cpp)
 target_link_libraries(rms_file_test res)
 
-add_executable(analysis_external_module analysis/tests/analysis_test_external_module.c)
+add_executable(analysis_external_module analysis/tests/analysis_test_external_module.cpp)
 target_link_libraries(analysis_external_module res)
 
 add_test(NAME analysis_module_rml
@@ -387,16 +387,16 @@ foreach(name job_status_test
              job_torque_test
              job_queue_manager)
 
-    add_executable(${name} job_queue/tests/${name}.c)
+    add_executable(${name} job_queue/tests/${name}.cpp)
     target_link_libraries(${name} res)
     add_test(NAME ${name} COMMAND ${name})
 endforeach()
 
 # job_workflow requires this binary being available
-add_executable(create_file job_queue/tests/create_file.c)
+add_executable(create_file job_queue/tests/create_file.cpp)
 target_link_libraries(create_file res)
 
-add_executable(job_loadOK job_queue/tests/job_loadOK.c)
+add_executable(job_loadOK job_queue/tests/job_loadOK.cpp)
 target_link_libraries(job_loadOK res)
 add_test(NAME job_loadOK1
          COMMAND job_loadOK
@@ -409,7 +409,7 @@ add_test(NAME job_loadOK3
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/internalOK
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/externalOK)
 
-add_executable(job_loadFail job_queue/tests/job_loadFail.c)
+add_executable(job_loadFail job_queue/tests/job_loadFail.cpp)
 target_link_libraries(job_loadFail res)
 
 add_test(NAME job_loadFail1
@@ -423,38 +423,38 @@ add_test(NAME job_loadFail3
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/internalFail
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/externalFail)
 
-add_executable(job_list_test job_queue/tests/job_list_test.c)
+add_executable(job_list_test job_queue/tests/job_list_test.cpp)
 target_link_libraries(job_list_test res)
 add_test(NAME job_list_test
          COMMAND valgrind --leak-check=full --error-exitcode=1
                  $<TARGET_FILE:job_list_test>)
 
-add_executable(job_workflow_test job_queue/tests/job_workflow_test.c)
+add_executable(job_workflow_test job_queue/tests/job_workflow_test.cpp)
 target_link_libraries(job_workflow_test res)
 add_test(NAME job_workflow_test
          COMMAND job_workflow_test
                  ${EXECUTABLE_OUTPUT_PATH}
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/internal_job)
 
-add_executable(job_lsf_exclude_hosts_test job_queue/tests/job_lsf_exclude_hosts_test.c)
+add_executable(job_lsf_exclude_hosts_test job_queue/tests/job_lsf_exclude_hosts_test.cpp)
 target_link_libraries(job_lsf_exclude_hosts_test res)
 add_test(NAME job_lsf_exclude_hosts_test
          COMMAND job_lsf_exclude_hosts_test job_program NULL LOCAL)
 
-add_executable(job_program_output job_queue/tests/job_program_output.c)
+add_executable(job_program_output job_queue/tests/job_program_output.cpp)
 target_link_libraries(job_program_output ecl)
 
-add_executable(job_queue_test job_queue/tests/job_job_queue_test.c)
+add_executable(job_queue_test job_queue/tests/job_job_queue_test.cpp)
 target_link_libraries(job_queue_test res)
 add_test(NAME job_queue_test
          COMMAND job_queue_test
                  $<TARGET_FILE:job_program_output>)
 set_tests_properties(job_queue_test PROPERTIES LABELS "SLOW_1")
 
-add_executable(job_queue_stress_task job_queue/tests/job_queue_stress_task.c)
+add_executable(job_queue_stress_task job_queue/tests/job_queue_stress_task.cpp)
 target_link_libraries(job_queue_stress_task ecl)
 
-add_executable(job_queue_stress_test job_queue/tests/job_queue_stress_test.c)
+add_executable(job_queue_stress_test job_queue/tests/job_queue_stress_test.cpp)
 target_link_libraries(job_queue_stress_test res)
 add_test(NAME job_queue_stress_test
          COMMAND job_queue_stress_test
@@ -467,7 +467,7 @@ add_test(NAME job_queue_user_exit
                  $<TARGET_FILE:job_queue_stress_task>
                  True)
 
-add_executable(job_queue_timeout_test job_queue/tests/job_queue_timeout_test.c)
+add_executable(job_queue_timeout_test job_queue/tests/job_queue_timeout_test.cpp)
 target_link_libraries(job_queue_timeout_test res)
 add_test(NAME job_queue_timeout_test
          COMMAND job_queue_timeout_test $<TARGET_FILE:job_queue_stress_task>)
@@ -475,14 +475,14 @@ add_test(NAME job_queue_timeout_test
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/qsub_emulators/
      DESTINATION ${EXECUTABLE_OUTPUT_PATH})
 
-add_executable(job_torque_submit_test job_queue/tests/job_torque_submit_test.c)
+add_executable(job_torque_submit_test job_queue/tests/job_torque_submit_test.cpp)
 target_link_libraries(job_torque_submit_test res)
 add_test(NAME job_torque_submit_test
          WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}
          COMMAND job_torque_submit_test dummyparam)
 set_property(TEST job_torque_submit_test PROPERTY ENVIRONMENT “setenv PATH ${EXECUTABLE_OUTPUT_PATH}:$PATH”)
 
-add_executable(ext_joblist_test job_queue/tests/ext_joblist_test.c)
+add_executable(ext_joblist_test job_queue/tests/ext_joblist_test.cpp)
 target_link_libraries(ext_joblist_test res)
 add_test(NAME ext_joblist_test
          COMMAND ext_joblist_test
@@ -514,22 +514,22 @@ if (ERT_LSF_SUBMIT_TEST)
   set(LSF_SERVER "" CACHE STRING  "List of LSF servers for testing")
 
   if (LSF_LIBRARY)
-     add_executable(job_lsb_test job_queue/tests/job_lsb_test.c)
+     add_executable(job_lsb_test job_queue/tests/job_lsb_test.cpp)
      target_link_libraries(job_lsb_test res)
      add_test(NAME job_lsb_test COMMAND job_lsb_test)
 
-     add_executable(job_lsb job_queue/tests/job_lsb.c)
+     add_executable(job_lsb job_queue/tests/job_lsb.cpp)
      target_link_libraries(job_lsb res)
      add_test(NAME job_lsb COMMAND job_lsb)
    endif()
 
-   add_executable(job_lsf_remote_submit_test job_queue/tests/job_lsf_remote_submit_test.c)
+   add_executable(job_lsf_remote_submit_test job_queue/tests/job_lsf_remote_submit_test.cpp)
    target_link_libraries(job_lsf_remote_submit_test res)
 
-   add_executable(job_lsf_library_submit_test job_queue/tests/job_lsf_library_submit_test.c)
+   add_executable(job_lsf_library_submit_test job_queue/tests/job_lsf_library_submit_test.cpp)
    target_link_libraries(job_lsf_library_submit_test res)
 
-   add_executable(job_program job_queue/tests/job_program.c)
+   add_executable(job_program job_queue/tests/job_program.cpp)
 
    if (LSF_SERVER)
      add_test(NAME job_lsf_remote_submit_test
@@ -588,7 +588,7 @@ foreach (test   enkf_active_list
                 rng_config
                 trans_func
     )
-    add_executable(${test} enkf/tests/${test}.c)
+    add_executable(${test} enkf/tests/${test}.cpp)
     target_link_libraries(${test} res)
     add_test(NAME ${test} COMMAND ${test})
 endforeach ()
@@ -621,7 +621,7 @@ foreach(test enkf_magic_string_in_workflows
              gen_kw_test
              enkf_runpath_list)
 
-    add_executable(${test} enkf/tests/${test}.c)
+    add_executable(${test} enkf/tests/${test}.cpp)
     target_link_libraries(${test} res)
 endforeach()
 
@@ -743,7 +743,7 @@ foreach(test enkf_site_config
              enkf_time_map
              enkf_main_fs )
 
-    add_executable(${test} enkf/tests/${test}.c)
+    add_executable(${test} enkf/tests/${test}.cpp)
     target_link_libraries(${test} res)
 endforeach()
 

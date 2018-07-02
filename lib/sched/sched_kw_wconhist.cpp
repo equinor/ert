@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'sched_kw_wconhist.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'sched_kw_wconhist.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -48,7 +48,7 @@ typedef struct wconhist_well_struct wconhist_well_type;
 
 
 struct wconhist_well_struct{
-  /* 
+  /*
     def: Read as defaulted, not defined!
   */
   bool          def[WCONHIST_NUM_KW];
@@ -80,18 +80,18 @@ struct sched_kw_wconhist_struct{
    Contains values for ORAT, GRAT, .... for one well for the complete
    history; this is orthogonal to the regualar sched_kw_wconhist
    keyowrd which contains the same data for all (or at least many ...)
-   wells at one time instant. 
+   wells at one time instant.
 */
 
 struct wconhist_state_struct {
   UTIL_TYPE_ID_DECLARATION;
   const time_t_vector_type  * time;                    /* Shared vector with the report_step -> time_t mapping .*/
-  int_vector_type           * state;                   /* Contains values from the well_status_enum. */ 
+  int_vector_type           * state;                   /* Contains values from the well_status_enum. */
   int_vector_type           * cmode;                   /* Contains values from the well_cm_enum. */
-  double_vector_type        * oil_rate;                
-  double_vector_type        * water_rate;              
-  double_vector_type        * gas_rate;                
-  int_vector_type           * vfp_table; 
+  double_vector_type        * oil_rate;
+  double_vector_type        * water_rate;
+  double_vector_type        * gas_rate;
+  int_vector_type           * vfp_table;
   double_vector_type        * art_lift;
   double_vector_type        * thp;
   double_vector_type        * bhp;
@@ -104,7 +104,7 @@ struct wconhist_state_struct {
 
 
 
-static wconhist_well_type * wconhist_well_alloc_empty( ) 
+static wconhist_well_type * wconhist_well_alloc_empty( )
 {
   wconhist_well_type * well = (wconhist_well_type*)util_malloc(sizeof * well);
   well->name   = NULL;
@@ -154,21 +154,21 @@ static void wconhist_well_fprintf(const wconhist_well_type * well, FILE * stream
 static wconhist_well_type * wconhist_well_alloc_from_tokens(const stringlist_type * line_tokens ) {
   wconhist_well_type * well = wconhist_well_alloc_empty( );
   sched_util_init_default( line_tokens , well->def );
-  
+
   well->name  = util_alloc_string_copy(stringlist_iget(line_tokens, 0));
-  
+
   if(!well->def[1])
     well->status = sched_types_get_status_from_string(stringlist_iget(line_tokens , 1));
   if (well->status == DEFAULT)
     well->status = WCONHIST_DEFAULT_STATUS;
-  
-  
+
+
   if(!well->def[2])
     well->cmode = sched_types_get_cm_from_string(stringlist_iget(line_tokens , 2) , true);
 
-  well->orat      = sched_util_atof(stringlist_iget(line_tokens , 3)); 
-  well->wrat      = sched_util_atof(stringlist_iget(line_tokens , 4)); 
-  well->grat      = sched_util_atof(stringlist_iget(line_tokens , 5)); 
+  well->orat      = sched_util_atof(stringlist_iget(line_tokens , 3));
+  well->wrat      = sched_util_atof(stringlist_iget(line_tokens , 4));
+  well->grat      = sched_util_atof(stringlist_iget(line_tokens , 5));
   well->vfptable  = sched_util_atoi(stringlist_iget(line_tokens , 6));
   well->alift     = sched_util_atof(stringlist_iget(line_tokens , 7));
   well->thp       = sched_util_atof(stringlist_iget(line_tokens , 8));
@@ -195,13 +195,13 @@ static hash_type * wconhist_well_export_obs_hash(const wconhist_well_type * well
 
   if(!well->def[5])
     hash_insert_double(obs_hash, "WGPR", well->grat);
-  
+
   if(!well->def[8])
     hash_insert_double(obs_hash, "WTHP", well->thp);
-  
+
   if(!well->def[9])
     hash_insert_double(obs_hash, "WBHP", well->bhp);
-  
+
   if(!well->def[10])
     hash_insert_double(obs_hash, "WWGPR", well->wgrat);
 
@@ -216,7 +216,7 @@ static hash_type * wconhist_well_export_obs_hash(const wconhist_well_type * well
 
     hash_insert_double(obs_hash, "WWCT", wct);
   }
-  
+
   // Gas oil ratio.
   if(!well->def[3] && !well->def[5])
   {
@@ -276,8 +276,8 @@ sched_kw_wconhist_type * sched_kw_wconhist_alloc(const stringlist_type * tokens 
       wconhist_well_type * well = wconhist_well_alloc_from_tokens( line_tokens );
       sched_kw_wconhist_add_well( kw , well );
       stringlist_free( line_tokens );
-    } 
-    
+    }
+
   } while (!eokw);
   return kw;
 }
@@ -314,7 +314,7 @@ hash_type * sched_kw_wconhist_alloc_well_obs_hash(const sched_kw_wconhist_type *
   hash_type * well_hash = hash_alloc();
 
   int num_wells = vector_get_size(kw->wells);
-  
+
   for(int well_nr=0; well_nr<num_wells; well_nr++)
   {
     wconhist_well_type * well = (wconhist_well_type*)vector_iget(kw->wells, well_nr);
@@ -344,9 +344,9 @@ static wconhist_well_type * sched_kw_wconhist_get_well( const sched_kw_wconhist_
   int index = 0;
   do {
     wconhist_well_type * iwell = (wconhist_well_type*)vector_iget( kw->wells , index);
-    if (strcmp( well_name , iwell->name ) == 0) 
+    if (strcmp( well_name , iwell->name ) == 0)
       well = iwell;
-    
+
     index++;
   } while ((well == NULL) && (index < size));
   return well;
@@ -466,12 +466,12 @@ bool sched_kw_wconhist_has_well( const sched_kw_wconhist_type * kw , const char 
    instance. The check is quite simple: if the wconhist instance has
    this well, and that well has status == OPEN AND a finite rate of at
    least one phase - we return true, in ALL other cases we return
-   false. 
-   
+   false.
+
    Observe that this function has no possibility to check well-names
    +++ - if you ask for a non-existing well you will just get false.
 */
-   
+
 
 bool sched_kw_wconhist_well_open( const sched_kw_wconhist_type * kw, const char * well_name) {
   wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
@@ -497,7 +497,7 @@ bool sched_kw_wconhist_well_open( const sched_kw_wconhist_type * kw, const char 
    Will update the input parameter @well_list to contain all the
    well_names present in the current sced_kw_wconhist keyword.
 */
-   
+
 void sched_kw_wconhist_init_well_list( const sched_kw_wconhist_type * kw , stringlist_type * well_list) {
   stringlist_clear( well_list );
   {
@@ -525,8 +525,8 @@ static double well_util_total( const time_t_vector_type * time, const double_vec
     double days = (time_t_vector_iget( time , index ) - time_t_vector_iget( time , index - 1)) / 86400;
     total +=      days * double_vector_iget( rate , index );
   }
-  
-  return total; 
+
+  return total;
 }
 
 
@@ -581,7 +581,7 @@ double wconhist_state_iget_WWPRH( const void * state , int report_step ) {
 double wconhist_state_iget_WWCTH( const void * state , int report_step ) {
   double WWPR = wconhist_state_iget_WWPRH( state , report_step );
   double WOPR = wconhist_state_iget_WOPRH( state , report_step );
-  
+
   return WWPR / ( WWPR + WOPR );
 }
 
@@ -594,7 +594,7 @@ double wconhist_state_iget_WGORH(const void * state , int report_step ) {
 
 
 /*
-  Uncertain about this memnonic?? 
+  Uncertain about this memnonic??
 */
 
 well_cm_enum wconhist_state_iget_WMCTLH( const void * state , int report_step ) {
@@ -616,26 +616,26 @@ double wconhist_state_iget_STAT( const void * state , int report_step ) {
 wconhist_state_type * wconhist_state_alloc( const time_t_vector_type * time) {
   wconhist_state_type * wconhist = (wconhist_state_type*)util_malloc( sizeof * wconhist );
   UTIL_TYPE_ID_INIT( wconhist , WCONHIST_TYPE_ID );
-  
+
   wconhist->time       = time;
   wconhist->state      = int_vector_alloc( 0 , WCONHIST_DEFAULT_STATUS );
-  wconhist->cmode      = int_vector_alloc( 0 , 0 ); 
-  
+  wconhist->cmode      = int_vector_alloc( 0 , 0 );
+
   wconhist->oil_rate   = double_vector_alloc( 0 , 0 );
   wconhist->gas_rate   = double_vector_alloc( 0 , 0 );
   wconhist->water_rate = double_vector_alloc( 0 , 0 );
-  
+
   /*
     The vfp_table and art_list keywords have an EXTREMELY ugly
     DEFAULT behaviour - it changes as function of time:
-  
+
      1. The first occurence of a default value should be interpreted
         as a '0'.
 
      2. The second occurence of a default value should be interpreted
         as 'No change prom previous value' - whatever that was.
-       
-    This behaviour is not properly supported in this implementation.    
+
+    This behaviour is not properly supported in this implementation.
   */
 
 
@@ -645,7 +645,7 @@ wconhist_state_type * wconhist_state_alloc( const time_t_vector_type * time) {
   wconhist->thp        = double_vector_alloc( 0 , 0 );
   wconhist->bhp        = double_vector_alloc( 0 , 0 );
   wconhist->wgas_rate  = double_vector_alloc( 0 , 0 );
-  
+
   return wconhist;
 }
 
@@ -654,7 +654,7 @@ void wconhist_state_free( wconhist_state_type * wconhist ) {
   int_vector_free( wconhist->state );
   int_vector_free( wconhist->cmode );
   int_vector_free( wconhist->vfp_table );
-  
+
   double_vector_free( wconhist->oil_rate );
   double_vector_free( wconhist->gas_rate );
   double_vector_free( wconhist->water_rate );
@@ -662,7 +662,7 @@ void wconhist_state_free( wconhist_state_type * wconhist ) {
   double_vector_free( wconhist->thp );
   double_vector_free( wconhist->bhp );
   double_vector_free( wconhist->wgas_rate );
-  
+
   free( wconhist );
 }
 
@@ -674,7 +674,7 @@ void wconhist_state_free__( void * arg ) {
 
 
 void sched_kw_wconhist_update_state(const sched_kw_wconhist_type * kw , wconhist_state_type * state , const char * well_name , int report_step ) {
-  
+
   wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
   if (well != NULL) {
 
@@ -688,7 +688,7 @@ void sched_kw_wconhist_update_state(const sched_kw_wconhist_type * kw , wconhist
     double_vector_iset_default( state->thp        , report_step  ,  well->thp      );
     double_vector_iset_default( state->bhp        , report_step  ,  well->bhp      );
     double_vector_iset_default( state->wgas_rate  , report_step  ,  well->wgrat    );
-    
+
   }
 }
 
@@ -703,7 +703,7 @@ void sched_kw_wconhist_close_state( wconhist_state_type * state , int report_ste
     If code ever ends up by querying one of the states below here
     there is something wrong.
   */
-  
+
   double_vector_iset_default( state->oil_rate   , report_step  ,  -1);
   double_vector_iset_default( state->water_rate , report_step  ,  -1);
   double_vector_iset_default( state->gas_rate   , report_step  ,  -1);

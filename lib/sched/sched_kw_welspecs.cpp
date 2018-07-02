@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'sched_kw_welspecs.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'sched_kw_welspecs.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdbool.h>
@@ -87,7 +87,7 @@ typedef enum {AS_STOP, AS_SHUT} auto_shut_type;
 
 
 
-typedef enum {CF_YES, CF_NO} crossflow_type; 
+typedef enum {CF_YES, CF_NO} crossflow_type;
 #define CF_YES_STRING "YES"
 #define CF_NO_STRING  "NO"
 
@@ -324,7 +324,7 @@ static void welspec_sched_fprintf(const welspec_type * ws, FILE * stream)
 static welspec_type * welspec_alloc_empty()
 {
   welspec_type *ws = (welspec_type*)util_malloc(sizeof *ws);
-  
+
   ws->name      = NULL;
   ws->group     = NULL;
   ws->fs_kw1    = NULL;
@@ -365,7 +365,7 @@ static welspec_type * welspec_alloc_from_tokens(const stringlist_type * line_tok
   welspec_type * ws = welspec_alloc_empty();
   sched_util_init_default( line_tokens , ws->def );
   ws->name = util_alloc_string_copy(stringlist_iget( line_tokens , 0));
-  
+
   if(ws->def[1])
     ws->group = util_alloc_string_copy("FIELD");
   else
@@ -374,7 +374,7 @@ static welspec_type * welspec_alloc_from_tokens(const stringlist_type * line_tok
   ws->hh_i        = sched_util_atoi(stringlist_iget( line_tokens , 2));
   ws->hh_j        = sched_util_atoi(stringlist_iget( line_tokens , 3));
   ws->md          = sched_util_atof(stringlist_iget( line_tokens , 4));
-  ws->phase       = get_phase_from_string(stringlist_iget( line_tokens , 5));        
+  ws->phase       = get_phase_from_string(stringlist_iget( line_tokens , 5));
   ws->drain_rad   = sched_util_atof(stringlist_iget( line_tokens , 6));
   ws->inflow_eq   = get_inflow_eq_from_string(stringlist_iget( line_tokens , 7));
   ws->auto_shut   = get_auto_shut_from_string(stringlist_iget( line_tokens , 8));
@@ -384,7 +384,7 @@ static welspec_type * welspec_alloc_from_tokens(const stringlist_type * line_tok
   ws->fip_region  = sched_util_atoi(stringlist_iget( line_tokens , 12));
 
   ws->fs_kw1      = util_alloc_string_copy(stringlist_iget( line_tokens , 13));   /* Reserved for use with FRONTSIM */
-  ws->fs_kw2      = util_alloc_string_copy(stringlist_iget( line_tokens , 14));   /* Reserved for use with FRONTSIM */ 
+  ws->fs_kw2      = util_alloc_string_copy(stringlist_iget( line_tokens , 14));   /* Reserved for use with FRONTSIM */
   ws->ecl300_kw   = util_alloc_string_copy(stringlist_iget( line_tokens , 15));   /* Could not find this in the dcoumentation ...??? */
 
   return ws;
@@ -422,8 +422,8 @@ sched_kw_welspecs_type * sched_kw_welspecs_alloc(const stringlist_type * tokens 
       welspec_type   * well         = welspec_alloc_from_tokens( line_tokens );
       sched_kw_welspecs_add_well( kw , well );
       stringlist_free( line_tokens );
-    } 
-    
+    }
+
   } while (!eokw);
   return kw;
 }
@@ -449,7 +449,7 @@ void sched_kw_welspecs_fprintf(const sched_kw_welspecs_type * kw, FILE * stream)
   }
   fprintf(stream,"/\n\n");
 };
-  
+
 
 
 

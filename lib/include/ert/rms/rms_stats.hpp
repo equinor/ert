@@ -1,7 +1,7 @@
 /*
-   Copyright (C) 2018  Statoil ASA, Norway.
+   Copyright (C) 2011  Statoil ASA, Norway.
 
-   The file 'rms_stats.hpp' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'rms_stats.h' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,20 @@
 
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
-
-
 */
-#include <ert/rms/rms_stats.h>
 
+#ifndef ERT_RMS_STATS_H
+#define ERT_RMS_STATS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <ert/rms/rms_tagkey.hpp>
+
+void rms_stats_mean_std(rms_tagkey_type * , rms_tagkey_type * , const char * , int , const char ** , bool);
+void rms_stats_update_ens(const char * , const char *, const char **, const char *, int , const double **);
+
+#ifdef __cplusplus
+}
+#endif
+#endif

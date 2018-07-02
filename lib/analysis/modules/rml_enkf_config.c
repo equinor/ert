@@ -17,11 +17,11 @@
 */
 
 
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
 
-#include <ert/analysis/std_enkf.h>
-#include <ert/analysis/analysis_module.h>
+#include <ert/analysis/std_enkf.hpp>
+#include <ert/analysis/analysis_module.hpp>
 
 #include <rml_enkf_config.h>
 

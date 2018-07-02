@@ -1,29 +1,29 @@
 /*
-   Copyright (C) 2012  Statoil ASA, Norway. 
-    
-   The file 'config_get.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2012  Statoil ASA, Norway.
+
+   The file 'config_get.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 
 /*****************************************************************/
-/* All the functions in this block will operate on the last item 
-   which has been set with a particular key value. So assuming the 
+/* All the functions in this block will operate on the last item
+   which has been set with a particular key value. So assuming the
    config file looks like:
 
    KEY   VALUE1
-   KEY   VALUE2  OPTIONAL 
+   KEY   VALUE2  OPTIONAL
    KEY   100     VALUE3   OPTIONAL  ERROR
 
    these functions will all operate on the last line in the config file:
@@ -44,9 +44,9 @@
 
 static config_content_node_type * config_get_value_node__( const config_parser_type * config , const char * kw) {
   config_content_node_type * node = config_get_value_node( config , kw );
-  if (node == NULL) 
+  if (node == NULL)
     util_abort("Tried to get value node from unset kw:%s \n",__func__ , kw );
-  
+
   return node;
 }
 

@@ -47,7 +47,7 @@ class ConfigTest(ResTest):
 
 
     def test_enums(self):
-        source_file_path = "lib/include/ert/config/config_schema_item.h"
+        source_file_path = "lib/include/ert/config/config_schema_item.hpp"
         self.assertEnumIsFullyDefined(ContentTypeEnum, "config_item_types", source_file_path)
         self.assertEnumIsFullyDefined(UnrecognizedEnum, "config_schema_unrecognized_enum", source_file_path)
 

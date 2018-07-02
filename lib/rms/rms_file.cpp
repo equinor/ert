@@ -31,8 +31,8 @@
 #include <ert/rms/rms_file.hpp>
 #include <ert/rms/rms_tagkey.hpp>
 
-#include <ert/ecl/ecl_kw.hpp>
-#include <ert/ecl/ecl_type.hpp>
+#include <ert/ecl/ecl_kw.h>
+#include <ert/ecl/ecl_type.h>
 
 /*****************************************************************/
 static const char * rms_ascii_header      = "roff-asc";

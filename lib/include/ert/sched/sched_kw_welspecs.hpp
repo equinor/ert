@@ -1,7 +1,7 @@
 /*
-   Copyright (C) 2018  Statoil ASA, Norway.
+   Copyright (C) 2011  Statoil ASA, Norway.
 
-   The file 'sched_kw_welspecs.hpp' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'sched_kw_welspecs.h' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,43 @@
 
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
-
-
 */
-#include <ert/sched/sched_kw_welspecs.h>
 
+#ifndef ERT_SCHED_KW_WELSPECS_H
+#define ERT_SCHED_KW_WELSPECS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <stdio.h>
+#include <stdbool.h>
+
+#include <ert/util/stringlist.hpp>
+
+#include <ert/sched/sched_macros.hpp>
+
+
+
+/*************************************************************/
+
+typedef struct sched_kw_welspecs_struct sched_kw_welspecs_type;
+
+
+
+sched_kw_welspecs_type * sched_kw_welspecs_fscanf_alloc(FILE *, bool *, const char *);
+sched_kw_welspecs_type * sched_kw_welspecs_fread_alloc(FILE *);
+void sched_kw_welspecs_free(sched_kw_welspecs_type *);
+void sched_kw_welspecs_fprintf(const sched_kw_welspecs_type *, FILE *);
+void sched_kw_welspecs_fwrite(const sched_kw_welspecs_type *, FILE *);
+
+void sched_kw_welspecs_alloc_child_parent_list(const sched_kw_welspecs_type *, char ***, char ***, int *);
+void sched_kw_welspecs_init_child_parent_list( const sched_kw_welspecs_type * kw , stringlist_type * child , stringlist_type * parent);
+/*******************************************************************/
+
+
+
+KW_HEADER(welspecs)
+
+#ifdef __cplusplus
+}
+#endif
+#endif

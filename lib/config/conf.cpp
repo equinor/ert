@@ -259,7 +259,7 @@ void conf_instance_free__(
 
 
 conf_item_spec_type * conf_item_spec_alloc(
-  char    * name,
+  const char    * name,
   bool      required_set,
   dt_enum   dt,
   const char * help)

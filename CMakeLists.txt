@@ -37,6 +37,9 @@ else()
     message( WARNING "Git not found. Build will not contain git revision info." )
 endif()
 
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
+find_package(CXX11Features)
+
 #-----------------------------------------------------------------
 
 option( BUILD_APPLICATIONS  "Build some small - mostly stale  -applications" OFF)
@@ -48,8 +51,6 @@ option( USE_RPATH           "Should we embed path to libraries"     ON )
 option( INSTALL_ERT_LEGACY  "Install legacy ert code"               OFF)
 option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit"     OFF)
 set( SITE_CONFIG_FILE "${PROJECT_SOURCE_DIR}/share/site-config" CACHE FILEPATH "Path to global ERT Configuration file")
-
-find_package(CXX11Features)
 
 if (BUILD_PYTHON)
   if (NOT ENABLE_PYTHON)
