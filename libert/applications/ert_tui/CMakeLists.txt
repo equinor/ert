@@ -1,9 +1,9 @@
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 
-set( src_list main.c enkf_tui_main.c  enkf_tui_fs.c  enkf_tui_ranking.c  enkf_tui_misc.c  enkf_tui_table.c menu.c 
-              enkf_tui_run.c enkf_tui_util.c  enkf_tui_init.c  enkf_tui_export.c  enkf_tui_analysis.c enkf_tui_help.c enkf_tui_simple.c enkf_tui_workflow.c)
+set( src_list main.cpp enkf_tui_main.cpp  enkf_tui_fs.cpp  enkf_tui_ranking.cpp  enkf_tui_misc.cpp  enkf_tui_table.cpp menu.cpp
+              enkf_tui_run.cpp enkf_tui_util.cpp  enkf_tui_init.cpp  enkf_tui_export.cpp  enkf_tui_analysis.cpp enkf_tui_help.cpp enkf_tui_simple.cpp enkf_tui_workflow.cpp)
 
-set_source_files_properties( main.c PROPERTIES COMPILE_DEFINITIONS "COMPILE_TIME_STAMP=\"${ERT_BUILD_TIME}\";GIT_COMMIT=\"${GIT_COMMIT}\"")
+set_source_files_properties( main.cpp PROPERTIES COMPILE_DEFINITIONS "COMPILE_TIME_STAMP=\"${ERT_BUILD_TIME}\";GIT_COMMIT=\"${GIT_COMMIT}\"")
 
 add_executable( ert_tui ${src_list} )
 target_link_libraries( ert_tui res::res ert )
