@@ -21,12 +21,15 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <set>
+#include <string>
+#include <vector>
+
 #include <ert/util/type_macros.hpp>
 #include <ert/util/util.hpp>
 #include <ert/util/parser.hpp>
 #include <ert/util/hash.hpp>
 #include <ert/util/stringlist.hpp>
-#include <ert/util/set.hpp>
 #include <ert/util/vector.hpp>
 #include <ert/res_util/subst_list.hpp>
 #include <ert/res_util/res_env.hpp>
@@ -72,13 +75,14 @@ typedef struct validate_struct validate_type;
 
 
 struct validate_struct {
+  std::set<std::string>              common_selection_set;    /* A selection set which will apply uniformly to all the arguments. */
+  std::vector<std::set<std::string>> indexed_selection_set;
+
   int                  argc_min;                /* The minimum number of arguments: -1 means no lower limit. */
   int                  argc_max;                /* The maximum number of arguments: -1 means no upper limit. */
-  set_type          *  common_selection_set;    /* A selection set which will apply uniformly to all the arguments. */
   int_vector_type   *  type_map;                /* A list of types for the items. Set along with argc_minmax(); */
   stringlist_type   *  required_children;       /* A list of item's which must also be set (if this item is set). (can be NULL) */
   hash_type         *  required_children_value; /* A list of item's which must also be set - depending on the value of this item. (can be NULL) (This one is complex). */
-  vector_type       *  indexed_selection_set;   /* A vector of set_type instances which will apply for specific (indexed) arguments. */
 };
 
 
@@ -110,11 +114,9 @@ static void validate_set_default_type( validate_type * validate , config_item_ty
 }
 
 static validate_type * validate_alloc() {
-  validate_type * validate = (validate_type*)util_malloc(sizeof * validate );
+  validate_type * validate = new validate_type();
   validate->argc_min                = CONFIG_DEFAULT_ARG_MIN;
   validate->argc_max                = CONFIG_DEFAULT_ARG_MAX;
-  validate->common_selection_set    = NULL;
-  validate->indexed_selection_set   = vector_alloc_new();
   validate->required_children       = NULL;
   validate->required_children_value = NULL;
   validate->type_map                = int_vector_alloc(0 , 0);
@@ -124,13 +126,10 @@ static validate_type * validate_alloc() {
 
 
 static void validate_free(validate_type * validate) {
-  if (validate->common_selection_set != NULL) set_free(validate->common_selection_set);
-
-  vector_free( validate->indexed_selection_set );
   int_vector_free( validate->type_map );
   if (validate->required_children != NULL) stringlist_free(validate->required_children);
   if (validate->required_children_value != NULL) hash_free(validate->required_children_value);
-  free(validate);
+  delete validate;
 }
 
 
@@ -161,45 +160,39 @@ static void validate_set_argc_minmax(validate_type * validate , int argc_min , i
 
 
 static void validate_set_common_selection_set(validate_type * validate , const stringlist_type * argv) {
-  if (validate->common_selection_set != NULL)
-    set_free(validate->common_selection_set);
-
-  validate->common_selection_set = set_alloc_empty();
+  validate->common_selection_set.clear();
   for (int i=0; i < stringlist_get_size(argv); i++)
-    set_add_key(validate->common_selection_set, stringlist_iget(argv, i));
+    validate->common_selection_set.insert( stringlist_iget(argv,i));
 }
 
 
-static set_type * validate_iget_selection_set( validate_type * validate , int index) {
-  return (set_type*)vector_safe_iget( validate->indexed_selection_set , index);
+static std::set<std::string>* validate_iget_selection_set( validate_type * validate , int index) {
+  if (index >= validate->indexed_selection_set.size())
+    return nullptr;
+
+  return &validate->indexed_selection_set[index];
 }
 
 static void validate_add_indexed_alternative(validate_type * validate , int index , const char * value) {
-  set_type * set = validate_iget_selection_set( validate , index );
+  if (index >= validate->indexed_selection_set.size())
+    validate->indexed_selection_set.resize(index+1);
 
-  if (!set) {
-    vector_safe_iset_owned_ref( validate->indexed_selection_set , index , set_alloc(0,NULL) , set_free__ );
-    set = (set_type*)vector_safe_iget( validate->indexed_selection_set , index);
-  }
-
-  set_add_key( set , value );
+  auto& set = validate->indexed_selection_set[index];
+  set.insert( value );
 }
 
 
 
 static void validate_set_indexed_selection_set(validate_type * validate , int index , const stringlist_type * argv) {
-
-  if (validate->indexed_selection_set == NULL)
-    util_abort("%s: must call xxx_set_argc_minmax() first - aborting \n",__func__);
-
   if (index >= validate->argc_min)
     util_abort("%s: When not not setting argc_max selection set can only be applied to indices up to argc_min\n",__func__);
 
-  set_type * set = set_alloc_empty();
-  for (int i=0; i < stringlist_get_size(argv); i++)
-    set_add_key(set, stringlist_iget(argv, i));
+  if (index >= validate->indexed_selection_set.size())
+    validate->indexed_selection_set.resize(index+1);
 
-  vector_safe_iset_owned_ref( validate->indexed_selection_set , index , set , set_free__ );
+  auto& set = validate->indexed_selection_set[index];
+  for (int i=0; i < stringlist_get_size(argv); i++)
+    set.insert( stringlist_iget(argv, i) );
 }
 
 
@@ -318,19 +311,19 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
   */
   if (OK) {
     /* Validating selection set - first common, then indexed */
-    if (item->validate->common_selection_set) {
+    if (item->validate->common_selection_set.size()) {
       for (int iarg = 0; iarg < argc; iarg++) {
-        if (!set_has_key(item->validate->common_selection_set , stringlist_iget( token_list , iarg + 1))) {
+        if (!item->validate->common_selection_set.count(stringlist_iget(token_list, iarg + 1))) {
           config_error_add( error_list , util_alloc_sprintf("%s: is not a valid value for: %s.",stringlist_iget( token_list , iarg + 1) , item->kw));
           OK = false;
         }
       }
-    } else if (item->validate->indexed_selection_set != NULL) {
+    } else if (item->validate->indexed_selection_set.size()) {
       for (int iarg = 0; iarg < argc; iarg++) {
         if ((item->validate->argc_max > 0) || (iarg < item->validate->argc_min)) {  /* Without this test we might go out of range on the indexed selection set. */
-          const set_type * selection_set = validate_iget_selection_set( item->validate , iarg);
-          if (selection_set) {
-            if (!set_has_key( selection_set, stringlist_iget( token_list , iarg + 1))) {
+          const auto * selection_set = validate_iget_selection_set( item->validate , iarg);
+          if (selection_set && selection_set->size()) {
+            if (!selection_set->count( stringlist_iget(token_list, iarg + 1))) {
               config_error_add( error_list , util_alloc_sprintf("%s: is not a valid value for item %d of \'%s\'.",stringlist_iget( token_list , iarg + 1) , iarg + 1 , item->kw));
               OK = false;
             }
