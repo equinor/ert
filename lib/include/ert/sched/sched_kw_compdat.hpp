@@ -23,7 +23,6 @@ extern "C" {
 #endif
 #include <stdio.h>
 
-#include <ert/util/set.hpp>
 #include <ert/util/stringlist.hpp>
 
 #include <ert/sched/sched_macros.hpp>

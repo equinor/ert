@@ -17,9 +17,11 @@
 */
 #include <stdlib.h>
 
+#include <set>
+#include <string>
+
 #include <ert/util/type_macros.hpp>
 #include <ert/util/hash.hpp>
-#include <ert/util/set.hpp>
 #include <ert/util/vector.hpp>
 #include <ert/res_util/subst_list.hpp>
 
@@ -36,7 +38,8 @@
 
 struct config_content_struct {
   UTIL_TYPE_ID_DECLARATION;
-  set_type              * parsed_files;              /* A set of config files whcih have been parsed - to protect against circular includes. */
+  std::set<std::string> * parsed_files;              /* A set of config files whcih have been parsed - to protect against circular includes. */
+
   vector_type        * nodes;
   hash_type          * items;
   config_error_type  * parse_errors;
@@ -57,12 +60,13 @@ UTIL_IS_INSTANCE_FUNCTION( config_content , CONFIG_CONTENT_TYPE_ID )
 config_content_type * config_content_alloc(const char * filename) {
   config_content_type * content = (config_content_type*)util_malloc( sizeof * content );
   UTIL_TYPE_ID_INIT( content , CONFIG_CONTENT_TYPE_ID );
+  content->parsed_files = new std::set<std::string>();
+
   content->valid = false;
   content->items = hash_alloc();
   content->nodes = vector_alloc_new();
   content->parse_errors = config_error_alloc();
   content->define_list = subst_list_alloc( NULL );
-  content->parsed_files = set_alloc_empty();
   content->warnings = stringlist_alloc_new();
 
   content->path_stack = config_path_stack_alloc( );
@@ -124,6 +128,8 @@ void config_content_free( config_content_type * content ) {
   if(!content)
     return;
 
+  delete content->parsed_files;
+
   stringlist_free( content->warnings );
   vector_free( content->nodes );
   hash_free( content->items );
@@ -132,7 +138,6 @@ void config_content_free( config_content_type * content ) {
   free( content->config_file );
   free( content->abs_path );
   free( content->config_path );
-  set_free( content->parsed_files );
   if (content->invoke_path != NULL)
     config_root_path_free( content->invoke_path );
 
@@ -141,7 +146,12 @@ void config_content_free( config_content_type * content ) {
 }
 
 bool config_content_add_file( config_content_type * content , const char * config_file)  {
-  return set_add_key( content->parsed_files , config_file);
+  const auto iter = content->parsed_files->find( config_file );
+  if (iter == content->parsed_files->end()) {
+    content->parsed_files->insert( config_file );
+    return true;
+  }
+  return false;
 }
 
 config_root_path_type * config_content_get_invoke_path( config_content_type * content ) {

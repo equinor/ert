@@ -38,7 +38,6 @@
 #include <ert/res_util/path_fmt.hpp>
 #include <ert/util/arg_pack.h>
 #include <ert/util/stringlist.h>
-#include <ert/util/set.h>
 #include <ert/util/node_ctype.h>
 #include <ert/util/string_util.h>
 #include <ert/util/type_vector_functions.h>

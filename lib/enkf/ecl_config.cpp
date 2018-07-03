@@ -21,7 +21,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/set.h>
 #include <ert/util/util.h>
 #include <ert/util/parser.h>
 #include <ert/res_util/ui_return.hpp>

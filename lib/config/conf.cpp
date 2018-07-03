@@ -15,12 +15,14 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <set>
+#include <vector>
+#include <string>
 
 #include <assert.h>
 #include <string.h>
 
 #include <ert/util/hash.hpp>
-#include <ert/util/set.hpp>
 #include <ert/util/util.hpp>
 #include <ert/util/vector.hpp>
 #include <ert/util/path_stack.hpp>
@@ -67,7 +69,7 @@ struct conf_item_spec_struct
   bool                    required_set;  /** Require the item to take a valid value. */
   char                  * default_value; /** Can be NULL if not given.               */
   dt_enum                 dt;            /** Data type. See conf_data.*              */
-  set_type              * restriction;   /** If non-empty, allowable values.         */
+  std::set<std::string> * restriction;
   char                  * help;          /** Can be NULL if not given.               */
 };
 
@@ -273,9 +275,10 @@ conf_item_spec_type * conf_item_spec_alloc(
   conf_item_spec->required_set  = required_set;
   conf_item_spec->dt            = dt;
   conf_item_spec->default_value = NULL;
-  conf_item_spec->restriction   = set_alloc_empty();
   conf_item_spec->help          = NULL;
   conf_item_spec_set_help( conf_item_spec , help );
+
+  conf_item_spec->restriction   = new std::set<std::string>();
   return conf_item_spec;
 }
 
@@ -287,7 +290,7 @@ void conf_item_spec_free(
   free(conf_item_spec->name);
   free(conf_item_spec->default_value);
   free(conf_item_spec->help);
-  set_free(conf_item_spec->restriction);
+  delete conf_item_spec->restriction;
   free(conf_item_spec);
 }
 
@@ -640,7 +643,7 @@ void conf_item_spec_add_restriction(
   conf_item_spec_type * conf_item_spec,
   const char          * restriction)
 {
-  set_add_key(conf_item_spec->restriction, restriction);
+  conf_item_spec->restriction->insert(restriction);
 }
 
 
@@ -929,7 +932,7 @@ void conf_item_spec_printf_help(
   const conf_item_spec_type * conf_item_spec)
 {
   assert(conf_item_spec->super_class != NULL);
-  int num_restrictions = set_get_size(conf_item_spec->restriction);
+  int num_restrictions = conf_item_spec->restriction->size();
 
   printf("\n       Help on item \"%s\" in class \"%s\":\n\n",
          conf_item_spec->name, conf_item_spec->super_class->class_name);
@@ -943,14 +946,9 @@ void conf_item_spec_printf_help(
   {
     printf("\n       The item \"%s\" is restricted to the following values:\n\n",
            conf_item_spec->name);
-    char ** restriction_keys = set_alloc_keylist(conf_item_spec->restriction);
-
-    for(int key_nr = 0; key_nr < num_restrictions; key_nr++)
-    {
-      printf("       %i. %s\n", key_nr + 1, restriction_keys[key_nr]);
-    }
-
-    util_free_stringlist(restriction_keys, num_restrictions);
+    int i=0;
+    for (auto iter=conf_item_spec->restriction->begin(); iter != conf_item_spec->restriction->end(); ++iter, ++i)
+      printf("    %i.  %s\n", i+1, iter->c_str());
   }
   printf("\n");
 }
@@ -987,7 +985,7 @@ bool conf_item_validate(
 
   bool ok = true;
   const conf_item_spec_type * conf_item_spec = conf_item->conf_item_spec;
-  int   num_restrictions = set_get_size(conf_item_spec->restriction);
+  int   num_restrictions = conf_item_spec->restriction->size();;
 
   if(!conf_data_validate_string_as_dt_value(conf_item_spec->dt, conf_item->value))
   {
@@ -999,7 +997,9 @@ bool conf_item_validate(
 
   if(num_restrictions > 0 && ok)
   {
-    char ** restriction_keys = set_alloc_keylist(conf_item_spec->restriction);
+    std::vector<std::string> restriction_keys;
+    for (auto iter = conf_item_spec->restriction->begin(); iter != conf_item_spec->restriction->end(); ++iter)
+      restriction_keys.push_back(*iter);
 
     /** Legacy work-around when removing the vector supprt. */
     const int num_tokens = 1;
@@ -1011,7 +1011,7 @@ bool conf_item_validate(
 
       for(int key_nr = 0; key_nr < num_restrictions; key_nr++)
       {
-        if(strcmp(tokens[token_nr], restriction_keys[key_nr]) == 0)
+        if(strcmp(tokens[token_nr], restriction_keys[key_nr].c_str()) == 0)
           valid = true;
       }
 
@@ -1022,7 +1022,6 @@ bool conf_item_validate(
                conf_item->value, conf_item_spec->name);
       }
     }
-    util_free_stringlist(restriction_keys, num_restrictions);
   }
 
   if(!ok)
@@ -1094,9 +1093,9 @@ bool conf_instance_check_item_mutex(
   const conf_instance_type   * conf_instance,
   const conf_item_mutex_type * conf_item_mutex)
 {
+  std::set<std::string> items_set;
   bool        ok            = true;
   int         num_items_set = 0;
-  set_type  * items_set     = set_alloc_empty();
   int         num_items     = hash_get_size(conf_item_mutex->item_spec_refs);
   char     ** item_keys     = hash_alloc_keylist(conf_item_mutex->item_spec_refs);
 
@@ -1105,40 +1104,49 @@ bool conf_instance_check_item_mutex(
     const char                * item_key = item_keys[item_nr];
     if(conf_instance_has_item(conf_instance, item_key))
     {
-      set_add_key(items_set, item_key);
+      items_set.insert( item_key );
     }
   }
 
-  num_items_set = set_get_size(items_set);
+  num_items_set = items_set.size();
 
   if (conf_item_mutex->inverse)
   {
     /** This is an inverse mutex - all (or none) items should be set. */
     if (!((num_items_set == 0) || (num_items_set == num_items)))
     {
+      std::vector<std::string> items_set_keys;
       ok = false;
-      char ** items_set_keys = set_alloc_keylist(items_set);
+      for (const auto& key : items_set)
+        items_set_keys.push_back(key);
+
       printf("ERROR: Failed to validate mutal inclusion in instance \"%s\" of class \"%s\".\n\n",
              conf_instance->name, conf_instance->conf_class->class_name);
       printf("       When using one or more of the following items, all must be set:\n");
+
       for(int item_nr = 0; item_nr < num_items; item_nr++)
         printf("       %i : %s\n", item_nr, item_keys[item_nr]);
+
       printf("\n");
       printf("       However, only the following items were set:\n");
-      for(int item_nr = 0; item_nr < num_items_set; item_nr++)
-        printf("       %i : %s\n", item_nr, items_set_keys[item_nr]);
-      printf("\n");
 
-      util_free_stringlist(items_set_keys, num_items_set);
+      for(int item_nr = 0; item_nr < num_items_set; item_nr++)
+        printf("       %i : %s\n", item_nr, items_set_keys[item_nr].c_str());
+
+      printf("\n");
     }
   }
   else
   {
     if(num_items_set > 1)
     {
+      std::vector<std::string> items_set_keys;
       ok = false;
-      char ** items_set_keys = set_alloc_keylist(items_set);
+      for (const auto& key : items_set)
+        items_set_keys.push_back(key);
 
+      printf("ERROR: Failed to validate mutal inclusion in instance \"%s\" of class \"%s\".\n\n",
+             conf_instance->name, conf_instance->conf_class->class_name);
       printf("ERROR: Failed to validate mutex in instance \"%s\" of class \"%s\".\n\n",
              conf_instance->name, conf_instance->conf_class->class_name);
       printf("       Only one of the following items may be set:\n");
@@ -1148,10 +1156,8 @@ bool conf_instance_check_item_mutex(
       printf("\n");
       printf("       However, all the following items were set:\n");
       for(int item_nr = 0; item_nr < num_items_set; item_nr++)
-        printf("       %i : %s\n", item_nr, items_set_keys[item_nr]);
+        printf("       %i : %s\n", item_nr, items_set_keys[item_nr].c_str());
       printf("\n");
-
-      util_free_stringlist(items_set_keys, num_items_set);
     }
   }
 
@@ -1167,8 +1173,6 @@ bool conf_instance_check_item_mutex(
   }
 
   util_free_stringlist(item_keys, num_items);
-  set_free(items_set);
-
   return ok;
 }
 

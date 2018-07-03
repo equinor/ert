@@ -26,7 +26,6 @@ extern "C" {
 
 #include <ert/util/util.h>
 #include <ert/util/stringlist.h>
-#include <ert/util/set.h>
 #include <ert/util/bool_vector.h>
 #include <ert/util/int_vector.h>
 #include <ert/res_util/matrix.hpp>
@@ -146,7 +145,6 @@ extern "C" {
   const char * enkf_main_get_plot_driver(const enkf_main_type * enkf_main );
   const char * enkf_main_get_image_type(const enkf_main_type * enkf_main);
 
-  void                     enkf_main_list_users(  set_type * users , const char * executable );
   const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main );
 
   subst_config_type      * enkf_main_get_subst_config(const enkf_main_type * enkf_main);
