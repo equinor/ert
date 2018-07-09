@@ -197,8 +197,8 @@ bool history_init_ts( const history_type * history , const char * summary_key , 
     if (local_key) {
       if (ecl_sum_has_general_var( history->refcase , local_key )) {
         for (int tstep = 0; tstep <= history_get_last_restart(history); tstep++) {
-          int time_index = ecl_sum_iget_report_end( history->refcase , tstep );
-          if (time_index >= 0) {
+          if (ecl_sum_has_report_step(history->refcase, tstep)) {
+            int time_index = ecl_sum_iget_report_end( history->refcase , tstep );
             double_vector_iset( value , tstep , ecl_sum_get_general_var( history->refcase , time_index , local_key ));
             bool_vector_iset( valid , tstep , true );
           } else
