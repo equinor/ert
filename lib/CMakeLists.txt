@@ -260,13 +260,18 @@ target_compile_definitions(res PRIVATE
 
 
 
-
 install(DIRECTORY include/ DESTINATION include)
+
 install(TARGETS res
         EXPORT res-config
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+install(TARGETS rml_enkf
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 #-----------------------------------------------------------------
 
