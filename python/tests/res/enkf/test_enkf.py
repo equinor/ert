@@ -223,7 +223,7 @@ class EnKFTest(ResTest):
 
 
     def test_run_context_from_external_folder(self):
-        with TestAreaContext('enkf_test', store_area = True) as work_area:
+        with TestAreaContext('enkf_test') as work_area:
             work_area.copy_directory(self.case_directory_custom_kw)
             res_config = ResConfig('snake_oil/snake_oil.ert')
             main = EnKFMain(res_config)

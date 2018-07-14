@@ -102,7 +102,7 @@ class RPCStorageTest(ResTest):
     def test_rpc_storage_with_simulation(self):
         config = self.createTestPath("local/snake_oil_no_data/snake_oil.ert")
 
-        with RPCServiceContext("ert/server/rpc_storage/simulation_and_storage", config, store_area=True) as server:
+        with RPCServiceContext("ert/server/rpc_storage/simulation_and_storage", config) as server:
             client = ErtRPCClient("localhost", server.port)
             realization_count = 2
 
