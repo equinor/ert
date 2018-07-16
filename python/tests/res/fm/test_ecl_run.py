@@ -23,8 +23,7 @@ import yaml
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
 from tests import ResTest, statoil_test
-from res.fm.ecl import EclConfig, EclRun
-
+from res.fm.ecl import EclRun, simulate
 
 
 class EclRunTest(ResTest):
@@ -61,7 +60,7 @@ class EclRunTest(ResTest):
                 f.write( yaml.dump(conf) )
 
             os.mkdir("bin")
-            EclConfig.config_file = "ecl_config.yml"
+            os.environ["ECL_SITE_CONFIG"] = "ecl_config.yml"
             for f in ["scalar_exe", "mpi_exe", "mpirun"]:
                 fname = os.path.join("bin", f)
                 with open( fname, "w") as fh:
@@ -149,6 +148,21 @@ class EclRunTest(ResTest):
             with self.assertRaises(Exception):
                 ecl_run.runEclipse( )
 
+    @statoil_test()
+    def test_run_api(self):
+        with TestAreaContext("ecl_run_api") as ta:
+            self.init_config()
+            ta.copy_file( os.path.join(self.SOURCE_ROOT , "test-data/local/eclipse/SPE1.DATA"))
+            os.makedirs("ecl_run")
+            shutil.move("SPE1.DATA" , "ecl_run")
+            simulate("ecl100", "2014.2", "ecl_run/SPE1.DATA")
+
+            self.assertTrue( os.path.isfile("ecl_run/SPE1.DATA"))
+            self.assertTrue( os.path.isfile("ecl_run/SPE1.DATA"))
+            self.assertTrue( os.path.isfile("ecl_run/SPE1.DATA"))
+
+
+
 
     @statoil_test()
     def test_flow(self):
@@ -208,6 +222,15 @@ class EclRunTest(ResTest):
             ecl_run.runEclipse( )
             self.assertTrue( os.path.isfile( os.path.join( ecl_run.runPath() , "%s.stderr" % ecl_run.baseName())))
             self.assertTrue( os.path.isfile( os.path.join( ecl_run.runPath() , "%s.LOG" % ecl_run.baseName())))
+
+
+    @statoil_test()
+    def test_mpi_run_api(self):
+        with TestAreaContext("ecl_run") as ta:
+            self.init_config()
+            ta.copy_file( os.path.join(self.SOURCE_ROOT , "test-data/local/eclipse/SPE1_PARALLELL.DATA"))
+            simulate("ecl100", "2014.2", "SPE1_PARALLELL.DATA", num_cpu = 2)
+
 
 
 

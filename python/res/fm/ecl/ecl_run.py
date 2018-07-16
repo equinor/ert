@@ -86,8 +86,9 @@ class EclRun(object):
     Eclipse100 = "run_ecl100"
     Eclipse300 = "run_ecl300"
     Eclipse100_nocheck = "run_ecl100_nocheck"
+    Eclipse300_nocheck = "run_ecl300_nocheck"
     Flow = "run_flow"
-
+    Flow_nocheck = "run_flow_nocheck"
 
     def __init__(self , argv):
         if 3 <= len(argv) <= 4:
@@ -103,8 +104,14 @@ class EclRun(object):
             elif script_name == EclRun.Eclipse100_nocheck:
                 simulator = "ecl100"
                 self.check_status = False
+            elif script_name == EclRun.Eclipse300_nocheck:
+                simulator = "ecl300"
+                self.check_status = False
             elif script_name == EclRun.Flow:
                 simulator = "flow"
+            elif script_name == EclRun.Flow_nocheck:
+                simulator = "flow"
+                self.check_status = False
             else:
                 raise ValueError("The name of the script:%s is invalid - must be run_ecl100 / run_ecl300" % script_name)
 
