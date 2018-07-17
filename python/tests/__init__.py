@@ -1,5 +1,6 @@
 import types
 import os.path
+import functools
 from ecl.util.test import ExtendedTestCase
 
 

@@ -11,6 +11,7 @@ init_python(2.7)
 find_python_package(ecl 2.1.0 ${PYTHON_INSTALL_PREFIX})
 find_python_package(cwrap 0.0.0 ${PYTHON_INSTALL_PREFIX})
 find_python_package(numpy 1.7.1 ${PYTHON_INSTALL_PREFIX})
+find_python_package(yaml  3.1.0 ${PYTHON_INSTALL_PREFIX})
 
 # libres python needs ecl, cwrap and numpy
 if (NOT DEFINED PY_ecl OR NOT DEFINED PY_cwrap OR NOT DEFINED PY_numpy)
