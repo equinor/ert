@@ -392,10 +392,10 @@ static bool enkf_state_internalize_dynamic_eclipse_results(ensemble_config_type 
         int_vector_type * time_index = __enkf_state_get_time_index(sim_fs, summary);
 
         /*
-	  Now there are two related / conflicting(?) systems for
-	  checking summary time consistency, both internally in the
-	  time_map and also through the
-	  model_config_report_step_compatible() function.
+          Now there are two related / conflicting(?) systems for
+          checking summary time consistency, both internally in the
+          time_map and also through the
+          model_config_report_step_compatible() function.
         */
 
         /*Check the loaded summary against the reference ecl_sum_type */
