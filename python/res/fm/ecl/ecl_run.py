@@ -146,9 +146,12 @@ class EclRun(object):
             # Fourth argument - the number of CPU's - defaults to one if not supplied.
             if len(argv) == 3:
                 self.num_cpu = 1
-                self.sim = config.sim( simulator, self.version )
             else:
                 self.num_cpu = int(argv[3])
+
+            if self.num_cpu == 1:
+                self.sim = config.sim( simulator, self.version )
+            else:
                 self.sim = config.mpi_sim( simulator, self.version)
 
         else:
