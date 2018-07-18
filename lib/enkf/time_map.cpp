@@ -86,6 +86,22 @@ bool time_map_attach_refcase( time_map_type * time_map , const ecl_sum_type * re
       time_t sim_time = ecl_sum_get_report_time( refcase , step );
 
       if (current_time != sim_time) {
+        /*
+          The treatment of report step 0 has been fraught with uncertainty.
+          Report step 0 is not really valid, and previously both the time_map
+          and the ecl_sum instance have returned -1 as an indication of
+          undefined value.
+
+          As part of the refactoring when the unsmry_loader was added to the
+          ecl_sum implementation ecl_sum will return the start date for report
+          step 0, then this test will fail for existing time_maps created prior
+          to this change of behaviour. We therefor special case the step 0 here.
+
+          July 2018.
+        */
+        if (step == 0)
+          continue;
+
         attach_ok = false;
         break;
       }
