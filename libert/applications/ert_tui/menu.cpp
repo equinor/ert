@@ -158,7 +158,7 @@ static void menu_item_free__(void * arg) {
 
 static bool __string_contains(const char * string , const char * char_set) {
   bool contains = false;
-  int i = 0;
+  size_t i = 0;
   do {
     if (strchr(string , char_set[i]) != NULL)
       contains = true;
