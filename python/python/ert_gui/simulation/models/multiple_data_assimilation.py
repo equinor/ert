@@ -90,10 +90,10 @@ class MultipleDataAssimilation(BaseRunModel):
         phase_string = "Analyzing iteration: %d with weight %f" % (next_iteration, weight)
         self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
 
-        es_update = self.ert().getESUpdate( ) 
+        es_update = self.ert().getESUpdate( )
         es_update.setGlobalStdScaling(weight)
         success = es_update.smootherUpdate( run_context )
-        
+
         if not success:
             raise UserWarning("Analysis of simulation failed for iteration: %d!" % next_iteration)
 
@@ -101,7 +101,7 @@ class MultipleDataAssimilation(BaseRunModel):
     def _simulateAndPostProcess(self, run_context):
         self._job_queue = self._queue_config.create_job_queue( )
         iteration = run_context.get_iter( )
-        
+
         phase_string = "Running simulation for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath(run_context)
@@ -115,7 +115,7 @@ class MultipleDataAssimilation(BaseRunModel):
         num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, run_context)
 
         self.checkHaveSufficientRealizations(num_successful_realizations)
-        
+
         phase_string = "Post processing for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.POST_SIMULATION)
@@ -155,11 +155,12 @@ class MultipleDataAssimilation(BaseRunModel):
 
         return result
 
-    
+
     def create_context(self, arguments, itr, prior_context = None, update = True):
         target_case_format = arguments["target_case"]
         model_config = self.ert().getModelConfig( )
         runpath_fmt = model_config.getRunpathFormat( )
+        jobname_fmt = model_conifg.getJobnameFormat( )
         subst_list = self.ert().getDataKW( )
         fs_manager = self.ert().getEnkfFsManager()
 
@@ -168,11 +169,11 @@ class MultipleDataAssimilation(BaseRunModel):
             target_fs = fs_manager.getFileSystem(target_case_format % (itr + 1))
         else:
             target_fs = None
-            
+
         if prior_context is None:
             mask = arguments["active_realizations"]
         else:
             mask = prior_context.get_mask( )
-            
-        run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, subst_list, itr)
+
+        run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr)
         return run_context
