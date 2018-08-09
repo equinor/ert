@@ -18,9 +18,6 @@
 
 #ifndef ERT_ENKF_MAIN_H
 #define ERT_ENKF_MAIN_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <stdbool.h>
 
@@ -63,7 +60,12 @@ extern "C" {
 #include <ert/enkf/field_config.hpp>
 #include <ert/enkf/ert_run_context.hpp>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
   /*****************************************************************/
+
 
   typedef struct enkf_main_struct enkf_main_type;
   ui_return_type *              enkf_main_set_eclbase( enkf_main_type * enkf_main , const char * eclbase_fmt);

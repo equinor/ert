@@ -18,16 +18,13 @@
 
 #ifndef ERT_ENSEMBLE_CONFIG_H
 #define ERT_ENSEMBLE_CONFIG_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdbool.h>
 
-#include <ert/util/stringlist.h>
-#include <ert/util/hash.h>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/hash.hpp>
 
-#include <ert/ecl/ecl_grid.h>
-#include <ert/ecl/ecl_sum.h>
+#include <ert/ecl/ecl_grid.hpp>
+#include <ert/ecl/ecl_sum.hpp>
 
 #include <ert/config/config_parser.hpp>
 #include <ert/config/config_content.hpp>
@@ -38,6 +35,9 @@ extern "C" {
 #include <ert/enkf/summary_key_matcher.hpp>
 #include <ert/enkf/custom_kw_config_set.hpp>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 typedef struct ensemble_config_struct ensemble_config_type;

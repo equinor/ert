@@ -20,12 +20,13 @@
 #define ERT_CONTAINER_CONFIG_H
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_macros.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
   typedef struct container_config_struct container_config_type;
 

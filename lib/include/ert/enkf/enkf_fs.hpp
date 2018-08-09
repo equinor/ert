@@ -18,9 +18,6 @@
 
 #ifndef ERT_ENKF_FS_H
 #define ERT_ENKF_FS_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdbool.h>
 
 #include <ert/util/stringlist.h>
@@ -38,6 +35,10 @@ extern "C" {
 #include <ert/enkf/misfit_ensemble_typedef.hpp>
 #include <ert/enkf/summary_key_set.hpp>
 #include <ert/enkf/custom_kw_config_set.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
   const      char * enkf_fs_get_mount_point( const enkf_fs_type * fs );
   const      char * enkf_fs_get_root_path( const enkf_fs_type * fs );

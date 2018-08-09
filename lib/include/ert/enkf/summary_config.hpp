@@ -19,9 +19,6 @@
 #ifndef ERT_SUMMARY_CONFIG_H
 #define ERT_SUMMARY_CONFIG_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -33,6 +30,9 @@ extern "C" {
 
 #include <ert/enkf/enkf_macros.hpp>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /*
   How should the run system handle a load problem of a summary
   variable. Observe that the numerical enum values are actually used -

@@ -19,18 +19,19 @@
 #ifndef ERT_FORWARD_LOAD_CONTEXT_H
 #define ERT_FORWARD_LOAD_CONTEXT_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <ert/util/type_macros.h>
 #include <ert/util/stringlist.h>
 
-#include <ert/ecl/ecl_sum.h>
-#include <ert/ecl/ecl_file.h>
+#include <ert/ecl/ecl_sum.hpp>
+#include <ert/ecl/ecl_file.hpp>
 
 #include <ert/enkf/enkf_fs_type.hpp>
 #include <ert/enkf/run_arg_type.hpp>
 #include <ert/enkf/ecl_config.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
   typedef struct forward_load_context_struct forward_load_context_type;
 

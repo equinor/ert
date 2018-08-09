@@ -18,9 +18,6 @@
 
 #ifndef ERT_GEN_DATA_CONFIG_H
 #define ERT_GEN_DATA_CONFIG_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdbool.h>
 
 #include <ert/util/stringlist.h>
@@ -32,6 +29,10 @@ extern "C" {
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/gen_data_common.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum { GEN_DATA_UNDEFINED = 0,
                ASCII              = 1,   /*   The file is ASCII file with a vector of numbers formatted with "%g".       */

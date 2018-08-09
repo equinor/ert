@@ -18,22 +18,23 @@
 
 #ifndef ERT_ENKF_CONFIG_NODE_H
 #define ERT_ENKF_CONFIG_NODE_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <ert/util/stringlist.h>
 #include <ert/util/hash.h>
 
 #include <ert/config/config_parser.hpp>
 
-#include <ert/ecl/ecl_grid.h>
+#include <ert/ecl/ecl_grid.hpp>
 
 #include <ert/enkf/field_trans.hpp>
 #include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/summary_config.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_macros.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
   typedef void   (config_free_ftype)    (void *);
   typedef int    (get_data_size_ftype)  (const void *);

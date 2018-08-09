@@ -18,7 +18,7 @@
 
 #include <stdlib.h>
 
-#include <ert/util/vector.h>
+#include <ert/util/vector.hpp>
 #include <ert/util/util.h>
 
 #include <ert/enkf/container_config.hpp>

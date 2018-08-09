@@ -20,9 +20,6 @@
 #ifndef ERT_ENKF_PLOT_TVECTOR_H
 #define ERT_ENKF_PLOT_TVECTOR_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <time.h>
 #include <stdbool.h>
 
@@ -31,6 +28,10 @@ extern "C" {
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
   typedef struct enkf_plot_tvector_struct enkf_plot_tvector_type;
 

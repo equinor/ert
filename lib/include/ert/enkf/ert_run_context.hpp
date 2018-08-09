@@ -18,9 +18,6 @@
 
 #ifndef ERT_RUN_CONTEXT_H
 #define ERT_RUN_CONTEXT_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <ert/util/type_macros.h>
 #include <ert/util/bool_vector.h>
@@ -31,6 +28,10 @@ extern "C" {
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/run_arg.hpp>
 #include <ert/enkf/enkf_fs.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct ert_run_context_struct ert_run_context_type;
 

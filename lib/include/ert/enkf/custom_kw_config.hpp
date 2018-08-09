@@ -1,8 +1,5 @@
 #ifndef ERT_CUSTOM_KW_CONFIG_H
 #define ERT_CUSTOM_KW_CONFIG_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdbool.h>
 
 #include <ert/util/stringlist.h>
@@ -13,6 +10,10 @@ extern "C" {
 #include <ert/enkf/enkf_fs_type.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_macros.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
     typedef struct custom_kw_config_struct custom_kw_config_type;
 
