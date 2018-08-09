@@ -89,14 +89,20 @@ static point_obs_type * point_obs_alloc( block_obs_source_type   source_type , i
   point_obs_type * point_obs = (point_obs_type *)util_malloc( sizeof * point_obs );
   UTIL_TYPE_ID_INIT( point_obs , POINT_OBS_TYPE_ID );
 
+  if (source_type == SOURCE_FIELD) {
+    point_obs->active_index = active_index;
+    point_obs->sum_key = NULL;
+  } else {
+    point_obs->active_index = -1;
+    point_obs->sum_key      = util_alloc_string_copy( sum_key );
+  }
+
   point_obs->source_type  = source_type;
   point_obs->i            = i;
   point_obs->j            = j;
   point_obs->k            = k;
-  point_obs->active_index = active_index;
   point_obs->value        = value;
   point_obs->std          = std;
-  point_obs->sum_key      = util_alloc_string_copy( sum_key );
   point_obs->std_scaling  = 1.0;
 
   return point_obs;
@@ -177,8 +183,8 @@ void block_obs_append_field_obs( block_obs_type * block_obs , int i , int j , in
 
 
 void block_obs_append_summary_obs( block_obs_type * block_obs , int i , int j , int k , const char * sum_key , double value , double std) {
-  int active_index = ecl_grid_get_active_index3( block_obs->grid , i , j , k );
-  point_obs_type * point_obs = point_obs_alloc( SOURCE_SUMMARY , i , j , k , active_index , sum_key , value , std);
+  int active_index = -1;
+  point_obs_type * point_obs = point_obs_alloc( SOURCE_SUMMARY , i , j , k , active_index, sum_key , value , std);
   block_obs_append_point( block_obs , point_obs );
 }
 
@@ -225,7 +231,9 @@ block_obs_type * block_obs_alloc_complete(const char   * obs_key,
                                           const double * obs_value,
                                           const double * obs_std)
 {
-  block_obs_validate_ijk( grid , size , i,j,k);
+  if (source_type == SOURCE_FIELD)
+    block_obs_validate_ijk( grid , size , i,j,k);
+
   {
     block_obs_type * block_obs = block_obs_alloc( obs_key , data_config , grid );
     if (block_obs) {
