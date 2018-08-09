@@ -18,9 +18,6 @@
 
 #ifndef ERT_FIELD_H
 #define ERT_FIELD_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <ert/util/type_macros.h>
 
 #include <ert/ecl/fortio.h>
@@ -32,6 +29,10 @@ extern "C" {
 #include <ert/enkf/field_config.hpp>
 #include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/field_common.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Typedef field_type moved to field_config.h */
 

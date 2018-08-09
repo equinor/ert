@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 #include <ert/util/util.h>
-#include <ert/util/int_vector.h>
+#include <ert/util/int_vector.hpp>
 
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/active_list.hpp>

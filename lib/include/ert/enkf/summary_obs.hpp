@@ -19,9 +19,6 @@
 #ifndef ERT_SUMMARY_OBS_H
 #define ERT_SUMMARY_OBS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdbool.h>
 
 #include <ert/sched/history.hpp>
@@ -35,6 +32,9 @@ extern "C" {
 #include <ert/enkf/summary.hpp>
 #include <ert/enkf/active_list.hpp>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 typedef struct summary_obs_struct summary_obs_type;

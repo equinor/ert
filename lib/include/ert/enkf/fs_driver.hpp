@@ -18,14 +18,15 @@
 
 #ifndef ERT_FS_DRIVER_H
 #define ERT_FS_DRIVER_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <ert/util/buffer.h>
 #include <ert/util/stringlist.h>
 
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/fs_types.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define FS_MAGIC_ID              123998L
 #define FSTAB_FILE              "ert_fstab"

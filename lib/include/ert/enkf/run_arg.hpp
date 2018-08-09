@@ -18,9 +18,6 @@
 
 #ifndef ERT_RUN_ARG_H
 #define ERT_RUN_ARG_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <ert/util/type_macros.h>
 #include <ert/res_util/subst_list.hpp>
@@ -30,6 +27,9 @@ extern "C" {
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/run_arg_type.hpp>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 UTIL_SAFE_CAST_HEADER( run_arg );

@@ -18,9 +18,6 @@
 
 #ifndef ERT_ENKF_OBS_H
 #define ERT_ENKF_OBS_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <time.h>
 
 #include <ert/util/hash.h>
@@ -43,6 +40,10 @@ extern "C" {
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/local_obsdata_node.hpp>
 #include <ert/enkf/local_obsdata.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
   bool enkf_obs_have_obs(const enkf_obs_type * enkf_obs);
   bool enkf_obs_is_valid(const enkf_obs_type*);

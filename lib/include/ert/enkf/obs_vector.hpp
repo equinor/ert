@@ -19,9 +19,6 @@
 #ifndef ERT_OBS_VECTOR_H
 #define ERT_OBS_VECTOR_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <time.h>
 
@@ -45,6 +42,9 @@ extern "C" {
 #include <ert/enkf/time_map.hpp>
 #include <ert/enkf/local_obsdata_node.hpp>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
   typedef void   (obs_free_ftype)                (void *);
   typedef void   (obs_get_ftype)                 (const void * , obs_data_type * , enkf_fs_type *, int , const active_list_type * );

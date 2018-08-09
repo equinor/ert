@@ -1,14 +1,15 @@
 #ifndef ERT_CUSTOM_KW_CONFIG_SET_H
 #define ERT_CUSTOM_KW_CONFIG_SET_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <ert/enkf/custom_kw_config.hpp>
 #include <ert/util/type_macros.h>
 
 #include <ert/enkf/enkf_types.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
     typedef struct custom_kw_config_set_struct custom_kw_config_set_type;
 

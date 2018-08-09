@@ -18,9 +18,6 @@
 
 #ifndef ERT_ECL_CONFIG_H
 #define ERT_ECL_CONFIG_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <time.h>
 
 #include <ert/res_util/ui_return.hpp>
@@ -28,9 +25,9 @@ extern "C" {
 #include <ert/config/config_parser.hpp>
 #include <ert/config/config_content.hpp>
 
-#include <ert/ecl/ecl_grid.h>
-#include <ert/ecl/ecl_sum.h>
-#include <ert/ecl/ecl_io_config.h>
+#include <ert/ecl/ecl_grid.hpp>
+#include <ert/ecl/ecl_sum.hpp>
+#include <ert/ecl/ecl_io_config.hpp>
 
 #include <ert/sched/sched_file.hpp>
 
@@ -38,6 +35,9 @@ extern "C" {
 
 #include <ert/enkf/ecl_refcase_list.hpp>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
   typedef struct ecl_config_struct ecl_config_type;
 

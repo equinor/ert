@@ -19,13 +19,14 @@
 #ifndef ERT_SURFACE_CONFIG_H
 #define ERT_SURFACE_CONFIG_H
 
+
+#include <ert/geometry/geo_surface.hpp>
+
+#include <ert/enkf/enkf_macros.hpp>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <ert/geometry/geo_surface.h>
-
-#include <ert/enkf/enkf_macros.hpp>
 
   typedef struct surface_config_struct surface_config_type;
 
