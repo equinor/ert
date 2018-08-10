@@ -80,3 +80,9 @@ class EnKFTestTransferEnv(ResTest):
           path_data = data["global_update_path"]
           self.assertEqual('TheThirdValue', path_data["THIRD"])
           self.assertEqual('TheFourthValue', path_data["FOURTH"])
+
+          joblist = data["jobList"]
+          job1 = joblist[0]
+          self.assertEqual(job1["name"], "SNAKE_OIL_FIELD_SNAKE_OIL_SIMULATOR")
+
+    
