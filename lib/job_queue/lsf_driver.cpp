@@ -34,6 +34,7 @@
 #include <ert/job_queue/lsf_driver.hpp>
 #include <ert/job_queue/lsf_job_stat.hpp>
 
+#define LSF_JSON "lsf_info.json"
 
 #ifdef HAVE_LSF_LIBRARY
 #include <ert/job_queue/lsb.hpp>
@@ -1001,8 +1002,14 @@ void * lsf_driver_submit_job(void * __driver ,
       free( lsf_stdout );
     }
 
-    if (job->lsf_jobnr > 0)
+    if (job->lsf_jobnr > 0) {
+      char * json_file = (char*)util_alloc_filename(run_path, LSF_JSON, NULL);
+      FILE * stream    = util_fopen(json_file, "w");
+      fprintf(stream, "{\"job_id\" : %ld}\n", job->lsf_jobnr );
+      free(json_file);
+      fclose(stream);
       return job;
+    }
     else {
       /*
         The submit failed - the queue system shall handle
