@@ -80,3 +80,6 @@ class EnKFTestTransferEnv(ResTest):
           path_data = data["global_update_path"]
           self.assertEqual('TheThirdValue', path_data["THIRD"])
           self.assertEqual('TheFourthValue', path_data["FOURTH"])
+
+
+    

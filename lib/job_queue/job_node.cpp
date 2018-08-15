@@ -24,6 +24,8 @@
 #include <pthread.h>
 #include <unistd.h>
 
+#include <string>
+
 #include <ert/util/util.hpp>
 #include <ert/util/arg_pack.hpp>
 #include <ert/util/type_macros.hpp>
@@ -281,7 +283,9 @@ job_queue_node_type * job_queue_node_alloc( const char * job_name ,
   UTIL_TYPE_ID_INIT( node , JOB_QUEUE_NODE_TYPE_ID );
 
   /* The data initialized in this block should *NEVER* change. */
-  node->job_name       = util_alloc_string_copy( job_name );
+  std::string path     = job_name;
+  std::string basename = path.substr(path.find_last_of("/\\") + 1);
+  node->job_name       = util_alloc_string_copy( basename.data() );
 
   node->run_path = util_alloc_realpath( run_path );
 
