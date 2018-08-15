@@ -160,7 +160,7 @@ class MultipleDataAssimilation(BaseRunModel):
         target_case_format = arguments["target_case"]
         model_config = self.ert().getModelConfig( )
         runpath_fmt = model_config.getRunpathFormat( )
-        jobname_fmt = model_conifg.getJobnameFormat( )
+        jobname_fmt = model_config.getJobnameFormat( )
         subst_list = self.ert().getDataKW( )
         fs_manager = self.ert().getEnkfFsManager()
 
