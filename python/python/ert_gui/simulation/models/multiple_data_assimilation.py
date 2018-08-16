@@ -83,7 +83,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
 
     def update(self, run_context, weight):
-        source_fs = run_context.get_result_fs( )
+        source_fs = run_context.get_sim_fs( )
         next_iteration = run_context.get_iter( ) + 1
         target_fs = run_context.get_target_fs( )
 
