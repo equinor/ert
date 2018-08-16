@@ -246,7 +246,7 @@ rms_tag_type * rms_file_fread_alloc_tag(rms_file_type * rms_file,
   rms_file_fopen_r(rms_file);
 
   long int start_pos = util_ftell(rms_file->stream);
-  util_fseek(rms_file->stream , 0 , SEEK_SET);
+  fseek(rms_file->stream , 0 , SEEK_SET);
   rms_file_init_fread(rms_file);
   while (true) {
     bool eof_tag = false;  // will be set by rms_tag
@@ -264,7 +264,7 @@ rms_tag_type * rms_file_fread_alloc_tag(rms_file_type * rms_file,
   }
 
   if (tag == NULL) {
-    util_fseek(rms_file->stream , start_pos , SEEK_SET);
+    fseek(rms_file->stream , start_pos , SEEK_SET);
     util_abort("%s: could not find tag: \"%s\" (with %s=%s) in file:%s - aborting.\n",
                __func__,
                tagname,
@@ -450,14 +450,14 @@ bool rms_file_is_roff(FILE * stream) {
   bool roff_file             = false;
 
   /* Skipping #roff-bin#0#  WILL Fail with formatted files */
-  util_fseek(stream, 1 + 1 + 8, SEEK_CUR);
+  fseek(stream, 1 + 1 + 8, SEEK_CUR);
 
 
   rms_util_fread_string(header , len+1 , stream);
   if (strncmp(rms_comment1 , header , len) == 0)
     roff_file = true;
 
-  util_fseek(stream , current_pos , SEEK_SET);
+  fseek(stream , current_pos , SEEK_SET);
   free(header);
   return roff_file;
 }

@@ -105,7 +105,7 @@ int rms_util_fread_strlen(FILE *stream) {
   int len;
   rms_util_fskip_string(stream);
   len = util_ftell(stream) - init_pos;
-  util_fseek(stream , init_pos , SEEK_SET);
+  fseek(stream , init_pos , SEEK_SET);
   return len;
 }
 
@@ -128,7 +128,7 @@ bool rms_util_fread_string(char *string , int max_length , FILE *stream) {
       if (max_length > 0) {
         if (pos == max_length) {
           read_ok = false;
-          util_fseek(stream , init_pos , SEEK_SET);
+          fseek(stream , init_pos , SEEK_SET);
           cont = false;
         }
       }
