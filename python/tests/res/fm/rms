@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+# This is mock RMS script; not very functional ...
+import json
+import sys
+import os
+
+config = json.load(open("action.json"))
+
+if "target_file" in config:
+    with open(config["target_file"], "w") as f:
+        f.write("this is the target file\n")
+
+sys.exit(config["exit_status"])
+
