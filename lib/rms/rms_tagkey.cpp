@@ -432,7 +432,7 @@ static void rms_tagkey_set_data_size(rms_tagkey_type *tagkey , FILE *stream , in
       for (i=0; i < tagkey->size; i++)
         rms_util_fskip_string(stream);
       tagkey->data_size = util_ftell(stream) - init_pos;
-      util_fseek(stream , init_pos , SEEK_SET);
+      fseek(stream , init_pos , SEEK_SET);
     } else
       tagkey->data_size = strlen + 1;
   } else

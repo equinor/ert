@@ -369,7 +369,7 @@ bool gen_kw_fload(gen_kw_type * gen_kw , const char * filename) {
     if (!readOK) {
       int counter = 0;
       readOK = true;
-      util_fseek( stream , 0 , SEEK_SET );
+      fseek( stream , 0 , SEEK_SET );
 
       while ((counter < size) && readOK) {
         char key[128];

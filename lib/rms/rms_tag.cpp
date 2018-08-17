@@ -205,7 +205,7 @@ static bool rms_tag_at_endtag(FILE *stream) {
     at_endtag = false;
 
   if (!at_endtag)
-    util_fseek(stream , init_pos , SEEK_SET);
+    fseek(stream , init_pos , SEEK_SET);
   return at_endtag;
 }
 

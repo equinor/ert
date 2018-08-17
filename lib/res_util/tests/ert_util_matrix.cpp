@@ -121,7 +121,7 @@ void test_readwrite() {
       matrix_fread( m1 , stream );
       test_assert_int_equal( matrix_get_rows(m1) , matrix_get_rows( m2));
       test_assert_int_equal( matrix_get_columns(m1) , matrix_get_columns( m2));
-      util_fseek( stream , 0 , SEEK_SET);
+      fseek( stream , 0 , SEEK_SET);
       {
         matrix_type * m3 = matrix_fread_alloc( stream );
         test_assert_true( matrix_equal( m2 , m3 ));
