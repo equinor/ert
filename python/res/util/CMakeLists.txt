@@ -1,6 +1,7 @@
 set(PYTHON_SOURCES
     __init__.py
     log.py
+    arg_pack.py
     stat.py
     res_log.py
     path_format.py

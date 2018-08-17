@@ -2,6 +2,7 @@ set(TEST_SOURCES
     __init__.py
     test_ui_return.py
     test_log.py
+    test_arg_pack.py
     test_res_log.py
     test_substitution_list.py
     test_version.py
@@ -21,3 +22,4 @@ addPythonTest(tests.res.util.test_path_fmt.PathFmtTest)
 addPythonTest(tests.res.util.test_stat.StatTest )
 addPythonTest(tests.res.util.test_matrix.MatrixTest )
 addPythonTest(tests.res.util.test_cthread_pool.CThreadPoolTest)
+addPythonTest(tests.res.util.test_arg_pack.ArgPackTest)

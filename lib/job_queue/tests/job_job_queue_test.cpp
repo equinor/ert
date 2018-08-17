@@ -20,7 +20,7 @@
 #include <time.h>
 
 #include <ert/util/util.hpp>
-#include <ert/util/arg_pack.hpp>
+#include <ert/res_util/arg_pack.hpp>
 #include <ert/util/test_util.hpp>
 #include <ert/util/test_work_area.hpp>
 

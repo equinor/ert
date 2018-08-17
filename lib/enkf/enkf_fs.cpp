@@ -28,9 +28,9 @@
 
 #include <ert/util/util.h>
 #include <ert/util/type_macros.h>
-#include <ert/util/arg_pack.h>
+#include <ert/res_util/arg_pack.hpp>
 #include <ert/util/stringlist.h>
-#include <ert/util/arg_pack.h>
+#include <ert/res_util/arg_pack.hpp>
 
 #include <ert/res_util/path_fmt.hpp>
 #include <ert/res_util/res_log.hpp>

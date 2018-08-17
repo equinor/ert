@@ -24,7 +24,7 @@
 #include <ert/util/test_util.h>
 #include <ert/util/util.h>
 #include <ert/util/bool_vector.h>
-#include <ert/util/arg_pack.h>
+#include <ert/res_util/arg_pack.hpp>
 
 #include <ert/enkf/enkf_plot_tvector.hpp>
 #include <ert/enkf/summary_config.hpp>

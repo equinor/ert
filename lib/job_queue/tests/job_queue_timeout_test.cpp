@@ -21,7 +21,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <ert/util/arg_pack.hpp>
+#include <ert/res_util/arg_pack.hpp>
 #include <ert/util/rng.hpp>
 #include <ert/util/test_util.hpp>
 #include <ert/util/test_work_area.hpp>

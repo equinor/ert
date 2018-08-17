@@ -24,7 +24,7 @@
 #include <ert/util/util.hpp>
 #include <ert/util/type_macros.hpp>
 #include <ert/util/stringlist.hpp>
-#include <ert/util/arg_pack.hpp>
+#include <ert/res_util/arg_pack.hpp>
 #include <ert/util/vector.hpp>
 #include <ert/res_util/subst_list.hpp>
 

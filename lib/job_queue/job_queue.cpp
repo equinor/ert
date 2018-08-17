@@ -27,7 +27,7 @@
 #include <unistd.h>
 
 #include <ert/util/util.hpp>
-#include <ert/util/arg_pack.hpp>
+#include <ert/res_util/arg_pack.hpp>
 #include <ert/res_util/res_log.hpp>
 #include <ert/res_util/thread_pool.hpp>
 #include <ert/res_util/res_portability.hpp>

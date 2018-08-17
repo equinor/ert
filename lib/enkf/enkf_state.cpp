@@ -28,7 +28,7 @@
 
 #include <ert/util/hash.h>
 #include <ert/util/util.h>
-#include <ert/util/arg_pack.h>
+#include <ert/res_util/arg_pack.hpp>
 #include <ert/util/stringlist.h>
 #include <ert/util/node_ctype.h>
 #include <ert/util/timer.h>
