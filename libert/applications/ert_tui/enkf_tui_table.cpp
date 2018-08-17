@@ -23,7 +23,7 @@
 #include <ctype.h>
 
 #include <ert/util/util.hpp>
-#include <ert/util/arg_pack.hpp>
+#include <ert/res_util/arg_pack.hpp>
 
 #include <ert/enkf/enkf_main.hpp>
 #include <ert/enkf/enkf_obs.hpp>

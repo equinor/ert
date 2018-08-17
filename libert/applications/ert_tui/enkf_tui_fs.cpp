@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/arg_pack.hpp>
+#include <ert/res_util/arg_pack.hpp>
 #include <ert/util/util.hpp>
 
 #include <ert/enkf/enkf_main.hpp>
