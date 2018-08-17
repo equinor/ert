@@ -24,7 +24,7 @@
 
 #include <ert/util/util.hpp>
 #include <ert/util/string_util.hpp>
-#include <ert/util/arg_pack.hpp>
+#include <ert/res_util/arg_pack.hpp>
 
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/field.hpp>
