@@ -24,7 +24,7 @@
 #include <ert/util/test_util.h>
 #include <ert/util/util.h>
 #include <ert/util/bool_vector.h>
-#include <ert/util/arg_pack.h>
+#include <ert/res_util/arg_pack.hpp>
 
 #include <ert/enkf/state_map.hpp>
 #include <ert/enkf/enkf_types.hpp>

@@ -16,6 +16,7 @@
 from cwrap import Prototype
 import res
 
+from .arg_pack import ArgPack
 from .substitution_list import SubstitutionList
 from .enums import LLSQResultEnum
 from .log import Log

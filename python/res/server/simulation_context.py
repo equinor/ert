@@ -1,9 +1,9 @@
 import os.path
-from ecl.util.util import ArgPack, BoolVector
+from ecl.util.util import BoolVector
 
 from res import RES_LIB
 from res.job_queue import JobQueueManager, ForwardModelStatus
-from res.util import CThreadPool
+from res.util import CThreadPool, ArgPack
 from res.enkf.ert_run_context import ErtRunContext
 from res.enkf.run_arg import RunArg
 from res.enkf.enums import EnkfRunType, EnkfInitModeEnum

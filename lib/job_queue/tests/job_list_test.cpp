@@ -19,7 +19,7 @@
 #include <stdbool.h>
 
 #include <ert/util/test_util.hpp>
-#include <ert/util/arg_pack.hpp>
+#include <ert/res_util/arg_pack.hpp>
 
 #include <ert/job_queue/job_node.hpp>
 #include <ert/job_queue/job_list.hpp>

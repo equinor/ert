@@ -24,7 +24,7 @@
 
 #include <ert/util/test_util.h>
 #include <ert/util/util.h>
-#include <ert/util/arg_pack.h>
+#include <ert/res_util/arg_pack.hpp>
 #include <ert/util/test_work_area.h>
 
 #include <ert/config/config_parser.hpp>

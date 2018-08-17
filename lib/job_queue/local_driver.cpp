@@ -25,7 +25,7 @@
 #include <errno.h>
 
 #include <ert/util/util.hpp>
-#include <ert/util/arg_pack.hpp>
+#include <ert/res_util/arg_pack.hpp>
 
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/local_driver.hpp>

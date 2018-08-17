@@ -25,9 +25,9 @@
 #include <ert/util/ert_api_config.hpp>
 #include <ert/res_util/thread_pool.hpp>
 #include <ert/util/util.hpp>
-#include <ert/util/arg_pack.hpp>
 #include <ert/util/rng.hpp>
 
+#include <ert/res_util/arg_pack.hpp>
 #include <ert/res_util/matrix.hpp>
 /**
    This is V E R Y  S I M P L E matrix implementation. It is not
