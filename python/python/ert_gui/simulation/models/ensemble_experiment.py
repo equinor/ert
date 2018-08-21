@@ -1,5 +1,6 @@
 from res.enkf.enums import HookRuntime
 from res.enkf import ErtRunContext
+from res.util import ResLog
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
 class EnsembleExperiment(BaseRunModel):
