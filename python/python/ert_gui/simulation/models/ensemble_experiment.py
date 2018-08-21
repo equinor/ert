@@ -1,5 +1,6 @@
 from res.enkf.enums import HookRuntime
 from res.enkf import ErtRunContext
+from res.util import ResLog
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
 class EnsembleExperiment(BaseRunModel):
@@ -33,7 +34,7 @@ class EnsembleExperiment(BaseRunModel):
             raise ErtRunError("Simulation failed! All realizations failed!")
         elif (num_successful_realizations < active_realizations):
             raise ErtRunError("Too many simulations have failed! .\n\n"
-                              "Check ERT log file '%s' or simulation folder for details." % ResLog.getFilename()) 
+                              "Check ERT log file '%s' or simulation folder for details." % ResLog.getFilename())
 
     def runSimulations(self, arguments ):
         self.runSimulations__(  arguments , "Running ensemble experiment...")
