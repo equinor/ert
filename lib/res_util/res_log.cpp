@@ -31,8 +31,29 @@
 #include <ert/res_util/res_log.hpp>
 #include <ert/res_util/res_util_defaults.hpp>
 
+
+static FILE * DEFAULT_STREAM = stdout;
 static log_type * logh = NULL;               /* Handle to an open log file. */
 
+
+
+static void res_log_init_stream(message_level_type log_level,
+                                FILE * stream) {
+  if (logh)
+    log_close(logh);
+
+  logh = log_open_stream(stream, log_level);
+  if (!logh)
+    fprintf(stderr,"Could not open stderr log stream\n");
+}
+
+
+/**
+ * Initializes the log with default filename and default log level.
+ */
+static void res_log_init_default(){
+  res_log_init_stream(DEFAULT_LOG_LEVEL, DEFAULT_STREAM);
+}
 
 
 /**
@@ -44,7 +65,7 @@ static log_type * logh = NULL;               /* Handle to an open log file. */
 void res_log_add_message(message_level_type message_level,
                          const char* message) {
   if (!logh)
-    res_log_init_log_default(false);
+    res_log_init_default();
 
   /* We have not managed to open log handle, if the message is critical we write to stderr. */
   if (!logh) {
@@ -128,7 +149,7 @@ void res_log_fcritical(const char * fmt, ...) {
  *
  *  A high log_level setting will include more messages.
  *
- *  if log_file_name=NULL then DEFAULT_LOG_FILE is used
+ *  if log_file_name=NULL the logger will write to DEFAULT_STREAM (i.e. stdout).
  */
 bool res_log_init_log(message_level_type log_level,
                       const char * log_file_name,
@@ -137,21 +158,25 @@ bool res_log_init_log(message_level_type log_level,
   if(logh)
      log_close(logh);
 
-  if(log_file_name==NULL)
-    log_file_name=DEFAULT_LOG_FILE;
+  if(log_file_name)
+    logh = log_open_file(log_file_name , log_level );
+  else
+    logh = log_open_stream( DEFAULT_STREAM, log_level);
 
-  logh = log_open(log_file_name , log_level );
   if (!logh) {
     fprintf(stderr,"Failed to open log handle to %s\n", log_file_name);
     return false;
   }
 
 
-  if (verbose)
+  if (verbose && log_file_name)
     printf("Activity will be logged to %s \n",log_get_filename( logh ));
+
   log_add_message(logh, LOG_INFO, "ert configuration loaded");
   return true;
 }
+
+
 
 /**
  * Initializes the log with log level DEFAULT_LOG_LEVEL.
@@ -161,13 +186,6 @@ bool res_log_init_log_default_log_level(const char * log_file_name, bool verbose
   return res_log_init_log(DEFAULT_LOG_LEVEL,log_file_name,verbose);
 }
 
-
-/**
- * Initializes the log with default filename and default log level.
- */
-bool res_log_init_log_default( bool verbose){
-  return res_log_init_log(DEFAULT_LOG_LEVEL, DEFAULT_LOG_FILE,verbose);
-}
 
 
 void res_log_close() {
@@ -180,25 +198,18 @@ void res_log_close() {
 }
 
 void res_log_set_log_level(message_level_type log_level){
-    if(logh==NULL)
-      res_log_init_log_default(false);
+  if (!logh)
+    res_log_init_default();
+
+  if (logh)
     log_set_level(logh, log_level);
 }
 
-int res_log_get_log_level(){
-  if(logh==NULL)
-    res_log_init_log_default(false);
-  return log_get_level(logh);
-}
 
 const char * res_log_get_filename() {
-  if(logh==NULL)
-    res_log_init_log_default(false);
-  return log_get_filename(logh);
+  if (logh)
+    return log_get_filename(logh);
+  else
+    return NULL;
 }
 
-void res_log_open_empty() {
-  if(logh)
-    log_close(logh);
-  logh = log_open(NULL, DEFAULT_LOG_LEVEL);
-}

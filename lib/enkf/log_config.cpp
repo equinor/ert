@@ -22,6 +22,7 @@
 #include <ert/enkf/log_config.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/model_config.hpp>
+#include <ert/enkf/enkf_defaults.hpp>
 
 struct log_config_struct {
 

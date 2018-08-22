@@ -19,22 +19,20 @@
 #ifndef RESLOG_H
 #define RESLOG_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdio.h>
 #include <stdbool.h>
 
 #include <ert/res_util/log.hpp>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 bool res_log_init_log(message_level_type log_level,const char * log_file_name, bool verbose);
 bool res_log_init_log_default_log_level(const char * log_file_name, bool verbose);
-bool res_log_init_log_default( bool verbose);
 void res_log_close();
-int res_log_get_log_level();
 const char * res_log_get_filename();
-void res_log_open_empty();
 
 void res_log_add_message(message_level_type message_level, const char* message);
 
