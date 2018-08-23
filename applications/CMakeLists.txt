@@ -4,6 +4,12 @@ if (NOT BUILD_APPLICATIONS)
     return()
 endif()
 
+add_executable(bls block_fs/bls.cpp)
+add_executable(bfs_extract block_fs/bfs_extract.cpp)
+target_link_libraries(bls res)
+target_link_libraries(bfs_extract res)
+
+
 add_executable(rms_extract rms/rms_extract.c)
 add_executable(rms_setname rms/rms_setname.c)
 add_executable(rms_stat    rms/rms_stat.c)
@@ -21,6 +27,8 @@ install(TARGETS rms_extract
                 rms_stat
                 rms_test
                 tag_list
+                bls
+                bfs_extract
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_executable(ert_module_test analysis/ert_module_test.c)
