@@ -3,4 +3,3 @@
 */
 
 #define DEFAULT_LOG_LEVEL LOG_WARNING
-#define DEFAULT_LOG_FILE  "log.txt"

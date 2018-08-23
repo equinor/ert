@@ -19,13 +19,13 @@
 #ifndef ERT_LOG_H
 #define ERT_LOG_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 //Same as pythons default log levels, but with different numeric values.
 typedef enum {
@@ -51,9 +51,11 @@ typedef enum {
 
 
 typedef struct log_struct log_type;
+  log_type   * log_open_file(const char *filename, message_level_type log_level);
+  log_type   * log_open_stream(FILE * stream, message_level_type log_level);
+
   void         log_add_message_stream(FILE * stream, bool add_timestamp, message_level_type message_level, const char * message);
   FILE       * log_get_stream(log_type * logh );
-  log_type   * log_open(const char *filename, message_level_type log_level);
   void         log_add_message(log_type *logh, message_level_type message_level,  const char* message);
   void         log_add_message_str(log_type *logh, message_level_type message_level , const char* message);
   void         log_add_fmt_message(log_type * logh , message_level_type message_level, const char * fmt , ...);
@@ -69,4 +71,5 @@ typedef struct log_struct log_type;
 #ifdef __cplusplus
 }
 #endif
+
 #endif

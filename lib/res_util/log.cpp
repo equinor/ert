@@ -48,6 +48,7 @@ struct log_struct {
   message_level_type log_level;
   message_level_type log_level_stdout;
   int                msg_count;
+  bool               stream_owner;
 #ifdef HAVE_PTHREAD
   pthread_mutex_t    mutex;
 #endif
@@ -56,12 +57,16 @@ struct log_struct {
 
 
 static void log_delete_empty(const log_type * logh) {
-  if (util_file_exists( logh->filename ) ) {
-    size_t file_size = util_file_size( logh->filename );
-    if (file_size == 0)
-      remove( logh->filename );
-  }
+  if (!logh->filename)
+    return;
+
+  if (!util_file_exists(logh->filename))
+    return;
+
+  if (util_file_size(logh->filename) == 0)
+    remove( logh->filename );
 }
+
 
 const char * log_get_filename( const log_type * logh ) {
   return logh->filename;
@@ -85,7 +90,27 @@ void log_set_level( log_type * logh , message_level_type log_level) {
 
 
 
-log_type * log_open(const char * filename , message_level_type log_level) {
+log_type * log_open_stream(FILE * stream, message_level_type log_level) {
+  if (!stream)
+    return NULL;
+
+  log_type * logh        = (log_type *) util_malloc(sizeof * logh);
+  logh->msg_count        = 0;
+  logh->log_level        = log_level;
+  logh->log_level_stdout = LOG_ERROR;  // non-configurable default
+  logh->stream           = stream;
+  logh->fd               = fileno( logh->stream );
+  logh->filename         = NULL;
+  logh->stream_owner     = false;
+#ifdef HAVE_PTHREAD
+  pthread_mutex_init( &logh->mutex , NULL );
+#endif
+
+  return logh;
+}
+
+
+log_type * log_open_file(const char * filename , message_level_type log_level) {
   if (!filename)
     return NULL;
 
@@ -110,17 +135,11 @@ log_type * log_open(const char * filename , message_level_type log_level) {
     return NULL;
 
 
-  log_type * logh = (log_type *) util_malloc(sizeof * logh);
-  logh->msg_count     = 0;
-  logh->log_level     = log_level;
-  logh->log_level_stdout = LOG_ERROR;  // non-configurable default
-  logh->filename      = util_alloc_string_copy(filename);
-  logh->stream        = stream;
-  logh->fd     = fileno( logh->stream );
-
-#ifdef HAVE_PTHREAD
-  pthread_mutex_init( &logh->mutex , NULL );
-#endif
+  log_type * logh = log_open_stream(stream, log_level);
+  if (logh) {
+    logh->filename = util_alloc_string_copy(filename);
+    logh->stream_owner = true;
+  }
 
   return logh;
 }
@@ -252,9 +271,10 @@ void log_sync(log_type * logh) {
 
 
 void log_close( log_type * logh ) {
-  fclose( logh->stream );  /* This closes BOTH the FILE * stream and the integer file descriptor. */
+  if (logh->stream_owner)
+    fclose( logh->stream );  /* This closes BOTH the FILE * stream and the integer file descriptor. */
   log_delete_empty( logh );
-  free( (char*) logh->filename );
+  free( logh->filename );
   free( logh );
 }
 

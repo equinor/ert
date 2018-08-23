@@ -12,6 +12,8 @@
 #define ERT_ENKF_DEFAULT
 #include <stdbool.h>
 
+#define DEFAULT_LOG_FILE     "log.txt"
+
 #define DEFAULT_RUNPATH_KEY  "DEFAULT_RUNPATH"
 #define RERUN_RUNPATH_KEY    "DEFAULT_RERUN_PATH"
 

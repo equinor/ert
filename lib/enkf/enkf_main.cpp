@@ -1900,7 +1900,6 @@ void enkf_main_clear_data_kw( enkf_main_type * enkf_main ) {
 static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main_type * enkf_main = (enkf_main_type *)util_malloc(sizeof * enkf_main);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
-  res_log_open_empty();
   enkf_main->ensemble           = NULL;
   enkf_main->local_config       = NULL;
   enkf_main->rng_manager        = NULL;
@@ -2206,19 +2205,6 @@ int enkf_main_get_observation_count( const enkf_main_type * enkf_main, const cha
 }
 
 
-
-void enkf_main_log_fprintf_config( const enkf_main_type * enkf_main , FILE * stream ) {
-  fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
-  fprintf( stream , CONFIG_COMMENT_FORMAT  , "Here comes configuration information about the ERT logging.");
-  fprintf( stream , CONFIG_KEY_FORMAT      , LOG_FILE_KEY );
-  fprintf( stream , CONFIG_ENDVALUE_FORMAT , res_log_get_filename());
-  fprintf(stream , CONFIG_KEY_FORMAT      , LOG_LEVEL_KEY );
-  fprintf(stream , CONFIG_INT_FORMAT , res_log_get_log_level());
-  fprintf(stream , "\n");
-
-  fprintf(stream , "\n");
-  fprintf(stream , "\n");
-}
 
 
 void enkf_main_install_SIGNALS(void) {

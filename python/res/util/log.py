@@ -21,9 +21,8 @@ from res.util.enums import MessageLevelEnum
 
 
 class Log(BaseCClass):
-    _open_log = ResPrototype("void* log_open(char*, message_level_enum)", bind=False)
+    _open_log = ResPrototype("void* log_open_file(char*, message_level_enum)", bind=False)
     _get_filename = ResPrototype("char* log_get_filename(log)")
-    _get_level = ResPrototype("message_level_enum log_get_level(log)")
     _set_level = ResPrototype("void log_set_level(log, message_level_enum)")
 
     def __init__(self, log_filename, log_level):
@@ -33,12 +32,8 @@ class Log(BaseCClass):
         else:
             raise IOError("Failed to open log handle at:%s" % log_filename)
 
-
     def get_filename(self):
         return self._get_filename()
-
-    def get_level(self):
-        return self._get_level()
 
     def set_level(self, level):
         self._set_level(self, level)

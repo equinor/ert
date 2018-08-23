@@ -19,9 +19,6 @@
 #ifndef ERT_ENKF_PLOT_GENDATA_H
 #define ERT_ENKF_PLOT_GENDATA_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <ert/util/type_macros.h>
 #include <ert/util/double_vector.h>
@@ -31,6 +28,9 @@ extern "C" {
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_plot_genvector.hpp>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 typedef struct enkf_plot_gendata_struct enkf_plot_gendata_type;

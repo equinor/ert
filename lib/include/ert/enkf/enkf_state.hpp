@@ -18,9 +18,6 @@
 
 #ifndef ERT_ENKF_STATE_H
 #define ERT_ENKF_STATE_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <stdbool.h>
 
@@ -52,6 +49,10 @@ extern "C" {
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/run_arg.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct enkf_state_struct    enkf_state_type;
 
