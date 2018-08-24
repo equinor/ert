@@ -1,0 +1,13 @@
+# The python wrappers to libecl and libres are required by ert, but there is not
+# yet any pip package for those, they are therefor just mentioned here with a comment, 
+# and must be installed by building from source.
+
+# libecl
+# libres
+
+cwrap
+numpy
+pandas
+matplotlib
+scipy
+PyQt4
