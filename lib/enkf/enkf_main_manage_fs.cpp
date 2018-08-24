@@ -123,7 +123,6 @@ void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main ,
                                        const ert_run_context_type * run_context) {
   int num_cpu = 4;
   int ens_size               = enkf_main_get_ensemble_size( enkf_main );
-  thread_pool_type * tp     = thread_pool_alloc( num_cpu , true );
   arg_pack_type ** arg_list = (arg_pack_type **) util_calloc( ens_size , sizeof * arg_list );
 
   for (int iens = 0; iens < ens_size; iens++) {
@@ -135,15 +134,13 @@ void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main ,
       arg_pack_append_int( arg_list[iens] , iens );
       arg_pack_append_int( arg_list[iens] ,ert_run_context_get_init_mode(run_context));
 
-      thread_pool_add_job( tp , enkf_main_initialize_from_scratch_mt , arg_list[iens]);
+      enkf_main_initialize_from_scratch_mt(arg_list[iens]);
     }
   }
-  thread_pool_join( tp );
   for (int iens = 0; iens < ens_size; iens++){
     arg_pack_free( arg_list[iens] );
   }
   free( arg_list );
-  thread_pool_free( tp );
 }
 
 
