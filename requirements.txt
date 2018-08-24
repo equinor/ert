@@ -1,0 +1,8 @@
+# The python wrappers to libecl is required by libres, but there is
+# not yet any pip package for that, it is therefor just mentioned here
+# as a comment, and must be installed by building libecl from source.
+# libecl
+
+cwrap
+numpy
+pandas
