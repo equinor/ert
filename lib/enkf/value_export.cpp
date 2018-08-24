@@ -16,6 +16,7 @@
    for more details.
 */
 #include <stdlib.h>
+#include <math.h>
 
 #include <ert/util/stringlist.h>
 #include <ert/util/double_vector.h>
@@ -100,7 +101,11 @@ void value_export_json(const value_export_type * value) {
     for (int i=0; i < size; i++) {
       const char * key          = stringlist_iget( value->keys, i );
       double double_value       = double_vector_iget( value->values, i );
-      fprintf(stream, "\"%s\" : %g", key, double_value);
+      if (isnan(double_value))
+        fprintf(stream,"\"%s\" : NaN", key);
+      else
+        fprintf(stream, "\"%s\" : %g", key, double_value);
+
       if (i < (size - 1))
         fprintf(stream, ",");
       fprintf(stream,"\n");
