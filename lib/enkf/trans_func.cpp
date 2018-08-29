@@ -235,75 +235,75 @@ trans_func_type * trans_func_alloc( const stringlist_type * args ) {
   trans_func_type * trans_func = trans_func_alloc_empty(func_name);
 
   if (util_string_equal(func_name , "NORMAL")) {
-    stringlist_append_ref( trans_func->param_names , "MEAN");
-    stringlist_append_ref( trans_func->param_names , "STD" );
+    stringlist_append_copy( trans_func->param_names , "MEAN");
+    stringlist_append_copy( trans_func->param_names , "STD" );
     trans_func->func = trans_normal;
   }
 
   if (util_string_equal( func_name , "LOGNORMAL")) {
-    stringlist_append_ref( trans_func->param_names , "MEAN");
-    stringlist_append_ref( trans_func->param_names , "STD" );
+    stringlist_append_copy( trans_func->param_names , "MEAN");
+    stringlist_append_copy( trans_func->param_names , "STD" );
     trans_func->func = trans_lognormal;
     trans_func->use_log = true;
   }
 
   if (util_string_equal( func_name , "TRUNCATED_NORMAL")) {
-    stringlist_append_ref( trans_func->param_names , "MEAN");
-    stringlist_append_ref( trans_func->param_names , "STD" );
-    stringlist_append_ref( trans_func->param_names , "MIN");
-    stringlist_append_ref( trans_func->param_names , "MAX" );
+    stringlist_append_copy( trans_func->param_names , "MEAN");
+    stringlist_append_copy( trans_func->param_names , "STD" );
+    stringlist_append_copy( trans_func->param_names , "MIN");
+    stringlist_append_copy( trans_func->param_names , "MAX" );
 
     trans_func->func = trans_truncated_normal;
   }
 
   if (util_string_equal(func_name, "TRIANGULAR")) {
-    stringlist_append_ref( trans_func->param_names, "XMIN");
-    stringlist_append_ref( trans_func->param_names, "XMODE");
-    stringlist_append_ref( trans_func->param_names, "XMAX");
+    stringlist_append_copy( trans_func->param_names, "XMIN");
+    stringlist_append_copy( trans_func->param_names, "XMODE");
+    stringlist_append_copy( trans_func->param_names, "XMAX");
 
     trans_func->func = trans_triangular;
   }
 
   if (util_string_equal( func_name , "UNIFORM")) {
-    stringlist_append_ref( trans_func->param_names , "MIN");
-    stringlist_append_ref( trans_func->param_names , "MAX" );
+    stringlist_append_copy( trans_func->param_names , "MIN");
+    stringlist_append_copy( trans_func->param_names , "MAX" );
     trans_func->func = trans_unif;
   }
 
 
   if (util_string_equal( func_name , "DUNIF")) {
-    stringlist_append_ref( trans_func->param_names , "STEPS");
-    stringlist_append_ref( trans_func->param_names , "MIN");
-    stringlist_append_ref( trans_func->param_names , "MAX" );
+    stringlist_append_copy( trans_func->param_names , "STEPS");
+    stringlist_append_copy( trans_func->param_names , "MIN");
+    stringlist_append_copy( trans_func->param_names , "MAX" );
 
     trans_func->func = trans_dunif;
   }
 
 
   if (util_string_equal( func_name , "ERRF")) {
-    stringlist_append_ref( trans_func->param_names , "MIN");
-    stringlist_append_ref( trans_func->param_names , "MAX" );
-    stringlist_append_ref( trans_func->param_names , "SKEWNESS");
-    stringlist_append_ref( trans_func->param_names , "WIDTH" );
+    stringlist_append_copy( trans_func->param_names , "MIN");
+    stringlist_append_copy( trans_func->param_names , "MAX" );
+    stringlist_append_copy( trans_func->param_names , "SKEWNESS");
+    stringlist_append_copy( trans_func->param_names , "WIDTH" );
 
     trans_func->func = trans_errf;
   }
 
 
   if (util_string_equal( func_name , "DERRF")) {
-    stringlist_append_ref( trans_func->param_names , "STEPS");
-    stringlist_append_ref( trans_func->param_names , "MIN");
-    stringlist_append_ref( trans_func->param_names , "MAX" );
-    stringlist_append_ref( trans_func->param_names , "SKEWNESS");
-    stringlist_append_ref( trans_func->param_names , "WIDTH" );
+    stringlist_append_copy( trans_func->param_names , "STEPS");
+    stringlist_append_copy( trans_func->param_names , "MIN");
+    stringlist_append_copy( trans_func->param_names , "MAX" );
+    stringlist_append_copy( trans_func->param_names , "SKEWNESS");
+    stringlist_append_copy( trans_func->param_names , "WIDTH" );
 
     trans_func->func = trans_derrf;
   }
 
 
   if (util_string_equal( func_name , "LOGUNIF")) {
-    stringlist_append_ref( trans_func->param_names , "MIN");
-    stringlist_append_ref( trans_func->param_names , "MAX" );
+    stringlist_append_copy( trans_func->param_names , "MIN");
+    stringlist_append_copy( trans_func->param_names , "MAX" );
 
     trans_func->func = trans_logunif;
     trans_func->use_log = true;
@@ -311,7 +311,7 @@ trans_func_type * trans_func_alloc( const stringlist_type * args ) {
 
 
   if (util_string_equal( func_name , "CONST")) {
-    stringlist_append_ref( trans_func->param_names , "VALUE");
+    stringlist_append_copy( trans_func->param_names , "VALUE");
     trans_func->func = trans_const;
   }
 

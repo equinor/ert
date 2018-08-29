@@ -68,7 +68,7 @@ static void forward_load_context_load_ecl_sum(forward_load_context_type * load_c
     /* Should we load from a unified summary file, or from several non-unified files? */
     if (unified_file != NULL)
       /* Use unified file: */
-      stringlist_append_ref( data_files , unified_file);
+      stringlist_append_copy( data_files , unified_file);
     else {
       /* Use several non unified files. */
       /* Bypassing the query to model_config_load_results() */
@@ -78,9 +78,10 @@ static void forward_load_context_load_ecl_sum(forward_load_context_type * load_c
       while (true) {
         char * summary_file = ecl_util_alloc_exfilename(run_arg_get_runpath( run_arg ) , eclbase , ECL_SUMMARY_FILE , fmt_file ,  report_step);
 
-        if (summary_file != NULL)
-          stringlist_append_owned_ref( data_files , summary_file);
-        else
+        if (summary_file != NULL) {
+          stringlist_append_copy( data_files , summary_file);
+          free(summary_file);
+        } else
           /*
              We stop the loading at first 'hole' in the series of summary files;
              the internalize layer must report failure if we are missing data.

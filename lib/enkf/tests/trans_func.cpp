@@ -29,10 +29,10 @@
 
 void test_triangular() {
   stringlist_type * args = stringlist_alloc_new();
-  stringlist_append_ref(args , "TRIANGULAR");
-  stringlist_append_ref(args, "0");
-  stringlist_append_ref(args,"0.5");
-  stringlist_append_ref(args, "1.0");
+  stringlist_append_copy(args , "TRIANGULAR");
+  stringlist_append_copy(args, "0");
+  stringlist_append_copy(args,"0.5");
+  stringlist_append_copy(args, "1.0");
 
   trans_func_type * trans_func = trans_func_alloc(args);
   test_assert_double_equal( trans_func_eval(trans_func, 0.0), 0.50);
@@ -43,15 +43,15 @@ void test_triangular() {
 void test_create() {
   {
     stringlist_type * args = stringlist_alloc_new();
-    stringlist_append_ref(args , "UNKNOWN_FUNCTION");
+    stringlist_append_copy(args , "UNKNOWN_FUNCTION");
     test_assert_NULL( trans_func_alloc(args));
     stringlist_free(args);
   }
   {
     stringlist_type * args = stringlist_alloc_new();
-    stringlist_append_ref(args , "UNIFORM");
-    stringlist_append_ref(args, "0");
-    stringlist_append_ref(args,"1");
+    stringlist_append_copy(args , "UNIFORM");
+    stringlist_append_copy(args, "0");
+    stringlist_append_copy(args,"1");
 
     trans_func_type * trans_func = trans_func_alloc(args);
     test_assert_double_equal( trans_func_eval(trans_func, 0.0), 0.50);
@@ -61,16 +61,16 @@ void test_create() {
   }
   {
     stringlist_type * args = stringlist_alloc_new();
-    stringlist_append_ref(args , "UNIFORM");
-    stringlist_append_ref(args, "0");
-    stringlist_append_ref(args,"X");
+    stringlist_append_copy(args , "UNIFORM");
+    stringlist_append_copy(args, "0");
+    stringlist_append_copy(args,"X");
     test_assert_NULL( trans_func_alloc(args));
     stringlist_free(args);
   }
   {
     stringlist_type * args = stringlist_alloc_new();
-    stringlist_append_ref(args , "UNIFORM");
-    stringlist_append_ref(args, "0");
+    stringlist_append_copy(args , "UNIFORM");
+    stringlist_append_copy(args, "0");
     test_assert_NULL( trans_func_alloc(args));
     stringlist_free(args);
   }

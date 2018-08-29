@@ -982,12 +982,12 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_schema_item(config , ARG_TYPE_KEY          , false ); config_schema_item_set_argc_minmax( item , 2 , 2 ); config_schema_item_iset_type( item , 0 , CONFIG_INT );
 
       stringlist_type * var_types = stringlist_alloc_new();
-      stringlist_append_ref(var_types, JOB_STRING_TYPE);
-      stringlist_append_ref(var_types, JOB_INT_TYPE);
-      stringlist_append_ref(var_types, JOB_FLOAT_TYPE);
-      stringlist_append_ref(var_types, JOB_BOOL_TYPE);
-      stringlist_append_ref(var_types, JOB_RUNTIME_FILE_TYPE);
-      stringlist_append_ref(var_types, JOB_RUNTIME_INT_TYPE);
+      stringlist_append_copy(var_types, JOB_STRING_TYPE);
+      stringlist_append_copy(var_types, JOB_INT_TYPE);
+      stringlist_append_copy(var_types, JOB_FLOAT_TYPE);
+      stringlist_append_copy(var_types, JOB_BOOL_TYPE);
+      stringlist_append_copy(var_types, JOB_RUNTIME_FILE_TYPE);
+      stringlist_append_copy(var_types, JOB_RUNTIME_INT_TYPE);
 
       config_schema_item_set_indexed_selection_set( item , 1 , var_types);
       stringlist_free(var_types);

@@ -367,9 +367,8 @@ char * config_content_alloc_joined_string(const config_content_type * content , 
 
 
 stringlist_type * config_content_alloc_complete_stringlist(const config_content_type * content , const char * kw) {
-  bool copy = true;
   config_content_item_type * item = config_content_get_item(content , kw);
-  return config_content_item_alloc_complete_stringlist(item , copy);
+  return config_content_item_alloc_complete_stringlist(item);
 }
 
 

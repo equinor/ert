@@ -115,9 +115,12 @@ void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
 
 void * enkf_main_smoother_with_iter_JOB( void * self , const stringlist_type * args ) {
   int iter;
-  stringlist_type * sub_args = stringlist_alloc_shallow_copy_with_limits( args , 1 , stringlist_get_size( args ) - 1);
-  util_sscanf_int( stringlist_iget(args , 0 ) , &iter );
+  stringlist_type * sub_args = stringlist_alloc_new();
 
+  for (int i=1; i < stringlist_get_size(args); i++)
+    stringlist_append_copy( sub_args, stringlist_iget(args, i));
+
+  util_sscanf_int( stringlist_iget(args , 0 ) , &iter );
   enkf_main_smoother_JOB__( self , iter , sub_args );
 
   stringlist_free( sub_args );
@@ -232,8 +235,11 @@ void * enkf_main_load_results_JOB( void * self , const stringlist_type * args) {
 
 void * enkf_main_load_results_iter_JOB( void * self , const stringlist_type * args) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
-  stringlist_type * iens_args = stringlist_alloc_shallow_copy_with_limits( args , 1 , stringlist_get_size( args ) - 1);
+  stringlist_type * iens_args = stringlist_alloc_new();
   int iter;
+
+  for (int i=1; i < stringlist_get_size(args); i++)
+    stringlist_append_copy( iens_args, stringlist_iget(args, i));
 
   util_sscanf_int( stringlist_iget( args , 0 ) , &iter);
   enkf_main_load_results_JOB__(enkf_main , iter , iens_args );

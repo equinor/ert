@@ -98,10 +98,12 @@ stringlist_type * ert_run_context_alloc_runpath_list(const bool_vector_type * ia
   stringlist_type * runpath_list = stringlist_alloc_new();
   for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
 
-    if (bool_vector_iget( iactive , iens ))
-      stringlist_append_owned_ref( runpath_list , ert_run_context_alloc_runpath(iens , runpath_fmt , subst_list , iter));
-    else
-      stringlist_append_ref( runpath_list , NULL );
+    if (bool_vector_iget( iactive , iens )) {
+      char * tmp_runpath = ert_run_context_alloc_runpath(iens, runpath_fmt, subst_list, iter);
+      stringlist_append_copy( runpath_list , tmp_runpath);
+      free(tmp_runpath);
+    } else
+      stringlist_append_copy( runpath_list , NULL );
 
   }
   return runpath_list;
@@ -112,10 +114,12 @@ static stringlist_type * ert_run_context_alloc_jobname_list(const bool_vector_ty
   stringlist_type * jobname_list = stringlist_alloc_new();
   for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
 
-    if (bool_vector_iget( iactive , iens ))
-      stringlist_append_owned_ref( jobname_list , ert_run_context_alloc_jobname(iens , jobname_fmt , subst_list));
-    else
-      stringlist_append_ref( jobname_list , NULL );
+    if (bool_vector_iget( iactive , iens )) {
+      char * tmp_jobname = ert_run_context_alloc_jobname(iens, jobname_fmt, subst_list);
+      stringlist_append_copy( jobname_list, tmp_jobname);
+      free(tmp_jobname);
+    } else
+      stringlist_append_copy( jobname_list , NULL );
 
   }
   return jobname_list;
@@ -154,7 +158,7 @@ static ert_run_context_type * ert_run_context_alloc__(const bool_vector_type * i
 ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * sim_fs,
                                                                  bool_vector_type * iactive ,
                                                                  const path_fmt_type * runpath_fmt ,
-								 const char * jobname_fmt,
+                                                                 const char * jobname_fmt,
                                                                  const subst_list_type * subst_list ,
                                                                  int iter) {
 
@@ -165,12 +169,12 @@ ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * 
     for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
       if (bool_vector_iget( iactive , iens )) {
         run_arg_type * arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( context->run_id,
-								sim_fs,
-								iens,
-								iter,
-								stringlist_iget( runpath_list , iens),
-								stringlist_iget( jobname_list, iens),
-                                subst_list);
+                                                                sim_fs,
+                                                                iens,
+                                                                iter,
+                                                                stringlist_iget( runpath_list , iens),
+                                                                stringlist_iget( jobname_list, iens),
+                                                                subst_list);
         vector_append_owned_ref( context->run_args , arg , run_arg_free__);
       } else
         vector_append_ref( context->run_args, NULL );

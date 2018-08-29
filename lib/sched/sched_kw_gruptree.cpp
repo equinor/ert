@@ -118,7 +118,7 @@ void sched_kw_gruptree_init_child_parent_list( const sched_kw_gruptree_type * kw
       const char * parent_group = hash_get_string( kw->gruptree_hash , child_group );
 
       stringlist_append_copy( child , child_group );       /* <- The iterator keys go out of scope when hash_iter_free() is called. */
-      stringlist_append_ref( parent , parent_group );
+      stringlist_append_copy( parent , parent_group );
     }
     hash_iter_free( iter );
   }

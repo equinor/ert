@@ -757,7 +757,8 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
                                                          obs_j[obs_pt_nr] + 1 ,
                                                          obs_k[obs_pt_nr] + 1 );
 
-        stringlist_append_owned_ref( summary_keys , summary_key );
+        stringlist_append_copy( summary_keys , summary_key );
+        free(summary_key);
       }
     }
 

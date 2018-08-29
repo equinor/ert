@@ -66,7 +66,7 @@ void test_run_workflow_job( const char * config_file , const char * job_file ) {
   stringlist_type * args0 = stringlist_alloc_new( );
   stringlist_type * args1 = stringlist_alloc_new( );
 
-  stringlist_append_ref( args1 , "NewCase");
+  stringlist_append_copy( args1 , "NewCase");
   test_assert_false( ert_test_context_run_worklow_job( test_context , "NO-this-does-not-exist" , args1));
   ert_test_context_install_workflow_job( test_context , "JOB" , job_file );
 
@@ -87,7 +87,7 @@ void test_install_workflow( const char * config_file , const char * job_file ) {
   {
     FILE * stream = util_fopen( wf_file , "w");
     stringlist_type * args = stringlist_alloc_new( );
-    stringlist_append_ref( args , "NewCase");
+    stringlist_append_copy( args , "NewCase");
     ert_test_context_fwrite_workflow_job( stream , "JOB" , args);
     stringlist_free( args );
     fclose( stream );
@@ -107,7 +107,7 @@ void test_run_workflow(const char * config_file , const char * job_file) {
     FILE * stream2 = util_fopen( "WFLOW2", "w");
     stringlist_type * args = stringlist_alloc_new( );
     ert_test_context_fwrite_workflow_job( stream1 , "JOB" , args);
-    stringlist_append_ref( args , "NewCase");
+    stringlist_append_copy( args , "NewCase");
     ert_test_context_fwrite_workflow_job( stream2 , "JOB" , args);
 
     stringlist_free( args );

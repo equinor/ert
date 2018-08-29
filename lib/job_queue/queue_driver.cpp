@@ -323,7 +323,7 @@ const void * queue_driver_get_option(queue_driver_type * driver, const char * op
 
 void queue_driver_init_option_list(queue_driver_type * driver, stringlist_type * option_list) {
   //Add options common for all driver types
-  stringlist_append_ref(option_list, MAX_RUNNING);
+  stringlist_append_copy(option_list, MAX_RUNNING);
 
   //Add options for the specific driver type
   if (driver->init_options)

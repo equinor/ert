@@ -42,21 +42,21 @@ int main(int argc , const char ** argv) {
     stringlist_type * args = stringlist_alloc_new();
 
     ert_test_context_install_workflow_job( test_context , "STD_SCALE" , workflow_job_file );
-    stringlist_append_ref( args, "WWCT:OP_1");
+    stringlist_append_copy( args, "WWCT:OP_1");
     test_assert_true( ert_test_context_run_worklow_job(test_context, "STD_SCALE", args));
 
-    stringlist_append_ref( args, "WWCT:OP_2");
+    stringlist_append_copy( args, "WWCT:OP_2");
     test_assert_true( ert_test_context_run_worklow_job(test_context, "STD_SCALE", args));
 
     stringlist_clear(args);
-    stringlist_append_ref( args, "RPR2_1");
-    stringlist_append_ref( args, "RPR2_2");
-    stringlist_append_ref( args, "RPR2_3");
-    stringlist_append_ref( args, "RPR2_4");
-    stringlist_append_ref( args, "RPR2_5");
-    stringlist_append_ref( args, "RPR2_6");
-    stringlist_append_ref( args, "RPR2_7");
-    stringlist_append_ref( args, "RPR2_8");
+    stringlist_append_copy( args, "RPR2_1");
+    stringlist_append_copy( args, "RPR2_2");
+    stringlist_append_copy( args, "RPR2_3");
+    stringlist_append_copy( args, "RPR2_4");
+    stringlist_append_copy( args, "RPR2_5");
+    stringlist_append_copy( args, "RPR2_6");
+    stringlist_append_copy( args, "RPR2_7");
+    stringlist_append_copy( args, "RPR2_8");
     test_assert_true( ert_test_context_run_worklow_job(test_context, "STD_SCALE", args));
 
     stringlist_free( args );

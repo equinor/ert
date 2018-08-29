@@ -70,7 +70,7 @@ stringlist_type * forward_model_alloc_joblist( const forward_model_type * forwar
   int i;
   for (i=0; i < vector_get_size( forward_model->jobs ); i++) {
     const ext_job_type * job = (const ext_job_type*)vector_iget_const( forward_model->jobs , i);
-    stringlist_append_ref( names , ext_job_get_name( job ));
+    stringlist_append_copy( names , ext_job_get_name( job ));
   }
 
   return names;

@@ -92,16 +92,17 @@ static void config_content_node_push_string( config_content_node_type * node , c
   if (node->string_storage == NULL)
     node->string_storage = stringlist_alloc_new( );
 
-  stringlist_append_owned_ref( node->string_storage , string );
+  stringlist_append_copy( node->string_storage , string );
 }
 
 const char * config_content_node_get_full_string(const config_content_node_type * node,
                                                  const char * sep) {
   char * full_string = stringlist_alloc_joined_string(node->stringlist , sep);
 
-  // casting node to non-const, just to take ownership of full_string
   config_content_node_push_string((config_content_node_type *)node, full_string );
-  return full_string;
+  free(full_string);
+
+  return stringlist_get_last(node->string_storage);
 }
 
 const char * config_content_node_iget(const config_content_node_type * node , int index) {

@@ -114,45 +114,24 @@ const stringlist_type * config_content_item_get_stringlist_ref(const config_cont
 }
 
 
-/**
-   If copy == false - the stringlist will break down when/if the
-   config object is freed - your call.
-*/
-
-stringlist_type * config_content_item_alloc_complete_stringlist(const config_content_item_type * item, bool copy) {
+stringlist_type * config_content_item_alloc_complete_stringlist(const config_content_item_type * item) {
   int inode;
   stringlist_type * stringlist = stringlist_alloc_new();
   for (inode = 0; inode < vector_get_size( item->nodes ); inode++) {
     const config_content_node_type * node = config_content_item_iget_node(item , inode);
     const stringlist_type * src_list = config_content_node_get_stringlist( node );
 
-    if (copy)
-      stringlist_append_stringlist_copy( stringlist , src_list );
-    else
-      stringlist_append_stringlist_ref( stringlist , src_list );
-
+    stringlist_append_stringlist_copy( stringlist , src_list );
   }
 
   return stringlist;
 }
 
 
-/**
-   If copy == false - the stringlist will break down when/if the
-   config object is freed - your call.
-*/
-
-stringlist_type * config_content_item_alloc_stringlist(const config_content_item_type * item, bool copy) {
+stringlist_type * config_content_item_alloc_stringlist(const config_content_item_type * item) {
   const config_content_node_type * node = config_content_item_get_last_node( item );
-  stringlist_type * stringlist = stringlist_alloc_new();
   const stringlist_type * src_list = config_content_node_get_stringlist( node );
-
-  if (copy)
-    stringlist_append_stringlist_copy( stringlist , src_list );
-  else
-    stringlist_append_stringlist_ref( stringlist , src_list );
-
-  return stringlist;
+  return stringlist_alloc_deep_copy(src_list);
 }
 
 

@@ -38,7 +38,7 @@ void test_load(const char * config_file) {
   path_fmt_type * runpath_fmt = model_config_get_runpath_fmt(enkf_main_get_model_config(enkf_main));
   ert_run_context_type * run_context = ert_run_context_alloc_INIT_ONLY(init_fs, INIT_CONDITIONAL, iens_mask, runpath_fmt, NULL, 0);
 
-  stringlist_append_ref( param_list , "GEN_KW");
+  stringlist_append_copy( param_list , "GEN_KW");
   enkf_main_initialize_from_scratch( enkf_main , param_list, run_context );
   {
     ensemble_config_type  * ensemble_config = enkf_main_get_ensemble_config( enkf_main );
