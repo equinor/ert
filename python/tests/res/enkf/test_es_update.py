@@ -65,7 +65,7 @@ class ESUpdateTest(ResTest):
             fsm = ert.getEnkfFsManager()
             sim_fs = fsm.getFileSystem("default_0")
             target_fs = fsm.getFileSystem("target")
-            
+
 
             # perform localization
             localized_idxs = (1, 2)
@@ -108,7 +108,7 @@ class ESUpdateTest(ResTest):
             # Test that the localized values has been updated
             for i in localized_idxs:
                 self.assertNotEqual(sim_gen_kw[i], target_gen_kw[i])
-            
+
             # test that all the other values are left unchanged
             non_localized_idxs = (
                 x for x in range(len(sim_gen_kw)) if x not in localized_idxs)

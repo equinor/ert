@@ -468,14 +468,6 @@ class ProgrammaticResConfigTest(ResTest):
                          prog_log_config.log_level)
 
 
-    def assert_equal_rng_config(self, loaded_rng_config, prog_rng_config):
-        self.assertEqual(loaded_rng_config.store_filename,
-                         prog_rng_config.store_filename)
-
-        self.assertEqual(loaded_rng_config.load_filename,
-                         prog_rng_config.load_filename)
-
-
     def assert_equal_ensemble_config(self, loaded_config, prog_config):
         self.assertEqual(set(loaded_config.alloc_keylist()),
                          set(prog_config.alloc_keylist()))
@@ -563,9 +555,6 @@ class ProgrammaticResConfigTest(ResTest):
 
             self.assert_equal_log_config(loaded_res_config.log_config,
                                          prog_res_config.log_config)
-
-            self.assert_equal_rng_config(loaded_res_config.rng_config,
-                                         prog_res_config.rng_config)
 
             self.assert_equal_ensemble_config(loaded_res_config.ensemble_config,
                                               prog_res_config.ensemble_config)

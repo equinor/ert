@@ -31,8 +31,7 @@ LOG_LEVEL           INFO
 UPDATE_LOG_PATH     ../output/update_log/<CASE_DIR>                       -- Storage of update log (list of active and inactive data points)
 LOG_FILE            ../output/log/ert_<CASE_DIR>.log                      -- Ert log file
 
-STORE_SEED          ../input/rng/SEED
-LOAD_SEED           ../input/rng/SEED
+RANDOM_SEED 3593114179000630026631423308983283277868
 -- --------------------------------------------------
 -- -- SECTION: LSF settings, AHM configuration etc
 -- --------------------------------------------------

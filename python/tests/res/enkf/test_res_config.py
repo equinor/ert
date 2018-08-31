@@ -397,18 +397,6 @@ class ResConfigTest(ResTest):
                 rng_config.alg_type
                 )
 
-        self.assert_same_config_file(
-                config_data["STORE_SEED"],
-                rng_config.store_filename,
-                working_dir
-                )
-
-        self.assert_same_config_file(
-                config_data["LOAD_SEED"],
-                rng_config.load_filename,
-                working_dir
-                )
-
 
     def assert_ert_templates(self, ert_templates, config_data, working_dir):
         self.assertEqual(
