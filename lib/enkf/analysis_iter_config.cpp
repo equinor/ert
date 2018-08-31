@@ -103,8 +103,9 @@ void analysis_iter_config_free( analysis_iter_config_type * config ) {
 const char * analysis_iter_config_iget_case( analysis_iter_config_type * config , int iter) {
   if (config->case_fmt != NULL) {
     char * fs_case = util_alloc_sprintf( config->case_fmt , iter );
-    stringlist_append_owned_ref( config->storage , fs_case);
-    return fs_case;
+    stringlist_append_copy( config->storage , fs_case);
+    free(fs_case);
+    return stringlist_get_last( config->storage );
   } else
     return NULL;
 }

@@ -110,8 +110,8 @@ void fscanf_2ts(const time_t_vector_type * time_vector , const char * filename ,
     stringlist_clear( s1 );
     stringlist_clear( s2 );
     for (int i=0; i < time_t_vector_size( time_vector ); i++) { 
-      stringlist_append_ref( s1 , NULL );
-      stringlist_append_ref( s2 , NULL );
+      stringlist_append_copy( s1 , NULL );
+      stringlist_append_copy( s2 , NULL );
     }
   }
   

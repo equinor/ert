@@ -114,8 +114,11 @@ bool custom_kw_write_to_buffer(const custom_kw_type * custom_kw, buffer_type * b
 void custom_kw_read_from_buffer(const custom_kw_type * custom_kw, buffer_type * buffer, enkf_fs_type * fs, int report_step) {
   int size = buffer_fread_int(buffer);
   stringlist_clear(custom_kw->data);
-  for (int i=0; i < size; i++)
-    stringlist_append_owned_ref(custom_kw->data, buffer_fread_alloc_string(buffer));
+  for (int i=0; i < size; i++) {
+    char * tmp_string = buffer_fread_alloc_string(buffer);
+    stringlist_append_copy(custom_kw->data, tmp_string);
+    free( tmp_string);
+  }
 }
 
 

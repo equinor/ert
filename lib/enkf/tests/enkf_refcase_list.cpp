@@ -99,7 +99,7 @@ int main(int argc , char ** argv) {
       const int N = ecl_refcase_list_get_size( refcase_list );
       int i;
       for (i=0; i < N; i++)
-        stringlist_append_ref( case_list , ecl_refcase_list_iget_pathcase( refcase_list , N - 1 - i ));
+        stringlist_append_copy( case_list , ecl_refcase_list_iget_pathcase( refcase_list , N - 1 - i ));
 
       {
         bool equal = true;

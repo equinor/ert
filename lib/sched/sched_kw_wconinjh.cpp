@@ -278,7 +278,7 @@ void sched_kw_wconinjh_init_well_list( const sched_kw_wconinjh_type * kw , strin
     int iw;
     for (iw = 0; iw < stringlist_get_size( well_list ); iw++) {
       const wconinjh_well_type * well = (const wconinjh_well_type*)vector_iget_const( kw->wells , iw );
-      stringlist_append_ref( well_list , well->name );
+      stringlist_append_copy( well_list , well->name );
     }
   }
 }

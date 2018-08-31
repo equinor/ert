@@ -394,7 +394,8 @@ static char * alloc_quoted_resource_string(const lsf_driver_type * driver) {
       for (int i = 0; i < stringlist_get_size(driver->exclude_hosts); i++) {
         char * exclude_host = (char*)util_alloc_sprintf("hname!='%s'",
                                                  stringlist_iget(driver->exclude_hosts, i));
-        stringlist_append_owned_ref(select_list, exclude_host);
+        stringlist_append_copy(select_list, exclude_host);
+        free(exclude_host);
       }
     }
     // select_list is non-empty
@@ -435,37 +436,37 @@ stringlist_type * lsf_driver_alloc_cmd(lsf_driver_type * driver ,
   char * quoted_resource_request = alloc_quoted_resource_string(driver);
 
   if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL)
-    stringlist_append_ref( argv , driver->bsub_cmd);
+    stringlist_append_copy( argv , driver->bsub_cmd);
 
-  stringlist_append_ref( argv , "-o" );
+  stringlist_append_copy( argv , "-o" );
   stringlist_append_copy( argv , lsf_stdout );
   if (driver->queue_name != NULL) {
-    stringlist_append_ref( argv , "-q" );
-    stringlist_append_ref( argv , driver->queue_name );
+    stringlist_append_copy( argv , "-q" );
+    stringlist_append_copy( argv , driver->queue_name );
   }
-  stringlist_append_ref( argv , "-J" );
-  stringlist_append_ref( argv , job_name );
-  stringlist_append_ref( argv , "-n" );
+  stringlist_append_copy( argv , "-J" );
+  stringlist_append_copy( argv , job_name );
+  stringlist_append_copy( argv , "-n" );
   stringlist_append_copy( argv , num_cpu_string );
 
   if (quoted_resource_request != NULL) {
-    stringlist_append_ref( argv , "-R");
+    stringlist_append_copy( argv , "-R");
     stringlist_append_copy( argv , quoted_resource_request );
   }
 
   if (driver->login_shell != NULL) {
-    stringlist_append_ref( argv , "-L");
-    stringlist_append_ref( argv , driver->login_shell );
+    stringlist_append_copy( argv , "-L");
+    stringlist_append_copy( argv , driver->login_shell );
   }
 
   if (driver->project_code) {
-    stringlist_append_ref( argv , "-P");
-    stringlist_append_ref( argv , driver->project_code );
+    stringlist_append_copy( argv , "-P");
+    stringlist_append_copy( argv , driver->project_code );
   }
 
-  stringlist_append_ref( argv , submit_cmd);
+  stringlist_append_copy( argv , submit_cmd);
   for (int iarg = 0; iarg < job_argc; iarg++)
-    stringlist_append_ref( argv , job_argv[ iarg ]);
+    stringlist_append_copy( argv , job_argv[ iarg ]);
 
   free( num_cpu_string );
   free( quoted_resource_request );
@@ -1271,16 +1272,16 @@ bool lsf_driver_has_option( const void * __driver , const char * option_key) {
 }
 
 void lsf_driver_init_option_list(stringlist_type * option_list) {
-  stringlist_append_ref(option_list, LSF_QUEUE);
-  stringlist_append_ref(option_list, LSF_RESOURCE);
-  stringlist_append_ref(option_list, LSF_SERVER);
-  stringlist_append_ref(option_list, LSF_RSH_CMD);
-  stringlist_append_ref(option_list, LSF_LOGIN_SHELL);
-  stringlist_append_ref(option_list, LSF_BSUB_CMD);
-  stringlist_append_ref(option_list, LSF_BJOBS_CMD);
-  stringlist_append_ref(option_list, LSF_BKILL_CMD);
-  stringlist_append_ref(option_list, LSF_BHIST_CMD);
-  stringlist_append_ref(option_list, LSF_BJOBS_TIMEOUT);
+  stringlist_append_copy(option_list, LSF_QUEUE);
+  stringlist_append_copy(option_list, LSF_RESOURCE);
+  stringlist_append_copy(option_list, LSF_SERVER);
+  stringlist_append_copy(option_list, LSF_RSH_CMD);
+  stringlist_append_copy(option_list, LSF_LOGIN_SHELL);
+  stringlist_append_copy(option_list, LSF_BSUB_CMD);
+  stringlist_append_copy(option_list, LSF_BJOBS_CMD);
+  stringlist_append_copy(option_list, LSF_BKILL_CMD);
+  stringlist_append_copy(option_list, LSF_BHIST_CMD);
+  stringlist_append_copy(option_list, LSF_BJOBS_TIMEOUT);
 }
 
 

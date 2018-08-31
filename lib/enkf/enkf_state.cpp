@@ -213,7 +213,7 @@ static void enkf_state_add_nodes( enkf_state_type * enkf_state, const ensemble_c
     const char * key = stringlist_iget(keylist, ik);
     const enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , key);
     if (enkf_config_node_get_impl_type( config_node ) == CONTAINER) {
-      stringlist_append_ref( container_keys , key );
+      stringlist_append_copy( container_keys , key );
     } else
       enkf_state_add_node(enkf_state , key , config_node);
   }

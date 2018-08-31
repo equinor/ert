@@ -708,16 +708,8 @@ sched_file_type * sched_file_alloc_copy(const sched_file_type * src , bool deep_
     sched_file_add_kw( target , kw );
   }
 
-
-  {
-    int i;
-    for (i = 0; i < stringlist_get_size( src->files ); i++) {
-      if (deep_copy)
-        stringlist_append_copy( target->files , stringlist_iget(src->files , i));
-      else
-        stringlist_append_ref( target->files , stringlist_iget(src->files , i));
-    }
-  }
+  for (int i = 0; i < stringlist_get_size( src->files ); i++)
+    stringlist_append_copy( target->files , stringlist_iget(src->files , i));
 
   sched_file_update_index( target );
   return target;

@@ -692,7 +692,7 @@ void analysis_config_add_config_items( config_parser_type * config ) {
 
   item = config_add_key_value( config , STOP_LONG_RUNNING_KEY, false,  CONFIG_BOOL );
   stringlist_type * child_list = stringlist_alloc_new();
-  stringlist_append_ref(child_list, MIN_REALIZATIONS_KEY);
+  stringlist_append_copy(child_list, MIN_REALIZATIONS_KEY);
   config_schema_item_set_required_children_on_value(item , "TRUE" , child_list);
   stringlist_free(child_list);
 

@@ -287,7 +287,7 @@ stringlist_type * gen_kw_config_alloc_name_list( const gen_kw_config_type * conf
   int i;
   for (i=0; i < vector_get_size( config->parameters ); i++) {
     const gen_kw_parameter_type * parameter = (const gen_kw_parameter_type *)vector_iget_const( config->parameters , i );
-    stringlist_append_ref( name_list , parameter->name );    /* If the underlying parameter goes out scope - whom bang .. */
+    stringlist_append_copy( name_list , parameter->name );    /* If the underlying parameter goes out scope - whom bang .. */
   }
 
   return name_list;

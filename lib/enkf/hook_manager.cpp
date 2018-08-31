@@ -196,10 +196,10 @@ void hook_manager_add_config_items( config_parser_type * config ) {
   {
     stringlist_type * argv = stringlist_alloc_new();
 
-    stringlist_append_ref(argv, RUN_MODE_PRE_SIMULATION_NAME);
-    stringlist_append_ref(argv, RUN_MODE_POST_SIMULATION_NAME);
-    stringlist_append_ref(argv, RUN_MODE_PRE_UPDATE_NAME);
-    stringlist_append_ref(argv, RUN_MODE_POST_UPDATE_NAME);
+    stringlist_append_copy(argv, RUN_MODE_PRE_SIMULATION_NAME);
+    stringlist_append_copy(argv, RUN_MODE_POST_SIMULATION_NAME);
+    stringlist_append_copy(argv, RUN_MODE_PRE_UPDATE_NAME);
+    stringlist_append_copy(argv, RUN_MODE_POST_UPDATE_NAME);
     config_schema_item_set_indexed_selection_set(item, 1, argv);
 
     stringlist_free( argv );

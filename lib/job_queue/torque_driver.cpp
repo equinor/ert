@@ -224,15 +224,15 @@ const void * torque_driver_get_option(const void * __driver, const char * option
 }
 
 void torque_driver_init_option_list(stringlist_type * option_list) {
-  stringlist_append_ref(option_list, TORQUE_QSUB_CMD);
-  stringlist_append_ref(option_list, TORQUE_QSTAT_CMD);
-  stringlist_append_ref(option_list, TORQUE_QDEL_CMD);
-  stringlist_append_ref(option_list, TORQUE_QUEUE);
-  stringlist_append_ref(option_list, TORQUE_NUM_CPUS_PER_NODE);
-  stringlist_append_ref(option_list, TORQUE_NUM_NODES);
-  stringlist_append_ref(option_list, TORQUE_KEEP_QSUB_OUTPUT);
-  stringlist_append_ref(option_list, TORQUE_CLUSTER_LABEL);
-  stringlist_append_ref(option_list, TORQUE_JOB_PREFIX_KEY);
+  stringlist_append_copy(option_list, TORQUE_QSUB_CMD);
+  stringlist_append_copy(option_list, TORQUE_QSTAT_CMD);
+  stringlist_append_copy(option_list, TORQUE_QDEL_CMD);
+  stringlist_append_copy(option_list, TORQUE_QUEUE);
+  stringlist_append_copy(option_list, TORQUE_NUM_CPUS_PER_NODE);
+  stringlist_append_copy(option_list, TORQUE_NUM_NODES);
+  stringlist_append_copy(option_list, TORQUE_KEEP_QSUB_OUTPUT);
+  stringlist_append_copy(option_list, TORQUE_CLUSTER_LABEL);
+  stringlist_append_copy(option_list, TORQUE_JOB_PREFIX_KEY);
 }
 
 torque_job_type * torque_job_alloc() {
@@ -253,8 +253,8 @@ stringlist_type * torque_driver_alloc_cmd(torque_driver_type * driver,
   stringlist_type * argv = stringlist_alloc_new();
 
   if (driver->keep_qsub_output) {
-    stringlist_append_ref(argv, "-k");
-    stringlist_append_ref(argv, "oe");
+    stringlist_append_copy(argv, "-k");
+    stringlist_append_copy(argv, "oe");
   }
 
   {
@@ -264,22 +264,22 @@ stringlist_type * torque_driver_alloc_cmd(torque_driver_type * driver,
     else
       resource_string = util_alloc_sprintf("nodes=%d:ppn=%d", driver->num_nodes, driver->num_cpus_per_node);
 
-    stringlist_append_ref(argv, "-l");
+    stringlist_append_copy(argv, "-l");
     stringlist_append_copy(argv, resource_string);
     free(resource_string);
   }
 
   if (driver->queue_name != NULL) {
-    stringlist_append_ref(argv, "-q");
-    stringlist_append_ref(argv, driver->queue_name);
+    stringlist_append_copy(argv, "-q");
+    stringlist_append_copy(argv, driver->queue_name);
   }
 
   if (job_name != NULL) {
-    stringlist_append_ref(argv, "-N");
-    stringlist_append_ref(argv, job_name);
+    stringlist_append_copy(argv, "-N");
+    stringlist_append_copy(argv, job_name);
   }
 
-  stringlist_append_ref(argv, submit_script);
+  stringlist_append_copy(argv, submit_script);
 
   return argv;
 }

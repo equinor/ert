@@ -504,7 +504,7 @@ void sched_kw_wconhist_init_well_list( const sched_kw_wconhist_type * kw , strin
     int iw;
     for (iw = 0; iw < vector_get_size( kw->wells ); iw++) {
       const wconhist_well_type * well = (const wconhist_well_type*)vector_iget_const( kw->wells , iw );
-      stringlist_append_ref( well_list , well->name );
+      stringlist_append_copy( well_list , well->name );
     }
   }
 }

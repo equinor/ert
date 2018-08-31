@@ -122,7 +122,7 @@ void sched_kw_wconprod_init_well_list( const sched_kw_wconprod_type * kw , strin
   {
     int iw;
     for (iw = 0; iw < stringlist_get_size( kw->wells ); iw++)
-      stringlist_append_ref( well_list , stringlist_iget( kw->wells , iw) );
+      stringlist_append_copy( well_list , stringlist_iget( kw->wells , iw) );
   }
 }
 

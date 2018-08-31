@@ -52,7 +52,7 @@ int main (int argc , char ** argv) {
 
         for (int iarg=3; iarg < argc; iarg++) {
           if( sched_history_has_key( sched_history , argv[iarg] ))
-            stringlist_append_ref( key_list , argv[iarg]);
+            stringlist_append_copy( key_list , argv[iarg]);
           else
             fprintf(stderr,"** Warning the SCHEDULE file does not contain the key: %s \n",argv[iarg]);
         }
