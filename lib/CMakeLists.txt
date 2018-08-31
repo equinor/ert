@@ -399,12 +399,25 @@ foreach(name job_status_test
     add_test(NAME ${name} COMMAND ${name})
 endforeach()
 
-# job_workflow requires this binary being available
-add_executable(create_file job_queue/tests/create_file.cpp)
-target_link_libraries(create_file res)
+foreach(name job_loadOK
+             job_list_test
+             ext_joblist_test
+             job_torque_submit_test
+             job_queue_timeout_test
+             job_queue_stress_test
+             job_queue_stress_task
+             job_job_queue_test
+             job_program_output
+             job_lsf_exclude_hosts_test
+             job_workflow_test
+             create_file
+             job_loadFail)
 
-add_executable(job_loadOK job_queue/tests/job_loadOK.cpp)
-target_link_libraries(job_loadOK res)
+     add_executable(${name} job_queue/tests/${name}.cpp)
+     target_link_libraries(${name} res)
+endforeach()
+
+
 add_test(NAME job_loadOK1
          COMMAND job_loadOK
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/internalOK)
@@ -415,9 +428,6 @@ add_test(NAME job_loadOK3
          COMMAND job_loadOK
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/internalOK
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/externalOK)
-
-add_executable(job_loadFail job_queue/tests/job_loadFail.cpp)
-target_link_libraries(job_loadFail res)
 
 add_test(NAME job_loadFail1
          COMMAND job_loadFail
@@ -430,39 +440,24 @@ add_test(NAME job_loadFail3
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/internalFail
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/externalFail)
 
-add_executable(job_list_test job_queue/tests/job_list_test.cpp)
-target_link_libraries(job_list_test res)
 add_test(NAME job_list_test
          COMMAND valgrind --leak-check=full --error-exitcode=1
                  $<TARGET_FILE:job_list_test>)
 
-add_executable(job_workflow_test job_queue/tests/job_workflow_test.cpp)
-target_link_libraries(job_workflow_test res)
 add_test(NAME job_workflow_test
          COMMAND job_workflow_test
                  ${EXECUTABLE_OUTPUT_PATH}
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/internal_job)
 
-add_executable(job_lsf_exclude_hosts_test job_queue/tests/job_lsf_exclude_hosts_test.cpp)
-target_link_libraries(job_lsf_exclude_hosts_test res)
 add_test(NAME job_lsf_exclude_hosts_test
          COMMAND job_lsf_exclude_hosts_test job_program NULL LOCAL)
 
-add_executable(job_program_output job_queue/tests/job_program_output.cpp)
-target_link_libraries(job_program_output ecl)
-
-add_executable(job_queue_test job_queue/tests/job_job_queue_test.cpp)
-target_link_libraries(job_queue_test res)
 add_test(NAME job_queue_test
-         COMMAND job_queue_test
+         COMMAND job_job_queue_test
                  $<TARGET_FILE:job_program_output>)
 set_tests_properties(job_queue_test PROPERTIES LABELS "SLOW_1")
 
-add_executable(job_queue_stress_task job_queue/tests/job_queue_stress_task.cpp)
-target_link_libraries(job_queue_stress_task ecl)
 
-add_executable(job_queue_stress_test job_queue/tests/job_queue_stress_test.cpp)
-target_link_libraries(job_queue_stress_test res)
 add_test(NAME job_queue_stress_test
          COMMAND job_queue_stress_test
                  $<TARGET_FILE:job_queue_stress_task>
@@ -474,23 +469,17 @@ add_test(NAME job_queue_user_exit
                  $<TARGET_FILE:job_queue_stress_task>
                  True)
 
-add_executable(job_queue_timeout_test job_queue/tests/job_queue_timeout_test.cpp)
-target_link_libraries(job_queue_timeout_test res)
 add_test(NAME job_queue_timeout_test
          COMMAND job_queue_timeout_test $<TARGET_FILE:job_queue_stress_task>)
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/qsub_emulators/
      DESTINATION ${EXECUTABLE_OUTPUT_PATH})
 
-add_executable(job_torque_submit_test job_queue/tests/job_torque_submit_test.cpp)
-target_link_libraries(job_torque_submit_test res)
 add_test(NAME job_torque_submit_test
          WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}
          COMMAND job_torque_submit_test dummyparam)
 set_property(TEST job_torque_submit_test PROPERTY ENVIRONMENT “setenv PATH ${EXECUTABLE_OUTPUT_PATH}:$PATH”)
 
-add_executable(ext_joblist_test job_queue/tests/ext_joblist_test.cpp)
-target_link_libraries(ext_joblist_test res)
 add_test(NAME ext_joblist_test
          COMMAND ext_joblist_test
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/jobs/util
@@ -712,20 +701,6 @@ set_property(TEST enkf_analysis_config_analysis_load PROPERTY
 add_config_test(enkf_workflow_job_test_version enkf_workflow_job_test_version ${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/workflow_jobs)
 #-----------------------------------------------------------------
 
-if (NOT STATOIL_TESTDATA_ROOT)
-    return ()
-endif ()
-
-add_test(NAME rms_file_test
-         COMMAND rms_file_test ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/rms_file_test/rms_file)
-
-add_test(NAME sched_history_summary1
-         COMMAND sched_history_summary ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE)
-
-add_test(NAME sched_history_summary2
-         COMMAND sched_history_summary ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Snorre/SNORRE)
-
-
 foreach(test enkf_site_config
              enkf_main_fs_current_file_test
              enkf_scale_correlated_std
@@ -753,6 +728,21 @@ foreach(test enkf_site_config
     add_executable(${test} enkf/tests/${test}.cpp)
     target_link_libraries(${test} res)
 endforeach()
+
+
+if (NOT STATOIL_TESTDATA_ROOT)
+    return ()
+endif ()
+
+add_test(NAME rms_file_test
+         COMMAND rms_file_test ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/rms_file_test/rms_file)
+
+add_test(NAME sched_history_summary1
+         COMMAND sched_history_summary ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE)
+
+add_test(NAME sched_history_summary2
+         COMMAND sched_history_summary ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Snorre/SNORRE)
+
 
 
 function( add_statoil_test name command )
