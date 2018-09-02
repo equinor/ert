@@ -2,7 +2,6 @@
 from __future__ import print_function
 
 import re
-import json
 import os
 import sys
 import subprocess
@@ -64,8 +63,8 @@ def build(source_dir, install_dir, test, c_flags, cxx_flags, test_flags=None):
             if test_flags is None:
                 test_flags = []
 
-        call(["ctest", "--output-on-failure"] + test_flags)
-        call(["bin/test_install"])
+            call(["ctest", "--output-on-failure"] + test_flags)
+            call(["bin/test_install"])
 
 
 
@@ -138,7 +137,7 @@ class PrBuilder(object):
         github_api_token = os.getenv("GITHUB_API_TOKEN")
         response = requests.get(url, {"access_token" : self.github_api_token})
 
-        content = json.loads(response.content)
+        content = response.json()
         state = content["state"]
         return state == "open"
 
@@ -159,7 +158,7 @@ class PrBuilder(object):
         if response.status_code != 200:
             sys.exit("HTTP GET from GitHub failed: %s" % response.text)
 
-        content = json.loads(response.content)
+        content = response.json()
         self.pr_description = content["body"]
         print("PULL REQUEST: %d\n%s" % (self.pr_number, self.pr_description))
         self.parse_pr_description()
