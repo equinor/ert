@@ -23,6 +23,10 @@
 #include <dlfcn.h>
 #include <unistd.h>
 
+#include <vector>
+#include <string>
+#include <sstream>
+
 #include <ert/util/util.hpp>
 #include <ert/util/hash.hpp>
 #include <ert/util/stringlist.hpp>
@@ -332,6 +336,17 @@ static void lsf_driver_assert_submit_method( const lsf_driver_type * driver ) {
 }
 
 
+static std::string join_strings(const std::vector<std::string>& strings, const std::string& sep) {
+  std::stringstream s;
+  s << strings[0];
+  for (int i=1; i < strings.size(); i++) {
+    s << sep;
+    s << strings[i];
+  }
+  return s.str();
+}
+
+
 /*
   A resource string can be "span[host=1] select[A && B] bla[xyz]".
   The blacklisting feature is to have select[hname!=bad1 && hname!=bad2].
@@ -340,16 +355,16 @@ static void lsf_driver_assert_submit_method( const lsf_driver_type * driver ) {
   the select[..] clause.  This addition is the result of '&&'.join(select_list).
 */
 char* alloc_composed_resource_request(const lsf_driver_type * driver,
-                                      const stringlist_type * select_list) {
+                                      const std::vector<std::string>& select_list) {
   char* resreq = util_alloc_string_copy(driver->resource_request);
-  char* excludes_string = stringlist_alloc_joined_string(select_list, " && ");
+  std::string excludes_string = join_strings(select_list, " && ");
 
   char* req = NULL;
   char* pos = strstr(resreq, "select["); // find select[...]
 
   if (pos == NULL) {
     // no select string in request, add select[...]
-    req = util_alloc_sprintf("%s select[%s]", resreq, excludes_string);
+    req = util_alloc_sprintf("%s select[%s]", resreq, excludes_string.c_str());
   } else {
     // add select string to existing select[...]
     char* endpos = strstr(pos, "]");
@@ -366,9 +381,8 @@ char* alloc_composed_resource_request(const lsf_driver_type * driver,
     char * before = (char*)util_alloc_substring_copy(resreq, 0, before_size);
     char * after = (char*)util_alloc_string_copy(&resreq[before_size]);
 
-    req = util_alloc_sprintf("%s && %s]%s", before, excludes_string, after);
+    req = util_alloc_sprintf("%s && %s]%s", before, excludes_string.c_str(), after);
   }
-  free(excludes_string);
   free(resreq);
   return req;
 }
@@ -389,24 +403,23 @@ static char * alloc_quoted_resource_string(const lsf_driver_type * driver) {
     if (driver->resource_request)
       req = util_alloc_string_copy(driver->resource_request);
   } else {
-    stringlist_type * select_list = stringlist_alloc_new();
+    std::vector<std::string> select_list;
     if (stringlist_get_size(driver->exclude_hosts) > 0) {
       for (int i = 0; i < stringlist_get_size(driver->exclude_hosts); i++) {
         char * exclude_host = (char*)util_alloc_sprintf("hname!='%s'",
                                                  stringlist_iget(driver->exclude_hosts, i));
-        stringlist_append_copy(select_list, exclude_host);
+        select_list.push_back(exclude_host);
         free(exclude_host);
       }
     }
+
     // select_list is non-empty
     if (driver->resource_request != NULL) {
       req = alloc_composed_resource_request(driver, select_list);
     } else {
-      char * select_string = stringlist_alloc_joined_string(select_list, " && ");
-      req = util_alloc_sprintf("select[%s]", select_string);
-      free(select_string);
+      std::string select_string = join_strings(select_list, " && ");
+      req = util_alloc_sprintf("select[%s]", select_string.c_str());
     }
-    stringlist_free(select_list);
   }
 
   char * quoted_resource_request = NULL;
