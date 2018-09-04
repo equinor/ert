@@ -18,12 +18,12 @@
 
 #ifndef ERT_LSF_DRIVER_H
 #define ERT_LSF_DRIVER_H
+#include <ert/util/stringlist.hpp>
+#include <ert/job_queue/queue_driver.hpp>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <ert/util/stringlist.hpp>
-
-#include <ert/job_queue/queue_driver.hpp>
 
 
 /*
