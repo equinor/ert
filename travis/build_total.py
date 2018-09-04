@@ -2,15 +2,27 @@
 from __future__ import print_function
 
 import re
-import json
 import os
 import sys
 import subprocess
 import shutil
 import codecs
 import requests
+from contextlib import contextmanager
 
 GITHUB_ROT13_API_TOKEN = "rp2rr795p41n83p076o6ro2qp209981r00590r8q"
+
+@contextmanager
+def pushd(path):
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    cwd0 = os.getcwd()
+    os.chdir(path)
+
+    yield
+
+    os.chdir(cwd0)
+
 
 def print_python_version():
     print(sys.version)
@@ -24,9 +36,6 @@ def call(args):
 
 
 def build(source_dir, install_dir, test, c_flags, cxx_flags, test_flags=None):
-    build_dir = os.path.join(source_dir, "build")
-    if not os.path.isdir(build_dir):
-        os.makedirs(build_dir)
 
     cmake_args = ["cmake",
                   source_dir,
@@ -44,19 +53,18 @@ def build(source_dir, install_dir, test, c_flags, cxx_flags, test_flags=None):
                   "-DCMAKE_C_FLAGS=%s" % c_flags
                  ]
 
-    cwd = os.getcwd()
-    os.chdir(build_dir)
-    call(cmake_args)
-    call(["make"])
-    if test:
-        if test_flags is None:
-            test_flags = []
+    build_dir = os.path.join(source_dir, "build")
+    with pushd(build_dir):
+        call(cmake_args)
+        call(["make"])
+        call(["make", "install"])
 
-        call(["ctest", "--output-on-failure"] + test_flags)
-    call(["make", "install"])
+        if test:
+            if test_flags is None:
+                test_flags = []
 
-    call(["bin/test_install"])
-    os.chdir(cwd)
+            call(["ctest", "--output-on-failure"] + test_flags)
+            call(["bin/test_install"])
 
 
 
@@ -129,7 +137,7 @@ class PrBuilder(object):
         github_api_token = os.getenv("GITHUB_API_TOKEN")
         response = requests.get(url, {"access_token" : self.github_api_token})
 
-        content = json.loads(response.content)
+        content = response.json()
         state = content["state"]
         return state == "open"
 
@@ -150,7 +158,7 @@ class PrBuilder(object):
         if response.status_code != 200:
             sys.exit("HTTP GET from GitHub failed: %s" % response.text)
 
-        content = json.loads(response.content)
+        content = response.json()
         self.pr_description = content["body"]
         print("PULL REQUEST: %d\n%s" % (self.pr_number, self.pr_description))
         self.parse_pr_description()
