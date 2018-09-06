@@ -8,6 +8,7 @@
 # You will also need PyQt4 - that is not a pip installable package, you should
 # probably install it through your operaing systems package manager.
 
+sphinx
 cwrap
 numpy
 pandas

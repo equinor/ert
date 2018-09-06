@@ -30,7 +30,7 @@ endif()
 #-----------------------------------------------------------------
 
 option( BUILD_TESTS         "Should the tests be built"                               OFF)
-option( RST_DOC             "Build RST documentation"                                 OFF)
+option( RST_DOC             "Build RST documentation"                                 ON)
 option( USE_RUNPATH         "Should we embed path to libraries"                       ON)
 option( GUI                 "Build Python GUI"                                        ON)
 
@@ -143,7 +143,6 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/share DESTINATION ${CMAKE_INSTALL_PREFIX
 add_subdirectory( python )
 add_subdirectory( bin )
 
-if(RST_DOC)
-   add_subdirectory( docs )
+if (RST_DOC)
+  add_subdirectory(docs/rst)
 endif()
-
