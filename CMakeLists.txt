@@ -135,8 +135,3 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/share DESTINATION ${CMAKE_INSTALL_PREFIX
 
 add_subdirectory( python )
 add_subdirectory( bin )
-
-if(RST_DOC)
-   add_subdirectory( docs )
-endif()
-
