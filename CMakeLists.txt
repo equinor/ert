@@ -30,7 +30,7 @@ endif()
 #-----------------------------------------------------------------
 
 option( BUILD_TESTS         "Should the tests be built"                               OFF)
-option( RST_DOC             "Build RST documentation"                                 OFF)
+option( RST_DOC             "Build RST documentation"                                 ON)
 option( USE_RUNPATH         "Should we embed path to libraries"                       ON)
 option( GUI                 "Build Python GUI"                                        ON)
 
