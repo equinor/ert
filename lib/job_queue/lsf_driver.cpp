@@ -23,6 +23,11 @@
 #include <dlfcn.h>
 #include <unistd.h>
 
+#include <vector>
+#include <string>
+#include <sstream>
+#include <algorithm>
+
 #include <ert/util/util.hpp>
 #include <ert/util/hash.hpp>
 #include <ert/util/stringlist.hpp>
@@ -131,7 +136,7 @@ struct lsf_driver_struct {
   UTIL_TYPE_ID_DECLARATION;
   char              * queue_name;
   char              * resource_request;
-  stringlist_type   * exclude_hosts;
+  std::vector<std::string> exclude_hosts;
   char              * login_shell;
   char              * project_code;
   pthread_mutex_t     submit_lock;
@@ -332,6 +337,20 @@ static void lsf_driver_assert_submit_method( const lsf_driver_type * driver ) {
 }
 
 
+static std::string join_strings(const std::vector<std::string>& strings, const std::string& sep) {
+  if (strings.empty())
+    return "";
+
+  std::stringstream s;
+  s << strings[0];
+  for (int i=1; i < strings.size(); i++) {
+    s << sep;
+    s << strings[i];
+  }
+  return s.str();
+}
+
+
 /*
   A resource string can be "span[host=1] select[A && B] bla[xyz]".
   The blacklisting feature is to have select[hname!=bad1 && hname!=bad2].
@@ -340,16 +359,16 @@ static void lsf_driver_assert_submit_method( const lsf_driver_type * driver ) {
   the select[..] clause.  This addition is the result of '&&'.join(select_list).
 */
 char* alloc_composed_resource_request(const lsf_driver_type * driver,
-                                      const stringlist_type * select_list) {
+                                      const std::vector<std::string>& select_list) {
   char* resreq = util_alloc_string_copy(driver->resource_request);
-  char* excludes_string = stringlist_alloc_joined_string(select_list, " && ");
+  std::string excludes_string = join_strings(select_list, " && ");
 
   char* req = NULL;
   char* pos = strstr(resreq, "select["); // find select[...]
 
   if (pos == NULL) {
     // no select string in request, add select[...]
-    req = util_alloc_sprintf("%s select[%s]", resreq, excludes_string);
+    req = util_alloc_sprintf("%s select[%s]", resreq, excludes_string.c_str());
   } else {
     // add select string to existing select[...]
     char* endpos = strstr(pos, "]");
@@ -366,9 +385,8 @@ char* alloc_composed_resource_request(const lsf_driver_type * driver,
     char * before = (char*)util_alloc_substring_copy(resreq, 0, before_size);
     char * after = (char*)util_alloc_string_copy(&resreq[before_size]);
 
-    req = util_alloc_sprintf("%s && %s]%s", before, excludes_string, after);
+    req = util_alloc_sprintf("%s && %s]%s", before, excludes_string.c_str(), after);
   }
-  free(excludes_string);
   free(resreq);
   return req;
 }
@@ -385,28 +403,23 @@ char* alloc_composed_resource_request(const lsf_driver_type * driver,
 */
 static char * alloc_quoted_resource_string(const lsf_driver_type * driver) {
   char * req = NULL;
-  if (stringlist_get_size(driver->exclude_hosts) == 0) {
+  if (driver->exclude_hosts.size() == 0) {
     if (driver->resource_request)
       req = util_alloc_string_copy(driver->resource_request);
   } else {
-    stringlist_type * select_list = stringlist_alloc_new();
-    if (stringlist_get_size(driver->exclude_hosts) > 0) {
-      for (int i = 0; i < stringlist_get_size(driver->exclude_hosts); i++) {
-        char * exclude_host = (char*)util_alloc_sprintf("hname!='%s'",
-                                                 stringlist_iget(driver->exclude_hosts, i));
-        stringlist_append_copy(select_list, exclude_host);
-        free(exclude_host);
-      }
+    std::vector<std::string> select_list;
+    for (const auto& host : driver->exclude_hosts) {
+      std::string exclude_host = "hname!='" + host + "'";
+      select_list.push_back(exclude_host);
     }
+
     // select_list is non-empty
     if (driver->resource_request != NULL) {
       req = alloc_composed_resource_request(driver, select_list);
     } else {
-      char * select_string = stringlist_alloc_joined_string(select_list, " && ");
-      req = util_alloc_sprintf("select[%s]", select_string);
-      free(select_string);
+      std::string select_string = join_strings(select_list, " && ");
+      req = util_alloc_sprintf("select[%s]", select_string.c_str());
     }
-    stringlist_free(select_list);
   }
 
   char * quoted_resource_request = NULL;
@@ -989,7 +1002,7 @@ void * lsf_driver_submit_job(void * __driver ,
       res_log_finfo("LSF DRIVER submitting using method:%d \n", submit_method);
 
       if (submit_method == LSF_SUBMIT_INTERNAL) {
-        if (stringlist_get_size(driver->exclude_hosts) > 0){
+        if (driver->exclude_hosts.size() > 0){
           res_log_warning("EXCLUDE_HOST is not supported with submit method LSF_SUBMIT_INTERNAL");
         }
         job->lsf_jobnr = lsf_driver_submit_internal_job( driver , lsf_stdout , job_name , submit_cmd , num_cpu , argc, argv);
@@ -1043,7 +1056,6 @@ void lsf_driver_free(lsf_driver_type * driver ) {
   free(driver->resource_request );
   free(driver->remote_lsf_server );
   free(driver->rsh_cmd );
-  stringlist_free(driver->exclude_hosts);
   free( driver->bhist_cmd );
   free( driver->bkill_cmd );
   free( driver->bjobs_cmd );
@@ -1059,7 +1071,7 @@ void lsf_driver_free(lsf_driver_type * driver ) {
     lsb_free( driver->lsb );
 #endif
 
-  free(driver);
+  delete driver;
   driver = NULL;
 }
 
@@ -1145,8 +1157,9 @@ void lsf_driver_add_exclude_hosts(lsf_driver_type * driver, const char * exclude
   stringlist_type * host_list = stringlist_alloc_from_split(excluded, ", ");
   for (int i = 0; i < stringlist_get_size(host_list); i++) {
     const char * excluded = stringlist_iget(host_list, i);
-    if (!stringlist_contains(driver->exclude_hosts, excluded))
-      stringlist_append_copy(driver->exclude_hosts, excluded);
+    const auto& iter = std::find( driver->exclude_hosts.begin(), driver->exclude_hosts.end(), std::string(excluded));
+    if (iter == driver->exclude_hosts.end())
+      driver->exclude_hosts.push_back(excluded);
   }
 }
 
@@ -1378,7 +1391,8 @@ bool lsf_driver_has_project_code( const lsf_driver_type * driver ) {
 
 
 void * lsf_driver_alloc( ) {
-  lsf_driver_type * lsf_driver     = (lsf_driver_type*)util_malloc(sizeof * lsf_driver );
+  lsf_driver_type * lsf_driver     = new lsf_driver_type();
+
   UTIL_TYPE_ID_INIT( lsf_driver , LSF_DRIVER_TYPE_ID);
   lsf_driver->submit_method        = LSF_SUBMIT_INVALID;
   lsf_driver->login_shell          = NULL;
@@ -1390,7 +1404,6 @@ void * lsf_driver_alloc( ) {
   lsf_driver->error_count          = 0;
   lsf_driver->max_error_count      = MAX_ERROR_COUNT;
   lsf_driver->submit_error_sleep   = SUBMIT_ERROR_SLEEP * 1000000;
-  lsf_driver->exclude_hosts        = stringlist_alloc_new();
   pthread_mutex_init( &lsf_driver->submit_lock , NULL );
 
   lsf_driver_lib_init( lsf_driver );
