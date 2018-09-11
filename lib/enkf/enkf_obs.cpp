@@ -1229,6 +1229,7 @@ double enkf_obs_scale_correlated_std(const enkf_obs_type * enkf_obs,
   meas_data_type * meas_data = meas_data_alloc( ens_mask );
   obs_data_type * obs_data = obs_data_alloc( 1.0 );
   double scale_factor = 1.0;
+  bool verbose = true;
 
   enkf_obs_get_obs_and_measure_data( enkf_obs , fs , local_obsdata , ens_active_list,
                                      meas_data , obs_data );
@@ -1243,6 +1244,29 @@ double enkf_obs_scale_correlated_std(const enkf_obs_type * enkf_obs,
       scale_factor = sqrt( obs_data_get_active_size( obs_data ) / num_PC );
 
       matrix_free( S );
+      if (verbose) {
+        int width = 80;
+        int column = 0;
+        const char * indent = "             ";
+        printf("================================================================================\n");
+        printf("Observations: ");
+        column += strlen("Observations:");
+        for (int i=0; i < local_obsdata_get_size(local_obsdata); i++) {
+          const local_obsdata_node_type * node = local_obsdata_iget(local_obsdata, i);
+          const char * key = local_obsdata_node_get_key(node);
+
+          if ((column + strlen(key) + 1) > width) {
+            printf("\n%s", indent);
+            column = strlen(indent);
+          }
+          puts(" ");
+          puts(key);
+          column += 1 + strlen(key);
+        }
+        printf("\n\n");
+        printf("Standard deviation scaled with: %g \n", scale_factor);
+        printf("================================================================================\n");
+      }
       enkf_obs_local_scale_std( enkf_obs , local_obsdata , scale_factor );
     }
   }
