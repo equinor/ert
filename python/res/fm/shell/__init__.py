@@ -1,8 +1,5 @@
 from .shell import Shell
 
-def prefix_path(input_path):
-  Shell.prefix_path(input_path)
-
 def symlink(target , link_name):
   Shell.symlink(target , link_name)
 
