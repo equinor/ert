@@ -33,16 +33,20 @@ def getPRList( api_token, pr1, pr2):
     return pr_list
 
 
+
 def printPRList( pr_list , fileH):
     for pr in pr_list:
         title = pr["title"]
         body = pr["body"]
         nr = pr["number"]
+        url = "https://github.com/Statoil/libres/pull/{}/".format(nr)
 
         try:
-            fileH.write( "[%d] *%s*\n\n" % (nr , title))
+            title = str(title)
         except UnicodeEncodeError:
-            fileH.write(" [%d] : UnicodeError")
+            title = "UnicodeError"
+
+        fileH.write( "[`{nr} <{url}>`] : {title}".format(nr = nr, url=url, title = title))
 
         try:
             fileH.write( "%s\n\n\n" % body )
