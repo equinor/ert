@@ -173,7 +173,7 @@ class EclRun(object):
 
 
     def initEnv(self):
-        for var,value in self.sim.env.iteritems():
+        for var,value in self.sim.env.items():
             os.environ[var] = value
 
 
