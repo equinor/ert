@@ -10,7 +10,7 @@ from res.util import ResLog
 # 2. If self._job_queue is None - the decorator argument is returned.
 
 def job_queue(default):
-    
+
     def job_queue_decorator(method):
 
         def dispatch(self , *args, **kwargs):
@@ -18,12 +18,12 @@ def job_queue(default):
             if self._job_queue is None:
                 return default
             else:
-                return method( self, *args , **kwargs) 
+                return method( self, *args , **kwargs)
 
         return dispatch
 
     return job_queue_decorator
-    
+
 
 class ErtRunError(Exception):
     pass
@@ -46,7 +46,7 @@ class BaseRunModel(object):
         self._queue_config = queue_config
         self._job_queue = None
         self.reset( )
-    
+
     def ert(self):
         """ @rtype: res.enkf.EnKFMain"""
         return ERT.ert
@@ -54,7 +54,7 @@ class BaseRunModel(object):
 
     def reset(self):
         self._failed = False
-        
+
 
     def startSimulations(self, arguments):
         try:
@@ -68,11 +68,11 @@ class BaseRunModel(object):
     def runSimulations(self, job_queue, run_context):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
-    
+
     def create_context(self, arguments):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
-    
+
     @job_queue(None)
     def killAllSimulations(self):
         self._job_queue.killAllJobs()
@@ -215,7 +215,7 @@ class BaseRunModel(object):
     def isIndeterminate(self):
         """ @rtype: bool """
         return not self.isFinished() and self._indeterminate
-       
+
     def checkHaveSufficientRealizations(self, num_successful_realizations):
         if num_successful_realizations == 0:
             raise ErtRunError("Simulation failed! All realizations failed!")
