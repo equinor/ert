@@ -86,9 +86,11 @@ TOPS
 -- The depth of the top of each grid block
 	100*8325 /
 
-PORO
--- Constant porosity of 0.3 throughout all 300 grid cells
-   	300*0.3 /
+
+-- ERT: Here we include a file which should be created using a GEN_KW keyword from ert.
+INCLUDE
+   'poro.grdecl' /
+
 
 PERMX
 -- The layers have perm. 500mD, 50mD and 200mD, respectively.
