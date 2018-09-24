@@ -77,7 +77,7 @@ class EnsembleSmoother(BaseRunModel):
         fs_manager = self.ert().getEnkfFsManager()
         if prior_context is None:
             sim_fs = fs_manager.getCurrentFileSystem( )
-            target_fs = fs_manager.getFileSystem("smoother-update")
+            target_fs = fs_manager.getFileSystem(arguments["target_case"])
             itr = 0
             mask = arguments["active_realizations"]
         else:
