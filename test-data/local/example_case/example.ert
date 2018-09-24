@@ -1,15 +1,36 @@
+-- This ert configuration file is an example which can be used to check that your
+-- local ert installation is basically sane. This example is not meant to be used
+-- as an automatically run integration test, rather it is meant to be tested
+-- interactively.
+-- 
+-- The example is based on the ECLIPSE100 forward model, that implies that you must
+-- configure the local eclipse related details corresponding to your site[1].
+-- 
+-- NB: the current case has *not* been carefully constructed to demonstrate the
+-- capabilities of ert; from a model updating perspective the current case is
+-- totally uninteresting.
+-- 
+-- [1]: This amounts to editing the file ecl_config.yml in the res.fm.ecl python
+-- package from the libres installation. See the documentation in the
+-- ecl_config.yml example file supplied with the libres distribution, or
+-- alternatively the "Post install configuration" section in the libres README. 
+
 QUEUE_SYSTEM LOCAL
+NUM_REALIZATIONS 20
 
-NUM_REALIZATIONS 1
+RUNPATH      output/simulations/runpath/realisation-%d/iter-%d
+ENSPATH      output/storage
 
-DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>
+ECLBASE   EXAMPLE%d
+DATA_FILE eclipse/model/SPE1.DATA
+REFCASE   eclipse/refcase/REFCASE
 
-RUNPATH_FILE directory/test_runpath_list.txt
-RUNPATH <STORAGE>/runpath/realisation-%d/iter-%d
-ENSPATH <STORAGE>/ensemble
+GEN_KW MULT_PORO templates/poro.tmpl   poro.grdecl  parameters/poro.txt
 
+FORWARD_MODEL ECLIPSE100_2016.2
 
-ECLBASE EXAMPLE
+OBS_CONFIG observations/observations.txt
 
-
-FORWARD_MODEL ECLPISE100_2016.2
+SUMMARY W*
+SUMMARY F*
+SUMMARY BPR*
