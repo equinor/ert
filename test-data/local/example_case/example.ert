@@ -1,0 +1,15 @@
+QUEUE_SYSTEM LOCAL
+
+NUM_REALIZATIONS 1
+
+DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>
+
+RUNPATH_FILE directory/test_runpath_list.txt
+RUNPATH <STORAGE>/runpath/realisation-%d/iter-%d
+ENSPATH <STORAGE>/ensemble
+
+
+ECLBASE EXAMPLE
+
+
+FORWARD_MODEL ECLPISE100_2016.2
