@@ -137,6 +137,16 @@ endif()
 install(DIRECTORY share/ DESTINATION share)
 install(PROGRAMS bin/job_dispatch.py DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 
+
+foreach (script ecl100 flow rms)
+  install(PROGRAMS "share/forward_models/res/script/${script}" DESTINATION "${CMAKE_INSTALL_PREFIX}/share/forward_models/res/script")
+endforeach()
+
+foreach (script copy_directory copy_file delete_directory delete_file make_directory move_file symlink)
+  install(PROGRAMS "share/forward_models/shell/script/${script}" DESTINATION "${CMAKE_INSTALL_PREFIX}/share/forward_models/shell/script")
+endforeach()
+
+
 install(EXPORT res-config
         DESTINATION share/cmake/res
         NAMESPACE res::)
