@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+import sys
+from res.fm.rms import run
+
+run_path = sys.argv[1]
+iens = int(sys.argv[2])
+version = sys.argv[3]
+project = sys.argv[4]
+export_path = sys.argv[5]
+import_path = sys.argv[6]
+workflow = sys.argv[7]
+
+run(iens, project, workflow, run_path, target_file=target_file, import_path=import_path, export_path=export_path)

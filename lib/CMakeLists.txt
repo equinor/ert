@@ -593,7 +593,7 @@ function( add_config_test name command )
     add_test( NAME ${name}
               COMMAND ${command} ${ARGN})
 
-    set_property( TEST ${name} PROPERTY ENVIRONMENT "ERT_ROOT=${ERT_ROOT}")
+    set_property( TEST ${name} PROPERTY ENVIRONMENT "ERT_ROOT=${ERT_ROOT};ERT_SITE_CONFIG=${PROJECT_SOURCE_DIR}/share/site-config")
 endfunction()
 
 

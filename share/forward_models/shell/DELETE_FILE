@@ -1,0 +1,10 @@
+STDERR    delete_file.stderr
+STDOUT    delete_file.stdout
+
+EXECUTABLE  script/delete_file
+ARGLIST     <FILES>
+
+MIN_ARG    1
+MAX_ARG    1
+ARG_TYPE 0 STRING
+
