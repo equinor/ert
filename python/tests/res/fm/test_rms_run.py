@@ -82,8 +82,7 @@ class RMSRunTest(ResTest):
             # -----------------------------------------------------------------
 
             action = {"exit_status" : 0,
-                      "target_file" : "some_file"}
-
+                      "target_file" : os.path.join(os.getcwd(), "some_file")}
             with open("run_path/action.json", "w") as f:
                 f.write( json.dumps(action) )
 
@@ -131,7 +130,7 @@ class RMSRunTest(ResTest):
             # -----------------------------------------------------------------
 
             action = {"exit_status" : 0,
-                      "target_file" : "some_file"}
+                      "target_file" : os.path.join(os.getcwd(), "some_file")}
 
             with open("run_path/action.json", "w") as f:
                 f.write( json.dumps(action) )
