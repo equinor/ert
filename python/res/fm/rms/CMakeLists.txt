@@ -6,3 +6,4 @@ set(PYTHON_SOURCES
 
 add_python_package("python.res.fm.rms" ${PYTHON_INSTALL_PREFIX}/res/fm/rms "${PYTHON_SOURCES}" True)
 
+install_example("rms_config.yml" "${PYTHON_INSTALL_PREFIX}/res/fms/rms")
