@@ -50,7 +50,14 @@ option( RST_DOC             "Build RST documentation"               OFF)
 option( USE_RPATH           "Should we embed path to libraries"     ON )
 option( INSTALL_ERT_LEGACY  "Install legacy ert code"               OFF)
 option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit"     OFF)
-set( SITE_CONFIG_FILE "${PROJECT_SOURCE_DIR}/share/site-config" CACHE FILEPATH "Path to global ERT Configuration file")
+
+# If the SITE_CONFIG_FILE is not set as -DSITE_CONFIG_FILE switch when invoking
+# cmake we set it here to location of the to-be-installed site-config file. That
+# implies that when testing the binary will have embedded a path to non-existent
+# or stale version of the site configuration file. Irrespective of the value of
+# SITE_CONFIG_FILE the environment variable ERT_SITE_CONFIG will be set to point
+# to the in-source version of the site-config file for testing.
+set( SITE_CONFIG_FILE "${CMAKE_INSTALL_PREFIX}/share/site-config" CACHE FILEPATH "Path to global ERT Configuration file")
 
 if (BUILD_PYTHON)
   if (NOT ENABLE_PYTHON)
