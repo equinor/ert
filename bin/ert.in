@@ -36,19 +36,19 @@ def runExec(executable , args):
     exec_args = [ executable ] + args
     os.execvpe( executable , exec_args , os.environ )
 
-    
+
 
 @ensureConfig
 def runGui( args ):
     runExec("python" , ["%s/ert_gui/gert_main.py" % ERT_PYTHONPATH] + args)
 
-    
-@ensureConfig    
+
+@ensureConfig
 def runTui( args ):
     os.environ["ERT_UI_MODE"] = "tui"
     runExec("%s/bin/ert_tui" % ERT_ROOT ,  args)
 
-    
+
 @ensureConfig
 def runServer( args ):
     runExec("%s/bin/ert_tcp_server" % ERT_ROOT ,  args)
@@ -86,4 +86,4 @@ elif options.server:
     runServer(args)
 else:
     runDefault(args)
-    
+
