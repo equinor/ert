@@ -23,7 +23,7 @@ class ImportPlugins(ImportTestCase):
 
     def test_import(self):
 
-        plugin_path = os.path.abspath( os.path.join( os.path.dirname( __file__) , "../../../../../../share/workflows/jobs/internal-gui/scripts") )
+        plugin_path = os.path.abspath( os.path.join( os.path.dirname( __file__) , "../../../../../../share/ert/workflows/jobs/internal-gui/scripts") )
         print(plugin_path)
         self.assertTrue( os.path.isdir( plugin_path ))
         for path in glob.glob("%s/*.py" % plugin_path):
