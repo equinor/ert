@@ -187,9 +187,11 @@ class Shell(object):
 
 
     @staticmethod
-    def copyFile(src , target ):
+    def copyFile(src , target = None):
         src = Shell.prefix_path( src )
         if os.path.isfile( src ):
+            if target is None:
+                target = os.path.basename(src)
 
             if os.path.isdir( target ):
                 target_file = os.path.join( target , os.path.basename( src ))

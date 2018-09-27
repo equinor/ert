@@ -1,10 +1,20 @@
 import unittest
 import os
 import os.path
+import contextlib
 
 from ecl.util.test import TestAreaContext
 from tests import ResTest
 from res.fm.shell import *
+
+@contextlib.contextmanager
+def pushd(path):
+    cwd0 = os.getcwd()
+    os.chdir(path)
+
+    yield
+
+    os.chdir(cwd0)
 
 
 
@@ -305,6 +315,14 @@ class ShellTest(ResTest):
 
                 copy_file("file" , "root/sub/path/file")
                 self.assertTrue( os.path.isfile( "root/sub/path/file"))
+
+                with open("file2" , "w") as f:
+                    f.write("Hei ...")
+
+                with pushd("root/sub/path"):
+                    copy_file("../../../file2")
+                    self.assertTrue(os.path.isfile("file2"))
+
 
 
     def test_copy_file2(self):
