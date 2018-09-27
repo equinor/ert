@@ -21,8 +21,10 @@
 -- ecl_config.yml example file supplied with the libres distribution, or
 -- alternatively the "Post install configuration" section in the libres README. 
 
-QUEUE_SYSTEM LOCAL
 NUM_REALIZATIONS 20
+
+QUEUE_SYSTEM LOCAL
+QUEUE_OPTION LOCAL MAX_RUNNING 4
 
 RUNPATH      output/simulations/runpath/realisation-%d/iter-%d
 ENSPATH      output/storage
@@ -36,7 +38,7 @@ GEN_KW MULT_PORO templates/poro.tmpl   poro.grdecl  parameters/poro.txt
 -- This forward model job requires that you have eclipse version 2016.02
 -- installed locally, feel free to modify this to use a different version if
 -- that is what you have installed.
-SIMULATION_JOB ECLIPSE100 2016.2 <ECLBASE>
+SIMULATION_JOB flow 2018.04 <ECLBASE>
 
 OBS_CONFIG observations/observations.txt
 
