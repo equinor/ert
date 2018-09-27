@@ -4,4 +4,4 @@ set(TEST_SOURCES
 
 add_python_package("python.tests.res.simulator" ${PYTHON_INSTALL_PREFIX}/tests/res/simulator "${TEST_SOURCES}" False)
 
-addPythonTest(tests.res.simulator.test_batch_sim.BatchSimulatorTest)
+python_config_test(tests.res.simulator.test_batch_sim.BatchSimulatorTest)

@@ -574,7 +574,6 @@ foreach (test   enkf_active_list
                 enkf_plot_gen_kw_vector
                 enkf_plot_genvector
                 enkf_plot_tvector
-                enkf_executable_path
                 enkf_run_arg
                 enkf_state_map
                 obs_vector_tests
@@ -593,7 +592,7 @@ function( add_config_test name command )
     add_test( NAME ${name}
               COMMAND ${command} ${ARGN})
 
-    set_property( TEST ${name} PROPERTY ENVIRONMENT "ERT_ROOT=${ERT_ROOT};ERT_SITE_CONFIG=${PROJECT_SOURCE_DIR}/share/site-config")
+    set_property( TEST ${name} PROPERTY ENVIRONMENT "ERT_ROOT=${ERT_ROOT};ERT_SITE_CONFIG=${PROJECT_SOURCE_DIR}/${SHARE_DIR}/site-config")
 endfunction()
 
 
@@ -611,6 +610,7 @@ foreach(test enkf_magic_string_in_workflows
              enkf_forward_init_GEN_KW
              enkf_forward_init_GEN_PARAM
              enkf_umask_config_test
+             enkf_executable_path
              enkf_forward_load_context
              enkf_ensemble_GEN_PARAM
              enkf_workflow_job_test2
@@ -621,10 +621,12 @@ foreach(test enkf_magic_string_in_workflows
     target_link_libraries(${test} res)
 endforeach()
 
+add_config_test(enkf_executable_path enkf_executable_path)
+
 add_config_test(enkf_workflow_job_test2
                 enkf_workflow_job_test2
                 ${CMAKE_SOURCE_DIR}/test-data/local/snake_oil_no_data/snake_oil_GEN_DATA.ert
-                ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/LOAD_RESULTS)
+                ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/LOAD_RESULTS)
 
 add_config_test(enkf_forward_load_context
                 enkf_forward_load_context
@@ -655,7 +657,7 @@ add_config_test(enkf_forward_init_GEN_PARAM_FALSE
 add_config_test(enkf_select_case_job
                 enkf_select_case_job
                 ${CMAKE_SOURCE_DIR}/test-data/local/snake_oil/snake_oil.ert
-                ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal-tui/config/SELECT_CASE)
+                ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal-tui/config/SELECT_CASE)
 add_config_test(enkf_forward_init_GEN_KW_TRUE
                 enkf_forward_init_GEN_KW
                 ${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/config/forward/ert
@@ -671,7 +673,7 @@ add_config_test(enkf_magic_string_in_workflows enkf_magic_string_in_workflows ${
 add_config_test(enkf_main enkf_main ${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/config rng)
 add_config_test(enkf_runpath_list enkf_runpath_list ${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/config/runpath_list/config)
 add_config_test(enkf_gen_obs_load enkf_gen_obs_load ${CMAKE_SOURCE_DIR}/test-data/local/config/gen_data/config)
-add_config_test(enkf_ert_workflow_list enkf_ert_workflow_list ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/SCALE_STD)
+add_config_test(enkf_ert_workflow_list enkf_ert_workflow_list ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/SCALE_STD)
 add_config_test(enkf_ert_test_context
                 enkf_ert_test_context
                 ${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/config/test_context/config
@@ -797,7 +799,7 @@ add_statoil_test(enkf_main_fs_current_file_test
 add_statoil_test(enkf_scale_correlated_std
                  enkf_scale_correlated_std
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/with_data/config
-                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/STD_SCALE_CORRELATED_OBS)
+                 ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/STD_SCALE_CORRELATED_OBS)
 
 add_statoil_test(enkf_plot_gendata_fs
                  enkf_plot_gendata_fs
@@ -834,24 +836,24 @@ add_statoil_test(enkf_state_no_summary_vars_present
 add_statoil_test(enkf_export_field_test
                  enkf_export_field_test
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/export_fields/config
-                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_FIELD
-                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_FIELD_ECL_GRDECL
-                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_FIELD_RMS_ROFF)
+                 ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_FIELD
+                 ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_FIELD_ECL_GRDECL
+                 ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_FIELD_RMS_ROFF)
 
 add_statoil_test(enkf_workflow_job_test
                  enkf_workflow_job_test
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/with_data/config
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/enkf_state_runpath/config_runpath_multiple_iterations
-                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal-tui/config/CREATE_CASE
-                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal-tui/config/INIT_CASE_FROM_EXISTING
-                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/LOAD_RESULTS
-                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/LOAD_RESULTS_ITER
-                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/OBSERVATION_RANKING
-                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/DATA_RANKING
-                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_RANKING
-                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/INIT_MISFIT_TABLE
-                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_RUNPATH
-                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/PRE_SIMULATION_COPY)
+                 ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal-tui/config/CREATE_CASE
+                 ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal-tui/config/INIT_CASE_FROM_EXISTING
+                 ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/LOAD_RESULTS
+                 ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/LOAD_RESULTS_ITER
+                 ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/OBSERVATION_RANKING
+                 ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/DATA_RANKING
+                 ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_RANKING
+                 ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/INIT_MISFIT_TABLE
+                 ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_RUNPATH
+                 ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/PRE_SIMULATION_COPY)
 
 
 add_statoil_test(enkf_forward_init_SURFACE_TRUE
