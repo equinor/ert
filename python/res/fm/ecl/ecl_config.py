@@ -41,6 +41,13 @@ class Simulator(object):
                 raise OSError("The mpirun argument: '{}' is not executable by user".format(executable))
 
 
+    def __repr__(self):
+        mpistring = ""
+        if self.mpirun:
+            mpistring = " MPI"
+        return "{}(version={}, executable={}{})".format(self.name, self.version, self.executable, mpistring)
+
+
 
 class EclConfig(object):
     """Represent the eclipse configuration at a site.
