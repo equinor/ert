@@ -51,13 +51,14 @@ option( USE_RPATH           "Should we embed path to libraries"     ON )
 option( INSTALL_ERT_LEGACY  "Install legacy ert code"               OFF)
 option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit"     OFF)
 
+set( SHARE_DIR "share/ert")
 # If the SITE_CONFIG_FILE is not set as -DSITE_CONFIG_FILE switch when invoking
 # cmake we set it here to location of the to-be-installed site-config file. That
 # implies that when testing the binary will have embedded a path to non-existent
 # or stale version of the site configuration file. Irrespective of the value of
 # SITE_CONFIG_FILE the environment variable ERT_SITE_CONFIG will be set to point
 # to the in-source version of the site-config file for testing.
-set( SITE_CONFIG_FILE "${CMAKE_INSTALL_PREFIX}/share/site-config" CACHE FILEPATH "Path to global ERT Configuration file")
+set( SITE_CONFIG_FILE "${CMAKE_INSTALL_PREFIX}/${SHARE_DIR}/site-config" CACHE FILEPATH "Path to global ERT Configuration file")
 
 if (BUILD_PYTHON)
   if (NOT ENABLE_PYTHON)
@@ -131,7 +132,29 @@ endif ()
 # feature tests
 include(CheckFunctionExists)
 check_function_exists( regexec ERT_HAVE_REGEXP )
+
 #-----------------------------------------------------------------
+# install_example() is a small utility function which is used to install an
+# example file. If a file with the same name already exists in the installation
+# directory the example file will not be reinstalled on top.
+#
+# The decision whether to install the example file or not is evaluated at
+# configure - time; i.e. there is a race open between configure time and
+# installation. Should ideally use the INSTALL(CODE ...) functionality to defer
+# the decision to installation time.
+
+function(install_example src_file destination)
+
+  set (_full_destination "${CMAKE_INSTALL_PREFIX}/${destination}")
+  if (EXISTS "${_full_destination}/${src_file}")
+    message(STATUS "File: ${_full_destination}/${src_file} already exists - will not be updated")
+  else()
+    message(STATUS "An example ${src_file} will be installed ${_full_destination}")
+    install(FILES ${src_file} DESTINATION "${_full_destination}")
+  endif()
+
+endfunction()
+
 
 add_subdirectory(lib)
 add_subdirectory(python)
@@ -141,16 +164,19 @@ if (RST_DOC)
     add_subdirectory( docs )
 endif()
 
-install(DIRECTORY share/ DESTINATION share)
-install(PROGRAMS bin/job_dispatch.py DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
+foreach(share_dir workflows gui forward-models)
+  install(DIRECTORY "share/ert/${share_dir}" DESTINATION share/ert)
+endforeach()
+install_example("share/ert/site-config" "share/ert")
+install(PROGRAMS bin/job_dispatch.py DESTINATION bin )
 
 
 foreach (script ecl100 flow rms)
-  install(PROGRAMS "share/forward_models/res/script/${script}" DESTINATION "${CMAKE_INSTALL_PREFIX}/share/forward_models/res/script")
+  install(PROGRAMS "share/ert/forward-models/res/script/${script}" DESTINATION "share/ert/forward-models/res/script")
 endforeach()
 
 foreach (script copy_directory copy_file delete_directory delete_file make_directory move_file symlink)
-  install(PROGRAMS "share/forward_models/shell/script/${script}" DESTINATION "${CMAKE_INSTALL_PREFIX}/share/forward_models/shell/script")
+  install(PROGRAMS "share/ert/forward-models/shell/script/${script}" DESTINATION "share/ert/forward-models/shell/script")
 endforeach()
 
 
