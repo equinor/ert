@@ -76,12 +76,23 @@ bash% make install
 ```
 
 When this process if over you will have a binary executable `ert` installed in
-`/local/ert/install/bin/ert`. To try this out go to the root our `ert/` source
-folder and type:
+`/local/ert/install/bin/ert`. 
 
-```
-/local/ert/install/bin/ert test-data/local/snake_oil/snake_oil.ert
-```
 
-where of course the `/local/ert/install` part should be replaced with the
-location where you have actually installed `ert`.
+#### 6. Try your new `ert` installation
+
+To actually get ert to work at your site you need to configure details about
+your system; at the very least this means you must configure where your
+reservoir simulator is installed. This is described in the *Post installation*
+section of the [libres README](https://github.com/Statoil/libres). In addition
+you might want to configure e.g. queue system in the `site-config` file, but
+that is not strictly necessary for a basic test.
+
+In the location `test-data/local/example_case` is a small ert case which can be
+used to verify that your installation is basically sound:
+
+   cd test-data/local/example_case
+   ert example.ert
+   
+Depending on the eclipse100 version available at your site you might have to
+modify the `SIMULATION_JOB` keyword.
