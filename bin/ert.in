@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 ERT_ROOT = "${ERT_ROOT}"
 ERT_LD_LIBRARY_PATH = "%s/${CMAKE_INSTALL_LIBDIR}" % ERT_ROOT
 ERT_PYTHONPATH = "%s/${PYTHON_INSTALL_PREFIX}" % ERT_ROOT
-ERT_SHARE_PATH = "%s/share" % ERT_ROOT
+ERT_SHARE_PATH = "%s/ert/share" % ERT_ROOT
 
 
 def updateEnvPath(path_var, value):
