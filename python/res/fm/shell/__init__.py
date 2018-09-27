@@ -18,7 +18,7 @@ def delete_directory(path):
 def copy_directory(src_path , target_path ):
   Shell.copyDirectory(src_path , target_path )
 
-def copy_file(src , target ):
+def copy_file(src , target=None ):
   Shell.copyFile(src , target )
 
 
