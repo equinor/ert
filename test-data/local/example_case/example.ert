@@ -1,7 +1,13 @@
 -- This ert configuration file is an example which can be used to check that your
 -- local ert installation is basically sane. This example is not meant to be used
 -- as an automatically run integration test, rather it is meant to be tested
--- interactively.
+-- interactively. In addition to the compiled application this will also verify that
+-- the various configuration files are reasonably correctly stitched together.
+--
+-- To actually test this invoke the ert binary you have installed and give the path to
+-- this file as argument:
+--
+--    /path/to/installed/ert/bin/ert example.ert
 -- 
 -- The example is based on the ECLIPSE100 forward model, that implies that you must
 -- configure the local eclipse related details corresponding to your site[1].
@@ -27,7 +33,10 @@ REFCASE   eclipse/refcase/REFCASE
 
 GEN_KW MULT_PORO templates/poro.tmpl   poro.grdecl  parameters/poro.txt
 
-FORWARD_MODEL ECLIPSE100_2016.2
+-- This forward model job requires that you have eclipse version 2016.02
+-- installed locally, feel free to modify this to use a different version if
+-- that is what you have installed.
+SIMULATION_JOB ECLIPSE100 2016.2 <ECLBASE>
 
 OBS_CONFIG observations/observations.txt
 
