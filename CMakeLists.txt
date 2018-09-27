@@ -38,19 +38,19 @@ find_package( ecl REQUIRED )
 find_package( res REQUIRED )
 
 function( symlink_at target link link_location)
-  if (EXISTS ${link})
-     EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E remove "${link}")
+  if (EXISTS "${link_location}/${link}")
+     EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E remove "${link_location}/${link}")
   endif()
 
   if (NOT EXISTS ${link_location})
-    EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E make_directory "${PROJECT_BINARY_DIR}/bin")
+    EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E make_directory "${link_location}")
   endif()
 
   if (EXISTS ${target})
      get_filename_component( abs_target ${target} ABSOLUTE )
      EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E create_symlink "${abs_target}" "${link}"
-                      WORKING_DIRECTORY link_location)
-     message(STATUS "Linking : ${link} -> ${abs_target}")
+                      WORKING_DIRECTORY ${link_location})
+     message(STATUS "Linking : ${link_location}/${link} -> ${abs_target}")
   else()
      message( SEND_ERROR "Link target: ${target} does not exist")
   endif()
@@ -61,7 +61,7 @@ if (EXISTS ${STATOIL_TESTDATA_ROOT})
   symlink_at( "${STATOIL_TESTDATA_ROOT}" "Statoil" "${CMAKE_CURRENT_SOURCE_DIR}/test-data")
 endif()
 
-symlink_at( "${CMAKE_CURRENT_SOURCE_DIR}/share" "share" "${CMAKE_CURRENT_BINARY_DIR}")
+symlink_at( "${CMAKE_CURRENT_SOURCE_DIR}/share" "share" "${PROJECT_BINARY_DIR}")
 symlink_at( "${res_DIR}/../../../bin/job_dispatch.py" "job_dispatch.py" "${PROJECT_BINARY_DIR}/bin")
 
 set( ERT_ROOT "${PROJECT_BINARY_DIR}" )
