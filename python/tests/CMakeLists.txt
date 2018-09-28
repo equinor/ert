@@ -9,7 +9,7 @@ set(INSTALL_DIRECTORY ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX})
 
 add_python_package("python.tests" "${PYTHON_INSTALL_PREFIX}/tests" "${TEST_SOURCES}" False)
 configure_file(
-   __init__.py 
+   __init__.py
    "${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX}/tests/__init__.py"
    @ONLY
 )

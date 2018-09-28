@@ -1,6 +1,15 @@
+function(python_config_test test_class)
+  addPythonTest(${test_class})
+  set_property(TEST ${test_class}
+    APPEND
+    PROPERTY
+       ENVIRONMENT "ERT_SITE_CONFIG=${PROJECT_SOURCE_DIR}/${SHARE_DIR}/site-config")
+endfunction()
+
 set(TEST_SOURCES
     __init__.py
 )
+
 
 add_python_package("python.tests.res"  ${PYTHON_INSTALL_PREFIX}/tests/res "${TEST_SOURCES}" False)
 
