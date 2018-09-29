@@ -501,6 +501,7 @@ void * enkf_main_export_runpath_file_JOB(void * self, const stringlist_type * ar
 void * enkf_main_std_scale_correlated_obs_JOB(void * self, const stringlist_type * args)  {
 
   if (stringlist_get_size(args) > 0) {
+    bool verbose = true;
     enkf_main_type * enkf_main              = enkf_main_safe_cast( self );
     int ensemble_size                       = enkf_main_get_ensemble_size(enkf_main);
     enkf_fs_type * fs                       = enkf_main_job_get_fs( enkf_main );
@@ -513,19 +514,33 @@ void * enkf_main_std_scale_correlated_obs_JOB(void * self, const stringlist_type
     for (int iarg = 0; iarg < stringlist_get_size(args); iarg++) {
       const char * arg_key = stringlist_iget( args , iarg );
       stringlist_type * key_list = enkf_obs_alloc_matching_keylist(obs, arg_key);
+      if (verbose)
+        printf("%s => ", arg_key);
+
       for (int iobs=0; iobs < stringlist_get_size( key_list ); iobs++) {
         const char * obs_key = stringlist_iget( key_list , iobs);
         const obs_vector_type * obs_vector = enkf_obs_get_vector(obs, obs_key);
         local_obsdata_add_node( obsdata , obs_vector_alloc_local_node(obs_vector) );
+        if (verbose)
+          printf("%s ", obs_key);
       }
+      if (verbose && (stringlist_get_size(key_list) == 0))
+        printf("**ERROR - no observation keys matched argument %s - ignored\n", arg_key);
+
+      if (verbose)
+        puts("\n");
+
       stringlist_free( key_list );
     }
 
     if (local_obsdata_get_size(obsdata) > 0)
-      enkf_obs_scale_correlated_std(obs, fs, realizations, obsdata );
+      enkf_obs_scale_correlated_std(obs, fs, realizations, obsdata, verbose );
+    else if (verbose)
+      printf("**Warning: Your list of arguments did not match any observation keys - no scaling performed.\n");
 
     local_obsdata_free( obsdata );
-  }
+  } else
+    fprintf(stderr,"** Warning: When using the workflow job to scale correlated observations you must provide the observation keys as arguments\n");
 
   return NULL;
 }
