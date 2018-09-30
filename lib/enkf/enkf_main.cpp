@@ -996,7 +996,7 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
         const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
         if (analysis_config_get_std_scale_correlated_obs(analysis_config)) {
           double scale_factor = enkf_obs_scale_correlated_std(enkf_main->obs, source_fs,
-                                                              ens_active_list, obsdata);
+                                                              ens_active_list, obsdata, false);
           res_log_finfo("Scaling standard deviation in obdsata set:%s with %g",
                         local_obsdata_get_name(obsdata), scale_factor);
         }

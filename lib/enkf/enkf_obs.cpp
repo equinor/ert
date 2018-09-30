@@ -1224,12 +1224,12 @@ void enkf_obs_local_scale_std( const enkf_obs_type * enkf_obs , const local_obsd
 double enkf_obs_scale_correlated_std(const enkf_obs_type * enkf_obs,
                                      enkf_fs_type * fs,
                                      const int_vector_type * ens_active_list,
-                                     const local_obsdata_type * local_obsdata) {
+                                     const local_obsdata_type * local_obsdata,
+                                     bool verbose) {
   bool_vector_type * ens_mask = int_vector_alloc_mask( ens_active_list );
   meas_data_type * meas_data = meas_data_alloc( ens_mask );
   obs_data_type * obs_data = obs_data_alloc( 1.0 );
   double scale_factor = 1.0;
-  bool verbose = true;
 
   enkf_obs_get_obs_and_measure_data( enkf_obs , fs , local_obsdata , ens_active_list,
                                      meas_data , obs_data );
