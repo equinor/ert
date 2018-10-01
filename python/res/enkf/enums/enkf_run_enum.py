@@ -25,5 +25,6 @@ class EnkfRunType(BaseCEnum):
 
 EnkfRunType.addEnum("ENKF_ASSIMILATION" , 1)
 EnkfRunType.addEnum("ENSEMBLE_EXPERIMENT" , 2)
-EnkfRunType.addEnum("SMOOTHER_UPDATE" , 4)
+EnkfRunType.addEnum("SMOOTHER_RUN" , 4)
 EnkfRunType.addEnum("INIT_ONLY" , 8)
+EnkfRunType.addEnum("SMOOTHER_UPDATE" , 16)

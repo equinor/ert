@@ -652,7 +652,7 @@ static int enkf_main_serialize_dataset( const ensemble_config_type * ens_config 
   for (int ikw=0; ikw < num_kw; ikw++) {
     const char             * key         = stringlist_iget(update_keys , ikw);
     enkf_config_node_type * config_node  = ensemble_config_get_node( ens_config , key );
-    if ((serialize_info[0].run_mode == SMOOTHER_UPDATE) && (enkf_config_node_get_var_type( config_node ) != PARAMETER)) {
+    if ((serialize_info[0].run_mode == SMOOTHER_RUN) && (enkf_config_node_get_var_type( config_node ) != PARAMETER)) {
       /* We have tried to serialize a dynamic node when we are
          smoother update mode; that does not make sense and we just
          continue. */
@@ -732,7 +732,7 @@ static void enkf_main_deserialize_dataset( ensemble_config_type * ensemble_confi
   for (int i = 0; i < stringlist_get_size( update_keys ); i++) {
     const char             * key         = stringlist_iget(update_keys , i);
     enkf_config_node_type * config_node  = ensemble_config_get_node( ensemble_config , key );
-    if ((serialize_info[0].run_mode == SMOOTHER_UPDATE) && (enkf_config_node_get_var_type( config_node ) != PARAMETER))
+    if ((serialize_info[0].run_mode == SMOOTHER_RUN) && (enkf_config_node_get_var_type( config_node ) != PARAMETER))
       /*
          We have tried to serialize a dynamic node when we are in
          smoother update mode; that does not make sense and we just
@@ -1253,7 +1253,7 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
 
 
 static bool enkf_main_smoother_update__(enkf_main_type * enkf_main , const int_vector_type * step_list , enkf_fs_type * source_fs, enkf_fs_type * target_fs) {
-  return enkf_main_UPDATE( enkf_main , step_list , source_fs , target_fs , 0 , SMOOTHER_UPDATE );
+  return enkf_main_UPDATE( enkf_main , step_list , source_fs , target_fs , 0 , SMOOTHER_RUN );
 }
 
 

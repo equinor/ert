@@ -213,7 +213,6 @@ ert_run_context_type * ert_run_context_alloc_INIT_ONLY(enkf_fs_type * sim_fs,
 }
 
 
-
 ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * sim_fs , enkf_fs_type * target_update_fs ,
                                                           bool_vector_type * iactive ,
                                                           const path_fmt_type * runpath_fmt ,
@@ -221,7 +220,7 @@ ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * sim_fs 
 							  const subst_list_type * subst_list ,
                                                           int iter) {
 
-  ert_run_context_type * context = ert_run_context_alloc__( iactive , SMOOTHER_UPDATE , INIT_CONDITIONAL, sim_fs , target_update_fs , iter);
+  ert_run_context_type * context = ert_run_context_alloc__( iactive , SMOOTHER_RUN , INIT_CONDITIONAL, sim_fs , target_update_fs , iter);
   {
     stringlist_type * runpath_list = ert_run_context_alloc_runpath_list( iactive , runpath_fmt , subst_list , iter );
     stringlist_type * jobname_list = ert_run_context_alloc_jobname_list( iactive , jobname_fmt , subst_list );
@@ -245,6 +244,10 @@ ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * sim_fs 
   return context;
 }
 
+ert_run_context_type * ert_run_context_alloc_SMOOTHER_UPDATE(enkf_fs_type * sim_fs , enkf_fs_type * target_update_fs , bool_vector_type * iactive) {
+  return ert_run_context_alloc__( iactive , SMOOTHER_UPDATE , INIT_CONDITIONAL, sim_fs , target_update_fs , 0);
+}
+
 ert_run_context_type * ert_run_context_alloc(run_mode_type run_mode,
                                              init_mode_type init_mode,
                                              enkf_fs_type * sim_fs ,
@@ -256,7 +259,7 @@ ert_run_context_type * ert_run_context_alloc(run_mode_type run_mode,
                                              int iter) {
   switch (run_mode) {
 
-  case(SMOOTHER_UPDATE):
+  case(SMOOTHER_RUN):
     return ert_run_context_alloc_SMOOTHER_RUN( sim_fs , target_update_fs, iactive, runpath_fmt , jobname_fmt, subst_list , iter );
 
   case(ENSEMBLE_EXPERIMENT):
