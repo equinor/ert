@@ -53,13 +53,13 @@ class ErtTestContextTest(ResTest):
 
 
     def loadResultsTest(self, context):
-        load_results_job = self.createSharePath("workflows/jobs/internal/config/LOAD_RESULTS")
+        load_results_job = self.createSharePath("ert/workflows/jobs/internal/config/LOAD_RESULTS")
         context.installWorkflowJob("LOAD_RESULTS_JOB", load_results_job)
         self.assertTrue(context.runWorkflowJob("LOAD_RESULTS_JOB", 0, 1))
 
 
     def rankRealizationsOnObservationsTest(self, context):
-        rank_job = self.createSharePath("workflows/jobs/internal/config/OBSERVATION_RANKING")
+        rank_job = self.createSharePath("ert/workflows/jobs/internal/config/OBSERVATION_RANKING")
 
         context.installWorkflowJob("OBS_RANK_JOB", rank_job)
 
@@ -74,7 +74,7 @@ class ErtTestContextTest(ResTest):
     def test_workflow_function_jobs(self):
 
         with ErtTestContext("python/enkf/ert_test_context_workflow_function_job", self.config) as context:
-            internal_config = "workflows/jobs/internal-tui/config"
+            internal_config = "ert/workflows/jobs/internal-tui/config"
             self.createCaseTest(context, root_path=internal_config)
             self.selectCaseTest(context, root_path=internal_config)
 
@@ -92,7 +92,7 @@ class ErtTestContextTest(ResTest):
             with self.assertRaises(IOError):
                 context.installWorkflowJob("JOB_NAME" , "DOES/NOT/EXIST")
 
-            ert_scripts_config = "workflows/jobs/internal-gui/config"
+            ert_scripts_config = "ert/workflows/jobs/internal-gui/config"
             self.createCaseTest(context, root_path=ert_scripts_config)
             self.selectCaseTest(context, root_path=ert_scripts_config)
             self.initFromCaseTest(context, root_path=ert_scripts_config)
