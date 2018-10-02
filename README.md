@@ -67,7 +67,7 @@ be loaded before the users personal config file. For more extensive use of `ert`
 it might be benefical to customize the `site-config` file to your personal site.
 There are three possible ways to do this:
 
-1. You can just edit the installed file manuaally - `libres` will not install
+1. You can just edit the installed file manually - `libres` will not install
    it's version of the `site-config` file if one is already present.
    
 2. The path to `site-config` file is *compiled into* the `libres` library, if
