@@ -35,14 +35,12 @@ example given here is for RedHat based distributions.
 
 ### 4. Run `cmake` to configure `libres`
 
-When running `cmake` you must tell `cmake` where the `libecl` code is located with
-`-DCMAKE_PREFIX_PATH` and also where some `Python/cmake` interoperability
-modules are found with `-DCMAKE_MODULE_PATH`, i.e. in addition to other possible
-arguments you must at least add:
+When running `cmake` you must tell `cmake` where the `libecl` code is located
+with `-DCMAKE_PREFIX_PATH`, i.e. in addition to other possible arguments you
+must at least add:
 
 ```
--DCMAKE_PREFIX_PATH=/local/ert/install \
--DCMAKE_MODULE_PATH=/local/ert/install/share/cmake/Modules \
+-DCMAKE_PREFIX_PATH=/local/ert/install
 ```
 
 in addition you probably want to pass `-DCMAKE_INSTALL_PREFIX` to configure where
