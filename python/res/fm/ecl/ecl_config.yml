@@ -37,20 +37,20 @@ simulators:
       scalar:
         executable: /path/ecl/2015.2/linux/x86_64/bin/eclipse100
       mpi:
-        executbale: /path/ecl/2015.2/linux/x86_64/bin/eclipse100_mpi
+        executable: /path/ecl/2015.2/linux/x86_64/bin/eclipse100_mpi
         mpirun: /path/ecl/2015.2/intel/bin/mpirun
         env:
           MPI_ROOT: /path/to/mpi/root
           LD_LIBRARY_PATH: /path/to/mpi/root/lib64:$LD_LIBRARY_PATH
-          
+
     2017.2:
       scalar:
         executable: /path/ecl/2017.2/linux/x86_64/bin/eclipse100
         env:
       mpi:
-        executbale: /path/ecl/2017.2/linux/x86_64/bin/eclipse100_mpi
+        executable: /path/ecl/2017.2/linux/x86_64/bin/eclipse100_mpi
         mpirun: /path/ecl/2017.2/intel/bin/mpirun
-   
+
   flow:
     2018.04:
       scalar:
