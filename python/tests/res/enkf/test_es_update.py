@@ -33,11 +33,7 @@ class ESUpdateTest(ResTest):
             sim_fs = fsm.getFileSystem("default_0")
             target_fs = fsm.getFileSystem("target")
             mask = BoolVector( initial_size = ert.getEnsembleSize(), default_value = True)
-            model_config = ert.getModelConfig( )
-            path_fmt = model_config.getRunpathFormat( )
-            jobname_fmt = model_config.getJobnameFormat( )
-            subst_list = None
-            run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, path_fmt, jobname_fmt, subst_list, 0)
+            run_context = ErtRunContext.ensemble_smoother_update( sim_fs, target_fs, mask )
             es_update.smootherUpdate( run_context )
 
 
