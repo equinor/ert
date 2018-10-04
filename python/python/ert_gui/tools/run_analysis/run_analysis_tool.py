@@ -58,8 +58,7 @@ class RunAnalysisTool(Tool):
 
         target_fs = fs_manager.getFileSystem(target)
         source_fs = fs_manager.getFileSystem(source)
-        mask = BoolVector( initial_size = ert.getEnsembleSize(), default_value = True)
-        run_context = ErtRunContext.ensemble_smoother_update( source_fs, target_fs, mask )
+        run_context = ErtRunContext.ensemble_smoother_update( source_fs, target_fs, )
         success = es_update.smootherUpdate( run_context )
 
         if not success:
