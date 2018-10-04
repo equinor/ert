@@ -39,10 +39,10 @@ GEN_KW MULT_PORO templates/poro.tmpl   poro.grdecl  parameters/poro.txt
 SIMULATION_JOB COPY_FILE eclipse/input/schedule  
 
 
--- This forward model job requires that you have eclipse version 2016.02
+-- This forward model job requires that you have eclipse version 2016.2
 -- installed locally, feel free to modify this to use a different version if
 -- that is what you have installed.
-SIMULATION_JOB ECLIPSE100 2016.02 <ECLBASE>
+SIMULATION_JOB ECLIPSE100 2016.2 <ECLBASE>
 
 OBS_CONFIG observations/observations.txt
 
