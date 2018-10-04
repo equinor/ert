@@ -34,7 +34,7 @@
 struct state_map_struct {
   UTIL_TYPE_ID_DECLARATION;
   int_vector_type  * state;
-  pthread_rwlock_t   rw_lock;
+  pthread_rwlock_t mutable rw_lock;
   bool               read_only;
 };
 
@@ -69,7 +69,7 @@ state_map_type * state_map_fread_alloc_readonly( const char * filename ) {
 }
 
 
-state_map_type * state_map_alloc_copy( state_map_type * map ) {
+state_map_type * state_map_alloc_copy(const state_map_type * map) {
   state_map_type * copy = state_map_alloc();
   pthread_rwlock_rdlock( &map->rw_lock );
   {
@@ -86,7 +86,7 @@ void state_map_free( state_map_type * map ) {
 }
 
 
-int state_map_get_size( state_map_type * map) {
+int state_map_get_size(const state_map_type * map) {
   int size;
   pthread_rwlock_rdlock( &map->rw_lock );
   {
@@ -97,7 +97,7 @@ int state_map_get_size( state_map_type * map) {
 }
 
 
-bool state_map_equal( state_map_type * map1 , state_map_type * map2) {
+bool state_map_equal(const state_map_type * map1, const state_map_type * map2) {
   bool equal = true;
   pthread_rwlock_rdlock( &map1->rw_lock );
   pthread_rwlock_rdlock( &map2->rw_lock );
@@ -114,7 +114,7 @@ bool state_map_equal( state_map_type * map1 , state_map_type * map2) {
 }
 
 
-realisation_state_enum state_map_iget( state_map_type * map , int index) {
+realisation_state_enum state_map_iget(const state_map_type * map , int index) {
   realisation_state_enum state;
   pthread_rwlock_rdlock( &map->rw_lock );
   {
@@ -182,7 +182,7 @@ void state_map_update_undefined( state_map_type * map , int index , realisation_
 
 
 
-void state_map_fwrite( state_map_type * map , const char * filename) {
+void state_map_fwrite(const state_map_type * map, const char * filename) {
   pthread_rwlock_rdlock( &map->rw_lock );
   {
     FILE * stream = util_mkdir_fopen( filename , "w");
@@ -217,8 +217,7 @@ bool state_map_fread( state_map_type * map , const char * filename) {
 }
 
 
-static void state_map_select_matching__( state_map_type * map , bool_vector_type * select_target , int select_mask , bool select) {
-  state_map_assert_writable(map);
+static void state_map_select_matching__(const state_map_type * map, bool_vector_type * select_target, int select_mask, bool select) {
   pthread_rwlock_rdlock( &map->rw_lock );
   {
     {
@@ -235,13 +234,13 @@ static void state_map_select_matching__( state_map_type * map , bool_vector_type
 }
 
 
-void state_map_select_matching( state_map_type * map , bool_vector_type * select_target , int select_mask) {
+void state_map_select_matching(const state_map_type * map, bool_vector_type * select_target, int select_mask) {
   state_map_select_matching__(map , select_target , select_mask , true );
 }
 
 
 
- void state_map_deselect_matching( state_map_type * map , bool_vector_type * select_target , int select_mask) {
+ void state_map_deselect_matching(const state_map_type * map, bool_vector_type * select_target, int select_mask) {
    state_map_select_matching__(map , select_target , select_mask , false );
 }
 
@@ -267,7 +266,7 @@ bool state_map_is_readonly(const state_map_type * state_map) {
 }
 
 
-int state_map_count_matching( state_map_type * state_map , int mask) {
+int state_map_count_matching(const state_map_type * state_map, int mask) {
    int count = 0;
    pthread_rwlock_rdlock( &state_map->rw_lock );
    {

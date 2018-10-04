@@ -16,6 +16,7 @@
    for more details.
 */
 
+#include <cassert>
 #include <unistd.h>
 
 #include <ert/util/stringlist.h>
@@ -27,6 +28,8 @@
 #include <ert/enkf/field_config.hpp>
 #include <ert/enkf/local_obsdata.hpp>
 #include <ert/enkf/local_obsdata_node.hpp>
+#include <ert/util/type_vector_functions.hpp>
+
 
 extern "C" {
 
@@ -497,7 +500,6 @@ void * enkf_main_export_runpath_file_JOB(void * self, const stringlist_type * ar
 }
 
 
-
 void * enkf_main_std_scale_correlated_obs_JOB(void * self, const stringlist_type * args)  {
 
   if (stringlist_get_size(args) > 0) {
@@ -506,10 +508,15 @@ void * enkf_main_std_scale_correlated_obs_JOB(void * self, const stringlist_type
     int ensemble_size                       = enkf_main_get_ensemble_size(enkf_main);
     enkf_fs_type * fs                       = enkf_main_job_get_fs( enkf_main );
     enkf_obs_type * obs                     = enkf_main_get_obs( enkf_main );
-    int_vector_type * realizations          = int_vector_alloc(1, 0);
     local_obsdata_type * obsdata = local_obsdata_alloc( "OBS-JOB" );
 
-    int_vector_init_range(realizations, 0, ensemble_size, 1);
+    // Find out what realizations have data
+    const auto* state_map = enkf_fs_get_state_map(fs);
+    auto* has_data_mask = bool_vector_alloc(0, false);
+    state_map_select_matching(state_map, has_data_mask, STATE_HAS_DATA);
+    auto* realizations = bool_vector_alloc_active_list(has_data_mask);
+    bool_vector_free(has_data_mask);
+
 
     for (int iarg = 0; iarg < stringlist_get_size(args); iarg++) {
       const char * arg_key = stringlist_iget( args , iarg );
@@ -538,6 +545,7 @@ void * enkf_main_std_scale_correlated_obs_JOB(void * self, const stringlist_type
     else if (verbose)
       printf("**Warning: Your list of arguments did not match any observation keys - no scaling performed.\n");
 
+    int_vector_free(realizations);
     local_obsdata_free( obsdata );
   } else
     fprintf(stderr,"** Warning: When using the workflow job to scale correlated observations you must provide the observation keys as arguments\n");
