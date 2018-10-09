@@ -27,7 +27,7 @@ class ErtRunContext(BaseCClass):
     _alloc              = ResPrototype("void* ert_run_context_alloc( enkf_run_mode_enum , enkf_init_mode_enum, enkf_fs , enkf_fs, bool_vector, path_fmt ,char*, subst_list, int)", bind = False)
     _alloc_ensemble_experiment = ResPrototype("ert_run_context_obj ert_run_context_alloc_ENSEMBLE_EXPERIMENT( enkf_fs, bool_vector, path_fmt ,char*, subst_list, int)", bind = False)
     _alloc_ensemble_smoother = ResPrototype("ert_run_context_obj ert_run_context_alloc_SMOOTHER_RUN( enkf_fs , enkf_fs, bool_vector, path_fmt ,char*, subst_list, int)", bind = False)
-    _alloc_ensemble_smoother_update = ResPrototype("ert_run_context_obj ert_run_context_alloc_SMOOTHER_UPDATE(enkf_fs , enkf_fs , bool_vector)", bind = False)
+    _alloc_ensemble_smoother_update = ResPrototype("ert_run_context_obj ert_run_context_alloc_SMOOTHER_UPDATE(enkf_fs , enkf_fs )", bind = False)
     _alloc_runpath_list = ResPrototype("stringlist_obj ert_run_context_alloc_runpath_list(bool_vector, path_fmt, subst_list, int)", bind = False)
     _alloc_runpath      = ResPrototype("char* ert_run_context_alloc_runpath(int, path_fmt, subst_list, int)", bind = False)
     _get_size           = ResPrototype("int ert_run_context_get_size( ert_run_context )")
@@ -77,8 +77,8 @@ class ErtRunContext(BaseCClass):
         return run_context
 
     @classmethod
-    def ensemble_smoother_update(cls, sim_fs, target_fs, mask):
-        return cls._alloc_ensemble_smoother_update( sim_fs, target_fs, mask)
+    def ensemble_smoother_update(cls, sim_fs, target_fs):
+        return cls._alloc_ensemble_smoother_update( sim_fs, target_fs )
 
 
     def is_active(self, index):

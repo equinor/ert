@@ -139,8 +139,14 @@ static ert_run_context_type * ert_run_context_alloc__(const bool_vector_type * i
   ert_run_context_type * context = (ert_run_context_type *)util_malloc( sizeof * context );
   UTIL_TYPE_ID_INIT( context , ERT_RUN_CONTEXT_TYPE_ID );
 
-  context->iactive = bool_vector_alloc_copy( iactive );
-  context->iens_map = bool_vector_alloc_active_index_list( iactive , -1 );
+  if (iactive != NULL) {
+    context->iactive = bool_vector_alloc_copy( iactive );
+    context->iens_map = bool_vector_alloc_active_index_list( iactive , -1 );
+  }
+  else {
+    context->iactive = NULL;
+    context->iens_map = NULL;
+  }
   context->run_args = vector_alloc_new();
   context->run_mode = run_mode;
   context->init_mode = init_mode;
@@ -244,8 +250,8 @@ ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * sim_fs 
   return context;
 }
 
-ert_run_context_type * ert_run_context_alloc_SMOOTHER_UPDATE(enkf_fs_type * sim_fs , enkf_fs_type * target_update_fs , bool_vector_type * iactive) {
-  return ert_run_context_alloc__( iactive , SMOOTHER_UPDATE , INIT_CONDITIONAL, sim_fs , target_update_fs , 0);
+ert_run_context_type * ert_run_context_alloc_SMOOTHER_UPDATE(enkf_fs_type * sim_fs , enkf_fs_type * target_update_fs ) {
+  return ert_run_context_alloc__( NULL , SMOOTHER_UPDATE , INIT_CONDITIONAL, sim_fs , target_update_fs , 0);
 }
 
 ert_run_context_type * ert_run_context_alloc(run_mode_type run_mode,
@@ -297,8 +303,10 @@ void ert_run_context_free( ert_run_context_type * context ) {
   }
 
   vector_free( context->run_args );
-  int_vector_free( context->iens_map );
-  bool_vector_free( context->iactive );
+  if (context->iactive != NULL) {
+    int_vector_free( context->iens_map );
+    bool_vector_free( context->iactive );
+  }
   free( context->run_id );
   free( context );
 }
