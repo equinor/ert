@@ -20,6 +20,9 @@ try:
 except ImportError:
   from PyQt5.QtWidgets import QMessageBox
 
+from ecl.util.util import BoolVector
+
+from res.enkf import ErtRunContext
 
 from ert_gui import ERT
 from res.enkf import ESUpdate
@@ -55,7 +58,8 @@ class RunAnalysisTool(Tool):
 
         target_fs = fs_manager.getFileSystem(target)
         source_fs = fs_manager.getFileSystem(source)
-        success = es_update.smootherUpdate( source_fs , target_fs )
+        run_context = ErtRunContext.ensemble_smoother_update( source_fs, target_fs, )
+        success = es_update.smootherUpdate( run_context )
 
         if not success:
             msg = QMessageBox()
