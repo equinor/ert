@@ -247,7 +247,6 @@ class JobManagerTest(TestCase):
             exit_status, msg = jobm.runJob(jobm[0])
             self.assertEqual(exit_status, 1)
 
-
     def test_verify_executable(self):
         with TestAreaContext(gen_area_name("no_executable", create_jobs_json)):
             with self.assertRaises(IOError):
@@ -434,7 +433,7 @@ class JobManagerTest(TestCase):
                 f.write("""#!/usr/bin/env python\n
 import os
 import json
-with open("EXEC_ENV_exec_env.json") as f:
+with open("exec_env_exec_env.json") as f:
      exec_env = json.load(f)
 assert exec_env["TEST_ENV"] == "123"
 assert exec_env["NOT_SET"] is None

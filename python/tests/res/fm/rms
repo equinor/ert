@@ -4,11 +4,21 @@ import json
 import sys
 import os
 
-config = json.load(open("action.json"))
+config = {"exit_status" : 0}
+if os.path.isfile("action.json"):
+    config = json.load(open("action.json"))
 
 if "target_file" in config:
     with open(config["target_file"], "w") as f:
         f.write("this is the target file\n")
+
+with open('env.json', 'w') as f:
+    env = {}
+    for key in ("PATH", "RMS_TEST_VAR"):
+        if key in os.environ:
+            env[key] = os.environ[key]
+
+    json.dump(env, f)
 
 sys.exit(config["exit_status"])
 

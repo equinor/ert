@@ -1,3 +1,5 @@
+from __future__ import print_function
+import json
 import os
 import sys
 import os.path
@@ -17,6 +19,19 @@ def pushd(path):
 
     os.chdir(cwd0)
 
+
+def _remove_python_from_path(path):
+    python_exec = 'python'
+    path_elems = []
+    for elem in path.split(os.pathsep):
+        if os.path.isfile(os.path.join(elem, python_exec)):
+            print('**Warning: the path: {} is removed from $PATH to avoid '
+                  'conflict with RMS internal python interpreter. To avoid '
+                  'this, please use RMS 10 or newer.'.format(elem))
+        else:
+            path_elems.append(elem)
+
+    return os.pathsep.join(path_elems)
 
 
 class RMSRun(object):
@@ -53,7 +68,6 @@ class RMSRun(object):
 
 
         self.init_seed(iens)
-
 
     def init_seed(self, iens):
         if "RMS_SEED" in os.environ:
@@ -94,9 +108,16 @@ class RMSRun(object):
 
         self_exe, _ = os.path.splitext(os.path.basename(sys.argv[0]))
         exec_env_file = "%s_exec_env.json" % self_exe
-        exec_env = None
+        exec_env = { 'PATH': os.environ['PATH'] }
         if os.path.isfile(exec_env_file):
-            exec_env = json.load(open(exec_env_file))
+            exec_env.update(json.load(open(exec_env_file)))
+
+        # TODO: This is to fix a bug in RMS 2013, should be removed when this
+        # version is no longer to be supported in Equinor. The
+        # _remove_python_from_path function, and adding PATH to the exec_env by
+        # default, should then also be removed..
+        if self.version is not None and self.version.startswith('2013'):
+            exec_env['PATH'] = _remove_python_from_path(exec_env['PATH'])
 
         with pushd(self.run_path):
             fileH = open("RMS_SEED_USED", "a+")
@@ -154,11 +175,18 @@ class RMSRun(object):
 
         if exec_env:
             env = os.environ.copy()
-            for key,value in exec_env.iteritems():
-                if value:
-                    env[key] = value
-                elif key in env:
-                    del env[key]
+            for key, value in exec_env.items():
+                if value is None:
+                    env.pop(key)
+                    continue
+
+                value = str(value).strip()
+                if len(value) == 0:
+                    env.pop(key)
+                    continue
+
+                env[key] = value
+
             os.execve( self.config.executable , args, env )
         else:
             os.execv(self.config.executable, args )
