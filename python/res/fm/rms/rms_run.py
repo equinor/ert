@@ -21,6 +21,9 @@ def pushd(path):
 
 
 def _remove_python_from_path(path):
+    if path is None:
+        return path
+
     python_exec = 'python'
     path_elems = []
     for elem in path.split(os.pathsep):
