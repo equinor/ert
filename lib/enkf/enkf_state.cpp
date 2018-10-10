@@ -413,7 +413,7 @@ static bool enkf_state_internalize_dynamic_eclipse_results(ensemble_config_type 
         const ecl_smspec_type * smspec = ecl_sum_get_smspec(summary);
 
         for(int i = 0; i < ecl_smspec_num_nodes(smspec); i++) {
-          const smspec_node_type * smspec_node = ecl_smspec_iget_node(smspec, i);
+          const smspec_node_type * smspec_node = ecl_smspec_iget_node_w_node_index(smspec, i);
           const char * key = smspec_node_get_gen_key1(smspec_node);
 
           if(summary_key_matcher_match_summary_key(matcher, key)) {
