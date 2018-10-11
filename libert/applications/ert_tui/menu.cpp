@@ -23,6 +23,7 @@
 
 #include <ert/util/util.hpp>
 #include <ert/util/vector.hpp>
+#include <ert/res_util/util_printf.hpp>
 
 #include "menu.hpp"
 
