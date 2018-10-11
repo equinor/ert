@@ -23,6 +23,7 @@ add_library(res res_util/res_log.cpp
                 res_util/path_fmt.cpp
                 res_util/res_env.cpp
                 res_util/res_portability.cpp
+                res_util/util_printf.cpp
                 res_util/block_fs.cpp
                 res_util/res_version.cpp
                 res_util/regression.cpp

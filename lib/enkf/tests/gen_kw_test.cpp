@@ -28,6 +28,7 @@
 #include <ert/util/type_macros.h>
 #include <ert/ecl/ecl_endian_flip.h>
 
+#include <ert/res_util/util_printf.hpp>
 #include <ert/enkf/enkf_main.hpp>
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_state.hpp>

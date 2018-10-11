@@ -23,6 +23,7 @@
 #include <ert/util/util.hpp>
 #include <ert/util/buffer.hpp>
 
+#include <ert/res_util/util_printf.hpp>
 #include <ert/sched/sched_util.hpp>
 
 /**
