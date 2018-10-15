@@ -1268,7 +1268,9 @@ double enkf_obs_scale_correlated_std(const enkf_obs_type * enkf_obs,
         printf("================================================================================\n");
       }
       enkf_obs_local_scale_std( enkf_obs , local_obsdata , scale_factor );
-    }
+    } else
+      if (verbose)
+        printf("No simulated data - S matrix is NULL. Wrong case?");
   }
   meas_data_free( meas_data );
   obs_data_free( obs_data );
