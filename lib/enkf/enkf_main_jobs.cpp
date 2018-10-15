@@ -539,6 +539,17 @@ void * enkf_main_std_scale_correlated_obs_JOB(void * self, const stringlist_type
 
       stringlist_free( key_list );
     }
+    if (verbose) {
+      printf("Realisations with data:");
+      for (int i=0; i < int_vector_size(realizations); i++) {
+        if ((i % 20 ) == 0)
+          puts("\n");
+
+        printf(" %3d", int_vector_iget(realizations, i));
+      }
+      puts("\n");
+    }
+
 
     if (local_obsdata_get_size(obsdata) > 0)
       enkf_obs_scale_correlated_std(obs, fs, realizations, obsdata, verbose );
