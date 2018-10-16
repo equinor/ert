@@ -216,7 +216,10 @@ bool state_map_fread( state_map_type * map , const char * filename) {
   return file_exists;
 }
 
-
+/*
+  NB: This function does *not* resize select_target vector; i.e. realizations
+  beyond the size of the select_target vector will not be selected.
+*/
 static void state_map_select_matching__(const state_map_type * map, bool_vector_type * select_target, int select_mask, bool select) {
   pthread_rwlock_rdlock( &map->rw_lock );
   {
