@@ -118,6 +118,13 @@ static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instan
       util_abort("%s: Internal error. Invalid conf_instance?\n", __func__);
 
     obs_restart_nr = time_map_lookup_time_with_tolerance( time_map , obs_time , 30 , 30 );
+    if (obs_restart_nr < 0) {
+      if (conf_instance_has_item(conf_instance, "DATE"))
+        printf("** ERROR: Could not determine REPORT step corresponding to DATE=%s\n", conf_instance_get_item_value_ref(conf_instance, "DATE"));
+
+      if (conf_instance_has_item(conf_instance, "DAYS"))
+        printf("** ERROR: Could not determine REPORT step corresponding to DAYS=%s\n", conf_instance_get_item_value_ref(conf_instance, "DAYS"));
+    }
   }
   if (obs_restart_nr < 0)
     util_abort("%s: Failed to look up restart nr correctly \n",__func__);
