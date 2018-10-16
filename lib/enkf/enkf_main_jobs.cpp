@@ -512,7 +512,7 @@ void * enkf_main_std_scale_correlated_obs_JOB(void * self, const stringlist_type
 
     // Find out what realizations have data
     const auto* state_map = enkf_fs_get_state_map(fs);
-    auto* has_data_mask = bool_vector_alloc(0, false);
+    auto* has_data_mask = bool_vector_alloc(state_map_get_size(state_map), false);
     state_map_select_matching(state_map, has_data_mask, STATE_HAS_DATA);
     auto* realizations = bool_vector_alloc_active_list(has_data_mask);
     bool_vector_free(has_data_mask);
