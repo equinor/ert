@@ -36,7 +36,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
         self._job_queue = None
 
-        
+
 
     def createTargetCaseFileSystem(self, phase, target_case_format):
         target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_format % phase)
@@ -87,7 +87,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 analysis_success = True
 
 
-                
+
             if analysis_success:
                 current_iteration += 1
                 run_context = self.create_context( arguments, current_iteration, prior_context = run_context )
@@ -110,6 +110,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
     def create_context(self, arguments, itr, prior_context = None, rerun = False):
         model_config = self.ert().getModelConfig( )
         runpath_fmt = model_config.getRunpathFormat( )
+        jobname_fmt = model_config.getJobnameFormat( )
         subst_list = self.ert().getDataKW( )
         fs_manager = self.ert().getEnkfFsManager()
         target_case_format = arguments["target_case"]
@@ -118,14 +119,14 @@ class IteratedEnsembleSmoother(BaseRunModel):
             mask = arguments["active_realizations"]
         else:
             mask = prior_context.get_mask( )
-        
+
         sim_fs = self.createTargetCaseFileSystem(itr, target_case_format)
         if rerun:
             target_fs = None
         else:
             target_fs = self.createTargetCaseFileSystem(itr + 1 , target_case_format)
 
-        run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, subst_list, itr)
+        run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr)
         return run_context
 
 
