@@ -20,21 +20,19 @@ def pushd(path):
     os.chdir(cwd0)
 
 
-def _remove_python_from_path(path):
+def _remove_komodo_from_envpath(path):
     if path is None:
         return path
 
-    python_exec = 'python'
-    path_elems = []
-    for elem in path.split(os.pathsep):
-        if os.path.isfile(os.path.join(elem, python_exec)):
-            print('**Warning: the path: {} is removed from $PATH to avoid '
-                  'conflict with RMS internal python interpreter. To avoid '
-                  'this, please use RMS 10 or newer.'.format(elem))
-        else:
-            path_elems.append(elem)
+    print('**Warning: Komodo is removed from your PYTHONPATH to avoid RMS picking up'
+          ' Python2 modules. If you experience RMS issues, you might need to'
+          ' remove other elements from your path as well. To avoid this problem'
+          ' all together, please use RMS 10 or newer.')
 
-    return os.pathsep.join(path_elems)
+    return os.pathsep.join(filter(
+        lambda elem: 'komodo' not in elem,
+        path.split(os.pathsep)
+    ))
 
 
 class RMSRun(object):
@@ -111,16 +109,17 @@ class RMSRun(object):
 
         self_exe, _ = os.path.splitext(os.path.basename(sys.argv[0]))
         exec_env_file = "%s_exec_env.json" % self_exe
-        exec_env = { 'PATH': os.environ['PATH'] }
+        exec_env = os.environ.copy()
         if os.path.isfile(exec_env_file):
             exec_env.update(json.load(open(exec_env_file)))
 
-        # TODO: This is to fix a bug in RMS 2013, should be removed when this
-        # version is no longer to be supported in Equinor. The
-        # _remove_python_from_path function, and adding PATH to the exec_env by
-        # default, should then also be removed..
+        # NOTE: RMS 2013 looks for modules using PYTHONPATH, this quickly
+        # breaks as we are currently running Python 2, while RMS is running
+        # Python 3. This approach is abandoned in newer versions of RMS.
+        # When we no longer support RMS 2013, this can all be removed. The
+        # _remove_komodo_from_envpath function should then also be removed..
         if self.version is not None and self.version.startswith('2013'):
-            exec_env['PATH'] = _remove_python_from_path(exec_env['PATH'])
+            exec_env['PYTHONPATH'] =_remove_komodo_from_envpath(exec_env['PYTHONPATH'])
 
         with pushd(self.run_path):
             fileH = open("RMS_SEED_USED", "a+")

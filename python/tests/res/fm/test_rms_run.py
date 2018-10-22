@@ -138,40 +138,36 @@ class RMSRunTest(ResTest):
             res.fm.rms.run(0, "project", "workflow", run_path="run_path", target_file="some_file")
 
 
-    # NB: Since the whole purpose of this test is to verify that the python interpreter is
-    #     removed from PATH we must use a mock-executable which is not based on Python.
     def test_rms2013(self):
         versions = [None, '2013', '2013.4', '10.1']
-        PATH0 = os.environ["PATH"]
+        PYTHONPATH0 = os.environ["PYTHONPATH"]
         for version in versions:
             with TestAreaContext('test_rms2013'):
                 # Setup RMS project
                 with open("rms_config.yml", "w") as f:
-                    f.write("executable:  {}/bin/rms.sh".format(os.getcwd()))
+                    f.write("executable:  {}/bin/rms".format(os.getcwd()))
                 os.mkdir("run_path")
                 os.mkdir("bin")
                 os.mkdir("project")
-                shutil.copy(os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms.sh"), "bin")
+                shutil.copy(os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin")
                 os.environ["RMS_SITE_CONFIG"] = "rms_config.yml"
 
-                new_bin = os.path.realpath("bin")
-                new_python = os.path.realpath('bin/python')
-                with open(new_python, 'w') as f:
-                    f.write('This is not really Python')
-
-                os.environ['PATH'] = os.path.pathsep.join([PATH0, new_bin])
+                komodo_dir = os.path.realpath('komodo')
+                os.mkdir(komodo_dir)
+                os.environ['PYTHONPATH'] = os.path.pathsep.join([PYTHONPATH0, komodo_dir])
 
                 action = {"target_file" : os.path.join(os.getcwd(), "PATH")}
 
                 res.fm.rms.run(0, 'project', 'workflow', run_path='run_path', version=version)
 
-                with open('run_path/PATH') as f:
-                    path_string = f.readline().rstrip()
+                with open('run_path/env.json') as f:
+                    rms_env = json.load(f)
 
+                pypath_elems = rms_env['PYTHONPATH'].split(os.pathsep)
                 if version and version.startswith('2013'):
-                    self.assertNotIn(new_bin, path_string.split(os.pathsep))
+                    self.assertNotIn(komodo_dir, pypath_elems)
                 else:
-                    self.assertIn(new_bin, path_string.split(os.pathsep))
+                    self.assertIn(komodo_dir, pypath_elems)
 
 
     def test_rms_load_env(self):
