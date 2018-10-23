@@ -1,6 +1,7 @@
 from res.analysis.analysis_module import AnalysisModule
 from res.analysis.enums.analysis_module_options_enum import AnalysisModuleOptionsEnum
 from res.enkf import RealizationStateEnum, EnkfVarType
+from res.enkf import ErtRunContext
 from res.job_queue import WorkflowRunner
 from ecl.util.util import BoolVector, StringList
 from ert_gui import ERT
@@ -88,10 +89,14 @@ def getCaseRealizationStates(case_name):
 @showWaitCursorWhileWaiting
 def initializeCurrentCaseFromScratch(parameters, members):
     selected_parameters = StringList(parameters)
+    mask = BoolVector(initial_size = getRealizationCount(), default_value = False)
     for member in members:
         member = int(member.strip())
-        ERT.ert.getEnkfFsManager().initializeFromScratch(selected_parameters, member, member)
+        mask[member] = True
 
+    sim_fs = ERT.ert.getEnkfFsManager().getCurrentFileSystem()
+    run_context = ErtRunContext.case_init(sim_fs, mask)
+    ERT.ert.getEnkfFsManager().initializeFromScratch(selected_parameters, run_context)
     ERT.emitErtChange()
 
 
