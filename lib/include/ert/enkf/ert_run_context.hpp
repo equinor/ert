@@ -75,6 +75,9 @@ typedef struct ert_run_context_struct ert_run_context_type;
 
   ert_run_context_type * ert_run_context_alloc_SMOOTHER_UPDATE(enkf_fs_type * sim_fs , enkf_fs_type * target_update_fs );
 
+  ert_run_context_type * ert_run_context_alloc_CASE_INIT(enkf_fs_type * sim_fs,
+                                                         const bool_vector_type * iactive);
+
   void                     ert_run_context_set_sim_fs(ert_run_context_type * context, enkf_fs_type * sim_fs);
   void                     ert_run_context_set_update_target_fs(ert_run_context_type * context, enkf_fs_type * update_target_fs);
 

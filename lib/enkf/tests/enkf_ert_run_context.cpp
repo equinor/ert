@@ -17,6 +17,7 @@
 */
 #include <stdlib.h>
 
+#include <ert/util/util.h>
 #include <ert/util/test_util.h>
 #include <ert/res_util/path_fmt.hpp>
 #include <ert/res_util/subst_list.hpp>
@@ -129,9 +130,21 @@ void test_iactive_update() {
 }
 
 
+
+void test_create_CASE_INIT() {
+  bool_vector_type * iactive = bool_vector_alloc(100, true);
+  enkf_fs_type * sim_fs = NULL;
+  ert_run_context_type * context = ert_run_context_alloc_CASE_INIT(sim_fs, iactive);
+  ert_run_context_free( context );
+  bool_vector_free( iactive );
+}
+
+
 int main( int argc , char ** argv) {
+  util_install_signals();
   test_create();
   test_create_ENSEMBLE_EXPERIMENT();
   test_iactive_update();
+  test_create_CASE_INIT();
   exit(0);
 }

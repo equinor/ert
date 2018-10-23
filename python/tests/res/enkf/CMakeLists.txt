@@ -1,5 +1,6 @@
 set(TEST_SOURCES
     __init__.py
+    test_ert_run_context.py
     test_simulation_batch.py
     test_model_config.py
     test_active_list.py
@@ -96,6 +97,8 @@ python_config_test(tests.res.enkf.test_simulation_batch.SimulationBatchTest)
 python_config_test(tests.res.enkf.test_model_config.ModelConfigTest)
 python_config_test(tests.res.enkf.test_enkf_fs_manager1.EnKFFSManagerTest1)
 python_config_test(tests.res.enkf.test_enkf_fs_manager2.EnKFFSManagerTest2)
+python_config_test(tests.res.enkf.test_ert_run_context.ErtRunContextTest)
+
 
 
 python_config_test(tests.res.enkf.test_enkf_obs.EnKFObsTest)

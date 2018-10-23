@@ -219,6 +219,13 @@ ert_run_context_type * ert_run_context_alloc_INIT_ONLY(enkf_fs_type * sim_fs,
 }
 
 
+ert_run_context_type * ert_run_context_alloc_CASE_INIT(enkf_fs_type * sim_fs,
+                                                       const bool_vector_type * iactive) {
+  ert_run_context_type * run_context = ert_run_context_alloc__(iactive, CASE_INIT_ONLY, INIT_FORCE, sim_fs, NULL, 0);
+  return run_context;
+}
+
+
 ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * sim_fs , enkf_fs_type * target_update_fs ,
                                                           bool_vector_type * iactive ,
                                                           const path_fmt_type * runpath_fmt ,

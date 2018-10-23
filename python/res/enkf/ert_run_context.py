@@ -28,6 +28,7 @@ class ErtRunContext(BaseCClass):
     _alloc_ensemble_experiment = ResPrototype("ert_run_context_obj ert_run_context_alloc_ENSEMBLE_EXPERIMENT( enkf_fs, bool_vector, path_fmt ,char*, subst_list, int)", bind = False)
     _alloc_ensemble_smoother = ResPrototype("ert_run_context_obj ert_run_context_alloc_SMOOTHER_RUN( enkf_fs , enkf_fs, bool_vector, path_fmt ,char*, subst_list, int)", bind = False)
     _alloc_ensemble_smoother_update = ResPrototype("ert_run_context_obj ert_run_context_alloc_SMOOTHER_UPDATE(enkf_fs , enkf_fs )", bind = False)
+    _alloc_case_init = ResPrototype("ert_run_context_obj ert_run_context_alloc_CASE_INIT(enkf_fs, bool_vector)", bind = False)
     _alloc_runpath_list = ResPrototype("stringlist_obj ert_run_context_alloc_runpath_list(bool_vector, path_fmt, subst_list, int)", bind = False)
     _alloc_runpath      = ResPrototype("char* ert_run_context_alloc_runpath(int, path_fmt, subst_list, int)", bind = False)
     _get_size           = ResPrototype("int ert_run_context_get_size( ert_run_context )")
@@ -50,6 +51,12 @@ class ErtRunContext(BaseCClass):
         # to a reference here - to inhibt Python GC of these objects.
         self._path_fmt = path_fmt
         self._subst_list = subst_list
+
+
+    @classmethod
+    def case_init(cls, sim_fs, mask):
+        return cls._alloc_case_init(sim_fs, mask)
+
 
     @classmethod
     def ensemble_experiment(cls, sim_fs, mask, path_fmt, jobname_fmt, subst_list , itr):
