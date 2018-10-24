@@ -14,11 +14,10 @@ if "target_file" in config:
 
 with open('env.json', 'w') as f:
     env = {}
-    for key in ("PATH", "RMS_TEST_VAR"):
+    for key in ("PATH", "RMS_TEST_VAR", "PYTHONPATH"):
         if key in os.environ:
             env[key] = os.environ[key]
 
     json.dump(env, f)
 
 sys.exit(config["exit_status"])
-
