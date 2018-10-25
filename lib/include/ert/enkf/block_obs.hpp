@@ -18,9 +18,7 @@
 
 #ifndef ERT_BLOCK_OBS_H
 #define ERT_BLOCK_OBS_H
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 #include <ert/sched/history.hpp>
 
 #include <ert/config/conf.hpp>
@@ -33,6 +31,10 @@ extern "C" {
 #include <ert/enkf/field_config.hpp>
 #include <ert/enkf/field.hpp>
 #include <ert/enkf/active_list.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 

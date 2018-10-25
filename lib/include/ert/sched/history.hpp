@@ -18,9 +18,6 @@
 
 #ifndef ERT_HISTORY_H
 #define ERT_HISTORY_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -33,6 +30,11 @@ extern "C" {
 #include <ert/ecl/ecl_sum.h>
 
 #include <ert/sched/sched_file.hpp>
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 typedef enum {

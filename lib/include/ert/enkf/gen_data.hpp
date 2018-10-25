@@ -18,9 +18,6 @@
 
 #ifndef ERT_GEN_DATA_H
 #define ERT_GEN_DATA_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <ert/util/util.h>
 #include <ert/util/bool_vector.h>
@@ -34,6 +31,11 @@ extern "C" {
 #include <ert/enkf/gen_data_common.hpp>
 #include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/forward_load_context.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 void                      gen_data_assert_size( gen_data_type * gen_data , int size , int report_step);
 bool                      gen_data_forward_load(gen_data_type * gen_data , const char * ecl_file , const forward_load_context_type * load_context);

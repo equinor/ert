@@ -18,9 +18,7 @@
 
 #ifndef ERT_MODEL_CONFIG_H
 #define ERT_MODEL_CONFIG_H
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 #include <stdbool.h>
 #include <time.h>
@@ -43,6 +41,11 @@ extern "C" {
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/fs_types.hpp>
 #include <ert/enkf/time_map.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
   typedef struct model_config_struct model_config_type;
   const char *           model_config_get_data_root( const model_config_type * model_config );
