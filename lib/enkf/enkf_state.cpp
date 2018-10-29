@@ -408,7 +408,7 @@ static bool enkf_state_internalize_dynamic_eclipse_results(ensemble_config_type 
         const int step2  = ecl_sum_get_last_report_step( summary );  /* Step2 is just taken from the number of steps found in the summary file. */
 
         int_vector_iset_block( time_index , 0 , load_start , -1 );
-        int_vector_resize( time_index , step2 + 1);
+        int_vector_resize( time_index , step2 + 1, -1);
 
         const ecl_smspec_type * smspec = ecl_sum_get_smspec(summary);
 

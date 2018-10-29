@@ -550,7 +550,7 @@ void time_map_summary_upgrade107( time_map_type * map , const ecl_sum_type * ecl
   int first_step = ecl_sum_get_first_report_step( ecl_sum );
   int last_step  = ecl_sum_get_last_report_step( ecl_sum );
 
-  time_t_vector_resize( map->map , last_step + 1);
+  time_t_vector_resize( map->map , last_step + 1, 0);
   time_t_vector_iset_block( map->map , 0 , first_step , DEFAULT_TIME);
   for (int step=first_step; step <= last_step; step++) {
     if (ecl_sum_has_report_step(ecl_sum , step)) {
