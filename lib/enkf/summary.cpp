@@ -114,7 +114,7 @@ void summary_read_from_buffer(summary_type * summary,
     double default_value = buffer_fread_double(buffer);
 
     double_vector_set_default(summary->data_vector, default_value);
-    double_vector_resize(summary->data_vector, size);
+    double_vector_resize(summary->data_vector, size, default_value);
     buffer_fread(buffer,
                  double_vector_get_ptr(summary->data_vector),
                  double_vector_element_size(summary->data_vector),
