@@ -113,13 +113,13 @@ class RMSRun(object):
         if os.path.isfile(exec_env_file):
             exec_env.update(json.load(open(exec_env_file)))
 
-        # NOTE: RMS 2013 looks for modules using PYTHONPATH, this quickly
-        # breaks as we are currently running Python 2, while RMS is running
-        # Python 3. This approach is abandoned in newer versions of RMS.
-        # When we no longer support RMS 2013, this can all be removed. The
-        # _remove_komodo_from_envpath function should then also be removed..
-        if self.version is not None and self.version.startswith('2013'):
-            exec_env['PYTHONPATH'] =_remove_komodo_from_envpath(exec_env['PYTHONPATH'])
+        # The ert frontend script updates the PYTHONPATH environment variable
+        # to include the path of the the current process. This creates problems
+        # when RMS is importing it's Python modules. The real fix is to remove
+        # the PYTHONPATH manipulations from the ert frontent script, but for
+        # now we just drop any path element containing 'komodo' from the
+        # PYTHOPATH.
+        exec_env['PYTHONPATH'] =_remove_komodo_from_envpath(exec_env['PYTHONPATH'])
 
         with pushd(self.run_path):
             fileH = open("RMS_SEED_USED", "a+")
