@@ -166,6 +166,7 @@ extern "C" {
   const char * config_keys_get_config_directory_key();
   const char * config_keys_get_queue_system_key();
   const char * config_keys_get_run_template_key();
+  const char * config_keys_get_custom_kw_key();
   const char * config_keys_get_gen_kw_key();
   const char * config_keys_get_queue_option_key();
   const char * config_keys_get_lsf_resources_key();

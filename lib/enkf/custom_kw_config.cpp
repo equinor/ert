@@ -243,7 +243,6 @@ static bool custom_kw_config_read_data__(const custom_kw_config_type * config, c
                 if (hash_has_key(read_keys, key)) {
                     fprintf(stderr ,"[%s] Warning:  Key: '%s:%s' has appeared multiple times. Only the last occurrence will be used!\n", __func__, config->name, key);
                 }
-
                 hash_insert_int(read_keys, key, 1);
                 int index = custom_kw_config_index_of_key(config, key);
                 stringlist_iset_copy(result, index, value);
@@ -283,7 +282,6 @@ bool custom_kw_config_parse_result_file(custom_kw_config_type * config, const ch
             read_ok = custom_kw_config_read_data__(config, result_file, result);
         }
     }
-
     return read_ok;
 }
 
