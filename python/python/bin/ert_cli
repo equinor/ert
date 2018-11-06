@@ -1,0 +1,163 @@
+#!/usr/bin/env python
+import sys
+
+from res.enkf import EnKFMain, ResConfig, ESUpdate, ErtRunContext
+from res.enkf.enums import RealizationStateEnum, HookRuntime
+from ecl.util.util import BoolVector
+import res
+from res.util import ResLog
+
+import argparse
+
+
+def setup_fs(ert, target="default_smoother_update"):
+    fs_manager = ert.getEnkfFsManager()
+
+    src_fs = fs_manager.getCurrentFileSystem()
+    tar_fs = fs_manager.getFileSystem(target)
+
+    return src_fs, tar_fs
+
+
+def resconfig(config_file):
+    return ResConfig(user_config_file=config_file)
+
+
+def args_parser():
+    parser = argparse.ArgumentParser(
+        description="ERT - Ensemble based Reservoir Tool")
+    parser.add_argument("config_file", metavar="config-file", type=str,
+                        help="The ert configuration file")
+    parser.add_argument("--algorithm", type=str, choices=["Test-run",
+                                                          "Ensemble Smoother",
+                                                          "Ensemble Experiment"],
+                        help="")
+    parser.add_argument("--target-case", type=str, default="default",
+                        help="The target filesystem to store results")
+    return parser
+
+
+def _test_run(ert):
+    source_fs, _ = setup_fs(ert)
+
+    model_config = ert.getModelConfig()
+    subst_list = ert.getDataKW()
+
+    single_mask = BoolVector(default_value=False)
+    single_mask[0] = True
+
+    run_context = ErtRunContext.ensemble_experiment(
+                                sim_fs=source_fs,
+                                mask=single_mask,
+                                path_fmt=model_config.getRunpathFormat(),
+                                jobname_fmt=model_config.getJobnameFormat(),
+                                subst_list=subst_list,
+                                itr=0)
+
+    sim_runner = ert.getEnkfSimulationRunner()
+    _run_ensemble_experiment(ert, run_context, sim_runner)
+
+
+def _experiment_run(ert):
+    source_fs, _ = setup_fs(ert)
+
+    model_config = ert.getModelConfig()
+    subst_list = ert.getDataKW()
+
+    mask = BoolVector(default_value=False, initial_size=ert.getEnsembleSize())
+    state_map = source_fs.getStateMap()
+    state_map.selectMatching(mask, RealizationStateEnum.STATE_HAS_DATA)
+
+    run_context = ErtRunContext.ensemble_experiment(
+                                sim_fs=source_fs,
+                                mask=mask,
+                                path_fmt=model_config.getRunpathFormat(),
+                                jobname_fmt=model_config.getJobnameFormat(),
+                                subst_list=subst_list,
+                                itr=0)
+
+    sim_runner = ert.getEnkfSimulationRunner()
+    _run_ensemble_experiment(ert, run_context, sim_runner)
+
+
+def _ensemble_smoother_run(ert):
+    source_fs, target_fs = setup_fs(ert)
+
+    model_config = ert.getModelConfig()
+    subst_list = ert.getDataKW()
+
+    mask = BoolVector(default_value=False, initial_size=ert.getEnsembleSize())
+    state_map = source_fs.getStateMap()
+    state_map.selectMatching(mask, RealizationStateEnum.STATE_HAS_DATA)
+
+    run_context = ErtRunContext.ensemble_smoother(
+                                sim_fs=source_fs,
+                                target_fs=target_fs,
+                                mask=mask,
+                                path_fmt=model_config.getRunpathFormat(),
+                                jobname_fmt=model_config.getJobnameFormat(),
+                                subst_list=subst_list,
+                                itr=0)
+
+    sim_runner = ert.getEnkfSimulationRunner()
+    _run_ensemble_experiment(ert, run_context, sim_runner)
+    sim_runner.runWorkflows( HookRuntime.PRE_UPDATE )
+
+    es_update = ESUpdate(ert)
+    success = es_update.smootherUpdate(run_context)
+    if not success:
+            raise AssertionError("Analysis of simulation failed!")
+
+    sim_runner.runWorkflows( HookRuntime.POST_UPDATE )
+
+    ert.getEnkfFsManager().switchFileSystem(run_context.get_target_fs())
+
+    rerun_context = ErtRunContext.ensemble_smoother(
+                                sim_fs=run_context.get_target_fs(),
+                                target_fs=None,
+                                mask=run_context.get_mask(),
+                                path_fmt=model_config.getRunpathFormat(),
+                                jobname_fmt=model_config.getJobnameFormat(),
+                                subst_list=subst_list,
+                                itr=1)
+
+    _run_ensemble_experiment(ert, rerun_context, sim_runner)
+
+
+def _run_ensemble_experiment(ert, run_context, sim_runner):
+    sim_runner.createRunPath(run_context)
+    sim_runner.runWorkflows(HookRuntime.PRE_SIMULATION)
+
+    job_queue = ert.get_queue_config().create_job_queue()
+    num_successful_realizations = sim_runner.runEnsembleExperiment(job_queue, run_context)
+    _assert_minium_realizations_success(ert, num_successful_realizations)
+
+    print("{} of the realizations were successful".format(num_successful_realizations))
+    sim_runner.runWorkflows( HookRuntime.POST_SIMULATION )
+
+
+def _assert_minium_realizations_success(ert, num_successful_realizations):
+    if num_successful_realizations == 0:
+        raise AssertionError("Simulation failed! All realizations failed!")
+    elif not ert.analysisConfig().haveEnoughRealisations(num_successful_realizations, ert.getEnsembleSize()):
+        raise AssertionError("Too many simulations have failed! You can add/adjust MIN_REALIZATIONS to allow failures in your simulations.\n\n"
+                            "Check ERT log file '%s' or simulation folder for details." % ResLog.getFilename())
+
+
+def main():
+    parser = args_parser()
+    args = parser.parse_args()
+
+    config = resconfig(args.config_file)
+    ert = EnKFMain(config)
+
+    if args.algorithm == "Test-run":
+        _test_run(ert)
+    if args.algorithm == "Ensemble Experiment":
+        _experiment_run(ert)
+    if args.algorithm == "Ensemble Smoother":
+        _ensemble_smoother_run(ert)
+
+
+if __name__ == '__main__':
+    main()

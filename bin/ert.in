@@ -39,6 +39,11 @@ def runShell( args ):
     runExec("ertshell",  args)
 
 
+@ensureConfig
+def runCli( args ):
+    runExec("ert_cli", args)
+
+
 #################################################################
 runDefault = runGui
 
@@ -51,6 +56,7 @@ mode = parser.add_mutually_exclusive_group( required = False )
 mode.add_argument("--gui" , dest = "gui" , action = "store_true" , default = False)
 mode.add_argument("--text" , dest = "tui" , action = "store_true" , default = False)
 mode.add_argument("--shell" , dest = "shell" , action = "store_true" , default = False)
+mode.add_argument("--cli" , dest = "cli" , action = "store_true" , default = False)
 
 options, args = parser.parse_known_args( args = sys.argv[1:] )
 
@@ -60,6 +66,8 @@ elif options.tui:
     runTui(args)
 elif options.shell:
     runShell( args )
+elif options.cli:
+    runCli(args)
 else:
     runDefault(args)
 
