@@ -212,3 +212,10 @@ class Shell(object):
                 shutil.copyfile( src , target_file )
         else:
             raise IOError("Input argument:'%s' does not correspond to an existing file" % src)
+
+    @staticmethod
+    def carefulCopyFile(src , target = None):
+        if os.path.exists(target):
+            print("File: {} already present - not updated".format(target))
+            return
+        Shell.copyFile(src,target)

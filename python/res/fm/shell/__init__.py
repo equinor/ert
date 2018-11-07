@@ -21,4 +21,7 @@ def copy_directory(src_path , target_path ):
 def copy_file(src , target=None ):
   Shell.copyFile(src , target )
 
+def careful_copy_file(src,target=None):
+  Shell.carefulCopyFile(src, target)
+
 
