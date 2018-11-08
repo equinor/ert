@@ -49,10 +49,6 @@ def runTui( args ):
     runExec("%s/bin/ert_tui" % ERT_ROOT ,  args)
 
 
-@ensureConfig
-def runServer( args ):
-    runExec("%s/bin/ert_tcp_server" % ERT_ROOT ,  args)
-
 def runShell( args ):
     runExec("%s/bin/ertshell" % ERT_ROOT ,  args)
 
@@ -72,7 +68,6 @@ mode = parser.add_mutually_exclusive_group( required = False )
 mode.add_argument("--gui" , dest = "gui" , action = "store_true" , default = False)
 mode.add_argument("--text" , dest = "tui" , action = "store_true" , default = False)
 mode.add_argument("--shell" , dest = "shell" , action = "store_true" , default = False)
-mode.add_argument("--server" , dest = "server" , action = "store_true" , default = False)
 
 options, args = parser.parse_known_args( args = sys.argv[1:] )
 
@@ -82,8 +77,6 @@ elif options.tui:
     runTui(args)
 elif options.shell:
     runShell( args )
-elif options.server:
-    runServer(args)
 else:
     runDefault(args)
 
