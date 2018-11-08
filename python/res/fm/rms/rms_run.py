@@ -119,7 +119,7 @@ class RMSRun(object):
         # the PYTHONPATH manipulations from the ert frontent script, but for
         # now we just drop any path element containing 'komodo' from the
         # PYTHOPATH.
-        exec_env['PYTHONPATH'] =_remove_komodo_from_envpath(exec_env['PYTHONPATH'])
+        exec_env['PYTHONPATH'] = _remove_komodo_from_envpath(exec_env.get('PYTHONPATH'))
 
         with pushd(self.run_path):
             fileH = open("RMS_SEED_USED", "a+")
