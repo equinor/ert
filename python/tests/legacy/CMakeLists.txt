@@ -5,8 +5,7 @@ set(TEST_SOURCES
     test_sched.py
     test_analysis.py
     test_config.py
-    test_server.py
-)
+        )
 
 add_python_package("python.tests.legacy.ert"  ${PYTHON_INSTALL_PREFIX}/tests/legacy "${TEST_SOURCES}" False)
 
