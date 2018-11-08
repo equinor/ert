@@ -368,7 +368,7 @@ class JobManagerTest(TestCase):
             self.assertEqual( "/path/to/data" , os.environ["DATA_ROOT"])
             self.assertEqual( "ERT_RUN_ID", os.environ["ERT_RUN_ID"])
 
-    def test_data_from_forward_model_json(self):
+    def test_data_from_forward_model_json_no_root(self):
         with TestAreaContext("json_from_forward_model_NO_DATA_ROOT"):
             with open("jobs.json", "w") as f:
                 f.write(JSON_STRING_NO_DATA_ROOT)
@@ -460,6 +460,21 @@ assert exec_env["NOT_SET"] is None
             self.assertEqual(len(exec_env), 2)
             exit_status, msg = jobm.runJob(job0)
             self.assertEqual(exit_status, 0)
+
+    def test_job_list_to_log_ordering(self):
+          with TestAreaContext("json_from_forward_model"):
+            with open("jobs.json", "w") as f:
+                f.write(JSON_STRING)
+            job_manager = JobManager()
+            job_manager.job_list = [{'name': 'b'}, {'name': 'd'}, {'name': 'a'}, {'name': 'c'}]
+            job_manager._job_map = {'b': {'name': 'b'}, 'd': {'name': 'd'}, 'a': {'name': 'a'}, 'c': {'name': 'c'}}
+            vals = job_manager._ordered_job_map_values()
+            
+            # Verify _job_map.values() is indeed giving us values in not wanted order
+            self.assertNotEqual(job_manager.job_list, job_manager._job_map.values())
+
+            # Verify _ordered_job_map_values is giving us values in same order as job_list
+            self.assertEqual(job_manager.job_list, vals)
 
 
 

@@ -167,7 +167,7 @@ class JobManager(object):
                         "python_version": python_vs,
                         "kernel_version": release,
                         }
-        logged_fields.update({"jobs": self._job_map.values()})
+        logged_fields.update({"jobs": self._ordered_job_map_values()})
         self.postMessage(extra_fields=logged_fields)
         cond_unlink("EXIT")
         cond_unlink(self.EXIT_file)
@@ -256,9 +256,14 @@ class JobManager(object):
                 if job["stdout"]:
                    job["stdout"] = "%s.%d" % (job["stdout"], index)
 
+    def _ordered_job_map_values(self):
+        ordered_map_values = []
+        for index, job in enumerate(self.job_list):
+            ordered_map_values.append(self._job_map[job["name"]])
+        return ordered_map_values
+
     def __contains__(self, key):
         return key in self._job_map
-
 
     def __len__(self):
         return len(self.job_list)
