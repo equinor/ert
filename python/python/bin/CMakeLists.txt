@@ -1,5 +1,4 @@
 set(application_list
-     ert_tcp_server
      ertshell
      ert_upgrade_fs107
 )
