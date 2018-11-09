@@ -1,9 +1,9 @@
 import time
 from collections import namedtuple
-from res.server import SimulationContext
 from res.enkf import NodeId, EnkfNode
 import logging
 import numpy as np
+from .simulation_context import SimulationContext
 
 Status = namedtuple("Status", "waiting pending running complete failed")
 

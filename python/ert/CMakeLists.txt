@@ -7,7 +7,6 @@ set(PYTHON_SOURCES
     sched/__init__.py
     analysis/__init__.py
     config/__init__.py
-    server/__init__.py
 )
 
 add_python_package("python.ert"  ${PYTHON_INSTALL_PREFIX}/ert "${PYTHON_SOURCES}" True)

@@ -7,7 +7,7 @@ from ecl.util.util import BoolVector
 from res.test import ErtTestContext
 from res.enkf import EnkfVarType
 from res.enkf.enums import RealizationStateEnum
-from res.server import SimulationContext
+from res.simulator import SimulationContext
 
 
 class SimulationContextTest(ResTest):
