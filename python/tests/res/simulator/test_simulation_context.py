@@ -85,4 +85,4 @@ class SimulationContextTest(ResTest):
                     self.assertFalse(simulation_context2.didRealizationFail(iens))
                     self.assertTrue(simulation_context2.isRealizationFinished(iens))
 
-		    self.assertEqual(other_half_state_map[iens], RealizationStateEnum.STATE_HAS_DATA)
+                    self.assertEqual(other_half_state_map[iens], RealizationStateEnum.STATE_HAS_DATA)
