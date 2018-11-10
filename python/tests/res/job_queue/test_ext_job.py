@@ -79,9 +79,9 @@ class ExtJobTest(ResTest):
             self.assertEqual( job.min_arg, 2 )
             self.assertEqual( job.max_arg, 7 )
             argTypes = job.arg_types
-            self.assertEqual( argTypes , [ContentTypeEnum.CONFIG_INT, ContentTypeEnum.CONFIG_FLOAT , 
-                                          ContentTypeEnum.CONFIG_STRING, ContentTypeEnum.CONFIG_BOOL, 
-                                          ContentTypeEnum.CONFIG_RUNTIME_FILE, ContentTypeEnum.CONFIG_RUNTIME_INT, 
+            self.assertEqual( argTypes , [ContentTypeEnum.CONFIG_INT, ContentTypeEnum.CONFIG_FLOAT ,
+                                          ContentTypeEnum.CONFIG_STRING, ContentTypeEnum.CONFIG_BOOL,
+                                          ContentTypeEnum.CONFIG_RUNTIME_FILE, ContentTypeEnum.CONFIG_RUNTIME_INT,
                                           ContentTypeEnum.CONFIG_STRING] )
 
 
@@ -96,7 +96,7 @@ class ExtJobTest(ResTest):
             with self.assertRaises(ValueError):
                 job = ExtJob("CONFIG" , True)
 
-                
+
         with TestAreaContext("python/job_queue/forward_model4"):
             create_config_executable_directory( "CONFIG" )
             with self.assertRaises(ValueError):
