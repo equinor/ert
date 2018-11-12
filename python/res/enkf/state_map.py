@@ -121,10 +121,20 @@ class StateMap(BaseCClass):
         @type state_value: RealizationStateEnum
         @rtype: ecl.util.IntVector
         """
-        mask = BoolVector(False, len(self))
-        self.selectMatching(mask, state_value)
+        mask = self.createMask(state_value)
         return BoolVector.createActiveList(mask)
 
+
+    def createMask(self, state_value):
+        """
+        Will create a bool vector of all realisations with state equal to state_value.
+
+        @type state_value: RealizationStateEnum
+        @rtype: ecl.util.BoolVector
+        """
+        mask = BoolVector(False, len(self))
+        self.selectMatching(mask, state_value)
+        return mask
 
 
     def free(self):

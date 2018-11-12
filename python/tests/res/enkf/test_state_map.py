@@ -94,12 +94,21 @@ class StateMapTest(ResTest):
         state_map[0] = RealizationStateEnum.STATE_INITIALIZED
         state_map[2] = RealizationStateEnum.STATE_INITIALIZED
         state_map[2] = RealizationStateEnum.STATE_HAS_DATA
-    
+
         initialized = state_map.realizationList( RealizationStateEnum.STATE_INITIALIZED )
         self.assertEqual( len(initialized) , 1 )
         self.assertEqual( initialized[0] , 0 )
-        
+
+        mask = state_map.createMask(RealizationStateEnum.STATE_INITIALIZED)
+        self.assertEqual([True, False, False], list(mask))
+
         has_data = state_map.realizationList( RealizationStateEnum.STATE_HAS_DATA )
         self.assertEqual( len(has_data) , 1 )
         self.assertEqual( has_data[0] , 2)
 
+        mask = state_map.createMask(RealizationStateEnum.STATE_HAS_DATA)
+        self.assertEqual([False, False, True], list(mask))
+
+        state = RealizationStateEnum.STATE_HAS_DATA | RealizationStateEnum.STATE_INITIALIZED
+        mask = state_map.createMask(state)
+        self.assertEqual([True, False, True], list(mask))
