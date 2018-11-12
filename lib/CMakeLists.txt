@@ -388,6 +388,7 @@ add_test(NAME analysis_test_module_info COMMAND analysis_test_module_info)
 
 
 foreach(name job_status_test
+             ext_job_test
              job_node_test
              job_lsf_parse_bsub_stdout
              job_lsf_test

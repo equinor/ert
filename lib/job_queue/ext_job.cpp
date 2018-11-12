@@ -1060,7 +1060,26 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
             const char * key   = config_content_node_iget( env_node, 0);
             if (config_content_node_get_size( env_node ) > 1) {
               const char * value = config_content_node_iget( env_node , 1);
-              hash_insert_hash_owned_ref( ext_job->exec_env, key , util_alloc_string_copy( value ) , free);
+              /*
+                A string which is in a <...> pair is interpreted to be a
+                placeholder string like <RMS_PYTHONPATH> where the user has not
+                supplied a replacement value. This special casing is to avoid
+                inserting string literals like <RMS_PYTHONPATH> in the exec_env
+                dictionary.
+              */
+              if (value[0] == '<' && value[strlen(value) - 1] == '>')
+                continue;
+
+
+              /*
+                We special case the literal value 'null' - that can be used to
+                induce behaviour similar to unsetenv in the actual child
+                process.
+              */
+              if (strcmp(value, "null") == 0)
+                hash_insert_ref(ext_job->exec_env, key, NULL);
+              else
+                hash_insert_hash_owned_ref( ext_job->exec_env, key , util_alloc_string_copy( value ) , free);
             } else
               hash_insert_ref(ext_job->exec_env, key, NULL);
           }
@@ -1115,6 +1134,14 @@ const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job ) {
     return ext_job->argv;
 }
 
+
+bool ext_job_exec_env_is_set(const ext_job_type * ext_job, const char * variable) {
+  return hash_has_key(ext_job->exec_env, variable);
+}
+
+const char * ext_job_exec_env_get(const ext_job_type * ext_job, const char * variable) {
+  return (const char *) hash_get(ext_job->exec_env, variable);
+}
 
 /**
 
