@@ -254,7 +254,6 @@ void fwd_step_enkf_updateA(void * module_data ,
   fwd_step_enkf_data_type * fwd_step_data = fwd_step_enkf_data_safe_cast( module_data );
   fwd_step_log_open(fwd_step_data->fwd_step_log);
   module_data_block_vector_type * data_block_vector = module_info_get_data_block_vector(module_info);
-  printf("Running Forward Stepwise regression:\n");
   matrix_type * S = matrix_alloc_copy(S0);
   {
 

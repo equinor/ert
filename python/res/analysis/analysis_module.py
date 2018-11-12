@@ -45,6 +45,13 @@ class AnalysisModule(BaseCClass):
     # The VARIABLE_NAMES field is a completly broken special case
     # which only applies to the rml module.
     VARIABLE_NAMES = {
+        "IES_MAX_STEPLENGTH": {"type": float, "description": "Max step Length of Gauss Newton Iteration"},
+        "IES_MIN_STEPLENGTH": {"type": float, "description": "Min step Length of Gauss Newton Iteration"},
+        "IES_DEC_STEPLENGTH": {"type": float, "description": "Decline of step Length in Gauss Newton Iteration"},
+        "IES_INVERSION": {"type": int, "description": "Inversion algorithm"},
+        "IES_DEBUG": {"type": bool, "description": "Print extensive log for IES analysis steps"},
+        "IES_LOGFILE": {"type": str, "description": "IES Log File"},
+        "IES_AAPROJECTION": {"type": str, "description": "Include projection Y (A^+A) for n<N-1"},
         "LAMBDA0": {"type": float, "description": "Initial Lambda"},
         "USE_PRIOR": {"type": bool, "description": "Use both Prior and Observation Variability"},
         "LAMBDA_REDUCE": {"type": float, "description": "Lambda Reduction Factor"},
@@ -54,7 +61,8 @@ class AnalysisModule(BaseCClass):
         "CLEAR_LOG": {"type": bool, "description": "Clear Existing Log File"},
         "LAMBDA_RECALCULATE": {"type": bool, "description": "Recalculate Lambda after each Iteration"},
         "ENKF_TRUNCATION": {"type": float, "description": "Singular value truncation"},
-        "ENKF_NCOMP": {"type": int, "description": "ENKF_NCOMP"},
+        "ENKF_SUBSPACE_DIMENSION": {"type": int, "description": "Number of singular values"},
+        "ENKF_NCOMP": {"type": int, "description": "Number of singular values"},
         "CV_NFOLDS": {"type": int, "description": "CV_NFOLDS"},
         "FWD_STEP_R2_LIMIT": {"type": float, "description": "FWD_STEP_R2_LIMIT"},
         "CV_PEN_PRESS": {"type": bool, "description": "CV_PEN_PRESS"}
