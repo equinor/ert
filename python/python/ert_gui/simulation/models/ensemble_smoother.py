@@ -1,5 +1,6 @@
 from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.enums import HookRuntime
+from res.enkf.enums import RealizationStateEnum
 from res.enkf import ErtRunContext
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
