@@ -79,6 +79,8 @@ test_work_area_type * work_area = test_work_area_alloc("value_export");
   const cJSON * subkey1 = cJSON_GetObjectItemCaseSensitive(key1, "SUBKEY1");
   test_assert_true(cJSON_IsNumber(subkey1));
 
+  const cJSON * compkey1 = cJSON_GetObjectItemCaseSensitive(json, "KEY100:SUBKEY1");
+  test_assert_double_equal(compkey1->valuedouble, 100);
 
   value_export_free( export_value );
   test_work_area_free( work_area );

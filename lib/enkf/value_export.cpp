@@ -98,6 +98,67 @@ void value_export_txt(const value_export_type * value) {
 
 }
 
+void generate_hirarchical_keys(const value_export_type * value, FILE * stream)
+{
+    for (auto iterMaps = value->values.begin(); iterMaps!= value->values.end(); ++iterMaps   ) {
+        std::string key = (*iterMaps).first;
+        std::map<std::string,double> subMap = (*iterMaps).second;
+        fprintf(stream, "\"%s\" : {\n", key.c_str());
+
+        for (auto iterValues = subMap.begin(); iterValues != subMap.end(); ++iterValues) {
+
+            std::string subkey = (*iterValues).first;
+
+            double double_value = (*iterValues).second;
+            if (isnan(double_value))
+                fprintf(stream, "\"%s\" : NaN", subkey.c_str());
+            else
+                fprintf(stream, "\"%s\" : %g", subkey.c_str(), double_value);
+
+
+            if (std::next(iterValues) != subMap.end())
+                fprintf(stream, ",");
+            fprintf(stream, "\n");
+        }
+
+        fprintf(stream, "},\n");
+
+    }
+
+}
+
+void generate_comosite_keys(const value_export_type * value, FILE * stream)
+{
+    for (auto iterMaps = value->values.begin(); iterMaps!= value->values.end(); ++iterMaps   ) {
+        std::string key = (*iterMaps).first;
+        std::map<std::string,double> subMap = (*iterMaps).second;
+
+        for (auto iterValues = subMap.begin(); iterValues != subMap.end(); ++iterValues) {
+
+            std::string subkey = (*iterValues).first;
+
+            double double_value = (*iterValues).second;
+            if (isnan(double_value))
+                fprintf(stream, "\"%s\" : NaN", key.c_str());
+            else
+                fprintf(stream, "\"%s:%s\" : %g", key.c_str(), subkey.c_str(), double_value);
+
+            if (std::next(iterValues) != subMap.end()) {
+                fprintf(stream, ",");
+                fprintf(stream, "\n");
+            }
+        }
+
+
+        if (std::next(iterMaps) != value->values.end())
+            fprintf(stream, ",");
+
+        fprintf(stream, "\n");
+
+    }
+
+}
+
 void value_export_json(const value_export_type * value) {
   std::string filename = value->directory +"/" + value->base_name + ".json";
   backup_if_existing(filename.c_str());
@@ -105,36 +166,8 @@ void value_export_json(const value_export_type * value) {
   if (!value->values.empty()) {
     FILE * stream = util_fopen( filename.c_str() , "w");
     fprintf(stream, "{\n");
-
-    for (auto iterMaps = value->values.begin(); iterMaps!= value->values.end(); ++iterMaps   ) {    
-      std::string key = (*iterMaps).first;
-      std::map<std::string,double> subMap = (*iterMaps).second;
-      fprintf(stream, "\"%s\" : {\n", key.c_str());
-
-      for (auto iterValues = subMap.begin(); iterValues != subMap.end(); ++iterValues) {
-
-        std::string key = (*iterValues).first;
-
-        double double_value = (*iterValues).second;
-        if (isnan(double_value))
-          fprintf(stream, "\"%s\" : NaN", key.c_str());
-        else
-          fprintf(stream, "\"%s\" : %g", key.c_str(), double_value);
-
-
-        if (std::next(iterValues) != subMap.end())
-          fprintf(stream, ",");
-            fprintf(stream, "\n");
-      }
-
-      fprintf(stream, "}");
-
-      if (std::next(iterMaps) != value->values.end())
-        fprintf(stream, ",");
-
-      fprintf(stream, "\n");
-
-    }
+    generate_hirarchical_keys(value, stream);
+    generate_comosite_keys(value, stream);
     fprintf(stream, "}\n");
     fclose( stream );
   }
