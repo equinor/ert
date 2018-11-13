@@ -18,9 +18,14 @@
 
 #ifndef VALUE_EXPORT_H
 #define VALUE_EXPORT_H
+
 #ifdef __cplusplus
+#include <string>
 extern "C" {
 #endif
+
+
+
 
 #include <ert/util/type_macros.h>
 
@@ -33,7 +38,7 @@ extern "C" {
   void                 value_export_txt(const value_export_type * value);
   void                 value_export_txt__(const value_export_type * value, const char * filename);
   void                 value_export(const value_export_type * value);
-  void                 value_export_append( value_export_type * value, const char * key , double double_value);
+  void                 value_export_append(value_export_type * value, const std::string key, const std::string subkey, double double_value);
 
 UTIL_IS_INSTANCE_HEADER(value_export);
 

@@ -259,14 +259,15 @@ void gen_kw_export_values(const gen_kw_type * gen_kw, value_export_type * export
     char * export_key         = util_alloc_sprintf("%s:%s" , key, parameter);
     double value              = gen_kw_config_transform( gen_kw->config , ikw , gen_kw->data[ikw] );
 
-    value_export_append( export_value, export_key , value );
+    value_export_append( export_value, key, parameter , value );
+
     free( export_key );
 
     if (gen_kw_config_should_use_log_scale(gen_kw->config, ikw)) {
       double log_value = log10(value);
-      char * log_export_key = util_alloc_sprintf("LOG10_%s:%s", key , parameter);
-      value_export_append( export_value, log_export_key , log_value );
-      free( log_export_key );
+      char * log_key = util_alloc_sprintf("LOG10_%s", key);
+      value_export_append( export_value, log_key, parameter , log_value );
+      free( log_key );
     }
   }
 }

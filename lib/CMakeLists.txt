@@ -211,6 +211,8 @@ add_library(res res_util/res_log.cpp
                 enkf/subst_config.cpp
                 enkf/log_config.cpp
                 enkf/config_keys.cpp
+
+                external/JSON/cJSON.c
 )
 
 #-----------------------------------------------------------------
@@ -579,15 +581,17 @@ foreach (test   enkf_active_list
                 enkf_state_map
                 obs_vector_tests
                 log_config_level_parse
-                value_export
                 rng_manager
                 rng_config
                 trans_func
+                value_export
     )
     add_executable(${test} enkf/tests/${test}.cpp)
     target_link_libraries(${test} res)
     add_test(NAME ${test} COMMAND ${test})
 endforeach ()
+
+
 
 function( add_config_test name command )
     add_test( NAME ${name}
