@@ -1551,7 +1551,7 @@ int_vector_type * enkf_main_update_alloc_step_list(const enkf_main_type * enkf_m
     return step_list;
   }
 
-  int step = util_int_max( 1 , load_start );
+  int step = util_int_max( 0 , load_start );
   while (true) {
     int_vector_append( step_list , step );
 
