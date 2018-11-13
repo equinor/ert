@@ -116,9 +116,10 @@ class AnalysisModuleTest(ResTest):
         self.assertTrue(mod.getBool('USE_EE'))
         self.assertTrue(mod.getBool('USE_GE'))
 
-        vals = ( 1.39,  -0.111, -0.278,
-                -0.111,  1.39,  -0.278,
-                 -0.278, -0.278,  1.56 )
+        elt_a, elt_b = 1.33, -0.167
+        vals = (elt_a, elt_b, elt_b,
+                elt_b, elt_a, elt_b,
+                elt_b, elt_b, elt_a)
         expected = self.construct_matrix(3, vals)
         X = mod.initX(A, S, R, dObs, E, D, self.rng)
         self._matrix_close(X, expected)
