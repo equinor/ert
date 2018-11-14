@@ -338,6 +338,17 @@ static void obs_block_initD( const obs_block_type * obs_block , matrix_type * D,
 }
 
 
+static void obs_block_set_active_mask( const obs_block_type * obs_block, bool * mask, int * offset) {
+  for (int i = 0; i < obs_block->size; i++) {
+    if (obs_block->active_mode[i] == ACTIVE)
+      mask[*offset] = true;
+    else
+      mask[*offset] = false;
+    (*offset)++;
+  }   
+}
+
+
 /*****************************************************************/
 
 
@@ -759,4 +770,17 @@ void obs_data_fprintf( const obs_data_type * obs_data , FILE * stream) {
     obs_block_fprintf( obs_block , stream );
   }
   fprintf(stream , "\n");
+}
+
+
+const bool * obs_data_get_active_mask( const obs_data_type * obs_data ) {
+  int total_size = obs_data_get_total_size( obs_data );
+  bool * mask = new bool[total_size];
+  int offset = 0;
+  for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
+    const obs_block_type * obs_block = (const obs_block_type *)vector_iget_const( obs_data->data , block_nr );
+    obs_block_set_active_mask( obs_block, mask, &offset);
+  }
+  
+  return mask;
 }
