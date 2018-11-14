@@ -246,6 +246,8 @@ target_link_libraries( res PUBLIC ecl ${LAPACK_LIBRARIES} ${LAPACK_LINKER_FLAGS}
 target_include_directories(res
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private-include>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private-include/ext/json>
         )
 
 
@@ -590,6 +592,7 @@ foreach (test   enkf_active_list
     add_executable(${test} enkf/tests/${test}.cpp)
     target_link_libraries(${test} res)
     add_test(NAME ${test} COMMAND ${test})
+    target_include_directories(${test} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private-include)
 endforeach ()
 
 
