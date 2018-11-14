@@ -512,10 +512,10 @@ void matrix_pretty_fprint_submat(const matrix_type * matrix , const char * name 
  if (m<0 || m>M || M >= matrix->rows || n<0 || n>N || N >= matrix->columns)
          util_abort("%s: matrix:%s not compatible with print subdimensions. \n",__func__ , matrix->name);
 
- fprintf(stream ,  "%s =" , name);
-  for (i=m; i < M; i++) {
+ fprintf(stream ,  "%s =\n" , name);
+  for (i=m; i <= M; i++) {
     fprintf(stream , " [");
-    for (j=n; j < N; j++)
+    for (j=n; j <= N; j++)
       fprintf(stream , fmt , matrix_iget(matrix , i,j));
     fprintf(stream , "]\n");
   }

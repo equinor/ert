@@ -149,10 +149,10 @@ static int enkf_linalg_num_significant(int num_singular_values , const double * 
     double running_sigma2  = 0;
     for (int i=0; i < num_singular_values; i++) {
       if (running_sigma2 / total_sigma2 < truncation) {  /* Include one more singular value ? */
-	num_significant++;
-	running_sigma2 += sig0[i] * sig0[i];
+         num_significant++;
+         running_sigma2 += sig0[i] * sig0[i];
       } else
-	break;
+         break;
     }
   }
 
@@ -161,12 +161,12 @@ static int enkf_linalg_num_significant(int num_singular_values , const double * 
 
 
 int enkf_linalg_svdS(const matrix_type * S ,
-		     double truncation ,
-		     int ncomp ,
-		     dgesvd_vector_enum store_V0T ,
-		     double * inv_sig0,
-		     matrix_type * U0 ,
-		     matrix_type * V0T) {
+                    double truncation ,
+                    int ncomp ,
+                    dgesvd_vector_enum store_V0T ,
+                    double * inv_sig0,
+                    matrix_type * U0 ,
+                    matrix_type * V0T) {
 
   double * sig0 = inv_sig0;
   int    num_significant = 0;
@@ -187,14 +187,14 @@ int enkf_linalg_svdS(const matrix_type * S ,
         num_significant = enkf_linalg_num_significant( num_singular_values , sig0 , truncation );
 
       {
-	int i;
-	/* Inverting the significant singular values */
-	for (i = 0; i < num_significant; i++)
-	  inv_sig0[i] = 1.0 / sig0[i];
+        int i;
+/* Inverting the significant singular values */
+        for (i = 0; i < num_significant; i++)
+           inv_sig0[i] = 1.0 / sig0[i];
 
-	/* Explicitly setting the insignificant singular values to zero. */
-	for (i=num_significant; i < num_singular_values; i++)
-	  inv_sig0[i] = 0;
+/* Explicitly setting the insignificant singular values to zero. */
+        for (i=num_significant; i < num_singular_values; i++)
+           inv_sig0[i] = 0;
       }
   } else
 
@@ -260,7 +260,7 @@ void enkf_linalg_lowrankE(const matrix_type * S , /* (nrobs x nrens) */
 /* Multiply X0 with sig0^(-1) from left X0 =  S^(-1) * X0   */
    for (j=0; j < matrix_get_columns( X0 ) ; j++)
       for (i=0; i < matrix_get_rows( X0 ); i++)
-         matrix_imul(X0 , i , j , inv_sig0[j]);
+         matrix_imul(X0 , i , j , inv_sig0[i]);
 
 
 /* Compute SVD of X0->  U1*eig*V1   14.52 */
@@ -783,13 +783,13 @@ void enkf_linalg_rml_enkfX3(matrix_type *X3, matrix_type *VdTr, double *Wdr, mat
     This routine computes X3 for RML_EnKF module as X3 = Vd *Wd*X2
   */
 
-	printf("\nWd: ");
+  printf("\nWd: ");
   matrix_type *tmp = matrix_alloc_copy(VdTr);
   for (int i=0; i< nsign ; i++) {
-		printf("%5.2f ", Wdr[i]);
+    printf("%5.2f ", Wdr[i]);
     matrix_scale_row(tmp, i, Wdr[i]);
   }
-	printf("\n\n");
+  printf("\n\n");
 
   matrix_matmul_with_transpose( X3 , tmp , X2 , true, false);
   matrix_free(tmp);
