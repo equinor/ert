@@ -31,7 +31,7 @@
 
 void test_create() {
   test_work_area_type * work_area = test_work_area_alloc("value_export");
-  value_export_type * export_value = value_export_alloc( NULL, "parameters");
+  value_export_type * export_value = value_export_alloc( "", "parameters");
 
   test_assert_int_equal( 0 , value_export_size( export_value ));
 
@@ -71,7 +71,7 @@ test_work_area_type * work_area = test_work_area_alloc("value_export");
                   std::istreambuf_iterator<char>());
 
   cJSON *json = cJSON_Parse(strJSON.c_str());
-  test_assert_false(json==NULL);
+  test_assert_not_NULL(json);
 
   const cJSON * key1 = cJSON_GetObjectItemCaseSensitive(json, "KEY100");
   test_assert_true(cJSON_IsObject(key1));
@@ -90,7 +90,7 @@ test_work_area_type * work_area = test_work_area_alloc("value_export");
 
 void test_export_txt__() {
   test_work_area_type * work_area = test_work_area_alloc("value_export");
-  value_export_type * export_value = value_export_alloc( NULL, "parameters");
+  value_export_type * export_value = value_export_alloc( "", "parameters");
   value_export_append(export_value, "KEY100", "SUBKEY1", 100);
   value_export_append(export_value, "KEY200", "SUBKEY2", 200);
   test_assert_int_equal( 2 , value_export_size( export_value ));

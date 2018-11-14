@@ -47,19 +47,14 @@ static void backup_if_existing(const char * filename) {
 }
 
 
-value_export_type * value_export_alloc(const char * directory, const char * base_name) {
+value_export_type * value_export_alloc(std::string directory, std::string base_name) {
+
   value_export_type * value = new value_export_type;
   UTIL_TYPE_ID_INIT( value , VALUE_EXPORT_TYPE_ID );
-
-  if(directory == NULL)
-    value->directory = "";
-  else
-    value->directory = directory;
-  if(base_name == NULL)
-    value->base_name = "";
-  else
-    value->base_name = base_name;
+  value->directory = directory;
+  value->base_name = base_name;
   return value;
+
 }
 
 
@@ -68,11 +63,11 @@ void value_export_free(value_export_type * value) {
 }
 
 int value_export_size( const value_export_type * value) {
-    int size = 0;
-    for(const auto& key_map_pair:value->values)
-    {
-        size += key_map_pair.second.size();
-    }
+  int size = 0;
+  for(const auto& key_map_pair:value->values)
+  {
+      size += key_map_pair.second.size();
+  }
 
   return size;
 }
@@ -98,7 +93,7 @@ void value_export_txt(const value_export_type * value) {
 
 }
 
-void generate_hirarchical_keys(const value_export_type * value, FILE * stream)
+static void generate_hirarchical_keys(const value_export_type * value, FILE * stream)
 {
     for (auto iterMaps = value->values.begin(); iterMaps!= value->values.end(); ++iterMaps   ) {
         std::string key = (*iterMaps).first;
@@ -127,7 +122,7 @@ void generate_hirarchical_keys(const value_export_type * value, FILE * stream)
 
 }
 
-void generate_comosite_keys(const value_export_type * value, FILE * stream)
+static void generate_comosite_keys(const value_export_type * value, FILE * stream)
 {
     for (auto iterMaps = value->values.begin(); iterMaps!= value->values.end(); ++iterMaps   ) {
         std::string key = (*iterMaps).first;
@@ -183,11 +178,10 @@ void value_export(const value_export_type * value) {
 void value_export_append(value_export_type * value, const std::string key, const std::string subkey, double double_value){
 
   if(value->values.find(key) == value->values.end()){
-    value->values.insert(std::make_pair(key, std::map<std::string, double>()));
+    value->values[key] = std::map<std::string, double>();
   }
 
-  value->values[key].insert(std::make_pair(subkey,double_value));
-
+  value->values[key][subkey] = double_value;
 }
 
 /*****************************************************************/

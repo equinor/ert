@@ -32,7 +32,7 @@ extern "C" {
   typedef struct value_export_struct value_export_type;
 
   void                 value_export_free(value_export_type * value);
-  value_export_type * value_export_alloc(const char * directory, const char * base_name);
+  value_export_type * value_export_alloc(std::string directory, std::string base_name);
   int                  value_export_size(const value_export_type * value);
   void                 value_export_json(const value_export_type * value);
   void                 value_export_txt(const value_export_type * value);
