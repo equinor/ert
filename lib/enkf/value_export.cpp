@@ -18,21 +18,23 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include <map>
+
 #include <ert/util/stringlist.h>
 #include <ert/util/double_vector.h>
 
 #include <ert/enkf/value_export.hpp>
+#include <iostream>
 
 #define VALUE_EXPORT_TYPE_ID     5741761
 
 
 struct value_export_struct {
   UTIL_TYPE_ID_DECLARATION;
-  char * directory;
-  char * base_name;
+  std::string directory;
+  std::string base_name;
+  std::map<std::string,std::map<std::string, double>> values;
 
-  stringlist_type * keys;
-  double_vector_type * values;
 };
 
 
@@ -45,75 +47,126 @@ static void backup_if_existing(const char * filename) {
 }
 
 
-value_export_type * value_export_alloc(const char * directory, const char * base_name) {
-  value_export_type * value = (value_export_type *)util_malloc( sizeof * value );
-  UTIL_TYPE_ID_INIT( value , VALUE_EXPORT_TYPE_ID );
-  value->directory = util_alloc_string_copy( directory );
-  value->base_name = util_alloc_string_copy( base_name );
+value_export_type * value_export_alloc(std::string directory, std::string base_name) {
 
-  value->keys = stringlist_alloc_new( );
-  value->values = double_vector_alloc(0,0);
+  value_export_type * value = new value_export_type;
+  UTIL_TYPE_ID_INIT( value , VALUE_EXPORT_TYPE_ID );
+  value->directory = directory;
+  value->base_name = base_name;
   return value;
+
 }
 
 
 void value_export_free(value_export_type * value) {
-  stringlist_free( value->keys );
-  double_vector_free( value->values );
-  free( value->directory );
-  free( value->base_name );
   free( value );
 }
 
 int value_export_size( const value_export_type * value) {
-  return double_vector_size( value->values );
+  int size = 0;
+  for(const auto& key_map_pair:value->values)
+  {
+      size += key_map_pair.second.size();
+  }
+
+  return size;
 }
 
 
 void value_export_txt__(const value_export_type * value, const char * filename) {
-  const int size = double_vector_size( value->values );
-  if (size > 0) {
-    FILE * stream = util_fopen( filename , "w");
 
-    for (int i=0; i < size; i++) {
-      const char * key          = stringlist_iget( value->keys, i );
-      double double_value              = double_vector_iget( value->values, i );
-      fprintf(stream, "%s %g\n", key, double_value);
+  if (!value->values.empty()) {
+    FILE * stream = util_fopen( filename , "w");
+    for (const auto & key_map_pair: value->values) {
+      for (const auto &sub_key_value_pair : key_map_pair.second) {
+        fprintf(stream, "%s:%s %g\n",  key_map_pair.first.c_str(), sub_key_value_pair.first.c_str(), sub_key_value_pair.second);
+      }
     }
     fclose( stream );
   }
 }
 
 void value_export_txt(const value_export_type * value) {
-  char * filename = util_alloc_filename( value->directory , value->base_name, "txt");
-  backup_if_existing(filename);
-  value_export_txt__( value, filename );
-  free( filename );
+  std::string filename = value->directory +"/" + value->base_name + ".txt";
+  backup_if_existing(filename.c_str());
+  value_export_txt__( value, filename.c_str() );
+
+}
+
+static void generate_hirarchical_keys(const value_export_type * value, FILE * stream)
+{
+    for (auto iterMaps = value->values.begin(); iterMaps!= value->values.end(); ++iterMaps   ) {
+        std::string key = (*iterMaps).first;
+        std::map<std::string,double> subMap = (*iterMaps).second;
+        fprintf(stream, "\"%s\" : {\n", key.c_str());
+
+        for (auto iterValues = subMap.begin(); iterValues != subMap.end(); ++iterValues) {
+
+            std::string subkey = (*iterValues).first;
+
+            double double_value = (*iterValues).second;
+            if (isnan(double_value))
+                fprintf(stream, "\"%s\" : NaN", subkey.c_str());
+            else
+                fprintf(stream, "\"%s\" : %g", subkey.c_str(), double_value);
+
+
+            if (std::next(iterValues) != subMap.end())
+                fprintf(stream, ",");
+            fprintf(stream, "\n");
+        }
+
+        fprintf(stream, "},\n");
+
+    }
+
+}
+
+static void generate_comosite_keys(const value_export_type * value, FILE * stream)
+{
+    for (auto iterMaps = value->values.begin(); iterMaps!= value->values.end(); ++iterMaps   ) {
+        std::string key = (*iterMaps).first;
+        std::map<std::string,double> subMap = (*iterMaps).second;
+
+        for (auto iterValues = subMap.begin(); iterValues != subMap.end(); ++iterValues) {
+
+            std::string subkey = (*iterValues).first;
+
+            double double_value = (*iterValues).second;
+            if (isnan(double_value))
+                fprintf(stream, "\"%s\" : NaN", key.c_str());
+            else
+                fprintf(stream, "\"%s:%s\" : %g", key.c_str(), subkey.c_str(), double_value);
+
+            if (std::next(iterValues) != subMap.end()) {
+                fprintf(stream, ",");
+                fprintf(stream, "\n");
+            }
+        }
+
+
+        if (std::next(iterMaps) != value->values.end())
+            fprintf(stream, ",");
+
+        fprintf(stream, "\n");
+
+    }
+
 }
 
 void value_export_json(const value_export_type * value) {
-  char * filename = util_alloc_filename( value->directory , value->base_name, "json");
-  backup_if_existing(filename);
-  const int size = double_vector_size( value->values );
-  if (size > 0) {
-    FILE * stream = util_fopen( filename , "w");
-    fprintf(stream, "{\n");
-    for (int i=0; i < size; i++) {
-      const char * key          = stringlist_iget( value->keys, i );
-      double double_value       = double_vector_iget( value->values, i );
-      if (isnan(double_value))
-        fprintf(stream,"\"%s\" : NaN", key);
-      else
-        fprintf(stream, "\"%s\" : %g", key, double_value);
+  std::string filename = value->directory +"/" + value->base_name + ".json";
+  backup_if_existing(filename.c_str());
 
-      if (i < (size - 1))
-        fprintf(stream, ",");
-      fprintf(stream,"\n");
-    }
+  if (!value->values.empty()) {
+    FILE * stream = util_fopen( filename.c_str() , "w");
+    fprintf(stream, "{\n");
+    generate_hirarchical_keys(value, stream);
+    generate_comosite_keys(value, stream);
     fprintf(stream, "}\n");
     fclose( stream );
   }
-  free( filename );
+
 }
 
 void value_export(const value_export_type * value) {
@@ -121,11 +174,15 @@ void value_export(const value_export_type * value) {
   value_export_json( value );
 }
 
-void value_export_append( value_export_type * value, const char * key , double double_value) {
-  stringlist_append_copy( value->keys, key );
-  double_vector_append( value->values, double_value );
-}
 
+void value_export_append(value_export_type * value, const std::string key, const std::string subkey, double double_value){
+
+  if(value->values.find(key) == value->values.end()){
+    value->values[key] = std::map<std::string, double>();
+  }
+
+  value->values[key][subkey] = double_value;
+}
 
 /*****************************************************************/
 

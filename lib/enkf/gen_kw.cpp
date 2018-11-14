@@ -256,23 +256,22 @@ void gen_kw_export_values(const gen_kw_type * gen_kw, value_export_type * export
   for (int ikw = 0; ikw < size; ++ikw) {
     const char * key          = gen_kw_config_get_key(gen_kw->config);
     const char * parameter    = gen_kw_config_iget_name(gen_kw->config , ikw);
-    char * export_key         = util_alloc_sprintf("%s:%s" , key, parameter);
+
     double value              = gen_kw_config_transform( gen_kw->config , ikw , gen_kw->data[ikw] );
 
-    value_export_append( export_value, export_key , value );
-    free( export_key );
+    value_export_append( export_value, key, parameter , value );
 
     if (gen_kw_config_should_use_log_scale(gen_kw->config, ikw)) {
       double log_value = log10(value);
-      char * log_export_key = util_alloc_sprintf("LOG10_%s:%s", key , parameter);
-      value_export_append( export_value, log_export_key , log_value );
-      free( log_export_key );
+      char * log_key = util_alloc_sprintf("LOG10_%s", key);
+      value_export_append( export_value, log_key, parameter , log_value );
+      free( log_key );
     }
   }
 }
 
 void gen_kw_write_export_file(const gen_kw_type * gen_kw , const char * filename) {
-  value_export_type * export_value = value_export_alloc( NULL, filename );
+  value_export_type * export_value = value_export_alloc("", filename );
   gen_kw_export_values( gen_kw, export_value );
   value_export_txt__( export_value , filename );
   value_export_free( export_value );
