@@ -22,12 +22,12 @@
 #include <iostream>
 #include <fstream>
 
+#include <ext/json/cJSON.h>
+
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.h>
-
 #include <ert/enkf/value_export.hpp>
 
-#include <ert/external/JSON/cJSON.h>
 
 void test_create() {
   test_work_area_type * work_area = test_work_area_alloc("value_export");
