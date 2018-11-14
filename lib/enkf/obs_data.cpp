@@ -70,6 +70,7 @@ Matrices: S, D, E and various internal variables.
 #include <ert/util/vector.h>
 #include <ert/res_util/matrix.hpp>
 #include <ert/util/rng.h>
+#include <ert/util/bool_vector.h>
 
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/meas_data.hpp>
@@ -94,8 +95,9 @@ struct obs_block_struct {
 
 
 struct obs_data_struct {
-  vector_type   * data;            /* vector with obs_block instances. */
-  double          global_std_scaling;
+  vector_type      * data;            /* vector with obs_block instances. */
+  bool_vector_type * mask;
+  double             global_std_scaling;
 };
 
 
@@ -338,12 +340,12 @@ static void obs_block_initD( const obs_block_type * obs_block , matrix_type * D,
 }
 
 
-static void obs_block_set_active_mask( const obs_block_type * obs_block, bool * mask, int * offset) {
+static void obs_block_set_active_mask( const obs_block_type * obs_block, bool_vector_type * mask, int * offset) {
   for (int i = 0; i < obs_block->size; i++) {
     if (obs_block->active_mode[i] == ACTIVE)
-      mask[*offset] = true;
+      bool_vector_iset(mask, *offset, true);
     else
-      mask[*offset] = false;
+      bool_vector_iset(mask, *offset, false);
     (*offset)++;
   }   
 }
@@ -355,6 +357,7 @@ static void obs_block_set_active_mask( const obs_block_type * obs_block, bool * 
 obs_data_type * obs_data_alloc(double global_std_scaling) {
   obs_data_type * obs_data = (obs_data_type *)util_malloc(sizeof * obs_data );
   obs_data->data = vector_alloc_new();
+  obs_data->mask = bool_vector_alloc(0, false);
   obs_data->global_std_scaling = global_std_scaling;
   obs_data_reset(obs_data);
   return obs_data;
@@ -386,6 +389,7 @@ const obs_block_type * obs_data_iget_block_const( const obs_data_type * obs_data
 
 void obs_data_free(obs_data_type * obs_data) {
   vector_free( obs_data->data );
+  bool_vector_free( obs_data->mask );
   free(obs_data);
 }
 
@@ -773,14 +777,15 @@ void obs_data_fprintf( const obs_data_type * obs_data , FILE * stream) {
 }
 
 
-const bool * obs_data_get_active_mask( const obs_data_type * obs_data ) {
+const bool_vector_type * obs_data_get_active_mask( const obs_data_type * obs_data ) {
   int total_size = obs_data_get_total_size( obs_data );
-  bool * mask = new bool[total_size];
+  bool_vector_resize(obs_data->mask, total_size, false);  //too account for extra data blocks added/removed
+
   int offset = 0;
   for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
     const obs_block_type * obs_block = (const obs_block_type *)vector_iget_const( obs_data->data , block_nr );
-    obs_block_set_active_mask( obs_block, mask, &offset);
+    obs_block_set_active_mask( obs_block, obs_data->mask, &offset);
   }
   
-  return mask;
+  return obs_data->mask;
 }
