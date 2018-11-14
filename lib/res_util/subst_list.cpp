@@ -711,7 +711,8 @@ bool subst_list_update_string(const subst_list_type * subst_list , char ** strin
 
 char * subst_list_alloc_filtered_string(const subst_list_type * subst_list , const char * string) {
   char * filtered_string = util_alloc_string_copy( string );
-  subst_list_update_string( subst_list , &filtered_string );
+  if (subst_list)
+    subst_list_update_string( subst_list , &filtered_string );
   return filtered_string;
 }
 

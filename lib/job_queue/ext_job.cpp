@@ -701,42 +701,84 @@ static void   __fprintf_close_python_list( FILE * stream ) {
 
 
 
+static hash_type * __alloc_filtered_hash(hash_type * input_hash,
+                                         bool include_angular_values,
+                                         const subst_list_type * private_args,
+                                         const subst_list_type * global_args) {
+
+  hash_type * output_hash = hash_alloc();
+  hash_iter_type * iter = hash_iter_alloc(input_hash);
+  const char * key = hash_iter_get_next_key(iter);
+  while (key != NULL) {
+    const char * value = (const char*) hash_get(input_hash , key);
+    /*
+      If the value is NULL or alternatively the special string value "null" we
+      print the @null_value variable and continue.
+    */
+    if (!value || strcmp(value, "null") == 0)
+      hash_insert_ref(output_hash, key, NULL);
+    else {
+      char * fv = __alloc_filtered_string(value, private_args, global_args);
+      /*
+        If the value string contains a <XXX> string which is not represented in
+        the substitutionlists we will not print out the <xxxx> literal.
+      */
+      if (include_angular_values)
+        hash_insert_hash_owned_ref(output_hash, key, fv, free);
+      else {
+        if ( !(fv[0] == '<' && fv[strlen(fv) -1] == '>') )
+          hash_insert_hash_owned_ref(output_hash, key, fv, free);
+      }
+
+    }
+
+    key = hash_iter_get_next_key(iter);
+  }
+  return output_hash;
+}
+
 
 
 static void __fprintf_python_hash(FILE * stream,
                                   const char * prefix,
                                   const char * id,
-                                  hash_type * hash,
+                                  hash_type * input_hash,
                                   const char * suffix,
                                   const subst_list_type * private_args,
                                   const subst_list_type * global_args,
                                   const char * null_value) {
+  bool print_angular_values = false;
+  hash_type * output_hash = __alloc_filtered_hash(input_hash, print_angular_values, private_args, global_args);
+  int  hash_size = hash_get_size(output_hash);
+
   fprintf(stream , "%s\"%s\" : " , prefix, id);
-  int   hash_size = hash_get_size(hash);
   if (hash_size > 0) {
-    int   counter   = 0;
+    bool first = true;
     fprintf(stream,"{");
-    hash_iter_type * iter = hash_iter_alloc(hash);
+
+    hash_iter_type * iter = hash_iter_alloc(output_hash);
     const char * key = hash_iter_get_next_key(iter);
+
     while (key != NULL) {
-      const char * value = (const char*)hash_get(hash , key);
-
-      fprintf(stream,"\"%s\" : " , key);
-      if (value)
-        __fprintf_string(stream , value , private_args , global_args);
-      else
-          fprintf(stream, "%s", null_value);
-
-      if (counter < (hash_size - 1))
+      const char * value = (const char*) hash_get(output_hash , key);
+      if (!first)
         fprintf(stream,",");
 
+      if (value)
+        fprintf(stream,"\"%s\" : \"%s\"" , key, value);
+      else
+        fprintf(stream, "\"%s\" : %s", key, null_value);
+
       key = hash_iter_get_next_key(iter);
-      counter += 1;
+      first = false;
     }
+
     fprintf(stream,"}");
   } else
     fprintf(stream, "%s", null_value);
   fprintf(stream, "%s", suffix);
+
+  hash_free(output_hash);
 }
 
 
@@ -1060,26 +1102,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
             const char * key   = config_content_node_iget( env_node, 0);
             if (config_content_node_get_size( env_node ) > 1) {
               const char * value = config_content_node_iget( env_node , 1);
-              /*
-                A string which is in a <...> pair is interpreted to be a
-                placeholder string like <RMS_PYTHONPATH> where the user has not
-                supplied a replacement value. This special casing is to avoid
-                inserting string literals like <RMS_PYTHONPATH> in the exec_env
-                dictionary.
-              */
-              if (value[0] == '<' && value[strlen(value) - 1] == '>')
-                continue;
-
-
-              /*
-                We special case the literal value 'null' - that can be used to
-                induce behaviour similar to unsetenv in the actual child
-                process.
-              */
-              if (strcmp(value, "null") == 0)
-                hash_insert_ref(ext_job->exec_env, key, NULL);
-              else
-                hash_insert_hash_owned_ref( ext_job->exec_env, key , util_alloc_string_copy( value ) , free);
+              hash_insert_hash_owned_ref( ext_job->exec_env, key , util_alloc_string_copy( value ) , free);
             } else
               hash_insert_ref(ext_job->exec_env, key, NULL);
           }
@@ -1134,14 +1157,6 @@ const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job ) {
     return ext_job->argv;
 }
 
-
-bool ext_job_exec_env_is_set(const ext_job_type * ext_job, const char * variable) {
-  return hash_has_key(ext_job->exec_env, variable);
-}
-
-const char * ext_job_exec_env_get(const ext_job_type * ext_job, const char * variable) {
-  return (const char *) hash_get(ext_job->exec_env, variable);
-}
 
 /**
 
