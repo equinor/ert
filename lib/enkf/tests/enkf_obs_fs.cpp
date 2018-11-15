@@ -63,6 +63,16 @@ void testS( ert_test_context_type * test_context ) {
     }
     int_vector_free( active_list );
     meas_data_free( meas_data );
+
+    //deactivating a block and check for mask
+    obs_block_type * obs_block = obs_data_iget_block( obs_data , 0 );
+    obs_block_deactivate( obs_block , 0 , false , "---");
+    int obs_size = obs_data_get_total_size( obs_data );
+    const bool_vector_type * mask = obs_data_get_active_mask(obs_data);
+    test_assert_false( bool_vector_iget(mask, 0) );
+    test_assert_true( bool_vector_iget(mask, 1) );
+    test_assert_true( bool_vector_iget(mask, obs_size-1) );
+
     obs_data_free( obs_data );
     local_obsdata_free( obs_set );
     bool_vector_free( ens_mask );

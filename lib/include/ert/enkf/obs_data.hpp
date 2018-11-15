@@ -78,6 +78,7 @@ const char * obs_block_get_key( const obs_block_type * obs_block) ;
 double       obs_data_iget_value( const obs_data_type * obs_data , int total_index );
 double       obs_data_iget_std( const obs_data_type * obs_data , int total_index );
 
+const bool_vector_type * obs_data_get_active_mask( const obs_data_type * obs_data );
 
 #ifdef __cplusplus
 }
