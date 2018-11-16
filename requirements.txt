@@ -7,3 +7,4 @@ cwrap
 numpy
 pandas
 pyaml
+jinja2

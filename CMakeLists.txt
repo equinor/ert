@@ -179,6 +179,9 @@ foreach (script copy_directory copy_file delete_directory delete_file make_direc
   install(PROGRAMS "share/ert/forward-models/shell/script/${script}" DESTINATION "share/ert/forward-models/shell/script")
 endforeach()
 
+foreach (script template_render)
+    install(PROGRAMS "share/ert/forward-models/util/script/${script}" DESTINATION "share/ert/forward-models/util/script")
+endforeach()
 
 install(EXPORT res-config
         DESTINATION share/cmake/res

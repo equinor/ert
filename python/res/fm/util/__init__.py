@@ -1,4 +1,4 @@
-from .template_parser import TemplateParser
+from .template_render import TemplateRender
 
-def build_from_template(template_file):
-    TemplateParser.build_from_template(template_file)
+def render_template(input_files, template_file, output_file):
+    TemplateRender.render_template(input_files, template_file, output_file)
