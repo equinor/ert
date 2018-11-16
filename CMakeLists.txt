@@ -180,7 +180,7 @@ foreach (script copy_directory copy_file delete_directory delete_file make_direc
 endforeach()
 
 foreach (script template_render)
-    install(PROGRAMS "share/ert/forward-models/util/script/${script}" DESTINATION "share/ert/forward-models/util/script")
+    install(PROGRAMS "share/ert/forward-models/templating/script/${script}" DESTINATION "share/ert/forward-models/templating/script")
 endforeach()
 
 install(EXPORT res-config

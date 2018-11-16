@@ -67,6 +67,8 @@ from .analysis_config import AnalysisConfig
 from .ecl_config import EclConfig
 
 from .config_keys import ConfigKeys
+from .enkf_defaults import EnkfDefaults
+
 from .queue_config import QueueConfig
 from .site_config import SiteConfig
 from .subst_config import SubstConfig
