@@ -4,19 +4,7 @@ import os
 from argparse import ArgumentParser
 
 ERT_ROOT = "${ERT_ROOT}"
-ERT_LD_LIBRARY_PATH = "%s/${CMAKE_INSTALL_LIBDIR}" % ERT_ROOT
-ERT_PYTHONPATH = "%s/${PYTHON_INSTALL_PREFIX}" % ERT_ROOT
 ERT_SHARE_PATH = "%s/share/ert" % ERT_ROOT
-
-
-def updateEnvPath(path_var, value):
-    if path_var in os.environ:
-        path = "%s%s%s" % (value, os.pathsep, os.environ[path_var])
-    else:
-        path = value
-
-    os.environ[path_var] = path
-
 
 def ensureConfig(func):
 
@@ -33,37 +21,32 @@ def ensureConfig(func):
 
 
 def runExec(executable , args):
-    exec_args = [ executable ] + args
-    os.execvpe( executable , exec_args , os.environ )
-
+    os.execvp(executable, [executable] + args)
 
 
 @ensureConfig
 def runGui( args ):
-    runExec("python" , ["%s/ert_gui/gert_main.py" % ERT_PYTHONPATH] + args)
+    runExec("python", ["-m", "ert_gui.gert_main"] + args)
 
 
 @ensureConfig
 def runTui( args ):
     os.environ["ERT_UI_MODE"] = "tui"
-    runExec("%s/bin/ert_tui" % ERT_ROOT ,  args)
+    runExec("ert_tui",  args)
 
 
 def runShell( args ):
-    runExec("%s/bin/ertshell" % ERT_ROOT ,  args)
-
+    runExec("ertshell",  args)
 
 
 #################################################################
 runDefault = runGui
 
-updateEnvPath( "LD_LIBRARY_PATH" , ERT_LD_LIBRARY_PATH )
-updateEnvPath( "PYTHONPATH"      , ERT_PYTHONPATH )
 os.environ["ERT_SHARE_PATH"] = ERT_SHARE_PATH
 os.environ["ERT_UI_MODE"] = "gui"
 os.environ["ERT_ROOT"] = ERT_ROOT
 
-parser = ArgumentParser( )
+parser = ArgumentParser()
 mode = parser.add_mutually_exclusive_group( required = False )
 mode.add_argument("--gui" , dest = "gui" , action = "store_true" , default = False)
 mode.add_argument("--text" , dest = "tui" , action = "store_true" , default = False)
