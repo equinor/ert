@@ -15,8 +15,8 @@ class TemplatingTest(ResTest):
     well_drill_tmpl ='PROD1 takes value {{ well_drill.PROD1 }}, implying {{ "on" if well_drill.PROD1 >= 0.5 else "off" }}\n' \
                          'PROD2 takes value {{ well_drill.PROD2 }}, implying {{ "on" if well_drill.PROD2 >= 0.5 else "off" }}\n' \
                          '---------------------------------- \n' \
-                         '{%- for well_name in well_drill %}\n' \
-                         '{{ well_name }} takes value {{  well_drill[well_name] }}, implying {{ "on" if  well_drill[well_name] >= 0.5 else "off"}}\n' \
+                         '{%- for well in well_drill.INJ %}\n' \
+                         '{{ well.name }} takes value {{  well.value|round(1) }}, implying {{ "on" if  well.value >= 0.5 else "off"}}\n' \
                          '{%- endfor %}'
 
     optimal_template = '{{well_drill.values() | sum()}}'
@@ -76,7 +76,7 @@ class TemplatingTest(ResTest):
     def test_render(self):
 
         wells = { 'PROD%d' % idx: 0.2*idx for idx in range(1, 5) }
-        wells.update( { 'INJ%d' % idx: 1-0.2*idx for idx in range(1, 5) } )
+        wells.update( {'INJ': [ {'name':'INJ{0}'.format(idx),'value': 1-0.2*idx} for idx in range(1, 5) ]} )
         wells_in = 'well_drill.json'
         wells_tmpl = 'well_drill_tmpl'
         wells_out = 'wells.out'
@@ -88,21 +88,16 @@ class TemplatingTest(ResTest):
         with open(wells_tmpl, 'w') as fout:
             fout.write(self.well_drill_tmpl)
 
-
         render_template(wells_in, wells_tmpl, wells_out)
-
+        self.maxDiff = None
         expected_template_out = [
             'PROD1 takes value 0.2, implying off\n',
             'PROD2 takes value 0.4, implying off\n',
             '----------------------------------\n',
-            'INJ3 takes value 0.4, implying off\n',
-            'PROD1 takes value 0.2, implying off\n',
-            'PROD2 takes value 0.4, implying off\n',
-            'PROD3 takes value 0.6, implying on\n',
-            'PROD4 takes value 0.8, implying on\n',
-            'INJ4 takes value 0.2, implying off\n',
+            'INJ1 takes value 0.8, implying on\n',
             'INJ2 takes value 0.6, implying on\n',
-            'INJ1 takes value 0.8, implying on',
+            'INJ3 takes value 0.4, implying off\n',
+            'INJ4 takes value 0.2, implying off'
         ]
 
         with open(wells_out) as fin:

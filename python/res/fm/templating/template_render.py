@@ -38,6 +38,9 @@ def _generate_file_namespace(filename):
 
 
 def _load_input(input_files):
+    """
+    Loads input files (JSON or YAML) and returns the content as dict.
+    """
     data = {}
     for input_file in input_files:
         input_namespace = _generate_file_namespace(input_file)
@@ -47,6 +50,11 @@ def _load_input(input_files):
 
 
 def _assert_input(input_files, template_file, output_file):
+    """
+    validates input for template rendering.
+    Throws ValueError if input files or template file is not found.
+    Throws TypeError if output_file is not a string.
+    """
     for input_file in input_files:
         if not os.path.isfile(input_file):
             raise ValueError('Input file: %s, does not exist..' % input_file)
@@ -59,14 +67,19 @@ def _assert_input(input_files, template_file, output_file):
 
 
 def render_template(input_files, template_file, output_file):
-
+    """
+    Will render a jinja2 template file with the parameters given
+    :param input_files: parameters as a list of JSON or YAML files
+    :param template_file: template file in jinja2 format
+    :param output_file: output desitnation for the rendered template file
+    """
     if isinstance(input_files, str) and input_files:
-        input_files = [input_files,]
+        input_files = (input_files,)
 
-    all_input_files = [DEFAULT_GEN_KW_EXPORT_NAME+".json",]
+    all_input_files = (DEFAULT_GEN_KW_EXPORT_NAME+".json",)
 
     if input_files:
-        all_input_files += input_files
+        all_input_files += tuple(input_files)
 
     _assert_input(all_input_files, template_file, output_file)
 
