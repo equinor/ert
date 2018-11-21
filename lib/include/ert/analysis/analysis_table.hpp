@@ -45,6 +45,7 @@ extern "C" {
 
   typedef void (analysis_init_update_ftype) (void * module_data,
                                              const bool_vector_type * ens_mask ,
+                                             const bool_vector_type * obs_mask, 
                                              const matrix_type * S ,
                                              const matrix_type * R ,
                                              const matrix_type * dObs ,

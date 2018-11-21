@@ -288,7 +288,7 @@ void analysis_module_init_update( analysis_module_type * module ,
                                   const matrix_type * D,
                                   rng_type * rng) {
   if (module->init_update != NULL)
-    module->init_update( module->module_data , ens_mask , S , R , dObs , E , D, rng);
+    module->init_update( module->module_data , ens_mask , NULL, S , R , dObs , E , D, rng);
 }
 
 
