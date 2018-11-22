@@ -1233,6 +1233,9 @@ double enkf_obs_scale_correlated_std(const enkf_obs_type * enkf_obs,
 
   enkf_obs_get_obs_and_measure_data( enkf_obs , fs , local_obsdata , ens_active_list,
                                      meas_data , obs_data );
+
+  if (obs_data_get_active_size(obs_data) == 1)
+    return scale_factor;
   {
     matrix_type * S      = meas_data_allocS( meas_data );
     if (S) {
