@@ -80,6 +80,8 @@ class EnKFTestSimModel(ResTest):
 
         run_context = ErtRunContext.ensemble_experiment( result_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr)
         ert.getEnkfSimulationRunner().createRunPath( run_context )
+        queue_config = ert.get_queue_config()
+        self.assertEqual( queue_config.num_cpu , 5 )
         os.chdir('storage/sim_kw/runpath/realisation-0/iter-0')
         assert(   os.path.isfile('jobs.json')   )
         with open("jobs.json", "r") as f:

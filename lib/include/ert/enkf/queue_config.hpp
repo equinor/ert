@@ -70,6 +70,8 @@ typedef struct queue_config_struct queue_config_type;
 
     job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config);
 
+    int queue_config_get_num_cpu(const queue_config_type * queue_config);
+
 UTIL_SAFE_CAST_HEADER(queue_config);
 UTIL_IS_INSTANCE_HEADER(queue_config);
 

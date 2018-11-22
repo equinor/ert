@@ -155,6 +155,7 @@ extern "C" {
 #define  STD_SCALE_CORRELATED_OBS_KEY      "STD_SCALE_CORRELATED_OBS"
 #define  PLOT_SETTING_KEY                  "PLOT_SETTINGS"
 #define  UPDATE_SETTING_KEY                "UPDATE_SETTINGS"
+#define  PARALLEL_KEY                      "PARALLEL"
 
 #define  CONFIG_DIRECTORY_KEY              "CONFIG_DIRECTORY"
 #define  RES_CONFIG_FILE_KEY               "RES_CONFIG_FILE"

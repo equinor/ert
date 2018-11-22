@@ -46,6 +46,7 @@ struct queue_config_struct {
     hash_type * queue_drivers;
     bool user_mode;
     int max_submit;
+    int num_cpu;
 };
 
 static void queue_config_add_queue_driver(queue_config_type * queue_config, const char * driver_name, queue_driver_type * driver);
@@ -58,6 +59,7 @@ static queue_config_type * queue_config_alloc_empty() {
     queue_config->driver_type = NULL_DRIVER;
     queue_config->user_mode = false;
     queue_config->max_submit = 2; // Default value
+    queue_config->num_cpu = 0;
 
     return queue_config;
 }
@@ -261,6 +263,8 @@ static bool queue_config_init(queue_config_type * queue_config, const config_con
     }
   }
 
+  if (config_content_has_item(config_content, PARALLEL_KEY))
+    queue_config->num_cpu = config_content_get_value_as_int(config_content, PARALLEL_KEY);
 
   if (config_content_has_item(config_content, JOB_SCRIPT_KEY))
     queue_config_set_job_script(queue_config, config_content_get_value_as_executable(config_content, JOB_SCRIPT_KEY));
@@ -296,6 +300,10 @@ job_driver_type queue_config_get_driver_type(const queue_config_type * queue_con
     return queue_config->driver_type;
 }
 
+int queue_config_get_num_cpu(const queue_config_type * queue_config) {
+    return queue_config->num_cpu;
+}
+
 void queue_config_add_queue_config_items(config_parser_type * parser, bool site_mode) {
 
 }
@@ -306,6 +314,12 @@ void queue_config_add_config_items(config_parser_type * parser, bool site_mode) 
 
   {
     config_schema_item_type * item = config_add_schema_item(parser, MAX_SUBMIT_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+    config_schema_item_iset_type(item, 0, CONFIG_INT);
+  }
+
+  {
+    config_schema_item_type * item = config_add_schema_item(parser, PARALLEL_KEY, false);
     config_schema_item_set_argc_minmax(item, 1, 1);
     config_schema_item_iset_type(item, 0, CONFIG_INT);
   }
