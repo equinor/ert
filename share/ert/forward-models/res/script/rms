@@ -10,4 +10,12 @@ export_path = sys.argv[5]
 import_path = sys.argv[6]
 workflow = sys.argv[7]
 
-run(iens, project, workflow, run_path, target_file=None, import_path=import_path, export_path=export_path)
+run(iens,
+    project,
+    workflow,
+    run_path,
+    target_file=None,
+    import_path=import_path,
+    export_path=export_path,
+    version=version,
+    )
