@@ -3,15 +3,37 @@ from res.enkf.enums import HookRuntime
 from res.enkf import ErtRunContext
 from ert_gui.simulation.models import BaseRunModel, ErtRunError, EnsembleExperiment
 
-class SingleTestRun(EnsembleExperiment):
+class SingleTestRun(BaseRunModel):
 
     def __init__(self, queue_config):
-        super(EnsembleExperiment, self).__init__("Single realization test-run" , queue_config)
+        super(SingleTestRun, self).__init__("Single realization test-run" , queue_config)
 
 
 
     def runSimulations(self, arguments):
-        self.runSimulations__( arguments  , "Running single realisation test ...")
+        run_msg =  "Running single realisation test ...";
+        self._job_queue = self._queue_config.create_job_queue( )
+        run_context = self.create_context( arguments )
+        self.setPhase(0, "Running simulations...", indeterminate=False)
+
+        self.setPhaseName("Pre processing...", indeterminate=True)
+        self.ert().getEnkfSimulationRunner().createRunPath( run_context )
+        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
+
+        self.setPhaseName( run_msg, indeterminate=False)
+
+        num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(self._job_queue, run_context)
+        self.checkHaveSufficientRealizations(num_successful_realizations)
+
+        self.setPhaseName("Post processing...", indeterminate=True)
+        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
+        self.setPhase(1, "Simulations completed.") # done...
+        self._job_queue = None
+
+    def checkHaveSufficientRealizations(self, num_successful_realizations):
+        #Should only have one successful realization
+        if num_successful_realizations == 0:
+            raise ErtRunError("Simulation failed!")
 
 
     def create_context(self, arguments):
