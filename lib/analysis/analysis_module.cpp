@@ -281,6 +281,7 @@ void analysis_module_updateA(analysis_module_type * module ,
 
 void analysis_module_init_update( analysis_module_type * module ,
                                   const bool_vector_type * ens_mask ,
+                                  const bool_vector_type * obs_mask ,
                                   const matrix_type * S ,
                                   const matrix_type * R ,
                                   const matrix_type * dObs ,
@@ -288,7 +289,7 @@ void analysis_module_init_update( analysis_module_type * module ,
                                   const matrix_type * D,
                                   rng_type * rng) {
   if (module->init_update != NULL)
-    module->init_update( module->module_data , ens_mask , NULL, S , R , dObs , E , D, rng);
+    module->init_update( module->module_data , ens_mask , obs_mask, S , R , dObs , E , D, rng);
 }
 
 

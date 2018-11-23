@@ -176,6 +176,7 @@ static void enkf_main_free_ensemble( enkf_main_type * enkf_main );
 static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
                                        enkf_fs_type * target_fs ,
                                        const bool_vector_type * ens_mask ,
+                                       const bool_vector_type * obs_mask ,
                                        int target_step ,
                                        hash_type * use_count,
                                        run_mode_type run_mode ,
@@ -937,6 +938,7 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
    process.
   */
   bool_vector_type * ens_mask = bool_vector_alloc(total_ens_size, false);
+  bool_vector_type * obs_mask = NULL;
   state_map_type * source_state_map = enkf_fs_get_state_map( source_fs );
 
   state_map_select_matching(source_state_map, ens_mask, STATE_HAS_DATA);
@@ -1016,6 +1018,7 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
             enkf_main_analysis_update(enkf_main,
                                       target_fs,
                                       ens_mask,
+                                      obs_mask,
                                       target_step,
                                       use_count,
                                       run_mode,
@@ -1056,6 +1059,7 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
 static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
                                        enkf_fs_type * target_fs ,
                                        const bool_vector_type * ens_mask ,
+                                       const bool_vector_type * obs_mask,
                                        int target_step ,
                                        hash_type * use_count,
                                        run_mode_type run_mode ,
@@ -1106,7 +1110,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 
   /*****************************************************************/
 
-  analysis_module_init_update( module , ens_mask , S , R , dObs , E , D, enkf_main->shared_rng);
+  analysis_module_init_update( module , ens_mask , obs_mask, S , R , dObs , E , D, enkf_main->shared_rng);
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     serialize_info_type * serialize_info = serialize_info_alloc( target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
