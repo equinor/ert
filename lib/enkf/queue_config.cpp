@@ -263,8 +263,8 @@ static bool queue_config_init(queue_config_type * queue_config, const config_con
     }
   }
 
-  if (config_content_has_item(config_content, PARALLEL_KEY))
-    queue_config->num_cpu = config_content_get_value_as_int(config_content, PARALLEL_KEY);
+  if (config_content_has_item(config_content, NUM_PC_KEY))
+    queue_config->num_cpu = config_content_get_value_as_int(config_content, NUM_PC_KEY);
 
   if (config_content_has_item(config_content, JOB_SCRIPT_KEY))
     queue_config_set_job_script(queue_config, config_content_get_value_as_executable(config_content, JOB_SCRIPT_KEY));
@@ -319,7 +319,7 @@ void queue_config_add_config_items(config_parser_type * parser, bool site_mode) 
   }
 
   {
-    config_schema_item_type * item = config_add_schema_item(parser, PARALLEL_KEY, false);
+    config_schema_item_type * item = config_add_schema_item(parser, NUM_PC_KEY, false);
     config_schema_item_set_argc_minmax(item, 1, 1);
     config_schema_item_iset_type(item, 0, CONFIG_INT);
   }
