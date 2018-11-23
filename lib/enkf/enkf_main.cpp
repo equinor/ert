@@ -1329,13 +1329,17 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
                                                          rng_manager_iget( enkf_main->rng_manager, run_arg_get_iens(run_arg)));
   {
     const char * argv = run_path;
+    int num_cpu = queue_config_get_num_cpu( queue_config );
+    if (num_cpu == 0)
+       num_cpu = ecl_config_get_num_cpu( ecl_config );
+
     int queue_index = job_queue_add_job( job_queue ,
                                          job_script ,
                                          enkf_state_complete_forward_modelOK__,
                                          enkf_state_complete_forward_modelRETRY__,
                                          enkf_state_complete_forward_modelEXIT__,
                                          callback_arg ,
-                                         ecl_config_get_num_cpu( ecl_config ),
+                                         num_cpu,
                                          run_path ,
                                          run_arg_get_job_name( run_arg ),
                                          1,

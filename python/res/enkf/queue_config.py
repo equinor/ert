@@ -35,6 +35,7 @@ class QueueConfig(BaseCClass):
     _max_submit            = ResPrototype("int queue_config_get_max_submit(queue_config)")
     _queue_system          = ResPrototype("char* queue_config_get_queue_system(queue_config)")
     _queue_driver          = ResPrototype("driver_ref queue_config_get_queue_driver(queue_config, char*)")
+    _get_num_cpu           = ResPrototype("int queue_config_get_num_cpu(queue_config)")
 
     def __init__(self, user_config_file=None):
         c_ptr = self._alloc(user_config_file)
@@ -95,3 +96,7 @@ class QueueConfig(BaseCClass):
     def lsf_server(self):
         self._assert_lsf(key=ConfigKeys.LSF_SERVER_KEY)
         return self._lsf_driver.get_option(ConfigKeys.LSF_SERVER_KEY)
+
+    @property
+    def num_cpu(self):
+        return self._get_num_cpu()
