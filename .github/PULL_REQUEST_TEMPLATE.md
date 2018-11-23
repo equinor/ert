@@ -1,5 +1,5 @@
-**Task**
-_Short description of the task_
+**Issue**
+Resolves #my_issue
 
 
 **Approach**
@@ -7,8 +7,8 @@ _Short description of the approach_
 
 
 **Pre un-WIP checklist**
-- [ ] Statoil tests pass locally
 - [ ] Have completed graphical integration test steps
+
 
 **Depends on**
 * Statoil/libecl#
