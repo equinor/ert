@@ -176,7 +176,6 @@ static void enkf_main_free_ensemble( enkf_main_type * enkf_main );
 static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
                                        enkf_fs_type * target_fs ,
                                        const bool_vector_type * ens_mask ,
-                                       const bool_vector_type * obs_mask ,
                                        int target_step ,
                                        hash_type * use_count,
                                        run_mode_type run_mode ,
@@ -938,7 +937,6 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
    process.
   */
   bool_vector_type * ens_mask = bool_vector_alloc(total_ens_size, false);
-  bool_vector_type * obs_mask = NULL;
   state_map_type * source_state_map = enkf_fs_get_state_map( source_fs );
 
   state_map_select_matching(source_state_map, ens_mask, STATE_HAS_DATA);
@@ -1018,7 +1016,6 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
             enkf_main_analysis_update(enkf_main,
                                       target_fs,
                                       ens_mask,
-                                      obs_mask,
                                       target_step,
                                       use_count,
                                       run_mode,
@@ -1059,7 +1056,6 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
 static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
                                        enkf_fs_type * target_fs ,
                                        const bool_vector_type * ens_mask ,
-                                       const bool_vector_type * obs_mask,
                                        int target_step ,
                                        hash_type * use_count,
                                        run_mode_type run_mode ,
@@ -1083,6 +1079,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   matrix_type * D       = NULL;
   matrix_type * localA  = NULL;
   int_vector_type * iens_active_index = bool_vector_alloc_active_index_list(ens_mask , -1);
+  const bool_vector_type * obs_mask = obs_data_get_active_mask(obs_data);
 
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
   analysis_module_type * module = analysis_config_get_active_module(analysis_config);
