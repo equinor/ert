@@ -103,6 +103,7 @@ typedef enum {
 
   void                   analysis_module_init_update( analysis_module_type * module ,
                                                       const bool_vector_type * ens_mask ,
+                                                      const bool_vector_type * obs_mask,
                                                       const matrix_type * S ,
                                                       const matrix_type * R ,
                                                       const matrix_type * dObs ,

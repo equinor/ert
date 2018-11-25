@@ -1079,6 +1079,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   matrix_type * D       = NULL;
   matrix_type * localA  = NULL;
   int_vector_type * iens_active_index = bool_vector_alloc_active_index_list(ens_mask , -1);
+  const bool_vector_type * obs_mask = obs_data_get_active_mask(obs_data);
 
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
   analysis_module_type * module = analysis_config_get_active_module(analysis_config);
@@ -1106,7 +1107,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 
   /*****************************************************************/
 
-  analysis_module_init_update( module , ens_mask , S , R , dObs , E , D, enkf_main->shared_rng);
+  analysis_module_init_update( module , ens_mask , obs_mask, S , R , dObs , E , D, enkf_main->shared_rng);
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     serialize_info_type * serialize_info = serialize_info_alloc( target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs

@@ -31,6 +31,7 @@ void   cv_enkf_data_free( void * arg );
 
 void cv_enkf_init_update( void * arg ,
                           const bool_vector_type * ens_mask ,
+                          const bool_vector_type * obs_back , 
                           const matrix_type * S ,
                           const matrix_type * R ,
                           const matrix_type * dObs ,
