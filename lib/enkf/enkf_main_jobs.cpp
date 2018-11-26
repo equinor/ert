@@ -551,8 +551,12 @@ void * enkf_main_std_scale_correlated_obs_JOB(void * self, const stringlist_type
     }
 
 
-    if (local_obsdata_get_size(obsdata) > 0)
-      enkf_obs_scale_correlated_std(obs, fs, realizations, obsdata, verbose );
+    if (local_obsdata_get_size(obsdata) > 0) {
+      const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+      double alpha = analysis_config_get_alpha(analysis_config);
+      double std_cutoff = analysis_config_get_std_cutoff(analysis_config);
+      enkf_obs_scale_correlated_std(obs, fs, realizations, obsdata, alpha, std_cutoff, verbose );
+    }
     else if (verbose)
       printf("**Warning: Your list of arguments did not match any observation keys - no scaling performed.\n");
 
