@@ -994,17 +994,18 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
         local_obsdata_reset_tstep_list(obsdata, step_list);
 
         const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
+        double alpha = analysis_config_get_alpha(analysis_config);
+        double std_cutoff = analysis_config_get_std_cutoff(analysis_config);
+
         if (analysis_config_get_std_scale_correlated_obs(analysis_config)) {
           double scale_factor = enkf_obs_scale_correlated_std(enkf_main->obs, source_fs,
-                                                              ens_active_list, obsdata, false);
+                                                              ens_active_list, obsdata, std_cutoff, alpha, false);
           res_log_finfo("Scaling standard deviation in obdsata set:%s with %g",
                         local_obsdata_get_name(obsdata), scale_factor);
         }
         enkf_obs_get_obs_and_measure_data(enkf_main->obs, source_fs, obsdata,
                                           ens_active_list, meas_data, obs_data);
 
-        double alpha = analysis_config_get_alpha(analysis_config);
-        double std_cutoff = analysis_config_get_std_cutoff(analysis_config);
         enkf_analysis_deactivate_outliers(obs_data, meas_data,
                                           std_cutoff, alpha, enkf_main->verbose);
 

@@ -46,6 +46,7 @@
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/local_obsdata_node.hpp>
 #include <ert/enkf/local_obsdata.hpp>
+#include <ert/enkf/enkf_analysis.hpp>
 
 /*
 
@@ -1225,6 +1226,8 @@ double enkf_obs_scale_correlated_std(const enkf_obs_type * enkf_obs,
                                      enkf_fs_type * fs,
                                      const int_vector_type * ens_active_list,
                                      const local_obsdata_type * local_obsdata,
+                                     double alpha,
+                                     double std_cutoff,
                                      bool verbose) {
   bool_vector_type * ens_mask = int_vector_alloc_mask( ens_active_list );
   meas_data_type * meas_data = meas_data_alloc( ens_mask );
@@ -1234,9 +1237,10 @@ double enkf_obs_scale_correlated_std(const enkf_obs_type * enkf_obs,
   enkf_obs_get_obs_and_measure_data( enkf_obs , fs , local_obsdata , ens_active_list,
                                      meas_data , obs_data );
 
-  if (obs_data_get_active_size(obs_data) == 1)
-    return scale_factor;
-  {
+  enkf_analysis_deactivate_outliers(obs_data, meas_data,
+                                    std_cutoff, alpha, verbose);
+
+  if (obs_data_get_active_size(obs_data) > 1) {
     matrix_type * S      = meas_data_allocS( meas_data );
     if (S) {
       double truncation    = 0.95;
@@ -1273,8 +1277,12 @@ double enkf_obs_scale_correlated_std(const enkf_obs_type * enkf_obs,
       enkf_obs_local_scale_std( enkf_obs , local_obsdata , scale_factor );
     } else
       if (verbose)
-        printf("No simulated data - S matrix is NULL. Wrong case?");
-  }
+        printf("No simulated data - S matrix is NULL. Wrong case?\n");
+  } else
+    if (verbose)
+      printf("No active observations\n");
+
+
   meas_data_free( meas_data );
   obs_data_free( obs_data );
   bool_vector_free( ens_mask );
