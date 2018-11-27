@@ -2,12 +2,12 @@ from threading import Thread
 import sys
 
 try:
-  from PyQt4.QtCore import Qt, QTimer, QSize
-  from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QMessageBox, QPushButton, QHBoxLayout, QColor, QLabel
+    from PyQt4.QtCore import Qt, QTimer, QSize
+    from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QMessageBox, QPushButton, QHBoxLayout, QColor, QLabel, QListView, QStandardItemModel, QStandardItem
 except ImportError:
-  from PyQt5.QtCore import Qt, QTimer, QSize
-  from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLayout, QMessageBox, QPushButton, QHBoxLayout, QLabel
-  from PyQt5.QtGui import QColor
+    from PyQt5.QtCore import Qt, QTimer, QSize
+    from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLayout, QMessageBox, QPushButton, QHBoxLayout, QLabel,  QListView
+    from PyQt5.QtGui import QColor, QStandardItemModel, QStandardItem
 
 
 from ert_gui.ertwidgets import resourceMovie, Legend
@@ -74,10 +74,16 @@ class RunDialog(QDialog):
         self.plot_button = QPushButton(self.plot_tool.getName())
         self.plot_button.clicked.connect(self.plot_tool.trigger)
         self.plot_button.setEnabled(ert is not None)
-        
+
         self.kill_button = QPushButton("Kill simulations")
         self.done_button = QPushButton("Done")
         self.done_button.setHidden(True)
+        self.restart_button = QPushButton("Restart")
+        self.restart_button.setHidden(True)
+
+        self.realizations_view = QListView()
+        self.realizations_view.setModel(QStandardItemModel(self.realizations_view))
+        self.realizations_view.setVisible(False)
 
         button_layout = QHBoxLayout()
 
@@ -98,14 +104,18 @@ class RunDialog(QDialog):
         button_layout.addWidget(self.plot_button)
         button_layout.addWidget(self.kill_button)
         button_layout.addWidget(self.done_button)
+        button_layout.addWidget(self.restart_button)
 
         layout.addStretch()
         layout.addLayout(button_layout)
+
+        layout.addWidget(self.realizations_view)
 
         self.setLayout(layout)
 
         self.kill_button.clicked.connect(self.killJobs)
         self.done_button.clicked.connect(self.accept)
+        self.restart_button.clicked.connect(self.restart_failed_realizations)
 
         self.__updating = False
         self.__update_queued = False
@@ -137,6 +147,8 @@ class RunDialog(QDialog):
 
     def checkIfRunFinished(self):
         if self._run_model.isFinished():
+
+            self.update_realizations_view()
             self.hideKillAndShowDone()
 
             if self._run_model.hasRunFailed():
@@ -218,6 +230,9 @@ class RunDialog(QDialog):
         self.processing_animation.hide()
         self.kill_button.setHidden(True)
         self.done_button.setHidden(False)
+        self.realizations_view.setVisible(True)
+        self.restart_button.setVisible(self.has_failed_realizations() )
+        self.restart_button.setEnabled(self._run_model.support_restart)
 
 
     def has_failed_realizations(self):
@@ -264,3 +279,14 @@ class RunDialog(QDialog):
             self._simulations_argments['active_realizations'] = active_realizations
             self._simulations_argments['prev_successful_realizations'] += self.count_successful_realizations()
             self.startSimulation(self._simulations_argments)
+
+    def update_realizations_view(self):
+        completed = self._run_model.completed_realizations_mask
+        for (index, successful) in enumerate(completed):
+            items = self.realizations_view.model().findItems(str(index))
+            if not items:
+                item = QStandardItem(str(index))
+                self.realizations_view.model().appendRow(item)
+            else:
+                item = items[0];
+            item.setCheckState(successful or item.checkState())
