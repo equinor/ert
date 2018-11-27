@@ -15,6 +15,7 @@ from ert_gui.simulation import Progress, SimpleProgress
 from ert_gui.simulation.models import BaseRunModel, SimulationsTracker
 from ert_gui.tools.plot.plot_tool import PlotTool
 
+from ecl.util.util import BoolVector
 
 class RunDialog(QDialog):
 
@@ -113,13 +114,18 @@ class RunDialog(QDialog):
         self.__update_timer = QTimer(self)
         self.__update_timer.setInterval(500)
         self.__update_timer.timeout.connect(self.updateRunStatus)
-
+        self._simulations_argments = {}
 
     def startSimulation(self, arguments):
+
+        self._simulations_argments = arguments
+
+        if not 'prev_successful_realizations' in self._simulations_argments:
+            self._simulations_argments['prev_successful_realizations'] = 0
         self._run_model.reset()
 
         def run():
-            self._run_model.startSimulations( arguments )
+            self._run_model.startSimulations( self._simulations_argments )
 
         simulation_thread = Thread(name="ert_gui_simulation_thread")
         simulation_thread.setDaemon(True)
@@ -212,3 +218,49 @@ class RunDialog(QDialog):
         self.processing_animation.hide()
         self.kill_button.setHidden(True)
         self.done_button.setHidden(False)
+
+
+    def has_failed_realizations(self):
+        completed = self._run_model.completed_realizations_mask
+        initial = self._run_model.initial_realizations_mask
+        for (index, successful) in enumerate(completed):
+            if initial[index] and not successful:
+                return True
+        return False
+
+
+    def count_successful_realizations(self):
+        """
+        Counts the realizations completed in the prevoius ensemble run
+        :return:
+        """
+        completed = self._run_model.completed_realizations_mask
+        return completed.count(True);
+
+    def create_mask_from_failed_realizations(self):
+        """
+        Creates a BoolVector mask representing the failed realizations
+        :return: Type BoolVector
+        """
+        completed = self._run_model.completed_realizations_mask
+        initial = self._run_model.initial_realizations_mask
+        inverted_mask = BoolVector(  default_value = False )
+        for (index, successful) in enumerate(completed):
+            inverted_mask[index] = initial[index] and not successful;
+        return inverted_mask
+
+
+    def restart_failed_realizations(self):
+
+        msg = QMessageBox(self)
+        msg.setIcon(QMessageBox.Information)
+        msg.setText("Note that workflows will only be executed on the restarted realizations and that this might have unexpected consequences.")
+        msg.setWindowTitle("Restart Failed Realizations")
+        msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        result = msg.exec_()
+
+        if result == QMessageBox.Ok:
+            active_realizations = self.create_mask_from_failed_realizations()
+            self._simulations_argments['active_realizations'] = active_realizations
+            self._simulations_argments['prev_successful_realizations'] += self.count_successful_realizations()
+            self.startSimulation(self._simulations_argments)
