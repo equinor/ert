@@ -15,6 +15,7 @@ from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.simulation.models import EnsembleExperiment
 from ert_gui.simulation.models import SingleTestRun
 from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
+from ecl.util.util import BoolVector
 
 class SingleTestRunPanel(SimulationConfigPanel):
 
@@ -39,5 +40,8 @@ class SingleTestRunPanel(SimulationConfigPanel):
     def toggleAdvancedOptions(self, show_advanced):
         pass
 
+    def getSimulationArguments(self):
+
+        return {"active_realizations": BoolVector(default_value=True, initial_size = 1)}
 
 

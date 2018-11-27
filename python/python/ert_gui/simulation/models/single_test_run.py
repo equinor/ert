@@ -14,25 +14,4 @@ class SingleTestRun(EnsembleExperiment):
             raise ErtRunError("Simulation failed!")
 
     def runSimulations(self, arguments):
-        self.runSimulations__( arguments  , "Running single realisation test ...")
-
-    def create_context(self, arguments):
-        fs_manager = self.ert().getEnkfFsManager()
-        result_fs = fs_manager.getCurrentFileSystem( )
-
-        model_config = self.ert().getModelConfig( )
-        runpath_fmt = model_config.getRunpathFormat( )
-        jobname_fmt = model_config.getJobnameFormat( )
-        subst_list = self.ert().getDataKW( )
-        itr = 0
-
-        mask = BoolVector(  default_value = False )
-        mask[0] = True
-        run_context = ErtRunContext.ensemble_experiment(result_fs,
-                                                        mask,
-                                                        runpath_fmt,
-                                                        jobname_fmt,
-                                                        subst_list,
-                                                        itr)
-
-        return run_context
+        return self.runSimulations__( arguments  , "Running single realisation test ...")
