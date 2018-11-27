@@ -44,7 +44,6 @@ class MultipleDataAssimilation(BaseRunModel):
         if not module_load_success:
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
-
     def runSimulations(self, arguments):
         context = self.create_context(arguments, 0, None)
         self.checkMinimumActiveRealizations(context)
@@ -79,9 +78,10 @@ class MultipleDataAssimilation(BaseRunModel):
 
         self.setPhase(iteration_count + 2, "Simulations completed.")
 
+        return run_context
+
     def count_active_realizations(self, run_context):
         return sum(run_context.get_mask( ))
-
 
     def update(self, run_context, weight):
         source_fs = run_context.get_sim_fs( )

@@ -69,8 +69,11 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhase(2, "Simulations completed.")
         self.__job_queue = None
 
+        return prior_context
+
 
     def create_context(self, arguments, prior_context = None):
+
         model_config = self.ert().getModelConfig( )
         runpath_fmt = model_config.getRunpathFormat( )
         jobname_fmt = model_config.getJobnameFormat( )

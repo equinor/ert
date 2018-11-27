@@ -66,10 +66,10 @@ class IteratedEnsembleSmoother(BaseRunModel):
         analysis_module = self.setAnalysisModule(arguments["analysis_module"])
         target_case_format = arguments["target_case"]
         run_context = self.create_context( arguments , 0 )
+
         self.ert().analysisConfig().getAnalysisIterConfig().setCaseFormat( target_case_format )
 
         self._runAndPostProcess( run_context )
-
 
         analysis_config = self.ert().analysisConfig()
         analysis_iter_config = analysis_config.getAnalysisIterConfig()
@@ -86,8 +86,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
             if  post_analysis_iter_num > pre_analysis_iter_num:
                 analysis_success = True
 
-
-
             if analysis_success:
                 current_iteration += 1
                 run_context = self.create_context( arguments, current_iteration, prior_context = run_context )
@@ -99,12 +97,12 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 self._runAndPostProcess(run_context)
                 num_tries += 1
 
-
-
         if current_iteration == phase_count:
             self.setPhase(phase_count, "Simulations completed.")
         else:
             raise ErtRunError("Iterated Ensemble Smoother stopped: maximum number of iteration retries (%d retries) reached for iteration %d" % (num_retries_per_iteration, current_iteration))
+
+        return run_context
 
 
     def create_context(self, arguments, itr, prior_context = None, rerun = False):

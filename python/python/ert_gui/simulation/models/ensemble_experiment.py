@@ -9,8 +9,10 @@ class EnsembleExperiment(BaseRunModel):
         super(EnsembleExperiment, self).__init__("Ensemble Experiment" , queue_config)
 
     def runSimulations__(self, arguments, run_msg):
+
         self._job_queue = self._queue_config.create_job_queue( )
         run_context = self.create_context( arguments )
+
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
         self.setPhaseName("Pre processing...", indeterminate=True)
@@ -27,9 +29,11 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhase(1, "Simulations completed.") # done...
         self._job_queue = None
 
+        return run_context
+
 
     def runSimulations(self, arguments ):
-        self.runSimulations__(  arguments , "Running ensemble experiment...")
+        return self.runSimulations__(  arguments , "Running ensemble experiment...")
 
 
     def create_context(self, arguments):

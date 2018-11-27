@@ -2,7 +2,7 @@ import time
 from res.job_queue import JobStatusType
 from ert_gui import ERT
 from res.util import ResLog
-
+from ecl.util.util import BoolVector
 
 # A method decorated with the @job_queue decorator implements the following logic:
 #
@@ -45,6 +45,9 @@ class BaseRunModel(object):
         self._failed = False
         self._queue_config = queue_config
         self._job_queue = None
+        self.initial_realizations_mask = None
+        self.completed_realizations_mask = None
+        self.support_restart = True
         self.reset( )
 
     def ert(self):
@@ -58,9 +61,15 @@ class BaseRunModel(object):
 
     def startSimulations(self, arguments):
         try:
-            self.runSimulations(arguments)
+            self.initial_realizations_mask = arguments["active_realizations"]
+            run_context = self.runSimulations(arguments)
+            self.completed_realizations_mask = run_context.get_mask()
         except ErtRunError as e:
+            self.completed_realizations_mask = BoolVector(default_value = False)
             self._failed = True
+            self._fail_message = str(e)
+            self._simulationEnded()
+        except UserWarning as e:
             self._fail_message = str(e)
             self._simulationEnded()
 
@@ -82,6 +91,7 @@ class BaseRunModel(object):
     def userExitCalled(self):
         """ @rtype: bool """
         return self._job_queue.getUserExit( )
+
 
     def phaseCount(self):
         """ @rtype: int """
