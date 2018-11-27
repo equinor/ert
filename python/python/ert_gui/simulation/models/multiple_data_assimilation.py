@@ -66,7 +66,7 @@ class MultipleDataAssimilation(BaseRunModel):
         run_context = None
         for iteration, weight in enumerate(weights):
             run_context = self.create_context( arguments , iteration,  prior_context = run_context )
-            self._simulateAndPostProcess(run_context )
+            self._simulateAndPostProcess(run_context, arguments )
 
             self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_UPDATE )
             self.update( run_context , weights[iteration])
@@ -74,7 +74,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         self.setPhaseName("Post processing...", indeterminate=True)
         run_context = self.create_context( arguments , len(weights),  prior_context = run_context, update = False)
-        self._simulateAndPostProcess(run_context)
+        self._simulateAndPostProcess(run_context, arguments)
 
         self.setPhase(iteration_count + 2, "Simulations completed.")
 
@@ -99,7 +99,7 @@ class MultipleDataAssimilation(BaseRunModel):
             raise UserWarning("Analysis of simulation failed for iteration: %d!" % next_iteration)
 
 
-    def _simulateAndPostProcess(self, run_context):
+    def _simulateAndPostProcess(self, run_context, arguments):
         self._job_queue = self._queue_config.create_job_queue( )
         iteration = run_context.get_iter( )
 
@@ -115,6 +115,7 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhaseName(phase_string, indeterminate=False)
         num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, run_context)
 
+        num_successful_realizations += arguments['prev_successful_realizations']
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         phase_string = "Post processing for iteration: %d" % iteration
@@ -176,6 +177,9 @@ class MultipleDataAssimilation(BaseRunModel):
         else:
             state = RealizationStateEnum.STATE_HAS_DATA | RealizationStateEnum.STATE_INITIALIZED
             mask = sim_fs.getStateMap().createMask(state)
+            # Make sure to only run the realizations which was passed in as argument
+            for index, run_realization in enumerate(self._initial_realizations_mask):
+                mask[index] = mask[index] and run_realization
 
         run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr)
         return run_context
