@@ -1,9 +1,10 @@
 set(application_list
      ertshell
      ert_upgrade_fs107
+     ert_cli
 )
 foreach(prog ${application_list} )
-   file(COPY ${prog} DESTINATION ${EXECUTABLE_OUTPUT_PATH})             
+   file(COPY ${prog} DESTINATION ${EXECUTABLE_OUTPUT_PATH})
 endforeach()
 
 

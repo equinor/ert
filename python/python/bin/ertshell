@@ -13,13 +13,12 @@ if __name__ == '__main__':
     if os.getenv("ERT_SHARE_PATH"):
         ert_share_path = os.getenv("ERT_SHARE_PATH")
     else:
-        ert_share_path = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../share"))
+        ert_share_path = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../share/ert"))
 
     ert_gui.ertwidgets.img_prefix = ert_share_path + "/gui/img/"
 
     help_center = HelpCenter("ERT")
-    help_center.setHelpLinkPrefix(os.getenv("ERT_SHARE_PATH") + "/gui/help/")
-
+    help_center.setHelpLinkPrefix(ert_share_path + "/gui/help/")
 
     app = QApplication(sys.argv)
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
