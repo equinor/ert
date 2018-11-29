@@ -5,7 +5,7 @@ if (SPHINX_FOUND)
     COMMAND sphinx-build -d htmldir ${CMAKE_CURRENT_SOURCE_DIR}/manual ${PROJECT_BINARY_DIR}/docs/html/manual
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
 
-
+  install(DIRECTORY ${PROJECT_BINARY_DIR}/docs/html/manual DESTINATION ${CMAKE_INSTALL_PREFIX}/share/ert/docs)
 
   # This command will configure sphinx to create a LaTeX version of the manual
   # in docs/latex/manual.
@@ -18,6 +18,8 @@ if (SPHINX_FOUND)
     add_custom_target(manual-latex ALL
       COMMAND sphinx-build -b latex -d latexdir ${CMAKE_CURRENT_SOURCE_DIR}/manual ${PROJECT_BINARY_DIR}/docs/latex/manual
       WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
+
+    install(FILES ${PROJECT_BINARY_DIR}/docs/latex/manual/ERT.pdf DESTINATION ${CMAKE_INSTALL_PREFIX}/share/ert/docs)
 
     file(GLOB sty_files "latex/*.sty")
     file(COPY ${sty_files} DESTINATION ${PROJECT_BINARY_DIR}/docs/latex/manual)
