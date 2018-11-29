@@ -417,6 +417,7 @@ class JobManager(object):
                    "application": "ert",
                    "subsystem": "ert_forward_model",
                    "node": self.node,
+                   "komodo_release": os.getenv("KOMODO_RELEASE", "--------"),
                    "start_time": self.start_time.isoformat(),
                    "node_timestamp": dt.now().isoformat(),
                    "simulation_id": self.simulation_id,
