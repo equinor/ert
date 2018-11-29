@@ -12,5 +12,5 @@ sphinx
 cwrap
 numpy
 pandas
-matplotlib
+matplotlib<3
 scipy
