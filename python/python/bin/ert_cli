@@ -10,7 +10,7 @@ from res.util import ResLog
 import argparse
 
 
-def setup_fs(ert, target="default_smoother_update"):
+def setup_fs(ert, target="default"):
     fs_manager = ert.getEnkfFsManager()
 
     src_fs = fs_manager.getCurrentFileSystem()
@@ -21,20 +21,6 @@ def setup_fs(ert, target="default_smoother_update"):
 
 def resconfig(config_file):
     return ResConfig(user_config_file=config_file)
-
-
-def args_parser():
-    parser = argparse.ArgumentParser(
-        description="ERT - Ensemble based Reservoir Tool")
-    parser.add_argument("config_file", metavar="config-file", type=str,
-                        help="The ert configuration file")
-    parser.add_argument("--algorithm", type=str, choices=["Test-run",
-                                                          "Ensemble Smoother",
-                                                          "Ensemble Experiment"],
-                        help="")
-    parser.add_argument("--target-case", type=str, default="default",
-                        help="The target filesystem to store results")
-    return parser
 
 
 def _test_run(ert):
@@ -78,8 +64,8 @@ def _experiment_run(ert):
     _run_ensemble_experiment(ert, run_context, sim_runner)
 
 
-def _ensemble_smoother_run(ert):
-    source_fs, target_fs = setup_fs(ert)
+def _ensemble_smoother_run(ert, target_case):
+    source_fs, target_fs = setup_fs(ert, target_case)
 
     model_config = ert.getModelConfig()
     subst_list = ert.getDataKW()
@@ -145,18 +131,21 @@ def _assert_minium_realizations_success(ert, num_successful_realizations):
 
 
 def main():
-    parser = args_parser()
-    args = parser.parse_args()
+    # The ert_cli script should be called from ert.in. The arguments are parsed and verified in ert.in
+    if len(sys.argv) < 3:
+        raise AssertionError("Required arguments are missing, the config-file, "
+                             "algorithm and target case must be provided")
+    config_file, algorithm, target_case = sys.argv[1:]
 
-    config = resconfig(args.config_file)
+    config = resconfig(config_file)
     ert = EnKFMain(config)
 
-    if args.algorithm == "Test-run":
+    if algorithm == "Test-run":
         _test_run(ert)
-    if args.algorithm == "Ensemble Experiment":
+    if algorithm == "Ensemble Experiment":
         _experiment_run(ert)
-    if args.algorithm == "Ensemble Smoother":
-        _ensemble_smoother_run(ert)
+    if algorithm == "Ensemble Smoother":
+        _ensemble_smoother_run(ert, target_case)
 
 
 if __name__ == '__main__':
