@@ -17,32 +17,29 @@ def runExec(executable , args):
 
 
 def runGui( args ):
-    runExec("python", ["-m", "ert_gui.gert_main"] + args.config)
+    runExec("python", ["-m", "ert_gui.gert_main"] + [args.config])
 
 
 def runTui( args ):
     os.environ["ERT_UI_MODE"] = "tui"
-    runExec("ert_tui",  args.config)
+    exec_path = os.path.join(os.path.dirname(__file__), "ert_tui")
+    runExec(exec_path,  [args.config])
 
 
 def runShell( args ):
-    runExec("ertshell",  args.config)
+    exec_path = os.path.join(os.path.dirname(__file__), "ertshell")
+    runExec(exec_path,  [args.config])
 
 
 def runCli( args ):
-    runExec("ert_cli", [args.config, args.algorithm, args.target_case])
+    exec_path = os.path.join(os.path.dirname(__file__), "ert_cli")
+    runExec(exec_path, [args.config, args.algorithm, args.target_case])
 
 
-#################################################################
-runDefault = runGui
+def ert_parser():
+    parser = ArgumentParser(description="ERT - Ensemble Reservoir Tool")
 
-os.environ["ERT_SHARE_PATH"] = ERT_SHARE_PATH
-os.environ["ERT_UI_MODE"] = "gui"
-os.environ["ERT_ROOT"] = ERT_ROOT
-
-parser = ArgumentParser(description="ERT - Ensemble Reservoir Tool")
-
-subparsers = parser.add_subparsers(
+    subparsers = parser.add_subparsers(
         title="Available user entries",
         description='ERT can be accessed through various interfaces. Include '
                     'one of the following arguments to change between the '
@@ -52,43 +49,54 @@ subparsers = parser.add_subparsers(
         help="Available entry points")
 
 
-gui_parser = subparsers.add_parser('gui',
-        help='Graphical User Interface - opens up an independent window for '
-            'the user to interact with ERT.',
-        description='Graphical User Interface')
-gui_parser.add_argument('config', type=valid_file,
-        help="Ert configuration file")
-gui_parser.set_defaults(func=runGui)
+    gui_parser = subparsers.add_parser('gui',
+            help='Graphical User Interface - opens up an independent window for '
+                'the user to interact with ERT.',
+            description='Graphical User Interface')
+    gui_parser.add_argument('config', type=valid_file,
+            help="Ert configuration file")
+    gui_parser.set_defaults(func=runGui)
 
 
-tui_parser = subparsers.add_parser('tui',
-        help='Text user interface - provides a user interface in the terminal.'
-        ' Allows the user to interact within the terminal window ',
-        description='Text user interface')
-tui_parser.add_argument('config', type=valid_file,
-        help="Ert configuration file")
-tui_parser.set_defaults(func=runTui)
+    tui_parser = subparsers.add_parser('text',
+            help='Text user interface - provides a user interface in the terminal.'
+            ' Allows the user to interact within the terminal window ',
+            description='Text user interface')
+    tui_parser.add_argument('config', type=valid_file,
+            help="Ert configuration file")
+    tui_parser.set_defaults(func=runTui)
 
 
-shell_parser = subparsers.add_parser('shell',
-        help='Shell interface - provides a user interface in the terminal.',
-        description='Shell interface')
-shell_parser.add_argument('config', type=valid_file,
-        help="Ert configuration file")
-shell_parser.set_defaults(func=runShell)
+    shell_parser = subparsers.add_parser('shell',
+            help='Shell interface - provides a user interface in the terminal.',
+            description='Shell interface')
+    shell_parser.add_argument('config', type=valid_file,
+            help="Ert configuration file")
+    shell_parser.set_defaults(func=runShell)
 
 
-cli_parser = subparsers.add_parser('cli',
-        description="Command Line Interface",
-        help="command line help")
-cli_parser.add_argument('config', type=valid_file,
-        help="Ert configuration file")
-cli_parser.add_argument("--algorithm", type=str, required=True,
-        choices=["Test-run", "Ensemble Smoother", "Ensemble Experiment"],
-        help="The available algorithms")
-cli_parser.add_argument("--target-case", type=str, default="default",
-        help="The target filesystem to store results")
-cli_parser.set_defaults(func=runCli)
+    cli_parser = subparsers.add_parser('cli',
+            description="Command Line Interface",
+            help="command line help")
+    cli_parser.add_argument('config', type=valid_file,
+            help="Ert configuration file")
+    cli_parser.add_argument("--algorithm", type=str, required=True,
+            choices=["Test-run", "Ensemble Smoother", "Ensemble Experiment"],
+            help="The available algorithms")
+    cli_parser.add_argument("--target-case", type=str, default="default",
+            help="The target filesystem to store results")
+    cli_parser.set_defaults(func=runCli)
+    return parser
 
-args = parser.parse_args(sys.argv[1:])
-args.func(args)
+
+def main():
+    parser = ert_parser()
+    args = parser.parse_args(sys.argv[1:])
+    args.func(args)
+
+
+if __name__ == '__main__':
+    os.environ["ERT_SHARE_PATH"] = ERT_SHARE_PATH
+    os.environ["ERT_UI_MODE"] = "gui"
+    os.environ["ERT_ROOT"] = ERT_ROOT
+    main()
