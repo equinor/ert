@@ -7,32 +7,33 @@ class TestFMValidity(ResTest):
     def setUp(self):
         pass
 
-    def _extract_executable(self,filename):
-        executable_list = []
+    def _extract_executable(self, filename):
         with open(filename,'r') as f:
             for line in f.readlines():
-                l = [a.strip() for a in line.split(' ') if a not in ['', ' ', '  ']]
-                if l[0]=='EXECUTABLE':
-                    executable_list.append(l[1])
-        return executable_list
+                l = line.strip().split()
+                if len(l)>1 and l[0]=='EXECUTABLE':
+                    return l[1]
+        return None
 
-    def _file_exist_and_is_executable(self,file_path):
+    def _file_exist_and_is_executable(self, file_path):
         return os.path.isfile(file_path) and os.access(file_path, os.X_OK)
 
     def test_validate_scripts(self):
-        fm_path = ['share/ert/forward-models/res',
-                   'share/ert/forward-models/shell',
-                   'share/ert/forward-models/templating']
-        for fdir in fm_path:
-            fpath = os.path.join(self.SOURCE_ROOT,fdir)
-            files = os.listdir(fpath)
-            for fn in files:
-                fn = os.path.join(fpath,fn)
-                if os.path.isfile(fn):
-                    executable_script = self._extract_executable(os.path.join(fdir,fn))
-                    valid_executable = [self._file_exist_and_is_executable(os.path.join(fpath,es))
-                                        for es in executable_script]
-                    self.assertFalse(False in valid_executable)
+        fm_path = 'share/ert/forward-models'
+        fm_path = os.path.join(self.SOURCE_ROOT, fm_path)
+        for fm_dir in os.listdir(fm_path):
+            fm_dir = os.path.join(fm_path, fm_dir)
+            #get all sub-folder in forward-models
+            if os.path.isdir(fm_dir):
+                files = os.listdir(fm_dir)
+                for fn in files:
+                    fn = os.path.join(fm_dir,fn)
+                    #get all files in sub-folders
+                    if os.path.isfile(fn):
+                        #extract executable (if any)
+                        executable_script = self._extract_executable(fn)
+                        if executable_script is not None:
+                            self.assertTrue(self._file_exist_and_is_executable(os.path.join(fm_dir, executable_script)))
 
 
 if __name__ == "__main__":
