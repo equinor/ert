@@ -39,6 +39,28 @@ void  dgesv_(int * n,
              double * B,
              int * ldb,
              int * info);
+void dgesvx_(char * fact,
+             char * trans,
+             int * n,
+             int * nrhs,
+             double * A,
+             int * lda,
+             double * AF,
+             int * ldaf,
+             long int * ipivot,
+             char * equed,
+             double * R,
+             double * C,
+             double * B,
+             int * ldb,
+             double * X,
+             int * ldx,
+             double * rcond,
+             double * ferr,
+             double * berr,
+             double * work,
+             long int * iwork,
+             int * info);
 void  dgesvd_(char * jobu,
               char * jobvt,
               int * m,
@@ -165,6 +187,54 @@ void matrix_dgesv(matrix_type * A , matrix_type * B) {
     dgesv_(&n , &nrhs , matrix_get_data( A ) , &lda , ipivot , matrix_get_data( B ), &ldb , &info);
     if (info != 0)
       util_abort("%s: low level lapack routine: dgesv() failed with info:%d \n",__func__ , info);
+    free(ipivot);
+  }
+}
+
+
+void matrix_dgesvx(matrix_type * A , matrix_type * B, double * rcond) {
+  matrix_lapack_assert_square( A );
+  matrix_lapack_assert_fortran_layout( B );
+  {
+    int n    = matrix_get_rows( A );
+    int lda  = matrix_get_column_stride( A );
+    int ldb  = matrix_get_column_stride( B );
+    int nrhs = matrix_get_columns( B );
+    int info;
+    int i,j;
+
+    int ldx  = ldb;
+    int ldaf  = n;
+    char trans='N';
+    char fact='N';
+    char equed='N';
+
+    double * X    = (double*)util_calloc( nrhs*n , sizeof * X );
+    double * AF   = (double*)util_calloc( n*n    , sizeof * AF );
+    double * C    = (double*)util_calloc( n      , sizeof * C );
+    double * R    = (double*)util_calloc( n      , sizeof * R );
+    double * work = (double*)util_calloc( 4*n    , sizeof * work );
+    double * ferr = (double*)util_calloc( nrhs   , sizeof * ferr );
+    double * berr = (double*)util_calloc( nrhs   , sizeof * berr );
+    long int * ipivot = (long int*)util_calloc( n , sizeof * ipivot );
+    long int * iwork  = (long int*)util_calloc( n , sizeof * iwork );
+
+
+    dgesvx_(&fact, &trans , &n, &nrhs, matrix_get_data( A ), &lda, AF, &ldaf, ipivot, &equed, R, C, matrix_get_data( B ), &ldb, X, &ldx, rcond, ferr, berr, work, iwork, &info);
+    if (info != 0)
+      util_abort("%s: low level lapack routine: dgesvx() failed with info:%d \n",__func__ , info);
+
+    for (j=0; j < B->columns; j++)
+       for (i=0; i < B->rows; i++)
+             matrix_iset(B , i , j , X[j*B->rows+i]);
+
+    free(X);
+    free(AF);
+    free(C);
+    free(R);
+    free(work);
+    free(ferr);
+    free(berr);
     free(ipivot);
   }
 }

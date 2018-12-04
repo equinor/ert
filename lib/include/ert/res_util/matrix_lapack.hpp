@@ -60,6 +60,7 @@ extern "C" {
 
 
   void      matrix_dgesv(matrix_type * A , matrix_type * B);
+  void      matrix_dgesvx(matrix_type * A , matrix_type * B, double * rcond);
   void      matrix_dgesvd(dgesvd_vector_enum jobv, dgesvd_vector_enum jobvt , matrix_type * A , double * S , matrix_type * U , matrix_type * VT);
 
   int  matrix_dsyevx(bool             compute_eig_vectors ,

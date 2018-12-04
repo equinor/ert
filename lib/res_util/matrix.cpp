@@ -1437,6 +1437,38 @@ bool matrix_equal( const matrix_type * m1 , const matrix_type * m2) {
 }
 
 
+/*
+   Returns true if the two matrices m1 and m2 are almost equal.
+   The equality-test applies an element-by-element comparison
+   whether the absolute value of the difference is less than a
+   user-specified tolerance. This routine is useful for testing
+   two different numerical algorithms that should give the same
+   result but not necessarily to machine precision. If the two
+   matrices do not have equal dimension false is returned.
+*/
+
+bool matrix_similar( const matrix_type * m1 , const matrix_type * m2, double epsilon) {
+  if (! ((m1->rows == m2->rows) && (m1->columns == m2->columns)))
+    return false;
+  {
+    int i,j;
+    for (i=0; i < m1->rows; i++) {
+      for (j=0; j < m1->columns; j++) {
+        int index1 = GET_INDEX(m1 , i , j);
+        int index2 = GET_INDEX(m2 , i , j);
+        double d1 = m1->data[ index1 ];
+        double d2 = m2->data[ index2 ];
+
+        if (fabs(d1 - d2) > epsilon)
+          return false;
+      }
+    }
+  }
+
+  /** OK - we came all the way through - they are almost equal. */
+  return true;
+}
+
 bool matrix_columns_equal( const matrix_type * m1 , int col1 , const matrix_type * m2 , int col2) {
   if (m1->rows != m2->rows)
     return false;

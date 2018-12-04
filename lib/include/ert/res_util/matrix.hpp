@@ -156,6 +156,7 @@ typedef struct matrix_struct matrix_type;
   void          matrix_get_dims(const matrix_type * matrix ,  int * rows , int * columns , int * row_stride , int * column_stride);
   bool          matrix_is_quadratic(const matrix_type * matrix);
   bool          matrix_equal( const matrix_type * m1 , const matrix_type * m2);
+  bool          matrix_similar( const matrix_type * m1 , const matrix_type * m2, double epsilon);
   bool          matrix_columns_equal( const matrix_type * m1 , int col1 , const matrix_type * m2 , int col2);
 
   void          matrix_diag_set_scalar(matrix_type * matrix , double value);

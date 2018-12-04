@@ -82,11 +82,79 @@ void test_det2() {
   rng_free( rng );
 }
 
+void test_dgesvx() {
+  matrix_type * m1 = matrix_alloc(3  , 3 );
+  matrix_type * m2 = matrix_alloc(3  , 3 );
+  matrix_type * b1 = matrix_alloc(3  , 5 );
+  matrix_type * b2 = matrix_alloc(3  , 5 );
+  matrix_type * b3 = matrix_alloc(3  , 5 );
+  rng_type * rng = rng_alloc(MZRAN , INIT_DEV_URANDOM );
+  double rcond;
+  double epsilon=0.0000000001;
+  double diag=1.0;
+  {
+     matrix_diag_set_scalar(m1, diag);
+     matrix_random_init( b1 , rng );
+     matrix_assign(b2 , b1);
+     matrix_dgesv( m1 , b1  );
+     test_assert_true( matrix_similar( b1 , b2 , epsilon ) );
+
+     matrix_diag_set_scalar(m1, diag);
+     matrix_random_init( b1 , rng );
+     matrix_assign(b2 , b1);
+     matrix_dgesvx( m1 , b1, &rcond  );
+     test_assert_true( matrix_similar( b1 , b2 , epsilon ) );
+
+
+     matrix_random_init( m1 , rng );
+     matrix_assign(m2 , m1);
+
+     matrix_random_init( b1 , rng );
+     matrix_assign(b2 , b1);
+
+     matrix_dgesv( m1 , b1  );
+     matrix_dgesvx( m2 , b2, &rcond  );
+
+
+     matrix_sub(b3,b2,b1);
+     matrix_pretty_fprint_submat(b3,"b3","%.*f ",stdout,0,2,0,4) ;
+
+     test_assert_true( matrix_similar( b1 , b2 , epsilon ) );
+
+  }
+
+  matrix_free( m1 );
+  matrix_free( m2 );
+  matrix_free( b1 );
+  matrix_free( b2 );
+  rng_free( rng );
+}
+
+void test_matrix_similar() {
+  rng_type * rng = rng_alloc(MZRAN , INIT_DEV_URANDOM );
+  matrix_type * m1 = matrix_alloc( 3 , 3 );
+  matrix_type * m2 = matrix_alloc( 3 , 3 );
+  double epsilon=0.0000000001;
+
+  matrix_random_init( m1 , rng );
+  matrix_assign( m2 , m1 );
+
+  test_assert_true( matrix_similar( m1 , m2, epsilon));
+
+  matrix_iadd(m2,2,2,0.5*epsilon);
+  test_assert_true( matrix_similar( m1 , m2, epsilon));
+
+  matrix_iadd(m2,2,2,epsilon);
+  test_assert_true( !matrix_similar( m1 , m2, epsilon));
+
+}
 
 
 int main( int argc , char ** argv) {
   test_det2();
   test_det3();
   test_det4();
+  test_dgesvx();
+  test_matrix_similar();
   exit(0);
 }
