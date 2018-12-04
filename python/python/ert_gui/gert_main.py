@@ -112,10 +112,10 @@
 import sys
 
 try:
-  from PyQt4.QtCore import Qt
+  from PyQt4.QtCore import Qt, QLocale
   from PyQt4.QtGui import QApplication, QFileDialog
 except ImportError:
-  from PyQt5.QtCore import Qt
+  from PyQt5.QtCore import Qt, QLocale
   from PyQt5.QtWidgets import QApplication, QFileDialog
 
 
@@ -159,6 +159,24 @@ ert_gui.ertwidgets.img_prefix = ert_share_path + "/gui/img/"
 def main(argv):
     app = QApplication(argv)  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
+
+    # There seems to be a setlocale() call deep down in the initialization of
+    # QApplication, if the user has set the LC_NUMERIC environment variables to
+    # a locale with decimalpoint different from "." the application will fail
+    # hard quite quickly.
+    current_locale = QLocale()
+    decimal_point = str(current_locale.decimalPoint())
+    if decimal_point != ".":
+        msg = """
+** WARNING: You are using a locale with decimalpoint: '{}' - the ert application is
+            written with the assumption that '.' is used as decimalpoint, and chances
+            are that something will break if you continue with this locale. It is highly
+            reccomended that you set the decimalpoint to '.' using one of the environment
+            variables 'LANG', LC_ALL', or 'LC_NUMERIC' to either the 'C' locale or
+            alternatively a locale which uses '.' as decimalpoint.\n""".format(decimal_point)
+
+        sys.stderr.write(msg)
+
 
     if len(argv) == 1:
         config_file = QFileDialog.getOpenFileName(None, "Open Configuration File")
@@ -260,5 +278,8 @@ def main(argv):
     sys.exit(finished_code)
 
 
+
 if __name__ == "__main__":
     main(sys.argv)
+
+
