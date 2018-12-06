@@ -186,8 +186,8 @@ void test_index_map( const char * case1, const char * case2 , const char * case3
   test_assert_true( time_map_summary_update( ecl_map , ecl_sum1 ) );
   {
     int_vector_type * index_map = time_map_alloc_index_map( ecl_map , ecl_sum1 );
-    int i;
-    for (i=0; i < int_vector_size( index_map ); i++)
+
+    for (int i= ecl_sum_get_first_report_step( ecl_sum1); i < int_vector_size( index_map ); i++)
       test_assert_int_equal( i , int_vector_iget( index_map , i ));
 
     test_assert_int_equal( int_vector_size( index_map ) , ecl_sum_get_last_report_step( ecl_sum1) + 1);

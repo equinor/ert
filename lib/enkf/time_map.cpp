@@ -677,53 +677,38 @@ static void time_map_summary_update_abort( time_map_type * map , const ecl_sum_t
 
 
 int_vector_type * time_map_alloc_index_map( time_map_type * map , const ecl_sum_type * ecl_sum ) {
-  int_vector_type * index_map = int_vector_alloc(0 , -1 );
+  int_vector_type * index_map = int_vector_alloc(0, -1);
   pthread_rwlock_rdlock( &map->rw_lock );
-  {
-    int time_map_index = 0;
-    int sum_index = 0;
 
-    while (true) {
-      time_t map_time = time_map_iget__( map , time_map_index);
-      if (map_time == DEFAULT_TIME)
+  int sum_index =  ecl_sum_get_first_report_step(ecl_sum);
+  int time_map_index = ecl_sum_get_first_report_step(ecl_sum);
+  for (; time_map_index < time_map_get_size(map); ++time_map_index) {
+    time_t map_time = time_map_iget__(map, time_map_index);
+    if (map_time == DEFAULT_TIME)
+      continue;
+
+    for(; sum_index <= ecl_sum_get_last_report_step(ecl_sum); ++sum_index) {
+      time_t sum_time = ecl_sum_get_report_time(ecl_sum, sum_index);
+      if (sum_time == map_time)
         break;
 
-      {
-        time_t sum_time;
-
-        while (true) {
-          sum_time = ecl_sum_get_report_time( ecl_sum , sum_index );
-
-          if (sum_time > map_time) {
-            int day,month,year;
-            util_set_date_values_utc( map_time , &day , &month , &year);
-            util_abort("%s: The eclipse summary cases is missing data for date:%02d/%02d/%4d - aborting\n", __func__ , day , month , year);
-          } else if (sum_time < map_time) {
-            sum_index++;
-            if (sum_index > ecl_sum_get_last_report_step( ecl_sum ))
-              break;
-          } else
-            break;
-
-        }
-
-        if (sum_time == map_time)
-          int_vector_iset( index_map , time_map_index , sum_index);
-        else {
-          res_log_error("Inconsistency in time_map - data will be ignored");
-          break;
-        }
-
-
-        time_map_index++;
-        if (time_map_index == time_map_get_size( map ))
-          break;
-
+      if (sum_time > map_time) {
+        int day, month, year;
+        util_set_date_values_utc(map_time, &day, &month, &year);
+        util_abort("%s: The eclipse summary cases is missing data for date:%02d/%02d/%4d - aborting\n", __func__ , day , month , year);
       }
     }
-  }
-  pthread_rwlock_unlock( &map->rw_lock );
 
+    if(sum_index > ecl_sum_get_last_report_step(ecl_sum)) {
+      res_log_error("Inconsistency in time_map - data will be ignored");
+      break;
+    }
+
+    int_vector_iset(index_map, time_map_index, sum_index);
+    
+  }
+
+  pthread_rwlock_unlock( &map->rw_lock );
   return index_map;
 }
 
