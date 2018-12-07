@@ -52,12 +52,12 @@ simulators:
         mpirun: /path/ecl/2017.2/intel/bin/mpirun
 
   flow:
-    '2018.04':
+    '@FLOW_VERSION@':
       scalar:
-        executable: /path/flow/2018.04/bin/flow
-        env:
-          LD_LIBRARY_PATH: /path/flow/2018.04/lib64:$LD_LIBRARY_PATH
-
+        executable: @FLOW_EXECUTABLE@
+      mpi:
+        executable: @FLOW_EXECUTABLE@
+        mpirun: @MPIEXEC@
 
 # You can have a shared 'env' attribute which is an environment variable map
 # which will be set before the simulator starts. If there are env settings in

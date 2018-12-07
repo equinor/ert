@@ -15,6 +15,7 @@
 #  for more details.
 import os
 import stat
+import inspect
 import unittest
 import yaml
 from ecl.util.test import TestAreaContext
@@ -26,14 +27,14 @@ from res.fm.ecl import EclConfig
 class EclConfigTest(ResTest):
 
     def setUp(self):
-        pass
+        self.ecl_config_path = os.path.dirname( inspect.getsourcefile(EclConfig) )
 
     def test_load(self):
         os.environ["ECL_SITE_CONFIG"] = "file/does/not/exist"
         with self.assertRaises(IOError):
             conf = EclConfig()
 
-        os.environ["ECL_SITE_CONFIG"] = os.path.join(self.SOURCE_ROOT, "python/res/fm/ecl/ecl_config.yml")
+        os.environ["ECL_SITE_CONFIG"] = os.path.join(self.ecl_config_path, "ecl_config.yml")
         conf = EclConfig()
 
         with TestAreaContext("yaml_invalid"):
@@ -90,7 +91,7 @@ class EclConfigTest(ResTest):
             with self.assertRaises(OSError):
                 sim = conf.sim("flow", "2018.04")
 
-            # Fails because the 2018.04 mpir version points to a non existing mpirun binary
+            # Fails because the 2018.04 mpi version points to a non existing mpirun binary
             with self.assertRaises(OSError):
                 sim = conf.mpi_sim("flow", "2018.04")
 
