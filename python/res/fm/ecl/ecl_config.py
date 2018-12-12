@@ -22,12 +22,22 @@ def _replace_env(env):
 
     return new_env
 
+class Keys(object):
+    default_version = "default_version"
+    default = "default"
+    versions = "versions"
+    env = "env"
+    mpi = "mpi"
+    mpirun = "mpirun"
+    executable = "executable"
+    scalar = "scalar"
+
 
 class Simulator(object):
     """Small 'struct' with the config information for one simulator.
     """
-    def __init__(self, name, version, executable, env, mpirun = None):
-        self.name = name
+
+    def __init__(self, version, executable, env, mpirun = None):
         self.version = version
         if not os.access( executable , os.X_OK ):
             raise OSError("The executable: '{}' can not be executed by user".format(executable))
@@ -35,6 +45,7 @@ class Simulator(object):
         self.executable = executable
         self.env = env
         self.mpirun = mpirun
+        self.name = "simulator"
 
         if not mpirun is None:
             if not os.access(mpirun, os.X_OK):
@@ -59,10 +70,8 @@ class EclConfig(object):
     example file.
 
     """
-    DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ecl_config.yml")
 
-    def __init__(self):
-        config_file = os.getenv("ECL_SITE_CONFIG", default = self.DEFAULT_CONFIG_FILE)
+    def __init__(self, config_file):
         with open(config_file) as f:
             try:
                 config = yaml.load(f)
@@ -70,27 +79,55 @@ class EclConfig(object):
                 raise ValueError("Failed parse: {} as yaml".format(config_file))
 
         self._config = config
+        self._config_file = os.path.abspath(config_file)
 
 
-    def _get_env(self, sim, version, exe_type):
+    def __contains__(self, version):
+        if version in self._config[Keys.versions]:
+            return True
+
+        return self.default_version is not None and version in [None, Keys.default]
+
+
+    @property
+    def default_version(self):
+        return self._config.get(Keys.default_version)
+
+
+    def _get_version(self, version_arg):
+        if version_arg in [None, Keys.default]:
+            version = self.default_version
+        else:
+            version = version_arg
+
+        if version is None:
+            raise Exception("The default version has not not been set in the config file:{}".format(self._config_file))
+
+        return version
+
+
+
+    def _get_env(self, version, exe_type):
         env = {}
-        env.update( self._config.get("env", {} ))
+        env.update( self._config.get(Keys.env, {} ))
 
-        mpi_sim = self._config["simulators"][sim][version][exe_type]
-        env.update( mpi_sim.get("env", {}))
+        version = self._get_version(version)
+        mpi_sim = self._config[Keys.versions][version][exe_type]
+        env.update( mpi_sim.get(Keys.env, {}))
         return _replace_env(env)
 
 
-    def _get_sim(self, sim, version, exe_type):
-        d = self._config["simulators"][sim][version][exe_type]
-        if exe_type == "mpi":
-            mpirun = d["mpirun"]
+    def _get_sim(self, version, exe_type):
+        version = self._get_version(version)
+        d = self._config[Keys.versions][version][exe_type]
+        if exe_type == Keys.mpi:
+            mpirun = d[Keys.mpirun]
         else:
             mpirun = None
-        return Simulator(sim, version, d["executable"], self._get_env(sim, version, exe_type), mpirun = mpirun)
+        return Simulator(version, d[Keys.executable], self._get_env(version, exe_type), mpirun = mpirun)
 
 
-    def sim(self, sim, version):
+    def sim(self, version = None):
         """Will return a small struct describing the simulator.
 
         The struct has attributes 'executable' and 'env'. Observe that the
@@ -98,29 +135,55 @@ class EclConfig(object):
         so if the executable key in the config file points to non-existing file
         you will not get the error before this point.
         """
-        return self._get_sim(sim, version, "scalar")
+        return self._get_sim(version, Keys.scalar)
 
-    def mpi_sim(self, sim, version):
+    def mpi_sim(self, version = None):
         """MPI version of method sim()."""
-        return self._get_sim(sim, version, "mpi")
+        return self._get_sim(version, Keys.mpi)
 
 
     def simulators(self, strict = True):
         simulators = []
-        for name,versions in self._config["simulators"].items():
-            for version,exe_types in versions.items():
-                for exe_type in exe_types.keys():
-                    if strict:
-                        sim = self._get_sim(name, version, exe_type)
-                    else:
-                        try:
-                            sim = self._get_sim(name, version, exe_type)
-                        except Exception:
-                            sys.stderr.write("Failed to create simulator object for:{name} version:{version} {exe_type}\n".format(name=name,
-                                                                                                                                  version=version,
-                                                                                                                                  exe_type=exe_type))
-                            sim = None
+        for version in self._config[Keys.versions].keys():
+            for exe_type in self._config[Keys.versions][version].keys():
+                if strict:
+                    sim = self._get_sim(version, exe_type)
+                else:
+                    try:
+                        sim = self._get_sim(version, exe_type)
+                    except Exception:
+                        sys.stderr.write("Failed to create simulator object for: version:{version} {exe_type}\n".format(version=version, exe_type=exe_type))
+                        sim = None
 
-                    if sim:
-                        simulators.append(sim)
+                if sim:
+                    simulators.append(sim)
         return simulators
+
+
+
+class Ecl100Config(EclConfig):
+
+    DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ecl100_config.yml")
+
+    def __init__(self):
+        config_file = os.getenv("ECL100_SITE_CONFIG", default = self.DEFAULT_CONFIG_FILE)
+        super(Ecl100Config, self).__init__(config_file)
+
+
+class Ecl300Config(EclConfig):
+
+    DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ecl300_config.yml")
+
+    def __init__(self):
+        config_file = os.getenv("ECL300_SITE_CONFIG", default = self.DEFAULT_CONFIG_FILE)
+        super(Ecl300Config, self).__init__(config_file)
+
+
+
+class FlowConfig(EclConfig):
+
+    DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "flow_config.yml")
+
+    def __init__(self):
+        config_file = os.getenv("FLOW_SITE_CONFIG", default = self.DEFAULT_CONFIG_FILE)
+        super(FlowConfig, self).__init__(config_file)

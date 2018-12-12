@@ -31,30 +31,24 @@
 # If it is an MPI simulation you must in addition to the executable attribute
 # also set an 'mpirun' attribute.
 
-simulators:
-  ecl100:
-    '2015.2':  # without quotes this will be interpreted as a number
-      scalar:
-        executable: /path/ecl/2015.2/linux/x86_64/bin/eclipse100
-      mpi:
-        executable: /path/ecl/2015.2/linux/x86_64/bin/eclipse100_mpi
-        mpirun: /path/ecl/2015.2/intel/bin/mpirun
-        env:
-          MPI_ROOT: /path/to/mpi/root
-          LD_LIBRARY_PATH: /path/to/mpi/root/lib64:$LD_LIBRARY_PATH
+versions:
+  '2015.2':  # without quotes this will be interpreted as a number
+    scalar:
+      executable: /path/ecl/2015.2/linux/x86_64/bin/eclipse100
+    mpi:
+      executable: /path/ecl/2015.2/linux/x86_64/bin/eclipse100_mpi
+      mpirun: /path/ecl/2015.2/intel/bin/mpirun
+      env:
+        MPI_ROOT: /path/to/mpi/root
+        LD_LIBRARY_PATH: /path/to/mpi/root/lib64:$LD_LIBRARY_PATH
 
-    '2017.2':
-      scalar:
-        executable: /path/ecl/2017.2/linux/x86_64/bin/eclipse100
-        env:
-      mpi:
-        executable: /path/ecl/2017.2/linux/x86_64/bin/eclipse100_mpi
-        mpirun: /path/ecl/2017.2/intel/bin/mpirun
-
-  flow:
-    '@FLOW_VERSION@':
-      scalar:
-        executable: @FLOW_EXECUTABLE@
+  '2017.2':
+    scalar:
+      executable: /path/ecl/2017.2/linux/x86_64/bin/eclipse100
+      env:
+    mpi:
+      executable: /path/ecl/2017.2/linux/x86_64/bin/eclipse100_mpi
+      mpirun: /path/ecl/2017.2/intel/bin/mpirun
 
 
 # You can have a shared 'env' attribute which is an environment variable map

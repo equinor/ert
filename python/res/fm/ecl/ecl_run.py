@@ -64,98 +64,43 @@ class EclRun(object):
        import sys
        from res.fm.ecl import EclRun
 
-       run = EclRun(sys.argv)
+       run = EclRun()
        run.runEclipse( )
 
 
-    Name of executable
-    ==================
-
-    Observe that the EclRun.__init__() initializer determines which simulator
-    to use by checking the value of sys.argv[0] - i.e. typically the name of
-    the executable. The currently recognized names are:
-
-        run_ecl100 : Run ECLIPSE100
-        run_ecl300 : Run ECLIPSE300
-        run_flow   : Run OPM/flow
-
-    The names 'ecl100', 'ecl300' and 'flow' will also be used as keys to look
-    up information about the simulator in the EclConfig class.
-
     """
-    Eclipse100 = "run_ecl100"
-    Eclipse300 = "run_ecl300"
-    Eclipse100_nocheck = "run_ecl100_nocheck"
-    Eclipse300_nocheck = "run_ecl300_nocheck"
-    Flow = "run_flow"
-    Flow_nocheck = "run_flow_nocheck"
 
-    def __init__(self , argv):
-        if 3 <= len(argv) <= 4:
-            self.check_status = True
-            config = EclConfig()
-
-            # First argument - name of simulator
-            script_name = os.path.basename( argv[0] )
-            if script_name == EclRun.Eclipse100:
-                simulator = "ecl100"
-            elif script_name == EclRun.Eclipse300:
-                simulator = "ecl300"
-            elif script_name == EclRun.Eclipse100_nocheck:
-                simulator = "ecl100"
-                self.check_status = False
-            elif script_name == EclRun.Eclipse300_nocheck:
-                simulator = "ecl300"
-                self.check_status = False
-            elif script_name == EclRun.Flow:
-                simulator = "flow"
-            elif script_name == EclRun.Flow_nocheck:
-                simulator = "flow"
-                self.check_status = False
-            else:
-                raise ValueError("The name of the script:%s is invalid - must be run_ecl100 / run_ecl300" % script_name)
+    def __init__(self , ecl_case, sim, num_cpu = 1, check_status = True):
+        self.sim = sim
+        self.check_status = check_status
+        self.num_cpu = int(num_cpu)
+        if self.num_cpu > 1:
+            if self.sim.mpirun is None:
+                raise Exception("Internal inconsistency - asked for:{} cpus with a not MPI enabled simulator".format(num_cpu))
 
 
-            # Second argument
-            self.version = argv[1]
-
-
-            # Third argument - datafile, with optional leading path component
-            input_arg = argv[2]
-            (base , ext) = os.path.splitext( input_arg )
-            if ext and ext in [".data", ".DATA"]:
-                data_file = input_arg
-            else:
-                if input_arg.islower():
-                    data_file = input_arg + ".data"
-                else:
-                    data_file = input_arg + ".DATA"
-
-
-            if not os.path.isfile( data_file ):
-                raise IOError("No such file: %s" % data_file )
-            else:
-                (self.run_path , self.data_file)  = os.path.split( data_file )
-                (self.base_name , ext ) = os.path.splitext( self.data_file )
-
-                if self.run_path is None:
-                    self.run_path = os.getcwd()
-                else:
-                    self.run_path = os.path.abspath( self.run_path )
-
-            # Fourth argument - the number of CPU's - defaults to one if not supplied.
-            if len(argv) == 3:
-                self.num_cpu = 1
-            else:
-                self.num_cpu = int(argv[3])
-
-            if self.num_cpu == 1:
-                self.sim = config.sim( simulator, self.version )
-            else:
-                self.sim = config.mpi_sim( simulator, self.version)
-
+        # Dechipher the ecl_case argument.
+        input_arg = ecl_case
+        (base , ext) = os.path.splitext( input_arg )
+        if ext and ext in [".data", ".DATA"]:
+            data_file = input_arg
         else:
-            raise ValueError("Must have three/four arguments")
+            if input_arg.islower():
+                data_file = input_arg + ".data"
+            else:
+                data_file = input_arg + ".DATA"
+
+
+        if not os.path.isfile( data_file ):
+            raise IOError("No such file: %s" % data_file )
+        else:
+            (self.run_path , self.data_file)  = os.path.split( data_file )
+            (self.base_name , ext ) = os.path.splitext( self.data_file )
+
+            if self.run_path is None:
+                self.run_path = os.getcwd()
+            else:
+                self.run_path = os.path.abspath( self.run_path )
 
 
 
@@ -339,12 +284,12 @@ class EclRun(object):
     def readECLEND(self):
         error_regexp = re.compile("^\s*Errors\s+(\d+)\s*$")
         bug_regexp = re.compile("^\s*Bugs\s+(\d+)\s*$")
-        if self.sim.name == "flow":
-            eclend_file = os.path.join( self.run_path, "{}.PRT".format(self.base_name))
-        else:
-            eclend_file = os.path.join( self.run_path , "{}.ECLEND".format(self.base_name)) 
 
-        with open(eclend_file , "r") as fileH:
+        report_file = os.path.join( self.run_path , "{}.ECLEND".format(self.base_name))
+        if not os.path.isfile(report_file):
+            report_file = os.path.join( self.run_path, "{}.PRT".format(self.base_name))
+
+        with open(report_file , "r") as fileH:
             for line in fileH.readlines():
                 error_match = re.match(error_regexp , line)
                 if error_match:

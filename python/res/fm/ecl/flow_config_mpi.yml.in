@@ -1,0 +1,13 @@
+# See the ecl_config.yml for more documentation of this file.
+
+default_version: '@FLOW_VERSION@'
+
+versions:
+  '@FLOW_VERSION@':
+    scalar:
+      executable: @FLOW_EXECUTABLE@
+
+    mpi:
+      executable: @FLOW_EXECUTABLE@
+      mpirun: @MPIEXEC@
+

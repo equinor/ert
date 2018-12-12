@@ -21,29 +21,29 @@ import yaml
 from ecl.util.test import TestAreaContext
 from tests import ResTest
 
-from res.fm.ecl import EclConfig
-
+from res.fm.ecl import Ecl100Config
+from res.fm.ecl.ecl_config import Keys
 
 class EclConfigTest(ResTest):
 
     def setUp(self):
-        self.ecl_config_path = os.path.dirname( inspect.getsourcefile(EclConfig) )
+        self.ecl_config_path = os.path.dirname( inspect.getsourcefile(Ecl100Config) )
 
     def test_load(self):
-        os.environ["ECL_SITE_CONFIG"] = "file/does/not/exist"
+        os.environ["ECL100_SITE_CONFIG"] = "file/does/not/exist"
         with self.assertRaises(IOError):
-            conf = EclConfig()
+            conf = Ecl100Config()
 
-        os.environ["ECL_SITE_CONFIG"] = os.path.join(self.ecl_config_path, "ecl_config.yml")
-        conf = EclConfig()
+        os.environ["ECL100_SITE_CONFIG"] = os.path.join(self.ecl_config_path, "ecl100_config.yml")
+        conf = Ecl100Config()
 
         with TestAreaContext("yaml_invalid"):
             with open("file.yml","w") as f:
                 f.write("this:\n -should\n-be\ninvalid:yaml?")
 
-            os.environ["ECL_SITE_CONFIG"] = "file.yml"
+            os.environ["ECL100_SITE_CONFIG"] = "file.yml"
             with self.assertRaises(ValueError):
-                conf = EclConfig()
+                conf = Ecl100Config()
 
             scalar_path = "scalar"
             scalar_exe = "bin/scalar_exe"
@@ -61,47 +61,49 @@ class EclConfigTest(ResTest):
             intel_path = "intel"
             os.environ["ENV1"] = "A"
             os.environ["ENV2"] = "C"
-            d = {"env" : {"LICENSE_SERVER" : "license@company.com"},
-                 "simulators": {"ecl100" : {"2015" : {"scalar": {"executable" : scalar_exe},
-                                                      "mpi"   : {"executable" : mpi_exe,
-                                                                 "mpirun"     : mpi_run,
-                                                                 "env" : {"I_MPI_ROOT" : "$ENV1:B:$ENV2",
-                                                                          "TEST_VAR" : "$ENV1.B.$ENV2 $UNKNOWN_VAR",
-                                                                          "P4_RSHCOMMAND" : "",
-                                                                          "LD_LIBRARY_PATH" : "{}:$LD_LIBRARY_PATH".format(intel_path),
-                                                                          "PATH" : "{}/bin64:$PATH".format(intel_path)}}}}
-                                ,
-                                "flow" : {"2018.04" : {"scalar" : {"executable" : "/does/not/exist"},
-                                                       "mpi" : {"executable" : mpi_exe,
-                                                                "mpirun"  : "/does/not/exist"}}}}}
+            d = {Keys.env : {"LICENSE_SERVER" : "license@company.com"},
+                 Keys.versions: {"2015" : {Keys.scalar: {Keys.executable : scalar_exe},
+                                           Keys.mpi   : {Keys.executable : mpi_exe,
+                                                         Keys.mpirun     : mpi_run,
+                                                         Keys.env : {"I_MPI_ROOT" : "$ENV1:B:$ENV2",
+                                                                     "TEST_VAR" : "$ENV1.B.$ENV2 $UNKNOWN_VAR",
+                                                                     "P4_RSHCOMMAND" : "",
+                                                                     "LD_LIBRARY_PATH" : "{}:$LD_LIBRARY_PATH".format(intel_path),
+                                                                     "PATH" : "{}/bin64:$PATH".format(intel_path)}}},
+                                 "2016" : {Keys.scalar: {Keys.executable : "/does/not/exist"},
+                                           Keys.mpi : {Keys.executable : "/does/not/exist",
+                                                       Keys.mpirun : mpi_run}},
+                                 "2017" : {Keys.mpi : {Keys.executable : mpi_exe,
+                                                       Keys.mpirun : "/does/not/exist"}}}}
+
 
             with open("file.yml", "w") as f:
                 f.write( yaml.dump(d) )
 
-            conf = EclConfig()
-            # Fails because there is no simulator ecl99
+            conf = Ecl100Config()
+            # Fails because there is no version 2020
             with self.assertRaises(KeyError):
-                sim = conf.sim("ecl99", "2015")
+                sim = conf.sim("2020")
 
-            # Fails because there is no version 2020 for ecl100
+            # Fails because the 2016 version points to a not existing executable
+            with self.assertRaises(OSError):
+                sim = conf.sim("2016")
+
+            # Fails because the 2016 mpi version points to a non existing mpi executable
+            with self.assertRaises(OSError):
+                sim = conf.mpi_sim("2016")
+
+            # Fails because the 2017 mpi version mpirun points to a non existing mpi executable
+            with self.assertRaises(OSError):
+                sim = conf.mpi_sim("2017")
+
+            # Fails because the 2017 scalar version is not registered
             with self.assertRaises(KeyError):
-                sim = conf.sim("ecl100", "2020")
+                sim = conf.sim("2017")
 
-            # Fails because the 2018.04 version of flow points to a not existing executable
-            with self.assertRaises(OSError):
-                sim = conf.sim("flow", "2018.04")
+            sim = conf.sim("2015")
+            mpi_sim = conf.mpi_sim("2015")
 
-            # Fails because the 2018.04 mpi version points to a non existing mpirun binary
-            with self.assertRaises(OSError):
-                sim = conf.mpi_sim("flow", "2018.04")
-
-            with self.assertRaises(Exception):
-                conf.sim("flowIx", "2018.04")
-
-            with self.assertRaises(Exception):
-                conf.mpi_sim("flow", "2018.04")
-
-            mpi_sim = conf.mpi_sim("ecl100", "2015")
             # Check that global environment has been propagated down.
             self.assertIn("LICENSE_SERVER", mpi_sim.env)
 
@@ -110,7 +112,7 @@ class EclConfigTest(ResTest):
             self.assertEqual(mpi_sim.env["TEST_VAR"], "A.B.C $UNKNOWN_VAR")
             self.assertEqual(len(mpi_sim.env), 1 + 5)
 
-            sim = conf.sim("ecl100", "2015")
+            sim = conf.sim("2015")
             self.assertEqual(sim.executable, scalar_exe)
             self.assertIsNone(sim.mpirun)
 
@@ -119,6 +121,49 @@ class EclConfigTest(ResTest):
 
             simulators = conf.simulators(strict = False)
             self.assertEqual(len(simulators), 2)
+
+    def test_default(self):
+        with TestAreaContext("default"):
+            os.mkdir("bin")
+            scalar_exe = "bin/scalar_exe"
+            with open( scalar_exe, "w") as fh:
+                fh.write("This is an exectable ...")
+            os.chmod(scalar_exe, stat.S_IEXEC)
+
+            d0 = {Keys.versions: {"2015" : {Keys.scalar: {Keys.executable : scalar_exe}},
+                                  "2016" : {Keys.scalar: {Keys.executable : scalar_exe}}}}
+
+            d1 = {Keys.default_version: "2015",
+                  Keys.versions: {"2015" : {Keys.scalar: {Keys.executable : scalar_exe}},
+                                  "2016" : {Keys.scalar: {Keys.executable : scalar_exe}}}}
+
+            os.environ["ECL100_SITE_CONFIG"] = os.path.join("file.yml")
+            with open("file.yml", "w") as f:
+                f.write( yaml.dump(d1) )
+
+            conf = Ecl100Config()
+            sim = conf.sim()
+            self.assertEqual(sim.version, "2015")
+            self.assertIn("2015", conf)
+            self.assertNotIn("xxxx", conf)
+            self.assertIn(Keys.default, conf)
+            self.assertIn(None, conf)
+
+            sim = conf.sim("default")
+            self.assertEqual(sim.version, "2015")
+
+            with open("file.yml", "w") as f:
+                f.write( yaml.dump(d0) )
+
+            conf = Ecl100Config()
+            self.assertNotIn(Keys.default, conf)
+            self.assertIsNone(conf.default_version)
+
+            with self.assertRaises(Exception):
+                sim = conf.sim()
+
+            with self.assertRaises(Exception):
+                sim = conf.sim(Keys.default)
 
 
 
