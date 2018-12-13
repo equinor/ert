@@ -64,9 +64,7 @@ def _experiment_run(ert):
     model_config = ert.getModelConfig()
     subst_list = ert.getDataKW()
 
-    mask = BoolVector(default_value=False, initial_size=ert.getEnsembleSize())
-    state_map = source_fs.getStateMap()
-    state_map.selectMatching(mask, RealizationStateEnum.STATE_HAS_DATA)
+    mask = BoolVector(default_value=True, initial_size=ert.getEnsembleSize())
 
     run_context = ErtRunContext.ensemble_experiment(
                                 sim_fs=source_fs,
@@ -86,9 +84,7 @@ def _ensemble_smoother_run(ert):
     model_config = ert.getModelConfig()
     subst_list = ert.getDataKW()
 
-    mask = BoolVector(default_value=False, initial_size=ert.getEnsembleSize())
-    state_map = source_fs.getStateMap()
-    state_map.selectMatching(mask, RealizationStateEnum.STATE_HAS_DATA)
+    mask = BoolVector(default_value=True, initial_size=ert.getEnsembleSize())
 
     run_context = ErtRunContext.ensemble_smoother(
                                 sim_fs=source_fs,
@@ -112,10 +108,14 @@ def _ensemble_smoother_run(ert):
 
     ert.getEnkfFsManager().switchFileSystem(run_context.get_target_fs())
 
+    sim_fs = prior_context.get_target_fs( )
+    state = RealizationStateEnum.STATE_HAS_DATA | RealizationStateEnum.STATE_INITIALIZED
+    mask = sim_fs.getStateMap().createMask(state)
+
     rerun_context = ErtRunContext.ensemble_smoother(
-                                sim_fs=run_context.get_target_fs(),
+                                sim_fs=sim_fs,
                                 target_fs=None,
-                                mask=run_context.get_mask(),
+                                mask=mask,
                                 path_fmt=model_config.getRunpathFormat(),
                                 jobname_fmt=model_config.getJobnameFormat(),
                                 subst_list=subst_list,
