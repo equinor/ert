@@ -58,7 +58,17 @@ set( SHARE_DIR "share/ert")
 # or stale version of the site configuration file. Irrespective of the value of
 # SITE_CONFIG_FILE the environment variable ERT_SITE_CONFIG will be set to point
 # to the in-source version of the site-config file for testing.
-set( SITE_CONFIG_FILE "${CMAKE_INSTALL_PREFIX}/${SHARE_DIR}/site-config" CACHE FILEPATH "Path to global ERT Configuration file")
+#
+# The variable SITE_CONFIG_FILE can be set by the user, if that is set it will
+# take presedence. If the user has not explicitly set the SITE_CONFIG_FILE variable
+# we will use the default path based on the install prefix.
+set( SITE_CONFIG_FILE "" CACHE FILEPATH "Path to global ERT Configuration file")
+set( __SITE_CONFIG_FILE "${CMAKE_INSTALL_PREFIX}/${SHARE_DIR}/site-config")
+if (SITE_CONFIG_FILE)
+  set( __SITE_CONFIG_FILE ${SITE_CONFIG_FILE})
+endif()
+message(STATUS "The path ${__SITE_CONFIG_FILE} will be compiled into the libres library as the location of the site configuration file")
+
 
 if (BUILD_PYTHON)
   if (NOT ENABLE_PYTHON)
@@ -149,7 +159,7 @@ function(install_example src_file destination)
   if (EXISTS "${_full_destination}/${src_file}")
     message(STATUS "File: ${_full_destination}/${src_file} already exists - will not be updated")
   else()
-    message(STATUS "An example ${src_file} will be installed ${_full_destination}")
+    message(STATUS "An example ${src_file} will be installed as ${_full_destination}")
     install(FILES ${src_file} DESTINATION "${_full_destination}")
   endif()
 

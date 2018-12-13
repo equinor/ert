@@ -260,7 +260,7 @@ target_compile_definitions(res PRIVATE
             -DRES_VERSION_MINOR=${RES_VERSION_MINOR}
             -DRES_VERSION_MICRO=${RES_VERSION_MICRO}
             -DCOMPILE_TIME_STAMP="${RES_BUILD_TIME}"
-            -DSITE_CONFIG_FILE=\"${SITE_CONFIG_FILE}\"
+            -DSITE_CONFIG_FILE=\"${__SITE_CONFIG_FILE}\"
 )
 
 
