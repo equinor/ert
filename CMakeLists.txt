@@ -175,22 +175,22 @@ if (RST_DOC)
 endif()
 
 foreach(share_dir workflows gui forward-models)
-  install(DIRECTORY "share/ert/${share_dir}" DESTINATION share/ert)
+  install(DIRECTORY "share/ert/${share_dir}" DESTINATION ${SHARE_DIR})
 endforeach()
-install_example("share/ert/site-config" "share/ert")
+install_example("share/ert/site-config" ${SHARE_DIR})
 install(PROGRAMS bin/job_dispatch.py DESTINATION bin )
 
 
 foreach (script ecl100 flow rms)
-  install(PROGRAMS "share/ert/forward-models/res/script/${script}" DESTINATION "share/ert/forward-models/res/script")
+  install(PROGRAMS "share/ert/forward-models/res/script/${script}" DESTINATION "${SHARE_DIR}/forward-models/res/script")
 endforeach()
 
 foreach (script careful_copy_file copy_directory copy_file delete_directory delete_file make_directory move_file symlink)
-  install(PROGRAMS "share/ert/forward-models/shell/script/${script}" DESTINATION "share/ert/forward-models/shell/script")
+  install(PROGRAMS "share/ert/forward-models/shell/script/${script}" DESTINATION "${SHARE_DIR}/forward-models/shell/script")
 endforeach()
 
 foreach (script template_render)
-    install(PROGRAMS "share/ert/forward-models/templating/script/${script}" DESTINATION "share/ert/forward-models/templating/script")
+    install(PROGRAMS "share/ert/forward-models/templating/script/${script}" DESTINATION "${SHARE_DIR}/forward-models/templating/script")
 endforeach()
 
 install(EXPORT res-config
