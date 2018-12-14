@@ -86,7 +86,7 @@ def _ensemble_smoother_run(ert):
 
     mask = BoolVector(default_value=True, initial_size=ert.getEnsembleSize())
 
-    run_context = ErtRunContext.ensemble_smoother(
+    prior_context = ErtRunContext.ensemble_smoother(
                                 sim_fs=source_fs,
                                 target_fs=target_fs,
                                 mask=mask,
@@ -96,17 +96,17 @@ def _ensemble_smoother_run(ert):
                                 itr=0)
 
     sim_runner = ert.getEnkfSimulationRunner()
-    _run_ensemble_experiment(ert, run_context, sim_runner)
+    _run_ensemble_experiment(ert, prior_context, sim_runner)
     sim_runner.runWorkflows( HookRuntime.PRE_UPDATE )
 
     es_update = ESUpdate(ert)
-    success = es_update.smootherUpdate(run_context)
+    success = es_update.smootherUpdate(prior_context)
     if not success:
-            raise AssertionError("Analysis of simulation failed!")
+        raise AssertionError("Analysis of simulation failed!")
 
     sim_runner.runWorkflows( HookRuntime.POST_UPDATE )
 
-    ert.getEnkfFsManager().switchFileSystem(run_context.get_target_fs())
+    ert.getEnkfFsManager().switchFileSystem(prior_context.get_target_fs())
 
     sim_fs = prior_context.get_target_fs( )
     state = RealizationStateEnum.STATE_HAS_DATA | RealizationStateEnum.STATE_INITIALIZED
