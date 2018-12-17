@@ -17,7 +17,7 @@
 */
 
 #ifndef ERT_SCHED_KW_INCLUDE_H
-#define ERT_SCHED_KW_INCLDUE_H
+#define ERT_SCHED_KW_INCLUDE_H
 #ifdef __cplusplus
 extern "C" {
 #endif
