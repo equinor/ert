@@ -16,3 +16,6 @@ GEN_DATA POLY_RES RESULT_FILE:poly_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
 
 INSTALL_JOB poly_eval POLY_EVAL
 SIMULATION_JOB poly_eval
+-- Load the RML module, this does not imply that it is actually used. That will
+-- be determined by the user interactively later.
+ANALYSIS_LOAD RML rml_enkf.so
