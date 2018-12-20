@@ -8,7 +8,7 @@ configure_file(
 )
 
 add_subdirectory(global)
-
+add_subdirectory(data)
 if (GUI)
    add_subdirectory(gui)
 endif()
