@@ -25,10 +25,7 @@ class LoadResultsTool(Tool):
         super(LoadResultsTool, self).__init__("Load results manually", "tools/load_manually", resourceIcon("ide/table_import"))
         self.__import_widget = None
         self.__dialog = None
-        self.setVisible(False)
-
-
-
+        self.setEnabled(LoadResultsModel.isValidRunPath())
 
     def trigger(self):
         if self.__import_widget is None:
@@ -41,10 +38,3 @@ class LoadResultsTool(Tool):
     def load(self):
         self.__import_widget.load()
         self.__dialog.accept()
-
-    def toggleAdvancedMode(self, advanced_mode):
-        self.setVisible(advanced_mode)
-        if not LoadResultsModel.isValidRunPath():
-            self.setEnabled(False)
-
-
