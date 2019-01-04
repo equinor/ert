@@ -38,8 +38,6 @@ class RunAnalysisTool(Tool):
         self._run_widget = None
         self._dialog = None
         self._selected_case_name = None
-        self.setVisible(False)
-
 
     def trigger(self):
         if self._run_widget is None:
@@ -53,7 +51,7 @@ class RunAnalysisTool(Tool):
         source = self._run_widget.source_case()
 
         ert = ERT.ert
-        fs_manager = ert.getEnkfFsManager() 
+        fs_manager = ert.getEnkfFsManager()
         es_update = ESUpdate(ert)
 
         target_fs = fs_manager.getFileSystem(target)
@@ -72,6 +70,3 @@ class RunAnalysisTool(Tool):
 
         ERT.ertChanged.emit()
         self._dialog.accept()
-
-    def toggleAdvancedMode(self, advanced_mode):
-        self.setVisible(advanced_mode)

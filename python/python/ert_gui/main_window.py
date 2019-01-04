@@ -72,15 +72,6 @@ class GertMainWindow(QMainWindow):
         """:type: QMenu"""
 
         """ @rtype: list of QAction """
-        advanced_toggle_action = QAction("Show Advanced Options", self)
-        advanced_toggle_action.setObjectName("AdvancedSimulationOptions")
-        advanced_toggle_action.setCheckable(True)
-        advanced_toggle_action.setChecked(False)
-        advanced_toggle_action.toggled.connect(self.toggleAdvancedMode)
-
-        self.__view_menu.addAction(advanced_toggle_action)
-
-        """ @rtype: list of QAction """
         show_about = self.__help_menu.addAction("About")
         show_about.setMenuRole(QAction.ApplicationSpecificRole)
         show_about.triggered.connect(self.__showAboutMessage)
@@ -112,15 +103,6 @@ class GertMainWindow(QMainWindow):
         else:
             self.restoreGeometry(settings.value("geometry"))
             self.restoreState(settings.value("windowState"))
-
-
-    def toggleAdvancedMode(self, advanced_mode):
-        if hasattr(self.__main_widget, "toggleAdvancedMode"):
-            self.__main_widget.toggleAdvancedMode(advanced_mode)
-
-        for tool in self.tools.values():
-            if hasattr(tool, "toggleAdvancedMode"):
-                tool.toggleAdvancedMode(advanced_mode)
 
 
     def setWidget(self, widget):
