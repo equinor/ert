@@ -21,6 +21,7 @@ class EnsembleSmoother(BaseRunModel):
     def runSimulations(self, arguments):
         prior_context = self.create_context( arguments )
 
+
         self.checkMinimumActiveRealizations(prior_context)
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
@@ -54,6 +55,7 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhaseName("Pre processing...")
 
         rerun_context = self.create_context( arguments, prior_context = prior_context )
+
         self.ert().getEnkfSimulationRunner().createRunPath( rerun_context )
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
@@ -93,6 +95,8 @@ class EnsembleSmoother(BaseRunModel):
             mask = sim_fs.getStateMap().createMask(state)
 
         run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr)
+        self._run_context = run_context
+
         return run_context
 
 

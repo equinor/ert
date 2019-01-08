@@ -178,8 +178,9 @@ class MultipleDataAssimilation(BaseRunModel):
             state = RealizationStateEnum.STATE_HAS_DATA | RealizationStateEnum.STATE_INITIALIZED
             mask = sim_fs.getStateMap().createMask(state)
             # Make sure to only run the realizations which was passed in as argument
-            for index, run_realization in enumerate(self._initial_realizations_mask):
+            for index, run_realization in enumerate(self.initial_realizations_mask):
                 mask[index] = mask[index] and run_realization
 
         run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr)
+        self._run_context = run_context
         return run_context

@@ -122,6 +122,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             target_fs = self.createTargetCaseFileSystem(itr + 1 , target_case_format)
 
         run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr)
+        self._run_context = run_context
         return run_context
 
 
