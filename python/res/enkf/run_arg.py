@@ -29,6 +29,7 @@ class RunArg(BaseCClass):
     _set_geo_id                = ResPrototype("void run_arg_set_geo_id(run_arg, int)")
     _get_runpath               = ResPrototype("char* run_arg_get_runpath(run_arg)")
     _get_iter                  = ResPrototype("int run_arg_get_iter(run_arg)")
+    _get_iens                  = ResPrototype("int run_arg_get_iens(run_arg)")
 
     def __init__(self):
         raise NotImplementedError("Cannot instantiat RunArg directly!")
@@ -78,3 +79,7 @@ class RunArg(BaseCClass):
     @property
     def iter_id(self):
         return self._get_iter()
+
+    @property
+    def iens(self):
+        return self._get_iens()
