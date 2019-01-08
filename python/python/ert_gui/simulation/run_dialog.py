@@ -11,7 +11,7 @@ except ImportError:
 
 
 from ert_gui.ertwidgets import resourceMovie, Legend
-from ert_gui.simulation import Progress, SimpleProgress
+from ert_gui.simulation import Progress, SimpleProgress, DetailedProgressDialog
 from ert_gui.simulation.models import BaseRunModel, SimulationsTracker
 from ert_gui.tools.plot.plot_tool import PlotTool
 
@@ -40,6 +40,8 @@ class RunDialog(QDialog):
         layout.addWidget(self.total_progress)
 
 
+
+
         status_layout = QHBoxLayout()
         status_layout.addStretch()
         self.__status_label = QLabel()
@@ -53,6 +55,10 @@ class RunDialog(QDialog):
             self.progress.addState(state.state, QColor(*state.color), 100.0 * state.count / state.total_count)
 
         layout.addWidget(self.progress)
+
+        self.detailed_progress = None
+        #layout.addWidget(self.detailed_progress)
+
 
         legend_layout = QHBoxLayout()
         self.legends = {}
@@ -80,6 +86,7 @@ class RunDialog(QDialog):
         self.done_button.setHidden(True)
         self.restart_button = QPushButton("Restart")
         self.restart_button.setHidden(True)
+        self.show_details_button = QPushButton("Details")
 
         self.realizations_view = QListView()
         self.realizations_view.setModel(QStandardItemModel(self.realizations_view))
@@ -101,6 +108,7 @@ class RunDialog(QDialog):
         button_layout.addWidget(self.processing_animation)
         button_layout.addWidget(self.running_time)
         button_layout.addStretch()
+        button_layout.addWidget(self.show_details_button)
         button_layout.addWidget(self.plot_button)
         button_layout.addWidget(self.kill_button)
         button_layout.addWidget(self.done_button)
@@ -116,6 +124,7 @@ class RunDialog(QDialog):
         self.kill_button.clicked.connect(self.killJobs)
         self.done_button.clicked.connect(self.accept)
         self.restart_button.clicked.connect(self.restart_failed_realizations)
+        self.show_details_button.clicked.connect(self.show_detailed_progress)
 
         self.__updating = False
         self.__update_queued = False
@@ -162,6 +171,8 @@ class RunDialog(QDialog):
 
         self.total_progress.setProgress(self._run_model.getProgress())
 
+
+
         self.__status_label.setText(self._run_model.getPhaseName())
 
         states = self.simulations_tracker.getStates()
@@ -173,6 +184,9 @@ class RunDialog(QDialog):
                 self.legends[state].updateLegend(state.name, 0, 0)
 
         else:
+            if self.detailed_progress:
+                self.detailed_progress.set_progress(*self._run_model.getDetailedProgress())
+
             self.progress.setIndeterminate(False)
             total_count = self._run_model.getQueueSize()
             queue_status = self._run_model.getQueueStatus()
@@ -290,3 +304,8 @@ class RunDialog(QDialog):
             else:
                 item = items[0];
             item.setCheckState(successful or item.checkState())
+
+    def show_detailed_progress(self):
+        if not self.detailed_progress:
+            self.detailed_progress = DetailedProgressDialog(self, self.simulations_tracker.getStates())
+        self.detailed_progress.show()
