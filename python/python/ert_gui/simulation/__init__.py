@@ -1,5 +1,6 @@
 from .progress import Progress
 from .simple_progress import SimpleProgress
+from .detailed_progress import DetailedProgressDialog
 from .run_dialog import RunDialog
 from .simulation_config_panel import SimulationConfigPanel
 from .single_test_run_panel import SingleTestRunPanel
