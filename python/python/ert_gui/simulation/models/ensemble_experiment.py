@@ -1,6 +1,9 @@
 from res.enkf.enums import HookRuntime
 from res.enkf import ErtRunContext
 from res.util import ResLog
+
+from res.simulator import SimulationContext
+
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
 class EnsembleExperiment(BaseRunModel):
@@ -18,6 +21,7 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath( run_context )
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
+
 
         self.setPhaseName( run_msg, indeterminate=False)
 
@@ -48,10 +52,14 @@ class EnsembleExperiment(BaseRunModel):
         subst_list = self.ert().getDataKW( )
         itr = 0
         mask = arguments["active_realizations"]
+
+
         run_context = ErtRunContext.ensemble_experiment(result_fs,
                                                         mask,
                                                         runpath_fmt,
                                                         jobname_fmt,
                                                         subst_list,
                                                         itr)
+        self._run_context = run_context
+
         return run_context
