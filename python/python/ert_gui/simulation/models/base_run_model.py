@@ -1,5 +1,6 @@
 import time
 from res.job_queue import JobStatusType
+from res.job_queue import JobQueueManager, ForwardModelStatus
 from ert_gui import ERT
 from res.util import ResLog
 from ecl.util.util import BoolVector
@@ -45,9 +46,11 @@ class BaseRunModel(object):
         self._failed = False
         self._queue_config = queue_config
         self._job_queue = None
+        self.realization_progress = {}
         self.initial_realizations_mask = None
         self.completed_realizations_mask = None
         self.support_restart = True
+        self._run_context = None
         self.reset( )
 
     def ert(self):
@@ -190,6 +193,7 @@ class BaseRunModel(object):
 
                 queue_status[status] += 1
 
+
         return queue_status
 
     @job_queue(False)
@@ -221,6 +225,45 @@ class BaseRunModel(object):
 
         return current_progress
 
+    @staticmethod
+    def is_forward_model_finished(progress):
+        for job in progress:
+            if job.status != 'Success':
+                return False
+
+        return True
+
+
+
+    def getDetailedProgress(self):
+
+        iteration = -1
+        if self._run_context:
+            iteration = self._run_context.get_iter()
+            if iteration not in self.realization_progress:
+                self.realization_progress[iteration] = {}
+            for run_arg in self._run_context:
+
+                try:
+                    # will throw if not yet submitted (is in a limbo state)
+                    queue_index = run_arg.getQueueIndex()
+                except ValueError:
+                    continue
+
+                fms = self.realization_progress[iteration].get(run_arg.iens, None)
+                if fms and BaseRunModel.is_forward_model_finished(fms):
+                    continue
+
+                fms = ForwardModelStatus.load(run_arg.runpath, num_retry=1)
+
+                if not fms:
+                    continue
+
+                jobs = fms.jobs
+
+                self.realization_progress[iteration][run_arg.iens] = jobs
+
+        return self.realization_progress[iteration], iteration
 
     def isIndeterminate(self):
         """ @rtype: bool """
