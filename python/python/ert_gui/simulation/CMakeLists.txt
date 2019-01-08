@@ -8,6 +8,7 @@ set(PYTHON_SOURCES
     progress.py
     run_dialog.py
     simple_progress.py
+    detailed_progress.py
     simulation_config_panel.py
     simulation_panel.py
 )
