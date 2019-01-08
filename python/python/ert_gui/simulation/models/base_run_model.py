@@ -233,8 +233,6 @@ class BaseRunModel(object):
 
         return True
 
-
-
     def getDetailedProgress(self):
 
         iteration = -1
@@ -286,5 +284,3 @@ class BaseRunModel(object):
 
     def __str__(self):
         return self._name
-
-
