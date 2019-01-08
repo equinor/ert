@@ -60,9 +60,8 @@ class RunArg(BaseCClass):
 
         return 'RunArg(queue_index = %s, %s) %s' % (qi, su, self._ad_str())
 
-
     def get_run_id(self):
-        return self._get_run_id( )
+        return self._get_run_id()
 
     @property
     def geo_id(self):

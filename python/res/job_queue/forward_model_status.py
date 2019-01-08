@@ -98,8 +98,7 @@ class ForwardModelStatus(object):
 
 
     @classmethod
-    def load(cls, path):
-        num_retry = 10
+    def load(cls, path, num_retry=10):
         sleep_time = 0.10
         attempt = 0
         status_file = os.path.join(path, cls.STATUS_FILE)
@@ -108,11 +107,11 @@ class ForwardModelStatus(object):
                 status = cls.try_load(status_file)
                 return status
             except:
-                time.sleep(0.10)
                 attempt += 1
+                if attempt < num_retry:
+                    time.sleep(sleep_time)
 
         return None
-
 
     @property
     def jobs(self):
