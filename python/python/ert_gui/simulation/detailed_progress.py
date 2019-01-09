@@ -5,8 +5,8 @@ try:
   from PyQt4.QtGui import QWidget, QPainter, QColor, QFrame, QGridLayout, QImage, QDialog, QTableView, QLabel
 except ImportError:
   from PyQt5.QtCore import QTimer, pyqtSignal, QVariant, Qt, QAbstractTableModel
-  from PyQt5.QtWidgets import QWidget, QFrame
-  from PyQt5.QtGui import QPainter, QColor, QLinearGradient, QGridLayout, QImage, QDialog, QTableView, QLabel
+  from PyQt5.QtWidgets import QWidget, QFrame, QDialog, QTableView, QLabel, QGridLayout
+  from PyQt5.QtGui import QPainter, QColor, QLinearGradient, QImage
 
 
 class DetailedProgress(QFrame):
