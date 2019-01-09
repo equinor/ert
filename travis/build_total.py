@@ -10,8 +10,6 @@ import codecs
 import requests
 from contextlib import contextmanager
 
-GITHUB_ROT13_API_TOKEN = "665o0ropn09p6r7412n91n3s608pq579n3s4p3o0"
-
 @contextmanager
 def pushd(path):
     if not os.path.isdir(path):
@@ -47,7 +45,7 @@ def build(source_dir, install_dir, test, c_flags, cxx_flags, test_flags=None):
                   "-DINSTALL_ERT_LEGACY=ON",
                   "-DCMAKE_PREFIX_PATH=%s" % install_dir,
                   "-DERT_USE_OPENMP=ON",
-                  "-DCMAKE_CXX_FLAGS=-Werror -Wno-unused-result",
+                  "-DCMAKE_CXX_FLAGS=%s" % cxx_flags,
                   "-DCMAKE_C_FLAGS=%s" % c_flags
                  ]
 
@@ -70,7 +68,6 @@ class PrBuilder(object):
 
     def __init__(self, argv):
         rep = argv[1]
-        self.github_api_token = codecs.encode(GITHUB_ROT13_API_TOKEN, 'rot13')
         self.build_ert = True
         if rep not in ('ecl', 'res', 'ert'):
             raise KeyError("Error: invalid repository type %s." % rep)
@@ -83,114 +80,19 @@ class PrBuilder(object):
         if rep == 'ert':
             self.rep_name = 'ert'
 
-        self.pr_map = {}
-        self.access_pr()
         self.test_flags = argv[2:]  # argv = [exec, repo, [L|LE, LABEL]]
 
-
-    def __str__(self):
-        ret_str = "Settings: "
-        ret_str += "\nRepository type: %s" % self.repository
-        ret_str += "\nECL pr number:   %s" % self.pr_map.get('libecl')
-        ret_str += "\nRES pr number:   %s" % self.pr_map.get('libres')
-        ret_str += "\nERT pr number:   %s" % self.pr_map.get('ert')
-        return ret_str
-
-
-
-
-    def parse_pr_description(self):
-        ecl_word = "Statoil/libecl#(\\d+)"
-        res_word = "Statoil/libres#(\\d+)"
-        ert_word = "Statoil/ert#(\\d+)"
-        desc = self.pr_description
-
-        match = re.search(ecl_word, desc, re.MULTILINE)
-        if match:
-            self.pr_map['libecl'] = int(match.group(1))
-        match = re.search(res_word, desc, re.MULTILINE)
-        if match:
-            self.pr_map['libres'] = int(match.group(1))
-        match = re.search(ert_word, desc, re.MULTILINE)
-        if match:
-            self.pr_map['ert'] = int(match.group(1))
-
-    def check_pr_num_consistency(self):
-        if self.repository == "ecl":
-            pr_num = self.pr_map.get('libecl')
-        elif self.repository == "res":
-            pr_num = self.pr_map.get('libres')
-        elif self.repository == "ert":
-            pr_num = self.pr_map.get('ert')
-
-        if pr_num is not None:
-            if pr_num != self.pr_number:
-                sys.exit("Error: The line rep=%d does not match pull request %d" %
-                         (pr_num, self.pr_number))
-
-    def pr_is_open(self, rep_name, pr_num=None):
-        if pr_num is None:
-            return
-        url = "https://api.github.com/repos/Statoil/%s/pulls/%d" % (rep_name, pr_num)
-        github_api_token = os.getenv("GITHUB_API_TOKEN")
-        response = requests.get(url, {"access_token" : self.github_api_token})
-
-        content = response.json()
-        state = content["state"]
-        return state == "open"
-
-    def access_pr(self):
-        if "TRAVIS_PULL_REQUEST" not in os.environ:
-            return
-
-        pr_number_string = os.getenv("TRAVIS_PULL_REQUEST")
-        if pr_number_string == "false":
-            return
-
-        self.pr_number = int(pr_number_string)
-        url = "https://api.github.com/repos/Statoil/%s/pulls/%d" % (self.rep_name, self.pr_number)
-        print("Accessing: %s" % url)
-
-        response = requests.get(url, {"access_token" : self.github_api_token})
-
-        if response.status_code != 200:
-            sys.exit("HTTP GET from GitHub failed: %s" % response.text)
-
-        content = response.json()
-        self.pr_description = content["body"]
-        print("PULL REQUEST: %d\n%s" % (self.pr_number, self.pr_description))
-        self.parse_pr_description()
-        self.check_pr_num_consistency()
-
-        # Removing referred-to closed PRs
-        for rep in ('libecl', 'libres', 'ert'):
-            if not self.pr_is_open(rep, self.pr_map.get(rep)):
-                print('Ignoring referred-to closed %s pr %s' % (rep, self.pr_map.get(rep)))
-                self.pr_map[rep] = None
-
-
-    def clone_fetch_merge(self, basedir):
-        self.clone_merge_repository('libecl', self.pr_map.get('libecl'), basedir)
-        self.clone_merge_repository('libres', self.pr_map.get('libres'), basedir)
+    def clone_fetch_merge(self):
+        self.clone_merge_repository('libecl')
+        self.clone_merge_repository('libres')
         if self.build_ert:
-            self.clone_merge_repository('ert', self.pr_map.get('ert'), basedir)
+            self.clone_merge_repository('ert')
 
-    def clone_merge_repository(self, rep_name, pr_num, basedir):
+    def clone_merge_repository(self, rep_name):
         if self.rep_name == rep_name:
             return
 
         call(["git", "clone", "https://github.com/Statoil/%s" % rep_name])
-        if pr_num is None:
-            return
-        rep_path = os.path.join(basedir, rep_name)
-        cwd = os.getcwd()
-        os.chdir(rep_path)
-        call(["git", "config", "user.email", "you@example.com"])
-        call(["git", "config", "user.name", "Your Name"])
-        path = "refs/pull/%d/head:%d" % (pr_num, pr_num)
-        call(["git", "fetch", "-f", "origin", path])
-        call(["git", "merge", "%d" % pr_num, '-m"A MESSAGE"'])
-        os.chdir(cwd)
 
     def compile_and_build(self, basedir):
         install_dir = os.path.join(basedir, "install")
@@ -226,7 +128,7 @@ class PrBuilder(object):
 
         # TODO add c_flags = "-Werror=all"
         c_flags = ""
-        cxx_flags = ""
+        cxx_flags = "-Werror -Wno-unused-result"
         build(source_dir, install_dir, test, c_flags, cxx_flags, test_flags=self.test_flags)
 
     def compile_ert(self, basedir, install_dir):
@@ -235,7 +137,7 @@ class PrBuilder(object):
         else:
             source_dir = os.path.join(basedir, "ert")
         c_flags = ""
-        cxx_flags = ""
+        cxx_flags = "-Werror -Wno-unused-result"
         build(source_dir, install_dir, True, c_flags, cxx_flags, test_flags=self.test_flags)
 
 
@@ -246,7 +148,7 @@ def main():
     print('===================\n')
     print_python_version()
     pr_build = PrBuilder(sys.argv)
-    pr_build.clone_fetch_merge(basedir)
+    pr_build.clone_fetch_merge()
     pr_build.compile_and_build(basedir)
     print(pr_build)
 
