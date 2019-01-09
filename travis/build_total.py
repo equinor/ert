@@ -10,7 +10,7 @@ import codecs
 import requests
 from contextlib import contextmanager
 
-GITHUB_ROT13_API_TOKEN = "rp2rr795p41n83p076o6ro2qp209981r00590r8q"
+GITHUB_ROT13_API_TOKEN = "05128947s3rrsq1n7o96q584n4o8615q034o9931"
 
 @contextmanager
 def pushd(path):
