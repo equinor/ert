@@ -37,8 +37,6 @@ class SingleTestRunPanel(SimulationConfigPanel):
 
         self.setLayout(layout)
 
-    def toggleAdvancedOptions(self, show_advanced):
-        pass
 
     def getSimulationArguments(self):
 

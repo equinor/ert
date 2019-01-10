@@ -62,48 +62,25 @@ class SimulationPanel(QWidget):
         self.addSimulationConfigPanel(SingleTestRunPanel())
         self.addSimulationConfigPanel(EnsembleExperimentPanel())
         self.addSimulationConfigPanel(EnsembleSmootherPanel())
-        self.addSimulationConfigPanel(IteratedEnsembleSmootherPanel(advanced_option=True))
+        self.addSimulationConfigPanel(IteratedEnsembleSmootherPanel())
         self.addSimulationConfigPanel(MultipleDataAssimilationPanel())
 
         self.setLayout(layout)
 
 
     def addSimulationConfigPanel(self, panel):
+
         assert isinstance(panel, SimulationConfigPanel)
-
-        panel.toggleAdvancedOptions(False)
         self._simulation_stack.addWidget(panel)
-
         simulation_model = panel.getSimulationModel()
-
         self._simulation_widgets[simulation_model] = panel
-
-        if not panel.is_advanced_option:
-            self._simulation_mode_combo.addItem(str(simulation_model), simulation_model)
-
+        self._simulation_mode_combo.addItem(str(simulation_model), simulation_model)
         panel.simulationConfigurationChanged.connect(self.validationStatusChanged)
 
 
     def getActions(self):
         return []
 
-    def toggleAdvancedOptions(self, show_advanced):
-        current_model = self.getCurrentSimulationModel()
-
-        self._simulation_mode_combo.clear()
-
-        for model, panel in self._simulation_widgets.items():
-            if show_advanced or not panel.is_advanced_option:
-                self._simulation_mode_combo.addItem(str(model), model)
-
-        old_index = self._simulation_mode_combo.findText(str(current_model))
-        self._simulation_mode_combo.setCurrentIndex(old_index if old_index > -1 else 0)
-
-    def toggleAdvancedMode(self, show_advanced):
-        for panel in self._simulation_widgets.values():
-            panel.toggleAdvancedOptions(show_advanced)
-
-        self.toggleAdvancedOptions(show_advanced)
 
     def getCurrentSimulationModel(self):
         data = self._simulation_mode_combo.itemData(self._simulation_mode_combo.currentIndex(), Qt.UserRole)

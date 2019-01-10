@@ -17,8 +17,8 @@ from ert_gui.simulation.models import IteratedEnsembleSmoother
 
 
 class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
-    def __init__(self, advanced_option=False):
-        SimulationConfigPanel.__init__(self, IteratedEnsembleSmoother( getQueueConfig( )), advanced_option)
+    def __init__(self):
+        SimulationConfigPanel.__init__(self, IteratedEnsembleSmoother( getQueueConfig( )))
 
         layout = QFormLayout()
 
@@ -66,14 +66,6 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
     def isConfigurationValid(self):
         analysis_module = self._analysis_module_selector.getSelectedAnalysisModuleName()
         return self._iterated_target_case_format_field.isValid() and self._active_realizations_field.isValid() and analysis_module is not None
-
-
-    def toggleAdvancedOptions(self, show_advanced):
-        self._active_realizations_field.setVisible(show_advanced)
-        self.layout().labelForField(self._active_realizations_field).setVisible(show_advanced)
-
-        self._analysis_module_selector.setVisible(show_advanced)
-        self.layout().labelForField(self._analysis_module_selector).setVisible(show_advanced)
 
 
     def getSimulationArguments(self):
