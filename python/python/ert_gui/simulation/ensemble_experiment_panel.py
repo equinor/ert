@@ -46,9 +46,6 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
     def isConfigurationValid(self):
         return self._active_realizations_field.isValid()
 
-    def toggleAdvancedOptions(self, show_advanced):
-        self._active_realizations_field.setVisible(show_advanced)
-        self.layout().labelForField(self._active_realizations_field).setVisible(show_advanced)
 
     def getSimulationArguments(self):
         active_realizations_mask = self._active_realizations_model.getActiveRealizationsMask()

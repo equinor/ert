@@ -54,13 +54,6 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
     def isConfigurationValid(self):
         return self._target_case_field.isValid() and self._active_realizations_field.isValid()
 
-    def toggleAdvancedOptions(self, show_advanced):
-        self._active_realizations_field.setVisible(show_advanced)
-        self.layout().labelForField(self._active_realizations_field).setVisible(show_advanced)
-
-        self._analysis_module_selector.setVisible(show_advanced)
-        self.layout().labelForField(self._analysis_module_selector).setVisible(show_advanced)
-
     def getSimulationArguments(self):
         arguments = {"active_realizations": self._active_realizations_model.getActiveRealizationsMask(),
                      "target_case": self._target_case_model.getValue(),
