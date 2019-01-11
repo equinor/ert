@@ -4,11 +4,11 @@ import os
 import os.path
 from   optparse import OptionParser
 
-ert_root = os.path.realpath( os.path.join(os.path.dirname( os.path.realpath( os.path.abspath( __file__))) , "../") )
+res_root = os.path.realpath( os.path.join(os.path.dirname( os.path.realpath( os.path.abspath( __file__))) , "../") )
 
 #-----------------------------------------------------------------
 
-default_lib_list          = ["analysis"   , "ert_util"]
+default_lib_list          = ["ecl"   , "res"]
 default_define_list       = ["HAVE_PTHREAD" , "COMPILER_GCC"]
 
 
@@ -96,7 +96,7 @@ def link( soname , filename , object_list , LDFLAGS , LFLAG , lFLAG , verbose):
 usage = """
 The ert_module script is a small convenience script to
 compile C source code into an analysis module which can
-be loaded by ert. The script is controlled by commandline
+be loaded by ert/libres. The script is controlled by commandline
 arguments:
 
   1. The first argument should be the name of the module
@@ -123,15 +123,15 @@ f90_object2.o will be included in the final module.
 -----------------------------------------------------------------
 
 To compile the module code you will typically need the include files
-and libraries from an existing ert installation. By default the
-ert_module script will locate the ert installation based on the
+and libraries from an existing libres installation. By default the
+ert_module script will locate the libres installation based on the
 location of the script, but you can pass the option:
 
-  --ert-root=/path/where/ert/is/installed
+  --res-root=/path/where/libres/is/installed
 
-The --ert-root option should point to a directory containing the
+The --res-root option should point to a directory containing the
 lib64/ and include/ directories of a binary etr distribution. In
-addition to --ert-root you can use the normal -L/path/to/lib option to
+addition to --res-root you can use the normal -L/path/to/lib option to
 send in additional link path arguments.
 
 By default the path to shared libraries will not be embedded in the
@@ -148,12 +148,12 @@ Options summary:
 
   -I/include : Include the path /include in the compiler include path.
 
-  --ert-root=/path/to/ert : Use this is as root for ert headers
+  --res-root=/path/to/libres : Use this is as root for libres headers
            and libraries. [Default: inferred from location of script]
 
   --use-rpath : Embed library paths in shared objects. Default off.
 
-  --exclude-ert: Do not use any ert default libraries or headers
+  --exclude-res: Do not use any default libraries or headers from libres
 
 
 Default flags:
@@ -161,19 +161,19 @@ Default flags:
 Compile: %s %s  %s
 Link:    %s %s  %s
 """ % (CC,
-       make_XFLAG( "I" , ["./" , "%s/include" % ert_root]) ,
+       make_XFLAG( "I" , ["./" , "%s/include" % res_root]) ,
        make_XFLAG( "D" , default_define_list) ,
        LD ,
-       make_XFLAG("L" , ["%s/lib64" % ert_root]) ,
+       make_XFLAG("L" , ["%s/lib64" % res_root]) ,
        make_XFLAG("l" , default_lib_list))
 
 parser = OptionParser( usage )
-parser.add_option("--ert-root" , dest="ert_root" , action="store")
+parser.add_option("--res-root" , dest="res_root" , action="store")
 parser.add_option("-I" , dest = "include_path_list", action = "append" , default = [])
 parser.add_option("-D" , dest = "define_list"      , action = "append" , default = [])
 parser.add_option("-L" , dest = "lib_path_list"    , action = "append" , default = [])
 parser.add_option("-l" , dest = "lib_list"         , action = "append" , default = [])
-parser.add_option("--exclude-ert" , dest = "exclude_ert" , action="store_true" , default = False)
+parser.add_option("--exclude-res" , dest = "exclude_res" , action="store_true" , default = False)
 parser.add_option("--use-rpath" , dest="use_rpath" , action="store_true" , default = False)
 parser.add_option("--silent" , dest="silent" , action="store_true" , default = False)
 
@@ -181,16 +181,16 @@ parser.add_option("--silent" , dest="silent" , action="store_true" , default = F
 if len(args) == 0:
     sys.exit( usage )
 
-if options.ert_root:
-    ert_root = options.ert_root
+if options.res_root:
+    res_root = options.res_root
 
-if options.exclude_ert:
+if options.exclude_res:
     default_include_path_list = ["./"]
     default_lib_path_list = []
     default_lib_list = []
 else:
-    default_include_path_list = ["./" , "%s/include" % ert_root]
-    default_lib_path_list = ["%s/lib64" % ert_root]
+    default_include_path_list = ["./" , "%s/include" % res_root]
+    default_lib_path_list = ["%s/lib64" % res_root]
     default_lib_list = default_lib_list
 
 
