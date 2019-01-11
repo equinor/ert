@@ -8,3 +8,4 @@ numpy
 pandas
 pyaml
 jinja2
+requests
