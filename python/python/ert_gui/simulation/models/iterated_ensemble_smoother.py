@@ -75,7 +75,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         analysis_config = self.ert().analysisConfig()
         analysis_iter_config = analysis_config.getAnalysisIterConfig()
         num_retries_per_iteration = analysis_iter_config.getNumRetries()
-        num_tries = 0
+        num_retries = 0
         current_iter = 0
 
         while current_iter < getNumberOfIterations() and num_retries < num_retries_per_iteration:
@@ -88,11 +88,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 run_context = self.create_context( arguments, current_iter, prior_context = run_context )
                 self.ert().getEnkfFsManager().switchFileSystem(run_context.get_target_fs())
                 self._runAndPostProcess(run_context)
-                num_tries = 0
+                num_retries = 0
             else:
                 run_context = self.create_context( arguments, current_iter, prior_context = run_context , rerun = True)
                 self._runAndPostProcess(run_context)
-                num_tries += 1
+                num_retries += 1
 
         if current_iter == (phase_count - 1):
             self.setPhase(phase_count, "Simulations completed.")
