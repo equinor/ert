@@ -21,7 +21,6 @@ class EnsembleSmoother(BaseRunModel):
     def runSimulations(self, arguments):
         prior_context = self.create_context( arguments )
 
-
         self.checkMinimumActiveRealizations(prior_context)
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
