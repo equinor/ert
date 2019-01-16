@@ -39,9 +39,6 @@ class RunDialog(QDialog):
         self.total_progress = SimpleProgress()
         layout.addWidget(self.total_progress)
 
-
-
-
         status_layout = QHBoxLayout()
         status_layout.addStretch()
         self.__status_label = QLabel()
@@ -57,8 +54,6 @@ class RunDialog(QDialog):
         layout.addWidget(self.progress)
 
         self.detailed_progress = None
-        #layout.addWidget(self.detailed_progress)
-
 
         legend_layout = QHBoxLayout()
         self.legends = {}
@@ -171,8 +166,6 @@ class RunDialog(QDialog):
 
         self.total_progress.setProgress(self._run_model.getProgress())
 
-
-
         self.__status_label.setText(self._run_model.getPhaseName())
 
         states = self.simulations_tracker.getStates()
@@ -264,7 +257,7 @@ class RunDialog(QDialog):
         :return:
         """
         completed = self._run_model.completed_realizations_mask
-        return completed.count(True);
+        return completed.count(True)
 
     def create_mask_from_failed_realizations(self):
         """
@@ -275,7 +268,7 @@ class RunDialog(QDialog):
         initial = self._run_model.initial_realizations_mask
         inverted_mask = BoolVector(  default_value = False )
         for (index, successful) in enumerate(completed):
-            inverted_mask[index] = initial[index] and not successful;
+            inverted_mask[index] = initial[index] and not successful
         return inverted_mask
 
 
@@ -302,7 +295,7 @@ class RunDialog(QDialog):
                 item = QStandardItem(str(index))
                 self.realizations_view.model().appendRow(item)
             else:
-                item = items[0];
+                item = items[0]
             item.setCheckState(successful or item.checkState())
 
     def show_detailed_progress(self):

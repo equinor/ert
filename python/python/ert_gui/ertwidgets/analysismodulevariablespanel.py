@@ -121,7 +121,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         spinner.setSingleStep(analysis_module_variables_model.getVariableStepValue(variable_name))
         spinner.setValue(variable_value)
         spinner.valueChanged.connect(partial(self.valueChanged, variable_name, variable_type, spinner))
-        return spinner;
+        return spinner
 
     def valueChanged(self, variable_name, variable_type, variable_control):
         value = None

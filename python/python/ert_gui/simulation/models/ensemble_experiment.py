@@ -22,7 +22,6 @@ class EnsembleExperiment(BaseRunModel):
         self.ert().getEnkfSimulationRunner().createRunPath( run_context )
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
-
         self.setPhaseName( run_msg, indeterminate=False)
 
         num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(self._job_queue, run_context)
@@ -52,7 +51,6 @@ class EnsembleExperiment(BaseRunModel):
         subst_list = self.ert().getDataKW( )
         itr = 0
         mask = arguments["active_realizations"]
-
 
         run_context = ErtRunContext.ensemble_experiment(result_fs,
                                                         mask,
