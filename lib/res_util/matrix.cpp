@@ -557,6 +557,7 @@ void matrix_fprintf( const matrix_type * matrix , const char * fmt , FILE * stre
 }
 
 
+
 void matrix_dump_csv( const matrix_type * matrix  ,const char * filename) {
   FILE * stream = util_fopen(filename , "w");
   for (int i=0; i < matrix->rows; i++) {
@@ -659,16 +660,43 @@ static void __fscanf_and_set( matrix_type * matrix , int row , int col , FILE * 
 void matrix_fscanf_data( matrix_type * matrix , bool row_major_order , FILE * stream ) {
   int row,col;
   if (row_major_order) {
-    for (row = 0; row < matrix->columns; row++) {
+    for (row = 0; row < matrix->rows; row++) {
       for (col = 0; col < matrix->columns; col++) {
         __fscanf_and_set( matrix , row , col ,stream);
       }
     }
   } else {
-    for (row = 0; row < matrix->columns; row++) {
-      for (col = 0; col < matrix->columns; col++) {
+    for (col = 0; col < matrix->columns; col++) {
+      for (row = 0; row < matrix->rows; row++) {
         __fscanf_and_set( matrix , row , col , stream);
       }
+    }
+  }
+}
+
+/*
+  If the matrix is printed in row_major_order it is printed so that it looks
+  visually like a matrix; i.e. with one row on each line in the file. When it is
+  written with row_major_order == false it is just written with one number on
+  each line.
+
+  As long as the matrix is loaded again with the matrix_fscanf_data() - or a
+  similar function which is not line oriented, the presence of newlines make no
+  difference anyway.
+*/
+
+void matrix_fprintf_data( const matrix_type * matrix , bool row_major_order, FILE * stream ) {
+  int i,j;
+  if (row_major_order) {
+    for (i=0; i < matrix->rows; i++) {
+      for (j=0; j < matrix->columns; j++)
+        fprintf(stream , "%lg ", matrix_iget( matrix , i , j));
+      fprintf(stream , "\n");
+    }
+  } else {
+    for (j=0; j < matrix->columns; j++)
+      for (i=0; i < matrix->rows; i++) {
+        fprintf(stream , "%lg\n" , matrix_iget( matrix , i , j));
     }
   }
 }

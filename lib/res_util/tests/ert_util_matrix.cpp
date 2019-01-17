@@ -25,9 +25,10 @@
 #include <ert/util/test_util.hpp>
 #include <ert/util/statistics.hpp>
 #include <ert/util/test_work_area.hpp>
-#include <ert/util/matrix.hpp>
 #include <ert/util/rng.hpp>
 #include <ert/util/mzran.hpp>
+
+#include <ert/res_util/matrix.hpp>
 
 
 void test_resize() {
@@ -228,6 +229,49 @@ void test_inplace_sub_column() {
 }
 
 
+
+void test_data() {
+  test_work_area_type * work_area = test_work_area_alloc("matrix_data");
+  int rows = 11;
+  int columns = 7;
+  matrix_type * m1 = matrix_alloc(rows, columns);
+  double value = 0.0;
+  for (int i=0; i < rows; i++) {
+    for (int j=0; j < columns; j++) {
+      matrix_iset(m1, i, j, value);
+      value += 1;
+    }
+  }
+  {
+    FILE * stream = util_fopen("row_major.txt", "w");
+    matrix_fprintf_data(m1, true, stream);
+    fclose(stream);
+  }
+  {
+    FILE * stream = util_fopen("column_major.txt", "w");
+    matrix_fprintf_data(m1, false, stream);
+    fclose(stream);
+  }
+  {
+    FILE * stream = util_fopen("row_major.txt", "r");
+    matrix_type * m2 = matrix_alloc(rows, columns);
+    matrix_fscanf_data(m2, true, stream);
+    test_assert_true(matrix_equal(m1,m2));
+    matrix_free(m2);
+    fclose(stream);
+  }
+  {
+    FILE * stream = util_fopen("column_major.txt", "r");
+    matrix_type * m2 = matrix_alloc(rows, columns);
+    matrix_fscanf_data(m2, false, stream);
+    test_assert_true(matrix_equal(m1,m2));
+    matrix_free(m2);
+    fclose(stream);
+  }
+  matrix_free(m1);
+  test_work_area_free(work_area);
+}
+
 int main( int argc , char ** argv) {
   test_create_invalid();
   test_resize();
@@ -238,5 +282,6 @@ int main( int argc , char ** argv) {
   test_diag_std();
   test_masked_copy();
   test_inplace_sub_column();
+  test_data();
   exit(0);
 }

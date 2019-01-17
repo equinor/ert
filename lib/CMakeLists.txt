@@ -287,6 +287,7 @@ endif()
 
 foreach(name ert_util_logh
              ert_util_arg_pack
+             ert_util_matrix
              ert_util_matrix_lapack
              ert_util_subst_list
              ert_util_block_fs
