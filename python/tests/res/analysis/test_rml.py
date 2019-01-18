@@ -110,21 +110,23 @@ class RMLTest(ResTest):
             param = [ random.gauss( 1.00 , 1.00 ) , random.gauss(1.00 , 1.00)]
             ens.append( param )
 
-        mask = BoolVector(default_value = True , initial_size = ens_size)
-        mask[2] = False
-        (A , S , E , D , R , dObs) = init_matrices( ens , mask , obs, rng)
+        ens_mask = BoolVector(default_value = True , initial_size = ens_size)
+        ens_mask[2] = False
+        obs_mask = BoolVector()
+        obs_mask[0] = 1
+        (A , S , E , D , R , dObs) = init_matrices( ens , ens_mask , obs, rng)
 
-        module.initUpdate(mask, S, R, dObs, E, D, rng)
+        module.initUpdate(ens_mask, obs_mask, S, R, dObs, E, D, rng)
         module.updateA(A, S, R, dObs, E, D, rng)
 
 
-        mask[10] = False
-        mask[5] = False
-        (A , S , E , D , R , dObs) = init_matrices( ens , mask , obs, rng)
-        self.assertEqual( S.dims() , (obs_size , mask.countEqual( True )))
-        self.assertEqual( E.dims() , (obs_size , mask.countEqual( True )))
-        self.assertEqual( D.dims() , (obs_size , mask.countEqual( True )))
+        ens_mask[10] = False
+        ens_mask[5] = False
+        (A , S , E , D , R , dObs) = init_matrices( ens , ens_mask , obs, rng)
+        self.assertEqual( S.dims() , (obs_size , ens_mask.countEqual( True )))
+        self.assertEqual( E.dims() , (obs_size , ens_mask.countEqual( True )))
+        self.assertEqual( D.dims() , (obs_size , ens_mask.countEqual( True )))
 
-        module.initUpdate(mask, S, R, dObs, E, D, rng)
+        module.initUpdate(ens_mask, obs_mask, S, R, dObs, E, D, rng)
         module.updateA(A, S, R, dObs, E ,D, rng)
 

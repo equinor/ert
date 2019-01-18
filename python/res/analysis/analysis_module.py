@@ -37,7 +37,7 @@ class AnalysisModule(BaseCClass):
     _get_int             = ResPrototype("int analysis_module_get_int(analysis_module, char*)")
     _get_bool            = ResPrototype("bool analysis_module_get_bool(analysis_module, char*)")
     _get_str             = ResPrototype("char* analysis_module_get_ptr(analysis_module, char*)")
-    _init_update         = ResPrototype("void analysis_module_init_update(analysis_module, bool_vector, matrix, matrix, matrix, matrix, matrix, rng)")
+    _init_update         = ResPrototype("void analysis_module_init_update(analysis_module, bool_vector, bool_vector, matrix, matrix, matrix, matrix, matrix, rng)")
     _updateA             = ResPrototype("void analysis_module_updateA(analysis_module, matrix, matrix, matrix, matrix, matrix, matrix, void*, rng)")
     _initX               = ResPrototype("void analysis_module_initX(analysis_module, matrix, matrix, matrix, matrix, matrix, matrix, matrix, rng)")
 
@@ -174,8 +174,8 @@ class AnalysisModule(BaseCClass):
         return self._get_str(var)
 
 
-    def initUpdate(self, mask, S, R, dObs, E, D, rng):
-        self._init_update(mask, S, R, dObs, E, D, rng)
+    def initUpdate(self, ens_mask, obs_mask, S, R, dObs, E, D, rng):
+        self._init_update(ens_mask, obs_mask, S, R, dObs, E, D, rng)
 
 
     def updateA(self, A, S, R, dObs, E, D, rng):
