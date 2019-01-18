@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <dlfcn.h>
 
+#include <stdexcept>
+
 #include <ert/res_util/matrix.hpp>
 #include <ert/util/util.hpp>
 #include <ert/util/type_macros.hpp>
@@ -288,6 +290,26 @@ void analysis_module_init_update( analysis_module_type * module ,
                                   const matrix_type * E ,
                                   const matrix_type * D,
                                   rng_type * rng) {
+
+  /*
+    The ensemble and observation masks sent to the init_update() function can be
+    misleading? When assembling the S,R,E and D matrices the inactive
+    observations & realisatons have been filtered out completely, i.e. the
+    ens_mask and obs_mask variables are *not* used to filter out rows and
+    columns from the S,R,E and D matrices.
+
+    In the case of multi iteration updates we need to detect the changes in
+    active realisatons/observations between iterations, and that is the purpose
+    of the ens_mask and obs_mask variables.
+  */
+
+
+  if (bool_vector_count_equal(ens_mask, true) != matrix_get_columns(S))
+    throw std::invalid_argument("Internal error - number of columns in S must be equal to number of *active* realisatons");
+
+  if (bool_vector_count_equal(obs_mask, true) != matrix_get_rows(S))
+    throw std::invalid_argument("Internal error - number of rows in S must be equal to number of *active* observations");
+
   if (module->init_update != NULL)
     module->init_update( module->module_data , ens_mask , obs_mask, S , R , dObs , E , D, rng);
 }

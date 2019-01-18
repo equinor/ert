@@ -386,9 +386,12 @@ add_test(NAME analysis_module_rml
                  CLEAR_LOG:True
                  LAMBDA_RECALCULATE:True)
 
-add_executable(analysis_test_module_info analysis/tests/analysis_test_module_info.c)
-target_link_libraries(analysis_test_module_info res)
-add_test(NAME analysis_test_module_info COMMAND analysis_test_module_info)
+
+foreach(name analysis_test_module_info analysis_module_test)
+  add_executable(${name} analysis/tests/${name}.cpp)
+  target_link_libraries(${name} res)
+  add_test(NAME ${name} COMMAND ${name})
+endforeach()
 
 #-----------------------------------------------------------------
 
