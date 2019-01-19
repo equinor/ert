@@ -11,6 +11,7 @@ endif ()
 
 add_library(res res_util/res_log.cpp
                 res_util/log.cpp
+                res_util/es_testdata.cpp
                 res_util/arg_pack.cpp
                 res_util/ui_return.cpp
                 res_util/subst_list.cpp
@@ -288,6 +289,7 @@ endif()
 foreach(name ert_util_logh
              ert_util_arg_pack
              ert_util_matrix
+             es_testdata
              ert_util_matrix_lapack
              ert_util_subst_list
              ert_util_block_fs
