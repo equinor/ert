@@ -27,10 +27,10 @@ class ShellCapturing(list):
 
 class ErtShellTestContext(object):
 
-    def __init__(self, test_name, config_file, load_config=True, prefix=None, store_area=False):
+    def __init__(self, test_name, config_file, load_config=True, store_area=False):
         self.config_file = config_file
         self.load_config = load_config
-        self.test_area_context = TestAreaContext(test_name, prefix=prefix, store_area=store_area)
+        self.test_area_context = TestAreaContext(test_name, store_area=store_area)
 
 
     def __enter__(self):
