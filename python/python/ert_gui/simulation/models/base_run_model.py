@@ -51,6 +51,7 @@ class BaseRunModel(object):
         self.completed_realizations_mask = None
         self.support_restart = True
         self._run_context = None
+        self._last_run_iteration = -1;
         self.reset( )
 
     def ert(self):
@@ -66,6 +67,7 @@ class BaseRunModel(object):
         try:
             self.initial_realizations_mask = arguments["active_realizations"]
             run_context = self.runSimulations(arguments)
+            self.updateDetailedProgress()
             self.completed_realizations_mask = run_context.get_mask()
         except ErtRunError as e:
             self.completed_realizations_mask = BoolVector(default_value = False)
@@ -76,6 +78,7 @@ class BaseRunModel(object):
             self._fail_message = str(e)
             self._simulationEnded()
 
+        self._run_context = None #delete last active run_context to notify fs_manager that storage is not being written to
 
     def runSimulations(self, job_queue, run_context):
         raise NotImplementedError("Method must be implemented by inheritors!")
@@ -233,35 +236,42 @@ class BaseRunModel(object):
 
         return True
 
+    def updateDetailedProgress(self):
+        if not self._run_context:
+            return
+
+        iteration = self._run_context.get_iter()
+        if iteration not in self.realization_progress:
+            self.realization_progress[iteration] = {}
+        for run_arg in self._run_context:
+            try:
+                # will throw if not yet submitted (is in a limbo state)
+                queue_index = run_arg.getQueueIndex()
+            except ValueError:
+                continue
+
+            fms = self.realization_progress[iteration].get(run_arg.iens, None)
+            if fms and BaseRunModel.is_forward_model_finished(fms):
+                continue
+
+            fms = ForwardModelStatus.load(run_arg.runpath, num_retry=1)
+
+            if not fms:
+                continue
+
+            jobs = fms.jobs
+            self.realization_progress[iteration][run_arg.iens] = jobs
+
     def getDetailedProgress(self):
+        if self._run_context and self._run_context.get_iter() in self.realization_progress:
+            self.updateDetailedProgress()
+            return self.realization_progress[self._run_context.get_iter()], self._run_context.get_iter()
 
-        iteration = -1
-        if self._run_context:
-            iteration = self._run_context.get_iter()
-            if iteration not in self.realization_progress:
-                self.realization_progress[iteration] = {}
-            for run_arg in self._run_context:
+        elif self._last_run_iteration in self.realization_progress:
+            return self.realization_progress[self._last_run_iteration], self._last_run_iteration
 
-                try:
-                    # will throw if not yet submitted (is in a limbo state)
-                    queue_index = run_arg.getQueueIndex()
-                except ValueError:
-                    continue
-
-                fms = self.realization_progress[iteration].get(run_arg.iens, None)
-                if fms and BaseRunModel.is_forward_model_finished(fms):
-                    continue
-
-                fms = ForwardModelStatus.load(run_arg.runpath, num_retry=1)
-
-                if not fms:
-                    continue
-
-                jobs = fms.jobs
-
-                self.realization_progress[iteration][run_arg.iens] = jobs
-
-        return self.realization_progress[iteration], iteration
+        else:
+            return {},-1
 
     def isIndeterminate(self):
         """ @rtype: bool """
