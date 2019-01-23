@@ -301,4 +301,5 @@ class RunDialog(QDialog):
     def show_detailed_progress(self):
         if not self.detailed_progress:
             self.detailed_progress = DetailedProgressDialog(self, self.simulations_tracker.getStates())
+        self.detailed_progress.set_progress(*self._run_model.getDetailedProgress())
         self.detailed_progress.show()

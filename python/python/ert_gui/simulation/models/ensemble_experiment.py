@@ -59,5 +59,5 @@ class EnsembleExperiment(BaseRunModel):
                                                         subst_list,
                                                         itr)
         self._run_context = run_context
-
+        self._last_run_iteration = run_context.get_iter()
         return run_context

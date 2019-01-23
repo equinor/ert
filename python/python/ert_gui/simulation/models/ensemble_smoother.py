@@ -95,7 +95,7 @@ class EnsembleSmoother(BaseRunModel):
 
         run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr)
         self._run_context = run_context
-
+        self._last_run_iteration = run_context.get_iter()
         return run_context
 
 
