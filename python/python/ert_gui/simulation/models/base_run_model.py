@@ -244,6 +244,8 @@ class BaseRunModel(object):
         if iteration not in self.realization_progress:
             self.realization_progress[iteration] = {}
         for run_arg in self._run_context:
+            if not run_arg:
+                continue
             try:
                 # will throw if not yet submitted (is in a limbo state)
                 queue_index = run_arg.getQueueIndex()
