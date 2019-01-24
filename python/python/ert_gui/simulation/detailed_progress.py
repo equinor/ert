@@ -18,6 +18,7 @@ class DetailedProgress(QFrame):
 
         self.state_colors = {state.name: state.color for state in states}
         self.state_colors['Success'] = (255, 200, 128)
+        self.state_colors['Failure'] = self.state_colors["Failed"]
         self._current_iteration = 0
         self._current_progress = []
         self.selected_realization = -1
