@@ -265,8 +265,9 @@ class BaseRunModel(object):
             self.realization_progress[iteration][run_arg.iens] = jobs
 
     def getDetailedProgress(self):
+        self.updateDetailedProgress()
+
         if self._run_context and self._run_context.get_iter() in self.realization_progress:
-            self.updateDetailedProgress()
             return self.realization_progress[self._run_context.get_iter()], self._run_context.get_iter()
 
         elif self._last_run_iteration in self.realization_progress:
