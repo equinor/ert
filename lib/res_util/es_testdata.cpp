@@ -106,7 +106,7 @@ matrix_type * safe_copy(const matrix_type * m) {
 
 
 
-matrix_type * es_testdata::alloc_matrix(const std::string& fname, int rows, int columns) {
+matrix_type * es_testdata::alloc_matrix(const std::string& fname, int rows, int columns) const {
   pushd tmp_path(this->path);
 
   matrix_type * m = alloc_load(fname, rows, columns);
@@ -114,7 +114,7 @@ matrix_type * es_testdata::alloc_matrix(const std::string& fname, int rows, int 
 }
 
 
-void es_testdata::save_matrix(const std::string& name, const matrix_type * m) {
+void es_testdata::save_matrix(const std::string& name, const matrix_type * m) const {
   pushd tmp_path(this->path);
 
   FILE * stream = util_fopen(name.c_str(), "w");
@@ -201,7 +201,7 @@ void es_testdata::save(const std::string& path) const {
   of this->active_ens_size.
 */
 
-matrix_type * es_testdata::alloc_state(const std::string& name) {
+matrix_type * es_testdata::alloc_state(const std::string& name) const {
   std::vector<double> data;
   {
     pushd tmp_path(this->path);

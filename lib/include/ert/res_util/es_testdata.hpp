@@ -43,9 +43,9 @@ public:
   es_testdata(const char * path);
   ~es_testdata();
 
-  matrix_type * alloc_matrix(const std::string& name, int rows, int columns);
-  void save_matrix(const std::string& name, const matrix_type * m);
-  matrix_type * alloc_state(const std::string& name);
+  matrix_type * alloc_matrix(const std::string& name, int rows, int columns) const;
+  void save_matrix(const std::string& name, const matrix_type * m) const;
+  matrix_type * alloc_state(const std::string& name) const;
   void save(const std::string& path) const;
 };
 
