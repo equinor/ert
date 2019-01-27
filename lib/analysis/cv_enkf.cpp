@@ -526,12 +526,12 @@ static void getW_prin_comp(cv_enkf_data_type * cv_data , matrix_type *W , const 
 
 void cv_enkf_initX(void * module_data ,
                    matrix_type * X ,
-                   matrix_type * A ,
-                   matrix_type * S ,
-                   matrix_type * R ,
-                   matrix_type * dObs ,
-                   matrix_type * E ,
-                   matrix_type * D,
+                   const matrix_type * A ,
+                   const matrix_type * S ,
+                   const matrix_type * R ,
+                   const matrix_type * dObs ,
+                   const matrix_type * E ,
+                   const matrix_type * D,
                    rng_type * rng) {
 
 

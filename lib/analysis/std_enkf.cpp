@@ -148,16 +148,17 @@ void std_enkf_data_free( void * data ) {
 
 
 static void std_enkf_initX__( matrix_type * X ,
-                              matrix_type * S ,
-                              matrix_type * R ,
-                              matrix_type * E ,
-                              matrix_type * D ,
+                              const matrix_type * S0 ,
+                              const matrix_type * R ,
+                              const matrix_type * E ,
+                              const matrix_type * D ,
                               double truncation,
                               int    ncomp,
                               bool   bootstrap ,
                               bool   use_EE ,
                               bool   use_GE) {
 
+  matrix_type * S   = matrix_alloc_copy(S0);
   int nrobs         = matrix_get_rows( S );
   int ens_size      = matrix_get_columns( S );
   int nrmin         = util_int_min( ens_size , nrobs);
@@ -190,6 +191,7 @@ static void std_enkf_initX__( matrix_type * X ,
   enkf_linalg_init_stdX( X , S , D , W , eig , bootstrap);
 
   matrix_free( W );
+  matrix_free( S );
   free( eig );
   enkf_linalg_checkX( X , bootstrap );
 }
@@ -200,12 +202,12 @@ static void std_enkf_initX__( matrix_type * X ,
 
 void std_enkf_initX(void * module_data ,
                     matrix_type * X ,
-                    matrix_type * A ,
-                    matrix_type * S ,
-                    matrix_type * R ,
-                    matrix_type * dObs ,
-                    matrix_type * E ,
-                    matrix_type * D,
+                    const matrix_type * A ,
+                    const matrix_type * S ,
+                    const matrix_type * R ,
+                    const matrix_type * dObs ,
+                    const matrix_type * E ,
+                    const matrix_type * D,
                     rng_type * rng) {
 
 

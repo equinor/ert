@@ -133,11 +133,11 @@ static void free_iens_resample( int ** iens_resample, int ens_size ) {
 
 void bootstrap_enkf_updateA(void * module_data ,
                             matrix_type * A ,
-                            matrix_type * S ,
-                            matrix_type * R ,
-                            matrix_type * dObs ,
-                            matrix_type * E ,
-                            matrix_type * D ,
+                            const matrix_type * S ,
+                            const matrix_type * R ,
+                            const matrix_type * dObs ,
+                            const matrix_type * E ,
+                            const matrix_type * D ,
                             const module_info_type* module_info,
                             rng_type * rng) {
 

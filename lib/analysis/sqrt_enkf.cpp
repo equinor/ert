@@ -104,16 +104,17 @@ bool sqrt_enkf_set_int( void * arg , const char * var_name , int value) {
 
 void sqrt_enkf_initX(void * module_data ,
                      matrix_type * X ,
-                     matrix_type * A ,
-                     matrix_type * S ,
-                     matrix_type * R ,
-                     matrix_type * dObs ,
-                     matrix_type * E ,
-                     matrix_type *D,
+                     const matrix_type * A ,
+                     const matrix_type * S0 ,
+                     const matrix_type * R ,
+                     const matrix_type * dObs ,
+                     const matrix_type * E ,
+                     const matrix_type *D,
                      rng_type * rng) {
 
   sqrt_enkf_data_type * data = sqrt_enkf_data_safe_cast( module_data );
   {
+    matrix_type * S   = matrix_alloc_copy(S0);
     int ncomp         = std_enkf_get_subspace_dimension( data->std_data );
     double truncation = std_enkf_get_truncation( data->std_data );
     int nrobs         = matrix_get_rows( S );
@@ -129,6 +130,7 @@ void sqrt_enkf_initX(void * module_data ,
     free( eig );
 
     enkf_linalg_checkX( X , false );
+    matrix_free(S);
   }
 }
 

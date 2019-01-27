@@ -42,12 +42,12 @@ extern "C" {
   bool   std_enkf_set_double( void * arg , const char * var_name , double value);
   void   std_enkf_initX(void * module_data ,
                         matrix_type * X ,
-                        matrix_type * A ,
-                        matrix_type * S ,
-                        matrix_type * R ,
-                        matrix_type * dObs ,
-                        matrix_type * E ,
-                        matrix_type * D,
+                        const matrix_type * A ,
+                        const matrix_type * S ,
+                        const matrix_type * R ,
+                        const matrix_type * dObs ,
+                        const matrix_type * E ,
+                        const matrix_type * D,
                         rng_type * rng);
 
 #ifdef __cplusplus

@@ -241,11 +241,11 @@ static void fwd_step_enkf_write_iter_info( fwd_step_enkf_data_type * data , step
 /*Main function: */
 void fwd_step_enkf_updateA(void * module_data ,
                            matrix_type * A ,
-                           matrix_type * S ,
-                           matrix_type * R ,
-                           matrix_type * dObs ,
-                           matrix_type * E ,
-                           matrix_type * D ,
+                           const matrix_type * S0 ,
+                           const matrix_type * R ,
+                           const matrix_type * dObs ,
+                           const matrix_type * E ,
+                           const matrix_type * D ,
                            const module_info_type* module_info,
                            rng_type * rng) {
 
@@ -255,6 +255,7 @@ void fwd_step_enkf_updateA(void * module_data ,
   fwd_step_log_open(fwd_step_data->fwd_step_log);
   module_data_block_vector_type * data_block_vector = module_info_get_data_block_vector(module_info);
   printf("Running Forward Stepwise regression:\n");
+  matrix_type * S = matrix_alloc_copy(S0);
   {
 
     int ens_size    = matrix_get_columns( S );
@@ -372,7 +373,7 @@ void fwd_step_enkf_updateA(void * module_data ,
 
 
   }
-
+  matrix_free(S);
   fwd_step_log_close( fwd_step_data->fwd_step_log );
 }
 

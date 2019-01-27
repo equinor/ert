@@ -252,12 +252,12 @@ void analysis_module_free__( void * arg) {
 
 void analysis_module_initX(analysis_module_type * module ,
                            matrix_type * X ,
-                           matrix_type * A ,
-                           matrix_type * S ,
-                           matrix_type * R ,
-                           matrix_type * dObs ,
-                           matrix_type * E ,
-                           matrix_type * D,
+                           const matrix_type * A ,
+                           const matrix_type * S ,
+                           const matrix_type * R ,
+                           const matrix_type * dObs ,
+                           const matrix_type * E ,
+                           const matrix_type * D,
                            rng_type * rng) {
 
 
@@ -267,11 +267,11 @@ void analysis_module_initX(analysis_module_type * module ,
 
 void analysis_module_updateA(analysis_module_type * module ,
                              matrix_type * A ,
-                             matrix_type * S ,
-                             matrix_type * R ,
-                             matrix_type * dObs ,
-                             matrix_type * E ,
-                             matrix_type * D ,
+                             const matrix_type * S ,
+                             const matrix_type * R ,
+                             const matrix_type * dObs ,
+                             const matrix_type * E ,
+                             const matrix_type * D ,
                              const module_info_type* module_info,
                              rng_type * rng) {
 
