@@ -1,4 +1,5 @@
 from pandas import DataFrame
+import numpy
 from res.enkf import ErtImplType, EnKFMain, EnkfFs, RealizationStateEnum, CustomKWConfig, EnkfNode, NodeId
 from res.enkf.key_manager import KeyManager
 
@@ -42,6 +43,7 @@ class CustomKWCollector(object):
         if keys is not None:
             custom_kw_keys = [key for key in keys if key in custom_kw_keys] # ignore keys that doesn't exist
 
+        realizations = numpy.array(realizations)
         custom_kw_data = DataFrame(index=realizations, columns=custom_kw_keys)
         custom_kw_data.index.name = "Realization"
 

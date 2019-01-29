@@ -41,5 +41,6 @@ class GenDataCollector(object):
                         value = realization_vector[data_index]
                         data_array[data_index][realization_index] = value
 
+        realizations = numpy.array(realizations)
         return DataFrame( data = data_array , columns = realizations )
 
