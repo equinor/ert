@@ -69,8 +69,11 @@ install:
 before_script:
   # For now we have to make install libecl.
   # Remove when it's possible to pip install
+  - source .libecl_version
   - git clone https://github.com/equinor/libecl
   - pushd libecl
+  - git fetch
+  - git checkout tags/$LIBECL_VERSION
   - sudo pip install -r requirements.txt
   - mkdir build
   - pushd build
