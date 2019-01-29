@@ -9,13 +9,16 @@ os:
   - osx
 
 osx_image: xcode7.3
-sudo: false
+sudo: true
 dist: trusty
 
 env:
   global:
     - ERT_SHOW_BACKTRACE=1
-    - LD_LIBRARY_PATH="$(pwd)/install/lib64"
+    - INSTALL_DIR="$(pwd)/install"
+    - LD_LIBRARY_PATH="${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64"
+    - PYTHONPATH="${INSTALL_DIR}/lib/python2.7/sist-packages:${INSTALL_DIR}/lib64/python2.7/sist-packages:$PYTHONPATH"
+    - PYTHONPATH="${INSTALL_DIR}/lib/python2.7/dist-packages:${INSTALL_DIR}/lib64/python2.7/dist-packages:$PYTHONPATH"
   matrix:
     - PYTHON_VERSION=2.7 TEST_SUITE="-LE SLOW"  # Run all tests not labeled as slow
     - PYTHON_VERSION=2.7 TEST_SUITE="-L SLOW_1" # Run all tests labeled as SLOW in group 1
@@ -60,40 +63,41 @@ addons:
       - cmake-data
 
 install:
-    - if [[ "$CC" == "gcc" ]]; then export CXX="g++-4.8"; fi
-    - cmake --version
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-        export CONDA_OS=MacOSX;
-      else
-        export CONDA_OS=Linux;
-      fi
-    - if [[ $PYTHON_VERSION == 2.7 ]]; then
-        export TRAVIS_PYTHON_VERSION="2.7";
-      else
-        export TRAVIS_PYTHON_VERSION="3.6";
-      fi
-    # We do this conditionally because it saves us some downloading if the version is the same.
-    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-        wget https://repo.continuum.io/miniconda/Miniconda2-latest-${CONDA_OS}-x86_64.sh -O miniconda.sh;
-      else
-        wget https://repo.continuum.io/miniconda/Miniconda3-4.4.10-${CONDA_OS}-x86_64.sh -O miniconda.sh;
-      fi
-    - bash miniconda.sh -b -p $HOME/miniconda
-    - export CONDA_HOME="$HOME/miniconda"
-    - export PATH="$CONDA_HOME/bin:$PATH"
-    - pip install -r requirements.txt
-    - hash -r
-    - conda config --set always_yes yes --set changeps1 no
-    - conda update -q conda
-    # Useful for debugging any issues with conda
-    - conda info -a
-    - wget https://raw.githubusercontent.com/Statoil/ert/master/travis/install_python_packages.py
-    - python install_python_packages.py
+  - if [[ "$CC" == "gcc" ]]; then export CXX="g++-4.8"; fi
+  - sudo pip install --upgrade -r requirements.txt
 
 before_script:
-  - wget https://raw.githubusercontent.com/Statoil/ert/master/travis/build_total.py
+  # For now we have to make install libecl.
+  # Remove when it's possible to pip install
+  - git clone https://github.com/equinor/libecl
+  - pushd libecl
+  - sudo pip install -r requirements.txt
+  - mkdir build
+  - pushd build
+  - cmake .. -DENABLE_PYTHON=ON
+             -DBUILD_APPLICATIONS=ON
+             -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR
+             -DCMAKE_PREFIX_PATH=$INSTALL_DIR
+             -DERT_USE_OPENMP=ON
+             -DCMAKE_F_CLAGS='-Werror=all'
+             -DCMAKE_CXX_FLAGS='-Werror -Wno-unused-result'
+  - make
+  - make install
+  - popd;popd
 
 script:
-  - python --version
-  - python build_total.py res ${TEST_SUITE}
+  - mkdir build
+  - pushd build
+  - cmake .. -DBUILD_TESTS=ON
+             -DENABLE_PYTHON=ON
+             -DBUILD_APPLICATIONS=ON
+             -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR
+             -DCMAKE_PREFIX_PATH=$INSTALL_DIR
+             -DERT_USE_OPENMP=ON
+             -DCMAKE_F_CLAGS='-Werror=all'
+             -DCMAKE_CXX_FLAGS='-Werror -Wno-unused-result'
+  - make
+  - make install
+  - set -e; python -c "import res"; set +e
+  - ctest --output-on-failure $TEST_SUITE
 
