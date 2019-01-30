@@ -15,7 +15,8 @@ dist: trusty
 env:
   global:
     - ERT_SHOW_BACKTRACE=1
-    - LD_LIBRARY_PATH="$(pwd)/install/lib64"
+    - INSTALL_DIR="$(pwd)/install"
+    - LD_LIBRARY_PATH="${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64"
   matrix:
     - PYTHON_VERSION=2.7
     - PYTHON_VERSION=3.6
@@ -45,7 +46,7 @@ addons:
       - cmake
       - cmake-data
 
-install:
+before_install:
     - if [[ "$CC" == "gcc" ]]; then export CXX="g++-4.8"; fi
 
     - if [[ $PYTHON_VERSION == 2.7 ]]; then
@@ -71,14 +72,38 @@ install:
     - bash miniconda.sh -b -p $HOME/miniconda
     - export CONDA_HOME="$HOME/miniconda"
     - export PATH="$CONDA_HOME/bin:$PATH"
-    - hash -r
-    - pip install cwrap
-    - conda config --set always_yes yes --set changeps1 no
-    - conda update -q conda
-    # Useful for debugging any issues with conda
-    - conda info -a
-    - travis/install_python_packages.py
+    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+        conda create -n ert_env pyqt=4.11.4 --yes;
+      else
+        conda create -n ert_env pyqt --yes;
+      fi
+    - source activate ert_env
+    - pip install --upgrade -r requirements.txt
+    # Checkout libres - need libecl version
+    - source .libres_version
+    - git clone https://github.com/equinor/libres
+    - pushd libres
+    - git checkout tags/$LIBRES_VERSION
+    - source .libecl_version
+    - popd
+    - git clone https://github.com/equinor/libecl
+    - pushd libecl
+    - git checkout tags/$LIBECL_VERSION
+    - popd
 
+install:
+  # For now we have to make install libecl.
+  # Remove when it's possible to pip install
+  - bash .build_install.sh libecl
+  - bash .build_install.sh libres
 
 script:
-  - travis/build_total.py ert
+  - mkdir build
+  - pushd build
+  - cmake .. -DBUILD_TESTS=ON
+             -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR
+             -DCMAKE_PREFIX_PATH=$INSTALL_DIR
+             -DCMAKE_C_FLAGS='-Werror=all'
+             -DCMAKE_CXX_FLAGS='-Werror -Wno-unused-result'
+  - make install
+  - ctest --output-on-failure
