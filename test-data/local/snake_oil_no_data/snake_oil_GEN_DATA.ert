@@ -31,3 +31,5 @@ GEN_DATA SNAKE_OIL_GPR_DIFF INPUT_FORMAT:ASCII RESULT_FILE:snake_oil_gpr_diff_%d
 LOG_LEVEL INFO
 LOG_FILE log/log.txt
 UPDATE_LOG_PATH log/update
+
+SUMMARY FOPT -- SUMMARY keyword needed to force time map load from summary file
