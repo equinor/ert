@@ -277,6 +277,16 @@ takes 5 arguments:
 NBINS set the number of discrete values, and the other arguments have the same
 effect as in ERRF.
 
+TRIANGULAR
+,,,,,
+
+::
+
+    TRIANGULAR XMIN XMODE XMAX
+
+Where ``XMODE`` correponds to the location of the maximum in the distribution function.
+
+
 Loading GEN_KW values from an external file
 ...........................................
 
