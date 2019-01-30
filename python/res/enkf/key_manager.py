@@ -113,7 +113,7 @@ class KeyManager(object):
             enkf_obs = self._ert().getObservations()
             gen_data_obs_keys = []
             for obs_vector in enkf_obs:
-                if obs_vector is EnkfObservationImplementationType.GEN_OBS:
+                if obs_vector.getImplementationType() is EnkfObservationImplementationType.GEN_OBS:
                     report_step = obs_vector.activeStep()
                     key = obs_vector.getDataKey()
 
