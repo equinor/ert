@@ -82,7 +82,7 @@ before_script:
              -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR
              -DCMAKE_PREFIX_PATH=$INSTALL_DIR
              -DERT_USE_OPENMP=ON
-             -DCMAKE_F_CLAGS='-Werror=all'
+             -DCMAKE_C_CLAGS='-Werror=all'
              -DCMAKE_CXX_FLAGS='-Werror -Wno-unused-result'
   - make
   - make install
