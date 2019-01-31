@@ -181,7 +181,7 @@ install_example("share/ert/site-config" ${SHARE_DIR})
 install(PROGRAMS bin/job_dispatch.py DESTINATION bin )
 
 
-foreach (script ecl100 flow rms)
+foreach (script ecl100 ecl300 flow rms)
   install(PROGRAMS "share/ert/forward-models/res/script/${script}" DESTINATION "${SHARE_DIR}/forward-models/res/script")
 endforeach()
 
