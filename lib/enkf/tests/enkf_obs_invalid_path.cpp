@@ -25,7 +25,7 @@
 
 
 void test_invalid_path() {
-  test_work_area_type * work_area = test_work_area_alloc("conf");
+  test_work_area_type * work_area = test_work_area_alloc__("conf", true);
   util_make_path("obs_path");
   {
     FILE * stream = util_fopen("obs_path/conf.txt","w");
@@ -51,7 +51,6 @@ void test_invalid_path() {
   test_assert_false(conf_instance_validate(enkf_conf));
 
   conf_instance_free(enkf_conf);
-  test_work_area_set_store(work_area, true);
 
   test_work_area_free(work_area);
 }

@@ -139,8 +139,7 @@ int main(int argc, char ** argv) {
   const int running_timeout = 0; // Pretend that the node running the job is dead
   const int sec = 1000*1000;
 
-  test_work_area_type * work_area = test_work_area_alloc("job_timeout");
-  test_work_area_set_store(work_area, true);
+  test_work_area_type * work_area = test_work_area_alloc__("job_timeout", true);
 
   job_type **jobs = alloc_jobs(number_of_jobs, argv[1]);
 

@@ -76,10 +76,9 @@ int main(int argc , char ** argv) {
   const char * init_file   = argv[3];
   const char * forward_init_string = argv[4];
 
-  test_work_area_type * work_area = test_work_area_alloc(config_file );
+  test_work_area_type * work_area = test_work_area_alloc__(config_file, true);
   test_work_area_copy_directory_content( work_area , root_path );
   test_work_area_install_file( work_area , init_file );
-  test_work_area_set_store(work_area, true);
 
   bool strict = true;
   res_config_type * res_config = res_config_alloc_load(config_file);

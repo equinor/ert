@@ -25,7 +25,6 @@ class ErtTest(BaseCClass):
     TYPE_NAME = "ert_test"
 
     _alloc         = ResPrototype("void* ert_test_context_alloc_python( test_area , res_config)", bind = False)
-    _set_store     = ResPrototype("void* ert_test_context_set_store( ert_test , bool)")
     _free          = ResPrototype("void  ert_test_context_free( ert_test )")
     _get_cwd       = ResPrototype("char* ert_test_context_get_cwd( ert_test )")
     _get_enkf_main = ResPrototype("enkf_main_ref ert_test_context_get_main( ert_test )")
@@ -36,7 +35,7 @@ class ErtTest(BaseCClass):
         if model_config is None and config_dict is None:
             raise ValueError("Must supply either model_config or config_dict argument")
 
-        work_area = TestArea( test_name )
+        work_area = TestArea( test_name, store_area = store_area )
         work_area.convertToCReference( self )
 
         if model_config:
@@ -49,13 +48,9 @@ class ErtTest(BaseCClass):
         res_config.convertToCReference( self )
         c_ptr = self._alloc(work_area, res_config)
         super(ErtTest, self).__init__(c_ptr)
-        self.setStore(store_area)
 
         self.__ert = None
 
-
-    def setStore(self, store):
-        self._set_store(store)
 
     def getErt(self):
         """ @rtype: EnKFMain """

@@ -44,7 +44,7 @@ struct ert_test_context_struct {
 UTIL_IS_INSTANCE_FUNCTION( ert_test_context , ERT_TEST_CONTEXT_TYPE_ID )
 
 
-static ert_test_context_type * ert_test_context_alloc__( test_work_area_type * work_area, res_config_type * res_config, const char * ui_mode) {
+static ert_test_context_type * ert_test_context_alloc_internal( test_work_area_type * work_area, res_config_type * res_config, const char * ui_mode) {
   ert_test_context_type * test_context = (ert_test_context_type *)util_malloc( sizeof * test_context );
   UTIL_TYPE_ID_INIT( test_context , ERT_TEST_CONTEXT_TYPE_ID );
 
@@ -62,24 +62,26 @@ static ert_test_context_type * ert_test_context_alloc__( test_work_area_type * w
 }
 
 
-ert_test_context_type * ert_test_context_alloc( const char * test_name , const char * model_config) {
+ert_test_context_type * ert_test_context_alloc__( const char * test_name , const char * model_config, bool store_area) {
   if (!util_file_exists(model_config))
     return NULL;
 
-  test_work_area_type * work_area = test_work_area_alloc(test_name);
-  test_work_area_set_store( work_area , false );
+  test_work_area_type * work_area = test_work_area_alloc__(test_name, store_area);
   test_work_area_copy_parent_content(work_area , model_config );
 
   char * config_file = util_split_alloc_filename( model_config );
   res_config_type * res_config = res_config_alloc_load(config_file);
   free( config_file );
 
-  return ert_test_context_alloc__( work_area, res_config, "tui");
+  return ert_test_context_alloc_internal( work_area, res_config, "tui");
 }
 
+ert_test_context_type * ert_test_context_alloc( const char * test_name , const char * model_config) {
+  return ert_test_context_alloc__(test_name, model_config, false);
+}
 
 ert_test_context_type * ert_test_context_alloc_python( test_work_area_type * work_area, res_config_type * res_config) {
-  return ert_test_context_alloc__( work_area, res_config , "gui");
+  return ert_test_context_alloc_internal( work_area, res_config , "gui");
 }
 
 
@@ -122,6 +124,7 @@ bool ert_test_context_install_workflow_job( ert_test_context_type * test_context
   } else
     return false;
 }
+
 
 
 bool ert_test_context_install_workflow( ert_test_context_type * test_context , const char * workflow_name , const char * workflow_file) {
@@ -180,6 +183,3 @@ bool ert_test_context_run_worklow_job( ert_test_context_type * test_context , co
 }
 
 
-void ert_test_context_set_store( ert_test_context_type * test_context , bool store) {
-  test_work_area_set_store( test_context->work_area , store );
-}

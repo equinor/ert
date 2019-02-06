@@ -31,9 +31,8 @@
 
 
 ert_test_context_type * create_context( const char * config_file, const char * name ) {
-  ert_test_context_type * test_context = ert_test_context_alloc(name , config_file);
+  ert_test_context_type * test_context = ert_test_context_alloc__(name , config_file, true);
   usleep( 2 * 100000 );
-  ert_test_context_set_store( test_context , true );
   return test_context;
 }
 
