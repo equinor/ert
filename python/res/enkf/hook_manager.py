@@ -6,13 +6,20 @@ from res import ResPrototype
 class HookManager(BaseCClass):
     TYPE_NAME = "hook_manager"
 
+    _alloc                 = ResPrototype("void* hook_manager_alloc(ert_workflow_list, config_content)", bind=False)
+    _free                  = ResPrototype("void hook_manager_free(subst_config)")
     _get_runpath_list_file = ResPrototype("char* hook_manager_get_runpath_list_file(hook_manager)")
     _get_runpath_list      = ResPrototype("runpath_list_ref  hook_manager_get_runpath_list(hook_manager)")
     _iget_hook_workflow    = ResPrototype("hook_workflow_ref hook_manager_iget_hook_workflow(hook_manager, int)")
     _size                  = ResPrototype("int hook_manager_get_size(hook_manager)")
 
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+    def __init__(self, workflow_list, config_content):
+        c_ptr = self._alloc(workflow_list, config_content)
+
+        if c_ptr is None:
+            raise ValueError('Failed to construct RNGConfig instance')
+
+        super(HookManager, self).__init__(c_ptr)
 
     def __len__(self):
         """ @rtype: int """
@@ -52,3 +59,6 @@ class HookManager(BaseCClass):
 
             workflow = hook_workflow.getWorkflow()
             workflow.run(ert_self, context=workflow_list.getContext())
+
+    def free(self):
+        self._free()
