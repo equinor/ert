@@ -24,17 +24,20 @@ from res import ResPrototype
 class RNGConfig(BaseCClass):
 
     TYPE_NAME = "rng_config"
-
+    _alloc        = ResPrototype("void* rng_config_alloc(config_content)", bind=False)
+    _free         = ResPrototype("void rng_config_free(rng_config)")
     _rng_alg_type = ResPrototype("rng_alg_type_enum rng_config_get_type(rng_config)")
     _load_file    = ResPrototype("char* rng_config_get_seed_load_file(rng_config)")
     _store_file   = ResPrototype("char* rng_config_get_seed_store_file(rng_config)")
     _random_seed  = ResPrototype("char* rng_config_get_random_seed(rng_config)")
 
-    def __init__(self, user_config_file):
-        raise NotImplementedError(
-                "RNGConfig does not support "
-                "initialization from Python."
-                )
+    def __init__(self, config_content):
+        c_ptr = self._alloc(config_content)
+
+        if c_ptr is None:
+            raise ValueError('Failed to construct RNGConfig instance')
+
+        super(RNGConfig, self).__init__(c_ptr)
 
     @property
     def alg_type(self):
@@ -51,3 +54,6 @@ class RNGConfig(BaseCClass):
     @property
     def random_seed(self):
         return self._random_seed()
+
+    def free(self):
+        self._free()
