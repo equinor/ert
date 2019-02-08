@@ -18,14 +18,20 @@ from os.path import isfile
 
 from cwrap import BaseCClass
 from res import ResPrototype
-from res.enkf import SiteConfig
 
 class SubstConfig(BaseCClass):
     TYPE_NAME = "subst_config"
+    _alloc          = ResPrototype("void* subst_config_alloc(config_content)", bind=False)
+    _free           = ResPrototype("void  subst_config_free(subst_config)")
     _get_subst_list = ResPrototype("subst_list_ref subst_config_get_subst_list( subst_config )")
 
-    def __init__(self):
-        raise NotImplementedError("Can not instantiate directly")
+    def __init__(self, config_content):
+        c_ptr = self._alloc(config_content)
+
+        if c_ptr is None:
+            raise ValueError('Failed to construct RNGConfig instance')
+
+        super(SubstConfig, self).__init__(c_ptr)
 
     def __getitem__(self, key):
         subst_list = self._get_subst_list( )
@@ -38,3 +44,6 @@ class SubstConfig(BaseCClass):
     @property
     def subst_list(self):
         return self._get_subst_list().setParent(self)
+
+    def free(self):
+        self._free()
