@@ -27,7 +27,8 @@ from res.analysis import AnalysisModule
 class AnalysisConfig(BaseCClass):
     TYPE_NAME = "analysis_config"
 
-    _alloc = ResPrototype("void* analysis_config_alloc_load(char*)", bind = False)
+    _alloc = ResPrototype("void* analysis_config_alloc(config_content)", bind=False)
+    _alloc_load = ResPrototype("void* analysis_config_alloc_load(char*)", bind=False)
     _free = ResPrototype("void analysis_config_free( analysis_config )")
     _get_rerun = ResPrototype("int analysis_config_get_rerun( analysis_config )")
     _set_rerun = ResPrototype("void analysis_config_set_rerun( analysis_config, bool)")
@@ -56,18 +57,26 @@ class AnalysisConfig(BaseCClass):
     _get_global_std_scaling = ResPrototype("double analysis_config_get_global_std_scaling(analysis_config)")
 
 
-    def __init__(self, user_config_file=None):
-        if user_config_file is not None and not isfile(user_config_file):
-            raise IOError('No such configuration file "%s".' % user_config_file)
+    def __init__(self, user_config_file = None, config_content = None):
 
-        c_ptr = self._alloc(user_config_file)
-        if c_ptr:
-            super(AnalysisConfig, self).__init__(c_ptr)
+        if user_config_file is not None:
+            if not isfile(user_config_file):
+                raise IOError('No such configuration file "%s".' % user_config_file)
+
+            c_ptr = self._alloc_load(user_config_file)
+            if c_ptr:
+                super(AnalysisConfig, self).__init__(c_ptr)
+            else:
+                raise ValueError('Failed to construct AnalysisConfig instance from config file %s.' % user_config_file)
         else:
-            raise ValueError(
-                    'Failed to construct AnalysisConfig instance from config file %s.'
-                    % user_config_file
-                    )
+            c_ptr = self._alloc(config_content)
+            if c_ptr:
+                super(AnalysisConfig, self).__init__(c_ptr)
+            else:
+                raise ValueError('Failed to construct SiteConfig instance.')
+
+
+
 
     def get_rerun(self):
         return self._get_rerun()
