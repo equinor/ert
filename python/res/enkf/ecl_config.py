@@ -26,34 +26,35 @@ from res.util import UIReturn
 class EclConfig(BaseCClass):
     TYPE_NAME = "ecl_config"
 
-    _alloc                  = ResPrototype("void* ecl_config_alloc(config_content)", bind = False)
-    _free                   = ResPrototype("void  ecl_config_free( ecl_config )")
-    _get_data_file          = ResPrototype("char* ecl_config_get_data_file(ecl_config)")
-    _set_data_file          = ResPrototype("void  ecl_config_set_data_file(ecl_config , char*)")
-    _validate_data_file     = ResPrototype("ui_return_obj ecl_config_validate_data_file(ecl_config , char*)")
-    _get_gridfile           = ResPrototype("char* ecl_config_get_gridfile(ecl_config)")
-    _set_gridfile           = ResPrototype("void  ecl_config_set_grid(ecl_config, char*)")
-    _validate_gridfile      = ResPrototype("ui_return_obj ecl_config_validate_grid(ecl_config, char*)")
-    _get_grid               = ResPrototype("ecl_grid_ref ecl_config_get_grid(ecl_config)")
-    _get_schedule_file      = ResPrototype("char* ecl_config_get_schedule_file(ecl_config)")
-    _set_schedule_file      = ResPrototype("void  ecl_config_set_schedule_file(ecl_config, char*, char*)")
-    _validate_schedule_file = ResPrototype("ui_return_obj ecl_config_validate_schedule_file(ecl_config, char*)")
-    _get_sched_file         = ResPrototype("sched_file_ref ecl_config_get_sched_file(ecl_config)")
-    _get_init_section       = ResPrototype("char* ecl_config_get_init_section(ecl_config)")
-    _set_init_section       = ResPrototype("void  ecl_config_set_init_section(ecl_config, char*)")
-    _validate_init_section  = ResPrototype("ui_return_obj ecl_config_validate_init_section(ecl_config, char*)")
-    _get_refcase_name       = ResPrototype("char* ecl_config_get_refcase_name(ecl_config)")
-    _get_refcase            = ResPrototype("ecl_sum_ref ecl_config_get_refcase(ecl_config)")
-    _load_refcase           = ResPrototype("void  ecl_config_load_refcase(ecl_config, char*)")
-    _validate_refcase       = ResPrototype("ui_return_obj ecl_config_validate_refcase(ecl_config, char*)")
-    _has_refcase            = ResPrototype("bool  ecl_config_has_refcase(ecl_config)")
-    _get_depth_unit         = ResPrototype("char* ecl_config_get_depth_unit(ecl_config)")
-    _get_pressure_unit      = ResPrototype("char* ecl_config_get_pressure_unit(ecl_config)")
-    _get_start_date         = ResPrototype("time_t ecl_config_get_start_date(ecl_config)")
-    _active                 = ResPrototype("bool ecl_config_active(ecl_config)")
+    _alloc                    = ResPrototype("void* ecl_config_alloc(config_content)", bind=False)
+    _free                     = ResPrototype("void  ecl_config_free( ecl_config )")
+    _get_data_file            = ResPrototype("char* ecl_config_get_data_file(ecl_config)")
+    _set_data_file            = ResPrototype("void  ecl_config_set_data_file(ecl_config , char*)")
+    _validate_data_file       = ResPrototype("ui_return_obj ecl_config_validate_data_file(ecl_config , char*)")
+    _get_gridfile             = ResPrototype("char* ecl_config_get_gridfile(ecl_config)")
+    _set_gridfile             = ResPrototype("void  ecl_config_set_grid(ecl_config, char*)")
+    _validate_gridfile        = ResPrototype("ui_return_obj ecl_config_validate_grid(ecl_config, char*)")
+    _get_grid                 = ResPrototype("ecl_grid_ref ecl_config_get_grid(ecl_config)")
+    _get_schedule_file        = ResPrototype("char* ecl_config_get_schedule_file(ecl_config)")
+    _set_schedule_file        = ResPrototype("void  ecl_config_set_schedule_file(ecl_config, char*, char*)")
+    _validate_schedule_file   = ResPrototype("ui_return_obj ecl_config_validate_schedule_file(ecl_config, char*)")
+    _get_sched_file           = ResPrototype("sched_file_ref ecl_config_get_sched_file(ecl_config)")
+    _get_init_section         = ResPrototype("char* ecl_config_get_init_section(ecl_config)")
+    _set_init_section         = ResPrototype("void  ecl_config_set_init_section(ecl_config, char*)")
+    _validate_init_section    = ResPrototype("ui_return_obj ecl_config_validate_init_section(ecl_config, char*)")
+    _get_refcase_name         = ResPrototype("char* ecl_config_get_refcase_name(ecl_config)")
+    _get_refcase              = ResPrototype("ecl_sum_ref ecl_config_get_refcase(ecl_config)")
+    _load_refcase             = ResPrototype("void  ecl_config_load_refcase(ecl_config, char*)")
+    _validate_refcase         = ResPrototype("ui_return_obj ecl_config_validate_refcase(ecl_config, char*)")
+    _has_refcase              = ResPrototype("bool  ecl_config_has_refcase(ecl_config)")
+    _get_depth_unit           = ResPrototype("char* ecl_config_get_depth_unit(ecl_config)")
+    _get_pressure_unit        = ResPrototype("char* ecl_config_get_pressure_unit(ecl_config)")
+    _get_start_date           = ResPrototype("time_t ecl_config_get_start_date(ecl_config)")
+    _active                   = ResPrototype("bool ecl_config_active(ecl_config)")
+    _get_last_history_restart = ResPrototype("int ecl_config_get_last_history_restart(ecl_config)")
 
-    def __init__(self):
-        c_ptr = self._alloc(None)
+    def __init__(self, config_content = None):
+        c_ptr = self._alloc(config_content)
         if c_ptr:
             super(EclConfig, self).__init__(c_ptr)
         else:
@@ -155,3 +156,6 @@ class EclConfig(BaseCClass):
         Has ECLIPSE been configured?"
         """
         return self._active( )
+
+    def getLastHistoryRestart(self):
+        return self._get_last_history_restart()
