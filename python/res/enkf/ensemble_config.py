@@ -27,7 +27,7 @@ from res.enkf.enums import EnkfVarType, ErtImplType
 
 class EnsembleConfig(BaseCClass):
     TYPE_NAME = "ens_config"
-    _alloc = ResPrototype("void* ensemble_config_alloc(config_content, ecl_grid, ecl_sum)", bind = False)
+    _alloc = ResPrototype("void* ensemble_config_alloc(config_content, ecl_grid, ecl_sum)", bind=False)
     _free = ResPrototype("void ensemble_config_free( ens_config )")
     _has_key = ResPrototype("bool ensemble_config_has_key( ens_config , char* )")
     _size = ResPrototype("int ensemble_config_get_size( ens_config)")
@@ -44,14 +44,16 @@ class EnsembleConfig(BaseCClass):
 
 
 
-    def __init__(self):
-        c_ptr = self._alloc(None, None, None)
-        super(EnsembleConfig , self).__init__(c_ptr)
+    def __init__(self, config_content = None, grid = None, refcase = None):
+        c_ptr = self._alloc(config_content, grid, refcase)
 
+        if c_ptr is None:
+            raise ValueError("Failed to construct EnsembleConfig instance")
+
+        super(EnsembleConfig , self).__init__(c_ptr)
 
     def __len__(self):
         return self._size( )
-
 
     def __getitem__(self , key):
         """ @rtype: EnkfConfigNode """
@@ -60,10 +62,8 @@ class EnsembleConfig(BaseCClass):
         else:
             raise KeyError("The key:%s is not in the ensemble configuration" % key)
 
-
     def getNode(self, key):
         return self[key]
-
 
     def alloc_keylist(self):
         """ @rtype: StringList """
