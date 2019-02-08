@@ -50,8 +50,10 @@ class ConfigSettings(BaseCClass):
 
 
 
-    def __init__(self , root_key):
-        c_ptr = ConfigSettings._alloc( root_key )
+    def __init__(self , root_key, c_ptr = None):
+        if c_ptr is None:
+            c_ptr = ConfigSettings._alloc( root_key )
+
         super(ConfigSettings, self).__init__(c_ptr)
 
 

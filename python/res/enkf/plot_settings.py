@@ -21,11 +21,21 @@ from res.config import ConfigSettings
 
 class PlotSettings(ConfigSettings):
     TYPE_NAME    = "plot_settings"
+
+    _alloc       = ResPrototype("void* plot_settings_alloc(config_content)", bind=False)
     _init        = ResPrototype("void plot_settings_init(plot_settings)")
 
-    def __init__(self):
-        super(PlotSettings, self).__init__("PLOT_SETTING")
-        self._init( )
+    def __init__(self, config_content = None):
+        if config_content:
+            c_ptr = self._alloc(config_content)
+
+            if c_ptr is None:
+                raise ValueError('Failed to construct RNGConfig instance')
+
+            super(PlotSettings, self).__init__("PLOT_SETTING", c_ptr)
+        else:
+            super(PlotSettings, self).__init__("PLOT_SETTING")
+            self._init( )
 
     def getPath(self):
         """ @rtype: str """
@@ -33,5 +43,3 @@ class PlotSettings(ConfigSettings):
 
     def setPath(self, path):
         self["PATH"] = path
-
-
