@@ -43,6 +43,22 @@ typedef struct res_config_struct res_config_type;
   void res_config_init_config_parser(config_parser_type * config_parser);
   res_config_type * res_config_alloc_load(const char *);
   res_config_type * res_config_alloc(const config_content_type *);
+
+  res_config_type * res_config_alloc_full(char * config_dir,
+                                        char * user_config_file,
+                                        subst_config_type * subst_config,
+                                        site_config_type * site_config,
+                                        rng_config_type * rng_config,
+                                        analysis_config_type * analysis_config,
+                                        ert_workflow_list_type * workflow_list,
+                                        hook_manager_type * hook_manager,
+                                        ert_templates_type * templates,
+                                        config_settings_type * plot_settings,
+                                        ecl_config_type * ecl_config,
+                                        ensemble_config_type * ensemble_config,
+                                        model_config_type * model_config,
+                                        log_config_type * log_config,
+                                        config_content_type * config_content);
   void              res_config_free(res_config_type *);
   void              res_config_add_config_items(config_parser_type * config_parser);
 

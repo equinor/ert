@@ -24,19 +24,34 @@ from res import ResPrototype
 from res.config import (ConfigParser, ConfigContent, ConfigSettings,
                         UnrecognizedEnum)
 
-from res.enkf import (SiteConfig, AnalysisConfig, SubstConfig, ModelConfig, EclConfig,
-                      EnsembleConfig, RNGConfig, ConfigKeys)
+from res.enkf import (SiteConfig, AnalysisConfig, SubstConfig, ModelConfig, EclConfig, PlotSettings,
+                      EnsembleConfig, RNGConfig, ConfigKeys, ErtWorkflowList, HookManager, ErtTemplates, LogConfig)
 
 class ResConfig(BaseCClass):
-
     TYPE_NAME = "res_config"
 
     _alloc_load = ResPrototype("void* res_config_alloc_load(char*)", bind=False)
     _alloc      = ResPrototype("void* res_config_alloc(config_content)", bind=False)
     _free       = ResPrototype("void res_config_free(res_config)")
+    _alloc_full = ResPrototype("void* res_config_alloc_full("
+                               "char*, "+\
+                               "char*, "+\
+                               "subst_config, "+\
+                               "site_config, "+\
+                               "rng_config, "+\
+                               "analysis_config, "+\
+                               "ert_workflow_list, "+\
+                               "hook_manager, "+\
+                               "ert_templates, "+\
+                               "plot_settings, "+\
+                               "ecl_config, "+\
+                               "ens_config, "+\
+                               "model_config, "+\
+                               "log_config, "+\
+                               "config_content)"
+                               , bind=False)
 
     _user_config_file  = ResPrototype("char* res_config_get_user_config_file(res_config)")
-
     _config_path       = ResPrototype("char* res_config_get_config_directory(res_config)")
     _site_config       = ResPrototype("site_config_ref res_config_get_site_config(res_config)")
     _analysis_config   = ResPrototype("analysis_config_ref res_config_get_analysis_config(res_config)")
@@ -55,17 +70,67 @@ class ResConfig(BaseCClass):
 
 
     def __init__(self, user_config_file=None, config=None, throw_on_error=True):
+
         self._errors, self._failed_keys = None, None
         self._assert_input(user_config_file, config, throw_on_error)
 
         if config is not None:
             config_content = self._build_config_content(config)
+            config_dir = config_content.getValue(ConfigKeys.CONFIG_DIRECTORY)
+
+            subst_config = SubstConfig(config_content=config_content)
+            site_config = SiteConfig(config_content=config_content)
+            rng_config = RNGConfig(config_content=config_content)
+            analysis_config = AnalysisConfig(config_content=config_content)
+            plot_config = PlotSettings(config_content=config_content)
+            ecl_config = EclConfig(config_content=config_content)
+            log_config = LogConfig(config_content=config_content)
+
+            ert_workflow_list = ErtWorkflowList(ert_workflow_list=subst_config.subst_list,
+                                                config_content=config_content)
+
+            hook_manager = HookManager(workflow_list=ert_workflow_list,
+                                       config_content=config_content)
+
+            ert_templates = ErtTemplates(parent_subst=subst_config.subst_list,
+                                         config_content=config_content)
+
+            ensemble_config = EnsembleConfig(config_content=config_content,
+                                             grid=ecl_config.getGrid(),
+                                             refcase=ecl_config.getRefcase())
+
+            model_config = ModelConfig(config_content=config_content,
+                                       data_root=config_dir,
+                                       joblist=site_config.get_installed_jobs(),
+                                       last_history_restart=ecl_config.getLastHistoryRestart(),
+                                       sched_file=ecl_config._get_sched_file(),
+                                       refcase=ecl_config.getRefcase())
+
+            configs = [
+                     subst_config,
+                     site_config,
+                     rng_config,
+                     analysis_config,
+                     ert_workflow_list,
+                     hook_manager,
+                     ert_templates,
+                     plot_config,
+                     ecl_config,
+                     ensemble_config,
+                     model_config,
+                     log_config,
+                     config_content]
 
             c_ptr = None
+
             if not self.errors or not throw_on_error:
-                c_ptr = self._alloc(config_content)
+                for conf in configs:
+                    conf.convertToCReference(None)
+                c_ptr = self._alloc_full(config_dir, user_config_file, *configs)
+
         else:
             c_ptr = self._alloc_load(user_config_file)
+
 
         if c_ptr:
             super(ResConfig, self).__init__(c_ptr)
@@ -74,7 +139,6 @@ class ResConfig(BaseCClass):
                     'Failed to construct ResConfig instance from %r.'
                     % (user_config_file if user_config_file else config)
                     )
-
 
     def _assert_input(self, user_config_file, config, throw_on_error):
         if config and not isinstance(config, dict):

@@ -239,6 +239,40 @@ res_config_type * res_config_alloc(const config_content_type * config_content) {
   return res_config;
 }
 
+res_config_type * res_config_alloc_full(char * config_dir,
+                                        char * user_config_file,
+                                        subst_config_type * subst_config,
+                                        site_config_type * site_config,
+                                        rng_config_type * rng_config,
+                                        analysis_config_type * analysis_config,
+                                        ert_workflow_list_type * workflow_list,
+                                        hook_manager_type * hook_manager,
+                                        ert_templates_type * templates,
+                                        config_settings_type * plot_settings,
+                                        ecl_config_type * ecl_config,
+                                        ensemble_config_type * ensemble_config,
+                                        model_config_type * model_config,
+                                        log_config_type * log_config,
+                                        config_content_type * config_content){
+  res_config_type  * res_config = res_config_alloc_empty();
+
+  res_config->user_config_file = util_alloc_string_copy(user_config_file);
+  res_config->config_dir = util_alloc_string_copy(config_dir);
+  res_config->subst_config = subst_config;
+  res_config->site_config = site_config;
+  res_config->rng_config = rng_config;
+  res_config->analysis_config = analysis_config;
+  res_config->workflow_list = workflow_list;
+  res_config->hook_manager = hook_manager;
+  res_config->templates = templates;
+  res_config->plot_config = plot_settings;
+  res_config->ecl_config = ecl_config;
+  res_config->ensemble_config = ensemble_config;
+  res_config->model_config = model_config;
+  res_config->log_config = log_config;
+
+  return res_config;
+}
 
 void res_config_free(res_config_type * res_config) {
   if(!res_config)
