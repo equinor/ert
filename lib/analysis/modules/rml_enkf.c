@@ -620,6 +620,7 @@ void rml_enkf_updateA(void * module_data,
 
 void rml_enkf_init_update(void * arg,
                           const bool_vector_type * ens_mask,
+                          const bool_vector_type * obs_mask,
                           const matrix_type * S,
                           const matrix_type * R,
                           const matrix_type * dObs,
