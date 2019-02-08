@@ -26,6 +26,7 @@ from res.util import PathFormat
 class ModelConfig(BaseCClass):
     TYPE_NAME = "model_config"
 
+    _alloc                       = ResPrototype("void*  model_config_alloc( config_content, char*, ext_joblist, int, sched_file, ecl_sum)", bind=False)
     _free                        = ResPrototype("void  model_config_free( model_config )")
     _get_forward_model           = ResPrototype("forward_model_ref model_config_get_forward_model(model_config)")
     _get_max_internal_submit     = ResPrototype("int   model_config_get_max_internal_submit(model_config)")
@@ -48,9 +49,13 @@ class ModelConfig(BaseCClass):
     _get_data_root               = ResPrototype("char* model_config_get_data_root(model_config)")
     _set_data_root               = ResPrototype("void model_config_get_data_root(model_config, char*)")
 
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+    def __init__(self, config_content, data_root, joblist, last_history_restart, sched_file, refcase, is_reference = False):
+        c_ptr = self._alloc(config_content, data_root, joblist, last_history_restart, sched_file, refcase)
 
+        if c_ptr is None:
+            raise ValueError('Failed to construct SiteConfig instance.')
+
+        super(ModelConfig, self).__init__(c_ptr, is_reference=is_reference)
 
     def hasHistory(self):
         return self._has_history()
