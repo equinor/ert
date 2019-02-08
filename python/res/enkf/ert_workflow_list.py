@@ -7,7 +7,8 @@ from res.job_queue import Workflow, WorkflowJob
 
 class ErtWorkflowList(BaseCClass):
     TYPE_NAME = "ert_workflow_list"
-
+    _alloc          = ResPrototype("void* ert_workflow_list_alloc(ert_workflow_list, config_content)", bind=False)
+    _free           = ResPrototype("void ert_workflow_list_free(ert_workflow_list)")
     _alloc_namelist = ResPrototype("stringlist_obj ert_workflow_list_alloc_namelist(ert_workflow_list)")
     _has_workflow   = ResPrototype("bool ert_workflow_list_has_workflow(ert_workflow_list, char*)")
     _get_workflow   = ResPrototype("workflow_ref ert_workflow_list_get_workflow(ert_workflow_list, char*)")
@@ -18,8 +19,13 @@ class ErtWorkflowList(BaseCClass):
     _get_job_names  = ResPrototype("stringlist_obj ert_workflow_list_get_job_names(ert_workflow_list)")
     _free           = ResPrototype("void ert_workflow_list_free(ert_workflow_list)")
 
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+    def __init__(self,  ert_workflow_list, config_content):
+        c_ptr = self._alloc(ert_workflow_list, config_content)
+
+        if c_ptr is None:
+            raise ValueError('Failed to construct ErtWorkflowList instance')
+
+        super(ErtWorkflowList, self).__init__(c_ptr)
 
     def getWorkflowNames(self):
         """ @rtype: StringList """
@@ -76,3 +82,6 @@ class ErtWorkflowList(BaseCClass):
             if job.isPlugin():
                 plugins.append(job)
         return plugins
+
+    def free(self):
+        self._free()
