@@ -23,27 +23,29 @@ from res.util.enums import MessageLevelEnum
 from res import ResPrototype
 
 class LogConfig(BaseCClass):
-
     TYPE_NAME = "log_config"
 
-    _alloc     = ResPrototype("void* log_config_alloc_load(char*)", bind=False)
-    _free      = ResPrototype("void log_config_free(log_config)")
+    _alloc      = ResPrototype("void* log_config_alloc(config_content)", bind=False)
+    _alloc_load = ResPrototype("void* log_config_alloc_load(char*)", bind=False)
+    _free       = ResPrototype("void log_config_free(log_config)")
+    _log_file   = ResPrototype("char* log_config_get_log_file(log_config)")
+    _log_level  = ResPrototype("message_level_enum log_config_get_log_level(log_config)")
 
-    _log_file  = ResPrototype("char* log_config_get_log_file(log_config)")
-    _log_level = ResPrototype("message_level_enum log_config_get_log_level(log_config)")
+    def __init__(self, user_config_file = None, config_content = None):
+        if config_content is None:
+            if user_config_file is not None and not isfile(user_config_file):
+                raise IOError('No such configuration file "%s".' % user_config_file)
 
-    def __init__(self, user_config_file):
-        if user_config_file is not None and not isfile(user_config_file):
-            raise IOError('No such configuration file "%s".' % user_config_file)
-
-        c_ptr = self._alloc(user_config_file)
-        if c_ptr:
-            super(LogConfig, self).__init__(c_ptr)
+            c_ptr = self._alloc_load(user_config_file)
+            if c_ptr:
+                super(LogConfig, self).__init__(c_ptr)
+            else:
+                raise ValueError('Failed to construct LogConfig instance from config file %s.' % user_config_file)
         else:
-            raise ValueError(
-                    'Failed to construct LogConfig instance from config file %s.'
-                    % user_config_file
-                    )
+            c_ptr = self._alloc(config_content)
+            if c_ptr is None:
+                raise ValueError('Failed to construct LogConfig instance')
+            super(LogConfig, self).__init__(c_ptr)
 
     def __repr__(self):
         return "LogConfig(log_file=%s, log_level=%r)" % (
