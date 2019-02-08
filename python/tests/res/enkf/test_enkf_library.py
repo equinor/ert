@@ -12,6 +12,7 @@ from res.enkf import GenDataConfig, FieldConfig, EnkfFs, EnkfObs, EnKFState, Ens
 from res.enkf.util import TimeMap
 
 
+
 @equinor_test()
 class EnKFLibraryTest(ResTest):
     def setUp(self):
@@ -19,7 +20,7 @@ class EnKFLibraryTest(ResTest):
 
     def test_failed_class_creation(self):
         classes = [EnkfConfigNode, EnKFState,
-                   ErtTemplate, ErtTemplates, LocalConfig, ModelConfig]
+                   ErtTemplate, LocalConfig]
 
         for cls in classes:
             with self.assertRaises(NotImplementedError):
