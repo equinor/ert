@@ -294,6 +294,3 @@ class BaseRunModel(object):
 
     def count_active_realizations(self, run_context):
         return sum(run_context.get_mask( ))
-
-    def __str__(self):
-        return self._name

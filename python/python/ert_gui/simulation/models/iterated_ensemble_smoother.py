@@ -2,12 +2,12 @@ from res.enkf.enums import EnkfInitModeEnum, HookRuntime
 from res.enkf import ErtRunContext
 from ert_gui.ertwidgets.models.ertmodel import getNumberOfIterations
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
-
+from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, getQueueConfig
 
 class IteratedEnsembleSmoother(BaseRunModel):
 
-    def __init__(self, queue_config):
-        super(IteratedEnsembleSmoother, self).__init__("Iterated Ensemble Smoother", queue_config , phase_count=2)
+    def __init__(self):
+        super(IteratedEnsembleSmoother, self).__init__("Iterated Ensemble Smoother", getQueueConfig() , phase_count=2)
         self.support_restart = False
 
     def setAnalysisModule(self, module_name):
@@ -126,5 +126,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self._last_run_iteration = run_context.get_iter()
         return run_context
 
-
-
+    @classmethod
+    def __repr__(cls):
+        return "Iterated Ensemble Smoother"

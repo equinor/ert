@@ -34,7 +34,7 @@ from ert_gui.simulation.models import MultipleDataAssimilation
 
 class MultipleDataAssimilationPanel(SimulationConfigPanel):
     def __init__(self):
-        SimulationConfigPanel.__init__(self, MultipleDataAssimilation( getQueueConfig() ))
+        SimulationConfigPanel.__init__(self, MultipleDataAssimilation)
 
         layout = QFormLayout()
 
@@ -54,6 +54,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self._target_case_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Target case format:", self._target_case_format_field)
 
+        self.weights = MultipleDataAssimilation.default_weights
         self._createInputForWeights(layout)
 
         self._analysis_module_selector = AnalysisModuleSelector(iterable=False, help_link="config/analysis/analysis_module")
@@ -72,13 +73,15 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
 
         self.setLayout(layout)
 
+
+
     def _createInputForWeights(self, layout):
-        relative_iteration_weights_model = ValueModel(self.getSimulationModel().getWeights())
+        relative_iteration_weights_model = ValueModel( self.weights)
         self._relative_iteration_weights_box = StringBox(relative_iteration_weights_model, help_link="config/simulation/iteration_weights", continuous_update=True)
         self._relative_iteration_weights_box.setValidator(NumberListStringArgument())
         layout.addRow("Relative Weights:", self._relative_iteration_weights_box)
 
-        relative_iteration_weights_model.valueChanged.connect(self.getSimulationModel().setWeights)
+        relative_iteration_weights_model.valueChanged.connect(self.setWeights)
 
         normalized_weights_model = ValueModel()
         normalized_weights_widget = ActiveLabel(normalized_weights_model, help_link="config/simulation/iteration_weights")
@@ -103,7 +106,13 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
     def getSimulationArguments(self):
         arguments = {"active_realizations": self._active_realizations_model.getActiveRealizationsMask(),
                      "target_case": self._target_case_format_model.getValue(),
-                     "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName()
+                     "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName(),
+                     "weights": self.weights
                      }
         return arguments
 
+
+    def setWeights(self, weights):
+        str_weights = str(weights)
+        print("Weights changed: %s" % str_weights)
+        self.weights = str_weights

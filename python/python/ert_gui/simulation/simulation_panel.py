@@ -74,7 +74,7 @@ class SimulationPanel(QWidget):
         self._simulation_stack.addWidget(panel)
         simulation_model = panel.getSimulationModel()
         self._simulation_widgets[simulation_model] = panel
-        self._simulation_mode_combo.addItem(str(simulation_model), simulation_model)
+        self._simulation_mode_combo.addItem(simulation_model.__repr__(),simulation_model)
         panel.simulationConfigurationChanged.connect(self.validationStatusChanged)
 
 
@@ -104,7 +104,7 @@ class SimulationPanel(QWidget):
         if start_simulations == QMessageBox.Yes:
             run_model = self.getCurrentSimulationModel()
             arguments = self.getSimulationArguments()
-            dialog = RunDialog(run_model, self)
+            dialog = RunDialog(run_model(), self)
             dialog.startSimulation( arguments )
             dialog.exec_()
 
