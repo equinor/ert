@@ -18,7 +18,7 @@ from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
 class EnsembleExperimentPanel(SimulationConfigPanel):
 
     def __init__(self):
-        SimulationConfigPanel.__init__(self, EnsembleExperiment( getQueueConfig( ) ))
+        SimulationConfigPanel.__init__(self, EnsembleExperiment)
 
         layout = QFormLayout()
 

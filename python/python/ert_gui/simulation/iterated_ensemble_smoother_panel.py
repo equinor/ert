@@ -18,7 +18,7 @@ from ert_gui.simulation.models import IteratedEnsembleSmoother
 
 class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
     def __init__(self):
-        SimulationConfigPanel.__init__(self, IteratedEnsembleSmoother( getQueueConfig( )))
+        SimulationConfigPanel.__init__(self, IteratedEnsembleSmoother)
 
         layout = QFormLayout()
 

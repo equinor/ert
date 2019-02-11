@@ -20,9 +20,8 @@ from ecl.util.util import BoolVector
 class SingleTestRunPanel(SimulationConfigPanel):
 
     def __init__(self):
-        queue_config = getQueueConfig( )
-        local_queue_config = queue_config.create_local_copy( )
-        SimulationConfigPanel.__init__(self, SingleTestRun( local_queue_config ))
+
+        SimulationConfigPanel.__init__(self, SingleTestRun)
         
         layout = QFormLayout()
 

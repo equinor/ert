@@ -19,24 +19,17 @@ from res.enkf.enums import RealizationStateEnum
 from res.enkf import ErtRunContext
 
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
-
+from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, getQueueConfig
 
 class MultipleDataAssimilation(BaseRunModel):
     """
     Run Multiple Data Assimilation (MDA) Ensemble Smoother with custom weights.
     """
+    default_weights = "3, 2, 1"
 
-    def __init__(self, queue_config):
-        super(MultipleDataAssimilation, self).__init__("Multiple Data Assimilation (ES MDA)", queue_config , phase_count=2)
-        self.weights = "3, 2, 1" # default value
-
-    def getWeights(self):
-        return self.weights
-
-    def setWeights(self, weights):
-        str_weights = str(weights)
-        print("Weights changed: %s" % str_weights)
-        self.weights = str_weights
+    def __init__(self):
+        super(MultipleDataAssimilation, self).__init__("Multiple Data Assimilation (ES MDA)", getQueueConfig() , phase_count=2)
+        self.weights = MultipleDataAssimilation.default_weights
 
     def setAnalysisModule(self, module_name):
         module_load_success = self.ert().analysisConfig().selectModule(module_name)
@@ -47,7 +40,7 @@ class MultipleDataAssimilation(BaseRunModel):
     def runSimulations(self, arguments):
         context = self.create_context(arguments, 0, None)
         self.checkMinimumActiveRealizations(context)
-        weights = self.parseWeights(self.weights)
+        weights = self.parseWeights(arguments['weights'])
         iteration_count = len(weights)
 
         self.setAnalysisModule(arguments["analysis_module"])
@@ -185,3 +178,7 @@ class MultipleDataAssimilation(BaseRunModel):
         self._run_context = run_context
         self._last_run_iteration = run_context.get_iter()
         return run_context
+
+    @classmethod
+    def __repr__(cls):
+        return "Muiltiple Data Assimilation"

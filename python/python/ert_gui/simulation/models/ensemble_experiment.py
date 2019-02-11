@@ -5,11 +5,12 @@ from res.util import ResLog
 from res.simulator import SimulationContext
 
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
+from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, getQueueConfig
 
 class EnsembleExperiment(BaseRunModel):
 
-    def __init__(self, queue_config):
-        super(EnsembleExperiment, self).__init__("Ensemble Experiment" , queue_config)
+    def __init__(self):
+        super(EnsembleExperiment, self).__init__("Ensemble Experiment" , getQueueConfig())
 
     def runSimulations__(self, arguments, run_msg):
 
@@ -61,3 +62,7 @@ class EnsembleExperiment(BaseRunModel):
         self._run_context = run_context
         self._last_run_iteration = run_context.get_iter()
         return run_context
+
+    @classmethod
+    def __repr__(cls):
+        return "Ensemble Experiment"
