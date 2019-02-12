@@ -2,7 +2,7 @@ import math
 import time
 try:
   from PyQt4.QtCore import QTimer, pyqtSignal, QVariant, Qt, QAbstractTableModel
-  from PyQt4.QtGui import QWidget, QPainter, QColor, QFrame, QGridLayout, QImage, QDialog, QTableView, QLabel
+  from PyQt4.QtGui import QWidget, QPainter, QColor, QFrame, QGridLayout, QImage, QDialog, QTableView, QLabel, QPen
 except ImportError:
   from PyQt5.QtCore import QTimer, pyqtSignal, QVariant, Qt, QAbstractTableModel
   from PyQt5.QtWidgets import QWidget, QFrame, QDialog, QTableView, QLabel, QGridLayout
@@ -52,6 +52,13 @@ class DetailedProgress(QFrame):
         self._current_iteration = iteration
         self.update()
 
+    def has_realization_failed(self, progress):
+        for job in progress:
+            if job.status == 'Failure':
+                return True
+
+        return False
+
     def paintEvent(self, event):
         super(DetailedProgress, self).paintEvent(event)
         if not self._current_progress:
@@ -81,12 +88,26 @@ class DetailedProgress(QFrame):
         for index, (iens, progress) in enumerate(self._current_progress):
             y = int(iens / self.grid_width)
             x = int(iens - (y * self.grid_width))
+
+            #painter.drawText(x * cell_width + cell_width / 2, y * cell_height + cell_height / 2, str(iens))
+            painter.setPen(QColor(80, 80, 80))
+            painter.drawText(x * cell_width, y * cell_height, cell_width, cell_height, Qt.AlignHCenter | Qt.AlignVCenter, str(iens))
+
             if iens == self.selected_realization:
-                painter.setPen(QColor(240, 240, 240))
+                pen = QPen(QColor(240, 240, 240))
+            elif(self.has_realization_failed(progress)):
+                pen = QPen(QColor(*self.state_colors['Failure']))
             else:
-                painter.setPen(QColor(80, 80, 80))
-            painter.drawRect(x * cell_width, y * cell_height, cell_width-1, cell_height-1)
-            painter.drawText(x * cell_width + cell_width / 2, y * cell_height + cell_height / 2, str(iens))
+                pen = QPen(QColor(80, 80, 80))
+
+            thickness = 4
+            pen.setWidth(thickness)
+            painter.setPen(pen)
+            painter.drawRect((x * cell_width)+(thickness / 2),
+                             (y * cell_height) + (thickness / 2),
+                             cell_width - (thickness - 1),
+                             cell_height - (thickness - 1))
+
 
 
 class SingleProgressModel(QAbstractTableModel):
