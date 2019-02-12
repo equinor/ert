@@ -1,12 +1,12 @@
 from res.job_queue import JobStatusType
 
 class SimulationStateStatus(object):
-    COLOR_WAITING = (164, 164, 255)
-    COLOR_PENDING = (164, 200, 255)
-    COLOR_RUNNING = (200, 255, 200)
+    COLOR_WAITING = (164, 200, 255)
+    COLOR_PENDING = (190,174,212)
+    COLOR_RUNNING = (255,255,153)
     COLOR_FAILED  = (255, 200, 200)
 
-    COLOR_FINISHED   = (200, 200, 200)
+    COLOR_FINISHED   = (127,201,127)
     COLOR_NOT_ACTIVE  = (255, 255, 255)
 
     def __init__(self, name, state, color):
