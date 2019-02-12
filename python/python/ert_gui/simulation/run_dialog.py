@@ -159,10 +159,13 @@ class RunDialog(QDialog):
                 error = self._run_model.getFailMessage()
                 QMessageBox.critical(self, "Simulations failed!", "The simulation failed with the following error:\n\n%s" % error)
                 self.reject()
-
+            return True
+        return False
 
     def updateRunStatus(self):
-        self.checkIfRunFinished()
+        if self.checkIfRunFinished():
+            self.total_progress.setProgress(self._run_model.getProgress())
+            return
 
         self.total_progress.setProgress(self._run_model.getProgress())
 
@@ -282,10 +285,15 @@ class RunDialog(QDialog):
         result = msg.exec_()
 
         if result == QMessageBox.Ok:
+            self.restart_button.setVisible(False)
+            self.kill_button.setVisible(True)
+            self.done_button.setVisible(False)
             active_realizations = self.create_mask_from_failed_realizations()
             self._simulations_argments['active_realizations'] = active_realizations
             self._simulations_argments['prev_successful_realizations'] += self.count_successful_realizations()
             self.startSimulation(self._simulations_argments)
+
+
 
     def update_realizations_view(self):
         completed = self._run_model.completed_realizations_mask
