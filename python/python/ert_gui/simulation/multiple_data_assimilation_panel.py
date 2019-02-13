@@ -23,7 +23,7 @@ except ImportError:
 
 from ert_gui.ertwidgets import addHelpToWidget, CaseSelector, ActiveLabel, AnalysisModuleSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, getQueueConfig
+from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
 from ert_gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
 from ert_gui.ertwidgets.stringbox import StringBox
