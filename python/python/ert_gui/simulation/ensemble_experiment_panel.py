@@ -8,7 +8,7 @@ except ImportError:
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, getQueueConfig
+from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
 from ert_gui.ertwidgets.stringbox import StringBox
 from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.simulation.models import EnsembleExperiment
