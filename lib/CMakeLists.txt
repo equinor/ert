@@ -713,9 +713,15 @@ add_config_test(gen_kw_logarithmic_test
 add_config_test(enkf_analysis_config_analysis_load enkf_analysis_config_analysis_load ${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/config/analysis_load_config)
 # It seems necessary to set the LD_LIBRARY_PATH for the loading of the
 # rml_enkf module to work.  Do understand why!
+if (UNIX AND NOT APPLE)
 set_property(TEST enkf_analysis_config_analysis_load PROPERTY
     ENVIRONMENT
     "ERT_SITE_CONFIG=${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/config/analysis_load_site_config;LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}:$ENV{LD_LIBRARY_PATH}")
+elseif (APPLE)
+set_property(TEST enkf_analysis_config_analysis_load PROPERTY
+    ENVIRONMENT
+    "ERT_SITE_CONFIG=${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/config/analysis_load_site_config_osx;DYLD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}:$ENV{DYLD_LIBRARY_PATH}")
+endif()
 
 add_config_test(enkf_workflow_job_test_version enkf_workflow_job_test_version ${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/workflow_jobs)
 #-----------------------------------------------------------------

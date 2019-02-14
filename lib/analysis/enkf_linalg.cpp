@@ -572,7 +572,7 @@ void enkf_linalg_set_randrot( matrix_type * Q  , rng_type * rng) {
   matrix_dgeqrf( Q , tau );  /* QR factorization */
   for (int i=0; i  < ens_size; i++) {
     double Qii = matrix_iget( Q , i,i);
-    sign[i] = Qii / abs(Qii);
+    sign[i] = (Qii>0) ? 1 : -1;
   }
 
   matrix_dorgqr( Q , tau , ens_size );
