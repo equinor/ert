@@ -119,6 +119,7 @@ void parse_workflows(int argc, char ** argv, stringlist_type * workflows) {
 int main (int argc, char ** argv) {
   text_splash();
   printf("\n");
+  printf("DEPRECATION WARNING: ERT tui is to be removed in ERT > 2.4.\n");
   printf("Documentation : %s \n","http://ert.nr.no");
   printf("git commit    : %s \n",ert_version_get_git_commit( ));
   printf("compile time  : %s \n",ert_version_get_build_time( ));
