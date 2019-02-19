@@ -41,11 +41,13 @@ def ert_parser():
 
     subparsers = parser.add_subparsers(
         title="Available user entries",
-        description='ERT can be accessed through various interfaces. Include '
+        description='ERT can be accessed through a GUI or CLI interface. Include '
                     'one of the following arguments to change between the '
-                    'interfaces. Note that different entry points may require'
+                    'interfaces. Note that different entry points may require '
                     'different additional arguments. See the help section for '
-                    'each interface for more details',
+                    'each interface for more details. DEPRECATION WARNING: '
+                    'Text User Interface and Shell Interface are to be removed in '
+                    'ERT > 2.4!',
         help="Available entry points")
 
 
@@ -59,25 +61,24 @@ def ert_parser():
 
 
     tui_parser = subparsers.add_parser('text',
-            help='Text user interface - provides a user interface in the terminal.'
-            ' Allows the user to interact within the terminal window ',
-            description='Text user interface')
+            help='Text user interface. Deprecated! Use CLI instead.',
+            description='Text user interface. Deprecated! Use CLI instead.')
     tui_parser.add_argument('config', type=valid_file,
             help="Ert configuration file")
     tui_parser.set_defaults(func=runTui)
 
 
     shell_parser = subparsers.add_parser('shell',
-            help='Shell interface - provides a user interface in the terminal.',
-            description='Shell interface')
+            help='Shell interface. Deprecated! Use CLI instead.',
+            description='Shell interface. Deprecated! Use CLI instead.')
     shell_parser.add_argument('config', type=valid_file,
             help="Ert configuration file")
     shell_parser.set_defaults(func=runShell)
 
 
     cli_parser = subparsers.add_parser('cli',
-            description="Command Line Interface",
-            help="command line help")
+            help='Command Line Interface - provides a user interface in the terminal.',
+            description="Command Line Interface")
     cli_parser.add_argument('config', type=valid_file,
             help="Ert configuration file")
     cli_parser.add_argument("--algorithm", type=str, required=True,

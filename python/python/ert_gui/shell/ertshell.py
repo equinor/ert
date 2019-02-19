@@ -43,11 +43,11 @@ class ErtShell(Cmd):
             "\n" \
             "Interactive shell for working with ERT.\n" \
             "\n" \
+            "-- DEPRECATION WARNING: ERT shell is to be removed in ERT > 2.4.\n" \
             "-- Type help for a list of supported commands.\n" \
             "-- Type exit or press Ctrl+D to end the shell session.\n" \
             "-- Press Tab for auto completion.\n" \
             "-- Arrow up/down for history.\n"
-
 
     def __init__(self, forget_history=False):
         Cmd.__init__(self)
