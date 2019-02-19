@@ -30,7 +30,7 @@ class PlotSettings(ConfigSettings):
             c_ptr = self._alloc(config_content)
 
             if c_ptr is None:
-                raise ValueError('Failed to construct RNGConfig instance')
+                raise ValueError('Failed to construct PlotSettings instance')
 
             super(PlotSettings, self).__init__("PLOT_SETTING", c_ptr)
         else:

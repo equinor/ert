@@ -33,7 +33,7 @@ class ErtTemplates(BaseCClass):
         c_ptr = self._alloc(parent_subst, config_content)
 
         if c_ptr is None:
-            raise ValueError('Failed to construct RNGConfig instance')
+            raise ValueError('Failed to construct ErtTemplates instance')
 
         super(ErtTemplates, self).__init__(c_ptr)
 
