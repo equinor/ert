@@ -1,4 +1,4 @@
-# ert [![Build Status](https://travis-ci.org/Statoil/ert.svg?branch=master)](https://travis-ci.org/Statoil/ert)
+# ert [![Build Status](https://travis-ci.org/Equinor/ert.svg?branch=master)](https://travis-ci.org/Equinor/ert)
 
 ERT - Ensemble based Reservoir Tool - is a tool to run ensemble based on
 reservoir models. ERT was originally devised as tool to do model updating
@@ -8,15 +8,15 @@ updating is the Ensemble Smoother (ES).
 
 The `ert` program is based on three different repositories:
 
-1. [libecl](https://github.com/Statoil/libecl) which contains utilities to read and write Eclipse files.
+1. [libecl](https://github.com/Equinor/libecl) which contains utilities to read and write Eclipse files.
 
-2. [libres](https://github.com/Statoil/libres) utilities to manage reservoir data, and algorithms do actually do model updating.
+2. [libres](https://github.com/Equinor/libres) utilities to manage reservoir data, and algorithms do actually do model updating.
 
 3. ert - this repository - the actual application and all of the GUI.
 
 ##  Building ert
 
-#### 1. Build and install [libecl](https://github.com/Statoil/libecl) and [libres](https://github.com/Statoil/libres). 
+#### 1. Build and install [libecl](https://github.com/Equinor/libecl) and [libres](https://github.com/Equinor/libres). 
 When configuring `libecl` and
 `libres` you should used the option `-DCMAKE_INSTALL_PREFIX` to tell ``cmake``
 where to install. The value passed to `CMAKE_INSTALL_PREFIX` will be needed when
@@ -83,7 +83,7 @@ When this process if over you will have a binary executable `ert` installed in
 To actually get ert to work at your site you need to configure details about
 your system; at the very least this means you must configure where your
 reservoir simulator is installed. This is described in the *Post installation*
-section of the [libres README](https://github.com/Statoil/libres). In addition
+section of the [libres README](https://github.com/Equinor/libres). In addition
 you might want to configure e.g. queue system in the `site-config` file, but
 that is not strictly necessary for a basic test.
 

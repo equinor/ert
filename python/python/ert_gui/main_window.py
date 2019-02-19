@@ -83,20 +83,20 @@ class GertMainWindow(QMainWindow):
 
 
     def __saveSettings(self):
-        settings = QSettings("Statoil", "Ert-Gui")
+        settings = QSettings("Equinor", "Ert-Gui")
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
 
 
     def closeEvent(self, event):
         #Use QT settings saving mechanism
-        #settings stored in ~/.config/Statoil/ErtGui.conf
+        #settings stored in ~/.config/Equinor/ErtGui.conf
         self.__saveSettings()
         QMainWindow.closeEvent(self, event)
 
 
     def __fetchSettings(self):
-        settings = QSettings("Statoil", "Ert-Gui")
+        settings = QSettings("Equinor", "Ert-Gui")
         if sys.version_info[0] == 2:
             self.restoreGeometry(settings.value("geometry").toByteArray())
             self.restoreState(settings.value("windowState").toByteArray())

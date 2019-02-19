@@ -56,9 +56,9 @@ function( symlink_at target link link_location)
   endif()
 endfunction()
 
-set(STATOIL_TESTDATA_ROOT "" CACHE PATH  "Root to Statoil internal testdata")
-if (EXISTS ${STATOIL_TESTDATA_ROOT})
-  symlink_at( "${STATOIL_TESTDATA_ROOT}" "Statoil" "${CMAKE_CURRENT_SOURCE_DIR}/test-data")
+set(EQUINOR_TESTDATA_ROOT "" CACHE PATH  "Root to Equinor internal testdata")
+if (EXISTS ${EQUINOR_TESTDATA_ROOT})
+  symlink_at( "${EQUINOR_TESTDATA_ROOT}" "Equinor" "${CMAKE_CURRENT_SOURCE_DIR}/test-data")
 endif()
 
 symlink_at( "${CMAKE_CURRENT_SOURCE_DIR}/share" "share" "${PROJECT_BINARY_DIR}")

@@ -7,9 +7,9 @@ _Short description of the approach_
 
 
 **Pre un-WIP checklist**
-- [ ] Statoil tests pass locally
+- [ ] Equinor tests pass locally
 - [ ] Have completed graphical integration test steps
 
 **Depends on**
-* Statoil/libres#
-* Statoil/libecl#
+* Equinor/libres#
+* Equinor/libecl#

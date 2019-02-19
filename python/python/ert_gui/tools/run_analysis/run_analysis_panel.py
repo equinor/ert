@@ -1,4 +1,4 @@
-#  Copyright (C) 2016  Statoil ASA, Norway.
+#  Copyright (C) 2016  Equinor ASA, Norway.
 #
 #  The file 'run_analysis_panel.py' is part of ERT - Ensemble based Reservoir Tool.
 #

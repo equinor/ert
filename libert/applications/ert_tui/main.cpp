@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway.
+   Copyright (C) 2011  Equinor ASA, Norway.
 
    The file 'main.c' is part of ERT - Ensemble based Reservoir Tool.
 
@@ -79,7 +79,7 @@ void enkf_usage() {
   printf(" **                                                                 **\n");
   printf(" **-----------------------------------------------------------------**\n");
   printf(" ** You have successfully started the ert program developed at      **\n");
-  printf(" ** Statoil. Before you can actually start using the program, you   **\n");
+  printf(" ** Equinor. Before you can actually start using the program, you   **\n");
   printf(" ** must create a configuration file. When the configuration file   **\n");
   printf(" ** has been created, you can start the ert application with:       **\n");
   printf(" **                                                                 **\n");
