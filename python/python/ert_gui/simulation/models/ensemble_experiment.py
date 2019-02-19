@@ -1,8 +1,5 @@
 from res.enkf.enums import HookRuntime
 from res.enkf import ErtRunContext
-from res.util import ResLog
-
-from res.simulator import SimulationContext
 
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, getQueueConfig
@@ -10,7 +7,7 @@ from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, 
 class EnsembleExperiment(BaseRunModel):
 
     def __init__(self):
-        super(EnsembleExperiment, self).__init__("Ensemble Experiment" , getQueueConfig())
+        super(EnsembleExperiment, self).__init__(getQueueConfig())
 
     def runSimulations__(self, arguments, run_msg):
 
@@ -64,5 +61,5 @@ class EnsembleExperiment(BaseRunModel):
         return run_context
 
     @classmethod
-    def __repr__(cls):
+    def name(cls):
         return "Ensemble Experiment"

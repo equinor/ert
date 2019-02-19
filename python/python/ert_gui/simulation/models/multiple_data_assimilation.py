@@ -13,7 +13,6 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.enums import HookRuntime
 from res.enkf.enums import RealizationStateEnum
 from res.enkf import ErtRunContext
@@ -28,7 +27,7 @@ class MultipleDataAssimilation(BaseRunModel):
     default_weights = "3, 2, 1"
 
     def __init__(self):
-        super(MultipleDataAssimilation, self).__init__("Multiple Data Assimilation (ES MDA)", getQueueConfig() , phase_count=2)
+        super(MultipleDataAssimilation, self).__init__(getQueueConfig() , phase_count=2)
         self.weights = MultipleDataAssimilation.default_weights
 
     def setAnalysisModule(self, module_name):
@@ -180,5 +179,5 @@ class MultipleDataAssimilation(BaseRunModel):
         return run_context
 
     @classmethod
-    def __repr__(cls):
-        return "Muiltiple Data Assimilation"
+    def name(cls):
+        return "Multiple Data Assimilation (ES MDA)"

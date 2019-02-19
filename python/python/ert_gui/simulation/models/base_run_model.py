@@ -31,9 +31,8 @@ class ErtRunError(Exception):
 
 class BaseRunModel(object):
 
-    def __init__(self, name, queue_config, phase_count=1):
+    def __init__(self, queue_config, phase_count=1):
         super(BaseRunModel, self).__init__()
-        self._name = name
         self._phase = 0
         self._phase_count = phase_count
         self._phase_update_count = 0

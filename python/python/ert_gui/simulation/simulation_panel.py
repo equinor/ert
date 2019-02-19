@@ -74,7 +74,7 @@ class SimulationPanel(QWidget):
         self._simulation_stack.addWidget(panel)
         simulation_model = panel.getSimulationModel()
         self._simulation_widgets[simulation_model] = panel
-        self._simulation_mode_combo.addItem(simulation_model.__repr__(),simulation_model)
+        self._simulation_mode_combo.addItem(simulation_model.name(),simulation_model)
         panel.simulationConfigurationChanged.connect(self.validationStatusChanged)
 
 
