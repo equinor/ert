@@ -6,7 +6,7 @@ try:
 except ImportError:
   from PyQt5.QtCore import QTimer, pyqtSignal, QVariant, Qt, QAbstractTableModel
   from PyQt5.QtWidgets import QWidget, QFrame, QDialog, QTableView, QLabel, QGridLayout
-  from PyQt5.QtGui import QPainter, QColor, QLinearGradient, QImage
+  from PyQt5.QtGui import QPainter, QColor, QLinearGradient, QImage, QPen
 
 
 class DetailedProgress(QFrame):
@@ -89,7 +89,6 @@ class DetailedProgress(QFrame):
             y = int(iens / self.grid_width)
             x = int(iens - (y * self.grid_width))
 
-            #painter.drawText(x * cell_width + cell_width / 2, y * cell_height + cell_height / 2, str(iens))
             painter.setPen(QColor(80, 80, 80))
             painter.drawText(x * cell_width, y * cell_height, cell_width, cell_height, Qt.AlignHCenter | Qt.AlignVCenter, str(iens))
 
@@ -207,7 +206,7 @@ class DetailedProgressDialog(QDialog):
             data = job.dump_data()
             row = [str(data[key]) for key in data]
             model_data.append(row)
-            headers = data.keys()
+            headers = list(data.keys())
 
         self.single_view.model().update_data(headers, model_data)
         self.single_view.resizeColumnsToContents()
