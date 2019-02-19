@@ -1,4 +1,3 @@
-from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.enums import HookRuntime
 from res.enkf.enums import RealizationStateEnum
 from res.enkf import ErtRunContext
@@ -8,7 +7,7 @@ from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, 
 class EnsembleSmoother(BaseRunModel):
 
     def __init__(self):
-        super(EnsembleSmoother, self).__init__("Ensemble Smoother", getQueueConfig() , phase_count=2)
+        super(EnsembleSmoother, self).__init__(getQueueConfig() , phase_count=2)
         self.support_restart = False
 
     def setAnalysisModule(self, module_name):
@@ -99,5 +98,5 @@ class EnsembleSmoother(BaseRunModel):
         return run_context
 
     @classmethod
-    def __repr__(cls):
+    def name(cls):
         return "Ensemble Smoother"

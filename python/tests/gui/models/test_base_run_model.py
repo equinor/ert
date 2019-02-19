@@ -11,6 +11,6 @@ class BaseRunModelTest(ErtTest):
         with ErtTestContext('kjell', config_file) as work_area:
             ert = work_area.getErt()
             configureErtNotifier(ert, config_file)
-            brm = BaseRunModel('kjell' ,ert.get_queue_config( ))
+            brm = BaseRunModel(ert.get_queue_config( ))
             self.assertFalse(brm.isQueueRunning())
             self.assertTrue(brm.getProgress() >= 0)

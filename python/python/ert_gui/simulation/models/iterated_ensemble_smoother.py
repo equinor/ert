@@ -127,5 +127,5 @@ class IteratedEnsembleSmoother(BaseRunModel):
         return run_context
 
     @classmethod
-    def __repr__(cls):
+    def name(cls):
         return "Iterated Ensemble Smoother"
