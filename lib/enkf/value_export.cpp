@@ -105,7 +105,7 @@ static void generate_hirarchical_keys(const value_export_type * value, FILE * st
             std::string subkey = (*iterValues).first;
 
             double double_value = (*iterValues).second;
-            if (isnan(double_value))
+            if (std::isnan(double_value))
                 fprintf(stream, "\"%s\" : NaN", subkey.c_str());
             else
                 fprintf(stream, "\"%s\" : %g", subkey.c_str(), double_value);
@@ -133,7 +133,7 @@ static void generate_comosite_keys(const value_export_type * value, FILE * strea
             std::string subkey = (*iterValues).first;
 
             double double_value = (*iterValues).second;
-            if (isnan(double_value))
+            if (std::isnan(double_value))
                 fprintf(stream, "\"%s\" : NaN", key.c_str());
             else
                 fprintf(stream, "\"%s:%s\" : %g", key.c_str(), subkey.c_str(), double_value);
