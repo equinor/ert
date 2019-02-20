@@ -64,6 +64,24 @@ void test_basic() {
 }
 
 
+void test_size_problems() {
+  ecl::util::TestArea work_area("es_testdata");
+  int ens_size = 10;
+  int obs_size =  7;
+  {
+    res::es_testdata td1 = make_testdata(ens_size, obs_size);
+    td1.save("path");
+  }
+  unlink("path/size");
+  test_assert_throw( res::es_testdata("path"), std::invalid_argument );
+  {
+    FILE * fp = util_fopen("path/size", "w");
+    fprintf(fp, "%d\n", ens_size);
+    fclose(fp);
+  }
+  test_assert_throw( res::es_testdata("path"), std::invalid_argument );
+}
+
 void test_load_state() {
   ecl::util::TestArea work_area("es_testdata");
   int ens_size = 10;
@@ -122,4 +140,5 @@ void test_load_state() {
 int main() {
   test_basic();
   test_load_state();
+  test_size_problems();
 }
