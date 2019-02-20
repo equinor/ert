@@ -80,7 +80,13 @@ std::array<int,2> load_size() {
   int active_ens_size, active_obs_size;
 
   FILE * stream = fopen("size", "r");
-  fscanf(stream, "%d %d", &active_ens_size, &active_obs_size);
+  if (!stream)
+    throw std::invalid_argument("Could not find file: size with ens_size, obs_size information in the test directory.");
+
+  int read_count = fscanf(stream, "%d %d", &active_ens_size, &active_obs_size);
+  if (read_count != 2)
+    throw std::invalid_argument("Failed to read ens_size obs_size from size file");
+
   fclose(stream);
 
   return {active_ens_size, active_obs_size};
@@ -97,6 +103,12 @@ matrix_type * safe_copy(const matrix_type * m) {
     return matrix_alloc_copy(m);
 
   return nullptr;
+}
+
+
+void matrix_delete_row_column(matrix_type * m1, int row_column) {
+  matrix_delete_row(m1, row_column);
+  matrix_delete_column(m1, row_column);
 }
 
 
@@ -129,8 +141,51 @@ es_testdata::es_testdata(const matrix_type* S, const matrix_type * R, const matr
     D(safe_copy(D)),
     E(safe_copy(E)),
     active_ens_size(matrix_get_columns(S)),
-    active_obs_size(matrix_get_rows(S))
+    active_obs_size(matrix_get_rows(S)),
+    obs_mask(bool_vector_alloc(active_obs_size, true)),
+    ens_mask(bool_vector_alloc(active_ens_size, true))
 {
+}
+
+
+void es_testdata::deactivate_obs(int iobs) {
+    if (iobs >= bool_vector_size( this->obs_mask ))
+        throw std::invalid_argument("Obs number: " + std::to_string(iobs) + " out of reach");
+
+    if (bool_vector_iget(this->obs_mask, iobs)) {
+        bool_vector_iset(this->obs_mask, iobs, false);
+
+        matrix_delete_row(this->dObs, iobs);
+        matrix_delete_row(this->S, iobs);
+        matrix_delete_row_column(this->R, iobs);
+
+        if (this->E)
+          matrix_delete_row(this->E, iobs);
+
+        if (this->D)
+          matrix_delete_row(this->D, iobs);
+
+        this->active_obs_size -= 1;
+    }
+}
+
+void es_testdata::deactivate_realization(int iens) {
+  if (iens >= bool_vector_size( this->ens_mask ))
+    throw std::invalid_argument("iRealization number: " + std::to_string(iens) + " out of reach");
+
+  if (bool_vector_iget(this->ens_mask, iens)) {
+    bool_vector_iset(this->ens_mask, iens, false);
+
+    matrix_delete_column(this->S, iens);
+
+    if (this->E)
+      matrix_delete_column(this->E, iens);
+
+    if (this->D)
+      matrix_delete_column(this->D, iens);
+
+    this->active_ens_size -= 1;
+  }
 }
 
 es_testdata::es_testdata(const char * path) :
@@ -152,6 +207,8 @@ es_testdata::es_testdata(const char * path) :
   this->R = alloc_load("R", this->active_obs_size, this->active_obs_size);
   this->D = alloc_load("D", this->active_obs_size, this->active_ens_size);
   this->dObs = alloc_load("dObs", this->active_obs_size, 2);
+  this->obs_mask = bool_vector_alloc(this->active_obs_size, true);
+  this->ens_mask = bool_vector_alloc(this->active_ens_size, true);
 }
 
 
@@ -170,6 +227,9 @@ es_testdata::~es_testdata() {
 
   if (this->dObs)
     matrix_free(this->dObs);
+
+  bool_vector_free(this->obs_mask);
+  bool_vector_free(this->ens_mask);
 }
 
 

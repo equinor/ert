@@ -37,6 +37,8 @@ public:
   matrix_type * dObs;
   int active_obs_size;
   int active_ens_size;
+  bool_vector_type * obs_mask;
+  bool_vector_type * ens_mask;
   int state_size;
 
   es_testdata(const matrix_type* S, const matrix_type * R, const matrix_type * dObs, const matrix_type *D , const matrix_type * E);
@@ -47,6 +49,8 @@ public:
   void save_matrix(const std::string& name, const matrix_type * m) const;
   matrix_type * alloc_state(const std::string& name) const;
   void save(const std::string& path) const;
+  void deactivate_obs(int iobs);
+  void deactivate_realization(int iens);
 };
 
 }
