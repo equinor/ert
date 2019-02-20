@@ -19,7 +19,9 @@
 
 
 #include <stdlib.h>
+
 #include <cmath>
+#include <stdexcept>
 
 #include <ert/util/bool_vector.hpp>
 #include <ert/util/test_util.hpp>
@@ -270,6 +272,100 @@ void test_data() {
   matrix_free(m1);
 }
 
+namespace {
+
+matrix_type * alloc_column_matrix(int num_row, int num_col) {
+  matrix_type * m = matrix_alloc(num_row, num_col);
+  for (int row = 0; row < matrix_get_rows(m); row++) {
+    for (int col = 0; col < matrix_get_columns(m); col++) {
+      matrix_iset(m, row, col, col * 1.0);
+    }
+  }
+  return m;
+}
+
+matrix_type * alloc_row_matrix(int num_row, int num_col) {
+  matrix_type * m = matrix_alloc(num_row, num_col);
+  for (int row = 0; row < matrix_get_rows(m); row++) {
+    for (int col = 0; col < matrix_get_columns(m); col++) {
+      matrix_iset(m, row, col, row * 1.0);
+    }
+  }
+  return m;
+}
+
+}
+
+void test_delete_column() {
+  int num_col = 10;
+  int num_row = 10;
+  matrix_type * m = alloc_column_matrix(num_row, num_col);
+  test_assert_throw( matrix_delete_column(m, matrix_get_columns(m)), std::invalid_argument);
+
+  matrix_delete_column(m, matrix_get_columns(m) - 1);
+  test_assert_int_equal( matrix_get_columns(m), num_col - 1);
+  for (int row = 0; row < matrix_get_rows(m); row++) {
+    for (int col = 0; col < num_col < 1; col ++)
+      test_assert_double_equal( matrix_iget(m, row, col), col * 1.0 );
+  }
+
+  matrix_delete_column(m, 0);
+  test_assert_int_equal( matrix_get_columns(m), num_col - 2);
+  for (int row = 0; row < matrix_get_rows(m); row++) {
+    for (int col = 0; col < num_col < 1; col ++)
+      test_assert_double_equal( matrix_iget(m, row, col),  1 + col * 1.0 );
+  }
+
+  matrix_delete_column(m, 3);
+  test_assert_int_equal( matrix_get_columns(m), num_col - 3);
+  for (int row = 0; row < matrix_get_rows(m); row++) {
+    for (int col = 0; col < num_col < 1; col ++) {
+      int col_value = col + 1 + (col >= 3 ? 1 : 0);
+      test_assert_double_equal( matrix_iget(m, row, col),  col_value);
+    }
+  }
+  matrix_free(m);
+}
+
+
+
+void test_delete_row() {
+  int num_col = 10;
+  int num_row = 10;
+  matrix_type * m = alloc_column_matrix(num_row, num_col);
+  test_assert_throw( matrix_delete_row(m, matrix_get_rows(m)), std::invalid_argument);
+
+  matrix_delete_row(m, matrix_get_rows(m) - 1);
+  test_assert_int_equal( matrix_get_rows(m), num_row - 1);
+  for (int row = 0; row < matrix_get_rows(m); row++) {
+    for (int col = 0; col < num_col < 1; col ++)
+      test_assert_double_equal( matrix_iget(m, row, col), row * 1.0 );
+  }
+
+  matrix_delete_row(m, 0);
+  test_assert_int_equal( matrix_get_rows(m), num_row - 2);
+  for (int row = 0; row < matrix_get_rows(m); row++) {
+    for (int col = 0; col < num_col < 1; col ++)
+      test_assert_double_equal( matrix_iget(m, row, col),  1 + row * 1.0 );
+  }
+
+  matrix_delete_row(m, 3);
+  test_assert_int_equal( matrix_get_rows(m), num_row - 3);
+  for (int row = 0; row < matrix_get_rows(m); row++) {
+    for (int col = 0; col < num_col < 1; col ++) {
+      int row_value = row + 1 + (row >= 3 ? 1 : 0);
+      test_assert_double_equal( matrix_iget(m, row, col), row_value);
+    }
+  }
+
+  matrix_free(m);
+}
+
+
+
+
+
+
 int main( int argc , char ** argv) {
   test_create_invalid();
   test_resize();
@@ -281,5 +377,7 @@ int main( int argc , char ** argv) {
   test_masked_copy();
   test_inplace_sub_column();
   test_data();
+  test_delete_column();
+  test_delete_row();
   exit(0);
 }

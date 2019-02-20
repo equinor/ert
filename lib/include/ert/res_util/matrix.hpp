@@ -164,6 +164,8 @@ typedef struct matrix_struct matrix_type;
   void          matrix_diag_set(matrix_type * matrix , const double * diag);
   void          matrix_random_init(matrix_type * matrix , rng_type * rng);
   void          matrix_matlab_dump(const matrix_type * matrix, const char * filename);
+  void          matrix_delete_row(matrix_type * m1, int row);
+  void          matrix_delete_column(matrix_type * m1, int row);
 
   void          matrix_imul_col( matrix_type * matrix , int column , double factor);
   double        matrix_column_column_dot_product(const matrix_type * m1 , int col1 , const matrix_type * m2 , int col2);

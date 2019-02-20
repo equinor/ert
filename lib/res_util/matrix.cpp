@@ -20,6 +20,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include <stdexcept>
 #include <cmath>
 
 #include <ert/util/ert_api_config.hpp>
@@ -1637,6 +1639,47 @@ void matrix_inplace_diag_sqrt(matrix_type *Cd)
         Cd->data[GET_INDEX(Cd , i , i)] = sqrt(Cd->data[GET_INDEX(Cd , i , i)]);
       }
   }
+}
+
+void matrix_delete_column(matrix_type * m1, int column) {
+  if (column < 0 || column >= matrix_get_columns(m1))
+    throw std::invalid_argument("Invalid column" + std::to_string(column));
+
+  matrix_type * m2 = matrix_alloc(matrix_get_rows(m1), matrix_get_columns(m1) - 1);
+  if (column > 0)
+    matrix_copy_block(m2, 0, 0,
+                      matrix_get_rows(m2), column,
+                      m1, 0, 0);
+
+  if (column < (matrix_get_columns(m1) - 1))
+    matrix_copy_block(m2, 0, column,
+                      matrix_get_rows(m2), matrix_get_columns(m2) - column,
+                      m1, 0, column + 1);
+
+  matrix_resize(m1, matrix_get_rows(m2), matrix_get_columns(m2), false);
+  matrix_assign(m1, m2);
+  matrix_free(m2);
+}
+
+
+void matrix_delete_row(matrix_type * m1, int row) {
+  if (row < 0 || row >= matrix_get_rows(m1))
+    throw std::invalid_argument("Invalid row" + std::to_string(row));
+
+  matrix_type * m2 = matrix_alloc(matrix_get_rows(m1) - 1, matrix_get_columns(m1));
+  if (row > 0)
+    matrix_copy_block(m2, 0, 0,
+                      row, matrix_get_columns(m2),
+                      m1, 0, 0);
+
+  if (row < (matrix_get_rows(m1) - 1))
+    matrix_copy_block(m2, row, 0,
+                      matrix_get_rows(m2) - row, matrix_get_columns(m2),
+                      m1, row + 1, 0);
+
+  matrix_resize(m1, matrix_get_rows(m2), matrix_get_columns(m2), false);
+  matrix_assign(m1, m2);
+  matrix_free(m2);
 }
 
 
