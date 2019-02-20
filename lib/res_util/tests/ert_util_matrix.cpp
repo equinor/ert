@@ -98,7 +98,7 @@ void test_dims() {
 
 
 void test_readwrite() {
-  test_work_area_type * test_area = test_work_area_alloc("matrix-test");
+  ecl::util::TestArea test_area("matrix_test");
   {
     rng_type * rng = rng_alloc(MZRAN , INIT_DEV_URANDOM );
     matrix_type * m1 = matrix_alloc(3  , 3);
@@ -136,7 +136,6 @@ void test_readwrite() {
     matrix_free( m1 );
     rng_free( rng );
   }
-  test_work_area_free( test_area );
 }
 
 
@@ -231,7 +230,7 @@ void test_inplace_sub_column() {
 
 
 void test_data() {
-  test_work_area_type * work_area = test_work_area_alloc("matrix_data");
+  ecl::util::TestArea("matrix_data");
   int rows = 11;
   int columns = 7;
   matrix_type * m1 = matrix_alloc(rows, columns);
@@ -269,7 +268,6 @@ void test_data() {
     fclose(stream);
   }
   matrix_free(m1);
-  test_work_area_free(work_area);
 }
 
 int main( int argc , char ** argv) {
