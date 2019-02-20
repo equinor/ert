@@ -229,11 +229,8 @@ class BaseRunModel(object):
 
     @staticmethod
     def is_forward_model_finished(progress):
-        for job in progress:
-            if job.status != 'Success':
-                return False
+        return any((job.status == 'Failure' for job in progress))
 
-        return True
 
     def updateDetailedProgress(self):
         if not self._run_context:
