@@ -50,9 +50,9 @@ res::es_testdata make_testdata(int ens_size, int obs_size) {
 }
 
 
-void test_basic() {
-  test_work_area_type * work_area = test_work_area_alloc("es_testdata");
 
+void test_basic() {
+  ecl::util::TestArea work_area("es_testdata");
   int ens_size = 10;
   int obs_size =  7;
   res::es_testdata td1 = make_testdata(ens_size, obs_size);
@@ -61,12 +61,11 @@ void test_basic() {
   res::es_testdata td2("path/sub/path");
   test_assert_true( matrix_equal(td1.S, td2.S) );
 
-  test_work_area_free(work_area);
 }
 
 
 void test_load_state() {
-  test_work_area_type * work_area = test_work_area_alloc("es_testdata");
+  ecl::util::TestArea work_area("es_testdata");
   int ens_size = 10;
   int obs_size =  7;
   res::es_testdata td0 = make_testdata(ens_size, obs_size);
@@ -118,7 +117,6 @@ void test_load_state() {
     matrix_free(A1);
     matrix_free(A2);
   }
-  test_work_area_free(work_area);
 }
 
 int main() {
