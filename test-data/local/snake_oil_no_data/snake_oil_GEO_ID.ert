@@ -6,7 +6,7 @@ DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>
 
 RANDOM_SEED 3593114179000630026631423308983283277868
 
-RUNPATH simulations/<GEO_ID>/realisation-%d/iter-%d
+RUNPATH simulations/<GEO_ID>/realisation-%d/iter-%d/magic-real-<IENS>/magic-iter-<ITER>
 ENSPATH <STORAGE>/ensemble
 ECLBASE SNAKE_OIL_FIELD
 SUMMARY *

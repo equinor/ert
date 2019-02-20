@@ -336,6 +336,9 @@ static void run_arg_update_subst(run_arg_type * run_arg)
   char * iens_str = util_alloc_sprintf("%d", run_arg->iens);
   subst_list_prepend_owned_ref(run_arg->subst_list, "<IENS>", iens_str, NULL);
 
+  char * iter_str = util_alloc_sprintf("%d", run_arg->iter);
+  subst_list_prepend_owned_ref(run_arg->subst_list, "<ITER>", iter_str, NULL);
+
   if (run_arg->geo_id != -1) {
     char * geo_id_str = util_alloc_sprintf("%d", run_arg->geo_id);
     subst_list_prepend_owned_ref(run_arg->subst_list, "<GEO_ID>", geo_id_str, NULL);
