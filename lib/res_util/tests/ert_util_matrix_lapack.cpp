@@ -19,7 +19,7 @@
 
 
 #include <stdlib.h>
-#include <math.h>
+#include <cmath>
 
 #include <ert/util/bool_vector.hpp>
 #include <ert/util/test_util.hpp>

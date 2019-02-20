@@ -18,7 +18,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
+#include <cmath>
 
 #include <ert/util/util.h>
 #include <ert/util/string_util.h>

@@ -16,7 +16,7 @@
    for more details.
 */
 
-#include <math.h>
+#include <cmath>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <pthread.h>

@@ -16,7 +16,7 @@
    for more details.
 */
 
-#include <math.h>
+#include <cmath>
 
 #include <ert/util/util.hpp>
 
@@ -638,12 +638,12 @@ double matrix_det( matrix_type *A ) {
 
 
         /* Try to avoid overflow/underflow by factoring out the order of magnitude. */
-        while (fabs(det) > 10.0) {
+        while (std::abs(det) > 10.0) {
           det       /= 10;
           det_scale += 1;
         }
 
-        while (fabs(det) < 1.0) {
+        while (std::abs(det) < 1.0) {
           det       *= 10;
           det_scale -= 1;
         }

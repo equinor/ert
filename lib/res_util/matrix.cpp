@@ -20,7 +20,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
+#include <cmath>
 
 #include <ert/util/ert_api_config.hpp>
 #include <ert/res_util/thread_pool.hpp>
@@ -1237,7 +1237,7 @@ double matrix_get_column_abssum(const matrix_type * matrix , int column) {
   double sum = 0;
   int i;
   for (i=0; i < matrix->rows; i++)
-    sum += fabs( matrix->data[ GET_INDEX( matrix , i , column ) ] );
+    sum += std::abs( matrix->data[ GET_INDEX( matrix , i , column ) ] );
   return sum;
 }
 
@@ -1258,7 +1258,7 @@ double matrix_get_row_abssum(const matrix_type * matrix , int row) {
   int j;
   for ( j=0; j < matrix->columns; j++) {
     double m = matrix->data[ GET_INDEX( matrix , row , j ) ];
-    sum_abs += fabs( m );
+    sum_abs += std::abs( m );
   }
   return sum_abs;
 }
@@ -1382,7 +1382,7 @@ bool matrix_is_finite(const matrix_type * matrix) {
   int i,j;
   for (i = 0; i < matrix->rows; i++)
     for (j =0; j< matrix->columns; j++)
-      if ( !isfinite( matrix->data[ GET_INDEX( matrix , i , j) ])) {
+      if ( !std::isfinite( matrix->data[ GET_INDEX( matrix , i , j) ])) {
         printf("%s(%d,%d) = %g \n",matrix->name , i,j,matrix->data[ GET_INDEX( matrix , i , j) ]);
         return false;
       }
@@ -1419,9 +1419,9 @@ double matrix_orthonormality( const matrix_type * matrix ) {
       double dev;
 
       if (col1 == col2)
-        dev = fabs( dot_product - 1.0 );
+        dev = std::abs( dot_product - 1.0 );
       else
-        dev = fabs( dot_product );
+        dev = std::abs( dot_product );
 
       if (dev > max_dev)
         max_dev = dev;
@@ -1487,7 +1487,7 @@ bool matrix_similar( const matrix_type * m1 , const matrix_type * m2, double eps
         double d1 = m1->data[ index1 ];
         double d2 = m2->data[ index2 ];
 
-        if (fabs(d1 - d2) > epsilon)
+        if (std::abs(d1 - d2) > epsilon)
           return false;
       }
     }

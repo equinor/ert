@@ -16,7 +16,7 @@
    for more details.
 */
 
-#include <math.h>
+#include <cmath>
 #include <stdlib.h>
 #include <string.h>
 
@@ -626,12 +626,12 @@ static bool field_check_finite( const field_type * field) {
   if (ecl_type_is_float(data_type)) {
     float * data = (float *) field->data;
     for (int i=0; i < data_size; i++)
-      if (!isfinite( data[i] ))
+      if (!std::isfinite( data[i] ))
         ok = false;
   } else if (ecl_type_is_double(data_type)) {
     double * data = (double *) field->data;
     for (int i=0; i < data_size; i++)
-      if (!isfinite( data[i] ))
+      if (!std::isfinite( data[i] ))
         ok = false;
   }
   return ok;

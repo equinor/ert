@@ -19,7 +19,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
+#include <cmath>
 #include <time.h>
 
 #include <ert/util/util.hpp>

@@ -16,7 +16,7 @@
    for more details.
 */
 #include <stdlib.h>
-#include <math.h>
+#include <cmath>
 
 #include <map>
 

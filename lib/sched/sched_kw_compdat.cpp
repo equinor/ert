@@ -18,7 +18,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
+#include <cmath>
 #include <string.h>
 #include <stdbool.h>
 

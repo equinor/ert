@@ -62,7 +62,7 @@ Matrices: S, D, E and various internal variables.
 
 
 #include <stdlib.h>
-#include <math.h>
+#include <cmath>
 #include <stdio.h>
 #include <pthread.h>
 

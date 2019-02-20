@@ -19,7 +19,7 @@
 
 
 #include <stdlib.h>
-#include <math.h>
+#include <cmath>
 
 #include <ert/util/bool_vector.hpp>
 #include <ert/util/test_util.hpp>
@@ -223,7 +223,7 @@ void test_inplace_sub_column() {
     int row;
     for (row = 0; row < N; row++) {
       double diff = matrix_iget( m1 , row , 0);
-      test_assert_true( fabs( diff ) < 1e-6);
+      test_assert_true( std::abs( diff ) < 1e-6);
     }
   }
 }

@@ -18,7 +18,7 @@
 
 
 #include <stdbool.h>
-#include <math.h>
+#include <cmath>
 
 #include <ert/util/util.hpp>
 #include <ert/util/stringlist.hpp>

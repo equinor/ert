@@ -21,7 +21,7 @@
    involved with observations/measurement/+++.
 */
 
-#include <math.h>
+#include <cmath>
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>

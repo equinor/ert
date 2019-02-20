@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <time.h>
+#include <cmath>
 
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
@@ -568,10 +569,10 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector ,
           double_vector_iset( std , restart_nr , error );
       } else if(strcmp(error_mode, "REL") == 0) {
         for( restart_nr = 0; restart_nr < size; restart_nr++)
-          double_vector_iset( std , restart_nr , error * abs( double_vector_iget( value , restart_nr )));
+          double_vector_iset( std , restart_nr , error * std::abs( double_vector_iget( value , restart_nr )));
       } else if(strcmp(error_mode, "RELMIN") == 0) {
         for(restart_nr = 0; restart_nr < size; restart_nr++) {
-          double tmp_std = util_double_max( error_min , error * abs( double_vector_iget( value , restart_nr )));
+          double tmp_std = util_double_max( error_min , error * std::abs( double_vector_iget( value , restart_nr )));
           double_vector_iset( std , restart_nr , tmp_std);
         }
       } else
@@ -620,10 +621,10 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector ,
                 double_vector_iset( std , restart_nr , error_segment) ;
             } else if(strcmp(error_mode_segment, "REL") == 0) {
               for( restart_nr = start; restart_nr <= stop; restart_nr++)
-                double_vector_iset( std , restart_nr , error_segment * abs(double_vector_iget( value , restart_nr)));
+                double_vector_iset( std , restart_nr , error_segment * std::abs(double_vector_iget( value , restart_nr)));
             } else if(strcmp(error_mode_segment, "RELMIN") == 0) {
               for(restart_nr = start; restart_nr <= stop ; restart_nr++) {
-                double tmp_std = util_double_max( error_min_segment , error_segment * abs( double_vector_iget( value , restart_nr )));
+                double tmp_std = util_double_max( error_min_segment , error_segment * std::abs( double_vector_iget( value , restart_nr )));
                 double_vector_iset( std , restart_nr , tmp_std);
               }
             } else

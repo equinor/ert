@@ -16,7 +16,7 @@
    for more details.
 */
 
-#include <math.h>
+#include <cmath>
 
 #include <ert/util/util.h>
 #include <ert/res_util/matrix.hpp>
@@ -144,7 +144,7 @@ void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_data_type
                outliers will lead to numerical problems.
             */
 
-            if (fabs( innov ) > alpha * (ens_std + obs_std)) {
+            if (std::abs( innov ) > alpha * (ens_std + obs_std)) {
               obs_block_deactivate(obs_block , iobs , verbose , "No overlap");
               meas_block_deactivate(meas_block , iobs);
             }

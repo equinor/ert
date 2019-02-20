@@ -30,7 +30,7 @@
 */
 #include <string.h>
 #include <stdbool.h>
-#include <math.h>
+#include <cmath>
 
 #include <ert/util/hash.h>
 #include <ert/util/util.h>

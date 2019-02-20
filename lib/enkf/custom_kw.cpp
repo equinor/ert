@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#include <math.h>
+#include <cmath>
 
 #include <ert/util/util.h>
 #include <ert/util/bool_vector.h>

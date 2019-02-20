@@ -18,7 +18,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
+#include <cmath>
 #include <stdio.h>
 
 #if defined(_OPENMP)
@@ -193,7 +193,7 @@ static void fwd_step_enkf_write_iter_info( fwd_step_enkf_data_type * data , step
     int row_end   = module_obs_block_get_row_end(module_obs_block);
     const char* obs_key = module_obs_block_get_key(module_obs_block);
     const double var_beta = stepwise_iget_beta(stepwise, ivar);
-    const double var_beta_percent = 100.0 * fabs(var_beta) / sum_beta;
+    const double var_beta_percent = 100.0 * std::abs(var_beta) / sum_beta;
 
     int local_index = 0;
     for (int i = row_start; i < row_end; i++) {

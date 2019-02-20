@@ -95,7 +95,7 @@ double regression_unscale(const matrix_type * beta , const matrix_type * X_norm 
    Performs an ordinary least squares estimation of the parameter
    vector beta.
 
-   beta = inv(X'·X)·X'·y
+   beta = inv(X' . X) . X' . y
 */
 
 void regression_augmented_OLS( const matrix_type * X , const matrix_type * Y , const matrix_type* Z, matrix_type * beta) {

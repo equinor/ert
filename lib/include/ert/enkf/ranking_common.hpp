@@ -18,7 +18,7 @@
 
 #ifndef ERT_RANKING_COMMON_H
 #define ERT_RANKING_COMMON_H
-#include <math.h>
+#include <cmath>
 
 #define INVALID_RANKING_VALUE  INFINITY
 

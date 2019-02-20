@@ -306,7 +306,7 @@ void rml_enkf_init_Csc(const rml_enkf_data_type * data ){
       double sumrow = matrix_get_row_sum(prior , row);
       double tmp    = sumrow / ens_size;
 
-      if (abs(tmp)< 1)
+      if (fabs(tmp)< 1)
         data->Csc[row] = 0.05;
       else
         data->Csc[row] = 1.00;

@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
+#include <cmath>
 
 #include <ert/res_util/matrix.hpp>
 #include <ert/res_util/matrix_lapack.hpp>
@@ -675,7 +675,7 @@ void enkf_linalg_checkX(const matrix_type * X , bool bootstrap) {
 
     for (int icol = 0; icol < matrix_get_columns( X ); icol++) {
       double col_sum = matrix_get_column_sum(X , icol);
-      if (fabs(col_sum - target_sum) > 0.0001)
+      if (std::abs(col_sum - target_sum) > 0.0001)
         util_abort("%s: something is seriously broken. col:%d  col_sum = %g != %g - ABORTING\n",__func__ , icol , col_sum , target_sum);
     }
   }

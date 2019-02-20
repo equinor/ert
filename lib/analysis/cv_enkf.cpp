@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <math.h>
+#include <cmath>
 
 #include <ert/util/util.hpp>
 #include <ert/util/rng.hpp>
