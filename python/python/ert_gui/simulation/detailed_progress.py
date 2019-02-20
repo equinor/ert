@@ -6,7 +6,7 @@ try:
 except ImportError:
   from PyQt5.QtCore import QTimer, pyqtSignal, QVariant, Qt, QAbstractTableModel
   from PyQt5.QtWidgets import QWidget, QFrame, QDialog, QTableView, QLabel, QGridLayout
-  from PyQt5.QtGui import QPainter, QColor, QLinearGradient, QImage, QPen
+  from PyQt5.QtGui import QPainter, QColor, QImage, QPen
 
 
 class DetailedProgress(QFrame):
