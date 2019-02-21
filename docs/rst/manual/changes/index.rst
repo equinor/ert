@@ -4,14 +4,173 @@ Release notes for ERT
 Version 2.4
 -----------
 
+See the *Highlighted* section for the most prominent changes. For a more
+in-depth overview, as well as links to the relevant pull requests, we refer the
+reader to the repository specific sections.
+
+Highlighted changes
+~~~~~~~~~~~~~~~~~~~
+
+Unified ERT binary
+###########################
+All launches of *ERT* is now to happen through the shell command ``ert``. To get
+an overview of the various *ERT* tools, you can run ``ert --help``. You will then be
+presented with the following overview.
+
+::
+
+    [scout@desktop ert]$ ert --help
+    usage: ert [-h] {gui,text,shell,cli} ...
+
+    ERT - Ensemble Reservoir Tool
+
+    optional arguments:
+      -h, --help            show this help message and exit
+
+    Available user entries:
+      ERT can be accessed through a GUI or CLI interface. Include one of the
+      following arguments to change between the interfaces. Note that different
+      entry points may require different additional arguments. See the help
+      section for each interface for more details. DEPRECATION WARNING: Text
+      User Interface and Shell Interface are to be removed in ERT > 2.4!
+
+      {gui,text,shell,cli}  Available entry points
+        gui                 Graphical User Interface - opens up an independent
+                            window for the user to interact with ERT.
+        text                Text user interface. Deprecated! Use CLI instead.
+        shell               Shell interface. Deprecated! Use CLI instead.
+        cli                 Command Line Interface - provides a user interface in
+                            the terminal.
+
+Hence, ``ert gui my_config_file`` will launch the *ERT*-gui with the specified
+configuration file. For detailed support for each of the options, use ``ert gui
+--help`` etc.
+
+ERT command line interface
+###########################
+The **cli** option listed above is new and will run *ERT* as a command line
+interface with no further interaction after initialization. This will be the
+supported command line interface of *ERT* in the future.
+
+The shell and text interfaces are deprecated
+######################################################
+Furthermore, the **text** and **shell** options are deprecated and **cli** will be
+the only option supported terminal option in the future. Hence, if you are
+using the text or shell interface of *ERT* and the current **cli** does not
+fit your needs, please contact us with a feature request!
+
+Forward model monitoring
+######################################################
+An essential new feature of *ERT 2.4* is a monitoring screen in the GUI
+displaying the progress of each forward model in your ensemble. After
+initiating the run, press the **Details** button to get an overview of the
+progress of each of the forward models. In the view appearing you can click on
+a specific realization to get even more details regarding that specific
+realization.
+
+Restarting failed realizations
+####################################################
+If some of your forward models failed there will appear a **Restart** button
+when the run has finished, which will rerun only the failed realizations.
+
+Run prior and posterior separately
+####################################################
+Many users have requested the possibility of running the prior and posterior
+independently. This feature already exists in the advanced mode of the GUI, but
+to make it more accessible to the users we have now made the advanced mode the
+only mode.
+
+To run your prior, you run an **Ensemble Experiment**. Then, to run an update you
+click **Run Analysis** from the top menu of the main window; you can then specify
+the target and source case and the update will be calculated. To evaluate your
+posterior, you then run a new **Ensemble Experiment** with your target case.
+After this, you can plot and compare just as if you had run an **Ensemble
+Smoother** to begin with.
+
+Generic tooling in the forward model
+####################################################
+As a first step towards more generic tooling in *ERT* forward models *ERT* will now dump all
+parameters with their corresponding values to the runpath as *JSON*. The format
+of this file is still experimental and will most likely change in a future
+release of *ERT*, but one is still welcome to play around with the extra
+possibilities this gives.
+
+Generic templating
+######################
+Jinja based templating has been a great success in *Everest* and will most
+likely be standardized in future version of *ERT* also; both with respect to
+configuration templating and templating in the forward model itself. As a first
+step towards this, a forward model named *TEMPLATE_RENDER* has been added. It
+will load the parameter values that is dumped by *ERT* (described above),
+optionally together with user specified *json*- and *yaml*-files and render a
+specified template. For more on how to write *Jinja* template, see the official
+`documentation <http://jinja.pocoo.org/docs/2.10/>`_.
+
+Eclipse version in forward model
+#################################
+The recommended way of specifying the eclipse version is to pass ``<VERSION>``
+as argument to the forward model ``ECLIPSE100`` instead of using
+``ECLIPSE100_<MY_ECL_VERSION>``. The old format of putting the version in the
+job name will be deprecated in the future.
+
+
 2.4 ert application
 ~~~~~~~~~~~~~~~~~~~
-PR: 162 - ?
+PR: 162 - 257
+
+New functionality:
+  - Unified ERT binary `[165] https://github.com/equinor/ert/pull/165`
+  - Restart failed realizations `[206, 209] https://github.com/equinor/ert/pull/206`
+  - Forward model monitoring in GUI `[252] https://github.com/equinor/ert/pull/252`
+
+Improvement:
+  - Print warning if decimal point is not `.` `[212] https://github.com/equinor/ert/pull/212`
+  - Fixed bug such that initial realization mask contains all `[213] https://github.com/equinor/ert/pull/213`
+  - Fixed bug in iterated smoother gui `[215] https://github.com/equinor/ert/pull/215`
+  - Always display advanced settings `[216] https://github.com/equinor/ert/pull/216`
+  - Change default plot size to emphasize discrete data `[243] https://github.com/equinor/ert/pull/243`
+
+Others:
+  - Continued to move documentation into the manual.
+  - TUI and shell is deprecated.
+  - Improved automatic testing on FMU tutorial.
+
+2.4 ert forward models
+~~~~~~~~~~~~~~~~~~~
+PR: 114 - 126
+
+New functionality:
+  - Forward model for dynamic porevolume geertsma `[114] https://github.com/equinor/ert-statoil/pull/114`
+
+Improvements:
+  - Eclipse version should be passed to job ECLIPSE_100 / ECLIPSE_300 as an argument
+
+Others:
+  - Major move of forward models from ert-statoil to libres
 
 
 2.4 libres
 ~~~~~~~~~~
-PR: 411 - ?
+PR: 411 - 517
+
+New functionality:
+ - Job description can set environment vars `[431] https://github.com/equinor/libres/pull/431/files`
+ - Experimental dump of parameters to runpath as json `[436] https://github.com/equinor/libres/pull/436`
+ - Jinja based rendering forward model `[443] https://github.com/equinor/libres/pull/443/files`
+ - New config keyword NUM_CPU to override eclipse PARALLEL keyword `[455] https://github.com/equinor/libres/pull/455/files`
+ - Expose the algorithm iteration number as magic string <ITER> `[515] https://github.com/equinor/libres/pull/515`
+
+Improvements:
+ - Fix bug in default standard deviation calculations `[513] https://github.com/equinor/libres/pull/513`
+ - Start scan for active observations at report step 0, instead of 1 `[439] https://github.com/equinor/libres/pull/439`
+ - Bug fixes in linear algebra code `[435] https://github.com/equinor/libres/pull/435`
+ - Improved job killing capabilities of local queue `[488] https://github.com/equinor/libres/pull/488`
+
+Others:
+ - Various improvements to code due to now being a C++ project
+ - Removed traces of WPRO and the RPCServer `[428] https://github.com/equinor/libres/pull/428`
+ - CAREFUL_COPY moved to libres `[424] https://github.com/equinor/libres/pull/424`
+ - Split simulator configuration into multiple files `[477] https://github.com/equinor/libres/pull/477`
 
 
 2.4 libecl
