@@ -1,5 +1,39 @@
-Release notes for ERT 
+Release notes for ERT
 =====================
+
+Version 2.4
+-----------
+
+2.4 ert application
+~~~~~~~~~~~~~~~~~~~
+PR: 162 - ?
+
+
+2.4 libres
+~~~~~~~~~~
+PR: 411 - ?
+
+
+2.4 libecl
+~~~~~~~~~~
+PR: 506 - 579
+
+New functionality:
+ - Ability to compute geertsma based on dynamic porevolume `[530] https://github.com/equinor/libecl/pull/530?`
+ - Support for Intersect NNC format `[533] https://github.com/equinor/libecl/pull/533`
+ - Support for extrapolation when resampling `[534] https://github.com/equinor/libecl/pull/534`
+ - Ability to load summary data from .csv-files `[536] https://github.com/equinor/libecl/pull/536`
+ - Identify region-to-region variables `[551] https://github.com/equinor/libecl/pull/551`
+
+Improvements:
+ - Load LGR info when loading well info `[529] https://github.com/equinor/libecl/pull/529`
+ - Do not fail if restart file is missing icon `[549] https://github.com/equinor/libecl/pull/549`
+
+Others:
+ - Various improvements to code due to now being a C++ project.
+ - Improved documentation for Windows users
+ - Improved Python 3 testing
+ - Revert fortio changes to increase reading speed `[567] https://github.com/equinor/libecl/pull/567`
 
 
 Version 2.3
