@@ -95,6 +95,7 @@ script:
   - python -c "import sys; print('\n'.join(sys.path))"
   - mkdir build
   - pushd build
+  - ulimit -n 2048
   - cmake .. -DBUILD_TESTS=ON
              -DENABLE_PYTHON=ON
              -DBUILD_APPLICATIONS=ON
