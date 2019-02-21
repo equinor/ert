@@ -484,7 +484,7 @@ int time_map_lookup_time_with_tolerance( time_map_type * map , time_t time , int
           break;
         }
 
-        if (std::abs(diff) < nearest_diff) {
+        if (std::fabs(diff) < nearest_diff) {
           bool inside_tolerance = true;
           if (seconds_after_tolerance >= 0) {
             if (diff >= seconds_after_tolerance)
