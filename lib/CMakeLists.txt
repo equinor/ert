@@ -620,7 +620,7 @@ foreach(test enkf_magic_string_in_workflows
              enkf_main
              enkf_select_case_job
              enkf_plot_gen_kw_fs
-             enkf_workflow_job_test_version
+             enkf_workflow_job_test_directory
              enkf_ert_test_context
              gen_kw_logarithmic_test
              enkf_analysis_config_analysis_load
@@ -723,7 +723,7 @@ set_property(TEST enkf_analysis_config_analysis_load PROPERTY
     "ERT_SITE_CONFIG=${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/config/analysis_load_site_config_osx;DYLD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}:$ENV{DYLD_LIBRARY_PATH}")
 endif()
 
-add_config_test(enkf_workflow_job_test_version enkf_workflow_job_test_version ${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/workflow_jobs)
+add_config_test(enkf_workflow_job_test_directory enkf_workflow_job_test_directory ${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/workflow_jobs)
 #-----------------------------------------------------------------
 
 foreach(test enkf_site_config

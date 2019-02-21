@@ -196,52 +196,9 @@ const workflow_job_type * ert_workflow_list_get_job( const ert_workflow_list_typ
     return workflow_joblist_get_job(workflow_list->joblist, job_name);
 }
 
-/**
-   This function will create the most specific matching filename
-   corresponding to the @root_name input. I.e. it will look for
-   filename in this order:
 
-     ROOT@X.Y.Z, ROOT@X.Y, ROOT@X, ROOT
-
-   And return the first name corresponding to an existing file. If no
-   file can be found the function will return NULL.
-*/
-
-static char * ert_workflow_list_alloc_version_name( const char * path , const char * root_name ) {
-  char * full_path = util_alloc_sprintf( "%s%s%s@%d.%d.%s" , path , UTIL_PATH_SEP_STRING , root_name ,
-					 ecl_version_get_major_version(),
-					 ecl_version_get_minor_version(),
-					 ecl_version_get_micro_version());
-  if (util_is_file( full_path ))
-    return full_path;
-  else
-    free( full_path );
-
-  /*****************************************************************/
-
-  full_path = util_alloc_sprintf( "%s%s%s@%d.%d" , path , UTIL_PATH_SEP_STRING , root_name ,
-				  ecl_version_get_major_version(),
-				  ecl_version_get_minor_version());
-
-  if (util_is_file( full_path ))
-    return full_path;
-  else
-    free( full_path );
-
-  /*****************************************************************/
-
-  full_path = util_alloc_sprintf( "%s%s%s@%d" , path , UTIL_PATH_SEP_STRING , root_name ,
-				  ecl_version_get_major_version());
-
-  if (util_is_file( full_path ))
-    return full_path;
-  else
-    free( full_path );
-
-
-  /*****************************************************************/
-
-  full_path = util_alloc_sprintf( "%s%s%s" , path , UTIL_PATH_SEP_STRING , root_name);
+static char * ert_workflow_list_alloc_name( const char * path , const char * root_name ) {
+  char * full_path = util_alloc_sprintf( "%s%s%s" , path , UTIL_PATH_SEP_STRING , root_name);
 
   if (util_is_file( full_path ))
     return full_path;
@@ -252,38 +209,35 @@ static char * ert_workflow_list_alloc_version_name( const char * path , const ch
 }
 
 
-
 void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_list , const char * path ) {
   DIR * dirH = opendir( path );
   std::set<std::string> names;
-  if (dirH) {
-    while (true) {
-      struct dirent * entry = readdir( dirH );
-      if (entry != NULL) {
-        if ((strcmp(entry->d_name , ".") != 0) && (strcmp(entry->d_name , "..") != 0)) {
-	  char * root_name, * version;
-	  util_binary_split_string( entry->d_name , "@" , false , &root_name , &version);
-	  if (!names.count(root_name)) {
-	    char * full_path = ert_workflow_list_alloc_version_name( path , root_name );
-
-	    if (full_path) {
-        names.insert(root_name);
-        res_log_finfo("Adding workflow job:%s", full_path);
-	      ert_workflow_list_add_job( workflow_list , root_name , full_path );
-	    }
-
-	    free( full_path );
-	  }
-	  free( root_name );
-	  free( version );
-        }
-      } else
-        break;
-    }
-    closedir( dirH );
-  } else
+  if (!dirH) {
     fprintf(stderr, "** Warning: failed to open workflow/jobs directory: %s\n", path);
+    return;
+  }
+  while (true) {
+    struct dirent * entry = readdir( dirH );
+    if (entry == NULL)
+      break;
 
+    if ((strcmp(entry->d_name , ".") == 0) || (strcmp(entry->d_name , "..") == 0))
+      continue;
+
+    char * root_name = entry->d_name;
+    if (names.count(root_name))
+      continue;
+
+    char * full_path = ert_workflow_list_alloc_name( path , root_name );
+    if (!full_path)
+      continue;
+
+    names.insert(root_name);
+    res_log_finfo("Adding workflow job:%s", full_path);
+    ert_workflow_list_add_job( workflow_list , root_name , full_path );
+    free( full_path );
+  }
+  closedir( dirH );
 }
 
 

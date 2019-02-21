@@ -21,58 +21,34 @@
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
 
-/*
-  These version functions are overrideed here to get a consistent
-  version mapping.
-*/
 
-int ecl_version_get_major_version( ) {
-  return 1;
-}
-
-
-int ecl_version_get_minor_version( ) {
-  return 2;
-}
-
-
-const char* ecl_version_get_micro_version( ) {
-  return "3";
-}
-
-
-void test_version() {
-  test_assert_int_equal( ecl_version_get_major_version( ) , 1 );
-  test_assert_int_equal( ecl_version_get_minor_version( ) , 2 );
-  test_assert_string_equal( ecl_version_get_micro_version( ) , "3" );
-}
 
 
 int main(int argc , const char ** argv) {
   enkf_main_install_SIGNALS();
-  test_version( );
   {
     const char * path = argv[1];
     ert_workflow_list_type * workflows = ert_workflow_list_alloc_empty(NULL);
     ert_workflow_list_add_jobs_in_directory( workflows , path );
+
 
     // The CONF1 only exists as default - unversioned
     test_assert_true( ert_workflow_list_has_job( workflows , "CONF1"));
 
     // The CONF2 exists as the default - which is invalid and will not load,
     // and CONF2@1 - which should load.
-    test_assert_false( ert_workflow_list_has_job( workflows , "CONF2@1"));
-    test_assert_true( ert_workflow_list_has_job( workflows , "CONF2"));
+    test_assert_true( ert_workflow_list_has_job( workflows , "CONF2@1"));
+    test_assert_false( ert_workflow_list_has_job( workflows , "CONF2"));
 
     // The CONF3 only exists as a fully versioned CONF3@1.2.3 - which should load.
-    test_assert_true( ert_workflow_list_has_job( workflows , "CONF3"));
+    test_assert_false( ert_workflow_list_has_job( workflows , "CONF3"));
 
     // The CONF4 only exists as a fully versioned CONF4@1.2.0 - which should not load.
     test_assert_false( ert_workflow_list_has_job( workflows , "CONF4"));
 
     // The CONF5 exists as a fully versioned CONF5@1.2.0 - which should not load and
     // CONF@1.2 which should load.
-    test_assert_true( ert_workflow_list_has_job( workflows , "CONF5"));
+    test_assert_false( ert_workflow_list_has_job( workflows , "CONF5"));
 
     ert_workflow_list_free( workflows );
   }
