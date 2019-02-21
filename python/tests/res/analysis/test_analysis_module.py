@@ -14,6 +14,8 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+import sys
+
 import res
 from tests import ResTest
 from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
@@ -25,7 +27,11 @@ from res.util import Matrix
 
 class AnalysisModuleTest(ResTest):
     def setUp(self):
-        self.libname = res.res_lib_path + "/rml_enkf.so"
+        if sys.platform.lower() == 'darwin':
+            self.libname = res.res_lib_path + "/rml_enkf.dylib"
+        else:
+            self.libname = res.res_lib_path + "/rml_enkf.so"
+
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
 
     def createAnalysisModule(self):

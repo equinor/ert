@@ -13,6 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import sys
 
 import res
 from tests import ResTest
@@ -25,7 +26,10 @@ class StdEnKFDebugTest(ResTest):
 
     def setUp(self):
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
-        self.libname = res.res_lib_path + "/std_enkf_debug.so"
+        if sys.platform.lower() == 'darwin':
+            self.libname = res.res_lib_path + "/std_enkf_debug.dylib"
+        else:
+            self.libname = res.res_lib_path + "/std_enkf_debug.so"
         self.module = AnalysisModule(lib_name = self.libname)
 
 

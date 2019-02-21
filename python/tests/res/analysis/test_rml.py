@@ -15,6 +15,7 @@
 #  for more details.
 
 import random
+import sys
 
 from tests import ResTest
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
@@ -79,7 +80,10 @@ def init_matrices(ens , mask , obs, rng):
 
 class RMLTest(ResTest):
     def setUp(self):
-        self.libname = res.res_lib_path + "/rml_enkf.so"
+        if sys.platform.lower() == 'darwin':
+            self.libname = res.res_lib_path + "/rml_enkf.dylib"
+        else:
+            self.libname = res.res_lib_path + "/rml_enkf.so"
         self.user    = "TEST"
 
     def createAnalysisModule(self):
