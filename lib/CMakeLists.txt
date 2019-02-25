@@ -414,7 +414,6 @@ foreach(name job_status_test
 endforeach()
 
 foreach(name job_loadOK
-             job_list_test
              ext_joblist_test
              job_torque_submit_test
              job_queue_timeout_test
@@ -430,6 +429,16 @@ foreach(name job_loadOK
      add_executable(${name} job_queue/tests/${name}.cpp)
      target_link_libraries(${name} res)
 endforeach()
+
+if (NOT APPLE)
+
+     add_executable(job_list_test job_queue/tests/job_list_test.cpp)
+     target_link_libraries(job_list_test res)
+
+     add_test(NAME job_list_test
+         COMMAND valgrind --leak-check=full --error-exitcode=1
+                 $<TARGET_FILE:job_list_test>)
+endif()
 
 
 add_test(NAME job_loadOK1
@@ -453,10 +462,6 @@ add_test(NAME job_loadFail3
          COMMAND job_loadFail
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/internalFail
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/externalFail)
-
-add_test(NAME job_list_test
-         COMMAND valgrind --leak-check=full --error-exitcode=1
-                 $<TARGET_FILE:job_list_test>)
 
 add_test(NAME job_workflow_test
          COMMAND job_workflow_test
