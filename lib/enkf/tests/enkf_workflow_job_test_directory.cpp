@@ -31,23 +31,11 @@ int main(int argc , const char ** argv) {
     ert_workflow_list_type * workflows = ert_workflow_list_alloc_empty(NULL);
     ert_workflow_list_add_jobs_in_directory( workflows , path );
 
-
-    // The CONF1 only exists as default - unversioned
     test_assert_true( ert_workflow_list_has_job( workflows , "CONF1"));
-
-    // The CONF2 exists as the default - which is invalid and will not load,
-    // and CONF2@1 - which should load.
     test_assert_true( ert_workflow_list_has_job( workflows , "CONF2@1"));
     test_assert_false( ert_workflow_list_has_job( workflows , "CONF2"));
-
-    // The CONF3 only exists as a fully versioned CONF3@1.2.3 - which should load.
-    test_assert_false( ert_workflow_list_has_job( workflows , "CONF3"));
-
-    // The CONF4 only exists as a fully versioned CONF4@1.2.0 - which should not load.
-    test_assert_false( ert_workflow_list_has_job( workflows , "CONF4"));
-
-    // The CONF5 exists as a fully versioned CONF5@1.2.0 - which should not load and
-    // CONF@1.2 which should load.
+    test_assert_true( ert_workflow_list_has_job( workflows , "CONF3@1.2.3"));
+    test_assert_true( ert_workflow_list_has_job( workflows , "CONF4@1.2.0"));
     test_assert_false( ert_workflow_list_has_job( workflows , "CONF5"));
 
     ert_workflow_list_free( workflows );
