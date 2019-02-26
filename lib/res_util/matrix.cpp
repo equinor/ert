@@ -17,7 +17,13 @@
 */
 
 #include <stdbool.h>
-#include <string.h>
+
+#ifdef __APPLE__
+    #include <string>
+#else
+    #include <cstring>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 
