@@ -4,7 +4,7 @@ Table of contents:
   2. About gen_data / gen_param and gen_obs.
   3. Some tips for implementing a obs_script
   4. About the ERT filesystem
-  5. Installing ERT software in Statoil
+  5. Installing ERT software in Equinor
 
 **********************************************************************
 
@@ -440,7 +440,7 @@ program, the block_fs system then has an api for reading and writing
 
 The block_fs_driver/block_fs combination is quite complex, but it has
 not had any hickups for about 1.5 years of extensive use in
-Statoil. Observe that if you pull the plug on ERT you might loose some
+Equinor. Observe that if you pull the plug on ERT you might loose some
 of the data which has been stored with the block_fs driver, but partly
 written and malformed data will be detected and discarded at the next
 boot. You are therefor guaranteed (add as many quotes you like to the
@@ -524,10 +524,10 @@ enkf_fs. Not very important functions, but convenient enough.
 
 **********************************************************************
 
-5. Installing ERT software in Statoil
+5. Installing ERT software in Equinor
 -------------------------------------
 
-Installation of research software in Statoil is according to the
+Installation of research software in Equinor is according to the
 general guideline:
 
  1. Log in to a computer in Trondheim with the correct version of

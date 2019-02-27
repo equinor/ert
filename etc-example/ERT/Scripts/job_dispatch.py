@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#  Copyright (C) 2011  Statoil ASA, Norway. 
+#  Copyright (C) 2011  Equinor ASA, Norway. 
 #   
 #  The file 'job_dispatch.py' is part of ERT - Ensemble based Reservoir Tool. 
 #   

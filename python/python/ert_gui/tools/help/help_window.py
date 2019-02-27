@@ -59,7 +59,7 @@ class HelpWindow(QMainWindow):
         self.__geometry = None
         self.setCentralWidget(central_widget)
 
-        # settings = QSettings("Statoil", "Ert-Gui")
+        # settings = QSettings("Equinor", "Ert-Gui")
         # self.restoreGeometry(settings.value("ert-gui-help/geometry").toByteArray())
 
 

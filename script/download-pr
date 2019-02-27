@@ -4,7 +4,7 @@ import json
 import os
 import sys
 
-url_fmt = "https://api.github.com/repos/Statoil/ert/pulls/%d"
+url_fmt = "https://api.github.com/repos/Equinor/ert/pulls/%d"
 
 def getPRList( api_token, pr1, pr2):
     pr = pr1
@@ -38,7 +38,7 @@ def printPRList( pr_list , fileH):
         title = pr["title"]
         body = pr["body"]
         nr = pr["number"]
-        url = "https://github.com/Statoil/ert/pull/{}/".format(nr)
+        url = "https://github.com/Equinor/ert/pull/{}/".format(nr)
 
         try:
             title = str(title)
