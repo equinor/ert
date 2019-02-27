@@ -60,17 +60,21 @@ class Workflow(BaseCClass):
         """
         self.__running = True
         success = self._try_compile(context)
+        if not success:
+            msg = "** Warning: The workflow file {} is not valid - "\
+                  "make sure the workflow jobs are defined accordingly\n"
+            sys.stderr.write(msg.format(workflow.src_file))
 
-        if success:
-            for job, args in self:
-                self.__current_job = job
-                if not self.__cancelled:
-                    return_value = job.run(ert, args, verbose)
+            self.__running = False
+            return False
 
-                    if job.hasFailed():
-                        print(return_value)
+        for job, args in self:
+            self.__current_job = job
+            if not self.__cancelled:
+                return_value = job.run(ert, args, verbose)
 
-                    #todo store results?
+                if job.hasFailed():
+                    print(return_value)
 
         self.__current_job = None
         self.__running = False
