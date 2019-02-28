@@ -171,6 +171,13 @@ class WorkflowJob(BaseCClass):
     def free(self):
         self._free( )
 
+    def stdoutdata(self):
+        """ @rtype: str """
+        return self.__script.stdoutdata
+
+    def stderrdata(self):
+        """ @rtype: str """
+        return self.__script.stderrdata
 
     @classmethod
     def createCReference(cls, c_pointer, parent=None):

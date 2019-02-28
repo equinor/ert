@@ -12,6 +12,9 @@ class WorkflowCommon(object):
             f.write("MAX_ARG 2\n")
             f.write("ARG_TYPE 0 STRING\n")
 
+        with open("dump_failing_job", "w") as f:
+            f.write("INTERNAL FALSE\n")
+            f.write("EXECUTABLE dump_failing.py\n")
 
         with open("dump.py", "w") as f:
             f.write("#!/usr/bin/env python\n")
@@ -19,9 +22,17 @@ class WorkflowCommon(object):
             f.write("f = open('%s' % sys.argv[1], 'w')\n")
             f.write("f.write('%s' % sys.argv[2])\n")
             f.write("f.close()\n")
+            f.write("print(\"Hello World\")")
+
+        with open("dump_failing.py", "w") as f:
+            f.write("#!/usr/bin/env python\n")
+            f.write("print(\"Hello Failing\")\n")
+            f.write("raise Exception")
 
         st = os.stat("dump.py")
         os.chmod("dump.py", st.st_mode | stat.S_IEXEC) # | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+        st = os.stat("dump_failing.py")
+        os.chmod("dump_failing.py", st.st_mode | stat.S_IEXEC)
 
         with open("dump_workflow", "w") as f:
             f.write("DUMP dump1 dump_text_1\n")

@@ -29,6 +29,7 @@ class Workflow(BaseCClass):
         self.__running = False
         self.__cancelled = False
         self.__current_job = None
+        self.__status = {}
 
     def __len__(self):
         return self._count( )
@@ -58,6 +59,8 @@ class Workflow(BaseCClass):
         @type context: SubstitutionList
         @rtype: bool
         """
+        # Reset status
+        self.__status = {}
         self.__running = True
         success = self._try_compile(context)
         if not success:
@@ -72,9 +75,10 @@ class Workflow(BaseCClass):
             self.__current_job = job
             if not self.__cancelled:
                 return_value = job.run(ert, args, verbose)
-
-                if job.hasFailed():
-                    print(return_value)
+                self.__status[job.name()] = {'stdout': job.stdoutdata(),
+                                             'stderr': job.stderrdata(),
+                                             'completed': not job.hasFailed(),
+                                             'return': return_value}
 
         self.__current_job = None
         self.__running = False
@@ -103,6 +107,10 @@ class Workflow(BaseCClass):
     def getLastError(self):
         """ @rtype: ConfigError """
         return self._get_last_error( )
+
+    def getJobsReport(self):
+        """ @rtype: {dict} """
+        return self.__status
 
     @classmethod
     def createCReference(cls, c_pointer, parent=None):

@@ -19,6 +19,22 @@ class ErtScript(object):
 
         self.__is_cancelled = False
         self.__failed = False
+        self._stdoutdata = ""
+        self._stderrdata = ""
+
+    @property
+    def stdoutdata(self):
+        """ @rtype: str """
+        if isinstance(self._stdoutdata, bytes):
+            self._stdoutdata = self._stdoutdata.decode()
+        return self._stdoutdata
+
+    @property
+    def stderrdata(self):
+        """ @rtype: str """
+        if isinstance(self._stderrdata, bytes):
+            self._stderrdata = self._stderrdata.decode()
+        return self._stderrdata
 
     def isVerbose(self):
         return self.__verbose
@@ -72,22 +88,25 @@ class ErtScript(object):
             if not hasattr(self, "run"):
                 self.__failed = True
                 return "Script '%s' has not implemented a 'run' function" % self.__class__.__name__
-            return self.defaultStackTrace(e)
+            self.outputStackTrace(e)
+            return None
         except KeyboardInterrupt:
             return "Script '%s' cancelled (CTRL+C)" % self.__class__.__name__
         except Exception as e:
-            return self.defaultStackTrace(e)
+            self.outputStackTrace(e)
+            return None
         finally:
             self.cleanup()
 
 
     __module_count = 0 # Need to have unique modules in case of identical object naming in scripts
 
-    def defaultStackTrace(self, error):
-        sys.stderr.write("The script '%s' caused an error while running:\n" % self.__class__.__name__)
+    def outputStackTrace(self, error=None):
+        stack_trace = error or "".join(traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+        msg = "The script '{}' caused an error while running:\n{}"
+
+        sys.stderr.write(msg.format(self.__class__.__name__, stack_trace))
         self.__failed = True
-        stack_trace = traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback)
-        return "".join(stack_trace)
 
     @staticmethod
     def loadScriptFromFile(path):

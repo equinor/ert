@@ -85,9 +85,23 @@ class WorkflowJobTest(ResTest):
             argTypes = job.argumentTypes()
             self.assertEqual( argTypes , [str , str] )
             self.assertIsNone(job.run(None, ["test", "text"]))
+            self.assertEqual(job.stdoutdata(), "Hello World\n")
 
             with open("test", "r") as f:
                 self.assertEqual(f.read(), "text")
+
+    def test_error_handling_external_job(self):
+
+        with TestAreaContext("python/job_queue/workflow_job") as work_area:
+            WorkflowCommon.createExternalDumpJob()
+
+            config = self._alloc_config()
+            job = self._alloc_from_file("DUMP", config, "dump_failing_job")
+
+            self.assertFalse(job.isInternal())
+            argTypes = job.argumentTypes()
+            self.assertTrue(job.run(None, []).startswith('Traceback'))
+            self.assertTrue(job.stderrdata().startswith('Traceback'))
 
 
     def test_run_internal_script(self):

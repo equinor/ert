@@ -1,4 +1,5 @@
-from subprocess import Popen
+import sys
+from subprocess import Popen, PIPE
 from res.job_queue import ErtScript
 
 
@@ -13,8 +14,19 @@ class ExternalErtScript(ErtScript):
     def run(self, *args):
         command = [self.__executable]
         command.extend([str(arg) for arg in args])
-        self.__job = Popen(command)
-        self.__job.wait() # This should not be here?
+
+        self.__job = Popen(command,
+                           stdout = PIPE,
+                           stderr = PIPE)
+
+        # The job will complete before stdout and stderr is returned
+        self._stdoutdata, self._stderrdata = self.__job.communicate()
+
+        sys.stdout.write(self._stdoutdata)
+
+        if self.__job.returncode != 0:
+            raise Exception(self._stderrdata)
+
         return None
 
     def cancel(self):
