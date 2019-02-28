@@ -49,6 +49,10 @@ class WorkflowRunner(object):
         """ @rtype: bool or None """
         return self.__workflow_result
 
+    def workflowReport(self):
+        """ @rtype: {dict} """
+        return self.__workflow.getJobsReport()
+
     def workflowError(self):
         """ @rtype: str """
         error = self.__workflow.getLastError()
