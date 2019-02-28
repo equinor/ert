@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway.
+   Copyright (C) 2011  Equinor ASA, Norway.
 
    The file 'enkf_serialize.c' is part of ERT - Ensemble based Reservoir Tool.
 
@@ -59,11 +59,11 @@
         ------------------>[ P2     P2 ]<-------------------
                            [ P3     P3 ]
                            [ P4     P4 ]
-                           [ ··········]             ==============
+                           [ Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·]             ==============
                            [ R1     R1 ]             | RELPERM-2  |
   ==============    ------>[ R2     R2 ]<----------->|------------|
   | RELPERM-1  |    |      [ R3     R3 ]             |            |
-  |------------|<----      [ ··········]             | R0 ... R5  |
+  |------------|<----      [ Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·]             | R0 ... R5  |
   |            |           [ F2     F2 ]             ==============
   | R0 ... R5  |      ---->[ F3     F3 ]
   ==============      |    [ F4     F4 ]<-----
@@ -124,10 +124,10 @@ following ensemble matrix, consisting of five ensemble members:
 
 
                            Member 5
-      Member 2 --·           |
+      Member 2 --Â·           |
                  |           |
                  |           |
-Member 1 ----·   |           |
+Member 1 ----Â·   |           |
              |   |           |
             \|/ \|/         \|/
            [ P0  P0  P0  P0  P0 ]

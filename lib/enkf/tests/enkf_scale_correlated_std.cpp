@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2015  Statoil ASA, Norway.
+   Copyright (C) 2015  Equinor ASA, Norway.
 
    The file 'enkf_scale_correlated_std.c' is part of ERT - Ensemble based Reservoir Tool.
 

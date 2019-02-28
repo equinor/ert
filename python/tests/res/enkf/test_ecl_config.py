@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#  Copyright (C) 2013  Statoil ASA, Norway.
+#  Copyright (C) 2013  Equinor ASA, Norway.
 #
 #  This file is part of ERT - Ensemble based Reservoir Tool.
 #
@@ -17,19 +17,19 @@
 
 import os.path
 from res.enkf import EclConfig
-from tests import ResTest, statoil_test
+from tests import ResTest, equinor_test
 from res.util import UIReturn
 from ecl.summary  import EclSum
 
-EGRID_file    = "Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID"
-SMSPEC_file   = "Statoil/ECLIPSE/Gurbat/ECLIPSE.SMSPEC"
-DATA_file     = "Statoil/ECLIPSE/Gurbat/ECLIPSE.DATA"
-INIT_file     = "Statoil/ECLIPSE/Gurbat/EQUIL.INC"
-DATA_INIT_file= "Statoil/ECLIPSE/Gurbat/ECLIPSE_INIT.DATA"
-SCHEDULE_file = "Statoil/ECLIPSE/Gurbat/target.SCH"
+EGRID_file    = "Equinor/ECLIPSE/Gurbat/ECLIPSE.EGRID"
+SMSPEC_file   = "Equinor/ECLIPSE/Gurbat/ECLIPSE.SMSPEC"
+DATA_file     = "Equinor/ECLIPSE/Gurbat/ECLIPSE.DATA"
+INIT_file     = "Equinor/ECLIPSE/Gurbat/EQUIL.INC"
+DATA_INIT_file= "Equinor/ECLIPSE/Gurbat/ECLIPSE_INIT.DATA"
+SCHEDULE_file = "Equinor/ECLIPSE/Gurbat/target.SCH"
 
 
-@statoil_test()
+@equinor_test()
 class EclConfigTest(ResTest):
 
 

@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway.
+   Copyright (C) 2011  Equinor ASA, Norway.
 
    The file 'site_config.c' is part of ERT - Ensemble based Reservoir Tool.
 
@@ -571,7 +571,7 @@ static bool site_config_init(site_config_type * site_config, const config_conten
      Set the umask for all file creation. A value of '0' will ensure
      that all files and directories are created with 'equal rights'
      for everyone - might be handy if you are helping someone... The
-     default statoil value is 0022, i.e. write access is removed from
+     default equinor value is 0022, i.e. write access is removed from
      group and others.
 
      The string is supposed to be in OCTAL representation (without any

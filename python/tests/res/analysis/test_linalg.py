@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#  Copyright (C) 2015  Statoil ASA, Norway.
+#  Copyright (C) 2015  Equinor ASA, Norway.
 #
 #  The file 'test_labscale.py' is part of ERT - Ensemble based Reservoir Tool.
 #

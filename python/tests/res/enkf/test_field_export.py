@@ -1,5 +1,5 @@
 import os
-from tests import ResTest, statoil_test
+from tests import ResTest, equinor_test
 from res.test import ErtTestContext
 
 from ecl.util.util import IntVector
@@ -11,10 +11,10 @@ from res.enkf.enums import EnkfFieldFileFormatEnum
 from res.enkf import NodeId
 
 
-@statoil_test()
+@equinor_test()
 class FieldExportTest(ResTest):
     def setUp(self):
-        self.config_file = self.createTestPath("Statoil/config/obs_testing/config")
+        self.config_file = self.createTestPath("Equinor/config/obs_testing/config")
 
     def test_field_type_enum(self):
         with ErtTestContext("export_test", self.config_file) as test_context:

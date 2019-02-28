@@ -11,4 +11,4 @@ _Short description of the approach_
 
 
 **Depends on**
-* Statoil/libecl#
+* Equinor/libecl#

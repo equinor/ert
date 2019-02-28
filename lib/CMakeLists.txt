@@ -760,118 +760,118 @@ foreach(test enkf_site_config
 endforeach()
 
 
-if (NOT STATOIL_TESTDATA_ROOT)
+if (NOT EQUINOR_TESTDATA_ROOT)
     return ()
 endif ()
 
 add_test(NAME rms_file_test
-         COMMAND rms_file_test ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/rms_file_test/rms_file)
+         COMMAND rms_file_test ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/rms_file_test/rms_file)
 
 add_test(NAME sched_history_summary1
-         COMMAND sched_history_summary ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE)
+         COMMAND sched_history_summary ${CMAKE_SOURCE_DIR}/test-data/Equinor/ECLIPSE/Gurbat/ECLIPSE)
 
 add_test(NAME sched_history_summary2
-         COMMAND sched_history_summary ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Snorre/SNORRE)
+         COMMAND sched_history_summary ${CMAKE_SOURCE_DIR}/test-data/Equinor/ECLIPSE/Snorre/SNORRE)
 
 
 
-function( add_statoil_test name command )
+function( add_equinor_test name command )
     add_test( NAME ${name}
               COMMAND ${command} ${ARGN})
 
-    set_property( TEST ${name} PROPERTY LABELS StatoilData)
+    set_property( TEST ${name} PROPERTY LABELS EquinorData)
     set_property( TEST ${name} PROPERTY ENVIRONMENT "ERT_ROOT=${ERT_ROOT}")
 endfunction()
 
 
-add_statoil_test(enkf_site_config
+add_equinor_test(enkf_site_config
                  enkf_site_config /project/res/etc/ERT/site-config)
 
-add_statoil_test(enkf_gen_data_config
+add_equinor_test(enkf_gen_data_config
                  enkf_gen_data_config
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/gendata_test/RFT_E-3H_21
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/gendata_test/RFT_E-3H_21_empty)
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/gendata_test/RFT_E-3H_21
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/gendata_test/RFT_E-3H_21_empty)
 
-add_statoil_test(enkf_block_obs
+add_equinor_test(enkf_block_obs
                  enkf_block_obs
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID)
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/ECLIPSE/Gurbat/ECLIPSE.EGRID)
 
-add_statoil_test(enkf_obs_fs
+add_equinor_test(enkf_obs_fs
                  enkf_obs_fs
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/obs_testing/config)
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/obs_testing/config)
 
-add_statoil_test(enkf_obs_vector_fs
+add_equinor_test(enkf_obs_vector_fs
                  enkf_obs_vector_fs
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/obs_testing/config)
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/obs_testing/config)
 
-add_statoil_test(enkf_plot_data_fs
+add_equinor_test(enkf_plot_data_fs
                  enkf_plot_data_fs
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/plotData/config)
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/plotData/config)
 
-add_statoil_test(enkf_time_map1 enkf_time_map)
-add_statoil_test(enkf_time_map2
+add_equinor_test(enkf_time_map1 enkf_time_map)
+add_equinor_test(enkf_time_map2
                  enkf_time_map
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/ModifiedSummary/EXTRA_TSTEP
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/ModifiedSummary/SHORT
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/ModifiedSummary/MISSING_TSTEP)
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/ECLIPSE/Gurbat/ECLIPSE
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/ECLIPSE/ModifiedSummary/EXTRA_TSTEP
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/ECLIPSE/ModifiedSummary/SHORT
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/ECLIPSE/ModifiedSummary/MISSING_TSTEP)
 
-add_statoil_test(enkf_main_fs
+add_equinor_test(enkf_main_fs
                  enkf_main_fs
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/plotData/config)
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/plotData/config)
 
-add_statoil_test(enkf_main_fs_current_file_test
+add_equinor_test(enkf_main_fs_current_file_test
                  enkf_main_fs_current_file_test
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/plotData/config)
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/plotData/config)
 
-add_statoil_test(enkf_scale_correlated_std
+add_equinor_test(enkf_scale_correlated_std
                  enkf_scale_correlated_std
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/with_data/config
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/with_data/config
                  ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/STD_SCALE_CORRELATED_OBS)
 
-add_statoil_test(enkf_plot_gendata_fs
+add_equinor_test(enkf_plot_gendata_fs
                  enkf_plot_gendata_fs
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/with_GEN_DATA/config)
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/with_GEN_DATA/config)
 
-add_statoil_test(enkf_state_report_step_compatible_TRUE
+add_equinor_test(enkf_state_report_step_compatible_TRUE
                  enkf_state_report_step_compatible
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_true
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/ecl_sum_compatible_true
                  config_ecl_sum_compatible_true
                  TRUE)
 
-add_statoil_test(enkf_state_report_step_compatible_FALSE
+add_equinor_test(enkf_state_report_step_compatible_FALSE
                  enkf_state_report_step_compatible
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_false
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/ecl_sum_compatible_false
                  config_ecl_sum_compatible_false
                  FALSE)
 
-add_statoil_test(enkf_state_manual_load_test
+add_equinor_test(enkf_state_manual_load_test
                  enkf_state_manual_load_test
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_true
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/ecl_sum_compatible_true
                  config_ecl_sum_compatible_true)
 
 
-add_statoil_test(enkf_state_summary_vars_present
+add_equinor_test(enkf_state_summary_vars_present
                  enkf_state_skip_summary_load_test
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/ecl_summary_vars_config
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/ecl_summary_vars_config
                  config_summary_vars)
 
-add_statoil_test(enkf_state_no_summary_vars_present
+add_equinor_test(enkf_state_no_summary_vars_present
                  enkf_state_skip_summary_load_test
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/ecl_no_summary_vars_config
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/ecl_no_summary_vars_config
                  config_no_summary_vars)
 
-add_statoil_test(enkf_export_field_test
+add_equinor_test(enkf_export_field_test
                  enkf_export_field_test
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/export_fields/config
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/export_fields/config
                  ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_FIELD
                  ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_FIELD_ECL_GRDECL
                  ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_FIELD_RMS_ROFF)
 
-add_statoil_test(enkf_workflow_job_test
+add_equinor_test(enkf_workflow_job_test
                  enkf_workflow_job_test
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/with_data/config
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/enkf_state_runpath/config_runpath_multiple_iterations
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/with_data/config
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/enkf_state_runpath/config_runpath_multiple_iterations
                  ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal-tui/config/CREATE_CASE
                  ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal-tui/config/INIT_CASE_FROM_EXISTING
                  ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/LOAD_RESULTS
@@ -884,63 +884,63 @@ add_statoil_test(enkf_workflow_job_test
                  ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/PRE_SIMULATION_COPY)
 
 
-add_statoil_test(enkf_forward_init_SURFACE_TRUE
+add_equinor_test(enkf_forward_init_SURFACE_TRUE
                  enkf_forward_init_SURFACE
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface config_surface_true
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface/Surface.irap
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/forward_init/surface config_surface_true
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/forward_init/surface/Surface.irap
                  TRUE)
 
-add_statoil_test(enkf_forward_init_SURFACE_FALSE
+add_equinor_test(enkf_forward_init_SURFACE_FALSE
                  enkf_forward_init_SURFACE
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface config_surface_false
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface/Surface.irap
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/forward_init/surface config_surface_false
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/forward_init/surface/Surface.irap
                  FALSE)
 
-add_statoil_test(enkf_forward_init_FIELD_TRUE
+add_equinor_test(enkf_forward_init_FIELD_TRUE
                  enkf_forward_init_FIELD
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/forward_init/field config_field_true
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/forward_init/field/petro.grdecl
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/forward_init/field config_field_true
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/forward_init/field/petro.grdecl
                  TRUE)
 
-add_statoil_test(enkf_forward_init_FIELD_FALSE
+add_equinor_test(enkf_forward_init_FIELD_FALSE
                  enkf_forward_init_FIELD
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/forward_init/field config_field_false
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/forward_init/field/petro.grdecl
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/forward_init/field config_field_false
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/forward_init/field/petro.grdecl
                  FALSE)
 
-add_statoil_test(enkf_forward_init_transform_TRUE
+add_equinor_test(enkf_forward_init_transform_TRUE
                  enkf_forward_init_transform
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/transform transform_forward_init_true
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/transform/petro.grdecl
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/transform transform_forward_init_true
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/transform/petro.grdecl
                  TRUE)
 
-add_statoil_test(enkf_forward_init_transform_FALSE
+add_equinor_test(enkf_forward_init_transform_FALSE
                  enkf_forward_init_transform
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/transform transform_forward_init_false
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/transform/petro.grdecl
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/transform transform_forward_init_false
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/transform/petro.grdecl
                  FALSE)
 
-add_statoil_test(enkf_export_inactive_cells
+add_equinor_test(enkf_export_inactive_cells
                  enkf_export_inactive_cells
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/export_inactive_cells/config
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/export_inactive_cells/petro.grdecl)
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/export_inactive_cells/config
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/export_inactive_cells/petro.grdecl)
 
-add_statoil_test(enkf_refcase_list
+add_equinor_test(enkf_refcase_list
                  enkf_refcase_list
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat*/ECLIPSE)
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/ECLIPSE/Gurbat/ECLIPSE
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/ECLIPSE/Gurbat*/ECLIPSE)
 
-add_statoil_test(enkf_refcase_list2
+add_equinor_test(enkf_refcase_list2
                  enkf_refcase_list
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat*/ECLIPSE.*)
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/ECLIPSE/Gurbat/ECLIPSE
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/ECLIPSE/Gurbat*/ECLIPSE.*)
 
-add_statoil_test(enkf_ecl_config1 enkf_ecl_config)
-add_statoil_test(enkf_ecl_config2
+add_equinor_test(enkf_ecl_config1 enkf_ecl_config)
+add_equinor_test(enkf_ecl_config2
                  enkf_ecl_config
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE)
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/ECLIPSE/Gurbat/ECLIPSE)
 
-add_statoil_test(enkf_ecl_config_config
+add_equinor_test(enkf_ecl_config_config
                  enkf_ecl_config_config
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/ecl_config)
+                 ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/ecl_config)
 

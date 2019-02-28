@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#  Copyright (C) 2015  Statoil ASA, Norway.
+#  Copyright (C) 2015  Equinor ASA, Norway.
 #
 #  The file 'test_labscale.py' is part of ERT - Ensemble based Reservoir Tool.
 #
@@ -25,7 +25,7 @@ class LabScaleTest(ResTest):
 
 
     def testObs(self):
-        config_file = self.createTestPath("Statoil/config/labscale/config")
+        config_file = self.createTestPath("Equinor/config/labscale/config")
         with ErtTestContext("labscale", config_file) as test_context:
             ert = test_context.getErt()
             obs = ert.getObservations()
@@ -58,7 +58,7 @@ class LabScaleTest(ResTest):
             
 
     def testObs_beijing(self):
-        config_file = self.createTestPath("Statoil/config/lab-beijing/labunits/config")
+        config_file = self.createTestPath("Equinor/config/lab-beijing/labunits/config")
         with ErtTestContext("labscale-beijing", config_file) as test_context:
             ert = test_context.getErt()
             obs = ert.getObservations()

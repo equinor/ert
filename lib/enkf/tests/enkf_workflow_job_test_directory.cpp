@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2016  Statoil ASA, Norway.
+   Copyright (C) 2016  Equinor ASA, Norway.
 
    The file 'enkf_workflow_job_test_version.c' is part of ERT -
    Ensemble based Reservoir Tool.

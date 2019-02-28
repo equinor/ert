@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#  Copyright (C) 2013  Statoil ASA, Norway.
+#  Copyright (C) 2013  Equinor ASA, Norway.
 #
 #  The file 'test_analysis_config.py' is part of ERT - Ensemble based Reservoir Tool.
 #

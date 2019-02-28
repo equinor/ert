@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
+   Copyright (C) 2011  Equinor ASA, Norway. 
     
    The file 'group_rate.c' is part of ERT - Ensemble based Reservoir Tool. 
     

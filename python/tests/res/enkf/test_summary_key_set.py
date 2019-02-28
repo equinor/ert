@@ -1,6 +1,6 @@
 import os
 from ecl.util.test.test_area import TestAreaContext
-from tests import ResTest, statoil_test
+from tests import ResTest, equinor_test
 from res.test.ert_test_context import ErtTestContext
 
 from res.enkf import SummaryKeySet
@@ -8,7 +8,7 @@ from res.enkf.enkf_fs import EnkfFs
 from res.enkf import EnKFMain, ResConfig
 
 
-@statoil_test()
+@equinor_test()
 class SummaryKeySetTest(ResTest):
 
     def test_creation(self):
@@ -72,7 +72,7 @@ class SummaryKeySetTest(ResTest):
 
 
     def test_with_enkf_fs(self):
-        config_file = self.createTestPath("Statoil/config/with_data/config")
+        config_file = self.createTestPath("Equinor/config/with_data/config")
 
         with TestAreaContext("enkf/summary_key_set/enkf_fs", store_area=True) as context:
             context.copy_parent_content(config_file)

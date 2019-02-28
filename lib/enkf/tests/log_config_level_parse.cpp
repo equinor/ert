@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2017  Statoil ASA, Norway.
+   Copyright (C) 2017  Equinor ASA, Norway.
 
    The file 'enkf_res_log_level_parse.c' is part of ERT - Ensemble based Reservoir Tool.
 

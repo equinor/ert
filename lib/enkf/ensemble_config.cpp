@@ -1,5 +1,5 @@
 /*
-   copyright (c) 2011  statoil asa, norway.
+   copyright (c) 2011  equinor asa, norway.
 
    the file 'ensemble_config.c' is part of ert - ensemble based reservoir tool.
 

@@ -1,13 +1,13 @@
-from tests import ResTest, statoil_test
+from tests import ResTest, equinor_test
 from res.test import ErtTestContext
 
 from res.enkf import ErtImplType, GenKwConfig
 
-@statoil_test()
+@equinor_test()
 class GenKwConfigTest(ResTest):
 
     def setUp(self):
-        self.config = self.createTestPath("Statoil/config/with_data/config")
+        self.config = self.createTestPath("Equinor/config/with_data/config")
 
 
     def test_gen_kw_config(self):

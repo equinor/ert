@@ -5,7 +5,7 @@
  *      Author: joaho
  */
 /*
-   Copyright (C) 2013  Statoil ASA, Norway.
+   Copyright (C) 2013  Equinor ASA, Norway.
 
    The file 'ui_return.c' is part of ERT - Ensemble based Reservoir Tool.
 

@@ -1,11 +1,11 @@
-from tests import ResTest, statoil_test
+from tests import ResTest, equinor_test
 from res.test import ErtTestContext
 
 
-@statoil_test()
+@equinor_test()
 class ErtTestContextTest(ResTest):
     def setUp(self):
-        self.config = self.createTestPath("Statoil/config/with_data/config")
+        self.config = self.createTestPath("Equinor/config/with_data/config")
 
     def test_raises(self):
         with self.assertRaises(IOError):

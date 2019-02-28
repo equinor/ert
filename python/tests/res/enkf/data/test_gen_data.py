@@ -1,14 +1,14 @@
 from ecl.util.util import BoolVector
-from tests import ResTest, statoil_test
+from tests import ResTest, equinor_test
 from res.test import ErtTestContext
 
 from res.enkf.data.enkf_node import EnkfNode
 from res.enkf.node_id import NodeId
 
-@statoil_test()
+@equinor_test()
 class GenDataTest(ResTest):
     def setUp(self):
-        self.config_file = self.createTestPath("Statoil/config/with_GEN_DATA/config")
+        self.config_file = self.createTestPath("Equinor/config/with_GEN_DATA/config")
 
 
     def test_create(self):

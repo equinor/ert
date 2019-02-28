@@ -20,7 +20,7 @@ Build and test fixes:
  - removed stale binaries [7, 9]
  - travis will build all repositories [23].
  - Travis + OSX [69, 72]
- - Remove statoil specific settings from build sytem [38].
+ - Remove equinor specific settings from build sytem [38].
  - Travis split for parallell builds [79].
 
 

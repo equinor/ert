@@ -12,7 +12,7 @@ set(TEST_SOURCES
     test_workflow_runner.py
     test_jobmanager.py
     test_job_manager_runtime_kw.py
-    test_statoil_jobmanager.py
+    test_equinor_jobmanager.py
     workflow_common.py
 )
 
@@ -30,4 +30,4 @@ addPythonTest(tests.res.job_queue.test_workflow_runner.WorkflowRunnerTest)
 addPythonTest(tests.res.job_queue.test_ext_job.ExtJobTest)
 addPythonTest(tests.res.job_queue.test_jobmanager.JobManagerTest)
 addPythonTest(tests.res.job_queue.test_job_manager_runtime_kw.JobManagerTestRuntimeKW)
-addPythonTest(tests.res.job_queue.test_statoil_jobmanager.JobManagerStatoilTest)
+addPythonTest(tests.res.job_queue.test_equinor_jobmanager.JobManagerEquinorTest)

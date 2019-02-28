@@ -48,7 +48,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'ert'
-copyright = u'2014, Statoil ASA'
+copyright = u'2014, Equinor ASA'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -201,7 +201,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('index', 'ert.tex', u'ert Documentation',
-   u'Statoil ASA', 'manual'),
+   u'Equinor ASA', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -231,7 +231,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'ert', u'ert Documentation',
-     [u'Statoil ASA'], 1)
+     [u'Equinor ASA'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -245,7 +245,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'ert', u'ert Documentation',
-   u'Statoil ASA', 'ert', 'One line description of project.',
+   u'Equinor ASA', 'ert', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -266,9 +266,9 @@ texinfo_documents = [
 
 # Bibliographic Dublin Core info.
 epub_title = u'ert'
-epub_author = u'Statoil ASA'
-epub_publisher = u'Statoil ASA'
-epub_copyright = u'2014, Statoil ASA'
+epub_author = u'Equinor ASA'
+epub_publisher = u'Equinor ASA'
+epub_copyright = u'2014, Equinor ASA'
 
 # The basename for the epub file. It defaults to the project name.
 #epub_basename = u'ert'

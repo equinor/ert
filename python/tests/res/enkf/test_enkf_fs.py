@@ -1,6 +1,6 @@
 import os
 from ecl.util.test import TestAreaContext
-from tests import ResTest, statoil_test
+from tests import ResTest, equinor_test
 from res.test import ErtTestContext
 
 from res.enkf import EnkfFs
@@ -8,11 +8,11 @@ from res.enkf import EnKFMain
 from res.enkf.enums import EnKFFSType
 
 
-@statoil_test()
+@equinor_test()
 class EnKFFSTest(ResTest):
     def setUp(self):
         self.mount_point = "storage/default"
-        self.config_file = self.createTestPath("Statoil/config/with_data/config")
+        self.config_file = self.createTestPath("Equinor/config/with_data/config")
 
 
     def test_id_enum(self):

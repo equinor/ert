@@ -1,5 +1,5 @@
 
-#  Copyright (C) 2013  Statoil ASA, Norway.
+#  Copyright (C) 2013  Equinor ASA, Norway.
 #
 #  The file 'analysis_module_load_status_enum.py' is part of ERT - Ensemble based Reservoir Tool.
 #

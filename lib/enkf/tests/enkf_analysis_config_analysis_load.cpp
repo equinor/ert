@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2014  Statoil ASA, Norway.
+   Copyright (C) 2014  Equinor ASA, Norway.
 
    The file 'enkf_analysis_config_analysis_load.c' is part of ERT - Ensemble based Reservoir Tool.
 

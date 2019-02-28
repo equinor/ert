@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway.
+   Copyright (C) 2011  Equinor ASA, Norway.
 
    The file 'matrix_blas.c' is part of ERT - Ensemble based Reservoir Tool.
 
@@ -105,7 +105,7 @@ static void dgemm_debug(const matrix_type *C , const matrix_type *A , const matr
 /**
    C = alpha * op(A) * op(B)  +  beta * C
 
-   op(·) can either be unity or Transpose.
+   op(Â·) can either be unity or Transpose.
 */
 
 void matrix_dgemm(matrix_type *C , const matrix_type *A , const matrix_type * B , bool transA, bool transB , double alpha , double beta) {
@@ -223,7 +223,7 @@ void matrix_matmul(matrix_type * C, const matrix_type * A , const matrix_type * 
 
 
 /**
-   Allocates new matrix C = A·B
+   Allocates new matrix C = AÂ·B
 */
 
 matrix_type * matrix_alloc_matmul(const matrix_type * A, const matrix_type * B) {
@@ -247,13 +247,13 @@ void matrix_gram_set( const matrix_type * X , matrix_type * G, bool col) {
   int X_rows = matrix_get_rows( X );
   int X_cols = matrix_get_columns( X );
   if (col) {
-    // Calculate X' · X
+    // Calculate X' Â· X
     if ((G_rows == G_cols) && (X_cols == G_rows))
       matrix_dgemm( G , X , X , true , false , 1 , 0);
     else
       util_abort("%s: dimension mismatch \n",__func__);
   } else {
-    // Calculate X · X'
+    // Calculate X Â· X'
     if ((G_rows == G_cols) && (X_rows == G_rows))
       matrix_dgemm( G , X , X , false , true , 1 , 0);
     else
@@ -263,8 +263,8 @@ void matrix_gram_set( const matrix_type * X , matrix_type * G, bool col) {
 
 
 /**
-   If col == true:   G = X' · X
-      col == false:  G = X  · X'
+   If col == true:   G = X' Â· X
+      col == false:  G = X  Â· X'
 */
 
 

@@ -1,4 +1,4 @@
-#  Copyright (C) 2018  Statoil ASA, Norway.
+#  Copyright (C) 2018  Equinor ASA, Norway.
 #
 #  The file 'test_ecl.py' is part of ERT - Ensemble based Reservoir Tool.
 #
@@ -23,7 +23,7 @@ import yaml
 
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
-from tests import ResTest, statoil_test
+from tests import ResTest, equinor_test
 from res.fm.ecl import *
 
 
@@ -137,7 +137,7 @@ class EclRunTest(ResTest):
 
 
 
-    @statoil_test()
+    @equinor_test()
     def test_run(self):
         with TestAreaContext("ecl_run") as ta:
             self.init_ecl100_config()
@@ -164,7 +164,7 @@ class EclRunTest(ResTest):
             with self.assertRaises(Exception):
                 ecl_run.runEclipse( )
 
-    @statoil_test()
+    @equinor_test()
     def test_run_api(self):
         with TestAreaContext("ecl_run_api") as ta:
             self.init_ecl100_config()
@@ -181,7 +181,7 @@ class EclRunTest(ResTest):
 
 
 
-    @statoil_test()
+    @equinor_test()
     def test_failed_run(self):
         with TestAreaContext("ecl_run") as ta:
             self.init_ecl100_config()
@@ -198,7 +198,7 @@ class EclRunTest(ResTest):
                 self.assertTrue( "ERROR" in str(e) )
 
 
-    @statoil_test()
+    @equinor_test()
     def test_failed_run_OK(self):
         with TestAreaContext("ecl_run") as ta:
             self.init_ecl100_config()
@@ -214,7 +214,7 @@ class EclRunTest(ResTest):
             ecl_run.runEclipse( )
 
 
-    @statoil_test()
+    @equinor_test()
     def test_mpi_run(self):
         with TestAreaContext("ecl_run") as ta:
             self.init_ecl100_config()
@@ -225,7 +225,7 @@ class EclRunTest(ResTest):
             self.assertTrue( os.path.isfile( "SPE1_PARALLELL.LOG"))
 
 
-    @statoil_test()
+    @equinor_test()
     def test_summary_block(self):
         with TestAreaContext("ecl_run") as ta:
             self.init_ecl100_config()
@@ -241,11 +241,11 @@ class EclRunTest(ResTest):
             self.assertTrue(isinstance(ecl_sum, EclSum))
 
 
-    @statoil_test()
+    @equinor_test()
     def test_check(self):
-        full_case   = os.path.join(self.SOURCE_ROOT, "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE" )
-        short_case  = os.path.join(self.SOURCE_ROOT, "test-data/Statoil/ECLIPSE/ShortSummary/ECLIPSE" )
-        failed_case = os.path.join(self.SOURCE_ROOT, "test-data/Statoil/ECLIPSE/SummaryFail/NOR-2013A_R002_1208-0")
+        full_case   = os.path.join(self.SOURCE_ROOT, "test-data/Equinor/ECLIPSE/Gurbat/ECLIPSE" )
+        short_case  = os.path.join(self.SOURCE_ROOT, "test-data/Equinor/ECLIPSE/ShortSummary/ECLIPSE" )
+        failed_case = os.path.join(self.SOURCE_ROOT, "test-data/Equinor/ECLIPSE/SummaryFail/NOR-2013A_R002_1208-0")
 
         with self.assertRaises(IOError):
             self.assertTrue( EclRun.checkCase( full_case , failed_case ))
@@ -269,7 +269,7 @@ class EclRunTest(ResTest):
 
 
 
-    @statoil_test()
+    @equinor_test()
     def test_error_parse(self):
         with TestAreaContext("ecl_run") as ta:
             self.init_ecl100_config()

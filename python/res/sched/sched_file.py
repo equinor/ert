@@ -1,4 +1,4 @@
-#  Copyright (C) 2012  Statoil ASA, Norway.
+#  Copyright (C) 2012  Equinor ASA, Norway.
 #
 #  The file 'sched_file.py' is part of ERT - Ensemble based Reservoir Tool.
 #

@@ -1,4 +1,4 @@
-#  Copyright (C) 2013  Statoil ASA, Norway.
+#  Copyright (C) 2013  Equinor ASA, Norway.
 #
 #  The file 'config_parser.py' is part of ERT - Ensemble based Reservoir Tool.
 #

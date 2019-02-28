@@ -5,7 +5,7 @@ DEFINE                    __INCLUDE_PATH__   /private/joaho/ERT/git/ert/Gurbat
 DEFINE                    __GRID__           __NAME__.EGRID
 DEFINE                    MULTIR_FILE        MULTIR.INC
 
-JOB_SCRIPT /private/joaho/ERT/Statoil/etc/ERT/Scripts/job_dispatch.py
+JOB_SCRIPT /private/joaho/ERT/Equinor/etc/ERT/Scripts/job_dispatch.py
 
 
 -- The ECLIPSE data files which are used as init.
@@ -16,10 +16,10 @@ SCHEDULE_FILE              target.SCH
 
 --SCHEDULE_PREDICTION_FILE   prediction.sch
 
-INSTALL_JOB          RMS_BATCH  /private/joaho/ERT/Statoil/etc/ERT/Config/jobs/resmod/RMS_BATCH_TEST
+INSTALL_JOB          RMS_BATCH  /private/joaho/ERT/Equinor/etc/ERT/Config/jobs/resmod/RMS_BATCH_TEST
 INSTALL_JOB          ECLIPSE_TEST ECLIPSE_TEST
 INSTALL_JOB          AVGP jobs/AVGP
---INSTALL_JOB          RMS_TEST /private/joaho/ERT/Statoil/etc/ERT/Config/jobs/resmod/RMS_BATCH
+--INSTALL_JOB          RMS_TEST /private/joaho/ERT/Equinor/etc/ERT/Config/jobs/resmod/RMS_BATCH
 SETENV               MANY_PATH                        $PATH:$LD_LIBRARY_PATH:$MANPATH:/lib
 
 
@@ -58,7 +58,7 @@ QC_PATH           /tmp/QC
 INSTALL_JOB       PVT      jobs/PVT
 INSTALL_JOB       NULL     jobs/NULL
 
-INSTALL_JOB      RMS_TEST   /private/joaho/ERT/Statoil/etc/ERT/Config/jobs/resmod/RUN_RMS_20XX
+INSTALL_JOB      RMS_TEST   /private/joaho/ERT/Equinor/etc/ERT/Config/jobs/resmod/RUN_RMS_20XX
 INSTALL_JOB      PRESSURE33 jobs/Pressure33
 
 --FORWARD_MODEL     RMS_BATCH(<RMS_VERSION>=2012.0.1, <RMS_PROJECT>=<CWD>/rms/rms_project_2012 , <RMS_WORKFLOW>=MAIN_WORKFLOW)

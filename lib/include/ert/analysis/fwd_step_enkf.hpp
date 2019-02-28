@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway.
+   Copyright (C) 2011  Equinor ASA, Norway.
 
    The file 'fwd_step_enkf.h' is part of ERT - Ensemble based Reservoir Tool.
 

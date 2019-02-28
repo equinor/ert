@@ -1,14 +1,14 @@
-from tests import ResTest, statoil_test
+from tests import ResTest, equinor_test
 from res.test import ErtTestContext
 
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from ecl.util.util import BoolVector
 
 
-@statoil_test()
+@equinor_test()
 class LoadResultsManuallyTest(ResTest):
     def setUp(self):
-        self.config_file = self.createTestPath("Statoil/config/with_data/config")
+        self.config_file = self.createTestPath("Equinor/config/with_data/config")
 
     def test_load_results_manually(self):
         with ErtTestContext("manual_load_test", self.config_file) as test_context:

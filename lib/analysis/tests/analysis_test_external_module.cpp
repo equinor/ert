@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2013  Statoil ASA, Norway.
+   Copyright (C) 2013  Equinor ASA, Norway.
 
    The file 'analysis_test_external_module.c' is part of ERT - Ensemble based Reservoir Tool.
 

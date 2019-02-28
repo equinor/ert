@@ -5,7 +5,7 @@ import os.path
 import stat
 import time
 import datetime
-from tests import ResTest, statoil_test
+from tests import ResTest, equinor_test
 
 from ecl.util.test import TestAreaContext
 from res.job_queue import JobManager
@@ -74,8 +74,8 @@ def create_jobs_json(jobList, umask="0000"):
         f.write(json.dumps(data))
 
 
-@statoil_test()
-class JobManagerStatoilTest(ResTest):
+@equinor_test()
+class JobManagerEquinorTest(ResTest):
 
     def assert_ip_address(self, ip):
         try:

@@ -1,7 +1,7 @@
 import os
 
 from ecl.util.test import TestAreaContext
-from tests import ResTest, statoil_test
+from tests import ResTest, equinor_test
 
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
@@ -12,7 +12,7 @@ from res.enkf import GenDataConfig, FieldConfig, EnkfFs, EnkfObs, EnKFState, Ens
 from res.enkf.util import TimeMap
 
 
-@statoil_test()
+@equinor_test()
 class EnKFLibraryTest(ResTest):
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")

@@ -1,5 +1,5 @@
 from ecl.util.util import BoolVector
-from tests import ResTest, statoil_test
+from tests import ResTest, equinor_test
 from res.test import ErtTestContext
 
 from res import ResPrototype
@@ -10,13 +10,13 @@ from res.enkf import ForwardLoadContext
 
 
 
-@statoil_test()
+@equinor_test()
 class GenDataConfigTest(ResTest):
     _get_active_mask    = ResPrototype("bool_vector_ref gen_data_config_get_active_mask( gen_data_config )", bind = False)
     _update_active_mask = ResPrototype("void gen_data_config_update_active( gen_data_config, forward_load_context , bool_vector)", bind = False)
 
     def setUp(self):
-        self.config_file = self.createTestPath("Statoil/config/with_GEN_DATA/config")
+        self.config_file = self.createTestPath("Equinor/config/with_GEN_DATA/config")
 
     def load_active_masks(self, case1, case2 ):
         with ErtTestContext("gen_data_config_test", self.config_file) as test_context:

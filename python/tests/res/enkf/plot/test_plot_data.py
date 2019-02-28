@@ -1,15 +1,15 @@
-from tests import ResTest, statoil_test
+from tests import ResTest, equinor_test
 from res.test import ErtTestContext
 
 from res.enkf.plot_data import PlotBlockData, PlotBlockDataLoader, PlotBlockVector
 from ecl.util.util import DoubleVector
 
 
-@statoil_test()
+@equinor_test()
 class PlotDataTest(ResTest):
 
     def setUp(self):
-        self.config_file = self.createTestPath("Statoil/config/with_RFT/config")
+        self.config_file = self.createTestPath("Equinor/config/with_RFT/config")
 
     def test_plot_block_vector(self):
         vector = DoubleVector()

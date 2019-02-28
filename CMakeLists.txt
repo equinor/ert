@@ -93,15 +93,15 @@ find_library(LSF_LIBRARY NAMES lsf PATHS ${ERT_LSF_LIB_PATH})
 
 #-----------------------------------------------------------------
 
-set(STATOIL_TESTDATA_ROOT "" CACHE PATH  "Root to Statoil internal testdata")
-if (EXISTS ${STATOIL_TESTDATA_ROOT})
-    set( LINK "${CMAKE_CURRENT_SOURCE_DIR}/test-data/Statoil" )
+set(EQUINOR_TESTDATA_ROOT "" CACHE PATH  "Root to Equinor internal testdata")
+if (EXISTS ${EQUINOR_TESTDATA_ROOT})
+    set( LINK "${CMAKE_CURRENT_SOURCE_DIR}/test-data/Equinor" )
     if (EXISTS ${LINK})
         execute_process(COMMAND ${CMAKE_COMMAND} -E remove "${LINK}")
     endif()
 
-    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${STATOIL_TESTDATA_ROOT}" "${LINK}")
-    message(STATUS "Linking testdata: ${LINK} -> ${STATOIL_TESTDATA_ROOT}")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${EQUINOR_TESTDATA_ROOT}" "${LINK}")
+    message(STATUS "Linking testdata: ${LINK} -> ${EQUINOR_TESTDATA_ROOT}")
 endif()
 
 file(COPY bin/job_dispatch.py DESTINATION ${PROJECT_BINARY_DIR}/bin )

@@ -1,4 +1,4 @@
-from tests import ResTest, statoil_test
+from tests import ResTest, equinor_test
 from res.test import ErtTestContext
 
 from ecl.grid import EclGrid
@@ -10,14 +10,14 @@ from res.enkf import ActiveMode, EnsembleConfig
 from res.enkf import (ObsVector, LocalObsdata, EnkfObs, TimeMap,
                       LocalObsdataNode, ObsData, MeasData, ActiveList)
 
-@statoil_test()
+@equinor_test()
 class EnKFObsTest(ResTest):
     def setUp(self):
-        self.config_file = self.createTestPath("Statoil/config/obs_testing/config")
-        self.obs_config = self.createTestPath("Statoil/config/obs_testing/observations")
-        self.obs_config2 = self.createTestPath("Statoil/config/obs_testing/observations2")
-        self.refcase = self.createTestPath("Statoil/config/obs_testing/EXAMPLE_01_BASE")
-        self.grid = self.createTestPath("Statoil/config/obs_testing/EXAMPLE_01_BASE.EGRID")
+        self.config_file = self.createTestPath("Equinor/config/obs_testing/config")
+        self.obs_config = self.createTestPath("Equinor/config/obs_testing/observations")
+        self.obs_config2 = self.createTestPath("Equinor/config/obs_testing/observations2")
+        self.refcase = self.createTestPath("Equinor/config/obs_testing/EXAMPLE_01_BASE")
+        self.grid = self.createTestPath("Equinor/config/obs_testing/EXAMPLE_01_BASE.EGRID")
 
 
     def test_scale_obs(self):

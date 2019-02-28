@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway.
+   Copyright (C) 2011  Equinor ASA, Norway.
 
    The file 'block_node.c' is part of ERT - Ensemble based Reservoir Tool.
 
@@ -30,7 +30,7 @@
 #include <ert/job_queue/lsf_driver.hpp>
 
 #define BLOCK_COMMAND        "/project/res/bin/block-job"
-#define STATOIL_LSF_REQUEST  "select[cs && x86_64Linux]"
+#define EQUINOR_LSF_REQUEST  "select[cs && x86_64Linux]"
 
 
 

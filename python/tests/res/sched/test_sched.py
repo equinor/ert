@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#  Copyright (C) 2012  Statoil ASA, Norway.
+#  Copyright (C) 2012  Equinor ASA, Norway.
 #
 #  The file 'test_sched.py' is part of ERT - Ensemble based Reservoir Tool.
 #
@@ -17,14 +17,14 @@
 import datetime
 import os
 from res.sched import SchedFile
-from tests import ResTest, statoil_test
+from tests import ResTest, equinor_test
 
 
 
-@statoil_test()
+@equinor_test()
 class SchedFileTest(ResTest):
     def setUp(self):
-        src_file = self.createTestPath("Statoil/ECLIPSE/Gurbat/target.SCH")
+        src_file = self.createTestPath("Equinor/ECLIPSE/Gurbat/target.SCH")
         self.start_time = datetime.date(2000, 1, 1)
 
         self.sched_file = SchedFile(src_file, self.start_time)

@@ -1,4 +1,4 @@
-#  Copyright (C) 2013  Statoil ASA, Norway.
+#  Copyright (C) 2013  Equinor ASA, Norway.
 #
 #  The file 'ert_impl_type_enum.py' is part of ERT - Ensemble based Reservoir Tool.
 #

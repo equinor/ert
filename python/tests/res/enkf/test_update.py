@@ -1,4 +1,4 @@
-#  Copyright (C) 2015  Statoil ASA, Norway.
+#  Copyright (C) 2015  Equinor ASA, Norway.
 #
 #  The file 'test_update.py' is part of ERT - Ensemble based Reservoir Tool.
 #
@@ -44,7 +44,7 @@ def update(rng , mask , module , ert , meas_data , obs_data , state_size):
 class UpdateTest(ResTest):
   def setUp(self):
       self.libname = ert.ert_lib_path + "/rml_enkf.so"
-      self.config_file = self.createTestPath("Statoil/config/obs_testing2/config")
+      self.config_file = self.createTestPath("Equinor/config/obs_testing2/config")
       self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
 
 

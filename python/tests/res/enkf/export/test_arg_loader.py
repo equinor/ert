@@ -1,11 +1,11 @@
 import math
-from tests import ResTest, statoil_test
+from tests import ResTest, equinor_test
 from res.test import ErtTestContext
 
 from res.enkf.export import ArgLoader
 
 
-@statoil_test()
+@equinor_test()
 class ArgLoaderTest(ResTest):
 
 
@@ -14,7 +14,7 @@ class ArgLoaderTest(ResTest):
         with self.assertRaises(IOError):
             arg = ArgLoader.load("arg1X")
 
-        arg_file = self.createTestPath("Statoil/config/with_GEN_DATA_RFT/wellpath/WI_1.txt")
+        arg_file = self.createTestPath("Equinor/config/with_GEN_DATA_RFT/wellpath/WI_1.txt")
 
         with self.assertRaises(ValueError):
             arg = ArgLoader.load(arg_file , column_names = ["Col1" , "Col2" , "Col3"  ,"COl5" , "Col6"])

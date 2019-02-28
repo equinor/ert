@@ -1,4 +1,4 @@
-# Copyright (C) 2013  Statoil ASA, Norway.
+# Copyright (C) 2013  Equinor ASA, Norway.
 #
 # The file 'block_observation_data_fetcher.py' is part of ERT - Ensemble based Reservoir Tool.
 #

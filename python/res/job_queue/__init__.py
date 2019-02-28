@@ -1,4 +1,4 @@
-#  Copyright (C) 2011  Statoil ASA, Norway.
+#  Copyright (C) 2011  Equinor ASA, Norway.
 #
 #  The file '__init__.py' is part of ERT - Ensemble based Reservoir Tool.
 #
@@ -68,7 +68,7 @@ if LSF_HOME:
     setenv("LSF_LIBDIR", "%s/lib" % LSF_HOME)
     setenv("XLSF_UIDDIR", "%s/lib/uid" % LSF_HOME)
     setenv("LSF_SERVERDIR", "%s/etc" % LSF_HOME)
-    setenv("LSF_ENVDIR", "%s/conf" % LSF_HOME)   # This is wrong: Statoil: /prog/LSF/conf
+    setenv("LSF_ENVDIR", "%s/conf" % LSF_HOME)   # This is wrong: Equinor: /prog/LSF/conf
 
 from .job_status_type_enum import JobStatusType
 from .job import Job

@@ -7,7 +7,7 @@ set(TEST_SOURCES
     test_gen_data_config.py
     test_gen_kw.py
     test_gen_kw_config.py
-    test_gen_kw_config_statoil.py
+    test_gen_kw_config_equinor.py
     test_ext_param.py
     test_enkf_node.py
     test_enkf_config_node.py
@@ -23,6 +23,6 @@ python_config_test(tests.res.enkf.data.test_enkf_node.EnkfNodeTest)
 python_config_test(tests.res.enkf.data.test_enkf_config_node.EnkfConfigNodeTest)
 python_config_test(tests.res.enkf.data.test_gen_kw_config.GenKwConfigTest)
 python_config_test(tests.res.enkf.data.test_summary.SummaryTest)
-python_config_test(tests.res.enkf.data.test_gen_kw_config_statoil.GenKwConfigTest)
+python_config_test(tests.res.enkf.data.test_gen_kw_config_equinor.GenKwConfigTest)
 python_config_test(tests.res.enkf.data.test_gen_data.GenDataTest)
 python_config_test(tests.res.enkf.data.test_gen_data_config.GenDataConfigTest)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016  Statoil ASA, Norway.
+ * Copyright (C) 2016  Equinor ASA, Norway.
  *
  * This file is part of ERT - Ensemble based Reservoir Tool.
  *
@@ -30,7 +30,7 @@
 static char * add_excluded(lsf_driver_type * driver) {
   const char * node1 = "enern";
   const char * node2 = "toern";
-  const char * node3 = "tre-ern.statoil.org";
+  const char * node3 = "tre-ern.equinor.org";
   char * black1 = util_alloc_sprintf("hname!='%s'", node1);
   char * black2 = util_alloc_sprintf("hname!='%s'", node2);
   char * black3 = util_alloc_sprintf("hname!='%s'", node3);
@@ -79,7 +79,7 @@ void test_submit_with_select_resources() {
   add_excluded(driver);
   const char * select =
     "select[hname!='xxx' && hname!='yyy' && "
-    "hname!='enern' && hname!='toern' && hname!='tre-ern.statoil.org']";
+    "hname!='enern' && hname!='toern' && hname!='tre-ern.equinor.org']";
   stringlist_type * argv = lsf_driver_alloc_cmd(driver, "", "NAME", "bsub", 1, 0, NULL);
   lsf_driver_free(driver);
 

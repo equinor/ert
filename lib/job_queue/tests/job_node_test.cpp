@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2015  Statoil ASA, Norway.
+   Copyright (C) 2015  Equinor ASA, Norway.
 
    The file 'job_node_test.c' is part of ERT - Ensemble based Reservoir Tool.
 

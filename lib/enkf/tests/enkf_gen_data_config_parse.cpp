@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2013  Statoil ASA, Norway.
+   Copyright (C) 2013  Equinor ASA, Norway.
 
    The file 'enkf_gen_data_config_parse.c' is part of ERT - Ensemble based Reservoir Tool.
 

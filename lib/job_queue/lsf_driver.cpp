@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway.
+   Copyright (C) 2011  Equinor ASA, Norway.
 
    The file 'lsf_driver.c' is part of ERT - Ensemble based Reservoir Tool.
 
@@ -62,7 +62,7 @@
   through library calls through the lsf library. This is a good
   solution which works well.
 
-  Unfortunately only quite few of the workstations in Statoil are
+  Unfortunately only quite few of the workstations in Equinor are
   "designated LSF machines", meaning that they are allowed to talk to
   the LIM servers, to be able to use the low-level lsb_xxx() function
   calls the host making the calls must configured (by an LSF

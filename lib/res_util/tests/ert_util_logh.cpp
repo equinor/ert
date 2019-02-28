@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 20LOG_DEBUG3  Statoil ASA, Norway.
+   Copyright (C) 20LOG_DEBUG3  Equinor ASA, Norway.
 
    The file 'ert_util_logh.c' is part of ERT - Ensemble based Reservoir Tool.
 

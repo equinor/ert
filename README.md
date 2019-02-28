@@ -1,11 +1,11 @@
-# libres [![Build Status](https://travis-ci.org/Statoil/libres.svg?branch=master)](https://travis-ci.org/Statoil/libres)
+# libres [![Build Status](https://travis-ci.org/Equinor/libres.svg?branch=master)](https://travis-ci.org/Equinor/libres)
 
-`libres` is part of the `ERT` project: _[Ensemble based Reservoir Tool](https://github.com/Statoil/ert)_.
+`libres` is part of the `ERT` project: _[Ensemble based Reservoir Tool](https://github.com/Equinor/ert)_.
 
 ## Building libres
 
 ### 1. Build libecl
-Build and install [libecl](https://github.com/Statoil/libecl). When configuring
+Build and install [libecl](https://github.com/Equinor/libecl). When configuring
 `libecl` you should used the option `-DCMAKE_INSTALL_PREFIX` to tell ``cmake``
 where to install `libecl`. The value passed to `CMAKE_INSTALL_PREFIX` will be
 needed when running cmake to configure `libres` in point 4 below. For now let us

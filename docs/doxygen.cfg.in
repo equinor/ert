@@ -3,7 +3,7 @@
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = "Ert"
 PROJECT_NUMBER         = ${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR}
-PROJECT_BRIEF          = "ERT is a software initially developed by Statoil which main feature is to handle several ECLIPSE simulations in an Ensemble setting. --- http://ert.nr.no/ert"
+PROJECT_BRIEF          = "ERT is a software initially developed by Equinor which main feature is to handle several ECLIPSE simulations in an Ensemble setting. --- http://ert.nr.no/ert"
 PROJECT_LOGO           =
 OUTPUT_DIRECTORY       = ${PROJECT_BINARY_DIR}/documentation/doxy
 CREATE_SUBDIRS         = NO

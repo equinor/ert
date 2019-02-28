@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2013  Statoil ASA, Norway.
+   Copyright (C) 2013  Equinor ASA, Norway.
 
    The file 'enkf_ui_return_type.c' is part of ERT - Ensemble based Reservoir Tool.
 
