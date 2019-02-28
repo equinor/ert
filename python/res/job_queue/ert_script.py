@@ -102,7 +102,7 @@ class ErtScript(object):
     __module_count = 0 # Need to have unique modules in case of identical object naming in scripts
 
     def outputStackTrace(self, error=None):
-        stack_trace = error or "".join(traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+        stack_trace = error or "".join(traceback.format_exception(*sys.exc_info()))
         msg = "The script '{}' caused an error while running:\n{}"
 
         sys.stderr.write(msg.format(self.__class__.__name__, stack_trace))
