@@ -1,109 +1,127 @@
-language: c
+language: python
 
-compiler:
-  - gcc
-  - clang
+python:
+  - 2.7
+  - 3.6
 
 os:
   - linux
-  - osx
 
-osx_image: xcode7.3
-sudo: false
-dist: trusty
+sudo: required
+services: docker
 
 env:
   global:
     - ERT_SHOW_BACKTRACE=1
-    - INSTALL_DIR="$(pwd)/install"
-    - LD_LIBRARY_PATH="${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64"
+    - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
+    - INSTALL_DIR="${TRAVIS_BUILD_DIR}/venv"
+    - LD_LIBRARY_PATH="${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64:${LD_LIBRARY_PATH}"
   matrix:
-    - PYTHON_VERSION=2.7
-    - PYTHON_VERSION=3.6
+    - TEST_SUITE=""  # Run all tests not labeled as slow
 
 matrix:
   fast_finish: true
-  allow_failures:
-    - os: osx
-  exclude:
-    - os: osx
-      compiler: gcc
-    - os: linux
-      compiler: clang
-
+  include:
+  - os: osx
+    osx_image: xcode8.3
+    language: generic
+    python: 2.7
+    env:
+    - MB_PYTHON_VERSION=2.7
+    - INSTALL_DIR="${TRAVIS_BUILD_DIR}/venv"
+    - DYLD_LIBRARY_PATH=${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64:${DYLD_LIBRARY_PATH}"
+    - TEST_SUITE=""
+  - os: osx
+    osx_image: xcode8.3
+    language: generic
+    python: 3.6
+    env:
+    - MB_PYTHON_VERSION=3.6
+    - INSTALL_DIR="${TRAVIS_BUILD_DIR}/venv"
+    - DYLD_LIBRARY_PATH=${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64:${DYLD_LIBRARY_PATH}"
+    - TEST_SUITE=""
 
 addons:
   apt:
     sources:
       - ubuntu-toolchain-r-test
       - george-edison55-precise-backports
+      - sourceline: 'ppa:opm/ppa'
     packages:
+      - libopm-simulators
       - liblapack-dev
       - valgrind
-      - gcc-4.8
-      - g++-4.8
-      - clang
-      - cmake
-      - cmake-data
 
 before_install:
-    - if [[ "$CC" == "gcc" ]]; then export CXX="g++-4.8"; fi
-
-    - if [[ $PYTHON_VERSION == 2.7 ]]; then
-        export TRAVIS_PYTHON_VERSION="2.7";
-      else
-        export TRAVIS_PYTHON_VERSION="3.6";
-      fi
-    # We do this conditionally because it saves us some downloading if the version is the same.
-    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-        if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-          wget https://repo.continuum.io/miniconda/Miniconda-latest-MacOSX-x86_64.sh -O miniconda.sh;
-        else
-          wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
-        fi
-      else
-        if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-          wget https://repo.continuum.io/miniconda/Miniconda3-4.4.10-MacOSX-x86_64.sh -O miniconda.sh;
-        else
-          wget https://repo.continuum.io/miniconda/Miniconda3-4.4.10-Linux-x86_64.sh -O miniconda.sh;
-        fi
-      fi
-
-    - bash miniconda.sh -b -p $HOME/miniconda
-    - export CONDA_HOME="$HOME/miniconda"
-    - export PATH="$CONDA_HOME/bin:$PATH"
-    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-        conda create -n ert_env pyqt=4.11.4 --yes;
-      else
-        conda create -n ert_env pyqt --yes;
-      fi
-    - source activate ert_env
-    - pip install --upgrade -r requirements.txt
-    # Checkout libres - need libecl version
-    - source .libres_version
-    - git clone https://github.com/equinor/libres
-    - pushd libres
-    - git checkout tags/$LIBRES_VERSION
-    - source .libecl_version
-    - popd
-    - git clone https://github.com/equinor/libecl
-    - pushd libecl
-    - git checkout tags/$LIBECL_VERSION
-    - popd
+  - git clone https://github.com/matthew-brett/multibuild.git
+  - unset -f pushd
+  - unset -f popd
+  - source multibuild/common_utils.sh
+  - source multibuild/travis_steps.sh
+  - before_install
 
 install:
+  - pip install -r requirements.txt
+
+before_script:
   # For now we have to make install libecl.
   # Remove when it's possible to pip install
-  - bash .build_install.sh libecl
-  - bash .build_install.sh libres
 
-script:
+  - source .libecl_version
+  - git clone https://github.com/equinor/libecl
+  - pushd libecl
+  - git fetch
+  - git checkout tags/$LIBECL_VERSION
+  - pip install -r requirements.txt
   - mkdir build
   - pushd build
-  - cmake .. -DBUILD_TESTS=ON
+  - cmake .. -DENABLE_PYTHON=ON
+             -DBUILD_APPLICATIONS=ON
+             -DINSTALL_CWRAP=OFF
              -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR
              -DCMAKE_PREFIX_PATH=$INSTALL_DIR
              -DCMAKE_C_FLAGS='-Werror=all'
+             -DCMAKE_INSTALL_NAME_DIR=$INSTALL_DIR/lib
              -DCMAKE_CXX_FLAGS='-Werror -Wno-unused-result'
+  - make
   - make install
-  - ctest --output-on-failure
+  - popd;popd
+
+  #install libres
+  - source .libres_version
+  - git clone https://github.com/equinor/libres
+  - pushd libres
+  - git fetch
+  - git checkout tags/$LIBRES_VERSION
+  - pip install -r requirements.txt
+  - mkdir build
+  - pushd build
+  - cmake .. -DENABLE_PYTHON=ON
+    -DBUILD_APPLICATIONS=ON
+    -DINSTALL_CWRAP=OFF
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR
+    -DCMAKE_PREFIX_PATH=$INSTALL_DIR
+    -DCMAKE_C_FLAGS='-Werror=all'
+    -DCMAKE_INSTALL_NAME_DIR=$INSTALL_DIR/lib
+    -DCMAKE_CXX_FLAGS='-Werror -Wno-unused-result'
+  - make
+  - make install
+  - popd;popd
+
+script:
+  - export PYTHONPATH="$INSTALL_DIR/lib/python$MB_PYTHON_VERSION/dist-packages:$PYTHONPATH"
+  - python -c "import sys; print('\n'.join(sys.path))"
+  - mkdir build
+  - pushd build
+  - ulimit -n 2048
+  - cmake .. -DBUILD_TESTS=ON
+             -DENABLE_PYTHON=ON
+             -DBUILD_APPLICATIONS=ON
+             -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR
+             -DCMAKE_PREFIX_PATH=$INSTALL_DIR
+             -DCMAKE_C_FLAGS='-Wno-varargs'
+             -DCMAKE_CXX_FLAGS='-Wno-unused-result'
+  - make
+  - make install
+  - set -e; python -c "import res"; set +e
+  - ctest --output-on-failure $TEST_SUITE
