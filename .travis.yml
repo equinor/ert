@@ -67,7 +67,17 @@ before_script:
   # For now we have to make install libecl.
   # Remove when it's possible to pip install
 
+  #source versions of libres and libecl
+  - source .libres_version
+  - git clone https://github.com/equinor/libres
+  - pushd libres
+  - git fetch
+  - git checkout tags/$LIBRES_VERSION
+  - pip install -r requirements.txt
   - source .libecl_version
+  - popd
+
+ # install libecl
   - git clone https://github.com/equinor/libecl
   - pushd libecl
   - git fetch
@@ -87,9 +97,7 @@ before_script:
   - make install
   - popd;popd
 
-  #install libres
-  - source .libres_version
-  - git clone https://github.com/equinor/libres
+  # install libres
   - pushd libres
   - git fetch
   - git checkout tags/$LIBRES_VERSION
