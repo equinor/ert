@@ -17,7 +17,7 @@ from ert_gui.tools.workflows.workflow_dialog import WorkflowDialog
 
 class RunWorkflowWidget(QWidget):
 
-    workflowSucceeded = pyqtSignal()
+    workflowSucceeded = pyqtSignal(list)
     workflowFailed = pyqtSignal()
     workflowKilled = pyqtSignal()
 
@@ -118,20 +118,26 @@ class RunWorkflowWidget(QWidget):
             time.sleep(2)
 
         cancelled = self._workflow_runner.isCancelled()
-      
+
         if cancelled:
             self.workflowKilled.emit()
         else:
             success = self._workflow_runner.workflowResult()
 
-            if not success:
-                self.workflowFailed.emit()
+            if success:
+                report =  self._workflow_runner.workflowReport()
+                failed_jobs = [k for k, v in report.items() if not v['completed']]
+                self.workflowSucceeded.emit(failed_jobs)
             else:
-                self.workflowSucceeded.emit()
+                self.workflowFailed.emit()
 
-    def workflowFinished(self):
+    def workflowFinished(self, failed_jobs):
         workflow_name = self.getCurrentWorkflowName()
-        QMessageBox.information(self, "Workflow completed!", "The workflow '%s' completed successfully!" % workflow_name)
+        jobs_msg = "successfully!"
+        if failed_jobs:
+            jobs_msg = "\nThe following jobs failed: " + ", ".join([j for j in failed_jobs])
+
+        QMessageBox.information(self, "Workflow completed!", "The workflow '{}' completed {}".format(workflow_name, jobs_msg))
         self._running_workflow_dialog.accept()
         self._running_workflow_dialog = None
 
@@ -149,4 +155,4 @@ class RunWorkflowWidget(QWidget):
         QMessageBox.information(self, "Workflow killed!", "The workflow '%s' was killed successfully!" % workflow_name)
         self._running_workflow_dialog.reject()
         self._running_workflow_dialog = None
-        
+
