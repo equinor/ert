@@ -97,7 +97,7 @@ install:
   - bash .build_install.sh libecl
   - bash .build_install.sh libres
 
-script:
+script: 
   - mkdir build
   - pushd build
   - cmake .. -DBUILD_TESTS=ON
