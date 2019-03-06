@@ -100,7 +100,7 @@ class WorkflowJobTest(ResTest):
 
             self.assertFalse(job.isInternal())
             argTypes = job.argumentTypes()
-            self.assertTrue(job.run(None, []).startswith('Traceback'))
+            self.assertIsNone(job.run(None, []))
             self.assertTrue(job.stderrdata().startswith('Traceback'))
 
 
