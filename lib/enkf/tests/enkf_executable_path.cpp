@@ -1,14 +1,13 @@
 #include <ert/util/util.h>
 #include <ert/util/test_util.h>
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/queue_config.hpp>
 
 int main() {
     util_install_signals();
-
-    test_work_area_type * work_area = test_work_area_alloc("enkf_executable_path");
+    ecl::util::TestArea ta("executable");
     const char * user_config_file = "path.txt";
 
     config_parser_type * parser = config_alloc( );
@@ -21,8 +20,5 @@ int main() {
     fclose(stream);
 
     queue_config_alloc_load( user_config_file );
-
-    test_work_area_free( work_area );
-
     return 0;
 }

@@ -278,7 +278,7 @@ int main(int argc , char ** argv) {
   const char * job = util_alloc_abs_path(argv[1]);
   rng_type * rng = rng_alloc( MZRAN , INIT_CLOCK );
   bool user_exit;
-  test_work_area_type * work_area = test_work_area_alloc("job_queue");
+  ecl::util::TestArea ta("stress_test");
   job_type **jobs = alloc_jobs( rng , number_of_jobs , job);
 
   job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK", "STATUS", "ERROR");
@@ -315,6 +315,5 @@ int main(int argc , char ** argv) {
     check_jobs( number_of_jobs , jobs );
 
   queue_driver_free(driver);
-  test_work_area_free(work_area);
   rng_free( rng );
 }

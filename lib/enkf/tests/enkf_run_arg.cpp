@@ -39,7 +39,7 @@ void call_set_queue_index( void * arg ) {
 
 
 void test_queue_index() {
-  test_work_area_type * test_area = test_work_area_alloc("run_arg/ENS");
+  ecl::util::TestArea ta("queue_index");
   {
     enkf_fs_type * fs   = enkf_fs_create_fs("sim" , BLOCK_FS_DRIVER_ID , NULL , true);
     subst_list_type * subst_list = subst_list_alloc(NULL);
@@ -60,7 +60,6 @@ void test_queue_index() {
     subst_list_free(subst_list);
     enkf_fs_decref( fs );
   }
-  test_work_area_free( test_area );
 }
 
 void call_get_sim_fs( void * arg ) {
@@ -77,7 +76,7 @@ void call_get_update_target_fs( void * arg ) {
 
 
 void test_SMOOTHER_RUN( ) {
-  test_work_area_type * test_area = test_work_area_alloc("run_arg/SMOOTHER");
+  ecl::util::TestArea ta("smoother");
   {
     enkf_fs_type * sim_fs    = enkf_fs_create_fs("sim" , BLOCK_FS_DRIVER_ID , NULL , true);
     enkf_fs_type * target_fs = enkf_fs_create_fs("target" , BLOCK_FS_DRIVER_ID , NULL , true);
@@ -92,12 +91,11 @@ void test_SMOOTHER_RUN( ) {
     enkf_fs_decref( sim_fs );
     enkf_fs_decref( target_fs );
   }
-  test_work_area_free( test_area );
 }
 
 
 void alloc_invalid_run_arg(void *arg) {
-  test_work_area_type * test_area = test_work_area_alloc("run_arg/invalid");
+  ecl::util::TestArea ta("invalid_run");
   {
     enkf_fs_type * fs    = enkf_fs_create_fs("fs" , BLOCK_FS_DRIVER_ID , NULL , true);
     subst_list_type * subst_list = subst_list_alloc(NULL);
@@ -106,7 +104,6 @@ void alloc_invalid_run_arg(void *arg) {
     subst_list_free(subst_list);
     enkf_fs_decref( fs );
   }
-  test_work_area_free( test_area );
 }
 
 
@@ -116,7 +113,7 @@ void test_invalid_update_on_self( ) {
 
 
 void test_INIT_ONLY( ) {
-  test_work_area_type * test_area = test_work_area_alloc("run_arg/INIT");
+  ecl::util::TestArea ta("INIT");
   {
     enkf_fs_type * init_fs   = enkf_fs_create_fs("sim" , BLOCK_FS_DRIVER_ID , NULL , true);
 
@@ -131,12 +128,11 @@ void test_INIT_ONLY( ) {
 
     enkf_fs_decref( init_fs );
   }
-  test_work_area_free( test_area );
 }
 
 
 void test_ENSEMBLE_EXPERIMENT( ) {
-  test_work_area_type * test_area = test_work_area_alloc("run_arg/ENS");
+  ecl::util::TestArea ta("ens");
   {
     enkf_fs_type * fs   = enkf_fs_create_fs("sim" , BLOCK_FS_DRIVER_ID , NULL , true);
 
@@ -152,7 +148,6 @@ void test_ENSEMBLE_EXPERIMENT( ) {
     subst_list_free(subst_list);
     enkf_fs_decref( fs );
   }
-  test_work_area_free( test_area );
 }
 
 // TODO: Write tests for the new functionality

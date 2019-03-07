@@ -71,14 +71,13 @@ void test_parse_fail_abort() {
 
 
 int main(int argc, char ** argv) {
-  test_work_area_type * work_area = test_work_area_alloc( "bsub_parse_stdout");
+  ecl::util::TestArea ta("lsf_parse");
   {
     test_empty_file();
     test_file_does_not_exist( );
     test_OK();
     test_parse_fail_abort();
   }
-  test_work_area_free( work_area );
 }
 
 

@@ -29,10 +29,10 @@
 #include <ert/job_queue/job_queue.hpp>
 #include <ert/job_queue/job_queue_manager.hpp>
 
-void submit_jobs_to_queue(job_queue_type * queue, test_work_area_type * work_area, const char * executable_to_run, int number_of_jobs, int number_of_slowjobs, const char* sleep_short, const char* sleep_long) {
+void submit_jobs_to_queue(job_queue_type * queue, ecl::util::TestArea& ta, const char * executable_to_run, int number_of_jobs, int number_of_slowjobs, const char* sleep_short, const char* sleep_long) {
   int submitted_slowjobs = 0;
   for (int i = 0; i < number_of_jobs; i++) {
-    char * runpath = util_alloc_sprintf("%s/%s_%d", test_work_area_get_cwd(work_area), "job", i);
+    char * runpath = util_alloc_sprintf("%s/%s_%d", ta.test_cwd().c_str(), "job", i);
     util_make_path(runpath);
 
     const char * sleeptime = sleep_short;
@@ -71,14 +71,14 @@ void monitor_job_queue(job_queue_type * queue, int max_job_duration, time_t stop
 
 
 void run_jobs_with_time_limit_test(const char * executable_to_run, int number_of_jobs, int number_of_slowjobs, const char * sleep_short, const char * sleep_long, int max_sleep) {
-  test_work_area_type * work_area = test_work_area_alloc("job_queue");
+  ecl::util::TestArea ta("submit");
   job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK.status", "STATUS", "ERROR");
 
   queue_driver_type * driver = queue_driver_alloc_local();
   job_queue_set_driver(queue, driver);
   job_queue_set_max_job_duration(queue, max_sleep);
 
-  submit_jobs_to_queue(queue, work_area, executable_to_run, number_of_jobs, number_of_slowjobs, sleep_short, sleep_long);
+  submit_jobs_to_queue(queue, ta , executable_to_run, number_of_jobs, number_of_slowjobs, sleep_short, sleep_long);
 
   job_queue_run_jobs(queue, number_of_jobs, false);
 
@@ -89,7 +89,6 @@ void run_jobs_with_time_limit_test(const char * executable_to_run, int number_of
 
   job_queue_free(queue);
   queue_driver_free(driver);
-  test_work_area_free(work_area);
 }
 
 
@@ -102,7 +101,7 @@ void run_and_monitor_jobs(char * executable_to_run,
                           int max_completed ,
                           int interval_between_jobs) {
 
-  test_work_area_type * work_area = test_work_area_alloc("job_queue");
+  ecl::util::TestArea ta("test1");
   job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK.status", "STATUS", "ERROR");
   job_queue_manager_type * queue_manager = job_queue_manager_alloc( queue );
   queue_driver_type * driver = queue_driver_alloc_local();
@@ -113,7 +112,7 @@ void run_and_monitor_jobs(char * executable_to_run,
   int job_run_time = 0;
 
   for (int i = 0; i < number_of_jobs; i++) {
-    char * runpath = util_alloc_sprintf("%s/%s_%d", test_work_area_get_cwd(work_area), "job", i);
+    char * runpath = util_alloc_sprintf("%s/%s_%d", ta.test_cwd().c_str(), "job", i);
     char * sleeptime = util_alloc_sprintf("%d", job_run_time);
     const char ** argv = (const char **) util_malloc( 2 * sizeof * argv );
     argv[0] = runpath;
@@ -142,12 +141,10 @@ void run_and_monitor_jobs(char * executable_to_run,
   job_queue_free(queue);
   queue_driver_free(driver);
   job_queue_manager_free( queue_manager );
-  test_work_area_free(work_area);
 }
 
 void run_jobs_time_limit_multithreaded(const char * executable_to_run, int number_of_jobs, int number_of_slowjobs,const char * sleep_short, const char * sleep_long, int max_sleep) {
-  test_work_area_type * work_area = test_work_area_alloc("job_queue");
-
+  ecl::util::TestArea ta("mt");
 
   job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK.status", "STATUS", "ERROR");
   queue_driver_type * driver = queue_driver_alloc_local();
@@ -162,7 +159,7 @@ void run_jobs_time_limit_multithreaded(const char * executable_to_run, int numbe
   thread_pool_type * pool = thread_pool_alloc(1, true);
   thread_pool_add_job(pool, job_queue_run_jobs__, arg_pack);
 
-  submit_jobs_to_queue(queue, work_area, executable_to_run, number_of_jobs, number_of_slowjobs, sleep_short, sleep_long);
+  submit_jobs_to_queue(queue, ta, executable_to_run, number_of_jobs, number_of_slowjobs, sleep_short, sleep_long);
 
   job_queue_submit_complete(queue);
   thread_pool_join(pool);
@@ -174,7 +171,6 @@ void run_jobs_time_limit_multithreaded(const char * executable_to_run, int numbe
 
   job_queue_free(queue);
   queue_driver_free(driver);
-  test_work_area_free(work_area);
 }
 
 
@@ -186,16 +182,14 @@ void test2(char ** argv) {
   int number_of_slow_jobs = 2;
   int number_of_queue_reuse = 3;
 
-  test_work_area_type * work_area = test_work_area_alloc("job_queue");
-
-
+  ecl::util::TestArea ta("test2");
 
   for (int j = 0; j < number_of_queue_reuse; j++) {
     job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK.status", "STATUS", "ERROR");
     queue_driver_type * driver = queue_driver_alloc_local();
     job_queue_set_driver(queue, driver);
 
-    submit_jobs_to_queue(queue, work_area, argv[1], number_of_jobs, number_of_slow_jobs, "1", "5");
+    submit_jobs_to_queue(queue, ta, argv[1], number_of_jobs, number_of_slow_jobs, "1", "5");
 
     job_queue_run_jobs(queue, number_of_jobs, false);
     time_t current_time = time(NULL);
@@ -206,9 +200,6 @@ void test2(char ** argv) {
     job_queue_free(queue);
     queue_driver_free(driver);
   }
-
-  test_work_area_free(work_area);
-
 }
 
 
@@ -343,7 +334,7 @@ void test14(char ** argv) {
 
   int number_of_jobs = 10;
 
-  test_work_area_type * work_area = test_work_area_alloc("job_queue");
+  ecl::util::TestArea ta("test14");
   job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK.status", "STATUS", "ERROR");
   queue_driver_type * driver = queue_driver_alloc_local();
   job_queue_manager_type * queue_manager = job_queue_manager_alloc( queue );
@@ -354,7 +345,7 @@ void test14(char ** argv) {
   int number_of_fastjobs = number_of_jobs - number_of_slowjobs;
   const char * sleep_short = "0";
   const char * sleep_long = "100";
-  submit_jobs_to_queue(queue, work_area, argv[1], number_of_jobs, number_of_slowjobs, sleep_short, sleep_long);
+  submit_jobs_to_queue(queue, ta, argv[1], number_of_jobs, number_of_slowjobs, sleep_short, sleep_long);
   job_queue_submit_complete(queue);
   job_queue_manager_start_queue( queue_manager , 10 , false );
 
@@ -385,7 +376,6 @@ void test14(char ** argv) {
   job_queue_manager_free( queue_manager );
   job_queue_free(queue);
   queue_driver_free(driver);
-  test_work_area_free(work_area);
 }
 
 void test15(char ** argv) {
@@ -393,14 +383,14 @@ void test15(char ** argv) {
 
   int number_of_jobs = 10;
 
-  test_work_area_type * work_area = test_work_area_alloc("job_queue");
+  ecl::util::TestArea ta("test15");
   job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK.status", "STATUS", "ERROR");
   queue_driver_type * driver = queue_driver_alloc_local();
   job_queue_set_driver(queue, driver);
 
   const char * sleep_long = "100";
 
-  submit_jobs_to_queue(queue, work_area, argv[1], number_of_jobs, number_of_jobs, "0", sleep_long);
+  submit_jobs_to_queue(queue, ta, argv[1], number_of_jobs, number_of_jobs, "0", sleep_long);
 
   job_queue_set_auto_job_stop_time(queue);
 
@@ -409,20 +399,19 @@ void test15(char ** argv) {
 
   job_queue_free(queue);
   queue_driver_free(driver);
-  test_work_area_free(work_area);
 }
 
 void test16(char ** argv) {
   printf("016: Running JobQueueSetAutoStopTime_AllJobsAreFinished_AutoStopDoesNothing\n");
 
   int number_of_jobs = 10;
-  test_work_area_type * work_area = test_work_area_alloc("job_queue");
+  ecl::util::TestArea ta("test16");
   job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK.status", "STATUS", "ERROR");
 
   queue_driver_type * driver = queue_driver_alloc_local();
   job_queue_set_driver(queue, driver);
 
-  submit_jobs_to_queue(queue, work_area, argv[1], number_of_jobs, 0, "0", "0");
+  submit_jobs_to_queue(queue, ta, argv[1], number_of_jobs, 0, "0", "0");
 
   job_queue_run_jobs(queue, number_of_jobs, false);
 
@@ -430,7 +419,6 @@ void test16(char ** argv) {
   test_assert_bool_equal(false, job_queue_get_open(queue));
   job_queue_free(queue);
   queue_driver_free(driver);
-  test_work_area_free(work_area);
 }
 
 

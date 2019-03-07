@@ -33,13 +33,13 @@ int main(int argc , char ** argv) {
   const char * rel_true = "rel/path/XXX";
   const char * path_true1 = "rel/path/XXX";
 
-  test_work_area_type * work_area = test_work_area_alloc( "config_path_elm" );
-  const char * root = test_work_area_get_cwd( work_area );
+  ecl::util::TestArea ta("config_path");
+  const char * root = ta.test_cwd().c_str();
   char * abs_path = util_alloc_filename( root , "rel/path" , NULL);
   char * abs_true = util_alloc_filename( root , "rel/path/XXX" , NULL);
   char * path_true2 = util_alloc_filename( root , "rel/path/XXX" , NULL);
 
-  util_chdir( test_work_area_get_original_cwd( work_area ));
+  util_chdir( ta.original_cwd().c_str() );
   config_root_path_type * root_path = config_root_path_alloc( root );
   {
     config_path_elm_type * path_elm = config_path_elm_alloc( root_path , rel_path );

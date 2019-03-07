@@ -35,12 +35,11 @@ void violating_fwrite( void * arg ) {
 
 
 void test_readonly( ) {
-  test_work_area_type * work_area = test_work_area_alloc("block_fs/read_only");
+  ecl::util::TestArea ta("readonly");
   block_fs_type * bfs = block_fs_mount( "test.mnt" , 1000 , 10000 , 0.67 , 10 , true , true , false );
   test_assert_true( block_fs_is_readonly( bfs ));
   test_assert_util_abort("block_fs_aquire_wlock" , violating_fwrite , bfs );
   block_fs_close(bfs , true);
-  test_work_area_free( work_area );
 }
 
 
@@ -76,7 +75,7 @@ void createFS1() {
 
 
 void test_lock_conflict() {
-  test_work_area_type * work_area = test_work_area_alloc("block_fs/lock_conflict");
+  ecl::util::TestArea ta("lockfile");
   createFS1();
   while (true) {
     if (util_file_exists("test.lock_0"))
@@ -95,8 +94,6 @@ void test_lock_conflict() {
   while (util_file_exists( "stop")) {
     usleep( 1000 );
   }
-
-  test_work_area_free( work_area );
 }
 
 

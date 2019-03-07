@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 #include <ert/util/test_util.h>
 
 #include <ert/config/config_parser.hpp>
@@ -66,8 +66,7 @@ enkf_config_node_type * parse_alloc_GEN_PARAM( const char * config_string , bool
 
 
 void test_parse_gen_param() {
-  test_work_area_type * work_area = test_work_area_alloc("GEN_PARAM_parse");
-
+  ecl::util::TestArea ta("parse");
   // Parse error: missing eclfile
   {
     enkf_config_node_type * config_node = parse_alloc_GEN_PARAM( "GEN_PARAM KEY\n" , false);
@@ -117,8 +116,6 @@ void test_parse_gen_param() {
 
     enkf_config_node_free( config_node );
   }
-
-  test_work_area_free( work_area );
 }
 
 
@@ -152,7 +149,7 @@ enkf_config_node_type * parse_alloc_GEN_DATA_result( const char * config_string 
 
 
 void test_parse_gen_data_result() {
-  test_work_area_type * work_area = test_work_area_alloc("GEN_DATA_RESULT_parse");
+  ecl::util::TestArea ta("GEN_DATA_RESULT_parse");
   // Parse error: missing KEY
   {
     enkf_config_node_type * config_node = parse_alloc_GEN_DATA_result( "GEN_DATA\n" , false);
@@ -238,8 +235,6 @@ void test_parse_gen_data_result() {
 
     enkf_config_node_free( config_node );
   }
-
-  test_work_area_free( work_area );
 }
 
 

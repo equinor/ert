@@ -94,8 +94,7 @@ void test_angular() {
 
 
 int main( int argc , char ** argv) {
-  test_work_area_type * test_area = test_work_area_alloc("ext_job");
-
+  ecl::util::TestArea ta("joblist");
   {
     FILE * stream = util_fopen("script", "w");
     fprintf(stream, "Dummy script");
@@ -103,6 +102,4 @@ int main( int argc , char ** argv) {
     chmod("script", 0777);
   }
   test_angular();
-
-  test_work_area_free(test_area);
 }

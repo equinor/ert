@@ -17,7 +17,7 @@
    for more details.
 */
 
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 #include <ert/util/test_util.h>
 
 #include <ert/enkf/enkf_fs.hpp>
@@ -96,7 +96,7 @@ void test_create_data() {
 }
 
 void test_forward_write() {
-  test_work_area_type * work_area = test_work_area_alloc( "test_json");
+  ecl::util::TestArea ta("test_json");
   enkf_config_node_type * config_node1 = create_config_node( );
   enkf_config_node_type * config_node2 = create_config_node__( "output/file.json");
   enkf_node_type * node1 = enkf_node_alloc( config_node1 );
@@ -111,7 +111,6 @@ void test_forward_write() {
   enkf_node_free( node2 );
   enkf_config_node_free( config_node1 );
   enkf_config_node_free( config_node2 );
-  test_work_area_free( work_area );
 }
 
 
@@ -133,7 +132,7 @@ void test_read_node( enkf_node_type * node ) {
 
 
 void test_fs() {
-  test_work_area_type * work_area = test_work_area_alloc( "test_json");
+  ecl::util::TestArea ta("test_fs");
   enkf_config_node_type * config_node = create_config_node( );
   enkf_node_type * node = enkf_node_alloc( config_node );
   ext_param_type * ext_param = (ext_param_type *) enkf_node_value_ptr( node );
@@ -152,7 +151,6 @@ void test_fs() {
 
   enkf_node_free( node );
   enkf_config_node_free( config_node );
-  test_work_area_free( work_area );
 }
 
 

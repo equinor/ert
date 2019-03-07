@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 #include <ert/util/test_util.h>
 #include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/gen_data_config.hpp>
@@ -82,11 +82,11 @@ void test_report_steps_dynamic() {
 
 
 void test_gendata_fload(const char * filename) {
-  test_work_area_type * work_area = test_work_area_alloc( "test_gendata_fload");
+  ecl::util::TestArea ta("gendata_fload");
   gen_data_config_type * config = gen_data_config_alloc_GEN_DATA_result("KEY" , ASCII);
   gen_data_type * gen_data = gen_data_alloc(config);
 
-  const char * cwd = test_work_area_get_cwd(work_area);
+  const char * cwd = ta.original_cwd().c_str();
   enkf_fs_type * write_fs = enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, NULL , true);
   subst_list_type * subst_list = subst_list_alloc(NULL);
   run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", write_fs, 0,0,"path", "base", subst_list);
@@ -99,7 +99,6 @@ void test_gendata_fload(const char * filename) {
 
   gen_data_free(gen_data);
   gen_data_config_free( config );
-  test_work_area_free(work_area);
   run_arg_free( run_arg );
   subst_list_free(subst_list);
   forward_load_context_free( load_context );
@@ -107,10 +106,10 @@ void test_gendata_fload(const char * filename) {
 
 
 void test_gendata_fload_empty_file(const char * filename) {
-  test_work_area_type * work_area = test_work_area_alloc( "test_gendata_fload_empty_file" );
+  ecl::util::TestArea ta("fload_empty");
   gen_data_config_type * config = gen_data_config_alloc_GEN_DATA_result("KEY" , ASCII);
   gen_data_type * gen_data = gen_data_alloc(config);
-  const char * cwd = test_work_area_get_cwd(work_area);
+  const char * cwd = ta.original_cwd().c_str();
   enkf_fs_type * write_fs = enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, NULL , true);
   subst_list_type * subst_list = subst_list_alloc(NULL);
   run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", write_fs, 0,0,"path", "base", subst_list);
@@ -124,7 +123,6 @@ void test_gendata_fload_empty_file(const char * filename) {
 
   gen_data_free(gen_data);
   gen_data_config_free( config );
-  test_work_area_free(work_area);
   run_arg_free( run_arg );
   subst_list_free(subst_list);
   forward_load_context_free( load_context );
@@ -181,7 +179,7 @@ void test_format_check() {
 
 
 void test_set_template_invalid() {
-  test_work_area_type * work_area = test_work_area_alloc("GEN_DATA_SET_TEMPLATE_INVALID");
+  ecl::util::TestArea ta("invalid");
   gen_data_config_type * config = gen_data_config_alloc_GEN_PARAM("KEY" , ASCII , ASCII);
 
   test_assert_false( gen_data_config_set_template( config , "does/not/exist" , NULL ) );
@@ -231,13 +229,12 @@ void test_set_template_invalid() {
   }
 
   gen_data_config_free( config );
-  test_work_area_free( work_area );
 }
 
 
 
 void test_set_template() {
-  test_work_area_type * work_area = test_work_area_alloc("GEN_DATA_SET_TEMPLATE");
+  ecl::util::TestArea ta("set_template");
   {
     gen_data_config_type * config = gen_data_config_alloc_GEN_PARAM("KEY" , ASCII , ASCII);
 
@@ -336,7 +333,6 @@ void test_set_template() {
 
     gen_data_config_free( config );
   }
-  test_work_area_free( work_area );
 }
 
 

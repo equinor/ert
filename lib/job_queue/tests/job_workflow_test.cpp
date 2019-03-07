@@ -98,7 +98,7 @@ int main( int argc , char ** argv) {
   const char * exjob_file = "job";
   const char * bin_path = argv[1];
   const char * internal_workflow = argv[2];
-  test_work_area_type * work_area = (test_work_area_type *) test_work_area_alloc( "job_workflow_test" );
+  ecl::util::TestArea ta("workflo_test");
 
   signal(SIGSEGV , util_abort_signal);
   create_exjob( exjob_file , bin_path );
@@ -182,6 +182,5 @@ int main( int argc , char ** argv) {
     test_assert_false( workflow_run( workflow , &read_value , false , NULL) );
     test_assert_int_equal( workflow_get_stack_size( workflow ) , 0 );
   }
-  test_work_area_free( work_area );
   exit(0);
 }

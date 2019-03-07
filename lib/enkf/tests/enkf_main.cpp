@@ -21,7 +21,7 @@
 #include <unistd.h>
 
 #include <ert/util/test_util.h>
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 #include <ert/util/util.h>
 
 #include <ert/enkf/enkf_main.hpp>
@@ -31,8 +31,8 @@
 
 
 void test_case_initialized(const char * config_path, const char * config_file) {
-  test_work_area_type * work_area = test_work_area_alloc("enkf_main_case_initialized");
-  test_work_area_copy_directory_content(work_area, config_path);
+  ecl::util::TestArea ta("case_initialized");
+  ta.copy_directory_content(config_path);
   {
     res_config_type * res_config = res_config_alloc_load(config_file);
     enkf_main_type * enkf_main = enkf_main_alloc(res_config, true, true);
@@ -47,14 +47,13 @@ void test_case_initialized(const char * config_path, const char * config_file) {
     enkf_main_free(enkf_main);
     res_config_free(res_config);
   }
-  test_work_area_free(work_area);
 }
 
 
 
 void test_create(const char * config_path, const char * config_file) {
-  test_work_area_type * work_area = test_work_area_alloc("enkf_main_create");
-  test_work_area_copy_directory_content(work_area, config_path);
+  ecl::util::TestArea ta("create");
+  ta.copy_directory_content(config_path);
 
   res_config_type * res_config = res_config_alloc_load(config_file);
   enkf_main_type * enkf_main = enkf_main_alloc(res_config, true, true);
@@ -62,7 +61,6 @@ void test_create(const char * config_path, const char * config_file) {
 
   enkf_main_free( enkf_main );
   res_config_free(res_config);
-  test_work_area_free( work_area );
 }
 
 

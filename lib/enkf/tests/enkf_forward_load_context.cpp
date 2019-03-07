@@ -17,7 +17,7 @@
 */
 #include <stdlib.h>
 #include <ert/util/test_util.h>
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 
 #include <ert/enkf/forward_load_context.hpp>
 #include <ert/enkf/run_arg.hpp>
@@ -74,7 +74,7 @@ void make_restart_mock( const char * path , const char * eclbase , int report_st
 }
 
 void test_load_restart2() {
-  test_work_area_type * work_area = test_work_area_alloc("forward_load");
+  ecl::util::TestArea ta("load_restart");
   {
     subst_list_type * subst_list = subst_list_alloc(NULL);
     run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", NULL , 0 , 0 , "run", "BASE", subst_list);
@@ -94,7 +94,6 @@ void test_load_restart2() {
     run_arg_free( run_arg );
     subst_list_free(subst_list);
   }
-  test_work_area_free( work_area );
 }
 
 

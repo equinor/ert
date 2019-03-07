@@ -1,6 +1,6 @@
 #include <ert/util/util.h>
 #include <ert/util/test_util.h>
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 
 #include <ert/job_queue/job_queue.hpp>
 #include <ert/job_queue/ext_job.hpp>
@@ -25,7 +25,7 @@ void test_empty() {
 
 
 void test_parse() {
-   test_work_area_type * work_area = test_work_area_alloc("queue_config");
+   ecl::util::TestArea ta("parse");
    const char * user_config_file = "queue_config.txt";
    config_parser_type * parser = config_alloc( );
 
@@ -94,7 +94,6 @@ void test_parse() {
    job_queue_free(job_queue);
    config_content_free(config_content);
    config_free( parser );
-   test_work_area_free( work_area );
 }
 
 

@@ -25,7 +25,7 @@
 #include <ert/util/test_util.h>
 #include <ert/util/util.h>
 #include <ert/res_util/arg_pack.hpp>
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 
 #include <ert/config/config_parser.hpp>
 #include <ert/config/config_content.hpp>
@@ -51,7 +51,7 @@ void test_init(const char * config_file) {
 
 
 void test_job_script() {
-  test_work_area_type * test_area = test_work_area_alloc("site-config");
+  ecl::util::TestArea ta("script");
   {
     site_config_type * site_config = site_config_alloc_load_user_config(NULL);
 
@@ -79,7 +79,6 @@ void test_job_script() {
     }
     site_config_free( site_config );
   }
-  test_work_area_free( test_area );
 }
 
 

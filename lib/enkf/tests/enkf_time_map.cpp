@@ -140,7 +140,7 @@ void test_refcase( const char * refcase_name , const char * case1, const char * 
 
 
   {
-    test_work_area_type * work_area = test_work_area_alloc( "time_map/attach_short_refcase");
+    ecl::util::TestArea ta("x");
     {
       time_map_type * ecl_map = time_map_alloc(  );
       test_assert_true( time_map_summary_update( ecl_map , refcase ) );
@@ -156,7 +156,6 @@ void test_refcase( const char * refcase_name , const char * case1, const char * 
       test_assert_true( time_map_attach_refcase( ecl_map , refcase ) );
       time_map_free( ecl_map );
     }
-    test_work_area_free( work_area );
   }
 
 
@@ -238,7 +237,7 @@ void test_index_map( const char * case1, const char * case2 , const char * case3
 
 void simple_test() {
   time_map_type * time_map = time_map_alloc(  );
-  test_work_area_type * work_area = test_work_area_alloc("enkf_time_map" );
+  ecl::util::TestArea ta("simple");
   const char * mapfile = "map";
 
   time_map_set_strict( time_map , false );
@@ -267,7 +266,6 @@ void simple_test() {
     time_map_fwrite( time_map , mapfile);
     test_assert_time_t_not_equal( mtime1 , util_file_mtime( mapfile ) );
   }
-  test_work_area_free( work_area );
 }
 
 
@@ -330,7 +328,7 @@ void thread_test() {
 
 
 void test_read_only() {
-  test_work_area_type * work_area = test_work_area_alloc("time-map");
+  ecl::util::TestArea ta("read_only");
   {
     time_map_type * tm = time_map_alloc(  );
 
@@ -368,7 +366,6 @@ void test_read_only() {
     test_assert_int_equal(0 , time_map_get_size( tm ));
     time_map_free( tm );
   }
-  test_work_area_free( work_area );
 }
 
 

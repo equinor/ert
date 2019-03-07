@@ -21,7 +21,7 @@
 #include <unistd.h>
 
 #include <ert/util/test_util.h>
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 #include <ert/util/util.h>
 
 #include <ert/enkf/enkf_main.hpp>
@@ -66,8 +66,8 @@ int main(int argc , char ** argv) {
 
   test_assert_true( util_sscanf_bool( compatible_str , &check_compatible));
 
-  test_work_area_type * work_area = test_work_area_alloc(config_file );
-  test_work_area_copy_directory_content( work_area , root_path );
+  ecl::util::TestArea ta("compatible");
+  ta.copy_directory_content(root_path);
 
   bool strict = true;
   res_config_type * res_config = res_config_alloc_load(config_file);
@@ -77,5 +77,4 @@ int main(int argc , char ** argv) {
 
   enkf_main_free( enkf_main );
   res_config_free(res_config);
-  test_work_area_free(work_area);
 }

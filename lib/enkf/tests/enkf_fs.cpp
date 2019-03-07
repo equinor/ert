@@ -28,7 +28,7 @@
 
 
 #include <ert/util/test_util.h>
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 
 
@@ -41,7 +41,7 @@ typedef struct
 static shared_data* data = NULL;
 
 void test_mount() {
-  test_work_area_type * work_area = test_work_area_alloc("enkf_fs/mount");
+  ecl::util::TestArea ta("mount");
 
   test_assert_false( enkf_fs_exists( "mnt" ));
   test_assert_NULL( enkf_fs_create_fs("mnt" , BLOCK_FS_DRIVER_ID , NULL , false));
@@ -58,21 +58,16 @@ void test_mount() {
     test_assert_true( enkf_fs_is_instance( fs ));
     enkf_fs_decref( fs );
   }
-
-
-  test_work_area_free( work_area );
 }
 
 void test_refcount() {
-  test_work_area_type * work_area = test_work_area_alloc("enkf_fs/refcount");
-
+  ecl::util::TestArea ta("ref_count");
   enkf_fs_create_fs("mnt" , BLOCK_FS_DRIVER_ID , NULL , false);
   {
     enkf_fs_type * fs = enkf_fs_mount( "mnt" );
     test_assert_int_equal( 1 , enkf_fs_get_refcount( fs ));
     enkf_fs_decref( fs );
   }
-  test_work_area_free( work_area );
 }
 
 void createFS() {
@@ -129,21 +124,22 @@ void initialise_shared()
 */
 void test_read_only2() {
   initialise_shared();
-  test_work_area_type * work_area = test_work_area_alloc("enkf_fs/read_only2");
-  enkf_fs_create_fs("mnt" , BLOCK_FS_DRIVER_ID , NULL , false);
-  pthread_mutex_lock(&data->mutex2);
-  createFS();
-  pthread_mutex_lock(&data->mutex1);
   {
-    enkf_fs_type * fs_false = enkf_fs_mount( "mnt" );
-    test_assert_true(enkf_fs_is_read_only(fs_false));
-    test_assert_util_abort( "enkf_fs_fwrite_node" , test_fwrite_readonly , fs_false );
-    enkf_fs_decref( fs_false );
+    ecl::util::TestArea ta("ro2");
+    enkf_fs_create_fs("mnt" , BLOCK_FS_DRIVER_ID , NULL , false);
+    pthread_mutex_lock(&data->mutex2);
+    createFS();
+    pthread_mutex_lock(&data->mutex1);
+    {
+      enkf_fs_type * fs_false = enkf_fs_mount( "mnt" );
+      test_assert_true(enkf_fs_is_read_only(fs_false));
+      test_assert_util_abort( "enkf_fs_fwrite_node" , test_fwrite_readonly , fs_false );
+      enkf_fs_decref( fs_false );
+    }
+    pthread_mutex_unlock(&data->mutex2);
+    pthread_mutex_unlock(&data->mutex1);
+    pthread_mutex_lock(&data->mutex2);
   }
-  pthread_mutex_unlock(&data->mutex2);
-  pthread_mutex_unlock(&data->mutex1);
-  pthread_mutex_lock(&data->mutex2);
-  test_work_area_free( work_area );
   pthread_mutex_unlock(&data->mutex2);
   munmap(data, sizeof(data));
 }

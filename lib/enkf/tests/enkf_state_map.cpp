@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 #include <ert/util/test_util.h>
 #include <ert/util/util.h>
 #include <ert/util/bool_vector.h>
@@ -107,7 +107,7 @@ void test_copy() {
 
 
 void test_io( ) {
-  test_work_area_type * work_area = test_work_area_alloc( "enkf-state-map" );
+  ecl::util::TestArea ta("state_map_io");
   {
     state_map_type * state_map = state_map_alloc();
     state_map_type * copy1 , *copy2;
@@ -131,7 +131,6 @@ void test_io( ) {
     test_assert_false(state_map_fread( copy2 , "DoesNotExist"));
     test_assert_int_equal( 0 , state_map_get_size( copy2 ));
   }
-  test_work_area_free( work_area );
 }
 
 
@@ -330,7 +329,7 @@ void test_readonly() {
     state_map_free(map1);
   }
   {
-    test_work_area_type * work_area = test_work_area_alloc("state-map");
+    ecl::util::TestArea ta("ro");
     state_map_type * map1 = state_map_alloc();
 
     state_map_iset(map1 , 5 , STATE_INITIALIZED);
@@ -343,7 +342,6 @@ void test_readonly() {
       test_assert_true(state_map_equal(map1 , map2));
       state_map_free(map2);
     }
-    test_work_area_free( work_area );
     state_map_free(map1);
   }
 }

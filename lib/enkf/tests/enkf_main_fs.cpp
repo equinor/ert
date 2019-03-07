@@ -35,10 +35,10 @@
 
 int main(int argc, char ** argv) {
   const char * config_file = argv[1];
-  test_work_area_type * work_area = test_work_area_alloc( "enkf_main_fs" );
+  ecl::util::TestArea ta("main");
   char * model_config;
   util_alloc_file_components( config_file , NULL , &model_config , NULL);
-  test_work_area_copy_parent_content( work_area , config_file );
+  ta.copy_parent_content(config_file);
   {
     res_config_type * res_config = res_config_alloc_load(model_config);
     enkf_main_type * enkf_main = enkf_main_alloc(res_config, false, false);
@@ -121,6 +121,5 @@ int main(int argc, char ** argv) {
     enkf_main_free( enkf_main );
     res_config_free(res_config);
   }
-  test_work_area_free( work_area );
   exit(0);
 }

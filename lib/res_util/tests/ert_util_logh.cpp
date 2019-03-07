@@ -28,7 +28,7 @@
 
 
 void test_open() {
-  test_work_area_type * work_area = test_work_area_alloc("util/logh");
+  ecl::util::TestArea ta("test_open");
   {
     log_type * logh = log_open_file( LOG_FILE , LOG_DEBUG);
     test_assert_not_NULL(logh);
@@ -41,13 +41,11 @@ void test_open() {
     test_assert_int_equal( 1 , log_get_msg_count( logh ));
     log_close( logh );
   }
-
-  test_work_area_free( work_area );
 }
 
 
 void test_delete_empty() {
-  test_work_area_type * work_area = test_work_area_alloc("logh_delete_empty");
+  ecl::util::TestArea ta("delete");
   {
     log_type * logh = log_open_file( LOG_FILE , LOG_DEBUG );
     test_assert_not_NULL(logh);
@@ -73,8 +71,6 @@ void test_delete_empty() {
     log_close( logh );
     test_assert_true( util_file_exists( LOG_FILE ));
   }
-
-  test_work_area_free( work_area );
 }
 
 
@@ -82,14 +78,12 @@ void test_delete_empty() {
   Invalid input - return NULL.
 */
 void test_invalid_input() {
-  test_work_area_type * work_area = test_work_area_alloc("logh_invalid_input");
+  ecl::util::TestArea ta("invalic_iinput");
   test_assert_NULL( log_open_file( NULL, LOG_DEBUG));
 
   util_mkdir_p("read_only");
   chmod("read_only", 0500);
   test_assert_NULL( log_open_file( "read_only/log.txt", LOG_DEBUG));
-
-  test_work_area_free(work_area);
 }
 
 
@@ -108,7 +102,7 @@ void test_file_deleted() {
 
 
 void test_stream_open() {
-  test_work_area_type * work_area = test_work_area_alloc("logh_stream_open");
+  ecl::util::TestArea ta("stream_open");
   FILE * stream = util_fopen("log_file.txt", "w");
   {
     log_type * logh = log_open_stream( stream , LOG_DEBUG);
@@ -117,7 +111,6 @@ void test_stream_open() {
   }
   fputs("Can still write to stream \n", stream);
   fclose(stream);
-  test_work_area_free(work_area);
 }
 
 

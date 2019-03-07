@@ -77,7 +77,7 @@ void test_default( ) {
 
 void test_state( ) {
   rng_manager_type * rng_manager = rng_manager_alloc_default( );
-  test_work_area_type * work_area = test_work_area_alloc( "rng_manager" );
+  ecl::util::TestArea ta("test_rng");
   rng_manager_iget(rng_manager , 100 );
   rng_manager_save_state( rng_manager , "seed.txt");
   test_assert_true( util_file_exists( "seed.txt" ));
@@ -97,12 +97,11 @@ void test_state( ) {
     rng_manager_free( rng_manager2 );
     rng_manager_free( rng_manager1 );
   }
-  test_work_area_free( work_area );
   rng_manager_free( rng_manager );
 }
 
 void test_state_restore( ) {
-  test_work_area_type * work_area = test_work_area_alloc( "rng_manager" );
+  ecl::util::TestArea ta("restore");
   rng_manager_type * rng_manager1 = rng_manager_alloc_default( );
   rng_manager_save_state( rng_manager1 , "seed.txt");
   rng_type * rng1 = rng_manager_alloc_rng( rng_manager1 );
@@ -124,7 +123,6 @@ void test_state_restore( ) {
     rng_free( rng2 );
     rng_manager_free( rng_manager2 );
   }
-  test_work_area_free( work_area );
   rng_manager_free( rng_manager1 );
 }
 

@@ -23,7 +23,7 @@
 #include <ert/util/test_util.h>
 #include <ert/util/util.h>
 #include <ert/res_util/arg_pack.hpp>
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 
 #include <ert/res_util/thread_pool.hpp>
 
@@ -93,7 +93,7 @@ void test_runpath_list() {
     test_assert_int_equal( runpath_list_size( list ) , block_size * threads );
 
     {
-      test_work_area_type * work_area = test_work_area_alloc("enkf_runpath_list" );
+      ecl::util::TestArea ta("runpath_list");
       runpath_list_fprintf( list );
       {
         int file_iens;
@@ -110,7 +110,6 @@ void test_runpath_list() {
         }
         fclose( stream );
       }
-      test_work_area_free( work_area );
     }
   }
   runpath_list_free( list );

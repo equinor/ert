@@ -67,7 +67,6 @@ void setoption_setalloptions_optionsset() {
   test_assert_string_equal( (const char *) torque_driver_get_option( driver, TORQUE_NUM_NODES         ), "36");
   test_assert_string_equal( (const char *) torque_driver_get_option( driver, TORQUE_KEEP_QSUB_OUTPUT  ), "0");
 
-  printf("Options OK\n");
   torque_driver_free(driver);
 }
 
@@ -101,7 +100,7 @@ void getoption_nooptionsset_defaultoptionsreturned() {
 }
 
 void create_submit_script_script_according_to_input() {
-  test_work_area_type * work_area = (test_work_area_type *) test_work_area_alloc("job_torque_test" );
+  ecl::util::TestArea ta("submit_script");
   const char * script_filename = "qsub_script.sh";
 
   {
@@ -130,7 +129,6 @@ void create_submit_script_script_according_to_input() {
 
     fclose(file_stream);
   }
-  test_work_area_free( work_area );
 }
 
 
@@ -138,15 +136,12 @@ void create_submit_script_script_according_to_input() {
 void test_parse_invalid( ) {
   test_assert_int_equal( torque_driver_parse_status( "/file/does/not/exist" , NULL) , JOB_QUEUE_STATUS_FAILURE);
   {
-    test_work_area_type * work_area = (test_work_area_type *) test_work_area_alloc("job_torque_test");
+    ecl::util::TestArea ta("submit");
     {
       FILE * stream = util_fopen("qstat.stdout", "w");
       fclose( stream );
     }
     test_assert_int_equal( torque_driver_parse_status( "qstat.stdout" , "a2345") , JOB_QUEUE_STATUS_FAILURE);
-
-
-    test_work_area_free( work_area );
   }
 }
 

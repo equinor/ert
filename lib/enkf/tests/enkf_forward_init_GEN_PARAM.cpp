@@ -23,7 +23,7 @@
 #include <ert/util/rng.h>
 #include <ert/util/mzran.h>
 #include <ert/util/test_util.h>
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 #include <ert/util/util.h>
 #include <ert/res_util/arg_pack.hpp>
 #include <ert/res_util/subst_list.hpp>
@@ -53,8 +53,8 @@ int main(int argc , char ** argv) {
   const char * root_path = argv[1];
   const char * config_file = argv[2];
   const char * forward_init_string = argv[3];
-  test_work_area_type * work_area = test_work_area_alloc(config_file );
-  test_work_area_copy_directory_content( work_area , root_path );
+  ecl::util::TestArea ta("main");
+  ta.copy_directory_content(root_path);
   {
     bool forward_init;
     bool strict = true;
@@ -164,7 +164,6 @@ int main(int argc , char ** argv) {
     enkf_main_free( enkf_main );
     res_config_free(res_config);
   }
-  test_work_area_free( work_area );
   rng_free( rng );
 }
 

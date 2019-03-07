@@ -21,7 +21,7 @@
 #include <unistd.h>
 
 #include <ert/util/test_util.h>
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 #include <ert/util/util.h>
 #include <ert/util/rng.h>
 
@@ -46,8 +46,7 @@ void test_create() {
 
 
 void test_min_realizations(const char * num_realizations_str, const char * min_realizations_str, int min_realizations_expected_needed) {
-  test_work_area_type * work_area = test_work_area_alloc("test_min_realizations_string");
-
+  ecl::util::TestArea ta("min_realizations");
   {
     FILE * config_file_stream = util_mkdir_fopen("config_file", "w");
     test_assert_not_NULL(config_file_stream);
@@ -79,8 +78,6 @@ void test_min_realizations(const char * num_realizations_str, const char * min_r
       config_free( c );
     }
   }
-
-  test_work_area_free(work_area);
 }
 
 

@@ -33,7 +33,7 @@ void test_create() {
 
 void test_filter_file1() {
   subst_list_type * subst_list = subst_list_alloc( NULL );
-  test_work_area_type * work_area = test_work_area_alloc("subst_list/filter1");
+  ecl::util::TestArea ta("filter_:file");
   {
     FILE * stream = util_fopen("template" , "w");
     fprintf(stream , "<KEY1>\n<KEY2>\n<KEY3>\n<KEY4>\n");
@@ -58,14 +58,13 @@ void test_filter_file1() {
     test_assert_string_equal( s3 , "Value3");
     test_assert_string_equal( s4 , "Value4");
   }
-  test_work_area_free( work_area );
   subst_list_free( subst_list );
 }
 
 
 void test_filter_file2() {
   subst_list_type * subst_list = subst_list_alloc( NULL );
-  test_work_area_type * work_area = test_work_area_alloc("subst_list/filter2");
+  ecl::util::TestArea ta("filetr2");
   {
     FILE * stream = util_fopen("template" , "w");
     fprintf(stream , "MAGIC_PRINT  magic-list.txt  <ERTCASE>  __MAGIC__");
@@ -83,7 +82,6 @@ void test_filter_file2() {
     test_assert_string_equal( target_string , "MAGIC_PRINT  magic-list.txt  default  MagicAllTheWayToWorkFlow");
     free( target_string );
   }
-  test_work_area_free( work_area );
   subst_list_free( subst_list );
 }
 

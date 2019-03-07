@@ -25,12 +25,12 @@
 #include <ext/json/cJSON.h>
 
 #include <ert/util/test_util.h>
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 #include <ert/enkf/value_export.hpp>
 
 
 void test_create() {
-  test_work_area_type * work_area = test_work_area_alloc("value_export");
+  ecl::util::TestArea ta("value_export");
   value_export_type * export_value = value_export_alloc( "", "parameters");
 
   test_assert_int_equal( 0 , value_export_size( export_value ));
@@ -45,14 +45,12 @@ void test_create() {
   test_assert_false( util_file_exists( "parameters.json" ));
 
   value_export_free( export_value );
-
-  test_work_area_free( work_area );
 }
 
 
 
 void test_export_json() {
-test_work_area_type * work_area = test_work_area_alloc("value_export");
+  ecl::util::TestArea ta("value_export_json");
   value_export_type * export_value = value_export_alloc( "path", "parameters");
   util_make_path( "path" );
 
@@ -83,13 +81,11 @@ test_work_area_type * work_area = test_work_area_alloc("value_export");
   test_assert_double_equal(compkey1->valuedouble, 100);
 
   value_export_free( export_value );
-  test_work_area_free( work_area );
-
 }
 
 
 void test_export_txt__() {
-  test_work_area_type * work_area = test_work_area_alloc("value_export");
+  ecl::util::TestArea ta("export_txt");
   value_export_type * export_value = value_export_alloc( "", "parameters");
   value_export_append(export_value, "KEY100", "SUBKEY1", 100);
   value_export_append(export_value, "KEY200", "SUBKEY2", 200);
@@ -100,12 +96,11 @@ void test_export_txt__() {
   test_assert_true( util_file_exists( "path/parameters__.txt" ));
   test_assert_true( util_files_equal( "path/parameters__.txt", "path/parameters.txt"));
   value_export_free( export_value );
-  test_work_area_free( work_area );
 }
 
 
 void test_export_txt() {
-  test_work_area_type * work_area = test_work_area_alloc("value_export");
+  ecl::util::TestArea ta("export_txt");
   value_export_type * export_value = value_export_alloc( "path", "parameters");
   util_make_path( "path" );
 
@@ -138,7 +133,6 @@ void test_export_txt() {
   }
 
   value_export_free( export_value );
-  test_work_area_free( work_area );
 }
 
 

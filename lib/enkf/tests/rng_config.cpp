@@ -17,7 +17,7 @@
 */
 
 #include <ert/util/test_util.h>
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 
 #include <ert/enkf/rng_config.hpp>
 #include <ert/res_util/res_log.hpp>
@@ -53,7 +53,7 @@ static char * alloc_read_random_seed(const char * log_file)
 
 void test_init()
 {
-  test_work_area_type * work_area = test_work_area_alloc("rng_config");
+  ecl::util::TestArea ta("rng_init");
   res_log_init_log(LOG_DEBUG, "log", true);
 
   const char * config_file = "my_rng_config";
@@ -73,7 +73,6 @@ void test_init()
 
   free(logged_random_seed);
   free(rng_config);
-  free(work_area);
 }
 
 static void alloc_reproduced_rng_config(
@@ -83,7 +82,7 @@ static void alloc_reproduced_rng_config(
         rng_manager_type ** orig_rng_man,
         rng_manager_type ** rep_rng_man)
 {
-  test_work_area_type * work_area = test_work_area_alloc("rng_config");
+  ecl::util::TestArea ta("rng_conifg");
   res_log_init_log(LOG_DEBUG, "log", true);
 
   const char * config_file = "my_rng_config";
@@ -105,7 +104,6 @@ static void alloc_reproduced_rng_config(
     *rep_rng_man = rng_config_alloc_rng_manager(*rep_rng_config);
 
   free(logged_random_seed);
-  free(work_area);
 }
 
 void test_reproducibility(const char * random_seed)

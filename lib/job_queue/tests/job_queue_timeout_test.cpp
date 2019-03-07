@@ -139,8 +139,7 @@ int main(int argc, char ** argv) {
   const int running_timeout = 0; // Pretend that the node running the job is dead
   const int sec = 1000*1000;
 
-  test_work_area_type * work_area = test_work_area_alloc__("job_timeout", true);
-
+  ecl::util::TestArea ta("timeout");
   job_type **jobs = alloc_jobs(number_of_jobs, argv[1]);
 
   // By setting max_submit to 0, failing jobs won't be restarted unless the retry callback says so
@@ -177,5 +176,4 @@ int main(int argc, char ** argv) {
   job_queue_free(queue);
   queue_driver_free(driver);
   free_jobs(jobs, number_of_jobs);
-  test_work_area_free(work_area);
 }

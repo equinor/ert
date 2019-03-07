@@ -21,7 +21,7 @@
 #include <unistd.h>
 
 #include <ert/util/test_util.h>
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 #include <ert/util/util.h>
 #include <ert/res_util/arg_pack.hpp>
 #include <ert/util/rng.h>
@@ -46,15 +46,43 @@ void create_runpath(enkf_main_type * enkf_main, int iter) {
 
 
 
+void install_file( const ecl::util::TestArea& ta, const char * input_src_file ) {
+  if (util_is_abs_path( input_src_file))
+    return;
+  else {
+    std::string src_file = ta.original_path(input_src_file);
+    char * src_path;
+
+    util_alloc_file_components(input_src_file, &src_path, NULL, NULL);
+
+    if (!util_entry_exists( src_path ))
+      util_make_path( src_path );
+
+    if (util_file_exists( src_file.c_str() )) {
+      char * target_file   = util_alloc_filename( ta.test_cwd().c_str(), input_src_file, NULL );
+      util_copy_file( src_file.c_str() , target_file );
+      free( target_file );
+    }
+
+    free(src_path);
+  }
+}
+
+
+
+
+
+
 int main(int argc , char ** argv) {
   enkf_main_install_SIGNALS();
   const char * root_path = argv[1];
   const char * config_file = argv[2];
   const char * init_file = argv[3];
   const char * forward_init_string = argv[4];
-  test_work_area_type * work_area = test_work_area_alloc(config_file );
-  test_work_area_copy_directory_content( work_area , root_path );
-  test_work_area_install_file( work_area , init_file );
+  ecl::util::TestArea ta("FIELD");
+  ta.copy_directory_content(root_path);
+  install_file(ta, init_file);
+
   {
     bool forward_init;
     bool strict = true;

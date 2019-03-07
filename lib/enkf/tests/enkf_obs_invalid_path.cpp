@@ -18,14 +18,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 #include <ert/util/test_util.h>
 
 #include <ert/enkf/enkf_obs.hpp>
 
 
 void test_invalid_path() {
-  test_work_area_type * work_area = test_work_area_alloc__("conf", true);
+  ecl::util::TestArea ta("conf");
   util_make_path("obs_path");
   {
     FILE * stream = util_fopen("obs_path/conf.txt","w");
@@ -51,13 +51,11 @@ void test_invalid_path() {
   test_assert_false(conf_instance_validate(enkf_conf));
 
   conf_instance_free(enkf_conf);
-
-  test_work_area_free(work_area);
 }
 
 
 void test_valid_path() {
-  test_work_area_type * work_area = test_work_area_alloc("conf");
+  ecl::util::TestArea ta("valid");
   util_make_path("obs_path");
   {
     FILE * stream = util_fopen("obs_path/conf.txt","w");
@@ -84,7 +82,6 @@ void test_valid_path() {
   test_assert_true(conf_instance_validate(enkf_conf));
 
   conf_instance_free(enkf_conf);
-  test_work_area_free(work_area);
 }
 
 

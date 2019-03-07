@@ -21,7 +21,7 @@
 #include <unistd.h>
 
 #include <ert/util/test_util.h>
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 #include <ert/util/util.h>
 
 #include <ert/enkf/ert_workflow_list.hpp>
@@ -37,7 +37,7 @@ void test_create_workflow_list() {
 
 
 void test_add_alias( const char * job) {
-  test_work_area_type * work_area = test_work_area_alloc( "workflow_list/alias" );
+  ecl::util::TestArea ta("alias");
   ert_workflow_list_type * wf_list = ert_workflow_list_alloc_empty(NULL);
   ert_workflow_list_add_job( wf_list , "JOB" , job );
 
@@ -72,8 +72,6 @@ void test_add_alias( const char * job) {
   test_assert_true( ert_workflow_list_has_workflow( wf_list , "alias"));
   test_assert_true( workflow_is_instance( ert_workflow_list_get_workflow( wf_list , "WF")));
   test_assert_true( workflow_is_instance( ert_workflow_list_get_workflow( wf_list , "alias")));
-
-  test_work_area_free( work_area );
 }
 
 

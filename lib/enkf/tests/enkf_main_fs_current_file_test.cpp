@@ -22,7 +22,7 @@
 #include <stdbool.h>
 
 #include <ert/util/test_util.h>
-#include <ert/util/test_work_area.h>
+#include <ert/util/test_work_area.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_main.hpp>
 
@@ -86,16 +86,15 @@ void test_change_case(const char * model_config) {
 
 int main(int argc, char ** argv) {
   const char * config_file = argv[1];
-  test_work_area_type * work_area = test_work_area_alloc__( "enkf_main_fs_current_file_test", true);
+  ecl::util::TestArea ta("current_file");
   char * model_config;
   util_alloc_file_components( config_file , NULL , &model_config , NULL);
-  test_work_area_copy_parent_content( work_area , config_file );
+  ta.copy_parent_content(config_file);
 
   test_current_file_not_present_symlink_present(model_config);
   test_current_file_present(model_config);
   test_change_case(model_config);
 
   free(model_config);
-  test_work_area_free( work_area );
   exit(0);
 }
