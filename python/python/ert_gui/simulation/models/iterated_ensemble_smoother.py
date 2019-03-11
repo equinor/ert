@@ -7,7 +7,7 @@ from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, 
 class IteratedEnsembleSmoother(BaseRunModel):
 
     def __init__(self):
-        super(IteratedEnsembleSmoother, self).__init__("Iterated Ensemble Smoother", getQueueConfig() , phase_count=2)
+        super(IteratedEnsembleSmoother, self).__init__(getQueueConfig() , phase_count=2)
         self.support_restart = False
 
     def setAnalysisModule(self, module_name):
