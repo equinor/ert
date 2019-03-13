@@ -114,18 +114,24 @@ void test_iactive_update() {
   ert_run_context_deactivate_realization( context , 9 );
 
   test_assert_not_NULL( ert_run_context_get_id( context ));
+  test_assert_int_equal( ert_run_context_get_active_size(context), 7);
+
+  auto check_iactive = [](bool_vector_type const* iactive) {
+      test_assert_int_equal( bool_vector_count_equal( iactive , true ) , 7 );
+      test_assert_false( bool_vector_iget( iactive , 0 ));
+      test_assert_false( bool_vector_iget( iactive , 5 ));
+      test_assert_false( bool_vector_iget( iactive , 9 ));
+  };
+
+  check_iactive(ert_run_context_get_iactive(context));
+
+  bool_vector_type * iactive2 = ert_run_context_alloc_iactive(context);
+  check_iactive(iactive2);
+  bool_vector_free( iactive2 );
+
   path_fmt_free( runpath_fmt );
   subst_list_free( subst_list );
   bool_vector_free(iactive);
-  {
-    bool_vector_type * iactive = ert_run_context_alloc_iactive(context);
-    test_assert_int_equal( bool_vector_count_equal( iactive , true ) , 7 );
-    test_assert_int_equal( ert_run_context_get_active_size(context), 7);
-    test_assert_false( bool_vector_iget( iactive , 0 ));
-    test_assert_false( bool_vector_iget( iactive , 5 ));
-    test_assert_false( bool_vector_iget( iactive , 9 ));
-    bool_vector_free( iactive );
-  }
   ert_run_context_free( context );
 }
 

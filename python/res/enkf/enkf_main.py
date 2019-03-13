@@ -195,6 +195,7 @@ class _RealEnKFMain(BaseCClass):
     _export_field = ResPrototype("bool enkf_main_export_field(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int)")
     _export_field_with_fs = ResPrototype("bool enkf_main_export_field_with_fs(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int, enkf_fs_manager)")
     _load_from_forward_model = ResPrototype("int enkf_main_load_from_forward_model_from_gui(enkf_main, int, bool_vector, enkf_fs)")
+    _load_from_run_context = ResPrototype("int enkf_main_load_from_run_context_from_gui(enkf_main, ert_run_context, enkf_fs)")
     _create_run_path = ResPrototype("void enkf_main_create_run_path(enkf_main , ert_run_context)")
     _icreate_run_path = ResPrototype("void enkf_main_icreate_run_path(enkf_main , run_arg, enkf_init_mode_enum)")
     _submit_simulation = ResPrototype("void enkf_main_isubmit_job(enkf_main , run_arg, job_queue)")
@@ -406,6 +407,10 @@ class _RealEnKFMain(BaseCClass):
     def loadFromForwardModel(self, realization, iteration, fs):
         """Returns the number of loaded realizations"""
         return self._load_from_forward_model(iteration, realization, fs)
+    
+    def loadFromRunContext(self, run_context, fs):
+        """Returns the number of loaded realizations"""
+        return self._load_from_run_context(run_context, fs)
 
     def initRun(self, run_context):
         self._init_run(run_context)

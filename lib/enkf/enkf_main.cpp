@@ -28,6 +28,7 @@
 #include <pwd.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <thread>
 
 #define HAVE_THREAD_POOL 1
 #include <ert/util/rng.h>
@@ -2284,57 +2285,83 @@ int enkf_main_load_from_forward_model(enkf_main_type * enkf_main, int iter , boo
 
 int enkf_main_load_from_forward_model_with_fs(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive, stringlist_type ** realizations_msg_list, enkf_fs_type * fs) {
   printf("Loading from forward model\n");
-  const int ens_size        = enkf_main_get_ensemble_size( enkf_main );
-  int result[ens_size];
   model_config_type * model_config = enkf_main_get_model_config(enkf_main);
-
   ert_run_context_type * run_context = ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs,
                                                                                   iactive,
                                                                                   model_config_get_runpath_fmt( model_config ),
                                                                                   model_config_get_jobname_fmt( model_config ),
                                                                                   enkf_main_get_data_kw(enkf_main),
                                                                                   iter );
-  arg_pack_type ** arg_list = (arg_pack_type **) util_calloc( ens_size , sizeof * arg_list ); // CXX_CAST_ERROR
-  thread_pool_type * tp     = thread_pool_alloc( 4 , true );  /* num_cpu - HARD coded. */
-
-  for (int iens = 0; iens < ens_size; ++iens) {
-    printf("\tloading %d (realization %d/%d) ", iens, (1+iens), ens_size);
-    result[iens] = 0;
-    arg_pack_type * arg_pack = arg_pack_alloc();
-    arg_list[iens] = arg_pack;
-
-    if (bool_vector_iget(iactive, iens)) {
-      printf("... ");
-      enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
-      arg_pack_append_ptr( arg_pack , enkf_state);                                         /* 0: enkf_state*/
-      arg_pack_append_ptr( arg_pack , ert_run_context_iget_arg( run_context , iens ));     /* 1: run_arg */
-      arg_pack_append_ptr(arg_pack, realizations_msg_list[iens]);                          /* 2: List of interactive mode messages. */
-      arg_pack_append_bool( arg_pack, true );                                              /* 3: Manual load */
-      arg_pack_append_ptr(arg_pack, &result[iens]);                                        /* 4: Result */
-      thread_pool_add_job( tp , enkf_state_load_from_forward_model_mt , arg_pack);
-    }
-    printf("done\n");
-  }
-
-  thread_pool_join( tp );
-  thread_pool_free( tp );
-  printf("\n");
-
-  int loaded = 0;
-  for (int iens = 0; iens < ens_size; ++iens) {
-    if (bool_vector_iget(iactive, iens)) {
-      if (result[iens] & LOAD_FAILURE)
-        fprintf(stderr, "** Warning: Function %s: Realization %d load failure\n", __func__, iens);
-      else if (result[iens] & REPORT_STEP_INCOMPATIBLE)
-        fprintf(stderr, "** Warning: Function %s: Realization %d report step incompatible\n", __func__, iens);
-      else
-        loaded++;
-    }
-    arg_pack_free(arg_list[iens]);
-  }
-  free( arg_list );
-  ert_run_context_free( run_context );
+  int loaded = enkf_main_load_from_run_context(enkf_main, run_context, realizations_msg_list, fs);
+  ert_run_context_free(run_context);
   return loaded;
+}
+
+
+int enkf_main_load_from_run_context_from_gui(enkf_main_type* enkf_main, ert_run_context_type* run_context, enkf_fs_type* fs) {
+   auto const ens_size = enkf_main_get_ensemble_size(enkf_main);
+   stringlist_type ** realizations_msg_list = (stringlist_type **) util_calloc(ens_size, sizeof *realizations_msg_list); // CXX_CAST_ERROR
+   for(int iens = 0; iens < ens_size; ++iens)
+      realizations_msg_list[iens] = stringlist_alloc_new();
+
+   int loaded = enkf_main_load_from_run_context(enkf_main, run_context, realizations_msg_list, fs);
+
+   for(int iens = 0; iens < ens_size; ++iens)
+      stringlist_free(realizations_msg_list[iens]);
+   free(realizations_msg_list);
+   return loaded;
+}
+
+int enkf_main_load_from_run_context(
+      enkf_main_type * enkf_main,
+      ert_run_context_type * run_context,
+      stringlist_type ** realizations_msg_list,
+      enkf_fs_type * fs) {
+   printf("Loading from run context\n");
+   auto const ens_size = enkf_main_get_ensemble_size( enkf_main );
+   auto const * iactive = ert_run_context_get_iactive(run_context);
+
+   int result[ens_size];
+   arg_pack_type ** arg_list = (arg_pack_type **) util_calloc( ens_size , sizeof * arg_list ); // CXX_CAST_ERROR
+   thread_pool_type * tp     = thread_pool_alloc( std::thread::hardware_concurrency() , true );
+
+   for (int iens = 0; iens < ens_size; ++iens) {
+     printf("\tloading %d (realization %d/%d) ", iens, (1+iens), ens_size);
+     result[iens] = 0;
+     arg_pack_type * arg_pack = arg_pack_alloc();
+     arg_list[iens] = arg_pack;
+
+     if (bool_vector_iget(iactive, iens)) {
+       printf("... ");
+       enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
+       arg_pack_append_ptr( arg_pack , enkf_state);                                         /* 0: enkf_state*/
+       arg_pack_append_ptr( arg_pack , ert_run_context_iget_arg( run_context , iens ));     /* 1: run_arg */
+       arg_pack_append_ptr(arg_pack, realizations_msg_list[iens]);                          /* 2: List of interactive mode messages. */
+       arg_pack_append_bool( arg_pack, true );                                              /* 3: Manual load */
+       arg_pack_append_ptr(arg_pack, &result[iens]);                                        /* 4: Result */
+       thread_pool_add_job( tp , enkf_state_load_from_forward_model_mt , arg_pack);
+     }
+     printf("done\n");
+   }
+
+   thread_pool_join( tp );
+   thread_pool_free( tp );
+   printf("\n");
+
+   int loaded = 0;
+   for (int iens = 0; iens < ens_size; ++iens) {
+     if (bool_vector_iget(iactive, iens)) {
+       if (result[iens] & LOAD_FAILURE)
+         fprintf(stderr, "** Warning: Function %s: Realization %d load failure\n", __func__, iens);
+       else if (result[iens] & REPORT_STEP_INCOMPATIBLE)
+         fprintf(stderr, "** Warning: Function %s: Realization %d report step incompatible\n", __func__, iens);
+       else
+         loaded++;
+     }
+     arg_pack_free(arg_list[iens]);
+   }
+   free( arg_list );
+   return loaded;
 }
 
 

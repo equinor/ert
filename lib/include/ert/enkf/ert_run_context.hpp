@@ -85,6 +85,7 @@ typedef struct ert_run_context_struct ert_run_context_type;
   int                      ert_run_context_get_size( const ert_run_context_type * context );
   run_mode_type            ert_run_context_get_mode( const ert_run_context_type * context );
   bool_vector_type       * ert_run_context_alloc_iactive(const ert_run_context_type * context);
+  bool_vector_type const * ert_run_context_get_iactive(const ert_run_context_type * context);
   int                      ert_run_context_get_iter( const ert_run_context_type * context );
   int                      ert_run_context_get_active_size(const ert_run_context_type * context);
   int                      ert_run_context_get_step1( const ert_run_context_type * context );
