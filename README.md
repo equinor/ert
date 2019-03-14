@@ -1,4 +1,4 @@
-# ert [![Build Status](https://travis-ci.org/Equinor/ert.svg?branch=master)](https://travis-ci.org/Equinor/ert)
+# ert [![Build Status](https://travis-ci.org/equinor/ert.svg?branch=master)](https://travis-ci.org/equinor/ert)
 
 ERT - Ensemble based Reservoir Tool - is a tool to run ensemble based on
 reservoir models. ERT was originally devised as tool to do model updating
