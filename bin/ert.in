@@ -36,6 +36,13 @@ def runCli( args ):
     runExec(exec_path, [args.config, args.mode, args.target_case])
 
 
+def validate_cli_args(parser, args):
+    if args.mode == "ensemble_smoother" and args.target_case == "default":
+        msg = "Target file system and source file system can not be the same. "\
+              "They were both: <default>. Please set using --target-case on "\
+              "the command line."
+        parser.error(msg)
+
 def ert_parser():
     parser = ArgumentParser(description="ERT - Ensemble Reservoir Tool")
 
@@ -93,6 +100,10 @@ def ert_parser():
 def main():
     parser = ert_parser()
     args = parser.parse_args(sys.argv[1:])
+
+    if args.func.func_name == "runCli":
+        validate_cli_args(parser, args)
+
     args.func(args)
 
 
