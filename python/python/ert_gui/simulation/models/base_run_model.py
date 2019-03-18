@@ -46,11 +46,11 @@ class BaseRunModel(object):
         self._queue_config = queue_config
         self._job_queue = None
         self.realization_progress = {}
-        self.initial_realizations_mask = None
-        self.completed_realizations_mask = None
+        self.initial_realizations_mask = []
+        self.completed_realizations_mask = []
         self.support_restart = True
         self._run_context = None
-        self._last_run_iteration = -1;
+        self._last_run_iteration = -1
         self.reset( )
 
     def ert(self):
