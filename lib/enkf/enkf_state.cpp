@@ -718,10 +718,6 @@ void * enkf_state_load_from_forward_model_mt( void * arg ) {
     *result -= REPORT_STEP_INCOMPATIBLE;
   }
 
-  if (manual_load) {
-    printf(".");
-    fflush(stdout);
-  }
   return NULL;
 }
 
