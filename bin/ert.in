@@ -33,7 +33,7 @@ def runShell( args ):
 
 def runCli( args ):
     exec_path = os.path.join(os.path.dirname(__file__), "ert_cli")
-    runExec(exec_path, [args.config, args.algorithm, args.target_case])
+    runExec(exec_path, [args.config, args.mode, args.target_case])
 
 
 def ert_parser():
