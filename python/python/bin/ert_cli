@@ -134,17 +134,17 @@ def main():
     # The ert_cli script should be called from ert.in. The arguments are parsed and verified in ert.in
     if len(sys.argv) < 3:
         raise AssertionError("Required arguments are missing, the config-file, "
-                             "algorithm and target case must be provided")
-    config_file, algorithm, target_case = sys.argv[1:]
+                             "mode and target case must be provided")
+    config_file, mode, target_case = sys.argv[1:]
 
     config = resconfig(config_file)
     ert = EnKFMain(config)
 
-    if algorithm == "Test-run":
+    if mode == "test_run":
         _test_run(ert)
-    if algorithm == "Ensemble Experiment":
+    if mode == "ensemble_experiment":
         _experiment_run(ert)
-    if algorithm == "Ensemble Smoother":
+    if mode == "ensemble_smoother":
         _ensemble_smoother_run(ert, target_case)
 
 

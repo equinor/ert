@@ -81,9 +81,9 @@ def ert_parser():
             description="Command Line Interface")
     cli_parser.add_argument('config', type=valid_file,
             help="Ert configuration file")
-    cli_parser.add_argument("--algorithm", type=str, required=True,
-            choices=["Test-run", "Ensemble Smoother", "Ensemble Experiment"],
-            help="The available algorithms")
+    cli_parser.add_argument("--mode", type=str, required=True,
+            choices=["test_run", "ensemble_experiment", "ensemble_smoother"],
+            help="The available modes")
     cli_parser.add_argument("--target-case", type=str, default="default",
             help="The target filesystem to store results")
     cli_parser.set_defaults(func=runCli)
