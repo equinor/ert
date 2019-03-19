@@ -132,12 +132,19 @@ class SingleProgressModel(QAbstractTableModel):
             return ""
         return self.model_header[index]
 
+    def get_column_index(self, name):
+        return self.model_header.index(name)
+
     def data(self, index, role):
         if not index.isValid():
             return QVariant()
         elif role != Qt.DisplayRole:
             return QVariant()
         if self.get_column_name(index.column()).find("time") >= 0:
+            status = self.model_data[index.row()][self.get_column_index("status")]
+            if status == "Pending" or status == "Waiting":
+                return QVariant()
+
             timestamp = eval(self.model_data[index.row()][index.column()])
             return QVariant(time.ctime(timestamp))
 
