@@ -229,7 +229,7 @@ class BaseRunModel(object):
 
     @staticmethod
     def is_forward_model_finished(progress):
-        return any((job.status == 'Failure' for job in progress))
+        return not (any((job.status != 'Success' for job in progress)))
 
 
     def updateDetailedProgress(self):
