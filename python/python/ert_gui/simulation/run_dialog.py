@@ -182,6 +182,8 @@ class RunDialog(QDialog):
         else:
             if self.detailed_progress:
                 self.detailed_progress.set_progress(*self._run_model.getDetailedProgress())
+            else:
+                self._run_model.updateDetailedProgress() #update information without rendering
 
             self.progress.setIndeterminate(False)
             total_count = self._run_model.getQueueSize()
