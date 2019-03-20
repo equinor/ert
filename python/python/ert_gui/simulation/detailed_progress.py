@@ -173,16 +173,16 @@ class DetailedProgressDialog(QDialog):
 
         self.detailed_progress_widget.clicked.connect(self.show_selection)
 
-        layout.addWidget(self.single_view_label, 0, 0)
-        layout.addWidget(self.overview_label, 0, 1)
-        layout.addWidget(self.single_view, 1, 0)
-        layout.addWidget(self.detailed_progress_widget, 1, 1)
+        layout.addWidget(self.single_view_label, 2, 0)
+        layout.addWidget(self.overview_label, 0, 0)
+        layout.addWidget(self.single_view, 3, 0)
+        layout.addWidget(self.detailed_progress_widget, 1, 0)
 
         self.detailed_progress_widget.show()
         self.setLayout(layout)
 
-        self.layout().setColumnStretch(0, 1)
-        self.layout().setColumnStretch(1, 2)
+        self.layout().setRowStretch(1,2)
+        self.layout().setRowStretch(3, 1)
         self.progress = None
         self.selected_realization = None
         self.resize(parent.width(), parent.height())
