@@ -68,8 +68,8 @@ class DetailedProgress(QFrame):
         width = self.width()
         height = self.height()
         aspect_ratio = float(width)/height
-        nr_realizations = max([iens for iens, progress in self._current_progress]) + 1
-        fm_size = max([len(progress) for iens, progress in self._current_progress])
+        nr_realizations = max([iens for iens, _ in self._current_progress]) + 1
+        fm_size = max([len(progress) for _ , progress in self._current_progress])
         self.grid_height = math.ceil(math.sqrt(nr_realizations / aspect_ratio))
         self.grid_width = math.ceil(self.grid_height * aspect_ratio)
         sub_grid_size = math.ceil(math.sqrt(fm_size))
@@ -190,7 +190,7 @@ class DetailedProgressDialog(QDialog):
         self.detailed_progress_widget.show()
         self.setLayout(layout)
 
-        self.layout().setRowStretch(1,2)
+        self.layout().setRowStretch(1, 2)
         self.layout().setRowStretch(3, 1)
         self.progress = None
         self.selected_realization = None
