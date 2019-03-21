@@ -12,13 +12,11 @@ except ImportError:
 class DetailedProgress(QFrame):
     clicked = pyqtSignal(int)
 
-    def __init__(self, states, parent):
+    def __init__(self, state_colors, parent):
         super(DetailedProgress, self).__init__(parent)
         self.setLineWidth(1)
 
-        self.state_colors = {state.name: state.color for state in states}
-        self.state_colors['Success'] = self.state_colors["Finished"]
-        self.state_colors['Failure'] = self.state_colors["Failed"]
+        self.state_colors = state_colors
         self._current_iteration = 0
         self._current_progress = []
         self.selected_realization = -1
@@ -110,10 +108,11 @@ class DetailedProgress(QFrame):
 
 
 class SingleProgressModel(QAbstractTableModel):
-    def __init__(self, parent_view):
+    def __init__(self, parent_view, state_colors):
         super(SingleProgressModel, self).__init__(parent_view)
         self.model_data = []
         self.model_header = []
+        self.state_colors = state_colors
 
     def update_data(self, header, data):
         self.model_data = data
@@ -138,10 +137,17 @@ class SingleProgressModel(QAbstractTableModel):
     def data(self, index, role):
         if not index.isValid():
             return QVariant()
-        elif role != Qt.DisplayRole:
+
+        status = self.model_data[index.row()][self.get_column_index("status")]
+        if role == Qt.BackgroundColorRole:
+            color = QColor(*self.state_colors[status])
+            color.setAlpha(color.alpha()/2)
+            return QVariant(color)
+
+        if role != Qt.DisplayRole:
             return QVariant()
+
         if self.get_column_name(index.column()).find("time") >= 0:
-            status = self.model_data[index.row()][self.get_column_index("status")]
             if status == "Pending" or status == "Waiting":
                 return QVariant()
 
@@ -160,15 +166,16 @@ class SingleProgressModel(QAbstractTableModel):
 
 
 class DetailedProgressDialog(QDialog):
-    def __init__(self, parent, states):
+    def __init__(self, parent, state_colors):
         super(DetailedProgressDialog, self).__init__(parent)
         self.setWindowTitle("Realization Progress")
         layout = QGridLayout(self)
-        self.detailed_progress_widget = DetailedProgress(states, self)
+
+        self.detailed_progress_widget = DetailedProgress(state_colors, self)
         self.overview_label = QLabel("Realizations")
 
         self.single_view = QTableView()
-        self.single_view.setModel(SingleProgressModel(self.single_view))
+        self.single_view.setModel(SingleProgressModel(self.single_view,state_colors))
         self.single_view_label = QLabel("Realization details")
 
         self.detailed_progress_widget.clicked.connect(self.show_selection)
