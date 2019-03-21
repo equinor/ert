@@ -23,6 +23,8 @@ class DetailedProgress(QFrame):
         self.grid_height = -1
         self.grid_width = -1
 
+        self.setMinimumHeight(200)
+
     def mousePressEvent(self, event):
         super(DetailedProgress, self).mousePressEvent(event)
         position = event.pos()
