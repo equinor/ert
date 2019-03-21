@@ -64,6 +64,10 @@ class RunDialog(QDialog):
 
         layout.addLayout(legend_layout)
 
+        self.state_colors = {state.name: state.color for state in states}
+        self.state_colors['Success'] = self.state_colors["Finished"]
+        self.state_colors['Failure'] = self.state_colors["Failed"]
+
         self.running_time = QLabel("")
 
         ert = None
@@ -310,6 +314,6 @@ class RunDialog(QDialog):
 
     def show_detailed_progress(self):
         if not self.detailed_progress:
-            self.detailed_progress = DetailedProgressDialog(self, self.simulations_tracker.getStates())
+            self.detailed_progress = DetailedProgressDialog(self, self.state_colors)
         self.detailed_progress.set_progress(*self._run_model.getDetailedProgress())
         self.detailed_progress.show()
