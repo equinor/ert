@@ -36,27 +36,39 @@ def _deserialize_date(serial_dt):
 
 class ForwardModelJobStatus(object):
 
-    def __init__(self, name, start_time = None, end_time = None, status = "Waiting", error=None):
+    def __init__(self, name,
+                 start_time = None,
+                 end_time = None,
+                 status = "Waiting",
+                 error=None,
+                 std_out_file="",
+                 std_err_file=""):
+
         self.start_time = start_time
         self.end_time = end_time
         self.name = name
         self.status = status
         self.error = error
+        self.std_out_file = std_out_file
+        self.std_err_file = std_err_file
 
 
     @classmethod
-    def load(cls,data):
+    def load(cls,job, data, run_path):
         start_time = _deserialize_date(data["start_time"])
         end_time = _deserialize_date(data["end_time"])
         name = data["name"]
         status = data["status"]
         error = data["error"]
-
+        std_err_file = job['stderr']
+        std_out_file = job['stdout']
         return cls(name,
                    start_time=start_time,
                    end_time=end_time,
                    status=status,
-                   error=error)
+                   error=error,
+                   std_out_file=os.path.join(run_path, std_out_file),
+                   std_err_file=os.path.join(run_path, std_err_file))
 
 
     def __str__(self):
@@ -68,11 +80,13 @@ class ForwardModelJobStatus(object):
                 "status" : self.status,
                 "error" : self.error,
                 "start_time" : _serialize_date(self.start_time),
-                "end_time" : _serialize_date(self.end_time)}
+                "end_time" : _serialize_date(self.end_time),
+                "stdout" : self.std_out_file,
+                "stderr" : self.std_err_file}
 
 class ForwardModelStatus(object):
     STATUS_FILE = "status.json"
-
+    JOBS_FILE = "jobs.json"
 
     def __init__(self, run_id, start_time, end_time = None):
         self.run_id = run_id
@@ -81,18 +95,24 @@ class ForwardModelStatus(object):
         self._jobs = []
 
     @classmethod
-    def try_load(cls, status_file):
-        fp = open(status_file)
-        data = json.load(fp)
+    def try_load(cls, path):
+        status_file = os.path.join(path, cls.STATUS_FILE)
+        jobs_file = os.path.join(path, cls.JOBS_FILE)
 
-        start_time = _deserialize_date(data["start_time"])
-        end_time = _deserialize_date(data["end_time"])
-        status = cls(data["run_id"],
+        with open(status_file) as status_fp:
+            status_data = json.load(status_fp)
+
+        with open(jobs_file) as jobs_fp:
+            job_data = json.load(jobs_fp)
+
+        start_time = _deserialize_date(status_data["start_time"])
+        end_time = _deserialize_date(status_data["end_time"])
+        status = cls(status_data["run_id"],
                      start_time,
                      end_time=end_time)
 
-        for job in data["jobs"]:
-            status.add_job(ForwardModelJobStatus.load(job))
+        for job, state in zip(job_data['jobList'], status_data["jobs"]):
+            status.add_job(ForwardModelJobStatus.load(job, state, path))
 
         return status
 
@@ -101,10 +121,10 @@ class ForwardModelStatus(object):
     def load(cls, path, num_retry=10):
         sleep_time = 0.10
         attempt = 0
-        status_file = os.path.join(path, cls.STATUS_FILE)
+
         while attempt < num_retry:
             try:
-                status = cls.try_load(status_file)
+                status = cls.try_load(path)
                 return status
             except:
                 attempt += 1
@@ -112,6 +132,7 @@ class ForwardModelStatus(object):
                     time.sleep(sleep_time)
 
         return None
+
 
     @property
     def jobs(self):
