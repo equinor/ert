@@ -25,6 +25,10 @@
 #include <time.h>
 #include <pthread.h>                /* must have rw locking on the config_nodes ... */
 
+#include <map>
+#include <string>
+
+
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
 #include <ert/util/stringlist.h>
@@ -71,12 +75,12 @@
 
 struct ensemble_config_struct {
   UTIL_TYPE_ID_DECLARATION;
-  pthread_mutex_t            mutex;
-  char                     * gen_kw_format_string;   /* format string used when creating gen_kw search/replace strings. */
-  hash_type                * config_nodes;           /* a hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
-  field_trans_table_type   * field_trans_table;      /* a table of the transformations which are available to apply on fields. */
-  bool                       have_forward_init;
-  summary_key_matcher_type * summary_key_matcher;
+  pthread_mutex_t                                mutex;
+  char                                         * gen_kw_format_string;   /* format string used when creating gen_kw search/replace strings. */
+  std::map<std::string,enkf_config_node_type*>   config_nodes;           /* a hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
+  field_trans_table_type                       * field_trans_table;      /* a table of the transformations which are available to apply on fields. */
+  bool                                           have_forward_init;
+  summary_key_matcher_type                     * summary_key_matcher;
 };
 
 
@@ -134,10 +138,9 @@ const char * ensemble_config_get_gen_kw_format( const ensemble_config_type * ens
 
 
 static ensemble_config_type * ensemble_config_alloc_empty(void) {
-  ensemble_config_type * ensemble_config = (ensemble_config_type *)util_malloc(sizeof * ensemble_config );
+  ensemble_config_type * ensemble_config = new ensemble_config_type();
 
   UTIL_TYPE_ID_INIT( ensemble_config , ENSEMBLE_CONFIG_TYPE_ID );
-  ensemble_config->config_nodes          = hash_alloc();
   ensemble_config->field_trans_table     = field_trans_table_alloc();
   ensemble_config->gen_kw_format_string  = util_alloc_string_copy( DEFAULT_GEN_KW_TAG_FORMAT );
   ensemble_config->have_forward_init     = false;
@@ -175,11 +178,14 @@ ensemble_config_type * ensemble_config_alloc(
 }
 
 void ensemble_config_free(ensemble_config_type * ensemble_config) {
-  hash_free( ensemble_config->config_nodes );
   field_trans_table_free( ensemble_config->field_trans_table );
   summary_key_matcher_free(ensemble_config->summary_key_matcher);
   free( ensemble_config->gen_kw_format_string );
-  free( ensemble_config );
+
+  for(auto& config_pair : ensemble_config->config_nodes)
+    enkf_config_node_free( config_pair.second );
+
+  delete ensemble_config;
 }
 
 
@@ -190,9 +196,9 @@ void ensemble_config_free(ensemble_config_type * ensemble_config) {
 
 ert_impl_type ensemble_config_impl_type(const ensemble_config_type *ensemble_config, const char * ecl_kw_name) {
   ert_impl_type impl_type = INVALID;
-
-  if (hash_has_key(ensemble_config->config_nodes , ecl_kw_name)) {
-    enkf_config_node_type * node = (enkf_config_node_type *)hash_get(ensemble_config->config_nodes , ecl_kw_name);
+  const auto node_it = ensemble_config->config_nodes.find(ecl_kw_name);
+  if (node_it != ensemble_config->config_nodes.end()) {
+    const enkf_config_node_type * node = node_it->second;
     impl_type = enkf_config_node_get_impl_type(node);
   } else
     util_abort("%s: internal error: asked for implementation type of unknown node:%s \n",__func__ , ecl_kw_name);
@@ -203,9 +209,10 @@ ert_impl_type ensemble_config_impl_type(const ensemble_config_type *ensemble_con
 
 enkf_var_type ensemble_config_var_type(const ensemble_config_type *ensemble_config, const char * ecl_kw_name) {
   enkf_var_type var_type = INVALID_VAR;
+  const auto node_it = ensemble_config->config_nodes.find(ecl_kw_name);
+  if (node_it != ensemble_config->config_nodes.end()) {
+    const enkf_config_node_type * node = node_it->second;
 
-  if (hash_has_key(ensemble_config->config_nodes , ecl_kw_name)) {
-    enkf_config_node_type * node = (enkf_config_node_type *)hash_get(ensemble_config->config_nodes , ecl_kw_name);
     var_type = enkf_config_node_get_var_type(node);
   } else
     util_abort("%s: internal error: asked for implementation type of unknown node:%s \n",__func__ , ecl_kw_name);
@@ -216,14 +223,15 @@ enkf_var_type ensemble_config_var_type(const ensemble_config_type *ensemble_conf
 
 
 bool ensemble_config_has_key(const ensemble_config_type * ensemble_config , const char * key) {
-  return hash_has_key( ensemble_config->config_nodes , key);
+  return ensemble_config->config_nodes.count(key) > 0;
 }
 
 
 
 enkf_config_node_type * ensemble_config_get_node(const ensemble_config_type * ensemble_config, const char * key) {
-  if (hash_has_key(ensemble_config->config_nodes , key)) {
-    enkf_config_node_type * node = (enkf_config_node_type *)hash_get(ensemble_config->config_nodes , key);
+  const auto node_it = ensemble_config->config_nodes.find(key);
+  if (node_it != ensemble_config->config_nodes.end()) {
+    enkf_config_node_type * node = node_it->second;
     return node;
   } else {
     util_abort("%s: ens node:\"%s\" does not exist \n",__func__ , key);
@@ -232,11 +240,10 @@ enkf_config_node_type * ensemble_config_get_node(const ensemble_config_type * en
 }
 
 enkf_config_node_type * ensemble_config_get_or_create_summary_node(ensemble_config_type * ensemble_config, const char * key) {
-    if (!hash_has_key(ensemble_config->config_nodes , key)) {
-        ensemble_config_add_summary(ensemble_config, key, LOAD_FAIL_SILENT);
-    }
+  if (ensemble_config->config_nodes.count(key) == 0)
+    ensemble_config_add_summary(ensemble_config, key, LOAD_FAIL_SILENT);
 
-    return ensemble_config_get_node(ensemble_config, key);
+  return ensemble_config_get_node(ensemble_config, key);
 }
 
 /**
@@ -252,7 +259,7 @@ enkf_config_node_type * ensemble_config_get_or_create_summary_node(ensemble_conf
 
 
 void ensemble_config_del_node(ensemble_config_type * ensemble_config, const char * key) {
-  hash_safe_del(ensemble_config->config_nodes , key);
+  ensemble_config->config_nodes.erase(key);
 }
 
 
@@ -266,7 +273,7 @@ void ensemble_config_add_node( ensemble_config_type * ensemble_config , enkf_con
     if (ensemble_config_has_key(ensemble_config , key))
       util_abort("%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
 
-    hash_insert_hash_owned_ref(ensemble_config->config_nodes , key , node , enkf_config_node_free__);
+    ensemble_config->config_nodes[key] = node;
     ensemble_config->have_forward_init |= enkf_config_node_use_forward_init( node );
   } else
     util_abort("%s: internal error - tried to add NULL node to ensemble configuration \n",__func__);
@@ -277,18 +284,16 @@ void ensemble_config_add_node( ensemble_config_type * ensemble_config , enkf_con
 
 
 void ensemble_config_add_obs_key(ensemble_config_type * ensemble_config , const char * key, const char * obs_key) {
-  enkf_config_node_type * config_node = (enkf_config_node_type *)hash_get(ensemble_config->config_nodes , key);
-  enkf_config_node_add_obs_key(config_node , obs_key);
+  enkf_config_node_type * node = ensemble_config->config_nodes.at(key);
+  enkf_config_node_add_obs_key(node , obs_key);
 }
 
 
 void ensemble_config_clear_obs_keys(ensemble_config_type * ensemble_config) {
-  hash_iter_type * iter = hash_iter_alloc( ensemble_config->config_nodes );
-  while (!hash_iter_is_complete( iter )) {
-    enkf_config_node_type * config_node = (enkf_config_node_type * ) hash_iter_get_next_value( iter );
+  for (auto& config_pair : ensemble_config->config_nodes) {
+    enkf_config_node_type * config_node = config_pair.second;
     enkf_config_node_clear_obs_keys( config_node );
   }
-  hash_iter_free( iter );
 }
 
 
@@ -751,13 +756,13 @@ const enkf_config_node_type * ensemble_config_user_get_node(const ensemble_confi
 
 
 stringlist_type * ensemble_config_alloc_keylist(const ensemble_config_type * config) {
-  return hash_alloc_stringlist( config->config_nodes );
+  stringlist_type * s = stringlist_alloc_new();
+  for (const auto& config_pair : config->config_nodes)
+    stringlist_append_copy( s, config_pair.first.c_str());
+  return s;
 }
 
 
-hash_iter_type * ensemble_config_alloc_hash_iter(const ensemble_config_type * config) {
-  return hash_iter_alloc( config->config_nodes );
-}
 
 
 /**
@@ -770,16 +775,14 @@ hash_iter_type * ensemble_config_alloc_hash_iter(const ensemble_config_type * co
 
 stringlist_type * ensemble_config_alloc_keylist_from_var_type(const ensemble_config_type * config , int var_mask) {
   stringlist_type * key_list = stringlist_alloc_new();
-  hash_iter_type * iter = hash_iter_alloc(config->config_nodes);
 
-  while (!hash_iter_is_complete( iter )) {
-    const char * key       = hash_iter_get_next_key(iter);
-    enkf_var_type var_type = enkf_config_node_get_var_type( (enkf_config_node_type * ) hash_get(config->config_nodes , key));
+  for (const auto& config_pair : config->config_nodes) {
+    const char * key       = config_pair.first.c_str();
+    enkf_var_type var_type = enkf_config_node_get_var_type( config_pair.second );
 
     if (var_type & var_mask)
       stringlist_append_copy( key_list , key );
   }
-  hash_iter_free(iter);
 
   return key_list;
 }
@@ -788,30 +791,25 @@ stringlist_type * ensemble_config_alloc_keylist_from_var_type(const ensemble_con
 
 stringlist_type * ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type * config , ert_impl_type impl_type) {
   stringlist_type * key_list = stringlist_alloc_new();
-  hash_iter_type * iter = hash_iter_alloc(config->config_nodes);
-  while (!hash_iter_is_complete( iter )) {
-    const char * key = hash_iter_get_next_key(iter);
-    if (enkf_config_node_get_impl_type( (enkf_config_node_type * ) hash_get(config->config_nodes , key)) == impl_type)
+
+  for (const auto& config_pair : config->config_nodes) {
+    const char * key       = config_pair.first.c_str();
+    if (impl_type == enkf_config_node_get_impl_type( config_pair.second ))
       stringlist_append_copy( key_list , key );
 
   }
-  hash_iter_free(iter);
+
   return key_list;
 }
 
 
 bool ensemble_config_has_impl_type(const  ensemble_config_type * config, const ert_impl_type impl_type) {
-  bool ret = false;
-  hash_iter_type * iter = hash_iter_alloc(config->config_nodes);
-  while (!hash_iter_is_complete( iter )) {
-    const char * key = hash_iter_get_next_key(iter);
-    if (enkf_config_node_get_impl_type( (enkf_config_node_type * ) hash_get(config->config_nodes , key)) == impl_type) {
-      ret = true;
-      break;
-    }
+  for (const auto& config_pair : config->config_nodes) {
+    if (impl_type == enkf_config_node_get_impl_type( config_pair.second ))
+      return true;
   }
-  hash_iter_free(iter);
-  return ret;
+
+  return false;
 }
 
 bool ensemble_config_require_summary(const  ensemble_config_type * ens_config) {
@@ -911,8 +909,9 @@ void ensemble_config_update_custom_kw_config(ensemble_config_type * config, cust
 enkf_config_node_type * ensemble_config_add_summary(ensemble_config_type * ensemble_config , const char * key , load_fail_type load_fail) {
   enkf_config_node_type * config_node = NULL;
 
-  if (hash_has_key(ensemble_config->config_nodes, key)) {
-    config_node = (enkf_config_node_type * ) hash_get(ensemble_config->config_nodes, key);
+  const auto node_it = ensemble_config->config_nodes.find(key);
+  if (node_it != ensemble_config->config_nodes.end()) {
+    config_node = node_it->second;
     if (enkf_config_node_get_impl_type( config_node ) != SUMMARY) {
       util_abort("%s: ensemble key:%s already exists - but it is not of summary type\n",__func__ , key);
     }
@@ -1043,7 +1042,7 @@ void ensemble_config_fprintf_config( ensemble_config_type * ensemble_config , FI
 
 
 int ensemble_config_get_size(const ensemble_config_type * ensemble_config ) {
-  return hash_get_size( ensemble_config->config_nodes );
+  return ensemble_config->config_nodes.size();
 }
 
 
@@ -1053,11 +1052,10 @@ int ensemble_config_forward_init(const ensemble_config_type * ens_config,
   int result = 0;
   if (run_arg_get_step1(run_arg) == 0) {
     int iens = run_arg_get_iens( run_arg );
-    hash_iter_type * iter = ensemble_config_alloc_hash_iter( ens_config );
-    while ( !hash_iter_is_complete(iter) ) {
-      enkf_config_node_type * config_node = (enkf_config_node_type * ) hash_iter_get_next_value(iter);
+    for( auto& config_pair : ens_config->config_nodes) {
+      enkf_config_node_type * config_node = config_pair.second;
       if (enkf_config_node_use_forward_init(config_node)) {
-	enkf_node_type * node = enkf_node_alloc( config_node );
+        enkf_node_type * node = enkf_node_alloc( config_node );
         enkf_fs_type * sim_fs = run_arg_get_sim_fs( run_arg );
         node_id_type node_id = {.report_step = 0 ,
                                 .iens = iens };
@@ -1084,10 +1082,9 @@ int ensemble_config_forward_init(const ensemble_config_type * ens_config,
             result |= LOAD_FAILURE;
           }
         }
-	enkf_node_free( node );
+        enkf_node_free( node );
       }
     }
-    hash_iter_free( iter );
   }
   return result;
 }
