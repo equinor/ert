@@ -11,24 +11,22 @@ modelling tasks like e.g. relperm interpolation or water saturation, or to
 calculate dynamic results like seismic response for special purpose comparisons.
 
 
-
-The forward model in the ert configuration file
------------------------------------------------
+The `FORWARD_MODEL` in the ert configuration file
+-------------------------------------------------
 
 The traditional way to configure the forward model in ERT is through the keyword
-`FORWARD_MODEL`. Each `FORWARD_MODEL` keyword will instruct ERT to run one
-particular executable, and by listing several `FORWARD_MODEL` keywords you can
+:code:`FORWARD_MODEL`. Each :code:`FORWARD_MODEL` keyword will instruct ERT to run one
+particular executable, and by listing several :code:`FORWARD_MODEL` keywords you can
 configure a list of jobs to run.
 
 
 The `SIMULATION_JOB` alternative
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In addition to `FORWARD_MODEL` there is an alternative keyword `SIMULATION_JOB`
+In addition to :code:`FORWARD_MODEL` there is an alternative keyword :code:`SIMULATION_JOB`
 which can be used to configure the forward model. The difference between
-`FORWARD_MODEL` and `SIMULATION_JOB` is in how commandline arguments are passed
+:code:`FORWARD_MODEL` and :code:`SIMULATION_JOB` is in how commandline arguments are passed
 to the final executable.
-
 
 
 The runpath directory
@@ -38,11 +36,27 @@ Default jobs
 ~~~~~~~~~~~~
 
 It is quite simple to *install* your own executables to be used as forward model
-jobs in ert, but some common jobs are distributed with the ert/libres
+job in ert, but some common jobs are distributed with the ert/libres
 distribution.
 
-Reservoir simulation: eclipse
-.............................
+Reservoir simulation: eclipse/flow
+..................................
+
+.. code-block:: bash
+
+    EXECUTABLE script/ecl100
+    DEFAULT <VERSION> version
+    DEFAULT <NUM_CPU> 1
+    ARGLIST <ECLBASE> "--version=<VERSION>" "--num-cpu=<NUM_CPU>" "--ignore-errors"
+
+There are forward models for each of the simulators eclipse100, eclipse300 and
+flow, and they are all configured the same way. The version, number of cpu and
+whether or not to ignore errors can be configured in the configuration file
+when adding the job, as such:
+
+.. code-block:: bash
+
+    FORWARD_MODEL ECLIPSE100 <ECLBASE> "--version=xxxx"
 
 Reservoir modelling: RMS
 ........................
