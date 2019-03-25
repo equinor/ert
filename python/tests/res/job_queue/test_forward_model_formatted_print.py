@@ -553,7 +553,7 @@ class ForwardModelFormattedPrintTest(ResTest):
             with open("status.json", "w") as f:
                 f.write(s)
 
-            status = ForwardModelStatus.try_load("status.json")
+            status = ForwardModelStatus.try_load("")
             for job in status.jobs:
                 self.assertTrue( isinstance(job.start_time, datetime.datetime))
                 self.assertTrue( isinstance(job.end_time, datetime.datetime))
