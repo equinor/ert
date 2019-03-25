@@ -2,10 +2,22 @@ import math
 import time
 try:
   from PyQt4.QtCore import QTimer, pyqtSignal, QVariant, Qt, QAbstractTableModel
-  from PyQt4.QtGui import QWidget, QPainter, QColor, QFrame, QGridLayout, QImage, QDialog, QTableView, QLabel, QPen
+  from PyQt4.QtGui import (QWidget,
+                           QPainter,
+                           QColor,
+                           QFrame,
+                           QGridLayout,
+                           QImage,
+                           QDialog,
+                           QTableView,
+                           QLabel,
+                           QPen,
+                           QPushButton,
+                           QTextEdit)
+
 except ImportError:
   from PyQt5.QtCore import QTimer, pyqtSignal, QVariant, Qt, QAbstractTableModel
-  from PyQt5.QtWidgets import QWidget, QFrame, QDialog, QTableView, QLabel, QGridLayout
+  from PyQt5.QtWidgets import QWidget, QFrame, QDialog, QTableView, QLabel, QGridLayout, QPushButton, QTextEdit
   from PyQt5.QtGui import QPainter, QColor, QImage, QPen
 
 
@@ -22,8 +34,6 @@ class DetailedProgress(QFrame):
         self.selected_realization = -1
         self.grid_height = -1
         self.grid_width = -1
-
-        self.setMinimumHeight(200)
 
     def mousePressEvent(self, event):
         super(DetailedProgress, self).mousePressEvent(event)
@@ -48,6 +58,7 @@ class DetailedProgress(QFrame):
             render_image.setPixel(x + x_off, y + y_off, color.rgb())
 
     def set_progress(self, progress, iteration):
+        self.setMinimumHeight(200)
         self._current_progress = sorted(progress.items(), key=lambda x: x[0])
         self._current_iteration = iteration
         self.update()
@@ -108,7 +119,6 @@ class DetailedProgress(QFrame):
                              cell_height - (thickness - 1))
 
 
-
 class SingleProgressModel(QAbstractTableModel):
     def __init__(self, parent_view, state_colors):
         super(SingleProgressModel, self).__init__(parent_view)
@@ -136,14 +146,24 @@ class SingleProgressModel(QAbstractTableModel):
     def get_column_index(self, name):
         return self.model_header.index(name)
 
+    def get_file_name(self, index):
+        col = self.get_column_name(index.column())
+        if col == 'stdout' or col == 'stderr':
+            return self.model_data[index.row()][index.column()] + "." + str(index.row())
+        return ''
+
     def data(self, index, role):
         if not index.isValid():
             return QVariant()
 
         status = self.model_data[index.row()][self.get_column_index("status")]
+        col = self.get_column_name(index.column())
+
         if role == Qt.BackgroundColorRole:
             color = QColor(*self.state_colors[status])
             color.setAlpha(color.alpha()/2)
+            if col == 'stdout' or col == 'stderr':
+                color = QColor(100,100,100,100) # make items stand out
             return QVariant(color)
 
         if role != Qt.DisplayRole:
@@ -156,6 +176,9 @@ class SingleProgressModel(QAbstractTableModel):
             timestamp = eval(self.model_data[index.row()][index.column()])
             return QVariant(time.ctime(timestamp))
 
+        if col == 'stdout' or col == 'stderr':
+            return QVariant("OPEN")
+
         return QVariant(self.model_data[index.row()][index.column()])
 
     def headerData(self, index, orientation, role=Qt.DisplayRole):
@@ -165,6 +188,73 @@ class SingleProgressModel(QAbstractTableModel):
             return QVariant(self.get_column_name(index))
         if orientation == Qt.Vertical:
             return QVariant(index)
+
+class SingleTableView(QTableView):
+    def __init__(self):
+        super(SingleTableView, self).__init__()
+        self.open_files = {}
+        self.realization = -1
+        self.iteration = -1
+
+    def mousePressEvent(self, mouse_event):
+        pos = mouse_event.pos()
+        index = self.indexAt(pos)
+        selected_file = self.model().get_file_name(index)
+        if selected_file and not selected_file in self.open_files:
+            job_name = self.model().model_data[index.row()][self.model().get_column_index("name")]
+            viewer = FileViewer(self, selected_file, job_name, index.row(), self.realization, self.iteration)
+            self.open_files[selected_file] = viewer
+
+        elif selected_file in self.open_files:
+            self.open_files[selected_file].reload(selected_file)
+
+    def update_data(self, jobs, iteration, realization):
+        self.setMinimumHeight(200)
+        self.iteration = iteration
+        self.realization = realization
+        model_data = []
+        headers = []
+        for job in jobs:
+            data = job.dump_data()
+            row = [str(data[key]) for key in data]
+            model_data.append(row)
+            headers = list(data.keys())
+
+        self.model().update_data(headers, model_data)
+        self.resizeColumnsToContents()
+        self.model().modelReset.emit()
+
+        for file_name in self.open_files:
+            if self.open_files[file_name].isVisible():
+                self.open_files[file_name].reload(file_name)
+
+
+class FileViewer(QDialog):
+    def __init__(self, parent, file_name, job_name, job_number, iteration, realization):
+        super(FileViewer, self).__init__(parent)
+
+        self.setWindowTitle("{} # {} Realization: {} Iteration: {}" \
+                            .format(job_name, job_number, realization, iteration))
+
+        self.text_cont = QTextEdit()
+        self.text_cont.setReadOnly(True)
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.accept)
+
+        layout = QGridLayout(self)
+        layout.addWidget(self.text_cont)
+        layout.addWidget(close_button)
+
+        self.setMinimumWidth(400)
+        self.setMinimumHeight(200)
+
+        self.reload(file_name)
+
+    def reload(self, file_name):
+        with open(file_name) as f:
+            text = f.read()
+        self.text_cont.setText(text)
+        self.show()
 
 
 class DetailedProgressDialog(QDialog):
@@ -176,7 +266,7 @@ class DetailedProgressDialog(QDialog):
         self.detailed_progress_widget = DetailedProgress(state_colors, self)
         self.overview_label = QLabel("Realizations")
 
-        self.single_view = QTableView()
+        self.single_view = SingleTableView()
         self.single_view.setModel(SingleProgressModel(self.single_view,state_colors))
         self.single_view_label = QLabel("Realization details")
 
@@ -190,13 +280,15 @@ class DetailedProgressDialog(QDialog):
         self.detailed_progress_widget.show()
         self.setLayout(layout)
 
-        self.layout().setRowStretch(1, 2)
+        self.layout().setRowStretch(1, 1)
         self.layout().setRowStretch(3, 1)
         self.progress = None
-        self.selected_realization = None
+        self.selected_realization = -1
+        self.current_iteration = -1
         self.resize(parent.width(), parent.height())
 
     def set_progress(self, progress, iteration):
+        self.current_iteration = iteration
         self.progress = progress
         self.detailed_progress_widget.set_progress(progress, iteration)
         self.overview_label.setText("Realizations for iteration {}".format(iteration))
@@ -215,16 +307,6 @@ class DetailedProgressDialog(QDialog):
         if not self.single_view.isVisible() or not self.selected_realization in self.progress:
             return
 
-        model_data = []
-        jobs = self.progress[self.selected_realization]
-        headers = []
-        for job in jobs:
-            data = job.dump_data()
-            row = [str(data[key]) for key in data]
-            model_data.append(row)
-            headers = list(data.keys())
-
-        self.single_view.model().update_data(headers, model_data)
-        self.single_view.resizeColumnsToContents()
-        self.single_view.model().modelReset.emit()
-
+        self.single_view.update_data(self.progress[self.selected_realization],
+                                     self.current_iteration,
+                                     self.selected_realization)
