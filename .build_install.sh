@@ -9,6 +9,7 @@ function build_install() {
 -DBUILD_APPLICATIONS=ON \
 -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR \
 -DCMAKE_PREFIX_PATH=$INSTALL_DIR \
+-DCMAKE_INSTALL_NAME_DIR=$INSTALL_DIR/lib \
 -DCMAKE_C_FLAGS="-Werror=all" \
 -DCMAKE_CXX_FLAGS="-Werror -Wno-unused-result"
   make install
