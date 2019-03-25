@@ -242,6 +242,52 @@ Jobs for geophysics
 Configuring your own jobs
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
+ERT does not limit the type of programming langugage in which a job is written,
+the only requirement is that it is an executable that can be run. It is
+therefore possible to create a program, or a script, that does whatever the
+user whish, and then have ERT run it as one of the jobs in the
+:code:`FORWARD_MODEL`.
+
+A job must be `installed` in order for ERT to know about it. All predefined
+jobs are alread installed and may be invoked by including the
+:code:`FORWARD_MODEL` keyword in the configuration file. Any other job must
+first be installed with :code:`INSTALL_JOB` as such:
+
+.. code-block:: bash
+
+    INSTALL_JOB JOB_NAME JOB_CONFIG
+
+
+The :code:`JOB_NAME` is an arbitrary name that can be used later in the ert
+configuration file to invoke the job. The :code:`JOB_CONFIG` is a file that
+specifies where the executable is, and how any arguments should behave.
+
+.. code-block:: bash
+
+    EXECUTABLE  path/to/program
+
+    STDERR      prog.stderr      -- Name of stderr file (defaults to
+                                 -- name_of_file.stderr.<job_nr>)
+    STDOUT      prog.stdout      -- Name of stdout file (defaults to
+                                 -- name_of_file.stdout.<job_nr>)
+    ARGLIST     <ARG0> <ARG1>    -- A list of arguments to pass on to the
+                                 --  executable
+
+
+Invoking the job is then done by including it in the ert config:
+
+.. code-block:: bash
+
+    FORWARD_MODEL JOB_NAME(<ARG0>=3, <ARG1>="something")
+
+
+Note that the following behaviour provides identical results:
+
+.. code-block:: bash
+
+    DEFINE <ARG0> 3
+    FORWARD_MODEL JOB_NAME(<ARG1>="something")
+
 The `job_dispatch` executable
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
