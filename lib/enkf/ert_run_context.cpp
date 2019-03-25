@@ -280,6 +280,13 @@ ert_run_context_type * ert_run_context_alloc(run_mode_type run_mode,
 
   case(INIT_ONLY):
     return ert_run_context_alloc_INIT_ONLY( sim_fs, init_mode , iactive, runpath_fmt , subst_list, iter );
+
+  case(SMOOTHER_UPDATE):
+    break;
+
+  case(CASE_INIT_ONLY):
+    break;
+
   }
 
   util_abort("%s: internal error - should never be here \n",__func__);
