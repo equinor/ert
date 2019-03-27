@@ -3,10 +3,29 @@ import sys
 
 try:
     from PyQt4.QtCore import Qt, QTimer, QSize
-    from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QMessageBox, QPushButton, QHBoxLayout, QColor, QLabel, QListView, QStandardItemModel, QStandardItem
+    from PyQt4.QtGui import (QDialog,
+                             QVBoxLayout,
+                             QLayout,
+                             QMessageBox,
+                             QPushButton,
+                             QHBoxLayout,
+                             QColor,
+                             QLabel,
+                             QListView,
+                             QStandardItemModel,
+                             QStandardItem,
+                             QWidget)
 except ImportError:
     from PyQt5.QtCore import Qt, QTimer, QSize
-    from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLayout, QMessageBox, QPushButton, QHBoxLayout, QLabel,  QListView
+    from PyQt5.QtWidgets import (QDialog,
+                                 QVBoxLayout,
+                                 QLayout,
+                                 QMessageBox,
+                                 QPushButton,
+                                 QHBoxLayout,
+                                 QLabel,
+                                 QListView,
+                                 QWidget)
     from PyQt5.QtGui import QColor, QStandardItemModel, QStandardItem
 
 
@@ -20,9 +39,8 @@ from ecl.util.util import BoolVector
 class RunDialog(QDialog):
 
     def __init__(self, run_model, parent):
-        QDialog.__init__(self, parent)
+        QDialog.__init__(self, None)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
         self.setModal(True)
         self.setWindowModality(Qt.WindowModal)
         self.setWindowTitle("Simulations")
@@ -30,30 +48,30 @@ class RunDialog(QDialog):
         assert isinstance(run_model, BaseRunModel)
         self._run_model = run_model
 
-        layout = QVBoxLayout()
-        layout.setSizeConstraint(QLayout.SetFixedSize)
+        ert = None
+        if isinstance(run_model, BaseRunModel):
+            ert = run_model.ert()
 
         self.simulations_tracker = SimulationsTracker()
         states = self.simulations_tracker.getStates()
+        self.state_colors = {state.name: state.color for state in states}
+        self.state_colors['Success'] = self.state_colors["Finished"]
+        self.state_colors['Failure'] = self.state_colors["Failed"]
 
         self.total_progress = SimpleProgress()
-        layout.addWidget(self.total_progress)
 
         status_layout = QHBoxLayout()
         status_layout.addStretch()
         self.__status_label = QLabel()
         status_layout.addWidget(self.__status_label)
         status_layout.addStretch()
-        layout.addLayout(status_layout)
+        status_widget_container = QWidget()
+        status_widget_container.setLayout(status_layout)
 
         self.progress = Progress()
         self.progress.setIndeterminateColor(self.total_progress.color)
         for state in states:
             self.progress.addState(state.state, QColor(*state.color), 100.0 * state.count / state.total_count)
-
-        layout.addWidget(self.progress)
-
-        self.detailed_progress = None
 
         legend_layout = QHBoxLayout()
         self.legends = {}
@@ -62,17 +80,10 @@ class RunDialog(QDialog):
             self.legends[state].updateLegend(state.name, 0, 0)
             legend_layout.addWidget(self.legends[state])
 
-        layout.addLayout(legend_layout)
-
-        self.state_colors = {state.name: state.color for state in states}
-        self.state_colors['Success'] = self.state_colors["Finished"]
-        self.state_colors['Failure'] = self.state_colors["Failed"]
+        legend_widget_container = QWidget()
+        legend_widget_container.setLayout(legend_layout)
 
         self.running_time = QLabel("")
-
-        ert = None
-        if isinstance(run_model, BaseRunModel):
-            ert = run_model.ert()
 
         self.plot_tool = PlotTool()
         self.plot_tool.setParent(None)
@@ -86,12 +97,7 @@ class RunDialog(QDialog):
         self.restart_button = QPushButton("Restart")
         self.restart_button.setHidden(True)
         self.show_details_button = QPushButton("Details")
-
-        self.realizations_view = QListView()
-        self.realizations_view.setModel(QStandardItemModel(self.realizations_view))
-        self.realizations_view.setVisible(False)
-
-        button_layout = QHBoxLayout()
+        self.show_details_button.setCheckable(True)
 
         size = 20
         spin_movie = resourceMovie("ide/loading.gif")
@@ -104,6 +110,7 @@ class RunDialog(QDialog):
         self.processing_animation.setMinimumSize(QSize(size, size))
         self.processing_animation.setMovie(spin_movie)
 
+        button_layout = QHBoxLayout()
         button_layout.addWidget(self.processing_animation)
         button_layout.addWidget(self.running_time)
         button_layout.addStretch()
@@ -112,18 +119,36 @@ class RunDialog(QDialog):
         button_layout.addWidget(self.kill_button)
         button_layout.addWidget(self.done_button)
         button_layout.addWidget(self.restart_button)
+        button_widget_container = QWidget()
+        button_widget_container.setLayout(button_layout)
 
-        layout.addStretch()
-        layout.addLayout(button_layout)
+        self.detailed_progress = DetailedProgressDialog(self, self.state_colors)
+        self.detailed_progress.setVisible(False)
+        self.dummy_widget_container = QWidget() #Used to keep the other widgets from stretching
 
-        layout.addWidget(self.realizations_view)
+        layout = QVBoxLayout()
+        layout.addWidget(self.total_progress)
+        layout.addWidget(status_widget_container)
+        layout.addWidget(self.progress)
+        layout.addWidget(legend_widget_container)
+        layout.addWidget(self.detailed_progress)
+        layout.addWidget(self.dummy_widget_container)
+        layout.addWidget(button_widget_container)
+
+        layout.setStretch(0, 0)
+        layout.setStretch(1, 0)
+        layout.setStretch(2, 0)
+        layout.setStretch(3, 0)
+        layout.setStretch(4, 1)
+        layout.setStretch(5, 1)
+        layout.setStretch(6, 0)
 
         self.setLayout(layout)
 
         self.kill_button.clicked.connect(self.killJobs)
         self.done_button.clicked.connect(self.accept)
         self.restart_button.clicked.connect(self.restart_failed_realizations)
-        self.show_details_button.clicked.connect(self.show_detailed_progress)
+        self.show_details_button.clicked.connect(self.toggle_detailed_progress)
 
         self.__updating = False
         self.__update_queued = False
@@ -133,6 +158,13 @@ class RunDialog(QDialog):
         self.__update_timer.setInterval(500)
         self.__update_timer.timeout.connect(self.updateRunStatus)
         self._simulations_argments = {}
+
+
+    def closeEvent(self, QCloseEvent):
+        if not self.checkIfRunFinished():
+            #Kill jobs if dialog is closed
+            if self.killJobs() != QMessageBox.Yes:
+                QCloseEvent.ignore()
 
     def startSimulation(self, arguments):
 
@@ -155,8 +187,6 @@ class RunDialog(QDialog):
 
     def checkIfRunFinished(self):
         if self._run_model.isFinished():
-
-            self.update_realizations_view()
             self.hideKillAndShowDone()
 
             if self._run_model.hasRunFailed():
@@ -184,7 +214,7 @@ class RunDialog(QDialog):
                 self.legends[state].updateLegend(state.name, 0, 0)
 
         else:
-            if self.detailed_progress:
+            if self.detailed_progress and self.detailed_progress.isVisible():
                 self.detailed_progress.set_progress(*self._run_model.getDetailedProgress())
             else:
                 self._run_model.updateDetailedProgress() #update information without rendering
@@ -239,6 +269,7 @@ class RunDialog(QDialog):
         if kill_job == QMessageBox.Yes:
             if self._run_model.killAllSimulations():
                 self.reject()
+        return kill_job
 
 
     def hideKillAndShowDone(self):
@@ -246,7 +277,7 @@ class RunDialog(QDialog):
         self.processing_animation.hide()
         self.kill_button.setHidden(True)
         self.done_button.setHidden(False)
-        self.realizations_view.setVisible(True)
+        self.detailed_progress.set_progress(*self._run_model.getDetailedProgress())
         self.restart_button.setVisible(self.has_failed_realizations() )
         self.restart_button.setEnabled(self._run_model.support_restart)
 
@@ -301,19 +332,8 @@ class RunDialog(QDialog):
 
 
 
-    def update_realizations_view(self):
-        completed = self._run_model.completed_realizations_mask
-        for (index, successful) in enumerate(completed):
-            items = self.realizations_view.model().findItems(str(index))
-            if not items:
-                item = QStandardItem(str(index))
-                self.realizations_view.model().appendRow(item)
-            else:
-                item = items[0]
-            item.setCheckState(successful or item.checkState())
+    def toggle_detailed_progress(self):
 
-    def show_detailed_progress(self):
-        if not self.detailed_progress:
-            self.detailed_progress = DetailedProgressDialog(self, self.state_colors)
-        self.detailed_progress.set_progress(*self._run_model.getDetailedProgress())
-        self.detailed_progress.show()
+        self.detailed_progress.setVisible(not(self.detailed_progress.isVisible()))
+        self.dummy_widget_container.setVisible(not(self.detailed_progress.isVisible()))
+        self.adjustSize()
