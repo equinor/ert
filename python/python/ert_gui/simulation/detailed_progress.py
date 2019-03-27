@@ -13,13 +13,21 @@ try:
                            QLabel,
                            QPen,
                            QPushButton,
-                           QTextEdit)
+                           QTextEdit,
+                           QTabWidget)
 
 except ImportError:
   from PyQt5.QtCore import QTimer, pyqtSignal, QVariant, Qt, QAbstractTableModel
-  from PyQt5.QtWidgets import QWidget, QFrame, QDialog, QTableView, QLabel, QGridLayout, QPushButton, QTextEdit
+  from PyQt5.QtWidgets import (QWidget,
+                               QFrame,
+                               QDialog,
+                               QTableView,
+                               QLabel,
+                               QGridLayout,
+                               QPushButton,
+                               QTextEdit,
+                               QTabWidget)
   from PyQt5.QtGui import QPainter, QColor, QImage, QPen
-
 
 class DetailedProgress(QFrame):
     clicked = pyqtSignal(int)
@@ -189,6 +197,7 @@ class SingleProgressModel(QAbstractTableModel):
         if orientation == Qt.Vertical:
             return QVariant(index)
 
+
 class SingleTableView(QTableView):
     def __init__(self):
         super(SingleTableView, self).__init__()
@@ -230,7 +239,7 @@ class SingleTableView(QTableView):
 
 
 class FileViewer(QDialog):
-    def __init__(self, parent, file_name, job_name, job_number, iteration, realization):
+    def __init__(self, parent, file_name, job_name, job_number,realization, iteration):
         super(FileViewer, self).__init__(parent)
 
         self.setWindowTitle("{} # {} Realization: {} Iteration: {}" \
@@ -257,27 +266,23 @@ class FileViewer(QDialog):
         self.show()
 
 
-class DetailedProgressDialog(QDialog):
+class DetailedProgressDialog(QWidget):
     def __init__(self, parent, state_colors):
         super(DetailedProgressDialog, self).__init__(parent)
         self.setWindowTitle("Realization Progress")
         layout = QGridLayout(self)
 
-        self.detailed_progress_widget = DetailedProgress(state_colors, self)
-        self.overview_label = QLabel("Realizations")
+        self.iterations = QTabWidget()
+        self.state_colors = state_colors
 
         self.single_view = SingleTableView()
         self.single_view.setModel(SingleProgressModel(self.single_view,state_colors))
         self.single_view_label = QLabel("Realization details")
 
-        self.detailed_progress_widget.clicked.connect(self.show_selection)
-
+        layout.addWidget(self.iterations, 1, 0)
         layout.addWidget(self.single_view_label, 2, 0)
-        layout.addWidget(self.overview_label, 0, 0)
         layout.addWidget(self.single_view, 3, 0)
-        layout.addWidget(self.detailed_progress_widget, 1, 0)
 
-        self.detailed_progress_widget.show()
         self.setLayout(layout)
 
         self.layout().setRowStretch(1, 1)
@@ -286,12 +291,22 @@ class DetailedProgressDialog(QDialog):
         self.selected_realization = -1
         self.current_iteration = -1
         self.resize(parent.width(), parent.height())
+        self.progress = {}
 
     def set_progress(self, progress, iteration):
-        self.current_iteration = iteration
         self.progress = progress
-        self.detailed_progress_widget.set_progress(progress, iteration)
-        self.overview_label.setText("Realizations for iteration {}".format(iteration))
+        for i in progress: #create all detailed views if they havent been constructed yet
+            if self.iterations.widget(i):
+                continue
+            detailed_progress_widget = DetailedProgress(self.state_colors, self)
+            detailed_progress_widget.clicked.connect(self.show_selection)
+            detailed_progress_widget.set_progress(progress[i], i)
+            detailed_progress_widget.show()
+            self.iterations.addTab(detailed_progress_widget, "Realizations for iteration {}".format(i))
+
+        current_progress_widget = self.iterations.widget(iteration)
+        current_progress_widget.set_progress(progress[iteration], iteration)
+
         self.update_single_view()
         self.update()
 
@@ -299,14 +314,25 @@ class DetailedProgressDialog(QDialog):
         if not self.progress:
             return
 
+        self.current_iteration = self.iterations.currentIndex()
+
+        for i in range(0, self.iterations.count()):
+            if i == self.current_iteration:
+                continue
+            self.iterations.widget(i).selected_realization = -1
+
         self.selected_realization = iens
-        self.single_view_label.setText("Realization id: {}".format(iens))
+        self.single_view_label.setText("Realization id: {} in iteration {}".format(iens,self.current_iteration))
         self.update_single_view()
 
     def update_single_view(self):
-        if not self.single_view.isVisible() or not self.selected_realization in self.progress:
+        if not self.single_view.isVisible():
+            return
+        if  not self.current_iteration in self.progress:
+            return
+        if  not self.selected_realization in self.progress[self.current_iteration]:
             return
 
-        self.single_view.update_data(self.progress[self.selected_realization],
+        self.single_view.update_data(self.progress[self.current_iteration][self.selected_realization],
                                      self.current_iteration,
                                      self.selected_realization)
