@@ -135,7 +135,10 @@ endif()
 
 include(cmake/ert_module_name.cmake)
 
-add_subdirectory( libert )
+if (NOT BUILD_SHARED_LIBS)
+    message(WARNING "Building python - forcing shared libs.")
+    set(BUILD_SHARED_LIBS ON)
+endif ()
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/share DESTINATION ${CMAKE_INSTALL_PREFIX})
 
