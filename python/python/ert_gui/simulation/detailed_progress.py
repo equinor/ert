@@ -266,6 +266,7 @@ class FileViewer(QDialog):
         self.show()
 
 
+
 class DetailedProgressWidget(QWidget):
     def __init__(self, parent, state_colors):
         super(DetailedProgressWidget, self).__init__(parent)

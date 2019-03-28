@@ -123,6 +123,7 @@ class RunDialog(QDialog):
         button_widget_container = QWidget()
         button_widget_container.setLayout(button_layout)
 
+
         self.detailed_progress = DetailedProgressWidget(self, self.state_colors)
         self.detailed_progress.setVisible(False)
         self.dummy_widget_container = QWidget() #Used to keep the other widgets from stretching
