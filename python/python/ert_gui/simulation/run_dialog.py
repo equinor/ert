@@ -30,7 +30,7 @@ except ImportError:
 
 
 from ert_gui.ertwidgets import resourceMovie, Legend
-from ert_gui.simulation import Progress, SimpleProgress, DetailedProgressDialog
+from ert_gui.simulation import Progress, SimpleProgress, DetailedProgressWidget
 from ert_gui.simulation.models import BaseRunModel, SimulationsTracker
 from ert_gui.tools.plot.plot_tool import PlotTool
 
@@ -39,7 +39,8 @@ from ecl.util.util import BoolVector
 class RunDialog(QDialog):
 
     def __init__(self, run_model, parent):
-        QDialog.__init__(self, None)
+        QDialog.__init__(self, parent)
+        self.setWindowFlags(Qt.Window)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setModal(True)
         self.setWindowModality(Qt.WindowModal)
@@ -122,7 +123,7 @@ class RunDialog(QDialog):
         button_widget_container = QWidget()
         button_widget_container.setLayout(button_layout)
 
-        self.detailed_progress = DetailedProgressDialog(self, self.state_colors)
+        self.detailed_progress = DetailedProgressWidget(self, self.state_colors)
         self.detailed_progress.setVisible(False)
         self.dummy_widget_container = QWidget() #Used to keep the other widgets from stretching
 
