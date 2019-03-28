@@ -64,23 +64,19 @@ Reservoir modelling: RMS
 File system utilities
 .....................
 
-There are many small jobs for copying and moving files and
-directories. The jobs are just thin wrappers around the corresponding
-unix commands, i.e. :code:`/bin/cp` and :code:`/bin/ln`, but we have
-tried quite hard to make them *safe* with error checking and "careful"
-default behaviour. The jobs are typically quite strict, i.e. if you
-try to remove a directory with the :code:`DELETE_FILE` job, or visa
-verse, nothing will happen. The actions performed will typically be
-logged to the :code:`xxx.stdout` files:
+There are many small jobs for copying and moving files and directories. The jobs
+are thin wrappers around corresponding operations in standard libraries, however
+additional error checking and "careful" default behaviour have been added in
+order to make them *safer* to use. The jobs are typically quite strict, i.e. if
+you try to remove a directory with the :code:`DELETE_FILE` job, or visa versa,
+the job will fail. The actions performed will typically be logged to the
+:code:`xxx.stdout` files:
 
 .. code-block:: bash
 
     Copying file 'file.txt' to 'target_backup.txt'
 
-And error messages will go to the :code:`xxx.stderr` files. None of
-these jobs have a :code:`TARGET_FILE` configured (maybe they should?),
-so there is no way for ert to detect an error situation.
-
+And error messages will go to the :code:`xxx.stderr` files.
 
 COPY_FILE
 .........
