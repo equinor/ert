@@ -266,9 +266,9 @@ class FileViewer(QDialog):
         self.show()
 
 
-class DetailedProgressDialog(QWidget):
+class DetailedProgressWidget(QWidget):
     def __init__(self, parent, state_colors):
-        super(DetailedProgressDialog, self).__init__(parent)
+        super(DetailedProgressWidget, self).__init__(parent)
         self.setWindowTitle("Realization Progress")
         layout = QGridLayout(self)
 
