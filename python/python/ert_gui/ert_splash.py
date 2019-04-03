@@ -63,7 +63,9 @@ class ErtSplash(QSplashScreen):
 
         image_width = self.splash_image.width()
         image_height = self.splash_image.height()
-        aspect = float(image_width) / float(image_height)
+        aspect = 1.0
+        if image_height:
+            aspect = float(image_width) / float(image_height)
 
         scaled_height = h - 2 * margin
         scaled_width = scaled_height * aspect
