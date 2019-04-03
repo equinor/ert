@@ -1,4 +1,5 @@
 import time
+import sys
 from res.config import ConfigError
 from cwrap import BaseCClass
 from res import ResPrototype
@@ -66,7 +67,7 @@ class Workflow(BaseCClass):
         if not success:
             msg = "** Warning: The workflow file {} is not valid - "\
                   "make sure the workflow jobs are defined accordingly\n"
-            sys.stderr.write(msg.format(workflow.src_file))
+            sys.stderr.write(msg.format(self.src_file))
 
             self.__running = False
             return False

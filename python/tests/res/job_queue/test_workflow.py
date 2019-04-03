@@ -55,3 +55,17 @@ class WorkflowTest(ResTest):
 
             with open("dump2", "r") as f:
                 self.assertEqual(f.read(), "dump_text_2")
+
+
+    def test_failing_workflow_run(self):
+        with TestAreaContext("python/job_queue/workflow") as work_area:
+            WorkflowCommon.createExternalDumpJob()
+
+            joblist = WorkflowJoblist()
+            self.assertTrue(joblist.addJobFromFile("DUMP", "dump_job"))
+            self.assertTrue("DUMP" in joblist)
+
+            workflow = Workflow("undefined", joblist)
+            context = SubstitutionList()
+
+            self.assertFalse(workflow.run(None, verbose=True, context=context))
