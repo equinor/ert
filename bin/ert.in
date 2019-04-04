@@ -2,9 +2,10 @@
 import sys
 import os
 from argparse import ArgumentParser, ArgumentTypeError
+import pkg_resources
 
-ERT_ROOT = "${ERT_ROOT}"
-ERT_SHARE_PATH = "%s/share/ert" % ERT_ROOT
+ERT_ROOT = pkg_resources.working_set.by_key['ensemble-reservoir-tool'].location
+ERT_SHARE_PATH = os.path.realpath(os.path.join(ERT_ROOT, '../../../share/ert'))
 
 def valid_file(fname):
     if not os.path.isfile(fname):

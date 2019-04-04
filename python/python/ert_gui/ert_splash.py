@@ -99,13 +99,6 @@ class ErtSplash(QSplashScreen):
         painter.setFont(font)
         painter.drawText(text_x, top_offset, text_area_width, text_size, Qt.AlignHCenter | Qt.AlignCenter, self.version)
 
-        top_offset += text_size + margin
-        text_size = 15
-        font.setPixelSize(text_size)
-        painter.setFont(font)
-        painter.drawText(text_x, top_offset, text_area_width, text_size, Qt.AlignHCenter | Qt.AlignCenter, self.timestamp)
-
-
         text_size = 12
         font.setPixelSize(text_size)
         painter.setFont(font)

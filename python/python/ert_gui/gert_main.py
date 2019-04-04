@@ -119,8 +119,6 @@ except ImportError:
   from PyQt5.QtWidgets import QApplication, QFileDialog
 
 
-from ecl.util.util import EclVersion
-from ert_gui import ErtVersion
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import SummaryPanel, resourceIcon
 import ert_gui.ertwidgets
@@ -141,6 +139,8 @@ import os
 from res.enkf import EnKFMain, ResConfig
 from res.util import ResLog
 from res.util import ResVersion
+import res
+import ecl
 import sys
 import time
 
@@ -231,10 +231,7 @@ def main(argv):
         sys.exit(1)
 
     splash = ErtSplash()
-    version = ErtVersion( )
-    splash.version = "Version %s" % version.versionString()
-
-    splash.timestamp = version.getBuildTime()
+    splash.version = "Version %s" % ert_gui.__version__
 
     splash.show()
     splash.repaint()
@@ -273,7 +270,7 @@ def main(argv):
     splash.finish(window)
     window.activateWindow()
     window.raise_()
-    ResLog.log(3, "Versions ecl:%s  res:%s   ert:%s" % (EclVersion( ), ResVersion( ), ErtVersion( )))
+    ResLog.log(3, "Versions: ecl:%s    res:%s    ert:%s" % (ecl.__version__, res.__version__, ert_gui.__version__))
     finished_code = app.exec_()
     sys.exit(finished_code)
 

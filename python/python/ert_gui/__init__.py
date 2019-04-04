@@ -17,6 +17,10 @@ if headless():
 else:
     matplotlib.use("Qt4Agg")
 
-from .ert_version import ErtVersion
+try:
+    from .version import version as __version__
+except ImportError:
+    __version__ = '0.0.0'
+
 from .ertnotifier import ERT
 from .ertnotifier import configureErtNotifier
