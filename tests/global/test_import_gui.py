@@ -14,13 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import os
-import sys
+import importlib
 
-
-from ecl.util.test import ImportTestCase
-
-class ImportGUI(ImportTestCase):
-
-    def test_import_gui(self):
-        self.assertTrue( self.import_package( "ert_gui" ))
+def test_import_gui():
+    assert importlib.import_module("ert_gui")
