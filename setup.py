@@ -16,7 +16,7 @@ extra_files = package_files('ert_gui/resources/')
 setup(
     name='Ensemble Reservoir Tool',
     use_scm_version={'root':'.' , 'write_to': 'ert_gui/version.py'},
-    scripts=['bin/ert.in', 'bin/ert_cli'],
+    scripts=['ert_gui/bin/ert', 'ert_gui/bin/ert_cli'],
     packages=find_packages(where=".") ,
     packages_dir='.',
     package_data={'ert_gui' : extra_files},
@@ -29,7 +29,8 @@ setup(
                     'numpy',
                     'pandas',
                     'matplotlib<3',
-                    'scipy'
+                    'scipy',
+                    'pytest'
                     ],
     zip_safe=False,
     tests_require=['pytest'],
