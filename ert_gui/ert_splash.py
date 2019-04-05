@@ -29,7 +29,7 @@ class ErtSplash(QSplashScreen):
         self.setGeometry(x, y, splash_width, splash_height)
 
 
-        self.splash_image = resourceImage("splash.jpg")
+        self.splash_image = resourceImage("splash.png")
 
         self.ert = "ERT"
         self.ert_title = "Ensemble based Reservoir Tool"

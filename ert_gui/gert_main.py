@@ -138,22 +138,16 @@ from ert_gui.tools.workflows import WorkflowsTool
 import os
 from res.enkf import EnKFMain, ResConfig
 from res.util import ResLog
-from res.util import ResVersion
+
 import res
 import ecl
 import sys
 import time
 
-if os.getenv("ERT_SHARE_PATH"):
-    ert_share_path = os.getenv("ERT_SHARE_PATH")
-else:
-    # If the ERT_SHARE_PATH variable is not set we try to use the
-    # source location relative to the location of the current file;
-    # assuming we are in the source directory. Will not work if we are
-    # in an arbitrary build directory.
-    ert_share_path = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../share/ert"))
+import pkg_resources
 
-ert_gui.ertwidgets.img_prefix = ert_share_path + "/gui/img/"
+pkg_dir = os.path.join(pkg_resources.working_set.by_key['ensemble-reservoir-tool'].location, 'ert_gui')
+ert_gui.ertwidgets.img_prefix = os.path.join(pkg_dir, "resources/gui/img/")
 
 
 def main(argv):
@@ -199,7 +193,7 @@ def main(argv):
         config_file = argv[1]
 
     help_center = HelpCenter("ERT")
-    help_center.setHelpLinkPrefix(ert_share_path + "/gui/help/")
+    help_center.setHelpLinkPrefix(pkg_dir + "resources/gui/help/")
     help_center.setHelpMessageLink("welcome_to_ert")
 
     strict = True

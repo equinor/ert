@@ -1,15 +1,26 @@
 from setuptools import setup, find_packages
 
 
+import os
 
+def package_files(directory):
+    paths = []
+    for (path, directories, filenames) in os.walk(directory):
+        for filename in filenames:
+            paths.append(os.path.join('..', path, filename))
+    return paths
+
+extra_files = package_files('ert_gui/resources/')
 
 
 setup(
     name='Ensemble Reservoir Tool',
-    use_scm_version={'root':'.' , 'write_to': 'python/python/ert_gui/version.py'},
-    scripts=['bin/ert.in', 'python/python/bin/ert_cli'],
-    packages=find_packages(where="python/python") ,
-    package_dir={'':'python/python'},
+    use_scm_version={'root':'.' , 'write_to': 'ert_gui/version.py'},
+    scripts=['bin/ert.in', 'bin/ert_cli'],
+    packages=find_packages(where=".") ,
+    packages_dir='.',
+    package_data={'ert_gui' : extra_files},
+    include_package_data=True,
     license='Open Source',
     long_description=open('README.md').read(),
     install_requires=[
