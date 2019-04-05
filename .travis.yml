@@ -18,6 +18,7 @@ env:
     - INSTALL_DIR="$(pwd)/install"
     - LD_LIBRARY_PATH="${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64"
     - DYLD_LIBRARY_PATH="${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64"
+
   matrix:
     - PYTHON_VERSION=2.7
     - PYTHON_VERSION=3.6
@@ -53,6 +54,7 @@ before_install:
       else
         export TRAVIS_PYTHON_VERSION="3.6";
       fi
+
     # We do this conditionally because it saves us some downloading if the version is the same.
     - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
         if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
@@ -72,9 +74,9 @@ before_install:
     - export CONDA_HOME="$HOME/miniconda"
     - export PATH="$CONDA_HOME/bin:$PATH"
     - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-        conda create -n ert_env pyqt=4.11.4 --yes;
+        conda create -n ert_env pyqt=4.11.4 python=2.7 --yes;
       else
-        conda create -n ert_env pyqt --yes;
+        conda create -n ert_env pyqt python=$TRAVIS_PYTHON_VERSION --yes;
       fi
     - source activate ert_env
     - pip install --upgrade -r requirements.txt
@@ -97,12 +99,11 @@ install:
   - bash .build_install.sh libres
 
 script:
-  - mkdir build
-  - pushd build
-  - cmake .. -DBUILD_TESTS=ON
-             -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR
-             -DCMAKE_PREFIX_PATH=$INSTALL_DIR
-             -DCMAKE_C_FLAGS='-Werror=all'
-             -DCMAKE_CXX_FLAGS='-Werror -Wno-unused-result'
-  - make install
-  - ctest --output-on-failure
+  - ulimit -n 2048
+  - export PYTHONPATH=$INSTALL_DIR/lib/python$TRAVIS_PYTHON_VERSION/dist-packages:$PYTHONPATH
+  - export PYTHONPATH=$INSTALL_DIR/lib/python$TRAVIS_PYTHON_VERSION/site-packages:$PYTHONPATH
+  - export PATH=$INSTALL_DIR/bin:$PATH
+  - echo $PATH
+  - echo $PYTHONPATH
+  - pip install . --prefix=$INSTALL_DIR
+  - python setup.py test
