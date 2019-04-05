@@ -20,6 +20,8 @@ endif()
 find_python_package(matplotlib 1.2.0  ${PYTHON_INSTALL_PREFIX})
 find_python_package(pandas     0.15.1 ${PYTHON_INSTALL_PREFIX})
 find_python_package(scipy      0.12.1 ${PYTHON_INSTALL_PREFIX})
+find_python_package(dash       0.40.0 ${PYTHON_INSTALL_PREFIX})
+find_python_package(dash_table 3.6.0  ${PYTHON_INSTALL_PREFIX})
 
 if(NOT DEFINED PY_matplotlib OR NOT DEFINED PY_scipy OR NOT DEFINED PY_pandas)
   message(SEND_ERROR "Packages matplotlib, scipy and pandas are required")

@@ -19,6 +19,9 @@ def runExec(executable , args):
 def runGui( args ):
     runExec("python", ["-m", "ert_gui.gert_main"] + [args.config])
 
+def runWebviz( args ):
+    runExec("python", ["-m", "tiny_ert_dash.TinyDashboard"] + [args.config])
+
 
 def runTui( args ):
     os.environ["ERT_UI_MODE"] = "tui"
@@ -57,6 +60,13 @@ def ert_parser():
                     'ERT > 2.4!',
         help="Available entry points")
 
+    webviz_parser = subparsers.add_parser('web',
+                                           help='Graphical Visual Exploration tool '
+                                            'for internal storage data',
+                                       description='Web-based visualization')
+    webviz_parser.add_argument('config', type=valid_file,
+                            help="Ert configuration file")
+    webviz_parser.set_defaults(func=runWebviz)
 
     gui_parser = subparsers.add_parser('gui',
             help='Graphical User Interface - opens up an independent window for '
