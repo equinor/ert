@@ -55,7 +55,7 @@ class AboutDialog(QDialog):
         top_layout = QHBoxLayout()
 
         image_label = QLabel()
-        image = resourceImage("splash.jpg")
+        image = resourceImage("splash.png")
         image_label.setPixmap(image.scaled(200, 240, Qt.KeepAspectRatio))
 
         top_layout.addWidget(image_label)
