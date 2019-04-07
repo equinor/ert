@@ -1,24 +1,21 @@
 import pandas as pd
 class TinyDashDataView:
-    COLORS = ['rgb(20,96,167)', 'rgb(120,96,167)']
-    def get_figure(self, tem_data):
-        return {'data': self.get_data(tem_data), 'layout': self.get_layout()}
+    def get_figure(self, tem_data, title, case_color):
+        layout = self.get_layout()
+        layout['title'] = title
+        return {'data': self.get_data(tem_data, case_color), 'layout': layout}
 
-    def _dict_data(self, data, label):
-        return None
-
-    def get_data(self, tem_data):
+    def get_data(self, tem_data, case_color):
         l = []
         for case in tem_data:
-            # print('DOING case: ', case)
             data = tem_data[case]
             if data is not None:
                 if isinstance(data, pd.DataFrame):
-                    l = l + [self._dict_data(data[key], '{}-R{}'.format(case, key), self.COLORS[0]) for key in
+                    l = l + [self._dict_data(data[key], '{}-R{}'.format(case, key), case_color[case]) for key in
                              data.columns]
                 else:
-                    l = l + [self._dict_data(data, '{}'.format(case), self.COLORS[0])]
+                    l = l + [self._dict_data(data, '{}'.format(case), case_color[case])]
         return l
     
     def get_layout(self): 
-        return {'margin': {'l': 30,'r': 20,'b': 30,'t': 20}}
+        return {'margin': {'l': 10,'r': 10,'b': 15,'t': 25}}

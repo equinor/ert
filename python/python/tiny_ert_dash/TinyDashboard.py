@@ -5,19 +5,26 @@ import dash_html_components as html
 import dash_table as dt
 import sys
 
-from TinyErtModel import TinyErtModel
+# from TinyErtModel import TinyErtModel
+from TinyMockErtModel import TinyMockErtModel
 from TinyDashPlot import TinyDashPlot
 from TinyDashHistogram import TinyDashHistogram
+from TinyDashPlotErrorBar import TinyDashPlotErrorBar
 
 app = dash.Dash(__name__)
 app.css.config.serve_locally = True
 app.scripts.config.serve_locally = True
 
-# ERT_CONFIG_FILE = '/data/workspace/ert/test-data/local/example_case/example.ert'
-ERT_CONFIG_FILE = sys.argv[1]
-tem = TinyErtModel(ERT_CONFIG_FILE)
+ERT_CONFIG_FILE = '/data/workspace/ert/test-data/local/example_case/example.ert'
+# ERT_CONFIG_FILE = sys.argv[1]
+# tem = TinyErtModel(ERT_CONFIG_FILE)
+tem = TinyMockErtModel(['default0', 'default1', 'default2'], 20)
 sel_cases = tem.get_cases()[0]
 all_cases = tem.get_cases()
+
+COLORS_CB = ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999']
+case_color = {case : COLORS_CB[i] for i, case in enumerate(all_cases)}
+
 
 container= {
     'display':'grid',
@@ -116,11 +123,14 @@ def update_cases(values):
 def update_func_plot(active_cell):
     global tem
     case_data = {}
+    title = 'Not key selected'
     if active_cell is not None:
         key = tem.get_summary_keys()[active_cell[0]]
         case_data = {case: tem.get_summary_data(case, key)
                      for case in sel_cases}
-    return TinyDashPlot().get_figure(case_data)
+        title = 'Function plot for {} in cases {}'.format(key, ', '.join(sel_cases))
+    # return TinyDashPlot().get_figure(case_data, title, case_color)
+    return TinyDashPlotErrorBar().get_figure(case_data, title, case_color)
 
 @app.callback(
     Output('hist-plot', 'figure'),
@@ -128,11 +138,13 @@ def update_func_plot(active_cell):
 def update_func_plot(active_cell):
     global tem
     case_data = {}
+    title = 'Not key selected'
     if active_cell is not None:
         key = tem.get_gen_kw_keys()[active_cell[0]]
         case_data = {case: tem.get_gen_kw_data(case, key)
                      for case in sel_cases}
-    return TinyDashHistogram().get_figure(case_data)
+        title = 'Histogram for {} in cases {}'.format(key, ', '.join(sel_cases))
+    return TinyDashHistogram().get_figure(case_data, title, case_color)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
