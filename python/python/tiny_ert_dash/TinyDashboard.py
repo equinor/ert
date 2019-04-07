@@ -67,6 +67,18 @@ def get_checklist_div(name='case-list', keys=[]):
                     } for i, j in enumerate(keys)]
                 )])
 
+def get_graph_type_div(name='graph_type', keys=[]):
+    return html.Div([
+                html.Label('Select Graph Type'),
+                dcc.RadioItems(
+                    options=[{
+                        'label': '{}'.format(id),
+                        'value': id
+                    } for id in keys],
+                    value=keys[0],
+                    id=name
+                )])
+
 def get_textarea_div(name='text-plot', rows=30):
     return html.Div([
                 dcc.Textarea(
@@ -91,6 +103,7 @@ def serve_layout():
             children='Ert config file: {}'.format(ERT_CONFIG_FILE),
         ),
         get_checklist_div(name='cases', keys=tem.get_cases()),
+        get_graph_type_div(name='graph_type', keys = ['Function plot', 'Stat. function plot']),
         html.Div([
             get_table_div(name='table-func-plot', key_name='SUMMARY KEY', keys=tem.get_summary_keys()),
             get_graph_div(name='func-plot'),
@@ -119,8 +132,9 @@ def update_cases(values):
 
 @app.callback(
     Output('func-plot', 'figure'),
-    [Input('table-func-plot', 'active_cell')])
-def update_func_plot(active_cell):
+    [Input('table-func-plot', 'active_cell')],
+    state = [State('graph_type', 'value')])
+def update_func_plot(active_cell, graph_type_value):
     global tem
     case_data = {}
     title = 'Not key selected'
@@ -129,7 +143,8 @@ def update_func_plot(active_cell):
         case_data = {case: tem.get_summary_data(case, key)
                      for case in sel_cases}
         title = 'Function plot for {} in cases {}'.format(key, ', '.join(sel_cases))
-    # return TinyDashPlot().get_figure(case_data, title, case_color)
+    if graph_type_value == 'Function plot':
+        return TinyDashPlot().get_figure(case_data, title, case_color)
     return TinyDashPlotErrorBar().get_figure(case_data, title, case_color)
 
 @app.callback(
