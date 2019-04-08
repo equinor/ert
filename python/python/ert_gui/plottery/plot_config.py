@@ -28,7 +28,7 @@ class PlotConfig(object):
 
         self._limits = PlotLimits()
 
-        self._default_style = PlotStyle(name="Default", color=None, marker=".", alpha=0.8)
+        self._default_style = PlotStyle(name="Default", color=None, marker="", alpha=0.8)
 
         self._refcase_style = PlotStyle(name="Refcase", alpha=0.8, line_style="--", marker="", width=2.0,
                                         enabled=self._plot_settings["SHOW_REFCASE"])
