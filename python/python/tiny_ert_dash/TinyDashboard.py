@@ -5,22 +5,34 @@ import dash_html_components as html
 import dash_table as dt
 import sys
 
-# from TinyErtModel import TinyErtModel
+from TinyErtModel import TinyErtModel
 from TinyMockErtModel import TinyMockErtModel
 from TinyDashPlot import TinyDashPlot
 from TinyDashHistogram import TinyDashHistogram
 from TinyDashPlotErrorBar import TinyDashPlotErrorBar
+from TinyDashFanChart import TinyDashFanChart
 
-app = dash.Dash(__name__)
+
+from webviz_components import Page, Layout, Map
+from webviz_plotly.graph_objs import FanChart
+
+
+external_stylesheets = [
+    'https://sibwebvizcdn.blob.core.windows.net/fonts/index.css',
+    'https://sibwebvizcdn.blob.core.windows.net/theme/equinor.theme.css'
+]
+
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.css.config.serve_locally = True
 app.scripts.config.serve_locally = True
 
 ERT_CONFIG_FILE = '/data/workspace/ert/test-data/local/example_case/example.ert'
 # ERT_CONFIG_FILE = sys.argv[1]
-# tem = TinyErtModel(ERT_CONFIG_FILE)
-tem = TinyMockErtModel(['default0', 'default1', 'default2'], 20)
+tem = TinyErtModel(ERT_CONFIG_FILE)
+# tem = TinyMockErtModel(['default0', 'default1', 'default2'], 20)
 sel_cases = tem.get_cases()[0]
 all_cases = tem.get_cases()
+print(all_cases)
 
 COLORS_CB = ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999']
 case_color = {case : COLORS_CB[i] for i, case in enumerate(all_cases)}
@@ -32,6 +44,8 @@ container= {
     'grid-template-rows':'repeat(3, minmax(100px, auto))',
     'grid-padding': '1em',
 }
+
+
 
 def get_graph_div(name='func-plot'):
     return html.Div([
@@ -90,32 +104,37 @@ def get_textarea_div(name='text-plot', rows=30):
                 )])
 
 def serve_layout():
-    global tem
-    return html.Div([
-        html.Div(id='output-1'),
-        html.H1(
-            children='Tiny ERT Visualization',
-            style={
-                'textAlign': 'center',
-            }
-        ),
-        html.H3(
-            children='Ert config file: {}'.format(ERT_CONFIG_FILE),
-        ),
-        get_checklist_div(name='cases', keys=tem.get_cases()),
-        get_graph_type_div(name='graph_type', keys = ['Function plot', 'Stat. function plot']),
-        html.Div([
-            get_table_div(name='table-func-plot', key_name='SUMMARY KEY', keys=tem.get_summary_keys()),
-            get_graph_div(name='func-plot'),
-            get_textarea_div(name='func-plot-area')
-        ], style=container),
-        html.Div([
-            get_table_div(name='table-hist-plot', key_name='GEN KW KEY', keys=tem.get_gen_kw_keys()),
-            get_graph_div(name='hist-plot'),
-            get_textarea_div(name='hist-plot-area')
-        ], style=container)
-    ])
-app.layout = serve_layout
+    return Layout(children = [
+        Page(
+            id='ertviz',
+            title='Tiny ERT Visualization',
+            children=[
+                html.Div(id='output-1'),
+                html.H1(
+                    children='Tiny ERT Visualization',
+                    style={
+                        'textAlign': 'center',
+                    }
+                ),
+                html.H3(
+                    children='Ert config file: {}'.format(ERT_CONFIG_FILE),
+                ),
+                get_checklist_div(name='cases', keys=tem.get_cases()),
+                get_graph_type_div(name='graph_type', keys = ['Function plot', 'FanChart', 'Stat. function plot']),
+                html.Div([
+                    get_table_div(name='table-func-plot', key_name='SUMMARY KEY', keys=tem.get_summary_keys()),
+                    get_graph_div(name='func-plot'),
+                    get_textarea_div(name='func-plot-area')
+                ], style=container),
+                html.Div([
+                    get_table_div(name='table-hist-plot', key_name='GEN KW KEY', keys=tem.get_gen_kw_keys()),
+                    get_graph_div(name='hist-plot'),
+                    get_textarea_div(name='hist-plot-area')
+                ], style=container)
+            ]
+        )])
+
+app.layout = serve_layout()
 
 
 @app.callback(
@@ -143,8 +162,11 @@ def update_func_plot(active_cell, graph_type_value):
         case_data = {case: tem.get_summary_data(case, key)
                      for case in sel_cases}
         title = 'Function plot for {} in cases {}'.format(key, ', '.join(sel_cases))
+
     if graph_type_value == 'Function plot':
         return TinyDashPlot().get_figure(case_data, title, case_color)
+    elif graph_type_value == 'FanChart':
+        return FanChart(data=TinyDashFanChart().get_figure(case_data, title, case_color))
     return TinyDashPlotErrorBar().get_figure(case_data, title, case_color)
 
 @app.callback(
@@ -162,4 +184,4 @@ def update_func_plot(active_cell):
     return TinyDashHistogram().get_figure(case_data, title, case_color)
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(host='0.0.0.0', debug=True)
