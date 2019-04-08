@@ -47,6 +47,9 @@ def _plotLines(axes, plot_config, data, ensemble_label, is_date_supported):
 
     style = plot_config.defaultStyle()
 
+    if len(data) == 1 and style.marker == '':
+        style.marker = '.'
+
     if is_date_supported:
         lines = axes.plot_date(x=data.index.values, y=data, color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, linewidth=style.width, markersize=style.size)
     else:
