@@ -1,5 +1,9 @@
 
-from PyQt4.QtGui import QApplication
+try:
+    from PyQt4.QtGui import QApplication
+except ImportError:
+    from PyQt5.QtWidgets import QApplication
+
 from ecl.util.util import Version
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import resourceIcon
