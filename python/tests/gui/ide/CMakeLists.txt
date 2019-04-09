@@ -33,5 +33,6 @@ addPythonTest(tests.gui.ide.test_configuration_line_definition.ConfigurationLine
 addPythonTest(tests.gui.ide.test_configuration_line_parser.ConfigurationLineParserTest)
 addPythonTest(tests.gui.ide.test_ert_keywords.ErtKeywordTest)
 addPythonTest(tests.gui.ide.test_tokens.TokenTest)
+addPythonTest(tests.gui.ide.test_percent_argument.PercentArgumentTest)
 
 add_subdirectory(wizards)
