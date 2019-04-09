@@ -12,6 +12,7 @@ from TinyDashHistogram import TinyDashHistogram
 from TinyDashPlotErrorBar import TinyDashPlotErrorBar
 from TinyDashFanChart import TinyDashFanChart
 
+import matplotlib.cm as cm
 
 from webviz_components import Page, Layout, Map
 from webviz_plotly.graph_objs import FanChart
@@ -34,6 +35,8 @@ sel_cases = tem.get_cases()[0]
 all_cases = tem.get_cases()
 print(all_cases)
 
+
+COLOR_CM = list(cm.get_cmap('Set1').colors)
 COLORS_CB = ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999']
 case_color = {case : COLORS_CB[i] for i, case in enumerate(all_cases)}
 
@@ -166,7 +169,7 @@ def update_func_plot(active_cell, graph_type_value):
     if graph_type_value == 'Function plot':
         return TinyDashPlot().get_figure(case_data, title, case_color)
     elif graph_type_value == 'FanChart':
-        return FanChart(data=TinyDashFanChart().get_figure(case_data, title, case_color))
+        return FanChart(data=TinyDashFanChart().get_figure(case_data, title, case_color), colors=COLOR_CM)
     return TinyDashPlotErrorBar().get_figure(case_data, title, case_color)
 
 @app.callback(
