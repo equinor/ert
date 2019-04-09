@@ -198,13 +198,13 @@ class RunDialog(QDialog):
         return False
 
     def updateRunStatus(self):
+        self.__status_label.setText(self._run_model.getPhaseName())
+
         if self.checkIfRunFinished():
             self.total_progress.setProgress(self._run_model.getProgress())
             return
 
         self.total_progress.setProgress(self._run_model.getProgress())
-
-        self.__status_label.setText(self._run_model.getPhaseName())
 
         states = self.simulations_tracker.getStates()
 
