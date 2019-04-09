@@ -56,8 +56,9 @@ def ert_parser():
                     'each interface for more details. DEPRECATION WARNING: '
                     'Text User Interface and Shell Interface are to be removed in '
                     'ERT > 2.4!',
-        help="Available entry points")
-
+        help="Available entry points",
+        dest="{gui,text,shell,cli}")
+    subparsers.required = True
 
     gui_parser = subparsers.add_parser('gui',
             help='Graphical User Interface - opens up an independent window for '
