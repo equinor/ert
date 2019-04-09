@@ -5,7 +5,7 @@ import dash_html_components as html
 import dash_table as dt
 import sys
 
-from TinyErtModel import TinyErtModel
+# from TinyErtModel import TinyErtModel
 from TinyMockErtModel import TinyMockErtModel
 from TinyDashPlot import TinyDashPlot
 from TinyDashHistogram import TinyDashHistogram
@@ -29,9 +29,8 @@ app.scripts.config.serve_locally = True
 
 ERT_CONFIG_FILE = '/data/workspace/ert/test-data/local/example_case/example.ert'
 # ERT_CONFIG_FILE = sys.argv[1]
-tem = TinyErtModel(ERT_CONFIG_FILE)
-# tem = TinyMockErtModel(['default0', 'default1', 'default2'], 20)
-sel_cases = tem.get_cases()[0]
+# tem = TinyErtModel(ERT_CONFIG_FILE)
+tem = TinyMockErtModel(['default0', 'default1', 'default2'], 20)
 all_cases = tem.get_cases()
 print(all_cases)
 
@@ -123,12 +122,18 @@ def serve_layout():
                     children='Ert config file: {}'.format(ERT_CONFIG_FILE),
                 ),
                 get_checklist_div(name='cases', keys=tem.get_cases()),
-                get_graph_type_div(name='graph_type', keys = ['Function plot', 'FanChart', 'Stat. function plot']),
+                dcc.Markdown('***'),
                 html.Div([
-                    get_table_div(name='table-func-plot', key_name='SUMMARY KEY', keys=tem.get_summary_keys()),
+                    html.Div([
+                        get_table_div(name='table-func-plot', key_name='SUMMARY KEY', keys=tem.get_summary_keys()),
+                        dcc.Markdown('***'),
+                        get_graph_type_div(name='graph_type',
+                                           keys=['Function plot', 'FanChart', 'Stat. function plot']),
+                    ]),
                     get_graph_div(name='func-plot'),
-                    get_textarea_div(name='func-plot-area')
+                    get_textarea_div(name='func-plot-area'),
                 ], style=container),
+                dcc.Markdown('***'),
                 html.Div([
                     get_table_div(name='table-hist-plot', key_name='GEN KW KEY', keys=tem.get_gen_kw_keys()),
                     get_graph_div(name='hist-plot'),
@@ -139,28 +144,26 @@ def serve_layout():
 
 app.layout = serve_layout()
 
-
 @app.callback(
     Output('func-plot-area', 'value'),
-    [Input('cases', 'values')])
-def update_cases(values):
-    global sel_cases
-    if values is not None:
-        sel_cases = []
-        for i in values:
-            if all_cases[i] is not None:
-                sel_cases.append(all_cases[i])
-    return sel_cases
+    [Input('func-plot', 'selectedData')])
+def func_display_data(selectedData):
+    return str(selectedData)
 
 @app.callback(
     Output('func-plot', 'figure'),
     [Input('table-func-plot', 'active_cell')],
-    state = [State('graph_type', 'value')])
-def update_func_plot(active_cell, graph_type_value):
+    state = [State('graph_type', 'value'),
+             State('cases', 'values')])
+def update_func_plot(active_cell, graph_type_value, sel_cases_id):
     global tem
     case_data = {}
     title = 'Not key selected'
     if active_cell is not None:
+        sel_cases = []
+        for i in sel_cases_id:
+            if all_cases[i] is not None:
+                sel_cases.append(all_cases[i])
         key = tem.get_summary_keys()[active_cell[0]]
         case_data = {case: tem.get_summary_data(case, key)
                      for case in sel_cases}
@@ -173,13 +176,24 @@ def update_func_plot(active_cell, graph_type_value):
     return TinyDashPlotErrorBar().get_figure(case_data, title, case_color)
 
 @app.callback(
+    Output('hist-plot-area', 'value'),
+    [Input('hist-plot', 'selectedData')])
+def hist_display_data(selectedData):
+    return str(selectedData)
+
+@app.callback(
     Output('hist-plot', 'figure'),
-    [Input('table-hist-plot', 'active_cell')])
-def update_func_plot(active_cell):
+    [Input('table-hist-plot', 'active_cell')],
+    state=[State('cases', 'values')])
+def update_func_plot(active_cell, sel_cases_id):
     global tem
     case_data = {}
     title = 'Not key selected'
     if active_cell is not None:
+        sel_cases = []
+        for i in sel_cases_id:
+            if all_cases[i] is not None:
+                sel_cases.append(all_cases[i])
         key = tem.get_gen_kw_keys()[active_cell[0]]
         case_data = {case: tem.get_gen_kw_data(case, key)
                      for case in sel_cases}

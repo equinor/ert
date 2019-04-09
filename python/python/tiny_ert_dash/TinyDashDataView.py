@@ -3,6 +3,9 @@ class TinyDashDataView:
     def get_figure(self, tem_data, title, case_color):
         layout = self.get_layout()
         layout['title'] = title
+        layout['dragmode'] = 'select'
+        layout['hovermode'] = 'closest'
+        layout['showlegend']= False
         return {'data': self.get_data(tem_data, case_color), 'layout': layout}
 
     def get_data(self, tem_data, case_color):
