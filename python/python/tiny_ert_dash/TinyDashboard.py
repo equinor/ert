@@ -5,7 +5,7 @@ import dash_html_components as html
 import dash_table as dt
 import sys
 
-# from TinyErtModel import TinyErtModel
+from TinyErtModel import TinyErtModel
 from TinyMockErtModel import TinyMockErtModel
 from TinyDashPlot import TinyDashPlot
 from TinyDashHistogram import TinyDashHistogram
@@ -27,10 +27,11 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.css.config.serve_locally = True
 app.scripts.config.serve_locally = True
 
-ERT_CONFIG_FILE = '/data/workspace/ert/test-data/local/example_case/example.ert'
+# ERT_CONFIG_FILE = '/data/workspace/ert/test-data/local/example_case/example.ert'
+ERT_CONFIG_FILE = '/data/workspace/ert/test-data/local/snake_oil/snake_oil.ert'
 # ERT_CONFIG_FILE = sys.argv[1]
-# tem = TinyErtModel(ERT_CONFIG_FILE)
-tem = TinyMockErtModel(['default0', 'default1', 'default2'], 20)
+tem = TinyErtModel(ERT_CONFIG_FILE)
+# tem = TinyMockErtModel(['default0', 'default1', 'default2'], 20)
 all_cases = tem.get_cases()
 print(all_cases)
 
@@ -46,8 +47,6 @@ container= {
     'grid-template-rows':'repeat(3, minmax(100px, auto))',
     'grid-padding': '1em',
 }
-
-
 
 def get_graph_div(name='func-plot'):
     return html.Div([
@@ -201,4 +200,4 @@ def update_func_plot(active_cell, sel_cases_id):
     return TinyDashHistogram().get_figure(case_data, title, case_color)
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', debug=True)
+    app.run_server(host='127.0.0.1', debug=True)
