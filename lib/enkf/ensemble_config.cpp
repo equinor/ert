@@ -25,7 +25,7 @@
 #include <time.h>
 #include <pthread.h>                /* must have rw locking on the config_nodes ... */
 
-#include <map>
+#include <unordered_map>
 #include <string>
 
 
@@ -73,11 +73,43 @@
 
 #define ENSEMBLE_CONFIG_TYPE_ID 8825306
 
+namespace {
+
+  std::unordered_map<std::string, std::string> create_opt_map(const config_content_node_type * node, int offset) {
+    std::unordered_map<std::string, std::string> options;
+    for (int i = offset; i < config_content_node_get_size( node ); i++) {
+      const char * key_value = config_content_node_iget( node , i);
+      char * value = NULL;
+      char * key = NULL;
+
+      util_binary_split_string( key_value , ":" , true , &key , &value);
+      if (value)
+        options[key] = value;
+
+      free(key);
+      free(value);
+    }
+
+    return options;
+  }
+
+
+  const char * get_string(const std::unordered_map<std::string, std::string>& opt_map, const char* key) {
+    const auto& iter = opt_map.find(key);
+    if (iter == opt_map.end())
+      return NULL;
+
+    return iter->second.c_str();
+  }
+
+}
+
+
 struct ensemble_config_struct {
   UTIL_TYPE_ID_DECLARATION;
   pthread_mutex_t                                mutex;
   char                                         * gen_kw_format_string;   /* format string used when creating gen_kw search/replace strings. */
-  std::map<std::string,enkf_config_node_type*>   config_nodes;           /* a hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
+  std::unordered_map<std::string,enkf_config_node_type*>   config_nodes;           /* a hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
   field_trans_table_type                       * field_trans_table;      /* a table of the transformations which are available to apply on fields. */
   bool                                           have_forward_init;
   summary_key_matcher_type                     * summary_key_matcher;
@@ -425,11 +457,9 @@ void ensemble_config_init_GEN_KW(ensemble_config_type * ensemble_config, const c
       const char * enkf_outfile   = config_content_node_iget(node, 2);
       const char * parameter_file = config_content_node_iget_as_abspath(node, 3);
 
-      hash_type * opt_hash         = hash_alloc();
-
-      config_content_node_init_opt_hash( node , opt_hash , 4 );
+      auto opt_map = create_opt_map(node, 4);
       {
-        const char *  forward_string = (const char * ) hash_safe_get( opt_hash , FORWARD_INIT_KEY );
+        const char * forward_string = get_string(opt_map, FORWARD_INIT_KEY);
         enkf_config_node_type * config_node;
         bool forward_init = false;
 
@@ -443,10 +473,9 @@ void ensemble_config_init_GEN_KW(ensemble_config_type * ensemble_config, const c
                                         enkf_outfile ,
                                         template_file ,
                                         parameter_file ,
-                                        (const char *) hash_safe_get( opt_hash , MIN_STD_KEY ) ,
-                                        (const char *) hash_safe_get( opt_hash , INIT_FILES_KEY));
+                                        get_string( opt_map , MIN_STD_KEY ) ,
+                                        get_string( opt_map , INIT_FILES_KEY));
       }
-      hash_free( opt_hash );
     }
   }
 }
@@ -481,15 +510,13 @@ void ensemble_config_init_SURFACE( ensemble_config_type * ensemble_config , cons
       const config_content_node_type * node = config_content_item_iget_node( item , i );
       const char * key           = config_content_node_iget( node , 0 );
       {
-        hash_type * options = hash_alloc();  /* INIT_FILE:<init_files>  OUTPUT_FILE:<outfile>  BASE_SURFACE:<base_file> */
-
-        config_content_node_init_opt_hash( node , options , 1 );
+        auto opt_map = create_opt_map(node, 1);
         {
-          const char * init_file_fmt   = (const char *) hash_safe_get( options , INIT_FILES_KEY );
-          const char * output_file     = (const char *) hash_safe_get( options , OUTPUT_FILE_KEY);
-          const char * base_surface    = (const char *) hash_safe_get( options , BASE_SURFACE_KEY);
-          const char * min_std_file    = (const char *) hash_safe_get( options , MIN_STD_KEY);
-          const char *  forward_string = (const char *) hash_safe_get( options , FORWARD_INIT_KEY );
+          const char * init_file_fmt   = get_string( opt_map , INIT_FILES_KEY );
+          const char * output_file     = get_string( opt_map , OUTPUT_FILE_KEY);
+          const char * base_surface    = get_string( opt_map , BASE_SURFACE_KEY);
+          const char * min_std_file    = get_string( opt_map , MIN_STD_KEY);
+          const char *  forward_string = get_string( opt_map , FORWARD_INIT_KEY );
           bool forward_init = false;
 
           if (forward_string) {
@@ -510,7 +537,6 @@ void ensemble_config_init_SURFACE( ensemble_config_type * ensemble_config , cons
             enkf_config_node_update_surface( config_node , base_surface , init_file_fmt , output_file , min_std_file );
           }
         }
-        hash_free( options );
       }
     }
   }
@@ -559,31 +585,29 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
       enkf_config_node_type * config_node;
 
       {
-        hash_type * options = hash_alloc();
-
         int    truncation = TRUNCATE_NONE;
         double value_min  = -1;
         double value_max  = -1;
 
-        config_content_node_init_opt_hash( node , options , 2 );
-        if (hash_has_key( options , MIN_KEY)) {
+        auto opt_map = create_opt_map(node, 2);
+        if (opt_map.count(MIN_KEY) > 0) {
           truncation |= TRUNCATE_MIN;
-          value_min   = atof((const char * ) hash_get( options , MIN_KEY));
+          value_min   = atof(get_string( opt_map, MIN_KEY));
         }
 
-        if (hash_has_key( options , MAX_KEY)) {
+        if (opt_map.count(MAX_KEY) > 0) {
           truncation |= TRUNCATE_MAX;
-          value_max   = atof((const char * ) hash_get( options , MAX_KEY));
+          value_max   = atof(get_string( opt_map, MAX_KEY));
         }
 
 
         if (strcmp(var_type_string , PARAMETER_KEY) == 0) {
           const char *  ecl_file          = config_content_node_iget( node , 2 );
-          const char *  init_file_fmt     = (const char *) hash_safe_get( options , INIT_FILES_KEY );
-          const char *  init_transform    = (const char *) hash_safe_get( options , INIT_TRANSFORM_KEY );
-          const char *  output_transform  = (const char *) hash_safe_get( options , OUTPUT_TRANSFORM_KEY );
-          const char *  min_std_file      = (const char *) hash_safe_get( options , MIN_STD_KEY );
-          const char *  forward_string    = (const char *) hash_safe_get( options , FORWARD_INIT_KEY );
+          const char *  init_file_fmt     = get_string( opt_map , INIT_FILES_KEY );
+          const char *  init_transform    = get_string( opt_map , INIT_TRANSFORM_KEY );
+          const char *  output_transform  = get_string( opt_map , OUTPUT_TRANSFORM_KEY );
+          const char *  min_std_file      = get_string( opt_map , MIN_STD_KEY );
+          const char *  forward_string    = get_string( opt_map , FORWARD_INIT_KEY );
           bool forward_init = false;
 
           if (forward_string) {
@@ -604,12 +628,12 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
           /* General - not really interesting .. */
           const char *  ecl_file          = config_content_node_iget( node , 2 );
           const char *  enkf_infile       = config_content_node_iget( node , 3 );
-          const char *  init_file_fmt     = (const char *) hash_safe_get( options , INIT_FILES_KEY );
-          const char *  init_transform    = (const char *) hash_safe_get( options , INIT_TRANSFORM_KEY );
-          const char *  output_transform  = (const char *) hash_safe_get( options , OUTPUT_TRANSFORM_KEY );
-          const char *  input_transform   = (const char *) hash_safe_get( options , INPUT_TRANSFORM_KEY );
-          const char *  min_std_file      = (const char *) hash_safe_get( options , MIN_STD_KEY );
-          const char *  forward_string    = (const char *) hash_safe_get( options , FORWARD_INIT_KEY );
+          const char *  init_file_fmt     = get_string( opt_map , INIT_FILES_KEY );
+          const char *  init_transform    = get_string( opt_map , INIT_TRANSFORM_KEY );
+          const char *  output_transform  = get_string( opt_map , OUTPUT_TRANSFORM_KEY );
+          const char *  input_transform   = get_string( opt_map , INPUT_TRANSFORM_KEY );
+          const char *  min_std_file      = get_string( opt_map , MIN_STD_KEY );
+          const char *  forward_string    = get_string( opt_map , FORWARD_INIT_KEY );
           bool forward_init = false;
 
           if (forward_string) {
@@ -631,8 +655,6 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
 
         } else
           util_abort("%s: field type: %s is not recognized\n",__func__ , var_type_string);
-
-        hash_free( options );
       }
     }
   }
