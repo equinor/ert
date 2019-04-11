@@ -53,7 +53,7 @@ class EclConfig(BaseCClass):
     _active                   = ResPrototype("bool ecl_config_active(ecl_config)")
     _get_last_history_restart = ResPrototype("int ecl_config_get_last_history_restart(ecl_config)")
 
-    def __init__(self, config_content = None):
+    def __init__(self, config_content=None):
         c_ptr = self._alloc(config_content)
         if c_ptr:
             super(EclConfig, self).__init__(c_ptr)

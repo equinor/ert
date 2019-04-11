@@ -34,20 +34,20 @@ class ResConfig(BaseCClass):
     _alloc      = ResPrototype("void* res_config_alloc(config_content)", bind=False)
     _free       = ResPrototype("void res_config_free(res_config)")
     _alloc_full = ResPrototype("void* res_config_alloc_full("
-                               "char*, "+\
-                               "char*, "+\
-                               "subst_config, "+\
-                               "site_config, "+\
-                               "rng_config, "+\
-                               "analysis_config, "+\
-                               "ert_workflow_list, "+\
-                               "hook_manager, "+\
-                               "ert_templates, "+\
-                               "plot_settings, "+\
-                               "ecl_config, "+\
-                               "ens_config, "+\
-                               "model_config, "+\
-                               "log_config, "+\
+                               "char*, " 
+                               "char*, " 
+                               "subst_config, " 
+                               "site_config, " 
+                               "rng_config, " 
+                               "analysis_config, " 
+                               "ert_workflow_list, " 
+                               "hook_manager, " 
+                               "ert_templates, " 
+                               "plot_settings, " 
+                               "ecl_config, " 
+                               "ens_config, " 
+                               "model_config, " 
+                               "log_config, " 
                                "config_content)"
                                , bind=False)
 

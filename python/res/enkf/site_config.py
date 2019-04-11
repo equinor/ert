@@ -53,7 +53,7 @@ class SiteConfig(BaseCClass):
     _get_umask              = ResPrototype("int site_config_get_umask(site_config)")
 
 
-    def __init__(self, user_config_file = None, config_content = None):
+    def __init__(self, user_config_file=None, config_content=None):
 
         if user_config_file is not None:
             if not isfile(user_config_file):

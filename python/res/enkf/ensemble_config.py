@@ -44,7 +44,7 @@ class EnsembleConfig(BaseCClass):
 
 
 
-    def __init__(self, config_content = None, grid = None, refcase = None):
+    def __init__(self, config_content=None, grid=None, refcase=None):
         c_ptr = self._alloc(config_content, grid, refcase)
 
         if c_ptr is None:

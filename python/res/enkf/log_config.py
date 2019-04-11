@@ -31,7 +31,7 @@ class LogConfig(BaseCClass):
     _log_file   = ResPrototype("char* log_config_get_log_file(log_config)")
     _log_level  = ResPrototype("message_level_enum log_config_get_log_level(log_config)")
 
-    def __init__(self, user_config_file = None, config_content = None):
+    def __init__(self, user_config_file=None, config_content=None):
         if config_content is None:
             if user_config_file is not None and not isfile(user_config_file):
                 raise IOError('No such configuration file "%s".' % user_config_file)

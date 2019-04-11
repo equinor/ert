@@ -25,7 +25,7 @@ class PlotSettings(ConfigSettings):
     _alloc       = ResPrototype("void* plot_settings_alloc(config_content)", bind=False)
     _init        = ResPrototype("void plot_settings_init(plot_settings)")
 
-    def __init__(self, config_content = None):
+    def __init__(self, config_content=None):
         if config_content:
             c_ptr = self._alloc(config_content)
 

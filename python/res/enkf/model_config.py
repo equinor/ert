@@ -49,7 +49,7 @@ class ModelConfig(BaseCClass):
     _get_data_root               = ResPrototype("char* model_config_get_data_root(model_config)")
     _set_data_root               = ResPrototype("void model_config_get_data_root(model_config, char*)")
 
-    def __init__(self, config_content, data_root, joblist, last_history_restart, sched_file, refcase, is_reference = False):
+    def __init__(self, config_content, data_root, joblist, last_history_restart, sched_file, refcase, is_reference=False):
         c_ptr = self._alloc(config_content, data_root, joblist, last_history_restart, sched_file, refcase)
 
         if c_ptr is None:

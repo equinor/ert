@@ -57,7 +57,7 @@ class AnalysisConfig(BaseCClass):
     _get_global_std_scaling = ResPrototype("double analysis_config_get_global_std_scaling(analysis_config)")
 
 
-    def __init__(self, user_config_file = None, config_content = None):
+    def __init__(self, user_config_file=None, config_content=None):
 
         if user_config_file is not None:
             if not isfile(user_config_file):
