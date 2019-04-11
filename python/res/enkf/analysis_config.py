@@ -59,6 +59,12 @@ class AnalysisConfig(BaseCClass):
 
     def __init__(self, user_config_file=None, config_content=None):
 
+        if user_config_file is not None and config_content is not None:
+            raise ValueError("Error trying to create AnalysisConfig with from config file and config content")
+
+        if user_config_file is None and config_content is None:
+            raise ValueError("Error trying to create AnalysisConfig without any configuration")
+
         if user_config_file is not None:
             if not isfile(user_config_file):
                 raise IOError('No such configuration file "%s".' % user_config_file)
@@ -73,7 +79,7 @@ class AnalysisConfig(BaseCClass):
             if c_ptr:
                 super(AnalysisConfig, self).__init__(c_ptr)
             else:
-                raise ValueError('Failed to construct SiteConfig instance.')
+                raise ValueError('Failed to construct AnalysisConfig instance.')
 
 
 

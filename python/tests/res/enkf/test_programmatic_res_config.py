@@ -37,7 +37,8 @@ class ProgrammaticResConfigTest(ResTest):
                                   },
 
                                   "RUNPATH"            : "/tmp/simulations/run%d",
-                                  "NUM_REALIZATIONS"   : 1,
+                                  "NUM_REALIZATIONS"   : 10,
+                                  "MIN_REALIZATIONS"   : 10,
                                   "JOB_SCRIPT"         : "script.sh",
                                   "ENSPATH"            : "Ensemble"
                                 }
@@ -57,7 +58,7 @@ class ProgrammaticResConfigTest(ResTest):
                                   },
 
                                   "RUNPATH"            : "/tmp/simulations/run%d",
-                                  "NUM_REALIZATIONS"   : 1,
+                                  "NUM_REALIZATIONS"   : 10,
                                   "JOB_SCRIPT"         : "script.sh",
                                   "ENSPATH"            : "Ensemble"
                                 }
@@ -96,7 +97,7 @@ class ProgrammaticResConfigTest(ResTest):
                                   },
 
                                   "RUNPATH"            : "/tmp/simulations/run%d",
-                                  "NUM_REALIZATIONS"   : 1,
+                                  "NUM_REALIZATIONS"   : 10,
                                   "JOB_SCRIPT"         : "script.sh",
                                   "ENSPATH"            : "Ensemble"
                                 }
@@ -116,7 +117,7 @@ class ProgrammaticResConfigTest(ResTest):
                                   },
                                   "ECLBASE" : "SIM_KW",
 
-                                  "NUM_REALIZATIONS"   : 1,
+                                  "NUM_REALIZATIONS"   : 10,
 
                                   "INSTALL_JOB" :
                                   [

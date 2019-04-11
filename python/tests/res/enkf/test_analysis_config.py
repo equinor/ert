@@ -26,6 +26,7 @@ class AnalysisConfigTest(ResTest):
 
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")
+        self.case_file = 'simple_config/minimum_config'
 
     def test_invalid_user_config(self):
         with TestAreaContext("void land"):
@@ -33,32 +34,38 @@ class AnalysisConfigTest(ResTest):
                 AnalysisConfig("this/is/not/a/file")
 
     def test_keywords_for_monitoring_simulation_runtime(self):
-        ac = AnalysisConfig()
+        with TestAreaContext("analysis_config_init_test") as work_area:
+            work_area.copy_directory(self.case_directory)
+            ac = AnalysisConfig(self.case_file)
 
-        # Unless the MIN_REALIZATIONS is set in config, one is required to have "all" realizations.
-        self.assertFalse(ac.haveEnoughRealisations(5, 10))
-        self.assertTrue(ac.haveEnoughRealisations(10, 10))
+            # Unless the MIN_REALIZATIONS is set in config, one is required to have "all" realizations.
+            self.assertFalse(ac.haveEnoughRealisations(5, 10))
+            self.assertTrue(ac.haveEnoughRealisations(10, 10))
 
-        ac.set_max_runtime( 50 )
-        self.assertEqual( 50 , ac.get_max_runtime() )
+            ac.set_max_runtime( 50 )
+            self.assertEqual( 50 , ac.get_max_runtime() )
 
-        ac.set_stop_long_running( True )
-        self.assertTrue( ac.get_stop_long_running() )
+            ac.set_stop_long_running( True )
+            self.assertTrue( ac.get_stop_long_running() )
 
 
     def test_analysis_modules(self):
-        ac = AnalysisConfig()
-        self.assertIsNone( ac.activeModuleName() )
-        self.assertIsNotNone( ac.getModuleList() )
+        with TestAreaContext("analysis_config_init_test") as work_area:
+            work_area.copy_directory(self.case_directory)
+            ac = AnalysisConfig(self.case_file)
+            self.assertIsNotNone( ac.activeModuleName() )
+            self.assertIsNotNone( ac.getModuleList() )
 
     def test_analysis_config_global_std_scaling(self):
-        ac = AnalysisConfig()
-        self.assertFloatEqual(ac.getGlobalStdScaling(), 1.0)
-        ac.setGlobalStdScaling(0.77)
-        self.assertFloatEqual(ac.getGlobalStdScaling(), 0.77)
+        with TestAreaContext("analysis_config_init_test") as work_area:
+            work_area.copy_directory(self.case_directory)
+            ac = AnalysisConfig(self.case_file)
+            self.assertFloatEqual(ac.getGlobalStdScaling(), 1.0)
+            ac.setGlobalStdScaling(0.77)
+            self.assertFloatEqual(ac.getGlobalStdScaling(), 0.77)
 
     def test_init(self):
         with TestAreaContext("analysis_config_init_test") as work_area:
             work_area.copy_directory(self.case_directory)
-            analysis_config = AnalysisConfig()
+            analysis_config = AnalysisConfig(self.case_file)
             self.assertIsNotNone(analysis_config)
