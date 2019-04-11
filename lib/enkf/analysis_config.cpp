@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <unordered_map>
+
 #include <ert/util/util.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/type_macros.h>
@@ -48,7 +50,7 @@
 
 struct analysis_config_struct {
   UTIL_TYPE_ID_DECLARATION;
-  hash_type                     * analysis_modules;
+  std::unordered_map<std::string, analysis_module_type*> analysis_modules;
   analysis_module_type          * analysis_module;
   char                          * log_path;                    /* Points to directory with update logs. */
   bool                            merge_observations;          /* When observing from time1 to time2 - should ALL observations in between be used? */
@@ -176,7 +178,12 @@ static void analysis_config_set_min_realisations( analysis_config_type * config 
 
 
 stringlist_type * analysis_config_alloc_module_names( const analysis_config_type * config ) {
-  return hash_alloc_stringlist( config->analysis_modules );
+  stringlist_type * s = stringlist_alloc_new();
+
+  for (const auto& analysis_pair : config->analysis_modules)
+    stringlist_append_copy(s, analysis_pair.first.c_str());
+
+  return s;
 }
 
 void analysis_config_set_store_PC( analysis_config_type * config , bool store_PC) {
@@ -275,8 +282,8 @@ void analysis_config_set_merge_observations( analysis_config_type * config , boo
 void analysis_config_load_internal_module( analysis_config_type * config ,
                                            const char * symbol_table ) {
   analysis_module_type * module = analysis_module_alloc_internal(symbol_table);
-  if (module != NULL)
-    hash_insert_hash_owned_ref( config->analysis_modules , analysis_module_get_name( module ) , module , analysis_module_free__ );
+  if (module)
+    config->analysis_modules[ analysis_module_get_name( module )] = module;
   else
     fprintf(stderr,"** Warning: failed to load module %s from %s.\n", analysis_module_get_name( module ) , symbol_table);
 }
@@ -304,7 +311,7 @@ bool analysis_config_load_external_module( analysis_config_type * config ,
   if (module != NULL) {
     if (user_name)
       analysis_module_set_name(module, user_name);
-    hash_insert_hash_owned_ref( config->analysis_modules , analysis_module_get_name( module ) ,  module , analysis_module_free__ );
+    config->analysis_modules[ analysis_module_get_name(module) ] = module;
     return true;
   } else {
     fprintf(stderr,"** Warning: failed to load module from %s.\n",lib_name);
@@ -327,7 +334,7 @@ void analysis_config_add_module_copy( analysis_config_type * config ,
     target_module = analysis_module_alloc_external(lib_name);
   }
 
-  hash_insert_hash_owned_ref( config->analysis_modules , target_name , target_module , analysis_module_free__ );
+  config->analysis_modules[ target_name ] = target_module;
   analysis_module_set_name( target_module , target_name );
 }
 
@@ -365,7 +372,11 @@ void analysis_config_reload_module( analysis_config_type * config , const char *
       is_current = true;
     }
 
-    hash_del( config->analysis_modules , user_name );
+    {
+      auto module_iter = config->analysis_modules.find(user_name);
+      analysis_module_free( module_iter->second );
+      config->analysis_modules.erase( module_iter->first );
+    }
     analysis_config_load_external_module( config , user_name , lib_name );
     if (is_current)
       analysis_config_select_module( config , user_name );
@@ -378,11 +389,11 @@ void analysis_config_reload_module( analysis_config_type * config , const char *
 
 
 analysis_module_type * analysis_config_get_module(const analysis_config_type * config , const char * module_name ) {
-  return (analysis_module_type *) hash_get( config->analysis_modules , module_name );
+  return config->analysis_modules.at(module_name);
 }
 
 bool analysis_config_has_module(const analysis_config_type * config , const char * module_name) {
-  return hash_has_key( config->analysis_modules , module_name );
+  return (config->analysis_modules.count(module_name) > 0);
 }
 
 bool analysis_config_get_module_option( const analysis_config_type * config , long flag) {
@@ -579,18 +590,21 @@ analysis_iter_config_type * analysis_config_get_iter_config( const analysis_conf
 
 void analysis_config_free(analysis_config_type * config) {
   analysis_iter_config_free( config->iter_config );
-  hash_free( config->analysis_modules );
+  for (auto& module_pair : config->analysis_modules)
+    analysis_module_free( module_pair.second );
+
   config_settings_free( config->update_settings );
   free( config->log_path );
   free( config->PC_filename );
   free( config->PC_path );
-  free( config );
+
+  delete config;
 }
 
 
 
 analysis_config_type * analysis_config_alloc_default(void) {
-  analysis_config_type * config = (analysis_config_type *)util_malloc( sizeof * config );
+  analysis_config_type * config = new analysis_config_type();
   UTIL_TYPE_ID_INIT( config , ANALYSIS_CONFIG_TYPE_ID );
 
   config->log_path                  = NULL;
@@ -614,7 +628,6 @@ analysis_config_type * analysis_config_alloc_default(void) {
   analysis_config_set_max_runtime( config              , DEFAULT_MAX_RUNTIME );
 
   config->analysis_module      = NULL;
-  config->analysis_modules     = hash_alloc();
   config->iter_config          = analysis_iter_config_alloc();
   config->std_scale_correlated_obs = false;
   config->global_std_scaling   = 1.0;
