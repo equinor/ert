@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <unordered_map>
+
 #include <ert/util/util.h>
 #include <ert/util/parser.h>
 #include <ert/res_util/ui_return.hpp>
@@ -61,7 +63,7 @@ struct ecl_config_struct
 {
   ecl_io_config_type * io_config;       /* This struct contains information of whether the eclipse files should be formatted|unified|endian_fliped */
   sched_file_type * sched_file;         /* Will only contain the history - if predictions are active the member_config objects will have a private sched_file instance. */
-  hash_type * fixed_length_kw;          /* Set of user-added SCHEDULE keywords with fixed length. */
+  std::unordered_map<std::string, int>  fixed_length_kw; /* Set of user-added SCHEDULE keywords with fixed length. */
   char * data_file;                     /* Eclipse data file. */
   time_t start_date;                    /* The start date of the ECLIPSE simulation - parsed from the data_file. */
   time_t end_date;                      /* An optional date value which can be used to check if the ECLIPSE simulation has been 'long enough'. */
@@ -266,23 +268,15 @@ void ecl_config_set_schedule_file(ecl_config_type * ecl_config, const char * sch
   sched_file_parse(ecl_config->sched_file, schedule_file);
   ecl_config->last_history_restart = sched_file_get_num_restart_files(ecl_config->sched_file) - 1; /* We keep track of this - so we can stop assimilation at the end of history */
 
-  {
-    hash_iter_type * iter = hash_iter_alloc(ecl_config->fixed_length_kw);
-    while (!hash_iter_is_complete(iter)) {
-      const char * key = hash_iter_get_next_key(iter);
-      int length = hash_get_int(ecl_config->fixed_length_kw, key);
-
-      sched_file_add_fixed_length_kw(ecl_config->sched_file, key, length);
-    }
-    hash_iter_free(iter);
-  }
+  for (const auto& kw_iter : ecl_config->fixed_length_kw)
+    sched_file_add_fixed_length_kw(ecl_config->sched_file, kw_iter.first.c_str(), kw_iter.second);
 }
 
 
 
 void ecl_config_add_fixed_length_schedule_kw(ecl_config_type * ecl_config, const char * kw, int length)
 {
-  hash_insert_int(ecl_config->fixed_length_kw, kw, length);
+  ecl_config->fixed_length_kw[kw] = length;
   if (ecl_config->sched_file != NULL )
     sched_file_add_fixed_length_kw(ecl_config->sched_file, kw, length);
 
@@ -464,10 +458,9 @@ const char * ecl_config_get_equil_init_file(const ecl_config_type * ecl_config)
 
 static ecl_config_type * ecl_config_alloc_empty(void)
 {
-  ecl_config_type * ecl_config = (ecl_config_type *)util_malloc(sizeof *ecl_config);
+  ecl_config_type * ecl_config = new ecl_config_type();
 
   ecl_config->io_config = ecl_io_config_alloc(DEFAULT_FORMATTED, DEFAULT_UNIFIED, DEFAULT_UNIFIED);
-  ecl_config->fixed_length_kw = hash_alloc();
   ecl_config->have_eclbase = false;
   ecl_config->num_cpu = 1; /* This must get a valid default in case no ECLIPSE datafile is provided. */
   ecl_config->unit_system = ECL_METRIC_UNITS;
@@ -715,8 +708,6 @@ void ecl_config_free(ecl_config_type * ecl_config)
     sched_file_free(ecl_config->sched_file);
 
   free(ecl_config->schedule_target_file);
-  hash_free(ecl_config->fixed_length_kw);
-
   free(ecl_config->input_init_section);
   free(ecl_config->init_section);
   free(ecl_config->schedule_prediction_file);
@@ -726,7 +717,7 @@ void ecl_config_free(ecl_config_type * ecl_config)
 
   ecl_refcase_list_free(ecl_config->refcase_list);
 
-  free(ecl_config);
+  delete ecl_config;
 }
 
 
