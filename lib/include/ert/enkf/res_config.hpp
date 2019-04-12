@@ -62,6 +62,8 @@ typedef struct res_config_struct res_config_type;
   void              res_config_free(res_config_type *);
   void              res_config_add_config_items(config_parser_type * config_parser);
 
+config_content_type * res_config_alloc_user_content(const char * user_config_file,
+                                                    config_parser_type * config_parser);
 const site_config_type       * res_config_get_site_config(const res_config_type *);
 rng_config_type              * res_config_get_rng_config(const res_config_type *);
 const analysis_config_type   * res_config_get_analysis_config(const res_config_type *);

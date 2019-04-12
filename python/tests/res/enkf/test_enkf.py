@@ -76,7 +76,8 @@ class EnKFTest(ResTest):
 
     def test_site_bootstrap( self ):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
-            EnKFMain(None)
+            with  self.assertRaises(ValueError):
+                EnKFMain(None)
 
     def test_default_res_config(self):
         with TestAreaContext("enkf_test", store_area=True) as work_area:

@@ -30,8 +30,6 @@ from res.enkf import (SiteConfig, AnalysisConfig, SubstConfig, ModelConfig, EclC
 class ResConfig(BaseCClass):
     TYPE_NAME = "res_config"
 
-    _alloc_load = ResPrototype("void* res_config_alloc_load(char*)", bind=False)
-    _alloc      = ResPrototype("void* res_config_alloc(config_content)", bind=False)
     _free       = ResPrototype("void res_config_free(res_config)")
     _alloc_full = ResPrototype("void* res_config_alloc_full("
                                "char*, " 
@@ -51,6 +49,7 @@ class ResConfig(BaseCClass):
                                "config_content)"
                                , bind=False)
 
+    _alloc_config_content = ResPrototype("config_content_ref res_config_alloc_user_content(char*, config_parser)", bind=False)
     _user_config_file  = ResPrototype("char* res_config_get_user_config_file(res_config)")
     _config_path       = ResPrototype("char* res_config_get_config_directory(res_config)")
     _site_config       = ResPrototype("site_config_ref res_config_get_site_config(res_config)")
@@ -65,7 +64,6 @@ class ResConfig(BaseCClass):
     _rng_config        = ResPrototype("rng_config_ref res_config_get_rng_config(res_config)")
     _ert_templates     = ResPrototype("ert_templates_ref res_config_get_templates(res_config)")
     _log_config        = ResPrototype("log_config_ref res_config_get_log_config(res_config)")
-    _add_config_items  = ResPrototype("void res_config_add_config_items(config_parser)")
     _init_parser       = ResPrototype("void res_config_init_config_parser(config_parser)", bind=False)
 
 
@@ -76,60 +74,67 @@ class ResConfig(BaseCClass):
 
         if config is not None:
             config_content = self._build_config_content(config)
-            config_dir = config_content.getValue(ConfigKeys.CONFIG_DIRECTORY)
+        elif user_config_file is not None:
 
-            subst_config = SubstConfig(config_content=config_content)
-            site_config = SiteConfig(config_content=config_content)
-            rng_config = RNGConfig(config_content=config_content)
-            analysis_config = AnalysisConfig(config_content=config_content)
-            plot_config = PlotSettings(config_content=config_content)
-            ecl_config = EclConfig(config_content=config_content)
-            log_config = LogConfig(config_content=config_content)
+            parser = ConfigParser()
 
-            ert_workflow_list = ErtWorkflowList(ert_workflow_list=subst_config.subst_list,
-                                                config_content=config_content)
-
-            hook_manager = HookManager(workflow_list=ert_workflow_list,
-                                       config_content=config_content)
-
-            ert_templates = ErtTemplates(parent_subst=subst_config.subst_list,
-                                         config_content=config_content)
-
-            ensemble_config = EnsembleConfig(config_content=config_content,
-                                             grid=ecl_config.getGrid(),
-                                             refcase=ecl_config.getRefcase())
-
-            model_config = ModelConfig(config_content=config_content,
-                                       data_root=config_dir,
-                                       joblist=site_config.get_installed_jobs(),
-                                       last_history_restart=ecl_config.getLastHistoryRestart(),
-                                       sched_file=ecl_config._get_sched_file(),
-                                       refcase=ecl_config.getRefcase())
-
-            configs = [
-                     subst_config,
-                     site_config,
-                     rng_config,
-                     analysis_config,
-                     ert_workflow_list,
-                     hook_manager,
-                     ert_templates,
-                     plot_config,
-                     ecl_config,
-                     ensemble_config,
-                     model_config,
-                     log_config,
-                     config_content]
-
-            c_ptr = None
-
-            if not self.errors or not throw_on_error:
-                for conf in configs:
-                    conf.convertToCReference(None)
-                c_ptr = self._alloc_full(config_dir, user_config_file, *configs)
-
+            config_content = self._alloc_config_content(user_config_file, parser)
         else:
-            c_ptr = self._alloc_load(user_config_file)
+            raise ValueError("No config provided")
+
+
+
+        config_dir = config_content.getValue(ConfigKeys.CONFIG_DIRECTORY)
+
+        subst_config = SubstConfig(config_content=config_content)
+        site_config = SiteConfig(config_content=config_content)
+        rng_config = RNGConfig(config_content=config_content)
+        analysis_config = AnalysisConfig(config_content=config_content)
+        plot_config = PlotSettings(config_content=config_content)
+        ecl_config = EclConfig(config_content=config_content)
+        log_config = LogConfig(config_content=config_content)
+
+        ert_workflow_list = ErtWorkflowList(ert_workflow_list=subst_config.subst_list,
+                                            config_content=config_content)
+
+        hook_manager = HookManager(workflow_list=ert_workflow_list,
+                                   config_content=config_content)
+
+        ert_templates = ErtTemplates(parent_subst=subst_config.subst_list,
+                                     config_content=config_content)
+
+        ensemble_config = EnsembleConfig(config_content=config_content,
+                                         grid=ecl_config.getGrid(),
+                                         refcase=ecl_config.getRefcase())
+
+        model_config = ModelConfig(config_content=config_content,
+                                   data_root=config_dir,
+                                   joblist=site_config.get_installed_jobs(),
+                                   last_history_restart=ecl_config.getLastHistoryRestart(),
+                                   sched_file=ecl_config._get_sched_file(),
+                                   refcase=ecl_config.getRefcase())
+
+        configs = [
+            subst_config,
+            site_config,
+            rng_config,
+            analysis_config,
+            ert_workflow_list,
+            hook_manager,
+            ert_templates,
+            plot_config,
+            ecl_config,
+            ensemble_config,
+            model_config,
+            log_config,
+            config_content]
+
+        c_ptr = None
+
+        if not self.errors or not throw_on_error:
+            for conf in configs:
+                conf.convertToCReference(None)
+            c_ptr = self._alloc_full(config_dir, user_config_file, *configs)
 
 
         if c_ptr:

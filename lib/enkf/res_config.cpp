@@ -120,7 +120,7 @@ static void res_config_install_config_key(
 }
 
 
-static config_content_type * res_config_alloc_user_content(
+config_content_type * res_config_alloc_user_content(
                                 const char * user_config_file,
                                 config_parser_type * config_parser) {
 
