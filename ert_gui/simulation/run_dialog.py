@@ -193,7 +193,7 @@ class RunDialog(QDialog):
             if self._run_model.hasRunFailed():
                 error = self._run_model.getFailMessage()
                 QMessageBox.critical(self, "Simulations failed!", "The simulation failed with the following error:\n\n%s" % error)
-                self.reject()
+                
             return True
         return False
 
