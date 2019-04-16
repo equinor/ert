@@ -254,7 +254,7 @@ def main(argv):
     window.addTool(RunAnalysisTool())
     window.addTool(LoadResultsTool())
     window.addTool(help_tool)
-
+    window.adjustSize()
     sleep_time = 2 - (time.time() - now)
 
     if sleep_time > 0:
