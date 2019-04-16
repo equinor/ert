@@ -82,6 +82,8 @@ class ResConfig(BaseCClass):
         else:
             raise ValueError("No config provided")
 
+        if self.errors and throw_on_error:
+            raise ValueError("Error loading configuration")
 
 
         config_dir = config_content.getValue(ConfigKeys.CONFIG_DIRECTORY)
@@ -131,10 +133,10 @@ class ResConfig(BaseCClass):
 
         c_ptr = None
 
-        if not self.errors or not throw_on_error:
-            for conf in configs:
-                conf.convertToCReference(None)
-            c_ptr = self._alloc_full(config_dir, user_config_file, *configs)
+
+        for conf in configs:
+            conf.convertToCReference(None)
+        c_ptr = self._alloc_full(config_dir, user_config_file, *configs)
 
 
         if c_ptr:
