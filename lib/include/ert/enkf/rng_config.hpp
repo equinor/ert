@@ -41,6 +41,7 @@ typedef struct rng_config_struct rng_config_type;
   void               rng_config_set_seed_store_file( rng_config_type * rng_config , const char * seed_store_file);
   rng_config_type  * rng_config_alloc_load_user_config(const char * user_config_file);
   rng_config_type  * rng_config_alloc(const config_content_type * config_content);
+  rng_config_type  * rng_config_alloc_full(const char * random_seed, const char * store_seed, const char * load_seed);
   void               rng_config_free( rng_config_type * rng);
   void               rng_config_add_config_items( config_parser_type * config );
   rng_manager_type * rng_config_alloc_rng_manager( const rng_config_type * rng_config );

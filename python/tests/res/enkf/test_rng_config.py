@@ -67,6 +67,36 @@ class RNGConfigTest(ResTest):
 
             self.assertIsNone(res_config.rng_config.random_seed)
 
+    def test_dict_constructor(self):
+        config = self.create_base_config()
+
+        seed_store = "../input/rng/SEED_STORE"
+        seed_load = "../input/rng/SEED"
+        config["SIMULATION"]["SEED"] = {ConfigKeys.STORE_SEED: seed_store,
+                                        ConfigKeys.LOAD_SEED: seed_load}
+        case_directory = self.createTestPath("local/simple_config")
+        with TestAreaContext("rng_config") as work_area:
+            work_area.copy_directory(case_directory)
+            rng_config = RNGConfig(config_dict=config["SIMULATION"]["SEED"])
+            res_config = ResConfig(config=config)
+            self.assertEqual(rng_config, res_config.rng_config)
+
+            random_seed = "abcdefghijklmnop"
+            config["SIMULATION"]["SEED"] = {ConfigKeys.RANDOM_SEED: random_seed}
+
+            rng_config = RNGConfig(config_dict=config["SIMULATION"]["SEED"])
+            res_config = ResConfig(config=config)
+            self.assertEqual(rng_config, res_config.rng_config)
+
+            #seed store and seed load should be ignored by both constructors
+            config["SIMULATION"]["SEED"] = {ConfigKeys.RANDOM_SEED: random_seed,
+                                        ConfigKeys.STORE_SEED: seed_store,
+                                        ConfigKeys.LOAD_SEED: seed_load
+                                        }
+
+            rng_config = RNGConfig(config_dict=config["SIMULATION"]["SEED"])
+            res_config = ResConfig(config=config)
+            self.assertEqual(rng_config, res_config.rng_config)
 
     def test_random_seed(self):
         config = self.create_base_config()

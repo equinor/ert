@@ -125,6 +125,16 @@ rng_config_type * rng_config_alloc(const config_content_type * config_content) {
 
   return rng_config;
 }
+rng_config_type * rng_config_alloc_full(const char * random_seed, const char * store_seed, const char * load_seed) {
+  rng_config_type * rng_config = rng_config_alloc_default();
+
+  rng_config->random_seed = util_realloc_string_copy(rng_config->random_seed, random_seed);
+  rng_config->seed_store_file = util_realloc_string_copy(rng_config->seed_store_file, store_seed);
+  rng_config->seed_load_file = util_realloc_string_copy(rng_config->seed_load_file, load_seed);
+
+  return rng_config;
+}
+
 
 void rng_config_free( rng_config_type * rng) {
   free( rng->seed_load_file );
