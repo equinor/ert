@@ -23,7 +23,7 @@ from res.enkf import (AnalysisConfig, EclConfig, LocalConfig, ModelConfig,
                       EnsembleConfig, SiteConfig, ResConfig, QueueConfig)
 from res.enkf import (EnkfObs, EnKFState,
                       EnkfSimulationRunner, EnkfFsManager)
-from res.enkf import (PlotSettings, ErtWorkflowList, HookManager, HookWorkflow,
+from res.enkf import (ErtWorkflowList, HookManager, HookWorkflow,
                       ESUpdate)
 from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.key_manager import KeyManager
@@ -174,7 +174,6 @@ class _RealEnKFMain(BaseCClass):
     _get_analysis_config = ResPrototype("analysis_config_ref enkf_main_get_analysis_config( enkf_main)")
     _get_site_config = ResPrototype("site_config_ref enkf_main_get_site_config( enkf_main)")
     _get_ecl_config = ResPrototype("ecl_config_ref enkf_main_get_ecl_config( enkf_main)")
-    _get_plot_config = ResPrototype("plot_settings_ref enkf_main_get_plot_config( enkf_main)")
     _get_schedule_prediction_file = ResPrototype("char* enkf_main_get_schedule_prediction_file( enkf_main )")
     _get_data_kw = ResPrototype("subst_list_ref enkf_main_get_data_kw(enkf_main)")
     _clear_data_kw = ResPrototype("void enkf_main_clear_data_kw(enkf_main)")
@@ -323,10 +322,6 @@ class _RealEnKFMain(BaseCClass):
     def eclConfig(self):
         """ @rtype: EclConfig """
         return self._get_ecl_config( ).setParent(self)
-
-    def plotConfig(self):
-        """ @rtype: PlotConfig """
-        return self._get_plot_config( ).setParent(self)
 
     def get_schedule_prediction_file(self):
         schedule_prediction_file = self._get_schedule_prediction_file( )

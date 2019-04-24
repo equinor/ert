@@ -24,9 +24,8 @@ from res import ResPrototype
 from res.config import (ConfigParser, ConfigContent, ConfigSettings,
                         UnrecognizedEnum)
 
-from res.enkf import (SiteConfig, AnalysisConfig, SubstConfig, ModelConfig, EclConfig, PlotSettings,
-                      EnsembleConfig, RNGConfig, ConfigKeys, ErtWorkflowList, HookManager, ErtTemplates, LogConfig,
-                      QueueConfig)
+from res.enkf import (SiteConfig, AnalysisConfig, SubstConfig, ModelConfig, EclConfig, QueueConfig,
+                      EnsembleConfig, RNGConfig, ConfigKeys, ErtWorkflowList, HookManager, ErtTemplates, LogConfig)
 
 class ResConfig(BaseCClass):
     TYPE_NAME = "res_config"
@@ -41,8 +40,7 @@ class ResConfig(BaseCClass):
                                "analysis_config, " 
                                "ert_workflow_list, " 
                                "hook_manager, " 
-                               "ert_templates, " 
-                               "plot_settings, " 
+                               "ert_templates, "  
                                "ecl_config, " 
                                "ens_config, " 
                                "model_config, " 
@@ -59,7 +57,6 @@ class ResConfig(BaseCClass):
     _model_config      = ResPrototype("model_config_ref res_config_get_model_config(res_config)")
     _ecl_config        = ResPrototype("ecl_config_ref res_config_get_ecl_config(res_config)")
     _ensemble_config   = ResPrototype("ens_config_ref res_config_get_ensemble_config(res_config)")
-    _plot_config       = ResPrototype("plot_settings_ref res_config_get_plot_config(res_config)")
     _hook_manager      = ResPrototype("hook_manager_ref res_config_get_hook_manager(res_config)")
     _ert_workflow_list = ResPrototype("ert_workflow_list_ref res_config_get_workflow_list(res_config)")
     _rng_config        = ResPrototype("rng_config_ref res_config_get_rng_config(res_config)")
@@ -85,7 +82,7 @@ class ResConfig(BaseCClass):
             raise ValueError("No config provided")
 
         if self.errors and throw_on_error:
-            raise ValueError("Error loading configuration")
+            raise ValueError("Error loading configuration: " + str(self._errors))
 
 
         config_dir = config_content.getValue(ConfigKeys.CONFIG_DIRECTORY)
@@ -94,7 +91,6 @@ class ResConfig(BaseCClass):
         site_config = SiteConfig(config_content=config_content)
         rng_config = RNGConfig(config_content=config_content)
         analysis_config = AnalysisConfig(config_content=config_content)
-        plot_config = PlotSettings(config_content=config_content)
         ecl_config = EclConfig(config_content=config_content)
         log_config = LogConfig(config_content=config_content)
         queue_config = QueueConfig(config_content=config_content)
@@ -127,7 +123,6 @@ class ResConfig(BaseCClass):
             ert_workflow_list,
             hook_manager,
             ert_templates,
-            plot_config,
             ecl_config,
             ensemble_config,
             model_config,
@@ -237,19 +232,6 @@ class ResConfig(BaseCClass):
                 queue_config.append((key, self._parse_value(value)))
 
         return queue_config
-
-
-    def _extract_plot_settings(self, config):
-        if ConfigKeys.PLOT_SETTINGS not in config:
-            return []
-
-        pc = config[ConfigKeys.PLOT_SETTINGS]
-        plot_config = []
-        for key in pc:
-            plot_config.append((ConfigKeys.PLOT_SETTINGS, [key, pc[key]]))
-
-        return plot_config
-
 
     def _extract_install_job(self, config):
         if ConfigKeys.INSTALL_JOB not in config:
@@ -402,10 +384,6 @@ class ResConfig(BaseCClass):
         # Extract queue system
         sim_filter.append(ConfigKeys.QUEUE_SYSTEM)
         simulation_config += self._extract_queue_system(sc)
-
-        # Extract plot settings
-        sim_filter.append(ConfigKeys.PLOT_SETTINGS)
-        simulation_config += self._extract_plot_settings(sc)
 
         # Extract install job
         sim_filter.append(ConfigKeys.INSTALL_JOB)
@@ -566,10 +544,6 @@ class ResConfig(BaseCClass):
     @property
     def ensemble_config(self):
         return self._ensemble_config()
-
-    @property
-    def plot_config(self):
-        return self._plot_config()
 
     @property
     def hook_manager(self):

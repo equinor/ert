@@ -30,7 +30,6 @@
 #include <ert/enkf/subst_config.hpp>
 #include <ert/enkf/hook_manager.hpp>
 #include <ert/enkf/ert_template.hpp>
-#include <ert/enkf/plot_settings.hpp>
 #include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/model_config.hpp>
@@ -49,7 +48,6 @@ struct res_config_struct {
   subst_config_type      * subst_config;
   hook_manager_type      * hook_manager;
   ert_templates_type     * templates;
-  config_settings_type   * plot_config;
   ecl_config_type        * ecl_config;
   ensemble_config_type   * ensemble_config;
   model_config_type      * model_config;
@@ -74,7 +72,6 @@ static res_config_type * res_config_alloc_empty() {
   res_config->subst_config      = NULL;
   res_config->hook_manager      = NULL;
   res_config->templates         = NULL;
-  res_config->plot_config       = NULL;
   res_config->ecl_config        = NULL;
   res_config->ensemble_config   = NULL;
   res_config->model_config      = NULL;
@@ -221,7 +218,6 @@ res_config_type * res_config_alloc(const config_content_type * config_content) {
                                     config_content
                                     );
 
-  res_config->plot_config     = plot_settings_alloc(config_content);
   res_config->ecl_config      = ecl_config_alloc(config_content);
 
   res_config->ensemble_config = ensemble_config_alloc(config_content,
@@ -253,7 +249,6 @@ res_config_type * res_config_alloc_full(char * config_dir,
                                         ert_workflow_list_type * workflow_list,
                                         hook_manager_type * hook_manager,
                                         ert_templates_type * templates,
-                                        config_settings_type * plot_settings,
                                         ecl_config_type * ecl_config,
                                         ensemble_config_type * ensemble_config,
                                         model_config_type * model_config,
@@ -270,7 +265,6 @@ res_config_type * res_config_alloc_full(char * config_dir,
   res_config->workflow_list = workflow_list;
   res_config->hook_manager = hook_manager;
   res_config->templates = templates;
-  res_config->plot_config = plot_settings;
   res_config->ecl_config = ecl_config;
   res_config->ensemble_config = ensemble_config;
   res_config->model_config = model_config;
@@ -290,7 +284,6 @@ void res_config_free(res_config_type * res_config) {
   subst_config_free(res_config->subst_config);
   hook_manager_free(res_config->hook_manager);
   ert_templates_free(res_config->templates);
-  config_settings_free(res_config->plot_config);
   ecl_config_free(res_config->ecl_config);
   ensemble_config_free(res_config->ensemble_config);
   model_config_free(res_config->model_config);
@@ -344,11 +337,6 @@ ert_templates_type * res_config_get_templates(
   return res_config->templates;
 }
 
-const config_settings_type * res_config_get_plot_config(
-                    const res_config_type * res_config
-                  ) {
-  return res_config->plot_config;
-}
 
 const ecl_config_type * res_config_get_ecl_config(
                     const res_config_type * res_config

@@ -39,7 +39,6 @@
 #include <ert/job_queue/forward_model.hpp>
 
 #include <ert/enkf/res_config.hpp>
-#include <ert/enkf/plot_settings.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_state.hpp>
@@ -134,7 +133,6 @@ extern "C" {
   //const enkf_sched_type       * enkf_main_get_enkf_sched(const enkf_main_type *);
   model_config_type           * enkf_main_get_model_config( const enkf_main_type * );
   local_config_type           * enkf_main_get_local_config( const enkf_main_type * enkf_main );
-  const config_settings_type  * enkf_main_get_plot_config( const enkf_main_type * enkf_main );
   bool                          enkf_main_load_obs(enkf_main_type *, const char *, bool);
   enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );
   bool                          enkf_main_have_obs( const enkf_main_type * enkf_main );

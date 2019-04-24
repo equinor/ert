@@ -354,13 +354,6 @@ class ResConfigTest(ResTest):
                 working_dir
                 )
 
-
-    def assert_plot_config(self, plot_config, config_data):
-        self.assertEqual(
-                config_data["PLOT_PATH"],
-                plot_config.getPath()
-                )
-
     def assert_hook_manager(self, hook_manager, config_data, working_dir):
         self.assert_same_config_file(
                     config_data["RUNPATH_FILE"],
@@ -457,7 +450,6 @@ class ResConfigTest(ResTest):
             self.assert_site_config(res_config.site_config, config_data, work_dir)
             self.assert_ecl_config(res_config.ecl_config, config_data, work_dir)
             self.assert_ensemble_config(res_config.ensemble_config, config_data, work_dir)
-            self.assert_plot_config(res_config.plot_config, config_data)
             self.assert_hook_manager(res_config.hook_manager, config_data, work_dir)
             self.assert_ert_workflow_list(res_config.ert_workflow_list, config_data, work_dir)
             self.assert_rng_config(res_config.rng_config, config_data, work_dir)

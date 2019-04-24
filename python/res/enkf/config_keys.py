@@ -26,7 +26,9 @@ class ConfigKeys:
     _history_source_key   = ResPrototype("char* config_keys_get_history_source_key()", bind=False)
     _queue_option_key     = ResPrototype("char* config_keys_get_queue_option_key()", bind=False)
     _install_job_key      = ResPrototype("char* config_keys_get_install_job_key()", bind=False)
-    _plot_settings_key    = ResPrototype("char* config_keys_get_plot_setting_key()", bind=False)
+    _path_key             = ResPrototype("char* config_keys_get_path_key()", bind=False)
+    _show_refcase_key     = ResPrototype("char* config_keys_get_show_refcase_key()", bind=False)
+    _show_history_key     = ResPrototype("char* config_keys_get_show_history_key()", bind=False)
     _forward_model_key    = ResPrototype("char* config_keys_get_forward_model_key()", bind=False)
     _simulation_job_key   = ResPrototype("char* config_keys_get_simulation_job_key()", bind=False)
     _log_file_key         = ResPrototype("char* config_keys_get_log_file_key()", bind=False)
@@ -85,7 +87,9 @@ class ConfigKeys:
     OPTION           = "OPTION"
     VALUE            = "VALUE"
     INSTALL_JOB      = _install_job_key()
-    PLOT_SETTINGS    = _plot_settings_key()
+    PATH_KEY         = _path_key
+    SHOW_REFCASE_KEY = _show_refcase_key
+    SHOW_HISTORY_KEY = _show_history_key
     FORWARD_MODEL    = _forward_model_key()
     SIMULATION_JOB   = _simulation_job_key()
     LOG_FILE         = _log_file_key()

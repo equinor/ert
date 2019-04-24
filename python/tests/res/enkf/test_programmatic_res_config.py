@@ -495,10 +495,6 @@ class ProgrammaticResConfigTest(ResTest):
             self.assertEqual(ljob.executable(), pjob.executable())
 
 
-    def assert_equal_plot_config(self, loaded_plot_config, prog_plot_config):
-        self.assertEqual(loaded_plot_config.getPath(),
-                         prog_plot_config.getPath())
-
     def assert_equal_simulation_config(self, loaded_simulation_config, prog_simulation_config):
         self.assertEqual(loaded_simulation_config.getPath(),
                          prog_simulation_config.getPath())
@@ -555,9 +551,6 @@ class ProgrammaticResConfigTest(ResTest):
 
             self.assert_equal_ert_workflow(loaded_res_config.ert_workflow_list,
                                            prog_res_config.ert_workflow_list)
-
-            self.assert_equal_plot_config(loaded_res_config.plot_config,
-                                          prog_res_config.plot_config)
 
             self.assertEqual(loaded_res_config.queue_config, prog_res_config.queue_config)
 

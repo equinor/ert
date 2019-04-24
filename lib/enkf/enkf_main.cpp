@@ -83,7 +83,6 @@
 #include <ert/enkf/enkf_main.hpp>
 #include <ert/enkf/res_config.hpp>
 #include <ert/enkf/enkf_serialize.hpp>
-#include <ert/enkf/plot_settings.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/model_config.hpp>
 #include <ert/enkf/hook_manager.hpp>
@@ -239,10 +238,6 @@ local_config_type * enkf_main_get_local_config( const enkf_main_type * enkf_main
 
 model_config_type * enkf_main_get_model_config( const enkf_main_type * enkf_main ) {
   return res_config_get_model_config(enkf_main->res_config);
-}
-
-const config_settings_type * enkf_main_get_plot_config( const enkf_main_type * enkf_main ) {
-  return res_config_get_plot_config(enkf_main->res_config);
 }
 
 ranking_table_type * enkf_main_get_ranking_table( const enkf_main_type * enkf_main ) {

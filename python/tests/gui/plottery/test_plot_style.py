@@ -1,7 +1,6 @@
 import datetime
 
 from tests import ResTest
-from res.enkf import PlotSettings
 from ert_gui.plottery import PlotStyle, PlotConfig, PlotLimits
 
 
@@ -80,8 +79,7 @@ class PlotStyleTest(ResTest):
 
 
     def test_plot_config(self):
-        ps = PlotSettings( )
-        plot_config = PlotConfig(ps , "Golden Sample", x_label="x", y_label="y")
+        plot_config = PlotConfig("Golden Sample", x_label="x", y_label="y")
 
         limits = PlotLimits()
         limits.count_limits = 1, 2
@@ -111,7 +109,7 @@ class PlotStyleTest(ResTest):
         plot_config.setStatisticsStyle("p33-p67", style)
         plot_config.setStatisticsStyle("std", style)
 
-        copy_of_plot_config = PlotConfig(ps , "Copy of Golden Sample")
+        copy_of_plot_config = PlotConfig("Copy of Golden Sample")
         copy_of_plot_config.copyConfigFrom(plot_config)
 
         self.assertEqual(plot_config.isLegendEnabled(), copy_of_plot_config.isLegendEnabled())

@@ -49,7 +49,6 @@
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/time_map.hpp>
 #include <ert/enkf/ert_workflow_list.hpp>
-#include <ert/enkf/plot_settings.hpp>
 #include <ert/enkf/analysis_config.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/ecl_config.hpp>
@@ -765,7 +764,14 @@ static void model_config_init_user_config(config_parser_type * config ) {
   /*****************************************************************/
 
   ert_workflow_list_add_config_items( config );
-  plot_settings_add_config_items( config );
+  {
+     item = config_add_schema_item(config, PLOT_SETTING_KEY, false);
+     config_install_message(
+      config, PLOT_SETTING_KEY,
+      "** Warning: \'PLOT_SETTINGS\' is ignored"
+      "- use the general dialog windows instead."
+      );
+  }
   analysis_config_add_config_items( config );
   ensemble_config_add_config_items( config );
   ecl_config_add_config_items( config );

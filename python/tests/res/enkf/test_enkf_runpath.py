@@ -20,7 +20,7 @@ from tests import ResTest
 from ecl.util.util import BoolVector
 
 from res.enkf import (EnsembleConfig, AnalysisConfig, ModelConfig, SiteConfig,
-                      EclConfig, PlotSettings, EnkfObs, ErtTemplates, EnkfFs,
+                      EclConfig, EnkfObs, ErtTemplates, EnkfFs,
                       EnKFState, EnkfVarType, ObsVector, RunArg, ResConfig)
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_main import EnKFMain

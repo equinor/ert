@@ -54,7 +54,6 @@ typedef struct res_config_struct res_config_type;
                                         ert_workflow_list_type * workflow_list,
                                         hook_manager_type * hook_manager,
                                         ert_templates_type * templates,
-                                        config_settings_type * plot_settings,
                                         ecl_config_type * ecl_config,
                                         ensemble_config_type * ensemble_config,
                                         model_config_type * model_config,
@@ -72,7 +71,6 @@ ert_workflow_list_type       * res_config_get_workflow_list(const res_config_typ
 subst_config_type            * res_config_get_subst_config(const res_config_type * res_config);
 const hook_manager_type      * res_config_get_hook_manager(const res_config_type * res_config);
 ert_templates_type           * res_config_get_templates(const res_config_type * res_config);
-const config_settings_type   * res_config_get_plot_config(const res_config_type * res_config);
 const ecl_config_type        * res_config_get_ecl_config(const res_config_type * res_config);
 ensemble_config_type         * res_config_get_ensemble_config(const res_config_type * res_config);
 model_config_type            * res_config_get_model_config(const res_config_type * res_config);

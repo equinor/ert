@@ -79,7 +79,6 @@ from .ert_template import ErtTemplate
 from .ert_templates import ErtTemplates
 from .local_config import LocalConfig
 from .model_config import ModelConfig
-from .plot_settings import PlotSettings
 from .runpath_list import RunpathList, RunpathNode
 from .hook_workflow import HookWorkflow
 from .hook_manager import HookManager

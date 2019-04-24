@@ -61,7 +61,6 @@ from res.enkf import ErtTemplate
 from res.enkf import ErtTemplates
 from res.enkf import LocalConfig
 from res.enkf import ModelConfig
-from res.enkf import PlotSettings
 from res.enkf import SiteConfig
 from res.enkf import RunpathList, RunpathNode
 from res.enkf import HookWorkflow

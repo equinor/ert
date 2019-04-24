@@ -20,7 +20,7 @@ from tests import ResTest
 
 from ecl.util.util import BoolVector
 from res.enkf import (EnsembleConfig, AnalysisConfig, ModelConfig, SiteConfig,
-                      EclConfig, PlotSettings, EnkfObs, ErtTemplates, EnkfFs,
+                      EclConfig, EnkfObs, ErtTemplates, EnkfFs,
                       EnKFState, EnkfVarType, ObsVector, RunArg, ResConfig)
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_main import EnKFMain
@@ -170,16 +170,12 @@ class EnKFTest(ResTest):
             self.assertIsInstance(main.ensembleConfig(), EnsembleConfig)
             self.assertIsInstance(main.analysisConfig(), AnalysisConfig)
             self.assertIsInstance(main.getModelConfig(), ModelConfig)
-            #self.assertIsInstance(main.local_config(), LocalConfig) #warn: Should this be None?
             self.assertIsInstance(main.siteConfig(), SiteConfig)
             self.assertIsInstance(main.eclConfig(), EclConfig)
-            self.assertIsInstance(main.plotConfig(), PlotSettings)
 
-            # self.main.load_obs(obs_config_file)
             self.assertIsInstance(main.getObservations(), EnkfObs)
             self.assertIsInstance(main.get_templates(), ErtTemplates)
             self.assertIsInstance(main.getEnkfFsManager().getCurrentFileSystem(), EnkfFs)
-            # self.assertIsInstance(main.iget_member_config(0), MemberConfig)
             self.assertIsInstance(main.getMemberRunningState(0), EnKFState)
 
             self.assertEqual( "simple_config/Ensemble" , main.getMountPoint())
