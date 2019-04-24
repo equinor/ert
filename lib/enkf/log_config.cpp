@@ -44,6 +44,13 @@ static log_config_type * log_config_alloc_default() {
   return log_config;
 }
 
+log_config_type * log_config_alloc_full(const char * log_file, message_level_type message_level) {
+  log_config_type * log_config = (log_config_type *)util_malloc(sizeof * log_config);
+  log_config->log_file = util_alloc_string_copy(log_file);
+  log_config->message_level = message_level;
+
+  return log_config;
+}
 
 log_config_type * log_config_alloc_load(const char * config_file) {
   config_parser_type * config_parser = config_alloc();

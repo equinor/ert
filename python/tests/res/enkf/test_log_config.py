@@ -20,7 +20,7 @@ from ecl.util.test import TestAreaContext
 from tests import ResTest
 from res.util.enums import MessageLevelEnum
 
-from res.enkf import LogConfig, ResConfig
+from res.enkf import LogConfig, ResConfig, ConfigKeys
 
 class LogConfigTest(ResTest):
 
@@ -50,20 +50,36 @@ class LogConfigTest(ResTest):
             write_abs_path=False
             ):
 
-
         with TestAreaContext("log_config_test") as work_area:
             work_area.copy_directory(self.case_directory)
 
+            config_dict = {}
             # Append config file
             with open(self.config_file, 'a') as cf:
                 if log_file:
+                    config_dict[ConfigKeys.LOG_FILE] = os.path.realpath(
+                        os.path.join(
+                            os.path.abspath(
+                                os.path.split(
+                                    self.config_file)[0]
+                            ), log_file
+                        )
+                    )
+
                     if write_abs_path:
-                        log_file = os.path.join(
-                                os.path.abspath(os.path.split(self.config_file)[0]),
-                                log_file
-                                )
+                        log_file = config_dict[ConfigKeys.LOG_FILE]
 
                     cf.write("\nLOG_FILE %s\n" % log_file)
+
+                else:
+                    config_dict[ConfigKeys.LOG_FILE] = os.path.realpath(
+                        os.path.join(
+                            os.path.abspath(
+                                os.path.split(
+                                    self.config_file)[0]
+                            ), "log.txt"
+                        )
+                    )
 
                 if log_level:
                     level = log_level
@@ -71,18 +87,29 @@ class LogConfigTest(ResTest):
                         if not log_level.isalpha():
                             level = int(float(level))
                     cf.write("\nLOG_LEVEL %s\n" % level)
+                    if type(level) is str and level.isdigit():
+                        config_dict[ConfigKeys.LOG_LEVEL] = MessageLevelEnum.to_enum(eval(level))
+                    elif type(level) is str:
+                        config_dict[ConfigKeys.LOG_LEVEL] = MessageLevelEnum.from_string("LOG_" + level)
+                    else:
+                        config_dict[ConfigKeys.LOG_LEVEL] = MessageLevelEnum.to_enum(level)
+                else:
+                    config_dict[ConfigKeys.LOG_LEVEL] = MessageLevelEnum.LOG_WARNING
 
-            log_config = LogConfig(self.config_file)
+            log_config = LogConfig(user_config_file=self.config_file)
+            res_config = ResConfig(self.config_file)
+            log_config_dict = LogConfig(config_dict=config_dict)
+            self.assertEqual(log_config, log_config_dict)
+            self.assertEqual(log_config, res_config.log_config)
 
             self.assertTrue(os.path.isabs(log_config.log_file))
-
 
             self.assertEqual(
                     os.path.normpath(log_config.log_file),
                     os.path.normpath(os.path.abspath(exp_log_file))
                     )
 
-            if isinstance(log_config.log_level,int):
+            if isinstance(log_config.log_level, int):
                 level = MessageLevelEnum.to_enum(log_config.log_level)
             else:
                 level = log_config.log_level
@@ -95,7 +122,6 @@ class LogConfigTest(ResTest):
 
     def test_log_config(self):
         test_cases = itertools.product(self.log_files, self.log_levels)
-
 
         for log_file_data, log_level_data in test_cases:
             self.assert_log_config_load(
