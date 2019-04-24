@@ -37,7 +37,7 @@ def runCli( args ):
 
 
 def validate_cli_args(parser, args):
-    if args.algorithm == "ensemble_smoother" and args.target_case == "default":
+    if args.algorithm == "Ensemble Smoother" and args.target_case == "default":
         msg = "Target file system and source file system can not be the same. "\
               "They were both: <default>. Please set using --target-case on "\
               "the command line."
