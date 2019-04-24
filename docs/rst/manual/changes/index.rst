@@ -1,6 +1,73 @@
 Release notes for ERT
 =====================
 
+Version 2.5
+-----------
+
+This is a small release which only contains some improvements to the GUI due to
+user feedback. See the *Highlighted* section for the most prominent changes. For a more
+in-depth overview, as well as links to the relevant pull requests, we refer the
+reader to the repository specific sections.
+
+Highlighted changes
+~~~~~~~~~~~~~~~~~~~
+
+Open job logs from the GUI
+#############################
+Open the montoring by pressing `details`. If you select a realization and then
+click either its `stdout` or `stderr` you will get the corresponding output
+displayed in the GUI for easier debugging.
+
+Notify user of failing workflows
+###################################
+If workflows fail a list of the failing workflows will be presented to the
+user.
+
+Polishing monitoring window
+###################################
+Several minor improvements to the monitoring section, including embedding it
+into the existinging monitoring window, making the layout vertical to prevent
+scrolling, not setting the start and end times before they actually exist,
+colors etc is added to the monitoring window.
+
+Debug after ensemble failure
+####################################
+The above capablilities are available also after the entire ensemble has
+finished.
+
+
+2.5 ert application
+~~~~~~~~~~~~~~~~~~~
+
+New functionality:
+  - MacOS compatibility
+  - Notify user of failed workflows
+  - Allow the user to open logs from the forward models in the GUI
+
+Improvement:
+  - Revert to old plot style if more than one data point
+  - Validate that target is specified when running an update via the `cli`
+  - Merge detailed view into the old progress window
+  - Vertical layout of monitoring for better usability
+
+Others:
+  - Documentation for setting up custom jobs.
+  - Fix status on finished runs.
+
+
+2.5 libres
+~~~~~~~~~~
+Minor code improvement and exposure of status files.
+
+ert forward models
+~~~~~~~~~~~~~~~~~~~
+No changes.
+
+libecl
+~~~~~~~~~~
+No changes.
+
+
 Version 2.4
 -----------
 
