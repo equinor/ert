@@ -33,11 +33,11 @@ def runShell( args ):
 
 def runCli( args ):
     exec_path = os.path.join(os.path.dirname(__file__), "ert_cli")
-    runExec(exec_path, [args.config, args.mode, args.target_case])
+    runExec(exec_path, [args.config, args.algorithm, args.target_case])
 
 
 def validate_cli_args(parser, args):
-    if args.mode == "ensemble_smoother" and args.target_case == "default":
+    if args.algorithm == "ensemble_smoother" and args.target_case == "default":
         msg = "Target file system and source file system can not be the same. "\
               "They were both: <default>. Please set using --target-case on "\
               "the command line."
