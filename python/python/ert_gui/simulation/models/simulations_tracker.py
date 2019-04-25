@@ -67,9 +67,8 @@ class SimulationsTracker(object):
         done_flag  = JobStatusType.JOB_QUEUE_DONE | JobStatusType.JOB_QUEUE_SUCCESS
         done_state = SimulationStateStatus("Finished", done_flag, SimulationStateStatus.COLOR_FINISHED)
 
-        self.states = [waiting_state, pending_state, running_state, failed_state, done_state]
-        self.custom_states = [waiting_state, pending_state, running_state, failed_state, done_state]
-
+        self.states = [done_state, failed_state, running_state, pending_state, waiting_state]
+        self.custom_states = [done_state, failed_state, running_state, pending_state, waiting_state]
         self.__checkForUnusedEnums()
 
     def getStates(self):
