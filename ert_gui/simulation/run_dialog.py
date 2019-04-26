@@ -197,20 +197,37 @@ class RunDialog(QDialog):
             return True
         return False
 
+    def updateProgress(self, recount=True):
+        total_count = self._run_model.getQueueSize()
+        queue_status = self._run_model.getQueueStatus()
+        states = self.simulations_tracker.getStates()
+        if recount:
+            for state in states:
+                state.count = 0
+                state.total_count = total_count
+
+        for state in states:
+            for queue_state in queue_status:
+                if queue_state in state.state:
+                    state.count += queue_status[queue_state]
+
+            self.progress.updateState(state.state, 100.0 * state.count / state.total_count)
+            self.legends[state].updateLegend(state.name, state.count, state.total_count)
+
     def updateRunStatus(self):
         self.__status_label.setText(self._run_model.getPhaseName())
 
         if self.checkIfRunFinished():
             self.total_progress.setProgress(self._run_model.getProgress())
+            self.detailed_progress.set_progress(*self._run_model.getDetailedProgress())
+            self.updateProgress(False)
             return
 
         self.total_progress.setProgress(self._run_model.getProgress())
 
-        states = self.simulations_tracker.getStates()
-
         if self._run_model.isIndeterminate():
             self.progress.setIndeterminate(True)
-
+            states = self.simulations_tracker.getStates()
             for state in states:
                 self.legends[state].updateLegend(state.name, 0, 0)
 
@@ -221,20 +238,7 @@ class RunDialog(QDialog):
                 self._run_model.updateDetailedProgress() #update information without rendering
 
             self.progress.setIndeterminate(False)
-            total_count = self._run_model.getQueueSize()
-            queue_status = self._run_model.getQueueStatus()
-
-            for state in states:
-                state.count = 0
-                state.total_count = total_count
-
-            for state in states:
-                for queue_state in queue_status:
-                    if queue_state in state.state:
-                        state.count += queue_status[queue_state]
-
-                self.progress.updateState(state.state, 100.0 * state.count / state.total_count)
-                self.legends[state].updateLegend(state.name, state.count, state.total_count)
+            self.updateProgress()
 
         self.setRunningTime()
 
