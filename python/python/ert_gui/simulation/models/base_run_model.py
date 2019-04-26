@@ -231,7 +231,7 @@ class BaseRunModel(object):
     def is_forward_model_finished(progress):
         return not (any((job.status != 'Success' for job in progress)))
 
-
+    @job_queue({})
     def updateDetailedProgress(self):
         if not self._run_context:
             return
@@ -248,17 +248,22 @@ class BaseRunModel(object):
             except ValueError:
                 continue
 
+            status = None
+            if self._job_queue:
+                status = self._job_queue.getJobStatus(queue_index)
+
             fms = self.realization_progress[iteration].get(run_arg.iens, None)
-            if fms and BaseRunModel.is_forward_model_finished(fms):
-                continue
 
-            fms = ForwardModelStatus.load(run_arg.runpath, num_retry=1)
+            #Dont load from file if you are finished
+            if fms and BaseRunModel.is_forward_model_finished(fms[0]):
+                jobs = self.realization_progress[iteration][run_arg.iens][0]
+            else:
+                fms = ForwardModelStatus.load(run_arg.runpath, num_retry=1)
+                if not fms:
+                    continue
 
-            if not fms:
-                continue
-
-            jobs = fms.jobs
-            self.realization_progress[iteration][run_arg.iens] = jobs
+                jobs = fms.jobs
+            self.realization_progress[iteration][run_arg.iens] = jobs, status
 
     def getDetailedProgress(self):
         self.updateDetailedProgress()
@@ -270,7 +275,7 @@ class BaseRunModel(object):
             return self.realization_progress, self._last_run_iteration
 
         else:
-            return {},-1
+            return {}, -1
 
     def isIndeterminate(self):
         """ @rtype: bool """

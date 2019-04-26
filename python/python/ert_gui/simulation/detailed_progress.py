@@ -29,6 +29,8 @@ except ImportError:
                                QTabWidget)
   from PyQt5.QtGui import QPainter, QColor, QImage, QPen
 
+from res.job_queue import JobStatusType
+
 class DetailedProgress(QFrame):
     clicked = pyqtSignal(int)
 
@@ -67,7 +69,8 @@ class DetailedProgress(QFrame):
 
     def set_progress(self, progress, iteration):
         self.setMinimumHeight(200)
-        self._current_progress = sorted(progress.items(), key=lambda x: x[0])
+        self._current_progress = sorted([(iens, jobs, status) for iens, (jobs, status) in progress.items()],
+                                        key = lambda x: x[0])
         self._current_iteration = iteration
         self.update()
 
@@ -87,8 +90,8 @@ class DetailedProgress(QFrame):
         width = self.width()
         height = self.height()
         aspect_ratio = float(width)/height
-        nr_realizations = max([iens for iens, _ in self._current_progress]) + 1
-        fm_size = max([len(progress) for _ , progress in self._current_progress])
+        nr_realizations = max([iens for iens, _ , _ in self._current_progress]) + 1
+        fm_size = max([len(progress) for _ , progress, _  in self._current_progress])
         self.grid_height = math.ceil(math.sqrt(nr_realizations / aspect_ratio))
         self.grid_width = math.ceil(self.grid_height * aspect_ratio)
         sub_grid_size = math.ceil(math.sqrt(fm_size))
@@ -98,13 +101,13 @@ class DetailedProgress(QFrame):
         foreground_image = QImage(self.grid_width*sub_grid_size, self.grid_height*sub_grid_size, QImage.Format_ARGB32)
         foreground_image.fill(QColor(0, 0, 0, 0))
 
-        for index, (iens, progress) in enumerate(self._current_progress):
+        for index, (iens, progress, state) in enumerate(self._current_progress):
             y = int(iens / self.grid_width)
             x = int(iens - (y * self.grid_width))
             self.draw_window(x * sub_grid_size, y * sub_grid_size, progress, foreground_image)
         painter.drawImage(self.contentsRect(), foreground_image)
 
-        for index, (iens, progress) in enumerate(self._current_progress):
+        for index, (iens, progress, state) in enumerate(self._current_progress):
             y = int(iens / self.grid_width)
             x = int(iens - (y * self.grid_width))
 
@@ -115,6 +118,8 @@ class DetailedProgress(QFrame):
                 pen = QPen(QColor(240, 240, 240))
             elif(self.has_realization_failed(progress)):
                 pen = QPen(QColor(*self.state_colors['Failure']))
+            elif(state == JobStatusType.JOB_QUEUE_RUNNING):
+                pen = QPen(QColor(*self.state_colors['Running']))
             else:
                 pen = QPen(QColor(80, 80, 80))
 
@@ -333,6 +338,6 @@ class DetailedProgressWidget(QWidget):
         if  not self.selected_realization in self.progress[self.current_iteration]:
             return
 
-        self.single_view.update_data(self.progress[self.current_iteration][self.selected_realization],
+        self.single_view.update_data(self.progress[self.current_iteration][self.selected_realization][0],
                                      self.current_iteration,
                                      self.selected_realization)
