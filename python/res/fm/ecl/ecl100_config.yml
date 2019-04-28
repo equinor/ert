@@ -2,31 +2,22 @@
 #     class which essentially internalizes this file and the EclRun class
 #     which uses the EclConfig class.
 #
-# The information about an eclipse installation at a particular site is
-# stored in one such configuration file. The file has only one required
-# top level element: 'simulators' which describe the various simulators
-# which are installed. In additon you can optionally have a top level
-# element 'env' which is a dictionary representing environment variables
-# which should be set before the simulator starts.
-
-# The 'simulators' setting is a dictionary where the keys are the available
-# simulators. In the example below we have the simulators 'ecl100' and 'flow'.
-# Observe that the names 'flow' and 'ecl100' will be used as keys in the EclRun
-# class, i.e. these are *not* arbitrary strings.
+# The information about eclipse versions installed at a particular site is
+# assembled in configuration files like this one, there are separate files for
+# ecl100, ecl300 and opm/flow. The file has only one required top level element:
+# 'versions' - which describe the versions which are installed. In
+# additon you can optionally have a top level element 'env' which is a
+# dictionary representing environment variables which should be set before the
+# simulator starts.
 #
-# Each simulator can be installed in multiple versions, in the example below the
-# ecl100 simulator is installed in versions '2015.2' and '2017.2' whereas flow
-# is only installed in version '2018.04'. These version strings will be passed
-# as argv[1] when instantiating a EclRun instance.
-#
-# Finally each version of the programs can exist as a scalar single process
+# In the example below the ecl100 simulator is installed in versions '2015.2'
+# and '2017.2'. Each version of the program can exist as a scalar single process
 # application and a parallell MPI application. When we have drilled all the way
-# down through simulators['ecl100']['2105.2']['scalar'] the only required
+# down through versions['2105.2']['scalar'] the only required
 # attribute is 'executable' which is the full path to the executable program. In
 # addition you can add an env: setting which will be a dictionary of environment
 # variables which will be set before the simulator is invoked. The 2015.2 mpi
-# version of ecl100 and the 2018.04 scalar version of flow have examples of
-# shuch env settings.
+# version has an example of such a settings.
 #
 # If it is an MPI simulation you must in addition to the executable attribute
 # also set an 'mpirun' attribute.
