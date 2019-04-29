@@ -49,6 +49,8 @@ Improvement:
   - Validate that target is specified when running an update via the `cli`
   - Merge detailed view into the old progress window
   - Vertical layout of monitoring for better usability
+  - Fetch queue status for each forward model in the detailed monitoring. Border color indicates:
+    Yellow, still running on queue. Black, finished. Red, failed
 
 Others:
   - Documentation for setting up custom jobs.
