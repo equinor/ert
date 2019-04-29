@@ -68,7 +68,6 @@ class EnsembleSmoother(BaseRunModel):
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
 
         self.setPhase(2, "Simulations completed.")
-        self.__job_queue = None
 
         return prior_context
 
