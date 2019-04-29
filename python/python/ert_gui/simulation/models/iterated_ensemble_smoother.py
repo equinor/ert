@@ -35,8 +35,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Post processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
-        self._job_queue = None
-
 
 
     def createTargetCaseFileSystem(self, phase, target_case_format):

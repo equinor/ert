@@ -101,7 +101,7 @@ class DetailedProgress(QFrame):
         foreground_image = QImage(self.grid_width*sub_grid_size, self.grid_height*sub_grid_size, QImage.Format_ARGB32)
         foreground_image.fill(QColor(0, 0, 0, 0))
 
-        for index, (iens, progress, state) in enumerate(self._current_progress):
+        for index, (iens, progress, _) in enumerate(self._current_progress):
             y = int(iens / self.grid_width)
             x = int(iens - (y * self.grid_width))
             self.draw_window(x * sub_grid_size, y * sub_grid_size, progress, foreground_image)

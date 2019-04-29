@@ -113,7 +113,6 @@ class MultipleDataAssimilation(BaseRunModel):
         phase_string = "Post processing for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.POST_SIMULATION)
-        self._job_queue = None
         return num_successful_realizations
 
 
