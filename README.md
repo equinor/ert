@@ -20,7 +20,7 @@ The `ert` program is based on three different repositories:
 When configuring `libecl` and
 `libres` you should used the option `-DCMAKE_INSTALL_PREFIX` to tell ``cmake``
 where to install. The value passed to `CMAKE_INSTALL_PREFIX` will be needed when
-running cmake to in point 4 below. For now let us assume that the prefix
+running pip install in point 4, below. For now let us assume that the prefix
 `/local/ert/install` was used.
 
 
@@ -49,36 +49,17 @@ depend on your Python version and which Linux distribution you are using. The
 example given here is for RedHat based distributions.
 
 
-#### 4. Run `cmake` to configure `ert`
-
-When running `cmake` you must tell `cmake` where the `libecl` code is located with
-`-DCMAKE_PREFIX_PATH`  i.e. in addition to other possible
-arguments you must at least add:
-
+#### 4. Pip install Ert
+ 
 ```
--DCMAKE_PREFIX_PATH=/local/ert/install
--DCMAKE_INSTALL_PREFIX=/local/ert/install
-```
-
-in addition you probably want to pass `-DCMAKE_INSTALL_PREFIX` to configure where
-the `ert` distribuion should be installed, normally that will be the same
-location where you have already installed `libecl` and `libres`. 
-
-
-#### 5. Run `make` to compile `ert`
-
-After you have run cmake you should run `make` and `make install` to build and install `ert`:
-
-```
-bash% make
-bash% make install
+pip install . --prefix=/local/ert/install
 ```
 
 When this process if over you will have a binary executable `ert` installed in
 `/local/ert/install/bin/ert`. 
 
 
-#### 6. Try your new `ert` installation
+#### 5. Try your new `ert` installation
 
 To actually get ert to work at your site you need to configure details about
 your system; at the very least this means you must configure where your
