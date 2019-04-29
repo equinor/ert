@@ -30,7 +30,6 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhaseName("Post processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
         self.setPhase(1, "Simulations completed.") # done...
-        self._job_queue = None
 
         return run_context
 

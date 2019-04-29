@@ -186,14 +186,13 @@ class BaseRunModel(object):
         """ @rtype: dict of (JobStatusType, int) """
         queue_status = {}
 
-        if self._job_queue.isRunning():
-            for job_number in range(len(self._job_queue)):
-                status = self._job_queue.getJobStatus(job_number)
+        for job_number in range(len(self._job_queue)):
+            status = self._job_queue.getJobStatus(job_number)
 
-                if not status in queue_status:
-                    queue_status[status] = 0
+            if not status in queue_status:
+                queue_status[status] = 0
 
-                queue_status[status] += 1
+            queue_status[status] += 1
 
 
         return queue_status

@@ -197,14 +197,15 @@ class RunDialog(QDialog):
             return True
         return False
 
-    def updateProgress(self, recount=True):
+    def updateProgress(self):
+
         total_count = self._run_model.getQueueSize()
         queue_status = self._run_model.getQueueStatus()
         states = self.simulations_tracker.getStates()
-        if recount:
-            for state in states:
-                state.count = 0
-                state.total_count = total_count
+
+        for state in states:
+            state.count = 0
+            state.total_count = total_count
 
         for state in states:
             for queue_state in queue_status:
@@ -220,7 +221,7 @@ class RunDialog(QDialog):
         if self.checkIfRunFinished():
             self.total_progress.setProgress(self._run_model.getProgress())
             self.detailed_progress.set_progress(*self._run_model.getDetailedProgress())
-            self.updateProgress(False)
+            self.updateProgress()
             return
 
         self.total_progress.setProgress(self._run_model.getProgress())
