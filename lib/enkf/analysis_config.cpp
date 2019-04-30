@@ -133,7 +133,7 @@ ANALYSIS_SELECT  ModuleName
 bool analysis_config_have_enough_realisations( const analysis_config_type * config , int realisations, int ensemble_size) {
   if (config->min_realisations > 0) {
     /* A value > 0 has been set in the config; compare with this value. */
-    return realisations >= config->min_realisations;
+    return realisations >= std::min(config->min_realisations, ensemble_size);
   }
   else {
     return realisations >= ensemble_size;
