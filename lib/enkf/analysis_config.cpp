@@ -176,6 +176,9 @@ static void analysis_config_set_min_realisations( analysis_config_type * config 
   config->min_realisations = min_realisations;
 }
 
+int analysis_config_get_min_realisations( const analysis_config_type * config) {
+  return config->min_realisations;
+}
 
 stringlist_type * analysis_config_alloc_module_names( const analysis_config_type * config ) {
   stringlist_type * s = stringlist_alloc_new();

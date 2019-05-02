@@ -106,6 +106,7 @@ void                   analysis_config_set_stop_long_running( analysis_config_ty
 bool                   analysis_config_get_stop_long_running( const analysis_config_type * config);
 void                   analysis_config_set_max_runtime( analysis_config_type * config, int max_runtime  );
 int                    analysis_config_get_max_runtime( const analysis_config_type * config );
+int                    analysis_config_get_min_realisations( const analysis_config_type * config );
 const char           * analysis_config_get_active_module_name( const analysis_config_type * config );
 bool                   analysis_config_get_std_scale_correlated_obs( const analysis_config_type * config);
 void                   analysis_config_set_std_scale_correlated_obs( analysis_config_type * config, bool std_scale_correlated_obs);

@@ -70,9 +70,16 @@ void test_min_realizations(const char * num_realizations_str, const char * min_r
       analysis_config_init(ac, content);
 
       int num_realizations = config_content_get_value_as_int(content, NUM_REALIZATIONS_KEY);
+
       test_assert_false(analysis_config_have_enough_realisations(ac, min_realizations_expected_needed - 1, num_realizations ));
       test_assert_true(analysis_config_have_enough_realisations(ac, min_realizations_expected_needed, num_realizations ));
       test_assert_true(analysis_config_have_enough_realisations(ac, min_realizations_expected_needed + 1, num_realizations ));
+
+      int min_realizations = analysis_config_get_min_realisations(ac);
+      if(min_realizations > 0)
+      {
+        test_assert_true(analysis_config_have_enough_realisations(ac, min_realizations - 1, min_realizations - 2));
+      }
       analysis_config_free( ac );
       config_content_free( content );
       config_free( c );
