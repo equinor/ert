@@ -41,6 +41,83 @@
 #include "ies_enkf_config.h"
 #include "ies_enkf_data.h"
 
+#include <stdbool.h>
+#include <ert/util/double_vector.hpp>
+#include <ert/res_util/matrix_lapack.hpp>
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+/***************************************************************************************************************/
+/* ies_enkf function headers */
+/***************************************************************************************************************/
+void ies_enkf_linalg_extract_active(const ies_enkf_data_type * data,
+                                    const matrix_type * D0,
+                                    const matrix_type * Yin,
+                                    const matrix_type * Rin,
+                                    matrix_type * E,
+                                    matrix_type * D,
+                                    matrix_type * Y,
+                                    matrix_type * R,
+                                    FILE * log_fp,
+                                    bool dbg);
+
+void ies_enkf_linalg_compute_AA_projection(const matrix_type * A,
+                                                 matrix_type * Y,
+                                                 FILE * log_fp,
+                                                 bool dbg);
+
+void ies_enkf_linalg_extract_active_W(const ies_enkf_data_type * data,
+                                            matrix_type * W0,
+                                            FILE * log_fp,
+                                            bool dbg);
+
+void ies_linalg_solve_S(const matrix_type * W0,
+                        const matrix_type * Y,
+                              matrix_type * S,
+                              double rcond,
+                              FILE * log_fp,
+                              bool dbg);
+
+void ies_enkf_linalg_subspace_inversion(matrix_type * W0,
+                                        const int ies_inversion,
+                                        matrix_type * E,
+                                        matrix_type * R,
+                                        const matrix_type * S,
+                                        const matrix_type * H,
+                                        double truncation,
+                                        double ies_steplength,
+                                        int subspace_dimension,
+                                        FILE * log_fp,
+                                        bool dbg);
+
+void ies_enkf_linalg_exact_inversion(matrix_type * W0,
+                                     const int ies_inversion,
+                                     const matrix_type * S,
+                                     const matrix_type * H,
+                                     double ies_steplength,
+                                     FILE * log_fp,
+                                     bool dbg);
+
+void ies_enkf_linalg_store_active_W(ies_enkf_data_type * data,
+                                    const matrix_type * W0,
+                                    FILE * log_fp,
+                                    bool dbg);
+
+void ies_enkf_linalg_extract_active_A0(const ies_enkf_data_type * data,
+                                       matrix_type * A0,
+                                       FILE * log_fp,
+                                       bool dbg);
+/***************************************************************************************************************/
+
+#ifdef __cplusplus
+}
+#endif
+
+
 #define ENKF_SUBSPACE_DIMENSION_KEY      "ENKF_SUBSPACE_DIMENSION"
 #define ENKF_TRUNCATION_KEY              "ENKF_TRUNCATION"
 #define IES_MAX_STEPLENGTH_KEY           "IES_MAX_STEPLENGTH"
@@ -131,12 +208,11 @@ void ies_enkf_updateA( void * module_data,
    int ens_size      = matrix_get_columns( Yin );               // Number of active realizations in current iteration
    int state_size    = matrix_get_rows( A );
 
-//   double ies_max_steplength = ies_enkf_config_get_ies_max_steplength(ies_config);
    ies_inversion_type ies_inversion = ies_enkf_config_get_ies_inversion( ies_config );
    double truncation = ies_enkf_config_get_truncation( ies_config );
    bool ies_debug = ies_enkf_config_get_ies_debug(ies_config);
    int subspace_dimension = ies_enkf_config_get_enkf_subspace_dimension( ies_config );
-   double rcond;
+   double rcond=0;
    int nrsing=0;
    int iteration_nr = ies_enkf_data_inc_iteration_nr(data);
    FILE * log_fp;
@@ -166,7 +242,6 @@ void ies_enkf_updateA( void * module_data,
    the observations were included in the initial call for storage in data->E as well as in
    in the current call. Thus, it is possible to remove observations but not include new ones. */
    nrobs = ies_enkf_data_active_obs_count(data);
-   int nrmin  = util_int_min( ens_size , nrobs);
    double nsc = 1.0/sqrt(ens_size - 1.0);
 
 /* dimensions for printing */
@@ -198,7 +273,7 @@ void ies_enkf_updateA( void * module_data,
    printf_mask(log_fp, "ensmask_i:", ies_enkf_data_get_ens_mask(data));
 
 /***************************************************************************************************************
-* Re structure input matrices according to new active obs_mask and ens_size.
+* Re-structure input matrices according to new active obs_mask and ens_size.
 *     Allocates the local matrices to be used.
 *     Copies the initial measurement perturbations for the active observations into the current E matrix.
 *     Copies the inputs in D, Y and R into their local representations
@@ -206,86 +281,24 @@ void ies_enkf_updateA( void * module_data,
    matrix_type * Y   = matrix_alloc( nrobs    , ens_size );
    matrix_type * E   = matrix_alloc( nrobs    , ens_size );
    matrix_type * D   = matrix_alloc( nrobs    , ens_size );
-   matrix_type * Rtmp= matrix_alloc( nrobs    , nrobs_inp );
    matrix_type * R   = matrix_alloc( nrobs    , nrobs );
    matrix_type * D0  = matrix_alloc_copy( Din );
 
 /* Subtract new measurement perturbations              D=D-E    */
    matrix_inplace_sub(D0,Ein);
 
-/* E=data->E but only using the active obs also stored in data->E */
-   {
-     const bool_vector_type * obs_mask0 = ies_enkf_data_get_obs_mask0(data);
-     const bool_vector_type * obs_mask  = ies_enkf_data_get_obs_mask(data);
-     const bool_vector_type * ens_mask  = ies_enkf_data_get_ens_mask(data);
-     const matrix_type * dataE          = ies_enkf_data_getE(data);
+/* Extract active observations and realizations for D, E, Y, and R    */
+   ies_enkf_linalg_extract_active(data, D0, Yin, Rin, E, D, Y, R, log_fp, dbg);
 
-     int j=-1;  // counter for initial mask0
-     int k=-1;  // counter for current mask
-     int m=-1;  // counter for currently active measurements
-     for (int iobs = 0; iobs < nrobs_msk; iobs++){
-       if ( bool_vector_iget(obs_mask0,iobs) )
-         j=j+1 ;
-
-       if ( bool_vector_iget(obs_mask,iobs) )
-         k=k+1 ;
-
-       if ( bool_vector_iget(obs_mask0,iobs) && bool_vector_iget(obs_mask,iobs) ){
-         m=m+1;
-
-         {
-           int i=0;
-           for (int iens = 0; iens < ens_size_msk; iens++){
-             if ( bool_vector_iget(ens_mask,iens) ){
-               matrix_iset_safe(E,m,i,matrix_iget(dataE,j,iens)) ;
-               i=i+1;
-             }
-           }
-         }
-
-         matrix_copy_row(D,D0,m,k);
-         matrix_copy_row(Y,Yin,m,k);
-         matrix_copy_row(Rtmp,Rin,m,k);
-         matrix_copy_column(R,Rtmp,m,k);
-       }
-     }
-
-     if (ens_size_msk == ens_size && nrobs == nrobs_inp){
-       fprintf(log_fp,"data->E copied exactly to E: %d\n",matrix_equal(dataE,E)) ;
-     }
-   }
-
-   fprintf(log_fp,"Input matrices\n");
-   if (dbg) matrix_pretty_fprint_submat(E,"E","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
-
-   if (dbg) matrix_pretty_fprint_submat(D0,"Din","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
-   if (dbg) matrix_pretty_fprint_submat(D,"D","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
-
-   if (dbg) matrix_pretty_fprint_submat(Yin,"Yin","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
-   if (dbg) matrix_pretty_fprint_submat(Y,"Y","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
-
-   if (dbg) matrix_pretty_fprint_submat(Rin,"Rin","%11.5f",log_fp,0,m_nrobs,0,m_nrobs) ;
-   if (dbg) matrix_pretty_fprint_submat(R,"R","%11.5f",log_fp,0,m_nrobs,0,m_nrobs) ;
-
-   matrix_inplace_add(D,E);          // Add old measurement perturbations
-
-
+/* Add old measurement perturbations */
+   matrix_inplace_add(D,E);          
 
    matrix_type * A0  = matrix_alloc( state_size, ens_size );  // Temporary ensemble matrix
    matrix_type * W0  = matrix_alloc( ens_size , ens_size  );  // Coefficient matrix
    matrix_type * W   = matrix_alloc( ens_size , ens_size  );  // Coefficient matrix
-   matrix_type * DW  = matrix_alloc( ens_size , ens_size  );  // Coefficient matrix W - data->W
    matrix_type * H   = matrix_alloc( nrobs    , ens_size  );  // Innovation vector "H= S*W+D-Y"
    matrix_type * S   = matrix_alloc( nrobs    , ens_size );   // Predicted ensemble anomalies scaled with inv(Omeaga)
-
-   matrix_type * YT  = matrix_alloc( ens_size, nrobs     );   // Y^T used in linear solver
-   matrix_type * ST  = matrix_alloc( ens_size, nrobs     );   // current S^T used in linear solver
-   matrix_type * STO = matrix_alloc( ens_size, nrobs     );   // previous S^T used in linear solver
-   matrix_type * SD  = matrix_alloc( ens_size, nrobs     );   // difference between ST and STO in linear solver
-   matrix_type * X   = matrix_alloc( ens_size, ens_size  );   // Used for Omega and transform matrix
-
-   double      * eig = (double*)util_calloc( ens_size , sizeof * eig);
-
+   matrix_type * X   = matrix_alloc( ens_size, ens_size  );   // Final transform matrix
 
    if (dbg) matrix_pretty_fprint_submat(A,"Ain","%11.5f",log_fp,0,m_state_size,0,m_ens_size) ;
    if (dbg) fprintf(log_fp,"Computed matrices\n");
@@ -301,82 +314,18 @@ void ies_enkf_updateA( void * module_data,
 /***************************************************************************************************************
 *  COMPUTING THE PROJECTION Y= Y * (Ai^+ * Ai) (only used when state_size < ens_size-1)    */
    if (ies_enkf_config_get_ies_aaprojection(ies_config) && (state_size <= (ens_size - 1))) {
-      fprintf(log_fp,"Activating AAi projection for Y\n");
-      matrix_type * Ai    = matrix_alloc_copy( A );
-      matrix_type * AAi   = matrix_alloc( ens_size, ens_size  );
-      matrix_subtract_row_mean(Ai);
-      matrix_type * VT    = matrix_alloc( state_size, ens_size  );
-      matrix_dgesvd(DGESVD_NONE , DGESVD_MIN_RETURN , Ai , eig , NULL , VT);
-      if (dbg) matrix_pretty_fprint_submat(VT,"VT","%11.5f",log_fp,0,m_state_size-1,0,m_ens_size) ;
-      matrix_dgemm(AAi,VT,VT,true,false,1.0,0.0);
-      if (dbg) matrix_pretty_fprint_submat(AAi,"AAi","%11.5f",log_fp,0,m_ens_size-1,0,m_ens_size);
-      matrix_inplace_matmul(Y,AAi);
-      matrix_free(Ai);
-      matrix_free(AAi);
-      matrix_free(VT);
-      if (dbg) matrix_pretty_fprint_submat(Y,"Yprojected","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
+      ies_enkf_linalg_compute_AA_projection(A, Y, log_fp, dbg);
    }
 
 /***************************************************************************************************************
 *  COPY ACTIVE REALIZATIONS FROM data->W to W0 */
-   {
-      const bool_vector_type * ens_mask = ies_enkf_data_get_ens_mask(data);
-      const matrix_type * dataW = ies_enkf_data_getW(data);
-      int i=-1;
-      int j;
-      for (int iens=0; iens < ens_size_msk; iens++){
-         if ( bool_vector_iget(ens_mask,iens) ){
-            i=i+1;
-            j=-1;
-            for (int jens=0; jens < ens_size_msk; jens++){
-               if ( bool_vector_iget(ens_mask,jens) ){
-                  j=j+1;
-                  matrix_iset_safe(W0,i,j,matrix_iget(dataW,iens,jens)) ;
-               }
-            }
-         }
-      }
-
-      if (ens_size_msk == ens_size){
-        fprintf(log_fp,"data->W copied exactly to W0: %d\n",matrix_equal(dataW,W0)) ;
-      }
-
-      if (dbg) matrix_pretty_fprint_submat(dataW,"data->W","%11.5f",log_fp,0,m_ens_size-1,0,m_ens_size);
-      if (dbg) matrix_pretty_fprint_submat(W0,"W0","%11.5f",log_fp,0,m_ens_size-1,0,m_ens_size);
-   }
+   ies_enkf_linalg_extract_active_W(data, W0, log_fp, dbg);
 
 /***************************************************************************************************************
-* COMPUTE  X= I + W (I-11'/sqrt(ens_size))    from Eq. (36).                                   (Line 6)
-*  When solving the system S = Y inv(Omega) we write
-*     X^T S^T = Y^T
-*  Here we compute the W (I-11'/N) / sqrt(N-1)  and transpose it).
+*  When solving the system S = Y inv(Omega) we write                                           (line 6)
+*     Omega^T S^T = Y^T
 */
-
-   matrix_assign(X,W0) ;            // X=data->W (from previous iteration used to solve for S)
-   matrix_subtract_row_mean(X);     // X=X*(I-(1/N)*11')
-   matrix_scale(X,nsc);             // X/sqrt(N-1)
-   matrix_inplace_transpose(X);     // X=transpose(X)
-   for (int i = 0; i < ens_size; i++){  // X=X+I
-      matrix_iadd(X,i,i,1.0);
-   }
-   if (dbg) matrix_pretty_fprint_submat(X,"OmegaT","%11.5f",log_fp,0,m_ens_size,0,m_ens_size) ;
-   if (dbg) tecfld( X, "tecOmega.dat" , "Omega", ens_size, ens_size , iteration_nr);
-   matrix_transpose(Y,YT);         // RHS stored in YT
-
-/* Solve system and return S in YT                                                             (Line 7)   */
-   fprintf(log_fp,"Solving X' S' = Y' using LU factorization:\n");
-   matrix_dgesvx(X,YT,&rcond);
-   fprintf(log_fp,"dgesvx condition number= %12.5e\n",rcond);
-
-   matrix_transpose(YT,S);          // Copy solution to S
-
-
-   if (iteration_nr == 1){
-         fprintf(log_fp,"dgesvx: Y exactly equal to S: %d\n",matrix_equal(Y,S)) ;
-   }
-
-
-   if (dbg) matrix_pretty_fprint_submat(S,"S","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
+   ies_linalg_solve_S(W0, Y, S, rcond, log_fp, dbg);
 
 /***************************************************************************************************************
 *  INNOVATION H = S*W + D - Y   from Eq. (47)                                                  (Line 8)    */
@@ -390,25 +339,24 @@ void ies_enkf_updateA( void * module_data,
 
 /***************************************************************************************************************
 * COMPUTE NEW UPDATED W                                                                        (Line 9)
-*  We first compute the expression
-*          S'*(S*S'+R)^{-1} H           (a)
+*     W = W + ies_steplength * ( W - S'*(S*S'+R)^{-1} H )          (a)
 *  which in the case when R=I can be rewritten as
-*          (S'*S + I)^{-1} * S' * H     (b)
+*     W = W + ies_steplength * ( W - (S'*S + I)^{-1} * S' * H )    (b)
 *
 *  With R=I the subspace inversion (ies_inversion=1) solving Eq. (a) with singular value
 *  trucation=1.000 gives exactly the same solution as the exact inversion (ies_inversion=0).
 *
-*  Using ies_inversion=IES_INVERSION_SUBSPACE_EXACT_R, and a step length of 1.0,
+*  Using ies_inversion=IES_INVERSION_SUBSPACE_EXACT_R(2), and a step length of 1.0,
 *  one update gives identical result to ENKF_STD as long as the same SVD
 *  truncation is used.
 *
 *  With very large data sets it is likely that the inversion becomes poorly
 *  conditioned and a trucation=1.000 is not a good choice. In this case the
-*  ies_inversion > 0 and EnKF_truncation set to 0.999 or so, should stabelize
+*  ies_inversion > 0 and EnKF_truncation set to 0.99 or so, should stabelize
 *  the algorithm.
 *
-*  Using ies_inversion=IES_INVERSION_SUBSPACE_EE_R and
-*  ies_inversion=IES_INVERSION_SUBSPACE_RE gives identical results but
+*  Using ies_inversion=IES_INVERSION_SUBSPACE_EE_R(3) and
+*  ies_inversion=IES_INVERSION_SUBSPACE_RE(2) gives identical results but
 *  ies_inversion=IES_INVERSION_SUBSPACE_RE is much faster (N^2m) than
 *  ies_inversion=IES_INVERSION_SUBSPACE_EE_R (Nm^2).
 
@@ -419,119 +367,18 @@ void ies_enkf_updateA( void * module_data,
    ies_inversion=IES_INVERSION_SUBSPACE_EE_R(2)    -> subspace inversion from (a) with R=EE
    ies_inversion=IES_INVERSION_SUBSPACE_RE(3)      -> subspace inversion from (a) with R represented by E
 */
-
    if (ies_inversion != IES_INVERSION_EXACT){
       fprintf(log_fp,"Subspace inversion. (ies_inversion=%d)\n",ies_inversion);
-      matrix_type * X1  = matrix_alloc( nrobs   , nrmin     );   // Used in subspace inversion
-      matrix_type * X3  = matrix_alloc( nrobs   , ens_size  );   // Used in subspace inversion
-      if (ies_inversion == IES_INVERSION_SUBSPACE_RE){
-         fprintf(log_fp,"Subspace inversion using E to represent errors. (ies_inversion=%d)\n",ies_inversion);
-         matrix_scale(E,nsc);
-         enkf_linalg_lowrankE( S , E , X1 , eig , truncation , subspace_dimension);
-      } else if (ies_inversion == IES_INVERSION_SUBSPACE_EE_R){
-         fprintf(log_fp,"Subspace inversion using ensemble generated full R=EE. (ies_inversion=%d)'\n",ies_inversion);
-         matrix_scale(E,nsc);
-         matrix_type * Et = matrix_alloc_transpose( E );
-         matrix_type * Cee = matrix_alloc_matmul( E , Et );
-         matrix_scale(Cee,nsc*nsc); // since enkf_linalg_lowrankCinv solves (SS' + (N-1) R)^{-1}
-         if (dbg) matrix_pretty_fprint_submat(Cee,"Cee","%11.5f",log_fp,0,m_nrobs,0,m_nrobs) ;
-         enkf_linalg_lowrankCinv( S , Cee , X1 , eig , truncation , subspace_dimension);
-         matrix_free( Et );
-         matrix_free( Cee );
-      } else if (ies_inversion == IES_INVERSION_SUBSPACE_EXACT_R){
-         fprintf(log_fp,"Subspace inversion using 'exact' full R. (ies_inversion=%d)\n",ies_inversion);
-         matrix_scale(R,nsc*nsc); // since enkf_linalg_lowrankCinv solves (SS' + (N-1) R)^{-1}
-         if (dbg) matrix_pretty_fprint_submat(R,"R","%11.5f",log_fp,0,m_nrobs,0,m_nrobs) ;
-         enkf_linalg_lowrankCinv( S , R , X1 , eig , truncation , subspace_dimension);
-      }
-
-      nrsing=0;
-      fprintf(log_fp,"\nEig:\n");
-      for (int i=0;i<nrmin;i++){
-         fprintf(log_fp," %f ", eig[i]);
-         if ((i+1)%20 == 0) fprintf(log_fp,"\n") ;
-         if (eig[i] < 1.0) nrsing+=1;
-      }
-      fprintf(log_fp,"\n");
-
-/*    X3 = X1 * diag(eig) * X1' * H (Similar to Eq. 14.31, Evensen (2007))                                  */
-      enkf_linalg_genX3(X3 , X1 , H , eig);
-
-      if (dbg) matrix_pretty_fprint_submat(X1,"X1","%11.5f",log_fp,0,m_nrobs,0,util_int_min(m_nrobs,nrmin-1)) ;
-      if (dbg) matrix_pretty_fprint_submat(X3,"X3","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
-
-/*    Update data->W = (1-ies_steplength) * data->W +  ies_steplength * S' * X3                          (Line 9)    */
-      matrix_dgemm(W0 , S , X3 , true , false , ies_steplength , 1.0-ies_steplength);
-
-      matrix_free( X1 );
-      matrix_free( X3 );
-
+      ies_enkf_linalg_subspace_inversion(W0, ies_inversion, E, R, S, H, truncation, ies_steplength, subspace_dimension, log_fp, dbg);
    } else if (ies_inversion == IES_INVERSION_EXACT) {
       fprintf(log_fp,"Exact inversion using diagonal R=I. (ies_inversion=%d)\n",ies_inversion);
-      matrix_type * Z      = matrix_alloc( ens_size , ens_size  );  // Eigen vectors of S'S+I
-      matrix_type * StH    = matrix_alloc( ens_size , ens_size );
-      matrix_type * StS    = matrix_alloc( ens_size , ens_size );
-      matrix_type * ZtStH  = matrix_alloc( ens_size , ens_size );
-
-      matrix_diag_set_scalar(StS,1.0);
-      matrix_dgemm(StS,S,S,true,false,1.0,1.0);
-      matrix_dgesvd(DGESVD_ALL , DGESVD_NONE , StS , eig , Z , NULL);
-
-      matrix_dgemm(StH,S,H,true,false,1.0,0.0);
-      matrix_dgemm(ZtStH,Z,StH,true,false,1.0,0.0);
-
-      for (int i=0;i<ens_size;i++){
-         eig[i]=1.0/eig[i] ;
-         matrix_scale_row(ZtStH,i,eig[i]);
-      }
-
-      fprintf(log_fp,"\nEig:\n");
-      for (int i=0;i<ens_size;i++){
-         fprintf(log_fp," %f ", eig[i]);
-         if ((i+1)%20 == 0) fprintf(log_fp,"\n") ;
-      }
-      fprintf(log_fp,"\n");
-
-/*    Update data->W = (1-ies_steplength) * data->W +  ies_steplength * Z * (Lamda^{-1}) Z' S' H         (Line 9)    */
-      matrix_dgemm(W0 , Z , ZtStH , false , false , ies_steplength , 1.0-ies_steplength);
-
-      matrix_free(Z);
-      matrix_free(StH);
-      matrix_free(StS);
-      matrix_free(ZtStH);
+      ies_enkf_linalg_exact_inversion( W0, ies_inversion, S, H, ies_steplength, log_fp, dbg);
    }
 
    if (dbg) matrix_pretty_fprint_submat(W0,"Updated W","%11.5f",log_fp,0,m_ens_size,0,m_ens_size) ;
 
-
-
 /* Store active realizations from W0 to data->W */
-   {
-      int i=0;
-      int j;
-      matrix_type * dataW = ies_enkf_data_getW(data);
-      const bool_vector_type * ens_mask = ies_enkf_data_get_ens_mask(data);
-      matrix_set(dataW , 0.0) ;
-      for (int iens=0; iens < ens_size_msk; iens++){
-         if ( bool_vector_iget(ens_mask,iens) ){
-            j=0;
-            for (int jens=0; jens < ens_size_msk; jens++){
-               if ( bool_vector_iget(ens_mask,jens) ){
-                 matrix_iset_safe(dataW,iens,jens,matrix_iget(W0,i,j));
-                 j += 1;
-               }
-            }
-            i += 1;
-         }
-      }
-
-      if (ens_size_msk == ens_size){
-        fprintf(log_fp,"W0 copied exactly to data->W: %d\n",matrix_equal(dataW,W0)) ;
-      }
-   }
-
-   if (dbg) tecfld( W, "tecW.dat" , "W", ens_size, ens_size , iteration_nr);
-
+   ies_enkf_linalg_store_active_W(data, W0, log_fp, dbg);
 
 /***************************************************************************************************************
 *  CONSTRUCT TRANFORM MATRIX X FOR CURRENT ITERATION                                         (Line 10)
@@ -545,33 +392,15 @@ void ies_enkf_updateA( void * module_data,
 
 /***************************************************************************************************************
 *  COMPUTE NEW ENSEMBLE SOLUTION FOR CURRENT ITERATION  Ei=A0*X                              (Line 11)   */
-
-   {
-      int i=-1;
-      const bool_vector_type * ens_mask = ies_enkf_data_get_ens_mask(data);
-      const matrix_type * dataA0 = ies_enkf_data_getA0(data);
-      matrix_pretty_fprint_submat(dataA0,"data->A0","%11.5f",log_fp,0,m_state_size,0,m_ens_size);
-      matrix_pretty_fprint_submat(A,"A^f","%11.5f",log_fp,0,m_state_size,0,m_ens_size);
-      for (int iens=0; iens < ens_size_msk; iens++){
-         if ( bool_vector_iget(ens_mask,iens) ){
-            i=i+1;
-            matrix_copy_column(A0,dataA0,i,iens);
-         }
-      }
-
-      if (ens_size_msk == ens_size){
-        fprintf(log_fp,"data->A0 copied exactly to A0: %d\n",matrix_equal(dataA0,A0)) ;
-      }
-   }
-   if (dbg) tecfld( X, "tecX.dat" , "X", ens_size, ens_size , iteration_nr);
+   matrix_pretty_fprint_submat(A,"A^f","%11.5f",log_fp,0,m_state_size,0,m_ens_size);
+   ies_enkf_linalg_extract_active_A0(data, A0, log_fp, dbg);
    matrix_matmul(A,A0,X);
    matrix_pretty_fprint_submat(A,"A^a","%11.5f",log_fp,0,m_state_size,0,m_ens_size);
 
-
 /***************************************************************************************************************
 *  COMPUTE ||W0 - W|| AND EVALUATE COST FUNCTION FOR PREVIOUS ITERATE                        (Line 12)   */
+   matrix_type * DW  = matrix_alloc( ens_size , ens_size  ); 
    matrix_sub(DW,W0,W);
-   if (dbg) tecfld( DW, "tecDW.dat" , "Delta W", ens_size, ens_size , iteration_nr);
    teclog(W,D,DW,"iesteclog.dat",ens_size,iteration_nr, rcond, nrsing, nrobs);
    teccost(W,D,"costf.dat",ens_size,iteration_nr);
 
@@ -582,7 +411,6 @@ void ies_enkf_updateA( void * module_data,
    matrix_free( Y  );
    matrix_free( D  );
    matrix_free( E  );
-   matrix_free( Rtmp);
    matrix_free( R  );
    matrix_free( D0 );
    matrix_free( A0 );
@@ -591,14 +419,398 @@ void ies_enkf_updateA( void * module_data,
    matrix_free( DW );
    matrix_free( H  );
    matrix_free( S  );
-   matrix_free( YT );
-   matrix_free( ST );
-   matrix_free( STO);
-   matrix_free( SD );
    matrix_free( X  );
 }
 
 
+/***************************************************************************************************************/
+/* ies_enkf linalg functions */
+/***************************************************************************************************************/
+/* Extract active observations and realizations for D, E, Y, and R.
+*  IES works from an initial set of active realizations and measurements.
+*  In the first iteration we store the measurement perturbations from the initially active observations.
+*  In the subsequent iterations we neglect new observations that may be introduced by ERT, and we reuse the 
+*  intially stored measurement perturbations.
+*  Additionally we may loose realizations during the iteratitions, and we extract measurement perturbations for
+*  only the active realizations and observations.
+*/
+void ies_enkf_linalg_extract_active(const ies_enkf_data_type * data,
+                                    const matrix_type * D0,
+                                    const matrix_type * Yin,
+                                    const matrix_type * Rin,
+                                    matrix_type * E,
+                                    matrix_type * D,
+                                    matrix_type * Y,
+                                    matrix_type * R,
+                                    FILE * log_fp,
+                                    bool dbg){
+
+   const bool_vector_type * obs_mask0 = ies_enkf_data_get_obs_mask0(data);
+   const bool_vector_type * obs_mask  = ies_enkf_data_get_obs_mask(data);
+   const bool_vector_type * ens_mask  = ies_enkf_data_get_ens_mask(data);
+   const matrix_type * dataE          = ies_enkf_data_getE(data);
+
+   int nrobs_msk     =ies_enkf_data_get_obs_mask_size(data); // Total number of observations
+   int nrobs_inp     =matrix_get_rows( Yin );                // Number of active observations input in current iteration
+   int nrobs=nrobs_inp;
+   int ens_size_msk  = ies_enkf_data_get_ens_mask_size(data);   // Total number of realizations
+   int ens_size      = matrix_get_columns( Yin );               // Number of active realizations in current iteration
+
+   int m_nrobs      = util_int_min(nrobs     -1,7);
+   int m_ens_size   = util_int_min(ens_size  -1,16);
+
+   matrix_type * Rtmp= matrix_alloc( nrobs    , nrobs_inp );
+
+   int j=-1;  // counter for initial mask0
+   int k=-1;  // counter for current mask
+   int m=-1;  // counter for currently active measurements
+   for (int iobs = 0; iobs < nrobs_msk; iobs++){
+      if ( bool_vector_iget(obs_mask0,iobs) )
+         j=j+1 ;
+
+      if ( bool_vector_iget(obs_mask,iobs) )
+         k=k+1 ;
+
+      if ( bool_vector_iget(obs_mask0,iobs) && bool_vector_iget(obs_mask,iobs) ){
+         m=m+1;
+
+         {
+            int i=0;
+            for (int iens = 0; iens < ens_size_msk; iens++){
+               if ( bool_vector_iget(ens_mask,iens) ){
+                  matrix_iset_safe(E,m,i,matrix_iget(dataE,j,iens)) ;
+                  i=i+1;
+               }
+            }
+         }
+
+         matrix_copy_row(D,D0,m,k);
+         matrix_copy_row(Y,Yin,m,k);
+         matrix_copy_row(Rtmp,Rin,m,k);
+         matrix_copy_column(R,Rtmp,m,k);
+      }
+   }
+
+   matrix_free( Rtmp);
+
+   if (ens_size_msk == ens_size && nrobs == nrobs_inp){
+      fprintf(log_fp,"data->E copied exactly to E: %d\n",matrix_equal(dataE,E)) ;
+   }
+
+   fprintf(log_fp,"Input matrices\n");
+   if (dbg) matrix_pretty_fprint_submat(E,"E","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
+
+   if (dbg) matrix_pretty_fprint_submat(D0,"Din","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
+   if (dbg) matrix_pretty_fprint_submat(D,"D","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
+
+   if (dbg) matrix_pretty_fprint_submat(Yin,"Yin","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
+   if (dbg) matrix_pretty_fprint_submat(Y,"Y","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
+
+   if (dbg) matrix_pretty_fprint_submat(Rin,"Rin","%11.5f",log_fp,0,m_nrobs,0,m_nrobs) ;
+   if (dbg) matrix_pretty_fprint_submat(R,"R","%11.5f",log_fp,0,m_nrobs,0,m_nrobs) ;
+}
+
+
+
+/*  COMPUTING THE PROJECTION Y= Y * (Ai^+ * Ai) (only used when state_size < ens_size-1)    */
+void ies_enkf_linalg_compute_AA_projection(const matrix_type * A,
+                                                 matrix_type * Y,
+                                                 FILE * log_fp,
+                                                 bool dbg){
+   int ens_size      = matrix_get_columns( A );            
+   int state_size    = matrix_get_rows( A );
+   int nrobs         = matrix_get_rows( Y );
+
+   int m_nrobs      = util_int_min(nrobs     -1,7);
+   int m_ens_size   = util_int_min(ens_size  -1,16);
+   int m_state_size = util_int_min(state_size-1,3);
+
+   fprintf(log_fp,"Activating AAi projection for Y\n");
+   double      * eig = (double*)util_calloc( ens_size , sizeof * eig);
+   matrix_type * Ai    = matrix_alloc_copy( A );
+   matrix_type * AAi   = matrix_alloc( ens_size, ens_size  );
+   matrix_subtract_row_mean(Ai);
+   matrix_type * VT    = matrix_alloc( state_size, ens_size  );
+   matrix_dgesvd(DGESVD_NONE , DGESVD_MIN_RETURN , Ai , eig , NULL , VT);
+   if (dbg) matrix_pretty_fprint_submat(VT,"VT","%11.5f",log_fp,0,m_state_size-1,0,m_ens_size) ;
+   matrix_dgemm(AAi,VT,VT,true,false,1.0,0.0);
+   if (dbg) matrix_pretty_fprint_submat(AAi,"AAi","%11.5f",log_fp,0,m_ens_size-1,0,m_ens_size);
+   matrix_inplace_matmul(Y,AAi);
+   matrix_free(Ai);
+   matrix_free(AAi);
+   matrix_free(VT);
+   free(eig);
+   if (dbg) matrix_pretty_fprint_submat(Y,"Yprojected","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
+}
+
+
+
+/*
+* W is stored for each iteration in data->W. If we loose realizations we copy only the active rows and cols from
+* data->W to W0 which is then used in the algorithm.
+*/
+void ies_enkf_linalg_extract_active_W(const ies_enkf_data_type * data,
+                                            matrix_type * W0,
+                                            FILE * log_fp,
+                                            bool dbg){
+
+   const bool_vector_type * ens_mask = ies_enkf_data_get_ens_mask(data);
+   const matrix_type * dataW = ies_enkf_data_getW(data);
+   int ens_size_msk  = ies_enkf_data_get_ens_mask_size(data);
+   int ens_size      = matrix_get_columns( W0 );            
+   int m_ens_size    = util_int_min(ens_size  -1,16);
+   int i=-1;
+   int j;
+   for (int iens=0; iens < ens_size_msk; iens++){
+      if ( bool_vector_iget(ens_mask,iens) ){
+         i=i+1;
+         j=-1;
+         for (int jens=0; jens < ens_size_msk; jens++){
+            if ( bool_vector_iget(ens_mask,jens) ){
+               j=j+1;
+               matrix_iset_safe(W0,i,j,matrix_iget(dataW,iens,jens)) ;
+            }
+         }
+      }
+   }
+
+   if (ens_size_msk == ens_size){
+     fprintf(log_fp,"data->W copied exactly to W0: %d\n",matrix_equal(dataW,W0)) ;
+   }
+
+   if (dbg) matrix_pretty_fprint_submat(dataW,"data->W","%11.5f",log_fp,0,m_ens_size-1,0,m_ens_size);
+   if (dbg) matrix_pretty_fprint_submat(W0,"W0","%11.5f",log_fp,0,m_ens_size-1,0,m_ens_size);
+}
+
+/*
+* COMPUTE  Omega= I + W (I-11'/sqrt(ens_size))    from Eq. (36).                                   (Line 6)
+*  When solving the system S = Y inv(Omega) we write
+*     Omega^T S^T = Y^T
+*/
+void ies_linalg_solve_S(const matrix_type * W0,
+                        const matrix_type * Y,
+                              matrix_type * S,
+                              double rcond,
+                              FILE * log_fp,
+                              bool dbg){
+   int ens_size      = matrix_get_columns( W0 );            
+   int nrobs         = matrix_get_rows( S );            
+   int m_ens_size    = util_int_min(ens_size  -1,16);
+   int m_nrobs      = util_int_min(nrobs     -1,7);
+   double nsc = 1.0/sqrt(ens_size - 1.0);
+
+   matrix_type * YT  = matrix_alloc( ens_size, nrobs     );   // Y^T used in linear solver
+   matrix_type * ST  = matrix_alloc( ens_size, nrobs     );   // current S^T used in linear solver
+   matrix_type * Omega   = matrix_alloc( ens_size, ens_size  );   // current S^T used in linear solver
+
+/*  Here we compute the W (I-11'/N) / sqrt(N-1)  and transpose it).*/
+   matrix_assign(Omega,W0) ;            // Omega=data->W (from previous iteration used to solve for S)
+   matrix_subtract_row_mean(Omega);     // Omega=Omega*(I-(1/N)*11')
+   matrix_scale(Omega,nsc);             // Omega/sqrt(N-1)
+   matrix_inplace_transpose(Omega);     // Omega=transpose(Omega)
+   for (int i = 0; i < ens_size; i++){  // Omega=Omega+I
+      matrix_iadd(Omega,i,i,1.0);
+   }
+   if (dbg) matrix_pretty_fprint_submat(Omega,"OmegaT","%11.5f",log_fp,0,m_ens_size,0,m_ens_size) ;
+   matrix_transpose(Y,YT);         // RHS stored in YT
+
+/* Solve system                                                                                (Line 7)   */
+   fprintf(log_fp,"Solving Omega' S' = Y' using LU factorization:\n");
+   matrix_dgesvx(Omega,YT,&rcond);
+   fprintf(log_fp,"dgesvx condition number= %12.5e\n",rcond);
+
+   matrix_transpose(YT,S);          // Copy solution to S
+
+   if (dbg) matrix_pretty_fprint_submat(S,"S","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
+   matrix_free(Omega);
+   matrix_free(ST);
+   matrix_free(YT);
+}
+
+
+/*
+*  The standard inversion works on the equation
+*          S'*(S*S'+R)^{-1} H           (a)
+*/
+void ies_enkf_linalg_subspace_inversion(matrix_type * W0,
+                                        const int ies_inversion,
+                                        matrix_type * E,
+                                        matrix_type * R,
+                                        const matrix_type * S,
+                                        const matrix_type * H,
+                                        double truncation,
+                                        double ies_steplength,
+                                        int subspace_dimension,
+                                        FILE * log_fp,
+                                        bool dbg){
+
+   int ens_size      = matrix_get_columns( S );            
+   int m_ens_size    = util_int_min(ens_size  -1,16);
+   int nrobs         = matrix_get_rows( S );            
+   int m_nrobs       = util_int_min(nrobs     -1,7);
+   int nrmin  = util_int_min( ens_size , nrobs);
+   double nsc = 1.0/sqrt(ens_size - 1.0);
+   matrix_type * X1  = matrix_alloc( nrobs   , nrmin     );   // Used in subspace inversion
+   matrix_type * X3  = matrix_alloc( nrobs   , ens_size  );   // Used in subspace inversion
+   double      * eig = (double*)util_calloc( ens_size , sizeof * eig);
+
+   fprintf(log_fp,"Subspace inversion. (ies_inversion=%d)\n",ies_inversion);
+
+   if (ies_inversion == IES_INVERSION_SUBSPACE_RE){
+      fprintf(log_fp,"Subspace inversion using E to represent errors. (ies_inversion=%d)\n",ies_inversion);
+      matrix_scale(E,nsc);
+      enkf_linalg_lowrankE( S , E , X1 , eig , truncation , subspace_dimension);
+   } else if (ies_inversion == IES_INVERSION_SUBSPACE_EE_R){
+      fprintf(log_fp,"Subspace inversion using ensemble generated full R=EE. (ies_inversion=%d)'\n",ies_inversion);
+      matrix_scale(E,nsc);
+      matrix_type * Et = matrix_alloc_transpose( E );
+      matrix_type * Cee = matrix_alloc_matmul( E , Et );
+      matrix_scale(Cee,nsc*nsc); // since enkf_linalg_lowrankCinv solves (SS' + (N-1) R)^{-1}
+      if (dbg) matrix_pretty_fprint_submat(Cee,"Cee","%11.5f",log_fp,0,m_nrobs,0,m_nrobs) ;
+      enkf_linalg_lowrankCinv( S , Cee , X1 , eig , truncation , subspace_dimension);
+      matrix_free( Et );
+      matrix_free( Cee );
+   } else if (ies_inversion == IES_INVERSION_SUBSPACE_EXACT_R){
+      fprintf(log_fp,"Subspace inversion using 'exact' full R. (ies_inversion=%d)\n",ies_inversion);
+      matrix_scale(R,nsc*nsc); // since enkf_linalg_lowrankCinv solves (SS' + (N-1) R)^{-1}
+      if (dbg) matrix_pretty_fprint_submat(R,"R","%11.5f",log_fp,0,m_nrobs,0,m_nrobs) ;
+      enkf_linalg_lowrankCinv( S , R , X1 , eig , truncation , subspace_dimension);
+   }
+
+   int nrsing=0;
+   fprintf(log_fp,"\nEig:\n");
+   for (int i=0;i<nrmin;i++){
+      fprintf(log_fp," %f ", eig[i]);
+      if ((i+1)%20 == 0) fprintf(log_fp,"\n") ;
+      if (eig[i] < 1.0) nrsing+=1;
+   }
+   fprintf(log_fp,"\n");
+
+/*    X3 = X1 * diag(eig) * X1' * H (Similar to Eq. 14.31, Evensen (2007))                                  */
+   enkf_linalg_genX3(X3 , X1 , H , eig);
+
+   if (dbg) matrix_pretty_fprint_submat(X1,"X1","%11.5f",log_fp,0,m_nrobs,0,util_int_min(m_nrobs,nrmin-1)) ;
+   if (dbg) matrix_pretty_fprint_submat(X3,"X3","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
+
+/*    Update data->W = (1-ies_steplength) * data->W +  ies_steplength * S' * X3                          (Line 9)    */
+   matrix_dgemm(W0 , S , X3 , true , false , ies_steplength , 1.0-ies_steplength);
+
+   matrix_free( X1 );
+   matrix_free( X3 );
+   free(eig);
+}
+
+/*
+*  The standard inversion works on the equation
+*          S'*(S*S'+R)^{-1} H           (a)
+*  which in the case when R=I can be rewritten as
+*          (S'*S + I)^{-1} * S' * H     (b)
+*/
+void ies_enkf_linalg_exact_inversion(matrix_type * W0,
+                                     const int ies_inversion,
+                                     const matrix_type * S,
+                                     const matrix_type * H,
+                                     double ies_steplength,
+                                     FILE * log_fp,
+                                     bool dbg){
+   int ens_size      = matrix_get_columns( S );            
+
+   fprintf(log_fp,"Exact inversion using diagonal R=I. (ies_inversion=%d)\n",ies_inversion);
+   matrix_type * Z      = matrix_alloc( ens_size , ens_size  );  // Eigen vectors of S'S+I
+   matrix_type * ZtStH  = matrix_alloc( ens_size , ens_size );
+   matrix_type * StH    = matrix_alloc( ens_size , ens_size );
+   matrix_type * StS    = matrix_alloc( ens_size , ens_size );
+   double      * eig = (double*)util_calloc( ens_size , sizeof * eig);
+
+   matrix_diag_set_scalar(StS,1.0);
+   matrix_dgemm(StS,S,S,true,false,1.0,1.0);
+   matrix_dgesvd(DGESVD_ALL , DGESVD_NONE , StS , eig , Z , NULL);
+
+   matrix_dgemm(StH,S,H,true,false,1.0,0.0);
+   matrix_dgemm(ZtStH,Z,StH,true,false,1.0,0.0);
+
+   for (int i=0;i<ens_size;i++){
+      eig[i]=1.0/eig[i] ;
+      matrix_scale_row(ZtStH,i,eig[i]);
+   }
+
+   fprintf(log_fp,"\nEig:\n");
+   for (int i=0;i<ens_size;i++){
+      fprintf(log_fp," %f ", eig[i]);
+      if ((i+1)%20 == 0) fprintf(log_fp,"\n") ;
+   }
+   fprintf(log_fp,"\n");
+/*    Update data->W = (1-ies_steplength) * data->W +  ies_steplength * Z * (Lamda^{-1}) Z' S' H         (Line 9)    */
+      matrix_dgemm(W0 , Z , ZtStH , false , false , ies_steplength , 1.0-ies_steplength);
+
+      matrix_free(Z);
+      matrix_free(ZtStH);
+      matrix_free(StH);
+      matrix_free(StS);
+      free(eig);
+}
+
+
+/*
+* the updated W is stored for each iteration in data->W. If we have lost realizations we copy only the active rows and cols from
+* W0 to data->W which is then used in the algorithm.  (note the definition of the pointer dataW to data->W)
+*/
+void ies_enkf_linalg_store_active_W(ies_enkf_data_type * data,
+                                    const matrix_type * W0,
+                                    FILE * log_fp,
+                                    bool dbg){
+   int ens_size_msk  = ies_enkf_data_get_ens_mask_size(data);
+   int ens_size      = matrix_get_columns( W0 );            
+   int i=0;
+   int j;
+   matrix_type * dataW = ies_enkf_data_getW(data);
+   const bool_vector_type * ens_mask = ies_enkf_data_get_ens_mask(data);
+   matrix_set(dataW , 0.0) ;
+   for (int iens=0; iens < ens_size_msk; iens++){
+      if ( bool_vector_iget(ens_mask,iens) ){
+         j=0;
+         for (int jens=0; jens < ens_size_msk; jens++){
+            if ( bool_vector_iget(ens_mask,jens) ){
+              matrix_iset_safe(dataW,iens,jens,matrix_iget(W0,i,j));
+              j += 1;
+            }
+         }
+         i += 1;
+      }
+   }
+
+   if (ens_size_msk == ens_size){
+     fprintf(log_fp,"W0 copied exactly to data->W: %d\n",matrix_equal(dataW,W0)) ;
+   }
+}
+
+/*
+* Extract active realizations from the initially stored ensemble.
+*/
+void ies_enkf_linalg_extract_active_A0(const ies_enkf_data_type * data,
+                                       matrix_type * A0,
+                                       FILE * log_fp,
+                                       bool dbg){
+   int ens_size_msk  = ies_enkf_data_get_ens_mask_size(data);
+   int ens_size      = matrix_get_columns( A0 );            
+   int state_size    = matrix_get_rows( A0 );
+   int m_ens_size    = util_int_min(ens_size  -1,16);
+   int m_state_size = util_int_min(state_size-1,3);
+   int i=-1;
+   const bool_vector_type * ens_mask = ies_enkf_data_get_ens_mask(data);
+   const matrix_type * dataA0 = ies_enkf_data_getA0(data);
+   matrix_pretty_fprint_submat(dataA0,"data->A0","%11.5f",log_fp,0,m_state_size,0,m_ens_size);
+   for (int iens=0; iens < ens_size_msk; iens++){
+      if ( bool_vector_iget(ens_mask,iens) ){
+         i=i+1;
+         matrix_copy_column(A0,dataA0,i,iens);
+      }
+   }
+
+   if (ens_size_msk == ens_size){
+     fprintf(log_fp,"data->A0 copied exactly to A0: %d\n",matrix_equal(dataA0,A0)) ;
+   }
+}
 
 
 
