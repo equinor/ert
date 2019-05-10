@@ -2489,8 +2489,8 @@ void enkf_main_export_ranking(enkf_main_type * enkf_main, const char * ranking_k
 
 
 queue_config_type * enkf_main_get_queue_config(enkf_main_type * enkf_main ) {
-  return site_config_get_queue_config(
-                enkf_main_get_site_config(enkf_main)
+  return res_config_get_queue_config(
+                enkf_main_get_res_config(enkf_main)
                                       );
 }
 

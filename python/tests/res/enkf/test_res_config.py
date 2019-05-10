@@ -261,22 +261,24 @@ class ResConfigTest(ResTest):
                 analysis_config.get_log_path()
                 )
 
-    def assert_site_config(self, site_config, config_data, working_dir):
+    def assert_queue_config(self, queue_config, config_data):
         corresponding = [
-            ('MAX_SUBMIT',    site_config.queue_config.max_submit),
-            ('LSF_QUEUE',     site_config.queue_config.queue_name),
-            ('LSF_SERVER',    site_config.queue_config.lsf_server),
-            ('LSF_RESOURCE',  site_config.queue_config.lsf_resource),
-            ('QUEUE_SYSTEM',  site_config.queue_config.queue_system),
-            ('QUEUE_SYSTEM',  site_config.queue_config.driver.name),
-            ('MAX_RUNNING',   site_config.queue_config.driver.get_option('MAX_RUNNING')),
-            ('UMASK',         site_config.umask),
+            ('MAX_SUBMIT', queue_config.max_submit),
+            ('LSF_QUEUE', queue_config.queue_name),
+            ('LSF_SERVER', queue_config.lsf_server),
+            ('LSF_RESOURCE', queue_config.lsf_resource),
+            ('QUEUE_SYSTEM', queue_config.queue_system),
+            ('QUEUE_SYSTEM', queue_config.driver.name),
+            ('MAX_RUNNING', queue_config.driver.get_option('MAX_RUNNING')),
         ]
         for key, act in corresponding:
             exp = config_data[key]
             errmsg = 'Error for key {key}, expected: "{exp}", was: "{act}".'
             errmsg = errmsg.format(key=key, act=act, exp=exp)
             self.assertEqual(exp, act, msg=errmsg)
+
+    def assert_site_config(self, site_config, config_data, working_dir):
+        self.assertEqual(site_config.umask, config_data['UMASK'])
 
         job_list = site_config.get_installed_jobs()
         for job_name in config_data["INSTALL_JOB"]:
@@ -451,6 +453,7 @@ class ResConfigTest(ResTest):
 
             self.assert_model_config(res_config.model_config, config_data, work_dir)
             self.assert_analysis_config(res_config.analysis_config, config_data)
+            self.assert_queue_config(res_config.queue_config, config_data)
             self.assert_site_config(res_config.site_config, config_data, work_dir)
             self.assert_ecl_config(res_config.ecl_config, config_data, work_dir)
             self.assert_ensemble_config(res_config.ensemble_config, config_data, work_dir)

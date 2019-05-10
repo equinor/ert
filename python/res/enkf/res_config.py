@@ -25,7 +25,8 @@ from res.config import (ConfigParser, ConfigContent, ConfigSettings,
                         UnrecognizedEnum)
 
 from res.enkf import (SiteConfig, AnalysisConfig, SubstConfig, ModelConfig, EclConfig, PlotSettings,
-                      EnsembleConfig, RNGConfig, ConfigKeys, ErtWorkflowList, HookManager, ErtTemplates, LogConfig)
+                      EnsembleConfig, RNGConfig, ConfigKeys, ErtWorkflowList, HookManager, ErtTemplates, LogConfig,
+                      QueueConfig)
 
 class ResConfig(BaseCClass):
     TYPE_NAME = "res_config"
@@ -46,7 +47,7 @@ class ResConfig(BaseCClass):
                                "ens_config, " 
                                "model_config, " 
                                "log_config, " 
-                               "config_content)"
+                               "queue_config)"
                                , bind=False)
 
     _alloc_config_content = ResPrototype("config_content_ref res_config_alloc_user_content(char*, config_parser)", bind=False)
@@ -64,6 +65,7 @@ class ResConfig(BaseCClass):
     _rng_config        = ResPrototype("rng_config_ref res_config_get_rng_config(res_config)")
     _ert_templates     = ResPrototype("ert_templates_ref res_config_get_templates(res_config)")
     _log_config        = ResPrototype("log_config_ref res_config_get_log_config(res_config)")
+    _queue_config      = ResPrototype("queue_config_ref res_config_get_queue_config(res_config)")
     _init_parser       = ResPrototype("void res_config_init_config_parser(config_parser)", bind=False)
 
 
@@ -95,6 +97,7 @@ class ResConfig(BaseCClass):
         plot_config = PlotSettings(config_content=config_content)
         ecl_config = EclConfig(config_content=config_content)
         log_config = LogConfig(config_content=config_content)
+        queue_config = QueueConfig(config_content=config_content)
 
         ert_workflow_list = ErtWorkflowList(ert_workflow_list=subst_config.subst_list,
                                             config_content=config_content)
@@ -129,7 +132,7 @@ class ResConfig(BaseCClass):
             ensemble_config,
             model_config,
             log_config,
-            config_content]
+            queue_config]
 
         c_ptr = None
 
@@ -587,3 +590,7 @@ class ResConfig(BaseCClass):
     @property
     def log_config(self):
         return self._log_config()
+
+    @property
+    def queue_config(self):
+        return self._queue_config()

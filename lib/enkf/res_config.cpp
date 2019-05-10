@@ -35,6 +35,7 @@
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/model_config.hpp>
 #include <ert/enkf/log_config.hpp>
+#include <ert/enkf/queue_config.hpp>
 
 struct res_config_struct {
 
@@ -53,6 +54,7 @@ struct res_config_struct {
   ensemble_config_type   * ensemble_config;
   model_config_type      * model_config;
   log_config_type        * log_config;
+  queue_config_type      * queue_config;
 
 };
 
@@ -77,6 +79,7 @@ static res_config_type * res_config_alloc_empty() {
   res_config->ensemble_config   = NULL;
   res_config->model_config      = NULL;
   res_config->log_config        = NULL;
+  res_config->queue_config      = NULL;
 
   return res_config;
 }
@@ -236,6 +239,8 @@ res_config_type * res_config_alloc(const config_content_type * config_content) {
 
   res_config->log_config      = log_config_alloc(config_content);
 
+  res_config->queue_config = queue_config_alloc(config_content);
+
   return res_config;
 }
 
@@ -253,7 +258,7 @@ res_config_type * res_config_alloc_full(char * config_dir,
                                         ensemble_config_type * ensemble_config,
                                         model_config_type * model_config,
                                         log_config_type * log_config,
-                                        config_content_type * config_content){
+                                        queue_config_type * queue_config){
   res_config_type  * res_config = res_config_alloc_empty();
 
   res_config->user_config_file = util_alloc_string_copy(user_config_file);
@@ -270,7 +275,7 @@ res_config_type * res_config_alloc_full(char * config_dir,
   res_config->ensemble_config = ensemble_config;
   res_config->model_config = model_config;
   res_config->log_config = log_config;
-
+  res_config->queue_config = queue_config;
   return res_config;
 }
 
@@ -293,6 +298,7 @@ void res_config_free(res_config_type * res_config) {
 
   free(res_config->user_config_file);
   free(res_config->config_dir);
+  queue_config_free(res_config->queue_config);
   free(res_config);
 }
 
@@ -366,6 +372,12 @@ const log_config_type * res_config_get_log_config(
                     const res_config_type * res_config
                   ) {
   return res_config->log_config;
+}
+
+queue_config_type * res_config_get_queue_config(
+                    const res_config_type * res_config
+                    ){
+  return res_config->queue_config;
 }
 
 static char * res_config_alloc_config_directory(const char * user_config_file) {

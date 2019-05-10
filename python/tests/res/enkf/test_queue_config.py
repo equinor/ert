@@ -15,18 +15,31 @@
 #  for more details.
 
 import os
-
+from ecl.util.test import TestAreaContext
 from tests import ResTest
 from res.enkf import QueueConfig
+from res.config import ConfigContent
 
 class QueueConfigTest(ResTest):
+    def setUp(self):
+        self.case_directory = self.createTestPath("local/simple_config/")
 
     def test_get_queue_config(self):
-        queue_config = QueueConfig(None)
-        job_queue = queue_config.create_job_queue()
-        queue_config_copy = queue_config.create_local_copy()
+        with TestAreaContext("queue_config_init_test") as work_area:
+            work_area.copy_directory(self.case_directory)
 
-        self.assertEqual(
-                queue_config.has_job_script(),
-                queue_config_copy.has_job_script()
-                )
+            config_file = "simple_config/minimum_config"
+            queue_config = QueueConfig(config_file)
+            job_queue = queue_config.create_job_queue()
+            queue_config_copy = queue_config.create_local_copy()
+
+            self.assertEqual(
+                    queue_config.has_job_script(),
+                    queue_config_copy.has_job_script()
+                    )
+
+
+            config_content = ConfigContent(config_file)
+
+            with self.assertRaises(ValueError):
+                queue_config = QueueConfig(user_config_file=config_file, config_content=config_content)

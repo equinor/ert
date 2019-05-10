@@ -105,9 +105,6 @@ struct site_config_struct {
   stringlist_type * path_variables_user; /* We can update the same path variable several times - i.e. it can not be a hash table. */
   stringlist_type * path_values_user;
 
-  queue_config_type * queue_config;
-
-
   char * manual_url;    //not this one
   char * default_browser;   //not this one
 
@@ -127,22 +124,6 @@ mode_t site_config_get_umask(const site_config_type * site_config) {
   return site_config->umask;
 }
 
-bool site_config_has_queue_driver(const site_config_type * site_config, const char * driver_name) {
-  return queue_config_has_queue_driver(site_config->queue_config, driver_name);
-}
-
-queue_driver_type * site_config_get_queue_driver(const site_config_type * site_config, const char * driver_name) {
-  return queue_config_get_queue_driver(site_config->queue_config, driver_name);
-}
-
-static void site_config_set_queue_option(site_config_type * site_config, const char * driver_name, const char * option_key, const char * option_value) {
-  if (site_config_has_queue_driver(site_config, driver_name)) {
-    queue_driver_type * driver = site_config_get_queue_driver(site_config, driver_name);
-    if (!queue_driver_set_option(driver, option_key, option_value))
-      fprintf(stderr, "** Warning: Option:%s or its value is not recognized by driver:%s- ignored \n", option_key, driver_name);
-  } else
-    fprintf(stderr, "** Warning: Driver:%s not recognized - ignored \n", driver_name);
-}
 
 static void site_config_set_config_file(site_config_type * site_config, const char * config_file) {
   free(site_config->config_file);
@@ -154,8 +135,6 @@ static void site_config_set_config_file(site_config_type * site_config, const ch
  */
 static site_config_type * site_config_alloc_empty() {
   site_config_type * site_config = (site_config_type *)util_malloc(sizeof * site_config);
-
-  site_config->queue_config = NULL;
 
   site_config->joblist = ext_joblist_alloc();
 
@@ -221,7 +200,6 @@ site_config_type * site_config_alloc_load_user_config(const char * user_config_f
 
 site_config_type * site_config_alloc(const config_content_type * config_content) {
   site_config_type * site_config = site_config_alloc_default();
-  site_config->queue_config = queue_config_alloc(config_content);
 
   if(config_content) {
     site_config->user_mode = true;
@@ -264,9 +242,6 @@ void site_config_set_license_root_path(site_config_type * site_config, const cha
   }
 }
 
-queue_config_type * site_config_get_queue_config(const site_config_type * site_config) {
-  return site_config->queue_config;
-}
 
 
 /**
@@ -368,136 +343,10 @@ void site_config_update_pathvar(site_config_type * site_config, const char * pat
 
 /*****************************************************************/
 
-/*****************************************************************/
-static int site_config_get_queue_max_running_option(queue_driver_type * driver) {
-  const char * max_running_string = (const char *)queue_driver_get_option(driver, MAX_RUNNING);
-  int max_running = 0;
-  if(!util_sscanf_int(max_running_string, &max_running)) {
-    fprintf(stderr, "** Warning: String:%s for max_running is not parsable as int, using 0\n", max_running_string);
-  }
-  return max_running;
-}
-
-
-static void site_config_set_queue_max_running_option(site_config_type * site_config, const char* driver_name, int max_running) {
-  char* max_running_string = util_alloc_sprintf("%d", max_running);
-  site_config_set_queue_option(site_config, driver_name, MAX_RUNNING, max_running_string);
-  free(max_running_string);
-}
-
-void site_config_set_max_running_lsf(site_config_type * site_config, int max_running_lsf) {
-  site_config_set_queue_max_running_option(site_config, LSF_DRIVER_NAME, max_running_lsf);
-}
-
-int site_config_get_max_running_lsf(const site_config_type * site_config) {
-  queue_driver_type * lsf_driver = site_config_get_queue_driver(site_config, LSF_DRIVER_NAME);
-  return site_config_get_queue_max_running_option(lsf_driver);
-}
-
-void site_config_set_max_running_rsh(site_config_type * site_config, int max_running_rsh) {
-  site_config_set_queue_max_running_option(site_config, RSH_DRIVER_NAME, max_running_rsh);
-}
-
-int site_config_get_max_running_rsh(const site_config_type * site_config) {
-  queue_driver_type * rsh_driver = site_config_get_queue_driver(site_config, RSH_DRIVER_NAME);
-  return site_config_get_queue_max_running_option(rsh_driver);
-}
-
-void site_config_set_max_running_local(site_config_type * site_config, int max_running_local) {
-  site_config_set_queue_max_running_option(site_config, LOCAL_DRIVER_NAME, max_running_local);
-}
-
-int site_config_get_max_running_local(const site_config_type * site_config) {
-  queue_driver_type * local_driver = site_config_get_queue_driver(site_config, LOCAL_DRIVER_NAME);
-  return site_config_get_queue_max_running_option(local_driver);
-}
-
-/*****************************************************************/
-
-/*****************************************************************/
-
-void site_config_clear_rsh_host_list(site_config_type * site_config) {
-  queue_driver_type * rsh_driver = site_config_get_queue_driver(site_config, RSH_DRIVER_NAME);
-  queue_driver_set_option(rsh_driver, RSH_CLEAR_HOSTLIST, NULL);
-}
-
-hash_type * site_config_get_rsh_host_list(const site_config_type * site_config) {
-  queue_driver_type * rsh_driver = site_config_get_queue_driver(site_config, RSH_DRIVER_NAME);
-  return (hash_type *) queue_driver_get_option(rsh_driver, RSH_HOSTLIST); // CXX_CAST_ERROR
-}
-
-void site_config_add_rsh_host_from_string(site_config_type * site_config, const char * host_string) {
-  queue_driver_type * rsh_driver = site_config_get_queue_driver(site_config, RSH_DRIVER_NAME);
-  queue_driver_set_option(rsh_driver, RSH_HOST, host_string);
-}
-
-void site_config_add_rsh_host(site_config_type * site_config, const char * rsh_host, int max_running) {
-  char * host_max_running = util_alloc_sprintf("%s:%d", rsh_host, max_running);
-  site_config_add_rsh_host_from_string(site_config, host_max_running);
-  free(host_max_running);
-}
-
-void site_config_set_rsh_command(site_config_type * site_config, const char * rsh_command) {
-  queue_driver_type * rsh_driver = site_config_get_queue_driver(site_config, RSH_DRIVER_NAME);
-  queue_driver_set_option(rsh_driver, RSH_CMD, rsh_command);
-}
-
-const char * site_config_get_rsh_command(const site_config_type * site_config) {
-  queue_driver_type * rsh_driver = site_config_get_queue_driver(site_config, RSH_DRIVER_NAME);
-  return (const char * ) queue_driver_get_option(rsh_driver, RSH_CMD); // CXX_CAST_ERROR
-}
-
-/*****************************************************************/
-
-void site_config_set_lsf_queue(site_config_type * site_config, const char * lsf_queue) {
-  queue_driver_type * lsf_driver = site_config_get_queue_driver(site_config, LSF_DRIVER_NAME);
-  queue_driver_set_option(lsf_driver, LSF_QUEUE, lsf_queue);
-}
-
-const char * site_config_get_lsf_queue(const site_config_type * site_config) {
-  queue_driver_type * lsf_driver = site_config_get_queue_driver(site_config, LSF_DRIVER_NAME);
-  return (const char * ) queue_driver_get_option(lsf_driver, LSF_QUEUE); // CXX_CAST_ERROR
-}
-
-void site_config_set_lsf_server(site_config_type * site_config, const char * lsf_server) {
-  queue_driver_type * lsf_driver = site_config_get_queue_driver(site_config, LSF_DRIVER_NAME);
-  queue_driver_set_option(lsf_driver, LSF_SERVER, lsf_server);
-}
-
-// TODO LSF resources requirement or lsf_request?
-void site_config_set_lsf_request(site_config_type * site_config, const char * lsf_request) {
-  queue_driver_type * lsf_driver = site_config_get_queue_driver(site_config, LSF_DRIVER_NAME);
-  queue_driver_set_option(lsf_driver, LSF_RESOURCE, lsf_request);
-}
-
-const char * site_config_get_lsf_request(const site_config_type * site_config) {
-  queue_driver_type * lsf_driver = site_config_get_queue_driver(site_config, LSF_DRIVER_NAME);
-  return (const char * ) queue_driver_get_option(lsf_driver, LSF_RESOURCE);
-}
-
-/*****************************************************************/
-
-
-const char * site_config_get_queue_system(const site_config_type * site_config) {
-  return queue_config_get_queue_system(site_config->queue_config); //based on driver_type
-}
-
-
-
-
 /**
    The job_script might be a relative path, and the cwd changes during
    execution, i.e. it is essential to get hold of the full path.
 */
-
-bool site_config_set_job_script(site_config_type * site_config, const char * job_script) {
-  return queue_config_set_job_script(site_config->queue_config, job_script);
-}
-
-
-
-
-
 
 const char * site_config_get_manual_url(const site_config_type * site_config) {
   return site_config->manual_url;
@@ -622,7 +471,7 @@ void site_config_free(site_config_type * site_config) {
   free(site_config->license_root_path_site);
   free(site_config->__license_root_path);
 
-  queue_config_free(site_config->queue_config);
+
   free(site_config);
 }
 
@@ -634,20 +483,12 @@ ext_joblist_type * site_config_get_installed_jobs(const site_config_type * site_
 /*****************************************************************/
 
 
-void site_config_add_queue_config_items(config_parser_type * config, bool site_mode) {
-  queue_config_add_config_items(config, site_mode);
-
-  config_schema_item_type * item = config_add_schema_item(config, MAX_SUBMIT_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, 1);
-  config_schema_item_iset_type(item, 0, CONFIG_INT);
-}
 
 void site_config_add_config_items(config_parser_type * config, bool site_mode) {
   queue_config_add_config_items(config, site_mode);
 
   config_schema_item_type * item;
   ert_workflow_list_add_config_items(config);
-  site_config_add_queue_config_items(config, site_mode);
 
 
   /*

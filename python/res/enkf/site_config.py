@@ -24,21 +24,6 @@ class SiteConfig(BaseCClass):
     _alloc                  = ResPrototype("void* site_config_alloc(config_content)", bind=False)
     _alloc_load_user_config = ResPrototype("void* site_config_alloc_load_user_config(char*)", bind=False)
     _free                   = ResPrototype("void site_config_free( site_config )")
-    _get_lsf_queue          = ResPrototype("char* site_config_get_lsf_queue(site_config)")
-    _set_lsf_queue          = ResPrototype("void site_config_set_lsf_queue(site_config, char*)")
-    _get_max_running_lsf    = ResPrototype("int site_config_get_max_running_lsf(site_config)")
-    _set_max_running_lsf    = ResPrototype("void site_config_set_max_running_lsf(site_config, int)")
-    _get_lsf_request        = ResPrototype("char* site_config_get_lsf_request(site_config)")
-    _set_lsf_request        = ResPrototype("void site_config_set_lsf_request(site_config, char*)")
-    _get_rsh_command        = ResPrototype("char* site_config_get_rsh_command(site_config)")
-    _set_rsh_command        = ResPrototype("void site_config_set_rsh_command(site_config, char*)")
-    _get_max_running_rsh    = ResPrototype("int site_config_get_max_running_rsh(site_config)")
-    _set_max_running_rsh    = ResPrototype("void site_config_set_max_running_rsh(site_config, int)")
-    _get_rsh_host_list      = ResPrototype("integer_hash_ref site_config_get_rsh_host_list(site_config)")
-    _clear_rsh_host_list    = ResPrototype("void site_config_clear_rsh_host_list(site_config)")
-    _add_rsh_host           = ResPrototype("void site_config_add_rsh_host(site_config, char*, int)")
-    _get_max_running_local  = ResPrototype("int site_config_get_max_running_local(site_config)")
-    _set_max_running_local  = ResPrototype("void site_config_set_max_running_local(site_config, int)")
     _get_installed_jobs     = ResPrototype("ext_joblist_ref site_config_get_installed_jobs(site_config)")
     _get_license_root_path  = ResPrototype("char* site_config_get_license_root_path(site_config)")
     _set_license_root_path  = ResPrototype("void site_config_set_license_root_path(site_config, char*)")
@@ -47,9 +32,7 @@ class SiteConfig(BaseCClass):
     _clear_pathvar          = ResPrototype("void site_config_clear_pathvar(site_config)")
     _update_pathvar         = ResPrototype("void site_config_update_pathvar(site_config, char*, char*)")
     _get_location           = ResPrototype("char* site_config_get_location(site_config)")
-    _has_driver             = ResPrototype("bool site_config_has_queue_driver(site_config, char*)")
     _get_config_file        = ResPrototype("char* site_config_get_config_file(site_config)")
-    _get_queue_config       = ResPrototype("queue_config_ref site_config_get_queue_config(site_config)")
     _get_umask              = ResPrototype("int site_config_get_umask(site_config)")
 
 
@@ -81,70 +64,6 @@ class SiteConfig(BaseCClass):
     def config_file(self):
         return self._get_config_file()
 
-    def getQueueName(self):
-        """ @rtype: str """
-        return self._get_queue_name( )
-
-    def setJobQueue(self, queue):
-        raise Exception("The function setJobQueue() is not properly implemented")
-
-
-    def hasDriver(self, driver_name):
-        return self._has_driver( driver_name )
-
-
-    def getLsfQueue(self):
-        """ @rtype: str """
-        return self._get_lsf_queue( )
-
-    def setLsfQueue(self, queue):
-        self._set_lsf_queue( queue)
-
-    def getMaxRunningLsf(self):
-        """ @rtype: int """
-        return self._get_max_running_lsf( )
-
-    def setMaxRunningLsf(self, max_running):
-        self._set_max_running_lsf( max_running)
-
-    def getLsfRequest(self):
-        """ @rtype: str """
-        return self._get_lsf_request( )
-
-    def setLsfRequest(self, lsf_request):
-        self._set_lsf_request( lsf_request)
-
-    def clearRshHostList(self):
-        self._clear_rsh_host_list( )
-
-    def getRshCommand(self):
-        """ @rtype: str """
-        return self._get_rsh_command( )
-
-    def set_rsh_command(self, rsh_command):
-        self._set_rsh_command( rsh_command)
-
-    def getMaxRunningRsh(self):
-        """ @rtype: int """
-        return self._get_max_running_rsh(  )
-
-    def setMaxRunningRsh(self, max_running):
-        self._set_max_running_rsh(  max_running)
-
-    def getMaxRunningLocal(self):
-        """ @rtype: int """
-        return self._get_max_running_local( )
-
-    def setMaxRunningLocal(self, max_running):
-        self._set_max_running_local(  max_running)
-
-    def get_job_script(self):
-        """ @rtype: str """
-        return self._get_job_script(  )
-
-    def set_job_script(self, job_script):
-        self._set_job_script( job_script)
-
     def get_path_variables(self):
         """ @rtype: StringList """
         return self._get_path_variables().setParent(self)
@@ -170,29 +89,12 @@ class SiteConfig(BaseCClass):
     def set_license_root_pathmax_submit(self, path):
         self._set_license_root_path( path)
 
-    def isQueueRunning(self):
-        """ @rtype: bool """
-        return self._queue_is_running( )
-
-    def getRshHostList(self):
-        """ @rtype: IntegerHash """
-        host_list = self._get_rsh_host_list()
-        return host_list
-
-    def addRshHost(self, host, max_running):
-        self._add_rsh_host(host, max_running)
-
     def getLocation(self):
         """ @rtype: str """
         return self._get_location()
 
-
     def free(self):
         self._free()
-
-    @property
-    def queue_config(self):
-        return self._get_queue_config()
 
     @property
     def umask(self):

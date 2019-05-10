@@ -49,47 +49,12 @@ void test_init(const char * config_file) {
   site_config_free( site_config );
 }
 
-
-void test_job_script() {
-  ecl::util::TestArea ta("script");
-  {
-    site_config_type * site_config = site_config_alloc_load_user_config(NULL);
-
-
-    test_assert_false( site_config_set_job_script( site_config , "/does/not/exist" ));
-
-
-    {
-      FILE * job_script = util_fopen("Script.sh" , "w");
-      fclose( job_script );
-    }
-    test_assert_false( site_config_set_job_script( site_config , "Script.sh" ));
-
-    chmod("Script.sh" , S_IRWXU );
-    test_assert_true( site_config_set_job_script( site_config , "Script.sh" ));
-
-
-    test_assert_false( site_config_set_job_script( site_config , "DoesNotExits"));
-
-    {
-      char * full_path = util_alloc_realpath( "Script.sh" );
-      queue_config_type * queue_config = site_config_get_queue_config( site_config );
-      test_assert_string_equal( full_path , queue_config_get_job_script( queue_config));
-      free( full_path );
-    }
-    site_config_free( site_config );
-  }
-}
-
-
-
 int main(int argc , char ** argv) {
   const char * site_config_file = argv[1];
 
   util_install_signals();
 
   test_init( site_config_file );
-  test_job_script();
 
   exit(0);
 }

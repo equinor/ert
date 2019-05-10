@@ -336,9 +336,6 @@ class ProgrammaticResConfigTest(ResTest):
             self.assertEqual(loaded_res_config.model_config.getEnspath(),
                              prog_res_config.model_config.getEnspath())
 
-            self.assertEqual(loaded_res_config.site_config.queue_config.job_script,
-                             prog_res_config.site_config.queue_config.job_script)
-
             self.assertEqual(0, len(prog_res_config.errors))
             self.assertEqual(0, len(prog_res_config.failed_keys))
 
@@ -410,24 +407,9 @@ class ProgrammaticResConfigTest(ResTest):
 
 
     def assert_equal_site_config(self, loaded_site_config, prog_site_config):
-        self.assertEqual(loaded_site_config.queue_config.queue_name,
-                         prog_site_config.queue_config.queue_name)
-
-        self.assertEqual(loaded_site_config.queue_config.max_submit,
-                         prog_site_config.queue_config.max_submit)
-
-        self.assertEqual(loaded_site_config.queue_config.lsf_resource,
-                         prog_site_config.queue_config.lsf_resource)
-
-        self.assertEqual(loaded_site_config.queue_config.lsf_server,
-                         prog_site_config.queue_config.lsf_server)
 
         self.assertEqual(loaded_site_config.umask,
                          prog_site_config.umask)
-
-
-        self.assertEqual(loaded_site_config.queue_config.driver.get_option("MAX_RUNNING"),
-                         prog_site_config.queue_config.driver.get_option("MAX_RUNNING"))
 
         loaded_job_list = loaded_site_config.get_installed_jobs()
         prog_job_list = prog_site_config.get_installed_jobs()
@@ -576,6 +558,8 @@ class ProgrammaticResConfigTest(ResTest):
 
             self.assert_equal_plot_config(loaded_res_config.plot_config,
                                           prog_res_config.plot_config)
+
+            self.assertEqual(loaded_res_config.queue_config, prog_res_config.queue_config)
 
             self.assertEqual(0, len(prog_res_config.failed_keys))
 

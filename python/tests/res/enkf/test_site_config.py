@@ -33,13 +33,6 @@ class SiteConfigTest(ResTest):
         with TestAreaContext("site_config_init_test") as work_area:
             work_area.copy_directory(self.case_directory)
             site_config = SiteConfig()
-            self.assertIsNotNone(site_config)
-            self.assertIsNotNone(site_config.config_file)
-            
             config_file = "simple_config/minimum_config"
             site_config2 = SiteConfig(user_config_file=config_file)
             self.assertIsNotNone(site_config2)
-
-            self.assertEqual(site_config.config_file, site_config2.config_file)
-
-            self.assertEqual(site_config.__repr__(), site_config2.__repr__())

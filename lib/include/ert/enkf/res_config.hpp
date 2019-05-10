@@ -32,6 +32,7 @@
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/model_config.hpp>
 #include <ert/enkf/log_config.hpp>
+#include <ert/enkf/log_config.hpp>
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,7 +59,7 @@ typedef struct res_config_struct res_config_type;
                                         ensemble_config_type * ensemble_config,
                                         model_config_type * model_config,
                                         log_config_type * log_config,
-                                        config_content_type * config_content);
+                                        queue_config_type * queue_config);
   void              res_config_free(res_config_type *);
   void              res_config_add_config_items(config_parser_type * config_parser);
 
@@ -76,6 +77,7 @@ const ecl_config_type        * res_config_get_ecl_config(const res_config_type *
 ensemble_config_type         * res_config_get_ensemble_config(const res_config_type * res_config);
 model_config_type            * res_config_get_model_config(const res_config_type * res_config);
 const log_config_type        * res_config_get_log_config(const res_config_type * res_config);
+queue_config_type            * res_config_get_queue_config(const res_config_type * res_config);
 
 const char * res_config_get_config_directory(const res_config_type *);
 const char * res_config_get_user_config_file(const res_config_type *);
