@@ -27,10 +27,10 @@ from res.enkf.enums import EnkfTruncationType, ErtImplType, LoadFailTypeEnum, En
 class EnkfConfigNode(BaseCClass):
     TYPE_NAME = "enkf_config_node"
 
+    _alloc = ResPrototype("enkf_config_node_obj enkf_config_node_alloc(enkf_var_type_enum, ert_impl_type_enum, bool, char*, char* , char*, char*, void*)", bind=False)
     _alloc_gen_data_everest = ResPrototype("enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_everest(char*, char* , int_vector)", bind = False)
     _alloc_summary_node = ResPrototype("enkf_config_node_obj enkf_config_node_alloc_summary(char*, load_fail_type)", bind = False)
     _alloc_field_node   = ResPrototype("enkf_config_node_obj enkf_config_node_alloc_field(char*, ecl_grid, void*, bool)", bind = False)
-    _alloc_ext_param_node = ResPrototype("enkf_config_node_obj enkf_config_node_alloc_EXT_PARAM(char*, stringlist, char*)", bind = False)
     _get_ref            = ResPrototype("void* enkf_config_node_get_ref(enkf_config_node)") #todo: fix return type
     _get_impl_type      = ResPrototype("ert_impl_type_enum enkf_config_node_get_impl_type(enkf_config_node)")
     _get_enkf_outfile   = ResPrototype("char* enkf_config_node_get_enkf_outfile(enkf_config_node)")
@@ -116,19 +116,29 @@ class EnkfConfigNode(BaseCClass):
 
 
     @classmethod
-    def create_ext_param(cls, key, key_list, output_file = None):
-        keys = StringList( initial = key_list )
-        return cls._alloc_ext_param_node(key, keys, output_file)
-
+    def create_ext_param(cls, key, input_keys, output_file=None):
+        config = ExtParamConfig(key, input_keys)
+        output_file = output_file or key + ".json"
+        node = cls._alloc(EnkfVarType.EXT_PARAMETER,
+            ErtImplType.EXT_PARAM,
+            False,
+            key,
+            None,
+            output_file,
+            None,
+            ExtParamConfig.from_param(config),
+            )
+        config.convertToCReference(node)  # config gets freed when node dies
+        return node
 
     # This method only exposes the details relevant for Everest usage.
     @classmethod
-    def create_gen_data(cls, key, file_fmt, report_steps = (0,)):
-        active_steps = IntVector( )
+    def create_gen_data(cls, key, file_fmt, report_steps=(0,)):
+        active_steps = IntVector()
         for step in report_steps:
-            active_steps.append( step )
+            active_steps.append(step)
 
-        config_node = cls._alloc_gen_data_everest( key, file_fmt, active_steps)
+        config_node = cls._alloc_gen_data_everest(key, file_fmt, active_steps)
         if config_node is None:
             raise ValueError("Failed to create GEN_DATA node for:%s" % key)
 
@@ -141,7 +151,7 @@ class EnkfConfigNode(BaseCClass):
 
     def __repr__(self):
         key = self.getKey()
-        vt  = self.getVariableType()
+        vt = self.getVariableType()
         imp = self.getImplementationType()
         content = 'key = %s, var_type = %s, implementation = %s' % (key, vt, imp)
         return self._create_repr(content)

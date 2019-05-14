@@ -17,9 +17,9 @@
 */
 
 #include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <vector>
 
 #include <ert/util/util.h>
 
@@ -35,8 +35,7 @@ GET_DATA_SIZE_HEADER(ext_param);
 struct ext_param_struct {
   int                         __type_id;
   const ext_param_config_type * config;
-  double                      * data;
-  int                           size;
+  std::vector<std::vector<double> > data;
 };
 
 /*****************************************************************/
@@ -44,20 +43,19 @@ struct ext_param_struct {
 
 
 void ext_param_free(ext_param_type *ext_param) {
-  free(ext_param->data);
-  free(ext_param);
+  delete ext_param;
 }
 
 
-
-
-
 ext_param_type * ext_param_alloc(const ext_param_config_type * config) {
-  ext_param_type * ext_param = (ext_param_type *)util_malloc(sizeof *ext_param );
-  ext_param->__type_id     = EXT_PARAM;
-  ext_param->config        = config;
-  ext_param->size          = ext_param_config_get_data_size( config );
-  ext_param->data          = (double * ) util_calloc( ext_param->size , sizeof * ext_param->data );
+  ext_param_type * ext_param = new ext_param_type();
+  ext_param->__type_id = EXT_PARAM;
+  ext_param->config = config;
+  ext_param->data.resize(ext_param_config_get_data_size(config));
+  for(int i = 0; i < ext_param->data.size(); i++) {
+    auto const suffix_count = ext_param_config_ikey_get_suffix_count(ext_param->config, i);
+    ext_param->data[i].resize(std::max(suffix_count, 1));
+  }
   return ext_param;
 }
 
@@ -67,7 +65,22 @@ bool ext_param_key_set( ext_param_type * param, const char * key, double value) 
   if (index < 0)
     return false;
 
-  param->data[index] = value;
+  param->data[index][0] = value;
+  return true;
+}
+
+
+bool ext_param_key_suffix_set( ext_param_type * param, const char * key, const char * suffix, double value) {
+  int index = ext_param_config_get_key_index( param->config, key);
+  if (index < 0)
+    return false;
+
+  int suffix_index = ext_param_config_ikey_get_suffix_index( param->config, index, suffix);
+  if (suffix_index < 0)
+    return false;
+
+
+  param->data[index][suffix_index] = value;
   return true;
 }
 
@@ -77,54 +90,115 @@ double ext_param_key_get( const ext_param_type * param, const char * key) {
   if (index < 0)
     util_abort("%s: invalid key:%s \n",__func__ , key);
 
-  return param->data[index];
+  return param->data[index].front();
+}
+
+
+double ext_param_key_suffix_get( const ext_param_type * param, const char * key, const char * suffix) {
+  int ikey = ext_param_config_get_key_index( param->config, key);
+  if (ikey < 0)
+    util_abort("%s: invalid key:%s \n",__func__ , key);
+
+  int isuffix = ext_param_config_ikey_get_suffix_index( param->config, ikey, suffix);
+  if (isuffix < 0)
+    util_abort("%s: invalid suffix:%s \n",__func__ , suffix);
+
+  return param->data[ikey][isuffix];
 }
 
 
 bool ext_param_iset( ext_param_type * param, int index , double value) {
-  if (index >= param->size)
+  if (index >= param->data.size())
     return false;
 
   if (index < 0)
     return false;
 
-  param->data[index] = value;
+  param->data[index].front() = value;
   return true;
 }
 
 
-const char* ext_param_iget_key(const ext_param_type * param, int index) {
-  return ext_param_config_iget_key( param->config , index );
+bool ext_param_iiset( ext_param_type * param, int ikey , int isuffix, double value) {
+  if (ikey >= param->data.size())
+    return false;
+
+  if (ikey < 0)
+    return false;
+
+  if (isuffix >= param->data[ikey].size())
+    return false;
+
+  if (isuffix < 0)
+    return false;
+
+  param->data[ikey][isuffix] = value;
+  return true;
 }
 
+
 double ext_param_iget(const ext_param_type * param, int index) {
-  if (index >= param->size)
-    util_abort("%s: invalid index:%d - range: [0,%d) \n",__func__ , index , param->size);
+  if (index >= param->data.size())
+    util_abort("%s: invalid index:%d - range: [0,%d) \n",__func__ , index , param->data.size());
 
   if (index < 0)
-    util_abort("%s: invalid index:%d - range: [0,%d) \n",__func__ , index , param->size);
+    util_abort("%s: invalid index:%d - range: [0,%d) \n",__func__ , index , param->data.size());
 
-  return param->data[index];
+  return param->data[index].front();
+}
+
+
+double ext_param_iiget(const ext_param_type * param, int ikey, int isuffix) {
+  if (ikey >= param->data.size())
+    util_abort("%s: invalid key index:%d - range: [0,%d) \n",__func__ , ikey , param->data.size());
+
+  if (ikey < 0)
+    util_abort("%s: invalid key index:%d - range: [0,%d) \n",__func__ , ikey , param->data.size());
+  
+  if (isuffix >= param->data[ikey].size())
+    util_abort("%s: invalid suffix index:%d - range: [0,%d) \n",__func__ , isuffix , param->data[ikey].size());
+
+  if (isuffix < 0)
+    util_abort("%s: invalid suffix index:%d - range: [0,%d) \n",__func__ , isuffix , param->data[ikey].size());
+
+  return param->data[ikey][isuffix];
 }
 
 
 void ext_param_json_export(const ext_param_type * ext_param, const char * json_file) {
-  FILE * stream = util_mkdir_fopen( json_file , "w");
-  fprintf(stream, "{\n");
-  for (int index=0; index < ext_param->size; index++) {
-    fprintf(stream, "\"%s\" : %g", ext_param_config_iget_key( ext_param->config , index ), ext_param->data[index]);
+   FILE * stream = util_mkdir_fopen(json_file, "w");
+   fprintf(stream, "{\n");
+   for(int ikey = 0; ikey < ext_param->data.size(); ikey++) {
+      auto const key = ext_param_config_iget_key(ext_param->config, ikey);
+      auto const suffix_count = ext_param_config_ikey_get_suffix_count(ext_param->config, ikey);
 
-    if (index < (ext_param->size - 1))
-      fprintf(stream, ",\n");
-    else
-      fprintf(stream, "\n");
+      fprintf(stream, "\"%s\" : ", key); // print the key
+      if(suffix_count == 0) {            // no suffixes, just print the value
+         auto const value = ext_param->data[ikey].front();
+         fprintf(stream, "%g", value);
+      }
+      else {                             // print suffixes and corresponding values
+         fprintf(stream, "{\n");
+         for(int isuffix = 0; isuffix < suffix_count; ++isuffix) {
+            auto const suffix = ext_param_config_ikey_iget_suffix(ext_param->config, ikey, isuffix);
+            auto const value = ext_param->data[ikey][isuffix];
+            fprintf(stream, "    \"%s\" : %g", suffix, value);
+            fprintf(stream, isuffix == suffix_count-1 ? "\n" : ",\n");
+         }
+         fprintf(stream, "}");
+      }
 
-  }
-  fprintf(stream, "}\n");
-  fclose( stream );
+      if(ikey< (ext_param->data.size() - 1))
+         fprintf(stream, ",\n");
+      else
+         fprintf(stream, "\n");
+
+   }
+   fprintf(stream, "}\n");
+   fclose(stream);
 }
 
-void ext_param_ecl_write(const ext_param_type * ext_param , const char * run_path , const char * base_file , value_export_type * export_value) {
+void ext_param_ecl_write(const ext_param_type * ext_param , const char * run_path , const char * base_file , value_export_type * unused) {
   char * target_file;
 
   if (run_path)
@@ -138,26 +212,24 @@ void ext_param_ecl_write(const ext_param_type * ext_param , const char * run_pat
 
 bool ext_param_write_to_buffer(const ext_param_type *ext_param , buffer_type * buffer,  int report_step) {
   buffer_fwrite_int( buffer , EXT_PARAM );
-  buffer_fwrite(buffer , ext_param->data , sizeof *ext_param->data , ext_param->size);
+  for(auto const& d : ext_param->data) {
+    buffer_fwrite(buffer , d.data() , sizeof *(d.data()), d.size());
+  }
   return true;
 }
 
 
 void ext_param_read_from_buffer(ext_param_type * ext_param , buffer_type * buffer, enkf_fs_type * fs, int report_step) {
-  const int data_size = ext_param_config_get_data_size( ext_param->config );
   enkf_util_assert_buffer_type( buffer, EXT_PARAM );
-  buffer_fread(buffer , ext_param->data , sizeof *ext_param->data , data_size);
+  for(auto& d : ext_param->data) {
+    buffer_fread(buffer , d.data() , sizeof *(d.data()) , d.size());
+  }
 }
 
-int ext_param_get_size( const ext_param_type * ext_param ) {
-  return ext_param->size;
+
+ext_param_config_type const* ext_param_get_config(const ext_param_type * param) {
+   return param->config;
 }
-
-
-bool ext_param_has_key( const ext_param_type * ext_param , const char * key) {
-  return ext_param_config_has_key( ext_param->config , key );
-}
-
 
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */

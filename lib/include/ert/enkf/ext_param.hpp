@@ -28,15 +28,17 @@ extern "C" {
 typedef struct ext_param_struct ext_param_type;
 
   bool        ext_param_iset( ext_param_type * param, int index , double value);
+  bool        ext_param_iiset( ext_param_type * param, int index , int suffix_index, double value);
   double      ext_param_iget(const ext_param_type * param, int index);
+  double      ext_param_iiget(const ext_param_type * param, int index, int suffix_index);
   bool        ext_param_key_set( ext_param_type * param, const char * key, double value);
+  bool        ext_param_key_suffix_set( ext_param_type * param, const char * key, const char * suffix, double value);
   double      ext_param_key_get( const ext_param_type * param, const char * key );
-  int         ext_param_get_size( const ext_param_type * ext_param );
-  bool        ext_param_has_key( const ext_param_type * ext_param , const char * key);
+  double      ext_param_key_suffix_get( const ext_param_type * param, const char * key, const char * suffix);
   void        ext_param_json_export(const ext_param_type * ext_param, const char * json_file);
-  const char* ext_param_iget_key(const ext_param_type * param, int index);
-  void ext_param_free(ext_param_type *ext_param);
+  void        ext_param_free(ext_param_type *ext_param);
   ext_param_type * ext_param_alloc(const ext_param_config_type * config);
+  ext_param_config_type const* ext_param_get_config(const ext_param_type * param);
 
 
 UTIL_SAFE_CAST_HEADER(ext_param);

@@ -624,7 +624,6 @@ foreach (test   enkf_active_list
                 enkf_cases_config
                 enkf_config_node
                 enkf_enkf_config_node_gen_data
-                enkf_config_node_ext_param
                 enkf_ensemble
                 enkf_ensemble_config
                 enkf_ert_run_context

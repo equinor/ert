@@ -214,9 +214,6 @@ extern "C" {
   void                    enkf_config_node_add_GEN_PARAM_config_schema( config_parser_type * config );
   enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM_from_config( const config_content_node_type * config_node );
   enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_from_config( const config_content_node_type * node );
-  enkf_config_node_type * enkf_config_node_alloc_EXT_PARAM( const char * node_key ,
-                                                            const stringlist_type * keys,
-                                                            const char * outfile);
 
 UTIL_IS_INSTANCE_HEADER( enkf_config_node );
 UTIL_SAFE_CAST_HEADER(enkf_config_node);

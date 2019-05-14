@@ -360,36 +360,6 @@ enkf_config_node_type * enkf_config_node_alloc_summary( const char * key , load_
 }
 
 
-enkf_config_node_type * enkf_config_node_alloc_EXT_PARAM( const char * node_key ,
-                                                          const stringlist_type * keys,
-                                                          const char * outfile)
-{
-  ext_param_config_type * data = ext_param_config_alloc( node_key , keys );
-  if (data) {
-    enkf_config_node_type * config_node = enkf_config_node_alloc__( EXT_PARAMETER ,  EXT_PARAM , node_key , false );
-    char * output_file;
-
-    config_node->data = data;
-    if (outfile)
-      output_file = util_alloc_string_copy( outfile );
-    else
-      output_file = util_alloc_sprintf("%s.json" , node_key);
-
-    enkf_config_node_update( config_node,
-                             NULL ,
-                             output_file,
-                             NULL,
-                             NULL);
-
-    free( output_file );
-
-    return config_node;
-  } else
-    return NULL;
-}
-
-
-
 enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM( const char * node_key ,
                                                           bool forward_init ,
                                                           gen_data_file_format_type input_format ,

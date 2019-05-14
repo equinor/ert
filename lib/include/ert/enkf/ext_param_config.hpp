@@ -25,12 +25,18 @@ extern "C" {
 
 typedef struct ext_param_config_struct ext_param_config_type;
 
-  const char            * ext_param_config_iget_key( const ext_param_config_type * config , int index);
-  void                    ext_param_config_free( ext_param_config_type * config );
-  int                     ext_param_config_get_data_size( const ext_param_config_type * config );
-  ext_param_config_type * ext_param_config_alloc( const char * key, const stringlist_type * keys);
-  int                     ext_param_config_get_key_index( const ext_param_config_type * config , const char * key);
-  bool                    ext_param_config_has_key(const ext_param_config_type * config , const char * key);
+ext_param_config_type * ext_param_config_alloc(const char * key, const stringlist_type * keys);
+
+void                    ext_param_config_free             (ext_param_config_type * config );
+void                    ext_param_config_ikey_set_suffixes(ext_param_config_type * config, int ikey, const stringlist_type * suffixes);
+
+int                     ext_param_config_get_data_size        (const ext_param_config_type * config);
+const char            * ext_param_config_iget_key             (const ext_param_config_type * config, int index);
+int                     ext_param_config_get_key_index        (const ext_param_config_type * config, const char * key);
+bool                    ext_param_config_has_key              (const ext_param_config_type * config, const char * key);
+int                     ext_param_config_ikey_get_suffix_count(const ext_param_config_type * config, int key_id);
+const char            * ext_param_config_ikey_iget_suffix     (const ext_param_config_type * config, int key_id, int suffix_id);
+int                     ext_param_config_ikey_get_suffix_index(const ext_param_config_type * config, int key_id, const char * suffix);
 
 UTIL_SAFE_CAST_HEADER(ext_param_config);
 UTIL_SAFE_CAST_HEADER_CONST(ext_param_config);
