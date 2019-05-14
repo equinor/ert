@@ -29,6 +29,8 @@ class ConfigKeys:
     _path_key             = ResPrototype("char* config_keys_get_path_key()", bind=False)
     _show_refcase_key     = ResPrototype("char* config_keys_get_show_refcase_key()", bind=False)
     _show_history_key     = ResPrototype("char* config_keys_get_show_history_key()", bind=False)
+    _install_job_directory_key = ResPrototype("char* config_keys_get_install_job_directory_key()", bind=False)
+    _plot_settings_key    = ResPrototype("char* config_keys_get_plot_setting_key()", bind=False)
     _forward_model_key    = ResPrototype("char* config_keys_get_forward_model_key()", bind=False)
     _simulation_job_key   = ResPrototype("char* config_keys_get_simulation_job_key()", bind=False)
     _log_file_key         = ResPrototype("char* config_keys_get_log_file_key()", bind=False)
@@ -64,6 +66,8 @@ class ConfigKeys:
     _output_format        = ResPrototype("char* config_keys_get_output_format()", bind=False)
     _init_files           = ResPrototype("char* config_keys_get_init_files()", bind=False)
     _random_seed          = ResPrototype("char* config_keys_get_random_seed()", bind=False)
+    _license_path_key     = ResPrototype("char* config_keys_get_license_path_key()", bind=False)
+    _setenv_key           = ResPrototype("char* config_keys_get_setenv_key()", bind=False)
 
     ARGLIST          = "ARGLIST"
     CONFIG_DIRECTORY = _config_directory_key()
@@ -127,3 +131,8 @@ class ConfigKeys:
     ECL_FILE         = _ecl_file()
     OUTPUT_FORMAT    = _output_format()
     INIT_FILES       = _init_files()
+    LICENSE_PATH     = _license_path_key()
+    INSTALL_JOB_DIRECTORY = _install_job_directory_key()
+    SETENV = _setenv_key()
+
+

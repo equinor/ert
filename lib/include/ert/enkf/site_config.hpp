@@ -40,39 +40,20 @@ extern "C" {
 typedef struct site_config_struct site_config_type;
 
   const char *             site_config_get_location();
-  void                     site_config_update_pathvar(site_config_type * site_config, const char * pathvar, const char * value);
-
   const char *             site_config_get_config_file(const site_config_type*);
-
-  const char *             site_config_get_manual_url( const site_config_type * site_config );
-  void                     site_config_set_manual_url( site_config_type * site_config , const char * manual_url );
-  const char *             site_config_get_default_browser( const site_config_type * site_config );
-  void                     site_config_set_default_browser( site_config_type * site_config , const char * default_browser );
-
   const char            *  site_config_get_license_root_path( const site_config_type * site_config );
   void                     site_config_set_license_root_path( site_config_type * site_config , const char * license_root_path);
-
   void                     site_config_free(site_config_type *);
   ext_joblist_type       * site_config_get_installed_jobs( const site_config_type * );
-
   const env_varlist_type * site_config_get_env_varlist(const site_config_type * site_config);
-  void                     site_config_clear_pathvar( site_config_type * site_config );
-  stringlist_type        * site_config_get_path_variables( const site_config_type * site_config );
-  stringlist_type        * site_config_get_path_values( const site_config_type * site_config );
-
-  void                     site_config_set_ext_job_search_path(site_config_type * site_config, bool search_path);
-
   int                      site_config_install_job(site_config_type * site_config , const char * job_name , const char * install_file);
   bool                     site_config_del_job( site_config_type * site_config , const char * job_name );
-
   void                     site_config_set_umask( site_config_type * site_config , mode_t umask);
   mode_t                   site_config_get_umask( const site_config_type * site_config );
-
   site_config_type       * site_config_alloc_load_user_config(const char *);
   site_config_type       * site_config_alloc(const config_content_type * config_content);
-
+  site_config_type       * site_config_alloc_full(ext_joblist_type * ext_joblist, env_varlist_type * env_varlist, int umask);
   config_content_type    * site_config_alloc_content(config_parser_type*);
-
   void                     site_config_add_config_items( config_parser_type * config , bool site_mode);
 #ifdef __cplusplus
 }

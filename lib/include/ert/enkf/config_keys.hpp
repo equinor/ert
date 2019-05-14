@@ -174,6 +174,7 @@ extern "C" {
   const char * config_keys_get_lsf_server_key();
   const char * config_keys_get_lsf_queue_key();
   const char * config_keys_get_install_job_key();
+  const char * config_keys_get_install_job_directory_key();
   const char * config_keys_get_plot_setting_key();
   const char * config_keys_get_forward_model_key();
   const char * config_keys_get_log_file_key();
@@ -207,6 +208,8 @@ extern "C" {
   const char * config_keys_get_output_format();
   const char * config_keys_get_init_files();
   const char * config_keys_get_random_seed();
+  const char * config_keys_get_license_path_key();
+  const char * config_keys_get_setenv_key();
 
 #ifdef   __cplusplus
 }

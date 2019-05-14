@@ -101,13 +101,6 @@ struct site_config_struct {
   char * license_root_path_site; /* The license_root_path value set by the site. */
   char * __license_root_path; /* The license_root_path value actually used - includes a user/pid subdirectory. */
 
-  hash_type * path_variables_site; /* We store this so we can roll back when all user settings are cleared. */
-  stringlist_type * path_variables_user; /* We can update the same path variable several times - i.e. it can not be a hash table. */
-  stringlist_type * path_values_user;
-
-  char * manual_url;    //not this one
-  char * default_browser;   //not this one
-
   bool user_mode;
   bool search_path;
 };
@@ -142,21 +135,13 @@ static site_config_type * site_config_alloc_empty() {
   site_config->license_root_path = NULL;
   site_config->license_root_path_site = NULL;
   site_config->__license_root_path = NULL;
-  site_config->manual_url = NULL;
-  site_config->default_browser = NULL;
   site_config->user_mode = false;
 
   site_config->env_varlist = env_varlist_alloc();
 
-  site_config->path_variables_user = stringlist_alloc_new();
-  site_config->path_values_user = stringlist_alloc_new();
-  site_config->path_variables_site = hash_alloc();
-
   /* Some hooops to get the current umask. */
   site_config->umask = umask(0);
   site_config_set_umask(site_config, site_config->umask);
-  site_config_set_manual_url(site_config, DEFAULT_MANUAL_URL);
-  site_config_set_default_browser(site_config, DEFAULT_BROWSER);
 
   site_config->search_path = false;
   return site_config;
@@ -206,6 +191,14 @@ site_config_type * site_config_alloc(const config_content_type * config_content)
     site_config_init(site_config, config_content);
   }
 
+  return site_config;
+}
+
+site_config_type * site_config_alloc_full(ext_joblist_type * ext_joblist, env_varlist_type * env_varlist, int umask) {
+  site_config_type * site_config = site_config_alloc_empty();
+  site_config->joblist = ext_joblist;
+  site_config->env_varlist = env_varlist;
+  site_config->umask = umask;
   return site_config;
 }
 
@@ -290,81 +283,6 @@ static void site_config_add_jobs(site_config_type * site_config, const config_co
 
 }
 
-/**
-   Will only return the user-set variables. The variables set in the
-   site config are hidden.
- */
-
-stringlist_type * site_config_get_path_variables(const site_config_type * site_config) {
-  return site_config->path_variables_user;
-}
-
-stringlist_type * site_config_get_path_values(const site_config_type * site_config) {
-  return site_config->path_values_user;
-}
-
-/**
-   Observe that the value inserted in the internal hash tables is the
-   interpolated value returned from util_interp_setenv(), where $VAR
-   expressions have been expanded.
- */
-
-
-void site_config_clear_pathvar(site_config_type * site_config) {
-  stringlist_clear(site_config->path_variables_user);
-  stringlist_clear(site_config->path_values_user);
-  {
-    /* Recover the original values. */
-    hash_iter_type * hash_iter = hash_iter_alloc(site_config->path_variables_site);
-    while (!hash_iter_is_complete(hash_iter)) {
-      const char * var = hash_iter_get_next_key(hash_iter);
-      const char * site_value = (const char *)hash_get(site_config->path_variables_site, var);
-
-      if (site_value == NULL)
-        res_env_unsetenv(var);
-      else
-        res_env_setenv(var, site_value);
-    }
-  }
-}
-
-void site_config_update_pathvar(site_config_type * site_config, const char * pathvar, const char * value) {
-  if (site_config->user_mode) {
-    stringlist_append_copy(site_config->path_variables_user, pathvar);
-    stringlist_append_copy(site_config->path_values_user, value);
-
-    if (!hash_has_key(site_config->path_variables_site, pathvar))
-      hash_insert_ref(site_config->path_variables_site, pathvar, NULL); /* This path variable has not been touched in the
-                                                                              site_config. We store a NULL, so can roll back
-                                                                              (i.e. call unsetenv()). */
-  }
-  res_env_update_path_var(pathvar, value, false);
-}
-
-/*****************************************************************/
-
-/**
-   The job_script might be a relative path, and the cwd changes during
-   execution, i.e. it is essential to get hold of the full path.
-*/
-
-const char * site_config_get_manual_url(const site_config_type * site_config) {
-  return site_config->manual_url;
-}
-
-void site_config_set_manual_url(site_config_type * site_config, const char * manual_url) {
-  site_config->manual_url = util_realloc_string_copy(site_config->manual_url, manual_url);
-}
-
-const char * site_config_get_default_browser(const site_config_type * site_config) {
-  return site_config->default_browser;
-}
-
-void site_config_set_default_browser(site_config_type * site_config, const char * default_browser) {
-  site_config->default_browser = util_realloc_string_copy(site_config->default_browser, default_browser);
-}
-
-
 
 const env_varlist_type * site_config_get_env_varlist(const site_config_type * site_config) {
   return site_config->env_varlist;
@@ -439,10 +357,6 @@ static bool site_config_init(site_config_type * site_config, const config_conten
   if (config_content_has_item(config, LICENSE_PATH_KEY))
     site_config_set_license_root_path(site_config, config_content_get_value_as_abspath(config, LICENSE_PATH_KEY));
 
-  if (config_content_has_item(config, EXT_JOB_SEARCH_PATH_KEY))
-      site_config_set_ext_job_search_path(site_config, config_content_get_value_as_bool(config, EXT_JOB_SEARCH_PATH_KEY));
-
-
   return true;
 }
 
@@ -454,19 +368,13 @@ void site_config_set_ext_job_search_path(site_config_type * site_config, bool se
 void site_config_free(site_config_type * site_config) {
   ext_joblist_free(site_config->joblist);
 
-
-  stringlist_free(site_config->path_variables_user);
-  stringlist_free(site_config->path_values_user);
-  hash_free(site_config->path_variables_site);
-
   env_varlist_free(site_config->env_varlist);
 
   if (site_config->__license_root_path != NULL)
     util_clear_directory(site_config->__license_root_path, true, true);
 
   free(site_config->config_file);
-  free(site_config->manual_url);
-  free(site_config->default_browser);
+
   free(site_config->license_root_path);
   free(site_config->license_root_path_site);
   free(site_config->__license_root_path);

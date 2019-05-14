@@ -13,48 +13,101 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from os.path import isfile
 
+import os
 from cwrap import BaseCClass
 from res import ResPrototype
+from res.enkf import ConfigKeys
+from res.job_queue import ExtJob, ExtJoblist, EnvironmentVarlist
 
 
 class SiteConfig(BaseCClass):
     TYPE_NAME = "site_config"
     _alloc                  = ResPrototype("void* site_config_alloc(config_content)", bind=False)
+    _alloc_full             = ResPrototype("void* site_config_alloc_full(ext_joblist, env_varlist, int)", bind=False)
     _alloc_load_user_config = ResPrototype("void* site_config_alloc_load_user_config(char*)", bind=False)
     _free                   = ResPrototype("void site_config_free( site_config )")
     _get_installed_jobs     = ResPrototype("ext_joblist_ref site_config_get_installed_jobs(site_config)")
     _get_license_root_path  = ResPrototype("char* site_config_get_license_root_path(site_config)")
     _set_license_root_path  = ResPrototype("void site_config_set_license_root_path(site_config, char*)")
-    _get_path_variables     = ResPrototype("stringlist_ref site_config_get_path_variables(site_config)")
-    _get_path_values        = ResPrototype("stringlist_ref site_config_get_path_values(site_config)")
-    _clear_pathvar          = ResPrototype("void site_config_clear_pathvar(site_config)")
-    _update_pathvar         = ResPrototype("void site_config_update_pathvar(site_config, char*, char*)")
-    _get_location           = ResPrototype("char* site_config_get_location(site_config)")
+    _get_location           = ResPrototype("char* site_config_get_location()", bind=False)
     _get_config_file        = ResPrototype("char* site_config_get_config_file(site_config)")
     _get_umask              = ResPrototype("int site_config_get_umask(site_config)")
 
 
-    def __init__(self, user_config_file=None, config_content=None):
+    def __init__(self, user_config_file=None, config_content=None, config_dict=None):
 
+        configs = sum([1 for x in [user_config_file, config_content, config_dict] if x is not None])
+
+        if configs > 1:
+            raise ValueError("Attempting to construct SiteConfig with multiple config objects")
+
+        if configs == 0:
+            raise ValueError("Attempting to construct SiteConfig with no config objects")
+
+        c_ptr = None
         if user_config_file is not None:
-            if not isfile(user_config_file):
+            if not os.path.isfile(user_config_file):
                 raise IOError('No such configuration file "%s".' % user_config_file)
-
             c_ptr = self._alloc_load_user_config(user_config_file)
-            if c_ptr:
-                super(SiteConfig, self).__init__(c_ptr)
-            else:
-                raise ValueError('Failed to construct SiteConfig instance from config file %s.' % user_config_file)
 
-        else:
+        elif config_content is not None:
             c_ptr = self._alloc(config_content)
 
-            if c_ptr is None:
-                raise ValueError('Failed to construct SiteConfig instance.')
+        elif config_dict is not None:
+            license_root_path = config_dict.get(ConfigKeys.LICENSE_PATH)
+            license_root_path_site = os.path.realpath(license_root_path)
+            __license_root_path = os.path.join(
+                license_root_path_site,
+                os.getenv("USER"),
+                str(os.getpid())
+            )
 
-            super(SiteConfig, self).__init__(c_ptr)
+            # Create joblist
+            ext_job_list = ExtJoblist()
+            for job in config_dict.get(ConfigKeys.INSTALL_JOB, []):
+                if not os.path.isfile(job['PATH']):
+                    print("WARNING: Unable to locate job file {}".format(job['PATH']))
+                    continue
+                try:
+                    new_job = ExtJob(config_file=job['PATH'], private=False, name=job['NAME'], license_root_path=__license_root_path)
+                    new_job.convertToCReference(None)
+                    ext_job_list.add_job(job['NAME'], new_job)
+                except:
+                    print("WARNING: Unable to create job from {}".format(job['PATH']))
+                    continue
+
+            for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
+                if not os.path.isdir(job_path):
+                    print("WARNING: Unable to locate job directory {}".format(job['PATH']))
+                    continue
+                files = os.listdir(job_path)
+                for file_name in files:
+                    full_path = os.path.join(job_path, file_name)
+                    try:
+                        new_job = ExtJob(config_file=full_path, private=False, license_root_path=__license_root_path)
+                        new_job.convertToCReference(None)
+                        ext_job_list.add_job(new_job.name(), new_job)
+                    except:
+                        print("WARNING: Unable to create job from {}".format(full_path))
+                        continue
+
+            ext_job_list.convertToCReference(None)
+
+            # Create varlist)
+            env_var_list = EnvironmentVarlist()
+            for (var, value) in config_dict.get(ConfigKeys.SETENV):
+                env_var_list[var] = value
+
+            env_var_list.convertToCReference(None)
+            umask = config_dict.get(ConfigKeys.UMASK)
+
+            c_ptr = self._alloc_full(ext_job_list, env_var_list, umask)
+
+        if c_ptr is None:
+            raise ValueError('Failed to construct SiteConfig instance.')
+
+        super(SiteConfig, self).__init__(c_ptr)
 
 
     def __repr__(self):
@@ -63,20 +116,6 @@ class SiteConfig(BaseCClass):
     @property
     def config_file(self):
         return self._get_config_file()
-
-    def get_path_variables(self):
-        """ @rtype: StringList """
-        return self._get_path_variables().setParent(self)
-
-    def get_path_values(self):
-        """ @rtype: StringList """
-        return self._get_path_values().setParent(self)
-
-    def clear_pathvar(self):
-        self._clear_pathvar(  )
-
-    def update_pathvar(self, pathvar, value):
-        self._update_pathvar( pathvar, value)
 
     def get_installed_jobs(self):
         """ @rtype: ExtJoblist """
@@ -89,9 +128,10 @@ class SiteConfig(BaseCClass):
     def set_license_root_pathmax_submit(self, path):
         self._set_license_root_path( path)
 
-    def getLocation(self):
+    @classmethod
+    def getLocation(cls):
         """ @rtype: str """
-        return self._get_location()
+        return cls._get_location()
 
     def free(self):
         self._free()
@@ -99,3 +139,25 @@ class SiteConfig(BaseCClass):
     @property
     def umask(self):
         return self._get_umask()
+
+    def __eq__(self, other):
+        if self.umask != other.umask:
+            return False
+
+        self_job_list = self.get_installed_jobs()
+        other_job_list = other.get_installed_jobs()
+
+        if other_job_list.getAvailableJobNames() != self_job_list.getAvailableJobNames():
+            return False
+
+        for job_name in other_job_list.getAvailableJobNames():
+
+            if other_job_list[job_name].get_config_file() != self_job_list[job_name].get_config_file():
+                return False
+
+            if other_job_list[job_name].get_stderr_file() != self_job_list[job_name].get_stderr_file():
+                return False
+
+            if other_job_list[job_name].get_stdout_file() != self_job_list[job_name].get_stdout_file():
+                return False
+        return True

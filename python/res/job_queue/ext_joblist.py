@@ -60,7 +60,7 @@ class ExtJoblist(BaseCClass):
 
     def getAvailableJobNames(self):
         """ @rtype: StringList """
-        return self._alloc_list( ).setParent(self)
+        return [str(x) for x in self._alloc_list( ).setParent(self)]
 
     def del_job(self, job):
         return self._del_job(job)

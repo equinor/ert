@@ -408,24 +408,7 @@ class ProgrammaticResConfigTest(ResTest):
 
     def assert_equal_site_config(self, loaded_site_config, prog_site_config):
 
-        self.assertEqual(loaded_site_config.umask,
-                         prog_site_config.umask)
-
-        loaded_job_list = loaded_site_config.get_installed_jobs()
-        prog_job_list = prog_site_config.get_installed_jobs()
-
-        self.assertEqual(loaded_job_list.getAvailableJobNames(),
-                         prog_job_list.getAvailableJobNames())
-
-        for job_name in loaded_job_list.getAvailableJobNames():
-            self.assertEqual(loaded_job_list[job_name].get_config_file(),
-                             prog_job_list[job_name].get_config_file())
-
-            self.assertEqual(loaded_job_list[job_name].get_stderr_file(),
-                             prog_job_list[job_name].get_stderr_file())
-
-            self.assertEqual(loaded_job_list[job_name].get_stdout_file(),
-                             prog_job_list[job_name].get_stdout_file())
+        self.assertEqual(loaded_site_config, prog_site_config)
 
 
     def assert_equal_ecl_config(self, loaded_ecl_config, prog_ecl_config):

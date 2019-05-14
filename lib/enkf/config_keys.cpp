@@ -189,3 +189,14 @@ const char * config_keys_get_init_files() {
 const char * config_keys_get_random_seed() {
   return RANDOM_SEED_KEY;
 }
+
+const char * config_keys_get_install_job_directory_key() {
+    return INSTALL_JOB_DIRECTORY_KEY;
+}
+
+const char * config_keys_get_license_path_key() {
+    return LICENSE_PATH_KEY;
+}
+const char * config_keys_get_setenv_key() {
+    return SETENV_KEY;
+}
