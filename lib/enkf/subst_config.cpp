@@ -95,6 +95,20 @@ subst_config_type * subst_config_alloc(const config_content_type * user_config) 
   return subst_config;
 }
 
+subst_config_type * subst_config_alloc_full(const subst_list_type * define_list) {
+  subst_config_type * subst_config = subst_config_alloc_default();
+
+  // copy list of substitution keywords
+  for (int i=0; i < subst_list_get_size(define_list); i++) {
+    const char * key   = subst_list_iget_key(define_list, i);
+    const char * value = subst_list_iget_value(define_list, i);
+    subst_config_add_subst_kw(subst_config, key, value);
+  }
+
+  return subst_config;
+}
+
+
 void subst_config_free(subst_config_type * subst_config) {
   if(!subst_config)
     return;

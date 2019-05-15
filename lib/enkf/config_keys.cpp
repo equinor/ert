@@ -22,6 +22,10 @@ const char * config_keys_get_config_directory_key() {
   return CONFIG_DIRECTORY_KEY;
 }
 
+const char * config_keys_get_config_file_key() {
+  return RES_CONFIG_FILE_KEY;
+}
+
 const char * config_keys_get_queue_system_key() {
   return QUEUE_SYSTEM_KEY;
 }
@@ -118,6 +122,10 @@ const char * config_keys_get_data_file_key() {
   return DATA_FILE_KEY;
 }
 
+const char * config_keys_get_data_kw_key() {
+    return DATA_KW_KEY;
+}
+
 const char * config_keys_get_runpath_key() {
   return RUNPATH_KEY;
 }
@@ -208,4 +216,8 @@ const char * config_keys_get_job_script_key() {
 
 const char * config_keys_get_num_cpu_key() {
   return NUM_CPU_KEY;
+}
+
+const char * config_keys_get_define_key() {
+    return DEFINE_KEY;
 }

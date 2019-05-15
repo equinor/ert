@@ -19,6 +19,7 @@ from res import ResPrototype
 class ConfigKeys:
 
     _config_directory_key = ResPrototype("char* config_keys_get_config_directory_key()", bind=False)
+    _config_file_key      = ResPrototype("char* config_keys_get_config_file_key()", bind=False)
     _queue_system_key     = ResPrototype("char* config_keys_get_queue_system_key()", bind=False)
     _run_template_key     = ResPrototype("char* config_keys_get_run_template_key()", bind=False)
     _custom_kw_key        = ResPrototype("char* config_keys_get_custom_kw_key()", bind=False)
@@ -48,6 +49,7 @@ class ConfigKeys:
     _max_submit           = ResPrototype("char* config_keys_get_max_submit_key()", bind=False)
     _umask                = ResPrototype("char* config_keys_get_umask_key()", bind=False)
     _data_file            = ResPrototype("char* config_keys_get_data_file_key()", bind=False)
+    _data_kw_key          = ResPrototype("char* config_keys_get_data_kw_key()", bind=False)
     _runpath              = ResPrototype("char* config_keys_get_runpath_key()", bind=False)
     _runpath_file         = ResPrototype("char* config_keys_get_runpath_file_key()", bind=False)
     _eclbase              = ResPrototype("char* config_keys_get_eclbase_key()", bind=False)
@@ -70,11 +72,13 @@ class ConfigKeys:
     _setenv_key           = ResPrototype("char* config_keys_get_setenv_key()", bind=False)
     _job_script_key       = ResPrototype("char* config_keys_get_job_script_key()", bind=False)
     _num_cpu_key           = ResPrototype("char* config_keys_get_num_cpu_key()", bind=False)
-
+    _define_key           = ResPrototype("char* config_keys_get_define_key()", bind=False)
 
     ARGLIST          = "ARGLIST"
     CONFIG_DIRECTORY = _config_directory_key()
+    CONFIG_FILE_KEY  = _config_file_key()
     DEFINES          = "DEFINES"
+    DEFINE_KEY       = _define_key()
     INTERNALS        = "INTERNALS"
     SIMULATION       = "SIMULATION"
     LOGGING          = "LOGGING"
@@ -117,8 +121,10 @@ class ConfigKeys:
     UMASK            = _umask()
     MAX_RUNNING      = "MAX_RUNNING"
     DATA_FILE        = _data_file()
+    DATA_KW_KEY      = _data_kw_key()
     RUNPATH          = _runpath()
     RUNPATH_FILE     = _runpath_file()
+    RUNPATH_LIST_FILE = ".ert_runpath_list"
     ECLBASE          = _eclbase()
     NUM_REALIZATIONS = _num_realizations()
     ENSPATH          = _enspath()

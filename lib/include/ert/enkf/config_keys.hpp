@@ -165,6 +165,7 @@ extern "C" {
 
 
   const char * config_keys_get_config_directory_key();
+  const char * config_keys_get_config_file_key();
   const char * config_keys_get_queue_system_key();
   const char * config_keys_get_run_template_key();
   const char * config_keys_get_custom_kw_key();
@@ -190,6 +191,7 @@ extern "C" {
   const char * config_keys_get_simulation_job_key();
   const char * config_keys_get_umask_key();
   const char * config_keys_get_data_file_key();
+  const char * config_keys_get_data_kw_key();
   const char * config_keys_get_runpath_key();
   const char * config_keys_get_runpath_file_key();
   const char * config_keys_get_eclbase_key();
@@ -212,6 +214,7 @@ extern "C" {
   const char * config_keys_get_setenv_key();
   const char * config_keys_get_job_script_key();
   const char * config_keys_get_num_cpu_key();
+  const char * config_keys_get_define_key();
 
 #ifdef   __cplusplus
 }

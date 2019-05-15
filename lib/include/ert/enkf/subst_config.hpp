@@ -27,6 +27,7 @@ typedef struct subst_config_struct subst_config_type;
 
 subst_config_type * subst_config_alloc_load(const char * user_config_file, const char * working_dir);
 subst_config_type * subst_config_alloc(const config_content_type * user_config);
+subst_config_type * subst_config_alloc_full(const subst_list_type * define_list);
 void                subst_config_free(subst_config_type * subst_config);
 
 subst_func_pool_type * subst_config_get_subst_func_pool(subst_config_type * subst_type);
