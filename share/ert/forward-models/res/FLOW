@@ -1,4 +1,5 @@
 EXECUTABLE script/flow
 DEFAULT <VERSION> default
 DEFAULT <NUM_CPU> 1
-ARGLIST <ECLBASE> "--version=<VERSION>" "--num-cpu=<NUM_CPU>"
+DEFAULT <OPTS> ""
+ARGLIST <ECLBASE> "--version=<VERSION>" "--num-cpu=<NUM_CPU>" <OPTS>
