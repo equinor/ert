@@ -47,7 +47,8 @@ Reservoir simulation: eclipse/flow
     EXECUTABLE script/ecl100
     DEFAULT <VERSION> version
     DEFAULT <NUM_CPU> 1
-    ARGLIST <ECLBASE> "--version=<VERSION>" "--num-cpu=<NUM_CPU>" "--ignore-errors"
+    DEFAULT OPTS ""
+    ARGLIST <ECLBASE> "--version=<VERSION>" "--num-cpu=<NUM_CPU>" OPTS
 
 There are forward models for each of the simulators eclipse100, eclipse300 and
 flow, and they are all configured the same way. The version, number of cpu and
@@ -56,7 +57,10 @@ when adding the job, as such:
 
 .. code-block:: bash
 
-    FORWARD_MODEL ECLIPSE100 <ECLBASE> "--version=xxxx"
+    FORWARD_MODEL ECLIPSE100(<ECLBASE>, <VERSION>=xxxx, <OPTS>="--ignore-errors")
+
+The :code:`OPTS` argument is optional and can be removed, thus running eclipse
+without ignoring errors
 
 Reservoir modelling: RMS
 ........................
