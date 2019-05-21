@@ -210,6 +210,8 @@ extern "C" {
   const char * config_keys_get_random_seed();
   const char * config_keys_get_license_path_key();
   const char * config_keys_get_setenv_key();
+  const char * config_keys_get_job_script_key();
+  const char * config_keys_get_num_cpu_key();
 
 #ifdef   __cplusplus
 }

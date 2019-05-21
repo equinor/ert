@@ -197,6 +197,15 @@ const char * config_keys_get_install_job_directory_key() {
 const char * config_keys_get_license_path_key() {
     return LICENSE_PATH_KEY;
 }
+
 const char * config_keys_get_setenv_key() {
     return SETENV_KEY;
+}
+
+const char * config_keys_get_job_script_key() {
+  return JOB_SCRIPT_KEY;
+}
+
+const char * config_keys_get_num_cpu_key() {
+  return NUM_CPU_KEY;
 }

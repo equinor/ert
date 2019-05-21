@@ -29,6 +29,7 @@ class QueueConfig(BaseCClass):
     _free                  = ResPrototype("void queue_config_free( queue_config )")
     _alloc_job_queue       = ResPrototype("job_queue_obj queue_config_alloc_job_queue( queue_config )")
     _alloc                 = ResPrototype("void* queue_config_alloc_load(char*)", bind=False)
+    _alloc_full            = ResPrototype("void* queue_config_alloc_full(char*, bool, int, int, int)", bind=False)
     _alloc_content         = ResPrototype("void* queue_config_alloc(config_content)", bind=False)
     _alloc_local_copy      = ResPrototype("queue_config_obj queue_config_alloc_local_copy( queue_config )")
     _has_job_script        = ResPrototype("bool queue_config_has_job_script( queue_config )")
@@ -38,24 +39,41 @@ class QueueConfig(BaseCClass):
     _queue_driver          = ResPrototype("driver_ref queue_config_get_queue_driver(queue_config, char*)")
     _get_num_cpu           = ResPrototype("int queue_config_get_num_cpu(queue_config)")
 
-    def __init__(self, user_config_file=None, config_content=None):
-        if user_config_file is not None and config_content is not None:
-            raise ValueError("Trying to create QueueConfig with multiple configurations!")
+    def __init__(self, user_config_file=None, config_content=None, config_dict=None):
+        configs = sum([1 for x in [user_config_file, config_content, config_dict] if x is not None])
 
-        if user_config_file is None and config_content is None:
-            raise ValueError("Trying to create QueueConfig with no configuration!")
+        if configs > 1:
+            raise ValueError("Attempting to create QueueConfig object with multiple config objects")
+
+        if configs == 0:
+            raise ValueError("Attempting to create QueueConfig object with no config objects")
 
         c_ptr = None
         if user_config_file is not None:
             c_ptr = self._alloc(user_config_file)
+
         if config_content is not None:
             c_ptr = self._alloc_content(config_content)
 
+        if config_dict is not None:
+                c_ptr = self._alloc_full(
+                                            config_dict[ConfigKeys.JOB_SCRIPT],
+                                            config_dict[ConfigKeys.USER_MODE],
+                                            config_dict[ConfigKeys.MAX_SUBMIT],
+                                            config_dict[ConfigKeys.NUM_CPU],
+                                            config_dict[ConfigKeys.QUEUE_SYSTEM]
+                )
         if not c_ptr:
-            raise ValueError("Unable to create QueueConfig instance with {} or {}"
-                             .format(user_config_file, config_content))
+            raise ValueError("Unable to create QueueConfig instance")
 
         super(QueueConfig, self).__init__(c_ptr)
+
+        #Need to create
+        if config_dict is not None:
+            queue_options = config_dict[ConfigKeys.QUEUE_OPTION]
+            for option in queue_options:
+                self.driver.set_option(option['NAME'], option['VALUE'])
+
 
     def create_job_queue(self):
         return self._alloc_job_queue()
@@ -118,13 +136,8 @@ class QueueConfig(BaseCClass):
         return self._get_num_cpu()
 
     def __eq__(self, other):
-        if self.queue_name != other.queue_name:
-            return False
+
         if self.max_submit != other.max_submit:
-            return False
-        if self.lsf_resource != other.lsf_resource:
-            return False
-        if self.lsf_server != other.lsf_server:
             return False
         if self.queue_system != other.queue_system:
             return False
@@ -132,4 +145,13 @@ class QueueConfig(BaseCClass):
             return False
         if self.job_script != other.job_script:
             return False
+
+        if self.queue_system != 'LOCAL':
+            if self.queue_name != other.queue_name:
+               return False
+            if self.lsf_resource != other.lsf_resource:
+               return False
+            if self.lsf_server != other.lsf_server:
+               return False
+
         return True

@@ -43,3 +43,25 @@ class QueueConfigTest(ResTest):
 
             with self.assertRaises(ValueError):
                 queue_config = QueueConfig(user_config_file=config_file, config_content=config_content)
+
+    def test_queue_config_constructor(self):
+        with TestAreaContext("queue_config_constructor_test") as work_area:
+            work_area.copy_directory(self.case_directory)
+            config_file = "simple_config/minimum_config"
+            config_dict = {
+                "JOB_SCRIPT" : os.getcwd() + "/simple_config/script.sh",
+                "QUEUE_SYSTEM": 2,
+                "USER_MODE" : True,
+                "MAX_SUBMIT" : 2,
+                "NUM_CPU" : 0,
+                "QUEUE_OPTION" : [
+                    {
+                        "NAME" : "MAX_RUNNING",
+                        "VALUE" : "50"
+                    }
+                ]
+            }
+
+            queue_config_file = QueueConfig(user_config_file=config_file)
+            queue_config_dict = QueueConfig(config_dict=config_dict)
+            self.assertEqual(queue_config_dict, queue_config_file)

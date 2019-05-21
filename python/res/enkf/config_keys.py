@@ -68,6 +68,9 @@ class ConfigKeys:
     _random_seed          = ResPrototype("char* config_keys_get_random_seed()", bind=False)
     _license_path_key     = ResPrototype("char* config_keys_get_license_path_key()", bind=False)
     _setenv_key           = ResPrototype("char* config_keys_get_setenv_key()", bind=False)
+    _job_script_key       = ResPrototype("char* config_keys_get_job_script_key()", bind=False)
+    _num_cpu_key           = ResPrototype("char* config_keys_get_num_cpu_key()", bind=False)
+
 
     ARGLIST          = "ARGLIST"
     CONFIG_DIRECTORY = _config_directory_key()
@@ -134,5 +137,6 @@ class ConfigKeys:
     LICENSE_PATH     = _license_path_key()
     INSTALL_JOB_DIRECTORY = _install_job_directory_key()
     SETENV = _setenv_key()
-
-
+    JOB_SCRIPT       = _job_script_key()
+    NUM_CPU          = _num_cpu_key()
+    USER_MODE        = "USER_MODE"
