@@ -236,6 +236,7 @@ void matrix_dgesvx(matrix_type * A , matrix_type * B, double * rcond) {
     free(ferr);
     free(berr);
     free(ipivot);
+    free(iwork);
   }
 }
 

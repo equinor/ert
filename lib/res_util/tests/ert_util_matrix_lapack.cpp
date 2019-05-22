@@ -117,7 +117,7 @@ void test_dgesvx() {
 
 
      matrix_sub(b3,b2,b1);
-     matrix_pretty_fprint_submat(b3,"b3","%.*f ",stdout,0,2,0,4) ;
+     matrix_pretty_fprint_submat(b3,"b3","%.6f ",stdout,0,2,0,4) ;
 
      test_assert_true( matrix_similar( b1 , b2 , epsilon ) );
 
@@ -127,6 +127,7 @@ void test_dgesvx() {
   matrix_free( m2 );
   matrix_free( b1 );
   matrix_free( b2 );
+  matrix_free( b3 );
   rng_free( rng );
 }
 
@@ -147,6 +148,9 @@ void test_matrix_similar() {
   matrix_iadd(m2,2,2,epsilon);
   test_assert_true( !matrix_similar( m1 , m2, epsilon));
 
+  matrix_free(m2);
+  matrix_free(m1);
+  rng_free(rng);
 }
 
 
