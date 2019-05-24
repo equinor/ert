@@ -15,12 +15,14 @@
 #  for more details.
 
 from os.path import isfile
+from os.path import realpath
 
 from cwrap import BaseCClass
 
 from ecl.util.util import StringList
 
 from res import ResPrototype
+from res.enkf import ConfigKeys
 from res.enkf import AnalysisIterConfig
 from res.analysis import AnalysisModule
 
@@ -29,6 +31,15 @@ class AnalysisConfig(BaseCClass):
 
     _alloc = ResPrototype("void* analysis_config_alloc(config_content)", bind=False)
     _alloc_load = ResPrototype("void* analysis_config_alloc_load(char*)", bind=False)
+    _alloc_full = ResPrototype("void* analysis_config_alloc_full(double, bool, "
+                               "bool, int, char*, double, bool, bool, "
+                               "bool, double, int, int)", bind=False)
+
+    _add_module_copy = ResPrototype("void analysis_config_add_module_copy( analysis_config, "
+                                    "char* , char* )")
+    _load_external_module = ResPrototype("bool analysis_config_load_external_module( analysis_config, "
+                                         "char* , char* )")
+
     _free = ResPrototype("void analysis_config_free( analysis_config )")
     _get_rerun = ResPrototype("int analysis_config_get_rerun( analysis_config )")
     _set_rerun = ResPrototype("void analysis_config_set_rerun( analysis_config, bool)")
@@ -57,13 +68,17 @@ class AnalysisConfig(BaseCClass):
     _get_global_std_scaling = ResPrototype("double analysis_config_get_global_std_scaling(analysis_config)")
 
 
-    def __init__(self, user_config_file=None, config_content=None):
+    def __init__(self, user_config_file=None, config_content=None, config_dict=None):
+        configs = sum([1 for x in [user_config_file, config_content, config_dict] if x is not None])
 
-        if user_config_file is not None and config_content is not None:
-            raise ValueError("Error trying to create AnalysisConfig with from config file and config content")
 
-        if user_config_file is None and config_content is None:
+        if configs>1:
+            raise ValueError("Attempting to create AnalysisConfig object with multiple config objects")
+
+        if configs==0:
             raise ValueError("Error trying to create AnalysisConfig without any configuration")
+
+        c_ptr = None
 
         if user_config_file is not None:
             if not isfile(user_config_file):
@@ -74,15 +89,54 @@ class AnalysisConfig(BaseCClass):
                 super(AnalysisConfig, self).__init__(c_ptr)
             else:
                 raise ValueError('Failed to construct AnalysisConfig instance from config file %s.' % user_config_file)
-        else:
+
+        if config_content is not None:
             c_ptr = self._alloc(config_content)
             if c_ptr:
                 super(AnalysisConfig, self).__init__(c_ptr)
             else:
                 raise ValueError('Failed to construct AnalysisConfig instance.')
 
+        if config_dict is not None:
+            c_ptr = self._alloc_full(
+                config_dict[ConfigKeys.ALPHA_KEY],
+                config_dict[ConfigKeys.RERUN_KEY],
+                config_dict[ConfigKeys.RERUN_START_KEY],
+                config_dict[ConfigKeys.MERGE_OBSERVATIONS],
+                realpath(config_dict[ConfigKeys.UPDATE_LOG_PATH]),
+                config_dict[ConfigKeys.STD_CUTOFF_KEY],
+                config_dict[ConfigKeys.STOP_LONG_RUNNING],
+                config_dict[ConfigKeys.SINGLE_NODE_UPDATE],
+                config_dict[ConfigKeys.STD_CORRELATED_OBS],
+                config_dict[ConfigKeys.GLOBAL_STD_SCALING],
+                config_dict[ConfigKeys.MAX_RUNTIME],
+                config_dict[ConfigKeys.MIN_REALIZATIONS],
+            )
+            if c_ptr:
+                super(AnalysisConfig, self).__init__(c_ptr)
+
+                #external modules
+                ext_modules_list = config_dict.get(ConfigKeys.ANALYSIS_LOAD,[])
+                for a in ext_modules_list:
+                    self._load_external_module(a[ConfigKeys.LIB_NAME], a[ConfigKeys.USER_NAME])
+
+                #copy modules
+                analysis_copy_list = config_dict.get(ConfigKeys.ANALYSIS_COPY,[])
+                for a in analysis_copy_list:
+                    self._add_module_copy(a[ConfigKeys.SRC_NAME], a[ConfigKeys.DST_NAME])
+
+                #set var list
+                set_var_list = config_dict.get(ConfigKeys.ANALYSIS_SET_VAR, [])
+                for a in set_var_list:
+                    module = self._get_module(a[ConfigKeys.MODULE_NAME])
+                    module._set_var(a[ConfigKeys.VAR_NAME], str(a[ConfigKeys.VALUE]))
+
+                if ConfigKeys.ANALYSIS_SELECT in config_dict:
+                    self._select_module(config_dict[ConfigKeys.ANALYSIS_SELECT])
 
 
+            else:
+                raise ValueError('Failed to construct AnalysisConfig from dict.')
 
     def get_rerun(self):
         return self._get_rerun()
@@ -176,5 +230,54 @@ class AnalysisConfig(BaseCClass):
 
     def haveEnoughRealisations(self, realizations, ensemble_size):
         return self._have_enough_realisations(realizations, ensemble_size)
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __eq__(self, other):
+        if realpath(self.get_log_path())!=realpath(other.get_log_path()):
+            return False
+
+        if self.get_max_runtime()!=other.get_max_runtime():
+            return False
+
+        if self.getGlobalStdScaling()!=other.getGlobalStdScaling():
+            return False
+
+        if self.get_stop_long_running()!=other.get_stop_long_running():
+            return False
+
+        if self.getStdCutoff()!=other.getStdCutoff():
+            return False
+
+        if self.getEnkfAlpha()!=other.getEnkfAlpha():
+            return False
+
+        if self.get_merge_observations()!=other.get_merge_observations():
+            return False
+
+        if self.get_rerun()!=other.get_rerun():
+            return False
+
+        if self.get_rerun_start()!=other.get_rerun_start():
+            return False
+
+        if list(self.getModuleList())!=list(other.getModuleList()):
+            return False
+
+        if self.activeModuleName()!=other.activeModuleName():
+            return False
+
+        if self.getAnalysisIterConfig()!=other.getAnalysisIterConfig():
+            return False
+
+        #compare each module
+        for a in list(self.getModuleList()):
+            if self.getModule(a)!=other.getModule(a):
+                return False
+
+        return True
+
+
 
 

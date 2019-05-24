@@ -21,6 +21,7 @@ from ecl.util.test import TestAreaContext
 from tests import ResTest
 
 from res.enkf import AnalysisConfig
+from res.enkf import ConfigKeys
 
 class AnalysisConfigTest(ResTest):
 
@@ -69,3 +70,56 @@ class AnalysisConfigTest(ResTest):
             work_area.copy_directory(self.case_directory)
             analysis_config = AnalysisConfig(self.case_file)
             self.assertIsNotNone(analysis_config)
+
+    def test_analysis_config_constructor(self):
+        with TestAreaContext("analysis_config_constructor_test") as work_area:
+            work_area.copy_directory(self.case_directory)
+            config_dict = {
+                ConfigKeys.ALPHA_KEY: 3,
+                ConfigKeys.RERUN_KEY: False,
+                ConfigKeys.RERUN_START_KEY: 0,
+                ConfigKeys.MERGE_OBSERVATIONS: False,
+                ConfigKeys.UPDATE_LOG_PATH: 'update_log',
+                ConfigKeys.STD_CUTOFF_KEY: 1e-6,
+                ConfigKeys.STOP_LONG_RUNNING: False,
+                ConfigKeys.SINGLE_NODE_UPDATE: False,
+                ConfigKeys.STD_CORRELATED_OBS: False,
+                ConfigKeys.GLOBAL_STD_SCALING: 1,
+                ConfigKeys.MAX_RUNTIME: 0,
+                ConfigKeys.MIN_REALIZATIONS: 0,
+                ConfigKeys.ANALYSIS_LOAD: [
+                    {
+                        ConfigKeys.USER_NAME: 'RML_ENKF',
+                        ConfigKeys.LIB_NAME: 'rml_enkf.so'
+                    },
+                    {
+                        ConfigKeys.USER_NAME: 'MODULE_ENKF',
+                        ConfigKeys.LIB_NAME: 'rml_enkf.so'
+                    }
+                ],
+                ConfigKeys.ANALYSIS_COPY: [
+                    {
+                        ConfigKeys.SRC_NAME:'STD_ENKF',
+                        ConfigKeys.DST_NAME:'ENKF_HIGH_TRUNCATION'
+                    }
+                ],
+                ConfigKeys.ANALYSIS_SET_VAR:[
+                    {
+                        ConfigKeys.MODULE_NAME:'STD_ENKF',
+                        ConfigKeys.VAR_NAME:'ENKF_NCOMP',
+                        ConfigKeys.VALUE:2
+                    },
+                    {
+                        ConfigKeys.MODULE_NAME: 'ENKF_HIGH_TRUNCATION',
+                        ConfigKeys.VAR_NAME: 'ENKF_TRUNCATION',
+                        ConfigKeys.VALUE: 0.99
+                    }
+                ],
+                ConfigKeys.ANALYSIS_SELECT:'ENKF_HIGH_TRUNCATION'
+            }
+            _config_file = 'simple_config/analysis_config'
+            analysis_config_file = AnalysisConfig(user_config_file=_config_file)
+            analysis_config_dict = AnalysisConfig(config_dict=config_dict)
+            self.assertEqual(analysis_config_dict, analysis_config_file)
+
+

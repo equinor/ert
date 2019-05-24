@@ -53,9 +53,11 @@ struct analysis_config_struct {
   std::unordered_map<std::string, analysis_module_type*> analysis_modules;
   analysis_module_type          * analysis_module;
   char                          * log_path;                    /* Points to directory with update logs. */
+
   bool                            merge_observations;          /* When observing from time1 to time2 - should ALL observations in between be used? */
   bool                            rerun;                       /* Should we rerun the simulator when the parameters have been updated? */
   int                             rerun_start;                 /* When rerunning - from where should we start? */
+
   config_settings_type          * update_settings;
 
   char                          * PC_filename;
@@ -604,6 +606,48 @@ void analysis_config_free(analysis_config_type * config) {
   delete config;
 }
 
+analysis_config_type * analysis_config_alloc_full(
+                            double alpha,
+                            bool merge_observations,
+                            bool rerun,
+                            int rerun_start,
+                            const char * log_path,
+                            double std_cutoff,
+                            bool stop_long_running,
+                            bool single_node_update,
+                            bool std_scale_correlated_obs,
+                            double global_std_scaling,
+                            int max_runtime,
+                            int min_realisations
+) {
+  analysis_config_type * config = new analysis_config_type();
+  UTIL_TYPE_ID_INIT( config , ANALYSIS_CONFIG_TYPE_ID );
+
+  config->update_settings           = config_settings_alloc( UPDATE_SETTING_KEY );
+  config_settings_add_double_setting(config->update_settings, UPDATE_OVERLAP_KEY , alpha );
+  config_settings_add_double_setting(config->update_settings, UPDATE_STD_CUTOFF_KEY, std_cutoff );
+
+  config->merge_observations = merge_observations;
+  config->rerun = rerun;
+  config->rerun_start = rerun_start;
+  config->log_path        = util_realloc_string_copy(config->log_path , log_path);
+  config->PC_filename = util_realloc_string_copy( config->PC_filename , DEFAULT_PC_FILENAME );
+  config->PC_path = util_realloc_string_copy( config->PC_path , DEFAULT_PC_PATH );
+  config->single_node_update = single_node_update;
+  config->store_PC = DEFAULT_STORE_PC;
+  config->min_realisations = min_realisations;
+  config->stop_long_running = stop_long_running;
+  config->max_runtime = max_runtime;
+
+  config->analysis_module      = NULL;
+  config->iter_config          = analysis_iter_config_alloc();
+  config->std_scale_correlated_obs = std_scale_correlated_obs;
+  config->global_std_scaling   = global_std_scaling;
+
+  analysis_config_load_internal_modules(config);
+
+  return config;
+}
 
 
 analysis_config_type * analysis_config_alloc_default(void) {
@@ -692,13 +736,25 @@ void analysis_config_add_config_items( config_parser_type * config ) {
   config_add_key_value( config , ENKF_MERGE_OBSERVATIONS_KEY , false , CONFIG_BOOL);
   config_add_key_value( config , SINGLE_NODE_UPDATE_KEY      , false , CONFIG_BOOL);
   config_add_key_value( config , ENKF_CROSS_VALIDATION_KEY   , false , CONFIG_BOOL);
-  config_add_key_value( config , ENKF_LOCAL_CV_KEY           , false , CONFIG_BOOL);
+  config_add_key_value( config , ENKF_LOCAL_CV_KEY           , false , CONFIG_BOOL); //Not in use
+  config_install_message( config , ENKF_LOCAL_CV_KEY , "The \'ENKF_LOCAL_CV\' keyword is ignored.");
+
   config_add_key_value( config , ENKF_PEN_PRESS_KEY          , false , CONFIG_BOOL);
-  config_add_key_value( config , ENKF_SCALING_KEY            , false , CONFIG_BOOL);
-  config_add_key_value( config , ENKF_KERNEL_REG_KEY         , false , CONFIG_BOOL);
-  config_add_key_value( config , ENKF_KERNEL_FUNC_KEY        , false , CONFIG_INT);
-  config_add_key_value( config , ENKF_KERNEL_PARAM_KEY       , false , CONFIG_INT);
-  config_add_key_value( config , ENKF_CV_FOLDS_KEY           , false , CONFIG_INT);
+  config_add_key_value( config , ENKF_SCALING_KEY            , false , CONFIG_BOOL); //Not in use
+  config_install_message( config , ENKF_SCALING_KEY , "The \'ENKF_SCALING\' keyword is ignored.");
+
+  config_add_key_value( config , ENKF_KERNEL_REG_KEY         , false , CONFIG_BOOL); //Not in use
+  config_install_message( config , ENKF_KERNEL_REG_KEY , "The \'ENKF_KERNEL_REG\' keyword is ignored.");
+
+  config_add_key_value( config , ENKF_KERNEL_FUNC_KEY        , false , CONFIG_INT); //Not in use
+  config_install_message( config , ENKF_KERNEL_FUNC_KEY , "The \'ENKF_KERNEL_FUNC\' keyword is ignored.");
+
+  config_add_key_value( config , ENKF_KERNEL_PARAM_KEY       , false , CONFIG_INT); //Not in use
+  config_install_message( config , ENKF_KERNEL_PARAM_KEY , "The \'ENKF_KERNEL_PARAM\' keyword is ignored.");
+
+  config_add_key_value( config , ENKF_CV_FOLDS_KEY           , false , CONFIG_INT); //Not in use
+  config_install_message( config , ENKF_CV_FOLDS_KEY , "The \'ENKF_CV_FOLDS\' keyword is ignored.");
+
   config_add_key_value( config , ENKF_RERUN_KEY              , false , CONFIG_BOOL);
   config_add_key_value( config , RERUN_START_KEY             , false , CONFIG_INT);
   config_add_key_value( config , UPDATE_LOG_PATH_KEY         , false , CONFIG_STRING);
@@ -725,6 +781,7 @@ void analysis_config_add_config_items( config_parser_type * config ) {
   config_schema_item_set_argc_minmax( item , 3 , CONFIG_DEFAULT_ARG_MAX);
   analysis_iter_config_add_config_items( config );
 }
+
 
 
 

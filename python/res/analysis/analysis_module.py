@@ -194,3 +194,42 @@ class AnalysisModule(BaseCClass):
         X = Matrix( A.columns() , A.columns())
         self._initX(X, A, S, R, dObs, E, D, rng)
         return X
+
+    def __ne__(self, other):
+        """
+        not equal operator between two modules
+        :param other: other module to compare with
+        :return: True if different
+        """
+        return not self == other
+
+
+    def __eq__(self, other):
+        """
+        equality operator between two modules
+        :param other: other module to compare with
+        :return: True if the same
+        """
+
+        if self.getName()!=other.getName():
+            return False
+        if self.getLibName()!=other.getLibName():
+            return False
+        if self.getTableName()!=other.getTableName():
+            return False
+        if self.getInternal()!=other.getInternal():
+            return False
+
+        var_name_local = self.getVariableNames()
+        var_name_other = other.getVariableNames()
+
+        if var_name_local!=var_name_other:
+            return False
+
+        for a in var_name_local:
+            if self.getVariableValue(a)!=other.getVariableValue(a):
+                return False
+
+        return True
+
+

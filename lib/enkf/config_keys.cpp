@@ -183,7 +183,62 @@ const char * config_keys_get_init_files() {
 const char * config_keys_get_random_seed() {
   return RANDOM_SEED_KEY;
 }
+/////***** Analysis config keys*******////////////
+const char * config_keys_get_alpha() {
+    return ENKF_ALPHA_KEY;
+}
 
+const char * config_keys_get_do_bootstrap() {
+    return ENKF_BOOTSTRAP_KEY;
+}
+
+const char * config_keys_get_do_pen_press() {
+    return ENKF_PEN_PRESS_KEY;
+}
+
+const char * config_keys_get_std_cutoff() {
+    return STD_CUTOFF_KEY;
+}
+const char * config_keys_get_stop_long_running() {
+    return STOP_LONG_RUNNING_KEY;
+}
+
+const char * config_keys_get_single_node_update() {
+    return SINGLE_NODE_UPDATE_KEY;
+}
+
+const char * config_keys_get_std_scale_correlated_obs() {
+    return STD_SCALE_CORRELATED_OBS_KEY;
+}
+
+const char * config_keys_get_rerun() {
+    return ENKF_RERUN_KEY;
+}
+
+const char * config_keys_get_rerun_start() {
+    return RERUN_START_KEY;
+}
+
+const char * config_keys_get_merge_observations() {
+    return ENKF_MERGE_OBSERVATIONS_KEY;
+}
+
+const char * config_keys_get_analysis_load() {
+    return ANALYSIS_LOAD_KEY;
+}
+
+const char * config_keys_get_analysis_copy() {
+    return ANALYSIS_COPY_KEY;
+}
+
+const char * config_keys_get_analysis_select() {
+    return ANALYSIS_SELECT_KEY;
+}
+
+const char * config_keys_get_analysis_set_var() {
+    return ANALYSIS_SET_VAR_KEY;
+}
+/////***** Analysis config keys*******////////////
 const char * config_keys_get_install_job_directory_key() {
   return INSTALL_JOB_DIRECTORY_KEY;
 }

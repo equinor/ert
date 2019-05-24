@@ -117,6 +117,42 @@ class ConfigKeys:
     ITER_RETRY_COUNT      = _iter_retry_count_key()
     # analysis_iter_config keys
 
+    #analysis_config keys
+    _alpha_key            = ResPrototype("char* config_keys_get_alpha()", bind=False)
+    _std_cutoff_key       = ResPrototype("char* config_keys_get_std_cutoff()", bind=False)
+    _stop_long_running    = ResPrototype("char* config_keys_get_stop_long_running()", bind=False)
+    _single_node_update   = ResPrototype("char* config_keys_get_single_node_update()", bind=False)
+    _std_correlated_obs   = ResPrototype("char* config_keys_get_std_scale_correlated_obs()", bind=False)
+
+    _rerun_key            = ResPrototype("char* config_keys_get_rerun()", bind=False)
+    _rerun_start_key      = ResPrototype("char* config_keys_get_rerun_start()", bind=False)
+    _merge_observations   = ResPrototype("char* config_keys_get_merge_observations()", bind=False)
+    _analysis_load        = ResPrototype("char* config_keys_get_analysis_load()", bind=False)
+    _analysis_copy        = ResPrototype("char* config_keys_get_analysis_copy()", bind=False)
+    _analysis_select      = ResPrototype("char* config_keys_get_analysis_select()", bind=False)
+    _analysis_set_var     = ResPrototype("char* config_keys_get_analysis_set_var()", bind=False)
+
+    ALPHA_KEY             = _alpha_key()
+    STD_CUTOFF_KEY        = _std_cutoff_key()
+    STOP_LONG_RUNNING     = _stop_long_running()
+    SINGLE_NODE_UPDATE    = _single_node_update()
+    STD_CORRELATED_OBS    = _std_correlated_obs()
+    GLOBAL_STD_SCALING    = "GLOBAL_STD_SCALING"
+    RERUN_KEY             = _rerun_key()
+    RERUN_START_KEY       = _rerun_start_key()
+    MERGE_OBSERVATIONS    = _merge_observations()
+    ANALYSIS_LOAD         = _analysis_load()
+    USER_NAME             = 'USER_NAME'
+    LIB_NAME              = 'LIB_NAME'
+    ANALYSIS_COPY         = _analysis_copy()
+    SRC_NAME              = 'SRC_NAME'
+    DST_NAME              = 'DST_NAME'
+    ANALYSIS_SET_VAR       = _analysis_set_var()
+    MODULE_NAME           = 'MODULE_NAME'
+    VAR_NAME              = 'VAR_NAME'
+    ANALYSIS_SELECT       = _analysis_select()
+    # analysis_config keys
+
     ARGLIST          = "ARGLIST"
     CONFIG_DIRECTORY = _config_directory_key()
     CONFIG_FILE_KEY  = _config_file_key()

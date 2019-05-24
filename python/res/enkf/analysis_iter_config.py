@@ -83,7 +83,7 @@ class AnalysisIterConfig(BaseCClass):
         self._free()
 
     def _short_case_fmt(self, maxlen=10):
-        fmt = getCaseFormat()
+        fmt = self.getCaseFormat()
         if len(fmt) <= maxlen:
             return fmt
         return fmt[:maxlen-2] + ".."
@@ -97,6 +97,9 @@ class AnalysisIterConfig(BaseCClass):
         its  = len(self)
         rets = self.getNumRetries()
         return ret % (its, rets, fmt, cfs, self._address)
+
+    def __ne__(self, other):
+        return not self == other
 
     def __eq__(self, other):
         if self.getCaseFormat()!=other.getCaseFormat():

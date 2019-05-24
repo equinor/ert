@@ -226,6 +226,23 @@ extern "C" {
   const char * config_keys_get_iter_retry_count_key();
   //*********analysis_iter_config keys************//
 
+/////***** Analysis config keys*******////////////
+  const char * config_keys_get_alpha();
+  const char * config_keys_get_do_pen_press();
+  const char * config_keys_get_do_bootstrap();
+  const char * config_keys_get_std_cutoff();
+  const char * config_keys_get_stop_long_running();
+  const char * config_keys_get_single_node_update();
+  const char * config_keys_get_std_scale_correlated_obs();
+  const char * config_keys_get_rerun();
+  const char * config_keys_get_rerun_start();
+  const char * config_keys_get_merge_observations();
+  const char * config_keys_get_analysis_load();
+  const char * config_keys_get_analysis_copy();
+  const char * config_keys_get_analysis_select();
+  const char * config_keys_get_analysis_set_var();
+/////***** Analysis config keys*******////////////
+
   // hook_manager config keys
   const char * config_keys_get_qc_workflow_key();
   const char * config_keys_get_hook_workflow_key();
