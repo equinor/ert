@@ -41,7 +41,7 @@ class PlotWindow(QMainWindow):
         self.setWindowTitle("Plotting")
         self.activateWindow()
 
-        self._plot_customizer = PlotCustomizer(self, self._ert.plotConfig())
+        self._plot_customizer = PlotCustomizer(self)
 
         def plotConfigCreator(key):
             return PlotConfigFactory.createPlotConfigForKey(self._ert, key)

@@ -1,5 +1,4 @@
 from res.enkf.enkf_fs_manager import naturalSortKey
-from res.enkf import PlotSettings as ErtPlotSettings
 from ert_gui.plottery.plot_config import PlotConfig
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 from ert_gui.shell.libshell import autoCompleteList, boolValidator, pathCompleter, splitArguments
@@ -21,12 +20,8 @@ class PlotSettings(ErtShellCollection):
         super(PlotSettings, self).__init__("plot_settings", parent)
         
         self.__cases = None
-        if self.ert():
-            ert_ps = self.ert().plotConfig( )
-        else:
-            ert_ps = ErtPlotSettings( )
 
-        self.__plot_config = PlotConfig( ert_ps )
+        self.__plot_config = PlotConfig()
         self.shellContext()["plot_settings"] = self
 
         self.addShellFunction(name="current",
@@ -42,15 +37,6 @@ class PlotSettings(ErtShellCollection):
                               completer=PlotSettings.completeSelect,
                               help_arguments="[case_1..case_n]",
                               help_message="Select one or more cases as default plot sources. Empty resets to current case.")
-
-        self.addShellProperty(name="path",
-                              getter=PlotSettings.getPath,
-                              setter=PlotSettings.setPath,
-                              validator=plotPathValidator,
-                              completer=pathCompleter,
-                              help_arguments="[path]",
-                              help_message="Show or set the plot output path",
-                              pretty_attribute="Plot output path")
 
         self.addShellProperty(name="title",
                               getter=PlotConfig.title,
@@ -165,14 +151,6 @@ class PlotSettings(ErtShellCollection):
         all_case_list = fs_manager.getCaseList()
         all_case_list = [case for case in all_case_list if not case.startswith(".")]
         return all_case_list
-
-    @assertConfigLoaded
-    def getPath(self):
-        return self.ert().plotConfig().getPath()
-
-    @assertConfigLoaded
-    def setPath(self, path):
-        self.ert().plotConfig().setPath(path)
 
     def resetTitle(self, line):
         self.plotConfig().setTitle(None)

@@ -7,11 +7,12 @@ class PlotConfig(object):
     # The plot_settings input argument is an internalisation of the (quite few) plot
     # policy settings which can be set in the configuration file.
     
-    def __init__(self, plot_settings, title="Unnamed", x_label=None, y_label=None):
+    def __init__(self, plot_settings=None, title="Unnamed", x_label=None, y_label=None):
         self._title = title
         self._plot_settings = plot_settings
         if self._plot_settings is None:
-            raise ValueError('PlotConfig needs a non-None plot settings.')
+            self._plot_settings = {'SHOW_REFCASE': True, 'SHOW_HISTORY': True}
+
         self._line_color_cycle_colors = ["#000000"]
         self._line_color_cycle = itertools.cycle(self._line_color_cycle_colors) #Black
         # Blueish, Greenlike, Beigeoid, Pinkness, Orangy-Brown

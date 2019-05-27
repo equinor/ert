@@ -43,8 +43,6 @@ class ErtShellPlotSettingsTest(ErtTest):
             self.checkBoolProperties(shell, "plot_settings refcase", plot_config.isRefcaseEnabled)
             self.checkBoolProperties(shell, "plot_settings observations", plot_config.isObservationsEnabled)
 
-            self.checkStringProperties(shell, "plot_settings path", shell.shellContext()["plot_settings"].getPath, allow_multiple_arguments=False)
-
             default_plot_cases = shell.shellContext()["plot_settings"].getCurrentPlotCases()
             self.assertTrue(shell.invokeCommand("plot_settings current"))
             self.assertTrue(shell.invokeCommand("plot_settings select test_run default"))
