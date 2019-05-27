@@ -10,7 +10,7 @@ class PlotConfigFactory(object):
         @param key: str
         @return: PlotConfig
         """
-        plot_config = PlotConfig(ert.plotConfig() , title = key)
+        plot_config = PlotConfig(plot_settings=None , title = key)
         return PlotConfigFactory.updatePlotConfigForKey(ert, key, plot_config)
 
 
