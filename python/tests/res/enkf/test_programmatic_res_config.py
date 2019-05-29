@@ -460,22 +460,7 @@ class ProgrammaticResConfigTest(ResTest):
 
 
     def assert_equal_ert_workflow(self, loaded_workflow_list, prog_workflow_list):
-        self.assertEqual(loaded_workflow_list.getWorkflowNames(),
-                         prog_workflow_list.getWorkflowNames())
-
-        for wname in loaded_workflow_list.getWorkflowNames():
-            self.assertEqual(loaded_workflow_list[wname].src_file,
-                             prog_workflow_list[wname].src_file)
-
-        self.assertEqual(loaded_workflow_list.getJobNames(),
-                         prog_workflow_list.getJobNames())
-
-        for jname in loaded_workflow_list.getJobNames():
-            ljob = loaded_workflow_list.getJob(jname)
-            pjob = prog_workflow_list.getJob(jname)
-
-            self.assertEqual(ljob.name(), pjob.name())
-            self.assertEqual(ljob.executable(), pjob.executable())
+        self.assertEqual(loaded_workflow_list, prog_workflow_list)
 
 
     def assert_equal_simulation_config(self, loaded_simulation_config, prog_simulation_config):

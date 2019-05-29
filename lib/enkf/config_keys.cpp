@@ -199,15 +199,15 @@ const char * config_keys_get_random_seed() {
 }
 
 const char * config_keys_get_install_job_directory_key() {
-    return INSTALL_JOB_DIRECTORY_KEY;
+  return INSTALL_JOB_DIRECTORY_KEY;
 }
 
 const char * config_keys_get_license_path_key() {
-    return LICENSE_PATH_KEY;
+  return LICENSE_PATH_KEY;
 }
 
 const char * config_keys_get_setenv_key() {
-    return SETENV_KEY;
+  return SETENV_KEY;
 }
 
 const char * config_keys_get_job_script_key() {
@@ -235,3 +235,17 @@ const char * config_keys_get_iter_retry_count_key() {
     return ITER_RETRY_COUNT_KEY;
 }
 //*********analysis_iter_config keys************//
+
+//*********ert workflow list_config keys************//
+const char * config_keys_get_load_workflow_key() {
+  return LOAD_WORKFLOW_KEY;
+}
+
+const char * config_keys_get_load_workflow_job_key() {
+  return LOAD_WORKFLOW_JOB_KEY;
+}
+
+const char * config_keys_get_workflow_job_directory_key() {
+  return WORKFLOW_JOB_DIRECTORY_KEY;
+}
+//*********ert workflow list_config keys************//

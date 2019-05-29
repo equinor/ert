@@ -44,7 +44,7 @@ from .summary_key_matcher import SummaryKeyMatcher
 from .custom_kw_config_set import CustomKWConfigSet
 from .enkf_fs import EnkfFs
 
-from .ert_workflow_list import ErtWorkflowList
+
 from .active_list import ActiveList
 from .config import *
 from .data import *
@@ -71,6 +71,7 @@ from .ecl_config import EclConfig
 from .enkf_defaults import EnkfDefaults
 
 from .queue_config import QueueConfig
+from .ert_workflow_list import ErtWorkflowList
 from .site_config import SiteConfig
 from .subst_config import SubstConfig
 from .ensemble_config import EnsembleConfig

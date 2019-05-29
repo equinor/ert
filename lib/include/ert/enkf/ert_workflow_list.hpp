@@ -44,6 +44,7 @@ extern "C" {
   ert_workflow_list_type  *  ert_workflow_list_alloc_load_site_config(const subst_list_type *);
   ert_workflow_list_type  *  ert_workflow_list_alloc_load(const subst_list_type * context, const char * user_config_file);
   ert_workflow_list_type  *  ert_workflow_list_alloc(const subst_list_type * context, const config_content_type * config_content);
+  ert_workflow_list_type  *  ert_workflow_list_alloc_full(const subst_list_type * context, workflow_joblist_type * workflow_joblist);
 
   void                       ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_list , const char * path );
   void                       ert_workflow_list_add_job( ert_workflow_list_type * workflow_list , const char * job_name , const char * config_file );

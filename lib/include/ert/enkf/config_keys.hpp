@@ -215,6 +215,9 @@ extern "C" {
   const char * config_keys_get_job_script_key();
   const char * config_keys_get_num_cpu_key();
   const char * config_keys_get_define_key();
+  const char * config_keys_get_load_workflow_job_key();
+  const char * config_keys_get_workflow_job_directory_key();
+  const char * config_keys_get_load_workflow_key();
 
   //*********analysis_iter_config keys************//
   const char * config_keys_get_iter_case_key();

@@ -73,6 +73,9 @@ class ConfigKeys:
     _job_script_key       = ResPrototype("char* config_keys_get_job_script_key()", bind=False)
     _num_cpu_key           = ResPrototype("char* config_keys_get_num_cpu_key()", bind=False)
     _define_key           = ResPrototype("char* config_keys_get_define_key()", bind=False)
+    _load_workflow_job_key = ResPrototype("char* config_keys_get_load_workflow_job_key()", bind=False)
+    _workflow_job_directory_key = ResPrototype("char* config_keys_get_workflow_job_directory_key()", bind=False)
+    _load_workflow_key = ResPrototype("char* config_keys_get_load_workflow_key()", bind=False)
 
     #analysis_iter_config keys
     _iter_case_key        = ResPrototype("char* config_keys_get_iter_case_key()", bind=False)
@@ -156,3 +159,6 @@ class ConfigKeys:
     JOB_SCRIPT       = _job_script_key()
     NUM_CPU          = _num_cpu_key()
     USER_MODE        = "USER_MODE"
+    LOAD_WORKFLOW_JOB = _load_workflow_job_key()
+    WORKFLOW_JOB_DIRECTORY = _workflow_job_directory_key()
+    LOAD_WORKFLOW    = _load_workflow_key()

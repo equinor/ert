@@ -186,4 +186,31 @@ class WorkflowJob(BaseCClass):
         workflow.__running = False
         return workflow
 
+    def __ne__(self, other):
+        return not(self == other)
 
+    def __eq__(self, other):
+
+        if self.executable() != other.executable():
+            return False
+
+        if self._is_internal_script() != other._is_internal_script():
+            return False
+
+        if self._is_internal_script():
+            if self._get_internal_script() != other._get_internal_script():
+                return False
+
+        if self._name() != other._name():
+            return False
+
+        if self._min_arg() != other._min_arg():
+            return False
+
+        if self._max_arg() != other._max_arg():
+            return False
+
+        if self._get_module() != other._get_module():
+            return False
+
+        return True

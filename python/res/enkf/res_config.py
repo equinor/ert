@@ -95,7 +95,7 @@ class ResConfig(BaseCClass):
         log_config = LogConfig(config_content=config_content)
         queue_config = QueueConfig(config_content=config_content)
 
-        ert_workflow_list = ErtWorkflowList(ert_workflow_list=subst_config.subst_list,
+        ert_workflow_list = ErtWorkflowList(subst_list=subst_config.subst_list,
                                             config_content=config_content)
 
         hook_manager = HookManager(workflow_list=ert_workflow_list,
