@@ -74,6 +74,16 @@ class ConfigKeys:
     _num_cpu_key           = ResPrototype("char* config_keys_get_num_cpu_key()", bind=False)
     _define_key           = ResPrototype("char* config_keys_get_define_key()", bind=False)
 
+    #analysis_iter_config keys
+    _iter_case_key        = ResPrototype("char* config_keys_get_iter_case_key()", bind=False)
+    _iter_count_key       = ResPrototype("char* config_keys_get_iter_count_key()", bind=False)
+    _iter_retry_count_key = ResPrototype("char* config_keys_get_iter_retry_count_key()", bind=False)
+
+    ITER_CASE             = _iter_case_key()
+    ITER_COUNT            = _iter_count_key()
+    ITER_RETRY_COUNT      = _iter_retry_count_key()
+    # analysis_iter_config keys
+
     ARGLIST          = "ARGLIST"
     CONFIG_DIRECTORY = _config_directory_key()
     CONFIG_FILE_KEY  = _config_file_key()

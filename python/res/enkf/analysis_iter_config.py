@@ -15,11 +15,13 @@
 #  for more details.
 from cwrap import BaseCClass
 from res import ResPrototype
+from res.enkf import ConfigKeys
 
 class AnalysisIterConfig(BaseCClass):
     TYPE_NAME = "analysis_iter_config"
 
     _alloc              = ResPrototype("void* analysis_iter_config_alloc( )", bind = False)
+    _alloc_full         = ResPrototype("void* analysis_iter_config_alloc_full( char*, int, int )", bind = False)
     _free               = ResPrototype("void  analysis_iter_config_free( analysis_iter_config )")
     _set_num_iterations = ResPrototype("void  analysis_iter_config_set_num_iterations(analysis_iter_config, int)")
     _get_num_iterations = ResPrototype("int   analysis_iter_config_get_num_iterations(analysis_iter_config)")
@@ -29,9 +31,25 @@ class AnalysisIterConfig(BaseCClass):
     _get_case_fmt       = ResPrototype("char* analysis_iter_config_get_case_fmt( analysis_iter_config)")
     _case_fmt_set       = ResPrototype("bool  analysis_iter_config_case_fmt_set(analysis_iter_config)")
 
-    def __init__(self):
-        c_ptr = self._alloc()
-        super(AnalysisIterConfig , self).__init__(c_ptr)
+    def __init__(self, config_dict=None):
+
+        if config_dict is None:
+            c_ptr = self._alloc()
+            if c_ptr:
+                super(AnalysisIterConfig , self).__init__(c_ptr)
+            else:
+                raise ValueError('Failed to construct AnalysisIterConfig instance.')
+        else:
+            c_ptr = self._alloc_full(
+                config_dict[ConfigKeys.ITER_CASE],
+                config_dict[ConfigKeys.ITER_COUNT],
+                config_dict[ConfigKeys.ITER_RETRY_COUNT]
+            )
+            if c_ptr:
+                super(AnalysisIterConfig, self).__init__(c_ptr)
+            else:
+                raise ValueError('Failed to construct AnalysisIterConfig instance for dictionary.')
+
 
     def getNumIterations(self):
         """ @rtype: int """
@@ -79,3 +97,15 @@ class AnalysisIterConfig(BaseCClass):
         its  = len(self)
         rets = self.getNumRetries()
         return ret % (its, rets, fmt, cfs, self._address)
+
+    def __eq__(self, other):
+        if self.getCaseFormat()!=other.getCaseFormat():
+            return False
+
+        if self.getNumIterations()!=other.getNumIterations():
+            return False
+
+        if self.getNumRetries()!=other.getNumRetries():
+            return False
+
+        return True

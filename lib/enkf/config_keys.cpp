@@ -221,3 +221,17 @@ const char * config_keys_get_num_cpu_key() {
 const char * config_keys_get_define_key() {
     return DEFINE_KEY;
 }
+
+//*********analysis_iter_config keys************//
+const char * config_keys_get_iter_case_key() {
+    return ITER_CASE_KEY;
+}
+
+const char * config_keys_get_iter_count_key() {
+    return ITER_COUNT_KEY;
+}
+
+const char * config_keys_get_iter_retry_count_key() {
+    return ITER_RETRY_COUNT_KEY;
+}
+//*********analysis_iter_config keys************//

@@ -93,6 +93,20 @@ analysis_iter_config_type * analysis_iter_config_alloc() {
    return config;
 }
 
+
+analysis_iter_config_type * analysis_iter_config_alloc_full(const char * case_fmt, int num_iterations, int num_iter_tries) {
+   analysis_iter_config_type * config = (analysis_iter_config_type *)util_malloc( sizeof * config );
+   config->case_fmt = NULL;
+   analysis_iter_config_set_case_fmt( config, case_fmt);
+   config->storage = stringlist_alloc_new();
+   analysis_iter_config_set_num_iterations( config , num_iterations );
+   analysis_iter_config_set_num_retries_per_iteration(config, num_iter_tries);
+
+   config->num_iterations_set = false;
+   config->case_set = false;
+   return config;
+}
+
 void analysis_iter_config_free( analysis_iter_config_type * config ) {
   free( config->case_fmt );
   stringlist_free( config->storage );

@@ -216,6 +216,12 @@ extern "C" {
   const char * config_keys_get_num_cpu_key();
   const char * config_keys_get_define_key();
 
+  //*********analysis_iter_config keys************//
+  const char * config_keys_get_iter_case_key();
+  const char * config_keys_get_iter_count_key();
+  const char * config_keys_get_iter_retry_count_key();
+  //*********analysis_iter_config keys************//
+
 #ifdef   __cplusplus
 }
 #endif

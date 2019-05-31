@@ -62,11 +62,12 @@ from .obs_data import ObsData
 from .meas_block import MeasBlock
 from .meas_data import MeasData
 
+from .config_keys import ConfigKeys
+
 from .analysis_iter_config import AnalysisIterConfig
 from .analysis_config import AnalysisConfig
 from .ecl_config import EclConfig
 
-from .config_keys import ConfigKeys
 from .enkf_defaults import EnkfDefaults
 
 from .queue_config import QueueConfig
