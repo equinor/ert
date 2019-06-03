@@ -1,7 +1,7 @@
 from res.enkf.config.custom_kw_config import CustomKWConfig
 from tests import ResTest
 from ecl.util.test.test_area import TestAreaContext
-from ecl.util import StringList
+from ecl.util.util import StringList
 
 
 class CustomKWConfigTest(ResTest):

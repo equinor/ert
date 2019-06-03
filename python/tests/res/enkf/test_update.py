@@ -15,11 +15,17 @@
 #  for more details.
 
 import random
-from tests import ResTest
+import sys
+import os
+
+import res
+
+from tests import ResTest, equinor_test
 from res.test import ErtTestContext
 
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
-from ecl.util import Matrix, BoolVector , RandomNumberGenerator
+from ecl.util.util import BoolVector, RandomNumberGenerator
+from res.util import Matrix
 from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 from res.enkf import MeasData, ObsData, LocalObsdata
 
@@ -39,11 +45,13 @@ def update(rng , mask , module , ert , meas_data , obs_data , state_size):
     module.updateA( A , S , R , dObs , E , D )
 
 
-
-
+@equinor_test()
 class UpdateTest(ResTest):
   def setUp(self):
-      self.libname = ert.ert_lib_path + "/rml_enkf.so"
+      if sys.platform.lower() == 'darwin':
+          self.libname = os.path.join(res.res_lib_path, "rml_enkf.dylib")
+      else:
+          self.libname = os.path.join(res.res_lib_path, "rml_enkf.so")
       self.config_file = self.createTestPath("Equinor/config/obs_testing2/config")
       self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
 

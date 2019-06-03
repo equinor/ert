@@ -14,22 +14,28 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import sys
+import os
 
-import res
 from tests import ResTest
 from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.util.rng import RandomNumberGenerator
 
+def find_file(path, filter):
+    import fnmatch
+    for root, dirnames, filenames in os.walk(path):
+        for filename in fnmatch.filter(filenames, filter):
+            return os.path.join(root, filename)
+    return None
 
 class StdEnKFDebugTest(ResTest):
 
     def setUp(self):
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
         if sys.platform.lower() == 'darwin':
-            self.libname = res.res_lib_path + "/std_enkf_debug.dylib"
+            self.libname = find_file(self.SOURCE_ROOT, "std_enkf_debug.dylib")
         else:
-            self.libname = res.res_lib_path + "/std_enkf_debug.so"
+            self.libname = find_file(self.SOURCE_ROOT, "std_enkf_debug.so")
         self.module = AnalysisModule(lib_name = self.libname)
 
 

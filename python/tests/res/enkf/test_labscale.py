@@ -15,12 +15,12 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from tests import ResTest
+from tests import ResTest, equinor_test
 from res.test import ErtTestContext
 
 from res.enkf import ObsVector
 
-
+@equinor_test()
 class LabScaleTest(ResTest):
 
 

@@ -1,9 +1,11 @@
-from ecl.test import ExtendedTestCase
+import os
+
 from res.util import UIReturn
 from res.util.enums import UIReturnStatusEnum
+from tests import ResTest
 
 
-class UIReturnTest(ExtendedTestCase):
+class UIReturnTest(ResTest):
     def test_create(self):
         ui_return = UIReturn(UIReturnStatusEnum.UI_RETURN_OK)
         self.assertTrue(ui_return)
@@ -65,5 +67,5 @@ class UIReturnTest(ExtendedTestCase):
         self.assertEqual(errorList, [])
 
     def test_status_enum(self):
-        source_file_path = "lib/include/ert/util/ui_return.hpp"
+        source_file_path = os.path.join("lib", "include", "ert", "res_util", "ui_return.hpp")
         self.assertEnumIsFullyDefined(UIReturnStatusEnum, "ui_return_status_enum", source_file_path)

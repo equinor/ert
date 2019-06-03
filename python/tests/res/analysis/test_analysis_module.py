@@ -15,6 +15,7 @@
 #  for more details.
 
 import sys
+import os
 
 import res
 from tests import ResTest
@@ -28,9 +29,9 @@ from res.util import Matrix
 class AnalysisModuleTest(ResTest):
     def setUp(self):
         if sys.platform.lower() == 'darwin':
-            self.libname = res.res_lib_path + "/rml_enkf.dylib"
+            self.libname = os.path.join(res.res_lib_path, "rml_enkf.dylib")
         else:
-            self.libname = res.res_lib_path + "/rml_enkf.so"
+            self.libname = os.path.join(res.res_lib_path, "rml_enkf.so")
 
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
 

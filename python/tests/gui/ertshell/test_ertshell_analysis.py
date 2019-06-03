@@ -1,4 +1,4 @@
-import ResTest
+from tests import ResTest
 from tests.gui.ertshell.ert_shell_test_context import ErtShellTestContext
 
 

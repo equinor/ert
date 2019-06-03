@@ -4,7 +4,8 @@ except ImportError:
     from io import StringIO
 import os
 import sys
-from ecl.test import TestAreaContext
+
+from ecl.util.test import TestAreaContext
 from ert_gui.shell import ErtShell
 
 class ShellCapturing(list):

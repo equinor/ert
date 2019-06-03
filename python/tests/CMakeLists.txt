@@ -2,6 +2,7 @@ set(TEST_SOURCES
     ctest_import.py
     ctest_run.py
     import_tester.py
+    test_files_present.py
 )
 
 set(TEST_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
@@ -16,6 +17,7 @@ configure_file(
 
 add_subdirectory(global)
 add_subdirectory(res)
+add_subdirectory(share)
 
 
 if (INSTALL_ERT_LEGACY)

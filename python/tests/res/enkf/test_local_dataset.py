@@ -23,7 +23,7 @@ from res.enkf.active_list import ActiveList
 from res.enkf.local_dataset import LocalDataset
 
 from ecl.grid import EclRegion
-from ecl.geo import Surface, GeoRegion
+from ecl.util.geometry import Surface, GeoRegion
 
 
 class LocalDatasetTest(ResTest):

@@ -19,7 +19,7 @@ import os
 from res.enkf import FieldConfig
 from res.enkf import ActiveList
 from tests import ResTest
-from ecl.ecl  import EclGrid
+from ecl.grid  import EclGrid
 
 class FieldConfigTest(ResTest):
 

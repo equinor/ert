@@ -55,6 +55,8 @@ set(TEST_SOURCES
     test_subst_config.py
     test_hook_manager.py
     test_workflow_list.py
+    test_key_manager.py
+    test_local_dataset.py
 )
 
 add_python_package("python.tests.res.enkf" ${PYTHON_INSTALL_PREFIX}/tests/res/enkf "${TEST_SOURCES}" False)
@@ -102,8 +104,6 @@ python_config_test(tests.res.enkf.test_enkf_fs_manager1.EnKFFSManagerTest1)
 python_config_test(tests.res.enkf.test_enkf_fs_manager2.EnKFFSManagerTest2)
 python_config_test(tests.res.enkf.test_ert_run_context.ErtRunContextTest)
 
-
-
 python_config_test(tests.res.enkf.test_enkf_obs.EnKFObsTest)
 python_config_test(tests.res.enkf.test_enkf_load_results_manually.LoadResultsManuallyTest)
 python_config_test(tests.res.enkf.test_enkf_fs.EnKFFSTest)
@@ -115,6 +115,11 @@ python_config_test(tests.res.enkf.test_field_export.FieldExportTest)
 python_config_test(tests.res.enkf.test_subst_config.SubstConfigTest)
 python_config_test(tests.res.enkf.test_hook_manager.HookManagerTest)
 python_config_test(tests.res.enkf.test_workflow_list.ErtWorkflowListTest)
+
+addPythonTest(tests.res.enkf.test_runpath_list_ert)
+addPythonTest(tests.res.enkf.test_update)
+addPythonTest(tests.res.enkf.data.test_custom_kw_config)
+addPythonTest(tests.res.enkf.data.test_field_config)
 
 # The following two tests involve loading the rml module as part of
 # the bootup process. That fails with a dlopen( ) error I just can
