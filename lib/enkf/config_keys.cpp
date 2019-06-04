@@ -118,9 +118,7 @@ const char * config_keys_get_umask_key() {
   return UMASK_KEY;
 }
 
-const char * config_keys_get_data_file_key() {
-  return DATA_FILE_KEY;
-}
+
 
 const char * config_keys_get_data_kw_key() {
     return DATA_KW_KEY;
@@ -134,9 +132,7 @@ const char * config_keys_get_runpath_file_key() {
   return RUNPATH_FILE_KEY;
 }
 
-const char * config_keys_get_eclbase_key() {
-  return ECLBASE_KEY;
-}
+
 
 const char * config_keys_get_num_realizations_key() {
   return NUM_REALIZATIONS_KEY;
@@ -146,13 +142,44 @@ const char * config_keys_get_enspath_key() {
   return ENSPATH_KEY;
 }
 
+
+/* ************* ECL config  ************* */
+const char * config_keys_get_eclbase_key() {
+  return ECLBASE_KEY;
+}
+
+const char * config_keys_get_data_file_key() {
+  return DATA_FILE_KEY;
+}
+
 const char * config_keys_get_grid_key() {
   return GRID_KEY;
+}
+
+const char * config_keys_get_add_fixed_length_schedule_kw_key() {
+  return ADD_FIXED_LENGTH_SCHEDULE_KW_KEY;
 }
 
 const char * config_keys_get_refcase_key() {
   return REFCASE_KEY;
 }
+
+const char * config_keys_get_refcase_list_key() {
+  return REFCASE_LIST_KEY;
+}
+
+const char * config_keys_get_init_section_key() {
+  return INIT_SECTION_KEY;
+}
+
+const char * config_keys_get_end_date_key() {
+  return END_DATE_KEY;
+}
+
+const char * config_keys_get_schedule_prediction_file_key() {
+  return SCHEDULE_PREDICTION_FILE_KEY;
+}
+/* ************* ECL config  ************* */
 
 const char * config_keys_get_history_source_key() {
   return HISTORY_SOURCE_KEY;

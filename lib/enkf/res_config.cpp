@@ -229,7 +229,6 @@ res_config_type * res_config_alloc(const config_content_type * config_content) {
                                                    res_config->config_dir,
                                                    site_config_get_installed_jobs(res_config->site_config),
                                                    ecl_config_get_last_history_restart(res_config->ecl_config),
-                                                   ecl_config_get_sched_file(res_config->ecl_config),
                                                    ecl_config_get_refcase(res_config->ecl_config)
                                    );
 

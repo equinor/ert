@@ -19,14 +19,26 @@ from res import ResPrototype
 from res.config import ConfigContent
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
-from ecl.util.util import StringList
+from ecl.util.util import StringList, IntVector, CTime
 from res.sched import SchedFile
 from res.util import UIReturn
+from res.enkf import ConfigKeys
+import os
+import re
+from datetime import datetime
 
 class EclConfig(BaseCClass):
     TYPE_NAME = "ecl_config"
 
     _alloc                    = ResPrototype("void* ecl_config_alloc(config_content)", bind=False)
+    _alloc_full               = ResPrototype("void* ecl_config_alloc_full(  bool, \
+                                                                            char*, \
+                                                                            ecl_grid, \
+                                                                            char*, \
+                                                                            stringlist, \
+                                                                            char*, \
+                                                                            time_t, \
+                                                                            char*)", bind=False)
     _free                     = ResPrototype("void  ecl_config_free( ecl_config )")
     _get_data_file            = ResPrototype("char* ecl_config_get_data_file(ecl_config)")
     _set_data_file            = ResPrototype("void  ecl_config_set_data_file(ecl_config , char*)")
@@ -35,10 +47,6 @@ class EclConfig(BaseCClass):
     _set_gridfile             = ResPrototype("void  ecl_config_set_grid(ecl_config, char*)")
     _validate_gridfile        = ResPrototype("ui_return_obj ecl_config_validate_grid(ecl_config, char*)")
     _get_grid                 = ResPrototype("ecl_grid_ref ecl_config_get_grid(ecl_config)")
-    _get_schedule_file        = ResPrototype("char* ecl_config_get_schedule_file(ecl_config)")
-    _set_schedule_file        = ResPrototype("void  ecl_config_set_schedule_file(ecl_config, char*, char*)")
-    _validate_schedule_file   = ResPrototype("ui_return_obj ecl_config_validate_schedule_file(ecl_config, char*)")
-    _get_sched_file           = ResPrototype("sched_file_ref ecl_config_get_sched_file(ecl_config)")
     _get_init_section         = ResPrototype("char* ecl_config_get_init_section(ecl_config)")
     _set_init_section         = ResPrototype("void  ecl_config_set_init_section(ecl_config, char*)")
     _validate_init_section    = ResPrototype("ui_return_obj ecl_config_validate_init_section(ecl_config, char*)")
@@ -52,9 +60,63 @@ class EclConfig(BaseCClass):
     _get_start_date           = ResPrototype("time_t ecl_config_get_start_date(ecl_config)")
     _active                   = ResPrototype("bool ecl_config_active(ecl_config)")
     _get_last_history_restart = ResPrototype("int ecl_config_get_last_history_restart(ecl_config)")
+    _get_end_date             = ResPrototype("time_t ecl_config_get_end_date(ecl_config)")
 
-    def __init__(self, config_content=None):
-        c_ptr = self._alloc(config_content)
+    def __init__(self, config_content=None, config_dict=None):
+    
+        if config_content is not None and config_dict is not None:
+            raise ValueError("Error: EclConfig can not be instantiated with multiple config objects")
+        c_ptr = None
+        if config_dict is None:
+            c_ptr = self._alloc(config_content)
+        
+        if config_dict is not None:
+            # ECLBASE_KEY
+            have_eclbase = config_dict.get(ConfigKeys.ECLBASE) is not None
+                
+            # DATA_FILE_KEY
+            data_file = config_dict.get(ConfigKeys.DATA_FILE)
+            if data_file is not None:
+                data_file = os.path.realpath(data_file)
+                if not os.path.isfile(data_file):
+                    raise ValueError("Error: data file is not a file")
+            
+            # GRID_KEY
+            grid_file = config_dict.get(ConfigKeys.GRID)
+            if grid_file is not None:
+                grid_file = os.path.realpath(grid_file)
+                if not os.path.isfile(grid_file):
+                    raise ValueError("Error: grid file is not a file")
+            grid = EclGrid.load_from_file(grid_file)
+            
+            # REFCASE_KEY
+            refcase_default = config_dict.get(ConfigKeys.REFCASE)
+            
+            # REFCASE_LIST_KEY
+            refcase_list = StringList()
+            for refcase in config_dict.get(ConfigKeys.REFCASE_LIST, []):
+                refcase_list.append(refcase)
+
+            # INIT_SECTION_KEY
+            init_section = config_dict.get(ConfigKeys.INIT_SECITON)
+
+            # END_DATE_KEY
+            end_date = CTime(datetime.strptime(config_dict.get(ConfigKeys.END_DATE), "%d/%m/%Y"))
+
+            # SCHEDULE_PREDICTION_FILE_KEY
+            schedule_prediction_file = config_dict.get(ConfigKeys.SCHEDULE_PREDICTION_FILE)
+
+            c_ptr = self._alloc_full(have_eclbase,
+                                    data_file,
+                                    grid,
+                                    refcase_default,
+                                    refcase_list,
+                                    init_section,
+                                    end_date,
+                                    schedule_prediction_file)
+            
+            grid.convertToCReference(None)
+
         if c_ptr:
             super(EclConfig, self).__init__(c_ptr)
         else:
@@ -87,20 +149,6 @@ class EclConfig(BaseCClass):
 
     def getGrid(self):
         return self._get_grid()
-
-    #-----------------------------------------------------------------
-
-    def getScheduleFile(self):
-        return self._get_schedule_file()
-
-    def setScheduleFile(self, schedule_file, target_file = None):
-        self._set_schedule_file(schedule_file, target_file)
-
-    def validateScheduleFile(self , schedule_file):
-        return self._validate_schedule_file(schedule_file)
-
-    def get_sched_file(self):
-        return self._get_sched_file()
 
     #-----------------------------------------------------------------
 
@@ -150,6 +198,8 @@ class EclConfig(BaseCClass):
     def getStartDate(self):
         return self._get_start_date()
 
+    def getEndDate(self):
+        return self._get_end_date()
 
     def active(self):
         """
@@ -159,3 +209,30 @@ class EclConfig(BaseCClass):
 
     def getLastHistoryRestart(self):
         return self._get_last_history_restart()
+
+    def __eq__(self, other):
+        if self.getDataFile() != other.getDataFile():
+            return False
+        
+        if self.get_gridfile() != other.get_gridfile():
+            return False
+        
+        if self.getInitSection() != other.getInitSection():
+            return False
+        
+        if self.getRefcaseName() != other.getRefcaseName():
+            return False
+        
+        if self.getDepthUnit() != other.getDepthUnit():
+            return False
+
+        if self.getPressureUnit() != other.getPressureUnit():
+            return False
+
+        if self.getStartDate() != other.getStartDate():
+            return False
+        
+        if self.getEndDate() != other.getEndDate():
+            return False
+
+        return True

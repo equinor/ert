@@ -16,7 +16,9 @@
 #  for more details.
 
 import os.path
-from res.enkf import EclConfig
+print(os.getcwd())
+from res.enkf import EclConfig, ResConfig
+from ecl.util.test import TestAreaContext
 from tests import ResTest, equinor_test
 from res.util import UIReturn
 from ecl.summary  import EclSum
@@ -26,13 +28,14 @@ SMSPEC_file   = "Equinor/ECLIPSE/Gurbat/ECLIPSE.SMSPEC"
 DATA_file     = "Equinor/ECLIPSE/Gurbat/ECLIPSE.DATA"
 INIT_file     = "Equinor/ECLIPSE/Gurbat/EQUIL.INC"
 DATA_INIT_file= "Equinor/ECLIPSE/Gurbat/ECLIPSE_INIT.DATA"
-SCHEDULE_file = "Equinor/ECLIPSE/Gurbat/target.SCH"
 
 
-@equinor_test()
+
+
+
 class EclConfigTest(ResTest):
 
-
+    @equinor_test()
     def test_grid(self):
         grid_file = self.createTestPath( EGRID_file )
         smspec_file = self.createTestPath( SMSPEC_file )
@@ -47,12 +50,8 @@ class EclConfigTest(ResTest):
         self.assertTrue( os.path.exists( smspec_file ))
         ui = ec.validateGridFile( smspec_file )
         self.assertFalse( ui )
-
-
-
-
-
-
+    
+    @equinor_test()
     def test_datafile(self):
         ec = EclConfig()
         ui = ec.validateDataFile( "DoesNotExist" )
@@ -65,27 +64,7 @@ class EclConfigTest(ResTest):
         self.assertEqual( dfile , ec.getDataFile() )
 
 
-    def test_schedule_file(self):
-        ec = EclConfig()
-        ui = ec.validateScheduleFile( "DoesNotExist" )
-        self.assertFalse( ui )
-
-        dfile = self.createTestPath( DATA_file )
-        sfile = self.createTestPath( SCHEDULE_file )
-
-        # Setting the schedule file should fail before the datafile
-        # (i.e. startdate) has been set.
-        ui = ec.validateScheduleFile( sfile )
-        self.assertFalse( ui )
-
-        ec.setDataFile( dfile )
-        ui = ec.validateScheduleFile( sfile )
-        self.assertTrue( ui )
-
-        ec.setScheduleFile( sfile )
-        self.assertEqual( sfile , ec.getScheduleFile() )
-
-
+    @equinor_test()
     def test_init_section(self):
         ec = EclConfig()
         dfile = self.createTestPath( DATA_file )
@@ -105,7 +84,7 @@ class EclConfigTest(ResTest):
         ec.setInitSection( ifile )
         self.assertTrue( ifile , ec.getInitSection() )
 
-
+    @equinor_test()
     def test_refcase( self ):
         ec = EclConfig()
         dfile = self.createTestPath( DATA_file )
@@ -120,5 +99,25 @@ class EclConfigTest(ResTest):
         self.assertTrue( isinstance( refcase , EclSum ))
         refcaseName = ec.getRefcaseName() + ".DATA"
         self.assertEqual( dfile , refcaseName )
+
+    def test_ecl_config_constructor(self):
+        config_dict = {
+            "DATA_FILE"                     : "configuration_tests/input/SPE1.DATA",
+            "ECLBASE"                       : "configuration_tests/input/<ECLIPSE_NAME>-%d",
+            "GRID"                          : "configuration_tests/input/CASE.EGRID",
+            "REFCASE"                       : "configuration_tests/input/SNAKE_OIL_FIELD",
+            "END_DATE"                      : "10/10/2010",
+            "SCHEDULE_PREDICTION_FILE"      : "configuration_tests/input/schedule.sch"
+        }
+        
+        self.case_directory = self.createTestPath("local/configuration_tests/")
+        with TestAreaContext("ecl_config_test") as work_area:
+            work_area.copy_directory(self.case_directory)
+            res_config = ResConfig('configuration_tests/ecl_config.ert')
+            ecl_config_file = res_config.ecl_config
+            ecl_config_dict = EclConfig(config_dict=config_dict)
+
+            self.assertEqual(ecl_config_dict, ecl_config_file)
+
 
 

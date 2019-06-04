@@ -758,19 +758,6 @@ void enkf_state_init_eclipse(const res_config_type * res_config,
   model_config_type * model_config = res_config_get_model_config(res_config);
 
   util_make_path(run_arg_get_runpath(run_arg));
-  if (ecl_config_get_schedule_target(ecl_config)) {
-    char * schedule_file_target = util_alloc_filename(run_arg_get_runpath(run_arg),
-                                                      ecl_config_get_schedule_target(ecl_config),
-                                                      NULL);
-
-    char * schedule_file_target_path = util_split_alloc_dirname(schedule_file_target);
-    util_make_path(schedule_file_target_path);
-    free(schedule_file_target_path);
-
-    sched_file_fprintf(ecl_config_get_sched_file(ecl_config), schedule_file_target);
-
-    free(schedule_file_target);
-  }
 
   ert_templates_instansiate(res_config_get_templates(res_config),
                             run_arg_get_runpath(run_arg),

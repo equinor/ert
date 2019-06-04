@@ -190,15 +190,24 @@ extern "C" {
   const char * config_keys_get_max_submit_key();
   const char * config_keys_get_simulation_job_key();
   const char * config_keys_get_umask_key();
-  const char * config_keys_get_data_file_key();
   const char * config_keys_get_data_kw_key();
   const char * config_keys_get_runpath_key();
-  const char * config_keys_get_runpath_file_key();
-  const char * config_keys_get_eclbase_key();
+  const char * config_keys_get_runpath_file_key();  
   const char * config_keys_get_num_realizations_key();
   const char * config_keys_get_enspath_key();
+  
+  /* ************* ECL config  ************* */
+  const char * config_keys_get_eclbase_key();
+  const char * config_keys_get_data_file_key();
   const char * config_keys_get_grid_key();
+  const char * config_keys_get_add_fixed_length_schedule_kw_key();
   const char * config_keys_get_refcase_key();
+  const char * config_keys_get_refcase_list_key();
+  const char * config_keys_get_init_section_key();
+  const char * config_keys_get_end_date_key();
+  const char * config_keys_get_schedule_prediction_file_key();
+  /* ************* ECL config  ************* */
+
   const char * config_keys_get_history_source_key();
   const char * config_keys_get_obs_config_key();
   const char * config_keys_get_time_map_key();

@@ -28,7 +28,6 @@
 #include <ert/res_util/ui_return.hpp>
 #include <ert/res_util/path_fmt.hpp>
 
-#include <ert/sched/sched_file.hpp>
 
 #include <ert/config/config_parser.hpp>
 #include <ert/config/config_content.hpp>
@@ -62,15 +61,12 @@
 struct ecl_config_struct
 {
   ecl_io_config_type * io_config;       /* This struct contains information of whether the eclipse files should be formatted|unified|endian_fliped */
-  sched_file_type * sched_file;         /* Will only contain the history - if predictions are active the member_config objects will have a private sched_file instance. */
-  std::unordered_map<std::string, int>  fixed_length_kw; /* Set of user-added SCHEDULE keywords with fixed length. */
   char * data_file;                     /* Eclipse data file. */
   time_t start_date;                    /* The start date of the ECLIPSE simulation - parsed from the data_file. */
   time_t end_date;                      /* An optional date value which can be used to check if the ECLIPSE simulation has been 'long enough'. */
   ecl_refcase_list_type * refcase_list;
   ecl_grid_type * grid;                 /* The grid which is active for this model. */
   char * schedule_prediction_file;      /* Name of schedule prediction file - observe that this is internally handled as a gen_kw node. */
-  char * schedule_target_file;          /* File name to write schedule info to */
   char * input_init_section;            /* File name for ECLIPSE (EQUIL) initialisation - can be NULL if the user has not supplied INIT_SECTION. */
   char * init_section;                  /* Equal to the full path of input_init_section IFF input_init_section points to an existing file - otherwise equal to input_init_section. */
   int last_history_restart;
@@ -127,7 +123,7 @@ void ecl_config_assert_restart(const ecl_config_type * ecl_config)
   }
 }
 
-ui_return_type * ecl_config_validate_data_file(const ecl_config_type * ecl_config, const char * data_file) {
+ui_return_type * ecl_config_validate_data_file(const ecl_config_type * ecl_config, const char * data_file) {    
   if (util_file_exists(data_file))
     return ui_return_alloc(UI_RETURN_OK);
   else {
@@ -199,87 +195,12 @@ void ecl_config_set_schedule_prediction_file(ecl_config_type * ecl_config, const
   ecl_config->schedule_prediction_file = util_realloc_string_copy(ecl_config->schedule_prediction_file, schedule_prediction_file);
 }
 
-const char * ecl_config_get_schedule_file(const ecl_config_type * ecl_config)
-{
-  if (ecl_config->sched_file != NULL )
-    return sched_file_iget_filename(ecl_config->sched_file, 0);
-  else
-    return NULL ;
-}
-
-bool ecl_config_has_schedule(const ecl_config_type * ecl_config)
-{
-  if (ecl_config->sched_file == NULL )
-    return false;
-  else
-    return true;
-}
-
 bool ecl_config_has_init_section(const ecl_config_type * ecl_config)
 {
   if (ecl_config->init_section == NULL )
     return false;
   else
     return true;
-}
-
-
-
-ui_return_type * ecl_config_validate_schedule_file(const ecl_config_type * ecl_config , const char * schedule_file) {
-  if ((ecl_config->start_date != -1) && (util_file_exists(schedule_file)))
-    return ui_return_alloc(UI_RETURN_OK);
-  else {
-    ui_return_type * ui_return = ui_return_alloc(UI_RETURN_FAIL);
-
-    if (ecl_config->start_date == -1)
-      ui_return_add_error(ui_return, "You must set the ECLIPSE datafile before you can set the SCHEDULE file.");
-
-    if (!util_file_exists(schedule_file)) {
-      char * error_msg = util_alloc_sprintf("SCHEDULE file:%s not found" , schedule_file);
-      ui_return_add_error(ui_return , error_msg);
-      free(error_msg);
-    }
-
-    return ui_return;
-  }
-}
-
-
-/**
-   Observe: This function makes a hard assumption that the
-   ecl_config->start_date has already been set. (And should not be
-   changed either ...)
-*/
-
-void ecl_config_set_schedule_file(ecl_config_type * ecl_config, const char * schedule_file, const char * schedule_target_file)
-{
-  if (schedule_target_file)
-    ecl_config->schedule_target_file = util_alloc_string_copy(schedule_target_file);
-  else {
-    char * base; /* The schedule target file will be without any path component */
-    char * ext;
-    util_alloc_file_components(schedule_file, NULL, &base, &ext);
-    ecl_config->schedule_target_file = util_alloc_filename(NULL, base, ext);
-    free(ext);
-    free(base);
-  }
-
-  ecl_config->sched_file = sched_file_alloc(ecl_config->start_date);
-  sched_file_parse(ecl_config->sched_file, schedule_file);
-  ecl_config->last_history_restart = sched_file_get_num_restart_files(ecl_config->sched_file) - 1; /* We keep track of this - so we can stop assimilation at the end of history */
-
-  for (const auto& kw_iter : ecl_config->fixed_length_kw)
-    sched_file_add_fixed_length_kw(ecl_config->sched_file, kw_iter.first.c_str(), kw_iter.second);
-}
-
-
-
-void ecl_config_add_fixed_length_schedule_kw(ecl_config_type * ecl_config, const char * kw, int length)
-{
-  ecl_config->fixed_length_kw[kw] = length;
-  if (ecl_config->sched_file != NULL )
-    sched_file_add_fixed_length_kw(ecl_config->sched_file, kw, length);
-
 }
 
 
@@ -471,9 +392,7 @@ static ecl_config_type * ecl_config_alloc_empty(void)
   ecl_config->can_restart = false;
   ecl_config->start_date = -1;
   ecl_config->end_date = -1;
-  ecl_config->sched_file = NULL;
   ecl_config->schedule_prediction_file = NULL;
-  ecl_config->schedule_target_file = NULL;
   ecl_config->refcase_list = ecl_refcase_list_alloc();
 
   return ecl_config;
@@ -502,6 +421,36 @@ ecl_config_type * ecl_config_alloc(const config_content_type * config_content) {
   return ecl_config;
 }
 
+ecl_config_type * ecl_config_alloc_full(bool have_eclbase, 
+                                        char * data_file, 
+                                        ecl_grid_type * grid,
+                                        char * refcase_default,
+                                        stringlist_type * ref_case_list,
+                                        char * init_section,
+                                        time_t end_date,
+                                        char * sched_prediction_file
+                                        ) {
+  ecl_config_type * ecl_config = ecl_config_alloc_empty();
+  ecl_config->have_eclbase = have_eclbase;
+  ecl_config->grid = grid;
+  if (data_file != NULL) {
+    ecl_config_set_data_file(ecl_config, data_file);
+  }
+
+  for (int i = 0; i < stringlist_get_size(ref_case_list); i++)
+  {
+    ecl_refcase_list_add_matching(ecl_config->refcase_list, stringlist_safe_iget(ref_case_list, i));
+  }
+  ecl_refcase_list_set_default(ecl_config->refcase_list, refcase_default);
+
+  ecl_config_set_init_section(ecl_config, init_section);
+
+  ecl_config->end_date = end_date;
+  ecl_config->schedule_prediction_file = util_alloc_string_copy(sched_prediction_file);
+  
+  return ecl_config;
+}
+
 static void handle_has_eclbase_key(ecl_config_type * ecl_config,
                                    const config_content_type * config) {
   /*
@@ -520,11 +469,6 @@ static void handle_has_eclbase_key(ecl_config_type * ecl_config,
   }
 }
 
-
-
-
-
-
 static void handle_has_data_file_key(ecl_config_type * ecl_config,
                                      const config_content_type * config) {
   const char * data_file = config_content_get_value_as_abspath(config,
@@ -537,27 +481,6 @@ static void handle_has_data_file_key(ecl_config_type * ecl_config,
     util_abort("%s: problem setting ECLIPSE data file (%s)\n",
                __func__, ui_return_get_last_error(ui_return));
   ui_return_free(ui_return);
-}
-
-static void handle_has_schedule_file_key(ecl_config_type * ecl_config,
-                                         const config_content_type * config) {
-  const config_content_item_type * schedule_item = config_content_get_item(config,
-                                                                           SCHEDULE_FILE_KEY);
-  config_content_node_type * schedule_node = config_content_item_get_last_node(schedule_item);
-  const char * schedule_target_file = NULL;
-
-  if (config_content_node_get_size( schedule_node ) > 1) {
-    const char * schedule_src_file = config_content_node_iget_as_abspath(schedule_node, 0);
-    ui_return_type * ui_return = ecl_config_validate_schedule_file(ecl_config,
-                                                                   schedule_src_file);
-    if (ui_return_get_status(ui_return) == UI_RETURN_OK)
-      ecl_config_set_schedule_file(ecl_config, schedule_src_file, schedule_target_file);
-    else
-      util_abort("%s: failed to set schedule file. Error:%s\n",
-                 __func__,
-                 ui_return_get_last_error(ui_return));
-    ui_return_free(ui_return);
-  }
 }
 
 static void handle_has_grid_key(ecl_config_type * ecl_config,
@@ -576,13 +499,6 @@ static void handle_has_grid_key(ecl_config_type * ecl_config,
   ui_return_free(ui_return);
 }
 
-static void handle_has_add_fixed_length_schedule_kw_key(ecl_config_type * ecl_config,
-                                                        const config_content_type * config) {
-  for (int iocc = 0; iocc < config_content_get_occurences(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY); iocc++)
-    ecl_config_add_fixed_length_schedule_kw(ecl_config,
-                                            config_content_iget(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY, iocc, 0),
-                                            config_content_iget_as_int(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY, iocc, 1));
-}
 
 static void handle_has_refcase_key(ecl_config_type * ecl_config,
                                    const config_content_type * config) {
@@ -645,14 +561,9 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
   if (config_content_has_item(config, DATA_FILE_KEY))
     handle_has_data_file_key(ecl_config, config);
 
-  if (config_content_has_item(config, SCHEDULE_FILE_KEY))
-    handle_has_schedule_file_key(ecl_config, config);
-
   if (config_content_has_item(config, GRID_KEY))
     handle_has_grid_key(ecl_config, config);
 
-  if (config_content_has_item(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY))
-    handle_has_add_fixed_length_schedule_kw_key(ecl_config, config);
 
   if (config_content_has_item(config, REFCASE_KEY))
     handle_has_refcase_key(ecl_config, config);
@@ -704,10 +615,6 @@ void ecl_config_free(ecl_config_type * ecl_config)
 {
   ecl_io_config_free(ecl_config->io_config);
   free(ecl_config->data_file);
-  if (ecl_config->sched_file != NULL )
-    sched_file_free(ecl_config->sched_file);
-
-  free(ecl_config->schedule_target_file);
   free(ecl_config->input_init_section);
   free(ecl_config->init_section);
   free(ecl_config->schedule_prediction_file);
@@ -793,22 +700,6 @@ ecl_io_config_type * ecl_config_get_io_config(const ecl_config_type * ecl_config
   return ecl_config->io_config;
 }
 
-sched_file_type * ecl_config_get_sched_file(const ecl_config_type * ecl_config)
-{
-  return ecl_config->sched_file;
-}
-
-
-const char * ecl_config_get_schedule_target(const ecl_config_type * ecl_config)
-{
-  return ecl_config->schedule_target_file;
-}
-
-int ecl_config_get_num_restart_files(const ecl_config_type * ecl_config)
-{
-  return sched_file_get_num_restart_files(ecl_config->sched_file);
-}
-
 bool ecl_config_get_formatted(const ecl_config_type * ecl_config)
 {
   return ecl_io_config_get_formatted(ecl_config->io_config);
@@ -832,16 +723,20 @@ void ecl_config_add_config_items(config_parser_type * config)
   config_schema_item_type * item;
 
   item = config_add_schema_item(config, SCHEDULE_FILE_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, 1);
-  config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+  config_install_message(
+      config, SCHEDULE_FILE_KEY,
+      "** Warning: \'SCHEDULE_FILE\' is ignored"
+      );
   /*
    Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a
    GEN_KW is added in ensemble_config.c
   */
 
   item = config_add_schema_item(config, IGNORE_SCHEDULE_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, 1);
-  config_schema_item_iset_type(item, 0, CONFIG_BOOL);
+  config_install_message(
+      config, IGNORE_SCHEDULE_KEY,
+      "** Warning: \'IGNORE_SCHEDULE\' is ignored"
+      );
 
   item = config_add_schema_item(config, ECLBASE_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
@@ -851,11 +746,15 @@ void ecl_config_add_config_items(config_parser_type * config)
   config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
 
   item = config_add_schema_item(config, STATIC_KW_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
-
+  config_install_message(
+      config, STATIC_KW_KEY,
+      "** Warning: \'STATIC_KW\' is ignored"
+      );
   item = config_add_schema_item(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY, false);
-  config_schema_item_set_argc_minmax(item, 2, 2);
-  config_schema_item_iset_type(item, 1, CONFIG_INT);
+  config_install_message(
+      config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY,
+      "** Warning: \'ADD_FIXED_LENGTH_SCHEDULE_KW\' is ignored"
+      );
 
   item = config_add_schema_item(config, REFCASE_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
@@ -872,6 +771,10 @@ void ecl_config_add_config_items(config_parser_type * config)
   config_schema_item_set_argc_minmax(item, 1, 1);
   config_schema_item_iset_type(item, 0, CONFIG_PATH);
   config_add_alias(config, INIT_SECTION_KEY, "EQUIL_INIT_FILE");
+  config_install_message(
+      config, INIT_SECTION_KEY,
+      "** Warning: \'INIT_SECTION\' has been deprecated"
+      );
 
   item = config_add_schema_item(config, END_DATE_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);

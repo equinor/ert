@@ -407,19 +407,11 @@ class ProgrammaticResConfigTest(ResTest):
 
 
     def assert_equal_site_config(self, loaded_site_config, prog_site_config):
-
         self.assertEqual(loaded_site_config, prog_site_config)
 
 
     def assert_equal_ecl_config(self, loaded_ecl_config, prog_ecl_config):
-        self.assertEqual(loaded_ecl_config.getDataFile(),
-                         prog_ecl_config.getDataFile())
-
-        self.assertEqual(loaded_ecl_config.get_gridfile(),
-                         prog_ecl_config.get_gridfile())
-
-        self.assertEqual(loaded_ecl_config.getRefcaseName(),
-                         prog_ecl_config.getRefcaseName())
+        self.assertEqual(loaded_ecl_config, prog_ecl_config)  
 
 
     def assert_equal_analysis_config(self, loaded_config, prog_config):

@@ -112,7 +112,6 @@ class ResConfig(BaseCClass):
                                    data_root=config_dir,
                                    joblist=site_config.get_installed_jobs(),
                                    last_history_restart=ecl_config.getLastHistoryRestart(),
-                                   sched_file=ecl_config._get_sched_file(),
                                    refcase=ecl_config.getRefcase())
 
         configs = [

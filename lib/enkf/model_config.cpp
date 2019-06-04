@@ -319,7 +319,6 @@ model_config_type * model_config_alloc_empty() {
 model_config_type * model_config_alloc_load(const char * user_config_file,
                                             const ext_joblist_type * joblist,
                                             int last_history_restart,
-                                            const sched_file_type * sched_file,
                                             const ecl_sum_type * refcase)
 {
   config_parser_type * config_parser = config_alloc();
@@ -338,7 +337,6 @@ model_config_type * model_config_alloc_load(const char * user_config_file,
                                                         data_root,
                                                         joblist,
                                                         last_history_restart,
-                                                        sched_file,
                                                         refcase);
 
   config_content_free(config_content);
@@ -352,7 +350,6 @@ model_config_type * model_config_alloc(
         const char * data_root,
         const ext_joblist_type * joblist,
         int last_history_restart,
-        const sched_file_type * sched_file,
         const ecl_sum_type * refcase)
 {
   model_config_type * model_config = model_config_alloc_empty();
@@ -364,7 +361,6 @@ model_config_type * model_config_alloc(
                       0,
                       joblist,
                       last_history_restart,
-                      sched_file,
                       refcase);
 
   return model_config;
@@ -372,13 +368,8 @@ model_config_type * model_config_alloc(
 
 
 
-bool model_config_select_history( model_config_type * model_config , history_source_type source_type, const sched_file_type * sched_file , const ecl_sum_type * refcase) {
+bool model_config_select_history( model_config_type * model_config , history_source_type source_type,  const ecl_sum_type * refcase) {
   bool selectOK = false;
-
-  if (source_type == SCHEDULE && sched_file != NULL) {
-    model_config_select_schedule_history( model_config , sched_file );
-    selectOK = true;
-  }
 
   if (((source_type == REFCASE_HISTORY) || (source_type == REFCASE_SIMULATED)) && refcase != NULL) {
     if (source_type == REFCASE_HISTORY)
@@ -392,13 +383,10 @@ bool model_config_select_history( model_config_type * model_config , history_sou
 }
 
 
-static bool model_config_select_any_history( model_config_type * model_config , const sched_file_type * sched_file , const ecl_sum_type * refcase) {
+static bool model_config_select_any_history( model_config_type * model_config , const ecl_sum_type * refcase) {
   bool selectOK = false;
 
-  if (sched_file != NULL) {
-    model_config_select_schedule_history( model_config , sched_file );
-    selectOK = true;
-  } else if ( refcase != NULL ) {
+  if ( refcase != NULL ) {
     model_config_select_refcase_history( model_config , refcase , true);
     selectOK = true;
   }
@@ -439,7 +427,6 @@ void model_config_init(model_config_type * model_config ,
                        int ens_size ,
                        const ext_joblist_type * joblist ,
                        int last_history_restart ,
-                       const sched_file_type * sched_file ,
                        const ecl_sum_type * refcase) {
 
   model_config->forward_model = forward_model_alloc(  joblist );
@@ -474,9 +461,9 @@ void model_config_init(model_config_type * model_config ,
     source_type = history_get_source_type( history_source );
   }
 
-  if (!model_config_select_history( model_config , source_type , sched_file , refcase ))
-    if (!model_config_select_history( model_config , DEFAULT_HISTORY_SOURCE , sched_file , refcase )) {
-      model_config_select_any_history( model_config , sched_file , refcase);
+  if (!model_config_select_history( model_config , source_type  , refcase ))
+    if (!model_config_select_history( model_config , DEFAULT_HISTORY_SOURCE , refcase )) {
+      model_config_select_any_history( model_config , refcase);
       /* If even the last call return false, it means the configuration does not have any of
        * these keys: HISTORY_SOURCE, SCHEDULE, REFCASE.
        * History matching won't be supported for this configuration.

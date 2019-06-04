@@ -66,10 +66,10 @@ from .config_keys import ConfigKeys
 
 from .analysis_iter_config import AnalysisIterConfig
 from .analysis_config import AnalysisConfig
-from .ecl_config import EclConfig
 
 from .enkf_defaults import EnkfDefaults
 
+from .ecl_config import EclConfig
 from .queue_config import QueueConfig
 from .ert_workflow_list import ErtWorkflowList
 from .site_config import SiteConfig

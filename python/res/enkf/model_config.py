@@ -19,14 +19,14 @@ from ecl.summary import EclSum
 
 from res import ResPrototype
 from res.job_queue import ForwardModel
-from res.sched import HistorySourceEnum, SchedFile
+from res.sched import HistorySourceEnum
 from res.util import PathFormat
 
 
 class ModelConfig(BaseCClass):
     TYPE_NAME = "model_config"
 
-    _alloc                       = ResPrototype("void*  model_config_alloc( config_content, char*, ext_joblist, int, sched_file, ecl_sum)", bind=False)
+    _alloc                       = ResPrototype("void*  model_config_alloc( config_content, char*, ext_joblist, int, ecl_sum)", bind=False)
     _free                        = ResPrototype("void  model_config_free( model_config )")
     _get_forward_model           = ResPrototype("forward_model_ref model_config_get_forward_model(model_config)")
     _get_max_internal_submit     = ResPrototype("int   model_config_get_max_internal_submit(model_config)")
@@ -38,7 +38,7 @@ class ModelConfig(BaseCClass):
     _get_fs_type                 = ResPrototype("enkf_fs_type_enum model_config_get_dbase_type(model_config)")
     _get_history                 = ResPrototype("history_ref model_config_get_history(model_config)")
     _get_history_source          = ResPrototype("history_source_enum model_config_get_history_source(model_config)")
-    _select_history              = ResPrototype("bool  model_config_select_history(model_config, history_source_enum, sched_file, ecl_sum)")
+    _select_history              = ResPrototype("bool  model_config_select_history(model_config, history_source_enum, ecl_sum)")
     _has_history                 = ResPrototype("bool  model_config_has_history(model_config)")
     _gen_kw_export_name          = ResPrototype("char* model_config_get_gen_kw_export_name(model_config)")
     _runpath_requires_iterations = ResPrototype("bool  model_config_runpath_requires_iter(model_config)")
@@ -49,8 +49,8 @@ class ModelConfig(BaseCClass):
     _get_data_root               = ResPrototype("char* model_config_get_data_root(model_config)")
     _set_data_root               = ResPrototype("void model_config_get_data_root(model_config, char*)")
 
-    def __init__(self, config_content, data_root, joblist, last_history_restart, sched_file, refcase, is_reference=False):
-        c_ptr = self._alloc(config_content, data_root, joblist, last_history_restart, sched_file, refcase)
+    def __init__(self, config_content, data_root, joblist, last_history_restart, refcase, is_reference=False):
+        c_ptr = self._alloc(config_content, data_root, joblist, last_history_restart, refcase)
 
         if c_ptr is None:
             raise ValueError('Failed to construct SiteConfig instance.')

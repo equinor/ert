@@ -48,15 +48,28 @@ class ConfigKeys:
     _min_realizations     = ResPrototype("char* config_keys_get_min_realizations_key()", bind=False)
     _max_submit           = ResPrototype("char* config_keys_get_max_submit_key()", bind=False)
     _umask                = ResPrototype("char* config_keys_get_umask_key()", bind=False)
-    _data_file            = ResPrototype("char* config_keys_get_data_file_key()", bind=False)
     _data_kw_key          = ResPrototype("char* config_keys_get_data_kw_key()", bind=False)
     _runpath              = ResPrototype("char* config_keys_get_runpath_key()", bind=False)
     _runpath_file         = ResPrototype("char* config_keys_get_runpath_file_key()", bind=False)
+    
+    # ************* ECL config  *************
     _eclbase              = ResPrototype("char* config_keys_get_eclbase_key()", bind=False)
+    _data_file            = ResPrototype("char* config_keys_get_data_file_key()", bind=False)
+    _grid                 = ResPrototype("char* config_keys_get_grid_key()", bind=False)
+    _add_fixed_length_schedule_kw_key = ResPrototype(
+            "char* config_keys_get_add_fixed_length_schedule_kw_key()", bind=False
+        )
+    _refcase              = ResPrototype("char* config_keys_get_refcase_key()", bind=False)
+    _refcase_list         = ResPrototype("char* config_keys_get_refcase_list_key()", bind=False)
+    _init_section         = ResPrototype("char* config_keys_get_init_section_key()", bind=False)
+    _end_date             = ResPrototype("char* config_keys_get_end_date_key()", bind=False)
+    _schedule_prediction_file = ResPrototype(
+            "char* config_keys_get_schedule_prediction_file_key()", bind=False
+        )
+    # ************* ECL config  ************* 
+    
     _num_realizations     = ResPrototype("char* config_keys_get_num_realizations_key()", bind=False)
     _enspath              = ResPrototype("char* config_keys_get_enspath_key()", bind=False)
-    _grid                 = ResPrototype("char* config_keys_get_grid_key()", bind=False)
-    _refcase              = ResPrototype("char* config_keys_get_refcase_key()", bind=False)
     _history_source       = ResPrototype("char* config_keys_get_history_source_key()", bind=False)
     _obs_config           = ResPrototype("char* config_keys_get_obs_config_key()", bind=False)
     _time_map             = ResPrototype("char* config_keys_get_time_map_key()", bind=False)
@@ -141,16 +154,25 @@ class ConfigKeys:
     MAX_SUBMIT       = _max_submit()
     UMASK            = _umask()
     MAX_RUNNING      = "MAX_RUNNING"
-    DATA_FILE        = _data_file()
     DATA_KW_KEY      = _data_kw_key()
     RUNPATH          = _runpath()
     RUNPATH_FILE     = _runpath_file()
     RUNPATH_LIST_FILE = ".ert_runpath_list"
+    
+    # ************* ECL config  *************
     ECLBASE          = _eclbase()
+    DATA_FILE        = _data_file()
+    GRID             = _grid()
+    ADD_FIXED_LENGTH_SCHEDULE_KW = _add_fixed_length_schedule_kw_key()
+    REFCASE          = _refcase()
+    REFCASE_LIST     = _refcase_list()
+    INIT_SECITON     = _init_section()
+    END_DATE         = _end_date()
+    SCHEDULE_PREDICTION_FILE = _schedule_prediction_file()
+    # ************* ECL config  *************
+    
     NUM_REALIZATIONS = _num_realizations()
     ENSPATH          = _enspath()
-    GRID             = _grid()
-    REFCASE          = _refcase()
     HISTORY_SOURCE   = _history_source()
     OBS_CONFIG       = _obs_config()
     TIME_MAP         = _time_map()

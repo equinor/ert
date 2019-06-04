@@ -29,8 +29,6 @@
 #include <ert/ecl/ecl_sum.hpp>
 #include <ert/ecl/ecl_io_config.hpp>
 
-#include <ert/sched/sched_file.hpp>
-
 #include <ert/res_util/path_fmt.hpp>
 
 #include <ert/enkf/ecl_refcase_list.hpp>
@@ -45,9 +43,6 @@ extern "C" {
   void                  ecl_config_set_data_file( ecl_config_type * ecl_config , const char * data_file);
   ui_return_type *      ecl_config_validate_data_file(const ecl_config_type * ecl_config, const char * data_file);
 
-  void                  ecl_config_set_schedule_file(ecl_config_type * ecl_config, const char * schedule_file, const char * schedule_target_file);
-  ui_return_type *      ecl_config_validate_schedule_file(const ecl_config_type * ecl_config , const char * schedule_file);
-  const char *          ecl_config_get_schedule_file( const ecl_config_type * ecl_config );
   const char          * ecl_config_get_schedule_target(const ecl_config_type * );
   bool                  ecl_config_has_schedule( const ecl_config_type * ecl_config );
 
@@ -79,8 +74,6 @@ extern "C" {
 
   const char          * ecl_config_get_schedule_prediction_file( const ecl_config_type * ecl_config );
   void                  ecl_config_set_schedule_prediction_file( ecl_config_type * ecl_config , const char * schedule_prediction_file );
-  sched_file_type     * ecl_config_get_sched_file(const ecl_config_type * );
-
 
   int                   ecl_config_get_num_cpu( const ecl_config_type * ecl_config );
   void                  ecl_config_init( ecl_config_type * ecl_config , const config_content_type * config);
@@ -97,7 +90,15 @@ extern "C" {
   const char          * ecl_config_get_refcase_name( const ecl_config_type * ecl_config);
   ecl_config_type     * ecl_config_alloc_load(const char * user_config_file);
   ecl_config_type     * ecl_config_alloc(const config_content_type * config_content);
-
+  ecl_config_type     * ecl_config_alloc_full(bool have_eclbase, 
+                                          char * data_file, 
+                                          ecl_grid_type * grid,
+                                          char * refcase_default,
+                                          stringlist_type * ref_case_list,
+                                          char * init_section,
+                                          time_t end_date,
+                                          char * sched_prediction_file
+                                          );
   void                  ecl_config_add_config_items( config_parser_type * config );
   const char          * ecl_config_get_depth_unit( const ecl_config_type * ecl_config );
   const char          * ecl_config_get_pressure_unit( const ecl_config_type * ecl_config );
