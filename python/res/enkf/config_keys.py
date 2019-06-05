@@ -77,6 +77,14 @@ class ConfigKeys:
     _workflow_job_directory_key = ResPrototype("char* config_keys_get_workflow_job_directory_key()", bind=False)
     _load_workflow_key = ResPrototype("char* config_keys_get_load_workflow_key()", bind=False)
 
+    # hook_manager config keys
+    _qc_workflow_key      = ResPrototype("char* config_keys_get_qc_workflow_key()", bind=False)
+    _hook_workflow_key    = ResPrototype("char* config_keys_get_hook_workflow_key()", bind=False)
+
+    QC_WORKFLOW_KEY  = _qc_workflow_key()
+    HOOK_WORKFLOW_KEY = _hook_workflow_key()
+    # hook_manager config keys
+
     #analysis_iter_config keys
     _iter_case_key        = ResPrototype("char* config_keys_get_iter_case_key()", bind=False)
     _iter_count_key       = ResPrototype("char* config_keys_get_iter_count_key()", bind=False)

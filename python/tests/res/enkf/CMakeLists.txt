@@ -53,6 +53,7 @@ set(TEST_SOURCES
     test_programmatic_res_config.py
     test_rng_config.py
     test_subst_config.py
+    test_hook_manager.py
     test_workflow_list.py
 )
 
@@ -112,6 +113,7 @@ python_config_test(tests.res.enkf.test_ecl_config.EclConfigTest)
 python_config_test(tests.res.enkf.test_ert_context.ErtTestContextTest)
 python_config_test(tests.res.enkf.test_field_export.FieldExportTest)
 python_config_test(tests.res.enkf.test_subst_config.SubstConfigTest)
+python_config_test(tests.res.enkf.test_hook_manager.HookManagerTest)
 python_config_test(tests.res.enkf.test_workflow_list.ErtWorkflowListTest)
 
 # The following two tests involve loading the rml module as part of

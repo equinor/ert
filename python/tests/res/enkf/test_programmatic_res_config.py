@@ -430,9 +430,7 @@ class ProgrammaticResConfigTest(ResTest):
                          prog_config.get_max_runtime())
 
     def assert_equal_hook_manager(self, loaded_hook_manager, prog_hook_manager):
-        self.assertEqual(loaded_hook_manager.getRunpathList().getExportFile(),
-                         prog_hook_manager.getRunpathList().getExportFile())
-
+        self.assertEqual(loaded_hook_manager, prog_hook_manager)
 
     def assert_equal_log_config(self, loaded_log_config, prog_log_config):
         self.assertEqual(loaded_log_config.log_file,

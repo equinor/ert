@@ -94,8 +94,6 @@ hook_manager_type * hook_manager_alloc(
   return hook_manager;
 }
 
-
-
 void hook_manager_free( hook_manager_type * hook_manager ) {
   if (hook_manager->runpath_list)
     runpath_list_free( hook_manager->runpath_list );
@@ -106,11 +104,9 @@ void hook_manager_free( hook_manager_type * hook_manager ) {
 }
 
 
-
 void hook_manager_add_input_context( hook_manager_type * hook_manager, const char * key , const char * value) {
   hash_insert_hash_owned_ref(hook_manager->input_context, key, util_alloc_string_copy(value), free);
 }
-
 
 
 runpath_list_type * hook_manager_get_runpath_list(const hook_manager_type * hook_manager) {
@@ -129,7 +125,34 @@ static void hook_manager_add_workflow( hook_manager_type * hook_manager , const 
   }
 }
 
+hook_manager_type * hook_manager_alloc_full(
+        ert_workflow_list_type * workflow_list,
+        const char * workflow_file,
+        const char * workflow_name,
+        const char * runpath_list_file,
+        const char ** hook_workflow_names,
+        const char ** hook_workflow_run_modes,
+        int hook_workflow_count) {
 
+    hook_manager_type * hook_manager = hook_manager_alloc_default(workflow_list);
+    if (workflow_file != NULL) {
+      workflow_type * workflow = ert_workflow_list_add_workflow( hook_manager->workflow_list , workflow_file , workflow_name);
+      if (workflow != NULL) {
+       hook_workflow_type * hook = hook_workflow_alloc( workflow , POST_SIMULATION );
+       vector_append_owned_ref(hook_manager->hook_workflow_list, hook , hook_workflow_free__);
+     }
+    }
+
+    for (int i = 0; i < hook_workflow_count; ++i) {
+      const char * workflow_name = hook_workflow_names[i];
+      hook_run_mode_enum run_mode = hook_workflow_run_mode_from_name(hook_workflow_run_modes[i]);
+      hook_manager_add_workflow( hook_manager , workflow_name , run_mode );
+    }
+
+    hook_manager->runpath_list = runpath_list_alloc(runpath_list_file);
+
+    return hook_manager;
+}
 
 void hook_manager_init( hook_manager_type * hook_manager , const config_content_type * config_content) {
 

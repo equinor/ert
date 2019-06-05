@@ -19,3 +19,12 @@ class HookWorkflow(BaseCClass):
 
     def getRunMode(self):
         return self._get_runmode()
+
+    def __eq__(self, other):
+        return self.getRunMode() == other.getRunMode() and self.getWorkflow().src_file == other.getWorkflow().src_file
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __repr__(self):
+        return "HookWorkflow({}, {})".format(self.getWorkflow().src_file, self.getRunMode())

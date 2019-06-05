@@ -215,15 +215,20 @@ extern "C" {
   const char * config_keys_get_job_script_key();
   const char * config_keys_get_num_cpu_key();
   const char * config_keys_get_define_key();
+  const char * config_keys_get_load_workflow_key();
   const char * config_keys_get_load_workflow_job_key();
   const char * config_keys_get_workflow_job_directory_key();
-  const char * config_keys_get_load_workflow_key();
 
   //*********analysis_iter_config keys************//
   const char * config_keys_get_iter_case_key();
   const char * config_keys_get_iter_count_key();
   const char * config_keys_get_iter_retry_count_key();
   //*********analysis_iter_config keys************//
+
+  // hook_manager config keys
+  const char * config_keys_get_qc_workflow_key();
+  const char * config_keys_get_hook_workflow_key();
+  // hook_manager config keys
 
 #ifdef   __cplusplus
 }
