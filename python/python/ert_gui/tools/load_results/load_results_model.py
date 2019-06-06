@@ -67,7 +67,7 @@ class LoadResultsModel(object):
         iteration = 0
         valid_directory = True
         while valid_directory:
-            formatted = run_path % (0, iteration)
+            formatted = run_path % (0, iteration + 1)
             valid_directory = os.path.exists(formatted)
             if valid_directory:
                 iteration += 1

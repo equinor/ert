@@ -15,7 +15,7 @@ class AllCasesModel(QAbstractItemModel):
         self.__data = []
 
     def index(self, row, column, parent=None, *args, **kwargs):
-        return self.createIndex(row, column, parent)
+        return self.createIndex(row, column)
 
     def parent(self, index=None):
         return QModelIndex()
