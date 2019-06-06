@@ -80,15 +80,11 @@ before_install:
     - pip install --upgrade -r requirements.txt
     # Checkout libres - need libecl version
     - source .libres_version
-    - git clone https://github.com/equinor/libres
+    - git clone --branch $LIBRES_VERSION --depth 1 https://github.com/equinor/libres
     - pushd libres
-    - git checkout tags/$LIBRES_VERSION
     - source .libecl_version
     - popd
-    - git clone https://github.com/equinor/libecl
-    - pushd libecl
-    - git checkout tags/$LIBECL_VERSION
-    - popd
+    - git clone --branch $LIBECL_VERSION --depth 1 https://github.com/equinor/libecl
 
 install:
   # For now we have to make install libecl.
