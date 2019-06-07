@@ -13,7 +13,7 @@ def load_data(filename):
     """
     with open(filename) as fin:
         try:
-            return yaml.load(fin)
+            return yaml.safe_load(fin)
         except Exception as yaml_err:
             pass
 

@@ -74,7 +74,7 @@ class EclConfig(object):
     def __init__(self, config_file):
         with open(config_file) as f:
             try:
-                config = yaml.load(f)
+                config = yaml.safe_load(f)
             except:
                 raise ValueError("Failed parse: {} as yaml".format(config_file))
 

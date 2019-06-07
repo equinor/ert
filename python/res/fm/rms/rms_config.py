@@ -10,7 +10,7 @@ class RMSConfig(object):
         config_file = os.getenv("RMS_SITE_CONFIG", default = self.DEFAULT_CONFIG_FILE)
         with open(config_file) as f:
             try:
-                config = yaml.load(f)
+                config = yaml.safe_load(f)
             except:
                 raise ValueError("Failed to parse: {} as yaml".format(config_file))
 
