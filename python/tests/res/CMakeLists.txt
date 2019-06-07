@@ -12,7 +12,6 @@ set(TEST_SOURCES
 
 
 add_python_package("python.tests.res"  ${PYTHON_INSTALL_PREFIX}/tests/res "${TEST_SOURCES}" False)
-addPythonTest(tests.res.util.test_ui_return)
 
 add_subdirectory(analysis)
 add_subdirectory(config)

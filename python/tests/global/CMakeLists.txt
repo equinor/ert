@@ -4,5 +4,3 @@ set( TEST_SOURCES
 )
 
 add_python_package("python.tests.global"  "${PYTHON_INSTALL_PREFIX}/tests/global" "${TEST_SOURCES}" False)
-
-addPythonTest( tests.global.test_import.ImportRes )

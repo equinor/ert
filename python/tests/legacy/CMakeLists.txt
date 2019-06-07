@@ -8,9 +8,3 @@ set(TEST_SOURCES
         )
 
 add_python_package("python.tests.legacy.ert"  ${PYTHON_INSTALL_PREFIX}/tests/legacy "${TEST_SOURCES}" False)
-
-addPythonTest(tests.legacy.test_enkf.ErtLegacyEnkfTest)
-addPythonTest(tests.legacy.test_job_queue.ErtLegacyJobQueueTest)
-addPythonTest(tests.legacy.test_sched.ErtLegacySchedTest)
-addPythonTest(tests.legacy.test_analysis.ErtLegacyAnalysisTest)
-addPythonTest(tests.legacy.test_config.ErtLegacyConfigTest)

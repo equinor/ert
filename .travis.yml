@@ -106,3 +106,6 @@ script:
   - make install
   - set -e; python -c "import res"; set +e
   - ctest --output-on-failure $TEST_SUITE
+  - pip install pytest
+  - pip install pylint
+  - pytest -s

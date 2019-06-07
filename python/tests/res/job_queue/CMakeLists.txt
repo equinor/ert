@@ -17,17 +17,3 @@ set(TEST_SOURCES
 )
 
 add_python_package("python.tests.res.job_queue" ${PYTHON_INSTALL_PREFIX}/tests/res/job_queue "${TEST_SOURCES}" False)
-
-addPythonTest(tests.res.job_queue.test_forward_model_formatted_print.ForwardModelFormattedPrintTest)
-addPythonTest(tests.res.job_queue.test_job_queue.JobQueueTest)
-addPythonTest(tests.res.job_queue.test_workflow_job.WorkflowJobTest)
-addPythonTest(tests.res.job_queue.test_workflow.WorkflowTest)
-addPythonTest(tests.res.job_queue.test_workflow_joblist.WorkflowJoblistTest)
-addPythonTest(tests.res.job_queue.test_ert_plugin.ErtPluginTest)
-addPythonTest(tests.res.job_queue.test_ert_script.ErtScriptTest)
-addPythonTest(tests.res.job_queue.test_function_ert_script.FunctionErtScriptTest)
-addPythonTest(tests.res.job_queue.test_workflow_runner.WorkflowRunnerTest)
-addPythonTest(tests.res.job_queue.test_ext_job.ExtJobTest)
-addPythonTest(tests.res.job_queue.test_jobmanager.JobManagerTest)
-addPythonTest(tests.res.job_queue.test_job_manager_runtime_kw.JobManagerTestRuntimeKW)
-addPythonTest(tests.res.job_queue.test_equinor_jobmanager.JobManagerEquinorTest)
