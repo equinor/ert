@@ -17,7 +17,7 @@ from os.path import abspath
 from ecl.util.test import TestAreaContext
 from tests import ResTest
 
-from ecl.grid import EclGrid
+from ecl.grid import EclGridGenerator
 from res.enkf.config import FieldTypeEnum, FieldConfig
 from res.enkf.enums import EnkfFieldFileFormatEnum
 
@@ -59,7 +59,7 @@ class FieldConfigTest(ResTest):
             FieldConfig.exportFormat("file.xyz")
 
     def test_basics(self):
-        grid = EclGrid.createRectangular((17,13,11),(1,1,1))
+        grid = EclGridGenerator.create_rectangular((17,13,11),(1,1,1))
         fc = FieldConfig('PORO',grid)
         print(fc)
         print(str(fc))

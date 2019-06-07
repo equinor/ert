@@ -19,12 +19,12 @@ import os
 from res.enkf import FieldConfig
 from res.enkf import ActiveList
 from tests import ResTest
-from ecl.grid  import EclGrid
+from ecl.grid  import EclGridGenerator
 
 class FieldConfigTest(ResTest):
 
     def test_create(self):
-        grid = EclGrid.createRectangular( (10,10,5) , (1,1,1) )
+        grid = EclGridGenerator.create_rectangular( (10,10,5) , (1,1,1) )
         field_config = FieldConfig("SWAT" , grid)
         
     

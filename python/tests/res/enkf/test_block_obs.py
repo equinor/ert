@@ -19,13 +19,13 @@ import os
 from res.enkf import BlockObservation
 from res.enkf import ActiveList, FieldConfig
 from tests import ResTest
-from ecl.grid import EclGrid
+from ecl.grid import EclGridGenerator
 
 
 class BlockObsTest(ResTest):
 
     def test_create(self):
-        grid = EclGrid.createRectangular( (10,20,5) , (1,1,1) )
+        grid = EclGridGenerator.create_rectangular( (10,20,5) , (1,1,1) )
         field_config = FieldConfig("PRESSURE" , grid)    
         block_obs = BlockObservation("P-CONFIG" , field_config , grid)
 
