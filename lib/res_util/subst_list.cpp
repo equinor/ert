@@ -855,38 +855,6 @@ void subst_list_fprintf(const subst_list_type * subst_list , FILE * stream) {
 }
 
 
-
-
-
-
-/**
-   Will allocate string representation of the subst_list as:
-   KEY1=Value1, Key2=Value2, Key3=Value3. Will return NULL is there
-   are no elements in the subst_list.
-*/
-
-char * subst_list_alloc_string_representation( const subst_list_type * subst_list ) {
-  int size = subst_list_get_size( subst_list );
-  char * return_string = NULL;
-  if (size > 0) {
-    buffer_type * buffer = buffer_alloc( 512 );
-    int i;
-
-    for (i=0; i < size; i++) {
-      buffer_fwrite_char_ptr( buffer , subst_list_iget_key( subst_list , i));
-      buffer_strcat(buffer , "=");
-      buffer_strcat( buffer , subst_list_iget_value( subst_list , i));
-      if (i < (size - 1))
-        buffer_strcat( buffer , ", ");
-    }
-    buffer_shrink_to_fit( buffer );
-    return_string = (char*)buffer_get_data( buffer );
-    buffer_free_container( buffer );
-  }
-  return return_string;
-}
-
-
 /** Will loose tagging .... */
 int subst_list_add_from_string( subst_list_type * subst_list , const char * arg_string, bool append) {
   int     error_count = 0;

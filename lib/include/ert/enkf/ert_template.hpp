@@ -35,9 +35,11 @@ typedef struct ert_templates_struct ert_templates_type;
 
 stringlist_type   * ert_templates_alloc_list( ert_templates_type * ert_templates);
 ert_template_type * ert_template_alloc( const char * template_file , const char * target_file, subst_list_type * parent_subst) ;
+ert_templates_type * ert_templates_alloc_default(subst_list_type * parent_subst);
 void                ert_template_free( ert_template_type * ert_tamplete );
 void                ert_template_instantiate( ert_template_type * ert_template , const char * path , const subst_list_type * arg_list );
 void                ert_template_add_arg( ert_template_type * ert_template , const char * key , const char * value );
+subst_list_type *   ert_template_get_arg_list( ert_template_type * ert_template);
 void                ert_template_free__(void * arg);
 
 void                ert_templates_clear( ert_templates_type * ert_templates );
@@ -52,8 +54,6 @@ void                 ert_templates_del_template( ert_templates_type * ert_templa
 
 const char         * ert_template_get_template_file( const ert_template_type * ert_template);
 const char         * ert_template_get_target_file( const ert_template_type * ert_template);
-const char         * ert_template_get_args_as_string( const ert_template_type * ert_template );
-void                 ert_templates_fprintf_config( const ert_templates_type * ert_templates , FILE * stream );
 void                 ert_templates_init( ert_templates_type * templates , const config_content_type * config );
 
 #ifdef __cplusplus

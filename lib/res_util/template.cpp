@@ -206,6 +206,10 @@ void template_add_arg( template_type * _template , const char * key , const char
   subst_list_append_copy( _template->arg_list , key , value , NULL /* No doc_string */);
 }
 
+subst_list_type * template_get_args_list(template_type * _template) {
+    return _template->arg_list;
+}
+
 
 void template_clear_args( template_type * _template ) {
   subst_list_clear( _template->arg_list );
@@ -216,12 +220,6 @@ int template_add_args_from_string( template_type * _template , const char * arg_
   return subst_list_add_from_string( _template->arg_list , arg_string , true);
 }
 
-
-char * template_get_args_as_string( template_type * _template ) {
-  free( _template->arg_string );
-  _template->arg_string = subst_list_alloc_string_representation( _template->arg_list );
-  return _template->arg_string;
-}
 
 /*****************************************************************/
 

@@ -34,6 +34,7 @@ template_type * template_alloc( const char * template_file , bool internalize_te
 void            template_free( template_type * _template );
 void            template_instantiate( const template_type * _template , const char * __target_file , const subst_list_type * arg_list , bool override_symlink);
 void            template_add_arg( template_type * _template , const char * key , const char * value );
+subst_list_type * template_get_args_list(template_type * _template);
 
 void            template_clear_args( template_type * _template );
 int             template_add_args_from_string( template_type * _template , const char * arg_string);

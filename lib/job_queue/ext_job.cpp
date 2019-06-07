@@ -1157,59 +1157,6 @@ const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job ) {
     return ext_job->argv;
 }
 
-
-/**
-
-*/
-
-//const char * ext_job_get_arglist_as_string( ext_job_type * ext_job ) {
-//  if (stringlist_get_size( ext_job->argv ) == 0)
-//    return NULL;
-//  else {
-//    const char * sep = "  ";
-//    int argc =  stringlist_get_size( ext_job->argv );
-//    int i;
-//    buffer_type * buffer = buffer_alloc( 512 );
-//    for (i = 0; i < argc; i++) {
-//      const char * arg = stringlist_iget( ext_job->argv , i );
-//      bool quote       = false;
-//      if (strchr(arg , ' ') != NULL)
-//        quote = true;
-//
-//      if (quote)
-//        buffer_fwrite_char( buffer , ' ' );
-//      buffer_fwrite_char_ptr( buffer , arg );
-//      if (quote)
-//        buffer_fwrite_char( buffer , ' ' );
-//
-//      if (i < (argc - 1))
-//        buffer_fwrite_char_ptr( buffer , sep );
-//
-//    buffer_fwrite_char( buffer , '\0');
-//    free(ext_job->argv_string);
-//    ext_job->argv_string = buffer_alloc_data_copy( buffer );
-//    buffer_free( buffer );
-//
-//    return ext_job->argv_string;
-//  }
-//}
-//
-//
-//void ext_job_set_arglist_from_string( ext_job_type * ext_job , const char * argv_string ) {
-//  parser_type * parser = parser_alloc(" " , "\"" , NULL , NULL , NULL , NULL );
-//  stringlist_free( ext_job->argv );
-//  ext_job->argv = parser_tokenize_buffer( parser , argv_string , true );
-//  parser_free( parser );
-//}
-
-
-const char * ext_job_get_private_args_as_string( ext_job_type * ext_job ) {
-  free( ext_job->private_args_string );
-  ext_job->private_args_string = subst_list_alloc_string_representation( ext_job->private_args );
-  return ext_job->private_args_string;
-}
-
-
 /**
    Set the internal arguments of the job based on an input string
    @arg_string which is of the form:

@@ -68,12 +68,6 @@ const char * ert_template_get_target_file( const ert_template_type * ert_templat
   return ert_template->target_file;
 }
 
-const char * ert_template_get_args_as_string( const ert_template_type * ert_template ) {
-  return template_get_args_as_string( ert_template->tmpl );
-}
-
-
-
 ert_template_type * ert_template_alloc( const char * template_file , const char * target_file , subst_list_type * parent_subst) {
   ert_template_type * ert_template = (ert_template_type *) util_malloc( sizeof * ert_template);
   UTIL_TYPE_ID_INIT(ert_template , ERT_TEMPLATE_TYPE_ID);
@@ -105,6 +99,10 @@ void ert_template_add_arg( ert_template_type * ert_template , const char * key ,
   template_add_arg( ert_template->tmpl , key , value );
 }
 
+subst_list_type * ert_template_get_arg_list( ert_template_type * ert_template) {
+    return template_get_args_list( ert_template->tmpl);
+}
+
 void ert_template_set_args_from_string( ert_template_type * ert_template, const char * arg_string ) {
   template_clear_args( ert_template->tmpl );
   template_add_args_from_string( ert_template->tmpl , arg_string );
@@ -118,24 +116,10 @@ void ert_template_free__(void * arg) {
 }
 
 
-static void ert_template_fprintf_config( const ert_template_type * tmpl , FILE * stream ) {
-  fprintf(stream , CONFIG_KEY_FORMAT   , RUN_TEMPLATE_KEY );
-  fprintf(stream , CONFIG_VALUE_FORMAT , ert_template_get_template_file( tmpl ));
-  fprintf(stream , CONFIG_VALUE_FORMAT , tmpl->target_file );
-  {
-    const char * arg_string = ert_template_get_args_as_string( tmpl );
-    if (arg_string != NULL)
-      fprintf(stream , CONFIG_ENDVALUE_FORMAT , arg_string );
-    else
-      fprintf(stream , "\n");
-  }
-}
-
-
 /*****************************************************************/
 
 
-static ert_templates_type * ert_templates_alloc_default(subst_list_type * parent_subst) {
+ert_templates_type * ert_templates_alloc_default(subst_list_type * parent_subst) {
   ert_templates_type * templates = (ert_templates_type *)util_malloc( sizeof * templates );
   UTIL_TYPE_ID_INIT( templates , ERT_TEMPLATES_TYPE_ID );
   templates->templates       = hash_alloc();
@@ -170,7 +154,6 @@ ert_templates_type * ert_templates_alloc(subst_list_type * parent_subst,
 
   return templates;
 }
-
 
 void ert_templates_free( ert_templates_type * ert_templates ) {
   hash_free( ert_templates->templates );
@@ -264,24 +247,5 @@ void ert_templates_init( ert_templates_type * templates , const config_content_t
         free( value );
       }
     }
-  }
-}
-
-
-void ert_templates_fprintf_config( const ert_templates_type * ert_templates , FILE * stream ) {
-  if (hash_get_size( ert_templates->templates ) > 0 ) {
-    fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
-    fprintf( stream , CONFIG_COMMENT_FORMAT , "Here comes configuration information about RUN-TIME templates instantiated by ERT.");
-
-    {
-      hash_iter_type * iter = hash_iter_alloc( ert_templates->templates );
-      while( !hash_iter_is_complete( iter )) {
-        const char * key                   = hash_iter_get_next_key( iter );
-        const ert_template_type * ert_template = (const ert_template_type *) hash_get( ert_templates->templates , key );
-        ert_template_fprintf_config( ert_template , stream );
-      }
-      hash_iter_free( iter );
-    }
-    fprintf( stream , "\n\n" );
   }
 }

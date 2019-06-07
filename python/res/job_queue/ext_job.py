@@ -27,7 +27,6 @@ class ExtJob(BaseCClass):
     _free                       = ResPrototype("void ext_job_free( ext_job )")
     _get_help_text              = ResPrototype("char* ext_job_get_help_text(ext_job)")
     _get_name                   = ResPrototype("char* ext_job_get_name(ext_job)")
-    _get_private_args_as_string = ResPrototype("char* ext_job_get_private_args_as_string(ext_job)")
     _set_private_args_as_string = ResPrototype("void ext_job_set_private_args_from_string(ext_job, char*)")
     _is_private                 = ResPrototype("int ext_job_is_private(ext_job)")
     _get_config_file            = ResPrototype("char* ext_job_get_config_file(ext_job)")
@@ -80,9 +79,6 @@ class ExtJob(BaseCClass):
             return self._create_repr('{}, config_file = {}'.format(self.name(), self.get_config_file()))
         else:
             return "UNINITIALIZED ExtJob"
-
-    def get_private_args_as_string(self):
-        return self._get_private_args_as_string( )
 
     def set_private_args_as_string(self, args):
         self._set_private_args_as_string( args)
