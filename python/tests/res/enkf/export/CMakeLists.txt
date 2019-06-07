@@ -8,7 +8,6 @@ set(TEST_SOURCES
     test_gen_data_observation_collector.py
     test_gen_kw_collector.py
     test_misfit_collector.py
-    test_numpy_and_pandas.py
     test_summary_collector.py
     test_summary_observation_collector.py
 )
