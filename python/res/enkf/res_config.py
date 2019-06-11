@@ -108,11 +108,11 @@ class ResConfig(BaseCClass):
                                          grid=ecl_config.getGrid(),
                                          refcase=ecl_config.getRefcase())
 
-        model_config = ModelConfig(config_content=config_content,
-                                   data_root=config_dir,
+        model_config = ModelConfig(data_root=config_dir,
                                    joblist=site_config.get_installed_jobs(),
                                    last_history_restart=ecl_config.getLastHistoryRestart(),
-                                   refcase=ecl_config.getRefcase())
+                                   refcase=ecl_config.getRefcase(),
+                                   config_content=config_content)
 
         configs = [
             subst_config,

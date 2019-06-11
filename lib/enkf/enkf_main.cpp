@@ -252,12 +252,6 @@ int enkf_main_get_history_length( const enkf_main_type * enkf_main) {
   return model_config_get_last_history_restart(enkf_main_get_model_config(enkf_main));
 }
 
-bool enkf_main_has_prediction( const enkf_main_type * enkf_main ) {
-  return model_config_has_prediction(enkf_main_get_model_config(enkf_main));
-}
-
-
-
 enkf_obs_type * enkf_main_get_obs(const enkf_main_type * enkf_main) {
   return enkf_main->obs;
 }

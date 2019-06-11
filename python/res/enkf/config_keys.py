@@ -32,8 +32,7 @@ class ConfigKeys:
     _show_history_key     = ResPrototype("char* config_keys_get_show_history_key()", bind=False)
     _install_job_directory_key = ResPrototype("char* config_keys_get_install_job_directory_key()", bind=False)
     _plot_settings_key    = ResPrototype("char* config_keys_get_plot_setting_key()", bind=False)
-    _forward_model_key    = ResPrototype("char* config_keys_get_forward_model_key()", bind=False)
-    _simulation_job_key   = ResPrototype("char* config_keys_get_simulation_job_key()", bind=False)
+    
     _log_file_key         = ResPrototype("char* config_keys_get_log_file_key()", bind=False)
     _log_level_key        = ResPrototype("char* config_keys_get_log_level_key()", bind=False)
     _lsf_resources_key    = ResPrototype("char* config_keys_get_lsf_resources_key()", bind=False)
@@ -43,13 +42,12 @@ class ConfigKeys:
     _store_seed           = ResPrototype("char* config_keys_get_store_seed_key()", bind=False)
     _load_seed            = ResPrototype("char* config_keys_get_load_seed_key()", bind=False)
     _summary              = ResPrototype("char* config_keys_get_summary_key()", bind=False)
-    _jobname              = ResPrototype("char* config_keys_get_jobname_key()", bind=False)
+    
     _max_runtime          = ResPrototype("char* config_keys_get_max_runtime_key()", bind=False)
     _min_realizations     = ResPrototype("char* config_keys_get_min_realizations_key()", bind=False)
     _max_submit           = ResPrototype("char* config_keys_get_max_submit_key()", bind=False)
     _umask                = ResPrototype("char* config_keys_get_umask_key()", bind=False)
     _data_kw_key          = ResPrototype("char* config_keys_get_data_kw_key()", bind=False)
-    _runpath              = ResPrototype("char* config_keys_get_runpath_key()", bind=False)
     _runpath_file         = ResPrototype("char* config_keys_get_runpath_file_key()", bind=False)
     
     # ************* ECL config  *************
@@ -67,12 +65,23 @@ class ConfigKeys:
             "char* config_keys_get_schedule_prediction_file_key()", bind=False
         )
     # ************* ECL config  ************* 
-    
+
+    # ************* Model config  *************
     _num_realizations     = ResPrototype("char* config_keys_get_num_realizations_key()", bind=False)
     _enspath              = ResPrototype("char* config_keys_get_enspath_key()", bind=False)
     _history_source       = ResPrototype("char* config_keys_get_history_source_key()", bind=False)
     _obs_config           = ResPrototype("char* config_keys_get_obs_config_key()", bind=False)
     _time_map             = ResPrototype("char* config_keys_get_time_map_key()", bind=False)
+    _jobname              = ResPrototype("char* config_keys_get_jobname_key()", bind=False)
+    _forward_model_key    = ResPrototype("char* config_keys_get_forward_model_key()", bind=False)
+    _simulation_job_key   = ResPrototype("char* config_keys_get_simulation_job_key()", bind=False)
+    _max_resample_key     = ResPrototype("char* config_keys_get_max_resample_key()", bind=False)
+    _data_root_key        = ResPrototype("char* config_keys_get_data_root_key()", bind=False)
+    _rftpath_key          = ResPrototype("char* config_keys_get_rftpath_key()", bind=False)
+    _gen_kw_export_name_key = ResPrototype("char* config_keys_get_gen_kw_export_name_key()", bind=False)    
+    _runpath              = ResPrototype("char* config_keys_get_runpath_key()", bind=False)
+    # ************* Model config  *************
+
     _gen_data             = ResPrototype("char* config_keys_get_gen_data_key()", bind=False)
     _result_file          = ResPrototype("char* config_keys_get_result_file()", bind=False)
     _report_steps         = ResPrototype("char* config_keys_get_report_steps()", bind=False)
@@ -135,8 +144,6 @@ class ConfigKeys:
     PATH_KEY         = _path_key
     SHOW_REFCASE_KEY = _show_refcase_key
     SHOW_HISTORY_KEY = _show_history_key
-    FORWARD_MODEL    = _forward_model_key()
-    SIMULATION_JOB   = _simulation_job_key()
     LOG_FILE         = _log_file_key()
     LOG_LEVEL        = _log_level_key()
     LSF_RESOURCE_KEY = _lsf_resources_key()
@@ -148,34 +155,14 @@ class ConfigKeys:
     LOAD_SEED        = _load_seed()
     RANDOM_SEED      = _random_seed()
     SUMMARY          = _summary()
-    JOBNAME          = _jobname()
     MAX_RUNTIME      = _max_runtime()
     MIN_REALIZATIONS = _min_realizations()
     MAX_SUBMIT       = _max_submit()
     UMASK            = _umask()
     MAX_RUNNING      = "MAX_RUNNING"
     DATA_KW_KEY      = _data_kw_key()
-    RUNPATH          = _runpath()
     RUNPATH_FILE     = _runpath_file()
     RUNPATH_LIST_FILE = ".ert_runpath_list"
-    
-    # ************* ECL config  *************
-    ECLBASE          = _eclbase()
-    DATA_FILE        = _data_file()
-    GRID             = _grid()
-    ADD_FIXED_LENGTH_SCHEDULE_KW = _add_fixed_length_schedule_kw_key()
-    REFCASE          = _refcase()
-    REFCASE_LIST     = _refcase_list()
-    INIT_SECITON     = _init_section()
-    END_DATE         = _end_date()
-    SCHEDULE_PREDICTION_FILE = _schedule_prediction_file()
-    # ************* ECL config  *************
-    
-    NUM_REALIZATIONS = _num_realizations()
-    ENSPATH          = _enspath()
-    HISTORY_SOURCE   = _history_source()
-    OBS_CONFIG       = _obs_config()
-    TIME_MAP         = _time_map()
     GEN_DATA         = _gen_data()
     RESULT_FILE      = _result_file()
     REPORT_STEPS     = _report_steps()
@@ -192,3 +179,32 @@ class ConfigKeys:
     LOAD_WORKFLOW_JOB = _load_workflow_job_key()
     WORKFLOW_JOB_DIRECTORY = _workflow_job_directory_key()
     LOAD_WORKFLOW    = _load_workflow_key()
+    
+
+    # ************* ECL config  *************
+    ECLBASE          = _eclbase()
+    DATA_FILE        = _data_file()
+    GRID             = _grid()
+    ADD_FIXED_LENGTH_SCHEDULE_KW = _add_fixed_length_schedule_kw_key()
+    REFCASE          = _refcase()
+    REFCASE_LIST     = _refcase_list()
+    INIT_SECITON     = _init_section()
+    END_DATE         = _end_date()
+    SCHEDULE_PREDICTION_FILE = _schedule_prediction_file()
+    # ************* ECL config  *************
+
+    # ************* Model config  *************
+    JOBNAME          = _jobname()
+    FORWARD_MODEL    = _forward_model_key()
+    SIMULATION_JOB   = _simulation_job_key()
+    RUNPATH          = _runpath()
+    MAX_RESAMPLE = _max_resample_key()
+    DATAROOT = _data_root_key()
+    RFTPATH = _rftpath_key()
+    GEN_KW_EXPORT_NAME = _gen_kw_export_name_key()
+    NUM_REALIZATIONS = _num_realizations()
+    ENSPATH          = _enspath()
+    HISTORY_SOURCE   = _history_source()
+    OBS_CONFIG       = _obs_config()
+    TIME_MAP         = _time_map()
+    # ************* Model config  *************

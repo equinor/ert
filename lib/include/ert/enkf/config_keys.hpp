@@ -177,24 +177,20 @@ extern "C" {
   const char * config_keys_get_install_job_key();
   const char * config_keys_get_install_job_directory_key();
   const char * config_keys_get_plot_setting_key();
-  const char * config_keys_get_forward_model_key();
+  
   const char * config_keys_get_log_file_key();
   const char * config_keys_get_log_level_key();
   const char * config_keys_get_update_log_path_key();
   const char * config_keys_get_store_seed_key();
   const char * config_keys_get_load_seed_key();
   const char * config_keys_get_summary_key();
-  const char * config_keys_get_jobname_key();
   const char * config_keys_get_max_runtime_key();
   const char * config_keys_get_min_realizations_key();
-  const char * config_keys_get_max_submit_key();
-  const char * config_keys_get_simulation_job_key();
   const char * config_keys_get_umask_key();
   const char * config_keys_get_data_kw_key();
-  const char * config_keys_get_runpath_key();
   const char * config_keys_get_runpath_file_key();  
-  const char * config_keys_get_num_realizations_key();
-  const char * config_keys_get_enspath_key();
+  const char * config_keys_get_max_submit_key();
+  const char * config_keys_get_gen_data_key();
   
   /* ************* ECL config  ************* */
   const char * config_keys_get_eclbase_key();
@@ -208,10 +204,6 @@ extern "C" {
   const char * config_keys_get_schedule_prediction_file_key();
   /* ************* ECL config  ************* */
 
-  const char * config_keys_get_history_source_key();
-  const char * config_keys_get_obs_config_key();
-  const char * config_keys_get_time_map_key();
-  const char * config_keys_get_gen_data_key();
   const char * config_keys_get_result_file();
   const char * config_keys_get_report_steps();
   const char * config_keys_get_input_format();
@@ -238,6 +230,22 @@ extern "C" {
   const char * config_keys_get_qc_workflow_key();
   const char * config_keys_get_hook_workflow_key();
   // hook_manager config keys
+  
+  /* ************* Model config  ************* */
+  const char * config_keys_get_forward_model_key();
+  const char * config_keys_get_jobname_key();
+  const char * config_keys_get_simulation_job_key();
+  const char * config_keys_get_runpath_key();
+  const char * config_keys_get_num_realizations_key();
+  const char * config_keys_get_history_source_key();
+  const char * config_keys_get_obs_config_key();
+  const char * config_keys_get_time_map_key();
+  const char * config_keys_get_enspath_key();
+  const char * config_keys_get_max_resample_key();
+  const char * config_keys_get_data_root_key();
+  const char * config_keys_get_rftpath_key();
+  const char * config_keys_get_gen_kw_export_name_key();
+  /* ************* Model config  ************* */
 
 #ifdef   __cplusplus
 }

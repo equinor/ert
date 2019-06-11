@@ -95,7 +95,20 @@ extern "C" {
   model_config_type    * model_config_alloc_empty();
   model_config_type    * model_config_alloc_load(const char*, const ext_joblist_type*, int, const ecl_sum_type*);
   model_config_type    * model_config_alloc(const config_content_type*, const char * data_root, const ext_joblist_type *, int, const ecl_sum_type*);
-
+  model_config_type * model_config_alloc_full(int max_resample,
+                                            int num_realizations,
+                                            char * run_path,
+                                            char * data_root,
+                                            char * enspath,
+                                            char * job_name,
+                                            forward_model_type * forward_model,
+                                            char * obs_config,
+                                            time_map_type * time_map,
+                                            char * rftpath,
+                                            char * gen_kw_export_name,
+                                            history_source_type history_source,
+                                            const ext_joblist_type * joblist,
+                                            const ecl_sum_type * refcase);
   bool                   model_config_select_history( model_config_type * model_config , history_source_type source_type , const ecl_sum_type * refcase);
   void                   model_config_set_runpath(model_config_type * model_config , const char * fmt);
   void                   model_config_set_gen_kw_export_name( model_config_type * model_config, const char * name);

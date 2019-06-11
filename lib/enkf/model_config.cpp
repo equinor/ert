@@ -97,7 +97,6 @@ struct model_config_struct {
   char                 * default_data_root;
 
   fs_driver_impl         dbase_type;
-  bool                   has_prediction;
   int                    max_internal_submit;        /* How many times to retry if the load fails. */
   const ecl_sum_type   * refcase;                    /* A pointer to the refcase - can be NULL. Observe that this ONLY a pointer
                                                         to the ecl_sum instance owned and held by the ecl_config object. */
@@ -366,6 +365,49 @@ model_config_type * model_config_alloc(
   return model_config;
 }
 
+model_config_type * model_config_alloc_full(int max_resample,
+                                           int num_realizations,
+                                           char * run_path,
+                                           char * data_root,
+                                           char * enspath,
+                                           char * job_name,
+                                           forward_model_type * forward_model,
+                                           char * obs_config,
+                                           time_map_type * time_map,
+                                           char * rftpath,
+                                           char * gen_kw_export_name,
+                                           history_source_type history_source,
+                                           const ext_joblist_type * joblist,
+                                           const ecl_sum_type * refcase)
+{
+  model_config_type * model_config = model_config_alloc_empty();
+  model_config->max_internal_submit = max_resample;
+  model_config->num_realizations = num_realizations;
+  model_config->dbase_type = BLOCK_FS_DRIVER_ID;
+  
+  model_config_add_runpath( model_config , DEFAULT_RUNPATH_KEY , run_path);
+  model_config_select_runpath( model_config , DEFAULT_RUNPATH_KEY );
+  model_config_set_data_root(model_config, data_root);
+
+  model_config->enspath = util_realloc_string_copy( model_config->enspath , enspath );
+  model_config->jobname_fmt = util_realloc_string_copy( model_config->jobname_fmt , job_name );
+  model_config->forward_model = forward_model;
+  model_config->obs_config_file = util_alloc_string_copy(obs_config);
+  model_config->external_time_map = time_map;
+  model_config->rftpath = util_realloc_string_copy( model_config->rftpath , rftpath );
+  model_config->gen_kw_export_name = util_realloc_string_copy( model_config->gen_kw_export_name , gen_kw_export_name );
+  model_config->refcase = refcase;
+  
+  model_config_select_history(model_config, history_source, refcase);
+
+  if (model_config->history != NULL) {
+    int num_restart = model_config_get_last_history_restart(model_config);
+    bool_vector_iset( model_config->internalize_state , num_restart - 1 , false );
+    bool_vector_iset( model_config->__load_eclipse_restart      , num_restart - 1 , false );
+  }
+  
+  return model_config;
+}
 
 
 bool model_config_select_history( model_config_type * model_config , history_source_type source_type,  const ecl_sum_type * refcase) {
@@ -496,11 +538,6 @@ void model_config_init(model_config_type * model_config ,
     present or not.
   */
 
-  if (config_content_has_item(config ,  SCHEDULE_PREDICTION_FILE_KEY))
-    model_config->has_prediction = true;
-  else
-    model_config->has_prediction = false;
-
   if (config_content_has_item( config , ENSPATH_KEY))
     model_config_set_enspath( model_config , config_content_get_value_as_path(config , ENSPATH_KEY));
 
@@ -528,9 +565,6 @@ void model_config_init(model_config_type * model_config ,
 
   if (config_content_has_item( config , RFTPATH_KEY))
     model_config_set_rftpath( model_config , config_content_get_value(config , RFTPATH_KEY));
-
-  if (config_content_has_item( config , DBASE_TYPE_KEY))
-    model_config_set_dbase_type( model_config , config_content_get_value(config , DBASE_TYPE_KEY));
 
   if (config_content_has_item( config , MAX_RESAMPLE_KEY))
     model_config_set_max_internal_submit( model_config , config_content_get_value_as_int( config , MAX_RESAMPLE_KEY ));
@@ -619,12 +653,6 @@ int model_config_get_last_history_restart(const model_config_type * config) {
       return -1;
   }
 }
-
-
-bool model_config_has_prediction(const model_config_type * config) {
-  return config->has_prediction;
-}
-
 
 forward_model_type * model_config_get_forward_model( const model_config_type * config) {
   return config->forward_model;
@@ -800,14 +828,11 @@ static void model_config_init_user_config(config_parser_type * config ) {
   config_schema_item_set_argc_minmax(item, 1, 1);
 
   item = config_add_schema_item(config, DBASE_TYPE_KEY, false);
-  config_schema_item_set_argc_minmax(item , 1, 1);
-  {
-    stringlist_type * argv = stringlist_alloc_new();
-    stringlist_append_copy(argv, "PLAIN");
-    stringlist_append_copy(argv, "BLOCK_FS");
-    config_schema_item_set_common_selection_set(item, argv);
-    stringlist_free( argv );
-  }
+  config_install_message(
+    config, DBASE_TYPE_KEY,
+    "** Warning: \'DBASE_TYPE\' is ignored"
+  );
+
   item = config_add_schema_item(config, FORWARD_MODEL_KEY, false);
   config_schema_item_set_argc_minmax(item , 1, CONFIG_DEFAULT_ARG_MAX);
 
@@ -839,8 +864,10 @@ static void model_config_init_user_config(config_parser_type * config ) {
 
 
   item = config_add_schema_item(config, LOCAL_CONFIG_KEY, false);
-  config_schema_item_set_argc_minmax(item , 1, 1);
-  config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+  config_install_message(
+    config, LOCAL_CONFIG_KEY,
+    "** Warning: \'LOCAL_CONFIG\' is ignored"
+  );
 
   stringlist_type * refcase_dep = stringlist_alloc_new();
   stringlist_append_copy(refcase_dep, REFCASE_KEY);

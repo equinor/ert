@@ -16,7 +16,7 @@
 
 from cwrap import BaseCClass
 from res import ResPrototype
-
+import os
 # The path_fmt implementation hinges strongly on variable length
 # argument lists in C  not clear if/how that maps over to Python,
 # this Python class therefor has *very* limited functionality.
@@ -40,3 +40,9 @@ class PathFormat(BaseCClass):
 
     def free(self):
         self._free( )
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __eq__(self, other):
+        return os.path.realpath(self._str()) == os.path.realpath(other._str())

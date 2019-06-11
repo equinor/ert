@@ -57,6 +57,7 @@ class ExtJob(BaseCClass):
     _set_environment            = ResPrototype("void ext_job_add_environment(ext_job, char*, char*)")
     _get_license_path           = ResPrototype("char* ext_job_get_license_path(ext_job)")
     _get_arglist                = ResPrototype("stringlist_ref ext_job_get_arglist(ext_job)")
+    _set_arglist                = ResPrototype("void ext_job_set_args(ext_job, stringlist)")
     _clear_environment          = ResPrototype("void ext_job_clear_environment(ext_job)")
     _save                       = ResPrototype("void ext_job_save(ext_job)")
 
@@ -180,6 +181,9 @@ class ExtJob(BaseCClass):
 
     def get_arglist(self):
         return self._get_arglist()
+    
+    def set_arglist(self, args):
+        return self._set_arglist(args)
 
     def clear_environment(self):
         self._clear_environment( )
@@ -192,3 +196,24 @@ class ExtJob(BaseCClass):
 
     def name(self):
         return self._get_name( )
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __eq__(self, other):
+        if self.name() != other.name():
+            return False
+        
+        if [x for x in self.get_arglist()] != [x for x in other.get_arglist()]:
+            return False
+
+        if self.get_config_file() != other.get_config_file():
+            return False
+
+        if self.get_stderr_file() != other.get_stderr_file():
+            return False
+
+        if self.get_stdout_file() != other.get_stdout_file():
+            return False
+
+        return True

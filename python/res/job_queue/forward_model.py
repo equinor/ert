@@ -69,3 +69,12 @@ class ForwardModel(BaseCClass):
 
     def get_size(self):
        return len(self)
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __eq__(self, other):
+        for i in range(len(self)):
+            if self.iget_job(i) != other.iget_job(i):
+                return False
+        return True

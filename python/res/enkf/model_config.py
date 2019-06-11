@@ -16,17 +16,37 @@
 from cwrap import BaseCClass
 
 from ecl.summary import EclSum
-
+from ecl.util.util import StringList
 from res import ResPrototype
-from res.job_queue import ForwardModel
+from res.job_queue import ForwardModel, ExtJob, ExtJoblist
 from res.sched import HistorySourceEnum
 from res.util import PathFormat
+from res.enkf import ConfigKeys
+from res.enkf.util import TimeMap
+
+import os
 
 
 class ModelConfig(BaseCClass):
     TYPE_NAME = "model_config"
 
-    _alloc                       = ResPrototype("void*  model_config_alloc( config_content, char*, ext_joblist, int, ecl_sum)", bind=False)
+    _alloc                       = ResPrototype("void*  model_config_alloc( config_content, \
+                                                                            char*, ext_joblist, \
+                                                                            int, ecl_sum)", bind=False)
+    _alloc_full                  = ResPrototype("void*  model_config_alloc_full( int, \
+                                                                                int, \
+                                                                                char*, \
+                                                                                char*, \
+                                                                                char*, \
+                                                                                char*, \
+                                                                                forward_model, \
+                                                                                char*, \
+                                                                                time_map, \
+                                                                                char*, \
+                                                                                char*, \
+                                                                                int, \
+                                                                                ext_joblist, \
+                                                                                ecl_sum)", bind=False)
     _free                        = ResPrototype("void  model_config_free( model_config )")
     _get_forward_model           = ResPrototype("forward_model_ref model_config_get_forward_model(model_config)")
     _get_max_internal_submit     = ResPrototype("int   model_config_get_max_internal_submit(model_config)")
@@ -48,12 +68,106 @@ class ModelConfig(BaseCClass):
     _get_obs_config_file         = ResPrototype("char* model_config_get_obs_config_file(model_config)")
     _get_data_root               = ResPrototype("char* model_config_get_data_root(model_config)")
     _set_data_root               = ResPrototype("void model_config_get_data_root(model_config, char*)")
+    _get_time_map                = ResPrototype("void model_config_get_external_time_map(model_config)")
 
-    def __init__(self, config_content, data_root, joblist, last_history_restart, refcase, is_reference=False):
-        c_ptr = self._alloc(config_content, data_root, joblist, last_history_restart, refcase)
+    def __init__(self, data_root, joblist, last_history_restart, refcase, 
+                 config_content=None, config_dict=None, is_reference=False):
+        if config_dict is not None and config_content is not None:
+            raise ValueError(
+                "Error: Unable to create ModelConfig with multiple config objects")
+
+        if config_dict is None:
+            c_ptr = self._alloc(config_content, data_root,
+                                joblist, last_history_restart, refcase)
+        else:
+            # MAX_RESAMPLE_KEY
+            max_resample = config_dict.get(ConfigKeys.MAX_RESAMPLE)
+
+            # NUM_REALIZATIONS_KEY
+            num_realizations = config_dict[ConfigKeys.NUM_REALIZATIONS]
+
+            # RUNPATH_KEY
+            run_path = config_dict.get(ConfigKeys.RUNPATH)
+            if run_path is not None:
+                run_path = os.path.realpath(run_path)
+
+            # DATA_ROOT_KEY
+            data_root_from_config = config_dict.get(ConfigKeys.DATAROOT)
+            if data_root_from_config is not None:
+                data_root = os.path.realpath(data_root_from_config)
+
+            # ENSPATH_KEY
+            ens_path = config_dict.get(ConfigKeys.ENSPATH)
+            if ens_path is not None:
+                ens_path = os.path.realpath(ens_path)
+
+            # JOBNAME_KEY
+            job_name = config_dict.get(ConfigKeys.JOBNAME)
+
+            # FORWARD_MODEL_KEY
+            forward_model = ForwardModel(ext_joblist=joblist)
+            for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
+                job = forward_model.add_job(job_description['NAME'])
+                args = StringList(job_description['ARGUMENTS'])                
+                job.set_args(args)
+                args.convertToCReference(None)
+                job.convertToCReference(None)
+
+            # SIMULATION_JOB_KEY
+            for job_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
+                job = forward_model.add_job(job_description['NAME'])
+                job.set_private_args_as_string(job_description['ARGUMENTS'])
+                job.convertToCReference(None)
+
+            # OBS_CONFIG_KEY
+            obs_config = config_dict.get(ConfigKeys.OBS_CONFIG)
+            if obs_config is not None:
+                obs_config = os.path.realpath(obs_config)
+
+            # TIME_MAP_KEY
+            time_map = None
+            time_map_file = config_dict.get(ConfigKeys.TIME_MAP)
+            if time_map_file is not None and not os.path.isfile(os.path.realpath(time_map_file)):
+                raise ValueError("Error: Time map is not a file")
+            elif (time_map_file is not None):
+                 time_map = TimeMap()
+                 time_map.fload(filename=os.path.realpath(time_map_file))
+
+            # RFTPATH_KEY
+            rft_path = config_dict.get(ConfigKeys.RFTPATH)
+            if rft_path is not None:
+                rft_path = os.path.realpath(rft_path)
+
+            # GEN_KW_EXPORT_NAME_KEY
+            gen_kw_export_name = config_dict.get(ConfigKeys.GEN_KW_EXPORT_NAME)
+
+            # HISTORY_SOURCE_KEY
+            history_source = config_dict.get(ConfigKeys.HISTORY_SOURCE)
+
+            c_ptr = self._alloc_full(
+                max_resample,
+                num_realizations,
+                run_path,
+                data_root,
+                ens_path,
+                job_name,
+                forward_model,
+                obs_config,
+                time_map,
+                rft_path,
+                gen_kw_export_name,
+                history_source,
+                joblist,
+                refcase
+            )
+
+            # Fix ownership
+            forward_model.convertToCReference(None)
+            if time_map is not None:
+                time_map.convertToCReference(None)
 
         if c_ptr is None:
-            raise ValueError('Failed to construct SiteConfig instance.')
+            raise ValueError('Failed to construct ModelConfig instance.')
 
         super(ModelConfig, self).__init__(c_ptr, is_reference=is_reference)
 
@@ -76,7 +190,6 @@ class ModelConfig(BaseCClass):
         assert isinstance(refcase, EclSum)
         return self._select_history(history_source, sched_file, refcase)
 
-
     def get_max_internal_submit(self):
         """ @rtype: int """
         return self._get_max_internal_submit()
@@ -87,7 +200,6 @@ class ModelConfig(BaseCClass):
     def getForwardModel(self):
         """ @rtype: ForwardModel """
         return self._get_forward_model().setParent(self)
-
 
     def getRunpathAsString(self):
         """ @rtype: str """
@@ -137,5 +249,50 @@ class ModelConfig(BaseCClass):
     def data_root(self):
         return self._get_data_root( )
 
-    def set_data_root(self, data_root):
-         self._set_data_root( data_root )
+    def _set_data_root(self, data_root):
+        self._set_data_root( data_root )
+
+    def get_time_map(self):
+        return self._get_time_map()
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __eq__(self, other):
+        if self.data_root() != other.data_root():
+            return False
+
+        if self.num_realizations != other.num_realizations:
+            return False
+
+        if os.path.realpath(self.obs_config_file) != os.path.realpath(other.obs_config_file):
+            return False
+
+        if os.path.realpath(self.getEnspath()) != os.path.realpath(other.getEnspath()):
+            return False
+
+        if self.getRunpathFormat() != other.getRunpathFormat():
+            return False
+
+        if self.getFSType() != other.getFSType():
+            return False
+
+        if self.getJobnameFormat() != other.getJobnameFormat():
+            return False
+
+        if os.path.realpath(self.getRunpathAsString()) != os.path.realpath(other.getRunpathAsString()):
+            return False
+
+        if self.get_max_internal_submit() != other.get_max_internal_submit():
+            return False
+
+        if self.getGenKWExportName() != other.getGenKWExportName():
+            return False
+
+        if self.get_time_map() != other.get_time_map():
+            return False
+
+        if self.getForwardModel() != other.getForwardModel():
+            return False
+
+        return True

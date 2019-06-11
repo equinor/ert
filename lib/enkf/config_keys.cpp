@@ -66,10 +66,6 @@ const char * config_keys_get_plot_setting_key() {
   return PLOT_SETTING_KEY;
 }
 
-const char * config_keys_get_forward_model_key() {
-  return FORWARD_MODEL_KEY;
-}
-
 const char * config_keys_get_log_file_key() {
   return LOG_FILE_KEY;
 }
@@ -94,10 +90,6 @@ const char * config_keys_get_summary_key() {
   return SUMMARY_KEY;
 }
 
-const char * config_keys_get_jobname_key() {
-  return JOBNAME_KEY;
-}
-
 const char * config_keys_get_max_runtime_key() {
   return MAX_RUNTIME_KEY;
 }
@@ -110,38 +102,21 @@ const char * config_keys_get_max_submit_key() {
   return MAX_SUBMIT_KEY;
 }
 
-const char * config_keys_get_simulation_job_key() {
-  return SIMULATION_JOB_KEY;
-}
-
 const char * config_keys_get_umask_key() {
   return UMASK_KEY;
 }
 
-
-
 const char * config_keys_get_data_kw_key() {
     return DATA_KW_KEY;
-}
-
-const char * config_keys_get_runpath_key() {
-  return RUNPATH_KEY;
 }
 
 const char * config_keys_get_runpath_file_key() {
   return RUNPATH_FILE_KEY;
 }
 
-
-
-const char * config_keys_get_num_realizations_key() {
-  return NUM_REALIZATIONS_KEY;
+const char * config_keys_get_gen_data_key() {
+  return GEN_DATA_KEY;
 }
-
-const char * config_keys_get_enspath_key() {
-  return ENSPATH_KEY;
-}
-
 
 /* ************* ECL config  ************* */
 const char * config_keys_get_eclbase_key() {
@@ -180,22 +155,6 @@ const char * config_keys_get_schedule_prediction_file_key() {
   return SCHEDULE_PREDICTION_FILE_KEY;
 }
 /* ************* ECL config  ************* */
-
-const char * config_keys_get_history_source_key() {
-  return HISTORY_SOURCE_KEY;
-}
-
-const char * config_keys_get_obs_config_key() {
-  return OBS_CONFIG_KEY;
-}
-
-const char * config_keys_get_time_map_key() {
-  return TIME_MAP_KEY;
-}
-
-const char * config_keys_get_gen_data_key() {
-  return GEN_DATA_KEY;
-}
 
 const char * config_keys_get_result_file() {
   return RESULT_FILE_KEY;
@@ -286,3 +245,59 @@ const char * config_keys_get_hook_workflow_key() {
   return HOOK_WORKFLOW_KEY;
 }
 // hook_manager config keys
+
+/* ************* Model config  ************* */
+
+const char * config_keys_get_max_resample_key() {
+  return MAX_RESAMPLE_KEY;
+}
+
+const char * config_keys_get_num_realizations_key() {
+  return NUM_REALIZATIONS_KEY;
+}
+
+const char * config_keys_get_runpath_key() {
+  return RUNPATH_KEY;
+}
+
+const char * config_keys_get_data_root_key() {
+  return DATA_ROOT_KEY;
+}
+
+const char * config_keys_get_enspath_key() {
+  return ENSPATH_KEY;
+}
+
+const char * config_keys_get_jobname_key() {
+  return JOBNAME_KEY;
+}
+
+const char * config_keys_get_forward_model_key() {
+  return FORWARD_MODEL_KEY;
+}
+
+const char * config_keys_get_simulation_job_key() {
+  return SIMULATION_JOB_KEY;
+}
+
+const char * config_keys_get_rftpath_key() {
+  return RFTPATH_KEY;
+}
+
+const char * config_keys_get_gen_kw_export_name_key() {
+  return GEN_KW_EXPORT_NAME_KEY;
+}
+
+const char * config_keys_get_history_source_key() {
+  return HISTORY_SOURCE_KEY;
+}
+
+const char * config_keys_get_obs_config_key() {
+  return OBS_CONFIG_KEY;
+}
+
+const char * config_keys_get_time_map_key() {
+  return TIME_MAP_KEY;
+}
+
+/* ************* Model config  ************* */
