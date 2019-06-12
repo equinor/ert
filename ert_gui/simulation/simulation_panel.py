@@ -62,8 +62,8 @@ class SimulationPanel(QWidget):
         self.addSimulationConfigPanel(SingleTestRunPanel())
         self.addSimulationConfigPanel(EnsembleExperimentPanel())
         self.addSimulationConfigPanel(EnsembleSmootherPanel())
-        self.addSimulationConfigPanel(IteratedEnsembleSmootherPanel())
         self.addSimulationConfigPanel(MultipleDataAssimilationPanel())
+        self.addSimulationConfigPanel(IteratedEnsembleSmootherPanel())
 
         self.setLayout(layout)
 

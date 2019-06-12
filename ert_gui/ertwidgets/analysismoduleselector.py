@@ -27,8 +27,9 @@ class AnalysisModuleSelector(QWidget):
         if load_all:
             self._module_names += getAnalysisModuleNames(not self._iterable)
 
+        suffix = {'STD_ENKF': " - Recommended"}
         for module_name in self._module_names:
-            analysis_module_combo.addItem(module_name)
+            analysis_module_combo.addItem(module_name + suffix.get(module_name, ""))
 
         self._current_module_name = self._getCurrentAnalysisModuleName()
         if self._current_module_name is not None:

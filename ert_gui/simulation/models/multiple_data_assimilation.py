@@ -179,4 +179,4 @@ class MultipleDataAssimilation(BaseRunModel):
 
     @classmethod
     def name(cls):
-        return "Multiple Data Assimilation (ES MDA)"
+        return "Multiple Data Assimilation (ES MDA) - Recommended"
