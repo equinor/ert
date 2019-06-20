@@ -5,8 +5,6 @@ import sys
 
 from ecl.summary import EclSum, EclSumTStep
 from ecl.util.test import ExtendedTestCase
-print( sys.path )
-print( os.environ["PYTHONPATH"] )
 import res
 
 from res.test.synthesizer import OilSimulator

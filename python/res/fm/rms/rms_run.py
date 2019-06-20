@@ -20,21 +20,6 @@ def pushd(path):
     os.chdir(cwd0)
 
 
-def _remove_komodo_from_envpath(path):
-    if path is None:
-        return path
-
-    print('**Warning: Komodo is removed from your PYTHONPATH to avoid RMS picking up'
-          ' Python2 modules. If you experience RMS issues, you might need to'
-          ' remove other elements from your path as well. To avoid this problem'
-          ' all together, please use RMS 10 or newer.')
-
-    return os.pathsep.join(filter(
-        lambda elem: 'komodo' not in elem,
-        path.split(os.pathsep)
-    ))
-
-
 class RMSRun(object):
     _single_seed_file = "RMS_SEED"
     _multi_seed_file = "random.seeds"
@@ -112,14 +97,6 @@ class RMSRun(object):
         exec_env = os.environ.copy()
         if os.path.isfile(exec_env_file):
             exec_env.update(json.load(open(exec_env_file)))
-
-        # The ert frontend script updates the PYTHONPATH environment variable
-        # to include the path of the the current process. This creates problems
-        # when RMS is importing it's Python modules. The real fix is to remove
-        # the PYTHONPATH manipulations from the ert frontent script, but for
-        # now we just drop any path element containing 'komodo' from the
-        # PYTHOPATH.
-        exec_env['PYTHONPATH'] = _remove_komodo_from_envpath(exec_env.get('PYTHONPATH'))
 
         with pushd(self.run_path):
             fileH = open("RMS_SEED_USED", "a+")

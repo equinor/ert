@@ -137,36 +137,6 @@ class RMSRunTest(ResTest):
                 f.write( json.dumps(action) )
             res.fm.rms.run(0, "project", "workflow", run_path="run_path", target_file="some_file")
 
-
-    def test_rms2013(self):
-        versions = [None, '2013', '2013.4', '10.1']
-        PYTHONPATH0 = os.environ["PYTHONPATH"]
-        for version in versions:
-            with TestAreaContext('test_rms2013'):
-                # Setup RMS project
-                with open("rms_config.yml", "w") as f:
-                    f.write("executable:  {}/bin/rms".format(os.getcwd()))
-                os.mkdir("run_path")
-                os.mkdir("bin")
-                os.mkdir("project")
-                shutil.copy(os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin")
-                os.environ["RMS_SITE_CONFIG"] = "rms_config.yml"
-
-                komodo_dir = os.path.realpath('komodo')
-                os.mkdir(komodo_dir)
-                os.environ['PYTHONPATH'] = os.path.pathsep.join([PYTHONPATH0, komodo_dir])
-
-                action = {"target_file" : os.path.join(os.getcwd(), "PATH")}
-
-                res.fm.rms.run(0, 'project', 'workflow', run_path='run_path', version=version)
-
-                with open('run_path/env.json') as f:
-                    rms_env = json.load(f)
-
-                pypath_elems = rms_env['PYTHONPATH'].split(os.pathsep)
-                self.assertNotIn(komodo_dir, pypath_elems)
-
-
     def test_rms_load_env(self):
         test_bed = [
             ('    ', False),
