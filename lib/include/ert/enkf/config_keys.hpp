@@ -264,6 +264,27 @@ extern "C" {
   const char * config_keys_get_gen_kw_export_name_key();
   /* ************* Model config  ************* */
 
+  /* ************* Ensemble config  ************* */
+  const char * config_keys_get_gen_param_key();
+  const char * config_keys_get_forward_init_key();
+  const char * config_keys_get_min_std_key();
+  const char * config_keys_get_template_key();
+  const char * config_keys_get_key_key();
+  const char * config_keys_get_kw_tag_format_key();
+  const char * config_keys_get_surface_key();
+  const char * config_keys_get_base_surface_key();
+  const char * config_keys_get_field_key();
+  const char * config_keys_get_init_transform_key();
+  const char * config_keys_get_input_transform_key();
+  const char * config_keys_get_output_transform_key();
+  const char * config_keys_get_min_key();
+  const char * config_keys_get_max_key();
+  const char * config_keys_get_parameter_key();
+  const char * config_keys_get_general_key();
+  const char * config_keys_get_pred_key();
+  const char * config_keys_get_container_key();
+  /* ************* Ensemble config  ************* */
+
 #ifdef   __cplusplus
 }
 #endif

@@ -75,6 +75,7 @@ typedef struct ensemble_config_struct ensemble_config_type;
 
   void                          ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , const config_content_type * config );
 
+  field_trans_table_type         * ensemble_config_get_trans_table( const ensemble_config_type * ensemble_config );
   enkf_config_node_type          * ensemble_config_get_node(const ensemble_config_type * , const char * );
   enkf_config_node_type          * ensemble_config_get_or_create_summary_node(ensemble_config_type * ensemble_config, const char * key);
   stringlist_type                * ensemble_config_alloc_keylist(const ensemble_config_type *);
@@ -82,6 +83,8 @@ typedef struct ensemble_config_struct ensemble_config_type;
   stringlist_type                * ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *, ert_impl_type);
   ensemble_config_type           * ensemble_config_alloc_load(const char *, ecl_grid_type *, const ecl_sum_type *);
   ensemble_config_type           * ensemble_config_alloc(const config_content_type *, ecl_grid_type *, const ecl_sum_type *);
+  ensemble_config_type           * ensemble_config_alloc_full(const char * gen_kw_format_string);
+  void                             ensemble_config_init_SUMMARY_full( ensemble_config_type *, const char *, const ecl_sum_type *);
 
   void                             ensemble_config_fprintf_config( ensemble_config_type * ensemble_config , FILE * stream );
   const summary_key_matcher_type * ensemble_config_get_summary_key_matcher(const ensemble_config_type * ensemble_config);

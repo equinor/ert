@@ -40,3 +40,13 @@ class SummaryConfig(BaseCClass):
     @property
     def key(self):
         return self._get_var()
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __eq__(self, other):
+        """ @rtype: bool"""
+        if self.key != other.key:
+            return False
+
+        return True

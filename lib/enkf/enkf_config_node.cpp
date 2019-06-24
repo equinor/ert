@@ -1039,7 +1039,96 @@ enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM_from_config( const conf
   return config_node;
 }
 
+/* ************* FULL ALLOCS  ************* */
+enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM_full( const char * node_key ,
+                                                               bool forward_init ,
+                                                               gen_data_file_format_type input_format ,
+                                                               gen_data_file_format_type output_format ,
+                                                               const char * init_file_fmt ,
+                                                               const char * ecl_file,
+                                                               const char * min_std_file,
+                                                               const char * template_file,
+                                                               const char * data_key) {
+  enkf_config_node_type * config_node   = NULL;
+  config_node = enkf_config_node_alloc_GEN_PARAM( node_key , forward_init , input_format , output_format , init_file_fmt , ecl_file);
 
+  if (template_file) {
+    bool template_set_ok = gen_data_config_set_template( (gen_data_config_type *) enkf_config_node_get_ref( config_node ) , template_file , data_key);
+    if (!template_set_ok)
+        fprintf(stderr,"** Warning: the template settings were not applied correctly - ignored\n");
+  }
+
+  if (min_std_file)
+    enkf_config_node_update_min_std( config_node , min_std_file );
+
+  return config_node;
+}
+
+enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_full( const char * node_key ,
+                                                              const char * result_file,
+                                                              gen_data_file_format_type input_format ,
+                                                              const int_vector_type * report_steps,
+                                                              const char * ecl_file,
+                                                              const char * init_file_fmt ,
+                                                              const char * template_file,
+                                                              const char * data_key) {
+  enkf_config_node_type * config_node = NULL;
+
+  if ((init_file_fmt == NULL) && (ecl_file == NULL) && (result_file != NULL)) {
+    config_node = enkf_config_node_alloc_GEN_DATA_result( node_key , input_format , result_file);
+  }
+  else if ((init_file_fmt != NULL) && (ecl_file      != NULL) && (result_file   != NULL)) {
+    util_abort("%s: This used to call the removed enkf_config_node_alloc_GEN_DATA_state() function \n",__func__);
+  }
+  gen_data_config_type * gen_data_config = (gen_data_config_type *)enkf_config_node_get_ref( config_node );
+
+  if (template_file)
+    gen_data_config_set_template( gen_data_config , template_file , data_key);
+
+  for (int i=0; i < int_vector_size( report_steps ); i++) {
+    int report_step = int_vector_iget( report_steps , i );
+    gen_data_config_add_report_step( gen_data_config , report_step);
+    enkf_config_node_set_internalize( config_node , report_step );
+  }
+
+  return config_node;
+}
+
+enkf_config_node_type * enkf_config_node_alloc_GEN_KW_full(const char * node_key,
+                                                           bool forward_init,
+                                                           const char * gen_kw_format,
+                                                           const char * template_file,
+                                                           const char * enkf_outfile,
+                                                           const char * parameter_file,
+                                                           const char * min_std_file,
+                                                           const char * init_file_fmt) {
+  enkf_config_node_type * config_node   = NULL;
+  config_node = enkf_config_node_new_gen_kw(node_key, gen_kw_format, forward_init);
+
+
+  enkf_config_node_update_gen_kw(config_node,
+                                 enkf_outfile,
+                                 template_file,
+                                 parameter_file,
+                                 min_std_file,
+                                 init_file_fmt);
+
+  return config_node;
+}
+
+enkf_config_node_type * enkf_config_node_alloc_SURFACE_full(const char * node_key,
+                                                            bool forward_init,
+                                                            const char * output_file,
+                                                            const char * base_surface,
+                                                            const char * min_std_file,
+                                                            const char * init_file_fmt) {
+
+  enkf_config_node_type * config_node = enkf_config_node_new_surface( node_key , forward_init );
+  enkf_config_node_update_surface( config_node , base_surface , init_file_fmt , output_file , min_std_file );
+
+  return config_node;
+}
+/* ************* FULL ALLOCS  ************* */
 /*****************************************************************/
 UTIL_SAFE_CAST_FUNCTION( enkf_config_node , ENKF_CONFIG_NODE_TYPE_ID)
 VOID_FREE(enkf_config_node)

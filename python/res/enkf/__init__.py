@@ -17,6 +17,7 @@
 
 from cwrap import Prototype
 import res
+from .config_keys import ConfigKeys
 import ecl.util
 import ecl.util.geometry
 import ecl
@@ -61,8 +62,6 @@ from .obs_block import ObsBlock
 from .obs_data import ObsData
 from .meas_block import MeasBlock
 from .meas_data import MeasData
-
-from .config_keys import ConfigKeys
 
 from .analysis_iter_config import AnalysisIterConfig
 from .analysis_config import AnalysisConfig

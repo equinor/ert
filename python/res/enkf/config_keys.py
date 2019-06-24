@@ -164,7 +164,8 @@ class ConfigKeys:
     SEED             = "SEED"
     QUEUE_SYSTEM     = _queue_system_key()
     RUN_TEMPLATE     = _run_template_key()
-    TEMPLATE         = "TEMPLATE"
+    _template_key    = ResPrototype("char* config_keys_get_template_key()", bind=False)
+    TEMPLATE         = _template_key()
     EXPORT           = "EXPORT"
     CUSTOM_KW        = _custom_kw_key()
     GEN_KW           = _gen_kw_key()
@@ -244,3 +245,42 @@ class ConfigKeys:
     OBS_CONFIG       = _obs_config()
     TIME_MAP         = _time_map()
     # ************* Model config  *************
+
+    # ************* Ensemble config  *************
+    _gen_param_key    = ResPrototype("char* config_keys_get_gen_param_key()", bind=False)
+    GEN_PARAM         = _gen_param_key()
+    _forward_init_key = ResPrototype("char* config_keys_get_forward_init_key()", bind=False)
+    FORWARD_INIT      = _forward_init_key()
+    _min_std_key      = ResPrototype("char* config_keys_get_min_std_key()", bind=False)
+    MIN_STD           = _min_std_key()
+    _key_key          = ResPrototype("char* config_keys_get_key_key()", bind=False)
+    KEY_KEY           = _key_key()
+    _kw_tag_format_key= ResPrototype("char* config_keys_get_kw_tag_format_key()", bind=False)
+    GEN_KW_TAG_FORMAT = _kw_tag_format_key()
+    _surface_key      = ResPrototype("char* config_keys_get_surface_key()", bind=False)
+    SURFACE_KEY       = _surface_key()
+    _base_surface_key = ResPrototype("char* config_keys_get_base_surface_key()", bind=False)
+    BASE_SURFACE_KEY  = _base_surface_key()
+    _field_key        = ResPrototype("char* config_keys_get_field_key()", bind=False)
+    FIELD_KEY         = _field_key()
+    VAR_TYPE          = 'VAR_TYPE'
+    _init_transform   = ResPrototype("char* config_keys_get_init_transform_key()", bind=False)
+    INIT_TRANSFORM    = _init_transform()
+    _input_transform  = ResPrototype("char* config_keys_get_input_transform_key()", bind=False)
+    INPUT_TRANSFORM   = _input_transform()
+    _output_transform = ResPrototype("char* config_keys_get_output_transform_key()", bind=False)
+    OUTPUT_TRANSFORM  = _output_transform()
+    _min_key          = ResPrototype("char* config_keys_get_min_key()", bind=False)
+    MIN_KEY           = _min_key()
+    _max_key          = ResPrototype("char* config_keys_get_max_key()", bind=False)
+    MAX_KEY           = _max_key()
+    ENKF_INFILE       = 'ENKF_INFILE'
+    _parameter_key    = ResPrototype("char* config_keys_get_parameter_key()", bind=False)
+    PARAMETER_KEY     = _parameter_key()
+    _general_key      = ResPrototype("char* config_keys_get_general_key()", bind=False)
+    GENERAL_KEY       = _general_key()
+    _pred_key         = ResPrototype("char* config_keys_get_pred_key()", bind=False)
+    PRED_KEY          = _pred_key()
+    _container_key    = ResPrototype("char* config_keys_get_container_key()", bind=False)
+    CONTAINER_KEY     = _container_key()
+    # ************* Ensemble config  *************

@@ -97,3 +97,25 @@ class GenDataConfig(BaseCClass):
     def getReportSteps(self):
         """ @rtype: list of int """
         return [self.getReportStep(index) for index in range(self.getNumReportStep())]
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __eq__(self, other):
+        """ @rtype: bool"""
+        if self.getName() != other.getName():
+            return False
+
+        if self.get_template_key() != other.get_template_key():
+            return False
+
+        if self.getInputFormat() != other.getInputFormat():
+            return False
+
+        if self.getOutputFormat() != other.getOutputFormat():
+            return False
+
+        if self.getReportSteps() != other.getReportSteps():
+            return False
+
+        return True

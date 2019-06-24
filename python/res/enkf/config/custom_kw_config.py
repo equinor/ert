@@ -19,7 +19,6 @@ from cwrap import BaseCClass
 from res import ResPrototype
 from ecl.util.util import StringList, IntegerHash
 
-
 class CustomKWConfig(BaseCClass):
     TYPE_NAME = "custom_kw_config"
 
@@ -118,3 +117,19 @@ class CustomKWConfig(BaseCClass):
                 value_type = 0 #str
             type_hash[key] = value_type
         return type_hash
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __eq__(self, other):
+        """ @rtype: bool"""
+        if self.getName() != other.getName():
+            return False
+
+        if self.getOutputFile() != other.getOutputFile():
+            return False
+
+        if self.getResultFile() != other.getResultFile():
+            return False
+
+        return True

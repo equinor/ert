@@ -356,3 +356,77 @@ const char * config_keys_get_time_map_key() {
 }
 
 /* ************* Model config  ************* */
+
+/* ************* Ensemble config  ************* */
+  const char * config_keys_get_gen_param_key() {
+    return GEN_PARAM_KEY;
+  }
+
+  const char * config_keys_get_forward_init_key() {
+    return FORWARD_INIT_KEY;
+  }
+
+  const char * config_keys_get_min_std_key() {
+    return MIN_STD_KEY;
+  }
+
+  const char * config_keys_get_template_key() {
+    return TEMPLATE_KEY;
+  }
+
+  const char * config_keys_get_key_key() {
+    return KEY_KEY;
+  }
+
+  const char * config_keys_get_kw_tag_format_key() {
+    return GEN_KW_TAG_FORMAT_KEY;
+  }
+
+  const char * config_keys_get_surface_key() {
+    return SURFACE_KEY;
+  }
+
+  const char * config_keys_get_base_surface_key() {
+    return BASE_SURFACE_KEY;
+  }
+
+  const char * config_keys_get_field_key() {
+    return FIELD_KEY;
+  }
+
+  const char * config_keys_get_init_transform_key() {
+    return INIT_TRANSFORM_KEY;
+  }
+
+  const char * config_keys_get_input_transform_key() {
+    return INPUT_TRANSFORM_KEY;
+  }
+
+  const char * config_keys_get_output_transform_key() {
+    return OUTPUT_TRANSFORM_KEY;
+  }
+
+  const char * config_keys_get_min_key() {
+    return MIN_KEY;
+  }
+
+  const char * config_keys_get_max_key() {
+    return MAX_KEY;
+  }
+
+  const char * config_keys_get_parameter_key() {
+    return PARAMETER_KEY;
+  }
+
+  const char * config_keys_get_general_key() {
+    return GENERAL_KEY;
+  }
+
+  const char * config_keys_get_pred_key() {
+    return PRED_KEY;
+  }
+
+  const char * config_keys_get_container_key() {
+    return CONTAINER_KEY;
+  }
+/* ************* Ensemble config  ************* */

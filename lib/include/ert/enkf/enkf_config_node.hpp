@@ -68,18 +68,6 @@ extern "C" {
                                                                   const char * enkf_infile_fmt );
 
 
-
-
-  void enkf_config_node_update_GEN_PARAM( enkf_config_node_type * config_node,
-                                          gen_data_file_format_type input_format,
-                                          gen_data_file_format_type output_format,
-                                          const char * init_file_fmt           ,
-                                          const char * template_ecl_file       ,
-                                          const char * template_data_key       ,
-                                          const char * enkf_outfile_fmt        ,
-                                          const char * min_std_file);
-
-
   void enkf_config_node_update_GEN_DATA_result( enkf_config_node_type * config_node,
                                                 gen_data_file_format_type input_format,
                                                 const char * enkf_infile_fmt );
@@ -214,6 +202,42 @@ extern "C" {
   void                    enkf_config_node_add_GEN_PARAM_config_schema( config_parser_type * config );
   enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM_from_config( const config_content_node_type * config_node );
   enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_from_config( const config_content_node_type * node );
+
+  /* ************* FULL ALLOCS  ************* */
+  enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM_full( const char * node_key ,
+                                                                 bool forward_init ,
+                                                                 gen_data_file_format_type input_format ,
+                                                                 gen_data_file_format_type output_format ,
+                                                                 const char * init_file_fmt ,
+                                                                 const char * ecl_file,
+                                                                 const char * min_std_file,
+                                                                 const char * template_file,
+                                                                 const char * data_key);
+
+  enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_full( const char * node_key ,
+                                                                const char * result_file,
+                                                                gen_data_file_format_type input_format ,
+                                                                const int_vector_type * report_steps,
+                                                                const char * ecl_file,
+                                                                const char * init_file_fmt ,
+                                                                const char * template_file,
+                                                                const char * data_key);
+
+enkf_config_node_type * enkf_config_node_alloc_GEN_KW_full(const char * node_key,
+                                                           bool forward_init,
+                                                           const char * gen_kw_format,
+                                                           const char * template_file,
+                                                           const char * enkf_outfile,
+                                                           const char * parameter_file,
+                                                           const char * min_std_file,
+                                                           const char * init_file_fmt);
+
+enkf_config_node_type * enkf_config_node_alloc_SURFACE_full(const char * node_key,
+                                                            bool forward_init,
+                                                            const char * output_file,
+                                                            const char * base_surface,
+                                                            const char * min_std_file,
+                                                            const char * init_file_fmt);
 
 UTIL_IS_INSTANCE_HEADER( enkf_config_node );
 UTIL_SAFE_CAST_HEADER(enkf_config_node);

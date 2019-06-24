@@ -168,6 +168,10 @@ const char * ensemble_config_get_gen_kw_format( const ensemble_config_type * ens
   return ensemble_config->gen_kw_format_string;
 }
 
+field_trans_table_type * ensemble_config_get_trans_table( const ensemble_config_type * ensemble_config ) {
+  return ensemble_config->field_trans_table;
+}
+
 
 static ensemble_config_type * ensemble_config_alloc_empty(void) {
   ensemble_config_type * ensemble_config = new ensemble_config_type();
@@ -179,6 +183,16 @@ static ensemble_config_type * ensemble_config_alloc_empty(void) {
   ensemble_config->summary_key_matcher   = summary_key_matcher_alloc();
   pthread_mutex_init( &ensemble_config->mutex , NULL);
 
+  return ensemble_config;
+}
+
+ensemble_config_type * ensemble_config_alloc_full(const char * gen_kw_format_string)
+{
+  ensemble_config_type * ensemble_config = ensemble_config_alloc_empty();
+  ensemble_config->field_trans_table     = field_trans_table_alloc();
+  ensemble_config_set_gen_kw_format( ensemble_config , gen_kw_format_string);
+  ensemble_config->summary_key_matcher   = summary_key_matcher_alloc();
+  pthread_mutex_init( &ensemble_config->mutex , NULL);
   return ensemble_config;
 }
 
@@ -553,26 +567,28 @@ void ensemble_config_init_SUMMARY( ensemble_config_type * ensemble_config , cons
       for (j= 0; j < config_content_node_get_size( node ); j++) {
         const char * key = config_content_node_iget( node , j );
         summary_key_matcher_add_summary_key(ensemble_config->summary_key_matcher, key);
-
-        if (util_string_has_wildcard( key )) {
-            //todo: DEPRECATED. In the Future the matcher should take care of this.
-          if (refcase != NULL) {
-            int k;
-            stringlist_type * keys = stringlist_alloc_new ( );
-
-            ecl_sum_select_matching_general_var_list(refcase , key , keys );   /* expanding the wildcard notation with help of the refcase. */
-            for (k=0; k < stringlist_get_size( keys ); k++)
-              ensemble_config_add_summary(ensemble_config , stringlist_iget(keys , k) , LOAD_FAIL_SILENT );
-
-            stringlist_free( keys );
-          }
-        } else
-          ensemble_config_add_summary(ensemble_config , key , LOAD_FAIL_SILENT);
+        ensemble_config_init_SUMMARY_full(ensemble_config, key, refcase);
       }
     }
   }
 }
 
+void ensemble_config_init_SUMMARY_full( ensemble_config_type * ensemble_config , const char * key, const ecl_sum_type * refcase) {
+  summary_key_matcher_add_summary_key(ensemble_config->summary_key_matcher, key);
+  if (util_string_has_wildcard( key )) {
+    if (refcase != NULL) {
+      stringlist_type * keys = stringlist_alloc_new ( );
+      ecl_sum_select_matching_general_var_list(refcase , key , keys );   /* expanding the wildcard notation with help of the refcase. */
+      int k;
+      for (k=0; k < stringlist_get_size( keys ); k++)
+        ensemble_config_add_summary(ensemble_config , stringlist_iget(keys , k) , LOAD_FAIL_SILENT );
+
+      stringlist_free( keys );
+    }
+  } else {
+    ensemble_config_add_summary(ensemble_config , key , LOAD_FAIL_SILENT);
+  }
+}
 
 void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const config_content_type * config , ecl_grid_type * grid) {
   if (config_content_has_item(config , FIELD_KEY)) {

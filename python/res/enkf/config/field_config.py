@@ -96,3 +96,23 @@ class FieldConfig(BaseCClass):
         nx,ny,nz = self.get_nx(),self.get_ny(),self.get_nz()
         cnt = 'type = %s, nx = %d, ny = %d, nz = %d' % (tp, nx,ny,nz)
         return self._create_repr(cnt)
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __eq__(self, other):
+        """ @rtype: bool"""
+        if self.get_init_transform_name() != other.get_init_transform_name():
+            return False
+        if self.get_output_transform_name() != other.get_output_transform_name():
+            return False
+        if self.get_truncation_max() != other.get_truncation_max():
+            return False
+        if self.get_truncation_min() != other.get_truncation_min():
+            return False
+        if self.get_truncation_mode() != other.get_truncation_mode():
+            return False
+        if self.get_type() != other.get_type():
+            return False
+
+        return True

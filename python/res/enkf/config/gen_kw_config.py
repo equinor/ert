@@ -97,3 +97,19 @@ class GenKwConfig(BaseCClass):
         while index < len(self):
             yield self[index]
             index += 1
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __eq__(self, other):
+        """ @rtype: bool"""
+        if self.getTemplateFile() != other.getTemplateFile():
+            return False
+
+        if self.getParameterFile() != other.getParameterFile():
+            return False
+
+        if self.getKey() != other.getKey():
+            return False
+
+        return True
