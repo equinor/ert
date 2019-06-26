@@ -20,20 +20,32 @@ import shutil
 import functools
 import inspect
 import yaml
+import pytest
+import re
 
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
 from tests import ResTest, equinor_test
 from res.fm.ecl import *
+from subprocess import Popen, PIPE
+from distutils.spawn import find_executable
 
 
+def flow_install():
+    try:
+        Popen(["flow"])
+        return True
+    except OSError:
+        pass
+    return False
 
-flow_config = FlowConfig( )
-try:
-    sim = flow_config.sim()
-    have_flow = True
-except:
-    have_flow = False
+
+flow_installed = pytest.mark.skipif(not flow_install(), reason="Requires flow")
+
+
+def find_version(output):
+    return re.search(r'flow\s*([\d.]+)', output).group(1)
+
 
 class EclRunTest(ResTest):
     def setUp(self):
@@ -54,6 +66,32 @@ class EclRunTest(ResTest):
         with open("ecl100_config.yml","w") as f:
             f.write( yaml.dump(conf) )
         os.environ["ECL100_SITE_CONFIG"] = "ecl100_config.yml"
+
+
+    def init_flow_config(self):
+        version = "2018.10"
+
+        p = Popen(["flow", '--version'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        output, err = p.communicate()
+        rc = p.returncode
+        if rc == 0:
+            version = find_version(output)
+        path_to_exe = find_executable("flow")
+
+        conf = {
+            "default_version": version,
+            "versions": {
+                version: {
+                    "scalar": {
+                        "executable": path_to_exe
+                    },
+                }
+            }
+        }
+
+        with open("flow_config.yml", "w") as f:
+            f.write(yaml.dump(conf))
+        os.environ["FLOW_SITE_CONFIG"] = "flow_config.yml"
 
 
     def test_create(self):
@@ -108,11 +146,11 @@ class EclRunTest(ResTest):
             with self.assertRaises(IOError):
                 ecl_run = EclRun("DOES/NOT/EXIST", mpi_sim, num_cpu = "10")
 
-
-
-    @unittest.skipUnless(have_flow, "Requires flow")
+    @pytest.mark.xfail(reason="Finding a version on Komodo of flow that is not OPM-flow")
+    @flow_installed
     def test_flow(self):
         with TestAreaContext("ecl_run") as ta:
+            self.init_flow_config()
             ta.copy_file( os.path.join(self.SOURCE_ROOT , "test-data/local/eclipse/SPE1.DATA"))
             ta.copy_file( os.path.join(self.SOURCE_ROOT , "test-data/local/eclipse/SPE1_ERROR.DATA"))
             os.makedirs("ecl_run")

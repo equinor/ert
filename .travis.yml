@@ -108,4 +108,6 @@ script:
   - ctest --output-on-failure $TEST_SUITE
   - pip install pytest
   - pip install pylint
-  - pytest -s
+  - popd
+  - pushd python
+  - pytest

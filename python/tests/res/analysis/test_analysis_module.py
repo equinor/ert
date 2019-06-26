@@ -15,23 +15,19 @@
 #  for more details.
 
 import sys
-import os
 
-import res
 from tests import ResTest
 from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
-
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.util.rng import RandomNumberGenerator
-
 from res.util import Matrix
 
 class AnalysisModuleTest(ResTest):
     def setUp(self):
         if sys.platform.lower() == 'darwin':
-            self.libname = os.path.join(res.res_lib_path, "rml_enkf.dylib")
+            self.libname = "rml_enkf.dylib"
         else:
-            self.libname = os.path.join(res.res_lib_path, "rml_enkf.so")
+            self.libname = "rml_enkf.so"
 
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
 

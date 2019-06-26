@@ -147,8 +147,12 @@ class SiteConfig(BaseCClass):
         self_job_list = self.get_installed_jobs()
         other_job_list = other.get_installed_jobs()
 
-        if other_job_list.getAvailableJobNames() != self_job_list.getAvailableJobNames():
+        if set(other_job_list.getAvailableJobNames()) != set(self_job_list.getAvailableJobNames()):
             return False
+
+        if len(other_job_list.getAvailableJobNames()) != len(self_job_list.getAvailableJobNames()):
+            return False
+
 
         for job_name in other_job_list.getAvailableJobNames():
 

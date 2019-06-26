@@ -20,24 +20,4 @@ if (NOT DEFINED PY_ecl OR NOT DEFINED PY_cwrap OR NOT DEFINED PY_numpy)
     return()
 endif()
 
-#-----------------------------------------------------------------
-
-if (ERT_BUILD_GUI)
-   find_python_package(PyQt4      4.8.0  ${PYTHON_INSTALL_PREFIX})
-   find_python_package(matplotlib 1.2.0  ${PYTHON_INSTALL_PREFIX})
-   find_python_package(pandas     0.15.1 ${PYTHON_INSTALL_PREFIX})
-   find_python_package(scipy      0.12.1 ${PYTHON_INSTALL_PREFIX})
-   if(NOT DEFINED PY_PyQt4 OR NOT DEFINED PY_matplotlib OR NOT DEFINED PY_scipy OR NOT DEFINED PY_pandas)
-     message(SEND_ERROR "Cannot build GUI without PyQt4, matplotlib, scipy, or pandas")
-   endif()
-endif()
-
-
-if (BUILD_TESTS)
-   add_subdirectory( tests )
-endif()
 add_subdirectory( res )
-
-if (INSTALL_ERT_LEGACY)
-  add_subdirectory( ert )
-endif()

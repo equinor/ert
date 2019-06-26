@@ -81,9 +81,9 @@ def init_matrices(ens , mask , obs, rng):
 class RMLTest(ResTest):
     def setUp(self):
         if sys.platform.lower() == 'darwin':
-            self.libname = res.res_lib_path + "/rml_enkf.dylib"
+            self.libname = "rml_enkf.dylib"
         else:
-            self.libname = res.res_lib_path + "/rml_enkf.so"
+            self.libname = "rml_enkf.so"
         self.user    = "TEST"
 
     def createAnalysisModule(self):
