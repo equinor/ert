@@ -100,14 +100,11 @@ presented with the following overview.
       ERT can be accessed through a GUI or CLI interface. Include one of the
       following arguments to change between the interfaces. Note that different
       entry points may require different additional arguments. See the help
-      section for each interface for more details. DEPRECATION WARNING: Text
-      User Interface and Shell Interface are to be removed in ERT > 2.4!
+      section for each interface for more details.  
 
       {gui,text,shell,cli}  Available entry points
         gui                 Graphical User Interface - opens up an independent
-                            window for the user to interact with ERT.
-        text                Text user interface. Deprecated! Use CLI instead.
-        shell               Shell interface. Deprecated! Use CLI instead.
+                            window for the user to interact with ERT.        
         cli                 Command Line Interface - provides a user interface in
                             the terminal.
 
@@ -120,13 +117,6 @@ ERT command line interface
 The **cli** option listed above is new and will run *ERT* as a command line
 interface with no further interaction after initialization. This will be the
 supported command line interface of *ERT* in the future.
-
-The shell and text interfaces are deprecated
-######################################################
-Furthermore, the **text** and **shell** options are deprecated and **cli** will be
-the only option supported terminal option in the future. Hence, if you are
-using the text or shell interface of *ERT* and the current **cli** does not
-fit your needs, please contact us with a feature request!
 
 Forward model monitoring
 ######################################################
