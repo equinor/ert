@@ -3,7 +3,7 @@ set(PYTHON_SOURCES
 )
 add_python_package("python.res"  ${PYTHON_INSTALL_PREFIX}/res "${PYTHON_SOURCES}" True)
 
-set( ERT_SITE_INIT_TARGET  ""  CACHE FILE "Name of optional external site init module for top level res package")
+set( ERT_SITE_INIT_TARGET  ""  CACHE STRING "Name of optional external site init module for top level res package")
 if (EXISTS ${ERT_SITE_INIT_TARGET})
    message(STATUS "Using res site init module: ${ERT_SITE_INIT_TARGET}")
    install(FILES ${ERT_SITE_INIT_TARGET} DESTINATION ${PYTHON_INSTALL_PREFIX}/res RENAME res_site_init.py)
