@@ -18,9 +18,10 @@ import random
 import sys
 import os
 
+import pytest
 import res
 
-from tests import ResTest, equinor_test
+from tests import ResTest
 from res.test import ErtTestContext
 
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
@@ -44,8 +45,8 @@ def update(rng , mask , module , ert , meas_data , obs_data , state_size):
     module.initUpdate( mask , S , R , dObs , E , D )
     module.updateA( A , S , R , dObs , E , D )
 
-
-@equinor_test()
+@pytest.mark.skip()
+@pytest.mark.equinor_test
 class UpdateTest(ResTest):
   def setUp(self):
       if sys.platform.lower() == 'darwin':

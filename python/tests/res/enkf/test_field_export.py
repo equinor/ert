@@ -1,5 +1,7 @@
 import os
-from tests import ResTest, equinor_test
+import pytest
+
+from tests import ResTest
 from res.test import ErtTestContext
 
 from ecl.util.util import IntVector
@@ -11,7 +13,7 @@ from res.enkf.enums import EnkfFieldFileFormatEnum
 from res.enkf import NodeId
 
 
-@equinor_test()
+@pytest.mark.equinor_test
 class FieldExportTest(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("Equinor/config/obs_testing/config")

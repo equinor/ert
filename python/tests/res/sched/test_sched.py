@@ -16,12 +16,14 @@
 #  for more details.
 import datetime
 import os
+import pytest
+
 from res.sched import SchedFile
-from tests import ResTest, equinor_test
+from tests import ResTest
 
 
 
-@equinor_test()
+@pytest.mark.equinor_test
 class SchedFileTest(ResTest):
     def setUp(self):
         src_file = self.createTestPath("Equinor/ECLIPSE/Gurbat/target.SCH")

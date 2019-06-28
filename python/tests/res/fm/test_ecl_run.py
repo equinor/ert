@@ -25,7 +25,7 @@ import re
 
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
-from tests import ResTest, equinor_test
+from tests import ResTest
 from res.fm.ecl import *
 from subprocess import Popen, PIPE
 from distutils.spawn import find_executable
@@ -175,7 +175,7 @@ class EclRunTest(ResTest):
 
 
 
-    @equinor_test()
+    @pytest.mark.equinor_test
     def test_run(self):
         with TestAreaContext("ecl_run") as ta:
             self.init_ecl100_config()
@@ -202,7 +202,7 @@ class EclRunTest(ResTest):
             with self.assertRaises(Exception):
                 ecl_run.runEclipse( )
 
-    @equinor_test()
+    @pytest.mark.equinor_test
     def test_run_api(self):
         with TestAreaContext("ecl_run_api") as ta:
             self.init_ecl100_config()
@@ -219,7 +219,7 @@ class EclRunTest(ResTest):
 
 
 
-    @equinor_test()
+    @pytest.mark.equinor_test
     def test_failed_run(self):
         with TestAreaContext("ecl_run") as ta:
             self.init_ecl100_config()
@@ -236,7 +236,7 @@ class EclRunTest(ResTest):
                 self.assertTrue( "ERROR" in str(e) )
 
 
-    @equinor_test()
+    @pytest.mark.equinor_test
     def test_failed_run_OK(self):
         with TestAreaContext("ecl_run") as ta:
             self.init_ecl100_config()
@@ -252,7 +252,7 @@ class EclRunTest(ResTest):
             ecl_run.runEclipse( )
 
 
-    @equinor_test()
+    @pytest.mark.equinor_test
     def test_mpi_run(self):
         with TestAreaContext("ecl_run") as ta:
             self.init_ecl100_config()
@@ -263,7 +263,7 @@ class EclRunTest(ResTest):
             self.assertTrue( os.path.isfile( "SPE1_PARALLELL.LOG"))
 
 
-    @equinor_test()
+    @pytest.mark.equinor_test
     def test_summary_block(self):
         with TestAreaContext("ecl_run") as ta:
             self.init_ecl100_config()
@@ -279,7 +279,7 @@ class EclRunTest(ResTest):
             self.assertTrue(isinstance(ecl_sum, EclSum))
 
 
-    @equinor_test()
+    @pytest.mark.equinor_test
     def test_check(self):
         full_case   = os.path.join(self.SOURCE_ROOT, "test-data/Equinor/ECLIPSE/Gurbat/ECLIPSE" )
         short_case  = os.path.join(self.SOURCE_ROOT, "test-data/Equinor/ECLIPSE/ShortSummary/ECLIPSE" )
@@ -307,7 +307,7 @@ class EclRunTest(ResTest):
 
 
 
-    @equinor_test()
+    @pytest.mark.equinor_test
     def test_error_parse(self):
         with TestAreaContext("ecl_run") as ta:
             self.init_ecl100_config()

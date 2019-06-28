@@ -1,11 +1,13 @@
-from tests import ResTest, equinor_test
+import pytest
+
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from ecl.util.util import BoolVector
 
 
-@equinor_test()
+@pytest.mark.equinor_test
 class LoadResultsManuallyTest(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("Equinor/config/with_data/config")

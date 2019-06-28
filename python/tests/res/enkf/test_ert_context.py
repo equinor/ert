@@ -1,8 +1,12 @@
-from tests import ResTest, equinor_test
+from tests import ResTest
+import sys
+
 from res.test import ErtTestContext
+import pytest
 
+import os
 
-@equinor_test()
+@pytest.mark.equinor_test
 class ErtTestContextTest(ResTest):
     def setUp(self):
         self.config = self.createTestPath("Equinor/config/with_data/config")

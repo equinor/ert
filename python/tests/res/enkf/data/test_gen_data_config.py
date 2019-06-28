@@ -1,5 +1,6 @@
-from ecl.util.util import BoolVector
-from tests import ResTest, equinor_test
+import pytest
+
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res import ResPrototype
@@ -10,7 +11,7 @@ from res.enkf import ForwardLoadContext
 
 
 
-@equinor_test()
+@pytest.mark.equinor_test
 class GenDataConfigTest(ResTest):
     _get_active_mask    = ResPrototype("bool_vector_ref gen_data_config_get_active_mask( gen_data_config )", bind = False)
     _update_active_mask = ResPrototype("void gen_data_config_update_active( gen_data_config, forward_load_context , bool_vector)", bind = False)

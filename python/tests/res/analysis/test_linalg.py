@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #  Copyright (C) 2015  Equinor ASA, Norway.
 #
-#  The file 'test_labscale.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'test_linalg.py' is part of ERT - Ensemble based Reservoir Tool.
 #
 #  ERT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by

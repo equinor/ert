@@ -2,11 +2,9 @@ import json
 import socket
 import os
 import os.path
-import stat
-import time
-import datetime
-from tests import ResTest, equinor_test
+import pytest
 
+from tests import ResTest
 from ecl.util.test import TestAreaContext
 from res.job_queue import JobManager
 
@@ -74,7 +72,7 @@ def create_jobs_json(jobList, umask="0000"):
         f.write(json.dumps(data))
 
 
-@equinor_test()
+@pytest.mark.equinor_test
 class JobManagerEquinorTest(ResTest):
 
     def assert_ip_address(self, ip):

@@ -24,7 +24,8 @@ build_and_test () {
 	run build_ecl
 	run build_res
 	run run_ctest
-	run run_pytest
+	run run_pytest_equinor
+	run run_pytest_normal
 }
 
 setup () {
@@ -59,7 +60,7 @@ build_res () {
 	python -m pip install -r requirements.txt
 	pushd $LIBRES_BUILD
 	echo "PYTHON:"$(which python)
-	cmake .. -DSTATOIL_TESTDATA_ROOT=/project/res-testdata/ErtTestData \
+	cmake .. -DEQUINOR_TESTDATA_ROOT=/project/res-testdata/ErtTestData \
 		  -DINSTALL_ERT_LEGACY=ON \
 		  -DCMAKE_PREFIX_PATH=$INSTALL \
 		  -DCMAKE_MODULE_PATH=$INSTALL/share/cmake/Modules \
@@ -140,12 +141,21 @@ run_ctest () {
 	popd
 }
 
-run_pytest () {
+run_pytest_normal () {
 	run enable_environment
 	pushd $LIBRES_ROOT/python
-	python -m pytest -s
+	python -m pytest -s -m "not equinor_test"
 	popd
 }
+
+
+run_pytest_equinor () {
+	run enable_environment
+	pushd $LIBRES_ROOT/python
+	python -m pytest -s -m "equinor_test"
+	popd
+}
+
 
 run () {
 	echo ""

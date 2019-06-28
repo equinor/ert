@@ -1,5 +1,4 @@
 import os
-from ecl.util.test import TestAreaContext
 from tests import ResTest
 from res.util import PathFormat
 

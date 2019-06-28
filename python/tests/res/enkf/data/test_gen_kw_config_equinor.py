@@ -1,9 +1,11 @@
-from tests import ResTest, equinor_test
+import pytest
+
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf import ErtImplType, GenKwConfig
 
-@equinor_test()
+@pytest.mark.equinor_test
 class GenKwConfigTest(ResTest):
 
     def setUp(self):

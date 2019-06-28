@@ -1,6 +1,8 @@
 import os
+import pytest
+
 from ecl.util.test import TestAreaContext
-from tests import ResTest, equinor_test
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf import EnkfFs
@@ -8,7 +10,7 @@ from res.enkf import EnKFMain
 from res.enkf.enums import EnKFFSType
 
 
-@equinor_test()
+@pytest.mark.equinor_test
 class EnKFFSTest(ResTest):
     def setUp(self):
         self.mount_point = "storage/default"

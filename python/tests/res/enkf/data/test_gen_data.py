@@ -1,11 +1,12 @@
-from ecl.util.util import BoolVector
-from tests import ResTest, equinor_test
+import pytest
+
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf.data.enkf_node import EnkfNode
 from res.enkf.node_id import NodeId
 
-@equinor_test()
+@pytest.mark.equinor_test
 class GenDataTest(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("Equinor/config/with_GEN_DATA/config")

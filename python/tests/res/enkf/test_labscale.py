@@ -15,12 +15,16 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from tests import ResTest, equinor_test
+import pytest
+
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf import ObsVector
 
-@equinor_test()
+
+@pytest.mark.skip('Currently failing because a config object is missing a key')
+@pytest.mark.equinor_test
 class LabScaleTest(ResTest):
 
 

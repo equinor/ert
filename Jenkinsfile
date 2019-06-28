@@ -25,9 +25,14 @@ pipeline {
                 sh 'sh testjenkins.sh run_ctest'
             }
         }
-	stage('run pytest') {
+	stage('run pytest_equinor') {
             steps {
-                sh 'sh testjenkins.sh run_pytest'
+                sh 'sh testjenkins.sh run_pytest_equinor'
+            }
+        }
+	stage('run pytest_normal') {
+            steps {
+                sh 'sh testjenkins.sh run_pytest_normal'
             }
         }
     }

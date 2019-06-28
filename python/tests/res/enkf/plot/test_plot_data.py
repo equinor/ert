@@ -1,11 +1,13 @@
-from tests import ResTest, equinor_test
+import pytest
+
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf.plot_data import PlotBlockData, PlotBlockDataLoader, PlotBlockVector
 from ecl.util.util import DoubleVector
 
 
-@equinor_test()
+@pytest.mark.equinor_test
 class PlotDataTest(ResTest):
 
     def setUp(self):

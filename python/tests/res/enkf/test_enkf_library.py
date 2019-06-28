@@ -1,7 +1,8 @@
 import os
+import pytest
 
-from ecl.util.test import TestAreaContext
-from tests import ResTest, equinor_test
+
+from tests import ResTest
 
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
@@ -13,7 +14,7 @@ from res.enkf.util import TimeMap
 
 
 
-@equinor_test()
+@pytest.mark.equinor_test
 class EnKFLibraryTest(ResTest):
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")

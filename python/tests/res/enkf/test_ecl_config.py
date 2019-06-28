@@ -15,11 +15,13 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+import pytest
+
 import os.path
-print(os.getcwd())
+
 from res.enkf import EclConfig, ResConfig
 from ecl.util.test import TestAreaContext
-from tests import ResTest, equinor_test
+from tests import ResTest
 from res.util import UIReturn
 from ecl.summary  import EclSum
 
@@ -35,7 +37,7 @@ DATA_INIT_file= "Equinor/ECLIPSE/Gurbat/ECLIPSE_INIT.DATA"
 
 class EclConfigTest(ResTest):
 
-    @equinor_test()
+    @pytest.mark.equinor_test
     def test_grid(self):
         grid_file = self.createTestPath( EGRID_file )
         smspec_file = self.createTestPath( SMSPEC_file )
@@ -51,7 +53,7 @@ class EclConfigTest(ResTest):
         ui = ec.validateGridFile( smspec_file )
         self.assertFalse( ui )
     
-    @equinor_test()
+    @pytest.mark.equinor_test
     def test_datafile(self):
         ec = EclConfig()
         ui = ec.validateDataFile( "DoesNotExist" )
@@ -64,7 +66,7 @@ class EclConfigTest(ResTest):
         self.assertEqual( dfile , ec.getDataFile() )
 
 
-    @equinor_test()
+    @pytest.mark.equinor_test
     def test_init_section(self):
         ec = EclConfig()
         dfile = self.createTestPath( DATA_file )
@@ -84,7 +86,7 @@ class EclConfigTest(ResTest):
         ec.setInitSection( ifile )
         self.assertTrue( ifile , ec.getInitSection() )
 
-    @equinor_test()
+    @pytest.mark.equinor_test
     def test_refcase( self ):
         ec = EclConfig()
         dfile = self.createTestPath( DATA_file )
