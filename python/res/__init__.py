@@ -27,28 +27,6 @@ function uses the standard methods of the operating system,
 i.e. standard locations configured with ld.so.conf and the environment
 variable LD_LIBRARY_PATH.
 
-To avoid conflict with other application using the res libraries the
-Python code should be able to locate the shared libraries without
-(necessarily) using the LD_LIBRARY_PATH variable. The default
-behaviour is to try to load from the library ../../lib64, but by using
-the enviornment variable ERT_LIBRARY_PATH you can alter how ert looks
-for shared libraries.
-
-   1. By default the code will try to load the shared libraries from
-      '../../lib64' relative to the location of this file.
-
-   2. Depending on the value of ERT_LIBRARY_PATH two different
-      behaviours can be imposed:
-
-         Existing path: the package will look in the path pointed to
-            by ERT_LIBRARY_PATH for shared libraries.
-
-         Arbitrary value: the package will use standard load order for
-         the operating system.
-
-If the fixed path, given by the default ../../lib64 or ERT_LIBRARY_PATH
-alternative fails, the loader will try the default load behaviour
-before giving up completely.
 """
 import os.path
 import sys
@@ -63,7 +41,6 @@ try:
     import ert_site_init
 except ImportError:
     pass
-
 
 required_version_hex = 0x02070000
 
@@ -87,18 +64,6 @@ except AttributeError:
     pass
 
 
-# 2. Using the environment variable ERT_LIBRARY_PATH it is possible to
-#    override the default algorithms. If the ERT_LIBRARY_PATH is set
-#    to a non existing directory a warning will go to stderr and the
-#    setting will be ignored.
-env_lib_path = os.getenv("ERT_LIBRARY_PATH")
-if env_lib_path:
-    if os.path.isdir( env_lib_path ):
-        res_lib_path = os.getenv("ERT_LIBRARY_PATH")
-    else:
-        sys.stderr.write("Warning: Environment variable ERT_LIBRARY_PATH points to nonexisting directory:%s - ignored" % env_lib_path)
-
-
 # Check that the final ert_lib_path setting corresponds to an existing
 # directory.
 if res_lib_path:
@@ -111,6 +76,11 @@ if res_lib_path:
 
 if sys.hexversion < required_version_hex:
     raise Exception("ERT Python requires Python 2.7")
+
+if os.getenv("ERT_LIBRARY_PATH"):
+    raise EnvironmentError("ERT_LIBRARY_PATH is deprecated and should be "
+                  "removed from your environment")
+
 
 # This load() function is *the* function actually loading shared
 # libraries.
