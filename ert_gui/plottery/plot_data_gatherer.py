@@ -87,22 +87,14 @@ class PlotDataGatherer(object):
     def gatherSummaryRefcaseData(ert, key):
         refcase = ert.eclConfig().getRefcase()
 
-        if refcase is None or not key in refcase:
+        if refcase is None or key not in refcase:
             return DataFrame()
 
-        vector = refcase.get_vector(key, report_only=False)
+        values = refcase.numpy_vector(key, report_only=False)
+        dates = refcase.numpy_dates
 
-        rows = []
-        for index in range(1, len(vector)):
-            node = vector[index]
-            row = {
-                "Date": node.date,
-                key: node.value
-            }
-            rows.append(row)
-
-        data = DataFrame(rows)
-        data = data.set_index("Date")
+        data = DataFrame(zip(dates, values), columns=['Date', key])
+        data.set_index("Date", inplace=True)
 
         return data
 
