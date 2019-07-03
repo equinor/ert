@@ -96,7 +96,7 @@ class PlotDataGatherer(object):
         data = DataFrame(zip(dates, values), columns=['Date', key])
         data.set_index("Date", inplace=True)
 
-        return data
+        return data.iloc[1:]
 
     @staticmethod
     def gatherSummaryHistoryData(ert, case, key):
