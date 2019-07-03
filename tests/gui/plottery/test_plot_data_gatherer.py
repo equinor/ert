@@ -18,13 +18,13 @@ class PlotGatherTest(ErtTest):
             result_data = PlotDataGatherer.gatherSummaryRefcaseData(ert, key)
 
             expected_data = [
-                (0, datetime.date(2010,1,1), 0.0),
-                (245, datetime.date(2010, 9, 3),   0.46973800659),
-                (1268, datetime.date(2013, 6, 22), 0.11672365665),
+                (0, datetime.date(2010,1,2),       1.03836009657e-05),
+                (244, datetime.date(2010, 9, 3),   0.46973800659),
+                (1267, datetime.date(2013, 6, 22), 0.11672365665),
                 (-1, datetime.date(2015, 6, 23),   0.00820410997),
             ]
 
-            self.assertEqual(len(result_data), 2000)
+            self.assertEqual(len(result_data), 1999)
 
             for index, date, value in expected_data:
                 self.assertAlmostEqual(value, result_data.iloc[index][key], delta=1E-10)
