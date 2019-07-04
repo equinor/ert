@@ -76,7 +76,10 @@ class ExtJob(BaseCClass):
             raise IOError('No such config file "%s".' % config_file)
 
     def __repr__(self):
-        return self._create_repr('%s, config_file = %s' % (self.name() , self.get_config_file()))
+        if self._address():
+            return self._create_repr('{}, config_file = {}'.format(self.name(), self.get_config_file()))
+        else:
+            return "UNINITIALIZED ExtJob"
 
     def get_private_args_as_string(self):
         return self._get_private_args_as_string( )
