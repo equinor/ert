@@ -1,9 +1,7 @@
-import sys
-
-if sys.version_info[0] == 2:
-  from PyQt4.QtCore import Qt
-else:
-  from PyQt5.QtCore import Qt
+try:
+    from PyQt5.QtCore import Qt
+except ImportError:
+    from PyQt4.QtCore import Qt
 
 
 from ert_gui.ide.wizards import TreeItem, TreeModel
