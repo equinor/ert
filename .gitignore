@@ -24,3 +24,8 @@ scratch.sparsebundle
 *.DS_Store
 __res_lib_path.py
 __res_lib_info.py
+/.project
+*.egg*
+/dist
+/ert_gui/version.py
+
