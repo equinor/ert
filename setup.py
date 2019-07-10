@@ -45,6 +45,8 @@ setup(
             'ert_gui.tools.workflows',
             'ert_gui.tools.plot.customize',
             'ert_gui.tools.plot.widgets',
+            'ErtQt',
+            'ErtQt.Qt',
             ],
     package_data={'ert_gui' : extra_files},
     include_package_data=True,
