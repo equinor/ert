@@ -1,11 +1,6 @@
 import sys
 
-try:
-  from PyQt4.QtCore import QMargins, Qt
-  from PyQt4.QtGui import QWidget, QHBoxLayout, QComboBox, QToolButton
-except ImportError:
-  from PyQt5.QtCore import QMargins, Qt
-  from PyQt5.QtWidgets import QWidget, QHBoxLayout, QComboBox, QToolButton
+from ErtQt.Qt import QMargins, Qt, QWidget, QHBoxLayout, QComboBox, QToolButton
 
 from ert_gui.ertwidgets import addHelpToWidget, ClosableDialog, resourceIcon
 from ert_gui.ertwidgets.models.ertmodel import getCurrentAnalysisModuleName, getAnalysisModuleNames

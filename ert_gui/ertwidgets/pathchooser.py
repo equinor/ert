@@ -17,12 +17,7 @@ import os
 import re
 import sys
 
-try:
-  from PyQt4.QtCore import QSize
-  from PyQt4.QtGui import QLineEdit, QToolButton, QFileDialog, QWidget, QHBoxLayout
-except ImportError:
-  from PyQt5.QtCore import QSize
-  from PyQt5.QtWidgets import QLineEdit, QToolButton, QFileDialog, QWidget, QHBoxLayout
+from ErtQt.Qt import QSize, QLineEdit, QToolButton, QFileDialog, QWidget, QHBoxLayout
 
 from ert_gui.ertwidgets import resourceIcon, addHelpToWidget
 from ert_gui.ertwidgets.validationsupport import ValidationSupport

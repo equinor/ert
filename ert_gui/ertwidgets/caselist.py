@@ -1,11 +1,6 @@
 import sys
 
-try:
-  from PyQt4.QtCore import QSize
-  from PyQt4.QtGui import QListWidget, QMessageBox, QAbstractItemView, QWidget, QVBoxLayout, QLabel, QToolButton, QHBoxLayout
-except ImportError:
-  from PyQt5.QtCore import QSize
-  from PyQt5.QtWidgets import QListWidget, QMessageBox, QAbstractItemView, QWidget, QVBoxLayout, QLabel, QToolButton, QHBoxLayout
+from ErtQt.Qt import QSize, QListWidget, QMessageBox, QAbstractItemView, QWidget, QVBoxLayout, QLabel, QToolButton, QHBoxLayout
 
 from ert_gui import ERT
 from ert_gui.ertwidgets import addHelpToWidget

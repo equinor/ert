@@ -1,11 +1,19 @@
 import sys
 
-try:
-  from PyQt4.QtCore import Qt, QSize
-  from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, QMessageBox, QComboBox
-except ImportError:
-  from PyQt5.QtCore import Qt, QSize
-  from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, QMessageBox, QComboBox
+from ErtQt import QT5
+from ErtQt.Qt import (
+    QComboBox,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QMessageBox,
+    QSize,
+    QStackedWidget,
+    Qt,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
+    )
 
 from ert_gui import ERT
 from ert_gui.ertwidgets import addHelpToWidget, resourceIcon
@@ -84,10 +92,7 @@ class SimulationPanel(QWidget):
 
     def getCurrentSimulationModel(self):
         data = self._simulation_mode_combo.itemData(self._simulation_mode_combo.currentIndex(), Qt.UserRole)
-        if sys.version_info[0] == 2:
-            return data.toPyObject()
-        else:
-            return data
+        return data if QT5 else data.toPyObject()
 
 
     def getSimulationArguments(self):

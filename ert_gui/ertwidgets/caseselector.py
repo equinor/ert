@@ -1,9 +1,6 @@
 import sys
 
-try:
-  from PyQt4.QtGui import QComboBox
-except ImportError:
-  from PyQt5.QtWidgets import QComboBox
+from ErtQt.Qt import QComboBox
 
 from ert_gui import ERT
 from ert_gui.ertwidgets import addHelpToWidget

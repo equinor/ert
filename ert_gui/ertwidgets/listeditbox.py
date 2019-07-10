@@ -15,12 +15,7 @@
 #  for more details.
 import sys
 
-try:
-  from PyQt4.QtCore import Qt, QSize
-  from PyQt4.QtGui import QHBoxLayout, QLineEdit, QCompleter, QToolButton, QInputDialog, QMessageBox, QWidget
-except ImportError:
-  from PyQt5.QtCore import Qt, QSize
-  from PyQt5.QtWidgets import QHBoxLayout, QLineEdit, QCompleter, QToolButton, QInputDialog, QMessageBox, QWidget
+from ErtQt.Qt import Qt, QSize, QHBoxLayout, QLineEdit, QCompleter, QToolButton, QInputDialog, QMessageBox, QWidget
 
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.validationsupport import ValidationSupport

@@ -1,11 +1,6 @@
 import sys
 
-try:
-  from PyQt4.QtCore import Qt
-  from PyQt4.QtGui import QFrame, QLabel, QVBoxLayout, QHBoxLayout, QScrollArea, QWidget, QGridLayout
-except ImportError:
-  from PyQt5.QtCore import Qt
-  from PyQt5.QtWidgets import QFrame, QLabel, QVBoxLayout, QHBoxLayout, QScrollArea, QWidget, QGridLayout
+from ErtQt.Qt import Qt, QFrame, QLabel, QVBoxLayout, QHBoxLayout, QScrollArea, QWidget, QGridLayout
 
 from ert_gui.ertwidgets.models.ertsummary import ErtSummary
 
