@@ -1,9 +1,6 @@
 import sys
 
-try:
-  from PyQt4.QtCore import QObject, pyqtSignal
-except ImportError:
-  from PyQt5.QtCore import QObject, pyqtSignal
+from ErtQt.Qt import QObject, pyqtSignal
 
 
 class SelectableListModel(QObject):

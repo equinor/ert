@@ -1,12 +1,6 @@
 import sys
 
-try:
-  from PyQt4 import QtCore
-  from PyQt4 import QtGui
-except ImportError:
-  from PyQt5 import QtCore
-  from PyQt5 import QtGui
-  from PyQt5 import QtWidgets
+from ErtQt.Qt import Qt, QCursor, QApplication, QIcon, QPixmap, QMovie
 
 img_prefix = ""
 
@@ -28,46 +22,37 @@ def showWaitCursorWhileWaiting(func):
     """A function decorator to show the wait cursor while the function is working."""
 
     def wrapper(*arg):
-        try:
-            QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
-        except AttributeError:
-            QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         try:
             res = func(*arg)
             return res
-        except:
-            raise
         finally:
-            try:
-                QtGui.QApplication.restoreOverrideCursor()
-            except AttributeError:
-                QtWidgets.QApplication.restoreOverrideCursor()
-
+            QApplication.restoreOverrideCursor()
     return wrapper
 
 
 def resourceIcon(name):
     """Load an image as an icon"""
     # print("Icon used: %s" % name)
-    return QtGui.QIcon(img_prefix + name)
+    return QIcon(img_prefix + name)
 
 
 def resourceStateIcon(on, off):
     """Load two images as an icon with on and off states"""
-    icon = QtGui.QIcon()
-    icon.addPixmap(resourceImage(on), state=QtGui.QIcon.On)
-    icon.addPixmap(resourceImage(off), state=QtGui.QIcon.Off)
+    icon = QIcon()
+    icon.addPixmap(resourceImage(on), state=QIcon.On)
+    icon.addPixmap(resourceImage(off), state=QIcon.Off)
     return icon
 
 
 def resourceImage(name):
     """Load an image as a Pixmap"""
-    return QtGui.QPixmap(img_prefix + name)
+    return QPixmap(img_prefix + name)
 
 
 def resourceMovie(name):
     """ @rtype: QMovie """
-    movie = QtGui.QMovie(img_prefix + name)
+    movie = QMovie(img_prefix + name)
     movie.start()
     return movie
 

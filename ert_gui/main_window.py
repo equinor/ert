@@ -1,12 +1,6 @@
 import sys
 
-try:
-  from PyQt4.QtCore import QSettings, Qt
-  from PyQt4.QtGui import QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget, QAction, QToolButton
-except ImportError:
-  from PyQt5.QtCore import QSettings, Qt
-  from PyQt5.QtWidgets import QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget, QAction, QToolButton
-
+from ErtQt.Qt import QSettings, Qt, QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget, QAction, QToolButton
 
 from ert_gui.about_dialog import AboutDialog
 
@@ -96,13 +90,14 @@ class GertMainWindow(QMainWindow):
 
 
     def __fetchSettings(self):
+        py3 = sys.version_info[0] == 3
         settings = QSettings("Equinor", "Ert-Gui")
-        if sys.version_info[0] == 2:
-            self.restoreGeometry(settings.value("geometry").toByteArray())
-            self.restoreState(settings.value("windowState").toByteArray())
-        else:
-            self.restoreGeometry(settings.value("geometry"))
-            self.restoreState(settings.value("windowState"))
+        geo = settings.value("geometry")
+        if geo:
+            self.restoreGeometry(geo if py3 else geo.toByteArray())
+        wnd = settings.value("windowState")
+        if wnd:
+            self.restoreState   (wnd if py3 else wnd.toByteArray())
 
 
     def setWidget(self, widget):

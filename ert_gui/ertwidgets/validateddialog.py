@@ -15,13 +15,7 @@
 #  for more details.
 import sys
 
-try:
-  from PyQt4.QtCore import Qt, QSize
-  from PyQt4.QtGui import QDialog, QColor, QFormLayout, QLabel, QWidget, QDialogButtonBox, QLineEdit, QComboBox, QLayout
-except ImportError:
-  from PyQt5.QtCore import Qt, QSize
-  from PyQt5.QtWidgets import QDialog, QFormLayout, QLabel, QWidget, QDialogButtonBox, QLineEdit, QComboBox, QLayout
-  from PyQt5.QtGui import QColor
+from ErtQt.Qt import Qt, QSize, QDialog, QColor, QFormLayout, QLabel, QWidget, QDialogButtonBox, QLineEdit, QComboBox, QLayout
 
 
 class ValidatedDialog(QDialog):

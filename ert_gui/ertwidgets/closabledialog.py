@@ -16,12 +16,7 @@
 
 import sys
 
-try:
-  from PyQt4.QtCore import Qt
-  from PyQt4.QtGui import  QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout
-except ImportError:
-  from PyQt5.QtCore import Qt
-  from PyQt5.QtWidgets import  QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout 
+from ErtQt.Qt import Qt, QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout
 
 
 class ClosableDialog(QDialog):

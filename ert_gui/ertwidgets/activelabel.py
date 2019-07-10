@@ -1,10 +1,6 @@
 import sys
 
-try:
-  from PyQt4.QtGui import QLabel, QFont
-except ImportError:
-  from PyQt5.QtWidgets import QLabel
-  from PyQt5.QtGui import QFont
+from ErtQt import QLabel, QFont
 
 from ert_gui.ertwidgets import addHelpToWidget
 

@@ -16,10 +16,7 @@
 from functools import partial
 import sys
 
-try:
-  from PyQt4.QtGui import QDoubleSpinBox, QWidget, QFormLayout, QCheckBox, QLineEdit, QHBoxLayout, QSpinBox, QLabel
-except ImportError:
-  from PyQt5.QtWidgets import QDoubleSpinBox, QWidget, QFormLayout, QCheckBox, QLineEdit, QHBoxLayout, QSpinBox, QLabel
+from ErtQt.Qt import QDoubleSpinBox, QWidget, QFormLayout, QCheckBox, QLineEdit, QHBoxLayout, QSpinBox, QLabel
 
 from ert_gui.ertwidgets.models.analysismodulevariablesmodel import AnalysisModuleVariablesModel
 

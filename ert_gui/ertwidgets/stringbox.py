@@ -16,11 +16,7 @@
 
 import sys
 
-try:
-  from PyQt4.QtGui import QPalette, QLineEdit
-except ImportError:
-  from PyQt5.QtWidgets import QLineEdit
-  from PyQt5.QtGui import QPalette
+from ErtQt.Qt import QPalette, QLineEdit
 
 from ert_gui.ertwidgets import ValidationSupport, addHelpToWidget
 from ert_gui.ertwidgets.models.valuemodel import ValueModel

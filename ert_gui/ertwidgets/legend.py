@@ -1,12 +1,7 @@
 import sys
 
-try:
-  from PyQt4.QtCore import QSize
-  from PyQt4.QtGui import QWidget, QPainter, QHBoxLayout, QLabel
-except ImportError:
-  from PyQt5.QtCore import QSize
-  from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel
-  from PyQt5.QtGui import QPainter
+from ErtQt.Qt import QSize, QWidget, QPainter, QHBoxLayout, QLabel
+
 
 class LegendMarker(QWidget):
     """A widget that shows a colored box"""

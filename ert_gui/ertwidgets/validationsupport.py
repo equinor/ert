@@ -1,12 +1,7 @@
 import sys
 
-try:
-  from PyQt4.QtCore import Qt, QPoint, QObject, pyqtSignal
-  from PyQt4.QtGui import QWidget, QVBoxLayout, QSizePolicy, QFrame, QColor, QLabel
-except ImportError:
-  from PyQt5.QtCore import Qt, QPoint, QObject, pyqtSignal
-  from PyQt5.QtWidgets import QWidget, QVBoxLayout, QSizePolicy, QFrame, QLabel
-  from PyQt5.QtGui import QColor
+from ErtQt.Qt import Qt, QPoint, QObject, pyqtSignal, QWidget, QVBoxLayout, QSizePolicy, QFrame, QColor, QLabel
+
 
 class ErrorPopup(QWidget):
     error_template = ("<html>"
