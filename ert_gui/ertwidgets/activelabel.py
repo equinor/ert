@@ -1,6 +1,6 @@
 import sys
 
-from ErtQt import QLabel, QFont
+from ErtQt.Qt import QLabel, QFont
 
 from ert_gui.ertwidgets import addHelpToWidget
 
