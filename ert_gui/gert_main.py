@@ -113,10 +113,10 @@ import sys
 
 try:
   from PyQt4.QtCore import Qt, QLocale
-  from PyQt4.QtGui import QApplication, QFileDialog
+  from PyQt4.QtGui import QApplication, QFileDialog, QMessageBox
 except ImportError:
   from PyQt5.QtCore import Qt, QLocale
-  from PyQt5.QtWidgets import QApplication, QFileDialog
+  from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox
 
 
 from ert_gui.ert_splash import ErtSplash
@@ -265,9 +265,13 @@ def main(argv):
     window.activateWindow()
     window.raise_()
     ResLog.log(3, "Versions: ecl:%s    res:%s    ert:%s" % (ecl.__version__, res.__version__, ert_gui.__version__))
+    
+    if not ert._real_enkf_main().have_observations():
+        em = QMessageBox.warning(window, "Warning!", "No observations loaded. Model update algorithms disabled!")
+        
+    
     finished_code = app.exec_()
     sys.exit(finished_code)
-
 
 
 if __name__ == "__main__":
