@@ -8,6 +8,7 @@ import res
 from res.util import ResLog
 
 import argparse
+import logging
 
 
 def setup_fs(ert, target="default"):
@@ -139,6 +140,10 @@ def main():
 
     config = resconfig(config_file)
     ert = EnKFMain(config)
+
+    if not ert._real_enkf_main().have_observations() and mode == 'ensemble_smoother':
+        logging.error("No observations loaded. Unable to perform model update.")
+        return 
 
     if mode == "test_run":
         _test_run(ert)
