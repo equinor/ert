@@ -186,6 +186,7 @@ class _RealEnKFMain(BaseCClass):
     _get_history_length = ResPrototype("int enkf_main_get_history_length(enkf_main)")
     _get_observations = ResPrototype("void enkf_main_get_observations(enkf_main, char*, int, long*, double*, double*)")
     _get_observation_count = ResPrototype("int enkf_main_get_observation_count(enkf_main, char*)")
+    _have_observations = ResPrototype("bool enkf_main_have_obs(enkf_main)")
     _iget_state = ResPrototype("enkf_state_ref enkf_main_iget_state(enkf_main, int)")
     _get_workflow_list = ResPrototype("ert_workflow_list_ref enkf_main_get_workflow_list(enkf_main)")
     _get_hook_manager = ResPrototype("hook_manager_ref enkf_main_get_hook_manager(enkf_main)")
@@ -345,6 +346,9 @@ class _RealEnKFMain(BaseCClass):
     def getObservations(self):
         """ @rtype: EnkfObs """
         return self._get_obs( ).setParent(self)
+
+    def have_observations(self):
+        return self._have_observations()
 
     def loadObservations(self , obs_config_file , clear = True):
         return self._load_obs(obs_config_file , clear)
