@@ -8,9 +8,14 @@ Keywords for the configuration file
 
 General overview
 ----------------
-The enkf application is started with a single argument, which is the name of the
-configuration file to be used. The enkf configuration file serves several
-purposes, which are:
+
+The ERT application is started with two arguments:
+
+* the program mode {gui, cli, text, and shell} to launch ERT gui, ERT command line interface, 
+ERT text mode and ERT shell mode, respectively. Shell and text are deprecated, use cli instead.
+* the name of the configuration file.
+
+The ERT configuration file serves several purposes, which are:
 
 * Defining which ECLIPSE model to use, i.e. giving a data, grid and schedule file.
 * Defining which observation file to use.
@@ -24,7 +29,7 @@ arguments that are unique to the particular keyword. Except for the DEFINE
 keyword, ordering of the keywords is not significant. Similarly to ECLIPSE data
 files, lines starting with "--" are treated as comments.
 
-The keywords in the enkf configuration file can roughly be divded into two
+The keywords in the ERT configuration file can roughly be divded into two
 groups:
 
 * Basic required keywords not related to parametrization. I.e., keywords giving
@@ -67,7 +72,7 @@ Keyword name                                                        	Required by
 :ref:`ENKF_KERNEL_PARAM <enkf_kernel_param>`                        	NO                    			1
 :ref:`ENKF_LOCAL_CV <enkf_local_cv>`                                	NO                    			FALSE                 		Should we estimate the subspace dimenseion using Cross-Validation
 :ref:`ENKF_MERGE_OBSERVATIONS <enkf_merge_observations>`            	NO                    			FALSE                 		Should observations from many times be merged together
-:ref:`ENKF_MODE <enkf_mode>`                                        	NO                    			STANDARD              		Which EnKF should be used
+:ref:`ENKF_MODE <enkf_mode>`                                        	NO                    			STANDARD              		Which updating scheme should be used
 :ref:`ENKF_PEN_PRESS <enkf_pen_press>`                              	NO                    			FALSE                 		Should we want to use a penalised PRESS statistic in model selection? 
 :ref:`ENKF_RERUN <enkf_rerun>`                                      	NO                    			FALSE                 		Should the simulations be restarted from time zero after each update. 
 :ref:`ENKF_SCALING <enkf_scaling>`                                  	NO                    			TRUE           		       	Do we want to normalize the data ensemble to have unit variance? 
@@ -133,27 +138,26 @@ Keyword name                                                        	Required by
 :ref:`TORQUE_QUEUE  <torque_queue>` 					NO 									... 
 :ref:`TIME_MAP  <time_map>`       					NO 									Ability to manually enter a list of dates to establish report step <-> dates mapping.
 :ref:`UMASK <umask>`  							NO 									Control the permissions on files created by ERT. 
-:ref:`UPDATE_LOG_PATH  <update_log_path>` 				NO 					update_log 			Summary of the EnKF update steps are stored in this directory. 
+:ref:`UPDATE_LOG_PATH  <update_log_path>` 				NO 					update_log 			Summary of the update steps are stored in this directory. 
 :ref:`UPDATE_PATH  <update_path>` 					NO 									Modify a UNIX path variable like LD_LIBRARY_PATH.
 :ref:`UPDATE_SETTINGS <update_settings>` 				NO 					  				Possibility to configure some common aspects of the Smoother update.|
 :ref:`WORKFLOW_JOB_DIRECTORY  <workflow_job_directory>` 		NO 									Directory containing workflow jobs. 
 =====================================================================	======================================	============================== 	==============================================================================================================================================
 
 
-:ref:` <>`
 
 Basic required keywords
 -----------------------
 .. _basic_required_keywords:
 
-These keywords must be set to make the enkf function properly.
+These keywords must be set to make ERT function properly.
 
 .. _data_file:
 .. topic:: DATA_FILE
 
 	| This is the name of ECLIPSE data file used to control the simulations. The
 	data file should be prepared according to the guidelines given in Preparing an
-	ECLIPSE reservoir model for use with enkf.
+	ECLIPSE reservoir model for use with ERT.
 	
 	*Example:*
 
@@ -202,7 +206,7 @@ These keywords must be set to make the enkf function properly.
 
 	This is the name of an existing GRID/EGRID file for your ECLIPSE model. If you
 	had to create a new grid file when preparing your ECLIPSE reservoir model for
-	use with enkf, this should point to the new .EGRID file.
+	use with ERT, this should point to the new .EGRID file.
 
 	*Example:*
 
@@ -231,7 +235,7 @@ These keywords must be set to make the enkf function properly.
 
 	This keyword should be the name a text file containing the SCHEDULE section of
 	the ECLIPSE data file. It should be prepared in accordance with the guidelines
-	given in Preparing an ECLIPSE reservoir model for use with enkf. This SCHEDULE
+	given in Preparing an ECLIPSE reservoir model for use with ERT. This SCHEDULE
 	section will be used to control the ECLIPSE simulations. You can optionally
 	give a second filename, which is the name of file which will be written into
 	the directories for running ECLIPSE.
@@ -256,7 +260,7 @@ Basic optional keywords
 
 These keywords are optional. However, they serve many useful purposes, and it is
 recommended that you read through this section to get a thorough idea of what's
-possible to do with the enkf application.
+possible to do with ERT.
 
 .. _data_kw:
 .. topic:: DATA_KW
@@ -273,7 +277,7 @@ possible to do with the enkf application.
 		-- when running the ECLIPSE jobs.
 		DATA_KW  MY_PATH  /mnt/my_own_disk/my_reservoir_model
 
-	The DATA_KW keyword is of course optional. Note also that the enkf has some
+	The DATA_KW keyword is of course optional. Note also that ERT has some
 	built in magic strings.
 
 .. _delete_runpath:
@@ -311,7 +315,7 @@ possible to do with the enkf application.
 	not now in advance how long the simulation is supposed to be,
 	it is therefor impossible beforehand to determine which
 	restart file number should be used as target file, and the
-	procedure used for EnKF runs can not be used to verify that an
+	procedure used for Smoother runs can not be used to verify that an
 	ECLIPSE simulation has run to the end.
 
 	By using the END_DATE keyword you can tell ERT that the
@@ -334,7 +338,7 @@ possible to do with the enkf application.
 .. topic:: ENSPATH
 
 	The ENSPATH should give the name of a folder that will be used
-	for storage by the enkf application. Note that the contents of
+	for storage by ERT. Note that the contents of
 	this folder is not intended for human inspection. By default,
 	ENSPATH is set to "storage".
 
@@ -411,7 +415,7 @@ possible to do with the enkf application.
 .. _install_job:
 .. topic:: INSTALL_JOB
 
-	The INSTALL_JOB keyword is used to learn the enkf application how to run
+	The INSTALL_JOB keyword is used to instruct ERT how to run
 	external applications and scripts, i.e. defining a job. After a job has been
 	defined with INSTALL_JOB, it can be used with the FORWARD_MODEL keyword. For
 	example, if you have a script which generates relative permeability curves
@@ -432,7 +436,7 @@ possible to do with the enkf application.
 		INSTALL_JOB LOMELAND jobs/lomeland.txt
 
 	The configuration file used to specify an external job is easy to use and very
-	flexible. It is documented in Customizing the simulation workflow in enkf.
+	flexible. It is documented in Customizing the simulation workflow in ERT.
 
 	The INSTALL_JOB keyword is optional.
 
@@ -441,7 +445,7 @@ possible to do with the enkf application.
 
 	The OBS_CONFIG key should point to a file defining observations and associated
 	uncertainties. The file should be in plain text and formatted according to the
-	guidelines given in Creating an observation file for use with enkf.
+	guidelines given in Creating an observation file for use with ERT.
 
 	*Example:*
 
@@ -456,10 +460,10 @@ possible to do with the enkf application.
 .. _result_path:
 .. topic:: RESULT_PATH
 
-	The enkf application will print some simple tabulated results at each report
+	ERT will print some simple tabulated results at each report
 	step. The RESULT_PATH keyword should point to a folder where the tabulated
 	results are to be written. It can contain a %d specifier, which will be
-	replaced with the report step by enkf. The default value for RESULT_PATH is
+	replaced with the report step. The default value for RESULT_PATH is
 	"results/step_%d".
 
 	*Example:*
@@ -476,7 +480,7 @@ possible to do with the enkf application.
 
 	The RUNPATH keyword should give the name of the folders where the ECLIPSE
 	simulations are executed. It should contain at least one %d specifier, which
-	will be replaced by the realization number when the enkf creates the folders.
+	will be replaced by the realization number when ERT creates the folders.
 	Optionally, it can contain one more %d specifier, which will be replaced by
 	the iteration number.
 
@@ -595,7 +599,7 @@ Parameterization keywords
 The keywords in this section are used to define a parametrization of the ECLIPSE
 model. I.e., defining which parameters to change in a sensitivity analysis
 and/or history matching project. For some parameters, it necessary to specify a
-prior distribution. See Prior distributions available in enkf for a complete
+prior distribution. See Prior distributions available in ERT for a complete
 list of available priors.
 
 .. _field:
@@ -641,8 +645,8 @@ list of available priors.
 
 		FIELD  ID PARAMETER   <ECLIPSE_FILE>  INIT_FILES:/path/%d  MIN:X MAX:Y OUTPUT_TRANSFORM:FUNC INIT_TRANSFORM:FUNC  
 
-	Here ID is again an arbitrary string, ECLIPSE_FILE is the name of the file the
-	enkf will export this field to when running simulations. Note that there
+	Here ID is again an arbitrary string, ECLIPSE_FILE is the name of the file ERT
+	will export this field to when running simulations. Note that there
 	should be an IMPORT statement in the ECLIPSE data file corresponding to the
 	name given with ECLIPSE_FILE. INIT_FILES is a filename (with an embedded %d)
 	to load the initial field from. Can be RMS ROFF format, ECLIPSE restart format
@@ -689,7 +693,7 @@ list of available priors.
 	requires that the ECLIPSE datafile contains an IMPORT statement. The advantage
 	with using a binary format is that the files are smaller, and reading/writing
 	is faster than for plain text files. If you give the ECLIPSE_FILE with the
-	extension .grdecl (arbitrary case), enkf will produce ordinary .grdecl files,
+	extension .grdecl (arbitrary case), ERT will produce ordinary .grdecl files,
 	which are loaded with an INCLUDE statement. This is probably what most users
 	are used to beforehand - but we recomend the IMPORT form.
 
@@ -702,14 +706,14 @@ list of available priors.
 
 	::
 
-		FIELD   ID  GENERAL    FILE_GENERATED_BY_ENKF  FILE_LOADED_BY_ENKF    <OPTIONS>
+		FIELD   ID  GENERAL    FILE_GENERATED_BY_ERT  FILE_LOADED_BY_ERT    <OPTIONS>
 
 	The OPTIONS argument is the same as for the parameter field.
 
 .. _gen_data:
 .. topic:: GEN_DATA
 
-	The GEN_DATA keyword is used when estimating data types which enkf does not
+	The GEN_DATA keyword is used when estimating data types which ERT does not
 	know anything about. GEN_DATA is very similar to GEN_PARAM, but GEN_DATA is
 	used for data which are updated/created by the forward model like e.g. seismic
 	data. In the main configuration file the input for a GEN_DATA instance is as
@@ -739,9 +743,9 @@ list of available priors.
 
 	**Optional GEN_DATA options**
 
-	* ECL_FILE - This is the name of file written by enkf to be read by the
+	* ECL_FILE - This is the name of file written by ERT to be read by the
     forward model.
-	* OUTPUT_FORMAT - The format of the files written by enkf and read by the
+	* OUTPUT_FORMAT - The format of the files written by ERT and read by the
     forward model, valid values are ASCII, BINARY_DOUBLE, BINARY_FLOAT and
     ASCII_TEMPLATE. If you use ASCII_TEMPLATE you must also supply values for
     TEMPLATE and TEMPLATE_KEY.
@@ -831,7 +835,7 @@ list of available priors.
 
 	Let us consider an example where the GEN_KW parameter type is used to estimate
 	pore volume multipliers. We would then declare a GEN_KW instance in the main
-	enkf configuration file:
+	ERT configuration file:
 
 	::
 
@@ -874,14 +878,14 @@ list of available priors.
 	In general, the first keyword on each line in the parameter configuration file
 	defines a key, which when found in the template file enclosed in '<' and '>',
 	is replaced with a value. The rest of the line defines a prior distribution
-	for the key. See Prior distributions available in enkf for a list of available
+	for the key. See Prior distributions available in ERT for a list of available
 	prior distributions.
 	
 	**Example: Using GEN_KW to estimate fault transmissibility multipliers**
 
-	Previously enkf supported a datatype MULTFLT for estimating fault
+	Previously ERT supported a datatype MULTFLT for estimating fault
 	transmissibility multipliers. This has now been depreceated, as the
-	functionality can be easily achieved with the help of GEN_KW. In th enkf
+	functionality can be easily achieved with the help of GEN_KW. In the ERT
 	config file:
 
 	::
@@ -967,7 +971,7 @@ list of available priors.
 	Some external Software (e.g. Cohiba) makes a large vector of random numbers
 	which will serve as input to the forward model. (It is no requirement that the
 	parameter set is large, but if it only consists of a few parameters the GEN_KW
-	type will be easier to use.) We want to update this parameter with enkf. In
+	type will be easier to use.) We want to update this parameter with ERT. In
 	the main configuration file the input for a GEN_PARAM instance is as follows:
 
 	::
@@ -978,8 +982,8 @@ list of available priors.
 	is the name of the file which is written into the run directories. The three
 	arguments GEN_PARAM, ID and ECLIPSE_FILE must be the three first arguments. In
 	addition you must have three additional arguments, INPUT_FORMAT, OUTPUT_FORMAT
-	and INIT_FILES. INPUT_FORMAT is the format of the files enkf should load to
-	initialize, and OUTPUT_FORMAT is the format of the files enkf writes for the
+	and INIT_FILES. INPUT_FORMAT is the format of the files ERT should load to
+	initialize, and OUTPUT_FORMAT is the format of the files ERT writes for the
 	forward model. The valid values are:
 
 	* ASCII - This is just text file with formatted numbers.
@@ -1000,7 +1004,7 @@ list of available priors.
 	**Regarding templates:** If you use OUTPUT_FORMAT:ASCII_TEMPLATE you must also
    supply the arguments TEMPLATE:/template/file and KEY:MaGiCKEY. The template
    file is an arbitrary existing text file, and KEY is a magic string found in
-   this file. When enkf is running the magic string is replaced with parameter
+   this file. When ERT is running the magic string is replaced with parameter
    data when the ECLIPSE_FILE is written to the directory where the simulation
    is run from. Consider for example the follwing configuration:
 
@@ -1020,7 +1024,7 @@ list of available priors.
 		Footer line1
 		Footer line2
 
-	When enkf is running the string Magic123 is replaced with parameter values,
+	When ERT is running the string Magic123 is replaced with parameter values,
 	and the resulting file will look like this:
 
 	::
@@ -1442,8 +1446,8 @@ Advanced optional keywords
 --------------------------
 .. _advanced_optional_keywords:
 
-The keywords in this section, controls advanced features of the enkf
-application. Insight in the internals of the enkf application and/or ECLIPSE may
+The keywords in this section, controls advanced features of ERT. Insight in 
+the internals of ERT and/or ECLIPSE may
 be required to fully understand their effect. Moreover, many of these keywords
 are defined in the site configuration, and thus optional to set for the user,
 but required when installing the enkf application at a new site.
@@ -1537,7 +1541,7 @@ Keywords related to running the forward model
 	takes the value ECLIPSE100.
 
 	The FORWARD_MODEL keyword expects a series of keywords, each defined with
-	INSTALL_JOB. The enkf will execute the jobs in sequentially in the order they
+	INSTALL_JOB. ERT will execute the jobs in sequentially in the order they
 	are entered. Note that the ENKF_SCHED_FILE keyword can be used to change the
 	FORWARD_MODEL for sub-sequences of the run.
 
@@ -1562,20 +1566,20 @@ Keywords related to running the forward model
 
 	For advanced jobs you can pass string arguments to the job using a KEY=VALUE
 	based approach, this is further described in: passing arguments. In available
-	jobs in enkf you can see a list of the jobs which are available.
+	jobs in ERT you can see a list of the jobs which are available.
 
 
 .. _job_script:
 .. topic:: JOB_SCRIPT
 
-	Running the forward model from enkf is a multi-level process which can be
+	Running the forward model from ERT is a multi-level process which can be
 	summarized as follows:
 
 	#. A Python module called jobs.py is written and stored in the directory where
      the forward simulation is run. The jobs.py module contains a list of
      job-elements, where each element is a Python representation of the code
      entered when installing the job.
-	#. The enkf application submits a Python script to the enkf queue system, this
+	#. ERT submits a Python script to the enkf queue system, this
      script then loads the jobs.py module to find out which programs to run, and
      how to run them.
 	#. The job_script starts and monitors the individual jobs in the jobs.py
@@ -1819,20 +1823,20 @@ Configuring the RSH queue
 .. _rsh_host:
 .. topic:: RSH_HOST
 
-	You can run the forward model in enkf on workstations using remote-shell
+	You can run the forward model on workstations using remote-shell
 	commands. To use the RSH queue system you must first set a list of computers
-	which enkf can use for running jobs:
+	which ERT can use for running jobs:
 
 	::
 
 		RSH_HOST   computer1:2  computer2:2   large_computer:8
 
-	Here you tell enkf that you can run on three different computers: computer1,
-	computer2 and large_computer. The two first computers can accept two jobs from
-	enkf, and the last can take eight jobs. Observe the following when using RSH:
+	Here you tell ERT that you can run on three different computers: computer1,
+	computer2 and large_computer. The two first computers can accept two jobs, 
+        and the last can take eight jobs. Observe the following when using RSH:
 
 	You must have passwordless login to the computers listed in RSH_HOST otherwise
-	it will fail hard. enkf will not consider total load on the various computers;
+	it will fail hard. ERT does not consider total load on the various computers;
 	if have said it can take two jobs, it will get two jobs, irrespective of the
 	existing load.
 
@@ -2057,9 +2061,9 @@ instance, and are not applied to the shell.
 .. _setenv:
 .. topic:: SETENV
 
-	You can use the SETENV keyword to alter the unix environment enkf is running
+	You can use the SETENV keyword to alter the unix environment ERT is running
 	in. This is probably most relevant for setting up the environment for the
-	external jobs invoked by enkf.
+	external jobs invoked by ERT.
 
 	*Example:*
 
