@@ -70,7 +70,7 @@ Example: configuring GEN_KW to estimate MULTPV values
 
 Let us consider an example where the GEN_KW parameter type is used to estimate
 pore volume multipliers in an Eclipse model. We could then declare a GEN_KW
-instance in the main enkf configuration file:
+instance in the main ERT configuration file:
 ::
 
   GEN_KW PAR_MULTPV multpv_template.txt multpv.txt multpv_priors.txt
@@ -112,7 +112,7 @@ configuration file multpv_priors.txt could look like this: ::
 In general, the first keyword on each line in the parameter configuration file
 defines a key, which when found in the template file enclosed in '<' and '>', is
 replaced with a value. The rest of the line defines a prior distribution for the
-key. See Prior distributions available in enkf for a list of available prior
+key. See Prior distributions available in ERT for a list of available prior
 distributions. The various prior distributions available for the ``GEN_KW``
 keyword are here :ref:`prior distributions available in ERT
 <prior_distributions>`
@@ -561,7 +561,7 @@ situation:
 Some external Software (e.g. Cohiba) makes a large vector of random numbers
 which will serve as input to the forward model. (It is no requirement that the
 parameter set is large, but if it only consists of a few parameters the GEN_KW
-type will be easier to use.) We want to update this parameter with enkf. In
+type will be easier to use.) We want to update this parameter with ERT. In
 the main configuration file the input for a GEN_PARAM instance is as follows:
 
 ::
@@ -572,8 +572,8 @@ here ID is the usual unique string identifying this instance and ECLIPSE_FILE is
 the name of the file which is written into the run directories. The three
 arguments GEN_PARAM, ID and ECLIPSE_FILE must be the three first arguments. In
 addition you must have three additional arguments, INPUT_FORMAT, OUTPUT_FORMAT
-and INIT_FILES. INPUT_FORMAT is the format of the files enkf should load to
-initialize, and OUTPUT_FORMAT is the format of the files enkf writes for the
+and INIT_FILES. INPUT_FORMAT is the format of the files ERT should load to
+initialize, and OUTPUT_FORMAT is the format of the files ERT writes for the
 forward model. The valid values are:
 
 * ASCII - This is just text file with formatted numbers.
@@ -592,7 +592,7 @@ Regarding the different formats - observe the following:
 
 If you use OUTPUT_FORMAT:ASCII_TEMPLATE you must also supply the arguments
 TEMPLATE:/template/file and KEY:MaGiCKEY. The template file is an arbitrary
-existing text file, and KEY is a magic string found in this file. When enkf is
+existing text file, and KEY is a magic string found in this file. When ERT is
 running the magic string is replaced with parameter data when the ECLIPSE_FILE
 is written to the directory where the simulation is run from. Consider for
 example the follwing configuration:
