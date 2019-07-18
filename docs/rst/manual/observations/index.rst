@@ -38,8 +38,8 @@ The HISTORY_OBSERVATION keyword
 
 The keyword HISTORY_OBSERVATION is used to condition on observations
 from the WCONHIST and WCONINJH keywords in schedule file provided to
-the enkf project (or alternatively an ECLIPSE summary file if you have
-changed the HISTORY_SOURCE keyword in the enkf project). The keyword
+the ERT project (or alternatively an ECLIPSE summary file if you have
+changed the HISTORY_SOURCE keyword in the ERT project). The keyword
 is typically used to condition on production and injection rates for
 groups and wells, as well as bottom hole and tubing head pressures. An
 observation entered with the HISTORY_OBSERVATION keyword will be
@@ -348,7 +348,7 @@ The GENERAL_OBSERVATION keyword
 The GENERAL_OBSERVATION keyword is used together with the GEN_DATA and
 GEN_PARAM type. This pair of observation and data types are typically
 used when you want to update something special which does not fit into
-any of the predefined enkf types. The ERT application just treats
+any of the predefined types. The ERT application just treats
 GENERAL_OBSERVATION (and also GEN_DATA) as a range of number with no
 particular structure, this is very flexible, but of course also a bit
 more complex to use::
