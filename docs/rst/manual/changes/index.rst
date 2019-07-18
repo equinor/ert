@@ -205,7 +205,7 @@ Others:
   - Improved automatic testing on FMU tutorial.
 
 2.4 ert forward models
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 PR: 114 - 126
 
 New functionality:
