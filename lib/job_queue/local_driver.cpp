@@ -90,11 +90,6 @@ void local_driver_free_job( void * __job ) {
 
 void local_driver_kill_job( void * __driver , void * __job) {
   local_job_type    * job  = local_job_safe_cast( __job );
-
-  char buff[100];
-  snprintf(buff, sizeof(buff), "pkill -P %d", job->child_process);
-  system(buff);
-
   kill( job->child_process , SIGTERM );
 }
 
