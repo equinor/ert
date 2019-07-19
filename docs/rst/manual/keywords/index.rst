@@ -123,6 +123,7 @@ Keyword name                                                        	Required by
 :ref:`OBS_CONFIG <obs_config>` 						NO 									File specifying observations with uncertainties. 
 :ref:`PLOT_SETTINGS <plot_driver>` 					NO 					  				Possibility to configure some aspects of plotting.
 :ref:`PRE_CLEAR_RUNPATH <pre_clear_runpath>` 				NO 					FALSE 				Should the runpath be cleared before initializing? 
+:ref:`QUEUE_OPTION <queue_option>` 					NO 									Set options for an ERT queue system 
 :ref:`QUEUE_SYSTEM <queue_system>` 					NO 									System used for running simulation jobs. 
 :ref:`REFCASE <refcase>` 						NO (see HISTORY_SOURCE and SUMMARY) 					Reference case used for observations and plotting. 
 :ref:`REFCASE_LIST <refcase_list>` 					NO 									Full path to Eclipse .DATA files containing completed runs (which you can add to plots) 
@@ -1606,6 +1607,9 @@ Keywords related to running the forward model
 	the forward model. This should normally be set in the site wide configuration
 	file.
 
+.. _queue_option:
+.. topic:: QUEUE_OPTION
+        Keyword used to set options for a queue (LSF, RSH, TORQUE, LOCAL), such like queue 
 
 .. _queue_system:
 .. topic:: QUEUE_SYSTEM
