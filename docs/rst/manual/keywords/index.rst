@@ -20,7 +20,7 @@ The ERT application is started from the command line with two arguments:
 
 ::
 
- > ert gui mysmoother.ert
+ > ert gui smoother.ert
 
 
 The ERT configuration file serves several purposes, which are:
@@ -1846,7 +1846,11 @@ Configuring the RSH queue
 
 	::
 
-		MAX_RUNNING_RSH
+		RSH_COMMAND /usr/bin/ssh
+
+
+.. _max_running_rsh:
+.. topic:: MAX_RUNNING_RSH
 
 	The keyword MAX_RUNNING_RSH controls the maximum number of simultaneous jobs
 	running when using the RSH option in QUEUE_SYSTEM. It MAX_RUNNING_RSH exceeds
