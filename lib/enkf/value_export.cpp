@@ -24,7 +24,11 @@
 #include <ert/util/double_vector.h>
 
 #include <ert/enkf/value_export.hpp>
+#include <iomanip>
 #include <iostream>
+#include <chrono>
+#include <string>
+#include <sstream>
 
 #define VALUE_EXPORT_TYPE_ID     5741761
 
@@ -39,11 +43,32 @@ struct value_export_struct {
 
 
 static void backup_if_existing(const char * filename) {
-  if(util_file_exists(filename)) {
-    char * backup_file_name = util_alloc_filename(NULL, filename, "old");
-    util_move_file(filename, backup_file_name);
-    free(backup_file_name);
-  }
+    if(not util_file_exists(filename))
+        return;
+    auto const backup_filename = [filename]() {
+        auto const tt = std::chrono::system_clock::to_time_t(
+            std::chrono::system_clock::now());
+        auto constexpr format = "%Y-%m-%d_%H-%M-%SZ";
+        auto fname_stream = std::stringstream();
+        fname_stream
+            << filename
+            << "_backup_"
+            << std::put_time(gmtime(&tt), format);
+        for(int i = 0;
+            util_file_exists(fname_stream.str().c_str()) && i < 100;
+            ++i
+        ) {
+            fname_stream.clear();
+            fname_stream
+                << filename
+                << "_backup_"
+                << std::put_time(gmtime(&tt), format)
+                << "_"
+                << i;
+        }
+        return fname_stream.str();
+    }();
+    util_move_file(filename, backup_filename.c_str());
 }
 
 
