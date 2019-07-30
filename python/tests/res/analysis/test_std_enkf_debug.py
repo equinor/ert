@@ -16,6 +16,8 @@
 import sys
 import os
 
+import pytest
+
 from tests import ResTest
 from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
@@ -33,10 +35,14 @@ class StdEnKFDebugTest(ResTest):
     def setUp(self):
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
         if sys.platform.lower() == 'darwin':
-            self.libname = find_file(self.SOURCE_ROOT, "std_enkf_debug.dylib")
+            lib_name = "std_enkf_debug.dylib"
         else:
-            self.libname = find_file(self.SOURCE_ROOT, "std_enkf_debug.so")
-        self.module = AnalysisModule(lib_name = self.libname)
+            lib_name = "std_enkf_debug.so"
+        self.libname = find_file(self.SOURCE_ROOT, lib_name)
+        if self.libname:
+            self.module = AnalysisModule(lib_name = self.libname)
+        else:
+            pytest.skip('Debug library not found')
 
 
     def toggleKey(self, key):
