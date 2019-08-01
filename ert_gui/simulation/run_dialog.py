@@ -33,7 +33,7 @@ from ert_gui.ertwidgets import resourceMovie, Legend
 from ert_gui.simulation import Progress, SimpleProgress, DetailedProgressWidget
 from ert_gui.simulation.models import BaseRunModel, SimulationsTracker
 from ert_gui.tools.plot.plot_tool import PlotTool
-
+from res.job_queue import JobStatusType
 from ecl.util.util import BoolVector
 
 class RunDialog(QDialog):
@@ -270,7 +270,11 @@ class RunDialog(QDialog):
 
 
     def killJobs(self):
-        kill_job = QMessageBox.question(self, "Kill simulations?", "Are you sure you want to kill the currently running simulations?", QMessageBox.Yes | QMessageBox.No )
+
+        msg =  "Are you sure you want to kill the currently running simulations?"
+        if self._run_model.getQueueStatus().get(JobStatusType.JOB_QUEUE_UNKNOWN, 0) > 0:
+            msg += "\n\nKilling a simulation with unknown status will not kill the realizations already submitted!"
+        kill_job = QMessageBox.question(self, "Kill simulations?",msg, QMessageBox.Yes | QMessageBox.No )
 
         if kill_job == QMessageBox.Yes:
             if self._run_model.killAllSimulations():
