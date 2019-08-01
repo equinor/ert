@@ -67,6 +67,9 @@ const char * job_status_get_name(job_status_type status) {
   case JOB_QUEUE_DO_KILL_NODE_FAILURE:
     return "JOB_QUEUE_DO_KILL_NODE_FAIURE";
     break;
+  case JOB_QUEUE_UNKNOWN:
+    return "JOB_QUEUE_UNKNOWN";
+    break;
   }
 
   util_abort("%s: internal error", __func__);

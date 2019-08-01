@@ -634,7 +634,7 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
   {
     char user[32];
     char status[16];
-    FILE *stream = util_fopen(tmp_file , "r");;
+    FILE *stream = util_fopen(tmp_file , "r");
     bool at_eof = false;
     hash_clear(driver->bjobs_cache);
     util_fskip_lines(stream , 1);
@@ -841,8 +841,7 @@ static int lsf_driver_get_job_status_shell(void * __driver , void * __job) {
           res_log_info("Have turned lsf debug info ON.");
         }
         status = lsf_driver_get_bhist_status_shell( driver , job );
-        if (status != JOB_STAT_UNKWN)
-          hash_insert_int( driver->bjobs_cache , job->lsf_jobnr_char , status );
+        hash_insert_int( driver->bjobs_cache , job->lsf_jobnr_char , status );
       }
     }
   }
@@ -879,7 +878,7 @@ job_status_type lsf_driver_convert_status( int lsf_status ) {
     job_status = JOB_QUEUE_EXIT;
     break;
   case JOB_STAT_UNKWN:  // Have lost contact with one of the daemons.
-    job_status = JOB_QUEUE_EXIT;
+    job_status = JOB_QUEUE_UNKNOWN;
     break;
   case JOB_STAT_DONE + JOB_STAT_PDONE: // = 192. JOB_STAT_PDONE: the job had a
                                        // post-execution script which completed

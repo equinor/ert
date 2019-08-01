@@ -33,6 +33,7 @@ class JobStatusType(BaseCEnum):
     JOB_QUEUE_STATUS_FAILURE = None
     JOB_QUEUE_FAILED = None
     JOB_QUEUE_DO_KILL_NODE_FAILURE = None
+    JOB_QUEUE_UNKNOWN = None
 
     @classmethod
     def from_string(cls, string):
@@ -54,3 +55,4 @@ JobStatusType.addEnum("JOB_QUEUE_RUNNING_EXIT_CALLBACK", 2048)
 JobStatusType.addEnum("JOB_QUEUE_STATUS_FAILURE", 4096)
 JobStatusType.addEnum("JOB_QUEUE_FAILED", 8192)
 JobStatusType.addEnum("JOB_QUEUE_DO_KILL_NODE_FAILURE", 16384)
+JobStatusType.addEnum("JOB_QUEUE_UNKNOWN", 32768)

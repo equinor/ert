@@ -76,7 +76,7 @@ void test_status_tr() {
   test_status( JOB_STAT_NULL   , JOB_QUEUE_NOT_ACTIVE );
   test_status( JOB_STAT_DONE   , JOB_QUEUE_DONE );
   test_status( JOB_STAT_EXIT   , JOB_QUEUE_EXIT );
-  test_status( JOB_STAT_UNKWN  , JOB_QUEUE_EXIT );
+  test_status( JOB_STAT_UNKWN  , JOB_QUEUE_UNKNOWN );
   test_status( 192             , JOB_QUEUE_DONE );
 }
 

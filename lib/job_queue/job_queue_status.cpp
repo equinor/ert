@@ -76,6 +76,7 @@ job_queue_status_type * job_queue_status_alloc() {
   status->status_index[12] = JOB_QUEUE_STATUS_FAILURE; //The driver call to get status has failed, job status remains unchanged
   status->status_index[13] = JOB_QUEUE_FAILED; // Job has failed, no more retries, FINAL STATE
   status->status_index[14] = JOB_QUEUE_DO_KILL_NODE_FAILURE; // Job has failed, node should be blacklisted
+  status->status_index[15] = JOB_QUEUE_UNKNOWN; // Unable to get status from submitted job
 
   return status;
 }
