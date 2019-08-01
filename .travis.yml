@@ -10,7 +10,7 @@ os:
 
 osx_image: xcode8.3
 sudo: false
-dist: trusty
+dist: xenial
 
 env:
   global:
@@ -40,15 +40,11 @@ addons:
     packages:
       - liblapack-dev
       - valgrind
-      - gcc-4.8
-      - g++-4.8
       - clang
       - cmake
       - cmake-data
 
 before_install:
-    - if [[ "$CC" == "gcc" ]]; then export CXX="g++-4.8"; fi
-
     - if [[ $PYTHON_VERSION == 2.7 ]]; then
         export TRAVIS_PYTHON_VERSION="2.7";
       else
@@ -74,7 +70,8 @@ before_install:
     - export CONDA_HOME="$HOME/miniconda"
     - export PATH="$CONDA_HOME/bin:$PATH"
     - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-        conda create -n ert_env pyqt=4.11.4 python=2.7 --yes;
+        conda config --set restore_free_channel true;        
+        conda create -n ert_env pyqt=4.11.3 python=2.7 --yes;
       else
         conda create -n ert_env pyqt python=$TRAVIS_PYTHON_VERSION --yes;
       fi

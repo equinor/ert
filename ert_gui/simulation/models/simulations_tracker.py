@@ -5,7 +5,7 @@ class SimulationStateStatus(object):
     COLOR_PENDING = (190,174,212)
     COLOR_RUNNING = (255,255,153)
     COLOR_FAILED  = (255, 200, 200)
-
+    COLOR_UNKNOWN  = (128, 128, 128)
     COLOR_FINISHED   = (127,201,127)
     COLOR_NOT_ACTIVE  = (255, 255, 255)
 
@@ -67,8 +67,11 @@ class SimulationsTracker(object):
         done_flag  = JobStatusType.JOB_QUEUE_DONE | JobStatusType.JOB_QUEUE_SUCCESS
         done_state = SimulationStateStatus("Finished", done_flag, SimulationStateStatus.COLOR_FINISHED)
 
-        self.states = [done_state, failed_state, running_state, pending_state, waiting_state]
-        self.custom_states = [done_state, failed_state, running_state, pending_state, waiting_state]
+        unknown_flag  = JobStatusType.JOB_QUEUE_UNKNOWN
+        unknown_state = SimulationStateStatus("Unknown", unknown_flag, SimulationStateStatus.COLOR_UNKNOWN)
+
+        self.states = [done_state, failed_state, unknown_state, running_state, pending_state, waiting_state]
+        self.custom_states = [done_state, failed_state, running_state, unknown_state, pending_state, waiting_state]
         self.__checkForUnusedEnums()
 
     def getStates(self):
