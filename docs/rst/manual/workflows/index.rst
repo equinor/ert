@@ -68,7 +68,7 @@ example of :code:`ErtScript` which calculates the misfit for all
 observations and prints the result to a text file. All Python scripts
 of this kind must:
 
-  1. Be implemented as a class which iherits from :code:`ErtScript`
+  1. Be implemented as a class which inherits from :code:`ErtScript`
   2. Have a method :code:`run(self)` which does the actual job
 
 
@@ -155,7 +155,7 @@ If you wish to implement your job as a Python class, derived from
 ::
 
    INTERNAL  TRUE                     -- The job will call an internal function of the current running ERT instance.
-   SCRIPT sripts/my_script.py         -- An existing Python script
+   SCRIPT scripts/my_script.py         -- An existing Python script
 
 Observe that the important thing here is the fact that we are writing
 an *internal* Python script; if you are writing an external script to

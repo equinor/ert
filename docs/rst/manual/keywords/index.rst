@@ -64,12 +64,12 @@ Keyword name                                                        	Required by
 :ref:`CASE_TABLE <case_table>`                                      	NO                                          				For running sensitivities you can give the cases descriptive names
 :ref:`CONTAINER <container>`                                        	NO                                          				...
 :ref:`CUSTOM_KW <custom_kw>`                                        	NO                                          				Ability to load arbitrary values from the forward model.
-:ref:`DATA_FILE <data_file>`                                        	YES                                         				Provide an ECLIPSE data file for the problem.
+:ref:`DATA_FILE <data_file>`                                        	NO                                         				Provide an ECLIPSE data file for the problem.
 :ref:`DATA_KW <data_kw>`                                            	NO                                          				Replace strings in ECLIPSE .DATA files
 :ref:`DBASE_TYPE <dbase_type>`                                      	NO                    			BLOCK_FS         	     	Which 'database' system should be used for storage
 :ref:`DEFINE <define>`                                              	NO                                          				Define keywords with config scope
 :ref:`DELETE_RUNPATH <delete_runpath>`                              	NO                                          				Explicitly tell ert to delete the runpath when a job is complete 
-:ref:`ECLBASE <eclbase>`	                                    	YES					        			Define a name for the ECLIPSE simulations.
+:ref:`ECLBASE <eclbase>`	                                    	YES*					        			Define a name for the ECLIPSE simulations. *Either JOBNAME or ECLBASE must be specified
 :ref:`END_DATE <end_date>`                                          	NO                                          				You can tell ERT how lon the simulations should be - for error check
 :ref:`ENKF_ALPHA <enkf_alpha>`                                      	NO                    			1.50                  		Parameter controlling outlier behaviour in EnKF algorithm
 :ref:`ENKF_BOOTSTRAP <enkf_bootstrap>`                              	NO                    			FALSE                 		Should we bootstrap the Kalman gain estimate
@@ -101,7 +101,7 @@ Keyword name                                                        	Required by
 :ref:`ITER_CASE <iter_Case>`                                        	NO                    			IES%d         	        	Case name format - iterated ensemble smoother
 :ref:`ITER_COUNT <iter_count>`                                      	NO                    			4             	        	Number of iterations - iterated ensemble smoother 
 :ref:`ITER_RETRY_COUNT <iter_retry_count>`                          	NO                    			4         	            	Number of retries for a iteration - iterated ensemble smoother 
-:ref:`JOBNAME <jobname>`                                            	NO                                          				Name used for simulation files. An alternative to ECLBASE. 
+:ref:`JOBNAME <jobname>`                                            	YES*                                          				Name used for simulation files. *Either JOBNAME or ECLBASE must be specified.
 :ref:`JOB_SCRIPT <job_script>`                                      	NO                                          				Python script managing the forward model. 
 :ref:`LOAD_SEED <load_seed>`                                        	NO                                          				Load random seed from given file.
 :ref:`LOAD_WORKFLOW <load_workflow>` 				    	NO                             						Load a workflow into ERT. 
