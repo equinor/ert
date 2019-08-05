@@ -19,7 +19,6 @@ class WorkflowDialog(QDialog):
         self.setModal(True)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCancelButtonHint)
 
 
         layout = QVBoxLayout()
