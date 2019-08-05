@@ -187,7 +187,6 @@ class CustomizePlotDialog(QDialog):
 
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCancelButtonHint)
 
         self._tab_map = {}
         self._tab_order = []

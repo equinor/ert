@@ -40,7 +40,6 @@ class AboutDialog(QDialog):
         self.setFixedSize(QSize(600, 480))
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCancelButtonHint)
 
         main_layout = QVBoxLayout()
 
