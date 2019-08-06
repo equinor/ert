@@ -8,8 +8,8 @@ class PathArgument(ArgumentDefinition):
     NOT_A_VALID_PATH = "The argument must be a valid path."
     PATH_DOES_NOT_EXIST = "The argument must be a valid path that exists."
 
-    PATTERN = re.compile("^[\S]+$")
-    PATTERN_WITH_SPACE = re.compile("^[\S| ]+$")
+    PATTERN = re.compile(r"^[\S]+$")
+    PATTERN_WITH_SPACE = re.compile(r"^[\S| ]+$")
 
     DEFINES = {}
 

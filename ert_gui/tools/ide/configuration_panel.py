@@ -121,7 +121,7 @@ class ConfigurationPanel(QWidget):
         print("Start!")
 
     def parseDefines(self, text):
-        pattern = re.compile("[ \t]*DEFINE[ \t]*(\S+)[ \t]*(\S+)")
+        pattern = re.compile(r"[ \t]*DEFINE[ \t]*(\S+)[ \t]*(\S+)")
 
         match = re.findall(pattern, text)
 

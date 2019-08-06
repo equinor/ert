@@ -7,7 +7,7 @@ class NumberListStringArgument(ArgumentDefinition):
     NOT_A_VALID_NUMBER_LIST_STRING = "The input should be of the type: <b><pre>\n\t23,5.5,11,1.01,3\n</pre></b>i.e. numeric values separated by commas."
     VALUE_NOT_A_NUMBER = "The value: '%s' is not a number."
 
-    PATTERN = re.compile("^[0-9\.\-+, \t]+$")
+    PATTERN = re.compile(r"^[0-9\.\-+, \t]+$")
 
     def __init__(self, **kwargs):
         super(NumberListStringArgument, self).__init__(**kwargs)

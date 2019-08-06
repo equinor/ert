@@ -18,7 +18,7 @@ class ProperNameFormatStringArgument(ArgumentDefinition):
                        "</ul>"
 
 
-    PATTERN = re.compile("^[A-Za-z0-9_\-.<>]*(%s)[A-Za-z0-9_\-.<>]*$")
+    PATTERN = re.compile(r"^[A-Za-z0-9_\-.<>]*(%s)[A-Za-z0-9_\-.<>]*$")
 
 
     def __init__(self, **kwargs):

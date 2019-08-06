@@ -7,7 +7,7 @@ class FloatArgument(ArgumentDefinition):
     NOT_FLOAT = "The argument must be a float."
     NOT_IN_RANGE = "The argument is not in range: %s"
 
-    pattern  = re.compile("^[\S]+$")
+    pattern  = re.compile(r"^[\S]+$")
 
     def __init__(self, from_value=None, to_value=None, **kwargs):
         super(FloatArgument, self).__init__(**kwargs)

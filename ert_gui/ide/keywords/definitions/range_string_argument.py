@@ -7,10 +7,9 @@ class RangeStringArgument(ArgumentDefinition):
     NOT_A_VALID_RANGE_STRING = "The input should be of the type: <b><pre>\n\t1,3-5,9,17\n</pre></b>i.e. integer values separated by commas, and dashes to represent ranges."
     VALUE_NOT_IN_RANGE = "A value must be in the range from 0 to %d."
 
-
-    PATTERN = re.compile("^[0-9\-, \t]+$")
-    RANGE_PATTERN = re.compile("^[ \t]*([0-9]+)[ \t]*-[ \t]*([0-9]+)[ \t]*$")
-    NUMBER_PATTERN = re.compile("^[ \t]*([0-9]+)[ \t]*$")
+    PATTERN = re.compile(r"^[0-9\-, \t]+$")
+    RANGE_PATTERN = re.compile(r"^[ \t]*([0-9]+)[ \t]*-[ \t]*([0-9]+)[ \t]*$")
+    NUMBER_PATTERN = re.compile(r"^[ \t]*([0-9]+)[ \t]*$")
 
 
     def __init__(self, max_value=None, **kwargs):
