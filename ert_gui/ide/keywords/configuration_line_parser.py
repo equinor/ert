@@ -3,9 +3,9 @@ from ert_gui.ide.keywords.data import Argument, Keyword
 
 
 class ConfigurationLineParser(object):
-    COMMENT_PATTERN = re.compile(".*?(--.*)")
-    KEYWORD_PATTERN = re.compile("^\s*([A-Z_]+)(\s|--)?")
-    ARGUMENT_PATTERN = re.compile('\s+?(\S+)\s*?')
+    COMMENT_PATTERN = re.compile(r".*?(--.*)")
+    KEYWORD_PATTERN = re.compile(r"^\s*([A-Z_]+)(\s|--)?")
+    ARGUMENT_PATTERN = re.compile(r'\s+?(\S+)\s*?')
 
     def __init__(self):
         super(ConfigurationLineParser, self).__init__()

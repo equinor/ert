@@ -7,7 +7,7 @@ class PercentArgument(ArgumentDefinition):
     NOT_PERCENT = "The argument must be a number followed by % - no space allowed."
     NOT_IN_RANGE = "The argument is not in range: %s"
 
-    pattern = re.compile("^-?[0-9]+(\.[0-9]+)?\%$")
+    pattern = re.compile(r"^-?[0-9]+(\.[0-9]+)?\%$")
 
     def __init__(self, from_value, to_value, **kwargs):
         super(PercentArgument, self).__init__(**kwargs)

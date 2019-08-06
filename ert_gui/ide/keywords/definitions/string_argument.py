@@ -6,8 +6,8 @@ class StringArgument(ArgumentDefinition):
 
     NOT_A_VALID_STRING = "The argument must be a valid string."
 
-    PATTERN = re.compile("^[\S]+$")
-    PATTERN_WITH_SPACE = re.compile("^[\S| ]+$")
+    PATTERN = re.compile(r"^[\S]+$")
+    PATTERN_WITH_SPACE = re.compile(r"^[\S| ]+$")
 
 
     def __init__(self, allow_space=False, **kwargs):
