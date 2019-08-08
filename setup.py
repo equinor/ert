@@ -60,7 +60,7 @@ setup(
                     'pytest',
                     ],
     zip_safe=False,
-    tests_require=['pytest'],
+    tests_require=['pytest', 'mock'],
     tests_suite=['tests'],
     setup_requires=["pytest-runner", 'setuptools_scm'],
 )
