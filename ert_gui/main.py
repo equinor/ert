@@ -14,17 +14,6 @@ def runExec(executable, args):
     os.execvp(executable, [executable] + args)
 
 
-def runTui(args):
-    os.environ["ERT_UI_MODE"] = "tui"
-    exec_path = os.path.join(os.path.dirname(__file__), "ert_tui")
-    runExec(exec_path,  [args.config])
-
-
-def runShell(args):
-    exec_path = os.path.join(os.path.dirname(__file__), "ertshell")
-    runExec(exec_path,  [args.config])
-
-
 def runGui(args):
     runExec("python", ["-m", "ert_gui.gert_main"] + [args.config])
 
@@ -51,9 +40,7 @@ def ert_parser():
                     'one of the following arguments to change between the '
                     'interfaces. Note that different entry points may require '
                     'different additional arguments. See the help section for '
-                    'each interface for more details. DEPRECATION WARNING: '
-                    'Text User Interface and Shell Interface are to be removed in '
-                    'ERT > 2.4!',
+                    'each interface for more details.',
         help="Available entry points",
         dest="interface")
 
@@ -64,20 +51,6 @@ def ert_parser():
     gui_parser.add_argument('config', type=valid_file,
                             help="Ert configuration file")
     gui_parser.set_defaults(func=runGui)
-
-    tui_parser = subparsers.add_parser('text',
-                                       help='Text user interface. Deprecated! Use CLI instead.',
-                                       description='Text user interface. Deprecated! Use CLI instead.')
-    tui_parser.add_argument('config', type=valid_file,
-                            help="Ert configuration file")
-    tui_parser.set_defaults(func=runTui)
-
-    shell_parser = subparsers.add_parser('shell',
-                                         help='Shell interface. Deprecated! Use CLI instead.',
-                                         description='Shell interface. Deprecated! Use CLI instead.')
-    shell_parser.add_argument('config', type=valid_file,
-                              help="Ert configuration file")
-    shell_parser.set_defaults(func=runShell)
 
     cli_parser = subparsers.add_parser('cli',
                                        help='Command Line Interface - provides a user interface in the terminal.',
