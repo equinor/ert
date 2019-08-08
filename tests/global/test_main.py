@@ -1,9 +1,13 @@
 import argparse
 import sys
 import unittest
-from unittest.mock import Mock, patch
 
 from ert_gui.main import ert_parser, main
+
+if sys.version_info >= (3, 3):
+    from unittest.mock import Mock, patch
+else:
+    from mock import Mock, patch
 
 
 class MainTest(unittest.TestCase):
