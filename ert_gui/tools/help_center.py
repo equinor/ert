@@ -71,7 +71,7 @@ class HelpCenter(object):
         #    if label.strip() == "":
         #        raise AssertionError("NOOOOOOOOOOOOOOOOOOOOO!!!!!!!!!!!!")
 
-        path = self.__help_prefix + help_link + ".html"
+        path = os.path.join(self.__help_prefix, help_link + ".html")
         if os.path.exists(path) and os.path.isfile(path):
             f = open(path, 'r')
             help = f.read()
