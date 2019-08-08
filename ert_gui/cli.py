@@ -7,7 +7,6 @@ from ecl.util.util import BoolVector
 import res
 from res.util import ResLog
 
-import argparse
 import logging
 
 
@@ -136,6 +135,7 @@ def main():
     if len(sys.argv) < 3:
         raise AssertionError("Required arguments are missing, the config-file, "
                              "mode and target case must be provided")
+    
     config_file, mode, target_case = sys.argv[1:]
 
     config = resconfig(config_file)
@@ -153,5 +153,5 @@ def main():
         _ensemble_smoother_run(ert, target_case)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
