@@ -1,4 +1,9 @@
+import functools
+import os
+import pkg_resources
 import sys
+import webbrowser
+import yaml
 
 from ErtQt.Qt import QSettings, Qt, QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget, QAction, QToolButton
 
@@ -69,6 +74,16 @@ class GertMainWindow(QMainWindow):
         show_about = self.__help_menu.addAction("About")
         show_about.setMenuRole(QAction.ApplicationSpecificRole)
         show_about.triggered.connect(self.__showAboutMessage)
+
+        with pkg_resources.resource_stream(
+            "ert_gui", os.path.join("resources", "gui", "help", "help_links.yml")
+        ) as stream:
+            help_links = yaml.safe_load(stream)
+
+        for menu_label, link in help_links.items():
+            help_link_item = self.__help_menu.addAction(menu_label)
+            help_link_item.setMenuRole(QAction.ApplicationSpecificRole)
+            help_link_item.triggered.connect(functools.partial(webbrowser.open, link))
 
 
     def __quit(self):
