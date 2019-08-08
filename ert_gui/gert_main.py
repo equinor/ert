@@ -193,7 +193,7 @@ def main(argv):
         config_file = argv[1]
 
     help_center = HelpCenter("ERT")
-    help_center.setHelpLinkPrefix(pkg_dir + "resources/gui/help/")
+    help_center.setHelpLinkPrefix(pkg_dir + "/resources/gui/help/")
     help_center.setHelpMessageLink("welcome_to_ert")
 
     strict = True
