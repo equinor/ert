@@ -1,43 +1,344 @@
+.. _Configuring_observations_for_ERT:
+
 Configuring observations for ERT
 ================================
+
 
 General overview
 ----------------
 
 When using ERT to condition on dynamic data, it is necessary to
-specify which data to condition on. In particular, for a given piece
-of data to condition on, the ERT  application needs to know:
+specify the data / observations to be used. For every piece of data
+ERT needs to know:
 
- - The actual measured value of the data.
- - The uncertainty of the measured data.
+ - The measured value of the data.
+ - The uncertainty (standard deviation) of the measured data.
  - The time of measurement.
- - How to simulate a response of the data given a parametrized ECLIPSE model. 
+ - How to simulate a response of the data given a parameterized forward model. 
+
+This information is configured in an observation file. The name / path 
+to this observation file is declared in the main ERT config file using the 
+:ref:`OBS_CONFIG <obs_config>` keyword.
+
+The observation file is a plain text file, and is in essence built around four 
+different classes of observations using the associated keywords:
+
+ - :ref:`SUMMARY_OBSERVATION <summary_observation>`: for scalar values that 
+   can be extracted from an ECLIPSE summary file. Examples are rates from 
+   separator tests, water cut, GOR, shut in pressures, etc
+ 
+ - :ref:`BLOCK_OBSERVATION <block_observation>`: for grid dependent observations 
+   that can be extracted from ECLIPSE output files. Examples are Well logs, RFTs, 
+   PLTs, etc
+
+ - :ref:`GENERAL_OBSERVATION <general_observation>`: all other observations. 
+   These observations are extracted from ascii files and allows for loading 
+   of just about anything. Examples: 4D seismic, results from non ECLIPSE 
+   compatible simulatores, etc
+
+ - :ref:`HISTORY_OBSERVATION <history_observation>`: for time series of 
+   observations for whcih the observed values can be extracted from 
+   WCONPROD or WCONINJE secion of ECLIPSE schedule files. Used for easy / quick 
+   configuration of production rates and fractions.
 
 
-To provide this observation to ERT, an observation file must be
-created. The observation file is a plain text file, and is in essence
-built around for different classes of observations and has an
-associated keyword for each class:
+Please note that observations and datatypes are quite tightly linked together.
+Before reading this you should have a firm grasp of the dynamic data types 
+as described in :ref:`Data types available in ERT <Data_types_available_in_ERT>`.
 
- - Well or group rates from an existing ECLIPSE reference case: The
-   HISTORY_OBSERVATION keyword.
 
- - Well logs, RFTS and PLTs: The BLOCK_OBSERVATION keyword. 
+.. _summary_observation:
 
- - Separator tests, region pressures, etc.: The SUMMARY_OBSERVATION
-   keyword.
+SUMMARY_OBSERVATION keyword
+---------------------------
 
- - Exotic observations (e.g. data from 4D seismic): The
-   GENERAL_OBSERVATION keyword.
+The keyword SUMMARY_OBSERVATION can be used to condition on any
+observation for which the simulated value is written to the ECLIPSE 
+summary file, e.g. well rates, region properties, group and field 
+rates etc. A typical usage of SUMMARY_OBSERVATION is to condition 
+on results from separator tests.
 
-Observe that observations and datatypes are quite tightly linked together.
-Before reading this you should have a firm grasp of the dynamic data types.
+In order to create a summary observation, four pieces of information
+are needed: The observed value, the observation error, the time of
+observation and a summary key. A typical summary observation is
+created as follows::
 
-The HISTORY_OBSERVATION keyword
--------------------------------
+ SUMMARY_OBSERVATION SEP_TEST_2005
+ {
+    VALUE = 100.0;
+    ERROR =     5;
+    DATE  = 21/08/2005;
+    KEY   = GOPR:BRENT;
+ };
+
+This will create an observation of group oil production for the Brent
+group on 21th of august 2005. The observed value was 100 with a
+standard deviation of 5. The name SEP_TEST_2005 will be used as a
+label for the observation within the ERT and must be unique.
+
+The item KEY in a SUMMARY_OBSERVATION is used to look up the simulated 
+value from the summary file. To condition on VAR in well, group or region 
+WGRNAME, one uses::
+
+ KEY = VAR:WGRNAME;
+
+For example, to condition on RPPW in region 8, one uses::
+
+ KEY = RPPW:8;
+
+It is also possible to give the observation time as a restart number
+using the RESTART item or as time in days from simulation start using
+the DAYS item. Here are two examples::
+
+ -- Giving the observation time in terms of restart number.
+ SUMMARY_OBSERVATION SEP_TEST_2005
+ {
+    VALUE    = 100;
+    ERROR    =   5;
+    RESTART  =  42;
+    KEY      = GOPR:BRENT;
+ };
+ 
+
+ -- Giving the observation time in terms of days
+ -- from simulation start.
+ SUMMARY_OBSERVATION SEP_TEST_2008
+ {
+    VALUE    = 213;
+    ERROR    =  10;
+    DAYS     = 911;
+    KEY      = GOPR:NESS;
+ };
+
+
+
+.. _block_observation:
+
+BLOCK_OBSERVATION keyword
+-------------------------
+
+This is observations of variables in grid blocks/cells. The
+observations can be of arbitrary ECLIPSE fields like PRESSURE
+(typically for an RFT), PORO or PERM. A block observation is entered
+with the BLOCK_OBSERVATION keyword. Here is an example of a typical
+block observation::
+
+  BLOCK_OBSERVATION RFT_2006
+  {
+     FIELD = PRESSURE;
+     DATE  = 22/10/2006;
+ 
+    OBS P1 { I = 1;  J = 1;  K = 1;   VALUE = 100;  ERROR = 5; };
+    OBS P2 { I = 2;  J = 2;  K = 1;   VALUE = 101;  ERROR = 5; };
+    OBS P3 { I = 2;  J = 3;  K = 1;   VALUE = 102;  ERROR = 5; };
+ };
+
+This will condition on observations of the pressure in grid blocks
+(1,1,1), (2,2,1) and (2,3,1) on the 22/10/2006.
+
+By default the BLOCK_OBSERVATION requires that the specific field
+which has been observed (e.g. PRESSURE in the example above) must have
+been specified in main ERT configuration file using the FIELD keyword,
+and ECLIPSE must be configured to produce a restart file for this
+particular time. Alternatively, it is possible to tell ERT to use the
+summary vector as source of the data::
+
+ BLOCK_OBSERVATION RFT_2006
+ {
+    FIELD = PRESSURE;
+    DATE  = 22/10/2006;
+    SOURCE = SUMMARY;  
+
+    OBS P1 { I = 1;  J = 1;  K = 1;   VALUE = 100;  ERROR = 5; };
+    OBS P2 { I = 2;  J = 2;  K = 1;   VALUE = 101;  ERROR = 5; };
+    OBS P3 { I = 2;  J = 3;  K = 1;   VALUE = 102;  ERROR = 5; };
+ };
+
+In this case the data will be loaded from the BPR vectors in the
+summary file.
+
+Note the use of the sub class OBS to specify the actual observed
+values, the observation errors and their grid location. Each OBS shall
+have a unique key within the BLOCK_OBSERVATION instance, and is
+required to have the items I, J, K, VALUE and ERROR. These are the
+grid i,j and k indicies for the observation point, the observed value
+and it's standard deviation.
+
+As with a SUMMARY_OBSERVATION, the observation time can be given as
+either a date, days since simulation start or restart number. The
+respective keys for setting giving it as date, days or restart number
+are DATE, DAYS and RESTART. Note that each BLOCK_OBSERVATION instance
+must have an unique global name (RFT_2006 in the example above).
+
+INCLUDE keyword
+...............
+
+Block observations can often be quite long. Thus, it is often a good
+idea to use the special keyword include in order to store the OBS
+structures in a different file. This is done as follows::
+
+ BLOCK_OBSERVATION RFT_2006
+ {
+    FIELD   = PRESSURE;
+    RESTART = 20;
+    
+    include 'RFT_2006_OBS_DATA.txt';  
+ };
+
+Where the file RFT_2006_OBS_DATA.txt contains the OBS instances::
+
+   OBS P1 { I = 1;  J = 1;  K = 1;   VALUE = 100;  ERROR = 5; };
+   OBS P2 { I = 2;  J = 2;  K = 1;   VALUE = 101;  ERROR = 5; };
+   OBS P3 { I = 2;  J = 3;  K = 1;   VALUE = 112;  ERROR = 5; };
+   OBS P4 { I = 3;  J = 3;  K = 1;   VALUE = 122;  ERROR = 5; };
+   OBS P5 { I = 4;  J = 3;  K = 1;   VALUE = 112;  ERROR = 5; };
+   OBS P6 { I = 5;  J = 3;  K = 1;   VALUE = 122;  ERROR = 5; };
+
+
+Note that the file name / path in the include keyword is realtive to 
+the location of ERT config file. And that the keyword can be used 
+anywhere in the configuration file. However, nested inclusion (use of 
+include in a file that has already been included with include) is not 
+allowed.
+   
+.. _general_observation:
+
+GENERAL_OBSERVATION keyword
+---------------------------
+
+The GENERAL_OBSERVATION keyword is used together with the GEN_DATA and
+GEN_PARAM type. This pair of observation and data types are typically
+used when you want to update something special which does not fit into
+any of the predefined types. The ERT application just treats
+GENERAL_OBSERVATION (and also GEN_DATA) as a range of number with no
+particular structure, this is very flexible, but of course also a bit
+more complex to use::
+
+ GENERAL_OBSERVATION GEN_OBS1{
+    DATA     = SOME_FIELD;
+    RESTART  = 20;
+    OBS_FILE = some_file.txt;
+ };
+
+This example a minimum GENERAL_OBSERVATION. The keyword DATA points to
+the GEN_DATA instance this observation is 'observing', RESTART gives
+the report step when this observation is active. OBS_FILE should be
+the name of a file with observation values, and the corresponding
+uncertainties. The file with observations should just be a plain text
+file with numbers in it, observations and corresponding uncertainties
+interleaved. The file name / path is interperated relative to the ERT 
+main config file.
+
+An example of an OBS_FILE::
+
+ 1.46 0.26
+ 25.0 5.0
+ 5.00 1.00
+
+This OBS_FILE has three observations: 1.46 +/- 0.26, 25.0 +/- 5.0 and
+5.00 +/- 1.00. In the example above it is assumed that the DATA
+instance we are observing (i.e. comparing with) has the same number of
+elements as the observation, i.e. three in this case. By using the
+keywords INDEX_LIST or INDEX_FILE you can select the elements of the
+GEN_DATA instance you are interested in. Consider for example::
+
+ GENERAL_OBSERVATION GEN_OBS1{
+    DATA       = SOME_FIELD;
+    INDEX_LIST = 0,3,9; 
+    RESTART    = 20;
+    OBS_FILE   = some_file.txt;
+ };
+
+Here we use INDEX_LIST to indicate that we are interested in element
+0,3 and 9 of the GEN_DATA instance::
+
+ GEN_DATA                     GEN_OBS1
+ ========                     ===========             
+ 1.56 <---------------------> 1.46  0.26
+ 23.0        /--------------> 25.0   5.00  
+ 56.0        |    /---------> 5.00  1.00
+ 27.0 <------/    |           =========== 
+  0.2             |
+ 1.56             | 
+ 1.78             |
+ 6.78             |
+ 9.00             | 
+ 4.50 <-----------/
+ ========
+
+In addition to INDEX_LIST it is possible to use INDEX_FILE which
+should just point at an plain text file with indexes (without any ','
+or anything). Finally, if your observation only has one value, you can
+embed it in the config object with VALUE and ERROR.
+
+Matching GEN_OBS and GEN_DATA
+.............................
+
+It is important to match up the GEN_OBS observations with the
+corresponding GEN_DATA simulation data correctly. The GEN_DATA result
+files must have an embedded '%d' to indicate the report step in them -
+in the case of smoother based workflows the actual numerical value
+here is not important. To ensure that GEN_OBS and corresponding
+GEN_DATA values match up correctly only the RESTART method is allowed
+for GEN_OBS when specifying the time. So consider a setup like this::
+
+ -- Config file:
+ GEN_DATA RFT_BH67 INPUT_FORMAT:ASCII RESULT_FILE:rft_BH67_%d    REPORT_STEPS:20
+ ...                                                       /|\                /|\ 
+ ...                                                        |                  | 
+ -- Observation file:                                       |                  |
+ GENERAL_OBSERVATION GEN_OBS1{                              +------------------/ 
+    DATA       = RFT_BH67;                                  | 
+    RESTART    = 20;   <------------------------------------/
+    OBS_FILE   = some_file.txt;
+ };
+
+Here we see that the observation is active at report step 20, and we
+expect the forward model to create a file rft_BH67_20 in each
+realization directory.  Error covariance
+
+ERROR_COVARIANCE keyword
+........................
+
+The optional keyword ERROR_COVAR can be used to point to an existing
+file, containing an error covariance matrix. The file should contain
+the elements of the matrix as formatted numbers; newline formatting is
+allowed but not necessary. Since the matrix should by construction be
+symmetric there is no difference between column-major and row-major
+order! The covariance matrix
+
+     [ 1      0.75  -0.25]
+C =  [ 0.75   1.25  -0.50] 
+     [-0.25  -0.50   0.85]
+
+Can be represented by the file::
+
+ 1
+ 0.75
+ -0.25
+ 0.75
+ 1.25
+ -0.50
+ -0.25
+ -0.50
+ 0.85
+
+without newlines, or alternatively::
+
+ 1       0.75  -0.25
+ 0.75    1.25  -0.50 
+ -0.25  -0.50   0.85
+
+with newlines. 
+
+
+.. _history_observation:
+
+HISTORY_OBSERVATION keyword
+---------------------------
 
 The keyword HISTORY_OBSERVATION is used to condition on observations
-from the WCONHIST and WCONINJH keywords in schedule file provided to
+fetched from the WCONHIST and WCONINJH keywords in schedule file provided to
 the ERT project (or alternatively an ECLIPSE summary file if you have
 changed the HISTORY_SOURCE keyword in the ERT project). The keyword
 is typically used to condition on production and injection rates for
@@ -134,10 +435,6 @@ like::
 In this case, changing the file hist_obs_wells.txt will affect all of
 the observations.
 
-Note that the keyword include can be used anywhere in the
-configuration file. However, nested inclusion (use of include in a
-file that has already been included with include) is not allowed.
-
 By default, an observation entered with the HISTORY_OBSERVATION
 keyword will get the observed values, i.e. the 'true' values, from the
 WCONHIST and WCONINJH keywords in the schedule file provided to the
@@ -193,273 +490,3 @@ currently available auto correlation functions are:
 where the parameter x is given as:
 
   x = (t2 - t1) / AUTO_CORRF_PARAM
-
-
-The SUMMARY_OBSERVATION keyword
--------------------------------
-
-The keyword SUMMARY_OBSERVATION can be used to condition on any
-observation whos simulated value is written to the ECLIPSE summary
-file, e.g. well rates, region properties, group and field rates etc. A
-quite typical usage of SUMMARY_OBSERVATION is to condition on the
-results of a separator test.
-
-Note: Although it is possible to condition on well and group rates
-with SUMMARY_OBSERVATION, it is usually easier to use
-HISTORY_OBSERVATION for this.
-
-In order to create a summary observation, four pieces of information
-are needed: The observed value, the observation error, the time of
-observation and a summary key. A typical summary observation is
-created as follows::
-
- SUMMARY_OBSERVATION SEP_TEST_2005
- {
-    VALUE = 100;
-    ERROR =   5;
-    DATE  = 21/08/2005;
-    KEY   = GOPR:BRENT;
- };
-
-This will create an observation of group oil production for the brent
-group on 21th of august 2005. The observed value was 100 with a
-standard deviation of 5. The name SEP_TEST_2005 will be used as a
-label for the observation within the ERT and must be unique.
-
-Similarly to the name of a HISTORY_OBSERVATION, the item KEY in a
-SUMMARY_OBSERVATION is used to look up the simulated value from the
-summary file. And again, as when declaring a HISTORY_OBSERVATION, to
-condition on VAR in well, group or region WGRNAME, one uses::
-
- KEY = VAR:WGRNAME;
-
-For example, to condition on RPPW in region 8, one uses::
-
- KEY = RPPW:8;
-
-It is also possible to give the observation time as a restart number
-using the RESTART item or as time in days from simulation start using
-the DAYS item. Here are two examples::
-
- -- Giving the observation time in terms of restart number.
- SUMMARY_OBSERVATION SEP_TEST_2005
- {
-    VALUE    = 100;
-    ERROR    =   5;
-    RESTART  =  42;
-    KEY      = GOPR:BRENT;
- };
- 
-
- -- Giving the observation time in terms of days
- -- from simulation start.
- SUMMARY_OBSERVATION SEP_TEST_2008
- {
-    VALUE    = 213;
-    ERROR    =  10;
-    DAYS     = 911;
-    KEY      = GOPR:NESS;
- };
-
-
-
-The BLOCK_OBSERVATION keyword 
-------------------------------
-
-This is observations of variables in grid blocks/cells. The
-observations can be of arbitrary ECLIPSE fields like PRESSURE
-(typically for an RFT), PORO or PERM. A block observation is entered
-with the BLOCK_OBSERVATION keyword. Here is an example of a typical
-block observation::
-
- BLOCK_OBSERVATION RFT_2006
- {
-    FIELD = PRESSURE;
-    DATE  = 22/10/2006;
- 
-    OBS P1 { I = 1;  J = 1;  K = 1;   VALUE = 100;  ERROR = 5; };
-    OBS P2 { I = 2;  J = 2;  K = 1;   VALUE = 101;  ERROR = 5; };
-    OBS P3 { I = 2;  J = 3;  K = 1;   VALUE = 102;  ERROR = 5; };
- };
-
-This will condition on observations of the pressure in grid blocks
-(1,1,1), (2,2,1) and (2,3,1) on the 22/10/2006.
-
-By default the BLOCK_OBSERVATION requires that the specific field
-which has been observed (e.g. PRESSURE in the example above) must have
-been specified in main ERT configuration file using the FIELD keyword,
-and ECLIPSE must be configured to produce a restart file for this
-particular time. Alternatively it is possible to tell ERT to use the
-summary vector as source of the data::
-
-  BLOCK_OBSERVATION RFT_2006
-  {
-     FIELD = PRESSURE;
-     DATE  = 22/10/2006;
-     SOURCE = SUMMARY;  
-
-     OBS P1 { I = 1;  J = 1;  K = 1;   VALUE = 100;  ERROR = 5; };
-     OBS P2 { I = 2;  J = 2;  K = 1;   VALUE = 101;  ERROR = 5; };
-     OBS P3 { I = 2;  J = 3;  K = 1;   VALUE = 102;  ERROR = 5; };
-  };
-
-In this case the data will be loaded from the BPR vectors in the
-summary file.
-
-Note the use of the sub class OBS to specify the actUal observed
-values, the observation errors and their grid location. Each OBS shall
-have a unique key within the BLOCK_OBSERVATION instance, and is
-required to have the items I, J, K, VALUE and ERROR. These are the
-grid i,j and k indicies for the observation point, the observed value
-and it's standard deviation.
-
-As with a SUMMARY_OBSERVATION, the observation time can be given as
-either a date, days since simulation start or restart number. The
-respective keys for setting giving it as date, days or restart number
-are DATE, DAYS and RESTART. Note that each BLOCK_OBSERVATION instance
-must have an unique global name (RFT_2006 in the example above).
-
-Block observations can often be quite long. Thus, it is often a good
-idea to use the special keyword include in order to store the OBS
-structures in a different file. This is done as follows::
-
- BLOCK_OBSERVATION RFT_2006
- {
-    FIELD   = PRESSURE;
-    RESTART = 20;
-    
-    include 'RFT_2006_OBS_DATA.txt';  
- };
-
-Where the file RFT_2006_OBS_DATA.txt contains the OBS instances::
-
-   OBS P1 { I = 1;  J = 1;  K = 1;   VALUE = 100;  ERROR = 5; };
-   OBS P2 { I = 2;  J = 2;  K = 1;   VALUE = 101;  ERROR = 5; };
-   OBS P3 { I = 2;  J = 3;  K = 1;   VALUE = 112;  ERROR = 5; };
-   OBS P4 { I = 3;  J = 3;  K = 1;   VALUE = 122;  ERROR = 5; };
-   OBS P5 { I = 4;  J = 3;  K = 1;   VALUE = 112;  ERROR = 5; };
-   OBS P6 { I = 5;  J = 3;  K = 1;   VALUE = 122;  ERROR = 5; };
-
-   
-
-The GENERAL_OBSERVATION keyword 
---------------------------------
-
-The GENERAL_OBSERVATION keyword is used together with the GEN_DATA and
-GEN_PARAM type. This pair of observation and data types are typically
-used when you want to update something special which does not fit into
-any of the predefined types. The ERT application just treats
-GENERAL_OBSERVATION (and also GEN_DATA) as a range of number with no
-particular structure, this is very flexible, but of course also a bit
-more complex to use::
-
- GENERAL_OBSERVATION GEN_OBS1{
-    DATA     = SOME_FIELD;
-    RESTART  = 20;
-    OBS_FILE = some_file.txt;
- };
-
-This example a minimum GENERAL_OBSERVATION. The keyword DATA points to
-the GEN_DATA instance this observation is 'observing', RESTART gives
-the report step when this observation is active. OBS_FILE should be
-the name of a file with observation values, and the corresponding
-uncertainties. The file with observations should just be a plain text
-file with numbers in it, observations and corresponding uncertainties
-interleaved. An example of an OBS_FILE::
-
- 1.46 0.26
- 25.0 5.0
- 5.00 1.00
-
-This OBS_FILE has three observations: 1.46 +/- 0.26, 25.0 +/- 5.0 and
-5.00 +/- 1.00. In the example above it is assumed that the DATA
-instance we are observing (i.e. comparing with) has the same number of
-elements as the observation, i.e. three in this case. By using the
-keywords INDEX_LIST or INDEX_FILE you can select the elements of the
-GEN_DATA instance you are interested in. Consider for example::
-
- GENERAL_OBSERVATION GEN_OBS1{
-    DATA       = SOME_FIELD;
-    INDEX_LIST = 0,3,9; 
-    RESTART    = 20;
-    OBS_FILE   = some_file.txt;
- };
-
-Here we use INDEX_LIST to indicate that we are interested in element
-0,3 and 9 of the GEN_DATA instance::
-
- GEN_DATA                     GEN_OBS1
- ========                     ===========             
- 1.56 <---------------------> 1.46  0.26
- 23.0        /--------------> 25.0   5.00  
- 56.0        |    /---------> 5.00  1.00
- 27.0 <------/    |           =========== 
-  0.2             |
- 1.56             | 
- 1.78             |
- 6.78             |
- 9.00             | 
- 4.50 <-----------/
- ========
-
-In addition to INDEX_LIST it is possible to use INDEX_FILE which
-should just point at an plain text file with indexes (without any ','
-or anything). Finally, if your observation only has one value, you can
-embed it in the config object with VALUE and ERROR.
-
-Matching GEN_OBS and GEN_DATA
-.............................
-
-It is important to match up the GEN_OBS observations with the
-corresponding GEN_DATA simulation data correctly. The GEN_DATA result
-files must have an embedded '%d' to indicate the report step in them -
-in the case of smoother based workflows the actual numerical value
-here is not important. To ensure that GEN_OBS and corresponding
-GEN_DATA values match up correctly only the RESTART method is allowed
-for GEN_OBS when specifying the time. So consider a setup like this::
-
- -- Config file:
- GEN_DATA RFT_BH67 INPUT_FORMAT:ASCII RESULT_FILE:rft_BH67_%d    REPORT_STEPS:20
- ...                                                       /|\                /|\ 
- ...                                                        |                  | 
- -- Observation file:                                       |                  |
- GENERAL_OBSERVATION GEN_OBS1{                              +------------------/ 
-    DATA       = RFT_BH67;                                  | 
-    RESTART    = 20;   <------------------------------------/
-    OBS_FILE   = some_file.txt;
- };
-
-Here we see that the observation is active at report step 20, and we
-expect the forward model to create a file rft_BH67_20 in each
-realization directory.  Error covariance
-
-The optional keyword ERROR_COVAR can be used to point to an existing
-file, containing an error covariance matrix. The file should contain
-the elements of the matrix as formatted numbers; newline formatting is
-allowed but not necessary. Since the matrix should by construction be
-symmetric there is no difference between column-major and row-major
-order! The covariance matrix
-
-     [ 1      0.75  -0.25]
-C =  [ 0.75   1.25  -0.50]  
-     [-0.25  -0.50   0.85]
-
-Can be represented by the file::
-
- 1
- 0.75
- -0.25
- 0.75
- 1.25
- -0.50
- -0.25
- -0.50
- 0.85
-
-without newlines, or alternatively::
-
- 1       0.75  -0.25
- 0.75    1.25  -0.50 
- -0.25  -0.50   0.85
-
-with newlines. 

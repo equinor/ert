@@ -3,8 +3,6 @@
 Keywords for the configuration file
 ===================================
 
-:ref:`Go to main ERT page <index>`
-
 
 General overview
 ----------------
@@ -37,8 +35,8 @@ arguments that are unique to the particular keyword. Except for the DEFINE
 keyword, ordering of the keywords is not significant. Similarly to ECLIPSE data
 files, lines starting with "- -" are treated as comments.
 
-The keywords in the ERT configuration file can roughly be divded into two
-groups:
+For your convenience, the description of the keywords in the ERT configuration file 
+are divded into the following groups:
 
 * Basic required keywords not related to parametrization. I.e., keywords giving
   the data, grid, schedule and observation file, defining how to run simulations
@@ -75,12 +73,14 @@ Keyword name                                                        	Required by
 :ref:`END_DATE <end_date>`                                          	NO                                          				You can tell ERT how lon the simulations should be - for error check
 :ref:`ENKF_ALPHA <enkf_alpha>`                                      	NO                    			1.50                  		Parameter controlling outlier behaviour in EnKF algorithm
 :ref:`ENKF_BOOTSTRAP <enkf_bootstrap>`                              	NO                    			FALSE                 		Should we bootstrap the Kalman gain estimate
-:ref:`ENKF_CROSS_VALIDATION <enkf_cross_validation>`                	NO                                          	...
+:ref:`ENKF_CROSS_VALIDATION <enkf_cross_validation>`                	NO                                                                      ...
 :ref:`ENKF_CV_FOLDS <enkf_cv_folds>`                                	NO                    			10                    		Number of folds used in the Cross-Validation scheme
+:ref:`ENKF_FORCE_NCOMP <enkf_force_ncomp>`                              NO                    			0                    		Indicate if ERT should force a specific number of principal components
 :ref:`ENKF_KERNEL_PARAM <enkf_kernel_param>`                        	NO                    			1
 :ref:`ENKF_LOCAL_CV <enkf_local_cv>`                                	NO                    			FALSE                 		Should we estimate the subspace dimenseion using Cross-Validation
 :ref:`ENKF_MERGE_OBSERVATIONS <enkf_merge_observations>`            	NO                    			FALSE                 		Should observations from many times be merged together
 :ref:`ENKF_MODE <enkf_mode>`                                        	NO                    			STANDARD              		Which updating scheme should be used
+:ref:`ENKF_NCOMP <enkf_ncomp>`                                        	NO                    			              			Number of PC to use when forcing a fixed number; used in combination with kw ENKF_FORCE_NCOMP 
 :ref:`ENKF_PEN_PRESS <enkf_pen_press>`                              	NO                    			FALSE                 		Should we want to use a penalised PRESS statistic in model selection? 
 :ref:`ENKF_RERUN <enkf_rerun>`                                      	NO                    			FALSE                 		Should the simulations be restarted from time zero after each update. 
 :ref:`ENKF_SCALING <enkf_scaling>`                                  	NO                    			TRUE           		       	Do we want to normalize the data ensemble to have unit variance? 
@@ -121,7 +121,12 @@ Keyword name                                                        	Required by
 :ref:`MIN_REALIZATIONS <min_realizations>` 				NO 					0 				Set the number of minimum reservoir realizations to run before long running realizations are stopped. Keyword STOP_LONG_RUNNING must be set to TRUE when MIN_REALIZATIONS are set. 
 :ref:`NUM_REALIZATIONS <num_realizations>` 				YES 									Set the number of reservoir realizations to use. 
 :ref:`OBS_CONFIG <obs_config>` 						NO 									File specifying observations with uncertainties. 
-:ref:`PLOT_SETTINGS <plot_driver>` 					NO 					  				Possibility to configure some aspects of plotting.
+:ref:`PLOT_DRIVER <plot_driver>` 					NO 					PLPLOT				Subsystem used for plotting
+:ref:`PLOT_ERRORBAR <plot_errorbar>` 					NO 					TRUE				Should ERT display error bars when plotting observations.
+:ref:`PLOT_ERRORBAR_MAX <plot_errorbar_max>` 				NO 									...
+:ref:`PLOT_HEIGHT <plot_height>` 					NO 					???				Height of plots in pixels.
+:ref:`PLOT_REFCASE <plot_refcase>` 					NO 					TRUE				Should ERT plot the refcase?
+:ref:`PLOT_SETTINGS <plot_settings>` 					NO 					  				Possibility to configure some aspects of plotting.
 :ref:`PRE_CLEAR_RUNPATH <pre_clear_runpath>` 				NO 					FALSE 				Should the runpath be cleared before initializing? 
 :ref:`QUEUE_OPTION <queue_option>` 					NO 									Set options for an ERT queue system 
 :ref:`QUEUE_SYSTEM <queue_system>` 					NO 									System used for running simulation jobs. 
@@ -129,16 +134,19 @@ Keyword name                                                        	Required by
 :ref:`REFCASE_LIST <refcase_list>` 					NO 									Full path to Eclipse .DATA files containing completed runs (which you can add to plots) 
 :ref:`RERUN_PATH  <rerun_path>` 					NO 									...
 :ref:`RERUN_START  <rerun_start>` 					NO 					0 				... 
+:ref:`RESULT_PATH  <result_path>` 					NO 					results/step_%d			Define where ERT should store results 				 
 :ref:`RFT_CONFIG  <rft_config>` 					NO 									Config file specifying wellnames and dates for rft-measurments. Used for plotting. The format has to be name day month year (ex. Q-2FI 02 08 1973), with a new entry on a new line. 
 :ref:`RFTPATH <rftpath>`  						NO 					rft 				Path to where the rft well observations are stored 
 :ref:`RSH_COMMAND  <rsh_command>` 					NO 									Command used for remote shell operations. 
 :ref:`RSH_HOST <rsh_host>`  						NO 									Remote host used to run forward model. 
-:ref:`RUNPATH <runoath>`  						NO 					simulations/realization%d 	Directory to run simulations
+:ref:`RUNPATH <runpath>`  						NO 					simulations/realization%d 	Directory to run simulations
+:ref:`RUNPATH_FILE <runpath_file>`  					NO 					.ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations. 
 :ref:`RUN_TEMPLATE <run_template>`  					NO 									Install arbitrary files in the runpath directory.
 :ref:`STD_SCALE_CORRELATED_OBS <std_scale_correlated_obs>`              NO                                      FALSE                           Try to estimate the correlations in the data to inflate the observation std.     
 :ref:`SCHEDULE_FILE <schedule_file>`  					NO 									Provide an ECLIPSE schedule file for the problem. 
 :ref:`SCHEDULE_PREDICTION_FILE <schedule_prediction_file>`  		NO 									Schedule prediction file. 
 :ref:`SETENV <setenv>`  						NO 									You can modify the UNIX environment with SETENV calls. 
+:ref:`SIMULATION_JOB <simulation_job>`  				NO 					 				Experimental alternative to FORWARD_MODEL
 :ref:`SINGLE_NODE_UPDATE <single_node_update>`  			NO 					FALSE 				... 
 :ref:`STOP_LONG_RUNNING <stop_long_running>`  				NO 					FALSE 				Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run. 
 :ref:`STORE_SEED  <store_seed>` 					NO 									File where the random seed used is stored. 
@@ -387,27 +395,27 @@ possible to do with ERT.
 
 	In the observation configuration file you can enter
 	observations with the keyword HISTORY_OBSERVATION; this means
-	that ERT will the observed 'true' values from the model
-	history. Practically the historical values can be fetched
-	either from the SCHEDULE file or from a reference case. What
-	source to use for the historical values can be controlled with
-	the HISTORY_SOURCE keyword. The different possible values for
-	the HISTORY_SOURCE keyword are:
+	that ERT will extract observed values from the model
+	history, either from the SCHEDULE file or from historical 
+	summary vectors of the reference case. What source to use for the 
+	historical values can be controlled with the HISTORY_SOURCE 
+	keyword. The different possible values for the HISTORY_SOURCE 
+	keyword are:
 
 	
-	REFCASE_HISTORY 
+	REFCASE_HISTORY
 	        This is the default value for HISTORY_SOURCE,
 		ERT will fetch the historical values from the *xxxH*
 		keywords in the refcase summary, e.g. observations of
 		WGOR:OP_1 is based the WGORH:OP_1 vector from the
 		refcase summary.
 
-	REFCASE_SIMULATED 
+	REFCASE_SIMULATED
 	        In this case the historical values are based on the
 		simulated values from the refcase, this is mostly relevant when a you want
 		compare with another case which serves as 'the truth'.
 
-	SCHEDULE 
+	SCHEDULE
 	        Load historical values from the WCONHIST and WCONINJE keywords in the
 		Schedule file.
 
@@ -477,7 +485,7 @@ possible to do with ERT.
 
 	The OBS_CONFIG key should point to a file defining observations and associated
 	uncertainties. The file should be in plain text and formatted according to the
-	guidelines given in Creating an observation file for use with ERT.
+	guidelines given in :ref:`Creating an observation file for use with ERT<Configuring_observations_for_ERT>`.
 
 	*Example:*
 
@@ -583,6 +591,12 @@ Keywords controlling the simulations
 
         The MIN_REALIZATIONS key is optional, but if it has not been
         set *all* the realisations must succeed.
+
+	Please note that MIN_REALIZATIONS = 0 means all simulations must succeed 
+	(this happens to be the default value). Note that the integer value of eg 
+	2% of 20 realizations is 0, and that it is easy to unintentionally instruct 
+	ERT to require all simulations to be finished when the intention was the 
+	opposite.
 
 
 .. _stop_long_running:
@@ -1154,14 +1168,16 @@ list of available priors.
 	**Note:** Properties added using the SUMMARY keyword are only diagnostic. I.e., they have no effect on the sensitivity analysis or history match. 
 
 
-Keywords controlling the ES algorithm
------------------------------------------
 .. _keywords_controlling_the_es_algorithm:
 
-.. _enkf_alpha:
-.. topic:: ENKF_ALPHA 
+Keywords controlling the ES algorithm
+-------------------------------------
 
-See the sub keyword :code:`OVERLAP_LIMIT` under the :code:`UPDATE_SETTINGS`keyword.           
+
+.. _enkf_alpha:
+.. topic:: ENKF_ALPHA
+
+        See the sub keyword :code:`OVERLAP_LIMIT` under the :code:`UPDATE_SETTINGS`keyword.           
 	
 .. _enkf_bootstrap:
 .. topic:: ENKF_BOOTSTRAP
@@ -1365,6 +1381,42 @@ See the sub keyword :code:`OVERLAP_LIMIT` under the :code:`UPDATE_SETTINGS`keywo
 .. topic:: UPDATE_LOG_PATH
 
 	A summary of the data used for updates are stored in this directory.
+
+
+.. _update_settings:
+.. topic:: UPDATE_SETTINGS
+
+        The :code:`UPDATE_SETTINGS` keyword is a *super-keyword* which can be used to
+	control parameters which apply to the Ensemble Smoother update algorithm. The
+	:code:`UPDATE_SETTINGS`currently supports the two subkeywords:
+
+   	OVERLAP_LIMIT Scaling factor used when detecting outliers. Increasing this
+        factor means that more observations will potentially be included in the
+        assimilation. The default value is 3.00..
+
+	Including outliers in the Smoother algorithm can dramatically increase the
+	coupling between the ensemble members. It is therefore important to filter out
+	these outlier data prior to data assimilation. An observation, \textstyle
+	d^o_i, will be classified as an outlier if
+
+	::
+
+		|d^o_i - \bar{d}_i| > \mathrm{ENKF\_ALPHA} \left(s_{d_i} + \sigma_{d^o_i}\right), 
+
+	where \textstyle\boldsymbol{d}^o is the vector of observed data,
+	\textstyle\boldsymbol{\bar{d}} is the average of the forcasted data ensemble,
+	\textstyle\boldsymbol{s_{d}} is the vector of estimated standard deviations
+	for the forcasted data ensemble, and \textstyle\boldsymbol{s_{d}^o} is the
+	vector standard deviations for the observation error (specified a priori).
+
+        
+   	STD_CUTOFF If the ensemble variation for one particular measurment is below
+        this limit the observation will be deactivated. The default value for
+        this cutoff is 1e-6.
+      
+        Observe that for the updates many settings should be applied on the analysis
+        module in question.
+   
 
 
 **References**
@@ -2010,7 +2062,6 @@ Keywords related to plotting
 
 	::
 
-		be-linapp16(inmyr) -/models/wells/rft 34> more WELLNAME_AND_RFT_TIME.txt
 		A-1HP  06 05 1993
 		A-9HW  31 07 1993
 		C-1HP  11 12 2007
@@ -2125,40 +2176,6 @@ instance, and are not applied to the shell.
 
 	The whole thing is just a workaround because we can not use $PATH.
 
-.. _update_settings:
-.. topic:: UPDATE_SETTINGS
-
-        The :code:`UPDATE_SETTINGS` keyword is a *super-keyword* which can be used to
-	control parameters which apply to the Ensemble Smoother update algorithm. The
-	:code:`UPDATE_SETTINGS`currently supports the two subkeywords:
-
-   	OVERLAP_LIMIT Scaling factor used when detecting outliers. Increasing this
-        factor means that more observations will potentially be included in the
-        assimilation. The default value is 3.00..
-
-	Including outliers in the Smoother algorithm can dramatically increase the
-	coupling between the ensemble members. It is therefore important to filter out
-	these outlier data prior to data assimilation. An observation, \textstyle
-	d^o_i, will be classified as an outlier if
-
-	::
-
-		|d^o_i - \bar{d}_i| > \mathrm{ENKF\_ALPHA} \left(s_{d_i} + \sigma_{d^o_i}\right), 
-
-	where \textstyle\boldsymbol{d}^o is the vector of observed data,
-	\textstyle\boldsymbol{\bar{d}} is the average of the forcasted data ensemble,
-	\textstyle\boldsymbol{s_{d}} is the vector of estimated standard deviations
-	for the forcasted data ensemble, and \textstyle\boldsymbol{s_{d}^o} is the
-	vector standard deviations for the observation error (specified a priori).
-
-        
-   	STD_CUTOFF If the ensemble variation for one particular measurment is below
-        this limit the observation will be deactivated. he default value for
-        this cutoff is 1e-6.
-      
-        Observe that for the updates many settings should be applied on the analysis
-        module in question.
-   
            
 .. _umask:
 .. topic:: UMASK

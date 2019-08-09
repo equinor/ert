@@ -1,3 +1,5 @@
+.. _Data_types_available_in_ERT:
+
 The data types available in ERT
 ===============================
 
