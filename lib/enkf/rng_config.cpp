@@ -191,6 +191,7 @@ void rng_config_init(rng_config_type * rng_config, const config_content_type * c
   if(config_content_has_item(config_content, RANDOM_SEED_KEY)) {
     const char * random_seed = config_content_get_value(config_content, RANDOM_SEED_KEY);
     rng_config_set_random_seed(rng_config, random_seed);
+    res_log_fcritical("Using RANDOM_SEED: %s", random_seed);
   }
 
   if(config_content_has_item(config_content, STORE_SEED_KEY)) {
