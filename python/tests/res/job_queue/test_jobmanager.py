@@ -1,3 +1,4 @@
+import getpass
 import json
 import os
 import os.path
@@ -335,26 +336,25 @@ class JobManagerTest(TestCase):
 
 
     def test_run_multiple_fail(self):
-        with TestAreaContext(gen_area_name("mkdir", create_jobs_json)):
+        with TestAreaContext(gen_area_name("exit", create_jobs_json)):
             joblist = []
-            dir_list = ["1","2","3","4","5"]
-            for d in dir_list:
-                job = {"name" : "MKDIR",
-                       "executable" : "/bin/mkdir",
-                       "stdout" : "mkdir_out",
-                       "stderr" : "mkdir_err",
-                       "argList" : ["-p", "-v", "read-only/%s" % d]}
+            for index in range(1, 6):
+                job = {"name" : "exit",
+                       "executable" : "/bin/bash",
+                       "stdout" : "exit_out",
+                       "stderr": "exit_err",
+                       # produces something on stderr, and exits with exit_code=index
+                       "argList": ["-c", "echo \"failed with %s\" 1>&2 ; exit %s" % (index, index)]}
                 joblist.append(job)
 
             create_jobs_json(joblist)
             jobm = JobManager()
-            os.mkdir("read-only")
-            os.chmod("read-only", stat.S_IRUSR + stat.S_IXUSR)
 
-            for (index,job) in enumerate(jobm):
+            for (index, job) in enumerate(jobm):
                 exit_status, msg = jobm.runJob(job)
-                self.assertEqual(exit_status, 1)
-                self.assertTrue(os.path.getsize("mkdir_err.%d" % index) > 0)
+                self.assertEqual(exit_status, index + 1)
+                self.assertTrue(os.path.getsize(
+                    "exit_err.%d" % index) > 0)
 
 
     def test_data_from_forward_model_json(self):
