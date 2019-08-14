@@ -25,7 +25,6 @@ matrix:
   fast_finish: true
   include:
   - os: osx
-    osx_image: xcode8.3
     language: generic
     python: 2.7
     env:
@@ -34,7 +33,6 @@ matrix:
     - DYLD_LIBRARY_PATH=${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64:${DYLD_LIBRARY_PATH}"
     - TEST_SUITE=""
   - os: osx
-    osx_image: xcode8.3
     language: generic
     python: 3.6
     env:
