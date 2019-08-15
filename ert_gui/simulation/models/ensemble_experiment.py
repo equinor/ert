@@ -24,7 +24,7 @@ class EnsembleExperiment(BaseRunModel):
 
         num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(self._job_queue, run_context)
 
-        num_successful_realizations += arguments['prev_successful_realizations']
+        num_successful_realizations += arguments.get('prev_successful_realizations', 0)
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)

@@ -2,78 +2,122 @@ import argparse
 import sys
 import unittest
 
-from ert_gui.main import ert_parser, main
-
-if sys.version_info >= (3, 3):
-    from unittest.mock import Mock, patch
-else:
-    from mock import Mock, patch
+from ert_gui.main import ert_parser
+from argparse import ArgumentParser
 
 
 class MainTest(unittest.TestCase):
 
-    def __init__(self, *args, **kwargs):
-        super(MainTest, self).__init__(*args, **kwargs)
+    def test_argparse_exec_gui(self):
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(parser, ['gui', 'test-data/local/poly_example/poly.ert'])
+        self.assertEquals(parsed.func.__name__, "runGui")
 
-        # argv is inconsequential for this case, as parsing is stubbed out.
-        # Tests still needs to assert argv was passed, and since it may vary
-        # (based on environment) it is unset.
-        sys.argv = list()
+    def test_argparse_exec_test_run_valid_case(self):
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser, ['test_run', "--verbose", 'test-data/local/poly_example/poly.ert'])
+        self.assertEquals(parsed.mode, "test_run")
+        self.assertEquals(
+            parsed.config, "test-data/local/poly_example/poly.ert")
+        self.assertEquals(parsed.func.__name__, "run_cli")
+        self.assertTrue(parsed.verbose)
 
-        # main is essentially a call to ArgumentParser.parse_args, so it is mocked.
-        self.arg_parser_mock = None
+    def test_argparse_exec_ensemble_experiment_valid_case(self):
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(parser, ['ensemble_experiment', "--realizations", "1-4,7,8",
+                                     'test-data/local/poly_example/poly.ert'])
+        self.assertEquals(parsed.mode, "ensemble_experiment")
+        self.assertEquals(
+            parsed.config, "test-data/local/poly_example/poly.ert")
+        self.assertEquals(parsed.realizations, "1-4,7,8")
+        self.assertEquals(parsed.func.__name__, "run_cli")
+        self.assertFalse(parsed.verbose)
 
-        # ArgumentParser.parse_args returns a Namespace, which must be mocked as
-        # parse_args is stubbed out.
-        self.namespace_mock = None
+    def test_argparse_exec_ensemble_experiment_faulty_realizations(self):
+        parser = ArgumentParser(prog="test_main")
+        with self.assertRaises(SystemExit):
+            ert_parser(parser, ['ensemble_experiment', "--realizations", "1~4,7,"
+                                'test-data/local/poly_example/poly.ert'])
 
-    def mock_parser(self):
-        """Returns a mocked ArgumentParser."""
-        return self.arg_parser_mock
+    def test_argparse_exec_ensemble_smoother_valid_case(self):
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(parser, [
+                            'ensemble_smoother', "--target-case", "some_case%d", 'test-data/local/poly_example/poly.ert'])
+        self.assertEquals(parsed.mode, "ensemble_smoother")
+        self.assertEquals(
+            parsed.config, "test-data/local/poly_example/poly.ert")
+        self.assertEquals(parsed.target_case, "some_case%d")
+        self.assertEquals(parsed.func.__name__, "run_cli")
+        self.assertFalse(parsed.verbose)
 
-    def setUp(self):
-        unittest.TestCase.setUp(self)
+    def test_argparse_exec_ensemble_smoother_default_target_case(self):
+        parser = ArgumentParser(prog="test_main")
+        with self.assertRaises(SystemExit):
+            ert_parser(parser, ['ensemble_smoother', "--target-case", 'default',
+                                'test-data/local/poly_example/poly.ert'])
 
-        self.namespace_mock = Mock(spec=argparse.Namespace)
-        self.namespace_mock.func = Mock()
+    def test_argparse_exec_ensemble_smoother_no_target_case(self):
+        parser = ArgumentParser(prog="test_main")
+        with self.assertRaises(SystemExit):
+            ert_parser(parser, ['ensemble_smoother',
+                                'test-data/local/poly_example/poly.ert'])
 
-        self.arg_parser_mock = Mock(spec=argparse.ArgumentParser)
-        self.arg_parser_mock.parse_args = Mock(return_value=self.namespace_mock)
+    def test_argparse_exec_es_mda_valid_case(self):
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(parser, ['es_mda', "--target-case", "some_case%d", "--realizations",
+                                     "1-10", "--verbose", "--weights", "1, 2, 4", 'test-data/local/poly_example/poly.ert'])
+        self.assertEquals(parsed.mode, "es_mda")
+        self.assertEquals(
+            parsed.config, "test-data/local/poly_example/poly.ert")
+        self.assertEquals(parsed.target_case, "some_case%d")
+        self.assertEquals(parsed.realizations, "1-10")        
+        self.assertEquals(parsed.weights, "1, 2, 4")
+        self.assertEquals(parsed.func.__name__, "run_cli")
+        self.assertTrue(parsed.verbose)
 
-    def test_run_gui(self):
-        self.namespace_mock.interface = 'gui'
+    def test_argparse_exec_es_mda_default_weights(self):
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser, ['es_mda', 'test-data/local/poly_example/poly.ert'])
+        self.assertEquals(parsed.mode, "es_mda")
+        self.assertEquals(
+            parsed.config, "test-data/local/poly_example/poly.ert")        
+        self.assertEquals(parsed.weights, "3, 2, 1")
+        self.assertEquals(parsed.func.__name__, "run_cli")
+        self.assertFalse(parsed.verbose)
 
-        with patch('ert_gui.main.ert_parser', new=self.mock_parser):
-            main()
+    def test_argparse_exec_iterated_ensemble_smoother_valid_case(self):
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(parser, ['iterated_ensemble_smoother',  "--iterations", "40",
+                                     'test-data/local/poly_example/poly.ert'])
+        self.assertEquals(parsed.mode, "iterated_ensemble_smoother")
+        self.assertEquals(
+            parsed.config, "test-data/local/poly_example/poly.ert")
+        self.assertEquals(parsed.iterations, 40)
+        self.assertEquals(parsed.func.__name__, "run_cli")
+        self.assertFalse(parsed.verbose)
 
-        self.arg_parser_mock.parse_args.assert_called_once_with(sys.argv)
-        self.namespace_mock.func.assert_called_once_with(self.namespace_mock)
+    def test_argparse_exec_iterated_ensemble_smoother_default_iterations(self):
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(parser, [
+                            'iterated_ensemble_smoother', 'test-data/local/poly_example/poly.ert'])
+        self.assertEquals(parsed.mode, "iterated_ensemble_smoother")
+        self.assertEquals(
+            parsed.config, "test-data/local/poly_example/poly.ert")
+        self.assertEquals(parsed.iterations, 4)
+        self.assertEquals(parsed.func.__name__, "run_cli")
+        self.assertFalse(parsed.verbose)
 
-    def test_run_cli_with_valid_arguments(self):
-        self.namespace_mock.interface = 'cli'
-        self.namespace_mock.mode = 'ensemble_experiment'
-        self.namespace_mock.target_case = 'some case'
+    def test_argparse_exec_iterated_ensemble_smoother_faulty_iterations(self):
+        parser = ArgumentParser(prog="test_main")
+        with self.assertRaises(SystemExit):
+            ert_parser(parser, ['iterated_ensemble_smoother', "--iterations", "100"
+                                'test-data/local/poly_example/poly.ert'])
 
-        with patch('ert_gui.main.ert_parser', new=self.mock_parser):
-            main()
-
-        self.arg_parser_mock.parse_args.assert_called_once_with(sys.argv)
-        self.namespace_mock.func.assert_called_once_with(self.namespace_mock)
-
-    def test_run_cli_with_invalid_arguments(self):
-        self.namespace_mock.interface = 'cli'
-        self.namespace_mock.mode = 'ensemble_smoother'
-        self.namespace_mock.target_case = 'default'
-        self.arg_parser_mock.error = Mock()
-
-        with patch('ert_gui.main.ert_parser', new=self.mock_parser):
-            main()
-
-        self.arg_parser_mock.parse_args.assert_called_once_with(sys.argv)
-        self.arg_parser_mock.error.assert_called_once_with("Target file system and source file system can not be the same. "
-                                                           "They were both: <default>. Please set using --target-case on "
-                                                           "the command line.")
-        self.namespace_mock.func.assert_called_once_with(self.namespace_mock)
+        with self.assertRaises(SystemExit):
+            ert_parser(parser, ['iterated_ensemble_smoother', "--iterations", "0",
+                                'test-data/local/poly_example/poly.ert'])
 
 
 if __name__ == '__main__':

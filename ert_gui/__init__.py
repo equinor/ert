@@ -22,5 +22,6 @@ try:
 except ImportError:
     __version__ = '0.0.0'
 
-from .ertnotifier import ERT
+from .ert_adapter import ERT
 from .ertnotifier import configureErtNotifier
+from .cli import run_cli

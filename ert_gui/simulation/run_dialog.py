@@ -170,9 +170,6 @@ class RunDialog(QDialog):
     def startSimulation(self, arguments):
 
         self._simulations_argments = arguments
-
-        if not 'prev_successful_realizations' in self._simulations_argments:
-            self._simulations_argments['prev_successful_realizations'] = 0
         self._run_model.reset()
 
         def run():
@@ -337,6 +334,7 @@ class RunDialog(QDialog):
             self.done_button.setVisible(False)
             active_realizations = self.create_mask_from_failed_realizations()
             self._simulations_argments['active_realizations'] = active_realizations
+            self._simulations_argments['prev_successful_realizations'] = self._simulations_argments.get('prev_successful_realizations', 0)
             self._simulations_argments['prev_successful_realizations'] += self.count_successful_realizations()
             self.startSimulation(self._simulations_argments)
 
