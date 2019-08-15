@@ -107,7 +107,7 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhaseName(phase_string, indeterminate=False)
         num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, run_context)
 
-        num_successful_realizations += arguments['prev_successful_realizations']
+        num_successful_realizations += arguments.get('prev_successful_realizations', 0)
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         phase_string = "Post processing for iteration: %d" % iteration

@@ -8,6 +8,7 @@
 *.user.*
 .idea
 .vscode
+.pytest_cache
 python/lib64
 /libenkf/src/.faultlist
 /develbranch/libenkf/src/.faultlist

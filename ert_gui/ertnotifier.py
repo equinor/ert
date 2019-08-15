@@ -6,7 +6,7 @@ except ImportError:
   from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 
 from res.enkf import EnKFMain
-
+from ert_gui import ERT
 
 class ErtNotifier(QObject):
     ertChanged = pyqtSignal()
@@ -48,10 +48,6 @@ class ErtNotifier(QObject):
         self._ert = None
         os.execl(python_executable, python_executable, ert_gui_main, config_file)
 
-
-ERT = ErtNotifier(None, None)
-""" @type: ErtNotifier """
-
-def configureErtNotifier(ert, config_file):
-    ERT._ert = ert
-    ERT._config_file = config_file
+def configureErtNotifier(ert, config_file):    
+    notifier = ErtNotifier(ert, config_file)
+    ERT.adapt(notifier)    
