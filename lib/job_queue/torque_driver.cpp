@@ -519,8 +519,14 @@ job_status_type torque_driver_parse_status(const char * qstat_file, const char *
               status = JOB_QUEUE_DONE;
               break;
 
+            case 'H':
+              status = JOB_QUEUE_PENDING;
+              break;
             case 'Q':
               status = JOB_QUEUE_PENDING;
+              break;
+
+            default:
               break;
             }
 
