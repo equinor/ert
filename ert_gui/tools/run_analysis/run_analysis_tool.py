@@ -13,23 +13,34 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import sys
+import ert_gui
 
 try:
-  from PyQt4.QtGui import QMessageBox
+    from PyQt4.QtGui import QMessageBox
 except ImportError:
-  from PyQt5.QtWidgets import QMessageBox
-
-from ecl.util.util import BoolVector
+    from PyQt5.QtWidgets import QMessageBox
 
 from res.enkf import ErtRunContext
 
-from ert_gui import ERT
+
 from res.enkf import ESUpdate
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from ert_gui.tools import Tool
 from ert_gui.tools.run_analysis import RunAnalysisPanel
+
+
+def analyse(target, source):
+    """Runs analysis using target and source cases. Returns whether or not
+    the analysis was successful."""
+    ert = ert_gui.ERT.ert
+    fs_manager = ert.getEnkfFsManager()
+    es_update = ESUpdate(ert)
+
+    target_fs = fs_manager.getFileSystem(target)
+    source_fs = fs_manager.getFileSystem(source)
+    run_context = ErtRunContext.ensemble_smoother_update(source_fs, target_fs,)
+    return es_update.smootherUpdate(run_context)
 
 
 class RunAnalysisTool(Tool):
@@ -50,23 +61,21 @@ class RunAnalysisTool(Tool):
         target = self._run_widget.target_case()
         source = self._run_widget.source_case()
 
-        ert = ERT.ert
-        fs_manager = ert.getEnkfFsManager()
-        es_update = ESUpdate(ert)
+        success = analyse(target, source)
 
-        target_fs = fs_manager.getFileSystem(target)
-        source_fs = fs_manager.getFileSystem(source)
-        run_context = ErtRunContext.ensemble_smoother_update( source_fs, target_fs, )
-        success = es_update.smootherUpdate( run_context )
+        msg = QMessageBox()
+        msg.setWindowTitle("Run Analysis")
+        msg.setStandardButtons(QMessageBox.Ok)
 
-        if not success:
-            msg = QMessageBox()
+        if success:
+            msg.setIcon(QMessageBox.Information)
+            msg.setText("Successfully ran analysis for case '{}'.".format(source))
+            msg.exec_()
+        else:
             msg.setIcon(QMessageBox.Warning)
-            msg.setWindowTitle("Run Analysis")
-            msg.setText("Unable to run analysis for case '%s'." % source)
-            msg.setStandardButtons(QMessageBox.Ok)
+            msg.setText("Unable to run analysis for case '{}'.".format(source))
             msg.exec_()
             return
 
-        ERT.ertChanged.emit()
+        ert_gui.ERT.ertChanged.emit()
         self._dialog.accept()
