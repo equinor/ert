@@ -441,12 +441,15 @@ ecl_config_type * ecl_config_alloc_full(bool have_eclbase,
   {
     ecl_refcase_list_add_matching(ecl_config->refcase_list, stringlist_safe_iget(ref_case_list, i));
   }
-  ecl_refcase_list_set_default(ecl_config->refcase_list, refcase_default);
+  if (refcase_default)
+    ecl_refcase_list_set_default(ecl_config->refcase_list, refcase_default);
 
-  ecl_config_set_init_section(ecl_config, init_section);
+  if (init_section)
+    ecl_config_set_init_section(ecl_config, init_section);
 
   ecl_config->end_date = end_date;
-  ecl_config->schedule_prediction_file = util_alloc_string_copy(sched_prediction_file);
+  if (sched_prediction_file)
+    ecl_config->schedule_prediction_file = util_alloc_string_copy(sched_prediction_file);
   
   return ecl_config;
 }

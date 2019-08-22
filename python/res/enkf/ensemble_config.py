@@ -64,104 +64,104 @@ class EnsembleConfig(BaseCClass):
         
         c_ptr = None
         if config_dict is not None:
-            c_ptr = self._alloc_full(config_dict[ConfigKeys.GEN_KW_TAG_FORMAT])
+            c_ptr = self._alloc_full(config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT))
             if c_ptr is None:
                 raise ValueError("Failed to construct EnsembleConfig instance from dict")
 
             super(EnsembleConfig, self).__init__(c_ptr)
 
             gen_param_list = config_dict.get(ConfigKeys.GEN_PARAM, [])
-            for a in gen_param_list:
-                gen_param_node = EnkfConfigNode.create_gen_param(a[ConfigKeys.NAME],
-                                                                 a[ConfigKeys.FORWARD_INIT],
-                                                                 a[ConfigKeys.INPUT_FORMAT],
-                                                                 a[ConfigKeys.OUTPUT_FORMAT],
-                                                                 a[ConfigKeys.INIT_FILES],
-                                                                 a[ConfigKeys.ECL_FILE],
-                                                                 a[ConfigKeys.MIN_STD],
-                                                                 a[ConfigKeys.TEMPLATE],
-                                                                 a[ConfigKeys.KEY_KEY])
+            for gene_param in gen_param_list:
+                gen_param_node = EnkfConfigNode.create_gen_param(gene_param.get(ConfigKeys.NAME),
+                                                                 gene_param.get(ConfigKeys.FORWARD_INIT),
+                                                                 gene_param.get(ConfigKeys.INPUT_FORMAT),
+                                                                 gene_param.get(ConfigKeys.OUTPUT_FORMAT),
+                                                                 gene_param.get(ConfigKeys.INIT_FILES),
+                                                                 gene_param.get(ConfigKeys.ECL_FILE),
+                                                                 gene_param.get(ConfigKeys.MIN_STD),
+                                                                 gene_param.get(ConfigKeys.TEMPLATE),
+                                                                 gene_param.get(ConfigKeys.KEY_KEY))
                 self.addNode(gen_param_node)
 
             gen_data_list = config_dict.get(ConfigKeys.GEN_DATA, [])
-            for a in gen_data_list:
-                gen_data_node = EnkfConfigNode.create_gen_data_full(a[ConfigKeys.NAME],
-                                                                    a[ConfigKeys.RESULT_FILE],
-                                                                    a[ConfigKeys.INPUT_FORMAT],
-                                                                    a[ConfigKeys.REPORT_STEPS],
-                                                                    a[ConfigKeys.ECL_FILE],
-                                                                    a[ConfigKeys.INIT_FILES],
-                                                                    a[ConfigKeys.TEMPLATE],
-                                                                    a[ConfigKeys.KEY_KEY])
+            for gene_data in gen_data_list:
+                gen_data_node = EnkfConfigNode.create_gen_data_full(gene_data.get(ConfigKeys.NAME),
+                                                                    gene_data.get(ConfigKeys.RESULT_FILE),
+                                                                    gene_data.get(ConfigKeys.INPUT_FORMAT),
+                                                                    gene_data.get(ConfigKeys.REPORT_STEPS),
+                                                                    gene_data.get(ConfigKeys.ECL_FILE),
+                                                                    gene_data.get(ConfigKeys.INIT_FILES),
+                                                                    gene_data.get(ConfigKeys.TEMPLATE),
+                                                                    gene_data.get(ConfigKeys.KEY_KEY))
                 self.addNode(gen_data_node)
 
             custom_kw_list = config_dict.get(ConfigKeys.CUSTOM_KW, [])
-            for a in custom_kw_list:
-                custom_kw_node = EnkfConfigNode.create_custom_kw(a[ConfigKeys.NAME],
-                                                                 a[ConfigKeys.RESULT_FILE],
-                                                                 a[ConfigKeys.OUT_FILE])
+            for custom_kw in custom_kw_list:
+                custom_kw_node = EnkfConfigNode.create_custom_kw(custom_kw.get(ConfigKeys.NAME),
+                                                                 custom_kw.get(ConfigKeys.RESULT_FILE),
+                                                                 custom_kw.get(ConfigKeys.OUT_FILE))
                 self.addNode(custom_kw_node)
 
             gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
-            for a in gen_kw_list:
-                gen_kw_node = EnkfConfigNode.create_gen_kw(a[ConfigKeys.NAME],
-                                                           _get_abs_path(a[ConfigKeys.TEMPLATE]),
-                                                           a[ConfigKeys.OUT_FILE],
-                                                           _get_abs_path(a[ConfigKeys.PARAMETER_FILE]),
-                                                           a[ConfigKeys.FORWARD_INIT],
-                                                           a[ConfigKeys.MIN_STD],
-                                                           a[ConfigKeys.INIT_FILES],
-                                                           config_dict[ConfigKeys.GEN_KW_TAG_FORMAT])
+            for gen_kw in gen_kw_list:
+                gen_kw_node = EnkfConfigNode.create_gen_kw(gen_kw.get(ConfigKeys.NAME),
+                                                           _get_abs_path(gen_kw.get(ConfigKeys.TEMPLATE)),
+                                                           gen_kw.get(ConfigKeys.OUT_FILE),
+                                                           _get_abs_path(gen_kw.get(ConfigKeys.PARAMETER_FILE)),
+                                                           gen_kw.get(ConfigKeys.FORWARD_INIT),
+                                                           gen_kw.get(ConfigKeys.MIN_STD),
+                                                           gen_kw.get(ConfigKeys.INIT_FILES),
+                                                           config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT))
                 self.addNode(gen_kw_node)
 
             surface_list = config_dict.get(ConfigKeys.SURFACE_KEY, [])
-            for a in surface_list:
-                surface_node = EnkfConfigNode.create_surface(a[ConfigKeys.NAME],
-                                                             a[ConfigKeys.INIT_FILES],
-                                                             a[ConfigKeys.OUT_FILE],
-                                                             a[ConfigKeys.BASE_SURFACE_KEY],
-                                                             a[ConfigKeys.MIN_STD],
-                                                             a[ConfigKeys.FORWARD_INIT])
+            for surface in surface_list:
+                surface_node = EnkfConfigNode.create_surface(surface.get(ConfigKeys.NAME),
+                                                             surface.get(ConfigKeys.INIT_FILES),
+                                                             surface.get(ConfigKeys.OUT_FILE),
+                                                             surface.get(ConfigKeys.BASE_SURFACE_KEY),
+                                                             surface.get(ConfigKeys.MIN_STD),
+                                                             surface.get(ConfigKeys.FORWARD_INIT))
                 self.addNode(surface_node)
 
             summary_list = config_dict.get(ConfigKeys.SUMMARY, [])
             for a in summary_list:
-                self.add_summary_full(a[ConfigKeys.NAME], refcase)
+                self.add_summary_full(a, refcase)
 
             field_list = config_dict.get(ConfigKeys.FIELD_KEY, [])
-            for a in field_list:
-                field_node = EnkfConfigNode.create_field(a[ConfigKeys.NAME],
-                                                         a[ConfigKeys.VAR_TYPE],
+            for field in field_list:
+                field_node = EnkfConfigNode.create_field(field.get(ConfigKeys.NAME),
+                                                         field.get(ConfigKeys.VAR_TYPE),
                                                          grid,
                                                          self._get_trans_table(),
-                                                         a[ConfigKeys.OUT_FILE],
-                                                         a[ConfigKeys.ENKF_INFILE],
-                                                         a[ConfigKeys.FORWARD_INIT],
-                                                         a[ConfigKeys.INIT_TRANSFORM],
-                                                         a[ConfigKeys.OUTPUT_TRANSFORM],
-                                                         a[ConfigKeys.INPUT_TRANSFORM],
-                                                         a[ConfigKeys.MIN_STD],
-                                                         a[ConfigKeys.MIN_KEY],
-                                                         a[ConfigKeys.MAX_KEY],
-                                                         a[ConfigKeys.INIT_FILES])
+                                                         field.get(ConfigKeys.OUT_FILE),
+                                                         field.get(ConfigKeys.ENKF_INFILE),
+                                                         field.get(ConfigKeys.FORWARD_INIT),
+                                                         field.get(ConfigKeys.INIT_TRANSFORM),
+                                                         field.get(ConfigKeys.OUTPUT_TRANSFORM),
+                                                         field.get(ConfigKeys.INPUT_TRANSFORM),
+                                                         field.get(ConfigKeys.MIN_STD),
+                                                         field.get(ConfigKeys.MIN_KEY),
+                                                         field.get(ConfigKeys.MAX_KEY),
+                                                         field.get(ConfigKeys.INIT_FILES))
                 self.addNode(field_node)
 
             schedule_file_list = config_dict.get(ConfigKeys.SCHEDULE_PREDICTION_FILE, [])
-            for a in schedule_file_list:
+            for schedule_file in schedule_file_list:
                 schedule_file_node = EnkfConfigNode.create_gen_kw(ConfigKeys.PRED_KEY,
-                                                                  a[ConfigKeys.TEMPLATE],
-                                                                  _get_filename(a[ConfigKeys.TEMPLATE]),
-                                                                  a[ConfigKeys.PARAMETER_KEY],
+                                                                  schedule_file.get(ConfigKeys.TEMPLATE),
+                                                                  _get_filename(schedule_file.get(ConfigKeys.TEMPLATE)),
+                                                                  schedule_file.get(ConfigKeys.PARAMETER_KEY),
                                                                   False,
-                                                                  a[ConfigKeys.MIN_STD],
-                                                                  a[ConfigKeys.INIT_FILES],
-                                                                  config_dict[ConfigKeys.GEN_KW_TAG_FORMAT])
+                                                                  schedule_file.get(ConfigKeys.MIN_STD),
+                                                                  schedule_file.get(ConfigKeys.INIT_FILES),
+                                                                  config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT))
                 self.addNode(schedule_file_node)
 
             container_list = config_dict.get(ConfigKeys.CONTAINER_KEY, [])
-            for a in container_list:
-                container_node = EnkfConfigNode.create_container(a[ConfigKeys.NAME])
-                for child_key in a[ConfigKeys.ARGLIST]:
+            for container in container_list:
+                container_node = EnkfConfigNode.create_container(container.get(ConfigKeys.NAME))
+                for child_key in container.get(ConfigKeys.ARGLIST):
                     container_node._update_container(self.getNode(child_key))
                 self.addNode(container_node)
 

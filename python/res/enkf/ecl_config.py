@@ -82,15 +82,18 @@ class EclConfig(BaseCClass):
                     raise ValueError("Error: data file is not a file")
             
             # GRID_KEY
+            grid = None
             grid_file = config_dict.get(ConfigKeys.GRID)
             if grid_file is not None:
                 grid_file = os.path.realpath(grid_file)
                 if not os.path.isfile(grid_file):
                     raise ValueError("Error: grid file is not a file")
-            grid = EclGrid.load_from_file(grid_file)
+                grid = EclGrid.load_from_file(grid_file)
             
             # REFCASE_KEY
             refcase_default = config_dict.get(ConfigKeys.REFCASE)
+            if refcase_default is not None:
+                refcase_default = os.path.realpath(refcase_default)
             
             # REFCASE_LIST_KEY
             refcase_list = StringList()
@@ -101,7 +104,7 @@ class EclConfig(BaseCClass):
             init_section = config_dict.get(ConfigKeys.INIT_SECITON)
 
             # END_DATE_KEY
-            end_date = CTime(datetime.strptime(config_dict.get(ConfigKeys.END_DATE), "%d/%m/%Y"))
+            end_date = CTime(datetime.strptime(config_dict.get(ConfigKeys.END_DATE, "31/12/1969"), "%d/%m/%Y"))
 
             # SCHEDULE_PREDICTION_FILE_KEY
             schedule_prediction_file = config_dict.get(ConfigKeys.SCHEDULE_PREDICTION_FILE)
@@ -114,8 +117,8 @@ class EclConfig(BaseCClass):
                                     init_section,
                                     end_date,
                                     schedule_prediction_file)
-            
-            grid.convertToCReference(None)
+            if grid is not None:
+                grid.convertToCReference(None)
 
         if c_ptr:
             super(EclConfig, self).__init__(c_ptr)

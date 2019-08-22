@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from res.enkf import SiteConfig
+from res.enkf import SiteConfig, ConfigKeys
 import os
 
 from ecl.util.test import TestAreaContext
@@ -46,22 +46,22 @@ class SiteConfigTest(ResTest):
             ERT_SITE_CONFIG = SiteConfig.getLocation()
             ERT_SHARE_PATH = os.path.dirname(ERT_SITE_CONFIG)
             snake_config_dict = {
-                "INSTALL_JOB":
+                ConfigKeys.INSTALL_JOB:
                     [
                         {
-                            "NAME": "SNAKE_OIL_SIMULATOR",
-                            "PATH": os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_SIMULATOR"
+                            ConfigKeys.NAME: "SNAKE_OIL_SIMULATOR",
+                            ConfigKeys.PATH: os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_SIMULATOR"
                         },
                         {
-                            "NAME": "SNAKE_OIL_NPV",
-                            "PATH": os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_NPV"
+                            ConfigKeys.NAME: "SNAKE_OIL_NPV",
+                            ConfigKeys.PATH: os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_NPV"
                         },
                         {
-                            "NAME": "SNAKE_OIL_DIFF",
-                            "PATH": os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_DIFF"
+                            ConfigKeys.NAME: "SNAKE_OIL_DIFF",
+                            ConfigKeys.PATH: os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_DIFF"
                         }
                     ],
-                "INSTALL_JOB_DIRECTORY":
+                ConfigKeys.INSTALL_JOB_DIRECTORY:
                     [
                         ERT_SHARE_PATH + '/forward-models/res',
                         ERT_SHARE_PATH + '/forward-models/shell',
@@ -69,20 +69,20 @@ class SiteConfigTest(ResTest):
                         ERT_SHARE_PATH + '/forward-models/old_style'
                     ],
 
-                "SETENV":
+                ConfigKeys.SETENV:
                     [
                         {
-                            "NAME": "SILLY_VAR",
-                            "VALUE": "silly-value"
+                            ConfigKeys.NAME: "SILLY_VAR",
+                            ConfigKeys.VALUE: "silly-value"
                         },
                         {
-                            "NAME": "OPTIONAL_VAR",
-                            "VALUE": "optional-value"
+                            ConfigKeys.NAME: "OPTIONAL_VAR",
+                            ConfigKeys.VALUE: "optional-value"
                         }
                     ],
-                "LICENSE_PATH": "some/random/path",
+                ConfigKeys.LICENSE_PATH: "some/random/path",
 
-                "UMASK": 18
+                ConfigKeys.UMASK: 18
             }
 
             site_config_user_file = SiteConfig(user_config_file=config_file)

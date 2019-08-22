@@ -106,17 +106,16 @@ class ModelConfig(BaseCClass):
 
             # FORWARD_MODEL_KEY
             forward_model = ForwardModel(ext_joblist=joblist)
-            for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
-                job = forward_model.add_job(job_description['NAME'])
-                args = StringList(job_description['ARGUMENTS'])                
-                job.set_args(args)
-                args.convertToCReference(None)
+            # SIMULATION_JOB_KEY
+            for job_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
+                job = forward_model.add_job(job_description[ConfigKeys.NAME])
+                job.set_private_args_as_string(job_description.get(ConfigKeys.ARGLIST))
                 job.convertToCReference(None)
 
             # SIMULATION_JOB_KEY
-            for job_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
-                job = forward_model.add_job(job_description['NAME'])
-                job.set_private_args_as_string(job_description['ARGUMENTS'])
+            for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
+                job = forward_model.add_job(job_description[ConfigKeys.NAME])
+                job.set_private_args_as_string(job_description.get(ConfigKeys.ARGLIST))
                 job.convertToCReference(None)
 
             # OBS_CONFIG_KEY

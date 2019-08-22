@@ -86,11 +86,7 @@ class EnsembleConfigTest(ResTest):
                     ConfigKeys.FORWARD_INIT: False
                 }
             ],
-            ConfigKeys.SUMMARY: [
-                {
-                    ConfigKeys.NAME: 'WOPR:OP_1'
-                }
-            ],
+            ConfigKeys.SUMMARY: ['WOPR:OP_1'],
             ConfigKeys.FIELD_KEY: [
                 {
                     ConfigKeys.NAME: 'PERMX',

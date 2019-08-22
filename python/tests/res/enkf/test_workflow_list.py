@@ -17,7 +17,7 @@
 import os
 from ecl.util.test import TestAreaContext
 from tests import ResTest
-from res.enkf import ErtWorkflowList, ResConfig, SiteConfig
+from res.enkf import ErtWorkflowList, ResConfig, SiteConfig, ConfigKeys
 
 
 class ErtWorkflowListTest(ResTest):
@@ -32,25 +32,25 @@ class ErtWorkflowListTest(ResTest):
             ERT_SHARE_PATH = os.path.dirname(ERT_SITE_CONFIG)
 
             self.config_dict = {
-            "LOAD_WORKFLOW_JOB":
-                [
-                    {
-                        "NAME" : "print_uber",
-                        "PATH" : os.getcwd() + "/simple_config/workflows/UBER_PRINT"
-                    }
-                ],
+                ConfigKeys.LOAD_WORKFLOW_JOB:
+                    [
+                        {
+                            ConfigKeys.NAME: "print_uber",
+                            ConfigKeys.PATH: os.getcwd() + "/simple_config/workflows/UBER_PRINT"
+                        }
+                    ],
 
-            "LOAD_WORKFLOW":
-                [
-                    {
-                        "NAME" : "magic_print",
-                        "PATH" : os.getcwd() + "/simple_config/workflows/MAGIC_PRINT"
-                    }
-                ],
-            'WORKFLOW_JOB_DIRECTORY': [
-                    ERT_SHARE_PATH + '/workflows/jobs/internal/config',
-                    ERT_SHARE_PATH + '/workflows/jobs/internal-gui/config'
-                ],
+                ConfigKeys.LOAD_WORKFLOW:
+                    [
+                        {
+                            ConfigKeys.NAME: "magic_print",
+                            ConfigKeys.PATH: os.getcwd() + "/simple_config/workflows/MAGIC_PRINT"
+                        }
+                    ],
+                ConfigKeys.WORKFLOW_JOB_DIRECTORY: [
+                        ERT_SHARE_PATH + '/workflows/jobs/internal/config',
+                        ERT_SHARE_PATH + '/workflows/jobs/internal-gui/config'
+                    ],
             }
 
             work_area.copy_directory(self.case_directory)

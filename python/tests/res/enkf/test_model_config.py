@@ -128,32 +128,32 @@ class ModelConfigTest(ResTest):
             work_area.copy_directory(case_directory)
             res_config = ResConfig(user_config_file="configuration_tests/model_config.ert")
             config_dict = {
-                "MAX_RESAMPLE": 1,
-                "JOBNAME" : "model_config_test",
-                "RUNPATH" : "/tmp/simulations/run%d",
-                "NUM_REALIZATIONS" : 10,
-                "ENSPATH" : "configuration_tests/Ensemble",
-                "TIME_MAP" :"configuration_tests/input/refcase/time_map.txt",
-                "OBS_CONFIG" : "configuration_tests/input/observations/observations.txt",
-                "DATA_ROOT" : "configuration_tests/",
-                "HISTORY_SOURCE" : 1,
-                "GEN_KW_EXPORT_NAME" : "parameter_test.json",
-                "FORWARD_MODEL" : [
+                ConfigKeys.MAX_RESAMPLE: 1,
+                ConfigKeys.JOBNAME: "model_config_test",
+                ConfigKeys.RUNPATH: "/tmp/simulations/run%d",
+                ConfigKeys.NUM_REALIZATIONS: 10,
+                ConfigKeys.ENSPATH: "configuration_tests/Ensemble",
+                ConfigKeys.TIME_MAP:"configuration_tests/input/refcase/time_map.txt",
+                ConfigKeys.OBS_CONFIG: "configuration_tests/input/observations/observations.txt",
+                ConfigKeys.DATAROOT: "configuration_tests/",
+                ConfigKeys.HISTORY_SOURCE: 1,
+                ConfigKeys.GEN_KW_EXPORT_NAME: "parameter_test.json",
+                ConfigKeys.FORWARD_MODEL: [
                     {
-                        "NAME" : "COPY_FILE",
-                        "ARGUMENTS" : "<FROM>=input/schedule.sch, <TO>=output/schedule_copy.sch",
+                        ConfigKeys.NAME: "COPY_FILE",
+                        ConfigKeys.ARGLIST: "<FROM>=input/schedule.sch, <TO>=output/schedule_copy.sch",
                     },
                     {
-                        "NAME" : "SNAKE_OIL_SIMULATOR",
-                        "ARGUMENTS" : "",
+                        ConfigKeys.NAME: "SNAKE_OIL_SIMULATOR",
+                        ConfigKeys.ARGLIST : "",
                     },
                     {
-                        "NAME" : "SNAKE_OIL_NPV",
-                        "ARGUMENTS" : "",
+                        ConfigKeys.NAME: "SNAKE_OIL_NPV",
+                        ConfigKeys.ARGLIST: "",
                     },
                     {
-                        "NAME" : "SNAKE_OIL_DIFF",
-                        "ARGUMENTS" : "",
+                        ConfigKeys.NAME: "SNAKE_OIL_DIFF",
+                        ConfigKeys.ARGLIST : "",
                     }
                 ]
             }

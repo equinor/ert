@@ -37,7 +37,7 @@ class HookManager(BaseCClass):
 
             # RUNPATH_FILE #
             runpath_file_name = config_dict.get(ConfigKeys.RUNPATH_FILE, ConfigKeys.RUNPATH_LIST_FILE)
-            runpath_file_path = os.path.join(config_dir, runpath_file_name)
+            runpath_file_path = os.path.normpath(os.path.join(config_dir, runpath_file_name))
 
             # HOOK_WORKFLOW
             hook_workflow_names = []

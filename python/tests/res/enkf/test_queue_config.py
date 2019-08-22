@@ -17,7 +17,7 @@
 import os
 from ecl.util.test import TestAreaContext
 from tests import ResTest
-from res.enkf import QueueConfig
+from res.enkf import QueueConfig, ConfigKeys
 from res.config import ConfigContent
 
 class QueueConfigTest(ResTest):
@@ -49,15 +49,15 @@ class QueueConfigTest(ResTest):
             work_area.copy_directory(self.case_directory)
             config_file = "simple_config/minimum_config"
             config_dict = {
-                "JOB_SCRIPT" : os.getcwd() + "/simple_config/script.sh",
-                "QUEUE_SYSTEM": 2,
-                "USER_MODE" : True,
-                "MAX_SUBMIT" : 2,
-                "NUM_CPU" : 0,
-                "QUEUE_OPTION" : [
+                ConfigKeys.JOB_SCRIPT: os.getcwd() + "/simple_config/script.sh",
+                ConfigKeys.QUEUE_SYSTEM: 2,
+                ConfigKeys.USER_MODE: True,
+                ConfigKeys.MAX_SUBMIT: 2,
+                ConfigKeys.NUM_CPU: 0,
+                ConfigKeys.QUEUE_OPTION: [
                     {
-                        "NAME" : "MAX_RUNNING",
-                        "VALUE" : "50"
+                        ConfigKeys.NAME: "MAX_RUNNING",
+                        ConfigKeys.VALUE: "50"
                     }
                 ]
             }

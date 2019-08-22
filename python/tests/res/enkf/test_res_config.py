@@ -14,6 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os, os.path
+import stat
 from copy import deepcopy
 from datetime import date
 
@@ -25,7 +26,8 @@ from res.util.enums import MessageLevelEnum
 
 from res.sched import HistorySourceEnum
 
-from res.enkf import ResConfig, SiteConfig, AnalysisConfig
+from res.job_queue import QueueDriverEnum
+from res.enkf import ResConfig, SiteConfig, AnalysisConfig, ConfigKeys, GenDataFileType
 from res.test import ErtTestContext
 
 # The res_config object should set the environment variable
@@ -126,6 +128,154 @@ config_data = {
                               }
         }
 
+
+config_data_new = {
+        ConfigKeys.ALPHA_KEY: 3,
+        ConfigKeys.RERUN_KEY: False,
+        ConfigKeys.RERUN_START_KEY: 0,
+        ConfigKeys.MERGE_OBSERVATIONS: False,
+        ConfigKeys.UPDATE_LOG_PATH: 'update_log',
+        ConfigKeys.STD_CUTOFF_KEY: 1e-6,
+        ConfigKeys.STOP_LONG_RUNNING: False,
+        ConfigKeys.SINGLE_NODE_UPDATE: False,
+        ConfigKeys.STD_CORRELATED_OBS: False,
+        ConfigKeys.GLOBAL_STD_SCALING: 1,
+        ConfigKeys.MIN_REALIZATIONS: 5,
+        # "MIN_REALIZATIONS"  : "50%", percentages need to be fixed or removed
+        ConfigKeys.RUNPATH: "<SCRATCH>/<USER>/<CASE_DIR>/realization-%d/iter-%d", #model
+        ConfigKeys.NUM_REALIZATIONS: 10, #model
+        ConfigKeys.MAX_RUNTIME: 23400,
+        ConfigKeys.END_DATE: '10/10/2010',
+
+        ConfigKeys.JOB_SCRIPT: "../../../script.sh",
+        ConfigKeys.QUEUE_SYSTEM: QueueDriverEnum.LSF_DRIVER,
+        ConfigKeys.USER_MODE: True,
+        ConfigKeys.MAX_SUBMIT: 13,
+        ConfigKeys.NUM_CPU: 0,
+        ConfigKeys.QUEUE_OPTION: [
+            {
+                ConfigKeys.NAME: "MAX_RUNNING",
+                ConfigKeys.VALUE: "100"
+            },
+            {
+                ConfigKeys.NAME: ConfigKeys.LSF_QUEUE_NAME_KEY,
+                ConfigKeys.VALUE: "mr"
+            },
+            {
+                ConfigKeys.NAME: ConfigKeys.LSF_SERVER_KEY,
+                ConfigKeys.VALUE: "simulacrum"
+            },
+            {
+                ConfigKeys.NAME: ConfigKeys.LSF_RESOURCE_KEY,
+                ConfigKeys.VALUE: "select[x86_64Linux] same[type:model]"
+            },
+        ],
+        ConfigKeys.UMASK: int("007", 8),
+        ConfigKeys.MAX_RUNNING: "100",
+        ConfigKeys.DATA_FILE: "../../eclipse/model/SNAKE_OIL.DATA",
+        # "START"             : date(2017, 1, 1), no clue where this comes from
+
+        ConfigKeys.GEN_KW_TAG_FORMAT: '<%s>',
+        ConfigKeys.SUMMARY : ["WOPR:PROD", "WOPT:PROD", "WWPR:PROD", "WWCT:PROD",
+                               "WWPT:PROD", "WBHP:PROD", "WWIR:INJ", "WWIT:INJ",
+                               "WBHP:INJ", "ROE:1"],#ensemble
+        ConfigKeys.GEN_KW: [
+            {
+                ConfigKeys.NAME: 'SIGMA',
+                ConfigKeys.TEMPLATE: '../input/templates/sigma.tmpl',
+                ConfigKeys.OUT_FILE: 'coarse.sigma',
+                ConfigKeys.PARAMETER_FILE: '../input/distributions/sigma.dist',
+                ConfigKeys.INIT_FILES: None,
+                ConfigKeys.MIN_STD: None,
+                ConfigKeys.FORWARD_INIT: False,
+            } #ensemble
+        ],
+        ConfigKeys.GEN_DATA: [
+            {
+                ConfigKeys.NAME: 'super_data',
+                ConfigKeys.INPUT_FORMAT: GenDataFileType.ASCII,
+                ConfigKeys.RESULT_FILE: 'super_data_%d',
+                ConfigKeys.REPORT_STEPS: [1],
+                ConfigKeys.INIT_FILES: None,
+                ConfigKeys.ECL_FILE: None,
+                ConfigKeys.TEMPLATE: None,
+                ConfigKeys.KEY_KEY: None
+            }#ensemble
+        ],
+        ConfigKeys.CUSTOM_KW: [
+            {
+                ConfigKeys.NAME: 'UNCERTAINTY',
+                ConfigKeys.RESULT_FILE: 'uncertainties.txt',
+                ConfigKeys.OUT_FILE: None
+            }#ensemble
+        ],
+        ConfigKeys.ECLBASE: "eclipse/model/<ECLIPSE_NAME>-%d", #model, ecl
+        ConfigKeys.ENSPATH: "../output/storage/<CASE_DIR>", #model
+        "PLOT_PATH"         : "../output/results/plot/<CASE_DIR>", #removed, previously plot config
+        ConfigKeys.UPDATE_LOG_PATH: "../output/update_log/<CASE_DIR>", #analysis
+        ConfigKeys.LOG_FILE: "../output/log/ert_<CASE_DIR>.log",   #log
+        ConfigKeys.RUNPATH_FILE: "../output/run_path_file/.ert-runpath-list_<CASE_DIR>", #subst
+        ConfigKeys.DEFINE_KEY: {
+            '<USER>': 'TEST_USER',
+            '<SCRATCH>': 'scratch/ert',
+            '<CASE_DIR>': 'the_extensive_case',
+            '<ECLIPSE_NAME>': 'XYZ'
+        }, #subst
+        ConfigKeys.REFCASE: "../input/refcase/SNAKE_OIL_FIELD", #ecl
+        ConfigKeys.JOBNAME: "SNAKE_OIL_STRUCTURE_%d", #model
+        ConfigKeys.MAX_RESAMPLE: 1, #model
+        ConfigKeys.TIME_MAP: '../input/refcase/time_map.txt', #model
+        ConfigKeys.INSTALL_JOB: [
+            {
+                ConfigKeys.NAME: "SNAKE_OIL_SIMULATOR",
+                ConfigKeys.PATH: "../../snake_oil/jobs/SNAKE_OIL_SIMULATOR"
+            },
+            {
+                ConfigKeys.NAME: "SNAKE_OIL_NPV",
+                ConfigKeys.PATH: "../../snake_oil/jobs/SNAKE_OIL_NPV"
+            },
+            {
+                ConfigKeys.NAME: "SNAKE_OIL_DIFF",
+                ConfigKeys.PATH: "../../snake_oil/jobs/SNAKE_OIL_DIFF"
+            } #site
+        ],
+        ConfigKeys.FORWARD_MODEL: [
+            {
+                ConfigKeys.NAME: "SNAKE_OIL_SIMULATOR",
+                ConfigKeys.ARGLIST: "",
+            },
+            {
+                ConfigKeys.NAME: "SNAKE_OIL_NPV",
+                ConfigKeys.ARGLIST: "",
+            },
+            {
+                ConfigKeys.NAME: "SNAKE_OIL_DIFF",
+                ConfigKeys.ARGLIST: ""
+            } #model
+        ],
+        ConfigKeys.HISTORY_SOURCE: HistorySourceEnum.REFCASE_HISTORY,
+        ConfigKeys.OBS_CONFIG: "../input/observations/obsfiles/observations.txt",
+        ConfigKeys.GEN_KW_EXPORT_NAME: 'parameters',
+        ConfigKeys.LOAD_WORKFLOW_JOB: [
+            {
+                ConfigKeys.NAME: "UBER_PRINT",
+                ConfigKeys.PATH: "../bin/workflows/workflowjobs/UBER_PRINT"
+            } #workflow_list
+        ],
+        ConfigKeys.LOAD_WORKFLOW: [
+            {
+                ConfigKeys.NAME: "MAGIC_PRINT",
+                ConfigKeys.PATH: "../bin/workflows/MAGIC_PRINT"
+            } #workflow_list
+        ],
+        ConfigKeys.LOG_LEVEL: MessageLevelEnum.LOG_INFO, #model, log
+        "RNG_ALG_TYPE"      : RngAlgTypeEnum.MZRAN,
+        ConfigKeys.RANDOM_SEED: '3593114179000630026631423308983283277868', #rng
+        ConfigKeys.GRID: "../../eclipse/include/grid/CASE.EGRID", #ecl
+        ConfigKeys.RUN_TEMPLATE: [
+            ("../input/templates/seed_template.txt", "seed.txt", []) #ert_templates not sure about this we might do a proper dict instead?
+        ]
+        }
 def expand_config_data():
     """Expands all strings in config_data according to config_defines.
 
@@ -481,3 +631,72 @@ class ResConfigTest(ResTest):
 
         with self.assertRaises(IOError):
             ResConfig( config = config )
+
+    def test_res_config_dict_constructor(self):
+        self.set_up_snake_oil_structure()
+
+        with TestAreaContext("enkf_test_other_area") as work_area:
+            work_area.copy_directory(self.case_directory)
+
+            #create script file
+            script_file = 'script.sh'
+            with open(script_file,'w') as f:
+                f.write("""#!/bin/sh\nls""")
+
+            st = os.stat(script_file)
+            os.chmod(script_file,  stat.S_IEXEC | st.st_mode)
+
+            # add a missing entries to config file
+            with open(self.config_file, 'a+') as ert_file:
+                ert_file.write("JOB_SCRIPT ../../../script.sh\n")
+                ert_file.write("END_DATE 10/10/2010\n")
+
+
+            #split config_file to path and filename
+            cfg_path, cfg_file = os.path.split(os.path.realpath(self.config_file))
+
+            # replace define keys only in root strings, this should be updated and validated in configsuite instead
+            for define_key in config_data_new[ConfigKeys.DEFINE_KEY]:
+                for data_key in config_data_new:
+                    if isinstance(config_data_new[data_key], str):
+                        config_data_new[data_key] = config_data_new[data_key].replace(
+                            define_key,
+                            config_data_new[ConfigKeys.DEFINE_KEY].get(define_key)
+                        )
+
+            #change dir to actual location of cfg_file
+            os.chdir(cfg_path)
+
+            # load res_file
+            res_config_file = ResConfig(user_config_file=cfg_file)
+
+            # get site_config location
+            ERT_SHARE_PATH = os.path.dirname(res_config_file.site_config.getLocation())
+
+            #update dictionary
+            #commit missing entries, this should be updated and validated in configsuite instead
+            config_data_new[ConfigKeys.CONFIG_FILE_KEY] = cfg_file
+            config_data_new[ConfigKeys.INSTALL_JOB_DIRECTORY] = [
+                ERT_SHARE_PATH + '/forward-models/res',
+                ERT_SHARE_PATH + '/forward-models/shell',
+                ERT_SHARE_PATH + '/forward-models/templating',
+                ERT_SHARE_PATH + '/forward-models/old_style'
+            ]
+            config_data_new[ConfigKeys.WORKFLOW_JOB_DIRECTORY] = [
+               ERT_SHARE_PATH + '/workflows/jobs/internal/config',
+               ERT_SHARE_PATH + '/workflows/jobs/internal-gui/config'
+            ]
+            for ip in config_data_new[ConfigKeys.INSTALL_JOB]:
+                ip[ConfigKeys.PATH] = os.path.realpath(ip[ConfigKeys.PATH])
+
+            for ip in config_data_new[ConfigKeys.LOAD_WORKFLOW]:
+                ip[ConfigKeys.PATH] = os.path.realpath(ip[ConfigKeys.PATH])
+            for ip in config_data_new[ConfigKeys.LOAD_WORKFLOW_JOB]:
+                ip[ConfigKeys.PATH] = os.path.realpath(ip[ConfigKeys.PATH])
+
+            config_data_new[ConfigKeys.JOB_SCRIPT] = os.path.normpath(os.path.realpath(config_data_new[ConfigKeys.JOB_SCRIPT]))
+
+            #open config via dictionary
+            res_config_dict = ResConfig(config_dict = config_data_new)
+
+            self.assertEqual(res_config_file, res_config_dict)

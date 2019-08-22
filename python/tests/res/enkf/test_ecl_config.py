@@ -19,7 +19,7 @@ import pytest
 
 import os.path
 
-from res.enkf import EclConfig, ResConfig
+from res.enkf import EclConfig, ResConfig, ConfigKeys
 from ecl.util.test import TestAreaContext
 from tests import ResTest
 from res.util import UIReturn
@@ -104,12 +104,12 @@ class EclConfigTest(ResTest):
 
     def test_ecl_config_constructor(self):
         config_dict = {
-            "DATA_FILE"                     : "configuration_tests/input/SPE1.DATA",
-            "ECLBASE"                       : "configuration_tests/input/<ECLIPSE_NAME>-%d",
-            "GRID"                          : "configuration_tests/input/CASE.EGRID",
-            "REFCASE"                       : "configuration_tests/input/SNAKE_OIL_FIELD",
-            "END_DATE"                      : "10/10/2010",
-            "SCHEDULE_PREDICTION_FILE"      : "configuration_tests/input/schedule.sch"
+            ConfigKeys.DATA_FILE                : "configuration_tests/input/SPE1.DATA",
+            ConfigKeys.ECLBASE                  : "configuration_tests/input/<ECLIPSE_NAME>-%d",
+            ConfigKeys.GRID                     : "configuration_tests/input/CASE.EGRID",
+            ConfigKeys.REFCASE                  : "configuration_tests/input/SNAKE_OIL_FIELD",
+            ConfigKeys.END_DATE                 : "10/10/2010",
+            ConfigKeys.SCHEDULE_PREDICTION_FILE : "configuration_tests/input/schedule.sch"
         }
         
         self.case_directory = self.createTestPath("local/configuration_tests/")

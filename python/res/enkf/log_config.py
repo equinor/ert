@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from os.path import isfile
+from os.path import isfile, realpath
 
 from cwrap import BaseCClass
 
@@ -54,7 +54,7 @@ class LogConfig(BaseCClass):
         if config_dict is not None:
 
             if ConfigKeys.LOG_FILE in config_dict:
-                log_file = config_dict[ConfigKeys.LOG_FILE]
+                log_file = realpath(config_dict[ConfigKeys.LOG_FILE])
             else:
                 raise ValueError("No log file provided")
 

@@ -55,31 +55,33 @@ class SiteConfig(BaseCClass):
             c_ptr = self._alloc(config_content)
 
         elif config_dict is not None:
-            license_root_path = config_dict.get(ConfigKeys.LICENSE_PATH)
-            license_root_path_site = os.path.realpath(license_root_path)
-            __license_root_path = os.path.join(
-                license_root_path_site,
-                os.getenv("USER"),
-                str(os.getpid())
-            )
+            __license_root_path = None
+            if ConfigKeys.LICENSE_PATH in config_dict:
+                license_root_path = config_dict.get(ConfigKeys.LICENSE_PATH)
+                license_root_path_site = os.path.realpath(license_root_path)
+                __license_root_path = os.path.join(
+                    license_root_path_site,
+                    os.getenv("USER"),
+                    str(os.getpid())
+                )
 
             # Create joblist
             ext_job_list = ExtJoblist()
             for job in config_dict.get(ConfigKeys.INSTALL_JOB, []):
-                if not os.path.isfile(job['PATH']):
-                    print("WARNING: Unable to locate job file {}".format(job['PATH']))
+                if not os.path.isfile(job[ConfigKeys.PATH]):
+                    print("WARNING: Unable to locate job file {}".format(job[ConfigKeys.PATH]))
                     continue
                 try:
-                    new_job = ExtJob(config_file=job['PATH'], private=False, name=job['NAME'], license_root_path=__license_root_path)
+                    new_job = ExtJob(config_file=job[ConfigKeys.PATH], private=False, name=job[ConfigKeys.NAME], license_root_path=__license_root_path)
                     new_job.convertToCReference(None)
-                    ext_job_list.add_job(job['NAME'], new_job)
+                    ext_job_list.add_job(job[ConfigKeys.NAME], new_job)
                 except:
-                    print("WARNING: Unable to create job from {}".format(job['PATH']))
+                    print("WARNING: Unable to create job from {}".format(job[ConfigKeys.PATH]))
                     continue
 
             for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
                 if not os.path.isdir(job_path):
-                    print("WARNING: Unable to locate job directory {}".format(job['PATH']))
+                    print("WARNING: Unable to locate job directory {}".format(job[ConfigKeys.PATH]))
                     continue
                 files = os.listdir(job_path)
                 for file_name in files:
@@ -96,7 +98,7 @@ class SiteConfig(BaseCClass):
 
             # Create varlist)
             env_var_list = EnvironmentVarlist()
-            for (var, value) in config_dict.get(ConfigKeys.SETENV):
+            for (var, value) in config_dict.get(ConfigKeys.SETENV, []):
                 env_var_list[var] = value
 
             env_var_list.convertToCReference(None)
@@ -111,7 +113,7 @@ class SiteConfig(BaseCClass):
 
 
     def __repr__(self):
-        return "Site Config loaded from %s" % self.config_file
+        return "Site Config {}".format(SiteConfig.getLocation())
 
     @property
     def config_file(self):

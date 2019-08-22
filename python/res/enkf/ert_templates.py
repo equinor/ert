@@ -46,7 +46,7 @@ class ErtTemplates(BaseCClass):
                     path = config_dict.get(ConfigKeys.CONFIG_DIRECTORY)
                     if not isinstance(path, str):
                         raise ValueError("ErtTemplates requires {} to be set".format(ConfigKeys.CONFIG_DIRECTORY))
-                    template_path = os.path.join(path, template_file_name)
+                    template_path = os.path.normpath(os.path.join(path, template_file_name))
                     arguments_string = ", ".join(["{}={}".format(key, val) for key, val in arguments])
                     self._add_template(
                         None,

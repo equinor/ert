@@ -99,37 +99,37 @@ class AnalysisConfig(BaseCClass):
 
         if config_dict is not None:
             c_ptr = self._alloc_full(
-                config_dict[ConfigKeys.ALPHA_KEY],
-                config_dict[ConfigKeys.RERUN_KEY],
-                config_dict[ConfigKeys.RERUN_START_KEY],
-                config_dict[ConfigKeys.MERGE_OBSERVATIONS],
-                realpath(config_dict[ConfigKeys.UPDATE_LOG_PATH]),
-                config_dict[ConfigKeys.STD_CUTOFF_KEY],
-                config_dict[ConfigKeys.STOP_LONG_RUNNING],
-                config_dict[ConfigKeys.SINGLE_NODE_UPDATE],
-                config_dict[ConfigKeys.STD_CORRELATED_OBS],
-                config_dict[ConfigKeys.GLOBAL_STD_SCALING],
-                config_dict[ConfigKeys.MAX_RUNTIME],
-                config_dict[ConfigKeys.MIN_REALIZATIONS],
+                config_dict.get(ConfigKeys.ALPHA_KEY, 3.0),
+                config_dict.get(ConfigKeys.MERGE_OBSERVATIONS, False),
+                config_dict.get(ConfigKeys.RERUN_KEY, False),
+                config_dict.get(ConfigKeys.RERUN_START_KEY, 0),
+                realpath(config_dict.get(ConfigKeys.UPDATE_LOG_PATH, 'update_log')),
+                config_dict.get(ConfigKeys.STD_CUTOFF_KEY, 1e-6),
+                config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False),
+                config_dict.get(ConfigKeys.SINGLE_NODE_UPDATE, False),
+                config_dict.get(ConfigKeys.STD_CORRELATED_OBS, False),
+                config_dict.get(ConfigKeys.GLOBAL_STD_SCALING, 1.0),
+                config_dict.get(ConfigKeys.MAX_RUNTIME, 0),
+                config_dict.get(ConfigKeys.MIN_REALIZATIONS, 0)
             )
             if c_ptr:
                 super(AnalysisConfig, self).__init__(c_ptr)
 
                 #external modules
                 ext_modules_list = config_dict.get(ConfigKeys.ANALYSIS_LOAD,[])
-                for a in ext_modules_list:
-                    self._load_external_module(a[ConfigKeys.LIB_NAME], a[ConfigKeys.USER_NAME])
+                for ext_module in ext_modules_list:
+                    self._load_external_module(ext_module[ConfigKeys.LIB_NAME], ext_module[ConfigKeys.USER_NAME])
 
                 #copy modules
                 analysis_copy_list = config_dict.get(ConfigKeys.ANALYSIS_COPY,[])
-                for a in analysis_copy_list:
-                    self._add_module_copy(a[ConfigKeys.SRC_NAME], a[ConfigKeys.DST_NAME])
+                for analysis_copy in analysis_copy_list:
+                    self._add_module_copy(analysis_copy[ConfigKeys.SRC_NAME], analysis_copy[ConfigKeys.DST_NAME])
 
                 #set var list
                 set_var_list = config_dict.get(ConfigKeys.ANALYSIS_SET_VAR, [])
-                for a in set_var_list:
-                    module = self._get_module(a[ConfigKeys.MODULE_NAME])
-                    module._set_var(a[ConfigKeys.VAR_NAME], str(a[ConfigKeys.VALUE]))
+                for set_var in set_var_list:
+                    module = self._get_module(set_var[ConfigKeys.MODULE_NAME])
+                    module._set_var(set_var[ConfigKeys.VAR_NAME], str(set_var[ConfigKeys.VALUE]))
 
                 if ConfigKeys.ANALYSIS_SELECT in config_dict:
                     self._select_module(config_dict[ConfigKeys.ANALYSIS_SELECT])

@@ -51,7 +51,7 @@ class SubstConfig(BaseCClass):
             filename = config_dict.get(ConfigKeys.CONFIG_FILE_KEY)
             if isinstance(filename, str):
                 subst_list.addItem("<CONFIG_FILE>", filename)
-                subst_list.addItem("<CONFIG_FILE_BASE>", filename)
+                subst_list.addItem("<CONFIG_FILE_BASE>", os.path.splitext(filename)[0])
 
             # CONSTANTS #
             constants = config_dict.get(ConfigKeys.DEFINE_KEY)
@@ -59,7 +59,7 @@ class SubstConfig(BaseCClass):
                 for key in constants:
                     subst_list.addItem(key, constants[key])
 
-            # DATA_KW #
+            # DATA_KW
             data_kw = config_dict.get(ConfigKeys.DATA_KW_KEY)
             if isinstance(data_kw, dict):
                 for key, value in data_kw.items():
@@ -67,7 +67,7 @@ class SubstConfig(BaseCClass):
 
             # RUNPATH_FILE #
             runpath_file_name = config_dict.get(ConfigKeys.RUNPATH_FILE, ConfigKeys.RUNPATH_LIST_FILE)
-            runpath_file_path = os.path.join(config_directory, runpath_file_name)
+            runpath_file_path = os.path.normpath(os.path.join(config_directory, runpath_file_name))
             subst_list.addItem("<RUNPATH_FILE>", runpath_file_path,
                                "The name of a file with a list of run directories.")
 
@@ -81,8 +81,6 @@ class SubstConfig(BaseCClass):
                         "<NUM_CPU>", "{}".format(num_cpu), "The number of CPU used for one forward model.")
                 else:
                     raise IOError("Could not find ECLIPSE data file: {}".format(file_path))
-            else:
-                raise IOError("{} not configured".format(ConfigKeys.DATA_FILE))
 
             c_ptr = self._alloc_full(subst_list)
 

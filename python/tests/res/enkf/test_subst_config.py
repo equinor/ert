@@ -88,10 +88,6 @@ class SubstConfigTest(ResTest):
         with self.assertRaises(IOError):
             SubstConfig(config_dict=self.set_key(ConfigKeys.DATA_FILE, "not_a_file"))
 
-    def test_missing_data_file_config_raises_error(self):
-        with self.assertRaises(IOError):
-            SubstConfig(config_dict=self.remove_key(ConfigKeys.DATA_FILE))
-
     def remove_key(self, key):
         return {i: self.config_data[i] for i in self.config_data if i != key}
 

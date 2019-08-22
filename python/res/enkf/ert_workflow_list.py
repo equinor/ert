@@ -41,12 +41,13 @@ class ErtWorkflowList(BaseCClass):
             parser = WorkflowJob.configParser( )
             for job in config_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, []):
                 try:
-                    new_job = WorkflowJob.fromFile(config_file=job['PATH'], name=job['NAME'], parser=parser)
+                    new_job = WorkflowJob.fromFile(config_file=job[ConfigKeys.PATH], name=job[ConfigKeys.NAME], parser=parser)
                 except:
-                    print("WARNING: Unable to create job from {}".format(job['PATH']))
+                    print("WARNING: Unable to create job from {}".format(job[ConfigKeys.PATH]))
                     continue
-                workflow_joblist.addJob(new_job)
-                new_job.convertToCReference(None)
+                if not new_job is None:
+                    workflow_joblist.addJob(new_job)
+                    new_job.convertToCReference(None)
 
             for job_path in config_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, []) :
                 if not os.path.isdir(job_path):
@@ -76,7 +77,7 @@ class ErtWorkflowList(BaseCClass):
 
         if config_dict is not None:
             for job in config_dict.get(ConfigKeys.LOAD_WORKFLOW, []):
-                self.addWorkflow(job['PATH'], job['NAME'])
+                self.addWorkflow(job[ConfigKeys.PATH], job[ConfigKeys.NAME])
 
     def getWorkflowNames(self):
         """ @rtype: StringList """
