@@ -1,5 +1,4 @@
 import inspect
-import imp
 import sys
 import traceback
 
@@ -112,9 +111,25 @@ class ErtScript(object):
     def loadScriptFromFile(path):
         """ @rtype: type ErtScript """
         try:
-            m = imp.load_source("ErtScriptModule_%d" % ErtScript.__module_count, path)
+            module_name = "ErtScriptModule_%d" % ErtScript.__module_count
             ErtScript.__module_count += 1
-            return ErtScript.__findErtScriptImplementations(m)
+
+            py_version = sys.version_info[:2]
+            if py_version == (2, 7):
+                import imp
+                module = imp.load_source(module_name, path)
+            elif (3, 0) <= py_version < (3, 5):
+                import importlib.machinery
+                loader = importlib.machinery.SourceFileLoader(module_name, path)
+                module = loader.load_module()
+            elif py_version >= (3, 5):
+                import importlib.util
+                spec = importlib.util.spec_from_file_location(module_name, path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+            else:
+                raise Exception("Invalid Python verson {}:".format(py_version))
+            return ErtScript.__findErtScriptImplementations(module)
         except Exception as e:
             sys.stderr.write("The script '%s' caused an error during load:\n" % path)
             traceback.print_exception(sys.exc_info()[0], sys.exc_info()[1], None)
