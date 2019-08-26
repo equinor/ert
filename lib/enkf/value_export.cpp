@@ -17,6 +17,7 @@
 */
 #include <stdlib.h>
 #include <cmath>
+#include <ctime>
 
 #include <map>
 
@@ -45,15 +46,24 @@ struct value_export_struct {
 static void backup_if_existing(const char * filename) {
     if(not util_file_exists(filename))
         return;
-    auto const backup_filename = [filename]() {
+
+    auto time_to_string = [](const std::tm* tmb, const char* fmt) -> std::string {
+        char buffer[256]; // typically enough for time and date
+        auto const count = strftime(buffer, sizeof(buffer), fmt, tmb);
+        if(count < 0)
+            return "";
+        return std::string(buffer, count);
+    };
+
+    auto const backup_filename = [filename, &time_to_string]() {
         auto const tt = std::chrono::system_clock::to_time_t(
             std::chrono::system_clock::now());
         auto constexpr format = "%Y-%m-%d_%H-%M-%SZ";
-        auto fname_stream = std::stringstream();
+        std::stringstream fname_stream;
         fname_stream
             << filename
             << "_backup_"
-            << std::put_time(gmtime(&tt), format);
+            << time_to_string(gmtime(&tt), format);
         for(int i = 0;
             util_file_exists(fname_stream.str().c_str()) && i < 100;
             ++i
@@ -62,7 +72,7 @@ static void backup_if_existing(const char * filename) {
             fname_stream
                 << filename
                 << "_backup_"
-                << std::put_time(gmtime(&tt), format)
+                << time_to_string(gmtime(&tt), format)
                 << "_"
                 << i;
         }
