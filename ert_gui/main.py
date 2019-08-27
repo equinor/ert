@@ -4,7 +4,7 @@ import sys
 from argparse import ArgumentParser, ArgumentTypeError
 from ert_gui import run_cli
 from ert_gui import ERT
-from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameFormatArgument, NumberListStringArgument
+from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameFormatArgument, ProperNameArgument, NumberListStringArgument
 from ert_gui.simulation.models.multiple_data_assimilation import MultipleDataAssimilation
 
 
@@ -32,6 +32,13 @@ def valid_weights(user_input):
 
     return user_input
 
+def proper_name_format(user_input):
+    validator = ProperNameArgument()
+    validated = validator.validate(user_input)
+    if validated.failed():
+        raise ArgumentTypeError(
+            "Defined name is not of correct format: {}".format(user_input))
+    return user_input
 
 def valid_name_format(user_input):
     validator = ProperNameFormatArgument()
@@ -42,12 +49,12 @@ def valid_name_format(user_input):
     return user_input
 
 
-def valid_name_format_not_default(user_input):
+def proper_name_format_not_default(user_input):
     if user_input == 'default':
         msg = "Target file system and source file system can not be the same. "\
               "They were both: <default>."
         raise ArgumentTypeError(msg)
-    valid_name_format(user_input)
+    proper_name_format(user_input)
     return user_input
 
 
@@ -66,8 +73,8 @@ def runGui(args):
               ["-m", "ert_gui.gert_main"] + [args.config])
 
 
-def ert_parser(parser, args):
-
+def ert_parser(args):
+    parser = ArgumentParser(description="ERT - Ensemble Reservoir Tool")
     subparsers = parser.add_subparsers(
         title="Available user entries",
         description='ERT can be accessed through a GUI or CLI interface. Include '
@@ -109,7 +116,7 @@ def ert_parser(parser, args):
     ensemble_smoother_parser = subparsers.add_parser('ensemble_smoother',
                                                      help="run simulations in cli while performing one update on the "
                                                      "parameters by using the ensemble smoother algorithm")
-    ensemble_smoother_parser.add_argument('--target-case', type=valid_name_format_not_default, required=True,
+    ensemble_smoother_parser.add_argument('--target-case', type=proper_name_format_not_default, required=True,
                                           help="This is the name of the case where the results for the "
                                           "updated parameters will be stored")
     ensemble_smoother_parser.add_argument('--verbose', action='store_true',
@@ -168,8 +175,7 @@ def ert_parser(parser, args):
 
 
 def main():
-    parser = ArgumentParser(description="ERT - Ensemble Reservoir Tool")
-    args = ert_parser(parser, sys.argv[1:])
+    args = ert_parser(sys.argv[1:])
     args.func(args)
 
 
