@@ -140,29 +140,7 @@ def ert_parser(parser, args):
                                help="Example Custom Relative Weights: '8,4,2,1'. This means Multiple Data "
                                "Assimilation Ensemble Smoother will half the weight applied to the "
                                "Observation Errors from one iteration to the next across 4 iterations.")
-    es_mda_parser.set_defaults(func=run_cli)
-
-    # iterative_ensemble_smoother_parser
-    iterative_ensemble_smoother_parser = subparsers.add_parser('iterated_ensemble_smoother',
-                                                               help="run simulations in cli while performing multiple updates on "
-                                                               "the parameters by using the iterated ensemble smoother algorithm")
-    iterative_ensemble_smoother_parser.add_argument('--target-case', type=valid_name_format,
-                                                    help="The iterated_ensemble_smoother creates multiple cases for the different "
-                                                    "iterations. The case names will follow the specified format. "
-                                                    "For example, 'Target case format: iter_%%d' will generate "
-                                                    "cases with the names iter_0, iter_1, iter_2, iter_3, ....")
-    iterative_ensemble_smoother_parser.add_argument('--iterations', type=range_limited_int, default=4,
-                                                    help="Specify the number of times to perform updates/iterations. "
-                                                    "In general, the more updates the better, however, this could be time consuming. "
-                                                    "The default value is 4.")
-    iterative_ensemble_smoother_parser.add_argument('--verbose', action='store_true',
-                                                    help="Show verbose output", default=False)
-    iterative_ensemble_smoother_parser.add_argument('--realizations', type=valid_realizations,
-                                                    help="These are the realizations that will be used to perform simulations."
-                                                    "For example, if 'Number of realizations:50 and Active realizations is 0-9', "
-                                                    "then only realizations 0,1,2,3,...,9 will be used to perform simulations "
-                                                    "while realizations 10,11, 12,...,49 will be excluded")
-    iterative_ensemble_smoother_parser.set_defaults(func=run_cli)
+    es_mda_parser.set_defaults(func=run_cli)    
 
     return parser.parse_args(args)
 
