@@ -15,7 +15,7 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-
+from pkg_resources import get_distribution
 
 # -- Project information -----------------------------------------------------
 
@@ -23,10 +23,12 @@ project = u'ERT'
 copyright = u'Equinor'
 author = u'Joakim Hove'
 
+dist_version = get_distribution('ensemble-reservoir-tool').version
+
 # The short X.Y version
-version = u''
+version = u'.'.join(dist_version.split('.')[:2])
 # The full version, including alpha/beta/rc tags
-release = u'2.3'
+release = dist_version
 
 
 # -- General configuration ---------------------------------------------------
