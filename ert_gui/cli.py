@@ -13,8 +13,6 @@ from ert_gui.ide.keywords.definitions import (NumberListStringArgument,
                                               RangeStringArgument)
 from ert_gui.simulation.models.ensemble_experiment import EnsembleExperiment
 from ert_gui.simulation.models.ensemble_smoother import EnsembleSmoother
-from ert_gui.simulation.models.iterated_ensemble_smoother import \
-    IteratedEnsembleSmoother
 from ert_gui.simulation.models.multiple_data_assimilation import \
     MultipleDataAssimilation
 from ert_gui.simulation.models.single_test_run import SingleTestRun
@@ -36,9 +34,7 @@ def run_cli(args):
     elif args.mode == 'ensemble_smoother':
         model, argument = _setup_ensemble_smoother(args)
     elif args.mode == 'es_mda':
-        model, argument = _setup_multiple_data_assimilation(args)
-    elif args.mode == 'iterated_ensemble_smoother':
-        model, argument = _setup_iterated_ensemble_smoother(args)
+        model, argument = _setup_multiple_data_assimilation(args)    
     else:
         raise NotImplementedError(
             "Run type not supported {}".format(args.mode))
@@ -65,40 +61,27 @@ def _setup_ensemble_experiment(args):
 
 def _setup_ensemble_smoother(args):
     model = EnsembleSmoother()
-
+    iterable = False
+    active_name = ERT.ert.analysisConfig().activeModuleName()
+    modules = ertmodel.getAnalysisModuleNames(iterable=iterable)
     simulations_argument = {
         "active_realizations": _realizations(args),
-        "target_case": _target_case_name(args, format_mode=False)
+        "target_case": _target_case_name(args, format_mode=False),
+        "analysis_module": _get_analysis_module_name(active_name, modules, iterable=iterable),
     }
     return model, simulations_argument
 
 
 def _setup_multiple_data_assimilation(args):
     model = MultipleDataAssimilation()
-    iterable = True
+    iterable = False
     active_name = ERT.ert.analysisConfig().activeModuleName()
     modules = ertmodel.getAnalysisModuleNames(iterable=iterable)
     simulations_argument = {
         "active_realizations": _realizations(args),
         "target_case": _target_case_name(args, format_mode=True),
-        "analysis_module": _get_analysis_module_name(active_name, modules, iterable=False),
+        "analysis_module": _get_analysis_module_name(active_name, modules, iterable=iterable),
         "weights": args.weights
-    }
-    return model, simulations_argument
-
-
-def _setup_iterated_ensemble_smoother(args):
-    if args.iterations is not None:
-        ertmodel.setNumberOfIterations(args.iterations)
-
-    model = IteratedEnsembleSmoother()
-    iterable = True
-    active_name = ERT.ert.analysisConfig().activeModuleName()
-    modules = ertmodel.getAnalysisModuleNames(iterable=iterable)
-    simulations_argument = {
-        "active_realizations": _realizations(args),
-        "target_case": _target_case_name(args, format_mode=True),
-        "analysis_module": _get_analysis_module_name(active_name, modules, iterable=iterable)
     }
     return model, simulations_argument
 

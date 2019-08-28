@@ -85,40 +85,7 @@ class MainTest(unittest.TestCase):
             parsed.config, "test-data/local/poly_example/poly.ert")        
         self.assertEquals(parsed.weights, "3, 2, 1")
         self.assertEquals(parsed.func.__name__, "run_cli")
-        self.assertFalse(parsed.verbose)
-
-    def test_argparse_exec_iterated_ensemble_smoother_valid_case(self):
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(parser, ['iterated_ensemble_smoother',  "--iterations", "40",
-                                     'test-data/local/poly_example/poly.ert'])
-        self.assertEquals(parsed.mode, "iterated_ensemble_smoother")
-        self.assertEquals(
-            parsed.config, "test-data/local/poly_example/poly.ert")
-        self.assertEquals(parsed.iterations, 40)
-        self.assertEquals(parsed.func.__name__, "run_cli")
-        self.assertFalse(parsed.verbose)
-
-    def test_argparse_exec_iterated_ensemble_smoother_default_iterations(self):
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(parser, [
-                            'iterated_ensemble_smoother', 'test-data/local/poly_example/poly.ert'])
-        self.assertEquals(parsed.mode, "iterated_ensemble_smoother")
-        self.assertEquals(
-            parsed.config, "test-data/local/poly_example/poly.ert")
-        self.assertEquals(parsed.iterations, 4)
-        self.assertEquals(parsed.func.__name__, "run_cli")
-        self.assertFalse(parsed.verbose)
-
-    def test_argparse_exec_iterated_ensemble_smoother_faulty_iterations(self):
-        parser = ArgumentParser(prog="test_main")
-        with self.assertRaises(SystemExit):
-            ert_parser(parser, ['iterated_ensemble_smoother', "--iterations", "100"
-                                'test-data/local/poly_example/poly.ert'])
-
-        with self.assertRaises(SystemExit):
-            ert_parser(parser, ['iterated_ensemble_smoother', "--iterations", "0",
-                                'test-data/local/poly_example/poly.ert'])
-
+        self.assertFalse(parsed.verbose)    
 
 if __name__ == '__main__':
     unittest.main()

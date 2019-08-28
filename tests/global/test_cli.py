@@ -8,6 +8,11 @@ from ert_gui import cli
 from ert_gui import ERT
 from ert_gui.cli import ErtCliNotifier
 from argparse import Namespace
+from ert_gui.simulation.models.ensemble_experiment import EnsembleExperiment
+from ert_gui.simulation.models.ensemble_smoother import EnsembleSmoother
+from ert_gui.simulation.models.multiple_data_assimilation import \
+    MultipleDataAssimilation
+from ert_gui.simulation.models.single_test_run import SingleTestRun
 
 
 class EntryPointTest(ErtTest):
@@ -73,6 +78,61 @@ class EntryPointTest(ErtTest):
             mask = BoolVector(default_value=False, initial_size=ensemble_size)
             mask.updateActiveMask("0-4,7,8")
             self.assertEqual(mask, res)
+
+    def test_setup_single_test_run(self):
+        config_file = self.createTestPath('local/poly_example/poly.ert')
+        with ErtTestContext('test_single_test_run', config_file) as work_area:
+            ert = work_area.getErt()
+            notifier = ErtCliNotifier(ert, config_file)
+            ERT.adapt(notifier)
+
+            model, argument = cli._setup_single_test_run()
+            self.assertTrue(isinstance(model, SingleTestRun))
+            self.assertEquals(1, len(argument.keys()))
+            self.assertTrue("active_realizations" in argument)
+
+    def test_setup_ensemble_experiment(self):
+        config_file = self.createTestPath('local/poly_example/poly.ert')
+        with ErtTestContext('test_single_test_run', config_file) as work_area:
+            ert = work_area.getErt()
+            notifier = ErtCliNotifier(ert, config_file)
+            ERT.adapt(notifier)
+
+            model, argument = cli._setup_single_test_run()
+            self.assertTrue(isinstance(model, EnsembleExperiment))
+            self.assertEquals(1, len(argument.keys()))
+            self.assertTrue("active_realizations" in argument)
+
+    def test_setup_ensemble_smoother(self):
+        config_file = self.createTestPath('local/poly_example/poly.ert')
+        with ErtTestContext('test_single_test_run', config_file) as work_area:
+            ert = work_area.getErt()
+            notifier = ErtCliNotifier(ert, config_file)
+            ERT.adapt(notifier)
+            args = Namespace(realizations="0-4,7,8", target_case="test_case")
+
+            model, argument = cli._setup_ensemble_smoother(args)
+            self.assertTrue(isinstance(model, EnsembleSmoother))
+            self.assertEquals(3, len(argument.keys()))
+            self.assertTrue("active_realizations" in argument)
+            self.assertTrue("target_case" in argument)
+            self.assertTrue("analysis_module" in argument)
+
+    def test_setup_multiple_data_assimilation(self):
+        config_file = self.createTestPath('local/poly_example/poly.ert')
+        with ErtTestContext('test_single_test_run', config_file) as work_area:
+            ert = work_area.getErt()
+            notifier = ErtCliNotifier(ert, config_file)
+            ERT.adapt(notifier)
+            args = Namespace(realizations="0-4,7,8", weights="6,4,2", target_case="test_case")
+
+            model, argument = cli._setup_multiple_data_assimilation(args)
+            self.assertTrue(isinstance(model, MultipleDataAssimilation))
+            self.assertEquals(4, len(argument.keys()))
+            self.assertTrue("active_realizations" in argument)
+            self.assertTrue("target_case" in argument)
+            self.assertTrue("analysis_module" in argument)
+            self.assertTrue("weights" in argument)
 
     def test_analysis_module_name_iterable(self):
 
