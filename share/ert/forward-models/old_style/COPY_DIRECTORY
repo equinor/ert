@@ -1,6 +1,6 @@
 STDERR    copy_directory.stderr
 STDOUT    copy_directory.stdout
-EXECUTABLE script/copy_directory
+EXECUTABLE ../shell/script/copy_directory
 ARGLIST    <FROM> <TO>
 
 MIN_ARG    2

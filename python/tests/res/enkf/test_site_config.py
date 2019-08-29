@@ -65,7 +65,8 @@ class SiteConfigTest(ResTest):
                     [
                         ERT_SHARE_PATH + '/forward-models/res',
                         ERT_SHARE_PATH + '/forward-models/shell',
-                        ERT_SHARE_PATH + '/forward-models/templating'
+                        ERT_SHARE_PATH + '/forward-models/templating',
+                        ERT_SHARE_PATH + '/forward-models/old_style'
                     ],
 
                 "SETENV":

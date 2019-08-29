@@ -1,7 +1,7 @@
 STDERR    delete_file.stderr
 STDOUT    delete_file.stdout
 
-EXECUTABLE  script/delete_file
+EXECUTABLE  ../shell/script/delete_file
 ARGLIST     <FILES>
 
 MIN_ARG    1

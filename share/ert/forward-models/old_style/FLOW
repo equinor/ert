@@ -1,4 +1,4 @@
-EXECUTABLE script/flow
+EXECUTABLE ../res/script/flow
 DEFAULT <VERSION> default
 DEFAULT <NUM_CPU> 1
 DEFAULT <OPTS> ""

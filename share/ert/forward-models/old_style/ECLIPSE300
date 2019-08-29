@@ -1,4 +1,4 @@
-EXECUTABLE script/ecl300
+EXECUTABLE ../res/script/ecl300
 DEFAULT <VERSION> version
 DEFAULT <NUM_CPU> 1
 DEFAULT <OPTS> ""

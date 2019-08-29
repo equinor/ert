@@ -3,7 +3,7 @@
 STDERR    make_symlink.stderr
 STDOUT    make_symlink.stdout
 
-EXECUTABLE  script/symlink
+EXECUTABLE  ../shell/script/symlink
 ARGLIST     <TARGET> <LINKNAME>
 
 MIN_ARG    2

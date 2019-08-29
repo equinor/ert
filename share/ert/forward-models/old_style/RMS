@@ -1,4 +1,4 @@
-EXECUTABLE script/rms
+EXECUTABLE ../res/script/rms
 
 DEFAULT       <RMS_IMPORT_PATH> ./
 DEFAULT       <RMS_EXPORT_PATH> ./

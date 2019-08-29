@@ -1,6 +1,6 @@
 STDOUT      careful_copy_file.stdout
 STDERR      careful_copy_file.stderr
-EXECUTABLE  script/careful_copy_file
+EXECUTABLE  ../shell/script/careful_copy_file
 ARGLIST     <FROM> <TO>
 
 MIN_ARG    2

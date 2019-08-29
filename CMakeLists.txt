@@ -185,27 +185,8 @@ endif()
 foreach(share_dir workflows gui forward-models)
   install(DIRECTORY "share/ert/${share_dir}" DESTINATION ${SHARE_DIR})
 endforeach()
-
 install_example("share/ert/site-config" ${SHARE_DIR})
 install(PROGRAMS bin/job_dispatch.py DESTINATION bin )
-
-# Install (symlinks) compatibility version of jobs (only on case sensitive OSs)
-# Case-sensitivity is checked by looking for an existing file. It is arguably
-# hacky but I could not find any better way to do it
-if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMAKELISTS.TXT")
-    foreach (job eclipse100 eclipse300 flow)
-        string(TOUPPER ${job} uc_job)
-        set(ln_target ${CMAKE_INSTALL_PREFIX}/${SHARE_DIR}/forward-models/res/${job}_compatibility)
-        set(ln_name ${CMAKE_INSTALL_PREFIX}/${SHARE_DIR}/forward-models/res/${uc_job})
-        INSTALL(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${ln_target}  ${ln_name})")
-    endforeach()
-    foreach (script careful_copy_file copy_directory copy_file delete_directory delete_file make_directory move_file symlink make_symlink)
-        string(TOUPPER ${script} uc_scrip)
-        set(ln_target ${CMAKE_INSTALL_PREFIX}/${SHARE_DIR}/forward-models/shell/${script}_compatibility)
-        set(ln_name ${CMAKE_INSTALL_PREFIX}/${SHARE_DIR}/forward-models/shell/${uc_scrip})
-        INSTALL(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${ln_target}  ${ln_name})")
-    endforeach()
-endif()
 
 foreach (script ecl100 ecl300 flow rms)
   install(PROGRAMS "share/ert/forward-models/res/script/${script}" DESTINATION "${SHARE_DIR}/forward-models/res/script")
