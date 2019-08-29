@@ -26,7 +26,6 @@ import socket
 import pwd
 import requests
 import json
-import imp
 from ecl import EclVersion
 from res import ResVersion
 from res.job_queue import ForwardModelStatus, ForwardModelJobStatus
