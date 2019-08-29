@@ -18,7 +18,6 @@ set(PYTHON_SOURCES
     workflow_job.py
     workflow_joblist.py
     workflow_runner.py
-    job_manager.py
     environment_varlist.py
     job_queue_node.py
 )

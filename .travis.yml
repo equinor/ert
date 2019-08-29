@@ -103,6 +103,8 @@ script:
   - ctest --output-on-failure $TEST_SUITE
   - pip install pytest
   - pip install pylint
+  - pip install mock
+  - pip install decorator
   - popd
   - pushd python
   - pytest

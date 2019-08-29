@@ -21,3 +21,4 @@ if (NOT DEFINED PY_ecl OR NOT DEFINED PY_cwrap OR NOT DEFINED PY_numpy)
 endif()
 
 add_subdirectory( res )
+add_subdirectory( job_runner )

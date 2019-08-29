@@ -10,4 +10,4 @@ pyyaml
 jinja2
 requests
 functools32;python_version=='2.7'
-psutil # for testing job_dispatch
+psutil

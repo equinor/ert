@@ -131,7 +131,7 @@ create_virtualenv () {
 	mkdir $ENV
 	python -m virtualenv $ENV
 	source $ENV/bin/activate
-	python -m pip install pytest faulthandler
+	python -m pip install pytest faulthandler decorator mock
 }
 
 run_ctest () {
@@ -182,5 +182,3 @@ if [ $# -ne 0 ]
 	then
 		run $1
 fi
-
-

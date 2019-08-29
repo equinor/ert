@@ -94,4 +94,3 @@ from .workflow_joblist import WorkflowJoblist
 from .workflow import Workflow
 from .workflow_runner import WorkflowRunner
 
-from .job_manager import JobManager, assert_file_executable
