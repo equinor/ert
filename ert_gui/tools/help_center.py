@@ -1,4 +1,4 @@
-import os
+from pkg_resources import resource_string
 
 
 class HelpCenter(object):
@@ -12,12 +12,10 @@ class HelpCenter(object):
         super(HelpCenter, self).__init__()
         self.__name = name
         self.__listeners = []
-        self.__help_prefix = ""
         self.__current_help_link = ""
         self.__help_messages = {}
 
         HelpCenter.__help_centers[name] = self
-
 
     def setHelpMessageLink(self, help_link):
         self.__current_help_link = help_link
@@ -44,21 +42,12 @@ class HelpCenter(object):
         help_link = self.__current_help_link
         listener.setHelpMessage(help_link, self.__help_messages[help_link])
 
-
-    # The setHelpLinkPrefix should be set to point to a directory
-    # containing (directories) with html help files. In the current
-    # implementation this variable is set from the gert_main.py script.
-    def setHelpLinkPrefix(self, prefix):
-        self.__help_prefix = prefix
-
     def getTemplate(self):
-        path = self.__help_prefix + "template.html"
-        if os.path.exists(path) and os.path.isfile(path):
-            f = open(path, 'r')
-            template = f.read()
-            f.close()
-            return template
-        else:
+        try:
+            return resource_string(
+                "ert_gui", "resources/gui/help/template.html"
+            ).decode("utf-8")
+        except IOError:
             return "<html>%s</html>"
 
     def resolveHelpLink(self, help_link):
@@ -71,27 +60,12 @@ class HelpCenter(object):
         #    if label.strip() == "":
         #        raise AssertionError("NOOOOOOOOOOOOOOOOOOOOO!!!!!!!!!!!!")
 
-        path = os.path.join(self.__help_prefix, help_link + ".html")
-        if os.path.exists(path) and os.path.isfile(path):
-            f = open(path, 'r')
-            help = f.read()
-            f.close()
-            return self.getTemplate() % help
-        else:
-            # This code automatically creates empty help files
-            #        sys.stderr.write("Missing help file: '%s'\n" % label)
-            #        if not label == "" and not label.find("/") == -1:
-            #            sys.stderr.write("Creating help file: '%s'\n" % label)
-            #            directory, filename = os.path.split(path)
-            #
-            #            if not os.path.exists(directory):
-            #                os.makedirs(directory)
-            #
-            #            file_object = open(path, "w")
-            #            file_object.write(label)
-            #            file_object.close()
+        try:
+            return self.getTemplate() % resource_string(
+                "ert_gui", "resources/gui/help/{}.html".format(help_link)
+            ).decode("utf-8")
+        except IOError:
             return None
-
 
     @classmethod
     def getHelpCenter(cls, name):

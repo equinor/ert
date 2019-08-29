@@ -1,8 +1,8 @@
 import sys
 
+from pkg_resources import resource_filename
 from ErtQt.Qt import Qt, QCursor, QApplication, QIcon, QPixmap, QMovie
 
-img_prefix = ""
 
 def addHelpToWidget(widget, link):
     original_enter_event = widget.enterEvent
@@ -34,7 +34,7 @@ def showWaitCursorWhileWaiting(func):
 def resourceIcon(name):
     """Load an image as an icon"""
     # print("Icon used: %s" % name)
-    return QIcon(img_prefix + name)
+    return QIcon(resource_filename("ert_gui", "resources/gui/img/" + name))
 
 
 def resourceStateIcon(on, off):
@@ -47,12 +47,12 @@ def resourceStateIcon(on, off):
 
 def resourceImage(name):
     """Load an image as a Pixmap"""
-    return QPixmap(img_prefix + name)
+    return QPixmap(resource_filename("ert_gui", "resources/gui/img/" + name))
 
 
 def resourceMovie(name):
     """ @rtype: QMovie """
-    movie = QMovie(img_prefix + name)
+    movie = QMovie(resource_filename("ert_gui", "resources/gui/img/" + name))
     movie.start()
     return movie
 
