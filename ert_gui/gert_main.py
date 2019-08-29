@@ -144,11 +144,6 @@ import ecl
 import sys
 import time
 
-import pkg_resources
-
-pkg_dir = os.path.join(pkg_resources.working_set.by_key['ensemble-reservoir-tool'].location, 'ert_gui')
-ert_gui.ertwidgets.img_prefix = os.path.join(pkg_dir, "resources/gui/img/")
-
 
 def main(argv):
     app = QApplication(argv)  # Early so that QT is initialized before other imports
@@ -193,7 +188,6 @@ def main(argv):
         config_file = argv[1]
 
     help_center = HelpCenter("ERT")
-    help_center.setHelpLinkPrefix(os.path.join(pkg_dir, "resources", "gui", "help"))
     help_center.setHelpMessageLink("welcome_to_ert")
 
     strict = True
@@ -276,5 +270,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv)
-
-
