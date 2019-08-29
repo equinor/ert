@@ -26,7 +26,7 @@ class JobTests(TestCase):
             PropertyMock(return_value=10)
         mock_process.return_value.wait.return_value = 9
 
-        run = job.run(0)
+        run = job.run()
 
         self.assertIsInstance(next(run), Start,
                               "run did not yield Start message")
@@ -52,7 +52,7 @@ class JobTests(TestCase):
                         .format(1, 1)],
         }, 0)
 
-        statuses = list(job.run(0))
+        statuses = list(job.run())
 
         self.assertEqual(3, len(statuses), "Wrong statuses count")
         self.assertEqual(1, statuses[2].exit_code,
@@ -72,7 +72,7 @@ class JobTests(TestCase):
         }, 0)
 
         with self.assertRaises(IOError):
-            for _ in job.run(0):
+            for _ in job.run():
                 pass
 
     @tmpdir(None)
@@ -89,5 +89,5 @@ class JobTests(TestCase):
         }, 0)
 
         with self.assertRaises(IOError):
-            for _ in job.run(0):
+            for _ in job.run():
                 pass

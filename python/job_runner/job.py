@@ -27,8 +27,7 @@ class Job(object):
         if "stdout" in job_data and job_data["stdout"]:
             self.std_out = "%s.%d" % (job_data["stdout"], index)
 
-    def run(self, wait_for_file_timeout):
-        self._license_check(wait_for_file_timeout)
+    def run(self):
         start_message = Start(self)
 
         errors = self._check_job_files()
@@ -170,53 +169,6 @@ class Job(object):
 
     def name(self):
         return self.job_data["name"]
-
-    def _license_check(self, wait_for_file_timeout=5):
-        self.job_data["license_link"] = None
-        if "max_running" in self.job_data:
-            if self.job_data["max_running"]:
-                self.job_data["license_file"] = "%s/%s" % (
-                    self.job_data["license_path"], self.name())
-                max_running = self.job_data["max_running"]
-                license_file = self.job_data["license_file"]
-
-                # Create a new licence with a random name
-                while True:
-                    self.job_data["license_link"] = "%s/%d" % (
-                        self.job_data["license_path"], random.randint(100000, 999999))
-                    if not os.path.exists(self.job_data["license_link"]):
-                        break
-
-                # If there were no license_file, create it
-                if not os.path.exists(license_file):
-                    fileH = open(license_file, "w")
-                    fileH.write("This is a license file for job:%s" %
-                                self.name())
-                    fileH.close()
-
-                # Find number of job-<random> licence files that links to license
-                stat_info = os.stat(license_file)
-                currently_running = stat_info[3] - 1
-
-                # Wait until there are less than max_running hard links to license
-                # file.
-                while True:
-                    stat_info = os.stat(license_file)
-                    currently_running = stat_info[3] - 1
-                    if currently_running < max_running:
-                        break
-                    else:
-                        time.sleep(wait_for_file_timeout)
-
-                os.link(license_file, self.job_data["license_link"])
-
-                while True:
-                    stat_info = os.stat(license_file)
-                    currently_running = stat_info[3] - 1
-                    if currently_running <= max_running:
-                        break  # OK - now we can leave the building - and let the job start
-                    else:
-                        time.sleep(wait_for_file_timeout)
 
     def _dump_exec_env(self):
         exec_env = self.job_data.get("exec_env")

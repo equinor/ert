@@ -7,9 +7,7 @@ from job_runner.reporting.message import Init, Finish
 
 class JobRunner(object):
 
-    def __init__(self, jobs_file="jobs.json", sleep_interval=5):
-        self.sleep_interval = sleep_interval
-
+    def __init__(self, jobs_file="jobs.json"):
         try:
             with open(jobs_file, "r") as json_file:
                 self.jobs_data = json.load(json_file)
@@ -64,7 +62,7 @@ class JobRunner(object):
         all_jobs_successful = True
         for job in job_queue:
 
-            for status_update in job.run(self.sleep_interval):
+            for status_update in job.run():
                 if not status_update.success():
                     all_jobs_successful = False
 
