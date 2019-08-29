@@ -27,7 +27,6 @@ class HelpWindow(QMainWindow):
     def __init__(self, help_center_name, parent=None):
         QMainWindow.__init__(self, parent, Qt.WindowStaysOnTopHint)
         palette = self.palette()
-        palette.setColor(self.backgroundRole(), QColor(255, 255, 224))
         self.setPalette(palette)
         self.setAutoFillBackground(True)
         self.setMinimumWidth(300)
@@ -91,4 +90,3 @@ class HelpWindow(QMainWindow):
     def closeEvent(self, event):
         self.hide()
         event.ignore()
-
