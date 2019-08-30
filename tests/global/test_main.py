@@ -43,11 +43,11 @@ class MainTest(unittest.TestCase):
     def test_argparse_exec_ensemble_smoother_valid_case(self):
         parser = ArgumentParser(prog="test_main")
         parsed = ert_parser(parser, [
-                            'ensemble_smoother', "--target-case", "some_case%d", 'test-data/local/poly_example/poly.ert'])
+                            'ensemble_smoother', "--target-case", "some_case", 'test-data/local/poly_example/poly.ert'])
         self.assertEquals(parsed.mode, "ensemble_smoother")
         self.assertEquals(
             parsed.config, "test-data/local/poly_example/poly.ert")
-        self.assertEquals(parsed.target_case, "some_case%d")
+        self.assertEquals(parsed.target_case, "some_case")
         self.assertEquals(parsed.func.__name__, "run_cli")
         self.assertFalse(parsed.verbose)
 
