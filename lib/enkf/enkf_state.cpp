@@ -807,7 +807,7 @@ void enkf_state_init_eclipse(const res_config_type * res_config,
     be called several times - MUST BE REENTRANT.
 */
 
-static bool enkf_state_complete_forward_modelOK(const res_config_type * res_config,
+bool enkf_state_complete_forward_modelOK(const res_config_type * res_config,
                                                 run_arg_type * run_arg) {
 
   ensemble_config_type * ens_config = res_config_get_ensemble_config( res_config );
@@ -865,7 +865,7 @@ bool enkf_state_complete_forward_modelOK__(void * arg ) {
 
 
 
-static bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type * run_arg) {
+bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type * run_arg) {
   const int iens = run_arg_get_iens( run_arg );
   res_log_ferror("[%03d:%04d-%04d] FAILED COMPLETELY.",
                  iens, run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));

@@ -54,6 +54,8 @@ typedef struct job_queue_node_struct job_queue_node_type;
   bool job_queue_node_status_transition( job_queue_node_type * node , job_queue_status_type * status , job_status_type new_status);
   bool job_queue_node_status_confirmed_running(job_queue_node_type * node);
   submit_status_type job_queue_node_submit( job_queue_node_type * node , job_queue_status_type * status , queue_driver_type * driver);
+  submit_status_type job_queue_node_submit_simple(job_queue_node_type * node,
+                                         queue_driver_type * driver);
   void job_queue_node_free_error_info( job_queue_node_type * node );
   void job_queue_node_fscanf_EXIT( job_queue_node_type * node );
   void job_queue_node_clear_error_info(job_queue_node_type * node);
@@ -63,7 +65,7 @@ typedef struct job_queue_node_struct job_queue_node_type;
                                               const char * run_path ,
                                               const char * run_cmd ,
                                               int argc ,
-                                              const char ** argv ,
+                                              char const * const * argv ,
                                               int num_cpu ,
                                               const char * ok_file,
                                               const char * status_file,
@@ -80,13 +82,24 @@ typedef struct job_queue_node_struct job_queue_node_type;
                                                      int argc ,
                                                      const char ** argv );
 
+  job_queue_node_type * job_queue_node_alloc_python( const char * job_name ,
+                                                   const char * run_path ,
+                                                   const char * run_cmd ,
+                                                   int argc ,
+                                                   const stringlist_type * arguments,
+                                                   int num_cpu,
+                                                   const char * ok_file,
+                                                    const char * status_file,
+                                                    const char * exit_file);
+
   bool job_queue_node_kill( job_queue_node_type * node , job_queue_status_type * status , queue_driver_type * driver);
+  bool job_queue_node_kill_simple(job_queue_node_type * node, queue_driver_type * driver);
   void job_queue_node_free(job_queue_node_type * node);
   job_status_type job_queue_node_get_status(const job_queue_node_type * node);
   void job_queue_node_free_driver_data( job_queue_node_type * node , queue_driver_type * driver);
   void job_queue_node_restart( job_queue_node_type * node , job_queue_status_type * status);
   bool job_queue_node_update_status( job_queue_node_type * node , job_queue_status_type * status , queue_driver_type * driver);
-
+  bool job_queue_node_update_status_simple(job_queue_node_type * node, queue_driver_type * driver );
   const char * job_queue_node_get_run_path( const job_queue_node_type * node);
   const char * job_queue_node_get_name( const job_queue_node_type * node);
   int  job_queue_node_get_submit_attempt( const job_queue_node_type * node);

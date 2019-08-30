@@ -31,6 +31,7 @@ class StateMap(BaseCClass):
     _iget                = ResPrototype("realisation_state_enum state_map_iget(state_map, int)")
     _iset                = ResPrototype("void  state_map_iset(state_map, int, realisation_state_enum)")
     _select_matching     = ResPrototype("void  state_map_select_matching(state_map, bool_vector, realisation_state_enum)")
+    _deselect_matching   = ResPrototype("void  state_map_deselect_matching(state_map, bool_vector, realisation_state_enum)")
     _is_read_only        = ResPrototype("bool  state_map_is_readonly(state_map)")
     _is_legal_transition = ResPrototype("bool  state_map_legal_transition(realisation_state_enum, realisation_state_enum)", bind = False)
 
@@ -112,6 +113,16 @@ class StateMap(BaseCClass):
         assert isinstance(select_mask, RealizationStateEnum)
 
         self._select_matching(select_target, select_mask)
+
+    def deselectMatching(self, select_target, select_mask):
+        """
+        @type select_target: BoolVector
+        @type select_mask: RealizationStateEnum
+        """
+        assert isinstance(select_target, BoolVector)
+        assert isinstance(select_mask, RealizationStateEnum)
+
+        self._deselect_matching(select_target, select_mask)
 
 
     def realizationList(self , state_value):

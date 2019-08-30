@@ -20,6 +20,7 @@ Module implementing a queue for managing external jobs.
 from cwrap import BaseCClass
 from res import ResPrototype
 from res.job_queue import Job, JobStatusType
+import time
 
 class JobQueueManager(BaseCClass):
     TYPE_NAME = "job_queue_manager"
@@ -140,3 +141,20 @@ class JobQueueManager(BaseCClass):
         nf = self._get_num_failed()
         ir = 'running' if self._is_running() else 'not running'
         return 'JobQueueManager(waiting=%d, running=%d, success=%d, failed=%d, %s)' % (nw,nr,ns,nf,ir)
+
+    def max_running(self):
+        return self.get_job_queue().get_max_running()
+
+    def execute_queue(self):
+
+        job_queue = self.get_job_queue()
+        started_job_threads = []
+        while job_queue.is_running():
+            job = job_queue.fetch_next_waiting()
+            while job is not None and job_queue.count_running() <= self.max_running():
+                started_job_threads.append(job.run(job_queue.driver))
+                job = job_queue.fetch_next_waiting()
+            time.sleep(1)
+
+        for thread in started_job_threads:
+            thread.join()

@@ -1383,3 +1383,25 @@ time_t job_queue_get_status_timestamp(const job_queue_type * queue) {
 time_t job_queue_get_progress_timestamp(const job_queue_type * queue) {
   return queue->progress_timestamp;
 }
+
+char * job_queue_get_ok_file(const job_queue_type * queue) {
+  return queue->ok_file;
+}
+
+char * job_queue_get_exit_file(const job_queue_type * queue) {
+  return queue->exit_file;
+}
+
+char * job_queue_get_status_file(const job_queue_type * queue) {
+  return queue->status_file;
+}
+
+void job_queue_add_job_node(job_queue_type * queue, job_queue_node_type * node) {
+  job_list_get_wrlock( queue->job_list );
+
+  job_list_add_job( queue->job_list , node );
+  job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
+
+  job_list_unlock( queue->job_list );
+
+}

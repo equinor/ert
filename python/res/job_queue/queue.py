@@ -75,6 +75,10 @@ class JobQueue(BaseCClass):
     # integer and convert it in the getJobStatus() method.
     _get_job_status  = ResPrototype("int job_queue_iget_job_status(job_queue, int)")
 
+    _get_ok_file = ResPrototype("char* job_queue_get_ok_file(job_queue)")
+    _get_exit_file = ResPrototype("char* job_queue_get_exit_file(job_queue)")
+    _get_status_file = ResPrototype("char* job_queue_get_status_file(job_queue)")
+    _add_job = ResPrototype("void job_queue_add_job_node(job_queue, job_queue_node)")
 
     def __repr__(self):
         nrun, ncom, nwait, npend = (self._num_running(),
@@ -105,17 +109,17 @@ class JobQueue(BaseCClass):
                 in this case.
             """
 
-        OK_file = None
-        status_file = None
-        exit_file = None
-
+        OK_file = "OK"
+        status_file = "STATUS"
+        exit_file = "EXIT"
+        self.job_list=[]
         c_ptr = self._alloc(max_submit, OK_file, status_file , exit_file)
         super(JobQueue, self).__init__(c_ptr)
         self.size = size
 
         self.driver = driver
         self._set_driver(driver.from_param(driver))
-        self.start( blocking=False )
+        
 
 
     def kill_job(self, queue_index):
@@ -250,6 +254,46 @@ class JobQueue(BaseCClass):
         int_status = self._get_job_status(job_number)
         return JobStatusType( int_status )
 
+    def is_running(self):
+        for job in self.job_list:
+            job_status = job.status
+            if (job_status ==  JobStatusType.JOB_QUEUE_PENDING or
+                job_status == JobStatusType.JOB_QUEUE_SUBMITTED or
+                job_status == JobStatusType.JOB_QUEUE_WAITING or
+                job_status == JobStatusType.JOB_QUEUE_RUNNING):
+                return True
+        return False
 
+    def fetch_next_waiting(self):
+        for job in self.job_list:
+            if job.status == JobStatusType.JOB_QUEUE_WAITING and not job.started:
+                return job
+        return None
 
+    def kill_all_jobs(self):
+        for job in self.job_list:
+            job.stop(self.driver)
 
+    @property
+    def queue_size(self):
+        return len(self.job_list)
+
+    @property
+    def ok_file(self):
+        return self._get_ok_file()
+
+    @property
+    def exit_file(self):
+        return self._get_exit_file()
+
+    @property
+    def status_file(self):
+        return self._get_status_file()
+
+    def add_job(self, job):
+        job.convertToCReference(None)
+        self._add_job(job)
+        self.job_list.append(job)
+
+    def count_running(self):
+        return sum(job.is_running() for job in self.job_list)

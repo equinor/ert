@@ -42,6 +42,9 @@ class ErtRunContext(BaseCClass):
     _get_sim_fs         = ResPrototype("enkf_fs_ref ert_run_context_get_sim_fs( ert_run_context )")
     _get_init_mode      = ResPrototype("enkf_init_mode_enum ert_run_context_get_init_mode( ert_run_context )")
 
+    _get_step           = ResPrototype("int ert_run_context_get_step1(ert_run_context)")
+    _deactivate_realization = ResPrototype("void ert_run_context_deactivate_realization( ert_run_context, int)")
+
     def __init__(self , run_type , sim_fs, target_fs , mask , path_fmt , jobname_fmt, subst_list , itr, init_mode = EnkfInitModeEnum.INIT_CONDITIONAL):
         c_ptr = self._alloc( run_type, init_mode, sim_fs, target_fs, mask , path_fmt , jobname_fmt, subst_list, itr)
         super(ErtRunContext, self).__init__(c_ptr)
@@ -106,7 +109,7 @@ class ErtRunContext(BaseCClass):
 
             if 0 <= index < len(self):
                 run_arg = self._iget(index)
-                run_arg.setParent( self )
+                #run_arg.setParent( self ) ## This migh not be correct....
                 return run_arg
             else:
                 raise IndexError("Index:%d invalid. Legal range: [0,%d)" % (index , len(self)))
@@ -154,3 +157,9 @@ class ErtRunContext(BaseCClass):
 
     def get_init_mode(self):
         return self._get_init_mode( )
+
+    def get_step(self):
+        return self._get_step()
+
+    def deactivate_realization(self, realization_nr):
+        self._deactivate_realization(realization_nr)

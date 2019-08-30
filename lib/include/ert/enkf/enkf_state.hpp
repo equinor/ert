@@ -106,6 +106,9 @@ typedef struct enkf_state_struct    enkf_state_type;
   bool enkf_state_complete_forward_modelRETRY__(void * arg );
   bool enkf_state_complete_forward_modelEXIT__(void * arg );
 
+  bool enkf_state_complete_forward_modelOK(const res_config_type * res_config,
+                                                run_arg_type * run_arg);
+  bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type * run_arg);
 
 #ifdef __cplusplus
 }

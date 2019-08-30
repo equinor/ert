@@ -24,6 +24,8 @@ class EnKFState(BaseCClass):
     _free           = ResPrototype("void* enkf_state_free( enkf_state )")
     _get_ens_config = ResPrototype("ens_config_ref enkf_state_get_ensemble_config( enkf_state )")
     _initialize     = ResPrototype("void enkf_state_initialize( enkf_state , enkf_fs , stringlist , enkf_init_mode_enum)")
+    _forward_model_OK = ResPrototype("bool enkf_state_complete_forward_modelOK(res_config, run_arg)", bind=False)
+    _forward_model_EXIT = ResPrototype("bool enkf_state_complete_forward_model_EXIT_handler__(run_arg)", bind=False)
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
@@ -44,3 +46,11 @@ class EnKFState(BaseCClass):
             ens_config = self.ensembleConfig( )
             param_list = ens_config.getKeylistFromVarType( EnkfVarType.PARAMETER )
         self._initialize( fs , param_list , init_mode )
+
+    @classmethod
+    def forward_model_exit_callback(cls, args):
+        cls._forward_model_EXIT(args[0])
+
+    @classmethod
+    def forward_model_ok_callback(cls, args):
+        cls._forward_model_OK(args[1], args[0])

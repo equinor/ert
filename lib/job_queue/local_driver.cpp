@@ -90,7 +90,8 @@ void local_driver_free_job( void * __job ) {
 
 void local_driver_kill_job( void * __driver , void * __job) {
   local_job_type    * job  = local_job_safe_cast( __job );
-  kill( job->child_process , SIGTERM );
+  if (job->child_process > 0)
+    kill( job->child_process , SIGTERM );
 }
 
 

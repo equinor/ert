@@ -259,12 +259,28 @@ job_queue_node_type * job_queue_node_alloc_simple( const char * job_name ,
   return job_queue_node_alloc( job_name , run_path , run_cmd , argc , argv , 1, NULL , NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
+job_queue_node_type * job_queue_node_alloc_python( const char * job_name ,
+                                                   const char * run_path ,
+                                                   const char * run_cmd ,
+                                                   int argc ,
+                                                   const stringlist_type * arguments,
+                                                   int num_cpu,
+                                                   const char * ok_file,
+                                                    const char * status_file,
+                                                    const char * exit_file) {
+  char ** argv           = stringlist_alloc_char_ref( arguments );
+  job_queue_node_type * out = job_queue_node_alloc( job_name , run_path , run_cmd , argc , argv , 1, ok_file , status_file, exit_file, NULL, NULL, NULL, NULL);
+  free(argv);
+  return out;
+}
+
+
 
 job_queue_node_type * job_queue_node_alloc( const char * job_name ,
                                             const char * run_path ,
                                             const char * run_cmd ,
                                             int argc ,
-                                            const char ** argv,
+                                            char const * const * argv,
                                             int num_cpu,
                                             const char * ok_file,
                                             const char * status_file,
@@ -291,7 +307,7 @@ job_queue_node_type * job_queue_node_alloc( const char * job_name ,
 
   node->run_cmd        = util_alloc_string_copy( run_cmd );
   node->argc           = argc;
-  node->argv           = util_alloc_stringlist_copy( argv , argc );
+  node->argv           = util_alloc_stringlist_copy( argv , argc ); // Please fix const <type> ** in libecl
   node->num_cpu        = num_cpu;
 
   if (ok_file)
@@ -504,6 +520,60 @@ cleanup:
   return submit_status;
 }
 
+submit_status_type job_queue_node_submit_simple(job_queue_node_type * node,
+                                         queue_driver_type * driver) {
+  submit_status_type submit_status;
+  pthread_mutex_lock( &node->data_mutex );
+  job_queue_node_set_status( node , JOB_QUEUE_SUBMITTED);
+  void * job_data = queue_driver_submit_job( driver,
+                                             node->run_cmd,
+                                             node->num_cpu,
+                                             node->run_path,
+                                             node->job_name,
+                                             node->argc,
+                                             (const char **) node->argv);
+  job_status_type old_status;
+  job_status_type new_status;
+
+  if (job_data == NULL) {
+    /*
+      In this case the status of the job itself will be
+      unmodified; i.e. it will still be WAITING, and a new attempt
+      to submit it will be performed in the next round.
+    */
+    submit_status = SUBMIT_DRIVER_FAIL;
+    res_log_fwarning("Failed to submit job %s (attempt %d)",
+                     node->job_name,
+                     node->submit_attempt);
+    pthread_mutex_unlock( &node->data_mutex );
+    return submit_status;
+  }
+
+  old_status = node->job_status;
+  new_status = JOB_QUEUE_SUBMITTED;
+
+  res_log_finfo("Submitted job %s (attempt %d)",
+                node->job_name,
+                node->submit_attempt);
+
+  node->job_data = job_data;
+  node->submit_attempt++;
+  /*
+    The status JOB_QUEUE_SUBMITTED is internal, and not
+    exported anywhere. The job_queue_update_status() will
+    update this to PENDING or RUNNING at the next call. The
+    important difference between SUBMITTED and WAITING is
+    that SUBMITTED have job_data != NULL and the
+    job_queue_node free function must be called on it.
+  */
+  submit_status = SUBMIT_OK;
+  job_queue_node_set_status( node , new_status);
+  pthread_mutex_unlock( &node->data_mutex );
+  return submit_status;
+}
+
+
+
 static bool job_queue_node_status_update_confirmed_running__(job_queue_node_type * node) {
   if (node->confirmed_running)
       return true;
@@ -579,6 +649,46 @@ cleanup:
   return status_change;
 }
 
+bool job_queue_node_update_status_simple(job_queue_node_type * node,
+                                  queue_driver_type * driver ) {
+  bool status_change = false;
+  pthread_mutex_lock( &node->data_mutex );
+  job_status_type current_status;
+  bool confirmed;
+
+  if (!node->job_data){
+    job_queue_node_update_timestamp(node);
+    pthread_mutex_unlock( &node->data_mutex );
+    return status_change;
+  }
+
+  current_status = job_queue_node_get_status(node);
+
+  confirmed = job_queue_node_status_update_confirmed_running__(node);
+
+  if ((current_status & JOB_QUEUE_RUNNING) && !confirmed) {
+    // it's running, but not confirmed running.
+    double runtime = job_queue_node_time_since_sim_start(node);
+    if (runtime >= node->max_confirm_wait) {
+      res_log_finfo("max_confirm_wait (%d) has passed since sim_start"
+                    "without success; %s is dead (attempt %d)",
+                    node->max_confirm_wait,
+                    node->job_name,
+                    node->submit_attempt);
+      job_status_type new_status = JOB_QUEUE_DO_KILL_NODE_FAILURE;
+      job_queue_node_set_status(node, new_status);
+    }
+  }
+
+  current_status = job_queue_node_get_status(node);
+  if (current_status & JOB_QUEUE_CAN_UPDATE_STATUS) {
+    job_status_type new_status = queue_driver_get_status( driver , node->job_data);
+    job_queue_node_set_status(node,new_status);
+  }
+  pthread_mutex_unlock( &node->data_mutex );
+  return status_change;
+}
+
 bool job_queue_node_status_transition(job_queue_node_type * node,
                                       job_queue_status_type * status,
                                       job_status_type new_status) {
@@ -638,6 +748,33 @@ bool job_queue_node_kill(job_queue_node_type * node,
   return result;
 }
 
+bool job_queue_node_kill_simple(job_queue_node_type * node,
+                         queue_driver_type * driver) {
+  bool result = false;
+  pthread_mutex_lock( &node->data_mutex );
+  job_status_type current_status = job_queue_node_get_status( node );
+  if (current_status & JOB_QUEUE_CAN_KILL) {
+    /*
+      If the job is killed before it is even started no driver
+      specific job data has been assigned; we therefor must check
+      the node->job_data pointer before entering.
+    */
+    if (node->job_data) {
+      queue_driver_kill_job( driver , node->job_data );
+      queue_driver_free_job( driver , node->job_data );
+      node->job_data = NULL;
+    }
+    job_queue_node_set_status( node , JOB_QUEUE_IS_KILLED);
+    res_log_finfo("job %s set to killed",
+                  node->job_name);
+    result = true;
+  } else {
+    res_log_fwarning("node_kill called but cannot kill %s",
+                     node->job_name);
+  }
+  pthread_mutex_unlock( &node->data_mutex );
+  return result;
+}
 
 /*
    This frees the storage allocated by the driver - the storage

@@ -75,7 +75,6 @@ from .site_config import SiteConfig
 from .subst_config import SubstConfig
 from .ensemble_config import EnsembleConfig
 from .enkf_obs import EnkfObs
-from .enkf_state import EnKFState
 from .ert_template import ErtTemplate
 from .ert_templates import ErtTemplates
 from .local_config import LocalConfig
@@ -89,6 +88,7 @@ from .res_config import ResConfig
 
 from .es_update import ESUpdate
 from .run_arg import RunArg
+from .enkf_state import EnKFState
 from .ert_run_context import ErtRunContext
 from .enkf_simulation_runner import EnkfSimulationRunner
 from .enkf_fs_manager import EnkfFsManager

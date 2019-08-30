@@ -30,6 +30,8 @@ class RunArg(BaseCClass):
     _get_runpath               = ResPrototype("char* run_arg_get_runpath(run_arg)")
     _get_iter                  = ResPrototype("int run_arg_get_iter(run_arg)")
     _get_iens                  = ResPrototype("int run_arg_get_iens(run_arg)")
+    _get_status                = ResPrototype("int run_arg_get_run_status(run_arg)")
+    _get_job_name              = ResPrototype("char* run_arg_get_job_name(run_arg)")
 
     def __init__(self):
         raise NotImplementedError("Cannot instantiat RunArg directly!")
@@ -82,3 +84,11 @@ class RunArg(BaseCClass):
     @property
     def iens(self):
         return self._get_iens()
+    
+    @property
+    def run_status(self):
+        return self._get_status()
+
+    @property
+    def job_name(self):
+        return self._get_job_name()

@@ -71,7 +71,10 @@ if LSF_HOME:
     setenv("LSF_ENVDIR", "%s/conf" % LSF_HOME)   # This is wrong: Equinor: /prog/LSF/conf
 
 from .job_status_type_enum import JobStatusType
+from .run_status_type_enum import RunStatusType
 from .job import Job
+from .driver import Driver, QueueDriverEnum
+from .job_queue_node import JobQueueNode
 from .queue import JobQueue
 from .job_queue_manager import JobQueueManager
 from .driver import QueueDriverEnum, Driver, LSFDriver, RSHDriver, LocalDriver

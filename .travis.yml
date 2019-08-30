@@ -17,9 +17,9 @@ env:
     - INSTALL_DIR="${TRAVIS_BUILD_DIR}/venv"
     - LD_LIBRARY_PATH="${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64:${LD_LIBRARY_PATH}"
   matrix:
-    - TEST_SUITE="-LE SLOW"  # Run all tests not labeled as slow
-    - TEST_SUITE="-L SLOW_1" # Run all tests labeled as SLOW in group 1
-    - TEST_SUITE="-L SLOW_2" # Run all tests labeled as SLOW in group 2
+    - TEST_SUITE=""  # Run all tests not labeled as slow
+    #- TEST_SUITE="-L SLOW_1" # Run all tests labeled as SLOW in group 1
+    #- TEST_SUITE="-L SLOW_2" # Run all tests labeled as SLOW in group 2
 
 matrix:
   fast_finish: true
