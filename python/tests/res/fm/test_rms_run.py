@@ -170,11 +170,15 @@ class RMSRunTest(ResTest):
                 rms_exec = os.path.join(self.SOURCE_ROOT, 'share/ert/forward-models/res/script/rms')
                 subprocess.check_call([
                     rms_exec,
+                    '--run-path',
                     'run_path',
                     '0',
+                    '--version',
                     '10.4',
                     'project',
+                    '--import-path',
                     './',
+                    '--export-path',
                     './',
                     'workflow',
                 ])
@@ -221,11 +225,15 @@ class RMSRunTest(ResTest):
                 rms_exec = os.path.join(self.SOURCE_ROOT, 'share/ert/forward-models/res/script/rms')
                 subprocess.check_call([
                     rms_exec,
+                    '--run-path',
                     'run_path',
                     '0',
+                    '--version',
                     '10.4',
                     'project',
+                    '--import-path',
                     './',
+                    '--export-path',
                     './',
                     'workflow',
                 ])
