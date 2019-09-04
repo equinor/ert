@@ -5,7 +5,7 @@
 ## Building libres
 
 ### 1. Build libecl
-Build and install [libecl](https://github.com/Equinor/libecl). When configuring
+Build and install [libecl](https://github.com/Equinor/libecl) at the version that `.libecl_version` specifies. When configuring
 `libecl` you should used the option `-DCMAKE_INSTALL_PREFIX` to tell ``cmake``
 where to install `libecl`. The value passed to `CMAKE_INSTALL_PREFIX` will be
 needed when running cmake to configure `libres` in point 4 below. For now let us
