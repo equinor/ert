@@ -353,7 +353,7 @@ Config refactor:
 
 
 Queue layer:
-`
+
  - Improved logging [`17 <https://github.com/Equinor/res/pull/17/>`_, `37 <https://github.com/Equinor/res/pull/37/>`_].
  - Funcionality to create a queue_config object copy [`36 <https://github.com/Equinor/res/pull/36/>`_].
 
@@ -401,8 +401,7 @@ Build & testing:
  - Remove ERT testing & building [`3 <https://github.com/Equinor/libecl/pull/3/>`_, `19 <https://github.com/Equinor/libecl/pull/19/>`_]
  - Changes to Python/cmake machinery [`25 <https://github.com/Equinor/libecl/pull/25/>`_, `30 <https://github.com/Equinor/libecl/pull/3/>`_, `31 <https://github.com/Equinor/libecl/pull/31/>`_, `32 <https://github.com/Equinor/libecl/pull/32/>`_, `49 <https://github.com/Equinor/libecl/pull/49/>`_, `52 <https://github.com/Equinor/libecl/pull/52/>`_, `62 <https://github.com/Equinor/libecl/pull/62/>`_].
  - Added cmake config file [`33 <https://github.com/Equinor/libecl/pull/33/>`_, `44 <https://github.com/Equinor/libecl/pull/44/>`_, `45 <https://github.com/Equinor/libecl/pull/45/>`_, `47 <https://github.com/Equinor/libecl/pull/47/>`_].
- - Only *one* library [`54 <https://github.com/Equinor/libecl/pull/54/>`_, `55 <https://github.com/Equinor/libecl/pull/55/>`_, `58 <https://github.com/Equinor/libecl/pull/58/>`_,
- `69 <https://github.com/Equinor/libecl/pull/69/>`_, `73 <https://github.com/Equinor/libecl/pull/73/>`_, `77 <https://github.com/Equinor/libecl/pull/77/>`_, `91 <https://github.com/Equinor/libecl/pull/91/>`_, `133 <https://github.com/Equinor/libecl/pull/133/>`_]
+ - Only *one* library [`54 <https://github.com/Equinor/libecl/pull/54/>`_, `55 <https://github.com/Equinor/libecl/pull/55/>`_, `58 <https://github.com/Equinor/libecl/pull/58/>`_, `69 <https://github.com/Equinor/libecl/pull/69/>`_, `73 <https://github.com/Equinor/libecl/pull/73/>`_, `77 <https://github.com/Equinor/libecl/pull/77/>`_, `91 <https://github.com/Equinor/libecl/pull/91/>`_, `133 <https://github.com/Equinor/libecl/pull/133/>`_]
  - Removed stale binaries [`59 <https://github.com/Equinor/libecl/pull/59/>`_].
  - Require cmake >= 2.8.12 [`67 <https://github.com/Equinor/libecl/pull/67/>`_].
  - Fix build on OSX [`87 <https://github.com/Equinor/libecl/pull/87/>`_, `88 <https://github.com/Equinor/libecl/pull/88/>`_, `95 <https://github.com/Equinor/libecl/pull/95/>`_, `103 <https://github.com/Equinor/libecl/pull/103/>`_].
