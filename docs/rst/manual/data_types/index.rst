@@ -178,7 +178,7 @@ This *TRUNCATED_NORMAL* distribution works as follows:
    2. Clamp X to the interval [min, max]
 
 This is **not** a proper truncated normal distribution; hence the
-clamping to ``[min,max]` should be an exceptional event. To configure
+clamping to `[min,max]` should be an exceptional event. To configure
 this distribution for a situation with mean 1, standard deviation 0.25
 and hard limits 0 and 10:
 
@@ -280,7 +280,7 @@ NBINS set the number of discrete values, and the other arguments have the same
 effect as in ERRF.
 
 TRIANGULAR
-,,,,,
+,,,,,,,,,,
 
 ::
 

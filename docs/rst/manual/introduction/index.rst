@@ -255,8 +255,8 @@ where :math:`G = \nabla g(x)` yields
 .. math::
    x = x^f + C_{xy}(C_{yy}^{f}+C_{dd})^{-1}(d_j-g(x_j^f)).
 
-Thus, the update of :math:`x^f`. is a linear and weighted correction, which in the linear case
-would result in the minimumm variance estimate.
+Thus, the update of :math:`x^f` is a linear and weighted correction, which in the linear case
+would result in the minimum variance estimate.
 
  
 Ensemble Smoother (ES)
@@ -317,7 +317,7 @@ The model responses are then solved indireclty by evaluating the forward model
 .. math::
    y_j^a = g(x_j^a).
 
-The pseudo algorithms for the ES:
+The pseudo algorithm for ES:
 
 1) Define :math:`D` by adding correalted noise according to :math:`C_{dd}`
 
@@ -329,9 +329,46 @@ The pseudo algorithms for the ES:
 
 5) Run the forward model :math:`Y_a = g(X_a)` to obtain the posterior simulated responses 
 
-NBNBNBB 2
-At this point we should probably provide an explanation of the available updating schemes (EnKF, SQRT, CV).   
-I guess we present it as numerical schemes to estimate the Kalman gain. 
+
+Nummerical schemes
+------------------
+There are several nummerical schemes, ie methods to estimate the Kalman gain matrix
+
+.. math::
+   \bar{C}_{xy}(\bar{C}_{xy}^{f}\bar{C}_{xx}^{-1}\bar{C}_{xy}+\bar{C}_{dd})^{-1}
+
+implemented in ERT. 
+
+
+STD EnKF
+~~~~~~~~
+
+The recommended scheme. 
+
+
+SQRT EnKF
+~~~~~~~~~
+
+
+
+NULL ENKF
+~~~~~~~~~
+
+
+
+FWD STEP EnKF
+~~~~~~~~~~~~~
+
+
+
+CV ENKF
+~~~~~~~~
+
+
+
+BOOTSTRAP ENKF
+~~~~~~~~~~~~~~
+
 
 
 Ensemble Smoother - Multiple Data Assimilation (ES MDA)
