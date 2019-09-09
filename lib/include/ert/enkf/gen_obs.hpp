@@ -41,7 +41,9 @@ void           gen_obs_user_get_with_data_index(const gen_obs_type * gen_obs , c
 void           gen_obs_update_std_scale(gen_obs_type * gen_obs, double std_multiplier , const active_list_type * active_list);
 int            gen_obs_get_size(const gen_obs_type * gen_obs);
 double         gen_obs_iget_std(const gen_obs_type * gen_obs, int index);
+void           gen_obs_load_std(const gen_obs_type * gen_obs, int size, double * data);
 double         gen_obs_iget_value(const gen_obs_type * gen_obs, int index);
+void           gen_obs_load_values(const gen_obs_type * gen_obs, int size, double * data);
 double         gen_obs_iget_std_scaling(const gen_obs_type * gen_obs, int index);
 int            gen_obs_get_obs_index(const gen_obs_type * gen_obs, int index);
 void           gen_obs_load_observation(gen_obs_type * gen_obs, const char * obs_file);

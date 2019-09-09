@@ -46,6 +46,7 @@ typedef struct local_obsdata_struct local_obsdata_type;
   active_list_type              * local_obsdata_get_node_active_list(const local_obsdata_type * obsdata , const char * obs_key );
   void                            local_obsdata_fprintf( const local_obsdata_type * obsdata , FILE * stream );
   void                            local_obsdata_summary_fprintf( const local_obsdata_type * obsdata , FILE * stream);
+  active_list_type              * local_obsdata_get_copy_node_active_list(const local_obsdata_type * obsdata , const char * obs_key);
 
 UTIL_IS_INSTANCE_HEADER( local_obsdata );
 

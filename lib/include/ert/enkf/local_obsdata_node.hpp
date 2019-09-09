@@ -36,6 +36,7 @@ extern "C" {
   void                        local_obsdata_node_free( local_obsdata_node_type * node );
   void                        local_obsdata_node_free__( void * arg );
   active_list_type          * local_obsdata_node_get_active_list( const local_obsdata_node_type * node );
+  active_list_type          * local_obsdata_node_get_copy_active_list( const local_obsdata_node_type * node );
   void                        local_obsdata_node_copy_active_list( local_obsdata_node_type * node , const active_list_type * active_list);
   void                        local_obsdata_node_add_tstep( local_obsdata_node_type * node, int tstep);
   void                        local_obsdata_node_add_range( local_obsdata_node_type * node, int step1, int step2);

@@ -28,6 +28,7 @@ class SummaryObservation(BaseCClass):
     _get_std_scaling  = ResPrototype("double summary_obs_get_std_scaling(summary_obs)")
     _get_summary_key  = ResPrototype("char*  summary_obs_get_summary_key(summary_obs)")
     _update_std_scale = ResPrototype("void   summary_obs_update_std_scale(summary_obs , double , active_list)")
+    _set_std_scale    = ResPrototype("void   summary_obs_set_std_scale(summary_obs , double)")
 
 
     def __init__(self, summary_key, observation_key, value, std, auto_corrf_name=None, auto_corrf_param=0.0):
@@ -57,6 +58,10 @@ class SummaryObservation(BaseCClass):
     def getStdScaling(self , index = 0):
         """ @rtype: float """
         return self._get_std_scaling()
+
+    def set_std_scaling(self, scaling_factor):
+        self._set_std_scale(scaling_factor)
+
 
     def __len__(self):
         return 1

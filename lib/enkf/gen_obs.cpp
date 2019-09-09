@@ -500,6 +500,20 @@ double gen_obs_iget_value(const gen_obs_type * gen_obs, int index){
   return gen_obs->obs_data[index];
 }
 
+void gen_obs_load_values(const gen_obs_type * gen_obs, int size, double * data) {
+      for (int i=0; i < size; i++) {
+        data[i] = gen_obs->obs_data[i];
+    }
+}
+
+
+void gen_obs_load_std(const gen_obs_type * gen_obs, int size, double * data) {
+      for (int i=0; i < size; i++) {
+        data[i] = gen_obs->obs_std[i];
+    }
+}
+
+
 int gen_obs_get_obs_index(const gen_obs_type * gen_obs, int index){
   if(index < 0 || index >= gen_obs->obs_size){
     util_abort("[Gen_Obs] Index out of bounds %d [0, %d]", index, gen_obs->obs_size - 1);

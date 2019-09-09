@@ -105,6 +105,11 @@ active_list_type * local_obsdata_node_get_active_list( const local_obsdata_node_
 }
 
 
+active_list_type * local_obsdata_node_get_copy_active_list( const local_obsdata_node_type * node ) {
+  return active_list_alloc_copy(node->active_list);
+}
+
+
 bool local_obsdata_node_tstep_active( const local_obsdata_node_type * node , int tstep ) {
   if (node->all_timestep_active)
     return true;

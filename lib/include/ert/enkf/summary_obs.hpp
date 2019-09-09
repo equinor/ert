@@ -73,6 +73,8 @@ void summary_obs_set(summary_obs_type * , double , double );
 
 void summary_obs_update_std_scale(summary_obs_type * summary_obs, double std_multiplier , const active_list_type * active_list);
 
+void summary_obs_set_std_scale(summary_obs_type * summary_obs, double std_multiplier);
+
 VOID_FREE_HEADER(summary_obs);
 VOID_GET_OBS_HEADER(summary_obs);
 VOID_MEASURE_HEADER(summary_obs);

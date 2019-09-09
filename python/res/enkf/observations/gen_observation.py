@@ -13,8 +13,10 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import ctypes
 import os.path
 
+import numpy as np
 from cwrap import BaseCClass
 from ecl.util.util import IntVector
 from res import ResPrototype
@@ -36,6 +38,8 @@ class GenObservation(BaseCClass):
     _load_data_index    = ResPrototype("void   gen_obs_load_data_index(gen_obs , char*)")
     _add_data_index     = ResPrototype("void   gen_obs_attach_data_index(gen_obs , int_vector)")
     _update_std_scaling = ResPrototype("void   gen_obs_update_std_scale(gen_obs , double , active_list)")
+    _get_value_vector   = ResPrototype("void   gen_obs_load_values(gen_obs, int, double*)")
+    _get_std_vector     = ResPrototype("void   gen_obs_load_std(gen_obs, int, double*)")
 
     def __init__(self , obs_key , data_config , scalar_value = None , obs_file = None , data_index = None):
         c_ptr = self._alloc( data_config , obs_key )
@@ -95,6 +99,15 @@ class GenObservation(BaseCClass):
     def updateStdScaling(self , factor , active_list):
         self._update_std_scaling(factor , active_list)
 
+    def get_data_points(self):
+        np_vector = np.zeros(len(self))
+        self._get_value_vector(len(self), np_vector.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+        return np_vector
+
+    def get_std(self):
+        np_vector = np.zeros(len(self))
+        self._get_std_vector(len(self), np_vector.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+        return np_vector
 
     def getSize(self):
         """ @rtype: float """

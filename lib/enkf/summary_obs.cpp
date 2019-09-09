@@ -177,6 +177,11 @@ void summary_obs_update_std_scale(summary_obs_type * summary_obs, double std_mul
 }
 
 
+void summary_obs_set_std_scale(summary_obs_type * summary_obs, double std_multiplier) {
+  summary_obs->std_scaling = std_multiplier;
+}
+
+
 /*****************************************************************/
 
 VOID_FREE(summary_obs)
