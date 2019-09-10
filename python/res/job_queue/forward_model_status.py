@@ -18,6 +18,9 @@ import json
 import datetime
 import time
 import sys
+from job_runner.reporting.file import File
+from job_runner import JOBS_FILE
+
 
 def _serialize_date(dt):
     if dt is None:
@@ -37,9 +40,9 @@ def _deserialize_date(serial_dt):
 class ForwardModelJobStatus(object):
 
     def __init__(self, name,
-                 start_time = None,
-                 end_time = None,
-                 status = "Waiting",
+                 start_time=None,
+                 end_time=None,
+                 status="Waiting",
                  error=None,
                  std_out_file="",
                  std_err_file=""):
@@ -52,9 +55,8 @@ class ForwardModelJobStatus(object):
         self.std_out_file = std_out_file
         self.std_err_file = std_err_file
 
-
     @classmethod
-    def load(cls,job, data, run_path):
+    def load(cls, job, data, run_path):
         start_time = _deserialize_date(data["start_time"])
         end_time = _deserialize_date(data["end_time"])
         name = data["name"]
@@ -70,25 +72,22 @@ class ForwardModelJobStatus(object):
                    std_out_file=os.path.join(run_path, std_out_file),
                    std_err_file=os.path.join(run_path, std_err_file))
 
-
     def __str__(self):
         return "name:{} start_time:{}  end_time:{}  status:{}  error:{} ".format(self.name, self.start_time, self.end_time, self.status, self.error)
 
-
     def dump_data(self):
-        return {"name" : self.name,
-                "status" : self.status,
-                "error" : self.error,
-                "start_time" : _serialize_date(self.start_time),
-                "end_time" : _serialize_date(self.end_time),
-                "stdout" : self.std_out_file,
-                "stderr" : self.std_err_file}
+        return {"name": self.name,
+                "status": self.status,
+                "error": self.error,
+                "start_time": _serialize_date(self.start_time),
+                "end_time": _serialize_date(self.end_time),
+                "stdout": self.std_out_file,
+                "stderr": self.std_err_file}
+
 
 class ForwardModelStatus(object):
-    STATUS_FILE = "status.json"
-    JOBS_FILE = "jobs.json"
 
-    def __init__(self, run_id, start_time, end_time = None):
+    def __init__(self, run_id, start_time, end_time=None):
         self.run_id = run_id
         self.start_time = start_time
         self.end_time = end_time
@@ -96,8 +95,8 @@ class ForwardModelStatus(object):
 
     @classmethod
     def try_load(cls, path):
-        status_file = os.path.join(path, cls.STATUS_FILE)
-        jobs_file = os.path.join(path, cls.JOBS_FILE)
+        status_file = os.path.join(path, File.STATUS_json)
+        jobs_file = os.path.join(path, JOBS_FILE)
 
         with open(status_file) as status_fp:
             status_data = json.load(status_fp)
@@ -116,7 +115,6 @@ class ForwardModelStatus(object):
 
         return status
 
-
     @classmethod
     def load(cls, path, num_retry=10):
         sleep_time = 0.10
@@ -133,34 +131,9 @@ class ForwardModelStatus(object):
 
         return None
 
-
     @property
     def jobs(self):
         return self._jobs
 
-
     def add_job(self, job):
         self._jobs.append(job)
-
-
-    def dump(self, filename = None):
-        if filename is None:
-            status_file = self.STATUS_FILE
-        else:
-            status_file = filename
-
-        data = {"run_id" : self.run_id,
-                "start_time" : _serialize_date(self.start_time),
-                "end_time" : _serialize_date(self.end_time)}
-        jobs = []
-        for job in self.jobs:
-            jobs.append( job.dump_data() )
-
-        data["jobs"] = jobs
-        with open(status_file, "w") as fp:
-            json.dump(data, fp)
-
-
-    def complete(self):
-        self.end_time = datetime.datetime.now()
-        self.dump( )

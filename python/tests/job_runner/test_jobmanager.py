@@ -167,7 +167,7 @@ class JobRunnerTest(TestCase):
             self.assertEqual(0, os.path.getsize("mkdir_err.%d" % index))
 
     @tmpdir(None)
-    def test_run_multiple_fail(self):
+    def test_run_multiple_fail_only_runs_one(self):
         joblist = []
         for index in range(1, 6):
             job = {"name": "exit",
@@ -187,7 +187,7 @@ class JobRunnerTest(TestCase):
 
         statuses = [s for s in list(jobm.run([])) if isinstance(s, Exited)]
 
-        self.assertEqual(len(statuses), 5)
+        self.assertEqual(len(statuses), 1)
         for i, status in enumerate(statuses):
             self.assertEqual(status.exit_code, i+1)
 

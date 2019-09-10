@@ -14,7 +14,7 @@ class File(object):
     EXIT_file = "EXIT"
     STATUS_file = "STATUS"
     OK_file = "OK"
-    STATUS_FILE = "status.json"
+    STATUS_json = "status.json"
 
     def __init__(self):
         self.status_dict = {}
@@ -180,5 +180,5 @@ class File(object):
         time.sleep(sync_disc_timeout)  # Let the disks sync up
 
     def _dump_status_json(self):
-        with open(self.STATUS_FILE, "w") as fp:
+        with open(self.STATUS_json, "w") as fp:
             json.dump(self.status_dict, fp)

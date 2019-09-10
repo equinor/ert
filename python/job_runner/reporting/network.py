@@ -11,6 +11,7 @@ from sys import version as sys_version
 
 import requests
 from ecl import EclVersion
+from job_runner import LOG_URL
 from job_runner.reporting.message import Exited, Init
 from job_runner.util import pad_nonexisting, read_os_release
 from res import ResVersion
@@ -18,34 +19,30 @@ from res import ResVersion
 
 class Network(object):
 
-    def __init__(self, error_url=None, log_url=None):
-        self.error_url = error_url
-
+    def __init__(self, log_url=LOG_URL):
         self.simulation_id = None
         self.ert_pid = None
 
         self.log_url = log_url
-        if log_url is None:
-            self.log_url = error_url
         self.node = socket.gethostname()
 
         pw_entry = pwd.getpwuid(os.getuid())
         self.user = pw_entry.pw_name
 
-    def report(self, status):
-        if isinstance(status, Init):
-            self.start_time = status.timestamp
-            self.simulation_id = status.run_id
-            self.ert_pid = status.ert_pid
+    def report(self, msg):
+        if isinstance(msg, Init):
+            self.start_time = msg.timestamp
+            self.simulation_id = msg.run_id
+            self.ert_pid = msg.ert_pid
 
-            self._post_initial(status)
-        elif isinstance(status, Exited):
-            if status.success():
-                self._post_success(status)
+            self._post_initial(msg)
+        elif isinstance(msg, Exited):
+            if msg.success():
+                self._post_success(msg)
             else:
-                self._post_job_failure(status)
+                self._post_job_failure(msg)
 
-    def _post_initial(self, status):
+    def _post_initial(self, msg):
         os_info = read_os_release()
         _, _, release, _, _ = os.uname()
         python_vs, _ = sys_version.split('\n')
@@ -65,18 +62,12 @@ class Network(object):
             "kernel_version": release,
         }
 
-        job_list = [j.name() for j in status.jobs]
+        job_list = [j.name() for j in msg.jobs]
         logged_fields.update({"jobs": job_list})
 
-        self._post_log_message(status.timestamp, extra_fields=logged_fields)
+        self._post_message(msg.timestamp, extra_fields=logged_fields)
 
-    def _post_log_message(self, timestamp, extra_fields=None):
-        self._post_message(self.log_url, timestamp, extra_fields)
-
-    def _post_error_message(self, timestamp, extra_fields):
-        self._post_message(self.error_url, timestamp, extra_fields)
-
-    def _post_message(self, url, timestamp, extra_fields=None):
+    def _post_message(self, timestamp, extra_fields=None):
         payload = {"user": self.user,
                    "cwd": os.getcwd(),
                    "application": "ert",
@@ -97,14 +88,14 @@ class Network(object):
                 "http": None,
                 "https": None,
             }
-            requests.post(url, timeout=3,
+            requests.post(self.log_url, timeout=3,
                           headers={"Content-Type": "application/json"},
                           data=data, proxies=proxies)
         except:  # noqa
             pass
 
-    def _post_success(self, status):
-        self._post_log_message(status.timestamp, {"status": "OK"})
+    def _post_success(self, msg):
+        self._post_message(msg.timestamp, {"status": "OK"})
 
     def _post_job_failure(self, msg):
         fields = {

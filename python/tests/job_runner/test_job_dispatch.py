@@ -1,13 +1,22 @@
 import json
 import os
+import signal
 import stat
+import sys
 import time
 import unittest
 from subprocess import Popen
 
 import psutil
 
+from job_runner.cli import main
+from job_runner.reporting.message import Finish
 from tests.utils import tmpdir
+
+if sys.version_info >= (3, 3):
+    from unittest.mock import patch
+else:
+    from mock import patch
 
 
 class JobDispatchTest(unittest.TestCase):
@@ -21,7 +30,8 @@ class JobDispatchTest(unittest.TestCase):
             if time.time() - start > timeout:
                 self.fail(
                     "Timeout while waiting for child processes"
-                    " count to reach {} (Current count is {})".format(count, current_count)
+                    " count to reach {} (Current count is {})".format(
+                        count, current_count)
                 )
 
     @tmpdir(None)
@@ -110,3 +120,16 @@ else:
         self.wait_for_child_process_count(p, 0, 10)
 
         os.wait()  # allow os to clean up zombie processes
+
+    @tmpdir(None)
+    def test_job_dispatch_kills_itself_after_unsuccessful_job(self):
+        with patch('job_runner.cli.os') as mock_os,\
+                patch('job_runner.cli.JobRunner') as mock_runner:
+            mock_runner.return_value.run.return_value = [
+                Finish().with_error("overall bad run"),
+            ]
+            mock_os.getpgid.return_value = 17
+
+            main(["script.py", "/foo/bar/baz"])
+
+            mock_os.killpg.assert_called_with(17, signal.SIGKILL)

@@ -23,7 +23,7 @@ class FileReporterTests(TestCase):
         with open(self.reporter.STATUS_file, "r") as f:
             self.assertIn("Current host", f.readline(),
                           "STATUS file missing expected value")
-        with open(self.reporter.STATUS_FILE, "r") as f:
+        with open(self.reporter.STATUS_json, "r") as f:
             contents = "".join(f.readlines())
             self.assertIn('"name": "job1"', contents,
                           "status.json missing job1")
@@ -48,7 +48,7 @@ class FileReporterTests(TestCase):
             self.assertIn("Calling: /bin/bash --foo 1 --bar 2", f.readline(),
                           """JOB_LOG file missing executable and arguments""")
 
-        with open(self.reporter.STATUS_FILE, "r") as f:
+        with open(self.reporter.STATUS_json, "r") as f:
             contents = "".join(f.readlines())
             self.assertIn('"status": "Running"', contents,
                           "status.json missing Running status")
@@ -67,7 +67,7 @@ class FileReporterTests(TestCase):
             self.assertIn(
                 "EXIT: {}/{}".format(-10, "massive_failure"), f.readline(),
                 "STATUS file missing EXIT message")
-        with open(self.reporter.STATUS_FILE, "r") as f:
+        with open(self.reporter.STATUS_json, "r") as f:
             contents = "".join(f.readlines())
             self.assertIn('"status": "Failure"', contents,
                           "status.json missing Failure status")
@@ -85,7 +85,7 @@ class FileReporterTests(TestCase):
 
         self.reporter.report(msg)
 
-        with open(self.reporter.STATUS_FILE, "r") as f:
+        with open(self.reporter.STATUS_json, "r") as f:
             contents = "".join(f.readlines())
             self.assertIn('"status": "Success"', contents,
                           "status.json missing Success status")
@@ -109,7 +109,7 @@ class FileReporterTests(TestCase):
                           contents, "ERROR file missing reason")
             self.assertIn("<stderr: Not redirected>", contents,
                           "ERROR had invalid stderr information")
-        with open(self.reporter.STATUS_FILE, "r") as f:
+        with open(self.reporter.STATUS_json, "r") as f:
             contents = "".join(f.readlines())
             self.assertIn('"status": "Failure"', contents,
                           "status.json missing Failure status")
@@ -126,7 +126,7 @@ class FileReporterTests(TestCase):
 
         self.reporter.report(msg)
 
-        with open(self.reporter.STATUS_FILE, "r") as f:
+        with open(self.reporter.STATUS_json, "r") as f:
             contents = "".join(f.readlines())
             self.assertIn('"status": "Running"', contents,
                           "status.json missing status")

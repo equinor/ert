@@ -1,5 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
+    cli.py
     job.py
     runner.py
 )

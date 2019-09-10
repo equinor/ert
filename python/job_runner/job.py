@@ -1,6 +1,5 @@
 import json
 import os
-import random
 import signal
 import time
 from datetime import datetime as dt
