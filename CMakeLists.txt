@@ -54,7 +54,6 @@ option( BUILD_APPLICATIONS  "Build some small - mostly stale  -applications" OFF
 option( BUILD_TESTS         "Should the tests be built"             OFF)
 option( BUILD_PYTHON        "Run py_compile on the python wrappers" OFF)
 option( ENABLE_PYTHON       "Enable the python wrappers"            ON )
-option( RST_DOC             "Build RST documentation"               OFF)
 option( USE_RPATH           "Should we embed path to libraries"     ON )
 option( INSTALL_ERT_LEGACY  "Install legacy ert code"               OFF)
 option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit"     OFF)
@@ -177,10 +176,6 @@ endfunction()
 add_subdirectory(lib)
 add_subdirectory(python)
 add_subdirectory(applications)
-
-if (RST_DOC)
-    add_subdirectory( docs )
-endif()
 
 foreach(share_dir workflows gui forward-models)
   install(DIRECTORY "share/ert/${share_dir}" DESTINATION ${SHARE_DIR})
