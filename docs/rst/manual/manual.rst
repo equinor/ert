@@ -14,6 +14,7 @@ Welcome to ERT's documentation!
    data_types/index
    forward_model/index
    workflows/index
+   workflows/built_in
    observations/index
    eclipse/index
    update/index
