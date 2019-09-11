@@ -306,11 +306,11 @@ file, containing an error covariance matrix. The file should contain
 the elements of the matrix as formatted numbers; newline formatting is
 allowed but not necessary. Since the matrix should by construction be
 symmetric there is no difference between column-major and row-major
-order! The covariance matrix
+order! The covariance matrix::
 
-     [ 1      0.75  -0.25]
-C =  [ 0.75   1.25  -0.50] 
-     [-0.25  -0.50   0.85]
+         [ 1      0.75  -0.25]
+    C =  [ 0.75   1.25  -0.50]
+         [-0.25  -0.50   0.85]
 
 Can be represented by the file::
 

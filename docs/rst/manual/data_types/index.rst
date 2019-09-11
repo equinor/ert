@@ -122,6 +122,7 @@ keyword are here :ref:`prior distributions available in ERT
 
 The prior - it is really a *transformation*
 ...........................................
+.. _prior_distributions:
 
 The Ensemble Smoother method, which ERT uses for updating of parameters, works
 with normally distributed variables. So internally in ERT the interplay between

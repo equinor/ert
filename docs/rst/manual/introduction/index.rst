@@ -75,6 +75,7 @@ magnitude as the uncertainty in the data. The assumption is then that if this mo
 predictions, it will be unbiased and give a realistic estimate of the future uncertainty (see
 illustration in figure :numref:`ensemble`).
 
+.. _ensemble:
 .. figure:: images/bpr.jpg
    :scale: 20%
 

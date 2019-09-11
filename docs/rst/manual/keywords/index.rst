@@ -69,7 +69,7 @@ Keyword name                                                        	Required by
 :ref:`DBASE_TYPE <dbase_type>`                                      	NO                    			BLOCK_FS         	     	Which 'database' system should be used for storage
 :ref:`DEFINE <define>`                                              	NO                                          				Define keywords with config scope
 :ref:`DELETE_RUNPATH <delete_runpath>`                              	NO                                          				Explicitly tell ert to delete the runpath when a job is complete 
-:ref:`ECLBASE <eclbase>`	                                    	YES*					        			Define a name for the ECLIPSE simulations. *Either JOBNAME or ECLBASE must be specified
+:ref:`ECLBASE <eclbase>`	                                    	YES\*					        			Define a name for the ECLIPSE simulations. \*Either JOBNAME or ECLBASE must be specified
 :ref:`END_DATE <end_date>`                                          	NO                                          				You can tell ERT how lon the simulations should be - for error check
 :ref:`ENKF_ALPHA <enkf_alpha>`                                      	NO                    			1.50                  		Parameter controlling outlier behaviour in EnKF algorithm
 :ref:`ENKF_BOOTSTRAP <enkf_bootstrap>`                              	NO                    			FALSE                 		Should we bootstrap the Kalman gain estimate
@@ -101,7 +101,7 @@ Keyword name                                                        	Required by
 :ref:`ITER_CASE <iter_Case>`                                        	NO                    			IES%d         	        	Case name format - iterated ensemble smoother
 :ref:`ITER_COUNT <iter_count>`                                      	NO                    			4             	        	Number of iterations - iterated ensemble smoother 
 :ref:`ITER_RETRY_COUNT <iter_retry_count>`                          	NO                    			4         	            	Number of retries for a iteration - iterated ensemble smoother 
-:ref:`JOBNAME <jobname>`                                            	YES*                                          				Name used for simulation files. *Either JOBNAME or ECLBASE must be specified.
+:ref:`JOBNAME <jobname>`                                            	YES\*                                          				Name used for simulation files. \*Either JOBNAME or ECLBASE must be specified.
 :ref:`JOB_SCRIPT <job_script>`                                      	NO                                          				Python script managing the forward model. 
 :ref:`LOAD_SEED <load_seed>`                                        	NO                                          				Load random seed from given file.
 :ref:`LOAD_WORKFLOW <load_workflow>` 				    	NO                             						Load a workflow into ERT. 
@@ -1177,8 +1177,8 @@ Keywords controlling the ES algorithm
 .. _enkf_alpha:
 .. topic:: ENKF_ALPHA
 
-        See the sub keyword :code:`OVERLAP_LIMIT` under the :code:`UPDATE_SETTINGS`keyword.           
-	
+	See the sub keyword :code:`OVERLAP_LIMIT` under the :code:`UPDATE_SETTINGS` keyword.
+
 .. _enkf_bootstrap:
 .. topic:: ENKF_BOOTSTRAP
 
@@ -1388,7 +1388,7 @@ Keywords controlling the ES algorithm
 
         The :code:`UPDATE_SETTINGS` keyword is a *super-keyword* which can be used to
 	control parameters which apply to the Ensemble Smoother update algorithm. The
-	:code:`UPDATE_SETTINGS`currently supports the two subkeywords:
+	:code:`UPDATE_SETTINGS` currently supports the two subkeywords:
 
    	OVERLAP_LIMIT Scaling factor used when detecting outliers. Increasing this
         factor means that more observations will potentially be included in the
@@ -1401,7 +1401,7 @@ Keywords controlling the ES algorithm
 
 	::
 
-		|d^o_i - \bar{d}_i| > \mathrm{ENKF\_ALPHA} \left(s_{d_i} + \sigma_{d^o_i}\right), 
+		|d^o_i - \bar{d}_i| > \mathrm{ENKF\_ALPHA} \left(s_{d_i} + \sigma_{d^o_i}\right)
 
 	where \textstyle\boldsymbol{d}^o is the vector of observed data,
 	\textstyle\boldsymbol{\bar{d}} is the average of the forcasted data ensemble,
@@ -1661,7 +1661,8 @@ Keywords related to running the forward model
 
 .. _queue_option:
 .. topic:: QUEUE_OPTION
-        Keyword used to set options for a queue (LSF, RSH, TORQUE, LOCAL), such like queue 
+
+	Keyword used to set options for a queue (LSF, RSH, TORQUE, LOCAL), such like queue
 
 .. _queue_system:
 .. topic:: QUEUE_SYSTEM

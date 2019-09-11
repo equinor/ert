@@ -178,16 +178,16 @@ job name will be deprecated in the future.
 PR: 162 - 257
 
 New functionality:
-  - Unified ERT binary `[165] https://github.com/equinor/ert/pull/165`
-  - Restart failed realizations `[206, 209] https://github.com/equinor/ert/pull/206`
-  - Forward model monitoring in GUI `[252] https://github.com/equinor/ert/pull/252`
+  - Unified ERT binary `[165] <https://github.com/equinor/ert/pull/165>`__
+  - Restart failed realizations `[206, 209] <https://github.com/equinor/ert/pull/206>`__
+  - Forward model monitoring in GUI `[252] <https://github.com/equinor/ert/pull/252>`__
 
 Improvement:
-  - Print warning if decimal point is not `.` `[212] https://github.com/equinor/ert/pull/212`
-  - Fixed bug such that initial realization mask contains all `[213] https://github.com/equinor/ert/pull/213`
-  - Fixed bug in iterated smoother gui `[215] https://github.com/equinor/ert/pull/215`
-  - Always display advanced settings `[216] https://github.com/equinor/ert/pull/216`
-  - Change default plot size to emphasize discrete data `[243] https://github.com/equinor/ert/pull/243`
+  - Print warning if decimal point is not `.` `[212] <https://github.com/equinor/ert/pull/212>`__
+  - Fixed bug such that initial realization mask contains all `[213] <https://github.com/equinor/ert/pull/213>`__
+  - Fixed bug in iterated smoother gui `[215] <https://github.com/equinor/ert/pull/215>`__
+  - Always display advanced settings `[216] <https://github.com/equinor/ert/pull/216>`__
+  - Change default plot size to emphasize discrete data `[243] <https://github.com/equinor/ert/pull/243>`__
 
 Others:
   - Continued to move documentation into the manual.
@@ -199,7 +199,7 @@ Others:
 PR: 114 - 126
 
 New functionality:
-  - Forward model for dynamic porevolume geertsma `[114] https://github.com/equinor/ert-statoil/pull/114`
+  - Forward model for dynamic porevolume geertsma `[114] <https://github.com/equinor/ert-statoil/pull/114>`__
 
 Improvements:
   - Eclipse version should be passed to job ECLIPSE_100 / ECLIPSE_300 as an argument
@@ -213,23 +213,23 @@ Others:
 PR: 411 - 517
 
 New functionality:
- - Job description can set environment vars `[431] https://github.com/equinor/libres/pull/431/files`
- - Experimental dump of parameters to runpath as json `[436] https://github.com/equinor/libres/pull/436`
- - Jinja based rendering forward model `[443] https://github.com/equinor/libres/pull/443/files`
- - New config keyword NUM_CPU to override eclipse PARALLEL keyword `[455] https://github.com/equinor/libres/pull/455/files`
- - Expose the algorithm iteration number as magic string <ITER> `[515] https://github.com/equinor/libres/pull/515`
+ - Job description can set environment vars `[431] <https://github.com/equinor/libres/pull/431/files>`__
+ - Experimental dump of parameters to runpath as json `[436] <https://github.com/equinor/libres/pull/436>`__
+ - Jinja based rendering forward model `[443] <https://github.com/equinor/libres/pull/443/files>`__
+ - New config keyword NUM_CPU to override eclipse PARALLEL keyword `[455] <https://github.com/equinor/libres/pull/455/files>`__
+ - Expose the algorithm iteration number as magic string <ITER> `[515] <https://github.com/equinor/libres/pull/515>`__
 
 Improvements:
- - Fix bug in default standard deviation calculations `[513] https://github.com/equinor/libres/pull/513`
- - Start scan for active observations at report step 0, instead of 1 `[439] https://github.com/equinor/libres/pull/439`
- - Bug fixes in linear algebra code `[435] https://github.com/equinor/libres/pull/435`
- - Improved job killing capabilities of local queue `[488] https://github.com/equinor/libres/pull/488`
+ - Fix bug in default standard deviation calculations `[513] <https://github.com/equinor/libres/pull/513>`__
+ - Start scan for active observations at report step 0, instead of 1 `[439] <https://github.com/equinor/libres/pull/439>`__
+ - Bug fixes in linear algebra code `[435] <https://github.com/equinor/libres/pull/435>`__
+ - Improved job killing capabilities of local queue `[488] <https://github.com/equinor/libres/pull/488>`__
 
 Others:
  - Various improvements to code due to now being a C++ project
- - Removed traces of WPRO and the RPCServer `[428] https://github.com/equinor/libres/pull/428`
- - CAREFUL_COPY moved to libres `[424] https://github.com/equinor/libres/pull/424`
- - Split simulator configuration into multiple files `[477] https://github.com/equinor/libres/pull/477`
+ - Removed traces of WPRO and the RPCServer `[428] <https://github.com/equinor/libres/pull/428>`__
+ - CAREFUL_COPY moved to libres `[424] <https://github.com/equinor/libres/pull/424>`__
+ - Split simulator configuration into multiple files `[477] <https://github.com/equinor/libres/pull/477>`__
 
 
 2.4 libecl
@@ -237,21 +237,21 @@ Others:
 PR: 506 - 579
 
 New functionality:
- - Ability to compute geertsma based on dynamic porevolume `[530] https://github.com/equinor/libecl/pull/530?`
- - Support for Intersect NNC format `[533] https://github.com/equinor/libecl/pull/533`
- - Support for extrapolation when resampling `[534] https://github.com/equinor/libecl/pull/534`
- - Ability to load summary data from .csv-files `[536] https://github.com/equinor/libecl/pull/536`
- - Identify region-to-region variables `[551] https://github.com/equinor/libecl/pull/551`
+ - Ability to compute geertsma based on dynamic porevolume `[530] <https://github.com/equinor/libecl/pull/530>`__
+ - Support for Intersect NNC format `[533] <https://github.com/equinor/libecl/pull/533>`__
+ - Support for extrapolation when resampling `[534] <https://github.com/equinor/libecl/pull/534>`__
+ - Ability to load summary data from .csv-files `[536] <https://github.com/equinor/libecl/pull/536>`__
+ - Identify region-to-region variables `[551] <https://github.com/equinor/libecl/pull/551>`__
 
 Improvements:
- - Load LGR info when loading well info `[529] https://github.com/equinor/libecl/pull/529`
- - Do not fail if restart file is missing icon `[549] https://github.com/equinor/libecl/pull/549`
+ - Load LGR info when loading well info `[529] <https://github.com/equinor/libecl/pull/529>`__
+ - Do not fail if restart file is missing icon `[549] <https://github.com/equinor/libecl/pull/549>`__
 
 Others:
  - Various improvements to code due to now being a C++ project.
  - Improved documentation for Windows users
  - Improved Python 3 testing
- - Revert fortio changes to increase reading speed `[567] https://github.com/equinor/libecl/pull/567`
+ - Revert fortio changes to increase reading speed `[567] <https://github.com/equinor/libecl/pull/567>`__
 
 
 Version 2.3
@@ -264,12 +264,12 @@ PR: 67 - 162
 
 2.3 libres
 ~~~~~~~~~~
-PR: 105 - 411 
+PR: 105 - 411
 
 
 2.3 libecl
 ~~~~~~~~~~
-PR: 170 - 506 
+PR: 170 - 506
 
 
 
@@ -281,34 +281,34 @@ Version 2.2
 ~~~~~~~~~~~~~~~~~~~~
 
 Version 2.2.1 September 2017 PR: 1 - 66
-Cherry-picked: `70 <https://github.com/Equinor/ert/pull/70/>`_
+Cherry-picked: `70 <https://github.com/Equinor/ert/pull/70/>`__
 
 Misc:
 
- - Using res_config changes from libres `[16] <https://github.com/Equinor/ert/pull/16/>`_
- - files moved from libecl to libres: `[51] <https://github.com/Equinor/ert/pull/51>`_
- - replaced ert.enkf with res.enkf `[56] <https://github.com/Equinor/ert/pull/56/>`_
- - Created ErtVersion: [`61 <https://github.com/Equinor/ert/pull/61/>`_, `66 <https://github.com/Equinor/ert/pull/66/>`_].
- - Using res_config: [`62 <https://github.com/Equinor/ert/pull/62/>`_]
- - Removed dead workflow files: `[64] <https://github.com/Equinor/ert/pull/64/>`_
+ - Using res_config changes from libres `[16] <https://github.com/Equinor/ert/pull/16/>`__
+ - files moved from libecl to libres: `[51] <https://github.com/Equinor/ert/pull/51>`__
+ - replaced ert.enkf with res.enkf `[56] <https://github.com/Equinor/ert/pull/56/>`__
+ - Created ErtVersion: [`61 <https://github.com/Equinor/ert/pull/61/>`__, `66 <https://github.com/Equinor/ert/pull/66/>`__].
+ - Using res_config: [`62 <https://github.com/Equinor/ert/pull/62/>`__]
+ - Removed dead workflow files: `[64] <https://github.com/Equinor/ert/pull/64/>`__
 
 Build and testing:
 
- - Cleanup after repo split [`1 <https://github.com/Equinor/ert/pull/1/>`_, `2 <https://github.com/Equinor/ert/pull/2/>`_, `3 <https://github.com/Equinor/ert/pull/3/>`_ , `4 <https://github.com/Equinor/ert/pull/4/>`_, `5 <https://github.com/Equinor/ert/pull/5/>`_ , `6 <https://github.com/Equinor/ert/pull/6/>`_]
- - Added test_install functionality [`7 <https://github.com/Equinor/ert/pull/7/>`_]
+ - Cleanup after repo split [`1 <https://github.com/Equinor/ert/pull/1/>`__, `2 <https://github.com/Equinor/ert/pull/2/>`__, `3 <https://github.com/Equinor/ert/pull/3/>`__ , `4 <https://github.com/Equinor/ert/pull/4/>`__, `5 <https://github.com/Equinor/ert/pull/5/>`__ , `6 <https://github.com/Equinor/ert/pull/6/>`__]
+ - Added test_install functionality [`7 <https://github.com/Equinor/ert/pull/7/>`__]
  - Added travis build script for libecl+libres+ert:
-   [`15 <https://github.com/Equinor/ert/pull/15/>`_, `17 <https://github.com/Equinor/ert/pull/17/>`_, `18 <https://github.com/Equinor/ert/pull/18/>`_, `19 <https://github.com/Equinor/ert/pull/19/>`_, `21 <https://github.com/Equinor/ert/pull/21/>`_, `26 <https://github.com/Equinor/ert/pull/26/>`_, `27 <https://github.com/Equinor/ert/pull/27/>`_, `39, <https://github.com/Equinor/ert/pull/39/>`_ `52 <https://github.com/Equinor/ert/pull/52/>`_-`55 <https://github.com/Equinor/ert/pull/55/>`_, `63 <https://github.com/Equinor/ert/pull/63/>`_]
+   [`15 <https://github.com/Equinor/ert/pull/15/>`__, `17 <https://github.com/Equinor/ert/pull/17/>`__, `18 <https://github.com/Equinor/ert/pull/18/>`__, `19 <https://github.com/Equinor/ert/pull/19/>`__, `21 <https://github.com/Equinor/ert/pull/21/>`__, `26 <https://github.com/Equinor/ert/pull/26/>`__, `27 <https://github.com/Equinor/ert/pull/27/>`__, `39, <https://github.com/Equinor/ert/pull/39/>`__ `52 <https://github.com/Equinor/ert/pull/52/>`__-`55 <https://github.com/Equinor/ert/pull/55/>`__, `63 <https://github.com/Equinor/ert/pull/63/>`__]
 
- - MacOS build error: [`28 <https://github.com/Equinor/ert/pull/28/>`_].
- - Created simple gui_test bin/gui_test [`32 <https://github.com/Equinor/ert/pull/32/>`_]
- - cmake - create symlink: [`41 <https://github.com/Equinor/ert/pull/41/>`_, `42 <https://github.com/Equinor/ert/pull/42/>`_, `43 <https://github.com/Equinor/ert/pull/43/>`_]
- - Initial Python3 testing [`58 <https://github.com/Equinor/ert/pull/58/>`_, `60 <https://github.com/Equinor/ert/pull/60/>`_].
+ - MacOS build error: [`28 <https://github.com/Equinor/ert/pull/28/>`__].
+ - Created simple gui_test bin/gui_test [`32 <https://github.com/Equinor/ert/pull/32/>`__]
+ - cmake - create symlink: [`41 <https://github.com/Equinor/ert/pull/41/>`__, `42 <https://github.com/Equinor/ert/pull/42/>`__, `43 <https://github.com/Equinor/ert/pull/43/>`__]
+ - Initial Python3 testing [`58 <https://github.com/Equinor/ert/pull/58/>`__, `60 <https://github.com/Equinor/ert/pull/60/>`__].
 
 
 Queue and running:
 
- - Added base run model - gui model updates: [`20 <https://github.com/Equinor/ert/pull/20/>`_].
- - Added single simulation pretest running [`33 <https://github.com/Equinor/ert/pull/33/>`_, `36 <https://github.com/Equinor/ert/pull/36/>`_, `50 <https://github.com/Equinor/ert/pull/50/>`_, `67 <https://github.com/Equinor/ert/pull/67/>`_].
+ - Added base run model - gui model updates: [`20 <https://github.com/Equinor/ert/pull/20/>`__].
+ - Added single simulation pretest running [`33 <https://github.com/Equinor/ert/pull/33/>`__, `36 <https://github.com/Equinor/ert/pull/36/>`__, `50 <https://github.com/Equinor/ert/pull/50/>`__, `67 <https://github.com/Equinor/ert/pull/67/>`__].
  - Add run_id to simulation batches.
 
 
@@ -316,29 +316,29 @@ Queue and running:
 ~~~~~~~~~~~
 
 Version 2.2.9 September 2017 PR: 1 - 104
-Cherry-picks: [`106 <https://github.com/Equinor/res/pull/106/>`_, `108 <https://github.com/Equinor/res/pull/108/>`_, `110 <https://github.com/Equinor/res/pull/110/>`_, `118 <https://github.com/Equinor/res/pull/118/>`_, `121 <https://github.com/Equinor/res/pull/121/>`_, `122 <https://github.com/Equinor/res/pull/122/>`_, `123 <https://github.com/Equinor/res/pull/123/>`_, `127 <https://github.com/Equinor/res/pull/127/>`_]
+Cherry-picks: [`106 <https://github.com/Equinor/res/pull/106/>`__, `108 <https://github.com/Equinor/res/pull/108/>`__, `110 <https://github.com/Equinor/res/pull/110/>`__, `118 <https://github.com/Equinor/res/pull/118/>`__, `121 <https://github.com/Equinor/res/pull/121/>`__, `122 <https://github.com/Equinor/res/pull/122/>`__, `123 <https://github.com/Equinor/res/pull/123/>`__, `127 <https://github.com/Equinor/res/pull/127/>`__]
 
 Misc:
 
- - implement legacy from ert.xxx [`1, <https://github.com/Equinor/res/pull/1/>`_ `20, <https://github.com/Equinor/res/pull/20/>`_ `21, <https://github.com/Equinor/res/pull/21/>`_ `22 <https://github.com/Equinor/res/pull/22/>`_]
- - Setting up libres_util and moving ert_log there [`13 <https://github.com/Equinor/res/pull/13/>`_, `44 <https://github.com/Equinor/res/pull/44/>`_, `48 <https://github.com/Equinor/res/pull/48/>`_].
+ - implement legacy from ert.xxx [`1, <https://github.com/Equinor/res/pull/1/>`__ `20, <https://github.com/Equinor/res/pull/20/>`__ `21, <https://github.com/Equinor/res/pull/21/>`__ `22 <https://github.com/Equinor/res/pull/22/>`__]
+ - Setting up libres_util and moving ert_log there [`13 <https://github.com/Equinor/res/pull/13/>`__, `44 <https://github.com/Equinor/res/pull/44/>`__, `48 <https://github.com/Equinor/res/pull/48/>`__].
  - Added subst_list + block_fs functionality to res_util - moved from
-   libecl [`27 <https://github.com/Equinor/res/pull/27/>`_, `68 <https://github.com/Equinor/res/pull/68/>`_, `74 <https://github.com/Equinor/res/pull/74/>`_].
- - Do not generate parameters.txt if no GEN_KW is specified.[`89 <https://github.com/Equinor/res/pull/89/>`_]
- - Started using RES_VERSION [`91 <https://github.com/Equinor/res/pull/91/>`_].
- - CONFIG_PATH subtitution settings - bug fixed[`43 <https://github.com/Equinor/res/pull/43/>`_, `96 <https://github.com/Equinor/res/pull/96/>`_].
- - Will load summary if GEN_DATA is present [`123 <https://github.com/Equinor/res/pull/123/>`_, `127 <https://github.com/Equinor/res/pull/127/>`_]
+   libecl [`27 <https://github.com/Equinor/res/pull/27/>`__, `68 <https://github.com/Equinor/res/pull/68/>`__, `74 <https://github.com/Equinor/res/pull/74/>`__].
+ - Do not generate parameters.txt if no GEN_KW is specified.[`89 <https://github.com/Equinor/res/pull/89/>`__]
+ - Started using RES_VERSION [`91 <https://github.com/Equinor/res/pull/91/>`__].
+ - CONFIG_PATH subtitution settings - bug fixed[`43 <https://github.com/Equinor/res/pull/43/>`__, `96 <https://github.com/Equinor/res/pull/96/>`__].
+ - Will load summary if GEN_DATA is present [`123 <https://github.com/Equinor/res/pull/123/>`__, `127 <https://github.com/Equinor/res/pull/127/>`__]
 
 
 Build and test fixes:
 
- - Simple functionality to do post-install testing[`3 <https://github.com/Equinor/res/pull/3/>`_]
- - Use libecl as cmake target[`6 <https://github.com/Equinor/res/pull/6/>`_,`15 <https://github.com/Equinor/res/pull/15/>`_]
- - removed stale binaries [`7 <https://github.com/Equinor/res/pull/7/>`_, `9 <https://github.com/Equinor/res/pull/9/>`_]
- - travis will build all repositories [`23 <https://github.com/Equinor/res/pull/23/>`_].
- - Travis + OSX [`69 <https://github.com/Equinor/res/pull/69/>`_, `72 <https://github.com/Equinor/res/pull/72/>`_]
- - Remove equinor specific settings from build sytem [`38 <https://github.com/Equinor/res/pull/38/>`_].
- - Travis split for parallell builds [`79 <https://github.com/Equinor/res/pull/79/>`_].
+ - Simple functionality to do post-install testing[`3 <https://github.com/Equinor/res/pull/3/>`__]
+ - Use libecl as cmake target[`6 <https://github.com/Equinor/res/pull/6/>`__,`15 <https://github.com/Equinor/res/pull/15/>`__]
+ - removed stale binaries [`7 <https://github.com/Equinor/res/pull/7/>`__, `9 <https://github.com/Equinor/res/pull/9/>`__]
+ - travis will build all repositories [`23 <https://github.com/Equinor/res/pull/23/>`__].
+ - Travis + OSX [`69 <https://github.com/Equinor/res/pull/69/>`__, `72 <https://github.com/Equinor/res/pull/72/>`__]
+ - Remove equinor specific settings from build sytem [`38 <https://github.com/Equinor/res/pull/38/>`__].
+ - Travis split for parallell builds [`79 <https://github.com/Equinor/res/pull/79/>`__].
 
 
 Config refactor:
@@ -349,35 +349,35 @@ Config refactor:
   change is that a new configuration object - res_config has been
   created ,which holds all the configuration subobjects:
 
-    [`10 <https://github.com/Equinor/res/pull/10/>`_, `14 <https://github.com/Equinor/res/pull/14/>`_, `35 <https://github.com/Equinor/res/pull/35/>`_, `39 <https://github.com/Equinor/res/pull/39/>`_, `45 <https://github.com/Equinor/res/pull/45/>`_, `52 <https://github.com/Equinor/res/pull/52/>`_, `54 <https://github.com/Equinor/res/pull/54/>`_, `58 <https://github.com/Equinor/res/pull/58/>`_-`62 <https://github.com/Equinor/res/pull/62/>`_, `66 <https://github.com/Equinor/res/pull/66/>`_, `75 <https://github.com/Equinor/res/pull/75/>`_]
+    [`10 <https://github.com/Equinor/res/pull/10/>`__, `14 <https://github.com/Equinor/res/pull/14/>`__, `35 <https://github.com/Equinor/res/pull/35/>`__, `39 <https://github.com/Equinor/res/pull/39/>`__, `45 <https://github.com/Equinor/res/pull/45/>`__, `52 <https://github.com/Equinor/res/pull/52/>`__, `54 <https://github.com/Equinor/res/pull/54/>`__, `58 <https://github.com/Equinor/res/pull/58/>`__-`62 <https://github.com/Equinor/res/pull/62/>`__, `66 <https://github.com/Equinor/res/pull/66/>`__, `75 <https://github.com/Equinor/res/pull/75/>`__]
 
 
 Queue layer:
 
- - Improved logging [`17 <https://github.com/Equinor/res/pull/17/>`_, `37 <https://github.com/Equinor/res/pull/37/>`_].
- - Funcionality to create a queue_config object copy [`36 <https://github.com/Equinor/res/pull/36/>`_].
+ - Improved logging [`17 <https://github.com/Equinor/res/pull/17/>`__, `37 <https://github.com/Equinor/res/pull/37/>`__].
+ - Funcionality to create a queue_config object copy [`36 <https://github.com/Equinor/res/pull/36/>`__].
 
  As part of this development cycle the job_dispatch script has been
  included in the libres distribution. There are many PR's related to
  this script:
 
-    [`28 <https://github.com/Equinor/res/pull/28/>`_, `40 <https://github.com/Equinor/res/pull/40/>`_, `41 <https://github.com/Equinor/res/pull/1/>`_, `51 <https://github.com/Equinor/res/pull/51/>`_, `53 <https://github.com/Equinor/res/pull/53/>`_, `63 <https://github.com/Equinor/res/pull/63/>`_, `64 <https://github.com/Equinor/res/pull/64/>`_, `83 <https://github.com/Equinor/res/pull/83/>`_, `84 <https://github.com/Equinor/res/pull/84/>`_, `85 <https://github.com/Equinor/res/pull/85/>`_, `93 <https://github.com/Equinor/res/pull/93/>`_, `94 <https://github.com/Equinor/res/pull/94/>`_, `95 <https://github.com/Equinor/res/pull/95/>`_, `97 <https://github.com/Equinor/res/pull/97/>`_-`99 <https://github.com/Equinor/res/pull/99/>`_,
-     `101 <https://github.com/Equinor/res/pull/101/>`_, `103 <https://github.com/Equinor/res/pull/103/>`_, `108 <https://github.com/Equinor/res/pull/108/>`_, `110 <https://github.com/Equinor/res/pull/110/>`_]
+    [`28 <https://github.com/Equinor/res/pull/28/>`__, `40 <https://github.com/Equinor/res/pull/40/>`__, `41 <https://github.com/Equinor/res/pull/1/>`__, `51 <https://github.com/Equinor/res/pull/51/>`__, `53 <https://github.com/Equinor/res/pull/53/>`__, `63 <https://github.com/Equinor/res/pull/63/>`__, `64 <https://github.com/Equinor/res/pull/64/>`__, `83 <https://github.com/Equinor/res/pull/83/>`__, `84 <https://github.com/Equinor/res/pull/84/>`__, `85 <https://github.com/Equinor/res/pull/85/>`__, `93 <https://github.com/Equinor/res/pull/93/>`__, `94 <https://github.com/Equinor/res/pull/94/>`__, `95 <https://github.com/Equinor/res/pull/95/>`__, `97 <https://github.com/Equinor/res/pull/97/>`__-`99 <https://github.com/Equinor/res/pull/99/>`__,
+     `101 <https://github.com/Equinor/res/pull/101/>`__, `103 <https://github.com/Equinor/res/pull/103/>`__, `108 <https://github.com/Equinor/res/pull/108/>`__, `110 <https://github.com/Equinor/res/pull/110/>`__]
 
  - Create a common run_id for one batch of simulations, and generally
    treat one batch of simulations as one unit, in a better way than
-   previously: [`42 <https://github.com/Equinor/res/pull/42/>`_, `67 <https://github.com/Equinor/res/pull/67/>`_]
+   previously: [`42 <https://github.com/Equinor/res/pull/42/>`__, `67 <https://github.com/Equinor/res/pull/67/>`__]
 
- - Added PPU (Paay Per Use) code to LSF driver [`71 <https://github.com/Equinor/res/pull/71/>`_].
- - Workflow job PRE_SIMULATION_COPY [`73 <https://github.com/Equinor/res/pull/73/>`_, `88 <https://github.com/Equinor/res/pull/88/>`_].
- - Allow to unset QUEUE_OPTION [`87 <https://github.com/Equinor/res/pull/87/>`_].
- - Jobs failing due to dead nodes are restarted [`100 <https://github.com/Equinor/res/pull/100/>`_].
+ - Added PPU (Paay Per Use) code to LSF driver [`71 <https://github.com/Equinor/res/pull/71/>`__].
+ - Workflow job PRE_SIMULATION_COPY [`73 <https://github.com/Equinor/res/pull/73/>`__, `88 <https://github.com/Equinor/res/pull/88/>`__].
+ - Allow to unset QUEUE_OPTION [`87 <https://github.com/Equinor/res/pull/87/>`__].
+ - Jobs failing due to dead nodes are restarted [`100 <https://github.com/Equinor/res/pull/100/>`__].
 
 
 Documentation:
 
-  - Formatting bugs: [`49 <https://github.com/Equinor/res/pull/49/>`_, `50 <https://github.com/Equinor/res/pull/50/>`_]
-  - Removed doxygen + build rst [`29 <https://github.com/Equinor/res/pull/29/>`_]
+  - Formatting bugs: [`49 <https://github.com/Equinor/res/pull/49/>`__, `50 <https://github.com/Equinor/res/pull/50/>`__]
+  - Removed doxygen + build rst [`29 <https://github.com/Equinor/res/pull/29/>`__]
 
 2.2: libecl
 ~~~~~~~~~~~
@@ -387,65 +387,65 @@ Open PR: 108, 145
 
 Grid:
 
- - Extracted implementation ecl_nnc_geometry [`1 <https://github.com/Equinor/libecl/pull/1/>`_, `66 <https://github.com/Equinor/libecl/pull/66/>`_, `75 <https://github.com/Equinor/libecl/pull/75/>`_, `78 <https://github.com/Equinor/libecl/pull/78/>`_, `80 <https://github.com/Equinor/libecl/pull/80/>`_, `109 <https://github.com/Equinor/libecl/pull/109/>`_].
- - Fix bug in cell_contains for mirrored grid [`51 <https://github.com/Equinor/libecl/pull/51/>`_, `53 <https://github.com/Equinor/libecl/pull/53/>`_].
- - Extract subgrid from grid [`56 <https://github.com/Equinor/libecl/pull/56/>`_].
- - Expose mapaxes [`63 <https://github.com/Equinor/libecl/pull/63/>`_, `64 <https://github.com/Equinor/libecl/pull/64/>`_].
- - grid.get_lgr - numbered lookup [`83 <https://github.com/Equinor/libecl/pull/83/>`_]
- - Added NUMRES values to EGRID header [`125 <https://github.com/Equinor/libecl/pull/125/>`_].
+ - Extracted implementation ecl_nnc_geometry [`1 <https://github.com/Equinor/libecl/pull/1/>`__, `66 <https://github.com/Equinor/libecl/pull/66/>`__, `75 <https://github.com/Equinor/libecl/pull/75/>`__, `78 <https://github.com/Equinor/libecl/pull/78/>`__, `80 <https://github.com/Equinor/libecl/pull/80/>`__, `109 <https://github.com/Equinor/libecl/pull/109/>`__].
+ - Fix bug in cell_contains for mirrored grid [`51 <https://github.com/Equinor/libecl/pull/51/>`__, `53 <https://github.com/Equinor/libecl/pull/53/>`__].
+ - Extract subgrid from grid [`56 <https://github.com/Equinor/libecl/pull/56/>`__].
+ - Expose mapaxes [`63 <https://github.com/Equinor/libecl/pull/63/>`__, `64 <https://github.com/Equinor/libecl/pull/64/>`__].
+ - grid.get_lgr - numbered lookup [`83 <https://github.com/Equinor/libecl/pull/83/>`__]
+ - Added NUMRES values to EGRID header [`125 <https://github.com/Equinor/libecl/pull/125/>`__].
 
 Build & testing:
 
- - Removed warnings - added pylint [`4 <https://github.com/Equinor/libecl/pull/4/>`_, `5 <https://github.com/Equinor/libecl/pull/5/>`_, `6 <https://github.com/Equinor/libecl/pull/6/>`_, `10 <https://github.com/Equinor/libecl/pull/10/>`_, `11 <https://github.com/Equinor/libecl/pull/11/>`_, `12 <https://github.com/Equinor/libecl/pull/12/>`_]
- - Accept any Python 2.7.x version [`17 <https://github.com/Equinor/libecl/pull/17/>`_, `18 <https://github.com/Equinor/libecl/pull/18/>`_]
- - Remove ERT testing & building [`3 <https://github.com/Equinor/libecl/pull/3/>`_, `19 <https://github.com/Equinor/libecl/pull/19/>`_]
- - Changes to Python/cmake machinery [`25 <https://github.com/Equinor/libecl/pull/25/>`_, `30 <https://github.com/Equinor/libecl/pull/3/>`_, `31 <https://github.com/Equinor/libecl/pull/31/>`_, `32 <https://github.com/Equinor/libecl/pull/32/>`_, `49 <https://github.com/Equinor/libecl/pull/49/>`_, `52 <https://github.com/Equinor/libecl/pull/52/>`_, `62 <https://github.com/Equinor/libecl/pull/62/>`_].
- - Added cmake config file [`33 <https://github.com/Equinor/libecl/pull/33/>`_, `44 <https://github.com/Equinor/libecl/pull/44/>`_, `45 <https://github.com/Equinor/libecl/pull/45/>`_, `47 <https://github.com/Equinor/libecl/pull/47/>`_].
- - Only *one* library [`54 <https://github.com/Equinor/libecl/pull/54/>`_, `55 <https://github.com/Equinor/libecl/pull/55/>`_, `58 <https://github.com/Equinor/libecl/pull/58/>`_, `69 <https://github.com/Equinor/libecl/pull/69/>`_, `73 <https://github.com/Equinor/libecl/pull/73/>`_, `77 <https://github.com/Equinor/libecl/pull/77/>`_, `91 <https://github.com/Equinor/libecl/pull/91/>`_, `133 <https://github.com/Equinor/libecl/pull/133/>`_]
- - Removed stale binaries [`59 <https://github.com/Equinor/libecl/pull/59/>`_].
- - Require cmake >= 2.8.12 [`67 <https://github.com/Equinor/libecl/pull/67/>`_].
- - Fix build on OSX [`87 <https://github.com/Equinor/libecl/pull/87/>`_, `88 <https://github.com/Equinor/libecl/pull/88/>`_, `95 <https://github.com/Equinor/libecl/pull/95/>`_, `103 <https://github.com/Equinor/libecl/pull/103/>`_].
- - Fix broken behavior with internal test data [`97 <https://github.com/Equinor/libecl/pull/97/>`_].
- - Travis - compile with -Werror [`122 <https://github.com/Equinor/libecl/pull/122/>`_, `123 <https://github.com/Equinor/libecl/pull/123/>`_, `127 <https://github.com/Equinor/libecl/pull/127/>`_, `130 <https://github.com/Equinor/libecl/pull/130/>`_]
- - Started to support Python3 syntax [`150 <https://github.com/Equinor/libecl/pull/150/>`_, `161 <https://github.com/Equinor/libecl/pull/161/>`_]
- - Add support for paralell builds on Travis [`149 <https://github.com/Equinor/libecl/pull/149/>`_]
+ - Removed warnings - added pylint [`4 <https://github.com/Equinor/libecl/pull/4/>`__, `5 <https://github.com/Equinor/libecl/pull/5/>`__, `6 <https://github.com/Equinor/libecl/pull/6/>`__, `10 <https://github.com/Equinor/libecl/pull/10/>`__, `11 <https://github.com/Equinor/libecl/pull/11/>`__, `12 <https://github.com/Equinor/libecl/pull/12/>`__]
+ - Accept any Python 2.7.x version [`17 <https://github.com/Equinor/libecl/pull/17/>`__, `18 <https://github.com/Equinor/libecl/pull/18/>`__]
+ - Remove ERT testing & building [`3 <https://github.com/Equinor/libecl/pull/3/>`__, `19 <https://github.com/Equinor/libecl/pull/19/>`__]
+ - Changes to Python/cmake machinery [`25 <https://github.com/Equinor/libecl/pull/25/>`__, `30 <https://github.com/Equinor/libecl/pull/3/>`__, `31 <https://github.com/Equinor/libecl/pull/31/>`__, `32 <https://github.com/Equinor/libecl/pull/32/>`__, `49 <https://github.com/Equinor/libecl/pull/49/>`__, `52 <https://github.com/Equinor/libecl/pull/52/>`__, `62 <https://github.com/Equinor/libecl/pull/62/>`__].
+ - Added cmake config file [`33 <https://github.com/Equinor/libecl/pull/33/>`__, `44 <https://github.com/Equinor/libecl/pull/44/>`__, `45 <https://github.com/Equinor/libecl/pull/45/>`__, `47 <https://github.com/Equinor/libecl/pull/47/>`__].
+ - Only *one* library [`54 <https://github.com/Equinor/libecl/pull/54/>`__, `55 <https://github.com/Equinor/libecl/pull/55/>`__, `58 <https://github.com/Equinor/libecl/pull/58/>`__, `69 <https://github.com/Equinor/libecl/pull/69/>`__, `73 <https://github.com/Equinor/libecl/pull/73/>`__, `77 <https://github.com/Equinor/libecl/pull/77/>`__, `91 <https://github.com/Equinor/libecl/pull/91/>`__, `133 <https://github.com/Equinor/libecl/pull/133/>`__]
+ - Removed stale binaries [`59 <https://github.com/Equinor/libecl/pull/59/>`__].
+ - Require cmake >= 2.8.12 [`67 <https://github.com/Equinor/libecl/pull/67/>`__].
+ - Fix build on OSX [`87 <https://github.com/Equinor/libecl/pull/87/>`__, `88 <https://github.com/Equinor/libecl/pull/88/>`__, `95 <https://github.com/Equinor/libecl/pull/95/>`__, `103 <https://github.com/Equinor/libecl/pull/103/>`__].
+ - Fix broken behavior with internal test data [`97 <https://github.com/Equinor/libecl/pull/97/>`__].
+ - Travis - compile with -Werror [`122 <https://github.com/Equinor/libecl/pull/122/>`__, `123 <https://github.com/Equinor/libecl/pull/123/>`__, `127 <https://github.com/Equinor/libecl/pull/127/>`__, `130 <https://github.com/Equinor/libecl/pull/130/>`__]
+ - Started to support Python3 syntax [`150 <https://github.com/Equinor/libecl/pull/150/>`__, `161 <https://github.com/Equinor/libecl/pull/161/>`__]
+ - Add support for paralell builds on Travis [`149 <https://github.com/Equinor/libecl/pull/149/>`__]
 
 libecl now fully supports OSX. On Travis it is compiled with
 -Werror=all which should protect against future warnings.
 
 C++:
 
- - Removed use of deignated initializers [`7 <https://github.com/Equinor/libecl/pull/7/>`_].
- - Memory leak in EclFilename.cpp [`14 <https://github.com/Equinor/libecl/pull/14/>`_].
- - Guarantee C linkage for ecl_data_type [`65 <https://github.com/Equinor/libecl/pull/65/>`_].
- - New smspec overload [`89 <https://github.com/Equinor/libecl/pull/89/>`_].
- - Use -std=c++0x if -std=c++11 is unavailable [`118 <https://github.com/Equinor/libecl/pull/118/>`_]
- - Make all of (previous( libutil compile with C++ [`162 <https://github.com/Equinor/libecl/pull/162/>`_]
+ - Removed use of deignated initializers [`7 <https://github.com/Equinor/libecl/pull/7/>`__].
+ - Memory leak in EclFilename.cpp [`14 <https://github.com/Equinor/libecl/pull/14/>`__].
+ - Guarantee C linkage for ecl_data_type [`65 <https://github.com/Equinor/libecl/pull/65/>`__].
+ - New smspec overload [`89 <https://github.com/Equinor/libecl/pull/89/>`__].
+ - Use -std=c++0x if -std=c++11 is unavailable [`118 <https://github.com/Equinor/libecl/pull/118/>`__]
+ - Make all of (previous( libutil compile with C++ [`162 <https://github.com/Equinor/libecl/pull/162/>`__]
 
 Well:
 
- - Get well rates from restart files [`8 <https://github.com/Equinor/libecl/pull/8/>`_,`20 <https://github.com/Equinor/res/pull/20/>`_].
- - Test if file exists before load [`111 <https://github.com/Equinor/libecl/pull/111/>`_].
- - Fix some warnings [`169 <https://github.com/Equinor/libecl/pull/169/>`_]
+ - Get well rates from restart files [`8 <https://github.com/Equinor/libecl/pull/8/>`__,`20 <https://github.com/Equinor/res/pull/20/>`__].
+ - Test if file exists before load [`111 <https://github.com/Equinor/libecl/pull/111/>`__].
+ - Fix some warnings [`169 <https://github.com/Equinor/libecl/pull/169/>`__]
 
 Core:
 
- - Support for variable length strings in binary eclipse files [`13 <https://github.com/Equinor/libecl/pull/13/>`_, `146 <https://github.com/Equinor/libecl/pull/146/>`_].
- - Renamed root package ert -> ecl [`21 <https://github.com/Equinor/libecl/pull/21/>`_]
- - Load INTERSECT summary files with NAMES instead WGNAMES [`34 <https://github.com/Equinor/libecl/pull/34/>`_ - `39 <https://github.com/Equinor/libecl/pull/39/>`_].
- - Possible memory leak: [`61 <https://github.com/Equinor/libecl/pull/61/>`_]
- - Refactored binary time search in __get_index_from_sim_time() [`113 <https://github.com/Equinor/libecl/pull/113/>`_]
- - Possible to mark fortio writer as "failed" - will unlink on close [`119 <https://github.com/Equinor/libecl/pull/119/>`_].
- - Allow keywords of more than 8 characters [`120 <https://github.com/Equinor/libecl/pull/120/>`_, `124 <https://github.com/Equinor/libecl/pull/124/>`_].
- - ecl_sum writer: Should write RESTART keyword [`129 <https://github.com/Equinor/libecl/pull/129/>`_, `131 <https://github.com/Equinor/libecl/pull/131/>`_]
- - Made EclVersion class [`160 <https://github.com/Equinor/libecl/pull/160/>`_]
- - Functionality to dump an index file for binary files: [`155 <https://github.com/Equinor/libecl/pull/155/>`_, `159 <https://github.com/Equinor/libecl/pull/159/>`_, `163 <https://github.com/Equinor/libecl/pull/163/>`_, `166 <https://github.com/Equinor/libecl/pull/166/>`_, `167 <https://github.com/Equinor/libecl/pull/167/>`_]
+ - Support for variable length strings in binary eclipse files [`13 <https://github.com/Equinor/libecl/pull/13/>`__, `146 <https://github.com/Equinor/libecl/pull/146/>`__].
+ - Renamed root package ert -> ecl [`21 <https://github.com/Equinor/libecl/pull/21/>`__]
+ - Load INTERSECT summary files with NAMES instead WGNAMES [`34 <https://github.com/Equinor/libecl/pull/34/>`__ - `39 <https://github.com/Equinor/libecl/pull/39/>`__].
+ - Possible memory leak: [`61 <https://github.com/Equinor/libecl/pull/61/>`__]
+ - Refactored binary time search in __get_index_from_sim_time() [`113 <https://github.com/Equinor/libecl/pull/113/>`__]
+ - Possible to mark fortio writer as "failed" - will unlink on close [`119 <https://github.com/Equinor/libecl/pull/119/>`__].
+ - Allow keywords of more than 8 characters [`120 <https://github.com/Equinor/libecl/pull/120/>`__, `124 <https://github.com/Equinor/libecl/pull/124/>`__].
+ - ecl_sum writer: Should write RESTART keyword [`129 <https://github.com/Equinor/libecl/pull/129/>`__, `131 <https://github.com/Equinor/libecl/pull/131/>`__]
+ - Made EclVersion class [`160 <https://github.com/Equinor/libecl/pull/160/>`__]
+ - Functionality to dump an index file for binary files: [`155 <https://github.com/Equinor/libecl/pull/155/>`__, `159 <https://github.com/Equinor/libecl/pull/159/>`__, `163 <https://github.com/Equinor/libecl/pull/163/>`__, `166 <https://github.com/Equinor/libecl/pull/166/>`__, `167 <https://github.com/Equinor/libecl/pull/167/>`__]
 
 Misc:
 
- - Added legacy pacakge ert/ [`48 <https://github.com/Equinor/libecl/pull/48/>`_, `99 <https://github.com/Equinor/libecl/pull/99/>`_]
- - Improved logging - adding enums for og levels [`90 <https://github.com/Equinor/libecl/pull/90/>`_, `140 <https://github.com/Equinor/libecl/pull/140/>`_, `141 <https://github.com/Equinor/libecl/pull/141/>`_]
- - Refactored to use snake_case instead of CamelCase [`144 <https://github.com/Equinor/libecl/pull/144/>`_, `145 <https://github.com/Equinor/libecl/pull/145/>`_]
+ - Added legacy pacakge ert/ [`48 <https://github.com/Equinor/libecl/pull/48/>`__, `99 <https://github.com/Equinor/libecl/pull/99/>`__]
+ - Improved logging - adding enums for og levels [`90 <https://github.com/Equinor/libecl/pull/90/>`__, `140 <https://github.com/Equinor/libecl/pull/140/>`__, `141 <https://github.com/Equinor/libecl/pull/141/>`__]
+ - Refactored to use snake_case instead of CamelCase [`144 <https://github.com/Equinor/libecl/pull/144/>`__, `145 <https://github.com/Equinor/libecl/pull/145/>`__]
 
 
 -----------------------------------------------------------------

@@ -57,6 +57,7 @@ function as exported is quite simple, but it requires changes to the
 core code and a new version must be installed.
 
 .. _ert_script:
+
 Run a Python Script
 ...................
 
@@ -295,10 +296,10 @@ argument which will be used as name for the workflow. Alternatively
 you can load a workflow interactively.
 
 
+.. _hook_workflow:
+
 Automatically run workflows : HOOK_WORKFLOW
 -------------------------------------------
-.. _hook_workflow:
-.. topic:: HOOK_WORKFLOW
 
 With the keyword :code:`HOOK_WORKFLOW` you can configure workflow
 'hooks'; meaning workflows which will be run automatically at certain
