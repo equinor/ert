@@ -100,4 +100,4 @@ script:
   - echo $PYTHONPATH
   - pip install . --prefix=$INSTALL_DIR
   - python setup.py test
-  - sphinx-build -n -v -E ./docs/rst/manual ./tmp/ert_docs # Add also -W when all the warnings have been addressed
+  - sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
