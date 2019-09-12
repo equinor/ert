@@ -438,11 +438,20 @@ possible to do with ERT.
 .. _refcase:
 .. topic:: REFCASE
 
-	With the REFCASE key you can supply ert with a reference case which can be
-	used for observations (see HISTORY_SOURCE), if you want to use wildcards with
-	the SUMMARY keyword you also must supply a REFCASE keyword. The REFCASE
-	keyword should just point to an existing ECLIPSE data file; ert will then look
-	up and load the corresponding summary results.
+        The REFCASE key is used to provide ERT an existing ECLIPSE simulation
+	from which it can read various information at startup. The intention is 
+	to ease the configuration needs for the user. Functionality provided with the 
+	refcase:
+
+	* summary keys are read from the refcase to enable use of wildcards.
+
+	* extract observed values from the refcase using the 
+	  :ref:`HISTORY_OBSERVATION <HISTORY_OBSERVATION>` and 
+	  :ref:`HISTORY_SOURCE <HISTORY_SOURCE>` keys. 
+
+
+	The REFCASE keyword should point to an existing ECLIPSE simulation; 
+	ert will then look up and load the corresponding summary results.
 
 	*Example:*
 
@@ -451,6 +460,24 @@ possible to do with ERT.
 		-- The REFCASE keyword points to the datafile of an existing ECLIPSE simulation. 
 		REFCASE /path/to/somewhere/SIM_01_BASE.DATA
 
+
+	Please note that the refcase is a common source of frustration for ERT users. The 
+	reason is that ERT indexes summary observation values according to the report steping 
+	of the reservoir simulator. This indexing is extracted by the report steps of the 
+	refcase when staring ERT. Later on when extracting results from forecasted 
+	simulations ERT requires that the indexing is according to that of the refcase. During a 
+	project it is very easy to introduce inconsistencies between the indexing in the 
+	refcase, the forward model and the internalized summary results in storage. 
+	Unfortunately, ERT does not handle this well and leaves the user with cryptical 
+	error messages.
+	
+	For the time being, it is hence necessary to keep the reporting as defined in the 
+	SCHEDULE section of the refcase and the model used in the project identical. 
+
+	The HISTORY_SOURCE keyword is optional. But if you are to perform model updating, 
+	indexing of summary observations need to be defined. This is either done by the 
+	REFCASE or the :ref:`TIME_MAP <TIME_MAP>` keyord, and the former is recommended.
+   
 
 .. _install_job:
 .. topic:: INSTALL_JOB
