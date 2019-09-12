@@ -1358,7 +1358,7 @@ Keywords controlling the ES algorithm
 .. _std_scale_correlated_obs:
 .. topic:: STD_SCALE_CORRELATED_OBS
 
-        With this kewyord you can instruct ERT to use the simulated data to
+        With this keyword you can instruct ERT to use the simulated data to
         estimate the correlations in the observations, and then inflate the
         observation standard deviation as a way to estimate the real information
         content in the observations. The method is based on PCA, the scaling
@@ -1507,7 +1507,7 @@ In the analysis module the update equations are formulated based on familiar
 matrix expressions, and no knowledge of the innards of the ERT program are
 required. Some more details of how modules work can be found here modules.txt.
 In principle a module is 'just' a shared library following some conventions, and
-if you are sufficiently savy with gcc you can build them manually, but along
+if you are sufficiently savvy with gcc you can build them manually, but along
 with the ert installation you should have utility script ert_module which can be
 used to build a module; just write ert_module without any arguments to get a
 brief usage description.
@@ -1696,11 +1696,11 @@ Configuring LSF access
 
 The LSF system is the most useful of the queue alternatives, and also the
 alternative with most options. The most important options are related to how ert
-should submit jobs to the LSF system. Essentially there are two methods ert can
+should submit jobs to the LSF system. Essentially there are two methods ERT can
 use when submitting jobs to the LSF system:
 
-#. For workstations which have direct access to LSF ert can submit directly with
-   no further configuration. This is preferred solution, but unfortunately not
+#. Workstations which have direct access to LSF ert can submit directly with
+   no further configuration. This is the preferred solution, but unfortunately not
    very common.
 #. Alternatively ert can issue shell commands to bsub/bjobs/bkill to submit
    jobs. These shell commands can be issued on the current workstation, or
@@ -1711,11 +1711,11 @@ The main switch between alternatives 1 and 2 above is the LSF_SERVER option.
 .. _lsf_server:
 .. topic:: LSF_SERVER
 
-	By using the LSF_SERVER option you essentially tell ert two things about how
+	By using the LSF_SERVER option you essentially tell ERT two things about how
 	jobs should be submitted to LSF:
 
-	#. You tell ert that jobs should be submitted using shell commands.
-	#. You tell ert which server should be used when submitting
+	#. You tell ERT that jobs should be submitted using shell commands.
+	#. You tell ERT which server should be used when submitting
 
 	So when your configuration file has the setting:
 
@@ -1730,7 +1730,7 @@ The main switch between alternatives 1 and 2 above is the LSF_SERVER option.
 
 	**bsub/bjobs/bkill options**
 
-	By default ert will use the shell commands bsub,bjobs and bkill to interact
+	By default ERT will use the shell commands bsub, bjobs and bkill to interact
 	with the queue system, i.e. whatever binaries are first in your PATH will be
 	used. For fine grained control of the shell based submission you can tell ert
 	which programs to use:
@@ -1778,7 +1778,7 @@ important options are related to how ert should submit jobs to the TORQUE
 system.
 
 * Currently, the TORQUE option only works when the machine you are logged into
-  have direct access to the queue system. ert then submit directly with no
+  have direct access to the queue system. ert then submits directly with no
   further configuration.
 
 The most basic invocation is in other words:
@@ -1870,7 +1870,7 @@ folder), use this:
 
 ** Slow submit to torque **
 
-To be more gentle with the torqueue system you can instruct the driver to sleep
+To be more gentle with the TORQUE system you can instruct the driver to sleep
 for every submit request. The argument to the SUBMIT_SLEEP is the number of
 seconds to sleep for every submit, can be a fraction like 0.5.
 
@@ -1881,7 +1881,7 @@ seconds to sleep for every submit, can be a fraction like 0.5.
 
 ** Torque debug log **
 
-You can ask the torqueu driver to store a debug log of the jobs submitted, and
+You can ask the TORQUE driver to store a debug log of the jobs submitted, and
 the resulting job id. This is done with the queue option DEBUG_OUTPUT:
 
 ::
@@ -2130,7 +2130,7 @@ Manipulating the Unix environment
 .. _manipulating_the_unix_environment:
 
 The two keywords SETENV and UPDATE_PATH can be used to manipulate the Unix
-environment of the ERT process, tha manipulations only apply to the running ERT
+environment of the ERT process, the manipulations only apply to the running ERT
 instance, and are not applied to the shell.
 
 
@@ -2180,7 +2180,7 @@ instance, and are not applied to the shell.
 .. _umask:
 .. topic:: UMASK
 
-        The `umask` is a concept used by Linux to controll the permissions on
+        The `umask` is a concept used by Linux to control the permissions on
         newly created files. By default the files created by ert will have the
         default permissions of your account, but by using the keyword `UMASK`
         you can alter the permissions of files created by ert.
