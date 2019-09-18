@@ -100,10 +100,9 @@ class EnkfSimulationRunner(BaseCClass):
         
         if job is None:
             return
-        job_queue.add_job(job)
+        run_arg._set_queue_index(job_queue.add_job(job))
 
     def start_queue(self, run_context, job_queue):
-
         # submit jobs
         for i in range(len(run_context)):
             if not run_context.is_active(i):

@@ -78,7 +78,7 @@ class JobQueue(BaseCClass):
     _get_ok_file = ResPrototype("char* job_queue_get_ok_file(job_queue)")
     _get_exit_file = ResPrototype("char* job_queue_get_exit_file(job_queue)")
     _get_status_file = ResPrototype("char* job_queue_get_status_file(job_queue)")
-    _add_job = ResPrototype("void job_queue_add_job_node(job_queue, job_queue_node)")
+    _add_job = ResPrototype("int job_queue_add_job_node(job_queue, job_queue_node)")
 
     def __repr__(self):
         nrun, ncom, nwait, npend = (self._num_running(),
@@ -292,8 +292,9 @@ class JobQueue(BaseCClass):
 
     def add_job(self, job):
         job.convertToCReference(None)
-        self._add_job(job)
+        queue_index = self._add_job(job)
         self.job_list.append(job)
+        return queue_index
 
     def count_running(self):
         return sum(job.is_running() for job in self.job_list)

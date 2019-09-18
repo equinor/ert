@@ -1396,12 +1396,12 @@ char * job_queue_get_status_file(const job_queue_type * queue) {
   return queue->status_file;
 }
 
-void job_queue_add_job_node(job_queue_type * queue, job_queue_node_type * node) {
+int job_queue_add_job_node(job_queue_type * queue, job_queue_node_type * node) {
   job_list_get_wrlock( queue->job_list );
 
   job_list_add_job( queue->job_list , node );
   job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
-
+  int queue_index = job_queue_node_get_queue_index(node);
   job_list_unlock( queue->job_list );
-
+  return queue_index;
 }
