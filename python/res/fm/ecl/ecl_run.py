@@ -152,7 +152,7 @@ class EclRun(object):
             elif len(LSB_machine_list) == self.num_cpu:
                 machine_list = LSB_machine_list
             else:
-                raise Exception("Complete LSF / MPI fuckup. Asked for:%s cpu. LSB_MCPU_HOSTS: \"%s\"  LSB_HOSTS: \"%s\"" % (self.num_cpu , LSB_MCPU_HOSTS , LSB_HOSTS))
+                raise Exception("LSF / MPI problems. Asked for:%s cpu. LSB_MCPU_HOSTS: \"%s\"  LSB_HOSTS: \"%s\"" % (self.num_cpu , LSB_MCPU_HOSTS , LSB_HOSTS))
         else:
             localhost = socket.gethostname()
             machine_list = [ localhost ] * self.num_cpu

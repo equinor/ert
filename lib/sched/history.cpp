@@ -72,7 +72,7 @@ const char * history_get_source_string( history_source_type history_source ) {
     return "SCHEDULE";
     break;
   default:
-    util_abort("%s: internal fuck up \n",__func__);
+    util_abort("%s: Internal inconsistency in refcase \n",__func__);
     return NULL;
   }
 }

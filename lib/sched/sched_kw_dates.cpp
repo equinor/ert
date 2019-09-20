@@ -146,7 +146,7 @@ void sched_kw_dates_fprintf(const sched_kw_dates_type *kw , FILE *stream) {
         util_set_date_values_utc(date, &day, &month, &year);
         fprintf(stream , DATES_FMT , day, get_month_string_from_int(month), year );
       } else
-        util_abort("%s: internal type fuckup \n",__func__);
+        util_abort("%s: TypeError: Time_node type != DATES_TIME \n",__func__);
     }
     fprintf(stream , "/\n\n");
   }

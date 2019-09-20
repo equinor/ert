@@ -932,7 +932,6 @@ static void block_fs_build_index( block_fs_type * block_fs , long_vector_type * 
     file_node = file_node_fread_alloc( block_fs->data_stream , &filename );
     if (file_node != NULL) {
       if ((file_node->status == NODE_INVALID) || (file_node->status == NODE_WRITE_ACTIVE)) {
-        /* Oh fuck */
         if (file_node->status == NODE_INVALID)
           fprintf(stderr,"** Warning:: invalid node found at offset:%ld in datafile:%s - data will be lost, node_size:%d\n", file_node->node_offset , block_fs->data_file , file_node->node_size);
         else

@@ -209,7 +209,7 @@ void test_set_template_invalid() {
 
   {
     FILE * stream = util_fopen("template2.txt" , "w");
-    fprintf(stream , "Template XYZ - lots of shit .... \n");
+    fprintf(stream , "Template XYZ \n");
     fclose( stream );
 
     test_assert_false( gen_data_config_set_template( config , "template2.txt" , "<KEY>"));

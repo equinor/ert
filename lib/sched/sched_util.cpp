@@ -257,7 +257,7 @@ void sched_util_fprintf_int(bool def, int value , int width , FILE *stream) {
 
 
 /*
-  The formatting is ridicolusly inflexible - don't touch this shit.
+  The formatting is very inflexible.
 */
 
 void sched_util_fprintf_qst(bool def, const char *s , int width , FILE *stream) {

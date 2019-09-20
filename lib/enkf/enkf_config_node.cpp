@@ -235,7 +235,7 @@ bool enkf_config_node_is_valid( const enkf_config_node_type * config_node ) {
     valid = enkf_config_node_is_valid_GEN_DATA( config_node );
     break;
   default:
-    util_abort("%s: - what the fuXX - internal bug. \n",__func__);
+    util_abort("%s: Internal inconsistency. \n",__func__);
   }
 
   return valid;

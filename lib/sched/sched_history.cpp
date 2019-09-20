@@ -701,7 +701,7 @@ bool sched_history_open( const sched_history_type * sched_history , const char *
         const char * group_name = group_index_get_name( group_index );
         return sched_history_group_exists( sched_history , group_name , report_step);
       } else {
-        util_abort("%s: - hmm internal fuckup \n",__func__);
+        util_abort("%s: IndexError: Invalid index instance \n",__func__);
         return false;
       }
     }

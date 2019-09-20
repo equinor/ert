@@ -40,7 +40,7 @@
 struct surface_struct {
   int                   __type_id; /* Only used for run_time checking. */
   surface_config_type * config;    /* Can not be NULL - var_type is set on first load. */
-  double              * data;      /* Size is always one - but what the fuck ... */
+  double              * data;      /* Size should always be one */
 };
 
 

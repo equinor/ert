@@ -181,16 +181,15 @@ sched_block_type * sched_file_iget_block(const sched_file_type * sched_file, int
 }
 
 /**
-   This is a fucking mess:
+    Example:
 
    block[0]   start_time - start_time
    block[1]   start_time - time of first report, i.e. X0001
    block[2]   X0001      - X0002
    ....
 
-   The reason for this funny convention is to ensure one-to-one index
-   correspondance between the restart files and the sched_file blocks
-   (I think ...).
+   The reason for this convention is to ensure one-to-one index
+   correspondance between the restart files and the sched_file blocks.
 */
 
 

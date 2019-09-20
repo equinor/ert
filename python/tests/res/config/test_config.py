@@ -439,7 +439,7 @@ class ConfigTest(ResTest):
             ContentTypeEnum.CONFIG_FLOAT.convert_string("100X")
 
         with self.assertRaises(ValueError):
-            ContentTypeEnum.CONFIG_BOOL.convert_string("WHAT_THE_FUCK")
+            ContentTypeEnum.CONFIG_BOOL.convert_string("a_random_string")
 
         self.assertTrue( ContentTypeEnum.CONFIG_BOOL.convert_string("TRUE"))
         self.assertTrue( ContentTypeEnum.CONFIG_BOOL.convert_string("True"))

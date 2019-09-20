@@ -25,9 +25,6 @@
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/active_list.hpp>
 
-/** This is heavy shit ... */
-
-
 /**
    This file handles serialization and deserialization of the
    enkf_nodes. This is at the very core of the EnKF update

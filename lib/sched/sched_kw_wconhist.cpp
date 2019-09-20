@@ -695,7 +695,7 @@ void sched_kw_wconhist_update_state(const sched_kw_wconhist_type * kw , wconhist
 
 
 void sched_kw_wconhist_close_state( wconhist_state_type * state , int report_step ) {
-  int_vector_iset_default( state->state         , report_step  ,  SHUT    );  /* SHUT or STOP?? This will fuck up a bit when what is actually happening is that the well goes over to
+  int_vector_iset_default( state->state         , report_step  ,  SHUT    );  /* SHUT or STOP?? This will cause problems when what is actually happening is that the well goes over to
                                                                                  WCONPROD control, because the WCONPROD keyword is not internalized at all; so the well be stuck in this
                                                                                  status. */
   int_vector_iset_default( state->cmode         , report_step  ,  CM_SHUT );

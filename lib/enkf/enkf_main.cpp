@@ -1806,8 +1806,7 @@ ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const
 
 /**
    This function creates a local_config file corresponding to the
-   default 'ALL_ACTIVE' configuration. We eat our own dogshit around
-   here...
+   default 'ALL_ACTIVE' configuration.
 */
 
 void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {

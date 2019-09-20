@@ -516,7 +516,7 @@ bool config_parser_add_key_values(config_parser_type * config,
    (through a recursive call to config_parse__). if include_kw == NULL,
    include files are not supported.
 
-   Observe that use of include, relative paths and all that shit is
+   Observe that the use of include and relative paths is
    quite tricky. The following is currently implemented:
 
     1. The front_end function will split the path to the config file
@@ -563,14 +563,14 @@ bool config_parser_add_key_values(config_parser_type * config,
    Config file:
    -------------
    myDEF   Name         BJARNE
-   myDEF   sexual-pref  Dogs
+   myDEF   pet        Dog
    ...
    ...
-   PERSON  <Name> 28 <sexual-pref>
+   PERSON  <Name> 28 <pet>
    ...
    ------------
 
-   After parsing we will have an entry: "NAME" , "Bjarne" , "28" , "Dogs".
+   After parsing we will have an entry: "NAME" , "Bjarne" , "28" , "Dog".
 
    The         key-value pairs internalized during the config parsing are NOT
    returned to the calling scope in any way.

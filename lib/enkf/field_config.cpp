@@ -504,7 +504,7 @@ bool field_config_is_valid( const field_config_type * field_config ) {
       valid = false;
     break;
   default:
-    util_abort("%s: internal fuckup \n",__func__);
+    util_abort("%s: Internal inconsistency in field config \n",__func__);
   }
   return valid;
 
@@ -698,8 +698,7 @@ int field_config_get_nz(const field_config_type * config ) {
 
    Currently only the roff loader supports set operations on the
    key. Also it is essential to observe that this will break **HARD**
-   is the file contains several parameters - so maybe this whole thing
-   is stupid?
+   is the file contains several parameters
 */
 
 

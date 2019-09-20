@@ -632,7 +632,7 @@ double matrix_det( matrix_type *A ) {
       int i;
       for (i=0; i < n; i++) {
         det *= matrix_iget(A , i , i);
-        if (det == 0) return 0;   /* Holy fuck - a float == comparison ?? */
+        if (det == 0) return 0;
 
         if (ipiv[i] != (i + 1))   /* A permutation has taken place. */
           det *= -1;

@@ -140,7 +140,7 @@ def fatal_error( msg ):
 
 
 def init_fd( base_name ):
-    # Creating a stupid input file which is connected to stdin
+    # Creating an input file which is connected to stdin
     fileH = open(stdin_file , "w")
     fileH.write("%s\n"   % base_name);
     fileH.write("%s\n"   % base_name);

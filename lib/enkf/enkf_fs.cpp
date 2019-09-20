@@ -190,8 +190,8 @@
   all drivers have been initialized, and aborts if that is not the
   case.
 
-  If the enkf_mount_info file is deleted you (might) be fucked. It
-  is currently 'protected' with chomd a-w - but that is of course not
+  If the enkf_mount_info file is deleted that can cause problems.
+  It is currently 'protected' with chomd a-w - but that is of course not
   foolprof.
 */
 
@@ -272,7 +272,7 @@ int enkf_fs_decref( enkf_fs_type * fs ) {
   refcount = fs->refcount;
 
   if (fs->refcount < 0)
-    util_abort("%s: internal fuckup. The filesystem refcount:%d is < 0 \n",__func__ , fs->refcount);
+    util_abort("%s: Internal inconsistency in file system. The filesystem refcount:%d is < 0 \n",__func__ , fs->refcount);
 
   res_log_fdebug("Calling decref on: %s . Refcount after decref:%d", fs->mount_point, fs->refcount);
   if (refcount == 0)
@@ -724,7 +724,7 @@ static void enkf_fs_umount(enkf_fs_type * fs) {
 
   int refcount = fs->refcount;
   if (refcount > 0)
-    util_abort("%s: internal fuckup - "
+    util_abort("%s: Internal inconsistency - "
                "tried to umount a filesystem with refcount:%d\n",
                __func__, refcount);
 

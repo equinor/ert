@@ -97,7 +97,7 @@ static const char * comp_get_state_string(comp_state_type state) {
   case(SHUT):
     return COMP_SHUT_STRING;
   default:
-    util_abort("%s: internal error \n",__func__);
+    util_abort("%s: Internal error \n",__func__);
     return NULL;
   }
 }
@@ -117,7 +117,7 @@ static const char * comp_get_dir_string(well_dir_type dir) {
   case(FY):
     return WELL_DIR_FY_STRING;
   default:
-    util_abort("%s: internal fuckup \n",__func__);
+    util_abort("%s: Internal error \n",__func__);
     return NULL;
   }
 }
@@ -135,7 +135,7 @@ static const well_dir_type comp_get_well_dir_from_string(const char * well_dir) 
   else if (strcmp(well_dir , WELL_DIR_FY_STRING) == 0)
     return FY;
   else {
-    util_abort("%s: internal fuckup \n",__func__);
+    util_abort("%s: Internal error \n",__func__);
     return (well_dir_type)-1;
   }
 }

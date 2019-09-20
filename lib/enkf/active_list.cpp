@@ -157,7 +157,7 @@ int active_list_get_active_size(const active_list_type * active_list, int total_
     active_size = total_size;
     break;
   default:
-    util_abort("%s: internal fuckup \n",__func__);
+    util_abort("%s: Internal inconsistency in active_list \n",__func__);
     active_size = -1;
   }
   return active_size;

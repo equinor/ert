@@ -69,7 +69,7 @@ struct rsh_driver_struct {
   int                 num_hosts;
   int                 last_host_index;
   rsh_host_type     **host_list;
-  hash_type          *__host_hash;  /* Stupid redundancy ... */
+  hash_type          *__host_hash;  /* Redundancy ... */
 };
 
 

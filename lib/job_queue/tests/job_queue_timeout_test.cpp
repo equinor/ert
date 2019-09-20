@@ -84,7 +84,7 @@ job_type * alloc_job(int ind, const char * cmd) {
   job->argv[0] = job->run_path;
   job->argv[1] = "RUNNING";
   job->argv[2] = "OK";
-  job->argv[3] = util_alloc_sprintf("%d", job->run_usleep);  // This will leak; don't give a shit.
+  job->argv[3] = util_alloc_sprintf("%d", job->run_usleep);
 
   job->retry_call_count = 0;
   job->exit_call_count = 0;

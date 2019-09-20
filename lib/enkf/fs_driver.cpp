@@ -115,7 +115,7 @@ FILE * fs_driver_open_fstab( const char * path , bool create) {
 void fs_driver_assert_magic( FILE * stream ) {
   long fs_magic = util_fread_long( stream );
   if (fs_magic != FS_MAGIC_ID)
-    util_abort("%s: WTF - fstab magic marker incorrect \n",__func__);
+    util_abort("%s: Fstab magic marker incorrect \n",__func__);
 }
 
 

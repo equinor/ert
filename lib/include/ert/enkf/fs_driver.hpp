@@ -122,7 +122,7 @@ extern "C" {
    Version 104B
    ------------
    Vector storage; each case is a seperate enkf_fs instance. Current
-   is stored with a symlink. Read about 104 -> 104B fuckup in the
+   is stored with a symlink. Read about 104 -> 104B problems in the
    function upgrade104B() in fs_driver.c
 
 
