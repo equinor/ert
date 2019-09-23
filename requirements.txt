@@ -12,7 +12,7 @@ sphinx
 cwrap
 numpy
 pandas
-matplotlib<3
+matplotlib
 scipy
 pyyaml
 sphinx-argparse
