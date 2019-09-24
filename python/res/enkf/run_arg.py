@@ -44,8 +44,8 @@ class RunArg(BaseCClass):
     def free(self):
         self._free()
 
-    def set_queue_index(self):
-        self._set_queue_index()
+    def set_queue_index(self, index):
+        self._set_queue_index(index)
 
     def getQueueIndex(self):
         qi = self._get_queue_index_safe()
