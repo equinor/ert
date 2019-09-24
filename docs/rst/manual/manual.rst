@@ -11,9 +11,11 @@ Welcome to ERT's documentation!
    :caption: Contents:
 
    introduction/index
+   interfaces/index
    data_types/index
    forward_model/index
    workflows/index
+   workflows/built_in
    observations/index
    eclipse/index
    update/index
