@@ -11,7 +11,7 @@ import psutil
 
 from job_runner.cli import main
 from job_runner.reporting.message import Finish
-from tests.utils import tmpdir
+from tests.utils import tmpdir, wait_until
 
 if sys.version_info >= (3, 3):
     from unittest.mock import patch
@@ -20,19 +20,6 @@ else:
 
 
 class JobDispatchTest(unittest.TestCase):
-
-    def wait_for_child_process_count(self, p, count, timeout):
-        current_count = len(p.children(recursive=True))
-        start = time.time()
-        while current_count != count:
-            time.sleep(0.001)
-            current_count = len(p.children(recursive=True))
-            if time.time() - start > timeout:
-                self.fail(
-                    "Timeout while waiting for child processes"
-                    " count to reach {} (Current count is {})".format(
-                        count, current_count)
-                )
 
     @tmpdir(None)
     def test_terminate_jobs(self):
@@ -113,11 +100,13 @@ else:
         p = psutil.Process(job_dispatch_process.pid)
 
         # Three levels of processes should spawn 8 children in total
-        self.wait_for_child_process_count(p, 8, 10)
+        wait_until(
+            lambda: self.assertEqual(len(p.children(recursive=True)), 8))
 
         p.terminate()
 
-        self.wait_for_child_process_count(p, 0, 10)
+        wait_until(
+            lambda: self.assertEqual(len(p.children(recursive=True)), 0))
 
         os.wait()  # allow os to clean up zombie processes
 

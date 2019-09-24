@@ -5,6 +5,7 @@ import tempfile
 import shutil
 
 import decorator
+import time
 
 """
 Swiped from
@@ -57,3 +58,23 @@ def tmp(path=None, teardown=True):
         except OSError as oserr:
             logging.debug('tmp:rmtree failed %s (%s)' % (fname, oserr))
             shutil.rmtree(fname, ignore_errors=True)
+
+def wait_until(func, interval=0.5, timeout=30):
+    """Expects 'func' to raise an AssertionError to indicate failure.
+    Repeatedly calls 'func' until it does not throw an AssertionError.
+    Waits 'interval' seconds before each invocation. If 'timeout' is
+    reached, will raise the AssertionError.
+
+    Example of how to wait for a file to be created:
+
+    wait_until(lambda: assertFileExists("/some/file"))"""
+    t = 0
+    while True:
+        time.sleep(interval)
+        t += interval
+        try:
+            func()
+            return
+        except AssertionError:
+            if t >= timeout:
+                raise
