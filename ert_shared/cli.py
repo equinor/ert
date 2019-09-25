@@ -7,7 +7,7 @@ from argparse import ArgumentTypeError
 from ecl.util.util import BoolVector
 from res.enkf import EnKFMain, ErtRunContext, ESUpdate, ResConfig
 
-from ert_gui import ERT
+from ert_shared import ERT
 from ert_gui.ertwidgets.models import ertmodel
 from ert_gui.ide.keywords.definitions import (NumberListStringArgument,
                                               RangeStringArgument)

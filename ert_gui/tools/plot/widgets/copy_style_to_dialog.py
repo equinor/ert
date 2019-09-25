@@ -8,7 +8,7 @@ except ImportError:
 
 from ert_gui.ertwidgets import CheckList, resourceIcon
 from ert_gui.tools.plot import FilterPopup, FilterableKwListModel
-from ert_gui import ERT
+from ert_shared import ERT
 
 
 class CopyStyleToDialog(QDialog):

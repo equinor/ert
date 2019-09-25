@@ -6,7 +6,7 @@ except ImportError:
   from PyQt5.QtWidgets import QMenu
 
 
-from ert_gui import ERT
+from ert_shared import ERT
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.tools import Tool
 from ert_gui.tools.plugins import PluginHandler, PluginRunner

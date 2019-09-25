@@ -3,8 +3,8 @@ import os
 import sys
 import re
 from argparse import ArgumentParser, ArgumentTypeError
-from ert_gui import run_cli
-from ert_gui import ERT
+from ert_shared import run_cli
+from ert_shared import ERT
 from ert_gui.ide.keywords.definitions import (
     RangeStringArgument,
     ProperNameArgument,

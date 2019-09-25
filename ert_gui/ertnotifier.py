@@ -6,7 +6,7 @@ except ImportError:
   from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 
 from res.enkf import EnKFMain
-from ert_gui import ERT
+from ert_shared import ERT
 
 class ErtNotifier(QObject):
     ertChanged = pyqtSignal()
