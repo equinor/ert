@@ -115,7 +115,7 @@ class JobQueueTest(ResTest):
             assert not job_queue.is_running()
 
             for job in job_queue.job_list:
-                assert job.status == JobStatusType.JOB_QUEUE_EXIT
+                assert job.status == JobStatusType.JOB_QUEUE_FAILED
             
             for t in threads:
                 t.join()

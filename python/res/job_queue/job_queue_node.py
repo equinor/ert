@@ -26,7 +26,7 @@ class JobQueueNode(BaseCClass):
     
     _get_status = ResPrototype("int job_queue_node_get_status(job_queue_node)")
     _update_status = ResPrototype("bool job_queue_node_update_status_simple(job_queue_node, driver)")
-
+    _set_status = ResPrototype("void job_queue_node_set_status(job_queue_node, int)")
 
     def __init__(self,job_script, job_name, run_path, num_cpu, 
                     status_file, ok_file, exit_file, 
@@ -83,6 +83,7 @@ class JobQueueNode(BaseCClass):
         if self.status == JobStatusType.JOB_QUEUE_DONE:
             self.run_done_callback()
         elif self.status == JobStatusType.JOB_QUEUE_EXIT:
+            self._set_status(JobStatusType.JOB_QUEUE_FAILED)
             self.run_exit_callback()
         elif self.status == JobStatusType.JOB_QUEUE_WAITING:
             self.started = False

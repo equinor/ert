@@ -429,7 +429,7 @@ void job_queue_node_run_EXIT_callback( job_queue_node_type * node ) {
     node->exit_callback( node->callback_arg );
 }
 
-static void job_queue_node_set_status(job_queue_node_type * node , job_status_type new_status) {
+void job_queue_node_set_status(job_queue_node_type * node , job_status_type new_status) {
   if (new_status == node->job_status)
     return;
 
