@@ -13,7 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import ert_gui
+import ert_shared
 
 try:
     from PyQt4.QtGui import QMessageBox
@@ -33,7 +33,7 @@ from ert_gui.tools.run_analysis import RunAnalysisPanel
 def analyse(target, source):
     """Runs analysis using target and source cases. Returns whether or not
     the analysis was successful."""
-    ert = ert_gui.ERT.ert
+    ert = ert_shared.ERT.ert
     fs_manager = ert.getEnkfFsManager()
     es_update = ESUpdate(ert)
 
@@ -77,5 +77,5 @@ class RunAnalysisTool(Tool):
             msg.exec_()
             return
 
-        ert_gui.ERT.ertChanged.emit()
+        ert_shared.ERT.ertChanged.emit()
         self._dialog.accept()

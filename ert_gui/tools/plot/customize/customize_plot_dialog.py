@@ -8,7 +8,7 @@ except ImportError:
   from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLayout, QTabWidget, QHBoxLayout, QPushButton, QToolButton, QMenu, QWidgetAction, QListWidget
 
 
-from ert_gui import ERT
+from ert_shared import ERT
 from ert_gui.tools.plot.widgets import CopyStyleToDialog
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.plottery import PlotConfig, PlotConfigHistory

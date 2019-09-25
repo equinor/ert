@@ -8,7 +8,7 @@ except ImportError:
   from PyQt5.QtWidgets import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout
 
 
-from ert_gui import ERT
+from ert_shared import ERT
 from ert_gui.ertwidgets import showWaitCursorWhileWaiting
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.plottery import PlotContext, PlotDataGatherer as PDG, PlotConfig, plots, PlotConfigFactory

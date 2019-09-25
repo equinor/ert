@@ -4,9 +4,9 @@ import os
 import subprocess
 from res.enkf import EnKFMain, ResConfig
 from ecl.util.util import BoolVector
-from ert_gui import cli
-from ert_gui import ERT
-from ert_gui.cli import ErtCliNotifier
+from ert_shared import cli
+from ert_shared import ERT
+from ert_shared.cli import ErtCliNotifier
 from argparse import Namespace
 from ert_gui.simulation.models.ensemble_experiment import EnsembleExperiment
 from ert_gui.simulation.models.ensemble_smoother import EnsembleSmoother

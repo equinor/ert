@@ -1,7 +1,7 @@
 import time
 from res.job_queue import JobStatusType
 from res.job_queue import JobQueueManager, ForwardModelStatus
-from ert_gui import ERT
+from ert_shared import ERT
 from res.util import ResLog
 from ecl.util.util import BoolVector
 

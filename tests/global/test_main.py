@@ -2,7 +2,7 @@ import argparse
 import sys
 import unittest
 
-from ert_gui.main import ert_parser
+from ert_shared.main import ert_parser
 from argparse import ArgumentParser
 
 

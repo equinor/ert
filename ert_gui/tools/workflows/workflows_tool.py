@@ -1,4 +1,4 @@
-from ert_gui import ERT
+from ert_shared import ERT
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from ert_gui.ertwidgets.models.ertmodel import getWorkflowNames

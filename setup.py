@@ -16,8 +16,9 @@ extra_files = package_files('ert_gui/resources/')
 setup(
     name='Ensemble Reservoir Tool',
     use_scm_version={'root':'.' , 'write_to': 'ert_gui/version.py'},
-    scripts=['ert_gui/bin/ert'],
+    scripts=['ert_shared/bin/ert'],
     packages=[
+            'ert_shared',
             'ert_gui',
             'ert_gui.ertwidgets',
             'ert_gui.ide',

@@ -2,7 +2,7 @@ import sys
 
 from ErtQt.Qt import QSize, QListWidget, QMessageBox, QAbstractItemView, QWidget, QVBoxLayout, QLabel, QToolButton, QHBoxLayout
 
-from ert_gui import ERT
+from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.models.ertmodel import getAllCases, selectOrCreateNewCase
 from ert_gui.ertwidgets.validateddialog import ValidatedDialog

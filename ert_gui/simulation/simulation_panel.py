@@ -15,7 +15,7 @@ from ErtQt.Qt import (
     QWidget,
     )
 
-from ert_gui import ERT
+from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget, resourceIcon
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.simulation import EnsembleExperimentPanel, EnsembleSmootherPanel

@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from res.analysis.analysis_module import AnalysisModule
-from ert_gui import ERT
+from ert_shared import ERT
 from ert_gui.ertwidgets.models.ertmodel import getRealizationCount
 
 class AnalysisModuleVariablesModel(object):

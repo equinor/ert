@@ -7,7 +7,7 @@ except ImportError:
   from PyQt5.QtCore import Qt
   from PyQt5.QtWidgets import QToolButton, QTextEdit, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox
 
-from ert_gui import ERT
+from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget, showWaitCursorWhileWaiting
 from ert_gui.ertwidgets.caselist import CaseList
 from ert_gui.ertwidgets.caseselector import CaseSelector

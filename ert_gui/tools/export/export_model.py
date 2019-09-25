@@ -18,7 +18,7 @@ from __future__ import print_function
 import os.path
 from res.enkf import EnkfConfigNode, EnkfNode, EnkfFieldFileFormatEnum, ErtImplType
 from res.enkf import GenKw, GenDataFileType, GenData, NodeId
-from ert_gui import ERT
+from ert_shared import ERT
 
 
 class ExportModel(object):

@@ -2,7 +2,7 @@ import sys
 
 from ErtQt.Qt import QComboBox
 
-from ert_gui import ERT
+from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.models.ertmodel import getAllCases, selectOrCreateNewCase, getCurrentCaseName, getAllInitializedCases
 

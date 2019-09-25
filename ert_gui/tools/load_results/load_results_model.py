@@ -15,7 +15,7 @@
 #  for more details.
 import os
 
-from ert_gui import ERT
+from ert_shared import ERT
 
 
 class LoadResultsModel(object):

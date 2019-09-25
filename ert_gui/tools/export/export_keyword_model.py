@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from res.enkf import EnkfVarType, ErtImplType
-from ert_gui import ERT
+from ert_shared import ERT
 
 
 class ExportKeywordModel(object):

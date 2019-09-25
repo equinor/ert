@@ -4,7 +4,7 @@ from res.enkf import RealizationStateEnum, EnkfVarType
 from res.enkf import ErtRunContext
 from res.job_queue import WorkflowRunner
 from ecl.util.util import BoolVector, StringList
-from ert_gui import ERT
+from ert_shared import ERT
 from ert_gui.ertwidgets import showWaitCursorWhileWaiting
 
 
