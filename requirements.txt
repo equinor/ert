@@ -16,3 +16,4 @@ matplotlib<3
 scipy
 pyyaml
 sphinx-argparse
+sphinx_rtd_theme
