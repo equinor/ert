@@ -151,7 +151,7 @@ class JobQueueManager(BaseCClass):
         started_job_threads = []
         while job_queue.is_running():
             job = job_queue.fetch_next_waiting()
-            while job is not None and job_queue.count_running() <= self.max_running():
+            while not job_queue.stopped_by_user and job is not None and job_queue.count_running() <= self.max_running():
                 started_job_threads.append(job.run(job_queue.driver))
                 job = job_queue.fetch_next_waiting()
             time.sleep(1)

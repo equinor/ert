@@ -113,6 +113,7 @@ class JobQueue(BaseCClass):
         status_file = "STATUS"
         exit_file = "EXIT"
         self.job_list=[]
+        self.stopped_by_user = False
         c_ptr = self._alloc(max_submit, OK_file, status_file , exit_file)
         super(JobQueue, self).__init__(c_ptr)
         self.size = size
@@ -255,6 +256,8 @@ class JobQueue(BaseCClass):
         return JobStatusType( int_status )
 
     def is_running(self):
+        if self.stopped_by_user:
+            return False
         for job in self.job_list:
             job_status = job.status
             if (job_status ==  JobStatusType.JOB_QUEUE_PENDING or
@@ -271,6 +274,7 @@ class JobQueue(BaseCClass):
         return None
 
     def kill_all_jobs(self):
+        self.stopped_by_user = True
         for job in self.job_list:
             job.stop(self.driver)
 
