@@ -1,5 +1,5 @@
-Interfaces
-==========
+Running ERT
+===========
 
 Graphical User Interface (GUI)
 ------------------------------
