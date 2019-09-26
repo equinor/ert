@@ -424,7 +424,7 @@ C++:
 
 Well:
 
- - Get well rates from restart files [`8 <https://github.com/Equinor/libecl/pull/8/>`__,`20 <https://github.com/Equinor/res/pull/20/>`__].
+ - Get well rates from restart files [`8 <https://github.com/Equinor/libecl/pull/8/>`__, `20 <https://github.com/Equinor/res/pull/20/>`__].
  - Test if file exists before load [`111 <https://github.com/Equinor/libecl/pull/111/>`__].
  - Fix some warnings [`169 <https://github.com/Equinor/libecl/pull/169/>`__]
 
