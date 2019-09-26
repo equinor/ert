@@ -76,6 +76,7 @@ void * enkf_main_dummy_JOB(void * self , const stringlist_type * args ) {
 
 
 void * enkf_main_ensemble_run_JOB( void * self , const stringlist_type * args ) {
+  printf("WARNING: The ENSEMBLE_RUN job is deprecated and will soon be removed!\n");
   enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
   int ens_size                 = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 0, stringlist_get_size(args), ens_size);
@@ -112,11 +113,13 @@ static void * enkf_main_smoother_JOB__( void * self , int iter , const stringlis
 
 
 void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
+  printf("WARNING: The RUN_SMOOTHER job is deprecated and will soon be removed!\n");
   return enkf_main_smoother_JOB__( self, 0 , args );
 }
 
 
 void * enkf_main_smoother_with_iter_JOB( void * self , const stringlist_type * args ) {
+  printf("WARNING: The RUN_SMOOTHER_WITH_ITER job is deprecated and will soon be removed!\n");
   int iter;
   stringlist_type * sub_args = stringlist_alloc_new();
 
@@ -133,6 +136,7 @@ void * enkf_main_smoother_with_iter_JOB( void * self , const stringlist_type * a
 
 
 void * enkf_main_iterated_smoother_JOB( void * self , const stringlist_type * args ) {
+  printf("WARNING: The RUN_ITERATED_SMOOTHER job is deprecated and will soon be removed!\n");
   enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
   analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
