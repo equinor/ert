@@ -238,16 +238,27 @@ it to a constant value. Here is an example of use:
 
    VAR6 CONST 1.0
 
-DUNIF 
+DUNIF
 ,,,,,
 
 The keyword DUNIF is used to assign a discrete uniform distribution. It takes
-three arguments, the number bins, a minimum and maximum value. Here is an
-example which creates a discrete uniform distribution on [0,1] with 25 bins:
+three arguments, the number of bins, a minimum and a maximum value. Here is an
+example which creates a discrete uniform distribution with 1, 2, 3, 4 and 5
+as possible values:
 
 ::
 
-   VAR7 DUNIF 25 0 1
+    VAR7 DUNIF 5 1 5
+
+Note that you can use the minimum and maximum to scale your distribution. In
+particular this will give you values on the form
+
+.. math::
+
+    \textit{min} + i * (max - min) / (nbins - 1)
+
+for values of i between 0 and nbins-1.
+
 
 ERRF
 ,,,,,
