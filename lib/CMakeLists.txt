@@ -306,7 +306,7 @@ foreach(name ies_enkf_config ies_enkf_data)
 endforeach()
 add_executable( ies_module analysis/modules/tests/ies_enkf_module.cpp)
 target_link_libraries(ies_module res)
-add_test(NAME ies_module COMMAND ies_module $<TARGET_FILE:ies> ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly)
+add_test(NAME ies_module COMMAND ies_module $<TARGET_FILE_NAME:ies> ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly)
 
 add_executable(ies_linalg analysis/modules/tests/ies_linalg.cpp ${ies_source})
 target_include_directories(ies_linalg PRIVATE analysis/modules)
@@ -428,7 +428,7 @@ target_link_libraries(analysis_external_module res)
 add_test(NAME analysis_module_rml
          COMMAND analysis_external_module
                  "RML_ENKF"
-                 $<TARGET_FILE:rml_enkf> 41
+                 $<TARGET_FILE_NAME:rml_enkf> 41
                  ITER:45
                  USE_PRIOR:False
                  LAMBDA_REDUCE:0.10
