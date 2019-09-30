@@ -711,14 +711,14 @@ list of available priors.
 	is exported from ERT, and FUNC is the name of a transformation function to be
 	applied. The avaialble functions are listed below:
 	
-	"POW10"       : This function will raise x to the power of 10: y = 10^x.
-	"TRUNC_POW10" : This function will raise x to the power of 10 - and truncate lower values at 0.001.
-	"LOG"         : This function will take the NATURAL logarithm of x: y = ln(x).
-	"LN"          : This function will take the NATURAL logarithm of x: y = ln(x).
- 	"LOG10"       : This function will take the log10 logarithm of x: y = log10(x). 
- 	"EXP"         : This function will calculate y = exp(x).  
- 	"LN0"         : This function will calculate y = ln(x + 0.000001
- 	"EXP0"        : This function will calculate y = exp(x) - 0.000001
+	| "POW10"			: This function will raise x to the power of 10: :math:`y = 10^x`
+	| "TRUNC_POW10"	: This function will raise x to the power of 10 - and truncate lower values at 0.001.
+	| "LOG"			: This function will take the NATURAL logarithm of :math:`x: y = \ln{x}`
+	| "LN"			: This function will take the NATURAL logarithm of :math:`x: y = \ln{x}`
+ 	| "LOG10"			: This function will take the log10 logarithm of :math:`x: y = \log_{10}{x}`
+ 	| "EXP"			: This function will calculate :math:`y = e^x`.
+ 	| "LN0"			: This function will calculate :math:`y = \ln{x} + 0.000001`
+ 	| "EXP0"			: This function will calculate :math:`y = e^x - 0.000001`
 
 	For example, the most common scenario is that underlying log-normal
 	distributed permeability in RMS are transformed to normally distributted in
@@ -1338,9 +1338,8 @@ Keywords controlling the ES algorithm
 	collinear (Saetrom and Omre, 2010). The subspace dimension, p, is selected
 	such that
 
-	::
 
-	        \frac{\sum_{i=1}^{p} s_i^2}{\sum_{i=1}^r s_i^2} \geq \mathrm{ENKF\_TRUNCATION}, 
+        :math:`\frac{\sum_{i=1}^{p} s_i^2}{\sum_{i=1}^r s_i^2} \geq \mathrm{ENKF\_TRUNCATION}`
 
 	where si is the ith singular value of the centered data ensemble matrix and r
 	is the rank of this matrix. This criterion is similar to the explained
@@ -1364,12 +1363,11 @@ Keywords controlling the ES algorithm
         content in the observations. The method is based on PCA, the scaling
         factor is calculated as:
 
-        ::
+        :math:`\sqrt{\frac{N_{\sigma}}{N_{\mathrm{obs}}}}`
 
-              \sqrt{\frac{N_{\sigma}}{N_{\mathrm{obs}}}
 
-        where $N_{\sigma}$ is the number of singular components, at (fixed)
-        truncation 0.95 and $N_{\mathrm{obs}}$ is the number of observations.
+        where :math:`N_{\sigma}` is the number of singular components, at (fixed)
+        truncation 0.95 and :math:`N_{\mathrm{obs}}` is the number of observations.
         The STD_SCALE_CORRELATED_OBS keyword will flatten all your observations,
         including temporal and spatial correlations. For more fine grained
         control you can use the STD_CALE_CORRELATED_OBS workflow job, or even
@@ -1396,17 +1394,15 @@ Keywords controlling the ES algorithm
 
 	Including outliers in the Smoother algorithm can dramatically increase the
 	coupling between the ensemble members. It is therefore important to filter out
-	these outlier data prior to data assimilation. An observation, \textstyle
-	d^o_i, will be classified as an outlier if
+	these outlier data prior to data assimilation. An observation, :math:`\textstyle
+	d^o_i`, will be classified as an outlier if
 
-	::
+        :math:`|d^o_i - \bar{d}_i| > \mathrm{ENKF\_ALPHA} \left(s_{d_i} + \sigma_{d^o_i}\right)`
 
-		|d^o_i - \bar{d}_i| > \mathrm{ENKF\_ALPHA} \left(s_{d_i} + \sigma_{d^o_i}\right)
-
-	where \textstyle\boldsymbol{d}^o is the vector of observed data,
-	\textstyle\boldsymbol{\bar{d}} is the average of the forcasted data ensemble,
-	\textstyle\boldsymbol{s_{d}} is the vector of estimated standard deviations
-	for the forcasted data ensemble, and \textstyle\boldsymbol{s_{d}^o} is the
+	where :math:`\textstyle\boldsymbol{d}^o` is the vector of observed data,
+	:math:`\textstyle\boldsymbol{\bar{d}}` is the average of the forcasted data ensemble,
+	:math:`\textstyle\boldsymbol{s_{d}}` is the vector of estimated standard deviations
+	for the forcasted data ensemble, and :math:`\textstyle\boldsymbol{s_{d}^o}` is the
 	vector standard deviations for the observation error (specified a priori).
 
         
