@@ -1,8 +1,8 @@
 from tests import ErtTest
 from res.enkf import EnKFMain
 from res.test import ErtTestContext
-from ert_gui.simulation.models import BaseRunModel
-from ert_gui import configureErtNotifier
+from ert_shared.models import BaseRunModel
+from ert_gui.ertnotifier import configureErtNotifier
 
 class BaseRunModelTest(ErtTest):
 

@@ -19,6 +19,7 @@ setup(
     scripts=['ert_shared/bin/ert'],
     packages=[
             'ert_shared',
+            'ert_shared.models',
             'ert_gui',
             'ert_gui.ertwidgets',
             'ert_gui.ide',
@@ -31,8 +32,7 @@ setup(
             'ert_gui.ide.wizards',
             'ert_gui.ide.keywords.data',
             'ert_gui.ide.keywords.definitions',
-            'ert_gui.plottery.plots',
-            'ert_gui.simulation.models',
+            'ert_gui.plottery.plots',            
             'ert_gui.tools.export',
             'ert_gui.tools.help',
             'ert_gui.tools.ide',

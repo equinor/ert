@@ -31,7 +31,7 @@ except ImportError:
 
 from ert_gui.ertwidgets import resourceMovie, Legend
 from ert_gui.simulation import Progress, SimpleProgress, DetailedProgressWidget
-from ert_gui.simulation.models import BaseRunModel, SimulationsTracker
+from ert_shared.models import BaseRunModel, SimulationsTracker
 from ert_gui.tools.plot.plot_tool import PlotTool
 from res.job_queue import JobStatusType
 from ecl.util.util import BoolVector

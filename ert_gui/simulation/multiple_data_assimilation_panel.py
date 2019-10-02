@@ -29,7 +29,7 @@ from ert_gui.ertwidgets.models.valuemodel import ValueModel
 from ert_gui.ertwidgets.stringbox import StringBox
 from ert_gui.ide.keywords.definitions import NumberListStringArgument, RangeStringArgument, ProperNameFormatArgument
 from ert_gui.simulation import SimulationConfigPanel
-from ert_gui.simulation.models import MultipleDataAssimilation
+from ert_shared.models import MultipleDataAssimilation
 
 
 class MultipleDataAssimilationPanel(SimulationConfigPanel):

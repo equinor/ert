@@ -1,11 +1,10 @@
-
-from ert_gui.simulation.models import BaseRunModel, ErtRunError, EnsembleExperiment
-from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, getQueueConfig
+from ert_shared.models import ErtRunError, EnsembleExperiment
+from ert_shared import ERT
 
 class SingleTestRun(EnsembleExperiment):
 
     def __init__(self):
-        queue_config = getQueueConfig()
+        queue_config = ERT.enkf_facade.get_queue_config()
         local_queue_config = queue_config.create_local_copy()
         super(EnsembleExperiment, self).__init__( local_queue_config)
 
