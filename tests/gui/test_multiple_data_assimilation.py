@@ -1,5 +1,5 @@
 from tests import ErtTest
-from ert_gui.simulation.models import MultipleDataAssimilation as mda
+from ert_shared.models import MultipleDataAssimilation as mda
 
 
 class MDAWeightsTest(ErtTest):

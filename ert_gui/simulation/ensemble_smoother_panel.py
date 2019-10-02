@@ -13,7 +13,7 @@ from ert_gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert_gui.ertwidgets.stringbox import StringBox
 from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameArgument
 from ert_gui.simulation import SimulationConfigPanel
-from ert_gui.simulation.models import EnsembleSmoother
+from ert_shared.models import EnsembleSmoother
 
 
 class EnsembleSmootherPanel(SimulationConfigPanel):

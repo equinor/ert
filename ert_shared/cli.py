@@ -1,21 +1,16 @@
 #!/usr/bin/env python
-import logging
 import os
-import sys
 from argparse import ArgumentTypeError
 
 from ecl.util.util import BoolVector
-from res.enkf import EnKFMain, ErtRunContext, ESUpdate, ResConfig
+from res.enkf import EnKFMain, ResConfig
 
 from ert_shared import ERT
-from ert_gui.ertwidgets.models import ertmodel
-from ert_gui.ide.keywords.definitions import (NumberListStringArgument,
-                                              RangeStringArgument)
-from ert_gui.simulation.models.ensemble_experiment import EnsembleExperiment
-from ert_gui.simulation.models.ensemble_smoother import EnsembleSmoother
-from ert_gui.simulation.models.multiple_data_assimilation import \
-    MultipleDataAssimilation
-from ert_gui.simulation.models.single_test_run import SingleTestRun
+from ert_gui.ide.keywords.definitions import RangeStringArgument
+from .models.ensemble_experiment import EnsembleExperiment
+from .models.ensemble_smoother import EnsembleSmoother
+from .models.multiple_data_assimilation import MultipleDataAssimilation
+from .models.single_test_run import SingleTestRun
 
 
 def run_cli(args):
@@ -34,7 +29,7 @@ def run_cli(args):
     elif args.mode == 'ensemble_smoother':
         model, argument = _setup_ensemble_smoother(args)
     elif args.mode == 'es_mda':
-        model, argument = _setup_multiple_data_assimilation(args)    
+        model, argument = _setup_multiple_data_assimilation(args)
     else:
         raise NotImplementedError(
             "Run type not supported {}".format(args.mode))
@@ -63,7 +58,7 @@ def _setup_ensemble_smoother(args):
     model = EnsembleSmoother()
     iterable = False
     active_name = ERT.ert.analysisConfig().activeModuleName()
-    modules = ertmodel.getAnalysisModuleNames(iterable=iterable)
+    modules = ERT.enkf_facade.get_analysis_module_names(iterable=iterable)
     simulations_argument = {
         "active_realizations": _realizations(args),
         "target_case": _target_case_name(args, format_mode=False),
@@ -76,7 +71,7 @@ def _setup_multiple_data_assimilation(args):
     model = MultipleDataAssimilation()
     iterable = False
     active_name = ERT.ert.analysisConfig().activeModuleName()
-    modules = ertmodel.getAnalysisModuleNames(iterable=iterable)
+    modules = ERT.enkf_facade.get_analysis_module_names(iterable=iterable)
     simulations_argument = {
         "active_realizations": _realizations(args),
         "target_case": _target_case_name(args, format_mode=True),
@@ -101,7 +96,7 @@ def _get_analysis_module_name(active_name, modules, iterable):
 
 
 def _realizations(args):
-    ensemble_size = ERT.ert.getEnsembleSize()
+    ensemble_size = ERT.enkf_facade.get_ensemble_size()
     mask = BoolVector(default_value=False, initial_size=ensemble_size)
     if args.realizations is None:
         default = "0-{}".format(ensemble_size - 1)
@@ -123,18 +118,19 @@ def _target_case_name(args, format_mode=False):
         return args.target_case
 
     if not format_mode:
-        case_name = ertmodel.getCurrentCaseName()
+        case_name = ERT.enkf_facade.get_current_case_name()
         return "{}_smoother_update".format(case_name)
 
     aic = ERT.ert.analysisConfig().getAnalysisIterConfig()
     if aic.caseFormatSet():
         return aic.getCaseFormat()
 
-    case_name = ertmodel.getCurrentCaseName()
+    case_name = ERT.enkf_facade.get_current_case_name()
     return "{}_%d".format(case_name)
 
 
 class ErtCliNotifier():
+    """CLI Notifier to use in ERT Adapter"""
 
     def __init__(self, ert, config_file):
         self._ert = ert

@@ -1,9 +1,9 @@
 import time
 from res.job_queue import JobStatusType
-from res.job_queue import JobQueueManager, ForwardModelStatus
-from ert_shared import ERT
+from res.job_queue import ForwardModelStatus
 from res.util import ResLog
 from ecl.util.util import BoolVector
+from ert_shared import ERT
 
 # A method decorated with the @job_queue decorator implements the following logic:
 #

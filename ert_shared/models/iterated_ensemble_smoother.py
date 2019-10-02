@@ -1,13 +1,12 @@
-from res.enkf.enums import EnkfInitModeEnum, HookRuntime
+from res.enkf.enums import HookRuntime
 from res.enkf import ErtRunContext
-from ert_gui.ertwidgets.models.ertmodel import getNumberOfIterations
-from ert_gui.simulation.models import BaseRunModel, ErtRunError
-from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, getQueueConfig
+from ert_shared.models import BaseRunModel, ErtRunError
+from ert_shared import ERT
 
 class IteratedEnsembleSmoother(BaseRunModel):
 
     def __init__(self):
-        super(IteratedEnsembleSmoother, self).__init__(getQueueConfig() , phase_count=2)
+        super(IteratedEnsembleSmoother, self).__init__(ERT.enkf_facade.get_queue_config() , phase_count=2)
         self.support_restart = False
 
     def setAnalysisModule(self, module_name):
@@ -59,7 +58,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.POST_UPDATE)
 
     def runSimulations(self, arguments):
-        phase_count = getNumberOfIterations() + 1
+        phase_count = ERT.enkf_facade.get_number_of_iterations() + 1
         self.setPhaseCount(phase_count)
 
         analysis_module = self.setAnalysisModule(arguments["analysis_module"])
@@ -76,7 +75,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         num_retries = 0
         current_iter = 0
 
-        while current_iter < getNumberOfIterations() and num_retries < num_retries_per_iteration:
+        while current_iter < ERT.enkf_facade.get_number_of_iterations() and num_retries < num_retries_per_iteration:
             pre_analysis_iter_num = analysis_module.getInt("ITER")
             self.analyzeStep( run_context )
             current_iter = analysis_module.getInt("ITER")
@@ -104,8 +103,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         model_config = self.ert().getModelConfig( )
         runpath_fmt = model_config.getRunpathFormat( )
         jobname_fmt = model_config.getJobnameFormat( )
-        subst_list = self.ert().getDataKW( )
-        fs_manager = self.ert().getEnkfFsManager()
+        subst_list = self.ert().getDataKW( )        
         target_case_format = arguments["target_case"]
 
         if prior_context is None:

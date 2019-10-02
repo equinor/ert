@@ -122,6 +122,7 @@ except ImportError:
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import SummaryPanel, resourceIcon
 import ert_gui.ertwidgets
+from ert_gui.ertnotifier import configureErtNotifier
 from ert_gui.main_window import GertMainWindow
 from ert_gui.newconfig import NewConfigurationDialog
 from ert_gui.simulation.simulation_panel import SimulationPanel
@@ -229,7 +230,7 @@ def main(argv):
     res_config = ResConfig(config_file)
     os.chdir( res_config.config_path )
     ert = EnKFMain(res_config, strict=strict, verbose=verbose)
-    ert_gui.configureErtNotifier(ert, config_file)
+    configureErtNotifier(ert, config_file)
 
     window = GertMainWindow()
     window.setWidget(SimulationPanel())

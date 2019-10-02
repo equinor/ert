@@ -10,7 +10,7 @@ from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.ertmodel import  getRunPath
-from ert_gui.simulation.models import SingleTestRun
+from ert_shared.models import SingleTestRun
 from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
 from ecl.util.util import BoolVector
 

@@ -9,6 +9,7 @@ from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import resourceIcon
 import ert_gui.ertwidgets
 from ert_gui.tools.plot.plot_window import PlotWindow
+from ert_gui.ertnotifier import configureErtNotifier
 import os
 from res.enkf import EnKFMain, ResConfig
 import sys
@@ -58,7 +59,7 @@ def main(argv):
 
     res_config = ResConfig(config_file)
     ert = EnKFMain(res_config, strict=strict, verbose=False)
-    ert_gui.configureErtNotifier(ert, config_file)
+    configureErtNotifier(ert, config_file)
 
     window = PlotWindow(ert, None)
 

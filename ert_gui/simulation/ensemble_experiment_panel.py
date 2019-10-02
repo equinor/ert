@@ -11,7 +11,7 @@ from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizations
 from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
 from ert_gui.ertwidgets.stringbox import StringBox
 from ert_gui.ide.keywords.definitions import RangeStringArgument
-from ert_gui.simulation.models import EnsembleExperiment
+from ert_shared.models import EnsembleExperiment
 from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
 
 

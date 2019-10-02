@@ -1,13 +1,13 @@
 from res.enkf.enums import HookRuntime
 from res.enkf.enums import RealizationStateEnum
 from res.enkf import ErtRunContext
-from ert_gui.simulation.models import BaseRunModel, ErtRunError
-from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, getQueueConfig
+from ert_shared.models import BaseRunModel, ErtRunError
+from ert_shared import ERT
 
 class EnsembleSmoother(BaseRunModel):
 
     def __init__(self):
-        super(EnsembleSmoother, self).__init__(getQueueConfig() , phase_count=2)
+        super(EnsembleSmoother, self).__init__(ERT.enkf_facade.get_queue_config() , phase_count=2)
         self.support_restart = False
 
     def setAnalysisModule(self, module_name):

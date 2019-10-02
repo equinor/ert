@@ -9,12 +9,11 @@ from ert_gui.ertwidgets import showWaitCursorWhileWaiting
 
 
 def getRealizationCount():
-    return ERT.ert.getEnsembleSize()
+    return ERT.enkf_facade.get_ensemble_size()
 
 
 def getAllCases():
     """ @rtype: list[str] """
-    fs = ERT.ert.getEnkfFsManager().getCurrentFileSystem()
     case_list = ERT.ert.getEnkfFsManager().getCaseList()
     return [str(case) for case in case_list if not ERT.ert.getEnkfFsManager().isCaseHidden(case)]
 
@@ -36,7 +35,7 @@ def getAllInitializedCases():
 
 def getCurrentCaseName():
     """ @rtype: str """
-    return str(ERT.ert.getEnkfFsManager().getCurrentFileSystem().getCaseName())
+    return ERT.enkf_facade.get_current_case_name()
 
 
 def getHistoryLength():
@@ -126,7 +125,7 @@ def getRunPath():
 
 def getNumberOfIterations():
     """ @rtype: int """
-    return ERT.ert.analysisConfig().getAnalysisIterConfig().getNumIterations()
+    return ERT.enkf_facade.get_number_of_iterations()
 
 
 def setNumberOfIterations(iteration_count):
@@ -152,22 +151,12 @@ def createWorkflowRunner(workflow_name):
 
 def getAnalysisModules(iterable=False):
     """ @rtype: list[ert.analysis.AnalysisModule]"""
-    module_names = ERT.ert.analysisConfig().getModuleList()
+    return ERT.enkf_facade.get_analysis_modules(iterable)
 
-    modules = []
-    for module_name in module_names:
-        module = ERT.ert.analysisConfig().getModule(module_name)
-        module_is_iterable = module.checkOption(AnalysisModuleOptionsEnum.ANALYSIS_ITERABLE)
-
-        if iterable == module_is_iterable:
-            modules.append(module)
-
-    return sorted(modules, key=AnalysisModule.getName)
 
 def getAnalysisModuleNames(iterable=False):
     """ @rtype: list[str] """
-    modules = getAnalysisModules(iterable)
-    return [module.getName() for module in modules]
+    return ERT.enkf_facade.get_analysis_module_names(iterable)
 
 
 def getCurrentAnalysisModuleName():
@@ -176,4 +165,4 @@ def getCurrentAnalysisModuleName():
 
 
 def getQueueConfig():
-    return ERT.ert.get_queue_config( )
+    return ERT.enkf_facade.get_queue_config()

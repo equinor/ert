@@ -4,14 +4,13 @@ import sys
 import re
 from argparse import ArgumentParser, ArgumentTypeError
 from ert_shared import run_cli
-from ert_shared import ERT
 from ert_gui.ide.keywords.definitions import (
     RangeStringArgument,
     ProperNameArgument,
     ProperNameFormatArgument,
     NumberListStringArgument,
 )
-from ert_gui.simulation.models.multiple_data_assimilation import (
+from ert_shared.models.multiple_data_assimilation import (
     MultipleDataAssimilation,
 )
 
@@ -98,6 +97,7 @@ def get_ert_parser(parser=None):
         help="Available sub commands",
         dest="mode",
     )
+    subparsers.required = True
 
     config_help = "Ert configuration file"
 
