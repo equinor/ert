@@ -3,6 +3,8 @@ import os
 import shutil
 import random
 import configsuite
+import yaml
+
 import numpy as np
 import pandas as pd
 
@@ -185,6 +187,33 @@ def test_old_enkf_scaling_job(setup_ert):
     job.run(ert, ["POLY_OBS"])
 
     assert_obs_vector(obs_vector, 3.1622776601683795)
+
+def test_python_version_of_enkf_scaling_job(setup_ert):
+    res_config = ResConfig(config=setup_ert)
+    ert = EnKFMain(res_config)
+
+    obs = ert.getObservations()
+    obs_vector = obs["POLY_OBS"]
+
+    assert_obs_vector(obs_vector, 1.0)
+
+    job_config = {"CALCULATE_KEYS": {"keys": ["POLY_OBS"]}}
+
+    with open("job_config.yml", "w") as fout:
+        yaml.dump(job_config, fout)
+
+    job = ert.getWorkflowList().getJob("CORRELATE_OBSERVATIONS")
+    job.run(ert, ["job_config.yml"])
+
+    assert_obs_vector(obs_vector, np.sqrt(10.))
+
+    job_config["CALCULATE_KEYS"].update({"index": [1, 2, 3]})
+    with open("job_config.yml", "w") as fout:
+        yaml.dump(job_config, fout)
+
+    job.run(ert, ["job_config.yml"])
+
+    assert_obs_vector(obs_vector, np.sqrt(10.), index_list=job_config["CALCULATE_KEYS"]["index"], val_2=np.sqrt(3.))
 
 
 def test_compare_different_jobs(setup_ert):
