@@ -14,8 +14,7 @@ def main(args):
         run_path = args[1]
 
         if not os.path.exists(run_path):
-            sys.stderr.write("No such directory: %s\n" % run_path)
-            sys.exit(1)
+            sys.exit("No such directory: {}".format(run_path))
         os.chdir(run_path)
 
     warning = check_version()
