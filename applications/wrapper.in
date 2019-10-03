@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+
+import os, pwd, socket, requests, subprocess, json, sys
+
+pw_entry = pwd.getpwuid(os.getuid())
+user = pw_entry.pw_name
+log_url = "http://devnull.statoil.no:4444"
+
+executable = "${EXEC}"
+
+payload = {"user": user,
+            "cwd": os.getcwd(),
+            "application": executable,
+            "node": socket.gethostname(),
+            "komodo_release": os.getenv("KOMODO_RELEASE", "--------")
+}
+
+# Disabling proxies
+proxies = {
+    "http": None,
+    "https": None,
+}
+
+requests.post(log_url, timeout=3,
+                headers={"Content-Type": "application/json"},
+                data=json.dumps(payload), proxies=proxies)
+
+subprocess.Popen([executable,] + sys.argv[1:])
