@@ -70,5 +70,5 @@ class RunAnalysisTool(Tool):
             msg.exec_()
             return
 
-        ERT.ertChanged.emit()
+        ERT.emitErtChange()
         self._dialog.accept()

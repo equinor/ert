@@ -3,7 +3,7 @@ from res.job_queue import JobStatusType
 from res.job_queue import ForwardModelStatus
 from res.util import ResLog
 from ecl.util.util import BoolVector
-import ert_shared
+from ert_shared import ERT
 
 # A method decorated with the @job_queue decorator implements the following logic:
 #
@@ -282,13 +282,13 @@ class BaseRunModel(object):
     def checkHaveSufficientRealizations(self, num_successful_realizations):
         if num_successful_realizations == 0:
             raise ErtRunError("Simulation failed! All realizations failed!")
-        elif not ert_shared.ERT.enkf_facade.have_enough_realizations(num_successful_realizations, self._ensemble_size):
+        elif not ERT.enkf_facade.have_enough_realizations(num_successful_realizations, self._ensemble_size):
             raise ErtRunError("Too many simulations have failed! You can add/adjust MIN_REALIZATIONS to allow failures in your simulations.\n\n"
                               "Check ERT log file '%s' or simulation folder for details." % ResLog.getFilename())
 
     def checkMinimumActiveRealizations(self, run_context):
         active_realizations = self.count_active_realizations( run_context )
-        if not ert_shared.ERT.enkf_facade.have_enough_realizations(active_realizations, self._ensemble_size):
+        if not ERT.enkf_facade.have_enough_realizations(active_realizations, self._ensemble_size):
             raise ErtRunError("Number of active realizations is less than the specified MIN_REALIZATIONS in the config file")
 
     def count_active_realizations(self, run_context):
