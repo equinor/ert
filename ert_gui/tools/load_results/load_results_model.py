@@ -28,13 +28,12 @@ class LoadResultsModel(object):
         @type iteration: int
         @rtype int: number of loaded realisations
         """
-        fs = ERT.ert.getEnkfFsManager().getFileSystem(selected_case)
-        return ERT.ert.loadFromForwardModel(realisations, iteration, fs)
+        return ERT.enkf_facade.load_results(selected_case, realisations, iteration)
 
     @staticmethod
     def isValidRunPath():
         """ @rtype: bool """
-        run_path = ERT.ert.getModelConfig().getRunpathAsString()
+        run_path = ERT.enkf_facade.get_runpath_as_string()
         try:
             result = run_path % (0, 0)
             return True
@@ -52,13 +51,13 @@ class LoadResultsModel(object):
     @staticmethod
     def getCurrentRunPath():
         """ @rtype: str """
-        return ERT.ert.getModelConfig().getRunpathAsString()
+        return ERT.enkf_facade.get_runpath_as_string()
 
 
     @staticmethod
     def getIterationCount():
         """ @rtype: int """
-        run_path = ERT.ert.getModelConfig().getRunpathAsString()
+        run_path = ERT.enkf_facade.get_runpath_as_string()
         try:
             results = run_path % (0, 0)
         except TypeError:

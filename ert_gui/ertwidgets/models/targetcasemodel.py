@@ -21,8 +21,8 @@ class TargetCaseModel(ValueModel):
     def getDefaultValue(self):
         """ @rtype: str """
         if self._format_mode:
-            if ERT.ert.analysisConfig().getAnalysisIterConfig().caseFormatSet():
-                return ERT.ert.analysisConfig().getAnalysisIterConfig().getCaseFormat()
+            if ERT.enkf_facade.is_case_format_set():
+                return ERT.enkf_facade.get_case_format()
             else:
                 case_name = getCurrentCaseName()
                 return "%s_%%d" % case_name

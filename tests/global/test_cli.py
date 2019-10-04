@@ -1,8 +1,5 @@
 from tests import ErtTest
 from res.test import ErtTestContext
-import os
-import subprocess
-from res.enkf import EnKFMain, ResConfig
 from ecl.util.util import BoolVector
 from ert_shared import cli
 from ert_shared import ERT
@@ -60,7 +57,7 @@ class EntryPointTest(ErtTest):
 
             args = Namespace(realizations=None)
             res = cli._realizations(args)
-            ensemble_size = ERT.ert.getEnsembleSize()
+            ensemble_size = ERT.enkf_facade.get_ensemble_size()
             mask = BoolVector(default_value=False, initial_size=ensemble_size)
             mask.updateActiveMask("0-99")
             self.assertEqual(mask, res)
@@ -74,7 +71,7 @@ class EntryPointTest(ErtTest):
 
             args = Namespace(realizations="0-4,7,8")
             res = cli._realizations(args)
-            ensemble_size = ERT.ert.getEnsembleSize()
+            ensemble_size = ERT.enkf_facade.get_ensemble_size()
             mask = BoolVector(default_value=False, initial_size=ensemble_size)
             mask.updateActiveMask("0-4,7,8")
             self.assertEqual(mask, res)

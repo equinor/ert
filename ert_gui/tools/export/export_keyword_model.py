@@ -26,7 +26,7 @@ class ExportKeywordModel(object):
         self.__gen_param = None
 
     def getKeylistFromImplType(self, ert_impl_type):
-        return sorted(ERT.ert.ensembleConfig().getKeylistFromImplType(ert_impl_type))
+        return sorted(ERT.enkf_facade.get_keylist_from_impl_type(ert_impl_type))
 
     def isDynamicPlot(self, key):
         vtype = self.getVarType(key)
@@ -36,17 +36,17 @@ class ExportKeywordModel(object):
         return self.getVarType(key) == EnkfVarType.DYNAMIC_STATE
 
     def getVarType(self, key):
-        config_node = ERT.ert.ensembleConfig().getNode(key)
+        config_node = ERT.enkf_facade.get_node(key)
         variable_type = config_node.getVariableType()
         return variable_type
 
     def getImplementationType(self, key):
-        config_node = ERT.ert.ensembleConfig().getNode(key)
+        config_node = ERT.enkf_facade.get_node(key)
         return config_node.getImplementationType()
 
     def getGenKwKeyWords(self):
         if self.__gen_kw is None:
-            self.__gen_kw = [key for key in ERT.ert.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)]
+            self.__gen_kw = [key for key in ERT.enkf_facade.get_keylist_from_impl_type(ErtImplType.GEN_KW)]
 
         return self.__gen_kw
 
@@ -54,13 +54,13 @@ class ExportKeywordModel(object):
         if self.__gen_data is None:
             gen_data_list = []
             gen_param_list = []
-            for key in ERT.ert.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_DATA):
+            for key in ERT.enkf_facade.get_keylist_from_impl_type(ErtImplType.GEN_DATA):
                 if self.getVarType(key) == EnkfVarType.PARAMETER:
                     gen_param_list.append(key)
                     continue
-                if ERT.ert.ensembleConfig().getNode(key).getDataModelConfig().getOutputFormat() is not None:
+                if ERT.enkf_facade.get_node_output_format(key) is not None:
                     gen_data_list.append(key)
-                elif ERT.ert.ensembleConfig().getNode(key).getDataModelConfig().getInputFormat() is not None:
+                elif ERT.enkf_facade.get_node_input_format(key) is not None:
                     gen_data_list.append(key)
             self.__gen_data = gen_data_list
             self.__gen_param = gen_param_list
@@ -104,9 +104,9 @@ class ExportKeywordModel(object):
 
     def getGenDataReportSteps(self, key):
         gen_data_list = []
-        obs_keys = ERT.ert.ensembleConfig().getNode(key).getObservationKeys()
+        obs_keys = ERT.enkf_facade.get_observation_keys(key)
         for obs_key in obs_keys:
-            obs_vector = ERT.ert.getObservations()[obs_key]
+            obs_vector = ERT.enkf_facade.get_observations(obs_key)
             for report_step in obs_vector.getStepList():
                 gen_data_list.append(str(report_step))
 

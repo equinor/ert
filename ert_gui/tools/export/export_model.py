@@ -16,8 +16,8 @@
 
 from __future__ import print_function
 import os.path
-from res.enkf import EnkfConfigNode, EnkfNode, EnkfFieldFileFormatEnum, ErtImplType
-from res.enkf import GenKw, GenDataFileType, GenData, NodeId
+from res.enkf import EnkfConfigNode, EnkfNode, EnkfFieldFileFormatEnum
+from res.enkf import GenKw, GenDataFileType, NodeId
 from ert_shared import ERT
 
 
@@ -35,7 +35,7 @@ class ExportModel(object):
         @type selected_case: str
         """
 
-        fs = ERT.ert.getEnkfFsManager().getFileSystem(selected_case)
+        fs = ERT.enkf_facade.get_file_system(selected_case)
         if file_type == EnkfFieldFileFormatEnum.ECL_GRDECL_FILE:
             extension = ".grdecl"
         elif file_type == EnkfFieldFileFormatEnum.RMS_ROFF_FILE:
@@ -43,9 +43,8 @@ class ExportModel(object):
 
         iens_list = iactive.createActiveList()
         path_fmt = os.path.join(path, keyword + "_%d" + extension)
-        config_node = ERT.ert.ensembleConfig()[keyword]
-        mc = ERT.ert.getModelConfig()
-        init_file = config_node.getInitFile(mc.getRunpathFormat())
+        config_node = ERT.enkf_facade.get_config_node(keyword)
+        init_file = config_node.getInitFile(ERT.enkf_facade.get_runpath_format())
         if init_file:
             print('Using init file:%s' % init_file)
         EnkfNode.exportMany(config_node, path_fmt, fs, iens_list, file_type=file_type, arg=init_file)
@@ -60,10 +59,10 @@ class ExportModel(object):
         @type report_step: int
         @type selected_case: str
         """
-        enkf_config_node = ERT.ert.ensembleConfig().getNode(keyword)
+        enkf_config_node = ERT.enkf_facade.get_node(keyword)
         assert isinstance(enkf_config_node, EnkfConfigNode)
         node = EnkfNode(enkf_config_node)
-        fs = ERT.ert.getEnkfFsManager().getFileSystem(selected_case)
+        fs = ERT.enkf_facade.get_file_system(selected_case)
 
         for index, value in enumerate(iactive):
             if value:
@@ -86,8 +85,7 @@ class ExportModel(object):
         @type report_step: int
         @type selected_case: str
         """
-        fs = ERT.ert.getEnkfFsManager().getFileSystem(selected_case)
-        config_node = ERT.ert.ensembleConfig().getNode(keyword)
+        config_node = ERT.enkf_facade.get_node(keyword)
         gen_data_config_node = config_node.getDataModelConfig()
 
         export_type = gen_data_config_node.getOutputFormat()
@@ -100,7 +98,7 @@ class ExportModel(object):
             if active:
                 node_id = NodeId(int(report_step), index)
 
-                if node.tryLoad(fs, node_id):
+                if ERT.enkf_facade.try_load_node(selected_case, node, node_id):
                     gen_data = node.asGenData()
 
                     filename = str(path + "/" + keyword + "_{0}").format(index) + ".txt"

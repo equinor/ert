@@ -6,27 +6,27 @@ class ErtSummary(object):
 
     def getForwardModels(self):
         """ @rtype: list of str """
-        forward_model  = ERT.ert.getModelConfig().getForwardModel()
+        forward_model  = ERT.enkf_facade.get_forward_model()
         return [job for job in forward_model.joblist()]
 
     def getParameters(self):
         """ @rtype: list of str """
-        parameters = ERT.ert.ensembleConfig().getKeylistFromVarType(EnkfVarType.PARAMETER)
+        parameters = ERT.enkf_facade.get_keylist_from_var_type(EnkfVarType.PARAMETER)
         return sorted([parameter for parameter in parameters], key=lambda k : k.lower())
 
 
     def getObservations(self):
         """ @rtype: list of str """
-        gen_obs = ERT.ert.getObservations().getTypedKeylist(EnkfObservationImplementationType.GEN_OBS)
+        gen_obs = ERT.enkf_facade.get_typed_keylist(EnkfObservationImplementationType.GEN_OBS)
 
 
-        summary_obs = ERT.ert.getObservations().getTypedKeylist(EnkfObservationImplementationType.SUMMARY_OBS)
+        summary_obs = ERT.enkf_facade.get_typed_keylist(EnkfObservationImplementationType.SUMMARY_OBS)
 
         keys = []
         summary_keys_count = {}
         summary_keys = []
         for key in summary_obs:
-            data_key = ERT.ert.getObservations()[key].getDataKey()
+            data_key = ERT.enkf_facade.get_observations_data_key(key)
 
             if not data_key in summary_keys_count:
                 summary_keys_count[data_key] = 1

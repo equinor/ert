@@ -57,7 +57,7 @@ def _setup_ensemble_experiment(args):
 def _setup_ensemble_smoother(args):
     model = EnsembleSmoother()
     iterable = False
-    active_name = ERT.ert.analysisConfig().activeModuleName()
+    active_name = ERT.enkf_facade.get_active_module_name()
     modules = ERT.enkf_facade.get_analysis_module_names(iterable=iterable)
     simulations_argument = {
         "active_realizations": _realizations(args),
@@ -70,7 +70,7 @@ def _setup_ensemble_smoother(args):
 def _setup_multiple_data_assimilation(args):
     model = MultipleDataAssimilation()
     iterable = False
-    active_name = ERT.ert.analysisConfig().activeModuleName()
+    active_name = ERT.enkf_facade.get_active_module_name()
     modules = ERT.enkf_facade.get_analysis_module_names(iterable=iterable)
     simulations_argument = {
         "active_realizations": _realizations(args),
@@ -121,9 +121,8 @@ def _target_case_name(args, format_mode=False):
         case_name = ERT.enkf_facade.get_current_case_name()
         return "{}_smoother_update".format(case_name)
 
-    aic = ERT.ert.analysisConfig().getAnalysisIterConfig()
-    if aic.caseFormatSet():
-        return aic.getCaseFormat()
+    if ERT.enkf_facade.is_case_format_set():
+        return ERT.enkf_facade.get_case_format()
 
     case_name = ERT.enkf_facade.get_current_case_name()
     return "{}_%d".format(case_name)

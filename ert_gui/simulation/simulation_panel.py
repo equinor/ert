@@ -69,7 +69,7 @@ class SimulationPanel(QWidget):
 
         self.addSimulationConfigPanel(SingleTestRunPanel())
         self.addSimulationConfigPanel(EnsembleExperimentPanel())
-        if(ERT.ert.have_observations()):
+        if(ERT.enkf_facade.have_observations()):
             self.addSimulationConfigPanel(EnsembleSmootherPanel())
             self.addSimulationConfigPanel(MultipleDataAssimilationPanel())
             self.addSimulationConfigPanel(IteratedEnsembleSmootherPanel())
