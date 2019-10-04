@@ -23,11 +23,6 @@ class CopyStyleToDialog(QDialog):
 
         layout = QFormLayout(self)
 
-        self._ert = ERT.ert
-        """:type: res.enkf.enkf_main.EnKFMain"""
-
-        self.model = self._ert
-
         self._filter_popup = FilterPopup(self)
         self._filter_popup.filterSettingsChanged.connect(self.filterSettingsChanged)
 
@@ -35,7 +30,7 @@ class CopyStyleToDialog(QDialog):
         filter_popup_button.setIcon(resourceIcon("ide/cog_edit.png"))
         filter_popup_button.clicked.connect(self._filter_popup.show)
 
-        self._list_model = FilterableKwListModel(self._ert, selectable_keys)
+        self._list_model = FilterableKwListModel(selectable_keys)
         self._list_model.unselectAll()
 
         self._cl = CheckList(self._list_model, custom_filter_button=filter_popup_button)

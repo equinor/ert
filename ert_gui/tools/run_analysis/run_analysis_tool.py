@@ -13,17 +13,13 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import ert_shared
-
 try:
     from PyQt4.QtGui import QMessageBox
 except ImportError:
     from PyQt5.QtWidgets import QMessageBox
 
+from ert_shared import ERT
 from res.enkf import ErtRunContext
-
-
-from res.enkf import ESUpdate
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from ert_gui.tools import Tool
@@ -33,14 +29,11 @@ from ert_gui.tools.run_analysis import RunAnalysisPanel
 def analyse(target, source):
     """Runs analysis using target and source cases. Returns whether or not
     the analysis was successful."""
-    ert = ert_shared.ERT.ert
-    fs_manager = ert.getEnkfFsManager()
-    es_update = ESUpdate(ert)
 
-    target_fs = fs_manager.getFileSystem(target)
-    source_fs = fs_manager.getFileSystem(source)
+    target_fs = ERT.enkf_facade.get_file_system(target)
+    source_fs = ERT.enkf_facade.get_file_system(source)
     run_context = ErtRunContext.ensemble_smoother_update(source_fs, target_fs,)
-    return es_update.smootherUpdate(run_context)
+    return ERT.enkf_facade.smoother_update(run_context)
 
 
 class RunAnalysisTool(Tool):
@@ -77,5 +70,5 @@ class RunAnalysisTool(Tool):
             msg.exec_()
             return
 
-        ert_shared.ERT.ertChanged.emit()
+        ERT.ertChanged.emit()
         self._dialog.accept()

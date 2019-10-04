@@ -4,8 +4,7 @@ from .plot_tools import PlotTools
 import pandas as pd
 
 def plotCrossCaseStatistics(plot_context):
-    """ @type plot_context: ert_gui.plottery.PlotContext """
-    ert = plot_context.ert()
+    """ @type plot_context: ert_gui.plottery.PlotContext """    
     key = plot_context.key()
     config = plot_context.plotConfig()
     axes = plot_context.figure().add_subplot(111)
@@ -35,7 +34,7 @@ def plotCrossCaseStatistics(plot_context):
     }
     for case_index, case in enumerate(case_list):
         case_indexes.append(case_index)
-        data = plot_context.dataGatherer().gatherData(ert, case, key)
+        data = plot_context.dataGatherer().gatherData(case, key)
         std_dev_factor = config.getStandardDeviationFactor()
 
         if not data.empty:

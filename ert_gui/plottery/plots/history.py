@@ -1,5 +1,4 @@
 def plotHistory(plot_context, axes):
-    ert = plot_context.ert()
     key = plot_context.key()
 
     if len(plot_context.cases()) == 0:
@@ -11,7 +10,7 @@ def plotHistory(plot_context, axes):
     data_gatherer = plot_context.dataGatherer()
 
     if config.isHistoryEnabled() and data_gatherer.hasHistoryGatherFunction():
-        history_data = data_gatherer.gatherHistoryData(ert, case, key)
+        history_data = data_gatherer.gatherHistoryData(case, key)
 
         if not history_data.empty:
             _plotHistory(axes, config, history_data)

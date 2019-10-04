@@ -1,18 +1,17 @@
 from ert_gui.ertwidgets.models.selectable_list_model import SelectableListModel
-
+from ert_shared import ERT
 
 class FilterableKwListModel(SelectableListModel):
     """
     Adds ERT - plotting keyword specific filtering functionality to the general SelectableListModel
     """
-    def __init__(self, ert, selectable_keys):
+    def __init__(self, selectable_keys):
         SelectableListModel.__init__(self, selectable_keys)
-        self._ert = ert
         self._show_summary_keys = True
         self._show_gen_kw_keys = True
         self._show_gen_data_keys = True
         self._show_custom_kw_keys = True
-        
+
     def getList(self):
         filtered_list = []
         for item in self._items:
@@ -27,20 +26,17 @@ class FilterableKwListModel(SelectableListModel):
 
         return filtered_list
 
-    def keyManager(self):
-        return self._ert.getKeyManager()
-
     def isSummaryKey(self, key):
-        return self.keyManager().isSummaryKey(key)
+        return ERT.enkf_facade.is_summary_key(key)
 
     def isGenKWKey(self, key):
-        return self.keyManager().isGenKwKey(key)
+        return ERT.enkf_facade.is_gen_kw_key(key)
 
     def isGenDataKey(self, key):
-        return self.keyManager().isGenDataKey(key)
+        return ERT.enkf_facade.is_gen_data_key(key)
 
     def isCustomKwKey(self, key):
-        return self.keyManager().isCustomKwKey(key)
+        return ERT.enkf_facade.is_custom_kw_key(key)
 
     def setShowSummaryKeys(self, visible):
         self._show_summary_keys = visible

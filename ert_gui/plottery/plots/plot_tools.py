@@ -1,3 +1,5 @@
+from ert_shared import ERT
+
 class PlotTools(object):
     @staticmethod
     def showGrid(axes, plot_context):
@@ -93,7 +95,6 @@ class PlotTools(object):
 
     @staticmethod
     def __setupLabels(plot_context, default_x_label, default_y_label):
-        ert = plot_context.ert()
         key = plot_context.key()
         config = plot_context.plotConfig()
 
@@ -103,7 +104,7 @@ class PlotTools(object):
         if config.yLabel() is None:
             config.setYLabel(default_y_label)
 
-            if ert.eclConfig().hasRefcase() and key in ert.eclConfig().getRefcase():
-                unit = ert.eclConfig().getRefcase().unit(key)
+            if ERT.enkf_facade.have_refcase() and key in ERT.enkf_facade.get_refcase():
+                unit = ERT.enkf_facade.get_refcase().unit(key)
                 if unit != "":
                     config.setYLabel(unit)

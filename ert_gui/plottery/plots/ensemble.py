@@ -7,7 +7,6 @@ def plotEnsemble(plot_context):
     """
     @type plot_context: ert_gui.plottery.PlotContext
     """
-    ert = plot_context.ert()
     key = plot_context.key()
     config = plot_context.plotConfig()
     """:type: ert_gui.plottery.PlotConfig """
@@ -20,7 +19,7 @@ def plotEnsemble(plot_context):
     plot_context.x_axis = plot_context.DATE_AXIS
 
     for case in case_list:
-        data = plot_context.dataGatherer().gatherData(ert, case, key)
+        data = plot_context.dataGatherer().gatherData(case, key)
         if not data.empty:
             if not data.index.is_all_dates:
                 plot_context.deactivateDateSupport()

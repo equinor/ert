@@ -176,13 +176,6 @@ class CustomizePlotDialog(QDialog):
         QDialog.__init__(self, parent)
         self.setWindowTitle(title)
 
-        self._ert = ERT.ert
-
-        """:type: res.enkf.enkf_main.EnKFMain"""
-
-        self.key_manager = self._ert.getKeyManager()
-        """:type: res.enkf.key_manager.KeyManager """
-
         self.current_key = key
 
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
@@ -262,7 +255,7 @@ class CustomizePlotDialog(QDialog):
         self.setLayout(layout)
 
     def initiateCopyStyleToDialog(self):
-        all_other_keys = [k for k in self.key_manager.allDataTypeKeys() if k != self.current_key]
+        all_other_keys = ERT.enkf_facade.get_all_other_data_type_keys(self.current_key)
         dialog = CopyStyleToDialog(self, self.current_key, all_other_keys)
         if dialog.exec_():
             self.copySettingsToOthers.emit(dialog.getSelectedKeys())

@@ -5,7 +5,7 @@ from argparse import ArgumentTypeError
 from ecl.util.util import BoolVector
 from res.enkf import EnKFMain, ResConfig
 
-from ert_shared import ERT
+from ert_shared import ERT, EnkfFacade
 from ert_gui.ide.keywords.definitions import RangeStringArgument
 from .models.ensemble_experiment import EnsembleExperiment
 from .models.ensemble_smoother import EnsembleSmoother
@@ -19,7 +19,8 @@ def run_cli(args):
     os.chdir(res_config.config_path)
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
     notifier = ErtCliNotifier(ert, args.config)
-    ERT.adapt(notifier)
+    facade = EnkfFacade(ert)
+    ERT.adapt(notifier, facade)
 
     # Setup model
     if args.mode == 'test_run':

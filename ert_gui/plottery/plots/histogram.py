@@ -6,7 +6,6 @@ import pandas as pd
 
 def plotHistogram(plot_context):
     """ @type plot_context: ert_gui.plottery.PlotContext """
-    ert = plot_context.ert()
     key = plot_context.key()
     config = plot_context.plotConfig()
 
@@ -34,7 +33,7 @@ def plotHistogram(plot_context):
     max_element_count = 0
     categorical = False
     for case in case_list:
-        data[case] = plot_context.dataGatherer().gatherData(ert, case, key)
+        data[case] = plot_context.dataGatherer().gatherData(case, key)
 
         if data[case].dtype == "object":
             try:

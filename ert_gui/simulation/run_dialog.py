@@ -49,10 +49,6 @@ class RunDialog(QDialog):
         assert isinstance(run_model, BaseRunModel)
         self._run_model = run_model
 
-        ert = None
-        if isinstance(run_model, BaseRunModel):
-            ert = run_model.ert()
-
         self.simulations_tracker = SimulationsTracker()
         states = self.simulations_tracker.getStates()
         self.state_colors = {state.name: state.color for state in states}
@@ -90,7 +86,7 @@ class RunDialog(QDialog):
         self.plot_tool.setParent(None)
         self.plot_button = QPushButton(self.plot_tool.getName())
         self.plot_button.clicked.connect(self.plot_tool.trigger)
-        self.plot_button.setEnabled(ert is not None)
+        self.plot_button.setEnabled(True)
 
         self.kill_button = QPushButton("Kill simulations")
         self.done_button = QPushButton("Done")

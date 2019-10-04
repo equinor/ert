@@ -1,8 +1,7 @@
 from tests import ErtTest
 from res.test import ErtTestContext
 from ecl.util.util import BoolVector
-from ert_shared import cli
-from ert_shared import ERT
+from ert_shared import ERT, cli, EnkfFacade
 from ert_shared.cli import ErtCliNotifier
 from argparse import Namespace
 from ert_shared.models.ensemble_experiment import EnsembleExperiment
@@ -19,7 +18,8 @@ class EntryPointTest(ErtTest):
         with ErtTestContext('test_custom_target_case_name', config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
-            ERT.adapt(notifier)
+            facade = EnkfFacade(ert)
+            ERT.adapt(notifier, facade)
 
             custom_name = "test"
             args = Namespace(target_case=custom_name)
@@ -31,7 +31,8 @@ class EntryPointTest(ErtTest):
         with ErtTestContext('test_default_target_case_name', config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
-            ERT.adapt(notifier)
+            facade = EnkfFacade(ert)
+            ERT.adapt(notifier, facade)
 
             args = Namespace(target_case=None)
             res = cli._target_case_name(args)
@@ -42,7 +43,8 @@ class EntryPointTest(ErtTest):
         with ErtTestContext('test_default_target_case_name_format_mode', config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
-            ERT.adapt(notifier)
+            facade = EnkfFacade(ert)
+            ERT.adapt(notifier, facade)
 
             args = Namespace(target_case=None)
             res = cli._target_case_name(args, format_mode=True)
@@ -53,7 +55,8 @@ class EntryPointTest(ErtTest):
         with ErtTestContext('test_default_realizations', config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
-            ERT.adapt(notifier)
+            facade = EnkfFacade(ert)
+            ERT.adapt(notifier, facade)
 
             args = Namespace(realizations=None)
             res = cli._realizations(args)
@@ -67,7 +70,8 @@ class EntryPointTest(ErtTest):
         with ErtTestContext('test_custom_realizations', config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
-            ERT.adapt(notifier)
+            facade = EnkfFacade(ert)
+            ERT.adapt(notifier, facade)
 
             args = Namespace(realizations="0-4,7,8")
             res = cli._realizations(args)
@@ -81,7 +85,8 @@ class EntryPointTest(ErtTest):
         with ErtTestContext('test_single_test_run', config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
-            ERT.adapt(notifier)
+            facade = EnkfFacade(ert)
+            ERT.adapt(notifier, facade)
 
             model, argument = cli._setup_single_test_run()
             self.assertTrue(isinstance(model, SingleTestRun))
@@ -93,7 +98,8 @@ class EntryPointTest(ErtTest):
         with ErtTestContext('test_single_test_run', config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
-            ERT.adapt(notifier)
+            facade = EnkfFacade(ert)
+            ERT.adapt(notifier, facade)
 
             model, argument = cli._setup_single_test_run()
             self.assertTrue(isinstance(model, EnsembleExperiment))
@@ -105,7 +111,8 @@ class EntryPointTest(ErtTest):
         with ErtTestContext('test_single_test_run', config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
-            ERT.adapt(notifier)
+            facade = EnkfFacade(ert)
+            ERT.adapt(notifier, facade)
             args = Namespace(realizations="0-4,7,8", target_case="test_case")
 
             model, argument = cli._setup_ensemble_smoother(args)
@@ -120,7 +127,8 @@ class EntryPointTest(ErtTest):
         with ErtTestContext('test_single_test_run', config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
-            ERT.adapt(notifier)
+            facade = EnkfFacade(ert)
+            ERT.adapt(notifier, facade)
             args = Namespace(realizations="0-4,7,8", weights="6,4,2", target_case="test_case")
 
             model, argument = cli._setup_multiple_data_assimilation(args)

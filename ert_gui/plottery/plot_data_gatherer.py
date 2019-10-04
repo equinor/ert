@@ -1,7 +1,7 @@
 from pandas import DataFrame
 from res.enkf.export import GenKwCollector, SummaryCollector, GenDataCollector, SummaryObservationCollector, \
     GenDataObservationCollector, CustomKWCollector
-
+from ert_shared import ERT
 
 class PlotDataGatherer(object):
 
@@ -30,45 +30,45 @@ class PlotDataGatherer(object):
         """ :rtype: bool """
         return self._conditionFunction(key)
 
-    def gatherData(self, ert, case, key):
+    def gatherData(self, case, key):
         """ :rtype: pandas.DataFrame """
         if not self.canGatherDataForKey(key):
             raise UserWarning("Unable to gather data for key: %s" % key)
 
-        return self._dataGatherFunction(ert, case, key)
+        return self._dataGatherFunction(case, key)
 
     def gatherRefcaseData(self, ert, key):
         """ :rtype: pandas.DataFrame """
         if not self.canGatherDataForKey(key) or not self.hasRefcaseGatherFunction():
             raise UserWarning("Unable to gather refcase data for key: %s" % key)
 
-        return self._refcaseGatherFunction(ert, key)
+        return self._refcaseGatherFunction(key)
 
-    def gatherObservationData(self, ert, case, key):
+    def gatherObservationData(self, case, key):
         """ :rtype: pandas.DataFrame """
         if not self.canGatherDataForKey(key) or not self.hasObservationGatherFunction():
             raise UserWarning("Unable to gather observation data for key: %s" % key)
 
-        return self._observationGatherFunction(ert, case, key)
+        return self._observationGatherFunction(case, key)
 
-    def gatherHistoryData(self, ert, case, key):
+    def gatherHistoryData(self, case, key):
         """ :rtype: pandas.DataFrame """
         if not self.canGatherDataForKey(key) or not self.hasHistoryGatherFunction():
             raise UserWarning("Unable to gather history data for key: %s" % key)
 
-        return self._historyGatherFunc(ert, case, key)
+        return self._historyGatherFunc(case, key)
 
 
     @staticmethod
-    def gatherGenKwData(ert, case, key):
+    def gatherGenKwData(case, key):
         """ :rtype: pandas.DataFrame """
-        data = GenKwCollector.loadAllGenKwData(ert, case, [key])
+        data = GenKwCollector.loadAllGenKwData(case, [key])
         return data[key].dropna()
 
     @staticmethod
-    def gatherSummaryData(ert, case, key):
+    def gatherSummaryData(case, key):
         """ :rtype: pandas.DataFrame """
-        data = SummaryCollector.loadAllSummaryData(ert, case, [key])
+        data = SummaryCollector.loadAllSummaryData(case, [key])
         if not data.empty:
             data = data.reset_index()
 
@@ -84,8 +84,8 @@ class PlotDataGatherer(object):
         return data #.dropna()
 
     @staticmethod
-    def gatherSummaryRefcaseData(ert, key):
-        refcase = ert.eclConfig().getRefcase()
+    def gatherSummaryRefcaseData(key):
+        refcase = ERT.enkf_facade.get_refcase()
 
         if refcase is None or key not in refcase:
             return DataFrame()
@@ -99,7 +99,7 @@ class PlotDataGatherer(object):
         return data.iloc[1:]
 
     @staticmethod
-    def gatherSummaryHistoryData(ert, case, key):
+    def gatherSummaryHistoryData(case, key):
         # create history key
         if ":" in key:
             head, tail = key.split(":", 2)
@@ -107,27 +107,27 @@ class PlotDataGatherer(object):
         else:
             key = "%sH" % key
 
-        data = PlotDataGatherer.gatherSummaryRefcaseData(ert, key)
+        data = PlotDataGatherer.gatherSummaryRefcaseData(key)
         if data.empty and case is not None:
-            data = PlotDataGatherer.gatherSummaryData(ert, case, key)
+            data = PlotDataGatherer.gatherSummaryData(case, key)
 
         return data
 
     @staticmethod
-    def gatherSummaryObservationData(ert, case, key):
-        if ert.getKeyManager().isKeyWithObservations(key):
-            return SummaryObservationCollector.loadObservationData(ert, case, [key]).dropna()
+    def gatherSummaryObservationData(case, key):
+        if ERT.enkf_facade.is_key_with_observations(key):
+            return SummaryObservationCollector.loadObservationData(case, [key]).dropna()
         else:
             return DataFrame()
 
 
     @staticmethod
-    def gatherGenDataData(ert, case, key):
+    def gatherGenDataData(case, key):
         """ :rtype: pandas.DataFrame """
         key, report_step = key.split("@", 1)
         report_step = int(report_step)
         try:
-            data = GenDataCollector.loadGenData(ert, case, key, report_step)
+            data = GenDataCollector.loadGenData(case, key, report_step)
         except ValueError:
             data = DataFrame()
 
@@ -135,15 +135,15 @@ class PlotDataGatherer(object):
 
 
     @staticmethod
-    def gatherGenDataObservationData(ert, case, key_with_report_step):
+    def gatherGenDataObservationData(case, key_with_report_step):
         """ :rtype: pandas.DataFrame """
         key, report_step = key_with_report_step.split("@", 1)
         report_step = int(report_step)
 
-        obs_key = GenDataObservationCollector.getObservationKeyForDataKey(ert, key, report_step)
+        obs_key = GenDataObservationCollector.getObservationKeyForDataKey(key, report_step)
 
         if obs_key is not None:
-            obs_data = GenDataObservationCollector.loadGenDataObservations(ert, case, obs_key)
+            obs_data = GenDataObservationCollector.loadGenDataObservations(case, obs_key)
             columns = {obs_key: key_with_report_step, "STD_%s" % obs_key: "STD_%s" % key_with_report_step}
             obs_data = obs_data.rename(columns=columns)
         else:
@@ -152,8 +152,8 @@ class PlotDataGatherer(object):
         return obs_data.dropna()
 
     @staticmethod
-    def gatherCustomKwData(ert, case, key):
+    def gatherCustomKwData(case, key):
         """ :rtype: pandas.DataFrame """
-        data = CustomKWCollector.loadAllCustomKWData(ert, case, [key])[key]
+        data = CustomKWCollector.loadAllCustomKWData(case, [key])[key]
 
         return data

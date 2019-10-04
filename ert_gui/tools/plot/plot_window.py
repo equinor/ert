@@ -29,12 +29,6 @@ class PlotWindow(QMainWindow):
     def __init__(self, parent):
         QMainWindow.__init__(self, parent)
 
-        self._ert = ERT.ert
-        """:type: res.enkf.enkf_main.EnKFMain"""
-
-        key_manager = self._ert.getKeyManager()
-        """:type: res.enkf.key_manager.KeyManager """
-
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)
 
@@ -44,7 +38,7 @@ class PlotWindow(QMainWindow):
         self._plot_customizer = PlotCustomizer(self)
 
         def plotConfigCreator(key):
-            return PlotConfigFactory.createPlotConfigForKey(self._ert, key)
+            return PlotConfigFactory.createPlotConfigForKey(key)
 
         self._plot_customizer.setPlotConfigCreator(plotConfigCreator)
         self._plot_customizer.settingsChanged.connect(self.keySelected)
@@ -67,10 +61,10 @@ class PlotWindow(QMainWindow):
         self._data_gatherers = []
         """:type: list of PlotDataGatherer """
 
-        summary_gatherer = self.createDataGatherer(PDG.gatherSummaryData, key_manager.isSummaryKey, refcaseGatherFunc=PDG.gatherSummaryRefcaseData, observationGatherFunc=PDG.gatherSummaryObservationData, historyGatherFunc=PDG.gatherSummaryHistoryData)
-        gen_data_gatherer = self.createDataGatherer(PDG.gatherGenDataData, key_manager.isGenDataKey, observationGatherFunc=PDG.gatherGenDataObservationData)
-        gen_kw_gatherer = self.createDataGatherer(PDG.gatherGenKwData, key_manager.isGenKwKey)
-        custom_kw_gatherer = self.createDataGatherer(PDG.gatherCustomKwData, key_manager.isCustomKwKey)
+        summary_gatherer = self.createDataGatherer(PDG.gatherSummaryData, ERT.enkf_facade.is_summary_key, refcaseGatherFunc=PDG.gatherSummaryRefcaseData, observationGatherFunc=PDG.gatherSummaryObservationData, historyGatherFunc=PDG.gatherSummaryHistoryData)
+        gen_data_gatherer = self.createDataGatherer(PDG.gatherGenDataData, ERT.enkf_facade.is_gen_data_key, observationGatherFunc=PDG.gatherGenDataObservationData)
+        gen_kw_gatherer = self.createDataGatherer(PDG.gatherGenKwData, ERT.enkf_facade.is_gen_kw_key)
+        custom_kw_gatherer = self.createDataGatherer(PDG.gatherCustomKwData, ERT.enkf_facade.is_custom_kw_key)
 
 
         self.addPlotWidget(ENSEMBLE, plots.plotEnsemble, [summary_gatherer, gen_data_gatherer])
@@ -81,7 +75,7 @@ class PlotWindow(QMainWindow):
         self.addPlotWidget(CROSS_CASE_STATISTICS, plots.plotCrossCaseStatistics, [gen_kw_gatherer, custom_kw_gatherer])
 
 
-        data_types_key_model = DataTypeKeysListModel(self._ert)
+        data_types_key_model = DataTypeKeysListModel()
 
         self._data_type_keys_widget = DataTypeKeysWidget(data_types_key_model)
         self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
@@ -119,13 +113,11 @@ class PlotWindow(QMainWindow):
     def _updateCustomizer(self, plot_widget):
         """ @type plot_widget: PlotWidget """
         key = self.getSelectedKey()
-        key_manager = self._ert.getKeyManager()
-
         index_type = PlotContext.UNKNOWN_AXIS
 
-        if key_manager.isGenDataKey(key):
+        if ERT.enkf_facade.is_gen_data_key(key):
             index_type = PlotContext.INDEX_AXIS
-        elif key_manager.isSummaryKey(key):
+        elif ERT.enkf_facade.is_summary_key(key):
             index_type = PlotContext.DATE_AXIS
 
         x_axis_type = PlotContext.UNKNOWN_AXIS
@@ -157,7 +149,7 @@ class PlotWindow(QMainWindow):
         data_gatherer = self.getDataGathererForKey(key)
         plot_config = PlotConfig.createCopy(self._plot_customizer.getPlotConfig())
         plot_config.setTitle(key)
-        return PlotContext(self._ert, figure, plot_config, cases, key, data_gatherer)
+        return PlotContext(figure, plot_config, cases, key, data_gatherer)
 
     def getDataGathererForKey(self, key):
         """ @rtype: PlotDataGatherer """

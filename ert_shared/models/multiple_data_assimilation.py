@@ -31,10 +31,7 @@ class MultipleDataAssimilation(BaseRunModel):
         self.weights = MultipleDataAssimilation.default_weights
 
     def setAnalysisModule(self, module_name):
-        module_load_success = self.ert().analysisConfig().selectModule(module_name)
-
-        if not module_load_success:
-            raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
+        return ERT.enkf_facade.set_analysis_module(module_name)
 
     def runSimulations(self, arguments):
         context = self.create_context(arguments, 0, None)
@@ -60,9 +57,9 @@ class MultipleDataAssimilation(BaseRunModel):
             run_context = self.create_context( arguments , iteration,  prior_context = run_context )
             self._simulateAndPostProcess(run_context, arguments )
 
-            self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_UPDATE )
+            ERT.enkf_facade.run_workflows(HookRuntime.PRE_UPDATE)
             self.update( run_context , weights[iteration])
-            self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_UPDATE )
+            ERT.enkf_facade.run_workflows(HookRuntime.POST_UPDATE)
 
         self.setPhaseName("Post processing...", indeterminate=True)
         run_context = self.create_context( arguments , len(weights),  prior_context = run_context, update = False)
@@ -83,9 +80,7 @@ class MultipleDataAssimilation(BaseRunModel):
         phase_string = "Analyzing iteration: %d with weight %f" % (next_iteration, weight)
         self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
 
-        es_update = self.ert().getESUpdate( )
-        es_update.setGlobalStdScaling(weight)
-        success = es_update.smootherUpdate( run_context )
+        success = ERT.enkf_facade.smoother_update(run_context, weight)
 
         if not success:
             raise UserWarning("Analysis of simulation failed for iteration: %d!" % next_iteration)
@@ -97,22 +92,22 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = "Running simulation for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=True)
-        self.ert().getEnkfSimulationRunner().createRunPath(run_context)
+        ERT.enkf_facade.create_runpath(run_context)
 
         phase_string = "Pre processing for iteration: %d" % iteration
         self.setPhaseName(phase_string)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
+        ERT.enkf_facade.run_workflows(HookRuntime.PRE_SIMULATION)
 
         phase_string = "Running forecast for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=False)
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, run_context)
+        num_successful_realizations = ERT.enkf_facade.run_simple_step(self._job_queue, run_context)
 
         num_successful_realizations += arguments.get('prev_successful_realizations', 0)
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         phase_string = "Post processing for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.POST_SIMULATION)
+        ERT.enkf_facade.run_workflows(HookRuntime.POST_SIMULATION)
         return num_successful_realizations
 
 
@@ -150,16 +145,14 @@ class MultipleDataAssimilation(BaseRunModel):
 
 
     def create_context(self, arguments, itr, prior_context = None, update = True):
-        target_case_format = arguments["target_case"]
-        model_config = self.ert().getModelConfig( )
-        runpath_fmt = model_config.getRunpathFormat( )
-        jobname_fmt = model_config.getJobnameFormat( )
-        subst_list = self.ert().getDataKW( )
-        fs_manager = self.ert().getEnkfFsManager()
+        target_case_format = arguments["target_case"]        
+        runpath_fmt = ERT.enkf_facade.get_runpath_format()
+        jobname_fmt = ERT.enkf_facade.get_jobname_format()
+        subst_list = ERT.enkf_facade.get_data_kw()
 
-        sim_fs = fs_manager.getFileSystem(target_case_format % itr)
+        sim_fs = ERT.enkf_facade.get_file_system(target_case_format % itr)
         if update:
-            target_fs = fs_manager.getFileSystem(target_case_format % (itr + 1))
+            target_fs = ERT.enkf_facade.get_file_system(target_case_format % (itr + 1))
         else:
             target_fs = None
 

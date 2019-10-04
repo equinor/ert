@@ -8,7 +8,6 @@ def plotGaussianKDE(plot_context):
     """
     @type plot_context: ert_gui.plottery.PlotContext
     """
-    ert = plot_context.ert()
     key = plot_context.key()
     config = plot_context.plotConfig()
     axes = plot_context.figure().add_subplot(111)
@@ -24,7 +23,7 @@ def plotGaussianKDE(plot_context):
 
     case_list = plot_context.cases()
     for case in case_list:
-        data = plot_context.dataGatherer().gatherData(ert, case, key)
+        data = plot_context.dataGatherer().gatherData(case, key)
 
         if not data.empty and data.nunique() > 1:
             _plotGaussianKDE(axes, config, data, case)

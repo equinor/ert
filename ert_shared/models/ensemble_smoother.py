@@ -11,10 +11,7 @@ class EnsembleSmoother(BaseRunModel):
         self.support_restart = False
 
     def setAnalysisModule(self, module_name):
-        module_load_success = self.ert().analysisConfig().selectModule(module_name)
-
-        if not module_load_success:
-            raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
+        return ERT.enkf_facade.set_analysis_module(module_name)
 
 
     def runSimulations(self, arguments):
@@ -26,46 +23,46 @@ class EnsembleSmoother(BaseRunModel):
         # self.setAnalysisModule(arguments["analysis_module"])
 
         self.setPhaseName("Pre processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().createRunPath(prior_context)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
+        ERT.enkf_facade.create_runpath(prior_context)
+        ERT.enkf_facade.run_workflows(HookRuntime.PRE_SIMULATION)
 
         self.setPhaseName("Running forecast...", indeterminate=False)
         self._job_queue = self._queue_config.create_job_queue( )
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, prior_context)
+        num_successful_realizations = ERT.enkf_facade.run_simple_step(self._job_queue, prior_context)
 
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
+        ERT.enkf_facade.run_workflows(HookRuntime.POST_SIMULATION)
 
         self.setPhaseName("Analyzing...")
 
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_UPDATE )
-        es_update = self.ert().getESUpdate( )
-        success = es_update.smootherUpdate( prior_context )
+        ERT.enkf_facade.run_workflows(HookRuntime.PRE_UPDATE)
+        success = ERT.enkf_facade.smoother_update(prior_context)
+        
         if not success:
             raise ErtRunError("Analysis of simulation failed!")
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_UPDATE )
+        ERT.enkf_facade.run_workflows(HookRuntime.POST_UPDATE)
 
         self.setPhase(1, "Running simulations...")
-        self.ert().getEnkfFsManager().switchFileSystem( prior_context.get_target_fs( ) )
+        ERT.enkf_facade.switch_file_system(prior_context.get_target_fs())
 
         self.setPhaseName("Pre processing...")
 
         rerun_context = self.create_context( arguments, prior_context = prior_context )
 
-        self.ert().getEnkfSimulationRunner().createRunPath( rerun_context )
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
+        ERT.enkf_facade.create_runpath(rerun_context )
+        ERT.enkf_facade.run_workflows(HookRuntime.PRE_SIMULATION)
 
         self.setPhaseName("Running forecast...", indeterminate=False)
 
         self._job_queue = self._queue_config.create_job_queue( )
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, rerun_context)
+        num_successful_realizations = ERT.enkf_facade.run_simple_step(self._job_queue, rerun_context)
 
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
+        ERT.enkf_facade.run_workflows(HookRuntime.POST_SIMULATION)
 
         self.setPhase(2, "Simulations completed.")
 
@@ -73,25 +70,22 @@ class EnsembleSmoother(BaseRunModel):
 
 
     def create_context(self, arguments, prior_context = None):
-
-        model_config = self.ert().getModelConfig( )
-        runpath_fmt = model_config.getRunpathFormat( )
-        jobname_fmt = model_config.getJobnameFormat( )
-        subst_list = self.ert().getDataKW( )
-        fs_manager = self.ert().getEnkfFsManager()
+        runpath_fmt = ERT.enkf_facade.get_runpath_format()
+        jobname_fmt = ERT.enkf_facade.get_jobname_format()
+        subst_list = ERT.enkf_facade.get_data_kw()
         if prior_context is None:
-            sim_fs = fs_manager.getCurrentFileSystem( )
-            target_fs = fs_manager.getFileSystem(arguments["target_case"])
+            sim_fs = ERT.enkf_facade.get_current_file_system()
+            target_fs = ERT.enkf_facade.get_file_system(arguments["target_case"])
             itr = 0
             mask = arguments["active_realizations"]
         else:
             itr = 1
-            sim_fs = prior_context.get_target_fs( )
+            sim_fs = prior_context.get_target_fs()
             target_fs = None
             state = RealizationStateEnum.STATE_HAS_DATA | RealizationStateEnum.STATE_INITIALIZED
             mask = sim_fs.getStateMap().createMask(state)
 
-        run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr)
+        run_context = ErtRunContext.ensemble_smoother(sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr)
         self._run_context = run_context
         self._last_run_iteration = run_context.get_iter()
         return run_context

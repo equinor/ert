@@ -7,8 +7,7 @@ from .plot_tools import PlotTools
 
 
 def plotStatistics(plot_context):
-    """ @type plot_context: ert_gui.plottery.PlotContext """
-    ert = plot_context.ert()
+    """ @type plot_context: ert_gui.plottery.PlotContext """    
     key = plot_context.key()
     config = plot_context.plotConfig()
     """:type: ert_gui.plotter.PlotConfig """
@@ -20,7 +19,7 @@ def plotStatistics(plot_context):
 
     case_list = plot_context.cases()
     for case in case_list:
-        data = plot_context.dataGatherer().gatherData(ert, case, key)
+        data = plot_context.dataGatherer().gatherData(case, key)
 
         if not data.empty:
             if not data.index.is_all_dates:

@@ -17,18 +17,18 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
         self.setPhaseName("Pre processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().createRunPath( run_context )
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
+        ERT.enkf_facade.create_runpath(run_context)
+        ERT.enkf_facade.run_workflows(HookRuntime.PRE_SIMULATION)
 
         self.setPhaseName( run_msg, indeterminate=False)
 
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(self._job_queue, run_context)
+        num_successful_realizations = ERT.enkf_facade.run_ensemble_experiment(self._job_queue, run_context)
 
         num_successful_realizations += arguments.get('prev_successful_realizations', 0)
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
+        ERT.enkf_facade.run_workflows(HookRuntime.POST_SIMULATION)
         self.setPhase(1, "Simulations completed.") # done...
 
         return run_context
@@ -39,13 +39,11 @@ class EnsembleExperiment(BaseRunModel):
 
 
     def create_context(self, arguments):
-        fs_manager = self.ert().getEnkfFsManager()
-        result_fs = fs_manager.getCurrentFileSystem( )
+        result_fs = ERT.enkf_facade.get_current_file_system()
 
-        model_config = self.ert().getModelConfig( )
-        runpath_fmt = model_config.getRunpathFormat( )
-        jobname_fmt = model_config.getJobnameFormat( )
-        subst_list = self.ert().getDataKW( )
+        runpath_fmt = ERT.enkf_facade.get_runpath_format()
+        jobname_fmt = ERT.enkf_facade.get_jobname_format()
+        subst_list = ERT.enkf_facade.get_data_kw()
         itr = 0
         mask = arguments["active_realizations"]
 

@@ -1,11 +1,10 @@
 def plotRefcase(plot_context, axes):
-   ert = plot_context.ert()
    key = plot_context.key()
    config = plot_context.plotConfig()
    data_gatherer = plot_context.dataGatherer()
 
    if config.isRefcaseEnabled() and data_gatherer.hasRefcaseGatherFunction():
-       refcase_data = data_gatherer.gatherRefcaseData(ert, key)
+       refcase_data = data_gatherer.gatherRefcaseData(key)
 
        if not refcase_data.empty:
            _plotRefcase(axes, config, refcase_data)

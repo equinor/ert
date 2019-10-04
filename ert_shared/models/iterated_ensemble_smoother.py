@@ -10,13 +10,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.support_restart = False
 
     def setAnalysisModule(self, module_name):
-        module_load_success = self.ert().analysisConfig().selectModule(module_name)
-
-        if not module_load_success:
-            raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
-
-        return self.ert().analysisConfig().getModule(module_name)
-
+        return ERT.enkf_facade.set_analysis_module(module_name)
 
     def _runAndPostProcess(self, run_context):
         self._job_queue = self._queue_config.create_job_queue( )
@@ -24,38 +18,32 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhase(run_context.get_iter(), phase_msg, indeterminate=False)
 
         self.setPhaseName("Pre processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().createRunPath( run_context )
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
+        ERT.enkf_facade.create_runpath(run_context)
+        ERT.enkf_facade.run_workflows(HookRuntime.PRE_SIMULATION)
 
         self.setPhaseName("Running forecast...", indeterminate=False)
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, run_context)
+        num_successful_realizations = ERT.enkf_facade.run_simple_step(self._job_queue, run_context)
 
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
+        ERT.enkf_facade.run_workflows(HookRuntime.POST_SIMULATION)
 
 
     def createTargetCaseFileSystem(self, phase, target_case_format):
-        target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_format % phase)
-        return target_fs
+        return ERT.enkf_facade.get_file_system(target_case_format % phase)
 
-
-    def analyzeStep(self, run_context):
-        target_fs = run_context.get_target_fs( )
-        self.setPhaseName("Analyzing...", indeterminate=True)
-        source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
-
+    def analyzeStep(self, run_context):        
+        self.setPhaseName("Analyzing...", indeterminate=True)        
         self.setPhaseName("Pre processing update...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.PRE_UPDATE)
-        es_update = self.ert().getESUpdate()
+        ERT.enkf_facade.run_workflows(HookRuntime.PRE_UPDATE)
+        success = ERT.enkf_facade.smoother_update(run_context)
 
-        success = es_update.smootherUpdate(run_context)
         if not success:
             raise ErtRunError("Analysis of simulation failed!")
 
         self.setPhaseName("Post processing update...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.POST_UPDATE)
+        ERT.enkf_facade.run_workflows(HookRuntime.POST_UPDATE)
 
     def runSimulations(self, arguments):
         phase_count = ERT.enkf_facade.get_number_of_iterations() + 1
@@ -65,17 +53,16 @@ class IteratedEnsembleSmoother(BaseRunModel):
         target_case_format = arguments["target_case"]
         run_context = self.create_context( arguments , 0 )
 
-        self.ert().analysisConfig().getAnalysisIterConfig().setCaseFormat( target_case_format )
-
+        ERT.enkf_facade.set_case_format(target_case_format)
+        
         self._runAndPostProcess( run_context )
 
-        analysis_config = self.ert().analysisConfig()
-        analysis_iter_config = analysis_config.getAnalysisIterConfig()
-        num_retries_per_iteration = analysis_iter_config.getNumRetries()
+        num_retries_per_iteration = ERT.enkf_facade.get_number_of_retries()
+        number_of_iterations = ERT.enkf_facade.get_number_of_iterations()
         num_retries = 0
         current_iter = 0
 
-        while current_iter < ERT.enkf_facade.get_number_of_iterations() and num_retries < num_retries_per_iteration:
+        while current_iter < number_of_iterations and num_retries < num_retries_per_iteration:
             pre_analysis_iter_num = analysis_module.getInt("ITER")
             self.analyzeStep( run_context )
             current_iter = analysis_module.getInt("ITER")
@@ -83,7 +70,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             analysis_success = current_iter > pre_analysis_iter_num
             if analysis_success:
                 run_context = self.create_context( arguments, current_iter, prior_context = run_context )
-                self.ert().getEnkfFsManager().switchFileSystem(run_context.get_target_fs())
+                ERT.enkf_facade.switch_file_system(run_context.get_target_fs())
                 self._runAndPostProcess(run_context)
                 num_retries = 0
             else:
@@ -99,11 +86,10 @@ class IteratedEnsembleSmoother(BaseRunModel):
         return run_context
 
 
-    def create_context(self, arguments, itr, prior_context = None, rerun = False):
-        model_config = self.ert().getModelConfig( )
-        runpath_fmt = model_config.getRunpathFormat( )
-        jobname_fmt = model_config.getJobnameFormat( )
-        subst_list = self.ert().getDataKW( )        
+    def create_context(self, arguments, itr, prior_context = None, rerun = False):        
+        runpath_fmt = ERT.enkf_facade.get_runpath_format()
+        jobname_fmt = ERT.enkf_facade.get_jobname_format()
+        subst_list = ERT.enkf_facade.get_data_kw()
         target_case_format = arguments["target_case"]
 
         if prior_context is None:

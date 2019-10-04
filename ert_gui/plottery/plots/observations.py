@@ -1,7 +1,6 @@
 import math
 
 def plotObservations(plot_context, axes):
-    ert = plot_context.ert()
     key = plot_context.key()
     config = plot_context.plotConfig()
     case_list = plot_context.cases()
@@ -9,7 +8,7 @@ def plotObservations(plot_context, axes):
 
     if config.isObservationsEnabled() and data_gatherer.hasObservationGatherFunction():
         if len(case_list) > 0:
-            observation_data = data_gatherer.gatherObservationData(ert, case_list[0], key)
+            observation_data = data_gatherer.gatherObservationData(case_list[0], key)
 
             if not observation_data.empty:
                 _plotObservations(axes, config, observation_data, value_column=key)

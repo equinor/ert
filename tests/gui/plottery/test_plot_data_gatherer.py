@@ -6,6 +6,8 @@ import pandas as pd
 from tests import ErtTest
 from res.test import ErtTestContext
 from ert_gui.plottery.plot_data_gatherer import PlotDataGatherer
+from ert_shared import ERT, EnkfFacade
+from ert_shared.cli import ErtCliNotifier
 
 
 class PlotGatherTest(ErtTest):
@@ -14,8 +16,12 @@ class PlotGatherTest(ErtTest):
         config_file = self.createTestPath(os.path.join("local", "snake_oil", "snake_oil.ert"))
         with ErtTestContext('SummaryRefcaseData', config_file) as work_area:
             ert = work_area.getErt()
+            notifier = ErtCliNotifier(ert, config_file)
+            facade = EnkfFacade(ert)
+            ERT.adapt(notifier, facade)
+
             key = "WOPRH:OP1"
-            result_data = PlotDataGatherer.gatherSummaryRefcaseData(ert, key)
+            result_data = PlotDataGatherer.gatherSummaryRefcaseData(key)
 
             expected_data = [
                 (0, datetime.date(2010,1,2),       1.03836009657e-05),
@@ -32,7 +38,7 @@ class PlotGatherTest(ErtTest):
 
             key = "not_a_key"
 
-            result_data = PlotDataGatherer.gatherSummaryRefcaseData(ert, key)
+            result_data = PlotDataGatherer.gatherSummaryRefcaseData(key)
             expected_data = pd.DataFrame()
 
             pd.testing.assert_frame_equal(result_data, expected_data, check_exact=True)
