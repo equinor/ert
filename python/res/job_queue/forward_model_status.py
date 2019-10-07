@@ -45,7 +45,9 @@ class ForwardModelJobStatus(object):
                  status="Waiting",
                  error=None,
                  std_out_file="",
-                 std_err_file=""):
+                 std_err_file="",
+                 current_memory_usage=0,
+                 max_memory_usage=0):
 
         self.start_time = start_time
         self.end_time = end_time
@@ -54,6 +56,8 @@ class ForwardModelJobStatus(object):
         self.error = error
         self.std_out_file = std_out_file
         self.std_err_file = std_err_file
+        self.current_memory_usage = current_memory_usage
+        self.max_memory_usage = max_memory_usage
 
     @classmethod
     def load(cls, job, data, run_path):
@@ -62,6 +66,8 @@ class ForwardModelJobStatus(object):
         name = data["name"]
         status = data["status"]
         error = data["error"]
+        current_memory_usage = data["current_memory_usage"]
+        max_memory_usage = data["max_memory_usage"]
         std_err_file = job['stderr']
         std_out_file = job['stdout']
         return cls(name,
@@ -70,7 +76,9 @@ class ForwardModelJobStatus(object):
                    status=status,
                    error=error,
                    std_out_file=os.path.join(run_path, std_out_file),
-                   std_err_file=os.path.join(run_path, std_err_file))
+                   std_err_file=os.path.join(run_path, std_err_file),
+                   current_memory_usage=current_memory_usage,
+                   max_memory_usage=max_memory_usage)
 
     def __str__(self):
         return "name:{} start_time:{}  end_time:{}  status:{}  error:{} ".format(self.name, self.start_time, self.end_time, self.status, self.error)
@@ -82,7 +90,9 @@ class ForwardModelJobStatus(object):
                 "start_time": _serialize_date(self.start_time),
                 "end_time": _serialize_date(self.end_time),
                 "stdout": self.std_out_file,
-                "stderr": self.std_err_file}
+                "stderr": self.std_err_file,
+                "current_memory_usage": self.current_memory_usage,
+                "max_memory_usage": self.max_memory_usage}
 
 
 class ForwardModelStatus(object):
