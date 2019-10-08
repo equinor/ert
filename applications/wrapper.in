@@ -29,7 +29,7 @@ if __name__ == "__main__":
     try:
         report(executable)
     except Exception as e:
-        logging.warning("An error occured when logging application usage."
+        logging.warning("An error occured when logging application usage.")
         logging.warning(e.message)
         
     os.execvp(executable, [executable,] + sys.argv[1:])
