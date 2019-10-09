@@ -726,20 +726,18 @@ void ecl_config_add_config_items(config_parser_type * config)
   config_schema_item_type * item;
 
   item = config_add_schema_item(config, SCHEDULE_FILE_KEY, false);
-  config_install_message(
+  config_parser_deprecate(
       config, SCHEDULE_FILE_KEY,
-      "** Warning: \'SCHEDULE_FILE\' is ignored"
-      );
+      "\'SCHEDULE_FILE\' has been deprecated.");
   /*
    Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a
    GEN_KW is added in ensemble_config.c
   */
 
   item = config_add_schema_item(config, IGNORE_SCHEDULE_KEY, false);
-  config_install_message(
+  config_parser_deprecate(
       config, IGNORE_SCHEDULE_KEY,
-      "** Warning: \'IGNORE_SCHEDULE\' is ignored"
-      );
+      "\'IGNORE_SCHEDULE\' has been deprecated");
 
   item = config_add_schema_item(config, ECLBASE_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
@@ -749,15 +747,13 @@ void ecl_config_add_config_items(config_parser_type * config)
   config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
 
   item = config_add_schema_item(config, STATIC_KW_KEY, false);
-  config_install_message(
+  config_parser_deprecate(
       config, STATIC_KW_KEY,
-      "** Warning: \'STATIC_KW\' is ignored"
-      );
+      "\'STATIC_KW\' has been deprecated");
   item = config_add_schema_item(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY, false);
-  config_install_message(
+  config_parser_deprecate(
       config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY,
-      "** Warning: \'ADD_FIXED_LENGTH_SCHEDULE_KW\' is ignored"
-      );
+      "\'ADD_FIXED_LENGTH_SCHEDULE_KW\' has been deprecated");
 
   item = config_add_schema_item(config, REFCASE_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
@@ -774,10 +770,9 @@ void ecl_config_add_config_items(config_parser_type * config)
   config_schema_item_set_argc_minmax(item, 1, 1);
   config_schema_item_iset_type(item, 0, CONFIG_PATH);
   config_add_alias(config, INIT_SECTION_KEY, "EQUIL_INIT_FILE");
-  config_install_message(
+  config_parser_deprecate(
       config, INIT_SECTION_KEY,
-      "** Warning: \'INIT_SECTION\' has been deprecated"
-      );
+      "\'INIT_SECTION\' has been deprecated");
 
   item = config_add_schema_item(config, END_DATE_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);

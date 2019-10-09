@@ -172,16 +172,16 @@ rng_manager_type * rng_config_alloc_rng_manager( const rng_config_type * rng_con
 
 void rng_config_add_config_items( config_parser_type * parser ) {
   config_add_key_value(parser, STORE_SEED_KEY, false, CONFIG_PATH);
-  config_install_message(
+  config_parser_deprecate(
           parser,
           STORE_SEED_KEY,
-          "WARNING: STORE_SEED is deprecated - for reproducibility, fetch logged RANDOM_SEED instead");
+          "STORE_SEED is deprecated - for reproducibility, fetch logged RANDOM_SEED instead");
 
   config_add_key_value(parser, LOAD_SEED_KEY, false, CONFIG_PATH);
-  config_install_message(
+  config_parser_deprecate(
           parser,
           LOAD_SEED_KEY,
-          "WARNING: LOAD_SEED is deprecated - use RANDOM_SEED instead");
+          "LOAD_SEED is deprecated - use RANDOM_SEED instead");
 
   config_add_key_value(parser, RANDOM_SEED_KEY, false, CONFIG_STRING);
 }

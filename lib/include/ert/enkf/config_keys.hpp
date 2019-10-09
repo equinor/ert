@@ -62,7 +62,6 @@ extern "C" {
 #define  DBASE_TYPE_KEY                    "DBASE_TYPE"
 #define  ECLBASE_KEY                       "ECLBASE"
 #define  END_DATE_KEY                      "END_DATE"
-#define  ENKF_BOOTSTRAP_KEY                "ENKF_BOOTSTRAP"
 #define  ENKF_PEN_PRESS_KEY                "ENKF_PEN_PRESS"
 #define  ENKF_ALPHA_KEY                    "ENKF_ALPHA"
 #define  ENKF_CROSS_VALIDATION_KEY         "ENKF_CROSS_VALIDATION"
@@ -73,7 +72,6 @@ extern "C" {
 #define  ENKF_KERNEL_PARAM_KEY             "ENKF_KERNEL_PARAM"
 #define  ENKF_LOCAL_CV_KEY                 "ENKF_LOCAL_CV"
 #define  ENKF_MERGE_OBSERVATIONS_KEY       "ENKF_MERGE_OBSERVATIONS"
-#define  ENKF_MODE_KEY                     "ENKF_MODE"
 #define  ENKF_RERUN_KEY                    "ENKF_RERUN"
 #define  ENKF_TRUNCATION_KEY               "ENKF_TRUNCATION"
 #define  ENSPATH_KEY                       "ENSPATH"
@@ -114,7 +112,6 @@ extern "C" {
 #define  NUM_REALIZATIONS_KEY              "NUM_REALIZATIONS"
 #define  MIN_REALIZATIONS_KEY              "MIN_REALIZATIONS"
 #define  OBS_CONFIG_KEY                    "OBS_CONFIG"
-#define  PLOT_PATH_KEY                     "PLOT_PATH"
 #define  QUEUE_SYSTEM_KEY                  "QUEUE_SYSTEM"
 #define  QUEUE_OPTION_KEY                  "QUEUE_OPTION"
 #define  QC_PATH_KEY                       "QC_PATH"
@@ -128,7 +125,6 @@ extern "C" {
 #define  RUNPATH_FILE_KEY                  "RUNPATH_FILE"
 #define  RUNPATH_KEY                       "RUNPATH"
 #define  ITER_RUNPATH_KEY                  "ITER_RUNPATH"
-#define  RERUN_PATH_KEY                    "RERUN_PATH"
 #define  RUN_TEMPLATE_KEY                  "RUN_TEMPLATE"
 #define  RFTPATH_KEY                       "RFTPATH"
 #define  SCHEDULE_FILE_KEY                 "SCHEDULE_FILE"
@@ -229,7 +225,6 @@ extern "C" {
 /////***** Analysis config keys*******////////////
   const char * config_keys_get_alpha();
   const char * config_keys_get_do_pen_press();
-  const char * config_keys_get_do_bootstrap();
   const char * config_keys_get_std_cutoff();
   const char * config_keys_get_stop_long_running();
   const char * config_keys_get_single_node_update();

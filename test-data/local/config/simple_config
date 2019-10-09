@@ -34,14 +34,10 @@ LICENSE_PATH               /tmp/BJARNE_PATH
 --SETENV ERT_LINK_LSF True
 --LSF_SERVER          be-grid01
 
---CASE_TABLE                 CaseNames
-
-
 -- Where do you want to store things
 
 
 RUNPATH           /scratch/ert/joaho/Run1/Xrun%d
-RERUN_PATH        /scratch/ert/joaho/Rerun/Xrun%d
 
 
 
@@ -86,7 +82,6 @@ DBASE_TYPE        BLOCK_FS
 NUM_REALIZATIONS  25
 
 IMAGE_TYPE        png
-PLOT_DRIVER       PLPLOT
 
 RUN_TEMPLATE      Template1       File1     File:1
 RUN_TEMPLATE      Template1       File2     File:2

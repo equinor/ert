@@ -75,5 +75,3 @@ SETENV              LSF_ENVDIR      /LS_PATH/conf
 
 UPDATE_PATH         PATH              /funky/path/bin
 SETENV              LD_LIBRARY_PATH   /funky/path/lib:$LD_LIBRARY_PATH
-
-

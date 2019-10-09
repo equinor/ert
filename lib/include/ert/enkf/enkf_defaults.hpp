@@ -15,7 +15,6 @@
 #define DEFAULT_LOG_FILE     "log.txt"
 
 #define DEFAULT_RUNPATH_KEY  "DEFAULT_RUNPATH"
-#define RERUN_RUNPATH_KEY    "DEFAULT_RERUN_PATH"
 
 
 /**
@@ -108,7 +107,6 @@ const char * enkf_defaults_get_default_gen_kw_export_name();
    Defaults for the EnKF analysis. The analysis_config object is
    instantiated with these values.
 */
-#define DEFAULT_ENKF_MODE                  ENKF_STANDARD
 #define DEFAULT_NCOMP                      1
 #define DEFAULT_ENKF_TRUNCATION            0.99
 #define DEFAULT_ENKF_ALPHA                 3.0
@@ -123,9 +121,7 @@ const char * enkf_defaults_get_default_gen_kw_export_name();
 #define DEFAULT_ENKF_KERNEL_FUNC           1       /*Default is the Gaussian */
 #define DEFAULT_ENKF_KERNEL_PARAM          1       /*Scale by the maximum value in the distance matrix */
 #define DEFAULT_ENKF_CV                    false
-#define DEFAULT_ENKF_BOOTSTRAP             false
 #define DEFAULT_ENKF_PEN_PRESS             false
-#define DEFAULT_ENKF_FORCE_NCOMP           false
 #define DEFAULT_UPDATE_RESULTS             false
 #define DEFAULT_SINGLE_NODE_UPDATE         false
 #define DEFAULT_ANALYSIS_MODULE            "STD_ENKF"
@@ -144,16 +140,10 @@ const char * enkf_defaults_get_default_gen_kw_export_name();
 #define DEFAULT_RUNPATH          "simulations/realization%d"
 #define DEFAULT_ENSPATH          "storage"
 #define DEFAULT_RFTPATH          "rft"
-#define DEFAULT_PLOT_REFCASE     true
 #define DEFAULT_REPORT_LARGE     false
 #define DEFAULT_REPORT_TIMEOUT   120
 
-#define DEFAULT_PLOT_WIDTH           1024
-#define DEFAULT_PLOT_HEIGHT           768
-#define DEFAULT_PLOT_ERRORBAR_MAX      25
-#define DEFAULT_PLOT_ERRORBAR       false
 #define DEFAULT_IMAGE_TYPE         "png"
-#define DEFAULT_PLOT_DRIVER        "PLPLOT"
 #define DEFAULT_IMAGE_VIEWER       "/usr/bin/display"
 #define DEFAULT_PLOT_LOGY          false
 

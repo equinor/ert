@@ -146,9 +146,6 @@ typedef enum { TRUNCATE_NONE   = 0,
       - ENSPATH
       - INIT_FILE (or estimation of EQUIL)
 
-   enkf_assmilation:
-      - RESULT_PATH
-
 */
 
 typedef enum { //ENKF_ASSIMILATION       = 1,

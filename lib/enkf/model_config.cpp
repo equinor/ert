@@ -781,11 +781,10 @@ static void model_config_init_user_config(config_parser_type * config ) {
   ert_workflow_list_add_config_items( config );
   {
      item = config_add_schema_item(config, PLOT_SETTING_KEY, false);
-     config_install_message(
-      config, PLOT_SETTING_KEY,
-      "** Warning: \'PLOT_SETTINGS\' is ignored"
-      "- use the general dialog windows instead."
-      );
+     config_parser_deprecate(
+         config, PLOT_SETTING_KEY,
+         "\'PLOT_SETTINGS\' has been deprecated"
+         "- use the general dialog windows instead.");
   }
   analysis_config_add_config_items( config );
   ensemble_config_add_config_items( config );
@@ -828,9 +827,9 @@ static void model_config_init_user_config(config_parser_type * config ) {
   config_schema_item_set_argc_minmax(item, 1, 1);
 
   item = config_add_schema_item(config, DBASE_TYPE_KEY, false);
-  config_install_message(
+  config_parser_deprecate(
     config, DBASE_TYPE_KEY,
-    "** Warning: \'DBASE_TYPE\' is ignored"
+    "\'DBASE_TYPE\' has been deprecated."
   );
 
   item = config_add_schema_item(config, FORWARD_MODEL_KEY, false);
@@ -864,9 +863,9 @@ static void model_config_init_user_config(config_parser_type * config ) {
 
 
   item = config_add_schema_item(config, LOCAL_CONFIG_KEY, false);
-  config_install_message(
+  config_parser_deprecate(
     config, LOCAL_CONFIG_KEY,
-    "** Warning: \'LOCAL_CONFIG\' is ignored"
+    "\'LOCAL_CONFIG\' is deprecated."
   );
 
   stringlist_type * refcase_dep = stringlist_alloc_new();
@@ -968,4 +967,3 @@ bool model_config_report_step_compatible(const model_config_type * model_config,
 
   return ret;
 }
-

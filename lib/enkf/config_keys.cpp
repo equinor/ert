@@ -62,10 +62,6 @@ const char * config_keys_get_install_job_key() {
   return INSTALL_JOB_KEY;
 }
 
-const char * config_keys_get_plot_setting_key() {
-  return PLOT_SETTING_KEY;
-}
-
 const char * config_keys_get_log_file_key() {
   return LOG_FILE_KEY;
 }
@@ -186,10 +182,6 @@ const char * config_keys_get_random_seed() {
 /////***** Analysis config keys*******////////////
 const char * config_keys_get_alpha() {
     return ENKF_ALPHA_KEY;
-}
-
-const char * config_keys_get_do_bootstrap() {
-    return ENKF_BOOTSTRAP_KEY;
 }
 
 const char * config_keys_get_do_pen_press() {
