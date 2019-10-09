@@ -165,6 +165,18 @@ class SingleProgressModel(QAbstractTableModel):
             return self.model_data[index.row()][index.column()] + "." + str(index.row())
         return ''
 
+    @staticmethod
+    def _get_byte_with_unit(byte_count):
+        suffixes = ["B", "kB", "MB", "GB", "TB", "PB"]
+        power = float(10**3)
+
+        i = 0
+        while byte_count >= power and i < len(suffixes) - 1:
+            byte_count = byte_count/power
+            i += 1
+
+        return "{byte_count:.2f} {suffix}".format(byte_count=byte_count, suffix=suffixes[i])
+
     def data(self, index, role):
         if not index.isValid():
             return QVariant()
@@ -191,6 +203,14 @@ class SingleProgressModel(QAbstractTableModel):
 
         if col == 'stdout' or col == 'stderr':
             return QVariant("OPEN")
+
+        if col == 'current_memory_usage' or col == 'max_memory_usage':
+            try:
+                memory_usage = int(self.model_data[index.row()][index.column()])
+            except ValueError:
+                return QVariant(self.model_data[index.row()][index.column()])
+            else:
+                return QVariant(SingleProgressModel._get_byte_with_unit(memory_usage))
 
         return QVariant(self.model_data[index.row()][index.column()])
 
