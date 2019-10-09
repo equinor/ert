@@ -78,6 +78,16 @@ class JobRunnerTest(TestCase):
         if "ERT_RUN_ID" in os.environ:
             del os.environ["ERT_RUN_ID"]
 
+
+    def tearDown(self):
+
+        keys = ("KEY_ONE", "KEY_TWO", "KEY_THREE", "KEY_FOUR", "PATH104", "DATA_ROOT", "ERT_RUN_ID")
+
+        for key in keys:
+            if key in os.environ:
+                del os.environ[key]
+
+
     def assert_clean_slate(self):
         self.assertFalse(os.path.isfile("jobs.py"))
         self.assertFalse(os.path.isfile("jobs.json"))

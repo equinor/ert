@@ -4,6 +4,7 @@ import os
 
 from tests import ResTest
 from res.test import ErtTestContext
+from _pytest.monkeypatch import MonkeyPatch
 
 from res.enkf.export import (DesignMatrixReader, SummaryCollector,
                              GenKwCollector, MisfitCollector)
@@ -41,8 +42,12 @@ def dumpDesignMatrix(path):
 class ExportJoinTest(ResTest):
 
     def setUp(self):
-        os.environ["TZ"] = "CET" # The ert_statoil case was generated in CET
+        self.monkeypatch = MonkeyPatch()
+        self.monkeypatch.setenv("TZ", "CET") # The ert_statoil case was generated in CET
         self.config = self.createTestPath("local/snake_oil/snake_oil.ert")
+
+    def tearDown(self):
+        self.monkeypatch.undo()
 
     def test_join(self):
 

@@ -29,6 +29,7 @@ from tests import ResTest
 from res.fm.ecl import *
 from subprocess import Popen, PIPE
 from distutils.spawn import find_executable
+from _pytest.monkeypatch import MonkeyPatch
 
 
 def flow_install():
@@ -50,6 +51,11 @@ def find_version(output):
 class EclRunTest(ResTest):
     def setUp(self):
         self.ecl_config_path = os.path.dirname( inspect.getsourcefile(Ecl100Config) )
+        self.monkeypatch = MonkeyPatch()
+
+
+    def tearDown(self):
+        self.monkeypatch.undo()
 
 
     def init_ecl100_config(self):
@@ -65,7 +71,7 @@ class EclRunTest(ResTest):
                                                               "PATH" : "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044/bin64:$PATH"}}}}}
         with open("ecl100_config.yml","w") as f:
             f.write( yaml.dump(conf) )
-        os.environ["ECL100_SITE_CONFIG"] = "ecl100_config.yml"
+        self.monkeypatch.setenv("ECL100_SITE_CONFIG", "ecl100_config.yml")
 
 
     def init_flow_config(self):
@@ -91,7 +97,7 @@ class EclRunTest(ResTest):
 
         with open("flow_config.yml", "w") as f:
             f.write(yaml.dump(conf))
-        os.environ["FLOW_SITE_CONFIG"] = "flow_config.yml"
+        self.monkeypatch.setenv("FLOW_SITE_CONFIG", "flow_config.yml")
 
 
     def test_create(self):
@@ -105,7 +111,7 @@ class EclRunTest(ResTest):
                 f.write( yaml.dump(conf) )
 
             os.mkdir("bin")
-            os.environ["ECL100_SITE_CONFIG"] = "ecl100_config.yml"
+            self.monkeypatch.setenv("ECL100_SITE_CONFIG", "ecl100_config.yml")
             for f in ["scalar_exe", "mpi_exe", "mpirun"]:
                 fname = os.path.join("bin", f)
                 with open( fname, "w") as fh:

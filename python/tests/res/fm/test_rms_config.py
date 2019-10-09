@@ -19,6 +19,7 @@ import unittest
 import yaml
 from ecl.util.test import TestAreaContext
 from tests import ResTest
+from _pytest.monkeypatch import MonkeyPatch
 
 from res.fm.rms import RMSConfig
 
@@ -26,14 +27,18 @@ from res.fm.rms import RMSConfig
 class RMSConfigTest(ResTest):
 
     def setUp(self):
+        self.monkeypatch = MonkeyPatch()
         pass
 
+    def tearDown(self):
+        self.monkeypatch.undo()
+
     def test_load(self):
-        os.environ["RMS_SITE_CONFIG"] = "file/does/not/exist"
+        self.monkeypatch.setenv("RMS_SITE_CONFIG", "file/does/not/exist")
         with self.assertRaises(IOError):
             conf = RMSConfig()
 
-        os.environ["RMS_SITE_CONFIG"] = os.path.join(self.SOURCE_ROOT, "python/res/fm/rms/rms_config.yml")
+        self.monkeypatch.setenv("RMS_SITE_CONFIG", os.path.join(self.SOURCE_ROOT, "python/res/fm/rms/rms_config.yml"))
         conf = RMSConfig()
 
         with self.assertRaises(OSError):
@@ -44,7 +49,7 @@ class RMSConfigTest(ResTest):
             with open("file.yml","w") as f:
                 f.write("this:\n -should\n-be\ninvalid:yaml?")
 
-            os.environ["RMS_SITE_CONFIG"] = "file.yml"
+            self.monkeypatch.setenv("RMS_SITE_CONFIG", "file.yml")
             with self.assertRaises(ValueError):
                 conf = RMSConfig()
 

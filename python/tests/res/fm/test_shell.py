@@ -6,6 +6,7 @@ import contextlib
 from ecl.util.test import TestAreaContext
 from tests import ResTest
 from res.fm.shell import *
+from _pytest.monkeypatch import MonkeyPatch
 
 @contextlib.contextmanager
 def pushd(path):
@@ -21,9 +22,11 @@ def pushd(path):
 class ShellTest(ResTest):
 
     def setUp(self):
-        if "DATA_ROOT" in os.environ:
-            del os.environ["DATA_ROOT"]
+        self.monkeypatch = MonkeyPatch()
 
+
+    def tearDown(self):
+        self.monkeypatch.undo()
 
     def test_symlink(self):
         with self.assertRaises(IOError):
@@ -254,7 +257,7 @@ class ShellTest(ResTest):
             with open("path/subpath/file" , "w") as f:
                 f.write("1")
 
-            os.environ["DATA_ROOT"] = "path"
+            self.monkeypatch.setenv("DATA_ROOT", "path")
             mkdir("target/sub")
             copy_directory("subpath" , "target/sub")
             self.assertTrue( os.path.exists( "target/sub/subpath" ))

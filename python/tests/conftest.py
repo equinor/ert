@@ -30,3 +30,11 @@ def pytest_runtest_setup(item):
     if item.get_closest_marker("equinor_test") and not has_equinor_test_data():
         pytest.skip("Test requires Equinor data")
 
+
+@pytest.fixture(autouse=True)
+def env_save():
+    environment_pre = [(key, val) for key, val in os.environ.items() if key != "PYTEST_CURRENT_TEST"]
+    yield
+    environment_post = [(key, val) for key, val in os.environ.items() if key != "PYTEST_CURRENT_TEST"]
+    if environment_pre != environment_post:
+        raise EnvironmentError("Your environment has changed after that test, please reset")

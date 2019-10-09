@@ -96,7 +96,7 @@ class RMSRun(object):
         exec_env_file = "%s_exec_env.json" % self_exe
         exec_env = os.environ.copy()
         if os.path.isfile(exec_env_file):
-            exec_env.update(json.load(open(exec_env_file)))
+            RMSRun.set_up_env(exec_env, json.load(open(exec_env_file)))
 
         with pushd(self.run_path):
             fileH = open("RMS_SEED_USED", "a+")
@@ -153,22 +153,22 @@ class RMSRun(object):
             args += ["-threads", str(self.config.threads)]
 
         if exec_env:
-            env = os.environ.copy()
-            for key, value in exec_env.items():
-                if value is None:
-                    env.pop(key)
-                    continue
-
-                value = str(value).strip()
-                if len(value) == 0:
-                    env.pop(key)
-                    continue
-
-                env[key] = value
-
-            os.execve( self.config.executable , args, env )
+            os.execve(self.config.executable, args, exec_env)
         else:
-            os.execv(self.config.executable, args )
+            os.execv(self.config.executable, args)
 
 
+    @staticmethod
+    def set_up_env(exec_env, env_extension):
+        """
+        This method takes in two dicts of environmental variables and sets up and
+        execute environment. If the values are empty the key will be popped.
+        """
+        for key, value in env_extension.items():
+            if value is None or len(str(value).strip()) == 0:
+                if key in exec_env:
+                    exec_env.pop(key)
+                continue
+
+            exec_env[key] = value
 

@@ -1,6 +1,7 @@
 import os
 from tests import ResTest
 from res.test import ErtTestContext
+from _pytest.monkeypatch import MonkeyPatch
 
 from res.enkf.export import SummaryObservationCollector
 
@@ -8,8 +9,13 @@ from res.enkf.export import SummaryObservationCollector
 class SummaryObservationCollectorTest(ResTest):
 
     def setUp(self):
-        os.environ["TZ"] = "CET" # The ert_statoil case was generated in CET
+        self.monkeypatch = MonkeyPatch()
+        self.monkeypatch.setenv("TZ", "CET") # The ert_statoil case was generated in CET
         self.config = self.createTestPath("local/snake_oil/snake_oil.ert")
+
+
+    def tearDown(self):
+        self.monkeypatch.undo()
 
 
     def test_summary_observation_collector(self):

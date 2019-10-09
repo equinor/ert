@@ -20,6 +20,7 @@ import unittest
 import yaml
 from ecl.util.test import TestAreaContext
 from tests import ResTest
+from _pytest.monkeypatch import MonkeyPatch
 
 from res.fm.ecl import Ecl100Config
 from res.fm.ecl.ecl_config import Keys
@@ -28,20 +29,25 @@ class EclConfigTest(ResTest):
 
     def setUp(self):
         self.ecl_config_path = os.path.dirname( inspect.getsourcefile(Ecl100Config) )
+        self.monkeypatch = MonkeyPatch()
+
+    def tearDown(self):
+        self.monkeypatch.undo()
+
 
     def test_load(self):
-        os.environ["ECL100_SITE_CONFIG"] = "file/does/not/exist"
+        self.monkeypatch.setenv("ECL100_SITE_CONFIG", "file/does/not/exist")
         with self.assertRaises(IOError):
             conf = Ecl100Config()
 
-        os.environ["ECL100_SITE_CONFIG"] = os.path.join(self.ecl_config_path, "ecl100_config.yml")
+        self.monkeypatch.setenv("ECL100_SITE_CONFIG", os.path.join(self.ecl_config_path, "ecl100_config.yml"))
         conf = Ecl100Config()
 
         with TestAreaContext("yaml_invalid"):
             with open("file.yml","w") as f:
                 f.write("this:\n -should\n-be\ninvalid:yaml?")
 
-            os.environ["ECL100_SITE_CONFIG"] = "file.yml"
+            self.monkeypatch.setenv("ECL100_SITE_CONFIG", "file.yml")
             with self.assertRaises(ValueError):
                 conf = Ecl100Config()
 
@@ -59,8 +65,8 @@ class EclConfigTest(ResTest):
                 os.chmod(fname, stat.S_IEXEC)
 
             intel_path = "intel"
-            os.environ["ENV1"] = "A"
-            os.environ["ENV2"] = "C"
+            self.monkeypatch.setenv("ENV1", "A")
+            self.monkeypatch.setenv("ENV2", "C")
             d = {Keys.env : {"LICENSE_SERVER" : "license@company.com"},
                  Keys.versions: {"2015" : {Keys.scalar: {Keys.executable : scalar_exe},
                                            Keys.mpi   : {Keys.executable : mpi_exe,
@@ -137,7 +143,7 @@ class EclConfigTest(ResTest):
                   Keys.versions: {"2015" : {Keys.scalar: {Keys.executable : scalar_exe}},
                                   "2016" : {Keys.scalar: {Keys.executable : scalar_exe}}}}
 
-            os.environ["ECL100_SITE_CONFIG"] = os.path.join("file.yml")
+            self.monkeypatch.setenv("ECL100_SITE_CONFIG", os.path.join("file.yml"))
             with open("file.yml", "w") as f:
                 f.write( yaml.dump(d1) )
 

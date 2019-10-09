@@ -10,6 +10,11 @@ from tests.utils import tmpdir
 
 
 class JobManagerTestRuntimeKW(TestCase):
+
+    def tearDown(self):
+        if "DATA_ROOT" in os.environ:
+            del os.environ["DATA_ROOT"]
+
     @tmpdir(None)
     def test_run_one_job_with_an_integer_arg_is_actually_a_fractional(self):
         executable = "echo"

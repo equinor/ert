@@ -22,6 +22,7 @@ import shutil
 import json
 from ecl.util.test import TestAreaContext
 from tests import ResTest
+from _pytest.monkeypatch import MonkeyPatch
 
 from res.fm.rms import RMSRun
 import res.fm.rms
@@ -29,10 +30,14 @@ import res.fm.rms
 class RMSRunTest(ResTest):
 
     def setUp(self):
+        self.monkeypatch = MonkeyPatch()
         pass
 
+    def tearDown(self):
+        self.monkeypatch.undo()
+
     def test_create(self):
-        os.environ["RMS_SITE_CONFIG"] =os.path.join(self.SOURCE_ROOT, "python/res/fm/rms/rms_config.yml")
+        self.monkeypatch.setenv("RMS_SITE_CONFIG", os.path.join(self.SOURCE_ROOT, "python/res/fm/rms/rms_config.yml"))
         with self.assertRaises(OSError):
             r = RMSRun(0, "/project/does/not/exist", "workflow")
 
@@ -51,7 +56,7 @@ class RMSRunTest(ResTest):
             os.mkdir("bin")
             os.mkdir("project")
             shutil.copy(os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin")
-            os.environ["RMS_SITE_CONFIG"] = "rms_config.yml"
+            self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
             action = {"exit_status" : 0}
             with open("run_path/action.json", "w") as f:
@@ -102,7 +107,7 @@ class RMSRunTest(ResTest):
             os.mkdir("bin")
             os.mkdir("project")
             shutil.copy(os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin")
-            os.environ["RMS_SITE_CONFIG"] = "rms_config.yml"
+            self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
             action = {"exit_status" : 0}
             with open("run_path/action.json", "w") as f:
@@ -161,11 +166,11 @@ class RMSRunTest(ResTest):
                 os.mkdir("bin")
                 os.mkdir("project")
                 shutil.copy(os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin")
-                os.environ["RMS_SITE_CONFIG"] = "rms_config.yml"
+                self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
                 action = {"exit_status" : 0}
                 with open("run_path/action.json", "w") as f:
-                    f.write( json.dumps(action) )
+                    f.write(json.dumps(action))
 
                 rms_exec = os.path.join(self.SOURCE_ROOT, 'share/ert/forward-models/res/script/rms')
                 subprocess.check_call([
@@ -210,13 +215,13 @@ class RMSRunTest(ResTest):
                     json.dump({
                         'RMS_TEST_VAR': val,
                     }, f)
-                os.environ['RMS_TEST_VAR'] = 'fdsgfdgfdsgfds'
+                self.monkeypatch.setenv('RMS_TEST_VAR', 'fdsgfdgfdsgfds')
 
                 os.mkdir("run_path")
                 os.mkdir("bin")
                 os.mkdir("project")
                 shutil.copy(os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin")
-                os.environ["RMS_SITE_CONFIG"] = "rms_config.yml"
+                self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
                 action = {"exit_status" : 0}
                 with open("run_path/action.json", "w") as f:
