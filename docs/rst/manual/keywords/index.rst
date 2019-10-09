@@ -56,34 +56,30 @@ List of keywords
 =====================================================================	======================================	==============================  ==============================================================================================================================================
 Keyword name                                                        	Required by user?     			Default value         		Purpose
 =====================================================================	======================================	============================== 	==============================================================================================================================================
-:ref:`ADD_FIXED_LENGTH_SCHEDULE_KW <add_fixed_length_schedule_kw>`  	NO                                          				Supporting unknown SCHEDULE keywords.
+:ref:`ADD_FIXED_LENGTH_SCHEDULE_KW <add_fixed_length_schedule_kw>`  	NO                                          				Deprecated.
 :ref:`ANALYSIS_COPY <analysis_copy>`                                	NO                                          				Create new instance of analysis module
 :ref:`ANALYSIS_LOAD <analysis_load>`                                	NO                                          				Load analysis module
-:ref:`ANALYSIS_SET_VAR <analysis_set_var>`                          	NO                                          				Set analysis module internal state variable
 :ref:`ANALYSIS_SELECT <analysis_select>`                            	NO                    			STD_ENKF    	          	Select analysis module to use in update
-:ref:`CASE_TABLE <case_table>`                                      	NO                                          				For running sensitivities you can give the cases descriptive names
+:ref:`ANALYSIS_SET_VAR <analysis_set_var>`                          	NO                                          				Set analysis module internal state variable
 :ref:`CONTAINER <container>`                                        	NO                                          				...
 :ref:`CUSTOM_KW <custom_kw>`                                        	NO                                          				Ability to load arbitrary values from the forward model.
 :ref:`DATA_FILE <data_file>`                                        	NO                                         				Provide an ECLIPSE data file for the problem.
 :ref:`DATA_KW <data_kw>`                                            	NO                                          				Replace strings in ECLIPSE .DATA files
-:ref:`DBASE_TYPE <dbase_type>`                                      	NO                    			BLOCK_FS         	     	Which 'database' system should be used for storage
 :ref:`DEFINE <define>`                                              	NO                                          				Define keywords with config scope
 :ref:`DELETE_RUNPATH <delete_runpath>`                              	NO                                          				Explicitly tell ERT to delete the runpath when a job is complete 
 :ref:`ECLBASE <eclbase>`	                                    	YES\*					        			Define a name for the ECLIPSE simulations. \*Either JOBNAME or ECLBASE must be specified
-:ref:`END_DATE <end_date>`                                          	NO                                          				You can tell ERT how lon the simulations should be - for error check
+:ref:`END_DATE <end_date>`                                          	NO                                          				You can tell ERT how long the simulations should be - for error checking
 :ref:`ENKF_ALPHA <enkf_alpha>`                                      	NO                    			1.50                  		Parameter controlling outlier behaviour in EnKF algorithm
-:ref:`ENKF_BOOTSTRAP <enkf_bootstrap>`                              	NO                    			FALSE                 		Should we bootstrap the Kalman gain estimate
-:ref:`ENKF_CROSS_VALIDATION <enkf_cross_validation>`                	NO                                                                      ...
+:ref:`ENKF_BOOTSTRAP <enkf_bootstrap>`                              	NO                    			FALSE                 		Deprecated.
 :ref:`ENKF_CV_FOLDS <enkf_cv_folds>`                                	NO                    			10                    		Number of folds used in the Cross-Validation scheme
-:ref:`ENKF_FORCE_NCOMP <enkf_force_ncomp>`                              NO                    			0                    		Indicate if ERT should force a specific number of principal components
-:ref:`ENKF_KERNEL_PARAM <enkf_kernel_param>`                        	NO                    			1
+:ref:`ENKF_FORCE_NCOMP <enkf_force_ncomp>`                              NO                    			0                    		Deprecated.
 :ref:`ENKF_LOCAL_CV <enkf_local_cv>`                                	NO                    			FALSE                 		Should we estimate the subspace dimenseion using Cross-Validation
 :ref:`ENKF_MERGE_OBSERVATIONS <enkf_merge_observations>`            	NO                    			FALSE                 		Should observations from many times be merged together
-:ref:`ENKF_MODE <enkf_mode>`                                        	NO                    			STANDARD              		Which updating scheme should be used
+:ref:`ENKF_MODE <enkf_mode>`                                        	NO                    			STANDARD              		Deprecated.
 :ref:`ENKF_NCOMP <enkf_ncomp>`                                        	NO                    			              			Number of PC to use when forcing a fixed number; used in combination with kw ENKF_FORCE_NCOMP 
 :ref:`ENKF_PEN_PRESS <enkf_pen_press>`                              	NO                    			FALSE                 		Should we want to use a penalised PRESS statistic in model selection? 
 :ref:`ENKF_RERUN <enkf_rerun>`                                      	NO                    			FALSE                 		Should the simulations be restarted from time zero after each update. 
-:ref:`ENKF_SCALING <enkf_scaling>`                                  	NO                    			TRUE           		       	Do we want to normalize the data ensemble to have unit variance? 
+:ref:`ENKF_SCALING <enkf_scaling>`                                  	NO                    			TRUE           		       	Deprecated.
 :ref:`ENKF_TRUNCATION <enkf_truncation>`                            	NO                    			0.99        	          	Cutoff used on singular value spectrum. 
 :ref:`ENSPATH <enspath>`                                            	NO                    			storage     	          	Folder used for storage of simulation results.
 :ref:`FIELD <field>`                                                	NO                                          				Ads grid parameters
@@ -91,29 +87,25 @@ Keyword name                                                        	Required by
 :ref:`GEN_DATA <gen_data>`                                          	NO                                          				Specify a general type of data created/updated by the forward model.
 :ref:`GEN_KW <gen_kw>`                                              	NO                                          				Add a scalar parameter. 
 :ref:`GEN_KW_TAG_FORMAT <gen_kw_tag_format>`                        	NO                    			<%s>                  		Format used to add keys in the GEN_KW template files.
-:ref:`GEN_KW_EXPORT_FILE <gen_kw_export_file>`                      	NO                    			parameter.txt         		Name of file to export GEN_KW parameters to. 
 :ref:`GEN_PARAM <gen_param>`                                        	NO                                          				Add a general parameter. 
 :ref:`GRID <grid>`                                                  	NO                                         				Provide an ECLIPSE grid for the reservoir model. 
 :ref:`HISTORY_SOURCE <history_source>`                              	NO                    			REFCASE_HISTORY     	  	Source used for historical values.
 :ref:`HOOK_WORKFLOW <hook_workflow>` 					NO 									Install a workflow to be run automatically.
-:ref:`IGNORE_SCHEDULE <ignore_schedule>`                            	NO
+:ref:`IGNORE_SCHEDULE <ignore_schedule>`  					NO 									Deprecated.
+:ref:`INIT_SECTION <init_section>`                                  	NO                                          				Deprecated.
 :ref:`INSTALL_JOB <install_job>`                                   	NO                                          				Install a job for use in a forward model. 
 :ref:`ITER_CASE <iter_Case>`                                        	NO                    			IES%d         	        	Case name format - iterated ensemble smoother
 :ref:`ITER_COUNT <iter_count>`                                      	NO                    			4             	        	Number of iterations - iterated ensemble smoother 
 :ref:`ITER_RETRY_COUNT <iter_retry_count>`                          	NO                    			4         	            	Number of retries for a iteration - iterated ensemble smoother 
-:ref:`JOBNAME <jobname>`                                            	YES\*                                          				Name used for simulation files. \*Either JOBNAME or ECLBASE must be specified.
 :ref:`JOB_SCRIPT <job_script>`                                      	NO                                          				Python script managing the forward model. 
-:ref:`LOAD_SEED <load_seed>`                                        	NO                                          				Load random seed from given file.
+:ref:`JOBNAME <jobname>`                                            	YES\*                                          				Name used for simulation files. \*Either JOBNAME or ECLBASE must be specified.
 :ref:`LOAD_WORKFLOW <load_workflow>` 				    	NO                             						Load a workflow into ERT. 
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`  			    	NO 									Load a workflow job into ERT. 
-:ref:`LICENSE_PATH <licence_path>`  				    	NO 									A path where ert-licenses to e.g. RMS are stored. 
-:ref:`LOCAL_CONFIG <load_config>` 			            	NO 									A file with configuration information for local analysis. 
 :ref:`LOG_FILE <log_file>` 					    	NO 					log 				Name of log file 
 :ref:`LOG_LEVEL <log_level>` 					    	NO 		 			1 				How much logging? 
 :ref:`LSF_QUEUE <lsf_queue>` 					    	NO 					normal				Name of LSF queue. 
-:ref:`LSF_RESOURCES <lsf_resources>` 				    	NO 
+:ref:`LSF_RESOURCES <lsf_resources>` 				    	NO                              						See detailed description.
 :ref:`LSF_SERVER <lsf_server>` 					    	NO 									Set server used when submitting LSF jobs. 
-:ref:`MAX_ITER_COUNT <max_iter_count>` 				    	NO 									Maximal number of iterations - iterated ensemble smoother. 
 :ref:`MAX_RESAMPLE <max_resample>`				    	NO 					1		 		How many times should ERT resample & retry a simulation.
 :ref:`MAX_RUNNING_RSH <max_running_rsh>` 				NO 									The maximum number of running jobs when using RSH queue system. 
 :ref:`MAX_RUNTIME <max_runtime>` 					NO 					0 				Set the maximum runtime in seconds for a realization. 
@@ -121,43 +113,42 @@ Keyword name                                                        	Required by
 :ref:`MIN_REALIZATIONS <min_realizations>` 				NO 					0 				Set the number of minimum reservoir realizations to run before long running realizations are stopped. Keyword STOP_LONG_RUNNING must be set to TRUE when MIN_REALIZATIONS are set. 
 :ref:`NUM_REALIZATIONS <num_realizations>` 				YES 									Set the number of reservoir realizations to use. 
 :ref:`OBS_CONFIG <obs_config>` 						NO 									File specifying observations with uncertainties. 
-:ref:`PLOT_DRIVER <plot_driver>` 					NO 					PLPLOT				Subsystem used for plotting
-:ref:`PLOT_ERRORBAR <plot_errorbar>` 					NO 					TRUE				Should ERT display error bars when plotting observations.
-:ref:`PLOT_ERRORBAR_MAX <plot_errorbar_max>` 				NO 									...
-:ref:`PLOT_HEIGHT <plot_height>` 					NO 					???				Height of plots in pixels.
-:ref:`PLOT_REFCASE <plot_refcase>` 					NO 					TRUE				Should ERT plot the refcase?
-:ref:`PLOT_SETTINGS <plot_settings>` 					NO 					  				Possibility to configure some aspects of plotting.
-:ref:`PRE_CLEAR_RUNPATH <pre_clear_runpath>` 				NO 					FALSE 				Should the runpath be cleared before initializing? 
+:ref:`PLOT_DRIVER <plot_driver>` 					NO 					PLPLOT				Deprecated.
+:ref:`PLOT_ERRORBAR <plot_errorbar>` 					NO 					TRUE				Deprecated.
+:ref:`PLOT_ERRORBAR_MAX <plot_errorbar_max>` 				NO 									Deprecated.
+:ref:`PLOT_HEIGHT <plot_height>` 					NO 					???				Deprecated.
+:ref:`PLOT_REFCASE <plot_refcase>` 					NO 					TRUE				Deprecated.
+:ref:`PLOT_SETTINGS <plot_settings>` 					NO 					  				Deprecated.
 :ref:`QUEUE_OPTION <queue_option>` 					NO 									Set options for an ERT queue system 
 :ref:`QUEUE_SYSTEM <queue_system>` 					NO 									System used for running simulation jobs. 
 :ref:`REFCASE <refcase>` 						NO (see HISTORY_SOURCE and SUMMARY) 					Reference case used for observations and plotting. 
 :ref:`REFCASE_LIST <refcase_list>` 					NO 									Full path to Eclipse .DATA files containing completed runs (which you can add to plots) 
-:ref:`RERUN_PATH  <rerun_path>` 					NO 									...
-:ref:`RERUN_START  <rerun_start>` 					NO 					0 				... 
+:ref:`RERUN_START  <rerun_start>` 					NO 					0 				Deprecated.
 :ref:`RESULT_PATH  <result_path>` 					NO 					results/step_%d			Define where ERT should store results 				 
 :ref:`RFT_CONFIG  <rft_config>` 					NO 									Config file specifying wellnames and dates for rft-measurments. Used for plotting. The format has to be name day month year (ex. Q-2FI 02 08 1973), with a new entry on a new line. 
 :ref:`RFTPATH <rftpath>`  						NO 					rft 				Path to where the rft well observations are stored 
 :ref:`RSH_COMMAND  <rsh_command>` 					NO 									Command used for remote shell operations. 
 :ref:`RSH_HOST <rsh_host>`  						NO 									Remote host used to run forward model. 
+:ref:`RUN_TEMPLATE <run_template>`  					NO 									Install arbitrary files in the runpath directory.
 :ref:`RUNPATH <runpath>`  						NO 					simulations/realization%d 	Directory to run simulations
 :ref:`RUNPATH_FILE <runpath_file>`  					NO 					.ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations. 
-:ref:`RUN_TEMPLATE <run_template>`  					NO 									Install arbitrary files in the runpath directory.
-:ref:`STD_SCALE_CORRELATED_OBS <std_scale_correlated_obs>`              NO                                      FALSE                           Try to estimate the correlations in the data to inflate the observation std.     
-:ref:`SCHEDULE_FILE <schedule_file>`  					NO 									Provide an ECLIPSE schedule file for the problem. 
+:ref:`SCHEDULE_FILE <schedule_file>`  					NO 									Deprecated.
 :ref:`SCHEDULE_PREDICTION_FILE <schedule_prediction_file>`  		NO 									Schedule prediction file. 
 :ref:`SETENV <setenv>`  						NO 									You can modify the UNIX environment with SETENV calls. 
 :ref:`SIMULATION_JOB <simulation_job>`  				NO 					 				Experimental alternative to FORWARD_MODEL
-:ref:`SINGLE_NODE_UPDATE <single_node_update>`  			NO 					FALSE 				... 
+:ref:`SINGLE_NODE_UPDATE <single_node_update>`  			NO 					FALSE 				Splits the dataset into individual parameters. 
+:ref:`STATIC_KW <static_kw>`                                            	NO                                          				Deprecated.
+:ref:`STD_SCALE_CORRELATED_OBS <std_scale_correlated_obs>`              NO                                      FALSE                           Try to estimate the correlations in the data to inflate the observation std.     
 :ref:`STOP_LONG_RUNNING <stop_long_running>`  				NO 					FALSE 				Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run. 
-:ref:`STORE_SEED  <store_seed>` 					NO 									File where the random seed used is stored. 
+:ref:`STORE_SEED  <store_seed>` 					NO 									Deprecated. For reproducibility, fetch logged `RANDOM_SEED` instead.
 :ref:`SUMMARY  <summary>` 						NO 									Add summary variables for internalization. 
 :ref:`SURFACE <surface>`  						NO 									Surface parameter read from RMS IRAP file. 
-:ref:`TORQUE_QUEUE  <torque_queue>` 					NO 									... 
 :ref:`TIME_MAP  <time_map>`       					NO 									Ability to manually enter a list of dates to establish report step <-> dates mapping.
+:ref:`TORQUE_QUEUE  <torque_queue>` 					NO 									Name of Torque queue.
 :ref:`UMASK <umask>`  							NO 									Control the permissions on files created by ERT. 
 :ref:`UPDATE_LOG_PATH  <update_log_path>` 				NO 					update_log 			Summary of the update steps are stored in this directory. 
 :ref:`UPDATE_PATH  <update_path>` 					NO 									Modify a UNIX path variable like LD_LIBRARY_PATH.
-:ref:`UPDATE_SETTINGS <update_settings>` 				NO 					  				Possibility to configure some common aspects of the Smoother update.|
+:ref:`UPDATE_SETTINGS <update_settings>` 				NO 					  				Deprecated.
 :ref:`WORKFLOW_JOB_DIRECTORY  <workflow_job_directory>` 		NO 									Directory containing workflow jobs. 
 =====================================================================	======================================	============================== 	==============================================================================================================================================
 
@@ -231,7 +222,7 @@ These keywords must be set to make ERT function properly.
 
 	As an alternative to the ECLBASE keyword you can use the JOBNAME keyword; in
 	particular in cases where your forward model does not include ECLIPSE at all
-	that makes more sense. If JOBANME is used instead of ECLBASE the same rules of
+	that makes more sense. If JOBNAME is used instead of ECLBASE the same rules of
 	no-mixed-case apply.
 
 .. _grid:
@@ -291,6 +282,12 @@ These keywords must be set to make ERT function properly.
 	sure that the ECLIPSE datafile correctly includes the SCHEDULE section.
 
 
+.. _ignore_schedule:
+.. topic:: IGNORE_SCHEDULE
+
+	Deprecated.
+
+
 Basic optional keywords
 -----------------------
 .. _basic_optional_keywords:
@@ -298,6 +295,7 @@ Basic optional keywords
 These keywords are optional. However, they serve many useful purposes, and it is
 recommended that you read through this section to get a thorough idea of what's
 possible to do with ERT.
+
 
 .. _data_kw:
 .. topic:: DATA_KW
@@ -316,6 +314,58 @@ possible to do with ERT.
 
 	The DATA_KW keyword is of course optional. Note also that ERT has some
 	built in magic strings.
+
+
+.. _static_kw:
+.. topic:: STATIC_KW
+
+	Deprecated.
+
+
+.. _load_seed:
+.. topic:: LOAD_SEED
+
+        `LOAD_SEED` is deprecated, use `RANDOM_SEED` instead.
+
+
+.. _store_seed:
+.. topic:: STORE_SEED
+
+        `STORE_SEED` is deprecated - for reproducibility, fetch logged `RANDOM_SEED` instead.
+
+
+.. _random_seed:
+.. topic:: RANDOM_SEED
+
+        Set specific seed for reproducibility.
+
+
+.. _log_file:
+.. topic:: LOG_FILE
+
+        Name of log file
+
+
+.. _log_level:
+.. topic:: LOG_LEVEL
+
+        What level should be logged. Can be one of:
+			- `CRITICAL`
+			- `ERROR`
+			- `WARNING`
+			- `INFO`
+			- `DEBUG`
+
+		Default is `WARNING`.
+
+
+.. _gen_kw_tag_format:
+.. topic:: GEN_KW_TAG_FORMAT
+
+        The format string used when creating "search-strings" which should
+        be replaced in the gen_kw template files - MUST contain one `%s`
+        placeholder which will be replaced with the parameter name.
+
 
 .. _delete_runpath:
 .. topic:: DELETE_RUNPATH
@@ -344,13 +394,18 @@ possible to do with ERT.
 
 	The DELETE_RUNPATH keyword is optional.
 
+.. _rerun_start:
+.. topic:: RERUN_START
+
+        `RERUN_START` is deprecated.
+
 
 .. _end_date:
 .. topic:: END_DATE
 
 	When running a set of models from beginning to end ERT does
-	not now in advance how long the simulation is supposed to be,
-	it is therefor impossible beforehand to determine which
+	not know in advance how long the simulation is supposed to be,
+	it is therefor impossible to determine beforehand which
 	restart file number should be used as target file, and the
 	procedure used for Smoother runs can not be used to verify that an
 	ECLIPSE simulation has run to the end.
@@ -561,6 +616,13 @@ possible to do with ERT.
 	stored as .ert_runpath_list in the same directory as the configuration
 	file, but you can set it to something else with the RUNPATH_FILE key.
 
+
+.. _run_template:
+.. topic:: RUN_TEMPLATE
+
+        Install arbitrary files in the runpath directory.
+
+
 Keywords controlling the simulations
 ------------------------------------
 .. _keywords_controlling_the_simulations:
@@ -756,6 +818,13 @@ list of available priors.
 
 	The OPTIONS argument is the same as for the parameter field.
 
+
+.. _init_section:
+.. topic:: INIT_SECTION
+
+	Deprecated.
+
+
 .. _gen_data:
 .. topic:: GEN_DATA
 
@@ -846,6 +915,11 @@ list of available priors.
            * COMPOSITION:unknown
            * COMPOSITION:state
 
+           ::
+
+                Naming a `CUSTOM_KW` parameter `PRED` will prevent the parameter from being
+                added to a ministep dataset.
+
 
 .. _gen_kw:
 .. topic:: GEN_KW
@@ -869,7 +943,12 @@ list of available priors.
 	pore volume multipliers. We would then declare a GEN_KW instance in the main
 	ERT configuration file:
 
-	::
+    ::
+
+        Naming a `GEN_KW` parameter `PRED` will prevent the parameter from being
+        added to a ministep dataset.
+
+    ::
 
 		GEN_KW PAR_MULTPV multpv_template.txt multpv.txt multpv_priors.txt
 
@@ -1182,13 +1261,7 @@ Keywords controlling the ES algorithm
 .. _enkf_bootstrap:
 .. topic:: ENKF_BOOTSTRAP
 
-	Boolean specifying if we want to resample the Kalman gain matrix in the update
-	step. The purpose is to avoid that the ensemble covariance collapses. When
-	this keyword is true each ensemble member will be updated based on a Kalman
-	gain matrix estimated from a resampling with replacement of the full ensemble.
-
-	In theory and in practice this has worked well when one uses a small number of
-	ensemble members.
+	`ENKF_BOOTSTRAP` is deprecated.
 
 
 .. _enkf_cv_folds:
@@ -1212,18 +1285,7 @@ Keywords controlling the ES algorithm
 .. _enkf_force_ncomp:
 .. topic:: ENKF_FORCE_NCOMP
 
-	Bool specifying if we want to force the subspace dimension we want to use in
-	the EnKF updating scheme (SVD-based) to a specific integer. This is an
-	alternative to selecting the dimension using ENKF_TRUNCATION or ENKF_LOCAL_CV.
-
-	*Example:*
-
-	::
-
-		-- Setting the the subspace dimension to 2
-		ENKF_FORCE_NCOMP     TRUE
-		ENKF_NCOMP              2
-
+	`ENKF_FORCE_NCOMP` is deprecated.
 
 
 .. _enkf_local_cv:
@@ -1268,25 +1330,7 @@ Keywords controlling the ES algorithm
 .. _enkf_mode:
 .. topic:: ENKF_MODE
 
-	The ENKF_MODE keyword is used to select which EnKF algorithm to use. Use the
-	value STANDARD for the original EnKF algorithm, or SQRT for the so-called
-	square root scheme. The default value for ENKF_MODE is STANDARD.
-
-	*Example A:*
-
-	::
-
-		-- Using the square root update
-		ENKF_MODE SQRT
-
-	*Example B:*
-
-	::
-
-		-- Using the standard update
-		ENKF_MODE STANDARD
-
-	The ENKF_MODE keyword is optional.
+	`ENKF_MODE` is deprecated.
 
 
 .. _enkf_merge_observations:
@@ -1323,9 +1367,7 @@ Keywords controlling the ES algorithm
 .. _enkf_scaling:
 .. topic:: ENKF_SCALING
 
-	This is a boolean switch - TRUE (Default) or FALSE. If TRUE, we scale the data
-	ensemble matrix to unit variance. This is generally recommended because the
-	SVD-based EnKF algorithm is not scale invariant.
+	`ENKF_SCALING` is deprecated.
 
 
 .. _enkf_truncation:
@@ -1497,6 +1539,49 @@ to load, select and modify the analysis modules are documented here.
 		ANALYSIS_SET_VAR A1 ENKF_TRUNCATION 0.95
 		ANALYSIS_SET_VAR A2 ENKF_TRUNCATION 0.98
 
+
+.. _iter_case:
+.. topic:: ITER_CASE
+
+
+        Case name format - iterated ensemble smoother.
+		By default, this value is set to `ITERATED_ENSEMBLE_SMOOTHER%d`.
+
+
+.. _iter_count:
+.. topic:: ITER_COUNT
+
+        Number of iterations - iterated ensemble smoother.
+		Default is 4.
+
+
+.. _iter_retry_count:
+.. topic:: ITER_RETRY_COUNT
+
+        Number of retries for a iteration - iterated ensemble smoother.
+		Defaults to 4.
+
+
+.. _max_resample:
+.. topic:: MAX_RESAMPLE
+
+        How many times should ERT resample & retry a simulation.
+		Default is 1.
+
+
+.. _max_submit:
+.. topic:: MAX_SUBMIT
+
+        How many times should the queue system retry a simulation.
+		Default is 2.
+
+
+.. _single_node_update:
+.. topic:: SINGLE_NODE_UPDATE
+
+        Splits the dataset into individual parameters.
+
+
 **Developing analysis modules**
 
 In the analysis module the update equations are formulated based on familiar
@@ -1522,7 +1607,7 @@ but required when installing ERT at a new site.
 .. _add_fixed_length_schedule_kw:
 .. topic:: ADD_FIXED_LENGTH_SCHEDULE_KW
 
-	Real low level fix for some SCHEDULE parsing problems.
+	Deprecated.
 
 
 .. _define:
@@ -1633,6 +1718,12 @@ Keywords related to running the forward model
 	For advanced jobs you can pass string arguments to the job using a KEY=VALUE
 	based approach, this is further described in: passing arguments. In available
 	jobs in ERT you can see a list of the jobs which are available.
+
+
+.. _simulation_job:
+.. topic:: SIMULATION_JOB
+
+        Experimental alternative to `FORWARD_MODEL`.
 
 
 .. _job_script:
@@ -1766,6 +1857,27 @@ The main switch between alternatives 1 and 2 above is the LSF_SERVER option.
 	The name of the LSF queue you are running ECLIPSE simulations in.
 
 
+.. _lsf_resources:
+.. topic:: LSF_RESOURCES
+
+        From https://www.ibm.com/support/knowledgecenter/en/SSETD4_9.1.3/lsf_admin/res_req_strings_about.html:
+		Most LSF commands accept a -R res_req argument to specify resource
+		requirements. The exact behavior depends on the command. For
+		example, specifying a resource requirement for the lsload command
+		displays the load levels for all hosts that have the requested resources.
+
+		Specifying resource requirements for the lsrun command causes LSF to
+		select the best host out of the set of hosts that have the requested
+		resources.
+
+		A resource requirement string describes the resources that a job needs.
+		LSF uses resource requirements to select hosts for remote execution and
+		job execution.
+
+		Resource requirement strings can be simple (applying to the entire job)
+		or compound (applying to the specified number of slots).
+
+
 Configuring TORQUE access
 -------------------------
 .. _configuring_torque_access:
@@ -1886,6 +1998,12 @@ the resulting job id. This is done with the queue option DEBUG_OUTPUT:
    QUEUE_OPTION TORQUE DEBUG_OUTPUT torque_log.txt
 
 
+.. _torque_queue:
+.. topic:: TORQUE_QUEUE
+
+        Name the Torque queue.
+
+
 Configuring the RSH queue
 -------------------------
 .. _configuring_the_rsh_queue:
@@ -1948,62 +2066,30 @@ Keywords related to plotting
 .. _plot_driver:
 .. topic:: PLOT_DRIVER
 
-	This is the name of the sub system used for creating plots. The default system
-	is called 'PLPLOT' - all the other options regarding plotting are sub options
-	which are only relevant when you are using PLPLOT. In addition to PLPLOT you
-	can chose the value 'TEXT'; this will actually not produce any plots, just
-	textfiles which can be used for plotting with your favorite plotting program.
-	This is particularly relevant if you have some special requirements to the
-	plots.
-
+	`PLOT_DRIVER` is deprecated.
 
 .. _plot_errorbar:
 .. topic:: PLOT_ERRORBAR
 
-	Should errorbars on the observations be plotted?
-
+	`PLOT_ERRORBAR` is deprecated.
 
 .. _plot_errorbar_max:
 .. topic:: PLOT_ERRORBAR_MAX
 
-	When plotting summary vectors for which observations have been 'installed'
-	with the OBS_CONFIG keyword, ERT will plot the observed values. If you have
-	less than PLOT_ERRORBAR_MAX observations ERT will use errorbars to show the
-	observed values, otherwise it will use two dashed lines indicating +/- one
-	standard deviation. This option is only meaningful when PLOT_PLOT_ERRORBAR is
-	activated.
-
-	To ensure that you always get errorbars you can set PLOT_ERRORBAR_MAX to a
-	very large value, on the other hand setting PLOT_ERRORBAR_MAX to 0 will ensure
-	that ERT always plots observation uncertainty using dashed lines of +/- one
-	standard deviation.
-
-	The setting here will also affect the output when you are using the TEXT
-	driver to plot.
-
+	`PLOT_ERRORBAR_MAX` is deprecated.
 
 .. _plot_height:
 .. topic:: PLOT_HEIGHT
 
-	When the PLPLOT driver creates a plot file, it will have the height (in
-	pixels) given by the PLOT_HEIGHT keyword. The default value for PLOT_HEIGHT is
-	768 pixels.
-
+	`PLOT_HEIGHT` is deprecated.
 
 .. _plot_refcase:
 .. topic:: PLOT_REFCASE
 
-	Boolean variable which is TRUE if you want to add the refcases to the plots.
-
-	*Example:*
-
-	::
-
-		PLOT_REFCASE TRUE
+	`PLOT_REFCASE` is deprecated.
 
 
-
-.. refcase_list:
+.. _refcase_list:
 .. topic:: REFCASE_LIST
 
 	Provide one or more Eclipse .DATA files for a refcase to be added in the
@@ -2024,25 +2110,7 @@ Keywords related to plotting
 .. _plot_settings:
 .. topic:: PLOT_SETTINGS
 
-        The :code:`PLOT_SETTINGS` keyword is a "master keyword" which can be
-        used to configure some aspects of the plotting. These settings will
-        affect the default behaviour when you create a new plot, you can still
-        changes these settings interactively.
-
-        When using the :code:`PLOT_SETTINGS` keyword you supply a secondary
-        keyword and a values as the tow arguments:
-
-        ::
-
-           PLOT_SETTINGS SHOW_REFCASE False
-
-        Will make sure that your plots are created without the refcase plotted
-        as default. The available secondary keys are:
-
-        SHOW_REFCASE : Default True
-        SHOW_HISTORY : Default True
-        
-        
+	`PLOT_SETTINGS` is deprecated.
 
 
 .. _rft_config:
@@ -2122,6 +2190,26 @@ Keywords related to plotting
     Currently, :code:`PRE_UPDATE` and :code:`POST_UPDATE` are only
     available from python.
 
+
+.. _load_workflow:
+.. topic:: LOAD_WORKFLOW
+
+    Load a workflow into ERT.
+
+
+.. _load_workflow_job:
+.. topic:: LOAD_WORKFLOW_JOB
+
+    Load a workflow job into ERT.
+
+
+
+.. _workflow_job_directory:
+.. topic:: WORKFLOW_JOB_DIRECTORY
+
+        Directory containing workflow jobs.
+
+
 Manipulating the Unix environment
 ---------------------------------
 .. _manipulating_the_unix_environment:
@@ -2173,7 +2261,7 @@ instance, and are not applied to the shell.
 
 	The whole thing is just a workaround because we can not use $PATH.
 
-           
+
 .. _umask:
 .. topic:: UMASK
 
@@ -2230,200 +2318,8 @@ Undocumented keywords
 ---------------------------------
 .. _undocumented_keywords:
 
-.. _case_table:
-.. topic:: CASE_TABLE
-
-        CASE_TABLE is not documented yet.
-
 
 .. _container:
 .. topic:: CONTAINER
 
         CONTAINER is not documented yet.
-
-
-.. _dbase_type:
-.. topic:: DBASE_TYPE
-
-        DBASE_TYPE is not documented yet.
-
-
-.. _enkf_cross_validation:
-.. topic:: ENKF_CROSS_VALIDATION
-
-        ENKF_CROSS_VALIDATION is not documented yet.
-
-
-.. _enkf_kernel_param:
-.. topic:: ENKF_KERNEL_PARAM
-
-        ENKF_KERNEL_PARAM is not documented yet.
-
-
-.. _gen_kw_tag_format:
-.. topic:: GEN_KW_TAG_FORMAT
-
-        GEN_KW_TAG_FORMAT is not documented yet.
-
-
-.. _gen_kw_export_file:
-.. topic:: GEN_KW_EXPORT_FILE
-
-        GEN_KW_EXPORT_FILE is not documented yet.
-
-
-.. _ignore_schedule:
-.. topic:: IGNORE_SCHEDULE
-
-        IGNORE_SCHEDULE is not documented yet.
-
-
-.. _iter_case:
-.. topic:: ITER_CASE
-
-        ITER_CASE is not documented yet.
-
-
-.. _iter_count:
-.. topic:: ITER_COUNT
-
-        ITER_COUNT is not documented yet.
-
-
-.. _iter_retry_count:
-.. topic:: ITER_RETRY_COUNT
-
-        ITER_RETRY_COUNT is not documented yet.
-
-
-.. _load_seed:
-.. topic:: LOAD_SEED
-
-        LOAD_SEED is not documented yet.
-
-
-.. _load_workflow:
-.. topic:: LOAD_WORKFLOW
-
-        LOAD_WORKFLOW is not documented yet.
-
-
-.. _load_workflow_job:
-.. topic:: LOAD_WORKFLOW_JOB
-
-        LOAD_WORKFLOW_JOB is not documented yet.
-
-
-.. _licence_path:
-.. topic:: LICENCE_PATH
-
-        LICENCE_PATH is not documented yet.
-
-
-.. _load_config:
-.. topic:: LOAD_CONFIG
-
-        LOAD_CONFIG is not documented yet.
-
-
-.. _log_file:
-.. topic:: LOG_FILE
-
-        LOG_FILE is not documented yet.
-
-
-.. _log_level:
-.. topic:: LOG_LEVEL
-
-        LOG_LEVEL is not documented yet.
-
-
-.. _lsf_resources:
-.. topic:: LSF_RESOURCES
-
-        LSF_RESOURCES is not documented yet.
-
-
-.. _max_iter_count:
-.. topic:: MAX_ITER_COUNT
-
-        MAX_ITER_COUNT is not documented yet.
-
-
-.. _max_resample:
-.. topic:: MAX_RESAMPLE
-
-        MAX_RESAMPLE is not documented yet.
-
-
-.. _max_submit:
-.. topic:: MAX_SUBMIT
-
-        MAX_SUBMIT is not documented yet.
-
-
-.. _pre_clear_runpath:
-.. topic:: PRE_CLEAR_RUNPATH
-
-        PRE_CLEAR_RUNPATH is not documented yet.
-
-
-.. _refcase_list:
-.. topic:: REFCASE_LIST
-
-        REFCASE_LIST is not documented yet.
-
-
-.. _rerun_path:
-.. topic:: RERUN_PATH
-
-        RERUN_PATH is not documented yet.
-
-
-.. _rerun_start:
-.. topic:: RERUN_START
-
-        RERUN_START is not documented yet.
-
-
-.. _run_template:
-.. topic:: RUN_TEMPLATE
-
-        RUN_TEMPLATE is not documented yet.
-
-
-.. _simulation_job:
-.. topic:: SIMULATION_JOB
-
-        SIMULATION_JOB is not documented yet.
-
-
-.. _single_node_update:
-.. topic:: SINGLE_NODE_UPDATE
-
-        SINGLE_NODE_UPDATE is not documented yet.
-
-
-.. _store_seed:
-.. topic:: STORE_SEED
-
-        STORE_SEED is not documented yet.
-
-
-.. _torque_queue:
-.. topic:: TORQUE_QUEUE
-
-        TORQUE_QUEUE is not documented yet.
-
-
-.. _workflow_job_directory:
-.. topic:: WORKFLOW_JOB_DIRECTORY
-
-        WORKFLOW_JOB_DIRECTORY is not documented yet.
-
-
-.. _prior_distributions:
-.. topic:: PRIOR_DISTRIBUTIONS
-
-        PRIOR_DISTRIBUTIONS is not documented yet.
-
