@@ -6,6 +6,7 @@ from res.test import ErtTestContext
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from ecl.util.util import BoolVector
 
+from tests.utils import tmpdir
 
 @pytest.mark.equinor_test
 class LoadResultsManuallyTest(ResTest):
@@ -40,6 +41,7 @@ class LoadResultsManuallyTest(ResTest):
             self.assertEqual(25, len(expected))
             self.assertEqual(25, len(realisations))
 
+    @tmpdir()
     def test_load_results_from_run_context(self):
         with ErtTestContext("manual_load_test", self.config_file) as test_context:
             ert = test_context.getErt()

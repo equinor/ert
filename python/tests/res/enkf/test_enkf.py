@@ -16,6 +16,7 @@
 
 import sys, os
 import os.path
+import pytest
 from tests import ResTest
 
 from ecl.util.util import BoolVector
@@ -32,6 +33,7 @@ from res.enkf.enums import (EnkfObservationImplementationType, LoadFailTypeEnum,
 from ecl.util.test import TestAreaContext
 from res.enkf.observations.summary_observation import SummaryObservation
 
+from tests.utils import tmpdir
 
 class EnKFTest(ResTest):
     def setUp(self):
@@ -39,6 +41,7 @@ class EnKFTest(ResTest):
         self.case_directory_custom_kw = self.createTestPath("local/snake_oil/")
 
 
+    @tmpdir()
     def test_repr( self ):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
             work_area.copy_directory(self.case_directory)
@@ -48,6 +51,7 @@ class EnKFTest(ResTest):
             self.assertEqual(pfx, repr(main)[:len(pfx)])
 
 
+    @tmpdir()
     def test_bootstrap( self ):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
             work_area.copy_directory(self.case_directory)
@@ -56,6 +60,7 @@ class EnKFTest(ResTest):
             self.assertTrue(main, "Load failed")
 
 
+    @tmpdir()
     def test_site_condif(self):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
             work_area.copy_directory(self.case_directory)
@@ -79,6 +84,7 @@ class EnKFTest(ResTest):
             with  self.assertRaises(ValueError):
                 EnKFMain(None)
 
+    @tmpdir()
     def test_default_res_config(self):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
             work_area.copy_directory(self.case_directory)
@@ -111,6 +117,7 @@ class EnKFTest(ResTest):
         self.assertEnumIsFullyDefined(ActiveMode , "active_mode_type" , "lib/include/ert/enkf/enkf_types.hpp")
 
 
+    @tmpdir()
     def test_observations(self):
         with TestAreaContext("enkf_test") as work_area:
             work_area.copy_directory(self.case_directory)
@@ -181,6 +188,7 @@ class EnKFTest(ResTest):
             self.assertEqual( "simple_config/Ensemble" , main.getMountPoint())
 
 
+    @tmpdir()
     def test_enkf_create_config_file(self):
         config_file      = "test_new_config"
         dbase_type       = "BLOCK_FS"

@@ -1,4 +1,7 @@
 import os
+
+import pytest
+
 from res.enkf.enums import EnkfRunType
 from res.enkf import ErtRunContext
 from res.enkf.config import CustomKWConfig
@@ -11,6 +14,8 @@ from tests import ResTest
 from ecl.util.test.test_area import TestAreaContext
 from ecl.util.util import StringList
 from ecl.util.util import BoolVector
+
+from tests.utils import tmpdir
 
 class CustomKWTest(ResTest):
 
@@ -78,7 +83,7 @@ class CustomKWTest(ResTest):
                 self.assertFalse( "VALUE_3" in custom_kw_config )
 
 
-
+    @tmpdir()
     def test_simulated_custom_kw(self):
         config = self.createTestPath("local/custom_kw/mini_config")
         with ErtTestContext("python/enkf/data/custom_kw_simulated", config) as context:

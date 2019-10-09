@@ -24,8 +24,7 @@ from res.util import Matrix
 from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 from res.enkf import MeasData , ObsData
 
-import res
-
+from tests.utils import tmpdir
 
 def forward_model(params , model_error = False):
     # Y = A*p[0] + B*p[1]
@@ -95,9 +94,9 @@ class RMLTest(ResTest):
         self.assertEnumIsFullyDefined(AnalysisModuleLoadStatusEnum, "analysis_module_load_status_enum", source_file_path)
 
 
-
-
+    @tmpdir()
     def test_analysis_module(self):
+
         rng = RandomNumberGenerator( )
         module = self.createAnalysisModule()
         ens_size = 12
