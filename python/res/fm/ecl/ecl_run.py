@@ -4,6 +4,8 @@ import time
 import datetime
 import socket
 from collections import namedtuple
+import subprocess
+from contextlib import contextmanager
 
 try:
     from ecl.summary import EclSum
@@ -34,6 +36,12 @@ def make_LSB_machine_list( LSB_HOSTS ):
     return LSB_HOSTS.split()
 
 
+@contextmanager
+def pushd(run_path):
+    starting_directory = os.getcwd()
+    os.chdir(run_path)
+    yield
+    os.chdir(starting_directory)
 
 
 class EclRun(object):
@@ -164,77 +172,79 @@ class EclRun(object):
                 fileH.write("%s\n" % host)
 
 
-
-    def initRedirect(self):
+    def execSerialEclipse(self):
         stdout_file = "%s.LOG" % self.base_name
         stderr_file = "%s.stderr" % self.base_name
-
-        # Redirecting stdout / stderr
-        fd_stdout = os.open(stdout_file , os.O_WRONLY | os.O_TRUNC | os.O_CREAT , 0o644);
-        fd_stderr = os.open(stderr_file , os.O_WRONLY | os.O_TRUNC | os.O_CREAT , 0o644);
-
-        os.dup2(fd_stdout , 1)
-        os.dup2(fd_stderr , 2)
-
-        os.close(fd_stdout)
-        os.close(fd_stderr)
-
-
-
-    def execSerialEclipse(self):
-        os.execv( self.sim.executable , [ self.sim.executable , self.base_name ])
+        with open(stdout_file, "w") as stdout, open(stderr_file, "w") as stderr:
+            process = subprocess.Popen(
+                [
+                    self.sim.executable,
+                    self.base_name
+                ],
+                env=self.sim.env,
+                stdout=stdout,
+                stderr=stderr,
+            )
+            process.communicate()
+            return process.returncode
 
 
     def execParallellEclipse(self):
         self.initMPI( )
-        os.execv( self.sim.mpirun , [self.sim.mpirun , "-machinefile" , self.machine_file , "-np" , "%s" % self.num_cpu , self.sim.executable , self.base_name ] )
+        stdout_file = "%s.LOG" % self.base_name
+        stderr_file = "%s.stderr" % self.base_name
+        with open(stdout_file, "w") as stdout, open(stderr_file, "w") as stderr:
+            process = subprocess.Popen(
+                [
+                    self.sim.mpirun,
+                    "-machinefile",
+                    self.machine_file,
+                    "-np",
+                    "%s" % self.num_cpu,
+                    self.sim.executable,
+                    self.base_name
+                ],
+                env=self.sim.env,
+                stdout=stdout,
+                stderr=stderr,
+            )
+            process.communicate()
+            return process.returncode
 
 
     def execEclipse(self):
-        os.chdir( self.run_path )
+        with pushd(self.run_path):
 
-        self.initEnv( )
-        self.initRedirect( )
+            if not os.path.exists( self.data_file ):
+                raise IOError("Can not find data_file:%s" % self.data_file )
 
-        if not os.path.exists( self.data_file ):
-            raise IOError("Can not find data_file:%s" % self.data_file )
+            if not os.access( self.data_file , os.R_OK ):
+                raise OSError("Can not read data file:%s" % self.data_file )
 
-        if not os.access( self.data_file , os.R_OK ):
-            raise OSError("Can not read data file:%s" % self.data_file )
+            if self.num_cpu == 1:
+                return self.execSerialEclipse()
+            else:
+                return self.execParallellEclipse()
 
-        if self.num_cpu == 1:
-            self.execSerialEclipse()
-        else:
-            self.execParallellEclipse()
 
 
     def runEclipse(self):
-        pid = os.fork()
-        if pid == 0:
-            self.execEclipse( )
+        return_code = self.execEclipse( )
+
+        OK_file = os.path.join(self.run_path , "%s.OK" % self.base_name)
+        if not self.check_status:
+            with open(OK_file, "w") as f:
+                f.write("ECLIPSE simulation complete - NOT checked for errors.")
         else:
-            while True:
-                (return_pid , exit_status) = os.waitpid(pid , os.WNOHANG)
-                if return_pid == 0:
-                    time.sleep( 1 )
-                else:
-                    exit_status = os.WEXITSTATUS( exit_status )
-                    break
+            if return_code != 0:
+                raise Exception("The eclipse executable:%s exited with error status: %d" % (self.sim.executable, return_code))
 
-            OK_file = os.path.join(self.run_path , "%s.OK" % self.base_name)
-            if self.check_status:
-                if exit_status != 0:
-                    raise Exception("The eclipse executable:%s exited with error status: %d" % (self.sim.executable, exit_status))
+            self.assertECLEND( )
+            if self.num_cpu > 1:
+                self.summary_block( )
 
-                self.assertECLEND( )
-                if self.num_cpu > 1:
-                    self.summary_block( )
-
-                with open(OK_file, "w") as f:
-                    f.write("ECLIPSE simulation OK")
-            else:
-                with open(OK_file, "w") as f:
-                    f.write("ECLIPSE simulation complete - NOT checked for errors.")
+            with open(OK_file, "w") as f:
+                f.write("ECLIPSE simulation OK")
 
 
     def summary_block(self):

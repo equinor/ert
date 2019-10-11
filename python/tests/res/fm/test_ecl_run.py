@@ -216,13 +216,9 @@ class EclRunTest(ResTest):
             os.makedirs("ecl_run")
             shutil.move("SPE1.DATA" , "ecl_run")
             ecl_config = Ecl100Config( )
+            self.assertTrue( os.path.isfile("ecl_run/SPE1.DATA"))
             run(ecl_config, ["ecl_run/SPE1.DATA", "--version=2014.2"])
-
             self.assertTrue( os.path.isfile("ecl_run/SPE1.DATA"))
-            self.assertTrue( os.path.isfile("ecl_run/SPE1.DATA"))
-            self.assertTrue( os.path.isfile("ecl_run/SPE1.DATA"))
-
-
 
 
     @pytest.mark.equinor_test
@@ -287,27 +283,39 @@ class EclRunTest(ResTest):
 
     @pytest.mark.equinor_test
     def test_check(self):
-        full_case   = os.path.join(self.SOURCE_ROOT, "test-data/Equinor/ECLIPSE/Gurbat/ECLIPSE" )
-        short_case  = os.path.join(self.SOURCE_ROOT, "test-data/Equinor/ECLIPSE/ShortSummary/ECLIPSE" )
-        failed_case = os.path.join(self.SOURCE_ROOT, "test-data/Equinor/ECLIPSE/SummaryFail/NOR-2013A_R002_1208-0")
+        full_case_dir   = os.path.join(self.SOURCE_ROOT, "test-data/Equinor/ECLIPSE/Gurbat" )
+        short_case_dir  = os.path.join(self.SOURCE_ROOT, "test-data/Equinor/ECLIPSE/ShortSummary" )
+        failed_case_dir = os.path.join(self.SOURCE_ROOT, "test-data/Equinor/ECLIPSE/SummaryFail")
 
-        with self.assertRaises(IOError):
-            self.assertTrue( EclRun.checkCase( full_case , failed_case ))
+        full_case = "Gurbat/ECLIPSE"
+        short_case = "ShortSummary/ECLIPSE"
+        failed_case = "SummaryFail/NOR-2013A_R002_1208-0"
 
-        with self.assertRaises(IOError):
-            self.assertTrue( EclRun.checkCase( full_case , "DOES-NOT-EXIST" ))
+        with TestAreaContext("ecl_check0") as ta:
+            ta.copy_directory(full_case_dir)
+            ta.copy_directory(short_case_dir)
+            ta.copy_directory(failed_case_dir)
 
-        with self.assertRaises(IOError):
-            self.assertTrue( EclRun.checkCase( "DOES-NOT-EXIST" , full_case))
+            with self.assertRaises(IOError):
+                self.assertTrue( EclRun.checkCase( full_case , failed_case ))
 
-        with self.assertRaises(ValueError):
-            EclRun.checkCase( full_case , short_case )
+            with self.assertRaises(IOError):
+                self.assertTrue( EclRun.checkCase( full_case , "DOES-NOT-EXIST" ))
+
+            with self.assertRaises(IOError):
+                self.assertTrue( EclRun.checkCase( "DOES-NOT-EXIST" , full_case))
+
+            with self.assertRaises(ValueError):
+                EclRun.checkCase( full_case , short_case )
 
         with TestAreaContext("ecl_check1"):
+            ta.copy_directory(full_case_dir)
             self.assertTrue( EclRun.checkCase( full_case , full_case ))
             self.assertTrue( os.path.isfile("CHECK_ECLIPSE_RUN.OK"))
 
         with TestAreaContext("ecl_check2"):
+            ta.copy_directory(full_case_dir)
+            ta.copy_directory(short_case_dir)
             self.assertTrue( EclRun.checkCase( short_case , full_case ))   # Simulation is longer than refcase - OK
             self.assertTrue( os.path.isfile("CHECK_ECLIPSE_RUN.OK"))
 
