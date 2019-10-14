@@ -234,7 +234,7 @@ def main(argv):
 
     window = GertMainWindow()
     window.setWidget(SimulationPanel())
-
+    window.setWindowTitle('ERT - {}'.format(config_file))
     plugin_handler = PluginHandler(ert, ert.getWorkflowList().getPluginJobs(), window)
 
     help_tool = HelpTool("ERT", window)
