@@ -83,7 +83,7 @@ class MainTest(unittest.TestCase):
         self.assertEquals(parsed.mode, "es_mda")
         self.assertEquals(
             parsed.config, "test-data/local/poly_example/poly.ert")        
-        self.assertEquals(parsed.weights, "3, 2, 1")
+        self.assertEquals(parsed.weights, "4, 2, 1")
         self.assertEquals(parsed.func.__name__, "run_cli")
         self.assertFalse(parsed.verbose)    
 

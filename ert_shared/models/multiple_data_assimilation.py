@@ -24,7 +24,7 @@ class MultipleDataAssimilation(BaseRunModel):
     """
     Run Multiple Data Assimilation (MDA) Ensemble Smoother with custom weights.
     """
-    default_weights = "3, 2, 1"
+    default_weights = "4, 2, 1"
 
     def __init__(self):
         super(MultipleDataAssimilation, self).__init__(ERT.enkf_facade.get_queue_config(), phase_count=2)
