@@ -59,6 +59,7 @@ setup(
                     'matplotlib<3',
                     'scipy',
                     'pytest',
+                    'decorator'
                     ],
     zip_safe=False,
     tests_require=['pytest', 'mock'],

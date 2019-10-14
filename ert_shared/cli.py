@@ -11,7 +11,8 @@ from .models.ensemble_experiment import EnsembleExperiment
 from .models.ensemble_smoother import EnsembleSmoother
 from .models.multiple_data_assimilation import MultipleDataAssimilation
 from .models.single_test_run import SingleTestRun
-
+import logging
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 def run_cli(args):
 
@@ -20,6 +21,10 @@ def run_cli(args):
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
     notifier = ErtCliNotifier(ert, args.config)
     ERT.adapt(notifier)
+    
+    if args.mode == 'workflow':
+        _execute_workflow(args.name)
+        return
 
     # Setup model
     if args.mode == 'test_run':
@@ -30,12 +35,25 @@ def run_cli(args):
         model, argument = _setup_ensemble_smoother(args)
     elif args.mode == 'es_mda':
         model, argument = _setup_multiple_data_assimilation(args)
+    
     else:
         raise NotImplementedError(
             "Run type not supported {}".format(args.mode))
 
     model.runSimulations(argument)
 
+def _execute_workflow(workflow_name):
+    workflow_list = ERT.ert.getWorkflowList()
+    try:
+        workflow = workflow_list[workflow_name]
+    except KeyError:
+        logging.error("Workflow {} is not in the list of available workflows".format(workflow_name))
+        return
+    context = workflow_list.getContext()
+    workflow.run(ert=ERT.ert, verbose=True, context=context)
+    all_successfull = all([v['completed'] for k, v in workflow.getJobsReport().items()])
+    if all_successfull:
+        logging.info("Workflow {} ran successfully!".format(workflow_name))
 
 def _setup_single_test_run():
     model = SingleTestRun()
