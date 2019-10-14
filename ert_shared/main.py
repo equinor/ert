@@ -210,6 +210,21 @@ def get_ert_parser(parser=None):
     es_mda_parser.set_defaults(func=run_cli)
     es_mda_parser.add_argument("config", type=valid_file, help=config_help)
 
+
+    workflow_description = "Executes the workflow given"
+    workflow_parser = subparsers.add_parser(
+        "workflow", help=workflow_description, description=workflow_description
+    )
+    workflow_parser.add_argument(
+        help="Name of workflow",
+        dest="name"
+    )
+    workflow_parser.add_argument(
+        "--verbose", action="store_true", help="Show verbose output", default=False
+    )
+    workflow_parser.set_defaults(func=run_cli)
+    workflow_parser.add_argument("config", type=valid_file, help=config_help)
+
     return parser
 
 

@@ -85,7 +85,18 @@ class MainTest(unittest.TestCase):
             parsed.config, "test-data/local/poly_example/poly.ert")        
         self.assertEquals(parsed.weights, "4, 2, 1")
         self.assertEquals(parsed.func.__name__, "run_cli")
-        self.assertFalse(parsed.verbose)    
+        self.assertFalse(parsed.verbose)
+
+    def test_argparse_exec_workflow(self):
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser, ['workflow', "--verbose", "workflow_name", 'test-data/local/poly_example/poly.ert'])
+        self.assertEquals(parsed.mode, "workflow")
+        self.assertEquals(parsed.name, "workflow_name")
+        self.assertEquals(
+            parsed.config, "test-data/local/poly_example/poly.ert")
+        self.assertEquals(parsed.func.__name__, "run_cli")
+        self.assertTrue(parsed.verbose)
 
 if __name__ == '__main__':
     unittest.main()

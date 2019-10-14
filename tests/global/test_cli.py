@@ -1,5 +1,6 @@
 from tests import ErtTest
 from res.test import ErtTestContext
+from res.enkf import EnKFMain, ResConfig
 import os
 import subprocess
 from res.enkf import EnKFMain, ResConfig
@@ -13,6 +14,11 @@ from ert_shared.models.ensemble_smoother import EnsembleSmoother
 from ert_shared.models.multiple_data_assimilation import \
     MultipleDataAssimilation
 from ert_shared.models.single_test_run import SingleTestRun
+
+import shutil
+from tests.utils import tmpdir, SOURCE_DIR
+
+
 
 
 class EntryPointTest(ErtTest):
@@ -179,3 +185,23 @@ class EntryPointTest(ErtTest):
             active_name, modules, iterable=True)
 
         self.assertIsNone(name)
+
+    @tmpdir(os.path.join(SOURCE_DIR,'test-data/local/poly_example'))
+    def test_executing_workflow(self):
+        print("test")
+        with open('test_wf', 'w') as wf_file:
+             wf_file.write('EXPORT_RUNPATH') 
+        
+        config_file = 'poly.ert'
+        with open(config_file, 'a') as file:
+            file.write("LOAD_WORKFLOW test_wf")
+        
+        rc = ResConfig(user_config_file=config_file)
+        rc.convertToCReference(None)
+        ert = EnKFMain(rc)
+        notifier = ErtCliNotifier(ert, config_file)
+        ERT.adapt(notifier)
+        args = Namespace(name="test_wf")
+        cli._execute_workflow(args.name)
+        assert os.path.isfile(".ert_runpath_list")
+        
