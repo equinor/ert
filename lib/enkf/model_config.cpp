@@ -158,7 +158,8 @@ void model_config_add_runpath( model_config_type * model_config , const char * p
 bool model_config_select_runpath( model_config_type * model_config , const char * path_key) {
   if (hash_has_key( model_config->runpath_map , path_key )) {
     model_config->current_runpath = (path_fmt_type * ) hash_get( model_config->runpath_map , path_key );
-    model_config->current_path_key = util_realloc_string_copy( model_config->current_path_key , path_key);
+    if(model_config->current_path_key != path_key) // If ptrs are the same, there is nothing to do
+        model_config->current_path_key = util_realloc_string_copy( model_config->current_path_key , path_key);
     return true;
   } else {
     if (model_config->current_runpath != NULL)  // OK - we already have a valid selection - stick to that and return False.
