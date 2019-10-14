@@ -136,6 +136,28 @@ The job copies the directory :code:`<FROM>` to the target :code:`<TO>`. If
 :code:`<TO>` points to a non-existing directory structure, it will be
 created first.
 
+CAREFUL_COPY_FILE
+.................
+
+.. code-block:: bash
+
+    STDERR      careful_copy_file.stderr
+    STDOUT      careful_copy_file.stdout
+
+    EXECUTABLE  script/careful_copy_file.py
+    ARGLIST     <FROM> <TO>
+
+The :code:`CAREFUL_COPY_FILE` job will copy a file if the target :code:`<TO>`
+does not already exist. If the :code:`<TO>` argument has a directory component,
+that directory will be created, i.e. with the :code:`FORWARD_MODEL`:
+
+.. code-block:: bash
+
+    FORWARD_MODEL CAREFUL_COPY_FILE(<FROM>=file1, <TO>=path/to/directory/file1)
+
+The directory :code:`path/to/directory` will be created before the
+file is copied, this is an extension of the normal :code:`cp` command
+which will *not* create directories in this way.
 
 DELETE_FILE
 ...........
