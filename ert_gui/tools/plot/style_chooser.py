@@ -1,9 +1,6 @@
 import sys
 
-try:
-  from PyQt4.QtGui import QWidget, QHBoxLayout, QComboBox, QDoubleSpinBox, QLabel, QHBoxLayout
-except ImportError:
-  from PyQt5.QtWidgets import QWidget, QHBoxLayout, QComboBox, QDoubleSpinBox, QLabel, QHBoxLayout
+from ErtQt.Qt import QWidget, QHBoxLayout, QComboBox, QDoubleSpinBox, QLabel, QHBoxLayout
 
 from ert_gui.plottery import PlotStyle
 
@@ -136,7 +133,8 @@ class StyleChooser(QWidget):
         thickness = float(self.thickness_spinner.value())
         size = float(self.size_spinner.value())
 
-        if sys.version_info[0] == 2:
+        from ErtQt import QT4
+        if QT4:
             self._style.line_style = str(line_style.toString())
             self._style.marker = str(marker_style.toString())
         else:

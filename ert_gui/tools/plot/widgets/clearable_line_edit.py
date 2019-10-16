@@ -1,13 +1,13 @@
 import sys
 
-try:
-  from PyQt4.QtCore import QString, QSize, Qt
-  from PyQt4.QtGui import QPushButton, QColor, QLineEdit, QStyle
-except ImportError:
-  from PyQt5.QtCore import QSize, Qt
-  from PyQt5.QtWidgets import QPushButton, QLineEdit, QStyle
-  from PyQt5.QtGui import QColor
-
+from ErtQt.Qt import (
+    QColor,
+    QLineEdit,
+    QPushButton,
+    QSize,
+    QStyle,
+    Qt,
+    )
 
 from ert_gui.ertwidgets import resourceIcon
 
@@ -100,7 +100,9 @@ class ClearableLineEdit(QLineEdit):
 
     def text(self):
         if self._placeholder_active:
-            if sys.version_info[0] == 2:
+            from ErtQt import QT4
+            if QT4:
+                from ErtQt.Qt import QString
                 return QString("")
             else:
                 return ""
