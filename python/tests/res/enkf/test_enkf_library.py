@@ -13,7 +13,7 @@ from res.enkf import GenDataConfig, FieldConfig, EnkfFs, EnkfObs, EnKFState, Ens
 from res.enkf.util import TimeMap
 
 
-
+@pytest.mark.unstable
 @pytest.mark.equinor_test
 class EnKFLibraryTest(ResTest):
     def setUp(self):

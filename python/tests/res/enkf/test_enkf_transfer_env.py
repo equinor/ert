@@ -18,6 +18,7 @@ import os
 import sys
 import json
 import subprocess
+import pytest
 
 from ecl.util.test import TestAreaContext
 from tests import ResTest
@@ -38,6 +39,7 @@ from res.enkf.observations.summary_observation import SummaryObservation
 from res.test import ErtTestContext
 
 
+@pytest.mark.unstable
 class EnKFTestTransferEnv(ResTest):
 
   def setUp(self):

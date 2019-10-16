@@ -35,6 +35,11 @@ pipeline {
                 sh 'sh testjenkins.sh run_pytest_normal'
             }
         }
+	stage('run pytest_unstable') {
+            steps {
+                sh 'sh testjenkins.sh run_pytest_unstable'
+            }
+        }
     }
 }
 

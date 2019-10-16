@@ -8,6 +8,7 @@ from ecl.util.util import BoolVector
 
 from tests.utils import tmpdir
 
+@pytest.mark.unstable
 @pytest.mark.equinor_test
 class LoadResultsManuallyTest(ResTest):
     def setUp(self):

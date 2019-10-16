@@ -14,6 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+import pytest
 
 from ecl.util.test import TestAreaContext
 from tests import ResTest
@@ -33,6 +34,7 @@ from res.enkf.observations.summary_observation import SummaryObservation
 
 import os
 
+@pytest.mark.unstable
 class EnKFRunpathTest(ResTest):
     def setUp(self):
         pass
