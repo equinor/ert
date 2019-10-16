@@ -1,11 +1,11 @@
 import functools
 import os
 import pkg_resources
-import sys
 import webbrowser
 import yaml
 
 from ErtQt.Qt import QSettings, Qt, QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget, QAction, QToolButton
+from ErtQt import QT5
 
 from ert_gui.about_dialog import AboutDialog
 
@@ -105,14 +105,13 @@ class GertMainWindow(QMainWindow):
 
 
     def __fetchSettings(self):
-        py3 = sys.version_info[0] == 3
         settings = QSettings("Equinor", "Ert-Gui")
         geo = settings.value("geometry")
         if geo:
-            self.restoreGeometry(geo if py3 else geo.toByteArray())
+            self.restoreGeometry(geo if QT5 else geo.toByteArray())
         wnd = settings.value("windowState")
         if wnd:
-            self.restoreState   (wnd if py3 else wnd.toByteArray())
+            self.restoreState   (wnd if QT5 else wnd.toByteArray())
 
 
     def setWidget(self, widget):
