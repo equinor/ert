@@ -112,6 +112,9 @@ def build_schema():
                         "index": {
                             MK.Required: False,
                             MK.LayerTransformation: _to_int_list,
+                            MK.Description: (
+                                "Index list where scaling factor is calculatied, must match the simulated data"
+                            ),
                             MK.Type: types.List,
                             MK.ElementValidators: (_min_length,),
                             MK.Content: {

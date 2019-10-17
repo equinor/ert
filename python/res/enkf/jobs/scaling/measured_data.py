@@ -8,9 +8,10 @@ class MeasuredData(object):
 
     def __init__(self, ert, events):
         self.data = self._get_data(ert, events.keys)
-        self.remove_nan()
         self.filter_on_column_index(events.index)
+        self.remove_nan()
         self.filter_out_outliers(events)
+
 
     def remove_nan(self):
         self.data = self.data.dropna(axis=1)

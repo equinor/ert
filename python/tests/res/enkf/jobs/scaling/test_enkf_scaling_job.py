@@ -635,6 +635,10 @@ def test_main_entry_point_summary_data_calc():
 
     arguments["CALCULATE_KEYS"].update({"index":[1, 2, 3]})
 
+    with pytest.raises(ValueError):  # Will give an empty data set
+        scaling_job.scaling_job(ert, arguments)
+
+    arguments["CALCULATE_KEYS"].update({"index": [8, 35, 71]})
     scaling_job.scaling_job(ert, arguments)
 
     for index, node in enumerate(obs_vector):
