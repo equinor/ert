@@ -1,0 +1,9 @@
+JOBNAME poly_%d
+NUM_REALIZATIONS 5
+
+QUEUE_SYSTEM LOCAL
+
+RUNPATH poly_out/real_%d/iter_%d
+
+INSTALL_JOB poly_eval POLY_EVAL 
+SIMULATION_JOB poly_eval

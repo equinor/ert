@@ -1,3 +1,5 @@
+.. _forward_model_chapter:
+
 Forward Model
 =============
 
@@ -106,4 +108,3 @@ The `job_dispatch` executable
 
 Interfacing with the cluster
 ----------------------------
-
