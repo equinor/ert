@@ -20,3 +20,9 @@ first word on each line is a keyword, which then is followed by a set of
 arguments that are unique to the particular keyword. Except for the DEFINE
 keyword, ordering of the keywords is not significant. Lines starting with "- -"
 are treated as comments.
+
+.. toctree::
+   :maxdepth: 1
+
+   poly_new/guide
+
