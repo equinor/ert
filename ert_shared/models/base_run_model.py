@@ -36,7 +36,7 @@ class BaseRunModel(object):
         self._phase = 0
         self._phase_count = phase_count
         self._phase_update_count = 0
-        self._phase_name = "Not defined"
+        self._phase_name = "Starting..."
 
         self._job_start_time  = 0
         self._job_stop_time = 0
@@ -174,6 +174,7 @@ class BaseRunModel(object):
         else:
             return self._job_stop_time - self._job_start_time
 
+
     @job_queue(1)
     def getQueueSize(self):
         """ @rtype: int """
@@ -196,7 +197,6 @@ class BaseRunModel(object):
                 queue_status[status] = 0
 
             queue_status[status] += 1
-
 
         return queue_status
 

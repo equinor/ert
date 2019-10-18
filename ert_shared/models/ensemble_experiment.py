@@ -34,7 +34,7 @@ class EnsembleExperiment(BaseRunModel):
         return run_context
 
 
-    def runSimulations(self, arguments ):
+    def runSimulations(self, arguments):
         return self.runSimulations__(  arguments , "Running ensemble experiment...")
 
 

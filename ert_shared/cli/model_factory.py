@@ -1,31 +1,16 @@
-#!/usr/bin/env python
-import os
 from argparse import ArgumentTypeError
 
 from ecl.util.util import BoolVector
-from res.enkf import EnKFMain, ResConfig
-
-from ert_shared import ERT
 from ert_gui.ide.keywords.definitions import RangeStringArgument
-from .models.ensemble_experiment import EnsembleExperiment
-from .models.ensemble_smoother import EnsembleSmoother
-from .models.multiple_data_assimilation import MultipleDataAssimilation
-from .models.single_test_run import SingleTestRun
-import logging
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+from ert_shared import ERT
+from ert_shared.models.ensemble_experiment import EnsembleExperiment
+from ert_shared.models.ensemble_smoother import EnsembleSmoother
+from ert_shared.models.multiple_data_assimilation import \
+    MultipleDataAssimilation
+from ert_shared.models.single_test_run import SingleTestRun
 
-def run_cli(args):
 
-    res_config = ResConfig(args.config)
-    os.chdir(res_config.config_path)
-    ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
-    notifier = ErtCliNotifier(ert, args.config)
-    ERT.adapt(notifier)
-    
-    if args.mode == 'workflow':
-        _execute_workflow(args.name)
-        return
-
+def create_model(args):
     # Setup model
     if args.mode == 'test_run':
         model, argument = _setup_single_test_run()
@@ -35,25 +20,13 @@ def run_cli(args):
         model, argument = _setup_ensemble_smoother(args)
     elif args.mode == 'es_mda':
         model, argument = _setup_multiple_data_assimilation(args)
-    
+
     else:
         raise NotImplementedError(
             "Run type not supported {}".format(args.mode))
 
-    model.runSimulations(argument)
+    return model, argument
 
-def _execute_workflow(workflow_name):
-    workflow_list = ERT.ert.getWorkflowList()
-    try:
-        workflow = workflow_list[workflow_name]
-    except KeyError:
-        logging.error("Workflow {} is not in the list of available workflows".format(workflow_name))
-        return
-    context = workflow_list.getContext()
-    workflow.run(ert=ERT.ert, verbose=True, context=context)
-    all_successfull = all([v['completed'] for k, v in workflow.getJobsReport().items()])
-    if all_successfull:
-        logging.info("Workflow {} ran successfully!".format(workflow_name))
 
 def _setup_single_test_run():
     model = SingleTestRun()
@@ -64,7 +37,6 @@ def _setup_single_test_run():
 
 
 def _setup_ensemble_experiment(args):
-
     model = EnsembleExperiment()
     simulations_argument = {
         "active_realizations": _realizations(args),
@@ -145,35 +117,3 @@ def _target_case_name(args, format_mode=False):
 
     case_name = ERT.enkf_facade.get_current_case_name()
     return "{}_%d".format(case_name)
-
-
-class ErtCliNotifier():
-    """CLI Notifier to use in ERT Adapter"""
-
-    def __init__(self, ert, config_file):
-        self._ert = ert
-        self._config_file = config_file
-
-    @property
-    def ert(self):
-        """ @rtype: EnKFMain """
-        if self._ert is None:
-            raise ValueError("Ert is undefined.")
-        return self._ert
-
-    @property
-    def config_file(self):
-        """ @rtype: str """
-        if self._ert is None:
-            raise ValueError("Ert is undefined.")
-        return self._config_file
-
-    @property
-    def ertChanged(self):
-        pass
-
-    def emitErtChange(self):
-        pass
-
-    def reloadERT(self, config_file):
-        pass

@@ -4,4 +4,4 @@ from .single_test_run import SingleTestRun
 from .ensemble_smoother import EnsembleSmoother
 from .iterated_ensemble_smoother import IteratedEnsembleSmoother
 from .multiple_data_assimilation import MultipleDataAssimilation
-from .simulations_tracker import SimulationsTracker
+from .simulations_tracker import SimulationsTracker, SimulationStateStatus
