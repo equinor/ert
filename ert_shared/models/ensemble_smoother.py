@@ -1,6 +1,6 @@
 from res.enkf.enums import HookRuntime
 from res.enkf.enums import RealizationStateEnum
-from res.enkf import ErtRunContext
+from res.enkf import ErtRunContext, EnkfSimulationRunner
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
 
@@ -27,7 +27,7 @@ class EnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath(prior_context)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
+        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
 
         self.setPhaseName("Running forecast...", indeterminate=False)
         self._job_queue = self._queue_config.create_job_queue( )
@@ -36,16 +36,16 @@ class EnsembleSmoother(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
+        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ert=ERT.ert )
 
         self.setPhaseName("Analyzing...")
 
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_UPDATE )
+        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=ERT.ert )
         es_update = self.ert().getESUpdate( )
         success = es_update.smootherUpdate( prior_context )
         if not success:
             raise ErtRunError("Analysis of simulation failed!")
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_UPDATE )
+        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=ERT.ert )
 
         self.setPhase(1, "Running simulations...")
         self.ert().getEnkfFsManager().switchFileSystem( prior_context.get_target_fs( ) )
@@ -55,7 +55,7 @@ class EnsembleSmoother(BaseRunModel):
         rerun_context = self.create_context( arguments, prior_context = prior_context )
 
         self.ert().getEnkfSimulationRunner().createRunPath( rerun_context )
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
+        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert )
 
         self.setPhaseName("Running forecast...", indeterminate=False)
 
@@ -65,7 +65,7 @@ class EnsembleSmoother(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
+        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ert=ERT.ert)
 
         self.setPhase(2, "Simulations completed.")
 
