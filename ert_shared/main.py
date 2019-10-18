@@ -3,7 +3,7 @@ import os
 import sys
 import re
 from argparse import ArgumentParser, ArgumentTypeError
-from ert_shared import run_cli
+from ert_shared.cli.main import run_cli
 from ert_gui.ide.keywords.definitions import (
     RangeStringArgument,
     ProperNameArgument,
@@ -115,11 +115,6 @@ def get_ert_parser(parser=None):
     test_run_parser = subparsers.add_parser(
         "test_run", help=test_run_description, description=test_run_description
     )
-    test_run_parser.add_argument(
-        "--verbose", action="store_true", help="Show verbose output", default=False
-    )
-    test_run_parser.set_defaults(func=run_cli)
-    test_run_parser.add_argument("config", type=valid_file, help=config_help)
 
     # ensemble_experiment_parser
     ensemble_experiment_description = (
@@ -131,9 +126,6 @@ def get_ert_parser(parser=None):
         help=ensemble_experiment_description,
     )
     ensemble_experiment_parser.add_argument(
-        "--verbose", action="store_true", help="Show verbose output", default=False
-    )
-    ensemble_experiment_parser.add_argument(
         "--realizations",
         type=valid_realizations,
         help="These are the realizations that will be used to perform simulations."
@@ -141,8 +133,6 @@ def get_ert_parser(parser=None):
         "then only realizations 0,1,2,3,...,9 will be used to perform simulations "
         "while realizations 10,11, 12,...,49 will be excluded",
     )
-    ensemble_experiment_parser.set_defaults(func=run_cli)
-    ensemble_experiment_parser.add_argument("config", type=valid_file, help=config_help)
 
     # ensemble_smoother_parser
     ensemble_smoother_description = (
@@ -162,9 +152,6 @@ def get_ert_parser(parser=None):
         "updated parameters will be stored",
     )
     ensemble_smoother_parser.add_argument(
-        "--verbose", action="store_true", help="Show verbose output", default=False
-    )
-    ensemble_smoother_parser.add_argument(
         "--realizations",
         type=valid_realizations,
         help="These are the realizations that will be used to perform simulations."
@@ -172,8 +159,6 @@ def get_ert_parser(parser=None):
         "then only realizations 0,1,2,3,...,9 will be used to perform simulations "
         "while realizations 10,11, 12,...,49 will be excluded",
     )
-    ensemble_smoother_parser.set_defaults(func=run_cli)
-    ensemble_smoother_parser.add_argument("config", type=valid_file, help=config_help)
 
     # es_mda_parser
     es_mda_description = "Run 'es_mda' in cli"
@@ -187,9 +172,6 @@ def get_ert_parser(parser=None):
         "iterations. The case names will follow the specified format. "
         "For example, 'Target case format: iter_%%d' will generate "
         "cases with the names iter_0, iter_1, iter_2, iter_3, ....",
-    )
-    es_mda_parser.add_argument(
-        "--verbose", action="store_true", help="Show verbose output", default=False
     )
     es_mda_parser.add_argument(
         "--realizations",
@@ -207,9 +189,6 @@ def get_ert_parser(parser=None):
         "Assimilation Ensemble Smoother will half the weight applied to the "
         "Observation Errors from one iteration to the next across 4 iterations.",
     )
-    es_mda_parser.set_defaults(func=run_cli)
-    es_mda_parser.add_argument("config", type=valid_file, help=config_help)
-
 
     workflow_description = "Executes the workflow given"
     workflow_parser = subparsers.add_parser(
@@ -219,11 +198,27 @@ def get_ert_parser(parser=None):
         help="Name of workflow",
         dest="name"
     )
-    workflow_parser.add_argument(
-        "--verbose", action="store_true", help="Show verbose output", default=False
-    )
-    workflow_parser.set_defaults(func=run_cli)
-    workflow_parser.add_argument("config", type=valid_file, help=config_help)
+
+    # Common arguments/defaults for all non-gui modes
+    for cli_parser in [test_run_parser, ensemble_experiment_parser,
+                       ensemble_smoother_parser, es_mda_parser,
+                       workflow_parser]:
+        cli_parser.set_defaults(func=run_cli)
+        cli_parser.add_argument(
+            "--verbose", action="store_true", help="Show verbose output",
+            default=False
+        )
+        cli_parser.add_argument(
+            "--color-always", action="store_true",
+            help="Force coloring of monitor output, which is automatically" +
+                 " disabled if the output stream is not a terminal.",
+            default=False
+        )
+        cli_parser.add_argument(
+            "--disable-monitoring", action="store_true", help="Disable monitoring.",
+            default=False
+        )
+        cli_parser.add_argument("config", type=valid_file, help=config_help)
 
     return parser
 

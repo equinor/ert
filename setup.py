@@ -59,7 +59,9 @@ setup(
                     'matplotlib<3',
                     'scipy',
                     'pytest',
-                    'decorator'
+                    'decorator',
+                    'console-progressbar==1.1.2',
+                    'ansicolors==1.1.8',
                     ],
     zip_safe=False,
     tests_require=['pytest', 'mock'],

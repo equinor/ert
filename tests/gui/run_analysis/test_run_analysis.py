@@ -1,5 +1,7 @@
 import sys
+import ert_shared
 
+from ert_shared.cli.notifier import ErtCliNotifier
 from ert_gui.tools import run_analysis
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from tests import ErtTest
@@ -41,7 +43,8 @@ class RunAnalysisTests(ErtTest):
         self.tool._run_widget.source_case.return_value = "source"
         self.tool._run_widget.target_case.return_value = "target"
 
-        self.tool.run()
+        with patch("ert_gui.tools.run_analysis.run_analysis_tool.ert_shared.ERT"):
+            self.tool.run()
 
         mock_analyse.assert_called_once_with("target", "source")
         mock_messagebox.return_value.setText.assert_called_once_with("Successfully ran analysis for case 'source'.")

@@ -53,7 +53,7 @@ class RunDialog(QDialog):
         if isinstance(run_model, BaseRunModel):
             ert = run_model.ert()
 
-        self.simulations_tracker = SimulationsTracker()
+        self.simulations_tracker = SimulationsTracker(model=run_model)
         states = self.simulations_tracker.getStates()
         self.state_colors = {state.name: state.color for state in states}
         self.state_colors['Success'] = self.state_colors["Finished"]
@@ -197,20 +197,9 @@ class RunDialog(QDialog):
         return False
 
     def updateProgress(self):
+        self.simulations_tracker._update()
 
-        total_count = self._run_model.getQueueSize()
-        queue_status = self._run_model.getQueueStatus()
-        states = self.simulations_tracker.getStates()
-
-        for state in states:
-            state.count = 0
-            state.total_count = total_count
-
-        for state in states:
-            for queue_state in queue_status:
-                if queue_state in state.state:
-                    state.count += queue_status[queue_state]
-
+        for state in self.simulations_tracker.getStates():
             self.progress.updateState(state.state, 100.0 * state.count / state.total_count)
             self.legends[state].updateLegend(state.name, state.count, state.total_count)
 
@@ -240,33 +229,8 @@ class RunDialog(QDialog):
             self.progress.setIndeterminate(False)
             self.updateProgress()
 
-        self.setRunningTime()
-
-
-    def setRunningTime(self):
-        days = 0
-        hours = 0
-        minutes = 0
-        seconds = self._run_model.getRunningTime()
-
-        if seconds >= 60:
-            minutes, seconds = divmod(seconds, 60)
-
-        if minutes >= 60:
-            hours, minutes = divmod(minutes, 60)
-
-        if hours >= 24:
-            days, hours = divmod(hours, 24)
-
-        if days > 0:
-            self.running_time.setText("Running time: %d days %d hours %d minutes %d seconds" % (days, hours, minutes, seconds))
-        elif hours > 0:
-            self.running_time.setText("Running time: %d hours %d minutes %d seconds" % (hours, minutes, seconds))
-        elif minutes > 0:
-            self.running_time.setText("Running time: %d minutes %d seconds" % (minutes, seconds))
-        else:
-            self.running_time.setText("Running time: %d seconds" % seconds)
-
+        runtime = self._run_model.getRunningTime()
+        self.running_time.setText(SimulationsTracker.format_running_time(runtime))
 
     def killJobs(self):
 

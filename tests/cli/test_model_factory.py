@@ -1,27 +1,19 @@
-from tests import ErtTest
-from res.test import ErtTestContext
-from res.enkf import EnKFMain, ResConfig
-import os
-import subprocess
-from res.enkf import EnKFMain, ResConfig
-from ecl.util.util import BoolVector
-from ert_shared import cli
-from ert_shared import ERT
-from ert_shared.cli import ErtCliNotifier
 from argparse import Namespace
+
+import ert_shared.cli.model_factory as model_factory
+from ecl.util.util import BoolVector
+from ert_shared import ERT
+from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared.models.ensemble_experiment import EnsembleExperiment
 from ert_shared.models.ensemble_smoother import EnsembleSmoother
 from ert_shared.models.multiple_data_assimilation import \
     MultipleDataAssimilation
 from ert_shared.models.single_test_run import SingleTestRun
-
-import shutil
-from tests.utils import tmpdir, SOURCE_DIR
-
+from res.test import ErtTestContext
+from tests import ErtTest
 
 
-
-class EntryPointTest(ErtTest):
+class ModelFactoryTest(ErtTest):
 
     def test_custom_target_case_name(self):
         config_file = self.createTestPath('local/poly_example/poly.ert')
@@ -32,7 +24,7 @@ class EntryPointTest(ErtTest):
 
             custom_name = "test"
             args = Namespace(target_case=custom_name)
-            res = cli._target_case_name(args)
+            res = model_factory._target_case_name(args)
             self.assertEqual(custom_name, res)
 
     def test_default_target_case_name(self):
@@ -43,7 +35,7 @@ class EntryPointTest(ErtTest):
             ERT.adapt(notifier)
 
             args = Namespace(target_case=None)
-            res = cli._target_case_name(args)
+            res = model_factory._target_case_name(args)
             self.assertEqual("default_smoother_update", res)
 
     def test_default_target_case_name_format_mode(self):
@@ -54,7 +46,7 @@ class EntryPointTest(ErtTest):
             ERT.adapt(notifier)
 
             args = Namespace(target_case=None)
-            res = cli._target_case_name(args, format_mode=True)
+            res = model_factory._target_case_name(args, format_mode=True)
             self.assertEqual("default_%d", res)
 
     def test_default_realizations(self):
@@ -65,7 +57,7 @@ class EntryPointTest(ErtTest):
             ERT.adapt(notifier)
 
             args = Namespace(realizations=None)
-            res = cli._realizations(args)
+            res = model_factory._realizations(args)
             ensemble_size = ERT.ert.getEnsembleSize()
             mask = BoolVector(default_value=False, initial_size=ensemble_size)
             mask.updateActiveMask("0-99")
@@ -79,7 +71,7 @@ class EntryPointTest(ErtTest):
             ERT.adapt(notifier)
 
             args = Namespace(realizations="0-4,7,8")
-            res = cli._realizations(args)
+            res = model_factory._realizations(args)
             ensemble_size = ERT.ert.getEnsembleSize()
             mask = BoolVector(default_value=False, initial_size=ensemble_size)
             mask.updateActiveMask("0-4,7,8")
@@ -92,9 +84,9 @@ class EntryPointTest(ErtTest):
             notifier = ErtCliNotifier(ert, config_file)
             ERT.adapt(notifier)
 
-            model, argument = cli._setup_single_test_run()
+            model, argument = model_factory._setup_single_test_run()
             self.assertTrue(isinstance(model, SingleTestRun))
-            self.assertEquals(1, len(argument.keys()))
+            self.assertEqual(1, len(argument.keys()))
             self.assertTrue("active_realizations" in argument)
 
     def test_setup_ensemble_experiment(self):
@@ -104,9 +96,9 @@ class EntryPointTest(ErtTest):
             notifier = ErtCliNotifier(ert, config_file)
             ERT.adapt(notifier)
 
-            model, argument = cli._setup_single_test_run()
+            model, argument = model_factory._setup_single_test_run()
             self.assertTrue(isinstance(model, EnsembleExperiment))
-            self.assertEquals(1, len(argument.keys()))
+            self.assertEqual(1, len(argument.keys()))
             self.assertTrue("active_realizations" in argument)
 
     def test_setup_ensemble_smoother(self):
@@ -117,9 +109,9 @@ class EntryPointTest(ErtTest):
             ERT.adapt(notifier)
             args = Namespace(realizations="0-4,7,8", target_case="test_case")
 
-            model, argument = cli._setup_ensemble_smoother(args)
+            model, argument = model_factory._setup_ensemble_smoother(args)
             self.assertTrue(isinstance(model, EnsembleSmoother))
-            self.assertEquals(3, len(argument.keys()))
+            self.assertEqual(3, len(argument.keys()))
             self.assertTrue("active_realizations" in argument)
             self.assertTrue("target_case" in argument)
             self.assertTrue("analysis_module" in argument)
@@ -132,9 +124,9 @@ class EntryPointTest(ErtTest):
             ERT.adapt(notifier)
             args = Namespace(realizations="0-4,7,8", weights="6,4,2", target_case="test_case")
 
-            model, argument = cli._setup_multiple_data_assimilation(args)
+            model, argument = model_factory._setup_multiple_data_assimilation(args)
             self.assertTrue(isinstance(model, MultipleDataAssimilation))
-            self.assertEquals(4, len(argument.keys()))
+            self.assertEqual(4, len(argument.keys()))
             self.assertTrue("active_realizations" in argument)
             self.assertTrue("target_case" in argument)
             self.assertTrue("analysis_module" in argument)
@@ -144,7 +136,7 @@ class EntryPointTest(ErtTest):
 
         active_name = "STD_ENKF"
         modules = ["RML_ENKF"]
-        name = cli._get_analysis_module_name(
+        name = model_factory._get_analysis_module_name(
             active_name, modules, iterable=True)
 
         self.assertEqual(name, "RML_ENKF")
@@ -154,7 +146,7 @@ class EntryPointTest(ErtTest):
         active_name = "STD_ENKF"
         modules = ['BOOTSTRAP_ENKF', 'CV_ENKF', 'FWD_STEP_ENKF',
                    'NULL_ENKF', 'SQRT_ENKF', 'STD_ENKF']
-        name = cli._get_analysis_module_name(
+        name = model_factory._get_analysis_module_name(
             active_name, modules, iterable=True)
 
         self.assertEqual(name, "STD_ENKF")
@@ -163,7 +155,7 @@ class EntryPointTest(ErtTest):
 
         active_name = "STD_ENKF"
         modules = ['STD_ENKF']
-        name = cli._get_analysis_module_name(
+        name = model_factory._get_analysis_module_name(
             active_name, modules, iterable=True)
 
         self.assertEqual(name, "STD_ENKF")
@@ -172,7 +164,7 @@ class EntryPointTest(ErtTest):
 
         active_name = "FOO"
         modules = ["BAR"]
-        name = cli._get_analysis_module_name(
+        name = model_factory._get_analysis_module_name(
             active_name, modules, iterable=True)
 
         self.assertEqual(name, "BAR")
@@ -181,27 +173,7 @@ class EntryPointTest(ErtTest):
 
         active_name = "FOO"
         modules = []
-        name = cli._get_analysis_module_name(
+        name = model_factory._get_analysis_module_name(
             active_name, modules, iterable=True)
 
         self.assertIsNone(name)
-
-    @tmpdir(os.path.join(SOURCE_DIR,'test-data/local/poly_example'))
-    def test_executing_workflow(self):
-        print("test")
-        with open('test_wf', 'w') as wf_file:
-             wf_file.write('EXPORT_RUNPATH') 
-        
-        config_file = 'poly.ert'
-        with open(config_file, 'a') as file:
-            file.write("LOAD_WORKFLOW test_wf")
-        
-        rc = ResConfig(user_config_file=config_file)
-        rc.convertToCReference(None)
-        ert = EnKFMain(rc)
-        notifier = ErtCliNotifier(ert, config_file)
-        ERT.adapt(notifier)
-        args = Namespace(name="test_wf")
-        cli._execute_workflow(args.name)
-        assert os.path.isfile(".ert_runpath_list")
-        
