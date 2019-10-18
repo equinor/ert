@@ -1,5 +1,5 @@
 from res.enkf.enums import HookRuntime
-from res.enkf import ErtRunContext
+from res.enkf import ErtRunContext, EnkfSimulationRunner
 
 from ert_shared.models import BaseRunModel
 from ert_shared import ERT
@@ -18,7 +18,7 @@ class EnsembleExperiment(BaseRunModel):
 
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath( run_context )
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
+        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ERT.ert)
 
         self.setPhaseName( run_msg, indeterminate=False)
 
@@ -28,7 +28,7 @@ class EnsembleExperiment(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
+        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ERT.ert)
         self.setPhase(1, "Simulations completed.") # done...
 
         return run_context

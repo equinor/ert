@@ -1,5 +1,5 @@
 from res.enkf.enums import HookRuntime
-from res.enkf import ErtRunContext
+from res.enkf import ErtRunContext, EnkfSimulationRunner
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
 
@@ -25,7 +25,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath( run_context )
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
+        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
 
         self.setPhaseName("Running forecast...", indeterminate=False)
         num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, run_context)
@@ -33,7 +33,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
+        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ert=ERT.ert)
 
 
     def createTargetCaseFileSystem(self, phase, target_case_format):
@@ -47,7 +47,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
 
         self.setPhaseName("Pre processing update...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.PRE_UPDATE)
+        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=ERT.ert)
         es_update = self.ert().getESUpdate()
 
         success = es_update.smootherUpdate(run_context)
@@ -55,7 +55,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             raise ErtRunError("Analysis of simulation failed!")
 
         self.setPhaseName("Post processing update...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.POST_UPDATE)
+        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=ERT.ert)
 
     def runSimulations(self, arguments):
         phase_count = ERT.enkf_facade.get_number_of_iterations() + 1

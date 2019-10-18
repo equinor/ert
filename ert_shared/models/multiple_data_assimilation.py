@@ -15,7 +15,7 @@
 #  for more details.
 from res.enkf.enums import HookRuntime
 from res.enkf.enums import RealizationStateEnum
-from res.enkf import ErtRunContext
+from res.enkf import ErtRunContext, EnkfSimulationRunner
 
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
@@ -60,9 +60,9 @@ class MultipleDataAssimilation(BaseRunModel):
             run_context = self.create_context( arguments , iteration,  prior_context = run_context )
             self._simulateAndPostProcess(run_context, arguments )
 
-            self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_UPDATE )
+            EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=ERT.ert)
             self.update( run_context , weights[iteration])
-            self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_UPDATE )
+            EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=ERT.ert)
 
         self.setPhaseName("Post processing...", indeterminate=True)
         run_context = self.create_context( arguments , len(weights),  prior_context = run_context, update = False)
@@ -101,7 +101,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = "Pre processing for iteration: %d" % iteration
         self.setPhaseName(phase_string)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
+        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
 
         phase_string = "Running forecast for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=False)
@@ -112,7 +112,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = "Post processing for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.POST_SIMULATION)
+        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ert=ERT.ert)
         return num_successful_realizations
 
 
