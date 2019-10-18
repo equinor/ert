@@ -77,11 +77,11 @@ class EnkfSimulationRunner(BaseCClass):
         """ @rtype: int """
         return self.runSimpleStep(job_queue, run_context)
 
-
-    def runWorkflows(self , runtime):
+    @staticmethod
+    def runWorkflows( runtime, ert):
         """:type res.enkf.enum.HookRuntimeEnum"""
-        hook_manager = self._enkf_main().getHookManager()
-        hook_manager.runWorkflows(runtime  , self._enkf_main())
+        hook_manager = ert.getHookManager()
+        hook_manager.runWorkflows(runtime  , ert)
 
 
     def add_job(self, run_arg, res_config, job_queue):
