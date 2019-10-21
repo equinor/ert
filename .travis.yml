@@ -78,8 +78,6 @@ before_script:
              -DINSTALL_CWRAP=OFF
              -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR
              -DCMAKE_PREFIX_PATH=$INSTALL_DIR
-             -DCMAKE_C_FLAGS='-Werror=all'
-             -DCMAKE_CXX_FLAGS='-Werror -Wno-unused-result'
   - make
   - make install
   - popd;popd
@@ -95,8 +93,14 @@ script:
              -DBUILD_APPLICATIONS=ON
              -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR
              -DCMAKE_PREFIX_PATH=$INSTALL_DIR
-             -DCMAKE_C_FLAGS='-Werror=all'
-             -DCMAKE_CXX_FLAGS='-Wno-unused-result'
+             -DCMAKE_C_FLAGS="-Werror -Wall -Wno-incompatible-pointer-types"
+             -DCMAKE_CXX_FLAGS="-Werror -Wall -Wno-unused-result  -Wno-reorder 
+                                -Wno-sign-compare -Wno-unknown-pragmas 
+                                -Wno-unused-variable -Wno-parentheses 
+                                -Wno-unused-function -Wno-unused-but-set-variable 
+                                -Wno-unknown-warning-option -Wno-missing-braces 
+                                -Wno-varargs -Wno-sometimes-uninitialized 
+                                -Wno-tautological-compare"
   - make
   - make install
   - set -e; python -c "import res"; set +e
