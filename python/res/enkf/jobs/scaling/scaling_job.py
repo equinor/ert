@@ -25,11 +25,9 @@ def scaling_job(ert, user_config_dict):
     config = setup_configuration(config_dict, job_config.build_schema())
 
     if not valid_configuration(config):
-        sys.exit(1)
-
+        raise ValueError("Invalid configuration")
     if not valid_job(ert.getObservations(), config, ert.getEnsembleSize(), ert.getEnkfFsManager().getCurrentFileSystem()):
-        sys.exit(1)
-
+        raise ValueError("Invalid job")
     _observation_scaling(ert, config.snapshot)
 
 
