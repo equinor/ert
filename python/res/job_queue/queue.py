@@ -68,6 +68,7 @@ class JobQueue(BaseCClass):
     _get_pause            = ResPrototype("bool job_queue_get_pause(job_queue)")
     _set_pause_on         = ResPrototype("void job_queue_set_pause_on(job_queue)")
     _set_pause_off        = ResPrototype("void job_queue_set_pause_off(job_queue)")
+    _get_max_submit       = ResPrototype("int job_queue_get_max_submit(job_queue)")
 
     # The return type of the job_queue_iget_job_status should really
     # be the enum job_status_type_enum, but I just did not manage to
@@ -89,13 +90,13 @@ class JobQueue(BaseCClass):
         cnt = '%s, num_running=%d, num_complete=%d, num_waiting=%d, num_pending=%d, active=%d'
         return self._create_repr(cnt % (isrun, nrun, ncom, nwait, npend, len(self)))
 
-    def __init__(self, driver , max_submit=1, size=0):
+    def __init__(self, driver , max_submit=2, size=0):
         """
         Short doc...
-
+        The @max_submit argument says how many times the job be submitted (including a failure)
+              max_submit = 2: means that we can submit job once more
         The @size argument is used to say how many jobs the queue will
         run, in total.
-
               size = 0: That means that you do not tell the queue in
                 advance how many jobs you have. The queue will just run
                 all the jobs you add, but you have to inform the queue in
@@ -113,7 +114,7 @@ class JobQueue(BaseCClass):
         status_file = "STATUS"
         exit_file = "EXIT"
         self.job_list=[]
-        self.stopped_by_user = False
+        self._stopped = False
         c_ptr = self._alloc(max_submit, OK_file, status_file , exit_file)
         super(JobQueue, self).__init__(c_ptr)
         self.size = size
@@ -210,6 +211,10 @@ class JobQueue(BaseCClass):
     def set_max_job_duration(self, max_duration):
         self._set_max_job_duration(max_duration)
 
+    @property
+    def max_submit(self):
+        return self._get_max_submit()
+
     def killAllJobs(self):
         # The queue will not set the user_exit flag before the
         # queue is in a running state. If the queue does not
@@ -256,13 +261,12 @@ class JobQueue(BaseCClass):
         return JobStatusType( int_status )
 
     def is_running(self):
-        if self.stopped_by_user:
-            return False
         for job in self.job_list:
             job_status = job.status
             if (job_status ==  JobStatusType.JOB_QUEUE_PENDING or
                 job_status == JobStatusType.JOB_QUEUE_SUBMITTED or
                 job_status == JobStatusType.JOB_QUEUE_WAITING or
+                job_status == JobStatusType.JOB_QUEUE_UNKNOWN or
                 job_status == JobStatusType.JOB_QUEUE_RUNNING):
                 return True
         return False
@@ -273,8 +277,15 @@ class JobQueue(BaseCClass):
                 return job
         return None
 
+    def count_status(self, status):
+        return len([job for job in self.job_list if job.status == status])
+
+    @property
+    def stopped(self):
+        return self._stopped
+
     def kill_all_jobs(self):
-        self.stopped_by_user = True
+        self._stopped = True
 
     @property
     def queue_size(self):

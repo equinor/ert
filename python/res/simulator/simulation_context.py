@@ -1,16 +1,12 @@
-import os.path
-from ecl.util.util import BoolVector
-
-from res import RES_LIB
 from res.job_queue import JobQueueManager, ForwardModelStatus
-from res.util import CThreadPool, ArgPack
 from res.enkf.ert_run_context import ErtRunContext
-from res.enkf.run_arg import RunArg
-from res.enkf.enums import EnkfRunType, EnkfInitModeEnum
+from res.enkf.enums import EnkfRunType
+from threading import Thread
+from time import sleep
 
 
 class SimulationContext(object):
-    def __init__(self, ert, sim_fs, mask, itr , verbose=False):
+    def __init__(self, ert, sim_fs, mask, itr, case_data):
         self._ert = ert
         """ :type: res.enkf.EnKFMain """
         max_runtime = ert.analysisConfig().get_max_runtime()
@@ -19,51 +15,49 @@ class SimulationContext(object):
         job_queue = ert.get_queue_config().create_job_queue()
         job_queue.set_max_job_duration(max_runtime)
         self._queue_manager = JobQueueManager(job_queue)
-        self._queue_manager.startQueue( mask.count( ), verbose=verbose)
-        self._run_args = {}
-        """ :type: dict[int, RunArg] """
-
-        self._thread_pool = CThreadPool(8)
-        self._thread_pool.addTaskFunction("submitJob", RES_LIB, "enkf_main_isubmit_job__")
 
         subst_list = self._ert.getDataKW( )
         path_fmt = self._ert.getModelConfig().getRunpathFormat()
         jobname_fmt = self._ert.getModelConfig().getJobnameFormat()
-        self._run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT, sim_fs, None, mask, path_fmt, jobname_fmt, subst_list, itr)
-        self._ert.initRun(self._run_context)
 
+        self._run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT, sim_fs, None, mask, path_fmt, jobname_fmt, subst_list, itr)
+        # fill in the missing geo_id data
+        for sim_id, (geo_id, _) in enumerate(case_data):
+            if mask[sim_id]:
+                run_arg = self._run_context[sim_id]
+                run_arg.geo_id = geo_id
+
+        self._ert.getEnkfSimulationRunner().createRunPath(self._run_context)
+        self._sim_thread = self._run_simulations_simple_step()
+
+    def get_run_args(self, iens):
+        '''
+        raises an  exception if no iens simulation found
+
+        :param iens: realization number
+        :return: run_args for the realization
+        '''
+        for run_arg in self._run_context:
+            if run_arg is not None and run_arg.iens == iens:
+                return run_arg
+        raise KeyError("No such simulation: %s" % iens)
+
+    def _run_simulations_simple_step(self):
+        sim_thread = Thread(
+            target=lambda: self._ert.getEnkfSimulationRunner().runSimpleStep(self._queue_manager.queue, self._run_context)
+        )
+        sim_thread.start()
+        return sim_thread
 
     def __len__(self):
         return self._mask.count()
 
-
-    def addSimulation(self, iens, geo_id):
-        if not (0 <= iens < len(self._run_context)):
-            raise UserWarning("Realization number out of range: %d >= %d" % (iens, len(self._run_context)))
-
-        if not self._mask[iens]:
-            raise UserWarning("Realization number: '%d' is not active" % iens)
-
-        if iens in self._run_args:
-            raise UserWarning("Realization number: '%d' already queued" % iens)
-
-        run_arg = self._run_context[iens]
-        run_arg.geo_id = geo_id
-        self._run_args[iens] = run_arg
-
-        self._ert.createRunpath(self._run_context, iens=iens)
-
-        queue = self._queue_manager.get_job_queue()
-        self._thread_pool.submitJob(ArgPack(self._ert, run_arg, queue))
-
-
     def isRunning(self):
-        return self._queue_manager.isRunning()
-
+        # TODO: Should separate between running jobs and having loaded all data
+        return self._sim_thread.is_alive() or self._queue_manager.isRunning()
 
     def getNumPending(self):
         return self._queue_manager.getNumPending()
-
 
     def getNumRunning(self):
         return self._queue_manager.getNumRunning()
@@ -81,7 +75,7 @@ class SimulationContext(object):
 
 
     def didRealizationSucceed(self, iens):
-        queue_index = self._run_args[iens].getQueueIndex()
+        queue_index = self.get_run_args(iens).getQueueIndex()
         return self._queue_manager.didJobSucceed(queue_index)
 
 
@@ -91,11 +85,12 @@ class SimulationContext(object):
 
 
     def isRealizationQueued(self, iens):
-        return iens in self._run_args
-
+        # an exception will be raised if it's not queued
+        self.get_run_args(iens)
+        return True
 
     def isRealizationFinished(self, iens):
-        run_arg = self._run_args[iens]
+        run_arg = self.get_run_args(iens)
 
         if run_arg.isSubmitted():
             queue_index = run_arg.getQueueIndex()
@@ -123,6 +118,7 @@ class SimulationContext(object):
 
     def stop(self):
         self._queue_manager.stop_queue( )
+        self._sim_thread.join()
 
 
     def job_progress(self, iens):
@@ -147,10 +143,8 @@ class SimulationContext(object):
                              (jobN.name, jobN.start_time, jobN.end_time, jobN.status, jobN.error_msg) ]
 
         """
-        if not iens in self._run_args:
-            raise KeyError("No such simulation: %s" % iens)
+        run_arg = self.get_run_args(iens)
 
-        run_arg = self._run_args[iens]
         try:
             # will throw if not yet submitted (is in a limbo state)
             queue_index = run_arg.getQueueIndex()
@@ -167,50 +161,15 @@ class SimulationContext(object):
         """
         Will return the path to the simulation.
         """
-        if not iens in self._run_args:
-            raise KeyError("No such simulation: %s" % iens)
-
-        run_arg = self._run_args[iens]
-        return run_arg.runpath
+        return self.get_run_args(iens).runpath
 
 
     def job_status(self, iens):
         """Will query the queue system for the status of the job.
         """
-        if not iens in self._run_args:
-            raise KeyError("No such simulation: %s" % iens)
-
-        run_arg = self._run_args[iens]
+        run_arg = self.get_run_args(iens)
         try:
             queue_index = run_arg.getQueueIndex()
         except ValueError:
             return None
         return self._queue_manager.getJobStatus(queue_index)
-
-
-    def status_timestamp(self):
-        """Will return a timestamp for the last status change of the simulations.
-
-        The timestamp is related to status changes when a simulation has
-        started, completed and failed.
-
-        """
-        return self._queue_manager.status_timestamp()
-
-
-    def progress_timestamp(self, iens = None):
-        """
-        Will return a timestamp for when the simulation has progressed to a new forward model step.
-        """
-
-        if iens is None:
-            return self._queue_manager.progress_timestamp()
-
-        if not iens in self._run_args:
-            raise KeyError("No such simulation: %s" % iens)
-
-        run_arg = self._run_args[iens]
-        queue_index = run_arg.getQueueIndex()
-        return self._queue_manager.progress_timestamp(queue_index)
-
-

@@ -10,11 +10,11 @@ Status = namedtuple("Status", "waiting pending running complete failed")
 class BatchContext(SimulationContext):
 
 
-    def __init__(self, result_keys, ert, fs, mask, itr):
+    def __init__(self, result_keys, ert, fs, mask, itr, case_data):
         """
         Handle which can be used to query status and results for batch simulation.
         """
-        super(BatchContext, self).__init__(ert, fs, mask, itr)
+        super(BatchContext, self).__init__(ert, fs, mask, itr, case_data)
         self.result_keys = result_keys
         self.res_config = ert.resConfig( )
 

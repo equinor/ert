@@ -202,10 +202,7 @@ class BatchSimulator(object):
         itr = 0
         mask = BoolVector(default_value=True, initial_size=len(case_data))
         sim_context = BatchContext(
-            self.result_keys, self.ert, file_system, mask, itr)
-
-        for sim_id, (geo_id, _) in enumerate(case_data):
-            sim_context.addSimulation(sim_id, geo_id)
+            self.result_keys, self.ert, file_system, mask, itr, case_data)
 
         if self.callback:
             self.callback(sim_context)

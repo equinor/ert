@@ -76,7 +76,7 @@ class QueueConfig(BaseCClass):
 
 
     def create_job_queue(self):
-        queue = JobQueue(self.driver, self.max_submit)
+        queue = JobQueue(self.driver, max_submit=self.max_submit)
         return queue
 
     def create_local_copy(self):

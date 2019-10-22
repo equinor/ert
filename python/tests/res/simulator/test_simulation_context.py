@@ -1,11 +1,9 @@
 import time
-import os.path
-import sys, os
 from tests import ResTest
 from ecl.util.util import BoolVector
 
 from res.test import ErtTestContext
-from res.enkf import EnkfVarType
+from tests.utils import wait_until
 from res.enkf.enums import RealizationStateEnum
 from res.simulator import SimulationContext
 
@@ -29,38 +27,28 @@ class SimulationContextTest(ResTest):
                 mask2[2*iens_2] = False
                 mask2[2*iens_2 + 1] = True
 
-
             fs_manager = ert.getEnkfFsManager()
             first_half = fs_manager.getFileSystem("first_half")
             other_half = fs_manager.getFileSystem("other_half")
 
-            simulation_context1 = SimulationContext(ert, first_half, mask1 , 0)
-            simulation_context2 = SimulationContext(ert, other_half, mask2 , 0)
+            # i represents geo_id
+            case_data = [(i,{}) for i in range(size)]
+            simulation_context1 = SimulationContext(ert, first_half, mask1 , 0, case_data)
+            simulation_context2 = SimulationContext(ert, other_half, mask2 , 0, case_data)
 
-            ert.createRunpath( simulation_context1.get_run_context( ) )
-            ert.createRunpath( simulation_context2.get_run_context( ) )
-
-            geo_id = 0
             for iens in range(size):
                 if iens % 2 == 0:
-                    simulation_context1.addSimulation(iens, geo_id)
                     self.assertFalse(simulation_context1.isRealizationFinished(iens))
+                    # do we have the proper geo_id in run_args?
+                    self.assertEqual(simulation_context1.get_run_args(iens).geo_id, iens)
                 else:
-                    simulation_context2.addSimulation(iens, geo_id)
                     self.assertFalse(simulation_context2.isRealizationFinished(iens))
+                    self.assertEqual(simulation_context2.get_run_args(iens).geo_id, iens)
 
-
-            with self.assertRaises(UserWarning):
-                simulation_context1.addSimulation(size, geo_id)
-
-            with self.assertRaises(UserWarning):
-                simulation_context1.addSimulation(0, geo_id)
-
-            while simulation_context1.isRunning():
-                time.sleep(1.0)
-
-            while simulation_context2.isRunning():
-                time.sleep(1.0)
+            wait_until(
+                func=(lambda: self.assertFalse(simulation_context1.isRunning() or simulation_context2.isRunning())),
+                timeout=60
+            )
 
             self.assertEqual(simulation_context1.getNumFailed(), 0)
             self.assertEqual(simulation_context1.getNumRunning(), 0)

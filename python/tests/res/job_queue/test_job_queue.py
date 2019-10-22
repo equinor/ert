@@ -19,24 +19,24 @@ dummy_config = {
     "exit_callback" : dummy_exit_callback
 }
 
-simple_script = "#!/usr/bin/env python\n"\
-                        "print('hello')\n"\
-                        "\n"
+simple_script = """#!/usr/bin/env python
+print('hello')
+"""
 
-never_ending_script = "#!/usr/bin/env python\n"\
-                        "while(True):\n"\
-                        "   pass"\
-                        "\n"
+never_ending_script = """#!/usr/bin/env python
+import time
+while True:
+    time.sleep(0.5)
+"""
 
-failing_script = "#!/usr/bin/env python\n"\
-                        "import sys\n"\
-                        "sys.exit(1)"\
-                        "\n"
+failing_script = """#!/usr/bin/env python
+import sys
+sys.exit(1)
+"""
 
-
-def create_queue(script):
+def create_queue(script, max_submit=1):
     driver = Driver(driver_type=QueueDriverEnum.LOCAL_DRIVER, max_running=5)
-    job_queue = JobQueue(driver)
+    job_queue = JobQueue(driver, max_submit=max_submit)
     with open(dummy_config["job_script"], "w") as f:
         f.write(script)
     os.chmod(dummy_config["job_script"], stat.S_IRWXU |  stat.S_IRWXO |  stat.S_IRWXG )
@@ -62,7 +62,7 @@ def start_all(job_queue):
     job = job_queue.fetch_next_waiting()
     threads = []
     while(job is not None):
-        threads.append(job.run(job_queue.driver))
+        threads.append(job.run(job_queue.driver, job_queue.max_submit))
         job = job_queue.fetch_next_waiting()
     return threads
 
@@ -73,19 +73,25 @@ class JobQueueTest(ResTest):
         self.assertEnumIsFullyDefined(JobStatusType, "job_status_type", source_path)
 
     def test_kill_jobs(self):
-        with TestAreaContext("job_queue_test_add") as work_area:
+        with TestAreaContext("job_queue_test_kill") as work_area:
             job_queue = create_queue(never_ending_script)
 
             assert job_queue.queue_size == 10
             assert job_queue.is_running()
-            
+
             threads = start_all(job_queue)
 
-            for job in job_queue.job_list: 
-                job.stop(job_queue.driver)
+            # make sure never ending jobs are running
+            time.sleep(3.0)
+            wait_until(
+                lambda: self.assertTrue(job_queue.is_running())
+            )
+
+            for job in job_queue.job_list:
+                job.stop()
 
             wait_until(
-                lambda:self.assertFalse(job_queue.is_running())
+                lambda: self.assertFalse(job_queue.is_running())
             )
             
             for job in job_queue.job_list:
@@ -93,7 +99,6 @@ class JobQueueTest(ResTest):
             
             for t in threads:
                 t.join()
-            assert True
 
     def test_add_jobs(self):
         with TestAreaContext("job_queue_test_add") as work_area:
@@ -102,22 +107,36 @@ class JobQueueTest(ResTest):
             assert job_queue.queue_size == 10
             assert job_queue.is_running()
             assert job_queue.fetch_next_waiting() is not None
-            
-            job_queue.kill_all_jobs()
-            assert not job_queue.is_running()
 
+            threads = start_all(job_queue)
+
+            for job in job_queue.job_list:
+                job.stop()
+
+            wait_until(
+                lambda: self.assertFalse(job_queue.is_running())
+            )
+
+            for t in threads:
+                t.join()
 
     def test_failing_jobs(self):
         with TestAreaContext("job_queue_test_add") as work_area:
-            job_queue = create_queue(failing_script)
+            job_queue = create_queue(failing_script, max_submit=1)
 
             assert job_queue.queue_size == 10
             assert job_queue.is_running()
             
             threads = start_all(job_queue)
+
+            wait_until(
+                func=(lambda: self.assertFalse(job_queue.is_running())),
+            )
+
+            for t in threads:
+                t.join()
+
             assert job_queue.fetch_next_waiting() is None
-            time.sleep(2)
-            assert not job_queue.is_running()
 
             for job in job_queue.job_list:
                 assert job.status == JobStatusType.JOB_QUEUE_FAILED

@@ -1,6 +1,7 @@
 from res.job_queue import JobStatusType, Driver,QueueDriverEnum, JobQueue, JobQueueNode, JobQueueManager
 from res.enkf import ResConfig
 from tests import ResTest
+from tests.utils import wait_until
 from ecl.util.test import TestAreaContext
 import os, stat
 
@@ -24,16 +25,23 @@ dummy_config = {
     "exit_callback" : dummy_exit_callback
 }
 
+simple_script = """#!/usr/bin/env python
+with open('STATUS', 'w') as f:
+   f.write('finished successfully')
+"""
 
-def create_queue():
+failing_script = """#!/usr/bin/env python
+import sys
+sys.exit(1)
+"""
+
+def create_queue(script, max_submit=2):
     driver = Driver(driver_type=QueueDriverEnum.LOCAL_DRIVER, max_running=5)
-    job_queue = JobQueue(driver)
+    job_queue = JobQueue(driver, max_submit=max_submit)
     
     with open(dummy_config["job_script"], "w") as f:
-        f.write("#!/usr/bin/env python\n"\
-                "with open('STATUS', 'w') as f:"\
-                "   f.write('finished successfully')"\
-                "\n")
+        f.write(script)
+
     os.chmod(dummy_config["job_script"], stat.S_IRWXU |  stat.S_IRWXO |  stat.S_IRWXG )
     for i in range(10):
         os.mkdir(dummy_config["run_path"].format(i))
@@ -57,14 +65,30 @@ class JobQueueManagerTest(ResTest):
     def test_execute_queue(self):
         
         with TestAreaContext("job_queue_manager_test") as work_area:
-            job_queue = create_queue()
+            job_queue = create_queue(simple_script)
             manager = JobQueueManager(job_queue)
             manager.execute_queue()
-            
-            assert not job_queue.is_running()
+
+            self.assertFalse(job_queue.isRunning())
 
             for job in job_queue.job_list:
                 ok_file = os.path.realpath(os.path.join(job.run_path, "OK"))
                 assert os.path.isfile( ok_file)
                 with open(ok_file, 'r') as f:
                     assert f.read() == "success"
+
+    def test_max_submit_reached(self):
+        with TestAreaContext("job_queue_manager_test") as work_area:
+            max_submit_num = 5
+            job_queue = create_queue(failing_script, max_submit=max_submit_num)
+            manager = JobQueueManager(job_queue)
+            manager.execute_queue()
+
+            self.assertFalse(manager.isRunning())
+
+            #check if it is really max_submit_num
+            assert job_queue.max_submit == max_submit_num
+
+            for job in job_queue.job_list:
+                assert job.status == JobStatusType.JOB_QUEUE_FAILED
+                assert job.submit_attempt == job_queue.max_submit
