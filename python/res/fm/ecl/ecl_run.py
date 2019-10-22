@@ -173,43 +173,33 @@ class EclRun(object):
 
 
     def execSerialEclipse(self):
-        stdout_file = "%s.LOG" % self.base_name
-        stderr_file = "%s.stderr" % self.base_name
-        with open(stdout_file, "w") as stdout, open(stderr_file, "w") as stderr:
-            process = subprocess.Popen(
-                [
-                    self.sim.executable,
-                    self.base_name
-                ],
-                env=self.sim.env,
-                stdout=stdout,
-                stderr=stderr,
-            )
-            process.communicate()
-            return process.returncode
+        process = subprocess.Popen(
+            [
+                self.sim.executable,
+                self.base_name
+            ],
+            env=self.sim.env
+        )
+        process.communicate()
+        return process.returncode
 
 
     def execParallellEclipse(self):
         self.initMPI( )
-        stdout_file = "%s.LOG" % self.base_name
-        stderr_file = "%s.stderr" % self.base_name
-        with open(stdout_file, "w") as stdout, open(stderr_file, "w") as stderr:
-            process = subprocess.Popen(
-                [
-                    self.sim.mpirun,
-                    "-machinefile",
-                    self.machine_file,
-                    "-np",
-                    "%s" % self.num_cpu,
-                    self.sim.executable,
-                    self.base_name
-                ],
-                env=self.sim.env,
-                stdout=stdout,
-                stderr=stderr,
-            )
-            process.communicate()
-            return process.returncode
+        process = subprocess.Popen(
+            [
+                self.sim.mpirun,
+                "-machinefile",
+                self.machine_file,
+                "-np",
+                "%s" % self.num_cpu,
+                self.sim.executable,
+                self.base_name
+            ],
+            env=self.sim.env
+        )
+        process.communicate()
+        return process.returncode
 
 
     def execEclipse(self):
