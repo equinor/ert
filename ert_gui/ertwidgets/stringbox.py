@@ -14,12 +14,9 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
-import sys
-
 from ErtQt.Qt import QPalette, QLineEdit
 
 from ert_gui.ertwidgets import ValidationSupport, addHelpToWidget
-from ert_gui.ertwidgets.models.valuemodel import ValueModel
 
 
 class StringBox(QLineEdit):
@@ -27,7 +24,7 @@ class StringBox(QLineEdit):
 
     def __init__(self, model, help_link="", default_string="", continuous_update=False):
         """
-        :type model: ValueModel
+        :type model: ert_gui.ertwidgets.models.valuemodel.ValueModel
         :type help_link: str
         :type default_string: str
         :type continuous_update: bool
@@ -87,6 +84,10 @@ class StringBox(QLineEdit):
             text = ""
 
         self.setText(str(text))
+
+    @property
+    def model(self):
+        return self._model
 
     def setValidator(self, validator):
         self._validator = validator
