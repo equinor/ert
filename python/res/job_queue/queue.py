@@ -275,8 +275,6 @@ class JobQueue(BaseCClass):
 
     def kill_all_jobs(self):
         self.stopped_by_user = True
-        for job in self.job_list:
-            job.stop(self.driver)
 
     @property
     def queue_size(self):

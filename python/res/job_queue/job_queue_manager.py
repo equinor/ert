@@ -155,6 +155,15 @@ class JobQueueManager(BaseCClass):
                 started_job_threads.append(job.run(job_queue.driver))
                 job = job_queue.fetch_next_waiting()
             time.sleep(1)
+            if job_queue.stopped_by_user:
+                for job in job_queue.job_list:
+                    job.stop(job_queue.driver)
 
         for thread in started_job_threads:
             thread.join()
+
+        #Cleanup all not-started jobs
+        for job in job_queue.job_list:
+            if job.status == JobStatusType.JOB_QUEUE_WAITING:
+                job._set_status(JobStatusType.JOB_QUEUE_IS_KILLED)
+

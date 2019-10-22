@@ -1,5 +1,6 @@
 from res.job_queue import JobStatusType, Driver, QueueDriverEnum, JobQueue, JobQueueNode
 from tests import ResTest
+from tests.utils import wait_until
 from ecl.util.test import TestAreaContext
 import os, stat, time
 
@@ -23,7 +24,7 @@ simple_script = "#!/usr/bin/env python\n"\
                         "\n"
 
 never_ending_script = "#!/usr/bin/env python\n"\
-                        "while(true):\n"\
+                        "while(True):\n"\
                         "   pass"\
                         "\n"
 
@@ -79,9 +80,13 @@ class JobQueueTest(ResTest):
             assert job_queue.is_running()
             
             threads = start_all(job_queue)
-         
-            job_queue.kill_all_jobs()
-            assert not job_queue.is_running()
+
+            for job in job_queue.job_list: 
+                job.stop(job_queue.driver)
+
+            wait_until(
+                lambda:self.assertFalse(job_queue.is_running())
+            )
             
             for job in job_queue.job_list:
                 assert job.status == JobStatusType.JOB_QUEUE_IS_KILLED
