@@ -160,6 +160,8 @@ class RunDialog(QDialog):
         self.__update_timer.timeout.connect(self.updateRunStatus)
         self._simulations_argments = {}
 
+    def reject(self):
+        return
 
     def closeEvent(self, QCloseEvent):
         if not self.checkIfRunFinished():
