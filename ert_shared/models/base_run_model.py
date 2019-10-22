@@ -92,7 +92,7 @@ class BaseRunModel(object):
 
     @job_queue(None)
     def killAllSimulations(self):
-        self._job_queue.killAllJobs()
+        self._job_queue.kill_all_jobs()
 
 
     @job_queue(False)
