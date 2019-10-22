@@ -1,14 +1,9 @@
-import sys
-
-try:
-  from PyQt4.QtGui import QFormLayout, QLabel
-except ImportError:
-  from PyQt5.QtWidgets import QFormLayout, QLabel
+from ErtQt.Qt import QFormLayout, QLabel
 
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
+from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, get_runnable_realizations_mask
 from ert_gui.ertwidgets.stringbox import StringBox
 from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_shared.models import EnsembleExperiment
@@ -22,8 +17,8 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
         layout = QFormLayout()
 
-        case_selector = CaseSelector()
-        layout.addRow("Current case:", case_selector)
+        self._case_selector = CaseSelector()
+        layout.addRow("Current case:", self._case_selector)
 
         run_path_label = QLabel("<b>%s</b>" % getRunPath())
         addHelpToWidget(run_path_label, "config/simulation/runpath")
@@ -33,14 +28,21 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         addHelpToWidget(number_of_realizations_label, "config/ensemble/num_realizations")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
-        self._active_realizations_model = ActiveRealizationsModel()
-        self._active_realizations_field = StringBox(self._active_realizations_model, "config/simulation/active_realizations")
-        self._active_realizations_field.setValidator(RangeStringArgument(getRealizationCount()))
+        self._active_realizations_field = StringBox(
+            ActiveRealizationsModel(),
+            "config/simulation/active_realizations",
+            )
+        self._active_realizations_field.setValidator(
+            RangeStringArgument(getRealizationCount()),
+            )
         layout.addRow("Active realizations", self._active_realizations_field)
 
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(self.simulationConfigurationChanged)
-
         self.setLayout(layout)
+
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(self.simulationConfigurationChanged)
+        self._case_selector.currentIndexChanged.connect(self._realizations_from_fs)
+
+        self._realizations_from_fs()  # update with the current case
 
 
     def isConfigurationValid(self):
@@ -48,7 +50,12 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
 
     def getSimulationArguments(self):
-        active_realizations_mask = self._active_realizations_model.getActiveRealizationsMask()
+        active_realizations_mask = \
+            self._active_realizations_field.model.getActiveRealizationsMask()
         return {"active_realizations": active_realizations_mask}
 
 
+    def _realizations_from_fs(self):
+        case = str(self._case_selector.currentText())
+        mask = get_runnable_realizations_mask(case)
+        self._active_realizations_field.model.setValueFromMask(mask)

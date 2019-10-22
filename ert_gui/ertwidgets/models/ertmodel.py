@@ -43,6 +43,26 @@ def getHistoryLength():
     return ERT.ert.getHistoryLength()
 
 
+def get_runnable_realizations_mask(casename):
+    """ Return the list of IDs corresponding to realizations that can be run.
+
+    A realization is considered "runnable" if its status is any other than
+    STATE_PARENT_FAILED. In that case, ERT does not know why that realization
+    failed, so it does not even know whether the parameter set for that
+    realization is sane or not.
+    If the requested case does not exist, an empty list is returned
+    """
+    fsm = ERT.ert.getEnkfFsManager()
+    if not fsm.caseExists(casename):
+        return []
+    sm = fsm.getStateMapForCase(casename)
+    runnable_flag = RealizationStateEnum.STATE_UNDEFINED | \
+                    RealizationStateEnum.STATE_INITIALIZED | \
+                    RealizationStateEnum.STATE_LOAD_FAILURE | \
+                    RealizationStateEnum.STATE_HAS_DATA
+    return sm.createMask(runnable_flag)
+
+
 @showWaitCursorWhileWaiting
 def selectOrCreateNewCase(case_name):
     if getCurrentCaseName() != case_name:
