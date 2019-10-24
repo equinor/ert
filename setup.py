@@ -47,6 +47,7 @@ setup(
             'ErtQt',
             'ErtQt.Qt',
             'ert3',
+            'ert3.resource_storage',
             ],
     package_data={'ert_gui' : extra_files},
     include_package_data=True,
