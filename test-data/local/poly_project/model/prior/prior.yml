@@ -1,0 +1,22 @@
+experiment:
+  name: poly_prior
+  parameters:
+    - coeffs
+
+environment:
+  simulation_folder: ../../scratch
+  output_folder: ../../output
+
+install_data:
+  -
+    source: ../../data/data_points
+    target: data_points
+
+forward_model:
+  - evaluate
+
+results:
+  -
+    name: poly_res
+    type: array
+    file: poly.out

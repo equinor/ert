@@ -1,0 +1,18 @@
+install_jobs:
+  -
+    name: poly_eval
+    script: ../../bin/poly_eval.py
+
+stages:
+  -
+    name: evaluate
+    jobs:
+      - poly_eval
+
+model:
+  realizations: [0-99]
+
+queue_system:
+  default_driver: local
+  local:
+    max_submit: 50

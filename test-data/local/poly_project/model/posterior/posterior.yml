@@ -1,0 +1,26 @@
+update:
+  algorithm: ensemble_smoother
+  prior: poly_prior
+  posterior: poly_posterior
+  match:
+    -
+      observation: poly_obs
+      measurement: poly_res
+
+environment:
+  simulation_folder: ../../scratch
+  output_folder: ../../output
+
+install_data:
+  -
+    source: ../../data/data_points
+    target: data_points
+
+forward_model:
+  - evaluate
+
+results:
+  -
+    name: poly_res
+    type: array
+    file: poly.out

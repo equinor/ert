@@ -1,0 +1,19 @@
+-
+  name: poly_obs
+  type: array
+  observations:
+    -
+      value: 2.8532509308
+      std: 0.1
+    -
+      value: 7.20311703432
+      std: 1.1
+    -
+      value: 21.3864899107
+      std: 4.1
+    -
+      value: 31.5145559347
+      std: 9.1
+    -
+      value: 53.5676660405
+      std: 16.1
