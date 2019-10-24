@@ -9,6 +9,7 @@
 # probably install it through your operaing systems package manager.
 
 sphinx
+configsuite
 cwrap
 numpy
 pandas
