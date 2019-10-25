@@ -15,6 +15,7 @@ dist: xenial
 env:
   global:
     - ERT_SHOW_BACKTRACE=1
+    - DEP_BUILD_DIR="$(pwd)/../build"
     - INSTALL_DIR="$(pwd)/../install"
     - LD_LIBRARY_PATH="${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64"
     - DYLD_LIBRARY_PATH="${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64"
@@ -79,17 +80,21 @@ before_install:
     - pip install --upgrade -r requirements.txt
     # Checkout libres - need libecl version
     - source .libres_version
+    - pushd $DEP_BUILD_DIR
     - git clone --branch $LIBRES_VERSION --depth 1 https://github.com/equinor/libres
     - pushd libres
     - source .libecl_version
     - popd
     - git clone --branch $LIBECL_VERSION --depth 1 https://github.com/equinor/libecl
+    - popd
 
 install:
   # For now we have to make install libecl.
   # Remove when it's possible to pip install
+  - pushd $DEP_BUILD_DIR
   - bash .build_install.sh libecl
   - bash .build_install.sh libres
+  - popd
 
 script:
   - ulimit -n 2048
