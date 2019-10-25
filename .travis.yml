@@ -80,6 +80,7 @@ before_install:
     - pip install --upgrade -r requirements.txt
     # Checkout libres - need libecl version
     - source .libres_version
+    - mkdir $DEP_BUILD_DIR
     - pushd $DEP_BUILD_DIR
     - git clone --branch $LIBRES_VERSION --depth 1 https://github.com/equinor/libres
     - pushd libres
