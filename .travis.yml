@@ -15,6 +15,7 @@ dist: xenial
 env:
   global:
     - ERT_SHOW_BACKTRACE=1
+    - ERT_ROOT_DIR="$(pwd)"
     - DEP_BUILD_DIR="$(pwd)/../build"
     - INSTALL_DIR="$(pwd)/../install"
     - LD_LIBRARY_PATH="${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64"
@@ -93,8 +94,8 @@ install:
   # For now we have to make install libecl.
   # Remove when it's possible to pip install
   - pushd $DEP_BUILD_DIR
-  - bash .build_install.sh libecl
-  - bash .build_install.sh libres
+  - bash $ERT_ROOT_DIR/.build_install.sh libecl
+  - bash $ERT_ROOT_DIR/.build_install.sh libres
   - popd
 
 script:
