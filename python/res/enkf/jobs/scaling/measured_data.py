@@ -9,11 +9,16 @@ class MeasuredData(object):
     def __init__(self, ert, events):
         self.data = self._get_data(ert, events.keys)
         self.filter_on_column_index(events.index)
-        self.remove_nan()
+        self.remove_nan(events.keys)
         self.filter_out_outliers(events)
 
 
-    def remove_nan(self):
+    def remove_nan(self, keys):
+        """
+        Removes NaN values from the case, first on a row basis to remove failed realizations,
+        then on a column basis.
+        """
+        self.data.loc[list(keys)] = self.data.loc[list(keys)].dropna(axis=0, how='all')
         self.data = self.data.dropna(axis=1)
 
     def filter_on_column_index(self, index_list):
