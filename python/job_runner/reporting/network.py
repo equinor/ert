@@ -12,7 +12,7 @@ from sys import version as sys_version
 import requests
 from ecl import EclVersion
 from job_runner import LOG_URL
-from job_runner.reporting.message import Exited, Init
+from job_runner.reporting.message import Exited, Init, Finish
 from job_runner.util import pad_nonexisting, read_os_release
 from res import ResVersion
 
@@ -22,6 +22,7 @@ class Network(object):
     def __init__(self, log_url=LOG_URL):
         self.simulation_id = None
         self.ert_pid = None
+        self.start_time = None
 
         self.log_url = log_url
         self.node = socket.gethostname()
@@ -37,10 +38,11 @@ class Network(object):
 
             self._post_initial(msg)
         elif isinstance(msg, Exited):
+            if not msg.success():
+                self._post_job_failure(msg)
+        elif isinstance(msg, Finish):
             if msg.success():
                 self._post_success(msg)
-            else:
-                self._post_job_failure(msg)
 
     def _post_initial(self, msg):
         os_info = read_os_release()
