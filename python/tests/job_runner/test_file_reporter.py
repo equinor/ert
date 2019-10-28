@@ -180,3 +180,41 @@ class FileReporterTests(TestCase):
 
         for f in [r.EXIT_file, r.ERROR_file, r.STATUS_file, r.OK_file]:
             self.assertFalse(os.path.isfile(f), "{} was not deleted".format(r))
+
+    @tmpdir(None)
+    def test_status_file_is_correct(self):
+        """The STATUS file is a file to which we append data about jobs as they
+        are run. So this involves multiple reports, and should be tested as
+        such.
+        See https://github.com/equinor/libres/issues/764
+        """
+        j_1 = Job({"name": "j_1", "executable": "", "argList": []}, 0)
+        j_2 = Job({"name": "j_2", "executable": "", "argList": []}, 0)
+        init = Init([j_1, j_2], 1, 1)
+        start_j_1 = Start(j_1)
+        exited_j_1 = Exited(j_1, 0)
+        start_j_2 = Start(j_2)
+        exited_j_2 = Exited(j_2, 9).with_error("failed horribly")
+
+        for msg in [init, start_j_1, exited_j_1, start_j_2, exited_j_2]:
+            self.reporter.report(msg)
+
+        expected_j1_line = "{:32}: {start_ts:%H:%M:%S} .... {end_ts:%H:%M:%S}  \n".format( # noqa
+            j_1.name(),
+            start_ts=start_j_1.timestamp,
+            end_ts=exited_j_1.timestamp,
+        )
+        expected_j2_line = "{:32}: {start_ts:%H:%M:%S} .... {end_ts:%H:%M:%S}   EXIT: {code}/{msg}\n".format( # noqa
+            j_2.name(),
+            start_ts=start_j_2.timestamp,
+            end_ts=exited_j_2.timestamp,
+            code=exited_j_2.exit_code,
+            msg=exited_j_2.error_message,
+        )
+
+        with open(self.reporter.STATUS_file, "r") as f:
+            for expected in ["Current host", expected_j1_line, expected_j2_line]: # noqa
+                self.assertIn(expected, f.readline())
+
+            # EOF
+            self.assertEqual("", f.readline())

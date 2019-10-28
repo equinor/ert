@@ -34,7 +34,7 @@ class File(object):
 
         elif isinstance(msg, Start):
             if msg.success():
-                self._start_status_file(msg.job)
+                self._start_status_file(msg)
                 self._add_log_line(msg.job)
                 job_status["status"] = "Running"
                 job_status["start_time"] = self._datetime_serialize(
@@ -46,14 +46,13 @@ class File(object):
                 job_status["end_time"] = self._datetime_serialize(
                     msg.timestamp)
 
-                # There was no status code in the case of STARTUP_ERROR, so use
-                # an arbitrary code less than -9.
-                self._fail_status_file(-10, error_msg)
+                self._complete_status_file(msg)
         elif isinstance(msg, Exited):
             job_status["end_time"] = self._datetime_serialize(msg.timestamp)
 
             if msg.success():
                 job_status["status"] = "Success"
+                self._complete_status_file(msg)
             else:
                 error_msg = msg.error_message
                 job_status["error"] = error_msg
@@ -62,7 +61,7 @@ class File(object):
                 # A STATUS_file is not written if there is no exit_code, i.e.
                 # when the job is killed due to timeout.
                 if msg.exit_code:
-                    self._fail_status_file(msg.exit_code, error_msg)
+                    self._complete_status_file(msg)
                 self._dump_error_file(msg.job, error_msg)
 
         elif isinstance(msg, Running):
@@ -89,8 +88,8 @@ class File(object):
 
     def _init_status_file(self):
         with open(self.STATUS_file, "a") as f:
-            f.write("%-32s: %s/%s\n" %
-                    ("Current host", self.node, os.uname()[4]))
+            f.write("{:32}: {}/{}\n".format("Current host", self.node,
+                                            os.uname()[4]))
 
     def _init_job_status_dict(self, start_time, run_id, jobs):
         return {
@@ -114,26 +113,34 @@ class File(object):
                 "stdout": job.std_out,
                 "stderr": job.std_err}
 
-    def _start_status_file(self, job):
+    def _start_status_file(self, msg):
         with open(self.STATUS_file, "a") as f:
-            now = time.localtime()
-            f.write("%-32s: %02d:%02d:%02d .... " %
-                    (job.name(), now.tm_hour, now.tm_min, now.tm_sec))
+            f.write("{:32}: {:%H:%M:%S} .... ".format(msg.job.name(),
+                    msg.timestamp))
 
-    def _fail_status_file(self, status_code, error_msg):
-        now = time.localtime()
+    def _complete_status_file(self, msg):
+        if msg.success():
+            status = ""
+        else:
+            # There was no status code in the case of STARTUP_ERROR, so use
+            # an arbitrary code less than -9.
+            if isinstance(msg, Start):
+                exit_code = -10
+            else:
+                exit_code = msg.exit_code
+
+            status = " EXIT: {}/{}".format(exit_code, msg.error_message)
         with open(self.STATUS_file, "a") as f:
-            status = " EXIT: %d/%s" % (status_code, error_msg)
-
-            f.write("%02d:%02d:%02d  %s\n" %
-                    (now.tm_hour, now.tm_min, now.tm_sec, status))
+            f.write("{:%H:%M:%S}  {}\n".format(msg.timestamp, status))
 
     def _add_log_line(self, job):
         now = time.localtime()
         with open(self.LOG_file, "a") as f:
             args = " ".join(job.job_data["argList"])
             f.write("{:02d}:{:02d}:{:02d}  Calling: {} {}\n".format(
-                now.tm_hour, now.tm_min, now.tm_sec, job.job_data["executable"], args))
+                now.tm_hour, now.tm_min, now.tm_sec,
+                job.job_data["executable"], args)
+            )
 
     # This file will be read by the job_queue_node_fscanf_EXIT() function
     # in job_queue.c. Be very careful with changes in output format.
