@@ -708,3 +708,44 @@ def test_main_entry_point_block_data_calc():
 
     for index, node in enumerate(obs_vector):
             assert node.getStdScaling(index) == 2.0
+
+
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_validate_failed_realizations():
+    """
+    Config has several failed realisations
+    """
+    test_data_dir = os.path.join(_TEST_DATA_DIR, "local", "custom_kw")
+    shutil.copytree(test_data_dir, "test_data")
+    os.chdir(os.path.join("test_data"))
+
+    res_config = ResConfig("mini_fail_config")
+    ert = EnKFMain(res_config)
+    observations = ert.getObservations()
+
+    result = scaling_job.has_data(
+        observations, ["GEN_PERLIN_1"],
+        ert.getEnsembleSize(),
+        ert.getEnkfFsManager().getCurrentFileSystem()
+    )
+    assert result == []
+
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_validate_no_realizations():
+    """
+    Ensamble has not run
+    """
+    test_data_dir = os.path.join(_TEST_DATA_DIR, "local", "poly_normal")
+    shutil.copytree(test_data_dir, "test_data")
+    os.chdir(os.path.join("test_data"))
+
+    res_config = ResConfig("poly.ert")
+    ert = EnKFMain(res_config)
+    observations = ert.getObservations()
+
+    result = scaling_job.has_data(
+        observations, ["POLY_OBS"],
+        ert.getEnsembleSize(),
+        ert.getEnkfFsManager().getCurrentFileSystem()
+    )
+    assert result == ["Key: POLY_OBS has no data"]

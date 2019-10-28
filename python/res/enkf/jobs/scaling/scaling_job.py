@@ -11,7 +11,7 @@ from res.enkf.jobs.scaling.scaled_matrix import DataMatrix
 from res.enkf.jobs.scaling.measured_data import MeasuredData
 from res.enkf import LocalObsdata, ActiveList
 from ecl.util.util import BoolVector
-
+from res.enkf import RealizationStateEnum
 
 def scaling_job(ert, user_config_dict):
     """
@@ -219,7 +219,12 @@ def has_data(observations, keys, ensamble_size, storage):
     Checks that all keys have data and returns a list of error messages
     """
     error_msg = "Key: {} has no data"
-    active_mask = BoolVector(True, ensamble_size)
+    active_realizations = storage.realizationList(RealizationStateEnum.STATE_HAS_DATA)
+
+    if len(active_realizations) == 0:
+        return [error_msg.format(key) for key in keys]
+
+    active_mask = BoolVector.createFromList(ensamble_size, active_realizations)
     return [error_msg.format(key) for key in keys if not observations[key].hasData(active_mask, storage)]
 
 
