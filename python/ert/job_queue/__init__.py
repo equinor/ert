@@ -14,4 +14,3 @@ from res.job_queue import WorkflowJob
 from res.job_queue import WorkflowJoblist
 from res.job_queue import Workflow
 from res.job_queue import WorkflowRunner
-from res.job_queue import JobManager, assert_file_executable
