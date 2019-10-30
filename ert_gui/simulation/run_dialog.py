@@ -28,7 +28,6 @@ except ImportError:
                                  QWidget)
     from PyQt5.QtGui import QColor, QStandardItemModel, QStandardItem
 
-
 from ert_gui.ertwidgets import resourceMovie, Legend
 from ert_gui.simulation import Progress, SimpleProgress, DetailedProgressWidget
 from ert_shared.models import BaseRunModel, SimulationsTracker
@@ -38,13 +37,13 @@ from ecl.util.util import BoolVector
 
 class RunDialog(QDialog):
 
-    def __init__(self, run_model, parent):
+    def __init__(self, config_file, run_model, parent):
         QDialog.__init__(self, parent)
         self.setWindowFlags(Qt.Window)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setModal(True)
         self.setWindowModality(Qt.WindowModal)
-        self.setWindowTitle("Simulations")
+        self.setWindowTitle("Simulations - {}".format(config_file))
 
         assert isinstance(run_model, BaseRunModel)
         self._run_model = run_model
@@ -86,7 +85,7 @@ class RunDialog(QDialog):
 
         self.running_time = QLabel("")
 
-        self.plot_tool = PlotTool()
+        self.plot_tool = PlotTool(config_file)
         self.plot_tool.setParent(None)
         self.plot_button = QPushButton(self.plot_tool.getName())
         self.plot_button.clicked.connect(self.plot_tool.trigger)

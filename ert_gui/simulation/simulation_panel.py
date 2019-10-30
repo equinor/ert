@@ -26,8 +26,9 @@ from collections import OrderedDict
 
 class SimulationPanel(QWidget):
 
-    def __init__(self):
+    def __init__(self, config_file):
         QWidget.__init__(self)
+        self._config_file = config_file
 
         layout = QVBoxLayout()
 
@@ -110,7 +111,7 @@ class SimulationPanel(QWidget):
         if start_simulations == QMessageBox.Yes:
             run_model = self.getCurrentSimulationModel()
             arguments = self.getSimulationArguments()
-            dialog = RunDialog(run_model(), self)
+            dialog = RunDialog(self._config_file, run_model(), self)
             dialog.startSimulation( arguments )
             dialog.exec_()
 

@@ -118,16 +118,14 @@ def _check_locale():
 
 
 def _setup_main_window(config_file, ert):
-    window = GertMainWindow()
-    window.setWidget(SimulationPanel())
-    window.setWindowTitle("ERT - {}".format(config_file))
+    window = GertMainWindow(config_file)
+    window.setWidget(SimulationPanel(config_file))
     plugin_handler = PluginHandler(ert, ert.getWorkflowList().getPluginJobs(), window)
     help_tool = HelpTool("ERT", window)
-    window.addDock(
-        "Configuration Summary", SummaryPanel(), area=Qt.BottomDockWidgetArea
-    )
-    window.addTool(IdeTool(os.path.basename(config_file), help_tool))
-    window.addTool(PlotTool())
+
+    window.addDock("Configuration Summary", SummaryPanel(), area=Qt.BottomDockWidgetArea)
+    window.addTool(IdeTool(config_file, help_tool))
+    window.addTool(PlotTool(config_file))
     window.addTool(ExportTool())
     window.addTool(WorkflowsTool())
     window.addTool(ManageCasesTool())

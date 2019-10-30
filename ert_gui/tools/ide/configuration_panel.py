@@ -19,7 +19,7 @@ class ConfigurationPanel(QWidget):
 
     reloadApplication = pyqtSignal(str)
 
-    def __init__(self, config_file_path, help_tool):
+    def __init__(self, config_file, help_tool):
         QWidget.__init__(self)
 
         layout = QVBoxLayout()
@@ -58,9 +58,9 @@ class ConfigurationPanel(QWidget):
         self.ide_panel = IdePanel()
         layout.addWidget(self.ide_panel, 1)
 
-        self.config_file_path = config_file_path
+        self.config_file = config_file
 
-        with open(config_file_path) as f:
+        with open(config_file) as f:
             config_file_text = f.read()
 
         self.highlighter = KeywordHighlighter(self.ide_panel.document())
@@ -85,17 +85,17 @@ class ConfigurationPanel(QWidget):
 
 
     def save(self):
-        backup_path = "%s.backup" % self.config_file_path
-        shutil.copyfile(self.config_file_path, backup_path)
+        backup_path = "%s.backup" % self.config_file
+        shutil.copyfile(self.config_file, backup_path)
 
-        with open(self.config_file_path, "w") as f:
+        with open(self.config_file, "w") as f:
             f.write(self.ide_panel.getText())
 
         message = "To make your changes current, a reload of the configuration file is required. Would you like to reload now?"
         result = QMessageBox.information(self, "Reload required!", message, QMessageBox.Yes | QMessageBox.No)
 
         if result == QMessageBox.Yes:
-            self.reload(self.config_file_path)
+            self.reload(self.config_file)
 
 
     def saveAs(self):

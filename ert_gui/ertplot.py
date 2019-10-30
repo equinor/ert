@@ -59,7 +59,7 @@ def main(argv):
     ert = EnKFMain(res_config, strict=strict, verbose=False)
     configureErtNotifier(ert, config_file)
 
-    window = PlotWindow(ert, None)
+    window = PlotWindow(config_file, ert, None)
 
     sleep_time = 2 - (time.time() - now)
 
