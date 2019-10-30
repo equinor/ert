@@ -1,24 +1,26 @@
 import pandas as pd
 
-from res.enkf.export import GenDataCollector, SummaryCollector, SummaryObservationCollector
+from res.enkf.export import (
+    GenDataCollector,
+    SummaryCollector,
+    SummaryObservationCollector,
+)
 from res.enkf.plot_data import PlotBlockDataLoader
 
 
 class MeasuredData(object):
-
     def __init__(self, ert, events):
         self.data = self._get_data(ert, events.keys)
         self.filter_on_column_index(events.index)
         self.remove_nan(events.keys)
         self.filter_out_outliers(events)
 
-
     def remove_nan(self, keys):
         """
         Removes NaN values from the case, first on a row basis to remove failed realizations,
         then on a column basis.
         """
-        self.data.loc[list(keys)] = self.data.loc[list(keys)].dropna(axis=0, how='all')
+        self.data.loc[list(keys)] = self.data.loc[list(keys)].dropna(axis=0, how="all")
         self.data = self.data.dropna(axis=1)
 
     def filter_on_column_index(self, index_list):
@@ -38,12 +40,21 @@ class MeasuredData(object):
         for key in observation_keys:
             observation_type = ert.getObservations()[key].getImplementationType().name
             if observation_type == "GEN_OBS":
-                measured_data = measured_data.append(self._get_general_data(ert, key, case_name))
+                measured_data = measured_data.append(
+                    self._get_general_data(ert, key, case_name)
+                )
             elif observation_type == "SUMMARY_OBS":
-                measured_data = measured_data.append(self._get_summary_data(ert, key, case_name))
+                measured_data = measured_data.append(
+                    self._get_summary_data(ert, key, case_name)
+                )
             elif observation_type == "BLOCK_OBS":
-                measured_data = measured_data.append(self._get_block_data(
-                    ert.getObservations(), key, ert.getEnsembleSize(), ert.getEnkfFsManager().getCurrentFileSystem())
+                measured_data = measured_data.append(
+                    self._get_block_data(
+                        ert.getObservations(),
+                        key,
+                        ert.getEnsembleSize(),
+                        ert.getEnkfFsManager().getCurrentFileSystem(),
+                    )
                 )
             else:
                 raise TypeError("Unknown observation type: {}".format(observation_type))
@@ -60,11 +71,18 @@ class MeasuredData(object):
             obs_block = loader.getBlockObservation(report_step)
 
             data = (
-                data
-                .append(pd.DataFrame(
-                    [self._get_block_observations(obs_block.getValue, obs_block)], index=["OBS_" + key]))
-                .append(pd.DataFrame(
-                    [self._get_block_observations(obs_block.getStd, obs_block)], index=["STD_" + key]))
+                data.append(
+                    pd.DataFrame(
+                        [self._get_block_observations(obs_block.getValue, obs_block)],
+                        index=["OBS_" + key],
+                    )
+                )
+                .append(
+                    pd.DataFrame(
+                        [self._get_block_observations(obs_block.getStd, obs_block)],
+                        index=["STD_" + key],
+                    )
+                )
                 .append(self._get_block_measured(key, ensamble_size, block_data))
             )
         return data
@@ -79,10 +97,26 @@ class MeasuredData(object):
             data = GenDataCollector.loadGenData(ert, case_name, data_key, time_step)
 
             general_data = (
-               general_data
-               .append(pd.DataFrame(self._get_observations(ert_obs, observation_key), index=["OBS_" + observation_key]))
-               .append(pd.DataFrame(self._get_std(ert_obs, observation_key), index=["STD_" + observation_key]))
-               .append(pd.concat([pd.DataFrame([data[key]], index=[observation_key]) for key in data.keys()]))
+                general_data.append(
+                    pd.DataFrame(
+                        self._get_observations(ert_obs, observation_key),
+                        index=["OBS_" + observation_key],
+                    )
+                )
+                .append(
+                    pd.DataFrame(
+                        self._get_std(ert_obs, observation_key),
+                        index=["STD_" + observation_key],
+                    )
+                )
+                .append(
+                    pd.concat(
+                        [
+                            pd.DataFrame([data[key]], index=[observation_key])
+                            for key in data.keys()
+                        ]
+                    )
+                )
             )
         return general_data
 
@@ -92,8 +126,12 @@ class MeasuredData(object):
         """
         if isinstance(index_list, (list, tuple)):
             if max(index_list) > self.data.shape[1]:
-                msg = ("Index list is larger than observation data, please check input, max index list:"
-                       "{} number of data points: {}".format(max(index_list), self.data.shape[1]))
+                msg = (
+                    "Index list is larger than observation data, please check input, max index list:"
+                    "{} number of data points: {}".format(
+                        max(index_list), self.data.shape[1]
+                    )
+                )
                 raise IndexError(msg)
             return self.data.iloc[:, list(index_list)]
         else:
@@ -116,15 +154,25 @@ class MeasuredData(object):
             obs_std = self.data.loc["STD_" + key]
 
             filters.append(self._filter_ensamble_std(ens_std, events.std_cutoff))
-            filters.append(self._filter_ens_mean_obs(ens_mean, ens_std, obs_values, obs_std, events.alpha))
+            filters.append(
+                self._filter_ens_mean_obs(
+                    ens_mean, ens_std, obs_values, obs_std, events.alpha
+                )
+            )
 
         combined_filter = self._combine_filters(filters)
         return self.data.drop(columns=combined_filter[combined_filter].index)
 
     def _get_summary_data(self, ert, observation_key, case_name):
         data_key = ert.getObservations()[observation_key].getDataKey()
-        return pd.concat([self._add_summary_observations(ert, data_key, observation_key, case_name),
-                          self._add_summary_data(ert, data_key, observation_key, case_name)])
+        return pd.concat(
+            [
+                self._add_summary_observations(
+                    ert, data_key, observation_key, case_name
+                ),
+                self._add_summary_data(ert, data_key, observation_key, case_name),
+            ]
+        )
 
     @staticmethod
     def _filter_ensamble_std(ensamble_std, std_cutoff):
@@ -135,12 +183,16 @@ class MeasuredData(object):
         return ensamble_std < std_cutoff
 
     @staticmethod
-    def _filter_ens_mean_obs(ensamble_mean, ensamble_std, observation_values, observation_std, alpha):
+    def _filter_ens_mean_obs(
+        ensamble_mean, ensamble_std, observation_values, observation_std, alpha
+    ):
         """
         Filters on distance between the observed data and the ensamble mean based on variation and
         a user defined alpha.
         """
-        return abs(observation_values - ensamble_mean) > alpha * (ensamble_std + observation_std)
+        return abs(observation_values - ensamble_mean) > alpha * (
+            ensamble_std + observation_std
+        )
 
     @staticmethod
     def _combine_filters(filters):
@@ -157,8 +209,12 @@ class MeasuredData(object):
 
     @staticmethod
     def _add_summary_observations(ert, data_key, observation_key, case_name):
-        data = SummaryObservationCollector.loadObservationData(ert, case_name, [data_key]).transpose()
-        data = data.set_index(data.index.str.replace(r"\b" + data_key, "OBS_" + data_key, regex=True))
+        data = SummaryObservationCollector.loadObservationData(
+            ert, case_name, [data_key]
+        ).transpose()
+        data = data.set_index(
+            data.index.str.replace(r"\b" + data_key, "OBS_" + data_key, regex=True)
+        )
         return data.set_index(data.index.str.replace(data_key, observation_key))
 
     @staticmethod

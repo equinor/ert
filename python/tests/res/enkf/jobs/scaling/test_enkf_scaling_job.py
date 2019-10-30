@@ -12,14 +12,16 @@ from copy import deepcopy
 from collections import namedtuple
 
 from res.enkf import ResConfig, EnKFMain, ConfigKeys
-from res.enkf.jobs.scaling import (scaling_job, job_config,
-                                   measured_data, scaled_matrix)
+from res.enkf.jobs.scaling import scaling_job, job_config, measured_data, scaled_matrix
 from ecl.util.util import BoolVector
 from res.enkf import ErtRunContext
 
-_TEST_DATA_DIR = os.path.abspath(os.path.join(
-    os.path.dirname(os.path.dirname(__file__)), os.path.join("..", "..", "..", "..", "..", "test-data")
-))
+_TEST_DATA_DIR = os.path.abspath(
+    os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        os.path.join("..", "..", "..", "..", "..", "test-data"),
+    )
+)
 
 
 def p(x):
@@ -49,8 +51,8 @@ def setup_tmpdir(tmpdir):
 def valid_poly_config():
 
     valid_config_data = {
-        'CALCULATE_KEYS': {'keys': ['POLY_OBS']},
-        'UPDATE_KEYS': {"keys": [{'key': 'POLY_OBS'}]},
+        "CALCULATE_KEYS": {"keys": ["POLY_OBS"]},
+        "UPDATE_KEYS": {"keys": [{"key": "POLY_OBS"}]},
     }
 
     schema = job_config.build_schema()
@@ -62,51 +64,39 @@ def valid_poly_config():
 def setup_ert(tmp_path_factory):
 
     config = {
-        ConfigKeys.SIMULATION:
-            {
-            ConfigKeys.QUEUE_SYSTEM:
-                {
-                    ConfigKeys.JOBNAME: "poly_%d",
-                    ConfigKeys.QUEUE_SYSTEM: "LOCAL",
-                    ConfigKeys.MAX_SUBMIT: 50,
-                },
+        ConfigKeys.SIMULATION: {
+            ConfigKeys.QUEUE_SYSTEM: {
+                ConfigKeys.JOBNAME: "poly_%d",
+                ConfigKeys.QUEUE_SYSTEM: "LOCAL",
+                ConfigKeys.MAX_SUBMIT: 50,
+            },
             ConfigKeys.RUNPATH: "poly_out/real_%d/iter_%d",
             ConfigKeys.NUM_REALIZATIONS: 5,
             ConfigKeys.MIN_REALIZATIONS: 1,
             ConfigKeys.OBS_CONFIG: "observations",
             ConfigKeys.TIME_MAP: "time_map",
-            ConfigKeys.SEED:
-                {ConfigKeys.RANDOM_SEED: 123},
-            ConfigKeys.GEN_DATA:
-                [
-                    {
-                        ConfigKeys.NAME: "POLY_RES",
-                        "RESULT_FILE": "poly_%d.out",
-                        "REPORT_STEPS": 0,
-                    }
-                ],
-            ConfigKeys.GEN_KW:
-                [
-                    {
-                        ConfigKeys.NAME: "COEFFS",
-                        ConfigKeys.TEMPLATE: "coeff.tmpl",
-                        ConfigKeys.OUT_FILE: "coeffs.json",
-                        ConfigKeys.PARAMETER_FILE: "coeff_priors"
-                    }
-                ],
-                ConfigKeys.INSTALL_JOB:
-                [
-                    {
-                        ConfigKeys.NAME: "poly_eval",
-                        ConfigKeys.PATH: "POLY_EVAL"
-                    },
-                ],
-            ConfigKeys.SIMULATION_JOB:
-                [
-                    {ConfigKeys.NAME: "poly_eval"},
-                ],
-            }
+            ConfigKeys.SEED: {ConfigKeys.RANDOM_SEED: 123},
+            ConfigKeys.GEN_DATA: [
+                {
+                    ConfigKeys.NAME: "POLY_RES",
+                    "RESULT_FILE": "poly_%d.out",
+                    "REPORT_STEPS": 0,
+                }
+            ],
+            ConfigKeys.GEN_KW: [
+                {
+                    ConfigKeys.NAME: "COEFFS",
+                    ConfigKeys.TEMPLATE: "coeff.tmpl",
+                    ConfigKeys.OUT_FILE: "coeffs.json",
+                    ConfigKeys.PARAMETER_FILE: "coeff_priors",
+                }
+            ],
+            ConfigKeys.INSTALL_JOB: [
+                {ConfigKeys.NAME: "poly_eval", ConfigKeys.PATH: "POLY_EVAL"}
+            ],
+            ConfigKeys.SIMULATION_JOB: [{ConfigKeys.NAME: "poly_eval"}],
         }
+    }
 
     temp_path = tmp_path_factory.mktemp("poly_case")
 
@@ -115,22 +105,29 @@ def setup_ert(tmp_path_factory):
 
     test_files = ["time_map", "POLY_EVAL", "poly_eval.py", "coeff.tmpl", "coeff_priors"]
     for test_file in test_files:
-        shutil.copy(os.path.join(_TEST_DATA_DIR, "local", "poly_normal", test_file), temp_path.as_posix())
+        shutil.copy(
+            os.path.join(_TEST_DATA_DIR, "local", "poly_normal", test_file),
+            temp_path.as_posix(),
+        )
 
     random.seed(123)
-    observations = [(p(x) + random.gauss(0, 0.25*x**2 + 0.1), 0.25*x**2 + 0.1) for x in range(10)]
+    observations = [
+        (p(x) + random.gauss(0, 0.25 * x ** 2 + 0.1), 0.25 * x ** 2 + 0.1)
+        for x in range(10)
+    ]
     with open("poly_obs_data.txt", "w") as fout:
         for value, error in observations:
             fout.write("{:.1f} {:.1f}\n".format(value, error))
 
-    obs_config = ("GENERAL_OBSERVATION POLY_OBS {"
-                  "\n   DATA       = POLY_RES;"
-                  "\n   RESTART    = 0;"
-                  "\n   OBS_FILE   = poly_obs_data.txt;\n};\n"
-                  )
+    obs_config = (
+        "GENERAL_OBSERVATION POLY_OBS {"
+        "\n   DATA       = POLY_RES;"
+        "\n   RESTART    = 0;"
+        "\n   OBS_FILE   = poly_obs_data.txt;\n};\n"
+    )
 
     with open("observations", "w") as fout:
-           fout.write(obs_config)
+        fout.write(obs_config)
 
     res_config = ResConfig(config=config)
 
@@ -150,7 +147,8 @@ def setup_ert(tmp_path_factory):
 
     ert.createRunpath(run_context)
     ert.getEnkfSimulationRunner().runEnsembleExperiment(
-        ert.get_queue_config().create_job_queue(), run_context)
+        ert.get_queue_config().create_job_queue(), run_context
+    )
 
     yield config
 
@@ -188,6 +186,7 @@ def test_old_enkf_scaling_job(setup_ert):
 
     assert_obs_vector(obs_vector, 3.1622776601683795)
 
+
 def test_python_version_of_enkf_scaling_job(setup_ert):
     res_config = ResConfig(config=setup_ert)
     ert = EnKFMain(res_config)
@@ -205,7 +204,7 @@ def test_python_version_of_enkf_scaling_job(setup_ert):
     job = ert.getWorkflowList().getJob("CORRELATE_OBSERVATIONS")
     job.run(ert, ["job_config.yml"])
 
-    assert_obs_vector(obs_vector, np.sqrt(10.))
+    assert_obs_vector(obs_vector, np.sqrt(10.0))
 
     job_config["CALCULATE_KEYS"].update({"index": [1, 2, 3]})
     with open("job_config.yml", "w") as fout:
@@ -213,7 +212,12 @@ def test_python_version_of_enkf_scaling_job(setup_ert):
 
     job.run(ert, ["job_config.yml"])
 
-    assert_obs_vector(obs_vector, np.sqrt(10.), index_list=job_config["CALCULATE_KEYS"]["index"], val_2=np.sqrt(3.))
+    assert_obs_vector(
+        obs_vector,
+        np.sqrt(10.0),
+        index_list=job_config["CALCULATE_KEYS"]["index"],
+        val_2=np.sqrt(3.0),
+    )
 
 
 def test_compare_different_jobs(setup_ert):
@@ -229,12 +233,12 @@ def test_compare_different_jobs(setup_ert):
     job = ert.getWorkflowList().getJob("STD_SCALE_CORRELATED_OBS")
     job.run(ert, ["POLY_OBS"])
 
-    #Result of old job:
+    # Result of old job:
     assert_obs_vector(obs_vector, 3.1622776601683795)
 
     scaling_job._observation_scaling(ert, get_config())
 
-    #Result of new job with no sub-indexing:
+    # Result of new job with no sub-indexing:
     assert_obs_vector(obs_vector, 3.1622776601683795)
 
 
@@ -249,7 +253,9 @@ def test_enkf_scale_job(setup_ert):
     assert_obs_vector(obs_vector, 1.0)
 
     index_list_update = [0, 1, 2, 3, 4]
-    scaling_job._observation_scaling(ert, get_config(index_list_update=index_list_update))
+    scaling_job._observation_scaling(
+        ert, get_config(index_list_update=index_list_update)
+    )
 
     assert_obs_vector(obs_vector, 1.0, index_list_update, 3.1622776601683795)
 
@@ -264,8 +270,12 @@ def test_enkf_scale_job(setup_ert):
 
     index_list_update = [0, 2, 3, 4]
     index_list_calc = [0, 1]
-    scaling_job._observation_scaling(ert, get_config(
-        index_list_calc=index_list_calc, index_list_update=index_list_update))
+    scaling_job._observation_scaling(
+        ert,
+        get_config(
+            index_list_calc=index_list_calc, index_list_update=index_list_update
+        ),
+    )
 
     assert_obs_vector(obs_vector, 2.0, index_list_update, 1.4142135623730951)
 
@@ -277,7 +287,8 @@ def test_create_observation_vectors(setup_ert, valid_poly_config):
     obs = ert.getObservations()
 
     new_events = scaling_job._create_active_lists(
-        obs, valid_poly_config.snapshot.UPDATE_KEYS.keys)
+        obs, valid_poly_config.snapshot.UPDATE_KEYS.keys
+    )
 
     keys = [event.key for event in new_events]
 
@@ -292,7 +303,6 @@ def test_is_subset():
     assert scaling_job.is_subset(example_list, ["a", "c"]) == []
     assert scaling_job.is_subset(example_list, ["a", "b", "c"]) == []
     assert len(scaling_job.is_subset(example_list, ["d"])) == 1
-
 
 
 def test_has_keys(setup_ert):
@@ -319,8 +329,12 @@ def test_valid_job(setup_ert, valid_poly_config):
     ert = EnKFMain(res_config)
     obs = ert.getObservations()
 
-    assert scaling_job.valid_job(obs, valid_poly_config,
-                ert.getEnsembleSize(), ert.getEnkfFsManager().getCurrentFileSystem())
+    assert scaling_job.valid_job(
+        obs,
+        valid_poly_config,
+        ert.getEnsembleSize(),
+        ert.getEnkfFsManager().getCurrentFileSystem(),
+    )
 
 
 def test_to_int_list():
@@ -333,7 +347,7 @@ def test_to_int_list():
         [0, 1, "2-3", "4-5"],
         "0-5",
         "0-1,2,3-5",
-        ["0,1,2-5"]
+        ["0,1,2-5"],
     ]
 
     for valid_input in valid_inputs:
@@ -348,11 +362,12 @@ def test_min_value():
     assert not job_config._min_value(-1)
     assert job_config._min_value(0)
 
+
 def test_expand_input():
 
     expected_result = {
         "UPDATE_KEYS": {"keys": [{"key": "key_1"}]},
-        "CALCULATE_KEYS": {"keys": ["key_1", "key_2", "key_3"]}
+        "CALCULATE_KEYS": {"keys": ["key_1", "key_2", "key_3"]},
     }
 
     valid_config = deepcopy(expected_result)
@@ -363,14 +378,8 @@ def test_expand_input():
     copy_of_valid_config.pop("UPDATE_KEYS")
 
     expected_result = {
-        "UPDATE_KEYS": {
-            "keys": [
-            {"key": "key_1"},
-            {"key": "key_2"},
-            {"key": "key_3"},
-            ],
-        },
-        "CALCULATE_KEYS": {"keys": ["key_1", "key_2", "key_3"]}
+        "UPDATE_KEYS": {"keys": [{"key": "key_1"}, {"key": "key_2"}, {"key": "key_3"}]},
+        "CALCULATE_KEYS": {"keys": ["key_1", "key_2", "key_3"]},
     }
 
     assert job_config._expand_input(copy_of_valid_config) == expected_result
@@ -379,15 +388,10 @@ def test_expand_input():
 def test_config_setup():
 
     valid_config_data = {
-        'CALCULATE_KEYS': {
+        "CALCULATE_KEYS": {
             "index": "1-5",
-            "keys": [
-                'first_key',
-                'second_key',
-                'third_key',
-                'fourth_key',
-            ]
-        },
+            "keys": ["first_key", "second_key", "third_key", "fourth_key"],
+        }
     }
 
     schema = job_config.build_schema()
@@ -395,60 +399,38 @@ def test_config_setup():
     assert config.valid
 
     valid_config_data = {
-        'CALCULATE_KEYS': {
+        "CALCULATE_KEYS": {
             "index": "1-5",
-            "keys": [
-                'first_key',
-                'second_key',
-                'third_key',
-                'fourth_key',
-            ]
+            "keys": ["first_key", "second_key", "third_key", "fourth_key"],
         },
-        'UPDATE_KEYS': {
-            "keys": [{'index': [1, 2, 3], 'key': 'first_key'}]
-        }
+        "UPDATE_KEYS": {"keys": [{"index": [1, 2, 3], "key": "first_key"}]},
     }
 
     schema = job_config.build_schema()
     config = configsuite.ConfigSuite(valid_config_data, schema)
     assert config.valid
 
-
     invalid_too_short_index_list = {
-        'UPDATE_KEYS': {
-            "keys": [{'index': '1', 'key': ['a_key']}]
-        }
+        "UPDATE_KEYS": {"keys": [{"index": "1", "key": ["a_key"]}]}
     }
 
     config = configsuite.ConfigSuite(invalid_too_short_index_list, schema)
     assert not config.valid
 
     invalid_missing_required_keyword = {
-        'CALCULATE_KEYS': {
-            'index': '1-5',
-            'keys': ['a_key']
-        },
-        'UPDATE_KEYS': {
-            'index': '1-5',
-        },
+        "CALCULATE_KEYS": {"index": "1-5", "keys": ["a_key"]},
+        "UPDATE_KEYS": {"index": "1-5"},
     }
 
     config = configsuite.ConfigSuite(invalid_missing_required_keyword, schema)
     assert not config.valid
 
     invalid_negative_index = {
-        'CALCULATE_KEYS': {
+        "CALCULATE_KEYS": {
             "index": "1-5",
-            "keys": [
-                'first_key',
-                'second_key',
-                'third_key',
-                'fourth_key',
-            ]
+            "keys": ["first_key", "second_key", "third_key", "fourth_key"],
         },
-        'UPDATE_KEYS': {
-            "keys": [{'index': [-1, 2, 3], 'key': 'first_key'}]
-        }
+        "UPDATE_KEYS": {"keys": [{"index": [-1, 2, 3], "key": "first_key"}]},
     }
 
     schema = job_config.build_schema()
@@ -463,7 +445,7 @@ def test_main_entry_point(setup_ert):
 
     arguments = {
         "CALCULATE_KEYS": {"keys": ["POLY_OBS"]},
-        "UPDATE_KEYS": {"keys": [{"key": "POLY_OBS", "index": [1, 2, 3]}]}
+        "UPDATE_KEYS": {"keys": [{"key": "POLY_OBS", "index": [1, 2, 3]}]},
     }
 
     scaling_job.scaling_job(ert, arguments)
@@ -471,11 +453,21 @@ def test_main_entry_point(setup_ert):
     obs = ert.getObservations()
     obs_vector = obs["POLY_OBS"]
 
-    assert_obs_vector(obs_vector, 1.0, arguments["UPDATE_KEYS"]["keys"][0]["index"], 3.1622776601683795)
+    assert_obs_vector(
+        obs_vector,
+        1.0,
+        arguments["UPDATE_KEYS"]["keys"][0]["index"],
+        3.1622776601683795,
+    )
 
     arguments["CALCULATE_KEYS"].update({"index": [7, 8, 9]})
     scaling_job.scaling_job(ert, arguments)
-    assert_obs_vector(obs_vector, 1.0, arguments["UPDATE_KEYS"]["keys"][0]["index"], 1.7320508075688772)
+    assert_obs_vector(
+        obs_vector,
+        1.0,
+        arguments["UPDATE_KEYS"]["keys"][0]["index"],
+        1.7320508075688772,
+    )
 
 
 def test_get_scaling_factor():
@@ -485,10 +477,10 @@ def test_get_scaling_factor():
     input_matrix = np.random.rand(10, 10)
 
     matrix = scaled_matrix.DataMatrix(
-        pd.DataFrame(data=input_matrix, index=event.keys*input_matrix.shape[1])
+        pd.DataFrame(data=input_matrix, index=event.keys * input_matrix.shape[1])
     )
 
-    assert matrix.get_scaling_factor(event) == np.sqrt(10/4.0)
+    assert matrix.get_scaling_factor(event) == np.sqrt(10 / 4.0)
 
 
 def test_get_nr_primary_components():
@@ -524,6 +516,7 @@ def test_filter_on_column_index(setup_ert):
     with pytest.raises(IndexError):
         data_matrix._filter_on_column_index([11])
 
+
 @pytest.mark.usefixtures("setup_tmpdir")
 def test_add_wildcards():
 
@@ -537,52 +530,48 @@ def test_add_wildcards():
 
     expected_dict = {
         "ANOTHER_KEY": "something",
-
         "CALCULATE_KEYS": {
-            "keys": ["WOPR_OP1_108",
-                     "WOPR_OP1_144",
-                     "WOPR_OP1_190",
-                     "WOPR_OP1_9",
-                     "WOPR_OP1_36",
-                     "WOPR_OP1_72",
-                     "FOPR",],
-            "index": [1, 2, 3, 4, 5]},
+            "keys": [
+                "WOPR_OP1_108",
+                "WOPR_OP1_144",
+                "WOPR_OP1_190",
+                "WOPR_OP1_9",
+                "WOPR_OP1_36",
+                "WOPR_OP1_72",
+                "FOPR",
+            ],
+            "index": [1, 2, 3, 4, 5],
+        },
         "UPDATE_KEYS": {
             "keys": [
-            {"key": "WOPR_OP1_108"},
-            {"key": "WOPR_OP1_144"},
-            {"key": "WOPR_OP1_190"},
-            {"key": "FOPR"},
+                {"key": "WOPR_OP1_108"},
+                {"key": "WOPR_OP1_144"},
+                {"key": "WOPR_OP1_190"},
+                {"key": "FOPR"},
             ]
-        }
+        },
     }
 
     user_config = {
         "ANOTHER_KEY": "something",
-        "CALCULATE_KEYS": {
-            "keys": ["WOPR_*", "FOPR"],
-            "index": [1, 2, 3, 4, 5]},
-        "UPDATE_KEYS": {
-            "keys": [
-            {"key": "WOPR_OP1_1*"},
-            {"key": "FOPR"},
-            ]
-        }
+        "CALCULATE_KEYS": {"keys": ["WOPR_*", "FOPR"], "index": [1, 2, 3, 4, 5]},
+        "UPDATE_KEYS": {"keys": [{"key": "WOPR_OP1_1*"}, {"key": "FOPR"}]},
     }
 
-    result_dict = scaling_job._find_and_expand_wildcards(ert.getObservations().getMatchingKeys, user_config)
+    result_dict = scaling_job._find_and_expand_wildcards(
+        ert.getObservations().getMatchingKeys, user_config
+    )
 
     result_dict["CALCULATE_KEYS"]["keys"].sort()
     expected_dict["CALCULATE_KEYS"]["keys"].sort()
 
     assert result_dict == expected_dict
 
+
 @pytest.mark.usefixtures("setup_tmpdir")
 def test_add_observation_vectors():
 
-    valid_config_data = {
-        'UPDATE_KEYS': {"keys": [{'key': 'WOPR_OP1_108'}]},
-    }
+    valid_config_data = {"UPDATE_KEYS": {"keys": [{"key": "WOPR_OP1_108"}]}}
 
     schema = job_config.build_schema()
     config = configsuite.ConfigSuite(valid_config_data, schema)
@@ -605,12 +594,11 @@ def test_add_observation_vectors():
     assert "WOPR_OP1_108" in keys
     assert "WOPR_OP1_144" not in keys
 
+
 @pytest.mark.usefixtures("setup_tmpdir")
 def test_main_entry_point_summary_data_calc():
 
-    arguments = {
-        'CALCULATE_KEYS': {"keys": ['WOPR_OP1_108', 'WOPR_OP1_144']},
-    }
+    arguments = {"CALCULATE_KEYS": {"keys": ["WOPR_OP1_108", "WOPR_OP1_144"]}}
 
     test_data_dir = os.path.join(_TEST_DATA_DIR, "local", "snake_oil")
 
@@ -623,17 +611,17 @@ def test_main_entry_point_summary_data_calc():
 
     obs = ert.getObservations()
 
-    obs_vector = obs['WOPR_OP1_108']
+    obs_vector = obs["WOPR_OP1_108"]
 
     for index, node in enumerate(obs_vector):
-            assert node.getStdScaling(index) == 1.0
+        assert node.getStdScaling(index) == 1.0
 
     scaling_job.scaling_job(ert, arguments)
 
     for index, node in enumerate(obs_vector):
-            assert node.getStdScaling(index) == np.sqrt((2.0*6.0)/2.0)
+        assert node.getStdScaling(index) == np.sqrt((2.0 * 6.0) / 2.0)
 
-    arguments["CALCULATE_KEYS"].update({"index":[1, 2, 3]})
+    arguments["CALCULATE_KEYS"].update({"index": [1, 2, 3]})
 
     with pytest.raises(ValueError):  # Will give an empty data set
         scaling_job.scaling_job(ert, arguments)
@@ -643,20 +631,20 @@ def test_main_entry_point_summary_data_calc():
 
     for index, node in enumerate(obs_vector):
         if index in arguments["CALCULATE_KEYS"]["index"]:
-            assert node.getStdScaling(index) == np.sqrt((2.0*6.0)/1.0)
+            assert node.getStdScaling(index) == np.sqrt((2.0 * 6.0) / 1.0)
         else:
-            assert node.getStdScaling(index) == np.sqrt((2.0*6.0)/2.0)
+            assert node.getStdScaling(index) == np.sqrt((2.0 * 6.0) / 2.0)
 
 
 @pytest.mark.equinor_test
 @pytest.mark.usefixtures("setup_tmpdir")
 def test_main_entry_point_summary_data_update():
     arguments = {
-        "CALCULATE_KEYS": {"keys": ["WWCT:OP_1","WWCT:OP_2"]},
+        "CALCULATE_KEYS": {"keys": ["WWCT:OP_1", "WWCT:OP_2"]},
         "UPDATE_KEYS": {"keys": [{"key": "WWCT:OP_2", "index": [1, 2, 3, 4, 5]}]},
     }
 
-    test_data_dir = os.path.join(_TEST_DATA_DIR, "Equinor","config","obs_testing")
+    test_data_dir = os.path.join(_TEST_DATA_DIR, "Equinor", "config", "obs_testing")
 
     shutil.copytree(test_data_dir, "test_data")
     os.chdir(os.path.join("test_data"))
@@ -671,7 +659,7 @@ def test_main_entry_point_summary_data_update():
 
     for index, node in enumerate(obs_vector):
         if index in arguments["UPDATE_KEYS"]["keys"][0]["index"]:
-            assert node.getStdScaling(index) == np.sqrt(61.0*2.0)
+            assert node.getStdScaling(index) == np.sqrt(61.0 * 2.0)
         else:
             assert node.getStdScaling(index) == 1.0
 
@@ -686,11 +674,9 @@ def test_main_entry_point_summary_data_update():
 @pytest.mark.equinor_test
 @pytest.mark.usefixtures("setup_tmpdir")
 def test_main_entry_point_block_data_calc():
-    arguments = {
-        "CALCULATE_KEYS": {"keys": ["RFT3"]},
-    }
+    arguments = {"CALCULATE_KEYS": {"keys": ["RFT3"]}}
 
-    test_data_dir = os.path.join(_TEST_DATA_DIR, "Equinor","config","with_RFT")
+    test_data_dir = os.path.join(_TEST_DATA_DIR, "Equinor", "config", "with_RFT")
 
     shutil.copytree(test_data_dir, "test_data")
     os.chdir(os.path.join("test_data"))
@@ -702,12 +688,12 @@ def test_main_entry_point_block_data_calc():
     obs_vector = obs["RFT3"]
 
     for index, node in enumerate(obs_vector):
-            assert node.getStdScaling(index) == 1.0
+        assert node.getStdScaling(index) == 1.0
 
     scaling_job.scaling_job(ert, arguments)
 
     for index, node in enumerate(obs_vector):
-            assert node.getStdScaling(index) == 2.0
+        assert node.getStdScaling(index) == 2.0
 
 
 @pytest.mark.usefixtures("setup_tmpdir")
@@ -724,11 +710,13 @@ def test_validate_failed_realizations():
     observations = ert.getObservations()
 
     result = scaling_job.has_data(
-        observations, ["GEN_PERLIN_1"],
+        observations,
+        ["GEN_PERLIN_1"],
         ert.getEnsembleSize(),
-        ert.getEnkfFsManager().getCurrentFileSystem()
+        ert.getEnkfFsManager().getCurrentFileSystem(),
     )
     assert result == []
+
 
 @pytest.mark.usefixtures("setup_tmpdir")
 def test_validate_no_realizations():
@@ -744,8 +732,9 @@ def test_validate_no_realizations():
     observations = ert.getObservations()
 
     result = scaling_job.has_data(
-        observations, ["POLY_OBS"],
+        observations,
+        ["POLY_OBS"],
         ert.getEnsembleSize(),
-        ert.getEnkfFsManager().getCurrentFileSystem()
+        ert.getEnkfFsManager().getCurrentFileSystem(),
     )
     assert result == ["Key: POLY_OBS has no data"]

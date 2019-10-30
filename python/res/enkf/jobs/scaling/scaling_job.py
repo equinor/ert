@@ -13,6 +13,7 @@ from res.enkf import LocalObsdata, ActiveList
 from ecl.util.util import BoolVector
 from res.enkf import RealizationStateEnum
 
+
 def scaling_job(ert, user_config_dict):
     """
     Takes an instance of EnkFMain and a user config dict, will do some pre-processing on
@@ -20,13 +21,20 @@ def scaling_job(ert, user_config_dict):
     is passed to the main job.
     """
 
-    config_dict = _find_and_expand_wildcards(ert.getObservations().getMatchingKeys, user_config_dict)
+    config_dict = _find_and_expand_wildcards(
+        ert.getObservations().getMatchingKeys, user_config_dict
+    )
 
     config = setup_configuration(config_dict, job_config.build_schema())
 
     if not valid_configuration(config):
         raise ValueError("Invalid configuration")
-    if not valid_job(ert.getObservations(), config, ert.getEnsembleSize(), ert.getEnkfFsManager().getCurrentFileSystem()):
+    if not valid_job(
+        ert.getObservations(),
+        config,
+        ert.getEnsembleSize(),
+        ert.getEnkfFsManager().getCurrentFileSystem(),
+    ):
         raise ValueError("Invalid job")
     _observation_scaling(ert, config.snapshot)
 
@@ -135,7 +143,12 @@ def _get_active_list(observation_data, key, index_list):
         return observation_data.copy_active_list(key).setParent()
 
 
-def _make_tuple(key, index, active_list, new_event=namedtuple("named_dict", ["key", "index", "active_list"])):
+def _make_tuple(
+    key,
+    index,
+    active_list,
+    new_event=namedtuple("named_dict", ["key", "index", "active_list"]),
+):
     return new_event(key, index, active_list)
 
 
@@ -149,7 +162,9 @@ def _update_scaling(obs, scale_factor, events):
         obs_vector = obs[event.key]
         for index, obs_node in enumerate(obs_vector):
             if obs_vector.getImplementationType().name == "SUMMARY_OBS":
-                index_list = event.index if event.index is not None else range(len(obs_vector))
+                index_list = (
+                    event.index if event.index is not None else range(len(obs_vector))
+                )
                 if index in index_list:
                     obs_node.set_std_scaling(scale_factor)
             elif obs_vector.getImplementationType().name != "SUMMARY_OBS":
@@ -197,13 +212,16 @@ def valid_job(observations, user_config, ensamble_size, storage):
     error_messages.extend(obs_keys_errors)
 
     if obs_keys_present:
-        error_messages.extend(has_data(observations, calculation_keys, ensamble_size, storage))
+        error_messages.extend(
+            has_data(observations, calculation_keys, ensamble_size, storage)
+        )
         error_messages.extend(same_data_type(observations, calculation_keys))
 
     for error in error_messages:
         sys.stderr.write(error)
 
     return len(error_messages) == 0
+
 
 def same_data_type(observations, keys):
     """
@@ -225,7 +243,11 @@ def has_data(observations, keys, ensamble_size, storage):
         return [error_msg.format(key) for key in keys]
 
     active_mask = BoolVector.createFromList(ensamble_size, active_realizations)
-    return [error_msg.format(key) for key in keys if not observations[key].hasData(active_mask, storage)]
+    return [
+        error_msg.format(key)
+        for key in keys
+        if not observations[key].hasData(active_mask, storage)
+    ]
 
 
 def has_keys(observations, keys):

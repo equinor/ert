@@ -14,7 +14,6 @@ class DataMatrix(object):
         if input_data.shape[1] == 0:
             raise ValueError("Empty dataset, all data has been filtered out")
 
-
     def get_data_matrix(self, observation_keys):
         """
         Extracts data from a dataframe given a set of keys and returns a matrix
@@ -32,7 +31,7 @@ class DataMatrix(object):
         for key in observation_keys:
             data_matrix = self.data.loc[key]
             std_vector = self.data.loc["STD_" + key]
-            output_data.loc[key] = (data_matrix * (1. / std_vector))
+            output_data.loc[key] = data_matrix * (1.0 / std_vector)
 
         if inplace:
             self.data = output_data
@@ -45,8 +44,12 @@ class DataMatrix(object):
         primary components and the number of observations.
         """
         data_matrix = self.get_data_matrix(events.keys)
-        nr_components = self._get_nr_primary_components(data_matrix, threshold=events.threshold)
-        scaling_factor = self._calculate_scaling_factor(len(events.keys), data_matrix.shape[1], nr_components)
+        nr_components = self._get_nr_primary_components(
+            data_matrix, threshold=events.threshold
+        )
+        scaling_factor = self._calculate_scaling_factor(
+            len(events.keys), data_matrix.shape[1], nr_components
+        )
 
         return scaling_factor
 
@@ -72,7 +75,7 @@ class DataMatrix(object):
         """
         _, s, _ = np.linalg.svd(data_matrix.T.astype(np.float), full_matrices=False)
         variance_ratio = np.cumsum(s ** 2) / np.sum(s ** 2)
-        return len([1 for i in variance_ratio[: -1] if i < threshold]) + 1
+        return len([1 for i in variance_ratio[:-1] if i < threshold]) + 1
 
     @staticmethod
     def _calculate_scaling_factor(nr_keys, nr_observations, nr_components):

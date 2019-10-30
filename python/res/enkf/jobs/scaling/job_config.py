@@ -19,6 +19,8 @@ def _min_value(value):
 
 
 _num_convert_msg = "Will go through the input and try to convert to list of int"
+
+
 @configsuite.transformation_msg(_num_convert_msg)
 def _to_int_list(value):
     value = deepcopy(value)
@@ -64,22 +66,35 @@ def _realize_list(input_string):
 
 
 _num_convert_msg = "Create UPDATE_KEYS from CALCULATE_KEYS as it was not specified"
+
+
 @configsuite.transformation_msg(_num_convert_msg)
 def _expand_input(input_value):
     expanded_values = deepcopy(input_value)
     if "CALCULATE_KEYS" in expanded_values and "UPDATE_KEYS" not in expanded_values:
         if "index" in expanded_values["CALCULATE_KEYS"]:
             expanded_values.update(
-                {"UPDATE_KEYS": {
-                     "keys":
-                         [{"key": key, "index": expanded_values["CALCULATE_KEYS"]["index"]} for key in expanded_values["CALCULATE_KEYS"]["keys"]]}
+                {
+                    "UPDATE_KEYS": {
+                        "keys": [
+                            {
+                                "key": key,
+                                "index": expanded_values["CALCULATE_KEYS"]["index"],
+                            }
+                            for key in expanded_values["CALCULATE_KEYS"]["keys"]
+                        ]
+                    }
                 }
             )
         else:
             expanded_values.update(
-                {"UPDATE_KEYS": {
-                    "keys":
-                        [{"key": key} for key in expanded_values["CALCULATE_KEYS"]["keys"]]}
+                {
+                    "UPDATE_KEYS": {
+                        "keys": [
+                            {"key": key}
+                            for key in expanded_values["CALCULATE_KEYS"]["keys"]
+                        ]
+                    }
                 }
             )
     return expanded_values
@@ -92,96 +107,79 @@ def _min_max_value(value):
 
 def build_schema():
     return {
-            MK.Type: types.NamedDict,
-            MK.Description: "Keys and index lists from all scaled keys",
-            MK.LayerTransformation: _expand_input,
-            MK.Content: {
-                "CALCULATE_KEYS": {
-                    MK.Required: True,
-                    MK.Type: types.NamedDict,
-                    MK.Content: {
-                        "keys": {
-                            MK.Required: True,
-                            MK.Type: types.List,
-                            MK.Content: {
-                                MK.Item: {
-                                MK.Type: types.String,
-                                },
-                            },
-                        },
-                        "index": {
-                            MK.Required: False,
-                            MK.LayerTransformation: _to_int_list,
-                            MK.Description: (
-                                "Index list where scaling factor is calculatied, must match the simulated data"
-                            ),
-                            MK.Type: types.List,
-                            MK.ElementValidators: (_min_length,),
-                            MK.Content: {
-                                MK.Item: {
-                                    MK.Type: types.Integer,
-                                    MK.ElementValidators: (_min_value,),
-                                },
-                            },
-                        },
-                        "threshold": {
-                            MK.Required: False,
-                            MK.Type: types.Number,
-                            MK.ElementValidators: (_min_max_value,),
-                        },
-                        "std_cutoff": {
-                            MK.Required: False,
-                            MK.Type: types.Number,
-                        },
-                        "alpha": {
-                            MK.Required: False,
-                            MK.Type: types.Number,
+        MK.Type: types.NamedDict,
+        MK.Description: "Keys and index lists from all scaled keys",
+        MK.LayerTransformation: _expand_input,
+        MK.Content: {
+            "CALCULATE_KEYS": {
+                MK.Required: True,
+                MK.Type: types.NamedDict,
+                MK.Content: {
+                    "keys": {
+                        MK.Required: True,
+                        MK.Type: types.List,
+                        MK.Content: {MK.Item: {MK.Type: types.String}},
+                    },
+                    "index": {
+                        MK.Required: False,
+                        MK.LayerTransformation: _to_int_list,
+                        MK.Description: (
+                            "Index list where scaling factor is calculatied, must match the simulated data"
+                        ),
+                        MK.Type: types.List,
+                        MK.ElementValidators: (_min_length,),
+                        MK.Content: {
+                            MK.Item: {
+                                MK.Type: types.Integer,
+                                MK.ElementValidators: (_min_value,),
+                            }
                         },
                     },
+                    "threshold": {
+                        MK.Required: False,
+                        MK.Type: types.Number,
+                        MK.ElementValidators: (_min_max_value,),
+                    },
+                    "std_cutoff": {MK.Required: False, MK.Type: types.Number},
+                    "alpha": {MK.Required: False, MK.Type: types.Number},
                 },
-                "UPDATE_KEYS": {
-                    MK.Required: False,
-                    MK.Type: types.NamedDict,
-                    MK.Content: {
-                        "keys": {
-                            MK.Required: False,
-                            MK.Type: types.List,
-                            MK.Content: {
-                                MK.Item: {
-                                    MK.Type: types.NamedDict,
-                                    MK.Content: {
-                                        "key": {
-                                            MK.Required: True,
-                                            MK.Type: types.String,
-                                        },
-                                        "index": {
-                                            MK.Required: False,
-                                            MK.Type: types.List,
-                                            MK.LayerTransformation: _to_int_list,
-                                            MK.Content: {
-                                                MK.Item: {
-                                                    MK.Type: types.Integer,
-                                                    MK.ElementValidators: (_min_value,),
-                                                },
-                                            },
+            },
+            "UPDATE_KEYS": {
+                MK.Required: False,
+                MK.Type: types.NamedDict,
+                MK.Content: {
+                    "keys": {
+                        MK.Required: False,
+                        MK.Type: types.List,
+                        MK.Content: {
+                            MK.Item: {
+                                MK.Type: types.NamedDict,
+                                MK.Content: {
+                                    "key": {MK.Required: True, MK.Type: types.String},
+                                    "index": {
+                                        MK.Required: False,
+                                        MK.Type: types.List,
+                                        MK.LayerTransformation: _to_int_list,
+                                        MK.Content: {
+                                            MK.Item: {
+                                                MK.Type: types.Integer,
+                                                MK.ElementValidators: (_min_value,),
+                                            }
                                         },
                                     },
                                 },
-                            },
+                            }
                         },
-                    },
+                    }
                 },
             },
-        }
+        },
+    }
 
 
 def get_default_values():
     default_values = {
-        "CALCULATE_KEYS": {
-            "threshold": 0.95,
-            "std_cutoff": 1e-6,
-            "alpha": 3.0,
-        },
-        "UPDATE_KEYS": {}
+        "CALCULATE_KEYS": {"threshold": 0.95, "std_cutoff": 1e-6, "alpha": 3.0},
+        "UPDATE_KEYS": {},
     }
     return default_values
