@@ -26,7 +26,7 @@ STATISTICS = "Statistics"
 class PlotWindow(QMainWindow):
 
 
-    def __init__(self, parent):
+    def __init__(self, config_file, parent):
         QMainWindow.__init__(self, parent)
 
         self._ert = ERT.ert
@@ -38,7 +38,7 @@ class PlotWindow(QMainWindow):
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)
 
-        self.setWindowTitle("Plotting")
+        self.setWindowTitle("Plotting - {}".format(config_file))
         self.activateWindow()
 
         self._plot_customizer = PlotCustomizer(self)

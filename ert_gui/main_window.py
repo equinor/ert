@@ -16,13 +16,13 @@ import ert_shared
 
 
 class GertMainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, config_file):
         QMainWindow.__init__(self)
 
         self.tools = {}
 
         self.resize(300, 700)
-        self.setWindowTitle('ERT')
+        self.setWindowTitle('ERT - {}'.format(config_file))
 
         self.__main_widget = None
 
