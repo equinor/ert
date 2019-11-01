@@ -1,5 +1,7 @@
 import functools
 import os
+import sys
+
 import pkg_resources
 import webbrowser
 import yaml
@@ -8,6 +10,7 @@ from ErtQt.Qt import QSettings, Qt, QMainWindow, qApp, QWidget, QVBoxLayout, QDo
 from ErtQt import QT5
 
 from ert_gui.about_dialog import AboutDialog
+from ert_shared.plugins import ErtPluginManager
 
 import ert_shared
 
@@ -77,10 +80,14 @@ class GertMainWindow(QMainWindow):
         show_about.setMenuRole(QAction.ApplicationSpecificRole)
         show_about.triggered.connect(self.__showAboutMessage)
 
-        with pkg_resources.resource_stream(
-            "ert_gui", os.path.join("resources", "gui", "help", "help_links.yml")
-        ) as stream:
-            help_links = yaml.safe_load(stream)
+        if sys.version_info.major >= 3:
+            pm = ErtPluginManager()
+            help_links = pm.get_help_links()
+        else:
+            with pkg_resources.resource_stream(
+                    "ert_gui", os.path.join("resources", "gui", "help", "help_links.yml")
+            ) as stream:
+                help_links = yaml.safe_load(stream)
 
         for menu_label, link in help_links.items():
             help_link_item = self.__help_menu.addAction(menu_label)

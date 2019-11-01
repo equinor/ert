@@ -20,6 +20,9 @@ setup(
     packages=[
             'ert_shared',
             'ert_shared.models',
+            'ert_shared.plugins',
+            'ert_shared.plugins.hook_specifications',
+            'ert_shared.hook_implementations',
             'ert_gui',
             'ert_gui.ertwidgets',
             'ert_gui.ide',
@@ -62,6 +65,7 @@ setup(
                     'decorator',
                     'console-progressbar==1.1.2',
                     'ansicolors==1.1.8',
+                    'pluggy',
                     ],
     zip_safe=False,
     tests_require=['pytest', 'mock'],
