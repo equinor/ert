@@ -14,6 +14,7 @@ from ert_gui.ide.keywords.definitions import (
 from ert_shared.models.multiple_data_assimilation import (
     MultipleDataAssimilation,
 )
+from ert_shared.plugins.plugin_manager import ErtPluginContext
 
 
 def strip_error_message_and_raise_exception(validated):
@@ -79,10 +80,6 @@ def range_limited_int(user_input):
     if 0 < i < 100:
         return i
     raise ArgumentTypeError("Range must be in range 1 - 99")
-
-
-def runGui(args):
-    os.execvp("python", ["python"] + ["-m", "ert_gui.gert_main"] + [args.config])
 
 
 def get_ert_parser(parser=None):
@@ -232,8 +229,9 @@ def ert_parser(parser, argv):
 
 
 def main():
-    args = ert_parser(None, sys.argv[1:])
-    args.func(args)
+    with ErtPluginContext():
+        args = ert_parser(None, sys.argv[1:])
+        args.func(args)
 
 
 if __name__ == "__main__":
