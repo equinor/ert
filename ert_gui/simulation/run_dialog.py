@@ -1,43 +1,26 @@
 from threading import Thread
-import sys
 
-try:
-    from PyQt4.QtCore import Qt, QTimer, QSize
-    from PyQt4.QtGui import (QDialog,
-                             QVBoxLayout,
-                             QLayout,
-                             QMessageBox,
-                             QPushButton,
-                             QHBoxLayout,
-                             QColor,
-                             QLabel,
-                             QListView,
-                             QStandardItemModel,
-                             QStandardItem,
-                             QWidget)
-except ImportError:
-    from PyQt5.QtCore import Qt, QTimer, QSize
-    from PyQt5.QtWidgets import (QDialog,
-                                 QVBoxLayout,
-                                 QLayout,
-                                 QMessageBox,
-                                 QPushButton,
-                                 QHBoxLayout,
-                                 QLabel,
-                                 QListView,
-                                 QWidget)
-    from PyQt5.QtGui import QColor, QStandardItemModel, QStandardItem
-
-from ert_gui.ertwidgets import resourceMovie, Legend
-from ert_gui.simulation import Progress, SimpleProgress, DetailedProgressWidget
-from ert_shared.models import BaseRunModel, SimulationsTracker
-from ert_gui.tools.plot.plot_tool import PlotTool
-from res.job_queue import JobStatusType
 from ecl.util.util import BoolVector
+from ert_gui.ertwidgets import Legend, resourceMovie
+from ert_gui.simulation import DetailedProgressWidget, Progress, SimpleProgress
+from ert_gui.tools.plot.plot_tool import PlotTool
+from ert_shared.models import BaseRunModel
+from ert_shared.tracker.events import (DetailedEvent, EndEvent, GeneralEvent,
+                                       TickEvent)
+from ert_shared.tracker.factory import create_tracker
+from ert_shared.tracker.utils import format_running_time
+from ErtQt.Qt import (QColor, QDialog, QHBoxLayout, QLabel, QLayout, QListView,
+                      QMessageBox, QPushButton, QSize, QStackedWidget,
+                      QStandardItem, QStandardItemModel, Qt, QTimer,
+                      QToolButton, QVBoxLayout, QWidget, pyqtSignal, pyqtSlot)
+from res.job_queue import JobStatusType
+
 
 class RunDialog(QDialog):
 
-    def __init__(self, config_file, run_model, parent):
+    simulation_done = pyqtSignal(bool, str)
+
+    def __init__(self, config_file, run_model, arguments, parent):
         QDialog.__init__(self, parent)
         self.setWindowFlags(Qt.Window)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
@@ -52,8 +35,14 @@ class RunDialog(QDialog):
         if isinstance(run_model, BaseRunModel):
             ert = run_model.ert()
 
-        self.simulations_tracker = SimulationsTracker(model=run_model)
-        states = self.simulations_tracker.getStates()
+        self._simulations_argments = arguments
+
+        self.simulations_tracker = create_tracker(
+            run_model, qtimer_cls=QTimer,
+            event_handler=self._on_tracker_event,
+            num_realizations=arguments["active_realizations"].count())
+
+        states = self.simulations_tracker.get_states()
         self.state_colors = {state.name: state.color for state in states}
         self.state_colors['Success'] = self.state_colors["Finished"]
         self.state_colors['Failure'] = self.state_colors["Failed"]
@@ -149,29 +138,24 @@ class RunDialog(QDialog):
         self.done_button.clicked.connect(self.accept)
         self.restart_button.clicked.connect(self.restart_failed_realizations)
         self.show_details_button.clicked.connect(self.toggle_detailed_progress)
-
-        self.__updating = False
-        self.__update_queued = False
-        self.__simulation_started = False
-
-        self.__update_timer = QTimer(self)
-        self.__update_timer.setInterval(500)
-        self.__update_timer.timeout.connect(self.updateRunStatus)
-        self._simulations_argments = {}
+        self.simulation_done.connect(self._on_simulation_done)
 
     def reject(self):
         return
 
     def closeEvent(self, QCloseEvent):
-        if not self.checkIfRunFinished():
-            #Kill jobs if dialog is closed
+        self.simulations_tracker.stop()
+        if self._run_model.isFinished():
+            self.simulation_done.emit(self._run_model.hasRunFailed(),
+                                      self._run_model.getFailMessage())
+        else:
+            # Kill jobs if dialog is closed
             if self.killJobs() != QMessageBox.Yes:
                 QCloseEvent.ignore()
 
-    def startSimulation(self, arguments):
-
-        self._simulations_argments = arguments
+    def startSimulation(self):
         self._run_model.reset()
+        self.simulations_tracker.reset()
 
         def run():
             self._run_model.startSimulations( self._simulations_argments )
@@ -181,55 +165,7 @@ class RunDialog(QDialog):
         simulation_thread.run = run
         simulation_thread.start()
 
-        self.__update_timer.start()
-
-
-    def checkIfRunFinished(self):
-        if self._run_model.isFinished():
-            self.hideKillAndShowDone()
-
-            if self._run_model.hasRunFailed():
-                error = self._run_model.getFailMessage()
-                QMessageBox.critical(self, "Simulations failed!", "The simulation failed with the following error:\n\n%s" % error)
-                
-            return True
-        return False
-
-    def updateProgress(self):
-        self.simulations_tracker._update()
-
-        for state in self.simulations_tracker.getStates():
-            self.progress.updateState(state.state, 100.0 * state.count / state.total_count)
-            self.legends[state].updateLegend(state.name, state.count, state.total_count)
-
-    def updateRunStatus(self):
-        self.__status_label.setText(self._run_model.getPhaseName())
-
-        if self.checkIfRunFinished():
-            self.total_progress.setProgress(self._run_model.getProgress())
-            self.detailed_progress.set_progress(*self._run_model.getDetailedProgress())
-            self.updateProgress()
-            return
-
-        self.total_progress.setProgress(self._run_model.getProgress())
-
-        if self._run_model.isIndeterminate():
-            self.progress.setIndeterminate(True)
-            states = self.simulations_tracker.getStates()
-            for state in states:
-                self.legends[state].updateLegend(state.name, 0, 0)
-
-        else:
-            if self.detailed_progress and self.detailed_progress.isVisible():
-                self.detailed_progress.set_progress(*self._run_model.getDetailedProgress())
-            else:
-                self._run_model.updateDetailedProgress() #update information without rendering
-
-            self.progress.setIndeterminate(False)
-            self.updateProgress()
-
-        runtime = self._run_model.getRunningTime()
-        self.running_time.setText(SimulationsTracker.format_running_time(runtime))
+        self.simulations_tracker.track()
 
     def killJobs(self):
 
@@ -243,16 +179,46 @@ class RunDialog(QDialog):
                 self.reject()
         return kill_job
 
-
-    def hideKillAndShowDone(self):
-        self.__update_timer.stop()
+    @pyqtSlot(bool, str)
+    def _on_simulation_done(self, failed, failed_msg):
+        self.simulations_tracker.stop()
         self.processing_animation.hide()
         self.kill_button.setHidden(True)
         self.done_button.setHidden(False)
-        self.detailed_progress.set_progress(*self._run_model.getDetailedProgress())
-        self.restart_button.setVisible(self.has_failed_realizations() )
+        self.restart_button.setVisible(self.has_failed_realizations())
         self.restart_button.setEnabled(self._run_model.support_restart)
 
+        if failed:
+            QMessageBox.critical(self, "Simulations failed!",
+                                 "The simulation failed with the following " +
+                                 "error:\n\n{}".format(failed_msg))
+
+    @pyqtSlot(object)
+    def _on_tracker_event(self, event):
+        if isinstance(event, TickEvent):
+            self.running_time.setText(format_running_time(event.runtime))
+
+        if isinstance(event, GeneralEvent):
+            self.total_progress.setProgress(event.progress)
+            self.progress.setIndeterminate(event.indeterminate)
+
+            if event.indeterminate:
+                for state in event.sim_states:
+                    self.legends[state].updateLegend(state.name, 0, 0)
+            else:
+                for state in event.sim_states:
+                    self.progress.updateState(
+                        state.state, 100.0 * state.count / state.total_count)
+                    self.legends[state].updateLegend(
+                        state.name, state.count, state.total_count)
+
+        if isinstance(event, DetailedEvent):
+            if not self.progress.get_indeterminate():
+                self.detailed_progress.set_progress(event.details,
+                                                    event.iteration)
+
+        if isinstance(event, EndEvent):
+            self.simulation_done.emit(event.failed, event.failed_msg)
 
     def has_failed_realizations(self):
         completed = self._run_model.completed_realizations_mask
@@ -301,7 +267,7 @@ class RunDialog(QDialog):
             self._simulations_argments['active_realizations'] = active_realizations
             self._simulations_argments['prev_successful_realizations'] = self._simulations_argments.get('prev_successful_realizations', 0)
             self._simulations_argments['prev_successful_realizations'] += self.count_successful_realizations()
-            self.startSimulation(self._simulations_argments)
+            self.startSimulation()
 
 
 

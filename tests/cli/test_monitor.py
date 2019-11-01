@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys
 import unittest
-from ert_shared.models import BaseRunModel, SimulationsTracker
+from ert_shared.tracker.events import GeneralEvent
+from ert_shared.tracker.state import SimulationStateStatus
 from ert_shared.cli.monitor import Monitor
 
 
@@ -9,6 +10,7 @@ if sys.version_info >= (3, 5):
     from io import StringIO
 else:
     from io import BytesIO as StringIO
+
 
 class MonitorTest(unittest.TestCase):
 
@@ -20,13 +22,12 @@ class MonitorTest(unittest.TestCase):
                          monitor._colorize("Foo", fg=(255, 0, 0)))
 
     def test_legends(self):
-        sim_tracker = SimulationsTracker()
-        done_state = sim_tracker.getStates()[0]  # first is the Finished state
-        done_state.total_count = 100
+        done_state = SimulationStateStatus("Finished", None, None)
         done_state.count = 10
+        done_state.total_count = 100
         monitor = Monitor(out=StringIO())
 
-        legends = monitor._get_legends(sim_tracker)
+        legends = monitor._get_legends([done_state])
 
         self.assertEqual("Finished       10/100", legends[done_state])
 
@@ -51,24 +52,23 @@ class MonitorTest(unittest.TestCase):
 
     def test_print_progress(self):
         out = StringIO()
-        sim_tracker = SimulationsTracker(model=BaseRunModel(None))
         monitor = Monitor(out=out)
-        sim_tracker._update()
-        sim_tracker.getStates()[0].count = 1
+        states = [
+            SimulationStateStatus("Finished", None, None),
+            SimulationStateStatus("Waiting", None, None),
+        ]
+        states[0].count = 10
+        states[0].total_count = 100
+        general_event = GeneralEvent("Test Phase", 0, 2, 0.5, False, states, 10)
 
-        monitor._print_progress(sim_tracker)
+        monitor._print_progress(general_event)
 
         self.assertEqual(
             """\r
-    --> Starting...
+    --> Test Phase
 
-    1/1 |██████████████████████████████| 100% Running time: 0 seconds
+    1/2 |███████████████               | 50% Running time: 10 seconds
 
-    Finished          1/1
-    Failed            0/1
-    Running           0/1
-    Unknown           0/1
-    Pending           0/1
+    Finished       10/100
     Waiting           0/1
-
 """, out.getvalue())

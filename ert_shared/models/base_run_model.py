@@ -35,7 +35,6 @@ class BaseRunModel(object):
         super(BaseRunModel, self).__init__()
         self._phase = 0
         self._phase_count = phase_count
-        self._phase_update_count = 0
         self._phase_name = "Starting..."
 
         self._job_start_time  = 0
@@ -164,16 +163,12 @@ class BaseRunModel(object):
             self._simulationEnded()
 
         self._phase = phase
-        self._phase_update_count = 0
 
+    def stop_time(self):
+        return self._job_stop_time
 
-    def getRunningTime(self):
-        """ @rtype: float """
-        if self._job_stop_time < self._job_start_time:
-            return time.time() - self._job_start_time
-        else:
-            return self._job_stop_time - self._job_start_time
-
+    def start_time(self):
+        return self._job_start_time
 
     @job_queue(1)
     def getQueueSize(self):
@@ -205,30 +200,6 @@ class BaseRunModel(object):
         """ @rtype: bool """
         return self._job_queue.isRunning()
 
-
-    def getProgress(self):
-        """ @rtype: float """
-        if self.isFinished():
-            current_progress = 1.0
-        elif not self.isQueueRunning() and self._phase_update_count > 0:
-            current_progress = (self._phase + 1.0) / self._phase_count
-        else:
-            self._phase_update_count += 1
-            queue_status = self.getQueueStatus()
-            queue_size = self.getQueueSize()
-
-            done_state = JobStatusType.JOB_QUEUE_SUCCESS | JobStatusType.JOB_QUEUE_DONE
-            done_count = 0
-
-            for state in queue_status:
-                if state in done_state:
-                    done_count += queue_status[state]
-
-            phase_progress = float(done_count) / queue_size
-            current_progress = (self._phase + phase_progress) / self._phase_count
-
-        return current_progress
-
     @staticmethod
     def is_forward_model_finished(progress):
         return not (any((job.status != 'Success' for job in progress)))
@@ -253,6 +224,13 @@ class BaseRunModel(object):
             status = None
             if self._job_queue:
                 status = self._job_queue.getJobStatus(queue_index)
+
+            if status in [
+                    JobStatusType.JOB_QUEUE_PENDING,
+                    JobStatusType.JOB_QUEUE_SUBMITTED,
+                    JobStatusType.JOB_QUEUE_WAITING
+                    ]:
+                continue
 
             fms = self.realization_progress[iteration].get(run_arg.iens, None)
 

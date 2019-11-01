@@ -91,6 +91,11 @@ class EnsembleSmoother(BaseRunModel):
             state = RealizationStateEnum.STATE_HAS_DATA | RealizationStateEnum.STATE_INITIALIZED
             mask = sim_fs.getStateMap().createMask(state)
 
+        # Deleting a run_context removes the possibility to retrospectively
+        # determine detailed progress. Thus, before deletion, the detailed
+        # progress is stored.
+        self.updateDetailedProgress()
+
         run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr)
         self._run_context = run_context
         self._last_run_iteration = run_context.get_iter()
