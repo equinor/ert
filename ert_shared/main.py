@@ -4,6 +4,7 @@ import sys
 import re
 from argparse import ArgumentParser, ArgumentTypeError
 from ert_shared.cli.main import run_cli
+from ert_gui.gert_main import run_gui
 from ert_gui.ide.keywords.definitions import (
     RangeStringArgument,
     ProperNameArgument,
@@ -107,8 +108,11 @@ def get_ert_parser(parser=None):
         description="Opens an independent graphical user interface for "
         "the user to interact with ERT.",
     )
-    gui_parser.set_defaults(func=runGui)
+    gui_parser.set_defaults(func=run_gui)
     gui_parser.add_argument("config", type=valid_file, help=config_help)
+    gui_parser.add_argument(
+        "--verbose", action="store_true", help="Show verbose output", default=False
+    )
 
     # test_run_parser
     test_run_description = "Run 'test_run' in cli"

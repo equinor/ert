@@ -13,7 +13,7 @@ from ert_gui.ertwidgets import resourceImage
 
 
 class ErtSplash(QSplashScreen):
-    def __init__(self):
+    def __init__(self, version_string="Version string"):
         QSplashScreen.__init__(self)
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.SplashScreen)
 
@@ -33,7 +33,7 @@ class ErtSplash(QSplashScreen):
 
         self.ert = "ERT"
         self.ert_title = "Ensemble based Reservoir Tool"
-        self.version = "Version string"
+        self.version = version_string
         self.timestamp = "Timestamp string"
         self.copyright = u"Copyright \u00A9 2017 Equinor ASA, Norway"
 
