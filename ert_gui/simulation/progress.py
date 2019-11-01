@@ -66,9 +66,11 @@ class Progress(QFrame):
         else:
             self.__timer.stop()
 
+    def get_indeterminate(self):
+        return self.__indeterminate
+
     def setIndeterminateColor(self, color):
         self.__indeterminate_color = color
-
 
     def paintEvent(self, paint_event):
         QFrame.paintEvent(self, paint_event)

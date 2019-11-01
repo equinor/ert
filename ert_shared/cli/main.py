@@ -9,7 +9,7 @@ from ert_shared.cli.model_factory import create_model
 from ert_shared.cli.monitor import Monitor
 from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared.cli.workflow import execute_workflow
-from ert_shared.models import SimulationsTracker
+from ert_shared.tracker.factory import create_tracker
 from res.enkf import EnKFMain, ResConfig
 
 
@@ -39,7 +39,7 @@ def run_cli(args):
         )
         thread.start()
 
-        tracker = SimulationsTracker(model=model)
+        tracker = create_tracker(model, tick_interval=0, detailed_interval=0)
         monitor = Monitor(color_always=args.color_always)
 
         try:
