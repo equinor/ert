@@ -47,9 +47,7 @@ def main(argv):
         print("The specified configuration file is a directory!")
         sys.exit(1)
 
-
-    splash = ErtSplash()
-    splash.version = "Version %s" % Version.getVersion()
+    splash = ErtSplash(version_string="Version {}".format(Version.getVersion()))
     splash.timestamp = Version.getBuildTime()
 
     splash.show()
