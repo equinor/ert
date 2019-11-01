@@ -17,6 +17,9 @@ from qtpy.QtGui import QPainter, QColor, QImage, QPen
 
 from res.job_queue import JobStatusType
 
+from ert_gui.tools.file import FileDialog
+
+
 class DetailedProgress(QFrame):
     clicked = Signal(int)
 
@@ -56,7 +59,7 @@ class DetailedProgress(QFrame):
     def set_progress(self, progress, iteration):
         self.setMinimumHeight(200)
         self._current_progress = sorted([(iens, jobs, status) for iens, (jobs, status) in progress.items()],
-                                        key = lambda x: x[0])
+                                        key=lambda x: x[0])
         self._current_iteration = iteration
         self.update()
 
@@ -75,36 +78,38 @@ class DetailedProgress(QFrame):
         painter = QPainter(self)
         width = self.width()
         height = self.height()
-        aspect_ratio = float(width)/height
-        nr_realizations = max([iens for iens, _ , _ in self._current_progress]) + 1
-        fm_size = max([len(progress) for _ , progress, _  in self._current_progress])
+        aspect_ratio = float(width) / height
+        nr_realizations = max([iens for iens, _, _ in self._current_progress]) + 1
+        fm_size = max([len(progress) for _, progress, _ in self._current_progress])
         self.grid_height = math.ceil(math.sqrt(nr_realizations / aspect_ratio))
         self.grid_width = math.ceil(self.grid_height * aspect_ratio)
         sub_grid_size = math.ceil(math.sqrt(fm_size))
         cell_height = height / self.grid_height
         cell_width = width / self.grid_width
 
-        foreground_image = QImage(self.grid_width*sub_grid_size, self.grid_height*sub_grid_size, QImage.Format_ARGB32)
+        foreground_image = QImage(self.grid_width * sub_grid_size, self.grid_height * sub_grid_size,
+                                  QImage.Format_ARGB32)
         foreground_image.fill(QColor(0, 0, 0, 0))
 
         for index, (iens, progress, _) in enumerate(self._current_progress):
             y = int(iens / self.grid_width)
             x = int(iens - (y * self.grid_width))
             self.draw_window(x * sub_grid_size, y * sub_grid_size, progress, foreground_image)
-        painter.drawImage(self.contentsRect(), foreground_image)
+            painter.drawImage(self.contentsRect(), foreground_image)
 
         for index, (iens, progress, state) in enumerate(self._current_progress):
             y = int(iens / self.grid_width)
             x = int(iens - (y * self.grid_width))
 
             painter.setPen(QColor(80, 80, 80))
-            painter.drawText(x * cell_width, y * cell_height, cell_width, cell_height, Qt.AlignHCenter | Qt.AlignVCenter, str(iens))
+            painter.drawText(x * cell_width, y * cell_height, cell_width, cell_height,
+                             Qt.AlignHCenter | Qt.AlignVCenter, str(iens))
 
             if iens == self.selected_realization:
                 pen = QPen(QColor(240, 240, 240))
-            elif(self.has_realization_failed(progress)):
+            elif (self.has_realization_failed(progress)):
                 pen = QPen(QColor(*self.state_colors['Failure']))
-            elif(state == JobStatusType.JOB_QUEUE_RUNNING):
+            elif (state == JobStatusType.JOB_QUEUE_RUNNING):
                 pen = QPen(QColor(*self.state_colors['Running']))
             else:
                 pen = QPen(QColor(80, 80, 80))
@@ -112,7 +117,7 @@ class DetailedProgress(QFrame):
             thickness = 4
             pen.setWidth(thickness)
             painter.setPen(pen)
-            painter.drawRect((x * cell_width)+(thickness / 2),
+            painter.drawRect((x * cell_width) + (thickness / 2),
                              (y * cell_height) + (thickness / 2),
                              cell_width - (thickness - 1),
                              cell_height - (thickness - 1))
@@ -154,11 +159,11 @@ class SingleProgressModel(QAbstractTableModel):
     @staticmethod
     def _get_byte_with_unit(byte_count):
         suffixes = ["B", "kB", "MB", "GB", "TB", "PB"]
-        power = float(10**3)
+        power = float(10 ** 3)
 
         i = 0
         while byte_count >= power and i < len(suffixes) - 1:
-            byte_count = byte_count/power
+            byte_count = byte_count / power
             i += 1
 
         return "{byte_count:.2f} {suffix}".format(byte_count=byte_count, suffix=suffixes[i])
@@ -172,7 +177,7 @@ class SingleProgressModel(QAbstractTableModel):
 
         if role == Qt.BackgroundColorRole:
             color = QColor(*self.state_colors[status])
-            color.setAlpha(color.alpha()/2)
+            color.setAlpha(color.alpha() / 2)
             if col == 'stdout' or col == 'stderr':
                 color = QColor(100,100,100,100) # make items stand out
             return color
@@ -222,11 +227,12 @@ class SingleTableView(QTableView):
         selected_file = self.model().get_file_name(index)
         if selected_file and not selected_file in self.open_files:
             job_name = self.model().model_data[index.row()][self.model().get_column_index("name")]
-            viewer = FileViewer(self, selected_file, job_name, index.row(), self.realization, self.iteration)
+            viewer = FileDialog(selected_file, job_name, index.row(), self.realization, self.iteration, self)
             self.open_files[selected_file] = viewer
+            viewer.finished.connect(lambda _, f=selected_file: self.open_files.pop(f))
 
         elif selected_file in self.open_files:
-            self.open_files[selected_file].reload(selected_file)
+            self.open_files[selected_file].raise_()
 
     def update_data(self, jobs, iteration, realization):
         self.setMinimumHeight(200)
@@ -244,38 +250,6 @@ class SingleTableView(QTableView):
         self.resizeColumnsToContents()
         self.model().modelReset.emit()
 
-        for file_name in self.open_files:
-            if self.open_files[file_name].isVisible():
-                self.open_files[file_name].reload(file_name)
-
-
-class FileViewer(QDialog):
-    def __init__(self, parent, file_name, job_name, job_number,realization, iteration):
-        super(FileViewer, self).__init__(parent)
-
-        self.setWindowTitle("{} # {} Realization: {} Iteration: {}" \
-                            .format(job_name, job_number, realization, iteration))
-
-        self.text_cont = QTextEdit()
-        self.text_cont.setReadOnly(True)
-        close_button = QPushButton("Close")
-        close_button.clicked.connect(self.accept)
-
-        layout = QGridLayout(self)
-        layout.addWidget(self.text_cont)
-        layout.addWidget(close_button)
-
-        self.setMinimumWidth(400)
-        self.setMinimumHeight(200)
-
-        self.reload(file_name)
-
-    def reload(self, file_name):
-        with open(file_name) as f:
-            text = f.read()
-        self.text_cont.setText(text)
-        self.show()
-
 
 class DetailedProgressWidget(QWidget):
     def __init__(self, parent, state_colors):
@@ -287,7 +261,7 @@ class DetailedProgressWidget(QWidget):
         self.state_colors = state_colors
 
         self.single_view = SingleTableView()
-        self.single_view.setModel(SingleProgressModel(self.single_view,state_colors))
+        self.single_view.setModel(SingleProgressModel(self.single_view, state_colors))
         self.single_view_label = QLabel("Realization details")
 
         layout.addWidget(self.iterations, 1, 0)
@@ -306,7 +280,7 @@ class DetailedProgressWidget(QWidget):
 
     def set_progress(self, progress, iteration):
         self.progress = progress
-        for i in progress: #create all detailed views if they havent been constructed yet
+        for i in progress:  # create all detailed views if they havent been constructed yet
             if self.iterations.widget(i):
                 continue
             detailed_progress_widget = DetailedProgress(self.state_colors, self)
@@ -333,15 +307,15 @@ class DetailedProgressWidget(QWidget):
             self.iterations.widget(i).selected_realization = -1
 
         self.selected_realization = iens
-        self.single_view_label.setText("Realization id: {} in iteration {}".format(iens,self.current_iteration))
+        self.single_view_label.setText("Realization id: {} in iteration {}".format(iens, self.current_iteration))
         self.update_single_view()
 
     def update_single_view(self):
         if not self.single_view.isVisible():
             return
-        if  not self.current_iteration in self.progress:
+        if not self.current_iteration in self.progress:
             return
-        if  not self.selected_realization in self.progress[self.current_iteration]:
+        if not self.selected_realization in self.progress[self.current_iteration]:
             return
 
         self.single_view.update_data(self.progress[self.current_iteration][self.selected_realization][0],
