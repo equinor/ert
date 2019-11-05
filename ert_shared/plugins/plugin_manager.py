@@ -1,4 +1,5 @@
 import functools
+import logging
 import os
 import shutil
 import sys
@@ -37,6 +38,7 @@ class ErtPluginManager(pluggy.PluginManager):
         else:
             for plugin in plugins:
                 self.register(plugin)
+        logging.debug(str(self))
 
     @python3only
     def __str__(self):
@@ -49,48 +51,66 @@ class ErtPluginManager(pluggy.PluginManager):
 
     @python3only
     def get_help_links(self):
-        return ErtPluginManager._merge_dicts(
-            [plugin_response.data for plugin_response in self.hook.help_links()]
+        return ErtPluginManager._merge_dicts(self.hook.help_links())
+
+    @staticmethod
+    def _evaluate_config_hook(hook, config_name):
+        response = hook()
+
+        if response is None:
+            logging.debug("Got no {} config path from any plugins".format(config_name))
+            return None
+
+        logging.debug(
+            "Got {} config path from {} ({})".format(
+                config_name,
+                response.plugin_metadata.plugin_name,
+                response.plugin_metadata.function_name,
+            )
         )
+        return response.data
 
     @python3only
     def get_ecl100_config_path(self):
-        try:
-            return self.hook.ecl100_config_path().data
-        except AttributeError:
-            return None
+        return ErtPluginManager._evaluate_config_hook(
+            hook=self.hook.ecl100_config_path, config_name="ecl100"
+        )
 
     @python3only
     def get_ecl300_config_path(self):
-        try:
-            return self.hook.ecl300_config_path().data
-        except AttributeError:
-            return None
+        return ErtPluginManager._evaluate_config_hook(
+            hook=self.hook.ecl300_config_path, config_name="ecl300"
+        )
 
     @python3only
     def get_flow_config_path(self):
-        try:
-            return self.hook.flow_config_path().data
-        except AttributeError:
-            return None
+        return ErtPluginManager._evaluate_config_hook(
+            hook=self.hook.flow_config_path, config_name="flow"
+        )
 
     @python3only
     def get_rms_config_path(self):
-        try:
-            return self.hook.rms_config_path().data
-        except AttributeError:
-            return None
+        return ErtPluginManager._evaluate_config_hook(
+            hook=self.hook.rms_config_path, config_name="rms"
+        )
 
     @python3only
     def _site_config_lines(self):
         try:
-            plugin_site_config_lines = [
-                plugin_response.data
-                for plugin_response in self.hook.site_config_lines()
-            ]
-            return list(chain.from_iterable(reversed(plugin_site_config_lines)))
+            plugin_responses = self.hook.site_config_lines()
         except AttributeError:
             return []
+        plugin_site_config_lines = [
+            [
+                "-- Content below originated from {} ({})".format(
+                    plugin_response.plugin_metadata.plugin_name,
+                    plugin_response.plugin_metadata.function_name,
+                )
+            ]
+            + plugin_response.data
+            for plugin_response in plugin_responses
+        ]
+        return list(chain.from_iterable(reversed(plugin_site_config_lines)))
 
     @python3only
     def get_site_config_content(self):
@@ -115,28 +135,38 @@ class ErtPluginManager(pluggy.PluginManager):
         return "\n".join(site_config_lines) + "\n"
 
     @staticmethod
-    def _merge_dicts(list_of_dicts):
+    def _add_plugin_info_to_dict(d, plugin_response):
+        return {k: (v, plugin_response.plugin_metadata) for k, v in d.items()}
+
+    @staticmethod
+    def _merge_dicts(list_of_dicts, include_plugin_data=False):
         list_of_dicts.reverse()
         merged_dict = {}
         for d in list_of_dicts:
-            conflicting_keys = set(merged_dict.keys()) & set(d.keys())
-            merged_dict.update(d)
-        return merged_dict
+            conflicting_keys = set(merged_dict.keys()) & set(d.data.keys())
+            for ck in conflicting_keys:
+                logging.info(
+                    "Overwriting {} from {}({}) with data from {}({})".format(
+                        ck,
+                        merged_dict[ck][1].plugin_name,
+                        merged_dict[ck][1].function_name,
+                        d.plugin_metadata.plugin_name,
+                        d.plugin_metadata.function_name,
+                    )
+                )
+            merged_dict.update(ErtPluginManager._add_plugin_info_to_dict(d.data, d))
+
+        if include_plugin_data:
+            return merged_dict
+        return {k: v[0] for k, v in merged_dict.items()}
 
     @python3only
     def get_installable_jobs(self):
-        return ErtPluginManager._merge_dicts(
-            [plugin_response.data for plugin_response in self.hook.installable_jobs()]
-        )
+        return ErtPluginManager._merge_dicts(self.hook.installable_jobs())
 
     @python3only
     def get_installable_workflow_jobs(self):
-        return ErtPluginManager._merge_dicts(
-            [
-                plugin_response.data
-                for plugin_response in self.hook.installable_workflow_jobs()
-            ]
-        )
+        return ErtPluginManager._merge_dicts(self.hook.installable_workflow_jobs())
 
 
 class ErtPluginContext:
@@ -151,14 +181,20 @@ class ErtPluginContext:
         site_config_content = self.plugin_manager.get_site_config_content()
         tmp_site_config_filename = None
         if site_config_content is not None:
+            logging.debug("Creating temporary site-config")
             tmp_site_config_filename = os.path.join(self.tmp_dir, "site-config")
             with open(tmp_site_config_filename, "w") as fh:
                 fh.write(site_config_content)
+            logging.debug(
+                "Temporary site-config created: {}".format(tmp_site_config_filename)
+            )
         return tmp_site_config_filename
 
     @python3only
     def __enter__(self):
+        logging.debug("Creating temporary directory for stie-config")
         self.tmp_dir = tempfile.mkdtemp()
+        logging.debug("Temporary directory created: {}".format(self.tmp_dir))
         self.tmp_site_config_filename = self._create_site_config()
         env = {
             "ERT_SITE_CONFIG": self.tmp_site_config_filename,
@@ -178,15 +214,26 @@ class ErtPluginContext:
         for name, value in env.items():
             if self.backup_env.get(name) is None:
                 if value is not None:
+                    logging.debug(
+                        "Setting environment variable {}={}".format(name, value)
+                    )
                     os.environ[name] = value
+            else:
+                logging.debug(
+                    "Environment variable already set {}={}, leaving it as is".format(
+                        name, self.backup_env.get(name)
+                    )
+                )
 
     @python3only
     def _reset_environment(self):
         for name, value in self.env.items():
             if self.backup_env.get(name) is None and name in os.environ:
+                logging.debug("Resetting environment variable {}".format(name))
                 del os.environ[name]
 
     @python3only
     def __exit__(self, *args):
         self._reset_environment()
+        logging.debug("Deleting temporary directory for site-config")
         shutil.rmtree(self.tmp_dir)

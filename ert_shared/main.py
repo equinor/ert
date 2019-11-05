@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import logging
 import os
 import sys
 import re
@@ -229,8 +230,12 @@ def ert_parser(parser, argv):
 
 
 def main():
+    args = ert_parser(None, sys.argv[1:])
+    if args.verbose:
+        logger = logging.getLogger()
+        logger.setLevel("DEBUG")
+
     with ErtPluginContext():
-        args = ert_parser(None, sys.argv[1:])
         args.func(args)
 
 
