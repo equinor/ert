@@ -22,3 +22,7 @@ endif()
 
 add_subdirectory( res )
 add_subdirectory( job_runner )
+
+if (INSTALL_ERT_LEGACY)
+  add_subdirectory(ert)
+endif()
