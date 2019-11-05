@@ -188,7 +188,12 @@ class EclRunTest(ResTest):
         ecl_run = EclRun("SPE1.DATA", sim)
         ecl_run.runEclipse( )
 
-        self.assertTrue( os.path.isfile( os.path.join( ecl_run.runPath() , "%s.OK" % ecl_run.baseName())))
+        ok_path = os.path.join(ecl_run.runPath(), "{}.OK".format(ecl_run.baseName()))
+        log_path = os.path.join(ecl_run.runPath(), "{}.LOG".format(ecl_run.baseName()))
+
+        self.assertTrue(os.path.isfile(ok_path))
+        self.assertTrue(os.path.isfile(log_path))
+        self.assertTrue(os.path.getsize(log_path) > 0)
 
         errors = ecl_run.parseErrors( )
         self.assertEqual( 0 , len(errors ))
@@ -251,7 +256,9 @@ class EclRunTest(ResTest):
         shutil.copy(os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1_PARALLELL.DATA"), "SPE1_PARALLELL.DATA")
         ecl_config = Ecl100Config()
         run(ecl_config, ["SPE1_PARALLELL.DATA", "--version=2014.2", "--num-cpu=2"])
-        self.assertTrue( os.path.isfile( "SPE1_PARALLELL.OK"))
+        self.assertTrue(os.path.isfile("SPE1_PARALLELL.LOG"))
+        self.assertTrue(os.path.getsize("SPE1_PARALLELL.LOG") > 0)
+
 
     @pytest.mark.equinor_test
     @tmpdir()
@@ -325,4 +332,3 @@ class EclRunTest(ResTest):
 
         self.assertEqual( error_list[0], error0)
         self.assertEqual( error_list[1], error1)
-

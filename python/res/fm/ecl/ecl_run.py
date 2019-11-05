@@ -1,4 +1,6 @@
 import os.path
+import os
+import sys
 import re
 import time
 import datetime
@@ -13,6 +15,7 @@ except ImportError:
     from ert.ecl import EclSum
 
 from .ecl_config import EclConfig
+from res.util.subprocess import await_process_tee
 
 
 EclipseResult = namedtuple("EclipseResult" , "errors bugs")
@@ -173,33 +176,39 @@ class EclRun(object):
 
 
     def execSerialEclipse(self):
-        process = subprocess.Popen(
-            [
-                self.sim.executable,
-                self.base_name
-            ],
-            env=self.sim.env
-        )
-        process.communicate()
-        return process.returncode
+        log_name = "{}.LOG".format(self.base_name)
+
+        with open(log_name, 'wb') as log_file:
+            process = subprocess.Popen(
+                [
+                    self.sim.executable,
+                    self.base_name
+                ],
+                env=self.sim.env,
+                stdout=subprocess.PIPE,
+            )
+            return await_process_tee(process, sys.stdout, log_file)
 
 
     def execParallellEclipse(self):
+        log_name = "{}.LOG".format(self.base_name)
+
         self.initMPI( )
-        process = subprocess.Popen(
-            [
-                self.sim.mpirun,
-                "-machinefile",
-                self.machine_file,
-                "-np",
-                "%s" % self.num_cpu,
-                self.sim.executable,
-                self.base_name
-            ],
-            env=self.sim.env
-        )
-        process.communicate()
-        return process.returncode
+        with open(log_name, 'wb') as log_file:
+            process = subprocess.Popen(
+                [
+                    self.sim.mpirun,
+                    "-machinefile",
+                    self.machine_file,
+                    "-np",
+                    "%s" % self.num_cpu,
+                    self.sim.executable,
+                    self.base_name
+                ],
+                env=self.sim.env,
+                stdout=subprocess.PIPE
+            )
+            return await_process_tee(process, sys.stdout, log_file)
 
 
     def execEclipse(self):
