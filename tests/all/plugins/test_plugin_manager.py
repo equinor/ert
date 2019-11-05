@@ -18,13 +18,17 @@ class PluginManagerTest(unittest.TestCase):
         self.assertIsNone(pm.get_flow_config_path())
         self.assertIsNone(pm.get_ecl100_config_path())
         self.assertIsNone(pm.get_ecl300_config_path())
-        self.assertIsNone(pm.get_flow_config_path())
+        self.assertIsNone(pm.get_rms_config_path())
 
         self.assertLess(0, len(pm.get_installable_jobs()))
         self.assertLess(0, len(pm.get_installable_workflow_jobs()))
 
         self.assertListEqual(
-            ["JOB_SCRIPT job_dispatch.py", "QUEUE_OPTION LOCAL MAX_RUNNING 1"],
+            [
+                "-- Content below originated from ert (site_config_lines)",
+                "JOB_SCRIPT job_dispatch.py",
+                "QUEUE_OPTION LOCAL MAX_RUNNING 1",
+            ],
             pm._site_config_lines(),
         )
 
@@ -40,17 +44,31 @@ class PluginManagerTest(unittest.TestCase):
             pm.get_help_links(),
         )
         self.assertEqual("/dummy/path/flow_config.yml", pm.get_flow_config_path())
+        self.assertEqual("/dummy/path/rms_config.yml", pm.get_rms_config_path())
         self.assertEqual("/dummy/path/ecl100_config.yml", pm.get_ecl100_config_path())
         self.assertEqual("/dummy/path/ecl300_config.yml", pm.get_ecl300_config_path())
 
         self.assertIn(("job1", "/dummy/path/job1"), pm.get_installable_jobs().items())
         self.assertIn(("job2", "/dummy/path/job2"), pm.get_installable_jobs().items())
-        self.assertIn(("wf_job1", "/dummy/path/wf_job1"), pm.get_installable_workflow_jobs().items())
-        self.assertIn(("wf_job2", "/dummy/path/wf_job2"), pm.get_installable_workflow_jobs().items())
+        self.assertIn(
+            ("wf_job1", "/dummy/path/wf_job1"),
+            pm.get_installable_workflow_jobs().items(),
+        )
+        self.assertIn(
+            ("wf_job2", "/dummy/path/wf_job2"),
+            pm.get_installable_workflow_jobs().items(),
+        )
 
         self.assertListEqual(
-            ["JOB_SCRIPT job_dispatch_dummy.py", "QUEUE_OPTION LOCAL MAX_RUNNING 2"],
-            pm._site_config_lines()[2:],
+            [
+                "-- Content below originated from ert (site_config_lines)",
+                "JOB_SCRIPT job_dispatch.py",
+                "QUEUE_OPTION LOCAL MAX_RUNNING 1",
+                "-- Content below originated from dummy (site_config_lines)",
+                "JOB_SCRIPT job_dispatch_dummy.py",
+                "QUEUE_OPTION LOCAL MAX_RUNNING 2",
+            ],
+            pm._site_config_lines(),
         )
 
     @unittest.skipIf(
@@ -63,5 +81,6 @@ class PluginManagerTest(unittest.TestCase):
         self.assertEqual(pm.get_flow_config_path(), None)
         self.assertEqual(pm.get_ecl100_config_path(), None)
         self.assertEqual(pm.get_ecl300_config_path(), None)
+        self.assertEqual(pm.get_rms_config_path(), None)
         self.assertEqual(pm.get_help_links(), None)
         self.assertEqual(pm.get_site_config_content(), None)
