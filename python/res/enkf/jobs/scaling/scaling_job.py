@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import sys
 import configsuite
 
 from copy import deepcopy
@@ -44,9 +43,7 @@ def _observation_scaling(ert, config):
     Collects data, performs scaling and applies scaling, assumes validated input.
     """
     obs = ert.getObservations()
-
     measured_data = MeasuredData(ert, config.CALCULATE_KEYS)
-
     matrix = DataMatrix(measured_data.data)
     matrix.std_normalization(config.CALCULATE_KEYS.keys, inplace=True)
 
@@ -169,6 +166,11 @@ def _update_scaling(obs, scale_factor, events):
                     obs_node.set_std_scaling(scale_factor)
             elif obs_vector.getImplementationType().name != "SUMMARY_OBS":
                 obs_node.updateStdScaling(scale_factor, event.active_list)
+    print(
+        "Keys: {} scaled with scaling factor: {}".format(
+            [event.key for event in events], scale_factor
+        )
+    )
 
 
 def _active_list_from_index_list(index_list):
@@ -216,10 +218,8 @@ def valid_job(observations, user_config, ensamble_size, storage):
             has_data(observations, calculation_keys, ensamble_size, storage)
         )
         error_messages.extend(same_data_type(observations, calculation_keys))
-
     for error in error_messages:
-        sys.stderr.write(error)
-
+        print(error)
     return len(error_messages) == 0
 
 
@@ -274,5 +274,5 @@ def valid_configuration(user_config):
     """
 
     for error in user_config.errors:
-        sys.stderr.write(error)
+        print(error)
     return user_config.valid

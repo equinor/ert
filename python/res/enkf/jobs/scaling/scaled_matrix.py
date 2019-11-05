@@ -51,6 +51,7 @@ class DataMatrix(object):
             len(events.keys), data_matrix.shape[1], nr_components
         )
 
+        print("Scaling factor calculated from {}".format(events.keys))
         return scaling_factor
 
     @staticmethod
@@ -88,4 +89,9 @@ class DataMatrix(object):
             pc is the number of primary components from PCA analysis
                 below a user threshold
         """
+        print(
+            "Calculation scaling factor, nr of primary components: {:d}, number of observations: {:d}".format(
+                nr_components, nr_keys * nr_observations
+            )
+        )
         return np.sqrt(nr_keys * nr_observations / float(nr_components))
