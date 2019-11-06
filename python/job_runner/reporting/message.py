@@ -14,6 +14,7 @@ class Message(object):
     def success(self):
         return self.error_message is None
 
+
 # manager level messages
 
 
@@ -28,6 +29,7 @@ class Init(Message):
 class Finish(Message):
     def __init__(self):
         super(Finish, self).__init__()
+
 
 # job level messages
 

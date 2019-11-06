@@ -17,17 +17,15 @@ def assert_file_executable(fname):
 
     """
     if not fname:
-        raise IOError('No executable provided!')
+        raise IOError("No executable provided!")
     fname = os.path.expanduser(fname)
 
     potential_executables = [os.path.abspath(fname)]
     if not os.path.isabs(fname):
-        potential_executables = (potential_executables +
-                                 [
-                                     os.path.join(location, fname)
-                                     for location in os.environ["PATH"]
-                                            .split(os.pathsep)
-                                 ])
+        potential_executables = potential_executables + [
+            os.path.join(location, fname)
+            for location in os.environ["PATH"].split(os.pathsep)
+        ]
 
     if not any(map(os.path.isfile, potential_executables)):
         raise IOError("{} is not a file!".format(fname))

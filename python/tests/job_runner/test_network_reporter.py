@@ -25,11 +25,9 @@ class NetworkReporterTests(TestCase):
     @patch("job_runner.reporting.network.requests.post")
     def test_failed_job_is_reported(self, post_mock):
         self.reporter.start_time = dt.now()
-        job = Job({"name": "failing job",
-                   "executable": "/dev/null", "argList": []}, 0)
+        job = Job({"name": "failing job", "executable": "/dev/null", "argList": []}, 0)
 
-        self.reporter.report(
-            Exited(job, 9).with_error("failed"))
+        self.reporter.report(Exited(job, 9).with_error("failed"))
         _, data = post_mock.call_args
 
         self.assertTrue(post_mock.called, "post not called for failed Exit")

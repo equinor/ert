@@ -30,21 +30,20 @@ class File(object):
             self._delete_old_status_files()
             self._init_status_file()
             self.status_dict = self._init_job_status_dict(
-                msg.timestamp, msg.run_id, msg.jobs)
+                msg.timestamp, msg.run_id, msg.jobs
+            )
 
         elif isinstance(msg, Start):
             if msg.success():
                 self._start_status_file(msg)
                 self._add_log_line(msg.job)
                 job_status["status"] = "Running"
-                job_status["start_time"] = self._datetime_serialize(
-                    msg.timestamp)
+                job_status["start_time"] = self._datetime_serialize(msg.timestamp)
             else:
                 error_msg = msg.error_message
                 job_status["status"] = "Failure"
                 job_status["error"] = error_msg
-                job_status["end_time"] = self._datetime_serialize(
-                    msg.timestamp)
+                job_status["end_time"] = self._datetime_serialize(msg.timestamp)
 
                 self._complete_status_file(msg)
         elif isinstance(msg, Exited):
@@ -71,8 +70,7 @@ class File(object):
 
         elif isinstance(msg, Finish):
             if msg.success():
-                self.status_dict["end_time"] = self._datetime_serialize(
-                    msg.timestamp)
+                self.status_dict["end_time"] = self._datetime_serialize(msg.timestamp)
                 self._dump_ok_file(sync_disc_timeout)
             else:
                 # this has already been handled by earlier event
@@ -88,15 +86,14 @@ class File(object):
 
     def _init_status_file(self):
         with open(self.STATUS_file, "a") as f:
-            f.write("{:32}: {}/{}\n".format("Current host", self.node,
-                                            os.uname()[4]))
+            f.write("{:32}: {}/{}\n".format("Current host", self.node, os.uname()[4]))
 
     def _init_job_status_dict(self, start_time, run_id, jobs):
         return {
             "run_id": run_id,
             "start_time": self._datetime_serialize(start_time),
             "end_time": None,
-            "jobs": [self._create_job_dict(j) for j in jobs]
+            "jobs": [self._create_job_dict(j) for j in jobs],
         }
 
     def _datetime_serialize(self, dt):
@@ -105,18 +102,19 @@ class File(object):
         return time.mktime(dt.timetuple())
 
     def _create_job_dict(self, job):
-        return {"name": job.name(),
-                "status": "Waiting",
-                "error": None,
-                "start_time": None,
-                "end_time": None,
-                "stdout": job.std_out,
-                "stderr": job.std_err}
+        return {
+            "name": job.name(),
+            "status": "Waiting",
+            "error": None,
+            "start_time": None,
+            "end_time": None,
+            "stdout": job.std_out,
+            "stderr": job.std_err,
+        }
 
     def _start_status_file(self, msg):
         with open(self.STATUS_file, "a") as f:
-            f.write("{:32}: {:%H:%M:%S} .... ".format(msg.job.name(),
-                    msg.timestamp))
+            f.write("{:32}: {:%H:%M:%S} .... ".format(msg.job.name(), msg.timestamp))
 
     def _complete_status_file(self, msg):
         if msg.success():
@@ -137,9 +135,14 @@ class File(object):
         now = time.localtime()
         with open(self.LOG_file, "a") as f:
             args = " ".join(job.job_data["argList"])
-            f.write("{:02d}:{:02d}:{:02d}  Calling: {} {}\n".format(
-                now.tm_hour, now.tm_min, now.tm_sec,
-                job.job_data["executable"], args)
+            f.write(
+                "{:02d}:{:02d}:{:02d}  Calling: {} {}\n".format(
+                    now.tm_hour,
+                    now.tm_min,
+                    now.tm_sec,
+                    job.job_data["executable"],
+                    args,
+                )
             )
 
     # This file will be read by the job_queue_node_fscanf_EXIT() function
@@ -148,8 +151,9 @@ class File(object):
         fileH = open(self.ERROR_file, "a")
         now = time.localtime()
         fileH.write("<error>\n")
-        fileH.write("  <time>%02d:%02d:%02d</time>\n" %
-                    (now.tm_hour, now.tm_min, now.tm_sec))
+        fileH.write(
+            "  <time>%02d:%02d:%02d</time>\n" % (now.tm_hour, now.tm_min, now.tm_sec)
+        )
         fileH.write("  <job>%s</job>\n" % job.name())
         fileH.write("  <reason>%s</reason>\n" % error_msg)
         stderr_file = None
@@ -158,8 +162,7 @@ class File(object):
                 with open(job.std_err, "r") as errH:
                     stderr = errH.read()
                     if stderr:
-                        stderr_file = os.path.join(
-                            os.getcwd(), job.std_err)
+                        stderr_file = os.path.join(os.getcwd(), job.std_err)
                     else:
                         stderr = "<Not written by:%s>\n" % job.name()
             else:
@@ -182,8 +185,10 @@ class File(object):
     def _dump_ok_file(self, sync_disc_timeout):
         now = time.localtime()
         with open(self.OK_file, "w") as f:
-            f.write("All jobs complete %02d:%02d:%02d \n" %
-                    (now.tm_hour, now.tm_min, now.tm_sec))
+            f.write(
+                "All jobs complete %02d:%02d:%02d \n"
+                % (now.tm_hour, now.tm_min, now.tm_sec)
+            )
         time.sleep(sync_disc_timeout)  # Let the disks sync up
 
     def _dump_status_json(self):

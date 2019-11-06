@@ -7,14 +7,12 @@ from job_runner.reporting.message import Init, Finish
 
 
 class JobRunner(object):
-
     def __init__(self, jobs_file=JOBS_FILE):
         try:
             with open(jobs_file, "r") as json_file:
                 jobs_data = json.load(json_file)
         except ValueError as e:
-            raise IOError(
-                "Job Runner failed to load JSON-file.{}".format(str(e)))
+            raise IOError("Job Runner failed to load JSON-file.{}".format(str(e)))
 
         os.umask(int(jobs_data["umask"], 8))
 
@@ -44,16 +42,16 @@ class JobRunner(object):
         if not names_of_jobs_to_run:
             job_queue = self.jobs
         else:
-            job_queue = [j for j in self.jobs if j.name()
-                         in names_of_jobs_to_run]
+            job_queue = [j for j in self.jobs if j.name() in names_of_jobs_to_run]
 
         init_message = Init(job_queue, self.simulation_id, self.ert_pid)
 
         unused = set(names_of_jobs_to_run) - set([j.name() for j in job_queue])
         if unused:
             init_message.with_error(
-                "{} does not exist. Available jobs: {}"
-                .format(unused, [j.name() for j in self.jobs])
+                "{} does not exist. Available jobs: {}".format(
+                    unused, [j.name() for j in self.jobs]
+                )
             )
             yield init_message
             return
@@ -65,8 +63,7 @@ class JobRunner(object):
                 yield status_update
 
                 if not status_update.success():
-                    yield Finish().with_error(
-                        "Not all jobs completed successfully.")
+                    yield Finish().with_error("Not all jobs completed successfully.")
                     return
 
         yield Finish()
@@ -81,7 +78,7 @@ class JobRunner(object):
         if self.global_update_path:
             data = self.global_update_path
             for key in data.keys():
-                if (os.environ.get(key)):
-                    os.environ[key] = data[key] + ':' + os.environ[key]
+                if os.environ.get(key):
+                    os.environ[key] = data[key] + ":" + os.environ[key]
                 else:
                     os.environ[key] = data[key]

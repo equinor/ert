@@ -59,9 +59,7 @@ JSON_STRING_NO_DATA_ROOT = """
 
 
 def create_jobs_json(job_list, umask="0000"):
-    data = {"umask": umask,
-            "DATA_ROOT": "/path/to/data",
-            "jobList": job_list}
+    data = {"umask": umask, "DATA_ROOT": "/path/to/data", "jobList": job_list}
 
     jobs_file = os.path.join(os.getcwd(), "jobs.json")
     with open(jobs_file, "w") as f:
@@ -69,7 +67,6 @@ def create_jobs_json(job_list, umask="0000"):
 
 
 class JobRunnerTest(TestCase):
-
     def setUp(self):
         self.dispatch_imp = None
         if "DATA_ROOT" in os.environ:
@@ -78,15 +75,21 @@ class JobRunnerTest(TestCase):
         if "ERT_RUN_ID" in os.environ:
             del os.environ["ERT_RUN_ID"]
 
-
     def tearDown(self):
 
-        keys = ("KEY_ONE", "KEY_TWO", "KEY_THREE", "KEY_FOUR", "PATH104", "DATA_ROOT", "ERT_RUN_ID")
+        keys = (
+            "KEY_ONE",
+            "KEY_TWO",
+            "KEY_THREE",
+            "KEY_FOUR",
+            "PATH104",
+            "DATA_ROOT",
+            "ERT_RUN_ID",
+        )
 
         for key in keys:
             if key in os.environ:
                 del os.environ[key]
-
 
     def assert_clean_slate(self):
         self.assertFalse(os.path.isfile("jobs.py"))
@@ -133,33 +136,33 @@ class JobRunnerTest(TestCase):
 
     @tmpdir(None)
     def test_run_output_rename(self):
-        job = {"name": "TEST_JOB",
-               "executable": "/bin/mkdir",
-               "stdout": "out",
-               "stderr": "err"}
+        job = {
+            "name": "TEST_JOB",
+            "executable": "/bin/mkdir",
+            "stdout": "out",
+            "stderr": "err",
+        }
         joblist = [job, job, job, job, job]
         create_jobs_json(joblist)
         jobm = JobRunner()
 
         for status in enumerate(jobm.run([])):
             if isinstance(status, Start):
-                self.assertEqual(
-                    status.job.std_err, "err.{}".format(status.job.index)
-                )
-                self.assertEqual(
-                    status.job.std_out, "out.{}".format(status.job.index)
-                )
+                self.assertEqual(status.job.std_err, "err.{}".format(status.job.index))
+                self.assertEqual(status.job.std_out, "out.{}".format(status.job.index))
 
     @tmpdir(None)
     def test_run_multiple_ok(self):
         joblist = []
         dir_list = ["1", "2", "3", "4", "5"]
         for d in dir_list:
-            job = {"name": "MKDIR",
-                   "executable": "/bin/mkdir",
-                   "stdout": "mkdir_out",
-                   "stderr": "mkdir_err",
-                   "argList": ["-p", "-v", d]}
+            job = {
+                "name": "MKDIR",
+                "executable": "/bin/mkdir",
+                "stdout": "mkdir_out",
+                "stderr": "mkdir_err",
+                "argList": ["-p", "-v", d],
+            }
             joblist.append(job)
         create_jobs_json(joblist)
         jobm = JobRunner()
@@ -180,17 +183,18 @@ class JobRunnerTest(TestCase):
     def test_run_multiple_fail_only_runs_one(self):
         joblist = []
         for index in range(1, 6):
-            job = {"name": "exit",
-                   "executable": "/bin/bash",
-                   "stdout": "exit_out",
-                   "stderr": "exit_err",
-                   # produces something on stderr, and exits with
-                   # exit_code=index
-                   "argList": [
-                       "-c",
-                       "echo \"failed with {}\" 1>&2 ; exit {}"
-                       .format(index, index)
-                    ]}
+            job = {
+                "name": "exit",
+                "executable": "/bin/bash",
+                "stdout": "exit_out",
+                "stderr": "exit_err",
+                # produces something on stderr, and exits with
+                # exit_code=index
+                "argList": [
+                    "-c",
+                    'echo "failed with {}" 1>&2 ; exit {}'.format(index, index),
+                ],
+            }
             joblist.append(job)
         create_jobs_json(joblist)
         jobm = JobRunner()
@@ -199,7 +203,7 @@ class JobRunnerTest(TestCase):
 
         self.assertEqual(len(statuses), 1)
         for i, status in enumerate(statuses):
-            self.assertEqual(status.exit_code, i+1)
+            self.assertEqual(status.exit_code, i + 1)
 
     @tmpdir(None)
     def test_given_global_env_and_update_path_executable_env_is_updated(self):
@@ -216,56 +220,70 @@ class JobRunnerTest(TestCase):
             f.write("print(os.environ['KEY_FOUR'])\n")
         os.chmod(executable, stat.S_IEXEC + stat.S_IREAD)
 
-        job = {"name": "TEST_GET_ENV1",
-               "executable": executable,
-               "stdout": outfile,
-               "stderr": "outfile.stderr",
-               "argList": []}
+        job = {
+            "name": "TEST_GET_ENV1",
+            "executable": executable,
+            "stdout": outfile,
+            "stderr": "outfile.stderr",
+            "argList": [],
+        }
 
-        data = {"umask": "0000",
-                "global_environment": {"KEY_ONE": "FirstValue",
-                                       "KEY_TWO": "SecondValue",
-                                       "KEY_THREE": "ThirdValue",
-                                       "KEY_FOUR": "ThirdValue:FourthValue"},
-                "global_update_path": {"PATH104": "NewPath",
-                                       "KEY_THREE": "FourthValue",
-                                       "KEY_FOUR": "FifthValue:SixthValue"},
-                "DATA_ROOT": "/path/to/data",
-                "jobList": [job]}
+        data = {
+            "umask": "0000",
+            "global_environment": {
+                "KEY_ONE": "FirstValue",
+                "KEY_TWO": "SecondValue",
+                "KEY_THREE": "ThirdValue",
+                "KEY_FOUR": "ThirdValue:FourthValue",
+            },
+            "global_update_path": {
+                "PATH104": "NewPath",
+                "KEY_THREE": "FourthValue",
+                "KEY_FOUR": "FifthValue:SixthValue",
+            },
+            "DATA_ROOT": "/path/to/data",
+            "jobList": [job],
+        }
 
         jobs_file = os.path.join(os.getcwd(), "jobs.json")
         with open(jobs_file, "w") as f:
             f.write(json.dumps(data))
         statuses = list(JobRunner().run([]))
 
-        exited_messages = [m for m in statuses if isinstance(
-            m, Exited) and m.success()]
+        exited_messages = [m for m in statuses if isinstance(m, Exited) and m.success()]
         number_of_finished_scripts = len(exited_messages)
-        self.assertEqual(number_of_finished_scripts, 1,
-                         "guard check, script must finish successfully")
+        self.assertEqual(
+            number_of_finished_scripts,
+            1,
+            "guard check, script must finish successfully",
+        )
 
         with open(outfile + ".0", "r") as out0:
             content = list(out0.read().splitlines())
-            self.assertEqual(content[0], 'FirstValue')
-            self.assertEqual(content[1], 'SecondValue')
-            self.assertEqual(content[2], 'NewPath')
-            self.assertEqual(content[3], 'FourthValue:ThirdValue')
-            self.assertEqual(content[4],
-                             'FifthValue:SixthValue:ThirdValue:FourthValue',
-                             """should be a concatenation of the variable from
-                             environment and update_path""")
+            self.assertEqual(content[0], "FirstValue")
+            self.assertEqual(content[1], "SecondValue")
+            self.assertEqual(content[2], "NewPath")
+            self.assertEqual(content[3], "FourthValue:ThirdValue")
+            self.assertEqual(
+                content[4],
+                "FifthValue:SixthValue:ThirdValue:FourthValue",
+                """should be a concatenation of the variable from
+                             environment and update_path""",
+            )
 
     @tmpdir(None)
     def test_exec_env(self):
         with open("exec_env.py", "w") as f:
-            f.write("""#!/usr/bin/env python\n
+            f.write(
+                """#!/usr/bin/env python\n
 import os
 import json
 with open("exec_env_exec_env.json") as f:
      exec_env = json.load(f)
 assert exec_env["TEST_ENV"] == "123"
 assert exec_env["NOT_SET"] is None
-                """)
+                """
+            )
         os.chmod("exec_env.py", stat.S_IEXEC + stat.S_IREAD)
 
         with open("EXEC_ENV", "w") as f:
@@ -281,7 +299,8 @@ assert exec_env["NOT_SET"] is None
         global_args = SubstitutionList()
         env_varlist = EnvironmentVarlist()
         forward_model.formatted_fprintf(
-            "run_id", None, "data_root", global_args, 0, env_varlist)
+            "run_id", None, "data_root", global_args, 0, env_varlist
+        )
 
         for msg in list(JobRunner().run([])):
             if isinstance(msg, Start):

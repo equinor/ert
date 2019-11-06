@@ -5,8 +5,7 @@ import time
 from datetime import datetime as dt
 from subprocess import Popen
 
-from psutil import (Process, TimeoutExpired, NoSuchProcess,
-                    AccessDenied, ZombieProcess)
+from psutil import Process, TimeoutExpired, NoSuchProcess, AccessDenied, ZombieProcess
 
 from job_runner.io import assert_file_executable
 from job_runner.reporting.message import Exited, Running, Start
@@ -41,7 +40,7 @@ class Job(object):
 
         yield start_message
 
-        executable = self.job_data.get('executable')
+        executable = self.job_data.get("executable")
         assert_file_executable(executable)
 
         arg_list = [executable]
@@ -72,18 +71,21 @@ class Job(object):
         exec_env = self.job_data.get("exec_env")
         if exec_env:
             exec_name, _ = os.path.splitext(
-                os.path.basename(self.job_data.get('executable')))
+                os.path.basename(self.job_data.get("executable"))
+            )
             with open("%s_exec_env.json" % exec_name, "w") as f:
                 f.write(json.dumps(exec_env))
 
         max_running_minutes = self.job_data.get("max_running_minutes")
         run_start_time = dt.now()
 
-        proc = Popen(arg_list,
-                     stdin=stdin,
-                     stdout=stdout,
-                     stderr=stderr,
-                     env=self.job_data.get("environment"))
+        proc = Popen(
+            arg_list,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+            env=self.job_data.get("environment"),
+        )
 
         exit_code = None
 
@@ -108,7 +110,10 @@ class Job(object):
                 exit_code = process.wait(timeout=self.MEMORY_POLL_PERIOD)
             except TimeoutExpired:
                 run_time = dt.now() - run_start_time
-                if max_running_minutes is not None and run_time.seconds > max_running_minutes * 60:
+                if (
+                    max_running_minutes is not None
+                    and run_time.seconds > max_running_minutes * 60
+                ):
                     """
                     If the spawned process is not in the same process group
                     as the callee (job_dispatch), we will kill the process
@@ -122,25 +127,34 @@ class Job(object):
                     if process_group_id != this_group_id:
                         os.killpg(process_group_id, signal.SIGKILL)
 
-                    yield Exited(self, exit_code).with_error("Job:{} has been running for more than {} minutes - explicitly killed.".format(self.name(), max_running_minutes))
+                    yield Exited(self, exit_code).with_error(
+                        "Job:{} has been running for more than {} minutes - explicitly killed.".format(
+                            self.name(), max_running_minutes
+                        )
+                    )
                     return
 
         exited_message = Exited(self, exit_code)
 
         if exit_code != 0:
-            yield exited_message.with_error("Process exited with status code {}".format(exit_code))
+            yield exited_message.with_error(
+                "Process exited with status code {}".format(exit_code)
+            )
             return
 
         # exit_code is 0
 
         if self.job_data.get("error_file"):
             if os.path.exists(self.job_data["error_file"]):
-                yield exited_message.with_error("Found the error file:{} - job failed.".format(self.job_data["error_file"]))
+                yield exited_message.with_error(
+                    "Found the error file:{} - job failed.".format(
+                        self.job_data["error_file"]
+                    )
+                )
                 return
 
         if self.job_data.get("target_file"):
-            target_file_error = self._check_target_file_is_written(
-                target_file_mtime)
+            target_file_error = self._check_target_file_is_written(target_file_mtime)
             if target_file_error:
                 yield exited_message.with_error(target_file_error)
                 return
@@ -156,14 +170,18 @@ class Job(object):
                 if arg_type == "RUNTIME_FILE":
                     file_path = os.path.join(os.getcwd(), arg_list[index])
                     if not os.path.isfile(file_path):
-                        errors.append("In job \"%s\": RUNTIME_FILE \"%s\" does not exist." % (
-                            self.name(), arg_list[index]))
+                        errors.append(
+                            'In job "%s": RUNTIME_FILE "%s" does not exist.'
+                            % (self.name(), arg_list[index])
+                        )
                 if arg_type == "RUNTIME_INT":
                     try:
                         int(arg_list[index])
                     except ValueError:
-                        errors.append("In job \"%s\": argument with index %d is of incorrect type, should be integer." % (
-                            self.name(), index))
+                        errors.append(
+                            'In job "%s": argument with index %d is of incorrect type, should be integer.'
+                            % (self.name(), index)
+                        )
         return errors
 
     def name(self):
@@ -173,7 +191,8 @@ class Job(object):
         exec_env = self.job_data.get("exec_env")
         if exec_env:
             exec_name, _ = os.path.splitext(
-                os.path.basename(self.job_data.get('executable')))
+                os.path.basename(self.job_data.get("executable"))
+            )
             with open("%s_exec_env.json" % exec_name, "w") as f:
                 f.write(json.dumps(exec_env))
 
@@ -185,13 +204,15 @@ class Job(object):
         errors = []
         if self.job_data.get("stdin"):
             if not os.path.exists(self.job_data["stdin"]):
-                errors.append("Could not locate stdin file: {}".format(
-                    self.job_data["stdin"]))
+                errors.append(
+                    "Could not locate stdin file: {}".format(self.job_data["stdin"])
+                )
 
         if self.job_data.get("start_file"):
             if not os.path.exists(self.job_data["start_file"]):
-                errors.append("Could not locate start_file:{}".format(
-                    self.job_data["start_file"]))
+                errors.append(
+                    "Could not locate start_file:{}".format(self.job_data["start_file"])
+                )
 
         if self.job_data.get("error_file"):
             if os.path.exists(self.job_data.get("error_file")):
@@ -225,6 +246,8 @@ class Job(object):
         # i.e. on a timeout.
         if os.path.exists(target_file):
             stat = os.stat(target_file)
-            return "The target file:{} has not been updated; this is flagged as failure. mtime:{}   stat_start_time:{}".format(target_file, stat.st_mtime, target_file_mtime)
+            return "The target file:{} has not been updated; this is flagged as failure. mtime:{}   stat_start_time:{}".format(
+                target_file, stat.st_mtime, target_file_mtime
+            )
         else:
             return "Could not find target_file:{}".format(target_file)

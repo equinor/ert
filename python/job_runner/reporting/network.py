@@ -18,7 +18,6 @@ from res import ResVersion
 
 
 class Network(object):
-
     def __init__(self, log_url=LOG_URL):
         self.simulation_id = None
         self.ert_pid = None
@@ -47,19 +46,19 @@ class Network(object):
     def _post_initial(self, msg):
         os_info = read_os_release()
         _, _, release, _, _ = os.uname()
-        python_vs, _ = sys_version.split('\n')
+        python_vs, _ = sys_version.split("\n")
         ecl_v = EclVersion()
         res_v = ResVersion()
         logged_fields = {
             "status": "init",
             "python_sys_path": list(map(pad_nonexisting, sys.path)),
-            "pythonpath": list(map(pad_nonexisting,
-                                   os.environ.get('PYTHONPATH', '').split(':'))
-                               ),
+            "pythonpath": list(
+                map(pad_nonexisting, os.environ.get("PYTHONPATH", "").split(":"))
+            ),
             "res_version": res_v.versionString(),
             "ecl_version": ecl_v.versionString(),
-            "LSB_ID": os_info.get('LSB_ID', ''),
-            "LSB_VERSION_ID": os_info.get('LSB_VERSION_ID', ''),
+            "LSB_ID": os_info.get("LSB_ID", ""),
+            "LSB_VERSION_ID": os_info.get("LSB_VERSION_ID", ""),
             "python_version": python_vs,
             "kernel_version": release,
         }
@@ -70,29 +69,32 @@ class Network(object):
         self._post_message(msg.timestamp, extra_fields=logged_fields)
 
     def _post_message(self, timestamp, extra_fields=None):
-        payload = {"user": self.user,
-                   "cwd": os.getcwd(),
-                   "application": "ert",
-                   "subsystem": "ert_forward_model",
-                   "node": self.node,
-                   "komodo_release": os.getenv("KOMODO_RELEASE", "--------"),
-                   "start_time": self.start_time.isoformat(),
-                   "node_timestamp": timestamp.isoformat(),
-                   "simulation_id": self.simulation_id,
-                   "ert_pid": self.ert_pid}
+        payload = {
+            "user": self.user,
+            "cwd": os.getcwd(),
+            "application": "ert",
+            "subsystem": "ert_forward_model",
+            "node": self.node,
+            "komodo_release": os.getenv("KOMODO_RELEASE", "--------"),
+            "start_time": self.start_time.isoformat(),
+            "node_timestamp": timestamp.isoformat(),
+            "simulation_id": self.simulation_id,
+            "ert_pid": self.ert_pid,
+        }
         payload.update(extra_fields)
 
         try:
             data = json.dumps(payload)
 
             # Disabling proxies
-            proxies = {
-                "http": None,
-                "https": None,
-            }
-            requests.post(self.log_url, timeout=3,
-                          headers={"Content-Type": "application/json"},
-                          data=data, proxies=proxies)
+            proxies = {"http": None, "https": None}
+            requests.post(
+                self.log_url,
+                timeout=3,
+                headers={"Content-Type": "application/json"},
+                data=data,
+                proxies=proxies,
+            )
         except:  # noqa
             pass
 
@@ -108,7 +110,7 @@ class Network(object):
             "error_msg": msg.error_message,
             "ert_job": msg.job.name(),
             "executable": msg.job.job_data["executable"],
-            "arg_list": " ".join(msg.job.job_data["argList"])
+            "arg_list": " ".join(msg.job.job_data["argList"]),
         }
         fields.update(self._extract_stderr_stdout(msg.job))
         self._post_message(msg.timestamp, fields)
