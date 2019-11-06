@@ -60,6 +60,7 @@ before_install:
 
 install:
   - pip install -r requirements.txt
+  - pip install -r test_requirements.txt
 
 before_script:
   # For now we have to make install libecl.
@@ -105,10 +106,6 @@ script:
   - make install
   - set -e; python -c "import res"; set +e
   - ctest --output-on-failure $TEST_SUITE
-  - pip install pytest
-  - pip install pylint
-  - pip install mock
-  - pip install decorator
   - popd
   - pushd python
   - pytest

@@ -58,6 +58,7 @@ build_res () {
 
 	pushd $LIBRES_ROOT
 	python -m pip install -r requirements.txt
+	python -m pip install -r test_requirements.txt
 	pushd $LIBRES_BUILD
 	echo "PYTHON:"$(which python)
 	cmake .. -DEQUINOR_TESTDATA_ROOT=/project/res-testdata/ErtTestData \
@@ -131,7 +132,6 @@ create_virtualenv () {
 	mkdir $ENV
 	python -m virtualenv $ENV
 	source $ENV/bin/activate
-	python -m pip install pytest faulthandler decorator mock
 }
 
 run_ctest () {
