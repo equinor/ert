@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import logging
 import os
+import sys
 import threading
 
 from ert_shared import ERT
@@ -28,6 +29,8 @@ def run_cli(args):
 
     if args.disable_monitoring:
         model.startSimulations(argument)
+        if model.hasRunFailed():
+            sys.exit(model.getFailMessage())
     else:
         thread = threading.Thread(
             name="ert_cli_simulation_thread",
@@ -46,3 +49,6 @@ def run_cli(args):
             model.killAllSimulations()
 
         thread.join()
+
+        if model.hasRunFailed():
+            sys.exit(1)  # the monitor has already reported the error message
