@@ -27,7 +27,7 @@ import ctypes
 from cwrap import BaseCClass
 
 from res import ResPrototype
-from res.job_queue import Job, JobStatusType
+from res.job_queue import Job, JobStatusType, ThreadStatusType
 
 
 class JobQueue(BaseCClass):
@@ -260,20 +260,17 @@ class JobQueue(BaseCClass):
         int_status = self._get_job_status(job_number)
         return JobStatusType( int_status )
 
-    def is_running(self):
+    def is_active(self):
         for job in self.job_list:
-            job_status = job.status
-            if (job_status ==  JobStatusType.JOB_QUEUE_PENDING or
-                job_status == JobStatusType.JOB_QUEUE_SUBMITTED or
-                job_status == JobStatusType.JOB_QUEUE_WAITING or
-                job_status == JobStatusType.JOB_QUEUE_UNKNOWN or
-                job_status == JobStatusType.JOB_QUEUE_RUNNING):
+            if (job.thread_status == ThreadStatusType.THREAD_READY or
+                job.thread_status == ThreadStatusType.THREAD_RUNNING or
+                job.thread_status == ThreadStatusType.THREAD_STOPPING):
                 return True
         return False
 
     def fetch_next_waiting(self):
         for job in self.job_list:
-            if job.status == JobStatusType.JOB_QUEUE_WAITING and not job.started:
+            if job.thread_status == ThreadStatusType.THREAD_READY:
                 return job
         return None
 
@@ -310,4 +307,4 @@ class JobQueue(BaseCClass):
         return queue_index
 
     def count_running(self):
-        return sum(job.is_running() for job in self.job_list)
+        return sum(job.thread_status == ThreadStatusType.THREAD_RUNNING for job in self.job_list)

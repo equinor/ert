@@ -60,11 +60,10 @@ def create_queue(script, max_submit=1):
 
 def start_all(job_queue):
     job = job_queue.fetch_next_waiting()
-    threads = []
     while(job is not None):
-        threads.append(job.run(job_queue.driver, job_queue.max_submit))
+        job.run(job_queue.driver, job_queue.max_submit)
         job = job_queue.fetch_next_waiting()
-    return threads
+    
 
 class JobQueueTest(ResTest):
 
@@ -77,70 +76,67 @@ class JobQueueTest(ResTest):
             job_queue = create_queue(never_ending_script)
 
             assert job_queue.queue_size == 10
-            assert job_queue.is_running()
+            assert job_queue.is_active()
 
-            threads = start_all(job_queue)
+            start_all(job_queue)
 
             # make sure never ending jobs are running
-            time.sleep(3.0)
             wait_until(
-                lambda: self.assertTrue(job_queue.is_running())
+                lambda: self.assertTrue(job_queue.is_active())
             )
 
             for job in job_queue.job_list:
                 job.stop()
 
             wait_until(
-                lambda: self.assertFalse(job_queue.is_running())
+                lambda: self.assertFalse(job_queue.is_active())
             )
             
             for job in job_queue.job_list:
                 assert job.status == JobStatusType.JOB_QUEUE_IS_KILLED
             
-            for t in threads:
-                t.join()
+            for job in job_queue.job_list:
+                job.wait_for()
 
     def test_add_jobs(self):
         with TestAreaContext("job_queue_test_add") as work_area:
             job_queue = create_queue(simple_script)
 
             assert job_queue.queue_size == 10
-            assert job_queue.is_running()
+            assert job_queue.is_active()
             assert job_queue.fetch_next_waiting() is not None
 
-            threads = start_all(job_queue)
+            start_all(job_queue)
 
             for job in job_queue.job_list:
                 job.stop()
 
             wait_until(
-                lambda: self.assertFalse(job_queue.is_running())
+                lambda: self.assertFalse(job_queue.is_active())
             )
 
-            for t in threads:
-                t.join()
+            for job in job_queue.job_list:
+                job.wait_for()
 
     def test_failing_jobs(self):
         with TestAreaContext("job_queue_test_add") as work_area:
             job_queue = create_queue(failing_script, max_submit=1)
 
             assert job_queue.queue_size == 10
-            assert job_queue.is_running()
+            assert job_queue.is_active()
             
-            threads = start_all(job_queue)
+            start_all(job_queue)
 
             wait_until(
-                func=(lambda: self.assertFalse(job_queue.is_running())),
+                func=(lambda: self.assertFalse(job_queue.is_active())),
             )
 
-            for t in threads:
-                t.join()
+            for job in job_queue.job_list:
+                job.wait_for()
 
             assert job_queue.fetch_next_waiting() is None
 
             for job in job_queue.job_list:
                 assert job.status == JobStatusType.JOB_QUEUE_FAILED
             
-            for t in threads:
-                t.join()
             assert True

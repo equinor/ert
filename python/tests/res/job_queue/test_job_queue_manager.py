@@ -3,6 +3,7 @@ from res.enkf import ResConfig
 from tests import ResTest
 from tests.utils import wait_until
 from ecl.util.test import TestAreaContext
+from threading import Thread
 import os, stat
 
 
@@ -33,6 +34,12 @@ with open('STATUS', 'w') as f:
 failing_script = """#!/usr/bin/env python
 import sys
 sys.exit(1)
+"""
+
+never_ending_script = """#!/usr/bin/env python
+import time
+while True:
+    time.sleep(0.5)
 """
 
 def create_queue(script, max_submit=2):
@@ -92,3 +99,14 @@ class JobQueueManagerTest(ResTest):
             for job in job_queue.job_list:
                 assert job.status == JobStatusType.JOB_QUEUE_FAILED
                 assert job.submit_attempt == job_queue.max_submit
+
+    def test_kill_queue(self):
+        with TestAreaContext("job_queue_manager_test") as work_area:
+            max_submit_num = 5
+            job_queue = create_queue(simple_script, max_submit=max_submit_num)
+            manager = JobQueueManager(job_queue)
+            job_queue.kill_all_jobs()
+            manager.execute_queue()
+
+            for job in job_queue.job_list:
+                assert job.status == JobStatusType.JOB_QUEUE_FAILED

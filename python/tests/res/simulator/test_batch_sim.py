@@ -400,7 +400,6 @@ class BatchSimulatorTest(ResTest):
                                   })
                              ])
 
-            time.sleep(2.0)
             ctx.stop()
             status = ctx.status
 

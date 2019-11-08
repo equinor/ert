@@ -19,8 +19,9 @@ Module implementing a queue for managing external jobs.
 """
 from cwrap import BaseCClass
 from res import ResPrototype
-from res.job_queue import Job, JobStatusType
+from res.job_queue import Job, JobStatusType, ThreadStatusType
 import time
+import threading
 
 class JobQueueManager(BaseCClass):
     TYPE_NAME = "job_queue_manager"
@@ -84,7 +85,7 @@ class JobQueueManager(BaseCClass):
 
 
     def isRunning(self):
-        return self.queue.is_running()
+        return self.queue.is_active()
 
     def free(self):
         self._free( )
@@ -122,27 +123,32 @@ class JobQueueManager(BaseCClass):
         return 'JobQueueManager(waiting=%d, running=%d, success=%d, failed=%d, %s)' % (nw,nr,ns,nf,ir)
 
     def max_running(self):
-        return self.queue.get_max_running()
+        if self.queue.get_max_running() == 0:
+            return len(self.queue.job_list)
+        else:
+            return self.queue.get_max_running()
 
     def execute_queue(self):
         job_queue = self.queue
-        started_job_threads = []
-        while job_queue.is_running():
+        
+        while job_queue.is_active():
             job = job_queue.fetch_next_waiting()
-            while not job_queue.stopped and job is not None and job_queue.count_running() <= self.max_running():
-                started_job_threads.append(job.run(job_queue.driver, max_submit=job_queue.max_submit))
+            while not job_queue.stopped and job is not None and job_queue.count_running() < self.max_running():
+                job.run(job_queue.driver, max_submit=job_queue.max_submit)
                 job = job_queue.fetch_next_waiting()
             time.sleep(1)
             if job_queue.stopped:
                 for job in job_queue.job_list:
                     job.stop()
 
-        for thread in started_job_threads:
-            thread.join()
+        for job in job_queue.job_list:
+            job.wait_for()
+            if job.thread_status == ThreadStatusType.THREAD_FAILED:
+                raise AssertionError("Unexpected job status type after running job: {}".format(job.status))
 
         #clean-up to get the correct status on non started jobs after being stopped by user
         if job_queue.stopped:
             for job in job_queue.job_list:
-                if job.status == JobStatusType.JOB_QUEUE_WAITING:
-                    job._set_status(JobStatusType.JOB_QUEUE_IS_KILLED)
+                if job.status != JobStatusType.JOB_QUEUE_DONE:
+                    job._set_status(JobStatusType.JOB_QUEUE_FAILED)
 
