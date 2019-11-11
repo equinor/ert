@@ -252,6 +252,30 @@ class RMSRunTest(ResTest):
                     self.assertNotIn('RMS_TEST_VAR', env)
 
 
+    def test_run_class_with_existing_target_file(self):
+        with TestAreaContext("test_run_existing_target"):
+            with open("rms_config.yml", "w") as f:
+                f.write("executable:  {}/bin/rms".format(os.getcwd()))
+
+            os.mkdir("run_path")
+            os.mkdir("bin")
+            os.mkdir("project")
+            shutil.copy(os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin")
+            self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+
+            target_file = os.path.join(os.getcwd(), "rms_target_file")
+            action = {
+                "exit_status": 0,
+                "target_file": target_file,
+            }
+            with open("run_path/action.json", "w") as f:
+                f.write(json.dumps(action))
+
+            with open(target_file, "w") as f:
+                f.write("This is a dummy target file")
+
+            r = RMSRun(0, "project", "workflow", run_path="run_path", target_file=target_file)
+            r.run()
 
 if __name__ == "__main__":
     unittest.main()

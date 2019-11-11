@@ -3,14 +3,37 @@
 import json
 import sys
 import os
+import time
 
 config = {"exit_status" : 0}
 if os.path.isfile("action.json"):
     config = json.load(open("action.json"))
 
+
+def write_target_file(target_file):
+    with open(target_file, "w") as f:
+        f.write("this is the target file {}\n".format(time.time()))
+
+
 if "target_file" in config:
-    with open(config["target_file"], "w") as f:
-        f.write("this is the target file\n")
+    target_file = config["target_file"]
+    if os.path.isfile(target_file):
+        mtime = os.path.getmtime(target_file)
+    else:
+        mtime = None
+
+    write_target_file(target_file)
+
+    # Try to ensure that mtime is updated for target file
+    base_sleep_time = 1
+    for sleep_pow in range(5):
+        if mtime is not None and mtime == os.path.getmtime(target_file):
+            time.sleep(base_sleep_time*2**sleep_pow)
+            write_target_file(target_file)
+            time.sleep(base_sleep_time*2**sleep_pow)
+        else:
+            break
+
 
 with open('env.json', 'w') as f:
     env = {}

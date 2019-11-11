@@ -47,8 +47,7 @@ class RMSRun(object):
                 self.target_file = os.path.join(os.getcwd(), target_file)
 
             if os.path.isfile(self.target_file):
-                st = os.stat(self.target_file)
-                self.target_file_mtime = st.mtime
+                self.target_file_mtime = os.path.getmtime(self.target_file)
             else:
                 self.target_file_mtime = None
 
@@ -129,8 +128,7 @@ class RMSRun(object):
         if self.target_file_mtime is None:
             return
 
-        st = os.stat(self.target_file)
-        if st.mtime == self.target_file_mtime:
+        if os.path.getmtime(self.target_file) == self.target_file_mtime:
             raise Exception("The target file:{} is unmodified - interpreted as failure".format(self.target_file))
 
 
