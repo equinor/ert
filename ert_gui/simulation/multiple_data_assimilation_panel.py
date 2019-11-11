@@ -49,7 +49,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         addHelpToWidget(number_of_realizations_label, "config/ensemble/num_realizations")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
-        self._target_case_format_model = TargetCaseModel(format_mode=True)
+        self._target_case_format_model = TargetCaseModel(format_mode=False)
         self._target_case_format_field = StringBox(self._target_case_format_model, "config/simulation/target_case_format")
         self._target_case_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Target case format:", self._target_case_format_field)
