@@ -30,6 +30,48 @@ without ignoring errors
 Reservoir modelling: RMS
 ........................
 
+.. code-block:: bash
+
+    EXECUTABLE ../res/script/rms
+
+    DEFAULT       <RMS_IMPORT_PATH> ./
+    DEFAULT       <RMS_EXPORT_PATH> ./
+    DEFAULT       <RMS_RUNPATH>     rms/model
+    TARGET_FILE   <RMS_TARGET_FILE>
+    ARGLIST <IENS> <RMS_PROJECT> <RMS_WORKFLOW> "--run-path=<RMS_RUNPATH>" "--target-file=<RMS_TARGET_FILE>" "--import-path=<RMS_IMPORT_PATH>" "--version=<RMS_VERSION>" "--export-path=<RMS_EXPORT_PATH>"
+
+    EXEC_ENV PYTHONPATH <RMS_PYTHONPATH>
+
+.. code-block:: bash
+
+    FORWARD_MODEL RMS(<IENS> <RMS_PROJECT> <RMS_WORKFLOW>)
+
+RMS script documentation
+########################
+
+The script must be invoked with minimum three positional arguments:
+
+Positional arguments:
+  IENS
+        Realization number
+  RMS_PROJECT
+        The RMS project we are running
+  RMS_WORKFLOW
+        The rms workflow we intend to run
+
+Optional arguments:  
+  -r, --run-path RUN_PATH
+                        The directory which will be used as cwd when running
+                        rms
+  -t, --target-file TARGET_FILE
+                        name of file which should be created/updated by rms
+  -i, --import-path IMPORT_PATH
+                        the prefix of all relative paths when rms is importing
+  -e, --export-path EXPORT_PATH
+                        the prefix of all relative paths when rms is exporting
+  -v, --version VERSION
+                        the prefix of all relative paths when rms is exporting
+
 File system utilities
 .....................
 
