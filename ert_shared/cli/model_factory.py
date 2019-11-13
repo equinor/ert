@@ -64,7 +64,7 @@ def _setup_multiple_data_assimilation(args):
     modules = ERT.enkf_facade.get_analysis_module_names(iterable=iterable)
     simulations_argument = {
         "active_realizations": _realizations(args),
-        "target_case": _target_case_name(args, format_mode=False),
+        "target_case": _target_case_name(args, format_mode=True),
         "analysis_module": _get_analysis_module_name(active_name, modules, iterable=iterable),
         "weights": args.weights
     }
