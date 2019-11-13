@@ -101,3 +101,5 @@ script:
   - pip install . --prefix=$INSTALL_DIR
   - python setup.py test
   - sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
+  - conda remove pyqt -y
+  - ert --help
