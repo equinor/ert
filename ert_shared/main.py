@@ -5,7 +5,6 @@ import sys
 import re
 from argparse import ArgumentParser, ArgumentTypeError
 from ert_shared.cli.main import run_cli
-from ert_gui.gert_main import run_gui
 from ert_gui.ide.keywords.definitions import (
     RangeStringArgument,
     ProperNameArgument,
@@ -83,6 +82,11 @@ def range_limited_int(user_input):
     raise ArgumentTypeError("Range must be in range 1 - 99")
 
 
+def run_gui_wrapper(args):
+    from ert_gui.gert_main import run_gui
+    run_gui(args)
+
+
 def get_ert_parser(parser=None):
     if parser is None:
         parser = ArgumentParser(description="ERT - Ensemble Reservoir Tool")
@@ -106,7 +110,7 @@ def get_ert_parser(parser=None):
         description="Opens an independent graphical user interface for "
         "the user to interact with ERT.",
     )
-    gui_parser.set_defaults(func=run_gui)
+    gui_parser.set_defaults(func=run_gui_wrapper)
     gui_parser.add_argument("config", type=valid_file, help=config_help)
     gui_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output", default=False
