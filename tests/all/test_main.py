@@ -11,7 +11,7 @@ class MainTest(unittest.TestCase):
     def test_argparse_exec_gui(self):
         parser = ArgumentParser(prog="test_main")
         parsed = ert_parser(parser, ['gui', 'test-data/local/poly_example/poly.ert'])
-        self.assertEquals(parsed.func.__name__, "run_gui")
+        self.assertEquals(parsed.func.__name__, "run_gui_wrapper")
 
     def test_argparse_exec_test_run_valid_case(self):
         parser = ArgumentParser(prog="test_main")
