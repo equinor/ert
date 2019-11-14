@@ -12,8 +12,6 @@ from ErtQt import QT5
 from ert_gui.about_dialog import AboutDialog
 from ert_shared.plugins import ErtPluginManager
 
-import ert_shared
-
 
 class GertMainWindow(QMainWindow):
     def __init__(self, config_file):
@@ -101,14 +99,10 @@ class GertMainWindow(QMainWindow):
         settings.setValue("windowState", self.saveState())
 
 
-    def _clear_global_state(self):
-        ert_shared.clear_global_state()
-
     def closeEvent(self, event):
         #Use QT settings saving mechanism
         #settings stored in ~/.config/Equinor/ErtGui.conf
         self.__saveSettings()
-        self._clear_global_state()
         QMainWindow.closeEvent(self, event)
 
 
