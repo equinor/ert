@@ -70,7 +70,7 @@ class GertMainWindow(QMainWindow):
 
     def __createMenu(self):
         file_menu = self.menuBar().addMenu("&File")
-        file_menu.addAction("Close", self.__quit)
+        file_menu.addAction("Close", self.close)
         self.__view_menu = self.menuBar().addMenu("&View")
         self.__help_menu = self.menuBar().addMenu("&Help")
         """:type: QMenu"""
@@ -93,12 +93,6 @@ class GertMainWindow(QMainWindow):
             help_link_item = self.__help_menu.addAction(menu_label)
             help_link_item.setMenuRole(QAction.ApplicationSpecificRole)
             help_link_item.triggered.connect(functools.partial(webbrowser.open, link))
-
-
-    def __quit(self):
-        self.__saveSettings()
-        self._clear_global_state()
-        qApp.quit()
 
 
     def __saveSettings(self):
