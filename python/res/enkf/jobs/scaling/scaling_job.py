@@ -43,7 +43,8 @@ def _observation_scaling(ert, config):
     Collects data, performs scaling and applies scaling, assumes validated input.
     """
     obs = ert.getObservations()
-    measured_data = MeasuredData(ert, config.CALCULATE_KEYS)
+    measured_data = MeasuredData(ert, config.CALCULATE_KEYS.keys)
+    measured_data.remove_nan_and_filter(config.CALCULATE_KEYS)
     matrix = DataMatrix(measured_data.data)
     matrix.std_normalization(config.CALCULATE_KEYS.keys, inplace=True)
 

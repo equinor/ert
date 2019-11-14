@@ -499,10 +499,8 @@ def test_get_nr_primary_components():
 def test_filter_on_column_index(setup_ert):
     res_config = ResConfig(config=setup_ert)
     ert = EnKFMain(res_config)
-    new_event = namedtuple("named_dict", ["keys", "index", "alpha", "std_cutoff"])
-    input = new_event(["POLY_OBS"], None, 3.0, 1e-6)
 
-    data_matrix = measured_data.MeasuredData(ert, input)
+    data_matrix = measured_data.MeasuredData(ert, ["POLY_OBS"])
 
     matrix = np.random.rand(10, 10)
 

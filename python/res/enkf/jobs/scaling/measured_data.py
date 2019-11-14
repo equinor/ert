@@ -9,8 +9,10 @@ from res.enkf.plot_data import PlotBlockDataLoader
 
 
 class MeasuredData(object):
-    def __init__(self, ert, events):
-        self.data = self._get_data(ert, events.keys)
+    def __init__(self, ert, keys):
+        self.data = self._get_data(ert, keys)
+
+    def remove_nan_and_filter(self, events):
         self.filter_on_column_index(events.index)
         self.remove_nan(events.keys)
         self.filter_out_outliers(events)
@@ -27,7 +29,7 @@ class MeasuredData(object):
         self.data = self._filter_on_column_index(index_list)
 
     def filter_out_outliers(self, events):
-        self.data = self._filter_out_outliers(events)
+        self.data = self._filter_out_outliers(events.keys, events.std_cutoff, events.alpha)
 
     def _get_data(self, ert, observation_keys):
         """
@@ -137,7 +139,7 @@ class MeasuredData(object):
         else:
             return self.data
 
-    def _filter_out_outliers(self, events):
+    def _filter_out_outliers(self, keys, std_cutoff, alpha):
         """
         Goes through the observation keys and filters out outliers. It first extracts
         key data such as ensamble mean and std, and observation values and std. It creates
@@ -146,17 +148,17 @@ class MeasuredData(object):
         """
         filters = []
 
-        for key in events.keys:
+        for key in keys:
 
             ens_mean = self.data.loc[key].mean(axis=0)
             ens_std = self.data.loc[key].std(axis=0)
             obs_values = self.data.loc["OBS_" + key]
             obs_std = self.data.loc["STD_" + key]
 
-            filters.append(self._filter_ensamble_std(ens_std, events.std_cutoff))
+            filters.append(self._filter_ensamble_std(ens_std, std_cutoff))
             filters.append(
                 self._filter_ens_mean_obs(
-                    ens_mean, ens_std, obs_values, obs_std, events.alpha
+                    ens_mean, ens_std, obs_values, obs_std, alpha
                 )
             )
 
