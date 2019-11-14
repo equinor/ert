@@ -4,6 +4,7 @@ import os
 import sys
 import re
 from argparse import ArgumentParser, ArgumentTypeError
+from ert_shared import clear_global_state
 from ert_shared.cli.main import run_cli
 from ert_gui.gert_main import run_gui
 from ert_gui.ide.keywords.definitions import (
@@ -237,6 +238,8 @@ def main():
 
     with ErtPluginContext():
         args.func(args)
+
+    clear_global_state()
 
 
 if __name__ == "__main__":
