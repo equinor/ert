@@ -50,7 +50,6 @@ find_package(CXX11Features)
 
 #-----------------------------------------------------------------
 
-option( BUILD_APPLICATIONS  "Build some small - mostly stale  -applications" OFF)
 option( BUILD_TESTS         "Should the tests be built"             OFF)
 option( BUILD_PYTHON        "Run py_compile on the python wrappers" OFF)
 option( ENABLE_PYTHON       "Enable the python wrappers"            ON )
@@ -175,7 +174,6 @@ endfunction()
 
 add_subdirectory(lib)
 add_subdirectory(python)
-add_subdirectory(applications)
 
 foreach(share_dir workflows gui forward-models)
   install(DIRECTORY "share/ert/${share_dir}" DESTINATION ${SHARE_DIR})
