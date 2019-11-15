@@ -1,7 +1,7 @@
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 from res import ResPrototype
-from res.job_queue import JobStatusType, ThreadStatusType
+from res.job_queue import JobStatusType, ThreadStatus
 from threading import Thread, Lock
 
 import time
@@ -39,7 +39,7 @@ class JobQueueNode(BaseCClass):
         argv = StringList()
         argv.append(run_path)
 
-        self._thread_status = ThreadStatusType.THREAD_READY
+        self._thread_status = ThreadStatus.READY
         self._thread = None
         self._mutex = Lock()
 
@@ -52,6 +52,7 @@ class JobQueueNode(BaseCClass):
             super(JobQueueNode, self).__init__(c_ptr)
         else:
             raise ValueError("Unable to create job node object")
+
     def free(self):
         self._free()
 
@@ -90,45 +91,51 @@ class JobQueueNode(BaseCClass):
         while self.is_running():
             time.sleep(1)
             self.update_status(driver)
-            if self._thread_status == ThreadStatusType.THREAD_STOPPING:
+            if self.thread_status == ThreadStatus.STOPPING:
                 self._kill(driver)
-        if self.status == JobStatusType.JOB_QUEUE_DONE:
-            self.run_done_callback()
-        elif self.status == JobStatusType.JOB_QUEUE_EXIT:
-            if self.submit_attempt < max_submit:
-                self._set_thread_status(ThreadStatusType.THREAD_READY)
-                return
-            else:
-                self._set_status(JobStatusType.JOB_QUEUE_FAILED)
-                self.run_exit_callback()
-        elif self.status == JobStatusType.JOB_QUEUE_IS_KILLED:
-            pass
-        else:
-            self._set_thread_status(ThreadStatusType.THREAD_FAILED)
-            raise AssertionError("Unexpected job status type after running job: {}".format(self.status))
 
-        self._set_thread_status(ThreadStatusType.THREAD_DONE)
+        with self._mutex:
+            if self.status == JobStatusType.JOB_QUEUE_DONE:
+                self.run_done_callback()
+            elif self.status == JobStatusType.JOB_QUEUE_EXIT:
+                if self.submit_attempt < max_submit:
+                    self._set_thread_status(ThreadStatus.READY)
+                    return
+                else:
+                    self._set_status(JobStatusType.JOB_QUEUE_FAILED)
+                    self.run_exit_callback()
+            elif self.status == JobStatusType.JOB_QUEUE_IS_KILLED:
+                pass
+            else:
+                self._set_thread_status(ThreadStatus.FAILED)
+                raise AssertionError("Unexpected job status type after running job: {}".format(self.status))
+
+            self._set_thread_status(ThreadStatus.DONE)
 
     def run(self, driver, max_submit=2):
         # Prevent multiple threads working on the same object
         self.wait_for()
         # Do not start if already kill signal is sent
-        if self._thread_status == ThreadStatusType.THREAD_STOPPING:
-            self._set_thread_status(threadStatusType.THREAD_DONE)
-
+        if self.thread_status == ThreadStatus.STOPPING:
+            self._set_thread_status(ThreadStatus.DONE)
             return
-        self._thread_status = ThreadStatusType.THREAD_RUNNING
-        try:
-            self._thread = Thread(target=self._job_monitor, args=(driver, max_submit))
-            self._thread.start()
-        except (RuntimeError, NameError):
-            self._set_thread_status(ThreadStatusType.THREAD_FAILED)
+
+        self._set_thread_status(ThreadStatus.RUNNING)
+        self._thread = Thread(target=self._job_monitor, args=(driver, max_submit))
+        self._thread.start()
         
     def stop(self):
-        if self._thread_status == ThreadStatusType.THREAD_RUNNING: 
-            self._set_thread_status(ThreadStatusType.THREAD_STOPPING)
-        else:
-            self._set_thread_status(ThreadStatusType.THREAD_DONE)
+        with self._mutex:
+            if self.thread_status == ThreadStatus.RUNNING:
+                self._set_thread_status(ThreadStatus.STOPPING)
+            elif self.thread_status == ThreadStatus.READY:
+                #clean-up to get the correct status after being stopped by user
+                self._set_thread_status(ThreadStatus.DONE)
+                self._set_status(JobStatusType.JOB_QUEUE_FAILED)
+
+            assert self.thread_status in [
+                ThreadStatus.DONE, ThreadStatus.STOPPING, ThreadStatus.FAILED,
+            ]
 
     def wait_for(self):
         if self._thread is not None and self._thread.is_alive():
@@ -139,6 +146,4 @@ class JobQueueNode(BaseCClass):
             self._update_status(driver)
 
     def _set_thread_status(self, new_status):
-        self._mutex.acquire()
         self._thread_status = new_status
-        self._mutex.release()

@@ -3,7 +3,6 @@ from res.enkf import ResConfig
 from tests import ResTest
 from tests.utils import wait_until
 from ecl.util.test import TestAreaContext
-from threading import Thread
 import os, stat
 
 

@@ -19,9 +19,8 @@ Module implementing a queue for managing external jobs.
 """
 from cwrap import BaseCClass
 from res import ResPrototype
-from res.job_queue import Job, JobStatusType, ThreadStatusType
+from res.job_queue import Job, JobStatusType, ThreadStatus
 import time
-import threading
 
 class JobQueueManager(BaseCClass):
     TYPE_NAME = "job_queue_manager"
@@ -128,27 +127,35 @@ class JobQueueManager(BaseCClass):
         else:
             return self.queue.get_max_running()
 
-    def execute_queue(self):
-        job_queue = self.queue
-        
-        while job_queue.is_active():
-            job = job_queue.fetch_next_waiting()
-            while not job_queue.stopped and job is not None and job_queue.count_running() < self.max_running():
-                job.run(job_queue.driver, max_submit=job_queue.max_submit)
-                job = job_queue.fetch_next_waiting()
+    def _available_capacity(self):
+        return not self.queue.stopped and self.queue.count_running() < self.max_running()
+
+    def _launch_jobs(self):
+        while self.queue.is_active() and not self.queue.stopped:
+            #Start waiting jobs
+            while self._available_capacity():
+                job = self.queue.fetch_next_waiting()
+                if job is None:
+                    break
+                job.run(self.queue.driver, max_submit=self.queue.max_submit)
             time.sleep(1)
-            if job_queue.stopped:
-                for job in job_queue.job_list:
-                    job.stop()
 
-        for job in job_queue.job_list:
-            job.wait_for()
-            if job.thread_status == ThreadStatusType.THREAD_FAILED:
-                raise AssertionError("Unexpected job status type after running job: {}".format(job.status))
+    def _stop_jobs(self):
+        for job in self.queue.job_list:
+            job.stop()
+        while self.queue.is_active():
+            time.sleep(1)
 
-        #clean-up to get the correct status on non started jobs after being stopped by user
-        if job_queue.stopped:
-            for job in job_queue.job_list:
-                if job.status != JobStatusType.JOB_QUEUE_DONE:
-                    job._set_status(JobStatusType.JOB_QUEUE_FAILED)
+    def _assert_complete(self):
+        for job in self.queue.job_list:
+            if job.thread_status != ThreadStatus.DONE:
+                msg = "Unexpected job status type after running job: {} with thread status: {}"
+                raise AssertionError(msg.format(job.status, job.thread_status))
 
+    def execute_queue(self):
+        self._launch_jobs()
+
+        if self.queue.stopped:
+            self._stop_jobs()
+
+        self._assert_complete()

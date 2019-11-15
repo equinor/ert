@@ -15,9 +15,9 @@
 #  for more details.
 
 
-class ThreadStatusType:
-    THREAD_READY = 1
-    THREAD_RUNNING = 2
-    THREAD_FAILED = 3
-    THREAD_DONE = 4
-    THREAD_STOPPING = 5
+class ThreadStatus:
+    READY = 1
+    RUNNING = 2
+    FAILED = 3
+    DONE = 4
+    STOPPING = 5
