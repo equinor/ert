@@ -72,31 +72,7 @@ _num_convert_msg = "Create UPDATE_KEYS from CALCULATE_KEYS as it was not specifi
 def _expand_input(input_value):
     expanded_values = deepcopy(input_value)
     if "CALCULATE_KEYS" in expanded_values and "UPDATE_KEYS" not in expanded_values:
-        if "index" in expanded_values["CALCULATE_KEYS"]:
-            expanded_values.update(
-                {
-                    "UPDATE_KEYS": {
-                        "keys": [
-                            {
-                                "key": key,
-                                "index": expanded_values["CALCULATE_KEYS"]["index"],
-                            }
-                            for key in expanded_values["CALCULATE_KEYS"]["keys"]
-                        ]
-                    }
-                }
-            )
-        else:
-            expanded_values.update(
-                {
-                    "UPDATE_KEYS": {
-                        "keys": [
-                            {"key": key}
-                            for key in expanded_values["CALCULATE_KEYS"]["keys"]
-                        ]
-                    }
-                }
-            )
+        expanded_values.update({"UPDATE_KEYS": expanded_values["CALCULATE_KEYS"]})
     return expanded_values
 
 
@@ -118,20 +94,23 @@ def build_schema():
                     "keys": {
                         MK.Required: True,
                         MK.Type: types.List,
-                        MK.Content: {MK.Item: {MK.Type: types.String}},
-                    },
-                    "index": {
-                        MK.Required: False,
-                        MK.LayerTransformation: _to_int_list,
-                        MK.Description: (
-                            "Index list where scaling factor is calculatied, must match the simulated data"
-                        ),
-                        MK.Type: types.List,
-                        MK.ElementValidators: (_min_length,),
                         MK.Content: {
                             MK.Item: {
-                                MK.Type: types.Integer,
-                                MK.ElementValidators: (_min_value,),
+                                MK.Type: types.NamedDict,
+                                MK.Content: {
+                                    "key": {MK.Required: True, MK.Type: types.String},
+                                    "index": {
+                                        MK.Required: False,
+                                        MK.Type: types.List,
+                                        MK.LayerTransformation: _to_int_list,
+                                        MK.Content: {
+                                            MK.Item: {
+                                                MK.Type: types.Integer,
+                                                MK.ElementValidators: (_min_value,),
+                                            }
+                                        },
+                                    },
+                                },
                             }
                         },
                     },

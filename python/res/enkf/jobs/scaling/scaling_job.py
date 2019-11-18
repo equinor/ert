@@ -43,10 +43,14 @@ def _observation_scaling(ert, config):
     Collects data, performs scaling and applies scaling, assumes validated input.
     """
     obs = ert.getObservations()
-    measured_data = MeasuredData(ert, config.CALCULATE_KEYS.keys)
-    measured_data.remove_nan_and_filter(config.CALCULATE_KEYS)
+    calculate_keys = [event.key for event in config.CALCULATE_KEYS.keys]
+    index_lists = [event.index for event in config.CALCULATE_KEYS.keys]
+    measured_data = MeasuredData(ert, calculate_keys, index_lists)
+    measured_data.remove_nan_and_filter(
+        calculate_keys, config.CALCULATE_KEYS.std_cutoff, config.CALCULATE_KEYS.alpha
+    )
     matrix = DataMatrix(measured_data.data)
-    matrix.std_normalization(config.CALCULATE_KEYS.keys, inplace=True)
+    matrix.std_normalization(inplace=True)
 
     scale_factor = matrix.get_scaling_factor(config.CALCULATE_KEYS)
 
@@ -67,16 +71,12 @@ def _wildcard_to_dict_list(matching_keys, wildcard_key):
         return [{"key": key} for key in matching_keys]
 
 
-def _expand_wildcard(get_wildcard_func, wildcard_key, parent):
+def _expand_wildcard(get_wildcard_func, wildcard_key):
     """
-    Expands a wildcard, the parent will be different if it is a calculate key
-    or update key, so a different approach is needed to expand them.
+    Expands a wildcard
     """
     matching_keys = get_wildcard_func(wildcard_key).strings
-    if isinstance(parent, dict):
-        return _wildcard_to_dict_list(matching_keys, wildcard_key)
-    elif isinstance(parent, str):
-        return [key for key in matching_keys]
+    return _wildcard_to_dict_list(matching_keys, wildcard_key)
 
 
 def _find_and_expand_wildcards(get_wildcard_func, user_dict):
@@ -88,13 +88,10 @@ def _find_and_expand_wildcards(get_wildcard_func, user_dict):
     for main_key, value in user_dict.items():
         new_entries = []
         if main_key in ("UPDATE_KEYS", "CALCULATE_KEYS"):
-            path = "key"
-            if main_key == "CALCULATE_KEYS":
-                path = slice(None)
             for val in value["keys"]:
-                key = val[path]
+                key = val["key"]
                 if "*" in key:
-                    new_entries.extend(_expand_wildcard(get_wildcard_func, key, val))
+                    new_entries.extend(_expand_wildcard(get_wildcard_func, key))
                 else:
                     new_entries.append(val)
             new_dict[main_key]["keys"] = new_entries
@@ -204,7 +201,7 @@ def valid_job(observations, user_config, ensamble_size, storage):
     Validates the job, assumes that the configuration is valid
     """
 
-    calculation_keys = user_config.snapshot.CALCULATE_KEYS.keys
+    calculation_keys = [entry.key for entry in user_config.snapshot.CALCULATE_KEYS.keys]
     application_keys = [entry.key for entry in user_config.snapshot.UPDATE_KEYS.keys]
 
     error_messages = []
@@ -218,19 +215,9 @@ def valid_job(observations, user_config, ensamble_size, storage):
         error_messages.extend(
             has_data(observations, calculation_keys, ensamble_size, storage)
         )
-        error_messages.extend(same_data_type(observations, calculation_keys))
     for error in error_messages:
         print(error)
     return len(error_messages) == 0
-
-
-def same_data_type(observations, keys):
-    """
-    Checks that only one data type is entered
-    """
-    error_msg = "Different types of observations not supported, types given: {}"
-    data_types = set([observations[key].getImplementationType().name for key in keys])
-    return [error_msg.format(data_types)] if len(data_types) > 1 else []
 
 
 def has_data(observations, keys, ensamble_size, storage):

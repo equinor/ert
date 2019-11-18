@@ -51,7 +51,7 @@ def setup_tmpdir(tmpdir):
 def valid_poly_config():
 
     valid_config_data = {
-        "CALCULATE_KEYS": {"keys": ["POLY_OBS"]},
+        "CALCULATE_KEYS": {"keys": [{"key": "POLY_OBS"}]},
         "UPDATE_KEYS": {"keys": [{"key": "POLY_OBS"}]},
     }
 
@@ -160,13 +160,13 @@ def get_config(index_list_calc=None, index_list_update=None):
     default_values = job_config.get_default_values()
     config = {
         "UPDATE_KEYS": {"keys": [{"key": "POLY_OBS"}]},
-        "CALCULATE_KEYS": {"keys": ["POLY_OBS"]},
+        "CALCULATE_KEYS": {"keys": [{"key": "POLY_OBS"}]},
     }
 
     if index_list_update:
         config["UPDATE_KEYS"]["keys"][0].update({"index": index_list_update})
     if index_list_calc:
-        config["CALCULATE_KEYS"].update({"index": index_list_calc})
+        config["CALCULATE_KEYS"]["keys"][0].update({"index": index_list_calc})
 
     return configsuite.ConfigSuite(config, schema, layers=(default_values,)).snapshot
 
@@ -196,7 +196,7 @@ def test_python_version_of_enkf_scaling_job(setup_ert):
 
     assert_obs_vector(obs_vector, 1.0)
 
-    job_config = {"CALCULATE_KEYS": {"keys": ["POLY_OBS"]}}
+    job_config = {"CALCULATE_KEYS": {"keys": [{"key": "POLY_OBS"}]}}
 
     with open("job_config.yml", "w") as fout:
         yaml.dump(job_config, fout)
@@ -206,7 +206,7 @@ def test_python_version_of_enkf_scaling_job(setup_ert):
 
     assert_obs_vector(obs_vector, np.sqrt(10.0))
 
-    job_config["CALCULATE_KEYS"].update({"index": [1, 2, 3]})
+    job_config["CALCULATE_KEYS"]["keys"][0].update({"index": [1, 2, 3]})
     with open("job_config.yml", "w") as fout:
         yaml.dump(job_config, fout)
 
@@ -215,7 +215,7 @@ def test_python_version_of_enkf_scaling_job(setup_ert):
     assert_obs_vector(
         obs_vector,
         np.sqrt(10.0),
-        index_list=job_config["CALCULATE_KEYS"]["index"],
+        index_list=job_config["CALCULATE_KEYS"]["keys"][0]["index"],
         val_2=np.sqrt(3.0),
     )
 
@@ -366,8 +366,10 @@ def test_min_value():
 def test_expand_input():
 
     expected_result = {
-        "UPDATE_KEYS": {"keys": [{"key": "key_1"}]},
-        "CALCULATE_KEYS": {"keys": ["key_1", "key_2", "key_3"]},
+        "UPDATE_KEYS": {"keys": [{"key": "key_4"}, {"key": "key_5"}, {"key": "key_6"}]},
+        "CALCULATE_KEYS": {
+            "keys": [{"key": "key_1"}, {"key": "key_2"}, {"key": "key_3"}]
+        },
     }
 
     valid_config = deepcopy(expected_result)
@@ -379,7 +381,9 @@ def test_expand_input():
 
     expected_result = {
         "UPDATE_KEYS": {"keys": [{"key": "key_1"}, {"key": "key_2"}, {"key": "key_3"}]},
-        "CALCULATE_KEYS": {"keys": ["key_1", "key_2", "key_3"]},
+        "CALCULATE_KEYS": {
+            "keys": [{"key": "key_1"}, {"key": "key_2"}, {"key": "key_3"}]
+        },
     }
 
     assert job_config._expand_input(copy_of_valid_config) == expected_result
@@ -388,10 +392,7 @@ def test_expand_input():
 def test_config_setup():
 
     valid_config_data = {
-        "CALCULATE_KEYS": {
-            "index": "1-5",
-            "keys": ["first_key", "second_key", "third_key", "fourth_key"],
-        }
+        "CALCULATE_KEYS": {"keys": [{"key": "first_key"}, {"key": "second_key"}]}
     }
 
     schema = job_config.build_schema()
@@ -399,10 +400,7 @@ def test_config_setup():
     assert config.valid
 
     valid_config_data = {
-        "CALCULATE_KEYS": {
-            "index": "1-5",
-            "keys": ["first_key", "second_key", "third_key", "fourth_key"],
-        },
+        "CALCULATE_KEYS": {"keys": [{"key": "first_key"}, {"key": "second_key"}]},
         "UPDATE_KEYS": {"keys": [{"index": [1, 2, 3], "key": "first_key"}]},
     }
 
@@ -418,7 +416,7 @@ def test_config_setup():
     assert not config.valid
 
     invalid_missing_required_keyword = {
-        "CALCULATE_KEYS": {"index": "1-5", "keys": ["a_key"]},
+        "CALCULATE_KEYS": {"keys": [{"key": "a_key"}]},
         "UPDATE_KEYS": {"index": "1-5"},
     }
 
@@ -426,10 +424,7 @@ def test_config_setup():
     assert not config.valid
 
     invalid_negative_index = {
-        "CALCULATE_KEYS": {
-            "index": "1-5",
-            "keys": ["first_key", "second_key", "third_key", "fourth_key"],
-        },
+        "CALCULATE_KEYS": {"keys": [{"key": "first_key"}, {"key": "second_key"}]},
         "UPDATE_KEYS": {"keys": [{"index": [-1, 2, 3], "key": "first_key"}]},
     }
 
@@ -444,7 +439,7 @@ def test_main_entry_point(setup_ert):
     ert = EnKFMain(res_config)
 
     arguments = {
-        "CALCULATE_KEYS": {"keys": ["POLY_OBS"]},
+        "CALCULATE_KEYS": {"keys": [{"key": "POLY_OBS"}]},
         "UPDATE_KEYS": {"keys": [{"key": "POLY_OBS", "index": [1, 2, 3]}]},
     }
 
@@ -460,7 +455,7 @@ def test_main_entry_point(setup_ert):
         3.1622776601683795,
     )
 
-    arguments["CALCULATE_KEYS"].update({"index": [7, 8, 9]})
+    arguments["CALCULATE_KEYS"]["keys"][0].update({"index": [7, 8, 9]})
     scaling_job.scaling_job(ert, arguments)
     assert_obs_vector(
         obs_vector,
@@ -476,9 +471,7 @@ def test_get_scaling_factor():
     np.random.seed(123)
     input_matrix = np.random.rand(10, 10)
 
-    matrix = scaled_matrix.DataMatrix(
-        pd.DataFrame(data=input_matrix, index=event.keys * input_matrix.shape[1])
-    )
+    matrix = scaled_matrix.DataMatrix(pd.DataFrame(data=input_matrix))
 
     assert matrix.get_scaling_factor(event) == np.sqrt(10 / 4.0)
 
@@ -496,6 +489,16 @@ def test_get_nr_primary_components():
     assert matrix._get_nr_primary_components(input_matrix, 0.99) == 6
 
 
+def test_std_normalization():
+    input_matrix = pd.DataFrame(np.ones((3, 3)))
+    input_matrix.loc["OBS"] = np.ones(3)
+    input_matrix.loc["STD"] = np.ones(3) * 0.1
+    expected_matrix = [[10.0, 10.0, 10.0], [10.0, 10.0, 10.0], [10.0, 10.0, 10.0]]
+    matrix = scaled_matrix.DataMatrix(pd.concat({"A_KEY": input_matrix}, axis=1))
+    result = matrix.std_normalization(["A_KEY"])
+    assert (result.loc[[0, 1, 2]].values == expected_matrix).all()
+
+
 def test_filter_on_column_index(setup_ert):
     res_config = ResConfig(config=setup_ert)
     ert = EnKFMain(res_config)
@@ -507,12 +510,14 @@ def test_filter_on_column_index(setup_ert):
     index_lists = [[0, 1], [1, 2, 3], [1, 2, 3, 4, 5]]
     for index_list in index_lists:
         data_matrix.data = pd.DataFrame(matrix)
-        data_matrix.filter_on_column_index(index_list)
+        data_matrix.data = data_matrix.filter_on_column_index(
+            data_matrix.data, index_list
+        )
         assert data_matrix.data.shape == (10, len(index_list))
 
     data_matrix.data = pd.DataFrame(matrix)
     with pytest.raises(IndexError):
-        data_matrix._filter_on_column_index([11])
+        data_matrix._filter_on_column_index(data_matrix.data, [11])
 
 
 @pytest.mark.usefixtures("setup_tmpdir")
@@ -530,15 +535,14 @@ def test_add_wildcards():
         "ANOTHER_KEY": "something",
         "CALCULATE_KEYS": {
             "keys": [
-                "WOPR_OP1_108",
-                "WOPR_OP1_144",
-                "WOPR_OP1_190",
-                "WOPR_OP1_9",
-                "WOPR_OP1_36",
-                "WOPR_OP1_72",
-                "FOPR",
-            ],
-            "index": [1, 2, 3, 4, 5],
+                {"key": "WOPR_OP1_108"},
+                {"key": "WOPR_OP1_144"},
+                {"key": "WOPR_OP1_190"},
+                {"key": "WOPR_OP1_9"},
+                {"key": "WOPR_OP1_36"},
+                {"key": "WOPR_OP1_72"},
+                {"key": "FOPR"},
+            ]
         },
         "UPDATE_KEYS": {
             "keys": [
@@ -552,16 +556,13 @@ def test_add_wildcards():
 
     user_config = {
         "ANOTHER_KEY": "something",
-        "CALCULATE_KEYS": {"keys": ["WOPR_*", "FOPR"], "index": [1, 2, 3, 4, 5]},
+        "CALCULATE_KEYS": {"keys": [{"key": "WOPR_*"}, {"key": "FOPR"}]},
         "UPDATE_KEYS": {"keys": [{"key": "WOPR_OP1_1*"}, {"key": "FOPR"}]},
     }
 
     result_dict = scaling_job._find_and_expand_wildcards(
         ert.getObservations().getMatchingKeys, user_config
     )
-
-    result_dict["CALCULATE_KEYS"]["keys"].sort()
-    expected_dict["CALCULATE_KEYS"]["keys"].sort()
 
     assert result_dict == expected_dict
 
@@ -596,7 +597,9 @@ def test_add_observation_vectors():
 @pytest.mark.usefixtures("setup_tmpdir")
 def test_main_entry_point_summary_data_calc():
 
-    arguments = {"CALCULATE_KEYS": {"keys": ["WOPR_OP1_108", "WOPR_OP1_144"]}}
+    arguments = {
+        "CALCULATE_KEYS": {"keys": [{"key": "WOPR_OP1_108"}, {"key": "WOPR_OP1_144"}]}
+    }
 
     test_data_dir = os.path.join(_TEST_DATA_DIR, "local", "snake_oil")
 
@@ -619,16 +622,18 @@ def test_main_entry_point_summary_data_calc():
     for index, node in enumerate(obs_vector):
         assert node.getStdScaling(index) == np.sqrt((2.0 * 6.0) / 2.0)
 
-    arguments["CALCULATE_KEYS"].update({"index": [1, 2, 3]})
+    arguments["CALCULATE_KEYS"]["keys"][0].update({"index": [1, 2, 3]})
+    arguments["CALCULATE_KEYS"]["keys"][1].update({"index": [1, 2, 3]})
 
     with pytest.raises(ValueError):  # Will give an empty data set
         scaling_job.scaling_job(ert, arguments)
 
-    arguments["CALCULATE_KEYS"].update({"index": [8, 35, 71]})
+    arguments["CALCULATE_KEYS"]["keys"][0].update({"index": [8, 35, 71]})
+    arguments["CALCULATE_KEYS"]["keys"][1].update({"index": [8, 35, 71]})
     scaling_job.scaling_job(ert, arguments)
 
     for index, node in enumerate(obs_vector):
-        if index in arguments["CALCULATE_KEYS"]["index"]:
+        if index in arguments["CALCULATE_KEYS"]["keys"][0]["index"]:
             assert node.getStdScaling(index) == np.sqrt((2.0 * 6.0) / 1.0)
         else:
             assert node.getStdScaling(index) == np.sqrt((2.0 * 6.0) / 2.0)
@@ -638,7 +643,7 @@ def test_main_entry_point_summary_data_calc():
 @pytest.mark.usefixtures("setup_tmpdir")
 def test_main_entry_point_summary_data_update():
     arguments = {
-        "CALCULATE_KEYS": {"keys": ["WWCT:OP_1", "WWCT:OP_2"]},
+        "CALCULATE_KEYS": {"keys": [{"key": "WWCT:OP_1"}, {"key": "WWCT:OP_2"}]},
         "UPDATE_KEYS": {"keys": [{"key": "WWCT:OP_2", "index": [1, 2, 3, 4, 5]}]},
     }
 
@@ -672,7 +677,7 @@ def test_main_entry_point_summary_data_update():
 @pytest.mark.equinor_test
 @pytest.mark.usefixtures("setup_tmpdir")
 def test_main_entry_point_block_data_calc():
-    arguments = {"CALCULATE_KEYS": {"keys": ["RFT3"]}}
+    arguments = {"CALCULATE_KEYS": {"keys": [{"key": "RFT3"}]}}
 
     test_data_dir = os.path.join(_TEST_DATA_DIR, "Equinor", "config", "with_RFT")
 
@@ -692,6 +697,31 @@ def test_main_entry_point_block_data_calc():
 
     for index, node in enumerate(obs_vector):
         assert node.getStdScaling(index) == 2.0
+
+
+@pytest.mark.equinor_test
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_main_entry_point_block_and_summary_data_calc():
+    arguments = {"CALCULATE_KEYS": {"keys": [{"key": "FOPT"}, {"key": "RFT3"}]}}
+
+    test_data_dir = os.path.join(_TEST_DATA_DIR, "Equinor", "config", "with_RFT")
+
+    shutil.copytree(test_data_dir, "test_data")
+    os.chdir(os.path.join("test_data"))
+
+    res_config = ResConfig("config")
+    ert = EnKFMain(res_config)
+    obs = ert.getObservations()
+
+    obs_vector = obs["RFT3"]
+
+    for index, node in enumerate(obs_vector):
+        assert node.getStdScaling(index) == 1.0
+
+    scaling_job.scaling_job(ert, arguments)
+
+    for index, node in enumerate(obs_vector):
+        assert node.getStdScaling(index) == np.sqrt(65)
 
 
 @pytest.mark.usefixtures("setup_tmpdir")

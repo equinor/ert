@@ -6,7 +6,7 @@ from copy import deepcopy
 class DataMatrix(object):
     def __init__(self, input_data):
         """
-        Takes input data in the form of a Pandas dataframe with observations,
+            Takes input data in the form of a Pandas multi index dataframe with observations,
         standard deviation and simulated values. Assumes observations are
         prepended with _OBS and standard deviation with _STD.
         """
@@ -14,13 +14,13 @@ class DataMatrix(object):
         if input_data.shape[1] == 0:
             raise ValueError("Empty dataset, all data has been filtered out")
 
-    def get_data_matrix(self, observation_keys):
+    def get_data_matrix(self):
         """
-        Extracts data from a dataframe given a set of keys and returns a matrix
+        Extracts data from a dataframe and returns a matrix
         """
-        return self.data.loc[list(observation_keys)].values
+        return self.data[~self.data.index.isin(["OBS", "STD"])].values
 
-    def std_normalization(self, observation_keys, inplace=False):
+    def std_normalization(self, inplace=False):
         """
         Duplicates the behavior of obs_data_scale, and scales the simulated data
         by 1 / (observation standard deviation), per observation key, i.e. each
@@ -28,10 +28,11 @@ class DataMatrix(object):
         from observations.
         """
         output_data = deepcopy(self.data)
-        for key in observation_keys:
-            data_matrix = self.data.loc[key]
-            std_vector = self.data.loc["STD_" + key]
-            output_data.loc[key] = data_matrix * (1.0 / std_vector)
+        data_matrix = self._get_data()
+        std_vector = self.data.loc["STD"]
+        output_data[~output_data.index.isin(["OBS", "STD"])] = data_matrix * (
+            1.0 / std_vector
+        )
 
         if inplace:
             self.data = output_data
@@ -43,16 +44,19 @@ class DataMatrix(object):
         a threshold and returns a scaling factor based on the number of
         primary components and the number of observations.
         """
-        data_matrix = self.get_data_matrix(events.keys)
+        data_matrix = self.get_data_matrix()
         nr_components = self._get_nr_primary_components(
             data_matrix, threshold=events.threshold
         )
         scaling_factor = self._calculate_scaling_factor(
-            len(events.keys), data_matrix.shape[1], nr_components
+            data_matrix.shape[1], nr_components
         )
 
         print("Scaling factor calculated from {}".format(events.keys))
         return scaling_factor
+
+    def _get_data(self):
+        return self.data[~self.data.index.isin(["OBS", "STD"])]
 
     @staticmethod
     def _get_nr_primary_components(data_matrix, threshold):
@@ -74,24 +78,23 @@ class DataMatrix(object):
              break;
         }
         """
-        _, s, _ = np.linalg.svd(data_matrix.T.astype(np.float), full_matrices=False)
+        _, s, _ = np.linalg.svd(data_matrix.astype(np.float), full_matrices=False)
         variance_ratio = np.cumsum(s ** 2) / np.sum(s ** 2)
         return len([1 for i in variance_ratio[:-1] if i < threshold]) + 1
 
     @staticmethod
-    def _calculate_scaling_factor(nr_keys, nr_observations, nr_components):
+    def _calculate_scaling_factor(nr_observations, nr_components):
         """
         Calculates a observation scaling factor which is:
             sqrt(nr_obs / pc)
         where:
-            nr_obs is the number of observations, i.e. the number of
-                observations times the number of scaled keys
+            nr_obs is the number of observations
             pc is the number of primary components from PCA analysis
                 below a user threshold
         """
         print(
             "Calculation scaling factor, nr of primary components: {:d}, number of observations: {:d}".format(
-                nr_components, nr_keys * nr_observations
+                nr_components, nr_observations
             )
         )
-        return np.sqrt(nr_keys * nr_observations / float(nr_components))
+        return np.sqrt(nr_observations / float(nr_components))
