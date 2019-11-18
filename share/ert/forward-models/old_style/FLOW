@@ -2,4 +2,4 @@ EXECUTABLE ../res/script/flow
 DEFAULT <VERSION> default
 DEFAULT <NUM_CPU> 1
 DEFAULT <OPTS> ""
-ARGLIST <ECLBASE> "--version=<VERSION>" "--num-cpu=<NUM_CPU>" <OPTS>
+ARGLIST <ECLBASE> -v <VERSION> -n <NUM_CPU> <OPTS>

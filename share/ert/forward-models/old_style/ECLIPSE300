@@ -2,5 +2,5 @@ EXECUTABLE ../res/script/ecl300
 DEFAULT <VERSION> version
 DEFAULT <NUM_CPU> 1
 DEFAULT <OPTS> ""
-ARGLIST <ECLBASE> "--version=<VERSION>" "--num-cpu=<NUM_CPU>" <OPTS>
+ARGLIST <ECLBASE> -v <VERSION> -n <NUM_CPU> <OPTS>
 
