@@ -83,7 +83,7 @@ class JobQueueNode(BaseCClass):
                 self.status == JobStatusType.JOB_QUEUE_RUNNING  or
                 self.status == JobStatusType.JOB_QUEUE_UNKNOWN) # dont stop monitoring if LSF commands are unavailable
     
-    def _job_monitor(self, driver, max_submit, pool_sema):
+    def _job_monitor(self, driver, pool_sema, max_submit):
 
         self.submit(driver)
         self.update_status(driver)
@@ -122,7 +122,7 @@ class JobQueueNode(BaseCClass):
             return
 
         self._set_thread_status(ThreadStatus.RUNNING)
-        self._thread = Thread(target=self._job_monitor, args=(driver, max_submit, pool_sema))
+        self._thread = Thread(target=self._job_monitor, args=(driver, pool_sema, max_submit))
         self._thread.start()
         
     def stop(self):
