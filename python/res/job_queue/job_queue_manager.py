@@ -20,7 +20,10 @@ Module implementing a queue for managing external jobs.
 from cwrap import BaseCClass
 from res import ResPrototype
 from res.job_queue import Job, JobStatusType, ThreadStatus
+from threading import BoundedSemaphore
 import time
+
+CONCURRENT_INTERNALIZATION = 10
 
 class JobQueueManager(BaseCClass):
     TYPE_NAME = "job_queue_manager"
@@ -131,13 +134,19 @@ class JobQueueManager(BaseCClass):
         return not self.queue.stopped and self.queue.count_running() < self.max_running()
 
     def _launch_jobs(self):
+
+        pool_sema = BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
         while self.queue.is_active() and not self.queue.stopped:
             #Start waiting jobs
             while self._available_capacity():
                 job = self.queue.fetch_next_waiting()
                 if job is None:
                     break
-                job.run(self.queue.driver, max_submit=self.queue.max_submit)
+                job.run(
+                    driver=self.queue.driver,
+                    pool_sema=pool_sema,
+                    max_submit=self.queue.max_submit
+                )
             time.sleep(1)
 
     def _stop_jobs(self):

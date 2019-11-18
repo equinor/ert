@@ -83,9 +83,9 @@ class JobQueueNode(BaseCClass):
                 self.status == JobStatusType.JOB_QUEUE_RUNNING  or
                 self.status == JobStatusType.JOB_QUEUE_UNKNOWN) # dont stop monitoring if LSF commands are unavailable
     
-    def _job_monitor(self, driver, max_submit):
+    def _job_monitor(self, driver, max_submit, pool_sema):
 
-        self._submit(driver)
+        self.submit(driver)
         self.update_status(driver)
 
         while self.is_running():
@@ -96,7 +96,8 @@ class JobQueueNode(BaseCClass):
 
         with self._mutex:
             if self.status == JobStatusType.JOB_QUEUE_DONE:
-                self.run_done_callback()
+                with pool_sema:
+                    self.run_done_callback()
             elif self.status == JobStatusType.JOB_QUEUE_EXIT:
                 if self.submit_attempt < max_submit:
                     self._set_thread_status(ThreadStatus.READY)
@@ -112,7 +113,7 @@ class JobQueueNode(BaseCClass):
 
             self._set_thread_status(ThreadStatus.DONE)
 
-    def run(self, driver, max_submit=2):
+    def run(self, driver, pool_sema, max_submit=2):
         # Prevent multiple threads working on the same object
         self.wait_for()
         # Do not start if already kill signal is sent
@@ -121,7 +122,7 @@ class JobQueueNode(BaseCClass):
             return
 
         self._set_thread_status(ThreadStatus.RUNNING)
-        self._thread = Thread(target=self._job_monitor, args=(driver, max_submit))
+        self._thread = Thread(target=self._job_monitor, args=(driver, max_submit, pool_sema))
         self._thread.start()
         
     def stop(self):
