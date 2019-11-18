@@ -3,6 +3,7 @@ from tests import ResTest
 from tests.utils import wait_until
 from ecl.util.test import TestAreaContext
 import os, stat, time
+from threading import BoundedSemaphore
 
 def dummy_ok_callback(args):
     print(args)
@@ -58,10 +59,10 @@ def create_queue(script, max_submit=1):
     
     return job_queue
 
-def start_all(job_queue):
+def start_all(job_queue, sema_pool):
     job = job_queue.fetch_next_waiting()
     while(job is not None):
-        job.run(job_queue.driver, job_queue.max_submit)
+        job.run(job_queue.driver, sema_pool, job_queue.max_submit)
         job = job_queue.fetch_next_waiting()
     
 
@@ -77,8 +78,9 @@ class JobQueueTest(ResTest):
 
             assert job_queue.queue_size == 10
             assert job_queue.is_active()
-
-            start_all(job_queue)
+            
+            pool_sema = BoundedSemaphore(value=10)
+            start_all(job_queue, pool_sema)
 
             # make sure never ending jobs are running
             wait_until(
@@ -106,7 +108,8 @@ class JobQueueTest(ResTest):
             assert job_queue.is_active()
             assert job_queue.fetch_next_waiting() is not None
 
-            start_all(job_queue)
+            pool_sema = BoundedSemaphore(value=10)
+            start_all(job_queue, pool_sema)
 
             for job in job_queue.job_list:
                 job.stop()
@@ -124,8 +127,9 @@ class JobQueueTest(ResTest):
 
             assert job_queue.queue_size == 10
             assert job_queue.is_active()
-            
-            start_all(job_queue)
+
+            pool_sema = BoundedSemaphore(value=10)            
+            start_all(job_queue, pool_sema)
 
             wait_until(
                 func=(lambda: self.assertFalse(job_queue.is_active())),
