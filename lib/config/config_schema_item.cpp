@@ -517,11 +517,6 @@ void config_schema_item_add_indexed_alternative(config_schema_item_type * item ,
 }
 
 
-
-void config_schema_item_set_required_children(config_schema_item_type * item , stringlist_type * stringlist) {
-  item->required_children = stringlist_alloc_deep_copy(stringlist);
-}
-
 void config_schema_item_add_required_children(config_schema_item_type * item , const char * child_key) {
   if (item->required_children == NULL)
     item->required_children = stringlist_alloc_new();
@@ -594,4 +589,3 @@ void config_schema_item_set_deprecated( config_schema_item_type * item , const c
 
 /*****************************************************************/
 /* Small functions to support enum introspection. */
-

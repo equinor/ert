@@ -63,16 +63,6 @@ void matrix_dgemv(const matrix_type * A , const double *x , double * y, bool tra
 }
 
 
-/**
-   y = A*x
-*/
-
-void matrix_mul_vector(const matrix_type * A , const double * x , double * y) {
-  matrix_dgemv(A , x , y , false , 1 , 0);
-}
-
-
-
 static void dgemm_debug(const matrix_type *C , const matrix_type *A , const matrix_type * B , bool transA, bool transB) {
   printf("\nC =  [%d , %d]\n",matrix_get_rows( C ) , matrix_get_columns(C));
 
@@ -259,27 +249,6 @@ void matrix_gram_set( const matrix_type * X , matrix_type * G, bool col) {
     else
       util_abort("%s: dimension mismatch \n",__func__);
   }
-}
-
-
-/**
-   If col == true:   G = X' · X
-      col == false:  G = X  · X'
-*/
-
-
-matrix_type * matrix_alloc_gram( const matrix_type * X , bool col) {
-  int X_rows    = matrix_get_rows( X );
-  int X_columns = matrix_get_columns( X );
-  matrix_type * G;
-
-  if (col)
-    G = matrix_alloc( X_columns , X_columns );
-  else
-    G = matrix_alloc( X_rows , X_rows );
-
-  matrix_gram_set( X , G , col);
-  return G;
 }
 
 #ifdef __cplusplus

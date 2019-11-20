@@ -214,16 +214,3 @@ void rng_config_init(rng_config_type * rng_config, const config_content_type * c
                                                         LOAD_SEED_KEY, 0 ,0));
   }
 }
-
-
-void rng_config_fprintf_config( rng_config_type * rng_config , FILE * stream ) {
-  if (rng_config->seed_load_file != NULL) {
-    fprintf( stream , CONFIG_KEY_FORMAT      , LOAD_SEED_KEY );
-    fprintf( stream , CONFIG_ENDVALUE_FORMAT , rng_config->seed_load_file);
-  }
-
-  if (rng_config->seed_store_file != NULL) {
-    fprintf( stream , CONFIG_KEY_FORMAT      , STORE_SEED_KEY );
-    fprintf( stream , CONFIG_ENDVALUE_FORMAT , rng_config->seed_store_file);
-  }
-}

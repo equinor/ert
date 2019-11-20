@@ -127,23 +127,6 @@ ert_templates_type * ert_templates_alloc_default(subst_list_type * parent_subst)
   return templates;
 }
 
-ert_templates_type * ert_templates_alloc_load(subst_list_type * parent_subst,
-        const char * config_file)
-{
-  config_parser_type * config_parser = config_alloc();
-  config_content_type * config_content = NULL;
-
-  if(config_file)
-    config_content = model_config_alloc_content(config_file, config_parser);
-
-  ert_templates_type * templates = ert_templates_alloc(parent_subst, config_content);
-
-  config_content_free(config_content);
-  config_free(config_parser);
-
-  return templates;
-}
-
 ert_templates_type * ert_templates_alloc(subst_list_type * parent_subst,
                                          const config_content_type * config_content) {
 

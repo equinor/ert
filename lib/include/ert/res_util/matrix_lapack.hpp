@@ -74,12 +74,6 @@ extern "C" {
                      double *eig_values ,
                      matrix_type * Z    ) ;
 
-
-  int  matrix_dsyevx_all(dsyevx_uplo_enum uplo ,
-                         matrix_type    * A ,
-                         double *eig_values ,
-                         matrix_type * Z    );
-
   void matrix_dgeqrf(matrix_type * A , double * tau);
   void matrix_dorgqr(matrix_type * A , double * tau, int num_reflectors);
 

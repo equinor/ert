@@ -28,25 +28,6 @@
 /*****************************************************************/
 
 
-const char * enkf_types_get_var_name(enkf_var_type var_type) {
-  switch(var_type) {
-  case(INVALID):
-    return "INVALID";
-    break;
-  case PARAMETER:
-    return "PARAMETER";
-    break;
-  case DYNAMIC_RESULT:
-    return "DYNAMIC_RESULT";
-    break;
-  default:
-    util_abort("%s: internal error - unrecognized var type: %d - aborting \n",__func__ , var_type);
-    return NULL;
-  }
-}
-
-
-
 const char * enkf_types_get_impl_name(ert_impl_type impl_type) {
   switch(impl_type) {
   case(INVALID):
@@ -87,59 +68,3 @@ static ert_impl_type enkf_types_get_impl_type__(const char * impl_type_string) {
   return impl_type;
 }
 #undef if_strcmp
-
-
-ert_impl_type enkf_types_get_impl_type(const char * __impl_type_string) {
-  char * impl_type_string = util_alloc_string_copy(__impl_type_string);
-  util_strupr(impl_type_string);
-  ert_impl_type impl_type = enkf_types_get_impl_type__(impl_type_string);
-  if (impl_type == INVALID)
-    util_abort("%s: enkf_type: %s not recognized - aborting \n",__func__ , __impl_type_string);
-
-  free(impl_type_string);
-  return impl_type;
-}
-
-
-/*
-  This will return INVALIID if given an invalid
-  input string - not fail.
-*/
-
-ert_impl_type enkf_types_check_impl_type(const char * impl_type_string) {
-  return enkf_types_get_impl_type__(impl_type_string);
-}
-
-
-/*****************************************************************/
-/*
-   These two functions update the truncation variable to ensure that
-   it applies truncate_min and truncate_max respectively. The somewhat
-   involved implementation is to ensure that the functions can be
-   called many times.
-*/
-
-
-void enkf_types_set_truncate_min(truncation_type * __trunc) {
-  int trunc = (int) *__trunc;
-
-  if (!(trunc & TRUNCATE_MIN))
-    trunc += TRUNCATE_MIN;
-
-  *__trunc = (truncation_type) trunc;
-}
-
-
-void enkf_types_set_truncate_max(truncation_type * __trunc) {
-  int trunc = *__trunc;
-
-  if (!(trunc & TRUNCATE_MAX))
-    trunc += TRUNCATE_MAX;
-
-  *__trunc = (truncation_type) trunc;
-}
-
-
-
-
-

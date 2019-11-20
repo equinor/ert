@@ -161,11 +161,6 @@ UTIL_IS_INSTANCE_FUNCTION(field_config , FIELD_CONFIG_ID)
 
 /*****************************************************************/
 
-void field_config_set_ecl_kw_name(field_config_type * config , const char * ecl_kw_name) {
-  config->ecl_kw_name = util_realloc_string_copy(config->ecl_kw_name , ecl_kw_name);
-}
-
-
 
 void field_config_set_ecl_data_type(field_config_type * config , ecl_data_type data_type) {
   memcpy(&config->internal_data_type, &data_type, sizeof data_type);
@@ -272,19 +267,8 @@ field_file_format_type field_config_guess_file_type(const char * filename ) {
   return file_type;
 }
 
-
-
-field_type * field_config_get_min_std( const field_config_type * field_config ) {
-  return field_config->min_std;
-}
-
-
 field_file_format_type field_config_get_export_format(const field_config_type * field_config) {
   return field_config->export_format;
-}
-
-field_file_format_type field_config_get_import_format(const field_config_type * field_config) {
-  return field_config->import_format;
 }
 
 /**
@@ -297,9 +281,6 @@ const char * field_config_get_init_transform_name( const field_config_type * fie
   return field_config->init_transform_name;
 }
 
-const char * field_config_get_input_transform_name( const field_config_type * field_config ) {
-  return field_config->input_transform_name;
-}
 
 const char * field_config_get_output_transform_name( const field_config_type * field_config ) {
   return field_config->output_transform_name;
@@ -428,23 +409,6 @@ static void field_config_set_input_transform( field_config_type * config , const
 }
 
 
-
-void field_config_update_state_field( field_config_type * config, int truncation, double min_value , double max_value) {
-  field_config_set_truncation( config ,truncation , min_value , max_value );
-  config->type = ECLIPSE_RESTART;
-
-  /* Setting all the defaults for state_fields, i.e. PRESSURE / SGAS / SWAT ... */
-  config->import_format = ECL_FILE;
-  config->export_format = ECL_FILE;
-
-  field_config_set_output_transform( config , NULL );
-  field_config_set_input_transform( config , NULL );
-  field_config_set_init_transform( config , NULL );
-}
-
-
-
-
 void field_config_update_parameter_field( field_config_type * config , int truncation, double min_value , double max_value,
                                           field_file_format_type export_format , /* This can be guessed with the field_config_default_export_format( ecl_file ) function. */
                                           const char * init_transform , const char * output_transform ) {
@@ -566,17 +530,6 @@ bool field_config_ijk_active(const field_config_type * config , int i , int j , 
 }
 
 
-
-
-void field_config_get_ijk( const field_config_type * config , int active_index , int *i , int * j , int * k) {
-  ecl_grid_get_ijk1A( config->grid , active_index , i,j,k);
-}
-
-
-bool field_config_write_compressed(const field_config_type * config) { return config->write_compressed; }
-
-
-
 void field_config_set_truncation(field_config_type * config , int truncation, double min_value, double max_value) {
   config->truncation = truncation;
   config->min_value  = min_value;
@@ -613,12 +566,6 @@ void field_config_free(field_config_type * config) {
 
 int field_config_get_volume(const field_config_type * config) {
   return config->nx * config->ny * config->nz;
-}
-
-
-
-rms_type_enum field_config_get_rms_type(const field_config_type * config) {
-  return rms_util_convert_ecl_type(config->internal_data_type);
 }
 
 
@@ -733,9 +680,6 @@ field_func_type * field_config_get_output_transform(const field_config_type * co
   return config->output_transform;
 }
 
-field_func_type * field_config_get_input_transform(const field_config_type * config) {
-  return config->input_transform;
-}
 
 field_func_type * field_config_get_init_transform(const field_config_type * config) {
   return config->init_transform;
@@ -882,5 +826,3 @@ CONFIG_GET_ECL_KW_NAME(field);
 GET_DATA_SIZE(field)
 VOID_GET_DATA_SIZE(field)
 VOID_FREE(field_config)
-
-

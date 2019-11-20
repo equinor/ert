@@ -55,10 +55,7 @@ typedef struct log_struct log_type;
   log_type   * log_open_stream(FILE * stream, message_level_type log_level);
 
   void         log_add_message_stream(FILE * stream, bool add_timestamp, message_level_type message_level, const char * message);
-  FILE       * log_get_stream(log_type * logh );
   void         log_add_message(log_type *logh, message_level_type message_level,  const char* message);
-  void         log_add_message_str(log_type *logh, message_level_type message_level , const char* message);
-  void         log_add_fmt_message(log_type * logh , message_level_type message_level, const char * fmt , ...);
   void         log_set_level( log_type * logh , message_level_type new_level);
   void         log_close( log_type * logh );
   void         log_sync(log_type * logh);

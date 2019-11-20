@@ -35,7 +35,6 @@ extern "C" {
   void                    container_config_free( container_config_type * container );
   void                    container_config_add_node( container_config_type * container, const enkf_config_node_type * config_node);
   const char            * container_config_iget_key( const container_config_type * container_config , int index);
-  const void            * container_config_iget_node(const container_config_type * container_config , int index);
   int                     container_config_get_size( const container_config_type * container_config );
 
   UTIL_IS_INSTANCE_HEADER(container_config);

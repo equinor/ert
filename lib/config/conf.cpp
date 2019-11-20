@@ -574,23 +574,6 @@ void conf_instance_insert_item(
 }
 
 
-
-void conf_instance_overload(
-  conf_instance_type       * conf_instance_target,
-  const conf_instance_type * conf_instance_source)
-{
-  assert(conf_instance_target != NULL);
-  assert(conf_instance_source != NULL);
-
-  if(conf_instance_target->conf_class != conf_instance_source->conf_class)
-    util_abort("%s: Internal error. Invalid overloading.\n", __func__);
-
-  conf_instance_copy_items(        conf_instance_target, conf_instance_source);
-  conf_instance_copy_sub_instances(conf_instance_target, conf_instance_source);
-}
-
-
-
 void conf_item_mutex_add_item_spec(
   conf_item_mutex_type       * conf_item_mutex,
   const conf_item_spec_type  * conf_item_spec)
@@ -755,19 +738,6 @@ bool conf_instance_has_item(
 }
 
 
-
-bool conf_instance_has_sub_instance(
-  const conf_instance_type * conf_instance,
-  const char               * sub_instance_name)
-{
-  if(!hash_has_key(conf_instance->sub_instances, sub_instance_name))
-    return false;
-  else
-    return true;
-}
-
-
-
 const conf_instance_type * conf_instance_get_sub_instance_ref(
   const conf_instance_type * conf_instance,
   const char               * sub_instance_name)
@@ -822,15 +792,6 @@ stringlist_type * conf_instance_alloc_list_of_sub_instances_of_class_by_name(
 
   return conf_instance_alloc_list_of_sub_instances_of_class(conf_instance, conf_class);
 }
-
-
-
-const conf_class_type * conf_instance_get_class_ref(
-  const conf_instance_type * conf_instance)
-{
-  return conf_instance->conf_class;
-}
-
 
 
 const char * conf_instance_get_class_name_ref(
@@ -1602,5 +1563,3 @@ conf_instance_type * conf_instance_alloc_from_file(
   path_stack_free( path_stack );
   return conf_instance;
 }
-
-

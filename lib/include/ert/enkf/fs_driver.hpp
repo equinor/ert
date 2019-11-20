@@ -224,13 +224,11 @@ struct fs_driver_struct {
   /*****************************************************************/
 
   void                       fs_driver_init(fs_driver_type * );
-  void                       fs_driver_assert_cast(const fs_driver_type * );
   fs_driver_type           * fs_driver_safe_cast(void * );
 
   void                       fs_driver_init_fstab( FILE * stream, fs_driver_impl driver_id );
   char                     * fs_driver_alloc_fstab_file( const char * path );
   FILE                     * fs_driver_open_fstab( const char * path , bool create);
-  fs_driver_impl             fs_driver_fread_type( FILE * stream );
   void                       fs_driver_assert_magic( FILE * stream );
   void                       fs_driver_assert_version( FILE * stream , const char * mount_point);
   int                        fs_driver_fread_version( FILE * stream );

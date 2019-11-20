@@ -59,12 +59,6 @@ void config_error_add( config_error_type * error , char * new_error) {
 }
 
 
-
-void config_error_clear( config_error_type * error ) {
-  stringlist_clear( error->error_list );
-}
-
-
 int config_error_count( const config_error_type * error )  {
   return stringlist_get_size( error->error_list );
 }

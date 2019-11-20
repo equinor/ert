@@ -29,10 +29,7 @@ extern "C" {
 
 typedef struct sched_kw_gruptree_struct sched_kw_gruptree_type;
 
-//void                     sched_kw_gruptree_free        (sched_kw_gruptree_type *);
-//void                     sched_kw_gruptree_fprintf     (const sched_kw_gruptree_type *, FILE * );
 void                     sched_kw_gruptree_alloc_child_parent_list(const sched_kw_gruptree_type *, char ***, char ***, int *);
-void                     sched_kw_gruptree_init_child_parent_list( const sched_kw_gruptree_type * kw , stringlist_type * child , stringlist_type * parent);
 
 /*******************************************************************/
 

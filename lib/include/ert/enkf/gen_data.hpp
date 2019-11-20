@@ -41,14 +41,10 @@ void                      gen_data_assert_size( gen_data_type * gen_data , int s
 bool                      gen_data_forward_load(gen_data_type * gen_data , const char * ecl_file , const forward_load_context_type * load_context);
 void                      gen_data_free(gen_data_type * );
 double                    gen_data_iget_double(const gen_data_type * , int );
-  void                      gen_data_iset_double(gen_data_type * , int , double);
-gen_data_config_type   *  gen_data_get_config(const gen_data_type * );
-const bool_vector_type *  gen_data_get_forward_mask( const gen_data_type * gen_data );
 int                       gen_data_get_size(const gen_data_type * );
 double                    gen_data_iget_double(const gen_data_type * , int );
 void                      gen_data_export(const gen_data_type * gen_data , const char * full_path , gen_data_file_format_type export_type);
 void                      gen_data_export_data(const gen_data_type * gen_data , double_vector_type * export_data);
-gen_data_file_format_type gen_data_guess_export_type( const gen_data_type * gen_data );
 const char  *             gen_data_get_key( const gen_data_type * gen_data);
 void                      gen_data_upgrade_103(const char * filename);
 int                       gen_data_get_size( const gen_data_type * gen_data );

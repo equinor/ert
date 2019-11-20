@@ -40,7 +40,6 @@ typedef struct local_obsdata_struct local_obsdata_type;
   local_obsdata_type            * local_obsdata_alloc_wrapper( local_obsdata_node_type * node );
   const char * local_obsdata_get_name( const local_obsdata_type * data);
   local_obsdata_node_type       * local_obsdata_get( const local_obsdata_type * data , const char * key);
-  void                            local_obsdata_clear( local_obsdata_type * data );
   void                            local_obsdata_del_node( local_obsdata_type * data  , const char * key);
   void                            local_obsdata_reset_tstep_list( local_obsdata_type * data , const int_vector_type * step_list);
   active_list_type              * local_obsdata_get_node_active_list(const local_obsdata_type * obsdata , const char * obs_key );

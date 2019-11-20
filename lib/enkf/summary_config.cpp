@@ -54,11 +54,6 @@ const char * summary_config_get_var(const summary_config_type * config) {
 }
 
 
-ecl_smspec_var_type summary_config_get_var_type(summary_config_type * config , const ecl_sum_type * ecl_sum) {
-  return config->var_type;
-}
-
-
 load_fail_type summary_config_get_load_fail_mode( const summary_config_type * config) {
   return config->load_fail;
 }
@@ -103,22 +98,11 @@ summary_config_type * summary_config_alloc(const char * var , load_fail_type loa
 
 
 
-void summary_config_add_obs_key(summary_config_type * config, const char * obs_key) {
-  config->obs_set.insert(obs_key);
-}
-
-
-
 void summary_config_free(summary_config_type * config) {
   free(config->var);
   delete config;
 }
 
-
-
-int summary_config_get_byte_size(const summary_config_type * config) {
-  return sizeof(double);
-}
 
 
 int summary_config_get_data_size( const summary_config_type * config) {
@@ -135,4 +119,3 @@ UTIL_SAFE_CAST_FUNCTION(summary_config , SUMMARY_CONFIG_TYPE_ID)
 UTIL_SAFE_CAST_FUNCTION_CONST(summary_config , SUMMARY_CONFIG_TYPE_ID)
 VOID_GET_DATA_SIZE(summary)
 VOID_CONFIG_FREE(summary)
-

@@ -460,48 +460,6 @@ time_t job_queue_iget_sim_end( job_queue_type * queue, int job_index) {
 }
 
 
-time_t job_queue_iget_submit_time( job_queue_type * queue, int job_index) {
-  time_t submit_time;
-  ASSIGN_LOCKED_ATTRIBUTE( submit_time , job_queue_node_get_submit_time , node );
-  return submit_time;
-}
-
-const char * job_queue_iget_run_path( job_queue_type * queue , int job_index) {
-  const char * run_path;
-  ASSIGN_LOCKED_ATTRIBUTE(run_path, job_queue_node_get_run_path, node );
-  return run_path;
-}
-
-
-const char * job_queue_iget_failed_job( job_queue_type * queue , int job_index) {
-  const char * failed_job;
-  ASSIGN_LOCKED_ATTRIBUTE(failed_job, job_queue_node_get_failed_job, node );
-  return failed_job;
-}
-
-
-const char * job_queue_iget_error_reason( job_queue_type * queue , int job_index) {
-  const char * error_reason;
-  ASSIGN_LOCKED_ATTRIBUTE(error_reason, job_queue_node_get_error_reason, node );
-  return error_reason;
-}
-
-
-const char * job_queue_iget_stderr_capture(  job_queue_type * queue , int job_index) {
-  const char * stderr_capture;
-  ASSIGN_LOCKED_ATTRIBUTE(stderr_capture, job_queue_node_get_stderr_capture, node );
-  return stderr_capture;
-}
-
-
-const char * job_queue_iget_stderr_file( job_queue_type * queue , int job_index) {
-  const char * stderr_file;
-  ASSIGN_LOCKED_ATTRIBUTE(stderr_file, job_queue_node_get_stderr_file, node );
-  return stderr_file;
-}
-
-
-
 job_status_type job_queue_iget_job_status( job_queue_type * queue , int job_index) {
   job_status_type job_status;
   ASSIGN_LOCKED_ATTRIBUTE(job_status, job_queue_node_get_status , node );
@@ -522,50 +480,6 @@ void job_queue_iset_max_confirm_wait_time(job_queue_type * queue, int job_index,
      job_queue_node_set_max_confirmation_wait_time( node, time );
    }
    job_list_unlock( queue->job_list );
-}
-
-
-
-
-/**
-   The external scope asks the queue to restart the the job; we reset
-   the submit counter to zero. This function should typically be used
-   in combination with resampling, however that is the responsability
-   of the calling scope.
-*/
-
-void job_queue_iset_external_restart(job_queue_type * queue , int job_index) {
-  job_list_get_rdlock( queue->job_list );
-  {
-    job_queue_node_type * node = job_list_iget_job( queue->job_list , job_index );
-    job_queue_node_restart(node,queue->status);
-  }
-  job_list_unlock( queue->job_list );
-}
-
-
-/**
-   The queue system has said that the job completed OK, however the
-   external scope failed to load all the results and are using this
-   function to inform the queue system that the job has indeed
-   failed. The queue system will then either retry the job, or switch
-   status to JOB_QUEUE_RUN_FAIL.
-
-
-   This is a bit dangerous because the queue system has said that the
-   job was all hunkadory, and freed the driver related resources
-   attached to the job; it is therefore essential that the
-   JOB_QUEUE_EXIT code explicitly checks the status of the job node's
-   driver specific data before dereferencing.
-*/
-
-void job_queue_iset_external_fail(job_queue_type * queue , int job_index) {
-  job_list_get_rdlock( queue->job_list );
-  {
-    job_queue_node_type * node = job_list_iget_job( queue->job_list , job_index );
-    job_queue_node_status_transition(node,queue->status,JOB_QUEUE_EXIT);
-  }
-  job_list_unlock( queue->job_list );
 }
 
 

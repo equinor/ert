@@ -54,12 +54,6 @@
      abort with util_abort() if the memory requirements can not be
      satisfied.
 
-   o The corresponding functions matrix_safe_alloc(),
-     matrix_safe_resize() and matrix_safe_alloc_copy() will not abort,
-     instead NULL or an unchanged matrix will be returned. When using
-     these functons it is the responsability of the calling scope to
-     check return values.
-
   So the expression "safe" should be interpreted as 'can not abort' -
   however the responsability of the calling scope is greater when it
   comes to using these functions - things can surely blow up!
@@ -236,41 +230,6 @@ matrix_type * matrix_alloc_shared(const matrix_type * src , int row , int column
 }
 
 
-matrix_type * matrix_alloc_view(double * data , int rows , int columns) {
-  matrix_type * matrix = matrix_alloc_empty();
-
-  matrix_init_header( matrix , rows , columns , 1 , rows);
-  matrix->data          = data;
-  matrix->data_owner    = false;
-
-  return matrix;
-}
-
-
-/**
-   This function will allocate a matrix structure; this matrix
-   structure will TAKE OWNERSHIP OF THE SUPPLIED DATA. This means that
-   it is (at the very best) highly risky to use the data pointer in
-   the calling scope after the matrix has been allocated. If the
-   supplied pointer is too small it is immediately realloced ( in
-   which case the pointer in the calling scope will be immediately
-   invalid).
-*/
-
-matrix_type * matrix_alloc_steal_data(int rows , int columns , double * data , int data_size) {
-  matrix_type * matrix = matrix_alloc_empty();
-  matrix_init_header( matrix , rows , columns , 1 , rows );
-  matrix->data_size  = data_size;           /* Can in general be different from rows * columns */
-  matrix->data_owner = true;
-  matrix->data       = data;
-  if (data_size < rows * columns)
-    matrix_realloc_data__(matrix , false);
-
-  return matrix;
-}
-
-
-
 /*****************************************************************/
 
 static matrix_type * matrix_alloc__(int rows, int columns , bool safe_mode) {
@@ -279,10 +238,6 @@ static matrix_type * matrix_alloc__(int rows, int columns , bool safe_mode) {
 
 matrix_type * matrix_alloc(int rows, int columns) {
   return matrix_alloc__( rows , columns , false );
-}
-
-matrix_type * matrix_safe_alloc(int rows, int columns) {
-  return matrix_alloc__( rows , columns , true );
 }
 
 matrix_type * matrix_alloc_identity(int dim) {
@@ -357,17 +312,6 @@ matrix_type * matrix_realloc_copy(matrix_type * T , const matrix_type * src) {
   }
 }
 
-
-
-
-/**
-   Will return NULL if allocation of the copy failed.
-*/
-
-matrix_type * matrix_safe_alloc_copy(const matrix_type * src) {
-  return matrix_alloc_copy__(src , true);
-}
-
 void matrix_copy_block( matrix_type * target_matrix , int target_row , int target_column , int rows , int columns,
                         const matrix_type * src_matrix , int src_row , int src_column) {
   matrix_type * target_view = matrix_alloc_shared(target_matrix , target_row , target_column , rows , columns);
@@ -440,35 +384,6 @@ static bool matrix_resize__(matrix_type * matrix , int rows , int columns , bool
 bool matrix_resize(matrix_type * matrix , int rows , int columns , bool copy_content) {
   return matrix_resize__(matrix , rows , columns , copy_content , false);
 }
-
-
-/**
-   Return true if the resize succeded, otherwise it will return false
-   and leave the matrix unchanged. When resize implies expanding a
-   dimension, the newly created elements will be explicitly
-   initialized to zero.
-
-   If copy_content is set to false the new matrix will be fully
-   initialized to zero.
-*/
-
-bool matrix_safe_resize(matrix_type * matrix , int rows , int columns , bool copy_content) {
-  return matrix_resize__(matrix , rows , columns , copy_content , true);
-}
-
-
-
-/**
-    This function will ensure that the matrix has at least 'rows'
-    rows. If the present matrix already has >= rows it will return
-    immediately, otherwise the matrix will be resized.
-*/
-
-void matrix_ensure_rows(matrix_type * matrix, int rows, bool copy_content) {
-  if (matrix->rows < rows)
-    matrix_resize( matrix , rows , matrix->columns , copy_content);
-}
-
 
 
 /**
@@ -824,13 +739,6 @@ void matrix_set_const_column(matrix_type * matrix , const double value , int col
 }
 
 
-void matrix_set_const_row(matrix_type * matrix , const double value , int row) {
-  int column;
-  for (column = 0; column < matrix->columns; column++)
-    matrix->data[ GET_INDEX( matrix , row , column) ] = value;
-}
-
-
 void matrix_copy_column(matrix_type * target_matrix, const matrix_type * src_matrix , int target_column, int src_column) {
   matrix_assert_equal_rows( target_matrix , src_matrix );
   {
@@ -969,38 +877,6 @@ void matrix_inplace_add(matrix_type * A , const matrix_type * B) {
 }
 
 
-/* Updates matrix A by multiplying in matrix B - elementwise - i.e. Schur product. */
-void matrix_inplace_mul(matrix_type * A , const matrix_type * B) {
-  if ((A->rows == B->rows) && (A->columns == B->columns)) {
-    int i,j;
-
-    for (j = 0; j < A->columns; j++)
-      for (i=0; i < A->rows; i++)
-        A->data[ GET_INDEX(A,i,j) ] *= B->data[ GET_INDEX(B,i,j) ];
-
-  } else
-    util_abort("%s: size mismatch \n",__func__);
-}
-
-
-/*
-  Schur product:  A = B * C
-*/
-
-void matrix_mul( matrix_type * A , const matrix_type * B , const matrix_type * C) {
-  if ((A->rows == B->rows) && (A->columns == B->columns) && (A->rows == C->rows) && (A->columns == C->columns)) {
-    int i,j;
-
-    for (j = 0; j < A->columns; j++)
-      for (i=0; i < A->rows; i++)
-        A->data[ GET_INDEX(A,i,j) ] = B->data[ GET_INDEX(B,i,j) ] * C->data[ GET_INDEX(B,i,j) ];
-
-  } else
-    util_abort("%s: size mismatch \n",__func__);
-}
-
-
-
 /* Updates matrix A by subtracting matrix B - elementwise. */
 void matrix_inplace_sub(matrix_type * A , const matrix_type * B) {
   if ((A->rows == B->rows) && (A->columns == B->columns)) {
@@ -1032,22 +908,6 @@ void matrix_sub(matrix_type * A , const matrix_type * B , const matrix_type * C)
     for (j = 0; j < A->columns; j++)
       for (i=0; i < A->rows; i++)
         A->data[ GET_INDEX(A,i,j) ] = B->data[ GET_INDEX(B,i,j) ] - C->data[ GET_INDEX(B,i,j) ];
-
-  } else
-    util_abort("%s: size mismatch \n",__func__);
-}
-
-
-
-
-/* Updates matrix A by dividing matrix B - elementwise. */
-void matrix_inplace_div(matrix_type * A , const matrix_type * B) {
-  if ((A->rows == B->rows) && (A->columns == B->columns)) {
-    int i,j;
-
-    for (j = 0; j < A->columns; j++)
-      for (i=0; i < A->rows; i++)
-        A->data[ GET_INDEX(A,i,j) ] /= B->data[ GET_INDEX(B,i,j) ];
 
   } else
     util_abort("%s: size mismatch \n",__func__);
@@ -1250,27 +1110,6 @@ double matrix_get_column_abssum(const matrix_type * matrix , int column) {
 }
 
 
-double matrix_get_row_sum2(const matrix_type * matrix , int row) {
-  double sum2 = 0;
-  int j;
-  for ( j=0; j < matrix->columns; j++) {
-    double m = matrix->data[ GET_INDEX( matrix , row , j ) ];
-    sum2 += m*m;
-  }
-  return sum2;
-}
-
-
-double matrix_get_row_abssum(const matrix_type * matrix , int row) {
-  double sum_abs = 0;
-  int j;
-  for ( j=0; j < matrix->columns; j++) {
-    double m = matrix->data[ GET_INDEX( matrix , row , j ) ];
-    sum_abs += std::abs( m );
-  }
-  return sum_abs;
-}
-
 /**
    Return the sum of the squares on column.
 */
@@ -1354,10 +1193,6 @@ int matrix_get_columns(const matrix_type * matrix) {
   return matrix->columns;
 }
 
-int matrix_get_row_stride(const matrix_type * matrix) {
-  return matrix->row_stride;
-}
-
 int matrix_get_column_stride(const matrix_type * matrix) {
   return matrix->column_stride;
 }
@@ -1408,39 +1243,6 @@ void matrix_assert_finite( const matrix_type * matrix ) {
 }
 
 #endif
-
-
-
-/**
-   This function will return the largest deviance from orthonormal
-   conditions for the matrix - i.e. when this function returns
-   0.000000 the matrix is perfectly orthonormal; otherwise it is the
-   responsability of the calling scope to evaluate.
-*/
-
-double matrix_orthonormality( const matrix_type * matrix ) {
-  double max_dev = 0.0;
-  int col1,col2;
-  for (col1=0; col1 < matrix->columns; col1++) {
-    for (col2=col1; col2 < matrix->columns; col2++) {
-      double dot_product = matrix_column_column_dot_product( matrix , col1 , matrix , col2);
-      double dev;
-
-      if (col1 == col2)
-        dev = std::abs( dot_product - 1.0 );
-      else
-        dev = std::abs( dot_product );
-
-      if (dev > max_dev)
-        max_dev = dev;
-    }
-  }
-  return max_dev;
-}
-
-
-
-
 
 /**
    Return true if the two matrices m1 and m2 are equal. The equality
@@ -1580,57 +1382,6 @@ void matrix_random_init(matrix_type * matrix , rng_type * rng) {
 }
 
 
-
-void matrix_clear( matrix_type * matrix ) {
-  matrix_set( matrix , 0 );
-}
-
-
-
-/**
-   This function dumps the following binary file:
-
-   rows
-   columns
-   data(1,1)
-   data(2,1)
-   data(3,1)
-   ....
-   data(1,2)
-   data(2,2)
-   ....
-
-   Not exactly a matlab format.
-
-   The following matlab code can be used to instatiate a matrix based
-   on the file:
-
-     function m = load_matrix(filename)
-     fid  = fopen(filename);
-     dims = fread(fid , 2 , 'int32');
-     m    = fread(fid , [dims(1) , dims(2)] , 'double');
-     fclose(fid);
-
-
-   >> A = load_matrix( 'filename' );
-*/
-
-
-void matrix_matlab_dump(const matrix_type * matrix, const char * filename) {
-  FILE * stream = util_fopen( filename , "w");
-  int i,j;
-  util_fwrite_int( matrix->rows    , stream);
-  util_fwrite_int( matrix->columns , stream);
-
-  for (j=0; j < matrix->columns; j++)
-    for (i=0; i < matrix->rows; i++)
-      util_fwrite_double( matrix->data[ GET_INDEX(matrix , i , j) ] , stream);
-
-  fclose(stream);
-}
-
-
-// Comment
 void matrix_inplace_diag_sqrt(matrix_type *Cd)
 {
   int nrows = Cd->rows;

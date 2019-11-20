@@ -179,11 +179,6 @@ static void thread_pool_iset_return_value( thread_pool_type * pool , int index ,
 }
 
 
-void * thread_pool_iget_return_value( const thread_pool_type * pool , int queue_index ) {
-  return pool->queue[ queue_index ].return_value;
-}
-
-
 /**
    The pthread_create() call which this is all about, does not start
    the user supplied function. Instead it will start an instance of
@@ -484,4 +479,3 @@ void thread_pool_free(thread_pool_type * pool) {
 int thread_pool_get_max_running( const thread_pool_type * pool ) {
   return pool->max_running;
 }
-

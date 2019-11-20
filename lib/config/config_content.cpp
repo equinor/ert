@@ -220,13 +220,6 @@ double config_content_iget_as_double( const config_content_type * content , cons
   return config_content_item_iget_as_double(item , occurence , index);
 }
 
-const char * config_content_iget_as_path( const config_content_type * content , const char * key , int occurence , int index) {
-  config_content_item_type * item = config_content_get_item(content , key);
-  config_content_node_type * node = config_content_item_iget_node( item , index );
-  return config_content_node_iget_as_path(node , index);
-}
-
-
 /**
    This function will return NULL is the item has not been set,
    however it must be installed with config_add_schema_item().
@@ -346,32 +339,6 @@ const char * config_content_get_value(const config_content_type * config , const
 }
 
 /*****************************************************************/
-
-char * config_content_alloc_joined_string(const config_content_type * content , const char * kw, const char * sep) {
-  config_content_item_type * item = config_content_get_item(content , kw);
-  return config_content_item_alloc_joined_string(item , sep);
-}
-
-
-/**
-  This function allocates a new stringlist containing *ALL* the
-  arguements for an item. With reference to the illustrated example at
-  the top the function call:
-
-     config_alloc_complete_strtinglist(config , "KEY1");
-
-     would produce the list: ("ARG1" "ARG2" "ARG2" "VERBOSE"), i.e. the
-  arguments for the various occurences of "KEY1" are collapsed to one
-  stringlist.
-*/
-
-
-stringlist_type * config_content_alloc_complete_stringlist(const config_content_type * content , const char * kw) {
-  config_content_item_type * item = config_content_get_item(content , kw);
-  return config_content_item_alloc_complete_stringlist(item);
-}
-
-
 
 const stringlist_type * config_content_iget_stringlist_ref(const config_content_type * content , const char * kw, int occurence) {
   config_content_item_type * item = config_content_get_item(content , kw);

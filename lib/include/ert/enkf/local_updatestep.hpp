@@ -33,12 +33,9 @@ void                    local_updatestep_free__(void * arg);
 void                    local_updatestep_free( local_updatestep_type * updatestep);
 void                    local_updatestep_add_ministep( local_updatestep_type * updatestep , local_ministep_type * ministep);
 local_ministep_type   * local_updatestep_iget_ministep( const local_updatestep_type * updatestep , int index);
-local_obsdata_type    * local_updatestep_iget_obsdata( const local_updatestep_type * updatestep , int index);
 int                     local_updatestep_get_num_ministep( const local_updatestep_type * updatestep );
-local_updatestep_type * local_updatestep_alloc_copy( const local_updatestep_type * src , const char * name );
 void                    local_updatestep_fprintf( const local_updatestep_type * updatestep , FILE * stream);
 const char            * local_updatestep_get_name( const local_updatestep_type * updatestep );
-bool                    local_updatestep_has_data_key( const local_updatestep_type * update_step , const char * key);
 
 #ifdef __cplusplus
 }

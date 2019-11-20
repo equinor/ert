@@ -45,7 +45,6 @@ extern "C" {
                                                        const enkf_config_node_type * config_node ,
                                                        int step);
 
-  bool                 ranking_table_has_ranking( const ranking_table_type * ranking_table , const char * ranking_key );
   bool                 ranking_table_display_ranking( const ranking_table_type * ranking_table , const char * ranking_key );
   bool                 ranking_table_fwrite_ranking( const ranking_table_type * ranking_table , const char * ranking_key, const char * filename );
 
@@ -56,7 +55,6 @@ extern "C" {
                                                          const char * ranking_key);
 
 
-  int                  ranking_table_get_size( const ranking_table_type * ranking_table );
   const perm_vector_type * ranking_table_get_permutation( const ranking_table_type * ranking_table , const char * ranking_key);
 
 #ifdef __cplusplus

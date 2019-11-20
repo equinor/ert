@@ -60,12 +60,10 @@ extern "C" {
   void                   model_config_set_dbase_type( model_config_type * model_config , const char * dbase_type_string);
   void                 * model_config_get_dbase_args( const model_config_type * model_config );
   const char           * model_config_get_enspath( const model_config_type * model_config);
-  const char           * model_config_get_rftpath( const model_config_type * model_config);
   fs_driver_impl         model_config_get_dbase_type(const model_config_type * model_config );
   const ecl_sum_type   * model_config_get_refcase( const model_config_type * model_config );
   void                   model_config_init_internalization( model_config_type * );
   void                   model_config_set_internalize_state( model_config_type *  , int );
-  void                   model_config_set_load_state( model_config_type *  , int );
   int                    model_config_get_history_length(const model_config_type * );
   bool                   model_config_has_prediction(const model_config_type * );
   bool                   model_config_has_history(const model_config_type * config);
@@ -79,11 +77,7 @@ extern "C" {
   path_fmt_type        * model_config_get_runpath_fmt(const model_config_type * );
   history_type         * model_config_get_history(const model_config_type * );
   forward_model_type   * model_config_get_forward_model( const model_config_type * );
-  bool                   model_config_internalize_state( const model_config_type *, int );
-  bool                   model_config_load_state( const model_config_type *, int );
   const char           * model_config_iget_casename( const model_config_type * model_config , int index);
-  //void                   model_config_set_max_resample( model_config_type * model_config , int max_resample );
-  //int                    model_config_get_max_resample(const model_config_type * model_config );
   void                   model_config_set_max_internal_submit(model_config_type * config, int max_resample);
   int                    model_config_get_max_internal_submit( const model_config_type * config );
   bool                   model_config_select_runpath( model_config_type * model_config , const char * path_key);
@@ -91,9 +85,7 @@ extern "C" {
   const char           * model_config_get_runpath_as_char( const model_config_type * model_config );
   history_source_type    model_config_get_history_source( const model_config_type * model_config );
   void                   model_config_set_refcase( model_config_type * model_config , const ecl_sum_type * refcase );
-  void                   model_config_fprintf_config( const model_config_type * model_config , int ens_size ,FILE * stream );
   model_config_type    * model_config_alloc_empty();
-  model_config_type    * model_config_alloc_load(const char*, const ext_joblist_type*, int, const ecl_sum_type*);
   model_config_type    * model_config_alloc(const config_content_type*, const char * data_root, const ext_joblist_type *, int, const ecl_sum_type*);
   model_config_type * model_config_alloc_full(int max_resample,
                                             int num_realizations,
@@ -124,5 +116,3 @@ extern "C" {
 }
 #endif
 #endif
-
-

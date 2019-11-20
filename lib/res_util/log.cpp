@@ -154,18 +154,6 @@ static bool log_include_message(const log_type *logh, message_level_type message
   return message_level >= logh->log_level;
 }
 
-/**
- * Adds a string to the log if message_level is below the threshold.
- *
- * It is the callers duty to either free the string or make sure that it is a
- * string literal.
- */
-void log_add_message_str(log_type *logh, message_level_type message_level, const char* message) {
-  log_add_message(logh, message_level, message);
-}
-
-
-
 void log_add_message_stream(FILE * stream, bool add_timestamp, message_level_type message_level, const char * message) {
   struct tm time_fields;
   time_t    epoch_time;
@@ -222,45 +210,6 @@ void log_add_message(log_type *logh,
 }
 
 
-
-
-
-/**
- * Adds a formated log message if message_level is below the threshold, fmt is expected to be the format string,
- * and "..." contains any arguments to it.
- */
-void log_add_fmt_message(log_type * logh, message_level_type message_level, const char * fmt, ...) {
-  if (!log_include_message(logh,message_level))
-      return;
-
-  char * message;
-  va_list ap;
-  va_start(ap , fmt);
-  message = util_alloc_sprintf_va( fmt , ap );
-  log_add_message(logh, message_level, message);
-  free(message);
-  va_end(ap);
-}
-
-
-
-
-
-
-/**
-   This function can be used to get low level to the FILE pointer of
-   the stream. To 'ensure' that the data actually hits the disk
-   you should call log_sync() after writing.
-
-   It is your responsabiulity to avoid racing++ when using the
-   log_get_stream() function.
-*/
-
-FILE * log_get_stream(log_type * logh ) {
-  return logh->stream;
-}
-
-
 void log_sync(log_type * logh) {
 #ifdef HAVE_FSYNC
   fsync( logh->fd );
@@ -277,5 +226,3 @@ void log_close( log_type * logh ) {
   free( logh->filename );
   free( logh );
 }
-
-

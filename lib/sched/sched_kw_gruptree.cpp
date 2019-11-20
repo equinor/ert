@@ -106,27 +106,6 @@ void sched_kw_gruptree_fprintf(const sched_kw_gruptree_type * kw, FILE * stream)
 };
 
 
-
-
-void sched_kw_gruptree_init_child_parent_list( const sched_kw_gruptree_type * kw , stringlist_type * child , stringlist_type * parent) {
-  stringlist_clear( child );
-  stringlist_clear( parent );
-  {
-    hash_iter_type * iter = hash_iter_alloc( kw->gruptree_hash );
-    while (!hash_iter_is_complete( iter )) {
-      const char * child_group  = hash_iter_get_next_key( iter );
-      const char * parent_group = hash_get_string( kw->gruptree_hash , child_group );
-
-      stringlist_append_copy( child , child_group );       /* <- The iterator keys go out of scope when hash_iter_free() is called. */
-      stringlist_append_copy( parent , parent_group );
-    }
-    hash_iter_free( iter );
-  }
-}
-
-
-
-
 void sched_kw_gruptree_alloc_child_parent_list(const sched_kw_gruptree_type * kw, char *** __children, char *** __parents, int * num_pairs)
 {
   *num_pairs = hash_get_size(kw->gruptree_hash);

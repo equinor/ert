@@ -74,7 +74,6 @@ typedef enum {
 
 
 fs_driver_impl    fs_types_lookup_string_name(const char * driver_name);
-const char      * fs_types_get_driver_name(fs_driver_enum driver_type);
 bool              fs_types_valid( fs_driver_enum driver_type);
 
 #ifdef __cplusplus

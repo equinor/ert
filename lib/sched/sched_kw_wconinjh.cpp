@@ -269,23 +269,6 @@ sched_kw_wconinjh_type * sched_kw_wconinjh_copyc(const sched_kw_wconinjh_type * 
   return NULL;
 }
 
-
-/*****************************************************************/
-
-void sched_kw_wconinjh_init_well_list( const sched_kw_wconinjh_type * kw , stringlist_type * well_list) {
-  stringlist_clear( well_list );
-  {
-    int iw;
-    for (iw = 0; iw < stringlist_get_size( well_list ); iw++) {
-      const wconinjh_well_type * well = (const wconinjh_well_type*)vector_iget_const( kw->wells , iw );
-      stringlist_append_copy( well_list , well->name );
-    }
-  }
-}
-
-
-
-
 /*****************************************************************/
 
 wconinjh_state_type * wconinjh_state_alloc( const time_t_vector_type* time) {
@@ -321,12 +304,6 @@ void wconinjh_state_free( wconinjh_state_type * wconinjh ) {
 }
 
 
-
-void wconinjh_state_free__( void * arg ) {
-  wconinjh_state_free( wconinjh_state_safe_cast( arg ));
-}
-
-
 /**
    memnonic ??
 */
@@ -335,76 +312,6 @@ void wconinjh_state_free__( void * arg ) {
 sched_phase_enum wconinjh_state_iget_phase( const wconinjh_state_type * state , int report_step) {
   return (sched_phase_enum)int_vector_safe_iget( state->phase , report_step );
 }
-
-
-well_status_enum wconinjh_state_iget_status( const wconinjh_state_type * state , int report_step ) {
-  return (well_status_enum)int_vector_safe_iget( state->state , report_step );
-}
-
-/**
-   Water injection rate - will return 0.0 if inj_phase == GAS.
-*/
-
-double wconinjh_state_iget_WWIRH( const void * __state , int report_step) {
-  const wconinjh_state_type * state = wconinjh_state_safe_cast_const( __state );
-  if (wconinjh_state_iget_phase( state , report_step ) == WATER)
-    return double_vector_safe_iget( state->injection_rate , report_step);
-  else
-    return 0.0;
-}
-
-
-/**
-   Gas injection rate - will return 0.0 if inj_phase == WATER.
-*/
-
-double wconinjh_state_iget_WGIRH( const void * __state , int report_step) {
-  const wconinjh_state_type * state = wconinjh_state_safe_cast_const( __state );
-  if (wconinjh_state_iget_phase( state , report_step ) == GAS)
-    return double_vector_safe_iget( state->injection_rate , report_step);
-  else
-    return 0.0;
-}
-
-
-/**
-   OIL injection rate - will return 0.0 if inj_phase == WATER|GAS
-*/
-
-double wconinjh_state_iget_WOIRH( const void * __state , int report_step) {
-  const wconinjh_state_type * state = wconinjh_state_safe_cast_const( __state );
-  if (wconinjh_state_iget_phase( state , report_step ) == OIL)
-    return double_vector_safe_iget( state->injection_rate , report_step);
-  else
-    return 0.0;
-}
-
-
-
-double wconinjh_state_iget_WBHPH( const void * __state , int report_step) {
-  const wconinjh_state_type * state = wconinjh_state_safe_cast_const( __state );
-  return double_vector_safe_iget( state->bhp , report_step );
-}
-
-
-double wconinjh_state_iget_WTHPH( const void * __state , int report_step) {
-  const wconinjh_state_type * state = wconinjh_state_safe_cast_const( __state );
-  return double_vector_safe_iget( state->thp , report_step );
-}
-
-/** Memnonic ??*/
-double wconinjh_state_iget_WVPRH( const void * __state , int report_step) {
-  const wconinjh_state_type * state = wconinjh_state_safe_cast_const( __state );
-  return double_vector_safe_iget( state->vapoil , report_step );
-}
-
-
-int wconinjh_state_iget_vfp_table_nr( const wconinjh_state_type * state , int report_step) {
-  return int_vector_safe_iget( state->vfp_table_nr , report_step );
-}
-
-
-
 
 void sched_kw_wconinjh_close_state(wconinjh_state_type * state , int report_step ) {
   int_vector_iset_default( state->state            , report_step ,  SHUT    );  /* SHUT or STOP ?? */

@@ -72,7 +72,6 @@ extern "C" {
   const char                  * enkf_main_get_user_config_file( const enkf_main_type * enkf_main );
   void                          enkf_main_set_rft_config_file( enkf_main_type * enkf_main , const char * rft_config_file );
   const char                  * enkf_main_get_rft_config_file( const enkf_main_type * enkf_main );
-  ui_return_type              * enkf_main_validata_refcase( const enkf_main_type * enkf_main , const char * refcase_path);
 
   ert_templates_type          * enkf_main_get_templates( enkf_main_type * enkf_main );
   void                          enkf_main_set_log_file( enkf_main_type * enkf_main , const char * log_file );
@@ -137,13 +136,10 @@ extern "C" {
   const analysis_config_type  * enkf_main_get_analysis_config(const enkf_main_type * );
   const log_config_type       * enkf_main_get_log_config(const enkf_main_type *);
 
-  void       * enkf_main_get_enkf_config_node_type(const ensemble_config_type *, const char *);
   void         enkf_main_set_field_config_iactive(const ensemble_config_type *, int);
   const char * enkf_main_get_image_viewer(const enkf_main_type * );
   const char * enkf_main_get_plot_driver(const enkf_main_type * enkf_main );
   const char * enkf_main_get_image_type(const enkf_main_type * enkf_main);
-
-  const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main );
 
   subst_config_type      * enkf_main_get_subst_config(const enkf_main_type * enkf_main);
   subst_list_type        * enkf_main_get_data_kw( const enkf_main_type * enkf_main );
@@ -177,10 +173,8 @@ extern "C" {
 
 
   void                   enkf_main_set_verbose( enkf_main_type * enkf_main , bool verbose);
-  bool                   enkf_main_get_verbose( const enkf_main_type * enkf_main );
 
   ert_workflow_list_type * enkf_main_get_workflow_list( enkf_main_type * enkf_main );
-  void                     enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type * workflows);
   bool                     enkf_main_run_workflow( enkf_main_type * enkf_main , const char * workflow);
 
   rng_config_type     * enkf_main_get_rng_config( const enkf_main_type * enkf_main );
@@ -273,7 +267,6 @@ extern "C" {
 
   char            * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const char * case_path);
   enkf_fs_type    * enkf_main_get_fs(const enkf_main_type * );
-  enkf_fs_type    * enkf_main_tui_get_fs(const enkf_main_type * );
   enkf_fs_type    * enkf_main_job_get_fs(const enkf_main_type * );
   enkf_fs_type    * enkf_main_get_fs_ref(const enkf_main_type * enkf_main);
   const char      * enkf_main_get_current_fs( const enkf_main_type * enkf_main );

@@ -372,16 +372,8 @@ const char * job_queue_node_get_ok_file( const job_queue_node_type * node) {
   return node->ok_file;
 }
 
-const char * job_queue_node_get_status_file( const job_queue_node_type * node) {
-  return node->status_file;
-}
-
 const char * job_queue_node_get_run_path( const job_queue_node_type * node) {
   return node->run_path;
-}
-
-const char * job_queue_node_get_name( const job_queue_node_type * node) {
-  return node->job_name;
 }
 
 const char * job_queue_node_get_failed_job( const job_queue_node_type * node) {
@@ -709,12 +701,6 @@ void job_queue_node_set_max_confirmation_wait_time(job_queue_node_type * node,
                                                    time_t time) {
   node->max_confirm_wait = time;
 }
-
-
-bool job_queue_node_status_confirmed_running(job_queue_node_type * node) {
-  return node->confirmed_running;
-}
-
 
 bool job_queue_node_kill(job_queue_node_type * node,
                          job_queue_status_type * status,

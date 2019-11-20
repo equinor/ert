@@ -118,12 +118,6 @@ bool local_obsdata_add_node( local_obsdata_type * data , local_obsdata_node_type
 }
 
 
- void local_obsdata_clear( local_obsdata_type * data ) {
-   hash_clear( data->nodes_map );
-   vector_clear( data->nodes_list );
- }
-
-
 local_obsdata_node_type * local_obsdata_iget( const local_obsdata_type * data , int index) {
   return (local_obsdata_node_type *) vector_iget( data->nodes_list , index );
 }

@@ -326,15 +326,12 @@ void prefix ## _alloc_stats(const prefix ## _type ** ensemble , int ens_size , p
 void    enkf_util_truncate(void *  , int  , ecl_data_type , void *  , void *);
 void    enkf_util_rand_stdnormal_vector(int  , double *, rng_type * rng);
 double  enkf_util_rand_normal(double , double , rng_type * rng);
-void    enkf_util_fwrite_target_type(FILE * , ert_impl_type);
 void    enkf_util_assert_buffer_type(buffer_type * buffer, ert_impl_type target_type);
-void    enkf_util_randperm( int * , int, rng_type * rng);
 
   //char  * enkf_util_scanf_alloc_filename(const char * , int );
 void    enkf_util_fprintf_data(const int * , const double ** , const char * , const char ** , int , int , const bool * , bool , FILE * stream);
 
 char * enkf_util_alloc_tagged_string(const char * );
-char * enkf_util_alloc_detagged_string( const char * tagged_string);
 int    enkf_util_compare_keys( const char * key1 , const char * key2 );
 int    enkf_util_compare_keys__( const void * __key1 , const void * __key2 );
 

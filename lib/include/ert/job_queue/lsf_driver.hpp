@@ -59,7 +59,6 @@ extern "C" {
 typedef struct lsf_driver_struct lsf_driver_type;
 typedef struct lsf_job_struct    lsf_job_type;
 
-  void            lsf_job_export_hostnames( const lsf_job_type * job , stringlist_type * hostlist);
   void            lsf_job_free(lsf_job_type * job);
   long            lsf_job_get_jobnr( const lsf_job_type * job );
 

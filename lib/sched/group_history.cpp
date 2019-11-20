@@ -47,33 +47,6 @@ UTIL_SAFE_CAST_FUNCTION( group_history , GROUP_HISTORY_TYPE_ID )
 UTIL_SAFE_CAST_FUNCTION_CONST( group_history , GROUP_HISTORY_TYPE_ID )
 UTIL_IS_INSTANCE_FUNCTION( group_history , GROUP_HISTORY_TYPE_ID)
 
-group_history_type * group_history_alloc( const char * group_name , const time_t_vector_type * time , int report_step) {
-  group_history_type * group_history = (group_history_type*)util_malloc( sizeof * group_history );
-
-  UTIL_TYPE_ID_INIT( group_history , GROUP_HISTORY_TYPE_ID );
-
-  group_history->time             = time;
-  group_history->group_name       = util_alloc_string_copy( group_name );
-  group_history->children_storage = vector_alloc_new();
-  group_history->children         = size_t_vector_alloc(0,0);
-  group_history->start_time       = report_step;
-  /*
-     We install an empty child hash immediately - so the children
-     table will never contain NULL.
-  */
-  {
-    hash_type * child_hash = hash_alloc();
-    vector_append_owned_ref( group_history->children_storage , child_hash , hash_free__ );
-    size_t_vector_iset_default( group_history->children , 0 , ( size_t ) child_hash );
-  }
-
-
-  group_history->parent           = size_t_vector_alloc(0, ( size_t ) NULL );
-  group_history->__active_step    = -1;
-  return group_history;
-}
-
-
 
 void group_history_free( group_history_type * group_history ) {
   vector_free( group_history->children_storage );
@@ -82,21 +55,6 @@ void group_history_free( group_history_type * group_history ) {
 
   free( group_history->group_name );
   free( group_history );
-}
-
-
-bool group_history_group_exists( const group_history_type * group_history , int report_step) {
-  if ( report_step >= group_history->start_time)
-    return true;
-  else
-    return false;
-}
-
-
-
-void group_history_free__( void * arg ){
-  group_history_type * group_history = group_history_safe_cast( arg );
-  group_history_free( group_history );
 }
 
 
@@ -193,64 +151,6 @@ void group_history_fprintf(const group_history_type * group_history , int report
 }
 
 
-void group_history_add_child(group_history_type * group_history , void * child_history , const char * child_name , int report_step ) {
-  bool well_child = well_history_is_instance( child_history ) ? true : false;
-
-
-  /*
-     If the child is already in a parent-child relationship; the child
-     must first be orphaned by removing it as a child from parents' child-list.
-  */
-
-  {
-    group_history_type * old_parent;
-    if (well_child)
-      old_parent = well_history_get_parent( (well_history_type*)child_history , report_step );
-    else
-      old_parent = group_history_get_parent( (group_history_type*)child_history , report_step );
-
-    if (old_parent != NULL)
-      group_history_del_child( old_parent , child_name , report_step );
-  }
-
-
-  group_history_ensure_private_child_list( group_history , report_step );
-  /*1: Establishing the child relationship. */
-  {
-    hash_type * child_hash;
-    child_hash = (hash_type *) size_t_vector_iget( group_history->children , report_step );         /* This should NOT use the safe_iget() function, because we always should work an per-report_step instance. */
-    hash_insert_ref( child_hash , child_name , child_history);                                      /* Establish parent -> child link. */
-  }
-
-
-  /*2: Setting the opposite, i.e. parent <- child relationship. */
-  if (well_child)
-    well_history_set_parent( (well_history_type*)child_history , report_step , group_history );
-  else if (group_history_is_instance( child_history ))
-    group_history_set_parent( (group_history_type*)child_history , report_step , group_history );
-
-}
-
-
-void group_history_init_child_names( group_history_type * group_history , int report_step , stringlist_type * child_names ) {
-  stringlist_clear( child_names );
-  {
-    hash_type      * child_hash = (hash_type *) size_t_vector_safe_iget( group_history->children , report_step );   /* Get a pointer to child hash instance valid at this report_step. */
-    hash_iter_type * child_iter = hash_iter_alloc( child_hash );
-    while ( !hash_iter_is_complete( child_iter )) {
-      const char * child_name = hash_iter_get_next_key( child_iter );
-      stringlist_append_copy( child_names , child_name );
-    }
-    hash_iter_free( child_iter );
-  }
-}
-
-
-const char * group_history_get_name( const group_history_type * group_history ) {
-  return group_history->group_name;
-}
-
-
 /*****************************************************************/
 
 double group_history_iget_GOPRH( const void * __group_history , int report_step ) {
@@ -321,71 +221,4 @@ double group_history_iget_GGPRH( const void * __group_history , int report_step 
 
     return GGPRH;
   }
-}
-
-
-double group_history_iget_GGPTH( const void * __group_history , int report_step ) {
-  const group_history_type * group_history = group_history_safe_cast_const( __group_history );
-  double GGPTH = 0;
-  for (int tstep = 1; tstep <= report_step; tstep++) {
-    double days = (time_t_vector_iget( group_history->time , tstep ) - time_t_vector_iget( group_history->time , tstep - 1)) * 1.0 / 86400 ;
-    double rate = group_history_iget_GGPRH( __group_history , tstep );
-    GGPTH += rate * days;
-  }
-  return GGPTH;
-}
-
-
-double group_history_iget_GOPTH( const void * __group_history , int report_step ) {
-  const group_history_type * group_history = group_history_safe_cast_const( __group_history );
-  double GOPTH = 0;
-  for (int tstep = 1; tstep <= report_step; tstep++) {
-    double days = (time_t_vector_iget( group_history->time , tstep ) - time_t_vector_iget( group_history->time , tstep - 1)) * 1.0 / 86400 ;
-    double rate = group_history_iget_GOPRH( __group_history , tstep );
-    GOPTH += rate * days;
-  }
-  return GOPTH;
-}
-
-
-double group_history_iget_GWPTH( const void * __group_history , int report_step ) {
-  const group_history_type * group_history = group_history_safe_cast_const( __group_history );
-  double GWPTH = 0;
-  for (int tstep = 1; tstep <= report_step; tstep++) {
-    double days = (time_t_vector_iget( group_history->time , tstep ) - time_t_vector_iget( group_history->time , tstep - 1)) * 1.0 / 86400 ;
-    double rate = group_history_iget_GWPRH( __group_history , tstep );
-    GWPTH += rate * days;
-  }
-  return GWPTH;
-}
-
-
-
-
-double group_history_iget_GGORH( const void * __group_history , int report_step ) {
-  double GGPRH = group_history_iget_GGPRH( __group_history , report_step );
-  double GOPRH = group_history_iget_GOPRH( __group_history , report_step );
-
-  return GGPRH / GOPRH;
-}
-
-
-
-double group_history_iget_GWCTH( const void * __group_history , int report_step ) {
-  double GWPRH = group_history_iget_GWPRH( __group_history , report_step );
-  double GOPRH = group_history_iget_GOPRH( __group_history , report_step );
-
-  return GWPRH / GOPRH;
-}
-
-
-
-
-
-
-double group_history_iget( const void * index , int report_step ) {
-  const group_history_type * group_history  = (const group_history_type*)group_index_get_state__( index );
-  sched_history_callback_ftype * func = group_index_get_callback( (const group_index_type*)index );
-
-  return func( group_history , report_step );
 }

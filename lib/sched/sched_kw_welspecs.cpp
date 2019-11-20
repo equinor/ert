@@ -451,28 +451,6 @@ void sched_kw_welspecs_fprintf(const sched_kw_welspecs_type * kw, FILE * stream)
 };
 
 
-
-
-void sched_kw_welspecs_init_child_parent_list( const sched_kw_welspecs_type * kw , stringlist_type * child , stringlist_type * parent) {
-  stringlist_clear( child );
-  stringlist_clear( parent );
-  {
-    for (int i=0; i < vector_get_size( kw->welspec_list ); i++) {
-      const welspec_type * well = (const welspec_type*)vector_iget_const(kw->welspec_list , i);
-      stringlist_append_copy( child , well->name );
-
-      if (!well->def[1])
-        stringlist_append_copy( parent , well->group );
-      else
-        stringlist_append_copy( parent , FIELD_GROUP );
-
-    }
-  }
-}
-
-
-
-
 void sched_kw_welspecs_alloc_child_parent_list(const sched_kw_welspecs_type * kw, char *** __children, char *** __parents, int * num_pairs)
 {
   int num_wells    = vector_get_size(kw->welspec_list);

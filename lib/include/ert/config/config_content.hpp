@@ -50,7 +50,6 @@ typedef struct config_content_struct config_content_type;
   int config_content_iget_as_int( const config_content_type * content , const char * key , int occurence , int index);
   bool   config_content_iget_as_bool( const config_content_type * content , const char * key , int occurence , int index);
   double config_content_iget_as_double( const config_content_type * content , const char * key , int occurence , int index);
-  const char * config_content_iget_as_path( const config_content_type * content , const char * key , int occurence , int index);
   const char * config_content_safe_iget(const config_content_type * content , const char *kw, int occurence , int index);
   int config_content_get_occurences(const config_content_type * content, const char * kw);
 
@@ -62,8 +61,6 @@ typedef struct config_content_struct config_content_type;
   const char * config_content_get_value_as_relpath( const config_content_type * config , const char * kw);
   const char * config_content_get_value_as_executable( const config_content_type * config , const char * kw);
   const char * config_content_get_value(const config_content_type * config , const char * kw);
-  char * config_content_alloc_joined_string(const config_content_type * content , const char * kw, const char * sep);
-  stringlist_type * config_content_alloc_complete_stringlist(const config_content_type * content , const char * kw);
   const stringlist_type * config_content_iget_stringlist_ref(const config_content_type * content , const char * kw, int occurence);
   config_content_node_type * config_content_get_value_node( const config_content_type * content , const char * kw);
   void config_content_add_define( config_content_type * content , const char * key , const char * value );

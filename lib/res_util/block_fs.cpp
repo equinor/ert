@@ -1685,33 +1685,6 @@ static void user_file_node_free__( void * node ) {
   user_file_node_free( (user_file_node_type *) node );
 }
 
-long int user_file_node_get_node_offset( const user_file_node_type * user_file_node ) {
-  return user_file_node->file_node->node_offset;
-}
-
-long int user_file_node_get_data_offset( const user_file_node_type * user_file_node ) {
-  return user_file_node->file_node->data_offset + user_file_node->file_node->node_offset;
-}
-
-int user_file_node_get_node_size( const user_file_node_type * user_file_node ) {
-  return user_file_node->file_node->node_size;
-}
-
-int user_file_node_get_data_size( const user_file_node_type * user_file_node ) {
-  return user_file_node->file_node->data_size;
-}
-
-bool user_file_node_in_use( const user_file_node_type * user_file_node ) {
-  if (user_file_node->file_node->status == NODE_IN_USE)
-    return true;
-  else
-    return false;
-}
-
-const char * user_file_node_get_filename( const user_file_node_type * user_file_node ) {
-  return user_file_node->filename;
-}
-
 static int offset_cmp( const void * arg1 , const void * arg2 ) {
   const user_file_node_type * node1 = (user_file_node_type *) arg1;
   const user_file_node_type * node2 = (user_file_node_type *) arg2;
@@ -1807,4 +1780,3 @@ vector_type * block_fs_alloc_filelist( block_fs_type * block_fs  , const char * 
 
   return sort_vector;
 }
-

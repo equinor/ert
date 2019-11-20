@@ -284,14 +284,6 @@ static sched_kw_type ** sched_kw_dates_split_alloc(const sched_kw_type * sched_k
 /*****************************************************************/
 
 
-
-
-
-const char * sched_kw_get_type_name( const sched_kw_type * sched_kw ) {
-  return sched_kw_type_name( sched_kw->type );
-}
-
-
 sched_kw_type_enum sched_kw_get_type(const sched_kw_type * sched_kw)
 {
   return sched_kw->type;
@@ -335,13 +327,6 @@ sched_kw_type * sched_kw_token_alloc(const stringlist_type * token_list, int * t
 
 
 const char * sched_kw_get_name( const sched_kw_type * kw) { return kw->kw_name; }
-
-
-
-void sched_kw_set_restart_nr( sched_kw_type * kw , int restart_nr) {
-  kw->restart_nr = restart_nr;
-}
-
 
 
 void sched_kw_free(sched_kw_type * sched_kw)
@@ -425,90 +410,6 @@ time_t sched_kw_get_new_time(const sched_kw_type * sched_kw, time_t curr_time)
 }
 
 
-
-char ** sched_kw_alloc_well_list(const sched_kw_type * sched_kw, int * num_wells)
-{
-  switch(sched_kw_get_type(sched_kw))
-  {
-  case(WCONPROD):
-    return sched_kw_wconprod_alloc_wells_copy( (const sched_kw_wconprod_type *) sched_kw->data , num_wells);
-    break;
-  case(WCONINJE):
-    return sched_kw_wconinje_alloc_wells_copy( (const sched_kw_wconinje_type *) sched_kw->data , num_wells);
-    break;
-  case(WCONINJ):
-    return sched_kw_wconinj_alloc_wells_copy( (const sched_kw_wconinj_type *) sched_kw->data , num_wells);
-    break;
-  case(WCONHIST):
-    {
-      hash_type * well_obs = sched_kw_wconhist_alloc_well_obs_hash( (sched_kw_wconhist_type *) sched_kw->data);
-      *num_wells = hash_get_size(well_obs);
-      char ** well_list = hash_alloc_keylist(well_obs);
-      hash_free(well_obs);
-      return well_list;
-    }
-    break;
-  case(WCONINJH):
-    {
-      hash_type * well_obs = sched_kw_wconinjh_alloc_well_obs_hash( (sched_kw_wconinjh_type *) sched_kw->data);
-      *num_wells = hash_get_size(well_obs);
-      char ** well_list = hash_alloc_keylist(well_obs);
-      hash_free(well_obs);
-      return well_list;
-    }
-    break;
-  default:
-       util_abort("%s: Internal error - trying to get well list from non-well kw - aborting.\n", __func__);
-       return NULL;
-  }
-}
-
-
-
-hash_type * sched_kw_alloc_well_obs_hash(const sched_kw_type * sched_kw)
-{
-  switch(sched_kw_get_type(sched_kw))
-  {
-    case(WCONHIST):
-    {
-      return sched_kw_wconhist_alloc_well_obs_hash( (sched_kw_wconhist_type *) sched_kw->data);
-    }
-    case(WCONINJH):
-    {
-      return sched_kw_wconinjh_alloc_well_obs_hash( (sched_kw_wconinjh_type *) sched_kw->data);
-    }
-    default:
-    {
-       util_abort("%s: Internal error - trying to get well observations from non-history kw - aborting.\n", __func__);
-       return NULL;
-    }
-  }
-}
-
-
-
-void sched_kw_alloc_child_parent_list(const sched_kw_type * sched_kw, char *** children, char *** parents, int * num_pairs)
-{
-  switch(sched_kw_get_type(sched_kw))
-  {
-    case(GRUPTREE):
-    {
-      sched_kw_gruptree_alloc_child_parent_list((sched_kw_gruptree_type *) sched_kw->data, children, parents, num_pairs);
-      break;
-    }
-    case(WELSPECS):
-    {
-      sched_kw_welspecs_alloc_child_parent_list((sched_kw_welspecs_type *) sched_kw->data, children, parents, num_pairs);
-      break;
-    }
-    default:
-    {
-       util_abort("%s: Internal error - trying to get GRUPTREE from non-gruptre kw - aborting.\n", __func__);
-    }
-  }
-}
-
-
 /**
     Only WCONHIST
 */
@@ -540,14 +441,6 @@ bool sched_kw_well_open( const sched_kw_type * sched_kw , const char * well ) {
 }
 
 
-
-sched_kw_type * sched_kw_alloc_copy(const sched_kw_type * src) {
-  sched_kw_type * target = NULL;
-
-  return target;
-}
-
-
 /*
   Returns an untyped poiniter to the spesific implementation. Used by
   the sched_file_update system. A bit careful with this one...
@@ -560,5 +453,3 @@ void * sched_kw_get_data( sched_kw_type * kw) {
 const void * sched_kw_get_const_data( const sched_kw_type * kw) {
   return kw->data;
 }
-
-

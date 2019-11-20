@@ -240,11 +240,6 @@ void config_content_node_assert_key_value( const config_content_node_type * node
     util_abort("%s: item:%s before calling config_get_value() functions *without* index you must set argc_min == argc_max = 1 \n",__func__ , config_schema_item_get_kw( node->schema ));
 }
 
-
-const config_path_elm_type * config_content_node_get_path_elm( const config_content_node_type * node ) {
-  return node->cwd;
-}
-
 /**
    The node should contain elements of the type:
 
@@ -260,11 +255,4 @@ void config_content_node_init_opt_hash( const config_content_node_type * node , 
   int i;
   for (i = elm_offset; i < config_content_node_get_size( node ); i++)
     hash_add_option( opt_hash , config_content_node_iget( node , i ));
-}
-
-
-void config_content_node_fprintf( const config_content_node_type * node , FILE * stream ) {
-  fprintf(stream , "%s: {" , config_schema_item_get_kw( node->schema ));
-  stringlist_fprintf( node->stringlist , ", " , stream );
-  fprintf(stream , "}\n");
 }

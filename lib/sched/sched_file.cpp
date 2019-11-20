@@ -25,7 +25,6 @@
 
 #include <ert/sched/sched_file.hpp>
 #include <ert/sched/sched_util.hpp>
-#include <ert/sched/sched_blob.hpp>
 #include <ert/sched/sched_kw_dates.hpp>
 #include <ert/sched/sched_kw_wconhist.hpp>
 #include <ert/sched/sched_kw_wconinje.hpp>
@@ -403,24 +402,6 @@ void sched_file_free(sched_file_type * sched_file)
 }
 
 
-/**
-   This function will allocate a time_t_vector instance, which
-   contains all the time_t values for this schedule_file - starting
-   with the start_date.
-*/
-
-time_t_vector_type * sched_file_alloc_time_t_vector( const sched_file_type * sched_file ) {
-  time_t_vector_type * vector = time_t_vector_alloc(0,0);
-  int i;
-  time_t_vector_append( vector , sched_file->start_time );
-  for (i=1; i < vector_get_size( sched_file->blocks ); i++) {
-    const sched_block_type * block = (const sched_block_type*)vector_iget_const( sched_file->blocks , i );
-    time_t_vector_append( vector , block->block_end_time );
-  }
-  return vector;
-}
-
-
 static stringlist_type * sched_file_tokenize( const char * filename ) {
   stringlist_type  * token_list;
   basic_parser_type     * parser    = basic_parser_alloc(" \t"  ,      /* Splitters */
@@ -474,22 +455,6 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
   sched_file_update_index( sched_file );
   stringlist_free( token_list );
 }
-
-
-void sched_file_simple_parse( const char * filename , time_t start_time) {
-  stringlist_type * token_list = sched_file_tokenize( filename );
-  const int num_tokens         = stringlist_get_size( token_list );
-  int token_index = 0;
-  do {
-    sched_kw_type_enum kw_type = sched_kw_type_from_string( stringlist_iget( token_list , token_index ));
-    if ((kw_type == DATES) || (kw_type == TSTEP)) {
-
-    }
-  } while( token_index < num_tokens );
-
-  stringlist_free( token_list );
-}
-
 
 
 void sched_file_parse(sched_file_type * sched_file, const char * filename)
@@ -591,19 +556,6 @@ int sched_file_get_restart_nr_from_time_t(const sched_file_type * sched_file, ti
 }
 
 
-/**
-   This function finds the restart_nr for the a number of days after
-   simulation start.
-*/
-
-int sched_file_get_restart_nr_from_days(const sched_file_type * sched_file , double days) {
-  time_t time = sched_file_iget_block_start_time(sched_file, 0);
-  util_inplace_forward_days_utc( &time , days);
-  return sched_file_get_restart_nr_from_time_t(sched_file , time);
-}
-
-
-
 time_t sched_file_iget_block_start_time(const sched_file_type * sched_file, int i)
 {
   sched_block_type * block = sched_file_iget_block(sched_file, i);
@@ -619,52 +571,11 @@ time_t sched_file_iget_block_end_time(const sched_file_type * sched_file, int i)
 }
 
 
-double sched_file_iget_block_start_days(const sched_file_type * sched_file, int i)
-{
-  sched_block_type * block = sched_file_iget_block(sched_file, i);
-  return util_difftime_days( sched_file->start_time , block->block_start_time );
-}
-
-
 double sched_file_iget_block_end_days(const sched_file_type * sched_file, int i)
 {
   sched_block_type * block = sched_file_iget_block(sched_file, i);
   return util_difftime_days( sched_file->start_time , block->block_end_time );
 }
-
-
-double sched_file_get_sim_days(const sched_file_type * sched_file , int report_step) {
-  return sched_file_iget_block_end_days( sched_file , report_step );
-}
-
-
-time_t sched_file_get_sim_time(const sched_file_type * sched_file , int report_step) {
-  return sched_file_iget_block_end_time( sched_file , report_step );
-}
-
-
-const char * sched_file_iget_filename( const sched_file_type * sched_file , int file_nr ) {
-  return stringlist_iget( sched_file->files , file_nr );
-}
-
-
-
-
-int sched_file_iget_block_size(const sched_file_type * sched_file, int block_nr)
-{
-  sched_block_type * block = sched_file_iget_block(sched_file, block_nr);
-  return sched_block_get_size(block);
-}
-
-
-
-sched_kw_type * sched_file_ijget_block_kw_ref(const sched_file_type * sched_file, int block_nr, int kw_nr)
-{
-  sched_block_type * block = sched_file_iget_block(sched_file, block_nr);
-  sched_kw_type * sched_kw = sched_block_iget_kw(block, kw_nr);
-  return sched_kw;
-}
-
 
 
 static void __sched_file_summarize_line(int restart_nr , time_t start_time , time_t t , FILE * stream) {
@@ -673,45 +584,6 @@ static void __sched_file_summarize_line(int restart_nr , time_t start_time , tim
 
   util_set_date_values_utc(t , &mday , &month , &year);
   fprintf(stream , "%02d/%02d/%04d   %7.1f days     %04d \n", mday , month , year , days , restart_nr);
-}
-
-
-
-
-void sched_file_summarize(const sched_file_type * sched_file , FILE * stream) {
-  int len            = sched_file_get_num_restart_files(sched_file);
-  time_t  start_time = sched_file_iget_block_start_time(sched_file , 0);
-  for(int i=1; i<len; i++) {
-    time_t t = sched_file_iget_block_start_time(sched_file , i);
-    __sched_file_summarize_line(i - 1 , start_time , t , stream);
-  }
-  {
-    time_t t = sched_file_iget_block_end_time(sched_file , len - 1);
-    __sched_file_summarize_line(len - 1 , start_time , t , stream);
-  }
-}
-
-
-/**
-    deep_copy is NOT implemented. With shallow_copy you get a new
-    container (i.e. vector) , but the node content is unchanged.
-*/
-
-
-sched_file_type * sched_file_alloc_copy(const sched_file_type * src , bool deep_copy) {
-  int ikw;
-  sched_file_type * target = sched_file_alloc(src->start_time);
-
-  for (ikw = 0; ikw < vector_get_size( src->kw_list ); ikw++) {
-    sched_kw_type * kw = (sched_kw_type*)vector_iget( src->kw_list , ikw );
-    sched_file_add_kw( target , kw );
-  }
-
-  for (int i = 0; i < stringlist_get_size( src->files ); i++)
-    stringlist_append_copy( target->files , stringlist_iget(src->files , i));
-
-  sched_file_update_index( target );
-  return target;
 }
 
 
@@ -759,246 +631,3 @@ void sched_file_update_blocks(sched_file_type * sched_file,
     sched_file_update_block( sched_block , restart_nr , kw_type , callback , callback_arg);
   }
 }
-
-
-
-/**
-    Update a complete schedule file by using callbacks to
-    'user-space'. Say for instance you want to scale up the oilrate in
-    well P1. This could be achieved with the following code:
-
-       -- This function is written by the user of the library - in a remote scope.
-
-       void increase_orat_callback(void * void_kw , int restart_nr , void * arg) {
-          double scale_factor  = *(( double * ) arg);
-          sched_kw_wconhist_type * kw = sched_kw_wconhist_safe_cast( void_kw );
-          sched_kw_wconhist_scale_orat( wconhist_kw , "P1" , scale_factor);
-       }
-
-       ....
-       ....
-
-       sched_file_update(sched_file , WCONHIST , increase_orat_callback , &scale_factor);
-
-    Observe the following about the callback:
-
-      * The sched_kw input argument comes as a void pointer, and an
-        sched_kw_xxx_safe_cast() function should be used on input to
-        check.
-
-      * The user-space level does *NOT* have access to the internals
-        of the sched_kw_xxxx type, so the library must provide
-        functions for the relevant state modifications.
-
-      * The last argumnt (void * arg) - can of course be anything and
-        his brother.
-
-*/
-
-
-void sched_file_update(sched_file_type * sched_file,
-                       sched_kw_type_enum kw_type,
-                       sched_file_callback_ftype * callback,
-                       void * callback_arg) {
-
-  sched_file_update_blocks(sched_file , 1 , sched_file_get_num_restart_files(sched_file) - 1 , kw_type , callback , callback_arg);
-
-}
-
-
-
-/*****************************************************************/
-/**
-   This function will count the number of TSTEP / DATES keywords in a
-   schedule file, without actually internalizing the file. This
-   function 'should' be used for schedule files which we do not manage
-   to parse.
-*/
-
-int sched_file_step_count( const char * filename ) {
-  stringlist_type * token_list = sched_file_tokenize( filename );
-  int token_index = 0;
-  int step_count  = 0;
-  do {
-    const char * current_token = stringlist_iget( token_list , token_index );
-    sched_kw_type_enum kw_type = sched_kw_type_from_string( current_token );
-
-    if (kw_type == DATES) {
-      sched_kw_type * sched_kw             = sched_kw_token_alloc( token_list , &token_index , NULL , NULL);
-      const sched_kw_dates_type * dates_kw = (const sched_kw_dates_type*)sched_kw_get_data( sched_kw );
-      step_count += sched_kw_dates_get_size( dates_kw );
-      sched_kw_free( sched_kw );
-    } else if (kw_type == TSTEP ) {
-      sched_kw_type * sched_kw             = sched_kw_token_alloc( token_list , &token_index , NULL , NULL);
-      const sched_kw_tstep_type * tstep_kw = (const sched_kw_tstep_type*)sched_kw_get_data( sched_kw );
-      step_count += sched_kw_tstep_get_length( tstep_kw );
-      sched_kw_free( sched_kw );
-    } else
-      token_index++;
-
-  } while ( token_index < stringlist_get_size( token_list ));
-  stringlist_free( token_list );
-  return step_count;
-}
-
-
-/*****************************************************************/
-
-
-//void sched_file_merge( const char * filename , time_t start_date , time_t insert_date , bool append_string , const char * insert_string) {
-//  stringlist_type * token_list = sched_file_tokenize( filename );
-//  int  token_index = 0;
-//  int  step_count  = 0;
-//  bool has_date    = false;
-//
-//  do {
-//    time_t       current_time  = start_date;
-//    const char * current_token = stringlist_iget( token_list , token_index );
-//    sched_kw_type_enum kw_type = sched_kw_type_from_string( current_token );
-//
-//    if ((kw_type == DATES) || (kw_type == TSTEP)) {
-//      int istep , num_step;
-//      sched_kw_type *  sched_kw = sched_kw_token_alloc( token_list , &token_index , NULL);
-//      sched_kw_type ** split_kw = sched_kw_split_alloc_DATES( sched_kw , &num_step );
-//
-//      for (istep = 0; istep  < num_step; istep++) {
-//        if (kw_type == DATES) {
-//          const sched_kw_dates_type * dates_kw = sched_kw_get_data( sched_kw );
-//          current_time = sched_kw_dates_iget_date( dates_kw , 0 );
-//        }
-//        if (current_time == insert_date) {
-//          /*
-//             We are currently looking at a DATES keyword EXACTLY at
-//             the date we should insert at. If append_string == false
-//             we let the new string go in immediately, otherwise we set
-//             has_date to true and continue one more time_step (then
-//             the current_time > insert_date test will kick in).
-//          */
-//          has_date = true;
-//          if (!append_string) {
-//
-//          }
-//        }
-//      }
-//      sched_kw_free( sched_kw );
-//
-//    } else
-//      token_index++;
-//
-//  } while ( token_index < stringlist_get_size( token_list ));
-//
-//}
-//
-
-
-/*****************************************************************/
-
-
-
-/**
-   Currently ONLY applicable to WCONHIST producers.
-
-
-*/
-
-bool sched_file_well_open( const sched_file_type * sched_file ,
-                           int restart_nr ,
-                           const char * well_name) {
-
-  bool well_found = false;
-  bool well_open  = false;
-  int block_nr    = restart_nr;
-  while (!well_found && (block_nr >= 0)) {
-    sched_block_type * block = sched_file_iget_block( sched_file , block_nr );
-
-    if (hash_has_key( block->kw_hash , "WCONHIST")) {
-      const vector_type * wconhist_vector = (const vector_type*)hash_get( block->kw_hash , "WCONHIST");
-      int i;
-      for (i=0; i < vector_get_size( wconhist_vector ); i++) {
-        const sched_kw_type * kw = (const sched_kw_type*)vector_iget_const( wconhist_vector , i );
-        if (sched_kw_has_well( kw , well_name )) {
-          well_found = true;
-          well_open = sched_kw_well_open( kw , well_name );
-        }
-      }
-    }
-
-
-    if (hash_has_key( block->kw_hash , "WCONINJE")) {
-      const vector_type * wconinje_vector = (const vector_type*)hash_get( block->kw_hash , "WCONINJE");
-      int i;
-      for (i=0; i < vector_get_size( wconinje_vector ); i++) {
-        const sched_kw_type * kw = (const sched_kw_type*)vector_iget_const( wconinje_vector , i );
-        if (sched_kw_has_well( kw , well_name )) {
-          well_found = true;
-          well_open  = sched_kw_well_open( kw , well_name );
-        }
-      }
-    }
-
-
-
-    block_nr--;
-  }
-  return well_open;
-}
-
-
-
-
-
-double sched_file_well_wconhist_rate( const sched_file_type * sched_file ,
-                                      int restart_nr ,
-                                      const char * well_name) {
-  double rate = -1;
-  bool well_found = false;
-  int block_nr    = restart_nr;
-
-  while (!well_found && (block_nr >= 0)) {
-    sched_block_type * block = sched_file_iget_block( sched_file , block_nr );
-
-    if (hash_has_key( block->kw_hash , "WCONHIST")) {
-      const vector_type * wconhist_vector = (const vector_type*)hash_get( block->kw_hash , "WCONHIST");
-      int i;
-      for (i=0; i < vector_get_size( wconhist_vector ); i++) {
-        sched_kw_type * kw = (sched_kw_type*)vector_iget( wconhist_vector , i );
-        if (sched_kw_has_well( kw , well_name )) {
-          well_found = true;
-          rate = sched_kw_wconhist_get_orat( (sched_kw_wconhist_type*)sched_kw_get_data( kw ) , well_name );
-        }
-      }
-    }
-    block_nr--;
-  }
-  return rate;
-}
-
-
-
-double sched_file_well_wconinje_rate( const sched_file_type * sched_file ,
-                                      int restart_nr ,
-                                      const char * well_name) {
-  double rate = -1;
-  bool well_found = false;
-  int block_nr    = restart_nr;
-
-  while (!well_found && (block_nr >= 0)) {
-    sched_block_type * block = sched_file_iget_block( sched_file , block_nr );
-
-    if (hash_has_key( block->kw_hash , "WCONINJE")) {
-      const vector_type * wconhist_vector = (const vector_type*)hash_get( block->kw_hash , "WCONINJE");
-      int i;
-      for (i=0; i < vector_get_size( wconhist_vector ); i++) {
-        sched_kw_type * kw = (sched_kw_type*)vector_iget( wconhist_vector , i );
-        if (sched_kw_has_well( kw , well_name )) {
-          well_found = true;
-          rate = sched_kw_wconinje_get_surface_flow( (const sched_kw_wconinje_type*)sched_kw_get_data( kw ) , well_name );
-        }
-      }
-    }
-
-    block_nr--;
-  }
-  return rate;
-}
-

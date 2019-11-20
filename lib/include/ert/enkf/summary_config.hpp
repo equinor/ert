@@ -55,7 +55,6 @@ typedef enum { LOAD_FAIL_SILENT  = 0,     // We just try to load - and if it is 
   void                   summary_config_set_load_fail_mode( summary_config_type * config , load_fail_type load_fail);
   load_fail_type         summary_config_get_load_fail_mode( const summary_config_type * config);
   void                   summary_config_update_required( summary_config_type * config , bool required );
-  ecl_smspec_var_type    summary_config_get_var_type(summary_config_type * , const ecl_sum_type * ecl_sum);
   const           char * summary_config_get_var(const summary_config_type * );
   void                   summary_config_set_obs_config_file(summary_config_type * , const char * );
   const char           * summary_config_get_config_txt_file_ref(const summary_config_type * );
@@ -67,8 +66,6 @@ typedef enum { LOAD_FAIL_SILENT  = 0,     // We just try to load - and if it is 
   void                   summary_config_add_var(summary_config_type *  , const char * );
   bool                   summary_config_has_var(const summary_config_type * , const char * );
   void                   summary_config_summarize(const summary_config_type * );
-  void                   summary_config_add_obs_key(summary_config_type * , const char * );
-  int                    summary_config_get_byte_size(const summary_config_type * );
 
   UTIL_IS_INSTANCE_HEADER(summary_config);
   UTIL_SAFE_CAST_HEADER(summary_config);

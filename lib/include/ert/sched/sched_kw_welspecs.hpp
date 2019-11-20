@@ -43,7 +43,6 @@ void sched_kw_welspecs_fprintf(const sched_kw_welspecs_type *, FILE *);
 void sched_kw_welspecs_fwrite(const sched_kw_welspecs_type *, FILE *);
 
 void sched_kw_welspecs_alloc_child_parent_list(const sched_kw_welspecs_type *, char ***, char ***, int *);
-void sched_kw_welspecs_init_child_parent_list( const sched_kw_welspecs_type * kw , stringlist_type * child , stringlist_type * parent);
 /*******************************************************************/
 
 

@@ -224,7 +224,6 @@ extern "C" {
 
 /////***** Analysis config keys*******////////////
   const char * config_keys_get_alpha();
-  const char * config_keys_get_do_pen_press();
   const char * config_keys_get_std_cutoff();
   const char * config_keys_get_stop_long_running();
   const char * config_keys_get_single_node_update();

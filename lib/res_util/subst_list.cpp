@@ -257,11 +257,6 @@ void subst_list_set_parent( subst_list_type * subst_list , const subst_list_type
 }
 
 
-const subst_list_type * subst_list_get_parent( const subst_list_type * subst_list ) {
-  return subst_list->parent;
-}
-
-
 bool subst_list_has_key( const subst_list_type * subst_list , const char * key) {
   return hash_has_key( subst_list->map , key );
 }
@@ -347,10 +342,6 @@ static void subst_list_insert__(subst_list_type * subst_list , const char * key 
        to do whatever it wants with the value pointer.
 
 */
-
-void subst_list_append_ref(subst_list_type * subst_list , const char * key , const char * value, const char * doc_string) {
-  subst_list_insert__(subst_list , key , value , doc_string , true , SUBST_SHARED_REF);
-}
 
 void subst_list_append_owned_ref(subst_list_type * subst_list , const char * key , const char * value, const char * doc_string) {
   subst_list_insert__(subst_list , key , value , doc_string , true , SUBST_MANAGED_REF);
@@ -680,15 +671,6 @@ bool subst_list_filter_file(const subst_list_type * subst_list , const char * sr
   return match;
 }
 
-/**
-   This function does search-replace on a file inplace.
-*/
-
-bool subst_list_update_file(const subst_list_type * subst_list , const char * file) {
-  return subst_list_filter_file( subst_list , file , file );
-}
-
-
 
 /**
    This function does search-replace on string instance inplace.
@@ -716,45 +698,6 @@ char * subst_list_alloc_filtered_string(const subst_list_type * subst_list , con
   return filtered_string;
 }
 
-
-
-/**
-   This function writes a filtered version of string to a file.
-*/
-void subst_list_filtered_fprintf(const subst_list_type * subst_list , const char * string , FILE * stream) {
-  buffer_type * buffer = buffer_alloc( strlen(string) + 1 );
-  buffer_fwrite( buffer , string , 1 , strlen( string ) + 1);
-  subst_list_update_buffer(subst_list , buffer);
-  buffer_stream_fwrite_n( buffer , 0 , -1 , stream );  /* -1: The trailing \0 is not explicitly written to file. */
-  buffer_free(buffer);
-}
-
-
-
-/**
-   This function will perform subst-based substitution on all the
-   elements in the stringlist. The stringlist is modified in place,
-   and the following applies to memory:
-
-    o Elements inserted with _ref() are just dropped on the floor,
-      they were the responsability of the calling scope anyway.
-
-    o Elements inserted with _owned_ref() are freed - INVALIDATING A
-      POSSIBLE POINTER IN THE CALLING SCOPE.
-
-    o The newly inserted element is inserted as _owned_ref() -
-      i.e. with a destructor.
-*/
-
-
-void stringlist_apply_subst(stringlist_type * stringlist , const subst_list_type * subst_list) {
-  int i;
-  for (i=0; i < stringlist_get_size( stringlist ); i++) {
-    const char * old_string = stringlist_iget( stringlist , i );
-    char * new_string = subst_list_alloc_filtered_string( subst_list , old_string );
-    stringlist_iset_owned_ref( stringlist , i , new_string );
-  }
-}
 
 /*****************************************************************/
 /*  End of update/apply functions                                */
@@ -832,18 +775,6 @@ const char * subst_list_get_doc_string( const subst_list_type * subst_list , con
   const subst_list_string_type * node = (const subst_list_string_type*)hash_get( subst_list->map , key );
   return node->doc_string;
 }
-
-
-const char * subst_list_iget_doc_string( const subst_list_type * subst_list , int index) {
-  if (index < vector_get_size(subst_list->string_data)) {
-    const subst_list_string_type * node = (const subst_list_string_type*)vector_iget_const( subst_list->string_data , index );
-    return node->doc_string;
-  } else {
-    util_abort("%s: index:%d to large \n",__func__ , index);
-    return NULL;
-  }
-}
-
 
 
 void subst_list_fprintf(const subst_list_type * subst_list , FILE * stream) {

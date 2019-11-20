@@ -88,15 +88,11 @@
   gruptree_register_grup(tree_two, "GRPB", "FIELD");
   gruptree_register_grup(tree_two, "INJE", "GRPA");
 
-  gruptree_type * tree_two = gruptree_copyc(tree_one);
   gruptree_register_grup(tree_two, "INJE", "GRPB");
   gruptree_register_grup(tree_two, "PROD", "GRPA");
 
   .....
   .....
-
-  gruptree_free(tree_one);
-  gruptree_free(tree_two);
 */
 
 
@@ -273,16 +269,6 @@ gruptree_type * gruptree_alloc()
 }
 
 
-
-void gruptree_free(gruptree_type * gruptree)
-{
-  hash_free(gruptree->grups);
-  hash_free(gruptree->wells);
-  free(gruptree);
-}
-
-
-
 void gruptree_register_grup(gruptree_type * gruptree, const char * name, const char * parent_name)
 {
   grup_type * parent;
@@ -359,20 +345,6 @@ void gruptree_register_well(gruptree_type * gruptree, const char * name, const c
 }
 
 
-
-bool gruptree_has_grup(const gruptree_type * gruptree, const char * grupname)
-{
-  if(hash_has_key(gruptree->grups, grupname))
-  {
-    return true;
-  }
-  else
-  {
-    return false;
-  }
-}
-
-
 char ** gruptree_alloc_grup_well_list(gruptree_type * gruptree, const char * grupname, int * num_wells)
 {
   char ** well_names;
@@ -398,149 +370,3 @@ char ** gruptree_alloc_grup_well_list(gruptree_type * gruptree, const char * gru
 
   return well_names;
 }
-
-
-
-gruptree_type * gruptree_copyc(const gruptree_type * gruptree)
-{
-  gruptree_type * gruptree_new = gruptree_alloc();
-
-  {
-    int num_grups = hash_get_size(gruptree->grups);
-    char ** grup_list = hash_alloc_keylist(gruptree->grups);
-    for(int i=0; i<num_grups; i++)
-    {
-      if(strcmp(grup_list[i], "FIELD") == 0)
-        continue;
-
-      grup_type * grup  = (grup_type*)hash_get(gruptree->grups, grup_list[i]);
-      gruptree_register_grup(gruptree_new, grup_list[i], grup_get_parent_name(grup));
-    }
-    util_free_stringlist(grup_list, num_grups);
-  }
-
-  {
-    int num_wells = hash_get_size(gruptree->wells);
-    char ** well_list = hash_alloc_keylist(gruptree->wells);
-    for(int i=0; i<num_wells; i++)
-    {
-      well_type * well  = (well_type*)hash_get(gruptree->wells, well_list[i]);
-      gruptree_register_well(gruptree_new, well_list[i], well_get_parent_name(well));
-    }
-    util_free_stringlist(well_list, num_wells);
-
-  }
-
-  return gruptree_new;
-}
-
-
-
-void gruptree_fwrite(const gruptree_type * gruptree, FILE * stream)
-{
-  {
-    int num_grups = hash_get_size(gruptree->grups);
-    char ** grup_list = hash_alloc_keylist(gruptree->grups);
-
-    util_fwrite(&num_grups, sizeof num_grups, 1, stream, __func__);
-
-    for(int i=0; i<num_grups; i++)
-    {
-      if(strcmp(grup_list[i], "FIELD") == 0) /* Skipping FIELD. */
-        continue;
-
-      grup_type * grup  = (grup_type*)hash_get(gruptree->grups, grup_list[i]);
-      const char * parent_name = grup_get_parent_name(grup);
-
-      util_fwrite_string(grup_list[i], stream);
-      util_fwrite_string(parent_name, stream);
-    }
-    util_free_stringlist(grup_list, num_grups);
-  }
-
-  {
-    int num_wells = hash_get_size(gruptree->wells);
-    char ** well_list = hash_alloc_keylist(gruptree->wells);
-
-    util_fwrite(&num_wells, sizeof num_wells, 1, stream, __func__);
-
-    for(int i=0; i<num_wells; i++)
-    {
-      well_type * well  = (well_type*)hash_get(gruptree->wells, well_list[i]);
-      const char * parent_name = well_get_parent_name(well);
-      util_fwrite_string(well_list[i], stream);
-      util_fwrite_string(parent_name,  stream);
-    }
-    util_free_stringlist(well_list, num_wells);
-
-  }
-
-}
-
-
-
-gruptree_type * gruptree_fread_alloc(FILE * stream)
-{
-  gruptree_type * gruptree = gruptree_alloc();
-  {
-    int num_grups;
-    util_fread(&num_grups, sizeof num_grups, 1, stream, __func__);
-    for(int i=0; i<num_grups-1; i++) /* Skipping FIELD. */
-    {
-      char * name    = util_fread_alloc_string(stream);
-      char * parent  = util_fread_alloc_string(stream);
-
-      gruptree_register_grup(gruptree, name, parent);
-
-      free(name);
-      free(parent);
-    }
-  }
-
-  {
-    int num_wells;
-    util_fread(&num_wells, sizeof num_wells, 1, stream, __func__);
-    for(int i=0; i<num_wells; i++)
-    {
-      char * name    = util_fread_alloc_string(stream);
-      char * parent  = util_fread_alloc_string(stream);
-
-      gruptree_register_well(gruptree, name, parent);
-
-      free(name);
-      free(parent);
-    }
-  }
-
-  return gruptree;
-}
-
-
-
-
-
-
-/**********************************************************************************/
-
-
-
-void gruptree_printf_grup_wells(gruptree_type * gruptree, const char * grupname)
-{
-  int num_wells;
-  char ** well_names = gruptree_alloc_grup_well_list(gruptree, grupname, &num_wells);
-
-  printf("WELLS IN GROUP %s:\n", grupname);
-  printf("-----------------------\n");
-
-  for(int i=0; i<num_wells; i++)
-    printf("%s\n", well_names[i]);
-
-  printf("\n");
-  util_free_stringlist(well_names, num_wells);
-
-}
-
-
-
-
-

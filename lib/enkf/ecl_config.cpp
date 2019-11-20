@@ -195,15 +195,6 @@ void ecl_config_set_schedule_prediction_file(ecl_config_type * ecl_config, const
   ecl_config->schedule_prediction_file = util_realloc_string_copy(ecl_config->schedule_prediction_file, schedule_prediction_file);
 }
 
-bool ecl_config_has_init_section(const ecl_config_type * ecl_config)
-{
-  if (ecl_config->init_section == NULL )
-    return false;
-  else
-    return true;
-}
-
-
 ui_return_type * ecl_config_validate_eclbase(const ecl_config_type * ecl_config, const char * eclbase_fmt) {
   if (ecl_util_valid_basename_fmt(eclbase_fmt))
     return ui_return_alloc(UI_RETURN_OK);
@@ -360,21 +351,13 @@ void ecl_config_set_init_section(ecl_config_type * ecl_config, const char * inpu
 
 /**
  This just returns the string which has been set with the
- ecl_config_set_init_section() function, whereas the
- ecl_config_get_equil_init_file() function will return the absolute
- path to the init_section (if it exists).
+ ecl_config_set_init_section() function.
  */
 
 const char * ecl_config_get_init_section(const ecl_config_type * ecl_config)
 {
   return ecl_config->input_init_section;
 }
-
-const char * ecl_config_get_equil_init_file(const ecl_config_type * ecl_config)
-{
-  return ecl_config->init_section;
-}
-
 
 
 static ecl_config_type * ecl_config_alloc_empty(void)
@@ -394,20 +377,6 @@ static ecl_config_type * ecl_config_alloc_empty(void)
   ecl_config->end_date = -1;
   ecl_config->schedule_prediction_file = NULL;
   ecl_config->refcase_list = ecl_refcase_list_alloc();
-
-  return ecl_config;
-}
-
-ecl_config_type * ecl_config_alloc_load(const char * user_config_file) {
-  config_parser_type * config_parser = config_alloc();
-  config_content_type * config_content = NULL;
-  if(user_config_file)
-    config_content = model_config_alloc_content(user_config_file, config_parser);
-
-  ecl_config_type * ecl_config = ecl_config_alloc(config_content);
-
-  config_content_free(config_content);
-  config_free(config_parser);
 
   return ecl_config;
 }
@@ -698,11 +667,6 @@ bool ecl_config_has_refcase(const ecl_config_type * ecl_config)
     return false;
 }
 
-ecl_io_config_type * ecl_config_get_io_config(const ecl_config_type * ecl_config)
-{
-  return ecl_config->io_config;
-}
-
 bool ecl_config_get_formatted(const ecl_config_type * ecl_config)
 {
   return ecl_io_config_get_formatted(ecl_config->io_config);
@@ -710,10 +674,6 @@ bool ecl_config_get_formatted(const ecl_config_type * ecl_config)
 bool ecl_config_get_unified_restart(const ecl_config_type * ecl_config)
 {
   return ecl_io_config_get_unified_restart(ecl_config->io_config);
-}
-bool ecl_config_get_unified_summary(const ecl_config_type * ecl_config)
-{
-  return ecl_io_config_get_unified_summary(ecl_config->io_config);
 }
 
 bool ecl_config_have_eclbase(const ecl_config_type * ecl_config) {

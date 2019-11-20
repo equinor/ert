@@ -500,24 +500,6 @@ int  matrix_dsyevx(bool             compute_eig_vectors ,
   }
 }
 
-
-/**
-   Wrapper function to compute all eigenvalues + eigenvectors with the
-   matrix_dsyevx() function.
-*/
-
-int  matrix_dsyevx_all(dsyevx_uplo_enum uplo,
-                       matrix_type    * A ,                   /* The input matrix - is modified by the dsyevx() function. */
-                       double *eig_values ,                   /* The calcualated eigenvalues         */
-                       matrix_type * Z    ) {                 /* The eigenvectors as columns vectors */
-  int num_eigenvalues;
-  num_eigenvalues = matrix_dsyevx(true , DSYEVX_ALL , uplo , A , 0,0,0,0, eig_values , Z);
-  return num_eigenvalues;
-
-}
-
-
-
 /*****************************************************************/
 /* Function to compute QR factorization withe the routine dgeqrf */
 
@@ -709,4 +691,3 @@ int matrix_inv( matrix_type * A ) {
 #ifdef __cplusplus
 }
 #endif
-

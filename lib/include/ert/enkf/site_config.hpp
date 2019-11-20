@@ -47,7 +47,6 @@ typedef struct site_config_struct site_config_type;
   ext_joblist_type       * site_config_get_installed_jobs( const site_config_type * );
   const env_varlist_type * site_config_get_env_varlist(const site_config_type * site_config);
   int                      site_config_install_job(site_config_type * site_config , const char * job_name , const char * install_file);
-  bool                     site_config_del_job( site_config_type * site_config , const char * job_name );
   void                     site_config_set_umask( site_config_type * site_config , mode_t umask);
   mode_t                   site_config_get_umask( const site_config_type * site_config );
   site_config_type       * site_config_alloc_load_user_config(const char *);

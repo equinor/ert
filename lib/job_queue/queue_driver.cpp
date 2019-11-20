@@ -297,15 +297,6 @@ queue_driver_type * queue_driver_alloc(job_driver_type type) {
 
 /*****************************************************************/
 
-bool queue_driver_has_option(queue_driver_type * driver, const char * option_key) {
-  if (driver->has_option != NULL)
-    return driver->has_option(driver, option_key);
-  else
-    return false;
-}
-
-/*****************************************************************/
-
 const void * queue_driver_get_option(queue_driver_type * driver, const char * option_key) {
   if (queue_driver_has_generic_option__(driver, option_key)) {
     return queue_driver_get_generic_option__(driver, option_key);
@@ -408,5 +399,3 @@ void queue_driver_free__(void * driver) {
   queue_driver_type * queue_driver = queue_driver_safe_cast(driver);
   queue_driver_free(queue_driver);
 }
-
-

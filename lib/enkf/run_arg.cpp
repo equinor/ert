@@ -251,11 +251,6 @@ int run_arg_get_step1( const run_arg_type * run_arg ) {
 }
 
 
-run_mode_type run_arg_get_run_mode( const run_arg_type * run_arg ) {
-  return run_arg->run_mode;
-}
-
-
 int run_arg_get_queue_index_safe( const run_arg_type * run_arg ) {
   if (run_arg->queue_index == INVALID_QUEUE_INDEX)
     return -1;

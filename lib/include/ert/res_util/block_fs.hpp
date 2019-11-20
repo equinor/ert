@@ -61,12 +61,6 @@ extern "C" {
   vector_type   * block_fs_alloc_filelist( block_fs_type * block_fs  , const char * pattern , block_fs_sort_type sort_mode , bool include_free_nodes );
   void            block_fs_defrag( block_fs_type * block_fs );
 
-  long int        user_file_node_get_node_offset( const user_file_node_type * user_file_node );
-  long int        user_file_node_get_data_offset( const user_file_node_type * user_file_node );
-  int             user_file_node_get_node_size( const user_file_node_type * user_file_node );
-  int             user_file_node_get_data_size( const user_file_node_type * user_file_node );
-  bool            user_file_node_in_use( const user_file_node_type * user_file_node );
-  const char *    user_file_node_get_filename( const user_file_node_type * user_file_node );
 
 UTIL_IS_INSTANCE_HEADER( block_fs );
 UTIL_SAFE_CAST_HEADER( block_fs );

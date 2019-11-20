@@ -249,18 +249,6 @@ static sched_kw_wconhist_type * sched_kw_wconhist_alloc_empty()
 
 
 
-sched_kw_wconhist_type * sched_kw_wconhist_safe_cast( void * arg ) {
-  sched_kw_wconhist_type * kw = (sched_kw_wconhist_type * ) arg;
-  if (kw->__type_id == SCHED_KW_WCONHIST_ID)
-    return kw;
-  else {
-    util_abort("%s: runtime cast failed \n",__func__);
-    return NULL;
-  }
-}
-
-
-
 /***********************************************************************/
 
 
@@ -364,91 +352,6 @@ double sched_kw_wconhist_get_orat( sched_kw_wconhist_type * kw , const char * we
     return -1;
 }
 
-void sched_kw_wconhist_scale_orat( sched_kw_wconhist_type * kw , const char * well_name, double factor) {
-  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
-  if (well != NULL)
-    well->orat *= factor;
-}
-
-void sched_kw_wconhist_shift_orat( sched_kw_wconhist_type * kw , const char * well_name, double shift_value) {
-  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
-  if (well != NULL) {
-    well->orat += shift_value;
-    if (well->orat < 0)
-      well->orat = 0;
-  }
-}
-
-void sched_kw_wconhist_set_orat( sched_kw_wconhist_type * kw , const char * well_name , double orat) {
-  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
-  if (well != NULL)
-    well->orat = orat;
-}
-
-/*****************************************************************/
-/* WRAT functions                                                */
-
-double sched_kw_wconhist_get_wrat( sched_kw_wconhist_type * kw , const char * well_name) {
-  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
-  if (well != NULL)
-    return well->wrat;
-  else
-    return -1;
-}
-
-void sched_kw_wconhist_scale_wrat( sched_kw_wconhist_type * kw , const char * well_name, double factor) {
-  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
-  if (well != NULL)
-    well->wrat *= factor;
-}
-
-void sched_kw_wconhist_shift_wrat( sched_kw_wconhist_type * kw , const char * well_name, double shift_value) {
-  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
-  if (well != NULL) {
-    well->wrat += shift_value;
-    if (well->wrat < 0)
-      well->wrat = 0;
-  }
-}
-
-void sched_kw_wconhist_set_wrat( sched_kw_wconhist_type * kw , const char * well_name , double wrat) {
-  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
-  if (well != NULL)
-    well->wrat = wrat;
-}
-
-/*****************************************************************/
-/* GRAT functions                                                */
-
-double sched_kw_wconhist_get_grat( sched_kw_wconhist_type * kw , const char * well_name) {
-  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
-  if (well != NULL)
-    return well->grat;
-  else
-    return -1;
-}
-
-void sched_kw_wconhist_scale_grat( sched_kw_wconhist_type * kw , const char * well_name, double factor) {
-  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
-  if (well != NULL)
-    well->grat *= factor;
-}
-
-void sched_kw_wconhist_shift_grat( sched_kw_wconhist_type * kw , const char * well_name, double shift_value) {
-  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
-  if (well != NULL) {
-    well->grat += shift_value;
-    if (well->grat < 0)
-      well->grat = 0;
-  }
-}
-
-void sched_kw_wconhist_set_grat( sched_kw_wconhist_type * kw , const char * well_name , double grat) {
-  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
-  if (well != NULL)
-    well->grat = grat;
-}
-
 
 /*****************************************************************/
 
@@ -492,26 +395,6 @@ bool sched_kw_wconhist_well_open( const sched_kw_wconhist_type * kw, const char 
 
 /*****************************************************************/
 
-
-/**
-   Will update the input parameter @well_list to contain all the
-   well_names present in the current sced_kw_wconhist keyword.
-*/
-
-void sched_kw_wconhist_init_well_list( const sched_kw_wconhist_type * kw , stringlist_type * well_list) {
-  stringlist_clear( well_list );
-  {
-    int iw;
-    for (iw = 0; iw < vector_get_size( kw->wells ); iw++) {
-      const wconhist_well_type * well = (const wconhist_well_type*)vector_iget_const( kw->wells , iw );
-      stringlist_append_copy( well_list , well->name );
-    }
-  }
-}
-
-
-/*****************************************************************/
-
 static UTIL_SAFE_CAST_FUNCTION_CONST( wconhist_state , WCONHIST_TYPE_ID)
 static UTIL_SAFE_CAST_FUNCTION( wconhist_state , WCONHIST_TYPE_ID)
 
@@ -530,35 +413,10 @@ static double well_util_total( const time_t_vector_type * time, const double_vec
 }
 
 
-double wconhist_state_iget_WOPTH( const void * state , int report_step ) {
-  const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
-  return well_util_total( wconhist_state->time , wconhist_state->oil_rate , report_step );
-}
-
-
-double wconhist_state_iget_WGPTH( const void * state , int report_step ) {
-  const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
-  return well_util_total( wconhist_state->time , wconhist_state->gas_rate , report_step );
-}
-
-
-double wconhist_state_iget_WWPTH( const void * state , int report_step ) {
-  const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
-  return well_util_total( wconhist_state->time , wconhist_state->water_rate , report_step );
-}
-
-
 /*
   Functions implementing the wconhist state; the naming convention
   here should follow the one used in summary files, i.e. WOPR to get Oil Production Rate.
 */
-
-
-double wconhist_state_iget_WBHPH( const void * state , int report_step ) {
-  const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
-  return double_vector_safe_iget( wconhist_state->bhp , report_step );
-}
-
 
 double wconhist_state_iget_WOPRH( const void * state , int report_step ) {
   const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
@@ -576,41 +434,6 @@ double wconhist_state_iget_WWPRH( const void * state , int report_step ) {
   const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
   return double_vector_safe_iget( wconhist_state->water_rate , report_step );
 }
-
-
-double wconhist_state_iget_WWCTH( const void * state , int report_step ) {
-  double WWPR = wconhist_state_iget_WWPRH( state , report_step );
-  double WOPR = wconhist_state_iget_WOPRH( state , report_step );
-
-  return WWPR / ( WWPR + WOPR );
-}
-
-
-double wconhist_state_iget_WGORH(const void * state , int report_step ) {
-  double WGPR = wconhist_state_iget_WGPRH( state , report_step );
-  double WOPR = wconhist_state_iget_WOPRH( state , report_step );
-  return WGPR / WOPR;
-}
-
-
-/*
-  Uncertain about this memnonic??
-*/
-
-well_cm_enum wconhist_state_iget_WMCTLH( const void * state , int report_step ) {
-  const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
-  return (well_cm_enum)int_vector_iget( wconhist_state->cmode , report_step );
-}
-
-
-//well_status_enum wconhist_state_iget_status( const void * state , int report_step ) {
-
-// All callbacks return double ... should really be an enum value
-double wconhist_state_iget_STAT( const void * state , int report_step ) {
-  const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
-  return int_vector_iget( wconhist_state->state , report_step );
-}
-
 
 
 wconhist_state_type * wconhist_state_alloc( const time_t_vector_type * time) {
@@ -665,12 +488,6 @@ void wconhist_state_free( wconhist_state_type * wconhist ) {
 
   free( wconhist );
 }
-
-
-void wconhist_state_free__( void * arg ) {
-  wconhist_state_free( wconhist_state_safe_cast( arg ));
-}
-
 
 
 void sched_kw_wconhist_update_state(const sched_kw_wconhist_type * kw , wconhist_state_type * state , const char * well_name , int report_step ) {

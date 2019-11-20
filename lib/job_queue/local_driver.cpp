@@ -187,11 +187,6 @@ void * local_driver_alloc() {
   return local_driver;
 }
 
-
-bool local_driver_set_option( void * __driver , const char * option_key , const void * value){
-  return false;
-}
-
 void local_driver_init_option_list(stringlist_type * option_list) {
   //No options specific for local driver; do nothing
 }
@@ -200,4 +195,3 @@ void local_driver_init_option_list(stringlist_type * option_list) {
 #undef LOCAL_JOB_ID
 
 /*****************************************************************/
-

@@ -30,7 +30,6 @@ extern "C" {
 
 
   char   ** sched_kw_wconprod_alloc_wells_copy( const sched_kw_wconprod_type * , int * );
-  void      sched_kw_wconprod_init_well_list( const sched_kw_wconprod_type * kw , stringlist_type * well_list);
 
 
 

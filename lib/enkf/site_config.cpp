@@ -251,13 +251,6 @@ int site_config_install_job(site_config_type * site_config, const char * job_nam
     return 1; /* Some undocumented error condition - the job is NOT added. */
 }
 
-/**
-   Will NOT remove shared jobs.
- */
-bool site_config_del_job(site_config_type * site_config, const char * job_name) {
-  return ext_joblist_del_job(site_config->joblist, job_name);
-}
-
 static void site_config_add_jobs(site_config_type * site_config, const config_content_type * config) {
   if (config_content_has_item(config, INSTALL_JOB_KEY)) {
     const config_content_item_type * content_item = config_content_get_item(config, INSTALL_JOB_KEY);
@@ -358,10 +351,6 @@ static bool site_config_init(site_config_type * site_config, const config_conten
     site_config_set_license_root_path(site_config, config_content_get_value_as_abspath(config, LICENSE_PATH_KEY));
 
   return true;
-}
-
-void site_config_set_ext_job_search_path(site_config_type * site_config, bool search_path){
-    site_config->search_path = search_path;
 }
 
 

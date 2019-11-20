@@ -56,23 +56,6 @@ void well_index_add_type( well_index_type * index , sched_kw_type_enum kw_type ,
 }
 
 
-
-well_index_type * well_index_alloc( const char * well_name , const char * variable , const void * state_ptr , sched_kw_type_enum kw_type , sched_history_callback_ftype * func ) {
-  well_index_type * well_index = (well_index_type*)util_malloc( sizeof * well_index );
-
-  UTIL_TYPE_ID_INIT( well_index , WELL_INDEX_TYPE_ID );
-
-  well_index->well_name = util_alloc_string_copy( well_name );
-  well_index->variable  = util_alloc_string_copy( variable );
-  well_index->kw_type   = int_vector_alloc( 0 , 0 );
-  well_index->func      = size_t_vector_alloc( 0 , 0 );
-  well_index->state_ptr = state_ptr;
-
-  well_index_add_type( well_index , kw_type , func );
-  return well_index;
-}
-
-
 void well_index_free( well_index_type * index ) {
   size_t_vector_free( index->func );
   int_vector_free( index->kw_type );
@@ -80,21 +63,6 @@ void well_index_free( well_index_type * index ) {
   free( index->variable );
   free( index );
 }
-
-
-void well_index_free__( void * arg ) {
-  well_index_free(  (well_index_type  *) arg );
-}
-
-const char * well_index_get_name( const well_index_type * well_index ) {
-  return well_index->well_name;
-}
-
-const char * well_index_get_variable( const well_index_type * well_index ) {
-  return well_index->variable;
-}
-
-
 
 
 sched_history_callback_ftype * well_index_get_callback( const well_index_type * well_index , sched_kw_type_enum kw_type) {
@@ -119,11 +87,4 @@ sched_history_callback_ftype * well_index_get_callback( const well_index_type * 
 
 const void * well_index_get_state( const well_index_type * well_index ) {
   return well_index->state_ptr;
-}
-
-
-
-const void * well_index_get_state__( const void * index ) {
-  const well_index_type * well_index = well_index_safe_cast_const( index );
-  return well_index_get_state( well_index );
 }

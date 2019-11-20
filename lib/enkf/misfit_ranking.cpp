@@ -100,65 +100,6 @@ void misfit_ranking_display( const misfit_ranking_type * misfit_ranking , FILE *
 }
 
 
-
-void misfit_ranking_fprintf( const misfit_ranking_type * misfit_ranking , const char * filename) {
-  FILE * stream                         = util_mkdir_fopen( filename , "w");
-  const int ens_size                    = misfit_ranking->ens_size;
-  const perm_vector_type * permutations = misfit_ranking->sort_permutation;
-  double summed_up = 0.0;
-  {
-    // All this whitespace is finely tuned and highly significant ....
-    const char * key_fmt       = " %18s ";
-    const char * value_fmt     = " %10.3f %8.3f";
-    const char * start_fmt     = " %2d       %3d     %7.3f %8.3f";
-
-    hash_type * obs_hash = (hash_type *)vector_iget( misfit_ranking->ensemble , 0);
-    stringlist_type * obs_keys = hash_alloc_stringlist( obs_hash );
-    int num_obs                = stringlist_get_size( obs_keys );
-    int iobs;
-    int num_obs_total = num_obs * ens_size;
-
-    stringlist_sort( obs_keys , enkf_util_compare_keys__ );
-    fprintf(stream , "                       Overall  ");
-    for (iobs =0; iobs < num_obs; iobs++)
-      fprintf(stream , key_fmt , stringlist_iget( obs_keys , iobs ));
-
-    fprintf(stream , "\n");
-    fprintf(stream , "  #    Realization  Norm    Total");
-    for (iobs =0; iobs < num_obs; iobs++)
-      fprintf(stream , "       Norm    Total");
-
-    fprintf(stream , "\n");
-    for (int i = 0; i < ens_size; i++) {
-      int iens = perm_vector_iget( permutations , i );
-      hash_type * obs_hash = (hash_type *)vector_iget( misfit_ranking->ensemble , iens );
-      double total_value   = double_vector_iget( misfit_ranking->total , iens );
-      double normalized_misfit = sqrt(total_value / num_obs_total);
-      summed_up = summed_up+total_value;
-      fprintf(stream , start_fmt , i , iens , normalized_misfit , total_value);
-      for (iobs =0; iobs < num_obs; iobs++){
-        double single_value = hash_get_double( obs_hash , stringlist_iget( obs_keys , iobs ));
-        double single_value_normalized = sqrt(single_value / (num_obs_total));
-        fprintf(stream , value_fmt , single_value_normalized , single_value);
-      }
-      fprintf(stream , "\n");
-    }
-    double summed_up_normalized = sqrt(summed_up / (num_obs_total * ens_size));
-    fprintf(stream , "           All    %7.3f %8.3f" , summed_up_normalized , summed_up);
-    for (iobs = 0; iobs < num_obs; iobs++){
-      double single_value_summed_up = 0.0;
-      for (int i = 0; i < ens_size; i++) {
-        single_value_summed_up = single_value_summed_up + hash_get_double( obs_hash , stringlist_iget( obs_keys , iobs ));
-      }
-      double single_value_summed_up_normalized=sqrt(single_value_summed_up / (num_obs_total * ens_size));
-      fprintf(stream , value_fmt , single_value_summed_up_normalized , single_value_summed_up);
-    }
-    fprintf(stream , "\n");
-  }
-  fclose( stream );
-}
-
-
 static misfit_ranking_type * misfit_ranking_alloc_empty( int ens_size ) {
   misfit_ranking_type * misfit_ranking = (misfit_ranking_type *)util_malloc( sizeof * misfit_ranking );
   UTIL_TYPE_ID_INIT( misfit_ranking , MISFIT_RANKING_TYPE_ID );

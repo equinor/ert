@@ -402,12 +402,6 @@ matrix_type * meas_data_allocS(const meas_data_type * matrix) {
 }
 
 
-
-int meas_data_get_nrobs( const meas_data_type * meas_data ) {
-  return -1;
-}
-
-
 int meas_data_get_active_ens_size( const meas_data_type * meas_data ) {
   return meas_data->active_ens_size;
 }
@@ -420,32 +414,4 @@ int meas_data_get_total_ens_size( const meas_data_type * meas_data ) {
 
 int meas_data_get_num_blocks( const meas_data_type * meas_data ) {
   return vector_get_size( meas_data->data );
-}
-
-
-
-/*
-void meas_data_assign_vector(meas_data_type * target_matrix, const meas_data_type * src_matrix , int target_index , int src_index) {
-  if (target_matrix->active_ens_size != src_matrix->active_ens_size)
-    util_abort("%s: size mismatch \n",__func__);
-
-  for (int block_nr = 0; block_nr < vector_get_size( target_matrix->data ); block_nr++) {
-    meas_block_type * target_block    = meas_data_iget_block( target_matrix , block_nr );
-    const meas_block_type * src_block = meas_data_iget_block_const( src_matrix , block_nr );
-
-    meas_data_assign_block( target_block , src_block , target_index , src_index );
-  }
-}
-*/
-
-
-
-void meas_data_fprintf( const meas_data_type * matrix , FILE * stream ) {
-  fprintf(stream , "-----------------------------------------------------------------\n");
-  for (int block_nr = 0; block_nr < vector_get_size( matrix->data ); block_nr++) {
-    const meas_block_type * block = meas_data_iget_block_const( matrix , block_nr );
-    meas_block_fprintf( block , stream );
-    fprintf(stream , "\n");
-  }
-  fprintf(stream , "-----------------------------------------------------------------\n");
 }

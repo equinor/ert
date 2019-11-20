@@ -241,11 +241,6 @@ void analysis_module_free( analysis_module_type * module ) {
 }
 
 
-void analysis_module_free__( void * arg) {
-  analysis_module_type * module = analysis_module_safe_cast( arg );
-  analysis_module_free( module );
-}
-
 /*****************************************************************/
 /* Update functions */
 
@@ -476,5 +471,3 @@ void * analysis_module_get_ptr( const analysis_module_type * module , const char
 
   return NULL;
 }
-
-

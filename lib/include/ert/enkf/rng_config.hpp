@@ -30,7 +30,6 @@ extern "C" {
 
 typedef struct rng_config_struct rng_config_type;
 
-  void               rng_config_fprintf_config( rng_config_type * rng_config , FILE * stream );
   void               rng_config_init(rng_config_type * rng_config, const config_content_type * config);
   void               rng_config_set_type( rng_config_type * rng_config , rng_alg_type type);
   rng_alg_type       rng_config_get_type(const rng_config_type * rng_config );

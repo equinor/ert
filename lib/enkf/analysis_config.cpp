@@ -344,55 +344,6 @@ void analysis_config_add_module_copy( analysis_config_type * config ,
 }
 
 
-
-/*
-  If module_name == NULL we will reload the current module. Unloading
-  modules is based on the dlclose() system call; internally the
-  dlopen() / dlclose() systems implements a reference counting to the
-  shared objects, i.e. if you have several modules defined in the same
-  shared library the dlclose() call will not unload the module
-  completely, and a subsequent dlopen() call will be satisfied by the
-  stale shared objects still mapped. Practically this means that:
-
-  * Internal modules (all in libanalysis.so) can not be reloaded.
-
-  * Modules which have been involved in copy operations, either as
-    source or target can not be reloaded.
-*/
-
-void analysis_config_reload_module( analysis_config_type * config , const char * module_name) {
-  analysis_module_type * module;
-  if (module_name != NULL)
-    module = analysis_config_get_module( config , module_name );
-  else
-    module = config->analysis_module;
-
-  if (!analysis_module_internal( module )) {
-    char * user_name = util_alloc_string_copy(analysis_module_get_name( module ));
-    char * lib_name  = util_alloc_string_copy(analysis_module_get_lib_name( module ));
-
-    bool is_current        = false;
-    if (module == config->analysis_module) {
-      config->analysis_module = NULL;
-      is_current = true;
-    }
-
-    {
-      auto module_iter = config->analysis_modules.find(user_name);
-      analysis_module_free( module_iter->second );
-      config->analysis_modules.erase( module_iter->first );
-    }
-    analysis_config_load_external_module( config , user_name , lib_name );
-    if (is_current)
-      analysis_config_select_module( config , user_name );
-
-    free( lib_name );
-    free( user_name );
-  } else
-    fprintf(stderr,"** Warning: Internal modules can not be reloaded.\n");
-}
-
-
 analysis_module_type * analysis_config_get_module(const analysis_config_type * config , const char * module_name ) {
   return config->analysis_modules.at(module_name);
 }
@@ -781,43 +732,3 @@ void analysis_config_add_config_items( config_parser_type * config ) {
   config_schema_item_set_argc_minmax( item , 3 , CONFIG_DEFAULT_ARG_MAX);
   analysis_iter_config_add_config_items( config );
 }
-
-
-
-
-void analysis_config_fprintf_config( analysis_config_type * config , FILE * stream) {
-  fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
-  fprintf( stream , CONFIG_COMMENT_FORMAT , "Here comes configuration information related to the EnKF analysis.");
-
-
-  if (config->merge_observations != DEFAULT_MERGE_OBSERVATIONS) {
-    fprintf( stream , CONFIG_KEY_FORMAT        , ENKF_MERGE_OBSERVATIONS_KEY);
-    fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->merge_observations ));
-  }
-
-  if (config->single_node_update != DEFAULT_SINGLE_NODE_UPDATE) {
-    fprintf( stream , CONFIG_KEY_FORMAT        , SINGLE_NODE_UPDATE_KEY);
-    fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->single_node_update ));
-  }
-
-  if (config->rerun) {
-    fprintf( stream , CONFIG_KEY_FORMAT        , ENKF_RERUN_KEY);
-    fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->rerun ));
-  }
-
-  if (config->rerun_start != DEFAULT_RERUN_START) {
-    fprintf( stream , CONFIG_KEY_FORMAT   , RERUN_START_KEY);
-    fprintf( stream , CONFIG_INT_FORMAT   , config->rerun_start );
-    fprintf( stream , "\n");
-  }
-
-  if (config->log_path != NULL) {
-    fprintf( stream , CONFIG_KEY_FORMAT      , UPDATE_LOG_PATH_KEY);
-    fprintf( stream , CONFIG_ENDVALUE_FORMAT , config->log_path );
-  }
-
-  fprintf(stream , "\n\n");
-}
-
-
-

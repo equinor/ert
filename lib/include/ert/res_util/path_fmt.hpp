@@ -32,7 +32,6 @@ extern "C" {
 
   path_fmt_type * path_fmt_alloc_directory_fmt(const char * );
   path_fmt_type * path_fmt_alloc_path_fmt(const char * );
-  path_fmt_type * path_fmt_copyc(const path_fmt_type *);
   path_fmt_type * path_fmt_scanf_alloc(const char *  , int , const node_ctype * , bool );
   char          * path_fmt_alloc_path(const path_fmt_type * , bool , ...);
   char          * path_fmt_alloc_file(const path_fmt_type * , bool , ...);

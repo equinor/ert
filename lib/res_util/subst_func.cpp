@@ -133,16 +133,6 @@ bool subst_func_pool_has_func( const subst_func_pool_type * pool , const char * 
 
 /*****************************************************************/
 
-char * subst_func_randint( const stringlist_type * args , void * arg) {
-  rng_type * rng = rng_safe_cast( arg );
-  return util_alloc_sprintf("%u" , rng_forward( rng ));
-}
-
-char * subst_func_randfloat( const stringlist_type * args , void * arg) {
-  rng_type * rng = rng_safe_cast( arg );
-  return util_alloc_sprintf("%12.10f" , 1e9 * rng_get_double( rng ));
-}
-
 
 char * subst_func_exp( const stringlist_type * args , void * ext_arg) {
   double arg;

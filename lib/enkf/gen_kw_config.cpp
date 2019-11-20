@@ -168,11 +168,7 @@ const char * gen_kw_config_get_parameter_file( const gen_kw_config_type * config
 /**
    Unfortunately the GUI makes it necessary(??) to be able to create
    halfways initialized gen_kw_config objects; and we then have to be
-   able to query the gen_kw_config object if it is valid. Observe that
-   some of the required config information will be owned by the
-   enkf_config_node itself, this function should therefor NOT be
-   called directly, only through the enkf_config_node_is_valid()
-   function.
+   able to query the gen_kw_config object if it is valid.
 
    Requirements:
    -------------
@@ -250,13 +246,6 @@ const char * gen_kw_config_get_key(const gen_kw_config_type * config ) {
 const char * gen_kw_config_get_tag_fmt(const gen_kw_config_type * config) {
   return config->tag_fmt;
 }
-
-
-char * gen_kw_config_alloc_user_key(const gen_kw_config_type * config , int kw_nr) {
-  char * user_key = util_alloc_sprintf("%s:%s" , config->key ,gen_kw_config_iget_name( config , kw_nr ));
-  return user_key;
-}
-
 
 const char * gen_kw_config_iget_name(const gen_kw_config_type * config, int kw_nr) {
   const gen_kw_parameter_type * parameter = (const gen_kw_parameter_type *)vector_iget( config->parameters , kw_nr );

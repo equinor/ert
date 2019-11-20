@@ -82,18 +82,6 @@ void ranking_table_add_misfit_ranking( ranking_table_type * ranking_table , cons
 }
 
 
-
-bool ranking_table_has_ranking( const ranking_table_type * ranking_table , const char * ranking_key ) {
-  return hash_has_key( ranking_table->ranking_table , ranking_key );
-}
-
-
-int ranking_table_get_size( const ranking_table_type * ranking_table ) {
-  return hash_get_size( ranking_table->ranking_table );
-}
-
-
-
 bool ranking_table_display_ranking( const ranking_table_type * ranking_table , const char * ranking_key ) {
   if (hash_has_key( ranking_table->ranking_table , ranking_key)) {
     void * ranking = (void *)hash_get( ranking_table->ranking_table , ranking_key );
@@ -157,7 +145,3 @@ const perm_vector_type * ranking_table_get_permutation( const ranking_table_type
   } else
     return NULL;
 }
-
-
-
-

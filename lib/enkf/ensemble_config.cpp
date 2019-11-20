@@ -164,10 +164,6 @@ void ensemble_config_set_gen_kw_format( ensemble_config_type * ensemble_config ,
 }
 
 
-const char * ensemble_config_get_gen_kw_format( const ensemble_config_type * ensemble_config ) {
-  return ensemble_config->gen_kw_format_string;
-}
-
 field_trans_table_type * ensemble_config_get_trans_table( const ensemble_config_type * ensemble_config ) {
   return ensemble_config->field_trans_table;
 }
@@ -235,39 +231,6 @@ void ensemble_config_free(ensemble_config_type * ensemble_config) {
 }
 
 
-
-
-
-
-
-ert_impl_type ensemble_config_impl_type(const ensemble_config_type *ensemble_config, const char * ecl_kw_name) {
-  ert_impl_type impl_type = INVALID;
-  const auto node_it = ensemble_config->config_nodes.find(ecl_kw_name);
-  if (node_it != ensemble_config->config_nodes.end()) {
-    const enkf_config_node_type * node = node_it->second;
-    impl_type = enkf_config_node_get_impl_type(node);
-  } else
-    util_abort("%s: internal error: asked for implementation type of unknown node:%s \n",__func__ , ecl_kw_name);
-
-  return impl_type;
-}
-
-
-enkf_var_type ensemble_config_var_type(const ensemble_config_type *ensemble_config, const char * ecl_kw_name) {
-  enkf_var_type var_type = INVALID_VAR;
-  const auto node_it = ensemble_config->config_nodes.find(ecl_kw_name);
-  if (node_it != ensemble_config->config_nodes.end()) {
-    const enkf_config_node_type * node = node_it->second;
-
-    var_type = enkf_config_node_get_var_type(node);
-  } else
-    util_abort("%s: internal error: asked for implementation type of unknown node:%s \n",__func__ , ecl_kw_name);
-
-  return var_type;
-}
-
-
-
 bool ensemble_config_has_key(const ensemble_config_type * ensemble_config , const char * key) {
   return ensemble_config->config_nodes.count(key) > 0;
 }
@@ -291,23 +254,6 @@ enkf_config_node_type * ensemble_config_get_or_create_summary_node(ensemble_conf
 
   return ensemble_config_get_node(ensemble_config, key);
 }
-
-/**
-    this will remove the config node indexed by key, it will use the
-    function hash_safe_del(), which is thread_safe, and will not fail
-    if the node has already been removed from the hash.
-
-    however - it is extremely important to ensure that all storage
-    nodes (which point to the config nodes) have been deleted before
-    calling this function. that is only assured by using
-    enkf_main_del_node().
-*/
-
-
-void ensemble_config_del_node(ensemble_config_type * ensemble_config, const char * key) {
-  ensemble_config->config_nodes.erase(key);
-}
-
 
 bool ensemble_config_have_forward_init( const ensemble_config_type * ensemble_config ) {
   return ensemble_config->have_forward_init;
@@ -1008,76 +954,6 @@ const summary_key_matcher_type * ensemble_config_get_summary_key_matcher(const e
 }
 
 /*****************************************************************/
-
-void ensemble_config_fprintf_config( ensemble_config_type * ensemble_config , FILE * stream ) {
-  fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
-  fprintf( stream , CONFIG_COMMENT_FORMAT , "Here comes configuration information about the uncertain parameters and response variables in use.");
-
-  fprintf( stream , CONFIG_KEY_FORMAT      , GEN_KW_TAG_FORMAT_KEY );
-  fprintf( stream , CONFIG_ENDVALUE_FORMAT , ensemble_config->gen_kw_format_string);
-
-
-  /* Writing GEN_KW nodes. */
-  {
-    stringlist_type * gen_kw_keys = ensemble_config_alloc_keylist_from_impl_type( ensemble_config , GEN_KW );
-    stringlist_sort( gen_kw_keys , NULL );
-    for (int i=0; i < stringlist_get_size( gen_kw_keys ); i++) {
-      const enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , stringlist_iget( gen_kw_keys , i));
-      enkf_config_node_fprintf_config( config_node , stream );
-    }
-    if (stringlist_get_size( gen_kw_keys ) > 0)
-      fprintf(stream , "\n");
-    stringlist_free( gen_kw_keys );
-  }
-
-
-  /* Writing FIELD nodes. */
-  {
-    stringlist_type * field_keys = ensemble_config_alloc_keylist_from_impl_type( ensemble_config , FIELD );
-    stringlist_sort( field_keys , NULL );
-    for (int i=0; i < stringlist_get_size( field_keys ); i++) {
-      const enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , stringlist_iget( field_keys , i));
-      enkf_config_node_fprintf_config( config_node , stream );
-    }
-    if (stringlist_get_size( field_keys ) > 0)
-      fprintf(stream , "\n");
-    stringlist_free( field_keys );
-  }
-
-
-  /* Writing SUMMARY nodes. */
-  {
-    stringlist_type * summary_keys = ensemble_config_alloc_keylist_from_impl_type( ensemble_config , SUMMARY );
-    stringlist_sort( summary_keys , NULL );
-    for (int i=0; i < stringlist_get_size( summary_keys ); i++) {
-      if (i == 0)
-        fprintf(stream , CONFIG_KEY_FORMAT , SUMMARY_KEY);
-      else if ((i % 8) == 0) {
-        fprintf(stream , "\n");
-        fprintf(stream , CONFIG_KEY_FORMAT , SUMMARY_KEY);
-      }
-      fprintf(stream , CONFIG_SHORT_VALUE_FORMAT , stringlist_iget( summary_keys , i ));
-    }
-    fprintf(stream , "\n");
-    stringlist_free( summary_keys );
-  }
-  fprintf(stream , "\n");
-
-
-  /* Writing GEN_DATA nodes. */
-  {
-    stringlist_type * gen_data_keys = ensemble_config_alloc_keylist_from_impl_type( ensemble_config , GEN_DATA );
-    stringlist_sort( gen_data_keys , NULL );
-    for (int i=0; i < stringlist_get_size( gen_data_keys ); i++) {
-      const enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , stringlist_iget( gen_data_keys , i));
-      enkf_config_node_fprintf_config( config_node , stream );
-    }
-    stringlist_free( gen_data_keys );
-  }
-  fprintf(stream , "\n\n");
-}
-
-
 
 int ensemble_config_get_size(const ensemble_config_type * ensemble_config ) {
   return ensemble_config->config_nodes.size();

@@ -41,7 +41,6 @@ extern "C" {
 #endif
 
   const      char * enkf_fs_get_mount_point( const enkf_fs_type * fs );
-  const      char * enkf_fs_get_root_path( const enkf_fs_type * fs );
   const      char * enkf_fs_get_case_name( const enkf_fs_type * fs );
   bool              enkf_fs_is_read_only(const enkf_fs_type * fs);
   void              enkf_fs_fsync( enkf_fs_type * fs );
@@ -79,8 +78,6 @@ extern "C" {
   bool              enkf_fs_has_vector(enkf_fs_type * enkf_fs , const char * node_key , enkf_var_type var_type , int iens);
   bool              enkf_fs_has_node(enkf_fs_type * enkf_fs , const char * node_key , enkf_var_type var_type , int report_step , int iens);
 
-  void              enkf_fs_debug_fprintf( const enkf_fs_type * fs);
-
   enkf_fs_type *    enkf_fs_create_fs( const char * mount_point , fs_driver_impl driver_id , void * arg, bool mount);
 
   char             * enkf_fs_alloc_case_filename( const enkf_fs_type * fs , const char * input_name);
@@ -88,19 +85,14 @@ extern "C" {
   char             * enkf_fs_alloc_case_tstep_filename( const enkf_fs_type * fs , int tstep , const char * input_name);
   char             * enkf_fs_alloc_case_tstep_member_filename( const enkf_fs_type * fs , int tstep , int iens , const char * input_name);
 
-  FILE             * enkf_fs_open_case_tstep_member_file( const enkf_fs_type * fs , const char * input_name , int tstep , int iens , const char * mode);
   FILE             * enkf_fs_open_case_file( const enkf_fs_type * fs , const char * input_name , const char * mode);
   FILE             * enkf_fs_open_case_tstep_file( const enkf_fs_type * fs , const char * input_name , int tstep , const char * mode);
-  FILE             * enkf_fs_open_case_member_file( const enkf_fs_type * fs , const char * input_name , int iens , const char * mode);
 
-  FILE             * enkf_fs_open_excase_tstep_member_file( const enkf_fs_type * fs , const char * input_name , int tstep , int iens);
   FILE             * enkf_fs_open_excase_file( const enkf_fs_type * fs , const char * input_name);
   FILE             * enkf_fs_open_excase_tstep_file( const enkf_fs_type * fs , const char * input_name , int tstep );
-  FILE             * enkf_fs_open_excase_member_file( const enkf_fs_type * fs , const char * input_name , int iens );
 
   time_map_type             * enkf_fs_alloc_readonly_time_map( const char * mount_point );
   state_map_type            * enkf_fs_alloc_readonly_state_map( const char * mount_point );
-  summary_key_set_type      * enkf_fs_alloc_readonly_summary_key_set( const char * mount_point );
   state_map_type            * enkf_fs_get_state_map( const enkf_fs_type * fs );
   time_map_type             * enkf_fs_get_time_map( const enkf_fs_type * fs );
   cases_config_type         * enkf_fs_get_cases_config( const enkf_fs_type * fs);

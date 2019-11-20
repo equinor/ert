@@ -78,10 +78,6 @@ void pca_plot_data_free( pca_plot_data_type * plot_data ) {
   free( plot_data );
 }
 
-void pca_plot_data_free__( void * arg ) {
-  pca_plot_data_type * plot_data = pca_plot_data_safe_cast( arg );
-  pca_plot_data_free( plot_data );
-}
 
 int pca_plot_data_get_size( const pca_plot_data_type * plot_data ) {
   return vector_get_size( plot_data->pca_vectors );

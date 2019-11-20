@@ -30,7 +30,6 @@ subst_config_type * subst_config_alloc(const config_content_type * user_config);
 subst_config_type * subst_config_alloc_full(const subst_list_type * define_list);
 void                subst_config_free(subst_config_type * subst_config);
 
-subst_func_pool_type * subst_config_get_subst_func_pool(subst_config_type * subst_type);
 subst_list_type      * subst_config_get_subst_list(subst_config_type * subst_type);
 
 void subst_config_add_internal_subst_kw(subst_config_type *, const char *, const char *, const char *);

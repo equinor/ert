@@ -241,10 +241,6 @@ const ecl_sum_type * forward_load_context_get_ecl_sum( const forward_load_contex
   return load_context->ecl_sum;
 }
 
-const ecl_file_type * forward_load_context_get_restart_file( const forward_load_context_type * load_context) {
-  return load_context->restart_file;
-}
-
 const run_arg_type * forward_load_context_get_run_arg( const forward_load_context_type * load_context ) {
   return load_context->run_arg;
 }
@@ -269,11 +265,3 @@ int forward_load_context_get_load_step(const forward_load_context_type * load_co
 
   return load_context->load_step;
 }
-
-
-bool forward_load_context_ecl_active( const forward_load_context_type * load_context ) {
-  return load_context->ecl_active;
-}
-
-
-

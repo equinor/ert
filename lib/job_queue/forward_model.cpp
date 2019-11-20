@@ -231,21 +231,6 @@ void forward_model_formatted_fprintf(const forward_model_type * forward_model ,
 #undef DEFAULT_JOBLIST_NAME
 
 
-
-
-forward_model_type * forward_model_alloc_copy(const forward_model_type * forward_model) {
-  int ijob;
-  forward_model_type * new_;
-
-  new_ = forward_model_alloc(forward_model->ext_joblist );
-  for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
-    const ext_job_type * job = (const ext_job_type*)vector_iget_const( forward_model->jobs , ijob);
-    vector_append_owned_ref( new_->jobs , ext_job_alloc_copy( job ) , ext_job_free__);
-  }
-
-  return new_;
-}
-
 ext_job_type * forward_model_iget_job( forward_model_type * forward_model , int index) {
   return (ext_job_type*)vector_iget( forward_model->jobs , index );
 }
@@ -262,10 +247,6 @@ void forward_model_fprintf(const forward_model_type * forward_model , FILE * str
   fprintf(stream , "\n");
 }
 
-
-const ext_joblist_type * forward_model_get_joblist(const forward_model_type * forward_model) {
-  return forward_model->ext_joblist;
-}
 
 int forward_model_get_length( const forward_model_type * forward_model ) {
   return vector_get_size( forward_model->jobs );

@@ -65,22 +65,6 @@ hook_manager_type * hook_manager_alloc_default(ert_workflow_list_type * workflow
   return hook_manager;
 }
 
-hook_manager_type * hook_manager_alloc_load(
-        ert_workflow_list_type * workflow_list,
-        const char * user_config_file)
-{
-  config_parser_type * config_parser = config_alloc();
-  config_content_type * config_content = NULL;
-  if(user_config_file)
-    config_content = model_config_alloc_content(user_config_file, config_parser);
-
-  hook_manager_type * hook_manager = hook_manager_alloc(workflow_list, config_content);
-
-  config_content_free(config_content);
-  config_free(config_parser);
-
-  return hook_manager;
-}
 
 hook_manager_type * hook_manager_alloc(
                     ert_workflow_list_type * workflow_list,
@@ -101,11 +85,6 @@ void hook_manager_free( hook_manager_type * hook_manager ) {
   vector_free( hook_manager->hook_workflow_list );
   hash_free( hook_manager->input_context );
   free( hook_manager );
-}
-
-
-void hook_manager_add_input_context( hook_manager_type * hook_manager, const char * key , const char * value) {
-  hash_insert_hash_owned_ref(hook_manager->input_context, key, util_alloc_string_copy(value), free);
 }
 
 
@@ -234,10 +213,6 @@ void hook_manager_add_config_items( config_parser_type * config ) {
 }
 
 
-void hook_manager_export_runpath_list( const hook_manager_type * hook_manager ) {
-  runpath_list_fprintf( hook_manager->runpath_list );
-}
-
 const char * hook_manager_get_runpath_list_file( const hook_manager_type * hook_manager) {
   return runpath_list_get_export_file( hook_manager->runpath_list );
 }
@@ -268,19 +243,4 @@ const hook_workflow_type * hook_manager_iget_hook_workflow(const hook_manager_ty
 
 int hook_manager_get_size(const hook_manager_type * hook_manager){
  return vector_get_size(hook_manager->hook_workflow_list);
-}
-
-
-/*****************************************************************/
-/* Deprecated stuff                                              */
-/*****************************************************************/
-
-
-
-bool hook_manager_run_post_hook_workflow( const hook_manager_type * hook_manager , void * self) {
-  const char * export_file = runpath_list_get_export_file( hook_manager->runpath_list );
-  if (!util_file_exists( export_file ))
-      fprintf(stderr,"** Warning: the file:%s with a list of runpath directories was not found - workflow will probably fail.\n" , export_file);
-
-  return hook_workflow_run_workflow(hook_manager->post_hook_workflow, hook_manager->workflow_list, self);
 }

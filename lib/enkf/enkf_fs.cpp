@@ -581,17 +581,6 @@ state_map_type * enkf_fs_alloc_readonly_state_map( const char * mount_point ) {
   return state_map;
 }
 
-summary_key_set_type * enkf_fs_alloc_readonly_summary_key_set( const char * mount_point ) {
-  path_fmt_type * path_fmt = path_fmt_alloc_directory_fmt( DEFAULT_CASE_PATH );
-  char * filename = path_fmt_alloc_file( path_fmt , false , mount_point , SUMMARY_KEY_SET_FILE);
-
-  summary_key_set_type * summary_key_set = summary_key_set_alloc_from_file( filename, true );
-
-  path_fmt_free( path_fmt );
-  free( filename );
-  return summary_key_set;
-}
-
 time_map_type * enkf_fs_alloc_readonly_time_map( const char * mount_point ) {
   path_fmt_type * path_fmt = path_fmt_alloc_directory_fmt( DEFAULT_CASE_PATH );
   char * filename = path_fmt_alloc_file( path_fmt , false , mount_point , TIME_MAP_FILE);
@@ -893,10 +882,6 @@ const char * enkf_fs_get_mount_point( const enkf_fs_type * fs ) {
   return fs->mount_point;
 }
 
-const char * enkf_fs_get_root_path( const enkf_fs_type * fs ) {
-  return fs->root_path;
-}
-
 const char * enkf_fs_get_case_name( const enkf_fs_type * fs ) {
   return fs->case_name;
 }
@@ -905,23 +890,6 @@ const char * enkf_fs_get_case_name( const enkf_fs_type * fs ) {
 bool enkf_fs_is_read_only(const enkf_fs_type * fs) {
     return fs->read_only;
 }
-
-void enkf_fs_set_writable(enkf_fs_type * fs, bool writable) {
-    fs->read_only = !writable;
-}
-
-void enkf_fs_debug_fprintf( const enkf_fs_type * fs) {
-  printf("-----------------------------------------------------------------\n");
-  printf("fs...................: %p \n",fs );
-  printf("Mount point..........: %s \n",fs->mount_point );
-  printf("Dynamic forecast.....: %p \n",fs->dynamic_forecast );
-  printf("Parameter............: %p \n",fs->parameter );
-  printf("Index................: %p \n",fs->index );
-  printf("-----------------------------------------------------------------\n");
-}
-
-
-
 
 /*****************************************************************/
 /* write_dir / read_dir confusion. */
@@ -958,14 +926,6 @@ FILE * enkf_fs_open_case_file( const enkf_fs_type * fs , const char * input_name
 }
 
 
-FILE * enkf_fs_open_case_member_file( const enkf_fs_type * fs , const char * input_name , int iens , const char * mode) {
-  char * filename = enkf_fs_alloc_case_member_filename( fs , iens , input_name );
-  FILE * stream   = util_mkdir_fopen( filename , mode );
-  free( filename );
-  return stream;
-}
-
-
 FILE * enkf_fs_open_case_tstep_file( const enkf_fs_type * fs , const char * input_name , int tstep , const char * mode) {
   char * filename = enkf_fs_alloc_case_tstep_filename( fs , tstep , input_name );
   FILE * stream   = util_mkdir_fopen( filename , mode );
@@ -973,13 +933,6 @@ FILE * enkf_fs_open_case_tstep_file( const enkf_fs_type * fs , const char * inpu
   return stream;
 }
 
-
-FILE * enkf_fs_open_case_tstep_member_file( const enkf_fs_type * fs , const char * input_name , int tstep , int iens , const char * mode) {
-  char * filename = enkf_fs_alloc_case_tstep_member_filename( fs , tstep , iens , input_name );
-  FILE * stream   = util_mkdir_fopen( filename , mode );
-  free( filename );
-  return stream;
-}
 
 /*****************************************************************/
 /*
@@ -1005,14 +958,6 @@ FILE * enkf_fs_open_excase_file( const enkf_fs_type * fs , const char * input_na
 }
 
 
-FILE * enkf_fs_open_excase_member_file( const enkf_fs_type * fs , const char * input_name , int iens ) {
-  char * filename = enkf_fs_alloc_case_member_filename( fs , iens , input_name );
-  FILE * stream   = enkf_fs_open_exfile( filename );
-  free( filename );
-  return stream;
-}
-
-
 FILE * enkf_fs_open_excase_tstep_file( const enkf_fs_type * fs , const char * input_name , int tstep ) {
   char * filename = enkf_fs_alloc_case_tstep_filename( fs , tstep , input_name );
   FILE * stream   = enkf_fs_open_exfile( filename );
@@ -1020,13 +965,6 @@ FILE * enkf_fs_open_excase_tstep_file( const enkf_fs_type * fs , const char * in
   return stream;
 }
 
-
-FILE * enkf_fs_open_excase_tstep_member_file( const enkf_fs_type * fs , const char * input_name , int tstep , int iens ) {
-  char * filename = enkf_fs_alloc_case_tstep_member_filename( fs , tstep , iens , input_name );
-  FILE * stream   = enkf_fs_open_exfile( filename );
-  free( filename );
-  return stream;
-}
 
 /*****************************************************************/
 
@@ -1065,4 +1003,3 @@ void enkf_fs_decrease_run_count(enkf_fs_type * fs) {
 bool enkf_fs_is_running(const enkf_fs_type * fs) {
   return (fs->runcount > 0);
 }
-

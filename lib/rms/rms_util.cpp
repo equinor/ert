@@ -62,23 +62,6 @@ void rms_util_set_fortran_data(void *_f90_data , const void * _rms_data, int siz
 }
 
 
-
-void rms_util_read_fortran_data(const void *_f90_data , void * _rms_data, int sizeof_ctype , int nx, int ny , int nz) {
-  const char *f90_data = (const char *) _f90_data;
-  char *rms_data       = (char *)       _rms_data;
-  int i,j,k,rms_index, f90_index;
-
-  for (i=0; i < nx; i++)
-    for (j=0; j < ny; j++)
-      for (k= 0; k < nz; k++) {
-        rms_index  = rms_util_global_index_from_eclipse_ijk(nx,ny,nz,i,j,k);
-        f90_index = i + j*nx + k*nx*ny;
-        memcpy(&rms_data[rms_index * sizeof_ctype] , &f90_data[f90_index * sizeof_ctype] , sizeof_ctype);
-      }
-}
-
-
-
 void rms_util_translate_undef(void * _data , int size , int sizeof_ctype , const void * old_undef , const void * new_undef) {
   char * data = (char *) _data;
   int i;
@@ -174,5 +157,3 @@ rms_type_enum rms_util_convert_ecl_type(ecl_data_type data_type) {
   }
   return rms_type;
 }
-
-

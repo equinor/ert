@@ -110,33 +110,6 @@ void rms_tagkey_clear(rms_tagkey_type * tagkey) {
 }
 
 
-void rms_tagkey_apply(rms_tagkey_type * tagkey , double (f) (double)) {
-int i;
-  rms_tagkey_assert_fnum(tagkey);
-  switch (tagkey->rms_type) {
-  case(rms_double_type):
-    {
-      double *tmp = (double *) tagkey->data;
-      for (i=0; i < tagkey->size; i++)
-        tmp[i] = f(tmp[i]);
-    }
-    break;
-
-  case(rms_float_type):
-    {
-      float *tmp = (float *) tagkey->data;
-      for (i=0; i < tagkey->size; i++)
-        tmp[i] = f(tmp[i]);
-    }
-    break;
-
-  default:
-    fprintf(stderr,"%s: only implemented for rms_double_type and rms_float_type - aborting \n",__func__);
-    abort();
-  }
-}
-
-
 void rms_tagkey_inplace_sqr(rms_tagkey_type * tagkey) {
   int i;
   rms_tagkey_assert_fnum(tagkey);
@@ -161,11 +134,6 @@ void rms_tagkey_inplace_sqr(rms_tagkey_type * tagkey) {
     fprintf(stderr,"%s: only implemented for rms_double_type and rms_float_type - aborting \n",__func__);
     abort();
   }
-}
-
-
-void rms_tagkey_assign(rms_tagkey_type * new_, const rms_tagkey_type *src) {
-  memcpy(new_->data , src->data , new_->size * new_->sizeof_ctype);
 }
 
 
@@ -223,62 +191,6 @@ void rms_tagkey_inplace_sqrt(rms_tagkey_type * tagkey) {
 }
 
 
-void rms_tagkey_scale(rms_tagkey_type * tagkey , double scale_factor) {
-  int i;
-  rms_tagkey_assert_fnum(tagkey);
-  switch (tagkey->rms_type) {
-  case(rms_double_type):
-    {
-      double *tmp = (double *) tagkey->data;
-      for (i=0; i < tagkey->size; i++)
-        tmp[i] *= scale_factor;
-    }
-    break;
-
-  case(rms_float_type):
-    {
-      float *tmp = (float *) tagkey->data;
-      for (i=0; i < tagkey->size; i++)
-        tmp[i] *= scale_factor;
-    }
-    break;
-
-  default:
-    fprintf(stderr,"%s: only implemented for rms_double_type and rms_float_type - aborting \n",__func__);
-    abort();
-  }
-}
-
-
-void rms_tagkey_inplace_add(rms_tagkey_type * tagkey , const rms_tagkey_type *delta) {
-  int i;
-  rms_tagkey_assert_fnum2(tagkey , delta);
-  switch (tagkey->rms_type) {
-  case(rms_double_type):
-    {
-      double *tmp1       = (double *) tagkey->data;
-      const double *tmp2 = (const double *) delta->data;
-      for (i=0; i < tagkey->size; i++)
-        tmp1[i] += tmp2[i];
-    }
-    break;
-
-  case(rms_float_type):
-    {
-      float *tmp1       = (float *) tagkey->data;
-      const float *tmp2 = (const float *) delta->data;
-      for (i=0; i < tagkey->size; i++)
-        tmp1[i] += tmp2[i];
-    }
-    break;
-
-  default:
-    fprintf(stderr,"%s: only implemented for rms_double_type and rms_float_type - aborting \n",__func__);
-    abort();
-  }
-}
-
-
 void rms_tagkey_inplace_add_scaled(rms_tagkey_type * tagkey , const rms_tagkey_type *delta, double factor) {
   int i;
   rms_tagkey_assert_fnum2(tagkey , delta);
@@ -298,35 +210,6 @@ void rms_tagkey_inplace_add_scaled(rms_tagkey_type * tagkey , const rms_tagkey_t
       const float *tmp2 = (const float *) delta->data;
       for (i=0; i < tagkey->size; i++)
         tmp1[i] += tmp2[i] * factor;
-    }
-    break;
-
-  default:
-    fprintf(stderr,"%s: only implemented for rms_double_type and rms_float_type - aborting \n",__func__);
-    abort();
-  }
-}
-
-
-void rms_tagkey_inplace_mul(rms_tagkey_type * tagkey , const rms_tagkey_type *delta) {
-  int i;
-  rms_tagkey_assert_fnum2(tagkey , delta);
-  switch (tagkey->rms_type) {
-  case(rms_double_type):
-    {
-      double *tmp1       = (double *) tagkey->data;
-      const double *tmp2 = (const double *) delta->data;
-      for (i=0; i < tagkey->size; i++)
-        tmp1[i] *= tmp2[i];
-    }
-    break;
-
-  case(rms_float_type):
-    {
-      float *tmp1       = (float *) tagkey->data;
-      const float *tmp2 = (const float *) delta->data;
-      for (i=0; i < tagkey->size; i++)
-        tmp1[i] *= tmp2[i];
     }
     break;
 
@@ -417,12 +300,6 @@ rms_tagkey_type * rms_tagkey_copyc(const rms_tagkey_type *tagkey) {
 }
 
 
-void * rms_tagkey_copyc_(const void * _tagkey) {
-  const  rms_tagkey_type * tagkey = (const rms_tagkey_type *) _tagkey;
-  return rms_tagkey_copyc(tagkey);
-}
-
-
 static void rms_tagkey_set_data_size(rms_tagkey_type *tagkey , FILE *stream , int strlen) {
 
   if (tagkey->rms_type == rms_char_type) {
@@ -456,11 +333,6 @@ static void rms_tagkey_fread_data(rms_tagkey_type *tagkey , bool endian_convert 
   if (endian_convert)
     if (tagkey->sizeof_ctype > 1)
       util_endian_flip_vector(tagkey->data , tagkey->sizeof_ctype , tagkey->size);
-}
-
-void rms_tagkey_manual_realloc_data(rms_tagkey_type * tagkey , int data_size) {
-  tagkey->data_size = data_size;
-  rms_tagkey_alloc_data(tagkey);
 }
 
 void rms_tagkey_set_data(rms_tagkey_type * tagkey , const void * data) {
@@ -699,19 +571,3 @@ rms_tagkey_type * rms_tagkey_alloc_dim(const char * dim, int value) {
 
 
 int rms_tagkey_get_size(const rms_tagkey_type * tagkey) { return tagkey->size; }
-
-
-/**
-   This function will compare two tagkeys, and return true if they are
-   equal. If they differ in size/type/...  or other fundamental ways a
-   false is immediately returned.
-*/
-
-bool rms_tagkey_cmp(const rms_tagkey_type * tagkey1 , const rms_tagkey_type * tagkey2) {
-  if (tagkey1->size     != tagkey2->size)     return false;
-  if (tagkey1->rms_type != tagkey2->rms_type) return false;
-  if (memcmp(tagkey1->data , tagkey1->data , tagkey1->size * tagkey1->sizeof_ctype) == 0)
-    return true;
-  else
-    return false;
-}

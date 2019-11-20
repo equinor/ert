@@ -47,7 +47,6 @@ double             meas_block_iget_ens_std( meas_block_type * meas_block , int i
 void               meas_block_deactivate( meas_block_type * meas_block , int iobs );
 bool               meas_block_iget_active( const meas_block_type * meas_block , int iobs);
   void meas_block_free( meas_block_type * meas_block );
-void meas_data_fprintf( const meas_data_type * matrix , FILE * stream);
 
 bool               meas_data_has_block( const meas_data_type * matrix , const char * lookup_key);
 
@@ -61,7 +60,6 @@ int                meas_data_get_active_obs_size( const meas_data_type * matrix 
 int                meas_data_get_total_ens_size( const meas_data_type * matrix );
 void               meas_data_deactivate(meas_data_type * meas_data, int index);
 int                meas_data_get_active_ens_size( const meas_data_type * meas_data );
-int                meas_data_get_nrobs( const meas_data_type * meas_data );
 meas_block_type  * meas_data_add_block( meas_data_type * matrix , const char * obs_key , int report_step , int obs_size);
 int                meas_data_get_num_blocks( const meas_data_type * meas_block );
 meas_block_type  * meas_data_iget_block( const meas_data_type * matrix , int block_mnr);

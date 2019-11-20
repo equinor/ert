@@ -77,7 +77,6 @@ typedef enum {
   analysis_module_type * analysis_module_alloc_external( const char * libname );
 
   void                   analysis_module_free( analysis_module_type * module );
-  void                   analysis_module_free__( void * arg);
 
   void analysis_module_initX(analysis_module_type * module ,
                              matrix_type * X ,

@@ -89,23 +89,6 @@ ert_workflow_list_type * ert_workflow_list_alloc_load_site_config(const subst_li
   return workflow_list;
 }
 
-ert_workflow_list_type * ert_workflow_list_alloc_load(
-        const subst_list_type * context,
-        const char * user_config_file) {
-
-  config_parser_type * config_parser = config_alloc();
-  config_content_type * config_content = NULL;
-  if(user_config_file)
-    config_content = model_config_alloc_content(user_config_file, config_parser);
-
-  ert_workflow_list_type * workflow_list = ert_workflow_list_alloc(context, config_content);
-
-  config_free(config_parser);
-  config_content_free(config_content);
-
-  return workflow_list;
-}
-
 ert_workflow_list_type * ert_workflow_list_alloc(
         const subst_list_type * context,
         const config_content_type * config_content) {
@@ -346,21 +329,10 @@ bool ert_workflow_list_run_workflow_blocking(ert_workflow_list_type * workflow_l
 }
 
 
-bool ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list, const char * workflow_name , void * self) {
-  workflow_type * workflow = ert_workflow_list_get_workflow( workflow_list , workflow_name );
-  return ert_workflow_list_run_workflow__( workflow_list, workflow , workflow_list->verbose , self);
-}
-
-
 /*****************************************************************/
 
 stringlist_type * ert_workflow_list_alloc_namelist( ert_workflow_list_type * workflow_list ) {
   return hash_alloc_stringlist( workflow_list->workflows );
-}
-
-
-const config_error_type * ert_workflow_list_get_last_error( const ert_workflow_list_type * workflow_list) {
-  return workflow_list->last_error;
 }
 
 

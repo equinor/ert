@@ -28,69 +28,6 @@
 #include <ert/res_util/regression.hpp>
 
 
-
-/**
-   Will normalize the the data in X and Y:
-
-     1. Y -> Y - <Y>
-     2. For each column: X -> X - <X>
-     3. For each column: ||X|| = 1
-
-   The mean Y value is returned from the function, and the mean X and
-   normalization factor for X is returned, for each column, in the
-   matrices (row vectors) X_mean and X_norm.
-*/
-
-
-double regression_scale(matrix_type * X , matrix_type * Y , matrix_type * X_mean , matrix_type * X_norm) {
-  int nvar = matrix_get_columns( X );
-  int nsample = matrix_get_rows( X );
-
-  if ( matrix_get_rows( Y ) != nsample)
-    util_abort("%s: dimension mismatch X:[%d,%d]  Y:%d \n",__func__ , nsample , nvar , matrix_get_rows( Y ));
-
-  if ( matrix_get_columns( X_norm ) != nvar)
-    util_abort("%s: dimension mismtach X_norm \n",__func__);
-
-  if ( matrix_get_columns( X_mean ) != nvar)
-    util_abort("%s: dimension mismtach X_mean \n",__func__);
-
-  {
-    double y_mean = matrix_get_column_sum( Y , 0 ) / nsample;
-    matrix_shift_column( Y , 0 , -y_mean );
-
-    {
-      int col;
-      for (col = 0; col < nvar; col++) {
-        double mean = matrix_get_column_sum(X , col ) / nsample;
-        matrix_shift_column(X , col , -mean);
-        matrix_iset( X_mean , 0 , col , mean );
-      }
-
-      for (col=0; col < nvar; col++) {
-        double norm = 1.0/sqrt( (1.0 / (nsample - 1)) * matrix_get_column_sum2( X , col ));
-        matrix_iset( X_norm , 0 , col , norm );
-      }
-    }
-    return y_mean;
-  }
-}
-
-
-double regression_unscale(const matrix_type * beta , const matrix_type * X_norm , const matrix_type * X_mean , double Y_mean , matrix_type * beta0) {
-  int    nvars = matrix_get_rows( beta0 );
-  int    k;
-  double yshift = 0;
-
-  for (k=0; k < nvars; k++) {
-    double scaled_beta = matrix_iget( beta , k , 0 ) * matrix_iget( X_norm , 0 , k);
-    matrix_iset( beta0 , k , 0 , scaled_beta);
-    yshift += scaled_beta * matrix_iget( X_mean , 0 , k );
-  }
-  return Y_mean - yshift;
-}
-
-
 /**
    Performs an ordinary least squares estimation of the parameter
    vector beta.
@@ -141,4 +78,3 @@ void regression_augmented_OLS( const matrix_type * X , const matrix_type * Y , c
   matrix_free( Zt );
   matrix_free( ZtZ );
 }
-

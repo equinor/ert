@@ -453,10 +453,6 @@ enkf_fs_type * enkf_main_get_fs(const enkf_main_type * enkf_main) {
   return enkf_main->dbase;
 }
 
-enkf_fs_type * enkf_main_tui_get_fs(const enkf_main_type * enkf_main) {
-  return enkf_main->dbase;
-}
-
 enkf_fs_type * enkf_main_job_get_fs(const enkf_main_type * enkf_main) {
   return enkf_main->dbase;
 }
@@ -678,4 +674,3 @@ void enkf_main_close_fs( enkf_main_type * enkf_main ) {
   if (enkf_main->dbase != NULL)
     enkf_fs_decref( enkf_main->dbase );
 }
-

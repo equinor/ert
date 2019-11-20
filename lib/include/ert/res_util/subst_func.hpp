@@ -41,8 +41,6 @@ bool                   subst_func_pool_has_func( const subst_func_pool_type * po
 UTIL_IS_INSTANCE_HEADER( subst_func_pool );
 
 /*****************************************************************/
-char * subst_func_randint( const stringlist_type * args , void * arg);
-char * subst_func_randfloat( const stringlist_type * args , void * arg);
 char * subst_func_add( const stringlist_type * args , void * arg);
 char * subst_func_mul( const stringlist_type * args , void * arg);
 char * subst_func_exp( const stringlist_type * args , void * arg);

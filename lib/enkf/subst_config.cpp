@@ -67,25 +67,6 @@ static subst_config_type * subst_config_alloc_default() {
   return subst_config;
 }
 
-subst_config_type * subst_config_alloc_load(const char * user_config_file, const char * config_dir) {
-  subst_config_type * subst_config = subst_config_alloc_default();
-
-  if(config_dir)
-    subst_config_install_config_directory(subst_config, config_dir);
-
-  if(user_config_file) {
-    config_parser_type * config = config_alloc();
-    config_content_type * content = model_config_alloc_content(user_config_file, config);
-
-    subst_config_init_load(subst_config, content);
-
-    config_free(config);
-    config_content_free(content);
-  }
-
-  return subst_config;
-}
-
 subst_config_type * subst_config_alloc(const config_content_type * user_config) {
   subst_config_type * subst_config = subst_config_alloc_default();
 
@@ -117,10 +98,6 @@ void subst_config_free(subst_config_type * subst_config) {
   subst_list_free(subst_config->subst_list);
 
   free(subst_config);
-}
-
-subst_func_pool_type * subst_config_get_subst_func_pool(subst_config_type * subst_type) {
-  return subst_type->subst_func_pool;
 }
 
 subst_list_type * subst_config_get_subst_list(subst_config_type * subst_type) {

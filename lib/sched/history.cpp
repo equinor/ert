@@ -176,8 +176,6 @@ time_t history_get_start_time( const history_type * history ) {
   return ecl_sum_get_start_time( history->refcase );
 }
 
-
-
 /* Uncertain about the first node - offset problems +++ ??
    Changed to use node_end_time() at svn ~ 2850
 

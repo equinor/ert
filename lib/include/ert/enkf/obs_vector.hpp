@@ -60,8 +60,6 @@ extern "C" {
   typedef struct obs_vector_struct obs_vector_type;
 
 
-  void                 obs_vector_clear_nodes( obs_vector_type * obs_vector );
-  void                 obs_vector_del_node(obs_vector_type * obs_vector , int index);
   void                 obs_vector_free(obs_vector_type * );
   int                  obs_vector_get_num_active(const obs_vector_type * );
   bool                 obs_vector_iget_active(const obs_vector_type * , int );
@@ -71,7 +69,6 @@ extern "C" {
   const char         * obs_vector_get_state_kw(const obs_vector_type * );
   const char         * obs_vector_get_key(const obs_vector_type * );
   obs_impl_type        obs_vector_get_impl_type(const obs_vector_type * );
-  int                  obs_vector_get_active_report_step(const obs_vector_type * );
   const int_vector_type * obs_vector_get_step_list(const obs_vector_type * vector);
   void                 obs_vector_user_get(const obs_vector_type * obs_vector , const char * index_key , int report_step , double * value , double * std , bool * valid);
   int                  obs_vector_get_next_active_step(const obs_vector_type * , int );
@@ -85,8 +82,6 @@ extern "C" {
   void                 obs_vector_scale_std(obs_vector_type * obs_vector, const local_obsdata_node_type * local_node , double std_multiplier);
   void                 obs_vector_install_node(obs_vector_type * obs_vector , int obs_index , void * node );
 
-  double                  obs_vector_chi2(const obs_vector_type *  , enkf_fs_type *  , node_id_type node_id);
-
   void                    obs_vector_ensemble_chi2(const obs_vector_type * obs_vector ,
                                                    enkf_fs_type * fs,
                                                    bool_vector_type * valid ,
@@ -95,7 +90,6 @@ extern "C" {
                                                    double ** chi2);
 
   double                  obs_vector_total_chi2(const obs_vector_type * , enkf_fs_type * , int );
-  void                    obs_vector_ensemble_total_chi2(const obs_vector_type *  , enkf_fs_type *  , int  , double * );
   enkf_config_node_type * obs_vector_get_config_node(const obs_vector_type * );
   const char            * obs_vector_get_obs_key( const obs_vector_type * obs_vector);
   local_obsdata_node_type * obs_vector_alloc_local_node(const obs_vector_type * obs_vector);

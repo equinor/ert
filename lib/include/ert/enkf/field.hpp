@@ -37,43 +37,28 @@ extern "C" {
 /* Typedef field_type moved to field_config.h */
 
   void         field_scale(field_type * field, double scale_factor);
-  int          field_get_global_index(const field_type * , int  , int  , int );
-  void         field_ijk_set(field_type * , int  , int  , int  , const void * );
-  void         field_indexed_set(field_type * field, ecl_data_type , int , const int * , const void * );
-  void         field_indexed_add(field_type * field, ecl_data_type , int , const int * , const void * );
   double       field_iget_double(const field_type * , int );
   double       field_ijk_get_double(const field_type * field, int  , int  , int );
   float        field_iget_float(const field_type * , int );
-  float        field_ijk_get_float(const field_type * field, int  , int  , int );
   void         field_ijk_get(const field_type * , int , int  , int , void *);
-  bool         field_ijk_valid(const field_type * , int , int , int );
-  void         field_ijk_get_if_valid(const field_type * , int  , int  , int , void * , bool *);
   void         field_ecl_write1D_fortio(const field_type * , fortio_type *);
   void         field_ecl_write3D_fortio(const field_type * , fortio_type *,  const char *);
   void         field_ROFF_export(const field_type * , const char * , const char *);
   void         field_copy_ecl_kw_data(field_type * , const ecl_kw_type * );
-  field_type * field_alloc_shared(const field_config_type * , void * , int );
   void         field_free(field_type *);
-  void         field_get_dims(const field_type *, int *, int *, int *);
   bool         field_fload_keep_inactive(field_type * field , const char * filename);
-  bool         field_fload_auto(field_type * , const char * , bool);
   bool         field_fload_rms(field_type * field , const char * filename, bool keep_inactive);
   void         field_export3D(const field_type * , void *, bool, ecl_data_type , void *, const char *);
   void         field_export(const field_type * , const char * , fortio_type * , field_file_format_type , bool, const char *);
   field_type * field_copyc(const field_type *);
   bool         field_cmp(const field_type *  , const field_type * );
 
-  double     * field_indexed_get_alloc(const field_type *, int, const int *);
   void         field_inplace_output_transform(field_type * field);
 
   void          field_iscale(field_type * , double );
   void          field_isqrt(field_type *);
-  void          field_isqr(field_type *);
   void          field_iaddsqr(field_type * , const field_type *);
   void          field_iadd(field_type * , const field_type *);
-  void          field_imul_add(field_type * , double , const field_type *);
-  ecl_kw_type * field_alloc_ecl_kw_wrapper(const field_type * );
-  void          field_update_sum(field_type * sum , field_type * field , double lower_limit , double upper_limit);
   void          field_upgrade_103(const char * filename);
 
   UTIL_IS_INSTANCE_HEADER(field);

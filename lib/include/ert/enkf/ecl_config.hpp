@@ -51,9 +51,6 @@ extern "C" {
   void                  ecl_config_set_init_section( ecl_config_type * ecl_config , const char * input_init_section );
   ui_return_type *      ecl_config_validate_init_section( const ecl_config_type * ecl_config , const char * input_init_section );
   const char          * ecl_config_get_init_section(const ecl_config_type * ecl_config);
-  const char          * ecl_config_get_equil_init_file(const ecl_config_type * );
-  bool                  ecl_config_has_init_section( const ecl_config_type * ecl_config );
-
 
   void                  ecl_config_set_grid( ecl_config_type * ecl_config , const char * grid_file );
   const char          * ecl_config_get_gridfile( const ecl_config_type * ecl_config );
@@ -78,17 +75,14 @@ extern "C" {
   int                   ecl_config_get_num_cpu( const ecl_config_type * ecl_config );
   void                  ecl_config_init( ecl_config_type * ecl_config , const config_content_type * config);
   void                  ecl_config_free( ecl_config_type *);
-  ecl_io_config_type  * ecl_config_get_io_config(const ecl_config_type * );
 
   bool                  ecl_config_get_formatted(const ecl_config_type * );
   bool                  ecl_config_get_unified_restart(const ecl_config_type * );
-  bool                  ecl_config_get_unified_summary(const ecl_config_type * );
   int                   ecl_config_get_num_restart_files(const ecl_config_type * );
   int                   ecl_config_get_last_history_restart( const ecl_config_type * );
   bool                  ecl_config_can_restart( const ecl_config_type * ecl_config );
   void                  ecl_config_assert_restart( const ecl_config_type * ecl_config );
   const char          * ecl_config_get_refcase_name( const ecl_config_type * ecl_config);
-  ecl_config_type     * ecl_config_alloc_load(const char * user_config_file);
   ecl_config_type     * ecl_config_alloc(const config_content_type * config_content);
   ecl_config_type     * ecl_config_alloc_full(bool have_eclbase, 
                                           char * data_file, 

@@ -110,20 +110,6 @@ static char * strip_line_alloc(const char * line) {
 /*****************************************************************/
 
 
-
-char * sched_util_alloc_line(FILE *stream , bool *at_eof) {
-  char *tmp_line = util_fscanf_alloc_line(stream , at_eof);
-  char * line    = strip_line_alloc( tmp_line );
-
-  free(tmp_line);
-  return line;
-}
-
-
-
-
-
-
 /**
  * We parse up to the terminating '/' - but it is NOT included in the returned string
 
@@ -304,21 +290,6 @@ int sched_util_atoi(const char *token) {
   } else
     return 0;
 }
-
-
-
-/* Simple utility function used for debugging. */
-void sched_util_fprintf_tokenlist(int num_token , const char ** token_list , const bool * def) {
-  int i;
-  for (i = 0; i < num_token; i++) {
-    if (def[i])
-      fprintf(stdout , " \'*\' " );
-    else
-      fprintf(stdout , " \'%s\' " , token_list[i]);
-  }
-  fprintf(stdout , "\n");
-}
-
 
 
 /**

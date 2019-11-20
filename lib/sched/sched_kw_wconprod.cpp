@@ -117,18 +117,6 @@ sched_kw_wconprod_type * sched_kw_wconprod_copyc(const sched_kw_wconprod_type * 
 }
 
 
-void sched_kw_wconprod_init_well_list( const sched_kw_wconprod_type * kw , stringlist_type * well_list) {
-  stringlist_clear( well_list );
-  {
-    int iw;
-    for (iw = 0; iw < stringlist_get_size( kw->wells ); iw++)
-      stringlist_append_copy( well_list , stringlist_iget( kw->wells , iw) );
-  }
-}
-
-
-
 /*****************************************************************/
 
 KW_IMPL(wconprod)
-

@@ -84,10 +84,6 @@ void config_path_elm_free__( void * arg ) {
   config_path_elm_free( path_elm );
 }
 
-const config_root_path_type * config_path_elm_get_rootpath( const config_path_elm_type * path_elm ) {
-  return path_elm->root_path;
-}
-
 const char * config_path_elm_get_relpath( const config_path_elm_type * path_elm ) {
   return path_elm->rel_path;
 }

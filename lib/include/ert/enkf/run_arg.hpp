@@ -62,7 +62,6 @@ UTIL_IS_INSTANCE_HEADER( run_arg );
 
   int            run_arg_get_step1( const run_arg_type * run_arg );
   int            run_arg_get_step2( const run_arg_type * run_arg );
-  run_mode_type  run_arg_get_run_mode( const run_arg_type * run_arg );
   int            run_arg_get_load_start( const run_arg_type * run_arg );
   int            run_arg_get_iens( const run_arg_type * run_arg );
   int            run_arg_get_iter( const run_arg_type * run_arg );

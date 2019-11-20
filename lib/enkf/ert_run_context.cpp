@@ -353,22 +353,6 @@ int ert_run_context_get_step1( const ert_run_context_type * context ) {
   return context->step1;
 }
 
-
-int ert_run_context_get_load_start( const ert_run_context_type * context ) {
-  if (context->step1 == 0)
-    return 1;
-  else
-    return context->step1;
-}
-
-
-int ert_run_context_get_step2( const ert_run_context_type * context ) {
-  return context->step2;
-}
-
-
-
-
 run_arg_type * ert_run_context_iget_arg( const ert_run_context_type * context , int index) {
   return (run_arg_type * ) vector_iget( context->run_args , index );
 }

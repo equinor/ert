@@ -180,12 +180,6 @@ void gen_kw_read_from_buffer(gen_kw_type * gen_kw , buffer_type * buffer, enkf_f
 #undef MULTFLT
 
 
-void gen_kw_truncate(gen_kw_type * gen_kw) {
-  return ;
-}
-
-
-
 bool gen_kw_initialize(gen_kw_type *gen_kw , int iens , const char * init_file , rng_type * rng ) {
   if (!init_file && !rng)
     util_abort("%s internal error: both init_file and rng are NULL", __func__);
@@ -415,11 +409,6 @@ bool gen_kw_user_get(const gen_kw_type * gen_kw, const char * key , int report_s
     fprintf(stderr,"** Warning:could not lookup key:%s in gen_kw instance \n",key);
     return false;
   }
-}
-
-
-void gen_kw_set_subst_parent(gen_kw_type * gen_kw , const subst_list_type * subst_parent) {
-  subst_list_set_parent( gen_kw->subst_list , subst_parent );
 }
 
 

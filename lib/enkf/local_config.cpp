@@ -255,15 +255,6 @@ local_dataset_type * local_config_get_dataset( const local_config_type * local_c
   return dataset;
 }
 
-local_ministep_type * local_config_alloc_ministep_copy( local_config_type * local_config , const char * src_key , const char * new_key) {
-  local_ministep_type * src_step = (local_ministep_type *)hash_get( local_config->ministep_storage , src_key );
-  local_ministep_type * new_step = local_ministep_alloc_copy( src_step , new_key );
-  hash_insert_hash_owned_ref( local_config->ministep_storage , new_key , new_step , local_ministep_free__);
-  return new_step;
-}
-
-
-
 local_updatestep_type * local_config_get_updatestep( const local_config_type * local_config) {
   local_updatestep_type * updatestep = local_config->default_updatestep;
 

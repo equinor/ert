@@ -208,10 +208,6 @@ void conf_instance_insert_item(
   const char         * item_name,
   const char         * value);
 
-void conf_instance_overload(
-  conf_instance_type       * conf_instance_target,
-  const conf_instance_type * conf_instance_source);
-
 conf_item_mutex_type * conf_class_new_item_mutex(
   conf_class_type  * conf_class,
   bool               require_one,
@@ -280,10 +276,6 @@ bool conf_instance_has_item(
   const conf_instance_type * conf_instance,
   const char               * item_name);
 
-bool conf_instance_has_sub_instance(
-  const conf_instance_type * conf_instance,
-  const char               * sub_instance_name);
-
 const conf_instance_type * conf_instance_get_sub_instance_ref(
   const conf_instance_type * conf_instance,
   const char               * sub_instance_name);
@@ -295,9 +287,6 @@ stringlist_type * conf_instance_alloc_list_of_sub_instances_of_class(
 stringlist_type * conf_instance_alloc_list_of_sub_instances_of_class_by_name(
   const conf_instance_type * conf_instance,
   const char               * sub_class_name);
-
-const conf_class_type * conf_instance_get_class_ref(
-  const conf_instance_type * conf_instance);
 
 const char * conf_instance_get_class_name_ref(
   const conf_instance_type * conf_instance);

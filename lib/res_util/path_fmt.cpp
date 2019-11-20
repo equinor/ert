@@ -134,12 +134,6 @@ path_fmt_type * path_fmt_alloc_path_fmt(const char * fmt) {
 }
 
 
-
-path_fmt_type * path_fmt_copyc(const path_fmt_type *path) {
-  path_fmt_type *new_path = path_fmt_alloc__(path->fmt , path->is_directory);
-  return new_path;
-}
-
 char * path_fmt_alloc_path_va(const path_fmt_type * path ,bool auto_mkdir,  va_list ap) {
  char * new_path = util_alloc_sprintf_va(path->fmt , ap );
  if (auto_mkdir)

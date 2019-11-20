@@ -193,35 +193,6 @@ hash_iter_type * local_ministep_alloc_dataset_iter( const local_ministep_type * 
   return hash_iter_alloc( ministep->datasets );
 }
 
-/*****************************************************************/
-
-/*
-   The keys referenced in the local_ministep_alloc_data_keys() and
-   local_ministep_has_data_key() are the underlying *enkf_node* keys -
-   not the keys used to index the local_datasets managed by this
-   local_ministep.
-*/
-
-stringlist_type * local_ministep_alloc_data_keys( const local_ministep_type * ministep ) {
-  stringlist_type * keys = stringlist_alloc_new();
-  {
-    hash_iter_type * dataset_iter = hash_iter_alloc( ministep->datasets );
-    while (!hash_iter_is_complete( dataset_iter )) {
-      const local_dataset_type * dataset = (const local_dataset_type *) hash_iter_get_next_value( dataset_iter );
-      stringlist_type * node_keys = local_dataset_alloc_keys( dataset );
-      for (int i=0; i < stringlist_get_size( node_keys ); i++) {
-        const char * data_key = stringlist_iget( node_keys , i );
-        if (!stringlist_contains(keys , data_key ))
-          stringlist_append_copy( keys , data_key );
-      }
-      stringlist_free( node_keys );
-    }
-    hash_iter_free( dataset_iter );
-  }
-  return keys;
-}
-
-
 bool local_ministep_has_data_key(const local_ministep_type * ministep , const char * key) {
   bool has_key = false;
   {
@@ -272,5 +243,3 @@ void local_ministep_summary_fprintf( const local_ministep_type * ministep , FILE
    fprintf(stream, "\n");
   }
 }
-
-

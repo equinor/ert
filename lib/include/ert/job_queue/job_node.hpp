@@ -52,7 +52,6 @@ typedef struct job_queue_node_struct job_queue_node_type;
 
   time_t job_queue_node_get_timestamp(const job_queue_node_type * node);
   bool job_queue_node_status_transition( job_queue_node_type * node , job_queue_status_type * status , job_status_type new_status);
-  bool job_queue_node_status_confirmed_running(job_queue_node_type * node);
   submit_status_type job_queue_node_submit( job_queue_node_type * node , job_queue_status_type * status , queue_driver_type * driver);
   submit_status_type job_queue_node_submit_simple(job_queue_node_type * node,
                                          queue_driver_type * driver);
@@ -101,7 +100,6 @@ typedef struct job_queue_node_struct job_queue_node_type;
   bool job_queue_node_update_status( job_queue_node_type * node , job_queue_status_type * status , queue_driver_type * driver);
   bool job_queue_node_update_status_simple(job_queue_node_type * node, queue_driver_type * driver );
   const char * job_queue_node_get_run_path( const job_queue_node_type * node);
-  const char * job_queue_node_get_name( const job_queue_node_type * node);
   int  job_queue_node_get_submit_attempt( const job_queue_node_type * node);
   void job_queue_node_reset_submit_attempt( job_queue_node_type * node);
   void job_queue_node_dec_submit_attempt( job_queue_node_type * node);
@@ -117,7 +115,6 @@ typedef struct job_queue_node_struct job_queue_node_type;
   void job_queue_node_set_max_confirmation_wait_time( job_queue_node_type * node, time_t time );
 
   const char * job_queue_node_get_ok_file( const job_queue_node_type * node);
-  const char * job_queue_node_get_status_file( const job_queue_node_type * node);
   const char * job_queue_node_get_exit_file( const job_queue_node_type * node);
 
   bool job_queue_node_run_DONE_callback( job_queue_node_type * node );

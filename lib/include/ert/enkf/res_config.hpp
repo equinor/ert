@@ -79,7 +79,6 @@ queue_config_type            * res_config_get_queue_config(const res_config_type
 
 const char * res_config_get_config_directory(const res_config_type *);
 const char * res_config_get_user_config_file(const res_config_type *);
-const char * res_config_get_site_config_file(const res_config_type *);
 
 #ifdef __cplusplus
 }

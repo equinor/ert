@@ -210,10 +210,6 @@ const char * model_config_get_gen_kw_export_name( const model_config_type * mode
    return model_config->enspath;
  }
 
-const char * model_config_get_rftpath( const model_config_type * model_config) {
-  return model_config->rftpath;
-}
-
 fs_driver_impl model_config_get_dbase_type(const model_config_type * model_config ) {
   return model_config->dbase_type;
 }
@@ -300,35 +296,6 @@ model_config_type * model_config_alloc_empty() {
   model_config_select_runpath( model_config , DEFAULT_RUNPATH_KEY );
   model_config_set_gen_kw_export_name(model_config, DEFAULT_GEN_KW_EXPORT_NAME);
 
-  return model_config;
-}
-
-model_config_type * model_config_alloc_load(const char * user_config_file,
-                                            const ext_joblist_type * joblist,
-                                            int last_history_restart,
-                                            const ecl_sum_type * refcase)
-{
-  config_parser_type * config_parser = config_alloc();
-  config_content_type * config_content = NULL;
-  char * data_root = NULL;
-
-  if(user_config_file) {
-    char * tmp_path;
-    util_alloc_file_components( user_config_file, &tmp_path , NULL , NULL );
-    data_root = util_alloc_abs_path( tmp_path );
-    config_content = model_config_alloc_content(user_config_file, config_parser);
-    free( tmp_path );
-  }
-
-  model_config_type * model_config = model_config_alloc(config_content,
-                                                        data_root,
-                                                        joblist,
-                                                        last_history_restart,
-                                                        refcase);
-
-  config_content_free(config_content);
-  config_free(config_parser);
-  free( data_root );
   return model_config;
 }
 
@@ -668,55 +635,7 @@ void model_config_set_internalize_state( model_config_type * config , int report
 }
 
 
-void model_config_set_load_state( model_config_type * config , int report_step) {
-  bool_vector_iset(config->__load_eclipse_restart , report_step , true);
-}
-
-
-
-/* Query functions. */
-
-bool model_config_internalize_state( const model_config_type * config , int report_step) {
-  return bool_vector_iget(config->internalize_state , report_step);
-}
-
 /*****************************************************************/
-
-bool model_config_load_state( const model_config_type * config , int report_step) {
-  return bool_vector_iget(config->__load_eclipse_restart , report_step);
-}
-
-void model_config_fprintf_config( const model_config_type * model_config , int ens_size , FILE * stream ) {
-  fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
-  fprintf( stream , CONFIG_COMMENT_FORMAT , "Here comes configuration information related to this model.");
-
-  fprintf( stream , CONFIG_KEY_FORMAT      , FORWARD_MODEL_KEY);
-  forward_model_fprintf( model_config->forward_model , stream );
-
-  fprintf( stream , CONFIG_KEY_FORMAT      , RUNPATH_KEY );
-  fprintf( stream , CONFIG_ENDVALUE_FORMAT , path_fmt_get_fmt( model_config->current_runpath ));
-
-  fprintf( stream , CONFIG_KEY_FORMAT      , ENSPATH_KEY );
-  fprintf( stream , CONFIG_ENDVALUE_FORMAT , model_config->enspath );
-
-  fprintf( stream , CONFIG_KEY_FORMAT      , RFTPATH_KEY );
-  fprintf( stream , CONFIG_ENDVALUE_FORMAT , model_config->rftpath );
-
-  fprintf( stream , CONFIG_KEY_FORMAT      , MAX_RESAMPLE_KEY );
-  {
-    char max_retry_string[16];
-    sprintf( max_retry_string , "%d" ,model_config->max_internal_submit);
-    fprintf( stream , CONFIG_ENDVALUE_FORMAT , max_retry_string);
-  }
-
-  fprintf(stream , CONFIG_KEY_FORMAT      , HISTORY_SOURCE_KEY);
-  fprintf(stream , CONFIG_ENDVALUE_FORMAT , history_get_source_string( model_config_get_history_source(model_config) ));
-
-  fprintf(stream , CONFIG_KEY_FORMAT , NUM_REALIZATIONS_KEY);
-  fprintf(stream , CONFIG_INT_FORMAT , ens_size);
-  fprintf(stream , "\n\n");
-
-}
 
 static char * model_config_alloc_user_config_file(const char * user_config_file, bool base_only) {
     char * base_name;

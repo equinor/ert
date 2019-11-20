@@ -45,7 +45,6 @@ local_config_type           * local_config_alloc( );
 void                          local_config_clear( local_config_type * local_config );
 void                          local_config_free( local_config_type * local_config );
 local_ministep_type         * local_config_alloc_ministep( local_config_type * local_config , const char * key,  analysis_module_type* analysis_module );
-local_ministep_type         * local_config_alloc_ministep_copy( local_config_type * local_config , const char * src_key , const char * new_key);
 void                          local_config_set_default_updatestep( local_config_type * local_config , local_updatestep_type * update_step );
 local_updatestep_type       * local_config_get_updatestep( const local_config_type * local_config );
 local_ministep_type         * local_config_get_ministep( const local_config_type * local_config , const char * key);

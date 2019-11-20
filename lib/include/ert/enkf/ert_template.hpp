@@ -45,7 +45,6 @@ void                ert_template_free__(void * arg);
 void                ert_templates_clear( ert_templates_type * ert_templates );
 ert_template_type * ert_templates_get_template( ert_templates_type * ert_templates , const char * key);
 
-ert_templates_type * ert_templates_alloc_load(subst_list_type * parent_subst, const char * config_file);
 ert_templates_type * ert_templates_alloc(subst_list_type *, const config_content_type *);
 void                 ert_templates_free( ert_templates_type * ert_templates );
 ert_template_type  * ert_templates_add_template( ert_templates_type * ert_templates , const char * key , const char * template_file , const char * target_file , const char * arg_string);

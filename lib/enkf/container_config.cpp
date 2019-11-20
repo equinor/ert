@@ -52,10 +52,6 @@ void container_config_add_node( container_config_type * container_config , const
   vector_append_ref( container_config->nodes , config_node );
 }
 
-const void * container_config_iget_node(const container_config_type * container_config , int index) {
-  return vector_iget_const( container_config->nodes , index ); // CXX_CAST_ERROR
-}
-
 int container_config_get_size( const container_config_type * container_config ) {
   return vector_get_size( container_config->nodes );
 }
@@ -73,4 +69,3 @@ UTIL_SAFE_CAST_FUNCTION(container_config , CONTAINER_CONFIG_TYPE_ID)
 UTIL_SAFE_CAST_FUNCTION_CONST(container_config , CONTAINER_CONFIG_TYPE_ID)
 VOID_GET_DATA_SIZE(container)
 VOID_CONFIG_FREE(container)
-

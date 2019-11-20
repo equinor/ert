@@ -562,10 +562,6 @@ const char * ext_job_get_license_path(const ext_job_type * ext_job) {
   return ext_job->license_path;
 }
 
-void ext_job_set_name(ext_job_type * ext_job, const char * name) {
-  ext_job->name = util_realloc_string_copy(ext_job->name , name);
-}
-
 const char * ext_job_get_name(const ext_job_type * ext_job) {
   return ext_job->name;
 }
@@ -972,15 +968,6 @@ void ext_job_fprintf(const ext_job_type * ext_job , FILE * stream) {
   fprintf(stream , "  ");
 }
 
-
-/**
-    The format variable @fmt should contain two '%s' placeholders -
-    one for the job name, and one for the job description file.
-*/
-
-void ext_job_fprintf_config(const ext_job_type * ext_job , const char * fmt , FILE * stream) {
-  fprintf(stream , fmt , ext_job->name , ext_job->config_file );
-}
 
 config_item_types ext_job_iget_argtype( const ext_job_type * ext_job, int index) {
   return (config_item_types)int_vector_safe_iget( ext_job->arg_types , index );

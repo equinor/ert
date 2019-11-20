@@ -40,7 +40,6 @@ typedef struct {
 
 void          rms_type_free(void *);
 __rms_type  * rms_type_alloc(rms_type_enum , int );
-const void  * rms_type_copyc(const void * );
 
 #ifdef __cplusplus
 }

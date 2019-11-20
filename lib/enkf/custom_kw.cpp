@@ -58,10 +58,6 @@ void custom_kw_free(custom_kw_type * custom_kw) {
     free(custom_kw);
 }
 
-const stringlist_type * custom_kw_get_data(const custom_kw_type * custom_kw) {
-    return custom_kw->data;
-}
-
 bool custom_kw_key_is_null(const custom_kw_type * custom_kw, char * key) {
     int index = custom_kw_config_index_of_key(custom_kw->config, key);
     return stringlist_iget(custom_kw->data, index) == NULL;

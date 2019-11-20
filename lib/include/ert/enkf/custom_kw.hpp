@@ -21,7 +21,6 @@ extern "C" {
     custom_kw_type         * custom_kw_alloc(const custom_kw_config_type * config);
     void                     custom_kw_free(custom_kw_type * custom_kw);
     custom_kw_config_type  * custom_kw_get_config(const custom_kw_type * custom_kw);
-    const stringlist_type  * custom_kw_get_data(const custom_kw_type * custom_kw);
     bool                     custom_kw_key_is_null(const custom_kw_type * custom_kw, char * key);
     double                   custom_kw_iget_as_double(const custom_kw_type * custom_kw, int index);
     const char             * custom_kw_iget_as_string(const custom_kw_type * custom_kw, int index);

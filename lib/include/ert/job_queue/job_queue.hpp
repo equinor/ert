@@ -67,7 +67,6 @@ extern "C" {
   int                 job_queue_iget_status_summary( const job_queue_type * queue , job_status_type status);
   time_t              job_queue_iget_sim_start( job_queue_type * queue, int job_index);
   time_t              job_queue_iget_sim_end( job_queue_type * queue, int job_index);
-  time_t              job_queue_iget_submit_time( job_queue_type * queue, int job_index);
   void                job_queue_iset_max_confirm_wait_time( job_queue_type * queue, int job_index, time_t time );
 
   void                job_queue_set_max_job_duration(job_queue_type * queue, int max_duration_seconds);
@@ -96,12 +95,6 @@ extern "C" {
   int                 job_queue_get_num_failed( const job_queue_type * queue);
   int                 job_queue_get_num_killed( const job_queue_type * queue);
   void              * job_queue_iget_driver_data( job_queue_type * queue , int job_index);
-  const char        * job_queue_iget_failed_job(  job_queue_type * queue , int job_index);
-  const char        * job_queue_iget_error_reason(  job_queue_type * queue , int job_index);
-  const char        * job_queue_iget_stderr_capture(  job_queue_type * queue , int job_index);
-  const char        * job_queue_iget_stderr_file(  job_queue_type * queue , int job_index);
-  const char        * job_queue_iget_run_path(  job_queue_type * queue , int job_index);
-  void                job_queue_iset_external_restart(job_queue_type * queue , int job_index);
   job_queue_node_type * job_queue_iget_job( job_queue_type * job_queue , int job_nr );
   bool                job_queue_has_driver(const job_queue_type * queue );
   job_queue_node_type * job_queue_iget_node(job_queue_type * queue , int job_index);

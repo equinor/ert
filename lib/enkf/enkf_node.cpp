@@ -280,20 +280,8 @@ enkf_node_type * enkf_node_copyc(const enkf_node_type * enkf_node) {
   }
 }
 
-
-
-bool enkf_node_include_type(const enkf_node_type * enkf_node, int mask) {
-  return enkf_config_node_include_type(enkf_node->config , mask);
-}
-
-
 ert_impl_type enkf_node_get_impl_type(const enkf_node_type * enkf_node) {
   return enkf_config_node_get_impl_type(enkf_node->config);
-}
-
-
-enkf_var_type enkf_node_get_var_type(const enkf_node_type * enkf_node) {
-  return enkf_config_node_get_var_type(enkf_node->config);
 }
 
 bool enkf_node_use_forward_init( const enkf_node_type * enkf_node ) {
@@ -653,52 +641,6 @@ bool enkf_node_has_data( enkf_node_type * enkf_node , enkf_fs_type * fs , node_i
   } else
     return enkf_config_node_has_node( enkf_node->config , fs , node_id );
 }
-
-
-/**
-   Copy an ensemble of nodes. Note that the limits are inclusive.
-*/
-
-void enkf_node_copy_ensemble(const enkf_config_node_type * config_node ,
-                             enkf_fs_type * src_case ,
-                             enkf_fs_type * target_case ,
-                             int report_step_from,    /* src state */
-                             int report_step_to  ,    /* target state */
-                             int ens_size,
-                             const perm_vector_type * permutations) {
-
-  node_id_type src_id    = {.report_step = report_step_from , .iens = 0 };
-  node_id_type target_id = {.report_step = report_step_to   , .iens = 0 };
-
-  for(int iens_from = 0; iens_from < ens_size; iens_from++) {
-    int iens_to;
-    if (permutations == NULL)
-      iens_to = iens_from;
-    else
-      iens_to = perm_vector_iget(permutations, iens_from);
-
-    src_id.iens = iens_from;
-    target_id.iens = iens_to;
-
-    enkf_node_copy(config_node , src_case , target_case , src_id , target_id );
-  }
-}
-
-
-
-enkf_node_type ** enkf_node_load_alloc_ensemble( const enkf_config_node_type * config_node , enkf_fs_type * fs ,
-                                                 int report_step , int iens1 , int iens2) {
-  enkf_node_type ** ensemble = (enkf_node_type **) util_calloc( (iens2 - iens1) , sizeof * ensemble );
-  for (int iens = iens1; iens < iens2; iens++) {
-    node_id_type node_id = {.report_step = report_step , .iens = iens };
-    ensemble[iens - iens1] = NULL;
-    ensemble[iens - iens1] = enkf_node_load_alloc(config_node , fs , node_id);
-  }
-
-  return ensemble;
-}
-
-
 
 
 void enkf_node_serialize(enkf_node_type *enkf_node , enkf_fs_type * fs, node_id_type node_id ,
@@ -1071,12 +1013,4 @@ enkf_node_type * enkf_node_deep_alloc(const enkf_config_node_type * config) {
 
 bool enkf_node_internalize(const enkf_node_type * node, int report_step) {
   return enkf_config_node_internalize( node->config , report_step );
-}
-
-
-/*****************************************************************/
-
-
-ecl_write_ftype * enkf_node_get_func_pointer( const enkf_node_type * node ) {
-  return node->ecl_write;
 }

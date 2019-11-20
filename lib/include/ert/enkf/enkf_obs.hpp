@@ -84,13 +84,11 @@ extern "C" {
   stringlist_type * enkf_obs_alloc_typed_keylist( enkf_obs_type * enkf_obs , obs_impl_type );
   hash_type * enkf_obs_alloc_data_map(enkf_obs_type * enkf_obs);
 
-  const obs_vector_type * enkf_obs_user_get_vector(const enkf_obs_type * obs , const char  * full_key, char ** index_key );
   bool              enkf_obs_has_key(const enkf_obs_type * , const char * );
   int               enkf_obs_get_size( const enkf_obs_type * obs );
 
   hash_iter_type  * enkf_obs_alloc_iter( const enkf_obs_type * enkf_obs );
 
-  stringlist_type * enkf_obs_alloc_keylist(enkf_obs_type * enkf_obs );
   stringlist_type * enkf_obs_alloc_matching_keylist(const enkf_obs_type * enkf_obs , const char * input_string);
   time_t            enkf_obs_iget_obs_time(const enkf_obs_type * enkf_obs , int report_step);
   void              enkf_obs_scale_std(enkf_obs_type * enkf_obs, double scale_factor);

@@ -30,7 +30,6 @@ void              sched_time_free( sched_time_type * time_node );
 void              sched_time_free__( void * arg );
 time_t            sched_time_get_date( const sched_time_type * time_node );
 time_t            sched_time_get_type( const sched_time_type * time_node );
-time_t            sched_time_get_target( const sched_time_type * time_node , time_t current_time);
 
 #ifdef __cplusplus
 }

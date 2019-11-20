@@ -89,8 +89,6 @@ typedef struct ert_run_context_struct ert_run_context_type;
   int                      ert_run_context_get_iter( const ert_run_context_type * context );
   int                      ert_run_context_get_active_size(const ert_run_context_type * context);
   int                      ert_run_context_get_step1( const ert_run_context_type * context );
-  int                      ert_run_context_get_step2( const ert_run_context_type * context );
-  int                      ert_run_context_get_load_start( const ert_run_context_type * context );
   run_arg_type           * ert_run_context_iget_arg( const ert_run_context_type * context , int index);
   run_arg_type           * ert_run_context_iens_get_arg( const ert_run_context_type * context , int iens);
   void                     ert_run_context_deactivate_realization( ert_run_context_type * context , int iens);
@@ -109,5 +107,3 @@ typedef struct ert_run_context_struct ert_run_context_type;
 }
 #endif
 #endif
-
-

@@ -45,9 +45,7 @@ add_library(res res_util/res_log.cpp
                 config/config_schema_item.cpp
                 config/config_settings.cpp
 
-                rms/rms_export.cpp
                 rms/rms_file.cpp
-                rms/rms_stats.cpp
                 rms/rms_tag.cpp
                 rms/rms_tagkey.cpp
                 rms/rms_type.cpp
@@ -57,7 +55,6 @@ add_library(res res_util/res_log.cpp
                 sched/group_index.cpp
                 sched/gruptree.cpp
                 sched/history.cpp
-                sched/sched_blob.cpp
                 sched/sched_file.cpp
                 sched/sched_kw.cpp
                 sched/sched_kw_compdat.cpp
@@ -993,4 +990,3 @@ add_equinor_test(enkf_ecl_config2
 add_equinor_test(enkf_ecl_config_config
                  enkf_ecl_config_config
                  ${CMAKE_SOURCE_DIR}/test-data/Equinor/config/ecl_config)
-

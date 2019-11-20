@@ -173,18 +173,6 @@ static sched_kw_wconinje_type * sched_kw_wconinje_alloc_empty() {
   return kw;
 }
 
-sched_kw_wconinje_type * sched_kw_wconinje_safe_cast( void * arg ) {
-  sched_kw_wconinje_type * kw = (sched_kw_wconinje_type * ) arg;
-  if (kw->__type_id == SCHED_KW_WCONINJE_ID)
-    return kw;
-  else {
-    util_abort("%s: runtime cast failed \n",__func__);
-    return NULL;
-  }
-}
-
-
-
 
 void sched_kw_wconinje_free(sched_kw_wconinje_type * kw)
 {
@@ -278,36 +266,6 @@ double sched_kw_wconinje_get_surface_flow( const sched_kw_wconinje_type * kw , c
     return -1;
 }
 
-void sched_kw_wconinje_scale_surface_flow( const sched_kw_wconinje_type * kw , const char * well_name, double factor) {
-  wconinje_well_type * well = sched_kw_wconinje_get_well( kw , well_name );
-  if (well != NULL)
-    well->surface_flow *= factor;
-}
-
-void sched_kw_wconinje_set_surface_flow( const sched_kw_wconinje_type * kw , const char * well_name , double surface_flow) {
-  wconinje_well_type * well = sched_kw_wconinje_get_well( kw , well_name );
-  if (well != NULL)
-    well->surface_flow = surface_flow;
-}
-
-
-
-void sched_kw_wconinje_shift_surface_flow( const sched_kw_wconinje_type * kw , const char * well_name , double delta_surface_flow) {
-  wconinje_well_type * well = sched_kw_wconinje_get_well( kw , well_name );
-  if (well != NULL)
-    well->surface_flow += delta_surface_flow;
-}
-
-
-sched_phase_enum sched_kw_wconinje_get_phase( const sched_kw_wconinje_type * kw , const char * well_name) {
-  wconinje_well_type * well = sched_kw_wconinje_get_well( kw , well_name );
-  if (well != NULL)
-    return well->injector_type;
-  else
-    return (sched_phase_enum)-1;
-}
-
-
 
 bool sched_kw_wconinje_has_well( const sched_kw_wconinje_type * kw , const char * well_name) {
   wconinje_well_type * well = sched_kw_wconinje_get_well( kw , well_name );
@@ -385,113 +343,6 @@ void wconinje_state_free( wconinje_state_type * wconinje ) {
 
 }
 
-void wconinje_state_free__( void * arg ) {
-  wconinje_state_free( wconinje_state_safe_cast( arg ));
-}
-
-
-
-/**
-   This function asks for the historical water injection rate; however
-   this is the WCONINJE keyword, and it is NOT necessarily meaningful
-   to query this keyword for that rate. To be meaningfull we check the
-   following conditions:
-
-     1. We verify that the well is rate-controlled; then the behaviour
-        of the well should(??) coincide with that of wells specifed by
-        the WCONINJH keyword.
-
-     2. We verify that the injected phase is indeed water.
-
-   If these conditions are not met 0 is returned, AND a warning is
-   written to stderr.
-*/
-
-double wconinje_state_iget_WWIRH( const void * __state , int report_step ) {
-  const wconinje_state_type * state = wconinje_state_safe_cast_const( __state );
-  sched_phase_enum phase = (sched_phase_enum)int_vector_safe_iget( state->phase , report_step );
-  well_cm_enum cmode     = (well_cm_enum)int_vector_safe_iget( state->cmode , report_step);
-
-  if (( phase == WATER) && (cmode == RATE))
-    return double_vector_safe_iget( state->surface_flow , report_step);
-  else {
-    if ( phase != WATER )
-      fprintf(stderr,"** Warning you have asked for historical water injection rate in well:%s which is not a water injector.\n", state->well_name);
-
-    if ( cmode != RATE )
-      fprintf(stderr,"** Warning you have asked for historical water injection rate in well:%s which is not rate controlled - I have no clue?! \n" , state->well_name);
-
-    return 0;
-  }
-}
-
-/**
-   See comment above wconinje_state_get_WWIRH();
-*/
-double wconinje_state_iget_WGIRH( const void * __state , int report_step ) {
-  const wconinje_state_type * state = wconinje_state_safe_cast_const( __state );
-  sched_phase_enum phase = (sched_phase_enum)int_vector_safe_iget( state->phase , report_step );
-  well_cm_enum cmode     = (well_cm_enum)int_vector_safe_iget( state->cmode , report_step);
-
-  if (( phase == GAS) && (cmode == RATE))
-    return double_vector_safe_iget( state->surface_flow , report_step);
-  else {
-    if ( phase != GAS )
-      fprintf(stderr,"** Warning you have asked for historical gas injection rate in well:%s(%d) which is not a gas injector.\n", state->well_name, report_step);
-
-    if ( cmode != RATE )
-      fprintf(stderr,"** Warning you have asked for historical gas injection rate in well:%s(%d) which is not rate controlled - I have no clue?! \n" , state->well_name, report_step);
-
-    return 0;
-  }
-}
-
-/**
-   Will update the input parameter @well_list to contain all the
-   well_names present in the current sced_kw_wconhist keyword.
-*/
-
-void sched_kw_wconinje_init_well_list( const sched_kw_wconinje_type * kw , stringlist_type * well_list) {
-  stringlist_clear( well_list );
-  {
-    int iw;
-    for (iw = 0; iw < vector_get_size( kw->wells ); iw++) {
-      const wconinje_well_type * well = (const wconinje_well_type*)vector_iget_const( kw->wells , iw );
-      stringlist_append_copy( well_list , well->name );
-    }
-  }
-}
-
-
-/**
-   For production the WCONHIST keyword will (typically) be used for
-   the historical period, and WCONPROD for the predicton. This can be
-   used to differentiate between hisorical period and prediction
-   period. When it comes to injection things are not so clear;
-   typically the WCONINJE keyword is used both for prediction and
-   historical period.
-
-   This function will check if all the wells (at least one) in the
-   WCONINJE keyword are rate-controlled, if so it is interpreted as
-   beeing in the historical period.
-*/
-
-bool sched_kw_wconinje_historical( const sched_kw_wconinje_type * kw ) {
-  bool historical = false;
-  int iw;
-  for (iw = 0; iw < vector_get_size( kw->wells ); iw++) {
-    const wconinje_well_type * well = (const wconinje_well_type*)vector_iget_const( kw->wells , iw );
-    if (well->cmode == RATE) {
-      historical = true;
-      break;
-    }
-  }
-  return historical;
-}
-
-
-
-
 
 void sched_kw_wconinje_update_state( const sched_kw_wconinje_type * kw , wconinje_state_type * state , const char * well_name , int report_step ) {
   wconinje_well_type * well = sched_kw_wconinje_get_well( kw , well_name );
@@ -511,12 +362,6 @@ void sched_kw_wconinje_update_state( const sched_kw_wconinje_type * kw , wconinj
 
 void sched_kw_wconinje_close_state(wconinje_state_type * state , int report_step ) {
   fprintf(stderr,"** Warning: %s not implemented \n",__func__);
-  //int_vector_iset_default( state->state            , report_step ,  SHUT    );  /* SHUT or STOP ?? */
-  //double_vector_iset_default(state->injection_rate , report_step , -1 );
-  //double_vector_iset_default(state->bhp            , report_step , -1 );
-  //double_vector_iset_default(state->thp            , report_step , -1 );
-  //int_vector_iset_default(state->vfp_table_nr      , report_step , -1 );
-  //double_vector_iset_default(state->vapoil         , report_step , -1 );
 }
 
 

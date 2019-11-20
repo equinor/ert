@@ -37,16 +37,11 @@ typedef void * (arg_node_copyc_ftype) (const void *);
   UTIL_IS_INSTANCE_HEADER( arg_pack );
 
   void            arg_pack_free(arg_pack_type * );
-  void            arg_pack_free__(void *);
   void            arg_pack_clear(arg_pack_type *);
-  void            arg_pack_lock(arg_pack_type *);
-  void            arg_pack_fscanf(arg_pack_type * arg , FILE * stream, const char * filename);
-  void            arg_pack_fprintf(const arg_pack_type * , FILE * );
 
   void            arg_pack_append_ptr(arg_pack_type * , void *);
   void            arg_pack_append_const_ptr(arg_pack_type * , const void *);
   void            arg_pack_append_owned_ptr(arg_pack_type * , void * , arg_node_free_ftype *);
-  void            arg_pack_append_copy(arg_pack_type * , void * , arg_node_copyc_ftype * , arg_node_free_ftype *);
 
   /*
     void            arg_pack_iset_copy(arg_pack_type * arg_pack , int index , void * ptr, arg_node_copyc_ftype * copyc , arg_node_free_ftype * freef);
@@ -56,7 +51,6 @@ typedef void * (arg_node_copyc_ftype) (const void *);
   const void    * arg_pack_iget_const_ptr( const arg_pack_type * arg_pack , int index);
   void          * arg_pack_iget_ptr(const arg_pack_type * , int);
   void          * arg_pack_iget_adress(const arg_pack_type * , int);
-  node_ctype      arg_pack_iget_ctype(const arg_pack_type * arg_pack ,int index);
 
   int arg_pack_size( const arg_pack_type * arg_pack );
 
@@ -95,4 +89,3 @@ ISET_TYPED_HEADER(size_t)
 }
 #endif
 #endif
-

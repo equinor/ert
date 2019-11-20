@@ -193,10 +193,6 @@ const analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type 
   return res_config_get_analysis_config(enkf_main->res_config);
 }
 
-ui_return_type * enkf_main_validata_refcase( const enkf_main_type * enkf_main , const char * refcase_path) {
-  return ecl_config_validate_refcase(enkf_main_get_ecl_config(enkf_main), refcase_path);
-}
-
 const char * enkf_main_get_user_config_file( const enkf_main_type * enkf_main ) {
   return res_config_get_user_config_file(enkf_main->res_config);
 }
@@ -1572,13 +1568,6 @@ int_vector_type * enkf_main_update_alloc_step_list(const enkf_main_type * enkf_m
 
 
 
-
-void * enkf_main_get_enkf_config_node_type(const ensemble_config_type * ensemble_config, const char * key){
-  enkf_config_node_type * config_node_type = ensemble_config_get_node(ensemble_config, key);
-  return enkf_config_node_get_ref(config_node_type); // CXX_CAST_ERROR
-}
-
-
 /**
    This function will initialize the necessary enkf_main structures
    before a run. Currently this means:
@@ -1873,12 +1862,6 @@ void enkf_main_set_verbose( enkf_main_type * enkf_main , bool verbose) {
   enkf_main->verbose = verbose;
 }
 
-
-bool enkf_main_get_verbose( const enkf_main_type * enkf_main ) {
-  return enkf_main->verbose;
-}
-
-
 /**
    There is NO tagging anymore - if the user wants tags - the user
    supplies the key __WITH__ tags.
@@ -1886,12 +1869,6 @@ bool enkf_main_get_verbose( const enkf_main_type * enkf_main ) {
 void enkf_main_add_data_kw(enkf_main_type * enkf_main , const char * key , const char * value) {
   subst_config_add_subst_kw(enkf_main_get_subst_config(enkf_main), key, value);
 }
-
-
-void enkf_main_data_kw_fprintf_config( const enkf_main_type * enkf_main , FILE * stream ) {
-  subst_config_fprintf(enkf_main_get_subst_config(enkf_main), stream);
-}
-
 
 void enkf_main_clear_data_kw( enkf_main_type * enkf_main ) {
   subst_config_clear(enkf_main_get_subst_config(enkf_main));
@@ -2136,12 +2113,7 @@ int enkf_main_get_ensemble_size( const enkf_main_type * enkf_main ) {
    loaded from disk, otherwise no loading is performed. This implies
    that if we do not want to internalize the full state but for
    instance the pressure (i.e. for an RFT) we must set the
-   __load_state variable for the actual report step to true. For this
-   reason calls enkf_config_node_internalize() must be accompanied by
-   calls to model_config_set_load_state|results() - this is ensured
-   when using this function to manipulate the configuration of
-   internalization.
-
+   __load_state variable for the actual report step to true.
 */
 
 
@@ -2174,24 +2146,6 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
     hash_free(map);
   }
 }
-
-
-
-
-/*****************************************************************/
-
-
-
-
-
-
-const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main ) {
-  return site_config_get_installed_jobs(
-             enkf_main_get_site_config(enkf_main)
-             );
-}
-
-
 
 /*****************************************************************/
 
@@ -2241,14 +2195,6 @@ bool enkf_main_run_workflow( enkf_main_type * enkf_main , const char * workflow 
     return false;
   }
 }
-
-
-void enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type * workflows) {
-  int iw;
-  for (iw = 0; iw < stringlist_get_size( workflows ); iw++)
-    enkf_main_run_workflow( enkf_main , stringlist_iget( workflows , iw ));
-}
-
 
 int enkf_main_load_from_forward_model_from_gui(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive, enkf_fs_type * fs){
   const int ens_size         = enkf_main_get_ensemble_size( enkf_main );

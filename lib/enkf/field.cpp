@@ -373,12 +373,6 @@ field_type * field_alloc(const field_config_type * field_config) {
 }
 
 
-field_type * field_alloc_shared(const field_config_type * field_config, void * shared_data , int shared_byte_size) {
-  return __field_alloc(field_config , shared_data , shared_byte_size);
-}
-
-
-
 void field_copy(const field_type *src , field_type * target ) {
   if (src->config == target->config)
     memcpy(target->data , src->data , field_config_get_byte_size(src->config));
@@ -581,21 +575,6 @@ void field_ecl_grdecl_export(const field_type * field , FILE * stream, const cha
   ecl_kw_fprintf_grdecl(ecl_kw , stream);
   ecl_kw_free(ecl_kw);
   free(data);
-}
-
-
-/**
-   This allocates a ecl_kw instance representing the field. The
-   size/header/type are copied from the field. whereas the data is
-   *SHARED* with the field->data.
-
-   The ecl_kw instance knows that the data is only shared, and it is
-   safe to call ecl_kw_free() on it.
-*/
-
-ecl_kw_type * field_alloc_ecl_kw_wrapper(const field_type * field) {
-  ecl_kw_type  * ecl_kw = field_alloc_ecl_kw_wrapper__(field , field->data);
-  return ecl_kw;
 }
 
 
@@ -867,12 +846,6 @@ double field_ijk_get_double(const field_type * field, int i , int j , int k) {
 }
 
 
-float field_ijk_get_float(const field_type * field, int i , int j , int k) {
-  int index = __get_index(field, i, j, k);
-  return field_iget_float( field , index );
-}
-
-
 /**
    Takes an active or global index as input, and returns a double.
 */
@@ -925,21 +898,6 @@ float field_iget_float(const field_type * field , int index) {
 }
 
 
-
-
-double field_iget(const field_type * field, int index) {
-  return field_iget_double(field , index);
-}
-
-
-
-void field_ijk_set(field_type * field , int i , int j , int k , const void * value) {
-  int index = __get_index(field, i, j, k);
-  int sizeof_ctype = field_config_get_sizeof_ctype(field->config);
-  memcpy(&field->data[index * sizeof_ctype] , value , sizeof_ctype);
-}
-
-
 #define INDEXED_UPDATE_MACRO(t,s,n,index,add) \
 {                                             \
    int i;                                     \
@@ -987,69 +945,6 @@ static void field_indexed_update(field_type * field, ecl_data_type src_type , in
     util_abort("%s existing field must be of type float/double - aborting \n",__func__);
   }
 }
-
-
-void field_indexed_set(field_type * field, ecl_data_type src_type , int len , const int * index_list , const void * value) {
-  field_indexed_update(field , src_type , len , index_list , value , false);
-}
-
-
-void field_indexed_add(field_type * field, ecl_data_type src_type , int len , const int * index_list , const void * value) {
-  field_indexed_update(field , src_type , len , index_list , value , true);
-}
-
-
-
-double * field_indexed_get_alloc(const field_type * field, int len, const int * index_list)
-{
-  double * export_data = (double *)util_calloc(len , sizeof * export_data);
-  ecl_data_type src_type = field_config_get_ecl_data_type(field->config);
-
-  if(ecl_type_is_double(src_type)) {
-    /* double -> double */
-    double * field_data = (double *) field->data;
-    for (int i=0; i<len; i++)
-      export_data[i] = field_data[index_list[i]];
-  } else if (ecl_type_is_float(src_type)) {
-    /* float -> double */
-    float * field_data = (float *) field->data;
-    for (int i=0; i<len; i++)
-      export_data[i] = field_data[index_list[i]];
-  } else
-    util_abort("%s: existing field must of type float/double - aborting. \n", __func__);
-
-  return export_data;
-}
-
-
-
-bool field_ijk_valid(const field_type * field , int i , int j , int k) {
-  int index = __get_index(field, i, j, k);
-  if (index >=0)
-    return true;
-  else
-    return false;
-}
-
-
-void field_ijk_get_if_valid(const field_type * field , int i , int j , int k , void * value , bool * valid) {
-  int index = __get_index(field, i, j, k);
-  if (index >=0) {
-    *valid = true;
-    field_ijk_get(field , i , j , k , value);
-  } else
-    *valid = false;
-}
-
-
-int field_get_active_index(const field_type * field , int i , int j  , int k) {
-  return field_config_active_index(field->config , i , j , k);
-}
-
-int field_get_global_index(const field_type * field , int i , int j  , int k) {
-  return field_config_global_index(field->config , i , j , k);
-}
-
 
 
 /**
@@ -1219,13 +1114,6 @@ bool field_fload_keep_inactive(field_type * field , const char * filename) {
 }
 
 
-bool field_fload_auto(field_type * field , const char * filename, bool keep_inactive ) {
-  field_file_format_type file_type = field_config_guess_file_type(filename);
-  return field_fload_typed(field , filename , file_type, keep_inactive);
-}
-
-
-
 /**
    This function compares two fields, and return true if they are
    equal. Observe that the config comparison is done with plain
@@ -1250,34 +1138,6 @@ bool field_cmp(const field_type * f1 , const field_type * f2) {
 
 
 /*****************************************************************/
-
-
-
-
-/**
-   This function loads a field from a complete forward run. The
-   original implementation is to load e.g. pressure and saturations
-   from a block of restart data. Current implementation can only
-   handle that, but in principle other possibilities should be
-   possible.
-
-   Observe that forward_load loads from a (already loaded) restart_block,
-   and not from a file.
-*/
-
-
-
-
-
-void field_get_dims(const field_type * field, int *nx, int *ny , int *nz) {
-  field_config_get_dims(field->config , nx , ny ,nz);
-}
-
-
-
-
-
-
 
 
 void field_iadd(field_type * field1, const field_type * field2) {
@@ -1368,66 +1228,10 @@ void field_scale(field_type * field, double scale_factor) {
 
 static inline float __sqr(float x) { return x*x; }
 
-void field_isqr(field_type * field) {
-  field_apply(field , __sqr);
-}
-
 
 void field_isqrt(field_type * field) {
   field_apply(field , sqrtf);
 }
-
-void field_imul_add(field_type * field1 , double factor , const field_type * field2) {
-  field_config_assert_binary(field1->config , field2->config , __func__);
-  {
-    const int data_size           = field_config_get_data_size(field1->config );
-    const ecl_data_type data_type = field_config_get_ecl_data_type(field1->config);
-    int i;
-
-    if (ecl_type_is_float(data_type)) {
-      float * data1       = (float *) field1->data;
-      const float * data2 = (const float *) field2->data;
-      for (i = 0; i < data_size; i++)
-        data1[i] += factor * data2[i];
-    } else if (ecl_type_is_double(data_type)) {
-      double * data1       = (double *) field1->data;
-      const double * data2 = (const double *) field2->data;
-      for (i = 0; i < data_size; i++)
-        data1[i] += factor * data2[i];
-    }
-  }
-}
-
-
-void field_update_sum(field_type * sum , field_type * field , double lower_limit , double upper_limit) {
-  field_output_transform( field );
-  {
-    const int data_size           = field_config_get_data_size(field->config );
-    const ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
-    int i;
-
-    if (ecl_type_is_float(data_type)) {
-      float * data       = (float *) field->data;
-      float * sum_data   = (float *) sum->data;
-      for (i = 0; i < data_size; i++) {
-        if (data[i] >= lower_limit)
-          if (data[i] < upper_limit)
-            sum_data[i] += 1;
-      }
-    } else if (ecl_type_is_double(data_type)) {
-        double * data       = (double *) field->data;
-        double * sum_data   = (double *) sum->data;
-        for (i = 0; i < data_size; i++) {
-          if (data[i] >= lower_limit)
-            if (data[i] < upper_limit)
-              sum_data[i] += 1;
-        }
-    }
-  }
-  field_revert_output_transform( field );
-}
-
-
 
 /**
   Here, index_key is i a tree digit string with the i, j and k indicies of

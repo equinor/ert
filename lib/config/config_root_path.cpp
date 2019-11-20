@@ -90,12 +90,3 @@ const char * config_root_path_get_rel_path( const config_root_path_type * root_p
 const char * config_root_path_get_abs_path( const config_root_path_type * root_path ) {
   return root_path->abs_path;
 }
-
-
-void config_root_path_printf( const config_root_path_type * root_path ) {
-  printf("input_path : %s \n" , root_path->input_path);
-  printf("abs_path   : %s \n" , root_path->abs_path);
-  printf("rel_path   : %s \n" , root_path->rel_path);
-}
-
-

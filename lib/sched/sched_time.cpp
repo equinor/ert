@@ -79,34 +79,6 @@ time_t sched_time_get_date( const sched_time_type * time_node ) {
 }
 
 
-/**
-   This function will return the true time at the end of this step,
-   for a time_node which represents a DATES instance the function will
-   just return the actual date, for a TSTEP it will step forward
-   starting at the input @current_time.
-*/
-
-time_t sched_time_get_target( const sched_time_type * time_node , time_t current_time) {
-  time_t target;
-
-  switch( time_node->time_type ) {
-  case( DATES_TIME ):
-    target = time_node->date;
-    break;
-  case( TSTEP_TIME ):
-    target = current_time;
-    util_inplace_forward_days_utc( &target , time_node->tstep_length );
-    break;
-  default:
-    util_abort("%s: invalid time_type value:%d \n",__func__ , time_node->time_type );
-  }
-
-  return target;
-}
-
-
-
 time_t sched_time_get_type( const sched_time_type * time_node ) {
   return time_node->time_type;
 }
-

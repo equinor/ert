@@ -37,25 +37,6 @@ fs_driver_impl fs_types_lookup_string_name(const char * driver_name) {
 }
 
 
-
-const char * fs_types_get_driver_name(fs_driver_enum driver_type) {
-  switch( driver_type ) {
-  case(DRIVER_PARAMETER):
-    return "PARAMETER";
-    break;
-  case(DRIVER_DYNAMIC_FORECAST):
-    return "FORECAST";
-    break;
-  case(DRIVER_INDEX):
-    return "INDEX";
-    break;
-  default:
-    util_abort("%s: driver_id:%d not recognized. \n",__func__ , driver_type );
-    return NULL;
-  }
-}
-
-
 /*
   The driver type DRIVER_STATIC has been removed completely as of
   December 2015, but there will still be many mount map files with

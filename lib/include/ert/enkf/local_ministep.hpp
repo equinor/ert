@@ -41,7 +41,6 @@ void                  local_ministep_free__(void * arg);
 void                  local_ministep_add_obs(local_ministep_type * ministep, const char * obs_key);
 active_list_type    * local_ministep_get_node_active_list(const local_ministep_type * ministep , const char * node_key );
 hash_iter_type      * local_ministep_alloc_dataset_iter( const local_ministep_type * ministep );
-stringlist_type     * local_ministep_alloc_data_keys( const local_ministep_type * ministep );
 bool                  local_ministep_has_data_key(const local_ministep_type * ministep , const char * key);
 local_ministep_type * local_ministep_alloc_copy( const local_ministep_type * src , const char * name);
 void                  local_ministep_del_obs( local_ministep_type * ministep , const char * obs_key);

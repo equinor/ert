@@ -215,32 +215,6 @@ static bool enkf_config_node_is_valid_GEN_DATA( const enkf_config_node_type * co
 }
 
 
-
-
-
-bool enkf_config_node_is_valid( const enkf_config_node_type * config_node ) {
-  bool valid = false;
-
-  switch(config_node->impl_type) {
-  case(FIELD):
-    valid = enkf_config_node_is_valid_FIELD( config_node );
-    break;
-  case(SUMMARY):
-    valid = true;
-    break;
-  case(GEN_KW):
-    valid = enkf_config_node_is_valid_GEN_KW( config_node );
-    break;
-  case(GEN_DATA):
-    valid = enkf_config_node_is_valid_GEN_DATA( config_node );
-    break;
-  default:
-    util_abort("%s: Internal inconsistency. \n",__func__);
-  }
-
-  return valid;
-}
-
 void enkf_config_node_update_min_std( enkf_config_node_type * config_node , const char * min_std_file ) {
   if (!util_string_equal( config_node->min_std_file , min_std_file )) {
     /* The current min_std_file and the new input are different, and
@@ -626,13 +600,6 @@ const char * enkf_config_node_get_init_file_fmt( const enkf_config_node_type * c
   return path_fmt_get_fmt( config_node->init_file_fmt );
 }
 
-void enkf_config_node_set_min_std( enkf_config_node_type * config_node , enkf_node_type * min_std ) {
-  if (config_node->min_std != NULL)
-    enkf_node_free( config_node->min_std );
-
-  config_node->min_std = min_std;
-}
-
 
 void enkf_config_node_set_internalize(enkf_config_node_type * node, int report_step) {
   ert_impl_type impl_type = enkf_config_node_get_impl_type( node );
@@ -648,12 +615,6 @@ void enkf_config_node_set_internalize(enkf_config_node_type * node, int report_s
       node->internalize = bool_vector_alloc( 0 , false );
     bool_vector_iset( node->internalize , report_step , true);
   }
-}
-
-
-void enkf_config_node_init_internalization(enkf_config_node_type * node) {
-  if (node->internalize != NULL)
-    bool_vector_reset( node->internalize );
 }
 
 

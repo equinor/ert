@@ -50,7 +50,6 @@ void                   config_settings_add_bool_setting(config_settings_type * s
 
 
 const char           * config_settings_get_value( const config_settings_type * config_settings , const char * key);
-const char           * config_settings_get_string_value( const config_settings_type * config_settings , const char * key);
 int                    config_settings_get_int_value( const config_settings_type * config_settings , const char * key);
 bool                   config_settings_get_bool_value( const config_settings_type * config_settings , const char * key);
 double                 config_settings_get_double_value( const config_settings_type * config_settings , const char * key);
@@ -59,7 +58,6 @@ bool                   config_settings_set_value( const config_settings_type * c
 bool                   config_settings_set_int_value( const config_settings_type * config_settings , const char * key, int value);
 bool                   config_settings_set_double_value( const config_settings_type * config_settings , const char * key, double value);
 bool                   config_settings_set_bool_value( const config_settings_type * config_settings , const char * key, bool value);
-bool                   config_settings_set_string_value( const config_settings_type * config_settings , const char * key, const char * value);
 
 #ifdef __cplusplus
 }

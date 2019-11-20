@@ -71,15 +71,6 @@ config_content_node_type * config_content_item_iget_node(const config_content_it
   return (config_content_node_type*)vector_iget( item->nodes , index );
 }
 
-const config_content_node_type * config_content_item_get_last_node_const(const config_content_item_type * item) {
-  return (const config_content_node_type*)vector_get_last( item->nodes );
-}
-
-const config_content_node_type * config_content_item_iget_node_const(const config_content_item_type * item , int index) {
-  return (const config_content_node_type*)vector_iget( item->nodes , index );
-}
-
-
 char * config_content_item_ialloc_joined_string(const config_content_item_type * item , const char * sep , int occurence) {
   const config_content_node_type * node = config_content_item_iget_node(item , occurence);
   return config_content_node_alloc_joined_string(node , sep);
@@ -107,13 +98,6 @@ const stringlist_type * config_content_item_iget_stringlist_ref(const config_con
   return config_content_node_get_stringlist( node );
 }
 
-
-const stringlist_type * config_content_item_get_stringlist_ref(const config_content_item_type * item) {
-  const config_content_node_type * node = config_content_item_get_last_node( item );
-  return config_content_node_get_stringlist( node );
-}
-
-
 stringlist_type * config_content_item_alloc_complete_stringlist(const config_content_item_type * item) {
   int inode;
   stringlist_type * stringlist = stringlist_alloc_new();
@@ -126,14 +110,6 @@ stringlist_type * config_content_item_alloc_complete_stringlist(const config_con
 
   return stringlist;
 }
-
-
-stringlist_type * config_content_item_alloc_stringlist(const config_content_item_type * item) {
-  const config_content_node_type * node = config_content_item_get_last_node( item );
-  const stringlist_type * src_list = config_content_node_get_stringlist( node );
-  return stringlist_alloc_deep_copy(src_list);
-}
-
 
 /**
    If copy == false - the hash will break down when/if the
@@ -262,10 +238,6 @@ config_content_node_type * config_content_item_alloc_node( const config_content_
 
 const config_schema_item_type * config_content_item_get_schema( const config_content_item_type * item ) {
   return item->schema;
-}
-
-const char* config_content_item_get_key( const config_content_item_type * item) {
-  return config_schema_item_get_kw(item->schema);
 }
 
 

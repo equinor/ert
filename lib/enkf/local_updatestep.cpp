@@ -57,27 +57,6 @@ local_updatestep_type * local_updatestep_alloc( const char * name ) {
 }
 
 
-bool local_updatestep_has_data_key( const local_updatestep_type * update_step , const char * key) {
-  bool has_key = false;
-  for (int i = 0; i < vector_get_size( update_step->ministep ); i++) {
-    const local_ministep_type * ministep = (const local_ministep_type *)vector_iget_const( update_step->ministep , i );
-    if (local_ministep_has_data_key(ministep, key))
-      has_key = true;
-  }
-  return has_key;
-}
-
-/**
-   Observe that use_count values are not copied.
-*/
-local_updatestep_type * local_updatestep_alloc_copy( const local_updatestep_type * src , const char * name ) {
-  local_updatestep_type * new_step = local_updatestep_alloc( name );
-  for (int i = 0; i < vector_get_size(src->ministep ); i++)
-    local_updatestep_add_ministep( new_step , (local_ministep_type *) vector_iget( src->ministep , i) );
-  return new_step;
-}
-
-
 void local_updatestep_free( local_updatestep_type * updatestep) {
   free( updatestep->name );
   vector_free( updatestep->ministep );
@@ -102,11 +81,6 @@ local_ministep_type * local_updatestep_iget_ministep( const local_updatestep_typ
 }
 
 
-local_obsdata_type * local_updatestep_iget_obsdata( const local_updatestep_type * updatestep , int index) {
-  return local_ministep_get_obsdata( (local_ministep_type *) vector_iget( updatestep->ministep , index ) );
-}
-
-
 int local_updatestep_get_num_ministep( const local_updatestep_type * updatestep) {
   return vector_get_size( updatestep->ministep );
 }
@@ -114,5 +88,3 @@ int local_updatestep_get_num_ministep( const local_updatestep_type * updatestep)
 const char * local_updatestep_get_name( const local_updatestep_type * updatestep ) {
   return updatestep->name;
 }
-
-

@@ -327,25 +327,6 @@ static stepwise_type * stepwise_alloc__( int nsample , int nvar , rng_type * rng
 }
 
 
-stepwise_type * stepwise_alloc0( rng_type * rng) {
-  stepwise_type * stepwise = (stepwise_type*)util_malloc( sizeof * stepwise );
-
-  stepwise->rng         = rng;
-  stepwise->X0          = NULL;
-  stepwise->E0          = NULL;
-  stepwise->Y0          = NULL;
-  stepwise->beta        = NULL;
-  stepwise->active_set  = NULL;
-  stepwise->X_mean      = NULL;
-  stepwise->X_norm      = NULL;
-  stepwise->Y_mean      = 0.0;
-  stepwise->R2          = -1.0;
-
-  return stepwise;
-}
-
-
-
 stepwise_type * stepwise_alloc1( int nsample , int nvar, rng_type * rng, const matrix_type* St, const matrix_type* Et) {
   stepwise_type * stepwise = stepwise_alloc__( nsample , nvar , rng);
 
@@ -362,51 +343,8 @@ void stepwise_set_Y0( stepwise_type * stepwise , matrix_type * Y) {
   stepwise->Y0 = Y;
 }
 
-void stepwise_set_X0( stepwise_type * stepwise ,  matrix_type * X) {
-  stepwise->X0 = X;
-}
-
-void stepwise_set_E0( stepwise_type * stepwise ,  matrix_type * E) {
-  stepwise->E0 = E;
-}
-
-
-void stepwise_set_beta( stepwise_type * stepwise ,  matrix_type * b) {
-if (stepwise->beta != NULL)
-    matrix_free( stepwise->beta );
-
-  stepwise->beta = b;
-}
-
-void stepwise_set_active_set( stepwise_type * stepwise ,  bool_vector_type * a) {
-  if (stepwise->active_set != NULL)
-    bool_vector_free( stepwise->active_set );
-
-  stepwise->active_set = a;
-}
-
 void stepwise_set_R2( stepwise_type * stepwise ,  const double R2) {
   stepwise->R2 = R2;
-}
-
-matrix_type * stepwise_get_X0( stepwise_type * stepwise ) {
-  return stepwise->X0;
-}
-
-matrix_type * stepwise_get_Y0( stepwise_type * stepwise ) {
-  return stepwise->Y0;
-}
-
-double stepwise_get_R2(const stepwise_type * stepwise ) {
-  return stepwise->R2;
-}
-
-int stepwise_get_nsample( stepwise_type * stepwise ) {
-  return matrix_get_rows( stepwise->X0 );
-}
-
-int stepwise_get_nvar( stepwise_type * stepwise ) {
-  return matrix_get_columns( stepwise->X0 );
 }
 
 int stepwise_get_n_active( stepwise_type * stepwise ) {
@@ -424,11 +362,6 @@ double stepwise_iget_beta(const stepwise_type * stepwise, const int index ) {
 double stepwise_get_sum_beta(const stepwise_type * stepwise ) {
   return matrix_get_column_abssum( stepwise->beta, 0);
 }
-
-void stepwise_isetY0( stepwise_type * stepwise , int i , double value ) {
-  matrix_iset( stepwise->Y0, i , 0 , value );
-}
-
 
 void stepwise_free( stepwise_type * stepwise ) {
   if (stepwise->active_set != NULL) {
@@ -454,4 +387,3 @@ void stepwise_free( stepwise_type * stepwise ) {
 
   free( stepwise );
 }
-

@@ -46,7 +46,6 @@ analysis_module_type * analysis_config_get_module(const analysis_config_type * c
 bool                   analysis_config_has_module(const analysis_config_type * config , const char * module_name );
 void                   analysis_config_load_internal_module( analysis_config_type * config , const char * symbol_table );
 void                   analysis_config_load_internal_modules( analysis_config_type * analysis );
-void                   analysis_config_reload_module( analysis_config_type * config , const char * module_name);
 bool                   analysis_config_get_module_option( const analysis_config_type * config , long flag);
 bool                   analysis_config_load_external_module( analysis_config_type * config , const char * lib_name, const char * user_name);
 void                   analysis_config_load_all_external_modules_from_config ( analysis_config_type * analysis_config, const config_content_type * config);
@@ -97,7 +96,6 @@ void                   analysis_config_set_log_path(analysis_config_type * confi
 void                   analysis_config_set_std_cutoff( analysis_config_type * config , double std_cutoff );
 double                 analysis_config_get_std_cutoff( const analysis_config_type * config );
 void                   analysis_config_add_config_items( config_parser_type * config );
-void                   analysis_config_fprintf_config( analysis_config_type * config , FILE * stream);
 
 bool                   analysis_config_select_module( analysis_config_type * config , const char * module_name );
 analysis_module_type * analysis_config_get_active_module(const analysis_config_type * config );

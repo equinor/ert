@@ -42,9 +42,6 @@
 
       arg_pack_type * arg_pack = arg_pack_alloc()
       arg_pack_append_int( arg_pack , 1);
-      arg_pack_iset_int( arg_pack , 3 , 0);   <--- Will fail hard because
-                                                   elements 1,2,3 have not been set.
-
 
    When you take them out again that is done with indexed get.
 
@@ -69,7 +66,6 @@
       arg_pack_type * arg_pack = arg_pack_safe_cast( __arg_pack );
       const char * arg1 = arg_pack_iget_ptr( arg_pack , 0);
       int          arg2 = arg_pack_iget_int( arg_pack , 1);
-      double       arg3 = arg_pack_iget_double(arg_pack , 2);
 
       some_function( arg1 , arg2 , arg3 );
    }
@@ -394,12 +390,6 @@ static arg_node_type * arg_pack_get_append_node(arg_pack_type * arg_pack) {
 }
 
 
-void arg_pack_lock(arg_pack_type * arg_pack) {
-  arg_pack->locked = true;
-}
-
-
-
 arg_pack_type * arg_pack_alloc() {
   arg_pack_type * arg_pack = (arg_pack_type*)util_malloc(sizeof * arg_pack );
   UTIL_TYPE_ID_INIT( arg_pack , ARG_PACK_TYPE_ID);
@@ -421,13 +411,6 @@ void arg_pack_free(arg_pack_type * arg_pack) {
   free(arg_pack->nodes);
   free(arg_pack);
 }
-
-
-void arg_pack_free__(void * __arg_pack) {
-  arg_pack_type * arg_pack = arg_pack_safe_cast( __arg_pack );
-  arg_pack_free( arg_pack );
-}
-
 
 
 void arg_pack_clear(arg_pack_type * arg_pack) {
@@ -519,11 +502,6 @@ void * arg_pack_iget_adress(const arg_pack_type * arg , int iarg) {
 }
 
 
-node_ctype arg_pack_iget_ctype(const arg_pack_type * arg_pack ,int index) {
-  __arg_pack_assert_index(arg_pack , index);
-  return arg_node_get_ctype( arg_pack->nodes[index] );
-}
-
 /*****************************************************************/
 
 
@@ -541,12 +519,6 @@ void arg_pack_iset_owned_ptr(arg_pack_type * arg_pack, int index , void * ptr, a
   arg_pack_iset_copy(arg_pack , index , ptr , NULL , freef );
 }
 
-
-void  arg_pack_append_copy(arg_pack_type * arg_pack , void * ptr, arg_node_copyc_ftype * copyc , arg_node_free_ftype * freef) {
-  arg_pack_iset_copy( arg_pack , arg_pack->size , ptr , copyc , freef);
-}
-
-
 void arg_pack_append_ptr(arg_pack_type * arg_pack, void * ptr) {
   arg_pack_iset_ptr( arg_pack , arg_pack->size , ptr );
 }
@@ -563,100 +535,3 @@ void arg_pack_append_owned_ptr(arg_pack_type * arg_pack, void * ptr, arg_node_fr
 int arg_pack_size( const arg_pack_type * arg_pack ) {
   return arg_pack->size;
 }
-
-/******************************************************************/
-/* Functions for formatted reading/writing of arg_pack instances. */
-
-
-
-void arg_pack_fscanf(arg_pack_type * arg , FILE * stream, const char * filename) {
-
-  int scan_count = 0;
-  int iarg;
-  char * fmt = NULL;
-  for (iarg = 0; iarg  < arg->size; iarg++) {
-    arg_node_type * node = arg->nodes[iarg];
-    fmt = util_strcat_realloc(fmt , arg_node_fmt(node));
-  }
-
-  switch(arg->size) {
-  case(0):
-    break;
-  case(1):
-    {
-      void *arg0;
-      arg0 = arg_pack_iget_adress(arg , 0);
-      scan_count = fscanf(stream , fmt , arg0);
-      break;
-    }
-  case(2):
-    {
-      void   *arg0, *arg1;
-      arg0 = arg_pack_iget_adress(arg , 0);
-      arg1 = arg_pack_iget_adress(arg , 1);
-
-      scan_count = fscanf(stream , fmt , arg0 , arg1);
-      break;
-    }
-  case(3):
-    {
-      void   *arg0, *arg1 , *arg2;
-      arg0 = arg_pack_iget_adress(arg , 0);
-      arg1 = arg_pack_iget_adress(arg , 1);
-      arg2 = arg_pack_iget_adress(arg , 2);
-
-      scan_count = fscanf(stream , fmt , arg0 , arg1 , arg2);
-      break;
-    }
-  case(4):
-    {
-      void   *arg0, *arg1 , *arg2 , *arg3;
-      arg0 = arg_pack_iget_adress(arg , 0);
-      arg1 = arg_pack_iget_adress(arg , 1);
-      arg2 = arg_pack_iget_adress(arg , 2);
-      arg3 = arg_pack_iget_adress(arg , 3);
-
-      scan_count = fscanf(stream , fmt , arg0 , arg1 , arg2 , arg3);
-      break;
-    }
-  case(5):
-    {
-      void   *arg0, *arg1 , *arg2 , *arg3, *arg4;
-      arg0 = arg_pack_iget_adress(arg , 0);
-      arg1 = arg_pack_iget_adress(arg , 1);
-      arg2 = arg_pack_iget_adress(arg , 2);
-      arg3 = arg_pack_iget_adress(arg , 3);
-      arg4 = arg_pack_iget_adress(arg , 4);
-
-      scan_count = fscanf(stream , fmt , arg0 , arg1 , arg2 , arg3 , arg4);
-      break;
-    }
-
-  default:
-    util_abort("%s: sorry %s not allocated for %d arguments from file %s\n",__func__ , __func__ , arg->size, filename);
-
-  }
-
-  if (scan_count != arg->size) {
-    util_abort("%s: wanted %d arguments - only found: %d in file %s \n", __func__ , arg->size , scan_count, filename);
-  }
-
-  free(fmt);
-}
-
-
-void arg_pack_fprintf(const arg_pack_type * arg_pack , FILE * stream) {
-  int iarg;
-  fprintf(stream," [");
-  for (iarg = 0; iarg  < arg_pack->size; iarg++) {
-    arg_node_type * node = arg_pack->nodes[iarg];
-    arg_node_fprintf(node , stream);
-    if (iarg < (arg_pack->size - 1))
-      fprintf(stream,", ");
-  }
-  fprintf(stream, "]\n");
-}
-
-
-
-

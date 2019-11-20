@@ -227,11 +227,6 @@ const char * config_settings_get_value( const config_settings_type * config_sett
   return setting_node_get_value( node );
 }
 
-const char * config_settings_get_string_value( const config_settings_type * config_settings , const char * key) {
-  setting_node_type * node = config_settings_get_node( config_settings , key );
-  return setting_node_get_string_value( node );
-}
-
 double config_settings_get_double_value( const config_settings_type * config_settings , const char * key) {
   setting_node_type * node = config_settings_get_node( config_settings , key );
   return setting_node_get_double_value( node );
@@ -295,19 +290,6 @@ bool config_settings_set_bool_value( const config_settings_type * config_setting
 
   return false;
 }
-
-
-bool config_settings_set_string_value( const config_settings_type * config_settings , const char * key, const char * value) {
-  if (config_settings_has_key( config_settings , key )) {
-    setting_node_type * node = config_settings_get_node( config_settings , key );
-    setting_node_set_string_value( node, value );
-    return true;
-  }
-
-  return false;
-}
-
-
 
 
 void config_settings_init_parser__( const char * root_key , config_parser_type * config , bool required) {

@@ -22,12 +22,6 @@
 #define CALLBACK_ARG_TYPE_ID 7814509
 
 
-void callback_arg_free(callback_arg_type * cb_arg) {
-  free( cb_arg );
-}
-
-
-
 callback_arg_type * callback_arg_alloc(const res_config_type * res_config,
                                        run_arg_type * run_arg,
                                        rng_type * rng)
@@ -44,5 +38,3 @@ callback_arg_type * callback_arg_alloc(const res_config_type * res_config,
 
 UTIL_IS_INSTANCE_FUNCTION( callback_arg, CALLBACK_ARG_TYPE_ID )
 UTIL_SAFE_CAST_FUNCTION( callback_arg, CALLBACK_ARG_TYPE_ID )
-
-

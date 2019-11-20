@@ -195,16 +195,6 @@ static double trans_triangular(double x, const double_vector_type * arg) {
 
 /*****************************************************************/
 
-const char * trans_func_get_name( const trans_func_type * trans_func ) {
-  return trans_func->name;
-}
-
-
-const stringlist_type * trans_func_get_param_names( const trans_func_type * trans_func ) {
-  return trans_func->param_names;
-}
-
-
 
 void trans_func_free( trans_func_type * trans_func ) {
   stringlist_free( trans_func->param_names );
@@ -357,7 +347,3 @@ double trans_func_eval( const trans_func_type * trans_func , double x) {
 bool trans_func_use_log_scale(const trans_func_type * trans_func) {
     return trans_func->use_log;
 }
-
-
-
-

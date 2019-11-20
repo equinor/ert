@@ -43,8 +43,6 @@ callback_arg_type * callback_arg_alloc(const res_config_type * res_config,
                                        run_arg_type * run_arg,
                                        rng_type * rng);
 
-void                callback_arg_free(callback_arg_type * cb_arg);
-
 UTIL_IS_INSTANCE_HEADER( callback_arg );
 UTIL_SAFE_CAST_HEADER( callback_arg );
 

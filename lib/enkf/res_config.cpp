@@ -388,9 +388,3 @@ const char * res_config_get_config_directory(const res_config_type * res_config)
 const char * res_config_get_user_config_file(const res_config_type * res_config) {
   return res_config->user_config_file;
 }
-
-const char * res_config_get_site_config_file(const res_config_type * res_config) {
-  return site_config_get_config_file(res_config->site_config);
-}
-
-

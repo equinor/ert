@@ -32,7 +32,6 @@ extern "C" {
   typedef struct hook_manager_struct hook_manager_type;
 
   hook_manager_type   * hook_manager_alloc_default(ert_workflow_list_type * workflow_list);
-  hook_manager_type   * hook_manager_alloc_load(ert_workflow_list_type *, const char *);
   hook_manager_type   * hook_manager_alloc(ert_workflow_list_type *, const config_content_type *);
 
   hook_manager_type * hook_manager_alloc_full(
@@ -50,7 +49,6 @@ extern "C" {
   void                  hook_manager_add_config_items( config_parser_type * config );
 
   runpath_list_type   * hook_manager_get_runpath_list(const hook_manager_type * hook_manager);
-  void                  hook_manager_export_runpath_list( const hook_manager_type * hook_manager );
   const char          * hook_manager_get_runpath_list_file(const hook_manager_type * hook_manager);
   void                  hook_manager_run_workflows( const hook_manager_type * hook_manager , hook_run_mode_enum run_mode , void * self);
 
@@ -60,7 +58,6 @@ extern "C" {
   /*****************************************************************/
   /* Deprecated stuff                                              */
   /*****************************************************************/
-  bool                  hook_manager_run_post_hook_workflow( const hook_manager_type * hook_manager , void * self);
 
   void                  hook_manager_set_path( hook_manager_type * hook_manager , const char * path);
   bool                  hook_manager_has_post_hook_workflow( const hook_manager_type * hook_manager );

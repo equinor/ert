@@ -65,9 +65,7 @@ typedef struct history_struct history_type;
   void           history_alloc_time_series_from_summary_key(const history_type *, const char *, double **, bool **);
   time_t         history_iget_node_start_time(const history_type *, int);
   time_t         history_iget_node_end_time(const history_type *, int);
-  int            history_get_restart_nr_from_days(const history_type *, double days);
   time_t         history_get_time_t_from_restart_nr( const history_type * history , int restart_nr);
-  int            history_get_restart_nr_from_time_t( const history_type * history , time_t time);
   history_source_type history_get_source(const history_type * history);
 
   UTIL_IS_INSTANCE_HEADER( history );

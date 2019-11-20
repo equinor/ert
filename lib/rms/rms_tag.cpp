@@ -155,19 +155,6 @@ const char * rms_tag_get_namekey_name(const rms_tag_type * tag) {
 }
 
 
-int rms_tag_get_datakey_sizeof_ctype(const rms_tag_type * tag) {
-  rms_tagkey_type * data_key = rms_tag_get_key(tag , "data");
-  if (data_key == NULL)
-    util_abort("%s: no data tagkey defined for this tag - aborting \n",
-               __func__);
-
-  return rms_tagkey_get_sizeof_ctype(data_key);
-}
-
-
-
-
-
 void rms_tag_add_tagkey(rms_tag_type *tag,
                         const rms_tagkey_type *tagkey,
                         int mem_mode) {
@@ -314,9 +301,4 @@ void rms_tag_fwrite_parameter(const char *param_name,
   rms_tag_fwrite(tag , stream);
   rms_tag_free(tag);
 
-}
-
-
-const char *rms_tag_name_ref(const rms_tag_type * tag) {
-  return tag->name;
 }

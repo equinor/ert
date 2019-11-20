@@ -255,29 +255,6 @@ static void obs_vector_assert_node_type( const obs_vector_type * obs_vector , co
 }
 
 
-
-
-void obs_vector_del_node(obs_vector_type * obs_vector , int index) {
-  if (vector_iget_const( obs_vector->nodes , index ) != NULL) {
-    vector_iset_ref( obs_vector->nodes , index , NULL);  /* Clear current content. */
-    obs_vector->num_active--;
-  }
-}
-
-/**
-   This function will clear (and free) all the summary_obs / gen_obs /
-   field_obs instances which have been installed in the vector;
-   however the vector itself is retained with keys, function pointers
-   and so on.
-*/
-
-void obs_vector_clear_nodes( obs_vector_type * obs_vector ) {
-  vector_clear( obs_vector->nodes );
-  obs_vector->num_active = 0;
-}
-
-
-
 void obs_vector_install_node(obs_vector_type * obs_vector , int index , void * node) {
   obs_vector_assert_node_type( obs_vector , node );
   {
@@ -312,35 +289,6 @@ static void obs_vector_add_summary_obs( obs_vector_type * obs_vector,
 
 int obs_vector_get_num_active(const obs_vector_type * vector) {
   return vector->num_active;
-}
-
-
-/**
-   IFF - only one - report step is active this function will return
-   that report step. If more than report step is active, the function
-   is ambiguous, and will fail HARD. Check with get_num_active first!
-*/
-
-int obs_vector_get_active_report_step(const obs_vector_type * vector) {
-  if (vector->num_active == 1) {
-    int active_step = -1;
-    int i;
-    for (i=0; i < vector_get_size(vector->nodes); i++) {
-      void * obs_node = (void *)vector_iget( vector->nodes , i);
-      if (obs_node != NULL) {
-        if (active_step >= 0)
-          util_abort("%s: internal error - mismatch in obs_vector->nodes and obs_vector->num_active \n",__func__);
-        active_step = i;
-      }
-    }
-    if (active_step < 0)
-      util_abort("%s: internal error - mismatch in obs_vector->nodes and obs_vector->num_active \n",__func__);
-
-    return active_step;
-  } else {
-    util_abort("%s: when calling this function the number of active report steps MUST BE 1 - you had: %d \n",__func__ , vector->num_active);
-    return 0; /* Comiler shut up. */
-  }
 }
 
 
@@ -400,22 +348,6 @@ int obs_vector_get_next_active_step(const obs_vector_type * obs_vector , int pre
       return next_step;
   }
 }
-
-
-int obs_vector_get_last_active_step(const obs_vector_type * obs_vector) {
-  int step = vector_get_size( obs_vector->nodes ) - 1;
-  while (true) {
-    const void * obs_node = (const void *)vector_iget_const( obs_vector->nodes , step );
-    if (obs_node)
-      break;
-
-    step--;
-    if (step < 0)
-      break;
-  }
-  return step;
-}
-
 
 
 /*****************************************************************/
@@ -961,23 +893,6 @@ static double obs_vector_chi2__(const obs_vector_type * obs_vector , int report_
 }
 
 
-
-
-
-double obs_vector_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs , node_id_type node_id) {
-  enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
-  double chi2 = 0;
-
-  if (enkf_node_try_load( enkf_node , fs , node_id))
-    chi2 = obs_vector_chi2__(obs_vector , node_id.report_step , enkf_node , node_id);
-
-  enkf_node_free( enkf_node );
-  return chi2;
-}
-
-
-
-
 /**
    This function will evaluate the chi2 for the ensemble members
    [iens1,iens2) and report steps [step1,step2).
@@ -1056,37 +971,6 @@ double obs_vector_total_chi2(const obs_vector_type * obs_vector , enkf_fs_type *
 }
 
 
-/**
-   This function will sum up all timesteps of the obs_vector, for all ensemble members.
-*/
-
-void obs_vector_ensemble_total_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs , int ens_size , double * sum_chi2) {
-  int report_step;
-  int iens;
-
-  for (iens = 0; iens < ens_size; iens++)
-    sum_chi2[iens] = 0;
-
-  {
-    node_id_type node_id = {.report_step = 0, .iens = iens };
-    enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
-    int vec_size = vector_get_size( obs_vector->nodes);
-    for (report_step = 0; report_step < vec_size; report_step++) {
-      if (vector_iget(obs_vector->nodes , report_step) != NULL) {
-        node_id.report_step = report_step;
-        for (iens = 0; iens < ens_size; iens++) {
-          node_id.iens = iens;
-
-          if (enkf_node_try_load( enkf_node , fs , node_id))
-            sum_chi2[iens] += obs_vector_chi2__(obs_vector , report_step , enkf_node, node_id);
-
-        }
-      }
-    }
-    enkf_node_free( enkf_node );
-  }
-}
-
 const char * obs_vector_get_obs_key( const obs_vector_type * obs_vector) {
   return obs_vector->obs_key;
 }
@@ -1103,4 +987,3 @@ local_obsdata_node_type * obs_vector_alloc_local_node(const obs_vector_type * ob
 
 
 VOID_FREE(obs_vector)
-

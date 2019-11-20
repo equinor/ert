@@ -415,17 +415,6 @@ static void gen_data_ecl_write_binary(const gen_data_type * gen_data , const cha
 }
 
 
-gen_data_file_format_type gen_data_guess_export_type( const gen_data_type * gen_data ) {
-  gen_data_file_format_type export_type = gen_data_config_get_output_format( gen_data->config );
-  if (export_type == GEN_DATA_UNDEFINED)
-    export_type = gen_data_config_get_input_format( gen_data->config );
-
-  if (export_type == GEN_DATA_UNDEFINED)
-    util_abort("%s: both input_format and output_format are set to UNDEFINED \n",__func__);
-  return export_type;
-}
-
-
 void gen_data_export(const gen_data_type * gen_data , const char * full_path , gen_data_file_format_type export_type) {
   switch (export_type) {
   case(ASCII):
@@ -484,23 +473,6 @@ double gen_data_iget_double(const gen_data_type * gen_data, int index) {
     }
   }
 }
-
-
-
-void gen_data_iset_double(gen_data_type * gen_data, int index, double value) {
-  gen_data_assert_index(gen_data , index);
-  {
-    ecl_data_type internal_type = gen_data_config_get_internal_data_type(gen_data->config);
-    if (ecl_type_is_double(internal_type)) {
-      double * data = (double *) gen_data->data;
-      data[index] = value;
-    } else {
-      float * data = (float *) gen_data->data;
-      data[index] = value;
-    }
-  }
-}
-
 
 
 void gen_data_export_data(const gen_data_type * gen_data , double_vector_type * export_data) {
@@ -669,10 +641,6 @@ void gen_data_scale(gen_data_type * gen_data, double scale_factor) {
   }
 }
 
-
-const bool_vector_type * gen_data_get_forward_mask( const gen_data_type * gen_data ) {
-  return gen_data_config_get_active_mask( gen_data->config );
-}
 
 void gen_data_copy_to_double_vector(const gen_data_type * gen_data , double_vector_type * vector){
     const ecl_data_type internal_type = gen_data_config_get_internal_data_type(gen_data->config);

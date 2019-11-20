@@ -76,18 +76,6 @@ static void rms_file_add_tag(rms_file_type *rms_file , const rms_tag_type *tag) 
 }
 
 
-void rms_file_add_dimensions(rms_file_type * rms_file , int nX , int nY , int nZ , bool save) {
-  if (rms_file_get_tag_ref(rms_file , "dimensions" , NULL , NULL , false) != NULL) {
-    fprintf(stderr,"%s: dimensions tag already persent in rms_file object - aborting \n",__func__);
-    abort();
-  }
-  rms_tag_type * dim_tag = rms_tag_alloc_dimensions(nX , nY , nZ);
-  rms_file_add_tag(rms_file , dim_tag);
-  if (save)
-    rms_tag_fwrite(dim_tag , rms_file->stream);
-}
-
-
 rms_tag_type * rms_file_get_tag_ref(const rms_file_type *rms_file ,
                                     const char *tagname ,
                                     const char *keyname ,
@@ -166,26 +154,6 @@ static int rms_file_get_dim(const rms_tag_type *tag , const char *dim_name) {
     abort();
   }
   return * (int *) rms_tagkey_get_data_ref(key);
-}
-
-
-void rms_file_assert_dimensions(const rms_file_type *rms_file , int nx , int ny , int nz) {
-  bool OK = true;
-  rms_tag_type *tag = rms_file_get_tag_ref(rms_file, "dimensions", NULL, NULL, true);
-  OK =       (nx == rms_file_get_dim(tag , "nX"));
-  OK = OK && (ny == rms_file_get_dim(tag , "nY"));
-  OK = OK && (nz == rms_file_get_dim(tag , "nZ"));
-
-  if (!OK) {
-    fprintf(stderr, "%s: dimensions on file: %s (%d, %d, %d) did not match with input dimensions (%d,%d,%d) - aborting \n",
-            __func__,
-            rms_file->filename,
-            rms_file_get_dim(tag , "nX"),
-            rms_file_get_dim(tag , "nY"),
-            rms_file_get_dim(tag , "nZ"),
-            nx , ny , nz);
-    abort();
-  }
 }
 
 
@@ -351,95 +319,6 @@ void rms_file_init_fwrite(const rms_file_type * rms_file , const char * filetype
 
 void rms_file_complete_fwrite(const rms_file_type * rms_file) {
   rms_tag_fwrite_eof(rms_file->stream);
-}
-
-
-void rms_file_fwrite(rms_file_type * rms_file, const char * filetype) {
-  rms_file_fopen_w(rms_file);
-  rms_file_init_fwrite(rms_file , filetype );
-
-  int size = vector_get_size(rms_file->tag_list);
-  for (int tag_index = 0; tag_index < size; tag_index++) {
-    const rms_tag_type *tag = (const rms_tag_type*)vector_iget_const( rms_file->tag_list , tag_index );
-    rms_tag_fwrite(tag , rms_file->stream);
-  }
-
-  rms_file_complete_fwrite(rms_file );
-  rms_file_fclose(rms_file);
-}
-
-
-void rms_file_fprintf(const rms_file_type *rms_file , FILE *stream) {
-  fprintf(stream , "<%s>\n",rms_file->filename);
-
-  int size = vector_get_size(rms_file->tag_list);
-  for (int tag_index = 0; tag_index < size; tag_index++) {
-    const rms_tag_type *tag = (const rms_tag_type*)vector_iget_const(rms_file->tag_list, tag_index);
-    rms_tag_fprintf(tag , rms_file->stream);
-  }
-
-  fprintf(stream , "</%s>\n",rms_file->filename);
-}
-
-
-/*
-  Hardcoded assumption that the parameter type is float - otherwise this
-  will break hard.
-*/
-void rms_file_2eclipse(const char * rms_file,
-                       const char * ecl_path,
-                       bool ecl_fmt_file,
-                       int ecl_file_nr) {
-  char * rms_base_file;
-  int dims[3] , size;
-  rms_file_type *file = rms_file_alloc(rms_file , false);
-  rms_file_fread(file);
-  rms_file_get_dims(file , dims);
-  size = dims[0] * dims[1] * dims[2] ;
-
-  util_alloc_file_components(rms_file , NULL , &rms_base_file , NULL);
-
-  float * ecl_data = (float*)malloc(size * sizeof * ecl_data);
-  int tag_list_size = vector_get_size(file->tag_list);
-  for (int tag_index = 0; tag_index < tag_list_size; tag_index++) {
-    rms_tag_type * rms_tag = (rms_tag_type*)vector_iget( file->tag_list , tag_index );
-
-    if (rms_tag_name_eq(rms_tag, "parameter", NULL, NULL)) {
-      rms_tagkey_type * rms_tagkey = rms_tag_get_datakey(rms_tag);
-      const float * data = (const float*)rms_tagkey_get_data_ref(rms_tagkey);
-      rms_util_set_fortran_data(ecl_data, data, sizeof * ecl_data,
-                                dims[0], dims[1], dims[2]);
-
-      float rms_undef = -999;
-      float ecl_undef = 0;
-      rms_util_translate_undef(ecl_data,
-                               size,
-                               rms_tagkey_get_sizeof_ctype(rms_tagkey),
-                               &rms_undef,
-                               &ecl_undef);
-
-
-      const char * tagname  = rms_tag_get_namekey_name(rms_tag);
-      char       * ecl_base = (char*)malloc(4 + strlen(tagname) + 2);
-      char       * ecl_file;
-
-      sprintf(ecl_base , "%s_%04d" , tagname , ecl_file_nr);
-      ecl_file = util_alloc_filename(ecl_path , ecl_base , NULL);
-      if (util_same_file(ecl_file , rms_file)) {
-        fprintf(stderr,"%s: attempt to overwrite %s -> %s - aborting \n",
-                __func__,
-                rms_file,
-                ecl_file);
-            abort();
-      }
-
-      ecl_kw_fwrite_param(ecl_file , ecl_fmt_file , tagname , ECL_FLOAT , size , ecl_data);
-      free(ecl_base);
-      free(ecl_file);
-    }
-  }
-  free(ecl_data);
-  free(rms_base_file);
 }
 
 

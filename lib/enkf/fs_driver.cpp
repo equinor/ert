@@ -51,12 +51,6 @@ void fs_driver_init(fs_driver_type * driver) {
   driver->fsync_driver  = NULL;
 }
 
-void fs_driver_assert_cast(const fs_driver_type * driver) {
-  if (driver->type_id != FS_DRIVER_ID)
-    util_abort("%s: internal error - incorrect cast() - aborting \n" , __func__);
-}
-
-
 fs_driver_type * fs_driver_safe_cast(void * __driver) {
   fs_driver_type * driver = (fs_driver_type *) __driver;
   if (driver->type_id != FS_DRIVER_ID)
@@ -149,12 +143,6 @@ void fs_driver_assert_version( FILE * stream , const char * mount_point) {
 }
 
 
-fs_driver_impl fs_driver_fread_type( FILE * stream ) {
-  fs_driver_impl impl = (fs_driver_impl) util_fread_int( stream );
-  return impl;
-}
-
-
 int fs_driver_fread_version( FILE * stream ) {
   long fs_magic = util_fread_long( stream );
   if (fs_magic != FS_MAGIC_ID)
@@ -167,5 +155,3 @@ int fs_driver_fread_version( FILE * stream ) {
 
 
 /*****************************************************************/
-
-

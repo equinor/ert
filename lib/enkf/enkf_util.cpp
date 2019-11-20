@@ -47,26 +47,6 @@ void enkf_util_rand_stdnormal_vector(int size , double *R, rng_type * rng) {
     R[i] = enkf_util_rand_normal(0.0 , 1.0 , rng);
 }
 
-/**
-   Vector containing a random permutation of the integers 1,...,size
-*/
-
-void enkf_util_randperm( int * P , int size , rng_type * rng) {
-  int k, tmp;
-
-  for (k = 0; k < size; k++)
-    P[k] = k;
-
-  while (size > 1) {
-    k = rng_get_int( rng , size );
-    size--;
-    tmp = P[size];
-    P[size] = P[k];
-    P[k] = tmp;
-  }
-}
-
-
 
 /*****************************************************************/
 
@@ -115,21 +95,6 @@ static void fread_file_type(ert_impl_type * file_type,
   memcpy(file_type, *buffer, size);
   *buffer += size;
 }
-
-void enkf_util_fread_assert_target_type_from_buffer(char ** buffer,
-                                                    ert_impl_type target_type) {
-  ert_impl_type file_type = INVALID;
-  fread_file_type(&file_type, buffer);
-  if (file_type != target_type) // FIXME flaky runpath_list test
-    util_abort("%s: wrong target type in file (expected:%d  got:%d) - aborting \n",
-               __func__, target_type, file_type);
-}
-
-
-void enkf_util_fwrite_target_type(FILE * stream , ert_impl_type target_type) {
-  util_fwrite_int(target_type , stream);
-}
-
 
 
 /**
@@ -245,14 +210,6 @@ void enkf_util_fprintf_data(const int * index_column ,
 char * enkf_util_alloc_tagged_string(const char * s) {
   return util_alloc_sprintf("%s%s%s" , DEFAULT_START_TAG , s , DEFAULT_END_TAG);
 }
-
-char * enkf_util_alloc_detagged_string( const char * tagged_string) {
-  const char * s = &tagged_string[ strlen( DEFAULT_START_TAG ) ];
-  return util_alloc_substring_copy( s , 0 , strlen( s ) - strlen( DEFAULT_END_TAG ));
-}
-
-
-
 
 /**
    This function will compare two (key) strings. The function is

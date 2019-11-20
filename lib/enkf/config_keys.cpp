@@ -184,10 +184,6 @@ const char * config_keys_get_alpha() {
     return ENKF_ALPHA_KEY;
 }
 
-const char * config_keys_get_do_pen_press() {
-    return ENKF_PEN_PRESS_KEY;
-}
-
 const char * config_keys_get_std_cutoff() {
     return STD_CUTOFF_KEY;
 }
