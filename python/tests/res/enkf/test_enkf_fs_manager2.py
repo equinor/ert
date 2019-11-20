@@ -29,13 +29,13 @@ class EnKFFSManagerTest2(ResTest):
                 fs_list.append(fsm.getFileSystem("fs_fill_%d" % index))
 
             for fs in fs_list:
-                self.assertEqual(1, fs.refCount())
-                fs_copy = fs.copy( )
                 self.assertEqual(2, fs.refCount())
-                self.assertEqual(2, fs_copy.refCount())
+                fs_copy = fs.copy( )
+                self.assertEqual(3, fs.refCount())
+                self.assertEqual(3, fs_copy.refCount())
 
                 del fs_copy
-                self.assertEqual(1, fs.refCount())
+                self.assertEqual(2, fs.refCount())
 
 
             self.assertEqual(EnkfFsManager.DEFAULT_CAPACITY, fsm.getFileSystemCount())

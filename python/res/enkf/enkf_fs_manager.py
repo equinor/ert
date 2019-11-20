@@ -33,7 +33,6 @@ class FileSystemRotator(object):
     def dropOldestFileSystem(self):
         if len(self._fs_list) > 0:
             case_name = self._fs_list[0]
-            fs = self._fs_map[case_name]
             del self._fs_list[0]
             del self._fs_map[case_name]
 
@@ -46,7 +45,7 @@ class FileSystemRotator(object):
 
     def __get_fs(self, name):
         fs = self._fs_map[name]
-        return fs.weakref( )
+        return fs.copy( )
 
     def __getitem__(self, case):
         """ @rtype: EnkfFs """
@@ -76,7 +75,7 @@ class FileSystemRotator(object):
 class EnkfFsManager(BaseCClass):
     TYPE_NAME = "enkf_fs_manager"
 
-    _get_current_fs = ResPrototype("enkf_fs_ref enkf_main_get_fs_ref(enkf_fs_manager)")
+    _get_current_fs = ResPrototype("enkf_fs_obj enkf_main_get_fs_ref(enkf_fs_manager)")
     _switch_fs =      ResPrototype("void enkf_main_set_fs(enkf_fs_manager, enkf_fs, char*)")
     _fs_exists =      ResPrototype("bool enkf_main_fs_exists(enkf_fs_manager, char*)")
     _alloc_caselist = ResPrototype("stringlist_obj enkf_main_alloc_caselist(enkf_fs_manager)")

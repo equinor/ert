@@ -28,7 +28,6 @@ class EnKFFSManagerTest1(ResTest):
             self.assertTrue(fsm.caseHasData("default_0"))
             self.assertFalse(fsm.isCaseRunning("default_0"))
 
-            self.assertEqual(2, fs.refCount())
             self.assertEqual(1, fsm.getFileSystemCount())
 
             self.assertFalse(fsm.isCaseMounted("newFS"))
@@ -38,10 +37,6 @@ class EnKFFSManagerTest1(ResTest):
 
             fs2 = fsm.getFileSystem("newFS")
             self.assertEqual(2, fsm.getFileSystemCount())
-            self.assertEqual(1, fs2.refCount())
-
-            with self.assertRaises(AssertionError):
-                fs2.umount( )
 
             self.assertTrue(fsm.isCaseMounted("newFS"))
             self.assertTrue(fsm.caseExists("newFS"))

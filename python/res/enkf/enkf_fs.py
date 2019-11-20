@@ -36,7 +36,7 @@ class EnkfFs(BaseCClass):
     _is_read_only         = ResPrototype("bool  enkf_fs_is_read_only(enkf_fs)")
     _is_running           = ResPrototype("bool  enkf_fs_is_running(enkf_fs)")
     _fsync                = ResPrototype("void  enkf_fs_fsync(enkf_fs)")
-    _create               = ResPrototype("enkf_fs_ref   enkf_fs_create_fs(char* , enkf_fs_type_enum , void* , bool)", bind = False)
+    _create               = ResPrototype("enkf_fs_obj   enkf_fs_create_fs(char* , enkf_fs_type_enum , void* , bool)", bind = False)
     _get_time_map         = ResPrototype("time_map_ref  enkf_fs_get_time_map(enkf_fs)")
     _get_state_map        = ResPrototype("state_map_ref enkf_fs_get_state_map(enkf_fs)")
     _summary_key_set      = ResPrototype("summary_key_set_ref enkf_fs_get_summary_key_set(enkf_fs)")
