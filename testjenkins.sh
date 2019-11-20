@@ -152,15 +152,7 @@ run_pytest_normal () {
 run_pytest_equinor () {
 	run enable_environment
 	pushd $LIBRES_ROOT/python
-	python -m pytest -m "equinor_test and not unstable" --durations=10
-	popd
-}
-
-
-run_pytest_unstable () {
-	run enable_environment
-	pushd $LIBRES_ROOT/python
-	python -m pytest -m "unstable" --durations=10
+	python -m pytest -m "equinor_test" --durations=10
 	popd
 }
 
