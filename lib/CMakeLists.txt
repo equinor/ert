@@ -59,7 +59,6 @@ add_library(res res_util/res_log.cpp
                 sched/history.cpp
                 sched/sched_blob.cpp
                 sched/sched_file.cpp
-                sched/sched_history.cpp
                 sched/sched_kw.cpp
                 sched/sched_kw_compdat.cpp
                 sched/sched_kw_dates.cpp

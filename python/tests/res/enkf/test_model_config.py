@@ -16,8 +16,10 @@
 import os
 from ecl.util.test import TestAreaContext
 from tests import ResTest
-from res.test import ErtTestContext
 from res.enkf import ResConfig, ConfigKeys, ModelConfig
+from res.sched import HistorySourceEnum
+from res.test import ErtTestContext
+
 
 class ModelConfigTest(ResTest):
 
@@ -163,3 +165,19 @@ class ModelConfigTest(ResTest):
                                        refcase=res_config.ecl_config.getRefcase(),
                                        config_dict=config_dict)
             self.assertEqual(model_config, res_config.model_config)
+
+    def test_schedule_file_as_history_is_disallowed(self):
+        case_directory = self.createTestPath("local/configuration_tests")
+        with TestAreaContext("test_constructor") as work_area:
+            work_area.copy_directory(case_directory)
+            with self.assertRaises(ValueError) as cm:
+                ResConfig(
+                    user_config_file="configuration_tests/sched_file_as_history_source.ert"
+                )
+
+            # Any assert should per the unittest documentation be outside the
+            # scope of the assertRaises with-block.
+            expected = "{} as {} is not supported".format(
+                str(HistorySourceEnum.SCHEDULE), ConfigKeys.HISTORY_SOURCE
+            )
+            self.assertIn(expected, str(cm.exception))

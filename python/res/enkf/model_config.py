@@ -76,6 +76,13 @@ class ModelConfig(BaseCClass):
             raise ValueError(
                 "Error: Unable to create ModelConfig with multiple config objects")
 
+        hist_src_enum = ModelConfig._get_history_src_enum(config_dict, config_content)
+        if hist_src_enum == HistorySourceEnum.SCHEDULE:
+            raise ValueError("{} as {} is not supported".format(
+                    HistorySourceEnum.SCHEDULE, ConfigKeys.HISTORY_SOURCE
+                )
+            )
+
         if config_dict is None:
             c_ptr = self._alloc(config_content, data_root,
                                 joblist, last_history_restart, refcase)
@@ -295,3 +302,15 @@ class ModelConfig(BaseCClass):
             return False
 
         return True
+
+    @staticmethod
+    def _get_history_src_enum(config_dict, config_content):
+        hist_src_enum = None
+        if config_dict and ConfigKeys.HISTORY_SOURCE in config_dict:
+            hist_src_enum = config_dict.get(ConfigKeys.HISTORY_SOURCE)
+
+        if config_content and config_content.hasKey(ConfigKeys.HISTORY_SOURCE):
+            hist_src_str = config_content.getValue(ConfigKeys.HISTORY_SOURCE)
+            hist_src_enum = HistorySourceEnum.from_string(hist_src_str)
+
+        return hist_src_enum

@@ -29,7 +29,6 @@
 #include <ert/util/bool_vector.h>
 
 #include <ert/sched/history.hpp>
-#include <ert/sched/sched_file.hpp>
 
 #include <ert/config/config_parser.hpp>
 #include <ert/config/config_content.hpp>
@@ -238,18 +237,6 @@ history_source_type model_config_get_history_source( const model_config_type * m
     return HISTORY_SOURCE_INVALID;
 
   return history_get_source(model_config->history);
-}
-
-
-
-void model_config_select_schedule_history( model_config_type * model_config , const sched_file_type * sched_file) {
-  if (model_config->history != NULL)
-    history_free( model_config->history );
-
-  if (sched_file != NULL) {
-    model_config->history = history_alloc_from_sched_file( SUMMARY_KEY_JOIN_STRING , sched_file);
-  } else
-    util_abort("%s: internal error - trying to select HISTORY_SOURCE:SCHEDULE - but no Schedule file has been loaded.\n",__func__);
 }
 
 
@@ -508,7 +495,7 @@ void model_config_init(model_config_type * model_config ,
     if (!model_config_select_history( model_config , DEFAULT_HISTORY_SOURCE , refcase )) {
       model_config_select_any_history( model_config , refcase);
       /* If even the last call return false, it means the configuration does not have any of
-       * these keys: HISTORY_SOURCE, SCHEDULE, REFCASE.
+       * these keys: HISTORY_SOURCE or REFCASE.
        * History matching won't be supported for this configuration.
        */
     }

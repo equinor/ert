@@ -16,17 +16,15 @@
 
 from cwrap import BaseCClass
 from res import ResPrototype
-from res.sched import SchedFile, HistorySourceEnum
+from res.sched import HistorySourceEnum
 from ecl.summary import EclSum
 
 class History(BaseCClass):
     TYPE_NAME = "history"
 
     _alloc_from_refcase    = ResPrototype("void* history_alloc_from_refcase(ecl_sum, bool)", bind = False)
-    _alloc_from_sched_file = ResPrototype("void* history_alloc_from_sched_file(char*, sched_file)", bind = False)
     _get_source_string     = ResPrototype("char* history_get_source_string(history_source_enum)", bind = False)
     _free                  = ResPrototype("void  history_free( history )")
-    # _history_get_source_type = ResPrototype("history_source_type_enum history_get_source_type(char*)", bind = False)
 
     def __init__(self, refcase = None, use_history = False, sched_file = None):
         """
@@ -34,21 +32,18 @@ class History(BaseCClass):
         @type use_history: bool
         @rtype: HistoryType
         """
-        self._init_from = ''
-        self._init_val  = ''
         if sched_file is not None:
-            self._init_from = 'sched_file'
-            self._init_val  = str(sched_file)
-            c_ptr = self._alloc_from_sched_file(sched_file, use_history)
-        else:
-            self._init_from = 'refcase'
-            self._init_val  = str(refcase)
-            c_ptr = self._alloc_from_refcase(refcase, use_history)
+            raise ValueError("Cannot create history from sched_file.")
+
+        if refcase is None:
+            ValueError('Refcase cannot be None when creating a History.')
+
+        self._init_from = 'refcase'
+        self._init_val  = str(refcase)
+        c_ptr = self._alloc_from_refcase(refcase, use_history)
         if c_ptr:
             super(History, self).__init__(c_ptr)
         else:
-            if sched_file is None and refcase is None:
-                raise ArgumentError('Need to specify either sched_file or refcase.')
             raise ValueError('Invalid input.  Failed to create History.')
 
     @staticmethod
