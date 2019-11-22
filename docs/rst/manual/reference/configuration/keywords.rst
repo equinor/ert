@@ -408,11 +408,10 @@ possible to do with ERT.
 	In the observation configuration file you can enter
 	observations with the keyword HISTORY_OBSERVATION; this means
 	that ERT will extract observed values from the model
-	history, either from the SCHEDULE file or from historical 
-	summary vectors of the reference case. What source to use for the 
-	historical values can be controlled with the HISTORY_SOURCE 
-	keyword. The different possible values for the HISTORY_SOURCE 
-	keyword are:
+	historical summary vectors of the reference case. What source
+	to use for the 	historical values can be controlled with the
+	HISTORY_SOURCE keyword. The different possible values for the
+	HISTORY_SOURCE keyword are:
 
 	
 	REFCASE_HISTORY
@@ -426,11 +425,6 @@ possible to do with ERT.
 	        In this case the historical values are based on the
 		simulated values from the refcase, this is mostly relevant when a you want
 		compare with another case which serves as 'the truth'.
-
-	SCHEDULE
-	        Load historical values from the WCONHIST and WCONINJE keywords in the
-		Schedule file.
-
 
 	When setting HISTORY_SOURCE to either REFCASE_SIMULATED or REFCASE_HISTORY you
 	must also set the REFCASE variable to point to the ECLIPSE data file in an
