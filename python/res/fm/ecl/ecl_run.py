@@ -174,58 +174,35 @@ class EclRun(object):
             for host in machine_list:
                 fileH.write("%s\n" % host)
 
-
-    def execSerialEclipse(self):
+    def execEclipse(self):
         log_name = "{}.LOG".format(self.base_name)
 
-        with open(log_name, 'wb') as log_file:
-            process = subprocess.Popen(
-                [
-                    self.sim.executable,
-                    self.base_name
-                ],
-                env=self.sim.env,
-                stdout=subprocess.PIPE,
-            )
-            return await_process_tee(process, sys.stdout, log_file)
+        with pushd(self.run_path), open(log_name, "wb") as log_file:
+            if not os.path.exists(self.data_file):
+                raise IOError("Can not find data_file:{}".format(self.data_file))
+            if not os.access(self.data_file, os.R_OK):
+                raise OSError("Can not read data file:{}".format(self.data_file))
 
-
-    def execParallellEclipse(self):
-        log_name = "{}.LOG".format(self.base_name)
-
-        self.initMPI( )
-        with open(log_name, 'wb') as log_file:
-            process = subprocess.Popen(
-                [
+            if self.num_cpu == 1:
+                command = [self.sim.executable, self.base_name]
+            else:
+                self.initMPI()
+                command = [
                     self.sim.mpirun,
                     "-machinefile",
                     self.machine_file,
                     "-np",
-                    "%s" % self.num_cpu,
+                    str(self.num_cpu),
                     self.sim.executable,
                     self.base_name
-                ],
+                ]
+
+            process = subprocess.Popen(
+                command,
                 env=self.sim.env,
-                stdout=subprocess.PIPE
+                stdout=subprocess.PIPE,
             )
             return await_process_tee(process, sys.stdout, log_file)
-
-
-    def execEclipse(self):
-        with pushd(self.run_path):
-
-            if not os.path.exists( self.data_file ):
-                raise IOError("Can not find data_file:%s" % self.data_file )
-
-            if not os.access( self.data_file , os.R_OK ):
-                raise OSError("Can not read data file:%s" % self.data_file )
-
-            if self.num_cpu == 1:
-                return self.execSerialEclipse()
-            else:
-                return self.execParallellEclipse()
-
-
 
     def runEclipse(self):
         return_code = self.execEclipse( )
