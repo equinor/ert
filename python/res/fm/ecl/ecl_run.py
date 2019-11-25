@@ -18,10 +18,10 @@ from .ecl_config import EclConfig
 from res.util.subprocess import await_process_tee
 
 
-EclipseResult = namedtuple("EclipseResult" , "errors bugs")
-body_sub_pattern = "(\s^\s@.+$)*"
-date_sub_pattern = "\s+AT TIME\s+(?P<Days>\d+\.\d+)\s+DAYS\s+\((?P<Date>(.+)):\s*$"
-error_pattern    = "^\s@--  ERROR%s$%s"   % (date_sub_pattern, body_sub_pattern)
+EclipseResult = namedtuple("EclipseResult", "errors bugs")
+body_sub_pattern = r"(\s^\s@.+$)*"
+date_sub_pattern = r"\s+AT TIME\s+(?P<Days>\d+\.\d+)\s+DAYS\s+\((?P<Date>(.+)):\s*$"
+error_pattern = r"^\s@--  ERROR{}${}".format(date_sub_pattern, body_sub_pattern)
 
 def make_LSB_MCPU_machine_list( LSB_MCPU_HOSTS ):
     host_numcpu_list = LSB_MCPU_HOSTS.split()
@@ -268,8 +268,8 @@ class EclRun(object):
 
 
     def readECLEND(self):
-        error_regexp = re.compile("^\s*Errors\s+(\d+)\s*$")
-        bug_regexp = re.compile("^\s*Bugs\s+(\d+)\s*$")
+        error_regexp = re.compile(r"^\s*Errors\s+(\d+)\s*$")
+        bug_regexp = re.compile(r"^\s*Bugs\s+(\d+)\s*$")
 
         report_file = os.path.join( self.run_path , "{}.ECLEND".format(self.base_name))
         if not os.path.isfile(report_file):
