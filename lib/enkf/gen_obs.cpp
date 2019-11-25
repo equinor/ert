@@ -476,6 +476,9 @@ void gen_obs_update_std_scale(gen_obs_type * gen_obs, double std_multiplier, con
     int size = active_list_get_active_size( active_list , gen_obs->obs_size );
     for (int i=0; i < size; i++) {
       int obs_index = active_index[i];
+      if (obs_index >= gen_obs->obs_size) {
+        util_abort("[Gen_Obs] Index out of bounds %d [0, %d]", obs_index, gen_obs->obs_size - 1);
+      }
       gen_obs->std_scaling[ obs_index ] = std_multiplier;
     }
   }
