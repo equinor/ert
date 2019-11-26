@@ -18,6 +18,7 @@ setup(
     use_scm_version={'root':'.' , 'write_to': 'ert_gui/version.py'},
     scripts=['ert_shared/bin/ert'],
     packages=[
+            'ert_data',
             'ert_shared',
             'ert_shared.models',
             'ert_shared.plugins',

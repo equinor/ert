@@ -1,4 +1,4 @@
-from .enkf_facade import EnkfFacade
+from ert_shared.libres_facade import LibresFacade
 
 class ErtAdapter():
     """The adapter object is the global ERT variable used all
@@ -17,7 +17,7 @@ class ErtAdapter():
 
     def adapt(self, implementation):
         self._implementation = implementation
-        self._enkf_facade = EnkfFacade(implementation.ert)
+        self._enkf_facade = LibresFacade(implementation.ert)
 
     @property
     def enkf_facade(self):
