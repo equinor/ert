@@ -35,7 +35,7 @@ import sys
 sys.exit(1)
 """
 
-def create_queue(script, max_submit=1):
+def create_queue(script, max_submit=1, max_runtime=0):
     driver = Driver(driver_type=QueueDriverEnum.LOCAL_DRIVER, max_running=5)
     job_queue = JobQueue(driver, max_submit=max_submit)
     with open(dummy_config["job_script"], "w") as f:
@@ -53,7 +53,8 @@ def create_queue(script, max_submit=1):
             exit_file=job_queue.exit_file,
             done_callback_function=dummy_config["ok_callback"],
             exit_callback_function=dummy_config["exit_callback"],
-            callback_arguments=[{"job_number":i}])
+            callback_arguments=[{"job_number":i}],
+            max_runtime=max_runtime)
 
         job_queue.add_job(job)
     
@@ -144,3 +145,28 @@ class JobQueueTest(ResTest):
                 assert job.status == JobStatusType.JOB_QUEUE_FAILED
             
             assert True
+
+    def test_timeout_jobs(self):
+        with TestAreaContext("job_queue_test_kill") as work_area:
+            job_queue = create_queue(never_ending_script, max_submit=1, max_runtime=5)
+
+            assert job_queue.queue_size == 10
+            assert job_queue.is_active()
+
+            pool_sema = BoundedSemaphore(value=10)
+            start_all(job_queue, pool_sema)
+
+            # make sure never ending jobs are running
+            wait_until(
+                lambda: self.assertTrue(job_queue.is_active())
+            )
+
+            wait_until(
+                lambda: self.assertFalse(job_queue.is_active())
+            )
+
+            for job in job_queue.job_list:
+                assert job.status == JobStatusType.JOB_QUEUE_IS_KILLED
+
+            for job in job_queue.job_list:
+                job.wait_for()

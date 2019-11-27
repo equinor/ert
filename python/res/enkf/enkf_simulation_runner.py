@@ -84,7 +84,7 @@ class EnkfSimulationRunner(BaseCClass):
         hook_manager.runWorkflows(runtime  , ert)
 
 
-    def add_job(self, run_arg, res_config, job_queue):
+    def add_job(self, run_arg, res_config, job_queue, max_runtime):
         job_name = run_arg.job_name
         run_path = run_arg.runpath
         job_script = res_config.queue_config.job_script
@@ -96,24 +96,23 @@ class EnkfSimulationRunner(BaseCClass):
                             status_file=job_queue.status_file, ok_file=job_queue.ok_file, exit_file=job_queue.exit_file,
                             done_callback_function=EnKFState.forward_model_ok_callback,
                             exit_callback_function=EnKFState.forward_model_exit_callback,
-                            callback_arguments=[run_arg, res_config])
+                            callback_arguments=[run_arg, res_config],
+                            max_runtime=max_runtime)
         
         if job is None:
             return
         run_arg._set_queue_index(job_queue.add_job(job))
 
     def start_queue(self, run_context, job_queue):
+        max_runtime = self._enkf_main().analysisConfig().get_max_runtime()
+
         # submit jobs
         for i in range(len(run_context)):
             if not run_context.is_active(i):
                 continue
             run_arg = run_context[i]
-            self.add_job(run_arg, self._enkf_main().resConfig(), job_queue)
-            
+            self.add_job(run_arg, self._enkf_main().resConfig(), job_queue, max_runtime)
 
         job_queue.submit_complete()
-        max_runtime = self._enkf_main().analysisConfig().get_max_runtime() 
-        job_queue.set_max_job_duration(max_runtime)
-
         jqm = JobQueueManager(job_queue)
         jqm.execute_queue()
