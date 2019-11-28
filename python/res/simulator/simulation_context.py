@@ -30,6 +30,11 @@ class SimulationContext(object):
         self._ert.getEnkfSimulationRunner().createRunPath(self._run_context)
         self._sim_thread = self._run_simulations_simple_step()
 
+        # Wait until the queue is active before we finish the creation
+        # to ensure sane job status while running
+        while self.isRunning() and not self._queue_manager.isRunning():
+            sleep(0.1)
+
     def get_run_args(self, iens):
         '''
         raises an  exception if no iens simulation found

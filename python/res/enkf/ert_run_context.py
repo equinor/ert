@@ -103,18 +103,14 @@ class ErtRunContext(BaseCClass):
 
 
     def __getitem__(self , index):
-        if isinstance(index, int):
-            if not self.is_active( index ):
-                return None
-
-            if 0 <= index < len(self):
-                run_arg = self._iget(index)
-                #run_arg.setParent( self ) ## This migh not be correct....
-                return run_arg
-            else:
-                raise IndexError("Index:%d invalid. Legal range: [0,%d)" % (index , len(self)))
-        else:
+        if not isinstance(index, int):
             raise TypeError("Invalid type - expetected integer")
+
+        if 0 <= index < len(self):
+            run_arg = self._iget(index)
+            return run_arg
+        else:
+            raise IndexError("Index:%d invalid. Legal range: [0,%d)" % (index , len(self)))
 
 
     def free(self):

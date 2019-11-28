@@ -1,5 +1,6 @@
 import os
 import time
+import shutil
 import sys
 import unittest
 import datetime
@@ -7,8 +8,9 @@ import datetime
 from ecl.util.test import TestAreaContext
 
 from res.simulator import BatchSimulator, BatchContext
+from res.job_queue import JobStatusType
 from res.enkf import ResConfig
-from tests.utils import wait_until
+from tests.utils import wait_until, tmpdir
 from tests import ResTest
 from threading import Thread
 
@@ -408,6 +410,60 @@ class BatchSimulatorTest(ResTest):
 
             runpath = 'storage/batch_sim/runpath/%s/realisation-0' % case_name
             self.assertTrue(os.path.exists(runpath))
+
+    def assertContextStatusOddFailures(self, batch_ctx, final_state_only=False):
+        running_status = set((
+            JobStatusType.JOB_QUEUE_WAITING,
+            JobStatusType.JOB_QUEUE_SUBMITTED,
+            JobStatusType.JOB_QUEUE_PENDING,
+            JobStatusType.JOB_QUEUE_RUNNING,
+            JobStatusType.JOB_QUEUE_UNKNOWN,
+            JobStatusType.JOB_QUEUE_EXIT,
+        ))
+
+        for idx in range(len(batch_ctx)):
+            status = batch_ctx.job_status(idx)
+            if not final_state_only and status in running_status:
+                continue
+            elif idx%2 == 0:
+                self.assertEqual(JobStatusType.JOB_QUEUE_DONE, status)
+            else:
+                self.assertEqual(JobStatusType.JOB_QUEUE_FAILED, status)
+
+    @tmpdir()
+    def test_batch_ctx_status_failing_jobs(self):
+
+        config_dir = os.path.join(self.SOURCE_ROOT, "test-data/local/batch_sim")
+        shutil.copytree(config_dir, "batch_sim")
+        os.chdir("batch_sim")
+
+        self.assertTrue(os.path.isfile("batch_sim_sleep_and_fail.ert"))
+        res_config = ResConfig(user_config_file="batch_sim_sleep_and_fail.ert")
+
+        external_parameters = {
+            "WELL_ORDER": ("W1", "W2", "W3"),
+            "WELL_ON_OFF": ("W1", "W2", "W3"),
+        }
+        results = ("ORDER", "ON_OFF")
+        rsim = BatchSimulator(res_config, external_parameters, results)
+
+        cases = [
+            (
+                0,
+                {
+                    "WELL_ORDER": {"W1": idx+1, "W2": idx+2, "W3": idx+3},
+                    "WELL_ON_OFF": {"W1": idx*4, "W2": idx*5, "W3": idx*6}
+                }
+            )
+            for idx in range(10)
+        ]
+
+        batch_ctx = rsim.start("case_name", cases)
+        while batch_ctx.running():
+            self.assertContextStatusOddFailures(batch_ctx)
+            time.sleep(1)
+
+        self.assertContextStatusOddFailures(batch_ctx, final_state_only=True)
 
 
 if __name__ == "__main__":
