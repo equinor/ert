@@ -177,6 +177,165 @@ class EclRunTest(ResTest):
         with self.assertRaises(Exception):
             run(flow_config, ["SPE1.DATA", "--version=no/such/version"])
 
+    @tmpdir()
+    def test_running_flow_given_env_config_can_still_read_parent_env(self):
+        version = "1111.11"
+
+        # create a script that prints env vars ENV1 and ENV2 to a file
+        with open("flow", "w") as f:
+            f.write("#!/bin/bash\n")
+            f.write("echo $ENV1 > out.txt\n")
+            f.write("echo $ENV2 >> out.txt\n")
+        executable = os.path.join(os.getcwd(), "flow")
+        os.chmod(executable, 0o777)
+
+        # create a flow_config.yml with environment extension ENV2
+        conf = {
+            "default_version": version,
+            "versions": {
+                version: {
+                    "scalar": {
+                        "executable": executable,
+                        "env": {"ENV2": "VAL2"}
+                    },
+                }
+            }
+        }
+
+        with open("flow_config.yml", "w") as f:
+            f.write(yaml.dump(conf))
+
+        # set the environment variable ENV1
+        self.monkeypatch.setenv("ENV1", "VAL1")
+        self.monkeypatch.setenv("FLOW_SITE_CONFIG", "flow_config.yml")
+
+        with open("DUMMY.DATA", "w") as f:
+            f.write("dummy")
+
+        with open("DUMMY.PRT", "w") as f:
+            f.write("Errors 0\n")
+            f.write("Bugs 0\n")
+
+        # run the script
+        flow_config = FlowConfig()
+        sim = flow_config.sim()
+        flow_run = EclRun("DUMMY.DATA", sim)
+        flow_run.runEclipse()
+
+        # assert that the script was able to read both the variables correctly
+        with open("out.txt") as f:
+            lines = f.readlines()
+
+        self.assertEqual(len(lines), 2)
+        self.assertEqual(lines[0].strip(), "VAL1")
+        self.assertEqual(lines[1].strip(), "VAL2")
+
+    @tmpdir()
+    def test_running_flow_given_no_env_config_can_still_read_parent_env(self):
+        version = "1111.11"
+
+        # create a script that prints env vars ENV1 and ENV2 to a file
+        with open("flow", "w") as f:
+            f.write("#!/bin/bash\n")
+            f.write("echo $ENV1 > out.txt\n")
+            f.write("echo $ENV2 >> out.txt\n")
+        executable = os.path.join(os.getcwd(), "flow")
+        os.chmod(executable, 0o777)
+
+        # create a flow_config.yml with environment extension ENV2
+        conf = {
+            "default_version": version,
+            "versions": {
+                version: {
+                    "scalar": {
+                        "executable": executable
+                    },
+                }
+            }
+        }
+
+        with open("flow_config.yml", "w") as f:
+            f.write(yaml.dump(conf))
+
+        # set the environment variable ENV1
+        self.monkeypatch.setenv("ENV1", "VAL1")
+        self.monkeypatch.setenv("ENV2", "VAL2")
+        self.monkeypatch.setenv("FLOW_SITE_CONFIG", "flow_config.yml")
+
+        with open("DUMMY.DATA", "w") as f:
+            f.write("dummy")
+
+        with open("DUMMY.PRT", "w") as f:
+            f.write("Errors 0\n")
+            f.write("Bugs 0\n")
+
+        # run the script
+        flow_config = FlowConfig()
+        sim = flow_config.sim()
+        flow_run = EclRun("DUMMY.DATA", sim)
+        flow_run.runEclipse()
+
+        # assert that the script was able to read both the variables correctly
+        with open("out.txt") as f:
+            lines = f.readlines()
+
+        self.assertEqual(len(lines), 2)
+        self.assertEqual(lines[0].strip(), "VAL1")
+        self.assertEqual(lines[1].strip(), "VAL2")
+
+    @tmpdir()
+    def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables_will_overwrite(self):
+        version = "1111.11"
+
+        # create a script that prints env vars ENV1 and ENV2 to a file
+        with open("flow", "w") as f:
+            f.write("#!/bin/bash\n")
+            f.write("echo $ENV1 > out.txt\n")
+            f.write("echo $ENV2 >> out.txt\n")
+        executable = os.path.join(os.getcwd(), "flow")
+        os.chmod(executable, 0o777)
+
+        # create a flow_config.yml with environment extension ENV2
+        conf = {
+            "default_version": version,
+            "versions": {
+                version: {
+                    "scalar": {
+                        "executable": executable,
+                        "env": {"ENV1": "OVERWRITTEN1", "ENV2": "OVERWRITTEN2"}
+                    },
+                }
+            }
+        }
+
+        with open("flow_config.yml", "w") as f:
+            f.write(yaml.dump(conf))
+
+        # set the environment variable ENV1
+        self.monkeypatch.setenv("ENV1", "VAL1")
+        self.monkeypatch.setenv("ENV2", "VAL2")
+        self.monkeypatch.setenv("FLOW_SITE_CONFIG", "flow_config.yml")
+
+        with open("DUMMY.DATA", "w") as f:
+            f.write("dummy")
+
+        with open("DUMMY.PRT", "w") as f:
+            f.write("Errors 0\n")
+            f.write("Bugs 0\n")
+
+        # run the script
+        flow_config = FlowConfig()
+        sim = flow_config.sim()
+        flow_run = EclRun("DUMMY.DATA", sim)
+        flow_run.runEclipse()
+
+        # assert that the script was able to read both the variables correctly
+        with open("out.txt") as f:
+            lines = f.readlines()
+
+        self.assertEqual(len(lines), 2)
+        self.assertEqual(lines[0].strip(), "OVERWRITTEN1")
+        self.assertEqual(lines[1].strip(), "OVERWRITTEN2")
 
     @tmpdir()
     @pytest.mark.equinor_test

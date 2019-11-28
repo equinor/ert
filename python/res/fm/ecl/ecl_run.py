@@ -128,11 +128,10 @@ class EclRun(object):
 
 
 
-    def initEnv(self):
-        for var,value in self.sim.env.items():
-            os.environ[var] = value
-
-
+    def _build_simulator_environment(self):
+        my_env = os.environ.copy()
+        my_env.update(self.sim.env.items())
+        return my_env
 
     def initMPI(self):
 
@@ -199,7 +198,7 @@ class EclRun(object):
 
             process = subprocess.Popen(
                 command,
-                env=self.sim.env,
+                env=self._build_simulator_environment(),
                 stdout=subprocess.PIPE,
             )
             return await_process_tee(process, sys.stdout, log_file)
