@@ -53,9 +53,11 @@ class JobQueueManager(BaseCClass):
     # method.
     _job_status      = ResPrototype("int job_queue_manager_iget_job_status(job_queue_manager, int)")
 
-    def __init__(self, queue):
+    def __init__(self, queue, queue_evaluators=None):
         c_ptr = self._alloc(queue)
         self._queue = queue
+        self._queue_evaluators = queue_evaluators
+        self._pool_sema = BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
         super(JobQueueManager, self).__init__(c_ptr)
 
     @property
@@ -134,20 +136,16 @@ class JobQueueManager(BaseCClass):
         return not self.queue.stopped and self.queue.count_running() < self.max_running()
 
     def _launch_jobs(self):
-
-        pool_sema = BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
-        while self.queue.is_active() and not self.queue.stopped:
-            #Start waiting jobs
-            while self._available_capacity():
-                job = self.queue.fetch_next_waiting()
-                if job is None:
-                    break
-                job.run(
-                    driver=self.queue.driver,
-                    pool_sema=pool_sema,
-                    max_submit=self.queue.max_submit
-                )
-            time.sleep(1)
+        #Start waiting jobs
+        while self._available_capacity():
+            job = self.queue.fetch_next_waiting()
+            if job is None:
+                break
+            job.run(
+                driver=self.queue.driver,
+                pool_sema=self._pool_sema,
+                max_submit=self.queue.max_submit
+            )
 
     def _stop_jobs(self):
         for job in self.queue.job_list:
@@ -162,7 +160,14 @@ class JobQueueManager(BaseCClass):
                 raise AssertionError(msg.format(job.status, job.thread_status))
 
     def execute_queue(self):
-        self._launch_jobs()
+        while self.queue.is_active() and not self.queue.stopped:
+            self._launch_jobs()
+
+            time.sleep(1)
+
+            if self._queue_evaluators is not None:
+                for func in self._queue_evaluators:
+                    func()
 
         if self.queue.stopped:
             self._stop_jobs()

@@ -6,10 +6,13 @@ from res.enkf import ErtRunContext
 from res.enkf import EnKFState
 from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
-from res.job_queue import RunStatusType, JobQueueManager, JobQueueNode
+from res.job_queue import RunStatusType, JobQueueManager, JobQueueNode, JobStatusType
 
+from functools import partial
 import time
 import threading
+
+LONG_RUNNING_FACTOR = 1.25
 
 class EnkfSimulationRunner(BaseCClass):
     TYPE_NAME = "enkf_simulation_runner"
@@ -115,5 +118,29 @@ class EnkfSimulationRunner(BaseCClass):
             self.add_job(run_arg, self._enkf_main().resConfig(), job_queue, max_runtime)
 
         job_queue.submit_complete()
-        jqm = JobQueueManager(job_queue)
+        queue_evaluators = None
+        if (self._enkf_main().analysisConfig().get_stop_long_running() and
+            self._enkf_main().analysisConfig().minimum_required_realizations > 0):
+            queue_evaluators = [
+                partial(
+                    EnkfSimulationRunner.stop_long_running_jobs,
+                    job_queue,
+                    self._enkf_main().analysisConfig().minimum_required_realizations
+                )
+            ]
+
+        jqm = JobQueueManager(job_queue, queue_evaluators)
         jqm.execute_queue()
+
+    @staticmethod
+    def stop_long_running_jobs(job_queue, minimum_required_realizations):
+        finished_realizations = job_queue.count_status(JobStatusType.JOB_QUEUE_DONE)
+        if finished_realizations < minimum_required_realizations:
+            return
+
+        completed_jobs = [job for job in job_queue.job_list if job.status == JobStatusType.JOB_QUEUE_DONE ]
+        average_runtime = sum([job.runtime for job in completed_jobs]) / float(len(completed_jobs))
+        
+        for job in job_queue.job_list:
+            if job.runtime > LONG_RUNNING_FACTOR * average_runtime:
+                job.stop()

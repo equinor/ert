@@ -46,6 +46,7 @@ class JobQueueNode(BaseCClass):
         self.run_path = run_path
         self._max_runtime = max_runtime
         self._start_time = None
+        self._end_time = None
         c_ptr = self._alloc(job_name, run_path, job_script, argc, argv, num_cpu,
                                 ok_file, status_file, exit_file, 
                                 None, None, None, None)
@@ -85,13 +86,20 @@ class JobQueueNode(BaseCClass):
                 self.status == JobStatusType.JOB_QUEUE_RUNNING  or
                 self.status == JobStatusType.JOB_QUEUE_UNKNOWN) # dont stop monitoring if LSF commands are unavailable
 
-    def _get_runtime(self):
-        return time.time() - self._start_time
+    @property
+    def runtime(self):
+        if self._start_time is None:
+            return 0
+
+        if self._end_time is None:
+            return time.time() - self._start_time
+
+        return self._end_time - self._start_time
 
     def _should_be_killed(self):
         return (
             self.thread_status == ThreadStatus.STOPPING or
-            (self._max_runtime is not None and self._get_runtime() >= self._max_runtime)
+            (self._max_runtime is not None and self.runtime >= self._max_runtime)
         )
 
     def _job_monitor(self, driver, pool_sema, max_submit):
@@ -104,6 +112,8 @@ class JobQueueNode(BaseCClass):
             self.update_status(driver)
             if self._should_be_killed():
                 self._kill(driver)
+
+        self._end_time = time.time()
 
         with self._mutex:
             if self.status == JobStatusType.JOB_QUEUE_DONE:

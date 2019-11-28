@@ -66,6 +66,7 @@ class AnalysisConfig(BaseCClass):
     _set_std_cutoff = ResPrototype("void analysis_config_set_std_cutoff(analysis_config, double)")
     _set_global_std_scaling = ResPrototype("void analysis_config_set_global_std_scaling(analysis_config, double)")
     _get_global_std_scaling = ResPrototype("double analysis_config_get_global_std_scaling(analysis_config)")
+    _get_min_realizations = ResPrototype("int analysis_config_get_min_realisations(analysis_config)")
 
 
     def __init__(self, user_config_file=None, config_content=None, config_dict=None):
@@ -228,8 +229,12 @@ class AnalysisConfig(BaseCClass):
     def getGlobalStdScaling(self):
         return self._get_global_std_scaling()
 
+    @property
+    def minimum_required_realizations(self):
+        return self._get_min_realizations()
+
     def haveEnoughRealisations(self, realizations, ensemble_size):
-        return self._have_enough_realisations(realizations, ensemble_size)
+        return realizations >= min(self.minimum_required_realizations, ensemble_size)
 
     def __ne__(self, other):
         return not self == other
