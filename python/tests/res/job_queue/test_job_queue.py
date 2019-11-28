@@ -35,7 +35,7 @@ import sys
 sys.exit(1)
 """
 
-def create_queue(script, max_submit=1, max_runtime=0):
+def create_queue(script, max_submit=1, max_runtime=None):
     driver = Driver(driver_type=QueueDriverEnum.LOCAL_DRIVER, max_running=5)
     job_queue = JobQueue(driver, max_submit=max_submit)
     with open(dummy_config["job_script"], "w") as f:

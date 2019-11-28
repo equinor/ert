@@ -31,7 +31,7 @@ class JobQueueNode(BaseCClass):
 
     def __init__(self,job_script, job_name, run_path, num_cpu, 
                     status_file, ok_file, exit_file, 
-                    done_callback_function, exit_callback_function, callback_arguments, max_runtime=0):
+                    done_callback_function, exit_callback_function, callback_arguments, max_runtime=None):
         self.done_callback_function = done_callback_function
         self.exit_callback_function = exit_callback_function
         self.callback_arguments = callback_arguments
@@ -91,7 +91,7 @@ class JobQueueNode(BaseCClass):
     def _should_be_killed(self):
         return (
             self.thread_status == ThreadStatus.STOPPING or
-            (self._max_runtime > 0 and self._get_runtime() >= self._max_runtime)
+            (self._max_runtime is not None and self._get_runtime() >= self._max_runtime)
         )
 
     def _job_monitor(self, driver, pool_sema, max_submit):

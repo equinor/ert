@@ -105,6 +105,8 @@ class EnkfSimulationRunner(BaseCClass):
 
     def start_queue(self, run_context, job_queue):
         max_runtime = self._enkf_main().analysisConfig().get_max_runtime()
+        if max_runtime == 0:
+            max_runtime = None
 
         # submit jobs
         for i in range(len(run_context)):
