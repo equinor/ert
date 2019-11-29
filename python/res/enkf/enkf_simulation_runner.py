@@ -15,7 +15,6 @@ class EnkfSimulationRunner(BaseCClass):
     TYPE_NAME = "enkf_simulation_runner"
 
     _create_run_path = ResPrototype("bool enkf_main_create_run_path(enkf_simulation_runner, ert_run_context)")
-    _run_simple_step = ResPrototype("int enkf_main_run_simple_step(enkf_simulation_runner, job_queue, ert_run_context)")
 
     def __init__(self, enkf_main):
         assert isinstance(enkf_main, BaseCClass)
