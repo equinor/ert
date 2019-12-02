@@ -41,6 +41,7 @@ void ies_enkf_data_fclose_log(ies_enkf_data_type * data);
 
 void ies_enkf_data_allocateW(ies_enkf_data_type * data, int ens_size);
 void ies_enkf_data_store_initialE(ies_enkf_data_type * data, const matrix_type * E0);
+void ies_enkf_data_augment_initialE(ies_enkf_data_type * data, const matrix_type * E0);
 void ies_enkf_data_store_initialA(ies_enkf_data_type * data, const matrix_type * A);
 const matrix_type * ies_enkf_data_getE(const ies_enkf_data_type * data);
 const matrix_type * ies_enkf_data_getA0(const ies_enkf_data_type * data);

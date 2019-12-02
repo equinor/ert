@@ -55,13 +55,7 @@ extern "C" {
 /* ies_enkf function headers */
 /***************************************************************************************************************/
 void ies_enkf_linalg_extract_active(const ies_enkf_data_type * data,
-                                    const matrix_type * D0,
-                                    const matrix_type * Yin,
-                                    const matrix_type * Rin,
                                     matrix_type * E,
-                                    matrix_type * D,
-                                    matrix_type * Y,
-                                    matrix_type * R,
                                     FILE * log_fp,
                                     bool dbg);
 
@@ -199,9 +193,9 @@ void ies_enkf_updateA( void * module_data,
    ies_enkf_data_type * data = ies_enkf_data_safe_cast( module_data );
    const ies_enkf_config_type * ies_config = ies_enkf_data_get_config( data );
 
+
    int nrobs_msk     =ies_enkf_data_get_obs_mask_size(data); // Total number of observations
    int nrobs_inp     =matrix_get_rows( Yin );                // Number of active observations input in current iteration
-   int nrobs         =nrobs_inp;                             // Number of selected active observations
 
 
    int ens_size_msk  = ies_enkf_data_get_ens_mask_size(data);   // Total number of realizations
@@ -238,27 +232,30 @@ void ies_enkf_updateA( void * module_data,
    bool dbg = ies_enkf_config_get_ies_debug( ies_config ) ;
 
 /***************************************************************************************************************/
-/* Counting number of active observations for current iteration. The number requires that
-   the observations were included in the initial call for storage in data->E as well as in
-   in the current call. Thus, it is possible to remove observations but not include new ones. */
-   nrobs = ies_enkf_data_active_obs_count(data);
+/* Counting number of active observations for current iteration. 
+   If the observations have been used in previous iterations they are contained in data->E0.
+   If they are introduced in the current iteration they will be augmented to data->E.  */
+   ies_enkf_data_store_initialE(data, Ein);
+   ies_enkf_data_augment_initialE(data, Ein);
+
    double nsc = 1.0/sqrt(ens_size - 1.0);
 
 /* dimensions for printing */
-   int m_nrobs      = util_int_min(nrobs     -1,7);
+   int m_nrobs      = util_int_min(nrobs_inp     -1,7);
    int m_ens_size   = util_int_min(ens_size  -1,16);
    int m_state_size = util_int_min(state_size-1,3);
 
 /***************************************************************************************************************/
-   ies_enkf_data_store_initialE(data, Ein);
    ies_enkf_data_allocateW(data, ens_size_msk);
    ies_enkf_data_store_initialA(data, A);
 
 
 /***************************************************************************************************************/
    fprintf(log_fp,"----active ens_size  = %d, total ens_size_msk = %d\n", ens_size,ens_size_msk);
-   fprintf(log_fp,"----active nrobs     = %d, nrobs_inp= %d, total nrobs_msk= %d\n", nrobs, nrobs_inp, nrobs_msk );
+   fprintf(log_fp,"----active nrobs_inp = %d, total     nrobs_msk= %d\n", nrobs_inp, nrobs_msk );
    fprintf(log_fp,"----active state_size= %d\n", state_size );
+
+
 
 /***************************************************************************************************************/
 /* Print initial observation mask */
@@ -278,17 +275,16 @@ void ies_enkf_updateA( void * module_data,
 *     Copies the initial measurement perturbations for the active observations into the current E matrix.
 *     Copies the inputs in D, Y and R into their local representations
 */
-   matrix_type * Y   = matrix_alloc( nrobs    , ens_size );
-   matrix_type * E   = matrix_alloc( nrobs    , ens_size );
-   matrix_type * D   = matrix_alloc( nrobs    , ens_size );
-   matrix_type * R   = matrix_alloc( nrobs    , nrobs );
-   matrix_type * D0  = matrix_alloc_copy( Din );
+   matrix_type * Y   = matrix_alloc_copy( Yin );
+   matrix_type * E   = matrix_alloc( nrobs_inp, ens_size );
+   matrix_type * D   = matrix_alloc_copy( Din );
+   matrix_type * R   = matrix_alloc_copy( Rin );
 
 /* Subtract new measurement perturbations              D=D-E    */
-   matrix_inplace_sub(D0,Ein);
+   matrix_inplace_sub(D,Ein);
 
 /* Extract active observations and realizations for D, E, Y, and R    */
-   ies_enkf_linalg_extract_active(data, D0, Yin, Rin, E, D, Y, R, log_fp, dbg);
+   ies_enkf_linalg_extract_active(data, E, log_fp, dbg);
 
 /* Add old measurement perturbations */
    matrix_inplace_add(D,E);          
@@ -296,8 +292,8 @@ void ies_enkf_updateA( void * module_data,
    matrix_type * A0  = matrix_alloc( state_size, ens_size );  // Temporary ensemble matrix
    matrix_type * W0  = matrix_alloc( ens_size , ens_size  );  // Coefficient matrix
    matrix_type * W   = matrix_alloc( ens_size , ens_size  );  // Coefficient matrix
-   matrix_type * H   = matrix_alloc( nrobs    , ens_size  );  // Innovation vector "H= S*W+D-Y"
-   matrix_type * S   = matrix_alloc( nrobs    , ens_size );   // Predicted ensemble anomalies scaled with inv(Omeaga)
+   matrix_type * H   = matrix_alloc( nrobs_inp, ens_size  );  // Innovation vector "H= S*W+D-Y"
+   matrix_type * S   = matrix_alloc( nrobs_inp, ens_size );   // Predicted ensemble anomalies scaled with inv(Omeaga)
    matrix_type * X   = matrix_alloc( ens_size, ens_size  );   // Final transform matrix
 
    if (dbg) matrix_pretty_fprint_submat(A,"Ain","%11.5f",log_fp,0,m_state_size,0,m_ens_size) ;
@@ -401,7 +397,7 @@ void ies_enkf_updateA( void * module_data,
 *  COMPUTE ||W0 - W|| AND EVALUATE COST FUNCTION FOR PREVIOUS ITERATE                        (Line 12)   */
    matrix_type * DW  = matrix_alloc( ens_size , ens_size  ); 
    matrix_sub(DW,W0,W);
-   teclog(W,D,DW,"iesteclog.dat",ens_size,iteration_nr, rcond, nrsing, nrobs);
+   teclog(W,D,DW,"iesteclog.dat",ens_size,iteration_nr, rcond, nrsing, nrobs_inp);
    teccost(W,D,"costf.dat",ens_size,iteration_nr);
 
 /* DONE *********************************************************************************************************/
@@ -412,7 +408,6 @@ void ies_enkf_updateA( void * module_data,
    matrix_free( D  );
    matrix_free( E  );
    matrix_free( R  );
-   matrix_free( D0 );
    matrix_free( A0 );
    matrix_free( W0 );
    matrix_free( W );
@@ -429,85 +424,45 @@ void ies_enkf_updateA( void * module_data,
 /* Extract active observations and realizations for D, E, Y, and R.
 *  IES works from an initial set of active realizations and measurements.
 *  In the first iteration we store the measurement perturbations from the initially active observations.
-*  In the subsequent iterations we neglect new observations that may be introduced by ERT, and we reuse the 
-*  intially stored measurement perturbations.
+*  In the subsequent iterations we include the new observations that may be introduced by ERT including their new
+*  measurement perturbations, and we reuse the intially stored measurement perturbations.
 *  Additionally we may loose realizations during the iteratitions, and we extract measurement perturbations for
-*  only the active realizations and observations.
+*  only the active realizations.
 */
 void ies_enkf_linalg_extract_active(const ies_enkf_data_type * data,
-                                    const matrix_type * D0,
-                                    const matrix_type * Yin,
-                                    const matrix_type * Rin,
                                     matrix_type * E,
-                                    matrix_type * D,
-                                    matrix_type * Y,
-                                    matrix_type * R,
                                     FILE * log_fp,
                                     bool dbg){
 
-   const bool_vector_type * obs_mask0 = ies_enkf_data_get_obs_mask0(data);
    const bool_vector_type * obs_mask  = ies_enkf_data_get_obs_mask(data);
    const bool_vector_type * ens_mask  = ies_enkf_data_get_ens_mask(data);
-   const matrix_type * dataE          = ies_enkf_data_getE(data);
 
-   int nrobs_msk     =ies_enkf_data_get_obs_mask_size(data); // Total number of observations
-   int nrobs_inp     =matrix_get_rows( Yin );                // Number of active observations input in current iteration
-   int nrobs=nrobs_inp;
+   int obs_size_msk  = ies_enkf_data_get_obs_mask_size(data); // Total number of observations
    int ens_size_msk  = ies_enkf_data_get_ens_mask_size(data);   // Total number of realizations
-   int ens_size      = matrix_get_columns( Yin );               // Number of active realizations in current iteration
 
-   int m_nrobs      = util_int_min(nrobs     -1,7);
-   int m_ens_size   = util_int_min(ens_size  -1,16);
+   const matrix_type * dataE = ies_enkf_data_getE(data);
 
-   matrix_type * Rtmp= matrix_alloc( nrobs    , nrobs_inp );
-
-   int j=-1;  // counter for initial mask0
-   int k=-1;  // counter for current mask
    int m=-1;  // counter for currently active measurements
-   for (int iobs = 0; iobs < nrobs_msk; iobs++){
-      if ( bool_vector_iget(obs_mask0,iobs) )
-         j=j+1 ;
-
-      if ( bool_vector_iget(obs_mask,iobs) )
-         k=k+1 ;
-
-      if ( bool_vector_iget(obs_mask0,iobs) && bool_vector_iget(obs_mask,iobs) ){
-         m=m+1;
-
-         {
-            int i=0;
-            for (int iens = 0; iens < ens_size_msk; iens++){
-               if ( bool_vector_iget(ens_mask,iens) ){
-                  matrix_iset_safe(E,m,i,matrix_iget(dataE,j,iens)) ;
-                  i=i+1;
-               }
+   for (int iobs = 0; iobs < obs_size_msk; iobs++){
+      if ( bool_vector_iget(obs_mask,iobs) ) {
+         m++;
+         fprintf(log_fp,"ies_enkf_linalg_extract_active iobs=%d m=%d)\n",iobs,m);
+         int i=-1;
+         for (int iens = 0; iens < ens_size_msk; iens++){
+            if ( bool_vector_iget(ens_mask,iens) ){
+               i++;
+               matrix_iset_safe(E,m,i,matrix_iget(dataE,iobs,iens)) ;
             }
          }
-
-         matrix_copy_row(D,D0,m,k);
-         matrix_copy_row(Y,Yin,m,k);
-         matrix_copy_row(Rtmp,Rin,m,k);
-         matrix_copy_column(R,Rtmp,m,k);
       }
    }
 
-   matrix_free( Rtmp);
-
-   if (ens_size_msk == ens_size && nrobs == nrobs_inp){
-      fprintf(log_fp,"data->E copied exactly to E: %d\n",matrix_equal(dataE,E)) ;
+   if (dbg) {
+      int m_nrobs      = util_int_min(matrix_get_rows( E )   -1,7);
+      int m_ens_size   = util_int_min(matrix_get_columns( E )-1,16);
+      matrix_pretty_fprint_submat(E,"E","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
    }
 
-   fprintf(log_fp,"Input matrices\n");
-   if (dbg) matrix_pretty_fprint_submat(E,"E","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
-
-   if (dbg) matrix_pretty_fprint_submat(D0,"Din","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
-   if (dbg) matrix_pretty_fprint_submat(D,"D","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
-
-   if (dbg) matrix_pretty_fprint_submat(Yin,"Yin","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
-   if (dbg) matrix_pretty_fprint_submat(Y,"Y","%11.5f",log_fp,0,m_nrobs,0,m_ens_size) ;
-
-   if (dbg) matrix_pretty_fprint_submat(Rin,"Rin","%11.5f",log_fp,0,m_nrobs,0,m_nrobs) ;
-   if (dbg) matrix_pretty_fprint_submat(R,"R","%11.5f",log_fp,0,m_nrobs,0,m_nrobs) ;
 }
 
 

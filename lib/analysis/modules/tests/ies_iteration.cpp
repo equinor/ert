@@ -261,10 +261,16 @@ matrix_type * swap_matrix(matrix_type * old_matrix, matrix_type * new_matrix) {
 /*
   This test verifies that the update iteration do not crash hard when
   realizations and observations are deactived between iterations.
+  The function is testing reactivation as well. It is a bit tricky since there is no
+  reactivation function. What is done is to start with identical copies, testdata and
+  testdata2. In the first iteration, one observation is removed in testdata2 and before
+  computing the update. In the subsequent iterations, testdata is used which includes
+  the datapoint initially removed from testdata2. 
 */
 
-void test_deactivate(const char * testdata_file) {
+void test_deactivate_observations_and_realizations(const char * testdata_file) {
   res::es_testdata testdata(testdata_file);
+  res::es_testdata testdata2(testdata_file);
   int num_iter = 10;
   rng_type * rng = rng_alloc( MZRAN, INIT_DEFAULT );
 
@@ -274,14 +280,44 @@ void test_deactivate(const char * testdata_file) {
   matrix_type * A0 = testdata.alloc_state("prior");
   matrix_type * A = matrix_alloc_copy(A0);
 
+
   ies_enkf_config_set_truncation(ies_config, 1.00);
   ies_enkf_config_set_ies_max_steplength(ies_config, 0.50);
   ies_enkf_config_set_ies_min_steplength(ies_config, 0.50);
   ies_enkf_config_set_ies_inversion(ies_config, IES_INVERSION_SUBSPACE_EXACT_R);
   ies_enkf_config_set_ies_aaprojection(ies_config, false);
 
+  for (int iter=0; iter < 1; iter++) {
+    printf("test_deactivate_observations_and_realizations: iter= %d\n",iter);
 
-  for (int iter=0; iter < num_iter; iter++) {
+    // deactivate an observation initially to test reactivation in the following iteration
+    testdata2.deactivate_obs( 2 );
+
+    ies_enkf_init_update(ies_data,
+                         testdata2.ens_mask,
+                         testdata2.obs_mask,
+                         testdata2.S,
+                         testdata2.R,
+                         testdata2.dObs,
+                         testdata2.E,
+                         testdata2.D,
+                         rng);
+
+    ies_enkf_updateA(ies_data,
+                     A,
+                     testdata2.S,
+                     testdata2.R,
+                     testdata2.dObs,
+                     testdata2.E,
+                     testdata2.D,
+                     NULL,
+                     rng);
+  }
+  
+  for (int iter=1; iter < num_iter; iter++) {
+    printf("test_deactivate_observations_and_realizations: iter= %d\n",iter);
+
+    // Deactivate a realization
     if (iter == 3) {
       int iens = testdata.active_ens_size / 2;
       testdata.deactivate_realization( iens );
@@ -295,6 +331,7 @@ void test_deactivate(const char * testdata_file) {
       }
     }
 
+    // Now deactivate a previously active observation
     if (iter == 7)
       testdata.deactivate_obs( testdata.active_obs_size / 2 );
 
@@ -317,8 +354,8 @@ void test_deactivate(const char * testdata_file) {
                      testdata.D,
                      NULL,
                      rng);
-
   }
+
 
   matrix_free(A);
   matrix_free(A0);
@@ -332,5 +369,5 @@ int main(int argc, char ** argv) {
   res::es_testdata testdata(argv[1]);
   cmp_std_ies(testdata);
   cmp_std_ies_delrel(testdata);
-  test_deactivate(argv[1]);
+  test_deactivate_observations_and_realizations(argv[1]);
 }

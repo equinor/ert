@@ -131,7 +131,7 @@ int ies_enkf_data_active_obs_count(const ies_enkf_data_type * data) {
   int nrobs_msk = ies_enkf_data_get_obs_mask_size( data );
   int nrobs = 0;
   for (int i = 0; i < nrobs_msk; i++) {
-    if ( bool_vector_iget(data->obs_mask0,i) && bool_vector_iget(data->obs_mask,i) ){
+    if ( bool_vector_iget(data->obs_mask,i) ){
       nrobs=nrobs+1;
     }
   }
@@ -167,16 +167,66 @@ void ies_enkf_data_fclose_log(ies_enkf_data_type * data) {
 }
 
 
+/* We store the initial observation perturbations in E, corresponding to active data->obs_mask0
+   in data->E. The unused rows in data->E corresponds to false data->obs_mask0 */
 void ies_enkf_data_store_initialE(ies_enkf_data_type * data, const matrix_type * E0) {
   if (!data->E){
-    // We store the initial observation perturbations corresponding to data->obs_mask0.
     bool dbg = ies_enkf_config_get_ies_debug( data->config ) ;
-    int m_nrobs      = util_int_min(matrix_get_rows( E0 )-1, 50);
-    int m_ens_size   = util_int_min(matrix_get_columns( E0 )-1, 16);
-    fprintf(data->log_fp,"Allocating and assigning data->E \n");
-    data->E = matrix_alloc_copy(E0);
-    if (dbg)
+    int obs_size_msk = ies_enkf_data_get_obs_mask_size( data );
+    int ens_size_msk = ies_enkf_data_get_ens_mask_size( data );
+    fprintf(data->log_fp,"Allocating and assigning data->E (%d,%d) \n",obs_size_msk,ens_size_msk);
+    data->E = matrix_alloc(obs_size_msk,ens_size_msk);
+    matrix_set(data->E , -999.9) ;
+    int m=0;
+    for (int i = 0; i < obs_size_msk; i++) {
+      if ( bool_vector_iget(data->obs_mask0,i) ){
+        matrix_copy_row(data->E,E0,i,m);
+        m++;
+      }
+    }
+
+    if (dbg) {
+      int nrobs_inp=matrix_get_rows( E0 );
+      int m_nrobs=util_int_min(nrobs_inp-1, 50);
+      int m_ens_size=util_int_min(ens_size_msk-1, 16);
+      matrix_pretty_fprint_submat(E0,"Ein","%11.5f",data->log_fp,0,m_nrobs,0,m_ens_size);
+      m_nrobs=util_int_min(obs_size_msk-1, 50);
       matrix_pretty_fprint_submat(data->E,"data->E","%11.5f",data->log_fp,0,m_nrobs,0,m_ens_size);
+    }
+
+  }
+}
+
+/* We augment the additional observation perturbations arriving in later iterations, that was not stored before,
+   in data->E. */
+void ies_enkf_data_augment_initialE(ies_enkf_data_type * data, const matrix_type * E0) {
+  if (data->E){
+    fprintf(data->log_fp,"Augmenting new perturbations to data->E \n");
+    bool dbg = ies_enkf_config_get_ies_debug( data->config ) ;
+    int obs_size_msk = ies_enkf_data_get_obs_mask_size( data );
+    int ens_size_msk = ies_enkf_data_get_ens_mask_size( data );
+    int m=0;
+    for (int iobs = 0; iobs < obs_size_msk; iobs++){
+       if ( !bool_vector_iget(data->obs_mask0,iobs) && bool_vector_iget(data->obs_mask,iobs) ){
+          int i=-1;
+          for (int iens = 0; iens < ens_size_msk; iens++){
+             if ( bool_vector_iget(data->ens_mask,iens) ){
+                i++;
+                matrix_iset_safe(data->E,iobs,iens,matrix_iget(E0,m,i)) ;
+             }
+          }
+          bool_vector_iset(data->obs_mask0,iobs,true);
+       }
+       if ( bool_vector_iget(data->obs_mask,iobs) ){
+          m++;
+       }
+    }
+
+    if (dbg) {
+      int m_nrobs=util_int_min(obs_size_msk-1, 50);
+      int m_ens_size=util_int_min(ens_size_msk-1, 16);
+        matrix_pretty_fprint_submat(data->E,"data->E","%11.5f",data->log_fp,0,m_nrobs,0,m_ens_size);
+    }
   }
 }
 
