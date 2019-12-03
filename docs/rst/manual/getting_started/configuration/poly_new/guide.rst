@@ -1,5 +1,5 @@
-Creating a config
-=================
+Configuration Guide
+===================
 ERT runs a set of simulations with a prior set of parameters sampled from
 distributions. Everything involved in running a particular simulation is called
 a realization. A set of realizations is called an ensemble. The results of all
