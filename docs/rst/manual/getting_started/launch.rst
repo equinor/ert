@@ -1,7 +1,7 @@
 Launching ERT
 -------------
 
-In order to run ERT you first need an ERT installation and an ERT :doc:`configuration/configuration`.
+In order to run ERT you first need an ERT installation and an ERT config (See: :doc:`configuration/poly_new/guide`).
 
 Before you can launch ERT you should change directory (in the terminal) to the ERT project folder.
 

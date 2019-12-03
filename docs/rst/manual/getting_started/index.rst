@@ -4,6 +4,6 @@
 
    setup
    key_concepts
-   configuration/configuration
+   configuration/poly_new/guide
    launch
    gui/gui
