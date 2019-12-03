@@ -20,7 +20,7 @@ class RunDialog(QDialog):
 
     simulation_done = pyqtSignal(bool, str)
 
-    def __init__(self, config_file, run_model, arguments, parent):
+    def __init__(self, config_file, run_model, arguments, parent=None):
         QDialog.__init__(self, parent)
         self.setWindowFlags(Qt.Window)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
