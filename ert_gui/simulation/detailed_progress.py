@@ -1,7 +1,7 @@
 import math
 import time
 
-from qtpy.QtCore import QTimer, Signal, QVariant, Qt, QAbstractTableModel
+from qtpy.QtCore import Signal, Qt, QAbstractTableModel
 from qtpy.QtWidgets import (QWidget,
                             QFrame,
                             QDialog,
@@ -163,7 +163,7 @@ class SingleProgressModel(QAbstractTableModel):
 
     def data(self, index, role):
         if not index.isValid():
-            return QVariant()
+            return
 
         status = self.model_data[index.row()][self.get_column_index("status")]
         col = self.get_column_name(index.column())
@@ -173,38 +173,38 @@ class SingleProgressModel(QAbstractTableModel):
             color.setAlpha(color.alpha()/2)
             if col == 'stdout' or col == 'stderr':
                 color = QColor(100,100,100,100) # make items stand out
-            return QVariant(color)
+            return color
 
         if role != Qt.DisplayRole:
-            return QVariant()
+            return
 
         if self.get_column_name(index.column()).find("time") >= 0:
             if status == "Pending" or status == "Waiting":
-                return QVariant()
+                return
 
             timestamp = eval(self.model_data[index.row()][index.column()])
-            return QVariant(time.ctime(timestamp))
+            return time.ctime(timestamp)
 
         if col == 'stdout' or col == 'stderr':
-            return QVariant("OPEN")
+            return "OPEN"
 
         if col == 'current_memory_usage' or col == 'max_memory_usage':
             try:
                 memory_usage = int(self.model_data[index.row()][index.column()])
             except ValueError:
-                return QVariant(self.model_data[index.row()][index.column()])
+                return self.model_data[index.row()][index.column()]
             else:
-                return QVariant(SingleProgressModel._get_byte_with_unit(memory_usage))
+                return SingleProgressModel._get_byte_with_unit(memory_usage)
 
-        return QVariant(self.model_data[index.row()][index.column()])
+        return self.model_data[index.row()][index.column()]
 
     def headerData(self, index, orientation, role=Qt.DisplayRole):
         if role != Qt.DisplayRole:
-            return QVariant()
+            return
         if orientation == Qt.Horizontal:
-            return QVariant(self.get_column_name(index))
+            return self.get_column_name(index)
         if orientation == Qt.Vertical:
-            return QVariant(index)
+            return index
 
 
 class SingleTableView(QTableView):

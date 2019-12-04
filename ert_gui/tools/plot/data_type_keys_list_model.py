@@ -1,4 +1,4 @@
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt
 from qtpy.QtGui import QColor
 
 from ert_gui.ertwidgets import resourceIcon
@@ -45,8 +45,6 @@ class DataTypeKeysListModel(QAbstractItemModel):
             elif role == Qt.BackgroundRole:
                 if self.keyManager().isKeyWithObservations(item):
                     return self.HAS_OBSERVATIONS
-
-        return QVariant()
 
     def itemAt(self, index):
         assert isinstance(index, QModelIndex)

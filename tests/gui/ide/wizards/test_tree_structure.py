@@ -56,7 +56,7 @@ class TreeStructureTest(ErtTest):
 
         self.assertEqual(child_item, tree_item)
 
-        self.assertTrue(tree.data(tree.index(3, 0)).isNull())
+        self.assertIsNone(tree.data(tree.index(3, 0)))
 
 
 

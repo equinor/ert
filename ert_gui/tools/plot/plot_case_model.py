@@ -1,4 +1,4 @@
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt
 
 
 from ert_gui.ertwidgets.models.ertmodel import getAllCasesNotRunning
@@ -35,8 +35,6 @@ class PlotCaseModel(QAbstractItemModel):
             if role == Qt.DisplayRole:
                 return item
 
-        return QVariant()
-
     def itemAt(self, index):
         assert isinstance(index, QModelIndex)
 
@@ -58,13 +56,3 @@ class PlotCaseModel(QAbstractItemModel):
         while cur < self.rowCount():
             yield self.itemAt(self.index(cur, 0))
             cur += 1
-
-
-
-
-
-
-
-
-
-

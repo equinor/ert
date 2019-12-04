@@ -1,4 +1,4 @@
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, QVariant, Qt
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt
 
 
 class TreeModel(QAbstractItemModel):
@@ -15,8 +15,6 @@ class TreeModel(QAbstractItemModel):
         if item is not None:
             if role == Qt.DisplayRole:
                 return item.name()
-
-        return QVariant()
 
     def item(self, q_model_index):
         if not q_model_index.isValid():
@@ -40,8 +38,6 @@ class TreeModel(QAbstractItemModel):
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return self.__root.name()
-
-        return QVariant()
 
 
     def index(self, row, column, parent=None):
