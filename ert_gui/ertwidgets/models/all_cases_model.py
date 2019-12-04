@@ -1,4 +1,4 @@
-from qtpy.QtCore import Qt, QVariant, QAbstractItemModel, QModelIndex
+from qtpy.QtCore import Qt, QAbstractItemModel, QModelIndex
 
 from ert_gui.ertwidgets.models.ertmodel import getAllCases
 
@@ -33,8 +33,6 @@ class AllCasesModel(QAbstractItemModel):
 
             if role == Qt.DisplayRole:
                 return item
-
-        return QVariant()
 
     def itemAt(self, index):
         assert isinstance(index, QModelIndex)
