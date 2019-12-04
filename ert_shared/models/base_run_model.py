@@ -212,8 +212,8 @@ class BaseRunModel(object):
         iteration = self._run_context.get_iter()
         if iteration not in self.realization_progress:
             self.realization_progress[iteration] = {}
-        for run_arg in self._run_context:
-            if not run_arg:
+        for idx, run_arg in enumerate(self._run_context):
+            if not self._run_context.is_active(idx):
                 continue
             try:
                 # will throw if not yet submitted (is in a limbo state)
