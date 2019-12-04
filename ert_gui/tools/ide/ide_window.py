@@ -1,17 +1,11 @@
-import sys
-
-try:
-  from PyQt4.QtCore import pyqtSignal
-  from PyQt4.QtGui import QMainWindow
-except ImportError:
-  from PyQt5.QtCore import pyqtSignal
-  from PyQt5.QtWidgets import QMainWindow
+from qtpy.QtCore import Signal
+from qtpy.QtWidgets import QMainWindow
 
 from ert_gui.tools.ide.configuration_panel import ConfigurationPanel
 
 
 class IdeWindow(QMainWindow):
-    reloadTriggered = pyqtSignal(str)
+    reloadTriggered = Signal(str)
 
     def __init__(self, config_file, parent, help_tool):
         QMainWindow.__init__(self, parent)

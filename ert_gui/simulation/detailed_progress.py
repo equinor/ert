@@ -1,38 +1,22 @@
 import math
 import time
-try:
-  from PyQt4.QtCore import QTimer, pyqtSignal, QVariant, Qt, QAbstractTableModel
-  from PyQt4.QtGui import (QWidget,
-                           QPainter,
-                           QColor,
-                           QFrame,
-                           QGridLayout,
-                           QImage,
-                           QDialog,
-                           QTableView,
-                           QLabel,
-                           QPen,
-                           QPushButton,
-                           QTextEdit,
-                           QTabWidget)
 
-except ImportError:
-  from PyQt5.QtCore import QTimer, pyqtSignal, QVariant, Qt, QAbstractTableModel
-  from PyQt5.QtWidgets import (QWidget,
-                               QFrame,
-                               QDialog,
-                               QTableView,
-                               QLabel,
-                               QGridLayout,
-                               QPushButton,
-                               QTextEdit,
-                               QTabWidget)
-  from PyQt5.QtGui import QPainter, QColor, QImage, QPen
+from qtpy.QtCore import QTimer, Signal, QVariant, Qt, QAbstractTableModel
+from qtpy.QtWidgets import (QWidget,
+                            QFrame,
+                            QDialog,
+                            QTableView,
+                            QLabel,
+                            QGridLayout,
+                            QPushButton,
+                            QTextEdit,
+                            QTabWidget)
+from qtpy.QtGui import QPainter, QColor, QImage, QPen
 
 from res.job_queue import JobStatusType
 
 class DetailedProgress(QFrame):
-    clicked = pyqtSignal(int)
+    clicked = Signal(int)
 
     def __init__(self, state_colors, parent):
         super(DetailedProgress, self).__init__(parent)

@@ -1,16 +1,9 @@
-import sys
-
-try:
-  from PyQt4.QtCore import pyqtSignal
-  from PyQt4.QtGui import QWidget
-except ImportError:
-  from PyQt5.QtCore import pyqtSignal
-  from PyQt5.QtWidgets import QWidget
+from qtpy.QtCore import Signal
+from qtpy.QtWidgets import QWidget
 
 
 class SimulationConfigPanel(QWidget):
-
-    simulationConfigurationChanged = pyqtSignal()
+    simulationConfigurationChanged = Signal()
 
     def __init__(self, simulation_model, advanced_option=False):
         QWidget.__init__(self)

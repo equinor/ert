@@ -14,9 +14,8 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import sys
-
-from ErtQt.Qt import Qt, QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout
 
 
 class ClosableDialog(QDialog):
@@ -28,7 +27,6 @@ class ClosableDialog(QDialog):
         self.setModal(True)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
-
 
         layout = QVBoxLayout()
         layout.setSizeConstraint(QLayout.SetFixedSize) # not resizable!!!
@@ -45,7 +43,6 @@ class ClosableDialog(QDialog):
         layout.addLayout(self.__button_layout)
 
         self.setLayout(layout)
-
 
     def disableCloseButton(self):
         self.close_button.setEnabled(False)

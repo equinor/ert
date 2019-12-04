@@ -1,11 +1,5 @@
-import sys
-
-try:
-  from PyQt4.QtCore import pyqtSignal, QSignalMapper, Qt
-  from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QToolButton, QComboBox
-except ImportError:
-  from PyQt5.QtCore import pyqtSignal, QSignalMapper, Qt
-  from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QToolButton, QComboBox
+from qtpy.QtCore import Signal, QSignalMapper, Qt
+from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QToolButton, QComboBox
 
 
 from ert_gui.ertwidgets import resourceIcon
@@ -14,7 +8,7 @@ from ert_gui.tools.plot import PlotCaseModel
 
 class CaseSelectionWidget(QWidget):
 
-    caseSelectionChanged = pyqtSignal()
+    caseSelectionChanged = Signal()
 
     def __init__(self, current_case):
         QWidget.__init__(self)

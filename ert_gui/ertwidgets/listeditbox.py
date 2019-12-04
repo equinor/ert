@@ -13,9 +13,8 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
-import sys
-
-from ErtQt.Qt import Qt, QSize, QHBoxLayout, QLineEdit, QCompleter, QToolButton, QInputDialog, QMessageBox, QWidget
+from qtpy.QtCore import Qt, QSize
+from qtpy.QtWidgets import QHBoxLayout, QLineEdit, QCompleter, QToolButton, QInputDialog, QMessageBox, QWidget
 
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.validationsupport import ValidationSupport

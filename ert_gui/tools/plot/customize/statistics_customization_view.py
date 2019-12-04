@@ -1,10 +1,4 @@
-import sys
-
-try:
-  from PyQt4.QtGui import QHBoxLayout, QLabel, QComboBox
-except ImportError:
-  from PyQt5.QtWidgets import QHBoxLayout, QLabel, QComboBox
-
+from qtpy.QtWidgets import QHBoxLayout, QComboBox
 
 from ert_gui.tools.plot.customize import CustomizationView, WidgetProperty
 from ert_gui.tools.plot import style_chooser as sc

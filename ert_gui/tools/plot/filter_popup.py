@@ -1,15 +1,9 @@
-import sys
-
-try:
-  from PyQt4.QtCore import Qt, pyqtSignal
-  from PyQt4.QtGui import QWidget, QFrame, QDialog, QVBoxLayout, QCheckBox, QLabel, QLayout, QCursor
-except ImportError:
-  from PyQt5.QtCore import Qt, pyqtSignal
-  from PyQt5.QtWidgets import QWidget, QFrame, QDialog, QVBoxLayout, QCheckBox, QLabel, QLayout
-  from PyQt5.QtGui import QCursor
+from qtpy.QtCore import Qt, Signal
+from qtpy.QtWidgets import QWidget, QFrame, QDialog, QVBoxLayout, QCheckBox, QLabel, QLayout
+from qtpy.QtGui import QCursor
 
 class FilterPopup(QDialog):
-    filterSettingsChanged = pyqtSignal(dict)
+    filterSettingsChanged = Signal(dict)
 
     def __init__(self, parent=None):
         QDialog.__init__(self, parent, Qt.WindowStaysOnTopHint | Qt.X11BypassWindowManagerHint | Qt.FramelessWindowHint)

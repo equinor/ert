@@ -1,12 +1,8 @@
 import sys
 import traceback
 
-try:
-  from PyQt4.QtCore import Qt, pyqtSignal
-  from PyQt4.QtGui import QWidget, QVBoxLayout, QAction
-except ImportError:
-  from PyQt5.QtCore import Qt, pyqtSignal
-  from PyQt5.QtWidgets import QWidget, QVBoxLayout, QAction
+from qtpy.QtCore import Qt, Signal
+from qtpy.QtWidgets import QWidget, QVBoxLayout, QAction
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT
@@ -15,7 +11,7 @@ from ert_gui.ertwidgets import resourceIcon
 
 
 class CustomNavigationToolbar(NavigationToolbar2QT):
-    customizationTriggered = pyqtSignal()
+    customizationTriggered = Signal()
 
     def __init__(self, canvas, parent, coordinates=True):
         super(CustomNavigationToolbar, self).__init__(canvas, parent, coordinates)
@@ -37,7 +33,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
 
 
 class PlotWidget(QWidget):
-    customizationTriggered = pyqtSignal()
+    customizationTriggered = Signal()
 
     def __init__(self, name, plotFunction, plot_condition_function_list, plotContextFunction, parent=None):
         QWidget.__init__(self, parent)

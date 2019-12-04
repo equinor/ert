@@ -1,11 +1,7 @@
 from math import floor
-import sys
 
-try:
-  from PyQt4.QtGui import QPainter, QColor, QFrame, QLinearGradient
-except ImportError:
-  from PyQt5.QtWidgets import QFrame
-  from PyQt5.QtGui import QPainter, QColor, QLinearGradient
+from qtpy.QtWidgets import QFrame
+from qtpy.QtGui import QPainter, QColor, QLinearGradient
 
 
 class SimpleProgress(QFrame):

@@ -1,24 +1,17 @@
-import sys
-
-try:
-  from PyQt4.QtCore import Qt, pyqtSignal, QSize
-  from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout, QWidget, QLabel, QMessageBox, QSizePolicy
-except ImportError:
-  from PyQt5.QtCore import Qt, pyqtSignal, QSize
-  from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout, QWidget, QLabel, QMessageBox, QSizePolicy, QSpacerItem
+from qtpy.QtCore import Qt, Signal, QSize
+from qtpy.QtWidgets import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout, QWidget, QLabel, QMessageBox, QSizePolicy, QSpacerItem
  
-
 from ert_gui.ertwidgets import resourceMovie
 
 
 class ProcessJobDialog(QDialog):
 
-    disposeDialog = pyqtSignal()
-    presentInformation = pyqtSignal(str, str, str)
-    presentError = pyqtSignal(str, str, str)
+    disposeDialog = Signal()
+    presentInformation = Signal(str, str, str)
+    presentError = Signal(str, str, str)
 
-    closeButtonPressed = pyqtSignal()
-    cancelConfirmed = pyqtSignal()
+    closeButtonPressed = Signal()
+    cancelConfirmed = Signal()
 
     def __init__(self, title, parent=None):
         QDialog.__init__(self, parent)

@@ -1,8 +1,4 @@
-try:
-    from PyQt5.QtCore import Qt
-except ImportError:
-    from PyQt4.QtCore import Qt
-
+from qtpy.QtCore import Qt
 
 from ert_gui.ide.wizards import TreeItem, TreeModel
 from tests import ErtTest

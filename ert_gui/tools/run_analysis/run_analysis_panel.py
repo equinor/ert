@@ -13,13 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import sys
-
-try:
-  from PyQt4.QtGui import QWidget, QFormLayout, QLineEdit
-except ImportError:
-  from PyQt5.QtWidgets import QWidget, QFormLayout, QLineEdit
-
+from qtpy.QtWidgets import QWidget, QFormLayout, QLineEdit
 
 from ert_gui.ertwidgets.analysismoduleselector import AnalysisModuleSelector
 from ert_gui.ertwidgets.caseselector import CaseSelector

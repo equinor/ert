@@ -1,6 +1,5 @@
-import sys
-
-from ErtQt.Qt import Qt, QFrame, QLabel, QVBoxLayout, QHBoxLayout, QScrollArea, QWidget, QGridLayout
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QFrame, QLabel, QVBoxLayout, QHBoxLayout, QScrollArea, QWidget, QGridLayout
 
 from ert_gui.ertwidgets.models.ertsummary import ErtSummary
 

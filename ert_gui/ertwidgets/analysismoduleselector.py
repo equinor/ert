@@ -1,6 +1,7 @@
 import sys
 
-from ErtQt.Qt import QMargins, Qt, QWidget, QHBoxLayout, QComboBox, QToolButton
+from qtpy.QtCore import QMargins, Qt
+from qtpy.QtWidgets import  QWidget, QHBoxLayout, QComboBox, QToolButton
 
 from ert_gui.ertwidgets import addHelpToWidget, ClosableDialog, resourceIcon
 from ert_gui.ertwidgets.models.ertmodel import getCurrentAnalysisModuleName, getAnalysisModuleNames

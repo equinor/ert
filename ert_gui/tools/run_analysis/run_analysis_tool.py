@@ -13,22 +13,17 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import ert_shared
 
-try:
-    from PyQt4.QtGui import QMessageBox
-except ImportError:
-    from PyQt5.QtWidgets import QMessageBox
+from qtpy.QtWidgets import QMessageBox
 
 from res.enkf import ErtRunContext
-
-
 from res.enkf import ESUpdate
+
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from ert_gui.tools import Tool
 from ert_gui.tools.run_analysis import RunAnalysisPanel
-
+import ert_shared
 
 def analyse(target, source):
     """Runs analysis using target and source cases. Returns whether or not

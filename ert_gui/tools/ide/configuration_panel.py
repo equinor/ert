@@ -1,13 +1,8 @@
 import re
 import shutil
-import sys
 
-try:
-  from PyQt4.QtCore import pyqtSignal
-  from PyQt4.QtGui import QWidget, QVBoxLayout, QToolBar, QMessageBox, QSizePolicy, QFileDialog
-except ImportError:
-  from PyQt5.QtCore import pyqtSignal
-  from PyQt5.QtWidgets import QWidget, QVBoxLayout, QToolBar, QMessageBox, QSizePolicy, QFileDialog
+from qtpy.QtCore import Signal
+from qtpy.QtWidgets import QWidget, QVBoxLayout, QToolBar, QMessageBox, QSizePolicy, QFileDialog
 
 from ert_gui.ertwidgets import SearchBox, resourceIcon
 from ert_gui.ide.highlighter import KeywordHighlighter
@@ -17,7 +12,7 @@ from ert_gui.tools.ide import IdePanel
 
 class ConfigurationPanel(QWidget):
 
-    reloadApplication = pyqtSignal(str)
+    reloadApplication = Signal(str)
 
     def __init__(self, config_file, help_tool):
         QWidget.__init__(self)

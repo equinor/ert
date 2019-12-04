@@ -1,10 +1,4 @@
-import sys
-
-try:
-  from PyQt4.QtGui import QMenu
-except ImportError:
-  from PyQt5.QtWidgets import QMenu
-
+from qtpy.QtWidgets import QMenu
 
 from ert_shared import ERT
 from ert_gui.ertwidgets import resourceIcon

@@ -1,11 +1,5 @@
-import sys
-
-try:
-  from PyQt4.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
-  from PyQt4.QtGui import QColor
-except ImportError:
-  from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
-  from PyQt5.QtGui import QColor
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
+from qtpy.QtGui import QColor
 
 from ert_gui.ertwidgets import resourceIcon
 

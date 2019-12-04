@@ -1,11 +1,10 @@
 import sys
-import ert_shared
 
-from ert_shared.cli.notifier import ErtCliNotifier
+from qtpy.QtGui import QIcon
+
 from ert_gui.tools import run_analysis
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from tests import ErtTest
-from ErtQt.Qt import QIcon
 
 if sys.version_info >= (3, 3):
     from unittest.mock import Mock, patch

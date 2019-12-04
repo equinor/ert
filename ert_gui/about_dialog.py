@@ -15,13 +15,9 @@
 #  for more details.
 import sys
 
-try:
-  from PyQt4.QtCore import Qt, QSize
-  from PyQt4.QtGui import  QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QFont
-except ImportError:
-  from PyQt5.QtCore import Qt, QSize
-  from PyQt5.QtWidgets import  QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QLabel
-  from PyQt5.QtGui import  QFont
+from qtpy.QtCore import Qt, QSize
+from qtpy.QtWidgets import QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QLabel
+from qtpy.QtGui import QFont
 
 import res
 import ecl

@@ -1,6 +1,6 @@
-import sys
-
-from ErtQt.Qt import Qt, QPoint, QObject, pyqtSignal, QWidget, QVBoxLayout, QSizePolicy, QFrame, QColor, QLabel
+from qtpy.QtCore import Qt, QPoint, QObject, Signal
+from qtpy.QtGui import QColor
+from qtpy.QtWidgets import QWidget, QVBoxLayout, QSizePolicy, QFrame, QLabel
 
 
 class ErrorPopup(QWidget):
@@ -53,7 +53,7 @@ class ValidationSupport(QObject):
     WARNING = "warning"
     EXCLAMATION = "ide/small/exclamation"
 
-    validationChanged = pyqtSignal(bool)
+    validationChanged = Signal(bool)
 
     def __init__(self, validation_target):
         """ @type validation_target: QWidget """

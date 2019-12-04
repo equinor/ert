@@ -1,12 +1,6 @@
-import sys
-
-try:
-  from PyQt4.QtCore import Qt, QUrl, pyqtSignal, QSettings
-  from PyQt4.QtGui import QLabel, QVBoxLayout, QColor, QDesktopServices, QDialog, QMainWindow, QWidget
-except ImportError:
-  from PyQt5.QtCore import Qt, QUrl, pyqtSignal, QSettings
-  from PyQt5.QtWidgets import QLabel, QVBoxLayout, QDialog, QMainWindow, QWidget
-  from PyQt5.QtGui import QColor, QDesktopServices
+from qtpy.QtCore import Qt, QUrl, Signal
+from qtpy.QtWidgets import QLabel, QVBoxLayout, QMainWindow, QWidget
+from qtpy.QtGui import QDesktopServices
 
 
 from ert_gui.tools import HelpCenter
@@ -22,7 +16,7 @@ class HelpWindow(QMainWindow):
                            "</table>"
                            "</html>")
 
-    visibilityChanged = pyqtSignal(bool)
+    visibilityChanged = Signal(bool)
 
     def __init__(self, help_center_name, parent=None):
         QMainWindow.__init__(self, parent, Qt.WindowStaysOnTopHint)

@@ -1,10 +1,4 @@
-import sys
-
-try:
-  from PyQt4.QtGui import QAction
-except ImportError:
-  from PyQt5.QtWidgets import QAction
-
+from qtpy.QtWidgets import QAction
 
 from ert_gui.tools import HelpCenter
 

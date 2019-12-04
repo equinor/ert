@@ -1,11 +1,5 @@
-import sys
-
-try:
-  from PyQt4.QtGui import QHBoxLayout, QLabel, QColor
-except ImportError:
-  from PyQt5.QtWidgets import QHBoxLayout, QLabel
-  from PyQt5.QtGui import QColor
-
+from qtpy.QtWidgets import QHBoxLayout
+from qtpy.QtGui import QColor
 
 from ert_gui.tools.plot import ColorBox
 from ert_gui.tools.plot.customize import CustomizationView, WidgetProperty

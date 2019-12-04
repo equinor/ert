@@ -1,11 +1,11 @@
 import sys
 
-from ErtQt.Qt import QObject, pyqtSignal
+from qtpy.QtCore import QObject, Signal
 
 
 class SelectableListModel(QObject):
-    modelChanged = pyqtSignal()
-    selectionChanged = pyqtSignal()
+    modelChanged = Signal()
+    selectionChanged = Signal()
 
     def __init__(self, items):
         QObject.__init__(self)

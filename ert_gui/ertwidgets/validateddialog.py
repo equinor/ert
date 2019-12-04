@@ -13,9 +13,9 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
-import sys
-
-from ErtQt.Qt import Qt, QSize, QDialog, QColor, QFormLayout, QLabel, QWidget, QDialogButtonBox, QLineEdit, QComboBox, QLayout
+from qtpy.QtCore import Qt, QSize
+from qtpy.QtGui import QColor
+from qtpy.QtWidgets import QDialog, QFormLayout, QLabel, QWidget, QDialogButtonBox, QLineEdit, QComboBox, QLayout
 
 
 class ValidatedDialog(QDialog):
