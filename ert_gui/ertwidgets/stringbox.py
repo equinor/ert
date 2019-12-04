@@ -14,7 +14,8 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
-from ErtQt.Qt import QPalette, QLineEdit
+from qtpy.QtGui import QPalette
+from qtpy.QtWidgets import QLineEdit
 
 from ert_gui.ertwidgets import ValidationSupport, addHelpToWidget
 

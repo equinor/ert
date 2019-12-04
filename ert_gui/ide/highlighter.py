@@ -1,10 +1,6 @@
 import re
-import sys
 
-try:
-  from PyQt4.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QTextBlockUserData
-except ImportError:
-  from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QTextBlockUserData
+from qtpy.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QTextBlockUserData
 
 from ert_gui.ide.keywords import ErtKeywords
 from ert_gui.ide.keywords.configuration_line_builder import ConfigurationLineBuilder

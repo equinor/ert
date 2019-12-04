@@ -14,9 +14,8 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from functools import partial
-import sys
 
-from ErtQt.Qt import QDoubleSpinBox, QWidget, QFormLayout, QCheckBox, QLineEdit, QHBoxLayout, QSpinBox, QLabel
+from qtpy.QtWidgets import QDoubleSpinBox, QWidget, QFormLayout, QCheckBox, QLineEdit, QHBoxLayout, QSpinBox, QLabel
 
 from ert_gui.ertwidgets.models.analysismodulevariablesmodel import AnalysisModuleVariablesModel
 

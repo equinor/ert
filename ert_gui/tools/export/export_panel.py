@@ -15,12 +15,8 @@
 #  for more details.
 import sys
 
-try:
-  from PyQt4.QtCore import QDir, pyqtSignal
-  from PyQt4.QtGui import QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox, QMessageBox
-except ImportError:
-  from PyQt5.QtCore import QDir, pyqtSignal
-  from PyQt5.QtWidgets import QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox, QMessageBox
+from qtpy.QtCore import QDir, Signal
+from qtpy.QtWidgets import QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox, QMessageBox
 
 
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
@@ -32,8 +28,8 @@ from ert_gui.tools.export import ExportKeywordModel
 
 
 class ExportPanel(QWidget):
-    updateExportButton = pyqtSignal(str, bool)
-    runExport = pyqtSignal(dict)
+    updateExportButton = Signal(str, bool)
+    runExport = Signal(dict)
 
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)

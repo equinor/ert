@@ -1,10 +1,4 @@
-import sys
-
-try:
-  from PyQt4.QtGui import QFormLayout, QWidget, QDialog, QPushButton, QHBoxLayout, QToolButton
-except ImportError:
-  from PyQt5.QtWidgets import QFormLayout, QWidget, QDialog, QPushButton, QHBoxLayout, QToolButton
-
+from qtpy.QtWidgets import QFormLayout, QWidget, QDialog, QPushButton, QHBoxLayout, QToolButton
 
 from ert_gui.ertwidgets import CheckList, resourceIcon
 from ert_gui.tools.plot import FilterPopup, FilterableKwListModel

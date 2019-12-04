@@ -1,15 +1,12 @@
 import sys
 
-try:
-  from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
-except ImportError:
-  from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+from qtpy.QtCore import QObject, Signal, Slot
 
 from res.enkf import EnKFMain
 from ert_shared import ERT
 
 class ErtNotifier(QObject):
-    ertChanged = pyqtSignal()
+    ertChanged = Signal()
 
     def __init__(self, ert, config_file, parent=None):
         QObject.__init__(self, parent)
@@ -33,12 +30,11 @@ class ErtNotifier(QObject):
         self._checkErt()
         return self._config_file
 
-    pyqtSlot()
+    @Slot()
     def emitErtChange(self):
         self._checkErt()
         self.ertChanged.emit()
 
-    pyqtSignal()
     def reloadERT(self, config_file):
         import sys
         import os

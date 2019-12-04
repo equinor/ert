@@ -1,18 +1,12 @@
-import sys
-
-try:
-  from PyQt4.QtCore import pyqtSignal
-  from PyQt4.QtGui import QWidget, QVBoxLayout, QListView, QHBoxLayout, QToolButton
-except ImportError:
-  from PyQt5.QtCore import pyqtSignal
-  from PyQt5.QtWidgets import QWidget, QVBoxLayout, QListView, QHBoxLayout, QToolButton
+from qtpy.QtCore import Signal
+from qtpy.QtWidgets import QWidget, QVBoxLayout, QListView, QHBoxLayout, QToolButton
 
 from ert_gui.ertwidgets import SearchBox, resourceIcon, Legend
 from ert_gui.tools.plot import DataTypeKeysListModel, DataTypeProxyModel, FilterPopup
 
 
 class DataTypeKeysWidget(QWidget):
-    dataTypeKeySelected = pyqtSignal()
+    dataTypeKeySelected = Signal()
 
     def __init__(self, model):
         QWidget.__init__(self)

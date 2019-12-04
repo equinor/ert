@@ -14,19 +14,14 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-try:
-    from PyQt4.QtCore import Qt, QLocale
-    from PyQt4.QtGui import QApplication, QFileDialog, QMessageBox
-except ImportError:
-    from PyQt5.QtCore import Qt, QLocale
-    from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox
+from qtpy.QtCore import Qt, QLocale
+from qtpy.QtWidgets import QApplication, QMessageBox
 
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import SummaryPanel, resourceIcon
 import ert_gui.ertwidgets
 from ert_gui.ertnotifier import configureErtNotifier
 from ert_gui.main_window import GertMainWindow
-from ert_gui.newconfig import NewConfigurationDialog
 from ert_gui.simulation.simulation_panel import SimulationPanel
 from ert_gui.tools import HelpCenter
 from ert_gui.tools.export import ExportTool

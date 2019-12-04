@@ -1,11 +1,5 @@
-import sys
-
-try:
-  from PyQt4.QtCore import Qt
-  from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout
-except ImportError:
-  from PyQt5.QtCore import Qt
-  from PyQt5.QtWidgets import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout
 
 
 from ert_shared import ERT

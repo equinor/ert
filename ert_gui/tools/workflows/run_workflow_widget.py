@@ -1,14 +1,8 @@
 import time
 from threading import Thread
-import sys
 
-try:
-  from PyQt4.QtCore import QSize, Qt, pyqtSignal
-  from PyQt4.QtGui import QWidget, QHBoxLayout, QLabel, QToolButton, QMessageBox, QComboBox
-except ImportError:
-  from PyQt5.QtCore import QSize, Qt, pyqtSignal
-  from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QToolButton, QMessageBox, QComboBox
-
+from qtpy.QtCore import QSize, Qt, Signal
+from qtpy.QtWidgets import QWidget, QHBoxLayout, QLabel, QToolButton, QMessageBox, QComboBox
 
 from ert_gui.ertwidgets import addHelpToWidget, resourceMovie, resourceIcon
 from ert_gui.ertwidgets.models.ertmodel import getWorkflowNames, createWorkflowRunner
@@ -17,9 +11,9 @@ from ert_gui.tools.workflows.workflow_dialog import WorkflowDialog
 
 class RunWorkflowWidget(QWidget):
 
-    workflowSucceeded = pyqtSignal(list)
-    workflowFailed = pyqtSignal()
-    workflowKilled = pyqtSignal()
+    workflowSucceeded = Signal(list)
+    workflowFailed = Signal()
+    workflowKilled = Signal()
 
     def __init__(self):
         QWidget.__init__(self)

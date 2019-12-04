@@ -1,13 +1,8 @@
 import re
-import sys
 
-try:
-  from PyQt4.QtCore import Qt, QEvent, QDir, QRegExp, QChar
-  from PyQt4.QtGui import QPlainTextEdit, QTextOption, QCompleter, QStringListModel, QFont, QColor, QShortcut, QKeySequence, QTextCursor, QFileSystemModel, QTextDocument
-except ImportError:
-  from PyQt5.QtCore import Qt, QEvent, QDir, QRegExp, QStringListModel
-  from PyQt5.QtWidgets import QPlainTextEdit, QCompleter, QShortcut, QFileSystemModel
-  from PyQt5.QtGui import QFont, QColor, QTextOption, QKeySequence, QTextCursor, QTextDocument
+from qtpy.QtCore import Qt, QEvent, QStringListModel
+from qtpy.QtWidgets import QPlainTextEdit, QCompleter, QShortcut
+from qtpy.QtGui import QFont, QTextOption, QKeySequence, QTextCursor
 
 
 from ert_gui.tools import HelpCenter
@@ -27,7 +22,6 @@ class IdePanel(QPlainTextEdit):
         self.completer.setWidget(self)
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.completer.activated.connect(self.insertCompletion)
-
 
         auto_complete = QShortcut(QKeySequence("Ctrl+Space"), self)
         auto_complete.activated.connect(self.activateCompleter)

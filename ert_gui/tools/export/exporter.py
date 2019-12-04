@@ -16,13 +16,8 @@
 import os
 import sys
 
-try:
-  from PyQt4.QtCore import QDir
-  from PyQt4.QtGui import QMessageBox
-except ImportError:
-  from PyQt5.QtCore import QDir
-  from PyQt5.QtWidgets import QMessageBox
-
+from qtpy.QtCore import QDir
+from qtpy.QtWidgets import QMessageBox
 
 from res.enkf import EnkfFieldFileFormatEnum
 from ert_gui.tools.export import ExportModel, ExportKeywordModel

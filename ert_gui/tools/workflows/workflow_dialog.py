@@ -1,16 +1,10 @@
-import sys
-
-try:
-  from PyQt4.QtCore import Qt, pyqtSignal
-  from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout
-except ImportError:
-  from PyQt5.QtCore import Qt, pyqtSignal
-  from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout
+from qtpy.QtCore import Qt, Signal
+from qtpy.QtWidgets import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout
 
 
 class WorkflowDialog(QDialog):
 
-    closeButtonPressed = pyqtSignal()
+    closeButtonPressed = Signal()
 
     def __init__(self, title, widget, parent=None):
         QDialog.__init__(self, parent)

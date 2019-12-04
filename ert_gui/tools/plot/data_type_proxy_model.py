@@ -13,13 +13,7 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
-import sys
-
-try:
-  from PyQt4.QtCore import Qt
-  from PyQt4.QtGui import QSortFilterProxyModel
-except ImportError:
-  from PyQt5.QtCore import Qt, QSortFilterProxyModel
+from qtpy.QtCore import Qt, QSortFilterProxyModel
 
 
 from ert_gui.tools.plot import DataTypeKeysListModel

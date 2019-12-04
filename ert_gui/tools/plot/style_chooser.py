@@ -1,6 +1,5 @@
-import sys
-
-from ErtQt.Qt import QWidget, QHBoxLayout, QComboBox, QDoubleSpinBox, QLabel, QHBoxLayout
+from qtpy.QtWidgets import QWidget, QHBoxLayout, QComboBox, QDoubleSpinBox, QLabel, QHBoxLayout
+from qtpy import PYQT4
 
 from ert_gui.plottery import PlotStyle
 
@@ -42,7 +41,6 @@ MARKERS = [MARKER_OFF, MARKER_X, MARKER_CIRCLE, MARKER_POINT, MARKER_STAR, MARKE
 
 
 class StyleChooser(QWidget):
-
     def __init__(self, line_style_set=STYLESET_DEFAULT):
         QWidget.__init__(self)
         self._style = PlotStyle("StyleChooser Internal Style")
@@ -133,8 +131,7 @@ class StyleChooser(QWidget):
         thickness = float(self.thickness_spinner.value())
         size = float(self.size_spinner.value())
 
-        from ErtQt import QT4
-        if QT4:
+        if PYQT4:
             self._style.line_style = str(line_style.toString())
             self._style.marker = str(marker_style.toString())
         else:

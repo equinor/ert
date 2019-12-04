@@ -16,14 +16,9 @@
 
 
 import os
-import sys
 
-try:
-  from PyQt4.QtCore import Qt, QSize
-  from PyQt4.QtGui import QDialog, QFormLayout, QLabel, QDialogButtonBox, QComboBox, QSpinBox, QLineEdit, QWidget
-except ImportError:
-  from PyQt5.QtCore import Qt, QSize
-  from PyQt5.QtWidgets import QDialog, QFormLayout, QLabel, QDialogButtonBox, QComboBox, QSpinBox, QLineEdit, QWidget
+from qtpy.QtCore import Qt, QSize
+from qtpy.QtWidgets import QDialog, QFormLayout, QLabel, QDialogButtonBox, QComboBox, QSpinBox, QLineEdit, QWidget
 
 
 def createSpace(size=5):

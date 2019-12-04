@@ -1,6 +1,8 @@
 import sys
 
-from ErtQt.Qt import QSize, QWidget, QPainter, QHBoxLayout, QLabel
+from qtpy.QtCore import QSize
+from qtpy.QtGui import QPainter
+from qtpy.QtWidgets import QWidget, QHBoxLayout, QLabel
 
 
 class LegendMarker(QWidget):

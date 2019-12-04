@@ -1,13 +1,7 @@
 import datetime
-import sys
 
-try:
-  from PyQt4.QtCore import QDate
-  from PyQt4.QtGui import QWidget, QHBoxLayout, QCalendarWidget, QToolButton, QMenu, QWidgetAction
-except ImportError:
-  from PyQt5.QtCore import QDate
-  from PyQt5.QtWidgets import QWidget, QHBoxLayout, QCalendarWidget, QToolButton, QMenu, QWidgetAction
-
+from qtpy.QtCore import QDate
+from qtpy.QtWidgets import QWidget, QHBoxLayout, QCalendarWidget, QToolButton, QMenu, QWidgetAction
 
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit

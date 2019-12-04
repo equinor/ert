@@ -1,13 +1,7 @@
-import sys
-
-from ErtQt.Qt import (
-    QColor,
-    QLineEdit,
-    QPushButton,
-    QSize,
-    QStyle,
-    Qt,
-    )
+from qtpy import PYQT4
+from qtpy.QtCore import Qt, QSize
+from qtpy.QtGui import QColor
+from qtpy.QtWidgets import QLineEdit, QPushButton, QStyle
 
 from ert_gui.ertwidgets import resourceIcon
 
@@ -100,11 +94,6 @@ class ClearableLineEdit(QLineEdit):
 
     def text(self):
         if self._placeholder_active:
-            from ErtQt import QT4
-            if QT4:
-                from ErtQt.Qt import QString
-                return QString("")
-            else:
-                return ""
+            return ""
         else:
             return QLineEdit.text(self)

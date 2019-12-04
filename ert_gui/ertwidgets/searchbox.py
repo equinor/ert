@@ -1,12 +1,12 @@
-import sys
-
-from ErtQt.Qt import pyqtSignal, Qt, QLineEdit, QColor
+from qtpy.QtCore import Signal, Qt
+from qtpy.QtGui import QColor
+from qtpy.QtWidgets import QLineEdit
 
 
 class SearchBox(QLineEdit):
     passive_color = QColor(194, 194, 194)
 
-    filterChanged = pyqtSignal(['PyQt_PyObject'])
+    filterChanged = Signal(['PyQt_PyObject'])
 
     def __init__(self):
         QLineEdit.__init__(self)

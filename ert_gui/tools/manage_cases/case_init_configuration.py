@@ -1,11 +1,5 @@
-import sys
-
-try:
-  from PyQt4.QtCore import Qt
-  from PyQt4.QtGui import QToolButton, QTextEdit, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox
-except ImportError:
-  from PyQt5.QtCore import Qt
-  from PyQt5.QtWidgets import QToolButton, QTextEdit, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QToolButton, QTextEdit, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox
 
 from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget, showWaitCursorWhileWaiting

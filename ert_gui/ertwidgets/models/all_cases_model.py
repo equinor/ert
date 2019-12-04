@@ -1,6 +1,4 @@
-import sys
-
-from ErtQt.Qt import QAbstractItemModel, QModelIndex, Qt, QVariant
+from qtpy.QtCore import Qt, QVariant, QAbstractItemModel, QModelIndex
 
 from ert_gui.ertwidgets.models.ertmodel import getAllCases
 

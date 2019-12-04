@@ -1,4 +1,4 @@
-from ErtQt.Qt import QFormLayout, QLabel
+from qtpy.QtWidgets import QFormLayout, QLabel
 
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.caseselector import CaseSelector

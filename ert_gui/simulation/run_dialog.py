@@ -1,5 +1,9 @@
 from threading import Thread
 
+from qtpy.QtCore import Qt, QTimer, QSize, Signal, Slot
+from qtpy.QtGui import QColor
+from qtpy.QtWidgets import QDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QVBoxLayout, QWidget
+
 from ecl.util.util import BoolVector
 from ert_gui.ertwidgets import Legend, resourceMovie
 from ert_gui.simulation import DetailedProgressWidget, Progress, SimpleProgress
@@ -9,16 +13,11 @@ from ert_shared.tracker.events import (DetailedEvent, EndEvent, GeneralEvent,
                                        TickEvent)
 from ert_shared.tracker.factory import create_tracker
 from ert_shared.tracker.utils import format_running_time
-from ErtQt.Qt import (QColor, QDialog, QHBoxLayout, QLabel, QLayout, QListView,
-                      QMessageBox, QPushButton, QSize, QStackedWidget,
-                      QStandardItem, QStandardItemModel, Qt, QTimer,
-                      QToolButton, QVBoxLayout, QWidget, pyqtSignal, pyqtSlot)
 from res.job_queue import JobStatusType
 
 
 class RunDialog(QDialog):
-
-    simulation_done = pyqtSignal(bool, str)
+    simulation_done = Signal(bool, str)
 
     def __init__(self, config_file, run_model, arguments, parent=None):
         QDialog.__init__(self, parent)
@@ -179,7 +178,7 @@ class RunDialog(QDialog):
                 self.reject()
         return kill_job
 
-    @pyqtSlot(bool, str)
+    @Slot(bool, str)
     def _on_simulation_done(self, failed, failed_msg):
         self.simulations_tracker.stop()
         self.processing_animation.hide()
@@ -193,7 +192,7 @@ class RunDialog(QDialog):
                                  "The simulation failed with the following " +
                                  "error:\n\n{}".format(failed_msg))
 
-    @pyqtSlot(object)
+    @Slot(object)
     def _on_tracker_event(self, event):
         if isinstance(event, TickEvent):
             self.running_time.setText(format_running_time(event.runtime))

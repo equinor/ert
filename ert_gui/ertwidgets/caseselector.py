@@ -1,6 +1,4 @@
-import sys
-
-from ErtQt.Qt import QComboBox
+from qtpy.QtWidgets import QComboBox
 
 from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget

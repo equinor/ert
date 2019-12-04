@@ -1,6 +1,5 @@
-import sys
-
-from ErtQt.Qt import QSize, Qt, QToolButton, QHBoxLayout, QLabel, QListWidget, QWidget, QVBoxLayout, QListWidgetItem, QMenu, QAbstractItemView
+from qtpy.QtCore import QSize, Qt
+from qtpy.QtWidgets import QToolButton, QHBoxLayout, QLabel, QListWidget, QWidget, QVBoxLayout, QListWidgetItem, QMenu, QAbstractItemView
 
 from ert_gui.ertwidgets import addHelpToWidget, SearchBox, resourceIcon
 

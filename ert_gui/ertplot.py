@@ -1,8 +1,4 @@
-
-try:
-    from PyQt4.QtGui import QApplication
-except ImportError:
-    from PyQt5.QtWidgets import QApplication
+from qtpy.QtWidgets import QApplication
 
 from ecl.util.util import Version
 from ert_gui.ert_splash import ErtSplash

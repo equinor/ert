@@ -1,16 +1,10 @@
-import sys
-
-try:
-  from PyQt4.QtCore import QSize, QRect, pyqtSignal
-  from PyQt4.QtGui import QWidget, QPainter, QHBoxLayout, QLabel, QFrame, QColor, QColorDialog
-except ImportError:
-  from PyQt5.QtCore import QSize, QRect, pyqtSignal
-  from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QFrame, QColorDialog
-  from PyQt5.QtGui import QPainter, QColor
+from qtpy.QtCore import QSize, QRect, Signal
+from qtpy.QtWidgets import QFrame, QColorDialog
+from qtpy.QtGui import QPainter, QColor
 
 
 class ColorBox(QFrame):
-    colorChanged = pyqtSignal(QColor)
+    colorChanged = Signal(QColor)
 
     """A widget that shows a colored box"""
     def __init__(self, color, size=15):

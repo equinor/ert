@@ -1,12 +1,5 @@
-import sys
-
-try:
-  from PyQt4.QtCore import Qt, pyqtSignal, QObject
-  from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QTabWidget, QHBoxLayout, QPushButton, QToolButton, QMenu, QWidgetAction, QListWidget
-except ImportError:
-  from PyQt5.QtCore import Qt, pyqtSignal, QObject
-  from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLayout, QTabWidget, QHBoxLayout, QPushButton, QToolButton, QMenu, QWidgetAction, QListWidget
-
+from qtpy.QtCore import Qt, Signal, QObject
+from qtpy.QtWidgets import QDialog, QVBoxLayout, QLayout, QTabWidget, QHBoxLayout, QPushButton, QToolButton, QMenu, QWidgetAction, QListWidget
 
 from ert_shared import ERT
 from ert_gui.tools.plot.widgets import CopyStyleToDialog
@@ -18,7 +11,7 @@ from ert_gui.tools.plot.customize import DefaultCustomizationView, StyleCustomiz
 
 class PlotCustomizer(QObject):
 
-    settingsChanged = pyqtSignal()
+    settingsChanged = Signal()
 
     def __init__(self, parent, default_plot_settings=None):
         super(PlotCustomizer, self).__init__()
@@ -165,12 +158,12 @@ class PlotCustomizer(QObject):
 
 
 class CustomizePlotDialog(QDialog):
-    applySettings = pyqtSignal()
-    undoSettings = pyqtSignal()
-    redoSettings = pyqtSignal()
-    resetSettings = pyqtSignal()
-    copySettings = pyqtSignal(str)
-    copySettingsToOthers = pyqtSignal(list)
+    applySettings = Signal()
+    undoSettings = Signal()
+    redoSettings = Signal()
+    resetSettings = Signal()
+    copySettings = Signal(str)
+    copySettingsToOthers = Signal(list)
 
     def __init__(self, title, parent=None, key=''):
         QDialog.__init__(self, parent)

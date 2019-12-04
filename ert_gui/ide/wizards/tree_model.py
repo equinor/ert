@@ -1,11 +1,4 @@
-
-try:
-  from PyQt4.QtCore import QAbstractItemModel, QModelIndex, QVariant, Qt
-except ImportError:
-  from PyQt5.QtCore import QAbstractItemModel, QModelIndex, QVariant, Qt
-
-
-from ert_gui.ide.wizards import TreeItem
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, QVariant, Qt
 
 
 class TreeModel(QAbstractItemModel):

@@ -1,19 +1,16 @@
-import sys
-
-from ErtQt import QT5
-from ErtQt.Qt import (
+from qtpy import PYQT5
+from qtpy.QtCore import Qt, QSize
+from qtpy.QtWidgets import (
     QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
     QMessageBox,
-    QSize,
     QStackedWidget,
-    Qt,
     QToolButton,
     QVBoxLayout,
     QWidget,
-    )
+)
 
 from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget, resourceIcon
@@ -24,8 +21,8 @@ from ert_gui.simulation import IteratedEnsembleSmootherPanel, MultipleDataAssimi
 from ert_gui.simulation import RunDialog
 from collections import OrderedDict
 
-class SimulationPanel(QWidget):
 
+class SimulationPanel(QWidget):
     def __init__(self, config_file):
         QWidget.__init__(self)
         self._config_file = config_file
@@ -77,7 +74,6 @@ class SimulationPanel(QWidget):
 
         self.setLayout(layout)
 
-
     def addSimulationConfigPanel(self, panel):
 
         assert isinstance(panel, SimulationConfigPanel)
@@ -87,21 +83,17 @@ class SimulationPanel(QWidget):
         self._simulation_mode_combo.addItem(simulation_model.name(),simulation_model)
         panel.simulationConfigurationChanged.connect(self.validationStatusChanged)
 
-
     def getActions(self):
         return []
 
-
     def getCurrentSimulationModel(self):
         data = self._simulation_mode_combo.itemData(self._simulation_mode_combo.currentIndex(), Qt.UserRole)
-        return data if QT5 else data.toPyObject()
-
+        return data if PYQT5 else data.toPyObject()
 
     def getSimulationArguments(self):
         """ @rtype: dict[str,object]"""
         simulation_widget = self._simulation_widgets[self.getCurrentSimulationModel()]
         return simulation_widget.getSimulationArguments()
-
 
     def runSimulation(self):
         case_name = getCurrentCaseName()
@@ -117,14 +109,12 @@ class SimulationPanel(QWidget):
 
             ERT.emitErtChange() # simulations may have added new cases.
 
-
     def toggleSimulationMode(self):
         current_model = self.getCurrentSimulationModel()
         if current_model is not None:
             widget = self._simulation_widgets[self.getCurrentSimulationModel()]
             self._simulation_stack.setCurrentWidget(widget)
             self.validationStatusChanged()
-
 
     def validationStatusChanged(self):
         widget = self._simulation_widgets[self.getCurrentSimulationModel()]

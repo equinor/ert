@@ -1,9 +1,4 @@
-import sys
-
-try:
-  from PyQt4.QtGui import QWidget, QFormLayout, QSpacerItem, QCheckBox, QHBoxLayout, QSpinBox
-except ImportError:
-  from PyQt5.QtWidgets import QWidget, QFormLayout, QSpacerItem, QCheckBox, QHBoxLayout, QSpinBox
+from qtpy.QtWidgets import QWidget, QFormLayout, QSpacerItem, QCheckBox, QHBoxLayout, QSpinBox
 
 
 from ert_gui.plottery import PlotConfig

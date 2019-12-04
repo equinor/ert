@@ -15,9 +15,9 @@
 #  for more details.
 import os
 import re
-import sys
 
-from ErtQt.Qt import QSize, QLineEdit, QToolButton, QFileDialog, QWidget, QHBoxLayout
+from qtpy.QtCore import QSize
+from qtpy.QtWidgets import QLineEdit, QToolButton, QFileDialog, QWidget, QHBoxLayout
 
 from ert_gui.ertwidgets import resourceIcon, addHelpToWidget
 from ert_gui.ertwidgets.validationsupport import ValidationSupport

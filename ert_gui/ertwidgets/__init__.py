@@ -1,7 +1,8 @@
-import sys
-
 from pkg_resources import resource_filename
-from ErtQt.Qt import Qt, QCursor, QApplication, QIcon, QPixmap, QMovie
+
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QCursor, QIcon, QPixmap, QMovie
+from qtpy.QtWidgets import QApplication
 
 
 def addHelpToWidget(widget, link):
