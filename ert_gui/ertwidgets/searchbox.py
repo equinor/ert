@@ -6,7 +6,7 @@ from qtpy.QtWidgets import QLineEdit
 class SearchBox(QLineEdit):
     passive_color = QColor(194, 194, 194)
 
-    filterChanged = Signal(['PyQt_PyObject'])
+    filterChanged = Signal(object)
 
     def __init__(self):
         QLineEdit.__init__(self)
