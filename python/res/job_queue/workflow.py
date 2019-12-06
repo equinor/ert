@@ -6,6 +6,8 @@ from res import ResPrototype
 from res.job_queue import WorkflowJoblist, WorkflowJob
 from res.util.substitution_list import SubstitutionList
 import os
+from ert_logger import log_message
+
 
 class Workflow(BaseCClass):
     TYPE_NAME = "workflow"
@@ -53,6 +55,15 @@ class Workflow(BaseCClass):
     def src_file(self):
         return self._get_src_file()
 
+    @staticmethod
+    def _log_workflow_job_usage(job_name):
+        payload = {
+            "subsystem": "ert_workflow",
+            "ert_job": job_name,
+            "cwd": os.getcwd(),
+        }
+        log_message(payload)
+
     def run(self, ert, verbose=False, context=None):
         """
         @type ert: res.enkf.enkf_main.EnKFMain
@@ -75,6 +86,8 @@ class Workflow(BaseCClass):
         for job, args in self:
             self.__current_job = job
             if not self.__cancelled:
+                self._log_workflow_job_usage(job.name())
+
                 return_value = job.run(ert, args, verbose)
                 self.__status[job.name()] = {'stdout': job.stdoutdata(),
                                              'stderr': job.stderrdata(),

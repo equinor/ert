@@ -11,19 +11,17 @@ from sys import version as sys_version
 
 import requests
 from ecl import EclVersion
-from job_runner import LOG_URL
 from job_runner.reporting.message import Exited, Init, Finish
 from job_runner.util import pad_nonexisting, read_os_release
 from res import ResVersion
+from ert_logger import log_message
 
 
 class Network(object):
-    def __init__(self, log_url=LOG_URL):
+    def __init__(self):
         self.simulation_id = None
         self.ert_pid = None
         self.start_time = None
-
-        self.log_url = log_url
         self.node = socket.gethostname()
 
         pw_entry = pwd.getpwuid(os.getuid())
@@ -70,33 +68,16 @@ class Network(object):
 
     def _post_message(self, timestamp, extra_fields=None):
         payload = {
-            "user": self.user,
             "cwd": os.getcwd(),
-            "application": "ert",
             "subsystem": "ert_forward_model",
             "node": self.node,
-            "komodo_release": os.getenv("KOMODO_RELEASE", "--------"),
             "start_time": self.start_time.isoformat(),
             "node_timestamp": timestamp.isoformat(),
             "simulation_id": self.simulation_id,
             "ert_pid": self.ert_pid,
         }
         payload.update(extra_fields)
-
-        try:
-            data = json.dumps(payload)
-
-            # Disabling proxies
-            proxies = {"http": None, "https": None}
-            requests.post(
-                self.log_url,
-                timeout=3,
-                headers={"Content-Type": "application/json"},
-                data=data,
-                proxies=proxies,
-            )
-        except:  # noqa
-            pass
+        log_message(payload)
 
     def _post_success(self, msg):
         self._post_message(msg.timestamp, {"status": "OK"})
