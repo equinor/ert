@@ -105,7 +105,7 @@ class JobQueueManager(BaseCClass):
         return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_FAILED
 
     def didJobSucceed(self, job_index):
-        return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_SUCCEED
+        return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_SUCCESS
 
     def getJobStatus(self, job_index):
         # See comment about return type in the prototype section at
