@@ -1,6 +1,120 @@
 Release Notes
 =============
 
+Version 2.6
+-----------
+
+Highlighted changes
+~~~~~~~~~~~~~~~~~~~
+
+Improvements to ERT CLI
+#######################
+The text and shell interface has been removed from ERT, but the CLI interface has gotten a upgrade and now
+included basic monitoring to show the progress of the running experiment. The CLI now also supports MDA and
+running single workflows.
+
+The see the usage and complete list of available commands, go to :doc:`../reference/running_ert`.
+
+
+Improvements to ERT GUI
+#######################
+The ERT GUI now includes help links to relevant resources and the job monitoring window now also includes
+memory usage information for each job. In addition, the output from the Eclipse job is treated like any
+other job and you can now read it from the the job monitoring window.
+
+Experimental features
+#####################
+The new iterative ensemble smoother algorithm has been added as an update algorithm.
+
+
+2.6 ERT application
+~~~~~~~~~~~~~~~~~~~
+
+New features:
+  - Add basic monitoring to ERT cli
+  - Memory usage monitoring in GUI
+  - CLI supports MDA
+  - CLI supports running single workflow
+
+Improvements:
+  - Less resource intensive monitoring
+  - Display config file name in all GUI window titles
+  - Run dialog no longer closes when pressing esc
+  - Improved exit monitoring when simulations fail
+  - Active realizations field is automatically filled with the runable realizations available
+  - Tailored plotting for single data points
+  - Algorithm recommendations in menu
+  - Check for observation data
+  - Better support for lsf-nodes with unknown status
+  - Communicate analysis completetion
+  - Various improvements to the documentation
+  - Document RMS job
+  - Help links in the GUI
+
+Code structure and tooling:
+  - Removed all C-code and CMake
+  - Removed ERT_SHARE_PATH
+  - Make CLI independent of Qt
+
+Breaking changes:
+  - Removed the text and tui interfaces.
+
+Experimental features:
+  - New iterative ensemble smother algorithm
+  - Python 3 support
+  - PyQt5 support
+  - Add plugin system for forward models
+
+2.6 libres
+~~~~~~~~~~
+New features:
+  - Suffix support for External Parameters
+  - Back up existing parameters-file
+  - Support for lower case shell scripts
+
+Improvements:
+  - Make runWorkflows static
+  - Exposed enkf_main_have_obs in python
+  - Added support for unknown status in the queue driver
+  - Ensure that the number of required successful realization are not higher then the ensemble size
+  - Fix yaml load warnings in python 3
+  - Fix ecl load warnings in python 3
+  - Improved support for when lsf executables are temporarily unavailable
+  - Use subprocess instead of fork
+  - General code and performance improvements
+
+Bug fixes:
+  - Log random seed
+  - Make sure reporting does not fail
+  - Remove double dash arguments from job arglists
+
+Breaking changes:
+  - Deprecated various unused keywords
+  - Deprecated updating workflows
+  - Remove SCHEDULE as HISTORY_SOURCE
+
+Experimental features:
+  - Programmatic initialization (Validation will come in a future release)
+
+ERT forward models
+~~~~~~~~~~~~~~~~~~~
+Improvements:
+  - Output from Eclipse job is treated like any other job
+
+
+2.5 libecl
+~~~~~~~~~~
+General bug fixes and improvements
+
+Changes:
+  - More aggressively close files when loading summary vectors.
+  - Dump mapaxes even though they are not applied
+  - Ignore wells with blank names
+  - Infer format from extension
+  - Use 0-based indices for nnc's.
+  - Allow for mixed case basenames
+  - Reset before active cells are set
+
 Version 2.5
 -----------
 
