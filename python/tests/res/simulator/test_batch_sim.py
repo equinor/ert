@@ -419,6 +419,7 @@ class BatchSimulatorTest(ResTest):
             JobStatusType.JOB_QUEUE_RUNNING,
             JobStatusType.JOB_QUEUE_UNKNOWN,
             JobStatusType.JOB_QUEUE_EXIT,
+            JobStatusType.JOB_QUEUE_DONE,
         ))
 
         for idx in range(len(batch_ctx)):
@@ -426,7 +427,7 @@ class BatchSimulatorTest(ResTest):
             if not final_state_only and status in running_status:
                 continue
             elif idx%2 == 0:
-                self.assertEqual(JobStatusType.JOB_QUEUE_DONE, status)
+                self.assertEqual(JobStatusType.JOB_QUEUE_SUCCESS, status)
             else:
                 self.assertEqual(JobStatusType.JOB_QUEUE_FAILED, status)
 

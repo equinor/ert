@@ -75,7 +75,14 @@ class JobQueueNode(BaseCClass):
         self._submit(driver)
 
     def run_done_callback(self):
-        return self.done_callback_function(self.callback_arguments)
+        callback_status = self.done_callback_function(self.callback_arguments)
+
+        if callback_status:
+            self._set_status(JobStatusType.JOB_QUEUE_SUCCESS)
+        else:
+            self._set_status(JobStatusType.JOB_QUEUE_EXIT)
+
+        return callback_status
 
     def run_exit_callback(self):
         return self.exit_callback_function(self.callback_arguments)
@@ -119,6 +126,9 @@ class JobQueueNode(BaseCClass):
             if self.status == JobStatusType.JOB_QUEUE_DONE:
                 with pool_sema:
                     self.run_done_callback()
+
+            if self.status == JobStatusType.JOB_QUEUE_SUCCESS:
+                pass
             elif self.status == JobStatusType.JOB_QUEUE_EXIT:
                 if self.submit_attempt < max_submit:
                     self._set_thread_status(ThreadStatus.READY)

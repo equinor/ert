@@ -49,8 +49,8 @@ class EnKFState(BaseCClass):
 
     @classmethod
     def forward_model_exit_callback(cls, args):
-        cls._forward_model_EXIT(args[0])
+        return cls._forward_model_EXIT(args[0])
 
     @classmethod
     def forward_model_ok_callback(cls, args):
-        cls._forward_model_OK(args[1], args[0])
+        return cls._forward_model_OK(args[1], args[0])

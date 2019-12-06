@@ -79,14 +79,11 @@ class JobQueueManager(BaseCClass):
     def getNumPending(self):
         return self.queue.count_status(JobStatusType.JOB_QUEUE_PENDING)
 
-
     def getNumSuccess(self):
-        return self.queue.count_status(JobStatusType.JOB_QUEUE_DONE)
-
+        return self.queue.count_status(JobStatusType.JOB_QUEUE_SUCCESS)
 
     def getNumFailed(self):
         return self.queue.count_status(JobStatusType.JOB_QUEUE_FAILED)
-
 
     def isRunning(self):
         return self.queue.is_active()
@@ -108,7 +105,7 @@ class JobQueueManager(BaseCClass):
         return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_FAILED
 
     def didJobSucceed(self, job_index):
-        return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_DONE
+        return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_SUCCEED
 
     def getJobStatus(self, job_index):
         # See comment about return type in the prototype section at
