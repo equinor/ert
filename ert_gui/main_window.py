@@ -6,7 +6,6 @@ import pkg_resources
 import webbrowser
 import yaml
 
-from qtpy import PYQT5
 from qtpy.QtCore import QSettings, Qt
 from qtpy.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDockWidget, QAction, QToolButton
 
@@ -111,10 +110,10 @@ class GertMainWindow(QMainWindow):
         settings = QSettings("Equinor", "Ert-Gui")
         geo = settings.value("geometry")
         if geo:
-            self.restoreGeometry(geo if PYQT5 else geo.toByteArray())
+            self.restoreGeometry(geo)
         wnd = settings.value("windowState")
         if wnd:
-            self.restoreState(wnd if PYQT5 else wnd.toByteArray())
+            self.restoreState(wnd)
 
 
     def setWidget(self, widget):

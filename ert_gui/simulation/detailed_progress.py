@@ -2,15 +2,17 @@ import math
 import time
 
 from qtpy.QtCore import Signal, Qt, QAbstractTableModel
-from qtpy.QtWidgets import (QWidget,
-                            QFrame,
-                            QDialog,
-                            QTableView,
-                            QLabel,
-                            QGridLayout,
-                            QPushButton,
-                            QTextEdit,
-                            QTabWidget)
+from qtpy.QtWidgets import (
+    QDialog,
+    QFrame,
+    QGridLayout,
+    QLabel,
+    QPushButton,
+    QTabWidget,
+    QTableView,
+    QTextEdit,
+    QWidget
+)
 from qtpy.QtGui import QPainter, QColor, QImage, QPen
 
 from res.job_queue import JobStatusType

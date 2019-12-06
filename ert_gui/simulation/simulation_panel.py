@@ -1,4 +1,3 @@
-from qtpy import PYQT5
 from qtpy.QtCore import Qt, QSize
 from qtpy.QtWidgets import (
     QComboBox,
@@ -87,8 +86,7 @@ class SimulationPanel(QWidget):
         return []
 
     def getCurrentSimulationModel(self):
-        data = self._simulation_mode_combo.itemData(self._simulation_mode_combo.currentIndex(), Qt.UserRole)
-        return data if PYQT5 else data.toPyObject()
+        return self._simulation_mode_combo.itemData(self._simulation_mode_combo.currentIndex(), Qt.UserRole)
 
     def getSimulationArguments(self):
         """ @rtype: dict[str,object]"""

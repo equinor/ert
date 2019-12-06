@@ -1,5 +1,4 @@
 from qtpy.QtWidgets import QWidget, QHBoxLayout, QComboBox, QDoubleSpinBox, QLabel, QHBoxLayout
-from qtpy import PYQT4
 
 from ert_gui.plottery import PlotStyle
 
@@ -131,12 +130,8 @@ class StyleChooser(QWidget):
         thickness = float(self.thickness_spinner.value())
         size = float(self.size_spinner.value())
 
-        if PYQT4:
-            self._style.line_style = str(line_style.toString())
-            self._style.marker = str(marker_style.toString())
-        else:
-            self._style.line_style = line_style
-            self._style.marker = marker_style
+        self._style.line_style = line_style
+        self._style.marker = marker_style
         self._style.width = thickness
         self._style.size = size
 
