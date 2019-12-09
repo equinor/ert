@@ -51,3 +51,12 @@ ES MDA
    :func: get_ert_parser
    :prog: ert
    :path: es_mda
+
+Workflow
+~~~~~~~~
+
+.. argparse::
+   :module: ert_shared.main
+   :func: get_ert_parser
+   :prog: ert
+   :path: workflow
