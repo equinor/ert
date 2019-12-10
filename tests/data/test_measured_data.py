@@ -242,3 +242,38 @@ def test_filter_on_column_index(index_list, expected_result):
     input_data = pd.DataFrame(data=[[1, 2, 3, 4, 5, 6, 7, 8]])
     result = MeasuredData._filter_on_column_index(input_data, index_list)
     assert result.equals(expected_result)
+
+
+@pytest.mark.usefixtures("facade", "measured_data_setup")
+@pytest.mark.parametrize(
+    "input_dataframe,expected_result",
+    [
+        (
+            pd.DataFrame(
+                data=[[1, 2, 3], [4, 5, 6], [7, 8, 9]], index=["OBS", "STD", 1]
+            ),
+            pd.DataFrame(
+                data=[[7, 8, 9]], index=[1]
+            ),
+        ),
+        (
+            pd.DataFrame(
+                data=[[1, None, 3], [4, None, 6], [7, 8, 9], [10, 11, 12]], index=["OBS", "STD", 1, 2]
+            ),
+            pd.DataFrame(
+                data=[[7, 8, 9], [10, 11, 12]], index=[1, 2], columns=[0, 1, 2]
+            ),
+        ),
+    ],
+)
+def test_get_simulated_data(
+    input_dataframe, expected_result, monkeypatch, facade, measured_data_setup
+):
+
+    measured_data_setup(input_dataframe, monkeypatch)
+    md = MeasuredData(facade, ["test_key"])
+
+    expected_result.columns = _set_multiindex(expected_result)
+
+    result = md.get_simulated_data()
+    assert result.equals(pd.concat({"test_key": expected_result.astype(float)}, axis=1))
