@@ -27,6 +27,10 @@ def measured_data_setup():
     return _setup
 
 
+def _set_multiindex(df):
+    tuples = list(zip(*[df.columns.to_list(), df.columns.to_list()]))
+    return pd.MultiIndex.from_tuples(tuples, names=["key_index", "data_index"])
+
 @pytest.mark.usefixtures("facade", "valid_dataframe", "measured_data_setup")
 @pytest.mark.parametrize("obs_type", [("GEN_OBS"), ("SUMMARY_OBS"), ("BLOCK_OBS")])
 def test_get_data(obs_type, monkeypatch, facade, valid_dataframe, measured_data_setup):
@@ -40,17 +44,11 @@ def test_get_data(obs_type, monkeypatch, facade, valid_dataframe, measured_data_
     mocked_loader = factory()
     mocked_loader.assert_called_once_with(facade, "test_key", "test_case")
 
-    assert (
-        md._data
-        == pd.concat(
-            {
-                "test_key": pd.DataFrame(
-                    data=[[2, 3]], index=["OBS", "STD"], columns=[1, 2]
-                )
-            },
-            axis=1,
-        )
-    ).all
+    df = pd.DataFrame(data=[[2, 3], [5, 6]], index=["OBS", "STD"], columns=[1, 2])
+    df.columns = _set_multiindex(df)
+    expected_result = pd.concat({"test_key": df}, axis=1)
+
+    assert md._data.equals(expected_result)
 
 
 @pytest.mark.usefixtures("facade", "valid_dataframe", "measured_data_setup")
@@ -116,6 +114,9 @@ def test_remove_failed_realizations(
     md = MeasuredData(facade, ["test_key"])
 
     md.remove_failed_realizations()
+
+    expected_result.columns = _set_multiindex(expected_result)
+
     assert md.data.equals(pd.concat({"test_key": expected_result}, axis=1))
 
 
@@ -148,6 +149,8 @@ def test_remove_inactive_observations(
     measured_data_setup(input_dataframe, monkeypatch)
     md = MeasuredData(facade, ["test_key"])
 
+    expected_result.columns = _set_multiindex(expected_result)
+
     md.remove_inactive_observations()
     assert md.data.equals(pd.concat({"test_key": expected_result}, axis=1))
 
@@ -175,6 +178,8 @@ def test_remove_inactive_observations(
 def test_filter_ensamble_std(
     std_cutoff, expected_result, monkeypatch, facade, measured_data_setup
 ):
+    expected_result.columns = _set_multiindex(expected_result)
+
     input_dataframe = pd.DataFrame(
         data=[[1, 2], [0.1, 0.2], [1, 1.5], [1, 2.5]], index=["OBS", "STD", 1, 2]
     )
@@ -211,6 +216,8 @@ def test_filter_ensamble_std(
 def test_filter_ens_mean_obs(
     alpha, expected_result, monkeypatch, facade, measured_data_setup
 ):
+    expected_result.columns = _set_multiindex(expected_result)
+
     input_dataframe = pd.DataFrame(
         data=[[1, 2], [0.1, 0.2], [1.1, 1.6], [1, 2.5]], index=["OBS", "STD", 1, 2]
     )

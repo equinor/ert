@@ -73,6 +73,12 @@ class MeasuredData(object):
             data_loader = loader.data_loader_factory(observation_type)
 
             data = data_loader(self._facade, key, case_name)
+
+            # Simulated data and observations both refer to the data
+            # index at some levels, so having that information available is
+            # helpful
+            _add_index_range(data)
+
             data = MeasuredData._filter_on_column_index(data, index_list)
             data = pd.concat({key: data}, axis=1)
 
@@ -127,3 +133,16 @@ class MeasuredData(object):
             return dataframe.iloc[:, list(index_list)]
         else:
             return dataframe
+
+
+def _add_index_range(data):
+    """
+    Adds a second column index with which corresponds to the data
+    index. This is because in libres simulated data and observations
+    are connected through an observation key and data index, so having
+    that information available when the data is joined is helpful.
+    """
+    arrays = [data.columns.to_list(), list(range(len(data.columns)))]
+    tuples = list(zip(*arrays))
+    index = pd.MultiIndex.from_tuples(tuples, names=['key_index', 'data_index'])
+    data.columns = index
