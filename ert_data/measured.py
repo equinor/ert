@@ -30,6 +30,12 @@ class MeasuredData(object):
     def remove_failed_realizations(self):
         self._set_data(self._remove_failed_realizations())
 
+    def get_simulated_data(self):
+        return self._get_simulated_data()
+
+    def _get_simulated_data(self):
+        return self.data[~self.data.index.isin(["OBS", "STD"])]
+
     def _remove_failed_realizations(self):
         """Removes rows with no simulated data, leaving observations and
         standard deviations as-is."""
@@ -98,7 +104,7 @@ class MeasuredData(object):
         deviation cutoff. If there is not enough variation in the measurements
         the data point is removed.
         """
-        ens_std = self.data[~self.data.index.isin(["OBS", "STD"])].std()
+        ens_std = self.get_simulated_data().std()
         std_filter = (ens_std <= std_cutoff)
         return self.data.drop(columns=std_filter[std_filter].index)
 
@@ -107,8 +113,8 @@ class MeasuredData(object):
         Filters on distance between the observed data and the ensamble mean
         based on variation and a user defined alpha.
         """
-        ens_mean = self.data[~self.data.index.isin(["OBS", "STD"])].mean()
-        ens_std = self.data[~self.data.index.isin(["OBS", "STD"])].std()
+        ens_mean = self.get_simulated_data().mean()
+        ens_std = self.get_simulated_data().std()
         obs_values = self.data.loc["OBS"]
         obs_std = self.data.loc["STD"]
 
