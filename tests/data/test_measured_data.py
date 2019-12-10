@@ -44,7 +44,9 @@ def test_get_data(obs_type, monkeypatch, facade, valid_dataframe, measured_data_
     mocked_loader = factory()
     mocked_loader.assert_called_once_with(facade, "test_key", "test_case")
 
-    df = pd.DataFrame(data=[[2, 3], [5, 6]], index=["OBS", "STD"], columns=[1, 2])
+    df = pd.DataFrame(
+        data=[[2.0, 3.0], [5.0, 6.0]], index=["OBS", "STD"], columns=[1, 2]
+    )
     df.columns = _set_multiindex(df)
     expected_result = pd.concat({"test_key": df}, axis=1)
 
@@ -117,7 +119,9 @@ def test_remove_failed_realizations(
 
     expected_result.columns = _set_multiindex(expected_result)
 
-    assert md.data.equals(pd.concat({"test_key": expected_result}, axis=1))
+    assert md.data.equals(
+        pd.concat({"test_key": expected_result.astype(float)}, axis=1)
+    )
 
 
 @pytest.mark.usefixtures("facade", "measured_data_setup")
@@ -152,7 +156,9 @@ def test_remove_inactive_observations(
     expected_result.columns = _set_multiindex(expected_result)
 
     md.remove_inactive_observations()
-    assert md.data.equals(pd.concat({"test_key": expected_result}, axis=1))
+    assert md.data.equals(
+        pd.concat({"test_key": expected_result.astype(float)}, axis=1)
+    )
 
 
 @pytest.mark.usefixtures("facade", "measured_data_setup")
@@ -252,13 +258,12 @@ def test_filter_on_column_index(index_list, expected_result):
             pd.DataFrame(
                 data=[[1, 2, 3], [4, 5, 6], [7, 8, 9]], index=["OBS", "STD", 1]
             ),
-            pd.DataFrame(
-                data=[[7, 8, 9]], index=[1]
-            ),
+            pd.DataFrame(data=[[7, 8, 9]], index=[1]),
         ),
         (
             pd.DataFrame(
-                data=[[1, None, 3], [4, None, 6], [7, 8, 9], [10, 11, 12]], index=["OBS", "STD", 1, 2]
+                data=[[1, None, 3], [4, None, 6], [7, 8, 9], [10, 11, 12]],
+                index=["OBS", "STD", 1, 2],
             ),
             pd.DataFrame(
                 data=[[7, 8, 9], [10, 11, 12]], index=[1, 2], columns=[0, 1, 2]

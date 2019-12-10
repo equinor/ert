@@ -90,7 +90,7 @@ class MeasuredData(object):
 
             measured_data = pd.concat([measured_data, data], axis=1)
 
-        return measured_data
+        return measured_data.astype(float)
 
     def filter_ensemble_std(self, std_cutoff):
         self._set_data(self._filter_ensemble_std(std_cutoff))
