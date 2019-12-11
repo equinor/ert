@@ -2,6 +2,7 @@ from ecl.util.util import BoolVector
 from res.util.substitution_list import SubstitutionList
 from ecl.util.test import TestAreaContext
 from tests import ResTest
+from tests.utils import tmpdir
 from res.enkf import ErtRunContext
 from res.enkf.enums import EnkfRunType
 from res.enkf.enums import EnKFFSType
@@ -10,6 +11,7 @@ from res.util import PathFormat
 
 class ErtRunContextTest(ResTest):
 
+    @tmpdir()
     def test_create(self):
         with TestAreaContext("run_context"):
             arg = None

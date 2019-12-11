@@ -17,6 +17,7 @@
 import os.path
 
 from tests import ResTest
+from tests.utils import tmpdir
 from res.test import ErtTestContext
 
 from res.enkf.active_list import ActiveList
@@ -42,6 +43,7 @@ class LocalDatasetTest(ResTest):
         s_args = (None, nx, ny, xinc, yinc, xstart, ystart, angle)
         return Surface(*s_args)
 
+    @tmpdir()
     def test_local_field(self):
         with ErtTestContext('python/enkf/data/local_config', self.field_config) as test_context:
             main = test_context.getErt()
@@ -55,7 +57,7 @@ class LocalDatasetTest(ResTest):
             data_scale.addField('PERMX', ecl_reg)
             self.assertEqual(1, len(data_scale))
 
-
+    @tmpdir()
     def test_local_surface(self):
         with ErtTestContext('python/enkf/data/local_config', self.surf_config) as test_context:
             main = test_context.getErt()
@@ -69,6 +71,7 @@ class LocalDatasetTest(ResTest):
             data_scale.addSurface('TOP', geo_reg)
             self.assertEqual(1, len(data_scale))
 
+    @tmpdir()
     def test_local_dataset(self):
         with ErtTestContext('python/enkf/data/local_config', self.config) as test_context:
             main = test_context.getErt()

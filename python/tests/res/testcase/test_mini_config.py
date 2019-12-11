@@ -1,10 +1,12 @@
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from res.test import ErtTestContext
 from tests import ResTest
+from tests.utils import tmpdir
 
 
 class MiniConfigTest(ResTest):
 
+    @tmpdir()
     def test_failed_realizations(self):
 
         # mini_fail_config has the following realization success/failures:

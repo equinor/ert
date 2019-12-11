@@ -2,6 +2,7 @@ import os
 import sys
 from ecl.util.test import TestAreaContext
 from tests import ResTest
+from tests.utils import tmpdir
 from ecl.util.util import BoolVector
 
 from res.test import ErtTestContext
@@ -16,6 +17,7 @@ class SimulationBatchTest(ResTest):
         pass
 
 
+    @tmpdir()
     def test_run(self):
         ens_size = 2
         config_file = self.createTestPath("local/config/simulation_batch/config.ert")

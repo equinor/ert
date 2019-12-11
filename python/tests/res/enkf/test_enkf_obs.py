@@ -1,6 +1,7 @@
 import pytest
 
 from tests import ResTest
+from tests.utils import tmpdir
 from res.test import ErtTestContext
 
 from ecl.grid import EclGrid
@@ -21,7 +22,7 @@ class EnKFObsTest(ResTest):
         self.refcase = self.createTestPath("Equinor/config/obs_testing/EXAMPLE_01_BASE")
         self.grid = self.createTestPath("Equinor/config/obs_testing/EXAMPLE_01_BASE.EGRID")
 
-
+    @tmpdir()
     def test_scale_obs(self):
         with ErtTestContext("obs_test", self.config_file) as test_context:
             ert = test_context.getErt()
@@ -80,11 +81,7 @@ class EnKFObsTest(ResTest):
             self.assertEqual(v1[1], std0*10)
             self.assertEqual(v2[1], std0*20)
 
-
-
-
-
-
+    @tmpdir()
     def testObs(self):
         with ErtTestContext("obs_test", self.config_file) as test_context:
             ert = test_context.getErt()
@@ -118,8 +115,7 @@ class EnKFObsTest(ResTest):
             for t in v1.getStepList():
                 self.assertTrue(local_node.tstepActive(t))
 
-
-
+    @tmpdir()
     def test_obs_block_scale_std(self):
         with ErtTestContext("obs_test_scale", self.config_file) as test_context:
             ert = test_context.getErt()

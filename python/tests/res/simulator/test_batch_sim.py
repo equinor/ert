@@ -12,6 +12,8 @@ from res.job_queue import JobStatusType
 from res.enkf import ResConfig
 from tests.utils import wait_until, tmpdir
 from tests import ResTest
+from tests.utils import tmpdir
+
 from threading import Thread
 
 class TestMonitor(object):
@@ -39,6 +41,7 @@ def _wait_for_completion(ctx):
 class BatchSimulatorTest(ResTest):
 
 
+    @tmpdir()
     def test_invalid_simulator_creation(self):
         config_file = self.createTestPath("local/batch_sim/batch_sim.ert")
 
@@ -163,6 +166,7 @@ class BatchSimulatorTest(ResTest):
                            ])
 
 
+    @tmpdir()
     def test_batch_simulation(self):
         config_file = self.createTestPath("local/batch_sim/batch_sim.ert")
 
@@ -233,8 +237,7 @@ class BatchSimulatorTest(ResTest):
 
             self.assertTrue(isinstance(monitor.sim_context, BatchContext))
 
-
-
+    @tmpdir()
     def test_batch_simulation_invalid_suffixes(self):
         config_file = self.createTestPath("local/batch_sim/batch_sim.ert")
         with TestAreaContext("batch_sim") as test_area:
@@ -310,6 +313,7 @@ class BatchSimulatorTest(ResTest):
                     }})])
 
 
+    @tmpdir()
     def test_batch_simulation_suffixes(self):
         config_file = self.createTestPath("local/batch_sim/batch_sim.ert")
         with TestAreaContext("batch_sim") as test_area:
@@ -372,6 +376,7 @@ class BatchSimulatorTest(ResTest):
                     self.assertAlmostEqual(exp, act)
 
 
+    @tmpdir()
     def test_stop_sim(self):
         config_file = self.createTestPath("local/batch_sim/batch_sim.ert")
         with TestAreaContext("batch_sim_stop") as test_area:

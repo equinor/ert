@@ -1,6 +1,7 @@
 import pytest
 
 from tests import ResTest
+from tests.utils import tmpdir
 from res.test import ErtTestContext
 
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
@@ -14,6 +15,7 @@ class LoadResultsManuallyTest(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("Equinor/config/with_data/config")
 
+    @tmpdir()
     def test_load_results_manually(self):
         with ErtTestContext("manual_load_test", self.config_file) as test_context:
             ert = test_context.getErt()

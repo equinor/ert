@@ -22,6 +22,7 @@ import pytest
 
 from ecl.util.test import TestAreaContext
 from tests import ResTest
+from tests.utils import tmpdir
 from ecl.util.util import BoolVector
 
 from res.enkf import (EnsembleConfig, AnalysisConfig, ModelConfig, SiteConfig,
@@ -45,6 +46,7 @@ class EnKFTestTransferEnv(ResTest):
   def setUp(self):
     pass
 
+  @tmpdir()
   def test_transfer_var(self):
 
     with TestAreaContext('enkf_test_transfer_env') as work_area:

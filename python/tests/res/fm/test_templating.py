@@ -1,6 +1,7 @@
 
 from ecl.util.test import TestAreaContext
 from tests import ResTest
+from tests.utils import tmpdir
 from res.fm.templating import *
 
 import jinja2
@@ -37,7 +38,7 @@ class TemplatingTest(ResTest):
         }
     }
 
-
+    @tmpdir()
     def test_render_invalid(self):
         with TestAreaContext("templating") as tac:
 
@@ -72,7 +73,7 @@ class TemplatingTest(ResTest):
             with self.assertRaises(TypeError):
                 render_template(prod_in, 'template_file', None)
 
-
+    @tmpdir()
     def test_render(self):
 
         wells = { 'PROD%d' % idx: 0.2*idx for idx in range(1, 5) }
@@ -105,7 +106,7 @@ class TemplatingTest(ResTest):
 
         self.assertEqual(expected_template_out, output)
 
-
+    @tmpdir()
     def test_template_multiple_input(self):
         with open("template", 'w') as template_file:
             template_file.write(self.mulitple_input_template)
@@ -138,7 +139,7 @@ class TemplatingTest(ResTest):
 
             self.assertEqual(parameter_file.read(), expected_output)
 
-
+    @tmpdir()
     def test_template_executable(self):
         with TestAreaContext("templating") as tac:
             with open("template", 'w') as template_file:
@@ -168,7 +169,7 @@ class TemplatingTest(ResTest):
                                   "F2 200"
                 self.assertEqual(parameter_file.read(), expected_output)
 
-
+    @tmpdir()
     def test_load_parameters(self):
 
         with TestAreaContext("templating") as tac:

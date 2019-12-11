@@ -1,4 +1,5 @@
 from tests import ResTest
+from tests.utils import tmpdir
 from res.test import ErtTestContext
 from ecl.util.util import BoolVector
 
@@ -10,6 +11,7 @@ from res.enkf import EnkfNode
 
 class ESUpdateTest(ResTest):
 
+    @tmpdir()
     def test_create(self):
         config = self.createTestPath("local/custom_kw/mini_config")
         with ErtTestContext("python/enkf/data/custom_kw_simulated", config) as context:
@@ -23,6 +25,7 @@ class ESUpdateTest(ResTest):
             module = es_update.getModule( "STD_ENKF" )
 
 
+    @tmpdir()
     def test_update(self):
         config = self.createTestPath("local/snake_oil/snake_oil.ert")
         with ErtTestContext("update_test", config) as context:
@@ -53,6 +56,7 @@ class ESUpdateTest(ResTest):
                 self.assertNotEqual(sim_gen_kw[index], target_gen_kw[index])
 
 
+    @tmpdir()
     def test_localization(self):
         config = self.createTestPath("local/snake_oil/snake_oil.ert")
         with ErtTestContext("localization_test", config) as context:

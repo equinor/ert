@@ -20,6 +20,7 @@ from datetime import date
 
 from ecl.util.test import TestAreaContext
 from tests import ResTest
+from tests.utils import tmpdir
 from ecl.util.util import CTime
 from ecl.util.enums import RngAlgTypeEnum
 from res.util.enums import MessageLevelEnum
@@ -303,6 +304,7 @@ class ResConfigTest(ResTest):
         self.config_file = "snake_oil_structure/ert/model/user_config.ert"
         expand_config_data()
 
+    @tmpdir()
     def test_invalid_user_config(self):
         self.set_up_simple()
 
@@ -310,6 +312,7 @@ class ResConfigTest(ResTest):
             with self.assertRaises(IOError):
                 ResConfig("this/is/not/a/file")
 
+    @tmpdir()
     def test_init(self):
         self.set_up_simple()
 
@@ -578,7 +581,7 @@ class ResConfigTest(ResTest):
                 log_config.log_level
                 )
 
-
+    @tmpdir()
     def test_extensive_config(self):
         self.set_up_snake_oil_structure()
 
@@ -610,6 +613,7 @@ class ResConfigTest(ResTest):
             # TODO: Not tested
             # - MIN_REALIZATIONS
 
+    @tmpdir()
     def test_missing_directory(self):
         config = {
             "INTERNALS" :
@@ -632,6 +636,7 @@ class ResConfigTest(ResTest):
         with self.assertRaises(IOError):
             ResConfig( config = config )
 
+    @tmpdir()
     def test_res_config_dict_constructor(self):
         self.set_up_snake_oil_structure()
 

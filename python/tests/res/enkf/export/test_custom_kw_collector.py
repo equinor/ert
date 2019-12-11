@@ -1,4 +1,5 @@
 from tests import ResTest
+from tests.utils import tmpdir
 from res.test import ErtTestContext
 
 from res.enkf.export import CustomKWCollector
@@ -6,6 +7,7 @@ from res.enkf.export import CustomKWCollector
 
 class CustomKwCollectorTest(ResTest):
 
+    @tmpdir()
     def test_custom_kw_collector_non_current_fs(self):
         config = self.createTestPath("local/custom_kw/mini_config")
 
@@ -16,7 +18,7 @@ class CustomKwCollectorTest(ResTest):
 
             self.assertTrue(len(data.columns) == 0)
 
-
+    @tmpdir()
     def test_custom_kw_collector_current_fs(self):
         config = self.createTestPath("local/custom_kw/mini_config")
 

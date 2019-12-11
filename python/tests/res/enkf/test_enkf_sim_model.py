@@ -22,6 +22,7 @@ import pytest
 
 from ecl.util.test import TestAreaContext
 from tests import ResTest
+from tests.utils import tmpdir
 from ecl.util.util import BoolVector
 
 from res.job_queue import ExtJob
@@ -46,6 +47,7 @@ class EnKFTestSimModel(ResTest):
   def setUp(self):
     pass
 
+  @tmpdir()
   def test_simulation_model(self):
 
     with TestAreaContext('enkf_test_sim_model_kw') as work_area:

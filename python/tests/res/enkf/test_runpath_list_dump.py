@@ -3,6 +3,7 @@ import itertools
 
 from ecl.util.test import TestAreaContext
 from tests import ResTest
+from tests.utils import tmpdir
 from res.test import ErtTestContext
 
 from ecl.util.util import BoolVector
@@ -79,6 +80,7 @@ class RunpathListDumpTest(ResTest):
             self.assertEqual(list(exp_runpaths), list(dumped_runpaths))
 
 
+    @tmpdir()
     def test_add_all(self):
         test_base = itertools.product([0, 1, 2, 17], [True, False])
         for itr, elementwise_creation in test_base:

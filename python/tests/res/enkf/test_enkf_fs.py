@@ -3,6 +3,7 @@ import pytest
 
 from ecl.util.test import TestAreaContext
 from tests import ResTest
+from tests.utils import tmpdir
 from res.test import ErtTestContext
 
 from res.enkf import EnkfFs
@@ -43,6 +44,7 @@ class EnKFFSTest(ResTest):
             self.assertTrue( version >= 106 )
 
 
+    @tmpdir()
     def test_create2(self):
         with TestAreaContext("create_fs2") as work_area:
             work_area.copy_parent_content(self.config_file)

@@ -18,6 +18,7 @@ import pytest
 
 from ecl.util.test import TestAreaContext
 from tests import ResTest
+from tests.utils import tmpdir
 from ecl.util.util import BoolVector
 
 from res.enkf import (EnsembleConfig, AnalysisConfig, ModelConfig, SiteConfig,
@@ -39,6 +40,7 @@ class EnKFRunpathTest(ResTest):
     def setUp(self):
         pass
 
+    @tmpdir()
     def test_with_gen_kw(self):
         case_directory = self.createTestPath('local/snake_oil_no_data/')
         with TestAreaContext('test_enkf_runpath', store_area=True) as work_area:
@@ -59,6 +61,7 @@ class EnKFRunpathTest(ResTest):
             rp.load()
             self.assertEqual(len(rp), 1)
 
+    @tmpdir()
     def test_without_gen_kw(self):
         case_directory = self.createTestPath('local/snake_oil_no_data/')
         with TestAreaContext('test_enkf_runpath', store_area=False) as work_area:

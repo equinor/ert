@@ -3,6 +3,7 @@ import pytest
 
 
 from tests import ResTest
+from tests.utils import tmpdir
 
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
@@ -27,7 +28,7 @@ class EnKFLibraryTest(ResTest):
             with self.assertRaises(NotImplementedError):
                 temp = cls()
 
-
+    @tmpdir()
     def test_ecl_config_creation(self):
         with TestAreaContext("enkf_library_test") as work_area:
             work_area.copy_directory(self.case_directory)

@@ -79,6 +79,7 @@ class EnKFTest(ResTest):
                     main.resConfig().user_config_file
                     )
 
+    @tmpdir()
     def test_site_bootstrap( self ):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
             with  self.assertRaises(ValueError):
@@ -95,6 +96,7 @@ class EnKFTest(ResTest):
             self.assertIsNotNone(main.siteConfig)
             self.assertIsNotNone(main.analysisConfig)
 
+    @tmpdir()
     def test_invalid_res_config(self):
         with TestAreaContext("enkf_test") as work_area:
             with self.assertRaises(TypeError):
@@ -102,7 +104,7 @@ class EnKFTest(ResTest):
                 main = EnKFMain(res_config="This is not a ResConfig instance")
 
 
-
+    @tmpdir()
     def test_enum(self):
         self.assertEnumIsFullyDefined(EnkfVarType, "enkf_var_type", "lib/include/ert/enkf/enkf_types.hpp")
         self.assertEnumIsFullyDefined(ErtImplType, "ert_impl_type", "lib/include/ert/enkf/enkf_types.hpp")
@@ -167,6 +169,7 @@ class EnKFTest(ResTest):
 
 
 
+    @tmpdir()
     def test_config( self ):
         with TestAreaContext("enkf_test") as work_area:
             work_area.copy_directory(self.case_directory)
@@ -201,6 +204,7 @@ class EnKFTest(ResTest):
             self.assertEqual(main.getEnsembleSize(), num_realizations)
 
 
+    @tmpdir()
     def test_run_context(self):
         with TestAreaContext("enkf_test") as work_area:
             work_area.copy_directory(self.case_directory)
@@ -226,7 +230,7 @@ class EnKFTest(ResTest):
             self.assertTrue( isinstance( run_arg , RunArg ))
 
 
-
+    @tmpdir()
     def test_run_context_from_external_folder(self):
         with TestAreaContext('enkf_test') as work_area:
             work_area.copy_directory(self.case_directory_custom_kw)

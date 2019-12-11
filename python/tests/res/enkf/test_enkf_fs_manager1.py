@@ -1,6 +1,7 @@
 import os
 from res.test import ErtTestContext
 from tests import ResTest
+from tests.utils import tmpdir
 
 from res.enkf import EnkfFs
 from res.enkf import EnKFMain
@@ -12,7 +13,7 @@ class EnKFFSManagerTest1(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("local/snake_oil/snake_oil.ert")
 
-
+    @tmpdir()
     def test_create(self):
         # We are indirectly testing the create through the create
         # already in the enkf_main object. In principle we could

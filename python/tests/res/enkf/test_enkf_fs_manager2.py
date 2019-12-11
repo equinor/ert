@@ -2,6 +2,8 @@ import sys
 import os
 from tests import ResTest
 from res.test import ErtTestContext
+from tests.utils import tmpdir
+
 
 from res.enkf import EnkfFs
 from res.enkf import EnKFMain
@@ -12,7 +14,7 @@ class EnKFFSManagerTest2(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("local/custom_kw/mini_config")
 
-
+    @tmpdir()
     def test_rotate(self):
 
         # We are indirectly testing the create through the create

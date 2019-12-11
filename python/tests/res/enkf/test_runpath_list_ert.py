@@ -2,6 +2,7 @@ import unittest
 import os
 from res.test import ErtTestContext
 from tests import ResTest
+from tests.utils import tmpdir
 
 from res.enkf import RunpathList, RunpathNode, ErtRunContext
 from res.enkf.enums import EnkfInitModeEnum,EnkfRunType
@@ -13,6 +14,7 @@ from res.util.substitution_list import SubstitutionList
 
 class RunpathListTestErt(ResTest):
 
+    @tmpdir()
     def test_an_enkf_runpath(self):
         # TODO this test is flaky and we need to figure out why.  See #1370
         # enkf_util_assert_buffer_type: wrong target type in file (expected:104 got:0)
@@ -20,7 +22,7 @@ class RunpathListTestErt(ResTest):
         with ErtTestContext("runpathlist_basic", test_path) as tc:
             pass
 
-
+    @tmpdir()
     def test_assert_export(self):
         with ErtTestContext("create_runpath_export" , self.createTestPath("local/snake_oil_no_data/snake_oil.ert")) as tc:
             ert = tc.getErt( )
@@ -44,7 +46,7 @@ class RunpathListTestErt(ResTest):
             self.assertTrue( os.path.isfile( runpath_list.getExportFile( ) ))
             self.assertEqual( "test_runpath_list.txt" , os.path.basename( runpath_list.getExportFile( ) ))
 
-
+    @tmpdir()
     def test_assert_symlink_deleted(self):
         with ErtTestContext("create_runpath_symlink_deleted" , self.createTestPath("local/snake_oil_field/snake_oil.ert")) as tc:
             ert = tc.getErt( )

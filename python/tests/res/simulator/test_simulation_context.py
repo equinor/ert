@@ -1,5 +1,6 @@
 import time
 from tests import ResTest
+from tests.utils import tmpdir
 from ecl.util.util import BoolVector
 
 from res.test import ErtTestContext
@@ -10,7 +11,7 @@ from res.simulator import SimulationContext
 
 class SimulationContextTest(ResTest):
 
-
+    @tmpdir()
     def test_simulation_context(self):
         config_file = self.createTestPath("local/snake_oil_no_data/snake_oil.ert")
         with ErtTestContext("ert/server/rpc/simulation_context", config_file) as test_context:
