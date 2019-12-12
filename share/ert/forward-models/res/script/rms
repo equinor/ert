@@ -16,6 +16,7 @@ def _build_argument_parser():
     parser = argparse.ArgumentParser(description=description, usage=usage)
     parser.add_argument(
         'iens',
+        type=int,
         help='Realization number',
     )
     parser.add_argument(
