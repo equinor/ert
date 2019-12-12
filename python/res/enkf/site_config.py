@@ -77,22 +77,21 @@ class SiteConfig(BaseCClass):
                     ext_job_list.add_job(job[ConfigKeys.NAME], new_job)
                 except:
                     print("WARNING: Unable to create job from {}".format(job[ConfigKeys.PATH]))
-                    continue
 
             for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
                 if not os.path.isdir(job_path):
-                    print("WARNING: Unable to locate job directory {}".format(job[ConfigKeys.PATH]))
+                    print("WARNING: Unable to locate job directory {}".format(job_path))
                     continue
                 files = os.listdir(job_path)
                 for file_name in files:
                     full_path = os.path.join(job_path, file_name)
-                    try:
-                        new_job = ExtJob(config_file=full_path, private=False, license_root_path=__license_root_path)
-                        new_job.convertToCReference(None)
-                        ext_job_list.add_job(new_job.name(), new_job)
-                    except:
-                        print("WARNING: Unable to create job from {}".format(full_path))
-                        continue
+                    if os.path.isfile(full_path):
+                        try:
+                            new_job = ExtJob(config_file=full_path, private=False, license_root_path=__license_root_path)
+                            new_job.convertToCReference(None)
+                            ext_job_list.add_job(new_job.name(), new_job)
+                        except:
+                            print("WARNING: Unable to create job from {}".format(full_path))
 
             ext_job_list.convertToCReference(None)
 
