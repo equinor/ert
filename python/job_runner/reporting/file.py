@@ -110,6 +110,8 @@ class File(object):
             "end_time": None,
             "stdout": job.std_out,
             "stderr": job.std_err,
+            "current_memory_usage": None,
+            "max_memory_usage": None,
         }
 
     def _start_status_file(self, msg):

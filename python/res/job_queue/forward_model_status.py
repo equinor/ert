@@ -134,7 +134,7 @@ class ForwardModelStatus(object):
             try:
                 status = cls.try_load(path)
                 return status
-            except:
+            except (OSError, ValueError):
                 attempt += 1
                 if attempt < num_retry:
                     time.sleep(sleep_time)
