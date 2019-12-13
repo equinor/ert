@@ -259,3 +259,43 @@ STORE_FILE
 
     EXECUTABLE  script/store_file.py
     ARGLIST     <STORAGE_PATH> <FILE>
+
+
+TEMPLATE_RENDER
+...............
+
+.. code-block:: bash
+
+    EXECUTABLE  ../templating/script/template_render
+    ARGLIST -i <INPUT_FILES> -o <OUTPUT_FILE> -t <TEMPLATE_FILE>
+
+Loads the data from each file ("some/path/filename.xxx") in INPUT_FILES
+and exposes it as the variable "filename". It then loads the Jinja2
+template TEMPLATE_FILE and dumps the rendered result to OUTPUT.
+
+Example:
+Given an input file my_input.json:
+
+.. code-block:: json
+
+    {
+        "my_variable": "my_value"
+    }
+
+And a template file tmpl.jinja:
+
+.. code-block:: bash
+
+    This is written in my file together with {{my_input.my_variable}}
+
+This job will produce an output file:
+
+.. code-block:: bash
+
+    This is written in my file together with my_value
+
+By invoking the :code:`FORWARD_MODEL` as such:
+
+.. code-block:: bash
+
+    FORWARD_MODEL TEMPLATE_RENDER(<INPUT_FILES>=my_input.json, <TEMPLATE_FILE>=tmpl.jinja, <OUTPUT_FILE>=output_file)
