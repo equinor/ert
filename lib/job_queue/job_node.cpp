@@ -269,7 +269,7 @@ job_queue_node_type * job_queue_node_alloc_python( const char * job_name ,
                                                     const char * status_file,
                                                     const char * exit_file) {
   char ** argv           = stringlist_alloc_char_ref( arguments );
-  job_queue_node_type * out = job_queue_node_alloc( job_name , run_path , run_cmd , argc , argv , 1, ok_file , status_file, exit_file, NULL, NULL, NULL, NULL);
+  job_queue_node_type * out = job_queue_node_alloc( job_name , run_path , run_cmd , argc , argv , num_cpu, ok_file , status_file, exit_file, NULL, NULL, NULL, NULL);
   free(argv);
   return out;
 }
