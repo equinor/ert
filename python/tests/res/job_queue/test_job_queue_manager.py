@@ -5,6 +5,7 @@ from tests.utils import wait_until
 from ecl.util.test import TestAreaContext
 import os, stat
 
+from threading import BoundedSemaphore
 
 def dummy_ok_callback(args):
     print("success {}".format(args[1]))
@@ -41,6 +42,12 @@ while True:
     time.sleep(0.5)
 """
 
+mock_bsub = """#!/usr/bin/env python
+import sys
+with open("test.out", "w") as f:
+    f.write(" ".join(sys.argv))
+"""
+
 def create_queue(script, max_submit=2):
     driver = Driver(driver_type=QueueDriverEnum.LOCAL_DRIVER, max_running=5)
     job_queue = JobQueue(driver, max_submit=max_submit)
@@ -68,6 +75,50 @@ def create_queue(script, max_submit=2):
 
 class JobQueueManagerTest(ResTest):
     
+    def test_num_cpu_submitted_correctly(self):
+        with TestAreaContext("job_node_test"):
+            os.putenv("PATH", os.getcwd() + ":" + os.getenv("PATH"))
+            driver = Driver(driver_type=QueueDriverEnum.LSF_DRIVER, max_running=1)
+            
+            with open(dummy_config["job_script"], "w") as f:
+                f.write(simple_script)
+            os.chmod(dummy_config["job_script"], stat.S_IRWXU |  stat.S_IRWXO |  stat.S_IRWXG )
+
+            with open("bsub", "w") as f:
+                f.write(mock_bsub)
+            os.chmod("bsub", stat.S_IRWXU |  stat.S_IRWXO |  stat.S_IRWXG )
+
+            job_id = 0
+            num_cpus = 4
+            os.mkdir(dummy_config["run_path"].format(job_id))
+            job = JobQueueNode(
+                job_script=dummy_config["job_script"], 
+                job_name=dummy_config["job_name"].format(job_id), 
+                run_path=os.path.realpath(dummy_config["run_path"].format(job_id)), 
+                num_cpu=num_cpus,
+                status_file="STATUS", 
+                ok_file="OK", 
+                exit_file="EXIT",
+                done_callback_function=dummy_config["ok_callback"],
+                exit_callback_function=dummy_config["exit_callback"],
+                callback_arguments=[{"job_number":job_id}, os.path.realpath(dummy_config["run_path"].format(job_id)), ])
+
+            pool_sema = BoundedSemaphore(value=2)
+            job.run(driver, pool_sema)
+            job.stop()
+            job.wait_for()
+
+            with open("test.out") as f:
+                bsub_argv = f.read().split()
+            
+            found_cpu_arg = False
+            for arg_i, arg in enumerate(bsub_argv):
+                if arg == "-n":
+                    self.assertEqual(bsub_argv[arg_i + 1], str(num_cpus), "num_cpu argument does not match specified number of cpus")
+                    found_cpu_arg = True
+
+            self.assertTrue(found_cpu_arg, "num_cpu argument not found")
+
     def test_execute_queue(self):
         
         with TestAreaContext("job_queue_manager_test") as work_area:
