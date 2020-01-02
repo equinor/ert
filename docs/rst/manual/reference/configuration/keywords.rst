@@ -83,6 +83,7 @@ Keyword name                                                        	Required   
 :ref:`MAX_RUNTIME <max_runtime>` 					NO 					0 				Set the maximum runtime in seconds for a realization. 
 :ref:`MAX_SUBMIT <max_submit>` 						NO 					2 				How many times should the queue system retry a simulation. 
 :ref:`MIN_REALIZATIONS <min_realizations>` 				NO 					0 				Set the number of minimum reservoir realizations to run before long running realizations are stopped. Keyword STOP_LONG_RUNNING must be set to TRUE when MIN_REALIZATIONS are set. 
+:ref:`NUM_CPU <num_cpu>` 							YES 									Set the number of CPUs. Intepretation varies depending on context.
 :ref:`NUM_REALIZATIONS <num_realizations>` 				YES 									Set the number of reservoir realizations to use. 
 :ref:`OBS_CONFIG <obs_config>` 						NO 									File specifying observations with uncertainties. 
 :ref:`PLOT_SETTINGS <plot_settings>` 					NO 					  				Deprecated.
@@ -220,6 +221,18 @@ These keywords must be set to make ERT function properly.
 
 		-- Use 200 realizations/members
 		NUM_REALIZATIONS 200
+
+.. _num_cpu:
+.. topic:: NUM_CPU
+
+    Equates to the ``-n`` argument in the context of LSF. For TORQUE, it is
+    simply a upper bound for the product of nodes and CPUs per node.
+
+    *Example:*
+
+    ::
+
+        NUM_CPU 2
 
 
 .. _ignore_schedule:
@@ -1757,26 +1770,13 @@ Keywords related to running the forward model
 .. _queue_option:
 .. topic:: QUEUE_OPTION
 
-	Keyword used to set options for a queue (LSF, RSH, TORQUE, LOCAL), such like queue
+	Keyword used to set options for a queue.
 
 .. _queue_system:
 .. topic:: QUEUE_SYSTEM
 
 	The keyword QUEUE_SYSTEM can be used to control where the simulation jobs are
-	executed. It can take the values LSF, TORQUE, RSH and LOCAL.
-
-	The LSF option will submit jobs to the LSF cluster at your location, and is
-	recommended whenever LSF is available.
-
-	The TORQUE option will submit jobs to the TORQUE a torque based system, using
-	the commands qsub, qstat etc., if available.
-
-	If you do not have access to LSF or TORQUE you can submit to your local
-	workstation using the LOCAL option and to homemade cluster of workstations
-	using the RSH option. All of the queue systems can be further configured, see
-	separate sections.
-
-	*Example:*
+	executed. It can take the values LSF, TORQUE, RSH (*deprecated*) and LOCAL.
 
 	::
 
@@ -1786,23 +1786,10 @@ Keywords related to running the forward model
 	The QUEUE_SYSTEM keyword is optional, and usually defaults to LSF (this is
 	site dependent).
 
-Configuring LSF access
-----------------------
-.. _configuring_lsf_access:
+.. _lsf_list_of_kwds:
 
-The LSF system is the most useful of the queue alternatives, and also the
-alternative with most options. The most important options are related to how ert
-should submit jobs to the LSF system. Essentially there are two methods ERT can
-use when submitting jobs to the LSF system:
-
-#. Workstations which have direct access to LSF ERT can submit directly with
-   no further configuration. This is the preferred solution, but unfortunately not
-   very common.
-#. Alternatively ERT can issue shell commands to bsub/bjobs/bkill to submit
-   jobs. These shell commands can be issued on the current workstation, or
-   alternatively on a remote workstation using ssh.
-
-The main switch between alternatives 1 and 2 above is the LSF_SERVER option.
+Available LSF configuration options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _lsf_server:
 .. topic:: LSF_SERVER
@@ -1819,7 +1806,7 @@ The main switch between alternatives 1 and 2 above is the LSF_SERVER option.
 
 		LSF_SERVER   be-grid01
 
-	ert will use ssh to submit your jobs using shell commands on the server
+	ERT will use ssh to submit your jobs using shell commands on the server
 	be-grid01. For this to work you must have passwordless ssh to the server
 	be-grid01. If you give the special server name LOCAL ERT will submit using
 	shell commands on the current workstation.
@@ -1828,13 +1815,13 @@ The main switch between alternatives 1 and 2 above is the LSF_SERVER option.
 
 	By default ERT will use the shell commands bsub, bjobs and bkill to interact
 	with the queue system, i.e. whatever binaries are first in your PATH will be
-	used. For fine grained control of the shell based submission you can tell ert
+	used. For fine grained control of the shell based submission you can tell ERT
 	which programs to use:
 
 	::
 
 		QUEUE_OPTION   LSF  BJOBS_CMD  /path/to/my/bjobs
-		QUEUE_OPTION   LSF  BSUB_CMD   /path/to/my/bsub 
+		QUEUE_OPTION   LSF  BSUB_CMD   /path/to/my/bsub
 
 	*Example 1*
 
@@ -1858,164 +1845,214 @@ The main switch between alternatives 1 and 2 above is the LSF_SERVER option.
 	LSF options apply irrespective of which method has been used to submit the
 	jobs.
 
-
 .. _lsf_queue:
 .. topic:: LSF_QUEUE
 
-	The name of the LSF queue you are running ECLIPSE simulations in.
-
+	The name of the LSF queue you are running simulations in.
+	For e.g. ``bsub``, this option will be passed to the ``-q`` parameter:
+	https://www.ibm.com/support/knowledgecenter/en/SSETD4_9.1.3/lsf_command_ref/bsub.q.1.html
 
 .. _lsf_resources:
 .. topic:: LSF_RESOURCES
 
-        From https://www.ibm.com/support/knowledgecenter/en/SSETD4_9.1.3/lsf_admin/res_req_strings_about.html:
-		Most LSF commands accept a -R res_req argument to specify resource
-		requirements. The exact behavior depends on the command. For
-		example, specifying a resource requirement for the lsload command
-		displays the load levels for all hosts that have the requested resources.
+	From https://www.ibm.com/support/knowledgecenter/en/SSETD4_9.1.3/lsf_admin/res_req_strings_about.html:
+	Most LSF commands accept a -R res_req argument to specify resource
+	requirements. The exact behavior depends on the command. For
+	example, specifying a resource requirement for the lsload command
+	displays the load levels for all hosts that have the requested resources.
 
-		Specifying resource requirements for the lsrun command causes LSF to
-		select the best host out of the set of hosts that have the requested
-		resources.
+	Specifying resource requirements for the lsrun command causes LSF to
+	select the best host out of the set of hosts that have the requested
+	resources.
 
-		A resource requirement string describes the resources that a job needs.
-		LSF uses resource requirements to select hosts for remote execution and
-		job execution.
+	A resource requirement string describes the resources that a job needs.
+	LSF uses resource requirements to select hosts for remote execution and
+	job execution.
 
-		Resource requirement strings can be simple (applying to the entire job)
-		or compound (applying to the specified number of slots).
+	Resource requirement strings can be simple (applying to the entire job)
+	or compound (applying to the specified number of slots).
 
+.. _lsf_rsh_cmd:
+.. topic:: LSF_RSH_CMD
 
+	This is option sets the *remote shell* command,
+	which defaults to ``/usr/bin/ssh``.
 
-Configuring TORQUE access
--------------------------
-.. _configuring_torque_access:
+.. _lsf_login_shell:
+.. topic:: LSF_LOGIN_SHELL
 
-The TORQUE system is the only available system on some clusters. The most
-important options are related to how ERT should submit jobs to the TORQUE
-system.
+	Equates to the ``-L`` parameter of e.g. ``bsub``:
+	https://www.ibm.com/support/knowledgecenter/en/SSETD4_9.1.3/lsf_command_ref/bsub.__l.1.html
+	Useful if you need to force the ``bsub`` command to use e.g. ``/bin/csh``.
 
-* Currently, the TORQUE option only works when the machine you are logged into
-  have direct access to the queue system. ERT then submits directly with no
-  further configuration.
+.. _bsub_cmd:
+.. topic:: BSUB_CMD
 
-The most basic invocation is in other words:
+	The ``bsub`` command. Default: ``bsub``.
 
-::
+.. _bjobs_cmd:
+.. topic:: BJOBS_CMD
 
-	QUEUE_SYSTEM TORQUE
+	The ``bjobs`` command. Default: ``bjobs``.
 
-**qsub/qstat/qdel options**
+.. _bkill_cmd:
+.. topic:: BKILL_CMD
 
-By default ERT will use the shell commands qsub,qstat and qdel to interact with
-the queue system, i.e. whatever binaries are first in your PATH will be used.
-For fine grained control of the shell based submission you can tell ERT which
-programs to use:
+	The ``bkill`` command. Default: ``bkill``.
 
-::
+.. _bhist_cmd:
+.. topic:: BHIST_CMD
 
-	QUEUE_SYSTEM TORQUE
-	QUEUE_OPTION TORQUE QSUB_CMD /path/to/my/qsub
-	QUEUE_OPTION TORQUE QSTAT_CMD /path/to/my/qstat 
-	QUEUE_OPTION TORQUE QDEL_CMD /path/to/my/qdel 
+	The ``bhist`` command. Default: ``bhist``.
+
+.. _bjobs_timeout:
+.. topic:: BJOBS_TIMEOUT
+
+	Determines how long-lived the job cache is. Default: ``0`` (i.e. no cache).
+
+.. _debug_output:
+.. topic:: DEBUG_OUTPUT
+
+	Whether or not to output debug information to ``stdout`` (i.e. your
+	console). Default: ``FALSE``, but note that the LSF queue system will
+	change this value in various failure modes.
+
+.. _submit_sleep:
+.. topic:: SUBMIT_SLEEP
+
+	Determines for how long the system will sleep between submitting jobs.
+
+.. _project_code:
+.. topic:: PROJECT_CODE
+
+	Equates to the ``-P`` parameter for e.g. ``bsub``. See https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_command_ref/bsub.__p.1.html
+
+.. _exclude_host:
+.. topic:: EXCLUDE_HOST
+
+	Comma separated list of hosts to be excluded. The LSF system will pass this
+	list of hosts to the ``-R`` argument of e.g. ``bsub`` with the criteria
+	``hname!=<exluded_host_1>``.
+
+.. _torque_list_of_kwds:
+
+Available TORQUE configuration options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. _torque_sub_stat_del_cmd:
+.. topic:: QSUB_CMD|QSTAT_CMD|QDEL_CMD
+
+	By default ERT will use the shell commands qsub,qstat and qdel to interact with
+	the queue system, i.e. whatever binaries are first in your PATH will be used.
+	For fine grained control of the shell based submission you can tell ERT which
+	programs to use:
+
+	::
+
+		QUEUE_SYSTEM TORQUE
+		QUEUE_OPTION TORQUE QSUB_CMD /path/to/my/qsub
+		QUEUE_OPTION TORQUE QSTAT_CMD /path/to/my/qstat
+		QUEUE_OPTION TORQUE QDEL_CMD /path/to/my/qdel
 
 In this example we tell ERT to submit jobs using custom binaries for bsub and
 bjobs.
 
-**Name of queue**
-
-The name of the TORQUE queue you are running ECLIPSE simulations in.
-
-::
-
-	QUEUE_OPTION TORQUE QUEUE name_of_queue
-
-**Name of cluster (label)**
-
-The name of the TORQUE cluster you are running ECLIPSE simulations in. This
-might be a label (serveral clusters), or a single one, as in this example baloo.
-
-::
-
-	QUEUE_OPTION TORQUE CLUSTER_LABEL baloo
-
-**Max running jobs**
-
-The queue option MAX_RUNNING controls the maximum number of simultaneous jobs
-submitted to the queue when using (in this case) the TORQUE option in
-QUEUE_SYSTEM.
-
-::
-  
-	QUEUE_SYSTEM TORQUE
-	-- Submit no more than 30 simultaneous jobs
-	-- to the TORQUE cluster.
-	QUEUE_OPTION TORQUE MAX_RUNNING 30
-
-**Queue options controlling number of nodes and CPUs**
-
-When using TORQUE, you must specify how many nodes a single job is should to
-use, and how many CPUs per node. The default setup in ERT will use one node and
-one CPU. These options are called NUM_NODES and NUM_CPUS_PER_NODE.
-
-If the numbers specified is higher than supported by the cluster (i.e. use 32
-CPUs, but no node has more than 16), the job will not start.
-
-If you wish to increase these number, the program running (typically ECLIPSE)
-will usually also have to be told to correspondingly use more processing units
-(keyword PARALLEL)
-
-::
-	
-	QUEUE_SYSTEM TORQUE
-	-- Use more nodes and CPUs
-	-- in the TORQUE cluster per job submitted
-	-- This should (in theory) allow for 24 processing
-	-- units to be used by eg. ECLIPSE
-	QUEUE_OPTION TORQUE NUM_NODES 3
-	QUEUE_OPTION TORQUE NUM_CPUS_PER_NODE 8
-
-**Keep output from qsub**
-
-Sometimes the error messages from qsub can be useful, if something is seriously
-wrong with the environment or setup. To keep this output (stored in your home
-folder), use this:
-
-::
-
-	QUEUE_OPTION TORQUE KEEP_QSUB_OUTPUT 1
-
-
-** Slow submit to torque **
-
-To be more gentle with the TORQUE system you can instruct the driver to sleep
-for every submit request. The argument to the SUBMIT_SLEEP is the number of
-seconds to sleep for every submit, can be a fraction like 0.5.
-
-::
-
-   QUEUE_OPTION TORQUE SUBMIT_SLEEP 0.25
-
-
-** Torque debug log **
-
-You can ask the TORQUE driver to store a debug log of the jobs submitted, and
-the resulting job id. This is done with the queue option DEBUG_OUTPUT:
-
-::
-   
-   QUEUE_OPTION TORQUE DEBUG_OUTPUT torque_log.txt
-
 
 .. _torque_queue:
-.. topic:: TORQUE_QUEUE
+.. topic:: QUEUE
 
-        Name of the Torque queue.
+	The name of the TORQUE queue you are running simulations in.
+
+	::
+
+		QUEUE_OPTION TORQUE QUEUE name_of_queue
+
+.. _torque_cluster_label:
+.. topic:: CLUSTER_LABEL
+
+	The name of the TORQUE cluster you are running simulations in. This
+	might be a label (serveral clusters), or a single one, as in this example baloo.
+
+	::
+
+		QUEUE_OPTION TORQUE CLUSTER_LABEL baloo
+
+.. _torque_max_running:
+.. topic:: MAX_RUNNING
+
+	The queue option MAX_RUNNING controls the maximum number of simultaneous jobs
+	submitted to the queue when using (in this case) the TORQUE option in
+	QUEUE_SYSTEM.
+
+	::
+
+		QUEUE_SYSTEM TORQUE
+		-- Submit no more than 30 simultaneous jobs
+		-- to the TORQUE cluster.
+		QUEUE_OPTION TORQUE MAX_RUNNING 30
 
 
-Configuring the RSH queue
--------------------------
+.. _torque_nodes_cpus:
+.. topic:: NUM_NODES|NUM_CPUS_PER_NODE
+
+	When using TORQUE, you must specify how many nodes a single job is should to
+	use, and how many CPUs per node. The default setup in ERT will use one node and
+	one CPU. These options are called NUM_NODES and NUM_CPUS_PER_NODE.
+
+	If the numbers specified is higher than supported by the cluster (i.e. use 32
+	CPUs, but no node has more than 16), the job will not start.
+
+	If you wish to increase these number, the program running (typically ECLIPSE)
+	will usually also have to be told to correspondingly use more processing units
+	(keyword PARALLEL)
+
+	::
+
+		QUEUE_SYSTEM TORQUE
+		-- Use more nodes and CPUs
+		-- in the TORQUE cluster per job submitted
+		-- This should (in theory) allow for 24 processing
+		-- units to be used by eg. ECLIPSE
+		QUEUE_OPTION TORQUE NUM_NODES 3
+		QUEUE_OPTION TORQUE NUM_CPUS_PER_NODE 8
+
+.. _torque_keep_qsub_output:
+.. topic:: KEEP_QSUB_OUTPUT
+
+	Sometimes the error messages from qsub can be useful, if something is seriously
+	wrong with the environment or setup. To keep this output (stored in your home
+	folder), use this:
+
+	::
+
+		QUEUE_OPTION TORQUE KEEP_QSUB_OUTPUT 1
+
+
+.. _torque_submit_sleep:
+.. topic:: SUBMIT_SLEEP
+
+	To be more gentle with the TORQUE system you can instruct the driver to sleep
+	for every submit request. The argument to the SUBMIT_SLEEP is the number of
+	seconds to sleep for every submit, can be a fraction like 0.5.
+
+	::
+
+		QUEUE_OPTION TORQUE SUBMIT_SLEEP 0.5
+
+.. _torque_debug_output:
+.. topic:: DEBUG_OUTPUT
+
+	You can ask the TORQUE driver to store a debug log of the jobs submitted, and
+	the resulting job id. This is done with the queue option DEBUG_OUTPUT:
+
+	::
+
+		QUEUE_OPTION TORQUE DEBUG_OUTPUT torque_log.txt
+
 .. _configuring_the_rsh_queue:
+
+Configuring the RSH queue (deprecated)
+--------------------------------------
 
 .. _rsh_host:
 .. topic:: RSH_HOST
@@ -2029,7 +2066,7 @@ Configuring the RSH queue
 		RSH_HOST   computer1:2  computer2:2   large_computer:8
 
 	Here you tell ERT that you can run on three different computers: computer1,
-	computer2 and large_computer. The two first computers can accept two jobs, 
+	computer2 and large_computer. The two first computers can accept two jobs,
         and the last can take eight jobs. Observe the following when using RSH:
 
 	You must have passwordless login to the computers listed in RSH_HOST otherwise

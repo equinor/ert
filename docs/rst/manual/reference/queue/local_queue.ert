@@ -1,0 +1,12 @@
+JOBNAME queue_test_%d
+
+QUEUE_SYSTEM LOCAL
+QUEUE_OPTION LOCAL MAX_RUNNING 50
+
+RUNPATH local_testing/real_%d/iter_%d
+
+NUM_REALIZATIONS 100
+MIN_REALIZATIONS 1
+
+INSTALL_JOB queue_test_job queue_test_job
+SIMULATION_JOB queue_test_job
