@@ -6,6 +6,13 @@ import re
 from argparse import ArgumentParser, ArgumentTypeError
 from ert_shared import clear_global_state
 from ert_shared.cli.main import run_cli
+from ert_shared.cli import (
+    ENSEMBLE_SMOOTHER_MODE,
+    ENSEMBLE_EXPERIMENT_MODE,
+    ES_MDA_MODE,
+    TEST_RUN_MODE,
+    WORKFLOW_MODE
+)
 from ert_gui.ide.keywords.definitions import (
     RangeStringArgument,
     ProperNameArgument,
@@ -62,17 +69,6 @@ def valid_name(user_input):
     return user_input
 
 
-def valid_name_not_default(user_input):
-    if user_input == "default":
-        msg = (
-            "Target file system and source file system can not be the same. "
-            "They were both: <default>."
-        )
-        raise ArgumentTypeError(msg)
-    valid_name(user_input)
-    return user_input
-
-
 def range_limited_int(user_input):
     try:
         i = int(user_input)
@@ -118,9 +114,9 @@ def get_ert_parser(parser=None):
     )
 
     # test_run_parser
-    test_run_description = "Run 'test_run' in cli"
+    test_run_description = "Run '{}' in cli".format(TEST_RUN_MODE)
     test_run_parser = subparsers.add_parser(
-        "test_run", help=test_run_description, description=test_run_description
+        TEST_RUN_MODE, help=test_run_description, description=test_run_description
     )
 
     # ensemble_experiment_parser
@@ -128,7 +124,7 @@ def get_ert_parser(parser=None):
         "Run simulations in cli without performing any updates on the parameters."
     )
     ensemble_experiment_parser = subparsers.add_parser(
-        "ensemble_experiment",
+        ENSEMBLE_EXPERIMENT_MODE,
         description=ensemble_experiment_description,
         help=ensemble_experiment_description,
     )
@@ -140,6 +136,13 @@ def get_ert_parser(parser=None):
         "then only realizations 0,1,2,3,...,9 will be used to perform simulations "
         "while realizations 10,11, 12,...,49 will be excluded",
     )
+    ensemble_experiment_parser.add_argument(
+        "--current-case",
+        type=valid_name,
+        required=False,
+        help="Name of the case where the results for the simulation "
+        "using the prior parameters will be stored",
+    )
 
     # ensemble_smoother_parser
     ensemble_smoother_description = (
@@ -147,15 +150,15 @@ def get_ert_parser(parser=None):
         " on the parameters by using the ensemble smoother algorithm"
     )
     ensemble_smoother_parser = subparsers.add_parser(
-        "ensemble_smoother",
+        ENSEMBLE_SMOOTHER_MODE,
         description=ensemble_smoother_description,
         help=ensemble_smoother_description,
     )
     ensemble_smoother_parser.add_argument(
         "--target-case",
-        type=valid_name_not_default,
+        type=valid_name,
         required=True,
-        help="This is the name of the case where the results for the "
+        help="Name of the case where the results for the "
         "updated parameters will be stored",
     )
     ensemble_smoother_parser.add_argument(
@@ -166,11 +169,18 @@ def get_ert_parser(parser=None):
         "then only realizations 0,1,2,3,...,9 will be used to perform simulations "
         "while realizations 10,11, 12,...,49 will be excluded",
     )
+    ensemble_smoother_parser.add_argument(
+        "--current-case",
+        type=valid_name,
+        required=False,
+        help="Name of the case where the results for the simulation "
+        "using the prior parameters will be stored",
+    )
 
     # es_mda_parser
-    es_mda_description = "Run 'es_mda' in cli"
+    es_mda_description = "Run '{}' in cli".format(ES_MDA_MODE)
     es_mda_parser = subparsers.add_parser(
-        "es_mda", description=es_mda_description, help=es_mda_description
+        ES_MDA_MODE, description=es_mda_description, help=es_mda_description
     )
     es_mda_parser.add_argument(
         "--target-case",
@@ -196,10 +206,17 @@ def get_ert_parser(parser=None):
         "Assimilation Ensemble Smoother will half the weight applied to the "
         "Observation Errors from one iteration to the next across 4 iterations.",
     )
+    es_mda_parser.add_argument(
+        "--current-case",
+        type=valid_name,
+        required=False,
+        help="Name of the case where the results for the simulation "
+        "using the prior parameters will be stored",
+    )
 
     workflow_description = "Executes the workflow given"
     workflow_parser = subparsers.add_parser(
-        "workflow", help=workflow_description, description=workflow_description
+        WORKFLOW_MODE, help=workflow_description, description=workflow_description
     )
     workflow_parser.add_argument(
         help="Name of workflow",
