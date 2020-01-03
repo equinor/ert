@@ -65,10 +65,8 @@ def get_runnable_realizations_mask(casename):
 
 @showWaitCursorWhileWaiting
 def selectOrCreateNewCase(case_name):
-    if getCurrentCaseName() != case_name:
-        fs = ERT.ert.getEnkfFsManager().getFileSystem(case_name)
-        ERT.ert.getEnkfFsManager().switchFileSystem(fs)
-        ERT.emitErtChange()
+    ERT.enkf_facade.select_or_create_new_case(case_name)
+    ERT.emitErtChange()
 
 
 def caseHasDataAndIsNotRunning(case):

@@ -76,3 +76,8 @@ class LibresFacade(object):
 
     def create_plot_block_data_loader(self, obs_vector):
         return PlotBlockDataLoader(obs_vector)
+
+    def select_or_create_new_case(self, case_name):
+        if self.get_current_case_name() != case_name:
+            fs = self._enkf_main.getEnkfFsManager().getFileSystem(case_name)
+            self._enkf_main.getEnkfFsManager().switchFileSystem(fs)

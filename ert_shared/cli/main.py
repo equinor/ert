@@ -9,6 +9,7 @@ from ert_shared.cli.model_factory import create_model
 from ert_shared.cli.monitor import Monitor
 from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared.cli.workflow import execute_workflow
+from ert_shared.cli import WORKFLOW_MODE, ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE
 from ert_shared.tracker.factory import create_tracker
 from res.enkf import EnKFMain, ResConfig
 
@@ -21,7 +22,7 @@ def run_cli(args):
     notifier = ErtCliNotifier(ert, args.config)
     ERT.adapt(notifier)
 
-    if args.mode == 'workflow':
+    if args.mode == WORKFLOW_MODE:
         execute_workflow(args.name)
         return
 
@@ -32,6 +33,17 @@ def run_cli(args):
         if model.hasRunFailed():
             sys.exit(model.getFailMessage())
     else:
+        if args.current_case:
+            ERT.enkf_facade.select_or_create_new_case(args.current_case)
+
+        if (args.mode in [ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE] and 
+            args.target_case == ERT.enkf_facade.get_current_case_name()):
+            msg = (
+                "ERROR: Target file system and source file system can not be the same. "
+                "They were both: {}.".format(args.target_case)
+            )
+            sys.exit(msg)
+
         thread = threading.Thread(
             name="ert_cli_simulation_thread",
             target=model.startSimulations,
