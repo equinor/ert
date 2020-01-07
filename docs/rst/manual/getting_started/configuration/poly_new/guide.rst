@@ -125,6 +125,8 @@ The second ``%d`` in the runpath is replaced by the iteration number of the
 algorithm. This is needed since the algorithm may run several iterations during
 the experiment.
 
+.. _create_script:
+
 Create script
 *************
 In a file ``poly_eval.py`` put the following:
@@ -167,6 +169,8 @@ Now the config file should look like this:
 
     .. include:: with_simple_script/poly.ert
         :code:
+
+see :ref:`configure_own_jobs`
 
 Running with the new Job
 ************************

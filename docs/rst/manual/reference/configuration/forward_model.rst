@@ -51,6 +51,7 @@ Jobs for geophysics
 ~~~~~~~~~~~~~~~~~~~
 
 
+.. _configure_own_jobs:
 
 Configuring your own jobs
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -100,6 +101,8 @@ Note that the following behaviour provides identical results:
 
     DEFINE <ARG0> 3
     FORWARD_MODEL JOB_NAME(<ARG1>="something")
+
+see example :ref:`create_script`
 
 The `job_dispatch` executable
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
