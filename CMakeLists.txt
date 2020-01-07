@@ -14,9 +14,9 @@ enable_testing()
 
 #-----------------------------------------------------------------
 
-set( RES_VERSION_MAJOR 2 )   # Remember to update release notes whenever
-set( RES_VERSION_MINOR 7 )   # you change the ERT_VERSION_MINOR or MAJOR
-set( RES_VERSION_MICRO git ) # with "new in Ert Version X.X.X"!
+set( RES_VERSION_MAJOR 0 )
+set( RES_VERSION_MINOR 0 )
+set( RES_VERSION_MICRO "not-available" )
 
 # If the micro version is not integer, that should be interpreted as a
 # development version leading towards version MAJOR.MINOR.0
@@ -25,25 +25,49 @@ execute_process(COMMAND date "+%Y-%m-%d %H:%M:%S" OUTPUT_VARIABLE RES_BUILD_TIME
 string(STRIP ${RES_BUILD_TIME} RES_BUILD_TIME)
 
 find_package(Git)
+
+if(GIT_FOUND)
+  execute_process(
+    COMMAND ${GIT_EXECUTABLE} "--git-dir=${CMAKE_SOURCE_DIR}/.git" status
+    RESULT_VARIABLE RESULT
+    OUTPUT_QUIET
+    ERROR_QUIET
+    )
+
+  if(NOT "${RESULT}" STREQUAL 0)
+    set(GIT_FOUND OFF)
+  endif()
+endif()
+
 if(GIT_FOUND)
    execute_process(
-     COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
-     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+     COMMAND ${GIT_EXECUTABLE} "--git-dir=${CMAKE_SOURCE_DIR}/.git" rev-parse HEAD
      OUTPUT_VARIABLE GIT_COMMIT
      OUTPUT_STRIP_TRAILING_WHITESPACE
    )
 
    execute_process(
-     COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
-     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+     COMMAND ${GIT_EXECUTABLE} "--git-dir=${CMAKE_SOURCE_DIR}/.git" rev-parse --short HEAD
      OUTPUT_VARIABLE GIT_COMMIT_SHORT
      OUTPUT_STRIP_TRAILING_WHITESPACE
    )
+
+   execute_process(
+     COMMAND ${GIT_EXECUTABLE} "--git-dir=${CMAKE_SOURCE_DIR}/.git" describe --tags
+     OUTPUT_VARIABLE GIT_TAG
+     OUTPUT_STRIP_TRAILING_WHITESPACE
+   )
+
+   string( REGEX REPLACE "^([^.]+)\\.([^.]+)\\.(.+)$" "\\1" RES_VERSION_MAJOR "${GIT_TAG}")
+   string( REGEX REPLACE "^([^.]+)\\.([^.]+)\\.(.+)$" "\\2" RES_VERSION_MINOR "${GIT_TAG}")
+   string( REGEX REPLACE "^([^.]+)\\.([^.]+)\\.(.+)$" "\\3" RES_VERSION_MICRO "${GIT_TAG}")
 else()
     set( GIT_COMMIT "unknown (git not found!)")
     set( GIT_COMMIT_SHORT "unknown (git not found!)")
-    message( WARNING "Git not found. Build will not contain git revision info." )
+    message( WARNING "Git not found. Build will not contain correct version info." )
 endif()
+
+message( STATUS "libres version: ${RES_VERSION_MAJOR}.${RES_VERSION_MINOR}.${RES_VERSION_MICRO}" )
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
 find_package(CXX11Features)
