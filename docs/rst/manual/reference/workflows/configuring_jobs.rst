@@ -3,8 +3,8 @@ Configuring Workflow Jobs
 
 Workflow jobs are configured with a small configuration file much like
 the configuration file used to install forward model jobs. The
-keywords used in the configuration file are in two *clases* - those
-related to how the job should located/run and the arguments which
+keywords used in the configuration file are in two *classes* - those
+related to how the job should be located/run and the arguments which
 should passed from the workflow to the job.
 
 
