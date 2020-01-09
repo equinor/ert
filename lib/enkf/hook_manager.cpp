@@ -28,6 +28,7 @@
 #include <ert/job_queue/workflow.hpp>
 
 #include <ert/enkf/config_keys.hpp>
+#include <ert/enkf/site_config.hpp>
 #include <ert/enkf/hook_manager.hpp>
 #include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/runpath_list.hpp>
@@ -35,10 +36,6 @@
 
 #define HOOK_MANAGER_NAME             "HOOK MANAGER"
 #define QC_WORKFLOW_NAME              "QC WORKFLOW"
-#define RUN_MODE_PRE_SIMULATION_NAME  "PRE_SIMULATION"
-#define RUN_MODE_POST_SIMULATION_NAME "POST_SIMULATION"
-#define RUN_MODE_PRE_UPDATE_NAME      "PRE_UPDATE"
-#define RUN_MODE_POST_UPDATE_NAME     "POST_UPDATE"
 
 struct hook_manager_struct {
   vector_type            * hook_workflow_list;  /* vector of hook_workflow_type instances */
@@ -52,18 +49,6 @@ struct hook_manager_struct {
 };
 
 
-hook_manager_type * hook_manager_alloc_default(ert_workflow_list_type * workflow_list) {
-  hook_manager_type * hook_manager = (hook_manager_type *)util_malloc( sizeof * hook_manager );
-  hook_manager->hook_workflow_list = vector_alloc_new();
-
-  hook_manager->workflow_list = workflow_list;
-
-  hook_manager->runpath_list = NULL;
-
-  hook_manager->input_context = hash_alloc();
-
-  return hook_manager;
-}
 
 
 hook_manager_type * hook_manager_alloc(
@@ -102,6 +87,32 @@ static void hook_manager_add_workflow( hook_manager_type * hook_manager , const 
   else {
     fprintf(stderr, "** Warning: While hooking workflow: %s not recognized among the list of loaded workflows.", workflow_name);
   }
+}
+
+hook_manager_type * hook_manager_alloc_default(ert_workflow_list_type * workflow_list) {
+  hook_manager_type * hook_manager = (hook_manager_type *)util_malloc( sizeof * hook_manager );
+  hook_manager->workflow_list = workflow_list;
+  
+  hook_manager->hook_workflow_list = vector_alloc_new();
+
+  config_parser_type * config = config_alloc();
+  config_content_type * site_config_content = site_config_alloc_content(config);
+
+  if (config_content_has_item( site_config_content , HOOK_WORKFLOW_KEY)) {
+    for (int ihook = 0; ihook < config_content_get_occurences(site_config_content , HOOK_WORKFLOW_KEY); ihook++) {
+      const char * workflow_name = config_content_iget( site_config_content , HOOK_WORKFLOW_KEY, ihook , 0 );
+      hook_run_mode_enum run_mode = hook_workflow_run_mode_from_name(config_content_iget(site_config_content , HOOK_WORKFLOW_KEY , ihook , 1));
+      hook_manager_add_workflow( hook_manager , workflow_name , run_mode );
+    }
+  }
+  config_free(config);
+  config_content_free(site_config_content);
+
+  hook_manager->runpath_list = NULL;
+
+  hook_manager->input_context = hash_alloc();
+
+  return hook_manager;
 }
 
 hook_manager_type * hook_manager_alloc_full(

@@ -462,6 +462,20 @@ void site_config_add_config_items(config_parser_type * config, bool site_mode) {
 
   item = config_add_schema_item( config , ANALYSIS_LOAD_KEY , false  );
   config_schema_item_set_argc_minmax( item , 2 , 2);
+
+  item = config_add_schema_item( config , HOOK_WORKFLOW_KEY , false );
+  config_schema_item_set_argc_minmax(item , 2 , 2 );
+  config_schema_item_iset_type( item , 0 , CONFIG_STRING );
+  config_schema_item_iset_type( item , 1 , CONFIG_STRING );
+  {
+    stringlist_type * argv = stringlist_alloc_new();
+    stringlist_append_copy(argv, RUN_MODE_PRE_SIMULATION_NAME);
+    stringlist_append_copy(argv, RUN_MODE_POST_SIMULATION_NAME);
+    stringlist_append_copy(argv, RUN_MODE_PRE_UPDATE_NAME);
+    stringlist_append_copy(argv, RUN_MODE_POST_UPDATE_NAME);
+    config_schema_item_set_indexed_selection_set(item, 1, argv);
+    stringlist_free( argv );
+  }
 }
 
 const char * site_config_get_config_file(const site_config_type * site_config) {
