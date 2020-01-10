@@ -1,3 +1,4 @@
+import codecs
 import sys
 from subprocess import Popen, PIPE
 from res.job_queue import ErtScript
@@ -21,6 +22,9 @@ class ExternalErtScript(ErtScript):
 
         # The job will complete before stdout and stderr is returned
         self._stdoutdata, self._stderrdata = self.__job.communicate()
+
+        self._stdoutdata = codecs.decode(self._stdoutdata, "utf8", "replace")
+        self._stderrdata = codecs.decode(self._stderrdata, "utf8", "replace")
 
         sys.stdout.write(self._stdoutdata)
 
