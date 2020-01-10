@@ -110,11 +110,13 @@ class JobQueueNode(BaseCClass):
         )
 
     def _job_monitor(self, driver, pool_sema, max_submit):
-        self._start_time = time.time()
+        
         self.submit(driver)
         self.update_status(driver)
 
         while self.is_running():
+            if self._start_time is None and self.status == JobStatusType.JOB_QUEUE_RUNNING:
+                self._start_time = time.time()
             time.sleep(1)
             self.update_status(driver)
             if self._should_be_killed():
@@ -153,6 +155,7 @@ class JobQueueNode(BaseCClass):
             return
 
         self._set_thread_status(ThreadStatus.RUNNING)
+        self._start_time = None
         self._thread = Thread(target=self._job_monitor, args=(driver, pool_sema, max_submit))
         self._thread.start()
         
