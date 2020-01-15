@@ -40,17 +40,25 @@ Breaking changes:
 Experimental features:
 
 
-ERT forward models
-~~~~~~~~~~~~~~~~~~~
-Improvements:
-  - Output from Eclipse job is treated like any other job
-
-
-2.5 libecl
+2.6 libecl
 ~~~~~~~~~~
 General bug fixes and improvements
 
 Changes:
+
+
+0.0.6 semeio
+~~~~~~~~~~~~
+
+New workflow jobs:
+  - CORRELATED_OBSERVATIONS_SCALING
+  - SPEARMAN_CORRELATION
+
+New forward model jobs:
+  - DESIGN2PARAMS
+  - DESIGN_KW
+  - STEA
+
 
 Version 2.6
 -----------
