@@ -94,7 +94,7 @@ value_export_type * value_export_alloc(std::string directory, std::string base_n
 
 
 void value_export_free(value_export_type * value) {
-  free( value );
+  delete value;
 }
 
 int value_export_size( const value_export_type * value) {
