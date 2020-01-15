@@ -1,6 +1,57 @@
 Release Notes
 =============
 
+Version 2.7
+-----------
+
+Highlighted changes
+~~~~~~~~~~~~~~~~~~~
+
+Improvements to ERT CLI
+#######################
+Defining current case is now available in the cli. The see the usage and complete list of available commands, go to :doc:`../reference/running_ert`.
+
+
+Improvements to ERT GUI
+#######################
+The viewer for job-output in the detailed monitor widget is now improved to handle larger outputs. 
+This will improve the experience for jobs like eclipse.
+
+2.7 ERT application
+~~~~~~~~~~~~~~~~~~~
+
+New features:
+  - CLI support current case
+  - output viewer supports large output from jobs like eclipse
+
+Improvements:
+  - Improvements to documentation
+
+2.7 libres
+~~~~~~~~~~
+New features:
+
+Improvements:
+
+Bug fixes:
+
+Breaking changes:
+
+Experimental features:
+
+
+ERT forward models
+~~~~~~~~~~~~~~~~~~~
+Improvements:
+  - Output from Eclipse job is treated like any other job
+
+
+2.5 libecl
+~~~~~~~~~~
+General bug fixes and improvements
+
+Changes:
+
 Version 2.6
 -----------
 
