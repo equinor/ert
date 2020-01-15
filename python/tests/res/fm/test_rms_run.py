@@ -27,6 +27,41 @@ from _pytest.monkeypatch import MonkeyPatch
 from res.fm.rms import RMSRun
 import res.fm.rms
 
+from tests.utils import tmpdir
+import pytest
+from tests.conftest import source_root
+
+@tmpdir()
+@pytest.mark.parametrize(
+    "test_input,expected_result",
+    [
+        (0, 422851785),
+        (1, 723121249),
+        (2, 132312123),
+    ],
+)
+def test_run_class_multi_seed(tmpdir, monkeypatch, test_input, expected_result):
+    with open("rms_config.yml", "w") as f:
+        f.write("executable:  {}/bin/rms".format(os.getcwd()))
+
+    os.mkdir("test_run_multi_seed")
+    os.mkdir("run_path")
+    os.mkdir("bin")
+    os.mkdir("project")
+    shutil.copy(os.path.join(source_root(), "python/tests/res/fm/rms"), "bin")
+    monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+
+    action = {"exit_status": 0}
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
+
+    seed_file = ["3", "422851785", "723121249", "132312123"]
+    with open("run_path/random.seeds", "w") as f:
+        f.write("\n".join(seed_file))
+
+    r = RMSRun(test_input, "project", "workflow", run_path="run_path")
+    assert r.seed == expected_result
+    
 class RMSRunTest(ResTest):
 
     def setUp(self):
