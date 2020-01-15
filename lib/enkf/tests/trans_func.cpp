@@ -40,6 +40,20 @@ void test_triangular() {
   stringlist_free(args);
 }
 
+void test_triangular_assymetric() {
+  stringlist_type * args = stringlist_alloc_new();
+  stringlist_append_copy(args , "TRIANGULAR");
+  stringlist_append_copy(args, "0");
+  stringlist_append_copy(args,"1.0");
+  stringlist_append_copy(args, "4.0");
+
+  trans_func_type * trans_func = trans_func_alloc(args);
+  test_assert_double_equal( trans_func_eval(trans_func, -1.0), 0.7966310411513150456286);
+  test_assert_double_equal( trans_func_eval(trans_func, 1.1), 2.72407181575270778882286);
+  trans_func_free( trans_func );
+  stringlist_free(args);
+}
+
 void test_create() {
   {
     stringlist_type * args = stringlist_alloc_new();
@@ -79,5 +93,6 @@ void test_create() {
 int main(int argc , char ** argv) {
   test_create();
   test_triangular();
+  test_triangular_assymetric();
 }
 

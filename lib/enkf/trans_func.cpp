@@ -182,14 +182,15 @@ static double trans_triangular(double x, const double_vector_type * arg) {
   double xmode = double_vector_iget(arg, 1);
   double xmax = double_vector_iget(arg,2);
 
-  double inv_norm = (xmax - xmin) * (xmode- xmin);
+  double inv_norm_left = (xmax - xmin) * (xmode - xmin);
+  double inv_norm_right = (xmax - xmin) * (xmax - xmode);
   double ymode = (xmode - xmin) / (xmax - xmin);
   double y = 0.5*(1 + erf(x/sqrt(2.0)));           /* 0 - 1 */
 
   if (y < ymode)
-    return xmin + sqrt(y * inv_norm);
+    return xmin + sqrt(y * inv_norm_left);
   else
-    return xmax - sqrt((1 - y)*inv_norm);
+    return xmax - sqrt((1 - y)*inv_norm_right);
 }
 
 
