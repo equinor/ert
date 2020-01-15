@@ -1,6 +1,67 @@
 Release Notes
 =============
 
+Version 2.8
+-----------
+
+Highlighted changes
+~~~~~~~~~~~~~~~~~~~
+
+Improvements to ERT
+###################
+When running ERT in komodo, the forward models will now run in the same komodo version as the ERT application. 
+This happens even if the stable komodo version changes while ERT is running. 
+
+Improvements to ERT CLI
+#######################
+Defining current case is now available in the cli. The see the usage and complete list of available commands, go to :doc:`../reference/running_ert`.
+
+
+Improvements to ERT GUI
+#######################
+The viewer for job-output in the detailed monitor widget is now improved to handle larger outputs. 
+
+This will improve the experience for jobs like eclipse.
+
+2.8 ERT application
+~~~~~~~~~~~~~~~~~~~
+
+New features:
+  - CLI support current case
+  - Output viewer supports large output from jobs like eclipse
+
+Improvements:
+  - Improvements to documentation
+
+2.8 libres
+~~~~~~~~~~
+
+General bug fixes and improvements
+  - Added support in IES_ENKF for using newly activated observations
+  - Fixed bug in IES_ENKF when extracting active observations
+  - Add filtering on module to prevent warnings from other modules
+  - Fix error in triangular distribution (Also backported to 2.6)
+
+2.7 libecl
+~~~~~~~~~~
+General bug fixes and improvements
+  - Add deprecation warnings when import ecl.ecl or import ert.ecl.
+
+0.1 Semeio
+~~~~~~~~~~
+
+New workflow jobs:
+  - CORRELATED_OBSERVATIONS_SCALING - Experimental
+  - SPEARMAN_CORRELATION - Experimental
+
+New jobs (Ported from ert-statoil for python 3): 
+  - STEA
+  - GENDATA_RFT
+  - DESIGN2PARAM
+  - DESIGN_KW
+
+Add komodo_job_dispatch from equlibrium
+
 Version 2.6
 -----------
 
