@@ -23,41 +23,28 @@ This will improve the experience for jobs like eclipse.
 New features:
   - CLI support current case
   - output viewer supports large output from jobs like eclipse
+  - MeasuredData
 
 Improvements:
   - Improvements to documentation
 
 2.7 libres
 ~~~~~~~~~~
-New features:
 
-Improvements:
-
-Bug fixes:
-
-Breaking changes:
-
-Experimental features:
+General bug fixes and improvements
 
 
 2.6 libecl
 ~~~~~~~~~~
 General bug fixes and improvements
 
-Changes:
-
 
 0.0.6 semeio
 ~~~~~~~~~~~~
 
 New workflow jobs:
-  - CORRELATED_OBSERVATIONS_SCALING
-  - SPEARMAN_CORRELATION
-
-New forward model jobs:
-  - DESIGN2PARAMS
-  - DESIGN_KW
-  - STEA
+  - CORRELATED_OBSERVATIONS_SCALING - Experimental
+  - SPEARMAN_CORRELATION - Experimental
 
 
 Version 2.6
