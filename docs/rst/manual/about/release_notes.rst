@@ -23,8 +23,7 @@ This will improve the experience for jobs like eclipse.
 New features:
   - CLI support current case
   - output viewer supports large output from jobs like eclipse
-  - MeasuredData
-
+  
 Improvements:
   - Improvements to documentation
 
