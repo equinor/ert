@@ -3,12 +3,20 @@ from matplotlib.lines import Line2D
 from .plot_tools import PlotTools
 import pandas as pd
 
-def plotCrossCaseStatistics(plot_context):
+
+class CrossCaseStatisticsPlot(object):
+
+    def __init__(self):
+        self.dimensionality = 1
+
+    def plot(self, figure, plot_context, case_to_data_map, _observation_data):
+        plotCrossCaseStatistics(figure,plot_context, case_to_data_map, _observation_data)
+
+def plotCrossCaseStatistics(figure, plot_context, case_to_data_map, _observation_data):
     """ @type plot_context: ert_gui.plottery.PlotContext """
-    ert = plot_context.ert()
     key = plot_context.key()
     config = plot_context.plotConfig()
-    axes = plot_context.figure().add_subplot(111)
+    axes = figure.add_subplot(111)
     """:type: matplotlib.axes.Axes """
 
     plot_context.deactivateDateSupport()
@@ -33,9 +41,8 @@ def plotCrossCaseStatistics(plot_context):
         "p67": {},
         "p90": {}
     }
-    for case_index, case in enumerate(case_list):
+    for case_index, (case, data) in enumerate(case_to_data_map.items()):
         case_indexes.append(case_index)
-        data = plot_context.dataGatherer().gatherData(ert, case, key)
         std_dev_factor = config.getStandardDeviationFactor()
 
         if not data.empty:
@@ -68,7 +75,7 @@ def plotCrossCaseStatistics(plot_context):
 
     axes.set_xticklabels([""] + case_list + [""], rotation=rotation)
 
-    PlotTools.finalizePlot(plot_context, axes, default_x_label="Case", default_y_label="Value")
+    PlotTools.finalizePlot(plot_context, figure, axes, default_x_label="Case", default_y_label="Value")
 
 
 def _addStatisticsLegends(plot_config):

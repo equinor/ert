@@ -6,9 +6,9 @@ from ert_gui.ertwidgets.models.ertmodel import getAllCasesNotRunning
 
 class PlotCaseModel(QAbstractItemModel):
 
-    def __init__(self):
+    def __init__(self, cases):
         QAbstractItemModel.__init__(self)
-        self.__data = None
+        self.__data = cases
 
     def index(self, row, column, parent=None, *args, **kwargs):
         return self.createIndex(row, column)
@@ -46,9 +46,6 @@ class PlotCaseModel(QAbstractItemModel):
 
 
     def getAllItems(self):
-        if self.__data is None:
-            self.__data = getAllCasesNotRunning()
-
         return self.__data
 
     def __iter__(self):

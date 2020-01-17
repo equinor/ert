@@ -10,10 +10,10 @@ class CaseSelectionWidget(QWidget):
 
     caseSelectionChanged = Signal()
 
-    def __init__(self, current_case):
+    def __init__(self, case_names):
         QWidget.__init__(self)
-
-        self.__model = PlotCaseModel()
+        self._cases = case_names
+        self.__model = PlotCaseModel(case_names)
 
         self.__signal_mapper = QSignalMapper(self)
         self.__case_selectors = {}
@@ -38,7 +38,7 @@ class CaseSelectionWidget(QWidget):
         self.__case_layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(self.__case_layout)
 
-        self.addCaseSelector(disabled=True, current_case=current_case)
+        self.addCaseSelector(disabled=True)
         layout.addStretch()
 
         self.setLayout(layout)
@@ -64,7 +64,7 @@ class CaseSelectionWidget(QWidget):
         self.__add_case_button.setEnabled(state)
 
 
-    def addCaseSelector(self, disabled=False, current_case=None):
+    def addCaseSelector(self, disabled=False):
         widget = QWidget()
 
         layout = QHBoxLayout()
@@ -76,17 +76,7 @@ class CaseSelectionWidget(QWidget):
         combo.setMinimumContentsLength(20)
         combo.setModel(self.__model)
 
-        if current_case is not None:
-            index = 0
-            for item in self.__model:
-                if item == current_case:
-                    combo.setCurrentIndex(index)
-                    break
-                index += 1
-
         combo.currentIndexChanged.connect(self.caseSelectionChanged.emit)
-
-
 
         layout.addWidget(combo, 1)
 

@@ -5,7 +5,7 @@ from qtpy.QtGui import QCursor
 class FilterPopup(QDialog):
     filterSettingsChanged = Signal(dict)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent, key_defs):
         QDialog.__init__(self, parent, Qt.WindowStaysOnTopHint | Qt.X11BypassWindowManagerHint | Qt.FramelessWindowHint)
         self.setVisible(False)
 
@@ -21,12 +21,10 @@ class FilterPopup(QDialog):
         self.__layout.setSizeConstraint(QLayout.SetFixedSize)
         self.__layout.addWidget(QLabel("Filter by data type:"))
 
-        self.addFilterItem("Summary", "summary")
-        # self.addFilterItem("Block", "block")
-        self.addFilterItem("Gen KW", "gen_kw")
-        self.addFilterItem("Gen Data", "gen_data")
-        self.addFilterItem("Custom KW", "custom_kw")
-        # self.addFilterItem("Custom PCA", "custom_pca")
+
+        filters = {k["metadata"]["data_origin"] for k in  key_defs}
+        for f in filters:
+            self.addFilterItem(f, f)
 
         frame.setLayout(self.__layout)
 

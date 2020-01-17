@@ -1,14 +1,20 @@
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout
 
-
+from ert_gui.plottery.plots.ccsp import CrossCaseStatisticsPlot
+from ert_gui.plottery.plots.distribution import DistributionPlot
+from ert_gui.plottery.plots.ensemble import EnsemblePlot
+from ert_gui.plottery.plots.gaussian_kde import GaussianKDEPlot
+from ert_gui.plottery.plots.histogram import HistogramPlot
+from ert_gui.plottery.plots.statistics import StatisticsPlot
 from ert_shared import ERT
 from ert_gui.ertwidgets import showWaitCursorWhileWaiting
-from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
-from ert_gui.plottery import PlotContext, PlotDataGatherer as PDG, PlotConfig, plots, PlotConfigFactory
+from ert_gui.plottery import PlotContext, PlotConfig
 
-from ert_gui.tools.plot import DataTypeKeysWidget, CaseSelectionWidget, PlotWidget, DataTypeKeysListModel
+from ert_gui.tools.plot import DataTypeKeysWidget, CaseSelectionWidget, PlotWidget
 from ert_gui.tools.plot.customize import PlotCustomizer
+
+from ert_gui.tools.plot.plot_api import PlotApi
 
 CROSS_CASE_STATISTICS = "Cross Case Statistics"
 DISTRIBUTION = "Distribution"
@@ -23,28 +29,19 @@ class PlotWindow(QMainWindow):
     def __init__(self, config_file, parent):
         QMainWindow.__init__(self, parent)
 
-        self._ert = ERT.ert
-        """:type: res.enkf.enkf_main.EnKFMain"""
-
-        key_manager = self._ert.getKeyManager()
-        """:type: res.enkf.key_manager.KeyManager """
+        self._api = PlotApi(ERT.enkf_facade)
 
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)
 
         self.setWindowTitle("Plotting - {}".format(config_file))
         self.activateWindow()
+        self._key_definitions = self._api.all_data_type_keys()
+        self._plot_customizer = PlotCustomizer(self, self._key_definitions)
 
-        self._plot_customizer = PlotCustomizer(self)
-
-        def plotConfigCreator(key):
-            return PlotConfigFactory.createPlotConfigForKey(self._ert, key)
-
-        self._plot_customizer.setPlotConfigCreator(plotConfigCreator)
         self._plot_customizer.settingsChanged.connect(self.keySelected)
 
         self._central_tab = QTabWidget()
-        self._central_tab.currentChanged.connect(self.currentPlotChanged)
 
         central_widget = QWidget()
         central_layout = QVBoxLayout()
@@ -58,69 +55,62 @@ class PlotWindow(QMainWindow):
         self._plot_widgets = []
         """:type: list of PlotWidget"""
 
-        self._data_gatherers = []
-        """:type: list of PlotDataGatherer """
+        self.addPlotWidget(ENSEMBLE, EnsemblePlot())
+        self.addPlotWidget(STATISTICS, StatisticsPlot())
+        self.addPlotWidget(HISTOGRAM, HistogramPlot())
+        self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
+        self.addPlotWidget(DISTRIBUTION, DistributionPlot())
+        self.addPlotWidget(CROSS_CASE_STATISTICS, CrossCaseStatisticsPlot())
 
-        summary_gatherer = self.createDataGatherer(PDG.gatherSummaryData, key_manager.isSummaryKey, refcaseGatherFunc=PDG.gatherSummaryRefcaseData, observationGatherFunc=PDG.gatherSummaryObservationData, historyGatherFunc=PDG.gatherSummaryHistoryData)
-        gen_data_gatherer = self.createDataGatherer(PDG.gatherGenDataData, key_manager.isGenDataKey, observationGatherFunc=PDG.gatherGenDataObservationData)
-        gen_kw_gatherer = self.createDataGatherer(PDG.gatherGenKwData, key_manager.isGenKwKey)
-        custom_kw_gatherer = self.createDataGatherer(PDG.gatherCustomKwData, key_manager.isCustomKwKey)
-
-
-        self.addPlotWidget(ENSEMBLE, plots.plotEnsemble, [summary_gatherer, gen_data_gatherer])
-        self.addPlotWidget(STATISTICS, plots.plotStatistics, [summary_gatherer, gen_data_gatherer])
-        self.addPlotWidget(HISTOGRAM, plots.plotHistogram, [gen_kw_gatherer, custom_kw_gatherer])
-        self.addPlotWidget(GAUSSIAN_KDE, plots.plotGaussianKDE, [gen_kw_gatherer, custom_kw_gatherer])
-        self.addPlotWidget(DISTRIBUTION, plots.plotDistribution, [gen_kw_gatherer, custom_kw_gatherer])
-        self.addPlotWidget(CROSS_CASE_STATISTICS, plots.plotCrossCaseStatistics, [gen_kw_gatherer, custom_kw_gatherer])
+        self._central_tab.currentChanged.connect(self.currentPlotChanged)
 
 
-        data_types_key_model = DataTypeKeysListModel(self._ert)
+        cases = self._api.get_all_cases_not_running()
+        case_names = [case["name"] for case in cases if not case["hidden"]]
 
-        self._data_type_keys_widget = DataTypeKeysWidget(data_types_key_model)
+
+        self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
         self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
         self.addDock("Data types", self._data_type_keys_widget)
-
-        current_case = getCurrentCaseName()
-        self._case_selection_widget = CaseSelectionWidget(current_case)
+        self._case_selection_widget = CaseSelectionWidget(case_names)
         self._case_selection_widget.caseSelectionChanged.connect(self.keySelected)
         self.addDock("Plot case", self._case_selection_widget)
 
         current_plot_widget = self._plot_widgets[self._central_tab.currentIndex()]
-        current_plot_widget.setActive()
         self._data_type_keys_widget.selectDefault()
         self._updateCustomizer(current_plot_widget)
 
 
-
-
-    def createDataGatherer(self, dataGatherFunc, gatherConditionFunc, refcaseGatherFunc=None, observationGatherFunc=None, historyGatherFunc=None):
-        data_gatherer = PDG(dataGatherFunc, gatherConditionFunc, refcaseGatherFunc=refcaseGatherFunc, observationGatherFunc=observationGatherFunc, historyGatherFunc=historyGatherFunc)
-        self._data_gatherers.append(data_gatherer)
-        return data_gatherer
-
-
     def currentPlotChanged(self):
+        key_def = self.getSelectedKey()
+        key = key_def["key"]
+
         for plot_widget in self._plot_widgets:
-            plot_widget.setActive(False)
             index = self._central_tab.indexOf(plot_widget)
 
-            if index == self._central_tab.currentIndex() and plot_widget.canPlotKey(self.getSelectedKey()):
-                plot_widget.setActive()
+            if index == self._central_tab.currentIndex() \
+                    and plot_widget._plotter.dimensionality == key_def["dimensionality"]:
                 self._updateCustomizer(plot_widget)
-                plot_widget.updatePlot()
+                cases = self._case_selection_widget.getPlotCaseNames()
+                case_to_data_map = {case: self._api.data_for_key(case, key)[key] for case in cases}
+                if len(key_def["observations"]) > 0:
+                    observations = self._api.observations_for_obs_keys(cases[0], key_def["observations"])
+                else:
+                    observations = None
+
+                plot_config = PlotConfig.createCopy(self._plot_customizer.getPlotConfig())
+                plot_config.setTitle(key)
+                plot_context = PlotContext(plot_config, cases, key)
+
+                if key_def["has_refcase"]:
+                    plot_context.refcase_data = self._api.refcase_data(key)
+
+                plot_widget.updatePlot(plot_context, case_to_data_map, observations)
 
     def _updateCustomizer(self, plot_widget):
         """ @type plot_widget: PlotWidget """
-        key = self.getSelectedKey()
-        key_manager = self._ert.getKeyManager()
-
-        index_type = PlotContext.UNKNOWN_AXIS
-
-        if key_manager.isGenDataKey(key):
-            index_type = PlotContext.INDEX_AXIS
-        elif key_manager.isSummaryKey(key):
-            index_type = PlotContext.DATE_AXIS
+        key_def = self.getSelectedKey()
+        index_type = key_def["index_type"]
 
         x_axis_type = PlotContext.UNKNOWN_AXIS
         y_axis_type = PlotContext.UNKNOWN_AXIS
@@ -144,25 +134,11 @@ class PlotWindow(QMainWindow):
 
         self._plot_customizer.setAxisTypes(x_axis_type, y_axis_type)
 
-
-    def createPlotContext(self, figure):
-        key = self.getSelectedKey()
-        cases = self._case_selection_widget.getPlotCaseNames()
-        data_gatherer = self.getDataGathererForKey(key)
-        plot_config = PlotConfig.createCopy(self._plot_customizer.getPlotConfig())
-        plot_config.setTitle(key)
-        return PlotContext(self._ert, figure, plot_config, cases, key, data_gatherer)
-
-    def getDataGathererForKey(self, key):
-        """ @rtype: PlotDataGatherer """
-        return next((data_gatherer for data_gatherer in self._data_gatherers if data_gatherer.canGatherDataForKey(key)), None)
-
     def getSelectedKey(self):
-        return str(self._data_type_keys_widget.getSelectedItem())
+        return self._data_type_keys_widget.getSelectedItem()
 
-    def addPlotWidget(self, name, plotFunction, data_gatherers, enabled=True):
-        plot_condition_function_list = [data_gatherer.canGatherDataForKey for data_gatherer in data_gatherers]
-        plot_widget = PlotWidget(name, plotFunction, plot_condition_function_list, self.createPlotContext)
+    def addPlotWidget(self, name, plotter, enabled=True):
+        plot_widget = PlotWidget(name, plotter)
         plot_widget.customizationTriggered.connect(self.toggleCustomizeDialog)
 
         index = self._central_tab.addTab(plot_widget, name)
@@ -183,17 +159,15 @@ class PlotWindow(QMainWindow):
 
     @showWaitCursorWhileWaiting
     def keySelected(self):
-        key = self.getSelectedKey()
-        self._plot_customizer.switchPlotConfigHistory(key)
+        key_def = self.getSelectedKey()
+        self._plot_customizer.switchPlotConfigHistory(key_def)
 
         for plot_widget in self._plot_widgets:
-            plot_widget.setDirty()
             index = self._central_tab.indexOf(plot_widget)
-            self._central_tab.setTabEnabled(index, plot_widget.canPlotKey(key))
+            self._central_tab.setTabEnabled(index, plot_widget._plotter.dimensionality == key_def["dimensionality"])
 
-        for plot_widget in self._plot_widgets:
-            if plot_widget.canPlotKey(key):
-                plot_widget.updatePlot()
+        self.currentPlotChanged()
+
 
 
     def toggleCustomizeDialog(self):

@@ -7,7 +7,7 @@ from ert_shared import ERT
 
 class CopyStyleToDialog(QDialog):
 
-    def __init__(self, parent=None, current_key='', selectable_keys=[]):
+    def __init__(self, parent, current_key, key_defs):
         QWidget.__init__(self, parent)
         self.setMinimumWidth(450)
         self.setMinimumHeight(200)
@@ -17,19 +17,14 @@ class CopyStyleToDialog(QDialog):
 
         layout = QFormLayout(self)
 
-        self._ert = ERT.ert
-        """:type: res.enkf.enkf_main.EnKFMain"""
-
-        self.model = self._ert
-
-        self._filter_popup = FilterPopup(self)
+        self._filter_popup = FilterPopup(self, key_defs)
         self._filter_popup.filterSettingsChanged.connect(self.filterSettingsChanged)
 
         filter_popup_button = QToolButton()
         filter_popup_button.setIcon(resourceIcon("ide/cog_edit.png"))
         filter_popup_button.clicked.connect(self._filter_popup.show)
 
-        self._list_model = FilterableKwListModel(self._ert, selectable_keys)
+        self._list_model = FilterableKwListModel(key_defs)
         self._list_model.unselectAll()
 
         self._cl = CheckList(self._list_model, custom_filter_button=filter_popup_button)
@@ -56,8 +51,6 @@ class CopyStyleToDialog(QDialog):
         return self._list_model.getSelectedItems()
 
     def filterSettingsChanged(self, item):
-        self._list_model.setShowSummaryKeys(item["summary"])
-        self._list_model.setShowGenKWKeys(item["gen_kw"])
-        self._list_model.setShowGenDataKeys(item["gen_data"])
-        self._list_model.setShowCustomKwKeys(item["custom_kw"])
+        for value, visible in item.items():
+            self._list_model.setFilterOnMetadata("data_origin", value, visible)
         self._cl.modelChanged()
