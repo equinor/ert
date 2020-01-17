@@ -1,8 +1,10 @@
+from pandas import DataFrame
 from res.analysis.analysis_module import AnalysisModule
 from res.analysis.enums.analysis_module_options_enum import \
     AnalysisModuleOptionsEnum
 from res.enkf.export import (GenDataCollector, SummaryCollector,
-                             SummaryObservationCollector)
+                             SummaryObservationCollector, GenDataObservationCollector, GenKwCollector,
+                             CustomKWCollector)
 from res.enkf.plot_data import PlotBlockDataLoader
 
 
@@ -81,3 +83,120 @@ class LibresFacade(object):
         if self.get_current_case_name() != case_name:
             fs = self._enkf_main.getEnkfFsManager().getFileSystem(case_name)
             self._enkf_main.getEnkfFsManager().switchFileSystem(fs)
+
+    def cases(self):
+        return self._enkf_main.getEnkfFsManager().getCaseList()
+
+    def is_case_hidden(self, case):
+        return self._enkf_main.getEnkfFsManager().isCaseHidden(case)
+
+    def case_has_data(self, case):
+        return self._enkf_main.getEnkfFsManager().caseHasData(case)
+
+    def is_case_running(self, case):
+        return self._enkf_main.getEnkfFsManager().isCaseRunning(case)
+
+    def all_data_type_keys(self):
+        return self._enkf_main.getKeyManager().allDataTypeKeys()
+
+    def observation_keys(self, key):
+        if self._enkf_main.getKeyManager().isGenDataKey(key):
+            key_parts = key.split("@")
+            key = key_parts[0]
+            if len(key_parts) > 1:
+                report_step = int(key_parts[1])
+            else:
+                report_step = 0
+
+            obs_key = GenDataObservationCollector.getObservationKeyForDataKey(self._enkf_main, key, report_step)
+            if obs_key is not None:
+                return [obs_key]
+            else:
+                return []
+        elif self._enkf_main.getKeyManager().isSummaryKey(key):
+            return [str(k) for k in self._enkf_main.ensembleConfig().getNode(key).getObservationKeys()]
+        else:
+            return []
+
+    def gather_gen_kw_data(self, case, key):
+        """ :rtype: pandas.DataFrame """
+        data = GenKwCollector.loadAllGenKwData(self._enkf_main, case, [key])
+        if key in data:
+            return data[key].dropna()
+        else:
+            return DataFrame()
+
+    def gather_summary_data(self, case, key):
+        """ :rtype: pandas.DataFrame """
+        data = SummaryCollector.loadAllSummaryData(self._enkf_main, case, [key])
+        if not data.empty:
+            data = data.reset_index()
+
+            if any(data.duplicated()):
+                print("** Warning: The simulation data contains duplicate "
+                      "timestamps. A possible explanation is that your "
+                      "simulation timestep is less than a second.")
+                data = data.drop_duplicates()
+
+            data = data.pivot(index="Date", columns="Realization", values=key)
+
+        return data
+
+    def has_refcase(self, key):
+        refcase = self._enkf_main.eclConfig().getRefcase()
+        return refcase is not None and key in refcase
+
+    def refcase_data(self, key):
+        refcase = self._enkf_main.eclConfig().getRefcase()
+
+        if refcase is None or key not in refcase:
+            return DataFrame()
+
+        values = refcase.numpy_vector(key, report_only=False)
+        dates = refcase.numpy_dates
+
+        data = DataFrame(zip(dates, values), columns=['Date', key])
+        data.set_index("Date", inplace=True)
+
+        return data.iloc[1:]
+
+    def gather_gen_data_data(self, case, key):
+        """ :rtype: pandas.DataFrame """
+        key_parts = key.split("@")
+        key = key_parts[0]
+        if len(key_parts) > 1:
+            report_step = int(key_parts[1])
+        else:
+            report_step = 0
+
+        try:
+            data = GenDataCollector.loadGenData(self._enkf_main, case, key, report_step)
+        except (ValueError, KeyError):
+            data = DataFrame()
+
+        return data.dropna() # removes all rows that has a NaN
+
+    def gather_custom_kw_data(self, case, key):
+        """ :rtype: pandas.DataFrame """
+        data = CustomKWCollector.loadAllCustomKWData(self._enkf_main, case, [key])
+
+        if key in data:
+            return data[key]
+        else:
+            return data
+
+    def is_summary_key(self, key):
+        """ :rtype: bool """
+        return key in self._enkf_main.getKeyManager().summaryKeys()
+
+    def is_gen_kw_key(self, key):
+        """ :rtype: bool """
+        return key in self._enkf_main.getKeyManager().genKwKeys()
+
+    def is_custom_kw_key(self, key):
+        """ :rtype: bool """
+        return key in self._enkf_main.getKeyManager().customKwKeys()
+
+    def is_gen_data_key(self, key):
+        """ :rtype: bool """
+        return key in self._enkf_main.getKeyManager().genDataKeys()

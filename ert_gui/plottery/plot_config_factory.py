@@ -4,26 +4,15 @@ from ert_gui.plottery import PlotConfig
 class PlotConfigFactory(object):
 
     @classmethod
-    def createPlotConfigForKey(cls, ert, key):
+    def createPlotConfigForKey(cls, key_def):
         """
-        @type ert: res.enkf.enkf_main.EnKFMain
-        @param key: str
+        @param key_def: dict with definition of a key
         @return: PlotConfig
         """
-        plot_config = PlotConfig(plot_settings=None , title = key)
-        return PlotConfigFactory.updatePlotConfigForKey(ert, key, plot_config)
+        plot_config = PlotConfig(plot_settings=None , title = key_def["key"])
 
-
-    @classmethod
-    def updatePlotConfigForKey(cls, ert, key, plot_config):
-        """
-        @type ert: res.enkf.enkf_main.EnKFMain
-        @param key: str
-        @return: PlotConfig
-        """
-        key_manager = ert.getKeyManager()
         # The styling of statistics changes based on the nature of the data
-        if key_manager.isSummaryKey(key) or key_manager.isGenDataKey(key):
+        if key_def["dimensionality"] == 2:
             mean_style = plot_config.getStatisticsStyle("mean")
             mean_style.line_style = "-"
             plot_config.setStatisticsStyle("mean", mean_style)
@@ -31,7 +20,7 @@ class PlotConfigFactory(object):
             p10p90_style = plot_config.getStatisticsStyle("p10-p90")
             p10p90_style.line_style = "--"
             plot_config.setStatisticsStyle("p10-p90", p10p90_style)
-        else:
+        elif key_def["dimensionality"] == 1:
             mean_style = plot_config.getStatisticsStyle("mean")
             mean_style.line_style = "-"
             mean_style.marker = "o"

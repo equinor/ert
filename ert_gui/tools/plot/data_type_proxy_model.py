@@ -21,15 +21,16 @@ from ert_gui.tools.plot import DataTypeKeysListModel
 
 class DataTypeProxyModel(QSortFilterProxyModel):
 
-    def __init__(self, model , parent=None):
+    def __init__(self, parent, model):
         QSortFilterProxyModel.__init__(self, parent)
+
         self.__show_summary_keys = True
         self.__show_block_keys = True
         self.__show_gen_kw_keys = True
         self.__show_gen_data_keys = True
         self.__show_custom_kw_keys = True
         self.__show_custom_pca_keys = True
-
+        self._metadata_filters = {}
         self.setFilterCaseSensitivity(Qt.CaseInsensitive)
         self.setSourceModel(model)
 
@@ -41,24 +42,10 @@ class DataTypeProxyModel(QSortFilterProxyModel):
             source_index = source_model.index(index, 0, q_model_index)
             key = source_model.itemAt(source_index)
 
-            if not self.__show_summary_keys and source_model.isSummaryKey(key):
-                show = False
-
-            elif not self.__show_block_keys and source_model.isBlockKey(key):
-                show = False
-
-            elif not self.__show_gen_kw_keys and source_model.isGenKWKey(key):
-                show = False
-
-            elif not self.__show_gen_data_keys and source_model.isGenDataKey(key):
-                show = False
-
-            elif not self.__show_custom_kw_keys and source_model.isCustomKwKey(key):
-                show = False
-
-            elif not self.__show_custom_pca_keys and source_model.isCustomPcaKey(key):
-                show = False
-
+            for meta_key, values in self._metadata_filters.items():
+                for value, visible in values.items():
+                    if not visible and meta_key in key["metadata"] and key["metadata"][meta_key] == value:
+                        show = False
 
         return show
 
@@ -66,27 +53,11 @@ class DataTypeProxyModel(QSortFilterProxyModel):
         """ @rtype: DataTypeKeysListModel """
         return QSortFilterProxyModel.sourceModel(self)
 
-    def setShowSummaryKeys(self, visible):
-        self.__show_summary_keys = visible
+    def setFilterOnMetadata(self, key, value, visible):
+        if not key in self._metadata_filters:
+            self._metadata_filters[key] = {}
+
+        self._metadata_filters[key][value] = visible
         self.invalidateFilter()
 
-    def setShowBlockKeys(self, visible):
-        self.__show_block_keys = visible
-        self.invalidateFilter()
-
-    def setShowGenKWKeys(self, visible):
-        self.__show_gen_kw_keys = visible
-        self.invalidateFilter()
-
-    def setShowGenDataKeys(self, visible):
-        self.__show_gen_data_keys = visible
-        self.invalidateFilter()
-
-    def setShowCustomKwKeys(self, visible):
-        self.__show_custom_kw_keys = visible
-        self.invalidateFilter()
-
-    def setShowCustomPcaKeys(self, visible):
-        self.__show_custom_pca_keys = visible
-        self.invalidateFilter()
 

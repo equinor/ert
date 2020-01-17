@@ -4,9 +4,17 @@ import numpy
 from .plot_tools import PlotTools
 import pandas as pd
 
-def plotHistogram(plot_context):
+
+class HistogramPlot(object):
+
+    def __init__(self):
+        self.dimensionality = 1
+
+    def plot(self, figure, plot_context, case_to_data_map, _observation_data):
+        plotHistogram(figure, plot_context, case_to_data_map, _observation_data)
+
+def plotHistogram(figure, plot_context, case_to_data_map, _observation_data):
     """ @type plot_context: ert_gui.plottery.PlotContext """
-    ert = plot_context.ert()
     key = plot_context.key()
     config = plot_context.plotConfig()
 
@@ -33,8 +41,8 @@ def plotHistogram(plot_context):
     categories = set()
     max_element_count = 0
     categorical = False
-    for case in case_list:
-        data[case] = plot_context.dataGatherer().gatherData(ert, case, key)
+    for case, datas in case_to_data_map.items():
+        data[case] = datas
 
         if data[case].dtype == "object":
             try:
@@ -48,15 +56,17 @@ def plotHistogram(plot_context):
         if categorical:
             categories = categories.union(set(data[case].unique()))
         else:
+            current_min = data[case].min()
+            current_max = data[case].max()
             if minimum is None:
-                minimum = data[case].min()
+                minimum = current_min
             else:
-                minimum = min(minimum, data[case].min())
+                minimum = min(minimum, current_min)
 
             if maximum is None:
-                maximum = data[case].max()
+                maximum = current_max
             else:
-                maximum = max(maximum, data[case].max())
+                maximum = max(maximum, current_max)
 
             max_element_count = max(max_element_count, len(data[case].index))
 
@@ -66,7 +76,7 @@ def plotHistogram(plot_context):
     axes = {}
     """:type: dict of (str, matplotlib.axes.Axes) """
     for index, case in enumerate(case_list):
-        axes[case] = plot_context.figure().add_subplot(case_count, 1, index + 1)
+        axes[case] = figure.add_subplot(case_count, 1, index + 1)
 
         axes[case].set_title("%s (%s)" % (config.title(), case))
 

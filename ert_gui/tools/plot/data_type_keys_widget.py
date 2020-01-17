@@ -8,16 +8,16 @@ from ert_gui.tools.plot import DataTypeKeysListModel, DataTypeProxyModel, Filter
 class DataTypeKeysWidget(QWidget):
     dataTypeKeySelected = Signal()
 
-    def __init__(self, model):
+    def __init__(self, key_defs):
         QWidget.__init__(self)
 
-        self.__filter_popup = FilterPopup(self)
+        self.__filter_popup = FilterPopup(self, key_defs)
         self.__filter_popup.filterSettingsChanged.connect(self.onItemChanged)
 
         layout = QVBoxLayout()
 
-        self.model = model
-        self.filter_model = DataTypeProxyModel(self.model)
+        self.model = DataTypeKeysListModel(key_defs)
+        self.filter_model = DataTypeProxyModel(self, self.model)
 
         filter_layout = QHBoxLayout()
 
@@ -46,12 +46,8 @@ class DataTypeKeysWidget(QWidget):
 
     def onItemChanged(self, item):
         # self.filter_model.setShowBlockKeys(item["block"])
-        self.filter_model.setShowSummaryKeys(item["summary"])
-        self.filter_model.setShowGenKWKeys(item["gen_kw"])
-        self.filter_model.setShowGenDataKeys(item["gen_data"])
-        self.filter_model.setShowCustomKwKeys(item["custom_kw"])
-        # self.filter_model.setShowCustomPcaKeys(item["custom_pca"])
-
+        for value, visible in item.items():
+            self.filter_model.setFilterOnMetadata("data_origin", value, visible)
 
     def itemSelected(self):
         selected_item = self.getSelectedItem()

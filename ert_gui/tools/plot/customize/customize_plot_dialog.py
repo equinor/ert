@@ -4,7 +4,7 @@ from qtpy.QtWidgets import QDialog, QVBoxLayout, QLayout, QTabWidget, QHBoxLayou
 from ert_shared import ERT
 from ert_gui.tools.plot.widgets import CopyStyleToDialog
 from ert_gui.ertwidgets import resourceIcon
-from ert_gui.plottery import PlotConfig, PlotConfigHistory
+from ert_gui.plottery import PlotConfig, PlotConfigHistory, PlotConfigFactory
 from ert_gui.tools.plot.customize import DefaultCustomizationView, StyleCustomizationView, \
     StatisticsCustomizationView, LimitsCustomizationView
 
@@ -13,21 +13,19 @@ class PlotCustomizer(QObject):
 
     settingsChanged = Signal()
 
-    def __init__(self, parent, default_plot_settings=None):
+    def __init__(self, parent, key_defs):
         super(PlotCustomizer, self).__init__()
 
         self._plot_config_key = None
         self._previous_key = None
-        self.default_plot_settings = default_plot_settings
+        self.default_plot_settings = None
         self._plot_configs = {
             None: PlotConfigHistory(
                 "No_Key_Selected",
-                PlotConfig(plot_settings=default_plot_settings, title=None))
+                PlotConfig(plot_settings=None, title=None))
         }
 
-        self._plotConfigCreator = self._defaultPlotConfigCreator
-
-        self._customization_dialog = CustomizePlotDialog("Customize", parent, key=self._plot_config_key)
+        self._customization_dialog = CustomizePlotDialog("Customize", parent, key_defs, key=self._plot_config_key)
 
         self._customization_dialog.addTab("general", "General", DefaultCustomizationView())
         self._customization_dialog.addTab("style", "Style", StyleCustomizationView())
@@ -130,16 +128,11 @@ class PlotCustomizer(QObject):
         else:
             self._customization_dialog.show()
 
-    def _defaultPlotConfigCreator(self, title):
-        return PlotConfig(title)
-
-    def _selectiveCopyOfCurrentPlotConfig(self, title):
-        return self._plotConfigCreator(title)
-
-    def switchPlotConfigHistory(self, key):
+    def switchPlotConfigHistory(self, key_def):
+        key = key_def["key"]
         if key != self._plot_config_key:
             if not key in self._plot_configs:
-                self._plot_configs[key] = PlotConfigHistory(key, self._selectiveCopyOfCurrentPlotConfig(key))
+                self._plot_configs[key] = PlotConfigHistory(key, PlotConfigFactory.createPlotConfigForKey(key_def))
                 self._customization_dialog.addCopyableKey(key)
             self._customization_dialog.currentPlotKeyChanged(key)
             self._previous_key = self._plot_config_key
@@ -153,9 +146,6 @@ class PlotCustomizer(QObject):
     def setAxisTypes(self, x_axis_type, y_axis_type):
         self._customize_limits.setAxisTypes(x_axis_type, y_axis_type)
 
-    def setPlotConfigCreator(self, func):
-        self._plotConfigCreator = func
-
 
 class CustomizePlotDialog(QDialog):
     applySettings = Signal()
@@ -165,18 +155,12 @@ class CustomizePlotDialog(QDialog):
     copySettings = Signal(str)
     copySettingsToOthers = Signal(list)
 
-    def __init__(self, title, parent=None, key=''):
+    def __init__(self, title, parent, key_defs, key=''):
         QDialog.__init__(self, parent)
         self.setWindowTitle(title)
 
-        self._ert = ERT.ert
-
-        """:type: res.enkf.enkf_main.EnKFMain"""
-
-        self.key_manager = self._ert.getKeyManager()
-        """:type: res.enkf.key_manager.KeyManager """
-
         self.current_key = key
+        self._key_defs = key_defs
 
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
@@ -255,8 +239,7 @@ class CustomizePlotDialog(QDialog):
         self.setLayout(layout)
 
     def initiateCopyStyleToDialog(self):
-        all_other_keys = [k for k in self.key_manager.allDataTypeKeys() if k != self.current_key]
-        dialog = CopyStyleToDialog(self, self.current_key, all_other_keys)
+        dialog = CopyStyleToDialog(self, self.current_key, self._key_defs)
         if dialog.exec_():
             self.copySettingsToOthers.emit(dialog.getSelectedKeys())
 

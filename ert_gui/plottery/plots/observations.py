@@ -1,19 +1,15 @@
 import math
 
-def plotObservations(plot_context, axes):
-    ert = plot_context.ert()
+def plotObservations(observation_data, plot_context, axes):
     key = plot_context.key()
     config = plot_context.plotConfig()
     case_list = plot_context.cases()
-    data_gatherer = plot_context.dataGatherer()
 
-    if config.isObservationsEnabled() and data_gatherer.hasObservationGatherFunction():
-        if len(case_list) > 0:
-            observation_data = data_gatherer.gatherObservationData(ert, case_list[0], key)
-
-            if not observation_data.empty:
-                _plotObservations(axes, config, observation_data, value_column=key)
-
+    if (config.isObservationsEnabled()
+            and len(case_list) > 0
+            and observation_data is not None
+            and not observation_data.empty):
+        _plotObservations(axes, config, observation_data, value_column=key)
 
 
 def _plotObservations(axes, plot_config, data, value_column):
@@ -39,8 +35,8 @@ def _plotObservations(axes, plot_config, data, value_column):
     if style.line_style == '':
         style.width = 0
 
-    errorbars = axes.errorbar(x=data.index.values, y=data[value_column].values,
-                              yerr=data["STD_%s" % value_column].values,
+    errorbars = axes.errorbar(x=data.columns.get_level_values("key_index").values, y=data.loc["OBS"].values,
+                              yerr=data.loc["STD"].values,
                               fmt=style.line_style, ecolor=style.color, color=style.color,
                               capsize=cap_size(style.width),
                               capthick=style.width, #same as width/thickness on error line

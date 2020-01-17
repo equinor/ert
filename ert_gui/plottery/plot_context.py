@@ -1,5 +1,4 @@
 from .plot_config import PlotConfig
-from .plot_data_gatherer import PlotDataGatherer
 
 class PlotContext(object):
     UNKNOWN_AXIS = None
@@ -11,30 +10,20 @@ class PlotContext(object):
     DEPTH_AXIS = "DEPTH"
     AXIS_TYPES = [UNKNOWN_AXIS, COUNT_AXIS, DATE_AXIS, DENSITY_AXIS, DEPTH_AXIS, INDEX_AXIS, VALUE_AXIS]
 
-    def __init__(self, ert, figure, plot_config, cases, key, data_gatherer):
+    def __init__(self, plot_config, cases, key):
         super(PlotContext, self).__init__()
-        self._data_gatherer = data_gatherer
         self._key = key
         self._cases = cases
-        self._figure = figure
-        self._ert = ert
         self._plot_config = plot_config
+        self.refcase_data = None
 
         self._date_support_active = True
         self._x_axis = None
         self._y_axis = None
 
-    def figure(self):
-        """ :rtype: matplotlib.figure.Figure"""
-        return self._figure
-
     def plotConfig(self):
         """ :rtype: PlotConfig """
         return self._plot_config
-
-    def ert(self):
-        """ :rtype: res.enkf.EnKFMain"""
-        return self._ert
 
     def cases(self):
         """ :rtype: list of str """
@@ -43,10 +32,6 @@ class PlotContext(object):
     def key(self):
         """ :rtype: str """
         return self._key
-
-    def dataGatherer(self):
-        """ :rtype: PlotDataGatherer """
-        return self._data_gatherer
 
     def deactivateDateSupport(self):
         self._date_support_active = False

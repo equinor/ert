@@ -1,61 +1,64 @@
 from matplotlib.patches import Rectangle
 from matplotlib.lines import Line2D
 from pandas import DataFrame
-from .refcase import plotRefcase
+
 from .observations import plotObservations
 from .plot_tools import PlotTools
 
 
-def plotStatistics(plot_context):
-    """ @type plot_context: ert_gui.plottery.PlotContext """
-    ert = plot_context.ert()
-    key = plot_context.key()
-    config = plot_context.plotConfig()
-    """:type: ert_gui.plotter.PlotConfig """
-    axes = plot_context.figure().add_subplot(111)
-    """:type: matplotlib.axes.Axes """
+class StatisticsPlot(object):
 
-    plot_context.y_axis = plot_context.VALUE_AXIS
-    plot_context.x_axis = plot_context.DATE_AXIS
+    def __init__(self):
+        self.dimensionality = 2
 
-    case_list = plot_context.cases()
-    for case in case_list:
-        data = plot_context.dataGatherer().gatherData(ert, case, key)
+    def plot(self, figure, plot_context, case_to_data_map, _observation_data):
+        """ @type plot_context: ert_gui.plottery.PlotContext """
+        key = plot_context.key()
+        config = plot_context.plotConfig()
+        """:type: ert_gui.plotter.PlotConfig """
+        axes = figure.add_subplot(111)
+        """:type: matplotlib.axes.Axes """
 
-        if not data.empty:
-            if not data.index.is_all_dates:
-                plot_context.deactivateDateSupport()
-                plot_context.x_axis = plot_context.INDEX_AXIS
+        plot_context.y_axis = plot_context.VALUE_AXIS
+        plot_context.x_axis = plot_context.DATE_AXIS
 
-            style = config.getStatisticsStyle("mean")
-            rectangle = Rectangle((0, 0), 1, 1, color=style.color, alpha=0.8) # creates rectangle patch for legend use.
-            config.addLegendItem(case, rectangle)
+        for case, data in case_to_data_map.items():
+            data = data.T
+            if not data.empty:
+                if not data.index.is_all_dates:
+                    plot_context.deactivateDateSupport()
+                    plot_context.x_axis = plot_context.INDEX_AXIS
 
-            statistics_data = DataFrame()
-            std_dev_factor = config.getStandardDeviationFactor()
 
-            statistics_data["Minimum"] = data.min(axis=1)
-            statistics_data["Maximum"] = data.max(axis=1)
-            statistics_data["Mean"] = data.mean(axis=1)
-            statistics_data["p10"] = data.quantile(0.1, axis=1)
-            statistics_data["p33"] = data.quantile(0.33, axis=1)
-            statistics_data["p50"] = data.quantile(0.50, axis=1)
-            statistics_data["p67"] = data.quantile(0.67, axis=1)
-            statistics_data["p90"] = data.quantile(0.90, axis=1)
-            std = data.std(axis=1) * std_dev_factor
-            statistics_data["std+"] = statistics_data["Mean"] + std
-            statistics_data["std-"] = statistics_data["Mean"] - std
+                style = config.getStatisticsStyle("mean")
+                rectangle = Rectangle((0, 0), 1, 1, color=style.color, alpha=0.8) # creates rectangle patch for legend use.
+                config.addLegendItem(case, rectangle)
 
-            _plotPercentiles(axes, config, statistics_data, case)
-            config.nextColor()
+                statistics_data = DataFrame()
+                std_dev_factor = config.getStandardDeviationFactor()
 
-    _addStatisticsLegends(plot_config=config)
+                statistics_data["Minimum"] = data.min(axis=1)
+                statistics_data["Maximum"] = data.max(axis=1)
+                statistics_data["Mean"] = data.mean(axis=1)
+                statistics_data["p10"] = data.quantile(0.1, axis=1)
+                statistics_data["p33"] = data.quantile(0.33, axis=1)
+                statistics_data["p50"] = data.quantile(0.50, axis=1)
+                statistics_data["p67"] = data.quantile(0.67, axis=1)
+                statistics_data["p90"] = data.quantile(0.90, axis=1)
+                std = data.std(axis=1) * std_dev_factor
+                statistics_data["std+"] = statistics_data["Mean"] + std
+                statistics_data["std-"] = statistics_data["Mean"] - std
 
-    plotRefcase(plot_context, axes)
-    plotObservations(plot_context, axes)
+                _plotPercentiles(axes, config, statistics_data, case)
+                config.nextColor()
 
-    default_x_label = "Date" if plot_context.isDateSupportActive() else "Index"
-    PlotTools.finalizePlot(plot_context, axes, default_x_label=default_x_label, default_y_label="Value")
+        _addStatisticsLegends(plot_config=config)
+
+        #plotRefcase(plot_context, axes)
+        plotObservations(_observation_data, plot_context, axes)
+
+        default_x_label = "Date" if plot_context.isDateSupportActive() else "Index"
+        PlotTools.finalizePlot(plot_context, figure, axes, default_x_label=default_x_label, default_y_label="Value")
 
 def _addStatisticsLegends(plot_config):
     _addStatisticsLegend(plot_config, "mean")

@@ -17,7 +17,7 @@ def data_loader_factory(observation_type):
         raise TypeError("Unknown observation type: {}".format(observation_type))
 
 
-def load_general_data(facade, observation_key, case_name):
+def load_general_data(facade, observation_key, case_name, include_data=True):
     obs_vector = facade.get_observations()[observation_key]
     data_key = obs_vector.getDataKey()
 
@@ -26,7 +26,6 @@ def load_general_data(facade, observation_key, case_name):
     for time_step in obs_vector.getStepList().asList():
         # Fetch, then transpose the simulation data in order to make it
         # conform with the GenObservation data structure.
-        gen_data = facade.load_gen_data(case_name, data_key, time_step).T
 
         # Observations and its standard deviation are a subset of the simulation data.
         # The index_list refers to indices in the simulation data. In order to
@@ -48,12 +47,14 @@ def load_general_data(facade, observation_key, case_name):
                 )
             )
             .append(pd.DataFrame([node.get_std()], columns=index_list, index=["STD"]))
-            .append(gen_data)
         )
+        if include_data:
+            gen_data = facade.load_gen_data(case_name, data_key, time_step).T
+            data = data.append(gen_data)
     return data
 
 
-def load_block_data(facade, observation_key, case_name):
+def load_block_data(facade, observation_key, case_name, include_data=True):
     """
     load_block_data is a part of the data_loader_factory, and the other
     methods returned by this factory, require case_name, so it is accepted
@@ -64,8 +65,6 @@ def load_block_data(facade, observation_key, case_name):
 
     data = pd.DataFrame()
     for report_step in obs_vector.getStepList().asList():
-
-        block_data = loader.load(facade.get_current_fs(), report_step)
         obs_block = loader.getBlockObservation(report_step)
 
         data = (
@@ -77,10 +76,13 @@ def load_block_data(facade, observation_key, case_name):
             .append(
                 pd.DataFrame([[obs_block.getStd(i) for i in obs_block]], index=["STD"])
             )
-            .append(_get_block_measured(facade.get_ensemble_size(), block_data))
         )
-    return data
 
+        if include_data:
+            block_data = loader.load(facade.get_current_fs(), report_step)
+            data = data.append(_get_block_measured(facade.get_ensemble_size(), block_data))
+
+    return data
 
 def _get_block_measured(ensamble_size, block_data):
     data = pd.DataFrame()
@@ -89,13 +91,14 @@ def _get_block_measured(ensamble_size, block_data):
     return data
 
 
-def load_summary_data(facade, observation_key, case_name):
+def load_summary_data(facade, observation_key, case_name, include_data=True):
     data_key = facade.get_data_key_for_obs_key(observation_key)
     args = (facade, observation_key, data_key, case_name)
-    return pd.concat([
-        _get_summary_data(*args),
-        _get_summary_observations(*args).pipe(_remove_inactive_report_steps, *args)
-    ])
+    data = []
+    if include_data:
+        data.append(_get_summary_data(*args))
+    data.append(_get_summary_observations(*args).pipe(_remove_inactive_report_steps, *args))
+    return pd.concat(data)
 
 
 def _get_summary_data(facade, _, data_key, case_name):
