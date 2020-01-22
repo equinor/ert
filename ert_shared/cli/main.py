@@ -33,7 +33,8 @@ def run_cli(args):
         if model.hasRunFailed():
             sys.exit(model.getFailMessage())
     else:
-        if args.current_case:
+        # Test run does not have a current_case
+        if "current_case" in args and args.current_case:
             ERT.enkf_facade.select_or_create_new_case(args.current_case)
 
         if (args.mode in [ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE] and 
