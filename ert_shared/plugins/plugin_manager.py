@@ -116,21 +116,32 @@ class ErtPluginManager(pluggy.PluginManager):
     def get_site_config_content(self):
         site_config_lines = self._site_config_lines()
 
-        install_job_lines = list(
-            [
-                "INSTALL_JOB {} {}".format(job_name, job_path)
-                for job_name, job_path in self.get_installable_jobs().items()
-            ]
-        )
+        config_env_vars = {
+            "ECL100_SITE_CONFIG": self.get_ecl100_config_path(),
+            "ECL300_SITE_CONFIG": self.get_ecl300_config_path(),
+            "FLOW_SITE_CONFIG": self.get_flow_config_path(),
+            "RMS_SITE_CONFIG": self.get_rms_config_path(),
+        }
+        config_lines = [
+            "SETENV {} {}".format(env_var, env_value)
+            for env_var, env_value in config_env_vars.items()
+            if env_value is not None
+        ]
+        site_config_lines.extend(config_lines + [""])
 
-        install_workflow_job_lines = list(
-            [
-                "LOAD_WORKFLOW_JOB {}".format(job_path)
-                for job_name, job_path in self.get_installable_workflow_jobs().items()
-            ]
-        )
-        site_config_lines.extend(install_job_lines)
-        site_config_lines.extend(install_workflow_job_lines)
+        install_job_lines = [
+            "INSTALL_JOB {} {}".format(job_name, job_path)
+            for job_name, job_path in self.get_installable_jobs().items()
+        ]
+
+        site_config_lines.extend(install_job_lines + [""])
+
+        install_workflow_job_lines = [
+            "LOAD_WORKFLOW_JOB {}".format(job_path)
+            for job_name, job_path in self.get_installable_workflow_jobs().items()
+        ]
+
+        site_config_lines.extend(install_workflow_job_lines + [""])
 
         return "\n".join(site_config_lines) + "\n"
 
@@ -192,16 +203,12 @@ class ErtPluginContext:
 
     @python3only
     def __enter__(self):
-        logging.debug("Creating temporary directory for stie-config")
+        logging.debug("Creating temporary directory for site-config")
         self.tmp_dir = tempfile.mkdtemp()
         logging.debug("Temporary directory created: {}".format(self.tmp_dir))
         self.tmp_site_config_filename = self._create_site_config()
         env = {
             "ERT_SITE_CONFIG": self.tmp_site_config_filename,
-            "ECL100_SITE_CONFIG": self.plugin_manager.get_ecl100_config_path(),
-            "ECL300_SITE_CONFIG": self.plugin_manager.get_ecl300_config_path(),
-            "FLOW_SITE_CONFIG": self.plugin_manager.get_flow_config_path(),
-            "RMS_SITE_CONFIG": self.plugin_manager.get_rms_config_path(),
         }
         self._setup_temp_environment_if_not_already_set(env)
         return self
