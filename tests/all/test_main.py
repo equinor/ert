@@ -1,139 +1,164 @@
-import argparse
 import sys
-import unittest
+import pytest
 
+import ert_shared
 from ert_shared.main import ert_parser
-from argparse import ArgumentParser
 from ert_shared.cli import (
     ENSEMBLE_SMOOTHER_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
     ES_MDA_MODE,
     TEST_RUN_MODE,
-    WORKFLOW_MODE
+    WORKFLOW_MODE,
 )
 
-
-class MainTest(unittest.TestCase):
-
-    def test_argparse_exec_gui(self):
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(parser, ['gui', 'test-data/local/poly_example/poly.ert'])
-        self.assertEquals(parsed.func.__name__, "run_gui_wrapper")
-
-    def test_argparse_exec_test_run_valid_case(self):
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser, [TEST_RUN_MODE, "--verbose", 'test-data/local/poly_example/poly.ert'])
-        self.assertEquals(parsed.mode, TEST_RUN_MODE)
-        self.assertEquals(
-            parsed.config, "test-data/local/poly_example/poly.ert")
-        self.assertEquals(parsed.func.__name__, "run_cli")
-        self.assertTrue(parsed.verbose)
-
-    def test_argparse_exec_ensemble_experiment_valid_case(self):
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(parser, [ENSEMBLE_EXPERIMENT_MODE, "--realizations", "1-4,7,8",
-                                     'test-data/local/poly_example/poly.ert'])
-        self.assertEquals(parsed.mode, ENSEMBLE_EXPERIMENT_MODE)
-        self.assertEquals(
-            parsed.config, "test-data/local/poly_example/poly.ert")
-        self.assertEquals(parsed.realizations, "1-4,7,8")
-        self.assertEquals(parsed.func.__name__, "run_cli")
-        self.assertFalse(parsed.verbose)
-
-    def test_argparse_exec_ensemble_experiment_faulty_realizations(self):
-        parser = ArgumentParser(prog="test_main")
-        with self.assertRaises(SystemExit):
-            ert_parser(parser, [ENSEMBLE_EXPERIMENT_MODE, "--realizations", "1~4,7,"
-                                'test-data/local/poly_example/poly.ert'])
-
-    def test_argparse_exec_ensemble_smoother_valid_case(self):
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(parser, [
-                            ENSEMBLE_SMOOTHER_MODE, "--target-case", "some_case", 'test-data/local/poly_example/poly.ert'])
-        self.assertEquals(parsed.mode, ENSEMBLE_SMOOTHER_MODE)
-        self.assertEquals(
-            parsed.config, "test-data/local/poly_example/poly.ert")
-        self.assertEquals(parsed.target_case, "some_case")
-        self.assertEquals(parsed.func.__name__, "run_cli")
-        self.assertFalse(parsed.verbose)
+if sys.version_info >= (3, 3):
+    from unittest.mock import Mock
+else:
+    from mock import Mock
 
 
-    def test_argparse_exec_ensemble_smoother_no_target_case(self):
-        parser = ArgumentParser(prog="test_main")
-        with self.assertRaises(SystemExit):
-            ert_parser(parser, [ENSEMBLE_SMOOTHER_MODE,
-                                'test-data/local/poly_example/poly.ert'])
-
-    def test_argparse_exec_es_mda_valid_case(self):
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(parser, [ES_MDA_MODE, "--target-case", "some_case%d", "--realizations",
-                                     "1-10", "--verbose", "--weights", "1, 2, 4", 'test-data/local/poly_example/poly.ert'])
-        self.assertEquals(parsed.mode, ES_MDA_MODE)
-        self.assertEquals(
-            parsed.config, "test-data/local/poly_example/poly.ert")
-        self.assertEquals(parsed.target_case, "some_case%d")
-        self.assertEquals(parsed.realizations, "1-10")        
-        self.assertEquals(parsed.weights, "1, 2, 4")
-        self.assertEquals(parsed.func.__name__, "run_cli")
-        self.assertTrue(parsed.verbose)
-
-    def test_argparse_exec_es_mda_default_weights(self):
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser, [ES_MDA_MODE, 'test-data/local/poly_example/poly.ert'])
-        self.assertEquals(parsed.mode, ES_MDA_MODE)
-        self.assertEquals(
-            parsed.config, "test-data/local/poly_example/poly.ert")        
-        self.assertEquals(parsed.weights, "4, 2, 1")
-        self.assertEquals(parsed.func.__name__, "run_cli")
-        self.assertFalse(parsed.verbose)
-
-    def test_argparse_exec_workflow(self):
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser, [WORKFLOW_MODE, "--verbose", "workflow_name", 'test-data/local/poly_example/poly.ert'])
-        self.assertEquals(parsed.mode, WORKFLOW_MODE)
-        self.assertEquals(parsed.name, "workflow_name")
-        self.assertEquals(
-            parsed.config, "test-data/local/poly_example/poly.ert")
-        self.assertEquals(parsed.func.__name__, "run_cli")
-        self.assertTrue(parsed.verbose)
-
-    def test_argparse_exec_ensemble_experiment_current_case(self):
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(parser, [ENSEMBLE_EXPERIMENT_MODE, "--current-case", 'test_case',
-                                     'test-data/local/poly_example/poly.ert'])
-        self.assertEquals(parsed.mode, ENSEMBLE_EXPERIMENT_MODE)
-        self.assertEquals(
-            parsed.config, "test-data/local/poly_example/poly.ert")
-        self.assertEquals(parsed.current_case, 'test_case')
-        self.assertEquals(parsed.func.__name__, "run_cli")
-        self.assertFalse(parsed.verbose)
-    
-    def test_argparse_exec_ensemble_smoother_current_case(self):
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(parser, [ENSEMBLE_SMOOTHER_MODE, "--current-case", 'test_case',
-                                     "--target-case", 'test_case_smoother',
-                                     'test-data/local/poly_example/poly.ert'])
-        self.assertEquals(parsed.mode, ENSEMBLE_SMOOTHER_MODE)
-        self.assertEquals(
-            parsed.config, "test-data/local/poly_example/poly.ert")
-        self.assertEquals(parsed.current_case, 'test_case')
-        self.assertEquals(parsed.func.__name__, "run_cli")
-        self.assertFalse(parsed.verbose)
-    
-    def test_argparse_exec_ensemble_es_mda_current_case(self):
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(parser, [ES_MDA_MODE, "--current-case", 'test_case',
-                                     'test-data/local/poly_example/poly.ert'])
-        self.assertEquals(parsed.mode, ES_MDA_MODE)
-        self.assertEquals(
-            parsed.config, "test-data/local/poly_example/poly.ert")
-        self.assertEquals(parsed.current_case, 'test_case')
-        self.assertEquals(parsed.func.__name__, "run_cli")
-        self.assertFalse(parsed.verbose)
+@pytest.fixture(autouse=True)
+def mocked_valid_file(monkeypatch):
+    monkeypatch.setattr(
+        ert_shared.main, "valid_file", Mock(return_value="path/to/config.ert")
+    )
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_argparse_exec_gui():
+    parsed = ert_parser(None, ["gui", "path/to/config.ert"])
+    assert parsed.func.__name__ == "run_gui_wrapper"
+
+
+@pytest.mark.parametrize("input_path", ["a/path/config.ert", "another/path/config.ert"])
+def test_parsed_config(monkeypatch, input_path):
+    monkeypatch.setattr(
+        ert_shared.main, "valid_file", Mock(side_effect=lambda x: input_path)
+    )
+    parsed = ert_parser(None, [TEST_RUN_MODE, input_path])
+    assert parsed.config == input_path
+
+
+def test_argparse_exec_test_run_valid_case():
+    parsed = ert_parser(None, [TEST_RUN_MODE, "path/to/config.ert"])
+    assert parsed.mode == TEST_RUN_MODE
+    assert parsed.func.__name__ == "run_cli"
+
+
+def test_argparse_exec_ensemble_experiment_valid_case():
+    parsed = ert_parser(
+        None,
+        [ENSEMBLE_EXPERIMENT_MODE, "--realizations", "1-4,7,8", "path/to/config.ert"],
+    )
+    assert parsed.mode == ENSEMBLE_EXPERIMENT_MODE
+    assert parsed.realizations == "1-4,7,8"
+    assert parsed.func.__name__ == "run_cli"
+
+
+def test_argparse_exec_ensemble_experiment_current_case():
+    parsed = ert_parser(
+        None,
+        [ENSEMBLE_EXPERIMENT_MODE, "--current-case", "test_case", "path/to/config.ert"],
+    )
+    assert parsed.mode == ENSEMBLE_EXPERIMENT_MODE
+    assert parsed.current_case == "test_case"
+    assert parsed.func.__name__ == "run_cli"
+
+
+def test_argparse_exec_ensemble_experiment_faulty_realizations():
+    with pytest.raises(SystemExit):
+        ert_parser(
+            None,
+            [
+                ENSEMBLE_EXPERIMENT_MODE,
+                "--realizations",
+                "1~4,7,",
+                "path/to/config.ert",
+            ],
+        )
+
+
+def test_argparse_exec_ensemble_smoother_valid_case():
+    parsed = ert_parser(
+        None,
+        [ENSEMBLE_SMOOTHER_MODE, "--target-case", "some_case", "path/to/config.ert"],
+    )
+    assert parsed.mode == ENSEMBLE_SMOOTHER_MODE
+    assert parsed.target_case == "some_case"
+    assert parsed.func.__name__ == "run_cli"
+
+
+def test_argparse_exec_ensemble_smoother_no_target_case():
+    with pytest.raises(SystemExit):
+        ert_parser(None, [ENSEMBLE_SMOOTHER_MODE, "path/to/config.ert"])
+
+
+def test_argparse_exec_es_mda_valid_case():
+    parsed = ert_parser(
+        None,
+        [
+            ES_MDA_MODE,
+            "--target-case",
+            "some_case%d",
+            "--realizations",
+            "1-10",
+            "--weights",
+            "1, 2, 4",
+            "path/to/config.ert",
+        ],
+    )
+    assert parsed.mode == ES_MDA_MODE
+    assert parsed.target_case == "some_case%d"
+    assert parsed.realizations == "1-10"
+    assert parsed.weights == "1, 2, 4"
+    assert parsed.func.__name__ == "run_cli"
+
+
+def test_argparse_exec_es_mda_default_weights():
+    parsed = ert_parser(None, [ES_MDA_MODE, "path/to/config.ert"])
+    assert parsed.mode == ES_MDA_MODE
+    assert parsed.weights == "4, 2, 1"
+    assert parsed.func.__name__ == "run_cli"
+
+
+def test_argparse_exec_ensemble_es_mda_current_case():
+    parsed = ert_parser(
+        None, [ES_MDA_MODE, "--current-case", "test_case", "path/to/config.ert"]
+    )
+    assert parsed.mode == ES_MDA_MODE
+    assert parsed.current_case == "test_case"
+    assert parsed.func.__name__ == "run_cli"
+
+
+def test_argparse_exec_workflow():
+    parsed = ert_parser(None, [WORKFLOW_MODE, "workflow_name", "path/to/config.ert"])
+    assert parsed.mode == WORKFLOW_MODE
+    assert parsed.name == "workflow_name"
+    assert parsed.func.__name__ == "run_cli"
+
+
+def test_argparse_exec_ensemble_smoother_current_case():
+    parsed = ert_parser(
+        None,
+        [
+            ENSEMBLE_SMOOTHER_MODE,
+            "--current-case",
+            "test_case",
+            "--target-case",
+            "test_case_smoother",
+            "path/to/config.ert",
+        ],
+    )
+    assert parsed.mode == ENSEMBLE_SMOOTHER_MODE
+    assert parsed.current_case == "test_case"
+    assert parsed.func.__name__ == "run_cli"
+
+
+@pytest.mark.parametrize(
+    "flag_val,expected_value", [("--verbose", True), (None, False)]
+)
+def test_verbose_flag(flag_val, expected_value):
+    args = [TEST_RUN_MODE, " path/to/config.ert"]
+    if flag_val:
+        args.append(flag_val)
+    parsed = ert_parser(None, args)
+    assert parsed.verbose == expected_value
