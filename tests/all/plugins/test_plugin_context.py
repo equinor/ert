@@ -43,19 +43,15 @@ class PluginContextTest(unittest.TestCase):
     @unittest.skipIf(sys.version_info.major < 3, "Plugin Manager is Python 3 only")
     def test_with_plugins(self):
         with ErtPluginContext(plugins=[dummy_plugins]) as c:
-            self.assertEqual(
-                "/dummy/path/ecl100_config.yml", os.environ["ECL100_SITE_CONFIG"]
-            )
-            self.assertEqual(
-                "/dummy/path/ecl300_config.yml", os.environ["ECL300_SITE_CONFIG"]
-            )
-            self.assertEqual(
-                "/dummy/path/flow_config.yml", os.environ["FLOW_SITE_CONFIG"]
-            )
-            self.assertEqual(
-                "/dummy/path/rms_config.yml", os.environ["RMS_SITE_CONFIG"]
-            )
-
+            with self.assertRaises(KeyError):
+                os.environ["ECL100_SITE_CONFIG"]
+            with self.assertRaises(KeyError):
+                os.environ["ECL300_SITE_CONFIG"]
+            with self.assertRaises(KeyError):
+                os.environ["FLOW_SITE_CONFIG"]
+            with self.assertRaises(KeyError):
+                os.environ["RMS_SITE_CONFIG"]
+            
             self.assertTrue(os.path.isfile(os.environ["ERT_SITE_CONFIG"]))
             with open(os.environ["ERT_SITE_CONFIG"]) as f:
                 self.assertEqual(f.read(), c.plugin_manager.get_site_config_content())
