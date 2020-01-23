@@ -1,4 +1,4 @@
-language: c
+language: C
 
 compiler:
   - gcc
@@ -22,6 +22,7 @@ env:
   matrix:
     - PYTHON_VERSION=2.7
     - PYTHON_VERSION=3.6
+
 
 matrix:
   fast_finish: true
@@ -89,16 +90,16 @@ install:
   # Remove when it's possible to pip install
   - bash .build_install.sh libecl
   - bash .build_install.sh libres
+  - pip install tox
 
 script:
   - ulimit -n 2048
   - export PYTHONPATH=$INSTALL_DIR/lib/python$TRAVIS_PYTHON_VERSION/dist-packages:$PYTHONPATH
   - export PYTHONPATH=$INSTALL_DIR/lib/python$TRAVIS_PYTHON_VERSION/site-packages:$PYTHONPATH
-  - export PATH=$INSTALL_DIR/bin:$PATH
+  - export PATH=$CONDA_PREFIX/bin/python:$INSTALL_DIR/bin:$PATH
   - echo $PATH
   - echo $PYTHONPATH
-  - pip install . --prefix=$INSTALL_DIR
-  - python setup.py test
-  - sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
+  - tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .)
+  - python setup.py build_sphinx
   - conda remove pyqt -y
   - ert --help

@@ -13,7 +13,7 @@ def package_files(directory):
 
 
 extra_files = package_files("ert_gui/resources/")
-
+docs_folder = os.path.join("docs", "rst", "manual")
 
 setup(
     name="Ensemble Reservoir Tool",
@@ -71,9 +71,15 @@ setup(
         "sphinx",
         "sphinx-argparse",
         "sphinx_rtd_theme",
+        'PyQt5;python_version>="3.5"',
+        'future;python_version<="2.7"',
+        'futures;python_version<="2.7"',
     ],
     zip_safe=False,
     tests_require=["pytest", "mock"],
     test_suite="tests",
     setup_requires=["pytest-runner", "setuptools_scm"],
+    command_options={
+        'build_sphinx': {
+            'source_dir': ('setup.py', docs_folder)}},
 )
