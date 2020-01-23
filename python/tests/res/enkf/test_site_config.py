@@ -14,17 +14,24 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from res.enkf import SiteConfig, ConfigKeys
+from res.enkf import SiteConfig, ConfigKeys, ResConfig
 import os
 
 from ecl.util.test import TestAreaContext
 from tests import ResTest
+from tests.utils import tmpdir
+from _pytest.monkeypatch import MonkeyPatch
 
 class SiteConfigTest(ResTest):
 
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")
         self.snake_case_directory = self.createTestPath("local/snake_oil/")
+
+        self.monkeypatch = MonkeyPatch()
+
+    def tearDown(self):
+        self.monkeypatch.undo()
 
     def test_invalid_user_config(self):
         with TestAreaContext("void land"):
@@ -91,3 +98,36 @@ class SiteConfigTest(ResTest):
 
             with self.assertRaises(ValueError):
                 site_config = SiteConfig(user_config_file=config_file, config_dict=snake_config_dict)
+
+    @tmpdir()
+    def test_site_config_hook_workflow(self):
+        site_config_filename = "test_site_config"
+        test_config_filename = "test_config"
+        site_config_content = """
+LOAD_WORKFLOW_JOB ECHO_WORKFLOW_JOB
+LOAD_WORKFLOW ECHO_WORKFLOW
+HOOK_WORKFLOW ECHO_WORKFLOW PRE_SIMULATION
+"""
+
+        with open(site_config_filename, "w") as fh:
+            fh.write(site_config_content)
+
+        with open(test_config_filename, "w") as fh:
+            fh.write("NUM_REALIZATIONS 1\n")
+
+        with open("ECHO_WORKFLOW_JOB", "w") as fh:
+            fh.write(
+                """INTERNAL False
+EXECUTABLE echo
+MIN_ARG 1
+"""
+            )
+
+        with open("ECHO_WORKFLOW", "w") as fh:
+            fh.write("ECHO_WORKFLOW_JOB hello")
+
+        self.monkeypatch.setenv("ERT_SITE_CONFIG", site_config_filename)
+
+        res_config = ResConfig(user_config_file=test_config_filename)
+        self.assertTrue(len(res_config.hook_manager) == 1)
+        self.assertEqual(res_config.hook_manager[0].getWorkflow().src_file, os.path.join(os.getcwd(), "ECHO_WORKFLOW"))
