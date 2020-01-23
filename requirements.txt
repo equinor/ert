@@ -1,22 +1,6 @@
 # The python wrappers to libecl and libres are required by ert, but there is not
-# yet any pip package for those, they are therefor just mentioned here with a comment, 
+# yet any pip package for those, they are therefore just mentioned here with a comment,
 # and must be installed by building from source.
 
 # libecl
 # libres
-
-# You will also need PyQt4 - that is not a pip installable package, you should
-# probably install it through your operaing systems package manager.
-
-sphinx
-cwrap
-numpy
-pandas
-matplotlib
-scipy
-pluggy
-pyyaml
-sphinx-argparse
-sphinx_rtd_theme
-console-progressbar==1.1.2
-ansicolors==1.1.8

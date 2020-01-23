@@ -56,7 +56,6 @@ setup(
     license="Open Source",
     long_description=open("README.md").read(),
     install_requires=[
-        "sphinx",
         "cwrap",
         "numpy",
         "pandas",
@@ -67,7 +66,11 @@ setup(
         "console-progressbar==1.1.2",
         "ansicolors==1.1.8",
         "pluggy",
-        "qtpy"
+        "qtpy",
+        "pyyaml",
+        "sphinx",
+        "sphinx-argparse",
+        "sphinx_rtd_theme",
     ],
     zip_safe=False,
     tests_require=["pytest", "mock"],

@@ -76,7 +76,6 @@ before_install:
         conda create -n ert_env pyqt python=$TRAVIS_PYTHON_VERSION --yes;
       fi
     - source activate ert_env
-    - pip install --upgrade -r requirements.txt
     # Checkout libres - need libecl version
     - source .libres_version
     - git clone --branch $LIBRES_VERSION --depth 1 https://github.com/equinor/libres
