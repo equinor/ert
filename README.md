@@ -26,13 +26,9 @@ running pip install in point 4, below. For now let us assume that the prefix
 
 #### 2. Install Python dependencies
 
-```
-pip install -r requirements.txt 
-```
-
-In addition you will need to install `PyQt4` - this package can not be installed
-using `pip`, you should probably use the package manager from your operating
-system.
+In addition you will need to install `PyQt` For Python 2.7 (`PyQt4`)- this package
+can not be installed using `pip`, you should probably use the package manager from
+your operating system. For Python >3.5 you can use `pip install PyQt5`.
 
 #### 3. Update environment variables 
 To ensure that the build system correctly finds the `ecl` Python package you
@@ -44,7 +40,7 @@ bash% export LD_LIBRARY_PATH=/local/ert/install/lib64:$LD_LIBRARY_PATH
 bash% export PYTHONPATH=/local/ert/install/lib/python2.7/site-packages:$PYTHONPATH
 ```
 
-Observe that path components `lib64` and `lib/python2.7/site-packages` will
+Observe that path components `lib64` and `lib/python*.*/site-packages` will
 depend on your Python version and which Linux distribution you are using. The
 example given here is for RedHat based distributions.
 
