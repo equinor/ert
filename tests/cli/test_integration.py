@@ -33,9 +33,17 @@ def test_target_case_equal_current_case(tmpdir, source_root):
     )
     with tmpdir.as_cwd():
         parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(parser, [ENSEMBLE_SMOOTHER_MODE, "--current-case", 'test_case',
-                                    "--target-case", 'test_case',
-                                    'poly_example/poly.ert'])
+        parsed = ert_parser(
+            parser,
+            [
+                ENSEMBLE_SMOOTHER_MODE,
+                "--current-case",
+                "test_case",
+                "--target-case",
+                "test_case",
+                "poly_example/poly.ert",
+            ],
+        )
 
         with pytest.raises(SystemExit):
             run_cli(parsed)
