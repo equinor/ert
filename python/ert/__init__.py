@@ -1,8 +1,14 @@
 import warnings
 
-warnings.simplefilter('always', DeprecationWarning) # see #1437
+warnings.filterwarnings(
+    action='always',
+    category=DeprecationWarning,
+    module=r'ecl|ert|res'
+)
+
 warnings.warn(
-    "Importing from ert is deprecated and will be removed in a future release, use: \'from res import\' instead",
+    "Importing from ert.ecl, ecl.ecl or ert is deprecated and will not be available in python3." \
+    " For eclipse functionality use \'from ecl import\', for ert workflow tooling use \'from res import\'.",
     DeprecationWarning
 )
 
