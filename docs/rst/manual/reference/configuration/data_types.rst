@@ -444,6 +444,14 @@ field as it comes out from ERT. The typical way to achieve this is:
    ``tmp_poro.grdecl`` *only if* ``poro.grdecl`` does not already exist. The
    rest of the forward model components should use ``poro.grdecl``.
 
+note
+  With regards to behavior relative to the values in storage;
+  What is really happening is that if ERT has values, those will be dumped
+  to the runpath, and if not, it will read those from the runpath after the
+  forward model finishes. However, if you change your runpath and "case" in
+  the config file, but not your storage case, you will end up with the same
+  parameter values but different RMS seed.
+
 
 Field transformations
 .....................
