@@ -94,10 +94,10 @@ install:
   - pip install tox
 
 script:
-  - export PYTHONPATH=$INSTALL_DIR/lib/python$TRAVIS_PYTHON_VERSION/dist-packages
-  - export PYTHONPATH=$INSTALL_DIR/lib/python$TRAVIS_PYTHON_VERSION/site-packages
+  - export PYTHONPATH=$INSTALL_DIR/lib/python$TRAVIS_PYTHON_VERSION/dist-packages:$PYTHONPATH
+  - export PYTHONPATH=$INSTALL_DIR/lib/python$TRAVIS_PYTHON_VERSION/site-packages:$PYTHONPATH
   - export PATH=$CONDA_PREFIX/bin/python:$PATH
   - tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .)
-  - python setup.py build_sphinx
+  - tox -e docs
   - conda remove pyqt -y
   - ert --help
