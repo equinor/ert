@@ -76,10 +76,5 @@ setup(
         'futures;python_version<="2.7"',
     ],
     zip_safe=False,
-    tests_require=["pytest", "mock"],
-    test_suite="tests",
     setup_requires=["pytest-runner", "setuptools_scm"],
-    command_options={
-        'build_sphinx': {
-            'source_dir': ('setup.py', docs_folder)}},
 )
