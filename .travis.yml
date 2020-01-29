@@ -23,6 +23,7 @@ env:
     - PYTHON_VERSION=2.7
     - PYTHON_VERSION=3.6
 
+
 matrix:
   fast_finish: true
   exclude:
@@ -73,9 +74,10 @@ before_install:
         conda config --set restore_free_channel true;        
         conda create -n ert_env pyqt=4.11.3 python=2.7 --yes;
       else
-        conda create -n ert_env pyqt python=$TRAVIS_PYTHON_VERSION --yes;
+        conda create -n ert_env python=$TRAVIS_PYTHON_VERSION --yes;
       fi
     - source activate ert_env
+    - conda install virtualenv --yes
     # Checkout libres - need libecl version
     - source .libres_version
     - git clone --branch $LIBRES_VERSION --depth 1 https://github.com/equinor/libres
@@ -89,17 +91,13 @@ install:
   # Remove when it's possible to pip install
   - bash .build_install.sh libecl
   - bash .build_install.sh libres
+  - pip install tox
 
 script:
-  - ulimit -n 2048
-  - export PYTHONPATH=$INSTALL_DIR/lib/python$TRAVIS_PYTHON_VERSION/dist-packages:$PYTHONPATH
-  - export PYTHONPATH=$INSTALL_DIR/lib/python$TRAVIS_PYTHON_VERSION/site-packages:$PYTHONPATH
-  - export PATH=$INSTALL_DIR/bin:$PATH
-  - echo $PATH
-  - echo $PYTHONPATH
-  - pip install -r dev-requirements.txt
-  - pip install . --prefix=$INSTALL_DIR
-  - python setup.py test
-  - sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
+  - export PYTHONPATH=$INSTALL_DIR/lib/python$TRAVIS_PYTHON_VERSION/dist-packages
+  - export PYTHONPATH=$INSTALL_DIR/lib/python$TRAVIS_PYTHON_VERSION/site-packages
+  - export PATH=$CONDA_PREFIX/bin/python:$PATH
+  - tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .)
+  - python setup.py build_sphinx
   - conda remove pyqt -y
   - ert --help
