@@ -47,6 +47,17 @@ def run_gui(args):
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
 
+    res_config = ResConfig(args.config)
+    os.chdir(res_config.config_path)
+    ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
+
+    _start_window(ert, args.config)
+
+    return app.exec_()
+
+
+def _start_window(ert, config):
+
     _check_locale()
 
     help_center = HelpCenter("ERT")
@@ -57,12 +68,9 @@ def run_gui(args):
     splash.repaint()
     splash_screen_start_time = time.time()
 
-    res_config = ResConfig(args.config)
-    os.chdir(res_config.config_path)
-    ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
-    configureErtNotifier(ert, args.config)
+    configureErtNotifier(ert, config)
 
-    window = _setup_main_window(args.config, ert)
+    window = _setup_main_window(config, ert)
 
     minimum_splash_screen_time = 2
     sleep_time_left = minimum_splash_screen_time - (time.time() - splash_screen_start_time)
@@ -87,9 +95,7 @@ def run_gui(args):
             "No observations loaded. Model update algorithms disabled!",
         )
 
-    finished_code = app.exec_()
-    return finished_code
-
+    return window
 
 def _check_locale():
     # There seems to be a setlocale() call deep down in the initialization of

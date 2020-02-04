@@ -14,6 +14,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
     def __init__(self):
         SimulationConfigPanel.__init__(self, EnsembleExperiment)
+        self.setObjectName("Ensemble_experiment_panel")
 
         layout = QFormLayout()
 

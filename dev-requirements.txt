@@ -1,4 +1,5 @@
 pytest
+pytest-qt
 mock
 sphinx
 sphinx-argparse
