@@ -25,10 +25,11 @@ class SimulationPanel(QWidget):
     def __init__(self, config_file):
         QWidget.__init__(self)
         self._config_file = config_file
-
+        self.setObjectName("Simulation_panel")
         layout = QVBoxLayout()
 
         self._simulation_mode_combo = QComboBox()
+        self._simulation_mode_combo.setObjectName("Simulation_mode")
         addHelpToWidget(self._simulation_mode_combo, "run/simulation_mode")
 
         self._simulation_mode_combo.currentIndexChanged.connect(self.toggleSimulationMode)

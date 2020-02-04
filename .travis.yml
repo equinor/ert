@@ -47,6 +47,7 @@ addons:
 before_install:
     - if [[ $PYTHON_VERSION == 2.7 ]]; then
         export TRAVIS_PYTHON_VERSION="2.7";
+        export PYTEST_QT_API="pyqt4v2";
       else
         export TRAVIS_PYTHON_VERSION="3.6";
       fi
@@ -91,7 +92,6 @@ install:
   - bash .build_install.sh libres
 
 script:
-  - ulimit -n 2048
   - export PYTHONPATH=$INSTALL_DIR/lib/python$TRAVIS_PYTHON_VERSION/dist-packages:$PYTHONPATH
   - export PYTHONPATH=$INSTALL_DIR/lib/python$TRAVIS_PYTHON_VERSION/site-packages:$PYTHONPATH
   - export PATH=$INSTALL_DIR/bin:$PATH
@@ -99,7 +99,11 @@ script:
   - echo $PYTHONPATH
   - pip install -r dev-requirements.txt
   - pip install . --prefix=$INSTALL_DIR
-  - python setup.py test
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      xvfb-run python setup.py test;
+    else
+      python setup.py test;
+    fi
   - sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
   - conda remove pyqt -y
   - ert --help

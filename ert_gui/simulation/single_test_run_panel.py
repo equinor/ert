@@ -11,9 +11,8 @@ from ecl.util.util import BoolVector
 class SingleTestRunPanel(SimulationConfigPanel):
 
     def __init__(self):
-
         SimulationConfigPanel.__init__(self, SingleTestRun)
-        
+        self.setObjectName("Single_test_run_panel")
         layout = QFormLayout()
 
         case_selector = CaseSelector()
