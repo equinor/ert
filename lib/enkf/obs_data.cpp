@@ -406,18 +406,12 @@ matrix_type * obs_data_allocE(const obs_data_type * obs_data , rng_type * rng , 
   pert_mean = (double *) util_calloc(active_obs_size , sizeof * pert_mean );
   pert_var  = (double *) util_calloc(active_obs_size , sizeof * pert_var  );
   {
-    double * tmp = (double *)util_calloc( active_obs_size * active_ens_size , sizeof * tmp );
-    int i,j;
-    int k = 0;
 
-    enkf_util_rand_stdnormal_vector(active_obs_size * active_ens_size , tmp , rng);
-    for (j=0; j < active_ens_size; j++) {
-      for (i=0; i < active_obs_size; i++) {
-        matrix_iset( E , i , j , tmp[k]);
-        k++;
+    for (int j=0; j < active_ens_size; j++) {
+      for (int i=0; i < active_obs_size; i++) {
+        matrix_iset( E , i , j , enkf_util_rand_normal(0, 1, rng));
       }
     }
-    free(tmp);
   }
 
   for (iobs_active = 0; iobs_active < active_obs_size; iobs_active++) {

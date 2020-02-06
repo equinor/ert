@@ -21,7 +21,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
-
+#include <random>
 #include <ert/util/util.h>
 #include <ert/util/rng.h>
 #include <ert/ecl/ecl_util.h>
@@ -30,23 +30,25 @@
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 
+class generator {
+  rng_type *rng;
 
+  public:
+    generator(rng_type *rng): rng(rng) {}
+
+    using value_type = unsigned int;
+    static constexpr value_type min() {return 0;}
+    static constexpr value_type max() {return UINT32_MAX;}
+
+    value_type operator()() {return rng_forward(rng); }
+};
 
 
 double enkf_util_rand_normal(double mean , double std , rng_type * rng) {
-  const double pi = 3.141592653589;
-  double R1 = rng_get_double( rng );
-  double R2 = rng_get_double( rng );
-
-  return mean + std * sqrt(-2.0 * log(R1)) * cos(2.0 * pi * R2);
+  generator gen(rng);
+  std::normal_distribution<double> normdist{mean, std};
+  return normdist(gen);
 }
-
-void enkf_util_rand_stdnormal_vector(int size , double *R, rng_type * rng) {
-  int i;
-  for (i = 0; i < size; i++)
-    R[i] = enkf_util_rand_normal(0.0 , 1.0 , rng);
-}
-
 
 /*****************************************************************/
 
