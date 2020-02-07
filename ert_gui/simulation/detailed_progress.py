@@ -51,7 +51,7 @@ class DetailedProgress(QFrame):
         grid_size = int(math.ceil(math.sqrt(nr_jobs)))
 
         for index, job in enumerate(progress):
-            y_off = index / grid_size
+            y_off = int(index / grid_size)
             x_off = index - (y_off * grid_size)
             color = QColor(*self.state_colors[job.status])
             render_image.setPixel(x + x_off, y + y_off, color.rgb())
