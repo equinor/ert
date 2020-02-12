@@ -277,19 +277,21 @@ class DetailedProgressWidget(QWidget):
         self.current_iteration = -1
         self.resize(parent.width(), parent.height())
         self.progress = {}
+        self._iter_to_tab = {}
 
     def set_progress(self, progress, iteration):
         self.progress = progress
         for i in progress:  # create all detailed views if they havent been constructed yet
-            if self.iterations.widget(i):
+            if i in self._iter_to_tab:
                 continue
             detailed_progress_widget = DetailedProgress(self.state_colors, self)
             detailed_progress_widget.clicked.connect(self.show_selection)
             detailed_progress_widget.set_progress(progress[i], i)
             detailed_progress_widget.show()
-            self.iterations.addTab(detailed_progress_widget, "Realizations for iteration {}".format(i))
+            self._iter_to_tab[i] = self.iterations.addTab(detailed_progress_widget,
+                                                          "Realizations for iteration {}".format(i))
 
-        current_progress_widget = self.iterations.widget(iteration)
+        current_progress_widget = self.iterations.widget(self._iter_to_tab[iteration])
         current_progress_widget.set_progress(progress[iteration], iteration)
 
         self.update_single_view()

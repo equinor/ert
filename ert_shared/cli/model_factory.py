@@ -40,6 +40,7 @@ def _setup_ensemble_experiment(args):
     model = EnsembleExperiment()
     simulations_argument = {
         "active_realizations": _realizations(args),
+        "iter_num": int(args.iter_num),
     }
     return model, simulations_argument
 

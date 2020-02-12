@@ -3,9 +3,10 @@ from qtpy.QtWidgets import QFormLayout, QLabel
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
+from ert_gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, get_runnable_realizations_mask
 from ert_gui.ertwidgets.stringbox import StringBox
-from ert_gui.ide.keywords.definitions import RangeStringArgument
+from ert_gui.ide.keywords.definitions import RangeStringArgument, IntegerArgument
 from ert_shared.models import EnsembleExperiment
 from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
 
@@ -38,6 +39,15 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
             )
         layout.addRow("Active realizations", self._active_realizations_field)
 
+        self._iter_field = StringBox(
+            IterValueModel(),
+            "config/simulation/iter_num",
+        )
+        self._iter_field.setValidator(
+            IntegerArgument(from_value=0),
+        )
+        layout.addRow("Iteration", self._iter_field)
+
         self.setLayout(layout)
 
         self._active_realizations_field.getValidationSupport().validationChanged.connect(self.simulationConfigurationChanged)
@@ -47,13 +57,16 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
 
     def isConfigurationValid(self):
-        return self._active_realizations_field.isValid()
+        return self._active_realizations_field.isValid() and self._iter_field.isValid()
 
 
     def getSimulationArguments(self):
         active_realizations_mask = \
             self._active_realizations_field.model.getActiveRealizationsMask()
-        return {"active_realizations": active_realizations_mask}
+        return {
+            "active_realizations": active_realizations_mask,
+            "iter_num": int(self._iter_field.model.getValue())
+        }
 
 
     def _realizations_from_fs(self):

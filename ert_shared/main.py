@@ -18,6 +18,7 @@ from ert_gui.ide.keywords.definitions import (
     ProperNameArgument,
     ProperNameFormatArgument,
     NumberListStringArgument,
+    IntegerArgument,
 )
 from ert_shared.models.multiple_data_assimilation import (
     MultipleDataAssimilation,
@@ -63,6 +64,13 @@ def valid_name_format(user_input):
 
 def valid_name(user_input):
     validator = ProperNameArgument()
+    validated = validator.validate(user_input)
+    if validated.failed():
+        strip_error_message_and_raise_exception(validated)
+    return user_input
+
+def valid_iter_num(user_input):
+    validator = IntegerArgument(from_value=0)
     validated = validator.validate(user_input)
     if validated.failed():
         strip_error_message_and_raise_exception(validated)
@@ -142,6 +150,15 @@ def get_ert_parser(parser=None):
         required=False,
         help="Name of the case where the results for the simulation "
         "using the prior parameters will be stored",
+    )
+
+    ensemble_experiment_parser.add_argument(
+        "--iter-num",
+        type=valid_iter_num,
+        default=0,
+        required=False,
+        help="Specification of which iteration number is about to be made."
+        "Use iter-num to avoid recomputing the priors."
     )
 
     # ensemble_smoother_parser

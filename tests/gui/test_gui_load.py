@@ -15,7 +15,6 @@ if sys.version_info >= (3, 3):
 else:
     from mock import Mock, PropertyMock
 
-
 @pytest.fixture()
 def patch_enkf_main(monkeypatch, tmpdir):
     plugins_mock = Mock()
@@ -135,3 +134,44 @@ def test_gui_full(monkeypatch, tmpdir, qapp):
     qapp.exec_ = lambda: None  # exec_ starts the event loop, and will stall the test.
     monkeypatch.setattr(ert_gui.gert_main, "QApplication", Mock(return_value=qapp))
     gui = run_gui(args_mock)
+
+def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
+    # won't run simulations so we mock it and test whether "iter_num" is in arguments
+    def _assert_iter_in_args(panel):
+        assert "iter_num" in panel.getSimulationArguments()
+
+    monkeypatch.setattr(
+        ert_gui.simulation.simulation_panel.SimulationPanel,
+        "runSimulation",
+        _assert_iter_in_args,
+    )
+    # overrides realization count to 2
+    monkeypatch.setattr(
+        ert_gui.ertwidgets.models.activerealizationsmodel,
+        "getRealizationCount",
+        Mock(return_value=2),
+    )
+
+    monkeypatch.setattr(
+        ert_gui.simulation.ensemble_experiment_panel,
+        "getRealizationCount",
+        Mock(return_value=2),
+    )
+
+    gui = _start_window(patch_enkf_main, "config.ert")
+    qtbot.addWidget(gui)
+
+    sim_mode = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_mode")
+    qtbot.keyClick(sim_mode, Qt.Key_Down)
+
+    sim_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_panel")
+
+    ensemble_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Ensemble_experiment_panel")
+    #simulate entering number 10 as iter_num
+    qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Backspace)
+    qtbot.keyClicks(ensemble_panel._iter_field, "10")
+    qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Enter)
+
+    start_simulation = gui.findChild(qtpy.QtWidgets.QWidget, name="start_simulation")
+    qtbot.mouseClick(start_simulation, Qt.LeftButton)
+    assert sim_panel.getSimulationArguments()["iter_num"] == 10
