@@ -9,7 +9,7 @@ from ert_shared.cli.model_factory import create_model
 from ert_shared.cli.monitor import Monitor
 from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared.cli.workflow import execute_workflow
-from ert_shared.cli import WORKFLOW_MODE, ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE
+from ert_shared.cli import WORKFLOW_MODE, ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE, ENSEMBLE_EXPERIMENT_MODE
 from ert_shared.tracker.factory import create_tracker
 from res.enkf import EnKFMain, ResConfig
 
@@ -27,7 +27,6 @@ def run_cli(args):
         return
 
     model, argument = create_model(args)
-
     if args.disable_monitoring:
         model.startSimulations(argument)
         if model.hasRunFailed():

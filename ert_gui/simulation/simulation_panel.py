@@ -42,6 +42,7 @@ class SimulationPanel(QWidget):
         simulation_mode_layout.addSpacing(20)
 
         self.run_button = QToolButton()
+        self.run_button.setObjectName('start_simulation')
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.setText("Start Simulation")
         self.run_button.setIcon(resourceIcon("ide/gear_in_play"))

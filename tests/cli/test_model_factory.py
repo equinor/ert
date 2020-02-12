@@ -63,6 +63,19 @@ class ModelFactoryTest(ErtTest):
             mask.updateActiveMask("0-99")
             self.assertEqual(mask, res)
 
+    def test_init_iteration_number(self):
+        config_file = self.createTestPath('local/poly_example/poly.ert')
+        with ErtTestContext('test_init_iteration_number', config_file) as work_area:
+            ert = work_area.getErt()
+            notifier = ErtCliNotifier(ert, config_file)
+            ERT.adapt(notifier)
+
+            args = Namespace(iter_num=10, realizations=None)
+            model, argument = model_factory._setup_ensemble_experiment(args)
+            run_context = model.create_context(argument)
+            self.assertEqual(argument['iter_num'], 10)
+            self.assertEqual(run_context.get_iter(), 10)
+
     def test_custom_realizations(self):
         config_file = self.createTestPath('local/poly_example/poly.ert')
         with ErtTestContext('test_custom_realizations', config_file) as work_area:
