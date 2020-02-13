@@ -13,7 +13,7 @@ file is installation of forward model and workflow jobs, and configuring
 properties of the cluster. This could be an example site config file ::
 
    -- Set some properties of the local LSF system
-   QUEUE_OPTION LSF QUEUE hmqueue
+   QUEUE_OPTION LSF LSF_QUEUE hmqueue
    QUEUE_OPTION LSF MAX_RUNNING 100
    QUEUE_OPTION LSF LSF_SERVER   lsf-front01.company.com
    QUEUE_OPTION LSF BSUB_CMD     /path/lsf/bin/bsub
