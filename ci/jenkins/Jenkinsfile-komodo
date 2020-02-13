@@ -1,0 +1,24 @@
+pipeline {
+    agent { label "si-build" }
+
+    parameters {
+        string(defaultValue: "bleeding-py27", description: 'The komodo relase to be used', name: 'RELEASE_NAME')
+        string(defaultValue: "/prog/res/komodo", description: 'Root folder for komodo', name: 'KOMODO_ROOT')
+        string(defaultValue: "/opt/rh/devtoolset-7", description: 'The komodo relase to be used', name: 'DEVTOOL')
+        string(defaultValue: "/prog/sdpsoft", description: 'The komodo relase to be used', name: 'SDPSOFT')
+    }
+
+    stages {
+        stage("Komodo CI") {
+            steps {
+                sh './ci/jenkins/testkomodo.sh'
+            }
+        }
+    }
+
+    post {
+        cleanup {
+            deleteDir()
+        }
+    }
+}
