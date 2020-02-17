@@ -24,14 +24,6 @@ matrix:
   include:
   - os: osx
     language: generic
-    python: 2.7
-    env:
-    - MB_PYTHON_VERSION=2.7
-    - INSTALL_DIR="${TRAVIS_BUILD_DIR}/venv"
-    - DYLD_LIBRARY_PATH=${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64:${DYLD_LIBRARY_PATH}"
-    - TEST_SUITE=""
-  - os: osx
-    language: generic
     python: 3.6
     env:
     - MB_PYTHON_VERSION=3.6
