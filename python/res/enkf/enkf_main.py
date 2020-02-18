@@ -197,7 +197,6 @@ class _RealEnKFMain(BaseCClass):
     _load_from_forward_model = ResPrototype("int enkf_main_load_from_forward_model_from_gui(enkf_main, int, bool_vector, enkf_fs)")
     _load_from_run_context = ResPrototype("int enkf_main_load_from_run_context_from_gui(enkf_main, ert_run_context, enkf_fs)")
     _create_run_path = ResPrototype("void enkf_main_create_run_path(enkf_main , ert_run_context)")
-    _icreate_run_path = ResPrototype("void enkf_main_icreate_run_path(enkf_main , run_arg, enkf_init_mode_enum)")
     _submit_simulation = ResPrototype("void enkf_main_isubmit_job(enkf_main , run_arg, job_queue)")
     _alloc_run_context_ENSEMBLE_EXPERIMENT= ResPrototype("ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main , enkf_fs , bool_vector , int)")
     _get_runpath_list = ResPrototype("runpath_list_ref enkf_main_get_runpath_list(enkf_main)")
@@ -414,12 +413,8 @@ class _RealEnKFMain(BaseCClass):
     def initRun(self, run_context):
         self._init_run(run_context)
 
-    def createRunpath(self , run_context, iens = None):
-        if iens is None:
-            self._create_run_path( run_context )
-        else:
-            run_arg = run_context[iens]
-            self._icreate_run_path( run_arg, EnkfInitModeEnum.INIT_CONDITIONAL)
+    def createRunpath(self , run_context):
+        self._create_run_path( run_context )
 
     def submitSimulation(self , run_arg, queue):
         self._submit_simulation( run_arg, queue)

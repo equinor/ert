@@ -121,7 +121,6 @@ static void * enkf_main_initialize_from_scratch_mt(void * void_arg) {
 void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main ,
                                        const stringlist_type * param_list ,
                                        const ert_run_context_type * run_context) {
-  int num_cpu = 4;
   int ens_size               = enkf_main_get_ensemble_size( enkf_main );
   arg_pack_type ** arg_list = (arg_pack_type **) util_calloc( ens_size , sizeof * arg_list );
 

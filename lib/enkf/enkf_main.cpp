@@ -1343,51 +1343,27 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
 
 }
 
-void * enkf_main_icreate_run_path( enkf_main_type * enkf_main, run_arg_type * run_arg, init_mode_type init_mode) {
-  {
-    runpath_list_type * runpath_list = enkf_main_get_runpath_list(enkf_main);
-    runpath_list_add( runpath_list ,
-                      run_arg_get_iens( run_arg ),
-                      run_arg_get_iter( run_arg ),
-                      run_arg_get_runpath( run_arg ),
-                      run_arg_get_job_name( run_arg ));
-  }
-
-  /* This block accesses enkf_state - can it be removed?? */
-  if (init_mode != INIT_NONE) {
-    stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
-    enkf_fs_type * init_fs = run_arg_get_sim_fs( run_arg );
-    rng_type * rng = rng_manager_iget( enkf_main->rng_manager, run_arg_get_iens( run_arg ));
-    enkf_state_type * enkf_state = enkf_main->ensemble[ run_arg_get_iens(run_arg) ];
-    enkf_state_initialize( enkf_state , rng, init_fs , param_list , init_mode);
-    stringlist_free( param_list );
-  }
-
-  enkf_state_init_eclipse( enkf_main->res_config,
-                           run_arg );
-
-  runpath_list_type * runpath_list = enkf_main_get_runpath_list(enkf_main);
-  runpath_list_fprintf( runpath_list );
-  return NULL;
-}
-
-
-static void * enkf_main_create_run_path__( enkf_main_type * enkf_main,
+static void enkf_main_write_run_path( enkf_main_type * enkf_main,
                                            const ert_run_context_type * run_context) {
-
-  int iens;
-  for (iens = 0; iens < ert_run_context_get_size( run_context ); iens++) {
+  runpath_list_type * runpath_list = enkf_main_get_runpath_list(enkf_main);
+  runpath_list_clear(runpath_list);
+  for (int iens = 0; iens < ert_run_context_get_size( run_context ); iens++) {
     if (ert_run_context_iactive( run_context , iens)) {
       run_arg_type * run_arg = ert_run_context_iget_arg( run_context , iens);
-      enkf_main_icreate_run_path(enkf_main, run_arg, INIT_NONE);
+      runpath_list_add( runpath_list ,
+                        run_arg_get_iens( run_arg ),
+                        run_arg_get_iter( run_arg ),
+                        run_arg_get_runpath( run_arg ),
+                        run_arg_get_job_name( run_arg ));
+      enkf_state_init_eclipse( enkf_main->res_config, run_arg );
     }
   }
-  return NULL;
+  runpath_list_fprintf( runpath_list );
 }
 
 void enkf_main_create_run_path(enkf_main_type * enkf_main , const ert_run_context_type * run_context) {
   enkf_main_init_run(enkf_main, run_context);
-  enkf_main_create_run_path__( enkf_main , run_context );
+  enkf_main_write_run_path( enkf_main , run_context );
 }
 
 

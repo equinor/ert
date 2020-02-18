@@ -32,7 +32,7 @@ class RunpathListDumpTest(ResTest):
         self.config_path = self.createTestPath(self.config_rel_path)
 
 
-    def _verify_runpath_rendering(self, itr, elementwise_runpath_creation=False):
+    def _verify_runpath_rendering(self, itr):
         with ErtTestContext("add_all_runpath_dump", model_config=self.config_path) as ctx:
             res = ctx.getErt()
             fs_manager = res.getEnkfFsManager()
@@ -53,11 +53,8 @@ class RunpathListDumpTest(ResTest):
             for i, run_arg in enumerate(run_context):
                 if mask[i]:
                     run_arg.geo_id = 10*i
-                    if elementwise_runpath_creation:
-                        res.createRunpath(run_context, i)
 
-            if not elementwise_runpath_creation:
-                res.createRunpath(run_context)
+            res.createRunpath(run_context)
 
             for i, run_arg in enumerate(run_context):
                 if not mask[i]:
@@ -82,9 +79,6 @@ class RunpathListDumpTest(ResTest):
 
     @tmpdir()
     def test_add_all(self):
-        test_base = itertools.product([0, 1, 2, 17], [True, False])
-        for itr, elementwise_creation in test_base:
-            self._verify_runpath_rendering(
-                    itr,
-                    elementwise_runpath_creation=elementwise_creation,
-                    )
+        test_base = [0, 1, 2, 17]
+        for itr in test_base:
+            self._verify_runpath_rendering(itr)
