@@ -32,5 +32,9 @@ mkdir tmptest
 cp -r tests tmptest/tests
 cp -r test-data tmptest/test-data
 pushd tmptest
-python -m pytest
+if [[ ${RELEASE_NAME} =~ py27$  ]]
+then
+    export PYTEST_QT_API=pyqt4v2
+fi
+xvfb-run python -m pytest
 popd
