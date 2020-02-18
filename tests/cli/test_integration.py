@@ -48,6 +48,39 @@ def test_target_case_equal_current_case(tmpdir, source_root):
         with pytest.raises(SystemExit):
             run_cli(parsed)
 
+def test_runpath_file(tmpdir, source_root):
+    shutil.copytree(
+        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(str(tmpdir), "poly_example"),
+    )
+
+    config_lines = [
+        "LOAD_WORKFLOW_JOB ASSERT_RUNPATH_FILE\n"
+        "LOAD_WORKFLOW TEST_RUNPATH_FILE\n",
+        "HOOK_WORKFLOW TEST_RUNPATH_FILE PRE_SIMULATION\n",
+    ]
+
+    with tmpdir.as_cwd():
+        with open("poly_example/poly.ert", "a") as fh:
+            fh.writelines(config_lines)
+
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser,
+            [
+                ENSEMBLE_SMOOTHER_MODE,
+                "--target-case",
+                "poly_runpath_file",
+                "--realizations",
+                "1,2,4,8,16,32,64",
+                "poly_example/poly.ert",
+            ],
+        )
+
+        run_cli(parsed)
+
+        assert os.path.isfile("RUNPATH_WORKFLOW_0.OK")
+        assert os.path.isfile("RUNPATH_WORKFLOW_1.OK")
 
 def test_cli_test_run(tmpdir, source_root, mock_cli_run):
     shutil.copytree(
