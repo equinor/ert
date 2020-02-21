@@ -4,6 +4,7 @@ pipeline {
         string(defaultValue: "bleeding-py36", description: 'The komodo relase to be used', name: 'RELEASE_NAME')
         string(defaultValue: "/prog/res/komodo", description: 'Root folder for komodo', name: 'KOMODO_ROOT')
         string(defaultValue: "/opt/rh/devtoolset-7", description: 'The devtoolset folder', name: 'DEVTOOL')
+        string(defaultValue: '', description: 'commit id you want to build or refname (eg: origin/pr/9/head)', name: 'sha1')
         string(defaultValue: "/prog/sdpsoft", description: 'The SDPSOFT folder', name: 'SDPSOFT')
     }
     stages{
