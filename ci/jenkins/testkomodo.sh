@@ -17,13 +17,6 @@ if [[ -z "${sha1// }" ]]; then
     EV=${EV%"+py3"}
     echo "Using ${PROJECT} version ${EV}"
     $GIT checkout $EV
-
-    # Run in a new folder so that we dont load the other python code from the source, but rather run against komodo
-    rm -rf tmptest
-    mkdir tmptest
-    cp -r tests tmptest/tests
-    cp -r test-data tmptest/test-data
-    pushd tmptest
 fi
 
 echo "Creating virtualenv"
@@ -33,6 +26,16 @@ mkdir $ENV
 python -m virtualenv --system-site-packages $ENV
 source $ENV/bin/activate
 python -m pip install -r dev-requirements.txt
+
+if [[ -z "${sha1// }" ]]; then
+    # Run in a new folder so that we dont load the other python code from the source, but rather run against komodo
+    rm -rf tmptest
+    mkdir tmptest
+    cp -r tests tmptest/tests
+    cp -r test-data tmptest/test-data
+    pushd tmptest
+fi
+
 
 echo "Running pytest"
 
