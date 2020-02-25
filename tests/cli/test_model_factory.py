@@ -101,6 +101,7 @@ class ModelFactoryTest(ErtTest):
             self.assertTrue(isinstance(model, SingleTestRun))
             self.assertEqual(1, len(argument.keys()))
             self.assertTrue("active_realizations" in argument)
+            model.create_context(argument)
 
     def test_setup_ensemble_experiment(self):
         config_file = self.createTestPath('local/poly_example/poly.ert')
@@ -113,6 +114,7 @@ class ModelFactoryTest(ErtTest):
             self.assertTrue(isinstance(model, EnsembleExperiment))
             self.assertEqual(1, len(argument.keys()))
             self.assertTrue("active_realizations" in argument)
+            model.create_context(argument)
 
     def test_setup_ensemble_smoother(self):
         config_file = self.createTestPath('local/poly_example/poly.ert')
@@ -128,6 +130,7 @@ class ModelFactoryTest(ErtTest):
             self.assertTrue("active_realizations" in argument)
             self.assertTrue("target_case" in argument)
             self.assertTrue("analysis_module" in argument)
+            model.create_context(argument)
 
     def test_setup_multiple_data_assimilation(self):
         config_file = self.createTestPath('local/poly_example/poly.ert')
@@ -135,7 +138,7 @@ class ModelFactoryTest(ErtTest):
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
             ERT.adapt(notifier)
-            args = Namespace(realizations="0-4,7,8", weights="6,4,2", target_case="test_case")
+            args = Namespace(realizations="0-4,7,8", weights="6,4,2", target_case="test_case_%d")
 
             model, argument = model_factory._setup_multiple_data_assimilation(args)
             self.assertTrue(isinstance(model, MultipleDataAssimilation))
@@ -144,6 +147,7 @@ class ModelFactoryTest(ErtTest):
             self.assertTrue("target_case" in argument)
             self.assertTrue("analysis_module" in argument)
             self.assertTrue("weights" in argument)
+            model.create_context(argument, 0)
 
     def test_analysis_module_name_iterable(self):
 

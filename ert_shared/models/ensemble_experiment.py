@@ -46,7 +46,7 @@ class EnsembleExperiment(BaseRunModel):
         runpath_fmt = model_config.getRunpathFormat( )
         jobname_fmt = model_config.getJobnameFormat( )
         subst_list = self.ert().getDataKW( )
-        itr = arguments["iter_num"]
+        itr = arguments.get("iter_num", 0)
         mask = arguments["active_realizations"]
 
         run_context = ErtRunContext.ensemble_experiment(result_fs,
