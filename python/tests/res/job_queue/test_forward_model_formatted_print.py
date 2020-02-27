@@ -332,10 +332,6 @@ class ForwardModelFormattedPrintTest(ResTest):
         self.assertEqual(umask, int(config["umask"], 8))
         self.assertEqual(len(selected_jobs), len(config["jobList"]))
 
-        ert_version = config["ert_version"]
-        loaded_version = Version(ert_version[0], ert_version[1], ert_version[2])
-        self.assertEqual(EclVersion(), loaded_version)
-
         for i in range(len(selected_jobs)):
             job = joblist[selected_jobs[i]]
             loaded_job = config["jobList"][i]
