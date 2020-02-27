@@ -65,7 +65,6 @@ else:
                     "max_arg": None,
                 }
             ],
-            "ert_version": [],
             "run_id": "",
             "ert_pid": "",
         }

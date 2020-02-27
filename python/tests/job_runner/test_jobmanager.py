@@ -44,15 +44,13 @@ JSON_STRING = """
   "license_path" : "this/is/my/license/PERGEN",
   "max_running_minutes" : 12,
   "max_running" : 30
-}],
- "ert_version" : [2, 2, "git"]
+}]
 }
 """
 
 JSON_STRING_NO_DATA_ROOT = """
 {
   "umask" : "0000",
-  "ert_version" : [2, 2, "git"],
   "jobList"   : []
 }
 """
