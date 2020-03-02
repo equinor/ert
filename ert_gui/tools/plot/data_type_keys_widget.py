@@ -33,6 +33,7 @@ class DataTypeKeysWidget(QWidget):
 
         self.data_type_keys_widget = QListView()
         self.data_type_keys_widget.setModel(self.filter_model)
+        self.data_type_keys_widget.setObjectName("data_keys_list")
         self.data_type_keys_widget.selectionModel().selectionChanged.connect(self.itemSelected)
 
         layout.addSpacing(15)
