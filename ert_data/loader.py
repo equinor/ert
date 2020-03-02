@@ -82,16 +82,6 @@ def load_block_data(facade, observation_key, case_name):
     return data
 
 
-def load_summary_data(facade, observation_key, case_name):
-    data_key = facade.get_data_key_for_obs_key(observation_key)
-    return pd.concat(
-        [
-            _add_summary_observations(facade, data_key, case_name),
-            _add_summary_data(facade, data_key, case_name),
-        ]
-    )
-
-
 def _get_block_measured(ensamble_size, block_data):
     data = pd.DataFrame()
     for ensamble_nr in range(ensamble_size):
@@ -99,16 +89,39 @@ def _get_block_measured(ensamble_size, block_data):
     return data
 
 
-def _add_summary_data(facade, data_key, case_name):
+def load_summary_data(facade, observation_key, case_name):
+    data_key = facade.get_data_key_for_obs_key(observation_key)
+    args = (facade, observation_key, data_key, case_name)
+    return pd.concat([
+        _get_summary_data(*args),
+        _get_summary_observations(*args).pipe(_remove_inactive_report_steps, *args)
+    ])
+
+
+def _get_summary_data(facade, _, data_key, case_name):
     data = facade.load_all_summary_data(case_name, [data_key])
     data = data[data_key].unstack(level=-1)
     return data.set_index(data.index.values)
 
 
-def _add_summary_observations(facade, data_key, case_name):
+def _get_summary_observations(facade, _, data_key, case_name):
     data = facade.load_observation_data(case_name, [data_key]).transpose()
     # The index from SummaryObservationCollector is {data_key} and STD_{data_key}"
     # to match the other data types this needs to be changed to OBS and STD, hence
     # the regex.
-    data = data.set_index(data.index.str.replace(r"\b" + data_key, "OBS", regex=True))
-    return data.set_index(data.index.str.replace("_" + data_key, ""))
+    data = data.set_index(
+        data.index.str.replace(r"\b" + data_key, "OBS", regex=True)
+    )
+    data = data.set_index(data.index.str.replace("_" + data_key, ""))
+    return data
+
+
+def _remove_inactive_report_steps(data, facade, observation_key, *args):
+    # XXX: the data returned from the SummaryObservationCollector is not
+    # specific to an observation_key, this means that the dataset contains all
+    # observations on the data_key. Here the extra data is removed.
+    obs_vector = facade.get_observations()[observation_key]
+    active_indices = []
+    for step in obs_vector.getStepList():
+        active_indices.append(step - 1)
+    return data.iloc[:, active_indices]
