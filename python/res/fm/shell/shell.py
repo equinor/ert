@@ -49,7 +49,11 @@ class Shell(object):
             target_check = os.path.join( link_path , target )
 
         if not os.path.exists( target_check ):
-            raise IOError("The target:%s does not exist" % target)
+            raise IOError(
+                "{} (target) and {} (link_name) requested, which implies that {} must exist, but it does not.".format(
+                    target, link_name, target_check
+                )
+            )
 
 
         if os.path.islink( link_name ):
