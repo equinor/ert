@@ -129,4 +129,4 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
     @classmethod
     def name(cls):
-        return "Iterated Ensemble Smoother - Experimental"
+        return "Iterated Ensemble Smoother"
