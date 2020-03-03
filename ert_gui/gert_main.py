@@ -51,7 +51,8 @@ def run_gui(args):
     os.chdir(res_config.config_path)
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
 
-    _start_window(ert, args.config)
+    # window reference must be kept until app.exec returns
+    window = _start_window(ert, args.config)
 
     return app.exec_()
 
