@@ -83,7 +83,9 @@ class StringBox(QLineEdit):
         text = self._model.getValue()
         if text is None:
             text = ""
-
+        # If model and view has same text, return
+        if text == self.text():
+            return
         self.setText(str(text))
 
     @property
