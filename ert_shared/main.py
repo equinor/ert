@@ -13,7 +13,7 @@ from ert_shared.cli import (
     TEST_RUN_MODE,
     WORKFLOW_MODE
 )
-from ert_gui.ide.keywords.definitions import (
+from ert_shared.ide.keywords.definitions import (
     RangeStringArgument,
     ProperNameArgument,
     ProperNameFormatArgument,

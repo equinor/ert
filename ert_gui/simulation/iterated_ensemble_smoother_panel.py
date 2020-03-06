@@ -5,7 +5,7 @@ from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizations
 from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, setNumberOfIterations, getNumberOfIterations
 from ert_gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert_gui.ertwidgets.stringbox import StringBox
-from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameFormatArgument
+from ert_shared.ide.keywords.definitions import RangeStringArgument, ProperNameFormatArgument
 from ert_gui.simulation import SimulationConfigPanel
 from ert_shared.models import IteratedEnsembleSmoother
 

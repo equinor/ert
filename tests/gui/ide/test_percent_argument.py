@@ -1,4 +1,4 @@
-from ert_gui.ide.keywords.definitions import PercentArgument
+from ert_shared.ide.keywords.definitions import PercentArgument
 from tests import ErtTest
 
 

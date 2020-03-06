@@ -1,4 +1,4 @@
-from ert_gui.ide.keywords.definitions import FloatArgument
+from ert_shared.ide.keywords.definitions import FloatArgument
 from tests import ErtTest
 
 

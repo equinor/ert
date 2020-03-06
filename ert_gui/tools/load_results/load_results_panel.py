@@ -20,7 +20,7 @@ from ert_gui.ertwidgets.models.all_cases_model import AllCasesModel
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
 from ert_gui.ertwidgets.stringbox import StringBox
-from ert_gui.ide.keywords.definitions import RangeStringArgument, IntegerArgument
+from ert_shared.ide.keywords.definitions import RangeStringArgument, IntegerArgument
 from ert_gui.tools.load_results import LoadResultsModel
 
 

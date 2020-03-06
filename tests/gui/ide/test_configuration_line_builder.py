@@ -1,7 +1,7 @@
-from ert_gui.ide.keywords import ErtKeywords
-from ert_gui.ide.keywords.configuration_line_builder import ConfigurationLineBuilder
-from ert_gui.ide.keywords.definitions import ArgumentDefinition
-from ert_gui.ide.keywords.data.configuration_line import ConfigurationLine
+from ert_shared.ide.keywords import ErtKeywords
+from ert_shared.ide.keywords.configuration_line_builder import ConfigurationLineBuilder
+from ert_shared.ide.keywords.definitions import ArgumentDefinition
+from ert_shared.ide.keywords.data.configuration_line import ConfigurationLine
 from tests import ErtTest
 
 

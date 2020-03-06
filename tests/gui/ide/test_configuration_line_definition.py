@@ -1,4 +1,4 @@
-from ert_gui.ide.keywords.definitions import ArgumentDefinition, KeywordDefinition, ConfigurationLineDefinition, IntegerArgument
+from ert_shared.ide.keywords.definitions import ArgumentDefinition, KeywordDefinition, ConfigurationLineDefinition, IntegerArgument
 from tests import ErtTest
 
 

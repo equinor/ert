@@ -23,7 +23,7 @@ from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizations
 from ert_gui.ertwidgets.models.all_cases_model import AllCasesModel
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.ertwidgets.stringbox import StringBox
-from ert_gui.ide.keywords.definitions import RangeStringArgument
+from ert_shared.ide.keywords.definitions import RangeStringArgument
 from ert_gui.tools.export import ExportKeywordModel
 
 

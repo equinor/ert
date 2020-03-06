@@ -6,7 +6,7 @@ from qtpy.QtWidgets import QWidget, QVBoxLayout, QToolBar, QMessageBox, QSizePol
 
 from ert_gui.ertwidgets import SearchBox, resourceIcon
 from ert_gui.ide.highlighter import KeywordHighlighter
-from ert_gui.ide.keywords.definitions.path_argument import PathArgument
+from ert_shared.ide.keywords.definitions.path_argument import PathArgument
 from ert_gui.tools.ide import IdePanel
 
 

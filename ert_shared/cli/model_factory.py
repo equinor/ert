@@ -1,7 +1,7 @@
 from argparse import ArgumentTypeError
 
 from ecl.util.util import BoolVector
-from ert_gui.ide.keywords.definitions import RangeStringArgument
+from ert_shared.ide.keywords.definitions import RangeStringArgument
 from ert_shared import ERT
 from ert_shared.models.ensemble_experiment import EnsembleExperiment
 from ert_shared.models.ensemble_smoother import EnsembleSmoother
