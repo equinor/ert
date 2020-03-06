@@ -1,4 +1,4 @@
-from ert_gui.ide.keywords.definitions import BoolArgument
+from ert_shared.ide.keywords.definitions import BoolArgument
 from tests import ErtTest
 
 

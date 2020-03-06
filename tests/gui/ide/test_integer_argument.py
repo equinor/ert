@@ -1,4 +1,4 @@
-from ert_gui.ide.keywords.definitions import IntegerArgument
+from ert_shared.ide.keywords.definitions import IntegerArgument
 from tests import ErtTest
 
 

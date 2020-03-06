@@ -2,9 +2,9 @@ import re
 
 from qtpy.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QTextBlockUserData
 
-from ert_gui.ide.keywords import ErtKeywords
-from ert_gui.ide.keywords.configuration_line_builder import ConfigurationLineBuilder
-from ert_gui.ide.keywords.data import Keyword
+from ert_shared.ide.keywords import ErtKeywords
+from ert_shared.ide.keywords.configuration_line_builder import ConfigurationLineBuilder
+from ert_shared.ide.keywords.data import Keyword
 
 
 class ConfigurationLineUserData(QTextBlockUserData):

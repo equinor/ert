@@ -1,7 +1,7 @@
-from ert_gui.ide.keywords.definitions import IntegerArgument, StringArgument, BoolArgument, PathArgument, FloatArgument , PercentArgument
-from ert_gui.ide.keywords import ErtKeywords
-from ert_gui.ide.keywords.definitions.proper_name_argument import ProperNameArgument
-from ert_gui.ide.keywords.definitions.proper_name_format_argument import ProperNameFormatArgument
+from ert_shared.ide.keywords.definitions import IntegerArgument, StringArgument, BoolArgument, PathArgument, FloatArgument , PercentArgument
+from ert_shared.ide.keywords import ErtKeywords
+from ert_shared.ide.keywords.definitions.proper_name_argument import ProperNameArgument
+from ert_shared.ide.keywords.definitions.proper_name_format_argument import ProperNameFormatArgument
 from tests import ErtTest
 
 

@@ -1,4 +1,4 @@
-from ert_gui.ide.keywords.definitions import PathArgument
+from ert_shared.ide.keywords.definitions import PathArgument
 from tests import ErtTest
 
 

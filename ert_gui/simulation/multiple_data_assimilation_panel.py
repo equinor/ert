@@ -21,7 +21,7 @@ from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
 from ert_gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
 from ert_gui.ertwidgets.stringbox import StringBox
-from ert_gui.ide.keywords.definitions import NumberListStringArgument, RangeStringArgument, ProperNameFormatArgument
+from ert_shared.ide.keywords.definitions import NumberListStringArgument, RangeStringArgument, ProperNameFormatArgument
 from ert_gui.simulation import SimulationConfigPanel
 from ert_shared.models import MultipleDataAssimilation
 
