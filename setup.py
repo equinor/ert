@@ -56,7 +56,6 @@ setup(
     license="Open Source",
     long_description=open("README.md").read(),
     install_requires=[
-        "cwrap",
         "numpy",
         "pandas",
         "matplotlib < 3; python_version < '3.0'",
