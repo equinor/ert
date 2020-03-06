@@ -99,6 +99,8 @@ script:
   - echo $PYTHONPATH
   - pip install -r dev-requirements.txt
   - pip install . --prefix=$INSTALL_DIR
+  # For easy compare of installed versions once a version fails
+  - pip list
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       xvfb-run python setup.py test;
     else
