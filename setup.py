@@ -60,7 +60,7 @@ setup(
         "numpy",
         "pandas",
         "matplotlib < 3; python_version < '3.0'",
-        "matplotlib; python_version >= '3.0'",
+        "matplotlib < 3.2; python_version >= '3.0'",
         "scipy",
         "pytest",
         "decorator",
