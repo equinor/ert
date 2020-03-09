@@ -1,6 +1,26 @@
 Release Notes
 =============
 
+Version 2.9
+-----------
+
+2.9 ERT application
+~~~~~~~~~~~~~~~~~~~
+
+Improvements:
+  - Fix bug where changing dataset for plotting would crash ERT
+  - Fix bug in ERT data API where inactive summary observations would exist
+
+3.2 libres
+~~~~~~~~~~~~
+
+Improvements:
+  - Fix bug in normal distribution which could generate -∞ when sampled
+
+Other changes:
+  - Removed ecl version from jobs.json
+  - Remove possibility to specify iens when creating runpath
+
 Version 2.8
 -----------
 
