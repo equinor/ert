@@ -123,6 +123,9 @@ def _remove_inactive_report_steps(data, facade, observation_key, *args):
     # XXX: the data returned from the SummaryObservationCollector is not
     # specific to an observation_key, this means that the dataset contains all
     # observations on the data_key. Here the extra data is removed.
+    if data.empty:
+        return data
+
     obs_vector = facade.get_observations()[observation_key]
     active_indices = []
     for step in obs_vector.getStepList():
