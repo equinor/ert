@@ -41,7 +41,13 @@ class WorkflowRunner(object):
 
     def isRunning(self):
         """ @rtype: bool """
-        return self.__workflow.isRunning()
+        if self.__workflow.isRunning():
+            return True
+
+        # Completion of _workflow does not indicate that __workflow_result is
+        # set. Check future status, since __workflow_result follows future
+        # completion.
+        return self._workflow_job is not None and not self._workflow_job.done()
 
     def isCancelled(self):
         """ @rtype: bool """
@@ -79,5 +85,3 @@ class WorkflowRunner(object):
             error_message += error_line + "\n"
 
         return error_message
-
-
