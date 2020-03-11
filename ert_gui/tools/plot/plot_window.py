@@ -15,6 +15,7 @@ from ert_gui.tools.plot import DataTypeKeysWidget, CaseSelectionWidget, PlotWidg
 from ert_gui.tools.plot.customize import PlotCustomizer
 
 from ert_gui.tools.plot.plot_api import PlotApi
+from ert_shared.storage.storage_api import PlotStorageApi
 
 CROSS_CASE_STATISTICS = "Cross Case Statistics"
 DISTRIBUTION = "Distribution"
@@ -30,6 +31,7 @@ class PlotWindow(QMainWindow):
         QMainWindow.__init__(self, parent)
 
         self._api = PlotApi(ERT.enkf_facade)
+        #self._api_new = PlotStorageApi()
 
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)

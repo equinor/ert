@@ -280,6 +280,9 @@ class DetailedProgressWidget(QWidget):
         self._iter_to_tab = {}
 
     def set_progress(self, progress, iteration):
+        if iteration < 0:
+            return
+
         self.progress = progress
         for i in progress:  # create all detailed views if they havent been constructed yet
             if i in self._iter_to_tab:
