@@ -56,7 +56,8 @@ class PlotApi(object):
         else:
             raise ValueError("no such key {}".format(key))
 
-        data = pd.concat({key: data}, axis=1)
+        if key not in data:
+            data = pd.concat({key: data}, axis=1)
 
         try:
             return data.astype(float)
