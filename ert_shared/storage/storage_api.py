@@ -22,22 +22,25 @@ def get_all_ensembles(rdb_api=None):
 
 class PlotStorageApi(object):
 
-    def __init__(self):
-        self._data_source = RdbApi()
+    def __init__(self, data_source=None):
+        self._data_source = data_source
 
     def all_data_type_keys(self):
         """ Returns a list of all the keys except observation keys. For each key a dict is returned with info about
             the key"""
-        ens = self._data_source.get_ensemble("default")
-        real = ens.realizations[0]
-        result = [{
+        # Will likely have to change this to somehow include the ensemble name
+        ens = self._data_source.get_all_ensembles()[0]
+
+        result = []
+
+        result.extend([{
             "key": param.name,
             "index_type": None,
             "observations": [],
             "has_refcase": False,
             "dimensionality": 1,
             "metadata": {"data_origin": "Parameters"}
-        } for param in real.parameters]
+        } for param in ens.parameter_definitions])
 
         def _obs_names(obs):
             if obs is None:
@@ -51,7 +54,7 @@ class PlotStorageApi(object):
             "has_refcase": False,
             "dimensionality": 1,
             "metadata": {"data_origin": "Response"}
-        } for resp in real.responses])
+        } for resp in ens.response_definitions])
 
         return result
 
