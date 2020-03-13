@@ -16,6 +16,7 @@ from ert_gui.tools.plot.customize import PlotCustomizer
 
 from ert_gui.tools.plot.plot_api import PlotApi
 from ert_shared.storage.storage_api import PlotStorageApi
+import pandas as pd
 
 CROSS_CASE_STATISTICS = "Cross Case Statistics"
 DISTRIBUTION = "Distribution"
@@ -94,7 +95,14 @@ class PlotWindow(QMainWindow):
                     and plot_widget._plotter.dimensionality == key_def["dimensionality"]:
                 self._updateCustomizer(plot_widget)
                 cases = self._case_selection_widget.getPlotCaseNames()
-                case_to_data_map = {case: self._api.data_for_key(case, key)[key] for case in cases}
+                def data_for_key(case, key):
+                    dataframe = self._api.data_for_key(case, key)
+                    if dataframe.empty:
+                        return pd.DataFrame()
+                    else:
+                        return dataframe[key]
+
+                case_to_data_map = {case: data_for_key(case, key) for case in cases}
                 if len(key_def["observations"]) > 0:
                     observations = self._api.observations_for_obs_keys(cases[0], key_def["observations"])
                 else:
