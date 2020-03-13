@@ -33,6 +33,7 @@ def db_session(engine, tables):
     transaction.rollback()
     connection.close()
 
+
 @pytest.yield_fixture
 def populated_db(db_session):
     with ErtRepository(db_session) as repository:
@@ -44,18 +45,35 @@ def populated_db(db_session):
             name="observation_one",
             key_indexes=[0, 3],
             data_indexes=[0, 3],
-            values=[22.1, 44.2],
+            values=[10.1, 10.2],
             stds=[1, 3],
         )
-        repository.commit()
+
+        repository.add_response_definition(
+            name="response_one",
+            indexes=[0, 1],
+            ensemble_name=ensemble.name,
+            observation_name=observation.name
+        )
 
         repository.add_response(
             name="response_one",
-            values=[22.1, 44.2],
-            indexes=[0, 1],
+            values=[11.1, 11.2],
             realization_index=realization.index,
             ensemble_name=ensemble.name,
-            observation_id=observation.id
+        )
+
+        repository.add_response_definition(
+            name="response_two",
+            indexes=[0, 1],
+            ensemble_name=ensemble.name,
+        )
+
+        repository.add_response(
+            name="response_two",
+            values=[12.1, 12.2],
+            realization_index=realization.index,
+            ensemble_name=ensemble.name,
         )
         repository.commit()
 
