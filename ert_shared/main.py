@@ -24,7 +24,7 @@ from ert_shared.models.multiple_data_assimilation import (
     MultipleDataAssimilation,
 )
 from ert_shared.plugins.plugin_manager import ErtPluginContext
-
+from ert_shared.feature_toggling import FeatureToggling
 
 def strip_error_message_and_raise_exception(validated):
     error = validated.message()
@@ -120,6 +120,8 @@ def get_ert_parser(parser=None):
     gui_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output", default=False
     )
+
+    FeatureToggling.add_feature_toggling_args(gui_parser)
 
     # test_run_parser
     test_run_description = "Run '{}' in cli".format(TEST_RUN_MODE)
@@ -261,6 +263,8 @@ def get_ert_parser(parser=None):
         )
         cli_parser.add_argument("config", type=valid_file, help=config_help)
 
+        FeatureToggling.add_feature_toggling_args(cli_parser)
+
     return parser
 
 
@@ -273,6 +277,7 @@ def main():
     if args.verbose:
         logger = logging.getLogger()
         logger.setLevel("DEBUG")
+    FeatureToggling.update_from_args(args)
 
     with ErtPluginContext():
         args.func(args)
