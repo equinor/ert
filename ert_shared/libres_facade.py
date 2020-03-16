@@ -122,7 +122,7 @@ class LibresFacade(object):
         """ :rtype: pandas.DataFrame """
         data = GenKwCollector.loadAllGenKwData(self._enkf_main, case, [key])
         if key in data:
-            return data[key].dropna()
+            return data[key].to_frame().dropna()
         else:
             return DataFrame()
 
