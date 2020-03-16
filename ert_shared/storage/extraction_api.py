@@ -4,6 +4,7 @@ from ert_shared import ERT
 from ert_shared.storage.repository import ErtRepository
 from ert_data.measured import MeasuredData
 
+from ert_shared.feature_toggling import FeatureToggling
 
 def _create_ensemble(repository):
     facade = ERT.enkf_facade
@@ -132,6 +133,9 @@ def _dump_response(repository, responses, ensemble_name, key_mapping):
 
 
 def dump_to_new_storage(repository=None):
+    if not FeatureToggling.is_enabled("new-storage"):
+        return
+
     start_time = time.time()
     print("Starting extraction...")
 
