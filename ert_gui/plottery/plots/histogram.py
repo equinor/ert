@@ -42,7 +42,11 @@ def plotHistogram(figure, plot_context, case_to_data_map, _observation_data):
     max_element_count = 0
     categorical = False
     for case, datas in case_to_data_map.items():
-        data[case] = datas
+        if datas.empty:
+            data[case] = pd.Series()
+            continue
+
+        data[case] = datas[key]
 
         if data[case].dtype == "object":
             try:
