@@ -19,6 +19,7 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
+from ert_shared.storage.extraction_api import dump_to_new_storage
 
 class MultipleDataAssimilation(BaseRunModel):
     """
@@ -59,16 +60,20 @@ class MultipleDataAssimilation(BaseRunModel):
         for iteration, weight in enumerate(weights):
             run_context = self.create_context( arguments , iteration,  prior_context = run_context )
             self._simulateAndPostProcess(run_context, arguments )
+            print("Case:", ERT.enkf_facade.get_current_case_name())
 
             EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=ERT.ert)
             self.update( run_context , weights[iteration])
             EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=ERT.ert)
+            dump_to_new_storage()
 
         self.setPhaseName("Post processing...", indeterminate=True)
         run_context = self.create_context( arguments , len(weights),  prior_context = run_context, update = False)
         self._simulateAndPostProcess(run_context, arguments)
 
         self.setPhase(iteration_count + 2, "Simulations completed.")
+
+        dump_to_new_storage()
 
         return run_context
 
@@ -180,6 +185,7 @@ class MultipleDataAssimilation(BaseRunModel):
         run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr)
         self._run_context = run_context
         self._last_run_iteration = run_context.get_iter()
+        self.ert().getEnkfFsManager().switchFileSystem(sim_fs)
         return run_context
 
     @classmethod
