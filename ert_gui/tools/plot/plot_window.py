@@ -31,8 +31,8 @@ class PlotWindow(QMainWindow):
     def __init__(self, config_file, parent):
         QMainWindow.__init__(self, parent)
 
-        self._api = PlotApi(ERT.enkf_facade)
-        #self._api_new = PlotStorageApi()
+        #self._api = PlotApi(ERT.enkf_facade)
+        self._api = PlotStorageApi()
 
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)
@@ -96,11 +96,11 @@ class PlotWindow(QMainWindow):
                 self._updateCustomizer(plot_widget)
                 cases = self._case_selection_widget.getPlotCaseNames()
                 def data_for_key(case, key):
-                    dataframe = self._api.data_for_key(case, key)
-                    if dataframe.empty:
-                        return pd.DataFrame()
+                    data = self._api.data_for_key(case, key)
+                    if key in data:
+                        return data[key]
                     else:
-                        return dataframe[key]
+                        return data
 
                 case_to_data_map = {case: data_for_key(case, key) for case in cases}
                 if len(key_def["observations"]) > 0:

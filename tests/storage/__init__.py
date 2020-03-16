@@ -77,4 +77,4 @@ def populated_db(db_session):
         )
         repository.commit()
 
-        yield repository
+    yield db_session
