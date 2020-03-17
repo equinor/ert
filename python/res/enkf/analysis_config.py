@@ -267,7 +267,7 @@ class AnalysisConfig(BaseCClass):
         if self.get_rerun_start()!=other.get_rerun_start():
             return False
 
-        if list(self.getModuleList())!=list(other.getModuleList()):
+        if set(self.getModuleList())!=set(other.getModuleList()):
             return False
 
         if self.activeModuleName()!=other.activeModuleName():
