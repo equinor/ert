@@ -103,6 +103,71 @@ class PlotStorageApi(object):
         else:
             return pd.DataFrame()
 
+    def make_df(self, msgs):
+        case_to_data = {}
+        done = False
+        df = None
+        idx = None
+        while not done:
+            msg = next(msgs)
+            if msg.type == "ensemble" and msg.status == "start":
+                df = pd.DataFrame()
+            elif msg.type == "realisation" and msg.status == "start":
+                real_df = pd.DataFrame()
+                real_done = False
+
+                while not real_done:
+                    msg = next(msgs)
+                    if msg.type == "realisation" and msg.status == "done":
+                        df = df.append(real_df.T)
+                        real_done = True
+                    elif msg.type == "parameter" and msg.status == "start":
+                        param_series = pd.Series()
+                        param_done = False
+                        while not param_done:
+                            msg = next(msgs)
+                            if msg.type == "parameter" and msg.status == "chunk":
+                                param_series = param_series.append(pd.Series(msg.value), ignore_index=True)
+                            elif msg.type == "parameter" and msg.status == "done":
+                                real_df = real_df.append(param_series, ignore_index=True)
+                                param_done = True
+            elif msg.type == "ensemble" and msg.status == "stop":
+                case_to_data[msg.name] = df
+                pass
+            elif msg.type == "EOL":
+                done = True
+        return case_to_data
+
+    def get_param_data(self, ensembles, keys=[], realizations=[]):
+
+        for ens_name in ensembles:
+            ens = self._repo().get_ensemble(ens_name)
+
+            yield DataStreamMessage("ensemble", ens_name, "start")
+
+            for param_def in ens.parameter_definitions:
+                if param_def.name in keys or len(keys) == 0:
+                    if len(param_def.parameters) > 0:
+                        size = 1 # len(param_def.parameters[0].value)
+                    else:
+                        size = 0
+                    yield DataStreamMessage("param_def", param_def.name, "size", size)
+
+            for real in ens.realizations:
+                if real.id in realizations or len(realizations) == 0:
+                    yield DataStreamMessage("realisation", real.id, "start")
+                    for param_def in ens.parameter_definitions:
+                        if param_def.name in keys or len(keys) == 0:
+                            for param in real.parameters:
+                                if param.parameter_definition == param_def:
+                                    yield DataStreamMessage("parameter", param_def.name, "start")
+                                    yield DataStreamMessage("parameter", param_def.name, "chunk", param.value)
+                            yield DataStreamMessage("parameter", param_def.name, "done")
+                    yield DataStreamMessage("realisation", real.id, "done")
+
+            yield DataStreamMessage("ensemble", ens_name, "stop")
+
+        yield DataStreamMessage("EOL", "EOL", "EOL")
 
     def _add_index_range(self, data):
         """
@@ -118,3 +183,14 @@ class PlotStorageApi(object):
         """ Returns a pandas DataFrame with the data points for the refcase for a given data key, if any.
             The row index is the index/date and the column index is the key."""
         return pd.DataFrame()
+
+class DataStreamMessage(object):
+
+    def __init__(self, type, name, status, value=None):
+        self.value = value
+        self.status = status
+        self.name = name
+        self.type = type
+
+    def __repr__(self):
+        return "DataStreamMessage: " + str(self.__dict__)

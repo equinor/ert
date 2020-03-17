@@ -8,7 +8,7 @@ from ert_shared.storage import Entities, Blobs
 
 @pytest.fixture(scope="session")
 def engine():
-    return create_engine("sqlite:///:memory:", echo=True)
+    return create_engine("sqlite:///:memory:", echo=False)
 
 
 @pytest.yield_fixture(scope="session")
@@ -75,6 +75,10 @@ def populated_db(db_session):
             realization_index=realization.index,
             ensemble_name=ensemble.name,
         )
+        repository.add_parameter_definition("A", "G", "ensemble_name")
+        repository.add_parameter_definition("B", "G", "ensemble_name")
+        repository.add_parameter("A", "G", 1, 0, "ensemble_name")
+        repository.add_parameter("B", "G", 2, 0, "ensemble_name")
         repository.commit()
 
     yield db_session

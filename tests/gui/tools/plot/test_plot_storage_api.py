@@ -29,3 +29,12 @@ def test_response_values(populated_db):
     idx = pd.MultiIndex.from_arrays([["response_one", "response_one"], [0, 1]])
     expected = pd.DataFrame([11.1, 11.2], index=idx).T
     assert result.equals(expected)
+
+def test_stream_param(populated_db):
+    api = PlotStorageApi(populated_db)
+    # for msg in api.get_param_data(ensembles = ["ensemble_name"]):
+    #     print(str(msg))
+
+    df = api.make_df(api.get_param_data(ensembles= ["ensemble_name"]))
+    print(df)
+
