@@ -8,4 +8,5 @@ def site_config_lines():
     return [
         "JOB_SCRIPT job_dispatch.py",
         "QUEUE_OPTION LOCAL MAX_RUNNING 1",
+        "ANALYSIS_LOAD RML_ENKF rml_enkf.so",
     ]
