@@ -2,7 +2,11 @@ import pandas as pd
 import pytest
 
 from ert_shared.storage.repository import ErtRepository
-from ert_shared.storage.extraction_api import _dump_observations
+from ert_shared.storage.extraction_api import (
+    _dump_observations,
+    _dump_parameters,
+    _dump_response,
+)
 
 from tests.storage import db_session, engine, tables
 
@@ -38,3 +42,47 @@ def test_dump_observations(db_session):
         assert test_obs.data_indexes == [3, 6, 9]
         assert test_obs.values == [6, 12, 18]
         assert test_obs.stds == [0.1, 0.2, 0.3]
+
+
+coeff_a = pd.DataFrame.from_dict(
+    {
+        "COEFFS:COEFF_A": {
+            0: 0.7684484807065148,
+            1: 0.031542101926117616,
+            2: 0.9116906743615176,
+            3: 0.6985513230581486,
+            4: 0.5949261230249001,
+        },
+    },
+)
+
+parameters = {"COEFFS:COEFF_A": coeff_a}
+
+
+def test_dump_parameters(db_session):
+    ensemble_name = "default"
+    with ErtRepository(db_session) as repository:
+        ensemble = repository.add_ensemble(name=ensemble_name)
+        for i in range(5):
+            repository.add_realization(i, ensemble.name)
+
+        _dump_parameters(
+            repository=repository, parameters=parameters, ensemble_name=ensemble.name
+        )
+        repository.commit()
+
+    with ErtRepository(db_session) as repository:
+        parameter_0 = repository.get_parameter("COEFF_A", "COEFFS", 0, ensemble_name)
+        assert parameter_0.value == 0.7684484807065148
+
+        parameter_1 = repository.get_parameter("COEFF_A", "COEFFS", 1, ensemble_name)
+        assert parameter_1.value == 0.031542101926117616
+
+        parameter_2 = repository.get_parameter("COEFF_A", "COEFFS", 2, ensemble_name)
+        assert parameter_2.value == 0.9116906743615176
+
+        parameter_3 = repository.get_parameter("COEFF_A", "COEFFS", 3, ensemble_name)
+        assert parameter_3.value == 0.6985513230581486
+
+        parameter_4 = repository.get_parameter("COEFF_A", "COEFFS", 4, ensemble_name)
+        assert parameter_4.value == 0.5949261230249001
