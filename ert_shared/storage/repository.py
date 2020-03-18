@@ -80,7 +80,7 @@ class ErtRepository:
     def get_response_data(self, name, ensemble_name):
         """Load lightweight "bundle" objects using the ORM."""
 
-        bundle = Bundle("response", Response.id, Response.values, Response.realization_id)
+        bundle = Bundle("response", Response.id, Response.values, Realization.index)
         ensemble = self.get_ensemble(ensemble_name)
         response_definition = self._get_response_definition(
             name=name, ensemble_id=ensemble.id
@@ -88,6 +88,7 @@ class ErtRepository:
         for row in (
             self._session.query(bundle)
             .filter_by(response_definition_id=response_definition.id,)
+            .join(Realization)
             .yield_per(1)
         ):
             yield row.response

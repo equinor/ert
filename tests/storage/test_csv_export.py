@@ -113,5 +113,5 @@ def test_retrieve_response_data(db_session):
 
     with ErtRepository(db_session) as repository:
         for response in storage_api.get_response_data("POLY_RES", ensemble_name, repository=repository):
-            realization_values = poly_res[response.realization_id - 1].to_list()
+            realization_values = poly_res[response.index].to_list()
             assert response.values == realization_values
