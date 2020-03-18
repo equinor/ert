@@ -1,7 +1,8 @@
+import ert_shared.storage.storage_api as storage_api
 import pandas as pd
 import pytest
-
 from ert_shared.storage.repository import ErtRepository
+
 from ert_shared.storage.extraction_api import (
     _dump_observations,
     _dump_parameters,
@@ -89,7 +90,7 @@ poly_res = pd.DataFrame.from_dict(
 responses = {"POLY_RES": poly_res}
 
 
-def test_dump_response_data(db_session):
+def test_retrieve_response_data(db_session):
     ensemble_name = "default"
     with ErtRepository(db_session) as repository:
         ensemble = repository.add_ensemble(name=ensemble_name)
@@ -110,9 +111,7 @@ def test_dump_response_data(db_session):
         )
         repository.commit()
 
-    with ErtRepository(db_session) as repository:        
-        for response in repository.get_response_data("POLY_RES", ensemble_name):
+    with ErtRepository(db_session) as repository:
+        for response in storage_api.get_response_data("POLY_RES", ensemble_name, repository=repository):
             realization_values = poly_res[response.realization_id - 1].to_list()
             assert response.values == realization_values
-            
-
