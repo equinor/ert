@@ -9,6 +9,7 @@ from ert_shared.storage import (
     Parameter,
 )
 from sqlalchemy import create_engine
+from sqlalchemy.orm import Bundle
 from ert_shared.storage.session import session_factory
 
 
@@ -75,6 +76,21 @@ class ErtRepository:
             )
             .first()
         )
+
+    def get_response_data(self, name, ensemble_name):
+        """Load lightweight "bundle" objects using the ORM."""
+
+        bundle = Bundle("response", Response.id, Response.values, Response.realization_id)
+        ensemble = self.get_ensemble(ensemble_name)
+        response_definition = self._get_response_definition(
+            name=name, ensemble_id=ensemble.id
+        )
+        for row in (
+            self._session.query(bundle)
+            .filter_by(response_definition_id=response_definition.id,)
+            .yield_per(1)
+        ):
+            yield row.response
 
     def get_parameter(self, name, group, realization_index, ensemble_name):
         realization = self.get_realization(
