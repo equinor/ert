@@ -4,10 +4,11 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.schema import UniqueConstraint
 
 
-Base = declarative_base()
+Entities = declarative_base(name="Entities")
+DataStore = declarative_base(name="DataStore")
 
 
-class Ensemble(Base):
+class Ensemble(Entities):
     __tablename__ = "ensembles"
 
     id = Column(Integer, primary_key=True)
@@ -19,7 +20,7 @@ class Ensemble(Base):
         return "<Ensemble(name='{}')>".format(self.name)
 
 
-class Realization(Base):
+class Realization(Entities):
     __tablename__ = "realizations"
 
     id = Column(Integer, primary_key=True)
@@ -40,7 +41,7 @@ Ensemble.realizations = relationship(
 )
 
 
-class ResponseDefinition(Base):
+class ResponseDefinition(Entities):
     __tablename__ = "response_definitions"
 
     id = Column(Integer, primary_key=True)
@@ -66,7 +67,7 @@ Ensemble.response_definitions = relationship(
 )
 
 
-class Response(Base):
+class Response(Entities):
     __tablename__ = "responses"
 
     id = Column(Integer, primary_key=True)
@@ -96,7 +97,7 @@ ResponseDefinition.responses = relationship(
 )
 
 
-class ParameterDefinition(Base):
+class ParameterDefinition(Entities):
     __tablename__ = "parameter_definitions"
 
     id = Column(Integer, primary_key=True)
@@ -120,7 +121,7 @@ Ensemble.parameter_definitions = relationship(
 )
 
 
-class Parameter(Base):
+class Parameter(Entities):
     __tablename__ = "parameters"
 
     id = Column(Integer, primary_key=True)
@@ -154,24 +155,35 @@ ParameterDefinition.parameters = relationship(
 )
 
 
-class Observation(Base):
+class Observation(Entities):
     __tablename__ = "observations"
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    key_indexes = Column(PickleType)
-    data_indexes = Column(PickleType)
-    values = Column(PickleType)
-    stds = Column(PickleType)
+    key_indexes_ref = Column(Integer)
+    data_indexes_ref = Column(Integer)
+    values_ref = Column(Integer)
+    stds_ref = Column(Integer)
 
     __table_args__ = (UniqueConstraint("name", name="_uc_observation_name_"),)
 
     def __repr__(self):
-        return "<Observation(name='{}', key_index='{}', data_index='{}', value='{}', std='{}')>".format(
-            self.name, self.key_indexes, self.data_indexes, self.values, self.stds
+        return "<Observation(name='{}', key_indexes_ref='{}', data_indexes_ref='{}', values_ref='{}', stds_ref='{}')>".format(
+            self.name, self.key_indexes_ref, self.data_indexes_ref, self.values_ref, self.stds_ref
         )
 
 
 Observation.response_definitions = relationship(
     "ResponseDefinition", order_by=ResponseDefinition.id, back_populates="observation"
 )
+
+
+class DataFrame(DataStore):
+    __tablename__ = "data_frames"
+
+    id = Column(Integer, primary_key=True)
+    data = Column(PickleType)
+
+    def __repr__(self):
+        return "<Value(id='{}', data='{}')>".format(self.id, self.data)
+

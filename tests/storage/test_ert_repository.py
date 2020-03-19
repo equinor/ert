@@ -4,41 +4,61 @@ import sqlalchemy.exc
 
 from ert_shared.storage import Observation
 from ert_shared.storage.repository import ErtRepository
+from ert_shared.storage.data_store import DataStore
 
 from tests.storage import db_session, engine, tables
 
 
 def test_add_observation(db_session):
-    with ErtRepository(db_session) as repository:
+    observation_name = "test"
+    key_indexes = [0, 3]
+    data_indexes = [0, 3]
+    values = [22.1, 44.2]
+    stds = [1, 3]
+    with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
+        key_indexes_df = data_store.add_data_frame(data=key_indexes)
+        data_indexes_df = data_store.add_data_frame(data=data_indexes)
+        values_df = data_store.add_data_frame(data=values)
+        stds_df = data_store.add_data_frame(data=stds)
+        data_store.commit()
+
         observation = repository.add_observation(
-            name="test",
-            key_indexes=[0, 3],
-            data_indexes=[0, 3],
-            values=[22.1, 44.2],
-            stds=[1, 3],
+            name=observation_name,
+            key_indexes_ref=key_indexes_df.id,
+            data_indexes_ref=data_indexes_df.id,
+            values_ref=values_df.id,
+            stds_ref=stds_df.id,
         )
         repository.commit()
         assert observation is not None
+
+    with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
+        observation = repository.get_observation(observation_name)
+        assert observation is not None
+        assert data_store.get_data_frame(observation.key_indexes_ref).data == key_indexes
+        assert data_store.get_data_frame(observation.data_indexes_ref).data == data_indexes
+        assert data_store.get_data_frame(observation.values_ref).data == values
+        assert data_store.get_data_frame(observation.stds_ref).data == stds
 
 
 def test_add_duplicate_observation(db_session):
     with ErtRepository(db_session) as repository:
         observation = repository.add_observation(
             name="test",
-            key_indexes=[0, 3],
-            data_indexes=[0, 3],
-            values=[22.1, 44.2],
-            stds=[1, 3],
+            key_indexes_ref=1,
+            data_indexes_ref=1,
+            values_ref=1,
+            stds_ref=1,
         )
         repository.commit()
 
         with pytest.raises(sqlalchemy.exc.IntegrityError) as error:
             observation = repository.add_observation(
                 name="test",
-                key_indexes=[0, 3],
-                data_indexes=[0, 3],
-                values=[22.1, 44.2],
-                stds=[1, 3],
+                key_indexes_ref=2,
+                data_indexes_ref=2,
+                values_ref=2,
+                stds_ref=2,
             )
             repository.commit()
 

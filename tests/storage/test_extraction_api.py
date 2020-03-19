@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 from ert_shared.storage.repository import ErtRepository
+from ert_shared.storage.data_store import DataStore
 from ert_shared.storage.extraction_api import (
     _dump_observations,
     _dump_parameters,
@@ -23,25 +24,35 @@ observation_data = {
 
 
 def test_dump_observations(db_session):
-    with ErtRepository(db_session) as repository:
+    with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
         observations = pd.DataFrame.from_dict(observation_data)
-        _dump_observations(repository=repository, observations=observations)
+        _dump_observations(
+            repository=repository, data_store=data_store, observations=observations
+        )
         repository.commit()
 
-    with ErtRepository(db_session) as repository:
+    with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
         poly_obs = repository.get_observation("POLY_OBS")
         assert poly_obs.id is not None
-        assert poly_obs.key_indexes == [0, 2, 4, 6, 8]
-        assert poly_obs.data_indexes == [10, 12, 14, 16, 18]
-        assert poly_obs.values == [2.0, 7.1, 21.1, 31.8, 53.2]
-        assert poly_obs.stds == [0.1, 1.1, 4.1, 9.1, 16.1]
+        key_indexes = data_store.get_data_frame(poly_obs.key_indexes_ref)
+        assert key_indexes.data == [0, 2, 4, 6, 8]
+        data_indexes = data_store.get_data_frame(poly_obs.data_indexes_ref)
+        assert data_indexes.data == [10, 12, 14, 16, 18]
+        values = data_store.get_data_frame(poly_obs.values_ref)
+        assert values.data == [2.0, 7.1, 21.1, 31.8, 53.2]
+        stds = data_store.get_data_frame(poly_obs.stds_ref)
+        assert stds.data == [0.1, 1.1, 4.1, 9.1, 16.1]
 
         test_obs = repository.get_observation("TEST_OBS")
         assert test_obs.id is not None
-        assert test_obs.key_indexes == [3, 6, 9]
-        assert test_obs.data_indexes == [3, 6, 9]
-        assert test_obs.values == [6, 12, 18]
-        assert test_obs.stds == [0.1, 0.2, 0.3]
+        key_indexes = data_store.get_data_frame(test_obs.key_indexes_ref)
+        assert key_indexes.data == [3, 6, 9]
+        data_indexes = data_store.get_data_frame(test_obs.data_indexes_ref)
+        assert data_indexes.data == [3, 6, 9]
+        values = data_store.get_data_frame(test_obs.values_ref)
+        assert values.data == [6, 12, 18]
+        stds = data_store.get_data_frame(test_obs.stds_ref)
+        assert stds.data == [0.1, 0.2, 0.3]
 
 
 coeff_a = pd.DataFrame.from_dict(
@@ -160,7 +171,7 @@ def test_dump_responses(db_session):
     ensemble_name = "default"
     with ErtRepository(db_session) as repository:
         ensemble = repository.add_ensemble(name=ensemble_name)
-        
+
         observations = pd.DataFrame.from_dict(observation_data)
         _dump_observations(repository=repository, observations=observations)
 
@@ -194,4 +205,4 @@ def test_dump_responses(db_session):
         ]
 
         assert response_0.response_definition.observation.name == "POLY_OBS"
-        
+
