@@ -13,7 +13,7 @@ Reservoir simulation: eclipse/flow
     DEFAULT <VERSION> version
     DEFAULT <NUM_CPU> 1
     DEFAULT OPTS ""
-    ARGLIST <ECLBASE> "--version=<VERSION>" "--num-cpu=<NUM_CPU>" OPTS
+    ARGLIST <ECLBASE> -v VERSION> -n <NUM_CPU> OPTS
 
 There are forward models for each of the simulators eclipse100, eclipse300 and
 flow, and they are all configured the same way. The version, number of cpu and
@@ -38,7 +38,7 @@ Reservoir modelling: RMS
     DEFAULT       <RMS_EXPORT_PATH> ./
     DEFAULT       <RMS_RUNPATH>     rms/model
     TARGET_FILE   <RMS_TARGET_FILE>
-    ARGLIST <IENS> <RMS_PROJECT> <RMS_WORKFLOW> "--run-path=<RMS_RUNPATH>" "--target-file=<RMS_TARGET_FILE>" "--import-path=<RMS_IMPORT_PATH>" "--version=<RMS_VERSION>" "--export-path=<RMS_EXPORT_PATH>"
+    ARGLIST <IENS> <RMS_PROJECT> <RMS_WORKFLOW> -r <RMS_RUNPATH> -t <RMS_TARGET_FILE> -i <RMS_IMPORT_PATH> -v <RMS_VERSION> -e <RMS_EXPORT_PATH>
 
     EXEC_ENV PYTHONPATH <RMS_PYTHONPATH>
 

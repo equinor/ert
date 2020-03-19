@@ -87,6 +87,13 @@ specifies where the executable is, and how any arguments should behave.
     ARGLIST     <ARG0> <ARG1>    -- A list of arguments to pass on to the
                                  --  executable
 
+Note
+____
+When configuring ARGLIST for FORWARD_MODEL jobs it is not suitable to use
+:code:`--some-option` for named options as it treated as a comment by the
+configuration compiler. Single letter options, i.e. :code:`-s` as shown in the
+examples in :doc:`../forward_models`, is needed.
+
 
 Invoking the job is then done by including it in the ert config:
 

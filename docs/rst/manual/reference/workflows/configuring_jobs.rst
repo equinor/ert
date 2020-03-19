@@ -74,9 +74,15 @@ type. These arguments apply to both internal and external jobs:
 	ARG_TYPE   0    INT          -- The first argument should be an integer
 	ARG_TYPE   1    FLOAT        -- The second argument should be a float value
 	ARG_TYPE   2    STRING       -- The third argument should be a string - the default.
+	ARGLIST    <ARG0> <ARG1>     -- A list of arguments to pass on to the executable
 
 The MIN_ARG,MAX_ARG and ARG_TYPE arguments are used to validate workflows.
 
+Note
+____
+When configuring ARGLIST for WORKFLOW_JOB jobs it is not suitable to use
+:code:`--some-option` for named options as it treated as a comment by the
+configuration compiler. Single letter options, i.e. :code:`-s`, are needed.
 
 **Example 1 : Plot variables**
 
