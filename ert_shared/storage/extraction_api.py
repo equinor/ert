@@ -6,6 +6,7 @@ from ert_data.measured import MeasuredData
 
 from ert_shared.feature_toggling import FeatureToggling
 
+
 def _create_ensemble(repository):
     facade = ERT.enkf_facade
     ensemble_name = facade.get_current_case_name()
@@ -37,12 +38,16 @@ def _dump_observations(repository, data_store, observations):
         observation = observations[key]
         if repository.get_observation(name=key) is not None:
             continue
-        key_indexes_df = data_store.add_data_frame(observation.columns.get_level_values(0).to_list())
-        data_indexes_df = data_store.add_data_frame(observation.columns.get_level_values(1).to_list())
+        key_indexes_df = data_store.add_data_frame(
+            observation.columns.get_level_values(0).to_list()
+        )
+        data_indexes_df = data_store.add_data_frame(
+            observation.columns.get_level_values(1).to_list()
+        )
         vals_df = data_store.add_data_frame(observation.loc["OBS"].to_list())
         stds_df = data_store.add_data_frame(observation.loc["STD"].to_list())
         data_store.commit()
-        
+
         repository.add_observation(
             name=key,
             key_indexes_ref=key_indexes_df.id,
@@ -67,17 +72,20 @@ def _extract_and_dump_parameters(repository, ensemble_name):
     )
 
 
-def _dump_parameters(repository, parameters, ensemble_name):
+def _dump_parameters(repository, data_store, parameters, ensemble_name):
     for key, parameter in parameters.items():
         group, name = key.split(":")
         parameter_definition = repository.add_parameter_definition(
             name=name, group=group, ensemble_name=ensemble_name,
         )
         for realization_index, value in parameter.iterrows():
+            value_df = data_store.add_data_frame(value)
+            data_store.commit()
+
             repository.add_parameter(
                 name=parameter_definition.name,
                 group=parameter_definition.group,
-                value=value,
+                value_ref=value_df.id,
                 realization_index=realization_index,
                 ensemble_name=ensemble_name,
             )
