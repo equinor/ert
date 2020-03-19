@@ -68,7 +68,8 @@ class PlotStorageApi(object):
     def get_all_cases_not_running(self):
         """ Returns a list of all cases that are not running. For each case a dict with info about the case is
             returned """
-        return [{'has_data': True, 'hidden': False, 'name': 'default'}]
+
+        return [{'has_data': True, 'hidden': False, 'name': ens.name} for ens in self._repo().get_all_ensembles()]
 
 
     def data_for_key(self, case, key):
@@ -76,9 +77,10 @@ class PlotStorageApi(object):
             the realization number, and the column index is a multi-index with (key, index/date)"""
 
         ens = self._repo().get_ensemble(case)
+        key_def = self._repo()._get_response_definition(key, ens.id) # TODO: need this public
         data = [resp.values for real in ens.realizations for resp in real.responses if resp.response_definition.name==key]
         if len(data) > 0:
-            df = pd.DataFrame(data)
+            df = pd.DataFrame(data, columns=key_def.indexes)
             with_key = pd.concat({key:df}, axis=1).astype(float)
         else:
             data = [param.value for real in ens.realizations for param in real.parameters if param.parameter_definition.name==key]
@@ -93,11 +95,9 @@ class PlotStorageApi(object):
             the index for the observation itself"""
         if len(obs_keys) > 0:
             obs = self._repo().get_observation(obs_keys[0])
-            values = obs.values
-            idx = pd.MultiIndex.from_arrays([range(len(obs.key_indexes)), obs.key_indexes],
+            idx = pd.MultiIndex.from_arrays([obs.data_indexes, obs.key_indexes],
                                              names=['data_index', 'key_index'])
-            values = pd.DataFrame(obs.values)
-            stds = pd.DataFrame(obs.stds)
+
             all = pd.DataFrame({"OBS":obs.values, "STD":obs.stds}, index=idx)
             return all.T
         else:
@@ -107,31 +107,35 @@ class PlotStorageApi(object):
         case_to_data = {}
         done = False
         df = None
-        idx = None
+        idx = []
         while not done:
             msg = next(msgs)
+            if msg.type in ["param_def", "response_def"] and msg.status == "size":
+                idx.extend([msg.name for x in range(0, msg.value)])
             if msg.type == "ensemble" and msg.status == "start":
                 df = pd.DataFrame()
             elif msg.type == "realisation" and msg.status == "start":
                 real_df = pd.DataFrame()
+                param_series = pd.Series()
+                param_series.name = msg.name
                 real_done = False
 
                 while not real_done:
                     msg = next(msgs)
                     if msg.type == "realisation" and msg.status == "done":
-                        df = df.append(real_df.T)
+                        #real_df = real_df.append(, ignore_index=True)
+                        df = df.append(param_series, ignore_index=True)
                         real_done = True
-                    elif msg.type == "parameter" and msg.status == "start":
-                        param_series = pd.Series()
+                    elif msg.type in ["parameter", "response"] and msg.status == "start":
                         param_done = False
                         while not param_done:
                             msg = next(msgs)
-                            if msg.type == "parameter" and msg.status == "chunk":
+                            if msg.type in ["parameter", "response"] and msg.status == "chunk":
                                 param_series = param_series.append(pd.Series(msg.value), ignore_index=True)
-                            elif msg.type == "parameter" and msg.status == "done":
-                                real_df = real_df.append(param_series, ignore_index=True)
+                            elif msg.type in ["parameter", "response"] and msg.status == "done":
                                 param_done = True
             elif msg.type == "ensemble" and msg.status == "stop":
+                df.columns = idx
                 case_to_data[msg.name] = df
                 pass
             elif msg.type == "EOL":
@@ -147,11 +151,13 @@ class PlotStorageApi(object):
 
             for param_def in ens.parameter_definitions:
                 if param_def.name in keys or len(keys) == 0:
-                    if len(param_def.parameters) > 0:
-                        size = 1 # len(param_def.parameters[0].value)
-                    else:
-                        size = 0
+                    size = 1
                     yield DataStreamMessage("param_def", param_def.name, "size", size)
+
+            for response_def in ens.response_definitions:
+                if response_def.name in keys or len(keys) == 0:
+                    size = len(response_def.responses[0].values)
+                    yield DataStreamMessage("response_def", response_def.name, "size", size)
 
             for real in ens.realizations:
                 if real.id in realizations or len(realizations) == 0:
@@ -163,6 +169,15 @@ class PlotStorageApi(object):
                                     yield DataStreamMessage("parameter", param_def.name, "start")
                                     yield DataStreamMessage("parameter", param_def.name, "chunk", param.value)
                             yield DataStreamMessage("parameter", param_def.name, "done")
+
+                    for response_def in ens.response_definitions:
+                        if response_def.name in keys or len(keys) == 0:
+                            for respons in real.responses:
+                                if respons.response_definition == response_def:
+                                    yield DataStreamMessage("response", response_def.name, "start")
+                                    yield DataStreamMessage("response", response_def.name, "chunk", respons.values)
+                            yield DataStreamMessage("response", response_def.name, "done")
+
                     yield DataStreamMessage("realisation", real.id, "done")
 
             yield DataStreamMessage("ensemble", ens_name, "stop")
