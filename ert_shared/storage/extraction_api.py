@@ -32,17 +32,23 @@ def _extract_and_dump_observations(repository):
     _dump_observations(repository=repository, observations=observations)
 
 
-def _dump_observations(repository, observations):
+def _dump_observations(repository, data_store, observations):
     for key in observations.columns.get_level_values(0).unique():
         observation = observations[key]
         if repository.get_observation(name=key) is not None:
             continue
+        key_indexes_df = data_store.add_data_frame(observation.columns.get_level_values(0).to_list())
+        data_indexes_df = data_store.add_data_frame(observation.columns.get_level_values(1).to_list())
+        vals_df = data_store.add_data_frame(observation.loc["OBS"].to_list())
+        stds_df = data_store.add_data_frame(observation.loc["STD"].to_list())
+        data_store.commit()
+        
         repository.add_observation(
             name=key,
-            key_indexes=observation.columns.get_level_values(0).to_list(),
-            data_indexes=observation.columns.get_level_values(1).to_list(),
-            values=observation.loc["OBS"].to_list(),
-            stds=observation.loc["STD"].to_list(),
+            key_indexes_ref=key_indexes_df.id,
+            data_indexes_ref=data_indexes_df.id,
+            values_ref=vals_df.id,
+            stds_ref=stds_df.id,
         )
 
 

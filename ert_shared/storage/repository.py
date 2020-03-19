@@ -2,11 +2,11 @@ from ert_shared.storage import (
     Observation,
     Realization,
     Ensemble,
-    Base,
     ResponseDefinition,
     Response,
     ParameterDefinition,
     Parameter,
+    DataFrame,
 )
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Bundle
@@ -192,13 +192,16 @@ class ErtRepository:
 
         return parameter
 
-    def add_observation(self, name, key_indexes, data_indexes, values, stds):
+    def add_observation(
+        self, name, key_indexes_ref, data_indexes_ref, values_ref, stds_ref
+    ):
+
         observation = Observation(
             name=name,
-            key_indexes=key_indexes,
-            data_indexes=data_indexes,
-            values=values,
-            stds=stds,
+            key_indexes_ref=key_indexes_ref,
+            data_indexes_ref=data_indexes_ref,
+            values_ref=values_ref,
+            stds_ref=stds_ref,
         )
         self._session.add(observation)
 
