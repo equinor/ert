@@ -40,6 +40,9 @@ def populated_db(db_session):
         ensemble = repository.add_ensemble(name="ensemble_name")
 
         realization = repository.add_realization(0, ensemble.name)
+        realization2 = repository.add_realization(1, ensemble.name)
+
+
 
         observation = repository.add_observation(
             name="observation_one",
@@ -56,29 +59,36 @@ def populated_db(db_session):
             observation_name=observation.name
         )
 
-        repository.add_response(
-            name="response_one",
-            values=[11.1, 11.2],
-            realization_index=realization.index,
-            ensemble_name=ensemble.name,
-        )
-
         repository.add_response_definition(
             name="response_two",
             indexes=[0, 1],
             ensemble_name=ensemble.name,
         )
 
-        repository.add_response(
-            name="response_two",
-            values=[12.1, 12.2],
-            realization_index=realization.index,
-            ensemble_name=ensemble.name,
-        )
         repository.add_parameter_definition("A", "G", "ensemble_name")
         repository.add_parameter_definition("B", "G", "ensemble_name")
-        repository.add_parameter("A", "G", 1, 0, "ensemble_name")
-        repository.add_parameter("B", "G", 2, 0, "ensemble_name")
+
+        def add_data(realization):
+            repository.add_response(
+                name="response_one",
+                values=[11.1, 11.2],
+                realization_index=realization.index,
+                ensemble_name=ensemble.name,
+            )
+
+            repository.add_response(
+                name="response_two",
+                values=[12.1, 12.2],
+                realization_index=realization.index,
+                ensemble_name=ensemble.name,
+            )
+
+            repository.add_parameter("A", "G", 1, realization.index, "ensemble_name")
+            repository.add_parameter("B", "G", 2, realization.index, "ensemble_name")
+
+        add_data(realization)
+        add_data(realization2)
+
         repository.commit()
 
     yield db_session
