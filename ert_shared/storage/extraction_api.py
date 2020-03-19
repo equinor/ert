@@ -79,7 +79,7 @@ def _dump_parameters(repository, data_store, parameters, ensemble_name):
             name=name, group=group, ensemble_name=ensemble_name,
         )
         for realization_index, value in parameter.iterrows():
-            value_df = data_store.add_data_frame(value)
+            value_df = data_store.add_data_frame(float(value))
             data_store.commit()
 
             repository.add_parameter(
