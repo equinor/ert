@@ -72,31 +72,31 @@ parameters = {"COEFFS:COEFF_A": coeff_a}
 
 def test_dump_parameters(db_session):
     ensemble_name = "default"
-    with ErtRepository(db_session) as repository:
+    with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
         ensemble = repository.add_ensemble(name=ensemble_name)
         for i in range(5):
             repository.add_realization(i, ensemble.name)
 
         _dump_parameters(
-            repository=repository, parameters=parameters, ensemble_name=ensemble.name
+            repository=repository, data_store=data_store, parameters=parameters, ensemble_name=ensemble.name
         )
         repository.commit()
 
-    with ErtRepository(db_session) as repository:
+    with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
         parameter_0 = repository.get_parameter("COEFF_A", "COEFFS", 0, ensemble_name)
-        assert parameter_0.value == 0.7684484807065148
+        assert data_store.get_data_frame(parameter_0.value_ref).data == 0.7684484807065148
 
         parameter_1 = repository.get_parameter("COEFF_A", "COEFFS", 1, ensemble_name)
-        assert parameter_1.value == 0.031542101926117616
+        assert data_store.get_data_frame(parameter_1.value_ref).data == 0.031542101926117616
 
         parameter_2 = repository.get_parameter("COEFF_A", "COEFFS", 2, ensemble_name)
-        assert parameter_2.value == 0.9116906743615176
+        assert data_store.get_data_frame(parameter_2.value_ref).data == 0.9116906743615176
 
         parameter_3 = repository.get_parameter("COEFF_A", "COEFFS", 3, ensemble_name)
-        assert parameter_3.value == 0.6985513230581486
+        assert data_store.get_data_frame(parameter_3.value_ref).data == 0.6985513230581486
 
         parameter_4 = repository.get_parameter("COEFF_A", "COEFFS", 4, ensemble_name)
-        assert parameter_4.value == 0.5949261230249001
+        assert data_store.get_data_frame(parameter_4.value_ref).data == 0.5949261230249001
 
 
 poly_res = pd.DataFrame.from_dict(
