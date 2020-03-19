@@ -128,7 +128,7 @@ class ErtRepository:
         return realization
 
     def add_response_definition(
-        self, name, indexes, ensemble_name, observation_name=None,
+        self, name, indexes_ref, ensemble_name, observation_name=None,
     ):
         ensemble = self.get_ensemble(name=ensemble_name)
         observation = None
@@ -137,7 +137,7 @@ class ErtRepository:
 
         response_definition = ResponseDefinition(
             name=name,
-            indexes=indexes,
+            indexes_ref=indexes_ref,
             ensemble_id=ensemble.id,
             observation_id=observation.id if observation is not None else None,
         )
@@ -146,7 +146,7 @@ class ErtRepository:
         return response_definition
 
     def add_response(
-        self, name, values, realization_index, ensemble_name,
+        self, name, values_ref, realization_index, ensemble_name,
     ):
         realization = self.get_realization(
             index=realization_index, ensemble_name=ensemble_name
@@ -155,7 +155,7 @@ class ErtRepository:
             name=name, ensemble_id=realization.ensemble.id
         )
         response = Response(
-            values=values,
+            values_ref=values_ref,
             realization_id=realization.id,
             response_definition_id=response_definition.id,
         )
@@ -175,7 +175,7 @@ class ErtRepository:
 
         return parameter_definition
 
-    def add_parameter(self, name, group, value, realization_index, ensemble_name):
+    def add_parameter(self, name, group, value_ref, realization_index, ensemble_name):
         realization = self.get_realization(
             index=realization_index, ensemble_name=ensemble_name
         )
@@ -184,7 +184,7 @@ class ErtRepository:
             name=name, group=group, ensemble_id=realization.ensemble.id
         )
         parameter = Parameter(
-            value=value,
+            value_ref=value_ref,
             realization_id=realization.id,
             parameter_definition_id=parameter_definition.id,
         )
