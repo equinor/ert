@@ -46,7 +46,7 @@ class ResponseDefinition(Entities):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    indexes = Column(PickleType)
+    indexes_ref = Column(Integer)
     ensemble_id = Column(Integer, ForeignKey("ensembles.id"))
     ensemble = relationship("Ensemble", back_populates="response_definitions")
     observation_id = Column(Integer, ForeignKey("observations.id"))
@@ -57,8 +57,8 @@ class ResponseDefinition(Entities):
     )
 
     def __repr__(self):
-        return "<ResponseDefinition(name='{}', indexes='{}', ensemble_id='{}')>".format(
-            self.name, self.indexes, self.ensemble_id
+        return "<ResponseDefinition(name='{}', indexes_ref='{}', ensemble_id='{}')>".format(
+            self.name, self.indexes_ref, self.ensemble_id
         )
 
 
@@ -71,7 +71,7 @@ class Response(Entities):
     __tablename__ = "responses"
 
     id = Column(Integer, primary_key=True)
-    values = Column(PickleType)
+    values_ref = Column(Integer)
     realization_id = Column(Integer, ForeignKey("realizations.id"))
     realization = relationship("Realization", back_populates="responses")
     response_definition_id = Column(Integer, ForeignKey("response_definitions.id"))
@@ -84,8 +84,8 @@ class Response(Entities):
     )
 
     def __repr__(self):
-        return "<Response(name='{}', values='{:.3f}', realization_id='{}', response_definition_id='{}')>".format(
-            self.name, self.values, self.realization_id, self.response_definition_id,
+        return "<Response(name='{}', values_ref='{}', realization_id='{}', response_definition_id='{}')>".format(
+            self.name, self.values_ref, self.realization_id, self.response_definition_id,
         )
 
 
@@ -125,7 +125,7 @@ class Parameter(Entities):
     __tablename__ = "parameters"
 
     id = Column(Integer, primary_key=True)
-    value = Column(Float)
+    value_ref = Column(Integer)
     realization_id = Column(Integer, ForeignKey("realizations.id"))
     realization = relationship("Realization", back_populates="parameters")
     parameter_definition_id = Column(Integer, ForeignKey("parameter_definitions.id"))
@@ -142,8 +142,8 @@ class Parameter(Entities):
     )
 
     def __repr__(self):
-        return "<Parameter(value='{:.3f}', realization_id='{}', parameter_definition_id='{}')>".format(
-            self.value, self.realization_id, self.parameter_definition_id
+        return "<Parameter(value_ref='{}', realization_id='{}', parameter_definition_id='{}')>".format(
+            self.value_ref, self.realization_id, self.parameter_definition_id
         )
 
 
