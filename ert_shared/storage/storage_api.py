@@ -1,4 +1,5 @@
-from ert_shared.storage.rdb_api import RdbApi
+from io import StringIO
+
 import pandas as pd
 from ert_shared.storage.rdb_api import RdbApi
 
@@ -75,18 +76,12 @@ class PlotStorageApi(object):
     def data_for_key(self, case, key):
         """ Returns a pandas DataFrame with the datapoints for a given key for a given case. The row index is
             the realization number, and the column index is a multi-index with (key, index/date)"""
+        csv = ""
+        for msg in self.stream_csv(self.get_param_data([case], [key])):
+            csv += msg
+        df = pd.read_csv(StringIO(csv), index_col=[0], header=[0, 1]).dropna().astype(float)
+        return df
 
-        ens = self._repo().get_ensemble(case)
-        key_def = self._repo()._get_response_definition(key, ens.id) # TODO: need this public
-        data = [resp.values for real in ens.realizations for resp in real.responses if resp.response_definition.name==key]
-        if len(data) > 0:
-            df = pd.DataFrame(data, columns=key_def.indexes)
-            with_key = pd.concat({key:df}, axis=1).astype(float)
-        else:
-            data = [param.value for real in ens.realizations for param in real.parameters if param.parameter_definition.name==key]
-            with_key = pd.DataFrame(data, columns=[key]).astype(float)
-
-        return with_key
 
     def observations_for_obs_keys(self, case, obs_keys):
         """ Returns a pandas DataFrame with the datapoints for a given observation key for a given case. The row index
@@ -103,44 +98,60 @@ class PlotStorageApi(object):
         else:
             return pd.DataFrame()
 
-    def make_df(self, msgs):
-        case_to_data = {}
+    def stream_csv(self, msgs):
         done = False
-        df = None
-        idx = []
+        first_header = True
+        first_index = True
         while not done:
             msg = next(msgs)
-            if msg.type in ["param_def", "response_def"] and msg.status == "size":
-                idx.extend([msg.name for x in range(0, msg.value)])
+            if msg.type == "key_def" and msg.status == "size":
+                if not first_header:
+                    yield ","
+                else:
+                    first_header = False
+                yield ",".join([msg.name for x in range(0, msg.value)])
+            if msg.type == "index_def" and msg.status == "indexes":
+                if not first_index:
+                    yield ","
+                else:
+                    yield "\nindexes,"
+                    first_index = False
+                yield ",".join([str(x) for x in msg.value])
             if msg.type == "ensemble" and msg.status == "start":
-                df = pd.DataFrame()
+                yield "keys,"
+                pass
             elif msg.type == "realisation" and msg.status == "start":
-                real_df = pd.DataFrame()
-                param_series = pd.Series()
-                param_series.name = msg.name
                 real_done = False
+                yield "\n{},".format(msg.name)
 
+                first_key = True
                 while not real_done:
                     msg = next(msgs)
                     if msg.type == "realisation" and msg.status == "done":
-                        #real_df = real_df.append(, ignore_index=True)
-                        df = df.append(param_series, ignore_index=True)
                         real_done = True
                     elif msg.type in ["parameter", "response"] and msg.status == "start":
+                        if not first_key:
+                            yield ","
+                        else:
+                            first_key = False
                         param_done = False
                         while not param_done:
                             msg = next(msgs)
                             if msg.type in ["parameter", "response"] and msg.status == "chunk":
-                                param_series = param_series.append(pd.Series(msg.value), ignore_index=True)
+
+                                yield ",".join([str(x) for x in msg.value])
                             elif msg.type in ["parameter", "response"] and msg.status == "done":
+                                # yield ","
                                 param_done = True
             elif msg.type == "ensemble" and msg.status == "stop":
-                df.columns = idx
-                case_to_data[msg.name] = df
                 pass
             elif msg.type == "EOL":
                 done = True
-        return case_to_data
+
+    #
+    # def get_obs_data(self, ensembles, obs_keys=[]):
+    #     for ens_name in ensembles:
+    #         ens = self._repo().get_ensemble(ens_name)
 
     def get_param_data(self, ensembles, keys=[], realizations=[]):
 
@@ -152,12 +163,20 @@ class PlotStorageApi(object):
             for param_def in ens.parameter_definitions:
                 if param_def.name in keys or len(keys) == 0:
                     size = 1
-                    yield DataStreamMessage("param_def", param_def.name, "size", size)
+                    yield DataStreamMessage("key_def", param_def.name, "size", size)
 
             for response_def in ens.response_definitions:
                 if response_def.name in keys or len(keys) == 0:
                     size = len(response_def.responses[0].values)
-                    yield DataStreamMessage("response_def", response_def.name, "size", size)
+                    yield DataStreamMessage("key_def", response_def.name, "size", size)
+
+            for param_def in ens.parameter_definitions:
+                if param_def.name in keys or len(keys) == 0:
+                    yield DataStreamMessage("index_def", param_def.name, "indexes", [0])
+
+            for response_def in ens.response_definitions:
+                if response_def.name in keys or len(keys) == 0:
+                    yield DataStreamMessage("index_def", response_def.name, "indexes", response_def.indexes)
 
             for real in ens.realizations:
                 if real.id in realizations or len(realizations) == 0:
@@ -167,7 +186,7 @@ class PlotStorageApi(object):
                             for param in real.parameters:
                                 if param.parameter_definition == param_def:
                                     yield DataStreamMessage("parameter", param_def.name, "start")
-                                    yield DataStreamMessage("parameter", param_def.name, "chunk", param.value)
+                                    yield DataStreamMessage("parameter", param_def.name, "chunk", [param.value])
                             yield DataStreamMessage("parameter", param_def.name, "done")
 
                     for response_def in ens.response_definitions:
