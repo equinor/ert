@@ -129,18 +129,22 @@ def _extract_and_dump_responses(repository, ensemble_name):
     )
 
 
-def _dump_response(repository, responses, ensemble_name, key_mapping):
+def _dump_response(repository, data_store, responses, ensemble_name, key_mapping):
     for key, response in responses.items():
+        indexes_df = data_store.add_data_frame(response.index.to_list())
+        data_store.commit()
         response_definition = repository.add_response_definition(
             name=key,
-            indexes=response.index.to_list(),
+            indexes_ref=indexes_df.id,
             ensemble_name=ensemble_name,
             observation_name=key_mapping.get(key),
         )
         for realization_index, values in response.iteritems():
+            values_df = data_store.add_data_frame(values.to_list())
+            data_store.commit()
             repository.add_response(
                 name=response_definition.name,
-                values=values.to_list(),
+                values_ref=values_df.id,
                 realization_index=realization_index,
                 ensemble_name=ensemble_name,
             )

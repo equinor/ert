@@ -169,11 +169,11 @@ responses = {"POLY_RES": poly_res}
 
 def test_dump_responses(db_session):
     ensemble_name = "default"
-    with ErtRepository(db_session) as repository:
+    with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
         ensemble = repository.add_ensemble(name=ensemble_name)
 
         observations = pd.DataFrame.from_dict(observation_data)
-        _dump_observations(repository=repository, observations=observations)
+        _dump_observations(repository=repository, data_store=data_store, observations=observations)
 
         for i in range(5):
             repository.add_realization(i, ensemble.name)
@@ -182,16 +182,17 @@ def test_dump_responses(db_session):
 
         _dump_response(
             repository=repository,
+            data_store=data_store,
             responses=responses,
             ensemble_name=ensemble.name,
             key_mapping=key_mapping,
         )
         repository.commit()
 
-    with ErtRepository(db_session) as repository:
+    with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
         response_0 = repository.get_response("POLY_RES", 0, ensemble_name)
-
-        assert response_0.values == [
+        response_values = data_store.get_data_frame(response_0.values_ref).data
+        assert response_values == [
             2.5995,
             5.203511,
             9.496884000000001,
