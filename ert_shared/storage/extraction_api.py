@@ -2,6 +2,7 @@ import time
 
 from ert_shared import ERT
 from ert_shared.storage.repository import ErtRepository
+from ert_shared.storage.data_store import DataStore
 from ert_data.measured import MeasuredData
 
 from ert_shared.feature_toggling import FeatureToggling
@@ -18,7 +19,7 @@ def _create_ensemble(repository):
     return ensemble
 
 
-def _extract_and_dump_observations(repository):
+def _extract_and_dump_observations(repository, data_store):
     facade = ERT.enkf_facade
 
     observation_keys = [
@@ -30,7 +31,7 @@ def _extract_and_dump_observations(repository):
     measured_data.remove_inactive_observations()
     observations = measured_data.data.loc[["OBS", "STD"]]
 
-    _dump_observations(repository=repository, observations=observations)
+    _dump_observations(repository=repository, data_store=data_store, observations=observations)
 
 
 def _dump_observations(repository, data_store, observations):
@@ -57,7 +58,7 @@ def _dump_observations(repository, data_store, observations):
         )
 
 
-def _extract_and_dump_parameters(repository, ensemble_name):
+def _extract_and_dump_parameters(repository, data_store, ensemble_name):
     facade = ERT.enkf_facade
 
     parameter_keys = [
@@ -68,7 +69,7 @@ def _extract_and_dump_parameters(repository, ensemble_name):
     }
 
     _dump_parameters(
-        repository=repository, parameters=all_parameters, ensemble_name=ensemble_name
+        repository=repository, data_store=data_store, parameters=all_parameters, ensemble_name=ensemble_name
     )
 
 
@@ -91,7 +92,7 @@ def _dump_parameters(repository, data_store, parameters, ensemble_name):
             )
 
 
-def _extract_and_dump_responses(repository, ensemble_name):
+def _extract_and_dump_responses(repository, data_store, ensemble_name):
     facade = ERT.enkf_facade
 
     gen_data_keys = [
@@ -117,12 +118,14 @@ def _extract_and_dump_responses(repository, ensemble_name):
 
     _dump_response(
         repository=repository,
+        data_store=data_store, 
         responses=gen_data_data,
         ensemble_name=ensemble_name,
         key_mapping=key_mapping,
     )
     _dump_response(
         repository=repository,
+        data_store=data_store, 
         responses=summary_data,
         ensemble_name=ensemble_name,
         key_mapping=key_mapping,
@@ -150,7 +153,7 @@ def _dump_response(repository, data_store, responses, ensemble_name, key_mapping
             )
 
 
-def dump_to_new_storage(repository=None):
+def dump_to_new_storage(repository=None, data_store=None):
     if not FeatureToggling.is_enabled("new-storage"):
         return
 
@@ -161,12 +164,15 @@ def dump_to_new_storage(repository=None):
 
     if repository is None:
         repository = ErtRepository()
+    
+    if data_store is None:
+        data_store = DataStore()
 
     with repository:
         ensemble = _create_ensemble(repository)
-        _extract_and_dump_observations(repository=repository)
-        _extract_and_dump_parameters(repository=repository, ensemble_name=ensemble.name)
-        _extract_and_dump_responses(repository=repository, ensemble_name=ensemble.name)
+        _extract_and_dump_observations(repository=repository, data_store=data_store)
+        _extract_and_dump_parameters(repository=repository, data_store=data_store, ensemble_name=ensemble.name)
+        _extract_and_dump_responses(repository=repository, data_store=data_store, ensemble_name=ensemble.name)
         repository.commit()
 
     end_time = time.time()
