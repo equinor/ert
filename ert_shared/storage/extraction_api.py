@@ -47,7 +47,7 @@ def _dump_observations(repository, data_store, observations):
         )
         vals_df = data_store.add_data_frame(observation.loc["OBS"].to_list())
         stds_df = data_store.add_data_frame(observation.loc["STD"].to_list())
-        data_store.commit()
+        data_store.flush()
 
         repository.add_observation(
             name=key,
@@ -81,7 +81,7 @@ def _dump_parameters(repository, data_store, parameters, ensemble_name):
         )
         for realization_index, value in parameter.iterrows():
             value_df = data_store.add_data_frame(float(value))
-            data_store.commit()
+            data_store.flush()
 
             repository.add_parameter(
                 name=parameter_definition.name,
@@ -135,7 +135,7 @@ def _extract_and_dump_responses(repository, data_store, ensemble_name):
 def _dump_response(repository, data_store, responses, ensemble_name, key_mapping):
     for key, response in responses.items():
         indexes_df = data_store.add_data_frame(response.index.to_list())
-        data_store.commit()
+        data_store.flush()
         response_definition = repository.add_response_definition(
             name=key,
             indexes_ref=indexes_df.id,
@@ -144,7 +144,7 @@ def _dump_response(repository, data_store, responses, ensemble_name, key_mapping
         )
         for realization_index, values in response.iteritems():
             values_df = data_store.add_data_frame(values.to_list())
-            data_store.commit()
+            data_store.flush()
             repository.add_response(
                 name=response_definition.name,
                 values_ref=values_df.id,
@@ -173,7 +173,9 @@ def dump_to_new_storage(repository=None, data_store=None):
         _extract_and_dump_observations(repository=repository, data_store=data_store)
         _extract_and_dump_parameters(repository=repository, data_store=data_store, ensemble_name=ensemble.name)
         _extract_and_dump_responses(repository=repository, data_store=data_store, ensemble_name=ensemble.name)
+        data_store.commit()
         repository.commit()
+        
 
     end_time = time.time()
     print("Extraction done... (Took {:.2f} seconds)".format(end_time - start_time))

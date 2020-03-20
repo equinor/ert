@@ -29,6 +29,9 @@ class DataStore:
 
     def commit(self):
         self._session.commit()
+    
+    def flush(self):
+        self._session.flush()
 
     def rollback(self):
         self._session.rollback()

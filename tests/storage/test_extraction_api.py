@@ -29,6 +29,7 @@ def test_dump_observations(db_session):
         _dump_observations(
             repository=repository, data_store=data_store, observations=observations
         )
+        data_store.commit()
         repository.commit()
 
     with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
@@ -80,6 +81,7 @@ def test_dump_parameters(db_session):
         _dump_parameters(
             repository=repository, data_store=data_store, parameters=parameters, ensemble_name=ensemble.name
         )
+        data_store.commit()
         repository.commit()
 
     with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
@@ -187,6 +189,7 @@ def test_dump_responses(db_session):
             ensemble_name=ensemble.name,
             key_mapping=key_mapping,
         )
+        data_store.commit()
         repository.commit()
 
     with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
