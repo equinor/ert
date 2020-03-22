@@ -179,7 +179,7 @@ Observation.response_definitions = relationship(
 
 
 class ErtBlob(Blobs):
-    __tablename__ = "data_frames"
+    __tablename__ = "ert_blobs"
 
     id = Column(Integer, primary_key=True)
     data = Column(PickleType)

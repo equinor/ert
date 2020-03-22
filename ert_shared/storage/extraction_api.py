@@ -55,7 +55,7 @@ def _dump_observations(rdb_api, blob_api, observations):
             data_indexes_ref=data_indexes_df.id,
             values_ref=vals_df.id,
             stds_ref=stds_df.id,
-        )        
+        )
 
 
 def _extract_and_dump_parameters(rdb_api, blob_api, ensemble_name):
@@ -69,7 +69,10 @@ def _extract_and_dump_parameters(rdb_api, blob_api, ensemble_name):
     }
 
     _dump_parameters(
-        rdb_api=rdb_api, blob_api=blob_api, parameters=all_parameters, ensemble_name=ensemble_name
+        rdb_api=rdb_api,
+        blob_api=blob_api,
+        parameters=all_parameters,
+        ensemble_name=ensemble_name,
     )
 
 
@@ -118,14 +121,14 @@ def _extract_and_dump_responses(rdb_api, blob_api, ensemble_name):
 
     _dump_response(
         rdb_api=rdb_api,
-        blob_api=blob_api, 
+        blob_api=blob_api,
         responses=gen_data_data,
         ensemble_name=ensemble_name,
         key_mapping=key_mapping,
     )
     _dump_response(
         rdb_api=rdb_api,
-        blob_api=blob_api, 
+        blob_api=blob_api,
         responses=summary_data,
         ensemble_name=ensemble_name,
         key_mapping=key_mapping,
@@ -164,18 +167,21 @@ def dump_to_new_storage(rdb_api=None, blob_api=None):
 
     if rdb_api is None:
         rdb_api = RdbApi()
-    
+
     if blob_api is None:
         blob_api = BlobApi()
 
     with rdb_api:
         ensemble = _create_ensemble(rdb_api)
         _extract_and_dump_observations(rdb_api=rdb_api, blob_api=blob_api)
-        _extract_and_dump_parameters(rdb_api=rdb_api, blob_api=blob_api, ensemble_name=ensemble.name)
-        _extract_and_dump_responses(rdb_api=rdb_api, blob_api=blob_api, ensemble_name=ensemble.name)
+        _extract_and_dump_parameters(
+            rdb_api=rdb_api, blob_api=blob_api, ensemble_name=ensemble.name
+        )
+        _extract_and_dump_responses(
+            rdb_api=rdb_api, blob_api=blob_api, ensemble_name=ensemble.name
+        )
         blob_api.commit()
         rdb_api.commit()
-        
 
     end_time = time.time()
     print("Extraction done... (Took {:.2f} seconds)".format(end_time - start_time))
