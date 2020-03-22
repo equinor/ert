@@ -1,8 +1,8 @@
 import pandas as pd
 import pytest
 
-from ert_shared.storage.repository import ErtRepository
-from ert_shared.storage.data_store import DataStore
+from ert_shared.storage.rdb_api import RdbApi
+from ert_shared.storage.blob_api import BlobApi
 from ert_shared.storage.extraction_api import (
     _dump_observations,
     _dump_parameters,
@@ -24,35 +24,35 @@ observation_data = {
 
 
 def test_dump_observations(db_session):
-    with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
+    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
         observations = pd.DataFrame.from_dict(observation_data)
         _dump_observations(
-            repository=repository, data_store=data_store, observations=observations
+            rdb_api=rdb_api, blob_api=blob_api, observations=observations
         )
-        data_store.commit()
-        repository.commit()
+        blob_api.commit()
+        rdb_api.commit()
 
-    with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
-        poly_obs = repository.get_observation("POLY_OBS")
+    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+        poly_obs = rdb_api.get_observation("POLY_OBS")
         assert poly_obs.id is not None
-        key_indexes = data_store.get_data_frame(poly_obs.key_indexes_ref)
+        key_indexes = blob_api.get_blob(poly_obs.key_indexes_ref)
         assert key_indexes.data == [0, 2, 4, 6, 8]
-        data_indexes = data_store.get_data_frame(poly_obs.data_indexes_ref)
+        data_indexes = blob_api.get_blob(poly_obs.data_indexes_ref)
         assert data_indexes.data == [10, 12, 14, 16, 18]
-        values = data_store.get_data_frame(poly_obs.values_ref)
+        values = blob_api.get_blob(poly_obs.values_ref)
         assert values.data == [2.0, 7.1, 21.1, 31.8, 53.2]
-        stds = data_store.get_data_frame(poly_obs.stds_ref)
+        stds = blob_api.get_blob(poly_obs.stds_ref)
         assert stds.data == [0.1, 1.1, 4.1, 9.1, 16.1]
 
-        test_obs = repository.get_observation("TEST_OBS")
+        test_obs = rdb_api.get_observation("TEST_OBS")
         assert test_obs.id is not None
-        key_indexes = data_store.get_data_frame(test_obs.key_indexes_ref)
+        key_indexes = blob_api.get_blob(test_obs.key_indexes_ref)
         assert key_indexes.data == [3, 6, 9]
-        data_indexes = data_store.get_data_frame(test_obs.data_indexes_ref)
+        data_indexes = blob_api.get_blob(test_obs.data_indexes_ref)
         assert data_indexes.data == [3, 6, 9]
-        values = data_store.get_data_frame(test_obs.values_ref)
+        values = blob_api.get_blob(test_obs.values_ref)
         assert values.data == [6, 12, 18]
-        stds = data_store.get_data_frame(test_obs.stds_ref)
+        stds = blob_api.get_blob(test_obs.stds_ref)
         assert stds.data == [0.1, 0.2, 0.3]
 
 
@@ -73,32 +73,32 @@ parameters = {"COEFFS:COEFF_A": coeff_a}
 
 def test_dump_parameters(db_session):
     ensemble_name = "default"
-    with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
-        ensemble = repository.add_ensemble(name=ensemble_name)
+    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+        ensemble = rdb_api.add_ensemble(name=ensemble_name)
         for i in range(5):
-            repository.add_realization(i, ensemble.name)
+            rdb_api.add_realization(i, ensemble.name)
 
         _dump_parameters(
-            repository=repository, data_store=data_store, parameters=parameters, ensemble_name=ensemble.name
+            rdb_api=rdb_api, blob_api=blob_api, parameters=parameters, ensemble_name=ensemble.name
         )
-        data_store.commit()
-        repository.commit()
+        blob_api.commit()
+        rdb_api.commit()
 
-    with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
-        parameter_0 = repository.get_parameter("COEFF_A", "COEFFS", 0, ensemble_name)
-        assert data_store.get_data_frame(parameter_0.value_ref).data == 0.7684484807065148
+    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+        parameter_0 = rdb_api.get_parameter("COEFF_A", "COEFFS", 0, ensemble_name)
+        assert blob_api.get_blob(parameter_0.value_ref).data == 0.7684484807065148
 
-        parameter_1 = repository.get_parameter("COEFF_A", "COEFFS", 1, ensemble_name)
-        assert data_store.get_data_frame(parameter_1.value_ref).data == 0.031542101926117616
+        parameter_1 = rdb_api.get_parameter("COEFF_A", "COEFFS", 1, ensemble_name)
+        assert blob_api.get_blob(parameter_1.value_ref).data == 0.031542101926117616
 
-        parameter_2 = repository.get_parameter("COEFF_A", "COEFFS", 2, ensemble_name)
-        assert data_store.get_data_frame(parameter_2.value_ref).data == 0.9116906743615176
+        parameter_2 = rdb_api.get_parameter("COEFF_A", "COEFFS", 2, ensemble_name)
+        assert blob_api.get_blob(parameter_2.value_ref).data == 0.9116906743615176
 
-        parameter_3 = repository.get_parameter("COEFF_A", "COEFFS", 3, ensemble_name)
-        assert data_store.get_data_frame(parameter_3.value_ref).data == 0.6985513230581486
+        parameter_3 = rdb_api.get_parameter("COEFF_A", "COEFFS", 3, ensemble_name)
+        assert blob_api.get_blob(parameter_3.value_ref).data == 0.6985513230581486
 
-        parameter_4 = repository.get_parameter("COEFF_A", "COEFFS", 4, ensemble_name)
-        assert data_store.get_data_frame(parameter_4.value_ref).data == 0.5949261230249001
+        parameter_4 = rdb_api.get_parameter("COEFF_A", "COEFFS", 4, ensemble_name)
+        assert blob_api.get_blob(parameter_4.value_ref).data == 0.5949261230249001
 
 
 poly_res = pd.DataFrame.from_dict(
@@ -171,30 +171,30 @@ responses = {"POLY_RES": poly_res}
 
 def test_dump_responses(db_session):
     ensemble_name = "default"
-    with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
-        ensemble = repository.add_ensemble(name=ensemble_name)
+    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+        ensemble = rdb_api.add_ensemble(name=ensemble_name)
 
         observations = pd.DataFrame.from_dict(observation_data)
-        _dump_observations(repository=repository, data_store=data_store, observations=observations)
+        _dump_observations(rdb_api=rdb_api, blob_api=blob_api, observations=observations)
 
         for i in range(5):
-            repository.add_realization(i, ensemble.name)
+            rdb_api.add_realization(i, ensemble.name)
 
         key_mapping = {"POLY_RES": "POLY_OBS"}
 
         _dump_response(
-            repository=repository,
-            data_store=data_store,
+            rdb_api=rdb_api,
+            blob_api=blob_api,
             responses=responses,
             ensemble_name=ensemble.name,
             key_mapping=key_mapping,
         )
-        data_store.commit()
-        repository.commit()
+        blob_api.commit()
+        rdb_api.commit()
 
-    with ErtRepository(db_session) as repository, DataStore(db_session) as data_store:
-        response_0 = repository.get_response("POLY_RES", 0, ensemble_name)
-        response_values = data_store.get_data_frame(response_0.values_ref).data
+    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+        response_0 = rdb_api.get_response("POLY_RES", 0, ensemble_name)
+        response_values = blob_api.get_blob(response_0.values_ref).data
         assert response_values == [
             2.5995,
             5.203511,

@@ -6,14 +6,14 @@ from ert_shared.storage import (
     Response,
     ParameterDefinition,
     Parameter,
-    DataFrame,
+    ErtBlob,
 )
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Bundle
 from ert_shared.storage.session import session_factory
 
 
-class DataStore:
+class BlobApi:
     def __init__(self, session=None):
 
         if session is None:
@@ -39,10 +39,10 @@ class DataStore:
     def close(self):
         self._session.close()
 
-    def add_data_frame(self, data):
-        data_frame = DataFrame(data=data)
+    def add_blob(self, data):
+        data_frame = ErtBlob(data=data)
         self._session.add(data_frame)
         return data_frame
 
-    def get_data_frame(self, id):
-        return self._session.query(DataFrame).get(id)
+    def get_blob(self, id):
+        return self._session.query(ErtBlob).get(id)

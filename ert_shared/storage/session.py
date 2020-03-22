@@ -1,4 +1,4 @@
-from ert_shared.storage import Entities, DataStore
+from ert_shared.storage import Entities, Blobs
 from sqlalchemy import create_engine
 from sqlalchemy.orm.session import Session
 
@@ -11,7 +11,7 @@ class SessionFactory(object):
         if self._session is None:
             engine = create_engine("sqlite:///ert_storage.db", echo=False)
             Entities.metadata.create_all(engine)
-            DataStore.metadata.create_all(engine)
+            Blobs.metadata.create_all(engine)
             connection = engine.connect()
             self._session = Session(bind=connection)
         return self._session
