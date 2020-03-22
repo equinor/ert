@@ -17,7 +17,7 @@ class BlobApi:
     def __init__(self, session=None):
 
         if session is None:
-            self._session = session_factory.get_session()
+            self._session = session_factory.get_blobs_session()
         else:
             self._session = session
 

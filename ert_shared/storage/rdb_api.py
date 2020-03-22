@@ -1,6 +1,12 @@
-from ert_shared.storage import (Ensemble, Observation, Parameter,
-                                ParameterDefinition, Realization, Response,
-                                ResponseDefinition)
+from ert_shared.storage import (
+    Ensemble,
+    Observation,
+    Parameter,
+    ParameterDefinition,
+    Realization,
+    Response,
+    ResponseDefinition,
+)
 from ert_shared.storage.session import session_factory
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Bundle
@@ -10,7 +16,7 @@ class RdbApi:
     def __init__(self, session=None):
 
         if session is None:
-            self._session = session_factory.get_session()
+            self._session = session_factory.get_entities_session()
         else:
             self._session = session
 
