@@ -5,7 +5,7 @@ from sqlalchemy.schema import UniqueConstraint
 
 
 Entities = declarative_base(name="Entities")
-DataStore = declarative_base(name="DataStore")
+Blobs = declarative_base(name="Blobs")
 
 
 class Ensemble(Entities):
@@ -178,7 +178,7 @@ Observation.response_definitions = relationship(
 )
 
 
-class DataFrame(DataStore):
+class ErtBlob(Blobs):
     __tablename__ = "data_frames"
 
     id = Column(Integer, primary_key=True)
