@@ -2,6 +2,7 @@ from io import StringIO
 
 import pandas as pd
 from ert_shared.storage.rdb_api import RdbApi
+from ert_shared.storage.blob_api import BlobApi
 
 
 def get_response_data(name, ensemble_name, rdb_api=None):
@@ -23,14 +24,21 @@ def get_all_ensembles(rdb_api=None):
 
 class PlotStorageApi(object):
 
-    def __init__(self, session=None):
+    def __init__(self, session=None, blob_session=None):
         self._session = session
+        self._blob_session = blob_session
 
     def _repo(self):
         if self._session is not None:
             return RdbApi(self._session)
         else:
             return RdbApi()
+
+    def _blob(self):
+        if self._session is not None:
+            return BlobApi(self._session)
+        else:
+            return BlobApi()
 
     def all_data_type_keys(self):
         """ Returns a list of all the keys except observation keys. For each key a dict is returned with info about
@@ -88,12 +96,17 @@ class PlotStorageApi(object):
             is the realization number, and the column index is a multi-index with (obs_key, index/date, obs_index),
             where index/date is used to relate the observation to the data point it relates to, and obs_index is
             the index for the observation itself"""
+        blob = self._blob()
         if len(obs_keys) > 0:
             obs = self._repo().get_observation(obs_keys[0])
-            idx = pd.MultiIndex.from_arrays([obs.data_indexes, obs.key_indexes],
+            data_indexes = blob.get_blob(obs.data_indexes_ref)
+            key_indexes = blob.get_blob(obs.key_indexes_ref)
+            values = blob.get_blob(obs.values_ref)
+            stds = blob.get_blob(obs.stds_ref)
+            idx = pd.MultiIndex.from_arrays([data_indexes.data, key_indexes.data],
                                              names=['data_index', 'key_index'])
 
-            all = pd.DataFrame({"OBS":obs.values, "STD":obs.stds}, index=idx)
+            all = pd.DataFrame({"OBS":values.data, "STD":stds.data}, index=idx)
             return all.T
         else:
             return pd.DataFrame()
@@ -154,9 +167,10 @@ class PlotStorageApi(object):
     #         ens = self._repo().get_ensemble(ens_name)
 
     def get_param_data(self, ensembles, keys=[], realizations=[]):
-
+        repo = self._repo()
+        blob = self._blob()
         for ens_name in ensembles:
-            ens = self._repo().get_ensemble(ens_name)
+            ens = repo.get_ensemble(ens_name)
 
             yield DataStreamMessage("ensemble", ens_name, "start")
 
@@ -167,7 +181,8 @@ class PlotStorageApi(object):
 
             for response_def in ens.response_definitions:
                 if response_def.name in keys or len(keys) == 0:
-                    size = len(response_def.responses[0].values)
+                    indexes = blob.get_blob(response_def.indexes_ref)
+                    size = len(indexes.data)
                     yield DataStreamMessage("key_def", response_def.name, "size", size)
 
             for param_def in ens.parameter_definitions:
@@ -176,7 +191,8 @@ class PlotStorageApi(object):
 
             for response_def in ens.response_definitions:
                 if response_def.name in keys or len(keys) == 0:
-                    yield DataStreamMessage("index_def", response_def.name, "indexes", response_def.indexes)
+                    indexes = blob.get_blob(response_def.indexes_ref)
+                    yield DataStreamMessage("index_def", response_def.name, "indexes", indexes.data)
 
             for real in ens.realizations:
                 if real.id in realizations or len(realizations) == 0:
@@ -186,7 +202,8 @@ class PlotStorageApi(object):
                             for param in real.parameters:
                                 if param.parameter_definition == param_def:
                                     yield DataStreamMessage("parameter", param_def.name, "start")
-                                    yield DataStreamMessage("parameter", param_def.name, "chunk", [param.value])
+                                    value = blob.get_blob(param.value_ref)
+                                    yield DataStreamMessage("parameter", param_def.name, "chunk", [value.data])
                             yield DataStreamMessage("parameter", param_def.name, "done")
 
                     for response_def in ens.response_definitions:
@@ -194,7 +211,8 @@ class PlotStorageApi(object):
                             for respons in real.responses:
                                 if respons.response_definition == response_def:
                                     yield DataStreamMessage("response", response_def.name, "start")
-                                    yield DataStreamMessage("response", response_def.name, "chunk", respons.values)
+                                    values = blob.get_blob(respons.values_ref)
+                                    yield DataStreamMessage("response", response_def.name, "chunk", values.data)
                             yield DataStreamMessage("response", response_def.name, "done")
 
                     yield DataStreamMessage("realisation", real.id, "done")
