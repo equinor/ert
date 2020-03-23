@@ -1,7 +1,8 @@
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from ert_shared.storage.repository import ErtRepository
+from ert_shared.storage.rdb_api import RdbApi
+from ert_shared.storage.blob_api import BlobApi
 
 from ert_shared.storage import Entities, Blobs
 
@@ -36,32 +37,35 @@ def db_session(engine, tables):
 
 @pytest.yield_fixture
 def populated_db(db_session):
-    with ErtRepository(db_session) as repository:
+    with RdbApi(db_session) as repository, BlobApi(db_session) as blob:
         ensemble = repository.add_ensemble(name="ensemble_name")
 
         realization = repository.add_realization(0, ensemble.name)
         realization2 = repository.add_realization(1, ensemble.name)
 
-
+        def add_blob(data):
+            ret = blob.add_blob(data)
+            blob.flush()
+            return ret.id
 
         observation = repository.add_observation(
             name="observation_one",
-            key_indexes=[0, 3],
-            data_indexes=[0, 3],
-            values=[10.1, 10.2],
-            stds=[1, 3],
+            key_indexes_ref=add_blob([0, 3]),
+            data_indexes_ref=add_blob([2, 3]),
+            values_ref=add_blob([10.1, 10.2]),
+            stds_ref=add_blob([1, 3]),
         )
 
         repository.add_response_definition(
             name="response_one",
-            indexes=[0, 1],
+            indexes_ref=add_blob([0, 1]),
             ensemble_name=ensemble.name,
             observation_name=observation.name
         )
 
         repository.add_response_definition(
             name="response_two",
-            indexes=[0, 1],
+            indexes_ref=add_blob([0, 1]),
             ensemble_name=ensemble.name,
         )
 
@@ -71,20 +75,20 @@ def populated_db(db_session):
         def add_data(realization):
             repository.add_response(
                 name="response_one",
-                values=[11.1, 11.2],
+                values_ref=add_blob([11.1, 11.2]),
                 realization_index=realization.index,
                 ensemble_name=ensemble.name,
             )
 
             repository.add_response(
                 name="response_two",
-                values=[12.1, 12.2],
+                values_ref=add_blob([12.1, 12.2]),
                 realization_index=realization.index,
                 ensemble_name=ensemble.name,
             )
 
-            repository.add_parameter("A", "G", 1, realization.index, "ensemble_name")
-            repository.add_parameter("B", "G", 2, realization.index, "ensemble_name")
+            repository.add_parameter("A", "G", add_blob(1), realization.index, "ensemble_name")
+            repository.add_parameter("B", "G", add_blob(2), realization.index, "ensemble_name")
 
         add_data(realization)
         add_data(realization2)
