@@ -196,7 +196,7 @@ class PlotStorageApi(object):
 
             for real in ens.realizations:
                 if real.id in realizations or len(realizations) == 0:
-                    yield DataStreamMessage("realisation", real.id, "start")
+                    yield DataStreamMessage("realisation", real.index, "start")
                     for param_def in ens.parameter_definitions:
                         if param_def.name in keys or len(keys) == 0:
                             for param in real.parameters:
