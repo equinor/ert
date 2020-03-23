@@ -5,6 +5,7 @@ import sys
 import threading
 
 from ert_shared import ERT
+from ert_shared import clear_global_state
 from ert_shared.cli.model_factory import create_model
 from ert_shared.cli.monitor import Monitor
 from ert_shared.cli.notifier import ErtCliNotifier
@@ -12,6 +13,11 @@ from ert_shared.cli.workflow import execute_workflow
 from ert_shared.cli import WORKFLOW_MODE, ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE, ENSEMBLE_EXPERIMENT_MODE
 from ert_shared.tracker.factory import create_tracker
 from res.enkf import EnKFMain, ResConfig
+
+
+def _clear_and_exit(args):
+    clear_global_state()
+    sys.exit(args)
 
 
 def run_cli(args):
@@ -30,7 +36,7 @@ def run_cli(args):
     if args.disable_monitoring:
         model.startSimulations(argument)
         if model.hasRunFailed():
-            sys.exit(model.getFailMessage())
+            _clear_and_exit(model.getFailMessage())
     else:
         # Test run does not have a current_case
         if "current_case" in args and args.current_case:
@@ -42,7 +48,7 @@ def run_cli(args):
                 "ERROR: Target file system and source file system can not be the same. "
                 "They were both: {}.".format(args.target_case)
             )
-            sys.exit(msg)
+            _clear_and_exit(msg)
 
         thread = threading.Thread(
             name="ert_cli_simulation_thread",
@@ -63,4 +69,4 @@ def run_cli(args):
         thread.join()
 
         if model.hasRunFailed():
-            sys.exit(1)  # the monitor has already reported the error message
+            _clear_and_exit(1)  # the monitor has already reported the error message
