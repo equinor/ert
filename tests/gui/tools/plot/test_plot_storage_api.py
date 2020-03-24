@@ -1,6 +1,7 @@
 import pytest
 from unittest import TestCase
 import pandas as pd
+import pprint
 
 from ert_shared.storage.storage_api import PlotStorageApi
 
@@ -43,4 +44,12 @@ def test_stream_param(populated_db):
     print(csv)
     df = pd.read_csv(StringIO(csv), index_col=[0], header=[0, 1])
     print(df)
+
+def test_ensemble_schema(populated_db):
+    api = PlotStorageApi(populated_db)
+
+
+    schema = api.ensemble_schema("ensemble_name")
+    pp = pprint.PrettyPrinter(indent=2)
+    pp.pprint(schema)
 
