@@ -57,6 +57,7 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhaseName(phase_string, indeterminate=True)
 
         run_context = None
+        previous_ensemble_name = None
         for iteration, weight in enumerate(weights):
             run_context = self.create_context( arguments , iteration,  prior_context = run_context )
             self._simulateAndPostProcess(run_context, arguments )
@@ -65,7 +66,8 @@ class MultipleDataAssimilation(BaseRunModel):
             EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=ERT.ert)
             self.update( run_context , weights[iteration])
             EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=ERT.ert)
-            dump_to_new_storage()
+            analysis_module_name = self.ert().analysisConfig().activeModuleName()
+            previous_ensemble_name = dump_to_new_storage(reference=None if previous_ensemble_name is None else (previous_ensemble_name, analysis_module_name))
 
         self.setPhaseName("Post processing...", indeterminate=True)
         run_context = self.create_context( arguments , len(weights),  prior_context = run_context, update = False)
@@ -73,7 +75,8 @@ class MultipleDataAssimilation(BaseRunModel):
 
         self.setPhase(iteration_count + 2, "Simulations completed.")
 
-        dump_to_new_storage()
+        analysis_module_name = self.ert().analysisConfig().activeModuleName()
+        previous_ensemble_name = dump_to_new_storage(reference=None if previous_ensemble_name is None else (previous_ensemble_name, analysis_module_name))
 
         return run_context
 
