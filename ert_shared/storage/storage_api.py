@@ -40,36 +40,94 @@ class PlotStorageApi(object):
         else:
             return BlobApi()
 
+    def ensemble_schema(self, ensemble):
+        repo = self._repo()
+        ens = repo.get_ensemble(ensemble)
+
+        schema = {
+            "name": ens.name,
+            "parameter_definitions": [],
+            "response_definitions": [],
+            "realizations": [],
+            "observations": []
+        }
+
+        for param_def in ens.parameter_definitions:
+            schema["parameter_definitions"].append({
+                "name": param_def.name
+            })
+
+        def observation_names(resp_def):
+            if resp_def.observation is not None:
+                return [resp_def.observation.name]
+            else:
+                return []
+
+        for resp_def in ens.response_definitions:
+            schema["response_definitions"].append({
+                "name": resp_def.name,
+                "observed_by": observation_names(resp_def)
+            })
+
+        for obs_name in repo.get_all_observation_keys():
+            obs = repo.get_observation(obs_name)
+            schema["observations"].append({
+                "name":obs.name,
+                "data_refs": {
+                    "values": obs.values_ref,
+                    "stds": obs.stds_ref,
+                    "key_indexes": obs.key_indexes_ref,
+                    "data_indexes": obs.data_indexes_ref,
+                },
+                "observes": [resp_def.name for resp_def in obs.response_definitions]
+            })
+
+        for real in ens.realizations:
+            realization = { "parameters": [],
+                            "responses": [] }
+            for param in real.parameters:
+                realization["parameters"].append(
+                    {"name": param.parameter_definition.name,
+                     "data_refs": {"value" : param.value_ref}})
+            for resp in real.responses:
+                response = {
+                    "name": resp.response_definition.name,
+                    "data_refs": {"values": resp.values_ref},
+                    "observed_by": observation_names(resp.response_definition)}
+
+                realization["responses"].append(response)
+
+            schema["realizations"].append(realization)
+
+        return schema
+
     def all_data_type_keys(self):
         """ Returns a list of all the keys except observation keys. For each key a dict is returned with info about
             the key"""
         # Will likely have to change this to somehow include the ensemble name
         ens = self._repo().get_all_ensembles()[0]
 
+        schema = self.ensemble_schema(ens.name)
+
         result = []
 
         result.extend([{
-            "key": param.name,
+            "key": param["name"],
             "index_type": None,
             "observations": [],
             "has_refcase": False,
             "dimensionality": 1,
             "metadata": {"data_origin": "Parameters"}
-        } for param in ens.parameter_definitions])
-
-        def _obs_names(obs):
-            if obs is None:
-                return []
-            return [obs.name]
+        } for param in schema["parameter_definitions"]])
 
         result.extend([{
-            "key": resp.name,
+            "key": resp["name"],
             "index_type": None,
-            "observations": _obs_names(resp.observation),
+            "observations": resp["observed_by"],
             "has_refcase": False,
             "dimensionality": 2,
             "metadata": {"data_origin": "Response"}
-        } for resp in ens.response_definitions])
+        } for resp in schema["response_definitions"]])
 
         return result
 
