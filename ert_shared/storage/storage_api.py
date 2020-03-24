@@ -51,7 +51,7 @@ class StorageApi(object):
             }
         ]
         """
-        return [{"name": ensemble.name, "ref_pointer" : ensemble.id} for ensemble in self._repo().get_all_ensembles()]
+        return [{"name": ensemble.name, "ref_pointer" : ensemble.name} for ensemble in self._repo().get_all_ensembles()]
 
 
     def realizations(self, ensemble_id, filter): 
@@ -68,14 +68,8 @@ class StorageApi(object):
         """
         pass
     
-    def data(self, id, filter):
-        """
-        @param id "id in blob"
-        @return type:
-            data vector
-        """
-        pass
-
+    def data(self, id):
+        return self._blob().get_blob(id)
 
 
     def ensemble_schema(self, ensemble):
@@ -84,16 +78,23 @@ class StorageApi(object):
 
         schema = {
             "name": ens.name,
-            "parameter_definitions": [],
-            "response_definitions": [],
-            "realizations": [],
+            "parameters": [],
+            "responses": [],
             "observations": []
         }
 
         for param_def in ens.parameter_definitions:
-            schema["parameter_definitions"].append({
-                "name": param_def.name
+            reals = []
+            schema["parameters"].append({
+                "name": param_def.name,
+                "realizations": reals
             })
+
+            for real in ens.realizations:
+                for param in real.parameters:
+                    if param.parameter_definition == param_def:
+                        reals.append({"name": real.index,
+                                      "data_refs": {"value": param.value_ref}})
 
         def observation_names(resp_def):
             if resp_def.observation is not None:
@@ -102,10 +103,18 @@ class StorageApi(object):
                 return []
 
         for resp_def in ens.response_definitions:
-            schema["response_definitions"].append({
+            reals = []
+            schema["responses"].append({
                 "name": resp_def.name,
-                "observed_by": observation_names(resp_def)
+                "realizations": reals
             })
+
+            for real in ens.realizations:
+                for resp in real.responses:
+                    if resp.response_definition == resp_def:
+                        reals.append({"name": real.index,
+                                      "data_refs": {"values": resp.values_ref},
+                                      "observed_by": observation_names(resp_def)})
 
         for obs_name in repo.get_all_observation_keys():
             obs = repo.get_observation(obs_name)
@@ -119,23 +128,6 @@ class StorageApi(object):
                 },
                 "observes": [resp_def.name for resp_def in obs.response_definitions]
             })
-
-        for real in ens.realizations:
-            realization = { "parameters": [],
-                            "responses": [] }
-            for param in real.parameters:
-                realization["parameters"].append(
-                    {"name": param.parameter_definition.name,
-                     "data_refs": {"value" : param.value_ref}})
-            for resp in real.responses:
-                response = {
-                    "name": resp.response_definition.name,
-                    "data_refs": {"values": resp.values_ref},
-                    "observed_by": observation_names(resp.response_definition)}
-
-                realization["responses"].append(response)
-
-            schema["realizations"].append(realization)
 
         return schema
 
