@@ -132,11 +132,11 @@ def test_add_reference_ensemble(db_session):
     with RdbApi(db_session) as rdb_api:
         ensemble = rdb_api.add_ensemble(name=reference_ensemble_name)
         rdb_api.commit()
-    
+
     with RdbApi(db_session) as rdb_api:
         result_ensemble = rdb_api.add_ensemble(name="result_ensemble", reference=(reference_ensemble_name, "es_mda"))
         rdb_api.commit()
-        
+        assert result_ensemble.parent[0].ensemble_reference.name == reference_ensemble_name
 
 def test_add_realization(db_session):
     with RdbApi(db_session) as rdb_api:

@@ -62,11 +62,11 @@ class Update(Entities):
 
 
 Ensemble.children = relationship(
-    "Update", order_by=Update.id, back_populates="ensemble_reference"
+    "Update", order_by=Update.id, back_populates="ensemble_reference", foreign_keys=[Update.ensemble_reference_id]
 )
 
 Ensemble.parent = relationship(
-    "Update", order_by=Update.id, back_populates="ensemble_result"
+    "Update", order_by=Update.id, back_populates="ensemble_result", foreign_keys=[Update.ensemble_result_id]
 )
 
 
