@@ -5,6 +5,8 @@ from tests.storage.app import FlaskWrapper
 from tests.storage import populated_db, db_session, engine, tables
 import pytest
 #from ert_shared.storage.demo_api import data_definitions, get_data
+import json
+import pprint
 
 @pytest.fixture()
 def test_client(populated_db):
@@ -19,7 +21,24 @@ def test_client(populated_db):
     ctx.pop()
 
 def test_api(test_client):
-    
-    print(test_client.get("ensembles").data)
-    #print(test_client.get("ensembles/1").data)
-    
+    response = test_client.get("/ensembles")
+    print(response.data)
+    print(response.mimetype)
+    ensembles = json.loads(response.data)
+
+    for ens in ensembles["ensembles"]:
+        url = ens["ref_pointer"]
+        ensemble = json.loads(test_client.get(url).data)
+
+        pprint.pprint(ensemble)
+        assert ensemble["name"] == "ensemble_name"
+
+
+def test_observation(test_client):
+    resp = test_client.get("/ensembles/ensemble_name")
+    ens = json.loads(resp.data)
+    for obs in ens["observations"]:
+        for data_ref, url in obs["data_refs"].items():
+            resp = test_client.get(url)
+
+            print(resp.data)
