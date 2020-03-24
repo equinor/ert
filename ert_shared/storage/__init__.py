@@ -7,17 +7,34 @@ from sqlalchemy.schema import UniqueConstraint
 Entities = declarative_base(name="Entities")
 Blobs = declarative_base(name="Blobs")
 
+class Project(Entities):
+    __tablename__ = "projects"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+
+    __table_args__ = (UniqueConstraint("name", name="_uc_project_name_"),)
+
+    def __repr__(self):
+        return "<Project(name='{}')>".format(self.name)
+
 
 class Ensemble(Entities):
     __tablename__ = "ensembles"
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
+    project_id = Column(Integer, ForeignKey("projects.id"))
+    project = relationship("Project", back_populates="ensembles")
 
     __table_args__ = (UniqueConstraint("name", name="_name_ensemble_id_"),)
 
     def __repr__(self):
         return "<Ensemble(name='{}')>".format(self.name)
+
+Project.ensembles = relationship(
+    "Ensemble", order_by=Ensemble.id, back_populates="project"
+)
 
 
 class Realization(Entities):
