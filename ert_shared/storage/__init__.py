@@ -7,6 +7,7 @@ from sqlalchemy.schema import UniqueConstraint
 Entities = declarative_base(name="Entities")
 Blobs = declarative_base(name="Blobs")
 
+
 class Project(Entities):
     __tablename__ = "projects"
 
@@ -32,9 +33,28 @@ class Ensemble(Entities):
     def __repr__(self):
         return "<Ensemble(name='{}')>".format(self.name)
 
+
 Project.ensembles = relationship(
     "Ensemble", order_by=Ensemble.id, back_populates="project"
 )
+
+
+class Update(Entities):
+    __tablename__ = "updates"
+
+    id = Column(Integer, primary_key=True)
+    algorithm = Column(String)
+    ensemble_reference_id = Column(Integer, ForeignKey("ensembles.id"))
+    ensemble_reference = relationship("Ensemble", back_populates="ensemble_reference")
+    ensemble_result_id = Column(Integer, ForeignKey("ensembles.id"))
+    ensemble_result = relationship("Ensemble", back_populates="ensemble_result")
+
+    __table_args__ = (UniqueConstraint("ensemble_result_id", name="_uc_result_id_"),)
+
+    def __repr__(self):
+        return "<Update(algorithm='{}', ensemble_reference_id='{}', ensemble_result_id='{}')>".format(
+            self.algorithm, self.ensemble_reference_id, self.ensemble_result_id
+        )
 
 
 class Realization(Entities):
@@ -102,7 +122,10 @@ class Response(Entities):
 
     def __repr__(self):
         return "<Response(name='{}', values_ref='{}', realization_id='{}', response_definition_id='{}')>".format(
-            self.name, self.values_ref, self.realization_id, self.response_definition_id,
+            self.name,
+            self.values_ref,
+            self.realization_id,
+            self.response_definition_id,
         )
 
 
@@ -186,7 +209,11 @@ class Observation(Entities):
 
     def __repr__(self):
         return "<Observation(name='{}', key_indexes_ref='{}', data_indexes_ref='{}', values_ref='{}', stds_ref='{}')>".format(
-            self.name, self.key_indexes_ref, self.data_indexes_ref, self.values_ref, self.stds_ref
+            self.name,
+            self.key_indexes_ref,
+            self.data_indexes_ref,
+            self.values_ref,
+            self.stds_ref,
         )
 
 
@@ -203,4 +230,3 @@ class ErtBlob(Blobs):
 
     def __repr__(self):
         return "<Value(id='{}', data='{}')>".format(self.id, self.data)
-
