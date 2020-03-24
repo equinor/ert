@@ -6,6 +6,7 @@ from ert_shared.storage import (
     Realization,
     Response,
     ResponseDefinition,
+    Update,
 )
 from ert_shared.storage.session import session_factory
 from sqlalchemy import create_engine
@@ -111,9 +112,15 @@ class RdbApi:
     def get_observation(self, name):
         return self._session.query(Observation).filter_by(name=name).first()
 
-    def add_ensemble(self, name):
+    def add_ensemble(self, name, reference=None):
         ensemble = Ensemble(name=name)
         self._session.add(ensemble)
+        if reference is not None:
+            reference_ensemble = self.get_ensemble(reference[0])
+            update = Update(algorithm=reference[1])
+            update.ensemble_reference = reference_ensemble
+            update.ensemble_result = ensemble
+            self._session.add(update)
         return ensemble
 
     def add_realization(self, index, ensemble_name):
