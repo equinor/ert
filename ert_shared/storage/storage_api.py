@@ -22,7 +22,7 @@ def get_all_ensembles(rdb_api=None):
         return [ensemble.name for ensemble in rdb_api.get_all_ensembles()]
 
 
-class PlotStorageApi(object):
+class StorageApi(object):
 
     def __init__(self, session=None, blob_session=None):
         self._session = session
@@ -39,6 +39,44 @@ class PlotStorageApi(object):
             return BlobApi(self._session)
         else:
             return BlobApi()
+
+    def ensembles(self, filter=None):
+        """
+        This function returns an overview of the ensembles available in the database
+        @return_type: 
+        [
+            {
+                "name" : "default"
+                "ref_pointer" : "10" -> "/ensembles/10" 
+            }
+        ]
+        """
+        return [{"name": ensemble.name, "ref_pointer" : ensemble.id} for ensemble in self._repo().get_all_ensembles()]
+
+
+    def realizations(self, ensemble_id, filter): 
+        """
+        This function returns an overview of the realizations in a given ensemble
+        @return_type: 
+        [
+            {
+                "name" : "<iens>"
+                "ref_pointer" : "2" -> "/ensembles/<ensemble_id>/realizations/2"
+                "data_pointer" : "<key>" -> "/data/<key>" 
+            }
+        ]
+        """
+        pass
+    
+    def data(self, id, filter):
+        """
+        @param id "id in blob"
+        @return type:
+            data vector
+        """
+        pass
+
+
 
     def ensemble_schema(self, ensemble):
         repo = self._repo()
