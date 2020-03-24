@@ -8,10 +8,10 @@ from ert_data.measured import MeasuredData
 from ert_shared.feature_toggling import FeatureToggling
 
 
-def _create_ensemble(rdb_api):
+def _create_ensemble(rdb_api, reference):
     facade = ERT.enkf_facade
     ensemble_name = facade.get_current_case_name()
-    ensemble = rdb_api.add_ensemble(ensemble_name)
+    ensemble = rdb_api.add_ensemble(ensemble_name, reference=reference)
 
     for i in range(facade.get_ensemble_size()):
         rdb_api.add_realization(index=i, ensemble_name=ensemble.name)
@@ -156,7 +156,7 @@ def _dump_response(rdb_api, blob_api, responses, ensemble_name, key_mapping):
             )
 
 
-def dump_to_new_storage(rdb_api=None, blob_api=None):
+def dump_to_new_storage(reference=None, rdb_api=None, blob_api=None):
     if not FeatureToggling.is_enabled("new-storage"):
         return
 
@@ -172,7 +172,7 @@ def dump_to_new_storage(rdb_api=None, blob_api=None):
         blob_api = BlobApi()
 
     with rdb_api:
-        ensemble = _create_ensemble(rdb_api)
+        ensemble = _create_ensemble(rdb_api, reference=reference)
         _extract_and_dump_observations(rdb_api=rdb_api, blob_api=blob_api)
         _extract_and_dump_parameters(
             rdb_api=rdb_api, blob_api=blob_api, ensemble_name=ensemble.name
@@ -182,6 +182,7 @@ def dump_to_new_storage(rdb_api=None, blob_api=None):
         )
         blob_api.commit()
         rdb_api.commit()
+        ensemble_name = ensemble.name
 
     end_time = time.time()
     print("Extraction done... (Took {:.2f} seconds)".format(end_time - start_time))
@@ -190,3 +191,5 @@ def dump_to_new_storage(rdb_api=None, blob_api=None):
             ", ".join([ensemble.name for ensemble in rdb_api.get_all_ensembles()])
         )
     )
+
+    return ensemble_name
