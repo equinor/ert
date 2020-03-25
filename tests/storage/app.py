@@ -31,7 +31,7 @@ class FlaskWrapper:
         self.app.add_url_rule('/ensembles', 'ensembles', self.ensembles)
         self.app.add_url_rule('/ensembles/<ensemble_id>', 'ensemble', self.ensemble_by_id)
         self.app.add_url_rule('/ensembles/<ensemble_id>/realizations', 'realizations', self.realizations)
-        self.app.add_url_rule('/ensembles/<ensemble_id>/realizations/<realization_id>', 'realizations', self.realization_by_id)
+        self.app.add_url_rule('/ensembles/<ensemble_id>/realizations/<realization_id>', 'realization', self.realization_by_id)
         self.app.add_url_rule('/data/<int:data_id>', 'data', self.data)
         self.api = StorageApi(session=session, blob_session=session)
     
