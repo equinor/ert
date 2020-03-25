@@ -46,11 +46,14 @@ class Update(Entities):
     algorithm = Column(String)
     ensemble_reference_id = Column(Integer, ForeignKey("ensembles.id"))
     ensemble_reference = relationship(
-        "Ensemble", foreign_keys=[ensemble_reference_id], back_populates="children"
+        "Ensemble", foreign_keys=[ensemble_reference_id], back_populates="children",
     )
     ensemble_result_id = Column(Integer, ForeignKey("ensembles.id"))
     ensemble_result = relationship(
-        "Ensemble", foreign_keys=[ensemble_result_id], back_populates="parent"
+        "Ensemble",
+        foreign_keys=[ensemble_result_id],
+        uselist=False,
+        back_populates="parent",
     )
 
     __table_args__ = (UniqueConstraint("ensemble_result_id", name="_uc_result_id_"),)
@@ -62,11 +65,17 @@ class Update(Entities):
 
 
 Ensemble.children = relationship(
-    "Update", order_by=Update.id, back_populates="ensemble_reference", foreign_keys=[Update.ensemble_reference_id]
+    "Update",
+    order_by=Update.id,
+    back_populates="ensemble_reference",
+    foreign_keys=[Update.ensemble_reference_id],
 )
 
 Ensemble.parent = relationship(
-    "Update", order_by=Update.id, back_populates="ensemble_result", foreign_keys=[Update.ensemble_result_id]
+    "Update",
+    order_by=Update.id,
+    back_populates="ensemble_result",
+    foreign_keys=[Update.ensemble_result_id],
 )
 
 
