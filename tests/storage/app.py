@@ -51,7 +51,7 @@ class FlaskWrapper:
     def realizations(self, ensemble_id):
         pass
 
-    def realizations_by_id(self, ensemble_id, realization_id):
+    def realization_by_id(self, ensemble_id, realization_id):
         pass
 
     def data(self, data_id):
