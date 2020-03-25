@@ -1,3 +1,5 @@
+import logging
+
 from ert_shared.storage import (
     Ensemble,
     Observation,
@@ -113,9 +115,15 @@ class RdbApi:
         return self._session.query(Observation).filter_by(name=name).first()
 
     def add_ensemble(self, name, reference=None):
+        msg = "Adding ensemble with name '{}'"
+        logging.info(msg.format(name))
+
         ensemble = Ensemble(name=name)
         self._session.add(ensemble)
         if reference is not None:
+            msg = "Adding ensemble '{}' as reference. '{}' is used on this update step."
+            logging.info(msg.format(reference[0], reference[1]))
+
             reference_ensemble = self.get_ensemble(reference[0])
             update = Update(algorithm=reference[1])
             update.ensemble_reference = reference_ensemble
@@ -124,6 +132,9 @@ class RdbApi:
         return ensemble
 
     def add_realization(self, index, ensemble_name):
+        msg = "Adding realization with index '{}' on ensemble '{}'"
+        logging.info(msg.format(index, ensemble_name))
+
         ensemble = self.get_ensemble(name=ensemble_name)
 
         realization = Realization(index=index)
@@ -136,9 +147,15 @@ class RdbApi:
     def add_response_definition(
         self, name, indexes_ref, ensemble_name, observation_name=None,
     ):
+        msg = "Adding response definition with name '{}' on ensemble '{}'. Attaching indexes with ref '{}'"
+        logging.info(msg.format(name, ensemble_name, indexes_ref))
+
         ensemble = self.get_ensemble(name=ensemble_name)
         observation = None
         if observation_name is not None:
+            msg = "Connecting observation '{}'"
+            logging.info(msg.format(observation_name))
+
             observation = self.get_observation(name=observation_name)
 
         response_definition = ResponseDefinition(
@@ -154,6 +171,9 @@ class RdbApi:
     def add_response(
         self, name, values_ref, realization_index, ensemble_name,
     ):
+        msg = "Adding response with name '{}' on ensemble '{}', realization '{}'. Attaching values with ref '{}'"
+        logging.info(msg.format(name, ensemble_name, realization_index, values_ref))
+
         realization = self.get_realization(
             index=realization_index, ensemble_name=ensemble_name
         )
@@ -172,6 +192,11 @@ class RdbApi:
     def add_parameter_definition(
         self, name, group, ensemble_name,
     ):
+        msg = (
+            "Adding parameter definition with name '{}' in group '{}' on ensemble '{}'"
+        )
+        logging.info(msg.format(name, group, ensemble_name))
+
         ensemble = self.get_ensemble(name=ensemble_name)
 
         parameter_definition = ParameterDefinition(
@@ -182,6 +207,11 @@ class RdbApi:
         return parameter_definition
 
     def add_parameter(self, name, group, value_ref, realization_index, ensemble_name):
+        msg = "Adding parameter with name '{}', group '{}', realization '{}', value_ref '{}', ensemble '{}'"
+        logging.info(
+            msg.format(name, group, realization_index, value_ref, ensemble_name)
+        )
+
         realization = self.get_realization(
             index=realization_index, ensemble_name=ensemble_name
         )
@@ -201,6 +231,10 @@ class RdbApi:
     def add_observation(
         self, name, key_indexes_ref, data_indexes_ref, values_ref, stds_ref
     ):
+        msg = "Adding observation with name '{}', key_indexes_ref '{}', data_indexes_ref '{}', values_ref '{}', stds_ref '{}'"
+        logging.info(
+            msg.format(name, key_indexes_ref, data_indexes_ref, values_ref, stds_ref)
+        )
 
         observation = Observation(
             name=name,
