@@ -30,6 +30,8 @@ class FlaskWrapper:
         self.app = flask.Flask("Ert http api")
         self.app.add_url_rule('/ensembles', 'ensembles', self.ensembles)
         self.app.add_url_rule('/ensembles/<ensemble_id>', 'ensemble', self.ensemble_by_id)
+        self.app.add_url_rule('/ensembles/<ensemble_id>/realizations', 'realizations', self.realizations)
+        self.app.add_url_rule('/ensembles/<ensemble_id>/realizations/<realization_id>', 'realizations', self.realization_by_id)
         self.app.add_url_rule('/data/<int:data_id>', 'data', self.data)
         self.api = StorageApi(session=session, blob_session=session)
     
@@ -45,6 +47,12 @@ class FlaskWrapper:
         ensemble = self.api.ensemble_schema(ensemble_id)
         resolve_data_uri(ensemble)
         return ensemble
+
+    def realizations(self, ensemble_id):
+        pass
+
+    def realizations_by_id(self, ensemble_id, realization_id):
+        pass
 
     def data(self, data_id):
         data = self.api.data(data_id).data
