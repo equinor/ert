@@ -1,7 +1,8 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, PickleType
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, PickleType, DateTime
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy.sql import func
 
 
 Entities = declarative_base(name="Entities")
@@ -27,8 +28,9 @@ class Ensemble(Entities):
     name = Column(String)
     project_id = Column(Integer, ForeignKey("projects.id"))
     project = relationship("Project", back_populates="ensembles")
+    time_created = Column(DateTime, server_default=func.now())
 
-    __table_args__ = (UniqueConstraint("name", name="_name_ensemble_id_"),)
+    __table_args__ = (UniqueConstraint("name", "time_created", name="_uc_name_time_"),)
 
     def __repr__(self):
         return "<Ensemble(name='{}')>".format(self.name)

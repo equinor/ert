@@ -163,8 +163,6 @@ def dump_to_new_storage(reference=None, rdb_api=None, blob_api=None):
     start_time = time.time()
     print("Starting extraction...")
 
-    # TODO: What to do if the ensemble already exist in the database?
-
     if rdb_api is None:
         rdb_api = RdbApi()
 
