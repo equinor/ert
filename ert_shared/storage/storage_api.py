@@ -153,7 +153,7 @@ class StorageApi(object):
         result.extend([{
             "key": resp["name"],
             "index_type": None,
-            "observations": resp["observed_by"],
+            "observations": resp.get("observed_by", []),
             "has_refcase": False,
             "dimensionality": 2,
             "metadata": {"data_origin": "Response"}
