@@ -1,3 +1,5 @@
+import time
+
 import pandas as pd
 import pytest
 import sqlalchemy.exc
@@ -123,9 +125,22 @@ def test_add_ensemble(db_session):
         rdb_api.commit()
         assert ensemble.id is not None
 
-        with pytest.raises(sqlalchemy.exc.IntegrityError) as error:
-            rdb_api.add_ensemble(name="test_ensemble")
-            rdb_api.commit()
+
+def test_two_ensembles_with_same_name(db_session):
+    with RdbApi(db_session) as rdb_api:
+        ensemble1 = rdb_api.add_ensemble(name="test_ensemble")
+        rdb_api.commit()
+        assert ensemble1.id is not None
+
+        time.sleep(1)
+
+        ensemble2 = rdb_api.add_ensemble(name="test_ensemble")
+        rdb_api.commit()
+        assert ensemble2.id is not None
+
+        ensemble = rdb_api.get_ensemble("test_ensemble")
+
+        assert ensemble.id == ensemble2.id
 
 def test_add_reference_ensemble(db_session):
     reference_ensemble_name = "test_ensemble"
@@ -137,6 +152,7 @@ def test_add_reference_ensemble(db_session):
         result_ensemble = rdb_api.add_ensemble(name="result_ensemble", reference=(reference_ensemble_name, "es_mda"))
         rdb_api.commit()
         assert result_ensemble.parent[0].ensemble_reference.name == reference_ensemble_name
+
 
 def test_add_realization(db_session):
     with RdbApi(db_session) as rdb_api:

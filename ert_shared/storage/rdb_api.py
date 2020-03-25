@@ -11,7 +11,7 @@ from ert_shared.storage import (
     Update,
 )
 from ert_shared.storage.session import session_factory
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import Bundle
 
 
@@ -39,7 +39,7 @@ class RdbApi:
         self._session.close()
 
     def get_ensemble(self, name):
-        return self._session.query(Ensemble).filter_by(name=name).first()
+        return self._session.query(Ensemble).filter_by(name=name).order_by(desc(Ensemble.time_created)).first()
 
     def get_realization(self, index, ensemble_name):
         ensemble = self.get_ensemble(name=ensemble_name)
