@@ -148,7 +148,7 @@ class StorageApi(object):
             "has_refcase": False,
             "dimensionality": 1,
             "metadata": {"data_origin": "Parameters"}
-        } for param in schema["parameter_definitions"]])
+        } for param in schema["parameters"]])
 
         result.extend([{
             "key": resp["name"],
@@ -157,7 +157,7 @@ class StorageApi(object):
             "has_refcase": False,
             "dimensionality": 2,
             "metadata": {"data_origin": "Response"}
-        } for resp in schema["response_definitions"]])
+        } for resp in schema["responses"]])
 
         return result
 
