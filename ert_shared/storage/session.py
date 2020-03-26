@@ -1,7 +1,7 @@
 
 import logging
 
-from ert_shared.storage import Blobs, Entities
+from ert_shared.storage.model import Blobs, Entities
 from sqlalchemy import create_engine
 from sqlalchemy.orm.session import Session
 
