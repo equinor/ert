@@ -1,6 +1,6 @@
 import logging
 
-from ert_shared.storage import (
+from ert_shared.storage.model import (
     Ensemble,
     Observation,
     Parameter,
