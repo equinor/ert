@@ -8,6 +8,10 @@ def resolve_ensemble_uri(ref_pointer):
     BASE_URL = request.host_url
     return "{}ensembles/{}".format(BASE_URL, ref_pointer)
 
+def resolve_realization_uri(base_url, ref_pointer):
+    BASE_URL = base_url
+    return "{}/realizations/{}".format(BASE_URL, ref_pointer)
+
 def resolve_data_uri(struct):
     BASE_URL = request.host_url
 
@@ -45,7 +49,11 @@ class FlaskWrapper:
 
     def ensemble_by_id(self, ensemble_id):
         ensemble = self.api.ensemble_schema(ensemble_id)
-        resolve_data_uri(ensemble)
+        base_url = resolve_ensemble_uri(ensemble_id)
+        
+        for index, realization in enumerate(ensemble['realizations']):
+            uri = resolve_realization_uri(base_url, realization['ref_pointer'])
+            ensemble['realizations'][index]['ref_pointer'] = uri
         return ensemble
 
     def realizations(self, ensemble_id):
