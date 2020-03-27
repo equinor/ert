@@ -55,14 +55,25 @@ class StorageApi(object):
         }
         """
         realization = self._repo.get_realizations_by_ensemble_id(ensemble_id=ensemble_id).filter_by(index=realization_idx).one()
-        respoonses = self.repo.get_responses_by_realization_id(realization_id=realization.id)
-        
+        response_definitions = self._repo.get_response_definitions_by_ensemble_id(ensemble_id=ensemble_id)
+        responses = [
+            {
+                'name': resp_def.name,
+                'response' : self._repo.get_response_by_realization_id(response_definition_id=resp_def.id, realization_id=realization.id) 
+            } for resp_def in response_definitions
+        ]
+        print(responses[0])
         return_schema = {
             "name" : realization_idx,
             "ensemble_id" : ensemble_id,
-            "responses"
+            "responses" : [
+                {
+                    "name" : res['name'],
+                    "data_ref" : res['response'].values_ref
+                } for res in responses],
         }
-        pass
+
+        return return_schema
     
     def data(self, id):
         return self._blob.get_blob(id)
@@ -88,7 +99,7 @@ class StorageApi(object):
         return_schema = {
             "name" : ens.name, 
             "realizations" : [
-                {"name": real.index, "ref_pointer" : real.id } 
+                {"name": real.index, "ref_pointer" : real.index } 
                     for real in self._repo.get_realizations_by_ensemble_id(ens.id)
             ]
         }

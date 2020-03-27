@@ -30,6 +30,14 @@ def test_api(test_client):
         url = ens["ref_pointer"]
         ensemble = json.loads(test_client.get(url).data)
         pprint.pprint(ensemble)
+        for real in ensemble['realizations']:
+            realization = json.loads(test_client.get(real['ref_pointer']).data)
+            pprint.pprint(realization)
+
+            for response in realization['responses']:
+                name = response['name']
+                response_data = test_client.get(response['data_ref'])
+                print(response_data.data)
     
 
 
