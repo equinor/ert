@@ -33,8 +33,8 @@ class FlaskWrapper:
         self.app = flask.Flask("Ert http api")
         self.app.add_url_rule('/ensembles', 'ensembles', self.ensembles)
         self.app.add_url_rule('/ensembles/<ensemble_id>', 'ensemble', self.ensemble_by_id)
-        self.app.add_url_rule('/ensembles/<ensemble_id>/realizations', 'realizations', self.realizations)
-        self.app.add_url_rule('/ensembles/<ensemble_id>/realizations/<realization_id>', 'realization', self.realization_by_id)
+        #self.app.add_url_rule('/ensembles/<ensemble_id>/realizations', 'realizations', self.realizations)
+        self.app.add_url_rule('/ensembles/<ensemble_id>/realizations/<realization_idx>', 'realization', self.realization_by_id)
         self.app.add_url_rule('/data/<int:data_id>', 'data', self.data)
         self.api = StorageApi(session=session, blob_session=session)
     
@@ -58,8 +58,8 @@ class FlaskWrapper:
     def realizations(self, ensemble_id):
         pass
 
-    def realization_by_id(self, ensemble_id, realization_id):
-        realization = self.api.realization(ensemble_id, realization_id, None)
+    def realization_by_id(self, ensemble_id, realization_idx):
+        realization = self.api.realization(ensemble_id, realization_idx, None)
         resolve_data_uri(realization)
         return realization
 
@@ -69,13 +69,3 @@ class FlaskWrapper:
             return ",".join([str(x) for x in data])
         else:
             return str(data)
-
-
-# # Flask provides a way to test your application by exposing the Werkzeug test Client
-# # and handling the context locals for you.
-# testing_client = flask_app.test_client()
-# # Establish an application context before running the tests.
-# ctx = flask_app.app_context()
-# ctx.push()
-# yield testing_client
-# ctx.pop()
