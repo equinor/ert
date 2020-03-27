@@ -62,7 +62,7 @@ class StorageApi(object):
                 'response' : self._repo.get_response_by_realization_id(response_definition_id=resp_def.id, realization_id=realization.id) 
             } for resp_def in response_definitions
         ]
-        print(responses[0])
+        
         return_schema = {
             "name" : realization_idx,
             "ensemble_id" : ensemble_id,
