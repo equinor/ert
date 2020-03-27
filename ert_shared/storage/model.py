@@ -145,8 +145,7 @@ class Response(Entities):
     )
 
     def __repr__(self):
-        return "<Response(name='{}', values_ref='{}', realization_id='{}', response_definition_id='{}')>".format(
-            self.name,
+        return "<Response(values_ref='{}', realization_id='{}', response_definition_id='{}')>".format(
             self.values_ref,
             self.realization_id,
             self.response_definition_id,

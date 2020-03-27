@@ -20,11 +20,10 @@ def resolve_data_uri(struct):
             resolve_data_uri(item)
     elif isinstance(struct, dict):
         for key, val in struct.items():
-            if key == "data_refs":
-                for name in val:
-                    id = val[name]
-                    url = "{}data/{}".format(BASE_URL, id)
-                    val[name] = url
+            if key == "data_ref":
+                id = struct[key]
+                url = "{}data/{}".format(BASE_URL, id)
+                struct[key] = url
             else:
                 resolve_data_uri(val)
 
@@ -60,7 +59,9 @@ class FlaskWrapper:
         pass
 
     def realization_by_id(self, ensemble_id, realization_id):
-        pass
+        realization = self.api.realization(ensemble_id, realization_id, None)
+        resolve_data_uri(realization)
+        return realization
 
     def data(self, data_id):
         data = self.api.data(data_id).data
