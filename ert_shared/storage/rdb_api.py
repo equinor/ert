@@ -252,3 +252,26 @@ class RdbApi:
 
     def get_all_ensembles(self):
         return [ensemble for ensemble in self._session.query(Ensemble).all()]
+
+    ############## - musiv - new functions ########################
+    def get_realizations_by_ensemble_id(self, ensemble_id):
+        return (
+            self._session.query(Realization)
+            .filter_by(ensemble_id=ensemble_id)
+        )   
+
+    def get_ensemble_by_id(self, ensemble_id):
+        return (self._session.query(Ensemble).filter_by(id=ensemble_id).first())
+
+    def get_responses_by_realization_id(self, realization_id, ensemble_id):
+        response_definition = self._get_response_definition(
+            name=name, ensemble_id=realization.ensemble.id
+        )
+        return (
+            self._session.query(Response)
+            .filter_by(
+                realization_id=realization.id,
+                response_definition_id=response_definition.id,
+            )
+            .first()
+        )

@@ -11,12 +11,13 @@ class StorageApi(object):
         self._session = session
         self._blob_session = blob_session
 
+    @property
     def _repo(self):
         if self._session is not None:
             return RdbApi(self._session)
         else:
             return RdbApi()
-
+    @property
     def _blob(self):
         if self._session is not None:
             return BlobApi(self._session)
@@ -34,30 +35,65 @@ class StorageApi(object):
             }
         ]
         """
-        return [{"name": ensemble.name, "ref_pointer" : ensemble.name} for ensemble in self._repo().get_all_ensembles()]
+        return [{"name": ensemble.name, "ref_pointer" : ensemble.id} for ensemble in self._repo.get_all_ensembles()]
 
 
-    def realizations(self, ensemble_id, filter): 
+    def realization(self, ensemble_id, realization_idx, filter): 
         """
         This function returns an overview of the realizations in a given ensemble
         @return_type: 
-        [
-            {
-                "name" : "<iens>"
-                "ref_pointer" : "2" -> "/ensembles/<ensemble_id>/realizations/2"
-                "data_pointer" : "<key>" -> "/data/<key>" 
+        {
+            "name" : "<real.index> 
+            "ensemble_id" : <ensemble_id>
+            "respoonses: [
+                {
+                    "name" : "<response key>"
+                    "ref_pointer" : "<response key>" -> "/ensembles/<ensemble_id>/realizations/<realization_id>/responses/<response_key>"
+                    "data_pointer" : "<key>" -> "/data/<key>" 
+                }
             }
-        ]
+        }
         """
+        realization = self._repo.get_realizations_by_ensemble_id(ensemble_id=ensemble_id).filter_by(index=realization_idx).one()
+        respoonses = self.repo.get_responses_by_realization_id(realization_id=realization.id)
+        
+        return_schema = {
+            "name" : realization_idx,
+            "ensemble_id" : ensemble_id,
+            "responses"
+        }
         pass
     
     def data(self, id):
-        return self._blob().get_blob(id)
+        return self._blob.get_blob(id)
 
 
-    def ensemble_schema(self, ensemble):
-        repo = self._repo()
-        ens = repo.get_ensemble(ensemble)
+    def ensemble_schema(self, ensemble_id):
+        """
+        @return_type: 
+        
+        {
+            "name" : "<ensemble name>"
+            "realizations" : [
+                {
+                    "name" : "<iens>"
+                    "ref_pointer: "50" -> "/ensembles/<ensemble_id>/realizations/50"
+                }
+            ]
+        }
+        
+        """
+
+        ens = self._repo.get_ensemble_by_id(ensemble_id)
+        return_schema = {
+            "name" : ens.name, 
+            "realizations" : [
+                {"name": real.index, "ref_pointer" : real.id } 
+                    for real in self._repo.get_realizations_by_ensemble_id(ens.id)
+            ]
+        }
+        
+        return return_schema
 
         schema = {
             "name": ens.name,
