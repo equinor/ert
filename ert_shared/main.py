@@ -6,6 +6,7 @@ import re
 from argparse import ArgumentParser, ArgumentTypeError
 from ert_shared import clear_global_state
 from ert_shared.cli.main import run_cli
+from ert_shared.storage.http_server import run_server
 from ert_shared.cli import (
     ENSEMBLE_SMOOTHER_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -118,6 +119,16 @@ def get_ert_parser(parser=None):
     gui_parser.set_defaults(func=run_gui_wrapper)
     gui_parser.add_argument("config", type=valid_file, help=config_help)
     gui_parser.add_argument(
+        "--verbose", action="store_true", help="Show verbose output", default=False
+    )
+
+     # ert_api
+    ert_api_parser = subparsers.add_parser(
+        "api",
+        description="",
+    )
+    ert_api_parser.set_defaults(func=run_server)
+    ert_api_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output", default=False
     )
 
