@@ -8,7 +8,7 @@ from ert_shared.storage.model import Observation
 from ert_shared.storage.rdb_api import RdbApi
 from ert_shared.storage.blob_api import BlobApi
 
-from tests.storage import db_session, engine, tables
+from tests.storage import populated_db, db_session, engine, tables
 
 
 def test_add_observation(db_session):
@@ -221,3 +221,7 @@ def test_add_parameter(db_session):
         assert parameter.realization_id is not None
         assert parameter.parameter_definition_id is not None
         assert blob_api.get_blob(id=parameter.value_ref).data == value
+
+def test_get_realizations_from_response_name(populated_db):
+    with RdbApi(populated_db) as rdb_api:
+        realizations = rdb_api.get_realizations_by_response_name('response_one', 1)

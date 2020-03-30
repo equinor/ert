@@ -25,20 +25,29 @@ def test_api(test_client):
     print(response.data)
     print(response.mimetype)
     ensembles = json.loads(response.data)
-
+    
+    
     for ens in ensembles["ensembles"]:
+        print("########## ENSEMBLE #############")
         url = ens["ref_pointer"]
         ensemble = json.loads(test_client.get(url).data)
         pprint.pprint(ensemble)
+        
         for real in ensemble['realizations']:
+            print("########## ENSEMBLE - realization #############")
             realization = json.loads(test_client.get(real['ref_pointer']).data)
             pprint.pprint(realization)
-
+        
             for response in realization['responses']:
-                name = response['name']
+                print("########## ENSEMBLE - realization - response #############")
                 response_data = test_client.get(response['data_ref'])
                 print(response_data.data)
-    
+        
+        
+        for response in ensemble['responses']:
+            print("########## ENSEMBLE - response #############")
+            response_data = test_client.get(response['ref_pointer'])
+            print(response_data.data)
 
 
 # def test_observation(test_client):
