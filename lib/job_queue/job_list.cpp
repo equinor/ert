@@ -105,7 +105,7 @@ job_queue_node_type * job_list_iget_job( const job_list_type * job_list , int qu
   if (queue_index >= 0 && queue_index < job_list->active_size)
     return job_list->jobs[queue_index];
   else {
-    util_abort("%s: invalid queue_index:%d  Valid range: [0,%d) \n",__func__ , queue_index , queue_index);
+    util_abort("%s: invalid queue_index:%d Valid range: [0,%d)\n", __func__, queue_index, job_list->active_size);
     return NULL;
   }
 }
