@@ -261,9 +261,12 @@ class RdbApi:
         )   
 
     def get_ensemble_by_id(self, ensemble_id):
-        return (self._session.query(Ensemble).filter_by(id=ensemble_id).first())
+        return (
+            self._session.query(Ensemble)
+            .filter_by(id=ensemble_id)
+            .one()
+        )
 
-    
     def get_response_definitions_by_ensemble_id(self, ensemble_id):
         return (
             self._session.query(ResponseDefinition)
@@ -272,5 +275,20 @@ class RdbApi:
 
     def get_response_by_realization_id(self, response_definition_id, realization_id):
         return (
-            self._session.query(Response).filter_by(response_definition_id=response_definition_id, realization_id=realization_id).one()
+            self._session.query(Response)
+            .filter_by(
+                response_definition_id=response_definition_id,
+                realization_id=realization_id)
+            .one()
+        )
+
+    def get_realizations_by_response_name(self, response_name, ensemble_id):
+        response_definition = (
+            self._session.query(ResponseDefinition)
+            .filter_by(name=response_name)
+        )
+        
+        
+        return (
+            
         )

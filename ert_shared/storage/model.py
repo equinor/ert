@@ -107,7 +107,7 @@ class ResponseDefinition(Entities):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    indexes_ref = Column(Integer)
+    indexes_ref = Column(Integer) # Indexes with obeservations [(1, 0), (3, 1), (5, 3)]  [1, 3, 5] -> [0, 1, 2]
     ensemble_id = Column(Integer, ForeignKey("ensembles.id"))
     ensemble = relationship("Ensemble", back_populates="response_definitions")
     observation_id = Column(Integer, ForeignKey("observations.id"))

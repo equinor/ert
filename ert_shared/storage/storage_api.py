@@ -45,7 +45,7 @@ class StorageApi(object):
         {
             "name" : "<real.index> 
             "ensemble_id" : <ensemble_id>
-            "respoonses: [
+            "responses: [
                 {
                     "name" : "<response key>"
                     "ref_pointer" : "<response key>" -> "/ensembles/<ensemble_id>/realizations/<realization_id>/responses/<response_key>"
@@ -74,6 +74,46 @@ class StorageApi(object):
         }
 
         return return_schema
+
+    def response(self, ensemble_id, response_name, filter): 
+        """
+        This function returns an overview of the realizations in a given ensemble
+        @return_type: 
+        {
+            "name" : "<name> 
+            "ensemble_id" : <ensemble_id>
+            "realizations: [
+                {
+                    "name" : "<realization_idx>"
+                    "ref_pointer" : "<realization_idx>" -> "/ensembles/<ensemble_id>/realizations/<realization_idx>/responses/<response_key>"
+                    "data_pointer" : "<key>" -> "/data/<key>" 
+                }
+            ]
+            "observations": [
+                "data_pointer" : <key>
+                "data_relationship" : [
+                    (<obs_value_idx>, <response_value_idx>)
+                ] 
+            ]
+        }
+        """
+
+        realizations = self._repo.get_realizations_by_response_name(response_name=response_name, ensemble_id=ensemble_id)
+
+        observations = self.repo.get_observations_by_<insert useful>
+
+        return_schema = {
+            "name" : response_name,
+            "ensemble_id" : ensemble_id,
+            "realizations" : [
+                {
+                    "name" : real.index,
+                    "ref_pointer": real.index,
+                    "data_ref" : real.values_ref
+                } for real in realizations],
+        }
+
+        return return_schema
     
     def data(self, id):
         return self._blob.get_blob(id)
@@ -87,8 +127,14 @@ class StorageApi(object):
             "name" : "<ensemble name>"
             "realizations" : [
                 {
-                    "name" : "<iens>"
-                    "ref_pointer: "50" -> "/ensembles/<ensemble_id>/realizations/50"
+                    "name" : "<realization_idx>"
+                    "ref_pointer: "<realization_idx>" -> "/ensembles/<ensemble_id>/realizations/<realization_idx>"
+                }
+            ]
+            "responses" : [
+                {
+                    "name" : "<name>"
+                    "ref_pointer: "<name>" -> "/ensembles/<ensemble_id>/responses/<name>"
                 }
             ]
         }
@@ -99,10 +145,18 @@ class StorageApi(object):
         return_schema = {
             "name" : ens.name, 
             "realizations" : [
-                {"name": real.index, "ref_pointer" : real.index } 
-                    for real in self._repo.get_realizations_by_ensemble_id(ens.id)
+                {
+                    "name": real.index, "ref_pointer" : real.index 
+                } for real in self._repo.get_realizations_by_ensemble_id(ensemble_id)
+            ],
+            "responses" : [
+                {
+                    "name" : resp.name, "ref_pointer" : resp.name
+                } for resp in self._repo.get_response_definitions_by_ensemble_id(ensemble_id)
             ]
         }
+
+        
         
         return return_schema
 
