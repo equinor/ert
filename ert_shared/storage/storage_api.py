@@ -7,20 +7,20 @@ from ert_shared.storage.blob_api import BlobApi
 
 class StorageApi(object):
 
-    def __init__(self, session=None, blob_session=None):
-        self._session = session
+    def __init__(self, rdb_session=None, blob_session=None):
+        self._rdb_session = rdb_session
         self._blob_session = blob_session
 
     @property
     def _repo(self):
-        if self._session is not None:
-            return RdbApi(self._session)
+        if self._rdb_session is not None:
+            return RdbApi(self._rdb_session)
         else:
             return RdbApi()
     @property
     def _blob(self):
-        if self._session is not None:
-            return BlobApi(self._session)
+        if self._blob_session is not None:
+            return BlobApi(self._blob_session)
         else:
             return BlobApi()
 
