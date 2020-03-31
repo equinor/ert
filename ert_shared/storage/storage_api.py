@@ -68,6 +68,16 @@ class StorageApi(object):
                 'response' : self._repo.get_response_by_realization_id(response_definition_id=resp_def.id, realization_id=realization.id) 
             } for resp_def in response_definitions
         ]
+
+        parameter_definitions = self._repo.get_parameter_definitions_by_ensemble_id(ensemble_id=ensemble_id)
+        parameters = [
+            {
+                'name': param_def.name,
+                'parameter': self._repo.get_parameter_by_realization_id(parameter_definition_id=param_def.id,
+                                                                      realization_id=realization.id)
+            } for param_def in parameter_definitions
+        ]
+
         
         return_schema = {
             "name" : realization_idx,
@@ -77,6 +87,11 @@ class StorageApi(object):
                     "name" : res['name'],
                     "data_ref" : res['response'].values_ref
                 } for res in responses],
+            "parameters": [
+                {
+                    "name": par["name"],
+                    "data_ref": par["parameter"].value_ref
+                } for par in parameters]
         }
 
         return return_schema
@@ -156,6 +171,11 @@ class StorageApi(object):
                     "ref_pointer: "<name>" -> "/ensembles/<ensemble_id>/responses/<name>"
                 }
             ]
+            "parameters": [
+                {
+                    "name": "<name>"
+                }
+            ]
         }
         
         """
@@ -172,11 +192,14 @@ class StorageApi(object):
                 {
                     "name" : resp.name, "ref_pointer" : resp.name
                 } for resp in self._repo.get_response_definitions_by_ensemble_id(ensemble_id)
+            ],
+            "parameters": [
+                {
+                    "name": par.name
+                } for par in self._repo.get_parameter_definitions_by_ensemble_id(ensemble_id)
             ]
         }
 
-        
-        
         return return_schema
 
         schema = {
