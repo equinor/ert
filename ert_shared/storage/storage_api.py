@@ -49,9 +49,15 @@ class StorageApi(object):
                 {
                     "name" : "<response key>"
                     "ref_pointer" : "<response key>" -> "/ensembles/<ensemble_id>/realizations/<realization_id>/responses/<response_key>"
-                    "data_pointer" : "<key>" -> "/data/<key>" 
+                    "data_pointer" : "<key>" -> "/data/<key>"
                 }
-            }
+            ]
+            "parameters" : [
+                {
+                    "name" : <parameter_name>
+                    "data_pointer" : <parameter_values_ref> # maybe serve value directly?
+                }
+            ]
         }
         """
         realization = self._repo.get_realizations_by_ensemble_id(ensemble_id=ensemble_id).filter_by(index=realization_idx).one()
@@ -77,23 +83,36 @@ class StorageApi(object):
 
     def response(self, ensemble_id, response_name, filter): 
         """
-        This function returns an overview of the realizations in a given ensemble
+        This function returns an overview of the response in a given ensemble
         @return_type: 
         {
             "name" : "<name> 
             "ensemble_id" : <ensemble_id>
-            "realizations: [
+            "realizations" : [
                 {
                     "name" : "<realization_idx>"
                     "ref_pointer" : "<realization_idx>" -> "/ensembles/<ensemble_id>/realizations/<realization_idx>/responses/<response_key>"
                     "data_pointer" : "<key>" -> "/data/<key>" 
                 }
             ]
+            "axis" : {
+                "data_pointer": <indexes_ref>
+            }
             "observations": {
-                "data_pointer" : <key>
-                "data_relationship" : [
-                    (<obs_value_idx>, <response_value_idx>)
-                ] 
+                "data" : [
+                    {
+                        "name" : "values"
+                        "data_pointer" : <values_ref>
+                    }
+                    {
+                        "name" : "std"
+                        "data_pointer" : <stds_ressf>
+                    }
+                    {
+                        "name" : "data_indexes"
+                        "data_pointer" : <data_indexes_ref>
+                    }
+                ]
             }
         }
         """
