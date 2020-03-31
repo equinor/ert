@@ -27,23 +27,25 @@ class StorageApi(object):
     def ensembles(self, filter=None):
         """
         This function returns an overview of the ensembles available in the database
-        @return_type: 
+        @return_type:
         [
             {
                 "name" : "default"
-                "ref_pointer" : "<ensemble_id>" -> "/ensembles/<ensemble_id>" 
+                "ref_pointer" : "<ensemble_id>" -> "/ensembles/<ensemble_id>"
             }
         ]
         """
-        return [{"name": ensemble.name, "ref_pointer" : ensemble.id} for ensemble in self._repo.get_all_ensembles()]
+        with self._repo as rdb_api:
+            data = [{"name": ensemble.name, "ref_pointer" : ensemble.id} for ensemble in rdb_api.get_all_ensembles()]
+        rdb_api.close_connection()
+        return data
 
-
-    def realization(self, ensemble_id, realization_idx, filter): 
+    def realization(self, ensemble_id, realization_idx, filter):
         """
         This function returns an overview of the realizations in a given ensemble
-        @return_type: 
+        @return_type:
         {
-            "name" : "<real.index> 
+            "name" : "<real.index>
             "ensemble_id" : <ensemble_id>
             "responses: [
                 {
@@ -60,25 +62,26 @@ class StorageApi(object):
             ]
         }
         """
-        realization = self._repo.get_realizations_by_ensemble_id(ensemble_id=ensemble_id).filter_by(index=realization_idx).one()
-        response_definitions = self._repo.get_response_definitions_by_ensemble_id(ensemble_id=ensemble_id)
-        responses = [
-            {
-                'name': resp_def.name,
-                'response' : self._repo.get_response_by_realization_id(response_definition_id=resp_def.id, realization_id=realization.id) 
-            } for resp_def in response_definitions
-        ]
+        with self._repo as rdb_api:
+            realization = rdb_api.get_realizations_by_ensemble_id(ensemble_id=ensemble_id).filter_by(index=realization_idx).one()
+            response_definitions = rdb_api.get_response_definitions_by_ensemble_id(ensemble_id=ensemble_id)
+            responses = [
+                {
+                    'name': resp_def.name,
+                    'response' : rdb_api.get_response_by_realization_id(response_definition_id=resp_def.id, realization_id=realization.id) 
+                } for resp_def in response_definitions
+            ]
 
-        parameter_definitions = self._repo.get_parameter_definitions_by_ensemble_id(ensemble_id=ensemble_id)
-        parameters = [
-            {
-                'name': param_def.name,
-                'parameter': self._repo.get_parameter_by_realization_id(parameter_definition_id=param_def.id,
-                                                                      realization_id=realization.id)
-            } for param_def in parameter_definitions
-        ]
+            parameter_definitions = rdb_api.get_parameter_definitions_by_ensemble_id(ensemble_id=ensemble_id)
+            parameters = [
+                {
+                    'name': param_def.name,
+                    'parameter': rdb_api.get_parameter_by_realization_id(parameter_definition_id=param_def.id,
+                                                                        realization_id=realization.id)
+                } for param_def in parameter_definitions
+            ]
+        rdb_api.close_connection()
 
-        
         return_schema = {
             "name" : realization_idx,
             "ensemble_id" : ensemble_id,
@@ -96,12 +99,12 @@ class StorageApi(object):
 
         return return_schema
 
-    def response(self, ensemble_id, response_name, filter): 
+    def response(self, ensemble_id, response_name, filter):
         """
         This function returns an overview of the response in a given ensemble
         @return_type: 
         {
-            "name" : "<name> 
+            "name" : "<name>
             "ensemble_id" : <ensemble_id>
             "realizations" : [
                 {
@@ -132,56 +135,61 @@ class StorageApi(object):
         }
         """
 
-        bundle = self._repo.get_response_bundle(
-            response_name=response_name,
-            ensemble_id=ensemble_id
-        )
-        
-        observation = bundle.observation
-        responses = bundle.responses
-        
+        with self._repo as rdb_api:
+            bundle = self._repo.get_response_bundle(
+                response_name=response_name,
+                ensemble_id=ensemble_id
+            )
 
-        return_schema = {
-            "name" : response_name,
-            "ensemble_id" : ensemble_id,
-            "realizations" : [
-                {
-                    "name" : resp.realization.index,
-                    "ref_pointer": resp.realization.index,
-                    "data_pointer" : resp.values_ref
-                } for resp in responses],
-            "axis": {
-                "data_pointer": bundle.indexes_ref
+            observation = bundle.observation
+            responses = bundle.responses
+
+
+            return_schema = {
+                "name" : response_name,
+                "ensemble_id" : ensemble_id,
+                "realizations" : [
+                    {
+                        "name" : resp.realization.index,
+                        "ref_pointer": resp.realization.index,
+                        "data_pointer" : resp.values_ref
+                    } for resp in responses],
+                "axis": {
+                    "data_pointer": bundle.indexes_ref
+                }
             }
-        }
-        if observation is not None:
-            return_schema["observation"] = {
-                "data" : [
-                    {
-                        "name": "values",
-                        "data_pointer": observation.values_ref
-                    },
-                    {
-                        "name": "std",
-                        "data_pointer": observation.stds_ref
-                    },
-                    {
-                        "name": "data_indexes",
-                        "data_pointer": observation.data_indexes_ref
-                    },
-                ]
-            }
+            if observation is not None:
+                return_schema["observation"] = {
+                    "data" : [
+                        {
+                            "name": "values",
+                            "data_pointer": observation.values_ref
+                        },
+                        {
+                            "name": "std",
+                            "data_pointer": observation.stds_ref
+                        },
+                        {
+                            "name": "data_indexes",
+                            "data_pointer": observation.data_indexes_ref
+                        },
+                    ]
+                }
+
+        rdb_api.close_connection()
 
         return return_schema
-    
-    def data(self, id):
-        return self._blob.get_blob(id)
 
+    def data(self, id):
+        with self._blob as blob_api:
+            return_data = blob_api.get_blob(id).data
+        blob_api.close_connection()
+        return return_data
 
     def ensemble_schema(self, ensemble_id):
         """
-        @return_type: 
-        
+        @return_type:
+
         {
             "name" : "<ensemble name>"
             "realizations" : [
@@ -202,28 +210,30 @@ class StorageApi(object):
                 }
             ]
         }
-        
+
         """
 
-        ens = self._repo.get_ensemble_by_id(ensemble_id)
-        return_schema = {
-            "name" : ens.name, 
-            "realizations" : [
-                {
-                    "name": real.index, "ref_pointer" : real.index 
-                } for real in self._repo.get_realizations_by_ensemble_id(ensemble_id)
-            ],
-            "responses" : [
-                {
-                    "name" : resp.name, "ref_pointer" : resp.name
-                } for resp in self._repo.get_response_definitions_by_ensemble_id(ensemble_id)
-            ],
-            "parameters": [
-                {
-                    "name": par.name
-                } for par in self._repo.get_parameter_definitions_by_ensemble_id(ensemble_id)
-            ]
-        }
+        with self._repo as rdb_api:
+            ens = rdb_api.get_ensemble_by_id(ensemble_id)
+            return_schema = {
+                "name" : ens.name,
+                "realizations" : [
+                    {
+                        "name": real.index, "ref_pointer" : real.index 
+                    } for real in rdb_api.get_realizations_by_ensemble_id(ensemble_id)
+                ],
+                "responses" : [
+                    {
+                        "name" : resp.name, "ref_pointer" : resp.name
+                    } for resp in rdb_api.get_response_definitions_by_ensemble_id(ensemble_id)
+                ],
+                "parameters": [
+                    {
+                        "name": par.name
+                    } for par in rdb_api.get_parameter_definitions_by_ensemble_id(ensemble_id)
+                ]
+            }
+        rdb_api.close_connection()
 
         return return_schema
 
