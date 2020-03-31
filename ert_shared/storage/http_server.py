@@ -99,7 +99,7 @@ class FlaskWrapper:
         return response
 
     def data(self, data_id):
-        data = self.api.data(data_id).data
+        data = self.api.data(data_id)
         if isinstance(data, list):
             return ",".join([str(x) for x in data])
         else:

@@ -39,6 +39,9 @@ class BlobApi:
     def close(self):
         self._session.close()
 
+    def close_connection(self):
+        self._session.connection().close()
+
     def add_blob(self, data):
         data_frame = ErtBlob(data=data)
         self._session.add(data_frame)
