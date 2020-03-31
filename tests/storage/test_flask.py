@@ -47,7 +47,7 @@ def test_api(test_client):
         for response in ensemble['responses']:
             print("########## ENSEMBLE - response #############")
             response_data = test_client.get(response['ref_pointer'])
-            print(response_data.data)
+            pprint.pprint(json.loads(response_data.data))
 
 
 # def test_observation(test_client):
