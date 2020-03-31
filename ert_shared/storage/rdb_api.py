@@ -282,6 +282,22 @@ class RdbApi:
             .one()
         )
 
+    def get_parameter_definitions_by_ensemble_id(self, ensemble_id):
+        return (
+            self._session.query(ParameterDefinition)
+            .filter_by(ensemble_id=ensemble_id)
+        )
+
+    def get_parameter_by_realization_id(self, parameter_definition_id, realization_id):
+        return (
+            self._session.query(Parameter)
+            .filter_by(
+                parameter_definition_id=parameter_definition_id,
+                realization_id=realization_id)
+            .one()
+        )
+
+
     def get_realizations_by_response_name(self, response_name, ensemble_id):
         response_definition = (
             self._session.query(ResponseDefinition)

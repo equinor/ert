@@ -57,6 +57,20 @@ class StorageClient(object):
                 for resp in ens_schema["responses"]
             ]
 
+        result.extend(
+            [
+                {
+                    "key": param["name"],
+                    "index_type": None,
+                    "observations": [],
+                    "has_refcase": False,
+                    "dimensionality": 1,
+                    "metadata": {"data_origin": "Parameter"},
+                }
+                for param in ens_schema["parameters"]
+            ]
+        )
+
         return result
 
     def get_all_cases_not_running(self):
@@ -98,7 +112,7 @@ class StorageClient(object):
 
             r = requests.get(real["ref_pointer"])
             realization = r.json()
-            response_df = pd.DataFrame()
+            key_df = pd.DataFrame()
             for resp in realization["responses"]:
                 if resp["name"] != key:
                     continue
@@ -112,9 +126,24 @@ class StorageClient(object):
                 # r.json() -> json.decoder.JSONDecodeError: Extra data: line 1 column 8 (char 7)
                 data = pd.Series(convert_response_to_float(r), name=real["name"])
 
-                response_df = response_df.append(data)
+                key_df = key_df.append(data)
 
-            df = df.append(response_df)
+            for param in realization["parameters"]:
+                if param["name"] != key:
+                    continue
+
+                r = requests.get(param["data_ref"])
+
+                # TODO: simplified for now, expected structure not in place
+                # Need to add index as well
+
+                # issue:
+                # r.json() -> json.decoder.JSONDecodeError: Extra data: line 1 column 8 (char 7)
+                data = pd.Series(convert_response_to_float(r), name=real["name"])
+
+                key_df = key_df.append(data)
+
+            df = df.append(key_df)
 
         arrays = [[key]*len(df.columns), df.columns]
         index = pd.MultiIndex.from_arrays(arrays, names=('key', 'index'))
