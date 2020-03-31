@@ -38,6 +38,9 @@ class RdbApi:
     def close(self):
         self._session.close()
 
+    def close_connection(self):
+        self._session.connection().close()
+
     def get_ensemble(self, name):
         return self._session.query(Ensemble).filter_by(name=name).order_by(desc(Ensemble.time_created)).first()
 
