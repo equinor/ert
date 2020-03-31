@@ -225,3 +225,8 @@ def test_add_parameter(db_session):
 def test_get_realizations_from_response_name(populated_db):
     with RdbApi(populated_db) as rdb_api:
         realizations = rdb_api.get_realizations_by_response_name('response_one', 1)
+
+def test_get_response_bundle(populated_db):
+    with RdbApi(populated_db) as rdb_api:
+        response_query = rdb_api.get_response_bundle('response_one', 1)
+        print(response_query)

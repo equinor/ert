@@ -53,7 +53,7 @@ class RdbApi:
         return (
             self._session.query(ResponseDefinition)
             .filter_by(name=name, ensemble_id=ensemble_id)
-            .first()
+            .one()
         )
 
     def _get_parameter_definition(self, name, group, ensemble_id):
@@ -304,8 +304,14 @@ class RdbApi:
             .filter_by(name=response_name)
         ).one()
         
+    def get_response_bundle(self, response_name, ensemble_id):
+        # responsedefinition : observation, indexes_ref
+        # realizations : index
+        # response : values_ref
         return (
-            self._session.query(Response)
-            .join(Realization)
-            .filter(Response.response_definition_id == response_definition.id)
+            self._session.query(ResponseDefinition)
+            .join(Response, ResponseDefinition.id == Response.response_definition_id)
+            .filter(ResponseDefinition.name == response_name)
+            .filter(ResponseDefinition.ensemble_id == ensemble_id)
+            .one()
         )

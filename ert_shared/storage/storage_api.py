@@ -106,14 +106,14 @@ class StorageApi(object):
             "realizations" : [
                 {
                     "name" : "<realization_idx>"
-                    "ref_pointer" : "<realization_idx>" -> "/ensembles/<ensemble_id>/realizations/<realization_idx>/responses/<response_key>"
+                    "ref_pointer" : "<realization_idx>" 
                     "data_pointer" : "<key>" -> "/data/<key>" 
                 }
             ]
             "axis" : {
                 "data_pointer": <indexes_ref>
             }
-            "observations": {
+            "observation": {
                 "data" : [
                     {
                         "name" : "values"
@@ -121,7 +121,7 @@ class StorageApi(object):
                     }
                     {
                         "name" : "std"
-                        "data_pointer" : <stds_ressf>
+                        "data_pointer" : <stds_ref>
                     }
                     {
                         "name" : "data_indexes"
@@ -132,20 +132,45 @@ class StorageApi(object):
         }
         """
 
-        bundle = self._repo.get_realizations_by_response_name(response_name=response_name, ensemble_id=ensemble_id)
-
-        #observations = self.repo.get_observations_by_<insert useful>
+        bundle = self._repo.get_response_bundle(
+            response_name=response_name,
+            ensemble_id=ensemble_id
+        )
+        
+        observation = bundle.observation
+        responses = bundle.responses
+        
 
         return_schema = {
             "name" : response_name,
             "ensemble_id" : ensemble_id,
             "realizations" : [
                 {
-                    "name" : e.realization.index,
-                    "ref_pointer": e.realization.index,
-                    "data_ref" : e.values_ref
-                } for e in bundle],
+                    "name" : resp.realization.index,
+                    "ref_pointer": resp.realization.index,
+                    "data_pointer" : resp.values_ref
+                } for resp in responses],
+            "axis": {
+                "data_pointer": bundle.indexes_ref
+            }
         }
+        if observation is not None:
+            return_schema["observation"] = {
+                "data" : [
+                    {
+                        "name": "values",
+                        "data_pointer": observation.values_ref
+                    },
+                    {
+                        "name": "std",
+                        "data_pointer": observation.stds_ref
+                    },
+                    {
+                        "name": "data_indexes",
+                        "data_pointer": observation.data_indexes_ref
+                    },
+                ]
+            }
 
         return return_schema
     
