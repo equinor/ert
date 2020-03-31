@@ -301,7 +301,7 @@ class RdbApi:
     def get_realizations_by_response_name(self, response_name, ensemble_id):
         response_definition = (
             self._session.query(ResponseDefinition)
-            .filter_by(name=response_name)
+            .filter_by(name=response_name, ensemble_id=ensemble_id)
         ).one()
         
     def get_response_bundle(self, response_name, ensemble_id):
