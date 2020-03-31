@@ -46,13 +46,13 @@ class StorageApi(object):
                 {
                     "name" : "<response key>"
                     "ref_pointer" : "<response key>" -> "/ensembles/<ensemble_id>/realizations/<realization_id>/responses/<response_key>"
-                    "data_pointer" : "<key>" -> "/data/<key>"
+                    "data_ref" : "<key>" -> "/data/<key>"
                 }
             ]
             "parameters" : [
                 {
                     "name" : <parameter_name>
-                    "data_pointer" : <parameter_values_ref> # maybe serve value directly?
+                    "data_ref" : <parameter_values_ref> # maybe serve value directly?
                 }
             ]
         }
@@ -117,25 +117,25 @@ class StorageApi(object):
                 {
                     "name" : "<realization_idx>"
                     "ref_pointer" : "<realization_idx>" 
-                    "data_pointer" : "<key>" -> "/data/<key>" 
+                    "data_ref" : "<key>" -> "/data/<key>" 
                 }
             ]
             "axis" : {
-                "data_pointer": <indexes_ref>
+                "data_ref": <indexes_ref>
             }
             "observation": {
                 "data" : [
                     {
                         "name" : "values"
-                        "data_pointer" : <values_ref>
+                        "data_ref" : <values_ref>
                     }
                     {
                         "name" : "std"
-                        "data_pointer" : <stds_ref>
+                        "data_ref" : <stds_ref>
                     }
                     {
                         "name" : "data_indexes"
-                        "data_pointer" : <data_indexes_ref>
+                        "data_ref" : <data_indexes_ref>
                     }
                 ]
             }
@@ -157,21 +157,25 @@ class StorageApi(object):
                     {
                         "name": resp.realization.index,
                         "ref_pointer": resp.realization.index,
-                        "data_pointer": resp.values_ref,
+                        "data_ref": resp.values_ref,
                     }
                     for resp in responses
                 ],
-                "axis": {"data_pointer": bundle.indexes_ref},
+                "axis": {"data_ref": bundle.indexes_ref},
             }
             if observation is not None:
                 return_schema["observation"] = {
                     "data": [
-                        {"name": "values", "data_pointer": observation.values_ref},
-                        {"name": "std", "data_pointer": observation.stds_ref},
+                        {"name": "values", "data_ref": observation.values_ref},
+                        {"name": "std", "data_ref": observation.stds_ref},
                         {
                             "name": "data_indexes",
-                            "data_pointer": observation.data_indexes_ref,
+                            "data_ref": observation.data_indexes_ref,
                         },
+                        {
+                            "name": "key_indexes",
+                            "data_ref": observation.key_indexes_ref,
+                        }
                     ]
                 }
 
