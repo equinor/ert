@@ -31,7 +31,7 @@ class StorageApi(object):
         [
             {
                 "name" : "default"
-                "ref_pointer" : "10" -> "/ensembles/10" 
+                "ref_pointer" : "<ensemble_id>" -> "/ensembles/<ensemble_id>" 
             }
         ]
         """
@@ -89,28 +89,28 @@ class StorageApi(object):
                     "data_pointer" : "<key>" -> "/data/<key>" 
                 }
             ]
-            "observations": [
+            "observations": {
                 "data_pointer" : <key>
                 "data_relationship" : [
                     (<obs_value_idx>, <response_value_idx>)
                 ] 
-            ]
+            }
         }
         """
 
-        realizations = self._repo.get_realizations_by_response_name(response_name=response_name, ensemble_id=ensemble_id)
+        bundle = self._repo.get_realizations_by_response_name(response_name=response_name, ensemble_id=ensemble_id)
 
-        observations = self.repo.get_observations_by_<insert useful>
+        #observations = self.repo.get_observations_by_<insert useful>
 
         return_schema = {
             "name" : response_name,
             "ensemble_id" : ensemble_id,
             "realizations" : [
                 {
-                    "name" : real.index,
-                    "ref_pointer": real.index,
-                    "data_ref" : real.values_ref
-                } for real in realizations],
+                    "name" : e.realization.index,
+                    "ref_pointer": e.realization.index,
+                    "data_ref" : e.values_ref
+                } for e in bundle],
         }
 
         return return_schema

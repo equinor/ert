@@ -286,9 +286,10 @@ class RdbApi:
         response_definition = (
             self._session.query(ResponseDefinition)
             .filter_by(name=response_name)
-        )
-        
+        ).one()
         
         return (
-            
+            self._session.query(Response)
+            .join(Realization)
+            .filter(Response.response_definition_id == response_definition.id)
         )

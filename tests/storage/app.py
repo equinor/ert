@@ -73,12 +73,13 @@ class FlaskWrapper:
         return realization
 
     def response_by_name(self, ensemble_id, response_name):
+        print("fetching responses for {} {}".format(ensemble_id, response_name))
         response = self.api.response(ensemble_id, response_name, None)
-        # base_url =  resolve_ensemble_uri(ensemble_id)
-        # for index, realization in enumerate(response['realizations']):
-        #     uri = resolve_realization_uri(base_url, realization['ref_pointer'])
-        #     response['realizations'][index]['ref_pointer'] = uri
-        # resolve_data_uri(response)
+        base_url =  resolve_ensemble_uri(ensemble_id)
+        for index, realization in enumerate(response['realizations']):
+            uri = resolve_realization_uri(base_url, realization['ref_pointer'])
+            response['realizations'][index]['ref_pointer'] = uri
+        resolve_data_uri(response)
         return response
 
     def data(self, data_id):
