@@ -38,11 +38,13 @@ class RdbApi:
     def close(self):
         self._session.close()
 
-    def close_connection(self):
-        self._session.connection().close()
-
     def get_ensemble(self, name):
-        return self._session.query(Ensemble).filter_by(name=name).order_by(desc(Ensemble.time_created)).first()
+        return (
+            self._session.query(Ensemble)
+            .filter_by(name=name)
+            .order_by(desc(Ensemble.time_created))
+            .first()
+        )
 
     def get_realization(self, index, ensemble_name):
         ensemble = self.get_ensemble(name=ensemble_name)
@@ -258,22 +260,14 @@ class RdbApi:
 
     ############## - musiv - new functions ########################
     def get_realizations_by_ensemble_id(self, ensemble_id):
-        return (
-            self._session.query(Realization)
-            .filter_by(ensemble_id=ensemble_id)
-        )   
+        return self._session.query(Realization).filter_by(ensemble_id=ensemble_id)
 
     def get_ensemble_by_id(self, ensemble_id):
-        return (
-            self._session.query(Ensemble)
-            .filter_by(id=ensemble_id)
-            .one()
-        )
+        return self._session.query(Ensemble).filter_by(id=ensemble_id).one()
 
     def get_response_definitions_by_ensemble_id(self, ensemble_id):
-        return (
-            self._session.query(ResponseDefinition)
-            .filter_by(ensemble_id=ensemble_id)
+        return self._session.query(ResponseDefinition).filter_by(
+            ensemble_id=ensemble_id
         )
 
     def get_response_by_realization_id(self, response_definition_id, realization_id):
@@ -281,14 +275,14 @@ class RdbApi:
             self._session.query(Response)
             .filter_by(
                 response_definition_id=response_definition_id,
-                realization_id=realization_id)
+                realization_id=realization_id,
+            )
             .one()
         )
 
     def get_parameter_definitions_by_ensemble_id(self, ensemble_id):
-        return (
-            self._session.query(ParameterDefinition)
-            .filter_by(ensemble_id=ensemble_id)
+        return self._session.query(ParameterDefinition).filter_by(
+            ensemble_id=ensemble_id
         )
 
     def get_parameter_by_realization_id(self, parameter_definition_id, realization_id):
@@ -296,17 +290,18 @@ class RdbApi:
             self._session.query(Parameter)
             .filter_by(
                 parameter_definition_id=parameter_definition_id,
-                realization_id=realization_id)
+                realization_id=realization_id,
+            )
             .one()
         )
 
-
     def get_realizations_by_response_name(self, response_name, ensemble_id):
         response_definition = (
-            self._session.query(ResponseDefinition)
-            .filter_by(name=response_name, ensemble_id=ensemble_id)
+            self._session.query(ResponseDefinition).filter_by(
+                name=response_name, ensemble_id=ensemble_id
+            )
         ).one()
-        
+
     def get_response_bundle(self, response_name, ensemble_id):
         # responsedefinition : observation, indexes_ref
         # realizations : index

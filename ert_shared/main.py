@@ -125,9 +125,10 @@ def get_ert_parser(parser=None):
      # ert_api
     ert_api_parser = subparsers.add_parser(
         "api",
-        description="",
+        description="Expose ERT data through an HTTP server",
     )
     ert_api_parser.set_defaults(func=run_server)
+    ert_api_parser.add_argument("--runpath", type=str, help="Path to where the database-files are located.")
     ert_api_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output", default=False
     )
