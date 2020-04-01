@@ -10,16 +10,12 @@ from ert_shared.storage.model import (
 )
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Bundle
-from ert_shared.storage.session import session_factory
+from sqlalchemy.orm.session import Session
 
 
 class BlobApi:
-    def __init__(self, session=None):
-
-        if session is None:
-            self._session = session_factory.get_blobs_session()
-        else:
-            self._session = session
+    def __init__(self, connection):
+        self._session = Session(bind=connection)
 
     def __enter__(self):
         return self

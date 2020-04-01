@@ -1,11 +1,11 @@
 import time
 
-from ert_shared import ERT
-from ert_shared.storage.rdb_api import RdbApi
-from ert_shared.storage.blob_api import BlobApi
 from ert_data.measured import MeasuredData
-
+from ert_shared import ERT
 from ert_shared.feature_toggling import FeatureToggling
+from ert_shared.storage import connections
+from ert_shared.storage.blob_api import BlobApi
+from ert_shared.storage.rdb_api import RdbApi
 
 
 def _create_ensemble(rdb_api, reference):
@@ -156,20 +156,25 @@ def _dump_response(rdb_api, blob_api, responses, ensemble_name, key_mapping):
             )
 
 
-def dump_to_new_storage(reference=None, rdb_api=None, blob_api=None):
+def dump_to_new_storage(reference=None, rdb_connection=None, blob_connection=None):
     if not FeatureToggling.is_enabled("new-storage"):
         return
 
     start_time = time.time()
     print("Starting extraction...")
 
-    if rdb_api is None:
-        rdb_api = RdbApi()
+    if rdb_connection is None:
+       rdb_connection = connections.get_rdb_connection()
 
-    if blob_api is None:
-        blob_api = BlobApi()
+    rdb_api = RdbApi(connection=rdb_connection)
 
-    with rdb_api:
+    if blob_connection is None:
+        blob_connection = connections.get_blob_connection()
+
+    blob_api = BlobApi(connection=blob_connection)
+
+
+    with rdb_api, blob_api:
         ensemble = _create_ensemble(rdb_api, reference=reference)
         _extract_and_dump_observations(rdb_api=rdb_api, blob_api=blob_api)
         _extract_and_dump_parameters(
@@ -182,12 +187,16 @@ def dump_to_new_storage(reference=None, rdb_api=None, blob_api=None):
         rdb_api.commit()
         ensemble_name = ensemble.name
 
-    end_time = time.time()
-    print("Extraction done... (Took {:.2f} seconds)".format(end_time - start_time))
-    print(
-        "All ensembles in database: {}".format(
-            ", ".join([ensemble.name for ensemble in rdb_api.get_all_ensembles()])
+        end_time = time.time()
+        print("Extraction done... (Took {:.2f} seconds)".format(end_time - start_time))
+        print(
+            "All ensembles in database: {}".format(
+                ", ".join([ensemble.name for ensemble in rdb_api.get_all_ensembles()])
+            )
         )
-    )
+
+    rdb_connection.close()
+    blob_connection.close()
+
 
     return ensemble_name

@@ -3,19 +3,31 @@ from io import StringIO
 import pandas as pd
 from ert_shared.storage.blob_api import BlobApi
 from ert_shared.storage.rdb_api import RdbApi
+from ert_shared.storage import connections
 
 
 class StorageApi(object):
-    def __init__(self, rdb_api=None, blob_api=None):
-        if rdb_api is None:
-            self._rdb_api = RdbApi()
+    def __init__(self, rdb_connection=None, blob_connection=None):
+        if rdb_connection is None:
+            self._rdb_connection = connections.get_rdb_connection()
         else:
-            self._rdb_api = rdb_api
+            self._rdb_connection = rdb_connection
 
-        if blob_api is None:
-            self._blob_api = BlobApi()
+        self._rdb_api = RdbApi(connection=self._rdb_connection)
+
+        if blob_connection is None:
+            self._blob_connection = connections.get_blob_connection()
         else:
-            self._blob_api = blob_api
+            self._blob_connection = blob_connection
+
+        self._blob_api = BlobApi(connection=self._blob_connection)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self._rdb_connection.close()
+        self._blob_connection.close()
 
     def ensembles(self, filter=None):
         """
