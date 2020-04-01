@@ -7,19 +7,11 @@ from ert_shared.storage import connections
 
 
 class StorageApi(object):
-    def __init__(self, rdb_connection=None, blob_connection=None):
-        if rdb_connection is None:
-            self._rdb_connection = connections.get_rdb_connection()
-        else:
-            self._rdb_connection = rdb_connection
-
+    def __init__(self, rdb_url=None, blob_url=None):
+        self._rdb_connection = connections.get_rdb_connection(rdb_url)
         self._rdb_api = RdbApi(connection=self._rdb_connection)
 
-        if blob_connection is None:
-            self._blob_connection = connections.get_blob_connection()
-        else:
-            self._blob_connection = blob_connection
-
+        self._blob_connection = connections.get_blob_connection(blob_url)
         self._blob_api = BlobApi(connection=self._blob_connection)
 
     def __enter__(self):
@@ -58,7 +50,7 @@ class StorageApi(object):
             "responses: [
                 {
                     "name" : "<response key>"
-    
+
                     "data_ref" : "<key>"
                 }
             ]
@@ -122,14 +114,14 @@ class StorageApi(object):
     def response(self, ensemble_id, response_name, filter):
         """
         This function returns an overview of the response in a given ensemble
-        @return_type: 
+        @return_type:
         {
             "name" : "<name>
             "ensemble_id" : <ensemble_id>
             "realizations" : [
                 {
                     "name" : "<realization_idx>"
-                    "realization_ref" : "<realization_idx>" 
+                    "realization_ref" : "<realization_idx>"
                     "data_ref" : "<key>"
                 }
             ]
