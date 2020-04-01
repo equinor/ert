@@ -107,7 +107,7 @@ class ResponseDefinition(Entities):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    indexes_ref = Column(Integer) # Reference to the description of  plot axis
+    indexes_ref = Column(Integer)  # Reference to the description of  plot axis
     ensemble_id = Column(Integer, ForeignKey("ensembles.id"))
     ensemble = relationship("Ensemble", back_populates="response_definitions")
     observation_id = Column(Integer, ForeignKey("observations.id"))
@@ -146,9 +146,7 @@ class Response(Entities):
 
     def __repr__(self):
         return "<Response(values_ref='{}', realization_id='{}', response_definition_id='{}')>".format(
-            self.values_ref,
-            self.realization_id,
-            self.response_definition_id,
+            self.values_ref, self.realization_id, self.response_definition_id,
         )
 
 

@@ -37,12 +37,8 @@ def test_add_observation(db_session):
     with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
         observation = rdb_api.get_observation(observation_name)
         assert observation is not None
-        assert (
-            blob_api.get_blob(observation.key_indexes_ref).data == key_indexes
-        )
-        assert (
-            blob_api.get_blob(observation.data_indexes_ref).data == data_indexes
-        )
+        assert blob_api.get_blob(observation.key_indexes_ref).data == key_indexes
+        assert blob_api.get_blob(observation.data_indexes_ref).data == data_indexes
         assert blob_api.get_blob(observation.values_ref).data == values
         assert blob_api.get_blob(observation.stds_ref).data == stds
 
@@ -101,10 +97,7 @@ def test_add_response(db_session):
         )
         assert response_definition.id is not None
         assert response_definition.ensemble_id is not None
-        assert (
-            blob_api.get_blob(id=response_definition.indexes_ref).data
-            == indexes
-        )
+        assert blob_api.get_blob(id=response_definition.indexes_ref).data == indexes
 
         realization = rdb_api.get_realization(index=0, ensemble_name=ensemble.name)
         assert realization.id is not None
@@ -142,6 +135,7 @@ def test_two_ensembles_with_same_name(db_session):
 
         assert ensemble.id == ensemble2.id
 
+
 def test_add_reference_ensemble(db_session):
     reference_ensemble_name = "test_ensemble"
     with RdbApi(db_session) as rdb_api:
@@ -149,9 +143,13 @@ def test_add_reference_ensemble(db_session):
         rdb_api.commit()
 
     with RdbApi(db_session) as rdb_api:
-        result_ensemble = rdb_api.add_ensemble(name="result_ensemble", reference=(reference_ensemble_name, "es_mda"))
+        result_ensemble = rdb_api.add_ensemble(
+            name="result_ensemble", reference=(reference_ensemble_name, "es_mda")
+        )
         rdb_api.commit()
-        assert result_ensemble.parent[0].ensemble_reference.name == reference_ensemble_name
+        assert (
+            result_ensemble.parent[0].ensemble_reference.name == reference_ensemble_name
+        )
 
 
 def test_add_realization(db_session):
@@ -215,18 +213,23 @@ def test_add_parameter(db_session):
         assert realization.ensemble_id is not None
 
         parameter = rdb_api.get_parameter(
-            name="test_param", group="test_group", realization_index=0, ensemble_name=ensemble.name
+            name="test_param",
+            group="test_group",
+            realization_index=0,
+            ensemble_name=ensemble.name,
         )
         assert parameter.id is not None
         assert parameter.realization_id is not None
         assert parameter.parameter_definition_id is not None
         assert blob_api.get_blob(id=parameter.value_ref).data == value
 
+
 def test_get_realizations_from_response_name(populated_db):
     with RdbApi(populated_db) as rdb_api:
-        realizations = rdb_api.get_realizations_by_response_name('response_one', 1)
+        realizations = rdb_api.get_realizations_by_response_name("response_one", 1)
+
 
 def test_get_response_bundle(populated_db):
     with RdbApi(populated_db) as rdb_api:
-        response_query = rdb_api.get_response_bundle('response_one', 1)
+        response_query = rdb_api.get_response_bundle("response_one", 1)
         print(response_query)
