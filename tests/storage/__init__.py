@@ -22,23 +22,21 @@ def tables(engine):
 
 
 @pytest.yield_fixture
-def db_session(engine, tables):
+def db_connection(engine, tables):
     """Returns an sqlalchemy session, and after the test tears down everything properly."""
     connection = engine.connect()
     transaction = connection.begin()
-    session = Session(bind=connection)
 
-    yield session
+    yield connection
 
-    session.close()
     transaction.rollback()
     connection.close()
 
 
 @pytest.yield_fixture
-def populated_db(db_session):
-    repository = RdbApi(db_session)
-    blob = BlobApi(db_session)
+def populated_db(db_connection):
+    repository = RdbApi(db_connection)
+    blob = BlobApi(db_connection)
 
     ensemble = repository.add_ensemble(name="ensemble_name")
 
@@ -99,4 +97,4 @@ def populated_db(db_session):
 
     repository.commit()
 
-    yield db_session
+    yield db_connection

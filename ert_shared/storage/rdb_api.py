@@ -10,18 +10,14 @@ from ert_shared.storage.model import (
     ResponseDefinition,
     Update,
 )
-from ert_shared.storage.session import session_factory
 from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import Bundle
+from sqlalchemy.orm.session import Session
 
 
 class RdbApi:
-    def __init__(self, session=None):
-
-        if session is None:
-            self._session = session_factory.get_entities_session()
-        else:
-            self._session = session
+    def __init__(self, connection):
+        self._session = Session(bind=connection)
 
     def __enter__(self):
         return self
@@ -296,7 +292,7 @@ class RdbApi:
         )
 
     def get_realizations_by_response_name(self, response_name, ensemble_id):
-        response_definition = (
+        return (
             self._session.query(ResponseDefinition).filter_by(
                 name=response_name, ensemble_id=ensemble_id
             )

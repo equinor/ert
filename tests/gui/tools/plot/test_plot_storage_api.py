@@ -5,7 +5,7 @@ import pprint
 
 from ert_gui.tools.plot.storage_client import StorageClient
 
-from tests.storage import populated_db, db_session, engine, tables
+from tests.storage import populated_db, db_connection, engine, tables
 from io import StringIO
 
 # def test_all_keys(populated_db):
