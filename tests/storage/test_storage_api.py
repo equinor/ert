@@ -7,7 +7,6 @@ import json
 import pprint
 
 def resolve_data_uri(BASE_URL, struct):
-
     if isinstance(struct, list):
         for item in struct:
             resolve_data_uri(BASE_URL, item)
@@ -20,14 +19,12 @@ def resolve_data_uri(BASE_URL, struct):
                 resolve_data_uri(BASE_URL, val)
 
 def resolve_ref_uri(BASE_URL, struct):
-    
     if isinstance(struct, list):
         for item in struct:
             resolve_ref_uri(BASE_URL, item)
     elif isinstance(struct, dict):
         for key, val in struct.copy().items():
             if "_ref" in key and "data" not in key:
-                parent = key.split('_').pop(0)
                 url = "{}/{}".format(BASE_URL, val)
                 struct["ref_url"] = url
             else:
