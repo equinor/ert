@@ -5,35 +5,36 @@ from ert_shared.storage.storage_api import StorageApi
 from flask import Response, request
 
 
-def resolve_ensemble_uri(ref_pointer):
+def resolve_ensemble_uri(ensemble_ref):
     BASE_URL = request.host_url
-    return "{}ensembles/{}".format(BASE_URL, ref_pointer)
-
-
-def resolve_realization_uri(base_url, ref_pointer):
-    BASE_URL = base_url
-    return "{}/realizations/{}".format(BASE_URL, ref_pointer)
-
-
-def resolve_response_uri(base_url, ref_pointer):
-    BASE_URL = base_url
-    return "{}/responses/{}".format(BASE_URL, ref_pointer)
+    return "{}ensembles/{}".format(BASE_URL, ensemble_ref)
 
 
 def resolve_data_uri(struct):
     BASE_URL = request.host_url
-
     if isinstance(struct, list):
         for item in struct:
             resolve_data_uri(item)
     elif isinstance(struct, dict):
-        for key, val in struct.items():
+        for key, val in struct.copy().items():
             if key == "data_ref":
-                id = struct[key]
-                url = "{}data/{}".format(BASE_URL, id)
-                struct[key] = url
+                url = "{}data/{}".format(BASE_URL, val)
+                struct["data_url"] = url
             else:
                 resolve_data_uri(val)
+
+
+def resolve_ref_uri(BASE_URL, struct):
+    if isinstance(struct, list):
+        for item in struct:
+            resolve_ref_uri(BASE_URL, item)
+    elif isinstance(struct, dict):
+        for key, val in struct.copy().items():
+            if "_ref" in key and "data" not in key:
+                url = "{}/{}".format(BASE_URL, val)
+                struct["ref_url"] = url
+            else:
+                resolve_ref_uri("{}/{}".format(BASE_URL, key), val)
 
 
 class FlaskWrapper:
@@ -61,25 +62,14 @@ class FlaskWrapper:
     def ensembles(self):
         api = StorageApi(rdb_api=self._rdb_api, blob_api=self._blob_api)
         ensembles = api.ensembles()
-
-        for index, ensemble in enumerate(ensembles):
-            uri = resolve_ensemble_uri(ensemble["ref_pointer"])
-            ensembles[index]["ref_pointer"] = uri
+        resolve_ref_uri("{}ensembles".format(request.host_url), ensembles)
         return {"ensembles": ensembles}
 
     def ensemble_by_id(self, ensemble_id):
         api = StorageApi(rdb_api=self._rdb_api, blob_api=self._blob_api)
         ensemble = api.ensemble_schema(ensemble_id)
         base_url = resolve_ensemble_uri(ensemble_id)
-
-        for index, realization in enumerate(ensemble["realizations"]):
-            uri = resolve_realization_uri(base_url, realization["ref_pointer"])
-            ensemble["realizations"][index]["ref_pointer"] = uri
-
-        for index, response in enumerate(ensemble["responses"]):
-            uri = resolve_response_uri(base_url, response["ref_pointer"])
-            ensemble["responses"][index]["ref_pointer"] = uri
-
+        resolve_ref_uri(base_url, ensemble)
         return ensemble
 
     def realizations(self, ensemble_id):
@@ -92,13 +82,10 @@ class FlaskWrapper:
         return realization
 
     def response_by_name(self, ensemble_id, response_name):
-        print("fetching responses for {} {}".format(ensemble_id, response_name))
         api = StorageApi(rdb_api=self._rdb_api, blob_api=self._blob_api)
         response = api.response(ensemble_id, response_name, None)
         base_url = resolve_ensemble_uri(ensemble_id)
-        for index, realization in enumerate(response["realizations"]):
-            uri = resolve_realization_uri(base_url, realization["ref_pointer"])
-            response["realizations"][index]["ref_pointer"] = uri
+        resolve_ref_uri(base_url, response)
         resolve_data_uri(response)
         return response
 
