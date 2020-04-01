@@ -34,13 +34,13 @@ def test_api(test_client):
 
     for ens in ensembles["ensembles"]:
         print("########## ENSEMBLE #############")
-        url = ens["ref_pointer"]
+        url = ens["ref_url"]
         ensemble = json.loads(test_client.get(url).data)
         pprint.pprint(ensemble)
 
         for real in ensemble["realizations"]:
             print("########## ENSEMBLE - realization #############")
-            realization = json.loads(test_client.get(real["ref_pointer"]).data)
+            realization = json.loads(test_client.get(real["ref_url"]).data)
             pprint.pprint(realization)
 
             for response in realization["responses"]:
@@ -50,7 +50,7 @@ def test_api(test_client):
 
         for response in ensemble["responses"]:
             print("########## ENSEMBLE - response #############")
-            response_data = test_client.get(response["ref_pointer"])
+            response_data = test_client.get(response["ref_url"])
             pprint.pprint(json.loads(response_data.data))
 
 
@@ -66,7 +66,7 @@ def test_observation(test_client):
 
     actual = set()
 
-    resp_url = ens["responses"][0]["ref_pointer"]
+    resp_url = ens["responses"][0]["ref_url"]
     resp_data = test_client.get(resp_url).data.decode()
     resp = json.loads(resp_data)
     obs = resp["observation"]
