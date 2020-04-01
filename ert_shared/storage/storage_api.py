@@ -21,6 +21,22 @@ class StorageApi(object):
         self._rdb_connection.close()
         self._blob_connection.close()
 
+    def _ensemble_minimal(self, ensemble):
+        return {
+            "name": ensemble.name,
+            "ensemble_ref": ensemble.id,
+            "parent": {
+                "ensemble_ref": ensemble.parent[0].ensemble_reference.id,
+                "name": ensemble.parent[0].ensemble_reference.name
+            } if not len(ensemble.parent) == 0 else None,
+            "children": [
+                {
+                    "ensemble_ref": child.ensemble_result.id,
+                    "name": child.ensemble_result.name
+                } for child in ensemble.children
+            ]
+        }
+
     def ensembles(self, filter=None):
         """
         This function returns an overview of the ensembles available in the database
@@ -34,7 +50,7 @@ class StorageApi(object):
         """
         with self._rdb_api as rdb_api:
             data = [
-                {"name": ensemble.name, "ensemble_ref": ensemble.id}
+                self._ensemble_minimal(ensemble)
                 for ensemble in rdb_api.get_all_ensembles()
             ]
 
@@ -214,8 +230,8 @@ class StorageApi(object):
 
         with self._rdb_api as rdb_api:
             ens = rdb_api.get_ensemble_by_id(ensemble_id)
-            return_schema = {
-                "name": ens.name,
+            return_schema = self._ensemble_minimal(ens)
+            return_schema.update({
                 "realizations": [
                     {"name": real.index, "realization_ref": real.index}
                     for real in rdb_api.get_realizations_by_ensemble_id(ensemble_id)
@@ -232,6 +248,6 @@ class StorageApi(object):
                         ensemble_id
                     )
                 ],
-            }
+            })
 
         return return_schema
