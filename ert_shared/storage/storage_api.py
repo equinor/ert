@@ -24,15 +24,13 @@ class StorageApi(object):
         [
             {
                 "name" : "default"
-                "ref_pointer" : "<ensemble_id>" -> "/ensembles/<ensemble_id>"
+                "ensemble_ref" : "<ensemble_id>"
             }
         ]
         """
-        with self._rdb_api as rdb_api:
-            data = [
-                {"name": ensemble.name, "ref_pointer": ensemble.id}
-                for ensemble in rdb_api.get_all_ensembles()
-            ]
+        with self._rdb_api as rdb_api: 
+                data = [{"name": ensemble.name, "ensemble_ref" : ensemble.id} for ensemble in rdb_api.get_all_ensembles()]
+        
         return data
 
     def realization(self, ensemble_id, realization_idx, filter):
@@ -45,8 +43,8 @@ class StorageApi(object):
             "responses: [
                 {
                     "name" : "<response key>"
-                    "ref_pointer" : "<response key>" -> "/ensembles/<ensemble_id>/realizations/<realization_id>/responses/<response_key>"
-                    "data_ref" : "<key>" -> "/data/<key>"
+    
+                    "data_ref" : "<key>"
                 }
             ]
             "parameters" : [
@@ -116,8 +114,8 @@ class StorageApi(object):
             "realizations" : [
                 {
                     "name" : "<realization_idx>"
-                    "ref_pointer" : "<realization_idx>" 
-                    "data_ref" : "<key>" -> "/data/<key>" 
+                    "realization_ref" : "<realization_idx>" 
+                    "data_ref" : "<key>"
                 }
             ]
             "axis" : {
@@ -143,7 +141,7 @@ class StorageApi(object):
         """
 
         with self._rdb_api as rdb_api:
-            bundle = self._rdb_api.get_response_bundle(
+            bundle = rdb_api.get_response_bundle(
                 response_name=response_name, ensemble_id=ensemble_id
             )
 
@@ -155,22 +153,28 @@ class StorageApi(object):
                 "ensemble_id": ensemble_id,
                 "realizations": [
                     {
-                        "name": resp.realization.index,
-                        "ref_pointer": resp.realization.index,
-                        "data_ref": resp.values_ref,
-                    }
-                    for resp in responses
-                ],
-                "axis": {"data_ref": bundle.indexes_ref},
+                        "name" : resp.realization.index,
+                        "realization_ref": resp.realization.index,
+                        "data_ref" : resp.values_ref
+                    } for resp in responses],
+                "axis": {
+                    "data_ref": bundle.indexes_ref
+                }
             }
             if observation is not None:
                 return_schema["observation"] = {
-                    "data": [
-                        {"name": "values", "data_ref": observation.values_ref},
-                        {"name": "std", "data_ref": observation.stds_ref},
+                    "data" : [
+                        {
+                            "name": "values",
+                            "data_ref": observation.values_ref
+                        },
+                        {
+                            "name": "std",
+                            "data_ref": observation.stds_ref
+                        },
                         {
                             "name": "data_indexes",
-                            "data_ref": observation.data_indexes_ref,
+                            "data_ref": observation.data_indexes_ref
                         },
                         {
                             "name": "key_indexes",
@@ -195,13 +199,13 @@ class StorageApi(object):
             "realizations" : [
                 {
                     "name" : "<realization_idx>"
-                    "ref_pointer: "<realization_idx>" -> "/ensembles/<ensemble_id>/realizations/<realization_idx>"
+                    "realization_ref: "<realization_idx>"
                 }
             ]
             "responses" : [
                 {
                     "name" : "<name>"
-                    "ref_pointer: "<name>" -> "/ensembles/<ensemble_id>/responses/<name>"
+                    "response_ref: "<name>"
                 }
             ]
             "parameters": [
@@ -216,16 +220,16 @@ class StorageApi(object):
         with self._rdb_api as rdb_api:
             ens = rdb_api.get_ensemble_by_id(ensemble_id)
             return_schema = {
-                "name": ens.name,
-                "realizations": [
-                    {"name": real.index, "ref_pointer": real.index}
-                    for real in rdb_api.get_realizations_by_ensemble_id(ensemble_id)
+                "name" : ens.name,
+                "realizations" : [
+                    {
+                        "name": real.index, "realization_ref" : real.index 
+                    } for real in rdb_api.get_realizations_by_ensemble_id(ensemble_id)
                 ],
-                "responses": [
-                    {"name": resp.name, "ref_pointer": resp.name}
-                    for resp in rdb_api.get_response_definitions_by_ensemble_id(
-                        ensemble_id
-                    )
+                "responses" : [
+                    {
+                        "name" : resp.name, "response_ref" : resp.name
+                    } for resp in rdb_api.get_response_definitions_by_ensemble_id(ensemble_id)
                 ],
                 "parameters": [
                     {"name": par.name}
@@ -236,64 +240,3 @@ class StorageApi(object):
             }
 
         return return_schema
-
-        schema = {
-            "name": ens.name,
-            "parameters": [],
-            "responses": [],
-            "observations": [],
-        }
-
-        for param_def in ens.parameter_definitions:
-            reals = []
-            schema["parameters"].append({"name": param_def.name, "realizations": reals})
-
-            for real in ens.realizations:
-                for param in real.parameters:
-                    if param.parameter_definition == param_def:
-                        reals.append(
-                            {
-                                "name": real.index,
-                                "data_refs": {"value": param.value_ref},
-                            }
-                        )
-
-        def observation_names(resp_def):
-            if resp_def.observation is not None:
-                return [resp_def.observation.name]
-            else:
-                return []
-
-        for resp_def in ens.response_definitions:
-            reals = []
-            schema["responses"].append({"name": resp_def.name, "realizations": reals})
-
-            for real in ens.realizations:
-                for resp in real.responses:
-                    if resp.response_definition == resp_def:
-                        reals.append(
-                            {
-                                "name": real.index,
-                                "data_refs": {"values": resp.values_ref},
-                                "observed_by": observation_names(resp_def),
-                            }
-                        )
-
-        for obs_name in rdb_api.get_all_observation_keys():
-            obs = rdb_api.get_observation(obs_name)
-            schema["observations"].append(
-                {
-                    "name": obs.name,
-                    "data_refs": {
-                        "values": obs.values_ref,
-                        "stds": obs.stds_ref,
-                        "key_indexes": obs.key_indexes_ref,
-                        "data_indexes": obs.data_indexes_ref,
-                    },
-                    "observes": [
-                        resp_def.name for resp_def in obs.response_definitions
-                    ],
-                }
-            )
-
-        return schema
