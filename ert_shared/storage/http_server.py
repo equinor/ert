@@ -26,18 +26,30 @@ def resolve_data_uri(struct):
                 resolve_data_uri(val)
 
 
-def resolve_ref_uri(BASE_URL, struct):
+def resolve_ref_uri(BASE_URL, struct, ensemble_id=None):
     if isinstance(struct, list):
         for item in struct:
-            resolve_ref_uri(BASE_URL, item)
+            resolve_ref_uri(BASE_URL, item, ensemble_id)
     elif isinstance(struct, dict):
         for key, val in struct.copy().items():
-            if "_ref" in key and "data" not in key:
-                url = "{}/{}".format(BASE_URL, val)
+            split_key = key.split("_")
+
+            if len(split_key) == 2 and split_key[1] == "ref" in key and "data" not in key:
+                type_name = split_key[0]
+                if type_name == "realization":
+                    base = resolve_ensemble_uri(ensemble_id)
+                    url = "{}/realizations/{}".format(base, val)
+                elif type_name == "ensemble":
+                    url = resolve_ensemble_uri(val)
+                elif type_name == "response":
+                    base = resolve_ensemble_uri(ensemble_id)
+                    url = "{}/responses/{}".format(base, val)
+                else:
+                    url = key
                 struct["ref_url"] = url
                 del struct[key]
             else:
-                resolve_ref_uri("{}/{}".format(BASE_URL, key), val)
+                resolve_ref_uri("{}/{}".format(BASE_URL, key), val, ensemble_id)
 
 
 class FlaskWrapper:
