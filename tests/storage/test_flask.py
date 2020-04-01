@@ -71,9 +71,8 @@ def test_observation(test_client):
     resp = json.loads(resp_data)
     obs = resp["observation"]
 
-    for data_def in obs["data"]:
+    for name, data_def in obs["data"].items():
         url = data_def["data_url"]
-        name = data_def["name"]
         resp = test_client.get(url)
         actual.add((name, resp.data.decode("utf-8")))
 
