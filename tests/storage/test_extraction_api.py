@@ -9,7 +9,7 @@ from ert_shared.storage.extraction_api import (
     _dump_response,
 )
 
-from tests.storage import db_session, engine, tables
+from tests.storage import db_connection, engine, tables
 
 observation_data = {
     ("POLY_OBS", 0, 10): {"OBS": 2.0, "STD": 0.1},
@@ -23,8 +23,8 @@ observation_data = {
 }
 
 
-def test_dump_observations(db_session):
-    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+def test_dump_observations(db_connection):
+    with RdbApi(db_connection) as rdb_api, BlobApi(db_connection) as blob_api:
         observations = pd.DataFrame.from_dict(observation_data)
         _dump_observations(
             rdb_api=rdb_api, blob_api=blob_api, observations=observations
@@ -32,7 +32,7 @@ def test_dump_observations(db_session):
         blob_api.commit()
         rdb_api.commit()
 
-    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+    with RdbApi(db_connection) as rdb_api, BlobApi(db_connection) as blob_api:
         poly_obs = rdb_api.get_observation("POLY_OBS")
         assert poly_obs.id is not None
         key_indexes = blob_api.get_blob(poly_obs.key_indexes_ref)
@@ -71,9 +71,9 @@ coeff_a = pd.DataFrame.from_dict(
 parameters = {"COEFFS:COEFF_A": coeff_a}
 
 
-def test_dump_parameters(db_session):
+def test_dump_parameters(db_connection):
     ensemble_name = "default"
-    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+    with RdbApi(db_connection) as rdb_api, BlobApi(db_connection) as blob_api:
         ensemble = rdb_api.add_ensemble(name=ensemble_name)
         for i in range(5):
             rdb_api.add_realization(i, ensemble.name)
@@ -87,7 +87,7 @@ def test_dump_parameters(db_session):
         blob_api.commit()
         rdb_api.commit()
 
-    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+    with RdbApi(db_connection) as rdb_api, BlobApi(db_connection) as blob_api:
         parameter_0 = rdb_api.get_parameter("COEFF_A", "COEFFS", 0, ensemble_name)
         assert blob_api.get_blob(parameter_0.value_ref).data == 0.7684484807065148
 
@@ -172,9 +172,9 @@ poly_res = pd.DataFrame.from_dict(
 responses = {"POLY_RES": poly_res}
 
 
-def test_dump_responses(db_session):
+def test_dump_responses(db_connection):
     ensemble_name = "default"
-    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+    with RdbApi(db_connection) as rdb_api, BlobApi(db_connection) as blob_api:
         ensemble = rdb_api.add_ensemble(name=ensemble_name)
 
         observations = pd.DataFrame.from_dict(observation_data)
@@ -197,7 +197,7 @@ def test_dump_responses(db_session):
         blob_api.commit()
         rdb_api.commit()
 
-    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+    with RdbApi(db_connection) as rdb_api, BlobApi(db_connection) as blob_api:
         response_0 = rdb_api.get_response("POLY_RES", 0, ensemble_name)
         response_values = blob_api.get_blob(response_0.values_ref).data
         assert response_values == [
