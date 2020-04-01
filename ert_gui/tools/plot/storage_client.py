@@ -9,8 +9,8 @@ def convert_response_to_float(resp):
     return [float(x) for x in string.split(",")]
 
 class StorageClient(object):
-    def __init__(self):
-        self._BASE_URI = "http://127.0.0.1:5000/" # Default flask server
+    def __init__(self, base_url="http://127.0.0.1:5000/"):
+        self._BASE_URI = base_url
 
     def all_data_type_keys(self):
         """ Returns a list of all the keys except observation keys. For each key a dict is returned with info about
