@@ -122,18 +122,18 @@ class StorageApi(object):
                 "data_ref": <indexes_ref>
             }
             "observation": {
-                "data" : [
-                    {
-                        "name" : "values"
+                "data" : {
+                    "values" : {
                         "data_ref" : <values_ref>
                     }
-                    {
-                        "name" : "std"
+                    "std" :{
                         "data_ref" : <stds_ref>
                     }
-                    {
-                        "name" : "data_indexes"
+                    "data_indexes" : {
                         "data_ref" : <data_indexes_ref>
+                    }
+                    "key_indexes" {
+                        "data_ref" : <key_indexes_ref>
                     }
                 ]
             }
@@ -163,24 +163,20 @@ class StorageApi(object):
             }
             if observation is not None:
                 return_schema["observation"] = {
-                    "data" : [
-                        {
-                            "name": "values",
-                            "data_ref": observation.values_ref
+                    "data" : {
+                        "values" : {
+                            "data_ref" : observation.values_ref
                         },
-                        {
-                            "name": "std",
-                            "data_ref": observation.stds_ref
+                        "std" : {
+                            "data_ref" : observation.stds_ref
                         },
-                        {
-                            "name": "data_indexes",
+                        "data_indexes" : {
                             "data_ref": observation.data_indexes_ref
                         },
-                        {
-                            "name": "key_indexes",
+                        "key_indexes" :{
                             "data_ref": observation.key_indexes_ref,
                         }
-                    ]
+                    }
                 }
 
         return return_schema
