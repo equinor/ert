@@ -39,7 +39,7 @@ class StorageClient(object):
 
         r = requests.get("{base}/ensembles".format(base=self._BASE_URI))
 
-        ens_pointer = r.json()["ensembles"][0]["ref_pointer"]
+        ens_pointer = r.json()["ensembles"][0]["ref_url"]
 
         r = requests.get(ens_pointer)
 
@@ -101,7 +101,7 @@ class StorageClient(object):
 
         r = requests.get("{base}/ensembles".format(base=self._BASE_URI))
 
-        ens_pointer = r.json()["ensembles"][0]["ref_pointer"]
+        ens_pointer = r.json()["ensembles"][0]["ref_url"]
 
         r = requests.get(ens_pointer)
 
@@ -110,14 +110,14 @@ class StorageClient(object):
         df = pd.DataFrame()
         for real in ens_schema["realizations"]:
 
-            r = requests.get(real["ref_pointer"])
+            r = requests.get(real["ref_url"])
             realization = r.json()
             key_df = pd.DataFrame()
             for resp in realization["responses"]:
                 if resp["name"] != key:
                     continue
 
-                r = requests.get(resp["data_ref"])
+                r = requests.get(resp["data_url"])
 
                 # TODO: simplified for now, expected structure not in place
                 # Need to add index as well
@@ -132,7 +132,7 @@ class StorageClient(object):
                 if param["name"] != key:
                     continue
 
-                r = requests.get(param["data_ref"])
+                r = requests.get(param["data_url"])
 
                 # TODO: simplified for now, expected structure not in place
                 # Need to add index as well
