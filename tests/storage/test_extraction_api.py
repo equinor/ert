@@ -79,7 +79,10 @@ def test_dump_parameters(db_session):
             rdb_api.add_realization(i, ensemble.name)
 
         _dump_parameters(
-            rdb_api=rdb_api, blob_api=blob_api, parameters=parameters, ensemble_name=ensemble.name
+            rdb_api=rdb_api,
+            blob_api=blob_api,
+            parameters=parameters,
+            ensemble_name=ensemble.name,
         )
         blob_api.commit()
         rdb_api.commit()
@@ -175,7 +178,9 @@ def test_dump_responses(db_session):
         ensemble = rdb_api.add_ensemble(name=ensemble_name)
 
         observations = pd.DataFrame.from_dict(observation_data)
-        _dump_observations(rdb_api=rdb_api, blob_api=blob_api, observations=observations)
+        _dump_observations(
+            rdb_api=rdb_api, blob_api=blob_api, observations=observations
+        )
 
         for i in range(5):
             rdb_api.add_realization(i, ensemble.name)
@@ -209,4 +214,3 @@ def test_dump_responses(db_session):
         ]
 
         assert response_0.response_definition.observation.name == "POLY_OBS"
-

@@ -29,7 +29,7 @@ class BlobApi:
 
     def commit(self):
         self._session.commit()
-    
+
     def flush(self):
         self._session.flush()
 
