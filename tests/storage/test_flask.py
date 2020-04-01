@@ -45,7 +45,7 @@ def test_api(test_client):
 
             for response in realization["responses"]:
                 print("########## ENSEMBLE - realization - response #############")
-                response_data = test_client.get(response["data_ref"])
+                response_data = test_client.get(response["data_url"])
                 print(response_data.data)
 
         for response in ensemble["responses"]:
@@ -72,7 +72,7 @@ def test_observation(test_client):
     obs = resp["observation"]
 
     for data_def in obs["data"]:
-        url = data_def["data_ref"]
+        url = data_def["data_url"]
         name = data_def["name"]
         resp = test_client.get(url)
         actual.add((name, resp.data.decode("utf-8")))
