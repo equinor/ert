@@ -132,7 +132,7 @@ class StorageApi(object):
                     "data_indexes" : {
                         "data_ref" : <data_indexes_ref>
                     }
-                    "key_indexes" {
+                    "key_indexes" :     {
                         "data_ref" : <key_indexes_ref>
                     }
                 ]
@@ -173,7 +173,7 @@ class StorageApi(object):
                         "data_indexes" : {
                             "data_ref": observation.data_indexes_ref
                         },
-                        "key_indexes" :{
+                        "key_indexes" : {
                             "data_ref": observation.key_indexes_ref,
                         }
                     }
