@@ -10,7 +10,9 @@ from sqlalchemy.orm import Session
 
 @pytest.fixture(scope="session")
 def engine():
-    return create_engine("sqlite:///:memory:", echo=False)
+    engine = create_engine("sqlite:///:memory:", echo=False)
+    engine.execute('pragma foreign_keys=on')
+    return engine
 
 
 @pytest.yield_fixture(scope="session")
@@ -34,13 +36,11 @@ def db_connection(engine, tables):
     connection.close()
 
 
-
-
 @pytest.yield_fixture
 def populated_db(tmpdir):
     db_name = "test.db"
     db_url = "sqlite:///{}/{}".format(tmpdir, db_name)
-    
+
     engine = create_engine(db_url, echo=False)
     Entities.metadata.create_all(engine)
     Blobs.metadata.create_all(engine)
@@ -68,11 +68,13 @@ def populated_db(tmpdir):
         stds_ref=add_blob([1, 3]),
     )
 
-    repository.add_response_definition(
-        name="response_one",
-        indexes_ref=add_blob([0, 1]),
-        ensemble_name=ensemble.name,
-        observation_name=observation.name,
+    response_definition = repository.add_response_definition(
+        name="response_one", indexes_ref=add_blob([0, 1]), ensemble_name=ensemble.name,
+    )
+    repository.flush()
+
+    repository._add_observation_response_definition_link(
+        observation_id=observation.id, response_definition_id=response_definition.id
     )
 
     repository.add_response_definition(
@@ -108,5 +110,4 @@ def populated_db(tmpdir):
     add_data(realization2)
 
     repository.commit()
-
     yield db_url
