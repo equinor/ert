@@ -91,36 +91,40 @@ def get_realizations_data(realizations, x_axis):
         realizations_data.append(realization_data)
     return realizations_data
 
-def get_observation_data(observation,x_axis):
-    data = get_data(observation["values"]["data_url"])
-    stds = get_data(observation["std"]["data_url"])
-    x_axis_indexes = get_axis(observation["data_indexes"]["data_url"])
-    x_axis = [x_axis[i] for i in x_axis_indexes]
-    observation_data = dict(
-        x=x_axis,
-        y=data,
-        text="Observations",
-        name="Observations",
-        mode="markers",
-        marker=dict(color="red", size=10)
-    )
-    lower_std_data = dict(
-        x=x_axis,
-        y=[d-std for d, std in zip(data,stds)],
-        text="Observations std lower",
-        name="Observations std lower",
-        mode="line",
-        line=dict(color="red", dash="dash")
-    )
-    upper_std_data = dict(
-        x=x_axis,
-        y=[d+std for d, std in zip(data,stds)],
-        text="Observations std upper",
-        name="Observations std upper",
-        mode="line",
-        line=dict(color="red", dash="dash")
-    )
-    return [observation_data, lower_std_data, upper_std_data]
+def get_observations_data(observations,x_axis):
+    return_plots = []
+    for observation in observations:
+        observation = observation["data"]
+        data = get_data(observation["values"]["data_url"])
+        stds = get_data(observation["std"]["data_url"])
+        x_axis_indexes = get_axis(observation["data_indexes"]["data_url"])
+        x_axis_tmp = [x_axis[i] for i in x_axis_indexes]
+        observation_data = dict(
+            x=x_axis_tmp,
+            y=data,
+            text="Observations",
+            name="Observations",
+            mode="markers",
+            marker=dict(color="red", size=10)
+        )
+        lower_std_data = dict(
+            x=x_axis_tmp,
+            y=[d-std for d, std in zip(data,stds)],
+            text="Observations std lower",
+            name="Observations std lower",
+            mode="line",
+            line=dict(color="red", dash="dash")
+        )
+        upper_std_data = dict(
+            x=x_axis_tmp,
+            y=[d+std for d, std in zip(data,stds)],
+            text="Observations std upper",
+            name="Observations std upper",
+            mode="line",
+            line=dict(color="red", dash="dash")
+        )
+        return_plots.extend([observation_data, lower_std_data, upper_std_data])
+    return return_plots
 
 @app.callback(
     Output('response-selector', 'options'),
@@ -148,8 +152,8 @@ def update_graph(
     response = api_request(yaxis_column_name)
     x_axis = get_axis(response["axis"]["data_url"])
     plot_lines = get_realizations_data(response["realizations"], x_axis)
-    if "observation" in response:
-        plot_lines += get_observation_data(response["observation"]["data"], x_axis)
+    if "observations" in response:
+        plot_lines += get_observations_data(response["observations"], x_axis)
     return {
         "data": plot_lines,
         "layout": dict(

@@ -111,8 +111,6 @@ class ResponseDefinition(Entities):
     indexes_ref = Column(Integer)  # Reference to the description of  plot axis
     ensemble_id = Column(Integer, ForeignKey("ensembles.id"))
     ensemble = relationship("Ensemble", back_populates="response_definitions")
-    observation_id = Column(Integer, ForeignKey("observations.id"))
-    observation = relationship("Observation", back_populates="response_definitions")
 
     __table_args__ = (
         UniqueConstraint("name", "ensemble_id", name="_name_ensemble_id_"),
@@ -239,8 +237,64 @@ class Observation(Entities):
         )
 
 
-Observation.response_definitions = relationship(
-    "ResponseDefinition", order_by=ResponseDefinition.id, back_populates="observation"
+class ObservationResponseDefinitionLink(Entities):
+    __tablename__ = "observation_response_definition_links"
+
+    id = Column(Integer, primary_key=True)
+    response_definition_id = Column(Integer, ForeignKey("response_definitions.id"))
+    response_definition = relationship(
+        "ResponseDefinition", back_populates="observation_links"
+    )
+    observation_id = Column(Integer, ForeignKey("observations.id"))
+    observation = relationship(
+        "Observation", back_populates="response_definition_links"
+    )
+
+    __table_args__ = (UniqueConstraint("response_definition_id", "observation_id", name="_uc_response_definition_observation_"),)
+
+    def __repr__(self):
+        return "<ObservationResponseDefinitionLink(response_definition_id='{}', observation_id='{}')>".format(
+            self.response_definition_id,
+            self.observation_id,
+        )
+
+
+ResponseDefinition.observation_links = relationship(
+    "ObservationResponseDefinitionLink", order_by=ObservationResponseDefinitionLink.id, back_populates="response_definition"
+)
+Observation.response_definition_links = relationship(
+    "ObservationResponseDefinitionLink", order_by=ObservationResponseDefinitionLink.id, back_populates="observation"
+)
+
+class Misfit(Entities):
+    __tablename__ = "misfits"
+
+    id = Column(Integer, primary_key=True)
+    response_id = Column(Integer, ForeignKey("responses.id"))
+    response = relationship(
+        "Response", back_populates="misfits"
+    )
+    observation_response_definition_link_id = Column(Integer, ForeignKey("observation_response_definition_links.id"))
+    observation_response_definition_link = relationship(
+        "ObservationResponseDefinitionLink", back_populates="misfits"
+    )
+    value = Column(Float)
+
+    __table_args__ = (UniqueConstraint("response_id", "observation_response_definition_link_id", name="_uc_response_link_"),)
+
+    def __repr__(self):
+        return "<Misfit(response_id='{}', observation_response_definition_link_id='{}', misfit='{}')>".format(
+            self.response_id,
+            self.observation_response_definition_link_id,
+            self.misfit,
+        )
+
+
+Response.misfits = relationship(
+    "Misfit", order_by=Misfit.id, back_populates="response"
+)
+ObservationResponseDefinitionLink.misfits = relationship(
+    "Misfit", order_by=Misfit.id, back_populates="observation_response_definition_link"
 )
 
 

@@ -185,14 +185,12 @@ def test_dump_responses(db_connection):
         for i in range(5):
             rdb_api.add_realization(i, ensemble.name)
 
-        key_mapping = {"POLY_RES": "POLY_OBS"}
 
         _dump_response(
             rdb_api=rdb_api,
             blob_api=blob_api,
             responses=responses,
             ensemble_name=ensemble.name,
-            key_mapping=key_mapping,
         )
         blob_api.commit()
         rdb_api.commit()
@@ -212,5 +210,3 @@ def test_dump_responses(db_connection):
             70.73372400000001,
             86.852631,
         ]
-
-        assert response_0.response_definition.observation.name == "POLY_OBS"

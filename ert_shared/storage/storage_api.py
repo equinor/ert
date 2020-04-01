@@ -156,19 +156,20 @@ class StorageApi(object):
             "axis" : {
                 "data_ref": <indexes_ref>
             }
-            "observation": {
-                "data" : {
-                    "values" : {
-                        "data_ref" : <values_ref>
-                    }
-                    "std" :{
-                        "data_ref" : <stds_ref>
-                    }
-                    "data_indexes" : {
-                        "data_ref" : <data_indexes_ref>
-                    }
-                    "key_indexes" :     {
-                        "data_ref" : <key_indexes_ref>
+            "observations": [
+                    {"data" : {
+                        "values" : {
+                            "data_ref" : <values_ref>
+                        }
+                        "std" :{
+                            "data_ref" : <stds_ref>
+                        }
+                        "data_indexes" : {
+                            "data_ref" : <data_indexes_ref>
+                        }
+                        "key_indexes" :     {
+                            "data_ref" : <key_indexes_ref>
+                        }
                     }
                 ]
             }
@@ -180,7 +181,7 @@ class StorageApi(object):
                 response_name=response_name, ensemble_id=ensemble_id
             )
 
-            observation = bundle.observation
+            observation_links = bundle.observation_links
             responses = bundle.responses
 
             return_schema = {
@@ -196,15 +197,15 @@ class StorageApi(object):
                 ],
                 "axis": {"data_ref": bundle.indexes_ref},
             }
-            if observation is not None:
-                return_schema["observation"] = {
+            if len(observation_links) > 0:
+                return_schema["observations"] = [{
                     "data": {
-                        "values": {"data_ref": observation.values_ref},
-                        "std": {"data_ref": observation.stds_ref},
-                        "data_indexes": {"data_ref": observation.data_indexes_ref},
-                        "key_indexes": {"data_ref": observation.key_indexes_ref,},
+                        "values": {"data_ref": observation_link.observation.values_ref},
+                        "std": {"data_ref": observation_link.observation.stds_ref},
+                        "data_indexes": {"data_ref": observation_link.observation.data_indexes_ref},
+                        "key_indexes": {"data_ref": observation_link.observation.key_indexes_ref,},
                     }
-                }
+                } for observation_link in observation_links]
 
         return return_schema
 

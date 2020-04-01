@@ -9,6 +9,8 @@ from ert_shared.storage.model import (
     Response,
     ResponseDefinition,
     Update,
+    ObservationResponseDefinitionLink,
+    Misfit,
 )
 from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import Bundle
@@ -27,6 +29,9 @@ class RdbApi:
 
     def commit(self):
         self._session.commit()
+
+    def flush(self):
+        self._session.flush()
 
     def rollback(self):
         self._session.rollback()
@@ -146,24 +151,17 @@ class RdbApi:
         return realization
 
     def add_response_definition(
-        self, name, indexes_ref, ensemble_name, observation_name=None,
+        self, name, indexes_ref, ensemble_name,
     ):
         msg = "Adding response definition with name '{}' on ensemble '{}'. Attaching indexes with ref '{}'"
         logging.info(msg.format(name, ensemble_name, indexes_ref))
 
         ensemble = self.get_ensemble(name=ensemble_name)
-        observation = None
-        if observation_name is not None:
-            msg = "Connecting observation '{}'"
-            logging.info(msg.format(observation_name))
-
-            observation = self.get_observation(name=observation_name)
 
         response_definition = ResponseDefinition(
             name=name,
             indexes_ref=indexes_ref,
             ensemble_id=ensemble.id,
-            observation_id=observation.id if observation is not None else None,
         )
         self._session.add(response_definition)
 
@@ -247,6 +245,38 @@ class RdbApi:
         self._session.add(observation)
 
         return observation
+
+    def _add_observation_response_definition_link(
+        self, observation_id, response_definition_id
+    ):
+        msg = "Adding link between observation with id '{}' and response definition with id '{}'"
+        logging.info(
+            msg.format(observation_id, response_definition_id)
+        )
+
+        link = ObservationResponseDefinitionLink(
+            observation_id=observation_id,
+            response_definition_id=response_definition_id,
+        )
+        self._session.add(link)
+        return link
+
+    def _add_misfit(
+        self, value, link_id, response_id
+    ):
+        msg = "Adding misfit ({}) between response with id '{}' and link with id '{}'"
+        logging.info(
+            msg.format(value, response_id, link_id)
+        )
+
+        misfit = Misfit(
+            value=value,
+            observation_response_definition_link_id=link_id,
+            response_id=response_id,
+        )
+        self._session.add(misfit)
+
+        return misfit
 
     def get_all_observation_keys(self):
         return [obs.name for obs in self._session.query(Observation.name).all()]
