@@ -20,6 +20,7 @@ def resolve_data_uri(struct):
             if key == "data_ref":
                 url = "{}data/{}".format(BASE_URL, val)
                 struct["data_url"] = url
+                del struct[key]
             else:
                 resolve_data_uri(val)
 
@@ -33,6 +34,7 @@ def resolve_ref_uri(BASE_URL, struct):
             if "_ref" in key and "data" not in key:
                 url = "{}/{}".format(BASE_URL, val)
                 struct["ref_url"] = url
+                del struct[key]
             else:
                 resolve_ref_uri("{}/{}".format(BASE_URL, key), val)
 
