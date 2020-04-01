@@ -148,7 +148,7 @@ def test_add_reference_ensemble(db_connection):
         )
         rdb_api.commit()
         assert (
-            result_ensemble.parent[0].ensemble_reference.name == reference_ensemble_name
+            result_ensemble.parent.ensemble_reference.name == reference_ensemble_name
         )
 
 

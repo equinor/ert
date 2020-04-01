@@ -76,6 +76,7 @@ Ensemble.children = relationship(
 Ensemble.parent = relationship(
     "Update",
     order_by=Update.id,
+    uselist=False,
     back_populates="ensemble_result",
     foreign_keys=[Update.ensemble_result_id],
 )
