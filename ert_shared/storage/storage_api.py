@@ -26,9 +26,9 @@ class StorageApi(object):
             "name": ensemble.name,
             "ensemble_ref": ensemble.id,
             "parent": {
-                "ensemble_ref": ensemble.parent[0].ensemble_reference.id,
-                "name": ensemble.parent[0].ensemble_reference.name
-            } if not len(ensemble.parent) == 0 else None,
+                "ensemble_ref": ensemble.parent.ensemble_reference.id,
+                "name": ensemble.parent.ensemble_reference.name
+            } if ensemble.parent is not None else None,
             "children": [
                 {
                     "ensemble_ref": child.ensemble_result.id,
