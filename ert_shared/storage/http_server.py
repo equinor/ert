@@ -26,10 +26,10 @@ def resolve_data_uri(struct):
                 resolve_data_uri(val)
 
 
-def resolve_ref_uri(BASE_URL, struct, ensemble_id=None):
+def resolve_ref_uri(struct, ensemble_id=None):
     if isinstance(struct, list):
         for item in struct:
-            resolve_ref_uri(BASE_URL, item, ensemble_id)
+            resolve_ref_uri(item, ensemble_id)
     elif isinstance(struct, dict):
         for key, val in struct.copy().items():
             split_key = key.split("_")
@@ -40,15 +40,17 @@ def resolve_ref_uri(BASE_URL, struct, ensemble_id=None):
                     base = resolve_ensemble_uri(ensemble_id)
                     struct["ref_url"] = "{}/realizations/{}".format(base, val)
                 elif type_name == "ensemble":
+                    struct["ref_url"] = resolve_ensemble_uri(val)
                 elif type_name == "response":
                     base = resolve_ensemble_uri(ensemble_id)
-                    url = "{}/responses/{}".format(base, val)
+                    struct["ref_url"] = "{}/responses/{}".format(base, val)
+                elif type_name == "data":
+                    struct["data_url"] = "{}data/{}".format(request.host_url, val)
                 else:
-                    url = key
-                struct["ref_url"] = url
+                    continue
                 del struct[key]
             else:
-                resolve_ref_uri("{}/{}".format(BASE_URL, key), val, ensemble_id)
+                resolve_ref_uri(val, ensemble_id)
 
 
 
@@ -79,7 +81,11 @@ class FlaskWrapper:
         ) as api:
             ensembles = api.ensembles()
             resolve_ref_uri(ensembles)
+<<<<<<< HEAD
             return ensembles
+=======
+            return {"ensembles": ensembles}
+>>>>>>> 24abfc33... unified ref resolver
 
     def ensemble_by_id(self, ensemble_id):
         with StorageApi(
