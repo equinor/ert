@@ -26,30 +26,31 @@ def resolve_data_uri(struct):
                 resolve_data_uri(val)
 
 
-def resolve_ref_uri(BASE_URL, struct, ensemble_id=None):
+def resolve_ref_uri(struct, ensemble_id=None):
     if isinstance(struct, list):
         for item in struct:
-            resolve_ref_uri(BASE_URL, item, ensemble_id)
+            resolve_ref_uri(item, ensemble_id)
     elif isinstance(struct, dict):
         for key, val in struct.copy().items():
             split_key = key.split("_")
 
-            if len(split_key) == 2 and split_key[1] == "ref" in key and "data" not in key:
+            if len(split_key) == 2 and split_key[1] == "ref" in key:
                 type_name = split_key[0]
                 if type_name == "realization":
                     base = resolve_ensemble_uri(ensemble_id)
-                    url = "{}/realizations/{}".format(base, val)
+                    struct["ref_url"] = "{}/realizations/{}".format(base, val)
                 elif type_name == "ensemble":
-                    url = resolve_ensemble_uri(val)
+                    struct["ref_url"] = resolve_ensemble_uri(val)
                 elif type_name == "response":
                     base = resolve_ensemble_uri(ensemble_id)
-                    url = "{}/responses/{}".format(base, val)
+                    struct["ref_url"] = "{}/responses/{}".format(base, val)
+                elif type_name == "data":
+                    struct["data_url"] = "{}data/{}".format(request.host_url, val)
                 else:
-                    url = key
-                struct["ref_url"] = url
+                    continue
                 del struct[key]
             else:
-                resolve_ref_uri("{}/{}".format(BASE_URL, key), val, ensemble_id)
+                resolve_ref_uri(val, ensemble_id)
 
 
 class FlaskWrapper:
@@ -79,7 +80,7 @@ class FlaskWrapper:
             rdb_url=self._rdb_url, blob_url=self._blob_url
         ) as api:
             ensembles = api.ensembles()
-            resolve_ref_uri("{}ensembles".format(request.host_url), ensembles)
+            resolve_ref_uri(ensembles)
             return {"ensembles": ensembles}
 
     def ensemble_by_id(self, ensemble_id):
@@ -87,8 +88,7 @@ class FlaskWrapper:
             rdb_url=self._rdb_url, blob_url=self._blob_url
         ) as api:
             ensemble = api.ensemble_schema(ensemble_id)
-            base_url = resolve_ensemble_uri(ensemble_id)
-            resolve_ref_uri(base_url, ensemble)
+            resolve_ref_uri(ensemble, ensemble_id)
             return ensemble
 
     def realizations(self, ensemble_id):
@@ -99,7 +99,7 @@ class FlaskWrapper:
             rdb_url=self._rdb_url, blob_url=self._blob_url
         ) as api:
             realization = api.realization(ensemble_id, realization_idx, None)
-            resolve_data_uri(realization)
+            resolve_ref_uri(realization, ensemble_id)
             return realization
 
     def response_by_name(self, ensemble_id, response_name):
@@ -107,9 +107,7 @@ class FlaskWrapper:
             rdb_url=self._rdb_url, blob_url=self._blob_url
         ) as api:
             response = api.response(ensemble_id, response_name, None)
-            base_url = resolve_ensemble_uri(ensemble_id)
-            resolve_ref_uri(base_url, response)
-            resolve_data_uri(response)
+            resolve_ref_uri(response, ensemble_id)
             return response
 
     def data(self, data_id):
