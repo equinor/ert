@@ -147,9 +147,7 @@ def test_add_reference_ensemble(db_connection):
             name="result_ensemble", reference=(reference_ensemble_name, "es_mda")
         )
         rdb_api.commit()
-        assert (
-            result_ensemble.parent.ensemble_reference.name == reference_ensemble_name
-        )
+        assert result_ensemble.parent.ensemble_reference.name == reference_ensemble_name
 
 
 def test_add_realization(db_connection):
@@ -223,3 +221,64 @@ def test_add_parameter(db_connection):
         assert parameter.parameter_definition_id is not None
         assert blob_api.get_blob(id=parameter.value_ref).data == value
 
+
+def test_add_observation_response_definition_link(db_connection):
+    with RdbApi(db_connection) as rdb_api:
+        observation = rdb_api.add_observation(
+            name="test", key_indexes_ref=None, data_indexes_ref=None, values_ref=None, stds_ref=None
+        )
+
+        ensemble = rdb_api.add_ensemble(name="test_ensemble")
+
+        response_definition = rdb_api.add_response_definition(
+            name="test_response_definition", indexes_ref=0, ensemble_name=ensemble.name
+        )
+
+        rdb_api.flush()
+
+        link = rdb_api._add_observation_response_definition_link(
+            observation_id=observation.id, response_definition_id=response_definition.id
+        )
+
+        rdb_api.commit()
+
+        assert link.id is not None
+        assert link.observation_id == observation.id
+        assert link.response_definition_id == response_definition.id
+
+def test_add_mistfit(db_connection):
+    with RdbApi(db_connection) as rdb_api:
+        observation = rdb_api.add_observation(
+            name="test", key_indexes_ref=None, data_indexes_ref=None, values_ref=None, stds_ref=None
+        )
+
+        ensemble = rdb_api.add_ensemble(name="test")
+
+        response_definition = rdb_api.add_response_definition(
+            name="test", indexes_ref=None, ensemble_name=ensemble.name
+        )
+
+        realization = rdb_api.add_realization(0, ensemble.name)
+
+        response = rdb_api.add_response(
+            name=response_definition.name,
+            values_ref=0,
+            realization_index=realization.index,
+            ensemble_name=ensemble.name,
+        )
+        rdb_api.flush()
+
+        link = rdb_api._add_observation_response_definition_link(
+            observation_id=observation.id, response_definition_id=response_definition.id
+        )
+
+        rdb_api.flush()
+
+        misfit = rdb_api._add_misfit(1.0, link.id, response.id)
+
+        rdb_api.commit()
+
+        assert misfit.id is not None
+        assert misfit.response_id == response.id
+        assert misfit.observation_response_definition_link_id == link.id
+        assert misfit.observation_response_definition_link.observation_id == observation.id

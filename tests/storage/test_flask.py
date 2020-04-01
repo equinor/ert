@@ -67,11 +67,12 @@ def test_observation(test_client):
     resp_url = ens["responses"][0]["ref_url"]
     resp_data = test_client.get(resp_url).data.decode()
     resp = json.loads(resp_data)
-    obs = resp["observation"]
+    observations = resp["observations"]
 
-    for name, data_def in obs["data"].items():
-        url = data_def["data_url"]
-        resp = test_client.get(url)
-        actual.add((name, resp.data.decode("utf-8")))
+    for obs in observations:
+        for name, data_def in obs["data"].items():
+            url = data_def["data_url"]
+            resp = test_client.get(url)
+            actual.add((name, resp.data.decode("utf-8")))
 
     assert actual == expected
