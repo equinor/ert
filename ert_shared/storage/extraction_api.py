@@ -7,6 +7,8 @@ from ert_shared.storage import connections
 from ert_shared.storage.blob_api import BlobApi
 from ert_shared.storage.rdb_api import RdbApi
 
+from res.enkf.export import MisfitCollector
+
 
 def _create_ensemble(rdb_api, reference):
     facade = ERT.enkf_facade
@@ -28,6 +30,7 @@ def _extract_and_dump_observations(rdb_api, blob_api):
 
     measured_data = MeasuredData(facade, observation_keys)
     # TODO: Should save all info and info about deactivation
+
     measured_data.remove_inactive_observations()
     observations = measured_data.data.loc[["OBS", "STD"]]
 
@@ -114,28 +117,21 @@ def _extract_and_dump_responses(rdb_api, blob_api, ensemble_name):
         for key in summary_data_keys
     }
 
-    observation_keys = rdb_api.get_all_observation_keys()
-    key_mapping = {
-        facade.get_data_key_for_obs_key(key): key for key in observation_keys
-    }
-
     _dump_response(
         rdb_api=rdb_api,
         blob_api=blob_api,
         responses=gen_data_data,
         ensemble_name=ensemble_name,
-        key_mapping=key_mapping,
     )
     _dump_response(
         rdb_api=rdb_api,
         blob_api=blob_api,
         responses=summary_data,
         ensemble_name=ensemble_name,
-        key_mapping=key_mapping,
     )
 
 
-def _dump_response(rdb_api, blob_api, responses, ensemble_name, key_mapping):
+def _dump_response(rdb_api, blob_api, responses, ensemble_name):
     for key, response in responses.items():
         indexes_df = blob_api.add_blob(response.index.to_list())
         blob_api.flush()
@@ -143,7 +139,6 @@ def _dump_response(rdb_api, blob_api, responses, ensemble_name, key_mapping):
             name=key,
             indexes_ref=indexes_df.id,
             ensemble_name=ensemble_name,
-            observation_name=key_mapping.get(key),
         )
         for realization_index, values in response.iteritems():
             values_df = blob_api.add_blob(values.to_list())
@@ -156,6 +151,34 @@ def _dump_response(rdb_api, blob_api, responses, ensemble_name, key_mapping):
             )
 
 
+def _extract_and_dump_update_data(ensemble_id, ensemble_name, rdb_api, blob_api):
+    facade = ERT.enkf_facade
+
+    fs = facade.get_current_fs()
+    realizations = MisfitCollector.createActiveList(ERT.ert, fs)
+
+    for obs_vector in facade.get_observations():
+        observation_key = obs_vector.getObservationKey()
+        response_key = obs_vector.getDataKey()
+        response_definition = rdb_api._get_response_definition(
+            response_key, ensemble_id
+        )
+        observation = rdb_api.get_observation(observation_key)
+        link = rdb_api._add_observation_response_definition_link(
+            observation_id=observation.id, response_definition_id=response_definition.id
+        )
+        for realization_number in realizations:
+            response = rdb_api.get_response(
+                name=response_key,
+                realization_index=realization_number,
+                ensemble_name=ensemble_name,
+            )
+            misfit_value = obs_vector.getTotalChi2(fs, realization_number)
+            rdb_api._add_misfit(
+                value=misfit_value, link_id=link.id, response_id=response.id
+            )
+
+
 def dump_to_new_storage(reference=None, rdb_connection=None, blob_connection=None):
     if not FeatureToggling.is_enabled("new-storage"):
         return
@@ -163,17 +186,16 @@ def dump_to_new_storage(reference=None, rdb_connection=None, blob_connection=Non
     start_time = time.time()
     print("Starting extraction...")
     if rdb_connection is None:
-        rdb_url="sqlite:///entities.db"
+        rdb_url = "sqlite:///entities.db"
         rdb_connection = connections.get_rdb_connection(rdb_url)
 
     rdb_api = RdbApi(connection=rdb_connection)
 
     if blob_connection is None:
-        blob_url="sqlite:///blobs.db"
+        blob_url = "sqlite:///blobs.db"
         blob_connection = connections.get_blob_connection(blob_url)
 
     blob_api = BlobApi(connection=blob_connection)
-
 
     with rdb_api, blob_api:
         ensemble = _create_ensemble(rdb_api, reference=reference)
@@ -184,6 +206,7 @@ def dump_to_new_storage(reference=None, rdb_connection=None, blob_connection=Non
         _extract_and_dump_responses(
             rdb_api=rdb_api, blob_api=blob_api, ensemble_name=ensemble.name
         )
+        _extract_and_dump_update_data(ensemble.id, ensemble.name, rdb_api, blob_api)
         blob_api.commit()
         rdb_api.commit()
         ensemble_name = ensemble.name
@@ -198,6 +221,5 @@ def dump_to_new_storage(reference=None, rdb_connection=None, blob_connection=Non
 
     rdb_connection.close()
     blob_connection.close()
-
 
     return ensemble_name
