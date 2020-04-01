@@ -8,16 +8,16 @@ from ert_shared.storage.model import Observation
 from ert_shared.storage.rdb_api import RdbApi
 from ert_shared.storage.blob_api import BlobApi
 
-from tests.storage import populated_db, db_session, engine, tables
+from tests.storage import populated_db, db_connection, engine, tables
 
 
-def test_add_observation(db_session):
+def test_add_observation(db_connection):
     observation_name = "test"
     key_indexes = [0, 3]
     data_indexes = [0, 3]
     values = [22.1, 44.2]
     stds = [1, 3]
-    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+    with RdbApi(db_connection) as rdb_api, BlobApi(db_connection) as blob_api:
         key_indexes_df = blob_api.add_blob(data=key_indexes)
         data_indexes_df = blob_api.add_blob(data=data_indexes)
         values_df = blob_api.add_blob(data=values)
@@ -34,7 +34,7 @@ def test_add_observation(db_session):
         rdb_api.commit()
         assert observation is not None
 
-    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+    with RdbApi(db_connection) as rdb_api, BlobApi(db_connection) as blob_api:
         observation = rdb_api.get_observation(observation_name)
         assert observation is not None
         assert blob_api.get_blob(observation.key_indexes_ref).data == key_indexes
@@ -43,8 +43,8 @@ def test_add_observation(db_session):
         assert blob_api.get_blob(observation.stds_ref).data == stds
 
 
-def test_add_duplicate_observation(db_session):
-    with RdbApi(db_session) as rdb_api:
+def test_add_duplicate_observation(db_connection):
+    with RdbApi(db_connection) as rdb_api:
         rdb_api.add_observation(
             name="test",
             key_indexes_ref=1,
@@ -65,10 +65,10 @@ def test_add_duplicate_observation(db_session):
             rdb_api.commit()
 
 
-def test_add_response(db_session):
+def test_add_response(db_connection):
     indexes = [0, 2]
     values = [22.1, 44.2]
-    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+    with RdbApi(db_connection) as rdb_api, BlobApi(db_connection) as blob_api:
         indexes_df = blob_api.add_blob(data=indexes)
         values_df = blob_api.add_blob(data=values)
         blob_api.commit()
@@ -89,7 +89,7 @@ def test_add_response(db_session):
         )
         rdb_api.commit()
 
-    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+    with RdbApi(db_connection) as rdb_api, BlobApi(db_connection) as blob_api:
         ensemble = rdb_api.get_ensemble(name="test")
         assert ensemble.id is not None
         response_definition = rdb_api._get_response_definition(
@@ -112,15 +112,15 @@ def test_add_response(db_session):
         assert blob_api.get_blob(id=response.values_ref).data == values
 
 
-def test_add_ensemble(db_session):
-    with RdbApi(db_session) as rdb_api:
+def test_add_ensemble(db_connection):
+    with RdbApi(db_connection) as rdb_api:
         ensemble = rdb_api.add_ensemble(name="test_ensemble")
         rdb_api.commit()
         assert ensemble.id is not None
 
 
-def test_two_ensembles_with_same_name(db_session):
-    with RdbApi(db_session) as rdb_api:
+def test_two_ensembles_with_same_name(db_connection):
+    with RdbApi(db_connection) as rdb_api:
         ensemble1 = rdb_api.add_ensemble(name="test_ensemble")
         rdb_api.commit()
         assert ensemble1.id is not None
@@ -136,13 +136,13 @@ def test_two_ensembles_with_same_name(db_session):
         assert ensemble.id == ensemble2.id
 
 
-def test_add_reference_ensemble(db_session):
+def test_add_reference_ensemble(db_connection):
     reference_ensemble_name = "test_ensemble"
-    with RdbApi(db_session) as rdb_api:
+    with RdbApi(db_connection) as rdb_api:
         ensemble = rdb_api.add_ensemble(name=reference_ensemble_name)
         rdb_api.commit()
 
-    with RdbApi(db_session) as rdb_api:
+    with RdbApi(db_connection) as rdb_api:
         result_ensemble = rdb_api.add_ensemble(
             name="result_ensemble", reference=(reference_ensemble_name, "es_mda")
         )
@@ -152,8 +152,8 @@ def test_add_reference_ensemble(db_session):
         )
 
 
-def test_add_realization(db_session):
-    with RdbApi(db_session) as rdb_api:
+def test_add_realization(db_connection):
+    with RdbApi(db_connection) as rdb_api:
         ensemble = rdb_api.add_ensemble(name="test_ensemble")
 
         realizations = []
@@ -168,16 +168,16 @@ def test_add_realization(db_session):
             assert realization.id is not None
 
     with pytest.raises(sqlalchemy.exc.IntegrityError) as error, RdbApi(
-        session=db_session
+        connection=db_connection
     ) as rdb_api:
         rdb_api.add_realization(0, ensemble_name=ensemble.name)
         rdb_api.commit()
 
 
-def test_add_parameter(db_session):
+def test_add_parameter(db_connection):
     value = 22.1
 
-    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+    with RdbApi(db_connection) as rdb_api, BlobApi(db_connection) as blob_api:
         value_df = blob_api.add_blob(data=value)
         blob_api.commit()
 
@@ -198,7 +198,7 @@ def test_add_parameter(db_session):
         )
         rdb_api.commit()
 
-    with RdbApi(db_session) as rdb_api, BlobApi(db_session) as blob_api:
+    with RdbApi(db_connection) as rdb_api, BlobApi(db_connection) as blob_api:
         ensemble = rdb_api.get_ensemble(name="test")
         assert ensemble.id is not None
 
