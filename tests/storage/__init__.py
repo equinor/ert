@@ -1,10 +1,11 @@
+import os
+
 import pytest
+from ert_shared.storage.blob_api import BlobApi
+from ert_shared.storage.model import Blobs, Entities
+from ert_shared.storage.rdb_api import RdbApi
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from ert_shared.storage.rdb_api import RdbApi
-from ert_shared.storage.blob_api import BlobApi
-
-from ert_shared.storage.model import Entities, Blobs
 
 
 @pytest.fixture(scope="session")
@@ -33,10 +34,21 @@ def db_connection(engine, tables):
     connection.close()
 
 
+
+
 @pytest.yield_fixture
-def populated_db(db_connection):
-    repository = RdbApi(db_connection)
-    blob = BlobApi(db_connection)
+def populated_db(tmpdir):
+    db_name = "test.db"
+    db_url = "sqlite:///{}/{}".format(tmpdir, db_name)
+    
+    engine = create_engine(db_url, echo=False)
+    Entities.metadata.create_all(engine)
+    Blobs.metadata.create_all(engine)
+
+    connection = engine.connect()
+
+    repository = RdbApi(connection)
+    blob = BlobApi(connection)
 
     ensemble = repository.add_ensemble(name="ensemble_name")
 
@@ -97,4 +109,4 @@ def populated_db(db_connection):
 
     repository.commit()
 
-    yield db_connection
+    yield db_url

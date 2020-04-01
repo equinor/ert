@@ -41,9 +41,9 @@ def resolve_ref_uri(BASE_URL, struct):
 
 
 class FlaskWrapper:
-    def __init__(self, rdb_connection=None, blob_connection=None):
-        self._rdb_connection = rdb_connection
-        self._blob_connection = blob_connection
+    def __init__(self, rdb_url=None, blob_url=None):
+        self._rdb_url = rdb_url
+        self._blob_url = blob_url
 
         self.app = flask.Flask("ert http api")
         self.app.add_url_rule("/ensembles", "ensembles", self.ensembles)
@@ -64,7 +64,7 @@ class FlaskWrapper:
 
     def ensembles(self):
         with StorageApi(
-            rdb_connection=self._rdb_connection, blob_connection=self._blob_connection
+            rdb_url=self._rdb_url, blob_url=self._blob_url
         ) as api:
             ensembles = api.ensembles()
             resolve_ref_uri("{}ensembles".format(request.host_url), ensembles)
@@ -72,7 +72,7 @@ class FlaskWrapper:
 
     def ensemble_by_id(self, ensemble_id):
         with StorageApi(
-            rdb_connection=self._rdb_connection, blob_connection=self._blob_connection
+            rdb_url=self._rdb_url, blob_url=self._blob_url
         ) as api:
             ensemble = api.ensemble_schema(ensemble_id)
             base_url = resolve_ensemble_uri(ensemble_id)
@@ -84,7 +84,7 @@ class FlaskWrapper:
 
     def realization_by_id(self, ensemble_id, realization_idx):
         with StorageApi(
-            rdb_connection=self._rdb_connection, blob_connection=self._blob_connection
+            rdb_url=self._rdb_url, blob_url=self._blob_url
         ) as api:
             realization = api.realization(ensemble_id, realization_idx, None)
             resolve_data_uri(realization)
@@ -92,7 +92,7 @@ class FlaskWrapper:
 
     def response_by_name(self, ensemble_id, response_name):
         with StorageApi(
-            rdb_connection=self._rdb_connection, blob_connection=self._blob_connection
+            rdb_url=self._rdb_url, blob_url=self._blob_url
         ) as api:
             response = api.response(ensemble_id, response_name, None)
             base_url = resolve_ensemble_uri(ensemble_id)
@@ -102,7 +102,7 @@ class FlaskWrapper:
 
     def data(self, data_id):
         with StorageApi(
-            rdb_connection=self._rdb_connection, blob_connection=self._blob_connection
+            rdb_url=self._rdb_url, blob_url=self._blob_url
         ) as api:
             data = api.data(data_id)
             if isinstance(data, list):
