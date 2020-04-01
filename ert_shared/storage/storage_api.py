@@ -28,9 +28,12 @@ class StorageApi(object):
             }
         ]
         """
-        with self._rdb_api as rdb_api: 
-                data = [{"name": ensemble.name, "ensemble_ref" : ensemble.id} for ensemble in rdb_api.get_all_ensembles()]
-        
+        with self._rdb_api as rdb_api:
+            data = [
+                {"name": ensemble.name, "ensemble_ref": ensemble.id}
+                for ensemble in rdb_api.get_all_ensembles()
+            ]
+
         return data
 
     def realization(self, ensemble_id, realization_idx, filter):
@@ -153,29 +156,21 @@ class StorageApi(object):
                 "ensemble_id": ensemble_id,
                 "realizations": [
                     {
-                        "name" : resp.realization.index,
+                        "name": resp.realization.index,
                         "realization_ref": resp.realization.index,
-                        "data_ref" : resp.values_ref
-                    } for resp in responses],
-                "axis": {
-                    "data_ref": bundle.indexes_ref
-                }
+                        "data_ref": resp.values_ref,
+                    }
+                    for resp in responses
+                ],
+                "axis": {"data_ref": bundle.indexes_ref},
             }
             if observation is not None:
                 return_schema["observation"] = {
-                    "data" : {
-                        "values" : {
-                            "data_ref" : observation.values_ref
-                        },
-                        "std" : {
-                            "data_ref" : observation.stds_ref
-                        },
-                        "data_indexes" : {
-                            "data_ref": observation.data_indexes_ref
-                        },
-                        "key_indexes" : {
-                            "data_ref": observation.key_indexes_ref,
-                        }
+                    "data": {
+                        "values": {"data_ref": observation.values_ref},
+                        "std": {"data_ref": observation.stds_ref},
+                        "data_indexes": {"data_ref": observation.data_indexes_ref},
+                        "key_indexes": {"data_ref": observation.key_indexes_ref,},
                     }
                 }
 
@@ -216,16 +211,16 @@ class StorageApi(object):
         with self._rdb_api as rdb_api:
             ens = rdb_api.get_ensemble_by_id(ensemble_id)
             return_schema = {
-                "name" : ens.name,
-                "realizations" : [
-                    {
-                        "name": real.index, "realization_ref" : real.index 
-                    } for real in rdb_api.get_realizations_by_ensemble_id(ensemble_id)
+                "name": ens.name,
+                "realizations": [
+                    {"name": real.index, "realization_ref": real.index}
+                    for real in rdb_api.get_realizations_by_ensemble_id(ensemble_id)
                 ],
-                "responses" : [
-                    {
-                        "name" : resp.name, "response_ref" : resp.name
-                    } for resp in rdb_api.get_response_definitions_by_ensemble_id(ensemble_id)
+                "responses": [
+                    {"name": resp.name, "response_ref": resp.name}
+                    for resp in rdb_api.get_response_definitions_by_ensemble_id(
+                        ensemble_id
+                    )
                 ],
                 "parameters": [
                     {"name": par.name}

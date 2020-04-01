@@ -1,10 +1,10 @@
-
 import logging
 
 from ert_shared.storage.model import Blobs, Entities
 from sqlalchemy import create_engine
 from sqlalchemy.orm.session import Session
 from sqlalchemy.pool import NullPool
+
 
 class SessionFactory(object):
     def __init__(self):

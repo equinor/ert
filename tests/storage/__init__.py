@@ -39,7 +39,7 @@ def db_session(engine, tables):
 def populated_db(db_session):
     repository = RdbApi(db_session)
     blob = BlobApi(db_session)
-       
+
     ensemble = repository.add_ensemble(name="ensemble_name")
 
     realization = repository.add_realization(0, ensemble.name)
@@ -62,13 +62,11 @@ def populated_db(db_session):
         name="response_one",
         indexes_ref=add_blob([0, 1]),
         ensemble_name=ensemble.name,
-        observation_name=observation.name
+        observation_name=observation.name,
     )
 
     repository.add_response_definition(
-        name="response_two",
-        indexes_ref=add_blob([0, 1]),
-        ensemble_name=ensemble.name,
+        name="response_two", indexes_ref=add_blob([0, 1]), ensemble_name=ensemble.name,
     )
 
     repository.add_parameter_definition("A", "G", "ensemble_name")
@@ -89,8 +87,12 @@ def populated_db(db_session):
             ensemble_name=ensemble.name,
         )
 
-        repository.add_parameter("A", "G", add_blob(1), realization.index, "ensemble_name")
-        repository.add_parameter("B", "G", add_blob(2), realization.index, "ensemble_name")
+        repository.add_parameter(
+            "A", "G", add_blob(1), realization.index, "ensemble_name"
+        )
+        repository.add_parameter(
+            "B", "G", add_blob(2), realization.index, "ensemble_name"
+        )
 
     add_data(realization)
     add_data(realization2)
