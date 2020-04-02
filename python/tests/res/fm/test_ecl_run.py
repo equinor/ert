@@ -101,6 +101,12 @@ class EclRunTest(ResTest):
         self.monkeypatch.setenv("FLOW_SITE_CONFIG", "flow_config.yml")
 
 
+    def test_make_LSB_MCPU_machine_list(self):
+        self.assertListEqual(
+            ['host1', 'host1', 'host1', 'host1', 'host2', 'host2', 'host2', 'host2'],
+            ecl_run.make_LSB_MCPU_machine_list("host1 4 host2 4")
+        )
+
     @tmpdir()
     def test_create(self):
         # This test can make do with a mock simulator; - just something executable

@@ -26,7 +26,7 @@ error_pattern = r"^\s@--  ERROR{}${}".format(date_sub_pattern, body_sub_pattern)
 def make_LSB_MCPU_machine_list( LSB_MCPU_HOSTS ):
     host_numcpu_list = LSB_MCPU_HOSTS.split()
     host_list = []
-    for index in range(len(host_numcpu_list) / 2):
+    for index in range(len(host_numcpu_list) // 2):
         machine = host_numcpu_list[ 2*index ]
         host_numcpu = int(host_numcpu_list[ 2*index  + 1 ])
         for icpu in range(host_numcpu):
