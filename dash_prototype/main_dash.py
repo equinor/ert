@@ -13,35 +13,37 @@ external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 
-import urllib.request, json
+import json
 server_url = "http://127.0.0.1:5000/"
+
+import requests
 
 def convertdate(dstring):
     return datetime.strptime(dstring, '%Y-%m-%d %H:%M:%S')
 
 def get_axis(data_url):
-    with urllib.request.urlopen(data_url) as url:
-        data = url.read().decode()
-        indexes = data.split(",")
-        if indexes and ":" in indexes[0]:
-            return list(map(convertdate, indexes))
-        else:
-            return list(map(int, indexes))
+    resp = requests.get(data_url)
+    indexes = resp.content.decode(resp.encoding).split(",")
+    if indexes and ":" in indexes[0]:
+        return list(map(convertdate, indexes))
+    else:
+        return list(map(int, indexes))
+
 
 def get_data(data_url):
-    with urllib.request.urlopen(data_url) as url:
-        data = url.read().decode()
-        return list(map(float, data.split(",")))
+    resp = requests.get(data_url)
+    data = resp.content.decode(resp.encoding)
+    return list(map(float, data.split(",")))
 
 def get_ensembles():
-    with urllib.request.urlopen(server_url+"ensembles") as url:
-        data = json.loads(url.read().decode())
-    return data["ensembles"]
+    resp = requests.get("{base}/ensembles".format(base=server_url))
+    return resp.json()["ensembles"]
 
 
 def api_request(api_url):
-    with urllib.request.urlopen(api_url) as url:
-        return json.loads(url.read().decode())
+    resp = requests.get(api_url)
+    return resp.json()
+
 
 ensembles = get_ensembles()
 app.layout = html.Div(
