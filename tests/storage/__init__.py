@@ -79,6 +79,7 @@ def populated_db(tmpdir):
         values_ref=add_blob([10.1, 10.2]),
         stds_ref=add_blob([1, 3]),
     )
+    observation.add_attribute("region", "1")
 
     response_definition = repository.add_response_definition(
         name="response_one", indexes_ref=add_blob([3, 5]), ensemble_name=ensemble.name,

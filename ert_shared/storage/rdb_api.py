@@ -16,6 +16,7 @@ from ert_shared.storage.model import (
 from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import Bundle
 from sqlalchemy.orm.session import Session
+from sqlalchemy.orm.exc import NoResultFound
 
 
 class RdbApi:
@@ -119,7 +120,14 @@ class RdbApi:
         )
 
     def get_observation(self, name):
-        return self._session.query(Observation).filter_by(name=name).first()
+        """Return an observation.
+
+        Return None if no observation found.
+        """
+        try:
+            return self._session.query(Observation).filter_by(name=name).one()
+        except NoResultFound:
+            return None
 
     def add_ensemble(self, name, reference=None, priors=[]):
         msg = "Adding ensemble with name '{}'"
@@ -280,6 +288,40 @@ class RdbApi:
         self._session.add(misfit)
 
         return misfit
+
+    def add_observation_attribute(self, name, attribute, value):
+        """Add an attribute-value pair to an observation.
+
+        Return None if the observation was not found else return the
+        observation.
+        """
+        msg = "Adding {} with value {} to observation with name {}"
+        logging.info(msg.format(attribute, value, name))
+
+        obs = self.get_observation(name)
+        if obs is None:
+            return None
+
+        obs.add_attribute(attribute, value)
+        self._session.add(obs)
+        return obs
+
+    def get_observation_attributes(self, name):
+        """Return all attributes on an observation.
+
+        Return None if the observation was not found.
+        """
+        obs = self.get_observation(name)
+        return None if obs is None else obs.get_attributes()
+
+    def get_observation_attribute(self, name, attribute):
+        """Return an attribute on an observation.
+
+        Return None if no observation was found, raise a KeyError if the
+        attribute did not exist.
+        """
+        obs = self.get_observation(name)
+        return None if obs is None else obs.get_attribute(attribute)
 
     def get_all_observation_keys(self):
         return [obs.name for obs in self._session.query(Observation.name).all()]

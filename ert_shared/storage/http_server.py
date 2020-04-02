@@ -1,4 +1,5 @@
 import flask
+import werkzeug.exceptions as werkzeug_exc
 from ert_shared.storage.blob_api import BlobApi
 from ert_shared.storage.rdb_api import RdbApi
 from ert_shared.storage.storage_api import StorageApi
@@ -59,6 +60,24 @@ class FlaskWrapper:
             self.response_by_name,
         )
         self.app.add_url_rule("/data/<int:data_id>", "data", self.data)
+        self.app.add_url_rule(
+            "/observation/<name>",
+            "get_observation",
+            self.get_observation,
+            methods=["GET"],
+        )
+        self.app.add_url_rule(
+            "/observation/<name>/attributes",
+            "get_observation_attributes",
+            self.get_observation_attributes,
+            methods=["GET"],
+        )
+        self.app.add_url_rule(
+            "/observation/<name>/attributes",
+            "set_observation_attributes",
+            self.set_observation_attributes,
+            methods=["POST"],
+        )
 
     def ensembles(self):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
@@ -94,6 +113,46 @@ class FlaskWrapper:
                 return ",".join([str(x) for x in data])
             else:
                 return str(data)
+
+    def get_observation(self, name):
+        """Return an observation."""
+        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+            obs = api.observation(name)
+            if obs is None:
+                raise werkzeug_exc.NotFound()
+            return obs
+
+    def get_observation_attributes(self, name):
+        """Return attributes for an observation.
+
+        {
+            "attributes": {...}
+        }
+        """
+        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+            attrs = api.get_observation_attributes(name)
+            if attrs is None:
+                raise werkzeug_exc.NotFound()
+            return attrs
+
+    def set_observation_attributes(self, name):
+        """Set attributes on an observation.
+
+        The posted JSON will be expected to be
+        {
+            "attributes": {
+                "region": "1",
+                "depth": "2892.1"
+            }
+        }
+        """
+        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+            js = request.get_json()
+            for k, v in js["attributes"].items():
+                obs = api.set_observation_attribute(name, k, v)
+                if obs is None:
+                    raise werkzeug_exc.NotFound()
+            return api.observation(name), 201
 
 
 def run_server(args):

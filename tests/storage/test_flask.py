@@ -76,3 +76,37 @@ def test_observation(test_client):
             actual.add((name, resp.data.decode("utf-8")))
 
     assert actual == expected
+
+
+def test_get_single_observation(test_client):
+    resp = test_client.get("/observation/observation_one")
+    obs = json.loads(resp.data)
+    expected = {
+        "attributes": {"region": "1"},
+        "data": {
+            "data_indexes": {"data_ref": 2},
+            "key_indexes": {"data_ref": 1},
+            "std": {"data_ref": 4},
+            "values": {"data_ref": 3},
+        },
+    }
+
+    assert obs == expected
+
+
+def test_get_single_observation_404(test_client):
+    resp = test_client.get("/observation/not_existing")
+    assert resp.status_code == 404
+
+
+def test_get_observation_attributes(test_client):
+    create_resp = test_client.post(
+        "/observation/observation_one/attributes",
+        data="""{"attributes": {"region": "1", "depth": "9000"}}""",
+        content_type="application/json",
+    )
+    assert create_resp.status_code == 201, create_resp.status
+    resp = test_client.get("/observation/observation_one/attributes")
+    obs = json.loads(resp.data)
+    expected = {"attributes": {"region": "1", "depth": "9000"}}
+    assert obs == expected

@@ -49,3 +49,31 @@ def test_priors(populated_db):
         assert prior1["function"] == "function"
         assert prior1["parameter_names"] == ["paramA", "paramB"]
         assert prior1["parameter_values"] == [0.1, 0.2]
+
+
+def test_observation(populated_db):
+    name = "observation_one"
+    with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
+        obs = api.observation("observation_one")
+        assert obs == {
+            "attributes": {"region": "1"},
+            "data": {
+                "data_indexes": {"data_ref": 2},
+                "key_indexes": {"data_ref": 1},
+                "std": {"data_ref": 4},
+                "values": {"data_ref": 3},
+            },
+        }
+
+
+def test_observation_attributes(populated_db):
+    attr = "region"
+    value = "1"
+    name = "observation_one"
+    expected = {"attributes": {attr: value}}
+
+    with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
+        api.set_observation_attribute(name, attr, value)
+
+    with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
+        assert api.get_observation_attribute(name, attr) == expected
