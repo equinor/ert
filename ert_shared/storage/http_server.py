@@ -112,5 +112,5 @@ class FlaskWrapper:
 
 
 def run_server(args):
-    wrapper = FlaskWrapper()
+    wrapper = FlaskWrapper(rdb_url="sqlite:///entities.db", blob_url="sqlite:///blobs.db")
     wrapper.app.run(host="0.0.0.0")
