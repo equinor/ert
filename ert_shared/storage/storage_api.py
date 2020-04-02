@@ -204,21 +204,7 @@ class StorageApi(object):
             }
             if len(observation_links) > 0:
                 return_schema["observations"] = [
-                    {
-                        "data": {
-                            "values": {
-                                "data_ref": observation_link.observation.values_ref
-                            },
-                            "std": {"data_ref": observation_link.observation.stds_ref},
-                            "data_indexes": {
-                                "data_ref": observation_link.observation.data_indexes_ref
-                            },
-                            "key_indexes": {
-                                "data_ref": observation_link.observation.key_indexes_ref,
-                            },
-                        }
-                    }
-                    for observation_link in observation_links
+                    self._obs_to_json(link.observation) for link in observation_links
                 ]
 
         return return_schema
@@ -227,6 +213,66 @@ class StorageApi(object):
         with self._blob_api as blob_api:
             return_data = blob_api.get_blob(id).data
         return return_data
+
+    def observation(self, name):
+        """Return an observation or None if the observation was not found.
+
+            {
+                "data": {
+                    "values": {"data_ref": 1},
+                    "std": {"data_ref": 2},
+                    "data_indexes": {"data_ref": 3},
+                    "key_indexes": {"data_ref": 4},
+                },
+                "attributes": {
+                    "region": 1
+                }
+            }
+        """
+        with self._rdb_api as rdb_api:
+            obs = rdb_api.get_observation(name)
+            return None if obs is None else self._obs_to_json(obs)
+
+    def get_observation_attributes(self, name):
+        """Return an observation or None if the observation was not found.
+
+            {
+                "attributes": {
+                    "region": "1",
+                    "depth": "3000"
+                }
+            }
+        """
+        with self._rdb_api as rdb_api:
+            attrs = rdb_api.get_observation_attributes(name)
+            return None if attrs is None else {"attributes": attrs}
+
+    def get_observation_attribute(self, name, attribute):
+        """Return an observation attribute or None if the observation was not
+        found. Raise a KeyError if the attribute did not exist.
+
+            {
+                "attributes": {
+                    "the_attribute": "value"
+                }
+            }
+        """
+        with self._rdb_api as rdb_api:
+            attr = rdb_api.get_observation_attribute(name, attribute)
+            return None if attr is None else {"attributes": {attribute: attr}}
+
+    def set_observation_attribute(self, name, attribute, value):
+        """Set an attribute on an observation.
+
+        Return None if the observation was not found, else return the updated
+        observation.
+        """
+        with self._rdb_api as rdb_api:
+            obs = rdb_api.add_observation_attribute(name, attribute, value)
+            if obs is None:
+                return None
+            rdb_api.commit()
+            return self._obs_to_json(obs)
 
     def ensemble_schema(self, ensemble_id):
         """
@@ -310,5 +356,20 @@ class StorageApi(object):
                     else [],
                 }
             )
+        return return_schema
 
-            return return_schema
+    def _obs_to_json(self, obs):
+        data = {
+            "data": {
+                "values": {"data_ref": obs.values_ref},
+                "std": {"data_ref": obs.stds_ref},
+                "data_indexes": {"data_ref": obs.data_indexes_ref},
+                "key_indexes": {"data_ref": obs.key_indexes_ref},
+            }
+        }
+
+        attrs = obs.get_attributes()
+        if len(attrs) > 0:
+            data["attributes"] = attrs
+
+        return data

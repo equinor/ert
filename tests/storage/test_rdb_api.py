@@ -65,6 +65,22 @@ def test_add_duplicate_observation(db_connection):
             rdb_api.commit()
 
 
+def test_observation_attribute(db_connection):
+    with RdbApi(db_connection) as rdb_api:
+        obs = rdb_api.add_observation(
+            name="test",
+            key_indexes_ref=1,
+            data_indexes_ref=1,
+            values_ref=1,
+            stds_ref=1,
+        )
+
+        obs.add_attribute("foo", "bar")
+        rdb_api.commit()
+
+        assert obs.get_attribute("foo") == "bar"
+
+
 def test_add_response(db_connection):
     indexes = [0, 2]
     values = [22.1, 44.2]

@@ -1,20 +1,19 @@
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import (
     Column,
-    Integer,
-    String,
+    DateTime,
     Float,
     ForeignKey,
+    Integer,
     PickleType,
-    DateTime,
-    JSON,
+    String,
     Table,
-    ARRAY,
 )
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import backref, relationship
+from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.sql import func
-
 
 Entities = declarative_base(name="Entities")
 Blobs = declarative_base(name="Blobs")
@@ -238,6 +237,12 @@ class Observation(Entities):
     values_ref = Column(Integer)
     stds_ref = Column(Integer)
 
+    attributes = association_proxy(
+        "observations_attributes",
+        "value",
+        creator=lambda a, v: ObservationsAttribute(attribute=a, value=v),
+    )
+
     __table_args__ = (UniqueConstraint("name", name="_uc_observation_name_"),)
 
     def __repr__(self):
@@ -248,6 +253,15 @@ class Observation(Entities):
             self.values_ref,
             self.stds_ref,
         )
+
+    def add_attribute(self, attribute, value):
+        self.attributes[attribute] = AttributeValue(value)
+
+    def get_attribute(self, attribute):
+        return self.attributes[attribute].value
+
+    def get_attributes(self):
+        return {k: v.value for k, v in self.attributes.items()}
 
 
 class ObservationResponseDefinitionLink(Entities):
@@ -321,6 +335,37 @@ Response.misfits = relationship("Misfit", order_by=Misfit.id, back_populates="re
 ObservationResponseDefinitionLink.misfits = relationship(
     "Misfit", order_by=Misfit.id, back_populates="observation_response_definition_link"
 )
+
+
+class ObservationsAttribute(Entities):
+    __tablename__ = "observations_attribute"
+
+    observation_id = Column(Integer, ForeignKey("observations.id"), primary_key=True)
+    attribute = Column(String)
+    value_id = Column(Integer, ForeignKey("attribute_value.id"), primary_key=True)
+    value = relationship("AttributeValue")
+
+    observation = relationship(
+        Observation,
+        backref=backref(
+            "observations_attributes",
+            collection_class=attribute_mapped_collection("attribute"),
+            cascade="all, delete-orphan",
+        ),
+    )
+
+
+class AttributeValue(Entities):
+    __tablename__ = "attribute_value"
+
+    id = Column(Integer, primary_key=True)
+    value = Column("value", String)
+
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return "AttributeValue(%s)" % repr(self.value)
 
 
 class ErtBlob(Blobs):
