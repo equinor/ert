@@ -7,7 +7,7 @@ from ert_shared.storage import connections
 
 
 class StorageApi(object):
-    def __init__(self, rdb_url=None, blob_url=None):
+    def __init__(self, rdb_url, blob_url):
         self._rdb_connection = connections.get_rdb_connection(rdb_url)
         self._rdb_api = RdbApi(connection=self._rdb_connection)
 
