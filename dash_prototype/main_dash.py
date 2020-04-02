@@ -14,7 +14,7 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 
 import json
-server_url = "http://127.0.0.1:5000/"
+server_url = "http://127.0.0.1:5000"
 
 import requests
 
