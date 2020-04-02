@@ -162,14 +162,15 @@ def dump_to_new_storage(reference=None, rdb_connection=None, blob_connection=Non
 
     start_time = time.time()
     print("Starting extraction...")
-
     if rdb_connection is None:
-       rdb_connection = connections.get_rdb_connection()
+        rdb_url="sqlite:///entities.db"
+        rdb_connection = connections.get_rdb_connection(rdb_url)
 
     rdb_api = RdbApi(connection=rdb_connection)
 
     if blob_connection is None:
-        blob_connection = connections.get_blob_connection()
+        blob_url="sqlite:///blobs.db"
+        blob_connection = connections.get_blob_connection(blob_url)
 
     blob_api = BlobApi(connection=blob_connection)
 
