@@ -6,14 +6,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
 
 
-def get_rdb_connection(url="sqlite:///entities.db"):
+def get_rdb_connection(url):
     msg = "Setting up session, using {}"
     logging.info(msg.format(url))
     entities_engine = create_engine(url, echo=False)
     Entities.metadata.create_all(entities_engine)
     return entities_engine.connect()
 
-def get_blob_connection(url="sqlite:///blobs.db"):
+def get_blob_connection(url):
     msg = "Setting up engine, using {}"
     logging.info(msg.format(url))
     blobs_engine = create_engine(url, echo=False)
