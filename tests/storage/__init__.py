@@ -69,7 +69,7 @@ def populated_db(tmpdir):
     )
 
     response_definition = repository.add_response_definition(
-        name="response_one", indexes_ref=add_blob([0, 1]), ensemble_name=ensemble.name,
+        name="response_one", indexes_ref=add_blob([3, 5]), ensemble_name=ensemble.name,
     )
     repository.flush()
 
@@ -78,7 +78,9 @@ def populated_db(tmpdir):
     )
 
     repository.add_response_definition(
-        name="response_two", indexes_ref=add_blob([0, 1]), ensemble_name=ensemble.name,
+        name="response_two",
+        indexes_ref=add_blob(["2000-01-01 20:01:01", "2000-01-02 20:01:01"]),
+        ensemble_name=ensemble.name,
     )
 
     repository.add_parameter_definition("A", "G", "ensemble_name")
