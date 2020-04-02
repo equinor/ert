@@ -226,13 +226,6 @@ def set_responses_value(available_options):
     return available_options[0]['value']
 
 @app.callback(
-    Output('parameter-selector', 'options'),
-    [Input('ensemble-selector', 'value')])
-def set_parameter_options(selected_ensemble_id):
-    ensemble_schema = api_request(selected_ensemble_id)
-    return [{'label': parameter["name"], 'value': parameter["name"]} for parameter in ensemble_schema["parameters"]]
-
-@app.callback(
     Output("responses-graphic", "figure"),
     [
         Input("ensemble-selector", "value"),
