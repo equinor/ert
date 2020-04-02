@@ -81,7 +81,7 @@ class FlaskWrapper:
         ) as api:
             ensembles = api.ensembles()
             resolve_ref_uri(ensembles)
-            return {"ensembles": ensembles}
+            return ensembles
 
     def ensemble_by_id(self, ensemble_id):
         with StorageApi(
@@ -123,4 +123,4 @@ class FlaskWrapper:
 
 def run_server(args):
     wrapper = FlaskWrapper(rdb_url="sqlite:///entities.db", blob_url="sqlite:///blobs.db")
-    wrapper.app.run(host="0.0.0.0")
+    wrapper.app.run(host="0.0.0.0", debug=True)

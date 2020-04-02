@@ -41,12 +41,14 @@ class StorageApi(object):
         """
         This function returns an overview of the ensembles available in the database
         @return_type:
-        [
-            {
-                "name" : "default"
-                "ensemble_ref" : "<ensemble_id>"
-            }
-        ]
+        {
+            "ensembles" : [
+                {
+                    "name" : "default"
+                    "ensemble_ref" : "<ensemble_id>"
+                }
+            ]
+        }
         """
         with self._rdb_api as rdb_api:
             data = [
@@ -54,7 +56,7 @@ class StorageApi(object):
                 for ensemble in rdb_api.get_all_ensembles()
             ]
 
-        return data
+        return {"ensembles" : data}
 
     def realization(self, ensemble_id, realization_idx, filter):
         """
