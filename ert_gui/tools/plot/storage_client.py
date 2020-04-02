@@ -1,12 +1,29 @@
 import pandas as pd
 import requests
+from datetime import datetime
 
-def convert_response_to_float(resp):
-    """
-    Takes the return of a request
-    """
-    string = resp.content.decode(resp.encoding)
-    return [float(x) for x in string.split(",")]
+def convertdate(dstring):
+    return datetime.strptime(dstring, '%Y-%m-%d %H:%M:%S')
+
+def axis_request(data_url):
+    resp = requests.get(data_url)
+    indexes = resp.content.decode(resp.encoding).split(",")
+    try:
+        if indexes and ":" in indexes[0]:
+            return list(map(convertdate, indexes))
+        else:
+            return list(map(int, indexes))
+    except ValueError as e:
+        raise ValueError("Could not parse indexes as either int or dates", e)
+
+def data_request(data_url):
+    resp = requests.get(data_url)
+    data = resp.content.decode(resp.encoding)
+    return list(map(float, data.split(",")))
+
+def ref_request(api_url):
+    resp = requests.get(api_url)
+    return resp.json()
 
 class StorageClient(object):
     def __init__(self, base_url="http://127.0.0.1:5000/"):
@@ -37,7 +54,7 @@ class StorageClient(object):
         ]
         """
 
-        r = requests.get("{base}/ensembles".format(base=self._BASE_URI))
+        r = requests.get("{base}ensembles".format(base=self._BASE_URI))
 
         ens_pointer = r.json()["ensembles"][0]["ref_url"]
 
@@ -99,53 +116,43 @@ class StorageClient(object):
         """ Returns a pandas DataFrame with the datapoints for a given key for a given case. The row index is
             the realization number, and the column index is a multi-index with (key, index/date)"""
 
-        r = requests.get("{base}/ensembles".format(base=self._BASE_URI))
+        ensembles = ref_request("{base}/ensembles".format(base=self._BASE_URI))
 
-        ens_pointer = r.json()["ensembles"][0]["ref_url"]
-
-        r = requests.get(ens_pointer)
-
-        ens_schema = r.json()
+        ens = [ens for ens in ensembles["ensembles"] if ens["name"] == case][0]
+        ens_schema = ref_request(ens["ref_url"])
 
         df = pd.DataFrame()
-        for real in ens_schema["realizations"]:
 
-            r = requests.get(real["ref_url"])
-            realization = r.json()
-            key_df = pd.DataFrame()
-            for resp in realization["responses"]:
-                if resp["name"] != key:
-                    continue
+        # Response Key
+        for resp in ens_schema["responses"]:
+            if resp["name"] != key:
+                continue
 
-                r = requests.get(resp["data_url"])
+            response = ref_request(resp["ref_url"])
 
-                # TODO: simplified for now, expected structure not in place
-                # Need to add index as well
+            for real in response["realizations"]:
 
-                # issue:
-                # r.json() -> json.decoder.JSONDecodeError: Extra data: line 1 column 8 (char 7)
-                data = pd.Series(convert_response_to_float(r), name=real["name"])
+                data = pd.Series(data_request(real["data_url"]), name=real["name"])
+                df = df.append(data)
 
-                key_df = key_df.append(data)
+            indexes = axis_request(response["axis"]["data_url"])
+            arrays = [[key]*len(indexes), indexes]
+            break
 
-            for param in realization["parameters"]:
-                if param["name"] != key:
-                    continue
+        # Parameter key - we only check if necessary
+        if df.empty:
+            for real in ens_schema["realizations"]:
+                realization = ref_request(real["ref_url"])
 
-                r = requests.get(param["data_url"])
+                for param in realization["parameters"]:
+                    if param["name"] != key:
+                        continue
 
-                # TODO: simplified for now, expected structure not in place
-                # Need to add index as well
+                    data = pd.Series(data_request(param["data_url"]), name=real["name"])
+                    df = df.append(data)
 
-                # issue:
-                # r.json() -> json.decoder.JSONDecodeError: Extra data: line 1 column 8 (char 7)
-                data = pd.Series(convert_response_to_float(r), name=real["name"])
+            arrays = [[key]*len(df.columns), df.columns]
 
-                key_df = key_df.append(data)
-
-            df = df.append(key_df)
-
-        arrays = [[key]*len(df.columns), df.columns]
         index = pd.MultiIndex.from_arrays(arrays, names=('key', 'index'))
         df.columns = index
         return df
