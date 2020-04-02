@@ -42,6 +42,9 @@ bool               trans_func_set_double_param( trans_func_type  * trans_func , 
 void               trans_func_iset_int_param(trans_func_type  * trans_func , int param_index , int value );
 bool               trans_func_set_int_param( trans_func_type  * trans_func , const char * param_name , int value );
 bool               trans_func_use_log_scale(const trans_func_type  * trans_func );
+stringlist_type * trans_func_get_param_names(const trans_func_type * trans_func);
+double_vector_type * trans_func_get_params(const trans_func_type * trans_func);
+const char * trans_func_get_name(const trans_func_type * trans_func);
 
 #ifdef __cplusplus
 }

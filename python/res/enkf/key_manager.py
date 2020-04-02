@@ -177,3 +177,15 @@ class KeyManager(object):
     def isMisfitKey(self, key):
         """ :rtype: bool """
         return key in self.misfitKeys()
+
+    def gen_kw_priors(self):
+        gen_kw_keys = self._ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
+        gen_kw_keys = [key for key in gen_kw_keys]
+
+        all_gen_kw_priors = {}
+        for key in gen_kw_keys:
+            enkf_config_node = self._ert().ensembleConfig().getNode(key)
+            gen_kw_config = enkf_config_node.getModelConfig()
+            all_gen_kw_priors[key] = gen_kw_config.get_priors()
+
+        return all_gen_kw_priors

@@ -34,7 +34,9 @@ class GenKwConfig(BaseCClass):
     _get_tag_fmt          = ResPrototype("char* gen_kw_config_get_tag_fmt(gen_kw_config)")
     _size                 = ResPrototype("int   gen_kw_config_get_data_size(gen_kw_config)")
     _iget_name            = ResPrototype("char* gen_kw_config_iget_name(gen_kw_config, int)")
-
+    _get_function_type = ResPrototype("char* gen_kw_config_iget_function_type(gen_kw_config, int)")
+    _get_function_parameter_names = ResPrototype("stringlist_ref gen_kw_config_iget_function_parameter_names(gen_kw_config, int)")
+    _get_function_parameter_values = ResPrototype("double_vector_ref gen_kw_config_iget_function_parameter_values(gen_kw_config, int)")
 
     def __init__(self, key, template_file , parameter_file , tag_fmt = "<%s>"):
         """
@@ -113,3 +115,32 @@ class GenKwConfig(BaseCClass):
             return False
 
         return True
+
+    def get_priors(self):
+        """
+        @rtype: list
+        [
+            {
+                "key" : "<key>",
+                "function" : "<function_type>"
+                "parameters" : {
+                    "<name>" : "<value>"
+                }
+            }
+        ]
+        """
+        priors = []
+        keys = self.getKeyWords()
+        for i, key in enumerate(keys):
+            function_type = self._get_function_type(i)
+            parameter_names = self._get_function_parameter_names(i)
+            parameter_values = self._get_function_parameter_values(i)
+            el = {
+                "key" : key,
+                "function" : function_type,
+                "parameters" : {
+                    name : value for (name, value) in zip(parameter_names, parameter_values)
+                }
+            }
+            priors.append(el)
+        return priors

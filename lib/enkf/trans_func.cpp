@@ -348,3 +348,13 @@ double trans_func_eval( const trans_func_type * trans_func , double x) {
 bool trans_func_use_log_scale(const trans_func_type * trans_func) {
     return trans_func->use_log;
 }
+
+stringlist_type * trans_func_get_param_names(const trans_func_type * trans_func){
+  return trans_func->param_names;
+}
+double_vector_type * trans_func_get_params(const trans_func_type * trans_func){
+  return trans_func->params;
+}
+const char * trans_func_get_name(const trans_func_type * trans_func){
+  return trans_func->name;
+}

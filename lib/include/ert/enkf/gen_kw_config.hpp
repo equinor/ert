@@ -54,6 +54,9 @@ void                        gen_kw_config_set_template_file( gen_kw_config_type 
 gen_kw_config_type        * gen_kw_config_alloc_empty( const char * key , const char * tag_fmt );
 void                        gen_kw_config_update( gen_kw_config_type * config , const char * template_file , const char * parameter_file);
 void                        gen_kw_config_update_tag_format(gen_kw_config_type * config , const char * tag_format);
+const char * gen_kw_config_iget_function_type(const gen_kw_config_type * config, int index);
+double_vector_type * gen_kw_config_iget_function_parameter_values( const gen_kw_config_type * config, int index );
+stringlist_type * gen_kw_config_iget_function_parameter_names( const gen_kw_config_type * config, int index );
 
 UTIL_SAFE_CAST_HEADER_CONST( gen_kw_config );
 UTIL_SAFE_CAST_HEADER(gen_kw_config);

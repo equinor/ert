@@ -320,6 +320,21 @@ void gen_kw_config_fprintf_config( const gen_kw_config_type * config , const cha
 
 }
 
+const char * gen_kw_config_iget_function_type(const gen_kw_config_type * config, int index) {
+  const gen_kw_parameter_type * parameter = (const gen_kw_parameter_type *)vector_iget_const(config->parameters, index);
+  return trans_func_get_name(parameter->trans_func);
+}
+
+stringlist_type * gen_kw_config_iget_function_parameter_names( const gen_kw_config_type * config, int index ) {
+  const gen_kw_parameter_type * parameter = (const gen_kw_parameter_type *)vector_iget_const(config->parameters, index);
+  return trans_func_get_param_names(parameter->trans_func);
+}
+
+double_vector_type * gen_kw_config_iget_function_parameter_values( const gen_kw_config_type * config, int index ) {
+  const gen_kw_parameter_type * parameter = (const gen_kw_parameter_type *)vector_iget_const(config->parameters, index);
+  return trans_func_get_params(parameter->trans_func);
+}
+
 
 /*****************************************************************/
 

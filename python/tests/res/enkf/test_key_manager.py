@@ -47,3 +47,17 @@ class KeyManagerTest(ResTest):
 
             self.assertEqual(len(key_man.genKwKeys()), 10)
             self.assertTrue("SNAKE_OIL_PARAM:BPR_555_PERSISTENCE" in key_man.genKwKeys())
+
+    def test_gen_kw_priors(self):
+        with ErtTestContext("enkf_key_manager_test", self.config_file) as testContext:
+            ert = testContext.getErt()
+            key_man = KeyManager(ert)
+            priors = key_man.gen_kw_priors()
+            self.assertEqual(len(priors["SNAKE_OIL_PARAM"]), 10)
+            self.assertTrue(
+                {
+                    "key" : "OP1_PERSISTENCE",
+                    "function" : "UNIFORM",
+                    "parameters" : {"MIN" : 0.01, "MAX" : 0.4}
+                } in priors["SNAKE_OIL_PARAM"]
+            )
