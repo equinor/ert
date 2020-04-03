@@ -116,7 +116,6 @@ def get_files_excluded_from_black(root):
         "ert_gui/tools/plot/plot_api.py",
         "ert_gui/tools/plot/customize/customize_plot_dialog.py",
         "ert_gui/tools/plot/widgets/copy_style_to_dialog.py",
-        "ert_gui/tools/plot/storage_client.py",
         "ert_gui/tools/plot/widgets/clearable_line_edit.py",
         "ert_gui/tools/plot/widgets/custom_date_edit.py",
         "ert_gui/tools/plugins/plugin.py",
