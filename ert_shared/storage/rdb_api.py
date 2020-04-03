@@ -11,6 +11,7 @@ from ert_shared.storage.model import (
     Update,
     ObservationResponseDefinitionLink,
     Misfit,
+    ParameterPrior,
 )
 from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import Bundle
@@ -120,11 +121,11 @@ class RdbApi:
     def get_observation(self, name):
         return self._session.query(Observation).filter_by(name=name).first()
 
-    def add_ensemble(self, name, reference=None):
+    def add_ensemble(self, name, reference=None, priors=[]):
         msg = "Adding ensemble with name '{}'"
         logging.info(msg.format(name))
 
-        ensemble = Ensemble(name=name)
+        ensemble = Ensemble(name=name, priors=priors)
         self._session.add(ensemble)
         if reference is not None:
             msg = "Adding ensemble '{}' as reference. '{}' is used on this update step."
@@ -186,9 +187,7 @@ class RdbApi:
 
         return response
 
-    def add_parameter_definition(
-        self, name, group, ensemble_name,
-    ):
+    def add_parameter_definition(self, name, group, ensemble_name, prior=None):
         msg = (
             "Adding parameter definition with name '{}' in group '{}' on ensemble '{}'"
         )
@@ -197,11 +196,23 @@ class RdbApi:
         ensemble = self.get_ensemble(name=ensemble_name)
 
         parameter_definition = ParameterDefinition(
-            name=name, group=group, ensemble_id=ensemble.id,
+            name=name,
+            group=group,
+            ensemble_id=ensemble.id,
+            prior_id=prior.id if prior is not None else None,
         )
         self._session.add(parameter_definition)
 
         return parameter_definition
+
+    def find_prior(
+        self, group, key
+    ):  # called this find_ because it is a search, not lookup by id
+        return (
+            self._session.query(ParameterPrior)
+            .filter_by(group=group, key=key)
+            .one_or_none()
+        )
 
     def add_parameter(self, name, group, value_ref, realization_index, ensemble_name):
         msg = "Adding parameter with name '{}', group '{}', realization '{}', value_ref '{}', ensemble '{}'"
@@ -331,3 +342,18 @@ class RdbApi:
             .filter(ResponseDefinition.ensemble_id == ensemble_id)
             .one()
         )
+
+    def add_prior(self, group, key, function, parameter_names, parameter_values):
+        msg = "Adding prior with group '{}', key '{}', function '{}'"
+        logging.info(msg.format(group, key, function))
+
+        prior = ParameterPrior(
+            group=group,
+            key=key,
+            function=function,
+            parameter_names=parameter_names,
+            parameter_values=parameter_values,
+        )
+
+        self._session.add(prior)
+        return prior

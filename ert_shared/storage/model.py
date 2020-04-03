@@ -1,5 +1,16 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, PickleType, DateTime
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Float,
+    ForeignKey,
+    PickleType,
+    DateTime,
+    JSON,
+    Table,
+    ARRAY,
+)
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.sql import func
@@ -165,6 +176,8 @@ class ParameterDefinition(Entities):
     group = Column(String)
     ensemble_id = Column(Integer, ForeignKey("ensembles.id"))
     ensemble = relationship("Ensemble", back_populates="parameter_definitions")
+    prior_id = Column(Integer, ForeignKey("parameter_priors.id"))
+    prior = relationship("ParameterPrior")
 
     __table_args__ = (
         UniqueConstraint("name", "group", "ensemble_id", name="_name_ensemble_id_"),
@@ -318,3 +331,28 @@ class ErtBlob(Blobs):
 
     def __repr__(self):
         return "<Value(id='{}', data='{}')>".format(self.id, self.data)
+
+
+prior_ensemble_association_table = Table(
+    "prior_ensemble_association_table",
+    Entities.metadata,
+    Column("prior_id", String, ForeignKey("parameter_priors.id")),
+    Column("ensemble_id", Integer, ForeignKey("ensembles.id")),
+)
+
+
+class ParameterPrior(Entities):
+    __tablename__ = "parameter_priors"
+
+    id = Column(Integer, primary_key=True)
+    group = Column("group", String)
+    key = Column("key", String)
+    function = Column("function", String)
+    parameter_names = Column("parameter_names", PickleType)
+    parameter_values = Column("parameter_values", PickleType)
+
+    __table_args__ = (UniqueConstraint("group", "key", name="_uc_group_key_",),)
+
+    ensemble = relationship(
+        "Ensemble", secondary=lambda: prior_ensemble_association_table, backref="priors"
+    )

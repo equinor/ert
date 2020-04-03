@@ -11,21 +11,6 @@ def resolve_ensemble_uri(ensemble_ref):
     return "{}ensembles/{}".format(BASE_URL, ensemble_ref)
 
 
-def resolve_data_uri(struct):
-    BASE_URL = request.host_url
-    if isinstance(struct, list):
-        for item in struct:
-            resolve_data_uri(item)
-    elif isinstance(struct, dict):
-        for key, val in struct.copy().items():
-            if key == "data_ref":
-                url = "{}data/{}".format(BASE_URL, val)
-                struct["data_url"] = url
-                del struct[key]
-            else:
-                resolve_data_uri(val)
-
-
 def resolve_ref_uri(struct, ensemble_id=None):
     if isinstance(struct, list):
         for item in struct:

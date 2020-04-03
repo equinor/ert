@@ -7,6 +7,7 @@ from ert_shared.storage.extraction_api import (
     _dump_observations,
     _dump_parameters,
     _dump_response,
+    _dump_priors,
 )
 
 from tests.storage import db_connection, engine, tables
@@ -209,3 +210,28 @@ def test_dump_responses(db_connection):
             70.73372400000001,
             86.852631,
         ]
+
+
+def test_dump_priors(db_connection):
+    priors = {
+        "COEFFS": [
+            {
+                "key": "COEFF_A",
+                "function": "UNIFORM",
+                "parameters": {"MIN": 0.0, "MAX": 1.0},
+            },
+            {
+                "key": "COEFF_B",
+                "function": "UNIFORM",
+                "parameters": {"MIN": 0.0, "MAX": 2.0},
+            },
+            {
+                "key": "COEFF_C",
+                "function": "UNIFORM",
+                "parameters": {"MIN": 0.0, "MAX": 5.0},
+            },
+        ]
+    }
+    with RdbApi(db_connection) as rdb_api:
+        _dump_priors(priors, rdb_api)
+        rdb_api.commit()
