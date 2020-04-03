@@ -77,10 +77,38 @@ def populated_db(tmpdir):
         observation_id=observation.id, response_definition_id=response_definition.id
     )
 
-    repository.add_response_definition(
+    observation_one = repository.add_observation(
+        name="observation_two_first",
+        key_indexes_ref=add_blob(["2000-01-01 20:01:01"]),
+        data_indexes_ref=add_blob([4]),
+        values_ref=add_blob([10.3]),
+        stds_ref=add_blob([2]),
+    )
+
+    observation_two = repository.add_observation(
+        name="observation_two_second",
+        key_indexes_ref=add_blob(["2000-01-02 20:01:01"]),
+        data_indexes_ref=add_blob([5]),
+        values_ref=add_blob([10.4]),
+        stds_ref=add_blob([2.5]),
+    )
+
+    response_two_definition = repository.add_response_definition(
         name="response_two",
         indexes_ref=add_blob(["2000-01-01 20:01:01", "2000-01-02 20:01:01"]),
         ensemble_name=ensemble.name,
+    )
+
+    repository.flush()
+
+    repository._add_observation_response_definition_link(
+        observation_id=observation_one.id,
+        response_definition_id=response_two_definition.id,
+    )
+
+    repository._add_observation_response_definition_link(
+        observation_id=observation_two.id,
+        response_definition_id=response_two_definition.id,
     )
 
     repository.add_parameter_definition("A", "G", "ensemble_name")

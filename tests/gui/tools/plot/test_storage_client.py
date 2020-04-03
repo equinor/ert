@@ -74,20 +74,45 @@ def test_all_keys(test_client):
 
 
 def test_observation_values(test_client):
-    # Not yet implemented
-    pass
-    #with patch("ert_gui.tools.plot.storage_client.requests", test_client):
-    #    api = StorageClient(base_url="")
-    #    result = api.observations_for_obs_keys(
-    #        case="ensemble_name", obs_keys=["observation_one"]
-    #    )
-#
-    #    idx = pd.MultiIndex.from_arrays(
-    #        [[2, 3], [0, 3]], names=["data_index", "key_index"]
-    #    )
-    #    expected = pd.DataFrame({"OBS": [10.1, 10.2], "STD": [1, 3]}, index=idx).T
-#
-    #    assert result.equals(expected)
+
+    with patch("ert_gui.tools.plot.storage_client.requests", test_client):
+        api = StorageClient(base_url="")
+        # Data refs are collected during the call to <all_data_type_keys>
+        response_key = [key for key in api.all_data_type_keys() if key["key"]=="response_one"][0]
+
+        result = api.observations_for_obs_keys(
+            case="ensemble_name", obs_keys=response_key["observations"]
+        )
+
+        idx = pd.MultiIndex.from_arrays(
+            [["response_one", "response_one"], [0, 3], [2, 3]], names=["obs_key", "key_index", "data_index"]
+        )
+        expected = pd.DataFrame({"OBS": [10.1, 10.2], "STD": [1, 3]}, index=idx).T
+
+        pd.testing.assert_frame_equal(result, expected)
+
+        # Response two has datetime indexes and consists of two individual observations put together
+        response_key = [key for key in api.all_data_type_keys() if key["key"]=="response_two"][0]
+
+        result = api.observations_for_obs_keys(
+            case="ensemble_name", obs_keys=response_key["observations"]
+        )
+
+        format = "%Y-%m-%d %H:%M:%S"
+        idx = pd.MultiIndex.from_arrays(
+            [
+                ["response_two", "response_two"],
+                [
+                    datetime.strptime("2000-01-01 20:01:01", format),
+                    datetime.strptime("2000-01-02 20:01:01", format),
+                ],
+                [4, 5]
+            ],
+            names=["obs_key", "key_index", "data_index"],
+        )
+        expected = pd.DataFrame({"OBS": [10.3, 10.4], "STD": [2, 2.5]}, index=idx).T
+
+        pd.testing.assert_frame_equal(result, expected)
 
 
 def test_response_values(test_client):
