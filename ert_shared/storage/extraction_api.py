@@ -5,15 +5,18 @@ from ert_shared import ERT
 from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.storage import connections
 from ert_shared.storage.blob_api import BlobApi
+from ert_shared.storage.model import ParameterPrior
 from ert_shared.storage.rdb_api import RdbApi
 
 from res.enkf.export import MisfitCollector
 
 
-def _create_ensemble(rdb_api, reference):
+def _create_ensemble(rdb_api, reference, priors):
+    if not ((reference is None) ^ (len(priors) == 0)):
+        raise ValueError("Ensembles can have only a reference or a set of priors")
     facade = ERT.enkf_facade
     ensemble_name = facade.get_current_case_name()
-    ensemble = rdb_api.add_ensemble(ensemble_name, reference=reference)
+    ensemble = rdb_api.add_ensemble(ensemble_name, reference=reference, priors=priors)
 
     for i in range(facade.get_ensemble_size()):
         rdb_api.add_realization(index=i, ensemble_name=ensemble.name)
@@ -82,13 +85,13 @@ def _extract_and_dump_parameters(rdb_api, blob_api, ensemble_name):
 def _dump_parameters(rdb_api, blob_api, parameters, ensemble_name):
     for key, parameter in parameters.items():
         group, name = key.split(":")
+        prior = rdb_api.find_prior(key=name, group=group)
         parameter_definition = rdb_api.add_parameter_definition(
-            name=name, group=group, ensemble_name=ensemble_name,
+            name=name, group=group, ensemble_name=ensemble_name, prior=prior
         )
         for realization_index, value in parameter.iterrows():
             value_df = blob_api.add_blob(float(value))
             blob_api.flush()
-
             rdb_api.add_parameter(
                 name=parameter_definition.name,
                 group=parameter_definition.group,
@@ -196,8 +199,11 @@ def dump_to_new_storage(reference=None, rdb_connection=None, blob_connection=Non
     blob_api = BlobApi(connection=blob_connection)
 
     with rdb_api, blob_api:
-        ensemble = _create_ensemble(rdb_api, reference=reference)
+        priors = _extract_and_dump_priors(rdb_api=rdb_api) if reference is None else []
+
+        ensemble = _create_ensemble(rdb_api, reference=reference, priors=priors)
         _extract_and_dump_observations(rdb_api=rdb_api, blob_api=blob_api)
+
         _extract_and_dump_parameters(
             rdb_api=rdb_api, blob_api=blob_api, ensemble_name=ensemble.name
         )
@@ -221,3 +227,26 @@ def dump_to_new_storage(reference=None, rdb_connection=None, blob_connection=Non
     blob_connection.close()
 
     return ensemble_name
+
+
+def _extract_and_dump_priors(rdb_api):
+    facade = ERT.enkf_facade
+    gen_kw_priors = facade.gen_kw_priors()
+    return _dump_priors(groups=gen_kw_priors, rdb_api=rdb_api)
+
+
+def _dump_priors(groups, rdb_api):
+    priors_created = []
+    for group, priors in groups.items():
+        for prior in priors:
+            priors_created.append(
+                rdb_api.add_prior(
+                    group=group,
+                    key=prior["key"],
+                    function=prior["function"],
+                    parameter_names=list(prior["parameters"].keys()),
+                    parameter_values=list(prior["parameters"].values()),
+                )
+            )
+
+    return priors_created
