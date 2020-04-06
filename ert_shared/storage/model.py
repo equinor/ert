@@ -250,49 +250,61 @@ class ObservationResponseDefinitionLink(Entities):
         "Observation", back_populates="response_definition_links"
     )
 
-    __table_args__ = (UniqueConstraint("response_definition_id", "observation_id", name="_uc_response_definition_observation_"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "response_definition_id",
+            "observation_id",
+            name="_uc_response_definition_observation_",
+        ),
+    )
 
     def __repr__(self):
         return "<ObservationResponseDefinitionLink(response_definition_id='{}', observation_id='{}')>".format(
-            self.response_definition_id,
-            self.observation_id,
+            self.response_definition_id, self.observation_id,
         )
 
 
 ResponseDefinition.observation_links = relationship(
-    "ObservationResponseDefinitionLink", order_by=ObservationResponseDefinitionLink.id, back_populates="response_definition"
+    "ObservationResponseDefinitionLink",
+    order_by=ObservationResponseDefinitionLink.id,
+    back_populates="response_definition",
 )
 Observation.response_definition_links = relationship(
-    "ObservationResponseDefinitionLink", order_by=ObservationResponseDefinitionLink.id, back_populates="observation"
+    "ObservationResponseDefinitionLink",
+    order_by=ObservationResponseDefinitionLink.id,
+    back_populates="observation",
 )
+
 
 class Misfit(Entities):
     __tablename__ = "misfits"
 
     id = Column(Integer, primary_key=True)
     response_id = Column(Integer, ForeignKey("responses.id"))
-    response = relationship(
-        "Response", back_populates="misfits"
+    response = relationship("Response", back_populates="misfits")
+    observation_response_definition_link_id = Column(
+        Integer, ForeignKey("observation_response_definition_links.id")
     )
-    observation_response_definition_link_id = Column(Integer, ForeignKey("observation_response_definition_links.id"))
     observation_response_definition_link = relationship(
         "ObservationResponseDefinitionLink", back_populates="misfits"
     )
     value = Column(Float)
 
-    __table_args__ = (UniqueConstraint("response_id", "observation_response_definition_link_id", name="_uc_response_link_"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "response_id",
+            "observation_response_definition_link_id",
+            name="_uc_response_link_",
+        ),
+    )
 
     def __repr__(self):
         return "<Misfit(response_id='{}', observation_response_definition_link_id='{}', misfit='{}')>".format(
-            self.response_id,
-            self.observation_response_definition_link_id,
-            self.misfit,
+            self.response_id, self.observation_response_definition_link_id, self.misfit,
         )
 
 
-Response.misfits = relationship(
-    "Misfit", order_by=Misfit.id, back_populates="response"
-)
+Response.misfits = relationship("Misfit", order_by=Misfit.id, back_populates="response")
 ObservationResponseDefinitionLink.misfits = relationship(
     "Misfit", order_by=Misfit.id, back_populates="observation_response_definition_link"
 )
