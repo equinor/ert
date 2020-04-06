@@ -100,6 +100,9 @@ script:
   - pip install -r dev-requirements.txt
   - pip install . --prefix=$INSTALL_DIR
   # For easy compare of installed versions once a version fails
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
+      pip install black;
+    fi
   - pip list
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       xvfb-run python setup.py test;
