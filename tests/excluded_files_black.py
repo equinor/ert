@@ -18,8 +18,6 @@ def get_files_excluded_from_black(root):
         "ert_gui/ertwidgets/activelabel.py",
         "ert_gui/ertwidgets/__init__.py",
         "ert_gui/ert_splash.py",
-        "ert_data/measured.py",
-        "ert_data/loader.py",
         "ert_gui/ertwidgets/caseselector.py",
         "ert_gui/ertwidgets/analysismoduleselector.py",
         "ert_gui/ertwidgets/closabledialog.py",
