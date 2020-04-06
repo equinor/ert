@@ -24,6 +24,7 @@ class StorageApi(object):
     def _ensemble_minimal(self, ensemble):
         return {
             "name": ensemble.name,
+            "time_created": ensemble.time_created.isoformat(),
             "ensemble_ref": ensemble.id,
             "parent": {
                 "ensemble_ref": ensemble.parent.ensemble_reference.id,
@@ -47,7 +48,8 @@ class StorageApi(object):
         {
             "ensembles" : [
                 {
-                    "name" : "default"
+                    "name" : "default",
+                    "time_created" : "<ISO 8601 Timestamp>",
                     "ensemble_ref" : "<ensemble_id>"
                     "parent" : {
                         "name" : "<parent_ensemble_name>"
@@ -57,7 +59,7 @@ class StorageApi(object):
                         {
                             "name" : "<child_ensemble_name>"
                             "ensemble_ref" : "<child_ensemble_id>"
-                        }    
+                        }
                     ]
                 }
             ]
@@ -232,6 +234,7 @@ class StorageApi(object):
 
         {
             "name" : "<ensemble name>"
+            "time_created" : "<ISO 8601 Timestamp>",
             "realizations" : [
                 {
                     "name" : "<realization_idx>"
@@ -246,7 +249,7 @@ class StorageApi(object):
                 {
                     "name" : "<child_ensemble_name>"
                     "ensemble_ref" : "<child_ensemble_id>"
-                }    
+                }
             ]
             "responses" : [
                 {
