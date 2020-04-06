@@ -14,7 +14,7 @@ from tests.storage import populated_db
 @pytest.fixture()
 def test_client(populated_db):
     # Flask provides a way to test your application by exposing the Werkzeug test Client
-    # and handling the context locals for you.    
+    # and handling the context locals for you.
     flWrapper = FlaskWrapper(rdb_url=populated_db, blob_url=populated_db)
     testing_client = flWrapper.app.test_client()
     # Establish an application context before running the tests.
