@@ -27,14 +27,17 @@ class StorageApi(object):
             "ensemble_ref": ensemble.id,
             "parent": {
                 "ensemble_ref": ensemble.parent.ensemble_reference.id,
-                "name": ensemble.parent.ensemble_reference.name
-            } if ensemble.parent is not None else None,
+                "name": ensemble.parent.ensemble_reference.name,
+            }
+            if ensemble.parent is not None
+            else None,
             "children": [
                 {
                     "ensemble_ref": child.ensemble_result.id,
-                    "name": child.ensemble_result.name
-                } for child in ensemble.children
-            ]
+                    "name": child.ensemble_result.name,
+                }
+                for child in ensemble.children
+            ],
         }
 
     def ensembles(self, filter=None):
@@ -66,7 +69,7 @@ class StorageApi(object):
                 for ensemble in rdb_api.get_all_ensembles()
             ]
 
-        return {"ensembles" : data}
+        return {"ensembles": data}
 
     def realization(self, ensemble_id, realization_idx, filter):
         """
@@ -198,14 +201,23 @@ class StorageApi(object):
                 "axis": {"data_ref": bundle.indexes_ref},
             }
             if len(observation_links) > 0:
-                return_schema["observations"] = [{
-                    "data": {
-                        "values": {"data_ref": observation_link.observation.values_ref},
-                        "std": {"data_ref": observation_link.observation.stds_ref},
-                        "data_indexes": {"data_ref": observation_link.observation.data_indexes_ref},
-                        "key_indexes": {"data_ref": observation_link.observation.key_indexes_ref,},
+                return_schema["observations"] = [
+                    {
+                        "data": {
+                            "values": {
+                                "data_ref": observation_link.observation.values_ref
+                            },
+                            "std": {"data_ref": observation_link.observation.stds_ref},
+                            "data_indexes": {
+                                "data_ref": observation_link.observation.data_indexes_ref
+                            },
+                            "key_indexes": {
+                                "data_ref": observation_link.observation.key_indexes_ref,
+                            },
+                        }
                     }
-                } for observation_link in observation_links]
+                    for observation_link in observation_links
+                ]
 
         return return_schema
 
@@ -254,23 +266,25 @@ class StorageApi(object):
         with self._rdb_api as rdb_api:
             ens = rdb_api.get_ensemble_by_id(ensemble_id)
             return_schema = self._ensemble_minimal(ens)
-            return_schema.update({
-                "realizations": [
-                    {"name": real.index, "realization_ref": real.index}
-                    for real in rdb_api.get_realizations_by_ensemble_id(ensemble_id)
-                ],
-                "responses": [
-                    {"name": resp.name, "response_ref": resp.name}
-                    for resp in rdb_api.get_response_definitions_by_ensemble_id(
-                        ensemble_id
-                    )
-                ],
-                "parameters": [
-                    {"name": par.name}
-                    for par in rdb_api.get_parameter_definitions_by_ensemble_id(
-                        ensemble_id
-                    )
-                ],
-            })
+            return_schema.update(
+                {
+                    "realizations": [
+                        {"name": real.index, "realization_ref": real.index}
+                        for real in rdb_api.get_realizations_by_ensemble_id(ensemble_id)
+                    ],
+                    "responses": [
+                        {"name": resp.name, "response_ref": resp.name}
+                        for resp in rdb_api.get_response_definitions_by_ensemble_id(
+                            ensemble_id
+                        )
+                    ],
+                    "parameters": [
+                        {"name": par.name}
+                        for par in rdb_api.get_parameter_definitions_by_ensemble_id(
+                            ensemble_id
+                        )
+                    ],
+                }
+            )
 
         return return_schema

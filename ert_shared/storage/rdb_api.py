@@ -159,9 +159,7 @@ class RdbApi:
         ensemble = self.get_ensemble(name=ensemble_name)
 
         response_definition = ResponseDefinition(
-            name=name,
-            indexes_ref=indexes_ref,
-            ensemble_id=ensemble.id,
+            name=name, indexes_ref=indexes_ref, ensemble_id=ensemble.id,
         )
         self._session.add(response_definition)
 
@@ -250,9 +248,7 @@ class RdbApi:
         self, observation_id, response_definition_id
     ):
         msg = "Adding link between observation with id '{}' and response definition with id '{}'"
-        logging.info(
-            msg.format(observation_id, response_definition_id)
-        )
+        logging.info(msg.format(observation_id, response_definition_id))
 
         link = ObservationResponseDefinitionLink(
             observation_id=observation_id,
@@ -261,13 +257,9 @@ class RdbApi:
         self._session.add(link)
         return link
 
-    def _add_misfit(
-        self, value, link_id, response_id
-    ):
+    def _add_misfit(self, value, link_id, response_id):
         msg = "Adding misfit ({}) between response with id '{}' and link with id '{}'"
-        logging.info(
-            msg.format(value, response_id, link_id)
-        )
+        logging.info(msg.format(value, response_id, link_id))
 
         misfit = Misfit(
             value=value,
