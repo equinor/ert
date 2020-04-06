@@ -185,7 +185,6 @@ def test_dump_responses(db_connection):
         for i in range(5):
             rdb_api.add_realization(i, ensemble.name)
 
-
         _dump_response(
             rdb_api=rdb_api,
             blob_api=blob_api,

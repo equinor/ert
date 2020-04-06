@@ -225,7 +225,11 @@ def test_add_parameter(db_connection):
 def test_add_observation_response_definition_link(db_connection):
     with RdbApi(db_connection) as rdb_api:
         observation = rdb_api.add_observation(
-            name="test", key_indexes_ref=None, data_indexes_ref=None, values_ref=None, stds_ref=None
+            name="test",
+            key_indexes_ref=None,
+            data_indexes_ref=None,
+            values_ref=None,
+            stds_ref=None,
         )
 
         ensemble = rdb_api.add_ensemble(name="test_ensemble")
@@ -246,10 +250,15 @@ def test_add_observation_response_definition_link(db_connection):
         assert link.observation_id == observation.id
         assert link.response_definition_id == response_definition.id
 
+
 def test_add_mistfit(db_connection):
     with RdbApi(db_connection) as rdb_api:
         observation = rdb_api.add_observation(
-            name="test", key_indexes_ref=None, data_indexes_ref=None, values_ref=None, stds_ref=None
+            name="test",
+            key_indexes_ref=None,
+            data_indexes_ref=None,
+            values_ref=None,
+            stds_ref=None,
         )
 
         ensemble = rdb_api.add_ensemble(name="test")
@@ -281,4 +290,6 @@ def test_add_mistfit(db_connection):
         assert misfit.id is not None
         assert misfit.response_id == response.id
         assert misfit.observation_response_definition_link_id == link.id
-        assert misfit.observation_response_definition_link.observation_id == observation.id
+        assert (
+            misfit.observation_response_definition_link.observation_id == observation.id
+        )

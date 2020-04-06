@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 @pytest.fixture(scope="session")
 def engine():
     engine = create_engine("sqlite:///:memory:", echo=False)
-    engine.execute('pragma foreign_keys=on')
+    engine.execute("pragma foreign_keys=on")
     return engine
 
 

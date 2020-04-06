@@ -76,17 +76,13 @@ class FlaskWrapper:
         self.app.add_url_rule("/data/<int:data_id>", "data", self.data)
 
     def ensembles(self):
-        with StorageApi(
-            rdb_url=self._rdb_url, blob_url=self._blob_url
-        ) as api:
+        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             ensembles = api.ensembles()
             resolve_ref_uri(ensembles)
             return ensembles
 
     def ensemble_by_id(self, ensemble_id):
-        with StorageApi(
-            rdb_url=self._rdb_url, blob_url=self._blob_url
-        ) as api:
+        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             ensemble = api.ensemble_schema(ensemble_id)
             resolve_ref_uri(ensemble, ensemble_id)
             return ensemble
@@ -95,25 +91,19 @@ class FlaskWrapper:
         pass
 
     def realization_by_id(self, ensemble_id, realization_idx):
-        with StorageApi(
-            rdb_url=self._rdb_url, blob_url=self._blob_url
-        ) as api:
+        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             realization = api.realization(ensemble_id, realization_idx, None)
             resolve_ref_uri(realization, ensemble_id)
             return realization
 
     def response_by_name(self, ensemble_id, response_name):
-        with StorageApi(
-            rdb_url=self._rdb_url, blob_url=self._blob_url
-        ) as api:
+        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             response = api.response(ensemble_id, response_name, None)
             resolve_ref_uri(response, ensemble_id)
             return response
 
     def data(self, data_id):
-        with StorageApi(
-            rdb_url=self._rdb_url, blob_url=self._blob_url
-        ) as api:
+        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             data = api.data(data_id)
             if isinstance(data, list):
                 return ",".join([str(x) for x in data])
@@ -122,5 +112,7 @@ class FlaskWrapper:
 
 
 def run_server(args):
-    wrapper = FlaskWrapper(rdb_url="sqlite:///entities.db", blob_url="sqlite:///blobs.db")
+    wrapper = FlaskWrapper(
+        rdb_url="sqlite:///entities.db", blob_url="sqlite:///blobs.db"
+    )
     wrapper.app.run(host="0.0.0.0", debug=True)
