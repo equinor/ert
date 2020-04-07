@@ -930,7 +930,6 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
     FILE * log_stream = enkf_main_log_step_list(enkf_main, step_list);
     double global_std_scaling = analysis_config_get_global_std_scaling(analysis_config);
     meas_data_type * meas_data = meas_data_alloc(ens_mask);
-    obs_data_type * obs_data = obs_data_alloc(global_std_scaling);
     int_vector_type * ens_active_list = bool_vector_alloc_active_list(ens_mask);
 
     /*
@@ -969,6 +968,7 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
         local_ministep_type * ministep = local_updatestep_iget_ministep(updatestep, ministep_nr);
         local_obsdata_type * obsdata = local_ministep_get_obsdata(ministep);
 
+        obs_data_type * obs_data = obs_data_alloc(global_std_scaling);
         obs_data_reset(obs_data);
         meas_data_reset(meas_data);
 
@@ -994,6 +994,7 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
 
         enkf_analysis_deactivate_outliers(obs_data, meas_data,
                                           std_cutoff, alpha, enkf_main->verbose);
+        local_ministep_add_obs_data(ministep, obs_data);
 
         if (enkf_main->verbose)
           enkf_analysis_fprintf_obs_summary(obs_data, meas_data, step_list, local_ministep_get_name(ministep), stdout);
@@ -1032,7 +1033,6 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
     }
 
     int_vector_free(ens_active_list);
-    obs_data_free(obs_data);
     meas_data_free(meas_data);
     fclose(log_stream);
   }

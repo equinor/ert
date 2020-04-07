@@ -17,7 +17,6 @@ class ObsBlockTest(ResTest):
         self.assertEqual( 0 , block.activeSize())
 
 
-
     def test_access(self):
         obs_size = 10
         block = ObsBlock("OBS" , obs_size)
@@ -49,3 +48,29 @@ class ObsBlockTest(ResTest):
 
         block[-1] = (17,19)
         self.assertEqual( block[-1], (17,19))
+
+    def test_is_active(self):
+        obs_size = 10
+        block = ObsBlock("OBS" , obs_size)
+        self.assertEqual(obs_size, block.totalSize())
+        self.assertEqual(0, block.activeSize())
+        for i in range(block.totalSize()):
+            self.assertFalse(block.is_active(i))
+
+        active_indexes = [2, 5, 8, 9]
+        for index in active_indexes:
+            block[index] = (10*index, index)
+        self.assertEqual(obs_size, block.totalSize())
+        self.assertEqual(len(active_indexes), block.activeSize())
+
+        for i in active_indexes:
+            self.assertTrue(block.is_active(i))
+
+        for i in set(range(block.totalSize())) - set(active_indexes):
+            self.assertFalse(block.is_active(i))
+
+
+    def test_obs_key(self):
+        obs_size = 10
+        block = ObsBlock("OBS" , obs_size)
+        self.assertEqual("OBS", block.get_obs_key())

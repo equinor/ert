@@ -38,6 +38,8 @@ class ObsData(BaseCClass):
     _allocR        = ResPrototype("matrix_obj obs_data_allocR(obs_data)")
     _allocD        = ResPrototype("matrix_obj obs_data_allocD(obs_data , matrix , matrix)")
     _allocE        = ResPrototype("matrix_obj obs_data_allocE(obs_data , rng , int)")
+    _iget_block     = ResPrototype("obs_block_ref obs_data_iget_block(obs_data , int )")
+    _get_num_blocks = ResPrototype("int obs_data_get_num_blocks( obs_data )")
 
     def __init__(self, global_std_scaling=1.0):
         c_pointer = self._alloc(global_std_scaling)
@@ -73,6 +75,12 @@ class ObsData(BaseCClass):
         error_covar_owner = False
         return self._add_block(obs_key , obs_size , error_covar , error_covar_owner)
 
+
+    def get_num_blocks(self):
+        return self._get_num_blocks()
+
+    def get_block(self , index):
+        return self._iget_block(index)
 
     def createDObs(self):
         """ @rtype: Matrix """

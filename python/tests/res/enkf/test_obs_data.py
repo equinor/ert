@@ -48,4 +48,15 @@ class ObsDataTest(ResTest):
         self.assertEqual( s , 12 )
 
 
+    def test_get_block(self):
+        obs_data = ObsData()
+
+        obs_blocks = [("OBS1", 10), ("OBS2", 7), ("OBS3", 15)]
+        for name, size in obs_blocks:
+            obs_data.addBlock(name , size)
+
+        self.assertEqual(len(obs_blocks), obs_data.get_num_blocks())
+
+        for i in range(obs_data.get_num_blocks()):
+            self.assertEqual(obs_blocks[i][0], obs_data.get_block(i).get_obs_key())
 

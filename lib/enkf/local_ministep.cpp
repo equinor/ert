@@ -30,6 +30,7 @@
 #include <ert/enkf/local_dataset.hpp>
 #include <ert/enkf/local_obsdata.hpp>
 #include <ert/enkf/local_obsdata_node.hpp>
+#include <ert/enkf/obs_data.hpp>
 
 /**
    This file implements a 'ministep' configuration for active /
@@ -57,6 +58,7 @@ struct local_ministep_struct {
   hash_type         * datasets;         /* A hash table of local_dataset_type instances - indexed by the name of the datasets. */
   local_obsdata_type * observations;
   analysis_module_type * analysis_module;
+  obs_data_type * obs_data;
 };
 
 
@@ -83,6 +85,7 @@ local_ministep_type * local_ministep_alloc(const char * name, analysis_module_ty
 
   ministep->datasets     = hash_alloc();
   ministep->analysis_module = analysis_module;
+  ministep->obs_data = NULL;
   UTIL_TYPE_ID_INIT( ministep , LOCAL_MINISTEP_TYPE_ID);
 
   return ministep;
@@ -120,6 +123,8 @@ void local_ministep_free(local_ministep_type * ministep) {
   free(ministep->name);
   hash_free( ministep->datasets );
   local_obsdata_free(ministep->observations);
+  if ( ministep->obs_data != NULL )
+    obs_data_free(ministep->obs_data);
   free( ministep );
 }
 
@@ -162,6 +167,14 @@ void local_ministep_add_obsdata( local_ministep_type * ministep , local_obsdata_
   }
 }
 
+void local_ministep_add_obs_data( local_ministep_type * ministep , obs_data_type * obs_data) {
+  if (ministep->obs_data != NULL){
+    obs_data_free(ministep->obs_data);
+    ministep->obs_data = NULL;
+  }
+  ministep->obs_data = obs_data;
+}
+
 void local_ministep_add_obsdata_node( local_ministep_type * ministep , local_obsdata_node_type * obsdatanode) {
   local_obsdata_type * obsdata = local_ministep_get_obsdata(ministep);
   local_obsdata_add_node(obsdata, obsdatanode);
@@ -181,6 +194,10 @@ local_dataset_type * local_ministep_get_dataset( const local_ministep_type * min
 
 local_obsdata_type * local_ministep_get_obsdata( const local_ministep_type * ministep ) {
   return ministep->observations;
+}
+
+obs_data_type * local_ministep_get_obs_data( const local_ministep_type * ministep ) {
+  return ministep->obs_data;
 }
 
 const char * local_ministep_get_name( const local_ministep_type * ministep ) {

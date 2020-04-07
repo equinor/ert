@@ -13,6 +13,8 @@ class ObsBlock(BaseCClass):
     _iset        = ResPrototype("void   obs_block_iset( obs_block , int , double , double)")
     _iget_value  = ResPrototype("double obs_block_iget_value( obs_block , int)")
     _iget_std    = ResPrototype("double obs_block_iget_std( obs_block , int)")
+    _get_obs_key = ResPrototype("char* obs_block_get_key( obs_block )")
+    _iget_is_active    = ResPrototype("bool obs_block_iget_is_active( obs_block , int)")
 
     def __init__(self , obs_key , obs_size , global_std_scaling=1.0):
         error_covar = None
@@ -31,6 +33,12 @@ class ObsBlock(BaseCClass):
     def __len__(self):
         """Returns the total size"""
         return self.totalSize()
+
+    def is_active(self, index):
+        return self._iget_is_active(index)
+
+    def get_obs_key(self):
+        return self._get_obs_key()
 
     def __setitem__(self , index , value):
         if len(value) != 2:

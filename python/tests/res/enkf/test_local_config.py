@@ -17,8 +17,11 @@
 import os.path
 
 from tests import ResTest
-from res.test import ErtTestContext
+from tests.utils import tmpdir
 
+from res.test import ErtTestContext
+from res.enkf import ESUpdate
+from res.enkf import ErtRunContext
 from res.enkf.local_ministep import LocalMinistep
 from res.enkf.local_obsdata import LocalObsdata
 from res.enkf.local_updatestep import LocalUpdateStep
@@ -151,6 +154,7 @@ class LocalConfigTest(ResTest):
             with self.assertRaises(KeyError):
                 _ = ministep["DATA"]
 
+            self.assertIsNone(ministep.get_obs_data())
 
     def test_attach_ministep(self):
         with ErtTestContext(self.local_conf_path, self.config) as test_context:
@@ -171,3 +175,44 @@ class LocalConfigTest(ResTest):
             updatestep.attachMinistep(ministep)
             self.assertTrue(isinstance(updatestep[0], LocalMinistep))
             self.assertEqual(len(updatestep), upd_size + 1)
+
+    @tmpdir()
+    def test_attach_obs_data_to_ministep(self):
+        config = self.createTestPath("local/snake_oil/snake_oil.ert")
+
+        expected_keys = {
+            "WPR_DIFF_1",
+            "WOPR_OP1_108",
+            "FOPR",
+            "WOPR_OP1_144",
+            "WOPR_OP1_190",
+            "WOPR_OP1_9",
+            "WOPR_OP1_36",
+            "WOPR_OP1_72",
+        }
+
+        with ErtTestContext("obs_data_ministep_test", config) as context:
+            ert = context.getErt()
+            es_update = ESUpdate( ert )
+            fsm = ert.getEnkfFsManager()
+
+            sim_fs = fsm.getFileSystem("default_0")
+            target_fs = fsm.getFileSystem("target")
+            run_context = ErtRunContext.ensemble_smoother_update( sim_fs, target_fs )
+            es_update.smootherUpdate( run_context )
+
+            update_step = ert.getLocalConfig().getUpdatestep()
+            ministep = update_step[len(update_step) - 1]
+            obs_data = ministep.get_obs_data()
+            self.assertEqual(len(expected_keys), obs_data.get_num_blocks())
+
+            observed_obs_keys = set()
+            for block_num in range(obs_data.get_num_blocks()):
+                block = obs_data.get_block(block_num)
+
+                obs_key = block.get_obs_key()
+                observed_obs_keys.add(obs_key)
+                for i in range(len(block)):
+                    self.assertTrue(block.is_active(i))
+
+            self.assertSetEqual(expected_keys, observed_obs_keys)

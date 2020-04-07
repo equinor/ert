@@ -50,6 +50,8 @@ from .active_list import ActiveList
 from .config import *
 from .data import *
 
+from .obs_block import ObsBlock
+from .obs_data import ObsData
 from .local_dataset import LocalDataset
 from .local_obsdata_node import LocalObsdataNode
 from .local_obsdata import LocalObsdata
@@ -58,8 +60,6 @@ from .local_updatestep import LocalUpdateStep
 
 from .observations import *
 
-from .obs_block import ObsBlock
-from .obs_data import ObsData
 from .meas_block import MeasBlock
 from .meas_data import MeasData
 

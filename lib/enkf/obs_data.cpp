@@ -190,6 +190,10 @@ active_type obs_block_iget_active_mode( const obs_block_type * obs_block , int i
 }
 
 
+bool obs_block_iget_is_active( const obs_block_type * obs_block , int iobs) {
+  return obs_block->active_mode[iobs] == ACTIVE;
+}
+
 
 int obs_block_get_size( const obs_block_type * obs_block ) {
   return obs_block->size;

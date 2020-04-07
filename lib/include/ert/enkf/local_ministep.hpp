@@ -32,6 +32,7 @@ extern "C" {
 #include <ert/enkf/local_dataset.hpp>
 #include <ert/enkf/local_obsdata.hpp>
 #include <ert/enkf/local_obsdata_node.hpp>
+#include <ert/enkf/obs_data.hpp>
 
 typedef struct local_ministep_struct local_ministep_type;
 
@@ -59,6 +60,8 @@ bool                  local_ministep_has_dataset( const local_ministep_type * mi
 int                   local_ministep_get_num_dataset( const local_ministep_type * ministep );
 bool                  local_ministep_has_analysis_module( const local_ministep_type * ministep );
 analysis_module_type* local_ministep_get_analysis_module( const local_ministep_type * ministep );
+void                  local_ministep_add_obs_data( local_ministep_type * ministep , obs_data_type * obs_data );
+obs_data_type *       local_ministep_get_obs_data( const local_ministep_type * ministep );
 
 UTIL_SAFE_CAST_HEADER(local_ministep);
 UTIL_IS_INSTANCE_HEADER(local_ministep);

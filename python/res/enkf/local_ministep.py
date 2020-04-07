@@ -1,7 +1,7 @@
 import ecl.util
 from cwrap import BaseCClass
 from res import ResPrototype
-from res.enkf import LocalObsdata, LocalObsdataNode, LocalDataset
+from res.enkf import LocalObsdata, LocalObsdataNode, LocalDataset, ObsData
 
 class LocalMinistep(BaseCClass):
     TYPE_NAME = "local_ministep"
@@ -10,6 +10,7 @@ class LocalMinistep(BaseCClass):
     _add_node            = ResPrototype("void local_ministep_add_obsdata_node(local_ministep, local_obsdata_node)")
     _get_local_obs_data  = ResPrototype("local_obsdata_ref local_ministep_get_obsdata(local_ministep)")
     _get_local_data      = ResPrototype("local_dataset_ref local_ministep_get_dataset(local_ministep , char*)")
+    _get_obs_data        = ResPrototype("obs_data_ref local_ministep_get_obs_data( local_ministep )")
     _has_local_data      = ResPrototype("bool              local_ministep_has_dataset(local_ministep , char*)")
     _free                = ResPrototype("void local_ministep_free(local_ministep)")
     _attach_obsdata      = ResPrototype("void local_ministep_add_obsdata(local_ministep, local_obsdata)")
@@ -57,6 +58,10 @@ class LocalMinistep(BaseCClass):
     def getName(self):
         """ @rtype: str """
         return self.name()
+
+    def get_obs_data(self):
+        """ @rtype: ObsData """
+        return self._get_obs_data()
 
     def free(self):
         self._free()
