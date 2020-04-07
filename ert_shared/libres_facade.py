@@ -203,3 +203,6 @@ class LibresFacade(object):
 
     def gen_kw_priors(self):
         return self._enkf_main.getKeyManager().gen_kw_priors()
+
+    def get_update_step(self):
+        return self._enkf_main.getLocalConfig().getUpdatestep()

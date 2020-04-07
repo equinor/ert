@@ -264,7 +264,7 @@ class RdbApi:
         return observation
 
     def _add_observation_response_definition_link(
-        self, observation_id, response_definition_id
+        self, observation_id, response_definition_id, active_ref
     ):
         msg = "Adding link between observation with id '{}' and response definition with id '{}'"
         logging.info(msg.format(observation_id, response_definition_id))
@@ -272,6 +272,7 @@ class RdbApi:
         link = ObservationResponseDefinitionLink(
             observation_id=observation_id,
             response_definition_id=response_definition_id,
+            active_ref=active_ref,
         )
         self._session.add(link)
         return link

@@ -257,7 +257,9 @@ def test_add_observation_response_definition_link(db_connection):
         rdb_api.flush()
 
         link = rdb_api._add_observation_response_definition_link(
-            observation_id=observation.id, response_definition_id=response_definition.id
+            observation_id=observation.id,
+            response_definition_id=response_definition.id,
+            active_ref=1,
         )
 
         rdb_api.commit()
@@ -294,7 +296,9 @@ def test_add_mistfit(db_connection):
         rdb_api.flush()
 
         link = rdb_api._add_observation_response_definition_link(
-            observation_id=observation.id, response_definition_id=response_definition.id
+            observation_id=observation.id,
+            response_definition_id=response_definition.id,
+            active_ref=1,
         )
 
         rdb_api.flush()

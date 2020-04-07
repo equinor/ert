@@ -152,11 +152,26 @@ def _dump_response(rdb_api, blob_api, responses, ensemble_name):
             )
 
 
+def _extract_active_observations(facade):
+    update_step = facade.get_update_step()
+    ministep = update_step[len(update_step) - 1]
+    obs_data = ministep.get_obs_data()
+    active_observations = dict()
+    for block_num in range(obs_data.get_num_blocks()):
+        block = obs_data.get_block(block_num)
+        obs_key = block.get_obs_key()
+        active_list = [block.is_active(i) for i in range(len(block))]
+        active_observations[obs_key] = active_list
+    return active_observations
+
+
 def _extract_and_dump_update_data(ensemble_id, ensemble_name, rdb_api, blob_api):
     facade = ERT.enkf_facade
 
     fs = facade.get_current_fs()
     realizations = MisfitCollector.createActiveList(ERT.ert, fs)
+
+    active_observations = _extract_active_observations(facade)
 
     for obs_vector in facade.get_observations():
         observation_key = obs_vector.getObservationKey()
@@ -164,9 +179,14 @@ def _extract_and_dump_update_data(ensemble_id, ensemble_name, rdb_api, blob_api)
         response_definition = rdb_api._get_response_definition(
             response_key, ensemble_id
         )
+
+        active_blob = blob_api.add_blob(active_observations[observation_key])
+        blob_api.flush()
         observation = rdb_api.get_observation(observation_key)
         link = rdb_api._add_observation_response_definition_link(
-            observation_id=observation.id, response_definition_id=response_definition.id
+            observation_id=observation.id,
+            response_definition_id=response_definition.id,
+            active_ref=active_blob.id,
         )
         for realization_number in realizations:
             response = rdb_api.get_response(

@@ -87,10 +87,13 @@ def populated_db(tmpdir):
     response_definition = repository.add_response_definition(
         name="response_one", indexes_ref=add_blob([3, 5]), ensemble_name=ensemble.name,
     )
+    active_ref = add_blob([True, False])
     repository.flush()
 
     obs_res_def_link = repository._add_observation_response_definition_link(
-        observation_id=observation.id, response_definition_id=response_definition.id
+        observation_id=observation.id,
+        response_definition_id=response_definition.id,
+        active_ref=active_ref,
     )
 
     observation_one = repository.add_observation(
@@ -117,14 +120,19 @@ def populated_db(tmpdir):
 
     repository.flush()
 
+    obs_one_active_ref = add_blob([True])
+    obs_two_active_ref = add_blob([True])
+
     repository._add_observation_response_definition_link(
         observation_id=observation_one.id,
         response_definition_id=response_two_definition.id,
+        active_ref=obs_one_active_ref,
     )
 
     repository._add_observation_response_definition_link(
         observation_id=observation_two.id,
         response_definition_id=response_two_definition.id,
+        active_ref=obs_two_active_ref,
     )
 
     repository.add_parameter_definition("A", "G", "ensemble_name")
