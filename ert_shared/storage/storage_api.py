@@ -89,17 +89,17 @@ class StorageApi(object):
                 for param_def in parameter_definitions
             ]
 
-        return_schema = {
-            "name": realization_idx,
-            "responses": [
-                {"name": res["name"], "data_ref": res["response"].values_ref}
-                for res in responses
-            ],
-            "parameters": [
-                {"name": par["name"], "data_ref": par["parameter"].value_ref}
-                for par in parameters
-            ],
-        }
+            return_schema = {
+                "name": realization_idx,
+                "responses": [
+                    {"name": res["name"], "data_ref": res["response"].values_ref}
+                    for res in responses
+                ],
+                "parameters": [
+                    {"name": par["name"], "data_ref": par["parameter"].value_ref}
+                    for par in parameters
+                ],
+            }
 
         return return_schema
 
@@ -153,6 +153,7 @@ class StorageApi(object):
 
             return_schema = {
                 "name": response_name,
+                "ensemble_id": ensemble_id,
                 "realizations": [
                     {
                         "name": resp.realization.index,
@@ -181,12 +182,29 @@ class StorageApi(object):
 
         return return_schema
 
+    def get_response_data(self, ensemble_id, response_name):
+        with self._rdb_api as rdb_api:
+            bundle = rdb_api.get_response_bundle(
+                response_name=response_name, ensemble_id=ensemble_id
+            )
+            if bundle is None:
+                return None
+            responses = bundle.responses
+
+            ids = [resp.values_ref for resp in responses]
+        return ids
+
     def get_data(self, id):
         with self._blob_api as blob_api:
             blob = blob_api.get_blob(id)
         if blob is None:
             return None
         return blob.data
+
+    def get_datas(self, id):
+        with self._blob_api as blob_api:
+            for response in blob_api.get_blobs(id):
+                yield response.data
 
     def get_observation(self, name):
         with self._rdb_api as rdb_api:
@@ -302,4 +320,15 @@ class StorageApi(object):
                 }
                 for param in bundle.parameters
             ]
-            return return_schema
+        return return_schema
+
+    def get_parameter_data(self, ensemble_id, parameter_def_id):
+        with self._rdb_api as rdb_api:
+            bundle = rdb_api.get_parameter_bundle(
+                parameter_def_id=parameter_def_id, ensemble_id=ensemble_id
+            )
+            if bundle is None:
+                return None
+
+            ids = [param.value_ref for param in bundle.parameters]
+        return ids

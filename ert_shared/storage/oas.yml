@@ -97,6 +97,35 @@ paths:
                 $ref: '#/components/schemas/Response'
         404:
           description: Response not found
+  /ensembles/{ensemble_id}/responses/{response_name}/data:
+    get:
+      summary: Returns all data from all realizations for the given response.
+      description: Returns all data from all realizations for the given response.
+      parameters:
+        - name: ensemble_id
+          in: path
+          description: The name of the ensemble.
+          required: true
+          schema:
+            type: string
+        - name: response_name
+          in: path
+          description: Name of the response to fetch data for
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: CSV with one line per realization with the data points for the given response. Empty if no data.
+          content:
+            text/csv:
+              schema:
+                type: string
+                example: |
+                  0.1,0.2,0.3
+                  0.4,0.5,0.6
+        404:
+          description: Response not found
   /ensembles/{ensemble_id}/parameters/{parameter_def_id}:
     get:
       summary: Returns a parameter object.
@@ -122,6 +151,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Parameter'
+        404:
+          description: Parameter not found
+  /ensembles/{ensemble_id}/parameters/{parameter_def_id}/data:
+    get:
+      summary: Returns all data from all realizations for the given parameter.
+      description: Returns all data from all realizations for the given parameter.
+      parameters:
+        - name: ensemble_id
+          in: path
+          description: The name of the ensemble.
+          required: true
+          schema:
+            type: string
+        - name: parameter_def_id
+          in: path
+          description: ID of the parameter to fetch data for
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: CSV with one line per realization with the data points for the given parameter. Empty if no data.
+          content:
+            text/csv:
+              schema:
+                type: string
+                example: |
+                  0.1
+                  0.4
         404:
           description: Parameter not found
   /observation/{name}:

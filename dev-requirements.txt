@@ -8,3 +8,4 @@ sphinx
 sphinx-argparse
 sphinx_rtd_theme
 pytest-flask-sqlalchemy
+requests

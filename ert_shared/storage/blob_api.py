@@ -45,3 +45,14 @@ class BlobApi:
 
     def get_blob(self, id):
         return self._session.query(ErtBlob).get(id)
+
+    def get_blobs(self, ids):
+        if not isinstance(ids, list):
+            ids = [ids]
+
+        return (
+            self._session.query(ErtBlob)
+            .filter(ErtBlob.id.in_(ids))
+            .yield_per(1)
+            .enable_eagerloads(False)
+        )

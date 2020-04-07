@@ -67,7 +67,7 @@ def _plotDistribution(axes, plot_config, data, label, index, previous_data):
     axes.set_ylabel(plot_config.yLabel())
 
     style = plot_config.distributionStyle()
-
+    data = data[0]
     if data.dtype == "object":
         try:
             data = pd.to_numeric(data, errors='coerce')
