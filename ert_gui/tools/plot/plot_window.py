@@ -179,9 +179,12 @@ class PlotWindow(QMainWindow):
 
         for plot_widget in self._plot_widgets:
             index = self._central_tab.indexOf(plot_widget)
+
+            self._central_tab.currentChanged.disconnect()
             self._central_tab.setTabEnabled(
                 index, plot_widget._plotter.dimensionality == key_def["dimensionality"]
             )
+            self._central_tab.currentChanged.connect(self.currentPlotChanged)
 
         self.currentPlotChanged()
 

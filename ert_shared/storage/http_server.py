@@ -2,10 +2,7 @@ import flask
 import os
 import yaml
 import werkzeug.exceptions as werkzeug_exc
-from ert_shared.storage.blob_api import BlobApi
-from ert_shared.storage.rdb_api import RdbApi
 from ert_shared.storage.storage_api import StorageApi
-from ert_shared.storage import connections
 from flask import Response, request
 
 
@@ -37,6 +34,8 @@ def resolve_ref_uri(struct, ensemble_id=None):
                     struct["ref_url"] = "{}/parameters/{}".format(base, val)
                 elif type_name == "data":
                     struct["data_url"] = "{}data/{}".format(request.host_url, val)
+                elif type_name == "alldata":
+                    struct["alldata_url"] = "{}/data".format(request.url)
                 else:
                     continue
                 del struct[key]
@@ -65,11 +64,22 @@ class FlaskWrapper:
             self.response_by_name,
         )
         self.app.add_url_rule(
+            "/ensembles/<ensemble_id>/responses/<response_name>/data",
+            "response_data",
+            self.response_data_by_name,
+        )
+        self.app.add_url_rule(
             "/ensembles/<ensemble_id>/parameters/<parameter_def_id>",
             "parameter",
             self.parameter_by_id,
         )
+        self.app.add_url_rule(
+            "/ensembles/<ensemble_id>/parameters/<parameter_def_id>/data",
+            "parameter_data",
+            self.parameter_data_by_id,
+        )
         self.app.add_url_rule("/data/<int:data_id>", "data", self.data)
+
         self.app.add_url_rule(
             "/observation/<name>",
             "get_observation",
@@ -126,16 +136,32 @@ class FlaskWrapper:
             response = api.get_response(ensemble_id, response_name, None)
             if response is None:
                 raise werkzeug_exc.NotFound()
+            response["alldata_ref"] = None  # value is irrelevant
             resolve_ref_uri(response, ensemble_id)
             return response
+
+    def response_data_by_name(self, ensemble_id, response_name):
+        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+            ids = api.get_response_data(ensemble_id, response_name)
+            if ids is None:
+                raise werkzeug_exc.NotFound()
+            return self._datas(ids)
 
     def parameter_by_id(self, ensemble_id, parameter_def_id):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             parameter = api.get_parameter(ensemble_id, parameter_def_id)
             if parameter is None:
                 raise werkzeug_exc.NotFound()
+            parameter["alldata_ref"] = None  # value is irrelevant
             resolve_ref_uri(parameter, ensemble_id)
             return parameter
+
+    def parameter_data_by_id(self, ensemble_id, parameter_def_id):
+        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+            ids = api.get_parameter_data(ensemble_id, parameter_def_id)
+            if ids is None:
+                raise werkzeug_exc.NotFound()
+            return self._datas(ids)
 
     def data(self, data_id):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
@@ -146,6 +172,24 @@ class FlaskWrapper:
                 return ",".join([str(x) for x in data])
             else:
                 return str(data)
+
+    def _datas(self, ids):
+        def generator():
+            with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+                first = True
+                for data in api.get_datas(ids):
+                    if first:
+                        first = False
+                    else:
+                        yield "\n"
+                    if isinstance(data, list):
+                        yield ",".join([str(x) for x in data])
+                    else:
+                        yield str(data)
+
+        response = Response(generator(), mimetype="text/csv")
+        response.headers["Content-Disposition"] = "attachment; filename=data.csv"
+        return response
 
     def get_observation(self, name):
         """Return an observation."""
