@@ -54,6 +54,12 @@ if [[ -z "${sha1// }" ]]; then
     mkdir tmptest
     cp -r python/tests tmptest/tests
     pushd tmptest
+else
+    export ERT_SITE_CONFIG=$(pwd)/share/ert/site-config
+    PYV=`python -c "import sys;print('{}.{}'.format(*sys.version_info[:2]))"`
+    export PYTHONPATH=$(pwd)/build/lib/python$PYV/site-packages
+    export LD_LIBRARY_PATH=$(pwd)/build/lib64:$(pwd)/build/lib:$LD_LIBRARY_PATH
+    pushd python
 fi
 
 export ECL_SKIP_SIGNAL=ON
