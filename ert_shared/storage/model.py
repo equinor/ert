@@ -269,6 +269,7 @@ class ObservationResponseDefinitionLink(Entities):
 
     id = Column(Integer, primary_key=True)
     response_definition_id = Column(Integer, ForeignKey("response_definitions.id"))
+    active_ref = Column(Integer)
     response_definition = relationship(
         "ResponseDefinition", back_populates="observation_links"
     )
