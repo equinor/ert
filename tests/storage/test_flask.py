@@ -120,3 +120,68 @@ def test_parameter(test_client):
     assert schema["key"] == "key1"
     assert schema["group"] == "group"
     assert schema["prior"]["function"] == "function"
+
+
+def test_get_batched_response(test_client):
+    resp_schema = _fetch_response(
+        test_client, ensemble_name="ensemble_name", response_name="response_two"
+    )
+    data_url = resp_schema["alldata_url"]
+
+    data_resp = test_client.get(data_url)
+
+    expected = b"12.1,12.2,11.1,11.2,9.9,9.3\n12.1,12.2,11.1,11.2,9.9,9.3"
+    csv = data_resp.data
+    assert expected == csv
+
+
+def test_get_batched_parameter(test_client):
+    param_schema = _fetch_parameter(
+        test_client,
+        ensemble_name="ensemble_name",
+        parameter_name="A",
+        parameter_group="G",
+    )
+    data_url = param_schema["alldata_url"]
+
+    data_resp = test_client.get(data_url)
+
+    expected = b"1\n1"
+    csv = data_resp.data
+    assert expected == csv
+
+
+def _fetch_ensemble(test_client, ensemble_name):
+    ensembles_resp = test_client.get("/ensembles")
+    ensembles_schema = json.loads(ensembles_resp.data)
+
+    ensemble_ref = next(
+        ens for ens in ensembles_schema["ensembles"] if ens["name"] == ensemble_name
+    )
+    ensemble_url = ensemble_ref["ref_url"]
+
+    ensemble_schema = json.loads(test_client.get(ensemble_url).data)
+    return ensemble_schema
+
+
+def _fetch_response(test_client, ensemble_name, response_name):
+    ensemble_schema = _fetch_ensemble(test_client, ensemble_name)
+    response_ref = next(
+        resp for resp in ensemble_schema["responses"] if resp["name"] == response_name
+    )
+    response_url = response_ref["ref_url"]
+    response_schema = json.loads(test_client.get(response_url).data)
+    return response_schema
+
+
+def _fetch_parameter(test_client, ensemble_name, parameter_name, parameter_group):
+    ensemble_schema = _fetch_ensemble(test_client, ensemble_name)
+    response_ref = next(
+        param
+        for param in ensemble_schema["parameters"]
+        if param["key"] == parameter_name and param["group"] == parameter_group
+    )
+    response_url = response_ref["ref_url"]
+    data = test_client.get(response_url).data
+    response_schema = json.loads(data)
+    return response_schema

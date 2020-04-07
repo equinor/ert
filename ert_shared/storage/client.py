@@ -90,7 +90,7 @@ class StorageClient(object):
         result.extend(
             [
                 {
-                    "key": param["key"],
+                    "key": param["group"] + ":" + param["key"],
                     "index_type": None,
                     "observations": [],
                     "has_refcase": False,
@@ -144,10 +144,21 @@ class StorageClient(object):
 
             response = ref_request(resp["ref_url"])
 
-            for real in response["realizations"]:
+            import time
 
-                data = pd.Series(data_request(real["data_url"]), name=real["name"])
-                df = df.append(data)
+            t0 = time.time()
+            print("start getting data")
+            df = pd.read_csv(response["alldata_url"], header=None)
+
+            # for real in response["realizations"]:
+            #
+            #     data = pd.Series(data_request(real["data_url"]), name=real["name"])
+            #     df = df.append(data)
+            t1 = time.time()
+
+            total = t1 - t0
+
+            print("done getting data used {}".format(total))
 
             indexes = axis_request(response["axis"]["data_url"])
             arrays = [[key] * len(indexes), indexes]
@@ -155,15 +166,13 @@ class StorageClient(object):
 
         # Parameter key - we only check if necessary
         if df.empty:
-            for real in ens_schema["realizations"]:
-                realization = ref_request(real["ref_url"])
+            for param in ens_schema["parameters"]:
+                if param["group"] + ":" + param["key"] != key:
+                    continue
 
-                for param in realization["parameters"]:
-                    if param["name"] != key:
-                        continue
+                parameter = ref_request(param["ref_url"])
 
-                    data = pd.Series(data_request(param["data_url"]), name=real["name"])
-                    df = df.append(data)
+                df = pd.read_csv(parameter["alldata_url"], header=None)
 
             arrays = [[key] * len(df.columns), df.columns]
 

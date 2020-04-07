@@ -406,9 +406,10 @@ class RdbApi:
         parameter_bundle = (
             self._session.query(ParameterDefinition)
             .join(
-                Parameter, ParameterDefinition.id == Parameter.parameter_definition_id
+                ParameterPrior,
+                ParameterDefinition.prior_id == ParameterPrior.id,
+                isouter=True,
             )
-            .join(ParameterPrior, ParameterDefinition.prior_id == ParameterPrior.id)
             .filter(ParameterDefinition.id == parameter_def_id)
             .filter(ParameterDefinition.ensemble_id == ensemble_id)
             .one()
