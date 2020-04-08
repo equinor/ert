@@ -110,3 +110,11 @@ def test_get_observation_attributes(test_client):
     obs = json.loads(resp.data)
     expected = {"attributes": {"region": "1", "depth": "9000"}}
     assert obs == expected
+
+
+def test_parameter(test_client):
+    resp = test_client.get("/ensembles/1/parameters/3")
+    schema = json.loads(resp.data)
+    assert schema["key"] == "key1"
+    assert schema["group"] == "group"
+    assert schema["prior"]["function"] == "function"

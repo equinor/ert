@@ -126,6 +126,7 @@ def populated_db(tmpdir):
 
     repository.add_parameter_definition("A", "G", "ensemble_name")
     repository.add_parameter_definition("B", "G", "ensemble_name")
+    repository.add_parameter_definition("key1", "group", "ensemble_name", prior=prior)
 
     def add_data(realization):
         repository.add_response(
@@ -147,6 +148,9 @@ def populated_db(tmpdir):
         )
         repository.add_parameter(
             "B", "G", add_blob(2), realization.index, "ensemble_name"
+        )
+        repository.add_parameter(
+            "key1", "group", add_blob(2), realization.index, "ensemble_name"
         )
 
     add_data(realization)

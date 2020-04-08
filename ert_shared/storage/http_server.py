@@ -30,6 +30,9 @@ def resolve_ref_uri(struct, ensemble_id=None):
                 elif type_name == "response":
                     base = resolve_ensemble_uri(ensemble_id)
                     struct["ref_url"] = "{}/responses/{}".format(base, val)
+                elif type_name == "parameter":
+                    base = resolve_ensemble_uri(ensemble_id)
+                    struct["ref_url"] = "{}/parameters/{}".format(base, val)
                 elif type_name == "data":
                     struct["data_url"] = "{}data/{}".format(request.host_url, val)
                 else:
@@ -58,6 +61,11 @@ class FlaskWrapper:
             "/ensembles/<ensemble_id>/responses/<response_name>",
             "response",
             self.response_by_name,
+        )
+        self.app.add_url_rule(
+            "/ensembles/<ensemble_id>/parameters/<parameter_def_id>",
+            "parameter",
+            self.parameter_by_id,
         )
         self.app.add_url_rule("/data/<int:data_id>", "data", self.data)
         self.app.add_url_rule(
@@ -105,6 +113,12 @@ class FlaskWrapper:
             response = api.response(ensemble_id, response_name, None)
             resolve_ref_uri(response, ensemble_id)
             return response
+
+    def parameter_by_id(self, ensemble_id, parameter_def_id):
+        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+            parameter = api.parameter(ensemble_id, parameter_def_id)
+            resolve_ref_uri(parameter, ensemble_id)
+            return parameter
 
     def data(self, data_id):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:

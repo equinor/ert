@@ -90,7 +90,7 @@ class StorageClient(object):
         result.extend(
             [
                 {
-                    "key": param["name"],
+                    "key": param["key"],
                     "index_type": None,
                     "observations": [],
                     "has_refcase": False,
