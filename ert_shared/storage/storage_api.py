@@ -322,16 +322,14 @@ class StorageApi(object):
             ]
             "parameters": [
                 {
-                    "name": "<name>"
-                }
-            ]
-            "priors": [
-                {
-                    "group": "<group>"
-                    "key": "<key>"
-                    "function": "<function>"
-                    "parameter_names": ["<parameter_name>"*]
-                    "parameter_values": ["<parameter_value>"*]
+                    "name": "<parameter_name>"
+                    "group" "<parameter_group>"
+                    "prior" : {
+                        "function": "<function>"
+                        "parameter_names": ["<parameter_name>"*]
+                        "parameter_values": ["<parameter_value>"*]
+                    }
+                    "parameter_ref" : "<parameter_def_id>"
                 }
             ]
         }
@@ -354,23 +352,16 @@ class StorageApi(object):
                         )
                     ],
                     "parameters": [
-                        {"name": par.name}
+                        self._parameter_minimal(
+                            name=par.name,
+                            group=par.group,
+                            prior=par.prior,
+                            parameter_def_id=par.id,
+                        )
                         for par in rdb_api.get_parameter_definitions_by_ensemble_id(
                             ensemble_id
                         )
                     ],
-                    "priors": [
-                        {
-                            "group": prior.group,
-                            "key": prior.key,
-                            "function": prior.function,
-                            "parameter_names": prior.parameter_names,
-                            "parameter_values": prior.parameter_values,
-                        }
-                        for prior in ens.priors
-                    ]
-                    if ens.priors is not None
-                    else [],
                 }
             )
         return return_schema
@@ -391,3 +382,59 @@ class StorageApi(object):
             data["attributes"] = attrs
 
         return data
+
+    def _parameter_minimal(self, name, group, prior, parameter_def_id):
+        return {
+            "key": name,
+            "group": group,
+            "parameter_ref": parameter_def_id,
+            "prior": {
+                "function": prior.function,
+                "parameter_names": prior.parameter_names,
+                "parameter_values": prior.parameter_values,
+            }
+            if prior is not None
+            else {},
+        }
+
+    def parameter(self, ensemble_id, parameter_def_id):
+        """
+        @return_type:
+        {
+            "key" : "<key>"
+            "group" "<group>"
+            "realizations" : [
+                "name" : "<realization_idx>"
+                "data_ref" : "<parameter_values_ref>"
+                "realization_ref" : "<realization_idx>"
+            ]
+            "prior" : {
+                "function" : "<parameter_function>"
+                "parameter_values" : "<parameter_values>"
+                "parameter_names" : "<parameter_names>"
+            }
+            "parameter_ref" : "<parameter_def_id>"
+        }
+        """
+
+        with self._rdb_api as rdb_api:
+            bundle = rdb_api.get_parameter_bundle(
+                parameter_def_id=parameter_def_id, ensemble_id=ensemble_id
+            )
+
+            return_schema = self._parameter_minimal(
+                name=bundle.name,
+                group=bundle.group,
+                prior=bundle.prior,
+                parameter_def_id=parameter_def_id,
+            )
+
+            return_schema["parameter_realizations"] = [
+                {
+                    "name": param.realization.index,
+                    "data_ref": param.value_ref,
+                    "realization": {"realization_ref": param.realization.index},
+                }
+                for param in bundle.parameters
+            ]
+            return return_schema

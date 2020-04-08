@@ -43,12 +43,24 @@ def test_realization(populated_db):
 def test_priors(populated_db):
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
         schema = api.ensemble_schema(1)
-        prior1 = schema["priors"][0]
-        assert prior1["group"] == "group"
-        assert prior1["key"] == "key1"
-        assert prior1["function"] == "function"
-        assert prior1["parameter_names"] == ["paramA", "paramB"]
-        assert prior1["parameter_values"] == [0.1, 0.2]
+        assert {
+            "group": "group",
+            "key": "key1",
+            "prior": {
+                "function": "function",
+                "parameter_names": ["paramA", "paramB"],
+                "parameter_values": [0.1, 0.2],
+            },
+            "parameter_ref": 3,
+        } in schema["parameters"]
+
+
+def test_parameter(populated_db):
+    with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
+        schema = api.parameter(ensemble_id=1, parameter_def_id="3")
+        assert schema["key"] == "key1"
+        assert schema["group"] == "group"
+        assert schema["prior"]["function"] == "function"
 
 
 def test_observation(populated_db):

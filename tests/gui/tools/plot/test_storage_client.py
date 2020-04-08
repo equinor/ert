@@ -70,7 +70,7 @@ def test_all_keys(test_client):
         api = StorageClient(base_url="")
         names = set([key["key"] for key in api.all_data_type_keys()])
 
-        assert names == set(["response_one", "response_two", "A", "B"])
+        assert names == set(["response_one", "response_two", "A", "B","key1"])
 
 
 def test_observation_values(test_client):
