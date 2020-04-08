@@ -43,4 +43,7 @@ if [[ ${RELEASE_NAME} =~ py27$  ]]
 then
     export PYTEST_QT_API=pyqt4v2
 fi
-xvfb-run python -m pytest
+# The existence of a running xvfb process will produce
+# a lock file for the default server and kill the run
+# Allow xvfb to find a new server
+xvfb-run --auto-servernum python -m pytest
