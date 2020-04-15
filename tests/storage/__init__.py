@@ -53,12 +53,15 @@ def populated_db(tmpdir):
     prior = repository.add_prior(
         "group", "key1", "function", ["paramA", "paramB"], [0.1, 0.2]
     )
+    repository.flush()
     prior1 = repository.add_prior(
         "group", "key2", "function", ["paramA", "paramB"], [0.3, 0.4]
     )
+    repository.flush()
     prior2 = repository.add_prior(
         "group", "key3", "function", ["paramA", "paramB"], [0.5, 0.6]
     )
+    repository.flush()
 
     ensemble = repository.add_ensemble(
         name="ensemble_name", priors=[prior, prior1, prior2]
@@ -86,7 +89,7 @@ def populated_db(tmpdir):
     )
     repository.flush()
 
-    repository._add_observation_response_definition_link(
+    obs_res_def_link = repository._add_observation_response_definition_link(
         observation_id=observation.id, response_definition_id=response_definition.id
     )
 
@@ -128,12 +131,14 @@ def populated_db(tmpdir):
     repository.add_parameter_definition("B", "G", "ensemble_name")
 
     def add_data(realization):
-        repository.add_response(
+        response_one = repository.add_response(
             name="response_one",
             values_ref=add_blob([11.1, 11.2]),
             realization_index=realization.index,
             ensemble_name=ensemble.name,
         )
+        repository.flush()
+        repository._add_misfit(200, obs_res_def_link.id, response_one.id)
 
         repository.add_response(
             name="response_two",

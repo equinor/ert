@@ -83,6 +83,7 @@ def test_get_single_observation(test_client):
     obs = json.loads(resp.data)
     expected = {
         "attributes": {"region": "1"},
+        "name": "observation_one",
         "data": {
             "data_indexes": {"data_ref": 2},
             "key_indexes": {"data_ref": 1},
