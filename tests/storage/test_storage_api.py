@@ -54,9 +54,10 @@ def test_priors(populated_db):
 def test_observation(populated_db):
     name = "observation_one"
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
-        obs = api.observation("observation_one")
+        obs = api.observation(name)
         assert obs == {
             "attributes": {"region": "1"},
+            "name": name,
             "data": {
                 "data_indexes": {"data_ref": 2},
                 "key_indexes": {"data_ref": 1},

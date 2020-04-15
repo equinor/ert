@@ -149,31 +149,40 @@ class StorageApi(object):
         This function returns an overview of the response in a given ensemble
         @return_type:
         {
-            "name" : "<name>
+            "name" : "<name>"
             "ensemble_id" : <ensemble_id>
             "realizations" : [
                 {
                     "name" : "<realization_idx>"
                     "realization_ref" : "<realization_idx>"
                     "data_ref" : "<key>"
+                    "misfits" : [
+                        {
+                            "observation" : "<obs_name>"
+                            "value" : <value>
+                        }
+                    ]
                 }
             ]
             "axis" : {
                 "data_ref": <indexes_ref>
             }
             "observations": [
-                    {"data" : {
-                        "values" : {
-                            "data_ref" : <values_ref>
-                        }
-                        "std" :{
-                            "data_ref" : <stds_ref>
-                        }
-                        "data_indexes" : {
-                            "data_ref" : <data_indexes_ref>
-                        }
-                        "key_indexes" :     {
-                            "data_ref" : <key_indexes_ref>
+                    {
+                        "name" : "<obs_name>"
+                        "data" : {
+                            "values" : {
+                                "data_ref" : <values_ref>
+                            }
+                            "std" :{
+                                "data_ref" : <stds_ref>
+                            }
+                            "data_indexes" : {
+                                "data_ref" : <data_indexes_ref>
+                            }
+                            "key_indexes" :     {
+                                "data_ref" : <key_indexes_ref>
+                            }
                         }
                     }
                 ]
@@ -197,6 +206,13 @@ class StorageApi(object):
                         "name": resp.realization.index,
                         "realization_ref": resp.realization.index,
                         "data_ref": resp.values_ref,
+                        "misfits": [
+                            {
+                                "observation": misfit.observation_response_definition_link.observation.name,
+                                "value": misfit.value,
+                            }
+                            for misfit in resp.misfits
+                        ],
                     }
                     for resp in responses
                 ],
@@ -218,6 +234,7 @@ class StorageApi(object):
         """Return an observation or None if the observation was not found.
 
             {
+                "name" : "<obs_name>"
                 "data": {
                     "values": {"data_ref": 1},
                     "std": {"data_ref": 2},
@@ -360,12 +377,13 @@ class StorageApi(object):
 
     def _obs_to_json(self, obs):
         data = {
+            "name": obs.name,
             "data": {
                 "values": {"data_ref": obs.values_ref},
                 "std": {"data_ref": obs.stds_ref},
                 "data_indexes": {"data_ref": obs.data_indexes_ref},
                 "key_indexes": {"data_ref": obs.key_indexes_ref},
-            }
+            },
         }
 
         attrs = obs.get_attributes()
