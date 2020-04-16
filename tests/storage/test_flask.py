@@ -56,6 +56,7 @@ def test_observation(test_client):
     resp = test_client.get("/ensembles/1")
     ens = json.loads(resp.data)
     expected = {
+        ("active_mask", "True,False"),
         ("data_indexes", "2,3"),
         ("key_indexes", "0,3"),
         ("std", "1,3"),

@@ -183,6 +183,9 @@ class StorageApi(object):
                             "key_indexes" :     {
                                 "data_ref" : <key_indexes_ref>
                             }
+                            "active_mask" : {
+                                "data_ref" : <active_mask_ref>
+                            }
                         }
                     }
                 ]
@@ -220,7 +223,8 @@ class StorageApi(object):
             }
             if len(observation_links) > 0:
                 return_schema["observations"] = [
-                    self._obs_to_json(link.observation) for link in observation_links
+                    self._obs_to_json(link.observation, link.active_ref)
+                    for link in observation_links
                 ]
 
         return return_schema
@@ -366,7 +370,7 @@ class StorageApi(object):
             )
         return return_schema
 
-    def _obs_to_json(self, obs):
+    def _obs_to_json(self, obs, active_ref=None):
         data = {
             "name": obs.name,
             "data": {
@@ -376,6 +380,8 @@ class StorageApi(object):
                 "key_indexes": {"data_ref": obs.key_indexes_ref},
             },
         }
+        if active_ref is not None:
+            data["data"]["active_mask"] = {"data_ref": active_ref}
 
         attrs = obs.get_attributes()
         if len(attrs) > 0:
