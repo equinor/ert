@@ -14,7 +14,7 @@ def test_response(populated_db):
         schema = api.response(1, "response_one", None)
         assert len(schema["realizations"]) == 2
         assert len(schema["observations"]) == 1
-        assert len(schema["observations"][0]["data"]) == 4
+        assert len(schema["observations"][0]["data"]) == 5
         print("############### RESPONSE ###############")
         pprint.pprint(schema)
 
