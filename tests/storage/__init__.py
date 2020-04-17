@@ -85,7 +85,9 @@ def populated_db(tmpdir):
     observation.add_attribute("region", "1")
 
     response_definition = repository.add_response_definition(
-        name="response_one", indexes_ref=add_blob([3, 5]), ensemble_name=ensemble.name,
+        name="response_one",
+        indexes_ref=add_blob([3, 5, 8, 9]),
+        ensemble_name=ensemble.name,
     )
     active_ref = add_blob([True, False])
     repository.flush()
@@ -114,7 +116,16 @@ def populated_db(tmpdir):
 
     response_two_definition = repository.add_response_definition(
         name="response_two",
-        indexes_ref=add_blob(["2000-01-01 20:01:01", "2000-01-02 20:01:01"]),
+        indexes_ref=add_blob(
+            [
+                "2000-01-01 20:01:01",
+                "2000-01-02 20:01:01",
+                "2000-01-02 20:01:01",
+                "2000-01-02 20:01:01",
+                "2000-01-02 20:01:01",
+                "2000-01-02 20:01:01",
+            ]
+        ),
         ensemble_name=ensemble.name,
     )
 
@@ -142,7 +153,7 @@ def populated_db(tmpdir):
     def add_data(realization):
         response_one = repository.add_response(
             name="response_one",
-            values_ref=add_blob([11.1, 11.2]),
+            values_ref=add_blob([11.1, 11.2, 9.9, 9.3]),
             realization_index=realization.index,
             ensemble_name=ensemble.name,
         )
@@ -151,7 +162,7 @@ def populated_db(tmpdir):
 
         repository.add_response(
             name="response_two",
-            values_ref=add_blob([12.1, 12.2]),
+            values_ref=add_blob([12.1, 12.2, 11.1, 11.2, 9.9, 9.3]),
             realization_index=realization.index,
             ensemble_name=ensemble.name,
         )

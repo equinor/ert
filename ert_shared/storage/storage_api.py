@@ -144,15 +144,17 @@ class StorageApi(object):
 
         return return_schema
 
-    def _calculate_misfit(self, obs_value, response_values, obs_stds, obs_data_indexes, obs_index):
+    def _calculate_misfit(
+        self, obs_value, response_values, obs_stds, obs_data_indexes, obs_index
+    ):
         observation_std = obs_stds[obs_index]
         response_index = obs_data_indexes[obs_index]
         response_value = response_values[response_index]
         difference = response_value - obs_value
-        misfit = (difference/observation_std)**2
+        misfit = (difference / observation_std) ** 2
         sign = difference > 0
 
-        return {"value" : misfit, "sign" : sign, "obs_index" : obs_index}
+        return {"value": misfit, "sign": sign, "obs_index": obs_index}
 
     def response(self, ensemble_id, response_name, filter):
         """
@@ -223,13 +225,23 @@ class StorageApi(object):
                     observation = link.observation
                     obs_values = list(blob_api.get_blob(observation.values_ref).data)
                     obs_stds = list(blob_api.get_blob(observation.stds_ref).data)
-                    obs_data_indexes = list(blob_api.get_blob(observation.data_indexes_ref).data)
+                    obs_data_indexes = list(
+                        blob_api.get_blob(observation.data_indexes_ref).data
+                    )
                     misfits = []
                     for obs_index, obs_value in enumerate(obs_values):
                         misfits.append(
-                            self._calculate_misfit(obs_value, resp_values, obs_stds, obs_data_indexes, obs_index)
+                            self._calculate_misfit(
+                                obs_value,
+                                resp_values,
+                                obs_stds,
+                                obs_data_indexes,
+                                obs_index,
+                            )
                         )
-                    univariate_misfits[resp.realization.index][observation.name] = misfits
+                    univariate_misfits[resp.realization.index][
+                        observation.name
+                    ] = misfits
 
             return_schema = {
                 "name": response_name,
@@ -240,13 +252,15 @@ class StorageApi(object):
                         "realization_ref": resp.realization.index,
                         "data_ref": resp.values_ref,
                         "misfits": {
-                            misfit.observation_response_definition_link.observation.name : misfit.value
+                            misfit.observation_response_definition_link.observation.name: misfit.value
                             for misfit in resp.misfits
                         },
-                        "univariate_misfits" : {
-                            obs_name : misfits
-                            for obs_name, misfits in univariate_misfits[resp.realization.index].items()
-                        }
+                        "univariate_misfits": {
+                            obs_name: misfits
+                            for obs_name, misfits in univariate_misfits[
+                                resp.realization.index
+                            ].items()
+                        },
                     }
                     for resp in responses
                 ],
