@@ -90,3 +90,34 @@ def test_observation_attributes(populated_db):
 
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
         assert api.get_observation_attribute(name, attr) == expected
+
+
+def test_single_observation_misfit_calculation(populated_db):
+    # observation
+    values_obs = [10.1, 10.2]
+    stds_obs = [1, 3]
+    data_indexes_obs = [2, 3]
+    # response
+    values_res = [11.1, 11.2, 9.9, 9.3]
+
+    misfit_manual = {
+        "observation_one": [
+            {
+                "value": ((values_res[index] - obs_value) / obs_std) ** 2,
+                "sign": values_res[index] - obs_value > 0,
+                "obs_index": obs_index,
+            }
+            for obs_index, (obs_value, obs_std, index) in enumerate(
+                zip(values_obs, stds_obs, data_indexes_obs)
+            )
+        ]
+    }
+
+    with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
+        univariate_misfit = api.response(
+            ensemble_id=1, response_name="response_one", filter=None
+        )
+
+        assert (
+            univariate_misfit["realizations"][0]["univariate_misfits"] == misfit_manual
+        )
