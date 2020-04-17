@@ -144,6 +144,16 @@ class StorageApi(object):
 
         return return_schema
 
+    def _calculate_misfit(self, obs_value, response_values, obs_stds, obs_data_indexes, obs_index):
+        observation_std = obs_stds[obs_index]
+        response_index = obs_data_indexes[obs_index]
+        response_value = response_values[response_index]
+        difference = response_value - obs_value
+        misfit = (difference/observation_std)**2
+        sign = difference > 0
+
+        return {"value" : misfit, "sign" : sign, "obs_index" : obs_index}
+
     def response(self, ensemble_id, response_name, filter):
         """
         This function returns an overview of the response in a given ensemble
@@ -156,12 +166,20 @@ class StorageApi(object):
                     "name" : "<realization_idx>"
                     "realization_ref" : "<realization_idx>"
                     "data_ref" : "<key>"
-                    "misfits" : [
-                        {
-                            "observation" : "<obs_name>"
-                            "value" : <value>
+                    "misfits" : {
+                            "<observation_name>" : "<misfit_value>"
                         }
-                    ]
+                    "univariate_misfits" : {
+                        "<observation_name>" : {
+                            "misfits" : [
+                                {
+                                    "value" : "<misfit_value>"
+                                    "sign" : "True/False" # True is positive, False is negative
+                                    "obs_index" : "<obs_index>"
+                                }
+                            ]
+                        }
+                    }
                 }
             ]
             "axis" : {
@@ -193,13 +211,28 @@ class StorageApi(object):
         }
         """
 
-        with self._rdb_api as rdb_api:
+        with self._rdb_api as rdb_api, self._blob_api as blob_api:
             bundle = rdb_api.get_response_bundle(
                 response_name=response_name, ensemble_id=ensemble_id
             )
 
             observation_links = bundle.observation_links
             responses = bundle.responses
+            univariate_misfits = {}
+            for resp in responses:
+                resp_values = list(blob_api.get_blob(resp.values_ref).data)
+                univariate_misfits[resp.realization.index] = {}
+                for link in observation_links:
+                    observation = link.observation
+                    obs_values = list(blob_api.get_blob(observation.values_ref).data)
+                    obs_stds = list(blob_api.get_blob(observation.stds_ref).data)
+                    obs_data_indexes = list(blob_api.get_blob(observation.data_indexes_ref).data)
+                    misfits = []
+                    for obs_index, obs_value in enumerate(obs_values):
+                        misfits.append(
+                            self._calculate_misfit(obs_value, resp_values, obs_stds, obs_data_indexes, obs_index)
+                        )
+                    univariate_misfits[resp.realization.index][observation.name] = misfits
 
             return_schema = {
                 "name": response_name,
@@ -209,13 +242,14 @@ class StorageApi(object):
                         "name": resp.realization.index,
                         "realization_ref": resp.realization.index,
                         "data_ref": resp.values_ref,
-                        "misfits": [
-                            {
-                                "observation": misfit.observation_response_definition_link.observation.name,
-                                "value": misfit.value,
-                            }
+                        "misfits": {
+                            misfit.observation_response_definition_link.observation.name : misfit.value
                             for misfit in resp.misfits
-                        ],
+                        },
+                        "univariate_misfits" : {
+                            obs_name : misfits
+                            for obs_name, misfits in univariate_misfits[resp.realization.index].items()
+                        }
                     }
                     for resp in responses
                 ],
