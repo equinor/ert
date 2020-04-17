@@ -121,9 +121,9 @@ def test_response_values(test_client):
         result = api.data_for_key(case="ensemble_name", key="response_one")
 
         idx = pd.MultiIndex.from_arrays(
-            [["response_one", "response_one"], [3, 5]], names=["key", "index"]
+            [["response_one", "response_one", "response_one", "response_one"], [3, 5, 8, 9]], names=["key", "index"]
         )
-        expected = pd.DataFrame([[11.1, 11.1], [11.2, 11.2]], index=idx).T
+        expected = pd.DataFrame([[11.1, 11.1], [11.2, 11.2], [9.9, 9.9], [9.3, 9.3]], index=idx).T
 
         pd.testing.assert_frame_equal(result, expected)
 
@@ -132,15 +132,19 @@ def test_response_values(test_client):
         format = "%Y-%m-%d %H:%M:%S"
         idx = pd.MultiIndex.from_arrays(
             [
-                ["response_two", "response_two"],
+                ["response_two", "response_two","response_two", "response_two","response_two", "response_two"],
                 [
                     datetime.strptime("2000-01-01 20:01:01", format),
                     datetime.strptime("2000-01-02 20:01:01", format),
+                    datetime.strptime("2000-01-02 20:01:01", format),
+                    datetime.strptime("2000-01-02 20:01:01", format),
+                    datetime.strptime("2000-01-02 20:01:01", format),
+                    datetime.strptime("2000-01-02 20:01:01", format)
                 ],
             ],
             names=["key", "index"],
         )
 
-        expected = pd.DataFrame([[12.1, 12.1], [12.2, 12.2]], index=idx).T
+        expected = pd.DataFrame([[12.1, 12.1], [12.2, 12.2], [11.1, 11.1], [11.2, 11.2], [9.9, 9.9], [9.3, 9.3]], index=idx).T
 
         pd.testing.assert_frame_equal(result, expected)
