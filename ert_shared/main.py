@@ -121,6 +121,9 @@ def get_ert_parser(parser=None):
     gui_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output", default=False
     )
+    gui_parser.add_argument(
+        "--storage-api-url", type=str, help="URL to Storage API. By default, ERT runs its own server."
+    )
 
      # ert_api
     ert_api_parser = subparsers.add_parser(
@@ -129,6 +132,16 @@ def get_ert_parser(parser=None):
     )
     ert_api_parser.set_defaults(func=run_server)
     ert_api_parser.add_argument("--runpath", type=str, help="Path to where the database-files are located.")
+    ert_api_parser.add_argument("--project", type=str, help="Project this API serves.")
+    ert_api_parser.add_argument(
+        "--host", type=str, help="What host the API will bind to.", default="0.0.0.0"
+    )
+    ert_api_parser.add_argument(
+        "--port",
+        type=str,
+        help="Port on which the API will be served. 0 means a random port as well as making service discovery possible.",
+        default="5000",
+    )
     ert_api_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output", default=False
     )

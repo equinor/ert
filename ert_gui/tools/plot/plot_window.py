@@ -1,5 +1,6 @@
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout
+import sys
+from qtpy.QtCore import Qt, Slot
+from qtpy.QtWidgets import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout, QDialog
 
 from ert_gui.plottery.plots.ccsp import CrossCaseStatisticsPlot
 from ert_gui.plottery.plots.distribution import DistributionPlot
@@ -10,13 +11,11 @@ from ert_gui.plottery.plots.statistics import StatisticsPlot
 from ert_shared import ERT
 from ert_gui.ertwidgets import showWaitCursorWhileWaiting
 from ert_gui.plottery import PlotContext, PlotConfig
-from ert_shared.feature_toggling import FeatureToggling
 
 from ert_gui.tools.plot import DataTypeKeysWidget, CaseSelectionWidget, PlotWidget
 from ert_gui.tools.plot.customize import PlotCustomizer
 
 from ert_gui.tools.plot.plot_api import PlotApi
-from ert_gui.tools.plot.storage_client import StorageClient
 import pandas as pd
 
 CROSS_CASE_STATISTICS = "Cross Case Statistics"
@@ -29,19 +28,38 @@ STATISTICS = "Statistics"
 class PlotWindow(QMainWindow):
 
 
-    def __init__(self, config_file, parent):
+    def __init__(self, args, parent, storage_client):
         QMainWindow.__init__(self, parent)
+        self.setMinimumWidth(850)
+        self.setMinimumHeight(650)
+        self.setWindowTitle("Plotting - {}".format(args.config))
+        self.activateWindow()
 
-        if FeatureToggling.is_enabled("new-storage"):
-            self._api = StorageClient()
+        if storage_client:
+            self._api = storage_client
+            self._api.readyChanged.connect(self._storage_api_ready_changed)
+
+            diag = QDialog(self)
+            diag.setWindowFlags(diag.windowFlags() | Qt.Tool)
+            self._api_not_ready = diag
+
+            if self._api.ready:
+                self._initialize()
+            # initialization is deferred until api ready
+            return
         else:
             self._api = PlotApi(ERT.enkf_facade)
 
-        self.setMinimumWidth(850)
-        self.setMinimumHeight(650)
+        self._initialize()
 
-        self.setWindowTitle("Plotting - {}".format(config_file))
-        self.activateWindow()
+    @Slot(bool)
+    def _storage_api_ready_changed(self, ready):
+        if ready and not hasattr(self, "_plot_widgets"):
+            self._initialize()
+        if not ready:
+            sys.exit("storage api went away")
+
+    def _initialize(self):
         self._key_definitions = self._api.all_data_type_keys()
         self._plot_customizer = PlotCustomizer(self, self._key_definitions)
 

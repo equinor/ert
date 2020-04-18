@@ -1,26 +1,41 @@
 import functools
 import os
 import sys
+import webbrowser
+from subprocess import Popen
 
 import pkg_resources
-import webbrowser
 import yaml
-
 from qtpy.QtCore import QSettings, Qt
-from qtpy.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDockWidget, QAction, QToolButton
+from qtpy.QtWidgets import (
+    QAction,
+    QDockWidget,
+    QMainWindow,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from ert_gui.about_dialog import AboutDialog
 from ert_shared.plugins import ErtPluginManager
 
 
 class GertMainWindow(QMainWindow):
-    def __init__(self, config_file):
+    def __init__(self, args, storage_client):
         QMainWindow.__init__(self)
+        self._storage_client = storage_client
+        self._service_discovery = (
+            args.storage_api_url is None and storage_client is not None
+        )
+
+        if self._service_discovery:
+            # TODO: add restarting of this server?
+            Popen([sys.argv[0], "api", "--port", "0", "--project", args.config])
 
         self.tools = {}
 
         self.resize(300, 700)
-        self.setWindowTitle('ERT - {}'.format(config_file))
+        self.setWindowTitle("ERT - {}".format(args.config))
 
         self.__main_widget = None
 
@@ -45,7 +60,13 @@ class GertMainWindow(QMainWindow):
         self.__createMenu()
         self.__fetchSettings()
 
-    def addDock(self, name, widget, area=Qt.RightDockWidgetArea, allowed_areas=Qt.AllDockWidgetAreas):
+    def addDock(
+        self,
+        name,
+        widget,
+        area=Qt.RightDockWidgetArea,
+        allowed_areas=Qt.AllDockWidgetAreas,
+    ):
         dock_widget = QDockWidget(name)
         dock_widget.setObjectName("%sDock" % name)
         dock_widget.setWidget(widget)
@@ -65,7 +86,6 @@ class GertMainWindow(QMainWindow):
             tool_button = self.toolbar.widgetForAction(tool.getAction())
             tool_button.setPopupMode(QToolButton.InstantPopup)
 
-
     def __createMenu(self):
         file_menu = self.menuBar().addMenu("&File")
         file_menu.addAction("Close", self.close)
@@ -83,7 +103,7 @@ class GertMainWindow(QMainWindow):
             help_links = pm.get_help_links()
         else:
             with pkg_resources.resource_stream(
-                    "ert_gui", os.path.join("resources", "gui", "help", "help_links.yml")
+                "ert_gui", os.path.join("resources", "gui", "help", "help_links.yml")
             ) as stream:
                 help_links = yaml.safe_load(stream)
 
@@ -92,19 +112,19 @@ class GertMainWindow(QMainWindow):
             help_link_item.setMenuRole(QAction.ApplicationSpecificRole)
             help_link_item.triggered.connect(functools.partial(webbrowser.open, link))
 
-
     def __saveSettings(self):
         settings = QSettings("Equinor", "Ert-Gui")
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
 
-
     def closeEvent(self, event):
-        #Use QT settings saving mechanism
-        #settings stored in ~/.config/Equinor/ErtGui.conf
+        # Use QT settings saving mechanism
+        # settings stored in ~/.config/Equinor/ErtGui.conf
         self.__saveSettings()
         QMainWindow.closeEvent(self, event)
 
+        if self._service_discovery:
+            self._storage_client.shutdown_server()
 
     def __fetchSettings(self):
         settings = QSettings("Equinor", "Ert-Gui")
@@ -114,7 +134,6 @@ class GertMainWindow(QMainWindow):
         wnd = settings.value("windowState")
         if wnd:
             self.restoreState(wnd)
-
 
     def setWidget(self, widget):
         self.__main_widget = widget
@@ -128,7 +147,3 @@ class GertMainWindow(QMainWindow):
         diag = AboutDialog(self)
         diag.show()
         pass
-
-
-
-

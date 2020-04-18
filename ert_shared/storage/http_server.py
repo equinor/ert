@@ -1,10 +1,14 @@
+from contextlib import ExitStack
+
 import flask
 import werkzeug.exceptions as werkzeug_exc
+from flask import Response, request
+
+from ert_shared.storage import connections
 from ert_shared.storage.blob_api import BlobApi
 from ert_shared.storage.rdb_api import RdbApi
 from ert_shared.storage.storage_api import StorageApi
-from ert_shared.storage import connections
-from flask import Response, request
+from ert_shared.storage.flask_service_discovery import flask_run_with_service_discovery
 
 
 def resolve_ensemble_uri(ensemble_ref):
@@ -173,4 +177,9 @@ def run_server(args):
     wrapper = FlaskWrapper(
         rdb_url="sqlite:///entities.db", blob_url="sqlite:///blobs.db"
     )
-    wrapper.app.run(host="0.0.0.0", debug=True)
+    if args.port == "0":
+        flask_run_with_service_discovery(
+            args.host, args.port, wrapper.app, args.project
+        )
+    else:
+        wrapper.app.run(host=args.host, port=args.port, debug=True)
