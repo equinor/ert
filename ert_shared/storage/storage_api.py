@@ -168,7 +168,7 @@ class StorageApi(object):
                     "name" : "<realization_idx>"
                     "realization_ref" : "<realization_idx>"
                     "data_ref" : "<key>"
-                    "misfits" : {
+                    "summarized_misfits" : {
                             "<observation_name>" : "<misfit_value>"
                         }
                     "univariate_misfits" : {
@@ -254,7 +254,7 @@ class StorageApi(object):
                         "name": resp.realization.index,
                         "realization_ref": resp.realization.index,
                         "data_ref": resp.values_ref,
-                        "misfits": {
+                        "summarized_misfits": {
                             misfit.observation_response_definition_link.observation.name: misfit.value
                             for misfit in resp.misfits
                         },
