@@ -42,29 +42,6 @@ class StorageApi(object):
         }
 
     def ensembles(self, filter=None):
-        """
-        This function returns an overview of the ensembles available in the database
-        @return_type:
-        {
-            "ensembles" : [
-                {
-                    "name" : "default",
-                    "time_created" : "<ISO 8601 Timestamp>",
-                    "ensemble_ref" : "<ensemble_id>"
-                    "parent" : {
-                        "name" : "<parent_ensemble_name>"
-                        "ensemble_ref" : "<parent_ensemble_id>"
-                    }
-                    "children" : [
-                        {
-                            "name" : "<child_ensemble_name>"
-                            "ensemble_ref" : "<child_ensemble_id>"
-                        }
-                    ]
-                }
-            ]
-        }
-        """
         with self._rdb_api as rdb_api:
             data = [
                 self._ensemble_minimal(ensemble)
@@ -74,27 +51,6 @@ class StorageApi(object):
         return {"ensembles": data}
 
     def realization(self, ensemble_id, realization_idx, filter):
-        """
-        This function returns an overview of the realizations in a given ensemble
-        @return_type:
-        {
-            "name" : "<real.index>
-            "ensemble_id" : <ensemble_id>
-            "responses: [
-                {
-                    "name" : "<response key>"
-
-                    "data_ref" : "<key>"
-                }
-            ]
-            "parameters" : [
-                {
-                    "name" : <parameter_name>
-                    "data_ref" : <parameter_values_ref> # maybe serve value directly?
-                }
-            ]
-        }
-        """
         with self._rdb_api as rdb_api:
             realization = (
                 rdb_api.get_realizations_by_ensemble_id(ensemble_id=ensemble_id)
@@ -157,62 +113,6 @@ class StorageApi(object):
         return {"value": misfit, "sign": sign, "obs_index": obs_index}
 
     def response(self, ensemble_id, response_name, filter):
-        """
-        This function returns an overview of the response in a given ensemble
-        @return_type:
-        {
-            "name" : "<name>"
-            "ensemble_id" : <ensemble_id>
-            "realizations" : [
-                {
-                    "name" : "<realization_idx>"
-                    "realization_ref" : "<realization_idx>"
-                    "data_ref" : "<key>"
-                    "summarized_misfits" : {
-                            "<observation_name>" : "<misfit_value>"
-                        }
-                    "univariate_misfits" : {
-                        "<observation_name>" : {
-                            "misfits" : [
-                                {
-                                    "value" : "<misfit_value>"
-                                    "sign" : "True/False" # True is positive, False is negative
-                                    "obs_index" : "<obs_index>"
-                                }
-                            ]
-                        }
-                    }
-                }
-            ]
-            "axis" : {
-                "data_ref": <indexes_ref>
-            }
-            "observations": [
-                    {
-                        "name" : "<obs_name>"
-                        "data" : {
-                            "values" : {
-                                "data_ref" : <values_ref>
-                            }
-                            "std" :{
-                                "data_ref" : <stds_ref>
-                            }
-                            "data_indexes" : {
-                                "data_ref" : <data_indexes_ref>
-                            }
-                            "key_indexes" :     {
-                                "data_ref" : <key_indexes_ref>
-                            }
-                            "active_mask" : {
-                                "data_ref" : <active_mask_ref>
-                            }
-                        }
-                    }
-                ]
-            }
-        }
-        """
-
         with self._rdb_api as rdb_api, self._blob_api as blob_api:
             bundle = rdb_api.get_response_bundle(
                 response_name=response_name, ensemble_id=ensemble_id
@@ -283,59 +183,21 @@ class StorageApi(object):
         return return_data
 
     def observation(self, name):
-        """Return an observation or None if the observation was not found.
-
-            {
-                "name" : "<obs_name>"
-                "data": {
-                    "values": {"data_ref": 1},
-                    "std": {"data_ref": 2},
-                    "data_indexes": {"data_ref": 3},
-                    "key_indexes": {"data_ref": 4},
-                },
-                "attributes": {
-                    "region": 1
-                }
-            }
-        """
         with self._rdb_api as rdb_api:
             obs = rdb_api.get_observation(name)
             return None if obs is None else self._obs_to_json(obs)
 
     def get_observation_attributes(self, name):
-        """Return an observation or None if the observation was not found.
-
-            {
-                "attributes": {
-                    "region": "1",
-                    "depth": "3000"
-                }
-            }
-        """
         with self._rdb_api as rdb_api:
             attrs = rdb_api.get_observation_attributes(name)
             return None if attrs is None else {"attributes": attrs}
 
     def get_observation_attribute(self, name, attribute):
-        """Return an observation attribute or None if the observation was not
-        found. Raise a KeyError if the attribute did not exist.
-
-            {
-                "attributes": {
-                    "the_attribute": "value"
-                }
-            }
-        """
         with self._rdb_api as rdb_api:
             attr = rdb_api.get_observation_attribute(name, attribute)
             return None if attr is None else {"attributes": {attribute: attr}}
 
     def set_observation_attribute(self, name, attribute, value):
-        """Set an attribute on an observation.
-
-        Return None if the observation was not found, else return the updated
-        observation.
-        """
         with self._rdb_api as rdb_api:
             obs = rdb_api.add_observation_attribute(name, attribute, value)
             if obs is None:
@@ -344,50 +206,6 @@ class StorageApi(object):
             return self._obs_to_json(obs)
 
     def ensemble_schema(self, ensemble_id):
-        """
-        @return_type:
-
-        {
-            "name" : "<ensemble name>"
-            "time_created" : "<ISO 8601 Timestamp>",
-            "realizations" : [
-                {
-                    "name" : "<realization_idx>"
-                    "realization_ref: "<realization_idx>"
-                }
-            ]
-            "parent" : {
-                "name" : "<parent_ensemble_name>"
-                "ensemble_ref" : "<parent_ensemble_id>"
-            }
-            "children" : [
-                {
-                    "name" : "<child_ensemble_name>"
-                    "ensemble_ref" : "<child_ensemble_id>"
-                }
-            ]
-            "responses" : [
-                {
-                    "name" : "<name>"
-                    "response_ref: "<name>"
-                }
-            ]
-            "parameters": [
-                {
-                    "name": "<parameter_name>"
-                    "group" "<parameter_group>"
-                    "prior" : {
-                        "function": "<function>"
-                        "parameter_names": ["<parameter_name>"*]
-                        "parameter_values": ["<parameter_value>"*]
-                    }
-                    "parameter_ref" : "<parameter_def_id>"
-                }
-            ]
-        }
-
-        """
-
         with self._rdb_api as rdb_api:
             ens = rdb_api.get_ensemble_by_id(ensemble_id)
             return_schema = self._ensemble_minimal(ens)
@@ -452,25 +270,6 @@ class StorageApi(object):
         }
 
     def parameter(self, ensemble_id, parameter_def_id):
-        """
-        @return_type:
-        {
-            "key" : "<key>"
-            "group" "<group>"
-            "realizations" : [
-                "name" : "<realization_idx>"
-                "data_ref" : "<parameter_values_ref>"
-                "realization_ref" : "<realization_idx>"
-            ]
-            "prior" : {
-                "function" : "<parameter_function>"
-                "parameter_values" : "<parameter_values>"
-                "parameter_names" : "<parameter_names>"
-            }
-            "parameter_ref" : "<parameter_def_id>"
-        }
-        """
-
         with self._rdb_api as rdb_api:
             bundle = rdb_api.get_parameter_bundle(
                 parameter_def_id=parameter_def_id, ensemble_id=ensemble_id
