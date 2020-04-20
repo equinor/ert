@@ -156,6 +156,8 @@ def _extract_active_observations(facade):
     update_step = facade.get_update_step()
     ministep = update_step[len(update_step) - 1]
     obs_data = ministep.get_obs_data()
+    if obs_data is None:
+        return None
     active_observations = dict()
     for block_num in range(obs_data.get_num_blocks()):
         block = obs_data.get_block(block_num)
@@ -180,13 +182,15 @@ def _extract_and_dump_update_data(ensemble_id, ensemble_name, rdb_api, blob_api)
             response_key, ensemble_id
         )
 
-        active_blob = blob_api.add_blob(active_observations[observation_key])
-        blob_api.flush()
+        if active_observations is not None:
+            active_blob = blob_api.add_blob(active_observations[observation_key])
+            blob_api.flush()
+
         observation = rdb_api.get_observation(observation_key)
         link = rdb_api._add_observation_response_definition_link(
             observation_id=observation.id,
             response_definition_id=response_definition.id,
-            active_ref=active_blob.id,
+            active_ref=active_blob.id if active_observations is not None else None,
         )
         for realization_number in realizations:
             response = rdb_api.get_response(
