@@ -128,7 +128,3 @@ class GertMainWindow(QMainWindow):
         diag = AboutDialog(self)
         diag.show()
         pass
-
-
-
-
