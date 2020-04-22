@@ -1,4 +1,6 @@
 import flask
+import os
+import yaml
 import werkzeug.exceptions as werkzeug_exc
 from ert_shared.storage.blob_api import BlobApi
 from ert_shared.storage.rdb_api import RdbApi
@@ -87,6 +89,18 @@ class FlaskWrapper:
             methods=["POST"],
         )
         self.app.add_url_rule("/shutdown", "shutdown", self.shutdown, methods=["POST"])
+        self.app.add_url_rule(
+            "/schema.json",
+            "schema",
+            self.schema,
+            methods=["GET"],
+        )
+
+    def schema(self):
+        cur_path = os.path.dirname(os.path.abspath(__file__))
+        schema_file = os.path.join(cur_path, "oas.yml")
+        with open(schema_file) as f:
+            return yaml.safe_load(f)
 
     def ensembles(self):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
