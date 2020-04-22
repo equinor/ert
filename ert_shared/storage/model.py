@@ -39,8 +39,9 @@ class Ensemble(Entities):
     project_id = Column(Integer, ForeignKey("projects.id"))
     project = relationship("Project", back_populates="ensembles")
     time_created = Column(DateTime, server_default=func.now())
-
-    __table_args__ = (UniqueConstraint("name", "time_created", name="_uc_name_time_"),)
+    __table_args__ = (
+        UniqueConstraint("name", "time_created", name="_uc_ensemble_name_time_"),
+    )
 
     def __repr__(self):
         return "<Ensemble(name='{}')>".format(self.name)
@@ -68,7 +69,9 @@ class Update(Entities):
         back_populates="parent",
     )
 
-    __table_args__ = (UniqueConstraint("ensemble_result_id", name="_uc_result_id_"),)
+    __table_args__ = (
+        UniqueConstraint("ensemble_result_id", name="_uc_update_result_id_"),
+    )
 
     def __repr__(self):
         return "<Update(algorithm='{}', ensemble_reference_id='{}', ensemble_result_id='{}')>".format(
@@ -101,7 +104,9 @@ class Realization(Entities):
     ensemble = relationship("Ensemble", back_populates="realizations")
 
     __table_args__ = (
-        UniqueConstraint("index", "ensemble_id", name="_index_ensemble_id_"),
+        UniqueConstraint(
+            "index", "ensemble_id", name="_uc_realization_index_ensemble_id_"
+        ),
     )
 
     def __repr__(self):
@@ -123,7 +128,9 @@ class ResponseDefinition(Entities):
     ensemble = relationship("Ensemble", back_populates="response_definitions")
 
     __table_args__ = (
-        UniqueConstraint("name", "ensemble_id", name="_name_ensemble_id_"),
+        UniqueConstraint(
+            "name", "ensemble_id", name="_uc_response_def_name_ensemble_id_"
+        ),
     )
 
     def __repr__(self):
@@ -149,7 +156,9 @@ class Response(Entities):
 
     __table_args__ = (
         UniqueConstraint(
-            "realization_id", "response_definition_id", name="_uc_realization_reponse_"
+            "realization_id",
+            "response_definition_id",
+            name="_uc__response_realization_reponse_def_",
         ),
     )
 
@@ -179,7 +188,12 @@ class ParameterDefinition(Entities):
     prior = relationship("ParameterPrior")
 
     __table_args__ = (
-        UniqueConstraint("name", "group", "ensemble_id", name="_name_ensemble_id_"),
+        UniqueConstraint(
+            "name",
+            "group",
+            "ensemble_id",
+            name="_uc_parameter_def_name_group_ensemble_id_",
+        ),
     )
 
     def __repr__(self):
@@ -209,7 +223,7 @@ class Parameter(Entities):
         UniqueConstraint(
             "realization_id",
             "parameter_definition_id",
-            name="_uc_realization_parameter_",
+            name="_uc_parameter_realization_parameter_def_",
         ),
     )
 
@@ -282,7 +296,7 @@ class ObservationResponseDefinitionLink(Entities):
         UniqueConstraint(
             "response_definition_id",
             "observation_id",
-            name="_uc_response_definition_observation_",
+            name="_uc_observation_resp_def_link_response_definition_observation_",
         ),
     )
 
@@ -322,7 +336,7 @@ class Misfit(Entities):
         UniqueConstraint(
             "response_id",
             "observation_response_definition_link_id",
-            name="_uc_response_link_",
+            name="_uc_misfit_response_observation_resp_def_link_",
         ),
     )
 
@@ -397,7 +411,7 @@ class ParameterPrior(Entities):
     parameter_names = Column("parameter_names", PickleType)
     parameter_values = Column("parameter_values", PickleType)
 
-    __table_args__ = (UniqueConstraint("group", "key", name="_uc_group_key_",),)
+    __table_args__ = (UniqueConstraint("group", "key", name="_uc_prior_group_key_",),)
 
     ensemble = relationship(
         "Ensemble", secondary=lambda: prior_ensemble_association_table, backref="priors"
