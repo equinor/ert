@@ -86,6 +86,7 @@ class FlaskWrapper:
             self.set_observation_attributes,
             methods=["POST"],
         )
+        self.app.add_url_rule("/shutdown", "shutdown", self.shutdown, methods=["POST"])
 
     def ensembles(self):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
@@ -168,9 +169,15 @@ class FlaskWrapper:
                     raise werkzeug_exc.NotFound()
             return api.observation(name), 201
 
+    def shutdown(self):
+        request.environ.get("werkzeug.server.shutdown")()
+        return "Server shutting down."
+
 
 def run_server(args):
     wrapper = FlaskWrapper(
         rdb_url="sqlite:///entities.db", blob_url="sqlite:///blobs.db"
     )
-    wrapper.app.run(host="0.0.0.0", debug=True)
+    (bind_host, bind_port) = args.bind.split(":")
+
+    wrapper.app.run(host=bind_host, port=bind_port, debug=args.debug)

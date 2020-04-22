@@ -31,7 +31,7 @@ def ref_request(api_url):
 
 
 class StorageClient(object):
-    def __init__(self, base_url="http://127.0.0.1:5000/"):
+    def __init__(self, base_url):
         self._BASE_URI = base_url
 
     def all_data_type_keys(self):
@@ -207,3 +207,7 @@ class StorageClient(object):
         """ Returns a pandas DataFrame with the data points for the refcase for a given data key, if any.
             The row index is the index/date and the column index is the key."""
         return pd.DataFrame()
+
+    def shutdown(self):
+        """A noop---the lifecycle of the server is managed by the user."""
+        pass
