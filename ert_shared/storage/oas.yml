@@ -316,9 +316,6 @@ components:
         name:
           type: string
           example: "0"
-        ensemble_id:
-          type: integer
-          example: 1
         responses:
           type: array
           items:
@@ -398,9 +395,6 @@ components:
         name:
           type: string
           example: response1
-        ensemble_id:
-          type: integer
-          example: 0
         realizations:
           type: array
           items:

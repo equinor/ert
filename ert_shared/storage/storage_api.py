@@ -87,7 +87,6 @@ class StorageApi(object):
 
         return_schema = {
             "name": realization_idx,
-            "ensemble_id": ensemble_id,
             "responses": [
                 {"name": res["name"], "data_ref": res["response"].values_ref}
                 for res in responses
@@ -148,7 +147,6 @@ class StorageApi(object):
 
             return_schema = {
                 "name": response_name,
-                "ensemble_id": ensemble_id,
                 "realizations": [
                     {
                         "name": resp.realization.index,
