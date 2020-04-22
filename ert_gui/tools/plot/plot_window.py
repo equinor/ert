@@ -10,14 +10,11 @@ from ert_gui.plottery.plots.statistics import StatisticsPlot
 from ert_shared import ERT
 from ert_gui.ertwidgets import showWaitCursorWhileWaiting
 from ert_gui.plottery import PlotContext, PlotConfig
-from ert_shared.feature_toggling import FeatureToggling
 
 from ert_gui.tools.plot import DataTypeKeysWidget, CaseSelectionWidget, PlotWidget
 from ert_gui.tools.plot.customize import PlotCustomizer
 
 from ert_gui.tools.plot.plot_api import PlotApi
-from ert_gui.tools.plot.storage_client import StorageClient
-import pandas as pd
 
 CROSS_CASE_STATISTICS = "Cross Case Statistics"
 DISTRIBUTION = "Distribution"
@@ -26,14 +23,13 @@ ENSEMBLE = "Ensemble"
 HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
 
+
 class PlotWindow(QMainWindow):
-
-
-    def __init__(self, config_file, parent):
+    def __init__(self, config_file, storage_client, parent):
         QMainWindow.__init__(self, parent)
 
-        if FeatureToggling.is_enabled("new-storage"):
-            self._api = StorageClient()
+        if storage_client:
+            self._api = storage_client
         else:
             self._api = PlotApi(ERT.enkf_facade)
 
