@@ -100,7 +100,7 @@ def test_single_observation_misfit_calculation(populated_db):
     # response
     values_res = [11.1, 11.2, 9.9, 9.3]
 
-    misfit_manual = {
+    misfit_expected = {
         "observation_one": [
             {
                 "value": ((values_res[index] - obs_value) / obs_std) ** 2,
@@ -119,5 +119,6 @@ def test_single_observation_misfit_calculation(populated_db):
         )
 
         assert (
-            univariate_misfit["realizations"][0]["univariate_misfits"] == misfit_manual
+            univariate_misfit["realizations"][0]["univariate_misfits"]
+            == misfit_expected
         )
