@@ -1,7 +1,7 @@
 pytest
 pytest-qt
 mock
-schemathesis
+schemathesis ; python_version >= '3'
 sphinx
 sphinx-argparse
 sphinx_rtd_theme
