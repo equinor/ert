@@ -1,5 +1,5 @@
 import logging
-
+logger = logging.getLogger(__name__)
 from ert_shared.storage.model import (
     Ensemble,
     Observation,
@@ -131,13 +131,13 @@ class RdbApi:
 
     def add_ensemble(self, name, reference=None, priors=[]):
         msg = "Adding ensemble with name '{}'"
-        logging.info(msg.format(name))
+        logger.info(msg.format(name))
 
         ensemble = Ensemble(name=name, priors=priors)
         self._session.add(ensemble)
         if reference is not None:
             msg = "Adding ensemble '{}' as reference. '{}' is used on this update step."
-            logging.info(msg.format(reference[0], reference[1]))
+            logger.info(msg.format(reference[0], reference[1]))
 
             reference_ensemble = self.get_ensemble(reference[0])
             update = Update(algorithm=reference[1])
@@ -148,7 +148,7 @@ class RdbApi:
 
     def add_realization(self, index, ensemble_name):
         msg = "Adding realization with index '{}' on ensemble '{}'"
-        logging.info(msg.format(index, ensemble_name))
+        logger.info(msg.format(index, ensemble_name))
 
         ensemble = self.get_ensemble(name=ensemble_name)
 
@@ -163,7 +163,7 @@ class RdbApi:
         self, name, indexes_ref, ensemble_name,
     ):
         msg = "Adding response definition with name '{}' on ensemble '{}'. Attaching indexes with ref '{}'"
-        logging.info(msg.format(name, ensemble_name, indexes_ref))
+        logger.info(msg.format(name, ensemble_name, indexes_ref))
 
         ensemble = self.get_ensemble(name=ensemble_name)
 
@@ -178,7 +178,7 @@ class RdbApi:
         self, name, values_ref, realization_index, ensemble_name,
     ):
         msg = "Adding response with name '{}' on ensemble '{}', realization '{}'. Attaching values with ref '{}'"
-        logging.info(msg.format(name, ensemble_name, realization_index, values_ref))
+        logger.info(msg.format(name, ensemble_name, realization_index, values_ref))
 
         realization = self.get_realization(
             index=realization_index, ensemble_name=ensemble_name
@@ -199,7 +199,7 @@ class RdbApi:
         msg = (
             "Adding parameter definition with name '{}' in group '{}' on ensemble '{}'"
         )
-        logging.info(msg.format(name, group, ensemble_name))
+        logger.info(msg.format(name, group, ensemble_name))
 
         ensemble = self.get_ensemble(name=ensemble_name)
 
@@ -224,7 +224,7 @@ class RdbApi:
 
     def add_parameter(self, name, group, value_ref, realization_index, ensemble_name):
         msg = "Adding parameter with name '{}', group '{}', realization '{}', value_ref '{}', ensemble '{}'"
-        logging.info(
+        logger.info(
             msg.format(name, group, realization_index, value_ref, ensemble_name)
         )
 
@@ -248,7 +248,7 @@ class RdbApi:
         self, name, key_indexes_ref, data_indexes_ref, values_ref, stds_ref
     ):
         msg = "Adding observation with name '{}', key_indexes_ref '{}', data_indexes_ref '{}', values_ref '{}', stds_ref '{}'"
-        logging.info(
+        logger.info(
             msg.format(name, key_indexes_ref, data_indexes_ref, values_ref, stds_ref)
         )
 
@@ -267,7 +267,7 @@ class RdbApi:
         self, observation_id, response_definition_id, active_ref
     ):
         msg = "Adding link between observation with id '{}' and response definition with id '{}'"
-        logging.info(msg.format(observation_id, response_definition_id))
+        logger.info(msg.format(observation_id, response_definition_id))
 
         link = ObservationResponseDefinitionLink(
             observation_id=observation_id,
@@ -279,7 +279,7 @@ class RdbApi:
 
     def _add_misfit(self, value, link_id, response_id):
         msg = "Adding misfit ({}) between response with id '{}' and link with id '{}'"
-        logging.info(msg.format(value, response_id, link_id))
+        logger.info(msg.format(value, response_id, link_id))
 
         misfit = Misfit(
             value=value,
@@ -297,7 +297,7 @@ class RdbApi:
         observation.
         """
         msg = "Adding {} with value {} to observation with name {}"
-        logging.info(msg.format(attribute, value, name))
+        logger.info(msg.format(attribute, value, name))
 
         obs = self.get_observation(name)
         if obs is None:
@@ -388,7 +388,7 @@ class RdbApi:
 
     def add_prior(self, group, key, function, parameter_names, parameter_values):
         msg = "Adding prior with group '{}', key '{}', function '{}'"
-        logging.info(msg.format(group, key, function))
+        logger.info(msg.format(group, key, function))
 
         prior = ParameterPrior(
             group=group,

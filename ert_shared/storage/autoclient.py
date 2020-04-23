@@ -1,4 +1,5 @@
 import logging
+logger = logging.getLogger(__name__)
 import os
 import socket
 import subprocess
@@ -25,7 +26,7 @@ class AutoClient(StorageClient):
 
         self._BASE_URI = "{}://{}:{}".format("http", address, port)
 
-        logging.info("Serving Storage API on {}".format(self._BASE_URI))
+        logger.info("Serving Storage API on {}".format(self._BASE_URI))
 
         # XXX: a hack to get flask to pick up our created socket, for more
         # serious application servers, this would be passed explicitly to the
