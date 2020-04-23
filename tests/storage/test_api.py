@@ -16,10 +16,12 @@ def test_schema(populated_db):
     # Establish an application context before running the tests.
     ctx = flWrapper.app.app_context()
     ctx.push()
-    yield schemathesis.from_wsgi("/schema.json", flWrapper.app) 
+    yield schemathesis.from_wsgi("/schema.json", flWrapper.app)
     ctx.pop()
 
+
 schema = schemathesis.from_pytest_fixture("test_schema")
+
 
 @schema.parametrize()
 def test_no_server_errors(case):
