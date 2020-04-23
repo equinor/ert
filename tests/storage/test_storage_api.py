@@ -11,7 +11,7 @@ from tests.storage import populated_db
 
 def test_response(populated_db):
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
-        schema = api.response(1, "response_one", None)
+        schema = api.get_response(1, "response_one", None)
         assert len(schema["realizations"]) == 2
         assert len(schema["observations"]) == 1
         assert len(schema["observations"][0]["data"]) == 5
@@ -21,28 +21,28 @@ def test_response(populated_db):
 
 def test_ensembles(populated_db):
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
-        schema = api.ensembles()
+        schema = api.get_ensembles()
         print("############### ENSEBMLES ###############")
         pprint.pprint(schema)
 
 
 def test_ensemble(populated_db):
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
-        schema = api.ensemble_schema(1)
+        schema = api.get_ensemble(1)
         print("############### ENSEMBLE ###############")
         pprint.pprint(schema)
 
 
 def test_realization(populated_db):
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
-        schema = api.realization(ensemble_id=1, realization_idx=0, filter=None)
+        schema = api.get_realization(ensemble_id=1, realization_idx=0, filter=None)
         print("############### REALIZATION ###############")
         pprint.pprint(schema)
 
 
 def test_priors(populated_db):
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
-        schema = api.ensemble_schema(1)
+        schema = api.get_ensemble(1)
         assert {
             "group": "group",
             "key": "key1",
@@ -57,7 +57,7 @@ def test_priors(populated_db):
 
 def test_parameter(populated_db):
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
-        schema = api.parameter(ensemble_id=1, parameter_def_id="3")
+        schema = api.get_parameter(ensemble_id=1, parameter_def_id="3")
         assert schema["key"] == "key1"
         assert schema["group"] == "group"
         assert schema["prior"]["function"] == "function"
@@ -66,7 +66,7 @@ def test_parameter(populated_db):
 def test_observation(populated_db):
     name = "observation_one"
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
-        obs = api.observation(name)
+        obs = api.get_observation(name)
         assert obs == {
             "attributes": {"region": "1"},
             "name": name,
@@ -114,7 +114,7 @@ def test_single_observation_misfit_calculation(populated_db):
     }
 
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
-        univariate_misfit = api.response(
+        univariate_misfit = api.get_response(
             ensemble_id=1, response_name="response_one", filter=None
         )
 

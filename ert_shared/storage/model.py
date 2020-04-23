@@ -411,7 +411,6 @@ class ParameterPrior(Entities):
     parameter_names = Column("parameter_names", PickleType)
     parameter_values = Column("parameter_values", PickleType)
 
-
     ensemble = relationship(
         "Ensemble", secondary=lambda: prior_ensemble_association_table, backref="priors"
     )

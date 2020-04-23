@@ -41,7 +41,7 @@ class StorageApi(object):
             ],
         }
 
-    def ensembles(self, filter=None):
+    def get_ensembles(self, filter=None):
         with self._rdb_api as rdb_api:
             data = [
                 self._ensemble_minimal(ensemble)
@@ -50,7 +50,7 @@ class StorageApi(object):
 
         return {"ensembles": data}
 
-    def realization(self, ensemble_id, realization_idx, filter):
+    def get_realization(self, ensemble_id, realization_idx, filter):
         with self._rdb_api as rdb_api:
             realization = (
                 rdb_api.get_realizations_by_ensemble_id(ensemble_id=ensemble_id)
@@ -111,7 +111,7 @@ class StorageApi(object):
 
         return {"value": misfit, "sign": sign, "obs_index": obs_index}
 
-    def response(self, ensemble_id, response_name, filter):
+    def get_response(self, ensemble_id, response_name, filter):
         with self._rdb_api as rdb_api, self._blob_api as blob_api:
             bundle = rdb_api.get_response_bundle(
                 response_name=response_name, ensemble_id=ensemble_id
@@ -175,12 +175,12 @@ class StorageApi(object):
 
         return return_schema
 
-    def data(self, id):
+    def get_data(self, id):
         with self._blob_api as blob_api:
             return_data = blob_api.get_blob(id).data
         return return_data
 
-    def observation(self, name):
+    def get_observation(self, name):
         with self._rdb_api as rdb_api:
             obs = rdb_api.get_observation(name)
             return None if obs is None else self._obs_to_json(obs)
@@ -203,7 +203,7 @@ class StorageApi(object):
             rdb_api.commit()
             return self._obs_to_json(obs)
 
-    def ensemble_schema(self, ensemble_id):
+    def get_ensemble(self, ensemble_id):
         with self._rdb_api as rdb_api:
             ens = rdb_api.get_ensemble_by_id(ensemble_id)
             return_schema = self._ensemble_minimal(ens)
@@ -267,7 +267,7 @@ class StorageApi(object):
             else {},
         }
 
-    def parameter(self, ensemble_id, parameter_def_id):
+    def get_parameter(self, ensemble_id, parameter_def_id):
         with self._rdb_api as rdb_api:
             bundle = rdb_api.get_parameter_bundle(
                 parameter_def_id=parameter_def_id, ensemble_id=ensemble_id
