@@ -1,4 +1,5 @@
 import logging
+
 logger = logging.getLogger(__name__)
 from ert_shared.storage.model import (
     Ensemble,

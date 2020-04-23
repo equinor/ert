@@ -22,6 +22,7 @@ def test_schema(populated_db):
 
 schema = schemathesis.from_pytest_fixture("test_schema")
 
+
 @schema.parametrize()
 def test_no_server_errors(case):
     response = case.call_wsgi()
