@@ -1,4 +1,5 @@
 import logging
+
 logger = logging.getLogger(__name__)
 from ert_shared.storage.model import Blobs, Entities
 from sqlalchemy import create_engine

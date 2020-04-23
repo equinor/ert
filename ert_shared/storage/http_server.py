@@ -90,10 +90,7 @@ class FlaskWrapper:
         )
         self.app.add_url_rule("/shutdown", "shutdown", self.shutdown, methods=["POST"])
         self.app.add_url_rule(
-            "/schema.json",
-            "schema",
-            self.schema,
-            methods=["GET"],
+            "/schema.json", "schema", self.schema, methods=["GET"],
         )
 
     def schema(self):
