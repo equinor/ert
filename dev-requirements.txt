@@ -1,6 +1,7 @@
 pytest
 pytest-qt
-mock
+mock ; python_version >= '3'
+mock<4; python_version < '3'
 schemathesis ; python_version >= '3'
 sphinx
 sphinx-argparse

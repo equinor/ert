@@ -1,13 +1,12 @@
+import sys
+
 if sys.version_info.major >= 3:
-    import requests
     import schemathesis
     import pytest
-    import sys
 
     from ert_shared.storage.http_server import FlaskWrapper
 
     from tests.storage import populated_db
-
 
     @pytest.fixture()
     def test_schema(populated_db):
@@ -19,7 +18,6 @@ if sys.version_info.major >= 3:
         ctx.push()
         yield schemathesis.from_wsgi("/schema.json", flWrapper.app)
         ctx.pop()
-
 
     schema = schemathesis.from_pytest_fixture("test_schema")
 
