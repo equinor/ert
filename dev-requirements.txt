@@ -1,6 +1,7 @@
 pytest
 pytest-qt
 mock
+schemathesis
 sphinx
 sphinx-argparse
 sphinx_rtd_theme
