@@ -411,7 +411,6 @@ class ParameterPrior(Entities):
     parameter_names = Column("parameter_names", PickleType)
     parameter_values = Column("parameter_values", PickleType)
 
-    __table_args__ = (UniqueConstraint("group", "key", name="_uc_prior_group_key_",),)
 
     ensemble = relationship(
         "Ensemble", secondary=lambda: prior_ensemble_association_table, backref="priors"
