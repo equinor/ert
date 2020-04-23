@@ -16,9 +16,12 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Ensemble-minimal'
+                type: object
+                properties:
+                  ensembles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Ensemble-minimal'
   /ensembles/{ensemble_id}:
     get:
       summary: Returns an ensemble.
@@ -37,6 +40,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Ensemble'
+        404:
+          description: Ensemble not found
   /ensembles/{ensemble_id}/realizations/{realization_idx}:
     get:
       summary: Returns a realization.
@@ -61,6 +66,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Realization'
+        404:
+          description: Realization not found
   /ensembles/{ensemble_id}/responses/{response_name}:
     get:
       summary: Returns a response object.
@@ -86,6 +93,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+        404:
+          description: Response not found
   /ensembles/{ensemble_id}/parameters/{parameter_def_id}:
     get:
       summary: Returns a parameter object.
@@ -111,6 +120,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Parameter'
+        404:
+          description: Parameter not found
   /observation/{name}:
     get:
       summary: Returns a observation object.
@@ -129,6 +140,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Observation'
+        404:
+          description: Parameter not found
   /observation/{name}/attributes:
     get:
       summary: Returns a attributes object.
@@ -147,6 +160,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Attributes'
+        404:
+          description: Observation not found
     post:
       summary: Add attributes
       description: Add attributes to the given observation
@@ -172,6 +187,8 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/Attributes'
+        404:
+          description: Observation not found
       x-codegen-request-body-name: attributes
   /data/{data_id}:
     get:
@@ -188,6 +205,8 @@ paths:
         200:
           description: Data blob.
           content: {}
+        404:
+          description: Data blob not found
 components:
   schemas:
     Ensemble-minimal:
@@ -207,6 +226,7 @@ components:
           example: /ensembles/1
         parent:
           type: object
+          nullable: true
           properties:
             url_ref:
               type: string
