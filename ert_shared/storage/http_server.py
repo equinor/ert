@@ -104,13 +104,13 @@ class FlaskWrapper:
 
     def ensembles(self):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
-            ensembles = api.ensembles()
+            ensembles = api.get_ensembles()
             resolve_ref_uri(ensembles)
             return ensembles
 
     def ensemble_by_id(self, ensemble_id):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
-            ensemble = api.ensemble_schema(ensemble_id)
+            ensemble = api.get_ensemble(ensemble_id)
             resolve_ref_uri(ensemble, ensemble_id)
             return ensemble
 
@@ -119,25 +119,25 @@ class FlaskWrapper:
 
     def realization_by_id(self, ensemble_id, realization_idx):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
-            realization = api.realization(ensemble_id, realization_idx, None)
+            realization = api.get_realization(ensemble_id, realization_idx, None)
             resolve_ref_uri(realization, ensemble_id)
             return realization
 
     def response_by_name(self, ensemble_id, response_name):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
-            response = api.response(ensemble_id, response_name, None)
+            response = api.get_response(ensemble_id, response_name, None)
             resolve_ref_uri(response, ensemble_id)
             return response
 
     def parameter_by_id(self, ensemble_id, parameter_def_id):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
-            parameter = api.parameter(ensemble_id, parameter_def_id)
+            parameter = api.get_parameter(ensemble_id, parameter_def_id)
             resolve_ref_uri(parameter, ensemble_id)
             return parameter
 
     def data(self, data_id):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
-            data = api.data(data_id)
+            data = api.get_data(data_id)
             if isinstance(data, list):
                 return ",".join([str(x) for x in data])
             else:
@@ -146,7 +146,7 @@ class FlaskWrapper:
     def get_observation(self, name):
         """Return an observation."""
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
-            obs = api.observation(name)
+            obs = api.get_observation(name)
             if obs is None:
                 raise werkzeug_exc.NotFound()
             return obs
@@ -181,7 +181,7 @@ class FlaskWrapper:
                 obs = api.set_observation_attribute(name, k, v)
                 if obs is None:
                     raise werkzeug_exc.NotFound()
-            return api.observation(name), 201
+            return api.get_observation(name), 201
 
     def shutdown(self):
         request.environ.get("werkzeug.server.shutdown")()
