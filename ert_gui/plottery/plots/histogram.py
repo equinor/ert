@@ -46,7 +46,7 @@ def plotHistogram(figure, plot_context, case_to_data_map, _observation_data):
             data[case] = pd.Series()
             continue
 
-        data[case] = datas[key]
+        data[case] = datas[0]
 
         if data[case].dtype == "object":
             try:
