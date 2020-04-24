@@ -49,6 +49,9 @@ class PlotApi(object):
             data = self._facade.gather_summary_data(case, key).T
         elif self._facade.is_gen_kw_key(key):
             data = self._facade.gather_gen_kw_data(case, key)
+            arrays = [[key], [0]]
+            index = pd.MultiIndex.from_arrays(arrays, names=("key", "index"))
+            data.columns = index
         elif self._facade.is_custom_kw_key(key):
             data = self._facade.gather_custom_kw_data(case, key)
         elif self._facade.is_gen_data_key(key):
