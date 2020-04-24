@@ -28,7 +28,9 @@ def plotGaussianKDE(figure, plot_context, case_to_data_map, _observation_data):
         key = key[6:]
         axes.set_xscale("log")
 
+
     for case, data in case_to_data_map.items():
+        data = data[0]
         if not data.empty and data.nunique() > 1:
             _plotGaussianKDE(axes, config, data, case)
             config.nextColor()

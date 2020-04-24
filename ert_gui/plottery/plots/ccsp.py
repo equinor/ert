@@ -99,6 +99,7 @@ def _addStatisticsLegend(plot_config, style_name, alpha_multiplier=1.0):
 
 
 def _assertNumeric(data):
+    data = data[0]
     if data.dtype == "object":
         try:
             data = pd.to_numeric(data, errors='coerce')
