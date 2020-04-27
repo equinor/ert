@@ -16,7 +16,7 @@ extra_files = package_files("ert_gui/resources/")
 
 
 setup(
-    name="Ensemble Reservoir Tool",
+    name="ert",
     use_scm_version={"root": ".", "write_to": "ert_gui/version.py"},
     scripts=["ert_shared/bin/ert"],
     packages=[
@@ -55,6 +55,7 @@ setup(
     include_package_data=True,
     license="Open Source",
     long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     install_requires=[
         "ansicolors==1.1.8",
         "console-progressbar==1.1.2",
@@ -66,6 +67,8 @@ setup(
         "pandas",
         "pluggy",
         "pyyaml",
+        "equinor-libres",
+        "PyQt5; python_version >= '3.0'",
         "qtpy",
         "scipy",
     ],

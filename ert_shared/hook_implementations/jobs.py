@@ -11,7 +11,7 @@ from ert_shared.plugins.plugin_response import plugin_response
 def _resolve_ert_share_path():
 
     share_path = os.path.realpath(
-        os.path.join(os.path.dirname(inspect.getfile(res)), "../../../../share/ert")
+        os.path.join(os.path.dirname(inspect.getfile(res)), ".data")
     )
     return share_path
 
