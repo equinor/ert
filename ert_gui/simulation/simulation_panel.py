@@ -22,9 +22,10 @@ from collections import OrderedDict
 
 
 class SimulationPanel(QWidget):
-    def __init__(self, config_file):
+    def __init__(self, config_file, storage_client):
         QWidget.__init__(self)
         self._config_file = config_file
+        self._storage_client = storage_client
         self.setObjectName("Simulation_panel")
         layout = QVBoxLayout()
 
@@ -103,7 +104,7 @@ class SimulationPanel(QWidget):
         if start_simulations == QMessageBox.Yes:
             run_model = self.getCurrentSimulationModel()
             arguments = self.getSimulationArguments()
-            dialog = RunDialog(self._config_file, run_model(), arguments)
+            dialog = RunDialog(self._config_file, run_model(), arguments, self._storage_client)
             dialog.startSimulation()
             dialog.exec_()
 

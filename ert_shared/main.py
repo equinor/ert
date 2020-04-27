@@ -6,6 +6,7 @@ import re
 from argparse import ArgumentParser, ArgumentTypeError
 from ert_shared import clear_global_state
 from ert_shared.cli.main import run_cli
+from ert_shared.storage.http_server import run_server
 from ert_shared.cli import (
     ENSEMBLE_SMOOTHER_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -122,6 +123,37 @@ def get_ert_parser(parser=None):
         "--verbose", action="store_true", help="Show verbose output", default=False
     )
     FeatureToggling.add_feature_toggling_args(gui_parser)
+    gui_url_or_bind = gui_parser.add_mutually_exclusive_group()
+    gui_url_or_bind.add_argument(
+        "--storage-api-url",
+        type=str,
+        help="Storage API URL. If not provided, ERT will start a server for you.",
+    )
+    gui_url_or_bind.add_argument(
+        "--storage-api-bind",
+        type=str,
+        help="Bind the Storage API to this server socket.",
+        default="127.0.0.1:0",
+    )
+
+    # ert_api
+    ert_api_parser = subparsers.add_parser(
+        "api", description="Expose ERT data through an HTTP server",
+    )
+    ert_api_parser.set_defaults(func=run_server)
+    ert_api_parser.add_argument(
+        "--runpath", type=str, help="Path to where the database-files are located."
+    )
+    ert_api_parser.add_argument(
+        "--verbose", action="store_true", help="Show verbose output", default=False
+    )
+    ert_api_parser.add_argument(
+        "--bind",
+        type=str,
+        help="Bind to a server socket. Default: 127.0.0.1:5000",
+        default="127.0.0.1:5000",
+    )
+    ert_api_parser.add_argument("--debug", action="store_true", default=False)
 
     # test_run_parser
     test_run_description = "Run '{}' in cli".format(TEST_RUN_MODE)
