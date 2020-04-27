@@ -1,12 +1,17 @@
-import flask
 import os
-import yaml
+import signal
+import subprocess
+import sys
+
+import psutil
 import werkzeug.exceptions as werkzeug_exc
+import yaml
+from flask import Flask, request
+
+from ert_shared.storage import connections
 from ert_shared.storage.blob_api import BlobApi
 from ert_shared.storage.rdb_api import RdbApi
 from ert_shared.storage.storage_api import StorageApi
-from ert_shared.storage import connections
-from flask import Response, request
 
 
 def resolve_ensemble_uri(ensemble_ref):
@@ -49,7 +54,7 @@ class FlaskWrapper:
         self._rdb_url = rdb_url
         self._blob_url = blob_url
 
-        self.app = flask.Flask("ert http api")
+        self.app = Flask("ert http api")
         self.app.add_url_rule("/ensembles", "ensembles", self.ensembles)
         self.app.add_url_rule(
             "/ensembles/<ensemble_id>", "ensemble", self.ensemble_by_id
@@ -181,14 +186,53 @@ class FlaskWrapper:
             return api.get_observation(name), 201
 
     def shutdown(self):
-        request.environ.get("werkzeug.server.shutdown")()
+        if "werkzeug.server.shutdown" in request.environ:
+            request.environ.get("werkzeug.server.shutdown")()
+        elif "_shutdown_server" in request.environ:
+            request.environ.get("_shutdown_server")()
+        else:
+            raise RuntimeError("no way to shut down")
         return "Server shutting down."
 
 
-def run_server(args):
+def create_wrapper():
     wrapper = FlaskWrapper(
         rdb_url="sqlite:///entities.db", blob_url="sqlite:///blobs.db"
     )
-    (bind_host, bind_port) = args.bind.split(":")
+    return wrapper
 
-    wrapper.app.run(host=bind_host, port=bind_port, debug=args.debug)
+
+def get_app(environ, start_response):
+    wrapper = create_wrapper()
+
+    # Shutdown the non-development server (currently gunicorn). This is done by
+    # sending the TERM signal to the master process, which is the parent of
+    # whatever worker process is executing this code.
+    environ["_shutdown_server"] = lambda: os.kill(os.getppid(), signal.SIGTERM)
+    return wrapper.app(environ, start_response)
+
+
+def run_server(args):
+    if args.production:
+        fds = ()
+        if "fd://" in args.bind:
+            # we expect the bind to be fd://xx in this mode, but pass_fds wants
+            # the xx part
+            fds = (args.bind[5:],)
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "gunicorn.app.wsgiapp",
+                "{}:get_app".format(__name__),
+                "--workers={}".format(psutil.cpu_count()),
+                "--bind={}".format(args.bind),
+                "--preload",
+            ],
+            check=True,
+            pass_fds=fds,
+        )
+    else:
+        (bind_host, bind_port) = args.bind.split(":")
+        wrapper = create_wrapper()
+        wrapper.app.run(host=bind_host, port=bind_port, debug=args.debug)

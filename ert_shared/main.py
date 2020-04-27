@@ -149,10 +149,14 @@ def get_ert_parser(parser=None):
     ert_api_parser.add_argument(
         "--bind",
         type=str,
-        help="Bind to a server socket. Default: 127.0.0.1:5000",
+        help="Bind to a server socket.",
         default="127.0.0.1:5000",
     )
-    ert_api_parser.add_argument("--debug", action="store_true", default=False)
+    debug_or_prod = ert_api_parser.add_mutually_exclusive_group()
+    debug_or_prod.add_argument("--debug", action="store_true", default=False)
+    debug_or_prod.add_argument(
+        "--production", action="store_true", help="Run a production server."
+    )
 
     # test_run_parser
     test_run_description = "Run '{}' in cli".format(TEST_RUN_MODE)

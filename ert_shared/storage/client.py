@@ -1,5 +1,6 @@
 import pandas as pd
 import requests
+import socket
 from datetime import datetime
 
 
@@ -31,8 +32,18 @@ def ref_request(api_url):
 
 
 class StorageClient(object):
-    def __init__(self, base_url):
-        self._BASE_URI = base_url
+    def __init__(self, base_url, bind=None, proto="http"):
+        if bind is None:
+            self._BASE_URI = base_url
+            return
+
+        (bind_host, bind_port) = bind.split(":")
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._sock.bind((bind_host, int(bind_port)))
+        self._sock.listen()
+
+        address, port = self._sock.getsockname()
+        self._BASE_URI = "{}://{}:{}".format(proto, address, port)
 
     def all_data_type_keys(self):
         """ Returns a list of all the keys except observation keys. For each key a dict is returned with info about
