@@ -3,6 +3,8 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 
 from ert_shared.models import BaseRunModel
 from ert_shared import ERT
+from ert_shared.storage.extraction_api import dump_to_new_storage
+
 
 class EnsembleExperiment(BaseRunModel):
 
@@ -30,6 +32,8 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhaseName("Post processing...", indeterminate=True)
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ERT.ert)
         self.setPhase(1, "Simulations completed.") # done...
+
+        dump_to_new_storage()
 
         return run_context
 

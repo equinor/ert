@@ -200,3 +200,9 @@ class LibresFacade(object):
     def is_gen_data_key(self, key):
         """ :rtype: bool """
         return key in self._enkf_main.getKeyManager().genDataKeys()
+
+    def gen_kw_priors(self):
+        return self._enkf_main.getKeyManager().gen_kw_priors()
+
+    def get_update_step(self):
+        return self._enkf_main.getLocalConfig().getUpdatestep()
