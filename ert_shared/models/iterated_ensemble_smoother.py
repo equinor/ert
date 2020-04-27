@@ -3,6 +3,7 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
 
+from ert_shared.storage.extraction_api import dump_to_new_storage
 class IteratedEnsembleSmoother(BaseRunModel):
 
     def __init__(self):
@@ -75,6 +76,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         num_retries = 0
         current_iter = 0
 
+        previous_ensemble_name = None
         while current_iter < ERT.enkf_facade.get_number_of_iterations() and num_retries < num_retries_per_iteration:
             pre_analysis_iter_num = analysis_module.getInt("ITER")
             self.analyzeStep( run_context )
@@ -82,6 +84,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
             analysis_success = current_iter > pre_analysis_iter_num
             if analysis_success:
+                analysis_module_name = self.ert().analysisConfig().activeModuleName()
+                previous_ensemble_name = dump_to_new_storage(reference=None if previous_ensemble_name is None else (previous_ensemble_name, analysis_module_name))
                 run_context = self.create_context( arguments, current_iter, prior_context = run_context )
                 self.ert().getEnkfFsManager().switchFileSystem(run_context.get_target_fs())
                 self._runAndPostProcess(run_context)
@@ -91,6 +95,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 self._runAndPostProcess(run_context)
                 num_retries += 1
 
+        analysis_module_name = self.ert().analysisConfig().activeModuleName()
+        previous_ensemble_name = dump_to_new_storage(reference=None if previous_ensemble_name is None else (previous_ensemble_name, analysis_module_name))
         if current_iter == (phase_count - 1):
             self.setPhase(phase_count, "Simulations completed.")
         else:
@@ -125,6 +131,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr)
         self._run_context = run_context
         self._last_run_iteration = run_context.get_iter()
+        self.ert().getEnkfFsManager().switchFileSystem(sim_fs)
         return run_context
 
     @classmethod
