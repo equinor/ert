@@ -13,6 +13,7 @@ def package_files(directory):
 
 
 extra_files = package_files("ert_gui/resources/")
+logging_configuration = package_files("ert_logging/")
 
 
 setup(
@@ -21,6 +22,7 @@ setup(
     scripts=["ert_shared/bin/ert"],
     packages=[
         "ert_data",
+        "ert_logging",
         "ert_shared",
         "ert_shared.models",
         "ert_shared.plugins",
@@ -51,7 +53,7 @@ setup(
         "ert_gui.tools.plot.customize",
         "ert_gui.tools.plot.widgets",
     ],
-    package_data={"ert_gui": extra_files},
+    package_data={"ert_gui": extra_files, "ert_logging": logging_configuration},
     include_package_data=True,
     license="Open Source",
     long_description=open("README.md").read(),
