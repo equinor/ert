@@ -25,7 +25,7 @@ class EnsemblePlot(object):
             data = data.T
 
             if not data.empty:
-                if not data.columns.is_all_dates:
+                if not data.index.is_all_dates:
                     plot_context.deactivateDateSupport()
                     plot_context.x_axis = plot_context.INDEX_AXIS
 

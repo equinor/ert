@@ -102,8 +102,10 @@ def patch_enkf_main(monkeypatch, tmpdir):
     os.environ.get("TRAVIS_OS_NAME") == "osx", reason="xvfb not available on travis OSX"
 )
 def test_gui_load(monkeypatch, tmpdir, qtbot, patch_enkf_main):
+    args_mock = Mock()
+    type(args_mock).config = PropertyMock(return_value="config.ert")
 
-    gui = _start_window(patch_enkf_main, "config.ert")
+    gui = _start_window(patch_enkf_main, args_mock)
     qtbot.addWidget(gui)
 
     sim_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_panel")
@@ -140,6 +142,9 @@ def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
     def _assert_iter_in_args(panel):
         assert "iter_num" in panel.getSimulationArguments()
 
+    args_mock = Mock()
+    type(args_mock).config = PropertyMock(return_value="config.ert")
+
     monkeypatch.setattr(
         ert_gui.simulation.simulation_panel.SimulationPanel,
         "runSimulation",
@@ -158,7 +163,7 @@ def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
         Mock(return_value=2),
     )
 
-    gui = _start_window(patch_enkf_main, "config.ert")
+    gui = _start_window(patch_enkf_main, args_mock)
     qtbot.addWidget(gui)
 
     sim_mode = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_mode")

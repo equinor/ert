@@ -23,13 +23,15 @@ ENSEMBLE = "Ensemble"
 HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
 
+
 class PlotWindow(QMainWindow):
-
-
-    def __init__(self, config_file, parent):
+    def __init__(self, config_file, storage_client, parent):
         QMainWindow.__init__(self, parent)
 
-        self._api = PlotApi(ERT.enkf_facade)
+        if storage_client:
+            self._api = storage_client
+        else:
+            self._api = PlotApi(ERT.enkf_facade)
 
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)
@@ -64,10 +66,8 @@ class PlotWindow(QMainWindow):
 
         self._central_tab.currentChanged.connect(self.currentPlotChanged)
 
-
         cases = self._api.get_all_cases_not_running()
         case_names = [case["name"] for case in cases if not case["hidden"]]
-
 
         self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
         self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
@@ -80,7 +80,6 @@ class PlotWindow(QMainWindow):
         self._data_type_keys_widget.selectDefault()
         self._updateCustomizer(current_plot_widget)
 
-
     def currentPlotChanged(self):
         key_def = self.getSelectedKey()
         key = key_def["key"]
@@ -88,17 +87,23 @@ class PlotWindow(QMainWindow):
         for plot_widget in self._plot_widgets:
             index = self._central_tab.indexOf(plot_widget)
 
-            if index == self._central_tab.currentIndex() \
-                    and plot_widget._plotter.dimensionality == key_def["dimensionality"]:
+            if (
+                index == self._central_tab.currentIndex()
+                and plot_widget._plotter.dimensionality == key_def["dimensionality"]
+            ):
                 self._updateCustomizer(plot_widget)
                 cases = self._case_selection_widget.getPlotCaseNames()
                 case_to_data_map = {case: self._api.data_for_key(case, key) for case in cases}
                 if len(key_def["observations"]) > 0:
-                    observations = self._api.observations_for_obs_keys(cases[0], key_def["observations"])
+                    observations = self._api.observations_for_obs_keys(
+                        cases[0], key_def["observations"]
+                    )
                 else:
                     observations = None
 
-                plot_config = PlotConfig.createCopy(self._plot_customizer.getPlotConfig())
+                plot_config = PlotConfig.createCopy(
+                    self._plot_customizer.getPlotConfig()
+                )
                 plot_config.setTitle(key)
                 plot_context = PlotContext(plot_config, cases, key)
 
@@ -147,17 +152,23 @@ class PlotWindow(QMainWindow):
         self._plot_widgets.append(plot_widget)
         self._central_tab.setTabEnabled(index, enabled)
 
-
-    def addDock(self, name, widget, area=Qt.LeftDockWidgetArea, allowed_areas=Qt.AllDockWidgetAreas):
+    def addDock(
+        self,
+        name,
+        widget,
+        area=Qt.LeftDockWidgetArea,
+        allowed_areas=Qt.AllDockWidgetAreas,
+    ):
         dock_widget = QDockWidget(name)
         dock_widget.setObjectName("%sDock" % name)
         dock_widget.setWidget(widget)
         dock_widget.setAllowedAreas(allowed_areas)
-        dock_widget.setFeatures(QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable)
+        dock_widget.setFeatures(
+            QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable
+        )
 
         self.addDockWidget(area, dock_widget)
         return dock_widget
-
 
     @showWaitCursorWhileWaiting
     def keySelected(self):
@@ -166,11 +177,11 @@ class PlotWindow(QMainWindow):
 
         for plot_widget in self._plot_widgets:
             index = self._central_tab.indexOf(plot_widget)
-            self._central_tab.setTabEnabled(index, plot_widget._plotter.dimensionality == key_def["dimensionality"])
+            self._central_tab.setTabEnabled(
+                index, plot_widget._plotter.dimensionality == key_def["dimensionality"]
+            )
 
         self.currentPlotChanged()
-
-
 
     def toggleCustomizeDialog(self):
         self._plot_customizer.toggleCustomizationDialog()
