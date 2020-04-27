@@ -11,7 +11,7 @@ from ert_shared.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ES_MDA_MODE,
     TEST_RUN_MODE,
-    WORKFLOW_MODE
+    WORKFLOW_MODE,
 )
 from ert_shared.ide.keywords.definitions import (
     RangeStringArgument,
@@ -20,10 +20,9 @@ from ert_shared.ide.keywords.definitions import (
     NumberListStringArgument,
     IntegerArgument,
 )
-from ert_shared.models.multiple_data_assimilation import (
-    MultipleDataAssimilation,
-)
+from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert_shared.plugins.plugin_manager import ErtPluginContext
+from ert_shared.feature_toggling import FeatureToggling
 
 
 def strip_error_message_and_raise_exception(validated):
@@ -69,6 +68,7 @@ def valid_name(user_input):
         strip_error_message_and_raise_exception(validated)
     return user_input
 
+
 def valid_iter_num(user_input):
     validator = IntegerArgument(from_value=0)
     validated = validator.validate(user_input)
@@ -89,6 +89,7 @@ def range_limited_int(user_input):
 
 def run_gui_wrapper(args):
     from ert_gui.gert_main import run_gui
+
     run_gui(args)
 
 
@@ -120,6 +121,7 @@ def get_ert_parser(parser=None):
     gui_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output", default=False
     )
+    FeatureToggling.add_feature_toggling_args(gui_parser)
 
     # test_run_parser
     test_run_description = "Run '{}' in cli".format(TEST_RUN_MODE)
@@ -158,7 +160,7 @@ def get_ert_parser(parser=None):
         default=0,
         required=False,
         help="Specification of which iteration number is about to be made."
-        "Use iter-num to avoid recomputing the priors."
+        "Use iter-num to avoid recomputing the priors.",
     )
 
     # ensemble_smoother_parser
@@ -235,31 +237,36 @@ def get_ert_parser(parser=None):
     workflow_parser = subparsers.add_parser(
         WORKFLOW_MODE, help=workflow_description, description=workflow_description
     )
-    workflow_parser.add_argument(
-        help="Name of workflow",
-        dest="name"
-    )
+    workflow_parser.add_argument(help="Name of workflow", dest="name")
 
     # Common arguments/defaults for all non-gui modes
-    for cli_parser in [test_run_parser, ensemble_experiment_parser,
-                       ensemble_smoother_parser, es_mda_parser,
-                       workflow_parser]:
+    for cli_parser in [
+        test_run_parser,
+        ensemble_experiment_parser,
+        ensemble_smoother_parser,
+        es_mda_parser,
+        workflow_parser,
+    ]:
         cli_parser.set_defaults(func=run_cli)
         cli_parser.add_argument(
-            "--verbose", action="store_true", help="Show verbose output",
-            default=False
+            "--verbose", action="store_true", help="Show verbose output", default=False
         )
         cli_parser.add_argument(
-            "--color-always", action="store_true",
-            help="Force coloring of monitor output, which is automatically" +
-                 " disabled if the output stream is not a terminal.",
-            default=False
+            "--color-always",
+            action="store_true",
+            help="Force coloring of monitor output, which is automatically"
+            + " disabled if the output stream is not a terminal.",
+            default=False,
         )
         cli_parser.add_argument(
-            "--disable-monitoring", action="store_true", help="Disable monitoring.",
-            default=False
+            "--disable-monitoring",
+            action="store_true",
+            help="Disable monitoring.",
+            default=False,
         )
         cli_parser.add_argument("config", type=valid_file, help=config_help)
+
+        FeatureToggling.add_feature_toggling_args(cli_parser)
 
     return parser
 
@@ -273,6 +280,7 @@ def main():
     if args.verbose:
         logger = logging.getLogger()
         logger.setLevel("DEBUG")
+    FeatureToggling.update_from_args(args)
 
     with ErtPluginContext():
         args.func(args)
