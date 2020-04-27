@@ -1,0 +1,466 @@
+openapi: 3.0.1
+info:
+  title: ERT Storage API
+  description: API description in Markdown.
+  version: 0.1.0
+servers:
+- url: http://127.0.0.1:5000/
+paths:
+  /ensembles:
+    get:
+      summary: Returns a list of available ensembles.
+      description: Returns an overview of the ensembles available in the database.
+      responses:
+        200:
+          description: List of ensemble objects.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ensembles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Ensemble-minimal'
+  /ensembles/{ensemble_id}:
+    get:
+      summary: Returns an ensemble.
+      description: Returns a detailed ensemble object
+      parameters:
+      - name: ensemble_id
+        in: path
+        description: The name of the ensemble to return.
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Ensemble object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ensemble'
+        404:
+          description: Ensemble not found
+  /ensembles/{ensemble_id}/realizations/{realization_idx}:
+    get:
+      summary: Returns a realization.
+      description: Returns the realization at the given index in the given ensemble.
+      parameters:
+      - name: ensemble_id
+        in: path
+        description: The name of the ensemble.
+        required: true
+        schema:
+          type: string
+      - name: realization_idx
+        in: path
+        description: Index of the realization to return
+        required: true
+        schema:
+          type: integer
+      responses:
+        200:
+          description: Realization object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Realization'
+        404:
+          description: Realization not found
+  /ensembles/{ensemble_id}/responses/{response_name}:
+    get:
+      summary: Returns a response object.
+      description: Returns the response object for the given response name in the
+        given ensemble.
+      parameters:
+      - name: ensemble_id
+        in: path
+        description: The name of the ensemble.
+        required: true
+        schema:
+          type: string
+      - name: response_name
+        in: path
+        description: Name of the response to return
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Response object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        404:
+          description: Response not found
+  /ensembles/{ensemble_id}/parameters/{parameter_def_id}:
+    get:
+      summary: Returns a parameter object.
+      description: Returns the parameter object for the given parameter id in the
+        given ensemble.
+      parameters:
+      - name: ensemble_id
+        in: path
+        description: The name of the ensemble.
+        required: true
+        schema:
+          type: string
+      - name: parameter_def_id
+        in: path
+        description: ID of the parameter to return
+        required: true
+        schema:
+          type: integer
+      responses:
+        200:
+          description: Parameter object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Parameter'
+        404:
+          description: Parameter not found
+  /observation/{name}:
+    get:
+      summary: Returns a observation object.
+      description: Returns the observation object for the given observation name.
+      parameters:
+      - name: name
+        in: path
+        description: Name of the observation to return
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Observation object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Observation'
+        404:
+          description: Parameter not found
+  /observation/{name}/attributes:
+    get:
+      summary: Returns a attributes object.
+      description: Returns the attributes for the given observation name.
+      parameters:
+      - name: name
+        in: path
+        description: Name of the observation to return the attributes for.
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Attributes object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attributes'
+        404:
+          description: Observation not found
+    post:
+      summary: Add attributes
+      description: Add attributes to the given observation
+      parameters:
+      - name: name
+        in: path
+        description: Name of the observation to set the attributes for.
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: The attributes to set (will overwrite attributes that are already
+          set).
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Attributes'
+        required: false
+      responses:
+        201:
+          description: Created
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Attributes'
+        404:
+          description: Observation not found
+      x-codegen-request-body-name: attributes
+  /data/{data_id}:
+    get:
+      summary: Returns a data blob.
+      description: Returns the data blob for the given data ID.
+      parameters:
+      - name: data_id
+        in: path
+        description: ID of the data blob to return.
+        required: true
+        schema:
+          type: integer
+      responses:
+        200:
+          description: Data blob.
+          content: {}
+        404:
+          description: Data blob not found
+components:
+  schemas:
+    Ensemble-minimal:
+      required:
+      - name
+      - time_created
+      type: object
+      properties:
+        name:
+          type: string
+          example: ensemble1
+        time_created:
+          type: string
+          format: date-time
+        url_ref:
+          type: string
+          example: /ensembles/1
+        parent:
+          type: object
+          nullable: true
+          properties:
+            url_ref:
+              type: string
+              example: /ensembles/0
+            name:
+              type: string
+              example: ensemble0
+        children:
+          type: array
+          items:
+            type: object
+            properties:
+              url_ref:
+                type: string
+                example: /ensembles/2
+              name:
+                type: string
+                example: ensemble2
+    Ensemble:
+      allOf:
+      - $ref: '#/components/schemas/Ensemble-minimal'
+      - type: object
+        properties:
+          realizations:
+            type: array
+            items:
+              type: object
+              properties:
+                url_ref:
+                  type: string
+                  example: /ensembles/1/realizations/0
+                name:
+                  type: string
+                  example: 0
+          responses:
+            type: array
+            items:
+              type: object
+              properties:
+                url_ref:
+                  type: string
+                  example: /ensembles/1/responses/2
+                name:
+                  type: string
+                  example: simulated_value2
+          parameters:
+            type: array
+            items:
+              $ref: '#/components/schemas/Parameter-minimal'
+    Parameter-minimal:
+      required:
+      - group
+      - name
+      - parameter_ref
+      type: object
+      properties:
+        url_ref:
+          type: string
+          example: /ensembles/1/parameters/2
+        name:
+          type: string
+          example: param2
+        group:
+          type: string
+          example: group1
+        priors:
+          type: object
+          properties:
+            function:
+              type: string
+              example: triangular
+            parameter_names:
+              type: array
+              items:
+                type: string
+              example: [min, max, mode]
+            parameter_values:
+              type: array
+              items:
+                type: number
+              example: [1.2, 5.5, 3.4]
+    Parameter:
+      allOf:
+      - $ref: '#/components/schemas/Parameter-minimal'
+      - type: object
+        properties:
+          realizations:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "0"
+                data_url:
+                  type: string
+                  example: "/data/1"
+                url_ref:
+                  type: string
+                  example: "/ensembles/1/realizations/0"
+    Realization:
+      required:
+      - ensemble_id
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+          example: "0"
+        responses:
+          type: array
+          items:
+            type: object
+            properties:
+              data_url:
+                type: string
+                example: /data/2
+              name:
+                type: string
+                example: simulated_value2
+        parameters:
+          type: array
+          items:
+            type: object
+            properties:
+              data_url:
+                type: string
+                example: /data/3
+              name:
+                type: string
+                example: param2
+              group:
+                type: string
+                example: group1
+    Attributes:
+      required:
+      - attributes
+      type: object
+      properties:
+        attributes:
+          type: object
+          properties: {}
+          example:
+            attr1: property1
+    Observation:
+      allOf:
+      - type: object
+        properties:
+          name:
+            type: string
+            example: obs1
+          data:
+            type: object
+            properties:
+              values:
+                type: object
+                properties:
+                  data_url:
+                    type: string
+                    example: /data/4
+              std:
+                type: object
+                properties:
+                  data_url:
+                    type: string
+                    example: /data/5
+              data_indexes:
+                type: object
+                properties:
+                  data_url:
+                    type: string
+                    example: /data/6
+              key_indexes:
+                type: object
+                properties:
+                  data_url:
+                    type: string
+                    example: /data/7
+      - $ref: '#/components/schemas/Attributes'
+    Response:
+      required:
+      - ensemble_id
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+          example: response1
+        realizations:
+          type: array
+          items:
+            type: object
+            properties:
+              data_url:
+                type: string
+                example: /data/8
+              name:
+                type: string
+                example: "0"
+              realization_ref:
+                type: string
+                example: /ensembles/1/realizations/0
+              summarized_misfits:
+                type: object
+                properties:
+                  observation_name:
+                    type: number
+                    example: 1.2
+              univariate_misfits:
+                type: object
+                properties:
+                  observation_name:
+                    type: object
+                    properties:
+                      misfits:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            value:
+                              type: number
+                              example: 2.2
+                            sign:
+                              type: boolean
+                            obs_index:
+                              type: integer
+                              example: 0
+        axis:
+          type: object
+          properties:
+            data_url:
+              type: string
+              example: /data/9
+        observations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Observation'
