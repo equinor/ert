@@ -40,14 +40,9 @@ def load_general_data(facade, observation_key, case_name, include_data=True):
         node = obs_vector.getNode(time_step)
         index_list = [node.getIndex(nr) for nr in range(len(node))]
 
-        data = (
-            data.append(
-                pd.DataFrame(
-                    [node.get_data_points()], columns=index_list, index=["OBS"]
-                )
-            )
-            .append(pd.DataFrame([node.get_std()], columns=index_list, index=["STD"]))
-        )
+        data = data.append(
+            pd.DataFrame([node.get_data_points()], columns=index_list, index=["OBS"])
+        ).append(pd.DataFrame([node.get_std()], columns=index_list, index=["STD"]))
         if include_data:
             gen_data = facade.load_gen_data(case_name, data_key, time_step).T
             data = data.append(gen_data)
@@ -67,22 +62,20 @@ def load_block_data(facade, observation_key, case_name, include_data=True):
     for report_step in obs_vector.getStepList().asList():
         obs_block = loader.getBlockObservation(report_step)
 
-        data = (
-            data.append(
-                pd.DataFrame(
-                    [[obs_block.getValue(i) for i in obs_block]], index=["OBS"]
-                )
-            )
-            .append(
-                pd.DataFrame([[obs_block.getStd(i) for i in obs_block]], index=["STD"])
-            )
+        data = data.append(
+            pd.DataFrame([[obs_block.getValue(i) for i in obs_block]], index=["OBS"])
+        ).append(
+            pd.DataFrame([[obs_block.getStd(i) for i in obs_block]], index=["STD"])
         )
 
         if include_data:
             block_data = loader.load(facade.get_current_fs(), report_step)
-            data = data.append(_get_block_measured(facade.get_ensemble_size(), block_data))
+            data = data.append(
+                _get_block_measured(facade.get_ensemble_size(), block_data)
+            )
 
     return data
+
 
 def _get_block_measured(ensamble_size, block_data):
     data = pd.DataFrame()
@@ -97,7 +90,9 @@ def load_summary_data(facade, observation_key, case_name, include_data=True):
     data = []
     if include_data:
         data.append(_get_summary_data(*args))
-    data.append(_get_summary_observations(*args).pipe(_remove_inactive_report_steps, *args))
+    data.append(
+        _get_summary_observations(*args).pipe(_remove_inactive_report_steps, *args)
+    )
     return pd.concat(data)
 
 
@@ -112,9 +107,7 @@ def _get_summary_observations(facade, _, data_key, case_name):
     # The index from SummaryObservationCollector is {data_key} and STD_{data_key}"
     # to match the other data types this needs to be changed to OBS and STD, hence
     # the regex.
-    data = data.set_index(
-        data.index.str.replace(r"\b" + data_key, "OBS", regex=True)
-    )
+    data = data.set_index(data.index.str.replace(r"\b" + data_key, "OBS", regex=True))
     data = data.set_index(data.index.str.replace("_" + data_key, ""))
     return data
 
