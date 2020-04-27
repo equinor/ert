@@ -33,6 +33,7 @@ from ert_gui.tools.plot import PlotTool
 from ert_gui.tools.plugins import PluginHandler, PluginsTool
 from ert_gui.tools.run_analysis import RunAnalysisTool
 from ert_gui.tools.workflows import WorkflowsTool
+from ert_shared.storage.client_factory import create_client
 import os
 from res.enkf import EnKFMain, ResConfig
 from res.util import ResLog
@@ -52,12 +53,12 @@ def run_gui(args):
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
 
     # window reference must be kept until app.exec returns
-    window = _start_window(ert, args.config)
+    window = _start_window(ert, args)
 
     return app.exec_()
 
 
-def _start_window(ert, config):
+def _start_window(ert, args):
 
     _check_locale()
 
@@ -69,9 +70,9 @@ def _start_window(ert, config):
     splash.repaint()
     splash_screen_start_time = time.time()
 
-    configureErtNotifier(ert, config)
+    configureErtNotifier(ert, args.config)
 
-    window = _setup_main_window(config, ert)
+    window = _setup_main_window(ert, args)
 
     minimum_splash_screen_time = 2
     sleep_time_left = minimum_splash_screen_time - (time.time() - splash_screen_start_time)
@@ -119,15 +120,17 @@ def _check_locale():
         sys.stderr.write(msg)
 
 
-def _setup_main_window(config_file, ert):
-    window = GertMainWindow(config_file)
-    window.setWidget(SimulationPanel(config_file))
+def _setup_main_window(ert, args):
+    config_file = args.config
+    storage_client = create_client(args)
+    window = GertMainWindow(config_file, storage_client)
+    window.setWidget(SimulationPanel(config_file, storage_client))
     plugin_handler = PluginHandler(ert, ert.getWorkflowList().getPluginJobs(), window)
     help_tool = HelpTool("ERT", window)
 
     window.addDock("Configuration Summary", SummaryPanel(), area=Qt.BottomDockWidgetArea)
     window.addTool(IdeTool(config_file, help_tool))
-    window.addTool(PlotTool(config_file))
+    window.addTool(PlotTool(config_file, storage_client))
     window.addTool(ExportTool())
     window.addTool(WorkflowsTool())
     window.addTool(ManageCasesTool())
