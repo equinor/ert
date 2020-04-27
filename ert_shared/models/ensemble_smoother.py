@@ -4,6 +4,7 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
 
+from ert_shared.storage.extraction_api import dump_to_new_storage
 class EnsembleSmoother(BaseRunModel):
 
     def __init__(self):
@@ -47,6 +48,8 @@ class EnsembleSmoother(BaseRunModel):
             raise ErtRunError("Analysis of simulation failed!")
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=ERT.ert )
 
+        previous_ensemble_name = dump_to_new_storage(reference=None)
+
         self.setPhase(1, "Running simulations...")
         self.ert().getEnkfFsManager().switchFileSystem( prior_context.get_target_fs( ) )
 
@@ -68,6 +71,9 @@ class EnsembleSmoother(BaseRunModel):
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ert=ERT.ert)
 
         self.setPhase(2, "Simulations completed.")
+
+        analysis_module_name = self.ert().analysisConfig().activeModuleName()
+        dump_to_new_storage(reference=(previous_ensemble_name, analysis_module_name))
 
         return prior_context
 
