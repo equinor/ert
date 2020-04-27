@@ -62,6 +62,7 @@ setup(
         "ansicolors==1.1.8",
         "console-progressbar==1.1.2",
         "decorator",
+        "flask",
         "jinja2",
         "matplotlib < 3; python_version < '3.0'",
         "matplotlib < 3.2; python_version >= '3.0'",
