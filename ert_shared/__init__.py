@@ -1,3 +1,4 @@
+import ert_logging
 from .ert_adapter import ERT
 
 def clear_global_state():
