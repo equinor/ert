@@ -105,7 +105,7 @@ class MeasuredData(object):
         the data point is removed.
         """
         ens_std = self.get_simulated_data().std()
-        std_filter = (ens_std <= std_cutoff)
+        std_filter = ens_std <= std_cutoff
         return self.data.drop(columns=std_filter[std_filter].index)
 
     def _filter_ensemble_mean_obs(self, alpha):
@@ -150,5 +150,5 @@ def _add_index_range(data):
     """
     arrays = [data.columns.to_list(), list(range(len(data.columns)))]
     tuples = list(zip(*arrays))
-    index = pd.MultiIndex.from_tuples(tuples, names=['key_index', 'data_index'])
+    index = pd.MultiIndex.from_tuples(tuples, names=["key_index", "data_index"])
     data.columns = index
