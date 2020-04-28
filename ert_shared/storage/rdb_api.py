@@ -403,14 +403,18 @@ class RdbApi:
         return prior
 
     def get_parameter_bundle(self, parameter_def_id, ensemble_id):
-        parameter_bundle = (
-            self._session.query(ParameterDefinition)
-            .join(
-                Parameter, ParameterDefinition.id == Parameter.parameter_definition_id
+        try:
+            parameter_bundle = (
+                self._session.query(ParameterDefinition)
+                .join(
+                    Parameter,
+                    ParameterDefinition.id == Parameter.parameter_definition_id,
+                )
+                .join(ParameterPrior, ParameterDefinition.prior_id == ParameterPrior.id)
+                .filter(ParameterDefinition.id == parameter_def_id)
+                .filter(ParameterDefinition.ensemble_id == ensemble_id)
+                .one()
             )
-            .join(ParameterPrior, ParameterDefinition.prior_id == ParameterPrior.id)
-            .filter(ParameterDefinition.id == parameter_def_id)
-            .filter(ParameterDefinition.ensemble_id == ensemble_id)
-            .one()
-        )
-        return parameter_bundle
+            return parameter_bundle
+        except NoResultFound:
+            return None
