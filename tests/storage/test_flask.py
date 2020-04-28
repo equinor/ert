@@ -8,11 +8,12 @@ from ert_shared.storage.http_server import FlaskWrapper
 from ert_shared.storage.rdb_api import RdbApi
 from flask import Response, request
 
-from tests.storage import populated_db
+from tests.storage import db_info
 
 
 @pytest.fixture()
-def test_client(populated_db):
+def test_client(db_info):
+    populated_db, _ = db_info
     # Flask provides a way to test your application by exposing the Werkzeug test Client
     # and handling the context locals for you.
     flWrapper = FlaskWrapper(rdb_url=populated_db, blob_url=populated_db)

@@ -6,43 +6,42 @@ from ert_shared.storage.blob_api import BlobApi
 from ert_shared.storage.rdb_api import RdbApi
 from ert_shared.storage.storage_api import StorageApi
 
-from tests.storage import populated_db
+from tests.storage import db_info
 
 
-def test_response(populated_db):
+def test_response(db_info):
+    populated_db, db_lookup = db_info
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
-        schema = api.get_response(1, "response_one", None)
+        schema = api.get_response(db_lookup["ensemble"], "response_one", None)
         assert len(schema["realizations"]) == 2
         assert len(schema["observations"]) == 1
         assert len(schema["observations"][0]["data"]) == 5
-        print("############### RESPONSE ###############")
-        pprint.pprint(schema)
 
 
-def test_ensembles(populated_db):
+def test_ensembles(db_info):
+    populated_db, _ = db_info
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
         schema = api.get_ensembles()
-        print("############### ENSEBMLES ###############")
-        pprint.pprint(schema)
 
 
-def test_ensemble(populated_db):
+def test_ensemble(db_info):
+    populated_db, db_lookup = db_info
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
-        schema = api.get_ensemble(1)
-        print("############### ENSEMBLE ###############")
-        pprint.pprint(schema)
+        schema = api.get_ensemble(db_lookup["ensemble"])
 
 
-def test_realization(populated_db):
+def test_realization(db_info):
+    populated_db, db_lookup = db_info
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
-        schema = api.get_realization(ensemble_id=1, realization_idx=0, filter=None)
-        print("############### REALIZATION ###############")
-        pprint.pprint(schema)
+        schema = api.get_realization(
+            ensemble_id=db_lookup["ensemble"], realization_idx=0, filter=None
+        )
 
 
-def test_priors(populated_db):
+def test_priors(db_info):
+    populated_db, db_lookup = db_info
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
-        schema = api.get_ensemble(1)
+        schema = api.get_ensemble(db_lookup["ensemble"])
         assert {
             "group": "group",
             "key": "key1",
@@ -55,15 +54,19 @@ def test_priors(populated_db):
         } in schema["parameters"]
 
 
-def test_parameter(populated_db):
+def test_parameter(db_info):
+    populated_db, db_lookup = db_info
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
-        schema = api.get_parameter(ensemble_id=1, parameter_def_id="3")
+        ens_id = db_lookup["ensemble"]
+        par_def_id = db_lookup["parameter_def_key1_group"]
+        schema = api.get_parameter(ensemble_id=ens_id, parameter_def_id=par_def_id)
         assert schema["key"] == "key1"
         assert schema["group"] == "group"
         assert schema["prior"]["function"] == "function"
 
 
-def test_observation(populated_db):
+def test_observation(db_info):
+    populated_db, _ = db_info
     name = "observation_one"
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
         obs = api.get_observation(name)
@@ -79,7 +82,8 @@ def test_observation(populated_db):
         }
 
 
-def test_observation_attributes(populated_db):
+def test_observation_attributes(db_info):
+    populated_db, _ = db_info
     attr = "region"
     value = "1"
     name = "observation_one"
@@ -92,7 +96,8 @@ def test_observation_attributes(populated_db):
         assert api.get_observation_attribute(name, attr) == expected
 
 
-def test_single_observation_misfit_calculation(populated_db):
+def test_single_observation_misfit_calculation(db_info):
+    populated_db, _ = db_info
     # observation
     values_obs = [10.1, 10.2]
     stds_obs = [1, 3]
