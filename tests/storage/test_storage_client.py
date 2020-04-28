@@ -5,7 +5,7 @@ import pytest
 import pandas as pd
 from mock import patch
 
-from tests.storage import populated_db, db_connection, engine, tables
+from tests.storage import db_info, db_connection, engine, tables
 from ert_shared.storage.client import StorageClient
 from ert_shared.storage.blob_api import BlobApi
 from ert_shared.storage.http_server import FlaskWrapper
@@ -42,7 +42,8 @@ class CustomResponse(Response):
 
 
 @pytest.fixture()
-def test_client(populated_db):
+def test_client(db_info):
+    populated_db, _ = db_info
 
     rdb_api = RdbApi(populated_db)
     blob_api = BlobApi(populated_db)
