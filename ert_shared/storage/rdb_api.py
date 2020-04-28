@@ -335,6 +335,16 @@ class RdbApi:
     def get_realizations_by_ensemble_id(self, ensemble_id):
         return self._session.query(Realization).filter_by(ensemble_id=ensemble_id)
 
+    def get_realization_by_realization_idx(self, ensemble_id, realization_idx):
+        try:
+            return (
+                self._session.query(Realization)
+                .filter_by(ensemble_id=ensemble_id, index=realization_idx)
+                .one()
+            )
+        except NoResultFound:
+            return None
+
     def get_ensemble_by_id(self, ensemble_id):
         return self._session.query(Ensemble).filter_by(id=ensemble_id).one()
 
