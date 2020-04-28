@@ -65,6 +65,15 @@ def test_parameter(db_info):
         assert schema["prior"]["function"] == "function"
 
 
+def test_nonexisiting_parameter(db_info):
+    populated_db, db_lookup = db_info
+    with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
+        schema = api.get_parameter(
+            ensemble_id=db_lookup["ensemble"], parameter_def_id="1293495"
+        )
+        assert schema is None
+
+
 def test_observation(db_info):
     populated_db, _ = db_info
     name = "observation_one"

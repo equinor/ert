@@ -272,6 +272,8 @@ class StorageApi(object):
             bundle = rdb_api.get_parameter_bundle(
                 parameter_def_id=parameter_def_id, ensemble_id=ensemble_id
             )
+            if bundle is None:
+                return None
 
             return_schema = self._parameter_minimal(
                 name=bundle.name,
