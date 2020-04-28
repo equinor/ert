@@ -129,6 +129,8 @@ class FlaskWrapper:
     def parameter_by_id(self, ensemble_id, parameter_def_id):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             parameter = api.get_parameter(ensemble_id, parameter_def_id)
+            if parameter is None:
+                raise werkzeug_exc.NotFound()
             resolve_ref_uri(parameter, ensemble_id)
             return parameter
 
