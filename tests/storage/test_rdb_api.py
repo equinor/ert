@@ -8,7 +8,7 @@ from ert_shared.storage.model import Observation
 from ert_shared.storage.rdb_api import RdbApi
 from ert_shared.storage.blob_api import BlobApi
 
-from tests.storage import populated_db, db_connection, engine, tables
+from tests.storage import db_info, db_connection, engine, tables
 
 
 def test_add_observation(db_connection):
