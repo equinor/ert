@@ -24,8 +24,20 @@ if sys.version_info.major >= 3:
 
     @schema.parametrize()
     def test_no_server_errors(case):
+        non_working_endpoints = {
+            "/ensembles",
+            "/ensembles/{ensemble_id}",
+            "/ensembles/{ensemble_id}/realization/{realization_idx}",
+            "/ensembles/{ensemble_id}/responses/{response_name}",
+            "/ensembles/{ensemble_id}/parameters/{parameter_def_id}",
+            "/observation/{name}/attributes",
+            "/data/{data_id}",
+        }
         response = case.call_wsgi()
         try:
             case.validate_response(response)
         except AssertionError as e:
-            print("Expected failure, API still in beta")
+            if case.endpoint.path in non_working_endpoints:
+                print("Expected failure, API still in beta")
+            else:
+                raise

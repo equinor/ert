@@ -117,6 +117,8 @@ class FlaskWrapper:
     def realization_by_id(self, ensemble_id, realization_idx):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             realization = api.get_realization(ensemble_id, realization_idx, None)
+            if realization is None:
+                raise werkzeug_exc.NotFound()
             resolve_ref_uri(realization, ensemble_id)
             return realization
 

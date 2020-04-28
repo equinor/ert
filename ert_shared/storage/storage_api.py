@@ -52,11 +52,13 @@ class StorageApi(object):
 
     def get_realization(self, ensemble_id, realization_idx, filter):
         with self._rdb_api as rdb_api:
-            realization = (
-                rdb_api.get_realizations_by_ensemble_id(ensemble_id=ensemble_id)
-                .filter_by(index=realization_idx)
-                .one()
+            realization = rdb_api.get_realization_by_realization_idx(
+                ensemble_id=ensemble_id, realization_idx=realization_idx
             )
+
+            if realization is None:
+                return None
+
             response_definitions = rdb_api.get_response_definitions_by_ensemble_id(
                 ensemble_id=ensemble_id
             )
