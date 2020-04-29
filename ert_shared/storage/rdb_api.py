@@ -345,7 +345,10 @@ class RdbApi:
             return None
 
     def get_ensemble_by_id(self, ensemble_id):
-        return self._session.query(Ensemble).filter_by(id=ensemble_id).one()
+        try:
+            return self._session.query(Ensemble).filter_by(id=ensemble_id).one()
+        except NoResultFound:
+            return None
 
     def get_response_definitions_by_ensemble_id(self, ensemble_id):
         return self._session.query(ResponseDefinition).filter_by(

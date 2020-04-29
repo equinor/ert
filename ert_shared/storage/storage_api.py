@@ -22,6 +22,8 @@ class StorageApi(object):
         self._blob_connection.close()
 
     def _ensemble_minimal(self, ensemble):
+        if ensemble is None:
+            return None
         return {
             "name": ensemble.name,
             "time_created": ensemble.time_created.isoformat(),
@@ -212,6 +214,10 @@ class StorageApi(object):
     def get_ensemble(self, ensemble_id):
         with self._rdb_api as rdb_api:
             ens = rdb_api.get_ensemble_by_id(ensemble_id)
+
+            if ens is None:
+                return None
+
             return_schema = self._ensemble_minimal(ens)
             return_schema.update(
                 {
