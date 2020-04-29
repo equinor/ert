@@ -73,6 +73,7 @@ def db_info(tmpdir):
     )
     repository.flush()
     db_lookup["ensemble"] = ensemble.id
+    db_lookup["ensemble_timestamp"] = ensemble.time_created
     ######## add parameteredefinitionss ########
     parameter_def_A_G = repository.add_parameter_definition("A", "G", "ensemble_name")
     parameter_def_B_G = repository.add_parameter_definition("B", "G", "ensemble_name")
@@ -80,7 +81,7 @@ def db_info(tmpdir):
         "key1", "group", "ensemble_name", prior=prior_key1
     )
     repository.flush()
-
+    db_lookup["parameter_def_A_G"] = parameter_def_A_G.id
     db_lookup["parameter_def_key1_group"] = parameter_def_key1_group.id
 
     ######## add observations ########

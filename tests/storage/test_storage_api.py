@@ -19,15 +19,38 @@ def test_response(db_info):
 
 
 def test_ensembles(db_info):
-    populated_db, _ = db_info
+    populated_db, db_lookup = db_info
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
         schema = api.get_ensembles()
+        assert type(schema["ensembles"]) == list
+        assert {
+            "name": "ensemble_name",
+            "time_created": db_lookup["ensemble_timestamp"].isoformat(),
+            "parent": None,
+            "children": [],
+            "ensemble_ref": db_lookup["ensemble"],
+        } in schema["ensembles"]
 
 
 def test_ensemble(db_info):
     populated_db, db_lookup = db_info
     with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
         schema = api.get_ensemble(db_lookup["ensemble"])
+        assert schema["name"] == "ensemble_name"
+        assert schema["time_created"] == db_lookup["ensemble_timestamp"].isoformat()
+        assert schema["parent"] == None
+        assert schema["children"] == []
+        assert schema["ensemble_ref"] == db_lookup["ensemble"]
+        assert {
+            "group": "G",
+            "key": "A",
+            "parameter_ref": db_lookup["parameter_def_A_G"],
+            "prior": {},
+        } in schema["parameters"]
+        assert {"name": 0, "realization_ref": 0} in schema["realizations"]
+        assert {"name": "response_one", "response_ref": "response_one"} in schema[
+            "responses"
+        ]
 
 
 def test_realization(db_info):
@@ -36,6 +59,9 @@ def test_realization(db_info):
         schema = api.get_realization(
             ensemble_id=db_lookup["ensemble"], realization_idx=0, filter=None
         )
+        assert schema["name"] == 0
+        assert len(schema["responses"]) == 2
+        assert len(schema["parameters"]) == 3
 
 
 def test_priors(db_info):
