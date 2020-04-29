@@ -97,6 +97,11 @@ def test_get_single_observation(test_client):
     assert obs == expected
 
 
+def test_get_ensemble_id_404(test_client):
+    resp = test_client.get("/ensembles/not_existing")
+    assert resp.status_code == 404
+
+
 def test_get_single_observation_404(test_client):
     resp = test_client.get("/observation/not_existing")
     assert resp.status_code == 404

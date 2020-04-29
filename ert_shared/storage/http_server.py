@@ -108,6 +108,8 @@ class FlaskWrapper:
     def ensemble_by_id(self, ensemble_id):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             ensemble = api.get_ensemble(ensemble_id)
+            if ensemble is None:
+                raise werkzeug_exc.NotFound()
             resolve_ref_uri(ensemble, ensemble_id)
             return ensemble
 
