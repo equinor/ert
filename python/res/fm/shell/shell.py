@@ -10,26 +10,6 @@ class Shell(object):
     """
 
     @staticmethod
-    def prefix_path(input_path):
-        # Absolute input path goes straight through.
-        if os.path.isabs( input_path ):
-            return input_path
-
-        # Iff the DATA_ROOT variable is set we return the path
-        # $DATA_ROOT/input_path iff that path exists.
-        data_root = os.getenv("DATA_ROOT")
-        if data_root:
-            data_path = os.path.join( data_root , input_path )
-            if os.path.exists( data_path ):
-                return data_path
-
-        # A relative path which is interpreted as an operation wholly
-        # inside the realizations folder.
-        return input_path
-
-
-
-    @staticmethod
     def symlink(target , link_name):
         """Will create a symbol link 'link_name -> target'.
 
@@ -38,7 +18,6 @@ class Shell(object):
         symbolic link OSError will be raised. If the @target does not
         exists IOError will be raised.
         """
-        target = Shell.prefix_path( target )
         link_path , link_base = os.path.split( link_name )
         if len(link_path) == 0:
             target_check = target
@@ -85,7 +64,6 @@ class Shell(object):
         Will raise IOError if src_file is not a file.
 
         """
-        src_file = Shell.prefix_path( src_file )
         if os.path.isfile(src_file):
             # shutil.move works best (as unix mv) when target is a file.
             if os.path.isdir(target):
@@ -130,7 +108,6 @@ class Shell(object):
 
     @staticmethod
     def deleteFile(filename):
-        filename = Shell.prefix_path( filename )
         if os.path.exists(filename):
             if os.path.isfile( filename ):
                 Shell.__deleteFile( filename )
@@ -150,7 +127,6 @@ class Shell(object):
         """
         Will ignore if you are not owner.
         """
-        path = Shell.prefix_path( path )
         if os.path.exists( path ):
             if os.path.isdir( path ):
                 for root, dirs, files in os.walk(path, topdown = False , followlinks = False):
@@ -171,7 +147,6 @@ class Shell(object):
 
     @staticmethod
     def copyDirectory(src_path , target_path ):
-        src_path = Shell.prefix_path( src_path )
         if os.path.isdir( src_path ):
             src_basename = os.path.basename( src_path )
             target_root, target_basename = os.path.split( target_path )
@@ -192,7 +167,6 @@ class Shell(object):
 
     @staticmethod
     def copyFile(src , target = None):
-        src = Shell.prefix_path( src )
         if os.path.isfile( src ):
             if target is None:
                 target = os.path.basename(src)

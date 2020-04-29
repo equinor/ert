@@ -250,43 +250,6 @@ class ShellTest(ResTest):
             with self.assertRaises(IOError):
                 copy_directory("hei" , "target")
 
-    def test_DATA_ROOT(self):
-        with TestAreaContext("copy/directory"):
-
-            mkdir("path/subpath")
-            with open("path/subpath/file" , "w") as f:
-                f.write("1")
-
-            self.monkeypatch.setenv("DATA_ROOT", "path")
-            mkdir("target/sub")
-            copy_directory("subpath" , "target/sub")
-            self.assertTrue( os.path.exists( "target/sub/subpath" ))
-            self.assertTrue( os.path.exists( "target/sub/subpath/file" ))
-
-            os.makedirs( "file_target")
-            copy_file( "subpath/file" , "file_target")
-            self.assertTrue( os.path.isfile( "file_target/file" ))
-
-            copy_file( "subpath/file" , "subpath/file")
-            with open("subpath/file") as f:
-                v = int(f.read())
-                self.assertEqual( v, 1 )
-
-            with open("path/subpath/file" , "w") as f:
-                f.write("2")
-            copy_file( "subpath/file" , "subpath/file")
-            with open("subpath/file") as f:
-                v = int(f.read())
-                self.assertEqual( v, 2 )
-
-            symlink( "subpath/file" , "file_link")
-            self.assertTrue( os.path.isfile( "file_link" ))
-            self.assertTrue( os.path.islink( "file_link" ))
-            self.assertEqual( os.readlink( "file_link" ) , "path/subpath/file")
-            delete_directory( "subpath" )
-            self.assertFalse( os.path.isdir( "path/subpath") )
-
-
     def test_copy_file(self):
         with TestAreaContext("copy/file"):
             with self.assertRaises(IOError):
