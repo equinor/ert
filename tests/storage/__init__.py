@@ -65,6 +65,9 @@ def db_info(tmpdir):
     prior_key3 = repository.add_prior(
         "group", "key3", "function", ["paramA", "paramB"], [0.5, 0.6]
     )
+    prior_A = repository.add_prior(
+        "G", "A", "function", ["paramA", "paramB"], [0.5, 0.6]
+    )
     repository.flush()
 
     ######## add ensemble ########
@@ -75,7 +78,9 @@ def db_info(tmpdir):
     db_lookup["ensemble"] = ensemble.id
     db_lookup["ensemble_timestamp"] = ensemble.time_created
     ######## add parameteredefinitionss ########
-    parameter_def_A_G = repository.add_parameter_definition("A", "G", "ensemble_name")
+    parameter_def_A_G = repository.add_parameter_definition(
+        "A", "G", "ensemble_name", prior=prior_A
+    )
     parameter_def_B_G = repository.add_parameter_definition("B", "G", "ensemble_name")
     parameter_def_key1_group = repository.add_parameter_definition(
         "key1", "group", "ensemble_name", prior=prior_key1
@@ -133,7 +138,9 @@ def db_info(tmpdir):
         ensemble_name=ensemble.name,
     )
     repository.flush()
+    db_lookup["response_defition_one"] = response_definition_one.id
 
+    ######## observation response definition links ########
     obs_res_def_link = repository._add_observation_response_definition_link(
         observation_id=observation_one.id,
         response_definition_id=response_definition_one.id,
@@ -156,6 +163,7 @@ def db_info(tmpdir):
     ######## add realizations ########
     realization_0 = repository.add_realization(0, ensemble.name)
     realization_1 = repository.add_realization(1, ensemble.name)
+    db_lookup["realization_0"] = realization_0.id
 
     def add_data(realization, response_def, ens):
         response_one = repository.add_response(

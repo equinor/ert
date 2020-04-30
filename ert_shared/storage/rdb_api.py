@@ -331,7 +331,6 @@ class RdbApi:
     def get_all_ensembles(self):
         return [ensemble for ensemble in self._session.query(Ensemble).all()]
 
-    ############## - musiv - new functions ########################
     def get_realizations_by_ensemble_id(self, ensemble_id):
         return self._session.query(Realization).filter_by(ensemble_id=ensemble_id)
 
@@ -377,13 +376,6 @@ class RdbApi:
             )
             .one()
         )
-
-    def get_realizations_by_response_name(self, response_name, ensemble_id):
-        return (
-            self._session.query(ResponseDefinition).filter_by(
-                name=response_name, ensemble_id=ensemble_id
-            )
-        ).one()
 
     def get_response_bundle(self, response_name, ensemble_id):
         # responsedefinition : observation, indexes_ref
