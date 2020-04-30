@@ -43,23 +43,19 @@ class PlotApi(object):
 
     def data_for_key(self, case, key):
         """ Returns a pandas DataFrame with the datapoints for a given key for a given case. The row index is
-            the realization number, and the column index is a multi-index with (key, index/date)"""
+            the realization number, and the columns are an index over the indexes/dates"""
 
         if self._facade.is_summary_key(key):
             data = self._facade.gather_summary_data(case, key).T
         elif self._facade.is_gen_kw_key(key):
             data = self._facade.gather_gen_kw_data(case, key)
-            arrays = [[key], [0]]
-            index = pd.MultiIndex.from_arrays(arrays, names=("key", "index"))
-            data.columns = index
+            data.columns = pd.Index([0])
         elif self._facade.is_custom_kw_key(key):
-            data = self._facade.gather_custom_kw_data(case, key)
+            data = self._facade.gather_custom_kw_data(case, key).to_frame(name=0)
         elif self._facade.is_gen_data_key(key):
             data = self._facade.gather_gen_data_data(case, key).T
         else:
             raise ValueError("no such key {}".format(key))
-
-        data = pd.concat({key: data}, axis=1)
 
         try:
             return data.astype(float)

@@ -58,6 +58,11 @@ def _plotDistribution(axes, plot_config, data, label, index, previous_data):
     @type label: Str
     """
 
+    if data.empty:
+        data = pd.Series(dtype="float64")
+    else:
+        data = data[0]
+
     axes.set_xlabel(plot_config.xLabel())
     axes.set_ylabel(plot_config.yLabel())
 
