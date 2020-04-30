@@ -45,7 +45,11 @@ def test_ensemble(db_info):
             "group": "G",
             "key": "A",
             "parameter_ref": db_lookup["parameter_def_A_G"],
-            "prior": {},
+            "prior": {
+                "function": "function",
+                "parameter_names": ["paramA", "paramB"],
+                "parameter_values": [0.5, 0.6],
+            },
         } in schema["parameters"]
         assert {"name": 0, "realization_ref": 0} in schema["realizations"]
         assert {"name": "response_one", "response_ref": "response_one"} in schema[

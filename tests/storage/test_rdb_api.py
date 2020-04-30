@@ -7,7 +7,7 @@ import sqlalchemy.exc
 from ert_shared.storage.model import Observation
 from ert_shared.storage.rdb_api import RdbApi
 from ert_shared.storage.blob_api import BlobApi
-
+from ert_shared.storage import connections
 from tests.storage import db_info, db_connection, engine, tables
 
 
@@ -312,4 +312,155 @@ def test_add_mistfit(db_connection):
         assert misfit.observation_response_definition_link_id == link.id
         assert (
             misfit.observation_response_definition_link.observation_id == observation.id
+        )
+
+
+def test_get_parameter_bundle(db_info):
+    populated_db, db_lookup = db_info
+    rdb_connection = connections.get_rdb_connection(populated_db)
+    with RdbApi(connection=rdb_connection) as rdb_api:
+        bundle = rdb_api.get_parameter_bundle(
+            parameter_def_id=db_lookup["parameter_def_A_G"],
+            ensemble_id=db_lookup["ensemble"],
+        )
+        assert bundle is not None
+        assert bundle.name == "A"
+        assert bundle.group == "G"
+        assert len(bundle.parameters) == 2
+
+
+def test_add_prior(db_connection):
+    with RdbApi(db_connection) as rdb_api:
+        prior = rdb_api.add_prior(
+            "group", "key", "function", ["paramA", "paramB"], [1, 2]
+        )
+        rdb_api.commit()
+        assert prior.id is not None
+
+
+def test_get_response_bundle(db_info):
+    populated_db, db_lookup = db_info
+    rdb_connection = connections.get_rdb_connection(populated_db)
+    with RdbApi(connection=rdb_connection) as rdb_api:
+        bundle = rdb_api.get_response_bundle(
+            response_name="response_one", ensemble_id=db_lookup["ensemble"]
+        )
+        assert bundle.name == "response_one"
+        assert len(bundle.responses) == 2
+
+
+def test_get_parameter_by_realization_id(db_info):
+    populated_db, db_lookup = db_info
+    rdb_connection = connections.get_rdb_connection(populated_db)
+    with RdbApi(connection=rdb_connection) as rdb_api:
+        param = rdb_api.get_parameter_by_realization_id(
+            parameter_definition_id=db_lookup["parameter_def_A_G"],
+            realization_id=db_lookup["realization_0"],
+        )
+        assert param.realization_id == db_lookup["realization_0"]
+        assert param.parameter_definition_id == db_lookup["parameter_def_A_G"]
+
+
+def test_get_parameter_definitions_by_ensemble_id(db_info):
+    populated_db, db_lookup = db_info
+    rdb_connection = connections.get_rdb_connection(populated_db)
+    with RdbApi(connection=rdb_connection) as rdb_api:
+        param_def = rdb_api.get_parameter_definitions_by_ensemble_id(
+            ensemble_id=db_lookup["ensemble"]
+        )
+        assert len(list(param_def)) == 3
+
+
+def test_get_response_by_realization_id(db_info):
+    populated_db, db_lookup = db_info
+    rdb_connection = connections.get_rdb_connection(populated_db)
+    with RdbApi(connection=rdb_connection) as rdb_api:
+        response = rdb_api.get_response_by_realization_id(
+            response_definition_id=db_lookup["response_defition_one"],
+            realization_id=db_lookup["realization_0"],
+        )
+        assert response is not None
+
+
+def test_get_response_definitions_by_ensemble_id(db_info):
+    populated_db, db_lookup = db_info
+    rdb_connection = connections.get_rdb_connection(populated_db)
+    with RdbApi(connection=rdb_connection) as rdb_api:
+        resp_defs = rdb_api.get_response_definitions_by_ensemble_id(
+            ensemble_id=db_lookup["ensemble"]
+        )
+        assert len(list(resp_defs)) == 2
+
+
+def test_get_ensemble_by_id(db_info):
+    populated_db, db_lookup = db_info
+    rdb_connection = connections.get_rdb_connection(populated_db)
+    with RdbApi(connection=rdb_connection) as rdb_api:
+        ens = rdb_api.get_ensemble_by_id(ensemble_id=db_lookup["ensemble"])
+        assert ens.name == "ensemble_name"
+
+
+def test_get_realizations_by_ensemble_id(db_info):
+    populated_db, db_lookup = db_info
+    rdb_connection = connections.get_rdb_connection(populated_db)
+    with RdbApi(connection=rdb_connection) as rdb_api:
+        reals = rdb_api.get_realizations_by_ensemble_id(
+            ensemble_id=db_lookup["ensemble"]
+        )
+        assert len(list(reals)) == 2
+
+
+def test_get_all_ensembles(db_info):
+    populated_db, db_lookup = db_info
+    rdb_connection = connections.get_rdb_connection(populated_db)
+    with RdbApi(connection=rdb_connection) as rdb_api:
+        ens_list = rdb_api.get_all_ensembles()
+        assert len(list(ens_list)) == 1
+        assert ens_list[0].name == "ensemble_name"
+
+
+def test_get_all_observation_keys(db_info):
+    populated_db, _ = db_info
+    rdb_connection = connections.get_rdb_connection(populated_db)
+    with RdbApi(connection=rdb_connection) as rdb_api:
+        obs_keys = rdb_api.get_all_observation_keys()
+        assert set(
+            ["observation_one", "observation_two_first", "observation_two_second"]
+        ) == set(obs_keys)
+
+
+def test_get_observation_attribute(db_info):
+    populated_db, _ = db_info
+    rdb_connection = connections.get_rdb_connection(populated_db)
+    with RdbApi(connection=rdb_connection) as rdb_api:
+        obs_attrib = rdb_api.get_observation_attribute(
+            name="observation_one", attribute="region"
+        )
+        assert obs_attrib == "1"
+
+
+def test_get_observation_attributes(db_info):
+    populated_db, _ = db_info
+    rdb_connection = connections.get_rdb_connection(populated_db)
+    with RdbApi(connection=rdb_connection) as rdb_api:
+        obs_attribs = rdb_api.get_observation_attributes(name="observation_one")
+        assert obs_attribs is not None
+        assert len(obs_attribs) == 1
+
+
+def test_get_observation(db_info):
+    populated_db, _ = db_info
+    rdb_connection = connections.get_rdb_connection(populated_db)
+    with RdbApi(connection=rdb_connection) as rdb_api:
+        obs = rdb_api.get_observation(name="observation_one")
+        assert obs is not None
+        assert obs.name == "observation_one"
+
+
+def test_get_parameter(db_info):
+    populated_db, db_lookup = db_info
+    rdb_connection = connections.get_rdb_connection(populated_db)
+    with RdbApi(connection=rdb_connection) as rdb_api:
+        param = rdb_api.get_parameter(
+            name="A", group="G", realization_index=0, ensemble_name="ensemble_name"
         )
