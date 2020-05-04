@@ -111,9 +111,6 @@ class FlaskWrapper:
             resolve_ref_uri(ensemble, ensemble_id)
             return ensemble
 
-    def realizations(self, ensemble_id):
-        pass
-
     def realization_by_id(self, ensemble_id, realization_idx):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             realization = api.get_realization(ensemble_id, realization_idx, None)
@@ -125,6 +122,8 @@ class FlaskWrapper:
     def response_by_name(self, ensemble_id, response_name):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             response = api.get_response(ensemble_id, response_name, None)
+            if response is None:
+                raise werkzeug_exc.NotFound()
             resolve_ref_uri(response, ensemble_id)
             return response
 
@@ -139,6 +138,8 @@ class FlaskWrapper:
     def data(self, data_id):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             data = api.get_data(data_id)
+            if data is None:
+                raise werkzeug_exc.NotFound()
             if isinstance(data, list):
                 return ",".join([str(x) for x in data])
             else:
