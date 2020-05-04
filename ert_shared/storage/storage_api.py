@@ -118,6 +118,8 @@ class StorageApi(object):
             bundle = rdb_api.get_response_bundle(
                 response_name=response_name, ensemble_id=ensemble_id
             )
+            if bundle is None:
+                return None
 
             observation_links = bundle.observation_links
             responses = bundle.responses
@@ -179,8 +181,10 @@ class StorageApi(object):
 
     def get_data(self, id):
         with self._blob_api as blob_api:
-            return_data = blob_api.get_blob(id).data
-        return return_data
+            blob = blob_api.get_blob(id)
+        if blob is None:
+            return None
+        return blob.data
 
     def get_observation(self, name):
         with self._rdb_api as rdb_api:
