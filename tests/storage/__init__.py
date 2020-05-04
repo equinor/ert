@@ -196,4 +196,8 @@ def db_info(tmpdir):
     add_data(realization_1, response_def=response_definition_one, ens=ensemble)
 
     repository.commit()
+    ######## add blob #########
+    data_blob = add_blob([0, 1, 2, 3])
+    db_lookup["data_blob"] = data_blob
+
     yield (db_url, db_lookup)

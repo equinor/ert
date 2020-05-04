@@ -17,6 +17,9 @@ def test_response(db_info):
         assert len(schema["observations"]) == 1
         assert len(schema["observations"][0]["data"]) == 5
 
+        schema = api.get_response(db_lookup["ensemble"], "response_not_existing", None)
+        assert schema is None
+
 
 def test_ensembles(db_info):
     populated_db, db_lookup = db_info
@@ -166,3 +169,12 @@ def test_single_observation_misfit_calculation(db_info):
             univariate_misfit["realizations"][0]["univariate_misfits"]
             == misfit_expected
         )
+
+
+def test_data(db_info):
+    populated_db, db_lookup = db_info
+    with StorageApi(rdb_url=populated_db, blob_url=populated_db) as api:
+        blob = api.get_data(db_lookup["data_blob"])
+        assert blob is not None
+        blob = api.get_data("non_existing")
+        assert blob is None
