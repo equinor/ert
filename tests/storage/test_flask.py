@@ -121,3 +121,8 @@ def test_parameter(test_client):
     assert schema["key"] == "key1"
     assert schema["group"] == "group"
     assert schema["prior"]["function"] == "function"
+
+
+def test_blob_404(test_client):
+    resp = test_client.get("/data/notfound")
+    assert resp.status_code == 404
