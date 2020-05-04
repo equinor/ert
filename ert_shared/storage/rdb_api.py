@@ -381,13 +381,18 @@ class RdbApi:
         # responsedefinition : observation, indexes_ref
         # realizations : index
         # response : values_ref
-        return (
-            self._session.query(ResponseDefinition)
-            .join(Response, ResponseDefinition.id == Response.response_definition_id)
-            .filter(ResponseDefinition.name == response_name)
-            .filter(ResponseDefinition.ensemble_id == ensemble_id)
-            .one()
-        )
+        try:
+            return (
+                self._session.query(ResponseDefinition)
+                .join(
+                    Response, ResponseDefinition.id == Response.response_definition_id
+                )
+                .filter(ResponseDefinition.name == response_name)
+                .filter(ResponseDefinition.ensemble_id == ensemble_id)
+                .one()
+            )
+        except NoResultFound:
+            return None
 
     def add_prior(self, group, key, function, parameter_names, parameter_values):
         msg = "Adding prior with group '{}', key '{}', function '{}'"
