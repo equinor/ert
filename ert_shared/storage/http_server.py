@@ -181,6 +181,8 @@ class FlaskWrapper:
         """
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             js = request.get_json()
+            if not js["attributes"]:
+                raise werkzeug_exc.BadRequest()
             for k, v in js["attributes"].items():
                 obs = api.set_observation_attribute(name, k, v)
                 if obs is None:
