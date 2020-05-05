@@ -1,4 +1,5 @@
 import time
+import logging
 from res.job_queue import JobStatusType
 from res.job_queue import ForwardModelStatus
 from res.util import ResLog
@@ -204,6 +205,40 @@ class BaseRunModel(object):
     def is_forward_model_finished(progress):
         return not (any((job.status != 'Success' for job in progress)))
 
+    def update_progress_for_index(self, iteration, idx, run_arg):
+        if not self._run_context.is_active(idx):
+            return
+        try:
+            # will throw if not yet submitted (is in a limbo state)
+            queue_index = run_arg.getQueueIndex()
+        except ValueError:
+            return
+
+        status = None
+        if self._job_queue:
+            status = self._job_queue.getJobStatus(queue_index)
+
+        if status in [
+                JobStatusType.JOB_QUEUE_PENDING,
+                JobStatusType.JOB_QUEUE_SUBMITTED,
+                JobStatusType.JOB_QUEUE_WAITING
+                ]:
+            return
+
+        fms = self.realization_progress[iteration].get(run_arg.iens, None)
+
+        #Dont load from file if you are finished
+        if fms and BaseRunModel.is_forward_model_finished(fms[0]):
+            jobs = self.realization_progress[iteration][run_arg.iens][0]
+        else:
+            fms = ForwardModelStatus.load(run_arg.runpath, num_retry=1)
+            if not fms:
+                return
+
+            jobs = fms.jobs
+        self.realization_progress[iteration][run_arg.iens] = jobs, status
+
+
     @job_queue({})
     def updateDetailedProgress(self):
         if not self._run_context:
@@ -212,38 +247,21 @@ class BaseRunModel(object):
         iteration = self._run_context.get_iter()
         if iteration not in self.realization_progress:
             self.realization_progress[iteration] = {}
-        for idx, run_arg in enumerate(self._run_context):
-            if not self._run_context.is_active(idx):
-                continue
-            try:
-                # will throw if not yet submitted (is in a limbo state)
-                queue_index = run_arg.getQueueIndex()
-            except ValueError:
-                continue
 
-            status = None
-            if self._job_queue:
-                status = self._job_queue.getJobStatus(queue_index)
-
-            if status in [
-                    JobStatusType.JOB_QUEUE_PENDING,
-                    JobStatusType.JOB_QUEUE_SUBMITTED,
-                    JobStatusType.JOB_QUEUE_WAITING
-                    ]:
-                continue
-
-            fms = self.realization_progress[iteration].get(run_arg.iens, None)
-
-            #Dont load from file if you are finished
-            if fms and BaseRunModel.is_forward_model_finished(fms[0]):
-                jobs = self.realization_progress[iteration][run_arg.iens][0]
+        try:
+            # Run context might be set to None by concurrent threads,
+            # which will results in an Attribute Error
+            for idx, run_arg in enumerate(self._run_context):
+                self.update_progress_for_index(iteration, idx, run_arg)
+        except AttributeError as e:
+            if self._run_context is None:
+                logging.debug(
+                    "Ignoring exception in run model (run_context is None): {}".format(
+                        str(e)
+                    )
+                )
             else:
-                fms = ForwardModelStatus.load(run_arg.runpath, num_retry=1)
-                if not fms:
-                    continue
-
-                jobs = fms.jobs
-            self.realization_progress[iteration][run_arg.iens] = jobs, status
+                raise
 
     def getDetailedProgress(self):
         self.updateDetailedProgress()
