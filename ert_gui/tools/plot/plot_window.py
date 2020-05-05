@@ -105,6 +105,8 @@ class PlotWindow(QMainWindow):
                 if key_def["has_refcase"]:
                     plot_context.refcase_data = self._api.refcase_data(key)
 
+                plot_context.log_scale = key_def["log_scale"]
+
                 plot_widget.updatePlot(plot_context, case_to_data_map, observations)
 
     def _updateCustomizer(self, plot_widget):

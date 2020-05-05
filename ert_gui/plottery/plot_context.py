@@ -16,6 +16,7 @@ class PlotContext(object):
         self._cases = cases
         self._plot_config = plot_config
         self.refcase_data = None
+        self._log_scale = False
 
         self._date_support_active = True
         self._x_axis = None
@@ -63,3 +64,11 @@ class PlotContext(object):
         if not value in PlotContext.AXIS_TYPES:
             raise UserWarning("Axis: '%s' is not one of: %s" % (value, PlotContext.AXIS_TYPES))
         self._y_axis = value
+
+    @property
+    def log_scale(self):
+        return self._log_scale
+
+    @log_scale.setter
+    def log_scale(self, value):
+        self._log_scale = value

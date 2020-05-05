@@ -105,7 +105,8 @@ class PlotApiTest(TestCase):
             'index_type': 'VALUE',
             'key': 'FOPR',
             'metadata': {'data_origin': 'Summary'},
-            'observations': ['FOPR']
+            'observations': ['FOPR'],
+            'log_scale': False,
         }
 
         self.assertEqual(expected, fopr)

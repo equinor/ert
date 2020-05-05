@@ -10,13 +10,19 @@ class PlotApi(object):
     def all_data_type_keys(self):
         """ Returns a list of all the keys except observation keys. For each key a dict is returned with info about
             the key"""
+
+        all_keys = self._facade.all_data_type_keys()
+        log_keys = [k[6:] for k in all_keys if k.startswith("LOG10_")]
+
         return [{"key": key,
                  "index_type": self._key_index_type(key),
                  "observations": self._facade.observation_keys(key),
                  "has_refcase": self._facade.has_refcase(key),
                  "dimensionality": self._dimensionality_of_key(key),
-                 "metadata": self._metadata(key)}
-                for key in self._facade.all_data_type_keys()]
+                 "metadata": self._metadata(key),
+                 "log_scale": key in log_keys}
+                for key in all_keys]
+
 
     def _metadata(self, key):
         meta = {}
