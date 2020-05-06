@@ -1,5 +1,6 @@
 import re
 import shutil
+import six
 
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QToolBar, QMessageBox, QSizePolicy, QFileDialog
@@ -8,6 +9,10 @@ from ert_gui.ertwidgets import SearchBox, resourceIcon
 from ert_gui.ide.highlighter import KeywordHighlighter
 from ert_shared.ide.keywords.definitions.path_argument import PathArgument
 from ert_gui.tools.ide import IdePanel
+
+
+if six.PY2:
+    from io import open
 
 
 class ConfigurationPanel(QWidget):
