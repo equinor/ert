@@ -291,18 +291,19 @@ class ObservationResponseDefinitionLink(Entities):
     observation = relationship(
         "Observation", back_populates="response_definition_links"
     )
-
+    update_id = Column(Integer, ForeignKey("updates.id"))
     __table_args__ = (
         UniqueConstraint(
             "response_definition_id",
             "observation_id",
-            name="_uc_observation_resp_def_link_response_definition_observation_",
+            "update_id",
+            name="_uc_observation_resp_def_link_response_definition_update_observation_",
         ),
     )
 
     def __repr__(self):
-        return "<ObservationResponseDefinitionLink(response_definition_id='{}', observation_id='{}')>".format(
-            self.response_definition_id, self.observation_id,
+        return "<ObservationResponseDefinitionLink(response_definition_id='{}', observation_id='{}', update_id='{}')>".format(
+            self.response_definition_id, self.observation_id, self.update_id
         )
 
 
