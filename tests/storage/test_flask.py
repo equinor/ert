@@ -27,28 +27,21 @@ def test_client(db_info):
 
 def test_api(test_client):
     response = test_client.get("/ensembles")
-    print(response.data)
-    print(response.mimetype)
     ensembles = json.loads(response.data)
 
     for ens in ensembles["ensembles"]:
-        print("########## ENSEMBLE #############")
         url = ens["ref_url"]
         ensemble = json.loads(test_client.get(url).data)
         pprint.pprint(ensemble)
 
         for real in ensemble["realizations"]:
-            print("########## ENSEMBLE - realization #############")
             realization = json.loads(test_client.get(real["ref_url"]).data)
             pprint.pprint(realization)
 
             for response in realization["responses"]:
-                print("########## ENSEMBLE - realization - response #############")
                 response_data = test_client.get(response["data_url"])
-                print(response_data.data)
 
         for response in ensemble["responses"]:
-            print("########## ENSEMBLE - response #############")
             response_data = test_client.get(response["ref_url"])
             pprint.pprint(json.loads(response_data.data))
 
