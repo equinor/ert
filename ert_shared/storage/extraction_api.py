@@ -174,6 +174,8 @@ def _extract_and_dump_update_data(ensemble_id, ensemble_name, rdb_api, blob_api)
     realizations = MisfitCollector.createActiveList(ERT.ert, fs)
 
     active_observations = _extract_active_observations(facade)
+    ensemble = rdb_api.get_ensemble_by_id(ensemble_id=ensemble_id)
+    update_id = ensemble.parent.id if ensemble.parent is not None else None
 
     for obs_vector in facade.get_observations():
         observation_key = obs_vector.getObservationKey()
@@ -191,6 +193,7 @@ def _extract_and_dump_update_data(ensemble_id, ensemble_name, rdb_api, blob_api)
             observation_id=observation.id,
             response_definition_id=response_definition.id,
             active_ref=active_blob.id if active_observations is not None else None,
+            update_id=update_id,
         )
         for realization_number in realizations:
             response = rdb_api.get_response(

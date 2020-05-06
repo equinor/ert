@@ -71,7 +71,7 @@ before_install:
     - export CONDA_HOME="$HOME/miniconda"
     - export PATH="$CONDA_HOME/bin:$PATH"
     - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-        conda config --set restore_free_channel true;        
+        conda config --set restore_free_channel true;
         conda create -n ert_env pyqt=4.11.3 python=2.7 --yes;
       else
         conda create -n ert_env pyqt python=$TRAVIS_PYTHON_VERSION --yes;
