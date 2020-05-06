@@ -9,7 +9,8 @@ from ert_shared.storage.model import ParameterPrior
 from ert_shared.storage.rdb_api import RdbApi
 
 from res.enkf.export import MisfitCollector
-
+import logging
+logger = logging.getLogger(__file__)
 
 def _create_ensemble(rdb_api, reference, priors):
     if not ((reference is None) ^ (len(priors) == 0)):
@@ -209,7 +210,7 @@ def dump_to_new_storage(reference=None, rdb_connection=None, blob_connection=Non
         return
 
     start_time = time.time()
-    print("Starting extraction...")
+    logger.debug("Starting extraction...")
     if rdb_connection is None:
         rdb_url = "sqlite:///entities.db"
         rdb_connection = connections.get_rdb_connection(rdb_url)
@@ -240,8 +241,8 @@ def dump_to_new_storage(reference=None, rdb_connection=None, blob_connection=Non
         ensemble_name = ensemble.name
 
         end_time = time.time()
-        print("Extraction done... (Took {:.2f} seconds)".format(end_time - start_time))
-        print(
+        logger.debug("Extraction done... (Took {:.2f} seconds)".format(end_time - start_time))
+        logger.debug(
             "All ensembles in database: {}".format(
                 ", ".join([ensemble.name for ensemble in rdb_api.get_all_ensembles()])
             )
