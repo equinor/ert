@@ -9,6 +9,10 @@ GCC_VERSION=7.3.0 CMAKE_VERSION=3.10.2 source ${SDPSOFT}/env.sh
 
 GIT=${SDPSOFT}/bin/git
 
+# Killing ert spawn an eternal loop. Issue occurs when tests segfault.
+# See ert/issues/705, libecl/issues/694 and libecl/pull/700
+export ECL_SKIP_SIGNAL=1
+
 if [[ -z "${sha1// }" ]]; then
     # this is not a PR build, the komodo everest verison is checked out
     EV=$(cat ${RELEASE_PATH}/${RELEASE_NAME} | grep "${PROJECT}:" -A2 | grep "version:")
