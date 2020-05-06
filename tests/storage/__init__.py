@@ -145,18 +145,21 @@ def db_info(tmpdir):
         observation_id=observation_one.id,
         response_definition_id=response_definition_one.id,
         active_ref=add_blob([True, False]),
+        update_id=None,
     )
 
     repository._add_observation_response_definition_link(
         observation_id=observation_two_first.id,
         response_definition_id=response_definition_two.id,
         active_ref=add_blob([True]),
+        update_id=None,
     )
 
     repository._add_observation_response_definition_link(
         observation_id=observation_two_second.id,
         response_definition_id=response_definition_two.id,
         active_ref=add_blob([True]),
+        update_id=None,
     )
     repository.flush()
 
