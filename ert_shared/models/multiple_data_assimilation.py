@@ -20,7 +20,8 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
 from ert_shared.storage.extraction_api import dump_to_new_storage
-
+import logging
+logger = logging.getLogger(__file__)
 class MultipleDataAssimilation(BaseRunModel):
     """
     Run Multiple Data Assimilation (MDA) Ensemble Smoother with custom weights.
@@ -45,11 +46,11 @@ class MultipleDataAssimilation(BaseRunModel):
 
         self.setAnalysisModule(arguments["analysis_module"])
 
-        print("Running MDA ES for %s  iterations\t%s" % (iteration_count, ", ".join(str(weight) for weight in weights)))
+        logger.info("Running MDA ES for %s  iterations\t%s" % (iteration_count, ", ".join(str(weight) for weight in weights)))
         weights = self.normalizeWeights(weights)
 
         weight_string = ", ".join(str(round(weight,3)) for weight in weights)
-        print("Running MDA ES on (weights normalized)\t%s" % weight_string)
+        logger.info("Running MDA ES on (weights normalized)\t%s" % weight_string)
 
 
         self.setPhaseCount(iteration_count+2) # pre + post + weights
@@ -61,7 +62,6 @@ class MultipleDataAssimilation(BaseRunModel):
         for iteration, weight in enumerate(weights):
             run_context = self.create_context( arguments , iteration,  prior_context = run_context )
             self._simulateAndPostProcess(run_context, arguments )
-            print("Case:", ERT.enkf_facade.get_current_case_name())
 
             EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=ERT.ert)
             self.update( run_context , weights[iteration])
@@ -148,7 +148,7 @@ class MultipleDataAssimilation(BaseRunModel):
             try:
                 f = float(element)
                 if f == 0:
-                    print('Warning: 0 weight, will ignore')
+                    logger.info('Warning: 0 weight, will ignore')
                 else:
                     result.append(f)
             except ValueError:
