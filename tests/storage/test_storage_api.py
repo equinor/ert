@@ -1,5 +1,4 @@
 import json
-import pprint
 
 import pytest
 from ert_shared.storage.blob_api import BlobApi
