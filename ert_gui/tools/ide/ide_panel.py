@@ -36,7 +36,7 @@ class IdePanel(QPlainTextEdit):
         text_cursor = self.textCursor()
         user_data = text_cursor.block().userData()
 
-        if user_data is not None:
+        if user_data is not None and hasattr(user_data, "configuration_line"):
             configuration_line = user_data.configuration_line
 
             if configuration_line.keyword().hasKeywordDefinition():
