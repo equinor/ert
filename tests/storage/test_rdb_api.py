@@ -466,3 +466,6 @@ def test_get_parameter(db_info):
         param = rdb_api.get_parameter(
             name="A", group="G", realization_index=0, ensemble_name="ensemble_name"
         )
+        assert param.parameter_definition.name == "A"
+        assert param.parameter_definition.group == "G"
+        assert param.realization.index == 0
