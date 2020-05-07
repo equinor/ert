@@ -35,7 +35,6 @@ def _extract_and_dump_observations(rdb_api, blob_api):
     ]
 
     measured_data = MeasuredData(facade, observation_keys)
-    # TODO: Should save all info and info about deactivation
 
     measured_data.remove_inactive_observations()
     observations = measured_data.data.loc[["OBS", "STD"]]
