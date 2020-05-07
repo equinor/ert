@@ -2,7 +2,7 @@ import time
 
 from ert_data.measured import MeasuredData
 from ert_shared import ERT
-from ert_shared.feature_toggling import FeatureToggling
+from ert_shared.feature_toggling import feature_enabled
 from ert_shared.storage import connections
 from ert_shared.storage.blob_api import BlobApi
 from ert_shared.storage.model import ParameterPrior
@@ -208,10 +208,8 @@ def _extract_and_dump_update_data(ensemble_id, ensemble_name, rdb_api, blob_api)
                 value=misfit_value, link_id=link.id, response_id=response.id
             )
 
-
+@feature_enabled("new-storage")
 def dump_to_new_storage(reference=None, rdb_connection=None, blob_connection=None):
-    if not FeatureToggling.is_enabled("new-storage"):
-        return
 
     start_time = time.time()
     logger.debug("Starting extraction...")
