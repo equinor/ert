@@ -101,6 +101,7 @@ script:
   - pip install . --prefix=$INSTALL_DIR
   # For easy compare of installed versions once a version fails
   - pip list
+  - python -m black --check ert_shared/storage
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       xvfb-run python setup.py test;
     else
