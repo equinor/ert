@@ -1,6 +1,103 @@
 Release Notes
 =============
 
+Version 2.10
+------------
+
+Highlighted changes
+~~~~~~~~~~~~~~~~~~~
+
+Change in shell script behaviour
+################################
+
+The shell script jobs will no longer interpret the first path relative to the
+configuration file. This implies that if you want to copy a file from the area
+around your configuration file to the runpath, the following copying will not
+work anymore:
+
+.. code-block:: none
+
+   FORWARD_MODEL COPY_FILE(<FROM>=my_files/data.txt, <TO>=data.txt)
+
+And the reason is that it is not possible to deduce whether the intent was to
+copy a file relative to your configuration file or whether you wanted to copy
+(or delete) something that is already in your runpath. This led to mysterious
+and strange errors. From now on, you will have to explicitly ask for the path
+to be relative to your configuration file using the ``<CONFIG_PATH>`` magic
+string:
+
+.. code-block:: none
+
+   FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/my_files/data.txt, <TO>=data.txt)
+
+The above change takes effect for the following shell scripts:
+  - ``CAREFUL_COPY_FILE``
+  - ``COPY_DIRECTORY``
+  - ``COPY_FILE``
+  - ``DELETE_DIRECTORY``
+  - ``DELETE_FILE``
+  - ``MAKE_DIRECTORY``
+  - ``MAKE_SYMLINK``
+  - ``MOVE_FILE``
+  - ``SCRIPT``
+  - ``SYMLINK``
+
+Python 3 compatible CSV-export
+##############################
+
+``CSV_EXPORT2`` has been added as Python 3 compatible alternative to ``CSV_EXPORT1``.
+
+2.10 ERT application
+~~~~~~~~~~~~~~~~~~~~
+
+Improvements:
+  - Improve documentation on ARGSLIST
+  - Enable RML_ENKF in default ERT installation
+
+Bug fixes:
+  - Fixed jumping cursor when filling in ES MDA weights
+  - Fixed Python exception on exit
+  - Logarithmic distributions are now plotted with correct axis type. The
+    values themselves on a logarithmic scale, and the exponents on a linear
+    scale.
+  - Do not terminate on exception in RunContext due to race condition
+  - [Python 2] Fix saving unicode configuration files
+
+Other changes:
+  - Lower bound matplotlib version for Python 3
+  - Remove cwrap from install requirements
+  - Separate plotting from data by an API
+  - Add Jinja2 as an install dependency
+
+4.0 libres
+~~~~~~~~~~~~
+
+Breaking changes:
+  - The shell script jobs will no longer interpret the first path relative to
+    the configuration file.
+
+Bug fixes:
+  - Use workflow future to determine running status
+  - Give queue index in queue error message
+  - Ensure integer division when making CPU list
+
+2.9 libecl
+~~~~~~~~~~
+
+Improvements:
+  - Pip-installable libecl
+  - Improved identification of rate and total (cumulative) keywords
+
+0.2.2 semeio
+~~~~~~~~~~~~
+
+Highlighted changes
+  - Add CSV_EXPORT2 as Python 3 compatible alternative to CSV_EXPORT1
+
+Bug fixes:
+  - Add string representation to TrajectoryPoint for backwards compatibility
+
+
 Version 2.9
 -----------
 
