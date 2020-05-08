@@ -72,18 +72,25 @@ def test_observation(test_client):
 def test_get_single_observation(test_client):
     resp = test_client.get("/observation/observation_one")
     obs = json.loads(resp.data)
-    expected = {
-        "attributes": {"region": "1"},
-        "name": "observation_one",
-        "data": {
-            "data_indexes": {"data_ref": 2},
-            "key_indexes": {"data_ref": 1},
-            "std": {"data_ref": 4},
-            "values": {"data_ref": 3},
-        },
-    }
 
-    assert obs == expected
+    assert obs["attributes"] == {"region": "1"}
+    assert obs["name"] == "observation_one"
+
+    key_indexes_url = obs["data"]["key_indexes"]["data_url"]
+    key_indexes = test_client.get(key_indexes_url).data
+    assert key_indexes == b"0,3"
+
+    data_indexes_url = obs["data"]["data_indexes"]["data_url"]
+    data_indexes = test_client.get(data_indexes_url).data
+    assert data_indexes == b"2,3"
+
+    values_url = obs["data"]["values"]["data_url"]
+    values = test_client.get(values_url).data
+    assert values == b"10.1,10.2"
+
+    stds_url = obs["data"]["std"]["data_url"]
+    stds = test_client.get(stds_url).data
+    assert stds == b"1,3"
 
 
 def test_get_ensemble_id_404(test_client):
