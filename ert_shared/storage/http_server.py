@@ -151,6 +151,7 @@ class FlaskWrapper:
         """Return an observation."""
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             obs = api.get_observation(name)
+            resolve_ref_uri(obs)
             if obs is None:
                 raise werkzeug_exc.NotFound()
             return obs
@@ -199,5 +200,4 @@ def run_server(args):
         rdb_url="sqlite:///entities.db", blob_url="sqlite:///blobs.db"
     )
     (bind_host, bind_port) = args.bind.split(":")
-
     wrapper.app.run(host=bind_host, port=bind_port, debug=args.debug)

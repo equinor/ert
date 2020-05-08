@@ -2,6 +2,7 @@ from ert_shared.feature_toggling import feature_enabled
 from ert_shared.storage.autoclient import AutoClient
 from ert_shared.storage.client import StorageClient
 
+
 @feature_enabled("new-storage")
 def create_client(args):
 
