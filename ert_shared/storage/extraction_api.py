@@ -208,6 +208,7 @@ def _extract_and_dump_update_data(ensemble_id, ensemble_name, rdb_api, blob_api)
                 value=misfit_value, link_id=link.id, response_id=response.id
             )
 
+
 @feature_enabled("new-storage")
 def dump_to_new_storage(reference=None, rdb_connection=None, blob_connection=None):
 
