@@ -84,6 +84,7 @@ def test_dump_parameters(db_connection):
             blob_api=blob_api,
             parameters=parameters,
             ensemble_name=ensemble.name,
+            priors=[],
         )
         blob_api.commit()
         rdb_api.commit()

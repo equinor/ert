@@ -66,7 +66,7 @@ def _dump_observations(rdb_api, blob_api, observations):
         )
 
 
-def _extract_and_dump_parameters(rdb_api, blob_api, ensemble_name):
+def _extract_and_dump_parameters(rdb_api, blob_api, ensemble_name, priors):
     facade = ERT.enkf_facade
 
     parameter_keys = [
@@ -81,13 +81,14 @@ def _extract_and_dump_parameters(rdb_api, blob_api, ensemble_name):
         blob_api=blob_api,
         parameters=all_parameters,
         ensemble_name=ensemble_name,
+        priors=priors,
     )
 
 
-def _dump_parameters(rdb_api, blob_api, parameters, ensemble_name):
+def _dump_parameters(rdb_api, blob_api, parameters, ensemble_name, priors):
     for key, parameter in parameters.items():
         group, name = key.split(":")
-        prior = rdb_api.find_prior(key=name, group=group)
+        prior = next((x for x in priors if x.key == name and x.group == group), None)
         parameter_definition = rdb_api.add_parameter_definition(
             name=name, group=group, ensemble_name=ensemble_name, prior=prior
         )
@@ -233,7 +234,10 @@ def dump_to_new_storage(reference=None, rdb_connection=None, blob_connection=Non
         _extract_and_dump_observations(rdb_api=rdb_api, blob_api=blob_api)
 
         _extract_and_dump_parameters(
-            rdb_api=rdb_api, blob_api=blob_api, ensemble_name=ensemble.name
+            rdb_api=rdb_api,
+            blob_api=blob_api,
+            ensemble_name=ensemble.name,
+            priors=priors,
         )
         _extract_and_dump_responses(
             rdb_api=rdb_api, blob_api=blob_api, ensemble_name=ensemble.name
