@@ -148,7 +148,7 @@ class StorageClient(object):
 
             df = pd.read_csv(response["alldata_url"], header=None)
             indexes = axis_request(response["axis"]["data_url"])
-            arrays = [[key] * len(indexes), indexes]
+            df.columns = indexes
             break
 
         # Parameter key - we only check if necessary
@@ -161,10 +161,6 @@ class StorageClient(object):
 
                 df = pd.read_csv(parameter["alldata_url"], header=None)
 
-            arrays = [[key] * len(df.columns), df.columns]
-
-        index = pd.MultiIndex.from_arrays(arrays, names=("key", "index"))
-        df.columns = index
         return df
 
     def observations_for_obs_keys(self, case, obs_keys):
