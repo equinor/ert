@@ -46,7 +46,6 @@ def plotCrossCaseStatistics(figure, plot_context, case_to_data_map, _observation
         std_dev_factor = config.getStandardDeviationFactor()
 
         if not data.empty:
-            data = data[0]
             data = _assertNumeric(data)
             if not data is None:
                 ccs["index"].append(case_index)
