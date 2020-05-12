@@ -67,7 +67,7 @@ def _plotDistribution(axes, plot_config, data, label, index, previous_data):
     axes.set_ylabel(plot_config.yLabel())
 
     style = plot_config.distributionStyle()
-    data = data[0]
+
     if data.dtype == "object":
         try:
             data = pd.to_numeric(data, errors='coerce')
@@ -82,7 +82,7 @@ def _plotDistribution(axes, plot_config, data, label, index, previous_data):
         if plot_config.isDistributionLineEnabled() and previous_data is not None:
             line_style = plot_config.distributionLineStyle()
             x = [index - 1, index]
-            y = [previous_data, data]
+            y = [previous_data[0], data]
             lines = axes.plot(x, y, color=line_style.color, alpha=line_style.alpha, linestyle=line_style.line_style, linewidth=line_style.width)
 
     if len(dots) > 0:
