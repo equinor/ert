@@ -94,7 +94,7 @@ class PlotWindow(QMainWindow):
                 self._updateCustomizer(plot_widget)
                 cases = self._case_selection_widget.getPlotCaseNames()
                 case_to_data_map = {
-                    case: self._api.data_for_key(case, key)[key] for case in cases
+                    case: self._api.data_for_key(case, key) for case in cases
                 }
                 if len(key_def["observations"]) > 0:
                     observations = self._api.observations_for_obs_keys(

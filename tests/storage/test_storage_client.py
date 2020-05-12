@@ -104,13 +104,8 @@ def test_response_values(server_url):
     api = StorageClient(base_url=server_url)
     result = api.data_for_key(case="ensemble_name", key="response_one")
 
-    idx = pd.MultiIndex.from_arrays(
-        [
-            ["response_one", "response_one", "response_one", "response_one"],
-            [3, 5, 8, 9],
-        ],
-        names=["key", "index"],
-    )
+    idx = [3, 5, 8, 9]
+
     expected = pd.DataFrame(
         [[11.1, 11.1], [11.2, 11.2], [9.9, 9.9], [9.3, 9.3]], index=idx
     ).T
@@ -120,27 +115,14 @@ def test_response_values(server_url):
     result = api.data_for_key(case="ensemble_name", key="response_two")
 
     format = "%Y-%m-%d %H:%M:%S"
-    idx = pd.MultiIndex.from_arrays(
-        [
-            [
-                "response_two",
-                "response_two",
-                "response_two",
-                "response_two",
-                "response_two",
-                "response_two",
-            ],
-            [
-                datetime.strptime("2000-01-01 20:01:01", format),
-                datetime.strptime("2000-01-02 20:01:01", format),
-                datetime.strptime("2000-01-02 20:01:01", format),
-                datetime.strptime("2000-01-02 20:01:01", format),
-                datetime.strptime("2000-01-02 20:01:01", format),
-                datetime.strptime("2000-01-02 20:01:01", format),
-            ],
-        ],
-        names=["key", "index"],
-    )
+    idx = [
+        datetime.strptime("2000-01-01 20:01:01", format),
+        datetime.strptime("2000-01-02 20:01:01", format),
+        datetime.strptime("2000-01-02 20:01:01", format),
+        datetime.strptime("2000-01-02 20:01:01", format),
+        datetime.strptime("2000-01-02 20:01:01", format),
+        datetime.strptime("2000-01-02 20:01:01", format),
+    ]
 
     expected = pd.DataFrame(
         [
