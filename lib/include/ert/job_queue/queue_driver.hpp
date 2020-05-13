@@ -51,7 +51,6 @@ extern "C" {
   typedef void (free_queue_driver_ftype) (void *);
   typedef bool (set_option_ftype) (void *, const char*, const void *);
   typedef const void * (get_option_ftype) (const void *, const char *);
-  typedef bool (has_option_ftype) (const void *, const char *);
   typedef void (init_option_list_ftype) (stringlist_type *);
 
 

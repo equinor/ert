@@ -71,7 +71,6 @@ struct queue_driver_struct {
   free_queue_driver_ftype * free_driver;
   set_option_ftype * set_option;
   get_option_ftype * get_option;
-  has_option_ftype * has_option;
   init_option_list_ftype * init_options;
 
   void * data; /* Driver specific data - passed as first argument to the driver functions above. */
@@ -209,7 +208,6 @@ static queue_driver_type * queue_driver_alloc_empty() {
   driver->free_driver = NULL;
   driver->get_option = NULL;
   driver->set_option = NULL;
-  driver->has_option = NULL;
   driver->name = NULL;
   driver->data = NULL;
   driver->max_running_string = NULL;
@@ -244,7 +242,6 @@ queue_driver_type * queue_driver_alloc(job_driver_type type) {
       driver->free_driver = lsf_driver_free__;
       driver->set_option = lsf_driver_set_option;
       driver->get_option = lsf_driver_get_option;
-      driver->has_option = lsf_driver_has_option;
       driver->name = util_alloc_string_copy("LSF");
       driver->init_options = lsf_driver_init_option_list;
       driver->data = lsf_driver_alloc();

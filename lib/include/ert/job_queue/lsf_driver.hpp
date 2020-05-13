@@ -92,7 +92,6 @@ typedef struct lsf_job_struct    lsf_job_type;
   void lsf_driver_add_exclude_hosts( lsf_driver_type * driver , const char * excluded);
   lsf_submit_method_enum lsf_driver_get_submit_method( const lsf_driver_type * driver );
 
-  bool            lsf_driver_has_option( const void * __driver , const char * option_key);
   const  void   * lsf_driver_get_option( const void * __driver , const char * option_key);
   bool            lsf_driver_set_option( void * __driver , const char * option_key , const void * value);
   bool            lsf_driver_has_project_code( const lsf_driver_type * driver );
