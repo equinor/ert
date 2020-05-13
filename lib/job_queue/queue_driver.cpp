@@ -214,7 +214,7 @@ static queue_driver_type * queue_driver_alloc_empty() {
   driver->data = NULL;
   driver->max_running_string = NULL;
   driver->init_options = NULL;
-
+  driver->blacklist_node = NULL;
   queue_driver_set_generic_option__(driver, MAX_RUNNING, "0");
 
   return driver;
@@ -252,7 +252,6 @@ queue_driver_type * queue_driver_alloc(job_driver_type type) {
     case LOCAL_DRIVER:
       driver->submit = local_driver_submit_job;
       driver->get_status = local_driver_get_job_status;
-      driver->blacklist_node = NULL;
       driver->kill_job = local_driver_kill_job;
       driver->free_job = local_driver_free_job;
       driver->free_driver = local_driver_free__;
@@ -263,7 +262,6 @@ queue_driver_type * queue_driver_alloc(job_driver_type type) {
     case RSH_DRIVER:
       driver->submit = rsh_driver_submit_job;
       driver->get_status = rsh_driver_get_job_status;
-      driver->blacklist_node = NULL;
       driver->kill_job = rsh_driver_kill_job;
       driver->free_job = rsh_driver_free_job;
       driver->free_driver = rsh_driver_free__;
@@ -276,7 +274,6 @@ queue_driver_type * queue_driver_alloc(job_driver_type type) {
     case TORQUE_DRIVER:
       driver->submit = torque_driver_submit_job;
       driver->get_status = torque_driver_get_job_status;
-      driver->blacklist_node = NULL;
       driver->kill_job = torque_driver_kill_job;
       driver->free_job = torque_driver_free_job;
       driver->free_driver = torque_driver_free__;
