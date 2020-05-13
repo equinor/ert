@@ -30,7 +30,8 @@ extern "C" {
     LSF_DRIVER = 1,
     LOCAL_DRIVER = 2,
     RSH_DRIVER = 3,
-    TORQUE_DRIVER = 4
+    TORQUE_DRIVER = 4,
+    SLURM_DRIVER = 5
   } job_driver_type;
 
 #define JOB_DRIVER_ENUM_SIZE 5

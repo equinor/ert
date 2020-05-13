@@ -27,6 +27,7 @@
 
 #include <ert/job_queue/torque_driver.hpp>
 #include <ert/job_queue/rsh_driver.hpp>
+#include <ert/job_queue/slurm_driver.hpp>
 
 
 void job_queue_set_driver_(job_driver_type driver_type) {
@@ -151,6 +152,24 @@ void get_driver_option_lists() {
     stringlist_free(option_list);
     queue_driver_free(driver_rsh);
   }
+
+
+  //SLurm driver option list
+  {
+    queue_driver_type * driver_slurm = queue_driver_alloc(SLURM_DRIVER);
+    stringlist_type * option_list = stringlist_alloc_new();
+    queue_driver_init_option_list(driver_slurm, option_list);
+
+    test_assert_true(stringlist_contains(option_list, MAX_RUNNING));
+    test_assert_true(stringlist_contains(option_list, SLURM_SBATCH_OPTION));
+    test_assert_true(stringlist_contains(option_list, SLURM_SCONTROL_OPTION));
+    test_assert_true(stringlist_contains(option_list, SLURM_SQUEUE_OPTION));
+    test_assert_true(stringlist_contains(option_list, SLURM_SCANCEL_OPTION));
+
+    stringlist_free(option_list);
+    queue_driver_free(driver_slurm);
+
+  }
 }
 
 int main(int argc, char ** argv) {
@@ -158,6 +177,7 @@ int main(int argc, char ** argv) {
   job_queue_set_driver_(LOCAL_DRIVER);
   job_queue_set_driver_(RSH_DRIVER);
   job_queue_set_driver_(TORQUE_DRIVER);
+  job_queue_set_driver_(SLURM_DRIVER);
 
   set_option_max_running_max_running_value_set();
   set_option_max_running_max_running_option_set();

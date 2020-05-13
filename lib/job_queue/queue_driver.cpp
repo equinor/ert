@@ -28,6 +28,7 @@
 #include <ert/job_queue/local_driver.hpp>
 #include <ert/job_queue/rsh_driver.hpp>
 #include <ert/job_queue/torque_driver.hpp>
+#include <ert/job_queue/slurm_driver.hpp>
 
 
 /**
@@ -279,6 +280,18 @@ queue_driver_type * queue_driver_alloc(job_driver_type type) {
       driver->name = util_alloc_string_copy("TORQUE");
       driver->init_options = torque_driver_init_option_list;
       driver->data = torque_driver_alloc();
+      break;
+    case SLURM_DRIVER:
+      driver->name = util_alloc_string_copy("SLURM");
+      driver->set_option = slurm_driver_set_option;
+      driver->get_option = slurm_driver_get_option;
+      driver->init_options = slurm_driver_init_option_list;
+      driver->free_driver = slurm_driver_free__;
+      driver->kill_job = slurm_driver_kill_job;
+      driver->free_job = slurm_driver_free_job;
+      driver->submit = slurm_driver_submit_job;
+      driver->get_status = slurm_driver_get_job_status;
+      driver->data = slurm_driver_alloc();
       break;
     default:
       util_abort("%s: unrecognized driver type:%d \n", __func__, type);
