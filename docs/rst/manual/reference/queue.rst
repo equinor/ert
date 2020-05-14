@@ -12,6 +12,7 @@ A number of queue systems are pre-installed with ERT.
 - ``LOCAL``
 - ``LSF``
 - ``TORQUE``
+- ``SLURM``
 - ``RSH`` — `deprecated`
 
 The ``LOCAL`` queue system will, unsurprisingly, run all computations locally,
@@ -129,6 +130,35 @@ The most basic invocation is in other words:
     QUEUE_SYSTEM TORQUE
 
 See the :ref:`list of all TORQUE configuration options <torque_list_of_kwds>`.
+
+
+SLURM
+-----
+
+Slurm is an open source queue system with many of the same capabilites as LSF.
+The Slurm support in ERT assumes that the computer you are running on is part of
+the Slurm cluster and no capabilities for ssh forwarding, shell to use and so on
+is provided.
+
+The Slurm support in ERT interacts with the Slurm system by issuing slurm
+commands ``sbatch, sinfo, squeue`` and ``scancel`` and parsing the output from
+these commands. By default the slurm driver will assume that the commands are in
+``PATH`` - i.e. the command to submit will be the equivalent of:
+
+::
+
+     bash% sbatch submit_script.sh
+
+But you can configure which binary should be used by using the ``QUEUE_OPTION
+SLURM ..`` configuration command:
+
+::
+
+    QUEUE_OPTION SLURM SBATCH  /path/to/special/sbatch
+    QUEUE_OPTION SLURM SINFO   /path/to/special/sinfo
+    QUEUE_OPTION SLURM SQUEUEU /path/to/special/sqeueue
+    QUEUE_OPTION SLURM SCANCEL /path/to/special/scancel
+
 
 NUM_CPU
 -------
