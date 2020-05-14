@@ -27,6 +27,7 @@
 #include <ert/job_queue/lsf_driver.hpp>
 #include <ert/job_queue/rsh_driver.hpp>
 #include <ert/job_queue/local_driver.hpp>
+#include <ert/job_queue/slurm_driver.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 
 #include <ert/config/config_parser.hpp>
@@ -182,6 +183,8 @@ const char * queue_config_get_queue_system(const queue_config_type * queue_confi
             return LOCAL_DRIVER_NAME;
         case TORQUE_DRIVER:
             return TORQUE_DRIVER_NAME;
+        case SLURM_DRIVER:
+            return SLURM_DRIVER_NAME;
         default:
             return NULL;
     }
@@ -255,6 +258,7 @@ void queue_config_create_queue_drivers(queue_config_type * queue_config) {
   queue_config_add_queue_driver(queue_config, TORQUE_DRIVER_NAME, queue_driver_alloc_TORQUE());
   queue_config_add_queue_driver(queue_config, RSH_DRIVER_NAME, queue_driver_alloc_RSH(NULL, NULL));
   queue_config_add_queue_driver(queue_config, LOCAL_DRIVER_NAME, queue_driver_alloc_local());
+  queue_config_add_queue_driver(queue_config, SLURM_DRIVER_NAME, queue_driver_alloc_slurm());
 }
 
 
@@ -281,6 +285,8 @@ static bool queue_config_init(queue_config_type * queue_config, const config_con
       queue_config->driver_type = LOCAL_DRIVER;
     else if (strcmp(queue_system, TORQUE_DRIVER_NAME) == 0)
       queue_config->driver_type = TORQUE_DRIVER;
+    else if (strcmp(queue_system, SLURM_DRIVER_NAME) == 0)
+      queue_config->driver_type = SLURM_DRIVER;
     else {
       util_abort("%s: queue system :%s not recognized \n", __func__, queue_system);
       queue_config->driver_type = NULL_DRIVER;

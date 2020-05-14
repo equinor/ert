@@ -65,3 +65,16 @@ class QueueConfigTest(ResTest):
             queue_config_file = QueueConfig(user_config_file=config_file)
             queue_config_dict = QueueConfig(config_dict=config_dict)
             self.assertEqual(queue_config_dict, queue_config_file)
+
+    def test_get_slurm_queue_config(self):
+        with TestAreaContext("queue_config_slurm_test") as work_area:
+            work_area.copy_directory(self.case_directory)
+
+            config_file = "simple_config/slurm_config"
+            queue_config = QueueConfig(config_file)
+            self.assertEqual(queue_config.queue_system, "SLURM")
+
+            driver = queue_config.driver
+            self.assertEqual(driver.get_option("SBATCH"), "/path/to/sbatch")
+            self.assertEqual(driver.get_option("SCONTROL"), "scontrol")
+            self.assertEqual(driver.name, "SLURM")

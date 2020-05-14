@@ -59,6 +59,7 @@ extern "C" {
   queue_driver_type * queue_driver_alloc_LSF(const char * queue_name, const char * resource_request, const char * remote_lsf_server);
   queue_driver_type * queue_driver_alloc_TORQUE();
   queue_driver_type * queue_driver_alloc_local();
+  queue_driver_type * queue_driver_alloc_slurm();
   queue_driver_type * queue_driver_alloc(job_driver_type type);
 
   void * queue_driver_submit_job(queue_driver_type * driver, const char * run_cmd, int num_cpu, const char * run_path, const char * job_name, int argc, const char ** argv);

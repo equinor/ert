@@ -28,18 +28,20 @@ class QueueDriverEnum(BaseCEnum):
     LOCAL_DRIVER = None
     RSH_DRIVER = None
     TORQUE_DRIVER = None
+    SLURM_DRIVER = None
 
 QueueDriverEnum.addEnum( "NULL_DRIVER" , 0 )
 QueueDriverEnum.addEnum( "LSF_DRIVER" , 1 )
 QueueDriverEnum.addEnum( "LOCAL_DRIVER" , 2 )
 QueueDriverEnum.addEnum( "RSH_DRIVER" , 3 )
 QueueDriverEnum.addEnum( "TORQUE_DRIVER" , 4 )
+QueueDriverEnum.addEnum( "SLURM_DRIVER" , 5 )
 
 
 LSF_DRIVER   = QueueDriverEnum.LSF_DRIVER
 RSH_DRIVER   = QueueDriverEnum.RSH_DRIVER
 LOCAL_DRIVER = QueueDriverEnum.LOCAL_DRIVER
-
+SLURM_DRIVER = QueueDriverEnum.SLURM_DRIVER
 
 
 class Driver(BaseCClass):
@@ -143,5 +145,4 @@ class RSHDriver(Driver):
         for (host, host_max) in rsh_host_list:
             options.append(("RSH_HOST", "%s:%d" % (host, host_max)))
         Driver.__init__(self, QueueDriverEnum.RSH_DRIVER, max_running, options=options)
-
 

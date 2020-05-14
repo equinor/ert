@@ -365,6 +365,11 @@ queue_driver_type * queue_driver_alloc_local() {
   return driver;
 }
 
+queue_driver_type * queue_driver_alloc_slurm() {
+    queue_driver_type * driver = queue_driver_alloc(SLURM_DRIVER);
+    return driver;
+}
+
 /* These are the functions used by the job_queue layer. */
 
 void * queue_driver_submit_job(queue_driver_type * driver, const char * run_cmd, int num_cpu, const char * run_path, const char * job_name, int argc, const char ** argv) {

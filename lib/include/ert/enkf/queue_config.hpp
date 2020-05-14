@@ -34,6 +34,7 @@ extern "C" {
 #define LOCAL_DRIVER_NAME  "LOCAL"
 #define RSH_DRIVER_NAME    "RSH"
 #define TORQUE_DRIVER_NAME "TORQUE"
+#define SLURM_DRIVER_NAME  "SLURM"
 
 
 typedef struct queue_config_struct queue_config_type;
