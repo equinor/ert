@@ -201,6 +201,7 @@ void * status_job__( void * arg ) {
         if (util_is_file(run_file)) {
           bool status_true = (status == JOB_QUEUE_RUNNING) ||
             (status == JOB_QUEUE_SUBMITTED ||
+             (status == JOB_QUEUE_PENDING) ||
              (status == JOB_QUEUE_RUNNING_DONE_CALLBACK) ||
              (status == JOB_QUEUE_RUNNING_EXIT_CALLBACK) ||
              (status == JOB_QUEUE_DONE));
@@ -276,17 +277,25 @@ int main(int argc , char ** argv) {
   const int submit_threads = number_of_jobs / 10 ;
   const int status_threads = number_of_jobs + 1;
   const char * job = util_alloc_abs_path(argv[1]);
+  const std::string driver_name = argv[2];
   rng_type * rng = rng_alloc( MZRAN , INIT_CLOCK );
   bool user_exit;
   ecl::util::TestArea ta("stress_test");
   job_type **jobs = alloc_jobs( rng , number_of_jobs , job);
 
   job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK", "STATUS", "ERROR");
-  queue_driver_type * driver = queue_driver_alloc_local();
   job_queue_manager_type * queue_manager = job_queue_manager_alloc( queue );
+  queue_driver_type * driver = nullptr;
+
+  if (driver_name == "LOCAL")
+    driver = queue_driver_alloc_local();
+  else if (driver_name == "SLURM")
+    driver = queue_driver_alloc_slurm();
+  else
+    util_exit("Driver type: %s not recognized - only LOCAL and SLURM allowed\n", driver_name.c_str());
 
   util_install_signals();
-  util_sscanf_bool(argv[2] , &user_exit);
+  util_sscanf_bool(argv[3] , &user_exit);
   job_queue_set_driver(queue, driver);
   job_queue_manager_start_queue(queue_manager, 0, false );
 

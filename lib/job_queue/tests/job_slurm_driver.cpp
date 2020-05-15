@@ -39,6 +39,8 @@ void test_options() {
   test_option(driver, SLURM_SCANCEL_OPTION, "my_funny_scancel");
   test_option(driver, SLURM_SQUEUE_OPTION, "my_funny_squeue");
   test_option(driver, SLURM_SCONTROL_OPTION, "my_funny_scontrol");
+  test_option(driver, SLURM_SQUEUE_TIMEOUT_OPTION, "11");
+  test_assert_false( slurm_driver_set_option(driver, "SLURM_SQUEUE_TIMEOUT_OPTION", "NOT_INTEGER"));
   test_assert_false( slurm_driver_set_option(driver, "NO_SUCH_OPTION", "Value"));
   slurm_driver_free( driver );
 }

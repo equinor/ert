@@ -39,6 +39,7 @@ extern "C" {
 #define SLURM_SCONTROL_OPTION   "SCONTROL"
 #define SLURM_SQUEUE_OPTION  "SQUEUE"
 #define SLURM_PARTITION_OPTION "PARTITION"
+#define SLURM_SQUEUE_TIMEOUT_OPTION "SQUEUE_TIMEOUT"
 
 typedef struct slurm_driver_struct slurm_driver_type;
 typedef struct slurm_job_struct    slurm_job_type;

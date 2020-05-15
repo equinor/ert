@@ -160,12 +160,14 @@ void get_driver_option_lists() {
     stringlist_type * option_list = stringlist_alloc_new();
     queue_driver_init_option_list(driver_slurm, option_list);
 
+    stringlist_fprintf(option_list, ", ", stdout);
     test_assert_true(stringlist_contains(option_list, MAX_RUNNING));
     test_assert_true(stringlist_contains(option_list, SLURM_SBATCH_OPTION));
     test_assert_true(stringlist_contains(option_list, SLURM_SCONTROL_OPTION));
     test_assert_true(stringlist_contains(option_list, SLURM_SQUEUE_OPTION));
     test_assert_true(stringlist_contains(option_list, SLURM_SCANCEL_OPTION));
     test_assert_true(stringlist_contains(option_list, SLURM_PARTITION_OPTION));
+    test_assert_true(stringlist_contains(option_list, SLURM_SQUEUE_TIMEOUT_OPTION));
 
     stringlist_free(option_list);
     queue_driver_free(driver_slurm);
