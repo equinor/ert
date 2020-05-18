@@ -62,6 +62,8 @@ class StorageClient(object):
         """
 
         ensembles = ref_request("{base}/ensembles".format(base=self._BASE_URI))
+        if not ensembles["ensembles"]:
+            return []
         ens_schema = ref_request(ensembles["ensembles"][0]["ref_url"])
 
         def obs_for_response(ref_url):
