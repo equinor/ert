@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'si-build' }
+    agent { label 'scout-ci' }
     parameters {
         string(defaultValue: "bleeding-py36", description: 'The komodo relase to be used', name: 'RELEASE_NAME')
         string(defaultValue: "/prog/res/komodo", description: 'Root folder for komodo', name: 'KOMODO_ROOT')
