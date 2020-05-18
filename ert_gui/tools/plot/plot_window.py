@@ -82,6 +82,8 @@ class PlotWindow(QMainWindow):
 
     def currentPlotChanged(self):
         key_def = self.getSelectedKey()
+        if key_def is None:
+            return
         key = key_def["key"]
 
         for plot_widget in self._plot_widgets:
@@ -119,6 +121,8 @@ class PlotWindow(QMainWindow):
     def _updateCustomizer(self, plot_widget):
         """ @type plot_widget: PlotWidget """
         key_def = self.getSelectedKey()
+        if key_def is None:
+            return
         index_type = key_def["index_type"]
 
         x_axis_type = PlotContext.UNKNOWN_AXIS
