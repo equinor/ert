@@ -37,7 +37,7 @@ if "target_file" in config:
 
 with open('env.json', 'w') as f:
     env = {}
-    for key in ("PATH", "RMS_TEST_VAR", "PYTHONPATH"):
+    for key in ("PATH", "RMS_TEST_VAR", "PYTHONPATH", "_PRE_RMS_PYTHONPATH", "_PRE_RMS_BACKUP"):
         if key in os.environ:
             env[key] = os.environ[key]
 

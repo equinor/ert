@@ -150,10 +150,12 @@ class RMSRun(object):
         if self.config.threads:
             args += ["-threads", str(self.config.threads)]
 
-        if exec_env:
-            os.execve(self.config.executable, args, exec_env)
-        else:
-            os.execv(self.config.executable, args)
+        if not exec_env:
+            exec_env = os.environ.copy()
+        exec_env["_PRE_RMS_BACKUP"] = "1"
+        if "PYTHONPATH" in os.environ:
+            exec_env["_PRE_RMS_PYTHONPATH"] = os.environ["PYTHONPATH"]
+        os.execve(self.config.executable, args, exec_env)
 
 
     @staticmethod
