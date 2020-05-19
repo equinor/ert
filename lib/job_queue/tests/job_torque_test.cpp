@@ -49,7 +49,21 @@ void setoption_setalloptions_optionsset() {
   test_assert_true( torque_driver_set_option( driver , TORQUE_SUBMIT_SLEEP , "0.25"));
   test_assert_int_equal( 250000 , torque_driver_get_submit_sleep(driver));
 
-  test_assert_true( torque_driver_set_option( driver , TORQUE_DEBUG_OUTPUT , "/tmp/torqueue_debug.txt"));
+  char tmp_path[] = "/tmp/torque_debug_XXXXXX";
+  // We do not strictly need the file, we are only interested in a path name
+  // tmpnam is however deprecated in favor of mkstemp, and no good substitute
+  // for tmpnam (with similar functionality) was found.
+  int fd = mkstemp(tmp_path);
+
+  if (fd == -1) {
+    printf("Unable to create dummy log file");
+    exit(1);
+  }
+
+  close(fd);
+  unlink(tmp_path);
+
+  test_assert_true( torque_driver_set_option( driver , TORQUE_DEBUG_OUTPUT , tmp_path));
   test_assert_not_NULL( torque_driver_get_debug_stream(driver) );
 
   test_option(driver, TORQUE_QSUB_CMD      , NULL);
