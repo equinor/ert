@@ -23,6 +23,7 @@
 #include <dlfcn.h>
 #include <unistd.h>
 
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -36,7 +37,15 @@
 #include <ert/job_queue/slurm_driver.hpp>
 
 
-class SlurmJob {
+struct SlurmJob {
+  SlurmJob(int job_id) :
+    job_id(job_id),
+    string_id(std::to_string(job_id))
+  {
+  }
+
+  int job_id;
+  std::string string_id;
 };
 
 
@@ -176,10 +185,53 @@ void slurm_driver_init_option_list(stringlist_type * option_list) {
 }
 
 
+static std::string make_submit_script(const char * cmd, int num_cpu, int argc, const char ** argv) {
+  char * submit        = (char*) util_alloc_tmp_file("/tmp" , "slurm-submit" , true);
+
+  FILE * submit_stream = util_fopen(submit, "w");
+  fprintf(submit_stream, "#!/bin/sh\n");
+
+  fprintf(submit_stream, "%s", cmd);  // Without srun?
+  for (int iarg=0; iarg < argc; iarg++)
+    fprintf(submit_stream, " %s", argv[iarg]);
+  fprintf(submit_stream, "\n");
+
+  fclose(submit_stream);
+  chmod(submit, S_IRWXU + S_IRGRP + S_IROTH);
+
+  std::string submit_script = submit;
+  free( submit );
+  return submit_script;
+}
+
+
+/*
+ The slurm jobs are submitted by first creating a submit script, which is a
+ small shell which contains the command to run along with possible slurm
+ options, and then this script is submitted with the 'sbatch' command.
+*/
+
 void * slurm_driver_submit_job( void * __driver, const char * cmd, int num_cpu, const char * run_path, const char * job_name, int argc, const char ** argv) {
   slurm_driver_type * driver = slurm_driver_safe_cast( __driver );
-  SlurmJob * job = nullptr;
-  return job;
+
+  auto submit_script = make_submit_script( cmd, num_cpu, argc, argv);
+  std::vector<std::string> sbatch_argv = {"--workdir=" + std::string(run_path), "--job-name=" + std::string(job_name), "--parsable"};
+  if (!driver->partition.empty())
+    sbatch_argv.push_back( "--partition=" + driver->partition );
+  sbatch_argv.push_back( submit_script );
+
+
+  auto file_content = load_stdout(driver->sbatch_cmd.c_str(), sbatch_argv);
+  util_unlink_existing( submit_script.c_str() );
+
+  int job_id;
+  try {
+    job_id = std::stoi(file_content);
+  } catch (std::invalid_argument& exc) {
+    return nullptr;
+  }
+
+  return new SlurmJob(job_id);
 }
 
 
@@ -191,6 +243,12 @@ job_status_type slurm_driver_get_job_status(void * __driver , void * __job) {
 
 void slurm_driver_kill_job(void * __driver , void * __job ) {
   slurm_driver_type * driver = slurm_driver_safe_cast( __driver );
+  const auto * job = static_cast<const SlurmJob*>(__job);
+  const char ** argv = static_cast<const char **>(util_calloc( 1, sizeof * argv ));
+
+  argv[0] = job->string_id.c_str();
+  util_spawn_blocking(driver->scancel_cmd.c_str(), 1, argv, nullptr, nullptr);
+  free(argv);
 }
 
 void slurm_driver_free_job(void * __job) {

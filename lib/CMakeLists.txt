@@ -454,6 +454,7 @@ foreach(name job_status_test
              job_lsf_test
              job_queue_driver_test
              job_slurm_driver
+             job_mock_slurm
              job_torque_test
              job_queue_manager)
 
@@ -462,6 +463,17 @@ foreach(name job_status_test
     target_link_libraries(${name} res)
     add_test(NAME ${name} COMMAND ${name})
 endforeach()
+
+find_program(SBATCH "sbatch")
+foreach(name job_slurm_submit)
+  add_executable(${name} job_queue/tests/${name}.cpp)
+  target_include_directories(${name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private-include)
+  target_link_libraries(${name} res)
+  if (SBATCH)
+    add_test(NAME ${name} COMMAND ${name})
+  endif()
+endforeach()
+
 
 foreach(name job_loadOK
              ext_joblist_test
