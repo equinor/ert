@@ -52,6 +52,7 @@ struct slurm_driver_struct {
   std::string scancel_cmd;
   std::string squeue_cmd;
   std::string scontrol_cmd;
+  std::string partition;
 };
 
 
@@ -92,6 +93,9 @@ const void * slurm_driver_get_option( const void * __driver, const char * option
   if (strcmp(option_key, SLURM_SQUEUE_OPTION) == 0)
     return driver->squeue_cmd.c_str();
 
+  if (strcmp(option_key, SLURM_PARTITION_OPTION) == 0)
+    return driver->partition.c_str();
+
   return nullptr;
 }
 
@@ -118,11 +122,17 @@ bool slurm_driver_set_option( void * __driver, const char * option_key, const vo
     return true;
   }
 
+  if (strcmp(option_key, SLURM_PARTITION_OPTION) == 0) {
+    driver->partition = static_cast<const char*>(value);
+    return true;
+  }
+
   return false;
 }
 
 
 void slurm_driver_init_option_list(stringlist_type * option_list) {
+  stringlist_append_copy(option_list, SLURM_PARTITION_OPTION);
   stringlist_append_copy(option_list, SLURM_SBATCH_OPTION);
   stringlist_append_copy(option_list, SLURM_SCONTROL_OPTION);
   stringlist_append_copy(option_list, SLURM_SQUEUE_OPTION);

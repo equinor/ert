@@ -34,6 +34,7 @@ void test_option(slurm_driver_type * driver , const char * option , const char *
 
 void test_options() {
   slurm_driver_type * driver = (slurm_driver_type *) slurm_driver_alloc();
+  test_option(driver, SLURM_PARTITION_OPTION, "my_partition");
   test_option(driver, SLURM_SBATCH_OPTION, "my_funny_sbatch");
   test_option(driver, SLURM_SCANCEL_OPTION, "my_funny_scancel");
   test_option(driver, SLURM_SQUEUE_OPTION, "my_funny_squeue");

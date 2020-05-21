@@ -165,6 +165,7 @@ void get_driver_option_lists() {
     test_assert_true(stringlist_contains(option_list, SLURM_SCONTROL_OPTION));
     test_assert_true(stringlist_contains(option_list, SLURM_SQUEUE_OPTION));
     test_assert_true(stringlist_contains(option_list, SLURM_SCANCEL_OPTION));
+    test_assert_true(stringlist_contains(option_list, SLURM_PARTITION_OPTION));
 
     stringlist_free(option_list);
     queue_driver_free(driver_slurm);
