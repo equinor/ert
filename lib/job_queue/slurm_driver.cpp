@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include <string>
+#include <vector>
 
 #include <ert/util/util.hpp>
 #include <ert/util/stringlist.hpp>
@@ -54,6 +55,41 @@ struct slurm_driver_struct {
   std::string scontrol_cmd;
   std::string partition;
 };
+
+static std::string load_file(const char * fname) {
+    char * buffer = util_fread_alloc_file_content(fname, nullptr);
+    std::string s = buffer;
+    free(buffer);
+    return s;
+}
+
+
+static std::string load_stdout(const char * cmd, int argc, const char ** argv) {
+    std::string fname = std::string(cmd) + "-stdout";
+    char * stdout = (char*) util_alloc_tmp_file("/tmp", fname.c_str(), true);
+
+    auto exit_status = util_spawn_blocking(cmd, argc, argv, stdout, nullptr);
+    auto file_content = load_file(stdout);
+
+    if (exit_status != 0)
+      res_log_fwarning("Calling shell command %s ... returned non zero exitcode: %d", cmd, exit_status);
+
+    util_unlink_existing(stdout);
+    free(stdout);
+    return file_content;
+}
+
+
+static std::string load_stdout(const char * cmd, const std::vector<std::string>& args) {
+    const char ** argv = static_cast<const char **>(util_calloc( args.size(), sizeof * argv ));
+    for (std::size_t i=0; i < args.size(); i++)
+        argv[i] = args[i].c_str();
+
+    auto file_content = load_stdout(cmd, args.size(), argv);
+    free(argv);
+    return file_content;
+}
+
 
 
 UTIL_SAFE_CAST_FUNCTION( slurm_driver , SLURM_DRIVER_TYPE_ID)
