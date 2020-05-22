@@ -308,6 +308,8 @@ def ert_parser(parser, argv):
 
 
 def main():
+    import ert_logging  # Only use ert logger config when running ERT
+
     args = ert_parser(None, sys.argv[1:])
     if args.verbose:
         logger = logging.getLogger()
