@@ -305,12 +305,18 @@ void slurm_driver_init_option_list(stringlist_type * option_list) {
   stringlist_append_copy(option_list, SLURM_SQUEUE_TIMEOUT_OPTION);
 }
 
-
+/*
+  Slurm allows very fine control over how a parallel job should be distributed
+  over available nodes and CPUs, the current approach is an absolutely simplest
+  way - where we just say how many processors we will need in total with the
+  --ntasks=$num_cpu setting.
+*/
 static std::string make_submit_script(const char * cmd, int num_cpu, int argc, const char ** argv) {
   char * submit        = (char*) util_alloc_tmp_file("/tmp" , "slurm-submit" , true);
 
   FILE * submit_stream = util_fopen(submit, "w");
   fprintf(submit_stream, "#!/bin/sh\n");
+  fprintf(submit_stream, "#SBATCH --ntasks=%d\n", num_cpu);
 
   fprintf(submit_stream, "%s", cmd);  // Without srun?
   for (int iarg=0; iarg < argc; iarg++)
