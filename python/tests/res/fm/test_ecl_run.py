@@ -28,6 +28,8 @@ from ecl.util.test import TestAreaContext
 from tests import ResTest
 from tests.utils import tmpdir
 from res.fm.ecl import *
+from res.fm.ecl.ecl_run import make_SLURM_machine_list
+from subprocess import Popen, PIPE
 from subprocess import Popen, PIPE
 from distutils.spawn import find_executable
 from _pytest.monkeypatch import MonkeyPatch
@@ -497,3 +499,38 @@ class EclRunTest(ResTest):
 
         self.assertEqual( error_list[0], error0)
         self.assertEqual( error_list[1], error1)
+
+
+
+    def test_slurm_env_parsing(self):
+        host_list = make_SLURM_machine_list("ws", "2")
+        self.assertEqual(host_list, ["ws", "ws"])
+
+        host_list = make_SLURM_machine_list("ws1,ws2", "2,3")
+        self.assertEqual( host_list, ["ws1", "ws1", "ws2", "ws2", "ws2"])
+
+        host_list = make_SLURM_machine_list("ws[1-3]", "1,2,3")
+        self.assertEqual( host_list, ["ws1", "ws2", "ws2", "ws3", "ws3", "ws3"])
+
+        host_list = make_SLURM_machine_list("ws[1,3]", "1,3")
+        self.assertEqual( host_list, ["ws1", "ws3", "ws3", "ws3"])
+
+        host_list = make_SLURM_machine_list("ws[1-3,6-8]", "1,2,3,1,2,3")
+        self.assertEqual( host_list, ["ws1", "ws2", "ws2", "ws3", "ws3", "ws3",
+                                      "ws6", "ws7", "ws7", "ws8", "ws8", "ws8"])
+
+        host_list = make_SLURM_machine_list("ws[1-3,6-8]", "2(x2),3,1,2(x2)")
+        self.assertEqual( host_list, ["ws1", "ws1",
+                                      "ws2", "ws2",
+                                      "ws3", "ws3", "ws3",
+                                      "ws6",
+                                      "ws7", "ws7",
+                                      "ws8", "ws8"])
+
+        host_list = make_SLURM_machine_list("ws[1-3,6],ws[7-8]", "2(x2),3,1,2(x2)")
+        self.assertEqual( host_list, ["ws1", "ws1",
+                                      "ws2", "ws2",
+                                      "ws3", "ws3", "ws3",
+                                      "ws6",
+                                      "ws7", "ws7",
+                                      "ws8", "ws8"])

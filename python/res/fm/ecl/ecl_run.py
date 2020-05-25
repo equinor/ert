@@ -34,6 +34,84 @@ def make_LSB_MCPU_machine_list( LSB_MCPU_HOSTS ):
     return host_list
 
 
+def _expand_SLURM_range(rs):
+    if "-" in rs:
+        tmp = rs.split("-")
+        return range(int(tmp[0]), int(tmp[1]) + 1)
+    else:
+        return [int(rs)]
+
+
+def _expand_SLURM_node(node_string):
+    match_object = re.match(r"(?P<base>[^[]+)\[(?P<range>[-0-9,]+)\]", node_string)
+    if match_object:
+        node_list = []
+        base = match_object.groupdict()["base"]
+        range_string = match_object.groupdict()["range"]
+        for rs in range_string.split(","):
+            for num in _expand_SLURM_range(rs):
+                node_list.append("{}{}".format(base, num))
+        return node_list
+    else:
+        return [ node_string ]
+
+
+def _expand_SLURM_task_count(task_count_string):
+    match_object = re.match(r"(?P<count>\d+)(\(x(?P<mult>\d+)\))?", task_count_string)
+    if match_object:
+        match_dict = match_object.groupdict()
+        print(match_dict)
+        count = int(match_dict["count"])
+        mult_string = match_dict["mult"]
+        if mult_string is None:
+            mult = 1
+        else:
+            mult = int(mult_string)
+
+        return [ count ] * mult
+    else:
+        raise Exception("Failed to parse SLURM_TASKS_PER_NODE: {}".format(task_count_string))
+
+
+
+
+# The list of available machines/nodes and how many tasks each node should get
+# is available in the slurm environment variables SLURM_JOB_NODELIST and
+# SLURM_TASKS_PER_NODE. These string variables are in an incredibly compact
+# notation, and there are some hoops to expand them. The short description is:
+#
+#  1. They represent flat lists of hostnames and the number of cpu's on that
+#     host respectively.
+#
+#  2. The outer structure is a ',' separated lis.
+#
+#  3. The items in SLURM_JOB_NODELIST have a compact notation
+#     base-[n1-n2,n3-n4] which is expanded to the nodelist: [base-n1,
+#     base-n1+1, base-n1+2, ... , base-n4-1, base-n4]
+#
+#  4. The SLURM_TASK_PER_NODE items has the compact notation 3(x4) which
+#     implies that four consecutive nodes (from the expanded
+#     SLURM_JOB_NODELIST) should have three CPUs each.
+#
+# For further details see the sbatch manual page.
+
+def make_SLURM_machine_list( SLURM_JOB_NODELIST, SLURM_TASKS_PER_NODE):
+    # We split on ',' - but not on ',' which is inside a [...]
+    split_re = ",(?![^[]*\\])"
+    nodelist = []
+    for node_string in re.split(split_re, SLURM_JOB_NODELIST):
+        nodelist += _expand_SLURM_node( node_string )
+
+    task_count_list = []
+    for task_count_string in SLURM_TASKS_PER_NODE.split(","):
+        task_count_list += _expand_SLURM_task_count( task_count_string )
+
+    host_list = []
+    for node, count in zip(nodelist, task_count_list):
+        host_list += [ node ] * count
+
+    return host_list
+
 
 def make_LSB_machine_list( LSB_HOSTS ):
     return LSB_HOSTS.split()
@@ -163,10 +241,14 @@ class EclRun(object):
                 machine_list = LSB_machine_list
             else:
                 raise Exception("LSF / MPI problems. Asked for:%s cpu. LSB_MCPU_HOSTS: \"%s\"  LSB_HOSTS: \"%s\"" % (self.num_cpu , LSB_MCPU_HOSTS , LSB_HOSTS))
+        elif os.getenv("SLURM_JOB_NODELIST"):
+            machine_list = make_SLURM_machine_list( os.getenv("SLURM_JOB_NODELIST"),
+                                                    os.getenv("SLURM_TASKS_PER_NODE") )
+            if len(machine_list) != self.num_cpu:
+                raise Exception("SLURM / MPI problems - asked for {} - got {} nodes".format(self.num_cpu, len(machine_list)))
         else:
             localhost = socket.gethostname()
             machine_list = [ localhost ] * self.num_cpu
-
 
         self.machine_file = "%s.mpi" % self.base_name
         with open( self.machine_file , "w") as fileH:
