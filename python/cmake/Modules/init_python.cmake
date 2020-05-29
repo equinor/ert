@@ -50,27 +50,16 @@
 # Downstream projects should use this as:
 #
 # include( init_python )
-# init_python( 2.7 )
+# init_python()
 # ...
 
-macro(init_python target_version)
+macro(init_python)
 
    FIND_PACKAGE(PythonInterp)
    if (NOT DEFINED PYTHON_EXECUTABLE)
       message(WARNING "Python interpreter not found - Python wrappers not enabled")
       set( BUILD_PYTHON OFF PARENT_SCOPE )
       return()
-   endif()
-
-   if (PYTHON_VERSION_MAJOR EQUAL 3)
-      if (NOT PYTHON_VERSION_MINOR EQUAL 6)
-          message(WARNING "Python 3 is only tested and verified against Python 3.6. Found version: ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR} - Python wrappers are enabled, but not guaranteed to work.")
-      endif()
-   elseif (PYTHON_VERSION_MAJOR EQUAL 2)
-      if (NOT PYTHON_VERSION_MINOR EQUAL 7)
-          message(FATAL_ERROR "Running Python 2, only Python 2.7 is supported. Found version: ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}")
-          return()
-      endif()
    endif()
 
    if (EXISTS "/etc/debian_version")
@@ -83,7 +72,6 @@ macro(init_python target_version)
    set(CTEST_PYTHONPATH ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX})
    configure_python_env( )
    include(add_python_test)
-   include(find_python_package) 
    include(add_python_package)
 endmacro()
 
