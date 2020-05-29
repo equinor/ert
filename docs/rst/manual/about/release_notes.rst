@@ -1,6 +1,40 @@
 Release Notes
 =============
 
+Version 2.11
+------------
+
+Highlighted changes
+~~~~~~~~~~~~~~~~~~~
+
+New database
+############
+
+A new storage implementation has been made. The aim is that this will end up
+as a more robust storage solution and that it will serve as a large step
+towards the future of ERT. The solution is still experimental and **should not be
+used for classified data** as of now. To enable the new storate solution use the
+command line option `--enable-new-storage` when launching ERT. Note that it
+will have to be used while running a case for the data to reside in the new
+storage, but that the same data will also be available in the old storage if
+you afterwards open ERT without the new storage enabled.
+
+.. code-block:: none
+
+   >>>> ert .... --enable-new-storage
+
+0.4.0 semeio
+~~~~~~~~~~~~
+New features:
+  - Implemented Misfit preprocessor which will allow the user to run a pipeline of jobs to account for correlated observations
+
+Improvements:
+  - Added reporter functionality to output data to common storage
+  - Correlated observations scaling uses SemeioScript with reporter in place of ErtScript
+  - Improve error messages in design_kw
+  - Correlated observation scaling will report singular values
+  - Correlated observation scaling will report scale factor
+
 Version 2.10
 ------------
 
