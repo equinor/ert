@@ -27,6 +27,7 @@ you afterwards open ERT without the new storage enabled.
 ~~~~~~~~~~~~
 New features:
   - Implemented Misfit preprocessor which will allow the user to run a pipeline of jobs to account for correlated observations
+  - Implemented new CSV_EXPORT2 job which utilizes fmu-ensemble to do the export.
 
 Improvements:
   - Added reporter functionality to output data to common storage
