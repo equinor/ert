@@ -311,12 +311,14 @@ void slurm_driver_init_option_list(stringlist_type * option_list) {
   way - where we just say how many processors we will need in total with the
   --ntasks=$num_cpu setting.
 */
-static std::string make_submit_script(const char * cmd, int num_cpu, int argc, const char ** argv) {
+static std::string make_submit_script(const char * cmd, const char * job_name, int num_cpu, int argc, const char ** argv) {
   char * submit        = (char*) util_alloc_tmp_file("/tmp" , "slurm-submit" , true);
 
   FILE * submit_stream = util_fopen(submit, "w");
   fprintf(submit_stream, "#!/bin/sh\n");
   fprintf(submit_stream, "#SBATCH --ntasks=%d\n", num_cpu);
+  fprintf(submit_stream, "#SBATCH --output=%s.stdout\n", job_name);
+  fprintf(submit_stream, "#SBATCH --error=%s.stderr\n", job_name);
 
   fprintf(submit_stream, "%s", cmd);  // Without srun?
   for (int iarg=0; iarg < argc; iarg++)
@@ -341,7 +343,7 @@ static std::string make_submit_script(const char * cmd, int num_cpu, int argc, c
 void * slurm_driver_submit_job( void * __driver, const char * cmd, int num_cpu, const char * run_path, const char * job_name, int argc, const char ** argv) {
   slurm_driver_type * driver = slurm_driver_safe_cast( __driver );
 
-  auto submit_script = make_submit_script( cmd, num_cpu, argc, argv);
+  auto submit_script = make_submit_script( cmd, job_name, num_cpu, argc, argv);
   std::vector<std::string> sbatch_argv = {"--workdir=" + std::string(run_path), "--job-name=" + std::string(job_name), "--parsable"};
   if (!driver->partition.empty())
     sbatch_argv.push_back( "--partition=" + driver->partition );
