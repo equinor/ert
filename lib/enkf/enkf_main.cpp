@@ -683,8 +683,7 @@ static void deserialize_node( enkf_fs_type * target_fs,
   enkf_node_type * node = enkf_node_alloc( config_node );
 
   // If partly active, init node from source fs (deserialize will fill it only in part)
-  if(active_list_get_mode(active_list) != ALL_ACTIVE)
-     enkf_node_load( node , src_fs , node_id);
+  enkf_node_load( node , src_fs , node_id);
 
   // deserialize the matrix into the node (and writes it to the target fs)
   enkf_node_deserialize(node , target_fs , node_id , active_list , A , row_offset , column);
