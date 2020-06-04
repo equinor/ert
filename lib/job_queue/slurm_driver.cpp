@@ -161,6 +161,8 @@ struct slurm_driver_struct {
   std::string squeue_cmd;
   std::string scontrol_cmd;
   std::string partition;
+  std::string memory;
+  std::string memory_per_cpu;
   std::string username;
   std::pair<std::string,int> max_runtime;
   mutable SlurmStatus status;
@@ -253,6 +255,12 @@ const void * slurm_driver_get_option( const void * __driver, const char * option
   if (strcmp(option_key, SLURM_SQUEUE_TIMEOUT_OPTION) == 0)
     return driver->status_timeout_string.c_str();
 
+  if (strcmp(option_key, SLURM_MEMORY_OPTION) == 0)
+    return driver->memory.c_str();
+
+  if (strcmp(option_key, SLURM_MEMORY_PER_CPU_OPTION) == 0)
+    return driver->memory_per_cpu.c_str();
+
   if (strcmp(option_key, SLURM_MAX_RUNTIME_OPTION) == 0)
     return driver->max_runtime.first.c_str();
 
@@ -284,6 +292,16 @@ bool slurm_driver_set_option( void * __driver, const char * option_key, const vo
 
   if (strcmp(option_key, SLURM_PARTITION_OPTION) == 0) {
     driver->partition = static_cast<const char*>(value);
+    return true;
+  }
+
+  if (strcmp(option_key, SLURM_MEMORY_OPTION) == 0) {
+    driver->memory= static_cast<const char*>(value);
+    return true;
+  }
+
+  if (strcmp(option_key, SLURM_MEMORY_PER_CPU_OPTION) == 0) {
+    driver->memory_per_cpu = static_cast<const char*>(value);
     return true;
   }
 
@@ -325,6 +343,8 @@ void slurm_driver_init_option_list(stringlist_type * option_list) {
   stringlist_append_copy(option_list, SLURM_SCANCEL_OPTION);
   stringlist_append_copy(option_list, SLURM_MAX_RUNTIME_OPTION);
   stringlist_append_copy(option_list, SLURM_SQUEUE_TIMEOUT_OPTION);
+  stringlist_append_copy(option_list, SLURM_MEMORY_OPTION);
+  stringlist_append_copy(option_list, SLURM_MEMORY_PER_CPU_OPTION);
 }
 
 /*
@@ -341,6 +361,10 @@ static std::string make_submit_script(const slurm_driver_type * driver, const ch
   fprintf(submit_stream, "#SBATCH --ntasks=%d\n", num_cpu);
   fprintf(submit_stream, "#SBATCH --output=%s.stdout\n", job_name);
   fprintf(submit_stream, "#SBATCH --error=%s.stderr\n", job_name);
+  if (driver->memory.size() > 0)
+    fprintf(submit_stream, "#SBATCH --mem=%s\n", driver->memory.c_str());
+  if (driver->memory_per_cpu.size() > 0)
+    fprintf(submit_stream, "#SBATCH --mem-per-cpu=%s\n", driver->memory_per_cpu.c_str());
   if (driver->max_runtime.second != 0)
     fprintf(submit_stream, "#SBATCH --time=%d\n", driver->max_runtime.second);
 

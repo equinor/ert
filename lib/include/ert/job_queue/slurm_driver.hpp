@@ -44,6 +44,8 @@ extern "C" {
 // Observe that the SLURM_MAX_RUNTIME_OPTION expects a time limit in seconds,
 // whereas slurm uses a time limit in minutes
 #define SLURM_MAX_RUNTIME_OPTION "MAX_RUNTIME"
+#define SLURM_MEMORY_OPTION "MEMORY"
+#define SLURM_MEMORY_PER_CPU_OPTION "MEMORY_PER_CPU"
 
 typedef struct slurm_driver_struct slurm_driver_type;
 typedef struct slurm_job_struct    slurm_job_type;

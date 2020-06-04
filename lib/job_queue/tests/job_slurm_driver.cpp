@@ -41,6 +41,8 @@ void test_options() {
   test_option(driver, SLURM_SCONTROL_OPTION, "my_funny_scontrol");
   test_option(driver, SLURM_SQUEUE_TIMEOUT_OPTION, "11");
   test_option(driver, SLURM_MAX_RUNTIME_OPTION, "11");
+  test_option(driver, SLURM_MEMORY_OPTION, "100mb");
+  test_option(driver, SLURM_MEMORY_PER_CPU_OPTION, "1000gb");
   test_assert_false( slurm_driver_set_option(driver, "SLURM_SQUEUE_TIMEOUT_OPTION", "NOT_INTEGER"));
   test_assert_false( slurm_driver_set_option(driver, "NO_SUCH_OPTION", "Value"));
   slurm_driver_free( driver );

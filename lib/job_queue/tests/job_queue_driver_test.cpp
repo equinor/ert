@@ -169,6 +169,8 @@ void get_driver_option_lists() {
     test_assert_true(stringlist_contains(option_list, SLURM_PARTITION_OPTION));
     test_assert_true(stringlist_contains(option_list, SLURM_SQUEUE_TIMEOUT_OPTION));
     test_assert_true(stringlist_contains(option_list, SLURM_MAX_RUNTIME_OPTION));
+    test_assert_true(stringlist_contains(option_list, SLURM_MEMORY_OPTION));
+    test_assert_true(stringlist_contains(option_list, SLURM_MEMORY_PER_CPU_OPTION));
 
     stringlist_free(option_list);
     queue_driver_free(driver_slurm);
