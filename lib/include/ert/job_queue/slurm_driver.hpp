@@ -47,6 +47,18 @@ extern "C" {
 #define SLURM_MEMORY_OPTION "MEMORY"
 #define SLURM_MEMORY_PER_CPU_OPTION "MEMORY_PER_CPU"
 
+
+// For the EXCLUDE and INCLUDE host options the slurm driver
+// maintains an internal list of hostnames, and the option can be called
+// repeatedly. It is possible to add multiple hosts separated by space or comma
+// in one option call:
+//
+// QUEUE_OPTION SLURM EXCLUDE_HOST host1,host2,host3
+// QUEUE_OPTION SLURM EXCLUDE_HOST host5 host6,host7
+#define SLURM_EXCLUDE_HOST_OPTION "EXCLUDE_HOST"
+#define SLURM_INCLUDE_HOST_OPTION "INCLUDE_HOST"
+
+
 typedef struct slurm_driver_struct slurm_driver_type;
 typedef struct slurm_job_struct    slurm_job_type;
 

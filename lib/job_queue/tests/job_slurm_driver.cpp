@@ -30,6 +30,16 @@ void test_option(slurm_driver_type * driver , const char * option , const char *
   test_assert_string_equal((const char *) slurm_driver_get_option( driver , option) , value);
 }
 
+void test_host_options(slurm_driver_type * driver, const char * option) {
+  test_assert_true(slurm_driver_set_option(driver, option, "host1"));
+  test_assert_string_equal((const char *) slurm_driver_get_option( driver , option) , "host1");
+
+  test_assert_true(slurm_driver_set_option(driver, option, "host2"));
+  test_assert_string_equal((const char *) slurm_driver_get_option( driver , option) , "host1,host2");
+
+  test_assert_true(slurm_driver_set_option(driver, option, "host2 host3,host4"));
+  test_assert_string_equal((const char *) slurm_driver_get_option( driver , option) , "host1,host2,host3,host4");
+}
 
 
 void test_options() {
@@ -45,6 +55,8 @@ void test_options() {
   test_option(driver, SLURM_MEMORY_PER_CPU_OPTION, "1000gb");
   test_assert_false( slurm_driver_set_option(driver, "SLURM_SQUEUE_TIMEOUT_OPTION", "NOT_INTEGER"));
   test_assert_false( slurm_driver_set_option(driver, "NO_SUCH_OPTION", "Value"));
+  test_host_options(driver, SLURM_INCLUDE_HOST_OPTION);
+  test_host_options(driver, SLURM_EXCLUDE_HOST_OPTION);
   slurm_driver_free( driver );
 }
 
