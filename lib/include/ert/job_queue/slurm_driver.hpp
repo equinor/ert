@@ -41,6 +41,10 @@ extern "C" {
 #define SLURM_PARTITION_OPTION "PARTITION"
 #define SLURM_SQUEUE_TIMEOUT_OPTION "SQUEUE_TIMEOUT"
 
+// Observe that the SLURM_MAX_RUNTIME_OPTION expects a time limit in seconds,
+// whereas slurm uses a time limit in minutes
+#define SLURM_MAX_RUNTIME_OPTION "MAX_RUNTIME"
+
 typedef struct slurm_driver_struct slurm_driver_type;
 typedef struct slurm_job_struct    slurm_job_type;
 

@@ -28,6 +28,8 @@
 #include <stdexcept>
 #include <cstddef>
 #include <ctime>
+#include <cmath>
+#include <set>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -160,6 +162,7 @@ struct slurm_driver_struct {
   std::string scontrol_cmd;
   std::string partition;
   std::string username;
+  std::pair<std::string,int> max_runtime;
   mutable SlurmStatus status;
   mutable std::time_t status_timestamp;
   double status_timeout = DEFAULT_SQUEUE_TIMEOUT;
@@ -250,6 +253,9 @@ const void * slurm_driver_get_option( const void * __driver, const char * option
   if (strcmp(option_key, SLURM_SQUEUE_TIMEOUT_OPTION) == 0)
     return driver->status_timeout_string.c_str();
 
+  if (strcmp(option_key, SLURM_MAX_RUNTIME_OPTION) == 0)
+    return driver->max_runtime.first.c_str();
+
   return nullptr;
 }
 
@@ -292,6 +298,21 @@ bool slurm_driver_set_option( void * __driver, const char * option_key, const vo
       return false;
   }
 
+  /*
+    The --time option in slurm which is used to set the maximum runtime of a job
+    is in minutes, whereas the libres option system uses seconds. This is to
+    ensure overall consistency in libres for timeouts.
+  */
+  if (strcmp(option_key, SLURM_MAX_RUNTIME_OPTION) == 0) {
+    const char * string_value = static_cast<const char *>(value);
+    int max_runtime_seconds;
+    if (util_sscanf_int(string_value, &max_runtime_seconds)) {
+      driver->max_runtime = std::make_pair(std::string(string_value), std::ceil(1.0 * max_runtime_seconds / 60));
+      return true;
+    } else
+      return false;
+  }
+
   return false;
 }
 
@@ -302,6 +323,7 @@ void slurm_driver_init_option_list(stringlist_type * option_list) {
   stringlist_append_copy(option_list, SLURM_SCONTROL_OPTION);
   stringlist_append_copy(option_list, SLURM_SQUEUE_OPTION);
   stringlist_append_copy(option_list, SLURM_SCANCEL_OPTION);
+  stringlist_append_copy(option_list, SLURM_MAX_RUNTIME_OPTION);
   stringlist_append_copy(option_list, SLURM_SQUEUE_TIMEOUT_OPTION);
 }
 
@@ -311,7 +333,7 @@ void slurm_driver_init_option_list(stringlist_type * option_list) {
   way - where we just say how many processors we will need in total with the
   --ntasks=$num_cpu setting.
 */
-static std::string make_submit_script(const char * cmd, const char * job_name, int num_cpu, int argc, const char ** argv) {
+static std::string make_submit_script(const slurm_driver_type * driver, const char * cmd, const char * job_name, int num_cpu, int argc, const char ** argv) {
   char * submit        = (char*) util_alloc_tmp_file("/tmp" , "slurm-submit" , true);
 
   FILE * submit_stream = util_fopen(submit, "w");
@@ -319,6 +341,9 @@ static std::string make_submit_script(const char * cmd, const char * job_name, i
   fprintf(submit_stream, "#SBATCH --ntasks=%d\n", num_cpu);
   fprintf(submit_stream, "#SBATCH --output=%s.stdout\n", job_name);
   fprintf(submit_stream, "#SBATCH --error=%s.stderr\n", job_name);
+  if (driver->max_runtime.second != 0)
+    fprintf(submit_stream, "#SBATCH --time=%d\n", driver->max_runtime.second);
+
 
   fprintf(submit_stream, "%s", cmd);  // Without srun?
   for (int iarg=0; iarg < argc; iarg++)
@@ -343,7 +368,7 @@ static std::string make_submit_script(const char * cmd, const char * job_name, i
 void * slurm_driver_submit_job( void * __driver, const char * cmd, int num_cpu, const char * run_path, const char * job_name, int argc, const char ** argv) {
   slurm_driver_type * driver = slurm_driver_safe_cast( __driver );
 
-  auto submit_script = make_submit_script( cmd, job_name, num_cpu, argc, argv);
+  auto submit_script = make_submit_script( driver, cmd, job_name, num_cpu, argc, argv);
   std::vector<std::string> sbatch_argv = {"--workdir=" + std::string(run_path), "--job-name=" + std::string(job_name), "--parsable"};
   if (!driver->partition.empty())
     sbatch_argv.push_back( "--partition=" + driver->partition );
