@@ -31,8 +31,7 @@ class ErtSplash(QSplashScreen):
         self.ert_title = "Ensemble based Reservoir Tool"
         self.version = version_string
         self.timestamp = "Timestamp string"
-        self.copyright = u"Copyright \u00A9 2017 Equinor ASA, Norway"
-
+        
 
     def drawContents(self, painter):
         """ @type painter: QPainter """
@@ -94,12 +93,3 @@ class ErtSplash(QSplashScreen):
         font.setPixelSize(text_size)
         painter.setFont(font)
         painter.drawText(text_x, top_offset, text_area_width, text_size, Qt.AlignHCenter | Qt.AlignCenter, self.version)
-
-        text_size = 12
-        font.setPixelSize(text_size)
-        painter.setFont(font)
-        painter.drawText(text_x, h - text_size - margin - 5, text_area_width, text_size + 5, Qt.AlignHCenter | Qt.AlignCenter, self.copyright)
-
-
-
-
