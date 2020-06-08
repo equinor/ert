@@ -3,6 +3,7 @@ import sys
 if sys.version_info.major >= 3:
     import schemathesis
     import pytest
+    import hypothesis
 
     from ert_shared.storage.http_server import FlaskWrapper
 
@@ -23,6 +24,12 @@ if sys.version_info.major >= 3:
     schema = schemathesis.from_pytest_fixture("test_schema")
 
     @schema.parametrize()
+    @hypothesis.settings(
+        suppress_health_check=[
+            hypothesis.HealthCheck.filter_too_much,
+            hypothesis.HealthCheck.too_slow,
+        ]
+    )
     def test_no_server_errors(case):
         response = case.call_wsgi()
         case.validate_response(response)
