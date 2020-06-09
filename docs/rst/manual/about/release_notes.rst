@@ -23,6 +23,11 @@ you afterwards open ERT without the new storage enabled.
 
    >>>> ert .... --enable-new-storage
 
+4.0.2 libres
+~~~~~~~~~~~~
+Bugfixes:
+  - Always load GEN_PARAM to ensure correct state before update
+
 0.4.0 semeio
 ~~~~~~~~~~~~
 New features:
