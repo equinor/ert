@@ -25,10 +25,11 @@ if sys.version_info.major >= 3:
 
     @schema.parametrize()
     @hypothesis.settings(
+        derandomize=True,
         suppress_health_check=[
             hypothesis.HealthCheck.filter_too_much,
             hypothesis.HealthCheck.too_slow,
-        ]
+        ],
     )
     def test_no_server_errors(case):
         response = case.call_wsgi()
