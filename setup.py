@@ -73,6 +73,7 @@ setup(
         "qtpy",
         "scipy",
         "sqlalchemy",
+        "decorator",
     ],
     zip_safe=False,
     tests_require=["pytest", "mock"],

@@ -70,6 +70,20 @@ class ErtPluginManager(pluggy.PluginManager):
         )
         return response.data
 
+    @staticmethod
+    def _evaluate_job_doc_hook(hook, job_name):
+        from inspect import signature
+
+        response = hook(job_name=job_name)
+
+        if response is None:
+            logging.debug(
+                "Got no documentation for {} from any plugins".format(job_name)
+            )
+            return {}
+
+        return response.data
+
     @python3only
     def get_ecl100_config_path(self):
         return ErtPluginManager._evaluate_config_hook(
@@ -178,6 +192,24 @@ class ErtPluginManager(pluggy.PluginManager):
     @python3only
     def get_installable_workflow_jobs(self):
         return ErtPluginManager._merge_dicts(self.hook.installable_workflow_jobs())
+
+    @python3only
+    def get_documentation_for_jobs(self):
+        job_docs = {
+            k: {
+                "config_file": v[0],
+                "source_package": v[1].plugin_name,
+                "source_function_name": v[1].function_name,
+            }
+            for k, v in ErtPluginManager._merge_dicts(
+                self.hook.installable_jobs(), include_plugin_data=True
+            ).items()
+        }
+        for k in job_docs.keys():
+            job_docs[k].update(
+                ErtPluginManager._evaluate_job_doc_hook(self.hook.job_documentation, k)
+            )
+        return job_docs
 
 
 class ErtPluginContext:
