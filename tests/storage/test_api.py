@@ -4,6 +4,7 @@ if sys.version_info.major >= 3:
     import schemathesis
     import pytest
     import hypothesis
+    from datetime import timedelta
 
     from ert_shared.storage.http_server import FlaskWrapper
 
@@ -25,6 +26,7 @@ if sys.version_info.major >= 3:
 
     @schema.parametrize()
     @hypothesis.settings(
+        deadline=timedelta(milliseconds=1500),
         derandomize=True,
         suppress_health_check=[
             hypothesis.HealthCheck.filter_too_much,
