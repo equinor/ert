@@ -73,6 +73,26 @@ class PluginManagerTest(unittest.TestCase):
             pm._site_config_lines(),
         )
 
+    @unittest.skipIf(sys.version_info.major < 3, "Plugin Manager is Python 3 only")
+    def test_job_documentation(self):
+        pm = ErtPluginManager(plugins=[dummy_plugins])
+        expected = {
+            "job1": {
+                "config_file": "/dummy/path/job1",
+                "source_package": "dummy",
+                "source_function_name": "installable_jobs",
+                "description": "job description",
+                "examples": "example 1 and example 2",
+                "category": "test.category.for.job",
+            },
+            "job2": {
+                "config_file": "/dummy/path/job2",
+                "source_package": "dummy",
+                "source_function_name": "installable_jobs",
+            },
+        }
+        assert pm.get_documentation_for_jobs() == expected
+
     @unittest.skipIf(
         sys.version_info.major > 2, "Skipping Plugin Manager Python 2 test"
     )

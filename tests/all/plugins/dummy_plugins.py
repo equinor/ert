@@ -48,3 +48,15 @@ def installable_workflow_jobs():
 @plugin_response(plugin_name="dummy")
 def site_config_lines():
     return ["JOB_SCRIPT job_dispatch_dummy.py", "QUEUE_OPTION LOCAL MAX_RUNNING 2"]
+
+
+@hook_implementation
+@plugin_response(plugin_name="dummy")
+def job_documentation(job_name):
+    if job_name == "job1":
+        return {
+            "description": "job description",
+            "examples": "example 1 and example 2",
+            "category": "test.category.for.job",
+        }
+    return None

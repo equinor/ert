@@ -1,13 +1,10 @@
 import functools
+from decorator import decorator
 
-
-def plugin_response(plugin_name):
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper_decorator(*args, **kwargs):
-            return PluginResponse(func(*args, **kwargs), PluginMetadata(plugin_name, func.__name__))
-        return wrapper_decorator
-    return decorator
+@decorator
+def plugin_response(func, plugin_name="", *args, **kwargs):
+    response = func(*args, **kwargs)
+    return PluginResponse(response, PluginMetadata(plugin_name, func.__name__)) if response is not None else None
 
 
 class PluginResponse:
