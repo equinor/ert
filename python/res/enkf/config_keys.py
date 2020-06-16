@@ -32,7 +32,7 @@ class ConfigKeys:
     _show_history_key     = ResPrototype("char* config_keys_get_show_history_key()", bind=False)
     _install_job_directory_key = ResPrototype("char* config_keys_get_install_job_directory_key()", bind=False)
     _plot_settings_key    = ResPrototype("char* config_keys_get_plot_setting_key()", bind=False)
-    
+
     _log_file_key         = ResPrototype("char* config_keys_get_log_file_key()", bind=False)
     _log_level_key        = ResPrototype("char* config_keys_get_log_level_key()", bind=False)
     _lsf_resources_key    = ResPrototype("char* config_keys_get_lsf_resources_key()", bind=False)
@@ -42,14 +42,14 @@ class ConfigKeys:
     _store_seed           = ResPrototype("char* config_keys_get_store_seed_key()", bind=False)
     _load_seed            = ResPrototype("char* config_keys_get_load_seed_key()", bind=False)
     _summary              = ResPrototype("char* config_keys_get_summary_key()", bind=False)
-    
+
     _max_runtime          = ResPrototype("char* config_keys_get_max_runtime_key()", bind=False)
     _min_realizations     = ResPrototype("char* config_keys_get_min_realizations_key()", bind=False)
     _max_submit           = ResPrototype("char* config_keys_get_max_submit_key()", bind=False)
     _umask                = ResPrototype("char* config_keys_get_umask_key()", bind=False)
     _data_kw_key          = ResPrototype("char* config_keys_get_data_kw_key()", bind=False)
     _runpath_file         = ResPrototype("char* config_keys_get_runpath_file_key()", bind=False)
-    
+
     # ************* ECL config  *************
     _eclbase              = ResPrototype("char* config_keys_get_eclbase_key()", bind=False)
     _data_file            = ResPrototype("char* config_keys_get_data_file_key()", bind=False)
@@ -64,7 +64,7 @@ class ConfigKeys:
     _schedule_prediction_file = ResPrototype(
             "char* config_keys_get_schedule_prediction_file_key()", bind=False
         )
-    # ************* ECL config  ************* 
+    # ************* ECL config  *************
 
     # ************* Model config  *************
     _num_realizations     = ResPrototype("char* config_keys_get_num_realizations_key()", bind=False)
@@ -78,7 +78,7 @@ class ConfigKeys:
     _max_resample_key     = ResPrototype("char* config_keys_get_max_resample_key()", bind=False)
     _data_root_key        = ResPrototype("char* config_keys_get_data_root_key()", bind=False)
     _rftpath_key          = ResPrototype("char* config_keys_get_rftpath_key()", bind=False)
-    _gen_kw_export_name_key = ResPrototype("char* config_keys_get_gen_kw_export_name_key()", bind=False)    
+    _gen_kw_export_name_key = ResPrototype("char* config_keys_get_gen_kw_export_name_key()", bind=False)
     _runpath              = ResPrototype("char* config_keys_get_runpath_key()", bind=False)
     # ************* Model config  *************
 
@@ -216,7 +216,7 @@ class ConfigKeys:
     LOAD_WORKFLOW_JOB = _load_workflow_job_key()
     WORKFLOW_JOB_DIRECTORY = _workflow_job_directory_key()
     LOAD_WORKFLOW    = _load_workflow_key()
-    
+
 
     # ************* ECL config  *************
     ECLBASE          = _eclbase()

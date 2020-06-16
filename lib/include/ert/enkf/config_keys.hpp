@@ -177,7 +177,7 @@ extern "C" {
   const char * config_keys_get_install_job_key();
   const char * config_keys_get_install_job_directory_key();
   const char * config_keys_get_plot_setting_key();
-  
+
   const char * config_keys_get_log_file_key();
   const char * config_keys_get_log_level_key();
   const char * config_keys_get_update_log_path_key();
@@ -188,10 +188,10 @@ extern "C" {
   const char * config_keys_get_min_realizations_key();
   const char * config_keys_get_umask_key();
   const char * config_keys_get_data_kw_key();
-  const char * config_keys_get_runpath_file_key();  
+  const char * config_keys_get_runpath_file_key();
   const char * config_keys_get_max_submit_key();
   const char * config_keys_get_gen_data_key();
-  
+
   /* ************* ECL config  ************* */
   const char * config_keys_get_eclbase_key();
   const char * config_keys_get_data_file_key();
@@ -245,7 +245,7 @@ extern "C" {
   const char * config_keys_get_qc_workflow_key();
   const char * config_keys_get_hook_workflow_key();
   // hook_manager config keys
-  
+
   /* ************* Model config  ************* */
   const char * config_keys_get_forward_model_key();
   const char * config_keys_get_jobname_key();
