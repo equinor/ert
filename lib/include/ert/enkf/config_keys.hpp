@@ -160,6 +160,31 @@ extern "C" {
 #define  CONFIG_DIRECTORY_KEY              "CONFIG_DIRECTORY"
 #define  RES_CONFIG_FILE_KEY               "RES_CONFIG_FILE"
 
+#define SLURM_SBATCH_OPTION                "SBATCH"
+#define SLURM_SCANCEL_OPTION               "SCANCEL"
+#define SLURM_SCONTROL_OPTION              "SCONTROL"
+#define SLURM_SQUEUE_OPTION                "SQUEUE"
+#define SLURM_PARTITION_OPTION             "PARTITION"
+#define SLURM_SQUEUE_TIMEOUT_OPTION        "SQUEUE_TIMEOUT"
+
+// Observe that the SLURM_MAX_RUNTIME_OPTION expects a time limit in seconds,
+// whereas slurm uses a time limit in minutes
+#define SLURM_MAX_RUNTIME_OPTION           "MAX_RUNTIME"
+#define SLURM_MEMORY_OPTION                "MEMORY"
+#define SLURM_MEMORY_PER_CPU_OPTION        "MEMORY_PER_CPU"
+
+
+// For the EXCLUDE and INCLUDE host options the slurm driver
+// maintains an internal list of hostnames, and the option can be called
+// repeatedly. It is possible to add multiple hosts separated by space or comma
+// in one option call:
+//
+// QUEUE_OPTION SLURM EXCLUDE_HOST host1,host2,host3
+// QUEUE_OPTION SLURM EXCLUDE_HOST host5 host6,host7
+#define SLURM_EXCLUDE_HOST_OPTION          "EXCLUDE_HOST"
+#define SLURM_INCLUDE_HOST_OPTION          "INCLUDE_HOST"
+
+
 
 #define CONFIG_BOOL_STRING( var ) (var) ? "TRUE" : "FALSE"
 
@@ -282,6 +307,20 @@ extern "C" {
   const char * config_keys_get_pred_key();
   const char * config_keys_get_container_key();
   /* ************* Ensemble config  ************* */
+
+  /* ************* Slurm options **************** */
+  const char * config_keys_get_slurm_sbatch_option();
+  const char * config_keys_get_slurm_scancel_option();
+  const char * config_keys_get_slurm_scontrol_option();
+  const char * config_keys_get_slurm_squeue_option();
+  const char * config_keys_get_slurm_partition_option();
+  const char * config_keys_get_slurm_squeue_timeout_option();
+  const char * config_keys_get_slurm_max_runtime_option();
+  const char * config_keys_get_slurm_memory_option();
+  const char * config_keys_get_slurm_memory_per_cpu_option();
+  const char * config_keys_get_slurm_exclude_host_option();
+  const char * config_keys_get_slurm_include_host_option();
+  /* ************* Slurm options **************** */
 
 #ifdef   __cplusplus
 }

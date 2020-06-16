@@ -132,6 +132,20 @@ class ConfigKeys:
     _analysis_select      = ResPrototype("char* config_keys_get_analysis_select()", bind=False)
     _analysis_set_var     = ResPrototype("char* config_keys_get_analysis_set_var()", bind=False)
 
+    #slurm options
+    _sbatch_option         = ResPrototype("char* config_keys_get_slurm_sbatch_option()", bind=False)
+    _scancel_option        = ResPrototype("char* config_keys_get_slurm_scancel_option()", bind=False)
+    _scontrol_option       = ResPrototype("char* config_keys_get_slurm_scontrol_option()", bind=False)
+    _squeue_option         = ResPrototype("char* config_keys_get_slurm_squeue_option()", bind=False)
+    _partition_option      = ResPrototype("char* config_keys_get_slurm_partition_option()", bind=False)
+    _squeue_timeout_option = ResPrototype("char* config_keys_get_slurm_squeue_timeout_option()", bind=False)
+    _max_runtime_option    = ResPrototype("char* config_keys_get_slurm_max_runtime_option()", bind=False)
+    _memory_option         = ResPrototype("char* config_keys_get_slurm_memory_option()", bind=False)
+    _memory_per_cpu_option = ResPrototype("char* config_keys_get_slurm_memory_per_cpu_option()", bind=False)
+    _exclude_host_option   = ResPrototype("char* config_keys_get_slurm_exclude_host_option()", bind=False)
+    _include_host_option   = ResPrototype("char* config_keys_get_slurm_include_host_option()", bind=False)
+
+
     ALPHA_KEY             = _alpha_key()
     STD_CUTOFF_KEY        = _std_cutoff_key()
     STOP_LONG_RUNNING     = _stop_long_running()
@@ -284,3 +298,15 @@ class ConfigKeys:
     _container_key    = ResPrototype("char* config_keys_get_container_key()", bind=False)
     CONTAINER_KEY     = _container_key()
     # ************* Ensemble config  *************
+
+    SLURM_SBATCH_OPTION  = _sbatch_option()
+    SLURM_SCANCEL_OPTION = _scancel_option()
+    SLURM_SCONTROL_OPTION = _scontrol_option()
+    SLURM_SQUEUE_OPTION = _squeue_option()
+    SLURM_PARTITION_OPTION = _partition_option()
+    SLURM_SQUEUE_TIMEOUT_OPTION = _squeue_timeout_option()
+    SLURM_MAX_RUNTIME_OPTION = _max_runtime_option()
+    SLURM_MEMORY_OPTION = _memory_option()
+    SLURM_MEMORY_PER_CPU_OPTION = _memory_per_cpu_option()
+    SLURM_EXCLUDE_HOST_OPTION = _exclude_host_option()
+    SLURM_INCLUDE_HOST_OPTION = _include_host_option()

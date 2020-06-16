@@ -417,4 +417,51 @@ const char * config_keys_get_time_map_key() {
   const char * config_keys_get_container_key() {
     return CONTAINER_KEY;
   }
+
+  const char * config_keys_get_slurm_sbatch_option() {
+    return SLURM_SBATCH_OPTION;
+  }
+
+  const char * config_keys_get_slurm_scancel_option() {
+    return SLURM_SCANCEL_OPTION;
+  }
+
+  const char * config_keys_get_slurm_scontrol_option() {
+    return SLURM_SCONTROL_OPTION;
+  }
+
+  const char * config_keys_get_slurm_squeue_option() {
+    return SLURM_SQUEUE_OPTION;
+  }
+
+  const char * config_keys_get_slurm_partition_option() {
+    return SLURM_PARTITION_OPTION;
+  }
+
+  const char * config_keys_get_slurm_squeue_timeout_option() {
+    return SLURM_SQUEUE_TIMEOUT_OPTION;
+  }
+
+  const char * config_keys_get_slurm_max_runtime_option() {
+    return SLURM_MAX_RUNTIME_OPTION;
+  }
+
+  const char * config_keys_get_slurm_memory_option() {
+    return SLURM_MEMORY_OPTION;
+  }
+
+  const char * config_keys_get_slurm_memory_per_cpu_option() {
+    return SLURM_MEMORY_PER_CPU_OPTION;
+  }
+
+  const char * config_keys_get_slurm_exclude_host_option() {
+    return SLURM_EXCLUDE_HOST_OPTION;
+  }
+
+  const char * config_keys_get_slurm_include_host_option() {
+    return SLURM_INCLUDE_HOST_OPTION;
+  }
+
+
+
 /* ************* Ensemble config  ************* */
