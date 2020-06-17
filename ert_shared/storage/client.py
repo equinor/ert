@@ -202,6 +202,11 @@ class StorageClient(object):
             The row index is the index/date and the column index is the key."""
         return pd.DataFrame()
 
+    def history_data(self, key, case=None):
+        """ Returns a pandas DataFrame with the data points for the history for a given data key, if any.
+            The row index is the index/date and the column index is the key."""
+        return pd.DataFrame()
+
     def shutdown(self):
         """A noop---the lifecycle of the server is managed by the user."""
         pass

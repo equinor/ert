@@ -123,6 +123,11 @@ class PlotApi(object):
             The row index is the index/date and the column index is the key."""
         return self._facade.refcase_data(key)
 
+    def history_data(self, key, case=None):
+        """ Returns a pandas DataFrame with the data points for the history for a given data key, if any.
+            The row index is the index/date and the column index is the key."""
+        return self._facade.history_data(key, case)
+
     def _dimensionality_of_key(self, key):
         if self._facade.is_summary_key(key) or self._facade.is_gen_data_key(key):
             return 2
