@@ -16,6 +16,7 @@ class PlotContext(object):
         self._cases = cases
         self._plot_config = plot_config
         self.refcase_data = None
+        self.history_data = None
         self._log_scale = False
 
         self._date_support_active = True

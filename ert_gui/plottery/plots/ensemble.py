@@ -1,5 +1,6 @@
 from .observations import plotObservations
 from .plot_tools import PlotTools
+from ert_gui.plottery.plots.history import plotHistory
 
 
 class EnsemblePlot(object):
@@ -15,8 +16,6 @@ class EnsemblePlot(object):
         """:type: ert_gui.plottery.PlotConfig """
         axes = figure.add_subplot(111)
         """:type: matplotlib.axes.Axes """
-
-        case_list = plot_context.cases()
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.DATE_AXIS
@@ -34,6 +33,7 @@ class EnsemblePlot(object):
 
         self.plotRefcase(plot_context, axes)
         plotObservations(observation_data, plot_context, axes)
+        plotHistory(plot_context, axes)
 
         default_x_label = "Date" if plot_context.isDateSupportActive() else "Index"
         PlotTools.finalizePlot(plot_context, figure, axes, default_x_label=default_x_label, default_y_label="Value")

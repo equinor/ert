@@ -160,6 +160,23 @@ class LibresFacade(object):
 
         return data.iloc[1:]
 
+    def history_data(self, key, case=None):
+        if not self.is_summary_key(key):
+            return DataFrame()
+
+        # create history key
+        if ":" in key:
+            head, tail = key.split(":", 2)
+            key = "{}H:{}".format(head, tail)
+        else:
+            key = "{}H".format(key)
+
+        data = self.refcase_data(key)
+        if data.empty and case is not None:
+            data = self.gather_summary_data(case, key)
+
+        return data
+
     def gather_gen_data_data(self, case, key):
         """ :rtype: pandas.DataFrame """
         key_parts = key.split("@")
