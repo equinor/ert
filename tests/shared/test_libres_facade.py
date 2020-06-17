@@ -164,3 +164,19 @@ class LibresFacadeTest(TestCase):
         facade = self.facade()
         data = facade.refcase_data('nokey')
         self.assertIsInstance(data, PandasObject)
+
+    @tmpdir(os.path.join(SOURCE_DIR, 'test-data/local/snake_oil'))
+    def test_case_history_data(self):
+        facade = self.facade()
+        data = facade.history_data('FOPR')
+        self.assertIsInstance(data, PandasObject)
+
+        facade = self.facade()
+        data = facade.history_data('WOPR:OP1')
+        self.assertIsInstance(data, PandasObject)
+
+    @tmpdir(os.path.join(SOURCE_DIR, 'test-data/local/snake_oil'))
+    def test_case_history_data_missing_key(self):
+        facade = self.facade()
+        data = facade.history_data('nokey')
+        self.assertIsInstance(data, PandasObject)
