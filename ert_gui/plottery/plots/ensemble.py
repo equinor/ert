@@ -1,6 +1,7 @@
 from .observations import plotObservations
 from .plot_tools import PlotTools
 from ert_gui.plottery.plots.history import plotHistory
+from ert_gui.plottery.plots.refcase import plotRefcase
 
 
 class EnsemblePlot(object):
@@ -31,7 +32,7 @@ class EnsemblePlot(object):
                 self._plotLines(axes, config, data, case, plot_context.isDateSupportActive())
                 config.nextColor()
 
-        self.plotRefcase(plot_context, axes)
+        plotRefcase(plot_context, axes)
         plotObservations(observation_data, plot_context, axes)
         plotHistory(plot_context, axes)
 
@@ -59,22 +60,3 @@ class EnsemblePlot(object):
 
         if len(lines) > 0:
             plot_config.addLegendItem(ensemble_label, lines[0])
-
-    def plotRefcase(self, plot_context, axes):
-        plot_config = plot_context.plotConfig()
-
-        if (not plot_config.isRefcaseEnabled()
-                or plot_context.refcase_data is None
-                or plot_context.refcase_data.empty):
-            return
-
-        data = plot_context.refcase_data
-        style = plot_config.refcaseStyle()
-
-        lines = axes.plot_date(x=data.index.values, y=data, color=style.color, alpha=style.alpha,
-                               marker=style.marker, linestyle=style.line_style, linewidth=style.width,
-                               markersize=style.size)
-
-        if len(lines) > 0 and style.isVisible():
-            plot_config.addLegendItem("Refcase", lines[0])
-

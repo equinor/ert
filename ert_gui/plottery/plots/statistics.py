@@ -4,6 +4,8 @@ from pandas import DataFrame
 
 from .observations import plotObservations
 from .plot_tools import PlotTools
+from ert_gui.plottery.plots.history import plotHistory
+from ert_gui.plottery.plots.refcase import plotRefcase
 
 
 class StatisticsPlot(object):
@@ -54,8 +56,9 @@ class StatisticsPlot(object):
 
         _addStatisticsLegends(plot_config=config)
 
-        #plotRefcase(plot_context, axes)
+        plotRefcase(plot_context, axes)
         plotObservations(_observation_data, plot_context, axes)
+        plotHistory(plot_context, axes)
 
         default_x_label = "Date" if plot_context.isDateSupportActive() else "Index"
         PlotTools.finalizePlot(plot_context, figure, axes, default_x_label=default_x_label, default_y_label="Value")
