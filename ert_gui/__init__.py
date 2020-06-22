@@ -8,6 +8,7 @@ if sys.hexversion < REQUIRED_VERSION_HEX:
 
 import os
 import matplotlib
+import ert_shared
 
 def headless():
     return "DISPLAY" not in os.environ
@@ -17,7 +18,4 @@ if headless():
 else:
     matplotlib.use("Qt4Agg")
 
-try:
-    from .version import version as __version__
-except ImportError:
-    __version__ = '0.0.0'
+__version__ = ert_shared.__version__
