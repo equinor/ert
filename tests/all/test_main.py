@@ -16,6 +16,8 @@ if sys.version_info >= (3, 3):
 else:
     from mock import Mock
 
+from packaging.version import Version
+
 
 @pytest.fixture(autouse=True)
 def mocked_valid_file(monkeypatch):
@@ -162,3 +164,36 @@ def test_verbose_flag(flag_val, expected_value):
         args.append(flag_val)
     parsed = ert_parser(None, args)
     assert parsed.verbose == expected_value
+
+
+def test_version_valid_Version(capsys):
+
+    try:
+        ert_parser(None, ["--version"])
+    except SystemExit as e:
+        assert e.code == 0
+
+    if sys.version_info.major < 3:
+        return
+
+    ert_version, _ = capsys.readouterr()
+    ert_version = ert_version.rstrip("\n")
+
+    assert Version(ert_version)
+
+
+def test_version_mocked(capsys, monkeypatch):
+    monkeypatch.setattr(ert_shared, "__version__", "1.0.3")
+
+    try:
+        ert_parser(None, ["--version"])
+    except SystemExit as e:
+        assert e.code == 0
+
+    if sys.version_info.major < 3:
+        return
+
+    ert_version, _ = capsys.readouterr()
+    ert_version = ert_version.rstrip("\n")
+
+    assert ert_version == "1.0.3"

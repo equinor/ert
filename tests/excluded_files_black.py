@@ -14,7 +14,7 @@ def get_files_excluded_from_black(root):
         "ert_gui/ertnotifier.py",
         "ert_gui/about_dialog.py",
         "ert_gui/ertplot.py",
-        "ert_gui/version.py",
+        "ert_shared/version.py",
         "ert_gui/ertwidgets/activelabel.py",
         "ert_gui/ertwidgets/__init__.py",
         "ert_gui/ert_splash.py",

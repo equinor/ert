@@ -24,6 +24,7 @@ from ert_shared.ide.keywords.definitions import (
 from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert_shared.plugins.plugin_manager import ErtPluginContext
 from ert_shared.feature_toggling import FeatureToggling
+import ert_shared
 
 
 def strip_error_message_and_raise_exception(validated):
@@ -97,6 +98,11 @@ def run_gui_wrapper(args):
 def get_ert_parser(parser=None):
     if parser is None:
         parser = ArgumentParser(description="ERT - Ensemble Reservoir Tool")
+
+    parser.add_argument(
+        "--version", action="version", version="{}".format(ert_shared.__version__),
+    )
+
     subparsers = parser.add_subparsers(
         title="Available user entries",
         description="ERT can be accessed through a GUI or CLI interface. Include "

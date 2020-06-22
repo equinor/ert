@@ -18,7 +18,7 @@ logging_configuration = package_files("ert_logging/")
 
 setup(
     name="Ensemble Reservoir Tool",
-    use_scm_version={"root": ".", "write_to": "ert_gui/version.py"},
+    use_scm_version={"root": ".", "write_to": "ert_shared/version.py"},
     scripts=["ert_shared/bin/ert"],
     packages=[
         "ert_data",
