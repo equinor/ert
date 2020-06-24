@@ -145,12 +145,13 @@ private:
 #define DEFAULT_SCONTROL_CMD  "scontrol"
 #define DEFAULT_SQUEUE_TIMEOUT 10
 
-#define SLURM_PENDING_STATUS    "PENDING"
-#define SLURM_COMPLETED_STATUS  "COMPLETED"
-#define SLURM_RUNNING_STATUS    "RUNNING"
-#define SLURM_FAILED_STATUS     "FAILED"
-#define SLURM_CANCELED_STATUS   "CANCELLED"
-#define SLURM_COMPLETING_STATUS "COMPLETING"
+#define SLURM_PENDING_STATUS     "PENDING"
+#define SLURM_COMPLETED_STATUS   "COMPLETED"
+#define SLURM_RUNNING_STATUS     "RUNNING"
+#define SLURM_FAILED_STATUS      "FAILED"
+#define SLURM_CANCELED_STATUS    "CANCELLED"
+#define SLURM_COMPLETING_STATUS  "COMPLETING"
+#define SLURM_CONFIGURING_STATUS "CONFIGURING"
 
 
 struct slurm_driver_struct {
@@ -480,6 +481,9 @@ static job_status_type slurm_driver_translate_status(const std::string& status_s
 
   if (status_string == SLURM_RUNNING_STATUS)
     return JOB_QUEUE_RUNNING;
+
+  if (status_string == SLURM_CONFIGURING_STATUS)
+      return JOB_QUEUE_RUNNING;
 
   if (status_string == SLURM_FAILED_STATUS)
     return JOB_QUEUE_EXIT;
