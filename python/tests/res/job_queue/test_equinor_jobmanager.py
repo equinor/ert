@@ -55,7 +55,7 @@ def create_jobs_py(jobList):
 
     with open(jobs_file, "w") as f:
         f.write("jobList = ")
-        f.write(json.dumps(jobList))
+        f.write(json.dumps(jobList, indent=1))
         f.write("\n")
 
     return jobs_file
@@ -66,7 +66,7 @@ def create_jobs_json(jobList, umask="0000"):
 
     jobs_file = os.path.join(os.getcwd(), "jobs.json")
     with open(jobs_file, "w") as f:
-        f.write(json.dumps(data))
+        f.write(json.dumps(data), indent=1)
 
 
 @pytest.mark.equinor_test

@@ -195,4 +195,4 @@ class File(object):
 
     def _dump_status_json(self):
         with open(self.STATUS_json, "w") as fp:
-            json.dump(self.status_dict, fp)
+            json.dump(self.status_dict, fp, indent=1)
