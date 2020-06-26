@@ -1,6 +1,40 @@
 Release Notes
 =============
 
+Version 2.12
+------------
+
+2.12.0 ERT
+~~~~~~~~~~~~
+New features:
+  - Support Slurm as a queue system
+
+Improvements:
+  - Support for --version in CLI
+
+4.1.0 libres
+~~~~~~~~~~~~
+New features:
+  - Support Slurm as a queue system
+
+Improvements:
+  - Backup PYTHONPATH when running RMS to faciliate external scripts
+
+Miscellaneous:
+  - Improve tmp-file usage in tests
+  - Remove unused configsuite dependency
+
+0.5.1 semeio
+~~~~~~~~~~~~
+New features:
+  - Add INSERT_NOSIM and REMOVE_NOSIM
+
+Improvements:
+  - Add name to ensemble set in CSV_EXPORT2
+  - Support configsuite 0.6
+  - Have design2params support spaces in values
+  - SpearmanJob exposes data via the reporter
+
 Version 2.11
 ------------
 
