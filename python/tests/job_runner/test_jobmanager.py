@@ -153,13 +153,13 @@ class JobRunnerTest(TestCase):
     def test_run_multiple_ok(self):
         joblist = []
         dir_list = ["1", "2", "3", "4", "5"]
-        for d in dir_list:
+        for job_index in dir_list:
             job = {
                 "name": "MKDIR",
                 "executable": "/bin/mkdir",
-                "stdout": "mkdir_out",
-                "stderr": "mkdir_err",
-                "argList": ["-p", "-v", d],
+                "stdout": "mkdir_out.{}".format(job_index),
+                "stderr": "mkdir_err.{}".format(job_index),
+                "argList": ["-p", "-v", job_index],
             }
             joblist.append(job)
         create_jobs_json(joblist)
@@ -171,11 +171,11 @@ class JobRunnerTest(TestCase):
         for status in statuses:
             self.assertEqual(status.exit_code, 0)
 
-        for index, dir_number in enumerate(dir_list):
-            self.assertTrue(os.path.isdir(dir_list[index]))
-            self.assertTrue(os.path.isfile("mkdir_out.%d" % index))
-            self.assertTrue(os.path.isfile("mkdir_err.%d" % index))
-            self.assertEqual(0, os.path.getsize("mkdir_err.%d" % index))
+        for dir_number in dir_list:
+            self.assertTrue(os.path.isdir(dir_number))
+            self.assertTrue(os.path.isfile("mkdir_out.{}".format(dir_number)))
+            self.assertTrue(os.path.isfile("mkdir_err.{}".format(dir_number)))
+            self.assertEqual(0, os.path.getsize("mkdir_err.{}".format(dir_number)))
 
     @tmpdir(None)
     def test_run_multiple_fail_only_runs_one(self):
@@ -206,7 +206,7 @@ class JobRunnerTest(TestCase):
     @tmpdir(None)
     def test_given_global_env_and_update_path_executable_env_is_updated(self):
         executable = "./x.py"
-        outfile = "outfile.stdout"
+        outfile = "outfile.stdout.0"
 
         with open(executable, "w") as f:
             f.write("#!/usr/bin/env python\n")
@@ -222,7 +222,7 @@ class JobRunnerTest(TestCase):
             "name": "TEST_GET_ENV1",
             "executable": executable,
             "stdout": outfile,
-            "stderr": "outfile.stderr",
+            "stderr": "outfile.stderr.0",
             "argList": [],
         }
 
@@ -256,7 +256,7 @@ class JobRunnerTest(TestCase):
             "guard check, script must finish successfully",
         )
 
-        with open(outfile + ".0", "r") as out0:
+        with open(outfile, "r") as out0:
             content = list(out0.read().splitlines())
             self.assertEqual(content[0], "FirstValue")
             self.assertEqual(content[1], "SecondValue")

@@ -21,9 +21,9 @@ class Job(object):
         self.std_err = None
         self.std_out = None
         if "stderr" in job_data and job_data["stderr"]:
-            self.std_err = "%s.%d" % (job_data["stderr"], index)
+            self.std_err = job_data["stderr"]
         if "stdout" in job_data and job_data["stdout"]:
-            self.std_out = "%s.%d" % (job_data["stdout"], index)
+            self.std_out = job_data["stdout"]
 
     def run(self):
         start_message = Start(self)

@@ -44,7 +44,7 @@ void test_angular() {
     ext_job_type * ext_job = ext_job_fscanf_alloc("ANGULAR", NULL, false, "ANGULAR", false);
     {
       FILE * stream = util_fopen("angular.json", "w");
-      ext_job_json_fprintf(ext_job, stream, subst_list);
+      ext_job_json_fprintf(ext_job, 0, stream, subst_list);
       fclose(stream);
     }
     cJSON *json;

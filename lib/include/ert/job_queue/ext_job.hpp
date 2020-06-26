@@ -51,7 +51,7 @@ void                    ext_job_set_private_arg(ext_job_type * , const char *  ,
 
 void                    ext_job_set_argc(ext_job_type *   , const char ** , int);
 void                    ext_job_python_fprintf(const ext_job_type * , FILE * , const subst_list_type *);
-void                    ext_job_json_fprintf(const ext_job_type*, FILE*, const subst_list_type*);
+void                    ext_job_json_fprintf(const ext_job_type*, int job_index, FILE*, const subst_list_type*);
 ext_job_type          * ext_job_fscanf_alloc(const char * , const char * , bool private_job , const char *, bool search_path);
 const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job );
 bool                    ext_job_is_shared( const ext_job_type * ext_job );

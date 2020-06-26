@@ -195,18 +195,17 @@ def load_configs(config_file):
     return jobs
 
 
-def create_stdout_file(config):
-    if config["stdout"]:
-        return config["stdout"]
+def create_std_file(config, std="stdout", job_index=None):
+    if job_index is None:
+        if config[std]:
+            return "{}".format(config[std])
+        else:
+            return "{}.{}".format(config["name"], std)
     else:
-        return (config["name"] + ".stdout")
-
-
-def create_stderr_file(config):
-    if config["stderr"]:
-        return config["stderr"]
-    else:
-        return (config["name"] + ".stderr")
+        if config[std]:
+            return "{}.{}".format(config[std], job_index)
+        else:
+            return "{}.{}.{}".format(config["name"], std, job_index)
 
 
 class ForwardModelFormattedPrintTest(ResTest):
@@ -248,11 +247,11 @@ class ForwardModelFormattedPrintTest(ResTest):
                 )
         self.assertEqual(
                 ext_job.get_stdout_file(),
-                create_stdout_file(ext_job_config)
+                create_std_file(ext_job_config, std="stdout")
                 )
         self.assertEqual(
                 ext_job.get_stderr_file(),
-                create_stderr_file(ext_job_config)
+                create_std_file(ext_job_config, std="stderr")
                 )
         self.assertEqual(
                 ext_job.get_stdin_file(),
@@ -304,7 +303,7 @@ class ForwardModelFormattedPrintTest(ResTest):
             ext_job_config["max_running"],
             get_license_root_path(ext_job_config["license_path"]),
             private
-            );
+            )
 
         self.validate_ext_job(ext_job, ext_job_config)
         return ext_job
@@ -332,9 +331,9 @@ class ForwardModelFormattedPrintTest(ResTest):
         self.assertEqual(umask, int(config["umask"], 8))
         self.assertEqual(len(selected_jobs), len(config["jobList"]))
 
-        for i in range(len(selected_jobs)):
-            job = joblist[selected_jobs[i]]
-            loaded_job = config["jobList"][i]
+        for job_index in range(len(selected_jobs)):
+            job = joblist[selected_jobs[job_index]]
+            loaded_job = config["jobList"][job_index]
 
             # Since no argList is loaded as an empty list by ext_job
             arg_list_back_up = job["argList"]
@@ -345,13 +344,10 @@ class ForwardModelFormattedPrintTest(ResTest):
             job["name"] = default_name_if_none(job["name"])
 
             for key in json_keywords:
-
-                if (key == "stdout"):
-                  self.assertEqual(create_stdout_file(job), loaded_job[key])
-                elif (key == "stderr"):
-                  self.assertEqual(create_stderr_file(job), loaded_job[key])
+                if (key in ["stdout", "stderr"]):
+                    self.assertEqual(create_std_file(job, std=key, job_index=job_index), loaded_job[key])
                 else:
-                  self.assertEqual(job[key], loaded_job[key])
+                    self.assertEqual(job[key], loaded_job[key])
 
             job["argList"] = arg_list_back_up
             job["name"] = name_back_up

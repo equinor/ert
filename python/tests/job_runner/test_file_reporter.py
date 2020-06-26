@@ -36,8 +36,8 @@ class FileReporterTests(TestCase):
             Job(
                 {
                     "name": "job1",
-                    "stdout": "/stdout",
-                    "stderr": "/stderr",
+                    "stdout": "/stdout.0",
+                    "stderr": "/stderr.0",
                     "argList": ["--foo", "1", "--bar", "2"],
                     "executable": "/bin/bash",
                 },
@@ -196,7 +196,7 @@ class FileReporterTests(TestCase):
             stderr.write("E_MASSIVE_FAILURE\n")
 
         self.reporter._dump_error_file(
-            Job({"name": "job1", "stderr": "stderr.out"}, 0), "massive_failure"
+            Job({"name": "job1", "stderr": "stderr.out.0"}, 0), "massive_failure"
         )
 
         with open(self.reporter.ERROR_file, "r") as f:

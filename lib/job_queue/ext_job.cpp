@@ -866,8 +866,15 @@ static void __fprintf_python_arg_types(FILE * stream,
 }
 
 
-void ext_job_json_fprintf(const ext_job_type * ext_job, FILE * stream, const subst_list_type * global_args) {
+void ext_job_json_fprintf(const ext_job_type * ext_job, int job_index, FILE * stream, const subst_list_type * global_args) {
   const char * null_value = "null";
+  
+  char * file_stdout_index = NULL;
+  char * file_stderr_index = NULL;
+  
+  file_stdout_index = util_alloc_sprintf("%s.%d",ext_job->stdout_file, job_index);
+  file_stderr_index = util_alloc_sprintf("%s.%d",ext_job->stderr_file, job_index);
+  
   fprintf(stream," {");
   {
     __fprintf_python_string(  stream, "",   "name",                ext_job->name,                ",\n", ext_job->private_args, NULL,        null_value);
@@ -875,8 +882,8 @@ void ext_job_json_fprintf(const ext_job_type * ext_job, FILE * stream, const sub
     __fprintf_python_string(  stream, "  ", "target_file",         ext_job->target_file,         ",\n", ext_job->private_args, global_args, null_value);
     __fprintf_python_string(  stream, "  ", "error_file",          ext_job->error_file,          ",\n", ext_job->private_args, global_args, null_value);
     __fprintf_python_string(  stream, "  ", "start_file",          ext_job->start_file,          ",\n", ext_job->private_args, global_args, null_value);
-    __fprintf_python_string(  stream, "  ", "stdout",              ext_job->stdout_file,         ",\n", ext_job->private_args, global_args, null_value);
-    __fprintf_python_string(  stream, "  ", "stderr",              ext_job->stderr_file,         ",\n", ext_job->private_args, global_args, null_value);
+    __fprintf_python_string(  stream, "  ", "stdout",              file_stdout_index,            ",\n", ext_job->private_args, global_args, null_value);
+    __fprintf_python_string(  stream, "  ", "stderr",              file_stderr_index,            ",\n", ext_job->private_args, global_args, null_value);
     __fprintf_python_string(  stream, "  ", "stdin",               ext_job->stdin_file,          ",\n", ext_job->private_args, global_args, null_value);
     __fprintf_python_argList( stream, "  ",                        ext_job,                      ",\n",                        global_args            );
     __fprintf_python_hash(    stream, "  ", "environment",         ext_job->environment,         ",\n", ext_job->private_args, global_args, null_value);
@@ -892,6 +899,9 @@ void ext_job_json_fprintf(const ext_job_type * ext_job, FILE * stream, const sub
 
   }
   fprintf(stream,"}");
+
+  free( file_stdout_index );
+  free( file_stderr_index );
 }
 
 

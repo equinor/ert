@@ -183,7 +183,7 @@ static void forward_model_json_fprintf(const forward_model_type * forward_model,
                                        const env_varlist_type * varlist) {
   char * json_file = (char*)util_alloc_filename(path , DEFAULT_JOB_JSON, NULL);
   FILE * stream    = util_fopen(json_file, "w");
-  int i;
+  int job_index;
 
   fprintf(stream, "{\n");
 
@@ -191,10 +191,10 @@ static void forward_model_json_fprintf(const forward_model_type * forward_model,
   fprintf(stream, "\"DATA_ROOT\": \"%s\",\n", data_root);
   env_varlist_json_fprintf(varlist, stream); fprintf(stream, ",\n");
   fprintf(stream, "\"jobList\" : [");
-  for (i=0; i < vector_get_size(forward_model->jobs); i++) {
-    const ext_job_type * job = (const ext_job_type*)vector_iget_const(forward_model->jobs , i);
-    ext_job_json_fprintf(job , stream , global_args);
-    if (i < (vector_get_size( forward_model->jobs ) - 1))
+  for (job_index=0; job_index < vector_get_size(forward_model->jobs); job_index++) {
+    const ext_job_type * job = (const ext_job_type*)vector_iget_const(forward_model->jobs , job_index);
+    ext_job_json_fprintf(job , job_index, stream , global_args);
+    if (job_index < (vector_get_size( forward_model->jobs ) - 1))
       fprintf(stream,",\n");
   }
   fprintf(stream, "],\n");
