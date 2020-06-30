@@ -440,7 +440,7 @@ field as it comes out from ERT. The typical way to achieve this is:
 2. In the first iteration ERT will *not* output a file ``poro.grdecl``, but in
    the second and subsequent iterations a ``poro.grdecl`` file will be created
    by ERT - this is at the core of the ``FORWARD_INIT:True`` functionality.
-3. In the forward model there should be a job ``CAREFULL_COPY`` which will copy
+3. In the forward model there should be a job ``CAREFUL_COPY_FILE`` which will copy
    ``tmp_poro.grdecl`` *only if* ``poro.grdecl`` does not already exist. The
    rest of the forward model components should use ``poro.grdecl``.
 

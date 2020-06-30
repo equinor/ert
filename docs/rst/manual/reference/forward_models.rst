@@ -155,7 +155,8 @@ CAREFUL_COPY_FILE
     ARGLIST     <FROM> <TO>
 
 The :code:`CAREFUL_COPY_FILE` job will copy a file if the target :code:`<TO>`
-does not already exist. If the :code:`<TO>` argument has a directory component,
+does not already exist. This job superseded an older version called :code:`CAREFULL_COPY`
+and should be used instead. If the :code:`<TO>` argument has a directory component,
 that directory will be created, i.e. with the :code:`FORWARD_MODEL`:
 
 .. code-block:: bash
