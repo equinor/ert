@@ -24,7 +24,7 @@ import time
 import random
 
 OK_file     = "OK"
-EXIT_file   = "EXIT"
+EXIT_file   = "ERROR"
 STATUS_file = "STATUS"
 run_path    = sys.argv[1]
 sleep_time  = 10           # Time to sleep before exiting the script - to let the disks sync up. 

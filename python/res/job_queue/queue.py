@@ -112,7 +112,7 @@ class JobQueue(BaseCClass):
 
         OK_file = "OK"
         status_file = "STATUS"
-        exit_file = "EXIT"
+        exit_file = "ERROR"
         self.job_list=[]
         self._stopped = False
         c_ptr = self._alloc(max_submit, OK_file, status_file , exit_file)

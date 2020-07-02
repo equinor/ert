@@ -14,7 +14,7 @@ def dummy_ok_callback(args):
 
 def dummy_exit_callback(args):
     print("failure {}".format(args))
-    with open('EXIT', 'w') as f:
+    with open('ERROR', 'w') as f:
         f.write('failure')
 
 dummy_config = {
@@ -98,7 +98,7 @@ class JobQueueManagerTest(ResTest):
                 num_cpu=num_cpus,
                 status_file="STATUS", 
                 ok_file="OK", 
-                exit_file="EXIT",
+                exit_file="ERROR",
                 done_callback_function=dummy_config["ok_callback"],
                 exit_callback_function=dummy_config["exit_callback"],
                 callback_arguments=[{"job_number":job_id}, os.path.realpath(dummy_config["run_path"].format(job_id)), ])

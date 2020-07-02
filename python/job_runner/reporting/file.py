@@ -11,7 +11,6 @@ from job_runner.reporting.message import Exited, Finish, Init, Running, Start
 class File(object):
     LOG_file = "JOB_LOG"
     ERROR_file = "ERROR"
-    EXIT_file = "EXIT"
     STATUS_file = "STATUS"
     OK_file = "OK"
     STATUS_json = "status.json"
@@ -79,7 +78,6 @@ class File(object):
         self._dump_status_json()
 
     def _delete_old_status_files(self):
-        cond_unlink(self.EXIT_file)
         cond_unlink(self.ERROR_file)
         cond_unlink(self.STATUS_file)
         cond_unlink(self.OK_file)
@@ -178,11 +176,6 @@ class File(object):
 
         fileH.write("</error>\n")
         fileH.close()
-
-        # Have renamed the exit file from "EXIT" to "ERROR";
-        # must keep the old "EXIT" file around until all old ert versions
-        # are flushed out.
-        shutil.copyfile(self.ERROR_file, self.EXIT_file)
 
     def _dump_ok_file(self, sync_disc_timeout):
         now = time.localtime()

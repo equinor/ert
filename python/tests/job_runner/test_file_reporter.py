@@ -210,12 +210,12 @@ class FileReporterTests(TestCase):
     def test_old_file_deletion(self):
         r = self.reporter
         # touch all files that are to be removed
-        for f in [r.EXIT_file, r.ERROR_file, r.STATUS_file, r.OK_file]:
+        for f in [r.ERROR_file, r.STATUS_file, r.OK_file]:
             open(f, "a").close()
 
         r._delete_old_status_files()
 
-        for f in [r.EXIT_file, r.ERROR_file, r.STATUS_file, r.OK_file]:
+        for f in [r.ERROR_file, r.STATUS_file, r.OK_file]:
             self.assertFalse(os.path.isfile(f), "{} was not deleted".format(r))
 
     @tmpdir(None)
