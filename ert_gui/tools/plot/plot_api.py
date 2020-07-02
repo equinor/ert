@@ -12,7 +12,7 @@ class PlotApi(object):
             the key"""
 
         all_keys = self._facade.all_data_type_keys()
-        log_keys = [k for k in all_keys if k.startswith("LOG10_")]
+        log_keys = [k[6:] for k in all_keys if k.startswith("LOG10_")]
 
         return [{"key": key,
                  "index_type": self._key_index_type(key),
