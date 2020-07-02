@@ -156,13 +156,19 @@ def _plotHistogram(axes, plot_config, data, label, bin_count, use_log_scale=Fals
     else:
         bins = bin_count
 
-    axes.hist(data.values, alpha=style.alpha, bins=bins, color=style.color)
+    if use_log_scale:
+        axes.hist(10**data.values, alpha=style.alpha, bins=bins, color=style.color)
+    else:
+        axes.hist(data.values, alpha=style.alpha, bins=bins, color=style.color)
 
     if minimum == maximum:
         minimum -= 0.5
         maximum += 0.5
 
-    axes.set_xlim(minimum, maximum)
+    if use_log_scale:
+        axes.set_xlim(10**minimum, 10**maximum)
+    else:
+        axes.set_xlim(minimum, maximum)
 
     rectangle = Rectangle((0, 0), 1, 1, color=style.color) # creates rectangle patch for legend use.'
     plot_config.addLegendItem(label, rectangle)
@@ -174,8 +180,6 @@ def _histogramLogBins(bin_count, minimum=None, maximum=None):
     @type data: pandas.DataFrame
     @rtype: int
     """
-    minimum = log10(float(minimum))
-    maximum = log10(float(maximum))
 
     min_value = int(floor(minimum))
     max_value = int(ceil(maximum))
