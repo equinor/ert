@@ -85,9 +85,16 @@ class StorageClient(object):
                 "has_refcase": False,
                 "dimensionality": 2,
                 "metadata": {"data_origin": "Reponse"},
+                "log_scale": False,
             }
             for resp in ens_schema["responses"]
         ]
+
+        log_keys = {
+            param["group"][6:] + param["key"]
+            for param in ens_schema["parameters"]
+            if param["group"].startswith("LOG10_")
+        }
 
         result.extend(
             [
@@ -98,6 +105,7 @@ class StorageClient(object):
                     "has_refcase": False,
                     "dimensionality": 1,
                     "metadata": {"data_origin": "Parameter"},
+                    "log_scale": (param["group"] + param["key"]) in log_keys,
                 }
                 for param in ens_schema["parameters"]
             ]
