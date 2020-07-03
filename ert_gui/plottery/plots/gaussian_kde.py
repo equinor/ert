@@ -24,8 +24,7 @@ def plotGaussianKDE(figure, plot_context, case_to_data_map, _observation_data):
     plot_context.x_axis = plot_context.VALUE_AXIS
     plot_context.y_axis = plot_context.DENSITY_AXIS
 
-    if key.startswith("LOG10_"):
-        key = key[6:]
+    if plot_context.log_scale:
         axes.set_xscale("log")
 
     for case, data in case_to_data_map.items():

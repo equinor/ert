@@ -21,8 +21,7 @@ def plotDistribution(figure, plot_context, case_to_data_map, _observation_data):
 
     plot_context.y_axis = plot_context.VALUE_AXIS
 
-    if key.startswith("LOG10_"):
-        key = key[6:]
+    if plot_context.log_scale:
         axes.set_yscale("log")
 
     case_list = plot_context.cases()
