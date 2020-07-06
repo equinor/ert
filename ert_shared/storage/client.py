@@ -90,12 +90,6 @@ class StorageClient(object):
             for resp in ens_schema["responses"]
         ]
 
-        log_keys = {
-            param["group"][6:] + param["key"]
-            for param in ens_schema["parameters"]
-            if param["group"].startswith("LOG10_")
-        }
-
         result.extend(
             [
                 {
@@ -105,7 +99,7 @@ class StorageClient(object):
                     "has_refcase": False,
                     "dimensionality": 1,
                     "metadata": {"data_origin": "Parameter"},
-                    "log_scale": (param["group"] + param["key"]) in log_keys,
+                    "log_scale": param["group"].startswith("LOG10_"),
                 }
                 for param in ens_schema["parameters"]
             ]
@@ -139,6 +133,9 @@ class StorageClient(object):
     def data_for_key(self, case, key):
         """ Returns a pandas DataFrame with the datapoints for a given key for a given case. The row index is
             the realization number, and the column index is a multi-index with (key, index/date)"""
+
+        if key.startswith("LOG10_"):
+            key = key[6:]
 
         ensembles = ref_request("{base}/ensembles".format(base=self._BASE_URI))
 
