@@ -29,5 +29,5 @@ __res_lib_info.py
 /.project
 *.egg*
 /dist
-/ert_gui/version.py
+/ert_shared/version.py
 
