@@ -12,7 +12,7 @@ class PlotApi(object):
             the key"""
 
         all_keys = self._facade.all_data_type_keys()
-        log_keys = [k[6:] for k in all_keys if k.startswith("LOG10_")]
+        log_keys = [k for k in all_keys if k.startswith("LOG10_")]
 
         return [{"key": key,
                  "index_type": self._key_index_type(key),
@@ -50,6 +50,9 @@ class PlotApi(object):
     def data_for_key(self, case, key):
         """ Returns a pandas DataFrame with the datapoints for a given key for a given case. The row index is
             the realization number, and the columns are an index over the indexes/dates"""
+
+        if key.startswith("LOG10_"):
+            key = key[6:]
 
         if self._facade.is_summary_key(key):
             data = self._facade.gather_summary_data(case, key).T
