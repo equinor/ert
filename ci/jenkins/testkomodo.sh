@@ -4,6 +4,8 @@ PROJECT=libres
 RELEASE_PATH=${KOMODO_ROOT}/${RELEASE_NAME}
 GIT=${SDPSOFT}/bin/git
 source $KOMODO_ROOT/$RELEASE_NAME/enable
+export LD_LIBRARY_PATH=${RELEASE_PATH}/root/lib:${RELEASE_PATH}/root/lib64
+
 source $DEVTOOL/enable
 
 # find and check out the code that was used to build libres for this komodo relase
