@@ -4,6 +4,8 @@ RELEASE_PATH=${KOMODO_ROOT}/${RELEASE_NAME}
 echo "unit testing ${PROJECT} against ${RELEASE_NAME}"
 
 source ${RELEASE_PATH}/enable
+export LD_LIBRARY_PATH=${RELEASE_PATH}/root/lib:${RELEASE_PATH}/root/lib64
+
 source ${DEVTOOL}/enable
 GCC_VERSION=7.3.0 CMAKE_VERSION=3.10.2 source ${SDPSOFT}/env.sh
 
