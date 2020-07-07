@@ -48,8 +48,11 @@ def _get_job_category(job_name):
     if "FILE" in job_name or "DIR" in job_name or "SYMLINK" in job_name:
         return "utility.file_system"
 
-    if job_name in {"ECLIPSE100", "ECLIPSE300", "FLOW", "RMS"}:
+    if job_name in {"ECLIPSE100", "ECLIPSE300", "FLOW"}:
         return "simulators.reservoir"
+
+    if job_name == "RMS":
+        return "modeling.reservoir"
 
     if job_name == "TEMPLATE_RENDER":
         return "utility.templating"
