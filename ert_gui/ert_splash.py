@@ -20,8 +20,8 @@ class ErtSplash(QSplashScreen):
         screen = desktop.screenGeometry(desktop.primaryScreen()).size()
 
         screen_width, screen_height = screen.width(), screen.height()
-        x = screen_width / 2 - splash_width / 2
-        y = screen_height / 2 - splash_height / 2
+        x = screen_width // 2 - splash_width // 2
+        y = screen_height // 2 - splash_height // 2
         self.setGeometry(x, y, splash_width, splash_height)
 
 
@@ -63,7 +63,7 @@ class ErtSplash(QSplashScreen):
             aspect = float(image_width) / float(image_height)
 
         scaled_height = h - 2 * margin
-        scaled_width = scaled_height * aspect
+        scaled_width = round(scaled_height * aspect)
 
         painter.drawRect(margin, margin, scaled_width, scaled_height)
         painter.drawPixmap(margin, margin, scaled_width, scaled_height, self.splash_image)
@@ -80,16 +80,16 @@ class ErtSplash(QSplashScreen):
         font.setStyleHint(QFont.Serif)
         font.setPixelSize(text_size)
         painter.setFont(font)
-        painter.drawText(text_x, margin + top_offset, text_area_width, text_size, Qt.AlignHCenter | Qt.AlignCenter, self.ert)
+        painter.drawText(text_x, margin + top_offset, text_area_width, text_size, int(Qt.AlignHCenter | Qt.AlignCenter), self.ert)
 
         top_offset += text_size + 2 * margin
         text_size = 25
         font.setPixelSize(text_size)
         painter.setFont(font)
-        painter.drawText(text_x, top_offset, text_area_width, text_size, Qt.AlignHCenter | Qt.AlignCenter, self.ert_title)
+        painter.drawText(text_x, top_offset, text_area_width, text_size, int(Qt.AlignHCenter | Qt.AlignCenter), self.ert_title)
 
         top_offset += text_size + 4 * margin
         text_size = 20
         font.setPixelSize(text_size)
         painter.setFont(font)
-        painter.drawText(text_x, top_offset, text_area_width, text_size, Qt.AlignHCenter | Qt.AlignCenter, self.version)
+        painter.drawText(text_x, top_offset, text_area_width, text_size, int(Qt.AlignHCenter | Qt.AlignCenter), self.version)
