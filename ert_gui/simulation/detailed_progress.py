@@ -84,8 +84,8 @@ class DetailedProgress(QFrame):
         self.grid_height = math.ceil(math.sqrt(nr_realizations / aspect_ratio))
         self.grid_width = math.ceil(self.grid_height * aspect_ratio)
         sub_grid_size = math.ceil(math.sqrt(fm_size))
-        cell_height = height / self.grid_height
-        cell_width = width / self.grid_width
+        cell_height = height // self.grid_height
+        cell_width = width // self.grid_width
 
         foreground_image = QImage(self.grid_width * sub_grid_size, self.grid_height * sub_grid_size,
                                   QImage.Format_ARGB32)
@@ -103,7 +103,7 @@ class DetailedProgress(QFrame):
 
             painter.setPen(QColor(80, 80, 80))
             painter.drawText(x * cell_width, y * cell_height, cell_width, cell_height,
-                             Qt.AlignHCenter | Qt.AlignVCenter, str(iens))
+                             int(Qt.AlignHCenter | Qt.AlignVCenter), str(iens))
 
             if iens == self.selected_realization:
                 pen = QPen(QColor(240, 240, 240))
@@ -117,8 +117,8 @@ class DetailedProgress(QFrame):
             thickness = 4
             pen.setWidth(thickness)
             painter.setPen(pen)
-            painter.drawRect((x * cell_width) + (thickness / 2),
-                             (y * cell_height) + (thickness / 2),
+            painter.drawRect((x * cell_width) + (thickness // 2),
+                             (y * cell_height) + (thickness // 2),
                              cell_width - (thickness - 1),
                              cell_height - (thickness - 1))
 
@@ -177,7 +177,7 @@ class SingleProgressModel(QAbstractTableModel):
 
         if role == Qt.BackgroundColorRole:
             color = QColor(*self.state_colors[status])
-            color.setAlpha(color.alpha() / 2)
+            color.setAlpha(round(color.alpha() / 2))
             if col == 'stdout' or col == 'stderr':
                 color = QColor(100,100,100,100) # make items stand out
             return color
