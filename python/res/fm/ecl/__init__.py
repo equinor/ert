@@ -1,4 +1,4 @@
-from .ecl_config import Ecl300Config, Ecl100Config, FlowConfig
+from .ecl_config import Ecl300Config, Ecl100Config, FlowConfig, EclrunConfig
 from .ecl_run import EclRun
 from .script import run
 

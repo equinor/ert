@@ -1,5 +1,6 @@
 import os
 import yaml
+import subprocess
 import sys
 import re
 
@@ -71,7 +72,7 @@ class EclConfig(object):
 
     """
 
-    def __init__(self, config_file):
+    def __init__(self, config_file, simulator_name="not_set"):
         with open(config_file) as f:
             try:
                 config = yaml.safe_load(f)
@@ -80,13 +81,19 @@ class EclConfig(object):
 
         self._config = config
         self._config_file = os.path.abspath(config_file)
-
+        self.simulator_name = simulator_name
 
     def __contains__(self, version):
         if version in self._config[Keys.versions]:
             return True
 
         return self.default_version is not None and version in [None, Keys.default]
+
+
+    def get_eclrun_env(self):
+        if "eclrun_env" in self._config:
+            return self._config["eclrun_env"].copy()
+        return None
 
 
     @property
@@ -167,7 +174,7 @@ class Ecl100Config(EclConfig):
 
     def __init__(self):
         config_file = os.getenv("ECL100_SITE_CONFIG", default = self.DEFAULT_CONFIG_FILE)
-        super(Ecl100Config, self).__init__(config_file)
+        super(Ecl100Config, self).__init__(config_file, simulator_name="eclipse")
 
 
 class Ecl300Config(EclConfig):
@@ -176,7 +183,7 @@ class Ecl300Config(EclConfig):
 
     def __init__(self):
         config_file = os.getenv("ECL300_SITE_CONFIG", default = self.DEFAULT_CONFIG_FILE)
-        super(Ecl300Config, self).__init__(config_file)
+        super(Ecl300Config, self).__init__(config_file, simulator_name="e300")
 
 
 
@@ -186,4 +193,53 @@ class FlowConfig(EclConfig):
 
     def __init__(self):
         config_file = os.getenv("FLOW_SITE_CONFIG", default = self.DEFAULT_CONFIG_FILE)
-        super(FlowConfig, self).__init__(config_file)
+        super(FlowConfig, self).__init__(config_file, simulator_name="flow")
+
+
+
+class EclrunConfig:
+    """ This class contains configurations for using the new eclrun binary
+    for running eclipse. It uses the old configurations classes above to
+    get the configuration in the ECLX00_SITE_CONFIG files.
+    """
+    def __init__(self, config, version):
+        self.simulator_name = config.simulator_name
+        self.run_env = self._get_run_env(config.get_eclrun_env())
+        self.version = version
+
+    def _get_run_env(self, eclrun_env):
+        if eclrun_env is None:
+            return None
+
+        env = os.environ.copy()
+        if "PATH" in eclrun_env:
+            env["PATH"] = eclrun_env["PATH"] + os.pathsep + env["PATH"]
+            eclrun_env.pop("PATH")
+
+        env.update(eclrun_env)
+        return env
+
+    def _get_available_eclrun_versions(self):
+        try:
+            return (
+                subprocess.check_output(
+                    ["eclrun", "--report-versions", self.simulator_name],
+                    env=self.run_env,
+                )
+                .decode("utf-8")
+                .strip()
+                .split(" ")
+            )
+        except subprocess.CalledProcessError:
+            return []
+
+    def can_use_eclrun(self):
+        if self.run_env is None:
+            return False
+
+        ecl_run_versions = self._get_available_eclrun_versions()
+        if self.version not in ecl_run_versions:
+            return False
+
+        return True
+

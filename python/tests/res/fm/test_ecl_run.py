@@ -150,10 +150,6 @@ class EclRunTest(ResTest):
         with self.assertRaises(ValueError):
             ecl_run = EclRun("path/ECLIPSE.DATA", sim, num_cpu = "xxx")
 
-        # invalid number of CPU
-        with self.assertRaises(Exception):
-            ecl_run = EclRun("path/ECLIPSE.DATA", sim, num_cpu = 10)
-
         ecl_run = EclRun("path/ECLIPSE.DATA", mpi_sim, num_cpu = "10")
         self.assertEqual( 10 , ecl_run.numCpu())
 

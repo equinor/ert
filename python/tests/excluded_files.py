@@ -139,7 +139,6 @@ def get_excluded_files(root):
         "res/enkf/summary_key_set.py",
         "res/fm/ecl/__init__.py",
         "res/enkf/state_map.py",
-        "res/fm/ecl/script.py",
         "res/fm/rms/__init__.py",
         "res/fm/rms/rms_config.py",
         "res/enkf/site_config.py",

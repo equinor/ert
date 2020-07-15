@@ -163,9 +163,6 @@ class EclRun(object):
         self.sim = sim
         self.check_status = check_status
         self.num_cpu = int(num_cpu)
-        if self.num_cpu > 1:
-            if self.sim.mpirun is None:
-                raise Exception("Internal inconsistency - asked for:{} cpus with a not MPI enabled simulator".format(num_cpu))
 
 
         # Dechipher the ecl_case argument.
@@ -205,11 +202,11 @@ class EclRun(object):
         return self.num_cpu
 
 
-
-    def _build_simulator_environment(self):
+    def _get_legacy_run_env(self):
         my_env = os.environ.copy()
         my_env.update(self.sim.env.items())
         return my_env
+
 
     def initMPI(self):
 
@@ -255,7 +252,34 @@ class EclRun(object):
             for host in machine_list:
                 fileH.write("%s\n" % host)
 
-    def execEclipse(self):
+    def _get_run_command(self, eclrun_config):
+        return [
+            "eclrun",
+            "-v",
+            eclrun_config.version,
+            "--np",
+            str(self.num_cpu),
+            eclrun_config.simulator_name,
+            "{}.DATA".format(self.base_name)
+        ]
+
+    def _get_legacy_run_command(self):
+        if self.num_cpu == 1:
+            return [self.sim.executable, self.base_name]
+        else:
+            self.initMPI()
+            return [
+                self.sim.mpirun,
+                "-machinefile",
+                self.machine_file,
+                "-np",
+                str(self.num_cpu),
+                self.sim.executable,
+                self.base_name
+            ]
+
+    def execEclipse(self, eclrun_config=None):
+        use_eclrun = eclrun_config is not None
         log_name = "{}.LOG".format(self.base_name)
 
         with pushd(self.run_path), open(log_name, "wb") as log_file:
@@ -264,29 +288,18 @@ class EclRun(object):
             if not os.access(self.data_file, os.R_OK):
                 raise OSError("Can not read data file:{}".format(self.data_file))
 
-            if self.num_cpu == 1:
-                command = [self.sim.executable, self.base_name]
-            else:
-                self.initMPI()
-                command = [
-                    self.sim.mpirun,
-                    "-machinefile",
-                    self.machine_file,
-                    "-np",
-                    str(self.num_cpu),
-                    self.sim.executable,
-                    self.base_name
-                ]
+            command = self._get_run_command(eclrun_config) if use_eclrun else self._get_legacy_run_command()
+            env = eclrun_config.run_env if use_eclrun else self._get_legacy_run_env()
 
             process = subprocess.Popen(
                 command,
-                env=self._build_simulator_environment(),
+                env=env,
                 stdout=subprocess.PIPE,
             )
             return await_process_tee(process, sys.stdout, log_file)
 
-    def runEclipse(self):
-        return_code = self.execEclipse( )
+    def runEclipse(self, eclrun_config=None):
+        return_code = self.execEclipse(eclrun_config=eclrun_config)
 
         OK_file = os.path.join(self.run_path , "%s.OK" % self.base_name)
         if not self.check_status:
@@ -294,7 +307,7 @@ class EclRun(object):
                 f.write("ECLIPSE simulation complete - NOT checked for errors.")
         else:
             if return_code != 0:
-                raise Exception("The eclipse executable:%s exited with error status: %d" % (self.sim.executable, return_code))
+                raise Exception("The eclipse executable exited with error status: %d" % (return_code))
 
             self.assertECLEND( )
             if self.num_cpu > 1:
