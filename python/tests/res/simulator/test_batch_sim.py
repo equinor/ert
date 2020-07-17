@@ -16,7 +16,7 @@ from tests.utils import tmpdir
 
 from threading import Thread
 
-class TestMonitor(object):
+class MockMonitor(object):
 
     def __init__(self):
         self.sim_context = None
@@ -174,7 +174,7 @@ class BatchSimulatorTest(ResTest):
             test_area.copy_parent_content(config_file)
 
             res_config = ResConfig(user_config_file=os.path.basename(config_file))
-            monitor = TestMonitor()
+            monitor = MockMonitor()
             rsim = BatchSimulator(res_config,
                                   {
                                       "WELL_ORDER" : ["W1", "W2", "W3"],
@@ -320,7 +320,7 @@ class BatchSimulatorTest(ResTest):
             test_area.copy_parent_content(config_file)
 
             res_config = ResConfig(user_config_file=os.path.basename(config_file))
-            monitor = TestMonitor()
+            monitor = MockMonitor()
             rsim = BatchSimulator(res_config,
                                   {
                                       "WELL_ORDER" : {

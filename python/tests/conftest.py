@@ -23,6 +23,12 @@ def pytest_runtest_setup(item):
         pytest.skip("Test requires Equinor data")
 
 
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "equinor_test"
+    )
+
+
 @pytest.fixture(autouse=True)
 def env_save():
     environment_pre = [(key, val) for key, val in os.environ.items() if key != "PYTEST_CURRENT_TEST"]
