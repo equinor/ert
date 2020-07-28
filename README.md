@@ -1,6 +1,6 @@
 # ert [![Build Status](https://travis-ci.org/equinor/ert.svg?branch=master)](https://travis-ci.org/equinor/ert)
 
-ERT - Ensemble based Reservoir Tool - is a tool to run ensemble based on
+ER  T - Ensemble based Reservoir Tool - is a tool to run ensemble based on
 reservoir models. ERT was originally devised as tool to do model updating
 (history matching) with the EnKF method, now the primary method for model
 updating is the Ensemble Smoother (ES).
