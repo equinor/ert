@@ -326,7 +326,7 @@ components:
                   type: string
                   example: /ensembles/1/realizations/0
                 name:
-                  type: string
+                  type: integer
                   example: 0
           responses:
             type: array
@@ -346,14 +346,14 @@ components:
     Parameter-minimal:
       required:
       - group
-      - name
-      - parameter_ref
+      - key
+      - ref_url
       type: object
       properties:
-        url_ref:
+        ref_url:
           type: string
           example: /ensembles/1/parameters/2
-        name:
+        key:
           type: string
           example: param2
         group:
@@ -396,13 +396,12 @@ components:
                   example: "/ensembles/1/realizations/0"
     Realization:
       required:
-      - ensemble_id
       - name
       type: object
       properties:
         name:
-          type: string
-          example: "0"
+          type: integer
+          example: 0
         responses:
           type: array
           items:

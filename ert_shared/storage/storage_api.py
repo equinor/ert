@@ -33,7 +33,7 @@ class StorageApi(object):
                 "name": ensemble.parent.ensemble_reference.name,
             }
             if ensemble.parent is not None
-            else None,
+            else {},
             "children": [
                 {
                     "ensemble_ref": child.ensemble_result.id,
@@ -90,7 +90,7 @@ class StorageApi(object):
             ]
 
             return_schema = {
-                "name": realization_idx,
+                "name": realization.index,
                 "responses": [
                     {"name": res["name"], "data_ref": res["response"].values_ref}
                     for res in responses
