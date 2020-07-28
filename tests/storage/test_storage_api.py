@@ -28,7 +28,7 @@ def test_ensembles(db_info):
         assert {
             "name": "ensemble_name",
             "time_created": db_lookup["ensemble_timestamp"].isoformat(),
-            "parent": None,
+            "parent": {},
             "children": [],
             "ensemble_ref": db_lookup["ensemble"],
         } in schema["ensembles"]
@@ -40,7 +40,7 @@ def test_ensemble(db_info):
         schema = api.get_ensemble(db_lookup["ensemble"])
         assert schema["name"] == "ensemble_name"
         assert schema["time_created"] == db_lookup["ensemble_timestamp"].isoformat()
-        assert schema["parent"] == None
+        assert schema["parent"] == {}
         assert schema["children"] == []
         assert schema["ensemble_ref"] == db_lookup["ensemble"]
         assert {
