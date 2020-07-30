@@ -11,7 +11,7 @@ install_test_dependencies () {
 }
 
 start_tests () {
-    if [[ ${RELEASE_NAME} =~ py27$  ]]
+    if [[ ${CI_KOMODO_RELEASE} =~ py27$  ]]
     then
         export PYTEST_QT_API=pyqt4v2
     fi
