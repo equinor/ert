@@ -52,4 +52,4 @@ fi
 # The existence of a running xvfb process will produce
 # a lock file for the default server and kill the run
 # Allow xvfb to find a new server
-xvfb-run --auto-servernum python -m pytest
+ xvfb-run --auto-servernum python -m pytest -k "not test_gui_load"

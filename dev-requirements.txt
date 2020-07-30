@@ -1,5 +1,5 @@
 black ; python_version >= '3.6'
-pytest
+pytest<6
 pytest-qt
 mock ; python_version >= '3'
 mock<4; python_version < '3'
