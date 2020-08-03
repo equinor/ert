@@ -10,6 +10,10 @@ install_test_dependencies () {
     pip install -r dev-requirements.txt
 }
 
+install_package () {
+    pip install . --no-deps
+}
+
 start_tests () {
     if [[ ${CI_KOMODO_RELEASE} =~ py27$  ]]
     then
