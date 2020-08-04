@@ -78,7 +78,7 @@ instance in the main ERT configuration file:
   GEN_KW PAR_MULTPV multpv_template.txt multpv.txt multpv_priors.txt
 
 In the GRID or EDIT section of the ECLIPSE data file, we would insert the
-ollowing include statement:
+following include statement:
 ::
 
  INCLUDE
@@ -129,7 +129,7 @@ with normally distributed variables. So internally in ERT the interplay between
 ``GEN_KW`` variables and updates is as follows:
 
   1. ERT samples a random variable ``x ~ N(0,1)`` - before outputing to the
-     forward model this is *transformed* to ``y ~ F(Y)`` where the the
+     forward model this is *transformed* to ``y ~ F(Y)`` where the
      distribution ``F(Y)`` is the correct prior distribution.
 
   2. When the prior simulations are complete ERT calculates misfits between
@@ -161,7 +161,7 @@ A stochastic variable is log normally distributed if the logarithm of the
 variable is normally distributed. In other words, if X is normally distributed,
 then Y = exp(X) is log normally distributed.
 
-A log normal prior is suited to model positive quanties with a heavy tail
+A log normal prior is suited to model positive quantities with a heavy tail
 (tendency to take large values). To set a log normal prior, use the keyword
 LOGNORMAL. It takes two arguments, the mean and standard deviation of the
 *logarithm* of the variable:
@@ -307,7 +307,7 @@ Loading GEN_KW values from an external file
 The default use of the GEN_KW keyword is to let the ERT application sample
 random values for the elements in the GEN_KW instance, but it is also possible
 to tell ERT to load a precreated set of data files, this can for instance be
-used as a component in a experimental design based workflow. When using external
+used as a component in an experimental design based workflow. When using external
 files to initialize the GEN_KW instances you supply an extra keyword
 ``INIT_FILE:/path/to/priors/files%d`` which tells where the prior files are:
 
@@ -523,7 +523,7 @@ The surface data can be updated using the Smoother.
 
 **Initializing from the FORWARD MODEL**
 
-All the parameter types like FIELD,GEN_KW,GEN_PARAM and SURFACE can be
+All the parameter types like FIELD, GEN_KW, GEN_PARAM and SURFACE can be
 initialized from the forward model. To achieve this you just add the setting
 FORWARD_INIT:True to the configuration. When using forward init the
 initialization will work like this:
@@ -538,7 +538,7 @@ initialization will work like this:
 
 When using FORWARD_INIT:True ERT will consider the INIT_FILES setting to find
 which file to initialize from. If the INIT_FILES setting contains a relative
-filename, it will be interpreted relativt to the runpath directory. In the
+filename, it will be interpreted relatively to the runpath directory. In the
 example below we assume that RMS has created a file petro.grdecl which contains
 both the PERMX and the PORO fields in grdecl format; we wish to initialize PERMX
 and PORO nodes from these files:
@@ -567,9 +567,9 @@ fit into any of the other categories. As an example, consider the following
 situation:
 
 Some external Software (e.g. Cohiba) makes a large vector of random numbers
-which will serve as input to the forward model. (It is no requirement that the
+which will serve as input to the forward model. It is no requirement that the
 parameter set is large, but if it only consists of a few parameters the GEN_KW
-type will be easier to use.) We want to update this parameter with ERT. In
+type will be easier to use. We want to update this parameter with ERT. In
 the main configuration file the input for a GEN_PARAM instance is as follows:
 
 ::
@@ -585,7 +585,7 @@ initialize, and OUTPUT_FORMAT is the format of the files ERT writes for the
 forward model. The valid values are:
 
 * ASCII - This is just text file with formatted numbers.
-* ASCII_TEMPLATE - An plain text file with formatted numbers, and an arbitrary header/footer.
+* ASCII_TEMPLATE - A plain text file with formatted numbers, and an arbitrary header/footer.
 * BINARY_FLOAT - A vector of binary float numbers.
 * BINARY_DOUBLE - A vector of binary double numbers. 
 
@@ -613,13 +613,13 @@ The template file can look like this (only the Magic123 is special):
 
 ::
 
-	Header line1
-	Header line2
-  ============
-	Magic123
-	============
-	Footer line1
-	Footer line2
+   Header line1
+   Header line2
+   ============
+   Magic123
+   ============
+   Footer line1
+   Footer line2
 
 When ERT is running the string Magic123 is replaced with parameter values, and
 the resulting file will look like this:
@@ -684,13 +684,13 @@ vectors and all group vectors from the ``NORTH`` group.
 General data: GEN_DATA
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The ``GEN_DATA`` keyword is used to to load *arbitrary* which has been generated
+The ``GEN_DATA`` keyword is used to load *arbitrary* which has been generated
 by the forward model. ERT does not have any awareness of the type of data
 encoded in a ``GEN_DATA`` keyword; it could be the result of gravimetric
-calculation or the pressure difference across a barrier in the reeservoir. This
+calculation or the pressure difference across a barrier in the reservoir. This
 means that the ``GEN_DATA`` keyword is extremely flexible, but also slightly
 complicated to configure. Assume a ``GEN_DATA`` keyword is used to represent the
-result of an estimated of the position of the oil water contact which should be
+result of an estimated position of the oil water contact which should be
 compared with a oil water contact from 4D seismic; this could be achieved with
 the configuration:  
 

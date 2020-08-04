@@ -4,9 +4,9 @@ List of Keywords
 ====================
 
 For your convenience, the description of the keywords in the ERT configuration file 
-are divded into the following groups:
+are divided into the following groups:
 
-* Basic required keywords not related to parametrization. I.e., keywords giving
+* Basic required keywords not related to parametrization. I.e. keywords giving
   the data, grid, schedule and observation file, defining how to run simulations
   and how to store results. These keywords are described in :ref:`Basic required
   keywords.<basic_required_keywords>`
@@ -24,97 +24,97 @@ List of keywords
 =====================================================================	======================================	==============================  ==============================================================================================================================================
 Keyword name                                                        	Required              			Default value         		Purpose
 =====================================================================	======================================	============================== 	==============================================================================================================================================
-:ref:`ADD_FIXED_LENGTH_SCHEDULE_KW <add_fixed_length_schedule_kw>`  	NO                                          				Deprecated.
+:ref:`ADD_FIXED_LENGTH_SCHEDULE_KW <add_fixed_length_schedule_kw>`  	NO                                          				Deprecated
 :ref:`ANALYSIS_COPY <analysis_copy>`                                	NO                                          				Create new instance of analysis module
 :ref:`ANALYSIS_LOAD <analysis_load>`                                	NO                                          				Load analysis module
 :ref:`ANALYSIS_SET_VAR <analysis_set_var>`                          	NO                                          				Set analysis module internal state variable
 :ref:`ANALYSIS_SELECT <analysis_select>`                            	NO                    			STD_ENKF    	          	Select analysis module to use in update
-:ref:`CASE_TABLE <case_table>`                                      	NO                                          				Deprecated.
-:ref:`CUSTOM_KW <custom_kw>`                                        	NO                                          				Ability to load arbitrary values from the forward model.
-:ref:`DATA_FILE <data_file>`                                        	NO                                         				Provide an ECLIPSE data file for the problem.
+:ref:`CASE_TABLE <case_table>`                                      	NO                                          				Deprecated
+:ref:`CUSTOM_KW <custom_kw>`                                        	NO                                          				Ability to load arbitrary values from the forward model
+:ref:`DATA_FILE <data_file>`                                        	NO                                         				Provide an ECLIPSE data file for the problem
 :ref:`DATA_KW <data_kw>`                                            	NO                                          				Replace strings in ECLIPSE .DATA files
-:ref:`DBASE_TYPE <dbase_type>`                                      	NO                    			BLOCK_FS         	     	Deprecated.
+:ref:`DBASE_TYPE <dbase_type>`                                      	NO                    			BLOCK_FS         	     	Deprecated
 :ref:`DEFINE <define>`                                              	NO                                          				Define keywords with config scope
 :ref:`DELETE_RUNPATH <delete_runpath>`                              	NO                                          				Explicitly tell ERT to delete the runpath when a job is complete 
 :ref:`ECLBASE <eclbase>`	                                    	YES\*					        			Define a name for the ECLIPSE simulations. \*Either JOBNAME or ECLBASE must be specified
-:ref:`END_DATE <end_date>`                                          	NO                                          				You can tell ERT how lon the simulations should be - for error check
+:ref:`END_DATE <end_date>`                                          	NO                                          				You can tell ERT how long the simulations should be - for error check
 :ref:`ENKF_ALPHA <enkf_alpha>`                                      	NO                    			1.50                  		Parameter controlling outlier behaviour in EnKF algorithm
-:ref:`ENKF_CROSS_VALIDATION <enkf_cross_validation>`                	NO                                                                      Deprecated.
+:ref:`ENKF_CROSS_VALIDATION <enkf_cross_validation>`                	NO                                                                      Deprecated
 :ref:`ENKF_FORCE_NCOMP <enkf_force_ncomp>`                              NO                    			0                    		Indicate if ERT should force a specific number of principal components
-:ref:`ENKF_KERNEL_PARAM <enkf_kernel_param>`                        	NO                    			1                    		Deprecated.
-:ref:`ENKF_CV_FOLDS <enkf_cv_folds>`                                	NO                    			10                    		Deprecated.
-:ref:`ENKF_LOCAL_CV <enkf_local_cv>`                                	NO                    			FALSE                 		Deprecated.
-:ref:`ENKF_MERGE_OBSERVATIONS <enkf_merge_observations>`            	NO                    			FALSE                 		Should observations from many times be merged together
+:ref:`ENKF_KERNEL_PARAM <enkf_kernel_param>`                        	NO                    			1                    		Deprecated
+:ref:`ENKF_CV_FOLDS <enkf_cv_folds>`                                	NO                    			10                    		Deprecated
+:ref:`ENKF_LOCAL_CV <enkf_local_cv>`                                	NO                    			FALSE                 		Deprecated
+:ref:`ENKF_MERGE_OBSERVATIONS <enkf_merge_observations>`            	NO                    			FALSE                 		Should observations from many times be merged together?
 :ref:`ENKF_NCOMP <enkf_ncomp>`                                        	NO                    			              			Number of PC to use when forcing a fixed number; used in combination with kw ENKF_FORCE_NCOMP 
 :ref:`ENKF_PEN_PRESS <enkf_pen_press>`                              	NO                    			FALSE                 		Should we want to use a penalised PRESS statistic in model selection? 
-:ref:`ENKF_RERUN <enkf_rerun>`                                      	NO                    			FALSE                 		Should the simulations be restarted from time zero after each update. 
-:ref:`ENKF_SCALING <enkf_scaling>`                                  	NO                    			TRUE           		       	Deprecated.
-:ref:`ENKF_TRUNCATION <enkf_truncation>`                            	NO                    			0.99        	          	Cutoff used on singular value spectrum. 
-:ref:`ENSPATH <enspath>`                                            	NO                    			storage     	          	Folder used for storage of simulation results.
-:ref:`FIELD <field>`                                                	NO                                          				Ads grid parameters
-:ref:`FORWARD_MODEL <forward_model>`                                	NO                                          				Add the running of a job to the simulation forward model. 
-:ref:`GEN_DATA <gen_data>`                                          	NO                                          				Specify a general type of data created/updated by the forward model.
-:ref:`GEN_KW <gen_kw>`                                              	NO                                          				Add a scalar parameter. 
-:ref:`GEN_KW_TAG_FORMAT <gen_kw_tag_format>`                        	NO                    			<%s>                  		Format used to add keys in the GEN_KW template files.
-:ref:`GEN_KW_EXPORT_FILE <gen_kw_export_file>`                      	NO                    			parameter.txt         		Name of file to where `GEN_KW` parameters will be exported.
-:ref:`GEN_PARAM <gen_param>`                                        	NO                                          				Add a general parameter. 
-:ref:`GRID <grid>`                                                  	NO                                         				Provide an ECLIPSE grid for the reservoir model. 
-:ref:`HISTORY_SOURCE <history_source>`                              	NO                    			REFCASE_HISTORY     	  	Source used for historical values.
-:ref:`HOOK_WORKFLOW <hook_workflow>` 					NO 									Install a workflow to be run automatically.
-:ref:`IGNORE_SCHEDULE <ignore_schedule>`                            	NO                                          				Deprecated.
-:ref:`INSTALL_JOB <install_job>`                                   	NO                                          				Install a job for use in a forward model. 
+:ref:`ENKF_RERUN <enkf_rerun>`                                      	NO                    			FALSE                 		Should the simulations be restarted from time zero after each update? 
+:ref:`ENKF_SCALING <enkf_scaling>`                                  	NO                    			TRUE           		       	Deprecated
+:ref:`ENKF_TRUNCATION <enkf_truncation>`                            	NO                    			0.99        	          	Cutoff used on singular value spectrum 
+:ref:`ENSPATH <enspath>`                                            	NO                    			storage     	          	Folder used for storage of simulation results
+:ref:`FIELD <field>`                                                	NO                                          				Adds grid parameters
+:ref:`FORWARD_MODEL <forward_model>`                                	NO                                          				Add the running of a job to the simulation forward model 
+:ref:`GEN_DATA <gen_data>`                                          	NO                                          				Specify a general type of data created/updated by the forward model
+:ref:`GEN_KW <gen_kw>`                                              	NO                                          				Add a scalar parameter 
+:ref:`GEN_KW_TAG_FORMAT <gen_kw_tag_format>`                        	NO                    			<%s>                  		Format used to add keys in the GEN_KW template files
+:ref:`GEN_KW_EXPORT_FILE <gen_kw_export_file>`                      	NO                    			parameter.txt         		Name of file to where `GEN_KW` parameters will be exported
+:ref:`GEN_PARAM <gen_param>`                                        	NO                                          				Add a general parameter 
+:ref:`GRID <grid>`                                                  	NO                                         				Provide an ECLIPSE grid for the reservoir model 
+:ref:`HISTORY_SOURCE <history_source>`                              	NO                    			REFCASE_HISTORY     	  	Source used for historical values
+:ref:`HOOK_WORKFLOW <hook_workflow>` 					NO 									Install a workflow to be run automatically
+:ref:`IGNORE_SCHEDULE <ignore_schedule>`                            	NO                                          				Deprecated
+:ref:`INSTALL_JOB <install_job>`                                   	NO                                          				Install a job for use in a forward model 
 :ref:`ITER_CASE <iter_Case>`                                        	NO                    			IES%d         	        	Case name format - iterated ensemble smoother
 :ref:`ITER_COUNT <iter_count>`                                      	NO                    			4             	        	Number of iterations - iterated ensemble smoother 
 :ref:`ITER_RETRY_COUNT <iter_retry_count>`                          	NO                    			4         	            	Number of retries for a iteration - iterated ensemble smoother 
-:ref:`JOBNAME <jobname>`                                            	YES\*                                          				Name used for simulation files. \*Either JOBNAME or ECLBASE must be specified.
-:ref:`JOB_SCRIPT <job_script>`                                      	NO                                          				Python script managing the forward model. 
-:ref:`LOAD_SEED <load_seed>`                                        	NO                                          				Deprecated.
-:ref:`LOAD_WORKFLOW <load_workflow>` 				    	NO                             						Load a workflow into ERT. 
-:ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`  			    	NO 									Load a workflow job into ERT. 
-:ref:`LICENSE_PATH <license_path>`  				    	NO 									A path where ert-licenses to e.g. RMS are stored.
-:ref:`LOCAL_CONFIG <load_config>` 			            	NO 									Deprecated.
+:ref:`JOBNAME <jobname>`                                            	YES\*                                          				Name used for simulation files. \*Either JOBNAME or ECLBASE must be specified
+:ref:`JOB_SCRIPT <job_script>`                                      	NO                                          				Python script managing the forward model 
+:ref:`LOAD_SEED <load_seed>`                                        	NO                                          				Deprecated
+:ref:`LOAD_WORKFLOW <load_workflow>` 				    	NO                             						Load a workflow into ERT 
+:ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`  			    	NO 									Load a workflow job into ERT 
+:ref:`LICENSE_PATH <license_path>`  				    	NO 									A path where ert-licenses to e.g. RMS are stored
+:ref:`LOCAL_CONFIG <load_config>` 			            	NO 									Deprecated
 :ref:`LOG_FILE <log_file>` 					    	NO 					log 				Name of log file 
 :ref:`LOG_LEVEL <log_level>` 					    	NO 		 			1 				How much logging? 
-:ref:`LSF_QUEUE <lsf_queue>` 					    	NO 					normal				Name of LSF queue. 
-:ref:`LSF_RESOURCES <lsf_resources>` 			            	NO 									See detailed description.
-:ref:`LSF_SERVER <lsf_server>` 					    	NO 									Set server used when submitting LSF jobs. 
-:ref:`MAX_RESAMPLE <max_resample>`				    	NO 					1		 		How many times should ERT resample & retry a simulation.
-:ref:`MAX_RUNNING_RSH <max_running_rsh>` 				NO 									The maximum number of running jobs when using RSH queue system. 
-:ref:`MAX_RUNTIME <max_runtime>` 					NO 					0 				Set the maximum runtime in seconds for a realization. 
-:ref:`MAX_SUBMIT <max_submit>` 						NO 					2 				How many times should the queue system retry a simulation. 
-:ref:`MIN_REALIZATIONS <min_realizations>` 				NO 					0 				Set the number of minimum reservoir realizations to run before long running realizations are stopped. Keyword STOP_LONG_RUNNING must be set to TRUE when MIN_REALIZATIONS are set. 
-:ref:`NUM_CPU <num_cpu>` 							YES 									Set the number of CPUs. Intepretation varies depending on context.
-:ref:`NUM_REALIZATIONS <num_realizations>` 				YES 									Set the number of reservoir realizations to use. 
-:ref:`OBS_CONFIG <obs_config>` 						NO 									File specifying observations with uncertainties. 
-:ref:`PLOT_SETTINGS <plot_settings>` 					NO 					  				Deprecated.
+:ref:`LSF_QUEUE <lsf_queue>` 					    	NO 					normal				Name of LSF queue 
+:ref:`LSF_RESOURCES <lsf_resources>` 			            	NO 									See detailed description
+:ref:`LSF_SERVER <lsf_server>` 					    	NO 									Set server used when submitting LSF jobs 
+:ref:`MAX_RESAMPLE <max_resample>`				    	NO 					1		 		How many times should ERT resample & retry a simulation
+:ref:`MAX_RUNNING_RSH <max_running_rsh>` 				NO 									The maximum number of running jobs when using RSH queue system 
+:ref:`MAX_RUNTIME <max_runtime>` 					NO 					0 				Set the maximum runtime in seconds for a realization 
+:ref:`MAX_SUBMIT <max_submit>` 						NO 					2 				How many times should the queue system retry a simulation 
+:ref:`MIN_REALIZATIONS <min_realizations>` 				NO 					0 				Set the number of minimum reservoir realizations to run before long running realizations are stopped. Keyword STOP_LONG_RUNNING must be set to TRUE when MIN_REALIZATIONS are set 
+:ref:`NUM_CPU <num_cpu>` 							YES 									Set the number of CPUs. Intepretation varies depending on context
+:ref:`NUM_REALIZATIONS <num_realizations>` 				YES 									Set the number of reservoir realizations to use 
+:ref:`OBS_CONFIG <obs_config>` 						NO 									File specifying observations with uncertainties 
+:ref:`PLOT_SETTINGS <plot_settings>` 					NO 					  				Deprecated
 :ref:`QUEUE_OPTION <queue_option>` 					NO 									Set options for an ERT queue system 
-:ref:`QUEUE_SYSTEM <queue_system>` 					NO 									System used for running simulation jobs.
-:ref:`REFCASE <refcase>` 						NO 									Reference case used for observations and plotting (See HISTORY_SOURCE and SUMMARY).
+:ref:`QUEUE_SYSTEM <queue_system>` 					NO 									System used for running simulation jobs
+:ref:`REFCASE <refcase>` 						NO 									Reference case used for observations and plotting (See HISTORY_SOURCE and SUMMARY)
 :ref:`REFCASE_LIST <refcase_list>` 					NO 									Full path to Eclipse .DATA files containing completed runs (which you can add to plots) 
-:ref:`RERUN_START  <rerun_start>` 					NO 					0 				Deprecated.
+:ref:`RERUN_START  <rerun_start>` 					NO 					0 				Deprecated
 :ref:`RESULT_PATH  <result_path>` 					NO 					results/step_%d			Define where ERT should store results 				 
 :ref:`RFTPATH <rftpath>`  						NO 					rft 				Path to where the rft well observations are stored 
-:ref:`RSH_COMMAND  <rsh_command>` 					NO 									Command used for remote shell operations. 
-:ref:`RSH_HOST <rsh_host>`  						NO 									Remote host used to run forward model. 
+:ref:`RSH_COMMAND  <rsh_command>` 					NO 									Command used for remote shell operations 
+:ref:`RSH_HOST <rsh_host>`  						NO 									Remote host used to run forward model 
 :ref:`RUNPATH <runpath>`  						NO 					simulations/realization%d 	Directory to run simulations
-:ref:`RUNPATH_FILE <runpath_file>`  					NO 					.ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations. 
-:ref:`RUN_TEMPLATE <run_template>`  					NO 									Install arbitrary files in the runpath directory.
-:ref:`STD_SCALE_CORRELATED_OBS <std_scale_correlated_obs>`              NO                                      FALSE                           Try to estimate the correlations in the data to inflate the observation std.     
-:ref:`SCHEDULE_FILE <schedule_file>`  					NO 									Deprecated.
-:ref:`SCHEDULE_PREDICTION_FILE <schedule_prediction_file>`  		NO 									Schedule prediction file. 
-:ref:`SETENV <setenv>`  						NO 									You can modify the UNIX environment with SETENV calls. 
+:ref:`RUNPATH_FILE <runpath_file>`  					NO 					.ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations 
+:ref:`RUN_TEMPLATE <run_template>`  					NO 									Install arbitrary files in the runpath directory
+:ref:`STD_SCALE_CORRELATED_OBS <std_scale_correlated_obs>`              NO                                      FALSE                           Try to estimate the correlations in the data to inflate the observation std     
+:ref:`SCHEDULE_FILE <schedule_file>`  					NO 									Deprecated
+:ref:`SCHEDULE_PREDICTION_FILE <schedule_prediction_file>`  		NO 									Schedule prediction file 
+:ref:`SETENV <setenv>`  						NO 									You can modify the UNIX environment with SETENV calls 
 :ref:`SIMULATION_JOB <simulation_job>`  				NO 					 				Experimental alternative to FORWARD_MODEL
-:ref:`SINGLE_NODE_UPDATE <single_node_update>`  			NO 					FALSE 				Splits the dataset into individual parameters.
-:ref:`STOP_LONG_RUNNING <stop_long_running>`  				NO 					FALSE 				Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run. 
-:ref:`STORE_SEED  <store_seed>` 					NO 									Deprecated.
-:ref:`SUMMARY  <summary>` 						NO 									Add summary variables for internalization. 
-:ref:`SURFACE <surface>`  						NO 									Surface parameter read from RMS IRAP file. 
-:ref:`TORQUE_QUEUE  <torque_queue>` 					NO 									Name of the torque queue.
-:ref:`TIME_MAP  <time_map>`       					NO 									Ability to manually enter a list of dates to establish report step <-> dates mapping.
-:ref:`UMASK <umask>`  							NO 									Control the permissions on files created by ERT. 
-:ref:`UPDATE_LOG_PATH  <update_log_path>` 				NO 					update_log 			Summary of the update steps are stored in this directory. 
-:ref:`UPDATE_PATH  <update_path>` 					NO 									Modify a UNIX path variable like LD_LIBRARY_PATH.
-:ref:`WORKFLOW_JOB_DIRECTORY  <workflow_job_directory>` 		NO 									Directory containing workflow jobs. 
+:ref:`SINGLE_NODE_UPDATE <single_node_update>`  			NO 					FALSE 				Splits the dataset into individual parameters
+:ref:`STOP_LONG_RUNNING <stop_long_running>`  				NO 					FALSE 				Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run 
+:ref:`STORE_SEED  <store_seed>` 					NO 									Deprecated
+:ref:`SUMMARY  <summary>` 						NO 									Add summary variables for internalization 
+:ref:`SURFACE <surface>`  						NO 									Surface parameter read from RMS IRAP file 
+:ref:`TORQUE_QUEUE  <torque_queue>` 					NO 									Name of the torque queue
+:ref:`TIME_MAP  <time_map>`       					NO 									Ability to manually enter a list of dates to establish report step <-> dates mapping
+:ref:`UMASK <umask>`  							NO 									Control the permissions on files created by ERT 
+:ref:`UPDATE_LOG_PATH  <update_log_path>` 				NO 					update_log 			Summary of the update steps are stored in this directory 
+:ref:`UPDATE_PATH  <update_path>` 					NO 									Modify a UNIX path variable like LD_LIBRARY_PATH
+:ref:`WORKFLOW_JOB_DIRECTORY  <workflow_job_directory>` 		NO 									Directory containing workflow jobs 
 =====================================================================	======================================	============================== 	==============================================================================================================================================
 
 
@@ -180,14 +180,14 @@ These keywords must be set to make ERT function properly.
   
 		ECLBASE eclipse/model/MY_VERY_OWN_OIL_FIELD-%d
 
-	**Note that JOBNAME can be used as an alternative to ECLBASE.**
+	**Note:** JOBNAME can be used as an alternative to ECLBASE.
 
 .. _jobname:
 .. topic::  JOBNAME
 
 	As an alternative to the ECLBASE keyword you can use the JOBNAME keyword; in
 	particular in cases where your forward model does not include ECLIPSE at all
-	that makes more sense. If JOBANME is used instead of ECLBASE the same rules of
+	that makes more sense. If JOBNAME is used instead of ECLBASE the same rules of
 	no-mixed-case apply.
 
 .. _grid:
@@ -375,7 +375,7 @@ possible to do with ERT.
 
 	When running a set of models from beginning to end ERT does
 	not now in advance how long the simulation is supposed to be,
-	it is therefor impossible beforehand to determine which
+	it is therefore impossible beforehand to determine which
 	restart file number should be used as target file, and the
 	procedure used for Smoother runs can not be used to verify that an
 	ECLIPSE simulation has run to the end.
@@ -391,10 +391,10 @@ possible to do with ERT.
 
 	::
 
-		END_DATE  10/10/2010
+		END_DATE  10/05/2010
 
 	With this END_DATE setting all simulations which have gone to
-	at least 10.th of October 2010 are OK.
+	at least May 10th 2010 are OK.
 
 
 .. _enspath:
@@ -646,10 +646,8 @@ Keywords controlling the simulations
         set *all* the realisations must succeed.
 
 	Please note that MIN_REALIZATIONS = 0 means all simulations must succeed 
-	(this happens to be the default value). Note that the integer value of eg 
-	2% of 20 realizations is 0, and that it is easy to unintentionally instruct 
-	ERT to require all simulations to be finished when the intention was the 
-	opposite.
+	(this happens to be the default value). Note MIN_REALIZATIONS is rounded up
+	e.g. 2% of 20 realizations is rounded to 1.
 
 
 .. _stop_long_running:
@@ -696,7 +694,7 @@ Parameterization keywords
 .. _parameterization_keywords:
 
 The keywords in this section are used to define a parametrization of the ECLIPSE
-model. I.e., defining which parameters to change in a sensitivity analysis
+model. I.e. defining which parameters to change in a sensitivity analysis
 and/or history matching project.
 
 
@@ -828,13 +826,13 @@ and/or history matching project.
 		GEN_DATA  ID RESULT_FILE:yyy INPUT_FORMAT:xx  REPORT_STEPS:10,20  ECL_FILE:xxx  OUTPUT_FORMAT:xx  INIT_FILES:/path/files%d TEMPLATE:/template_file TEMPLATE_KEY:magic_string 
 
 	The GEN_DATA keyword has many options; in many cases you can leave many of
-	them off. We therefor list the required and the optional options separately:
+	them off. We therefore list the required and the optional options separately:
 	
 	**Required GEN_DATA options**
 
-	* RESULT_FILE - This if the name the file generated by the forward model and read by ERT. This filename _must_ have a %d as part of the name, that %d will be replaced by report step when loading.
+	* RESULT_FILE - This is the name of the file generated by the forward model and read by ERT. This filename _must_ have a %d as part of the name, that %d will be replaced by report step when loading.
 	* INPUT_FORMAT - The format of the file written by the forward model (i.e. RESULT_FILE) and read by ERT, valid values are ASCII, BINARY_DOUBLE and BINARY_FLOAT.
-	* REPORT_STEPS A list of the report step(s) where you expect the forward model to create a result file. I.e. if the forward model should create a result file for report steps 50 and 100 this setting should be: REPORT_STEPS:50,100. If you have observations of this GEN_DATA data the RESTART setting of the corresponding GENERAL_OBSERVATION must match one of the values given by REPORT_STEPS.
+	* REPORT_STEPS - A list of the report step(s) where you expect the forward model to create a result file. I.e. if the forward model should create a result file for report steps 50 and 100 this setting should be: REPORT_STEPS:50,100. If you have observations of this GEN_DATA data the RESTART setting of the corresponding GENERAL_OBSERVATION must match one of the values given by REPORT_STEPS.
 
 	**Optional GEN_DATA options**
 
@@ -854,7 +852,7 @@ and/or history matching project.
 	these files and load the content. The files should be pure numbers - without
 	any header.
 
-	**Observe that the GEN_DATA RESULT_FILE setting must have a %d format specifier, that will be replaced with the report step..**
+	**Observe that the GEN_DATA RESULT_FILE setting must have a %d format specifier, that will be replaced with the report step.**
 
 
 .. _custom_kw:
@@ -983,7 +981,7 @@ and/or history matching project.
 	**Example: Using GEN_KW to estimate fault transmissibility multipliers**
 
 	Previously ERT supported a datatype MULTFLT for estimating fault
-	transmissibility multipliers. This has now been depreceated, as the
+	transmissibility multipliers. This has now been deprecated, as the
 	functionality can be easily achieved with the help of GEN_KW. In the ERT
 	config file:
 
@@ -1015,7 +1013,7 @@ and/or history matching project.
 	The default use of the GEN_KW keyword is to let the ERT application sample
 	random values for the elements in the GEN_KW instance, but it is also possible
 	to tell ERT to load a precreated set of data files, this can for instance be
-	used as a component in a experimental design based workflow. When using
+	used as a component in an experimental design based workflow. When using
 	external files to initialize the GEN_KW instances you supply an extra keyword
 	``INIT_FILE:/path/to/priors/files%d`` which tells where the prior files are:
 
@@ -1065,9 +1063,9 @@ and/or history matching project.
 	following situation:
 
 	Some external Software (e.g. Cohiba) makes a large vector of random numbers
-	which will serve as input to the forward model. (It is no requirement that the
+	which will serve as input to the forward model. It is no requirement that the
 	parameter set is large, but if it only consists of a few parameters the GEN_KW
-	type will be easier to use.) We want to update this parameter with ERT. In
+	type will be easier to use. We want to update this parameter with ERT. In
 	the main configuration file the input for a GEN_PARAM instance is as follows:
 
 	::
@@ -1083,7 +1081,7 @@ and/or history matching project.
 	forward model. The valid values are:
 
 	* ASCII - This is just text file with formatted numbers.
-	* ASCII_TEMPLATE - An plain text file with formatted numbers, and an arbitrary
+	* ASCII_TEMPLATE - A plain text file with formatted numbers, and an arbitrary
     	  header/footer.
 	* BINARY_FLOAT - A vector of binary float numbers.
 	* BINARY_DOUBLE - A vector of binary double numbers.
@@ -1183,7 +1181,7 @@ and/or history matching project.
 
 	**Initializing from the FORWARD MODEL**
 
-	All the parameter types like FIELD,GEN_KW,GEN_PARAM and SURFACE can be
+	All the parameter types like FIELD, GEN_KW, GEN_PARAM and SURFACE can be
 	initialized from the forward model. To achieve this you just add the setting
 	FORWARD_INIT:True to the configuration. When using forward init the
 	initialization will work like this:
@@ -1198,7 +1196,7 @@ and/or history matching project.
 
 	When using FORWARD_INIT:True ERT will consider the INIT_FILES setting to find
 	which file to initialize from. If the INIT_FILES setting contains a relative
-	filename, it will be interpreted relativt to the runpath directory. In the
+	filename, it will be interpreted relatively to the runpath directory. In the
 	example below we assume that RMS has created a file petro.grdecl which
 	contains both the PERMX and the PORO fields in grdecl format; we wish to
 	initialize PERMX and PORO nodes from these files:
@@ -1242,7 +1240,7 @@ and/or history matching project.
 	are selected. Observe that if your summary key contains wildcards you must
 	supply a refcase with the REFCASE key - otherwise it will fail hard.
 
-	**Note:** Properties added using the SUMMARY keyword are only diagnostic. I.e., they have no effect on the sensitivity analysis or history match. 
+	**Note:** Properties added using the SUMMARY keyword are only diagnostic. I.e. they have no effect on the sensitivity analysis or history match. 
 
 
 .. _keywords_controlling_the_es_algorithm:
@@ -1636,7 +1634,7 @@ but required when installing ERT at a new site.
 
 	With the DEFINE keyword you can define key-value pairs which will be
 	substituted in the rest of the configuration file. The DEFINE keyword expects
-	two arguments: A key and a value to replace for that key. Later instances of
+	two arguments: a key and a value to replace for that key. Later instances of
 	the key enclosed in '<' and '>' will be substituted with the value. The value
 	can consist of several strings, in that case they will be joined by one single
 	space.
@@ -1656,7 +1654,7 @@ but required when installing ERT at a new site.
 
 	Observe that when you refer to the keys later in the config file they must be
 	enclosed in '<' and '>'. Furthermore, a key-value pair must be defined in the
-	config file before it can be used. The final key define above KEY, will be
+	config file before it can be used. The last key defined above (KEY) will be
 	replaced with VALUE1 VALUE2 VALUE3 VALUE4 - i.e. the extra spaces will be
 	discarded.
 
@@ -1709,11 +1707,11 @@ Keywords related to running the forward model
 	E.g., which version of ECLIPSE to use, which rel.perm script to run, which
 	rock physics model to use etc. Jobs (i.e. programs and scripts) that are to be
 	used in the FORWARD_MODEL keyword must be defined using the INSTALL_JOB
-	keyword. A set of default jobs are available, and by default FORWARD_MODEL
+	keyword. A set of default jobs is available, and by default FORWARD_MODEL
 	takes the value ECLIPSE100.
 
 	The FORWARD_MODEL keyword expects a series of keywords, each defined with
-	INSTALL_JOB. ERT will execute the jobs in sequentially in the order they
+	INSTALL_JOB. ERT will execute the jobs sequentially, in the order they
 	are entered. Note that the ENKF_SCHED_FILE keyword can be used to change the
 	FORWARD_MODEL for sub-sequences of the run.
 
@@ -1798,7 +1796,7 @@ Available LSF configuration options
 	jobs should be submitted to LSF:
 
 	#. You tell ERT that jobs should be submitted using shell commands.
-	#. You tell ERT which server should be used when submitting
+	#. You tell ERT which server should be used when submitting.
 
 	So when your configuration file has the setting:
 
@@ -1849,13 +1847,13 @@ Available LSF configuration options
 .. topic:: LSF_QUEUE
 
 	The name of the LSF queue you are running simulations in.
-	For e.g. ``bsub``, this option will be passed to the ``-q`` parameter:
-	https://www.ibm.com/support/knowledgecenter/en/SSETD4_9.1.3/lsf_command_ref/bsub.q.1.html
+	For example, ``bsub``, this option will be passed to the ``-q`` parameter:
+	https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_command_ref/bsub.q.1.html
 
 .. _lsf_resources:
 .. topic:: LSF_RESOURCES
 
-	From https://www.ibm.com/support/knowledgecenter/en/SSETD4_9.1.3/lsf_admin/res_req_strings_about.html:
+	From https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_admin/res_req_strings_about.html:
 	Most LSF commands accept a -R res_req argument to specify resource
 	requirements. The exact behavior depends on the command. For
 	example, specifying a resource requirement for the lsload command
@@ -1875,14 +1873,14 @@ Available LSF configuration options
 .. _lsf_rsh_cmd:
 .. topic:: LSF_RSH_CMD
 
-	This is option sets the *remote shell* command,
+	This option sets the *remote shell* command,
 	which defaults to ``/usr/bin/ssh``.
 
 .. _lsf_login_shell:
 .. topic:: LSF_LOGIN_SHELL
 
 	Equates to the ``-L`` parameter of e.g. ``bsub``:
-	https://www.ibm.com/support/knowledgecenter/en/SSETD4_9.1.3/lsf_command_ref/bsub.__l.1.html
+	https://www.ibm.com/support/knowledgecenter/en/SSWRJV_10.1.0/lsf_command_ref/bsub.__l.1.html
 	Useful if you need to force the ``bsub`` command to use e.g. ``/bin/csh``.
 
 .. _bsub_cmd:
@@ -1995,14 +1993,14 @@ bjobs.
 .. _torque_nodes_cpus:
 .. topic:: NUM_NODES|NUM_CPUS_PER_NODE
 
-	When using TORQUE, you must specify how many nodes a single job is should to
+	When using TORQUE, you must specify how many nodes a single job should
 	use, and how many CPUs per node. The default setup in ERT will use one node and
 	one CPU. These options are called NUM_NODES and NUM_CPUS_PER_NODE.
 
 	If the numbers specified is higher than supported by the cluster (i.e. use 32
 	CPUs, but no node has more than 16), the job will not start.
 
-	If you wish to increase these number, the program running (typically ECLIPSE)
+	If you wish to increase this number, the program running (typically ECLIPSE)
 	will usually also have to be told to correspondingly use more processing units
 	(keyword PARALLEL)
 
@@ -2033,7 +2031,7 @@ bjobs.
 
 	To be more gentle with the TORQUE system you can instruct the driver to sleep
 	for every submit request. The argument to the SUBMIT_SLEEP is the number of
-	seconds to sleep for every submit, can be a fraction like 0.5.
+	seconds to sleep for every submit, which can be a fraction like 0.5.
 
 	::
 
@@ -2090,7 +2088,7 @@ Configuring the RSH queue (deprecated)
 .. topic:: MAX_RUNNING_RSH
 
 	The keyword MAX_RUNNING_RSH controls the maximum number of simultaneous jobs
-	running when using the RSH option in QUEUE_SYSTEM. It MAX_RUNNING_RSH exceeds
+	running when using the RSH option in QUEUE_SYSTEM. If MAX_RUNNING_RSH exceeds
 	the total capacity defined in RSH_HOST, it will automatically be truncated to
 	that capacity.
 
@@ -2134,7 +2132,7 @@ Keywords related to plotting
 .. topic:: RFTPATH
 
 
-	RFTPATHs argument is the path to where the rft-files are located
+	RFTPATHs argument is the path to where the rft-files are located.
 
 	::
 
@@ -2151,7 +2149,7 @@ Keywords related to plotting
     certain points during ERTs execution. Currently there are four
     points in ERTs flow of execution where you can hook in a workflow,
     before the simulations start, :code:`PRE_SIMULATION`; after all
-    the simulations have completed :code:`POST_SIMULATION`; before the
+    the simulations have completed, :code:`POST_SIMULATION`; before the
     update step, :code:`PRE_UPDATE` and after the update step,
     :code:`POST_UPDATE`.  The :code:`POST_SIMULATION` hook is
     typically used to trigger QC workflows:
@@ -2236,7 +2234,7 @@ instance, and are not applied to the shell.
 .. topic:: UPDATE_PATH
 
 	The UPDATE_PATH keyword will prepend a new element to an existing PATH
-	variable. I.e. the config
+	variable, i.e. the config.
 
 	::
 

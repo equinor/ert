@@ -36,7 +36,7 @@ which makes ERT use the ``LOCAL`` queue system, and
   QUEUE_OPTION LOCAL MAX_RUNNING 50
 
 which sets the ``MAX_RUNNING`` option for the ``LOCAL`` queue to ``50``. This
-is the only *generic* option, i.e. a option that can be set for all queue
+is the only *generic* option, i.e. an option that can be set for all queue
 systems.
 
 Creating a local configuration
@@ -171,8 +171,8 @@ configuration file:
   NUM_CPU 42
 
 Its meaning varies depending on context. For LSF it equates to the ``-n``
-parameter. See more here https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_command_ref/bsub.n.1.html
-E.g., ``NUM_CPU 10`` can be understood as a way for a job to make sure it can
+parameter. See more here https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_command_ref/bsub.n.1.html.
+E.g. ``NUM_CPU 10`` can be understood as a way for a job to make sure it can
 execute on ``10`` processors. This means that a higher number may *increase*
 wait times, since LSF might need to wait until resources are freed in order to
 allocate 10 processors.

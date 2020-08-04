@@ -3,7 +3,7 @@ Internal Workflows
 
 These jobs invoke a function in the address space of the ERT program
 itself; i.e. they are run as part of the running ERT process - and can
-in principle do anything that ERT can do itself. There are two two
+in principle do anything that ERT can do itself. There are two
 varieties of the internal workflow jobs:
 
 
@@ -11,7 +11,7 @@ varieties of the internal workflow jobs:
 Invoke a pre exported function
 ------------------------------
 
-This is the simplest, where you can invoke a a predefined ERT
+This is the simplest, where you can invoke a predefined ERT
 function. The function must already have been marked as *exported* in
 the ert code base. The list of predefined workflow jobs based on this
 method can be found here: :ref:`built_in_workflow_jobs`. Marking a new

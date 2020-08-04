@@ -244,7 +244,7 @@ data/keywords:
      (see enkf_types.h) of STATIC_STATE.
 
   parameter: These are the parameter which we are updating with EnKF
-     like e.g. the permx field and for instance a MULTFLT
+     e.g. the permx field and for instance a MULTFLT
      multiplier. Corresponding to an enkf_var_type value of PARAMETER.
 
   dynamic: These represent data which are updated by the forward
@@ -378,7 +378,7 @@ restart information. The story goes about like this:
 
 Now - the point is that when we store the nodes in the database we
 loose track of the ordering of the keywords - and then ECLIPSE goes
-belly up. I.e. we must keep track of the original order of the
+belly up, i.e. we must keep track of the original order of the
 keywords, that is what the index/kw_list is used for.
     
 
@@ -443,7 +443,7 @@ not had any hickups for about 1.5 years of extensive use in
 Equinor. Observe that if you pull the plug on ERT you might loose some
 of the data which has been stored with the block_fs driver, but partly
 written and malformed data will be detected and discarded at the next
-boot. You are therefor guaranteed (add as many quotes you like to the
+boot. You are therefore guaranteed (add as many quotes you like to the
 guarantee - but this has at least worked 100% up until now) that no
 bogus data will be loaded after an unclean shutdown. When shut down
 cleanly the block_fs will create an index file which can be used for
@@ -551,7 +551,7 @@ SConstruct files:
 
 Unfortunately it has been a major pain in the ass to get SCons to
 behave according to the requirements listed above; for the more
-extensive installation procedures there are therefor simple Python
+extensive installation procedures there are therefore simple Python
 scripts "install.py" which should be invoked after the SCons build is
 complete.
 

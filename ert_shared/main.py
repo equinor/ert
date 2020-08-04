@@ -115,7 +115,7 @@ def get_ert_parser(parser=None):
     )
     subparsers.required = True
 
-    config_help = "Ert configuration file"
+    config_help = "ERT configuration file"
 
     # gui_parser
     gui_parser = subparsers.add_parser(
@@ -126,7 +126,7 @@ def get_ert_parser(parser=None):
     gui_parser.set_defaults(func=run_gui_wrapper)
     gui_parser.add_argument("config", type=valid_file, help=config_help)
     gui_parser.add_argument(
-        "--verbose", action="store_true", help="Show verbose output", default=False
+        "--verbose", action="store_true", help="Show verbose output.", default=False
     )
     FeatureToggling.add_feature_toggling_args(gui_parser)
     gui_url_or_bind = gui_parser.add_mutually_exclusive_group()
@@ -151,7 +151,7 @@ def get_ert_parser(parser=None):
         "--runpath", type=str, help="Path to where the database-files are located."
     )
     ert_api_parser.add_argument(
-        "--verbose", action="store_true", help="Show verbose output", default=False
+        "--verbose", action="store_true", help="Show verbose output.", default=False
     )
     ert_api_parser.add_argument(
         "--bind",
@@ -179,17 +179,17 @@ def get_ert_parser(parser=None):
     ensemble_experiment_parser.add_argument(
         "--realizations",
         type=valid_realizations,
-        help="These are the realizations that will be used to perform simulations."
+        help="These are the realizations that will be used to perform simulations. "
         "For example, if 'Number of realizations:50 and Active realizations is 0-9', "
         "then only realizations 0,1,2,3,...,9 will be used to perform simulations "
-        "while realizations 10,11, 12,...,49 will be excluded",
+        "while realizations 10,11, 12,...,49 will be excluded.",
     )
     ensemble_experiment_parser.add_argument(
         "--current-case",
         type=valid_name,
         required=False,
         help="Name of the case where the results for the simulation "
-        "using the prior parameters will be stored",
+        "using the prior parameters will be stored.",
     )
 
     ensemble_experiment_parser.add_argument(
@@ -197,14 +197,14 @@ def get_ert_parser(parser=None):
         type=valid_iter_num,
         default=0,
         required=False,
-        help="Specification of which iteration number is about to be made."
+        help="Specification of which iteration number is about to be made. "
         "Use iter-num to avoid recomputing the priors.",
     )
 
     # ensemble_smoother_parser
     ensemble_smoother_description = (
         "Run simulations in cli while performing one update"
-        " on the parameters by using the ensemble smoother algorithm"
+        " on the parameters by using the ensemble smoother algorithm."
     )
     ensemble_smoother_parser = subparsers.add_parser(
         ENSEMBLE_SMOOTHER_MODE,
@@ -216,7 +216,7 @@ def get_ert_parser(parser=None):
         type=valid_name,
         required=True,
         help="Name of the case where the results for the "
-        "updated parameters will be stored",
+        "updated parameters will be stored.",
     )
     ensemble_smoother_parser.add_argument(
         "--realizations",
@@ -231,7 +231,7 @@ def get_ert_parser(parser=None):
         type=valid_name,
         required=False,
         help="Name of the case where the results for the simulation "
-        "using the prior parameters will be stored",
+        "using the prior parameters will be stored.",
     )
 
     # es_mda_parser
@@ -268,7 +268,7 @@ def get_ert_parser(parser=None):
         type=valid_name,
         required=False,
         help="Name of the case where the results for the simulation "
-        "using the prior parameters will be stored",
+        "using the prior parameters will be stored.",
     )
 
     workflow_description = "Executes the workflow given"
@@ -287,7 +287,7 @@ def get_ert_parser(parser=None):
     ]:
         cli_parser.set_defaults(func=run_cli)
         cli_parser.add_argument(
-            "--verbose", action="store_true", help="Show verbose output", default=False
+            "--verbose", action="store_true", help="Show verbose output.", default=False
         )
         cli_parser.add_argument(
             "--color-always",

@@ -37,8 +37,8 @@ different classes of observations using the associated keywords:
    compatible simulatores, etc
 
  - :ref:`HISTORY_OBSERVATION <history_observation>`: for time series of 
-   observations for whcih the observed values can be extracted from 
-   WCONPROD or WCONINJE secion of ECLIPSE schedule files. Used for easy / quick 
+   observations for which the observed values can be extracted from 
+   WCONPROD or WCONINJE section of ECLIPSE schedule files. Used for easy / quick 
    configuration of production rates and fractions.
 
 
@@ -161,7 +161,7 @@ Note the use of the sub class OBS to specify the actual observed
 values, the observation errors and their grid location. Each OBS shall
 have a unique key within the BLOCK_OBSERVATION instance, and is
 required to have the items I, J, K, VALUE and ERROR. These are the
-grid i,j and k indicies for the observation point, the observed value
+grid i,j and k indices for the observation point, the observed value
 and it's standard deviation.
 
 As with a SUMMARY_OBSERVATION, the observation time can be given as
@@ -195,7 +195,7 @@ Where the file RFT_2006_OBS_DATA.txt contains the OBS instances::
    OBS P6 { I = 5;  J = 3;  K = 1;   VALUE = 122;  ERROR = 5; };
 
 
-Note that the file name / path in the include keyword is realtive to 
+Note that the file name / path in the include keyword is relative to 
 the location of ERT config file. And that the keyword can be used 
 anywhere in the configuration file. However, nested inclusion (use of 
 include in a file that has already been included with include) is not 
@@ -265,7 +265,7 @@ Here we use INDEX_LIST to indicate that we are interested in element
  ========
 
 In addition to INDEX_LIST it is possible to use INDEX_FILE which
-should just point at an plain text file with indexes (without any ','
+should just point at a plain text file with indexes (without any ','
 or anything). Finally, if your observation only has one value, you can
 embed it in the config object with VALUE and ERROR.
 
@@ -439,8 +439,8 @@ the observations.
 By default, an observation entered with the HISTORY_OBSERVATION
 keyword will get the observed values, i.e. the 'true' values, from the
 WCONHIST and WCONINJH keywords in the schedule file provided to the
-ERT project. However it also possible to get the observed values from
-a reference case. In that case you must set set HISTORY_SOURCE
+ERT project. However it is also possible to get the observed values from
+a reference case. In that case you must set HISTORY_SOURCE
 variable in the ERT configuration file, see Creating a configuration
 file for ERT.
 
@@ -471,15 +471,15 @@ keyword. For example::
      };
   };
 
-The items START and STOP sets the start and stop of the segment in
+The items START and STOP set the start and stop of the segment in
 terms of ECLIPSE restart steps. The keywords ERROR, ERROR_MODE and
-ERROR_MIN behaves like before. If the segments overlap, they are
+ERROR_MIN behave like before. If the segments overlap, they are
 computed in alphabetical order.  Error covariance for "merged" updates
 
 When merging the historical observations from several report steps
 together in one update the different steps are not independent, and it
-is beneficial to use a error covariance matrix, by using the keywords
-AUTO_CORRF and AUTO_CORRF_PARAM ERT will automatically estimate a
+is beneficial to use a error covariance matrix. By using the keywords
+AUTO_CORRF and AUTO_CORRF_PARAM, ERT will automatically estimate a
 error-covariance matrix based on the auto correlation function
 specified by the AUTO_CORRF keyword, with the parameter given by the
 AUTO_CORRF_PARAM parameter (i.e. the auto correlation length). The

@@ -18,7 +18,7 @@ New features:
   - Support Slurm as a queue system
 
 Improvements:
-  - Backup PYTHONPATH when running RMS to faciliate external scripts
+  - Backup PYTHONPATH when running RMS to facilitate external scripts
 
 Miscellaneous:
   - Improve tmp-file usage in tests

@@ -2,11 +2,6 @@
 Welcome to ERT's documentation!
 ===============================
 
-.. todo::
-   Welcome text (link to theroy)
-
-   Describe ERT as a tool for ensemble experiments/workflow manger, history matching and sensitivity analysis.
-
 ERT (Ensemble based Reservoir Tool) is a tool for model updating (history matching) using ensemble methods.
 ERT is primarily developed for use with reservoir models, but the tool can be used in any area dealing
 with model updates and uncertainty estimation. You can read more about the theory in :doc:`theory/ensemble_based_methods`

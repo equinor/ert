@@ -62,7 +62,7 @@ Jobs related to export
 **EXPORT_FIELD**
 
 The EXPORT_FIELD workflow job exports field data to roff or grdecl
-format dependent on the extension of the export file argument.The job
+format dependent on the extension of the export file argument. The job
 takes the following arguments:
 
 #. Field to be exported
@@ -173,7 +173,7 @@ and the target case must be given as arguments:
    ANALYSIS_UPDATE prior posterior
 
 Will fetch prior parameters and simulated responses from the
-case:`prior` and store updated parameters in the case:`posterior`. If
+case:`prior` and store updated parameters in the case: `posterior`. If
 you have configured local updates that will be respected, otherwise
 all available data will be used - and all parameters will be updated.
 
@@ -209,9 +209,9 @@ specified case, then run a simulation on this case:
 **RUN_SMOOTHER_WITH_ITER**
 
 This is exactly like the RUN_SMOOTHER job, but it has an additional
-first argumeent iter which can be used to control the iter number in
+first argument iter which can be used to control the iter number in
 the RUNPATH. When using the RUN_SMOOTHER job the iter number will be
-defaultetd to zero, and one in the optional rerun.
+defaulted to zero, and one in the optional rerun.
 
 **ENSEMBLE_RUN**
 
@@ -242,7 +242,7 @@ realizations are loaded.
 
 	LOAD_RESULTS 1-5, 8
 
-In the case of multi iteration jobs, like e.g. the integrated smoother
+In the case of multi iteration jobs, e.g. the integrated smoother
 update, the LOAD_RESULTS job will load the results from iter==0. To
 control which iteration is loaded from you can use the
 LOAD_RESULTS_ITER job.
@@ -366,7 +366,7 @@ export to.
 **INIT_MISFIT_TABLE**
 
 Calculating the misfit for all observations and all timesteps can
-potentially be a bit timeconsuming, the results are therefor cached
+potentially be a bit timeconsuming, the results are therefore cached
 internally. If you need to force the recalculation of this cache you
 can use the INIT_MISFIT_TABLE job to initialize the misfit table that
 is used in observation ranking.
