@@ -445,7 +445,7 @@ ERT script function                                                        Purpo
 .. _load_file:
 .. topic:: EclGrid, EclInitFile
 
-   This function will load an ECLIPSE file in restart format (i.e., *restart
+   This function will load an ECLIPSE file in restart format (i.e. *restart
    file* or *INIT file*), the keywords in this file can then subsequently be
    used in ``ECLREGION_SELECT_VALUE_XXX`` commands below.  The ``KEY`` argument
    is a string which will be used later when we refer to the content of this

@@ -37,7 +37,7 @@ class FeatureToggling:
             parser.add_argument(
                 "--{}".format(FeatureToggling._get_arg_name(feature_name)),
                 action="store_true",
-                help="Toggle {} (Warning: This is experiemental)".format(feature_name),
+                help="Toggle {} (Warning: This is experimental)".format(feature_name),
                 default=False,
             )
 

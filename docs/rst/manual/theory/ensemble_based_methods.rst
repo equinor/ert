@@ -38,7 +38,7 @@ based on Bayes' theorem:
 
 where :math:`f(x|d)` is the posterior probability distribution i.e., the probability of :math:`x`
 given :math:`d`, :math:`f(x)` is the prior distribution, and :math:`f(d|x)` is called the
-likelihood ie the probability of observing :math:`d` assuming the reservoir is characterized by
+likelihood i.e. the probability of observing :math:`d` assuming the reservoir is characterized by
 :math:`x`. A successful sampling of reservoir models from the posterior distribution will not
 only provide models with better history match (which in turn should provide better predictions)
 but also assess the associated uncertainty.
@@ -62,7 +62,7 @@ of the reservoir. However, it is essential to remember that the goal is *not* to
 the uncertainty and find one true answer. There are two reasons for this:
 
 1. The data used, when conditioning the model, are also uncertain. The accuracy of measurements
-   of, e.g., water cut and GOR, is limited by the precision in the measurement apparatus and the
+   of, e.g. water cut and GOR, is limited by the precision in the measurement apparatus and the
    allocation procedures. For 4D seismic data, the uncertainty is considerable.
 
 2. The model updating process will take place in the abstract space spanned by
@@ -84,7 +84,7 @@ illustration in figure :numref:`ensemble`).
 
 
 All the plots show simulations pressure in a cell as a function of time, with measurements. Plots
-(1) and (3) show simulations before the model updating (i.e., the *prior*) and plots (2) and (4)
+(1) and (3) show simulations before the model updating (i.e. the *prior*) and plots (2) and (4)
 show the plots after the update process (the *posterior*). The dashed vertical line is meant to
 illustrate the change from history to prediction. 
  
@@ -148,11 +148,11 @@ equation for how the boat moves in time, and at selected points in time :math:`t
    This is the position estimated from :math:`x_{k-1}` and :math:`g(x,t)`, but
    before the observed data :math:`d_k` are taken into account.
 
-:math:`d_k`: The observed values that are used in the updating process. The
-   :math:`d_k` values are measured with a process external to the model updating.
+:math:`d_k`: The observed values that are used in the updating process. 
+   The :math:`d_k` values are measured with a process external to the model updating.
 
-:math:`\sigma_d`: The uncertainty in the measurements :math:`d_k`. A reliable
-      estimate of this uncertainty is essential for the algorithm to place a
+:math:`\sigma_d`: The uncertainty in the measurements :math:`d_k`. 
+      A reliable estimate of this uncertainty is essential for the algorithm to place a
       "correct" weight on the measured values.
 
 :math:`g(x,t)`: The equation of motion - *forward model* - which propagates
@@ -234,7 +234,7 @@ error covariance for the measurements. We can then write the posterior distribut
           & \times \exp\{-\frac{1}{2}(g(x)-d)^T C_{dd}^{-1}(g(x)-d)\}.
    \end{align}
 
-The smoother methods in ERT approximateley sample the posterior PDF through various routes. 
+The smoother methods in ERT approximately sample the posterior PDF through various routes. 
 These are derived exploiting the fact that maximizing f(x|d) is equivalent to minimizing
 
 .. math::
@@ -287,13 +287,13 @@ so that the columns consist of the data vector plus a random vector from the nor
 
 .. math::
 
-   f(d|g(x)=f(e)=\mathcal{N}(0,C_{dd}).
+   f(d|g(x))=f(e)=\mathcal{N}(0,C_{dd}).
 
 
 The Ensemble Smoother algorithm approximately solves the minimization problems
 :math:`\nabla\mathcal{J(x_j)}=0` for each realization.
 To derive an equation for the updated :math:`x_j` that solves
-:math:`\nabla\mathcal{J(x_j)}=0` one must use the linearization
+:math:`\nabla\mathcal{J(x_j)}=0`, one must use the linearization:
 
 .. math::
    g(x_j) = x_j^f + G_j(x_j -x_j^f)
@@ -320,20 +320,20 @@ The model responses are then solved indireclty by evaluating the forward model
 
 The pseudo algorithm for ES:
 
-1) Define :math:`D` by adding correalted noise according to :math:`C_{dd}`
+1) Define :math:`D` by adding correlated noise according to :math:`C_{dd}`
 
 2) Sample the prior ensemble, :math:`X_f`
 
-3) Run the forward model :math:`Y_f = g(X_f)` to obtain the prior simulated respones
+3) Run the forward model :math:`Y_f = g(X_f)` to obtain the prior simulated responses
 
 4) Calculate :math:`X_a` using equation above
 
 5) Run the forward model :math:`Y_a = g(X_a)` to obtain the posterior simulated responses 
 
 
-Nummerical schemes
+Numerical schemes
 ------------------
-There are several nummerical schemes, ie methods to estimate the Kalman gain matrix
+There are several nummerical schemes, i.e. methods to estimate the Kalman gain matrix
 
 .. math::
    \bar{C}_{xy}(\bar{C}_{xy}^{f}\bar{C}_{xx}^{-1}\bar{C}_{xy}+\bar{C}_{dd})^{-1}

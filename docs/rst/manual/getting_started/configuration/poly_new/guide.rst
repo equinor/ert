@@ -40,6 +40,8 @@ Then create a file ``poly.ert`` inside the folder with the following content:
 Launch the user interface
 *************************
 
+#Missing installation steps, create virtual environment
+
 Navigate to this folder on your command line and run ERT::
 
     ert gui poly.ert
@@ -189,7 +191,7 @@ specified in the config. Now run the ensemble experiment again like you did
 earlier. After it has finished, close all ERT windows.
 
 In you project folder you should now see a new folder called ``poly_out`` as
-you defined in the ``RUNPATH`` configuration. Inside the folder yo will see
+you defined in the ``RUNPATH`` configuration. Inside the folder you will see
 folders named ``real_0``, ``real_1``, and so on, for each realization. Inside
 these folders you will see a new level of folders named ``iter_0``, where the
 realization simulation has run. Inside this folder, you will see some new files
@@ -272,7 +274,7 @@ The :ref:`GEN_KW <gen_kw>` keyword tells ERT to generate parameters from a
 distribution. After the keyword there are four arguments, specifying how to
 do this.
 
- 1. ``COEFFS``: The first argument is the name you wish to give to give to the parameter set.
+ 1. ``COEFFS``: The first argument is the name you wish to give to the parameter set.
  2. ``coeff.tmpl``: The second argument is the name of the template file with placeholder names of the parameters.
  3. ``coeffs.json``: The third argument is the name of the file into which the result of the template replacement will be written in each simulation runpath before the simulation jobs run.
  4. ``coeff_priors``: The fourth and final argument specifies where the parameter distributions are specified.
@@ -405,10 +407,10 @@ the following observations in the file ``poly_obs_data.txt``:
 The observations are written one for each line, with the first number
 signifying the observed value, and the second number signifying the uncertainty.
 
-Now lets describe the observations we have to ERT. This is done with the
+Now let's describe the observations we have to ERT. This is done with the
 :ref:`OBS_CONFIG <obs_config>` keyword, which refers to a file in which we must
 :ref:`OBS_CONFIG <obs_config>` keyword, which refers to a file in which we must
-describe the observations. Firs, make a file called ``observations`` in the
+describe the observations. First, make a file called ``observations`` in the
 project folder with the following content:
 
     .. literalinclude:: with_observations/observations
@@ -418,16 +420,16 @@ to relate them to simulation results. It is followed by a name of the observatio
 set, then a list of key-value pairs specifying the details.
 
 DATA
-    specifies which result set to relate the observation to
+    Specifies which result set to relate the observation to.
 INDEX_LIST
     In our results file we have 10 values, while we only have 5 observation.
     This list tells ERT which of the results we have observations for. If they
-    are the same length, you can omit this
+    are the same length, you can omit this.
 RESTART
-    legacy, must simply be the same as ``REPORT_STEPS`` from the ``GEN_DATA``
+    Legacy, must simply be the same as ``REPORT_STEPS`` from the ``GEN_DATA``
     line.
 OBS_FILE
-    the file in which the observations can be found.
+    The file in which the observations can be found.
 
 After creating the observations file we need to add it to the config file with
 these lines::
@@ -438,10 +440,11 @@ these lines::
 The :ref:`OBS_CONFIG <obs_config>` line simply tells ERT that there is a
 description of an observation set in the file ``observations``. The
 :ref:`TIME_MAP <time_map>` is legacy, and not used anymore, but it is still
-required when we have an observation set.
+required to create a `time_map` file (e.g. containing 00/00/0000) when 
+we have an observation set.
 
 If you now launch ERT again you will now be able to choose different simulation
-modes. Choose Ensemble Smoother, and start the simulations. When it it is
+modes. Choose Ensemble Smoother, and start the simulations. When it is
 running you will see that when the first set of realizations is done, a new tab
 is created, where another set of realizations is visualized. This new set runs
 with the updated parameters that the algorithm creates, which should give new

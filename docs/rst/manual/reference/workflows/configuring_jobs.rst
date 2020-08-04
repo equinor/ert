@@ -5,7 +5,7 @@ Workflow jobs are configured with a small configuration file much like
 the configuration file used to install forward model jobs. The
 keywords used in the configuration file are in two *classes* - those
 related to how the job should be located/run and the arguments which
-should passed from the workflow to the job.
+should be passed from the workflow to the job.
 
 
 Configure an internal job
@@ -63,7 +63,7 @@ Configuring the arguments
 -------------------------
 
 In addition to the INTERNAL, FUNCTION, MODULE and EXECUTABLE keys
-which are used to configure what the job should do there are some keys
+which are used to configure what the job should do, there are some keys
 which can be used to configure the number of arguments and their
 type. These arguments apply to both internal and external jobs:
 
@@ -76,7 +76,7 @@ type. These arguments apply to both internal and external jobs:
 	ARG_TYPE   2    STRING       -- The third argument should be a string - the default.
 	ARGLIST    <ARG0> <ARG1>     -- A list of arguments to pass on to the executable
 
-The MIN_ARG,MAX_ARG and ARG_TYPE arguments are used to validate workflows.
+The MIN_ARG, MAX_ARG and ARG_TYPE arguments are used to validate workflows.
 
 Note
 ____
