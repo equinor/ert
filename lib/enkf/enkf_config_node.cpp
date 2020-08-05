@@ -849,6 +849,9 @@ void enkf_config_node_add_GEN_DATA_config_schema( config_parser_type * config ) 
 
 void enkf_config_node_add_CUSTOM_KW_config_schema(config_parser_type * config){
     config_schema_item_type * item = config_add_schema_item(config, CUSTOM_KW_KEY, false);
+    config_parser_deprecate(
+         config, CUSTOM_KW_KEY,
+         "\'CUSTOM_KW\' has been deprecated");
     config_schema_item_set_argc_minmax(item, 2, 3);
     config_schema_item_iset_type(item, 0, CONFIG_STRING);
     config_schema_item_iset_type(item, 1, CONFIG_PATH);
