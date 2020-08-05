@@ -132,6 +132,12 @@ void test_min_realizations_percent() {
     test_min_realizations(num_realizations_str, min_realizations_str, min_realizations_expected_needed);
   }
   {
+    const char * num_realizations_str = "NUM_REALIZATIONS 5\n";
+    const char * min_realizations_str = "MIN_REALIZATIONS 2%\n";
+    int min_realizations_expected_needed              = 1; 
+    test_min_realizations(num_realizations_str, min_realizations_str, min_realizations_expected_needed);
+  }
+  {
     const char * num_realizations_str = "NUM_REALIZATIONS 8\n";
     const char * min_realizations_str = "MIN_REALIZATIONS 50%\n";
     int min_realizations_expected_needed              = 4;
@@ -146,7 +152,7 @@ void test_min_realizations_percent() {
   {
     const char * num_realizations_str = "NUM_REALIZATIONS 8\n";
     const char * min_realizations_str = "MIN_REALIZATIONS 10%\n";
-    int min_realizations_expected_needed              = 8; // Expect 8 because 10 % of 8 will be calculated to zero.
+    int min_realizations_expected_needed              = 1; // Expect 1 because 10 % of 8 will be calculated to 1 (ceiling).
     test_min_realizations(num_realizations_str, min_realizations_str, min_realizations_expected_needed );
   }
 }

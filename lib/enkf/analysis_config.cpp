@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <math.h>
+
 #include <unordered_map>
 
 #include <ert/util/util.h>
@@ -454,8 +456,7 @@ void analysis_config_init( analysis_config_type * analysis , const config_conten
     int min_realizations                      = DEFAULT_ANALYSIS_MIN_REALISATIONS;
     double percent                            = 0.0;
     if (util_sscanf_percent(min_realizations_string, &percent)) {
-
-      min_realizations = num_realizations * percent/100;
+      min_realizations = ceil(num_realizations * percent/100);
     } else {
       bool min_realizations_int_exists = util_sscanf_int(min_realizations_string, &min_realizations);
       if (!min_realizations_int_exists)
