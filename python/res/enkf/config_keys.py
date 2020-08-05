@@ -35,9 +35,6 @@ class ConfigKeys:
 
     _log_file_key         = ResPrototype("char* config_keys_get_log_file_key()", bind=False)
     _log_level_key        = ResPrototype("char* config_keys_get_log_level_key()", bind=False)
-    _lsf_resources_key    = ResPrototype("char* config_keys_get_lsf_resources_key()", bind=False)
-    _lsf_server_key       = ResPrototype("char* config_keys_get_lsf_server_key()", bind=False)
-    _lsf_queue_key        = ResPrototype("char* config_keys_get_lsf_queue_key()", bind=False)
     _update_log_path      = ResPrototype("char* config_keys_get_update_log_path_key()", bind=False)
     _store_seed           = ResPrototype("char* config_keys_get_store_seed_key()", bind=False)
     _load_seed            = ResPrototype("char* config_keys_get_load_seed_key()", bind=False)
@@ -197,10 +194,6 @@ class ConfigKeys:
     SHOW_HISTORY_KEY = _show_history_key
     LOG_FILE         = _log_file_key()
     LOG_LEVEL        = _log_level_key()
-    LSF_RESOURCE_KEY = _lsf_resources_key()
-    LSF_QUEUE_NAME_KEY = _lsf_queue_key()
-    LSF_SERVER_KEY   = _lsf_server_key()
-    LSF_KEY          = 'LSF'
     UPDATE_LOG_PATH  = _update_log_path()
     STORE_SEED       = _store_seed()
     LOAD_SEED        = _load_seed()

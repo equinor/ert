@@ -39,6 +39,11 @@ class QueueConfig(BaseCClass):
     _queue_driver          = ResPrototype("driver_ref queue_config_get_queue_driver(queue_config, char*)")
     _get_num_cpu           = ResPrototype("int queue_config_get_num_cpu(queue_config)")
 
+    _lsf_queue_opt = ResPrototype("char* queue_config_lsf_queue_name()", bind=False)
+    _lsf_server_opt = ResPrototype("char* queue_config_lsf_server()", bind=False)
+    _lsf_resource_opt = ResPrototype("char* queue_config_lsf_resource()", bind=False)
+    _lsf_driver_opt = ResPrototype("char* queue_config_lsf_driver_name()", bind=False)
+
     def __init__(self, user_config_file=None, config_content=None, config_dict=None):
         configs = sum([1 for x in [user_config_file, config_content, config_dict] if x is not None])
 
@@ -94,7 +99,7 @@ class QueueConfig(BaseCClass):
 
     @property
     def queue_name(self):
-        return self.driver.get_option(ConfigKeys.LSF_QUEUE_NAME_KEY)
+        return self.driver.get_option(QueueConfig.LSF_QUEUE_NAME_KEY)
 
     @property
     def queue_system(self):
@@ -111,7 +116,7 @@ class QueueConfig(BaseCClass):
 
     def _assert_lsf(self, key='driver'):
         sys = self.queue_system
-        if sys != ConfigKeys.LSF_KEY:
+        if sys != QueueConfig.LSF_KEY:
             fmt = 'Cannot fetch LSF {key}, current queue is {system}'
             raise ValueError(fmt.format(key=key,
                                         system=self.queue_system))
@@ -119,18 +124,18 @@ class QueueConfig(BaseCClass):
     @property
     def _lsf_driver(self):
         self._assert_lsf()
-        driver = self._queue_driver(ConfigKeys.LSF_KEY)
+        driver = self._queue_driver(self.LSF_KEY)
         return driver.setParent(self)
 
     @property
     def lsf_resource(self):
-        self._assert_lsf(key=ConfigKeys.LSF_RESOURCE_KEY)
-        return self._lsf_driver.get_option(ConfigKeys.LSF_RESOURCE_KEY)
+        self._assert_lsf(key=QueueConfig.LSF_RESOURCE_KEY)
+        return self._lsf_driver.get_option(self.LSF_RESOURCE_KEY)
 
     @property
     def lsf_server(self):
-        self._assert_lsf(key=ConfigKeys.LSF_SERVER_KEY)
-        return self._lsf_driver.get_option(ConfigKeys.LSF_SERVER_KEY)
+        self._assert_lsf(key=QueueConfig.LSF_SERVER_KEY)
+        return self._lsf_driver.get_option(self.LSF_SERVER_KEY)
 
     @property
     def num_cpu(self):
@@ -156,3 +161,8 @@ class QueueConfig(BaseCClass):
                return False
 
         return True
+
+    LSF_KEY = _lsf_driver_opt()
+    LSF_QUEUE_NAME_KEY = _lsf_queue_opt()
+    LSF_RESOURCE_KEY = _lsf_resource_opt()
+    LSF_SERVER_KEY = _lsf_server_opt()

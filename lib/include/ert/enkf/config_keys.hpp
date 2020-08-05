@@ -100,14 +100,7 @@ extern "C" {
 #define  LOCAL_CONFIG_KEY                  "LOCAL_CONFIG"
 #define  LOG_FILE_KEY                      "LOG_FILE"
 #define  LOG_LEVEL_KEY                     "LOG_LEVEL"
-#define  LSF_QUEUE_KEY                     "LSF_QUEUE" // The queue name, e.g. "mr"
-#define  LSF_RESOURCES_KEY                 "LSF_RESOURCE" // LSF resource requirements
-#define  LSF_SERVER_KEY                    "LSF_SERVER"
-#define  TORQUE_QUEUE_KEY                  "TORQUE_QUEUE"
 #define  MAX_RESAMPLE_KEY                  "MAX_RESAMPLE"
-#define  MAX_RUNNING_LOCAL_KEY             "MAX_RUNNING_LOCAL"
-#define  MAX_RUNNING_LSF_KEY               "MAX_RUNNING_LSF"
-#define  MAX_RUNNING_RSH_KEY               "MAX_RUNNING_RSH"
 #define  MAX_SUBMIT_KEY                    "MAX_SUBMIT"
 #define  NUM_REALIZATIONS_KEY              "NUM_REALIZATIONS"
 #define  MIN_REALIZATIONS_KEY              "MIN_REALIZATIONS"
@@ -120,8 +113,6 @@ extern "C" {
 #define  REFCASE_KEY                       "REFCASE"
 #define  REFCASE_LIST_KEY                  "REFCASE_LIST"
 #define  RERUN_START_KEY                   "RERUN_START"
-#define  RSH_COMMAND_KEY                   "RSH_COMMAND"
-#define  RSH_HOST_KEY                      "RSH_HOST"
 #define  RUNPATH_FILE_KEY                  "RUNPATH_FILE"
 #define  RUNPATH_KEY                       "RUNPATH"
 #define  ITER_RUNPATH_KEY                  "ITER_RUNPATH"
@@ -196,9 +187,6 @@ extern "C" {
   const char * config_keys_get_custom_kw_key();
   const char * config_keys_get_gen_kw_key();
   const char * config_keys_get_queue_option_key();
-  const char * config_keys_get_lsf_resources_key();
-  const char * config_keys_get_lsf_server_key();
-  const char * config_keys_get_lsf_queue_key();
   const char * config_keys_get_install_job_key();
   const char * config_keys_get_install_job_directory_key();
   const char * config_keys_get_plot_setting_key();

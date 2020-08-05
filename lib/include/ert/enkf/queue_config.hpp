@@ -78,6 +78,11 @@ typedef struct queue_config_struct queue_config_type;
 
     int queue_config_get_num_cpu(const queue_config_type * queue_config);
 
+    const char * queue_config_lsf_queue_name();
+    const char * queue_config_lsf_server();
+    const char * queue_config_lsf_resource();
+    const char * queue_config_lsf_driver_name();
+
 UTIL_SAFE_CAST_HEADER(queue_config);
 UTIL_IS_INSTANCE_HEADER(queue_config);
 

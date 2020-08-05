@@ -417,40 +417,6 @@ void site_config_add_config_items(config_parser_type * config, bool site_mode) {
 
 
   /*****************************************************************/
-  /* Items related to running jobs with lsf/rsh/local ...          */
-
-  /* These must be set IFF QUEUE_SYSTEM == LSF */
-  item = config_add_schema_item(config, LSF_QUEUE_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, 1);
-
-  item = config_add_schema_item(config, LSF_RESOURCES_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
-
-  item = config_add_schema_item(config, MAX_RUNNING_LSF_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, 1);
-  config_schema_item_iset_type(item, 0, CONFIG_INT);
-
-  item = config_add_schema_item(config, LSF_SERVER_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, 1);
-
-  /* These must be set IFF QUEUE_SYSTEM == RSH */
-  if (!site_mode)
-    config_add_schema_item(config, RSH_HOST_KEY, false); /* Only added when user parse. */
-  item = config_add_schema_item(config, RSH_COMMAND_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, 1);
-  config_schema_item_iset_type(item, 0, CONFIG_EXECUTABLE);
-
-  item = config_add_schema_item(config, MAX_RUNNING_RSH_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, 1);
-  config_schema_item_iset_type(item, 0, CONFIG_INT);
-
-  /* These must be set IFF QUEUE_SYSTEM == LOCAL */
-  item = config_add_schema_item(config, MAX_RUNNING_LOCAL_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, 1);
-  config_schema_item_iset_type(item, 0, CONFIG_INT);
-
-
-  /*****************************************************************/
 
   item = config_add_schema_item(config, INSTALL_JOB_KEY, false);
   config_schema_item_set_argc_minmax(item, 2, 2);

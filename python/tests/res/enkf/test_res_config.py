@@ -31,6 +31,8 @@ from res.job_queue import QueueDriverEnum
 from res.enkf import ResConfig, SiteConfig, AnalysisConfig, ConfigKeys, GenDataFileType
 from res.test import ErtTestContext
 
+from res.enkf import QueueConfig
+
 # The res_config object should set the environment variable
 # 'DATA_ROOT' to the root directory with the config
 # file. Unfortunately the python methods to get environment variable,
@@ -159,15 +161,15 @@ config_data_new = {
                 ConfigKeys.VALUE: "100"
             },
             {
-                ConfigKeys.NAME: ConfigKeys.LSF_QUEUE_NAME_KEY,
+                ConfigKeys.NAME: QueueConfig.LSF_QUEUE_NAME_KEY,
                 ConfigKeys.VALUE: "mr"
             },
             {
-                ConfigKeys.NAME: ConfigKeys.LSF_SERVER_KEY,
+                ConfigKeys.NAME: QueueConfig.LSF_SERVER_KEY,
                 ConfigKeys.VALUE: "simulacrum"
             },
             {
-                ConfigKeys.NAME: ConfigKeys.LSF_RESOURCE_KEY,
+                ConfigKeys.NAME: QueueConfig.LSF_RESOURCE_KEY,
                 ConfigKeys.VALUE: "select[x86_64Linux] same[type:model]"
             },
         ],

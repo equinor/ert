@@ -796,33 +796,10 @@ static void model_config_init_user_config(config_parser_type * config ) {
   hook_manager_add_config_items(config);
 }
 
-static void model_config_user_config_deprecate(config_parser_type * config) {
-  config_parser_deprecate(
-          config,
-          "MAX_RUNNING_LSF",
-          "MAX_RUNNING_LSF is deprecated. "
-          "Use the general QUEUE_OPTION LSF MAX_RUNNING instead."
-          );
-
-  config_parser_deprecate(
-          config,
-          "MAX_RUNNING_LOCAL",
-          "MAX_RUNNING_LOCAL is deprecated. "
-          "Use the general QUEUE_OPTION LOCAL MAX_RUNNING instead."
-          );
-
-  config_parser_deprecate(
-          config,
-          "MAX_RUNNING_RSH",
-          "MAX_RUNNING_RSH is deprecated. "
-          "Use the general QUEUE_OPTION RSH MAX_RUNNING instead."
-          );
-}
 
 void model_config_init_config_parser(config_parser_type * config_parser) {
   model_config_init_user_config(config_parser);
   site_config_add_config_items(config_parser, false);
-  model_config_user_config_deprecate(config_parser);
 }
 
 config_content_type * model_config_alloc_content(
