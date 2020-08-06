@@ -2162,6 +2162,134 @@ Configuring the RSH queue (deprecated)
 		QUEUE_OPTION RSH MAX_RUNNING 10
 
 
+.. _configuring_the_slurm_queue:
+
+Configuring the SLURM queue
+--------------------------------------
+
+	The slurm queue managing tool has a very fine grained control. In ERT only the options that
+	are the most necessary have been added.
+
+.. _slurm_sbatch:
+.. topic:: SBATCH
+
+	Command used to submit the jobs.
+
+	::
+
+		QUEUE_OPTION SLURM SBATCH
+
+
+.. _slurm_scancel:
+.. topic:: SCANCEL
+
+	Command used to cancel the jobs.
+
+	::
+
+		QUEUE_OPTION SLURM SCANCEL
+
+
+.. _slurm_scontrol:
+.. topic:: SCONTROL
+
+	Command to modify configuration and state
+
+	::
+
+		QUEUE_OPTION SLURM SCONTROL
+
+
+.. _slurm_squeue:
+.. topic:: SQUEUE
+
+	Command to view information about the queue
+
+	::
+
+		QUEUE_OPTION SLURM SQUEUE
+
+
+.. _slurm_partition:
+.. topic:: PARTITION
+
+	Partition/queue in which to run the jobs
+
+	::
+
+		QUEUE_OPTION SLURM PARTITION
+
+
+.. _slurm_squeue_timeout:
+.. topic:: SQUEUE_TIMEOUT
+
+	Specify timeout used when querying for status of the jobs while running.
+
+	::
+
+		QUEUE_OPTION SLURM SQUEUE_TIMEOUT 10
+
+.. _slurm_smax_runtime:
+.. topic:: MAX_RUNTIME
+
+	Specify the maximum runtime (in seconds) for how long a job can run.
+
+	::
+
+		QUEUE_OPTION SLURM MAX_RUNTIME 100
+
+.. _slurm_memory:
+.. topic:: MEMORY
+
+	Memory required per node (MB).
+	::
+
+		QUEUE_OPTION SLURM MEMORY 16000
+
+.. _slurm_memory_per_cpu:
+.. topic:: MEMORY_PER_CPU (MB).
+
+
+	Memory required per allocated CPU
+	::
+
+		QUEUE_OPTION SLURM MEMORY_PER_CPU 4000
+
+.. _slurm_include_host:
+.. topic:: INCLUDE_HOST
+
+	Specific host names to use when running the jobs. It is possible to add multiple
+	hosts separated by space or comma in one option call
+
+	::
+
+		QUEUE_OPTION SLURM INCLUDE_HOST host1,host2
+
+.. _slurm_exclude_host:
+.. topic:: EXCLUDE_HOST
+
+	Specific host names to exclude when running the jobs. It is possible to add multiple
+	hosts separated by space or comma in one option call
+
+	::
+
+		QUEUE_OPTION SLURM EXCLUDE_HOST host3,host4
+
+
+.. _max_running_slurm:
+.. topic:: MAX_RUNNING
+
+	The queue option keyword MAX_RUNNING controls the maximum number of simultaneous
+	jobs running when (in this case) using the SLURM option in QUEUE_SYSTEM.
+
+	*Example:*
+
+	::
+
+		QUEUE_SYSTEM SLURM
+		-- No more than 10 simultaneous jobs
+		-- running via SLURM.
+		QUEUE_OPTION SLURM MAX_RUNNING 10
 
 Keywords related to plotting
 ----------------------------
