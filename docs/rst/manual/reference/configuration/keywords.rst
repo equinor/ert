@@ -75,11 +75,7 @@ Keyword name                                                        	Required   
 :ref:`LOCAL_CONFIG <load_config>` 			            	NO 									Deprecated
 :ref:`LOG_FILE <log_file>` 					    	NO 					log 				Name of log file 
 :ref:`LOG_LEVEL <log_level>` 					    	NO 		 			1 				How much logging? 
-:ref:`LSF_QUEUE <lsf_queue>` 					    	NO 					normal				Name of LSF queue 
-:ref:`LSF_RESOURCES <lsf_resources>` 			            	NO 									See detailed description
-:ref:`LSF_SERVER <lsf_server>` 					    	NO 									Set server used when submitting LSF jobs 
 :ref:`MAX_RESAMPLE <max_resample>`				    	NO 					1		 		How many times should ERT resample & retry a simulation
-:ref:`MAX_RUNNING_RSH <max_running_rsh>` 				NO 									The maximum number of running jobs when using RSH queue system 
 :ref:`MAX_RUNTIME <max_runtime>` 					NO 					0 				Set the maximum runtime in seconds for a realization 
 :ref:`MAX_SUBMIT <max_submit>` 						NO 					2 				How many times should the queue system retry a simulation 
 :ref:`MIN_REALIZATIONS <min_realizations>` 				NO 					0 				Set the number of minimum reservoir realizations to run before long running realizations are stopped. Keyword STOP_LONG_RUNNING must be set to TRUE when MIN_REALIZATIONS are set 
@@ -94,8 +90,6 @@ Keyword name                                                        	Required   
 :ref:`RERUN_START  <rerun_start>` 					NO 					0 				Deprecated
 :ref:`RESULT_PATH  <result_path>` 					NO 					results/step_%d			Define where ERT should store results 				 
 :ref:`RFTPATH <rftpath>`  						NO 					rft 				Path to where the rft well observations are stored 
-:ref:`RSH_COMMAND  <rsh_command>` 					NO 									Command used for remote shell operations 
-:ref:`RSH_HOST <rsh_host>`  						NO 									Remote host used to run forward model 
 :ref:`RUNPATH <runpath>`  						NO 					simulations/realization%d 	Directory to run simulations
 :ref:`RUNPATH_FILE <runpath_file>`  					NO 					.ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations 
 :ref:`RUN_TEMPLATE <run_template>`  					NO 									Install arbitrary files in the runpath directory
@@ -109,7 +103,6 @@ Keyword name                                                        	Required   
 :ref:`STORE_SEED  <store_seed>` 					NO 									Deprecated
 :ref:`SUMMARY  <summary>` 						NO 									Add summary variables for internalization 
 :ref:`SURFACE <surface>`  						NO 									Surface parameter read from RMS IRAP file 
-:ref:`TORQUE_QUEUE  <torque_queue>` 					NO 									Name of the torque queue
 :ref:`TIME_MAP  <time_map>`       					NO 									Ability to manually enter a list of dates to establish report step <-> dates mapping
 :ref:`UMASK <umask>`  							NO 									Control the permissions on files created by ERT 
 :ref:`UPDATE_LOG_PATH  <update_log_path>` 				NO 					update_log 			Summary of the update steps are stored in this directory 
@@ -1765,16 +1758,11 @@ Keywords related to running the forward model
 	the forward model. This should normally be set in the site wide configuration
 	file.
 
-.. _queue_option:
-.. topic:: QUEUE_OPTION
-
-	Keyword used to set options for a queue.
-
 .. _queue_system:
 .. topic:: QUEUE_SYSTEM
 
 	The keyword QUEUE_SYSTEM can be used to control where the simulation jobs are
-	executed. It can take the values LSF, TORQUE, RSH (*deprecated*) and LOCAL.
+	executed. It can take the values LSF, TORQUE, SLURM, RSH (*deprecated*) and LOCAL.
 
 	::
 
@@ -1783,6 +1771,13 @@ Keywords related to running the forward model
 
 	The QUEUE_SYSTEM keyword is optional, and usually defaults to LSF (this is
 	site dependent).
+
+.. _queue_option:
+.. topic:: QUEUE_OPTION
+
+	The chosen queue system can be configured further to for instance define the
+	resources it is using. The different queues have individual options that are
+	configurable.
 
 .. _lsf_list_of_kwds:
 
@@ -1802,7 +1797,7 @@ Available LSF configuration options
 
 	::
 
-		LSF_SERVER   be-grid01
+		QUEUE_OPTION LSF LSF_SERVER   be-grid01
 
 	ERT will use ssh to submit your jobs using shell commands on the server
 	be-grid01. For this to work you must have passwordless ssh to the server
@@ -1832,19 +1827,12 @@ Available LSF configuration options
 	In this example we tell ERT to submit jobs from the workstation be-grid01
 	using custom binaries for bsub and bjobs.
 
-	*Example 2*
+.. _lsf_queue:
+.. topic:: LSF_QUEUE
 
 	::
 
-		LSF_SERVER   LOCAL
-
-	In this example we will submit on the current workstation, without using ssh
-	first, and we will use the default bsub and bjobs executables. The remaining
-	LSF options apply irrespective of which method has been used to submit the
-	jobs.
-
-.. _lsf_queue:
-.. topic:: LSF_QUEUE
+		QUEUE_OPTION LSF LSF_QUEUE name_of_queue
 
 	The name of the LSF queue you are running simulations in.
 	For example, ``bsub``, this option will be passed to the ``-q`` parameter:
@@ -1853,7 +1841,12 @@ Available LSF configuration options
 .. _lsf_resources:
 .. topic:: LSF_RESOURCES
 
+	::
+
+		QUEUE_OPTION LSF LSF_RESOURCES resource_string
+
 	From https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_admin/res_req_strings_about.html:
+
 	Most LSF commands accept a -R res_req argument to specify resource
 	requirements. The exact behavior depends on the command. For
 	example, specifying a resource requirement for the lsload command
@@ -1873,11 +1866,18 @@ Available LSF configuration options
 .. _lsf_rsh_cmd:
 .. topic:: LSF_RSH_CMD
 
-	This option sets the *remote shell* command,
-	which defaults to ``/usr/bin/ssh``.
+	::
+
+		QUEUE_OPTION LSF LSF_RSH_CMD name_of_queue
+
+	This option sets the *remote shell* command, which defaults to ``/usr/bin/ssh``.
 
 .. _lsf_login_shell:
 .. topic:: LSF_LOGIN_SHELL
+
+	::
+
+		QUEUE_OPTION LSF LSF_LOGIN_SHELL name_of_queue
 
 	Equates to the ``-L`` parameter of e.g. ``bsub``:
 	https://www.ibm.com/support/knowledgecenter/en/SSWRJV_10.1.0/lsf_command_ref/bsub.__l.1.html
@@ -1888,25 +1888,49 @@ Available LSF configuration options
 
 	The ``bsub`` command. Default: ``bsub``.
 
+	::
+
+		QUEUE_OPTION LSF BSUB_CMD command
+
 .. _bjobs_cmd:
 .. topic:: BJOBS_CMD
 
 	The ``bjobs`` command. Default: ``bjobs``.
+
+	::
+
+		QUEUE_OPTION LSF BJOBS_CMD command
+
 
 .. _bkill_cmd:
 .. topic:: BKILL_CMD
 
 	The ``bkill`` command. Default: ``bkill``.
 
+	::
+
+		QUEUE_OPTION LSF BKILL_CMD command
+
+
 .. _bhist_cmd:
 .. topic:: BHIST_CMD
 
 	The ``bhist`` command. Default: ``bhist``.
 
+	::
+
+		QUEUE_OPTION LSF BHIST_CMD command
+
+
 .. _bjobs_timeout:
 .. topic:: BJOBS_TIMEOUT
 
 	Determines how long-lived the job cache is. Default: ``0`` (i.e. no cache).
+
+	::
+
+		QUEUE_OPTION LSF BJOBS_TIMEOUT 0
+
 
 .. _debug_output:
 .. topic:: DEBUG_OUTPUT
@@ -1915,15 +1939,31 @@ Available LSF configuration options
 	console). Default: ``FALSE``, but note that the LSF queue system will
 	change this value in various failure modes.
 
+	::
+
+		QUEUE_OPTION LSF DEBUG_OUTPUT FALSE
+
+
 .. _submit_sleep:
 .. topic:: SUBMIT_SLEEP
 
 	Determines for how long the system will sleep between submitting jobs.
+	Defaults to 0.
+
+	::
+
+		QUEUE_OPTION LSF SUBMIT_SLEEP 5
+
 
 .. _project_code:
 .. topic:: PROJECT_CODE
 
 	Equates to the ``-P`` parameter for e.g. ``bsub``. See https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_command_ref/bsub.__p.1.html
+
+	::
+
+		QUEUE_OPTION LSF PROJECT_CODE command
+
 
 .. _exclude_host:
 .. topic:: EXCLUDE_HOST
@@ -1931,6 +1971,26 @@ Available LSF configuration options
 	Comma separated list of hosts to be excluded. The LSF system will pass this
 	list of hosts to the ``-R`` argument of e.g. ``bsub`` with the criteria
 	``hname!=<exluded_host_1>``.
+
+	::
+
+		QUEUE_OPTION LSF EXCLUDE_HOST host1,host2
+
+
+.. _lsf_max_running:
+.. topic:: MAX_RUNNING
+
+	The queue option MAX_RUNNING controls the maximum number of simultaneous jobs
+	submitted to the queue when using (in this case) the LSF option in
+	QUEUE_SYSTEM.
+
+	::
+
+		QUEUE_SYSTEM LSF
+		-- Submit no more than 30 simultaneous jobs
+		-- to the TORQUE cluster.
+		QUEUE_OPTION LSF MAX_RUNNING 30
+
 
 .. _torque_list_of_kwds:
 
@@ -2061,7 +2121,7 @@ Configuring the RSH queue (deprecated)
 
 	::
 
-		RSH_HOST   computer1:2  computer2:2   large_computer:8
+		QUEUE_OPTION RSH RSH_HOST   computer1:2  computer2:2   large_computer:8
 
 	Here you tell ERT that you can run on three different computers: computer1,
 	computer2 and large_computer. The two first computers can accept two jobs,
@@ -2081,24 +2141,25 @@ Configuring the RSH queue (deprecated)
 
 	::
 
-		RSH_COMMAND /usr/bin/ssh
+		QUEUE_OPTION RSH RSH_COMMAND /usr/bin/ssh
 
 
 .. _max_running_rsh:
-.. topic:: MAX_RUNNING_RSH
+.. topic:: MAX_RUNNING
 
-	The keyword MAX_RUNNING_RSH controls the maximum number of simultaneous jobs
-	running when using the RSH option in QUEUE_SYSTEM. If MAX_RUNNING_RSH exceeds
-	the total capacity defined in RSH_HOST, it will automatically be truncated to
+	The queue option keyword MAX_RUNNING controls the maximum number of simultaneous
+	jobs running when (in this case) using the RSH option in QUEUE_SYSTEM. If MAX_RUNNING
+	exceeds the total capacity defined in RSH_HOST, it will automatically be truncated to
 	that capacity.
 
 	*Example:*
 
 	::
 
+		QUEUE_SYSTEM RSH
 		-- No more than 10 simultaneous jobs
 		-- running via RSH.
-		MAX_RUNNING_RSH 10
+		QUEUE_OPTION RSH MAX_RUNNING 10
 
 
 
