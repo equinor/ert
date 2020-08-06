@@ -75,7 +75,6 @@ find_package(CXX11Features)
 #-----------------------------------------------------------------
 
 option( BUILD_TESTS         "Should the tests be built"             OFF)
-option( BUILD_PYTHON        "Run py_compile on the python wrappers" OFF)
 option( ENABLE_PYTHON       "Enable the python wrappers"            ON )
 option( USE_RPATH           "Should we embed path to libraries"     ON )
 option( INSTALL_ERT_LEGACY  "Install legacy ert code"               OFF)
@@ -98,14 +97,6 @@ if (SITE_CONFIG_FILE)
   set( __SITE_CONFIG_FILE ${SITE_CONFIG_FILE})
 endif()
 message(STATUS "The path ${__SITE_CONFIG_FILE} will be compiled into the libres library as the location of the site configuration file")
-
-
-if (BUILD_PYTHON)
-  if (NOT ENABLE_PYTHON)
-    message(SEND_ERROR "The 'BUILD_PYTHON' option is deprecated - use 'ENABLE_PYTHON' - the two are inconsistent - exiting.")
-  endif()
-  message(WARNING "The 'BUILD_PYTHON' option is deprecated - use 'ENABLE_PYTHON=ON'")
-endif()
 
 if (USE_RPATH)
     SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")

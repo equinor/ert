@@ -58,7 +58,7 @@ macro(init_python)
    FIND_PACKAGE(PythonInterp)
    if (NOT DEFINED PYTHON_EXECUTABLE)
       message(WARNING "Python interpreter not found - Python wrappers not enabled")
-      set( BUILD_PYTHON OFF PARENT_SCOPE )
+      set( ENABLE_PYTHON OFF PARENT_SCOPE )
       return()
    endif()
 
