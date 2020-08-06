@@ -851,6 +851,8 @@ and/or history matching project.
 .. _custom_kw:
 .. topic:: CUSTOM_KW
 
+           `CUSTOM_KW` is deprecated.
+
            The keyword CUSTOM_KW enables custom data key:value pairs
            to be stored in ERT storage.  Custom KW has many
            similarities to Gen KW and Gen Data but is fully defined by
