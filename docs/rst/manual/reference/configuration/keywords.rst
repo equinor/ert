@@ -38,7 +38,7 @@ Keyword name                                                        	Required   
 :ref:`DELETE_RUNPATH <delete_runpath>`                              	NO                                          				Explicitly tell ERT to delete the runpath when a job is complete 
 :ref:`ECLBASE <eclbase>`	                                    	YES\*					        			Define a name for the ECLIPSE simulations. \*Either JOBNAME or ECLBASE must be specified
 :ref:`END_DATE <end_date>`                                          	NO                                          				You can tell ERT how long the simulations should be - for error check
-:ref:`ENKF_ALPHA <enkf_alpha>`                                      	NO                    			1.50                  		Parameter controlling outlier behaviour in EnKF algorithm
+:ref:`ENKF_ALPHA <enkf_alpha>`                                      	NO                    			3.0                  		Parameter controlling outlier behaviour in EnKF algorithm
 :ref:`ENKF_CROSS_VALIDATION <enkf_cross_validation>`                	NO                                                                      Deprecated
 :ref:`ENKF_FORCE_NCOMP <enkf_force_ncomp>`                              NO                    			0                    		Indicate if ERT should force a specific number of principal components
 :ref:`ENKF_KERNEL_PARAM <enkf_kernel_param>`                        	NO                    			1                    		Deprecated
@@ -1247,7 +1247,7 @@ Keywords controlling the ES algorithm
 .. _enkf_alpha:
 .. topic:: ENKF_ALPHA
 
-	See the sub keyword :code:`OVERLAP_LIMIT` under the :code:`UPDATE_SETTINGS` keyword.
+	See the sub keyword :code:`ENKF_ALPHA` under the :code:`UPDATE_SETTINGS` keyword.
 
 .. _enkf_bootstrap:
 .. topic:: ENKF_BOOTSTRAP
@@ -1444,7 +1444,7 @@ Keywords controlling the ES algorithm
 	control parameters which apply to the Ensemble Smoother update algorithm. The
 	:code:`UPDATE_SETTINGS` currently supports the two subkeywords:
 
-   	OVERLAP_LIMIT Scaling factor used when detecting outliers. Increasing this
+	ENKF_ALPHA Scaling factor used when detecting outliers. Increasing this
         factor means that more observations will potentially be included in the
         assimilation. The default value is 3.00..
 
@@ -1461,7 +1461,7 @@ Keywords controlling the ES algorithm
 	for the forcasted data ensemble, and :math:`\textstyle\boldsymbol{s_{d}^o}` is the
 	vector standard deviations for the observation error (specified a priori).
 
-        
+
    	STD_CUTOFF If the ensemble variation for one particular measurment is below
         this limit the observation will be deactivated. The default value for
         this cutoff is 1e-6.
