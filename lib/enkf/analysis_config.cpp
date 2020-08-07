@@ -44,7 +44,7 @@
 #include <ert/enkf/model_config.hpp>
 
 
-#define UPDATE_OVERLAP_KEY      "OVERLAP_LIMIT"
+#define UPDATE_ENKF_ALPHA_KEY      "ENKF_ALPHA"
 #define UPDATE_STD_CUTOFF_KEY   "STD_CUTOFF"
 
 
@@ -220,12 +220,12 @@ const char * analysis_config_get_PC_path( const analysis_config_type * config ) 
 
 
 void analysis_config_set_alpha( analysis_config_type * config , double alpha) {
-  config_settings_set_double_value(config->update_settings, UPDATE_OVERLAP_KEY, alpha );
+  config_settings_set_double_value(config->update_settings, UPDATE_ENKF_ALPHA_KEY, alpha );
 }
 
 
 double analysis_config_get_alpha(const analysis_config_type * config) {
-  return config_settings_get_double_value(config->update_settings, UPDATE_OVERLAP_KEY);
+  return config_settings_get_double_value(config->update_settings, UPDATE_ENKF_ALPHA_KEY);
 }
 
 void analysis_config_set_std_cutoff( analysis_config_type * config , double std_cutoff ) {
@@ -576,7 +576,7 @@ analysis_config_type * analysis_config_alloc_full(
   UTIL_TYPE_ID_INIT( config , ANALYSIS_CONFIG_TYPE_ID );
 
   config->update_settings           = config_settings_alloc( UPDATE_SETTING_KEY );
-  config_settings_add_double_setting(config->update_settings, UPDATE_OVERLAP_KEY , alpha );
+  config_settings_add_double_setting(config->update_settings, UPDATE_ENKF_ALPHA_KEY , alpha );
   config_settings_add_double_setting(config->update_settings, UPDATE_STD_CUTOFF_KEY, std_cutoff );
 
   config->merge_observations = merge_observations;
@@ -610,7 +610,7 @@ analysis_config_type * analysis_config_alloc_default(void) {
   config->PC_filename               = NULL;
   config->PC_path                   = NULL;
   config->update_settings           = config_settings_alloc( UPDATE_SETTING_KEY );
-  config_settings_add_double_setting(config->update_settings, UPDATE_OVERLAP_KEY , DEFAULT_ENKF_ALPHA);
+  config_settings_add_double_setting(config->update_settings, UPDATE_ENKF_ALPHA_KEY , DEFAULT_ENKF_ALPHA);
   config_settings_add_double_setting(config->update_settings, UPDATE_STD_CUTOFF_KEY, DEFAULT_ENKF_STD_CUTOFF );
 
   analysis_config_set_merge_observations( config       , DEFAULT_MERGE_OBSERVATIONS );
