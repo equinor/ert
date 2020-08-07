@@ -1,6 +1,33 @@
 Release Notes
 =============
 
+Version 2.13
+------------
+
+2.13.0 ERT
+~~~~~~~~~~~~
+
+New features:
+  - Jobs can provide documentation via the plugin system
+
+Improvements:
+  - Resolve Python 3.8 deprecation warnings
+  - Document job plugin system
+  - Update COPY_DIRECTORY job docs
+
+4.2.2 libres
+~~~~~~~~~~~~
+
+Improvements:
+  - Label configuring slurm jobs as running
+  - Remove deprecated queue configuration keys
+
+0.5.3 semeio
+~~~~~~~~~~~~
+
+New features:
+  - Pass job documentation of jobs to ERT via plugin system
+
 Version 2.12
 ------------
 
