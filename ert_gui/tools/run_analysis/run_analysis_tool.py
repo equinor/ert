@@ -56,6 +56,10 @@ class RunAnalysisTool(Tool):
         target = self._run_widget.target_case()
         source = self._run_widget.source_case()
 
+        if len(target) == 0:
+            self._report_empty_target()
+            return
+
         success = analyse(target, source)
 
         msg = QMessageBox()
@@ -74,3 +78,11 @@ class RunAnalysisTool(Tool):
 
         ert_shared.ERT.ertChanged.emit()
         self._dialog.accept()
+
+    def _report_empty_target(self):
+        msg = QMessageBox()
+        msg.setWindowTitle("Invalid Target")
+        msg.setIcon(QMessageBox.Warning)
+        msg.setText("Target case can not be empty")
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.exec_()
