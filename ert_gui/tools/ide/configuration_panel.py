@@ -1,3 +1,4 @@
+from builtins import str
 import re
 import shutil
 import six
@@ -89,7 +90,7 @@ class ConfigurationPanel(QWidget):
         shutil.copyfile(self.config_file, backup_path)
 
         with open(self.config_file, "w") as f:
-            f.write(self.ide_panel.getText())
+            f.write(str(self.ide_panel.getText()))
 
         message = "To make your changes current, a reload of the configuration file is required. Would you like to reload now?"
         result = QMessageBox.information(self, "Reload required!", message, QMessageBox.Yes | QMessageBox.No)
