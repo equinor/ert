@@ -223,3 +223,9 @@ class LibresFacade(object):
 
     def get_update_step(self):
         return self._enkf_main.getLocalConfig().getUpdatestep()
+
+    def get_alpha(self):
+        return self._enkf_main.analysisConfig().getEnkfAlpha()
+
+    def get_std_cutoff(self):
+        return self._enkf_main.analysisConfig().getStdCutoff()
