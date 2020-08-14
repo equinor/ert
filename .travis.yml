@@ -112,7 +112,7 @@ script:
   # For easy compare of installed versions once a version fails
   - pip list
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      xvfb-run python setup.py test;
+      xvfb-run -s "-screen 0 640x480x24" python setup.py test;
     else
       python setup.py test;
     fi
