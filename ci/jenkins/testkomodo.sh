@@ -4,7 +4,6 @@ RELEASE_PATH=${KOMODO_ROOT}/${RELEASE_NAME}
 echo "unit testing ${PROJECT} against ${RELEASE_NAME}"
 
 source ${RELEASE_PATH}/enable
-export LD_LIBRARY_PATH=${RELEASE_PATH}/root/lib:${RELEASE_PATH}/root/lib64
 
 source ${DEVTOOL}/enable
 GCC_VERSION=7.3.0 CMAKE_VERSION=3.10.2 source ${SDPSOFT}/env.sh
@@ -52,4 +51,4 @@ fi
 # The existence of a running xvfb process will produce
 # a lock file for the default server and kill the run
 # Allow xvfb to find a new server
- xvfb-run -s "-screen 0 640x480x24" --auto-servernum python -m pytest -k "not test_gui_load"
+xvfb-run -s "-screen 0 640x480x24" --auto-servernum python setup.py test
