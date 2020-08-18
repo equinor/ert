@@ -95,7 +95,8 @@ main categories (ie. the category listed before the first dot).
 
 Workflow jobs
 ~~~~~~~~~~~~~
-To install workflow jobs that you want to have available in ERT you can use the following hook specification:
+There are two ways to install a workflow job in ERT. To install workflow jobs that you
+want to have available in ERT you can use one of the following hook specifications:
 
 .. code-block:: python
 
@@ -106,3 +107,57 @@ To install workflow jobs that you want to have available in ERT you can use the 
       :rtype: PluginResponse with data as dict[str,str]
       """
 
+This hook spesification relies on creating a config file, and has no utility functionality.
+
+The second hook registers individual jobs, with the option of adding documentation in the form
+of a description, examples, parser, etc. It passes in a config object where the job is added.
+
+.. literalinclude:: ../../../../ert_shared/plugins/hook_specifications/jobs.py
+   :pyobject: legacy_ertscript_workflow
+
+Minimal example:
+
+.. code-block:: python
+
+   from res.enkf import ErtScript
+   from ert_shared.plugins.plugin_manager import hook_implementation
+
+   class MyJob(ErtScript)
+       def run()
+           print("Hello World")
+
+   @hook_implementation
+    def legacy_ertscript_workflow(config):
+        config.add_workflow(MyJob, "MY_JOB")
+
+
+Full example:
+
+.. code-block:: python
+
+   from res.enkf import ErtScript
+   from ert_shared.plugins.plugin_manager import hook_implementation
+
+   class MyJob(ErtScript)
+       def run()
+           print("Hello World")
+
+   @hook_implementation
+    def legacy_ertscript_workflow(config):
+        workflow = config.add_workflow(MyJob, "MY_JOB")
+        workflow.parser = my_job_parser  # Optional
+        workflow.description = "My job description"  # Optional
+        workflow.examples = "example of use"  # Optional
+
+The configuration object and properties is documented in: :class:`ert_shared.plugins.workflow_config.WorkflowConfig`
+
+.. autofunction:: ert_shared.plugins.hook_specifications.jobs.legacy_ertscript_workflow
+
+.. autoclass:: ert_shared.plugins.workflow_config.WorkflowConfigs
+    :members: add_workflow
+    :undoc-members:
+
+
+.. autoclass:: ert_shared.plugins.workflow_config.WorkflowConfig
+    :members:
+    :undoc-members:

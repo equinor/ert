@@ -7,6 +7,7 @@ import tempfile
 from itertools import chain
 
 import pluggy
+from ert_shared.plugins.workflow_config import WorkflowConfigs
 
 _PLUGIN_NAMESPACE = "ert"
 
@@ -72,7 +73,6 @@ class ErtPluginManager(pluggy.PluginManager):
 
     @staticmethod
     def _evaluate_job_doc_hook(hook, job_name):
-        from inspect import signature
 
         response = hook(job_name=job_name)
 
@@ -127,6 +127,15 @@ class ErtPluginManager(pluggy.PluginManager):
         return list(chain.from_iterable(reversed(plugin_site_config_lines)))
 
     @python3only
+    def _get_workflow_jobs(self):
+        config_workflow_jobs = self._get_installable_workflow_jobs()
+        hooked_workflow_jobs = self.get_ertscript_workflows().get_workflows()
+        installable_workflow_jobs = self._merge_internal_jobs(
+            config_workflow_jobs, hooked_workflow_jobs
+        )
+        return installable_workflow_jobs
+
+    @python3only
     def get_site_config_content(self):
         site_config_lines = self._site_config_lines()
 
@@ -150,14 +159,28 @@ class ErtPluginManager(pluggy.PluginManager):
 
         site_config_lines.extend(install_job_lines + [""])
 
+        installable_workflow_jobs = self._get_workflow_jobs()
+
         install_workflow_job_lines = [
             "LOAD_WORKFLOW_JOB {}".format(job_path)
-            for job_name, job_path in self.get_installable_workflow_jobs().items()
+            for job_name, job_path in installable_workflow_jobs.items()
         ]
-
         site_config_lines.extend(install_workflow_job_lines + [""])
 
         return "\n".join(site_config_lines) + "\n"
+
+    @staticmethod
+    def _merge_internal_jobs(config_jobs, hooked_jobs):
+        conflicting_keys = set(config_jobs.keys()) & set(hooked_jobs.keys())
+        for ck in conflicting_keys:
+            logging.info(
+                "Duplicate key: {} in workflow hook implementations, config path 1: {}, config path 2: {}".format(
+                    ck, config_jobs[ck], hooked_jobs[ck]
+                )
+            )
+        merged_jobs = config_jobs.copy()
+        merged_jobs.update(hooked_jobs)
+        return merged_jobs
 
     @staticmethod
     def _add_plugin_info_to_dict(d, plugin_response):
@@ -190,7 +213,7 @@ class ErtPluginManager(pluggy.PluginManager):
         return ErtPluginManager._merge_dicts(self.hook.installable_jobs())
 
     @python3only
-    def get_installable_workflow_jobs(self):
+    def _get_installable_workflow_jobs(self):
         return ErtPluginManager._merge_dicts(self.hook.installable_workflow_jobs())
 
     @python3only
@@ -210,6 +233,28 @@ class ErtPluginManager(pluggy.PluginManager):
                 ErtPluginManager._evaluate_job_doc_hook(self.hook.job_documentation, k)
             )
         return job_docs
+
+    @python3only
+    def get_documentation_for_workflows(self):
+        workflow_config = self.get_ertscript_workflows()
+
+        job_docs = {
+            workflow.name: {
+                "description": workflow.description,
+                "examples": workflow.examples,
+                "config_file": workflow.config_path,
+                "parser": workflow.parser,
+            }
+            for workflow in workflow_config._workflows
+        }
+
+        return job_docs
+
+    @python3only
+    def get_ertscript_workflows(self):
+        config = WorkflowConfigs()
+        self.hook.legacy_ertscript_workflow(config=config)
+        return config
 
 
 class ErtPluginContext:

@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
+import tempfile
 import unittest
+
+if sys.version_info >= (3, 3):
+    from unittest.mock import Mock
+else:
+    from mock import Mock
+
 from _pytest.monkeypatch import MonkeyPatch
 
 from ert_shared.plugins import ErtPluginContext
@@ -51,6 +58,11 @@ class PluginContextTest(unittest.TestCase):
     @unittest.skipIf(sys.version_info.major < 3, "Plugin Manager is Python 3 only")
     def test_with_plugins(self):
         self.monkeypatch.delenv("ERT_SITE_CONFIG", raising=False)
+        # We are comparing two function calls, both of which generate a tmpdir, this makes
+        # sure that the same tmpdir is called on both occasions.
+        self.monkeypatch.setattr(
+            tempfile, "mkdtemp", Mock(return_value=tempfile.mkdtemp())
+        )
         with ErtPluginContext(plugins=[dummy_plugins]) as c:
             with self.assertRaises(KeyError):
                 os.environ["ECL100_SITE_CONFIG"]

@@ -46,6 +46,15 @@ def installable_workflow_jobs():
 
 @hook_implementation
 @plugin_response(plugin_name="dummy")
+def legacy_ertscript_workflow(config):
+    def some_func():
+        pass
+
+    config.add_workflow(some_func)
+
+
+@hook_implementation
+@plugin_response(plugin_name="dummy")
 def site_config_lines():
     return ["JOB_SCRIPT job_dispatch_dummy.py", "QUEUE_OPTION LOCAL MAX_RUNNING 2"]
 

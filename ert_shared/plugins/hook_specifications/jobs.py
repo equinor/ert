@@ -33,3 +33,15 @@ def installable_workflow_jobs():
     :return: dict with workflow job names as keys and path to config as value
     :rtype: PluginResponse with data as dict[str,str]
     """
+
+
+@hook_specification
+def legacy_ertscript_workflow(config):
+    """
+    This hook allows the user to register a workflow with the config object. A workflow
+    must add the class inheriting from ErtScript and an optional name.
+
+    :param config: A handle to the main workflow config.
+    :type config: :class:`ert_shared.plugins.workflow_config.WorkflowConfigs`
+    :return: None
+    """
