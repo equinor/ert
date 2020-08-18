@@ -1,8 +1,9 @@
-from ert_shared._doc_utils.ert_jobs import ErtForwardModelDocumentation
+from ert_shared._doc_utils.ert_jobs import ErtForwardModelDocumentation, ErtWorkflowDocumentation
 
 
 def setup(app):
     app.add_directive("ert_forward_models", ErtForwardModelDocumentation)
+    app.add_directive("ert_workflow_jobs", ErtWorkflowDocumentation)
 
     return {
         "version": "0.1",

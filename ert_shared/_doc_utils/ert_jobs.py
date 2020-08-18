@@ -10,7 +10,14 @@ from ert_shared.plugins import ErtPluginManager
 
 class _ForwardModelDocumentation:
     def __init__(
-        self, name, category, job_source, description, job_config_file, examples="",
+        self,
+        name,
+        category,
+        job_source,
+        description,
+        job_config_file,
+        examples="",
+        parser=None,
     ):
         self.name = name
         self.job_source = job_source
@@ -18,6 +25,7 @@ class _ForwardModelDocumentation:
         self.description = description
         self.job_config_file = job_config_file
         self.examples = examples
+        self.parser = parser
 
     def _create_job_config_section(self):
         config_section_node = _create_section_with_title(
@@ -53,6 +61,17 @@ class _ForwardModelDocumentation:
         _parse_raw_rst(self.examples, example_section_node, state)
         return example_section_node
 
+    def _create_argparse_section(self):
+        config_section_node = _create_section_with_title(
+            section_id=self.name + "-job-config", title="Job arguments"
+        )
+        parser = self.parser()
+        text = parser.format_help()
+        text = text.replace(parser.prog, self.name)
+        job_config_text_node = nodes.literal_block(text=text)
+        config_section_node.append(job_config_text_node)
+        return config_section_node
+
     def create_node(self, state):
         # Create main node section
         node = _create_section_with_title(section_id=self.name, title=self.name)
@@ -71,6 +90,11 @@ class _ForwardModelDocumentation:
             example_section_node = self._create_example_section(state)
             node.append(example_section_node)
 
+        # Add parser
+        if self.parser:
+            parser_section_node = self._create_argparse_section()
+            node.append(parser_section_node)
+
         return node
 
 
@@ -87,12 +111,14 @@ class _ErtDocumentation(SphinxDirective):
     _DESCRIPTION_KEY = "description"
     _CONFIG_FILE_KEY = "config_file"
     _EXAMPLES_KEY = "examples"
+    _PARSER_KEY = "parser"
 
     _CATEGORY_DEFAULT = "other"
     _SOURCE_PACKAGE_DEFAULT = "PACKAGE NOT PROVIDED"
     _DESCRIPTION_DEFAULT = ""
     _CONFIG_FILE_DEFAULT = "No config file provided"
     _EXAMPLES_DEFAULT = ""
+    _PARSER_DEFAULT = None
 
     @staticmethod
     def _divide_into_categories(jobs):
@@ -134,6 +160,9 @@ class _ErtDocumentation(SphinxDirective):
                     examples=docs.get(
                         _ErtDocumentation._EXAMPLES_KEY,
                         _ErtDocumentation._EXAMPLES_DEFAULT,
+                    ),
+                    parser=docs.get(
+                        _ErtDocumentation._PARSER_KEY, _ErtDocumentation._PARSER_DEFAULT
                     ),
                 )
             )
@@ -211,6 +240,23 @@ class ErtForwardModelDocumentation(_ErtDocumentation):
         if sys.version_info.major >= 3:
             return self._generate_job_documentation(
                 ErtForwardModelDocumentation._JOBS, section_id, title
+            )
+        else:
+            return _create_py2_message(section_id, title)
+
+
+class ErtWorkflowDocumentation(_ErtDocumentation):
+    pm = ErtPluginManager()
+    _JOBS = pm.get_documentation_for_workflows()
+    _TITLE = "Workflow jobs"
+    _SECTION_ID = "ert-workflow-jobs"
+
+    def run(self):
+        section_id = ErtWorkflowDocumentation._SECTION_ID
+        title = ErtWorkflowDocumentation._TITLE
+        if sys.version_info.major >= 3:
+            return self._generate_job_documentation(
+                ErtWorkflowDocumentation._JOBS, section_id, title
             )
         else:
             return _create_py2_message(section_id, title)

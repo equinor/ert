@@ -46,6 +46,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.githubpages',
+    'sphinx.ext.autodoc',
     'sphinxarg.ext',
     'sphinx.ext.todo',
     'ert_jobs',
