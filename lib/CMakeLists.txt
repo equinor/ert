@@ -672,6 +672,7 @@ foreach (test   enkf_active_list
                 enkf_plot_gen_kw_vector
                 enkf_plot_genvector
                 enkf_plot_tvector
+                enkf_update_log_test
                 enkf_run_arg
                 enkf_state_map
                 obs_vector_tests

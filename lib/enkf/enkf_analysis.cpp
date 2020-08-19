@@ -43,6 +43,9 @@
 
 void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const meas_data_type * meas_data , const int_vector_type * step_list , const char * ministep_name , FILE * stream ) {
   const char * float_fmt = "%15.3f";
+  bool local_inactive_obs;
+  local_inactive_obs = false;
+
   fprintf(stream , "===============================================================================================================================\n");
   fprintf(stream , "Report step...: %04d",int_vector_iget( step_list , 0));
   if (int_vector_size( step_list ) == 1)
@@ -70,37 +73,39 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
 
         for (int iobs = 0; iobs < obs_block_get_size( obs_block ); iobs++) {
           active_type active_mode = obs_block_iget_active_mode( obs_block , iobs );
-          if ((active_mode == MISSING) || (active_mode == LOCAL_INACTIVE))
-            continue;
-          else {
-            const char * print_key;
-            if (iobs == 0)
-              print_key = obs_key;
-            else
-              print_key = "  ...";
+          const char * print_key;
+          if (iobs == 0)
+            print_key = obs_key;
+          else
+            print_key = "  ...";
 
-            fprintf(stream , obs_fmt , obs_count , print_key , obs_block_iget_value( obs_block , iobs ) , obs_block_iget_std( obs_block , iobs ));
+          fprintf(stream , obs_fmt , obs_count , print_key , obs_block_iget_value( obs_block , iobs ) , obs_block_iget_std( obs_block , iobs ));
 
-            if (active_mode == ACTIVE)
-              fprintf(stream , "  Active   |");
-            else if (active_mode == DEACTIVATED)
-              fprintf(stream , "  Inactive |");
-            else if (active_mode == LOCAL_INACTIVE)
-              fprintf(stream , "           |");
-            else if (active_mode == MISSING)
-              fprintf(stream , "           |");
-            else
-              util_abort("%s: enum_value:%d not handled - internal error\n" , __func__ , active_mode);
+          if (active_mode == ACTIVE)
+            fprintf(stream , " Active    |");
+          else if (active_mode == DEACTIVATED)
+            fprintf(stream , " Inactive  |");
+          else if (active_mode == LOCAL_INACTIVE) {
+            fprintf(stream , " Inactive* |");
+            local_inactive_obs = true;
+            }
+          else if (active_mode == MISSING)
+            fprintf(stream , " Missing   |");
+          else
+            util_abort("%s: enum_value:%d not handled - internal error\n" , __func__ , active_mode);
 
-            if (active_mode == MISSING)
-              fprintf(stream , "                  Missing\n");
-            else if (active_mode == LOCAL_INACTIVE)
-              fprintf(stream , "                  Deactivated - local updates\n");
-            else
-              fprintf(stream , sim_fmt, meas_block_iget_ens_mean( meas_block , iobs ) , meas_block_iget_ens_std( meas_block , iobs ));
-
-            obs_count++;
+          double simulated_value;
+          double simulated_std;
+          if ((active_mode == MISSING) || (active_mode == LOCAL_INACTIVE)) {
+            simulated_value = NAN;
+            simulated_std = NAN;
           }
+          else {
+            simulated_value = meas_block_iget_ens_mean( meas_block , iobs );
+            simulated_std = meas_block_iget_ens_std( meas_block , iobs );
+          }
+          fprintf(stream , sim_fmt, simulated_value, simulated_std);
+          obs_count++;
         }
       }
     }
@@ -109,6 +114,8 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
     free( sim_fmt );
   }
   fprintf(stream , "===============================================================================================================================\n");
+  if (local_inactive_obs == true)
+    fprintf(stream , "* Local inactive\n");
   fprintf(stream , "\n\n\n");
 }
 
