@@ -1,4 +1,4 @@
-from res.enkf.enums import HookRuntime
+from res.enkf.enums import HookRuntime, RealizationStateEnum
 from res.enkf import ErtRunContext, EnkfSimulationRunner
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
@@ -112,12 +112,14 @@ class IteratedEnsembleSmoother(BaseRunModel):
         subst_list = self.ert().getDataKW( )        
         target_case_format = arguments["target_case"]
 
+        sim_fs = self.createTargetCaseFileSystem(itr, target_case_format)
+
         if prior_context is None:
             mask = arguments["active_realizations"]
         else:
-            mask = prior_context.get_mask( )
+            state = RealizationStateEnum.STATE_HAS_DATA | RealizationStateEnum.STATE_INITIALIZED
+            mask = sim_fs.getStateMap().createMask(state)
 
-        sim_fs = self.createTargetCaseFileSystem(itr, target_case_format)
         if rerun:
             target_fs = None
         else:
