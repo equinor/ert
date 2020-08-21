@@ -18,13 +18,13 @@ from qtpy.QtWidgets import QFormLayout, QLabel
 from ert_gui.ertwidgets import addHelpToWidget, CaseSelector, ActiveLabel, AnalysisModuleSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
+from ert_gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert_gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
 from ert_gui.ertwidgets.stringbox import StringBox
-from ert_shared.ide.keywords.definitions import NumberListStringArgument, RangeStringArgument, ProperNameFormatArgument
+from ert_shared.ide.keywords.definitions import NumberListStringArgument, RangeStringArgument, ProperNameFormatArgument, IntegerArgument
 from ert_gui.simulation import SimulationConfigPanel
 from ert_shared.models import MultipleDataAssimilation
-
 
 class MultipleDataAssimilationPanel(SimulationConfigPanel):
     def __init__(self):
@@ -51,6 +51,15 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self.weights = MultipleDataAssimilation.default_weights
         self._createInputForWeights(layout)
 
+        self._iter_field = StringBox(
+            IterValueModel(),
+            "config/simulation/iter_num",
+        )
+        self._iter_field.setValidator(
+            IntegerArgument(from_value=0),
+        )
+        layout.addRow("Start iteration:", self._iter_field)
+
         self._analysis_module_selector = AnalysisModuleSelector(iterable=False, help_link="config/analysis/analysis_module")
         layout.addRow("Analysis Module:", self._analysis_module_selector)
 
@@ -58,7 +67,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self._active_realizations_model = ActiveRealizationsModel()
         self._active_realizations_field = StringBox(self._active_realizations_model, "config/simulation/active_realizations")
         self._active_realizations_field.setValidator(RangeStringArgument(getRealizationCount()))
-        layout.addRow("Active realizations", self._active_realizations_field)
+        layout.addRow("Active realizations:", self._active_realizations_field)
 
 
         self._target_case_format_field.getValidationSupport().validationChanged.connect(self.simulationConfigurationChanged)
@@ -101,7 +110,8 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         arguments = {"active_realizations": self._active_realizations_model.getActiveRealizationsMask(),
                      "target_case": self._target_case_format_model.getValue(),
                      "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName(),
-                     "weights": self.weights
+                     "weights": self.weights,
+                     "start_iteration": int(self._iter_field.model.getValue())
                      }
         return arguments
 

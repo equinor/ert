@@ -138,15 +138,21 @@ class ModelFactoryTest(ErtTest):
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
             ERT.adapt(notifier)
-            args = Namespace(realizations="0-4,7,8", weights="6,4,2", target_case="test_case_%d")
+            args = Namespace(
+                realizations="0-4,7,8",
+                weights="6,4,2",
+                target_case="test_case_%d",
+                start_iteration="0",
+            )
 
             model, argument = model_factory._setup_multiple_data_assimilation(args)
             self.assertTrue(isinstance(model, MultipleDataAssimilation))
-            self.assertEqual(4, len(argument.keys()))
+            self.assertEqual(5, len(argument.keys()))
             self.assertTrue("active_realizations" in argument)
             self.assertTrue("target_case" in argument)
             self.assertTrue("analysis_module" in argument)
             self.assertTrue("weights" in argument)
+            self.assertTrue("start_iteration" in argument)
             model.create_context(argument, 0)
 
     def test_analysis_module_name_iterable(self):

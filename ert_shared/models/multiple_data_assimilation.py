@@ -39,7 +39,7 @@ class MultipleDataAssimilation(BaseRunModel):
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
     def runSimulations(self, arguments):
-        context = self.create_context(arguments, 0, None)
+        context = self.create_context(arguments, 0, initialize_mask_from_arguments=True)
         self.checkMinimumActiveRealizations(context)
         weights = self.parseWeights(arguments['weights'])
         iteration_count = len(weights)
@@ -59,18 +59,21 @@ class MultipleDataAssimilation(BaseRunModel):
 
         run_context = None
         previous_ensemble_name = None
-        for iteration, weight in enumerate(weights):
-            run_context = self.create_context( arguments , iteration,  prior_context = run_context )
-            self._simulateAndPostProcess(run_context, arguments )
+        enumerated_weights = list(enumerate(weights))
+        weights_to_run = enumerated_weights[min(arguments["start_iteration"], len(weights)):]
+        for iteration, weight in weights_to_run:
+            is_first_iteration = iteration == 0
+            run_context = self.create_context( arguments , iteration,  initialize_mask_from_arguments=is_first_iteration)
+            self._simulateAndPostProcess(run_context, arguments)
 
             EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=ERT.ert)
-            self.update( run_context , weights[iteration])
+            self.update(run_context , weight)
             EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=ERT.ert)
             analysis_module_name = self.ert().analysisConfig().activeModuleName()
             previous_ensemble_name = dump_to_new_storage(reference=None if previous_ensemble_name is None else (previous_ensemble_name, analysis_module_name))
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        run_context = self.create_context( arguments , len(weights),  prior_context = run_context, update = False)
+        run_context = self.create_context( arguments , len(weights),  initialize_mask_from_arguments=False, update = False)
         self._simulateAndPostProcess(run_context, arguments)
 
         self.setPhase(iteration_count + 2, "Simulations completed.")
@@ -157,7 +160,7 @@ class MultipleDataAssimilation(BaseRunModel):
         return result
 
 
-    def create_context(self, arguments, itr, prior_context = None, update = True):
+    def create_context(self, arguments, itr, initialize_mask_from_arguments = True, update = True):
         target_case_format = arguments["target_case"]
         model_config = self.ert().getModelConfig( )
         runpath_fmt = model_config.getRunpathFormat( )
@@ -165,13 +168,22 @@ class MultipleDataAssimilation(BaseRunModel):
         subst_list = self.ert().getDataKW( )
         fs_manager = self.ert().getEnkfFsManager()
 
-        sim_fs = fs_manager.getFileSystem(target_case_format % itr)
+        source_case_name = target_case_format % itr
+        if itr > 0 and not fs_manager.caseExists(source_case_name):
+            raise ErtRunError(
+                "Source case {} for iteration {} does not exists. "
+                "If you are attempting to restart ESMDA from a iteration other than 0, "
+                "make sure the target case format is the same as for the original run! "
+                "(Current target case format: {})".format(source_case_name, itr, target_case_format)
+            )
+
+        sim_fs = fs_manager.getFileSystem(source_case_name)
         if update:
             target_fs = fs_manager.getFileSystem(target_case_format % (itr + 1))
         else:
             target_fs = None
 
-        if prior_context is None:
+        if initialize_mask_from_arguments:
             mask = arguments["active_realizations"]
         else:
             state = RealizationStateEnum.STATE_HAS_DATA | RealizationStateEnum.STATE_INITIALIZED
