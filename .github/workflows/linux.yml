@@ -1,0 +1,57 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Linux Python package
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [2.7, 3.6]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install libecl
+      run: |
+        source .libecl_version
+        git clone https://github.com/equinor/libecl --branch=$LIBECL_VERSION --depth 1
+        mkdir libecl/build
+        pip install -r libecl/requirements.txt
+        cmake -S libecl -B libecl/build
+        sudo make -C libecl/build install
+
+    - name: Install libres
+      run: |
+        source .libres_version
+        git clone https://github.com/equinor/libecl --branch=$LIBRES_VERSION --depth 1
+        mkdir libres/build
+        pip install -r libres/requirements.txt
+        cmake -S libres -B libres/build
+        sudo make -C libres/build install
+
+    - name: Install ERT
+      run: |
+        pip install -r dev-requirements.txt
+        pip install .
+
+    - name: Test with Qt 5
+      run: xvfb-run -s "screen 0 640x480x24" python setup.py test
+      if: ${{ matrix.python-version == '3.6' }}
+
+    - name: Test with Qt 4
+      run: xvfb-run -s "screen 0 640x480x24" python setup.py test
+      env:
+        PYTHON_QT_API: pyqt4v2
+      if: ${{ matrix.python-version == '2.7' }}
