@@ -105,6 +105,8 @@ def test_argparse_exec_es_mda_valid_case():
             "1-10",
             "--weights",
             "1, 2, 4",
+            "--start-iteration",
+            "1",
             "path/to/config.ert",
         ],
     )
@@ -112,6 +114,7 @@ def test_argparse_exec_es_mda_valid_case():
     assert parsed.target_case == "some_case%d"
     assert parsed.realizations == "1-10"
     assert parsed.weights == "1, 2, 4"
+    assert parsed.start_iteration == "1"
     assert parsed.func.__name__ == "run_cli"
 
 

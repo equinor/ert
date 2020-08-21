@@ -67,7 +67,8 @@ def _setup_multiple_data_assimilation(args):
         "active_realizations": _realizations(args),
         "target_case": _target_case_name(args, format_mode=True),
         "analysis_module": _get_analysis_module_name(active_name, modules, iterable=iterable),
-        "weights": args.weights
+        "weights": args.weights,
+        "start_iteration": int(args.start_iteration)
     }
     return model, simulations_argument
 

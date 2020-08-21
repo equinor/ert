@@ -270,6 +270,14 @@ def get_ert_parser(parser=None):
         help="Name of the case where the results for the simulation "
         "using the prior parameters will be stored.",
     )
+    es_mda_parser.add_argument(
+        "--start-iteration",
+        default="0",
+        type=valid_iter_num,
+        required=False,
+        help="Which iteration the evaluation should start from. "
+        "Requires cases previous to the specified iteration to exist.",
+    )
 
     workflow_description = "Executes the workflow given"
     workflow_parser = subparsers.add_parser(
