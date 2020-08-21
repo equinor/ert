@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 import sys
 import unittest
+from os import uname
 
 from ert_shared.plugins import ErtPluginManager
 import ert_shared.hook_implementations
 
 import tests.all.plugins.dummy_plugins as dummy_plugins
+
+_lib_extension = "dylib" if uname()[0] == "Darwin" else "so"
 
 
 class PluginManagerTest(unittest.TestCase):
@@ -28,7 +31,7 @@ class PluginManagerTest(unittest.TestCase):
                 "-- Content below originated from ert (site_config_lines)",
                 "JOB_SCRIPT job_dispatch.py",
                 "QUEUE_OPTION LOCAL MAX_RUNNING 1",
-                "ANALYSIS_LOAD RML_ENKF rml_enkf.so",
+                "ANALYSIS_LOAD RML_ENKF rml_enkf.{}".format(_lib_extension),
             ],
             pm._site_config_lines(),
         )
@@ -65,7 +68,7 @@ class PluginManagerTest(unittest.TestCase):
                 "-- Content below originated from ert (site_config_lines)",
                 "JOB_SCRIPT job_dispatch.py",
                 "QUEUE_OPTION LOCAL MAX_RUNNING 1",
-                "ANALYSIS_LOAD RML_ENKF rml_enkf.so",
+                "ANALYSIS_LOAD RML_ENKF rml_enkf.{}".format(_lib_extension),
                 "-- Content below originated from dummy (site_config_lines)",
                 "JOB_SCRIPT job_dispatch_dummy.py",
                 "QUEUE_OPTION LOCAL MAX_RUNNING 2",
