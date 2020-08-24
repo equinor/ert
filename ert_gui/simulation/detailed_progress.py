@@ -84,8 +84,8 @@ class DetailedProgress(QFrame):
         self.grid_height = math.ceil(math.sqrt(nr_realizations / aspect_ratio))
         self.grid_width = math.ceil(self.grid_height * aspect_ratio)
         sub_grid_size = math.ceil(math.sqrt(fm_size))
-        cell_height = height // self.grid_height
-        cell_width = width // self.grid_width
+        cell_height = height / self.grid_height
+        cell_width = width / self.grid_width
 
         foreground_image = QImage(self.grid_width * sub_grid_size, self.grid_height * sub_grid_size,
                                   QImage.Format_ARGB32)
@@ -102,7 +102,7 @@ class DetailedProgress(QFrame):
             x = int(iens - (y * self.grid_width))
 
             painter.setPen(QColor(80, 80, 80))
-            painter.drawText(x * cell_width, y * cell_height, cell_width, cell_height,
+            painter.drawText(int(x * cell_width), int(y * cell_height), int(cell_width), int(cell_height),
                              int(Qt.AlignHCenter | Qt.AlignVCenter), str(iens))
 
             if iens == self.selected_realization:
@@ -117,10 +117,10 @@ class DetailedProgress(QFrame):
             thickness = 4
             pen.setWidth(thickness)
             painter.setPen(pen)
-            painter.drawRect((x * cell_width) + (thickness // 2),
-                             (y * cell_height) + (thickness // 2),
-                             cell_width - (thickness - 1),
-                             cell_height - (thickness - 1))
+            painter.drawRect(int(x * cell_width) + (thickness // 2),
+                             int(y * cell_height) + (thickness // 2),
+                             int(cell_width) - (thickness - 1),
+                             int(cell_height) - (thickness - 1))
 
 
 class SingleProgressModel(QAbstractTableModel):
