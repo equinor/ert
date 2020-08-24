@@ -153,7 +153,7 @@ class SingleProgressModel(QAbstractTableModel):
     def get_file_name(self, index):
         col = self.get_column_name(index.column())
         if col == 'stdout' or col == 'stderr':
-            return self.model_data[index.row()][index.column()] + "." + str(index.row())
+            return self.model_data[index.row()][index.column()]
         return ''
 
     @staticmethod
