@@ -40,3 +40,21 @@ class TestSubprocess(unittest.TestCase):
         self.assertTrue(process.stdout.closed)
         self.assertEqual(cat_content, a_content)
         self.assertEqual(cat_content, b_content)
+
+    @tmpdir()
+    def test_await_process_finished_tee(self):
+        with open("a", "wb") as a_fh, open("b", "wb") as b_fh:
+            process = Popen(["/bin/cat", "/bin/cat"], stdout=PIPE)
+            process.wait()
+            await_process_tee(process, a_fh, b_fh)
+
+        with open("a", "rb") as f:
+            a_content = f.read()
+        with open("b", "rb") as f:
+            b_content = f.read()
+        with open("/bin/cat", "rb") as f:
+            cat_content = f.read()
+
+        self.assertTrue(process.stdout.closed)
+        self.assertEqual(cat_content, a_content)
+        self.assertEqual(cat_content, b_content)
