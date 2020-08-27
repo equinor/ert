@@ -12,4 +12,5 @@ Configuration
    forward_model
    observations
    keywords
+   magic_strings
    site_wide
