@@ -71,4 +71,5 @@ python -m pytest \
  --ignore="tests/res/enkf/test_site_config.py"\
  --ignore="tests/res/enkf/test_workflow_list.py"\
  --ignore="tests/res/enkf/test_hook_manager.py"\
- --ignore="tests/legacy"
+ --ignore="tests/legacy"\
+ --ignore="tests/test_formatting.py"
