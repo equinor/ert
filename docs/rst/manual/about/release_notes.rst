@@ -1,6 +1,70 @@
 Release Notes
 =============
 
+Version 2.14
+------------
+
+Highlighted changes
+~~~~~~~~~~~~~~~~~~~
+
+Restarting ES-MDA
+#################
+
+It is now possible to restart ES-MDA runs from an intermediate iteration. Note
+that this requires a bit of care due to the lack of metadata in current storage.
+We are aiming at resolving this in the future in the new storage that soon will
+be the standard.
+
+After selecting the ES-MDA algorithm, you first need to set `Current case` to
+the case you intend to be your first case to reevaluate. After which the
+iteration number will be wrongly injected into the `Target case format`, which
+you have to remove manually (reset it to the original `Target case format`).
+After which you have to set `Start iteration` to the iteration for which you
+are to start from; this number must correspond to the iteration number of the
+case you have selected as your `Current case`. We recognize that this induces
+some manual checking, but this is due to the lack of metadata mentioned above.
+We still hope that this can aid our users and prevent the need of a complete
+restart due to cluster issues etc.
+
+2.14.0 ERT
+~~~~~~~~~~~~
+New features:
+  - It's now possible to restart ES-MDA
+
+Improvements:
+  - Clean up ENKF_ALPHA keyword usage and documentation
+  - Improved queue documentation
+  - Warn user if invalid target is used to run analysis
+
+Miscellaneous:
+  - Find right extension based on system when loading rml_enkf analysis module
+
+Bug fixes:
+  - Ensure py2 QString conversion through py3 str
+  - Correctly initialize active mask for IES
+  - Fix early int conversion lead to rounding error and graphical glitches in the detailed view
+
+5.0.1 libres
+~~~~~~~~~~~~
+Improvements:
+  - Pretty print status.json and jobs.json
+  - Add job index to elements in jobs.json
+  - Print update log even if points are missing or inactive
+
+Miscellaneous:
+  - Remove deprecated BUILT_PYTHON option
+  - Deprecate CUSTOM_KW
+  - Stop generating EXIT files (only ERROR file is created)
+
+0.5.4 semeio
+~~~~~~~~~~~~
+Improvements:
+  - All data reported by workflows are persisted
+
+Bug fixes:
+  - Fix crash on emmpty defaults sheet for design matrices
+  - Fix GENDATA_RFT job config
+
 Version 2.13
 ------------
 
