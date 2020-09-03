@@ -31,7 +31,7 @@ class PluginManagerTest(unittest.TestCase):
         self.assertIsNone(pm.get_rms_config_path())
 
         self.assertLess(0, len(pm.get_installable_jobs()))
-        self.assertLess(0, len(pm._get_installable_workflow_jobs()))
+        self.assertLess(0, len(pm._get_config_workflow_jobs()))
 
         self.assertListEqual(
             [
@@ -62,12 +62,10 @@ class PluginManagerTest(unittest.TestCase):
         self.assertIn(("job1", "/dummy/path/job1"), pm.get_installable_jobs().items())
         self.assertIn(("job2", "/dummy/path/job2"), pm.get_installable_jobs().items())
         self.assertIn(
-            ("wf_job1", "/dummy/path/wf_job1"),
-            pm._get_installable_workflow_jobs().items(),
+            ("wf_job1", "/dummy/path/wf_job1"), pm._get_config_workflow_jobs().items(),
         )
         self.assertIn(
-            ("wf_job2", "/dummy/path/wf_job2"),
-            pm._get_installable_workflow_jobs().items(),
+            ("wf_job2", "/dummy/path/wf_job2"), pm._get_config_workflow_jobs().items(),
         )
 
         self.assertListEqual(
@@ -108,7 +106,7 @@ class PluginManagerTest(unittest.TestCase):
     )
     def test_plugin_manager_python_2(self):
         pm = ErtPluginManager()
-        self.assertEqual(pm._get_installable_workflow_jobs(), None)
+        self.assertEqual(pm._get_config_workflow_jobs(), None)
         self.assertEqual(pm.get_installable_jobs(), None)
         self.assertEqual(pm.get_flow_config_path(), None)
         self.assertEqual(pm.get_ecl100_config_path(), None)
@@ -128,7 +126,7 @@ def test_workflows_merge(monkeypatch, tmpdir):
     tempfile_mock = Mock(return_value=tmpdir)
     monkeypatch.setattr(tempfile, "mkdtemp", tempfile_mock)
     pm = ErtPluginManager(plugins=[dummy_plugins])
-    result = pm._get_workflow_jobs()
+    result = pm.get_installable_workflow_jobs()
     assert result == expected_result
 
 
