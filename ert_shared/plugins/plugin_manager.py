@@ -127,8 +127,8 @@ class ErtPluginManager(pluggy.PluginManager):
         return list(chain.from_iterable(reversed(plugin_site_config_lines)))
 
     @python3only
-    def _get_workflow_jobs(self):
-        config_workflow_jobs = self._get_installable_workflow_jobs()
+    def get_installable_workflow_jobs(self):
+        config_workflow_jobs = self._get_config_workflow_jobs()
         hooked_workflow_jobs = self.get_ertscript_workflows().get_workflows()
         installable_workflow_jobs = self._merge_internal_jobs(
             config_workflow_jobs, hooked_workflow_jobs
@@ -159,7 +159,7 @@ class ErtPluginManager(pluggy.PluginManager):
 
         site_config_lines.extend(install_job_lines + [""])
 
-        installable_workflow_jobs = self._get_workflow_jobs()
+        installable_workflow_jobs = self.get_installable_workflow_jobs()
 
         install_workflow_job_lines = [
             "LOAD_WORKFLOW_JOB {}".format(job_path)
@@ -213,7 +213,7 @@ class ErtPluginManager(pluggy.PluginManager):
         return ErtPluginManager._merge_dicts(self.hook.installable_jobs())
 
     @python3only
-    def _get_installable_workflow_jobs(self):
+    def _get_config_workflow_jobs(self):
         return ErtPluginManager._merge_dicts(self.hook.installable_workflow_jobs())
 
     @python3only
