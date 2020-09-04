@@ -229,3 +229,8 @@ class LibresFacade(object):
 
     def get_std_cutoff(self):
         return self._enkf_main.analysisConfig().getStdCutoff()
+
+    def get_workflow_job(self, name):
+        if self._enkf_main.getWorkflowList().hasJob(name):
+            return self._enkf_main.getWorkflowList().getJob(name)
+        return None

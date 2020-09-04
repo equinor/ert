@@ -40,6 +40,7 @@ setup(
         "scipy",
         "sqlalchemy",
         "decorator",
+        "semeio"
     ],
     zip_safe=False,
     tests_require=["pytest", "mock"],
