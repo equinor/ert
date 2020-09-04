@@ -78,11 +78,6 @@ def patch_enkf_main(monkeypatch, tmpdir):
         Mock(return_value=[]),
     )
     monkeypatch.setattr(
-        ert_gui.tools.export.export_keyword_model.ExportKeywordModel,
-        "hasKeywords",
-        Mock(return_value=False),
-    )
-    monkeypatch.setattr(
         ert_gui.tools.workflows.workflows_tool,
         "getWorkflowNames",
         Mock(return_value=[]),

@@ -17,30 +17,51 @@ from weakref import ref
 
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
-from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.tools import Tool
-from ert_gui.tools.export import ExportPanel, Exporter, ExportKeywordModel
+from ert_gui.tools.export import ExportPanel
+from ert_shared.exporter import Exporter
+from qtpy.QtWidgets import QMessageBox
+import logging
 
 
 class ExportTool(Tool):
     def __init__(self):
-        super(ExportTool, self).__init__("Export Data", "tools/export", resourceIcon("ide/table_export"))
+        super(ExportTool, self).__init__(
+            "Export Data", "tools/export", resourceIcon("ide/table_export")
+        )
         self.__export_widget = None
         self.__dialog = None
-        self.__exporter = None
-        self.setEnabled(ExportKeywordModel().hasKeywords())
+        self.__exporter = Exporter()
+        self.setEnabled(self.__exporter.is_valid())
 
     def trigger(self):
         if self.__export_widget is None:
             self.__export_widget = ref(ExportPanel(self.parent()))
-            self.__exporter = Exporter()
-            self.__export_widget().runExport.connect(self.__exporter.runExport)
+            self.__export_widget().runExport.connect(self._run_export)
 
-        self.__export_widget().setSelectedCase(getCurrentCaseName())
-        self.__dialog = ref(ClosableDialog("Export", self.__export_widget(), self.parent()))
+        self.__dialog = ref(
+            ClosableDialog("Export", self.__export_widget(), self.parent())
+        )
         self.__export_widget().updateExportButton.connect(self.__dialog().toggleButton)
         self.__dialog().addButton("Export", self.export)
         self.__dialog().show()
+
+    def _run_export(self, params):
+        try:
+            self.__exporter.run_export(params)
+            QMessageBox.information(
+                None, "Success", """Export completed!""", QMessageBox.Ok
+            )
+        except UserWarning as usrwarning:
+            logging.error(str(usrwarning))
+            QMessageBox.warning(
+                None,
+                "Failure",
+                """Export failed with the follwing message:\n{}""".format(
+                    str(usrwarning)
+                ),
+                QMessageBox.Ok,
+            )
 
     def export(self):
         self.__export_widget().export()
