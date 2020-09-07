@@ -4,16 +4,6 @@ import pytest
 from ert_shared._doc_utils.ert_jobs import _ErtDocumentation
 
 
-@pytest.fixture(scope="module", autouse=True)
-def skip_if_py2():
-    """
-    This skips all functions in this module,
-    remove with py2 compatibility.
-    """
-    if sys.version_info < (3, 6):
-        pytest.skip("Skipping on py2")
-
-
 @pytest.mark.parametrize(
     "test_input, expected_length",
     [

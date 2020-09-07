@@ -19,17 +19,7 @@ import ert_shared.plugins.hook_specifications
 import ert_shared.hook_implementations
 
 
-def python3only(func):
-    @functools.wraps(func)
-    def wrapper_decorator(*args, **kwargs):
-        if sys.version_info.major >= 3:
-            return func(*args, **kwargs)
-
-    return wrapper_decorator
-
-
 class ErtPluginManager(pluggy.PluginManager):
-    @python3only
     def __init__(self, plugins=None):
         super().__init__(_PLUGIN_NAMESPACE)
         self.add_hookspecs(ert_shared.plugins.hook_specifications)
@@ -41,7 +31,6 @@ class ErtPluginManager(pluggy.PluginManager):
                 self.register(plugin)
         logging.debug(str(self))
 
-    @python3only
     def __str__(self):
         self_str = "ERT Plugin manager:\n"
         for plugin in self.get_plugins():
@@ -50,7 +39,6 @@ class ErtPluginManager(pluggy.PluginManager):
                 self_str += "\t\t" + str(hook_caller) + "\n"
         return self_str
 
-    @python3only
     def get_help_links(self):
         return ErtPluginManager._merge_dicts(self.hook.help_links())
 
@@ -84,31 +72,26 @@ class ErtPluginManager(pluggy.PluginManager):
 
         return response.data
 
-    @python3only
     def get_ecl100_config_path(self):
         return ErtPluginManager._evaluate_config_hook(
             hook=self.hook.ecl100_config_path, config_name="ecl100"
         )
 
-    @python3only
     def get_ecl300_config_path(self):
         return ErtPluginManager._evaluate_config_hook(
             hook=self.hook.ecl300_config_path, config_name="ecl300"
         )
 
-    @python3only
     def get_flow_config_path(self):
         return ErtPluginManager._evaluate_config_hook(
             hook=self.hook.flow_config_path, config_name="flow"
         )
 
-    @python3only
     def get_rms_config_path(self):
         return ErtPluginManager._evaluate_config_hook(
             hook=self.hook.rms_config_path, config_name="rms"
         )
 
-    @python3only
     def _site_config_lines(self):
         try:
             plugin_responses = self.hook.site_config_lines()
@@ -126,7 +109,6 @@ class ErtPluginManager(pluggy.PluginManager):
         ]
         return list(chain.from_iterable(reversed(plugin_site_config_lines)))
 
-    @python3only
     def get_installable_workflow_jobs(self):
         config_workflow_jobs = self._get_config_workflow_jobs()
         hooked_workflow_jobs = self.get_ertscript_workflows().get_workflows()
@@ -135,7 +117,6 @@ class ErtPluginManager(pluggy.PluginManager):
         )
         return installable_workflow_jobs
 
-    @python3only
     def get_site_config_content(self):
         site_config_lines = self._site_config_lines()
 
@@ -208,15 +189,12 @@ class ErtPluginManager(pluggy.PluginManager):
             return merged_dict
         return {k: v[0] for k, v in merged_dict.items()}
 
-    @python3only
     def get_installable_jobs(self):
         return ErtPluginManager._merge_dicts(self.hook.installable_jobs())
 
-    @python3only
     def _get_config_workflow_jobs(self):
         return ErtPluginManager._merge_dicts(self.hook.installable_workflow_jobs())
 
-    @python3only
     def get_documentation_for_jobs(self):
         job_docs = {
             k: {
@@ -234,7 +212,6 @@ class ErtPluginManager(pluggy.PluginManager):
             )
         return job_docs
 
-    @python3only
     def get_documentation_for_workflows(self):
         workflow_config = self.get_ertscript_workflows()
 
@@ -251,7 +228,6 @@ class ErtPluginManager(pluggy.PluginManager):
 
         return job_docs
 
-    @python3only
     def get_ertscript_workflows(self):
         config = WorkflowConfigs()
         self.hook.legacy_ertscript_workflow(config=config)
@@ -259,13 +235,11 @@ class ErtPluginManager(pluggy.PluginManager):
 
 
 class ErtPluginContext:
-    @python3only
     def __init__(self, plugins=None):
         self.plugin_manager = ErtPluginManager(plugins=plugins)
         self.tmp_dir = None
         self.tmp_site_config_filename = None
 
-    @python3only
     def _create_site_config(self):
         site_config_content = self.plugin_manager.get_site_config_content()
         tmp_site_config_filename = None
@@ -279,7 +253,6 @@ class ErtPluginContext:
             )
         return tmp_site_config_filename
 
-    @python3only
     def __enter__(self):
         logging.debug("Creating temporary directory for site-config")
         self.tmp_dir = tempfile.mkdtemp()
@@ -291,7 +264,6 @@ class ErtPluginContext:
         self._setup_temp_environment_if_not_already_set(env)
         return self
 
-    @python3only
     def _setup_temp_environment_if_not_already_set(self, env):
         self.backup_env = os.environ.copy()
         self.env = env
@@ -310,14 +282,12 @@ class ErtPluginContext:
                     )
                 )
 
-    @python3only
     def _reset_environment(self):
         for name, value in self.env.items():
             if self.backup_env.get(name) is None and name in os.environ:
                 logging.debug("Resetting environment variable {}".format(name))
                 del os.environ[name]
 
-    @python3only
     def __exit__(self, *args):
         self._reset_environment()
         logging.debug("Deleting temporary directory for site-config")

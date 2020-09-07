@@ -4,10 +4,7 @@ import unittest
 from ert_shared.tracker.base import BaseTracker
 from res.job_queue import JobStatusType
 
-if sys.version_info >= (3, 3):
-    from unittest.mock import Mock
-else:
-    from mock import Mock
+from unittest.mock import Mock
 
 
 class BaseTrackerTest(unittest.TestCase):

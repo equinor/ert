@@ -5,10 +5,7 @@ from ert_shared.tracker.blocking import BlockingTracker
 from ert_shared.tracker.factory import create_tracker
 from ert_shared.tracker.qt import QTimerTracker
 
-if sys.version_info >= (3, 3):
-    from unittest.mock import Mock
-else:
-    from mock import Mock
+from unittest.mock import Mock
 
 
 class TrackerFactoryTest(unittest.TestCase):

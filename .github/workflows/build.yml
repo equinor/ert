@@ -1,0 +1,74 @@
+name: Python package
+
+on: [pull_request]
+
+env:
+  INSTALL_DIR: ${{ github.workspace }}/install
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+        os: [ubuntu-latest]
+        include:
+        - python-version: 3.6
+          os: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      env:
+        LD_LIBRARY_PATH: "${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
+        DYLD_LIBRARY_PATH: "${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
+        PYTHONPATH: ${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/site-packages:${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/dist-packages
+      run: |
+        if [[ ${{ matrix.os }} == "ubuntu-latest" ]]; then
+          sudo apt-get install liblapack-dev valgrind clang cmake cmake-data xvfb libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3
+        fi
+        source .libres_version
+        git clone --branch $LIBRES_VERSION --depth 1 https://github.com/equinor/libres
+        pushd libres
+        source .libecl_version
+        popd
+        git clone --branch $LIBECL_VERSION --depth 1 https://github.com/equinor/libecl
+        bash .build_install.sh libecl
+        bash .build_install.sh libres
+        pip install -r dev-requirements.txt
+        pip install .
+        pip list
+    - name: Test Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      env:
+        ERT_SHOW_BACKTRACE: 1
+        LD_LIBRARY_PATH: "${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
+        DYLD_LIBRARY_PATH: "${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
+        PYTHONPATH: ${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/site-packages:${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/dist-packages
+      run: |
+        xvfb-run  -s "-screen 0 640x480x24" --auto-servernum python -m pytest -sv
+    - name: Test MacOS
+      if: matrix.os == 'macos-latest'
+      env:
+        ERT_SHOW_BACKTRACE: 1
+        LD_LIBRARY_PATH: "${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
+        DYLD_LIBRARY_PATH: "${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
+        PYTHONPATH: ${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/site-packages:${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/dist-packages
+      run: |
+        python -m pytest -sv
+    - name: Test docs and CLI
+      env:
+        ERT_SHOW_BACKTRACE: 1
+        LD_LIBRARY_PATH: "${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
+        DYLD_LIBRARY_PATH: "${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
+        PYTHONPATH: ${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/site-packages:${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/dist-packages
+      run: |
+        sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
+        pip uninstall -y PyQt5
+        ert --help

@@ -7,10 +7,7 @@ from res.job_queue import JobStatusType
 from res.test import ErtTestContext
 from tests import ErtTest
 
-if sys.version_info >= (3, 3):
-    from unittest.mock import Mock, patch
-else:
-    from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 
 class BaseRunModelTest(ErtTest):

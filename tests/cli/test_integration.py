@@ -9,10 +9,7 @@ from argparse import ArgumentParser
 from ert_shared.cli.main import run_cli
 from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
 
-if sys.version_info >= (3, 3):
-    from unittest.mock import Mock
-else:
-    from mock import Mock
+from unittest.mock import Mock
 
 
 @pytest.fixture()

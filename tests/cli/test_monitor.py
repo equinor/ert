@@ -6,10 +6,7 @@ from ert_shared.tracker.state import SimulationStateStatus
 from ert_shared.cli.monitor import Monitor
 
 
-if sys.version_info >= (3, 5):
-    from io import StringIO
-else:
-    from io import BytesIO as StringIO
+from io import StringIO
 
 
 class MonitorTest(unittest.TestCase):

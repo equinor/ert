@@ -4,10 +4,7 @@ import sys
 import pandas as pd
 import pytest
 
-if sys.version_info >= (3, 3):
-    from unittest.mock import Mock, MagicMock, ANY
-else:
-    from mock import Mock, MagicMock, ANY
+from unittest.mock import Mock, MagicMock, ANY
 
 
 def create_expected_data():

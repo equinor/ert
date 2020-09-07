@@ -4,10 +4,7 @@ import sys
 import tempfile
 import unittest
 
-if sys.version_info >= (3, 3):
-    from unittest.mock import Mock
-else:
-    from mock import Mock
+from unittest.mock import Mock
 
 from _pytest.monkeypatch import MonkeyPatch
 
@@ -32,7 +29,6 @@ class PluginContextTest(unittest.TestCase):
     def tearDown(self):
         self.monkeypatch.undo()
 
-    @unittest.skipIf(sys.version_info.major < 3, "Plugin Manager is Python 3 only")
     def test_no_plugins(self):
         self.monkeypatch.delenv("ERT_SITE_CONFIG", raising=False)
         with ErtPluginContext(plugins=[]) as c:
@@ -55,7 +51,6 @@ class PluginContextTest(unittest.TestCase):
             os.environ["ERT_SITE_CONFIG"]
         self.assertFalse(os.path.isfile(path))
 
-    @unittest.skipIf(sys.version_info.major < 3, "Plugin Manager is Python 3 only")
     def test_with_plugins(self):
         self.monkeypatch.delenv("ERT_SITE_CONFIG", raising=False)
         # We are comparing two function calls, both of which generate a tmpdir, this makes
@@ -83,7 +78,6 @@ class PluginContextTest(unittest.TestCase):
             os.environ["ERT_SITE_CONFIG"]
         self.assertFalse(os.path.isfile(path))
 
-    @unittest.skipIf(sys.version_info.major < 3, "Plugin Manager is Python 3 only")
     def test_already_set(self):
         for var in env_vars:
             self.monkeypatch.setenv(var, "TEST")
@@ -94,12 +88,3 @@ class PluginContextTest(unittest.TestCase):
 
         for var in env_vars:
             self.assertEqual("TEST", os.environ[var])
-
-    @unittest.skipIf(
-        sys.version_info.major > 2, "Skipping Plugin Manager Python 2 test"
-    )
-    def test_plugin_context_python_2(self):
-        with ErtPluginContext(plugins=[]):
-            for var in env_vars:
-                with self.assertRaises(KeyError):
-                    os.environ[var]
