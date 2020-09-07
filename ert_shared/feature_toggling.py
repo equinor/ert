@@ -3,13 +3,8 @@ import logging
 
 
 class _Feature:
-    def __init__(self, default_enabled, python3_only=False, msg=None):
-        self.is_python3_only = python3_only
-        python_major_version = sys.version_info[0]
-        self.is_enabled = default_enabled and not (
-            python_major_version < 3 and python3_only
-        )
-        self.is_togglable = not (python_major_version < 3 and python3_only)
+    def __init__(self, default_enabled, msg=None):
+        self.is_enabled = default_enabled
         self.msg = msg
 
 
@@ -17,7 +12,6 @@ class FeatureToggling:
     _conf = {
         "new-storage": _Feature(
             default_enabled=False,
-            python3_only=True,
             msg="The new storage solution is experimental! "
                 "In particular it starts a http server on your computer serving the "
                 "data from ERT and should therefore not be used on confidential data.",
@@ -30,10 +24,7 @@ class FeatureToggling:
 
     @staticmethod
     def add_feature_toggling_args(parser):
-        for feature_name, feature in FeatureToggling._conf.items():
-            if not feature.is_togglable:
-                continue
-
+        for feature_name in FeatureToggling._conf.keys():
             parser.add_argument(
                 "--{}".format(FeatureToggling._get_arg_name(feature_name)),
                 action="store_true",
@@ -44,9 +35,7 @@ class FeatureToggling:
     @staticmethod
     def update_from_args(args):
         args_dict = vars(args)
-        for feature_name, feature in FeatureToggling._conf.items():
-            if not feature.is_togglable:
-                continue
+        for feature_name in FeatureToggling._conf.keys():
 
             arg_name = FeatureToggling._get_arg_name(feature_name)
             feature_name_escaped = arg_name.replace("-", "_")

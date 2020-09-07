@@ -6,10 +6,7 @@ import inspect
 
 import pytest
 
-if sys.version_info >= (3, 3):
-    from unittest.mock import Mock
-else:
-    from mock import Mock
+from unittest.mock import Mock
 
 from ert_shared.plugins import workflow_config
 

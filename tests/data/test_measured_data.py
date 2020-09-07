@@ -5,10 +5,7 @@ import pytest
 from ert_data import loader
 from ert_data.measured import MeasuredData
 
-if sys.version_info >= (3, 3):
-    from unittest.mock import Mock
-else:
-    from mock import Mock
+from unittest.mock import Mock
 
 
 @pytest.fixture()

@@ -219,15 +219,6 @@ def _create_section_with_title(section_id, title):
     return node
 
 
-def _create_py2_message(section_id, title):
-    jobs_node = _create_section_with_title(section_id=section_id, title=title)
-    paragraph_node = nodes.paragraph(
-        text="Switch to Python 3 to automatically generate documentation for jobs!"
-    )
-    jobs_node.append(paragraph_node)
-    return [jobs_node]
-
-
 class ErtForwardModelDocumentation(_ErtDocumentation):
     pm = ErtPluginManager()
     _JOBS = pm.get_documentation_for_jobs()
@@ -237,12 +228,9 @@ class ErtForwardModelDocumentation(_ErtDocumentation):
     def run(self):
         section_id = ErtForwardModelDocumentation._SECTION_ID
         title = ErtForwardModelDocumentation._TITLE
-        if sys.version_info.major >= 3:
-            return self._generate_job_documentation(
-                ErtForwardModelDocumentation._JOBS, section_id, title
-            )
-        else:
-            return _create_py2_message(section_id, title)
+        return self._generate_job_documentation(
+            ErtForwardModelDocumentation._JOBS, section_id, title
+        )
 
 
 class ErtWorkflowDocumentation(_ErtDocumentation):
@@ -254,9 +242,6 @@ class ErtWorkflowDocumentation(_ErtDocumentation):
     def run(self):
         section_id = ErtWorkflowDocumentation._SECTION_ID
         title = ErtWorkflowDocumentation._TITLE
-        if sys.version_info.major >= 3:
-            return self._generate_job_documentation(
-                ErtWorkflowDocumentation._JOBS, section_id, title
-            )
-        else:
-            return _create_py2_message(section_id, title)
+        return self._generate_job_documentation(
+            ErtWorkflowDocumentation._JOBS, section_id, title
+        )

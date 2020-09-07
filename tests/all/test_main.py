@@ -11,10 +11,7 @@ from ert_shared.cli import (
     WORKFLOW_MODE,
 )
 
-if sys.version_info >= (3, 3):
-    from unittest.mock import Mock
-else:
-    from mock import Mock
+from unittest.mock import Mock
 
 from packaging.version import Version
 
@@ -176,9 +173,6 @@ def test_version_valid_Version(capsys):
     except SystemExit as e:
         assert e.code == 0
 
-    if sys.version_info.major < 3:
-        return
-
     ert_version, _ = capsys.readouterr()
     ert_version = ert_version.rstrip("\n")
 
@@ -192,9 +186,6 @@ def test_version_mocked(capsys, monkeypatch):
         ert_parser(None, ["--version"])
     except SystemExit as e:
         assert e.code == 0
-
-    if sys.version_info.major < 3:
-        return
 
     ert_version, _ = capsys.readouterr()
     ert_version = ert_version.rstrip("\n")

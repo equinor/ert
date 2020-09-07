@@ -6,10 +6,7 @@ from ert_shared.tracker.events import (DetailedEvent, EndEvent, GeneralEvent,
                                        TickEvent)
 from ert_shared.tracker.qt import QTimerTracker
 
-if sys.version_info >= (3, 3):
-    from unittest.mock import Mock
-else:
-    from mock import Mock
+from unittest.mock import Mock
 
 
 class QTimerTrackerTest(unittest.TestCase):

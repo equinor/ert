@@ -12,14 +12,10 @@ import ert_shared.hook_implementations
 import tests.all.plugins.dummy_plugins as dummy_plugins
 
 _lib_extension = "dylib" if uname()[0] == "Darwin" else "so"
-if sys.version_info >= (3, 3):
-    from unittest.mock import Mock
-else:
-    from mock import Mock
+from unittest.mock import Mock
 
 
 class PluginManagerTest(unittest.TestCase):
-    @unittest.skipIf(sys.version_info.major < 3, "Plugin Manager is Python 3 only")
     def test_no_plugins(self):
         pm = ErtPluginManager(plugins=[ert_shared.hook_implementations])
         self.assertDictEqual(
@@ -43,7 +39,6 @@ class PluginManagerTest(unittest.TestCase):
             pm._site_config_lines(),
         )
 
-    @unittest.skipIf(sys.version_info.major < 3, "Plugin Manager is Python 3 only")
     def test_with_plugins(self):
         pm = ErtPluginManager(plugins=[ert_shared.hook_implementations, dummy_plugins])
         self.assertDictEqual(
@@ -81,7 +76,6 @@ class PluginManagerTest(unittest.TestCase):
             pm._site_config_lines(),
         )
 
-    @unittest.skipIf(sys.version_info.major < 3, "Plugin Manager is Python 3 only")
     def test_job_documentation(self):
         pm = ErtPluginManager(plugins=[dummy_plugins])
         expected = {
@@ -101,22 +95,7 @@ class PluginManagerTest(unittest.TestCase):
         }
         assert pm.get_documentation_for_jobs() == expected
 
-    @unittest.skipIf(
-        sys.version_info.major > 2, "Skipping Plugin Manager Python 2 test"
-    )
-    def test_plugin_manager_python_2(self):
-        pm = ErtPluginManager()
-        self.assertEqual(pm._get_config_workflow_jobs(), None)
-        self.assertEqual(pm.get_installable_jobs(), None)
-        self.assertEqual(pm.get_flow_config_path(), None)
-        self.assertEqual(pm.get_ecl100_config_path(), None)
-        self.assertEqual(pm.get_ecl300_config_path(), None)
-        self.assertEqual(pm.get_rms_config_path(), None)
-        self.assertEqual(pm.get_help_links(), None)
-        self.assertEqual(pm.get_site_config_content(), None)
 
-
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_workflows_merge(monkeypatch, tmpdir):
     expected_result = {
         "wf_job1": "/dummy/path/wf_job1",
@@ -130,7 +109,6 @@ def test_workflows_merge(monkeypatch, tmpdir):
     assert result == expected_result
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_workflows_merge_duplicate(caplog):
     pm = ErtPluginManager(plugins=[dummy_plugins])
 
