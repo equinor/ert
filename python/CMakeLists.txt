@@ -9,7 +9,3 @@ init_python()
 add_subdirectory( res )
 add_subdirectory( job_runner )
 add_subdirectory( ert_logger )
-
-if (INSTALL_ERT_LEGACY)
-  add_subdirectory(ert)
-endif()

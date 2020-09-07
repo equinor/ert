@@ -25,10 +25,10 @@ include the `libecl` installation:
   
 ```
 bash% export LD_LIBRARY_PATH=/local/ert/install/lib64:$LD_LIBRARY_PATH
-bash% export PYTHONPATH=/local/ert/install/lib/python2.7/site-packages:$PYTHONPATH
+bash% export PYTHONPATH=/local/ert/install/lib/python3.6/site-packages:$PYTHONPATH
 ```
 
-Observe that path components `lib64` and `lib/python2.7/site-packages` will
+Observe that path components `lib64` and `lib/python3.6/site-packages` will
 depend on your Python version and which Linux distribution you are using. The
 example given here is for RedHat based distributions.
 

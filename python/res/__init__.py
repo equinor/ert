@@ -46,8 +46,6 @@ try:
 except ImportError:
     pass
 
-required_version_hex = 0x02070000
-
 res_lib_path = None
 ert_so_version = ""
 __version__ = "0.0.0"
@@ -77,9 +75,6 @@ if res_lib_path:
     if not os.path.isdir( res_lib_path ):
         res_lib_path = None
 
-
-if sys.hexversion < required_version_hex:
-    raise Exception("ERT Python requires Python 2.7")
 
 # This load() function is *the* function actually loading shared
 # libraries.

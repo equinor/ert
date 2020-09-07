@@ -6,10 +6,7 @@ from job_runner.job import Job
 from job_runner.reporting import Network
 from job_runner.reporting.message import Exited, Init, Finish
 
-if sys.version_info >= (3, 3):
-    from unittest.mock import patch
-else:
-    from mock import patch
+from unittest.mock import patch
 
 
 class NetworkReporterTests(TestCase):

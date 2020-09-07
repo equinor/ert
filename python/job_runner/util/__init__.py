@@ -1,28 +1,6 @@
 import sys
 import os
 
-REQUESTED_HEXVERSION = 0x02070000
-
-
-def check_version():
-    if sys.hexversion < REQUESTED_HEXVERSION:
-        version = sys.version_info
-        warning = """
-/------------------------------------------------------------------------
-| You are running Python version {}.{}.{}; much of the ert functionality
-| expects to be running on Python 2.7.5.  Version 2.7.13 is the default
-| version in /prog/sdpsoft.
-|
-| It is highly recommended that you update your setup to use Python 2.7.5.
-|
-\\------------------------------------------------------------------------
-
-""".format(
-            version[0], version[1], version[2]
-        )
-        return warning
-    return None
-
 
 def read_os_release(pfx="LSB_"):
     fname = "/etc/os-release"

@@ -5,7 +5,6 @@ import sys
 import job_runner.reporting as reporting
 from job_runner.reporting.message import Finish
 from job_runner.runner import JobRunner
-from job_runner.util import check_version
 
 
 def main(args):
@@ -16,10 +15,6 @@ def main(args):
         if not os.path.exists(run_path):
             sys.exit("No such directory: {}".format(run_path))
         os.chdir(run_path)
-
-    warning = check_version()
-    if warning is not None:
-        sys.stderr.write(warning)
 
     jobs_to_run = []
     if len(args) > 2:

@@ -7,10 +7,7 @@ from ecl.util.test import TestAreaContext
 from res.util.substitution_list import SubstitutionList
 from .workflow_common import WorkflowCommon
 import sys
-if sys.version_info >= (3, 3):
-    from unittest.mock import patch
-else:
-    from mock import patch
+from unittest.mock import patch
 
 class WorkflowRunnerTest(ResTest):
 

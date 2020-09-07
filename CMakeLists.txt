@@ -77,7 +77,6 @@ find_package(CXX11Features)
 option( BUILD_TESTS         "Should the tests be built"             OFF)
 option( ENABLE_PYTHON       "Enable the python wrappers"            ON )
 option( USE_RPATH           "Should we embed path to libraries"     ON )
-option( INSTALL_ERT_LEGACY  "Install legacy ert code"               OFF)
 option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit"     OFF)
 
 set( SHARE_DIR "share/ert")

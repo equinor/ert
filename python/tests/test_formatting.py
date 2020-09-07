@@ -15,7 +15,6 @@ def get_py_files(path):
     return fnames
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires Python3")
 def test_code_style():
     from click.testing import CliRunner
     import black

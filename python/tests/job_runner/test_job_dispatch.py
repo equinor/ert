@@ -13,10 +13,7 @@ from job_runner.cli import main
 from job_runner.reporting.message import Finish
 from tests.utils import tmpdir, wait_until
 
-if sys.version_info >= (3, 3):
-    from unittest.mock import patch
-else:
-    from mock import patch
+from unittest.mock import patch
 
 
 class JobDispatchTest(unittest.TestCase):

@@ -62,7 +62,6 @@ build_res () {
 	pushd $LIBRES_BUILD
 	echo "PYTHON:"$(which python)
 	cmake .. -DEQUINOR_TESTDATA_ROOT=/project/res-testdata/ErtTestData \
-		  -DINSTALL_ERT_LEGACY=ON \
 		  -DCMAKE_PREFIX_PATH=$INSTALL \
 		  -DCMAKE_MODULE_PATH=$INSTALL/share/cmake/Modules \
 		  -DCMAKE_INSTALL_PREFIX=$INSTALL \
@@ -76,7 +75,7 @@ build_res () {
 
 source_build_tools() {
 	source /opt/rh/devtoolset-7/enable
-	LIBECL_VERSION="" PYTHON_VERSION="2.7.14" GCC_VERSION=7.3.0 CMAKE_VERSION=3.10.2 source /prog/sdpsoft/env.sh
+	LIBECL_VERSION="" PYTHON_VERSION="3.6.4" GCC_VERSION=7.3.0 CMAKE_VERSION=3.10.2 source /prog/sdpsoft/env.sh
 	python --version
 	gcc --version
 	cmake --version
@@ -105,10 +104,10 @@ enable_environment () {
 
 	source $ENV/bin/activate
 	export ERT_SHOW_BACKTRACE=Y
-	export ECL_SITE_CONFIG=/project/res/komodo/$KOMODO_VERSION/root/lib/python2.7/site-packages/res/fm/ecl/ecl_config.yml
-	export RMS_SITE_CONFIG=/project/res/komodo/$KOMODO_VERSION/root/lib/python2.7/site-packages/res/fm/rms/rms_config.yml
+	export ECL_SITE_CONFIG=/project/res/komodo/$KOMODO_VERSION/root/lib/python3.6/site-packages/res/fm/ecl/ecl_config.yml
+	export RMS_SITE_CONFIG=/project/res/komodo/$KOMODO_VERSION/root/lib/python3.6/site-packages/res/fm/rms/rms_config.yml
 	export LD_LIBRARY_PATH=$INSTALL/lib64:$LD_LIBRARY_PATH
-	export PYTHONPATH=$INSTALL/lib/python2.7/site-packages:$PYTHONPATH
+	export PYTHONPATH=$INSTALL/lib/python3.6/site-packages:$PYTHONPATH
 	export PYTHONFAULTHANDLER=PYTHONFAULTHANDLER
 }
 
@@ -130,7 +129,7 @@ clone_repos () {
 
 create_virtualenv () {
 	mkdir $ENV
-	python -m virtualenv $ENV
+	python3 -m venv $ENV
 	source $ENV/bin/activate
 }
 

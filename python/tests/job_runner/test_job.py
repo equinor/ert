@@ -6,10 +6,7 @@ from tests.utils import tmpdir
 from job_runner.reporting.message import Exited, Running, Start
 from job_runner.job import Job
 
-if sys.version_info >= (3, 3):
-    from unittest.mock import patch, PropertyMock
-else:
-    from mock import patch, PropertyMock
+from unittest.mock import patch, PropertyMock
 
 
 class JobTests(TestCase):

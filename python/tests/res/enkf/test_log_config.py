@@ -81,9 +81,8 @@ class LogConfigTest(ResTest):
 
                 if log_level:
                     level = log_level
-                    if sys.version_info[0] >= 3:
-                        if not log_level.isalpha():
-                            level = int(float(level))
+                    if not log_level.isalpha():
+                        level = int(float(level))
                     cf.write("\nLOG_LEVEL %s\n" % level)
                     if type(level) is str and level.isdigit():
                         config_dict[ConfigKeys.LOG_LEVEL] = MessageLevelEnum.to_enum(eval(level))
