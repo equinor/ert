@@ -20,7 +20,6 @@ env:
     - DYLD_LIBRARY_PATH="${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64"
 
   matrix:
-    - PYTHON_VERSION=2.7
     - PYTHON_VERSION=3.6
 
 matrix:
@@ -55,37 +54,19 @@ addons:
       - libxcb-xinerama0
 
 before_install:
-    - if [[ $PYTHON_VERSION == 2.7 ]]; then
-        export TRAVIS_PYTHON_VERSION="2.7";
-        export PYTEST_QT_API="pyqt4v2";
-      else
-        export TRAVIS_PYTHON_VERSION="3.6";
-      fi
+    - export TRAVIS_PYTHON_VERSION="3.6";
 
     # We do this conditionally because it saves us some downloading if the version is the same.
-    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-        if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-          wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh;
-        else
-          wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-        fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+        wget https://repo.continuum.io/miniconda/Miniconda3-4.4.10-MacOSX-x86_64.sh -O miniconda.sh;
       else
-        if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-          wget https://repo.continuum.io/miniconda/Miniconda3-4.4.10-MacOSX-x86_64.sh -O miniconda.sh;
-        else
-          wget https://repo.continuum.io/miniconda/Miniconda3-4.4.10-Linux-x86_64.sh -O miniconda.sh;
-        fi
+        wget https://repo.continuum.io/miniconda/Miniconda3-4.4.10-Linux-x86_64.sh -O miniconda.sh;
       fi
 
     - bash miniconda.sh -b -p $HOME/miniconda
     - export CONDA_HOME="$HOME/miniconda"
     - export PATH="$CONDA_HOME/bin:$PATH"
-    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-        conda config --set restore_free_channel true;
-        conda create -n ert_env pyqt=4.11.3 python=2.7 --yes;
-      else
-        conda create -n ert_env pyqt python=$TRAVIS_PYTHON_VERSION --yes;
-      fi
+    - conda create -n ert_env pyqt python=$TRAVIS_PYTHON_VERSION --yes;
     - source activate ert_env
     # Checkout libres - need libecl version
     - source .libres_version

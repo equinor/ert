@@ -14,6 +14,9 @@ The `ert` program is based on three different repositories:
 
 3. ert - this repository - the actual application and all of the GUI.
 
+
+ERT is now Python 3 only. The last Python 2 compatible release is [2.14](https://github.com/equinor/ert/tree/version-2.14)
+
 ##  Building ert
 
 #### 1. Build and install [libecl](https://github.com/Equinor/libecl) and [libres](https://github.com/Equinor/libres). 
@@ -24,13 +27,7 @@ running pip install in point 4, below. For now let us assume that the prefix
 `/local/ert/install` was used.
 
 
-#### 2. Install Python dependencies
-
-In addition you will need to install `PyQt` For Python 2.7 (`PyQt4`)- this package
-can not be installed using `pip`, you should probably use the package manager from
-your operating system. For Python >3.5 you can use `pip install PyQt5`.
-
-#### 3. Update environment variables 
+#### 2. Update environment variables 
 To ensure that the build system correctly finds the `ecl` Python package you
 need to set the environment variables `PYTHONPATH` and `LD_LIBRARY_PATH` to
 include the `libecl` installation:

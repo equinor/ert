@@ -3,10 +3,7 @@ import sys
 
 from ert_shared.storage.autoclient import AutoClient
 
-if sys.version_info >= (3, 3):
-    from unittest.mock import Mock, patch
-else:
-    from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 
 @patch.dict(os.environ, {})

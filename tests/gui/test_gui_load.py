@@ -10,10 +10,7 @@ from qtpy.QtCore import Qt
 import qtpy
 from ert_gui.gert_main import _start_window, run_gui
 
-if sys.version_info >= (3, 3):
-    from unittest.mock import Mock, PropertyMock
-else:
-    from mock import Mock, PropertyMock
+from unittest.mock import Mock, PropertyMock
 
 @pytest.fixture()
 def patch_enkf_main(monkeypatch, tmpdir):

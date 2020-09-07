@@ -1,10 +1,7 @@
 import sys
 
-REQUIRED_VERSION_HEX = 0x02070000
-
-
-if sys.hexversion < REQUIRED_VERSION_HEX:
-    raise Exception("ERT GUI Python requires at least version 2.7 of Python")
+if sys.version_info < (3,6):
+    raise Exception("ERT GUI Python requires at least version 3.6 of Python")
 
 import os
 import matplotlib
@@ -16,6 +13,6 @@ def headless():
 if headless():
     matplotlib.use("Agg")
 else:
-    matplotlib.use("Qt4Agg")
+    matplotlib.use("Qt5Agg")
 
 __version__ = ert_shared.__version__

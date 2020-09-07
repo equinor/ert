@@ -78,14 +78,8 @@ class GertMainWindow(QMainWindow):
         show_about.setMenuRole(QAction.ApplicationSpecificRole)
         show_about.triggered.connect(self.__showAboutMessage)
 
-        if sys.version_info.major >= 3:
-            pm = ErtPluginManager()
-            help_links = pm.get_help_links()
-        else:
-            with pkg_resources.resource_stream(
-                    "ert_gui", os.path.join("resources", "gui", "help", "help_links.yml")
-            ) as stream:
-                help_links = yaml.safe_load(stream)
+        pm = ErtPluginManager()
+        help_links = pm.get_help_links()
 
         for menu_label, link in help_links.items():
             help_link_item = self.__help_menu.addAction(menu_label)
