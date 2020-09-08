@@ -70,7 +70,7 @@ before_install:
     # - export PATH="$CONDA_HOME/bin:$PATH"
     # - conda create -n ert_env pyqt python=$TRAVIS_PYTHON_VERSION --yes;
     # - source activate ert_env
-    - python -m venv ert_env
+    - python$TRAVIS_PYTHON_VERSION -m venv ert_env
     - source ert_env/bin/activate
     # Checkout libres - need libecl version
     - source .libres_version
