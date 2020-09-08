@@ -13,7 +13,6 @@ os:
 
 osx_image: xcode8.3
 sudo: false
-dist: xenial
 
 env:
   global:
@@ -93,7 +92,7 @@ script:
   #- echo $PATH
   #- echo $PYTHONPATH
   - pip install -r dev-requirements.txt
-  - pip install . --prefix=$INSTALL_DIR
+  - pip install .
   # For easy compare of installed versions once a version fails
   - pip list
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
