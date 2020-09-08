@@ -71,6 +71,7 @@ before_install:
     # - conda create -n ert_env pyqt python=$TRAVIS_PYTHON_VERSION --yes;
     # - source activate ert_env
     - python -m venv ert_env
+    - source ert_env/bin/activate
     # Checkout libres - need libecl version
     - source .libres_version
     - git clone --branch $LIBRES_VERSION --depth 1 https://github.com/equinor/libres
@@ -101,5 +102,5 @@ script:
       python setup.py test;
     fi
   - sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
-  - pip uninstall PyQt5
+  - pip uninstall -y PyQt5
   - ert --help
