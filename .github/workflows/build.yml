@@ -1,0 +1,42 @@
+name: Python package
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        source .libres_version
+        git clone --branch $LIBRES_VERSION --depth 1 https://github.com/equinor/libres
+        pushd libres
+        source .libecl_version
+        popd
+        git clone --branch $LIBECL_VERSION --depth 1 https://github.com/equinor/libecl
+        .build_install.sh libecl
+        .build_install.sh libres
+        pip install -r dev-requirements.txt
+        pip install .
+        pip list
+    - name: Test with pytest
+      run: |
+        # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        xvfb-run -s "-screen 0 640x480x24" python setup.py test;
+        #  else
+        #    python setup.py test;
+        #  fi
+        sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
+        pip uninstall -y PyQt5
+        ert --help
+
