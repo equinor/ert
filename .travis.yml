@@ -6,29 +6,29 @@ python:
 os:
   - linux
 
+sudo: required
+services: docker
+
 env:
   global:
     - ERT_SHOW_BACKTRACE=1
-    - INSTALL_DIR="$(pwd)/ert_env"
-    - LD_LIBRARY_PATH="${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64"
-    - DYLD_LIBRARY_PATH="${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64"
-
+    - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
+    - INSTALL_DIR="${TRAVIS_BUILD_DIR}/venv"
+    - LD_LIBRARY_PATH="${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64:${LD_LIBRARY_PATH}"
   matrix:
-    - PYTHON_VERSION=3.6
+    - TEST_SUITE=""
 
 matrix:
   fast_finish: true
   include:
-    - os: osx
-      language: generic
-      python: 3.6
-      compiler: clang
-      env:
-      - MB_PYTHON_VERSION=3.6
-      - INSTALL_DIR="${TRAVIS_BUILD_DIR}/ert_env"
-      - DYLD_LIBRARY_PATH=${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64:${DYLD_LIBRARY_PATH}"
-      - TEST_SUITE="
-
+  - os: osx
+    language: generic
+    python: 3.6
+    env:
+    - MB_PYTHON_VERSION=3.6
+    - INSTALL_DIR="${TRAVIS_BUILD_DIR}/venv"
+    - DYLD_LIBRARY_PATH=${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64:${DYLD_LIBRARY_PATH}"
+    - TEST_SUITE="""
 
 addons:
   apt:
@@ -67,7 +67,7 @@ before_install:
     # - export PATH="$CONDA_HOME/bin:$PATH"
     # - conda create -n ert_env pyqt python=$TRAVIS_PYTHON_VERSION --yes;
     # - source activate ert_env
-    - python -m venv ert_env
+    - python -m venv venv
     - source ert_env/bin/activate
     # Checkout libres - need libecl version
     - source .libres_version
