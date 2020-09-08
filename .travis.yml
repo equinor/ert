@@ -3,14 +3,8 @@ dist: xenial
 python:
   - 3.6
 
-compiler:
-  - gcc
-
 os:
   - linux
-
-osx_image: xcode8.3
-sudo: false
 
 env:
   global:
@@ -31,7 +25,7 @@ matrix:
       compiler: clang
       env:
       - MB_PYTHON_VERSION=3.6
-      - INSTALL_DIR="${TRAVIS_BUILD_DIR}/venv"
+      - INSTALL_DIR="${TRAVIS_BUILD_DIR}/ert_env"
       - DYLD_LIBRARY_PATH=${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64:${DYLD_LIBRARY_PATH}"
       - TEST_SUITE="
 
@@ -59,7 +53,7 @@ addons:
       - libxcb-xinerama0
 
 before_install:
-    - export TRAVIS_PYTHON_VERSION="3.6";
+    # - export TRAVIS_PYTHON_VERSION="3.6";
 
     # We do this conditionally because it saves us some downloading if the version is the same.
     # - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
@@ -73,7 +67,7 @@ before_install:
     # - export PATH="$CONDA_HOME/bin:$PATH"
     # - conda create -n ert_env pyqt python=$TRAVIS_PYTHON_VERSION --yes;
     # - source activate ert_env
-    - python${TRAVIS_PYTHON_VERSION} -m venv ert_env
+    - python -m venv ert_env
     - source ert_env/bin/activate
     # Checkout libres - need libecl version
     - source .libres_version
