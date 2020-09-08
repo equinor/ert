@@ -5,11 +5,9 @@ python:
 
 compiler:
   - gcc
-  - clang
 
 os:
   - linux
-  - osx
 
 osx_image: xcode8.3
 sudo: false
@@ -26,11 +24,16 @@ env:
 
 matrix:
   fast_finish: true
-  exclude:
+  include:
     - os: osx
-      compiler: gcc
-    - os: linux
+      language: generic
+      python: 3.6
       compiler: clang
+      env:
+      - MB_PYTHON_VERSION=3.6
+      - INSTALL_DIR="${TRAVIS_BUILD_DIR}/venv"
+      - DYLD_LIBRARY_PATH=${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64:${DYLD_LIBRARY_PATH}"
+      - TEST_SUITE="
 
 
 addons:
@@ -70,7 +73,7 @@ before_install:
     # - export PATH="$CONDA_HOME/bin:$PATH"
     # - conda create -n ert_env pyqt python=$TRAVIS_PYTHON_VERSION --yes;
     # - source activate ert_env
-    - python$TRAVIS_PYTHON_VERSION -m venv ert_env
+    - python${TRAVIS_PYTHON_VERSION} -m venv ert_env
     - source ert_env/bin/activate
     # Checkout libres - need libecl version
     - source .libres_version
