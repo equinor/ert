@@ -1,7 +1,6 @@
 black==19.10b0
 pytest<6
 pytest-qt
-mock
 schemathesis==1.3.4
 sphinx
 sphinx-argparse

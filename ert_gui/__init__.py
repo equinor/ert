@@ -1,10 +1,8 @@
+import os
 import sys
 
-if sys.version_info < (3,6):
-    raise Exception("ERT GUI Python requires at least version 3.6 of Python")
-
-import os
 import matplotlib
+
 import ert_shared
 
 def headless():
