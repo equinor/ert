@@ -1,6 +1,6 @@
 STDOUT      copy_file.stdout
 STDERR      copy_file.stderr
-EXECUTABLE  ../shell/script/copy_file
+EXECUTABLE  ../../shell_scripts/copy_file
 ARGLIST     <FROM> <TO>
 
 MIN_ARG    2

@@ -1,7 +1,7 @@
 STDERR    move_file.stderr
 STDOUT    move_file.stdout
 
-EXECUTABLE    ../shell/script/move_file
+EXECUTABLE    ../../shell_scripts/move_file
 ARGLIST       <FROM>  <TO>
 
 MIN_ARG    2

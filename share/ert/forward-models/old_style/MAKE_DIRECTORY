@@ -2,7 +2,7 @@ STDERR    make_directory.stderr
 STDOUT    make_directory.stdout
 
 ARGLIST   <DIRECTORY>
-EXECUTABLE    ../shell/script/make_directory
+EXECUTABLE    ../../shell_scripts/make_directory
 
 MIN_ARG    1
 MAX_ARG    1

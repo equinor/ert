@@ -1,7 +1,7 @@
 STDERR    delete_dir.stderr
 STDOUT    delete_dir.stdout
 
-EXECUTABLE  ../shell/script/delete_directory
+EXECUTABLE  ../../shell_scripts/delete_directory
 ARGLIST     <DIRECTORY>
 
 MIN_ARG    1
