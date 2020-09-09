@@ -1,5 +1,6 @@
 -- This is a very basic site config file, mainly used for testing.
 
+WORKFLOW_JOB_DIRECTORY workflows/jobs/shell
 WORKFLOW_JOB_DIRECTORY workflows/jobs/internal/config
 WORKFLOW_JOB_DIRECTORY workflows/jobs/internal-gui/config
 
