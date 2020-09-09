@@ -201,7 +201,7 @@ foreach (script ecl100 ecl300 flow rms)
 endforeach()
 
 foreach (script careful_copy_file copy_directory copy_file delete_directory delete_file make_directory move_file symlink)
-  install(PROGRAMS "share/ert/forward-models/shell/script/${script}" DESTINATION "${SHARE_DIR}/forward-models/shell/script")
+  install(PROGRAMS "share/ert/shell_scripts/${script}" DESTINATION "${SHARE_DIR}/shell_scripts")
 endforeach()
 
 foreach (script template_render)
