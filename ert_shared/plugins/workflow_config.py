@@ -54,6 +54,7 @@ class WorkflowConfig(object):
         self.func = ertscript_class
         self.name = self._get_func_name(ertscript_class, name)
         self.function_dir = os.path.abspath(inspect.getfile(ertscript_class))
+        self.source_package = self._get_source_package(self.func)
         self.config_path = self._write_workflow_config(tmpdir)
         self._description = ertscript_class.__doc__ if ertscript_class.__doc__ else ""
         self._examples = None
@@ -102,3 +103,8 @@ class WorkflowConfig(object):
             f_out.write("INTERNAL      True\n")
             f_out.write("SCRIPT        {}".format(self.function_dir))
         return file_path
+
+    @staticmethod
+    def _get_source_package(module):
+        base, _, _ = module.__module__.partition(".")
+        return base
