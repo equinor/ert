@@ -682,6 +682,7 @@ class ResConfigTest(ResTest):
                 ERT_SHARE_PATH + '/forward-models/old_style'
             ]
             config_data_new[ConfigKeys.WORKFLOW_JOB_DIRECTORY] = [
+               ERT_SHARE_PATH + '/workflows/jobs/shell',
                ERT_SHARE_PATH + '/workflows/jobs/internal/config',
                ERT_SHARE_PATH + '/workflows/jobs/internal-gui/config'
             ]

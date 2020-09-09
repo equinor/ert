@@ -48,6 +48,7 @@ class ErtWorkflowListTest(ResTest):
                         }
                     ],
                 ConfigKeys.WORKFLOW_JOB_DIRECTORY: [
+                        ERT_SHARE_PATH + '/workflows/jobs/shell',
                         ERT_SHARE_PATH + '/workflows/jobs/internal/config',
                         ERT_SHARE_PATH + '/workflows/jobs/internal-gui/config'
                     ],
