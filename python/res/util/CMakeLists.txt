@@ -1,7 +1,5 @@
 set(PYTHON_SOURCES
     __init__.py
-    arg_pack.py
-    cthread_pool.py
     log.py
     matrix.py
     path_format.py
