@@ -244,6 +244,7 @@ class ErtPluginManager(pluggy.PluginManager):
                 "examples": workflow.examples,
                 "config_file": workflow.config_path,
                 "parser": workflow.parser,
+                "source_package": workflow.source_package,
             }
             for workflow in workflow_config._workflows
         }
