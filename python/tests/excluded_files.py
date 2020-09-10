@@ -327,7 +327,6 @@ def get_excluded_files(root):
         "tests/res/util/test_substitution_list.py",
         "tests/utils/__init__.py",
         "tests/res/util/test_ui_return.py",
-        "tests/share/test_synthesizer.py",
         "tests/res/job_queue/test_forward_model_formatted_print.py",
         "tests/res/util/test_matrix.py",
         "tests/res/simulator/test_batch_sim.py",
