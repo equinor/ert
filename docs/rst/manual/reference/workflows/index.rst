@@ -32,3 +32,4 @@ can be of two fundamentally different types - *external* and *internal*.
    configuring_jobs
    complete_workflows
    built_in
+   added_workflow_jobs
