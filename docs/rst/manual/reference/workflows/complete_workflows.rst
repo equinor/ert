@@ -1,3 +1,5 @@
+.. _complete_workflows_chapter:
+
 Complete Workflows
 ==================
 
