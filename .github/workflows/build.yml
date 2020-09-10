@@ -29,11 +29,13 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get install liblapack-dev valgrind clang cmake cmake-data xvfb libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3
+    - name: Setup environment
+      run: |
+        echo "::add-path::${{ env.INSTALL_DIR}}/bin"
+        echo "::set-env name=LD_LIBRARY_PATH::${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
+        echo "::set-env name=DYLD_LIBRARY_PATH::${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
+        echo "::set-env name=PYTHONPATH::${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/site-packages:${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/dist-packages"
     - name: Install ERT and dependencies
-      env:
-        LD_LIBRARY_PATH: "${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
-        DYLD_LIBRARY_PATH: "${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
-        PYTHONPATH: ${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/site-packages:${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/dist-packages
       run: |
         source .libres_version
         git clone --branch $LIBRES_VERSION --depth 1 https://github.com/equinor/libres
@@ -48,25 +50,13 @@ jobs:
         pip list
     - name: Test Ubuntu
       if: matrix.os == 'ubuntu-latest'
-      env:
-        LD_LIBRARY_PATH: "${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
-        DYLD_LIBRARY_PATH: "${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
-        PYTHONPATH: ${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/site-packages:${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/dist-packages
       run: |
         xvfb-run  -s "-screen 0 640x480x24" --auto-servernum python -m pytest -sv
     - name: Test MacOS
       if: matrix.os == 'macos-latest'
-      env:
-        LD_LIBRARY_PATH: "${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
-        DYLD_LIBRARY_PATH: "${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
-        PYTHONPATH: ${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/site-packages:${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/dist-packages
       run: |
         python -m pytest -sv
     - name: Test docs and CLI
-      env:
-        LD_LIBRARY_PATH: "${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
-        DYLD_LIBRARY_PATH: "${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
-        PYTHONPATH: ${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/site-packages:${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/dist-packages
       run: |
         sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
         pip uninstall -y PyQt5
