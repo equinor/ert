@@ -17,7 +17,7 @@ else:
     # If the ERT_SHARE_PATH variable is not set we try to use the
     # source location relative to the location of the current file;
     # assuming we are in the source directory. Will not work if we are
-    # in an arbitrary build directory.
+    # in an arbitrary build directory. 
     ert_share_path = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../share/ert"))
 
 ert_gui.ertwidgets.img_prefix = ert_share_path + "/gui/img/"
