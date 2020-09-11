@@ -1,0 +1,94 @@
+name: Libres testing
+
+on: [pull_request]
+
+env:
+  INSTALL_DIR: ${{ github.workspace }}/install
+  ERT_SHOW_BACKTRACE: 1
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+        os: [ubuntu-latest]
+        include:
+        - python-version: 3.6
+          os: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Ubuntu dependencies
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo add-apt-repository ppa:opm/ppa
+        sudo apt-get update
+        sudo apt-get install libopm-simulators liblapack-dev valgrind
+    - name: Setup environment
+      run: |
+        echo "::add-path::${{ env.INSTALL_DIR}}/bin"
+        echo "::set-env name=LD_LIBRARY_PATH::${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
+        echo "::set-env name=DYLD_LIBRARY_PATH::${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
+        echo "::set-env name=PYTHONPATH::${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/site-packages:${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/dist-packages"
+    - name: Install dependencies
+      run: |
+          pip install -r requirements.txt
+          pip install -r test_requirements.txt
+          source .libecl_version
+          git clone https://github.com/equinor/libecl
+          pushd libecl
+          git fetch
+          git checkout tags/$LIBECL_VERSION
+          pip install -r requirements.txt
+          mkdir build
+          pushd build
+          cmake .. -DENABLE_PYTHON=ON \
+                   -DBUILD_APPLICATIONS=ON \
+                   -DINSTALL_CWRAP=OFF \
+                   -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR \
+                   -DCMAKE_PREFIX_PATH=$INSTALL_DIR
+          make
+          make install
+          popd;popd
+    - name: Build and install libres
+      run: |
+        mkdir build
+        pushd build
+        ulimit -n 1024
+        cmake .. -DBUILD_TESTS=ON \
+                -DENABLE_PYTHON=ON \
+                -DBUILD_APPLICATIONS=ON \
+                -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR \
+                -DCMAKE_PREFIX_PATH=$INSTALL_DIR \
+                -DCMAKE_INSTALL_NAME_DIR=$INSTALL_DIR/lib \
+                -DCMAKE_C_FLAGS="-Werror -Wall -Wno-incompatible-pointer-types" \
+                -DCMAKE_CXX_FLAGS="-Werror -Wall -Wno-unused-result  -Wno-reorder \
+                                    -Wno-sign-compare -Wno-unknown-pragmas \
+                                    -Wno-unused-variable -Wno-parentheses \
+                                    -Wno-unused-function -Wno-unused-but-set-variable \
+                                    -Wno-unknown-warning-option -Wno-missing-braces \
+                                    -Wno-varargs -Wno-sometimes-uninitialized \
+                                    -Wno-tautological-compare"
+        make
+        make install
+        popd
+    - name: Run ctest
+      run: |
+        pushd build
+        set -e; python -c "import res"; set +e
+        ctest --output-on-failure $TEST_SUITE
+        popd
+    - name: Run pytest
+      run: |
+        export LD_LIBRARY_PATH=${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
+        export DYLD_LIBRARY_PATH=${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
+        pushd python
+        pytest
