@@ -1,3 +1,4 @@
+from logging import exception
 import time
 
 from ert_data.measured import MeasuredData
@@ -34,6 +35,8 @@ def _extract_and_dump_observations(rdb_api, blob_api):
         facade.get_observation_key(nr) for nr, _ in enumerate(facade.get_observations())
     ]
 
+    if len(observation_keys) == 0:
+        return
     measured_data = MeasuredData(facade, observation_keys)
 
     measured_data.remove_inactive_observations()
@@ -157,7 +160,9 @@ def _dump_response(rdb_api, blob_api, responses, ensemble_name):
 
 def _extract_active_observations(facade):
     update_step = facade.get_update_step()
-    ministep = update_step[len(update_step) - 1]
+    if len(update_step) == 0:
+        return None
+    ministep = update_step[-1]
     obs_data = ministep.get_obs_data()
     if obs_data is None:
         return None
