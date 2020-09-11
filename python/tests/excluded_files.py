@@ -167,7 +167,6 @@ def get_excluded_files(root):
         "res/job_queue/forward_model_status.py",
         "res/job_queue/job_queue_node.py",
         "res/job_queue/workflow_joblist.py",
-        "res/job_queue/job_queue_manager.py",
         "res/job_queue/workflow.py",
         "res/sched/history_source_enum.py",
         "res/simulator/__init__.py",

@@ -102,14 +102,7 @@ extern "C" {
   bool                          enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list, enkf_fs_type * source_fs, enkf_fs_type * target_fs , int target_step , run_mode_type run_mode);
   bool                          enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * source_fs, enkf_fs_type * target_fs);
   void                          enkf_main_create_run_path(enkf_main_type * enkf_main , const ert_run_context_type * run_context);
-  int                           enkf_main_run_simple_step( enkf_main_type* enkf_main, job_queue_type * job_queue, ert_run_context_type * run_context );
 
-  void                          enkf_main_run_tui_exp(enkf_main_type * enkf_main ,
-                                                      bool_vector_type * iactive);
-
-
-  void                          enkf_main_run_smoother(enkf_main_type * enkf_main, job_queue_type * job_queue, enkf_fs_type * source_fs, const char * target_fs_name , bool_vector_type * iactive , int iter , bool rerun);
-  void                          enkf_main_run_iterated_ES(enkf_main_type * enkf_main, job_queue_type * job_queue, int num_iterations);
   void                          enkf_main_set_data_kw(enkf_main_type * , const char * , const char *);
   void                          enkf_main_set_state_run_path(const enkf_main_type * , int );
   void                          enkf_main_set_state_eclbase(const enkf_main_type * , int );

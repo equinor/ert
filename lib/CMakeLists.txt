@@ -98,7 +98,6 @@ add_library(res res_util/res_log.cpp
                 job_queue/job_list.cpp
                 job_queue/job_node.cpp
                 job_queue/job_queue.cpp
-                job_queue/job_queue_manager.cpp
                 job_queue/job_queue_status.cpp
                 job_queue/local_driver.cpp
                 job_queue/lsf_driver.cpp
@@ -455,8 +454,7 @@ foreach(name job_status_test
              job_queue_driver_test
              job_slurm_driver
              job_mock_slurm
-             job_torque_test
-             job_queue_manager)
+             job_torque_test)
 
     add_executable(${name} job_queue/tests/${name}.cpp)
     target_include_directories(${name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private-include)
@@ -479,10 +477,7 @@ endforeach()
 foreach(name job_loadOK
              ext_joblist_test
              job_torque_submit_test
-             job_queue_timeout_test
-             job_queue_stress_test
              job_queue_stress_task
-             job_job_queue_test
              job_program_output
              job_lsf_exclude_hosts_test
              job_workflow_test
@@ -533,43 +528,6 @@ add_test(NAME job_workflow_test
 
 add_test(NAME job_lsf_exclude_hosts_test
          COMMAND job_lsf_exclude_hosts_test job_program NULL LOCAL)
-
-add_test(NAME job_queue_test
-         COMMAND job_job_queue_test
-                 $<TARGET_FILE:job_program_output>)
-set_tests_properties(job_queue_test PROPERTIES LABELS "SLOW_1")
-
-
-add_test(NAME job_queue_stress_test_LOCAL
-         COMMAND job_queue_stress_test
-                 $<TARGET_FILE:job_queue_stress_task>
-                 LOCAL
-                 False)
-set_tests_properties(job_queue_stress_test_LOCAL PROPERTIES LABELS "SLOW_1")
-
-add_test(NAME job_queue_user_exit_LOCAL
-         COMMAND job_queue_stress_test
-                 $<TARGET_FILE:job_queue_stress_task>
-                 LOCAL
-                 True)
-
-if (SBATCH)
-  add_test(NAME job_queue_stress_test_SLURM
-    COMMAND job_queue_stress_test
-    $<TARGET_FILE:job_queue_stress_task>
-    SLURM
-    False)
-  set_tests_properties(job_queue_stress_test_SLURM PROPERTIES LABELS "SLOW_1")
-
-  add_test(NAME job_queue_user_exit_SLURM
-    COMMAND job_queue_stress_test
-    $<TARGET_FILE:job_queue_stress_task>
-    SLURM
-    True)
-endif()
-
-add_test(NAME job_queue_timeout_test
-         COMMAND job_queue_timeout_test $<TARGET_FILE:job_queue_stress_task>)
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/qsub_emulators/
      DESTINATION ${EXECUTABLE_OUTPUT_PATH})

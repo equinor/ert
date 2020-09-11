@@ -17,48 +17,18 @@
 Module implementing a queue for managing external jobs.
 
 """
-from cwrap import BaseCClass
-from res import ResPrototype
 from res.job_queue import Job, JobStatusType, ThreadStatus
 from threading import BoundedSemaphore
 import time
 
 CONCURRENT_INTERNALIZATION = 10
 
-class JobQueueManager(BaseCClass):
-    TYPE_NAME = "job_queue_manager"
-    _alloc           = ResPrototype("void* job_queue_manager_alloc( job_queue)", bind = False)
-    _free            = ResPrototype("void job_queue_manager_free( job_queue_manager )")
-    _start_queue     = ResPrototype("void job_queue_manager_start_queue( job_queue_manager , int , bool)")
-    _stop_queue      = ResPrototype("void job_queue_manager_stop_queue(job_queue_manager)")
-    _get_num_waiting = ResPrototype("int job_queue_manager_get_num_waiting( job_queue_manager )")
-    _get_num_pending = ResPrototype("int job_queue_manager_get_num_pending( job_queue_manager )")
-    _get_num_running = ResPrototype("int job_queue_manager_get_num_running( job_queue_manager )")
-    _get_num_success = ResPrototype("int job_queue_manager_get_num_success( job_queue_manager )")
-    _get_num_failed  = ResPrototype("int job_queue_manager_get_num_failed( job_queue_manager )")
-    _is_running      = ResPrototype("bool job_queue_manager_is_running( job_queue_manager )")
-    _job_complete    = ResPrototype("bool job_queue_manager_job_complete( job_queue_manager , int)")
-    _job_running     = ResPrototype("bool job_queue_manager_job_running( job_queue_manager , int)")
 
-    # Note, even if all realizations have finished, they need not all be failed or successes.
-    # That is how Ert report things. They can be "killed", which is neither success nor failure.
-    _job_failed      = ResPrototype("bool job_queue_manager_job_failed( job_queue_manager , int)")
-    _job_waiting     = ResPrototype("bool job_queue_manager_job_waiting( job_queue_manager , int)")
-    _job_success     = ResPrototype("bool job_queue_manager_job_success( job_queue_manager , int)")
-
-    # The return type of the job_queue_manager_iget_job_status should
-    # really be the enum job_status_type_enum, but I just did not
-    # manage to get the prototyping right. Have therefor taken the
-    # return as an integer and convert it in the getJobStatus()
-    # method.
-    _job_status      = ResPrototype("int job_queue_manager_iget_job_status(job_queue_manager, int)")
-
+class JobQueueManager:
     def __init__(self, queue, queue_evaluators=None):
-        c_ptr = self._alloc(queue)
         self._queue = queue
         self._queue_evaluators = queue_evaluators
         self._pool_sema = BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
-        super(JobQueueManager, self).__init__(c_ptr)
 
     @property
     def queue(self):
@@ -66,9 +36,6 @@ class JobQueueManager(BaseCClass):
 
     def stop_queue(self):
         self.queue.kill_all_jobs()
-
-    def startQueue(self , total_size , verbose = False ):
-        self._start_queue( total_size , verbose )
 
     def getNumRunning(self):
         return self.queue.count_status(JobStatusType.JOB_QUEUE_RUNNING)
@@ -88,12 +55,11 @@ class JobQueueManager(BaseCClass):
     def isRunning(self):
         return self.queue.is_active()
 
-    def free(self):
-        self._free( )
-
     def isJobComplete(self, job_index):
-        return not (self.queue.job_list[job_index].is_running()
-                    or self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_WAITING)
+        return not (
+            self.queue.job_list[job_index].is_running()
+            or self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_WAITING
+        )
 
     def isJobRunning(self, job_index):
         return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_RUNNING
@@ -114,14 +80,14 @@ class JobQueueManager(BaseCClass):
         int_status = self.queue.job_list[job_index].status
         return JobStatusType(int_status)
 
-
     def __repr__(self):
-        nw = self._get_num_waiting()
-        nr = self._get_num_running()
-        ns = self._get_num_success()
-        nf = self._get_num_failed()
-        ir = 'running' if self._is_running() else 'not running'
-        return 'JobQueueManager(waiting=%d, running=%d, success=%d, failed=%d, %s)' % (nw,nr,ns,nf,ir)
+        nw = self.getNumWaiting()
+        nr = self.getNumRunning()
+        ns = self.getNumSuccess()
+        nf = self.getNumFailed()
+        ir = "running" if self.isRunning() else "not running"
+        status = "waiting=%d, running=%d, success=%d, failed=%d" % (nw, nr, ns, nf)
+        return "JobQueueManager(%s, %s)" % (status, ir)
 
     def max_running(self):
         if self.queue.get_max_running() == 0:
@@ -130,10 +96,12 @@ class JobQueueManager(BaseCClass):
             return self.queue.get_max_running()
 
     def _available_capacity(self):
-        return not self.queue.stopped and self.queue.count_running() < self.max_running()
+        return (
+            not self.queue.stopped and self.queue.count_running() < self.max_running()
+        )
 
     def _launch_jobs(self):
-        #Start waiting jobs
+        # Start waiting jobs
         while self._available_capacity():
             job = self.queue.fetch_next_waiting()
             if job is None:
@@ -141,7 +109,7 @@ class JobQueueManager(BaseCClass):
             job.run(
                 driver=self.queue.driver,
                 pool_sema=self._pool_sema,
-                max_submit=self.queue.max_submit
+                max_submit=self.queue.max_submit,
             )
 
     def _stop_jobs(self):
