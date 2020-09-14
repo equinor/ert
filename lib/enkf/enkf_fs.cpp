@@ -47,7 +47,6 @@
 #include <ert/enkf/summary_key_set.hpp>
 #include <ert/enkf/misfit_ensemble.hpp>
 #include <ert/enkf/cases_config.hpp>
-#include <ert/enkf/custom_kw_config_set.hpp>
 
 /**
 
@@ -212,7 +211,6 @@
 #define STATE_MAP_FILE            "state-map"
 #define MISFIT_ENSEMBLE_FILE      "misfit-ensemble"
 #define CASE_CONFIG_FILE          "case_config"
-#define CUSTOM_KW_CONFIG_SET_FILE "custom_kw_config_set"
 
 struct enkf_fs_struct {
   UTIL_TYPE_ID_DECLARATION;
@@ -233,7 +231,6 @@ struct enkf_fs_struct {
   state_map_type            * state_map;
   summary_key_set_type      * summary_key_set;
   misfit_ensemble_type      * misfit_ensemble;
-  custom_kw_config_set_type * custom_kw_config_set;
   /*
      The variables below here are for storing arbitrary files within
      the enkf_fs storage directory, but not as serialized enkf_nodes.
@@ -300,7 +297,6 @@ static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point ) {
   fs->cases_config           = cases_config_alloc();
   fs->state_map              = state_map_alloc();
   fs->summary_key_set        = summary_key_set_alloc();
-  fs->custom_kw_config_set   = custom_kw_config_set_alloc();
   fs->misfit_ensemble        = misfit_ensemble_alloc();
   fs->index                  = NULL;
   fs->parameter              = NULL;
@@ -539,12 +535,6 @@ static void enkf_fs_fsync_summary_key_set( enkf_fs_type * fs ) {
   free( filename );
 }
 
-static void enkf_fs_fsync_custom_kw_config_set( enkf_fs_type * fs ) {
-  char * filename = enkf_fs_alloc_case_filename(fs, CUSTOM_KW_CONFIG_SET_FILE);
-  custom_kw_config_set_fwrite(fs->custom_kw_config_set, filename );
-  free( filename );
-}
-
 static void enkf_fs_fread_cases_config( enkf_fs_type * fs ) {
   char * filename = enkf_fs_alloc_case_filename( fs , CASE_CONFIG_FILE );
   cases_config_fread( fs->cases_config , filename );
@@ -561,12 +551,6 @@ static void enkf_fs_fread_state_map( enkf_fs_type * fs ) {
 static void enkf_fs_fread_summary_key_set( enkf_fs_type * fs ) {
   char * filename = enkf_fs_alloc_case_filename( fs , SUMMARY_KEY_SET_FILE );
   summary_key_set_fread( fs->summary_key_set , filename );
-  free( filename );
-}
-
-static void enkf_fs_fread_custom_kw_config_set(enkf_fs_type * fs) {
-  char * filename = enkf_fs_alloc_case_filename(fs, CUSTOM_KW_CONFIG_SET_FILE);
-  custom_kw_config_set_fread(fs->custom_kw_config_set, filename);
   free( filename );
 }
 
@@ -673,7 +657,6 @@ enkf_fs_type * enkf_fs_mount(const char * mount_point) {
   enkf_fs_fread_cases_config(fs);
   enkf_fs_fread_state_map(fs);
   enkf_fs_fread_summary_key_set(fs);
-  enkf_fs_fread_custom_kw_config_set(fs);
   enkf_fs_fread_misfit(fs);
 
   enkf_fs_get_ref(fs);
@@ -737,7 +720,6 @@ static void enkf_fs_umount(enkf_fs_type * fs) {
   path_fmt_free(fs->case_tstep_fmt);
   path_fmt_free(fs->case_tstep_member_fmt);
 
-  custom_kw_config_set_free(fs->custom_kw_config_set);
   state_map_free(fs->state_map);
   summary_key_set_free(fs->summary_key_set);
   time_map_free(fs->time_map);
@@ -790,10 +772,7 @@ void enkf_fs_fsync( enkf_fs_type * fs ) {
   enkf_fs_fsync_cases_config( fs) ;
   enkf_fs_fsync_state_map( fs );
   enkf_fs_fsync_summary_key_set( fs );
-  enkf_fs_fsync_custom_kw_config_set(fs);
 }
-
-
 
 
 void enkf_fs_fread_node(enkf_fs_type * enkf_fs , buffer_type * buffer ,
@@ -982,10 +961,6 @@ state_map_type * enkf_fs_get_state_map( const enkf_fs_type * fs ) {
 
 summary_key_set_type * enkf_fs_get_summary_key_set( const enkf_fs_type * fs ) {
   return fs->summary_key_set;
-}
-
-custom_kw_config_set_type * enkf_fs_get_custom_kw_config_set(const enkf_fs_type * fs) {
-  return fs->custom_kw_config_set;
 }
 
 misfit_ensemble_type * enkf_fs_get_misfit_ensemble( const enkf_fs_type * fs ) {

@@ -122,9 +122,6 @@ add_library(res res_util/res_log.cpp
                 enkf/cases_config.cpp
                 enkf/container.cpp
                 enkf/container_config.cpp
-                enkf/custom_kw.cpp
-                enkf/custom_kw_config.cpp
-                enkf/custom_kw_config_set.cpp
                 enkf/data_ranking.cpp
                 enkf/ecl_config.cpp
                 enkf/ecl_refcase_list.cpp

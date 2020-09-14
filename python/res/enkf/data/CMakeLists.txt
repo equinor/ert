@@ -1,7 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
     enkf_node.py
-    custom_kw.py
     field.py
     gen_data.py
     gen_kw.py

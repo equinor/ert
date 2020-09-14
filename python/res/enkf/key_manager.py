@@ -1,6 +1,6 @@
 import weakref
 
-from res.enkf import ErtImplType, GenKwConfig, CustomKWConfig
+from res.enkf import ErtImplType, GenKwConfig
 from res.enkf.enums import EnkfObservationImplementationType
 
 
@@ -20,7 +20,6 @@ class KeyManager(object):
         self.__gen_data_keys = None
         self.__gen_data_keys_with_observations = None
         self.__gen_kw_keys = None
-        self.__custom_kw_keys = None
         self.__misfit_keys = None
 
     def _ert(self):
@@ -52,12 +51,12 @@ class KeyManager(object):
     def genKwKeys(self):
         """ :rtype: list of str """
         if self.__gen_kw_keys is None:
-            gen_kw_keys = self._ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
+            gen_kw_keys = self.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
             gen_kw_keys = [key for key in gen_kw_keys]
 
             gen_kw_list = []
             for key in gen_kw_keys:
-                enkf_config_node = self._ert().ensembleConfig().getNode(key)
+                enkf_config_node = self.ensembleConfig().getNode(key)
                 gen_kw_config = enkf_config_node.getModelConfig()
                 assert isinstance(gen_kw_config, GenKwConfig)
 
@@ -71,30 +70,10 @@ class KeyManager(object):
 
         return self.__gen_kw_keys
 
-
-    def customKwKeys(self):
-        """ :rtype: list of str """
-        if self.__custom_kw_keys is None:
-            custom_kw_keys = self._ert().ensembleConfig().getKeylistFromImplType(ErtImplType.CUSTOM_KW)
-
-            keys = []
-            for name in custom_kw_keys:
-                enkf_config_node = self._ert().ensembleConfig().getNode(name)
-                custom_kw_config = enkf_config_node.getModelConfig()
-                assert isinstance(custom_kw_config, CustomKWConfig)
-
-                for key in custom_kw_config:
-                    keys.append("%s:%s" % (name, key))
-
-            self.__custom_kw_keys = sorted([key for key in keys], key=lambda k : k.lower())
-
-        return self.__custom_kw_keys
-
-
     def genDataKeys(self):
         """ :rtype: list of str """
         if self.__gen_data_keys is None:
-            gen_data_keys = self._ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_DATA)
+            gen_data_keys = self.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_DATA)
             gen_data_list = []
             for key in gen_data_keys:
                 enkf_config_node = self._ert().ensembleConfig().getNode(key)
@@ -103,7 +82,7 @@ class KeyManager(object):
                 for report_step in gen_data_config.getReportSteps():
                     gen_data_list.append("%s@%d" % (key, report_step))
 
-            self.__gen_data_keys = sorted(gen_data_list, key=lambda k : k.lower())
+            self.__gen_data_keys = sorted(gen_data_list, key=lambda k: k.lower())
 
         return self.__gen_data_keys
 
@@ -143,7 +122,7 @@ class KeyManager(object):
     def allDataTypeKeys(self):
         """ :rtype: list of str """
         if self.__all_keys is None:
-            self.__all_keys = self.summaryKeys() + self.genKwKeys() + self.customKwKeys() + self.genDataKeys()
+            self.__all_keys = self.summaryKeys() + self.genKwKeys() + self.genDataKeys()
 
         return self.__all_keys
 
@@ -166,10 +145,6 @@ class KeyManager(object):
         """ :rtype: bool """
         return key in self.genKwKeys()
 
-    def isCustomKwKey(self, key):
-        """ :rtype: bool """
-        return key in self.customKwKeys()
-
     def isGenDataKey(self, key):
         """ :rtype: bool """
         return key in self.genDataKeys()
@@ -179,12 +154,12 @@ class KeyManager(object):
         return key in self.misfitKeys()
 
     def gen_kw_priors(self):
-        gen_kw_keys = self._ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
+        gen_kw_keys = self.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
         gen_kw_keys = [key for key in gen_kw_keys]
 
         all_gen_kw_priors = {}
         for key in gen_kw_keys:
-            enkf_config_node = self._ert().ensembleConfig().getNode(key)
+            enkf_config_node = self.ensembleConfig().getNode(key)
             gen_kw_config = enkf_config_node.getModelConfig()
             all_gen_kw_priors[key] = gen_kw_config.get_priors()
 

@@ -1,7 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
     arg_loader.py
-    custom_kw_collector.py
     design_matrix_reader.py
     gen_data_collector.py
     gen_data_observation_collector.py

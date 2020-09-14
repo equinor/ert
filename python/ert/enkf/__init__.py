@@ -4,13 +4,11 @@ from res.enkf import BlockDataConfig
 from res.enkf import BlockObservation
 from res.enkf import ObsVector
 
-from res.enkf import CustomKW
 from res.enkf import Field
 from res.enkf import GenData
 from res.enkf import GenKw
 from res.enkf import EnkfNode
 
-from res.enkf import CustomKWConfig
 from res.enkf import FieldConfig
 from res.enkf import FieldTypeEnum
 from res.enkf import GenDataConfig
@@ -38,7 +36,6 @@ from res.enkf import TimeMap
 from res.enkf import StateMap
 from res.enkf import SummaryKeySet
 from res.enkf import SummaryKeyMatcher
-from res.enkf import CustomKWConfigSet
 from res.enkf import EnkfFs
 from res.enkf import ErtWorkflowList
 from res.enkf import ActiveList

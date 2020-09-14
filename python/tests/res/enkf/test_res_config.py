@@ -75,7 +75,6 @@ config_data = {
                                "WBHP:INJ", "ROE:1"],
         "GEN_KW"            : ["SIGMA"],
         "GEN_DATA"          : ["super_data"],
-        "CUSTOM_KW"         : ["UNCERTAINTY"],
         "ECLBASE"           : "eclipse/model/<ECLIPSE_NAME>-%d",
         "ENSPATH"           : "../output/storage/<CASE_DIR>",
         "PLOT_PATH"         : "../output/results/plot/<CASE_DIR>",
@@ -203,13 +202,6 @@ config_data_new = {
                 ConfigKeys.ECL_FILE: None,
                 ConfigKeys.TEMPLATE: None,
                 ConfigKeys.KEY_KEY: None
-            }#ensemble
-        ],
-        ConfigKeys.CUSTOM_KW: [
-            {
-                ConfigKeys.NAME: 'UNCERTAINTY',
-                ConfigKeys.RESULT_FILE: 'uncertainties.txt',
-                ConfigKeys.OUT_FILE: None
             }#ensemble
         ],
         ConfigKeys.ECLBASE: "eclipse/model/<ECLIPSE_NAME>-%d", #model, ecl
@@ -485,7 +477,7 @@ class ResConfigTest(ResTest):
 
     def assert_ensemble_config(self, ensemble_config, config_data, working_dir):
         self.assertEqual(
-            set(config_data["SUMMARY"] + config_data["GEN_KW"] + config_data["GEN_DATA"] + config_data["CUSTOM_KW"]),
+            set(config_data["SUMMARY"] + config_data["GEN_KW"] + config_data["GEN_DATA"]),
             set(ensemble_config.alloc_keylist())
             )
 

@@ -19,7 +19,7 @@ from ecl.grid import EclGrid
 from ecl.util.util import StringList, IntVector
 
 from res import ResPrototype
-from res.enkf.config import FieldConfig, GenDataConfig, GenKwConfig, SummaryConfig, CustomKWConfig, ExtParamConfig
+from res.enkf.config import FieldConfig, GenDataConfig, GenKwConfig, SummaryConfig, ExtParamConfig
 from res.enkf.enums import EnkfTruncationType, ErtImplType, LoadFailTypeEnum, EnkfVarType
 from res.enkf import ConfigKeys
 import os
@@ -65,9 +65,6 @@ class EnkfConfigNode(BaseCClass):
                                                                                                     char*, \
                                                                                                     char*)", bind=False)
 
-    _alloc_custom_kw_full = ResPrototype("enkf_config_node_obj enkf_config_node_new_custom_kw( char*,\
-                                                                                               char*, \
-                                                                                               char*)", bind=False)
 
     _alloc_gen_kw_full = ResPrototype("enkf_config_node_obj enkf_config_node_alloc_GEN_KW_full( char*,\
                                                                                                 bool, \
@@ -152,10 +149,6 @@ class EnkfConfigNode(BaseCClass):
     def getKeywordModelConfig(self):
         """ @rtype: GenKWConfig """
         return GenKwConfig.createCReference(self._get_ref(), parent=self)
-
-    def getCustomKeywordModelConfig(self):
-        """ @rtype: CustomKWConfig """
-        return CustomKWConfig.createCReference(self._get_ref(), parent=self)
 
     def getSummaryModelConfig(self):
         """ @rtype: SummaryConfig """
@@ -260,15 +253,6 @@ class EnkfConfigNode(BaseCClass):
 
         return config_node
 
-    # CUSTOM KW FULL creation
-    @classmethod
-    def create_custom_kw(cls, key, result_file, output_file):
-        config_node = cls._alloc_custom_kw_full(key, result_file, output_file)
-        if config_node is None:
-            raise ValueError("Failed to create CUSTOM KW node for:%s" % key)
-
-        return config_node
-
     # GEN KW FULL creation
     @classmethod
     def create_gen_kw(cls, key, template_file, enkf_outfile, parameter_file,
@@ -318,13 +302,13 @@ class EnkfConfigNode(BaseCClass):
         if max_key is not None:
             value_max = max_key
             truncation = truncation | EnkfTruncationType.TRUNCATE_MAX
-        
+
         config_node = cls._alloc_field_node(key, grid, field_trans_table, forward_init)
         if config_node is None:
             raise ValueError("Failed to create FIELD node for:%s" % key)
 
         if var_type_string == ConfigKeys.PARAMETER_KEY:
-            config_node._update_parameter_field(ecl_file, 
+            config_node._update_parameter_field(ecl_file,
                                                 init_file_fmt,
                                                 min_std_file,
                                                 truncation,
@@ -377,8 +361,6 @@ class EnkfConfigNode(BaseCClass):
             return self.getDataModelConfig()
         elif implementation_type == ErtImplType.GEN_KW:
             return self.getKeywordModelConfig()
-        elif implementation_type == ErtImplType.CUSTOM_KW:
-            return self.getCustomKeywordModelConfig()
         elif implementation_type == ErtImplType.SUMMARY:
             return SummaryConfig.createCReference(self.getPointerReference(), parent=self)
         elif implementation_type == ErtImplType.EXT_PARAM:
@@ -408,11 +390,6 @@ class EnkfConfigNode(BaseCClass):
             if self.get_min_std_file() != other.get_min_std_file():
                 return False
             if self.get_enkf_outfile() != other.get_enkf_outfile():
-                return False
-            if self.getUseForwardInit() != other.getUseForwardInit():
-                return False
-        elif self.getImplementationType() == ErtImplType.CUSTOM_KW:
-            if self.getCustomKeywordModelConfig() != other.getCustomKeywordModelConfig():
                 return False
             if self.getUseForwardInit() != other.getUseForwardInit():
                 return False

@@ -301,23 +301,6 @@ static void enkf_state_log_GEN_DATA_load( const enkf_node_type * enkf_node , int
 }
 
 
-static void enkf_state_log_custom_kw_load(const enkf_node_type * enkf_node, int report_step, forward_load_context_type * load_context) {
-  if (forward_load_context_accept_messages(load_context)) {
-    char * load_file = enkf_config_node_alloc_infile(enkf_node_get_config(enkf_node), report_step);
-    char * msg = util_alloc_sprintf("Loaded CUSTOM_KW: %s instance for step: %d from file: %s",
-                                    enkf_node_get_key(enkf_node),
-                                    report_step,
-                                    load_file);
-
-    forward_load_context_add_message(load_context, msg);
-
-    free(msg);
-    free(load_file);
-  }
-}
-
-
-
 static int_vector_type * __enkf_state_get_time_index(enkf_fs_type * sim_fs, const ecl_sum_type * summary) {
   time_map_type * time_map = enkf_fs_get_time_map( sim_fs );
   time_map_summary_update( time_map , summary );
@@ -450,61 +433,6 @@ static bool enkf_state_internalize_dynamic_eclipse_results(ensemble_config_type 
     return true;
   }
 }
-
-
-
-
-
-
-static void enkf_state_internalize_custom_kw(const ensemble_config_type * ens_config,
-                                             forward_load_context_type * load_context ,
-                                             const model_config_type * model_config) {
-
-  const run_arg_type * run_arg     = forward_load_context_get_run_arg( load_context );
-  enkf_fs_type *sim_fs             = run_arg_get_sim_fs(run_arg);
-  const int iens                   = run_arg_get_iens( run_arg );
-  stringlist_type * custom_kw_keys = ensemble_config_alloc_keylist_from_impl_type(ens_config, CUSTOM_KW);
-  const int report_step            = 0;
-
-  custom_kw_config_set_type * config_set = enkf_fs_get_custom_kw_config_set(sim_fs);
-  custom_kw_config_set_reset(config_set);
-
-  for (int ikey=0; ikey < stringlist_get_size(custom_kw_keys); ikey++) {
-    const char* custom_kw_key = stringlist_iget(custom_kw_keys, ikey);
-    enkf_config_node_type * config_node = ensemble_config_get_node( ens_config , custom_kw_key);
-    enkf_node_type * node = enkf_node_alloc( config_node );
-
-    if (enkf_node_vector_storage(node))
-      util_abort("%s: Vector storage not correctly implemented for CUSTOM_KW\n", __func__);
-
-    if (enkf_node_internalize(node, report_step) && enkf_node_has_func(node, forward_load_func)) {
-      if (enkf_node_forward_load(node, load_context)) {
-        node_id_type node_id = {.report_step = report_step, .iens = iens };
-
-        enkf_node_store(node, sim_fs, false, node_id);
-
-        const enkf_config_node_type * config_node = enkf_node_get_config(node);
-        const custom_kw_config_type * custom_kw_config = (const custom_kw_config_type *)(custom_kw_config_type*) enkf_config_node_get_ref(config_node);
-        custom_kw_config_set_add_config(config_set, custom_kw_config);
-        enkf_state_log_custom_kw_load(node, report_step, load_context);
-      } else {
-        forward_load_context_update_result(load_context, LOAD_FAILURE);
-        res_log_ferror("[%03d:%04d] Failed load data for CUSTOM_KW node: %s.",
-                       iens, report_step, enkf_node_get_key(node));
-
-        if (forward_load_context_accept_messages(load_context)) {
-          char * msg = util_alloc_sprintf("Failed to load: %s at step: %d", enkf_node_get_key(node), report_step);
-          forward_load_context_add_message(load_context , msg);
-          free( msg );
-        }
-      }
-    }
-    enkf_node_free( node );
-  }
-
-  stringlist_free(custom_kw_keys);
-}
-
 
 static void enkf_state_load_gen_data_node(
   forward_load_context_type * load_context,
@@ -649,7 +577,6 @@ static int enkf_state_internalize_results(ensemble_config_type * ens_config,
     model_config_set_internalize_state( model_config , last_report);
 
   enkf_state_internalize_GEN_DATA(ens_config , load_context , model_config , last_report);
-  enkf_state_internalize_custom_kw(ens_config, load_context , model_config);
 
   int result = forward_load_context_get_result(load_context);
   forward_load_context_free( load_context );

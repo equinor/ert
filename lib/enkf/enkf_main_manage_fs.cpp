@@ -17,7 +17,6 @@
 */
 
 #include <ert/enkf/summary_key_set.hpp>
-#include <ert/enkf/custom_kw_config_set.hpp>
 
 
 /*
@@ -535,14 +534,6 @@ static void enkf_main_update_summary_config_from_fs__(enkf_main_type * enkf_main
 }
 
 
-static void enkf_main_update_custom_kw_config_from_fs__(enkf_main_type * enkf_main, enkf_fs_type * fs) {
-    ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-    custom_kw_config_set_type * custom_kw_config_set = enkf_fs_get_custom_kw_config_set(fs);
-
-    ensemble_config_update_custom_kw_config(ensemble_config, custom_kw_config_set);
-}
-
-
 /**
    The enkf_fs instances employ a simple reference counting
    scheme. The main point with this system is to avoid opening the
@@ -585,7 +576,6 @@ void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const ch
     enkf_main_update_current_case(enkf_main, case_path);
 
     enkf_main_update_summary_config_from_fs__(enkf_main, fs);
-    enkf_main_update_custom_kw_config_from_fs__(enkf_main, fs);
   }
 }
 

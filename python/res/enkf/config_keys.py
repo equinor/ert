@@ -22,7 +22,6 @@ class ConfigKeys:
     _config_file_key      = ResPrototype("char* config_keys_get_config_file_key()", bind=False)
     _queue_system_key     = ResPrototype("char* config_keys_get_queue_system_key()", bind=False)
     _run_template_key     = ResPrototype("char* config_keys_get_run_template_key()", bind=False)
-    _custom_kw_key        = ResPrototype("char* config_keys_get_custom_kw_key()", bind=False)
     _gen_kw_key           = ResPrototype("char* config_keys_get_gen_kw_key()", bind=False)
     _history_source_key   = ResPrototype("char* config_keys_get_history_source_key()", bind=False)
     _queue_option_key     = ResPrototype("char* config_keys_get_queue_option_key()", bind=False)
@@ -178,7 +177,6 @@ class ConfigKeys:
     _template_key    = ResPrototype("char* config_keys_get_template_key()", bind=False)
     TEMPLATE         = _template_key()
     EXPORT           = "EXPORT"
-    CUSTOM_KW        = _custom_kw_key()
     GEN_KW           = _gen_kw_key()
     NAME             = "NAME"
     OUT_FILE         = "OUT_FILE"

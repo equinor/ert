@@ -367,22 +367,6 @@ class ResConfig(BaseCClass):
 
         return template_config
 
-    def _extract_custom_kw(self, config):
-        if ConfigKeys.CUSTOM_KW not in config:
-            return []
-
-        custom_kw_config = []
-        for ck in config[ConfigKeys.CUSTOM_KW]:
-            custom_kw_options = [ConfigKeys.NAME,
-                                 ConfigKeys.RESULT_FILE]
-
-            self._assert_keys(ConfigKeys.CUSTOM_KW, custom_kw_options, ck.keys())
-
-            value = [ck[item] for item in custom_kw_options]
-            custom_kw_config.append((ConfigKeys.CUSTOM_KW, value))
-
-        return custom_kw_config
-
     def _extract_gen_kw(self, config):
         if ConfigKeys.GEN_KW not in config:
             return []
@@ -461,10 +445,6 @@ class ResConfig(BaseCClass):
         # Extract run templates
         sim_filter.append(ConfigKeys.RUN_TEMPLATE)
         simulation_config += self._extract_run_templates(sc)
-
-        # Extract CUSTOM_KW
-        sim_filter.append(ConfigKeys.CUSTOM_KW)
-        simulation_config += self._extract_custom_kw(sc)
 
         # Extract GEN_KW
         sim_filter.append(ConfigKeys.GEN_KW)

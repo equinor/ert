@@ -283,14 +283,6 @@ class ProgrammaticResConfigTest(ResTest):
                                     }
                                   ],
 
-                                  "CUSTOM_KW" :
-                                  [
-                                    {
-                                      "NAME"        : "UNCERTAINTY",
-                                      "RESULT_FILE" : "uncertainties.txt"
-                                    }
-                                  ],
-
                                   "GEN_DATA" :
                                   [
                                     {
@@ -314,6 +306,7 @@ class ProgrammaticResConfigTest(ResTest):
                                   }
                                 }
                               }
+
     def test_minimum_config(self):
         case_directory = self.createTestPath("local/simple_config")
         config_file = "simple_config/minimum_config"
@@ -481,7 +474,7 @@ class ProgrammaticResConfigTest(ResTest):
             work_area.copy_directory(case_directory)
 
             loaded_res_config = ResConfig(user_config_file=config_file)
-            prog_res_config   = ResConfig(config=self.large_config)
+            prog_res_config = ResConfig(config=self.large_config)
 
             self.assert_equal_model_config(loaded_res_config.model_config,
                                            prog_res_config.model_config)

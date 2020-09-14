@@ -16,7 +16,7 @@
 import sys
 from cwrap import BaseCClass
 from res import ResPrototype
-from res.enkf import TimeMap, StateMap, SummaryKeySet, CustomKWConfigSet
+from res.enkf import TimeMap, StateMap, SummaryKeySet
 from res.enkf.enums import EnKFFSType
 
 
@@ -40,7 +40,6 @@ class EnkfFs(BaseCClass):
     _get_time_map         = ResPrototype("time_map_ref  enkf_fs_get_time_map(enkf_fs)")
     _get_state_map        = ResPrototype("state_map_ref enkf_fs_get_state_map(enkf_fs)")
     _summary_key_set      = ResPrototype("summary_key_set_ref enkf_fs_get_summary_key_set(enkf_fs)")
-    _config_kw_config_set = ResPrototype("custom_kw_config_set_ref enkf_fs_get_custom_kw_config_set(enkf_fs)")
 
     def __init__(self, mount_point):
         c_ptr = self._mount(mount_point)
@@ -148,7 +147,3 @@ class EnkfFs(BaseCClass):
         """
         state_map = self.getStateMap()
         return state_map.realizationList(state)
-
-    def getCustomKWConfigSet(self):
-        """ @rtype: CustomKWConfigSet """
-        return self._config_kw_config_set()

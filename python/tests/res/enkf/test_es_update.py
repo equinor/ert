@@ -14,7 +14,7 @@ class ESUpdateTest(ResTest):
     @tmpdir()
     def test_create(self):
         config = self.createTestPath("local/custom_kw/mini_config")
-        with ErtTestContext("python/enkf/data/custom_kw_simulated", config) as context:
+        with ErtTestContext("python/enkf/data/mini_ert_simulated", config) as context:
             ert = context.getErt()
             es_update = ESUpdate( ert )
 

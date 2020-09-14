@@ -18,7 +18,7 @@ from res.enkf.enums import ErtImplType
 from cwrap import BaseCClass
 from res import ResPrototype
 from res.enkf import EnkfFs, NodeId
-from res.enkf.data import GenKw, GenData, CustomKW, Field, ExtParam
+from res.enkf.data import GenKw, GenData, Field, ExtParam
 
 class EnkfNode(BaseCClass):
     TYPE_NAME = "enkf_node"
@@ -91,29 +91,22 @@ class EnkfNode(BaseCClass):
 
         return GenKw.createCReference(self.valuePointer(), self)
 
-    def asCustomKW(self):
-        """ @rtype: CustomKW """
-        impl_type = self.getImplType( )
-        assert impl_type == ErtImplType.CUSTOM_KW
-
-        return CustomKW.createCReference(self.valuePointer(), self)
-
     def asField(self):
-        """ @rtype: CustomKW """
+        """ @rtype: Field """
         impl_type = self.getImplType( )
         assert impl_type == ErtImplType.FIELD
 
         return Field.createCReference(self.valuePointer(), self)
 
     def as_summary(self):
-        """ @rtype: CustomKW """
+        """ @rtype: Summary """
         impl_type = self.getImplType( )
         assert impl_type == ErtImplType.SUMMARY
 
         return Summary.createCReference(self.valuePointer(), self)
 
     def as_ext_param(self):
-        """ @rtype: CustomKW """
+        """ @rtype: ExtParam """
         impl_type = self.getImplType( )
         assert impl_type == ErtImplType.EXT_PARAM
 

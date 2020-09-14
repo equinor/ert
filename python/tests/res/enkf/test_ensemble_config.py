@@ -58,13 +58,6 @@ class EnsembleConfigTest(ResTest):
                     ConfigKeys.KEY_KEY: None
                 }
             ],
-            ConfigKeys.CUSTOM_KW: [
-                {
-                    ConfigKeys.NAME: 'SNAKE_OIL_NPV',
-                    ConfigKeys.RESULT_FILE: 'snake_oil_npv.txt',
-                    ConfigKeys.OUT_FILE: None
-                }
-            ],
             ConfigKeys.GEN_KW: [
                 {
                     ConfigKeys.NAME: 'MULTFLT',

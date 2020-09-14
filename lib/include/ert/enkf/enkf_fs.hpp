@@ -34,7 +34,6 @@
 #include <ert/enkf/state_map.hpp>
 #include <ert/enkf/misfit_ensemble_typedef.hpp>
 #include <ert/enkf/summary_key_set.hpp>
-#include <ert/enkf/custom_kw_config_set.hpp>
 
 #ifdef __cplusplus
 extern "C" {
@@ -98,7 +97,6 @@ extern "C" {
   cases_config_type         * enkf_fs_get_cases_config( const enkf_fs_type * fs);
   misfit_ensemble_type      * enkf_fs_get_misfit_ensemble( const enkf_fs_type * fs );
   summary_key_set_type      * enkf_fs_get_summary_key_set( const enkf_fs_type * fs );
-  custom_kw_config_set_type * enkf_fs_get_custom_kw_config_set( const enkf_fs_type * fs );
 
   void             enkf_fs_increase_run_count(enkf_fs_type * fs);
   void             enkf_fs_decrease_run_count(enkf_fs_type * fs);

@@ -11,7 +11,7 @@ except ImportError:
 
 
 from res.enkf import ErtPlugin, CancelPluginException
-from res.enkf.export import SummaryCollector, GenKwCollector, MisfitCollector, DesignMatrixReader, CustomKWCollector
+from res.enkf.export import SummaryCollector, GenKwCollector, MisfitCollector, DesignMatrixReader
 from ert_gui.ertwidgets.customdialog import CustomDialog
 from ert_gui.ertwidgets.listeditbox import ListEditBox
 from ert_gui.ertwidgets.models.path_model import PathModel
@@ -20,7 +20,7 @@ from ert_gui.ertwidgets.pathchooser import PathChooser
 
 class CSVExportJob(ErtPlugin):
     """
-    Export of summary, custom_kw, misfit, design matrix data and gen kw into a single CSV file.
+    Export of summary, misfit, design matrix data and gen kw into a single CSV file.
 
     The script expects a single argument:
 
@@ -62,7 +62,7 @@ class CSVExportJob(ErtPlugin):
         return "CSV Export"
 
     def getDescription(self):
-        return "Export GenKW, CustomKW, design matrix, misfit data and summary data into a single CSV file."
+        return "Export GenKW, design matrix, misfit data and summary data into a single CSV file."
 
     def inferIterationNumber(self, case_name):
         pattern = re.compile("_([0-9]+$)")
@@ -109,10 +109,6 @@ class CSVExportJob(ErtPlugin):
                 iteration_number = index
 
             case_data = GenKwCollector.loadAllGenKwData(self.ert(), case)
-
-            custom_kw_data = CustomKWCollector.loadAllCustomKWData(self.ert(), case)
-            if not custom_kw_data.empty:
-                case_data = case_data.join(custom_kw_data, how='outer')
 
             if design_matrix_path is not None:
                 design_matrix_data = DesignMatrixReader.loadDesignMatrix(design_matrix_path)

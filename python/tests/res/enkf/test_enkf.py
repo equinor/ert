@@ -38,7 +38,7 @@ from tests.utils import tmpdir
 class EnKFTest(ResTest):
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")
-        self.case_directory_custom_kw = self.createTestPath("local/snake_oil/")
+        self.case_directory_snake_oil = self.createTestPath("local/snake_oil/")
 
 
     @tmpdir()
@@ -233,7 +233,7 @@ class EnKFTest(ResTest):
     @tmpdir()
     def test_run_context_from_external_folder(self):
         with TestAreaContext('enkf_test') as work_area:
-            work_area.copy_directory(self.case_directory_custom_kw)
+            work_area.copy_directory(self.case_directory_snake_oil)
             res_config = ResConfig('snake_oil/snake_oil.ert')
             main = EnKFMain(res_config)
             fs_manager = main.getEnkfFsManager()

@@ -5,7 +5,6 @@ from res.enkf.export.gen_kw_collector import GenKwCollector
 from res.enkf.export.gen_data_collector import GenDataCollector
 from res.enkf.export.gen_data_observation_collector import GenDataObservationCollector
 from res.enkf.export.misfit_collector import MisfitCollector
-from res.enkf.export.custom_kw_collector import CustomKWCollector
 from res.enkf.export.arg_loader import ArgLoader
 
 __all__ = ["DesignMatrixReader",
@@ -13,8 +12,7 @@ __all__ = ["DesignMatrixReader",
            "SummaryObservationCollector",
            "GenKwCollector",
            "MisfitCollector",
-           "CustomKWCollector",
-           "GenDataCollector", 
+           "GenDataCollector",
            "GenDataObservationCollector",
            "ArgLoader"]
 

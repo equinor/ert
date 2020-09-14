@@ -50,8 +50,6 @@ extern "C" {
 
   enkf_config_node_type * enkf_config_node_new_GEN_PARAM( const char * key , bool forward_init);
   enkf_config_node_type * enkf_config_node_new_GEN_DATA( const char * key , bool forward_init);
-  enkf_config_node_type * enkf_config_node_new_custom_kw(const char * key, const char * result_file, const char * output_file);
-  enkf_config_node_type * enkf_config_node_new_defined_custom_kw(const char * key, const hash_type * definition);
 
   void enkf_config_node_update_min_std( enkf_config_node_type * config_node , const char * min_std_file );
 
@@ -100,9 +98,6 @@ extern "C" {
                                        const char * parameter_file   ,
                                        const char * min_std_file     ,
                                        const char * init_file_fmt );
-
-  void enkf_config_node_update_custom_kw(enkf_config_node_type * config_node, const char * result_file, const char * output_file);
-
 
   enkf_config_node_type * enkf_config_node_alloc(enkf_var_type         ,
                                                  ert_impl_type         ,
@@ -195,7 +190,6 @@ extern "C" {
   /*****************************************************************/
 
   void                    enkf_config_node_add_GEN_DATA_config_schema( config_parser_type * config );
-  void                    enkf_config_node_add_CUSTOM_KW_config_schema( config_parser_type * config );
   void                    enkf_config_node_add_GEN_PARAM_config_schema( config_parser_type * config );
   enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM_from_config( const config_content_node_type * config_node );
   enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_from_config( const config_content_node_type * node );

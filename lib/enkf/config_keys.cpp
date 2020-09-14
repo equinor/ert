@@ -34,10 +34,6 @@ const char * config_keys_get_run_template_key() {
   return RUN_TEMPLATE_KEY;
 }
 
-const char * config_keys_get_custom_kw_key() {
-  return CUSTOM_KW_KEY;
-}
-
 const char * config_keys_get_gen_kw_key() {
   return GEN_KW_KEY;
 }

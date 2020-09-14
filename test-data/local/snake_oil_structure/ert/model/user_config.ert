@@ -65,8 +65,6 @@ GEN_DATA super_data INPUT_FORMAT:ASCII RESULT_FILE:super_data_%d  REPORT_STEPS:1
 -- ------ ---------------------------------------------------------------------------------------------------------------------
 GEN_KW SIGMA          ../input/templates/sigma.tmpl          coarse.sigma              ../input/distributions/sigma.dist
 
-CUSTOM_KW UNCERTAINTY uncertainties.txt
-
 RUN_TEMPLATE             ../input/templates/seed_template.txt     seed.txt
 
 -- -------------------------------------------------------

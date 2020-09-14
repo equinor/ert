@@ -67,7 +67,6 @@
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/summary_key_matcher.hpp>
-#include <ert/enkf/custom_kw_config_set.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 
 
@@ -330,7 +329,6 @@ void ensemble_config_add_config_items(config_parser_type * config) {
 
   enkf_config_node_add_GEN_PARAM_config_schema( config );
   enkf_config_node_add_GEN_DATA_config_schema( config );
-  enkf_config_node_add_CUSTOM_KW_config_schema( config );
 
   item = config_add_schema_item(config , SUMMARY_KEY , false  );   /* can have several summary keys on each line. */
   config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
@@ -438,28 +436,6 @@ void ensemble_config_init_GEN_KW(ensemble_config_type * ensemble_config, const c
       }
     }
   }
-}
-
-void ensemble_config_init_CUSTOM_KW(ensemble_config_type * ensemble_config, const config_content_type * config) {
-    if (config_content_has_item(config, CUSTOM_KW_KEY)) {
-        const config_content_item_type * custom_kw_item = config_content_get_item(config, CUSTOM_KW_KEY);
-
-        for (int i = 0; i < config_content_item_get_size(custom_kw_item); i++) {
-            config_content_node_type * node = config_content_item_iget_node(custom_kw_item, i);
-
-            const char * key         = config_content_node_iget(node, 0);
-            const char * result_file = config_content_node_iget(node, 1);
-            const char * output_file = NULL;
-
-            if(config_content_node_get_size(node) > 2) {
-                output_file = config_content_node_iget(node, 2);
-            }
-
-            enkf_config_node_type * config_node = ensemble_config_add_custom_kw(ensemble_config, key, result_file, output_file);
-            enkf_config_node_update_custom_kw(config_node, result_file, output_file);
-            enkf_config_node_set_internalize(config_node, 0);
-        }
-    }
 }
 
 void ensemble_config_init_SURFACE( ensemble_config_type * ensemble_config , const config_content_type * config ) {
@@ -671,7 +647,6 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
 
   ensemble_config_init_GEN_PARAM(ensemble_config, config);
   ensemble_config_init_GEN_DATA(ensemble_config, config);
-  ensemble_config_init_CUSTOM_KW(ensemble_config, config);
   ensemble_config_init_GEN_KW(ensemble_config, config);
   ensemble_config_init_SURFACE(ensemble_config, config);
   ensemble_config_init_SUMMARY(ensemble_config, config, refcase);
@@ -845,40 +820,6 @@ enkf_config_node_type * ensemble_config_add_gen_kw( ensemble_config_type * confi
   ensemble_config_add_node( config , config_node );
   return config_node;
 }
-
-enkf_config_node_type * ensemble_config_add_custom_kw(ensemble_config_type * config, const char * key, const char * result_file, const char * output_file) {
-  enkf_config_node_type * config_node = enkf_config_node_new_custom_kw(key, result_file, output_file);
-  ensemble_config_add_node(config, config_node);
-  return config_node;
-}
-
-enkf_config_node_type * ensemble_config_add_defined_custom_kw(ensemble_config_type * config, const char * key, const hash_type * definition) {
-  enkf_config_node_type * config_node = enkf_config_node_new_defined_custom_kw(key, definition);
-  ensemble_config_add_node(config, config_node);
-  return config_node;
-}
-
-
-
-void ensemble_config_update_custom_kw_config(ensemble_config_type * config, custom_kw_config_set_type * config_set) {
-    stringlist_type * keys = custom_kw_config_set_get_keys_alloc(config_set);
-
-    for(int i = 0; i < stringlist_get_size(keys); i++) {
-        const char * key = stringlist_iget(keys, i);
-        if(!ensemble_config_has_key(config, key)) {
-            ensemble_config_add_custom_kw(config, key, NULL, NULL);
-            printf("[%s] CustomKW key: '%s' not in ensemble! Adding from storage.\n", __func__, key);
-        }
-
-        enkf_config_node_type * config_node = ensemble_config_get_node(config, key);
-        custom_kw_config_type * custom_kw_config = (custom_kw_config_type *)(custom_kw_config_type*) enkf_config_node_get_ref(config_node);
-
-        custom_kw_config_set_update_config(config_set, custom_kw_config);
-    }
-
-    stringlist_free(keys);
-}
-
 
 /**
    this function ensures that object contains a node with 'key' and

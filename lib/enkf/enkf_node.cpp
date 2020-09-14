@@ -36,7 +36,6 @@
 #include <ert/enkf/field.hpp>
 #include <ert/enkf/surface.hpp>
 #include <ert/enkf/summary.hpp>
-#include <ert/enkf/custom_kw.hpp>
 #include <ert/enkf/gen_kw.hpp>
 #include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/ext_param.hpp>
@@ -823,17 +822,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->isqrt              = gen_kw_isqrt__;
     node->set_inflation      = gen_kw_set_inflation__;
     node->fload              = gen_kw_fload__;
-    break;
-  case(CUSTOM_KW):
-    node->alloc              = custom_kw_alloc__;
-    node->freef              = custom_kw_free__;
-    node->forward_load       = custom_kw_forward_load__;
-    node->fload              = custom_kw_fload__;
-    node->ecl_write          = custom_kw_ecl_write__;
-    node->write_to_buffer    = custom_kw_write_to_buffer__;
-    node->read_from_buffer   = custom_kw_read_from_buffer__;
-    node->serialize          = custom_kw_serialize__;
-    node->deserialize        = custom_kw_deserialize__;
     break;
   case(SUMMARY):
     node->forward_load         = summary_forward_load__;

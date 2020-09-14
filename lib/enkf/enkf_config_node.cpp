@@ -37,7 +37,6 @@
 #include <ert/enkf/ext_param_config.hpp>
 #include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
-#include <ert/enkf/custom_kw_config.hpp>
 #include <ert/enkf/summary_config.hpp>
 #include <ert/enkf/surface_config.hpp>
 #include <ert/enkf/container_config.hpp>
@@ -146,10 +145,6 @@ static enkf_config_node_type * enkf_config_node_alloc__(enkf_var_type  var_type,
         case(GEN_KW):
             node->freef             = gen_kw_config_free__;
             node->get_data_size     = gen_kw_config_get_data_size__;
-            break;
-        case(CUSTOM_KW):
-            node->freef             = custom_kw_config_free__;
-            node->get_data_size     = NULL;
             break;
         case(SUMMARY):
             node->vector_storage    = true;
@@ -282,10 +277,6 @@ void enkf_config_node_update_gen_kw( enkf_config_node_type * config_node ,
 }
 
 
-void enkf_config_node_update_custom_kw(enkf_config_node_type * config_node, const char * result_file, const char * output_file) {
-    enkf_config_node_update(config_node, NULL, output_file, result_file, NULL);
-}
-
 /**
    This will create a new gen_kw_config instance which is NOT yet
    valid.
@@ -293,18 +284,6 @@ void enkf_config_node_update_custom_kw(enkf_config_node_type * config_node, cons
 enkf_config_node_type * enkf_config_node_new_gen_kw( const char * key , const char * tag_fmt , bool forward_init) {
   enkf_config_node_type * config_node = enkf_config_node_alloc__( PARAMETER , GEN_KW , key , forward_init);
   config_node->data = gen_kw_config_alloc_empty( key , tag_fmt );
-  return config_node;
-}
-
-enkf_config_node_type * enkf_config_node_new_custom_kw(const char * key, const char * result_file, const char * output_file) {
-    enkf_config_node_type * config_node = enkf_config_node_alloc__(DYNAMIC_RESULT, CUSTOM_KW, key, false);
-    config_node->data = custom_kw_config_alloc_empty(key, result_file, output_file);
-    return config_node;
-}
-
-enkf_config_node_type * enkf_config_node_new_defined_custom_kw(const char * key, const hash_type * definition) {
-  enkf_config_node_type * config_node = enkf_config_node_alloc__(DYNAMIC_RESULT, CUSTOM_KW, key, false);
-  config_node->data = custom_kw_config_alloc_with_definition(key, definition);
   return config_node;
 }
 
@@ -845,17 +824,6 @@ void enkf_config_node_add_GEN_DATA_config_schema( config_parser_type * config ) 
   config_schema_item_type * item;
   item = config_add_schema_item(config , GEN_DATA_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
-}
-
-void enkf_config_node_add_CUSTOM_KW_config_schema(config_parser_type * config){
-    config_schema_item_type * item = config_add_schema_item(config, CUSTOM_KW_KEY, false);
-    config_parser_deprecate(
-         config, CUSTOM_KW_KEY,
-         "\'CUSTOM_KW\' has been deprecated");
-    config_schema_item_set_argc_minmax(item, 2, 3);
-    config_schema_item_iset_type(item, 0, CONFIG_STRING);
-    config_schema_item_iset_type(item, 1, CONFIG_PATH);
-    config_schema_item_iset_type(item, 2, CONFIG_PATH);
 }
 
 enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_from_config( const config_content_node_type * node ) {

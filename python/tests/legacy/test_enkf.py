@@ -4,13 +4,11 @@ from ert.enkf import BlockDataConfig
 from ert.enkf import BlockObservation
 from ert.enkf import ObsVector
 
-from ert.enkf import CustomKW
 from ert.enkf import Field
 from ert.enkf import GenData
 from ert.enkf import GenKw
 from ert.enkf import EnkfNode
 
-from ert.enkf import CustomKWConfig
 from ert.enkf import FieldConfig
 from ert.enkf import FieldTypeEnum
 from ert.enkf import GenDataConfig
@@ -38,7 +36,6 @@ from ert.enkf import TimeMap
 from ert.enkf import StateMap
 from ert.enkf import SummaryKeySet
 from ert.enkf import SummaryKeyMatcher
-from ert.enkf import CustomKWConfigSet
 from ert.enkf import EnkfFs
 from ert.enkf import ErtWorkflowList
 from ert.enkf import ActiveList

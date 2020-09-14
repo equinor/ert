@@ -20,7 +20,7 @@ from ecl.summary import EclSum
 from res import ResPrototype
 from res.enkf import SummaryKeyMatcher, ConfigKeys
 from res.config import ConfigContent
-from res.enkf.config import EnkfConfigNode, CustomKWConfig
+from res.enkf.config import EnkfConfigNode
 from res.enkf.enums import EnkfVarType, ErtImplType, LoadFailTypeEnum
 import os
 
@@ -53,7 +53,6 @@ class EnsembleConfig(BaseCClass):
     _alloc_keylist_from_impl_type = ResPrototype("stringlist_obj ensemble_config_alloc_keylist_from_impl_type(ens_config, ert_impl_type_enum)")
     _add_node = ResPrototype("void ensemble_config_add_node( ens_config , enkf_config_node )")
     _summary_key_matcher = ResPrototype("summary_key_matcher_ref ensemble_config_get_summary_key_matcher(ens_config)")
-    _add_defined_custom_kw = ResPrototype("enkf_config_node_ref ensemble_config_add_defined_custom_kw(ens_config, char*, integer_hash)")
     _get_trans_table = ResPrototype("void* ensemble_config_get_trans_table(ens_config)")
     _add_summary_full = ResPrototype("void ensemble_config_init_SUMMARY_full(ens_config, char*, ecl_sum)")
 
@@ -94,13 +93,6 @@ class EnsembleConfig(BaseCClass):
                                                                     gene_data.get(ConfigKeys.TEMPLATE),
                                                                     gene_data.get(ConfigKeys.KEY_KEY))
                 self.addNode(gen_data_node)
-
-            custom_kw_list = config_dict.get(ConfigKeys.CUSTOM_KW, [])
-            for custom_kw in custom_kw_list:
-                custom_kw_node = EnkfConfigNode.create_custom_kw(custom_kw.get(ConfigKeys.NAME),
-                                                                 custom_kw.get(ConfigKeys.RESULT_FILE),
-                                                                 custom_kw.get(ConfigKeys.OUT_FILE))
-                self.addNode(custom_kw_node)
 
             gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
             for gen_kw in gen_kw_list:
@@ -231,14 +223,6 @@ class EnsembleConfig(BaseCClass):
 
     def free(self):
         self._free( )
-
-    def addDefinedCustomKW(self, group_name, definition):
-        """ @rtype: EnkfConfigNode """
-        if not group_name in self:
-            type_hash = CustomKWConfig.convertDefinition(definition)
-            self._add_defined_custom_kw(group_name, type_hash)
-
-        return self[group_name]
 
     def __eq__(self, other):
         self_param_list = set(self.alloc_keylist())

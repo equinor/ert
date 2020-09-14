@@ -55,7 +55,6 @@ extern "C" {
 #define  ANALYSIS_SET_VAR_KEY              "ANALYSIS_SET_VAR"
 #define  ANALYSIS_SELECT_KEY               "ANALYSIS_SELECT"
 #define  CONTAINER_KEY                     "CONTAINER"
-#define  CUSTOM_KW_KEY                     "CUSTOM_KW"
 #define  DATA_ROOT_KEY                     "DATA_ROOT"
 #define  DATA_FILE_KEY                     "DATA_FILE"
 #define  DATA_KW_KEY                       "DATA_KW"
@@ -184,7 +183,6 @@ extern "C" {
   const char * config_keys_get_config_file_key();
   const char * config_keys_get_queue_system_key();
   const char * config_keys_get_run_template_key();
-  const char * config_keys_get_custom_kw_key();
   const char * config_keys_get_gen_kw_key();
   const char * config_keys_get_queue_option_key();
   const char * config_keys_get_install_job_key();
