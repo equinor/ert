@@ -31,7 +31,7 @@ from res.enkf.local_obsdata_node import LocalObsdataNode
 class LocalConfigTest(ResTest):
 
     def setUp(self):
-        self.config = self.createTestPath("local/custom_kw/mini_config")
+        self.config = self.createTestPath("local/mini_ert/mini_config")
         self.local_conf_path = 'python/enkf/data/local_config'
 
 

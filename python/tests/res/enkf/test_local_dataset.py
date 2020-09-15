@@ -30,7 +30,7 @@ from ecl.util.geometry import Surface, GeoRegion
 class LocalDatasetTest(ResTest):
 
     def setUp(self):
-        self.config = self.createTestPath('local/custom_kw/mini_config')
+        self.config = self.createTestPath('local/mini_ert/mini_config')
         self.field_config = self.createTestPath('local/snake_oil_field/snake_oil.ert')
         self.surf_config = self.createTestPath('local/snake_oil_field/snake_oil_surface.ert')
 

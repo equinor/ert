@@ -23,7 +23,7 @@ class MiniConfigTest(ResTest):
         # 9 OK
 
 
-        config = self.createTestPath("local/custom_kw/mini_fail_config")
+        config = self.createTestPath("local/mini_ert/mini_fail_config")
         with ErtTestContext("python/enkf/data/mini_ert_simulated", config) as context:
             ert = context.getErt()
 

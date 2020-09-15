@@ -23,7 +23,7 @@ from res.test import ErtTestContext
 class DataKWTest(ResTest):
 
     def test_it(self):
-        config = self.createTestPath("local/custom_kw/mini_config_define")
+        config = self.createTestPath("local/mini_ert/mini_config_define")
         with ErtTestContext("mini_config_define", config) as context:
             ert = context.getErt()
             data_kw = ert.getDataKW( )

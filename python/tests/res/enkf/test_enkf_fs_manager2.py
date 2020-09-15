@@ -12,7 +12,7 @@ from res.enkf import EnkfFsManager
 
 class EnKFFSManagerTest2(ResTest):
     def setUp(self):
-        self.config_file = self.createTestPath("local/custom_kw/mini_config")
+        self.config_file = self.createTestPath("local/mini_ert/mini_config")
 
     @tmpdir()
     def test_rotate(self):
