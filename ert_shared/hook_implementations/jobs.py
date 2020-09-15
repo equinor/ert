@@ -100,6 +100,7 @@ def job_documentation(job_name):
 @plugin_response(plugin_name="ert")
 def installable_workflow_jobs():
     directories = [
+        "{{ERT_SHARE_PATH}}/workflows/jobs/shell",
         "{{ERT_SHARE_PATH}}/workflows/jobs/internal/config",
         "{{ERT_SHARE_PATH}}/workflows/jobs/internal-{{ERT_UI_MODE}}/config",
     ]
