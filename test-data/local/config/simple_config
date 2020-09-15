@@ -27,8 +27,6 @@ SETENV               MANY_PATH                        $PATH:$LD_LIBRARY_PATH:$MA
 
 DATA_FILE                  Example_01_base.data
 
-
-INIT_SECTION               __INCLUDE_PATH__/EQUIL.INC
 LICENSE_PATH               /tmp/BJARNE_PATH
 
 --SETENV ERT_LINK_LSF True
@@ -70,12 +68,6 @@ UMASK              0
 MAX_SUBMIT         10
 MAX_RESAMPLE       1
 
-
-ADD_FIXED_LENGTH_SCHEDULE_KW  Jalla  7
-ADD_FIXED_LENGTH_SCHEDULE_KW  Jalla2 70 
-
-
-
 DBASE_TYPE        BLOCK_FS
 
 -- The ensemble 
@@ -109,9 +101,6 @@ INSTALL_JOB SGOF_TAB  jobs/SGOF_TAB
 ENKF_MERGE_OBSERVATIONS   TRUE
 --ENKF_SCHED_FILE   sched_config
 
-
---ADD_STATIC_KW    __ALL__
-ADD_STATIC_KW    BJARNE  KW2  
 
 ENKF_ALPHA        1.50
 -----------------------------------------------------------------

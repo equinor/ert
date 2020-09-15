@@ -2,9 +2,7 @@ data_file	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#D
 eclbase	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ECLBASE
 jobname	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#JOBNAME
 grid	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#GRID
-init_section	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#INIT_SECTION
 num_realizations	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#NUM_REALIZATIONS
-schedule_file	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#SCHEDULE_FILE
 data_kw	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#DATA_KW
 delete_runpath	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#DELETE_RUNPATH
 enkf_sched_file	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_SCHED_FILE
@@ -42,8 +40,6 @@ analysis_load	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_E
 analysis_select	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ANALYSIS_SELECT
 analysis_set_var	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ANALYSIS_SET_VAR
 analysis_copy	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ANALYSIS_COPY
-add_fixed_length_schedule_kw	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ADD_FIXED_LENGTH_SCHEDULE_KW
-add_static_kw	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ADD_STATIC_KW
 define	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#DEFINE
 schedule_prediction_file	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#SCHEDULE_PREDICTION_FILE
 forward_model	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#FORWARD_MODEL

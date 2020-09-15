@@ -49,7 +49,6 @@ extern "C" {
 #define  PRED_KEY                          "PRED_KEY"
 
 
-#define  ADD_FIXED_LENGTH_SCHEDULE_KW_KEY  "ADD_FIXED_LENGTH_SCHEDULE_KW"
 #define  ANALYSIS_COPY_KEY                 "ANALYSIS_COPY"
 #define  ANALYSIS_LOAD_KEY                 "ANALYSIS_LOAD"
 #define  ANALYSIS_SET_VAR_KEY              "ANALYSIS_SET_VAR"
@@ -81,8 +80,6 @@ extern "C" {
 #define  GRID_KEY                          "GRID"
 #define  HISTORY_SOURCE_KEY                "HISTORY_SOURCE"
 #define  HOSY_TYPE_KEY                     "HOST_TYPE"
-#define  IGNORE_SCHEDULE_KEY               "IGNORE_SCHEDULE"
-#define  INIT_SECTION_KEY                  "INIT_SECTION"
 #define  INSTALL_JOB_KEY                   "INSTALL_JOB"
 #define  INSTALL_JOB_DIRECTORY_KEY         "INSTALL_JOB_DIRECTORY"
 #define  JOB_SCRIPT_KEY                    "JOB_SCRIPT"
@@ -110,11 +107,9 @@ extern "C" {
 #define  ITER_RUNPATH_KEY                  "ITER_RUNPATH"
 #define  RUN_TEMPLATE_KEY                  "RUN_TEMPLATE"
 #define  RFTPATH_KEY                       "RFTPATH"
-#define  SCHEDULE_FILE_KEY                 "SCHEDULE_FILE"
 #define  SCHEDULE_PREDICTION_FILE_KEY      "SCHEDULE_PREDICTION_FILE"
 #define  SETENV_KEY                        "SETENV"
 #define  SIMULATION_JOB_KEY                "SIMULATION_JOB"
-#define  STATIC_KW_KEY                     "ADD_STATIC_KW"
 #define  STD_CUTOFF_KEY                    "STD_CUTOFF"
 #define  SUMMARY_KEY                       "SUMMARY"
 #define  SURFACE_KEY                       "SURFACE"
@@ -200,10 +195,8 @@ extern "C" {
   const char * config_keys_get_eclbase_key();
   const char * config_keys_get_data_file_key();
   const char * config_keys_get_grid_key();
-  const char * config_keys_get_add_fixed_length_schedule_kw_key();
   const char * config_keys_get_refcase_key();
   const char * config_keys_get_refcase_list_key();
-  const char * config_keys_get_init_section_key();
   const char * config_keys_get_end_date_key();
   const char * config_keys_get_schedule_prediction_file_key();
   /* ************* ECL config  ************* */

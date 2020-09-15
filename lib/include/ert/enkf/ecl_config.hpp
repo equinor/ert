@@ -48,10 +48,6 @@ extern "C" {
 
   ui_return_type *      ecl_config_validate_eclbase( const ecl_config_type * ecl_config , const char * eclbase_fmt );
 
-  void                  ecl_config_set_init_section( ecl_config_type * ecl_config , const char * input_init_section );
-  ui_return_type *      ecl_config_validate_init_section( const ecl_config_type * ecl_config , const char * input_init_section );
-  const char          * ecl_config_get_init_section(const ecl_config_type * ecl_config);
-
   void                  ecl_config_set_grid( ecl_config_type * ecl_config , const char * grid_file );
   const char          * ecl_config_get_gridfile( const ecl_config_type * ecl_config );
   ecl_grid_type       * ecl_config_get_grid(const ecl_config_type * );
@@ -89,7 +85,6 @@ extern "C" {
                                           ecl_grid_type * grid,
                                           char * refcase_default,
                                           stringlist_type * ref_case_list,
-                                          char * init_section,
                                           time_t end_date,
                                           char * sched_prediction_file
                                           );

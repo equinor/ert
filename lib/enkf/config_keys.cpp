@@ -111,20 +111,12 @@ const char * config_keys_get_grid_key() {
   return GRID_KEY;
 }
 
-const char * config_keys_get_add_fixed_length_schedule_kw_key() {
-  return ADD_FIXED_LENGTH_SCHEDULE_KW_KEY;
-}
-
 const char * config_keys_get_refcase_key() {
   return REFCASE_KEY;
 }
 
 const char * config_keys_get_refcase_list_key() {
   return REFCASE_LIST_KEY;
-}
-
-const char * config_keys_get_init_section_key() {
-  return INIT_SECTION_KEY;
 }
 
 const char * config_keys_get_end_date_key() {

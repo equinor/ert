@@ -16,16 +16,14 @@
 
 from cwrap import BaseCClass
 from res import ResPrototype
-from res.config import ConfigContent
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
-from ecl.util.util import StringList, IntVector, CTime
-from res.sched import SchedFile
+from ecl.util.util import StringList, CTime
 from res.util import UIReturn
 from res.enkf import ConfigKeys
 import os
-import re
 from datetime import datetime
+
 
 class EclConfig(BaseCClass):
     TYPE_NAME = "ecl_config"
@@ -36,7 +34,6 @@ class EclConfig(BaseCClass):
                                                                             ecl_grid, \
                                                                             char*, \
                                                                             stringlist, \
-                                                                            char*, \
                                                                             time_t, \
                                                                             char*)", bind=False)
     _free                     = ResPrototype("void  ecl_config_free( ecl_config )")
@@ -47,9 +44,6 @@ class EclConfig(BaseCClass):
     _set_gridfile             = ResPrototype("void  ecl_config_set_grid(ecl_config, char*)")
     _validate_gridfile        = ResPrototype("ui_return_obj ecl_config_validate_grid(ecl_config, char*)")
     _get_grid                 = ResPrototype("ecl_grid_ref ecl_config_get_grid(ecl_config)")
-    _get_init_section         = ResPrototype("char* ecl_config_get_init_section(ecl_config)")
-    _set_init_section         = ResPrototype("void  ecl_config_set_init_section(ecl_config, char*)")
-    _validate_init_section    = ResPrototype("ui_return_obj ecl_config_validate_init_section(ecl_config, char*)")
     _get_refcase_name         = ResPrototype("char* ecl_config_get_refcase_name(ecl_config)")
     _get_refcase              = ResPrototype("ecl_sum_ref ecl_config_get_refcase(ecl_config)")
     _load_refcase             = ResPrototype("void  ecl_config_load_refcase(ecl_config, char*)")
@@ -62,6 +56,7 @@ class EclConfig(BaseCClass):
     _get_last_history_restart = ResPrototype("int ecl_config_get_last_history_restart(ecl_config)")
     _get_end_date             = ResPrototype("time_t ecl_config_get_end_date(ecl_config)")
     _get_num_cpu = ResPrototype("int ecl_config_get_num_cpu(ecl_config)")
+
     def __init__(self, config_content=None, config_dict=None):
     
         if config_content is not None and config_dict is not None:
@@ -100,9 +95,6 @@ class EclConfig(BaseCClass):
             for refcase in config_dict.get(ConfigKeys.REFCASE_LIST, []):
                 refcase_list.append(refcase)
 
-            # INIT_SECTION_KEY
-            init_section = config_dict.get(ConfigKeys.INIT_SECITON)
-
             # END_DATE_KEY
             end_date = CTime(datetime.strptime(config_dict.get(ConfigKeys.END_DATE, "31/12/1969"), "%d/%m/%Y"))
 
@@ -114,7 +106,6 @@ class EclConfig(BaseCClass):
                                     grid,
                                     refcase_default,
                                     refcase_list,
-                                    init_section,
                                     end_date,
                                     schedule_prediction_file)
             if grid is not None:
@@ -152,19 +143,6 @@ class EclConfig(BaseCClass):
 
     def getGrid(self):
         return self._get_grid()
-
-    #-----------------------------------------------------------------
-
-    def getInitSection(self):
-        return self._get_init_section()
-
-    def setInitSection(self, init_section):
-        self._set_init_section(init_section)
-
-    def validateInitSection(self, init_section):
-        return self._validate_init_section(init_section)
-
-    #-----------------------------------------------------------------
 
     def getRefcaseName(self):
         return self._get_refcase_name()
@@ -225,9 +203,6 @@ class EclConfig(BaseCClass):
             return False
         
         if self.get_gridfile() != other.get_gridfile():
-            return False
-        
-        if self.getInitSection() != other.getInitSection():
             return False
         
         if self.getRefcaseName() != other.getRefcaseName():

@@ -36,7 +36,6 @@ typedef struct sched_block_struct sched_block_type;
 
 typedef void (sched_file_callback_ftype)( void * sched_kw , int restart_nr , void * arg);
 
-void                 sched_file_add_fixed_length_kw( sched_file_type * sched_file , const char * kw , int length );
 sched_file_type *    sched_file_alloc(time_t);
 void                 sched_file_free(sched_file_type *);
 void                 sched_file_parse(sched_file_type *, const char *);

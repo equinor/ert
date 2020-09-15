@@ -23,16 +23,13 @@ from res.enkf import EclConfig, ResConfig, ConfigKeys
 from ecl.util.test import TestAreaContext
 from tests import ResTest
 from res.util import UIReturn
-from ecl.summary  import EclSum
+from ecl.summary import EclSum
 
 EGRID_file    = "Equinor/ECLIPSE/Gurbat/ECLIPSE.EGRID"
 SMSPEC_file   = "Equinor/ECLIPSE/Gurbat/ECLIPSE.SMSPEC"
 DATA_file     = "Equinor/ECLIPSE/Gurbat/ECLIPSE.DATA"
 INIT_file     = "Equinor/ECLIPSE/Gurbat/EQUIL.INC"
 DATA_INIT_file= "Equinor/ECLIPSE/Gurbat/ECLIPSE_INIT.DATA"
-
-
-
 
 
 class EclConfigTest(ResTest):
@@ -52,7 +49,7 @@ class EclConfigTest(ResTest):
         self.assertTrue( os.path.exists( smspec_file ))
         ui = ec.validateGridFile( smspec_file )
         self.assertFalse( ui )
-    
+
     @pytest.mark.equinor_test
     def test_datafile(self):
         ec = EclConfig()
@@ -64,27 +61,6 @@ class EclConfigTest(ResTest):
         self.assertTrue( ui )
         ec.setDataFile( dfile )
         self.assertEqual( dfile , ec.getDataFile() )
-
-
-    @pytest.mark.equinor_test
-    def test_init_section(self):
-        ec = EclConfig()
-        dfile = self.createTestPath( DATA_file )
-        difile = self.createTestPath( DATA_INIT_file )
-        ifile = self.createTestPath( INIT_file )
-
-        ui = ec.validateInitSection( ifile )
-        self.assertFalse( ui )
-
-        ec.setDataFile( dfile )
-        ui = ec.validateInitSection( ifile )
-        self.assertFalse( ui )
-
-        ec.setDataFile( difile )
-        ui = ec.validateInitSection( ifile )
-        self.assertTrue( ui )
-        ec.setInitSection( ifile )
-        self.assertTrue( ifile , ec.getInitSection() )
 
     @pytest.mark.equinor_test
     def test_refcase( self ):
@@ -111,7 +87,7 @@ class EclConfigTest(ResTest):
             ConfigKeys.END_DATE                 : "10/10/2010",
             ConfigKeys.SCHEDULE_PREDICTION_FILE : "configuration_tests/input/schedule.sch"
         }
-        
+
         self.case_directory = self.createTestPath("local/configuration_tests/")
         with TestAreaContext("ecl_config_test") as work_area:
             work_area.copy_directory(self.case_directory)

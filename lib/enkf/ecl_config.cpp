@@ -67,8 +67,6 @@ struct ecl_config_struct
   ecl_refcase_list_type * refcase_list;
   ecl_grid_type * grid;                 /* The grid which is active for this model. */
   char * schedule_prediction_file;      /* Name of schedule prediction file - observe that this is internally handled as a gen_kw node. */
-  char * input_init_section;            /* File name for ECLIPSE (EQUIL) initialisation - can be NULL if the user has not supplied INIT_SECTION. */
-  char * init_section;                  /* Equal to the full path of input_init_section IFF input_init_section points to an existing file - otherwise equal to input_init_section. */
   int last_history_restart;
   bool can_restart;                     /* Have we found the <INIT> tag in the data file? */
   bool have_eclbase;
@@ -250,116 +248,6 @@ const char * ecl_config_get_refcase_name(const ecl_config_type * ecl_config)
 
 }
 
-
-
-/* The semantic regarding INIT_SECTION is as follows:
-
-   1. If the INIT_SECTION points to an existing file - the
-   ecl_config->input_init_section is set to the absolute path of
-   this file.
-
-   2. If the INIT_SECTION points to a not existing file:
-
-   a. We assert that INIT_SECTION points to a pure filename,
-   i.e. /some/path/which/does/not/exist is NOT accepted. In
-   the case the input argument contain a path a error message
-   will be printed on stderr and the ->init_section will not
-   be set.
-   b. The ecl_config->input_init_section is set to point to this
-   file.
-   c. WE TRUST THE USER TO SUPPLY CONTENT (THROUGH SOME FUNKY
-   FORWARD MODEL) IN THE RUNPATH. This can unfortunately not
-   be checked/verified before the ECLIPSE simulation fails.
-
-
-   The INIT_SECTION keyword and <INIT> in the datafile (checked with
-   ecl_config->can_restart) interplay as follows:
-
-
-   CASE   |   INIT_SECTION  |  <INIT>    | OK ?
-   ---------------------------------------------
-   0      |   Present       | Present    |  Yes
-   1      |   Not Present   | Present    |  No
-   2      |   Present       | Not present|  No
-   3      |   Not Present   | Not present|  Yes
-   ---------------------------------------------
-
-
-   Case 0: This is the most flexible case, which can do arbitrary
-   restart.
-
-   Case 1: In this case the datafile will contain a <INIT> tag, we
-   we do not have the info to replace that tag with for
-   initialisation, and ECLIPSE will fail. Strictly speaking this
-   case can actually restart, but that is not enough - we let
-   this case fail hard.
-
-   Case 2: We have some INIT_SECTION infor, but no tag in he
-   datafile to update. If the datafile has embedded
-   initialisation info this case will work for init; but it is
-   logically flawed, and not accepted. Currently only a warning.
-
-   Case 3: This case has just the right amount of information for
-   initialisation, but it is 'consistently unable' to restart.
-
-*/
-
-ui_return_type * ecl_config_validate_init_section(const ecl_config_type * ecl_config, const char * input_init_section) {
-  if (ecl_config->can_restart)
-    return ui_return_alloc( UI_RETURN_OK );
-  else {
-    ui_return_type * ui_return = ui_return_alloc(UI_RETURN_FAIL);
-    ui_return_add_error( ui_return , "The <INIT> tag was not found in datafile - can not set INIT_SECTION keyword\n");
-    return ui_return;
-  }
-}
-
-
-void ecl_config_set_init_section(ecl_config_type * ecl_config, const char * input_init_section) {
-  if (ecl_config->can_restart)  {
-    /* The <INIT> tag is set. */
-    ecl_config->input_init_section = util_realloc_string_copy(ecl_config->input_init_section, input_init_section); /* input_init_section = path/to/init_section         */
-    if (util_file_exists(ecl_config->input_init_section))
-    { /* init_section       = $CWD/path/to/init_section */
-      free(ecl_config->init_section);
-      ecl_config->init_section = util_alloc_realpath(input_init_section);
-    }
-    else
-    {
-      char * path;
-
-      util_alloc_file_components(ecl_config->input_init_section, &path, NULL, NULL );
-      if (path != NULL )
-        fprintf(stderr,
-            "** Warning: %s: When INIT_SECTION:%s points to a non-existing file - you can not have any path components.\n",
-            __func__, input_init_section);
-      else
-        ecl_config->init_section = util_alloc_string_copy(input_init_section);
-
-      free(path);
-    }
-  }
-  else
-    /*
-       The <INIT> tag is not set - we can not utilize the
-       input_init_section info, and we just ignore it.
-     */
-    fprintf(stderr,
-        "** Warning: <INIT> tag was not found in datafile - can not utilize INIT_SECTION keyword - ignored.\n");
-}
-
-
-/**
- This just returns the string which has been set with the
- ecl_config_set_init_section() function.
- */
-
-const char * ecl_config_get_init_section(const ecl_config_type * ecl_config)
-{
-  return ecl_config->input_init_section;
-}
-
-
 static ecl_config_type * ecl_config_alloc_empty(void)
 {
   ecl_config_type * ecl_config = new ecl_config_type();
@@ -369,8 +257,6 @@ static ecl_config_type * ecl_config_alloc_empty(void)
   ecl_config->num_cpu = 1; /* This must get a valid default in case no ECLIPSE datafile is provided. */
   ecl_config->unit_system = ECL_METRIC_UNITS;
   ecl_config->data_file = NULL;
-  ecl_config->input_init_section = NULL;
-  ecl_config->init_section = NULL;
   ecl_config->grid = NULL;
   ecl_config->can_restart = false;
   ecl_config->start_date = -1;
@@ -395,7 +281,6 @@ ecl_config_type * ecl_config_alloc_full(bool have_eclbase,
                                         ecl_grid_type * grid,
                                         char * refcase_default,
                                         stringlist_type * ref_case_list,
-                                        char * init_section,
                                         time_t end_date,
                                         char * sched_prediction_file
                                         ) {
@@ -412,9 +297,6 @@ ecl_config_type * ecl_config_alloc_full(bool have_eclbase,
   }
   if (refcase_default)
     ecl_refcase_list_set_default(ecl_config->refcase_list, refcase_default);
-
-  if (init_section)
-    ecl_config_set_init_section(ecl_config, init_section);
 
   ecl_config->end_date = end_date;
   if (sched_prediction_file)
@@ -493,12 +375,6 @@ static void handle_has_refcase_list_key(ecl_config_type * ecl_config,
   }
 }
 
-static void handle_has_init_section_key(ecl_config_type * ecl_config,
-                                        const config_content_type * config) {
-  ecl_config_set_init_section(ecl_config, config_content_get_value(config,
-                                                                   INIT_SECTION_KEY));
-}
-
 static void handle_has_end_date_key(ecl_config_type * ecl_config,
                                     const config_content_type * config) {
   const char * date_string = config_content_get_value(config, END_DATE_KEY);
@@ -536,7 +412,6 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
   if (config_content_has_item(config, GRID_KEY))
     handle_has_grid_key(ecl_config, config);
 
-
   if (config_content_has_item(config, REFCASE_KEY))
     handle_has_refcase_key(ecl_config, config);
 
@@ -544,9 +419,12 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
     handle_has_refcase_list_key(ecl_config, config);
 
 
-  if (config_content_has_item(config, INIT_SECTION_KEY))
-    handle_has_init_section_key(ecl_config, config);
-  else if (ecl_config->can_restart)
+  if (ecl_config->can_restart)
+    fprintf(stderr,
+            "** Warning: The ECLIPSE data file contains a <INIT> section, the support\n"
+            "            for this functionality has been removed. libres will not\n"
+            "            be able to properly initialize the ECLIPSE MODEL.\n"
+            );
     /**
      This is a hard error - the datafile contains <INIT>, however
      the config file does NOT contain INIT_SECTION, i.e. we have
@@ -554,9 +432,6 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
      will not be able to initialize an ECLIPSE model, and that is
      broken behaviour.
      */
-    util_abort("%s Sorry: when the datafile contains <INIT> the config file MUST have the INIT_SECTION keyword. \n",
-               __func__);
-
 
   /*
    The user has not supplied a INIT_SECTION keyword whatsoever,
@@ -578,7 +453,7 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
     handle_has_end_date_key(ecl_config, config);
 
   if (config_content_has_item(config, SCHEDULE_PREDICTION_FILE_KEY))
-     handle_has_schedule_prediction_file_key(ecl_config, config);
+    handle_has_schedule_prediction_file_key(ecl_config, config);
 }
 
 
@@ -587,8 +462,6 @@ void ecl_config_free(ecl_config_type * ecl_config)
 {
   ecl_io_config_free(ecl_config->io_config);
   free(ecl_config->data_file);
-  free(ecl_config->input_init_section);
-  free(ecl_config->init_section);
   free(ecl_config->schedule_prediction_file);
 
   if (ecl_config->grid != NULL )
@@ -685,19 +558,10 @@ void ecl_config_add_config_items(config_parser_type * config)
 {
   config_schema_item_type * item;
 
-  item = config_add_schema_item(config, SCHEDULE_FILE_KEY, false);
-  config_parser_deprecate(
-      config, SCHEDULE_FILE_KEY,
-      "\'SCHEDULE_FILE\' has been deprecated.");
   /*
    Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a
    GEN_KW is added in ensemble_config.c
   */
-
-  item = config_add_schema_item(config, IGNORE_SCHEDULE_KEY, false);
-  config_parser_deprecate(
-      config, IGNORE_SCHEDULE_KEY,
-      "\'IGNORE_SCHEDULE\' has been deprecated");
 
   item = config_add_schema_item(config, ECLBASE_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
@@ -705,15 +569,6 @@ void ecl_config_add_config_items(config_parser_type * config)
   item = config_add_schema_item(config, DATA_FILE_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
   config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
-
-  item = config_add_schema_item(config, STATIC_KW_KEY, false);
-  config_parser_deprecate(
-      config, STATIC_KW_KEY,
-      "\'STATIC_KW\' has been deprecated");
-  item = config_add_schema_item(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY, false);
-  config_parser_deprecate(
-      config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY,
-      "\'ADD_FIXED_LENGTH_SCHEDULE_KW\' has been deprecated");
 
   item = config_add_schema_item(config, REFCASE_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
@@ -725,14 +580,6 @@ void ecl_config_add_config_items(config_parser_type * config)
   item = config_add_schema_item(config, GRID_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
   config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
-
-  item = config_add_schema_item(config, INIT_SECTION_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, 1);
-  config_schema_item_iset_type(item, 0, CONFIG_PATH);
-  config_add_alias(config, INIT_SECTION_KEY, "EQUIL_INIT_FILE");
-  config_parser_deprecate(
-      config, INIT_SECTION_KEY,
-      "\'INIT_SECTION\' has been deprecated");
 
   item = config_add_schema_item(config, END_DATE_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);

@@ -50,12 +50,8 @@ class ConfigKeys:
     _eclbase              = ResPrototype("char* config_keys_get_eclbase_key()", bind=False)
     _data_file            = ResPrototype("char* config_keys_get_data_file_key()", bind=False)
     _grid                 = ResPrototype("char* config_keys_get_grid_key()", bind=False)
-    _add_fixed_length_schedule_kw_key = ResPrototype(
-            "char* config_keys_get_add_fixed_length_schedule_kw_key()", bind=False
-        )
     _refcase              = ResPrototype("char* config_keys_get_refcase_key()", bind=False)
     _refcase_list         = ResPrototype("char* config_keys_get_refcase_list_key()", bind=False)
-    _init_section         = ResPrototype("char* config_keys_get_init_section_key()", bind=False)
     _end_date             = ResPrototype("char* config_keys_get_end_date_key()", bind=False)
     _schedule_prediction_file = ResPrototype(
             "char* config_keys_get_schedule_prediction_file_key()", bind=False
@@ -227,10 +223,8 @@ class ConfigKeys:
     ECLBASE          = _eclbase()
     DATA_FILE        = _data_file()
     GRID             = _grid()
-    ADD_FIXED_LENGTH_SCHEDULE_KW = _add_fixed_length_schedule_kw_key()
     REFCASE          = _refcase()
     REFCASE_LIST     = _refcase_list()
-    INIT_SECITON     = _init_section()
     END_DATE         = _end_date()
     SCHEDULE_PREDICTION_FILE = _schedule_prediction_file()
     # ************* ECL config  *************

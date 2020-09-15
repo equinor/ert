@@ -1,7 +1,6 @@
 -- Note that this is copied from model_config.ert
 -- We replace REFCASE with SCHEDULE_FILE and then change the
 -- HISTORY_SOURCE to be SCHEDULE.
-SCHEDULE_FILE                   target.SCH
 END_DATE                        10/10/2010
 MIN_REALIZATIONS 10
 QUEUE_SYSTEM LOCAL
