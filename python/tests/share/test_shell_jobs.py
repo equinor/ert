@@ -1,6 +1,4 @@
-from res.job_queue import ExtJob
-
-from res.enkf import ResConfig, ErtWorkflowList, SiteConfig
+from res.enkf import ResConfig
 
 from tests import ResTest
 
@@ -28,3 +26,26 @@ class TestSiteConfigShellJobs(ResTest):
                 wf_shell_jobs[wf_name] = exe
 
         assert fm_shell_jobs == wf_shell_jobs
+
+    def test_shell_script_jobs_names(self):
+        config_file = self.createTestPath("local/simple_config/minimum_config")
+        share_path = self.createSharePath("ert/shell_scripts")
+
+        shell_job_names = [
+            "delete_file",
+            "delete_directory",
+            "copy_directory",
+            "make_symlink",
+            "move_file",
+            "make_directory",
+            "careful_copy_file",
+            "symlink",
+            "copy_file",
+        ]
+        res_config = ResConfig(config_file)
+
+        list_from_content = res_config.ert_workflow_list
+        for wf_name in list_from_content.getJobNames():
+            exe = list_from_content.getJob(wf_name).executable()
+            if exe and exe.startswith(share_path):
+                assert wf_name in shell_job_names
