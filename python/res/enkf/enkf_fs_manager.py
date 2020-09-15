@@ -4,7 +4,8 @@ import re
 from cwrap import BaseCClass
 from ecl.util.util import StringList, BoolVector
 from res import ResPrototype
-from res.enkf import EnkfFs, StateMap, TimeMap, RealizationStateEnum, EnkfInitModeEnum
+from res.enkf import EnkfFs, StateMap, TimeMap, RealizationStateEnum, EnkfInitModeEnum, \
+    EnKFFSType
 
 
 def naturalSortKey(s, _nsre=re.compile('([0-9]+)')):
@@ -109,9 +110,6 @@ class EnkfFsManager(BaseCClass):
         self._fs_rotator = FileSystemRotator(capacity)
         self._mount_root = real_enkf_main.getMountPoint()
 
-        self._fs_type = real_enkf_main.getModelConfig().getFSType()
-        self._fs_arg = None
-
     def __del__(self):
         # This object is a reference, so free() won't be called on it
         # Any clean-up must be done here
@@ -140,7 +138,7 @@ class EnkfFsManager(BaseCClass):
                 if self._fs_rotator.atCapacity():
                     self._fs_rotator.dropOldestFileSystem()
 
-                EnkfFs.createFileSystem(full_case_name, self._fs_type, self._fs_arg)
+                EnkfFs.createFileSystem(full_case_name)
 
             new_fs = EnkfFs(full_case_name)
             self._fs_rotator.addFileSystem(new_fs, full_case_name)

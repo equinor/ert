@@ -55,7 +55,6 @@ class ModelConfig(BaseCClass):
     _select_runpath              = ResPrototype("bool  model_config_select_runpath(model_config, char*)")
     _set_runpath                 = ResPrototype("void  model_config_set_runpath(model_config, char*)")
     _get_enspath                 = ResPrototype("char* model_config_get_enspath(model_config)")
-    _get_fs_type                 = ResPrototype("enkf_fs_type_enum model_config_get_dbase_type(model_config)")
     _get_history                 = ResPrototype("history_ref model_config_get_history(model_config)")
     _get_history_source          = ResPrototype("history_source_enum model_config_get_history_source(model_config)")
     _select_history              = ResPrototype("bool  model_config_select_history(model_config, history_source_enum, ecl_sum)")
@@ -221,9 +220,6 @@ class ModelConfig(BaseCClass):
     def free(self):
         self._free()
 
-    def getFSType(self):
-        return self._get_fs_type()
-
     def getGenKWExportName(self):
         """ @rtype: str """
         return self._gen_kw_export_name( )
@@ -278,9 +274,6 @@ class ModelConfig(BaseCClass):
             return False
 
         if self.getRunpathFormat() != other.getRunpathFormat():
-            return False
-
-        if self.getFSType() != other.getFSType():
             return False
 
         if self.getJobnameFormat() != other.getJobnameFormat():

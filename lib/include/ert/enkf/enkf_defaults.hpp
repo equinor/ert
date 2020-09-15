@@ -72,10 +72,6 @@ const char * enkf_defaults_get_default_gen_kw_export_name();
 #define INTERNAL_DATA_KW_TAG_FORMAT   "<%s>"
 
 
-
-
-#define DEFAULT_DBASE_TYPE "BLOCK_FS"
-
 /**
     The default number of block_fs instances allocated.
 */

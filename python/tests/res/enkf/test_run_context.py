@@ -5,17 +5,15 @@ from tests import ResTest
 from tests.utils import tmpdir
 from res.enkf import ErtRunContext
 from res.enkf.enums import EnkfRunType
-from res.enkf.enums import EnKFFSType
 from res.enkf import EnkfFs
 from res.util import PathFormat
 
-class ErtRunContextTest(ResTest):
 
+class ErtRunContextTest(ResTest):
     @tmpdir()
     def test_create(self):
         with TestAreaContext("run_context"):
-            arg = None
-            sim_fs = EnkfFs.createFileSystem("sim_fs", EnKFFSType.BLOCK_FS_DRIVER_ID, arg)
+            sim_fs = EnkfFs.createFileSystem("sim_fs")
             target_fs = None
 
             mask = BoolVector( initial_size = 100 , default_value = True )

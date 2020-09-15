@@ -45,7 +45,6 @@ extern "C" {
 
 typedef enum {
   INVALID_DRIVER_ID          = 0,
-  PLAIN_DRIVER_ID            = 1005,
   BLOCK_FS_DRIVER_ID         = 3001} fs_driver_impl;
 
 
@@ -73,7 +72,6 @@ typedef enum {
 
 
 
-fs_driver_impl    fs_types_lookup_string_name(const char * driver_name);
 bool              fs_types_valid( fs_driver_enum driver_type);
 
 #ifdef __cplusplus

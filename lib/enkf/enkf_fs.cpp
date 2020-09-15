@@ -40,7 +40,6 @@
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/fs_driver.hpp>
 #include <ert/enkf/fs_types.hpp>
-#include <ert/enkf/plain_driver.hpp>
 #include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/time_map.hpp>
 #include <ert/enkf/state_map.hpp>
@@ -391,17 +390,6 @@ static void enkf_fs_init_path_fmt( enkf_fs_type * fs) {
 
 }
 
-
-static void enkf_fs_create_plain_fs( FILE * stream , void * arg) {
-
-  plain_driver_create_fs( stream , DRIVER_PARAMETER        , DEFAULT_PLAIN_NODE_PARAMETER_PATH        , DEFAULT_PLAIN_VECTOR_PARAMETER_PATH);
-  plain_driver_create_fs( stream , DRIVER_DYNAMIC_FORECAST , DEFAULT_PLAIN_NODE_DYNAMIC_FORECAST_PATH , DEFAULT_PLAIN_VECTOR_DYNAMIC_FORECAST_PATH);
-  plain_driver_create_fs( stream , DRIVER_INDEX            , DEFAULT_PLAIN_NODE_INDEX_PATH            , DEFAULT_PLAIN_VECTOR_INDEX_PATH );
-
-}
-
-
-
 static void enkf_fs_create_block_fs( FILE * stream , int num_drivers , const char * mount_point , void * arg) {
 
   block_fs_driver_create_fs( stream , mount_point , DRIVER_PARAMETER        , num_drivers , "Ensemble/mod_%d" , "PARAMETER");
@@ -452,30 +440,6 @@ static enkf_fs_type *  enkf_fs_mount_block_fs( FILE * fstab_stream , const char 
   return fs;
 }
 
-
-
-
-static enkf_fs_type *  enkf_fs_mount_plain( FILE * fstab_stream , const char * mount_point ) {
-  enkf_fs_type * fs = enkf_fs_alloc_empty( mount_point );
-  {
-    while (true) {
-      fs_driver_enum driver_type;
-      if (fread( &driver_type , sizeof driver_type , 1 , fstab_stream) == 1) {
-        if (fs_types_valid( driver_type )) {
-          fs_driver_type * driver = (fs_driver_type * ) plain_driver_open( fstab_stream , mount_point );
-          enkf_fs_assign_driver( fs , driver , driver_type );
-        } else
-          plain_driver_fskip( fstab_stream );
-
-      } else
-        break;
-    }
-  }
-  return fs;
-}
-
-
-
 enkf_fs_type * enkf_fs_create_fs( const char * mount_point, fs_driver_impl driver_id , void * arg , bool mount) {
   const int num_drivers = 32;
   FILE * stream = fs_driver_open_fstab( mount_point , true );
@@ -485,9 +449,6 @@ enkf_fs_type * enkf_fs_create_fs( const char * mount_point, fs_driver_impl drive
       switch( driver_id ) {
       case( BLOCK_FS_DRIVER_ID ):
         enkf_fs_create_block_fs( stream , num_drivers , mount_point , arg );
-        break;
-      case( PLAIN_DRIVER_ID ):
-        enkf_fs_create_plain_fs( stream , arg );
         break;
       default:
         util_abort("%s: Invalid driver_id value:%d \n",__func__ , driver_id );
@@ -501,7 +462,6 @@ enkf_fs_type * enkf_fs_create_fs( const char * mount_point, fs_driver_impl drive
   else
     return NULL;
 }
-
 
 static void enkf_fs_fsync_time_map( enkf_fs_type * fs ) {
   char * filename = enkf_fs_alloc_case_filename( fs , TIME_MAP_FILE );
@@ -642,10 +602,6 @@ enkf_fs_type * enkf_fs_mount(const char * mount_point) {
   case(BLOCK_FS_DRIVER_ID):
     fs = enkf_fs_mount_block_fs(stream, mount_point);
     res_log_fdebug("Mounting (block_fs) point %s.", mount_point);
-    break;
-  case(PLAIN_DRIVER_ID):
-    fs = enkf_fs_mount_plain(stream, mount_point);
-    res_log_fdebug("Mounting (plain) point %s.", mount_point);
     break;
   default:
     util_abort("%s: unrecognized driver_id:%d \n", __func__, driver_id);

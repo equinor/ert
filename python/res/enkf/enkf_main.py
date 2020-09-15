@@ -119,10 +119,6 @@ class EnKFMain(BaseCClass):
                 continue  # skip private methods
             setattr(self, name, method)
 
-    @staticmethod
-    def createNewConfig(config_file, storage_path, dbase_type, num_realizations):
-        return _RealEnKFMain.createNewConfig(config_file, storage_path, dbase_type, num_realizations)
-
     def __repr__(self):
         repr = self._real_enkf_main().__repr__()
         assert repr.startswith('_RealEnKFMain')
@@ -163,7 +159,6 @@ class _RealEnKFMain(BaseCClass):
     """
 
     _alloc = ResPrototype("void* enkf_main_alloc(res_config, bool, bool)", bind = False)
-    _create_new_config = ResPrototype("void enkf_main_create_new_config(char* , char*, char* , int)", bind = False)
 
     _free = ResPrototype("void enkf_main_free(enkf_main)")
     _get_queue_config = ResPrototype("queue_config_ref enkf_main_get_queue_config(enkf_main)")
@@ -265,10 +260,6 @@ class _RealEnKFMain(BaseCClass):
 
     def get_queue_config(self):
         return self._get_queue_config()
-
-    @staticmethod
-    def createNewConfig(config_file, storage_path, dbase_type, num_realizations):
-        return _RealEnKFMain._create_new_config(config_file, storage_path, dbase_type, num_realizations)
 
     def getRealisation(self , iens):
         """ @rtype: EnKFState """

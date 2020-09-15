@@ -1764,41 +1764,6 @@ enkf_main_type * enkf_main_alloc(const res_config_type * res_config, bool strict
   return enkf_main;
 }
 
-/**
-   This function creates a minimal configuration file, with a few
-   parameters (a bit arbitrary) parameters read from (typically) a GUI
-   configuration dialog.
-
-   The set of parameters written by this function is _NOT_ a minimum
-   set to generate a valid configuration.
-*/
-
-void enkf_main_create_new_config( const char * config_file , const char * storage_path , const char * dbase_type , int num_realizations) {
-
-  FILE * stream = util_mkdir_fopen( config_file , "w" );
-
-  fprintf(stream , CONFIG_KEY_FORMAT      , ENSPATH_KEY);
-  fprintf(stream , CONFIG_ENDVALUE_FORMAT , storage_path );
-
-  fprintf(stream , CONFIG_KEY_FORMAT      , DBASE_TYPE_KEY);
-  fprintf(stream , CONFIG_ENDVALUE_FORMAT , dbase_type);
-
-  fprintf(stream , CONFIG_KEY_FORMAT      , NUM_REALIZATIONS_KEY);
-  fprintf(stream , CONFIG_INT_FORMAT , num_realizations);
-  fprintf(stream , "\n");
-
-  fclose( stream );
-
-  printf("Have created configuration file: %s \n",config_file );
-}
-
-
-
-
-
-
-
-
 
 int enkf_main_get_ensemble_size( const enkf_main_type * enkf_main ) {
   return enkf_main->ens_size;

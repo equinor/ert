@@ -100,9 +100,10 @@ class EnkfFs(BaseCClass):
 
 
     @classmethod
-    def createFileSystem(cls, path, fs_type, arg=None , mount = False):
+    def createFileSystem(cls, path, mount=False):
         assert isinstance(path, str)
-        assert isinstance(fs_type, EnKFFSType)
+        fs_type = EnKFFSType.BLOCK_FS_DRIVER_ID
+        arg = None
         fs = cls._create(path, fs_type, arg, mount)
         return fs
 

@@ -68,9 +68,7 @@ UMASK              0
 MAX_SUBMIT         10
 MAX_RESAMPLE       1
 
-DBASE_TYPE        BLOCK_FS
-
--- The ensemble 
+-- The ensemble
 NUM_REALIZATIONS  25
 
 IMAGE_TYPE        png

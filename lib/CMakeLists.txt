@@ -182,7 +182,6 @@ add_library(res res_util/res_log.cpp
                 enkf/obs_vector.cpp
                 enkf/pca_plot_data.cpp
                 enkf/pca_plot_vector.cpp
-                enkf/plain_driver.cpp
                 enkf/queue_config.cpp
                 enkf/ranking_table.cpp
                 enkf/rng_config.cpp

@@ -95,7 +95,6 @@ struct model_config_struct {
   char                 * data_root;
   char                 * default_data_root;
 
-  fs_driver_impl         dbase_type;
   int                    max_internal_submit;        /* How many times to retry if the load fails. */
   const ecl_sum_type   * refcase;                    /* A pointer to the refcase - can be NULL. Observe that this ONLY a pointer
                                                         to the ecl_sum instance owned and held by the ecl_config object. */
@@ -199,29 +198,13 @@ const char * model_config_get_gen_kw_export_name( const model_config_type * mode
    model_config->rftpath = util_realloc_string_copy( model_config->rftpath , rftpath );
  }
 
- void model_config_set_dbase_type( model_config_type * model_config , const char * dbase_type_string) {
-   model_config->dbase_type = fs_types_lookup_string_name( dbase_type_string );
-   if (model_config->dbase_type == INVALID_DRIVER_ID)
-     util_abort("%s: did not recognize driver_type:%s \n",__func__ , dbase_type_string);
- }
-
-
  const char * model_config_get_enspath( const model_config_type * model_config) {
    return model_config->enspath;
  }
 
-fs_driver_impl model_config_get_dbase_type(const model_config_type * model_config ) {
-  return model_config->dbase_type;
-}
-
 const ecl_sum_type * model_config_get_refcase( const model_config_type * model_config ) {
   return model_config->refcase;
 }
-
-void * model_config_get_dbase_args( const model_config_type * model_config ) {
-  return NULL;
-}
-
 
 void model_config_set_refcase( model_config_type * model_config , const ecl_sum_type * refcase ) {
   model_config->refcase = refcase;
@@ -273,7 +256,6 @@ model_config_type * model_config_alloc_empty() {
   model_config->rftpath                   = NULL;
   model_config->data_root                 = NULL;
   model_config->default_data_root         = NULL;
-  model_config->dbase_type                = INVALID_DRIVER_ID;
   model_config->current_runpath           = NULL;
   model_config->current_path_key          = NULL;
   model_config->history                   = NULL;
@@ -290,7 +272,6 @@ model_config_type * model_config_alloc_empty() {
 
   model_config_set_enspath( model_config        , DEFAULT_ENSPATH );
   model_config_set_rftpath( model_config        , DEFAULT_RFTPATH );
-  model_config_set_dbase_type( model_config     , DEFAULT_DBASE_TYPE );
   model_config_set_max_internal_submit( model_config   , DEFAULT_MAX_INTERNAL_SUBMIT);
   model_config_add_runpath( model_config , DEFAULT_RUNPATH_KEY , DEFAULT_RUNPATH);
   model_config_select_runpath( model_config , DEFAULT_RUNPATH_KEY );
@@ -338,8 +319,7 @@ model_config_type * model_config_alloc_full(int max_resample,
   model_config_type * model_config = model_config_alloc_empty();
   model_config->max_internal_submit = max_resample;
   model_config->num_realizations = num_realizations;
-  model_config->dbase_type = BLOCK_FS_DRIVER_ID;
-  
+
   model_config_add_runpath( model_config , DEFAULT_RUNPATH_KEY , run_path);
   model_config_select_runpath( model_config , DEFAULT_RUNPATH_KEY );
   model_config_set_data_root(model_config, data_root);
@@ -703,14 +683,7 @@ static void model_config_init_user_config(config_parser_type * config ) {
   item = config_add_schema_item(config, NUM_REALIZATIONS_KEY, true);
   config_schema_item_set_argc_minmax(item, 1, 1);
   config_schema_item_iset_type(item, 0, CONFIG_INT);
-  config_add_alias(config, NUM_REALIZATIONS_KEY, "SIZE");
   config_add_alias(config, NUM_REALIZATIONS_KEY, "NUM_REALISATIONS");
-  config_install_message(
-          config, "SIZE",
-          "** Warning: \'SIZE\' is depreceated "
-          "- use \'NUM_REALIZATIONS\' instead."
-          );
-
 
   /*****************************************************************/
   /* Optional keywords from the model config file */
@@ -725,12 +698,6 @@ static void model_config_init_user_config(config_parser_type * config ) {
 
   item = config_add_schema_item(config, JOBNAME_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
-
-  item = config_add_schema_item(config, DBASE_TYPE_KEY, false);
-  config_parser_deprecate(
-    config, DBASE_TYPE_KEY,
-    "\'DBASE_TYPE\' has been deprecated."
-  );
 
   item = config_add_schema_item(config, FORWARD_MODEL_KEY, false);
   config_schema_item_set_argc_minmax(item , 1, CONFIG_DEFAULT_ARG_MAX);
@@ -752,21 +719,6 @@ static void model_config_init_user_config(config_parser_type * config ) {
 
   item = config_add_schema_item(config, GEN_KW_EXPORT_NAME_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
-
-  item = config_add_schema_item(config, GEN_KW_EXPORT_FILE_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, 1);
-  {
-    char * msg = util_alloc_sprintf("The keyword:%s has been deprecated - use %s *WITHOUT* extension instead", GEN_KW_EXPORT_FILE_KEY, GEN_KW_EXPORT_NAME_KEY);
-    config_parser_deprecate( config, GEN_KW_EXPORT_FILE_KEY, msg );
-    free( msg );
-  }
-
-
-  item = config_add_schema_item(config, LOCAL_CONFIG_KEY, false);
-  config_parser_deprecate(
-    config, LOCAL_CONFIG_KEY,
-    "\'LOCAL_CONFIG\' is deprecated."
-  );
 
   stringlist_type * refcase_dep = stringlist_alloc_new();
   stringlist_append_copy(refcase_dep, REFCASE_KEY);
