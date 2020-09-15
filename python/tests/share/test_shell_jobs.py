@@ -42,10 +42,14 @@ class TestSiteConfigShellJobs(ResTest):
             "symlink",
             "copy_file",
         ]
-        res_config = ResConfig(config_file)
 
+        res_config = ResConfig(config_file)
+        found_jobs = set()
         list_from_content = res_config.ert_workflow_list
         for wf_name in list_from_content.getJobNames():
             exe = list_from_content.getJob(wf_name).executable()
             if exe and exe.startswith(share_path):
                 assert wf_name in shell_job_names
+                found_jobs.add(wf_name)
+
+        assert len(shell_job_names) == len(found_jobs)
