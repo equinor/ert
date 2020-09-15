@@ -131,7 +131,6 @@ extern "C" {
 #define  TIME_MAP_KEY                      "TIME_MAP"
 #define  EXT_JOB_SEARCH_PATH_KEY           "EXT_JOB_SEARCH_PATH"
 #define  STD_SCALE_CORRELATED_OBS_KEY      "STD_SCALE_CORRELATED_OBS"
-#define  PLOT_SETTING_KEY                  "PLOT_SETTINGS"
 #define  UPDATE_SETTING_KEY                "UPDATE_SETTINGS"
 #define  NUM_CPU_KEY                       "NUM_CPU"
 
@@ -175,7 +174,6 @@ extern "C" {
   const char * config_keys_get_queue_option_key();
   const char * config_keys_get_install_job_key();
   const char * config_keys_get_install_job_directory_key();
-  const char * config_keys_get_plot_setting_key();
 
   const char * config_keys_get_log_file_key();
   const char * config_keys_get_log_level_key();

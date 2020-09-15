@@ -213,11 +213,6 @@ class ProgrammaticResConfigTest(ResTest):
                                   "OBS_CONFIG"       : "../input/observations/obsfiles/observations.txt",
                                   "TIME_MAP"         : "../input/refcase/time_map.txt",
 
-                                  "PLOT_SETTINGS" :
-                                  {
-                                    "PATH" : "../output/results/plot/<CASE_DIR>"
-                                  },
-
                                   "SUMMARY" :
                                   [
                                     "WOPR:PROD",

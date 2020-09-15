@@ -686,13 +686,6 @@ static void model_config_init_user_config(config_parser_type * config ) {
   /*****************************************************************/
 
   ert_workflow_list_add_config_items( config );
-  {
-     item = config_add_schema_item(config, PLOT_SETTING_KEY, false);
-     config_parser_deprecate(
-         config, PLOT_SETTING_KEY,
-         "\'PLOT_SETTINGS\' has been deprecated"
-         "- use the general dialog windows instead.");
-  }
   analysis_config_add_config_items( config );
   ensemble_config_add_config_items( config );
   ecl_config_add_config_items( config );

@@ -30,7 +30,6 @@ class ConfigKeys:
     _show_refcase_key     = ResPrototype("char* config_keys_get_show_refcase_key()", bind=False)
     _show_history_key     = ResPrototype("char* config_keys_get_show_history_key()", bind=False)
     _install_job_directory_key = ResPrototype("char* config_keys_get_install_job_directory_key()", bind=False)
-    _plot_settings_key    = ResPrototype("char* config_keys_get_plot_setting_key()", bind=False)
 
     _log_file_key         = ResPrototype("char* config_keys_get_log_file_key()", bind=False)
     _log_level_key        = ResPrototype("char* config_keys_get_log_level_key()", bind=False)
