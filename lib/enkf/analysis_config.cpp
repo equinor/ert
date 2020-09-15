@@ -688,24 +688,6 @@ void analysis_config_add_config_items( config_parser_type * config ) {
   config_add_key_value( config , ENKF_MERGE_OBSERVATIONS_KEY , false , CONFIG_BOOL);
   config_add_key_value( config , SINGLE_NODE_UPDATE_KEY      , false , CONFIG_BOOL);
   config_add_key_value( config , ENKF_CROSS_VALIDATION_KEY   , false , CONFIG_BOOL);
-  config_add_key_value( config , ENKF_LOCAL_CV_KEY           , false , CONFIG_BOOL); //Not in use
-  config_parser_deprecate( config , ENKF_LOCAL_CV_KEY , "\'ENKF_LOCAL_CV\' is deprecated.");
-
-  config_add_key_value( config , ENKF_PEN_PRESS_KEY          , false , CONFIG_BOOL);
-  config_add_key_value( config , ENKF_SCALING_KEY            , false , CONFIG_BOOL); //Not in use
-  config_parser_deprecate( config , ENKF_SCALING_KEY , "\'ENKF_SCALING\' is deprecated.");
-
-  config_add_key_value( config , ENKF_KERNEL_REG_KEY         , false , CONFIG_BOOL); //Not in use
-  config_parser_deprecate( config , ENKF_KERNEL_REG_KEY , "\'ENKF_KERNEL_REG\' is deprecated.");
-
-  config_add_key_value( config , ENKF_KERNEL_FUNC_KEY        , false , CONFIG_INT); //Not in use
-  config_parser_deprecate( config , ENKF_KERNEL_FUNC_KEY , "\'ENKF_KERNEL_FUNC\' is deprecated.");
-
-  config_add_key_value( config , ENKF_KERNEL_PARAM_KEY       , false , CONFIG_INT); //Not in use
-  config_parser_deprecate( config , ENKF_KERNEL_PARAM_KEY , "\'ENKF_KERNEL_PARAM\' is deprecated.");
-
-  config_add_key_value( config , ENKF_CV_FOLDS_KEY           , false , CONFIG_INT); //Not in use
-  config_parser_deprecate( config , ENKF_CV_FOLDS_KEY , "\'ENKF_CV_FOLDS\' is deprecated.");
 
   config_add_key_value( config , ENKF_RERUN_KEY              , false , CONFIG_BOOL);
   config_add_key_value( config , RERUN_START_KEY             , false , CONFIG_INT);

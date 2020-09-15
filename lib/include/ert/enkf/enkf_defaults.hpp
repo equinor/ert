@@ -115,14 +115,6 @@ const char * enkf_defaults_get_default_gen_kw_export_name();
 #define DEFAULT_RERUN                      false
 #define DEFAULT_RERUN_START                0
 #define DEFAULT_UPDATE_LOG_PATH            "update_log"
-#define DEFAULT_CV_NFOLDS                  10
-#define DEFAULT_ENKF_SCALING               true
-#define DEFAULT_ENKF_KERNEL_REG            false
-#define DEFAULT_ENKF_KERNEL_FUNC           1       /*Default is the Gaussian */
-#define DEFAULT_ENKF_KERNEL_PARAM          1       /*Scale by the maximum value in the distance matrix */
-#define DEFAULT_ENKF_CV                    false
-#define DEFAULT_ENKF_PEN_PRESS             false
-#define DEFAULT_UPDATE_RESULTS             false
 #define DEFAULT_SINGLE_NODE_UPDATE         false
 #define DEFAULT_ANALYSIS_MODULE            "STD_ENKF"
 #define DEFAULT_ANALYSIS_NUM_ITERATIONS    4

@@ -99,7 +99,6 @@ GEN_PARAM         GP              GP.txt  INIT_FILES:GP/GP.txt  INPUT_FORMAT:ASC
 
 
 
-UPDATE_RESULTS    TRUE
 ENKF_RERUN        FALSE
 RERUN_START       0
 

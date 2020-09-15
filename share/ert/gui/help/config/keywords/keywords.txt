@@ -30,15 +30,12 @@ surface	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#SUR
 summary	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#SUMMARY
 enkf_alpha	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_ALPHA
 enkf_bootstrap	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_BOOTSTRAP
-enkf_cv_folds	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_CV_FOLDS
 enkf_force_ncomp	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_FORCE_NCOMP
-enkf_local_cv	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_LOCAL_CV
 enkf_pen_press	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_PEN_PRESS
 enkf_mode	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_MODE
 enkf_merge_observations	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_MERGE_OBSERVATIONS
 enkf_ncomp	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_NCOMP
 enkf_rerun	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_RERUN
-enkf_scaling	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_SCALING
 enkf_truncation	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_TRUNCATION
 update_log_path	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#UPDATE_LOG_PATH
 analysis_load	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ANALYSIS_LOAD
