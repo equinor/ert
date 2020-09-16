@@ -60,9 +60,7 @@ class EnKFMain(BaseCClass):
     def __init__(self, config, strict=True, verbose=False):
         """ Initializes an instance of EnkfMain.
 
-        Note: @config ought to be the ResConfig instance holding the
-        configuration. It also accepts that config is the name of a
-        configuration file, this is however deprecated.
+        Note: @config is a ResConfig instance holding the configuration.
         """
 
         real_enkf_main = _RealEnKFMain(config, strict, verbose)
@@ -224,38 +222,12 @@ class _RealEnKFMain(BaseCClass):
         # The res_config argument can be None; the only reason to
         # allow that possibility is to be able to test that the
         # site-config loads correctly.
-        if not config:
-            check = True
-        else:
-            if sys.version_info[0] == 2:
-                check = isinstance(config, basestring)
-            else:
-                check = isinstance(config, str)
-        if check:
-            user_config_file = None
+        if config is None:
+            config = ResConfig(None)
+            config.convertToCReference(self)
+            return config
 
-            if sys.version_info[0] == 2:
-               check2 = isinstance(config, basestring)
-            else:
-               check2 = isinstance(config, str)
-            if check2:
-                if not isfile(config):
-                    raise IOError('No such configuration file "%s".' % res_config)
-
-                warnings.warn("Initializing enkf_main with a config_file is "
-                            "deprecated. Please use res_config to load the file "
-                            "instead",
-                            DeprecationWarning
-                            )
-
-                user_config_file = config
-
-            res_config = ResConfig(user_config_file)
-            res_config.convertToCReference(self)
-
-            return res_config
-
-        raise TypeError("Expected ResConfig, received: %r" % res_config)
+        raise TypeError("Expected ResConfig, received: %r" % config)
 
 
     def get_queue_config(self):
