@@ -38,8 +38,7 @@ class PlotApiTest(TestCase):
                     'SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE', 'SNAKE_OIL_PARAM:OP1_OCTAVES', 'SNAKE_OIL_PARAM:OP1_OFFSET',
                     'SNAKE_OIL_PARAM:OP1_PERSISTENCE', 'SNAKE_OIL_PARAM:OP2_DIVERGENCE_SCALE',
                     'SNAKE_OIL_PARAM:OP2_OCTAVES', 'SNAKE_OIL_PARAM:OP2_OFFSET', 'SNAKE_OIL_PARAM:OP2_PERSISTENCE',
-                    'SNAKE_OIL_NPV:NPV', 'SNAKE_OIL_NPV:RATING', 'SNAKE_OIL_GPR_DIFF@199', 'SNAKE_OIL_OPR_DIFF@199',
-                    'SNAKE_OIL_WPR_DIFF@199'}
+                    'SNAKE_OIL_GPR_DIFF@199', 'SNAKE_OIL_OPR_DIFF@199', 'SNAKE_OIL_WPR_DIFF@199'}
         self.assertSetEqual(expected, keys)
 
     @tmpdir(os.path.join(SOURCE_DIR, 'test-data/local/snake_oil'))

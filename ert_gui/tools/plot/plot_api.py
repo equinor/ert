@@ -32,8 +32,6 @@ class PlotApi(object):
             meta["data_origin"] = "Gen Data"
         elif self._facade.is_gen_kw_key(key):
             meta["data_origin"] = "Gen KW"
-        elif self._facade.is_custom_kw_key(key):
-            meta["data_origin"] = "Custom Data"
         return meta
 
     def get_all_cases_not_running(self):
@@ -59,8 +57,6 @@ class PlotApi(object):
         elif self._facade.is_gen_kw_key(key):
             data = self._facade.gather_gen_kw_data(case, key)
             data.columns = pd.Index([0])
-        elif self._facade.is_custom_kw_key(key):
-            data = self._facade.gather_custom_kw_data(case, key).to_frame(name=0)
         elif self._facade.is_gen_data_key(key):
             data = self._facade.gather_gen_data_data(case, key).T
         else:

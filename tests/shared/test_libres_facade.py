@@ -22,7 +22,6 @@ class LibresFacadeTest(TestCase):
     @tmpdir(os.path.join(SOURCE_DIR, 'test-data/local/snake_oil'))
     def test_keyword_type_checks(self):
         facade = self.facade()
-        self.assertTrue(facade.is_custom_kw_key('SNAKE_OIL_NPV:NPV'))
         self.assertTrue(facade.is_gen_data_key('SNAKE_OIL_GPR_DIFF@199'))
         self.assertTrue(facade.is_summary_key('BPR:1,3,8'))
         self.assertTrue(facade.is_gen_kw_key('SNAKE_OIL_PARAM:BPR_138_PERSISTENCE'))
@@ -30,7 +29,6 @@ class LibresFacadeTest(TestCase):
     @tmpdir(os.path.join(SOURCE_DIR, 'test-data/local/snake_oil'))
     def test_keyword_type_checks_missing_key(self):
         facade = self.facade()
-        self.assertFalse(facade.is_custom_kw_key('nokey'))
         self.assertFalse(facade.is_gen_data_key('nokey'))
         self.assertFalse(facade.is_summary_key('nokey'))
         self.assertFalse(facade.is_gen_kw_key('nokey'))
@@ -39,7 +37,6 @@ class LibresFacadeTest(TestCase):
     def test_data_fetching(self):
         facade = self.facade()
         data = [
-            facade.gather_custom_kw_data('default_0', 'SNAKE_OIL_NPV:NPV'),
             facade.gather_gen_data_data('default_0', 'SNAKE_OIL_GPR_DIFF@199'),
             facade.gather_summary_data('default_0', 'BPR:1,3,8'),
             facade.gather_gen_kw_data('default_0', 'SNAKE_OIL_PARAM:BPR_138_PERSISTENCE')
@@ -53,7 +50,6 @@ class LibresFacadeTest(TestCase):
     def test_data_fetching_missing_case(self):
         facade = self.facade()
         data = [
-            facade.gather_custom_kw_data('nocase', 'SNAKE_OIL_NPV:NPV'),
             facade.gather_gen_data_data('nocase', 'SNAKE_OIL_GPR_DIFF@199'),
             facade.gather_summary_data('nocase', 'BPR:1,3,8'),
             facade.gather_gen_kw_data('nocase', 'SNAKE_OIL_PARAM:BPR_138_PERSISTENCE')
@@ -67,7 +63,6 @@ class LibresFacadeTest(TestCase):
     def test_data_fetching_missing_key(self):
         facade = self.facade()
         data = [
-            facade.gather_custom_kw_data('default_0', 'nokey'),
             facade.gather_gen_data_data('default_0', 'nokey'),
             facade.gather_summary_data('default_0', 'nokey'),
             facade.gather_gen_kw_data('default_0', 'nokey')
@@ -115,8 +110,7 @@ class LibresFacadeTest(TestCase):
                     'SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE', 'SNAKE_OIL_PARAM:OP1_OCTAVES', 'SNAKE_OIL_PARAM:OP1_OFFSET',
                     'SNAKE_OIL_PARAM:OP1_PERSISTENCE', 'SNAKE_OIL_PARAM:OP2_DIVERGENCE_SCALE',
                     'SNAKE_OIL_PARAM:OP2_OCTAVES', 'SNAKE_OIL_PARAM:OP2_OFFSET', 'SNAKE_OIL_PARAM:OP2_PERSISTENCE',
-                    'SNAKE_OIL_NPV:NPV', 'SNAKE_OIL_NPV:RATING', 'SNAKE_OIL_GPR_DIFF@199', 'SNAKE_OIL_OPR_DIFF@199',
-                    'SNAKE_OIL_WPR_DIFF@199']
+                    'SNAKE_OIL_GPR_DIFF@199', 'SNAKE_OIL_OPR_DIFF@199', 'SNAKE_OIL_WPR_DIFF@199']
 
         self.assertEqual(expected, keys)
 

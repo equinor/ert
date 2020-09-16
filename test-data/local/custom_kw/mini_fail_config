@@ -39,5 +39,3 @@ UPDATE_LOG_PATH log/UP
 DATA_KW CSV_OUTPUT_PATH custom_output.csv
 
 OBS_CONFIG Observations/observations
-
-CUSTOM_KW AGGREGATED aggregated.txt aggregated_out.txt
