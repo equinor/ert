@@ -116,38 +116,22 @@ message_level_type log_config_level_parser(const char * level) {
 
   typedef struct {
     const char * log_keyword; // The keyword written in the config file
-    const char * log_old_numeric_str; // The *old* integer value
     const message_level_type log_enum; // The enum for the new log-level
-  } log_tupple;
+  } log_tuple;
 
   const int nr_of_log_levels = 5;
-  log_tupple log_levels[] = {
-  //           New name           Deprecated name            Corresponding enum
-          { LOG_CRITICAL_NAME, LOG_CRITICAL_DEPRECATED_NAME, LOG_CRITICAL },
-          { LOG_ERROR_NAME,    LOG_ERROR_DEPRECATED_NAME,    LOG_ERROR    },
-          { LOG_WARNING_NAME,  LOG_WARNING_DEPRECATED_NAME,  LOG_WARNING  },
-          { LOG_INFO_NAME,     LOG_INFO_DEPRECATED_NAME,     LOG_INFO     },
-          { LOG_DEBUG_NAME,    LOG_DEBUG_DEPRECATED_NAME,    LOG_DEBUG    }
-          };
+    log_tuple log_levels[] = {{LOG_CRITICAL_NAME, LOG_CRITICAL},
+                              {LOG_ERROR_NAME,    LOG_ERROR},
+                              {LOG_WARNING_NAME,  LOG_WARNING},
+                              {LOG_INFO_NAME,     LOG_INFO},
+                              {LOG_DEBUG_NAME,    LOG_DEBUG}};
 
 
   for (int i = 0; i < nr_of_log_levels; i++) {
-    log_tupple curr_log_level = log_levels[i];
+    log_tuple curr_log_level = log_levels[i];
 
-    // We found a new proper name
     if (strcmp(level, curr_log_level.log_keyword)==0)
       return curr_log_level.log_enum;
-
-    // We found an old integer level
-    else if (strcmp(level, curr_log_level.log_old_numeric_str)==0) {
-      fprintf(stderr,
-              "** Deprecation warning: Use of %s %s is deprecated, use %s %s instead\n",
-              LOG_LEVEL_KEY, curr_log_level.log_old_numeric_str,
-              LOG_LEVEL_KEY, curr_log_level.log_keyword
-              );
-
-      return curr_log_level.log_enum;
-    }
   }
 
   fprintf(stderr, "** The log_level: %s is not valid, using default log level\n", level);

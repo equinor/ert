@@ -14,13 +14,16 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import os, itertools, sys
+import itertools
+import os
+import sys
 
 from ecl.util.test import TestAreaContext
-from tests import ResTest
-from res.util.enums import MessageLevelEnum
 
 from res.enkf import LogConfig, ResConfig, ConfigKeys
+from res.util.enums import MessageLevelEnum
+from tests import ResTest
+
 
 class LogConfigTest(ResTest):
 
@@ -29,19 +32,14 @@ class LogConfigTest(ResTest):
         self.config_file = "simple_config/minimum_config"
 
         self.log_files = [
-                            (None, "simple_config/log.txt"),
-                            ("file_loglog", "simple_config/file_loglog"),
-                            ("this/is/../my/log/file.loglog", "simple_config/this/my/log/file.loglog")
-                         ]
+            (None, "simple_config/log.txt"),
+            ("file_loglog", "simple_config/file_loglog"),
+            ("this/is/../my/log/file.loglog", "simple_config/this/my/log/file.loglog")
+        ]
 
         self.log_levels = [(None, MessageLevelEnum.LOG_WARNING)]
         for message_level in [lev for lev in MessageLevelEnum.enums() if lev.value]:
-            # Add new log level
             self.log_levels.append((message_level.name.split("_")[1], message_level))
-
-            # Add old log level
-            self.log_levels.append((str(5-message_level.value/10), message_level))
-
 
     def assert_log_config_load(
             self,
@@ -119,19 +117,18 @@ class LogConfigTest(ResTest):
                     exp_log_level
             )
 
-
     def test_log_config(self):
         test_cases = itertools.product(self.log_files, self.log_levels)
 
         for log_file_data, log_level_data in test_cases:
             self.assert_log_config_load(
-                    log_file_data[0], log_file_data[1],
-                    log_level_data[0], log_level_data[1]
-                    )
+                log_file_data[0], log_file_data[1],
+                log_level_data[0], log_level_data[1]
+            )
 
             if log_file_data[0]:
                 self.assert_log_config_load(
-                        log_file_data[0], log_file_data[1],
-                        log_level_data[0], log_level_data[1],
-                        write_abs_path=True
-                        )
+                    log_file_data[0], log_file_data[1],
+                    log_level_data[0], log_level_data[1],
+                    write_abs_path=True
+                )

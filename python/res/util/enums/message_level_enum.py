@@ -5,36 +5,17 @@ class MessageLevelEnum(BaseCEnum):
     TYPE_NAME = "message_level_enum"
 
     LOG_CRITICAL = None
-    LOG_ERROR    = None
-    LOG_WARNING  = None
-    LOG_INFO     = None
-    LOG_DEBUG    = None
-
-    @classmethod
-    def __legacy_values(cls, val):
-        """These are deprecated legacy values that were deprecated in res 2.2.
-
-        They will be removed later."""
-
-        LEGACY_LEVELS = {
-            4: MessageLevelEnum.LOG_DEBUG,
-            3: MessageLevelEnum.LOG_INFO,
-            2: MessageLevelEnum.LOG_WARNING,
-            1: MessageLevelEnum.LOG_ERROR,
-            0: MessageLevelEnum.LOG_CRITICAL
-        }
-        return LEGACY_LEVELS.get(val)
+    LOG_ERROR = None
+    LOG_WARNING = None
+    LOG_INFO = None
+    LOG_DEBUG = None
 
     @classmethod
     def to_enum(cls, val):
-        legacy = cls.__legacy_values(val)
-        if legacy:
-            return legacy
-
         if isinstance(val, MessageLevelEnum):
             return val
         if not isinstance(val, int):
-            raise TypeError('Cannot convert %s to MessageLevelEnum.' % type(val))
+            raise TypeError("Cannot convert %s to MessageLevelEnum." % type(val))
         if val is None:
             return MessageLevelEnum.LOG_WARNING
         if val >= 50:
@@ -50,7 +31,7 @@ class MessageLevelEnum(BaseCEnum):
 
 
 MessageLevelEnum.addEnum("LOG_CRITICAL", 50)
-MessageLevelEnum.addEnum("LOG_ERROR",    40)
-MessageLevelEnum.addEnum("LOG_WARNING",  30)
-MessageLevelEnum.addEnum("LOG_INFO",     20)
-MessageLevelEnum.addEnum("LOG_DEBUG",    10)
+MessageLevelEnum.addEnum("LOG_ERROR", 40)
+MessageLevelEnum.addEnum("LOG_WARNING", 30)
+MessageLevelEnum.addEnum("LOG_INFO", 20)
+MessageLevelEnum.addEnum("LOG_DEBUG", 10)

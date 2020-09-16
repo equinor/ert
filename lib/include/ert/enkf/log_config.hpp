@@ -28,19 +28,10 @@ extern "C" {
 
 
 #define LOG_CRITICAL_NAME "CRITICAL"
-#define LOG_CRITICAL_DEPRECATED_NAME "0"
-
 #define LOG_ERROR_NAME "ERROR"
-#define LOG_ERROR_DEPRECATED_NAME "1"
-
 #define LOG_WARNING_NAME "WARNING"
-#define LOG_WARNING_DEPRECATED_NAME "2"
-
 #define LOG_INFO_NAME "INFO"
-#define LOG_INFO_DEPRECATED_NAME "3"
-
 #define LOG_DEBUG_NAME "DEBUG"
-#define LOG_DEBUG_DEPRECATED_NAME "4"
 
 
 typedef struct log_config_struct log_config_type;
