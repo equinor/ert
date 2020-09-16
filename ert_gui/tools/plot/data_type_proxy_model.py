@@ -28,7 +28,6 @@ class DataTypeProxyModel(QSortFilterProxyModel):
         self.__show_block_keys = True
         self.__show_gen_kw_keys = True
         self.__show_gen_data_keys = True
-        self.__show_custom_kw_keys = True
         self.__show_custom_pca_keys = True
         self._metadata_filters = {}
         self.setFilterCaseSensitivity(Qt.CaseInsensitive)

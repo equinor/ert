@@ -3,8 +3,7 @@ from res.analysis.analysis_module import AnalysisModule
 from res.analysis.enums.analysis_module_options_enum import \
     AnalysisModuleOptionsEnum
 from res.enkf.export import (GenDataCollector, SummaryCollector,
-                             SummaryObservationCollector, GenDataObservationCollector, GenKwCollector,
-                             CustomKWCollector)
+                             SummaryObservationCollector, GenDataObservationCollector, GenKwCollector)
 from res.enkf.plot_data import PlotBlockDataLoader
 
 
@@ -193,15 +192,6 @@ class LibresFacade(object):
 
         return data.dropna() # removes all rows that has a NaN
 
-    def gather_custom_kw_data(self, case, key):
-        """ :rtype: pandas.DataFrame """
-        data = CustomKWCollector.loadAllCustomKWData(self._enkf_main, case, [key])
-
-        if key in data:
-            return data[key]
-        else:
-            return data
-
     def is_summary_key(self, key):
         """ :rtype: bool """
         return key in self._enkf_main.getKeyManager().summaryKeys()
@@ -209,10 +199,6 @@ class LibresFacade(object):
     def is_gen_kw_key(self, key):
         """ :rtype: bool """
         return key in self._enkf_main.getKeyManager().genKwKeys()
-
-    def is_custom_kw_key(self, key):
-        """ :rtype: bool """
-        return key in self._enkf_main.getKeyManager().customKwKeys()
 
     def is_gen_data_key(self, key):
         """ :rtype: bool """
