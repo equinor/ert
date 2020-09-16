@@ -132,11 +132,6 @@ DATA_KW          WhatEver             SomeThing
 HISTORY_SOURCE  REFCASE_HISTORY
 REFCASE         __NAME__.DATA
 
-
-STORE_SEED   RandomSeed
-LOAD_SEED    RandomSeed
-
-
 --EQUIL      EQUIL     EQUIL.INC     equil_config
 
 RUN_TEMPLATE      GEN_DATA_TEMPLATE GEN_DATA_FILE

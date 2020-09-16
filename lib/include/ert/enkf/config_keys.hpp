@@ -83,7 +83,6 @@ extern "C" {
 #define  JOB_SCRIPT_KEY                    "JOB_SCRIPT"
 #define  JOBNAME_KEY                       "JOBNAME"
 #define  LICENSE_PATH_KEY                  "LICENSE_PATH"
-#define  LOAD_SEED_KEY                     "LOAD_SEED"
 #define  LOG_FILE_KEY                      "LOG_FILE"
 #define  LOG_LEVEL_KEY                     "LOG_LEVEL"
 #define  MAX_RESAMPLE_KEY                  "MAX_RESAMPLE"
@@ -113,7 +112,6 @@ extern "C" {
 #define  UPDATE_LOG_PATH_KEY               "UPDATE_LOG_PATH"
 #define  UPDATE_PATH_KEY                   "UPDATE_PATH"
 #define  SINGLE_NODE_UPDATE_KEY            "SINGLE_NODE_UPDATE"
-#define  STORE_SEED_KEY                    "STORE_SEED"
 #define  RANDOM_SEED_KEY                   "RANDOM_SEED"
 #define  UMASK_KEY                         "UMASK"
 #define  WORKFLOW_JOB_DIRECTORY_KEY        "WORKFLOW_JOB_DIRECTORY"
@@ -175,8 +173,6 @@ extern "C" {
   const char * config_keys_get_log_file_key();
   const char * config_keys_get_log_level_key();
   const char * config_keys_get_update_log_path_key();
-  const char * config_keys_get_store_seed_key();
-  const char * config_keys_get_load_seed_key();
   const char * config_keys_get_summary_key();
   const char * config_keys_get_max_runtime_key();
   const char * config_keys_get_min_realizations_key();

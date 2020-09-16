@@ -37,8 +37,6 @@
 struct rng_config_struct {
   rng_alg_type      type;
   char            * random_seed;
-  char            * seed_load_file;    /* NULL: Do not store the seed. */
-  char            * seed_store_file;   /* NULL: Do not load a seed from file. */
 };
 
 
@@ -75,30 +73,11 @@ rng_alg_type rng_config_get_type(const rng_config_type * rng_config ) {
   return rng_config->type;
 }
 
-const char * rng_config_get_seed_load_file( const rng_config_type * rng_config ) {
-  return rng_config->seed_load_file;
-}
-
-void rng_config_set_seed_load_file( rng_config_type * rng_config , const char * seed_load_file) {
-  rng_config->seed_load_file = util_realloc_string_copy( rng_config->seed_load_file , seed_load_file);
-}
-
-const char * rng_config_get_seed_store_file( const rng_config_type * rng_config ) {
-  return rng_config->seed_store_file;
-}
-
-void rng_config_set_seed_store_file( rng_config_type * rng_config , const char * seed_store_file) {
-  rng_config->seed_store_file = util_realloc_string_copy( rng_config->seed_store_file , seed_store_file);
-}
-
-
 static rng_config_type * rng_config_alloc_default(void) {
   rng_config_type * rng_config = (rng_config_type *)util_malloc( sizeof * rng_config);
 
   rng_config_set_type( rng_config , MZRAN );  /* Only type ... */
   rng_config->random_seed = NULL;
-  rng_config->seed_store_file = NULL;
-  rng_config->seed_load_file = NULL;
 
   return rng_config;
 }
@@ -125,44 +104,31 @@ rng_config_type * rng_config_alloc(const config_content_type * config_content) {
 
   return rng_config;
 }
-rng_config_type * rng_config_alloc_full(const char * random_seed, const char * store_seed, const char * load_seed) {
+rng_config_type * rng_config_alloc_full(const char * random_seed) {
   rng_config_type * rng_config = rng_config_alloc_default();
-
   rng_config->random_seed = util_realloc_string_copy(rng_config->random_seed, random_seed);
-  rng_config->seed_store_file = util_realloc_string_copy(rng_config->seed_store_file, store_seed);
-  rng_config->seed_load_file = util_realloc_string_copy(rng_config->seed_load_file, load_seed);
 
   return rng_config;
 }
 
 
 void rng_config_free( rng_config_type * rng) {
-  free( rng->seed_load_file );
-  free( rng->seed_store_file );
   free( rng->random_seed );
   free( rng );
 }
 
 
 rng_manager_type * rng_config_alloc_rng_manager( const rng_config_type * rng_config ) {
-  const char * seed_store = rng_config_get_seed_store_file( rng_config );
-  const char * seed_load  = rng_config_get_seed_load_file( rng_config );
   rng_manager_type * rng_manager;
 
   if (rng_config->random_seed) {
     char * formatted_seed = rng_config_alloc_formatted_random_seed(rng_config);
     rng_manager = rng_manager_alloc(formatted_seed);
-  }
-  else if (seed_load && util_file_exists( seed_load )) {
-    rng_manager = rng_manager_alloc_load( seed_load );
-  }
-  else {
+  } else {
     rng_manager = rng_manager_alloc_random( );
   }
 
   rng_manager_log_state(rng_manager);
-  if (seed_store)
-    rng_manager_save_state( rng_manager , seed_store );
 
   return rng_manager;
 }
@@ -171,18 +137,6 @@ rng_manager_type * rng_config_alloc_rng_manager( const rng_config_type * rng_con
 /*****************************************************************/
 
 void rng_config_add_config_items( config_parser_type * parser ) {
-  config_add_key_value(parser, STORE_SEED_KEY, false, CONFIG_PATH);
-  config_parser_deprecate(
-          parser,
-          STORE_SEED_KEY,
-          "STORE_SEED is deprecated - for reproducibility, fetch logged RANDOM_SEED instead");
-
-  config_add_key_value(parser, LOAD_SEED_KEY, false, CONFIG_PATH);
-  config_parser_deprecate(
-          parser,
-          LOAD_SEED_KEY,
-          "LOAD_SEED is deprecated - use RANDOM_SEED instead");
-
   config_add_key_value(parser, RANDOM_SEED_KEY, false, CONFIG_STRING);
 }
 
@@ -192,25 +146,5 @@ void rng_config_init(rng_config_type * rng_config, const config_content_type * c
     const char * random_seed = config_content_get_value(config_content, RANDOM_SEED_KEY);
     rng_config_set_random_seed(rng_config, random_seed);
     res_log_fcritical("Using RANDOM_SEED: %s", random_seed);
-  }
-
-  if(config_content_has_item(config_content, STORE_SEED_KEY)) {
-    if(rng_config->random_seed)
-      res_log_warning("Cannot have both RANDOM_SEED and STORE_SEED "
-                      "keywords. STORE_SEED will be ignored.");
-    else
-      rng_config_set_seed_store_file(rng_config,
-                                     config_content_iget(config_content,
-                                                         STORE_SEED_KEY, 0, 0));
-  }
-
-  if(config_content_has_item(config_content, LOAD_SEED_KEY)) {
-    if(rng_config->random_seed)
-      res_log_warning("Cannot have both RANDOM_SEED and LOAD_SEED "
-                      "keywords. LOAD_SEED will be ignored.");
-    else
-      rng_config_set_seed_load_file(rng_config,
-                                    config_content_iget(config_content,
-                                                        LOAD_SEED_KEY, 0 ,0));
   }
 }

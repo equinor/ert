@@ -119,8 +119,6 @@ config_data = {
                               },
         "LOG_LEVEL"         : MessageLevelEnum.LOG_INFO,
         "RNG_ALG_TYPE"      : RngAlgTypeEnum.MZRAN,
-        "STORE_SEED"        : "../input/rng/SEED",
-        "LOAD_SEED"         : "../input/rng/SEED",
         "GRID"              : "../../eclipse/include/grid/CASE.EGRID",
         "RUN_TEMPLATE"      : {
                                   "seed_template" : {

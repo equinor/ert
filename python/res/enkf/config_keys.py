@@ -34,8 +34,6 @@ class ConfigKeys:
     _log_file_key         = ResPrototype("char* config_keys_get_log_file_key()", bind=False)
     _log_level_key        = ResPrototype("char* config_keys_get_log_level_key()", bind=False)
     _update_log_path      = ResPrototype("char* config_keys_get_update_log_path_key()", bind=False)
-    _store_seed           = ResPrototype("char* config_keys_get_store_seed_key()", bind=False)
-    _load_seed            = ResPrototype("char* config_keys_get_load_seed_key()", bind=False)
     _summary              = ResPrototype("char* config_keys_get_summary_key()", bind=False)
 
     _max_runtime          = ResPrototype("char* config_keys_get_max_runtime_key()", bind=False)
@@ -188,8 +186,6 @@ class ConfigKeys:
     LOG_FILE         = _log_file_key()
     LOG_LEVEL        = _log_level_key()
     UPDATE_LOG_PATH  = _update_log_path()
-    STORE_SEED       = _store_seed()
-    LOAD_SEED        = _load_seed()
     RANDOM_SEED      = _random_seed()
     SUMMARY          = _summary()
     MAX_RUNTIME      = _max_runtime()

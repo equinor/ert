@@ -58,14 +58,6 @@ const char * config_keys_get_update_log_path_key() {
   return UPDATE_LOG_PATH_KEY;
 }
 
-const char * config_keys_get_store_seed_key() {
-  return STORE_SEED_KEY;
-}
-
-const char * config_keys_get_load_seed_key() {
-  return LOAD_SEED_KEY;
-}
-
 const char * config_keys_get_summary_key() {
   return SUMMARY_KEY;
 }

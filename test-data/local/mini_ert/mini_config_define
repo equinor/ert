@@ -6,9 +6,6 @@ DEFINE <STORAGE> storage
 
 NUM_REALIZATIONS 10
 
-STORE_SEED   RandomSeed
-LOAD_SEED    RandomSeed
-
 RUNPATH <STORAGE>/Run/realisation-%d/iter-%d
 ENSPATH <STORAGE>/ertensemble
 

@@ -293,12 +293,6 @@ class ProgrammaticResConfigTest(ResTest):
                                     "UPDATE_LOG_PATH" : "../output/update_log/<CASE_DIR>",
                                     "LOG_FILE"        : "../output/log/ert_<CASE_DIR>.log"
                                   },
-
-                                  "SEED" :
-                                  {
-                                    "STORE_SEED" : "../input/rng/SEED",
-                                    "LOAD_SEED"  : "../input/rng/SEED"
-                                  }
                                 }
                               }
 
