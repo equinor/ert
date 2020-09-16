@@ -16,13 +16,10 @@
 
 import sys
 import os.path
-import warnings
 
 from cwrap import BaseCClass
-from ecl.util.util import StringList
 from res import ResPrototype
-from res.config import (ContentTypeEnum, ConfigContent,
-                        UnrecognizedEnum, ConfigPathElm)
+from res.config import ConfigContent, UnrecognizedEnum
 
 
 class ConfigParser(BaseCClass):
@@ -32,17 +29,15 @@ class ConfigParser(BaseCClass):
     _add   = ResPrototype("schema_item_ref config_add_schema_item(config_parser, char*, bool)")
     _free  = ResPrototype("void config_free(config_parser)")
     _parse = ResPrototype("config_content_obj config_parse(config_parser, char*, char*, char*, char*, hash, config_unrecognized_enum, bool)")
-    _size  = ResPrototype("int config_get_schema_size(config_parser)");
+    _size  = ResPrototype("int config_get_schema_size(config_parser)")
     _get_schema_item = ResPrototype("schema_item_ref config_get_schema_item(config_parser, char*)")
     _has_schema_item = ResPrototype("bool config_has_schema_item(config_parser, char*)")
     _add_key_value   = ResPrototype("bool config_parser_add_key_values(config_parser, config_content, char*, stringlist, config_path_elm, char*, config_unrecognized_enum)")
     _validate        = ResPrototype("void config_validate(config_parser, config_content)")
 
-
     def __init__(self):
         c_ptr = self._alloc()
         super(ConfigParser, self).__init__(c_ptr)
-
 
     def __contains__(self, keyword):
         return self._has_schema_item(keyword)
@@ -59,11 +54,6 @@ class ConfigParser(BaseCClass):
             item.iset_type(0, value_type)
         return item
 
-
-    def getSchemaItem(self, keyword):
-        warnings.warn('deprecated, use conf[kw]', DeprecationWarning)
-        return self[keyword]
-
     def __getitem__(self, keyword):
         if keyword in self:
             item = self._get_schema_item(keyword)
@@ -71,7 +61,6 @@ class ConfigParser(BaseCClass):
             return item
         else:
             raise KeyError("Config parser does not have item:%s" % keyword)
-
 
     def parse(self,
               config_file,
@@ -104,14 +93,11 @@ class ConfigParser(BaseCClass):
 
         return config_content
 
-
     def free(self):
         self._free()
 
-
     def validate(self, config_content):
         self._validate(config_content)
-
 
     def add_key_value(self,
                       config_content,
