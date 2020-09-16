@@ -420,46 +420,6 @@ void ext_job_set_executable(ext_job_type * ext_job, const char * executable_abs,
     __update_mode( full_path , S_IRUSR + S_IWUSR + S_IXUSR + S_IRGRP + S_IWGRP + S_IXGRP + S_IROTH + S_IXOTH);  /* u:rwx  g:rwx  o:rx */
     ext_job->executable = util_realloc_string_copy(ext_job->executable , full_path);
     free( full_path );
-  } else if (util_file_exists(executable_input)) {
-    /*
-       This "if" case means that we have found an executable relative
-       to the current working directory. This is deprecated behaviour,
-       support will be removed
-    */
-    char * full_path                  = (char*)util_alloc_abs_path(executable_input);
-    const char * job_description_file = ext_job_get_config_file(ext_job);
-    char * path_to_job_descr_file     = util_split_alloc_dirname(job_description_file);
-    char * new_relative_path_to_exe   = (char*)util_alloc_rel_path(path_to_job_descr_file, full_path);
-    char * relative_config_file       = (char*)util_alloc_rel_path(NULL , ext_job->config_file);
-
-    fprintf(stderr,"/----------------------------------------------------------------\n");
-    fprintf(stderr,"|                        ** WARNING **                            \n");
-    fprintf(stderr,"|\n");
-    fprintf(stderr,"| The convention for locating the executable in a forward model \n");
-    fprintf(stderr,"| job has changed. When using a relative path in the EXECUTABLE \n");
-    fprintf(stderr,"| setting in the job description file, the path will be interpreted\n");
-    fprintf(stderr,"| relative to the location of the job description file. \n");
-    fprintf(stderr,"|\n");
-    fprintf(stderr,"| The job:\'%s\' will temporarilty continue to work in the \n",ext_job->name);
-    fprintf(stderr,"| present form, but it is recommended to update: \n");
-    fprintf(stderr,"|\n");
-    fprintf(stderr,"|   1. Open the file:%s in an editor \n",relative_config_file);
-    fprintf(stderr,"|\n");
-    fprintf(stderr,"|   2. Change the EXECUTABLE line to: \n");
-    fprintf(stderr,"|\n");
-    fprintf(stderr,"|             EXECUTABLE  %s \n" , new_relative_path_to_exe);
-    fprintf(stderr,"|\n");
-    fprintf(stderr,"| The main advantage with this change in behaviour is that the\n");
-    fprintf(stderr,"| job description file and the executable can be relocated.\n");
-    fprintf(stderr,"\\----------------------------------------------------------------\n\n");
-
-    ext_job_set_executable(ext_job, full_path, NULL, search_path);
-
-    free(new_relative_path_to_exe);
-    free(path_to_job_descr_file);
-    free(full_path);
-    free(relative_config_file);
-
    } else  if (util_is_abs_path( executable_input )) {
     /* If you have given an absolute path (i.e. starting with '/' to
        a non existing job we mark it as invalid - no possibility to
