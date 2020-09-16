@@ -47,11 +47,8 @@ job_script	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#
 queue_system	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#QUEUE_SYSTEM
 lsf_server	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#LSF_SERVER
 lsf_queue	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#LSF_QUEUE
-max_running_lsf	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#MAX_RUNNING_LSF
-max_running_local	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#MAX_RUNNING_LOCAL
 rsh_host	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#RSH_HOST
 rsh_command	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#RSH_COMMAND
-max_running_rsh	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#MAX_RUNNING_RSH
 image_viewer	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#IMAGE_VIEWER
 image_type	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#IMAGE_TYPE
 plot_driver	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#PLOT_DRIVER

@@ -8,7 +8,6 @@
 
 -- Setting configuration information about the LSF system:
 LSF_QUEUE           normal
-MAX_RUNNING_LSF     20
 LSF_RESOURCES       select[cs && x86_64Linux] rusage[ecl100v2000=1:duration=5]
 
 
@@ -20,12 +19,7 @@ LSF_RESOURCES       select[cs && x86_64Linux] rusage[ecl100v2000=1:duration=5]
 -- Which will run up to two jobs on 'host1' and four jobs on 'host2'
 -- and 'host3'; in addition it is essential to have passwordless login
 -- to the hosts 'hostx'.
-MAX_RUNNING_RSH     100  -- You will never get more than the hosts allow anyway.
 RSH_COMMAND         /usr/bin/ssh
-
-
--- Configuration for running the local workstation:
-MAX_RUNNING_LOCAL   4
 
 
 -- Which queue system will we use?
