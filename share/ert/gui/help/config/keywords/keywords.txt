@@ -77,7 +77,5 @@ observation_ranking	http://ert.nr.no/ert/index.php/Creating_a_configuration_file
 data_ranking	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#DATA_RANKING
 export_ranking	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#EXPORT_RANKING
 init_misfit_table	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#INIT_MISFIT_TABLE
-qc_workflow	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#QC_WORKFLOW
-qc_path	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#QC_PATH
 setenv	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#SETENV
 update_path	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#UPDATE_PATH

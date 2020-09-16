@@ -35,21 +35,13 @@
 #include <ert/enkf/model_config.hpp>
 
 #define HOOK_MANAGER_NAME             "HOOK MANAGER"
-#define QC_WORKFLOW_NAME              "QC WORKFLOW"
 
 struct hook_manager_struct {
   vector_type            * hook_workflow_list;  /* vector of hook_workflow_type instances */
   runpath_list_type      * runpath_list;
   ert_workflow_list_type * workflow_list;
   hash_type              * input_context;
-
-
-  /* Deprecated stuff */
-  hook_workflow_type     * post_hook_workflow; /* This is the good old QC workflow, kept for backward compatibility, obsolete */
 };
-
-
-
 
 hook_manager_type * hook_manager_alloc(
                     ert_workflow_list_type * workflow_list,
@@ -117,21 +109,12 @@ hook_manager_type * hook_manager_alloc_default(ert_workflow_list_type * workflow
 
 hook_manager_type * hook_manager_alloc_full(
         ert_workflow_list_type * workflow_list,
-        const char * workflow_file,
-        const char * workflow_name,
         const char * runpath_list_file,
         const char ** hook_workflow_names,
         const char ** hook_workflow_run_modes,
         int hook_workflow_count) {
 
     hook_manager_type * hook_manager = hook_manager_alloc_default(workflow_list);
-    if (workflow_file != NULL) {
-      workflow_type * workflow = ert_workflow_list_add_workflow( hook_manager->workflow_list , workflow_file , workflow_name);
-      if (workflow != NULL) {
-       hook_workflow_type * hook = hook_workflow_alloc( workflow , POST_SIMULATION );
-       vector_append_owned_ref(hook_manager->hook_workflow_list, hook , hook_workflow_free__);
-     }
-    }
 
     for (int i = 0; i < hook_workflow_count; ++i) {
       const char * workflow_name = hook_workflow_names[i];
@@ -145,23 +128,6 @@ hook_manager_type * hook_manager_alloc_full(
 }
 
 void hook_manager_init( hook_manager_type * hook_manager , const config_content_type * config_content) {
-
-  /* Old stuff explicitly prefixed with QC  */
-  {
-    if (config_content_has_item( config_content , QC_WORKFLOW_KEY)) {
-      char * workflow_name;
-      const char * file_name = config_content_get_value_as_path(config_content , QC_WORKFLOW_KEY);
-      util_alloc_file_components( file_name , NULL , &workflow_name , NULL );
-      workflow_type * workflow = ert_workflow_list_add_workflow( hook_manager->workflow_list , file_name , workflow_name);
-      if (workflow != NULL) {
-       hook_workflow_type * hook = hook_workflow_alloc( workflow , POST_SIMULATION );
-       vector_append_owned_ref(hook_manager->hook_workflow_list, hook , hook_workflow_free__);
-     }
-    }
-  }
-
-
-
   if (config_content_has_item( config_content , HOOK_WORKFLOW_KEY)) {
     for (int ihook = 0; ihook < config_content_get_occurences(config_content , HOOK_WORKFLOW_KEY); ihook++) {
       const char * workflow_name = config_content_iget( config_content , HOOK_WORKFLOW_KEY, ihook , 0 );
@@ -187,20 +153,6 @@ void hook_manager_init( hook_manager_type * hook_manager , const config_content_
 
 void hook_manager_add_config_items( config_parser_type * config ) {
   config_schema_item_type * item;
-
-  /* Old stuff - explicitly prefixed with QC. */
-  {
-    item = config_add_schema_item( config , QC_PATH_KEY , false  );
-    config_schema_item_set_argc_minmax(item , 1 , 1 );
-    config_install_message( config , QC_PATH_KEY , "The \'QC_PATH\' keyword is ignored.");
-
-
-    item = config_add_schema_item( config , QC_WORKFLOW_KEY , false );
-    config_schema_item_set_argc_minmax(item , 1 , 1 );
-    config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
-
-    config_install_message( config , QC_WORKFLOW_KEY , "The \'QC_WORKFLOW\' keyword is deprecated - use \'HOOK_WORKFLOW\' instead");
-  }
 
   item = config_add_schema_item( config , HOOK_WORKFLOW_KEY , false );
   config_schema_item_set_argc_minmax(item , 2 , 2 );

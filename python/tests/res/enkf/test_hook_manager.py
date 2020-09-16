@@ -35,7 +35,6 @@ class HookManagerTest(ResTest):
             ConfigKeys.RUNPATH_FILE: "runpath",
             ConfigKeys.CONFIG_DIRECTORY: self.work_area.get_cwd(),
             ConfigKeys.CONFIG_FILE_KEY: "config",
-            ConfigKeys.QC_WORKFLOW_KEY: "qc_workflow",
             ConfigKeys.HOOK_WORKFLOW_KEY: [
                 ("MAGIC_PRINT", "PRE_SIMULATION")
             ],
@@ -45,7 +44,6 @@ class HookManagerTest(ResTest):
         }
         self.filename = self.config_data[ConfigKeys.CONFIG_FILE_KEY]
         # these files must exist
-        self.make_empty_file(self.config_data[ConfigKeys.QC_WORKFLOW_KEY])
         self.make_empty_file(self.config_data[ConfigKeys.RUNPATH_FILE])
 
         # write a config file in order to load ResConfig
@@ -96,16 +94,9 @@ class HookManagerTest(ResTest):
             list_file,
             os.path.join(conf_dir, self.config_data[ConfigKeys.RUNPATH_FILE]))
 
-        self.assertEqual(len(hook_manager), 2)
-        qc_workflow = hook_manager[0]
-        self.assertEqual(
-            qc_workflow.getWorkflow().src_file,
-            self.config_data[ConfigKeys.QC_WORKFLOW_KEY])
-        self.assertEqual(
-            qc_workflow.getRunMode(),
-            HookRuntime.POST_SIMULATION)
+        self.assertEqual(len(hook_manager), 1)
 
-        magic_workflow = hook_manager[1]
+        magic_workflow = hook_manager[0]
         self.assertEqual(
             magic_workflow.getWorkflow().src_file,
             os.path.join(conf_dir, self.config_data[ConfigKeys.LOAD_WORKFLOW]))

@@ -92,8 +92,6 @@ extern "C" {
 #define  OBS_CONFIG_KEY                    "OBS_CONFIG"
 #define  QUEUE_SYSTEM_KEY                  "QUEUE_SYSTEM"
 #define  QUEUE_OPTION_KEY                  "QUEUE_OPTION"
-#define  QC_PATH_KEY                       "QC_PATH"
-#define  QC_WORKFLOW_KEY                   "QC_WORKFLOW"
 #define  HOOK_WORKFLOW_KEY                 "HOOK_WORKFLOW"
 #define  REFCASE_KEY                       "REFCASE"
 #define  REFCASE_LIST_KEY                  "REFCASE_LIST"
@@ -230,7 +228,6 @@ extern "C" {
 /////***** Analysis config keys*******////////////
 
   // hook_manager config keys
-  const char * config_keys_get_qc_workflow_key();
   const char * config_keys_get_hook_workflow_key();
   // hook_manager config keys
 

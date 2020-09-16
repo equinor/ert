@@ -247,11 +247,6 @@ const char * config_keys_get_workflow_job_directory_key() {
 }
 //*********ert workflow list_config keys************//
 
-// hook_manager config keys
-const char * config_keys_get_qc_workflow_key() {
-  return QC_WORKFLOW_KEY;
-}
-
 const char * config_keys_get_hook_workflow_key() {
   return HOOK_WORKFLOW_KEY;
 }

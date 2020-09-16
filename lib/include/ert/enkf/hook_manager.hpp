@@ -35,13 +35,12 @@ extern "C" {
   hook_manager_type   * hook_manager_alloc(ert_workflow_list_type *, const config_content_type *);
 
   hook_manager_type * hook_manager_alloc_full(
-          ert_workflow_list_type *,
-          const char *,
-          const char *,
-          const char *,
-          const char **,
-          const char **,
-          int);
+          ert_workflow_list_type * workflow_list,
+          const char * runpath_list_file,
+          const char ** hook_workflow_names,
+          const char ** hook_workflow_run_modes,
+          int hook_workflow_count
+          );
 
   void                  hook_manager_free(hook_manager_type * hook_manager);
 
@@ -54,14 +53,6 @@ extern "C" {
 
   const hook_workflow_type   * hook_manager_iget_hook_workflow(const hook_manager_type * hook_manager, int index);
   int                          hook_manager_get_size(const hook_manager_type * hook_manager);
-
-  /*****************************************************************/
-  /* Deprecated stuff                                              */
-  /*****************************************************************/
-
-  void                  hook_manager_set_path( hook_manager_type * hook_manager , const char * path);
-  bool                  hook_manager_has_post_hook_workflow( const hook_manager_type * hook_manager );
-  const hook_workflow_type * hook_manager_get_post_hook_workflow( const hook_manager_type * hook_manager );
 
 
 #ifdef __cplusplus

@@ -6,11 +6,14 @@ from res import ResPrototype
 from res.enkf import ConfigKeys
 from res.enkf.enums import HookRuntime
 
+
 class HookManager(BaseCClass):
     TYPE_NAME = "hook_manager"
 
     _alloc                 = ResPrototype("void* hook_manager_alloc(ert_workflow_list, config_content)", bind=False)
-    _alloc_full            = ResPrototype("void* hook_manager_alloc_full(ert_workflow_list, char*, char*, char*)", bind=False)
+    # hook_manager_alloc_full() has char** which cwrap is missing an implementation for
+    # so we let ctypes implicitly handle the two char** arguments and final int argument
+    _alloc_full            = ResPrototype("void* hook_manager_alloc_full(ert_workflow_list, char*)", bind=False)
     _free                  = ResPrototype("void hook_manager_free(subst_config)")
     _get_runpath_list_file = ResPrototype("char* hook_manager_get_runpath_list_file(hook_manager)")
     _get_runpath_list      = ResPrototype("runpath_list_ref  hook_manager_get_runpath_list(hook_manager)")
@@ -26,14 +29,6 @@ class HookManager(BaseCClass):
             if not isinstance(config_dir, str):
                 raise ValueError(
                     "HookManager needs {} to be configured".format(ConfigKeys.CONFIG_DIRECTORY))
-
-            # QC_WORKFLOW
-            workflow_name = config_dict.get(ConfigKeys.QC_WORKFLOW_KEY)
-            workflow_file = None
-            if workflow_name is not None:
-                workflow_file = workflow_name
-                if not os.path.isfile(workflow_file) or not os.access(workflow_file, os.R_OK):
-                    raise IOError("Could not read file {}".format(workflow_file))
 
             # RUNPATH_FILE #
             runpath_file_name = config_dict.get(ConfigKeys.RUNPATH_FILE, ConfigKeys.RUNPATH_LIST_FILE)
@@ -51,8 +46,6 @@ class HookManager(BaseCClass):
 
             c_ptr = self._alloc_full(
                 workflow_list,
-                workflow_file,
-                workflow_name,
                 runpath_file_path,
                 self._to_c_string_arr(hook_workflow_names),
                 self._to_c_string_arr(hook_workflow_run_modes),

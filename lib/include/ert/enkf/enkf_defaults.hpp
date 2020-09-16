@@ -123,7 +123,6 @@ const char * enkf_defaults_get_default_gen_kw_export_name();
 
 
 /* Default directories. */
-#define DEFAULT_QC_PATH          "QC"
 #define DEFAULT_REPORT_PATH      "reports"
 #define DEFAULT_RUNPATH          "simulations/realization%d"
 #define DEFAULT_ENSPATH          "storage"

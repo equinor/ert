@@ -44,8 +44,6 @@ RUNPATH           /scratch/ert/joaho/Run1/Xrun%d
 ENSPATH           /tmp/Gurbat/104BlockFS
 ECLBASE           ECL_%04d
 
-QC_PATH           /tmp/QC
-
 -- How to simulate
 
 

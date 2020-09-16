@@ -71,7 +71,6 @@ void test_filter_file2() {
     fclose(stream);
   }
 
-  subst_list_append_copy( subst_list , "<QC_PATH>" , "QC" , NULL);
   subst_list_append_copy( subst_list , "__MAGIC__" , "MagicAllTheWayToWorkFlow" , NULL);
   subst_list_append_copy( subst_list , "<CASE>" , "SUPERcase" , NULL);
   subst_list_append_copy( subst_list , "<ERTCASE>" , "default" , NULL);
