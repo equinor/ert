@@ -81,11 +81,6 @@ if res_lib_path:
 if sys.hexversion < required_version_hex:
     raise Exception("ERT Python requires Python 2.7")
 
-if os.getenv("ERT_LIBRARY_PATH"):
-    raise EnvironmentError("ERT_LIBRARY_PATH is deprecated and should be "
-                  "removed from your environment")
-
-
 # This load() function is *the* function actually loading shared
 # libraries.
 
