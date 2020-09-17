@@ -24,7 +24,6 @@ List of keywords
 =====================================================================	======================================	==============================  ==============================================================================================================================================
 Keyword name                                                        	Required              			Default value         		Purpose
 =====================================================================	======================================	============================== 	==============================================================================================================================================
-:ref:`ADD_FIXED_LENGTH_SCHEDULE_KW <add_fixed_length_schedule_kw>`  	NO                                          				Deprecated
 :ref:`ANALYSIS_COPY <analysis_copy>`                                	NO                                          				Create new instance of analysis module
 :ref:`ANALYSIS_LOAD <analysis_load>`                                	NO                                          				Load analysis module
 :ref:`ANALYSIS_SET_VAR <analysis_set_var>`                          	NO                                          				Set analysis module internal state variable
@@ -32,7 +31,6 @@ Keyword name                                                        	Required   
 :ref:`CASE_TABLE <case_table>`                                      	NO                                          				Deprecated
 :ref:`DATA_FILE <data_file>`                                        	NO                                         				Provide an ECLIPSE data file for the problem
 :ref:`DATA_KW <data_kw>`                                            	NO                                          				Replace strings in ECLIPSE .DATA files
-:ref:`DBASE_TYPE <dbase_type>`                                      	NO                    			BLOCK_FS         	     	Deprecated
 :ref:`DEFINE <define>`                                              	NO                                          				Define keywords with config scope
 :ref:`DELETE_RUNPATH <delete_runpath>`                              	NO                                          				Explicitly tell ERT to delete the runpath when a job is complete 
 :ref:`ECLBASE <eclbase>`	                                    	YES\*					        			Define a name for the ECLIPSE simulations. \*Either JOBNAME or ECLBASE must be specified
@@ -40,40 +38,31 @@ Keyword name                                                        	Required   
 :ref:`ENKF_ALPHA <enkf_alpha>`                                      	NO                    			3.0                  		Parameter controlling outlier behaviour in EnKF algorithm
 :ref:`ENKF_CROSS_VALIDATION <enkf_cross_validation>`                	NO                                                                      Deprecated
 :ref:`ENKF_FORCE_NCOMP <enkf_force_ncomp>`                              NO                    			0                    		Indicate if ERT should force a specific number of principal components
-:ref:`ENKF_KERNEL_PARAM <enkf_kernel_param>`                        	NO                    			1                    		Deprecated
-:ref:`ENKF_CV_FOLDS <enkf_cv_folds>`                                	NO                    			10                    		Deprecated
-:ref:`ENKF_LOCAL_CV <enkf_local_cv>`                                	NO                    			FALSE                 		Deprecated
 :ref:`ENKF_MERGE_OBSERVATIONS <enkf_merge_observations>`            	NO                    			FALSE                 		Should observations from many times be merged together?
 :ref:`ENKF_NCOMP <enkf_ncomp>`                                        	NO                    			              			Number of PC to use when forcing a fixed number; used in combination with kw ENKF_FORCE_NCOMP 
-:ref:`ENKF_PEN_PRESS <enkf_pen_press>`                              	NO                    			FALSE                 		Should we want to use a penalised PRESS statistic in model selection? 
-:ref:`ENKF_RERUN <enkf_rerun>`                                      	NO                    			FALSE                 		Should the simulations be restarted from time zero after each update? 
-:ref:`ENKF_SCALING <enkf_scaling>`                                  	NO                    			TRUE           		       	Deprecated
-:ref:`ENKF_TRUNCATION <enkf_truncation>`                            	NO                    			0.99        	          	Cutoff used on singular value spectrum 
+:ref:`ENKF_RERUN <enkf_rerun>`                                      	NO                    			FALSE                 		Should the simulations be restarted from time zero after each update?
+:ref:`ENKF_TRUNCATION <enkf_truncation>`                            	NO                    			0.99        	          	Cutoff used on singular value spectrum
 :ref:`ENSPATH <enspath>`                                            	NO                    			storage     	          	Folder used for storage of simulation results
 :ref:`FIELD <field>`                                                	NO                                          				Adds grid parameters
 :ref:`FORWARD_MODEL <forward_model>`                                	NO                                          				Add the running of a job to the simulation forward model 
 :ref:`GEN_DATA <gen_data>`                                          	NO                                          				Specify a general type of data created/updated by the forward model
 :ref:`GEN_KW <gen_kw>`                                              	NO                                          				Add a scalar parameter 
 :ref:`GEN_KW_TAG_FORMAT <gen_kw_tag_format>`                        	NO                    			<%s>                  		Format used to add keys in the GEN_KW template files
-:ref:`GEN_KW_EXPORT_FILE <gen_kw_export_file>`                      	NO                    			parameter.txt         		Name of file to where `GEN_KW` parameters will be exported
-:ref:`GEN_PARAM <gen_param>`                                        	NO                                          				Add a general parameter 
+:ref:`GEN_PARAM <gen_param>`                                        	NO                                          				Add a general parameter
 :ref:`GRID <grid>`                                                  	NO                                         				Provide an ECLIPSE grid for the reservoir model 
 :ref:`HISTORY_SOURCE <history_source>`                              	NO                    			REFCASE_HISTORY     	  	Source used for historical values
 :ref:`HOOK_WORKFLOW <hook_workflow>` 					NO 									Install a workflow to be run automatically
-:ref:`IGNORE_SCHEDULE <ignore_schedule>`                            	NO                                          				Deprecated
-:ref:`INSTALL_JOB <install_job>`                                   	NO                                          				Install a job for use in a forward model 
+:ref:`INSTALL_JOB <install_job>`                                   	NO                                          				Install a job for use in a forward model
 :ref:`ITER_CASE <iter_Case>`                                        	NO                    			IES%d         	        	Case name format - iterated ensemble smoother
 :ref:`ITER_COUNT <iter_count>`                                      	NO                    			4             	        	Number of iterations - iterated ensemble smoother 
 :ref:`ITER_RETRY_COUNT <iter_retry_count>`                          	NO                    			4         	            	Number of retries for a iteration - iterated ensemble smoother 
 :ref:`JOBNAME <jobname>`                                            	YES\*                                          				Name used for simulation files. \*Either JOBNAME or ECLBASE must be specified
 :ref:`JOB_SCRIPT <job_script>`                                      	NO                                          				Python script managing the forward model 
-:ref:`LOAD_SEED <load_seed>`                                        	NO                                          				Deprecated
-:ref:`LOAD_WORKFLOW <load_workflow>` 				    	NO                             						Load a workflow into ERT 
+:ref:`LOAD_WORKFLOW <load_workflow>` 				    	NO                             						Load a workflow into ERT
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`  			    	NO 									Load a workflow job into ERT 
 :ref:`LICENSE_PATH <license_path>`  				    	NO 									A path where ert-licenses to e.g. RMS are stored
-:ref:`LOCAL_CONFIG <load_config>` 			            	NO 									Deprecated
-:ref:`LOG_FILE <log_file>` 					    	NO 					log 				Name of log file 
-:ref:`LOG_LEVEL <log_level>` 					    	NO 		 			1 				How much logging? 
+:ref:`LOG_FILE <log_file>` 					    	NO 					log 				Name of log file
+:ref:`LOG_LEVEL <log_level>` 					    	NO 		 			WARNING 				How much logging? CRITICAL|DEBUG|ERROR|INFO|WARNING
 :ref:`MAX_RESAMPLE <max_resample>`				    	NO 					1		 		How many times should ERT resample & retry a simulation
 :ref:`MAX_RUNTIME <max_runtime>` 					NO 					0 				Set the maximum runtime in seconds for a realization 
 :ref:`MAX_SUBMIT <max_submit>` 						NO 					2 				How many times should the queue system retry a simulation 
@@ -81,8 +70,7 @@ Keyword name                                                        	Required   
 :ref:`NUM_CPU <num_cpu>` 							YES 									Set the number of CPUs. Intepretation varies depending on context
 :ref:`NUM_REALIZATIONS <num_realizations>` 				YES 									Set the number of reservoir realizations to use 
 :ref:`OBS_CONFIG <obs_config>` 						NO 									File specifying observations with uncertainties 
-:ref:`PLOT_SETTINGS <plot_settings>` 					NO 					  				Deprecated
-:ref:`QUEUE_OPTION <queue_option>` 					NO 									Set options for an ERT queue system 
+:ref:`QUEUE_OPTION <queue_option>` 					NO 									Set options for an ERT queue system
 :ref:`QUEUE_SYSTEM <queue_system>` 					NO 									System used for running simulation jobs
 :ref:`REFCASE <refcase>` 						NO 									Reference case used for observations and plotting (See HISTORY_SOURCE and SUMMARY)
 :ref:`REFCASE_LIST <refcase_list>` 					NO 									Full path to Eclipse .DATA files containing completed runs (which you can add to plots) 
@@ -93,14 +81,12 @@ Keyword name                                                        	Required   
 :ref:`RUNPATH_FILE <runpath_file>`  					NO 					.ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations 
 :ref:`RUN_TEMPLATE <run_template>`  					NO 									Install arbitrary files in the runpath directory
 :ref:`STD_SCALE_CORRELATED_OBS <std_scale_correlated_obs>`              NO                                      FALSE                           Try to estimate the correlations in the data to inflate the observation std     
-:ref:`SCHEDULE_FILE <schedule_file>`  					NO 									Deprecated
-:ref:`SCHEDULE_PREDICTION_FILE <schedule_prediction_file>`  		NO 									Schedule prediction file 
+:ref:`SCHEDULE_PREDICTION_FILE <schedule_prediction_file>`  		NO 									Schedule prediction file
 :ref:`SETENV <setenv>`  						NO 									You can modify the UNIX environment with SETENV calls 
 :ref:`SIMULATION_JOB <simulation_job>`  				NO 					 				Experimental alternative to FORWARD_MODEL
 :ref:`SINGLE_NODE_UPDATE <single_node_update>`  			NO 					FALSE 				Splits the dataset into individual parameters
 :ref:`STOP_LONG_RUNNING <stop_long_running>`  				NO 					FALSE 				Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run 
-:ref:`STORE_SEED  <store_seed>` 					NO 									Deprecated
-:ref:`SUMMARY  <summary>` 						NO 									Add summary variables for internalization 
+:ref:`SUMMARY  <summary>` 						NO 									Add summary variables for internalization
 :ref:`SURFACE <surface>`  						NO 									Surface parameter read from RMS IRAP file 
 :ref:`TIME_MAP  <time_map>`       					NO 									Ability to manually enter a list of dates to establish report step <-> dates mapping
 :ref:`UMASK <umask>`  							NO 									Control the permissions on files created by ERT 
@@ -227,18 +213,6 @@ These keywords must be set to make ERT function properly.
         NUM_CPU 2
 
 
-.. _ignore_schedule:
-.. topic:: IGNORE_SCHEDULE
-
-        `IGNORE_SCHEDULE` is deprecated.
-
-
-.. _schedule_file:
-.. topic:: SCHEDULE_FILE
-
-	`SCHEDULE_FILE` is deprecated.
-
-
 Basic optional keywords
 -----------------------
 .. _basic_optional_keywords:
@@ -266,41 +240,10 @@ possible to do with ERT.
 	built in magic strings.
 
 
-.. _dbase_type:
-.. topic:: DBASE_TYPE
-
-        `DBASE_TYPE` is deprecated.
-
-
-
-.. _static_kw:
-.. topic:: STATIC_KW
-
-    Deprecated.
-
-
 .. _license_path:
 .. topic:: LICENSE_PATH
 
     A path where ert-licenses to e.g. RMS are stored.
-
-
-.. _load_seed:
-.. topic:: LOAD_SEED
-
-        `LOAD_SEED` is deprecated, use `RANDOM_SEED` instead.
-
-
-.. _load_config:
-.. topic:: LOCAL_CONFIG
-
-        `LOCAL_CONFIG` is deprecated.
-
-
-.. _store_seed:
-.. topic:: STORE_SEED
-
-        `STORE_SEED` is deprecated - for reproducibility, fetch logged `RANDOM_SEED` instead.
 
 
 .. _random_seed:
@@ -1081,12 +1024,6 @@ and/or history matching project.
         Format used to add keys in the `GEN_KW` template files.
 
 
-.. _gen_kw_export_file:
-.. topic:: GEN_KW_EXPORT_FILE
-
-        Name of file to where `GEN_KW` parameters will be exported.
-
-
 .. _surface:
 .. topic:: SURFACE
 
@@ -1212,24 +1149,12 @@ Keywords controlling the ES algorithm
         `ENKF_CROSS_VALIDATION` is deprecated.
 
 
-.. _enkf_kernel_param:
-.. topic:: ENKF_KERNEL_PARAM
-
-        `ENKF_KERNEL_PARAM` is deprecated.
-
-
-.. _enkf_cv_folds:
-.. topic:: ENKF_CV_FOLDS
-
-	`ENKF_CV_FOLDS` is deprecated.
-
-
 .. _enkf_force_ncomp:
 .. topic:: ENKF_FORCE_NCOMP
 
 	Bool specifying if we want to force the subspace dimension we want to use in
 	the EnKF updating scheme (SVD-based) to a specific integer. This is an
-	alternative to selecting the dimension using ENKF_TRUNCATION or ENKF_LOCAL_CV.
+	alternative to selecting the dimension using ENKF_TRUNCATION.
 
 	*Example:*
 
@@ -1238,34 +1163,6 @@ Keywords controlling the ES algorithm
 		-- Setting the the subspace dimension to 2
 		ENKF_FORCE_NCOMP     TRUE
 		ENKF_NCOMP              2
-
-
-
-.. _enkf_local_cv:
-.. topic:: ENKF_LOCAL_CV
-
-	`ENKF_LOCAL_CV` is deprecated.
-
-
-.. _enkf_pen_press:
-.. topic:: ENKF_PEN_PRESS
-
-	Boolean specifying if we want to select the subspace dimension in the
-	SVD-based EnKF algorithm using Cross-Validation (CV), and a penalised version
-	of the predictive error sum of squares (PRESS) statistic [2]. This is
-	recommended when overfitting is a severe problem (and when the number of
-	ensemble members is small)
-
-	*Example:*
-
-	::
-
-		-- Select the subspace dimension using Cross-Validation
-		ENKF_LOCAL_CV TRUE
-
-		-- Using penalised PRESS statistic
-		ENKF_PEN_PRESS TRUE
-
 
 
 .. _enkf_mode:
@@ -1320,13 +1217,6 @@ Keywords controlling the ES algorithm
 
 	This is a boolean switch - TRUE or FALSE. Should the simulation start from
 	time zero after each update.
-
-
-
-.. _enkf_scaling:
-.. topic:: ENKF_SCALING
-
-	`ENKF_SCALING` is deprecated.
 
 
 .. _enkf_truncation:
@@ -1561,12 +1451,6 @@ the internals of ERT and/or ECLIPSE may
 be required to fully understand their effect. Moreover, many of these keywords
 are defined in the site configuration, and thus optional to set for the user,
 but required when installing ERT at a new site.
-
-
-.. _add_fixed_length_schedule_kw:
-.. topic:: ADD_FIXED_LENGTH_SCHEDULE_KW
-
-	`ADD_FIXED_LENGTH_SCHEDULE_KW` is deprecated.
 
 
 .. _define:
@@ -2255,13 +2139,6 @@ Keywords related to plotting
 	::
 
 		REFCASE_LIST /path/to/refcase1/file1.DATA /path/to/refcase2/file2.DATA
-
-
-.. _plot_settings:
-.. topic:: PLOT_SETTINGS
-
-	`PLOT_SETTINGS` is deprecated.
-
 
 
 .. _rftpath:
