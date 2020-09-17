@@ -1,4 +1,4 @@
-from ert_shared.ide.keywords.definitions import IntegerArgument, KeywordDefinition, ConfigurationLineDefinition, PathArgument, StringArgument
+from ert_shared.ide.keywords.definitions import KeywordDefinition, ConfigurationLineDefinition, PathArgument, StringArgument
 from ert_shared.ide.keywords.definitions.proper_name_argument import ProperNameArgument
 
 
@@ -9,31 +9,6 @@ class AdvancedKeywords(object):
 
         ert_keywords.addKeyword(self.addDefine())
         ert_keywords.addKeyword(self.addSchedulePredictionFile())
-        ert_keywords.addKeyword(self.addFixedLengthScheduleKw())
-        ert_keywords.addKeyword(self.addStaticKw())
-
-
-
-    def addFixedLengthScheduleKw(self):
-        fixed_length_sched_kw = ConfigurationLineDefinition(keyword=KeywordDefinition("ADD_FIXED_LENGTH_SCHEDULE_KW"),
-                                             arguments=[StringArgument(),
-                                                        StringArgument()],
-                                             documentation_link="keywords/add_fixed_length_schedule_kw",
-                                             required=False,
-                                             group=self.group)
-        return fixed_length_sched_kw
-
-
-    def addStaticKw(self):
-        add_static_kw = ConfigurationLineDefinition(keyword=KeywordDefinition("ADD_STATIC_KW"),
-                                             arguments=[StringArgument(),
-                                                        StringArgument()],
-                                             documentation_link="keywords/add_static_kw",
-                                             required=False,
-                                             group=self.group)
-        return add_static_kw
-
-
 
     def addDefine(self):
         define = ConfigurationLineDefinition(keyword=KeywordDefinition("DEFINE"),

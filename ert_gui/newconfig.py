@@ -18,7 +18,7 @@
 import os
 
 from qtpy.QtCore import Qt, QSize
-from qtpy.QtWidgets import QDialog, QFormLayout, QLabel, QDialogButtonBox, QComboBox, QSpinBox, QLineEdit, QWidget
+from qtpy.QtWidgets import QDialog, QFormLayout, QLabel, QDialogButtonBox, QSpinBox, QLineEdit, QWidget
 
 
 def createSpace(size=5):
@@ -56,10 +56,6 @@ class NewConfigurationDialog(QDialog):
         configuration_name = QLabel()
         configuration_name.setText(filename)
 
-        self.db_type = QComboBox()
-        self.db_type.addItem("BLOCK_FS")
-        self.db_type.addItem("PLAIN")
-
         self.num_realizations = QSpinBox()
         self.num_realizations.setMinimum(1)
         self.num_realizations.setMaximum(1000)
@@ -73,7 +69,6 @@ class NewConfigurationDialog(QDialog):
         layout.addRow("Configuration name:", configuration_name)
         layout.addRow("Configuration location:", configuration_location)
         layout.addRow("Path to store DBase:", self.storage_path)
-        layout.addRow("DBase type:", self.db_type)
         layout.addRow("Number of realizations", self.num_realizations)
         layout.addRow(createSpace(10))
 
@@ -92,10 +87,6 @@ class NewConfigurationDialog(QDialog):
 
     def getConfigurationPath(self):
         return self.configuration_path
-
-    def getDBaseType(self):
-        """Return the DBase type"""
-        return str(self.db_type.currentText())
 
     def getStoragePath(self):
         """Return the DBase storage path"""

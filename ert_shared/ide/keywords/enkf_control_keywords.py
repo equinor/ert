@@ -8,23 +8,16 @@ class EnkfControlKeywords(object):
 
         ert_keywords.addKeyword(self.addEnkfAlpha())
         ert_keywords.addKeyword(self.addEnkfBootstrap())
-        ert_keywords.addKeyword(self.addEnkfCvFolds())
         ert_keywords.addKeyword(self.addEnkfForceNComp())
-        ert_keywords.addKeyword(self.addEnkfLocalCv())
-        ert_keywords.addKeyword(self.addEnkfPenPress())
         ert_keywords.addKeyword(self.addEnkfMode())
         ert_keywords.addKeyword(self.addMergeObservations())
         ert_keywords.addKeyword(self.addEnkfNComp())
         ert_keywords.addKeyword(self.addEnkfRerun())
-        ert_keywords.addKeyword(self.addEnkfScaling())
         ert_keywords.addKeyword(self.addEnkfTruncation())
         ert_keywords.addKeyword(self.addUpdateLogPath())
         ert_keywords.addKeyword(self.addRerunStart())
         ert_keywords.addKeyword(self.addUpdateResults())
         ert_keywords.addKeyword(self.addEnkfCrossValidation())
-        ert_keywords.addKeyword(self.addEnkfKernelRegression())
-        ert_keywords.addKeyword(self.addEnkfKernelFunction())
-        ert_keywords.addKeyword(self.addEnkfKernelParam())
         ert_keywords.addKeyword(self.addEnkfSchedFile())
         ert_keywords.addKeyword(self.addCaseTable())
         ert_keywords.addKeyword(self.addContainer())
@@ -39,8 +32,6 @@ class EnkfControlKeywords(object):
                                                  group=self.group)
         return enkf_alpha
 
-
-
     def addEnkfBootstrap(self):
         enkf_bootstrap = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_BOOTSTRAP"),
                                                      arguments=[BoolArgument()],
@@ -49,18 +40,6 @@ class EnkfControlKeywords(object):
                                                      group=self.group)
         return enkf_bootstrap
 
-
-
-    def addEnkfCvFolds(self):
-        enkf_cv_folds = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_CV_FOLDS"),
-                                                    arguments=[IntegerArgument()],
-                                                    documentation_link="keywords/enkf_cv_folds",
-                                                    required=False,
-                                                    group=self.group)
-        return enkf_cv_folds
-
-
-
     def addEnkfForceNComp(self):
         enkf_force_ncomp = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_FORCE_NCOMP"),
                                                     arguments=[BoolArgument()],
@@ -68,25 +47,6 @@ class EnkfControlKeywords(object):
                                                     required=False,
                                                     group=self.group)
         return enkf_force_ncomp
-
-
-    def addEnkfLocalCv(self):
-        enkf_local_cv = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_LOCAL_CV"),
-                                                    arguments=[BoolArgument()],
-                                                    documentation_link="keywords/enkf_local_cv",
-                                                    required=False,
-                                                    group=self.group)
-        return enkf_local_cv
-
-
-    def addEnkfPenPress(self):
-        enkf_pen_press = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_PEN_PRESS"),
-                                                    arguments=[BoolArgument()],
-                                                    documentation_link="keywords/enkf_pen_press",
-                                                    required=False,
-                                                    group=self.group)
-        return enkf_pen_press
-
 
 
     def addEnkfMode(self):
@@ -136,17 +96,6 @@ class EnkfControlKeywords(object):
         return rerun_start
 
 
-
-    def addEnkfScaling(self):
-        enkf_scaling = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_SCALING"),
-                                                   arguments=[BoolArgument()],
-                                                   documentation_link="keywords/enkf_scaling",
-                                                   required=False,
-                                                   group=self.group)
-        return enkf_scaling
-
-
-
     def addEnkfTruncation(self):
         enkf_truncation = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_TRUNCATION"),
                                                       arguments=[FloatArgument()],
@@ -182,33 +131,6 @@ class EnkfControlKeywords(object):
                                                        required=False,
                                                         group=self.group)
         return cross_validation
-
-
-    def addEnkfKernelRegression(self):
-        kernel_regression = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_KERNEL_REGRESSION"),
-                                                        arguments=[StringArgument()],
-                                                        documentation_link="keywords/enkf_kernel_regression",
-                                                        required=False,
-                                                        group=self.group)
-        return kernel_regression
-
-
-    def addEnkfKernelFunction(self):
-        kernel_function = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_KERNEL_FUNCTION"),
-                                                      arguments=[StringArgument()],
-                                                      documentation_link="keywords/enkf_kernel_function",
-                                                      required=False,
-                                                      group=self.group)
-        return kernel_function
-
-
-    def addEnkfKernelParam(self):
-        kernel_param = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_KERNEL_PARAM"),
-                                                      arguments=[StringArgument()],
-                                                      documentation_link="keywords/enkf_kernel_param",
-                                                      required=False,
-                                                      group=self.group)
-        return kernel_param
 
 
     def addEnkfSchedFile(self):

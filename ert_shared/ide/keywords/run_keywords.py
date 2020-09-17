@@ -101,7 +101,7 @@ class RunKeywords(object):
 
     def addLogLevel(self):
         log_level = ConfigurationLineDefinition(keyword=KeywordDefinition("LOG_LEVEL"),
-                                                      arguments=[IntegerArgument()],
+                                                      arguments=[StringArgument()],
                                                       documentation_link="keywords/log_level",
                                                       required=False,
                                                       group=self.group)

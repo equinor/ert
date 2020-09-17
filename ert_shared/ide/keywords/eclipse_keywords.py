@@ -1,4 +1,4 @@
-from ert_shared.ide.keywords.definitions import IntegerArgument, KeywordDefinition, ConfigurationLineDefinition, StringArgument, BoolArgument
+from ert_shared.ide.keywords.definitions import KeywordDefinition, ConfigurationLineDefinition, StringArgument
 from ert_shared.ide.keywords.definitions.path_argument import PathArgument
 
 
@@ -7,18 +7,12 @@ class EclipseKeywords(object):
         super(EclipseKeywords, self).__init__()
         self.group = "Eclipse"
 
-
         ert_keywords.addKeyword(self.addDataFile())
         ert_keywords.addKeyword(self.addEclBase())
         ert_keywords.addKeyword(self.addJobName())
         ert_keywords.addKeyword(self.addGrid())
-        ert_keywords.addKeyword(self.addInitSection())
-        ert_keywords.addKeyword(self.addScheduleFile())
         ert_keywords.addKeyword(self.addDataKw())
         ert_keywords.addKeyword(self.addEquilInitFile())
-        ert_keywords.addKeyword(self.addIgnoreSchedule())
-
-
 
     def addDataFile(self):
         data_file = ConfigurationLineDefinition(keyword=KeywordDefinition("DATA_FILE"),
@@ -63,33 +57,6 @@ class EclipseKeywords(object):
                                            required=True,
                                            group=self.group)
         return grid
-
-    def addInitSection(self):
-        init_section = ConfigurationLineDefinition(keyword=KeywordDefinition("INIT_SECTION"),
-                                                   arguments=[PathArgument()],
-                                                   documentation_link="keywords/init_section",
-                                                   required=True,
-                                                   group=self.group)
-        return init_section
-
-
-    def addScheduleFile(self):
-        schedule_file = ConfigurationLineDefinition(keyword=KeywordDefinition("SCHEDULE_FILE"),
-                                                    arguments=[PathArgument()],
-                                                    documentation_link="keywords/schedule_file",
-                                                    required=True,
-                                                    group=self.group)
-        return schedule_file
-
-
-    def addIgnoreSchedule(self):
-        ignore_schedule = ConfigurationLineDefinition(keyword=KeywordDefinition("IGNORE_SCHEDULE"),
-                                                    arguments=[BoolArgument()],
-                                                    documentation_link="keywords/ignore_schedule",
-                                                    required=False,
-                                                    group=self.group)
-        return ignore_schedule
-
 
     def addDataKw(self):
         data_kw = ConfigurationLineDefinition(keyword=KeywordDefinition("DATA_KW"),

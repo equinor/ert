@@ -6,7 +6,6 @@ from ert_shared.ide.keywords.enkf_control_keywords import EnkfControlKeywords
 from ert_shared.ide.keywords.ensemble_keywords import EnsembleKeywords
 from ert_shared.ide.keywords.parametrization_keywords import ParametrizationKeywords
 from ert_shared.ide.keywords.plot_keywords import PlotKeywords
-from ert_shared.ide.keywords.qc_keywords import QCKeywords
 from ert_shared.ide.keywords.queue_system_keywords import QueueSystemKeywords
 from ert_shared.ide.keywords.run_keywords import RunKeywords
 from ert_shared.ide.keywords.simulation_control_keywords import SimulationControlKeywords
@@ -32,7 +31,6 @@ class ErtKeywords(object):
         PlotKeywords(self)
         WorkflowKeywords(self)
         AdvancedKeywords(self)
-        QCKeywords(self)
         UnixEnvironmentKeywords(self)
 
 
