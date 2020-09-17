@@ -34,11 +34,6 @@ class ErtKeywordTest(ErtTest):
         self.keywordTest("ECLBASE", [StringArgument], "keywords/eclbase", "Eclipse", True)
         self.keywordTest("JOBNAME", [StringArgument], "keywords/job_name", "Eclipse", True)
         self.keywordTest("GRID", [PathArgument], "keywords/grid", "Eclipse", True)
-        self.keywordTest("INIT_SECTION", [PathArgument], "keywords/init_section", "Eclipse", True)
-        self.keywordTest("SCHEDULE_FILE", [PathArgument], "keywords/schedule_file", "Eclipse", True)
-        self.keywordTest("DATA_KW", [StringArgument, StringArgument], "keywords/data_kw", "Eclipse")
-        self.keywordTest("IGNORE_SCHEDULE", [BoolArgument], "keywords/ignore_schedule", "Eclipse")
-
 
     def test_ensemble_keywords(self):
         self.keywordTest("NUM_REALIZATIONS", [IntegerArgument], "keywords/num_realizations", "Ensemble", True)
@@ -52,7 +47,6 @@ class ErtKeywordTest(ErtTest):
         self.keywordTest("OBS_CONFIG", [PathArgument], "keywords/obs_config", "Ensemble")
         self.keywordTest("RESULT_PATH", [PathArgument], "keywords/result_path", "Ensemble")
         self.keywordTest("LICENSE_PATH", [PathArgument], "keywords/license_path", "Ensemble")
-        self.keywordTest("LOCAL_CONFIG", [StringArgument], "keywords/local_config", "Ensemble")
 
     def test_run_keywords(self):
         self.keywordTest("INSTALL_JOB", [StringArgument, PathArgument], "keywords/install_job", "Run")
@@ -63,13 +57,11 @@ class ErtKeywordTest(ErtTest):
         self.keywordTest("FORWARD_MODEL", [StringArgument], "keywords/forward_model", "Run")
         self.keywordTest("JOB_SCRIPT", [PathArgument], "keywords/job_script", "Run")
         self.keywordTest("RUN_TEMPLATE", [PathArgument, StringArgument], "keywords/run_template", "Run")
-        self.keywordTest("LOG_LEVEL", [IntegerArgument], "keywords/log_level", "Run")
+        self.keywordTest("LOG_LEVEL", [StringArgument], "keywords/log_level", "Run")
         self.keywordTest("LOG_FILE", [PathArgument], "keywords/log_file", "Run")
         self.keywordTest("MAX_SUBMIT", [IntegerArgument], "keywords/max_submit", "Run")
         self.keywordTest("MAX_RESAMPLE", [IntegerArgument], "keywords/max_resample", "Run")
         self.keywordTest("PRE_CLEAR_RUNPATH", [BoolArgument], "keywords/pre_clear_runpath", "Run")
-
-
 
     def test_control_simulations_keywords(self):
         self.keywordTest("MAX_RUNTIME", [IntegerArgument], "keywords/max_runtime", "Simulation Control")
@@ -83,32 +75,21 @@ class ErtKeywordTest(ErtTest):
         self.keywordTest("GEN_KW_TAG_FORMAT", [StringArgument], "keywords/gen_kw_tag_format", "Parametrization")
         self.keywordTest("GEN_PARAM", [StringArgument,StringArgument,StringArgument], "keywords/gen_param", "Parametrization")
         self.keywordTest("SUMMARY", [StringArgument], "keywords/summary", "Parametrization")
-        self.keywordTest("DBASE_TYPE", [StringArgument], "keywords/dbase_type", "Parametrization")
-        self.keywordTest("STORE_SEED", [StringArgument], "keywords/store_seed", "Parametrization")
-        self.keywordTest("LOAD_SEED", [StringArgument], "keywords/load_seed", "Parametrization")
         self.keywordTest("SURFACE", [StringArgument], "keywords/surface", "Parametrization")
-
 
     def test_enkf_control_keywords(self):
         self.keywordTest("ENKF_ALPHA", [FloatArgument], "keywords/enkf_alpha", "Enkf Control")
         self.keywordTest("ENKF_BOOTSTRAP", [BoolArgument], "keywords/enkf_bootstrap", "Enkf Control")
-        self.keywordTest("ENKF_CV_FOLDS", [IntegerArgument], "keywords/enkf_cv_folds", "Enkf Control")
         self.keywordTest("ENKF_FORCE_NCOMP", [BoolArgument], "keywords/enkf_force_ncomp", "Enkf Control")
-        self.keywordTest("ENKF_LOCAL_CV", [BoolArgument], "keywords/enkf_local_cv", "Enkf Control")
-        self.keywordTest("ENKF_PEN_PRESS", [BoolArgument], "keywords/enkf_pen_press", "Enkf Control")
         self.keywordTest("ENKF_MODE", [StringArgument], "keywords/enkf_mode", "Enkf Control")
         self.keywordTest("ENKF_MERGE_OBSERVATIONS", [BoolArgument], "keywords/enkf_merge_observations", "Enkf Control")
         self.keywordTest("ENKF_NCOMP", [IntegerArgument], "keywords/enkf_ncomp", "Enkf Control")
         self.keywordTest("ENKF_RERUN", [BoolArgument], "keywords/enkf_rerun", "Enkf Control")
         self.keywordTest("RERUN_START", [IntegerArgument], "keywords/rerun_start", "Enkf Control")
-        self.keywordTest("ENKF_SCALING", [BoolArgument], "keywords/enkf_scaling", "Enkf Control")
         self.keywordTest("ENKF_TRUNCATION", [FloatArgument], "keywords/enkf_truncation", "Enkf Control")
         self.keywordTest("UPDATE_LOG_PATH", [PathArgument], "keywords/update_log_path", "Enkf Control")
         self.keywordTest("UPDATE_RESULTS", [BoolArgument], "keywords/update_results", "Enkf Control")
         self.keywordTest("ENKF_CROSS_VALIDATION", [StringArgument], "keywords/enkf_cross_validation", "Enkf Control")
-        self.keywordTest("ENKF_KERNEL_REGRESSION", [StringArgument], "keywords/enkf_kernel_regression", "Enkf Control")
-        self.keywordTest("ENKF_KERNEL_FUNCTION", [StringArgument], "keywords/enkf_kernel_function", "Enkf Control")
-        self.keywordTest("ENKF_KERNEL_PARAM", [StringArgument], "keywords/enkf_kernel_param", "Enkf Control")
         self.keywordTest("ENKF_SCHED_FILE", [PathArgument], "keywords/enkf_sched_file", "Enkf Control")
         self.keywordTest("CASE_TABLE", [StringArgument], "keywords/case_table", "Enkf Control")
         self.keywordTest("CONTAINER", [StringArgument], "keywords/container", "Enkf Control")
@@ -127,8 +108,6 @@ class ErtKeywordTest(ErtTest):
 
 
     def test_advanced_keywords(self):
-        self.keywordTest("ADD_FIXED_LENGTH_SCHEDULE_KW", [StringArgument, StringArgument], "keywords/add_fixed_length_schedule_kw", "Advanced")
-        self.keywordTest("ADD_STATIC_KW", [StringArgument, StringArgument], "keywords/add_static_kw", "Advanced")
         self.keywordTest("DEFINE", [ProperNameArgument, StringArgument], "keywords/define", "Advanced")
         self.keywordTest("SCHEDULE_PREDICTION_FILE", [PathArgument], "keywords/schedule_prediction_file", "Advanced")
 
@@ -138,12 +117,9 @@ class ErtKeywordTest(ErtTest):
         self.keywordTest("LSF_SERVER", [StringArgument], "keywords/lsf_server", "Queue System")
         self.keywordTest("LSF_QUEUE", [StringArgument], "keywords/lsf_queue", "Queue System")
         self.keywordTest("LSF_RESOURCES", [StringArgument], "keywords/lsf_resources", "Queue System")
-        self.keywordTest("MAX_RUNNING_LSF", [IntegerArgument], "keywords/max_running_lsf", "Queue System")
         self.keywordTest("TORQUE_QUEUE", [StringArgument], "keywords/torque_queue", "Queue System")
-        self.keywordTest("MAX_RUNNING_LOCAL", [IntegerArgument], "keywords/max_running_local", "Queue System")
         self.keywordTest("RSH_HOST", [StringArgument, StringArgument], "keywords/rsh_host", "Queue System")
         self.keywordTest("RSH_COMMAND", [PathArgument], "keywords/rsh_command", "Queue System")
-        self.keywordTest("MAX_RUNNING_RSH", [IntegerArgument], "keywords/max_running_rsh", "Queue System")
         self.keywordTest("HOST_TYPE", [StringArgument], "keywords/host_type", "Queue System")
 
 
@@ -172,10 +148,6 @@ class ErtKeywordTest(ErtTest):
         self.keywordTest("LOAD_WORKFLOW_JOB", [StringArgument], "keywords/load_workflow_job", "Workflow Jobs")
         self.keywordTest("WORKFLOW_JOB_DIRECTORY", [PathArgument], "keywords/workflow_job_directory", "Workflow Jobs")
         self.keywordTest("LOAD_WORKFLOW", [PathArgument, StringArgument], "keywords/load_workflow", "Workflow Jobs")
-
-    def test_qc_keywords(self):
-        self.keywordTest("QC_WORKFLOW", [StringArgument], "keywords/qc_workflow", "Quality Check")
-        self.keywordTest("QC_PATH", [PathArgument], "keywords/qc_path", "Quality Check")
 
     def test_unix_environment_keywords(self):
         self.keywordTest("SETENV", [StringArgument, StringArgument], "keywords/setenv", "Unix")

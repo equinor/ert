@@ -1,4 +1,4 @@
-from ert_shared.ide.keywords.definitions import IntegerArgument, KeywordDefinition, ConfigurationLineDefinition, PathArgument, StringArgument
+from ert_shared.ide.keywords.definitions import  KeywordDefinition, ConfigurationLineDefinition, StringArgument
 
 
 class ParametrizationKeywords(object):
@@ -11,15 +11,8 @@ class ParametrizationKeywords(object):
         ert_keywords.addKeyword(self.addGenKw())
         ert_keywords.addKeyword(self.addSummary())
         ert_keywords.addKeyword(self.addGenParam())
-        ert_keywords.addKeyword(self.addDBaseType())
-        ert_keywords.addKeyword(self.addStoreSeed())
-        ert_keywords.addKeyword(self.addLoadSeed())
         ert_keywords.addKeyword(self.addGenKwTagFormat())
         ert_keywords.addKeyword(self.addSurface())
-        ert_keywords.addKeyword(self.addGenKwExportFile())
-
-
-
 
     def addField(self):
         field = ConfigurationLineDefinition(keyword=KeywordDefinition("FIELD"),
@@ -54,16 +47,6 @@ class ParametrizationKeywords(object):
                                             group=self.group)
         return gen_kw
 
-
-    def addGenKwExportFile(self):
-        gen_kw_export_file = ConfigurationLineDefinition(keyword=KeywordDefinition("GEN_KW_EXPORT_FILE"),
-                                            arguments=[StringArgument()],
-                                            documentation_link="keywords/gen_kw_export_file",
-                                            required=False,
-                                            group=self.group)
-        return gen_kw_export_file
-
-
     def addGenKwTagFormat(self):
         gen_kw_tag_format = ConfigurationLineDefinition(keyword=KeywordDefinition("GEN_KW_TAG_FORMAT"),
                                                         arguments=[StringArgument(built_in=True,allow_space=True)],
@@ -91,33 +74,6 @@ class ParametrizationKeywords(object):
                                               required=False,
                                               group=self.group)
         return summary
-
-    def addDBaseType(self):
-        dbase_type = ConfigurationLineDefinition(keyword=KeywordDefinition("DBASE_TYPE"),
-                                                  arguments=[StringArgument()],
-                                                  documentation_link="keywords/dbase_type",
-                                                  required=False,
-                                                  group=self.group)
-        return dbase_type
-
-
-    def addStoreSeed(self):
-        store_seed = ConfigurationLineDefinition(keyword=KeywordDefinition("STORE_SEED"),
-                                                  arguments=[StringArgument(built_in=True)],
-                                                  documentation_link="keywords/store_seed",
-                                                  required=False,
-                                                  group=self.group)
-        return store_seed
-
-
-    def addLoadSeed(self):
-        load_seed = ConfigurationLineDefinition(keyword=KeywordDefinition("LOAD_SEED"),
-                                                arguments=[StringArgument(built_in=True)],
-                                                documentation_link="keywords/load_seed",
-                                                required=False,
-                                                group=self.group)
-        return load_seed
-
 
     def addSurface(self):
         surface = ConfigurationLineDefinition(keyword=KeywordDefinition("SURFACE"),

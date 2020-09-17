@@ -165,7 +165,6 @@ def get_files_excluded_from_black(root):
         "ert_shared/ide/keywords/configuration_line_builder.py",
         "ert_shared/ide/keywords/definitions/range_string_argument.py",
         "ert_shared/ide/keywords/ert_keywords.py",
-        "ert_shared/ide/keywords/qc_keywords.py",
         "ert_shared/ide/keywords/eclipse_keywords.py",
         "ert_shared/ide/keywords/simulation_control_keywords.py",
         "ert_shared/ide/keywords/ensemble_keywords.py",

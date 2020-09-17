@@ -13,12 +13,9 @@ class QueueSystemKeywords(object):
         ert_keywords.addKeyword(self.addQueueSystem())
         ert_keywords.addKeyword(self.addLsfServer())
         ert_keywords.addKeyword(self.addLsfQueue())
-        ert_keywords.addKeyword(self.addMaxRunningLsf())
         ert_keywords.addKeyword(self.addTorqueQueue())
-        ert_keywords.addKeyword(self.addMaxRunningLocal())
         ert_keywords.addKeyword(self.addRshHost())
         ert_keywords.addKeyword(self.addRshCommand())
-        ert_keywords.addKeyword(self.addMaxRunningRsh())
         ert_keywords.addKeyword(self.addHostType())
         ert_keywords.addKeyword(self.addLsfResources())
 
@@ -62,15 +59,6 @@ class QueueSystemKeywords(object):
                                                 group=self.group)
         return lsf_queue
 
-
-    def addMaxRunningLsf(self):
-        max_running_lsf = ConfigurationLineDefinition(keyword = KeywordDefinition("MAX_RUNNING_LSF"),
-                                                      arguments=[IntegerArgument(from_value=1)],
-                                                      documentation_link="keywords/max_running_lsf",
-                                                      group=self.group)
-        return max_running_lsf
-
-
     def addLsfResources(self):
         lsf_resources = ConfigurationLineDefinition(keyword = KeywordDefinition("LSF_RESOURCES"),
                                                       arguments=[StringArgument(rest_of_line=True,allow_space=True)],
@@ -86,15 +74,6 @@ class QueueSystemKeywords(object):
                                                       group=self.group)
         return torque_queue
 
-
-    def addMaxRunningLocal(self):
-        max_running_local = ConfigurationLineDefinition(keyword = KeywordDefinition("MAX_RUNNING_LOCAL"),
-                                                        arguments=[IntegerArgument(from_value=1)],
-                                                        documentation_link="keywords/max_running_local",
-                                                        group=self.group)
-        return max_running_local
-
-
     def addRshHost(self):
         rsh_host = ConfigurationLineDefinition(keyword = KeywordDefinition("RSH_HOST"),
                                                arguments=[StringArgument(), StringArgument(rest_of_line=True, allow_space=True)],
@@ -109,16 +88,6 @@ class QueueSystemKeywords(object):
                                                   documentation_link="keywords/rsh_command",
                                                   group=self.group)
         return rsh_command
-
-
-    def addMaxRunningRsh(self):
-        max_running_rsh = ConfigurationLineDefinition(keyword = KeywordDefinition("MAX_RUNNING_RSH"),
-                                                      arguments=[IntegerArgument()],
-                                                      documentation_link="keywords/max_running_rsh",
-                                                      group=self.group)
-        return max_running_rsh
-
-
 
     def addHostType(self):
         host_type = ConfigurationLineDefinition(keyword = KeywordDefinition("HOST_TYPE"),
