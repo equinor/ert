@@ -16,7 +16,7 @@ WWCT:OP_1, WWCT:OP_3, PRESSURE:10,10,10, FGPT and FOPT. The plot job we
 have created in this example is general, if we limited
 ourselves to ECLIPSE summary variables we could get wildcard
 support. Then we invoke the ECL_HIST example job to create a
-histogram. See below for documentation of <RUNPATH_FILE>, <QC_PATH> and
+histogram. See below for documentation of <RUNPATH_FILE> and
 <ERTCASE>.
 
 
