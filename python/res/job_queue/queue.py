@@ -70,11 +70,7 @@ class JobQueue(BaseCClass):
     _set_pause_off        = ResPrototype("void job_queue_set_pause_off(job_queue)")
     _get_max_submit       = ResPrototype("int job_queue_get_max_submit(job_queue)")
 
-    # The return type of the job_queue_iget_job_status should really
-    # be the enum job_status_type_enum, but I just did not manage to
-    # get the prototyping right. Have therefor taken the return as an
-    # integer and convert it in the getJobStatus() method.
-    _get_job_status  = ResPrototype("int job_queue_iget_job_status(job_queue, int)")
+    _get_job_status  = ResPrototype("job_status_type_enum job_queue_iget_job_status(job_queue, int)")
 
     _get_ok_file = ResPrototype("char* job_queue_get_ok_file(job_queue)")
     _get_exit_file = ResPrototype("char* job_queue_get_exit_file(job_queue)")
@@ -254,11 +250,8 @@ class JobQueue(BaseCClass):
         return self._get_active_size( )
 
     def getJobStatus(self, job_number):
-        # See comment about return type in the prototype section at
-        # the top of class.
         """ @rtype: JobStatusType """
-        int_status = self._get_job_status(job_number)
-        return JobStatusType( int_status )
+        return self._get_job_status(job_number)
 
     def is_active(self):
         for job in self.job_list:

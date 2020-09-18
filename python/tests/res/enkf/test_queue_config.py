@@ -16,6 +16,8 @@
 
 import os
 from ecl.util.test import TestAreaContext
+
+from res.job_queue import QueueDriverEnum
 from tests import ResTest
 from res.enkf import QueueConfig, ConfigKeys
 from res.config import ConfigContent
@@ -50,7 +52,7 @@ class QueueConfigTest(ResTest):
             config_file = "simple_config/minimum_config"
             config_dict = {
                 ConfigKeys.JOB_SCRIPT: os.getcwd() + "/simple_config/script.sh",
-                ConfigKeys.QUEUE_SYSTEM: 2,
+                ConfigKeys.QUEUE_SYSTEM: QueueDriverEnum(2),
                 ConfigKeys.USER_MODE: True,
                 ConfigKeys.MAX_SUBMIT: 2,
                 ConfigKeys.NUM_CPU: 0,

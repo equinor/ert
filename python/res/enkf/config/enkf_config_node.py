@@ -90,7 +90,7 @@ class EnkfConfigNode(BaseCClass):
                                                                                          char*, \
                                                                                          char*, \
                                                                                          char*, \
-                                                                                         int, \
+                                                                                         enkf_truncation_type_enum, \
                                                                                          double, \
                                                                                          double, \
                                                                                          char*, \
@@ -100,7 +100,7 @@ class EnkfConfigNode(BaseCClass):
                                                                                      char*, \
                                                                                      char*, \
                                                                                      char*, \
-                                                                                     int, \
+                                                                                     enkf_truncation_type_enum, \
                                                                                      double, \
                                                                                      double, \
                                                                                      char*, \

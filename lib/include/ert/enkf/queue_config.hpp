@@ -45,7 +45,7 @@ typedef struct queue_config_struct queue_config_type;
                                                 bool user_mode,
                                                 int max_submit,
                                                 int num_cpu,
-                                                int driver_type);
+                                                job_driver_type driver_type);
     queue_config_type * queue_config_alloc_local_copy( queue_config_type * queue_config);
     void queue_config_free(queue_config_type * queue_config);
 

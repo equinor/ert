@@ -19,7 +19,7 @@ from ecl.summary import EclSum
 from ecl.util.util import StringList
 from res import ResPrototype
 from res.job_queue import ForwardModel, ExtJob, ExtJoblist
-from res.sched import HistorySourceEnum
+from res.sched import HistorySourceEnum, SchedFile
 from res.util import PathFormat
 from res.enkf import ConfigKeys
 from res.enkf.util import TimeMap
@@ -44,7 +44,7 @@ class ModelConfig(BaseCClass):
                                                                                 time_map, \
                                                                                 char*, \
                                                                                 char*, \
-                                                                                int, \
+                                                                                history_source_enum, \
                                                                                 ext_joblist, \
                                                                                 ecl_sum)", bind=False)
     _free                        = ResPrototype("void  model_config_free( model_config )")

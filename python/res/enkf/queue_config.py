@@ -29,7 +29,7 @@ class QueueConfig(BaseCClass):
     _free                  = ResPrototype("void queue_config_free( queue_config )")
     _alloc_job_queue       = ResPrototype("job_queue_obj queue_config_alloc_job_queue( queue_config )")
     _alloc                 = ResPrototype("void* queue_config_alloc_load(char*)", bind=False)
-    _alloc_full            = ResPrototype("void* queue_config_alloc_full(char*, bool, int, int, int)", bind=False)
+    _alloc_full            = ResPrototype("void* queue_config_alloc_full(char*, bool, int, int, queue_driver_enum)", bind=False)
     _alloc_content         = ResPrototype("void* queue_config_alloc(config_content)", bind=False)
     _alloc_local_copy      = ResPrototype("queue_config_obj queue_config_alloc_local_copy( queue_config )")
     _has_job_script        = ResPrototype("bool queue_config_has_job_script( queue_config )")

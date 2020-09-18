@@ -52,7 +52,7 @@ class History(BaseCClass):
         @type history_source_type: HistorySourceEnum
         @rtype: str
         """
-        return self._get_source_string(history_source_type)
+        return History._get_source_string(history_source_type)
 
     def free(self):
         self._free( self )

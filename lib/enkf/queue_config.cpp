@@ -112,7 +112,7 @@ queue_config_type * queue_config_alloc_full(char * job_script,
                                             bool user_mode,
                                             int max_submit,
                                             int num_cpu,
-                                            int driver_type) {
+                                            job_driver_type driver_type) {
 
   queue_config_type * queue_config = (queue_config_type *)util_malloc(sizeof * queue_config);
   queue_config->queue_drivers = hash_alloc();

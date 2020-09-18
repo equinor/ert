@@ -51,7 +51,7 @@ class Driver(BaseCClass):
     _set_option = ResPrototype("void queue_driver_set_option( driver , char* , char*)")
     _get_option = ResPrototype("char* queue_driver_get_option(driver, char*)")
     _free_job = ResPrototype("void   queue_driver_free_job( driver , job )")
-    _get_status = ResPrototype("int queue_driver_get_status( driver , job)")
+    _get_status = ResPrototype("job_status_type_enum queue_driver_get_status(driver, job)")
     _kill_job = ResPrototype("void queue_driver_kill_job( driver , job )")
     _get_max_running = ResPrototype("int queue_driver_get_max_running( driver )")
     _set_max_running = ResPrototype("void queue_driver_set_max_running( driver , int)")
@@ -91,8 +91,7 @@ class Driver(BaseCClass):
         self._free_job(job)
 
     def get_status( self, job ):
-        status = self._get_status(job)
-        return status
+        return self._get_status(job)
 
     def kill_job( self, job ):
         self._kill_job(job)

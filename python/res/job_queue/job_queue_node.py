@@ -24,9 +24,9 @@ class JobQueueNode(BaseCClass):
     _submit = ResPrototype("int job_queue_node_submit_simple(job_queue_node, driver)")
     _kill = ResPrototype("bool job_queue_node_kill_simple(job_queue_node, driver)")
     
-    _get_status = ResPrototype("int job_queue_node_get_status(job_queue_node)")
+    _get_status = ResPrototype("job_status_type_enum job_queue_node_get_status(job_queue_node)")
     _update_status = ResPrototype("bool job_queue_node_update_status_simple(job_queue_node, driver)")
-    _set_status = ResPrototype("void job_queue_node_set_status(job_queue_node, int)")
+    _set_status = ResPrototype("void job_queue_node_set_status(job_queue_node, job_status_type_enum)")
     _get_submit_attempt = ResPrototype("int job_queue_node_get_submit_attempt(job_queue_node)")
 
     def __init__(self,job_script, job_name, run_path, num_cpu, 

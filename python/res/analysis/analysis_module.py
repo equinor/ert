@@ -31,7 +31,7 @@ class AnalysisModule(BaseCClass):
     _set_var             = ResPrototype("bool analysis_module_set_var(analysis_module, char*, char*)")
     _get_table_name      = ResPrototype("char* analysis_module_get_table_name(analysis_module)")
     _get_name            = ResPrototype("char* analysis_module_get_name(analysis_module)")
-    _check_option        = ResPrototype("bool analysis_module_check_option(analysis_module, long)")
+    _check_option        = ResPrototype("bool analysis_module_check_option(analysis_module, analysis_module_options_enum)")
     _has_var             = ResPrototype("bool analysis_module_has_var(analysis_module, char*)")
     _get_double          = ResPrototype("double analysis_module_get_double(analysis_module, char*)")
     _get_int             = ResPrototype("int analysis_module_get_int(analysis_module, char*)")

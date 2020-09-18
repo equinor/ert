@@ -138,7 +138,7 @@ class ModelConfigTest(ResTest):
                 ConfigKeys.TIME_MAP:"configuration_tests/input/refcase/time_map.txt",
                 ConfigKeys.OBS_CONFIG: "configuration_tests/input/observations/observations.txt",
                 ConfigKeys.DATAROOT: "configuration_tests/",
-                ConfigKeys.HISTORY_SOURCE: 1,
+                ConfigKeys.HISTORY_SOURCE: HistorySourceEnum(1),
                 ConfigKeys.GEN_KW_EXPORT_NAME: "parameter_test.json",
                 ConfigKeys.FORWARD_MODEL: [
                     {
