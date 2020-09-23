@@ -4,7 +4,7 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 from ert_shared.models import BaseRunModel
 from ert_shared import ERT
 from ert_shared.storage.extraction_api import dump_to_new_storage
-
+from ert_shared.ensemble_evaluator.context_manager import attach_ensemble_evaluator
 
 class EnsembleExperiment(BaseRunModel):
 
@@ -24,7 +24,10 @@ class EnsembleExperiment(BaseRunModel):
 
         self.setPhaseName( run_msg, indeterminate=False)
 
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(self._job_queue, run_context)
+        run_path_list = self.ert().getRunpathList()
+        forward_model = self.ert().resConfig().model_config.getForwardModel()
+        with attach_ensemble_evaluator(run_context, run_path_list, forward_model):
+            num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(self._job_queue, run_context)
 
         num_successful_realizations += arguments.get('prev_successful_realizations', 0)
         self.checkHaveSufficientRealizations(num_successful_realizations)

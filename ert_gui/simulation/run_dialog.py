@@ -1,3 +1,4 @@
+import time
 from threading import Thread
 
 from qtpy.QtCore import Qt, QTimer, QSize, Signal, Slot
@@ -9,8 +10,7 @@ from ert_gui.ertwidgets import Legend, resourceMovie
 from ert_gui.simulation import DetailedProgressWidget, Progress, SimpleProgress
 from ert_gui.tools.plot.plot_tool import PlotTool
 from ert_shared.models import BaseRunModel
-from ert_shared.tracker.events import (DetailedEvent, EndEvent, GeneralEvent,
-                                       TickEvent)
+from ert_shared.tracker.events import DetailedEvent, EndEvent, GeneralEvent
 from ert_shared.tracker.factory import create_tracker
 from ert_shared.tracker.utils import format_running_time
 from res.job_queue import JobStatusType
@@ -41,6 +41,9 @@ class RunDialog(QDialog):
             run_model, qtimer_cls=QTimer,
             event_handler=self._on_tracker_event,
             num_realizations=self._simulations_argments["active_realizations"].count())
+
+        self._ticker = QTimer(self)
+        self._ticker.timeout.connect(self._on_ticker)
 
         states = self.simulations_tracker.get_states()
         self.state_colors = {state.name: state.color for state in states}
@@ -165,6 +168,7 @@ class RunDialog(QDialog):
         simulation_thread.run = run
         simulation_thread.start()
 
+        self._ticker.start(1000)
         self.simulations_tracker.track()
 
     def killJobs(self):
@@ -193,11 +197,13 @@ class RunDialog(QDialog):
                                  "The simulation failed with the following " +
                                  "error:\n\n{}".format(failed_msg))
 
+    @Slot()
+    def _on_ticker(self):
+        runtime = self._run_model.get_runtime()
+        self.running_time.setText(format_running_time(runtime))
+
     @Slot(object)
     def _on_tracker_event(self, event):
-        if isinstance(event, TickEvent):
-            self.running_time.setText(format_running_time(event.runtime))
-
         if isinstance(event, GeneralEvent):
             self.total_progress.setProgress(event.progress)
             self.progress.setIndeterminate(event.indeterminate)
@@ -207,8 +213,12 @@ class RunDialog(QDialog):
                     self.legends[state].updateLegend(state.name, 0, 0)
             else:
                 for state in event.sim_states:
-                    self.progress.updateState(
-                        state.state, 100.0 * state.count / state.total_count)
+                    try:
+                        self.progress.updateState(
+                            state.state, 100.0 * state.count / state.total_count)
+                    except ZeroDivisionError:
+                        # total_count not set by some slow tracker (EE)
+                        pass
                     self.legends[state].updateLegend(
                         state.name, state.count, state.total_count)
 
