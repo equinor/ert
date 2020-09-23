@@ -32,8 +32,8 @@ struct container_struct {
 };
 
 
-
-container_type * container_alloc( const container_config_type * config ) {
+// Used by the VOID_ALLOC macro
+C_USED container_type * container_alloc( const container_config_type * config ) {
   container_type * container = (container_type *)util_malloc( sizeof * container );
   UTIL_TYPE_ID_INIT( container , CONTAINER );
   container->config = config;

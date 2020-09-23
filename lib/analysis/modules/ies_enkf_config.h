@@ -58,12 +58,6 @@ typedef struct ies_enkf_config_struct ies_enkf_config_type;
   double ies_enkf_config_get_ies_dec_steplength( const ies_enkf_config_type * config );
   void   ies_enkf_config_set_ies_dec_steplength( ies_enkf_config_type * config , double ies_dec_steplength);
 
-  double ies_enkf_config_get_gauss_newton_conv( const ies_enkf_config_type * config );
-  void   ies_enkf_config_set_gauss_newton_conv( ies_enkf_config_type * config , double gauss_newton_conv);
-
-  int    ies_enkf_config_get_max_gauss_newton_it( const ies_enkf_config_type * config );
-  void   ies_enkf_config_set_max_gauss_newton_it( ies_enkf_config_type * config , int max_gauss_newton_it);
-
   ies_inversion_type ies_enkf_config_get_ies_inversion( const ies_enkf_config_type * config ) ;
   void   ies_enkf_config_set_ies_inversion( ies_enkf_config_type * config , ies_inversion_type ies_inversion ) ;
 

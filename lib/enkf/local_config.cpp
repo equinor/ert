@@ -36,7 +36,6 @@
 #include <ert/enkf/local_config.hpp>
 #include <ert/enkf/local_dataset.hpp>
 #include <ert/enkf/local_obsdata.hpp>
-#include <ert/enkf/local_context.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/config_keys.hpp>

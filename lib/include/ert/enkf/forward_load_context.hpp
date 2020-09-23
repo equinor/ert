@@ -42,8 +42,6 @@ extern "C" {
   forward_load_context_type * forward_load_context_alloc( const run_arg_type * run_arg , bool load_summary , const ecl_config_type * ecl_config , stringlist_type * messages);
   void                        forward_load_context_free( forward_load_context_type * load_context );
   const ecl_sum_type        * forward_load_context_get_ecl_sum( const forward_load_context_type * load_context);
-  int                         forward_load_context_get_report_step( const forward_load_context_type * load_context);
-  int                         forward_load_context_get_iens( const forward_load_context_type * load_context);
   const run_arg_type        * forward_load_context_get_run_arg( const forward_load_context_type * load_context );
   const char                * forward_load_context_get_run_path( const forward_load_context_type * load_context );
   int                         forward_load_context_get_load_step(const forward_load_context_type * load_context);

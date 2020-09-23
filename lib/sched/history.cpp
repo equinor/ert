@@ -119,12 +119,6 @@ int history_get_last_restart(const history_type * history) {
 }
 
 
-
-
-
-
-
-
 bool history_init_ts( const history_type * history , const char * summary_key , double_vector_type * value, bool_vector_type * valid) {
   bool initOK = false;
 
@@ -201,16 +195,5 @@ int history_get_restart_nr_from_time_t( const history_type * history , time_t ti
       util_abort("%s: Date: %02d/%02d/%04d  does not cooincide with any report time. Aborting.\n", __func__ , mday , month , year);
       return -1;
     }
-  }
-}
-
-
-int history_get_restart_nr_from_days( const history_type * history , double sim_days) {
-  int report_step = ecl_sum_get_report_step_from_days( history->refcase , sim_days);
-  if (report_step >= 1)
-    return report_step;
-  else {
-    util_abort("%s: Days:%g  does not cooincide with any report time. Aborting.\n", __func__ , sim_days);
-    return -1;
   }
 }

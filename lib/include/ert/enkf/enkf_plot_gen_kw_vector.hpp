@@ -36,7 +36,6 @@ extern "C" {
   int                            enkf_plot_gen_kw_vector_get_size( const enkf_plot_gen_kw_vector_type * vector );
   void                           enkf_plot_gen_kw_vector_reset( enkf_plot_gen_kw_vector_type * vector );
   void                           enkf_plot_gen_kw_vector_load( enkf_plot_gen_kw_vector_type * vector , enkf_fs_type * fs , bool transform_data , int report_step );
-  void                         * enkf_plot_gen_kw_vector_load__( void * arg );
   double                         enkf_plot_gen_kw_vector_iget( const enkf_plot_gen_kw_vector_type * vector , int index);
 
   UTIL_IS_INSTANCE_HEADER( enkf_plot_gen_kw_vector );

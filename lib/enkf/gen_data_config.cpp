@@ -604,19 +604,14 @@ static const char * gen_data_config_format_name( gen_data_file_format_type forma
   switch (format_type ) {
   case GEN_DATA_UNDEFINED:
     return "UNDEFINED";
-    break;
   case ASCII:
     return "ASCII";
-    break;
   case ASCII_TEMPLATE:
     return "ASCII_TEMPLATE";
-    break;
   case BINARY_FLOAT:
     return "BINARY_FLOAT";
-    break;
   case BINARY_DOUBLE:
     return "BINARY_DOUBLE";
-    break;
   default:
     util_abort("%s: What the f.. \n",__func__);
     return NULL;

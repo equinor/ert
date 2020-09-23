@@ -37,7 +37,6 @@ extern "C" {
 rms_type_enum rms_util_convert_ecl_type(ecl_data_type);
 int           rms_util_global_index_from_eclipse_ijk(int, int, int, int, int, int);
 void          rms_util_translate_undef(void * , int , int , const void * , const void * );
-void          rms_util_set_fortran_data(void *, const void * , int , int , int  , int);
 void          rms_util_fskip_string(FILE *);
 int           rms_util_fread_strlen(FILE *);
 bool          rms_util_fread_string(char * ,  int , FILE *);

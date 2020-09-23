@@ -25,7 +25,6 @@ extern "C" {
   int      std_enkf_get_subspace_dimension( std_enkf_data_type * data );
   void     std_enkf_set_truncation( std_enkf_data_type * data , double truncation );
   void     std_enkf_set_subspace_dimension( std_enkf_data_type * data , int subspace_dimension);
-  void     std_enkf_set_lambda0( std_enkf_data_type * data , double lambda0 );
   bool     std_enkf_has_var( const void * arg, const char * var_name);
 
   double   std_enkf_get_truncation( std_enkf_data_type * data );

@@ -32,39 +32,18 @@ const char * enkf_types_get_impl_name(ert_impl_type impl_type) {
   switch(impl_type) {
   case(INVALID):
     return "INVALID";
-    break;
   case FIELD:
     return "FIELD";
-    break;
   case GEN_KW:
     return "GEN_KW";
-    break;
   case SUMMARY:
     return "SUMMARY";
-    break;
   case GEN_DATA:
     return "GEN_DATA";
-    break;
   case EXT_PARAM:
     return "EXT_PARAM";
-    break;
   default:
     util_abort("%s: internal error - unrecognized implementation type: %d - aborting \n",__func__ , impl_type);
     return NULL;
   }
 }
-
-
-
-#define if_strcmp(s) if (strcmp(impl_type_string , #s) == 0) impl_type = s
-static ert_impl_type enkf_types_get_impl_type__(const char * impl_type_string) {
-  ert_impl_type impl_type;
-  if_strcmp(SUMMARY);
-  else if_strcmp(FIELD);
-  else if_strcmp(GEN_KW);
-  else if_strcmp(GEN_DATA);
-  else if_strcmp(EXT_PARAM);
-  else impl_type = INVALID;
-  return impl_type;
-}
-#undef if_strcmp

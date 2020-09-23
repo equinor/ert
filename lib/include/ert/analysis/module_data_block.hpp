@@ -20,6 +20,7 @@
 #define MODULE_DATA_BLOCKS_H
 
 #include <ert/util/vector.hpp>
+#include <ert/util/type_macros.hpp>
 
 #ifdef __cplusplus
 extern "C" {

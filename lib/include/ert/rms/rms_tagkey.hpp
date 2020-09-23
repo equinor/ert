@@ -47,7 +47,6 @@ void              rms_tagkey_free_(void *);
 void              rms_tagkey_load(rms_tagkey_type *, bool , FILE *, hash_type *);
 void            * rms_tagkey_get_data_ref(const rms_tagkey_type *);
 void              rms_tagkey_fwrite(const rms_tagkey_type * , FILE *);
-void              rms_tagkey_fprintf(const rms_tagkey_type * , FILE *);
 rms_tagkey_type * rms_tagkey_copyc(const rms_tagkey_type *);
 int               rms_tagkey_get_size(const rms_tagkey_type *);
 
@@ -63,8 +62,6 @@ void rms_tagkey_inplace_sqr(rms_tagkey_type *);
 void rms_tagkey_inplace_sqrt(rms_tagkey_type *);
 void rms_tagkey_inplace_add_scaled(rms_tagkey_type * , const rms_tagkey_type * , double);
 void rms_tagkey_clear(rms_tagkey_type *  );
-int  rms_tagkey_get_sizeof_ctype(const rms_tagkey_type * );
-void rms_tagkey_max_min(const rms_tagkey_type * , void *, void *);
 
 #ifdef __cplusplus
 }

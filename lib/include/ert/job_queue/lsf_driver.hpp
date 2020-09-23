@@ -86,7 +86,6 @@ typedef struct lsf_job_struct    lsf_job_type;
   job_status_type lsf_driver_get_job_status(void * __driver , void * __job);
   int             lsf_driver_get_job_status_lsf(void * __driver , void * __job);
   void            lsf_driver_free_job(void * __job);
-  void            lsf_driver_display_info( void * __driver , void * __job);
   void            lsf_driver_set_bjobs_refresh_interval( lsf_driver_type * driver , int refresh_interval);
 
   void lsf_driver_add_exclude_hosts( lsf_driver_type * driver , const char * excluded);

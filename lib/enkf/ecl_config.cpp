@@ -133,17 +133,15 @@ ui_return_type * ecl_config_validate_data_file(const ecl_config_type * ecl_confi
   }
 }
 
-
 void ecl_config_set_data_file(ecl_config_type * ecl_config, const char * data_file) {
   ecl_config->data_file = util_realloc_string_copy(ecl_config->data_file, data_file);
   {
     FILE * stream = util_fopen(ecl_config->data_file, "r");
     basic_parser_type * parser = basic_parser_alloc(NULL, NULL, NULL, NULL, "--", "\n");
-    char * init_tag = enkf_util_alloc_tagged_string("INIT");
+    const char * init_tag = DEFAULT_START_TAG "INIT" DEFAULT_END_TAG;
 
     ecl_config->can_restart = basic_parser_fseek_string(parser, stream, init_tag, false, true);
 
-    free(init_tag);
     basic_parser_free(parser);
     fclose(stream);
   }

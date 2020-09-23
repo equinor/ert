@@ -46,7 +46,6 @@ double                    gen_data_iget_double(const gen_data_type * , int );
 void                      gen_data_export(const gen_data_type * gen_data , const char * full_path , gen_data_file_format_type export_type);
 void                      gen_data_export_data(const gen_data_type * gen_data , double_vector_type * export_data);
 const char  *             gen_data_get_key( const gen_data_type * gen_data);
-void                      gen_data_upgrade_103(const char * filename);
 int                       gen_data_get_size( const gen_data_type * gen_data );
 void                      gen_data_copy_to_double_vector(const gen_data_type * gen_data , double_vector_type * vector);
 bool                      gen_data_fload_with_report_step( gen_data_type * gen_data , const char * filename , const forward_load_context_type * load_context);

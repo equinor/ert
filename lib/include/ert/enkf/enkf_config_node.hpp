@@ -48,9 +48,6 @@ extern "C" {
   bool                    enkf_config_node_has_node( const enkf_config_node_type * node , enkf_fs_type * fs , node_id_type node_id);
   bool                    enkf_config_node_vector_storage( const enkf_config_node_type * config_node);
 
-  enkf_config_node_type * enkf_config_node_new_GEN_PARAM( const char * key , bool forward_init);
-  enkf_config_node_type * enkf_config_node_new_GEN_DATA( const char * key , bool forward_init);
-
   void enkf_config_node_update_min_std( enkf_config_node_type * config_node , const char * min_std_file );
 
   enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM( const char * node_key ,
@@ -64,23 +61,6 @@ extern "C" {
   enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_result( const char * key ,
                                                                   gen_data_file_format_type input_format,
                                                                   const char * enkf_infile_fmt );
-
-
-  void enkf_config_node_update_GEN_DATA_result( enkf_config_node_type * config_node,
-                                                gen_data_file_format_type input_format,
-                                                const char * enkf_infile_fmt );
-
-
-  void enkf_config_node_update_GEN_DATA_state( enkf_config_node_type * config_node,
-                                               gen_data_file_format_type input_format,
-                                               gen_data_file_format_type output_format,
-                                               const char * init_file_fmt     ,
-                                               const char * template_ecl_file ,
-                                               const char * template_data_key ,
-                                               const char * enkf_outfile_fmt  ,
-                                               const char * enkf_infile_fmt   ,
-                                               const char * min_std_file);
-
 
   enkf_config_node_type * enkf_config_node_new_surface( const char * key , bool forward_init);
 
@@ -154,7 +134,6 @@ extern "C" {
   void                    enkf_config_node_clear_obs_keys(enkf_config_node_type * config_node);
   void                    enkf_config_node_free(enkf_config_node_type * );
   bool                    enkf_config_node_include_type(const enkf_config_node_type * , int );
-  int                     enkf_config_node_get_serial_size(enkf_config_node_type *, int *);
   bool                    enkf_config_node_include_type(const enkf_config_node_type * , int);
   ert_impl_type           enkf_config_node_get_impl_type(const enkf_config_node_type *);
   enkf_var_type           enkf_config_node_get_var_type(const enkf_config_node_type *);
@@ -176,7 +155,7 @@ extern "C" {
 
   enkf_config_node_type       * enkf_config_node_new_container( const char * key );
   void                          enkf_config_node_update_container( enkf_config_node_type * config_node , const enkf_config_node_type * child_node);
-  const char *                  enkf_config_node_iget_container_key( const enkf_config_node_type * config_node , int index);
+  PY_USED const char * enkf_config_node_iget_container_key( const enkf_config_node_type * config_node , int index);
   /*
     The enkf_node_free() function declaration is in the enkf_config_node.h header,
     because the enkf_config_node needs to know how to free the min_std node.
@@ -185,7 +164,6 @@ extern "C" {
   const enkf_node_type * enkf_config_node_get_min_std( const enkf_config_node_type * config_node );
 
   bool                   enkf_config_node_use_forward_init(const enkf_config_node_type * config_node);
-  void                   enkf_config_node_set_forward_init(enkf_config_node_type * config_node, bool forward_init);
 
   /*****************************************************************/
 
@@ -195,7 +173,7 @@ extern "C" {
   enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_from_config( const config_content_node_type * node );
 
   /* ************* FULL ALLOCS  ************* */
-  enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM_full( const char * node_key ,
+  PY_USED enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM_full( const char * node_key ,
                                                                  bool forward_init ,
                                                                  gen_data_file_format_type input_format ,
                                                                  gen_data_file_format_type output_format ,
@@ -205,7 +183,7 @@ extern "C" {
                                                                  const char * template_file,
                                                                  const char * data_key);
 
-  enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_full( const char * node_key ,
+  PY_USED enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_full( const char * node_key ,
                                                                 const char * result_file,
                                                                 gen_data_file_format_type input_format ,
                                                                 const int_vector_type * report_steps,
@@ -214,7 +192,7 @@ extern "C" {
                                                                 const char * template_file,
                                                                 const char * data_key);
 
-enkf_config_node_type * enkf_config_node_alloc_GEN_KW_full(const char * node_key,
+  PY_USED enkf_config_node_type * enkf_config_node_alloc_GEN_KW_full(const char * node_key,
                                                            bool forward_init,
                                                            const char * gen_kw_format,
                                                            const char * template_file,
@@ -223,7 +201,7 @@ enkf_config_node_type * enkf_config_node_alloc_GEN_KW_full(const char * node_key
                                                            const char * min_std_file,
                                                            const char * init_file_fmt);
 
-enkf_config_node_type * enkf_config_node_alloc_SURFACE_full(const char * node_key,
+  PY_USED enkf_config_node_type * enkf_config_node_alloc_SURFACE_full(const char * node_key,
                                                             bool forward_init,
                                                             const char * output_file,
                                                             const char * base_surface,

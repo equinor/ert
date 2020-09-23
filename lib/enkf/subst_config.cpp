@@ -118,14 +118,6 @@ void subst_config_clear(subst_config_type * subst_config) {
   subst_list_clear(subst_config->subst_list);
 }
 
-void subst_config_fprintf(const subst_config_type * subst_config, FILE * stream) {
-  for (int i = 0; i < subst_list_get_size(subst_config->subst_list); i++) {
-    fprintf(stream, CONFIG_KEY_FORMAT,      DATA_KW_KEY);
-    fprintf(stream, CONFIG_VALUE_FORMAT,    subst_list_iget_key(subst_config->subst_list, i));
-    fprintf(stream, CONFIG_ENDVALUE_FORMAT, subst_list_iget_value(subst_config->subst_list, i));
-  }
-}
-
 static void subst_config_install_num_cpu(subst_config_type * subst_config, int num_cpu) {
   char * num_cpu_string = util_alloc_sprintf("%d" , num_cpu);
   subst_config_add_internal_subst_kw(subst_config, "NUM_CPU", num_cpu_string, "The number of CPU used for one forward model.");

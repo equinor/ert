@@ -20,6 +20,7 @@
 
 #include <ert/analysis/module_data_block_vector.hpp>
 #include <ert/analysis/module_obs_block_vector.hpp>
+#include <ert/util/type_macros.hpp>
 
 #ifdef __cplusplus
 extern "C" {

@@ -37,5 +37,5 @@ const char * res_version_get_micro_version() {
 
 
 bool res_version_is_devel_version() {
-  return util_sscanf_int(str(RES_VERSION_MICRO), NULL);
+    return util_sscanf_int(str(RES_VERSION_MICRO), NULL);
 }

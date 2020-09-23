@@ -45,18 +45,14 @@ void         obs_block_iset_missing( obs_block_type * obs_block , int iobs );
 
 double obs_block_iget_std( const obs_block_type * obs_block , int iobs);
 double obs_block_iget_value( const obs_block_type * obs_block , int iobs);
-bool   obs_block_iget_active( const obs_block_type * obs_block , int iobs);
 
-const char * obs_data_iget_keyword( const obs_data_type * obs_data , int index );
 double       obs_data_iget_value( const obs_data_type * obs_data , int index );
-double       obs_data_iget_std( const obs_data_type * obs_data, int i_ndex );
-active_type  obs_data_iget_active_mode( const obs_data_type * obs_data , int index );
+PY_USED double obs_data_iget_std( const obs_data_type * obs_data, int i_ndex );
 obs_block_type       * obs_data_iget_block( obs_data_type * obs_data , int index );
 const obs_block_type *     obs_data_iget_block_const( const obs_data_type * obs_data , int block_nr);
-obs_block_type *     obs_data_get_block( obs_data_type * obs_data , const char * obs_key );
 obs_block_type *     obs_data_add_block( obs_data_type * obs_data , const char * obs_key , int obs_size , matrix_type * error_covar , bool error_covar_owner);
-void obs_data_scale_matrix(const obs_data_type * obs_data , matrix_type * matrix);
-void obs_data_scale_Rmatrix(const obs_data_type * obs_data , matrix_type * matrix);
+PY_USED void obs_data_scale_matrix(const obs_data_type * obs_data , matrix_type * matrix);
+PY_USED void obs_data_scale_Rmatrix(const obs_data_type * obs_data , matrix_type * matrix);
 
 obs_data_type      * obs_data_alloc(double global_std_scaling);
 void                 obs_data_free(obs_data_type *);
@@ -66,14 +62,13 @@ matrix_type        * obs_data_allocR(const obs_data_type * obs_data );
 matrix_type        * obs_data_allocdObs(const obs_data_type * obs_data );
 matrix_type        * obs_data_allocE(const obs_data_type * obs_data , rng_type * rng , int active_ens_size);
   void                 obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , matrix_type * O);
-void                 obs_data_iget_value_std(const obs_data_type * obs_data , int index , double * value ,  double * std);
 int                  obs_data_get_active_size(const obs_data_type * obs_data );
 int                  obs_data_get_total_size( const obs_data_type * obs_data );
 int                  obs_data_get_num_blocks( const obs_data_type * obs_data );
 const char * obs_block_get_key( const obs_block_type * obs_block) ;
 double       obs_data_iget_value( const obs_data_type * obs_data , int total_index );
-double       obs_data_iget_std( const obs_data_type * obs_data , int total_index );
-bool         obs_block_iget_is_active( const obs_block_type * obs_block , int iobs );
+PY_USED double obs_data_iget_std( const obs_data_type * obs_data , int total_index );
+PY_USED bool obs_block_iget_is_active( const obs_block_type * obs_block , int iobs );
 
 const bool_vector_type * obs_data_get_active_mask( const obs_data_type * obs_data );
 

@@ -26,14 +26,11 @@ extern "C" {
 #include <ert/util/hash.hpp>
 #include <ert/util/stringlist.hpp>
 #include <ert/res_util/subst_list.hpp>
-
+#include <ert/tooling.hpp>
 #include <ert/config/config_content.hpp>
 
 typedef struct ext_job_struct ext_job_type;
 
-
-const char            * ext_job_exec_env_get(const ext_job_type * ext_job, const char * variable);
-bool                    ext_job_exec_env_is_set(const ext_job_type * ext_job, const char * variable);
 
 const char *            ext_job_get_help_text( const ext_job_type * job );
 void                    ext_job_set_help_text( ext_job_type * job , const char * help_text);
@@ -49,8 +46,6 @@ void                    ext_job_save( const ext_job_type * ext_job );
 void                    ext_job_fprintf(const ext_job_type * , FILE * stream );
 void                    ext_job_set_private_arg(ext_job_type * , const char *  , const char * );
 
-void                    ext_job_set_argc(ext_job_type *   , const char ** , int);
-void                    ext_job_python_fprintf(const ext_job_type * , FILE * , const subst_list_type *);
 void                    ext_job_json_fprintf(const ext_job_type*, int job_index, FILE*, const subst_list_type*);
 ext_job_type          * ext_job_fscanf_alloc(const char * , const char * , bool private_job , const char *, bool search_path);
 const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job );
@@ -69,8 +64,6 @@ const char *            ext_job_get_target_file(const ext_job_type * ext_job);
 void                    ext_job_set_start_file(ext_job_type * ext_job, const char * start_file);
 const char *            ext_job_get_start_file(const ext_job_type * ext_job);
 const char *            ext_job_get_name(const ext_job_type * ext_job);
-void                    ext_job_set_lsf_request(ext_job_type * ext_job, const char * lsf_request);
-const char *            ext_job_get_lsf_request(const ext_job_type * ext_job);
 void                    ext_job_set_stdin_file(ext_job_type * ext_job, const char * stdin_file);
 const char *            ext_job_get_stdin_file(const ext_job_type * ext_job);
 void                    ext_job_set_stdout_file(ext_job_type * ext_job, const char * stdout_file);
@@ -78,8 +71,8 @@ const char *            ext_job_get_stdout_file(const ext_job_type * ext_job);
 void                    ext_job_set_stderr_file(ext_job_type * ext_job, const char * stderr_file);
 const char *            ext_job_get_stderr_file(const ext_job_type * ext_job);
 
-int                     ext_job_get_min_arg(const ext_job_type * ext_job);
-int                     ext_job_get_max_arg(const ext_job_type * ext_job);
+PY_USED int             ext_job_get_min_arg(const ext_job_type * ext_job);
+PY_USED int             ext_job_get_max_arg(const ext_job_type * ext_job);
 config_item_types       ext_job_iget_argtype( const ext_job_type * ext_job, int index);
 
 void                    ext_job_set_max_running( ext_job_type * ext_job , int max_running);
@@ -91,11 +84,8 @@ void                    ext_job_clear_environment( ext_job_type * ext_job );
 hash_type             * ext_job_get_environment( ext_job_type * ext_job );
 int                     ext_job_set_private_args_from_string( ext_job_type * ext_job , const char * arg_string );
 const char *            ext_job_get_license_path(const ext_job_type*);
-//const char            * ext_job_get_arglist_as_string( ext_job_type * ext_job );
-//void                    ext_job_set_arglist_from_string( ext_job_type * ext_job , const char * argv_string );
 
-
-const char * ext_job_get_error_file(const ext_job_type * ext_job);
+const char *            ext_job_get_error_file(const ext_job_type * ext_job);
 
 
 #ifdef __cplusplus

@@ -140,11 +140,6 @@ rms_tagkey_type * rms_tag_get_key(const rms_tag_type *tag,
 }
 
 
-rms_tagkey_type * rms_tag_get_datakey(const rms_tag_type *tag) {
-  return rms_tag_get_key(tag , "data");
-}
-
-
 const char * rms_tag_get_namekey_name(const rms_tag_type * tag) {
   rms_tagkey_type * name_key = rms_tag_get_key(tag , "name");
   if (name_key == NULL)
@@ -238,19 +233,6 @@ void rms_tag_fwrite(const rms_tag_type * tag , FILE * stream) {
   }
 
   rms_util_fwrite_string("endtag" , stream);
-}
-
-
-void rms_tag_fprintf(const rms_tag_type * tag , FILE * stream) {
-  fprintf(stream , "  <%s>\n",tag->name);
-
-  int size = vector_get_size( tag->key_list );
-  for (int i=0; i < size; i++) {
-    const rms_tagkey_type * tagkey = (const rms_tagkey_type*)vector_iget_const( tag->key_list , i );
-    rms_tagkey_fprintf( tagkey , stream);
-  }
-
-  fprintf(stream , "  </%s>\n",tag->name);
 }
 
 

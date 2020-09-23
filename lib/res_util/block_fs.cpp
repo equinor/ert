@@ -532,12 +532,6 @@ static file_node_type * block_fs_lookup_free_node( const block_fs_type * block_f
 
 
 
-
-
-
-
-
-
 /**
    Inserts a file_node instance in the linked list of free nodes. The
    list is sorted in order of increasing node size.
@@ -1036,19 +1030,6 @@ static bool block_fs_load_index( block_fs_type * block_fs ) {
 }
 
 
-size_t block_fs_get_cache_usage( const block_fs_type * block_fs ) {
-  return block_fs->total_cache_size;
-}
-
-
-bool block_fs_is_mount( const char * mount_file ) {
-  FILE * stream            = util_fopen( mount_file , "r");
-  int id                   = util_fread_int( stream );
-  fclose(stream);
-  return id == MOUNT_MAP_MAGIC_INT;
-}
-
-
 bool block_fs_is_readonly( const block_fs_type * bfs ) {
   if (bfs->data_owner)
     return false;
@@ -1204,7 +1185,7 @@ static void block_fs_unlink_file__( block_fs_type * block_fs , const char * file
 /**
    Returns the fraction of unused space in the block_fs instance.
 */
-double block_fs_get_fragmentation( const block_fs_type * block_fs ) {
+static double get_fragmentation( const block_fs_type * block_fs ) {
   return block_fs->free_size * 1.0 / block_fs->data_file_size;
 }
 
@@ -1213,40 +1194,11 @@ void block_fs_unlink_file( block_fs_type * block_fs , const char * filename) {
   block_fs_aquire_wlock( block_fs );
 
   block_fs_unlink_file__( block_fs , filename );
-  if (block_fs_get_fragmentation( block_fs ) > block_fs->fragmentation_limit)
+  if (get_fragmentation( block_fs ) > block_fs->fragmentation_limit)
     block_fs_rotate__( block_fs );
 
   block_fs_release_rwlock( block_fs );
 }
-
-
-/**
-   This function can be used to initiate explicit rotate of the file
-   system, observe the following.
-
-   1. This function is called with an explicit fragmentation_limit
-   which might differ from the fragmentation limit held by the
-   filesystem
-
-   2. This function will take the write lock, it is therefor
-   essential that this function is NOT called by another function
-   which has already taken the write lock (i.e. the
-   block_fs_unlink_file() or block_fs_fwrite_file() functions),
-   that will deadlock.
-
-   The return value is whether a rotation actually has taken place.
-*/
-
-bool block_fs_rotate( block_fs_type * block_fs , double fragmentation_limit) {
-  if (block_fs_get_fragmentation( block_fs ) > fragmentation_limit) {
-    block_fs_aquire_wlock( block_fs );
-    block_fs_rotate__( block_fs );
-    block_fs_release_rwlock( block_fs );
-    return true;
-  } else
-    return false;
-}
-
 
 /*
    It seems it is not enough to call fsync(); must also issue this
@@ -1371,42 +1323,9 @@ void block_fs_fwrite_file(block_fs_type * block_fs , const char * filename , con
   block_fs_release_rwlock( block_fs );
 }
 
-
-void block_fs_defrag( block_fs_type * block_fs ) {
-  block_fs_aquire_wlock( block_fs );
-  block_fs_rotate__( block_fs );
-  block_fs_release_rwlock( block_fs );
-}
-
-
 void block_fs_fwrite_buffer(block_fs_type * block_fs , const char * filename , const buffer_type * buffer) {
   block_fs_fwrite_file( block_fs , filename , buffer_get_data( buffer ) , buffer_get_size( buffer ));
 }
-
-
-/**
-   Need extra locking here - because the global rwlock allows many
-   concurrent readers.
-*/
-static void block_fs_fread__(block_fs_type * block_fs , const file_node_type * file_node , void * ptr , size_t read_bytes) {
-
-#ifdef ENABLE_CACHE
-  if (file_node->cache != NULL)
-    file_node_read_from_cache( file_node , ptr , read_bytes);
-  else
-#else
-    if (true)
-#endif
-
-  {
-    pthread_mutex_lock( &block_fs->io_lock );
-    block_fs_fseek_node_data( block_fs , file_node );
-    util_fread( ptr , 1 , read_bytes , block_fs->data_stream , __func__);
-    //file_node_verify_end_tag( file_node , block_fs->data_stream );
-    pthread_mutex_unlock( &block_fs->io_lock );
-  }
-}
-
 
 /**
    Reads the full content of 'filename' into the buffer.
@@ -1420,8 +1339,7 @@ void block_fs_fread_realloc_buffer( block_fs_type * block_fs , const char * file
     buffer_clear( buffer );   /* Setting: content_size = 0; pos = 0;  */
     {
       /*
-         Going low-level - essentially a second implementation of
-         block_fs_fread__():
+         Going low-level
       */
 
 #ifdef ENABLE_CACHE
@@ -1445,43 +1363,6 @@ void block_fs_fread_realloc_buffer( block_fs_type * block_fs , const char * file
   }
   block_fs_release_rwlock( block_fs );
 }
-
-
-
-
-
-
-
-/*
-  This function will read all the data stored in 'filename' - it is
-  the responsability of the calling scope that ptr is sufficiently
-  large to hold it. You can use block_fs_get_filesize() first to
-  check.
-*/
-
-
-void block_fs_fread_file( block_fs_type * block_fs , const char * filename , void * ptr) {
-  block_fs_aquire_rlock( block_fs );
-  {
-    file_node_type * node = (file_node_type*)hash_get( block_fs->index , filename);
-    block_fs_fread__( block_fs , node , ptr , node->data_size);
-  }
-  block_fs_release_rwlock( block_fs );
-}
-
-
-
-int block_fs_get_filesize( block_fs_type * block_fs , const char * filename) {
-  int data_size;
-  block_fs_aquire_rlock( block_fs );
-  {
-    file_node_type * node = (file_node_type*)hash_get( block_fs->index , filename );
-    data_size = node->data_size;
-  }
-  block_fs_release_rwlock( block_fs );
-  return data_size;
-}
-
 
 static void block_fs_dump_index( block_fs_type * block_fs ) {
   if (block_fs->data_owner) {

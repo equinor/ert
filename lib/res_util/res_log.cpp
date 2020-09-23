@@ -177,17 +177,6 @@ bool res_log_init_log(message_level_type log_level,
 }
 
 
-
-/**
- * Initializes the log with log level DEFAULT_LOG_LEVEL.
- * If log_file_name=NULL then DEFAULT_LOG_FILE is used
- */
-bool res_log_init_log_default_log_level(const char * log_file_name, bool verbose){
-  return res_log_init_log(DEFAULT_LOG_LEVEL,log_file_name,verbose);
-}
-
-
-
 void res_log_close() {
   if (logh) {
     log_add_message(logh, (message_level_type)false,
@@ -196,15 +185,6 @@ void res_log_close() {
   }
   logh = NULL;
 }
-
-void res_log_set_log_level(message_level_type log_level){
-  if (!logh)
-    res_log_init_default();
-
-  if (logh)
-    log_set_level(logh, log_level);
-}
-
 
 const char * res_log_get_filename() {
   if (logh)

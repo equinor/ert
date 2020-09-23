@@ -336,11 +336,6 @@ int job_queue_iget_status_summary( const job_queue_type * queue , job_status_typ
   return job_queue_status_get_count(queue->status, status);
 }
 
-int job_queue_get_num_callback( const job_queue_type * queue) {
-  return job_queue_iget_status_summary( queue , JOB_QUEUE_RUNNING_DONE_CALLBACK ) +
-         job_queue_iget_status_summary( queue , JOB_QUEUE_RUNNING_EXIT_CALLBACK );
-}
-
 int job_queue_get_num_running( const job_queue_type * queue) {
   return job_queue_iget_status_summary( queue , JOB_QUEUE_RUNNING );
 }
@@ -355,14 +350,6 @@ int job_queue_get_num_waiting( const job_queue_type * queue) {
 
 int job_queue_get_num_complete( const job_queue_type * queue) {
   return job_queue_iget_status_summary( queue , JOB_QUEUE_SUCCESS );
-}
-
-int job_queue_get_num_failed( const job_queue_type * queue) {
-  return job_queue_iget_status_summary( queue , JOB_QUEUE_FAILED );
-}
-
-int job_queue_get_num_killed( const job_queue_type * queue) {
-  return job_queue_iget_status_summary( queue , JOB_QUEUE_IS_KILLED );
 }
 
 int job_queue_get_active_size( const job_queue_type * queue ) {
@@ -465,23 +452,6 @@ job_status_type job_queue_iget_job_status( job_queue_type * queue , int job_inde
   ASSIGN_LOCKED_ATTRIBUTE(job_status, job_queue_node_get_status , node );
   return job_status;
 }
-
-
-time_t job_queue_iget_progress_timestamp(job_queue_type *queue, int job_index) {
-  time_t timestamp;
-  ASSIGN_LOCKED_ATTRIBUTE(timestamp, job_queue_node_get_timestamp, node);
-  return timestamp;
-}
-
-void job_queue_iset_max_confirm_wait_time(job_queue_type * queue, int job_index, time_t time) {
-  job_list_get_rdlock( queue->job_list );
-   {
-     job_queue_node_type * node = job_list_iget_job( queue->job_list , job_index );
-     job_queue_node_set_max_confirmation_wait_time( node, time );
-   }
-   job_list_unlock( queue->job_list );
-}
-
 
 /*
   This returns a pointer to a very internal datastructure; used by the
@@ -1286,16 +1256,6 @@ int job_queue_get_max_running( const job_queue_type * queue ) {
 
 void job_queue_set_max_running( job_queue_type * queue , int max_running ) {
   job_queue_set_max_running_option(queue->driver, max_running);
-}
-
-
-time_t job_queue_get_status_timestamp(const job_queue_type * queue) {
-  return job_queue_status_get_timestamp(queue->status);
-}
-
-
-time_t job_queue_get_progress_timestamp(const job_queue_type * queue) {
-  return queue->progress_timestamp;
 }
 
 char * job_queue_get_ok_file(const job_queue_type * queue) {

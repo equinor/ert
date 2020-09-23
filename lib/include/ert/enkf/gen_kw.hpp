@@ -24,6 +24,7 @@ extern "C" {
 
 #include <ert/util/double_vector.h>
 #include <ert/res_util/subst_list.hpp>
+#include <ert/tooling.hpp>
 
 #include <ert/enkf/gen_kw_config.hpp>
 #include <ert/enkf/enkf_util.hpp>
@@ -32,32 +33,19 @@ extern "C" {
 #include <ert/enkf/gen_kw_common.hpp>
 
 void             gen_kw_ecl_write(const gen_kw_type * gen_kw , const char * run_path , const char * base_file , value_export_type * export_value);
-void             gen_kw_write_export_file(const gen_kw_type * gen_kw , const char * filename);
-void             gen_kw_output_transform(gen_kw_type * );
-void             gen_kw_get_output_data(const gen_kw_type * , double * );
-const double   * gen_kw_get_output_ref(const gen_kw_type * );
-const double   * gen_kw_get_data_ref(const gen_kw_type * );
-  //void             gen_kw_get_data(const gen_kw_type * , double * );
-
+PY_USED void     gen_kw_write_export_file(const gen_kw_type * gen_kw , const char * filename);
 
 void             gen_kw_free(gen_kw_type *);
 int              gen_kw_data_size( const gen_kw_type * );
 double           gen_kw_data_iget( const gen_kw_type * , int , bool );
 void             gen_kw_data_iset( gen_kw_type * , int , double );
-void             gen_kw_data_set_vector( gen_kw_type * gen_kw, const double_vector_type * values );
+PY_USED void     gen_kw_data_set_vector( gen_kw_type * gen_kw, const double_vector_type * values );
 double           gen_kw_data_get( gen_kw_type * , const char * , bool );
 void             gen_kw_data_set( gen_kw_type *, const char *, double );
-bool             gen_kw_data_has_key( gen_kw_type *, const char *);
-void             gen_kw_ens_write(const gen_kw_type * , const char *);
-void             gen_kw_ens_read(gen_kw_type * , const char *);
-gen_kw_type   *  gen_kw_alloc_mean(int , const gen_kw_type **);
+PY_USED bool     gen_kw_data_has_key( gen_kw_type *, const char *);
 const char     * gen_kw_get_name(const gen_kw_type * , int );
 void             gen_kw_filter_file(const gen_kw_type * , const char * );
-void             gen_kw_export(const gen_kw_type * , int * , char ***, double **);
-void             gen_kw_upgrade_103( const char * filename );
-char           * gen_kw_alloc_user_key(const gen_kw_config_type *  , const char * , int );
 void             gen_kw_ecl_write_template(const gen_kw_type * gen_kw , const char * file_name);
-
 
 UTIL_SAFE_CAST_HEADER(gen_kw);
 UTIL_SAFE_CAST_HEADER_CONST(gen_kw);

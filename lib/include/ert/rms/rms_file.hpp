@@ -35,7 +35,6 @@ FILE               * rms_file_fopen_r(rms_file_type *rms_file);
 FILE               * rms_file_fopen_w(rms_file_type *rms_file);
 void                 rms_file_set_filename(rms_file_type * , const char * , bool);
 rms_file_type      * rms_file_alloc       (const char *, bool );
-void                 rms_file_fread       (rms_file_type *);
 void                 rms_file_free        (rms_file_type *);
 void                 rms_file_free_data   (rms_file_type *);
 rms_tag_type       * rms_file_get_dim_tag_ref(const rms_file_type * );

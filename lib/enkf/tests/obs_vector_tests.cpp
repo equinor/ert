@@ -151,8 +151,8 @@ bool scale_std_block100observations_no_errors() {
 
   for (int i = 0; i < num_observations; i++) {
     for (int point_nr = 0; point_nr < num_points; point_nr++) {
-      double value, std;
-      block_obs_iget(observations[i], point_nr, &value, &std);
+      double value = block_obs_iget_value(observations[i], point_nr);
+      double std = block_obs_iget_std(observations[i], point_nr);
       test_assert_double_equal(obs_value, value);
       test_assert_double_equal(obs_std, std);
     }
@@ -166,11 +166,12 @@ bool scale_std_block100observations_no_errors() {
 
   for (int i = 0; i < num_observations; i++) {
     for (int point_nr = 0; point_nr < num_points; point_nr++) {
-      double value, std;
-      block_obs_iget(observations[i], point_nr, &value, &std);
+      double value = block_obs_iget_value(observations[i], point_nr);
+      double std = block_obs_iget_std(observations[i], point_nr);
+      double std_scale = block_obs_iget_std_scaling( observations[i] , point_nr);
       test_assert_double_equal(obs_value, value);
       test_assert_double_equal(obs_std , std);
-      test_assert_double_equal(scale_factor , block_obs_iget_std_scaling( observations[i] , point_nr));
+      test_assert_double_equal(scale_factor , std_scale);
     }
   }
 

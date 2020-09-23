@@ -59,16 +59,12 @@ typedef enum { GEN_DATA_UNDEFINED = 0,
   gen_data_file_format_type    gen_data_config_get_input_format ( const gen_data_config_type * );
   gen_data_file_format_type    gen_data_config_get_output_format ( const gen_data_config_type * );
   ecl_data_type                gen_data_config_get_internal_data_type(const gen_data_config_type *);
-  gen_data_config_type       * gen_data_config_alloc_with_options(const char * key , bool , const stringlist_type *);
   void                         gen_data_config_free(gen_data_config_type * );
-  int                          gen_data_config_get_initial_size( const gen_data_config_type * config );
+  PY_USED int                  gen_data_config_get_initial_size( const gen_data_config_type * config );
   void                         gen_data_config_assert_size(gen_data_config_type *  , int , int);
   const bool_vector_type     * gen_data_config_get_active_mask( const gen_data_config_type * config );
   void                         gen_data_config_update_active(gen_data_config_type * config , const forward_load_context_type * load_context , const bool_vector_type * data_mask);
-  const bool     *             gen_data_config_get_iactive(const gen_data_config_type * );
-  void                         gen_data_config_ecl_write(const gen_data_config_type *  , const char * , char * );
   void                         gen_data_config_get_template_data( const gen_data_config_type * , char ** , int * , int * , int *);
-  gen_data_config_type       * gen_data_config_fscanf_alloc(const char * );
   const char  *                gen_data_config_get_key( const gen_data_config_type * config);
   int                          gen_data_config_get_byte_size( const gen_data_config_type * config , int report_step);
   int                          gen_data_config_get_data_size( const gen_data_config_type * config , int report_step);

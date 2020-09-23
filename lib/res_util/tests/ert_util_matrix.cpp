@@ -284,16 +284,6 @@ matrix_type * alloc_column_matrix(int num_row, int num_col) {
   return m;
 }
 
-matrix_type * alloc_row_matrix(int num_row, int num_col) {
-  matrix_type * m = matrix_alloc(num_row, num_col);
-  for (int row = 0; row < matrix_get_rows(m); row++) {
-    for (int col = 0; col < matrix_get_columns(m); col++) {
-      matrix_iset(m, row, col, row * 1.0);
-    }
-  }
-  return m;
-}
-
 }
 
 void test_delete_column() {

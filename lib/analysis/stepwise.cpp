@@ -19,12 +19,10 @@ struct stepwise_struct {
   matrix_type      * Y0;
 
   matrix_type      * beta;           // Quantities estimated by the stepwise algorithm
-  double             Y_mean;
   matrix_type      * X_mean;
   matrix_type      * X_norm;
   bool_vector_type * active_set;
   rng_type         * rng;           // Needed in the cross-validation
-  double             R2;            // Final R2
 };
 
 
@@ -295,7 +293,6 @@ void stepwise_estimate( stepwise_type * stepwise , double deltaR2_limit , int CV
     }
   }
 
-  stepwise_set_R2(stepwise, currentR2);
   bool_vector_free( active_rows );
 }
 
@@ -313,7 +310,6 @@ static stepwise_type * stepwise_alloc__( int nsample , int nvar , rng_type * rng
 
   stepwise->X_mean      = NULL;
   stepwise->X_norm      = NULL;
-  stepwise->Y_mean      = 0.0;
   stepwise->rng         = rng;
   stepwise->X0          = NULL;
   stepwise->E0          = NULL;
@@ -339,10 +335,6 @@ stepwise_type * stepwise_alloc1( int nsample , int nvar, rng_type * rng, const m
 
 void stepwise_set_Y0( stepwise_type * stepwise , matrix_type * Y) {
   stepwise->Y0 = Y;
-}
-
-void stepwise_set_R2( stepwise_type * stepwise ,  const double R2) {
-  stepwise->R2 = R2;
 }
 
 int stepwise_get_n_active( stepwise_type * stepwise ) {

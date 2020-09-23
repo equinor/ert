@@ -151,6 +151,7 @@ extern "C" {
 #define SLURM_EXCLUDE_HOST_OPTION          "EXCLUDE_HOST"
 #define SLURM_INCLUDE_HOST_OPTION          "INCLUDE_HOST"
 
+// All of these functions are probably only used by Python libraries
   const char * config_keys_get_config_directory_key();
   const char * config_keys_get_config_file_key();
   const char * config_keys_get_queue_system_key();

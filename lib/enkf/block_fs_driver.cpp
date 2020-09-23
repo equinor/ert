@@ -171,8 +171,6 @@ static void bfs_mount( bfs_type * bfs) {
 static void * bfs_mount__( void * arg ) {
   bfs_type * bfs = bfs_safe_cast( arg );
   bfs_mount( bfs );
-  //printf(".");
-  //fflush( stdout );
   return NULL;
 }
 

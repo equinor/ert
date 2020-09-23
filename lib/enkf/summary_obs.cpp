@@ -136,7 +136,7 @@ void summary_obs_measure(const summary_obs_type * obs, const summary_type * summ
 
 
 
-double summary_obs_chi2(const summary_obs_type * obs,
+C_USED double summary_obs_chi2(const summary_obs_type * obs,
                         const summary_type     * summary,
                         node_id_type node_id) {
   double x = (summary_get(summary , node_id.report_step) - obs->value) / obs->std;

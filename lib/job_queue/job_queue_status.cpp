@@ -175,8 +175,3 @@ int job_queue_status_get_total_count( const job_queue_status_type * status ) {
     total_count += status->status_list[ index ];
   return total_count;
 }
-
-
-time_t job_queue_status_get_timestamp(const job_queue_status_type * status) {
-  return status->timestamp;
-}

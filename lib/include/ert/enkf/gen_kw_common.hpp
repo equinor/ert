@@ -27,12 +27,12 @@
 extern "C" {
 #endif
 
+#include <ert/tooling.hpp>
 
 typedef struct gen_kw_config_struct gen_kw_config_type;
 typedef struct gen_kw_struct        gen_kw_type;
 
-gen_kw_type * gen_kw_alloc(const gen_kw_config_type * );
-bool          gen_kw_fload(gen_kw_type * , const char *);
+PY_USED gen_kw_type * gen_kw_alloc(const gen_kw_config_type * );
 
 
 

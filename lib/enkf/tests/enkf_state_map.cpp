@@ -237,33 +237,6 @@ void test_deselect_matching( ) {
 }
 
 
-void test_set_from_mask() {
-  int i;
-  state_map_type * map1 = state_map_alloc();
-  state_map_type * map2 = state_map_alloc();
-  bool_vector_type * mask = bool_vector_alloc(0, false);
-  bool_vector_iset(mask , 10 , true);
-  bool_vector_iset(mask , 20 , true);
-
-  state_map_set_from_mask(map1 , mask , STATE_INITIALIZED);
-  state_map_set_from_inverted_mask(map2 , mask , STATE_INITIALIZED);
-  test_assert_int_equal(21 , state_map_get_size(map1));
-  test_assert_int_equal(21 , state_map_get_size(map2));
-  for (i = 0; i < state_map_get_size(map1); i++) {
-    if (i == 10 || i== 20) {
-      test_assert_int_equal( STATE_INITIALIZED , state_map_iget( map1 , i) );
-      test_assert_int_equal( STATE_UNDEFINED , state_map_iget(map2 , i));
-    }
-    else {
-      test_assert_int_equal(STATE_UNDEFINED , state_map_iget(map1 , i ));
-      test_assert_int_equal( STATE_INITIALIZED , state_map_iget(map2 , i));
-    }
-
-
-  }
-}
-
-
 void test_count_matching() {
   state_map_type * map1 = state_map_alloc();
   state_map_iset(map1 , 10 , STATE_INITIALIZED );

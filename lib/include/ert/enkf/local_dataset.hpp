@@ -19,7 +19,7 @@
 
 #ifndef ERT_LOCAL_DATASET_H
 #define ERT_LOCAL_DATASET_H
-
+#include <ert/tooling.hpp>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -32,16 +32,14 @@ void                 local_dataset_free( local_dataset_type * dataset );
 void                 local_dataset_free__( void * arg );
 void                 local_dataset_add_node(local_dataset_type * dataset, const char *node_key);
 void                 local_dataset_del_node( local_dataset_type * dataset , const char * node_key);
-void                 local_dataset_clear( local_dataset_type * dataset);
+PY_USED void         local_dataset_clear( local_dataset_type * dataset);
 const char *         local_dataset_get_name( const local_dataset_type * dataset);
-void                 local_dataset_fprintf( const local_dataset_type * dataset , FILE * stream);
 void                 local_dataset_summary_fprintf( const local_dataset_type * dataset , FILE * stream);
 active_list_type   * local_dataset_get_node_active_list(const local_dataset_type * dataset , const char * node_key );
 stringlist_type    * local_dataset_alloc_keys( const local_dataset_type * dataset );
 int                  local_dataset_get_size( const local_dataset_type * dataset );
-void local_dataset_del_node( local_dataset_type * dataset , const char * node_key);
-void local_dataset_clear( local_dataset_type * dataset);
-bool local_dataset_has_key(const local_dataset_type * dataset, const char * key);
+void                 local_dataset_del_node( local_dataset_type * dataset , const char * node_key);
+PY_USED bool         local_dataset_has_key(const local_dataset_type * dataset, const char * key);
 
 #ifdef __cplusplus
 }

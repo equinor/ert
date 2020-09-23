@@ -25,7 +25,6 @@
 #include <ert/config/conf_data.hpp>
 
 
-
 #define DT_STR_STRING             "string"
 #define DT_INT_STRING             "integer"
 #define DT_POSINT_STRING          "positive integer"
@@ -34,45 +33,7 @@
 #define DT_FILE_STRING            "file"
 #define DT_DATE_STRING            "date"
 
-
-
-#define RETURN_TYPE_IF_MATCH(STRING,TYPE) if(strcmp(STRING, TYPE ##_STRING) == 0){ return TYPE;}
-dt_enum conf_data_get_dt_from_string(
-  const char * str)
-{
-  RETURN_TYPE_IF_MATCH(str, DT_STR);
-  RETURN_TYPE_IF_MATCH(str, DT_INT);
-  RETURN_TYPE_IF_MATCH(str, DT_POSINT);
-  RETURN_TYPE_IF_MATCH(str, DT_FLOAT);
-  RETURN_TYPE_IF_MATCH(str, DT_POSFLOAT);
-  RETURN_TYPE_IF_MATCH(str, DT_FILE);
-  RETURN_TYPE_IF_MATCH(str, DT_DATE);
-
-  util_abort("%s: Data type \"%s\" is unkown.\n", __func__, str);
-  return (dt_enum)0;
-}
-#undef RETURN_TYPE_IF_MATCH
-
-
-
-bool conf_data_string_is_dt(
-  const char * str)
-{
-  if(     !strcmp(str, DT_STR_STRING            )) return true;
-  else if(!strcmp(str, DT_INT_STRING            )) return true;
-  else if(!strcmp(str, DT_POSINT_STRING         )) return true;
-  else if(!strcmp(str, DT_FLOAT_STRING          )) return true;
-  else if(!strcmp(str, DT_POSFLOAT_STRING       )) return true;
-  else if(!strcmp(str, DT_FILE_STRING           )) return true;
-  else if(!strcmp(str, DT_DATE_STRING           )) return true;
-  else                                             return false;
-}
-
-
-
-const char * conf_data_get_dt_name_ref(
-  dt_enum dt)
-{
+const char *conf_data_get_dt_name_ref(dt_enum dt) {
   switch(dt)
   {
     case(DT_STR):
@@ -96,11 +57,7 @@ const char * conf_data_get_dt_name_ref(
 }
 
 
-
-bool conf_data_validate_string_as_dt_value(
-  dt_enum      dt,
-  const char * str)
-{
+bool conf_data_validate_string_as_dt_value(dt_enum dt, const char *str) {
   if(str == NULL)
     return false;
 
@@ -146,13 +103,7 @@ bool conf_data_validate_string_as_dt_value(
 }
 
 
-
-
-
-int conf_data_get_int_from_string(
-  dt_enum      dt,
-  const char * str)
-{
+int conf_data_get_int_from_string(dt_enum dt, const char *str) {
   int  value  = 0;
   bool ok     = true;
 
@@ -176,11 +127,7 @@ int conf_data_get_int_from_string(
 }
 
 
-
-double conf_data_get_double_from_string(
-  dt_enum      dt,
-  const char * str)
-{
+double conf_data_get_double_from_string(dt_enum dt, const char *str) {
   double value  = 0;
   bool   ok = true;
 
@@ -210,11 +157,7 @@ double conf_data_get_double_from_string(
 }
 
 
-
-time_t conf_data_get_time_t_from_string(
-  dt_enum      dt,
-  const char * str)
-{
+time_t conf_data_get_time_t_from_string(dt_enum dt, const char *str) {
   time_t value = 0;
   bool   ok    = true;
 

@@ -68,7 +68,7 @@ static void SUMMARY_SET_VALUE( summary_type * summary,
 
 
 
-void summary_clear(summary_type * summary) {
+C_USED void summary_clear(summary_type * summary) {
   double_vector_reset( summary->data_vector );
 }
 
@@ -84,7 +84,6 @@ summary_type * summary_alloc(const summary_config_type * summary_config) {
 
 
 bool summary_active_value( double value ) {
-
   if (value == SUMMARY_UNDEF)
     return false;
 
@@ -137,7 +136,7 @@ bool summary_write_to_buffer(const summary_type * summary,
 }
 
 
-bool summary_has_data( const summary_type * summary,
+C_USED bool summary_has_data( const summary_type * summary,
                        int report_step) {
   return double_vector_size(summary->data_vector) > report_step;
 }

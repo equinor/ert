@@ -336,9 +336,8 @@ void block_obs_measure(const block_obs_type * block_obs, const void * state , no
   }
 }
 
-
-
-double block_obs_chi2(const block_obs_type * block_obs, const void * state, node_id_type node_id) {
+// used by the VOID_CHI2 macro
+C_USED double block_obs_chi2(const block_obs_type * block_obs, const void * state, node_id_type node_id) {
   double sum_chi2 = 0;
   int obs_size = block_obs_get_size( block_obs );
   block_obs_assert_data(block_obs, state);
@@ -352,17 +351,6 @@ double block_obs_chi2(const block_obs_type * block_obs, const void * state, node
   return sum_chi2;
 }
 
-
-
-
-/**
-   The index is into the the number of active cells which are observed by this observation.
-*/
-void block_obs_iget(const block_obs_type * block_obs, int index , double *value , double * std) {
-  const point_obs_type * point_obs = block_obs_iget_point_const( block_obs , index );
-  *value = point_obs->value;
-  *std   = point_obs->std;
-}
 
 double block_obs_iget_value(const block_obs_type * block_obs, int index ){
     const point_obs_type * point_obs = block_obs_iget_point_const( block_obs , index );
@@ -424,18 +412,6 @@ double block_obs_iget_depth( const block_obs_type * block_obs , int index)  {
   const point_obs_type * point_obs = block_obs_iget_point_const( block_obs , index);
   return ecl_grid_get_cdepth3( block_obs->grid , point_obs->i , point_obs->j ,point_obs->k);
 }
-
-/*
-  Returns by reference i,j,k for observation point nr block_nr.
-*/
-
-void block_obs_iget_ijk(const block_obs_type * block_obs , int block_nr , int * i , int * j , int * k) {
-  const point_obs_type * point_obs = block_obs_iget_point_const( block_obs , block_nr );
-  *i = point_obs->i;
-  *j = point_obs->j;
-  *k = point_obs->k;
-}
-
 
 int block_obs_get_size(const block_obs_type * block_obs) {
   return vector_get_size( block_obs->point_list );

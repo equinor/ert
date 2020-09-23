@@ -280,28 +280,6 @@ rms_tagkey_type * rms_file_fread_alloc_data_tagkey(rms_file_type * rms_file,
 }
 
 
-void rms_file_fread(rms_file_type *rms_file) {
-  rms_file_fopen_r(rms_file);
-  rms_file_init_fread(rms_file);
-
-  /* The main read loop */
-  bool eof_tag = false;
-  while (!eof_tag) {
-    rms_tag_type * tag = rms_tag_fread_alloc(rms_file->stream,
-                                             rms_file->type_map,
-                                             rms_file->endian_convert,
-                                             &eof_tag);
-    if (!eof_tag)
-      rms_file_add_tag(rms_file , tag);
-    else
-      rms_tag_free(tag);
-  }
-
-  rms_file_fclose(rms_file);
-}
-
-
-
 /*static */
 void rms_file_init_fwrite(const rms_file_type * rms_file , const char * filetype) {
   if (!rms_file->fmt_file)

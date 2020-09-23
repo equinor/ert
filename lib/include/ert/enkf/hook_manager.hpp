@@ -34,7 +34,7 @@ extern "C" {
   hook_manager_type   * hook_manager_alloc_default(ert_workflow_list_type * workflow_list);
   hook_manager_type   * hook_manager_alloc(ert_workflow_list_type *, const config_content_type *);
 
-  hook_manager_type * hook_manager_alloc_full(
+  PY_USED hook_manager_type * hook_manager_alloc_full(
           ert_workflow_list_type * workflow_list,
           const char * runpath_list_file,
           const char ** hook_workflow_names,
@@ -51,7 +51,7 @@ extern "C" {
   const char          * hook_manager_get_runpath_list_file(const hook_manager_type * hook_manager);
   void                  hook_manager_run_workflows( const hook_manager_type * hook_manager , hook_run_mode_enum run_mode , void * self);
 
-  const hook_workflow_type   * hook_manager_iget_hook_workflow(const hook_manager_type * hook_manager, int index);
+  PY_USED const hook_workflow_type * hook_manager_iget_hook_workflow(const hook_manager_type * hook_manager, int index);
   int                          hook_manager_get_size(const hook_manager_type * hook_manager);
 
 

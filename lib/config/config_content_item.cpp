@@ -71,44 +71,10 @@ config_content_node_type * config_content_item_iget_node(const config_content_it
   return (config_content_node_type*)vector_iget( item->nodes , index );
 }
 
-char * config_content_item_ialloc_joined_string(const config_content_item_type * item , const char * sep , int occurence) {
-  const config_content_node_type * node = config_content_item_iget_node(item , occurence);
-  return config_content_node_alloc_joined_string(node , sep);
-}
-
-
-
-char * config_content_item_alloc_joined_string(const config_content_item_type * item , const char * sep) {
-  const int occurences = config_content_item_get_size( item );
-  char * joined_string = NULL;
-
-  for (int i =0; i < occurences ; i++) {
-    char * element = config_content_item_ialloc_joined_string(item , sep , i);
-    joined_string = util_strcat_realloc( joined_string , element);
-    if (i < (occurences - 1))
-      joined_string = util_strcat_realloc( joined_string , sep );
-    free( element );
-  }
-
-  return joined_string;
-}
 
 const stringlist_type * config_content_item_iget_stringlist_ref(const config_content_item_type * item, int occurence) {
   const config_content_node_type * node = config_content_item_iget_node(item , occurence);
   return config_content_node_get_stringlist( node );
-}
-
-stringlist_type * config_content_item_alloc_complete_stringlist(const config_content_item_type * item) {
-  int inode;
-  stringlist_type * stringlist = stringlist_alloc_new();
-  for (inode = 0; inode < vector_get_size( item->nodes ); inode++) {
-    const config_content_node_type * node = config_content_item_iget_node(item , inode);
-    const stringlist_type * src_list = config_content_node_get_stringlist( node );
-
-    stringlist_append_stringlist_copy( stringlist , src_list );
-  }
-
-  return stringlist;
 }
 
 /**

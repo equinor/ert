@@ -30,7 +30,6 @@ extern "C" {
 
 
 bool res_log_init_log(message_level_type log_level,const char * log_file_name, bool verbose);
-bool res_log_init_log_default_log_level(const char * log_file_name, bool verbose);
 void res_log_close();
 const char * res_log_get_filename();
 

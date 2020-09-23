@@ -33,20 +33,9 @@ extern "C" {
 
 #include <ert/enkf/enkf_types.hpp>
 
-
 void    enkf_util_truncate(void *  , int  , ecl_data_type , void *  , void *);
-void    enkf_util_rand_stdnormal_vector(int  , double *, rng_type * rng);
 double  enkf_util_rand_normal(double , double , rng_type * rng);
 void    enkf_util_assert_buffer_type(buffer_type * buffer, ert_impl_type target_type);
-
-  //char  * enkf_util_scanf_alloc_filename(const char * , int );
-void    enkf_util_fprintf_data(const int * , const double ** , const char * , const char ** , int , int , const bool * , bool , FILE * stream);
-
-char * enkf_util_alloc_tagged_string(const char * );
-int    enkf_util_compare_keys( const char * key1 , const char * key2 );
-int    enkf_util_compare_keys__( const void * __key1 , const void * __key2 );
-
-
 
 #ifdef __cplusplus
 }

@@ -22,10 +22,12 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <ert/tooling.hpp>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
 //Same as pythons default log levels, but with different numeric values.
 typedef enum {
@@ -56,14 +58,11 @@ typedef struct log_struct log_type;
 
   void         log_add_message_stream(FILE * stream, bool add_timestamp, message_level_type message_level, const char * message);
   void         log_add_message(log_type *logh, message_level_type message_level,  const char* message);
-  void         log_set_level( log_type * logh , message_level_type new_level);
+  PY_USED void log_set_level( log_type * logh , message_level_type new_level);
   void         log_close( log_type * logh );
   void         log_sync(log_type * logh);
   const char * log_get_filename( const log_type * logh );
-  void         log_set_level( log_type * logh , message_level_type log_level);
   int          log_get_msg_count(const log_type * logh);
-  message_level_type log_get_level( const log_type * logh);
-  message_level_type log_get_level( const log_type * logh);
 
 #ifdef __cplusplus
 }

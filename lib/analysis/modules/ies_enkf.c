@@ -821,16 +821,6 @@ bool ies_enkf_set_string( void * arg , const char * var_name , const char * valu
   }
 }
 
-const char* ies_enkf_get_string( void * arg , const char * var_name ) {
-  const ies_enkf_data_type * module_data = ies_enkf_data_safe_cast( arg );
-  const ies_enkf_config_type * ies_config = ies_enkf_data_get_config( module_data );
-  {
-    if (strcmp( var_name , IES_LOGFILE_KEY) == 0)
-      return ies_enkf_config_get_ies_logfile( ies_config );
-    else
-       return NULL;
-  }
-}
 
 bool ies_enkf_set_bool( void * arg , const char * var_name , bool value) {
   ies_enkf_data_type * module_data = ies_enkf_data_safe_cast( arg );

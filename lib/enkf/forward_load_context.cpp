@@ -36,7 +36,6 @@ struct forward_load_context_struct {
   const run_arg_type    * run_arg;
   const ecl_config_type * ecl_config;   // Can be NULL
 
-  int step1;
   int step2;
   stringlist_type * messages;          // This is managed by external scope - can be NULL
 

@@ -76,10 +76,6 @@ int log_get_msg_count( const log_type * logh) {
   return logh->msg_count;
 }
 
-message_level_type log_get_level( const log_type * logh) {
-  return logh->log_level;
-}
-
 /**
  * If an incoming message is below or equal to the configured log_level, it is included. So a high log_level will
  * include more messages.

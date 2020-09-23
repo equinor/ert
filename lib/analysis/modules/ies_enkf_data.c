@@ -32,14 +32,7 @@
 struct ies_enkf_data_struct {
    UTIL_TYPE_ID_DECLARATION;
    int       iteration_nr;            // Keep track of the outer iteration loop
-   double    ies_max_steplength;      // Maximum step length in Gauss Newton iteration
-   double    ies_min_steplength;      // Minimum step length in Gauss Newton iteration
-   double    ies_dec_steplength;      // Step length decline in Gauss Newton iteration
-   double    gauss_newton_conv;       // NOT USED
-   bool      ies_subspace;            // NOT USED
-   int       max_gauss_newton_it;     // NOT USED
    int state_size;                    // Initial state_size used for checks in subsequent calls
-   bool_vector_type * ens_mask0;      // Initial ensemble mask of active realizations
    bool_vector_type * ens_mask;       // Ensemble mask of active realizations
    bool_vector_type * obs_mask0;      // Initial observation mask for active measurements
    bool_vector_type * obs_mask;       // Current observation mask
@@ -58,13 +51,7 @@ void * ies_enkf_data_alloc( rng_type * rng) {
   ies_enkf_data_type * data = util_malloc( sizeof * data);
   UTIL_TYPE_ID_INIT( data , IES_ENKF_DATA_TYPE_ID );
   data->iteration_nr         = 0;
-  data->ies_max_steplength   = 0.0;
-  data->ies_min_steplength   = 0.0;
-  data->ies_dec_steplength   = 0.0;
-  data->gauss_newton_conv    = 0.0;
-  data->max_gauss_newton_it  = 0;
   data->state_size           = 0;
-  data->ens_mask0            = NULL;
   data->ens_mask             = NULL;
   data->obs_mask0            = NULL;
   data->obs_mask             = NULL;

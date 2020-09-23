@@ -58,7 +58,7 @@ void gen_kw_free(gen_kw_type *gen_kw) {
 
 
 
-gen_kw_type * gen_kw_alloc(const gen_kw_config_type * config) {
+PY_USED gen_kw_type * gen_kw_alloc(const gen_kw_config_type * config) {
   gen_kw_type * gen_kw = (gen_kw_type *)util_malloc(sizeof *gen_kw );
   gen_kw->__type_id     = GEN_KW;
   gen_kw->config        = config;
@@ -68,7 +68,7 @@ gen_kw_type * gen_kw_alloc(const gen_kw_config_type * config) {
 }
 
 
-void gen_kw_clear(gen_kw_type * gen_kw) {
+C_USED void gen_kw_clear(gen_kw_type * gen_kw) {
   int i;
   for (i=0; i < gen_kw_config_get_data_size( gen_kw->config ); i++)
     gen_kw->data[i]        = 0.0;
@@ -151,7 +151,7 @@ bool gen_kw_data_has_key( gen_kw_type * gen_kw, const char * subkey )
   return has_key;
 }
 
-bool gen_kw_write_to_buffer(const gen_kw_type *gen_kw , buffer_type * buffer,  int report_step) {
+C_USED bool gen_kw_write_to_buffer(const gen_kw_type *gen_kw , buffer_type * buffer,  int report_step) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );
   buffer_fwrite_int( buffer , GEN_KW );
   buffer_fwrite(buffer , gen_kw->data , sizeof *gen_kw->data , data_size);
@@ -179,6 +179,7 @@ void gen_kw_read_from_buffer(gen_kw_type * gen_kw , buffer_type * buffer, enkf_f
 }
 #undef MULTFLT
 
+C_USED static bool gen_kw_fload(gen_kw_type * , const char *);
 
 bool gen_kw_initialize(gen_kw_type *gen_kw , int iens , const char * init_file , rng_type * rng ) {
   if (!init_file && !rng)
@@ -330,7 +331,7 @@ const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
 
 */
 
-bool gen_kw_fload(gen_kw_type * gen_kw , const char * filename) {
+static bool gen_kw_fload(gen_kw_type * gen_kw , const char * filename) {
   FILE * stream  = util_fopen__( filename , "r");
   if (stream) {
     const int size = gen_kw_config_get_data_size(gen_kw->config );
@@ -398,7 +399,7 @@ bool gen_kw_fload(gen_kw_type * gen_kw , const char * filename) {
    Will return 0.0 on invalid input, and set valid -> false. It is the
    responsibility of the calling scope to check valid.
 */
-bool gen_kw_user_get(const gen_kw_type * gen_kw, const char * key , int report_step , double * value) {
+C_USED bool gen_kw_user_get(const gen_kw_type * gen_kw, const char * key , int report_step , double * value) {
   int index = gen_kw_config_get_index(gen_kw->config , key);
 
   if (index >= 0) {
@@ -412,7 +413,7 @@ bool gen_kw_user_get(const gen_kw_type * gen_kw, const char * key , int report_s
 }
 
 
-void gen_kw_set_inflation(gen_kw_type * inflation , const gen_kw_type * std , const gen_kw_type * min_std) {
+C_USED void gen_kw_set_inflation(gen_kw_type * inflation , const gen_kw_type * std , const gen_kw_type * min_std) {
   const int data_size           = gen_kw_config_get_data_size(std->config );
   const double * std_data       = std->data;
   const double * min_std_data   = min_std->data;
@@ -429,31 +430,31 @@ void gen_kw_set_inflation(gen_kw_type * inflation , const gen_kw_type * std , co
 }
 
 
-void gen_kw_iadd( gen_kw_type * gen_kw , const gen_kw_type * delta) {
+C_USED void gen_kw_iadd( gen_kw_type * gen_kw , const gen_kw_type * delta) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );
   for(int i=0; i < data_size; i++)
     gen_kw->data[i] += delta->data[i];
 }
 
-void gen_kw_iaddsqr( gen_kw_type * gen_kw , const gen_kw_type * delta) {
+C_USED void gen_kw_iaddsqr( gen_kw_type * gen_kw , const gen_kw_type * delta) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );
   for(int i=0; i < data_size; i++)
     gen_kw->data[i] += (delta->data[i] * delta->data[i]);
 }
 
-void gen_kw_imul( gen_kw_type * gen_kw , const gen_kw_type * delta) {
+C_USED void gen_kw_imul( gen_kw_type * gen_kw , const gen_kw_type * delta) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );
   for(int i=0; i < data_size; i++)
     gen_kw->data[i] *= delta->data[i];
 }
 
-void gen_kw_scale( gen_kw_type * gen_kw , double scale_factor) {
+C_USED void gen_kw_scale( gen_kw_type * gen_kw , double scale_factor) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );
   for(int i=0; i < data_size; i++)
     gen_kw->data[i] *= scale_factor;
 }
 
-void gen_kw_isqrt( gen_kw_type * gen_kw ) {
+C_USED void gen_kw_isqrt( gen_kw_type * gen_kw ) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );
   for(int i=0; i < data_size; i++)
     gen_kw->data[i] = sqrt( gen_kw->data[i] );

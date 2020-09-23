@@ -268,7 +268,7 @@ stringlist_type * workflow_iget_arguments( const workflow_type * workflow, int i
 extern "C" {
 #endif
 
-const char * worflow_get_src_file(const workflow_type * workflow) {
+PY_USED const char * worflow_get_src_file(const workflow_type * workflow) {
   return workflow->src_file;
 }
 

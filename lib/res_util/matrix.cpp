@@ -1123,15 +1123,6 @@ double matrix_get_column_sum2(const matrix_type * matrix , int column) {
   return sum2;
 }
 
-
-
-void matrix_shift_column(matrix_type * matrix , int column, double shift) {
-  int i;
-  for ( i=0; i < matrix->rows; i++)
-    matrix->data[ GET_INDEX( matrix , i , column) ] += shift;
-}
-
-
 void matrix_shift_row(matrix_type * matrix , int row , double shift) {
    int j;
   for ( j=0; j < matrix->columns; j++)

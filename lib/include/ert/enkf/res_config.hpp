@@ -45,7 +45,7 @@ typedef struct res_config_struct res_config_type;
   res_config_type * res_config_alloc_load(const char *);
   res_config_type * res_config_alloc(const config_content_type *);
 
-  res_config_type * res_config_alloc_full(char * config_dir,
+  PY_USED res_config_type * res_config_alloc_full(char * config_dir,
                                         char * user_config_file,
                                         subst_config_type * subst_config,
                                         site_config_type * site_config,
@@ -77,7 +77,7 @@ model_config_type            * res_config_get_model_config(const res_config_type
 const log_config_type        * res_config_get_log_config(const res_config_type * res_config);
 queue_config_type            * res_config_get_queue_config(const res_config_type * res_config);
 
-const char * res_config_get_config_directory(const res_config_type *);
+PY_USED const char * res_config_get_config_directory(const res_config_type *);
 const char * res_config_get_user_config_file(const res_config_type *);
 
 #ifdef __cplusplus

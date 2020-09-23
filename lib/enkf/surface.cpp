@@ -44,7 +44,7 @@ struct surface_struct {
 };
 
 
-void surface_clear(surface_type * surface) {
+C_USED void surface_clear(surface_type * surface) {
   const int data_size = surface_config_get_data_size(surface->config);
   for (int k=0; k < data_size; k++)
     surface->data[k] = 0;
@@ -179,7 +179,7 @@ bool surface_user_get(const surface_type * surface,
 
 
 
-void surface_set_inflation(surface_type * inflation,
+C_USED void surface_set_inflation(surface_type * inflation,
                            const surface_type * std,
                            const surface_type * min_std) {
   int size = 1;
@@ -188,33 +188,33 @@ void surface_set_inflation(surface_type * inflation,
 }
 
 
-void surface_iadd(surface_type * surface, const surface_type * delta) {
+C_USED void surface_iadd(surface_type * surface, const surface_type * delta) {
   int size = 1;
   for (int i = 0; i < size; i++)
     surface->data[i] += delta->data[i];
 }
 
 
-void surface_iaddsqr(surface_type * surface, const surface_type * delta) {
+C_USED void surface_iaddsqr(surface_type * surface, const surface_type * delta) {
   int size = 1;
   for (int i = 0; i < size; i++)
     surface->data[i] += delta->data[i] * delta->data[i];
 }
 
 
-void surface_imul(surface_type * surface, const surface_type * delta) {
+C_USED void surface_imul(surface_type * surface, const surface_type * delta) {
   int size = 1;
   for (int i = 0; i < size; i++)
     surface->data[i] *= delta->data[i];
 }
 
-void surface_scale(surface_type * surface, double scale_factor) {
+C_USED void surface_scale(surface_type * surface, double scale_factor) {
   int size = 1;
   for (int i = 0; i < size; i++)
     surface->data[i] *= scale_factor;
 }
 
-void surface_isqrt(surface_type * surface) {
+C_USED void surface_isqrt(surface_type * surface) {
   int size = 1;
   for (int i = 0; i < size; i++)
     surface->data[i] = sqrt(surface->data[i]);

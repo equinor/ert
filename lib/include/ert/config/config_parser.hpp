@@ -29,6 +29,8 @@ extern "C" {
 
 #include <ert/util/stringlist.hpp>
 #include <ert/util/hash.hpp>
+
+#include <ert/tooling.hpp>
 #include <ert/res_util/subst_list.hpp>
 
 #include <ert/config/config_schema_item.hpp>
@@ -41,8 +43,7 @@ typedef struct config_parser_struct              config_parser_type;
 
 
   void              config_free(config_parser_type *);
-  config_parser_type *     config_alloc( );
-  char       **     config_alloc_active_list(const config_parser_type * , int * );
+  config_parser_type * config_alloc( );
   config_content_type * config_parse(config_parser_type * config,
                                      const char * filename,
                                      const char * comment_string,
@@ -56,39 +57,17 @@ typedef struct config_parser_struct              config_parser_type;
 /*****************************************************************/
 
   config_schema_item_type * config_get_schema_item(const config_parser_type *, const char *);
-  bool               config_item_set(const config_parser_type * , const char * );
   void               config_add_alias(config_parser_type * , const char * , const char * );
   void               config_install_message(config_parser_type * , const char * , const char * );
-  const char       * config_safe_get(const config_parser_type * , const char *);
-  char             * config_alloc_joined_string(const config_parser_type * , const char * , const char * );
-
-  void               config_add_define( config_parser_type * config , const char * key , const char * value );
 
   config_schema_item_type * config_add_schema_item(config_parser_type * config,
                                      const char * kw,
                                      bool required);
 
+  config_schema_item_type * config_add_key_value( config_parser_type * config , const char * key , bool required , config_item_types item_type);
 
-  stringlist_type       * config_alloc_complete_stringlist(const config_parser_type *  , const char * );
-  stringlist_type       * config_alloc_stringlist(const config_parser_type * config , const char * );
-  hash_type             * config_alloc_hash(const config_parser_type *  , const char * );
-  const stringlist_type * config_iget_stringlist_ref(const config_parser_type *  , const char * , int );
-
-  int                     config_get_occurences(const config_parser_type * , const char * );
-  int                     config_get_occurence_size( const config_parser_type * config , const char * kw , int occurence);
-
-  bool                       config_has_content_item( const config_parser_type * config , const char * input_kw);
-  config_content_item_type * config_get_content_item( const config_parser_type * config , const char * input_kw);
-  config_schema_item_type      * config_add_key_value( config_parser_type * config , const char * key , bool required , config_item_types item_type);
-;
-  const char *            config_get_value_as_relpath( const config_parser_type * config , const char * kw);
-  const char *            config_get_value_as_path( const config_parser_type * config , const char * kw);
-  const char *            config_get_value(const config_parser_type * config , const char * kw);
-
-  const subst_list_type * config_get_define_list( const config_parser_type * config);
   int                     config_get_schema_size( const config_parser_type * config );
-  config_content_node_type       * config_get_value_node( const config_parser_type * config , const char * kw);
-  void                             config_parser_deprecate(config_parser_type * config , const char * kw, const char * msg);
+  void                    config_parser_deprecate(config_parser_type * config , const char * kw, const char * msg);
 
   void config_validate(config_parser_type * config, config_content_type * content);
 

@@ -155,21 +155,6 @@ void test_export_json() {
 }
 
 
-void test_export_txt__() {
-  ecl::util::TestArea ta("export_txt__");
-  value_export_type * export_value = value_export_alloc( "", "parameters");
-  value_export_append(export_value, "KEY100", "SUBKEY1", 100);
-  value_export_append(export_value, "KEY200", "SUBKEY2", 200);
-  test_assert_int_equal( 2 , value_export_size( export_value ));
-
-  value_export_txt( export_value );
-  value_export_txt__( export_value , "parameters__.txt");
-  test_assert_true( util_file_exists( "path/parameters__.txt" ));
-  test_assert_true( util_files_equal( "path/parameters__.txt", "path/parameters.txt"));
-  value_export_free( export_value );
-}
-
-
 void test_export_txt() {
   ecl::util::TestArea ta("export_txt");
   value_export_type * export_value = value_export_alloc( "path", "parameters");

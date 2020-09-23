@@ -64,7 +64,6 @@ GET_DATA_SIZE_HEADER(field);
 struct field_struct {
   int    __type_id;
   const  field_config_type * config;              /* The field config object - containing information of active cells++ */
-  bool   private_config;
   char  *data;                                    /* The actual storage for the field - suitabley casted to int/float/double on use*/
 
   bool   shared_data;                             /* If the data is shared - i.e. managed (xalloc & free) from another scope. */
@@ -314,7 +313,7 @@ static void field_import3D(field_type * field ,
 /*****************************************************************/
 
 #define CLEAR_MACRO(d,s) { int k; for (k=0; k < (s); k++) (d)[k] = 0; }
-void field_clear(field_type * field) {
+C_USED void field_clear(field_type * field) {
   const ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
   const int data_size           = field_config_get_data_size(field->config );
 
@@ -349,7 +348,6 @@ void field_clear(field_type * field) {
 static field_type * __field_alloc(const field_config_type * field_config , void * shared_data , int shared_byte_size) {
   field_type * field = (field_type *)util_malloc(sizeof *field);
   field->config = field_config;
-  field->private_config = false;
   if (shared_data == NULL) {
     field->shared_data = false;
     field->data        = (char * ) util_calloc(field_config_get_byte_size(field->config) , sizeof * field->data );
@@ -373,7 +371,7 @@ field_type * field_alloc(const field_config_type * field_config) {
 }
 
 
-void field_copy(const field_type *src , field_type * target ) {
+C_USED void field_copy(const field_type *src , field_type * target ) {
   if (src->config == target->config)
     memcpy(target->data , src->data , field_config_get_byte_size(src->config));
   else
@@ -1114,33 +1112,11 @@ bool field_fload_keep_inactive(field_type * field , const char * filename) {
 }
 
 
-/**
-   This function compares two fields, and return true if they are
-   equal. Observe that the config comparison is done with plain
-   pointer comparison, i.e. the actual content of the config objects
-   is not compared. If the two fields point to different config
-   objects, the comparision will fail immediately - without checking the
-   content of the fields.
-*/
-
-bool field_cmp(const field_type * f1 , const field_type * f2) {
-  if (f1->config != f2->config) {
-    fprintf(stderr,"The two fields have different config objects - and the comparison fails trivially.\n");
-    return false;
-  } else {
-    const int byte_size = field_config_get_byte_size(f1->config);
-    if (memcmp( f1->data , f2->data , byte_size) != 0)
-      return false;
-    else
-      return true;
-  }
-}
-
 
 /*****************************************************************/
 
 
-void field_iadd(field_type * field1, const field_type * field2) {
+C_USED void field_iadd(field_type * field1, const field_type * field2) {
   field_config_assert_binary(field1->config , field2->config , __func__);
   {
     const int data_size           = field_config_get_data_size( field1->config );
@@ -1162,7 +1138,7 @@ void field_iadd(field_type * field1, const field_type * field2) {
 }
 
 
-void field_imul(field_type * field1, const field_type * field2) {
+C_USED void field_imul(field_type * field1, const field_type * field2) {
   field_config_assert_binary(field1->config , field2->config , __func__);
   {
     const int data_size           = field_config_get_data_size(field1->config );
@@ -1184,7 +1160,7 @@ void field_imul(field_type * field1, const field_type * field2) {
 }
 
 
-void field_iaddsqr(field_type * field1, const field_type * field2) {
+C_USED void field_iaddsqr(field_type * field1, const field_type * field2) {
   field_config_assert_binary(field1->config , field2->config , __func__);
   {
     const int data_size           = field_config_get_data_size(field1->config );
@@ -1226,10 +1202,7 @@ void field_scale(field_type * field, double scale_factor) {
 }
 
 
-static inline float __sqr(float x) { return x*x; }
-
-
-void field_isqrt(field_type * field) {
+C_USED void field_isqrt(field_type * field) {
   field_apply(field , sqrtf);
 }
 
@@ -1241,7 +1214,7 @@ void field_isqrt(field_type * field) {
   [1..ny] , [1...nz], they are immediately converted to C-based zero
   offset indices.
 */
-bool field_user_get(const field_type * field, const char * index_key, int report_step , double * value)
+C_USED bool field_user_get(const field_type * field, const char * index_key, int report_step , double * value)
 {
   const    bool internal_value = false;
   bool     valid = false;
@@ -1289,7 +1262,7 @@ bool field_user_get(const field_type * field, const char * index_key, int report
 }
 
 
-void field_set_inflation(field_type * inflation , const field_type * std , const field_type * min_std) {
+C_USED void field_set_inflation(field_type * inflation , const field_type * std , const field_type * min_std) {
   const field_config_type * config = inflation->config;
   ecl_data_type data_type          = field_config_get_ecl_data_type( config );
   const int data_size              = field_config_get_data_size( config );

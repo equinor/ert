@@ -235,24 +235,6 @@ void cmp_std_ies_delrel(res::es_testdata& testdata) {
    rng_free( rng );
 }
 
-
-
-matrix_type * matrix_delete_column(const matrix_type * m1, int column) {
-  matrix_type * m2 = matrix_alloc(matrix_get_rows(m1), matrix_get_columns(m1) - 1);
-  if (column > 0)
-    matrix_copy_block(m2, 0, 0,
-                      matrix_get_rows(m2), column,
-                      m1, 0, 0);
-
-  if (column < (matrix_get_columns(m1) - 1))
-    matrix_copy_block(m2, 0, column,
-                      matrix_get_rows(m2), matrix_get_columns(m2) - column,
-                      m1, 0, column + 1);
-
-  return m2;
-}
-
-
 matrix_type * swap_matrix(matrix_type * old_matrix, matrix_type * new_matrix) {
   matrix_free( old_matrix );
   return new_matrix;

@@ -24,6 +24,7 @@ extern "C" {
 
 #include <ert/util/hash.hpp>
 #include <ert/job_queue/job_status.hpp>
+#include <ert/tooling.hpp>
 
   typedef enum {
     NULL_DRIVER = 0,
@@ -68,7 +69,7 @@ extern "C" {
   void queue_driver_kill_job(queue_driver_type * driver, void * job_data);
   job_status_type queue_driver_get_status(queue_driver_type * driver, void * job_data);
 
-  const char * queue_driver_get_name(const queue_driver_type * driver);
+  PY_USED const char * queue_driver_get_name(const queue_driver_type * driver);
 
   bool queue_driver_set_option(queue_driver_type * driver, const char * option_key, const void * value);
   bool queue_driver_unset_option(queue_driver_type * driver, const char * option_key);
@@ -79,7 +80,7 @@ extern "C" {
   void queue_driver_free__(void * driver);
 
   void queue_driver_set_max_running(queue_driver_type * driver, int max_running);
-  int  queue_driver_get_max_running(const queue_driver_type * driver);
+  PY_USED int  queue_driver_get_max_running(const queue_driver_type * driver);
 
   typedef enum {SUBMIT_OK           = 0 ,
                 SUBMIT_JOB_FAIL     = 1 , /* Typically no more attempts. */

@@ -41,7 +41,7 @@ typedef struct queue_config_struct queue_config_type;
 
     queue_config_type * queue_config_alloc_load(const char * user_config_file);
     queue_config_type * queue_config_alloc(const config_content_type * config_content);
-    queue_config_type * queue_config_alloc_full(char * job_script,
+    PY_USED queue_config_type * queue_config_alloc_full(char * job_script,
                                                 bool user_mode,
                                                 int max_submit,
                                                 int num_cpu,
@@ -78,10 +78,10 @@ typedef struct queue_config_struct queue_config_type;
 
     int queue_config_get_num_cpu(const queue_config_type * queue_config);
 
-    const char * queue_config_lsf_queue_name();
-    const char * queue_config_lsf_server();
-    const char * queue_config_lsf_resource();
-    const char * queue_config_lsf_driver_name();
+    PY_USED const char * queue_config_lsf_queue_name();
+    PY_USED const char * queue_config_lsf_server();
+    PY_USED const char * queue_config_lsf_resource();
+    PY_USED const char * queue_config_lsf_driver_name();
 
 UTIL_SAFE_CAST_HEADER(queue_config);
 UTIL_IS_INSTANCE_HEADER(queue_config);

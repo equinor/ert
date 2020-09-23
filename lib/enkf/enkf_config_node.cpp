@@ -178,20 +178,6 @@ bool enkf_config_node_vector_storage( const enkf_config_node_type * config_node)
   return config_node->vector_storage;
 }
 
-/**
-   Requires that enkf_outfile_fmt (i.e. the name of the file produced
-   by ERT) is set to a non NULL value; in addition to the type
-   specific validation in gen_kw_config_is_valid().
-*/
-
-static bool enkf_config_node_is_valid_GEN_KW( const enkf_config_node_type * config_node ) {
-  bool valid = gen_kw_config_is_valid( (const gen_kw_config_type * ) config_node->data );
-  valid = (valid && (config_node->enkf_outfile_fmt != NULL));
-
-  return valid;
-}
-
-
 static bool enkf_config_node_is_valid_FIELD( const enkf_config_node_type * config_node ) {
   bool valid = false;
   if ( config_node->var_type != INVALID_VAR )
@@ -1048,7 +1034,7 @@ enkf_config_node_type * enkf_config_node_alloc_GEN_KW_full(const char * node_key
   return config_node;
 }
 
-enkf_config_node_type * enkf_config_node_alloc_SURFACE_full(const char * node_key,
+enkf_config_node_type *enkf_config_node_alloc_SURFACE_full(const char * node_key,
                                                             bool forward_init,
                                                             const char * output_file,
                                                             const char * base_surface,

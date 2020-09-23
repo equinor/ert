@@ -144,7 +144,6 @@ add_library(res res_util/res_log.cpp
                 enkf/hook_manager.cpp
                 enkf/hook_workflow.cpp
                 enkf/local_config.cpp
-                enkf/local_context.cpp
                 enkf/local_dataset.cpp
                 enkf/local_ministep.cpp
                 enkf/local_obsdata.cpp

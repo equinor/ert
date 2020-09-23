@@ -329,7 +329,7 @@ void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_da
 
 
 
-void gen_obs_get_observations(gen_obs_type * gen_obs , obs_data_type * obs_data, enkf_fs_type * fs, int report_step , const active_list_type * __active_list) {
+C_USED void gen_obs_get_observations(gen_obs_type * gen_obs , obs_data_type * obs_data, enkf_fs_type * fs, int report_step , const active_list_type * __active_list) {
   const bool_vector_type * forward_model_active = NULL;
   if (gen_data_config_has_active_mask( gen_obs->data_config , fs, report_step)) {
     gen_data_config_load_active( gen_obs->data_config , fs, report_step , true);
@@ -467,7 +467,7 @@ void gen_obs_user_get_with_data_index(const gen_obs_type * gen_obs , const char 
   }
 }
 
-void gen_obs_update_std_scale(gen_obs_type * gen_obs, double std_multiplier, const active_list_type * active_list) {
+C_USED void gen_obs_update_std_scale(gen_obs_type * gen_obs, double std_multiplier, const active_list_type * active_list) {
   if (active_list_get_mode( active_list ) == ALL_ACTIVE) {
     for (int i = 0; i < gen_obs->obs_size; i++)
       gen_obs->std_scaling[i] = std_multiplier;

@@ -141,12 +141,6 @@ static void obs_block_free__( void * arg ) {
 }
 
 
-static void obs_block_fprintf( const obs_block_type * obs_block , FILE * stream ) {
-  for (int iobs=0; iobs < obs_block->size; iobs++)
-    fprintf(stream , "[ %12.5f  +/-  %12.5f ] \n" , obs_block->value[iobs] , obs_block->std[iobs]);
-}
-
-
 void obs_block_deactivate( obs_block_type * obs_block , int iobs , bool verbose , const char * msg) {
   if (obs_block->active_mode[ iobs ] == ACTIVE) {
     if (verbose)

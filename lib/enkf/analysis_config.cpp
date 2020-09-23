@@ -1,3 +1,4 @@
+#include <iso646.h>
 /*
    Copyright (C) 2011  Equinor ASA, Norway.
 

@@ -154,7 +154,7 @@ static void shared_info_free(shared_info_type * shared_info) {
 */
 void enkf_state_initialize(enkf_state_type * enkf_state , rng_type * rng, enkf_fs_type * fs , const stringlist_type * param_list, init_mode_type init_mode) {
   if (init_mode != INIT_NONE) {
-    int iens = enkf_state_get_iens( enkf_state );
+    int iens = enkf_state->__iens;
     state_map_type * state_map = enkf_fs_get_state_map( fs );
     realisation_state_enum current_state = state_map_iget(state_map, iens);
     if ((current_state == STATE_PARENT_FAILURE) && (init_mode != INIT_FORCE))
@@ -179,26 +179,6 @@ void enkf_state_initialize(enkf_state_type * enkf_state , rng_type * rng, enkf_f
     }
   }
 }
-
-
-
-
-
-
-
-int enkf_state_get_iens(const enkf_state_type * enkf_state) {
-  return enkf_state->__iens;
-}
-
-
-
-
-
-static void enkf_state_add_subst_kw( enkf_state_type * enkf_state, const char * key, const char * value, const char * doc) {
-
-}
-
-
 
 
 static void enkf_state_add_nodes( enkf_state_type * enkf_state, const ensemble_config_type * ensemble_config) {
@@ -246,39 +226,11 @@ enkf_state_type * enkf_state_alloc(int iens,
   enkf_state->shared_info       = shared_info_alloc(site_config , model_config , ecl_config , templates);
   enkf_state->node_hash         = hash_alloc();
 
-  /**
-     Adding all the subst_kw keywords here, with description. Listing
-     all of them here in one go guarantees that we have control over
-     the ordering (which is interesting because the substititions are
-     done in a cascade like fashion). The user defined keywords are
-     added first, so that these can refer to the built in keywords.
-  */
-
-  enkf_state_add_subst_kw(enkf_state , "RUNPATH"       , "---" , "The absolute path of the current forward model instance. ");
-  enkf_state_add_subst_kw(enkf_state , "IENS"          , "---" , "The realisation number for this realization.");
-  enkf_state_add_subst_kw(enkf_state , "IENS4"         , "---" , "The realization number for this realization - formated with %04d.");
-  enkf_state_add_subst_kw(enkf_state , "ECLBASE"       , "---" , "The ECLIPSE basename for this realization.");
-  enkf_state_add_subst_kw(enkf_state , "ECL_BASE"      , "---" , "Depreceated - use ECLBASE instead.");
-  enkf_state_add_subst_kw(enkf_state , "SMSPEC"        , "---" , "The ECLIPSE SMSPEC file for this realization.");
-  enkf_state_add_subst_kw(enkf_state , "TSTEP1"        , "---" , "The initial report step for this simulation.");
-  enkf_state_add_subst_kw(enkf_state , "TSTEP2"        , "---" , "The final report step for this simulation.");
-  enkf_state_add_subst_kw(enkf_state , "TSTEP1_04"     , "---" , "The initial report step for this simulation - formated with %04d.");
-  enkf_state_add_subst_kw(enkf_state , "TSTEP2_04"     , "---" , "The final report step for this simulation - formated withh %04d.");
-  enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , "---" , "The ECLIPSE restart file this simulation starts with.");
-  enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , "---" , "The ECLIPSE restart file this simulation should end with.");
-
   enkf_state->__iens = iens;
   enkf_state_add_nodes( enkf_state , ensemble_config );
 
   return enkf_state;
 }
-
-
-
-
-
-
-
 
 
 static void enkf_state_log_GEN_DATA_load( const enkf_node_type * enkf_node , int report_step , forward_load_context_type * load_context) {
@@ -777,7 +729,7 @@ bool enkf_state_complete_forward_modelOK(const res_config_type * res_config,
 
   }
 
-  return (result == 0) ? true : false;
+  return result == 0;
 }
 
 

@@ -24,6 +24,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdbool.h>
 
+#include <ert/tooling.hpp>
 #include <ert/util/node_ctype.hpp>
 #include <ert/util/type_macros.hpp>
 
@@ -43,11 +44,6 @@ typedef void * (arg_node_copyc_ftype) (const void *);
   void            arg_pack_append_const_ptr(arg_pack_type * , const void *);
   void            arg_pack_append_owned_ptr(arg_pack_type * , void * , arg_node_free_ftype *);
 
-  /*
-    void            arg_pack_iset_copy(arg_pack_type * arg_pack , int index , void * ptr, arg_node_copyc_ftype * copyc , arg_node_free_ftype * freef);
-    void            arg_pack_iset_ptr(arg_pack_type * arg_pack, int index , void * ptr);
-    void            arg_pack_iset_owned_ptr(arg_pack_type * arg_pack, int index , void * ptr, arg_node_free_ftype * freef);
-  */
   const void    * arg_pack_iget_const_ptr( const arg_pack_type * arg_pack , int index);
   void          * arg_pack_iget_ptr(const arg_pack_type * , int);
   void          * arg_pack_iget_adress(const arg_pack_type * , int);

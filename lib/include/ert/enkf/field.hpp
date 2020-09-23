@@ -40,7 +40,7 @@ extern "C" {
   double       field_iget_double(const field_type * , int );
   double       field_ijk_get_double(const field_type * field, int  , int  , int );
   float        field_iget_float(const field_type * , int );
-  void         field_ijk_get(const field_type * , int , int  , int , void *);
+  PY_USED void field_ijk_get(const field_type * , int , int  , int , void *);
   void         field_ecl_write1D_fortio(const field_type * , fortio_type *);
   void         field_ecl_write3D_fortio(const field_type * , fortio_type *,  const char *);
   void         field_ROFF_export(const field_type * , const char * , const char *);
@@ -50,16 +50,10 @@ extern "C" {
   bool         field_fload_rms(field_type * field , const char * filename, bool keep_inactive);
   void         field_export3D(const field_type * , void *, bool, ecl_data_type , void *, const char *);
   void         field_export(const field_type * , const char * , fortio_type * , field_file_format_type , bool, const char *);
-  field_type * field_copyc(const field_type *);
-  bool         field_cmp(const field_type *  , const field_type * );
 
   void         field_inplace_output_transform(field_type * field);
 
-  void          field_iscale(field_type * , double );
-  void          field_isqrt(field_type *);
-  void          field_iaddsqr(field_type * , const field_type *);
-  void          field_iadd(field_type * , const field_type *);
-  void          field_upgrade_103(const char * filename);
+
 
   UTIL_IS_INSTANCE_HEADER(field);
   UTIL_SAFE_CAST_HEADER_CONST(field);

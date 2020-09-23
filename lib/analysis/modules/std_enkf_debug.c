@@ -62,7 +62,7 @@ void std_enkf_debug_data_set_prefix( std_enkf_debug_data_type * data , const cha
 void * std_enkf_debug_data_alloc( rng_type * rng) {
   std_enkf_debug_data_type * data = util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , STD_ENKF_DEBUG_TYPE_ID );
-  data->std_data = std_enkf_data_alloc( rng );
+  data->std_data = std_enkf_data_alloc();
 
   data->update_count = 0;
   data->prefix = NULL;

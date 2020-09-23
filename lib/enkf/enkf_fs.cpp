@@ -834,13 +834,6 @@ char * enkf_fs_alloc_case_filename( const enkf_fs_type * fs , const char * input
   return filename;
 }
 
-
-char * enkf_fs_alloc_case_member_filename( const enkf_fs_type * fs , int iens , const char * input_name) {
-  char * filename = path_fmt_alloc_file( fs->case_member_fmt , false , fs->mount_point , iens , input_name);
-  return filename;
-}
-
-
 char * enkf_fs_alloc_case_tstep_filename( const enkf_fs_type * fs , int tstep , const char * input_name) {
   char * filename    = path_fmt_alloc_file( fs->case_tstep_fmt , false , fs->mount_point , tstep , input_name);
   return filename;

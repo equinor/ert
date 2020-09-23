@@ -36,9 +36,7 @@ const char                * gen_kw_config_get_tag_fmt(const gen_kw_config_type *
 bool                        gen_kw_config_is_valid( const gen_kw_config_type * config );
 void                        gen_kw_config_fprintf_config( const gen_kw_config_type * config , const char * outfile , const char * min_std_file , FILE * stream );
 void                        gen_kw_config_set_parameter_file( gen_kw_config_type * config , const char * parameter_file );
-const char                * gen_kw_config_get_parameter_file( const gen_kw_config_type * config );
-char                      * gen_kw_config_alloc_initfile( const gen_kw_config_type * gen_kw_config , int iens );
-void                        gen_kw_config_set_init_file_fmt( gen_kw_config_type * config , const char * init_file_fmt );
+PY_USED const char *        gen_kw_config_get_parameter_file( const gen_kw_config_type * config );
 const char                * gen_kw_config_get_key(const gen_kw_config_type * config );
 const char                * gen_kw_config_get_template_file(const gen_kw_config_type * );
 void                        gen_kw_config_free(gen_kw_config_type *);
@@ -49,14 +47,13 @@ const char                * gen_kw_config_iget_name(const gen_kw_config_type * ,
 const char                * gen_kw_config_get_tagged_name(const gen_kw_config_type * , int );
 stringlist_type           * gen_kw_config_alloc_name_list( const gen_kw_config_type * config);
 int                         gen_kw_config_get_index(const gen_kw_config_type *  , const char * );
-const char                * gen_kw_config_get_init_file_fmt( const gen_kw_config_type * config );
 void                        gen_kw_config_set_template_file( gen_kw_config_type * config , const char * template_file );
 gen_kw_config_type        * gen_kw_config_alloc_empty( const char * key , const char * tag_fmt );
 void                        gen_kw_config_update( gen_kw_config_type * config , const char * template_file , const char * parameter_file);
 void                        gen_kw_config_update_tag_format(gen_kw_config_type * config , const char * tag_format);
-const char * gen_kw_config_iget_function_type(const gen_kw_config_type * config, int index);
-double_vector_type * gen_kw_config_iget_function_parameter_values( const gen_kw_config_type * config, int index );
-stringlist_type * gen_kw_config_iget_function_parameter_names( const gen_kw_config_type * config, int index );
+PY_USED const char        * gen_kw_config_iget_function_type(const gen_kw_config_type * config, int index);
+double_vector_type *        gen_kw_config_iget_function_parameter_values( const gen_kw_config_type * config, int index );
+stringlist_type *           gen_kw_config_iget_function_parameter_names( const gen_kw_config_type * config, int index );
 
 UTIL_SAFE_CAST_HEADER_CONST( gen_kw_config );
 UTIL_SAFE_CAST_HEADER(gen_kw_config);

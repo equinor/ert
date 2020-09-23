@@ -119,7 +119,6 @@ typedef struct matrix_struct matrix_type;
   void          matrix_inplace_matmul_mt2(matrix_type * A, const matrix_type * B , thread_pool_type * thread_pool);
 #endif
 
-  void          matrix_shift_column(matrix_type * matrix , int column, double shift);
   void          matrix_shift_row(matrix_type * matrix , int row , double shift);
   double        matrix_get_column_sum(const matrix_type * matrix , int column);
   double        matrix_get_row_sum(const matrix_type * matrix , int column);
@@ -163,7 +162,6 @@ typedef struct matrix_struct matrix_type;
 
   void          matrix_scalar_set( matrix_type * matrix , double value);
   void          matrix_inplace_diag_sqrt(matrix_type *Cd);
-  void          matrix_create_identiy(int n,matrix_type *Id);
   double        matrix_trace(const matrix_type *matrix);
   double        matrix_diag_std(const matrix_type * Sk,double mean);
   double        matrix_det2( const matrix_type * A);

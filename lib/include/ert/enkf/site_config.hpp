@@ -41,7 +41,7 @@ typedef struct site_config_struct site_config_type;
 
   const char *             site_config_get_location();
   const char *             site_config_get_config_file(const site_config_type*);
-  const char            *  site_config_get_license_root_path( const site_config_type * site_config );
+  PY_USED const char * site_config_get_license_root_path( const site_config_type * site_config );
   void                     site_config_set_license_root_path( site_config_type * site_config , const char * license_root_path);
   void                     site_config_free(site_config_type *);
   ext_joblist_type       * site_config_get_installed_jobs( const site_config_type * );

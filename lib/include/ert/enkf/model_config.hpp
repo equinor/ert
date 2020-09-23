@@ -60,9 +60,8 @@ extern "C" {
   const ecl_sum_type   * model_config_get_refcase( const model_config_type * model_config );
   void                   model_config_init_internalization( model_config_type * );
   void                   model_config_set_internalize_state( model_config_type *  , int );
-  int                    model_config_get_history_length(const model_config_type * );
   bool                   model_config_has_prediction(const model_config_type * );
-  bool                   model_config_has_history(const model_config_type * config);
+  PY_USED bool  model_config_has_history(const model_config_type * config);
   int                    model_config_get_last_history_restart(const model_config_type * );
   time_map_type        * model_config_get_external_time_map( const model_config_type * config);
   int                    model_config_get_num_realizations(const model_config_type * model_config);
@@ -73,13 +72,12 @@ extern "C" {
   path_fmt_type        * model_config_get_runpath_fmt(const model_config_type * );
   history_type         * model_config_get_history(const model_config_type * );
   forward_model_type   * model_config_get_forward_model( const model_config_type * );
-  const char           * model_config_iget_casename( const model_config_type * model_config , int index);
   void                   model_config_set_max_internal_submit(model_config_type * config, int max_resample);
-  int                    model_config_get_max_internal_submit( const model_config_type * config );
+  PY_USED int   model_config_get_max_internal_submit( const model_config_type * config );
   bool                   model_config_select_runpath( model_config_type * model_config , const char * path_key);
   void                   model_config_add_runpath( model_config_type * model_config , const char * path_key , const char * fmt );
   const char           * model_config_get_runpath_as_char( const model_config_type * model_config );
-  history_source_type    model_config_get_history_source( const model_config_type * model_config );
+  PY_USED  history_source_type model_config_get_history_source( const model_config_type * model_config );
   void                   model_config_set_refcase( model_config_type * model_config , const ecl_sum_type * refcase );
   model_config_type    * model_config_alloc_empty();
   model_config_type    * model_config_alloc(const config_content_type*, const char * data_root, const ext_joblist_type *, int, const ecl_sum_type*);

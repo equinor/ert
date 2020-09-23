@@ -43,9 +43,8 @@ typedef struct local_obsdata_struct local_obsdata_type;
   void                            local_obsdata_del_node( local_obsdata_type * data  , const char * key);
   void                            local_obsdata_reset_tstep_list( local_obsdata_type * data , const int_vector_type * step_list);
   active_list_type              * local_obsdata_get_node_active_list(const local_obsdata_type * obsdata , const char * obs_key );
-  void                            local_obsdata_fprintf( const local_obsdata_type * obsdata , FILE * stream );
   void                            local_obsdata_summary_fprintf( const local_obsdata_type * obsdata , FILE * stream);
-  active_list_type              * local_obsdata_get_copy_node_active_list(const local_obsdata_type * obsdata , const char * obs_key);
+  PY_USED active_list_type * local_obsdata_get_copy_node_active_list(const local_obsdata_type * obsdata , const char * obs_key);
 
 UTIL_IS_INSTANCE_HEADER( local_obsdata );
 

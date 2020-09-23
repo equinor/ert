@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-
+#include <ert/tooling.hpp>
 
 
 

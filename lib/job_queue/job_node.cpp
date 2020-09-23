@@ -349,20 +349,6 @@ job_queue_node_type * job_queue_node_alloc( const char * job_name ,
 }
 
 
-const char * job_queue_node_get_error_reason( const job_queue_node_type * node) {
-  return node->error_reason;
-}
-
-const char * job_queue_node_get_stderr_capture( const job_queue_node_type * node) {
-  return node->stderr_capture;
-}
-
-
-const char * job_queue_node_get_stderr_file( const job_queue_node_type * node) {
-  return node->stderr_file;
-}
-
-
 const char * job_queue_node_get_exit_file( const job_queue_node_type * node) {
   return node->exit_file;
 }
@@ -370,14 +356,6 @@ const char * job_queue_node_get_exit_file( const job_queue_node_type * node) {
 
 const char * job_queue_node_get_ok_file( const job_queue_node_type * node) {
   return node->ok_file;
-}
-
-const char * job_queue_node_get_run_path( const job_queue_node_type * node) {
-  return node->run_path;
-}
-
-const char * job_queue_node_get_failed_job( const job_queue_node_type * node) {
-  return node->failed_job;
 }
 
 
@@ -388,10 +366,6 @@ time_t job_queue_node_get_sim_start( const job_queue_node_type * node ) {
 
 time_t job_queue_node_get_sim_end( const job_queue_node_type * node ) {
   return node->sim_end;
-}
-
-time_t job_queue_node_get_submit_time( const job_queue_node_type * node ) {
-  return node->submit_time;
 }
 
 double job_queue_node_time_since_sim_start (const job_queue_node_type * node ) {
@@ -697,11 +671,6 @@ bool job_queue_node_status_transition(job_queue_node_type * node,
   return status_change;
 }
 
-void job_queue_node_set_max_confirmation_wait_time(job_queue_node_type * node,
-                                                   time_t time) {
-  node->max_confirm_wait = time;
-}
-
 bool job_queue_node_kill(job_queue_node_type * node,
                          job_queue_status_type * status,
                          queue_driver_type * driver) {
@@ -794,19 +763,6 @@ void job_queue_node_free_driver_data(job_queue_node_type * node,
 
 void * job_queue_node_get_driver_data( job_queue_node_type * node ) {
   return node->job_data;
-}
-
-
-void job_queue_node_restart(job_queue_node_type * node,
-                            job_queue_status_type * status) {
-  pthread_mutex_lock( &node->data_mutex );
-
-  job_status_type current_status = job_queue_node_get_status( node );
-  job_queue_status_transition(status, current_status, JOB_QUEUE_WAITING);
-  job_queue_node_set_status( node , JOB_QUEUE_WAITING);
-  job_queue_node_reset_submit_attempt(node);
-
-  pthread_mutex_unlock( &node->data_mutex );
 }
 
 

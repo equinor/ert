@@ -36,7 +36,6 @@ extern "C" {
   void job_queue_status_inc( job_queue_status_type * status_count , job_status_type status_type);
   bool job_queue_status_transition( job_queue_status_type * status_count , job_status_type src_status , job_status_type target_status);
   int job_queue_status_get_total_count( const job_queue_status_type * status );
-  time_t job_queue_status_get_timestamp(const job_queue_status_type * status);
 
   UTIL_IS_INSTANCE_HEADER( job_queue_status );
   UTIL_SAFE_CAST_HEADER( job_queue_status );

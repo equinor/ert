@@ -25,6 +25,7 @@ extern "C" {
 
 
 #include <ert/analysis/module_obs_block.hpp>
+#include <ert/util/type_macros.hpp>
 
   typedef struct module_obs_block_vector_struct module_obs_block_vector_type;
 

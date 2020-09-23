@@ -219,44 +219,6 @@ void rms_tagkey_inplace_add_scaled(rms_tagkey_type * tagkey , const rms_tagkey_t
   }
 }
 
-
-#define TAGKEY_MAX_MIN(type)                             \
-{                                                        \
-  type * data = (type*)rms_tagkey_get_data_ref(tagkey);         \
-  type max = -data[0];                                   \
-  type min =  data[0];                                   \
-  int i;                                                 \
-  for (i=1; i < tagkey->size; i++)                       \
-      util_update_ ## type ## _max_min(data[i] , &max , &min); \
-  memcpy(_max , &max , tagkey->sizeof_ctype);            \
-  memcpy(_min , &min , tagkey->sizeof_ctype);            \
-}
-
-
-
-void rms_tagkey_max_min(const rms_tagkey_type * tagkey , void * _max , void *_min) {
-  switch (tagkey->rms_type) {
-  case(rms_float_type):
-    TAGKEY_MAX_MIN(float);
-    break;
-  case(rms_double_type):
-    TAGKEY_MAX_MIN(double);
-    break;
-  case(rms_int_type):
-    TAGKEY_MAX_MIN(int);
-    break;
-  default:
-    fprintf(stderr,"%s: invalid type for element sum \n",__func__);
-    abort();
-  }
-}
-
-#undef TAGKEY_MAX_MIN
-
-
-
-
-
 void rms_tagkey_free_(void *_tagkey) {
   rms_tagkey_type * tagkey = (rms_tagkey_type *) _tagkey;
   rms_tagkey_free(tagkey);
@@ -405,18 +367,6 @@ void rms_tagkey_fwrite(const rms_tagkey_type * tagkey , FILE *stream) {
   rms_tagkey_fwrite_data(tagkey , stream);
 }
 
-void rms_tagkey_fprintf(const rms_tagkey_type * tagkey, FILE *stream) {
-  fprintf(stream,"    <%s> %6d %s",tagkey->name , tagkey->size , rms_type_names[tagkey->rms_type]);
-  if (tagkey->size == 1) {
-    if (tagkey->rms_type == rms_int_type)
-      fprintf(stream, " = %d ",(( int *) tagkey->data)[0]);
-    else if (tagkey->rms_type == rms_char_type)
-      fprintf(stream, " = %s ",( char *) tagkey->data);
-  }
-  fprintf(stream,"\n");
-}
-
-
 const char * rms_tagkey_get_name(const rms_tagkey_type *tagkey) {
   return tagkey->name;
 }
@@ -476,11 +426,6 @@ rms_tagkey_type * rms_tagkey_alloc_complete(const char * name , int size , rms_t
   rms_tagkey_set_data(tag , data);
 
   return tag;
-}
-
-
-int rms_tagkey_get_sizeof_ctype(const rms_tagkey_type * key) {
-  return key->sizeof_ctype;
 }
 
 

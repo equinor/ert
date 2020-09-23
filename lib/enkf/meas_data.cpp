@@ -102,19 +102,6 @@ meas_block_type * meas_block_alloc( const char * obs_key , const bool_vector_typ
   return meas_block;
 }
 
-static void meas_block_fprintf( const meas_block_type * meas_block , FILE * stream) {
-  int iens;
-  int iobs;
-  for (iobs = 0; iobs < meas_block->obs_size; iobs++) {
-    for (iens = 0; iens < meas_block->active_ens_size; iens++) {
-      int index = iens * meas_block->ens_stride + iobs * meas_block->obs_stride;
-      fprintf(stream , " %10.2f ", meas_block->data[ index ]);
-    }
-    fprintf(stream , "\n");
-  }
-}
-
-
 void meas_block_free( meas_block_type * meas_block ) {
   free( meas_block->obs_key );
   free( meas_block->data );

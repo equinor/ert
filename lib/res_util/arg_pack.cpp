@@ -137,33 +137,33 @@ static void __arg_node_assert_type(const arg_node_type * node , node_ctype arg_t
    return value;                                 \
 }
 
-
-static int arg_node_get_int( const arg_node_type * node) {
+// Used by IGET_TYPED macro
+C_USED static int arg_node_get_int( const arg_node_type * node) {
   __arg_node_assert_type( node , CTYPE_INT_VALUE );
   ARG_NODE_GET_RETURN( int )
 }
 
-static char arg_node_get_char( const arg_node_type * node) {
+C_USED static char arg_node_get_char( const arg_node_type * node) {
   __arg_node_assert_type( node , CTYPE_CHAR_VALUE );
   ARG_NODE_GET_RETURN( char )
 }
 
-static double arg_node_get_double( const arg_node_type * node) {
+C_USED static double arg_node_get_double( const arg_node_type * node) {
   __arg_node_assert_type( node , CTYPE_DOUBLE_VALUE );
   ARG_NODE_GET_RETURN( double )
 }
 
-static float arg_node_get_float( const arg_node_type * node) {
+C_USED static float arg_node_get_float( const arg_node_type * node) {
   __arg_node_assert_type( node , CTYPE_FLOAT_VALUE );
   ARG_NODE_GET_RETURN( float )
 }
 
-static bool arg_node_get_bool( const arg_node_type * node) {
+C_USED static bool arg_node_get_bool( const arg_node_type * node) {
   __arg_node_assert_type( node , CTYPE_BOOL_VALUE );
   ARG_NODE_GET_RETURN( bool )
 }
 
-static size_t arg_node_get_size_t( const arg_node_type * node) {
+C_USED static size_t arg_node_get_size_t( const arg_node_type * node) {
   __arg_node_assert_type( node , CTYPE_SIZE_T_VALUE );
   ARG_NODE_GET_RETURN( size_t )
 }
@@ -205,38 +205,38 @@ static node_ctype arg_node_get_ctype( const arg_node_type * arg_node ) {
   memcpy(node->buffer , &value , sizeof value);                        \
   node->destructor = NULL;
 
-
-static void arg_node_set_int( arg_node_type * node , int value) {
+// Used by ISET_TYPED macro
+C_USED static void arg_node_set_int( arg_node_type * node , int value) {
   ARG_NODE_SET( node , value );
   node->ctype = CTYPE_INT_VALUE;
 }
 
 
-static void arg_node_set_char( arg_node_type * node , char value) {
+C_USED static void arg_node_set_char( arg_node_type * node , char value) {
   ARG_NODE_SET( node , value );
   node->ctype = CTYPE_CHAR_VALUE;
 }
 
 
-static void arg_node_set_float( arg_node_type * node , float value) {
+C_USED static void arg_node_set_float( arg_node_type * node , float value) {
   ARG_NODE_SET( node , value );
   node->ctype = CTYPE_FLOAT_VALUE;
 }
 
 
-static void arg_node_set_double( arg_node_type * node , double value) {
+C_USED static void arg_node_set_double( arg_node_type * node , double value) {
   ARG_NODE_SET( node , value );
   node->ctype = CTYPE_DOUBLE_VALUE;
 }
 
 
-static void arg_node_set_bool( arg_node_type * node , bool value) {
+C_USED static void arg_node_set_bool( arg_node_type * node , bool value) {
   ARG_NODE_SET( node , value );
   node->ctype = CTYPE_BOOL_VALUE;
 }
 
 
-static void arg_node_set_size_t( arg_node_type * node , size_t value) {
+C_USED static void arg_node_set_size_t( arg_node_type * node , size_t value) {
   ARG_NODE_SET( node , value );
   node->ctype = CTYPE_SIZE_T_VALUE;
 }
@@ -276,55 +276,6 @@ static void arg_node_free(arg_node_type * node) {
   free(node->buffer);
   free(node);
 }
-
-
-
-static const char * arg_node_fmt(const arg_node_type *node) {
-  switch (node->ctype) {
-  case(CTYPE_INT_VALUE):
-    return " %d";
-      break;
-  case(CTYPE_DOUBLE_VALUE):
-    return " %lg";
-    break;
-  case(CTYPE_FLOAT_VALUE):
-    return " %g";
-    break;
-  case(CTYPE_BOOL_VALUE):
-    return " %d";
-    break;
-  case(CTYPE_CHAR_VALUE):
-    return " %d";
-    break;
-  case(CTYPE_SIZE_T_VALUE):
-    return " %d";
-    break;
-  default:
-    util_abort("%s: arg_type:%d not recognized for scanning \n",__func__ , node->ctype);
-    return ""; /* Dummy to shut up compiler */
-  }
-}
-
-
-static void arg_node_fprintf(const arg_node_type * node , FILE * stream) {
-  switch (node->ctype) {
-  case(CTYPE_INT_VALUE):
-    fprintf(stream , "int:%d",arg_node_get_int(node));
-    break;
-  case(CTYPE_DOUBLE_VALUE):
-    fprintf(stream , "double:%g",arg_node_get_double(node));
-    break;
-  case(CTYPE_VOID_POINTER):
-    fprintf(stream , "pointer:<%p>",arg_node_get_ptr( node , true ));
-    break;
-  case(CTYPE_BOOL_VALUE):
-    fprintf(stream , "bool:%d", arg_node_get_bool( node ));
-    break;
-  default:
-    util_abort("%s: - not implemented for type:%d \n",__func__ , node->ctype);
-  }
-}
-
 
 /*****************************************************************/
 /* Ending node node functions - starting on functons for the whole pack. */

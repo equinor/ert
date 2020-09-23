@@ -139,7 +139,7 @@ void gen_data_free(gen_data_type * gen_data) {
 */
 
 
-bool gen_data_write_to_buffer(const gen_data_type * gen_data , buffer_type * buffer , int report_step) {
+C_USED bool gen_data_write_to_buffer(const gen_data_type * gen_data , buffer_type * buffer , int report_step) {
   const bool write_zero_size = true; /* true:ALWAYS write a file   false:only write files with size > 0. */
   {
     bool write    = write_zero_size;
@@ -162,7 +162,7 @@ bool gen_data_write_to_buffer(const gen_data_type * gen_data , buffer_type * buf
 
 
 
-void gen_data_read_from_buffer(gen_data_type * gen_data , buffer_type * buffer , enkf_fs_type * fs,  int report_step) {
+C_USED void gen_data_read_from_buffer(gen_data_type * gen_data , buffer_type * buffer , enkf_fs_type * fs,  int report_step) {
   int size;
   enkf_util_assert_buffer_type(buffer , GEN_DATA);
   size = buffer_fread_int(buffer);
@@ -354,7 +354,7 @@ bool gen_data_forward_load(gen_data_type * gen_data , const char * ecl_file , co
 
 
 
-bool gen_data_initialize(gen_data_type * gen_data , int iens , const char * init_file , rng_type * rng) {
+C_USED bool gen_data_initialize(gen_data_type * gen_data , int iens , const char * init_file , rng_type * rng) {
   bool ret = false;
   if (init_file) {
     forward_load_context_type * load_context = forward_load_context_alloc( NULL , false , NULL , NULL );
@@ -496,7 +496,7 @@ void gen_data_export_data(const gen_data_type * gen_data , double_vector_type * 
    false, and return silently in that case.
 */
 
-bool gen_data_user_get(const gen_data_type * gen_data, const char * index_key, int report_step , double * value)
+C_USED bool gen_data_user_get(const gen_data_type * gen_data, const char * index_key, int report_step , double * value)
 {
   int index;
   *value = 0.0;
@@ -519,7 +519,7 @@ const char * gen_data_get_key( const gen_data_type * gen_data) {
 }
 
 
-void gen_data_clear( gen_data_type * gen_data ) {
+C_USED void gen_data_clear( gen_data_type * gen_data ) {
   const gen_data_config_type * config = gen_data->config;
   ecl_data_type internal_type         = gen_data_config_get_internal_data_type( config );
   const int data_size                 = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
@@ -537,7 +537,7 @@ void gen_data_clear( gen_data_type * gen_data ) {
 
 
 
-void gen_data_isqrt(gen_data_type * gen_data) {
+C_USED void gen_data_isqrt(gen_data_type * gen_data) {
   const int data_size                 = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
   const ecl_data_type internal_type   = gen_data_config_get_internal_data_type(gen_data->config);
 
@@ -555,7 +555,7 @@ void gen_data_isqrt(gen_data_type * gen_data) {
 
 
 
-void gen_data_iadd(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
+C_USED void gen_data_iadd(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
   //gen_data_config_assert_binary(gen_data1->config , gen_data2->config , __func__);
   {
     const int data_size                 = gen_data_config_get_data_size( gen_data1->config , gen_data1->current_report_step );
@@ -578,7 +578,7 @@ void gen_data_iadd(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
 }
 
 
-void gen_data_imul(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
+C_USED void gen_data_imul(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
   //gen_data_config_assert_binary(gen_data1->config , gen_data2->config , __func__);
   {
     const int data_size               = gen_data_config_get_data_size( gen_data1->config , gen_data1->current_report_step );
@@ -675,7 +675,7 @@ void gen_data_copy_to_double_vector(const gen_data_type * gen_data , double_vect
    up.
 */
 
-void gen_data_set_inflation(gen_data_type * inflation , const gen_data_type * std , const gen_data_type * min_std) {
+C_USED void gen_data_set_inflation(gen_data_type * inflation , const gen_data_type * std , const gen_data_type * min_std) {
   const gen_data_config_type * config = inflation->config;
   ecl_data_type data_type              = gen_data_config_get_internal_data_type( config );
   const int data_size                 = gen_data_config_get_data_size( std->config , std->current_report_step );

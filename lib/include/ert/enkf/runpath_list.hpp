@@ -18,6 +18,8 @@
 #ifndef ERT_RUNPATH_LIST_H
 #define ERT_RUNPATH_LIST_H
 
+#include <ert/tooling.hpp>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -35,14 +37,14 @@ extern "C" {
   void                runpath_list_clear( runpath_list_type * list );
   int                 runpath_list_iget_iens( runpath_list_type * list , int index);
   int                 runpath_list_iget_iter( runpath_list_type * list , int index);
-  char *              runpath_list_iget_runpath( runpath_list_type * list , int index);
+  PY_USED char *      runpath_list_iget_runpath( runpath_list_type * list , int index);
   char *              runpath_list_iget_basename( runpath_list_type * list , int index);
   void                runpath_list_set_line_fmt( runpath_list_type * list , const char * line_fmt );
   const char        * runpath_list_get_line_fmt( const runpath_list_type * list );
   void                runpath_list_fprintf( runpath_list_type * list);
   const char *        runpath_list_get_export_file( const runpath_list_type * list );
   void                runpath_list_set_export_file( runpath_list_type * list , const char * export_file );
-  bool                runpath_list_load(runpath_list_type * list);
+  PY_USED bool        runpath_list_load(runpath_list_type * list);
 
 
 #ifdef __cplusplus

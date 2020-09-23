@@ -15,7 +15,6 @@ extern "C" {
   void            stepwise_free( stepwise_type * stepwise);
 
   void            stepwise_set_Y0( stepwise_type * stepwise ,  matrix_type * Y);
-  void            stepwise_set_R2( stepwise_type * stepwise ,  const double R2);
   int             stepwise_get_n_active( stepwise_type * stepwise );
   bool_vector_type * stepwise_get_active_set( stepwise_type * stepwise );
   double          stepwise_iget_beta(const stepwise_type * stepwise, const int index );

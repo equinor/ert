@@ -38,14 +38,14 @@ gen_obs_type * gen_obs_alloc(const gen_data_config_type * config , const char * 
 gen_obs_type * gen_obs_alloc__(const gen_data_config_type * data_config , const char * obs_key); // for python bindings
 void           gen_obs_user_get_with_data_index(const gen_obs_type * gen_obs , const char * index_key , double * value , double * std , bool * valid);
 
-void           gen_obs_update_std_scale(gen_obs_type * gen_obs, double std_multiplier , const active_list_type * active_list);
+PY_USED void   gen_obs_update_std_scale(gen_obs_type * gen_obs, double std_multiplier , const active_list_type * active_list);
 int            gen_obs_get_size(const gen_obs_type * gen_obs);
 double         gen_obs_iget_std(const gen_obs_type * gen_obs, int index);
 void           gen_obs_load_std(const gen_obs_type * gen_obs, int size, double * data);
 double         gen_obs_iget_value(const gen_obs_type * gen_obs, int index);
 void           gen_obs_load_values(const gen_obs_type * gen_obs, int size, double * data);
 double         gen_obs_iget_std_scaling(const gen_obs_type * gen_obs, int index);
-int            gen_obs_get_obs_index(const gen_obs_type * gen_obs, int index);
+PY_USED int    gen_obs_get_obs_index(const gen_obs_type * gen_obs, int index);
 void           gen_obs_load_observation(gen_obs_type * gen_obs, const char * obs_file);
 void           gen_obs_set_scalar( gen_obs_type * gen_obs , double scalar_value , double scalar_std);
 void 	       gen_obs_attach_data_index( gen_obs_type * gen_obs , const int_vector_type * data_index );

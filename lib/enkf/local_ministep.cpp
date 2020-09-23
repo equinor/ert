@@ -91,34 +91,6 @@ local_ministep_type * local_ministep_alloc(const char * name, analysis_module_ty
   return ministep;
 }
 
-
-local_ministep_type * local_ministep_alloc_copy( const local_ministep_type * src , const char * name) {
-  //local_ministep_type * new = local_ministep_alloc( name );
-  //{
-  //  hash_iter_type * obs_iter = hash_iter_alloc( src->observations );
-  //  while (!hash_iter_is_complete( obs_iter )) {
-  //    const char * obs_key = hash_iter_get_next_key( obs_iter );
-  //  active_list_type * active_list_copy = (active_list_type *) active_list_alloc_copy( hash_get( src->observations , obs_key) );
-  //    hash_insert_hash_owned_ref( new->observations , obs_key , active_list_copy , active_list_free__);
-  //  }
-  //}
-  //
-  //{
-  //  hash_iter_type * nodeset_iter = hash_iter_alloc( src->datasets );
-  //  while (!hash_iter_is_complete( nodeset_iter )) {
-  //    const char * nodeset_key = hash_iter_get_next_key( nodeset_iter );
-  // local_nodeset_type * new_nodeset = (local_nodeset_type *)local_nodeset_alloc_copy( hash_get( src->datasets , nodeset_key ));
-  //    hash_insert_ref( new->datasets , nodeset_key , new_nodeset );
-  //  }
-  //}
-  //
-  //return new;
-  util_abort("%s: this function seems completely broken - internal error?\n",__func__);
-  return NULL;
-}
-
-
-
 void local_ministep_free(local_ministep_type * ministep) {
   free(ministep->name);
   hash_free( ministep->datasets );
@@ -210,26 +182,6 @@ hash_iter_type * local_ministep_alloc_dataset_iter( const local_ministep_type * 
   return hash_iter_alloc( ministep->datasets );
 }
 
-bool local_ministep_has_data_key(const local_ministep_type * ministep , const char * key) {
-  bool has_key = false;
-  {
-    hash_iter_type * dataset_iter = hash_iter_alloc( ministep->datasets );
-
-    while (true) {
-      const local_dataset_type * dataset = (const local_dataset_type *) hash_iter_get_next_value( dataset_iter );
-      if (dataset) {
-        if (local_dataset_has_key( dataset , key)) {
-          has_key = true;
-          break;
-        }
-      } else
-        break;
-    }
-
-    hash_iter_free( dataset_iter );
-  }
-  return has_key;
-}
 
 bool local_ministep_has_analysis_module( const local_ministep_type * ministep){
   return ministep->analysis_module != NULL;

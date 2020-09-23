@@ -91,23 +91,6 @@ ext_job_type * forward_model_add_job(forward_model_type * forward_model , const 
 }
 
 
-
-/**
-   This function is used to set private argument values to jobs in the
-   forward model (i.e. the argument values passed in with KEY=VALUE
-   pairs in the defining ().
-
-   The use of 'index' to get the job is unfortunate , however one
-   forward model can contain several instances of the same job, it is
-   therefor not possible to use name based lookup.
-*/
-
-void forward_model_iset_job_arg( forward_model_type * forward_model , int job_index , const char * arg , const char * value) {
-  ext_job_type * job = (ext_job_type*)vector_iget( forward_model->jobs , job_index );
-  ext_job_set_private_arg(job , arg , value);
-}
-
-
 void forward_model_clear( forward_model_type * forward_model ) {
   vector_clear( forward_model->jobs );
 }
@@ -225,23 +208,9 @@ void forward_model_formatted_fprintf(const forward_model_type * forward_model ,
 #undef DEFAULT_JOB_MODULE
 #undef DEFAULT_JOBLIST_NAME
 
-
 ext_job_type * forward_model_iget_job( forward_model_type * forward_model , int index) {
   return (ext_job_type*)vector_iget( forward_model->jobs , index );
 }
-
-
-
-void forward_model_fprintf(const forward_model_type * forward_model , FILE * stream) {
-  int ijob;
-  fprintf(stream , " ");
-  for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
-    ext_job_fprintf( (const ext_job_type*)vector_iget(forward_model->jobs , ijob) , stream);
-    fprintf(stream , "  ");
-  }
-  fprintf(stream , "\n");
-}
-
 
 int forward_model_get_length( const forward_model_type * forward_model ) {
   return vector_get_size( forward_model->jobs );

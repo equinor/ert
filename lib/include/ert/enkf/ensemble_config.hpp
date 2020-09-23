@@ -57,13 +57,12 @@ typedef struct ensemble_config_struct ensemble_config_type;
   void                     ensemble_config_clear_obs_keys(ensemble_config_type * ensemble_config);
   void                     ensemble_config_add_obs_key(ensemble_config_type * , const char * , const char * );
   const enkf_config_node_type  * ensemble_config_user_get_node(const ensemble_config_type *  , const char * , char **);
-  void                     ensemble_config_init(ensemble_config_type * ensemble_config , const config_content_type * config , ecl_grid_type * grid , const ecl_sum_type * refcase);
   void                     ensemble_config_free(ensemble_config_type * );
   bool                     ensemble_config_has_key(const ensemble_config_type * , const char * );
   bool                     ensemble_config_has_impl_type(const  ensemble_config_type * config, const ert_impl_type impl_type);
   bool                     ensemble_config_have_forward_init( const ensemble_config_type * ensemble_config );
   bool                     ensemble_config_require_summary(const  ensemble_config_type * config);
-  void                          ensemble_config_add_config_items(config_parser_type * );
+  void                     ensemble_config_add_config_items(config_parser_type * );
 
   void                          ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , const config_content_type * config );
 
@@ -75,11 +74,11 @@ typedef struct ensemble_config_struct ensemble_config_type;
   stringlist_type                * ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *, ert_impl_type);
   ensemble_config_type           * ensemble_config_alloc_load(const char *, ecl_grid_type *, const ecl_sum_type *);
   ensemble_config_type           * ensemble_config_alloc(const config_content_type *, ecl_grid_type *, const ecl_sum_type *);
-  ensemble_config_type           * ensemble_config_alloc_full(const char * gen_kw_format_string);
+  PY_USED ensemble_config_type   * ensemble_config_alloc_full(const char * gen_kw_format_string);
   void                             ensemble_config_init_SUMMARY_full( ensemble_config_type *, const char *, const ecl_sum_type *);
 
   const summary_key_matcher_type * ensemble_config_get_summary_key_matcher(const ensemble_config_type * ensemble_config);
-  int                      ensemble_config_get_size(const ensemble_config_type * ensemble_config );
+  int ensemble_config_get_size(const ensemble_config_type * ensemble_config );
   int ensemble_config_forward_init(const ensemble_config_type * ens_config,
                                    const run_arg_type * run_arg);
 

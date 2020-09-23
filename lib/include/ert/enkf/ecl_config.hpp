@@ -43,9 +43,6 @@ extern "C" {
   void                  ecl_config_set_data_file( ecl_config_type * ecl_config , const char * data_file);
   ui_return_type *      ecl_config_validate_data_file(const ecl_config_type * ecl_config, const char * data_file);
 
-  const char          * ecl_config_get_schedule_target(const ecl_config_type * );
-  bool                  ecl_config_has_schedule( const ecl_config_type * ecl_config );
-
   ui_return_type *      ecl_config_validate_eclbase( const ecl_config_type * ecl_config , const char * eclbase_fmt );
 
   void                  ecl_config_set_grid( ecl_config_type * ecl_config , const char * grid_file );
@@ -74,20 +71,19 @@ extern "C" {
 
   bool                  ecl_config_get_formatted(const ecl_config_type * );
   bool                  ecl_config_get_unified_restart(const ecl_config_type * );
-  int                   ecl_config_get_num_restart_files(const ecl_config_type * );
   int                   ecl_config_get_last_history_restart( const ecl_config_type * );
   bool                  ecl_config_can_restart( const ecl_config_type * ecl_config );
   void                  ecl_config_assert_restart( const ecl_config_type * ecl_config );
   const char          * ecl_config_get_refcase_name( const ecl_config_type * ecl_config);
   ecl_config_type     * ecl_config_alloc(const config_content_type * config_content);
-  ecl_config_type     * ecl_config_alloc_full(bool have_eclbase, 
-                                          char * data_file, 
-                                          ecl_grid_type * grid,
-                                          char * refcase_default,
-                                          stringlist_type * ref_case_list,
-                                          time_t end_date,
-                                          char * sched_prediction_file
-                                          );
+  PY_USED ecl_config_type * ecl_config_alloc_full(bool have_eclbase,
+                                                      char * data_file,
+                                                      ecl_grid_type * grid,
+                                                      char * refcase_default,
+                                                      stringlist_type * ref_case_list,
+                                                      time_t end_date,
+                                                      char * sched_prediction_file
+                                                      );
   void                  ecl_config_add_config_items( config_parser_type * config );
   const char          * ecl_config_get_depth_unit( const ecl_config_type * ecl_config );
   const char          * ecl_config_get_pressure_unit( const ecl_config_type * ecl_config );

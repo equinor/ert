@@ -53,12 +53,10 @@ typedef struct job_queue_node_struct job_queue_node_type;
   time_t job_queue_node_get_timestamp(const job_queue_node_type * node);
   bool job_queue_node_status_transition( job_queue_node_type * node , job_queue_status_type * status , job_status_type new_status);
   submit_status_type job_queue_node_submit( job_queue_node_type * node , job_queue_status_type * status , queue_driver_type * driver);
-  submit_status_type job_queue_node_submit_simple(job_queue_node_type * node,
+  PY_USED submit_status_type job_queue_node_submit_simple(job_queue_node_type * node,
                                          queue_driver_type * driver);
   void job_queue_node_free_error_info( job_queue_node_type * node );
   void job_queue_node_fscanf_EXIT( job_queue_node_type * node );
-  void job_queue_node_clear_error_info(job_queue_node_type * node);
-  void job_queue_node_clear(job_queue_node_type * node);
   void job_queue_node_free_data(job_queue_node_type * node);
   job_queue_node_type * job_queue_node_alloc( const char * job_name ,
                                               const char * run_path ,
@@ -81,7 +79,7 @@ typedef struct job_queue_node_struct job_queue_node_type;
                                                      int argc ,
                                                      const char ** argv );
 
-  job_queue_node_type * job_queue_node_alloc_python( const char * job_name ,
+  PY_USED job_queue_node_type * job_queue_node_alloc_python( const char * job_name ,
                                                    const char * run_path ,
                                                    const char * run_cmd ,
                                                    int argc ,
@@ -92,27 +90,19 @@ typedef struct job_queue_node_struct job_queue_node_type;
                                                     const char * exit_file);
 
   bool job_queue_node_kill( job_queue_node_type * node , job_queue_status_type * status , queue_driver_type * driver);
-  bool job_queue_node_kill_simple(job_queue_node_type * node, queue_driver_type * driver);
+  PY_USED  bool job_queue_node_kill_simple(job_queue_node_type * node, queue_driver_type * driver);
   void job_queue_node_free(job_queue_node_type * node);
   job_status_type job_queue_node_get_status(const job_queue_node_type * node);
   void job_queue_node_free_driver_data( job_queue_node_type * node , queue_driver_type * driver);
-  void job_queue_node_restart( job_queue_node_type * node , job_queue_status_type * status);
-  bool job_queue_node_update_status( job_queue_node_type * node , job_queue_status_type * status , queue_driver_type * driver);
-  bool job_queue_node_update_status_simple(job_queue_node_type * node, queue_driver_type * driver );
-  const char * job_queue_node_get_run_path( const job_queue_node_type * node);
+  PY_USED bool job_queue_node_update_status( job_queue_node_type * node , job_queue_status_type * status , queue_driver_type * driver);
+  PY_USED bool job_queue_node_update_status_simple(job_queue_node_type * node, queue_driver_type * driver );
   int  job_queue_node_get_submit_attempt( const job_queue_node_type * node);
   void job_queue_node_reset_submit_attempt( job_queue_node_type * node);
   void job_queue_node_dec_submit_attempt( job_queue_node_type * node);
-  const char * job_queue_node_get_failed_job( const job_queue_node_type * node);
-  const char * job_queue_node_get_error_reason( const job_queue_node_type * node);
-  const char * job_queue_node_get_stderr_capture( const job_queue_node_type * node);
-  const char * job_queue_node_get_stderr_file( const job_queue_node_type * node);
 
   time_t job_queue_node_get_sim_start( const job_queue_node_type * node );
   time_t job_queue_node_get_sim_end( const job_queue_node_type * node );
-  time_t job_queue_node_get_submit_time( const job_queue_node_type * node );
   double job_queue_node_time_since_sim_start( const job_queue_node_type * node ) ;
-  void job_queue_node_set_max_confirmation_wait_time( job_queue_node_type * node, time_t time );
 
   const char * job_queue_node_get_ok_file( const job_queue_node_type * node);
   const char * job_queue_node_get_exit_file( const job_queue_node_type * node);

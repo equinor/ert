@@ -25,7 +25,7 @@ extern "C" {
 
 #include <ert/util/type_macros.h>
 #include <ert/util/int_vector.h>
-
+#include <ert/tooling.hpp>
 #include <ert/ecl/ecl_sum.h>
 
 typedef struct time_map_struct time_map_type;
@@ -61,7 +61,7 @@ typedef struct time_map_struct time_map_type;
   int              time_map_lookup_time( time_map_type * map , time_t time);
   int              time_map_lookup_days( time_map_type * map , double sim_days);
   int              time_map_lookup_time_with_tolerance( time_map_type * map , time_t time , int seconds_before_tolerance, int seconds_after_tolerance);
-  void             time_map_summary_upgrade107( time_map_type * map , const ecl_sum_type * ecl_sum);
+  PY_USED void     time_map_summary_upgrade107( time_map_type * map , const ecl_sum_type * ecl_sum);
 
 #ifdef __cplusplus
 }

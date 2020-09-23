@@ -29,9 +29,6 @@ extern "C" {
 
   typedef struct block_fs_driver_struct block_fs_driver_type;
 
-
-  void                   block_fs_driver_fwrite_mount_info(FILE * stream , fs_driver_enum driver_type , int num_block_fs_drivers);
-  block_fs_driver_type * block_fs_driver_fread_alloc(const char * root_path , FILE * stream);
   bool                   block_fs_sscanf_key(const char * key , char ** config_key , int * __report_step , int * __iens);
   void                 * block_fs_driver_open(FILE * fstab_stream , const char * mount_point , fs_driver_enum driver_type , bool read_only);
   void                   block_fs_driver_create_fs( FILE * stream ,
