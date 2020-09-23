@@ -5,7 +5,7 @@ import sys
 import re
 from argparse import ArgumentParser, ArgumentTypeError
 from ert_shared import clear_global_state
-from ert_shared.cli.main import run_cli
+from ert_shared.cli.main import run_cli, run_ee
 from ert_shared.storage.http_server import run_server
 from ert_shared.cli import (
     ENSEMBLE_SMOOTHER_MODE,
@@ -13,6 +13,7 @@ from ert_shared.cli import (
     ES_MDA_MODE,
     TEST_RUN_MODE,
     WORKFLOW_MODE,
+    ENSEMBLE_EVALUATOR_MODE,
 )
 from ert_shared.ide.keywords.definitions import (
     RangeStringArgument,
@@ -285,6 +286,11 @@ def get_ert_parser(parser=None):
     )
     workflow_parser.add_argument(help="Name of workflow", dest="name")
 
+    ee_parser = subparsers.add_parser(
+        ENSEMBLE_EVALUATOR_MODE,
+        description="Runs the Ensemble Evaluator.",
+    )
+
     # Common arguments/defaults for all non-gui modes
     for cli_parser in [
         test_run_parser,
@@ -292,6 +298,7 @@ def get_ert_parser(parser=None):
         ensemble_smoother_parser,
         es_mda_parser,
         workflow_parser,
+        ee_parser,
     ]:
         cli_parser.set_defaults(func=run_cli)
         cli_parser.add_argument(
@@ -314,6 +321,7 @@ def get_ert_parser(parser=None):
 
         FeatureToggling.add_feature_toggling_args(cli_parser)
 
+    ee_parser.set_defaults(func=run_ee)
     return parser
 
 
