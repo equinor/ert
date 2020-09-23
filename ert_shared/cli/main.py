@@ -6,6 +6,9 @@ import threading
 
 from ert_shared import ERT
 from ert_shared import clear_global_state
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
+from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.cli.model_factory import create_model
 from ert_shared.cli.monitor import Monitor
 from ert_shared.cli.notifier import ErtCliNotifier
@@ -57,7 +60,8 @@ def run_cli(args):
         )
         thread.start()
 
-        tracker = create_tracker(model, tick_interval=0, detailed_interval=0)
+        tracker = create_tracker(model, detailed_interval=0)
+
         monitor = Monitor(color_always=args.color_always)
 
         try:
