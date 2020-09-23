@@ -155,26 +155,6 @@ typedef enum { //ENKF_ASSIMILATION       = 1,
                CASE_INIT_ONLY          = 32 } run_mode_type;
 
 
-#define ENKF_RUN_ENUM_DEFS {.value = 1 , .name = "ENKF_ASSIMILATION"},   \
-                           {.value = 2 , .name = "ENSEMBLE_EXPERIMENT"}
-
-#define ENKF_RUN_ENUM_SIZE 2
-
-
-
-/**
-   This enum enumerates the different types of inflation which should
-   be used. Observe that the actual variable used is not en enum
-   instance, but rather an ordinary integer which is in general a sum
-   of of the values listed in this enum.
-*/
-
-
-  typedef enum { NO_INFLATION     = 0,
-                 SCALAR_INFLATION = 1,
-                 LOCAL_INFLATION  = 2} inflation_mode_type;
-
-
 
   typedef enum { JOB_NOT_STARTED  = 0,
                  JOB_SUBMITTED    = 1,  // This implies that it has been submitted to the internal queue system; we don't know if it is actually running or not.

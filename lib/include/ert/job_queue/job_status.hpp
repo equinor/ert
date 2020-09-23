@@ -111,22 +111,11 @@ typedef enum {
 #define JOB_QUEUE_MAX_STATE  16
 
   /*
-    All jobs which are in the status set defined by
-    JOB_QUEUE_CAN_RESTART can be restarted based on external
-    user-input. It is OK to try to restart a job which is not in this
-    state - basically nothing should happen.
-   */
-#define JOB_QUEUE_CAN_RESTART  (JOB_QUEUE_FAILED + JOB_QUEUE_IS_KILLED  +  JOB_QUEUE_SUCCESS)
-
-
-  /*
     These are the jobs which can be killed. It is OK to try to kill a
     job which is not in this state, the only thing happening is that the
     function job_queue_kill_simulation() wil return false.
    */
 #define JOB_QUEUE_CAN_KILL    (JOB_QUEUE_WAITING + JOB_QUEUE_RUNNING + JOB_QUEUE_PENDING + JOB_QUEUE_SUBMITTED + JOB_QUEUE_DO_KILL + JOB_QUEUE_DO_KILL_NODE_FAILURE)
-
-#define JOB_QUEUE_WAITING_STATUS (JOB_QUEUE_WAITING + JOB_QUEUE_PENDING)
 
 #define JOB_QUEUE_CAN_UPDATE_STATUS (JOB_QUEUE_RUNNING + JOB_QUEUE_PENDING + JOB_QUEUE_SUBMITTED + JOB_QUEUE_UNKNOWN)
 

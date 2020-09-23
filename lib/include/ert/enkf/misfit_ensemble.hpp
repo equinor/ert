@@ -31,7 +31,6 @@ extern "C" {
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/misfit_member.hpp>
 
-#define MISFIT_DEFAULT_RANKING_KEY "DEFAULT"
 #include <ert/enkf/misfit_ensemble_typedef.hpp>
 
 

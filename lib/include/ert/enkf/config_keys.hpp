@@ -77,7 +77,6 @@ extern "C" {
 #define  GEN_PARAM_KEY                     "GEN_PARAM"
 #define  GRID_KEY                          "GRID"
 #define  HISTORY_SOURCE_KEY                "HISTORY_SOURCE"
-#define  HOSY_TYPE_KEY                     "HOST_TYPE"
 #define  INSTALL_JOB_KEY                   "INSTALL_JOB"
 #define  INSTALL_JOB_DIRECTORY_KEY         "INSTALL_JOB_DIRECTORY"
 #define  JOB_SCRIPT_KEY                    "JOB_SCRIPT"
@@ -98,7 +97,6 @@ extern "C" {
 #define  RERUN_START_KEY                   "RERUN_START"
 #define  RUNPATH_FILE_KEY                  "RUNPATH_FILE"
 #define  RUNPATH_KEY                       "RUNPATH"
-#define  ITER_RUNPATH_KEY                  "ITER_RUNPATH"
 #define  RUN_TEMPLATE_KEY                  "RUN_TEMPLATE"
 #define  RFTPATH_KEY                       "RFTPATH"
 #define  SCHEDULE_PREDICTION_FILE_KEY      "SCHEDULE_PREDICTION_FILE"
@@ -122,7 +120,6 @@ extern "C" {
 #define  STOP_LONG_RUNNING_KEY             "STOP_LONG_RUNNING"
 #define  MAX_RUNTIME_KEY                   "MAX_RUNTIME"
 #define  TIME_MAP_KEY                      "TIME_MAP"
-#define  EXT_JOB_SEARCH_PATH_KEY           "EXT_JOB_SEARCH_PATH"
 #define  STD_SCALE_CORRELATED_OBS_KEY      "STD_SCALE_CORRELATED_OBS"
 #define  UPDATE_SETTING_KEY                "UPDATE_SETTINGS"
 #define  NUM_CPU_KEY                       "NUM_CPU"
@@ -153,11 +150,6 @@ extern "C" {
 // QUEUE_OPTION SLURM EXCLUDE_HOST host5 host6,host7
 #define SLURM_EXCLUDE_HOST_OPTION          "EXCLUDE_HOST"
 #define SLURM_INCLUDE_HOST_OPTION          "INCLUDE_HOST"
-
-
-
-#define CONFIG_BOOL_STRING( var ) (var) ? "TRUE" : "FALSE"
-
 
   const char * config_keys_get_config_directory_key();
   const char * config_keys_get_config_file_key();

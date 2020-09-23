@@ -28,8 +28,6 @@
 
 #include <ert/enkf/runpath_list.hpp>
 
-#define RUNPATH_LIST_DIR  "<CWD>"   //<---- This does not work; I think
-
 typedef struct runpath_node_struct runpath_node_type;
 
 

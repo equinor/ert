@@ -47,11 +47,6 @@
 */
 
 
-
-
-
-#define MISFIT_ENSEMBLE_TYPE_ID   441066
-
 struct misfit_ensemble_struct {
   UTIL_TYPE_ID_DECLARATION;
   bool                  initialized;

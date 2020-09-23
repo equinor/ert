@@ -34,8 +34,6 @@
 #include <ert/enkf/runpath_list.hpp>
 #include <ert/enkf/model_config.hpp>
 
-#define HOOK_MANAGER_NAME             "HOOK MANAGER"
-
 struct hook_manager_struct {
   vector_type            * hook_workflow_list;  /* vector of hook_workflow_type instances */
   runpath_list_type      * runpath_list;

@@ -49,15 +49,6 @@ typedef enum {
     ANALYSIS_ITERABLE   = 32       // The module can bu used as an iterative smoother.
 } analysis_module_flag_enum;
 
-
-#define ANALYSIS_MODULE_FLAG_ENUM_SIZE 5
-#define ANALYSIS_MODULE_FLAG_ENUM_DEFS {.value = ANALYSIS_NEED_ED     , .name = "ANALYSIS_NEED_ED"},\
-                                       {.value = ANALYSIS_USE_A       , .name = "ANALYSIS_USE_A"},\
-                                       {.value = ANALYSIS_UPDATE_A    , .name = "ANALYSIS_UPDATE_A"},\
-                                       {.value = ANALYSIS_SCALE_DATA  , .name = "ANALYSIS_SCALE_DATA"},\
-                                       {.value = ANALYSIS_ITERABLE    , .name = "ANALYSIS_ITERABLE"}
-
-
 #define EXTERNAL_MODULE_NAME "analysis_table"
 #define EXTERNAL_MODULE_SYMBOL analysis_table
 

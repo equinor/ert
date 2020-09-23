@@ -61,12 +61,10 @@ void             gen_kw_ecl_write_template(const gen_kw_type * gen_kw , const ch
 
 UTIL_SAFE_CAST_HEADER(gen_kw);
 UTIL_SAFE_CAST_HEADER_CONST(gen_kw);
-ALLOC_STATS_HEADER(gen_kw)
 VOID_ECL_WRITE_HEADER  (gen_kw)
 VOID_COPY_HEADER (gen_kw);
 VOID_INITIALIZE_HEADER(gen_kw);
 VOID_FREE_HEADER       (gen_kw);
-  //MATH_OPS_VOID_HEADER(gen_kw);
 VOID_ALLOC_HEADER(gen_kw);
 VOID_ECL_WRITE_HEADER(gen_kw);
 VOID_USER_GET_HEADER(gen_kw);

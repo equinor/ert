@@ -38,8 +38,6 @@
 #include <ert/enkf/ranking_table.hpp>
 
 
-#define RANKING_TABLE_TYPE_ID 78420651
-
 struct ranking_table_struct {
   UTIL_TYPE_ID_DECLARATION;
   int                 ens_size;    // Will not really handle ensemble resize events

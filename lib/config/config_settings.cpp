@@ -26,7 +26,6 @@
 #include <ert/config/config_settings.hpp>
 
 
-#define CONFIG_SETTINGS_TYPE_ID 68621527
 #define SETTING_NODE_TYPE_ID    76254096
 
 

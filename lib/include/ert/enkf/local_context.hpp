@@ -34,8 +34,6 @@ extern "C" {
 #include <ert/ecl/ecl_file.h>
 #include <ert/ecl/ecl_grid.h>
 
-#define  GLOBAL_GRID  "GLOBAL_GRID"
-
   typedef struct local_context_struct local_context_type;
 
 #ifdef __cplusplus

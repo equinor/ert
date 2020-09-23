@@ -11,8 +11,6 @@
 #include <ert/analysis/stepwise.hpp>
 
 
-#define STEPWISE_TYPE_ID 8722106
-
 struct stepwise_struct {
   UTIL_TYPE_ID_DECLARATION;
 

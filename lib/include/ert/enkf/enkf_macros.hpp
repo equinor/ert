@@ -183,16 +183,6 @@ void prefix ## _user_get__(void * void_arg , const char * key , double * value, 
 
 /*****************************************************************/
 
-#define VOID_FREE_DATA(prefix)                               \
-void prefix ## _free_data__(void * void_arg) {               \
-   prefix ## _type * arg = prefix ## _safe_cast( void_arg ); \
-   prefix ## _free_data( arg );                              \
-}
-
-#define VOID_FREE_DATA_HEADER(prefix) void prefix ## _free_data__(void * );
-
-/*****************************************************************/
-
 #define VOID_COPY(prefix)                                             \
 void prefix ## _copy__(const void * void_src, void * void_target) {   \
    const prefix ## _type * src = prefix ## _safe_cast_const( void_src );    \
@@ -338,18 +328,6 @@ double obs_prefix ## _chi2__(const void * void_obs ,  const void * void_state, n
 }
 
 #define VOID_IADDSQR_HEADER(prefix)   void prefix ## _iaddsqr__( void * void_arg , const void * void_delta );
-
-/*****************************************************************/
-
-#define CONFIG_GET_ENSFILE(prefix)                   const char * prefix ## _config_get_ensfile_ref(const prefix ## _config_type * config) { return config->ensfile; }
-#define CONFIG_GET_ECLFILE(prefix)                   const char * prefix ## _config_get_eclfile_ref(const prefix ## _config_type * config) { return config->eclfile; }
-#define CONFIG_GET_ENSFILE_HEADER(prefix)       const char * prefix ## _config_get_ensfile_ref(const prefix ## _config_type * )
-#define CONFIG_GET_ECLFILE_HEADER(prefix)       const char * prefix ## _config_get_eclfile_ref(const prefix ## _config_type * )
-
-/*****************************************************************/
-
-#define VOID_IGET(prefix)        double prefix ## _iget__(const void * void_arg, int index) { return prefix ## _iget((const prefix ## _type *) void_arg , index); }
-#define VOID_IGET_HEADER(prefix) double prefix ## _iget__(const void * , int )
 
 #ifdef __cplusplus
 }

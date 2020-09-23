@@ -36,12 +36,6 @@ extern "C" {
 #include <ert/config/config_content_node.hpp>
 #include <ert/config/config_content.hpp>
 
-#define ECL_COM_KW "--"
-#define ENKF_COM_KW "--"
-
-
-
-
 
 typedef struct config_parser_struct              config_parser_type;
 

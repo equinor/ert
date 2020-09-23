@@ -29,7 +29,6 @@ extern "C" {
 #endif
 
 #define FS_MAGIC_ID              123998L
-#define FSTAB_FILE              "ert_fstab"
 #define CURRENT_FS_VERSION       107
 #define MIN_SUPPORTED_FS_VERSION 105
 

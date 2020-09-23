@@ -75,8 +75,6 @@ const char * enkf_defaults_get_default_gen_kw_export_name();
 /**
     The default number of block_fs instances allocated.
 */
-#define ENKF_DEFAULT_NUM_BLOCK_FS_DRIVERS 32
-
 
 /* Eclipse IO  related stuff */
 #define DEFAULT_FORMATTED   false
@@ -123,16 +121,10 @@ const char * enkf_defaults_get_default_gen_kw_export_name();
 
 
 /* Default directories. */
-#define DEFAULT_REPORT_PATH      "reports"
 #define DEFAULT_RUNPATH          "simulations/realization%d"
 #define DEFAULT_ENSPATH          "storage"
 #define DEFAULT_RFTPATH          "rft"
-#define DEFAULT_REPORT_LARGE     false
 #define DEFAULT_REPORT_TIMEOUT   120
-
-#define DEFAULT_IMAGE_TYPE         "png"
-#define DEFAULT_IMAGE_VIEWER       "/usr/bin/display"
-#define DEFAULT_PLOT_LOGY          false
 
 #define DEFAULT_STORE_PC           true
 #define DEFAULT_PC_FILENAME        "PC_%04d-%04d-%s"
@@ -151,10 +143,8 @@ const char * enkf_defaults_get_default_gen_kw_export_name();
 #define CONFIG_KEY_FORMAT           "%-24s"
 #define CONFIG_VALUE_FORMAT         " %-32s"
 #define CONFIG_FLOAT_FORMAT         " %32.4f"  /* One size - fits all :-) */
-#define CONFIG_INT_FORMAT           " %32d"    /* One size - fits all :-) */
 #define CONFIG_SHORT_VALUE_FORMAT   " %-12s"
 #define CONFIG_ENDVALUE_FORMAT      " %-32s\n"
-#define CONFIG_COMMENT_FORMAT       "-- %s\n"
 #define CONFIG_COMMENTLINE_FORMAT   "----------------------------------------------------------------------\n"
 
 /*
@@ -164,13 +154,6 @@ const char * enkf_defaults_get_default_gen_kw_export_name();
 
 #define DEFAULT_START_TAG "<"
 #define DEFAULT_END_TAG   ">"
-
-#define DEFAULT_MANUAL_URL "http://ert.nr.no/ert/index.php/User_Manual"
-#define DEFAULT_BROWSER    "firefox"
-
-/*****************************************************************/
-
-#define DEFAULT_VAR_DIR "/tmp/ert/var/run/ert"
 
 /*****************************************************************/
 /* file system spesific defaults. */
@@ -183,19 +166,6 @@ const char * enkf_defaults_get_default_gen_kw_export_name();
 #define CURRENT_CASE      "current"
 #define DEFAULT_CASE      "default"
 #define CURRENT_CASE_FILE "current_case"
-
-#define DEFAULT_PLAIN_NODE_PARAMETER_PATH           "tstep/%04d/mem%03d/Parameter"
-#define DEFAULT_PLAIN_NODE_STATIC_PATH              "tstep/%04d/mem%03d/Static"
-#define DEFAULT_PLAIN_NODE_DYNAMIC_FORECAST_PATH    "tstep/%04d/mem%03d/Forecast"
-#define DEFAULT_PLAIN_NODE_DYNAMIC_ANALYZED_PATH    "tstep/%04d/mem%03d/Analyzed"
-#define DEFAULT_PLAIN_NODE_INDEX_PATH               "tstep/%04d/mem%03d/Index"
-
-#define DEFAULT_PLAIN_VECTOR_PARAMETER_PATH           "vectors/mem%03d/Parameter"
-#define DEFAULT_PLAIN_VECTOR_STATIC_PATH              "vectors/mem%03d/Static"
-#define DEFAULT_PLAIN_VECTOR_DYNAMIC_FORECAST_PATH    "vectors/mem%03d/Forecast"
-#define DEFAULT_PLAIN_VECTOR_DYNAMIC_ANALYZED_PATH    "vectors/mem%03d/Analyzed"
-#define DEFAULT_PLAIN_VECTOR_INDEX_PATH               "vectors/mem%03d/Index"
-
 
 #define DEFAULT_CASE_PATH                        "%s/files"              // mountpoint
 #define DEFAULT_CASE_MEMBER_PATH                 "%s/mem%03d/files"      // mountpoint/member
