@@ -1,4 +1,3 @@
-import sys
 import unittest
 
 from ert_shared.tracker.base import BaseTracker
@@ -10,15 +9,7 @@ from unittest.mock import Mock
 class BaseTrackerTest(unittest.TestCase):
     def setUp(self):
         self.model = Mock()
-        self.tracker = BaseTracker(self.model)
-
-    def test_tick_event_generation(self):
-        self.model.start_time.return_value = 100
-        self.model.stop_time.return_value = 200
-
-        tick_event = self.tracker._tick_event()
-
-        self.assertEqual(100, tick_event.runtime)
+        self.tracker = BaseTracker(self.model, None)
 
     def test_general_event_generation(self):
         self.model.getPhaseName.return_value = "Test Phase"
@@ -30,9 +21,8 @@ class BaseTrackerTest(unittest.TestCase):
         self.model.isIndeterminate.return_value = True
         self.model.start_time.return_value = 100
         self.model.stop_time.return_value = 200
-        self.model.getQueueStatus.return_value = {
-            JobStatusType.JOB_QUEUE_DONE: 50
-        }
+        self.model.getQueueStatus.return_value = {JobStatusType.JOB_QUEUE_DONE: 50}
+        self.model.get_runtime.return_value = 100
 
         general_event = self.tracker._general_event()
 
