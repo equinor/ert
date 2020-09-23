@@ -2,6 +2,8 @@
 from __future__ import print_function
 
 import sys
+import threading
+import time
 
 from colors import color as ansi_color
 from console_progressbar import ProgressBar

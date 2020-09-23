@@ -171,6 +171,12 @@ class BaseRunModel(object):
     def start_time(self):
         return self._job_start_time
 
+    def get_runtime(self):
+        if self.stop_time() < self.start_time():
+            return time.time() - self.start_time()
+        else:
+            return self.stop_time() - self.start_time()
+
     @job_queue(1)
     def getQueueSize(self):
         """ @rtype: int """
@@ -218,6 +224,8 @@ class BaseRunModel(object):
         if self._job_queue:
             status = self._job_queue.getJobStatus(queue_index)
 
+        # Avoids reading from disk for jobs in these states since there's no
+        # data anyway
         if status in [
                 JobStatusType.JOB_QUEUE_PENDING,
                 JobStatusType.JOB_QUEUE_SUBMITTED,
@@ -227,7 +235,7 @@ class BaseRunModel(object):
 
         fms = self.realization_progress[iteration].get(run_arg.iens, None)
 
-        #Dont load from file if you are finished
+        # Don't load from file if you are finished
         if fms and BaseRunModel.is_forward_model_finished(fms[0]):
             jobs = self.realization_progress[iteration][run_arg.iens][0]
         else:

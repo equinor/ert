@@ -1,8 +1,3 @@
-class TickEvent(object):
-    def __init__(self, runtime):
-        self.runtime = runtime
-
-
 class GeneralEvent(object):
     def __init__(
         self,
