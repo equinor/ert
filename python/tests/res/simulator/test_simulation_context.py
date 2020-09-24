@@ -48,7 +48,7 @@ class SimulationContextTest(ResTest):
 
             wait_until(
                 func=(lambda: self.assertFalse(simulation_context1.isRunning() or simulation_context2.isRunning())),
-                timeout=60
+                timeout=90
             )
 
             self.assertEqual(simulation_context1.getNumFailed(), 0)
