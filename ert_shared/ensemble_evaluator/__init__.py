@@ -37,6 +37,28 @@ class EnsembleEvaluator:
             name="ert_ee",
             target=self._evaluate,
         )
+        self._ws_thread = threading.Thread(
+            name="ert_ee_wsocket",
+            target=self._wsocket,
+        )
+
+    def _wsocket(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        async def hello(websocket, path):
+            name = await websocket.recv()
+            print(f"< {name}")
+
+            greeting = f"Hello {name}!"
+
+            await websocket.send(greeting)
+            print(f"> {greeting}")
+
+        start_server = websockets.serve(hello, "localhost", 8765)
+
+        loop.run_until_complete(start_server)
+        loop.run_forever()
 
     def _evaluate(self):
         i = 0
@@ -52,6 +74,7 @@ class EnsembleEvaluator:
     def run(self):
         self._api_thread.start()
         self._ee_thread.start()
+        self._ws_thread.start()
         return create_monitor(self._url)
 
     def _ping(self):

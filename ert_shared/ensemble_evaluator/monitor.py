@@ -46,7 +46,7 @@ def create_event_from_dict(data):
 
 
 class _Monitor:
-    def __init__(self, url):
+    def __init__(self, url, loop):
         self._url = url
 
     def track(self):
