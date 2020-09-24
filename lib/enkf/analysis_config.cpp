@@ -694,7 +694,14 @@ void analysis_config_add_config_items( config_parser_type * config ) {
   config_add_key_value( config , UPDATE_LOG_PATH_KEY         , false , CONFIG_STRING);
   config_add_key_value( config , MIN_REALIZATIONS_KEY        , false , CONFIG_STRING );
   config_add_key_value( config , MAX_RUNTIME_KEY             , false , CONFIG_INT );
-  config_add_key_value( config , STD_SCALE_CORRELATED_OBS_KEY, false , CONFIG_BOOL );
+
+  config_add_key_value(config, STD_SCALE_CORRELATED_OBS_KEY, false, CONFIG_BOOL);
+  config_parser_deprecate(
+          config,
+          STD_SCALE_CORRELATED_OBS_KEY,
+          "STD_SCALE_CORRELATED_OBS is deprecated. "
+          "Use the AUTO_SCALE workflow instead."
+  );
 
   item = config_add_key_value( config , STOP_LONG_RUNNING_KEY, false,  CONFIG_BOOL );
   stringlist_type * child_list = stringlist_alloc_new();
