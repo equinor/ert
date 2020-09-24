@@ -16,9 +16,6 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <unistd.h>
 
 #include <ert/util/test_util.h>
 

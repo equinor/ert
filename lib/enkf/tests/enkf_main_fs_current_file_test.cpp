@@ -18,8 +18,6 @@
 
 
 #include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
 
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>

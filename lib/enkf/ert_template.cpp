@@ -15,18 +15,13 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <stdbool.h>
 #include <stdlib.h>
 
 #include <ert/util/hash.h>
-#include <ert/util/util.h>
 #include <ert/res_util/template.hpp>
-#include <ert/res_util/subst_list.hpp>
 
 #include <ert/enkf/ert_template.hpp>
 #include <ert/enkf/config_keys.hpp>
-#include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/model_config.hpp>
 
 
 #define ERT_TEMPLATE_TYPE_ID  7731963

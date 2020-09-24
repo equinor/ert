@@ -17,11 +17,8 @@
 */
 
 #include <stdlib.h>
-#include <string.h>
 
 #include <ert/util/vector.h>
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
 #include <ert/util/hash.h>
 
 #include <ert/ecl/ecl_sum.h>

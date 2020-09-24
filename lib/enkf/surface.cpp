@@ -18,7 +18,6 @@
 
 #include <stdlib.h>
 #include <cmath>
-#include <string.h>
 
 #include <ert/util/util.h>
 
@@ -27,11 +26,6 @@
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/surface.hpp>
-#include <ert/enkf/surface_config.hpp>
-#include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/enkf_serialize.hpp>
-#include <ert/enkf/value_export.hpp>
 
 
 /*****************************************************************/

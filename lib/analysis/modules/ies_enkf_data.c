@@ -1,9 +1,6 @@
 #include "ies_enkf_config.h"
 #include "ies_enkf_data.h"
 
-#include <ert/util/type_macros.hpp>
-#include <ert/util/util.h>
-
 //**********************************************
 // IES "object" data definition
 //**********************************************

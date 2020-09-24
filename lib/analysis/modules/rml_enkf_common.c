@@ -16,19 +16,8 @@
    for more details.
 */
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <math.h>
-
 #include <ert/util/util.hpp>
 #include <ert/res_util/matrix.hpp>
-#include <ert/res_util/matrix_blas.hpp>
-#include <ert/util/rng.hpp>
-
-#include <ert/analysis/analysis_module.hpp>
-#include <ert/analysis/analysis_table.hpp>
-#include <ert/analysis/enkf_linalg.hpp>
 
 #include <rml_enkf_common.h>
 

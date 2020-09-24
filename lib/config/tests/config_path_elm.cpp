@@ -16,17 +16,12 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <unistd.h>
 
 #include <ert/util/test_util.hpp>
 #include <ert/util/util.hpp>
 #include <ert/util/test_work_area.hpp>
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_path_elm.hpp>
-#include <ert/config/config_root_path.hpp>
 
 int main(int argc , char ** argv) {
   const char * rel_path = "rel/path";

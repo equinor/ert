@@ -18,14 +18,8 @@
 */
 
 
-#include <stdlib.h>
-#include <stdio.h>
-
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ert_test_context.hpp>
-#include <ert/enkf/meas_data.hpp>
-#include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/obs_vector.hpp>
 
 #include <ert/util/test_util.h>
 #include <ert/util/type_vector_functions.h>

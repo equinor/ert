@@ -16,17 +16,12 @@
    for more details.
 */
 #include <assert.h>
-#include <stdbool.h>
-#include <time.h>
 
 #include <ert/util/bool_vector.h>
-#include <ert/util/double_vector.h>
-#include <ert/util/type_macros.h>
 
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_plot_gen_kw.hpp>
-#include <ert/enkf/enkf_plot_gen_kw_vector.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
 
 

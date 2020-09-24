@@ -29,11 +29,9 @@
   bottom of the file.
 */
 #include <string.h>
-#include <stdbool.h>
 #include <cmath>
 
 #include <ert/util/hash.h>
-#include <ert/util/util.h>
 
 #include <ert/enkf/field_trans.hpp>
 /*****************************************************************/

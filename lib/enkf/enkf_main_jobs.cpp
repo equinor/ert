@@ -17,17 +17,12 @@
 */
 
 #include <cassert>
-#include <unistd.h>
 
 #include <ert/util/stringlist.h>
 #include <ert/util/string_util.h>
-#include <ert/util/int_vector.h>
 
 #include <ert/res_util/res_log.hpp>
 #include <ert/enkf/enkf_main.hpp>
-#include <ert/enkf/field_config.hpp>
-#include <ert/enkf/local_obsdata.hpp>
-#include <ert/enkf/local_obsdata_node.hpp>
 #include <ert/util/type_vector_functions.hpp>
 
 

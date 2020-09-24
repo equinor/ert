@@ -26,10 +26,8 @@
 #endif
 
 #include <ert/util/type_macros.hpp>
-#include <ert/util/util.hpp>
 #include <ert/util/rng.hpp>
 #include <ert/res_util/matrix.hpp>
-#include <ert/res_util/matrix_blas.hpp>
 #include <ert/util/stringlist.hpp>
 #include <ert/util/double_vector.hpp>
 
@@ -38,10 +36,6 @@
 #include <ert/analysis/fwd_step_log.hpp>
 #include <ert/analysis/analysis_table.hpp>
 #include <ert/analysis/analysis_module.hpp>
-#include <ert/analysis/module_data_block.hpp>
-#include <ert/analysis/module_data_block_vector.hpp>
-#include <ert/analysis/module_obs_block.hpp>
-#include <ert/analysis/module_obs_block_vector.hpp>
 
 #define FWD_STEP_ENKF_TYPE_ID 765524
 

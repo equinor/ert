@@ -16,13 +16,11 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
 #include <stdio.h>
 
 #include <algorithm>
 #include <iostream>
 #include <fstream>
-#include <string>
 #include <vector>
 
 #include <ext/json/cJSON.h>

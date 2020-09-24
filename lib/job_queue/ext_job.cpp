@@ -17,23 +17,16 @@
 */
 
 #include <stdlib.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <ctype.h>
 #include <string.h>
 #include <stdio.h>
 
 #include <ert/util/util.hpp>
 #include <ert/util/hash.hpp>
-#include <ert/util/stringlist.hpp>
-#include <ert/util/parser.hpp>
 #include <ert/res_util/subst_list.hpp>
 #include <ert/res_util/res_env.hpp>
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_content.hpp>
-#include <ert/config/config_error.hpp>
 
 #include <ert/job_queue/job_kw_definitions.hpp>
 #include <ert/job_queue/ext_job.hpp>

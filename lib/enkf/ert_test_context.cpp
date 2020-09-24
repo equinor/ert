@@ -18,7 +18,6 @@
 
 
 #include <stdlib.h>
-#include <stdbool.h>
 #include <stdio.h>
 
 #include <ert/util/util.h>
@@ -28,7 +27,6 @@
 
 #include <ert/enkf/enkf_main.hpp>
 #include <ert/enkf/ert_test_context.hpp>
-#include <ert/enkf/enkf_main.hpp>
 
 
 #define ERT_TEST_CONTEXT_TYPE_ID 99671055

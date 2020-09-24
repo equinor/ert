@@ -17,34 +17,20 @@
  */
 
 #include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 #include <ert/util/util.h>
 #include <ert/util/stringlist.h>
-#include <ert/util/vector.h>
 
 #include <ert/job_queue/job_queue.hpp>
 #include <ert/job_queue/ext_job.hpp>
 #include <ert/job_queue/ext_joblist.hpp>
-#include <ert/job_queue/lsf_driver.hpp>
-#include <ert/job_queue/rsh_driver.hpp>
-#include <ert/job_queue/local_driver.hpp>
-#include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/environment_varlist.hpp>
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_content_item.hpp>
-#include <ert/config/config_content_node.hpp>
-#include <ert/config/config_schema_item.hpp>
-
-#include <ert/res_util/res_env.hpp>
 
 #include <ert/enkf/site_config.hpp>
-#include <ert/enkf/queue_config.hpp>
-#include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/model_config.hpp>

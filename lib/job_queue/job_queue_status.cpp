@@ -18,7 +18,6 @@
 #include <pthread.h>
 
 #include <ert/util/type_macros.hpp>
-#include <ert/util/util.hpp>
 
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/job_queue_status.hpp>

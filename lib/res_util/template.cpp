@@ -17,7 +17,6 @@
 */
 
 #include <stdlib.h>
-#include <stdbool.h>
 #include <stdio.h>
 
 #include <ert/util/ert_api_config.hpp>
@@ -25,7 +24,6 @@
 #include <ert/util/util.hpp>
 #include <ert/util/stringlist.hpp>
 
-#include <ert/res_util/subst_func.hpp>
 #include <ert/res_util/subst_list.hpp>
 #include <ert/res_util/template.hpp>
 #include <ert/res_util/template_type.hpp>

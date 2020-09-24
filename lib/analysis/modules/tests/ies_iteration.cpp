@@ -5,7 +5,6 @@
 
 #include <ert/analysis/std_enkf.hpp>
 #include "ies_enkf_data.h"
-#include "ies_enkf_config.h"
 #include "ies_enkf.h"
 
 

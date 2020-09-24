@@ -16,17 +16,12 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
 #include <signal.h>
-#include <unistd.h>
 
 #include <ert/util/test_util.hpp>
 #include <ert/util/util.hpp>
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_schema_item.hpp>
-#include <ert/config/config_error.hpp>
 
 void install_SIGNALS(void) {
   signal(SIGSEGV , util_abort_signal);    /* Segmentation violation, i.e. overwriting memory ... */

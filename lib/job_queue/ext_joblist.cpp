@@ -19,15 +19,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <sys/types.h>
 #include <dirent.h>
 
 #include <ert/util/util.hpp>
 #include <ert/util/hash.hpp>
-#include <ert/util/stringlist.hpp>
-#include <ert/res_util/subst_list.hpp>
 
 #include <ert/job_queue/ext_job.hpp>
 #include <ert/job_queue/ext_joblist.hpp>

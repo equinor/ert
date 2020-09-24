@@ -4,7 +4,6 @@
 #include <ert/res_util/es_testdata.hpp>
 
 #include "ies_enkf_data.h"
-#include "ies_enkf_config.h"
 #include "ies_enkf.h"
 
 

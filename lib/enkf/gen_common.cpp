@@ -18,11 +18,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 
 #include <ert/util/util.h>
 
-#include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_type.h>
 
 #include <ert/enkf/gen_data_config.hpp>

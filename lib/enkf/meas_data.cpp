@@ -23,15 +23,12 @@
 
 #include <cmath>
 #include <stdlib.h>
-#include <string.h>
 #include <pthread.h>
 
 #include <ert/util/type_macros.h>
-#include <ert/util/util.h>
 #include <ert/util/hash.h>
 #include <ert/res_util/matrix.hpp>
 #include <ert/util/vector.h>
-#include <ert/util/int_vector.h>
 #include <ert/util/type_vector_functions.h>
 
 #include <ert/enkf/meas_data.hpp>

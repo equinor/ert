@@ -1,15 +1,8 @@
 #include <ert/enkf/summary_key_matcher.hpp>
 
 #include <stdlib.h>
-#include <stdbool.h>
 
-#include <ert/util/util.h>
 #include <ert/util/hash.h>
-#include <ert/util/stringlist.h>
-#include <ert/util/type_macros.h>
-
-#include <ert/enkf/enkf_types.hpp>
-
 
 
 #define SUMMARY_KEY_MATCHER_TYPE_ID 700672137

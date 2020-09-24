@@ -16,25 +16,12 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <unistd.h>
-
-#include <ert/util/test_util.h>
-#include <ert/util/util.h>
-#include <ert/res_util/arg_pack.hpp>
 
 #include <ert/config/config_parser.hpp>
 
 #include <ert/ecl/ecl_sum.h>
 
 #include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/time_map.hpp>
-
-
-
-
-
 
 
 int main(int argc , char ** argv) {

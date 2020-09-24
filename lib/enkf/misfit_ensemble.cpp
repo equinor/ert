@@ -18,21 +18,13 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <cmath>
-#include <stdbool.h>
 
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
 #include <ert/util/vector.h>
-#include <ert/util/double_vector.h>
-#include <ert/util/buffer.h>
 
 #include <ert/enkf/enkf_obs.hpp>
-#include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/misfit_ensemble.hpp>
-#include <ert/enkf/misfit_member.hpp>
-#include <ert/enkf/misfit_ts.hpp>
 
 
 /**

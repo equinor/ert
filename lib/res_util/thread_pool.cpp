@@ -20,10 +20,8 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <signal.h>
 #include <pthread.h>
-#include <unistd.h>
 
 #include <ert/res_util/thread_pool.hpp>
 #include <ert/res_util/res_portability.hpp>

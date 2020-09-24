@@ -22,8 +22,6 @@
 
 #include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/local_updatestep.hpp>
-#include <ert/enkf/local_config.hpp>
-#include <ert/enkf/enkf_macros.hpp>
 
 /**
    One enkf update is described/configured by the data structure in

@@ -16,7 +16,6 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
 #include <sys/stat.h>
 
 #include <ext/json/cJSON.h>

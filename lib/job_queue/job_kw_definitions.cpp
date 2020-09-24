@@ -1,8 +1,6 @@
-#include <stdio.h>
+
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_content.hpp>
-#include <ert/config/config_error.hpp>
 
 #include <ert/job_queue/job_kw_definitions.hpp>
 

@@ -16,15 +16,10 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <unistd.h>
 
 #include <ert/util/test_util.h>
-#include <ert/util/int_vector.h>
 
 #include <ert/enkf/local_obsdata_node.hpp>
-#include <ert/enkf/active_list.hpp>
 
 
 void test_content( local_obsdata_node_type * node ) {

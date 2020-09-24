@@ -16,16 +16,10 @@
    for more details.
 */
 
-#include <stdbool.h>
 #include <stdlib.h>
 #include <dlfcn.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
 
 #include <ert/util/int_vector.hpp>
-#include <ert/util/util.hpp>
-#include <ert/util/type_macros.hpp>
 
 #include <ert/config/config_parser.hpp>
 

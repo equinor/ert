@@ -22,8 +22,6 @@
 #include <ert/util/int_vector.hpp>
 
 #include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/active_list.hpp>
-#include <ert/enkf/local_config.hpp>
 
 
 /**

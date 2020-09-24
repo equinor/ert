@@ -17,13 +17,11 @@
 */
 
 
-#include <stdbool.h>
 #include <cmath>
 
 #include <ert/util/util.hpp>
 #include <ert/util/stringlist.hpp>
 #include <ert/util/hash.hpp>
-#include <ert/util/rng.hpp>
 
 #include <ert/res_util/subst_func.hpp>
 

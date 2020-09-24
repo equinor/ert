@@ -29,9 +29,6 @@
 #include <ert/config/config_path_elm.hpp>
 #include <ert/config/config_path_stack.hpp>
 #include <ert/config/config_content.hpp>
-#include <ert/config/config_content_item.hpp>
-#include <ert/config/config_schema_item.hpp>
-#include <ert/config/config_error.hpp>
 
 
 #define CONFIG_CONTENT_TYPE_ID 6612520

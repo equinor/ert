@@ -16,17 +16,10 @@
    for more details.
 */
 #include <time.h>
-#include <stdbool.h>
 
 #include <ert/util/double_vector.h>
-#include <ert/util/stringlist.h>
-#include <ert/util/type_macros.h>
-#include <ert/util/vector.h>
-
-#include <ert/res_util/thread_pool.hpp>
 
 #include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_plot_gen_kw_vector.hpp>
 #include <ert/enkf/gen_kw.hpp>
 

@@ -19,10 +19,7 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <stdio.h>
-#include <string.h>
 #include <pthread.h>
-#include <errno.h>
 
 #include <ert/util/util.hpp>
 #include <ert/res_util/arg_pack.hpp>

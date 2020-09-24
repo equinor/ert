@@ -16,13 +16,11 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
 
 #include <ert/util/test_util.hpp>
 
 #include <ert/config/config_error.hpp>
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_content.hpp>
 
 
 void error(const char * msg) {

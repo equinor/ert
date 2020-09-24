@@ -16,8 +16,6 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
 
 #include <ert/util/test_work_area.hpp>
 #include <ert/util/test_util.hpp>

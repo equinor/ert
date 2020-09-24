@@ -3,7 +3,6 @@
 #include <ert/util/rng.h>
 
 #include "ies_enkf_data.h"
-#include "ies_enkf_config.h"
 
 
 void test_create() {

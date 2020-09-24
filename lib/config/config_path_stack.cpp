@@ -20,7 +20,6 @@
 #include <ert/util/type_macros.hpp>
 #include <ert/util/vector.hpp>
 
-#include <ert/config/config_root_path.hpp>
 #include <ert/config/config_path_elm.hpp>
 #include <ert/config/config_path_stack.hpp>
 

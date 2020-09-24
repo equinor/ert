@@ -19,7 +19,7 @@
 #ifndef _GNU_SOURCE
 #define  _GNU_SOURCE   /* Must define this to get access to pthread_rwlock_t */
 #endif
-#include <stdbool.h>
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -33,10 +33,7 @@
 #include <ert/res_util/res_portability.hpp>
 
 #include <ert/job_queue/job_queue.hpp>
-#include <ert/job_queue/job_node.hpp>
 #include <ert/job_queue/job_list.hpp>
-#include <ert/job_queue/job_queue_status.hpp>
-#include <ert/job_queue/queue_driver.hpp>
 
 
 /**

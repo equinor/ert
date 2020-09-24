@@ -17,16 +17,12 @@
 */
 
 #include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <dlfcn.h>
 
 #include <stdexcept>
 
 #include <ert/res_util/matrix.hpp>
-#include <ert/util/util.hpp>
-#include <ert/util/type_macros.hpp>
 
 #include <ert/analysis/analysis_module.hpp>
 #include <ert/analysis/analysis_table.hpp>

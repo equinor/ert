@@ -17,7 +17,8 @@
 */
 
 #include <ert/enkf/summary_key_set.hpp>
-
+#include <ert/enkf/enkf_defaults.hpp>
+#include <dirent.h>
 
 /*
   This small function is here only to make sure that the main

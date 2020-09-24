@@ -18,13 +18,10 @@
 #include <stdlib.h>
 
 #include <ert/util/test_util.h>
-#include <ert/res_util/path_fmt.hpp>
 #include <ert/util/test_work_area.h>
 #include <ert/res_util/subst_list.hpp>
 
 #include <ert/enkf/ert_run_context.hpp>
-#include <ert/enkf/run_arg.hpp>
-#include <ert/enkf/enkf_fs.hpp>
 
 
 void call_get_queue_index( void * arg ) {

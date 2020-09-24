@@ -18,16 +18,13 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <time.h>
 #include <fnmatch.h>
 
 #include <ert/util/hash.hpp>
-#include <ert/util/util.hpp>
 #include <ert/util/vector.hpp>
 #include <ert/util/buffer.hpp>
 #include <ert/util/long_vector.hpp>

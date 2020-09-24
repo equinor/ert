@@ -28,7 +28,6 @@
 #include <ert/util/statistics.hpp>
 #include <ert/util/test_work_area.hpp>
 #include <ert/util/rng.hpp>
-#include <ert/util/mzran.hpp>
 
 #include <ert/res_util/matrix.hpp>
 

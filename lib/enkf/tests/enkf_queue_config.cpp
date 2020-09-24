@@ -4,11 +4,7 @@
 
 #include <ert/job_queue/job_queue.hpp>
 #include <ert/job_queue/ext_job.hpp>
-#include <ert/job_queue/ext_joblist.hpp>
 #include <ert/job_queue/lsf_driver.hpp>
-#include <ert/job_queue/rsh_driver.hpp>
-#include <ert/job_queue/local_driver.hpp>
-#include <ert/job_queue/queue_driver.hpp>
 
 #include <ert/config/config_parser.hpp>
 

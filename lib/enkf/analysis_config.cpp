@@ -1,4 +1,3 @@
-#include <iso646.h>
 /*
    Copyright (C) 2011  Equinor ASA, Norway.
 
@@ -20,7 +19,6 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <math.h>
 
@@ -28,19 +26,15 @@
 
 #include <ert/util/util.h>
 #include <ert/util/stringlist.h>
-#include <ert/util/type_macros.h>
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_content.hpp>
 #include <ert/config/config_settings.hpp>
 
 #include <ert/analysis/analysis_module.hpp>
 
-#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/analysis_config.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/config_keys.hpp>
-#include <ert/enkf/analysis_iter_config.hpp>
 #include <ert/enkf/site_config.hpp>
 #include <ert/enkf/model_config.hpp>
 

@@ -17,17 +17,11 @@
 */
 
 
-#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <ert/util/util.h>
-#include <ert/util/stringlist.h>
 
-#include <ert/config/config_parser.hpp>
-
-#include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/cases_config.hpp>
 
 

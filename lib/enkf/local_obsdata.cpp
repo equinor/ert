@@ -23,7 +23,6 @@
 #include <ert/util/hash.h>
 
 #include <ert/enkf/local_config.hpp>
-#include <ert/enkf/local_obsdata.hpp>
 
 
 #define LOCAL_OBSDATA_TYPE_ID 86331309

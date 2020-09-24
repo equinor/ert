@@ -18,14 +18,10 @@
 
 #include <stdlib.h>
 #include <pthread.h>
-#include <stdbool.h>
 
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
-#include <ert/util/stringlist.h>
-#include <ert/util/type_macros.h>
 
-#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/summary_key_set.hpp>
 
 

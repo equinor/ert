@@ -17,95 +17,41 @@
 
 
 
-#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <signal.h>
-#include <stdbool.h>
 #include <pthread.h>
-#include <dirent.h>
-#include <pwd.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <thread>
 
 #define HAVE_THREAD_POOL 1
 #include <ert/util/rng.h>
 #include <ert/util/int_vector.h>
 #include <ert/util/bool_vector.h>
-#include <ert/util/util.h>
 #include <ert/util/hash.h>
 #include <ert/res_util/path_fmt.hpp>
 #include <ert/res_util/arg_pack.hpp>
-#include <ert/util/stringlist.h>
-#include <ert/util/node_ctype.h>
-#include <ert/util/string_util.h>
 #include <ert/util/type_vector_functions.h>
-
-#include <ert/ecl/ecl_util.h>
-#include <ert/ecl/ecl_io_config.h>
 
 #include <ert/res_util/thread_pool.hpp>
 #include <ert/res_util/subst_list.hpp>
 #include <ert/res_util/res_log.hpp>
-#include <ert/res_util/res_util_defaults.hpp>
 #include <ert/res_util/matrix.hpp>
 
 #include <ert/job_queue/job_queue.hpp>
-#include <ert/job_queue/local_driver.hpp>
-#include <ert/job_queue/rsh_driver.hpp>
-#include <ert/job_queue/lsf_driver.hpp>
-#include <ert/job_queue/forward_model.hpp>
-#include <ert/job_queue/queue_driver.hpp>
 
 #include <ert/sched/history.hpp>
 
 #include <ert/analysis/analysis_module.hpp>
-#include <ert/analysis/analysis_table.hpp>
 #include <ert/analysis/enkf_linalg.hpp>
-#include <ert/analysis/module_info.hpp>
-
-#include <ert/res_util/res_util_defaults.hpp>
-#include <ert/res_util/subst_func.hpp>
-#include <ert/res_util/res_log.hpp>
 
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
-#include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/enkf_obs.hpp>
-#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_main.hpp>
-#include <ert/enkf/res_config.hpp>
-#include <ert/enkf/enkf_serialize.hpp>
-#include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/model_config.hpp>
-#include <ert/enkf/hook_manager.hpp>
-#include <ert/enkf/site_config.hpp>
-#include <ert/enkf/queue_config.hpp>
-#include <ert/enkf/active_config.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
-#include <ert/enkf/local_ministep.hpp>
-#include <ert/enkf/local_updatestep.hpp>
-#include <ert/enkf/local_config.hpp>
-#include <ert/enkf/local_dataset.hpp>
-#include <ert/enkf/misfit_ensemble.hpp>
-#include <ert/enkf/ert_template.hpp>
-#include <ert/enkf/rng_config.hpp>
-#include <ert/enkf/rng_manager.hpp>
-#include <ert/enkf/enkf_plot_data.hpp>
-#include <ert/enkf/ranking_table.hpp>
-#include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/config_keys.hpp>
-#include <ert/enkf/runpath_list.hpp>
-#include <ert/enkf/analysis_config.hpp>
-#include <ert/enkf/analysis_iter_config.hpp>
 #include <ert/enkf/field.hpp>
-#include <ert/enkf/ert_run_context.hpp>
-#include <ert/enkf/run_arg.hpp>
 #include <ert/enkf/callback_arg.hpp>
 
 

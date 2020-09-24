@@ -16,23 +16,16 @@
    for more details.
 */
 
-#include <stdbool.h>
 #include <stdlib.h>
-#include <dlfcn.h>
 
 #include <ert/util/int_vector.hpp>
-#include <ert/util/util.hpp>
-#include <ert/util/type_macros.hpp>
 #include <ert/util/stringlist.hpp>
-#include <ert/res_util/arg_pack.hpp>
 #include <ert/util/vector.hpp>
 #include <ert/res_util/subst_list.hpp>
 
 #include <ert/config/config_parser.hpp>
 
 #include <ert/job_queue/workflow.hpp>
-#include <ert/job_queue/workflow_job.hpp>
-#include <ert/job_queue/workflow_joblist.hpp>
 
 #define CMD_TYPE_ID                66153
 #define WORKFLOW_TYPE_ID         6762081

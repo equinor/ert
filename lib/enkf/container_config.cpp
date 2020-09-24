@@ -19,10 +19,8 @@
 #include <stdlib.h>
 
 #include <ert/util/vector.hpp>
-#include <ert/util/util.h>
 
 #include <ert/enkf/container_config.hpp>
-#include <ert/enkf/enkf_macros.hpp>
 
 #define CONTAINER_CONFIG_TYPE_ID 51330852
 

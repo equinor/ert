@@ -17,29 +17,19 @@
 */
 
 #include <stdlib.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
 #include <dirent.h>
 
 #include <set>
 #include <string>
 
 #include <ert/util/hash.h>
-#include <ert/util/ecl_version.h>
-#include <ert/util/stringlist.h>
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
 #include <ert/res_util/subst_list.hpp>
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_error.hpp>
-#include <ert/config/config_schema_item.hpp>
 
 #include <ert/job_queue/workflow.hpp>
-#include <ert/job_queue/workflow_job.hpp>
-#include <ert/job_queue/workflow_joblist.hpp>
 
 #include <ert/res_util/res_log.hpp>
 

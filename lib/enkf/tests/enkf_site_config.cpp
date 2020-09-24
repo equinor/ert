@@ -16,28 +16,10 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
-#include <ert/util/test_util.h>
 #include <ert/util/util.h>
-#include <ert/res_util/arg_pack.hpp>
-#include <ert/util/test_work_area.hpp>
-
-#include <ert/config/config_parser.hpp>
-#include <ert/config/config_content.hpp>
-
-#include <ert/ecl/ecl_sum.h>
 
 #include <ert/enkf/site_config.hpp>
-
-
-#include <ert/enkf/site_config.hpp>
-
-
 
 
 #define INCLUDE_KEY "INCLUDE"

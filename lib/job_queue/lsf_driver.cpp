@@ -30,8 +30,6 @@
 
 #include <ert/util/util.hpp>
 #include <ert/util/hash.hpp>
-#include <ert/util/stringlist.hpp>
-#include <ert/res_util/log.hpp>
 #include <ert/res_util/res_log.hpp>
 #include <ert/res_util/res_env.hpp>
 

@@ -18,17 +18,12 @@
 
 #include <cmath>
 #include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdbool.h>
 #include <random>
 #include <ert/util/util.h>
 #include <ert/util/rng.h>
 #include <ert/ecl/ecl_util.h>
 
-#include <ert/res_util/util_printf.hpp>
 #include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/enkf_defaults.hpp>
 
 class generator {
   rng_type *rng;

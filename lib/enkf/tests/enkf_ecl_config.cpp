@@ -16,14 +16,10 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <unistd.h>
 
 #include <ert/util/test_util.h>
 
 #include <ert/enkf/ecl_config.hpp>
-#include <ert/enkf/ecl_refcase_list.hpp>
 
 int main(int argc , char ** argv) {
   ecl_config_type * ecl_config = ecl_config_alloc(NULL);

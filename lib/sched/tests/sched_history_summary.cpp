@@ -16,8 +16,6 @@
    for more details.
 */
 
-#include <stdbool.h>
-
 #include <ert/util/test_util.hpp>
 
 #include <ert/ecl/ecl_sum.h>

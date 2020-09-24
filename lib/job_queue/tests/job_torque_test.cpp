@@ -17,12 +17,10 @@
  */
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
 
 #include <ert/util/test_work_area.hpp>
 #include <ert/util/test_util.hpp>
 #include <ert/job_queue/torque_driver.hpp>
-#include <ert/util/util.hpp>
 
 void test_option(torque_driver_type * driver, const char * option, const char * value) {
   test_assert_true(torque_driver_set_option(driver, option, value));

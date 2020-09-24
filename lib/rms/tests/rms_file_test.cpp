@@ -16,12 +16,8 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <unistd.h>
 
 #include <ert/util/test_util.hpp>
-#include <ert/util/util.hpp>
 
 #include <ert/rms/rms_util.hpp>
 #include <ert/rms/rms_file.hpp>

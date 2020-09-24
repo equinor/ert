@@ -16,12 +16,10 @@
    for more details.
 */
 #include <unistd.h>
-#include <sys/types.h>
 #include <time.h>
 
 #include <ert/util/type_macros.h>
 #include <ert/util/vector.h>
-#include <ert/util/int_vector.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/type_vector_functions.h>
 

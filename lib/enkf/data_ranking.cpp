@@ -19,20 +19,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <cmath>
-#include <stdbool.h>
 
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
-#include <ert/util/vector.h>
 #include <ert/util/double_vector.h>
-#include <ert/util/buffer.h>
-#include <ert/util/type_macros.h>
-#include <ert/util/perm_vector.h>
 
 #include <ert/enkf/enkf_obs.hpp>
-#include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/ranking_common.hpp>
 #include <ert/enkf/data_ranking.hpp>
 
 

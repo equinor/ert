@@ -16,17 +16,9 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <unistd.h>
 
 #include <ert/util/test_util.h>
-#include <ert/util/test_work_area.h>
 #include <ert/enkf/ert_test_context.hpp>
-
-#include <ert/util/util.h>
-#include <ert/util/string_util.h>
-
 
 
 void test_export_field(ert_test_context_type * test_context , const char * job_name , const char * job_file) {

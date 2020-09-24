@@ -22,7 +22,6 @@
 #include <map>
 
 #include <ert/util/stringlist.h>
-#include <ert/util/double_vector.h>
 
 #include <ert/enkf/value_export.hpp>
 #include <iomanip>

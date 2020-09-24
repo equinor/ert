@@ -20,15 +20,12 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <pthread.h>
-#include <unistd.h>
 
 #include <string>
 
 #include <ert/util/util.hpp>
 #include <ert/res_util/arg_pack.hpp>
-#include <ert/util/type_macros.hpp>
 #include <ert/res_util/res_log.hpp>
 
 #include <ert/job_queue/job_node.hpp>

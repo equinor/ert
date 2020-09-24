@@ -19,7 +19,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <unistd.h>
 
 #include <ert/util/util.hpp>
@@ -30,9 +29,6 @@
 #include <ert/job_queue/ext_job.hpp>
 #include <ert/job_queue/ext_joblist.hpp>
 #include <ert/job_queue/forward_model.hpp>
-#include <ert/job_queue/job_status.hpp>
-
-#include <ert/util/ecl_version.hpp>
 
 
 /**

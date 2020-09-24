@@ -18,11 +18,9 @@
 
 #include <cmath>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <pthread.h>
 
 #include <ert/job_queue/job_queue_status.hpp>
-#include <ert/job_queue/queue_driver.hpp>
 #include <ert/util/test_util.hpp>
 
 

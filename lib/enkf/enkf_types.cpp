@@ -17,8 +17,6 @@
 */
 
 #include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 
 #include <ert/util/util.h>
 

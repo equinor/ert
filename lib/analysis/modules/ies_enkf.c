@@ -22,10 +22,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <time.h>
-
 #include <ert/util/util.hpp>
-#include <ert/util/type_macros.hpp>
 #include <ert/util/rng.hpp>
 #include <ert/util/bool_vector.hpp>
 
@@ -36,14 +33,9 @@
 #include <ert/analysis/analysis_module.hpp>
 #include <ert/analysis/analysis_table.hpp>
 #include <ert/analysis/enkf_linalg.hpp>
-#include <ert/analysis/std_enkf.hpp>
 
 #include "ies_enkf_config.h"
 #include "ies_enkf_data.h"
-
-#include <stdbool.h>
-#include <ert/util/double_vector.hpp>
-#include <ert/res_util/matrix_lapack.hpp>
 
 
 #ifdef __cplusplus

@@ -26,21 +26,12 @@
 
 #include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_kw.h>
-#include <ert/ecl/ecl_file.h>
-#include <ert/ecl/ecl_util.h>
 #include <ert/ecl/ecl_endian_flip.h>
-#include <ert/ecl/ecl_type.h>
 
 #include <ert/rms/rms_file.hpp>
-#include <ert/rms/rms_tagkey.hpp>
-#include <ert/rms/rms_type.hpp>
 #include <ert/rms/rms_util.hpp>
 
 #include <ert/enkf/field.hpp>
-#include <ert/enkf/field_config.hpp>
-#include <ert/enkf/enkf_serialize.hpp>
-#include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/forward_load_context.hpp>
 
 
 GET_DATA_SIZE_HEADER(field);

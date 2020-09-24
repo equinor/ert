@@ -16,15 +16,8 @@
    for more details.
 */
 
-#include <stdbool.h>
 #include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <cmath>
 
-#include <ert/util/util.hpp>
-
-#include <ert/res_util/thread_pool.hpp>
 #include <ert/res_util/matrix.hpp>
 #include <ert/res_util/matrix_blas.hpp>
 #include <ert/res_util/matrix_lapack.hpp>

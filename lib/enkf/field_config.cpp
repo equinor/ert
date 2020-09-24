@@ -18,25 +18,17 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <cmath>
 
 #include <ert/util/util.h>
 #include <ert/util/string_util.h>
 
 #include <ert/ecl/ecl_grid.h>
-#include <ert/ecl/ecl_kw.h>
-#include <ert/ecl/ecl_util.h>
 #include <ert/ecl/ecl_endian_flip.h>
-#include <ert/ecl/ecl_type.h>
 
 #include <ert/rms/rms_file.hpp>
-#include <ert/rms/rms_util.hpp>
 
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/field_config.hpp>
-#include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/field_trans.hpp>
-#include <ert/enkf/field_common.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 

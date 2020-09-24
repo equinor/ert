@@ -16,17 +16,13 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
 #include <stdio.h>
-#include <unistd.h>
 
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
 #include <ert/util/util.h>
-#include <ert/util/rng.h>
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_content.hpp>
 
 #include <ert/enkf/analysis_config.hpp>
 #include <ert/enkf/config_keys.hpp>

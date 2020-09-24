@@ -17,8 +17,6 @@
 */
 
 #include <stdlib.h>
-#include <assert.h>
-#include <string.h>
 
 #include <ert/util/util.hpp>
 

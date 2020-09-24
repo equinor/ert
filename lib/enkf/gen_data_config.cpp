@@ -24,21 +24,15 @@
 #include <ert/util/util.h>
 #include <ert/util/int_vector.h>
 #include <ert/util/bool_vector.h>
-#include <ert/util/string_util.h>
-#include <ert/util/type_macros.h>
 #include <ert/res_util/res_log.hpp>
 
-#include <ert/config/config_parser.hpp>
 #include <ert/ecl/ecl_util.h>
 
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/gen_data_config.hpp>
-#include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/gen_data_common.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/forward_load_context.hpp>
 
 /**
    About deactivating by the forward model

@@ -19,31 +19,21 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdbool.h>
 #include <cmath>
 
 #include <ert/util/util.h>
 #include <ert/res_util/matrix.hpp>
-#include <ert/util/bool_vector.h>
-#include <ert/util/rng.h>
 
-#include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_sum.h>
-#include <ert/ecl/ecl_file.h>
-#include <ert/ecl/ecl_util.h>
 
 #include <ert/res_util/res_log.hpp>
 
 #include <ert/enkf/enkf_serialize.hpp>
-#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/gen_data.hpp>
-#include <ert/enkf/gen_data_common.hpp>
 #include <ert/enkf/gen_common.hpp>
-#include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/forward_load_context.hpp>
 
 
 /**

@@ -20,18 +20,11 @@
 
 #include <ert/util/util.h>
 #include <ert/res_util/matrix.hpp>
-#include <ert/res_util/matrix_lapack.hpp>
-#include <ert/res_util/matrix_blas.hpp>
-#include <ert/util/timer.h>
-#include <ert/util/rng.h>
 
 #include <ert/analysis/analysis_module.hpp>
-#include <ert/analysis/enkf_linalg.hpp>
 
 #include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/analysis_config.hpp>
-#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
 
 

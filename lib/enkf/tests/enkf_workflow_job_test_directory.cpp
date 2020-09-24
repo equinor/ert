@@ -17,7 +17,6 @@
    for more details.
 */
 
-#include <ert/util/ecl_version.h>
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
 

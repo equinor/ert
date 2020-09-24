@@ -18,16 +18,12 @@
 
 
 #include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
 
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
 
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_main.hpp>
-#include <ert/enkf/enkf_plot_tvector.hpp>
-
 
 
 void test_load_GEN_KW( enkf_main_type * enkf_main , const char * key , const char * index_key) {

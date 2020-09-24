@@ -21,7 +21,6 @@
 #include <cmath>
 
 #include <ert/util/hash.h>
-#include <ert/util/util.h>
 #include <ert/util/vector.h>
 #include <ert/util/type_vector_functions.h>
 
@@ -33,19 +32,10 @@
 #include <ert/analysis/enkf_linalg.hpp>
 
 #include <ert/enkf/summary_obs.hpp>
-#include <ert/enkf/block_obs.hpp>
 #include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/time_map.hpp>
 #include <ert/enkf/obs_vector.hpp>
-#include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/local_config.hpp>
-#include <ert/enkf/meas_data.hpp>
-#include <ert/enkf/enkf_obs.hpp>
-#include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/config_keys.hpp>
-#include <ert/enkf/local_obsdata_node.hpp>
-#include <ert/enkf/local_obsdata.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
 
 /*

@@ -23,7 +23,6 @@
 #include <ert/res_util/subst_list.hpp>
 
 #include <ert/enkf/ert_run_context.hpp>
-#include <ert/enkf/run_arg.hpp>
 
 void test_create() {
   bool_vector_type * iactive = bool_vector_alloc(10,true);

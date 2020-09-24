@@ -16,14 +16,10 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <unistd.h>
 
 #include <ert/util/test_util.h>
 
 #include <ert/enkf/local_obsdata.hpp>
-#include <ert/enkf/local_obsdata_node.hpp>
 
 
 void test_wrapper() {

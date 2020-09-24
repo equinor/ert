@@ -26,19 +26,11 @@
 #include <ert/util/string_util.h>
 
 #include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/gen_obs.hpp>
-#include <ert/enkf/gen_data_config.hpp>
-#include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/gen_data.hpp>
-#include <ert/enkf/gen_obs.hpp>
 #include <ert/enkf/gen_common.hpp>
-#include <ert/enkf/active_list.hpp>
-
-#include <ert/ecl/ecl_type.h>
 
 
 /**

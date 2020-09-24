@@ -17,21 +17,17 @@
 */
 
 #include <stdlib.h>
-#include <stdbool.h>
 #include <stdio.h>
 
 #include <ert/util/util.h>
 #include <ert/util/buffer.h>
-#include <ert/util/timer.h>
 
 #include <ert/res_util/block_fs.hpp>
-#include <ert/res_util/path_fmt.hpp>
 #include <ert/res_util/thread_pool.hpp>
 
 #include <ert/enkf/fs_types.hpp>
 #include <ert/enkf/fs_driver.hpp>
 #include <ert/enkf/block_fs_driver.hpp>
-#include <ert/enkf/enkf_types.hpp>
 
 
 typedef struct bfs_struct bfs_type;

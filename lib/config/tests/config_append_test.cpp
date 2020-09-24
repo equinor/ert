@@ -16,14 +16,10 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
 
 #include <ert/util/test_util.hpp>
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_content.hpp>
-
-
 
 
 int main(int argc , char ** argv) {

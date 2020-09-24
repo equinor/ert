@@ -16,18 +16,12 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <unistd.h>
 
 #include <ert/util/test_work_area.hpp>
 #include <ert/util/test_util.h>
-#include <ert/util/util.h>
 #include <ert/util/bool_vector.h>
-#include <ert/res_util/arg_pack.hpp>
 
 #include <ert/enkf/state_map.hpp>
-#include <ert/enkf/enkf_types.hpp>
 
 
 void create_test() {

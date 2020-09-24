@@ -17,7 +17,6 @@
 */
 
 #include <stdlib.h>
-#include <string.h>
 
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
@@ -30,9 +29,6 @@
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/site_config.hpp>
 #include <ert/enkf/hook_manager.hpp>
-#include <ert/enkf/ert_workflow_list.hpp>
-#include <ert/enkf/runpath_list.hpp>
-#include <ert/enkf/model_config.hpp>
 
 struct hook_manager_struct {
   vector_type            * hook_workflow_list;  /* vector of hook_workflow_type instances */

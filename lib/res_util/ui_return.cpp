@@ -25,8 +25,6 @@
 #include <string.h>
 
 #include <ert/util/stringlist.hpp>
-#include <ert/util/type_macros.hpp>
-#include <ert/util/util.hpp>
 
 #include <ert/res_util/ui_return.hpp>
 

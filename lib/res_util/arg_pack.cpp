@@ -18,8 +18,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdbool.h>
 
 #include <ert/util/util.h>
 #include <ert/util/node_ctype.hpp>

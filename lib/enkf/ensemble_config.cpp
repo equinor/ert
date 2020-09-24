@@ -18,11 +18,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <stdio.h>
-#include <stdbool.h>
 #include <unistd.h>
-#include <time.h>
 #include <pthread.h>                /* must have rw locking on the config_nodes ... */
 
 #include <unordered_map>
@@ -31,41 +28,19 @@
 
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
-#include <ert/util/stringlist.h>
-#include <ert/util/type_macros.h>
 
 #include <ert/ecl/ecl_grid.h>
 
-#include <ert/job_queue/job_queue.hpp>
-#include <ert/job_queue/lsf_driver.hpp>
-#include <ert/job_queue/local_driver.hpp>
-#include <ert/job_queue/rsh_driver.hpp>
 #include <ert/job_queue/ext_joblist.hpp>
 
 #include <ert/config/config_parser.hpp>
 
 #include <ert/enkf/enkf_config_node.hpp>
-#include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/field_config.hpp>
-#include <ert/enkf/gen_data_config.hpp>
-#include <ert/enkf/surface_config.hpp>
-#include <ert/enkf/meas_data.hpp>
-#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
-#include <ert/enkf/summary.hpp>
-#include <ert/enkf/summary_config.hpp>
-#include <ert/enkf/gen_data.hpp>
-#include <ert/enkf/gen_kw_config.hpp>
-#include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/gen_data_config.hpp>
-#include <ert/enkf/field_trans.hpp>
 #include <ert/enkf/enkf_obs.hpp>
-#include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/summary_key_matcher.hpp>
-#include <ert/enkf/ensemble_config.hpp>
 
 
 #define ENSEMBLE_CONFIG_TYPE_ID 8825306

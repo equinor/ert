@@ -64,16 +64,12 @@ Matrices: S, D, E and various internal variables.
 #include <stdlib.h>
 #include <cmath>
 #include <stdio.h>
-#include <pthread.h>
 
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
 #include <ert/res_util/matrix.hpp>
-#include <ert/util/rng.h>
-#include <ert/util/bool_vector.h>
 
 #include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/enkf_util.hpp>
 
 #define OBS_BLOCK_TYPE_ID 995833

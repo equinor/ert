@@ -16,10 +16,8 @@
    for more details.
 */
 
-#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
 

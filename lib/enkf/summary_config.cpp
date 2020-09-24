@@ -17,8 +17,6 @@
 */
 
 #include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
 
 #include <string>
 #include <set>
@@ -26,12 +24,8 @@
 #include <ert/util/util.h>
 
 #include <ert/ecl/ecl_sum.h>
-#include <ert/ecl/ecl_smspec.h>
 
-#include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/summary_config.hpp>
-#include <ert/enkf/enkf_macros.hpp>
 
 
 #define SUMMARY_CONFIG_TYPE_ID 63106

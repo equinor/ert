@@ -23,7 +23,6 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <pthread.h>
-#include <errno.h>
 
 
 #include <ert/util/util.hpp>

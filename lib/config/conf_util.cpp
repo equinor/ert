@@ -19,7 +19,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdlib.h>
 
 #include <ert/util/util.hpp>
 #include <ert/util/parser.hpp>

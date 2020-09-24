@@ -21,22 +21,13 @@
 #include <ert/util/util.h>
 
 #include <ert/job_queue/job_queue.hpp>
-#include <ert/job_queue/job_node.hpp>
 #include <ert/job_queue/ext_job.hpp>
-#include <ert/job_queue/ext_joblist.hpp>
 #include <ert/job_queue/lsf_driver.hpp>
-#include <ert/job_queue/rsh_driver.hpp>
-#include <ert/job_queue/local_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
-#include <ert/job_queue/queue_driver.hpp>
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_content_item.hpp>
-#include <ert/config/config_content_node.hpp>
-#include <ert/config/config_schema_item.hpp>
 
 #include <ert/enkf/queue_config.hpp>
-#include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/site_config.hpp>
 #include <ert/enkf/model_config.hpp>

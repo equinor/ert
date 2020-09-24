@@ -17,12 +17,9 @@
 */
 
 #include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 
 #include <ert/util/util.hpp>
 #include <ert/res_util/matrix.hpp>
-#include <ert/res_util/matrix_blas.hpp>
 
 #include <ert/analysis/analysis_table.hpp>
 #include <ert/analysis/analysis_module.hpp>

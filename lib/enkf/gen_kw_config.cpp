@@ -24,9 +24,7 @@
 #include <ert/util/vector.h>
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_content.hpp>
 
-#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/gen_kw_common.hpp>

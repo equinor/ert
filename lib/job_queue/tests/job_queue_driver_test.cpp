@@ -16,13 +16,11 @@
    for more details.
  */
 #include <stdlib.h>
-#include <stdbool.h>
 
 #include <ert/util/util.hpp>
 #include <ert/util/test_util.hpp>
 
 #include <ert/job_queue/lsf_driver.hpp>
-#include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/job_queue.hpp>
 
 #include <ert/job_queue/torque_driver.hpp>

@@ -16,18 +16,12 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <unistd.h>
 
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
 #include <ert/util/util.h>
 
 #include <ert/enkf/enkf_main.hpp>
-#include <ert/enkf/model_config.hpp>
-
-
 
 
 void test_case_initialized(const char * config_path, const char * config_file) {

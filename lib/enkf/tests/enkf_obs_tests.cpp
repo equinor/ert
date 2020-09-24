@@ -22,9 +22,7 @@
 #include <ert/ecl/ecl_grid.h>
 
 #include <ert/enkf/enkf_obs.hpp>
-#include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/summary_obs.hpp>
-#include <ert/enkf/ensemble_config.hpp>
 
 
 int main(int argc, char ** argv) {

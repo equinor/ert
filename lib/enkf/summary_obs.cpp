@@ -20,18 +20,10 @@
    See the overview documentation of the observation system in enkf_obs.c
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <cmath>
-#include <string.h>
-#include <stdio.h>
 
 #include <ert/util/util.h>
 
 #include <ert/enkf/summary_obs.hpp>
-#include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/meas_data.hpp>
-#include <ert/enkf/summary.hpp>
-#include <ert/enkf/active_list.hpp>
 
 
 #define SUMMARY_OBS_TYPE_ID 66103

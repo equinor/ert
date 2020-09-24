@@ -22,11 +22,9 @@
 
 #include <ert/util/hash.hpp>
 #include <ert/util/vector.hpp>
-#include <ert/util/util.hpp>
 
 #include <ert/rms/rms_tag.hpp>
 #include <ert/rms/rms_util.hpp>
-#include <ert/rms/rms_tagkey.hpp>
 
 static const char * rms_eof_tag           = "eof";
 static const char * rms_starttag_string   = "tag";

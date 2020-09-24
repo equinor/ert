@@ -18,10 +18,6 @@
 
 #include <ert/config/config_content.hpp>
 
-#include <ert/util/rng.h>
-#include <ert/res_util/subst_func.hpp>
-#include <ert/res_util/subst_list.hpp>
-
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/subst_config.hpp>

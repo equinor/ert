@@ -17,26 +17,19 @@
 */
 
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
-#include <stdio.h>
 
 #include <set>
 #include <string>
 #include <vector>
 
 #include <ert/util/type_macros.hpp>
-#include <ert/util/util.hpp>
 #include <ert/util/parser.hpp>
 #include <ert/util/hash.hpp>
-#include <ert/util/stringlist.hpp>
-#include <ert/util/vector.hpp>
-#include <ert/res_util/subst_list.hpp>
 #include <ert/res_util/res_env.hpp>
 
 #include <ert/config/config_error.hpp>
 #include <ert/config/config_schema_item.hpp>
-#include <ert/config/config_path_elm.hpp>
 
 typedef struct validate_struct validate_type;
 

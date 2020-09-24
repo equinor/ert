@@ -19,14 +19,10 @@
 #include <string.h>
 
 #include <ert/util/type_macros.hpp>
-#include <ert/util/util.hpp>
 #include <ert/util/hash.hpp>
-#include <ert/util/stringlist.hpp>
 #include <ert/util/bool_vector.hpp>
 
 #include <ert/ecl/ecl_sum.h>
-#include <ert/ecl/ecl_util.h>
-#include <ert/ecl/ecl_smspec.h>
 
 #include <ert/sched/history.hpp>
 

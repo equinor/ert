@@ -19,20 +19,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdbool.h>
 
 #include <ert/util/hash.hpp>
 #include <ert/util/vector.hpp>
-#include <ert/util/util.hpp>
 
 #include <ert/rms/rms_type.hpp>
 #include <ert/rms/rms_util.hpp>
 #include <ert/rms/rms_tag.hpp>
 #include <ert/rms/rms_file.hpp>
-#include <ert/rms/rms_tagkey.hpp>
-
-#include <ert/ecl/ecl_kw.h>
-#include <ert/ecl/ecl_type.h>
 
 /*****************************************************************/
 static const char * rms_ascii_header      = "roff-asc";

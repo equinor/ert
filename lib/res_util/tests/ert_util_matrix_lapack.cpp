@@ -19,15 +19,10 @@
 
 
 #include <stdlib.h>
-#include <cmath>
 
 #include <ert/util/bool_vector.hpp>
 #include <ert/util/test_util.hpp>
-#include <ert/util/statistics.hpp>
-#include <ert/util/test_work_area.hpp>
 #include <ert/res_util/matrix.hpp>
-#include <ert/util/rng.hpp>
-#include <ert/util/mzran.hpp>
 #include <ert/res_util/matrix_lapack.hpp>
 
 

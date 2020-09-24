@@ -23,9 +23,6 @@
 
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ert_test_context.hpp>
-#include <ert/enkf/meas_data.hpp>
-#include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/summary_config.hpp>
 
 
 void testS( ert_test_context_type * test_context ) {

@@ -16,7 +16,6 @@
    for more details.
 */
 
-#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -24,10 +23,6 @@
 #include <ert/util/util.hpp>
 
 #include <ert/rms/rms_util.hpp>
-
-#include <ert/ecl/ecl_util.h>
-
-
 
 
 /*

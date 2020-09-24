@@ -16,23 +16,12 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
 #include <stdio.h>
-#include <unistd.h>
 
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
-#include <ert/util/util.h>
-#include <ert/util/vector.h>
-
-#include <ert/util/type_macros.h>
-#include <ert/ecl/ecl_endian_flip.h>
 
 #include <ert/res_util/util_printf.hpp>
-#include <ert/enkf/enkf_main.hpp>
-#include <ert/enkf/enkf_node.hpp>
-#include <ert/enkf/enkf_state.hpp>
-#include <ert/enkf/run_arg.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
 
 

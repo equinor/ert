@@ -19,7 +19,6 @@
 #include <cmath>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 
 #include <ert/util/util.h>
 #include <ert/util/stringlist.h>

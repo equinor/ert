@@ -19,11 +19,9 @@
 #include <stdlib.h>
 #include <cmath>
 #include <pthread.h>
-#include <stdbool.h>
 
 #include <ert/util/util.h>
 #include <ert/util/time_t_vector.h>
-#include <ert/util/type_macros.h>
 
 #include <ert/ecl/ecl_sum.h>
 

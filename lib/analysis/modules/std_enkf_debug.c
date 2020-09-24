@@ -18,17 +18,14 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include <ert/util/util.hpp>
 #include <ert/util/type_macros.hpp>
 #include <ert/res_util/matrix.hpp>
 #include <ert/res_util/matrix_blas.hpp>
-#include <ert/util/rng.hpp>
 
 #include <ert/analysis/analysis_module.hpp>
 #include <ert/analysis/analysis_table.hpp>
-#include <ert/analysis/enkf_linalg.hpp>
 #include <ert/analysis/std_enkf.hpp>
 
 #define PREFIX_KEY      "PREFIX"

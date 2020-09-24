@@ -17,11 +17,8 @@
 */
 
 #include <stdlib.h>
-#include <string.h>
 
 #include <ert/util/vector.hpp>
-#include <ert/util/util.hpp>
-#include <ert/util/type_macros.hpp>
 
 #include <ert/analysis/module_obs_block.hpp>
 #include <ert/analysis/module_obs_block_vector.hpp>

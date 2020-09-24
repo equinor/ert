@@ -18,12 +18,11 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <pthread.h>
 #include <assert.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <sys/mman.h>
 
 

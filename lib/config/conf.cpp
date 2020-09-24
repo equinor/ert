@@ -23,7 +23,6 @@
 #include <string.h>
 
 #include <ert/util/hash.hpp>
-#include <ert/util/util.hpp>
 #include <ert/util/vector.hpp>
 #include <ert/util/path_stack.hpp>
 

@@ -16,11 +16,6 @@
    for more details.
 */
 
-#include <string.h>
-#include <stdlib.h>
-
-#include <ert/util/util.h>
-
 #include <ert/enkf/fs_types.hpp>
 
 /*

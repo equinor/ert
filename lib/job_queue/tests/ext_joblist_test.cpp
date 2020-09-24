@@ -16,7 +16,6 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
 #include <ert/util/test_util.hpp>
 #include <ert/job_queue/ext_joblist.hpp>
 

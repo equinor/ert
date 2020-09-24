@@ -19,18 +19,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
 #include <ert/util/hash.h>
-#include <ert/util/util.h>
 
-#include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/local_config.hpp>
-#include <ert/enkf/local_ministep.hpp>
-#include <ert/enkf/local_dataset.hpp>
-#include <ert/enkf/local_obsdata.hpp>
-#include <ert/enkf/local_obsdata_node.hpp>
-#include <ert/enkf/obs_data.hpp>
 
 /**
    This file implements a 'ministep' configuration for active /

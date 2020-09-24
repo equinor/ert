@@ -17,9 +17,7 @@
 */
 
 
-#include <stdbool.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <ert/util/util.h>
 #include <ert/util/stringlist.h>

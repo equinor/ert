@@ -18,19 +18,13 @@
 
 #include <sys/types.h>
 #include <string.h>
-#include <errno.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <pthread.h>
-#include <dirent.h>
 #include <unistd.h>
 
 #include <ert/util/util.h>
 #include <ert/util/type_macros.h>
-#include <ert/res_util/arg_pack.hpp>
-#include <ert/util/stringlist.h>
-#include <ert/res_util/arg_pack.hpp>
 
 #include <ert/res_util/path_fmt.hpp>
 #include <ert/res_util/res_log.hpp>
@@ -38,14 +32,7 @@
 #include <ert/enkf/block_fs_driver.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/fs_driver.hpp>
-#include <ert/enkf/fs_types.hpp>
-#include <ert/enkf/gen_data.hpp>
-#include <ert/enkf/time_map.hpp>
-#include <ert/enkf/state_map.hpp>
-#include <ert/enkf/summary_key_set.hpp>
 #include <ert/enkf/misfit_ensemble.hpp>
-#include <ert/enkf/cases_config.hpp>
 
 /**
 

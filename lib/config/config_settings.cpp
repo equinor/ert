@@ -19,7 +19,6 @@
 #include <stdlib.h>
 
 #include <ert/util/type_macros.hpp>
-#include <ert/util/util.hpp>
 #include <ert/util/hash.hpp>
 
 #include <ert/config/config_schema_item.hpp>

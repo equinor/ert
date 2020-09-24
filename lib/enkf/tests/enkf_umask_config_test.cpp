@@ -16,17 +16,10 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <unistd.h>
 #include <string.h>
 
 #include <ert/enkf/ert_test_context.hpp>
 #include <ert/util/test_util.h>
-#include <ert/util/util.h>
-#include <ert/enkf/enkf_main.hpp>
-#include <ert/enkf/run_arg.hpp>
-
 
 
 int main(int argc , char ** argv) {

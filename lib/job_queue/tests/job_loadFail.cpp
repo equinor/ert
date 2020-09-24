@@ -16,7 +16,6 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
 
 #include <ert/config/config_parser.hpp>
 

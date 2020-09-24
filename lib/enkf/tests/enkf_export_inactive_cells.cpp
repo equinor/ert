@@ -16,26 +16,14 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
 #include <stdio.h>
-#include <unistd.h>
 
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
-#include <ert/util/util.h>
-#include <ert/res_util/subst_list.hpp>
-
-#include <ert/ecl/ecl_kw_magic.h>
-#include <ert/ecl/ecl_kw.h>
 
 #include <ert/rms/rms_util.hpp>
 
-#include <ert/enkf/enkf_main.hpp>
 #include <ert/enkf/field.hpp>
-#include <ert/enkf/enkf_config_node.hpp>
-#include <ert/enkf/run_arg.hpp>
-#include <ert/enkf/ert_run_context.hpp>
-
 
 
 void check_exported_data(const char * exported_file,

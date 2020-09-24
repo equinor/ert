@@ -17,14 +17,11 @@
 */
 
 
-#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #include <ert/util/stringlist.h>
 #include <ert/util/string_util.h>
-#include <ert/util/util.h>
-#include <ert/util/bool_vector.h>
 #include <ert/util/vector.h>
 
 #include <ert/ecl/ecl_grid.h>
@@ -35,16 +32,11 @@
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/field_config.hpp>
 #include <ert/enkf/ext_param_config.hpp>
-#include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
-#include <ert/enkf/summary_config.hpp>
 #include <ert/enkf/surface_config.hpp>
 #include <ert/enkf/container_config.hpp>
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/gen_obs.hpp>
-#include <ert/enkf/enkf_config_node.hpp>
-#include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/config_keys.hpp>
 

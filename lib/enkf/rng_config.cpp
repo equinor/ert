@@ -18,19 +18,14 @@
 
 #include <stdlib.h>
 
-#include <ert/util/mzran.h>
 #include <ert/util/util.h>
-#include <ert/util/test_util.h>
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_schema_item.hpp>
 
 #include <ert/res_util/res_log.hpp>
 
 #include <ert/enkf/rng_config.hpp>
-#include <ert/enkf/rng_manager.hpp>
 #include <ert/enkf/config_keys.hpp>
-#include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/model_config.hpp>
 
 

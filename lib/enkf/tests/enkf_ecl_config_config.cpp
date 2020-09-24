@@ -16,19 +16,13 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <unistd.h>
 
 #include <ert/util/test_util.h>
-#include <ert/util/path_stack.h>
 #include <ert/util/util.h>
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_content.hpp>
 
 #include <ert/enkf/ecl_config.hpp>
-#include <ert/enkf/ecl_refcase_list.hpp>
 
 int main(int argc , char ** argv) {
   util_install_signals();

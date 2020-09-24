@@ -20,8 +20,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "ert/util/build_config.h"
-
 #include <ert/util/util.hpp>
 #include <ert/res_util/res_env.hpp>
 #include <ert/util/buffer.hpp>

@@ -20,11 +20,9 @@
 #include <ert/util/type_macros.h>
 
 #include <ert/res_util/subst_list.hpp>
-#include <ert/res_util/path_fmt.hpp>
 
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/run_arg.hpp>
-#include <ert/enkf/enkf_fs.hpp>
 
 
 #define RUN_ARG_TYPE_ID 66143287

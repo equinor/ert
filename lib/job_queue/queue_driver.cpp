@@ -18,8 +18,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include <string.h>
 
 #include <ert/util/util.hpp>
 

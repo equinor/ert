@@ -19,12 +19,9 @@
 
 #include <ert/util/test_util.h>
 
-#include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_plot_gen_kw.hpp>
 #include <ert/enkf/ert_test_context.hpp>
-#include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
 
 

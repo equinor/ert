@@ -23,18 +23,6 @@
 
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/res_config.hpp>
-#include <ert/enkf/site_config.hpp>
-#include <ert/enkf/rng_config.hpp>
-#include <ert/enkf/analysis_config.hpp>
-#include <ert/enkf/ert_workflow_list.hpp>
-#include <ert/enkf/subst_config.hpp>
-#include <ert/enkf/hook_manager.hpp>
-#include <ert/enkf/ert_template.hpp>
-#include <ert/enkf/ecl_config.hpp>
-#include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/model_config.hpp>
-#include <ert/enkf/log_config.hpp>
-#include <ert/enkf/queue_config.hpp>
 
 struct res_config_struct {
 

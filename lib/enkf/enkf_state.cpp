@@ -18,59 +18,23 @@
 
 #include <sys/types.h>
 #include <string.h>
-#include <errno.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
-#include <pthread.h>
 
 #include <ert/util/hash.h>
-#include <ert/util/util.h>
 #include <ert/res_util/arg_pack.hpp>
-#include <ert/util/stringlist.h>
-#include <ert/util/node_ctype.h>
-#include <ert/util/timer.h>
-#include <ert/util/time_t_vector.h>
 #include <ert/util/rng.h>
 #include <ert/res_util/subst_list.hpp>
 
-#include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_kw.h>
-#include <ert/ecl/ecl_io_config.h>
-#include <ert/ecl/ecl_file.h>
-#include <ert/ecl/ecl_util.h>
 #include <ert/ecl/ecl_sum.h>
-#include <ert/ecl/ecl_endian_flip.h>
 
 #include <ert/job_queue/environment_varlist.hpp>
 #include <ert/job_queue/forward_model.hpp>
-#include <ert/job_queue/job_queue.hpp>
-#include <ert/job_queue/queue_driver.hpp>
-#include <ert/job_queue/ext_joblist.hpp>
 
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_state.hpp>
-#include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/field.hpp>
-#include <ert/enkf/field_config.hpp>
-#include <ert/enkf/gen_kw.hpp>
-#include <ert/enkf/summary.hpp>
 #include <ert/enkf/gen_data.hpp>
-#include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/model_config.hpp>
-#include <ert/enkf/site_config.hpp>
-#include <ert/enkf/ecl_config.hpp>
-#include <ert/enkf/ert_template.hpp>
-#include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/state_map.hpp>
 #include <ert/res_util/res_log.hpp>
-#include <ert/enkf/run_arg.hpp>
-#include <ert/enkf/summary_key_matcher.hpp>
-#include <ert/enkf/forward_load_context.hpp>
-#include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/callback_arg.hpp>
 
 #define  ENKF_STATE_TYPE_ID 78132

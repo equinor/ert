@@ -16,14 +16,11 @@
    for more details.
 */
 
-#include <ert/util/ert_api_config.hpp>
-
 #include <ctype.h>
 #include <sys/types.h>
 #include <regex.h>
 
 #include <ert/util/parser.hpp>
-#include <ert/util/stringlist.hpp>
 
 #include <ert/res_util/template_type.hpp>
 #include <ert/res_util/template.hpp>

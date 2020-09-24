@@ -16,14 +16,9 @@
    for more details.
 */
 
-#include <stdbool.h>
-#include <stdlib.h>
-
 #include <ert/util/util.h>
 
 #include <ert/enkf/enkf_serialize.hpp>
-#include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/active_list.hpp>
 
 /**
    This file handles serialization and deserialization of the

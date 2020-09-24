@@ -16,18 +16,14 @@
    for more details.
 */
 #include <time.h>
-#include <stdbool.h>
 
 #include <ert/util/double_vector.h>
-#include <ert/util/vector.h>
-#include <ert/util/type_macros.h>
 
 #include <ert/res_util/thread_pool.hpp>
 
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_plot_tvector.hpp>
 #include <ert/enkf/enkf_plot_data.hpp>
-#include <ert/enkf/state_map.hpp>
 
 
 #define ENKF_PLOT_DATA_TYPE_ID 3331063

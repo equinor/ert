@@ -3,8 +3,6 @@
 
 #include <ert/util/util.hpp>
 #include <ert/res_util/matrix.hpp>
-#include <ert/util/bool_vector.hpp>
-#include <ert/util/double_vector.hpp>
 
 #include <ert/res_util/regression.hpp>
 

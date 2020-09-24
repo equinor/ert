@@ -16,17 +16,11 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
 
 #include <ert/util/test_util.hpp>
-#include <ert/util/util.hpp>
 #include <ert/util/hash.hpp>
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_content_node.hpp>
-#include <ert/config/config_schema_item.hpp>
-#include <ert/config/config_path_elm.hpp>
 
 
 int main(int argc , char ** argv) {

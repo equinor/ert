@@ -17,15 +17,11 @@
  */
 
 #include <stdlib.h>
-#include <stdbool.h>
-#include <unistd.h>
 #include <string.h>
 
-#include <assert.h>
 #include <ert/util/util.hpp>
 
 #include <ert/job_queue/lsf_driver.hpp>
-#include <ert/job_queue/lsf_job_stat.hpp>
 
 static char * add_excluded(lsf_driver_type * driver) {
   const char * node1 = "enern";

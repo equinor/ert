@@ -16,17 +16,13 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
 #include <stdio.h>
-#include <unistd.h>
 
 #include <ert/util/test_util.hpp>
 #include <ert/util/util.hpp>
 #include <ert/util/path_stack.hpp>
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_schema_item.hpp>
-#include <ert/config/config_content.hpp>
 
 void parse_test(config_parser_type * config ,
                 const char * root_path ,     // The new working directory - the test will start by chdir() here.

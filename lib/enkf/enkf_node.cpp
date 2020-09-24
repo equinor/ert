@@ -17,7 +17,6 @@
 */
 
 #include <string.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -25,14 +24,8 @@
 #include <ert/util/buffer.h>
 #include <ert/util/rng.h>
 #include <ert/util/vector.h>
-#include <ert/util/type_macros.h>
-
-#include <ert/res_util/path_fmt.hpp>
 
 #include <ert/enkf/enkf_node.hpp>
-#include <ert/enkf/enkf_config_node.hpp>
-#include <ert/enkf/container_config.hpp>
-#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/field.hpp>
 #include <ert/enkf/surface.hpp>
 #include <ert/enkf/summary.hpp>
@@ -40,8 +33,6 @@
 #include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/ext_param.hpp>
 #include <ert/enkf/container.hpp>
-#include <ert/enkf/enkf_serialize.hpp>
-#include <ert/enkf/value_export.hpp>
 
 /**
    A small illustration (says more than thousand words ...) of how the

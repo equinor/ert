@@ -18,7 +18,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include <ert/util/util.hpp>
 #include <ert/res_util/matrix.hpp>

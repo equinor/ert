@@ -18,13 +18,10 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
 #include <string.h>
 #include <pthread.h>
 
 #include <ert/util/vector.h>
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
 
 #include <ert/enkf/runpath_list.hpp>
 

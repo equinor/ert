@@ -16,8 +16,6 @@
    for more details.
 */
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
 #include <unistd.h>
 
 #include <ert/util/test_work_area.h>
@@ -25,7 +23,6 @@
 #include <ert/util/util.h>
 #include <ert/res_util/arg_pack.hpp>
 #include <ert/util/vector.h>
-#include <ert/util/test_work_area.h>
 
 #include <ert/ecl/ecl_sum.h>
 

@@ -23,7 +23,6 @@
 #include <ert/util/util.hpp>
 #include <ert/util/hash.hpp>
 #include <ert/util/vector.hpp>
-#include <ert/util/node_data.hpp>
 #include <ert/util/buffer.hpp>
 #include <ert/util/parser.hpp>
 

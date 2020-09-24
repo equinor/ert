@@ -17,33 +17,24 @@
  */
 
 #include <time.h>
-#include <stdbool.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <unordered_map>
 
 #include <ert/util/util.h>
 #include <ert/util/parser.h>
 #include <ert/res_util/ui_return.hpp>
-#include <ert/res_util/path_fmt.hpp>
 
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_content.hpp>
-#include <ert/config/config_schema_item.hpp>
 
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_io_config.h>
-#include <ert/ecl/ecl_util.h>
 
-#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/config_keys.hpp>
-#include <ert/enkf/ecl_refcase_list.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/model_config.hpp>
 
 /**
  This file implements a struct which holds configuration information

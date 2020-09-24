@@ -18,13 +18,6 @@
 
 #include <ert/util/test_util.h>
 
-#include <ert/ecl/ecl_grid.h>
-
-#include <ert/enkf/field_config.hpp>
-#include <ert/enkf/enkf_config_node.hpp>
-
-
-
 
 int main(int argc , char ** argv)  {
   exit(0);

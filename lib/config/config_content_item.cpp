@@ -16,18 +16,12 @@
    for more details.
 */
 
-#include <stdbool.h>
-
 #include <ert/util/vector.hpp>
-#include <ert/util/type_macros.hpp>
-#include <ert/util/util.hpp>
 #include <ert/util/stringlist.hpp>
 
 #include <ert/config/config_schema_item.hpp>
 #include <ert/config/config_content_node.hpp>
 #include <ert/config/config_content_item.hpp>
-#include <ert/config/config_error.hpp>
-#include <ert/config/config_path_elm.hpp>
 
 
 #define CONFIG_CONTENT_ITEM_ID 8876752

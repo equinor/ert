@@ -16,12 +16,9 @@
   for more details.
 */
 
-#include <pthread.h>
-
 #include <ert/util/util.hpp>
 
 #include <ert/res_util/res_portability.hpp>
-#include "ert/util/build_config.h"
 
 void res_yield() {
 #ifdef HAVE_YIELD_NP

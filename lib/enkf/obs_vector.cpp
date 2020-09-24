@@ -22,7 +22,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 #include <time.h>
 #include <cmath>
 
@@ -35,20 +34,13 @@
 
 #include <ert/config/conf.hpp>
 
-#include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_grid.h>
-#include <ert/ecl/smspec_node.h>
 
 #include <ert/enkf/obs_vector.hpp>
-#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/summary_obs.hpp>
 #include <ert/enkf/block_obs.hpp>
 #include <ert/enkf/gen_obs.hpp>
-#include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/active_list.hpp>
-#include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/local_obsdata_node.hpp>
 
 #define OBS_VECTOR_TYPE_ID 120086
 

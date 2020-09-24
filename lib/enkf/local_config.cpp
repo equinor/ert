@@ -18,28 +18,13 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 
 #include <ert/util/vector.h>
-#include <ert/util/util.h>
-#include <ert/util/int_vector.h>
-
-#include <ert/geometry/geo_polygon.h>
-#include <ert/geometry/geo_region.h>
-
-#include <ert/ecl/ecl_grid.h>
-#include <ert/ecl/ecl_region.h>
 
 
 #include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/local_updatestep.hpp>
 #include <ert/enkf/local_config.hpp>
-#include <ert/enkf/local_dataset.hpp>
-#include <ert/enkf/local_obsdata.hpp>
-#include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/enkf_obs.hpp>
-#include <ert/enkf/config_keys.hpp>
-#include <ert/enkf/enkf_defaults.hpp>
 
 /******************************************************************/
 

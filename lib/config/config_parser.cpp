@@ -17,29 +17,18 @@
 */
 
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
-#include <unistd.h>
 
 #include <ert/util/type_macros.hpp>
-#include <ert/util/util.hpp>
 #include <ert/util/parser.hpp>
 #include <ert/util/hash.hpp>
-#include <ert/util/stringlist.hpp>
-#include <ert/util/vector.hpp>
 #include <ert/util/path_stack.hpp>
 #include <ert/res_util/subst_list.hpp>
 #include <ert/res_util/res_env.hpp>
 #include <ert/res_util/res_log.hpp>
 
 #include <ert/config/config_parser.hpp>
-#include <ert/config/config_error.hpp>
-#include <ert/config/config_schema_item.hpp>
-#include <ert/config/config_content_node.hpp>
-#include <ert/config/config_content_item.hpp>
-#include <ert/config/config_path_elm.hpp>
-#include <ert/config/config_root_path.hpp>
 
 #define  CLEAR_STRING "__RESET__"
 
@@ -137,20 +126,9 @@ struct config_parser_struct {
   hash_type             * messages;                  /* Can print a (warning) message when a keyword is encountered. */
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+int config_get_schema_size( const config_parser_type * config ) {
+    return hash_get_size( config->schema_items );
+}
 
 
 
@@ -750,8 +728,5 @@ void config_parser_deprecate(config_parser_type * config , const char * kw, cons
   } else
     util_abort("%s: item:%s not recognized \n",__func__ , kw);
 }
-
-
-#include "config_get.cpp"
 
 

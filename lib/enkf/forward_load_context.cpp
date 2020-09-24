@@ -22,7 +22,6 @@
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/forward_load_context.hpp>
 #include <ert/enkf/run_arg.hpp>
-#include <ert/enkf/ecl_config.hpp>
 
 
 #define FORWARD_LOAD_CONTEXT_TYPE_ID 644239127

@@ -20,13 +20,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <dlfcn.h>
 #include <unistd.h>
 #include <pwd.h>
-#include <sys/types.h>
 
 #include <stdexcept>
-#include <cstddef>
 #include <ctime>
 #include <cmath>
 #include <set>
@@ -38,9 +35,7 @@
 
 #include <ert/util/util.hpp>
 #include <ert/util/stringlist.hpp>
-#include <ert/res_util/log.hpp>
 #include <ert/res_util/res_log.hpp>
-#include <ert/res_util/res_env.hpp>
 
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>

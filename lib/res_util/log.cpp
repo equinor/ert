@@ -19,13 +19,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
 #include <time.h>
-#include <sys/stat.h>
-#include <stdarg.h>
 #include <sys/types.h>
-#include <fcntl.h>
-#include <errno.h>
 
 #include "ert/util/build_config.h"
 

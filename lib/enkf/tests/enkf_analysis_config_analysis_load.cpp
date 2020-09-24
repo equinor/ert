@@ -17,16 +17,8 @@
 */
 
 
-#include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <unistd.h>
-
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
-
-#include <ert/enkf/site_config.hpp>
-#include <ert/enkf/analysis_config.hpp>
 
 int main(int argc , const char ** argv)  {
   util_install_signals();
