@@ -24,15 +24,15 @@ class EnsembleEvaluator:
         self._queues = {}
         self._events = []
 
-        self._app = flask.Flask("ert ee")
-        self._app.add_url_rule("/ping", "ping", self._ping)
-        self._app.add_url_rule("/await_event/<ident>", "await_event", self._await_event)
-        self._app.add_url_rule("/stop", "stop", self._stop, methods=["POST"])
+        # self._app = flask.Flask("ert ee")
+        # self._app.add_url_rule("/ping", "ping", self._ping)
+        # self._app.add_url_rule("/await_event/<ident>", "await_event", self._await_event)
+        # self._app.add_url_rule("/stop", "stop", self._stop, methods=["POST"])
 
-        self._api_thread = threading.Thread(
-            name="ert_ee_api",
-            target=self._app.run,
-        )
+        # self._api_thread = threading.Thread(
+        #     name="ert_ee_api",
+        #     target=self._app.run,
+        # )
         self._ee_thread = threading.Thread(
             name="ert_ee",
             target=self._evaluate,
@@ -46,18 +46,39 @@ class EnsembleEvaluator:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-        async def hello(websocket, path):
-            name = await websocket.recv()
-            print(f"< {name}")
+        USERS = set()
 
-            greeting = f"Hello {name}!"
+        async def worker(queue):
+            i = 0
+            while True:
+                if USERS:
+                    message = "work done {}".format(i)
+                    await asyncio.wait([user.send(message) for user in USERS])
+                i += 1
+                await asyncio.sleep(1)
 
-            await websocket.send(greeting)
-            print(f"> {greeting}")
+        async def client_handler(websocket, path):
+            # websocket.send(snapshot)
+            # foo = await queue.get()
+            # await websocket.send(str(foor))
+            # print(f"> {i}")
+            # i += 1
+            USERS.add(websocket)
+            try:
+                async for message in websocket:
+                    data = json.loads(message)
+                    print(data)
+                    if data["action"] == "kill":
+                        pass # Do something
+            finally:
+                USERS.remove(websocket)
 
-        start_server = websockets.serve(hello, "localhost", 8765)
+        start_server = websockets.serve(client_handler, "localhost", 8765)
 
-        loop.run_until_complete(start_server)
+        loop.create_task(start_server)
+        loop.create_task(worker())
+        # asyncio.gather(start_server, worker(), )
+        # await asyncio.wait(start_server, worker(), return_when=asyncio.FIRST_COMPLETED)
         loop.run_forever()
 
     def _evaluate(self):
@@ -72,13 +93,13 @@ class EnsembleEvaluator:
         self._put_event(create_event(i, 0, 0, None, "terminated"))
 
     def run(self):
-        self._api_thread.start()
+        # self._api_thread.start()
         self._ee_thread.start()
         self._ws_thread.start()
         return create_monitor(self._url)
 
-    def _ping(self):
-        return "pong"
+    # def _ping(self):
+    #     return "pong"
 
     def stop(self):
         requests.post("{}/stop".format(self._url))
