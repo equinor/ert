@@ -1,66 +1,75 @@
 import time
-import requests
-
-
-class _Event:
-    def __init__(self, event_index, iteration, index, job=None, status=None):
-        self._iter = iteration
-        self._index = index
-        self._job = job
-        self._status = status
-        self._event_index = event_index
-
-    def is_terminated(self):
-        return self._status == "terminated"
-
-    def is_done(self):
-        return self._status == "done"
-
-    def is_running(self):
-        return not (self.is_terminated() or self.is_done())
-
-    def to_dict(self):
-        return {
-            "iter": self._iter,
-            "index": self._index,
-            "status": self._status,
-            "event_index": self._event_index,
-        }
-
-    @classmethod
-    def from_dict(cls, data):
-        event_index = data["event_index"]
-        iteration = data["iter"]
-        index = data["index"]
-        job = data.get("job")
-        status = data.get("status")
-        return cls(event_index, iteration, index, job, status)
-
-
-def create_event(event_index, iteration, index, job=None, status=None):
-    return _Event(event_index, iteration, index, job, status)
-
-
-def create_event_from_dict(data):
-    return _Event.from_dict(data)
+import json
+import asyncio
+import websockets
+import ert_shared.ensemble_evaluator.entity as ee_entity
 
 
 class _Monitor:
-    def __init__(self, url, loop):
-        self._url = url
+    def __init__(self, host, port):
+        self._host = host
+        self._port = port
+        self._bus = asyncio.Queue()
 
     def track(self):
-        time.sleep(1)  # XXX: fix
-        while True:
-            # we add owl to fake a unique session
-            event_dict = requests.get("{}/{}/owl".format(self._url, "await_event")).json()
-            event = _Event.from_dict(event_dict)
+        loop = asyncio.get_event_loop()
+        queue = asyncio.Queue()
 
-            yield event
-            if not event.is_running():
-                print("monitor ending tracking")
+        async def hello():
+            print("starting monitor hello")
+            uri = f"ws://{self._host}:{self._port}"
+            async with websockets.connect(uri) as websocket:
+                async for message in websocket:
+                    try:
+                        # await websocket.send("Hello world!")
+                        # print(f"got message {message}")
+                        event_json = json.loads(message)
+                        event = ee_entity.create_evaluator_event_from_dict(event_json)
+                        # f"Would yield event {event}"
+                        await queue.put(event)
+                        if event.is_done():
+                            print("hello exiting return")
+                            return
+                    except Exception as e:
+                        import traceback
+                        print(e, traceback.format_exc())
+
+        retries = 0
+        while retries < 3:
+            try:
+                hello_future = loop.create_task(hello())
+                while True:
+                    get_future = loop.create_task(queue.get())
+                    done, pending = loop.run_until_complete(asyncio.wait((hello_future, get_future), return_when=asyncio.FIRST_COMPLETED))
+                    if hello_future in done:
+                        if hello_future.exception():
+                            raise hello_future.exception()
+                        print("monitor client exited", hello_future)
+                    # event = asyncio.run_coroutine_threadsafe(queue.get(), loop).result()
+                        # if the client exits (e.g. if evaluator exits early), we
+                        # must manually drain the queue IF the get_future is still pending
+                        if get_future in done:
+                            yield get_future.result()
+                        break
+
+                    event = get_future.result()
+                    print("sync world got", event)
+                    yield event
+                    if event.is_done():
+                        break
+                    # if event.is_done():
+                    #     print("monitor saw done, exiting")
+                    #     return
+                    # yield event
+                while not queue.empty():
+                    yield loop.run_until_complete(queue.get())
+                
                 return
+            except ConnectionRefusedError as e:
+                print(f"Attempt {retries}: {e}")
+                retries += 1
+                time.sleep(1)
 
 
-def create_monitor(url):
-    return _Monitor(url)
+def create(host, port):
+    return _Monitor(host, port)
