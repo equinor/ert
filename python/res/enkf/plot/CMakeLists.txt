@@ -8,7 +8,6 @@ set(PYTHON_SOURCES
     ensemble_gen_kw_fetcher.py
     observation_data_fetcher.py
     observation_gen_data_fetcher.py
-    pca_fetcher.py
     refcase_data_fetcher.py
 )
 

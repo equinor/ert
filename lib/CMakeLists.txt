@@ -180,8 +180,6 @@ add_library(res res_util/res_log.cpp
                 enkf/model_config.cpp
                 enkf/obs_data.cpp
                 enkf/obs_vector.cpp
-                enkf/pca_plot_data.cpp
-                enkf/pca_plot_vector.cpp
                 enkf/queue_config.cpp
                 enkf/ranking_table.cpp
                 enkf/rng_config.cpp
@@ -619,7 +617,6 @@ foreach (test   enkf_active_list
                 enkf_obs_invalid_path
                 enkf_obs_tests
                 enkf_obs_vector
-                enkf_pca_plot
                 enkf_plot_data
                 enkf_plot_gendata
                 enkf_plot_gen_kw

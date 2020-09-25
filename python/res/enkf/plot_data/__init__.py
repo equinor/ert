@@ -7,6 +7,4 @@ from .ensemble_plot_gen_data_vector import EnsemblePlotGenDataVector
 from .ensemble_plot_gen_data import EnsemblePlotGenData
 from .ensemble_plot_gen_kw_vector import EnsemblePlotGenKWVector
 from .ensemble_plot_gen_kw import EnsemblePlotGenKW
-from .pca_plot_vector import PcaPlotVector
-from .pca_plot_data import PcaPlotData
 

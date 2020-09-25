@@ -102,7 +102,6 @@
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/runpath_list.hpp>
-#include <ert/enkf/pca_plot_data.hpp>
 #include <ert/enkf/analysis_config.hpp>
 #include <ert/enkf/analysis_iter_config.hpp>
 #include <ert/enkf/field.hpp>

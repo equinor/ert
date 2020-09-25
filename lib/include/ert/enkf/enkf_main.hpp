@@ -55,7 +55,6 @@
 #include <ert/enkf/hook_manager.hpp>
 #include <ert/enkf/rng_config.hpp>
 #include <ert/enkf/rng_manager.hpp>
-#include <ert/enkf/pca_plot_data.hpp>
 #include <ert/enkf/field_config.hpp>
 #include <ert/enkf/ert_run_context.hpp>
 

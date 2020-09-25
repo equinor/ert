@@ -7,4 +7,3 @@ from .block_observation_data_fetcher import BlockObservationDataFetcher
 from .ensemble_gen_kw_fetcher import EnsembleGenKWFetcher
 from .ensemble_gen_data_fetcher import EnsembleGenDataFetcher
 from .observation_gen_data_fetcher import ObservationGenDataFetcher
-from .pca_fetcher import PcaDataFetcher
