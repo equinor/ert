@@ -60,7 +60,6 @@
 #include <ert/job_queue/queue_driver.hpp>
 
 #include <ert/sched/history.hpp>
-#include <ert/sched/sched_file.hpp>
 
 #include <ert/analysis/analysis_module.hpp>
 #include <ert/analysis/analysis_table.hpp>

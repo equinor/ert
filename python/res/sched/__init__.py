@@ -20,6 +20,5 @@ import ecl.util.geometry
 
 from cwrap import Prototype
 
-from .sched_file import SchedFile
 from .history_source_enum import HistorySourceEnum
 from .history import History

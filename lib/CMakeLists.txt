@@ -51,29 +51,7 @@ add_library(res res_util/res_log.cpp
                 rms/rms_type.cpp
                 rms/rms_util.cpp
 
-                sched/group_history.cpp
-                sched/group_index.cpp
-                sched/gruptree.cpp
                 sched/history.cpp
-                sched/sched_file.cpp
-                sched/sched_kw.cpp
-                sched/sched_kw_compdat.cpp
-                sched/sched_kw_dates.cpp
-                sched/sched_kw_gruptree.cpp
-                sched/sched_kw_include.cpp
-                sched/sched_kw_tstep.cpp
-                sched/sched_kw_untyped.cpp
-                sched/sched_kw_wconhist.cpp
-                sched/sched_kw_wconinj.cpp
-                sched/sched_kw_wconinje.cpp
-                sched/sched_kw_wconinjh.cpp
-                sched/sched_kw_wconprod.cpp
-                sched/sched_kw_welspecs.cpp
-                sched/sched_time.cpp
-                sched/sched_types.cpp
-                sched/sched_util.cpp
-                sched/well_history.cpp
-                sched/well_index.cpp
 
                 analysis/analysis_module.cpp
                 analysis/bootstrap_enkf.cpp

@@ -29,8 +29,6 @@
 
 #include <ert/ecl/ecl_sum.h>
 
-#include <ert/sched/sched_file.hpp>
-
 
 #ifdef __cplusplus
 extern "C" {

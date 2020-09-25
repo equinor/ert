@@ -30,8 +30,6 @@
 #include <ert/res_util/log.hpp>
 #include <ert/res_util/subst_list.hpp>
 
-#include <ert/sched/sched_file.hpp>
-
 #include <ert/config/config_settings.hpp>
 
 #include <ert/job_queue/job_queue.hpp>
@@ -112,7 +110,6 @@ extern "C" {
   enkf_state_type             * enkf_main_iget_state(const enkf_main_type * , int );
 
   const enkf_config_node_type * enkf_main_get_config_node(const enkf_main_type * , const char *);
-  const sched_file_type       * enkf_main_get_sched_file(const enkf_main_type *);
   ranking_table_type          * enkf_main_get_ranking_table( const enkf_main_type * enkf_main );
   const ecl_config_type       * enkf_main_get_ecl_config(const enkf_main_type * enkf_main);
   ensemble_config_type        * enkf_main_get_ensemble_config(const enkf_main_type * enkf_main);

@@ -42,8 +42,6 @@
 #include <ert/job_queue/rsh_driver.hpp>
 #include <ert/job_queue/ext_joblist.hpp>
 
-#include <ert/sched/sched_file.hpp>
-
 #include <ert/config/config_parser.hpp>
 
 #include <ert/enkf/enkf_config_node.hpp>

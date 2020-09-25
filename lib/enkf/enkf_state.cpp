@@ -44,8 +44,6 @@
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_endian_flip.h>
 
-#include <ert/sched/sched_file.hpp>
-
 #include <ert/job_queue/environment_varlist.hpp>
 #include <ert/job_queue/forward_model.hpp>
 #include <ert/job_queue/job_queue.hpp>

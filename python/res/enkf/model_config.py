@@ -19,7 +19,7 @@ from ecl.summary import EclSum
 from ecl.util.util import StringList
 from res import ResPrototype
 from res.job_queue import ForwardModel, ExtJob, ExtJoblist
-from res.sched import HistorySourceEnum, SchedFile
+from res.sched import HistorySourceEnum
 from res.util import PathFormat
 from res.enkf import ConfigKeys
 from res.enkf.util import TimeMap
@@ -183,17 +183,15 @@ class ModelConfig(BaseCClass):
         """ @rtype: HistorySourceEnum """
         return self._get_history_source()
 
-    def set_history_source(self, history_source, sched_file, refcase):
+    def set_history_source(self, history_source, refcase):
         """
          @type history_source: HistorySourceEnum
-         @type sched_file: SchedFile
          @type refcase: EclSum
          @rtype: bool
         """
         assert isinstance(history_source, HistorySourceEnum)
-        assert isinstance(sched_file, SchedFile)
         assert isinstance(refcase, EclSum)
-        return self._select_history(history_source, sched_file, refcase)
+        return self._select_history(history_source, refcase)
 
     def get_max_internal_submit(self):
         """ @rtype: int """

@@ -32,7 +32,6 @@
 #include <ert/job_queue/forward_model.hpp>
 
 #include <ert/sched/history.hpp>
-#include <ert/sched/sched_file.hpp>
 
 #include <ert/ecl/ecl_sum.h>
 

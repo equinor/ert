@@ -28,8 +28,6 @@
 #include <ert/res_util/subst_list.hpp>
 #include <ert/res_util/matrix.hpp>
 
-#include <ert/sched/sched_file.hpp>
-
 #include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_file.h>
 

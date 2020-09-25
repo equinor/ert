@@ -28,7 +28,6 @@
 #include <ert/ecl/ecl_util.h>
 #include <ert/ecl/ecl_smspec.h>
 
-#include <ert/sched/gruptree.hpp>
 #include <ert/sched/history.hpp>
 
 
