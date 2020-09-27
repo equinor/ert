@@ -9,7 +9,7 @@ copy_test_files () {
     mkdir -p $CI_TEST_ROOT/python/res/fm/rms/
     
     local PWD=$(pwd)
-    ln -s {$PWD,$CI_TEST_ROOT}/python/tests
+    cp -r {$PWD,$CI_TEST_ROOT}/python/tests
     ln -s {$PWD,$CI_TEST_ROOT}/test-data
     ln -s {$PWD,$CI_TEST_ROOT}/lib
     ln -s {$PWD,$CI_TEST_ROOT}/share
