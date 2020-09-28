@@ -6,7 +6,7 @@ import threading
 
 from ert_shared import ERT
 from ert_shared import clear_global_state
-from ert_shared.ensemble_evaluator import EnsembleEvaluator
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.cli.model_factory import create_model
 from ert_shared.cli.monitor import Monitor
 from ert_shared.cli.notifier import ErtCliNotifier
