@@ -17,7 +17,7 @@ class _Monitor:
 
         async def hello():
             print("starting monitor hello")
-            uri = f"ws://{self._host}:{self._port}"
+            uri = f"ws://{self._host}:{self._port}/client"
             async with websockets.connect(uri) as websocket:
                 async for message in websocket:
                     try:
