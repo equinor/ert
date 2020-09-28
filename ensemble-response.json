@@ -1,0 +1,55 @@
+{
+    status: new/running/done,
+    forward_models: [
+        {
+            id: 0,
+            type: disk_mutation,
+        },
+        {
+            id: 1,
+            input: [0],
+            type: eclipse
+        },
+        {
+            id: 2,
+            type: extrapolate_wellpressures_lol,
+            input: [1],
+        }
+    ]
+    realizations: [
+        {
+            index: 4,
+            forward_models: [
+                {
+                    id: 2,
+                    status: running
+                }
+            ],
+            status: running
+        },
+        {
+            index: 5,
+            forward_models: [
+                {
+                    id: 0,
+                    status: success
+                },
+                {
+                    id: 1:
+                    status: running,
+                }
+            ]
+        },
+        …
+    ]
+
+}
+digraph {
+    A;
+    B;
+    C;
+    D;
+    A -> B;
+    B ->(produces) C[mynode1];
+}
+C is done
