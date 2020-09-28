@@ -13,7 +13,7 @@ class EnsembleEvaluator:
 
         self._host = "localhost"
         self._port = 8765
-        self._events = []
+        self._state = {}
 
         self._ws_thread = threading.Thread(
             name="ert_ee_wsocket",
@@ -58,7 +58,7 @@ class EnsembleEvaluator:
             self.stop()
             print("worker exiting")
 
-        async def client_handler(websocket, path):
+        async def handle_client(websocket, path):
             print(f"Client {websocket.remote_address} connected")
             USERS.add(websocket)
 
@@ -81,8 +81,18 @@ class EnsembleEvaluator:
                 print("Serverside: Client disconnected")
                 USERS.remove(websocket)
 
+        async def handle_dispatch(websocket, path):
+            pass
+
+        async def connection_handler(websocket, path):
+            if path == "/client":
+                await handle_client(websocket, path)
+            elif path == "/dispatch":
+                await handle_dispatch(websocket, path)
+
+
         async def evaluator_server(done):
-            async with websockets.serve(client_handler, self._host, self._port):
+            async with websockets.serve(connection_handler, self._host, self._port):
                 await done
                 print("server got done signal")
             print("server exiting")
