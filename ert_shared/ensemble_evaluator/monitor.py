@@ -9,23 +9,19 @@ class _Monitor:
     def __init__(self, host, port):
         self._host = host
         self._port = port
-        self._bus = asyncio.Queue()
 
     def track(self):
-        loop = asyncio.get_event_loop()
-        queue = asyncio.Queue()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
-        async def hello():
+        async def hello(queue):
             print("starting monitor hello")
             uri = f"ws://{self._host}:{self._port}/client"
             async with websockets.connect(uri) as websocket:
                 async for message in websocket:
                     try:
-                        # await websocket.send("Hello world!")
-                        # print(f"got message {message}")
                         event_json = json.loads(message)
                         event = ee_entity.create_evaluator_event_from_dict(event_json)
-                        # f"Would yield event {event}"
                         await queue.put(event)
                         if event.is_done():
                             print("hello exiting return")
@@ -37,7 +33,8 @@ class _Monitor:
         retries = 0
         while retries < 3:
             try:
-                hello_future = loop.create_task(hello())
+                queue = asyncio.Queue()
+                hello_future = loop.create_task(hello(queue))
                 while True:
                     get_future = loop.create_task(queue.get())
                     done, pending = loop.run_until_complete(asyncio.wait((hello_future, get_future), return_when=asyncio.FIRST_COMPLETED))
@@ -53,7 +50,6 @@ class _Monitor:
                         break
 
                     event = get_future.result()
-                    print("sync world got", event)
                     yield event
                     if event.is_done():
                         break
@@ -65,7 +61,9 @@ class _Monitor:
                     yield loop.run_until_complete(queue.get())
                 
                 return
-            except ConnectionRefusedError as e:
+            except OSError as e:
+                import traceback
+                print(traceback.format_exc())
                 print(f"Attempt {retries}: {e}")
                 retries += 1
                 time.sleep(1)

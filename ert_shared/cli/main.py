@@ -80,7 +80,7 @@ def run_ee(args):
     monitor = ee.run()
     
     for event in monitor.track():
-        print("got event from monitor", event._event_index)
+        print("Monitor", event)
 
         if event.is_terminated():
             print("evaluation terminated")
