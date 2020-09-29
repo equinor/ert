@@ -3,18 +3,15 @@ import time
 import shutil
 import sys
 import unittest
-import datetime
 
 from ecl.util.test import TestAreaContext
 
 from res.simulator import BatchSimulator, BatchContext
 from res.job_queue import JobStatusType
 from res.enkf import ResConfig
-from tests.utils import wait_until, tmpdir
 from tests import ResTest
 from tests.utils import tmpdir
 
-from threading import Thread
 
 class MockMonitor(object):
 
@@ -415,6 +412,54 @@ class BatchSimulatorTest(ResTest):
 
             runpath = 'storage/batch_sim/runpath/%s/realisation-0' % case_name
             self.assertTrue(os.path.exists(runpath))
+
+
+    @tmpdir()
+    def test_workflow_pre_simulation(self):
+        config_file = self.createTestPath("local/batch_sim/batch_sim.ert")
+        with TestAreaContext("batch_sim_stop") as test_area:
+            test_area.copy_parent_content(config_file)
+            res_config = ResConfig(user_config_file=os.path.basename(config_file))
+
+            rsim = BatchSimulator(
+                res_config,
+                {"WELL_ORDER": ["W1", "W2", "W3"], "WELL_ON_OFF": ["W1", "W2", "W3"]},
+                ["ORDER", "ON_OFF"],
+            )
+
+            case_name = "TestCase42"
+            case_data = [
+                (
+                    2,
+                    {
+                        "WELL_ORDER": {"W1": 1, "W2": 2, "W3": 3},
+                        "WELL_ON_OFF": {"W1": 4, "W2": 5, "W3": 6},
+                    },
+                ),
+                (
+                    1,
+                    {
+                        "WELL_ORDER": {"W1": 7, "W2": 8, "W3": 9},
+                        "WELL_ON_OFF": {"W1": 10, "W2": 11, "W3": 12},
+                    },
+                ),
+            ]
+
+            # Starting a simulation which should actually run through.
+            ctx = rsim.start(case_name, case_data)
+            ctx.stop()
+
+            status = ctx.status
+
+            self.assertEqual(status.complete, 0)
+            self.assertEqual(status.running, 0)
+            for idx, _ in enumerate(case_data):
+                path = "storage/batch_sim/runpath/{}/realisation-{}/iter-0/realization.number".format(
+                    case_name, idx
+                )
+                self.assertTrue(os.path.isfile(path))
+                with open(path, "r") as f:
+                    self.assertEqual(f.readline(1), str(idx))
 
     def assertContextStatusOddFailures(self, batch_ctx, final_state_only=False):
         running_status = set((

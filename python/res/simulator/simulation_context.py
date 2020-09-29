@@ -1,6 +1,6 @@
 from res.job_queue import JobQueueManager, ForwardModelStatus
-from res.enkf.ert_run_context import ErtRunContext
-from res.enkf.enums import EnkfRunType
+from res.enkf import ErtRunContext, EnkfSimulationRunner
+from res.enkf.enums import EnkfRunType, HookRuntime
 from threading import Thread
 from time import sleep
 
@@ -28,6 +28,7 @@ class SimulationContext(object):
                 run_arg.geo_id = geo_id
 
         self._ert.getEnkfSimulationRunner().createRunPath(self._run_context)
+        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, self._ert)
         self._sim_thread = self._run_simulations_simple_step()
 
         # Wait until the queue is active before we finish the creation
