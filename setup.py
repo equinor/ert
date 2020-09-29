@@ -25,8 +25,10 @@ setup(
     license="Open Source",
     long_description=open("README.md").read(),
     install_requires=[
+        "aiofiles",
         "ansicolors==1.1.8",
         "console-progressbar==1.1.2",
+        "decorator",
         "decorator",
         "flask",
         "jinja2",
@@ -38,9 +40,9 @@ setup(
         "pyyaml",
         "qtpy",
         "scipy",
+        "semeio",
         "sqlalchemy",
-        "decorator",
-        "semeio"
+        "websockets",
     ],
     zip_safe=False,
     tests_require=["pytest", "mock"],
