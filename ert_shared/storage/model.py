@@ -14,6 +14,8 @@ from sqlalchemy.orm import backref, relationship
 from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.sql import func
+from sqlalchemy_utils import UUIDType
+import uuid
 
 Entities = declarative_base(name="Entities")
 Blobs = declarative_base(name="Blobs")
@@ -22,7 +24,7 @@ Blobs = declarative_base(name="Blobs")
 class Project(Entities):
     __tablename__ = "projects"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUIDType(binary=False), primary_key=True)
     name = Column(String)
 
     __table_args__ = (UniqueConstraint("name", name="_uc_project_name_"),)
@@ -34,7 +36,7 @@ class Project(Entities):
 class Ensemble(Entities):
     __tablename__ = "ensembles"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUIDType(binary=False), primary_key=True)
     name = Column(String)
     project_id = Column(Integer, ForeignKey("projects.id"))
     project = relationship("Project", back_populates="ensembles")
@@ -55,7 +57,7 @@ Project.ensembles = relationship(
 class Update(Entities):
     __tablename__ = "updates"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUIDType(binary=False), primary_key=True)
     algorithm = Column(String)
     ensemble_reference_id = Column(Integer, ForeignKey("ensembles.id"))
     ensemble_reference = relationship(
@@ -98,7 +100,7 @@ Ensemble.parent = relationship(
 class Realization(Entities):
     __tablename__ = "realizations"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUIDType(binary=False), primary_key=True)
     index = Column(Integer)
     ensemble_id = Column(Integer, ForeignKey("ensembles.id"))
     ensemble = relationship("Ensemble", back_populates="realizations")
@@ -121,7 +123,7 @@ Ensemble.realizations = relationship(
 class ResponseDefinition(Entities):
     __tablename__ = "response_definitions"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUIDType(binary=False), primary_key=True)
     name = Column(String)
     indexes_ref = Column(Integer)  # Reference to the description of  plot axis
     ensemble_id = Column(Integer, ForeignKey("ensembles.id"))
@@ -147,7 +149,7 @@ Ensemble.response_definitions = relationship(
 class Response(Entities):
     __tablename__ = "responses"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUIDType(binary=False), primary_key=True)
     values_ref = Column(Integer)
     realization_id = Column(Integer, ForeignKey("realizations.id"))
     realization = relationship("Realization", back_populates="responses")
@@ -179,7 +181,7 @@ ResponseDefinition.responses = relationship(
 class ParameterDefinition(Entities):
     __tablename__ = "parameter_definitions"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUIDType(binary=False), primary_key=True)
     name = Column(String)
     group = Column(String)
     ensemble_id = Column(Integer, ForeignKey("ensembles.id"))
@@ -210,7 +212,7 @@ Ensemble.parameter_definitions = relationship(
 class Parameter(Entities):
     __tablename__ = "parameters"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUIDType(binary=False), primary_key=True)
     value_ref = Column(Integer)
     realization_id = Column(Integer, ForeignKey("realizations.id"))
     realization = relationship("Realization", back_populates="parameters")
@@ -244,7 +246,7 @@ ParameterDefinition.parameters = relationship(
 class Observation(Entities):
     __tablename__ = "observations"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUIDType(binary=False), primary_key=True)
     name = Column(String)
     key_indexes_ref = Column(Integer)
     data_indexes_ref = Column(Integer)
@@ -281,7 +283,7 @@ class Observation(Entities):
 class ObservationResponseDefinitionLink(Entities):
     __tablename__ = "observation_response_definition_links"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUIDType(binary=False), primary_key=True)
     response_definition_id = Column(Integer, ForeignKey("response_definitions.id"))
     active_ref = Column(Integer)
     response_definition = relationship(
@@ -322,7 +324,7 @@ Observation.response_definition_links = relationship(
 class Misfit(Entities):
     __tablename__ = "misfits"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUIDType(binary=False), primary_key=True)
     response_id = Column(Integer, ForeignKey("responses.id"))
     response = relationship("Response", back_populates="misfits")
     observation_response_definition_link_id = Column(
@@ -374,7 +376,7 @@ class ObservationsAttribute(Entities):
 class AttributeValue(Entities):
     __tablename__ = "attribute_value"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUIDType(binary=False), primary_key=True)
     value = Column("value", String)
 
     def __init__(self, value):
@@ -387,7 +389,7 @@ class AttributeValue(Entities):
 class ErtBlob(Blobs):
     __tablename__ = "ert_blobs"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUIDType(binary=False), primary_key=True)
     data = Column(PickleType)
 
     def __repr__(self):
@@ -405,7 +407,7 @@ prior_ensemble_association_table = Table(
 class ParameterPrior(Entities):
     __tablename__ = "parameter_priors"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUIDType(binary=False), primary_key=True)
     group = Column("group", String)
     key = Column("key", String)
     function = Column("function", String)
