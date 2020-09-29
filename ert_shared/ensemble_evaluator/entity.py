@@ -1,3 +1,22 @@
+import collections.abc
+import copy
+
+
+def _recursive_update(d, u):
+    for k, v in u.items():
+        if k not in d:
+            raise ValueError(f"Illegal field {k}")
+        if isinstance(v, collections.abc.Mapping):
+            d_val = d.get(k, {})
+            if d_val is None:
+                d[k] = copy.deepcopy(v)
+            else:
+                d[k] = _recursive_update(d_val, v)
+        else:
+            d[k] = v
+    return d
+
+
 _TERMINATE = "terminate"
 _PAUSE = "pause"
 _ACTION = "action"
@@ -39,6 +58,40 @@ def create_command_from_dict(data):
     return _Command.from_dict(data)
 
 
+_FMJ_ID = "id"
+_FMJ_TYPE = "type"
+_FMJ_INPUTS = "inputs"
+
+
+class _ForwardModelJob:
+    def __init__(self, fmj_id, fmj_type, inputs=()):
+        self.id = fmj_id
+        self.type = fmj_type
+        self.inputs = inputs
+
+    def to_dict(self):
+        return {
+            _FMJ_ID: self.id,
+            _FMJ_TYPE: self.type,
+            _FMJ_INPUTS: self.inputs,
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        fmj_id = data[_FMJ_ID]
+        fmj_type = data[_FMJ_TYPE]
+        inputs = data[_FMJ_INPUTS]
+        return cls(
+            fmj_id=fmj_id,
+            fmj_type=fmj_type,
+            inputs=inputs,
+        )
+
+
+def create_forward_model_job(fmj_id, fmj_type, inputs=()):
+    return _ForwardModelJob(fmj_id=fmj_id, fmj_type=fmj_type, inputs=inputs)
+
+
 # TODO: might subclass EnsembleResponse?
 class _EnsembleResponseEvent:
     def __init__(
@@ -62,12 +115,26 @@ class _EnsembleResponseEvent:
         return not (self.is_terminated() or self.is_done())
 
     def is_partial(self):
-        return self._forward_models is not None
+        return self._forward_models is None
+
+    def merge_event(self, other):
+        if self.is_partial() or not other.is_partial():
+            raise ValueError("Can only merge partial event into non-partial event")
+
+        if self._event_index >= other._event_index:
+            return
+
+        self._status = self._status if other._status is None else other._status
+        self._event_index = other._event_index
+
+        _recursive_update(self._realizations, other._realizations)
 
     def to_dict(self):
         return {
             _STATUS: self._status,
-            _FORWARD_MODELS: self._forward_models,
+            _FORWARD_MODELS: [fm.to_dict() for fm in self._forward_models]
+            if self._forward_models is not None
+            else None,
             _REALIZATIONS: self._realizations,
             _EVENT_INDEX: self._event_index,
         }
@@ -76,6 +143,10 @@ class _EnsembleResponseEvent:
     def from_dict(cls, data):
         event_index = data[_EVENT_INDEX]
         forward_models = data.get(_FORWARD_MODELS)
+        if forward_models is not None:
+            forward_models = [
+                _ForwardModelJob.from_dict(fmj_dict) for fmj_dict in forward_models
+            ]
         realizations = data.get(_REALIZATIONS)
         status = data.get(_STATUS)
         return cls(
@@ -86,14 +157,38 @@ class _EnsembleResponseEvent:
         )
 
 
-def create_evaluator_event(event_index, forward_models, realizations, status):
+def create_evaluator_event(event_index, realizations, status):
     return _EnsembleResponseEvent(
         event_index,
-        forward_models=forward_models,
+        forward_models=None,
         realizations=realizations,
         status=status,
     )
 
 
+def create_unindexed_evaluator_event(realizations, status):
+    return create_evaluator_event(
+        event_index=-1, realizations=realizations, status=status
+    )
+
+
 def create_evaluator_event_from_dict(data):
     return _EnsembleResponseEvent.from_dict(data)
+
+
+def create_evaluator_snapshot(forward_models, realization_indexes):
+    realizations = {}
+    for realization_index in realization_indexes:
+        realization_fmjs = {}
+        for forward_model in forward_models:
+            realization_fmjs[forward_model.id] = {"status": "unknown", "data": None}
+        realizations[realization_index] = {
+            "status": "unknown",
+            "forward_models": realization_fmjs,
+        }
+    return _EnsembleResponseEvent(
+        event_index=0,
+        status="unknown",
+        forward_models=forward_models,
+        realizations=realizations,
+    )
