@@ -4,6 +4,9 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 from ert_shared.models import BaseRunModel
 from ert_shared import ERT
 from ert_shared.storage.extraction_api import dump_to_new_storage
+from unittest.mock import patch
+from ert_shared.ensemble_evaluator.queue_adaptor import JobQueueManagerAdaptor
+
 
 
 class EnsembleExperiment(BaseRunModel):
@@ -24,7 +27,10 @@ class EnsembleExperiment(BaseRunModel):
 
         self.setPhaseName( run_msg, indeterminate=False)
 
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(self._job_queue, run_context)
+        # XXX: this magic string will eventually come from the legacy EE itself
+        JobQueueManagerAdaptor.ws_url = "ws://localhost:8765"
+        with patch("res.enkf.enkf_simulation_runner.JobQueueManager", new=JobQueueManagerAdaptor):
+            num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(self._job_queue, run_context)
 
         num_successful_realizations += arguments.get('prev_successful_realizations', 0)
         self.checkHaveSufficientRealizations(num_successful_realizations)
