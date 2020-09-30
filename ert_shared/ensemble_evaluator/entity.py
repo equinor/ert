@@ -1,5 +1,6 @@
 import collections.abc
 import copy
+import json
 
 
 def _recursive_update(d, u):
@@ -90,6 +91,41 @@ class _ForwardModelJob:
 
 def create_forward_model_job(fmj_id, fmj_type, inputs=()):
     return _ForwardModelJob(fmj_id=fmj_id, fmj_type=fmj_type, inputs=inputs)
+
+
+_REALIZATION_STATUS = "status"
+_REALIZATION_FORWARD_MODELS = "forward_models"
+
+
+class _Realization:
+    def __init__(self, status, forward_models):
+        self._status = status
+        self._forward_models = forward_models
+
+    def __repr__(self):
+        return str(self.to_dict())
+
+    def to_dict(self):
+        return {
+            _REALIZATION_STATUS: self._status,
+            _REALIZATION_FORWARD_MODELS: self._forward_models,
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            data[_REALIZATION_STATUS],
+            data[_REALIZATION_FORWARD_MODELS],
+        )
+
+
+def create_realization(status, forward_model):
+    return _Realization(status, forward_model)
+
+
+class RealizationDecoder(json.JSONEncoder):
+    def default(self, o):
+        return o.to_dict()
 
 
 # TODO: might subclass EnsembleResponse?
