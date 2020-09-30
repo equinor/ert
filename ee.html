@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Ensemble Evaluator demo</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"
+        integrity="sha512-XHDcSyqhOoO2ocB7sKOCJEkUjw/pQCJViP1ynpy+EGh/LggzrP6U/V3a++LQTnZT7sCQKeHRyWHfhN2afjXjCg=="
+        crossorigin="anonymous"></script>
+
+    <style type="text/css">
+        .mynetwork {
+            width: 900px;
+            height: 600px;
+            margin: auto;
+        }
+    </style>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container" id="main-container"></div>
+    <script type="text/javascript">
+        const color_map = { "unknown": "#8a8a8a", "running": "#0379ff", "done": "#0c9c02" };
+        function create_graph(forward_models) {
+            var nodes_arr = [];
+            var edges_arr = [];
+            for (fm of forward_models) {
+                nodes_arr.push({ id: fm.id, label: fm.type, color: color_map["unknown"] });
+                for (i of fm.inputs) {
+                    edges_arr.push({ from: i, to: fm.id, arrows: "to" });
+                }
+            }
+            var nodes = new vis.DataSet(nodes_arr);
+            var edges = new vis.DataSet(edges_arr);
+            var data = {
+                nodes: nodes,
+                edges: edges,
+            };
+            return data;
+        }
+
+        function update_status(realizations) {
+            for (realization in realizations) {
+                for (const [fm_id, fm] of Object.entries(realizations[realization].forward_models)) {
+                    datasets[realization].nodes.update({ id: fm_id, color: color_map[fm.status] });
+                }
+
+            }
+        }
+
+        function wait_for_connection() {
+            console.log("Attempting to connect...");
+            var ws = new WebSocket("ws://127.0.0.1:8765/client");
+            ws.onerror = function (event) {
+                console.error("WebSocket error observed:", event);
+                setTimeout(() => { wait_for_connection(); }, 1000);;
+            };
+            ws.onmessage = function (event) {
+                var event_data = JSON.parse(event.data);
+                if (event_data.forward_models) {
+                    for (network_id in networks) {
+                        networks[network_id].destroy();
+                    }
+                    networks = {};
+                    datasets = {};
+                    create_containers(event_data.realizations);
+                    for (realization in event_data.realizations) {
+                        datasets[realization] = create_graph(event_data.forward_models);
+                        networks[realization] = new vis.Network(document.getElementById(realization + "_realization_network"), datasets[realization], options);
+                        $('.nav-tabs a').on('shown.bs.tab', function (event) {
+                            for (network_id in networks) {
+                                networks[network_id].fit();
+                            }
+                        });
+                    }
+                }
+                $("#home-list").append($("<li>" + event.data + "</li>"));
+                if (event_data.realizations) {
+                    update_status(event_data.realizations)
+                }
+            };
+        }
+
+        function create_containers(realizations) {
+            var no_realizations = Object.keys(realizations).length === 0 && realizations.constructor === Object;
+            var home_text;
+            if (no_realizations){
+                home_text = "Connecting ...";
+            }
+            else{
+                home_text = "Click on the different realizations to see their status!";
+            }
+            $("#main-container").empty()
+            $("#main-container").append("<ul class=\"nav nav-tabs\" id=\"realization-navs\"><li class=\"active\"><a data-toggle=\"tab\" href=\"#home\">Home</a></li></ul>");
+            $("#main-container").append("<div class=\"tab-content\" id=\"realization-tab-content\"><div id=\"home\" class=\"tab-pane fade in active\"><h3>Home</h3><p>" + home_text + "</p><ul id=\"home-list\"></ul></div></div>");
+            for (realization_id in realizations) {
+                $("#realization-navs").append("<li><a data-toggle=\"tab\" href=\"#" + realization_id + "_realization\">Realization " + realization_id + "</a></li>")
+                $("#realization-tab-content").append("<div id=\"" + realization_id + "_realization\" class=\"tab-pane fade\"><div id=\"" + realization_id + "_realization_network\" class=\"mynetwork\"></div></div>")
+            }
+        }
+
+        // Globals
+        var options = {}; // Vis.js options
+        var networks = {};
+        var datasets = {};
+
+        create_containers({})
+        wait_for_connection();
+
+    </script>
+</body>
+
+</html>
