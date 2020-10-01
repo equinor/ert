@@ -65,7 +65,8 @@ class MultipleDataAssimilation(BaseRunModel):
             is_first_iteration = iteration == 0
             run_context = self.create_context( arguments , iteration,  initialize_mask_from_arguments=is_first_iteration)
             self._simulateAndPostProcess(run_context, arguments)
-
+            if is_first_iteration:
+                EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_FIRST_UPDATE, ert=ERT.ert)
             EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=ERT.ert)
             self.update(run_context , weight)
             EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=ERT.ert)

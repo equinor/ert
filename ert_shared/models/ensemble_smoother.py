@@ -40,7 +40,7 @@ class EnsembleSmoother(BaseRunModel):
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ert=ERT.ert )
 
         self.setPhaseName("Analyzing...")
-
+        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_FIRST_UPDATE, ert=ERT.ert)
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=ERT.ert )
         es_update = self.ert().getESUpdate( )
         success = es_update.smootherUpdate( prior_context )
