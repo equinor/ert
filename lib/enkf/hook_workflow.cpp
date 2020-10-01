@@ -27,6 +27,7 @@
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/hook_workflow.hpp>
 
+#define RUN_MODE_PRE_FIRST_UPDATE_NAME   "PRE_FIRST_UPDATE"
 #define RUN_MODE_PRE_SIMULATION_NAME     "PRE_SIMULATION"
 #define RUN_MODE_POST_SIMULATION_NAME    "POST_SIMULATION"
 #define RUN_MODE_PRE_UPDATE_NAME         "PRE_UPDATE"
@@ -88,6 +89,8 @@ hook_run_mode_enum hook_workflow_run_mode_from_name( const char * run_mode ) {
     mode = PRE_UPDATE;
   else if (strcmp( run_mode , RUN_MODE_POST_UPDATE_NAME) == 0)
     mode = POST_UPDATE;
+  else if (strcmp( run_mode , RUN_MODE_PRE_FIRST_UPDATE_NAME) == 0)
+    mode = PRE_FIRST_UPDATE;
   else {
     util_abort("%s: unrecognized run mode :%s \n",__func__ , run_mode);
     mode = POST_UPDATE; /* Dummy */

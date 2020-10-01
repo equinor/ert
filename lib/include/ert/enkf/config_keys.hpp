@@ -117,6 +117,7 @@ extern "C" {
 #define  RUN_MODE_POST_SIMULATION_NAME     "POST_SIMULATION"
 #define  RUN_MODE_PRE_UPDATE_NAME          "PRE_UPDATE"
 #define  RUN_MODE_POST_UPDATE_NAME         "POST_UPDATE"
+#define  RUN_MODE_PRE_FIRST_UPDATE_NAME    "PRE_FIRST_UPDATE"
 #define  STOP_LONG_RUNNING_KEY             "STOP_LONG_RUNNING"
 #define  MAX_RUNTIME_KEY                   "MAX_RUNTIME"
 #define  TIME_MAP_KEY                      "TIME_MAP"
