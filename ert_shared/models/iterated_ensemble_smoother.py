@@ -79,7 +79,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
         previous_ensemble_name = None
         while current_iter < ERT.enkf_facade.get_number_of_iterations() and num_retries < num_retries_per_iteration:
             pre_analysis_iter_num = analysis_module.getInt("ITER")
-            self.analyzeStep( run_context )
+            # We run the PRE_FIRST_UPDATE hook here because the current_iter is explicitly available, versus
+            # in the run_context inside analyzeStep
+            if current_iter == 0:
+                EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_FIRST_UPDATE, ert=ERT.ert)
+            self.analyzeStep(run_context)
             current_iter = analysis_module.getInt("ITER")
 
             analysis_success = current_iter > pre_analysis_iter_num

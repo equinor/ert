@@ -2163,8 +2163,11 @@ Keywords related to plotting
     points in ERTs flow of execution where you can hook in a workflow,
     before the simulations start, :code:`PRE_SIMULATION`; after all
     the simulations have completed, :code:`POST_SIMULATION`; before the
-    update step, :code:`PRE_UPDATE` and after the update step,
-    :code:`POST_UPDATE`.  The :code:`POST_SIMULATION` hook is
+    update step, :code:`PRE_UPDATE`; :code:`POST_UPDATE`; after the update
+    step and :code:`PRE_FIRST_UPDATE` only before the first update.
+    :code:`PRE_FIRST_UPDATE` will run before :code:`PRE_UPDATE`.
+    For non iterative algorithms, :code:`PRE_FIRST_UPDATE` is equal to
+    :code:`PRE_UPDATE`. The :code:`POST_SIMULATION` hook is
     typically used to trigger QC workflows:
 
     ::
