@@ -20,6 +20,8 @@ copy_test_files () {
 install_package () {
     local PWD=$(pwd)
     export ERT_SITE_CONFIG=$PWD/share/ert/site-config
+    export PYTHONPATH=$CI_SOURCE_ROOT/cmake-build/lib/python3.6/site-packages:${PYTHONPATH:-}
+    export LD_LIBRARY_PATH=$CI_SOURCE_ROOT/cmake-build/lib:$CI_SOURCE_ROOT/cmake-build/lib64:${LD_LIBRARY_PATH:-}
 }
 
 start_tests () {
