@@ -56,7 +56,12 @@ class EnsemblePlot(object):
         if is_date_supported:
             lines = axes.plot_date(x=data.index.values, y=data, color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, linewidth=style.width, markersize=style.size)
         else:
-            lines = axes.plot(data.index.values, data, color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, linewidth=style.width, markersize=style.size)
+            index = data.index.values
+            from pandas import DataFrame
+            if isinstance(data, DataFrame):
+                data = data.to_numpy()
+
+            lines = axes.plot(index, data, color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, linewidth=style.width, markersize=style.size)
 
         if len(lines) > 0:
             plot_config.addLegendItem(ensemble_label, lines[0])
