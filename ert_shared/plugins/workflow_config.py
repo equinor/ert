@@ -59,6 +59,7 @@ class WorkflowConfig(object):
         self._description = ertscript_class.__doc__ if ertscript_class.__doc__ else ""
         self._examples = None
         self._parser = None
+        self._category = "other"
 
     @property
     def description(self):
@@ -92,6 +93,17 @@ class WorkflowConfig(object):
     @parser.setter
     def parser(self, parser):
         self._parser = parser
+
+    @property
+    def category(self):
+        """
+        A dot separated string
+        """
+        return self._category
+
+    @category.setter
+    def category(self, category):
+        self._category = category
 
     @staticmethod
     def _get_func_name(func, name):
