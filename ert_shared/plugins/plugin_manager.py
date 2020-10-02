@@ -222,6 +222,7 @@ class ErtPluginManager(pluggy.PluginManager):
                 "config_file": workflow.config_path,
                 "parser": workflow.parser,
                 "source_package": workflow.source_package,
+                "category": workflow.category,
             }
             for workflow in workflow_config._workflows
         }
