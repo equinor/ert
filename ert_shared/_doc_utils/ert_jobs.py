@@ -29,7 +29,7 @@ class _ForwardModelDocumentation:
 
     def _create_job_config_section(self):
         config_section_node = _create_section_with_title(
-            section_id=self.name + "-job-config", title="ERT config file"
+            section_id=self.name + "-job-config", title="Job configuration used by ERT"
         )
 
         with open(self.job_config_file) as fh:
@@ -81,10 +81,6 @@ class _ForwardModelDocumentation:
         job_details_node = self._create_job_details()
         node.append(job_details_node)
 
-        # Add forward model config file
-        config_section_node = self._create_job_config_section()
-        node.append(config_section_node)
-
         # Add examples
         if self.examples:
             example_section_node = self._create_example_section(state)
@@ -94,6 +90,10 @@ class _ForwardModelDocumentation:
         if self.parser:
             parser_section_node = self._create_argparse_section()
             node.append(parser_section_node)
+
+        # Add forward model config file
+        config_section_node = self._create_job_config_section()
+        node.append(config_section_node)
 
         return node
 
