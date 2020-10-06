@@ -51,5 +51,5 @@ setup(
     zip_safe=False,
     tests_require=["pytest", "mock"],
     test_suite="tests",
-    setup_requires=["pytest-runner", "setuptools_scm"],
+    setup_requires=["setuptools_scm"],
 )

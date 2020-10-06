@@ -33,18 +33,17 @@ jobs:
 
     - name: Install ERT and dependencies
       run: |
-        pip install -r dev-requirements.txt
-        pip install .
+        pip install tox tox-gh-actions
 
     - name: Test Ubuntu
       if: matrix.os == 'ubuntu-latest'
       run: |
-        xvfb-run  -s "-screen 0 640x480x24" --auto-servernum python -m pytest -sv
+        xvfb-run  -s "-screen 0 640x480x24" --auto-servernum tox
 
     - name: Test MacOS
       if: matrix.os == 'macos-latest'
       run: |
-        python -m pytest -sv
+        tox
 
     - name: Test docs and CLI
       run: |
