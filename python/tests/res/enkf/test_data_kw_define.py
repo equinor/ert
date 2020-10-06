@@ -19,13 +19,11 @@ from tests import ResTest
 from res.test import ErtTestContext
 
 
-
 class DataKWTest(ResTest):
-
     def test_it(self):
         config = self.createTestPath("local/mini_ert/mini_config_define")
         with ErtTestContext("mini_config_define", config) as context:
             ert = context.getErt()
-            data_kw = ert.getDataKW( )
+            data_kw = ert.getDataKW()
             my_path = data_kw["MY_PATH"]
-            self.assertEqual( my_path , os.getcwd())
+            self.assertEqual(my_path, os.getcwd())

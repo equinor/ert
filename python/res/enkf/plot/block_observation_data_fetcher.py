@@ -28,7 +28,9 @@ class BlockObservationDataFetcher(DataFetcher):
 
     def fetchSupportedKeys(self):
         observations = self.ert().getObservations()
-        string_list = observations.getTypedKeylist(EnkfObservationImplementationType.BLOCK_OBS)
+        string_list = observations.getTypedKeylist(
+            EnkfObservationImplementationType.BLOCK_OBS
+        )
         return [key for key in string_list]
 
     def __fetchObservationData(self, block_observation):
@@ -42,7 +44,7 @@ class BlockObservationDataFetcher(DataFetcher):
             "min_y": None,
             "max_y": None,
             "min_x": None,
-            "max_x": None
+            "max_x": None,
         }
 
         for index in block_observation:
@@ -61,7 +63,6 @@ class BlockObservationDataFetcher(DataFetcher):
 
             if data["max_x"] is None or data["max_x"] < x + std:
                 data["max_x"] = x + std
-
 
             if data["min_y"] is None or data["min_y"] > y:
                 data["min_y"] = y
@@ -99,9 +100,7 @@ class BlockObservationDataFetcher(DataFetcher):
             data["report_step"] = report_step
             report_step_data.append(data)
 
-
         if self.__selected_report_step_index is not None:
             return report_step_data[self.__selected_report_step_index]
         else:
             return report_step_data
-

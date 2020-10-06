@@ -15,6 +15,7 @@
 #  for more details.
 from cwrap import BaseCEnum
 
+
 class EnkfInitModeEnum(BaseCEnum):
     TYPE_NAME = "enkf_init_mode_enum"
     INIT_NONE = None

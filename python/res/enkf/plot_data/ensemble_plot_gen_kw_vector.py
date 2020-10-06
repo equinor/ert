@@ -17,12 +17,16 @@
 from cwrap import BaseCClass
 from res import ResPrototype
 
+
 class EnsemblePlotGenKWVector(BaseCClass):
     TYPE_NAME = "ensemble_plot_gen_kw_vector"
 
-    _size      = ResPrototype("int    enkf_plot_gen_kw_vector_get_size(ensemble_plot_gen_kw_vector)")
-    _get_value = ResPrototype("double enkf_plot_gen_kw_vector_iget(ensemble_plot_gen_kw_vector, int)")
-
+    _size = ResPrototype(
+        "int    enkf_plot_gen_kw_vector_get_size(ensemble_plot_gen_kw_vector)"
+    )
+    _get_value = ResPrototype(
+        "double enkf_plot_gen_kw_vector_iget(ensemble_plot_gen_kw_vector, int)"
+    )
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
@@ -46,4 +50,4 @@ class EnsemblePlotGenKWVector(BaseCClass):
         return self._get_value(index)
 
     def __repr__(self):
-        return 'EnsemblePlotGenKWVector(size = %d) %s' % (len(self), self._ad_str())
+        return "EnsemblePlotGenKWVector(size = %d) %s" % (len(self), self._ad_str())

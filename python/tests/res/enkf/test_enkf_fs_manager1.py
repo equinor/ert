@@ -8,7 +8,6 @@ from res.enkf import EnKFMain
 from res.enkf import EnkfFsManager
 
 
-
 class EnKFFSManagerTest1(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("local/snake_oil/snake_oil.ert")
@@ -19,7 +18,9 @@ class EnKFFSManagerTest1(ResTest):
         # already in the enkf_main object. In principle we could
         # create a separate manager instance from the ground up, but
         # then the reference count will be weird.
-        with ErtTestContext("enkf_fs_manager_create_test", self.config_file) as testContext:
+        with ErtTestContext(
+            "enkf_fs_manager_create_test", self.config_file
+        ) as testContext:
             ert = testContext.getErt()
             fsm = ert.getEnkfFsManager()
 
@@ -43,4 +44,3 @@ class EnKFFSManagerTest1(ResTest):
             self.assertTrue(fsm.caseExists("newFS"))
             self.assertFalse(fsm.caseHasData("newFS"))
             self.assertFalse(fsm.isCaseRunning("newFS"))
-

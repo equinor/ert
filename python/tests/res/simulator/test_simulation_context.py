@@ -10,7 +10,6 @@ from res.simulator import SimulationContext
 
 
 class SimulationContextTest(ResTest):
-
     @tmpdir()
     def test_simulation_context(self):
         config_file = self.createTestPath("local/batch_sim/sleepy_time.ert")
@@ -49,10 +48,7 @@ class SimulationContextTest(ResTest):
             def any_is_running():
                 return even_ctx.isRunning() or odd_ctx.isRunning()
 
-            wait_until(
-                func=(lambda: self.assertFalse(any_is_running())),
-                timeout=90
-            )
+            wait_until(func=(lambda: self.assertFalse(any_is_running())), timeout=90)
 
             self.assertEqual(even_ctx.getNumFailed(), 0)
             self.assertEqual(even_ctx.getNumRunning(), 0)
@@ -71,10 +67,14 @@ class SimulationContextTest(ResTest):
                     self.assertFalse(even_ctx.didRealizationFail(iens))
                     self.assertTrue(even_ctx.isRealizationFinished(iens))
 
-                    self.assertEqual(even_state_map[iens], RealizationStateEnum.STATE_HAS_DATA)
+                    self.assertEqual(
+                        even_state_map[iens], RealizationStateEnum.STATE_HAS_DATA
+                    )
                 else:
                     self.assertTrue(odd_ctx.didRealizationSucceed(iens))
                     self.assertFalse(odd_ctx.didRealizationFail(iens))
                     self.assertTrue(odd_ctx.isRealizationFinished(iens))
 
-                    self.assertEqual(odd_state_map[iens], RealizationStateEnum.STATE_HAS_DATA)
+                    self.assertEqual(
+                        odd_state_map[iens], RealizationStateEnum.STATE_HAS_DATA
+                    )

@@ -23,21 +23,32 @@ from res.util.enums import MessageLevelEnum
 from res import ResPrototype
 from res.enkf import ConfigKeys
 
+
 class LogConfig(BaseCClass):
     TYPE_NAME = "log_config"
 
-    _alloc      = ResPrototype("void* log_config_alloc(config_content)", bind=False)
+    _alloc = ResPrototype("void* log_config_alloc(config_content)", bind=False)
     _alloc_load = ResPrototype("void* log_config_alloc_load(char*)", bind=False)
-    _alloc_full = ResPrototype("void* log_config_alloc_full(char*, message_level_enum)", bind=False)
-    _free       = ResPrototype("void log_config_free(log_config)")
-    _log_file   = ResPrototype("char* log_config_get_log_file(log_config)")
-    _log_level  = ResPrototype("message_level_enum log_config_get_log_level(log_config)")
+    _alloc_full = ResPrototype(
+        "void* log_config_alloc_full(char*, message_level_enum)", bind=False
+    )
+    _free = ResPrototype("void log_config_free(log_config)")
+    _log_file = ResPrototype("char* log_config_get_log_file(log_config)")
+    _log_level = ResPrototype("message_level_enum log_config_get_log_level(log_config)")
 
     def __init__(self, user_config_file=None, config_content=None, config_dict=None):
-        configs = sum([1 for x in [user_config_file, config_content, config_dict] if x is not None])
+        configs = sum(
+            [
+                1
+                for x in [user_config_file, config_content, config_dict]
+                if x is not None
+            ]
+        )
 
         if configs > 1:
-            raise IOError("Attempting to construct LogConfig with multiple config objects")
+            raise IOError(
+                "Attempting to construct LogConfig with multiple config objects"
+            )
 
         if configs == 0:
             raise IOError("Attempting to construct LogConfig with no config objects")
@@ -66,12 +77,11 @@ class LogConfig(BaseCClass):
             c_ptr = self._alloc_full(log_file, message_level)
 
         if c_ptr is None:
-            raise ValueError('Failed to construct LogConfig instance')
+            raise ValueError("Failed to construct LogConfig instance")
         super(LogConfig, self).__init__(c_ptr)
 
     def __repr__(self):
-        return "LogConfig(log_file=%s, log_level=%r)" % (
-                self.log_file, self.log_level)
+        return "LogConfig(log_file=%s, log_level=%r)" % (self.log_file, self.log_level)
 
     def free(self):
         self._free()

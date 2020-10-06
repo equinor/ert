@@ -21,19 +21,39 @@ from tests import ResTest
 from tests.utils import tmpdir
 from ecl.util.util import BoolVector
 
-from res.enkf import (EnsembleConfig, AnalysisConfig, ModelConfig, SiteConfig,
-                      EclConfig, EnkfObs, ErtTemplates, EnkfFs,
-                      EnKFState, EnkfVarType, ObsVector, RunArg, ResConfig)
+from res.enkf import (
+    EnsembleConfig,
+    AnalysisConfig,
+    ModelConfig,
+    SiteConfig,
+    EclConfig,
+    EnkfObs,
+    ErtTemplates,
+    EnkfFs,
+    EnKFState,
+    EnkfVarType,
+    ObsVector,
+    RunArg,
+    ResConfig,
+)
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_main import EnKFMain
-from res.enkf.enums import (EnkfObservationImplementationType, LoadFailTypeEnum,
-                            EnkfInitModeEnum, ErtImplType, RealizationStateEnum,
-                            EnkfRunType, EnkfFieldFileFormatEnum,
-                            EnkfTruncationType, ActiveMode)
+from res.enkf.enums import (
+    EnkfObservationImplementationType,
+    LoadFailTypeEnum,
+    EnkfInitModeEnum,
+    ErtImplType,
+    RealizationStateEnum,
+    EnkfRunType,
+    EnkfFieldFileFormatEnum,
+    EnkfTruncationType,
+    ActiveMode,
+)
 
 from res.enkf.observations.summary_observation import SummaryObservation
 
 import os
+
 
 @pytest.mark.unstable
 class EnKFRunpathTest(ResTest):
@@ -42,38 +62,69 @@ class EnKFRunpathTest(ResTest):
 
     @tmpdir()
     def test_with_gen_kw(self):
-        case_directory = self.createTestPath('local/snake_oil_no_data/')
-        with TestAreaContext('test_enkf_runpath', store_area=True) as work_area:
+        case_directory = self.createTestPath("local/snake_oil_no_data/")
+        with TestAreaContext("test_enkf_runpath", store_area=True) as work_area:
             work_area.copy_directory(case_directory)
-            res_config = ResConfig('snake_oil_no_data/snake_oil.ert')
+            res_config = ResConfig("snake_oil_no_data/snake_oil.ert")
             main = EnKFMain(res_config)
-            iactive = BoolVector(initial_size=main.getEnsembleSize(), default_value=False)
+            iactive = BoolVector(
+                initial_size=main.getEnsembleSize(), default_value=False
+            )
             iactive[0] = True
             fs = main.getEnkfFsManager().getCurrentFileSystem()
             run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, iactive)
             main.createRunpath(run_context)
-            self.assertFileExists('snake_oil_no_data/storage/snake_oil/runpath/realisation-0/iter-0/parameters.txt')
-            self.assertEqual(len(os.listdir('snake_oil_no_data/storage/snake_oil/runpath')), 1)
-            self.assertEqual(len(os.listdir('snake_oil_no_data/storage/snake_oil/runpath/realisation-0')), 1)
+            self.assertFileExists(
+                "snake_oil_no_data/storage/snake_oil/runpath/realisation-0/iter-0/parameters.txt"
+            )
+            self.assertEqual(
+                len(os.listdir("snake_oil_no_data/storage/snake_oil/runpath")), 1
+            )
+            self.assertEqual(
+                len(
+                    os.listdir(
+                        "snake_oil_no_data/storage/snake_oil/runpath/realisation-0"
+                    )
+                ),
+                1,
+            )
 
-            rp = main.create_runpath_list( )
+            rp = main.create_runpath_list()
             self.assertEqual(len(rp), 0)
             rp.load()
             self.assertEqual(len(rp), 1)
 
     @tmpdir()
     def test_without_gen_kw(self):
-        case_directory = self.createTestPath('local/snake_oil_no_data/')
-        with TestAreaContext('test_enkf_runpath', store_area=False) as work_area:
+        case_directory = self.createTestPath("local/snake_oil_no_data/")
+        with TestAreaContext("test_enkf_runpath", store_area=False) as work_area:
             work_area.copy_directory(case_directory)
-            res_config = ResConfig('snake_oil_no_data/snake_oil_no_gen_kw.ert')
+            res_config = ResConfig("snake_oil_no_data/snake_oil_no_gen_kw.ert")
             main = EnKFMain(res_config)
-            iactive = BoolVector(initial_size=main.getEnsembleSize(), default_value=False)
+            iactive = BoolVector(
+                initial_size=main.getEnsembleSize(), default_value=False
+            )
             iactive[0] = True
             fs = main.getEnkfFsManager().getCurrentFileSystem()
             run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, iactive)
             main.createRunpath(run_context)
-            self.assertDirectoryExists('snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath/realisation-0/iter-0')
-            self.assertFileDoesNotExist('snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath/realisation-0/iter-0/parameters.txt')
-            self.assertEqual(len(os.listdir('snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath')), 1)
-            self.assertEqual(len(os.listdir('snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath/realisation-0')), 1)
+            self.assertDirectoryExists(
+                "snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath/realisation-0/iter-0"
+            )
+            self.assertFileDoesNotExist(
+                "snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath/realisation-0/iter-0/parameters.txt"
+            )
+            self.assertEqual(
+                len(
+                    os.listdir("snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath")
+                ),
+                1,
+            )
+            self.assertEqual(
+                len(
+                    os.listdir(
+                        "snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath/realisation-0"
+                    )
+                ),
+                1,
+            )

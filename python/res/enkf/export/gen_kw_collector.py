@@ -8,12 +8,15 @@ from ecl.util.util import BoolVector
 
 
 class GenKwCollector(object):
-
     @staticmethod
     def createActiveList(ert, fs):
         state_map = fs.getStateMap()
         ens_mask = BoolVector(False, ert.getEnsembleSize())
-        state_map.selectMatching(ens_mask, RealizationStateEnum.STATE_INITIALIZED | RealizationStateEnum.STATE_HAS_DATA)
+        state_map.selectMatching(
+            ens_mask,
+            RealizationStateEnum.STATE_INITIALIZED
+            | RealizationStateEnum.STATE_HAS_DATA,
+        )
         active_list = BoolVector.createActiveList(ens_mask)
 
         return [iens for iens in active_list]
@@ -39,9 +42,13 @@ class GenKwCollector(object):
         gen_kw_keys = GenKwCollector.getAllGenKwKeys(ert)
 
         if keys is not None:
-            gen_kw_keys = [key for key in keys if key in gen_kw_keys] # ignore keys that doesn't exist
+            gen_kw_keys = [
+                key for key in keys if key in gen_kw_keys
+            ]  # ignore keys that doesn't exist
 
-        gen_kw_array = numpy.empty(shape=(len(gen_kw_keys), len(realizations)), dtype=numpy.float64)
+        gen_kw_array = numpy.empty(
+            shape=(len(gen_kw_keys), len(realizations)), dtype=numpy.float64
+        )
         gen_kw_array.fill(numpy.nan)
 
         for column_index, key in enumerate(gen_kw_keys):
@@ -66,8 +73,9 @@ class GenKwCollector(object):
 
                 gen_kw_array[column_index][realization_index] = value
 
-        gen_kw_data = DataFrame(data=numpy.transpose(gen_kw_array), index=realizations, columns=gen_kw_keys)
+        gen_kw_data = DataFrame(
+            data=numpy.transpose(gen_kw_array), index=realizations, columns=gen_kw_keys
+        )
         gen_kw_data.index.name = "Realization"
 
         return gen_kw_data
-

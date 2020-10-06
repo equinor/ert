@@ -20,17 +20,22 @@ from res import ResPrototype
 from res.enkf import EnkfFs, NodeId
 from res.enkf.data import GenKw, GenData, Field, ExtParam
 
+
 class EnkfNode(BaseCClass):
     TYPE_NAME = "enkf_node"
-    _alloc         = ResPrototype("void* enkf_node_alloc(enkf_config_node)", bind = False)
-    _alloc_private = ResPrototype("void* enkf_node_alloc_private_container(enkf_config_node)", bind = False)
-    _free          = ResPrototype("void  enkf_node_free(enkf_node)")
-    _get_name      = ResPrototype("char* enkf_node_get_key(enkf_node)")
-    _value_ptr     = ResPrototype("void* enkf_node_value_ptr(enkf_node)")
-    _try_load      = ResPrototype("bool  enkf_node_try_load(enkf_node, enkf_fs, node_id)")
-    _store         = ResPrototype("bool  enkf_node_store(enkf_node, enkf_fs, bool, node_id)")
-    _get_impl_type = ResPrototype("ert_impl_type_enum enkf_node_get_impl_type(enkf_node)")
-    _ecl_write     = ResPrototype("void enkf_node_ecl_write(enkf_node, char*, void*, int)")
+    _alloc = ResPrototype("void* enkf_node_alloc(enkf_config_node)", bind=False)
+    _alloc_private = ResPrototype(
+        "void* enkf_node_alloc_private_container(enkf_config_node)", bind=False
+    )
+    _free = ResPrototype("void  enkf_node_free(enkf_node)")
+    _get_name = ResPrototype("char* enkf_node_get_key(enkf_node)")
+    _value_ptr = ResPrototype("void* enkf_node_value_ptr(enkf_node)")
+    _try_load = ResPrototype("bool  enkf_node_try_load(enkf_node, enkf_fs, node_id)")
+    _store = ResPrototype("bool  enkf_node_store(enkf_node, enkf_fs, bool, node_id)")
+    _get_impl_type = ResPrototype(
+        "ert_impl_type_enum enkf_node_get_impl_type(enkf_node)"
+    )
+    _ecl_write = ResPrototype("void enkf_node_ecl_write(enkf_node, char*, void*, int)")
 
     def __init__(self, config_node, private=False):
         self._private = private
@@ -42,76 +47,83 @@ class EnkfNode(BaseCClass):
         if c_pointer:
             super(EnkfNode, self).__init__(c_pointer, config_node, True)
         else:
-            p_err = 'private ' if private else ''
-            raise ValueError('Unable to create %sEnkfNode from given config node.' % p_err)
+            p_err = "private " if private else ""
+            raise ValueError(
+                "Unable to create %sEnkfNode from given config node." % p_err
+            )
 
     @classmethod
-    def exportMany(cls , config_node , file_format , fs , iens_list  , report_step = 0 , file_type = None , arg = None):
-        node = EnkfNode( config_node )
+    def exportMany(
+        cls,
+        config_node,
+        file_format,
+        fs,
+        iens_list,
+        report_step=0,
+        file_type=None,
+        arg=None,
+    ):
+        node = EnkfNode(config_node)
         for iens in iens_list:
             filename = file_format % iens
-            node_id = NodeId( report_step , iens )
-            if node.tryLoad(fs , node_id):
-                if node.export( filename , file_type = file_type , arg = arg):
-                    print("%s[%03d] -> %s" % (config_node.getKey() , iens , filename))
+            node_id = NodeId(report_step, iens)
+            if node.tryLoad(fs, node_id):
+                if node.export(filename, file_type=file_type, arg=arg):
+                    print("%s[%03d] -> %s" % (config_node.getKey(), iens, filename))
             else:
-                sys.stderr.write("** ERROR: Could not load realisation:%d - export failed" % iens)
+                sys.stderr.write(
+                    "** ERROR: Could not load realisation:%d - export failed" % iens
+                )
 
-
-    def export(self , filename , file_type = None , arg = None):
+    def export(self, filename, file_type=None, arg=None):
         impl_type = self.getImplType()
         if impl_type == ErtImplType.FIELD:
-            field_node = self.asField( )
-            return field_node.export( filename , file_type = file_type , init_file = arg)
+            field_node = self.asField()
+            return field_node.export(filename, file_type=file_type, init_file=arg)
         else:
             raise NotImplementedError("The export method is only implemented for field")
 
-
-
     def valuePointer(self):
-        return self._value_ptr( )
-
+        return self._value_ptr()
 
     def getImplType(self):
         """ @rtype: res.enkf.enums.ert_impl_type_enum.ErtImplType """
-        return self._get_impl_type( )
-
+        return self._get_impl_type()
 
     def asGenData(self):
         """ @rtype: GenData """
-        impl_type = self.getImplType( )
+        impl_type = self.getImplType()
         assert impl_type == ErtImplType.GEN_DATA
 
         return GenData.createCReference(self.valuePointer(), self)
 
     def asGenKw(self):
         """ @rtype: GenKw """
-        impl_type = self.getImplType( )
+        impl_type = self.getImplType()
         assert impl_type == ErtImplType.GEN_KW
 
         return GenKw.createCReference(self.valuePointer(), self)
 
     def asField(self):
         """ @rtype: Field """
-        impl_type = self.getImplType( )
+        impl_type = self.getImplType()
         assert impl_type == ErtImplType.FIELD
 
         return Field.createCReference(self.valuePointer(), self)
 
     def as_summary(self):
         """ @rtype: Summary """
-        impl_type = self.getImplType( )
+        impl_type = self.getImplType()
         assert impl_type == ErtImplType.SUMMARY
 
         return Summary.createCReference(self.valuePointer(), self)
 
     def as_ext_param(self):
         """ @rtype: ExtParam """
-        impl_type = self.getImplType( )
+        impl_type = self.getImplType()
         assert impl_type == ErtImplType.EXT_PARAM
 
         return ExtParam.createCReference(self.valuePointer(), self)
-
 
     def tryLoad(self, fs, node_id):
         """
@@ -120,19 +132,22 @@ class EnkfNode(BaseCClass):
         @rtype: bool
         """
         if not isinstance(fs, EnkfFs):
-            raise TypeError('fs must be an EnkfFs, not %s' % type(fs))
+            raise TypeError("fs must be an EnkfFs, not %s" % type(fs))
         if not isinstance(node_id, NodeId):
-            raise TypeError('node_id must be a NodeId, not %s' % type(node_id))
+            raise TypeError("node_id must be a NodeId, not %s" % type(node_id))
 
         return self._try_load(fs, node_id)
 
     def name(self):
         """ @rtype: str """
-        return self._get_name( )
+        return self._get_name()
 
     def load(self, fs, node_id):
         if not self.tryLoad(fs, node_id):
-            raise Exception("Could not load node: %s iens: %d report: %d" % (self.name(), node_id.iens, node_id.report_step))
+            raise Exception(
+                "Could not load node: %s iens: %d report: %d"
+                % (self.name(), node_id.iens, node_id.report_step)
+            )
 
     def save(self, fs, node_id):
         assert isinstance(fs, EnkfFs)
@@ -141,14 +156,13 @@ class EnkfNode(BaseCClass):
         return self._store(fs, False, node_id)
 
     def free(self):
-        self._free( )
+        self._free()
 
     def __repr__(self):
-        pp = ', private' if self._private else ''
+        pp = ", private" if self._private else ""
         return 'EnkfNode(name = "%s"%s) %s' % (self.name(), pp, self._ad_str())
-
 
     def ecl_write(self, path):
         filestream_ptr = None
         report_step = 0
-        self._ecl_write( path, filestream_ptr, report_step )
+        self._ecl_write(path, filestream_ptr, report_step)

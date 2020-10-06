@@ -22,27 +22,31 @@ from ecl.util.util import BoolVector
 class StateMap(BaseCClass):
     TYPE_NAME = "state_map"
 
-    _alloc               = ResPrototype("void* state_map_alloc()", bind = False)
-    _fread               = ResPrototype("bool  state_map_fread(state_map , char*)")
-    _fwrite              = ResPrototype("void  state_map_fwrite(state_map , char*)")
-    _equal               = ResPrototype("bool  state_map_equal(state_map , state_map)")
-    _free                = ResPrototype("void  state_map_free(state_map)")
-    _size                = ResPrototype("int   state_map_get_size(state_map)")
-    _iget                = ResPrototype("realisation_state_enum state_map_iget(state_map, int)")
-    _iset                = ResPrototype("void  state_map_iset(state_map, int, realisation_state_enum)")
-    _select_matching     = ResPrototype("void  state_map_select_matching(state_map, bool_vector, realisation_state_enum)")
-    _deselect_matching   = ResPrototype("void  state_map_deselect_matching(state_map, bool_vector, realisation_state_enum)")
-    _is_read_only        = ResPrototype("bool  state_map_is_readonly(state_map)")
-    _is_legal_transition = ResPrototype("bool  state_map_legal_transition(realisation_state_enum, realisation_state_enum)", bind = False)
+    _alloc = ResPrototype("void* state_map_alloc()", bind=False)
+    _fread = ResPrototype("bool  state_map_fread(state_map , char*)")
+    _fwrite = ResPrototype("void  state_map_fwrite(state_map , char*)")
+    _equal = ResPrototype("bool  state_map_equal(state_map , state_map)")
+    _free = ResPrototype("void  state_map_free(state_map)")
+    _size = ResPrototype("int   state_map_get_size(state_map)")
+    _iget = ResPrototype("realisation_state_enum state_map_iget(state_map, int)")
+    _iset = ResPrototype("void  state_map_iset(state_map, int, realisation_state_enum)")
+    _select_matching = ResPrototype(
+        "void  state_map_select_matching(state_map, bool_vector, realisation_state_enum)"
+    )
+    _deselect_matching = ResPrototype(
+        "void  state_map_deselect_matching(state_map, bool_vector, realisation_state_enum)"
+    )
+    _is_read_only = ResPrototype("bool  state_map_is_readonly(state_map)")
+    _is_legal_transition = ResPrototype(
+        "bool  state_map_legal_transition(realisation_state_enum, realisation_state_enum)",
+        bind=False,
+    )
 
-
-
-    def __init__(self , filename = None):
+    def __init__(self, filename=None):
         c_ptr = self._alloc()
         super(StateMap, self).__init__(c_ptr)
         if filename:
             self.load(filename)
-
 
     def __len__(self):
         """ @rtype: int """
@@ -56,9 +60,8 @@ class StateMap(BaseCClass):
             yield self[index]
             index += 1
 
-    def __eq__(self , other):
+    def __eq__(self, other):
         return self._equal(other)
-
 
     def __getitem__(self, index):
         """ @rtype: RealizationStateEnum """
@@ -71,7 +74,6 @@ class StateMap(BaseCClass):
         if 0 <= index < size:
             return self._iget(index)
         raise IndexError("Invalid index.  Valid range: [0, %d)" % size)
-
 
     def __setitem__(self, index, value):
         if self.isReadOnly():
@@ -94,11 +96,12 @@ class StateMap(BaseCClass):
     def isLegalTransition(cls, realization_state1, realization_state2):
         """ @rtype: bool """
 
-        if not isinstance(realization_state1, RealizationStateEnum) or not isinstance(realization_state2, RealizationStateEnum):
+        if not isinstance(realization_state1, RealizationStateEnum) or not isinstance(
+            realization_state2, RealizationStateEnum
+        ):
             raise TypeError("Expected a RealizationStateEnum")
 
         return cls._is_legal_transition(realization_state1, realization_state2)
-
 
     def isReadOnly(self):
         """ @rtype: bool """
@@ -124,8 +127,7 @@ class StateMap(BaseCClass):
 
         self._deselect_matching(select_target, select_mask)
 
-
-    def realizationList(self , state_value):
+    def realizationList(self, state_value):
         """
         Will create a list of all realisations with state equal to state_value.
 
@@ -134,7 +136,6 @@ class StateMap(BaseCClass):
         """
         mask = self.createMask(state_value)
         return BoolVector.createActiveList(mask)
-
 
     def createMask(self, state_value):
         """
@@ -147,18 +148,16 @@ class StateMap(BaseCClass):
         self.selectMatching(mask, state_value)
         return mask
 
-
     def free(self):
         self._free()
 
     def __repr__(self):
-        ro = 'read only' if self.isReadOnly() else 'read/write'
-        return 'StateMap(size = %d, %s) %s' % (len(self), ro, self._ad_str())
+        ro = "read only" if self.isReadOnly() else "read/write"
+        return "StateMap(size = %d, %s) %s" % (len(self), ro, self._ad_str())
 
-    def load(self,filename):
+    def load(self, filename):
         if not self._fread(filename):
             raise IOError("Failed to load state map from:%s" % filename)
-
 
     def save(self, filename):
         self._fwrite(filename)

@@ -19,14 +19,19 @@ from res import ResPrototype
 from res.sched import HistorySourceEnum
 from ecl.summary import EclSum
 
+
 class History(BaseCClass):
     TYPE_NAME = "history"
 
-    _alloc_from_refcase    = ResPrototype("void* history_alloc_from_refcase(ecl_sum, bool)", bind = False)
-    _get_source_string     = ResPrototype("char* history_get_source_string(history_source_enum)", bind = False)
-    _free                  = ResPrototype("void  history_free( history )")
+    _alloc_from_refcase = ResPrototype(
+        "void* history_alloc_from_refcase(ecl_sum, bool)", bind=False
+    )
+    _get_source_string = ResPrototype(
+        "char* history_get_source_string(history_source_enum)", bind=False
+    )
+    _free = ResPrototype("void  history_free( history )")
 
-    def __init__(self, refcase = None, use_history = False, sched_file = None):
+    def __init__(self, refcase=None, use_history=False, sched_file=None):
         """
         @type refcase: EclSum
         @type use_history: bool
@@ -36,15 +41,15 @@ class History(BaseCClass):
             raise ValueError("Cannot create history from sched_file.")
 
         if refcase is None:
-            ValueError('Refcase cannot be None when creating a History.')
+            ValueError("Refcase cannot be None when creating a History.")
 
-        self._init_from = 'refcase'
-        self._init_val  = str(refcase)
+        self._init_from = "refcase"
+        self._init_val = str(refcase)
         c_ptr = self._alloc_from_refcase(refcase, use_history)
         if c_ptr:
             super(History, self).__init__(c_ptr)
         else:
-            raise ValueError('Invalid input.  Failed to create History.')
+            raise ValueError("Invalid input.  Failed to create History.")
 
     @staticmethod
     def get_source_string(history_source_type):
@@ -55,10 +60,10 @@ class History(BaseCClass):
         return History._get_source_string(history_source_type)
 
     def free(self):
-        self._free( self )
+        self._free(self)
 
     def __repr__(self):
         fr = self._init_from
         va = self._init_val
         ad = self._ad_str()
-        return 'History(init_from = %s: %s) %s' % (fr,va,ad)
+        return "History(init_from = %s: %s) %s" % (fr, va, ad)

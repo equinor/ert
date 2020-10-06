@@ -12,7 +12,6 @@ from res.enkf import EnKFMain, ResConfig
 
 @pytest.mark.equinor_test
 class SummaryKeySetTest(ResTest):
-
     def test_creation(self):
 
         keys = SummaryKeySet()
@@ -35,8 +34,6 @@ class SummaryKeySetTest(ResTest):
 
         self.assertItemsEqual(["WWCT", "FOPT"], keys.keys())
 
-
-
     def test_read_only_creation(self):
         with TestAreaContext("enkf/summary_key_set/read_only_write_test"):
             keys = SummaryKeySet()
@@ -52,7 +49,6 @@ class SummaryKeySetTest(ResTest):
 
             self.assertTrue(keys_from_file.isReadOnly())
             self.assertFalse(keys_from_file.addSummaryKey("WOPR"))
-
 
     def test_write_to_and_read_from_file(self):
         with TestAreaContext("enkf/summary_key_set/write_test"):
@@ -72,11 +68,12 @@ class SummaryKeySetTest(ResTest):
             keys_from_file = SummaryKeySet(filename)
             self.assertItemsEqual(keys.keys(), keys_from_file.keys())
 
-
     def test_with_enkf_fs(self):
         config_file = self.createTestPath("Equinor/config/with_data/config")
 
-        with TestAreaContext("enkf/summary_key_set/enkf_fs", store_area=True) as context:
+        with TestAreaContext(
+            "enkf/summary_key_set/enkf_fs", store_area=True
+        ) as context:
             context.copy_parent_content(config_file)
 
             fs = EnkfFs("storage/default")
@@ -100,5 +97,3 @@ class SummaryKeySetTest(ResTest):
             self.assertTrue("WWCT" in ensemble_config)
             self.assertTrue("WOPR" in ensemble_config)
             self.assertFalse("TCPU" in ensemble_config)
-
-

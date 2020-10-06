@@ -25,7 +25,6 @@ from res.fm.rms import RMSConfig
 
 
 class RMSConfigTest(ResTest):
-
     def setUp(self):
         self.monkeypatch = MonkeyPatch()
         pass
@@ -38,15 +37,17 @@ class RMSConfigTest(ResTest):
         with self.assertRaises(IOError):
             conf = RMSConfig()
 
-        self.monkeypatch.setenv("RMS_SITE_CONFIG", os.path.join(self.SOURCE_ROOT, "python/res/fm/rms/rms_config.yml"))
+        self.monkeypatch.setenv(
+            "RMS_SITE_CONFIG",
+            os.path.join(self.SOURCE_ROOT, "python/res/fm/rms/rms_config.yml"),
+        )
         conf = RMSConfig()
 
         with self.assertRaises(OSError):
             exe = conf.executable
 
-
         with TestAreaContext("yaml"):
-            with open("file.yml","w") as f:
+            with open("file.yml", "w") as f:
                 f.write("this:\n -should\n-be\ninvalid:yaml?")
 
             self.monkeypatch.setenv("RMS_SITE_CONFIG", "file.yml")
@@ -71,6 +72,7 @@ class RMSConfigTest(ResTest):
 
             conf = RMSConfig()
             self.assertEqual(conf.threads, 17)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -13,14 +13,15 @@ class _NonePrototype(cwrap.Prototype):
 
 
 class FunctionErtScript(ErtScript):
-
     def __init__(self, ert, function_name, argument_types, argument_count):
         super(FunctionErtScript, self).__init__(ert)
 
         parsed_argument_types = []
 
         if ert is not None:
-            self.__function = _NonePrototype("void* %s(void*, stringlist)" % function_name)
+            self.__function = _NonePrototype(
+                "void* %s(void*, stringlist)" % function_name
+            )
 
         else:
             for arg in argument_types:
@@ -35,8 +36,10 @@ class FunctionErtScript(ErtScript):
                 else:
                     raise TypeError("Unknown type: %s" % arg)
 
-            self.__function = _NonePrototype("void* %s(%s)" % (function_name, ", ".join(parsed_argument_types[:argument_count])))
-
+            self.__function = _NonePrototype(
+                "void* %s(%s)"
+                % (function_name, ", ".join(parsed_argument_types[:argument_count]))
+            )
 
     def run(self, *args):
         ert = self.ert()
@@ -51,14 +54,10 @@ class FunctionErtScript(ErtScript):
             if hasattr(ert, "from_param"):
                 pointer = ert.from_param(ert)
             else:
-                pointer = ert # ...
+                pointer = ert  # ...
 
             return self.__function(pointer, str_args)
 
     def cancel(self):
         # job is not cancellable and will just ignore the call
         pass
-
-
-
-

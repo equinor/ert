@@ -25,16 +25,35 @@ from tests import ResTest
 from tests.utils import tmpdir
 from ecl.util.util import BoolVector
 
-from res.enkf import (EnsembleConfig, AnalysisConfig, ModelConfig, SiteConfig,
-                      EclConfig, EnkfObs, ErtTemplates, EnkfFs,
-                      EnKFState, EnkfVarType, ObsVector, RunArg, ResConfig)
+from res.enkf import (
+    EnsembleConfig,
+    AnalysisConfig,
+    ModelConfig,
+    SiteConfig,
+    EclConfig,
+    EnkfObs,
+    ErtTemplates,
+    EnkfFs,
+    EnKFState,
+    EnkfVarType,
+    ObsVector,
+    RunArg,
+    ResConfig,
+)
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_main import EnKFMain
 from res.enkf.ert_run_context import ErtRunContext
-from res.enkf.enums import (EnkfObservationImplementationType, LoadFailTypeEnum,
-                            EnkfInitModeEnum, ErtImplType, RealizationStateEnum,
-                            EnkfRunType, EnkfFieldFileFormatEnum,
-                            EnkfTruncationType, ActiveMode)
+from res.enkf.enums import (
+    EnkfObservationImplementationType,
+    LoadFailTypeEnum,
+    EnkfInitModeEnum,
+    ErtImplType,
+    RealizationStateEnum,
+    EnkfRunType,
+    EnkfFieldFileFormatEnum,
+    EnkfTruncationType,
+    ActiveMode,
+)
 
 from res.enkf.observations.summary_observation import SummaryObservation
 from res.test import ErtTestContext
@@ -42,48 +61,48 @@ from res.test import ErtTestContext
 
 @pytest.mark.unstable
 class EnKFTestTransferEnv(ResTest):
+    def setUp(self):
+        pass
 
-  def setUp(self):
-    pass
+    @tmpdir()
+    def test_transfer_var(self):
 
-  @tmpdir()
-  def test_transfer_var(self):
+        with TestAreaContext("enkf_test_transfer_env") as work_area:
+            base_path = os.getcwd()
+            source_path = self.createTestPath("local/snake_oil_no_data")
 
-    with TestAreaContext('enkf_test_transfer_env') as work_area:
-      base_path = os.getcwd()
-      source_path = self.createTestPath('local/snake_oil_no_data')
+            work_area.copy_directory(source_path)
+            dir_ert = os.path.join(base_path, "snake_oil_no_data")
+            assert os.path.isdir(dir_ert)
 
-      work_area.copy_directory(source_path)
-      dir_ert = os.path.join(base_path, 'snake_oil_no_data');
-      assert(os.path.isdir(  dir_ert  )  )
+            file_ert = os.path.join(dir_ert, "snake_oil.ert")
+            assert os.path.isfile(file_ert)
 
-      file_ert = os.path.join(dir_ert, 'snake_oil.ert')
-      assert(  os.path.isfile(file_ert)  )
+            with ErtTestContext(
+                "transfer_env_var", model_config=file_ert, store_area=True
+            ) as ctx:
+                ert = ctx.getErt()
+                fs_manager = ert.getEnkfFsManager()
+                result_fs = fs_manager.getCurrentFileSystem()
 
-      with ErtTestContext( "transfer_env_var", model_config = file_ert, store_area = True) as ctx:
-        ert = ctx.getErt( )
-        fs_manager = ert.getEnkfFsManager()
-        result_fs = fs_manager.getCurrentFileSystem( )
+                model_config = ert.getModelConfig()
+                runpath_fmt = model_config.getRunpathFormat()
+                jobname_fmt = model_config.getJobnameFormat()
+                subst_list = ert.getDataKW()
+                itr = 0
+                mask = BoolVector(default_value=True, initial_size=1)
+                run_context = ErtRunContext.ensemble_experiment(
+                    result_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr
+                )
+                ert.getEnkfSimulationRunner().createRunPath(run_context)
+                os.chdir("storage/snake_oil/runpath/realisation-0/iter-0")
+                assert os.path.isfile("jobs.json")
+                with open("jobs.json", "r") as f:
+                    data = json.load(f)
+                    env_data = data["global_environment"]
+                    self.assertEqual("TheFirstValue", env_data["FIRST"])
+                    self.assertEqual("TheSecondValue", env_data["SECOND"])
 
-        model_config = ert.getModelConfig( )
-        runpath_fmt = model_config.getRunpathFormat( )
-        jobname_fmt = model_config.getJobnameFormat( )
-        subst_list = ert.getDataKW( )
-        itr = 0
-        mask = BoolVector( default_value = True, initial_size = 1 )
-        run_context = ErtRunContext.ensemble_experiment( result_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr)
-        ert.getEnkfSimulationRunner().createRunPath( run_context )
-        os.chdir('storage/snake_oil/runpath/realisation-0/iter-0')
-        assert(   os.path.isfile('jobs.json')   )
-        with open("jobs.json", "r") as f:
-          data = json.load(f)
-          env_data = data["global_environment"]
-          self.assertEqual('TheFirstValue', env_data["FIRST"])
-          self.assertEqual('TheSecondValue', env_data["SECOND"])
-
-          path_data = data["global_update_path"]
-          self.assertEqual('TheThirdValue', path_data["THIRD"])
-          self.assertEqual('TheFourthValue', path_data["FOURTH"])
-
-
-    
+                    path_data = data["global_update_path"]
+                    self.assertEqual("TheThirdValue", path_data["THIRD"])
+                    self.assertEqual("TheFourthValue", path_data["FOURTH"])

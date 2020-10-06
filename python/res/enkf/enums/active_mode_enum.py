@@ -15,6 +15,7 @@
 #  for more details.
 from cwrap import BaseCEnum
 
+
 class ActiveMode(BaseCEnum):
     TYPE_NAME = "active_mode_enum"
     ALL_ACTIVE = None

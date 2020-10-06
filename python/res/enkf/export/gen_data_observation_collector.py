@@ -3,22 +3,23 @@ from res.enkf import EnKFMain, EnkfFs, EnkfObservationImplementationType
 
 
 class GenDataObservationCollector(object):
-
     @staticmethod
     def getAllObservationKeys(ert):
         """
-         @type ert: EnKFMain
-         @rtype: list of str
+        @type ert: EnKFMain
+        @rtype: list of str
         """
         enkf_obs = ert.getObservations()
-        observation_keys = enkf_obs.getTypedKeylist(EnkfObservationImplementationType.GEN_OBS)
+        observation_keys = enkf_obs.getTypedKeylist(
+            EnkfObservationImplementationType.GEN_OBS
+        )
         return [key for key in observation_keys]
 
     @staticmethod
     def getObservationKeyForDataKey(ert, data_key, data_report_step):
         """
-         @type ert: EnKFMain
-         @rtype: str
+        @type ert: EnKFMain
+        @rtype: str
         """
         observation_key = None
 
@@ -33,7 +34,6 @@ class GenDataObservationCollector(object):
 
         return observation_key
 
-
     @staticmethod
     def loadGenDataObservations(ert, case_name, key):
         """
@@ -44,7 +44,9 @@ class GenDataObservationCollector(object):
         """
         fs = ert.getEnkfFsManager().getFileSystem(case_name)
 
-        available_observation_keys = GenDataObservationCollector.getAllObservationKeys(ert)
+        available_observation_keys = GenDataObservationCollector.getAllObservationKeys(
+            ert
+        )
         if not key in available_observation_keys:
             raise KeyError("Key '%s' is not a valid observation key")
 

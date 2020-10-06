@@ -3,13 +3,14 @@ from ecl.util.util import BoolVector
 from res.enkf import ResConfig, EnKFMain, EnkfConfigNode, EnkfNode, NodeId
 from .batch_simulator_context import BatchContext
 
+
 def _slug(entity):
-    entity = ' '.join(str(entity).split())
-    return ''.join([x if x.isalnum() else '_' for x in entity.strip()])
+    entity = " ".join(str(entity).split())
+    return "".join([x if x.isalnum() else "_" for x in entity.strip()])
+
 
 class BatchSimulator(object):
-
-    def __init__(self, res_config, controls, results, callback = None):
+    def __init__(self, res_config, controls, results, callback=None):
         """Will create simulator which can be used to run multiple simulations.
 
         The @res_config argument should be a ResConfig object, representing the
@@ -91,18 +92,16 @@ class BatchSimulator(object):
         for key in results:
             ens_config.addNode(EnkfConfigNode.create_gen_data(key, "{}_%d".format(key)))
 
-
     def _setup_sim(self, sim_id, controls, file_system):
         def _set_ext_param(ext_param, key, assignment):
             if isinstance(assignment, dict):  # handle suffixes
                 suffixes = ext_param.config[key]
                 if len(assignment) != len(suffixes):
                     raise KeyError(
-                        "Key {} is missing values for these suffixes: {}"
-                        .format(key,
-                                set(suffixes).difference(
-                                    set(assignment.keys()))
-                                ))
+                        "Key {} is missing values for these suffixes: {}".format(
+                            key, set(suffixes).difference(set(assignment.keys()))
+                        )
+                    )
                 for suffix, value in assignment.items():
                     ext_node[key, suffix] = value
             else:  # assume assignment is a single numerical value
@@ -118,20 +117,17 @@ class BatchSimulator(object):
             node = EnkfNode(ens_config[control_name])
             ext_node = node.as_ext_param()
             if len(ext_node) != len(control.keys()):
-                raise KeyError((
-                    "Expected {} variables for control {}, "
-                    "received {}."
-                    ).format(len(ext_node),
-                        control_name,
-                        len(control.keys())
-                        ))
+                raise KeyError(
+                    ("Expected {} variables for control {}, " "received {}.").format(
+                        len(ext_node), control_name, len(control.keys())
+                    )
+                )
             for var_name, var_setting in control.items():
                 _set_ext_param(ext_node, var_name, var_setting)
             node.save(file_system, node_id)
 
-
     def start(self, case_name, case_data):
-        """ Start batch simulation, return a simulation context
+        """Start batch simulation, return a simulation context
 
         The start method will submit simulations to the queue system and then
         return a BatchContext handle which can be used to query for simulation
@@ -191,7 +187,7 @@ class BatchSimulator(object):
 
         self.ert.addDataKW("<CASE_NAME>", _slug(case_name))
         file_system = self.ert.getEnkfFsManager().getFileSystem(case_name)
-        for sim_id, (geo_id, controls)  in enumerate(case_data):
+        for sim_id, (geo_id, controls) in enumerate(case_data):
             assert isinstance(geo_id, int)
             self._setup_sim(sim_id, controls, file_system)
 
@@ -202,7 +198,8 @@ class BatchSimulator(object):
         itr = 0
         mask = BoolVector(default_value=True, initial_size=len(case_data))
         sim_context = BatchContext(
-            self.result_keys, self.ert, file_system, mask, itr, case_data)
+            self.result_keys, self.ert, file_system, mask, itr, case_data
+        )
 
         if self.callback:
             self.callback(sim_context)

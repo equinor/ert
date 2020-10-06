@@ -15,38 +15,39 @@
 #  for more details.
 
 from tests import ResTest
-from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
+from res.analysis import (
+    AnalysisModule,
+    AnalysisModuleLoadStatusEnum,
+    AnalysisModuleOptionsEnum,
+)
 
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.util.rng import RandomNumberGenerator
 
 
 class StdEnKFTest(ResTest):
-
     def setUp(self):
-        self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
-        self.module = AnalysisModule(name = "STD_ENKF" )
+        self.rng = RandomNumberGenerator(
+            RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT
+        )
+        self.module = AnalysisModule(name="STD_ENKF")
 
     def toggleKey(self, key):
-        self.assertTrue( self.module.hasVar( key ))
+        self.assertTrue(self.module.hasVar(key))
 
         # check it is true
-        self.assertTrue( self.module.setVar( key , True ) )
-        self.assertTrue( self.module.getBool(key) )
+        self.assertTrue(self.module.setVar(key, True))
+        self.assertTrue(self.module.getBool(key))
 
         # set it to false
-        self.assertTrue( self.module.setVar( key , False ) )
-        self.assertFalse( self.module.getBool(key) )
+        self.assertTrue(self.module.setVar(key, False))
+        self.assertFalse(self.module.getBool(key))
 
     def test_EE_option(self):
-        self.toggleKey( 'USE_EE' )
+        self.toggleKey("USE_EE")
 
     def test_GE_option(self):
-        self.toggleKey( 'USE_GE' )
-
+        self.toggleKey("USE_GE")
 
     def test_scaledata_option(self):
-        self.toggleKey( 'ANALYSIS_SCALE_DATA' )
-
-
-    
+        self.toggleKey("ANALYSIS_SCALE_DATA")

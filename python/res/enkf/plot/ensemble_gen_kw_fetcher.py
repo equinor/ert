@@ -24,7 +24,9 @@ class EnsembleGenKWFetcher(DataFetcher):
         super(EnsembleGenKWFetcher, self).__init__(ert)
 
     def fetchSupportedKeys(self):
-        gen_kw_keys = self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
+        gen_kw_keys = (
+            self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
+        )
         gen_kw_list = []
         for key in gen_kw_keys:
             enkf_config_node = self.ert().ensembleConfig().getNode(key)
@@ -37,13 +39,11 @@ class EnsembleGenKWFetcher(DataFetcher):
 
         return gen_kw_list
 
-
     def getEnsembleConfigNode(self, key):
         """ @rtype: EnsembleConfig """
         ensemble_config = self.ert().ensembleConfig()
         assert key in ensemble_config
         return ensemble_config.getNode(key)
-
 
     def fetchData(self, key, case=None):
         key, keyword = key.split(":")
@@ -54,13 +54,15 @@ class EnsembleGenKWFetcher(DataFetcher):
 
         use_log_scale = ensemble_plot_gen_kw.shouldUseLogScale(keyword_index)
 
-        data = {"x": [0],
-                "y": [],
-                "min_y": None,
-                "max_y": None,
-                "min_x": 0,
-                "max_x": 0,
-                "use_log_scale": use_log_scale}
+        data = {
+            "x": [0],
+            "y": [],
+            "min_y": None,
+            "max_y": None,
+            "min_x": 0,
+            "max_x": 0,
+            "use_log_scale": use_log_scale,
+        }
 
         for vector in ensemble_plot_gen_kw:
             y = []
@@ -77,4 +79,3 @@ class EnsembleGenKWFetcher(DataFetcher):
                     data["max_y"] = value
 
         return data
-

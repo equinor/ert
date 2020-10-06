@@ -3,7 +3,6 @@ from ecl.util.util import DoubleVector
 
 
 class PlotBlockData(object):
-
     def __init__(self, depth_vector):
         """
         @type depth_vector: DoubleVector
@@ -12,11 +11,9 @@ class PlotBlockData(object):
         self.__depth_vector = depth_vector
         self.__plot_block_vectors = {}
 
-
     def __len__(self):
         """ @rtype: int """
         return len(self.__plot_block_vectors)
-
 
     def __getitem__(self, index):
         """
@@ -35,7 +32,6 @@ class PlotBlockData(object):
     def getDepth(self):
         """ @rtype: DoubleVector """
         return self.__depth_vector
-
 
     def addPlotBlockVector(self, vector):
         """

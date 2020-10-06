@@ -18,28 +18,27 @@
 from cwrap import BaseCClass
 from res import ResPrototype
 
+
 class EnvironmentVarlist(BaseCClass):
-  TYPE_NAME      = "env_varlist"
+    TYPE_NAME = "env_varlist"
 
-  _alloc                    = ResPrototype("void* env_varlist_alloc()", bind=False)
-  _free                     = ResPrototype("void env_varlist_free( env_varlist )")
-  _setenv                   = ResPrototype("void env_varlist_setenv(env_varlist, char*, char*)")
-  _get_size                 = ResPrototype("int env_varlist_get_size(env_varlist)")
+    _alloc = ResPrototype("void* env_varlist_alloc()", bind=False)
+    _free = ResPrototype("void env_varlist_free( env_varlist )")
+    _setenv = ResPrototype("void env_varlist_setenv(env_varlist, char*, char*)")
+    _get_size = ResPrototype("int env_varlist_get_size(env_varlist)")
 
-  def __init__(self):
-    c_ptr = self._alloc()
-    super(EnvironmentVarlist , self).__init__(c_ptr)
+    def __init__(self):
+        c_ptr = self._alloc()
+        super(EnvironmentVarlist, self).__init__(c_ptr)
 
-  def __len__(self):
-    """
-    Returns the number of elements. Implements len()
-    """
-    return self._get_size()
+    def __len__(self):
+        """
+        Returns the number of elements. Implements len()
+        """
+        return self._get_size()
 
-  def __setitem__(self, var, value):
-    self._setenv(var, value)
+    def __setitem__(self, var, value):
+        self._setenv(var, value)
 
-  def free(self):
-    self._free( )
-
-
+    def free(self):
+        self._free()

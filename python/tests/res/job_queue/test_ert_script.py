@@ -8,13 +8,16 @@ class ReturnErtScript(ErtScript):
     def run(self):
         return self.ert()
 
+
 class AddScript(ErtScript):
     def run(self, arg1, arg2):
         return arg1 + arg2
 
+
 class FailScript(ErtScript):
     def rum(self):
         pass
+
 
 class NoneScript(ErtScript):
     def run(self, arg):
@@ -22,7 +25,6 @@ class NoneScript(ErtScript):
 
 
 class ErtScriptTest(ResTest):
-
     @staticmethod
     def createScripts():
         WorkflowCommon.createErtScriptsJob()
@@ -36,12 +38,10 @@ class ErtScriptTest(ResTest):
         with open("empty_script.py", "w") as f:
             f.write("from res.enkf import ErtScript\n")
 
-
     def test_ert_script_return_ert(self):
         script = ReturnErtScript("ert")
         result = script.initializeAndRun([], [])
         self.assertEqual(result, "ert")
-
 
     def test_ert_script_add(self):
         script = AddScript("ert")
@@ -53,11 +53,9 @@ class ErtScriptTest(ResTest):
         with self.assertRaises(ValueError):
             result = script.initializeAndRun([int, int], ["5", "4.6"])
 
-
     def test_ert_script_failed_implementation(self):
         with self.assertRaises(UserWarning):
             script = FailScript("ert")
-
 
     def test_ert_script_from_file(self):
         with TestAreaContext("python/job_queue/ert_script") as work_area:
@@ -69,15 +67,13 @@ class ErtScriptTest(ResTest):
             result = script.initializeAndRun([int, int], ["1", "2"])
             self.assertEqual(result, -1)
 
-
             # with self.assertRaises(ErtScriptError):
             self.assertIsNone(ErtScript.loadScriptFromFile("syntax_error_script.py"))
             self.assertIsNone(ErtScript.loadScriptFromFile("import_error_script.py"))
             self.assertIsNone(ErtScript.loadScriptFromFile("empty_script.py"))
 
-
     def test_none_ert_script(self):
-        #Check if None is not converted to string "None"
+        # Check if None is not converted to string "None"
         script = NoneScript("ert")
 
         script.initializeAndRun([str], [None])

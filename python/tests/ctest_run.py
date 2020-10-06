@@ -18,9 +18,11 @@ def runTestCase(tests, verbosity=0):
         return True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     TEST_PYTHONPATH = sys.argv[1]
-    os.environ["PYTHONPATH"] = TEST_PYTHONPATH + os.pathsep + os.getenv("PYTHONPATH", "")
+    os.environ["PYTHONPATH"] = (
+        TEST_PYTHONPATH + os.pathsep + os.getenv("PYTHONPATH", "")
+    )
     for path_element in reversed(TEST_PYTHONPATH.split(os.pathsep)):
         sys.path.insert(0, path_element)
 

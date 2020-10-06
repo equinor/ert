@@ -22,17 +22,22 @@ from ecl import EclPrototype
 from res.enkf import ConfigKeys
 from res.util import SubstitutionList
 
+
 class SubstConfig(BaseCClass):
     TYPE_NAME = "subst_config"
-    _alloc          = ResPrototype("void* subst_config_alloc(config_content)", bind=False)
-    _alloc_full     = ResPrototype("void* subst_config_alloc_full(subst_list)", bind=False)
-    _free           = ResPrototype("void  subst_config_free(subst_config)")
-    _get_subst_list = ResPrototype("subst_list_ref subst_config_get_subst_list( subst_config )")
-    _get_num_cpu    = EclPrototype("int ecl_util_get_num_cpu(char*)", bind = False)
+    _alloc = ResPrototype("void* subst_config_alloc(config_content)", bind=False)
+    _alloc_full = ResPrototype("void* subst_config_alloc_full(subst_list)", bind=False)
+    _free = ResPrototype("void  subst_config_free(subst_config)")
+    _get_subst_list = ResPrototype(
+        "subst_list_ref subst_config_get_subst_list( subst_config )"
+    )
+    _get_num_cpu = EclPrototype("int ecl_util_get_num_cpu(char*)", bind=False)
 
     def __init__(self, config_content=None, config_dict=None):
         if not ((config_content is not None) ^ (config_dict is not None)):
-            raise ValueError('SubstConfig must be instansiated with exactly one of config_content or config_dict')
+            raise ValueError(
+                "SubstConfig must be instansiated with exactly one of config_content or config_dict"
+            )
 
         if config_dict is not None:
             subst_list = SubstitutionList()
@@ -40,12 +45,20 @@ class SubstConfig(BaseCClass):
             # DIRECTORY #
             config_directory = config_dict.get(ConfigKeys.CONFIG_DIRECTORY)
             if isinstance(config_directory, str):
-                subst_list.addItem("<CWD>", config_directory,
-                                   "The current working directory we are running from - the location of the config file.")
-                subst_list.addItem("<CONFIG_PATH>", config_directory,
-                                   "The current working directory we are running from - the location of the config file.")
+                subst_list.addItem(
+                    "<CWD>",
+                    config_directory,
+                    "The current working directory we are running from - the location of the config file.",
+                )
+                subst_list.addItem(
+                    "<CONFIG_PATH>",
+                    config_directory,
+                    "The current working directory we are running from - the location of the config file.",
+                )
             else:
-                raise ValueError("{} must be configured".format(ConfigKeys.CONFIG_DIRECTORY))
+                raise ValueError(
+                    "{} must be configured".format(ConfigKeys.CONFIG_DIRECTORY)
+                )
 
             # FILE #
             filename = config_dict.get(ConfigKeys.CONFIG_FILE_KEY)
@@ -66,21 +79,35 @@ class SubstConfig(BaseCClass):
                     subst_list.addItem(key, value)
 
             # RUNPATH_FILE #
-            runpath_file_name = config_dict.get(ConfigKeys.RUNPATH_FILE, ConfigKeys.RUNPATH_LIST_FILE)
-            runpath_file_path = os.path.normpath(os.path.join(config_directory, runpath_file_name))
-            subst_list.addItem("<RUNPATH_FILE>", runpath_file_path,
-                               "The name of a file with a list of run directories.")
+            runpath_file_name = config_dict.get(
+                ConfigKeys.RUNPATH_FILE, ConfigKeys.RUNPATH_LIST_FILE
+            )
+            runpath_file_path = os.path.normpath(
+                os.path.join(config_directory, runpath_file_name)
+            )
+            subst_list.addItem(
+                "<RUNPATH_FILE>",
+                runpath_file_path,
+                "The name of a file with a list of run directories.",
+            )
 
             # Read num_cpu from Eclipse DATA_FILE
             if ConfigKeys.DATA_FILE in config_dict:
-                file_path = os.path.join(config_directory, config_dict[ConfigKeys.DATA_FILE])
+                file_path = os.path.join(
+                    config_directory, config_dict[ConfigKeys.DATA_FILE]
+                )
 
                 if os.path.isfile(file_path) and os.access(file_path, os.R_OK):
                     num_cpu = self._get_num_cpu(file_path)
                     subst_list.addItem(
-                        "<NUM_CPU>", "{}".format(num_cpu), "The number of CPU used for one forward model.")
+                        "<NUM_CPU>",
+                        "{}".format(num_cpu),
+                        "The number of CPU used for one forward model.",
+                    )
                 else:
-                    raise IOError("Could not find ECLIPSE data file: {}".format(file_path))
+                    raise IOError(
+                        "Could not find ECLIPSE data file: {}".format(file_path)
+                    )
 
             c_ptr = self._alloc_full(subst_list)
 
@@ -88,16 +115,16 @@ class SubstConfig(BaseCClass):
             c_ptr = self._alloc(config_content)
 
         if c_ptr is None:
-            raise ValueError('Failed to construct Substonfig instance')
+            raise ValueError("Failed to construct Substonfig instance")
 
         super(SubstConfig, self).__init__(c_ptr)
 
     def __getitem__(self, key):
-        subst_list = self._get_subst_list( )
+        subst_list = self._get_subst_list()
         return subst_list[key]
 
     def __iter__(self):
-        subst_list = self._get_subst_list( )
+        subst_list = self._get_subst_list()
         return iter(subst_list)
 
     @property
@@ -124,5 +151,13 @@ class SubstConfig(BaseCClass):
         return not self == other
 
     def __str__(self):
-        return "[" + ",\n".join(["({}, {}, {})".format(key, value, doc) for key, value, doc in self.subst_list]) + "]"
-
+        return (
+            "["
+            + ",\n".join(
+                [
+                    "({}, {}, {})".format(key, value, doc)
+                    for key, value, doc in self.subst_list
+                ]
+            )
+            + "]"
+        )

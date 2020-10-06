@@ -22,68 +22,50 @@ from res.test import ErtTestContext
 
 
 class ModelConfigTest(ResTest):
-
     def setUp(self):
         self.config_both = {
-                                "INTERNALS" :
-                                {
-                                  "CONFIG_DIRECTORY" : "simple_config",
-                                },
-
-                                "SIMULATION" :
-                                {
-                                  "QUEUE_SYSTEM" :
-                                  {
-                                    "JOBNAME" : "JOBNAME%d",
-                                  },
-
-                                  "RUNPATH"            : "/tmp/simulations/run%d",
-                                  "NUM_REALIZATIONS"   : 1,
-                                  "JOB_SCRIPT"         : "script.sh",
-                                    "ENSPATH"          : "Ensemble",
-                                  "ECLBASE"            : "ECLBASE%d"
-                                }
-                              }
-
+            "INTERNALS": {
+                "CONFIG_DIRECTORY": "simple_config",
+            },
+            "SIMULATION": {
+                "QUEUE_SYSTEM": {
+                    "JOBNAME": "JOBNAME%d",
+                },
+                "RUNPATH": "/tmp/simulations/run%d",
+                "NUM_REALIZATIONS": 1,
+                "JOB_SCRIPT": "script.sh",
+                "ENSPATH": "Ensemble",
+                "ECLBASE": "ECLBASE%d",
+            },
+        }
 
         self.config_eclbase = {
-                                "INTERNALS" :
-                                {
-                                  "CONFIG_DIRECTORY" : "simple_config",
-                                },
-
-                                "SIMULATION" :
-                                {
-                                  "RUNPATH"            : "/tmp/simulations/run%d",
-                                  "NUM_REALIZATIONS"   : 1,
-                                  "JOB_SCRIPT"         : "script.sh",
-                                  "ENSPATH"            : "Ensemble",
-                                  "ECLBASE"            : "ECLBASE%d"
-                                }
-                              }
-
+            "INTERNALS": {
+                "CONFIG_DIRECTORY": "simple_config",
+            },
+            "SIMULATION": {
+                "RUNPATH": "/tmp/simulations/run%d",
+                "NUM_REALIZATIONS": 1,
+                "JOB_SCRIPT": "script.sh",
+                "ENSPATH": "Ensemble",
+                "ECLBASE": "ECLBASE%d",
+            },
+        }
 
         self.config_jobname = {
-                                "INTERNALS" :
-                                {
-                                  "CONFIG_DIRECTORY" : "simple_config",
-                                },
-
-                                "SIMULATION" :
-                                {
-                                  "QUEUE_SYSTEM" :
-                                  {
-                                    "JOBNAME" : "JOBNAME%d",
-                                  },
-
-                                  "RUNPATH"            : "/tmp/simulations/run%d",
-                                  "NUM_REALIZATIONS"   : 1,
-                                  "JOB_SCRIPT"         : "script.sh",
-                                  "ENSPATH"            : "Ensemble"
-                                }
-                              }
-
-
+            "INTERNALS": {
+                "CONFIG_DIRECTORY": "simple_config",
+            },
+            "SIMULATION": {
+                "QUEUE_SYSTEM": {
+                    "JOBNAME": "JOBNAME%d",
+                },
+                "RUNPATH": "/tmp/simulations/run%d",
+                "NUM_REALIZATIONS": 1,
+                "JOB_SCRIPT": "script.sh",
+                "ENSPATH": "Ensemble",
+            },
+        }
 
     def test_eclbase_and_jobname(self):
         case_directory = self.createTestPath("local/simple_config")
@@ -94,10 +76,8 @@ class ModelConfigTest(ResTest):
             model_config = res_config.model_config
             ecl_config = res_config.ecl_config
 
-            self.assertTrue( ecl_config.active( ) )
-            self.assertEqual( "JOBNAME%d" , model_config.getJobnameFormat())
-
-
+            self.assertTrue(ecl_config.active())
+            self.assertEqual("JOBNAME%d", model_config.getJobnameFormat())
 
     def test_eclbase(self):
         case_directory = self.createTestPath("local/simple_config")
@@ -108,9 +88,8 @@ class ModelConfigTest(ResTest):
             model_config = res_config.model_config
             ecl_config = res_config.ecl_config
 
-            self.assertTrue( ecl_config.active( ) )
-            self.assertEqual( "ECLBASE%d" , model_config.getJobnameFormat( ))
-
+            self.assertTrue(ecl_config.active())
+            self.assertEqual("ECLBASE%d", model_config.getJobnameFormat())
 
     def test_jobname(self):
         case_directory = self.createTestPath("local/simple_config")
@@ -121,21 +100,23 @@ class ModelConfigTest(ResTest):
             model_config = res_config.model_config
             ecl_config = res_config.ecl_config
 
-            self.assertFalse( ecl_config.active( ) )
-            self.assertEqual( "JOBNAME%d" , model_config.getJobnameFormat( ))
+            self.assertFalse(ecl_config.active())
+            self.assertEqual("JOBNAME%d", model_config.getJobnameFormat())
 
     def test_model_config_dict_constructor(self):
         case_directory = self.createTestPath("local/configuration_tests")
         with TestAreaContext("test_constructor") as work_area:
             work_area.copy_directory(case_directory)
-            res_config = ResConfig(user_config_file="configuration_tests/model_config.ert")
+            res_config = ResConfig(
+                user_config_file="configuration_tests/model_config.ert"
+            )
             config_dict = {
                 ConfigKeys.MAX_RESAMPLE: 1,
                 ConfigKeys.JOBNAME: "model_config_test",
                 ConfigKeys.RUNPATH: "/tmp/simulations/run%d",
                 ConfigKeys.NUM_REALIZATIONS: 10,
                 ConfigKeys.ENSPATH: "configuration_tests/Ensemble",
-                ConfigKeys.TIME_MAP:"configuration_tests/input/refcase/time_map.txt",
+                ConfigKeys.TIME_MAP: "configuration_tests/input/refcase/time_map.txt",
                 ConfigKeys.OBS_CONFIG: "configuration_tests/input/observations/observations.txt",
                 ConfigKeys.DATAROOT: "configuration_tests/",
                 ConfigKeys.HISTORY_SOURCE: HistorySourceEnum(1),
@@ -147,7 +128,7 @@ class ModelConfigTest(ResTest):
                     },
                     {
                         ConfigKeys.NAME: "SNAKE_OIL_SIMULATOR",
-                        ConfigKeys.ARGLIST : "",
+                        ConfigKeys.ARGLIST: "",
                     },
                     {
                         ConfigKeys.NAME: "SNAKE_OIL_NPV",
@@ -155,15 +136,17 @@ class ModelConfigTest(ResTest):
                     },
                     {
                         ConfigKeys.NAME: "SNAKE_OIL_DIFF",
-                        ConfigKeys.ARGLIST : "",
-                    }
-                ]
+                        ConfigKeys.ARGLIST: "",
+                    },
+                ],
             }
-            model_config = ModelConfig(data_root="",
-                                       joblist=res_config.site_config.get_installed_jobs(),
-                                       last_history_restart=res_config.ecl_config.getLastHistoryRestart(),
-                                       refcase=res_config.ecl_config.getRefcase(),
-                                       config_dict=config_dict)
+            model_config = ModelConfig(
+                data_root="",
+                joblist=res_config.site_config.get_installed_jobs(),
+                last_history_restart=res_config.ecl_config.getLastHistoryRestart(),
+                refcase=res_config.ecl_config.getRefcase(),
+                config_dict=config_dict,
+            )
             self.assertEqual(model_config, res_config.model_config)
 
     def test_schedule_file_as_history_is_disallowed(self):

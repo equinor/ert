@@ -25,77 +25,73 @@ from tests import ResTest
 from res.util import UIReturn
 from ecl.summary import EclSum
 
-EGRID_file    = "Equinor/ECLIPSE/Gurbat/ECLIPSE.EGRID"
-SMSPEC_file   = "Equinor/ECLIPSE/Gurbat/ECLIPSE.SMSPEC"
-DATA_file     = "Equinor/ECLIPSE/Gurbat/ECLIPSE.DATA"
-INIT_file     = "Equinor/ECLIPSE/Gurbat/EQUIL.INC"
-DATA_INIT_file= "Equinor/ECLIPSE/Gurbat/ECLIPSE_INIT.DATA"
+EGRID_file = "Equinor/ECLIPSE/Gurbat/ECLIPSE.EGRID"
+SMSPEC_file = "Equinor/ECLIPSE/Gurbat/ECLIPSE.SMSPEC"
+DATA_file = "Equinor/ECLIPSE/Gurbat/ECLIPSE.DATA"
+INIT_file = "Equinor/ECLIPSE/Gurbat/EQUIL.INC"
+DATA_INIT_file = "Equinor/ECLIPSE/Gurbat/ECLIPSE_INIT.DATA"
 
 
 class EclConfigTest(ResTest):
-
     @pytest.mark.equinor_test
     def test_grid(self):
-        grid_file = self.createTestPath( EGRID_file )
-        smspec_file = self.createTestPath( SMSPEC_file )
+        grid_file = self.createTestPath(EGRID_file)
+        smspec_file = self.createTestPath(SMSPEC_file)
         ec = EclConfig()
-        ui = ec.validateGridFile( grid_file )
-        self.assertTrue( ui )
-        self.assertTrue( isinstance(ui , UIReturn ))
+        ui = ec.validateGridFile(grid_file)
+        self.assertTrue(ui)
+        self.assertTrue(isinstance(ui, UIReturn))
 
-        ui = ec.validateGridFile( "Does/Not/Exist" )
-        self.assertFalse( ui )
+        ui = ec.validateGridFile("Does/Not/Exist")
+        self.assertFalse(ui)
 
-        self.assertTrue( os.path.exists( smspec_file ))
-        ui = ec.validateGridFile( smspec_file )
-        self.assertFalse( ui )
+        self.assertTrue(os.path.exists(smspec_file))
+        ui = ec.validateGridFile(smspec_file)
+        self.assertFalse(ui)
 
     @pytest.mark.equinor_test
     def test_datafile(self):
         ec = EclConfig()
-        ui = ec.validateDataFile( "DoesNotExist" )
-        self.assertFalse( ui )
+        ui = ec.validateDataFile("DoesNotExist")
+        self.assertFalse(ui)
 
-        dfile = self.createTestPath( DATA_file )
-        ui = ec.validateDataFile( dfile )
-        self.assertTrue( ui )
-        ec.setDataFile( dfile )
-        self.assertEqual( dfile , ec.getDataFile() )
+        dfile = self.createTestPath(DATA_file)
+        ui = ec.validateDataFile(dfile)
+        self.assertTrue(ui)
+        ec.setDataFile(dfile)
+        self.assertEqual(dfile, ec.getDataFile())
 
     @pytest.mark.equinor_test
-    def test_refcase( self ):
+    def test_refcase(self):
         ec = EclConfig()
-        dfile = self.createTestPath( DATA_file )
+        dfile = self.createTestPath(DATA_file)
 
-        ui = ec.validateRefcase( "Does/not/exist" )
-        self.assertFalse( ui )
+        ui = ec.validateRefcase("Does/not/exist")
+        self.assertFalse(ui)
 
-        ui = ec.validateRefcase( dfile )
-        self.assertTrue( ui )
-        ec.loadRefcase( dfile )
+        ui = ec.validateRefcase(dfile)
+        self.assertTrue(ui)
+        ec.loadRefcase(dfile)
         refcase = ec.getRefcase()
-        self.assertTrue( isinstance( refcase , EclSum ))
+        self.assertTrue(isinstance(refcase, EclSum))
         refcaseName = ec.getRefcaseName() + ".DATA"
-        self.assertEqual( dfile , refcaseName )
+        self.assertEqual(dfile, refcaseName)
 
     def test_ecl_config_constructor(self):
         config_dict = {
-            ConfigKeys.DATA_FILE                : "configuration_tests/input/SPE1.DATA",
-            ConfigKeys.ECLBASE                  : "configuration_tests/input/<ECLIPSE_NAME>-%d",
-            ConfigKeys.GRID                     : "configuration_tests/input/CASE.EGRID",
-            ConfigKeys.REFCASE                  : "configuration_tests/input/SNAKE_OIL_FIELD",
-            ConfigKeys.END_DATE                 : "10/10/2010",
-            ConfigKeys.SCHEDULE_PREDICTION_FILE : "configuration_tests/input/schedule.sch"
+            ConfigKeys.DATA_FILE: "configuration_tests/input/SPE1.DATA",
+            ConfigKeys.ECLBASE: "configuration_tests/input/<ECLIPSE_NAME>-%d",
+            ConfigKeys.GRID: "configuration_tests/input/CASE.EGRID",
+            ConfigKeys.REFCASE: "configuration_tests/input/SNAKE_OIL_FIELD",
+            ConfigKeys.END_DATE: "10/10/2010",
+            ConfigKeys.SCHEDULE_PREDICTION_FILE: "configuration_tests/input/schedule.sch",
         }
 
         self.case_directory = self.createTestPath("local/configuration_tests/")
         with TestAreaContext("ecl_config_test") as work_area:
             work_area.copy_directory(self.case_directory)
-            res_config = ResConfig('configuration_tests/ecl_config.ert')
+            res_config = ResConfig("configuration_tests/ecl_config.ert")
             ecl_config_file = res_config.ecl_config
             ecl_config_dict = EclConfig(config_dict=config_dict)
 
             self.assertEqual(ecl_config_dict, ecl_config_file)
-
-
-

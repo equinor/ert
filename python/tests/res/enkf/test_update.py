@@ -27,63 +27,68 @@ from res.test import ErtTestContext
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.util import BoolVector, RandomNumberGenerator
 from res.util import Matrix
-from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
+from res.analysis import (
+    AnalysisModule,
+    AnalysisModuleLoadStatusEnum,
+    AnalysisModuleOptionsEnum,
+)
 from res.enkf import MeasData, ObsData, LocalObsdata
 
 
-def update(rng , mask , module , ert , meas_data , obs_data , state_size):
+def update(rng, mask, module, ert, meas_data, obs_data, state_size):
     S = meas_data.createS()
     R = obs_data.createR()
     dObs = obs_data.createDObs()
-    E = obs_data.createE( rng , meas_data.getActiveEnsSize() )
-    D = obs_data.createD(E , S)
-    obs_data.scale(S , E = E , D = D , R = R , D_obs = dObs)
+    E = obs_data.createE(rng, meas_data.getActiveEnsSize())
+    D = obs_data.createD(E, S)
+    obs_data.scale(S, E=E, D=D, R=R, D_obs=dObs)
 
-    A = Matrix(state_size , meas_data.getActiveEnsSize())
-    A.randomInit( rng )
+    A = Matrix(state_size, meas_data.getActiveEnsSize())
+    A.randomInit(rng)
 
-    module.initUpdate( mask , S , R , dObs , E , D )
-    module.updateA( A , S , R , dObs , E , D )
+    module.initUpdate(mask, S, R, dObs, E, D)
+    module.updateA(A, S, R, dObs, E, D)
+
 
 @pytest.mark.skip()
 @pytest.mark.equinor_test
 class UpdateTest(ResTest):
-  def setUp(self):
-      if sys.platform.lower() == 'darwin':
-          self.libname = os.path.join(res.res_lib_path, "rml_enkf.dylib")
-      else:
-          self.libname = os.path.join(res.res_lib_path, "rml_enkf.so")
-      self.config_file = self.createTestPath("Equinor/config/obs_testing2/config")
-      self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
+    def setUp(self):
+        if sys.platform.lower() == "darwin":
+            self.libname = os.path.join(res.res_lib_path, "rml_enkf.dylib")
+        else:
+            self.libname = os.path.join(res.res_lib_path, "rml_enkf.so")
+        self.config_file = self.createTestPath("Equinor/config/obs_testing2/config")
+        self.rng = RandomNumberGenerator(
+            RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT
+        )
 
+    def createAnalysisModule(self):
+        return AnalysisModule(self.rng, lib_name=self.libname)
 
-  def createAnalysisModule(self):
-      return AnalysisModule(self.rng, lib_name = self.libname)
+    def test_it(self):
+        state_size = 10
+        with ErtTestContext("update", self.config_file) as tc:
+            analysis = self.createAnalysisModule()
+            ert = tc.getErt()
+            obs = ert.getObservations()
+            local_obsdata = obs.getAllActiveLocalObsdata()
 
+            fs = ert.getEnkfFsManager().getCurrentFileSystem()
 
-  def test_it(self):
-      state_size = 10
-      with ErtTestContext("update" , self.config_file) as tc:
-          analysis = self.createAnalysisModule()
-          ert = tc.getErt()
-          obs = ert.getObservations()
-          local_obsdata = obs.getAllActiveLocalObsdata( )
+            mask = BoolVector(initial_size=ert.getEnsembleSize(), default_value=True)
+            meas_data = MeasData(mask)
+            obs_data = ObsData()
+            obs.getObservationAndMeasureData(
+                fs, local_obsdata, mask.createActiveList(), meas_data, obs_data
+            )
+            update(self.rng, mask, analysis, ert, meas_data, obs_data, state_size)
 
-          fs = ert.getEnkfFsManager().getCurrentFileSystem()
-
-
-          mask = BoolVector( initial_size = ert.getEnsembleSize() , default_value = True)
-          meas_data = MeasData(mask)
-          obs_data = ObsData()
-          obs.getObservationAndMeasureData( fs , local_obsdata , mask.createActiveList() , meas_data , obs_data )
-          update( self.rng , mask , analysis , ert , meas_data , obs_data , state_size)
-
-
-          mask[0] = False
-          mask[4] = False
-          meas_data = MeasData(mask)
-          obs_data = ObsData()
-          obs.getObservationAndMeasureData( fs , local_obsdata , mask.createActiveList() , meas_data , obs_data )
-          update( self.rng , mask , analysis , ert , meas_data , obs_data , state_size)
-
-
+            mask[0] = False
+            mask[4] = False
+            meas_data = MeasData(mask)
+            obs_data = ObsData()
+            obs.getObservationAndMeasureData(
+                fs, local_obsdata, mask.createActiveList(), meas_data, obs_data
+            )
+            update(self.rng, mask, analysis, ert, meas_data, obs_data, state_size)

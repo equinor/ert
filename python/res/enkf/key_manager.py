@@ -5,7 +5,6 @@ from res.enkf.enums import EnkfObservationImplementationType
 
 
 class KeyManager(object):
-
     def __init__(self, ert):
         super(KeyManager, self).__init__()
         """
@@ -26,8 +25,7 @@ class KeyManager(object):
         """ :rtype:  res.enkf.EnKFMain """
         ert = self.__ert_ref()
         if ert is None:
-            raise RuntimeError(
-                "The reference EnKFMain instance has been deleted")
+            raise RuntimeError("The reference EnKFMain instance has been deleted")
         return ert
 
     def ensembleConfig(self):
@@ -37,21 +35,38 @@ class KeyManager(object):
     def summaryKeys(self):
         """ :rtype: list of str """
         if self.__summary_keys is None:
-            self.__summary_keys = sorted([key for key in self.ensembleConfig().getKeylistFromImplType(ErtImplType.SUMMARY)], key=lambda k : k.lower())
+            self.__summary_keys = sorted(
+                [
+                    key
+                    for key in self.ensembleConfig().getKeylistFromImplType(
+                        ErtImplType.SUMMARY
+                    )
+                ],
+                key=lambda k: k.lower(),
+            )
 
         return self.__summary_keys
 
     def summaryKeysWithObservations(self):
         """ :rtype: list of str """
         if self.__summary_keys_with_observations is None:
-            self.__summary_keys_with_observations = sorted([key for key in self.summaryKeys() if len(self.ensembleConfig().getNode(key).getObservationKeys()) > 0], key=lambda k : k.lower())
+            self.__summary_keys_with_observations = sorted(
+                [
+                    key
+                    for key in self.summaryKeys()
+                    if len(self.ensembleConfig().getNode(key).getObservationKeys()) > 0
+                ],
+                key=lambda k: k.lower(),
+            )
 
         return self.__summary_keys_with_observations
 
     def genKwKeys(self):
         """ :rtype: list of str """
         if self.__gen_kw_keys is None:
-            gen_kw_keys = self.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
+            gen_kw_keys = self.ensembleConfig().getKeylistFromImplType(
+                ErtImplType.GEN_KW
+            )
             gen_kw_keys = [key for key in gen_kw_keys]
 
             gen_kw_list = []
@@ -66,14 +81,16 @@ class KeyManager(object):
                     if gen_kw_config.shouldUseLogScale(keyword_index):
                         gen_kw_list.append("LOG10_%s:%s" % (key, keyword))
 
-            self.__gen_kw_keys = sorted(gen_kw_list, key=lambda k : k.lower())
+            self.__gen_kw_keys = sorted(gen_kw_list, key=lambda k: k.lower())
 
         return self.__gen_kw_keys
 
     def genDataKeys(self):
         """ :rtype: list of str """
         if self.__gen_data_keys is None:
-            gen_data_keys = self.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_DATA)
+            gen_data_keys = self.ensembleConfig().getKeylistFromImplType(
+                ErtImplType.GEN_DATA
+            )
             gen_data_list = []
             for key in gen_data_keys:
                 enkf_config_node = self._ert().ensembleConfig().getNode(key)
@@ -92,7 +109,10 @@ class KeyManager(object):
             enkf_obs = self._ert().getObservations()
             gen_data_obs_keys = []
             for obs_vector in enkf_obs:
-                if obs_vector.getImplementationType() is EnkfObservationImplementationType.GEN_OBS:
+                if (
+                    obs_vector.getImplementationType()
+                    is EnkfObservationImplementationType.GEN_OBS
+                ):
                     report_step = obs_vector.activeStep()
                     key = obs_vector.getDataKey()
 
@@ -114,10 +134,11 @@ class KeyManager(object):
 
             keys.append("MISFIT:TOTAL")
 
-            self.__misfit_keys = sorted(keys, key=lambda k : k.lower()) if sort_keys else keys
+            self.__misfit_keys = (
+                sorted(keys, key=lambda k: k.lower()) if sort_keys else keys
+            )
 
         return self.__misfit_keys
-
 
     def allDataTypeKeys(self):
         """ :rtype: list of str """
@@ -129,7 +150,9 @@ class KeyManager(object):
     def allDataTypeKeysWithObservations(self):
         """ :rtype: list of str """
         if self.__all_keys_with_observations is None:
-            self.__all_keys_with_observations = self.summaryKeysWithObservations() + self.genDataKeysWithObservations()
+            self.__all_keys_with_observations = (
+                self.summaryKeysWithObservations() + self.genDataKeysWithObservations()
+            )
 
         return self.__all_keys_with_observations
 

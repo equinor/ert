@@ -1,8 +1,8 @@
 from res.enkf import SummaryKeyMatcher
 from tests import ResTest
 
-class SummaryKeyMatcherTest(ResTest):
 
+class SummaryKeyMatcherTest(ResTest):
     def test_creation(self):
         matcher = SummaryKeyMatcher()
 

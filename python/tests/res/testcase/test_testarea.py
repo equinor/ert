@@ -19,8 +19,8 @@ import os
 from ecl.util.test import TestAreaContext
 from tests import ResTest
 
-class TestTestArea(ResTest):
 
+class TestTestArea(ResTest):
     def test_test_area_ok(self):
         orig_cwd = os.getcwd()
         f_name = "this_is_not_a_file?"

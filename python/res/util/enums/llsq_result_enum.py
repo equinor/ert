@@ -8,6 +8,6 @@ class LLSQResultEnum(BaseCEnum):
     LLSQ_UNDETERMINED = None
 
 
-LLSQResultEnum.addEnum("LLSQ_SUCCESS" , 0)
-LLSQResultEnum.addEnum("LLSQ_INVALID_DIM" , 1)
-LLSQResultEnum.addEnum("LLSQ_UNDETERMINED" , 2)
+LLSQResultEnum.addEnum("LLSQ_SUCCESS", 0)
+LLSQResultEnum.addEnum("LLSQ_INVALID_DIM", 1)
+LLSQResultEnum.addEnum("LLSQ_UNDETERMINED", 2)

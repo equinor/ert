@@ -23,11 +23,9 @@ from res.test import ErtTestContext
 from res.enkf import ObsVector
 
 
-@pytest.mark.skip('Currently failing because a config object is missing a key')
+@pytest.mark.skip("Currently failing because a config object is missing a key")
 @pytest.mark.equinor_test
 class LabScaleTest(ResTest):
-
-
     def testObs(self):
         config_file = self.createTestPath("Equinor/config/labscale/config")
         with ErtTestContext("labscale", config_file) as test_context:
@@ -39,27 +37,24 @@ class LabScaleTest(ResTest):
                 self.assertTrue(isinstance(v, ObsVector))
 
             v1 = obs["WWCT_1"]
-            self.assertEqual( v1.activeStep() , 5 )
-            node = v1.getNode( 5 )
-            self.assertFloatEqual( node.getValue() , 0.00)
+            self.assertEqual(v1.activeStep(), 5)
+            node = v1.getNode(5)
+            self.assertFloatEqual(node.getValue(), 0.00)
 
             v2 = obs["WWCT_2"]
-            self.assertEqual( v2.activeStep() , 31 )
-            node = v2.getNode( 31 )
-            self.assertFloatEqual( node.getValue() , 0.575828)
+            self.assertEqual(v2.activeStep(), 31)
+            node = v2.getNode(31)
+            self.assertFloatEqual(node.getValue(), 0.575828)
 
             v3 = obs["WWCT_3"]
-            self.assertEqual( v3.activeStep() , 73 )
-            node = v3.getNode( 73 )
-            self.assertFloatEqual( node.getValue() , 1.00)
-
+            self.assertEqual(v3.activeStep(), 73)
+            node = v3.getNode(73)
+            self.assertFloatEqual(node.getValue(), 1.00)
 
             bpr = obs["BPR"]
-            self.assertEqual( bpr.activeStep() , 31 )
-            node = bpr.getNode( 31 )
-            self.assertFloatEqual( node.getValue(0) , 10.284)
-
-            
+            self.assertEqual(bpr.activeStep(), 31)
+            node = bpr.getNode(31)
+            self.assertFloatEqual(node.getValue(0), 10.284)
 
     def testObs_beijing(self):
         config_file = self.createTestPath("Equinor/config/lab-beijing/labunits/config")
@@ -67,14 +62,12 @@ class LabScaleTest(ResTest):
             ert = test_context.getErt()
             obs = ert.getObservations()
 
-
             v0 = obs["WCT0"]
-            self.assertEqual( v0.activeStep() , 18 )
-            node = v0.getNode( 18 )
-            self.assertEqual( node.getValue() , 0.12345 )
-
+            self.assertEqual(v0.activeStep(), 18)
+            node = v0.getNode(18)
+            self.assertEqual(node.getValue(), 0.12345)
 
             v1 = obs["WCT1"]
-            self.assertEqual( v1.activeStep() , 18 )
-            node = v1.getNode( 18 )
-            self.assertEqual( node.getValue() , 0.12345 )
+            self.assertEqual(v1.activeStep(), 18)
+            node = v1.getNode(18)
+            self.assertEqual(node.getValue(), 0.12345)

@@ -15,8 +15,9 @@
 #  for more details.
 from cwrap import BaseCEnum
 
+
 class EnkfVarType(BaseCEnum):
-    TYPE_NAME        = "enkf_var_type_enum"
+    TYPE_NAME = "enkf_var_type_enum"
     INVALID_VAR = None
     PARAMETER = None
     DYNAMIC_RESULT = None

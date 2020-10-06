@@ -25,26 +25,28 @@ from _pytest.monkeypatch import MonkeyPatch
 from res.fm.ecl import Ecl100Config
 from res.fm.ecl.ecl_config import Keys
 
-class EclConfigTest(ResTest):
 
+class EclConfigTest(ResTest):
     def setUp(self):
-        self.ecl_config_path = os.path.dirname( inspect.getsourcefile(Ecl100Config) )
+        self.ecl_config_path = os.path.dirname(inspect.getsourcefile(Ecl100Config))
         self.monkeypatch = MonkeyPatch()
 
     def tearDown(self):
         self.monkeypatch.undo()
-
 
     def test_load(self):
         self.monkeypatch.setenv("ECL100_SITE_CONFIG", "file/does/not/exist")
         with self.assertRaises(IOError):
             conf = Ecl100Config()
 
-        self.monkeypatch.setenv("ECL100_SITE_CONFIG", os.path.join(self.ecl_config_path, "ecl100_config.yml"))
+        self.monkeypatch.setenv(
+            "ECL100_SITE_CONFIG",
+            os.path.join(self.ecl_config_path, "ecl100_config.yml"),
+        )
         conf = Ecl100Config()
 
         with TestAreaContext("yaml_invalid"):
-            with open("file.yml","w") as f:
+            with open("file.yml", "w") as f:
                 f.write("this:\n -should\n-be\ninvalid:yaml?")
 
             self.monkeypatch.setenv("ECL100_SITE_CONFIG", "file.yml")
@@ -59,7 +61,7 @@ class EclConfigTest(ResTest):
             os.mkdir("bin")
             for f in ["scalar_exe", "mpi_exe", "mpi_run"]:
                 fname = os.path.join("bin", f)
-                with open( fname, "w") as fh:
+                with open(fname, "w") as fh:
                     fh.write("This is an exectable ...")
 
                 os.chmod(fname, stat.S_IEXEC)
@@ -67,24 +69,43 @@ class EclConfigTest(ResTest):
             intel_path = "intel"
             self.monkeypatch.setenv("ENV1", "A")
             self.monkeypatch.setenv("ENV2", "C")
-            d = {Keys.env : {"LICENSE_SERVER" : "license@company.com"},
-                 Keys.versions: {"2015" : {Keys.scalar: {Keys.executable : scalar_exe},
-                                           Keys.mpi   : {Keys.executable : mpi_exe,
-                                                         Keys.mpirun     : mpi_run,
-                                                         Keys.env : {"I_MPI_ROOT" : "$ENV1:B:$ENV2",
-                                                                     "TEST_VAR" : "$ENV1.B.$ENV2 $UNKNOWN_VAR",
-                                                                     "P4_RSHCOMMAND" : "",
-                                                                     "LD_LIBRARY_PATH" : "{}:$LD_LIBRARY_PATH".format(intel_path),
-                                                                     "PATH" : "{}/bin64:$PATH".format(intel_path)}}},
-                                 "2016" : {Keys.scalar: {Keys.executable : "/does/not/exist"},
-                                           Keys.mpi : {Keys.executable : "/does/not/exist",
-                                                       Keys.mpirun : mpi_run}},
-                                 "2017" : {Keys.mpi : {Keys.executable : mpi_exe,
-                                                       Keys.mpirun : "/does/not/exist"}}}}
-
+            d = {
+                Keys.env: {"LICENSE_SERVER": "license@company.com"},
+                Keys.versions: {
+                    "2015": {
+                        Keys.scalar: {Keys.executable: scalar_exe},
+                        Keys.mpi: {
+                            Keys.executable: mpi_exe,
+                            Keys.mpirun: mpi_run,
+                            Keys.env: {
+                                "I_MPI_ROOT": "$ENV1:B:$ENV2",
+                                "TEST_VAR": "$ENV1.B.$ENV2 $UNKNOWN_VAR",
+                                "P4_RSHCOMMAND": "",
+                                "LD_LIBRARY_PATH": "{}:$LD_LIBRARY_PATH".format(
+                                    intel_path
+                                ),
+                                "PATH": "{}/bin64:$PATH".format(intel_path),
+                            },
+                        },
+                    },
+                    "2016": {
+                        Keys.scalar: {Keys.executable: "/does/not/exist"},
+                        Keys.mpi: {
+                            Keys.executable: "/does/not/exist",
+                            Keys.mpirun: mpi_run,
+                        },
+                    },
+                    "2017": {
+                        Keys.mpi: {
+                            Keys.executable: mpi_exe,
+                            Keys.mpirun: "/does/not/exist",
+                        }
+                    },
+                },
+            }
 
             with open("file.yml", "w") as f:
-                f.write( yaml.dump(d) )
+                f.write(yaml.dump(d))
 
             conf = Ecl100Config()
             # Fails because there is no version 2020
@@ -125,27 +146,35 @@ class EclConfigTest(ResTest):
             with self.assertRaises(Exception):
                 simulators = conf.simulators()
 
-            simulators = conf.simulators(strict = False)
+            simulators = conf.simulators(strict=False)
             self.assertEqual(len(simulators), 2)
 
     def test_default(self):
         with TestAreaContext("default"):
             os.mkdir("bin")
             scalar_exe = "bin/scalar_exe"
-            with open( scalar_exe, "w") as fh:
+            with open(scalar_exe, "w") as fh:
                 fh.write("This is an exectable ...")
             os.chmod(scalar_exe, stat.S_IEXEC)
 
-            d0 = {Keys.versions: {"2015" : {Keys.scalar: {Keys.executable : scalar_exe}},
-                                  "2016" : {Keys.scalar: {Keys.executable : scalar_exe}}}}
+            d0 = {
+                Keys.versions: {
+                    "2015": {Keys.scalar: {Keys.executable: scalar_exe}},
+                    "2016": {Keys.scalar: {Keys.executable: scalar_exe}},
+                }
+            }
 
-            d1 = {Keys.default_version: "2015",
-                  Keys.versions: {"2015" : {Keys.scalar: {Keys.executable : scalar_exe}},
-                                  "2016" : {Keys.scalar: {Keys.executable : scalar_exe}}}}
+            d1 = {
+                Keys.default_version: "2015",
+                Keys.versions: {
+                    "2015": {Keys.scalar: {Keys.executable: scalar_exe}},
+                    "2016": {Keys.scalar: {Keys.executable: scalar_exe}},
+                },
+            }
 
             self.monkeypatch.setenv("ECL100_SITE_CONFIG", os.path.join("file.yml"))
             with open("file.yml", "w") as f:
-                f.write( yaml.dump(d1) )
+                f.write(yaml.dump(d1))
 
             conf = Ecl100Config()
             sim = conf.sim()
@@ -159,7 +188,7 @@ class EclConfigTest(ResTest):
             self.assertEqual(sim.version, "2015")
 
             with open("file.yml", "w") as f:
-                f.write( yaml.dump(d0) )
+                f.write(yaml.dump(d0))
 
             conf = Ecl100Config()
             self.assertNotIn(Keys.default, conf)
@@ -170,7 +199,6 @@ class EclConfigTest(ResTest):
 
             with self.assertRaises(Exception):
                 sim = conf.sim(Keys.default)
-
 
 
 if __name__ == "__main__":

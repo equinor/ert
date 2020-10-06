@@ -57,9 +57,11 @@ import os
 from cwrap import Prototype
 import res
 
-def setenv( var, value):
+
+def setenv(var, value):
     if not os.getenv(var):
         os.environ[var] = value
+
 
 # Set up the full LSF environment - based onf LSF_HOME
 LSF_HOME = os.getenv("LSF_HOME")
@@ -68,7 +70,7 @@ if LSF_HOME:
     setenv("LSF_LIBDIR", "%s/lib" % LSF_HOME)
     setenv("XLSF_UIDDIR", "%s/lib/uid" % LSF_HOME)
     setenv("LSF_SERVERDIR", "%s/etc" % LSF_HOME)
-    setenv("LSF_ENVDIR", "%s/conf" % LSF_HOME)   # This is wrong: Equinor: /prog/LSF/conf
+    setenv("LSF_ENVDIR", "%s/conf" % LSF_HOME)  # This is wrong: Equinor: /prog/LSF/conf
 
 from .job_status_type_enum import JobStatusType
 from .run_status_type_enum import RunStatusType
@@ -94,4 +96,3 @@ from .workflow_job import WorkflowJob
 from .workflow_joblist import WorkflowJoblist
 from .workflow import Workflow
 from .workflow_runner import WorkflowRunner
-

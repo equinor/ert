@@ -22,7 +22,9 @@ class ObservationGenDataFetcher(DataFetcher):
         super(ObservationGenDataFetcher, self).__init__(ert)
 
     def fetchSupportedKeys(self):
-        gen_data_keys = self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_DATA)
+        gen_data_keys = (
+            self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_DATA)
+        )
         gen_data_list = []
         for key in gen_data_keys:
             obs_keys = self.ert().ensembleConfig().getNode(key).getObservationKeys()
@@ -34,14 +36,16 @@ class ObservationGenDataFetcher(DataFetcher):
         return gen_data_list
 
     def __getObservationData(self, key, report_step):
-        data = {"continuous": True,
-                "x": [],
-                "y": [],
-                "std": [],
-                "min_y": None,
-                "max_y": None,
-                "min_x": None,
-                "max_x": None}
+        data = {
+            "continuous": True,
+            "x": [],
+            "y": [],
+            "std": [],
+            "min_y": None,
+            "max_y": None,
+            "min_x": None,
+            "max_x": None,
+        }
 
         observations = self.ert().getObservations()
         assert observations.hasKey(key)
@@ -61,16 +65,15 @@ class ObservationGenDataFetcher(DataFetcher):
             adjusted_y = self.adjustY(y_value, std)
 
             if data["min_y"] is None or data["min_y"] > adjusted_y:
-                 data["min_y"] = adjusted_y
+                data["min_y"] = adjusted_y
 
             if data["max_y"] is None or data["max_y"] < y_value + std:
-                 data["max_y"] = y_value + std
+                data["max_y"] = y_value + std
 
             obs_index = gen_obs.getIndex(index)
             data["x"].append(obs_index)
 
         return data
-
 
     def getObsKeyForKey(self, key, key_report_step):
         obs_keys = self.ert().ensembleConfig().getNode(key).getObservationKeys()
@@ -82,11 +85,9 @@ class ObservationGenDataFetcher(DataFetcher):
 
         raise UserWarning("Observation key for key '%s' not found!" % key)
 
-
     def getAllObsKeysForKey(self, key):
         key, report_step = key.split("@")
         return self.ert().ensembleConfig().getNode(key).getObservationKeys()
-
 
     def hasData(self, key):
         """ @rtype: bool """
@@ -105,7 +106,6 @@ class ObservationGenDataFetcher(DataFetcher):
         obs_key = self.getObsKeyForKey(key, key_report_step)
 
         return self.__getObservationData(obs_key, key_report_step)
-
 
     @staticmethod
     def adjustY(y, std):

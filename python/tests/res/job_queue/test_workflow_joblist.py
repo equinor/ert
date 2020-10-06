@@ -6,7 +6,6 @@ from .workflow_common import WorkflowCommon
 
 
 class WorkflowJoblistTest(ResTest):
-
     def test_workflow_joblist_creation(self):
         joblist = WorkflowJoblist()
 
@@ -20,8 +19,6 @@ class WorkflowJoblistTest(ResTest):
         job_ref = joblist["JOB1"]
 
         self.assertEqual(job.name(), job_ref.name())
-
-
 
     def test_workflow_joblist_with_files(self):
         with TestAreaContext("python/job_queue/workflow_joblist") as work_area:

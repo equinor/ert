@@ -16,147 +16,153 @@ from res.job_queue.ext_joblist import ExtJoblist
 # Data for testing
 #
 joblist = [
-            {
-                "name" : "PERLIN",
-                "executable" : "perlin.py",
-                "target_file" : "my_target_file",
-                "error_file" : "error_file",
-                "start_file" : "some_start_file",
-                "stdout" : "perlin.stdout",
-                "stderr" : "perlin.stderr",
-                "stdin" : "input4thewin",
-                "argList" : ["-speed", "hyper"],
-                "environment" : {"TARGET": "flatland"},
-                "license_path" : "this/is/my/license/PERLIN",
-                "max_running_minutes" : 12,
-                "max_running" : 30
-            },
-            {
-                "name" : "AGGREGATOR",
-                "executable" : "aggregator.py",
-                "target_file" : "target",
-                "error_file" : "None",
-                "start_file" : "eple",
-                "stdout" : "aggregator.stdout",
-                "stderr" : "aggregator.stderr",
-                "stdin" : "illgiveyousome",
-                "argList" : ["-o"],
-                "environment" : {"STATE": "awesome"},
-                "license_path" : "I/will/pay/ya/tomorrow/AGGREGATOR",
-                "max_running_minutes" : 1,
-                "max_running" : 14,
-            },
-            {
-                "name" : "PI",
-                "executable" : "pi.py",
-                "target_file" : "my_target_file",
-                "error_file" : "error_file",
-                "start_file" : "some_start_file",
-                "stdout" : "pi.stdout",
-                "stderr" : "pi.stderr",
-                "stdin" : "input4thewin",
-                "argList" : ["-p", "8"],
-                "environment" : {"LOCATION": "earth"},
-                "license_path" : "license/PI",
-                "max_running_minutes" : 12,
-                "max_running" : 30
-            },
-            {
-                "name" : "OPTIMUS",
-                "executable" : "optimus.py",
-                "target_file" : "target",
-                "error_file" : "None",
-                "start_file" : "eple",
-                "stdout" : "optimus.stdout",
-                "stderr" : "optimus.stderr",
-                "stdin" : "illgiveyousome",
-                "argList" : ["-help"],
-                "environment" : {"PATH": "/ubertools/4.1"},
-                "license_path" : "license/OPTIMUS",
-                "max_running_minutes" : 1,
-                "max_running" : 14,
-            }
-        ]
+    {
+        "name": "PERLIN",
+        "executable": "perlin.py",
+        "target_file": "my_target_file",
+        "error_file": "error_file",
+        "start_file": "some_start_file",
+        "stdout": "perlin.stdout",
+        "stderr": "perlin.stderr",
+        "stdin": "input4thewin",
+        "argList": ["-speed", "hyper"],
+        "environment": {"TARGET": "flatland"},
+        "license_path": "this/is/my/license/PERLIN",
+        "max_running_minutes": 12,
+        "max_running": 30,
+    },
+    {
+        "name": "AGGREGATOR",
+        "executable": "aggregator.py",
+        "target_file": "target",
+        "error_file": "None",
+        "start_file": "eple",
+        "stdout": "aggregator.stdout",
+        "stderr": "aggregator.stderr",
+        "stdin": "illgiveyousome",
+        "argList": ["-o"],
+        "environment": {"STATE": "awesome"},
+        "license_path": "I/will/pay/ya/tomorrow/AGGREGATOR",
+        "max_running_minutes": 1,
+        "max_running": 14,
+    },
+    {
+        "name": "PI",
+        "executable": "pi.py",
+        "target_file": "my_target_file",
+        "error_file": "error_file",
+        "start_file": "some_start_file",
+        "stdout": "pi.stdout",
+        "stderr": "pi.stderr",
+        "stdin": "input4thewin",
+        "argList": ["-p", "8"],
+        "environment": {"LOCATION": "earth"},
+        "license_path": "license/PI",
+        "max_running_minutes": 12,
+        "max_running": 30,
+    },
+    {
+        "name": "OPTIMUS",
+        "executable": "optimus.py",
+        "target_file": "target",
+        "error_file": "None",
+        "start_file": "eple",
+        "stdout": "optimus.stdout",
+        "stderr": "optimus.stderr",
+        "stdin": "illgiveyousome",
+        "argList": ["-help"],
+        "environment": {"PATH": "/ubertools/4.1"},
+        "license_path": "license/OPTIMUS",
+        "max_running_minutes": 1,
+        "max_running": 14,
+    },
+]
 
 #
 # Keywords for the ext_job initialization file
 #
 ext_job_keywords = [
-            "MAX_RUNNING",
-            "STDIN",
-            "STDOUT",
-            "STDERR",
-            "EXECUTABLE",
-            "TARGET_FILE",
-            "ERROR_FILE",
-            "START_FILE",
-            "ARGLIST",
-            "ENV",
-            "MAX_RUNNING_MINUTES"
-            ]
+    "MAX_RUNNING",
+    "STDIN",
+    "STDOUT",
+    "STDERR",
+    "EXECUTABLE",
+    "TARGET_FILE",
+    "ERROR_FILE",
+    "START_FILE",
+    "ARGLIST",
+    "ENV",
+    "MAX_RUNNING_MINUTES",
+]
 
 #
 # JSON keywords
 #
 json_keywords = [
-            "name",
-            "executable",
-            "target_file",
-            "error_file",
-            "start_file",
-            "stdout",
-            "stderr",
-            "stdin",
-            "license_path",
-            "max_running_minutes",
-            "max_running",
-            "argList",
-            "environment"
-            ]
+    "name",
+    "executable",
+    "target_file",
+    "error_file",
+    "start_file",
+    "stdout",
+    "stderr",
+    "stdin",
+    "license_path",
+    "max_running_minutes",
+    "max_running",
+    "argList",
+    "environment",
+]
+
 
 def str_none_sensitive(x):
     return str(x) if x is not None else None
 
-DEFAULT_NAME = "default_job_name"
-def _generate_job(
-                  name,
-                  executable,
-                  target_file,
-                  error_file,
-                  start_file,
-                  stdout,
-                  stderr,
-                  stdin,
-                  environment,
-                  arglist,
-                  max_running_minutes,
-                  max_running,
-                  license_root_path,
-                  private
-                ):
-    config_file = (DEFAULT_NAME if name is None else name)
-    environment = (
-            None if environment is None else
-            list(environment.keys()) + list(environment.values())
-            )
 
-    values = [  str_none_sensitive(max_running),
-                stdin,
-                stdout,
-                stderr,
-                executable,
-                target_file,
-                error_file,
-                start_file,
-                None if arglist is None else " ".join(arglist),
-                None if environment is None else " ".join(environment),
-                str_none_sensitive(max_running_minutes)
-                ]
+DEFAULT_NAME = "default_job_name"
+
+
+def _generate_job(
+    name,
+    executable,
+    target_file,
+    error_file,
+    start_file,
+    stdout,
+    stderr,
+    stdin,
+    environment,
+    arglist,
+    max_running_minutes,
+    max_running,
+    license_root_path,
+    private,
+):
+    config_file = DEFAULT_NAME if name is None else name
+    environment = (
+        None
+        if environment is None
+        else list(environment.keys()) + list(environment.values())
+    )
+
+    values = [
+        str_none_sensitive(max_running),
+        stdin,
+        stdout,
+        stderr,
+        executable,
+        target_file,
+        error_file,
+        start_file,
+        None if arglist is None else " ".join(arglist),
+        None if environment is None else " ".join(environment),
+        str_none_sensitive(max_running_minutes),
+    ]
 
     conf = open(config_file, "w")
     for key, val in zip(ext_job_keywords, values):
         if val is not None:
-            conf.write("%s %s\n" %(key, val))
+            conf.write("%s %s\n" % (key, val))
     conf.close()
 
     exec_file = open(executable, "w")
@@ -168,14 +174,18 @@ def _generate_job(
 
     return ext_job
 
+
 def empty_list_if_none(l):
-        return [] if l is None else l
+    return [] if l is None else l
+
 
 def default_name_if_none(name):
     return DEFAULT_NAME if name is None else name
 
+
 def get_license_root_path(license_path):
     return os.path.split(license_path)[0]
+
 
 def dump_config_to_terminal():
     print("############ JSON ####################")
@@ -187,6 +197,7 @@ def dump_config_to_terminal():
         print(f.read())
 
     print("######################################")
+
 
 def load_configs(config_file):
     with open(config_file, "r") as cf:
@@ -217,77 +228,47 @@ class ForwardModelFormattedPrintTest(ResTest):
         # Make all executable paths absolute
         for job in joblist:
             if not os.path.isabs(job["executable"]):
-                job["executable"] = os.path.join(
-                        os.getcwd(),
-                        job["executable"]
-                        )
+                job["executable"] = os.path.join(os.getcwd(), job["executable"])
 
     def validate_ext_job(self, ext_job, ext_job_config):
         zero_if_none = lambda x: 0 if x is None else x
 
+        self.assertEqual(ext_job.name(), default_name_if_none(ext_job_config["name"]))
+        self.assertEqual(ext_job.get_executable(), ext_job_config["executable"])
+        self.assertEqual(ext_job.get_target_file(), ext_job_config["target_file"])
+        self.assertEqual(ext_job.get_error_file(), ext_job_config["error_file"])
+        self.assertEqual(ext_job.get_start_file(), ext_job_config["start_file"])
         self.assertEqual(
-                ext_job.name(),
-                default_name_if_none(ext_job_config["name"])
-                )
+            ext_job.get_stdout_file(), create_std_file(ext_job_config, std="stdout")
+        )
         self.assertEqual(
-                ext_job.get_executable(),
-                ext_job_config["executable"]
-                )
+            ext_job.get_stderr_file(), create_std_file(ext_job_config, std="stderr")
+        )
+        self.assertEqual(ext_job.get_stdin_file(), ext_job_config["stdin"])
         self.assertEqual(
-                ext_job.get_target_file(),
-                ext_job_config["target_file"]
-                )
+            ext_job.get_max_running_minutes(),
+            zero_if_none(ext_job_config["max_running_minutes"]),
+        )
         self.assertEqual(
-                ext_job.get_error_file(),
-                ext_job_config["error_file"]
-                )
+            ext_job.get_max_running(), zero_if_none(ext_job_config["max_running"])
+        )
+        self.assertEqual(ext_job.get_license_path(), ext_job_config["license_path"])
         self.assertEqual(
-                ext_job.get_start_file(),
-                ext_job_config["start_file"]
-                )
-        self.assertEqual(
-                ext_job.get_stdout_file(),
-                create_std_file(ext_job_config, std="stdout")
-                )
-        self.assertEqual(
-                ext_job.get_stderr_file(),
-                create_std_file(ext_job_config, std="stderr")
-                )
-        self.assertEqual(
-                ext_job.get_stdin_file(),
-                ext_job_config["stdin"]
-                )
-        self.assertEqual(
-                ext_job.get_max_running_minutes(),
-                zero_if_none(ext_job_config["max_running_minutes"])
-                )
-        self.assertEqual(
-                ext_job.get_max_running(),
-                zero_if_none(ext_job_config["max_running"])
-                )
-        self.assertEqual(
-                ext_job.get_license_path(),
-                ext_job_config["license_path"]
-                )
-        self.assertEqual(
-                ext_job.get_arglist(),
-                empty_list_if_none(ext_job_config["argList"])
-                )
+            ext_job.get_arglist(), empty_list_if_none(ext_job_config["argList"])
+        )
 
         if ext_job_config["environment"] is None:
             self.assertTrue(len(ext_job.get_environment().keys()) == 0)
         else:
             self.assertEqual(
-                    ext_job.get_environment().keys(),
-                    ext_job_config["environment"].keys()
-                    )
+                ext_job.get_environment().keys(), ext_job_config["environment"].keys()
+            )
             for key in ext_job_config["environment"].keys():
                 self.assertEqual(
-                        ext_job.get_environment()[key],
-                        ext_job_config["environment"][key]
-                        )
+                    ext_job.get_environment()[key], ext_job_config["environment"][key]
+                )
 
-    def generate_job_from_dict(self, ext_job_config, private = True):
+    def generate_job_from_dict(self, ext_job_config, private=True):
         ext_job = _generate_job(
             ext_job_config["name"],
             ext_job_config["executable"],
@@ -302,8 +283,8 @@ class ForwardModelFormattedPrintTest(ResTest):
             ext_job_config["max_running_minutes"],
             ext_job_config["max_running"],
             get_license_root_path(ext_job_config["license_path"]),
-            private
-            )
+            private,
+        )
 
         self.validate_ext_job(ext_job, ext_job_config)
         return ext_job
@@ -327,7 +308,7 @@ class ForwardModelFormattedPrintTest(ResTest):
         self.assertTrue(os.path.isfile(self.JOBS_JSON_FILE))
         config = load_configs(self.JOBS_JSON_FILE)
 
-        self.assertEqual(run_id , config["run_id"])
+        self.assertEqual(run_id, config["run_id"])
         self.assertEqual(umask, int(config["umask"], 8))
         self.assertEqual(len(selected_jobs), len(config["jobList"]))
 
@@ -344,8 +325,11 @@ class ForwardModelFormattedPrintTest(ResTest):
             job["name"] = default_name_if_none(job["name"])
 
             for key in json_keywords:
-                if (key in ["stdout", "stderr"]):
-                    self.assertEqual(create_std_file(job, std=key, job_index=job_index), loaded_job[key])
+                if key in ["stdout", "stderr"]:
+                    self.assertEqual(
+                        create_std_file(job, std=key, job_index=job_index),
+                        loaded_job[key],
+                    )
                 else:
                     self.assertEqual(job[key], loaded_job[key])
 
@@ -360,31 +344,27 @@ class ForwardModelFormattedPrintTest(ResTest):
             global_args = SubstitutionList()
             varlist = EnvironmentVarlist()
             forward_model.formatted_fprintf(
-                run_id,
-                os.getcwd(),
-                "data_root",
-                global_args,
-                umask,
-                varlist)
+                run_id, os.getcwd(), "data_root", global_args, umask, varlist
+            )
 
             self.verify_json_dump([], global_args, umask, run_id)
 
     def test_transfer_arg_types(self):
         with TestAreaContext("python/job_queue/forward_model_transfer_arg_types"):
-            with open("FWD_MODEL" , "w") as f:
-               f.write("EXECUTABLE ls\n")
-               f.write("MIN_ARG 2\n")
-               f.write("MAX_ARG 6\n")
-               f.write("ARG_TYPE 0 INT\n")
-               f.write("ARG_TYPE 1 FLOAT\n")
-               f.write("ARG_TYPE 2 STRING\n")
-               f.write("ARG_TYPE 3 BOOL\n")
-               f.write("ARG_TYPE 4 RUNTIME_FILE\n")
-               f.write("ARG_TYPE 5 RUNTIME_INT\n")
-               f.write("ENV KEY1 VALUE2\n")
-               f.write("ENV KEY2 VALUE2\n")
+            with open("FWD_MODEL", "w") as f:
+                f.write("EXECUTABLE ls\n")
+                f.write("MIN_ARG 2\n")
+                f.write("MAX_ARG 6\n")
+                f.write("ARG_TYPE 0 INT\n")
+                f.write("ARG_TYPE 1 FLOAT\n")
+                f.write("ARG_TYPE 2 STRING\n")
+                f.write("ARG_TYPE 3 BOOL\n")
+                f.write("ARG_TYPE 4 RUNTIME_FILE\n")
+                f.write("ARG_TYPE 5 RUNTIME_INT\n")
+                f.write("ENV KEY1 VALUE2\n")
+                f.write("ENV KEY2 VALUE2\n")
 
-            job = ExtJob("FWD_MODEL" , True)
+            job = ExtJob("FWD_MODEL", True)
 
             ext_joblist = ExtJoblist()
             ext_joblist.add_job(job.name(), job)
@@ -401,19 +381,20 @@ class ForwardModelFormattedPrintTest(ResTest):
                 "data_root",
                 global_args,
                 umask,
-                EnvironmentVarlist())
+                EnvironmentVarlist(),
+            )
             config = load_configs(self.JOBS_JSON_FILE)
             printed_job = config["jobList"][0]
             self.assertEqual(printed_job["min_arg"], 2)
             self.assertEqual(printed_job["max_arg"], 6)
-            self.assertEqual(printed_job["arg_types"], ["INT", "FLOAT", "STRING", "BOOL", "RUNTIME_FILE", "RUNTIME_INT"])
-
-
-
+            self.assertEqual(
+                printed_job["arg_types"],
+                ["INT", "FLOAT", "STRING", "BOOL", "RUNTIME_FILE", "RUNTIME_INT"],
+            )
 
     def test_env_varlist(self):
         varlist_string = "global_environment"
-        update_string  = "global_update_path"
+        update_string = "global_update_path"
         first = "FIRST"
         second = "SECOND"
         third = "THIRD"
@@ -432,25 +413,19 @@ class ForwardModelFormattedPrintTest(ResTest):
             umask = 4
             global_args = SubstitutionList()
             forward_model.formatted_fprintf(
-                run_id,
-                os.getcwd(),
-                "data_root",
-                global_args,
-                umask,
-                varlist)
+                run_id, os.getcwd(), "data_root", global_args, umask, varlist
+            )
             config = load_configs(self.JOBS_JSON_FILE)
             env_config = config[varlist_string]
-            self.assertEqual(first_value, env_config[first]  )
-            self.assertEqual(second_value, env_config[second] )
+            self.assertEqual(first_value, env_config[first])
+            self.assertEqual(second_value, env_config[second])
             self.assertEqual(third_value_correct, env_config[third])
             update_config = config[update_string]
-
-
 
     def test_repr(self):
         with TestAreaContext("python/job_queue/forward_model_one_job"):
             forward_model = self.set_up_forward_model()
-            self.assertTrue(repr(forward_model).startswith('ForwardModel'))
+            self.assertTrue(repr(forward_model).startswith("ForwardModel"))
 
     def test_one_job(self):
         with TestAreaContext("python/job_queue/forward_model_one_job"):
@@ -461,12 +436,8 @@ class ForwardModelFormattedPrintTest(ResTest):
                 global_args = SubstitutionList()
                 varlist = EnvironmentVarlist()
                 forward_model.formatted_fprintf(
-                    run_id,
-                    os.getcwd(),
-                    "data_root",
-                    global_args,
-                    umask,
-                    varlist)
+                    run_id, os.getcwd(), "data_root", global_args, umask, varlist
+                )
 
                 self.verify_json_dump([i], global_args, umask, run_id)
 
@@ -477,12 +448,8 @@ class ForwardModelFormattedPrintTest(ResTest):
         global_args = SubstitutionList()
         varlist = EnvironmentVarlist()
         forward_model.formatted_fprintf(
-            run_id,
-            os.getcwd(),
-            "data_root",
-            global_args,
-            umask,
-            varlist)
+            run_id, os.getcwd(), "data_root", global_args, umask, varlist
+        )
 
         self.verify_json_dump(range(len(joblist)), global_args, umask, run_id)
 
@@ -497,9 +464,8 @@ class ForwardModelFormattedPrintTest(ResTest):
 
             joblist[0]["name"] = None
             joblist[0]["license_path"] = os.path.join(
-                    get_license_root_path(joblist[0]["license_path"]),
-                    DEFAULT_NAME
-                    )
+                get_license_root_path(joblist[0]["license_path"]), DEFAULT_NAME
+            )
 
             self.run_all()
 
@@ -516,14 +482,13 @@ class ForwardModelFormattedPrintTest(ResTest):
             "max_running_minutes",
             "argList",
             "environment",
-            "stdin"
-            ]:
-                with TestAreaContext("python/job_queue/forward_model_none_" + key):
-                    back_up = joblist[0][key]
-                    joblist[0][key] = None
-                    self.run_all()
-                    joblist[0][key] = back_up
-
+            "stdin",
+        ]:
+            with TestAreaContext("python/job_queue/forward_model_none_" + key):
+                back_up = joblist[0][key]
+                joblist[0][key] = None
+                self.run_all()
+                joblist[0][key] = back_up
 
     def test_status_file(self):
         with TestAreaContext("status_json"):
@@ -533,12 +498,8 @@ class ForwardModelFormattedPrintTest(ResTest):
             global_args = SubstitutionList()
             varlist = EnvironmentVarlist()
             forward_model.formatted_fprintf(
-                run_id,
-                os.getcwd(),
-                "data_root",
-                global_args,
-                umask,
-                varlist)
+                run_id, os.getcwd(), "data_root", global_args, umask, varlist
+            )
 
             s = '{"start_time": null, "jobs": [{"status": "Success", "start_time": 1519653419.0, "end_time": 1519653419.0, "name": "SQUARE_PARAMS", "error": null, "current_memory_usage": 2000, "max_memory_usage": 3000}], "end_time": null, "run_id": ""}'
 
@@ -547,5 +508,5 @@ class ForwardModelFormattedPrintTest(ResTest):
 
             status = ForwardModelStatus.try_load("")
             for job in status.jobs:
-                self.assertTrue( isinstance(job.start_time, datetime.datetime))
-                self.assertTrue( isinstance(job.end_time, datetime.datetime))
+                self.assertTrue(isinstance(job.start_time, datetime.datetime))
+                self.assertTrue(isinstance(job.end_time, datetime.datetime))

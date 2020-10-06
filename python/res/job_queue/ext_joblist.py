@@ -21,15 +21,15 @@ from ecl.util.util import StringList
 
 class ExtJoblist(BaseCClass):
     TYPE_NAME = "ext_joblist"
-    _alloc      = ResPrototype("void* ext_joblist_alloc( )", bind=False)
-    _free       = ResPrototype("void ext_joblist_free( ext_joblist )")
+    _alloc = ResPrototype("void* ext_joblist_alloc( )", bind=False)
+    _free = ResPrototype("void ext_joblist_free( ext_joblist )")
     _alloc_list = ResPrototype("stringlist_ref ext_joblist_alloc_list(ext_joblist)")
-    _get_job    = ResPrototype("ext_job_ref ext_joblist_get_job(ext_joblist, char*)")
-    _del_job    = ResPrototype("int ext_joblist_del_job(ext_joblist, char*)")
-    _has_job    = ResPrototype("int ext_joblist_has_job(ext_joblist, char*)")
-    _add_job    = ResPrototype("void ext_joblist_add_job(ext_joblist, char*, ext_job)")
-    _get_jobs   = ResPrototype("hash_ref ext_joblist_get_jobs(ext_joblist)")
-    _size       = ResPrototype("int ext_joblist_get_size(ext_joblist)")
+    _get_job = ResPrototype("ext_job_ref ext_joblist_get_job(ext_joblist, char*)")
+    _del_job = ResPrototype("int ext_joblist_del_job(ext_joblist, char*)")
+    _has_job = ResPrototype("int ext_joblist_has_job(ext_joblist, char*)")
+    _add_job = ResPrototype("void ext_joblist_add_job(ext_joblist, char*, ext_job)")
+    _get_jobs = ResPrototype("hash_ref ext_joblist_get_jobs(ext_joblist)")
+    _size = ResPrototype("int ext_joblist_get_size(ext_joblist)")
 
     def __init__(self):
         c_ptr = self._alloc()
@@ -37,14 +37,14 @@ class ExtJoblist(BaseCClass):
 
     def get_jobs(self):
         """ @rtype: Hash """
-        jobs = self._get_jobs( )
+        jobs = self._get_jobs()
         jobs.setParent(self)
         return jobs
 
     def __len__(self):
-        return self._size( )
+        return self._size()
 
-    def __contains__(self , job):
+    def __contains__(self, job):
         return self._has_job(job)
 
     def __iter__(self):
@@ -52,15 +52,13 @@ class ExtJoblist(BaseCClass):
         for job in names:
             yield self[job]
 
-
     def __getitem__(self, job):
         if job in self:
             return self._get_job(job).setParent(self)
 
-
     def getAvailableJobNames(self):
         """ @rtype: StringList """
-        return [str(x) for x in self._alloc_list( ).setParent(self)]
+        return [str(x) for x in self._alloc_list().setParent(self)]
 
     def del_job(self, job):
         return self._del_job(job)
@@ -79,7 +77,7 @@ class ExtJoblist(BaseCClass):
         self._add_job(job_name, new_job)
 
     def free(self):
-        self._free( )
+        self._free()
 
     def __repr__(self):
-        return self._create_repr('size=%d, joblist=%s' % (len(self), self.get_jobs()))
+        return self._create_repr("size=%d, joblist=%s" % (len(self), self.get_jobs()))

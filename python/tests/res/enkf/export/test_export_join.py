@@ -6,13 +6,19 @@ from tests import ResTest
 from res.test import ErtTestContext
 from _pytest.monkeypatch import MonkeyPatch
 
-from res.enkf.export import (DesignMatrixReader, SummaryCollector,
-                             GenKwCollector, MisfitCollector)
+from res.enkf.export import (
+    DesignMatrixReader,
+    SummaryCollector,
+    GenKwCollector,
+    MisfitCollector,
+)
 
 
 def dumpDesignMatrix(path):
     with open(path, "w") as dm:
-        dm.write("REALIZATION	EXTRA_FLOAT_COLUMN EXTRA_INT_COLUMN EXTRA_STRING_COLUMN\n")
+        dm.write(
+            "REALIZATION	EXTRA_FLOAT_COLUMN EXTRA_INT_COLUMN EXTRA_STRING_COLUMN\n"
+        )
         dm.write("0	0.08	125	ON\n")
         dm.write("1	0.07	225	OFF\n")
         dm.write("2	0.08	325	ON\n")
@@ -39,11 +45,13 @@ def dumpDesignMatrix(path):
         dm.write("23	0.08	625	OFF\n")
         dm.write("24	0.08	725	ON\n")
 
-class ExportJoinTest(ResTest):
 
+class ExportJoinTest(ResTest):
     def setUp(self):
         self.monkeypatch = MonkeyPatch()
-        self.monkeypatch.setenv("TZ", "CET") # The ert_statoil case was generated in CET
+        self.monkeypatch.setenv(
+            "TZ", "CET"
+        )  # The ert_statoil case was generated in CET
         self.config = self.createTestPath("local/snake_oil/snake_oil.ert")
 
     def tearDown(self):
@@ -60,16 +68,22 @@ class ExportJoinTest(ResTest):
             misfit = MisfitCollector.loadAllMisfitData(ert, "default_1")
             dm = DesignMatrixReader.loadDesignMatrix("DesignMatrix.txt")
 
-            result = summary_data.join(gen_kw_data, how='inner')
-            result = result.join(misfit, how='inner')
-            result = result.join(dm, how='inner')
+            result = summary_data.join(gen_kw_data, how="inner")
+            result = result.join(misfit, how="inner")
+            result = result.join(dm, how="inner")
 
             first_date = "2010-01-10"
             last_date = "2015-06-23"
 
-            self.assertFloatEqual(result["SNAKE_OIL_PARAM:OP1_OCTAVES"][0][first_date], 3.947766)
-            self.assertFloatEqual(result["SNAKE_OIL_PARAM:OP1_OCTAVES"][24][first_date], 4.206698)
-            self.assertFloatEqual(result["SNAKE_OIL_PARAM:OP1_OCTAVES"][24][last_date], 4.206698)
+            self.assertFloatEqual(
+                result["SNAKE_OIL_PARAM:OP1_OCTAVES"][0][first_date], 3.947766
+            )
+            self.assertFloatEqual(
+                result["SNAKE_OIL_PARAM:OP1_OCTAVES"][24][first_date], 4.206698
+            )
+            self.assertFloatEqual(
+                result["SNAKE_OIL_PARAM:OP1_OCTAVES"][24][last_date], 4.206698
+            )
 
             self.assertFloatEqual(result["EXTRA_FLOAT_COLUMN"][0][first_date], 0.08)
             self.assertEqual(result["EXTRA_INT_COLUMN"][0][first_date], 125)
@@ -89,7 +103,6 @@ class ExportJoinTest(ResTest):
             self.assertFloatEqual(result["MISFIT:TOTAL"][0][first_date], 468.469969)
             self.assertFloatEqual(result["MISFIT:TOTAL"][0][last_date], 468.469969)
             self.assertFloatEqual(result["MISFIT:TOTAL"][24][last_date], 1714.662370)
-
 
             with self.assertRaises(KeyError):
                 realization_13 = result.loc[60]

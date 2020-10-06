@@ -23,14 +23,15 @@ body_sub_pattern = r"(\s^\s@.+$)*"
 date_sub_pattern = r"\s+AT TIME\s+(?P<Days>\d+\.\d+)\s+DAYS\s+\((?P<Date>(.+)):\s*$"
 error_pattern = r"^\s@--  ERROR{}${}".format(date_sub_pattern, body_sub_pattern)
 
-def make_LSB_MCPU_machine_list( LSB_MCPU_HOSTS ):
+
+def make_LSB_MCPU_machine_list(LSB_MCPU_HOSTS):
     host_numcpu_list = LSB_MCPU_HOSTS.split()
     host_list = []
     for index in range(len(host_numcpu_list) // 2):
-        machine = host_numcpu_list[ 2*index ]
-        host_numcpu = int(host_numcpu_list[ 2*index  + 1 ])
+        machine = host_numcpu_list[2 * index]
+        host_numcpu = int(host_numcpu_list[2 * index + 1])
         for icpu in range(host_numcpu):
-            host_list.append( machine )
+            host_list.append(machine)
     return host_list
 
 
@@ -53,7 +54,7 @@ def _expand_SLURM_node(node_string):
                 node_list.append("{}{}".format(base, num))
         return node_list
     else:
-        return [ node_string ]
+        return [node_string]
 
 
 def _expand_SLURM_task_count(task_count_string):
@@ -68,11 +69,11 @@ def _expand_SLURM_task_count(task_count_string):
         else:
             mult = int(mult_string)
 
-        return [ count ] * mult
+        return [count] * mult
     else:
-        raise Exception("Failed to parse SLURM_TASKS_PER_NODE: {}".format(task_count_string))
-
-
+        raise Exception(
+            "Failed to parse SLURM_TASKS_PER_NODE: {}".format(task_count_string)
+        )
 
 
 # The list of available machines/nodes and how many tasks each node should get
@@ -95,25 +96,26 @@ def _expand_SLURM_task_count(task_count_string):
 #
 # For further details see the sbatch manual page.
 
-def make_SLURM_machine_list( SLURM_JOB_NODELIST, SLURM_TASKS_PER_NODE):
+
+def make_SLURM_machine_list(SLURM_JOB_NODELIST, SLURM_TASKS_PER_NODE):
     # We split on ',' - but not on ',' which is inside a [...]
     split_re = ",(?![^[]*\\])"
     nodelist = []
     for node_string in re.split(split_re, SLURM_JOB_NODELIST):
-        nodelist += _expand_SLURM_node( node_string )
+        nodelist += _expand_SLURM_node(node_string)
 
     task_count_list = []
     for task_count_string in SLURM_TASKS_PER_NODE.split(","):
-        task_count_list += _expand_SLURM_task_count( task_count_string )
+        task_count_list += _expand_SLURM_task_count(task_count_string)
 
     host_list = []
     for node, count in zip(nodelist, task_count_list):
-        host_list += [ node ] * count
+        host_list += [node] * count
 
     return host_list
 
 
-def make_LSB_machine_list( LSB_HOSTS ):
+def make_LSB_machine_list(LSB_HOSTS):
     return LSB_HOSTS.split()
 
 
@@ -159,15 +161,14 @@ class EclRun(object):
 
     """
 
-    def __init__(self , ecl_case, sim, num_cpu = 1, check_status = True):
+    def __init__(self, ecl_case, sim, num_cpu=1, check_status=True):
         self.sim = sim
         self.check_status = check_status
         self.num_cpu = int(num_cpu)
 
-
         # Dechipher the ecl_case argument.
         input_arg = ecl_case
-        (base , ext) = os.path.splitext( input_arg )
+        (base, ext) = os.path.splitext(input_arg)
         if ext and ext in [".data", ".DATA"]:
             data_file = input_arg
         else:
@@ -176,37 +177,30 @@ class EclRun(object):
             else:
                 data_file = input_arg + ".DATA"
 
-
-        if not os.path.isfile( data_file ):
-            raise IOError("No such file: %s" % data_file )
+        if not os.path.isfile(data_file):
+            raise IOError("No such file: %s" % data_file)
         else:
-            (self.run_path , self.data_file)  = os.path.split( data_file )
-            (self.base_name , ext ) = os.path.splitext( self.data_file )
+            (self.run_path, self.data_file) = os.path.split(data_file)
+            (self.base_name, ext) = os.path.splitext(self.data_file)
 
             if self.run_path is None:
                 self.run_path = os.getcwd()
             else:
-                self.run_path = os.path.abspath( self.run_path )
-
-
+                self.run_path = os.path.abspath(self.run_path)
 
     def runPath(self):
         return self.run_path
 
-
     def baseName(self):
         return self.base_name
 
-
     def numCpu(self):
         return self.num_cpu
-
 
     def _get_legacy_run_env(self):
         my_env = os.environ.copy()
         my_env.update(self.sim.env.items())
         return my_env
-
 
     def initMPI(self):
 
@@ -223,32 +217,38 @@ class EclRun(object):
         #
         #       host1  host1  host2  host3
 
-
-
         LSB_MCPU_HOSTS = os.getenv("LSB_MCPU_HOSTS")
         LSB_HOSTS = os.getenv("LSB_HOSTS")
 
         if LSB_MCPU_HOSTS or LSB_HOSTS:
-            LSB_MCPU_machine_list = make_LSB_MCPU_machine_list( LSB_MCPU_HOSTS )
-            LSB_machine_list = make_LSB_machine_list( LSB_HOSTS )
+            LSB_MCPU_machine_list = make_LSB_MCPU_machine_list(LSB_MCPU_HOSTS)
+            LSB_machine_list = make_LSB_machine_list(LSB_HOSTS)
 
             if len(LSB_MCPU_machine_list) == self.num_cpu:
                 machine_list = LSB_MCPU_machine_list
             elif len(LSB_machine_list) == self.num_cpu:
                 machine_list = LSB_machine_list
             else:
-                raise Exception("LSF / MPI problems. Asked for:%s cpu. LSB_MCPU_HOSTS: \"%s\"  LSB_HOSTS: \"%s\"" % (self.num_cpu , LSB_MCPU_HOSTS , LSB_HOSTS))
+                raise Exception(
+                    'LSF / MPI problems. Asked for:%s cpu. LSB_MCPU_HOSTS: "%s"  LSB_HOSTS: "%s"'
+                    % (self.num_cpu, LSB_MCPU_HOSTS, LSB_HOSTS)
+                )
         elif os.getenv("SLURM_JOB_NODELIST"):
-            machine_list = make_SLURM_machine_list( os.getenv("SLURM_JOB_NODELIST"),
-                                                    os.getenv("SLURM_TASKS_PER_NODE") )
+            machine_list = make_SLURM_machine_list(
+                os.getenv("SLURM_JOB_NODELIST"), os.getenv("SLURM_TASKS_PER_NODE")
+            )
             if len(machine_list) != self.num_cpu:
-                raise Exception("SLURM / MPI problems - asked for {} - got {} nodes".format(self.num_cpu, len(machine_list)))
+                raise Exception(
+                    "SLURM / MPI problems - asked for {} - got {} nodes".format(
+                        self.num_cpu, len(machine_list)
+                    )
+                )
         else:
             localhost = socket.gethostname()
-            machine_list = [ localhost ] * self.num_cpu
+            machine_list = [localhost] * self.num_cpu
 
         self.machine_file = "%s.mpi" % self.base_name
-        with open( self.machine_file , "w") as fileH:
+        with open(self.machine_file, "w") as fileH:
             for host in machine_list:
                 fileH.write("%s\n" % host)
 
@@ -260,7 +260,7 @@ class EclRun(object):
             "--np",
             str(self.num_cpu),
             eclrun_config.simulator_name,
-            "{}.DATA".format(self.base_name)
+            "{}.DATA".format(self.base_name),
         ]
 
     def _get_legacy_run_command(self):
@@ -275,7 +275,7 @@ class EclRun(object):
                 "-np",
                 str(self.num_cpu),
                 self.sim.executable,
-                self.base_name
+                self.base_name,
             ]
 
     def execEclipse(self, eclrun_config=None):
@@ -288,7 +288,11 @@ class EclRun(object):
             if not os.access(self.data_file, os.R_OK):
                 raise OSError("Can not read data file:{}".format(self.data_file))
 
-            command = self._get_run_command(eclrun_config) if use_eclrun else self._get_legacy_run_command()
+            command = (
+                self._get_run_command(eclrun_config)
+                if use_eclrun
+                else self._get_legacy_run_command()
+            )
             env = eclrun_config.run_env if use_eclrun else self._get_legacy_run_env()
 
             process = subprocess.Popen(
@@ -301,29 +305,31 @@ class EclRun(object):
     def runEclipse(self, eclrun_config=None):
         return_code = self.execEclipse(eclrun_config=eclrun_config)
 
-        OK_file = os.path.join(self.run_path , "%s.OK" % self.base_name)
+        OK_file = os.path.join(self.run_path, "%s.OK" % self.base_name)
         if not self.check_status:
             with open(OK_file, "w") as f:
                 f.write("ECLIPSE simulation complete - NOT checked for errors.")
         else:
             if return_code != 0:
-                raise Exception("The eclipse executable exited with error status: %d" % (return_code))
+                raise Exception(
+                    "The eclipse executable exited with error status: %d"
+                    % (return_code)
+                )
 
-            self.assertECLEND( )
+            self.assertECLEND()
             if self.num_cpu > 1:
-                self.summary_block( )
+                self.summary_block()
 
             with open(OK_file, "w") as f:
                 f.write("ECLIPSE simulation OK")
 
-
     def summary_block(self):
         case = os.path.join(self.run_path, self.base_name)
-        start_time = datetime.datetime.now( )
+        start_time = datetime.datetime.now()
         prev_len = 0
         while True:
             dt = datetime.datetime.now() - start_time
-            if dt.total_seconds( ) > 15:
+            if dt.total_seconds() > 15:
                 # We have not got a stable summary file after 15 seconds of waiting,
                 # this eitther implies that something is completely broken or this is
                 # a NOSIM simulation. Due the possibility of NOSIM solution we just return
@@ -347,43 +353,42 @@ class EclRun(object):
 
         return ecl_sum
 
-
     def assertECLEND(self):
-        result = self.readECLEND( )
+        result = self.readECLEND()
         if result.errors > 0:
-            error_list = self.parseErrors( )
+            error_list = self.parseErrors()
             sep = "\n\n...\n\n"
-            error_msg = sep.join( error_list )
-            raise Exception("Eclipse simulation failed with:%d errors:\n\n%s" % (result.errors , error_msg))
+            error_msg = sep.join(error_list)
+            raise Exception(
+                "Eclipse simulation failed with:%d errors:\n\n%s"
+                % (result.errors, error_msg)
+            )
 
         if result.bugs > 0:
-            raise Exception("Eclipse simulation failed with:%d bugs" % result.bugs )
-
-
+            raise Exception("Eclipse simulation failed with:%d bugs" % result.bugs)
 
     def readECLEND(self):
         error_regexp = re.compile(r"^\s*Errors\s+(\d+)\s*$")
         bug_regexp = re.compile(r"^\s*Bugs\s+(\d+)\s*$")
 
-        report_file = os.path.join( self.run_path , "{}.ECLEND".format(self.base_name))
+        report_file = os.path.join(self.run_path, "{}.ECLEND".format(self.base_name))
         if not os.path.isfile(report_file):
-            report_file = os.path.join( self.run_path, "{}.PRT".format(self.base_name))
+            report_file = os.path.join(self.run_path, "{}.PRT".format(self.base_name))
 
-        with open(report_file , "r") as fileH:
+        with open(report_file, "r") as fileH:
             for line in fileH.readlines():
-                error_match = re.match(error_regexp , line)
+                error_match = re.match(error_regexp, line)
                 if error_match:
-                    errors = int( error_match.group(1) )
+                    errors = int(error_match.group(1))
 
-                bug_match = re.match(bug_regexp , line)
+                bug_match = re.match(bug_regexp, line)
                 if bug_match:
-                    bugs = int( bug_match.group(1) )
+                    bugs = int(bug_match.group(1))
 
-        return EclipseResult( errors = errors , bugs = bugs )
-
+        return EclipseResult(errors=errors, bugs=bugs)
 
     def parseErrors(self):
-        prt_file = os.path.join( self.runPath() , "%s.PRT" % self.baseName())
+        prt_file = os.path.join(self.runPath(), "%s.PRT" % self.baseName())
         error_list = []
         error_regexp = re.compile(error_pattern, re.MULTILINE)
         with open(prt_file) as f:
@@ -391,24 +396,25 @@ class EclRun(object):
 
         offset = 0
         while True:
-            match = error_regexp.search( content[offset:] )
+            match = error_regexp.search(content[offset:])
             if match:
-                error_list.append( content[ offset + match.start( ) : offset + match.end() ] )
-                offset += match.end( )
+                error_list.append(
+                    content[offset + match.start() : offset + match.end()]
+                )
+                offset += match.end()
             else:
                 break
 
         return error_list
 
-
     @classmethod
-    def checkCase(cls , refcase , simcase):
-        ref = EclSum( refcase )
-        sim = EclSum( simcase )
+    def checkCase(cls, refcase, simcase):
+        ref = EclSum(refcase)
+        sim = EclSum(simcase)
 
-        if sim.getEndTime( ) >= ref.getEndTime():
-            with open("CHECK_ECLIPSE_RUN.OK","w") as f:
-                f.write("OK - the simulation %s was >= %s" % (simcase , refcase))
+        if sim.getEndTime() >= ref.getEndTime():
+            with open("CHECK_ECLIPSE_RUN.OK", "w") as f:
+                f.write("OK - the simulation %s was >= %s" % (simcase, refcase))
 
             return True
         else:
@@ -416,5 +422,10 @@ class EclRun(object):
 CHECK_ECLIPSE_RUN: Failed
 Refcase    %s : %s
 Simulation %s : %s
-""" % ( refcase , ref.getEndTime() , simcase , sim.getEndTime())
-            raise ValueError( msg )
+""" % (
+                refcase,
+                ref.getEndTime(),
+                simcase,
+                sim.getEndTime(),
+            )
+            raise ValueError(msg)

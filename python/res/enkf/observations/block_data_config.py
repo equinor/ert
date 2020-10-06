@@ -18,24 +18,25 @@ from res.enkf import NodeId, FieldConfig
 from res import ResPrototype
 import ctypes
 
+
 class BlockDataConfig(BaseCClass):
     TYPE_NAME = "block_data_config"
 
     def __init__(self):
-        raise NotImplementedError('Cannot instantiate BlockDataConfig!')
+        raise NotImplementedError("Cannot instantiate BlockDataConfig!")
 
     @classmethod
-    def from_param(cls , instance):
+    def from_param(cls, instance):
         if instance is None:
             return ctypes.c_void_p()
-        elif isinstance(instance , FieldConfig):
-            return FieldConfig.from_param( instance )
+        elif isinstance(instance, FieldConfig):
+            return FieldConfig.from_param(instance)
 
         # The Container class which is used to support summary based
         # source in the BLOCK_OBS configuration is not yet supported
         # in Python.
 
-        #elif isinstance(instance , ContainerConfig):
+        # elif isinstance(instance , ContainerConfig):
         #    return ContainerConfig.from_param( instance )
         else:
             raise ValueError("Currently ONLY field data is supported")

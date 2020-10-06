@@ -7,7 +7,6 @@ from ecl.util.util import BoolVector
 
 
 class SummaryCollector(object):
-
     @staticmethod
     def createActiveList(ert, fs):
         state_map = fs.getStateMap()
@@ -39,9 +38,14 @@ class SummaryCollector(object):
 
         summary_keys = SummaryCollector.getAllSummaryKeys(ert)
         if keys is not None:
-            summary_keys = [key for key in keys if key in summary_keys] # ignore keys that doesn't exist
+            summary_keys = [
+                key for key in keys if key in summary_keys
+            ]  # ignore keys that doesn't exist
 
-        summary_array = numpy.empty(shape=(len(summary_keys), len(realizations) * len(dates)), dtype=numpy.float64)
+        summary_array = numpy.empty(
+            shape=(len(summary_keys), len(realizations) * len(dates)),
+            dtype=numpy.float64,
+        )
         summary_array.fill(numpy.nan)
 
         for key_index, key in enumerate(summary_keys):
@@ -60,8 +64,10 @@ class SummaryCollector(object):
                         value = realization_vector.getValue(index)
                         summary_row[column_index + index - 1] = value
 
-
-        multi_index = MultiIndex.from_product([realizations, dates], names=["Realization", "Date"])
-        summary_data = DataFrame(data=numpy.transpose(summary_array), index=multi_index, columns=summary_keys)
+        multi_index = MultiIndex.from_product(
+            [realizations, dates], names=["Realization", "Date"]
+        )
+        summary_data = DataFrame(
+            data=numpy.transpose(summary_array), index=multi_index, columns=summary_keys
+        )
         return summary_data
-

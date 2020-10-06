@@ -21,27 +21,25 @@ from res.util import Matrix
 from res.analysis import Linalg
 from tests import ResTest
 
+
 class LinalgTest(ResTest):
-
     def test_num_PC(self):
-        S = Matrix(3,3)
-        S[0,0] = 1
-        S[1,1] = 1
-        S[2,2] = 1
+        S = Matrix(3, 3)
+        S[0, 0] = 1
+        S[1, 1] = 1
+        S[2, 2] = 1
 
         with self.assertRaises(ValueError):
-            num_pc = Linalg.numPC( S , 0 )
+            num_pc = Linalg.numPC(S, 0)
 
         with self.assertRaises(ValueError):
-            num_pc = Linalg.numPC( S , 1.5 )
+            num_pc = Linalg.numPC(S, 1.5)
 
-        num_pc = Linalg.numPC( S , 0.20 )
-        self.assertEqual( num_pc , 1 )
+        num_pc = Linalg.numPC(S, 0.20)
+        self.assertEqual(num_pc, 1)
 
-        num_pc = Linalg.numPC( S , 0.50 )
-        self.assertEqual( num_pc , 2 )
+        num_pc = Linalg.numPC(S, 0.50)
+        self.assertEqual(num_pc, 2)
 
-        num_pc = Linalg.numPC( S , 0.80 )
-        self.assertEqual( num_pc , 3 )
-
-
+        num_pc = Linalg.numPC(S, 0.80)
+        self.assertEqual(num_pc, 3)

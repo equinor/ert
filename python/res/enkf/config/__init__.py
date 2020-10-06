@@ -7,10 +7,12 @@ from .ext_param_config import ExtParamConfig
 from .enkf_config_node import EnkfConfigNode
 
 
-__all__ = ["FieldConfig",
-           "FieldTypeEnum",
-           "GenKwConfig",
-           "GenDataConfig",
-           "EnkfConfigNode",
-           "SummaryConfig",
-           "ExtParamConfig"]
+__all__ = [
+    "FieldConfig",
+    "FieldTypeEnum",
+    "GenKwConfig",
+    "GenDataConfig",
+    "EnkfConfigNode",
+    "SummaryConfig",
+    "ExtParamConfig",
+]

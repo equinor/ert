@@ -3,10 +3,9 @@ from .ecl_run import EclRun
 from .script import run
 
 
-
 # This is very deprecated, should rather use the run() method in the script
 # module. That will handle argument parsing and so on.
-def simulate(simulator, version, data_file, num_cpu = 1, check = True):
+def simulate(simulator, version, data_file, num_cpu=1, check=True):
     if simulator == "ecl100":
         config = Ecl100Config()
     elif simulator == "flow":
@@ -22,6 +21,6 @@ def simulate(simulator, version, data_file, num_cpu = 1, check = True):
         argv.append("--version={}".format(version))
 
     if not check:
-        argv.append( "--ignore-errors")
+        argv.append("--ignore-errors")
 
     run(config, argv)

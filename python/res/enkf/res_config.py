@@ -21,56 +21,103 @@ from cwrap import BaseCClass
 
 from ecl.util.util import StringList
 from res import ResPrototype
-from res.config import (ConfigParser, ConfigContent, ConfigSettings,
-                        UnrecognizedEnum)
+from res.config import ConfigParser, ConfigContent, ConfigSettings, UnrecognizedEnum
 
-from res.enkf import (SiteConfig, AnalysisConfig, SubstConfig, ModelConfig, EclConfig, QueueConfig,
-                      EnsembleConfig, RNGConfig, ConfigKeys, ErtWorkflowList, HookManager, ErtTemplates, LogConfig)
+from res.enkf import (
+    SiteConfig,
+    AnalysisConfig,
+    SubstConfig,
+    ModelConfig,
+    EclConfig,
+    QueueConfig,
+    EnsembleConfig,
+    RNGConfig,
+    ConfigKeys,
+    ErtWorkflowList,
+    HookManager,
+    ErtTemplates,
+    LogConfig,
+)
+
 
 class ResConfig(BaseCClass):
     TYPE_NAME = "res_config"
 
-    _free       = ResPrototype("void res_config_free(res_config)")
-    _alloc_full = ResPrototype("void* res_config_alloc_full("
-                               "char*, " 
-                               "char*, " 
-                               "subst_config, " 
-                               "site_config, " 
-                               "rng_config, " 
-                               "analysis_config, " 
-                               "ert_workflow_list, " 
-                               "hook_manager, " 
-                               "ert_templates, "  
-                               "ecl_config, " 
-                               "ens_config, " 
-                               "model_config, " 
-                               "log_config, " 
-                               "queue_config)"
-                               , bind=False)
+    _free = ResPrototype("void res_config_free(res_config)")
+    _alloc_full = ResPrototype(
+        "void* res_config_alloc_full("
+        "char*, "
+        "char*, "
+        "subst_config, "
+        "site_config, "
+        "rng_config, "
+        "analysis_config, "
+        "ert_workflow_list, "
+        "hook_manager, "
+        "ert_templates, "
+        "ecl_config, "
+        "ens_config, "
+        "model_config, "
+        "log_config, "
+        "queue_config)",
+        bind=False,
+    )
 
-    _alloc_config_content = ResPrototype("config_content_ref res_config_alloc_user_content(char*, config_parser)", bind=False)
-    _user_config_file  = ResPrototype("char* res_config_get_user_config_file(res_config)")
-    _config_path       = ResPrototype("char* res_config_get_config_directory(res_config)")
-    _site_config       = ResPrototype("site_config_ref res_config_get_site_config(res_config)")
-    _analysis_config   = ResPrototype("analysis_config_ref res_config_get_analysis_config(res_config)")
-    _subst_config      = ResPrototype("subst_config_ref res_config_get_subst_config(res_config)")
-    _model_config      = ResPrototype("model_config_ref res_config_get_model_config(res_config)")
-    _ecl_config        = ResPrototype("ecl_config_ref res_config_get_ecl_config(res_config)")
-    _ensemble_config   = ResPrototype("ens_config_ref res_config_get_ensemble_config(res_config)")
-    _hook_manager      = ResPrototype("hook_manager_ref res_config_get_hook_manager(res_config)")
-    _ert_workflow_list = ResPrototype("ert_workflow_list_ref res_config_get_workflow_list(res_config)")
-    _rng_config        = ResPrototype("rng_config_ref res_config_get_rng_config(res_config)")
-    _ert_templates     = ResPrototype("ert_templates_ref res_config_get_templates(res_config)")
-    _log_config        = ResPrototype("log_config_ref res_config_get_log_config(res_config)")
-    _queue_config      = ResPrototype("queue_config_ref res_config_get_queue_config(res_config)")
-    _init_parser       = ResPrototype("void res_config_init_config_parser(config_parser)", bind=False)
+    _alloc_config_content = ResPrototype(
+        "config_content_ref res_config_alloc_user_content(char*, config_parser)",
+        bind=False,
+    )
+    _user_config_file = ResPrototype(
+        "char* res_config_get_user_config_file(res_config)"
+    )
+    _config_path = ResPrototype("char* res_config_get_config_directory(res_config)")
+    _site_config = ResPrototype(
+        "site_config_ref res_config_get_site_config(res_config)"
+    )
+    _analysis_config = ResPrototype(
+        "analysis_config_ref res_config_get_analysis_config(res_config)"
+    )
+    _subst_config = ResPrototype(
+        "subst_config_ref res_config_get_subst_config(res_config)"
+    )
+    _model_config = ResPrototype(
+        "model_config_ref res_config_get_model_config(res_config)"
+    )
+    _ecl_config = ResPrototype("ecl_config_ref res_config_get_ecl_config(res_config)")
+    _ensemble_config = ResPrototype(
+        "ens_config_ref res_config_get_ensemble_config(res_config)"
+    )
+    _hook_manager = ResPrototype(
+        "hook_manager_ref res_config_get_hook_manager(res_config)"
+    )
+    _ert_workflow_list = ResPrototype(
+        "ert_workflow_list_ref res_config_get_workflow_list(res_config)"
+    )
+    _rng_config = ResPrototype("rng_config_ref res_config_get_rng_config(res_config)")
+    _ert_templates = ResPrototype(
+        "ert_templates_ref res_config_get_templates(res_config)"
+    )
+    _log_config = ResPrototype("log_config_ref res_config_get_log_config(res_config)")
+    _queue_config = ResPrototype(
+        "queue_config_ref res_config_get_queue_config(res_config)"
+    )
+    _init_parser = ResPrototype(
+        "void res_config_init_config_parser(config_parser)", bind=False
+    )
 
+    def __init__(
+        self, user_config_file=None, config=None, throw_on_error=True, config_dict=None
+    ):
 
-    def __init__(self, user_config_file=None, config=None, throw_on_error=True, config_dict=None):
-
-        _assert_configs = (config is not None) ^ (config_dict is not None) ^ (user_config_file is not None)
+        _assert_configs = (
+            (config is not None)
+            ^ (config_dict is not None)
+            ^ (user_config_file is not None)
+        )
         if _assert_configs is False:
-            raise ValueError("Wrong config input - only one config means needs to be provided!")
+            raise ValueError(
+                "Wrong config input - only one config means needs to be provided!"
+            )
 
         self._errors, self._failed_keys = None, None
         self._assert_input(user_config_file, config_dict, throw_on_error)
@@ -78,9 +125,15 @@ class ResConfig(BaseCClass):
         configs = None
         config_dir = None
         if config is not None or user_config_file is not None:
-            configs, config_dir = self._alloc_from_content(user_config_file=user_config_file, config=config, throw_on_error=throw_on_error)
+            configs, config_dir = self._alloc_from_content(
+                user_config_file=user_config_file,
+                config=config,
+                throw_on_error=throw_on_error,
+            )
         else:
-            configs, config_dir = self._alloc_from_dict(config_dict=config_dict, throw_on_error=throw_on_error)
+            configs, config_dir = self._alloc_from_dict(
+                config_dict=config_dict, throw_on_error=throw_on_error
+            )
 
         c_ptr = None
 
@@ -88,36 +141,42 @@ class ResConfig(BaseCClass):
             conf.convertToCReference(None)
         c_ptr = self._alloc_full(config_dir, user_config_file, *configs)
 
-
         if c_ptr:
             super(ResConfig, self).__init__(c_ptr)
         else:
             raise ValueError(
-                    'Failed to construct ResConfig instance from %r.'
-                    % (user_config_file if user_config_file else config)
-                    )
+                "Failed to construct ResConfig instance from %r."
+                % (user_config_file if user_config_file else config)
+            )
 
     def _assert_input(self, user_config_file, config, throw_on_error):
         if config and not isinstance(config, dict):
-            raise ValueError("Expected config to be a dictionary, was %r"
-                             % type(config))
+            raise ValueError(
+                "Expected config to be a dictionary, was %r" % type(config)
+            )
 
         if user_config_file and not isinstance(user_config_file, str):
             raise ValueError("Expected user_config_file to be a string.")
 
         if user_config_file is not None and config is not None:
-            raise ValueError("Expected either user_config_file " +
-                             "or config to be provided, got both!")
+            raise ValueError(
+                "Expected either user_config_file "
+                + "or config to be provided, got both!"
+            )
 
         if user_config_file is not None and not isfile(user_config_file):
             raise IOError('No such configuration file "%s".' % user_config_file)
 
         if user_config_file is not None and not throw_on_error:
-            raise NotImplementedError("Disabling exceptions on errors is not "
-                                      "available when loading from file.")
+            raise NotImplementedError(
+                "Disabling exceptions on errors is not "
+                "available when loading from file."
+            )
 
-    #build configs from config file or everest dict
-    def _alloc_from_content(self, user_config_file=None, config=None, throw_on_error=True):
+    # build configs from config file or everest dict
+    def _alloc_from_content(
+        self, user_config_file=None, config=None, throw_on_error=True
+    ):
         if user_config_file is not None:
             # initialize configcontent if user_file provided
             parser = ConfigParser()
@@ -138,41 +197,50 @@ class ResConfig(BaseCClass):
         log_config = LogConfig(config_content=config_content)
         queue_config = QueueConfig(config_content=config_content)
 
-        ert_workflow_list = ErtWorkflowList(subst_list=subst_config.subst_list,
-                                            config_content=config_content)
+        ert_workflow_list = ErtWorkflowList(
+            subst_list=subst_config.subst_list, config_content=config_content
+        )
 
-        hook_manager = HookManager(workflow_list=ert_workflow_list,
-                                   config_content=config_content)
+        hook_manager = HookManager(
+            workflow_list=ert_workflow_list, config_content=config_content
+        )
 
-        ert_templates = ErtTemplates(parent_subst=subst_config.subst_list,
-                                     config_content=config_content)
+        ert_templates = ErtTemplates(
+            parent_subst=subst_config.subst_list, config_content=config_content
+        )
 
-        ensemble_config = EnsembleConfig(config_content=config_content,
-                                         grid=ecl_config.getGrid(),
-                                         refcase=ecl_config.getRefcase())
+        ensemble_config = EnsembleConfig(
+            config_content=config_content,
+            grid=ecl_config.getGrid(),
+            refcase=ecl_config.getRefcase(),
+        )
 
-        model_config = ModelConfig(data_root=config_dir,
-                                   joblist=site_config.get_installed_jobs(),
-                                   last_history_restart=ecl_config.getLastHistoryRestart(),
-                                   refcase=ecl_config.getRefcase(),
-                                   config_content=config_content)
+        model_config = ModelConfig(
+            data_root=config_dir,
+            joblist=site_config.get_installed_jobs(),
+            last_history_restart=ecl_config.getLastHistoryRestart(),
+            refcase=ecl_config.getRefcase(),
+            config_content=config_content,
+        )
 
-        return [subst_config,
-                site_config,
-                rng_config,
-                analysis_config,
-                ert_workflow_list,
-                hook_manager,
-                ert_templates,
-                ecl_config,
-                ensemble_config,
-                model_config,
-                log_config,
-                queue_config], config_dir
+        return [
+            subst_config,
+            site_config,
+            rng_config,
+            analysis_config,
+            ert_workflow_list,
+            hook_manager,
+            ert_templates,
+            ecl_config,
+            ensemble_config,
+            model_config,
+            log_config,
+            queue_config,
+        ], config_dir
 
     # build configs from config dict
     def _alloc_from_dict(self, config_dict, throw_on_error=True):
-        #treat the default config dir
+        # treat the default config dir
         config_dir = os.getcwd()
         if ConfigKeys.CONFIG_DIRECTORY in config_dict:
             config_dir = config_dict[ConfigKeys.CONFIG_DIRECTORY]
@@ -186,37 +254,46 @@ class ResConfig(BaseCClass):
         log_config = LogConfig(config_dict=config_dict)
         queue_config = QueueConfig(config_dict=config_dict)
 
-        ert_workflow_list = ErtWorkflowList(subst_list=subst_config.subst_list,
-                                            config_dict=config_dict)
+        ert_workflow_list = ErtWorkflowList(
+            subst_list=subst_config.subst_list, config_dict=config_dict
+        )
 
-        hook_manager = HookManager(workflow_list=ert_workflow_list,
-                                   config_dict=config_dict)
+        hook_manager = HookManager(
+            workflow_list=ert_workflow_list, config_dict=config_dict
+        )
 
-        ert_templates = ErtTemplates(parent_subst=subst_config.subst_list,
-                                     config_dict=config_dict)
+        ert_templates = ErtTemplates(
+            parent_subst=subst_config.subst_list, config_dict=config_dict
+        )
 
-        ensemble_config = EnsembleConfig(grid=ecl_config.getGrid(),
-                                         refcase=ecl_config.getRefcase(),
-                                         config_dict=config_dict)
+        ensemble_config = EnsembleConfig(
+            grid=ecl_config.getGrid(),
+            refcase=ecl_config.getRefcase(),
+            config_dict=config_dict,
+        )
 
-        model_config = ModelConfig(data_root=config_dir,
-                                   joblist=site_config.get_installed_jobs(),
-                                   last_history_restart=ecl_config.getLastHistoryRestart(),
-                                   refcase=ecl_config.getRefcase(),
-                                   config_dict=config_dict)
+        model_config = ModelConfig(
+            data_root=config_dir,
+            joblist=site_config.get_installed_jobs(),
+            last_history_restart=ecl_config.getLastHistoryRestart(),
+            refcase=ecl_config.getRefcase(),
+            config_dict=config_dict,
+        )
 
-        return [subst_config,
-                site_config,
-                rng_config,
-                analysis_config,
-                ert_workflow_list,
-                hook_manager,
-                ert_templates,
-                ecl_config,
-                ensemble_config,
-                model_config,
-                log_config,
-                queue_config], config_dir
+        return [
+            subst_config,
+            site_config,
+            rng_config,
+            analysis_config,
+            ert_workflow_list,
+            hook_manager,
+            ert_templates,
+            ecl_config,
+            ensemble_config,
+            model_config,
+            log_config,
+            queue_config,
+        ], config_dir
 
     def _extract_defines(self, config):
         defines = {}
@@ -226,7 +303,6 @@ class ResConfig(BaseCClass):
 
         return defines
 
-
     def _parse_value(self, value):
         if isinstance(value, str):
             return value
@@ -235,12 +311,10 @@ class ResConfig(BaseCClass):
         else:
             return str(value)
 
-
     def _assert_keys(self, mother_key, exp_keys, keys):
         if set(exp_keys) != set(keys):
             err_msg = "Did expect the keys %r in %s, received %r."
             raise ValueError(err_msg % (exp_keys, mother_key, keys))
-
 
     def _extract_internals(self, config):
         internal_config = []
@@ -261,7 +335,6 @@ class ResConfig(BaseCClass):
         internal_config.append((ConfigKeys.CONFIG_DIRECTORY, config_dir))
         return config_dir, internal_config
 
-
     def _extract_queue_system(self, config):
         if ConfigKeys.QUEUE_SYSTEM not in config:
             return []
@@ -270,9 +343,11 @@ class ResConfig(BaseCClass):
         queue_config = []
         if ConfigKeys.QUEUE_OPTION in qc:
             for qo in qc[ConfigKeys.QUEUE_OPTION]:
-                queue_options = [ConfigKeys.DRIVER_NAME,
-                                 ConfigKeys.OPTION,
-                                 ConfigKeys.VALUE]
+                queue_options = [
+                    ConfigKeys.DRIVER_NAME,
+                    ConfigKeys.OPTION,
+                    ConfigKeys.VALUE,
+                ]
 
                 self._assert_keys(ConfigKeys.QUEUE_OPTION, queue_options, qo.keys())
 
@@ -301,7 +376,6 @@ class ResConfig(BaseCClass):
 
         return job_config
 
-
     def _extract_simulation_job(self, config):
         if ConfigKeys.SIMULATION_JOB not in config:
             return []
@@ -309,14 +383,13 @@ class ResConfig(BaseCClass):
         ic = config[ConfigKeys.SIMULATION_JOB]
         simulation_job = []
         for job in ic:
-            arglist = [ job[ConfigKeys.NAME] ]
+            arglist = [job[ConfigKeys.NAME]]
             if ConfigKeys.ARGLIST in job:
                 for arg in job[ConfigKeys.ARGLIST]:
                     arglist.append(str(arg))
             simulation_job.append((ConfigKeys.SIMULATION_JOB, arglist))
 
         return simulation_job
-
 
     def _extract_forward_model(self, config):
         if ConfigKeys.FORWARD_MODEL not in config:
@@ -329,7 +402,6 @@ class ResConfig(BaseCClass):
 
         return forward_model_job
 
-
     def _extract_logging(self, config):
         if ConfigKeys.LOGGING not in config:
             return []
@@ -340,7 +412,6 @@ class ResConfig(BaseCClass):
 
         return logging_config
 
-
     def _extract_seed(self, config):
         if ConfigKeys.SEED not in config:
             return []
@@ -350,7 +421,6 @@ class ResConfig(BaseCClass):
             seed_config.append((key, self._parse_value(value)))
 
         return seed_config
-
 
     def _extract_run_templates(self, config):
         if ConfigKeys.RUN_TEMPLATE not in config:
@@ -373,10 +443,12 @@ class ResConfig(BaseCClass):
 
         gen_kw_config = []
         for gk in config[ConfigKeys.GEN_KW]:
-            gen_kw_options = [ConfigKeys.NAME,
-                              ConfigKeys.TEMPLATE,
-                              ConfigKeys.OUT_FILE,
-                              ConfigKeys.PARAMETER_FILE]
+            gen_kw_options = [
+                ConfigKeys.NAME,
+                ConfigKeys.TEMPLATE,
+                ConfigKeys.OUT_FILE,
+                ConfigKeys.PARAMETER_FILE,
+            ]
 
             self._assert_keys(ConfigKeys.GEN_KW, gen_kw_options, gk.keys())
 
@@ -385,18 +457,19 @@ class ResConfig(BaseCClass):
 
         return gen_kw_config
 
-
     def _extract_gen_data(self, config):
         if ConfigKeys.GEN_DATA not in config:
             return []
 
         gen_data_config = []
         for gd in config[ConfigKeys.GEN_DATA]:
-            req_keys = [ConfigKeys.NAME,
-                        ConfigKeys.RESULT_FILE,
-                        ConfigKeys.REPORT_STEPS]
+            req_keys = [
+                ConfigKeys.NAME,
+                ConfigKeys.RESULT_FILE,
+                ConfigKeys.REPORT_STEPS,
+            ]
 
-            default_opt = {ConfigKeys.INPUT_FORMAT : "ASCII"}
+            default_opt = {ConfigKeys.INPUT_FORMAT: "ASCII"}
 
             if not sorted(req_keys) == sorted(gd.keys()):
                 err_msg = "Expected keys %r when creating GEN_DATA, received %r"
@@ -408,7 +481,6 @@ class ResConfig(BaseCClass):
             gen_data_config.append((ConfigKeys.GEN_DATA, value))
 
         return gen_data_config
-
 
     def _extract_simulation(self, config):
         if ConfigKeys.SIMULATION not in config:
@@ -461,7 +533,6 @@ class ResConfig(BaseCClass):
 
         return simulation_config
 
-
     def _extract_config(self, config):
         defines = self._extract_defines(config)
         key_filter = [ConfigKeys.DEFINES]
@@ -484,12 +555,11 @@ class ResConfig(BaseCClass):
 
         return defines, config_dir, new_config
 
-
     def _build_config_content(self, config):
         self._failed_keys = {}
         defines, config_dir, config_list = self._extract_config(config)
 
-        config_parser  = ResConfig.config_parser()
+        config_parser = ResConfig.config_parser()
         config_content = ConfigContent(None)
         config_content.setParser(config_parser)
 
@@ -498,21 +568,23 @@ class ResConfig(BaseCClass):
             config_content.add_define(key, defines[key])
 
         # Insert key values
-        if not os.path.exists( config_dir ):
-            raise IOError("The configuration direcetory: %s does not exist" % config_dir)
+        if not os.path.exists(config_dir):
+            raise IOError(
+                "The configuration direcetory: %s does not exist" % config_dir
+            )
 
         path_elm = config_content.create_path_elm(config_dir)
-        add_key_value = lambda key, value : config_parser.add_key_value(
-                                                            config_content,
-                                                            key,
-                                                            StringList([key] + value),
-                                                            path_elm=path_elm)
+        add_key_value = lambda key, value: config_parser.add_key_value(
+            config_content, key, StringList([key] + value), path_elm=path_elm
+        )
 
         for key, value in config_list:
             if isinstance(value, str):
                 value = [value]
             if not isinstance(value, list):
-                raise ValueError("Expected value to be str or list, was %r" % (type(value)))
+                raise ValueError(
+                    "Expected value to be str or list, was %r" % (type(value))
+                )
 
             ok = add_key_value(key, value)
             if not ok:
@@ -521,16 +593,14 @@ class ResConfig(BaseCClass):
         config_parser.validate(config_content)
         self._errors = list(config_content.getErrors())
 
-
         return config_content
 
     def free(self):
         self._free()
 
-
     @classmethod
     def config_parser(cls):
-        parser = ConfigParser( )
+        parser = ConfigParser()
         cls._init_parser(parser)
         return parser
 
@@ -560,7 +630,7 @@ class ResConfig(BaseCClass):
 
     @property
     def config_path(self):
-        return self._config_path( )
+        return self._config_path()
 
     @property
     def subst_config(self):
@@ -603,7 +673,7 @@ class ResConfig(BaseCClass):
         return self._queue_config()
 
     def __eq__(self, other):
-        #compare each config separatelly
+        # compare each config separatelly
         config_eqs = (
             (self.subst_config == other.subst_config),
             (self.site_config == other.site_config),
@@ -616,7 +686,7 @@ class ResConfig(BaseCClass):
             (self.ensemble_config == other.ensemble_config),
             (self.model_config == other.model_config),
             (self.log_config == other.log_config),
-            (self.queue_config == other.queue_config)
+            (self.queue_config == other.queue_config),
         )
 
         if not all(config_eqs):

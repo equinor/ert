@@ -25,16 +25,36 @@ class ContentNode(BaseCClass):
 
     _iget = ResPrototype("char* config_content_node_iget( content_node , int)")
     _size = ResPrototype("int config_content_node_get_size( content_node )")
-    _get_full_string = ResPrototype("char* config_content_node_get_full_string( content_node , char* )")
-    _iget_type = ResPrototype("config_content_type_enum config_content_node_iget_type( content_node , int)")
-    _iget_as_abspath = ResPrototype("char* config_content_node_iget_as_abspath( content_node , int)")
-    _iget_as_relpath = ResPrototype("char* config_content_node_iget_as_relpath( content_node , int)")
-    _iget_as_string = ResPrototype("char* config_content_node_iget( content_node , int)")
-    _iget_as_int = ResPrototype("int config_content_node_iget_as_int( content_node , int)")
-    _iget_as_double = ResPrototype("double config_content_node_iget_as_double( content_node , int)")
-    _iget_as_path = ResPrototype("char* config_content_node_iget_as_path( content_node , int)")
-    _iget_as_bool = ResPrototype("bool config_content_node_iget_as_bool( content_node , int)")
-    _iget_as_isodate = ResPrototype("time_t config_content_node_iget_as_isodate( content_node , int)")
+    _get_full_string = ResPrototype(
+        "char* config_content_node_get_full_string( content_node , char* )"
+    )
+    _iget_type = ResPrototype(
+        "config_content_type_enum config_content_node_iget_type( content_node , int)"
+    )
+    _iget_as_abspath = ResPrototype(
+        "char* config_content_node_iget_as_abspath( content_node , int)"
+    )
+    _iget_as_relpath = ResPrototype(
+        "char* config_content_node_iget_as_relpath( content_node , int)"
+    )
+    _iget_as_string = ResPrototype(
+        "char* config_content_node_iget( content_node , int)"
+    )
+    _iget_as_int = ResPrototype(
+        "int config_content_node_iget_as_int( content_node , int)"
+    )
+    _iget_as_double = ResPrototype(
+        "double config_content_node_iget_as_double( content_node , int)"
+    )
+    _iget_as_path = ResPrototype(
+        "char* config_content_node_iget_as_path( content_node , int)"
+    )
+    _iget_as_bool = ResPrototype(
+        "bool config_content_node_iget_as_bool( content_node , int)"
+    )
+    _iget_as_isodate = ResPrototype(
+        "time_t config_content_node_iget_as_isodate( content_node , int)"
+    )
 
     typed_get = {
         ContentTypeEnum.CONFIG_STRING: _iget_as_string,
@@ -43,9 +63,8 @@ class ContentNode(BaseCClass):
         ContentTypeEnum.CONFIG_PATH: _iget_as_path,
         ContentTypeEnum.CONFIG_EXISTING_PATH: _iget_as_path,
         ContentTypeEnum.CONFIG_BOOL: _iget_as_bool,
-        ContentTypeEnum.CONFIG_ISODATE: _iget_as_isodate
+        ContentTypeEnum.CONFIG_ISODATE: _iget_as_isodate,
     }
-
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
@@ -53,7 +72,7 @@ class ContentNode(BaseCClass):
     def __len__(self):
         return self._size()
 
-    def __assertIndex(self , index):
+    def __assertIndex(self, index):
         if isinstance(index, int):
             if index < 0:
                 index += len(self)
@@ -64,7 +83,6 @@ class ContentNode(BaseCClass):
         else:
             raise TypeError("Invalid argument type: %s" % index)
 
-
     def __getitem__(self, index):
         index = self.__assertIndex(index)
 
@@ -72,10 +90,13 @@ class ContentNode(BaseCClass):
         typed_get = self.typed_get[content_type]
         return typed_get(self, index)
 
-    def getPath(self , index = 0, absolute = True , relative_start = None):
+    def getPath(self, index=0, absolute=True, relative_start=None):
         index = self.__assertIndex(index)
         content_type = self._iget_type(index)
-        if content_type in [ContentTypeEnum.CONFIG_EXISTING_PATH , ContentTypeEnum.CONFIG_PATH]:
+        if content_type in [
+            ContentTypeEnum.CONFIG_EXISTING_PATH,
+            ContentTypeEnum.CONFIG_PATH,
+        ]:
             if absolute:
                 return self._iget_as_abspath(index)
             else:
@@ -83,41 +104,40 @@ class ContentNode(BaseCClass):
                     return self._iget_as_relpath(index)
                 else:
                     abs_path = self._iget_as_abspath(index)
-                    return os.path.relpath( abs_path , relative_start )
+                    return os.path.relpath(abs_path, relative_start)
         else:
             raise TypeError("The getPath() method can only be called on PATH items")
 
     def content(self, sep=" "):
         return self._get_full_string(sep)
 
-
-    def igetString(self , index):
+    def igetString(self, index):
         index = self.__assertIndex(index)
-        return self._iget(index )
-
+        return self._iget(index)
 
     def asList(self):
         return [x for x in self]
 
 
-
 class ContentItem(BaseCClass):
     TYPE_NAME = "content_item"
 
-    _alloc = ResPrototype("void* config_content_item_alloc( schema_item , void* )" , bind = False )
+    _alloc = ResPrototype(
+        "void* config_content_item_alloc( schema_item , void* )", bind=False
+    )
     _size = ResPrototype("int config_content_item_get_size( content_item )")
-    _iget_content_node = ResPrototype("content_node_ref config_content_item_iget_node( content_item , int)")
+    _iget_content_node = ResPrototype(
+        "content_node_ref config_content_item_iget_node( content_item , int)"
+    )
     _free = ResPrototype("void config_content_item_free( content_item )")
 
-    def __init__(self , schema_item):
+    def __init__(self, schema_item):
         path_elm = None
-        c_ptr = self._alloc( schema_item , path_elm)
-        super( ContentItem, self).__init__(c_ptr)
-
+        c_ptr = self._alloc(schema_item, path_elm)
+        super(ContentItem, self).__init__(c_ptr)
 
     def __len__(self):
         return self._size()
-
 
     def __getitem__(self, index):
         if isinstance(index, int):
@@ -127,22 +147,22 @@ class ContentItem(BaseCClass):
             if (index >= 0) and (index < len(self)):
                 return self._iget_content_node(index).setParent(self)
             else:
-                raise IndexError("Expected 0 <= index < %d, was 0 <= %d < %d" %
-                                 (len(self), index, len(self)))
+                raise IndexError(
+                    "Expected 0 <= index < %d, was 0 <= %d < %d"
+                    % (len(self), index, len(self))
+                )
         else:
             raise TypeError("[] operator must have integer index")
 
     def last(self):
         return self[-1]
 
-    def getValue(self , item_index = -1 , node_index = 0):
+    def getValue(self, item_index=-1, node_index=0):
         node = self[item_index]
         return node[node_index]
 
-
     def free(self):
-        self._free( )
-
+        self._free()
 
 
 class ConfigContent(BaseCClass):
@@ -152,12 +172,24 @@ class ConfigContent(BaseCClass):
     _free = ResPrototype("void config_content_free( config_content )")
     _is_valid = ResPrototype("bool config_content_is_valid( config_content )")
     _has_key = ResPrototype("bool config_content_has_item( config_content , char*)")
-    _get_item = ResPrototype("content_item_ref config_content_get_item( config_content , char*)")
-    _get_errors = ResPrototype("config_error_ref config_content_get_errors( config_content )")
-    _get_warnings =  ResPrototype("stringlist_ref config_content_get_warnings( config_content )")
-    _get_config_path = ResPrototype("char* config_content_get_config_path( config_content )")
-    _create_path_elm = ResPrototype("config_path_elm_ref config_content_add_path_elm(config_content, char*)")
-    _add_define = ResPrototype("void config_content_add_define(config_content, char*, char*)")
+    _get_item = ResPrototype(
+        "content_item_ref config_content_get_item( config_content , char*)"
+    )
+    _get_errors = ResPrototype(
+        "config_error_ref config_content_get_errors( config_content )"
+    )
+    _get_warnings = ResPrototype(
+        "stringlist_ref config_content_get_warnings( config_content )"
+    )
+    _get_config_path = ResPrototype(
+        "char* config_content_get_config_path( config_content )"
+    )
+    _create_path_elm = ResPrototype(
+        "config_path_elm_ref config_content_add_path_elm(config_content, char*)"
+    )
+    _add_define = ResPrototype(
+        "void config_content_add_define(config_content, char*, char*)"
+    )
     _size = ResPrototype("int config_content_get_size(config_content)")
     _keys = ResPrototype("stringlist_obj config_content_alloc_keys(config_content)")
 
@@ -168,65 +200,54 @@ class ConfigContent(BaseCClass):
             super(ConfigContent, self).__init__(c_ptr)
         else:
             raise ValueError(
-                    'Failed to construct ConfigContent instance from config file %s.'
-                    % filename
-                    )
-
+                "Failed to construct ConfigContent instance from config file %s."
+                % filename
+            )
 
     def __len__(self):
         return self._size()
 
-
-    def __contains__(self , key):
+    def __contains__(self, key):
         return self._has_key(key)
 
-    def setParser(self , parser):
+    def setParser(self, parser):
         self._parser = parser
 
-
-    def __getitem__(self , key):
+    def __getitem__(self, key):
         if key in self:
             item = self._get_item(key)
-            item.setParent( self )
+            item.setParent(self)
             return item
         else:
             if key in self._parser:
-                schema_item = SchemaItem( key )
-                return ContentItem( schema_item )
+                schema_item = SchemaItem(key)
+                return ContentItem(schema_item)
             else:
                 raise KeyError("No such key: %s" % key)
 
-
-    def hasKey(self,key):
+    def hasKey(self, key):
         return key in self
 
-
-    def getValue(self , key , item_index = -1 , node_index = 0):
+    def getValue(self, key, item_index=-1, node_index=0):
         item = self[key]
-        return item.getValue( item_index , node_index )
-
+        return item.getValue(item_index, node_index)
 
     def isValid(self):
         return self._is_valid()
 
-
     def free(self):
         self._free()
-
 
     def getErrors(self):
         """ @rtype: ConfigError """
         return self._get_errors()
 
-
     def getWarnings(self):
         """ @rtype: ConfigError """
-        return self._get_warnings( )
-
+        return self._get_warnings()
 
     def get_config_path(self):
-        return self._get_config_path( )
-
+        return self._get_config_path()
 
     def create_path_elm(self, path):
         return self._create_path_elm(path)
@@ -237,12 +258,11 @@ class ConfigContent(BaseCClass):
     def keys(self):
         return self._keys()
 
-
     def as_dict(self):
         d = {}
         for key in self.keys():
             d[key] = []
             item = self[key]
             for node in item:
-                d[key].append( [ x for x in node ])
+                d[key].append([x for x in node])
         return d

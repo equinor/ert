@@ -5,7 +5,6 @@ from tests.utils import tmpdir
 
 
 class MiniConfigTest(ResTest):
-
     @tmpdir()
     def test_failed_realizations(self):
 
@@ -22,7 +21,6 @@ class MiniConfigTest(ResTest):
         # 8 OK
         # 9 OK
 
-
         config = self.createTestPath("local/mini_ert/mini_fail_config")
         with ErtTestContext("python/enkf/data/mini_ert_simulated", config) as context:
             ert = context.getErt()
@@ -34,7 +32,9 @@ class MiniConfigTest(ResTest):
             self.assertTrue(8 in realizations_list)
             self.assertTrue(9 in realizations_list)
 
-            realizations_list = fs.realizationList(RealizationStateEnum.STATE_LOAD_FAILURE)
+            realizations_list = fs.realizationList(
+                RealizationStateEnum.STATE_LOAD_FAILURE
+            )
             self.assertTrue(1 in realizations_list)
             self.assertTrue(2 in realizations_list)
             self.assertTrue(3 in realizations_list)
@@ -42,10 +42,3 @@ class MiniConfigTest(ResTest):
             self.assertTrue(5 in realizations_list)
             self.assertTrue(6 in realizations_list)
             self.assertTrue(7 in realizations_list)
-
-
-
-
-
-
-

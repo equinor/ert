@@ -5,12 +5,11 @@ from res.test import ErtTestContext
 
 from res.enkf import ErtImplType, GenKwConfig
 
+
 @pytest.mark.equinor_test
 class GenKwConfigTest(ResTest):
-
     def setUp(self):
         self.config = self.createTestPath("Equinor/config/with_data/config")
-
 
     def test_gen_kw_config(self):
 
@@ -18,7 +17,9 @@ class GenKwConfigTest(ResTest):
 
             ert = context.getErt()
 
-            result_gen_kw_keys = ert.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
+            result_gen_kw_keys = ert.ensembleConfig().getKeylistFromImplType(
+                ErtImplType.GEN_KW
+            )
 
             expected_keys = ["GRID_PARAMS", "FLUID_PARAMS", "MULTFLT"]
 

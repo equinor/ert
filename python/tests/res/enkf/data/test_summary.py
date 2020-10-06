@@ -8,9 +8,7 @@ from ecl.util.test import TestAreaContext
 from tests import ResTest
 
 
-
 class SummaryTest(ResTest):
-
     def test_create(self):
         config = SummaryConfig("WWCT:OP_5")
         summary = Summary(config)

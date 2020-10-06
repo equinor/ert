@@ -17,10 +17,10 @@ class EnKFFSTest(ResTest):
         self.mount_point = "storage/default"
         self.config_file = self.createTestPath("Equinor/config/with_data/config")
 
-
     def test_id_enum(self):
-        self.assertEnumIsFullyDefined(EnKFFSType, "fs_driver_impl", "lib/include/ert/enkf/fs_types.hpp")
-
+        self.assertEnumIsFullyDefined(
+            EnKFFSType, "fs_driver_impl", "lib/include/ert/enkf/fs_types.hpp"
+        )
 
     def test_create(self):
         with TestAreaContext("create_fs") as work_area:
@@ -34,14 +34,13 @@ class EnKFFSTest(ResTest):
             self.assertFalse(EnkfFs.exists("newFS"))
             fs = EnkfFs.createFileSystem("newFS")
             self.assertTrue(EnkfFs.exists("newFS"))
-            self.assertTrue( fs is None )
+            self.assertTrue(fs is None)
 
             with self.assertRaises(IOError):
                 version = EnkfFs.diskVersion("does/not/exist")
 
             version = EnkfFs.diskVersion("newFS")
-            self.assertTrue( version >= 106 )
-
+            self.assertTrue(version >= 106)
 
     @tmpdir()
     def test_create2(self):
@@ -54,5 +53,3 @@ class EnKFFSTest(ResTest):
     def test_throws(self):
         with self.assertRaises(Exception):
             fs = EnkfFs("/does/not/exist")
-
-

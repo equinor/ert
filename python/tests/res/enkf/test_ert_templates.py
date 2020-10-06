@@ -24,17 +24,28 @@ import copy
 
 
 class ErtTemplatesTest(ResTest):
-
     def setUp(self):
         self.work_area = TestArea("ert_templates_test_tmp")
         self.config_data = {
             ConfigKeys.CONFIG_DIRECTORY: self.work_area.get_cwd(),
             ConfigKeys.CONFIG_FILE_KEY: "config",
             ConfigKeys.RUN_TEMPLATE: [
-                ("namea", "filea", [("keyaa", "valaa"), ("keyab", "valab"), ("keyac", "valac")]),
-                ("nameb", "fileb", [("keyba", "valba"), ("keybb", "valbb"), ("keybc", "valbc")]),
-                ("namec", "filec", [("keyca", "valca"), ("keycb", "valcb"), ("keycc", "valcc")])
-            ]
+                (
+                    "namea",
+                    "filea",
+                    [("keyaa", "valaa"), ("keyab", "valab"), ("keyac", "valac")],
+                ),
+                (
+                    "nameb",
+                    "fileb",
+                    [("keyba", "valba"), ("keybb", "valbb"), ("keybc", "valbc")],
+                ),
+                (
+                    "namec",
+                    "filec",
+                    [("keyca", "valca"), ("keycb", "valcb"), ("keycc", "valcc")],
+                ),
+            ],
         }
         self.filename = self.config_data[ConfigKeys.CONFIG_FILE_KEY]
 
@@ -49,26 +60,40 @@ class ErtTemplatesTest(ResTest):
         del self.work_area
 
     def test_all_templates_exist_with_correct_properties(self):
-        templates = ErtTemplates(self.res_config.subst_config.subst_list, config_dict=self.config_data)
+        templates = ErtTemplates(
+            self.res_config.subst_config.subst_list, config_dict=self.config_data
+        )
         template_names = templates.getTemplateNames()
-        configured_target_files = [t[0] for t in self.config_data[ConfigKeys.RUN_TEMPLATE]]
+        configured_target_files = [
+            t[0] for t in self.config_data[ConfigKeys.RUN_TEMPLATE]
+        ]
         assert set(template_names) == set(configured_target_files)
         for configured_template in self.config_data[ConfigKeys.RUN_TEMPLATE]:
             template = templates.get_template(configured_template[0])
-            self.assertEqual(template.get_template_file(), os.path.join(self.work_area.get_cwd(), configured_template[0]))
+            self.assertEqual(
+                template.get_template_file(),
+                os.path.join(self.work_area.get_cwd(), configured_template[0]),
+            )
             self.assertEqual(template.get_target_file(), configured_template[1])
-            expected_arg_string = ", ".join(["{}={}".format(key, val) for key, val in configured_template[2]])
+            expected_arg_string = ", ".join(
+                ["{}={}".format(key, val) for key, val in configured_template[2]]
+            )
             self.assertEqual(expected_arg_string, template.get_args_as_string())
 
     def test_old_and_new_logic_produces_equal_objects(self):
-        templates = ErtTemplates(self.res_config.subst_config.subst_list, config_dict=self.config_data)
+        templates = ErtTemplates(
+            self.res_config.subst_config.subst_list, config_dict=self.config_data
+        )
         self.assertEqual(templates, self.res_config.ert_templates)
 
     def test_unequal_objects_are_unequal(self):
-        templates = ErtTemplates(self.res_config.subst_config.subst_list,
-                                 config_dict=self.config_data)
-        templates2 = ErtTemplates(self.res_config.subst_config.subst_list,
-                                  config_dict=self.change_template_arg(1, 1, "XXX", "YYY"))
+        templates = ErtTemplates(
+            self.res_config.subst_config.subst_list, config_dict=self.config_data
+        )
+        templates2 = ErtTemplates(
+            self.res_config.subst_config.subst_list,
+            config_dict=self.change_template_arg(1, 1, "XXX", "YYY"),
+        )
         self.assertNotEqual(templates, templates2)
 
     def remove_key(self, key):
@@ -76,7 +101,10 @@ class ErtTemplatesTest(ResTest):
 
     def change_template_arg(self, template_index, arg_index, new_key, new_val):
         conf_copy = copy.deepcopy(self.config_data)
-        conf_copy[ConfigKeys.RUN_TEMPLATE][template_index][2][arg_index] = (new_key, new_val)
+        conf_copy[ConfigKeys.RUN_TEMPLATE][template_index][2][arg_index] = (
+            new_key,
+            new_val,
+        )
         return conf_copy
 
     def make_config_file(self, filename):
@@ -87,11 +115,15 @@ class ErtTemplatesTest(ResTest):
 
             for template, target, args in self.config_data[ConfigKeys.RUN_TEMPLATE]:
                 argstring = " ".join("{}:{}".format(key, val) for key, val in args)
-                config.write("{} {} {} {}\n".format(ConfigKeys.RUN_TEMPLATE, template, target, argstring))
+                config.write(
+                    "{} {} {} {}\n".format(
+                        ConfigKeys.RUN_TEMPLATE, template, target, argstring
+                    )
+                )
 
     def make_empty_file(self, filename):
-        open(filename, 'a').close()
+        open(filename, "a").close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

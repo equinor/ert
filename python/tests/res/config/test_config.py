@@ -29,28 +29,45 @@ class TestConfigPrototype(Prototype):
     lib = resload("libres")
 
     def __init__(self, prototype, bind=False):
-        super(TestConfigPrototype, self).__init__(TestConfigPrototype.lib, prototype, bind=bind)
+        super(TestConfigPrototype, self).__init__(
+            TestConfigPrototype.lib, prototype, bind=bind
+        )
+
 
 # Adding extra functions to the ConfigContent object for the ability
 # to test low level C functions which are not exposed in Python.
-_safe_iget      = TestConfigPrototype("char* config_content_safe_iget(config_content, char*, int, int)")
-_iget           = TestConfigPrototype("char* config_content_iget(config_content, char*, int, int)")
-_iget_as_int    = TestConfigPrototype("int config_content_iget_as_int(config_content, char*, int, int)")
-_iget_as_bool   = TestConfigPrototype("bool config_content_iget_as_bool(config_content, char*, int, int)")
-_iget_as_double = TestConfigPrototype("double config_content_iget_as_double(config_content, char*, int, int)")
-_get_occurences = TestConfigPrototype("int config_content_get_occurences(config_content, char*)")
+_safe_iget = TestConfigPrototype(
+    "char* config_content_safe_iget(config_content, char*, int, int)"
+)
+_iget = TestConfigPrototype(
+    "char* config_content_iget(config_content, char*, int, int)"
+)
+_iget_as_int = TestConfigPrototype(
+    "int config_content_iget_as_int(config_content, char*, int, int)"
+)
+_iget_as_bool = TestConfigPrototype(
+    "bool config_content_iget_as_bool(config_content, char*, int, int)"
+)
+_iget_as_double = TestConfigPrototype(
+    "double config_content_iget_as_double(config_content, char*, int, int)"
+)
+_get_occurences = TestConfigPrototype(
+    "int config_content_get_occurences(config_content, char*)"
+)
 
 
 class ConfigTest(ResTest):
     def setUp(self):
         self.file_list = []
 
-
     def test_enums(self):
         source_file_path = "lib/include/ert/config/config_schema_item.hpp"
-        self.assertEnumIsFullyDefined(ContentTypeEnum, "config_item_types", source_file_path)
-        self.assertEnumIsFullyDefined(UnrecognizedEnum, "config_schema_unrecognized_enum", source_file_path)
-
+        self.assertEnumIsFullyDefined(
+            ContentTypeEnum, "config_item_types", source_file_path
+        )
+        self.assertEnumIsFullyDefined(
+            UnrecognizedEnum, "config_schema_unrecognized_enum", source_file_path
+        )
 
     def test_item_types(self):
         with TestAreaContext("config/types") as test_area:
@@ -92,14 +109,12 @@ class ConfigTest(ResTest):
             self.assertEqual(type_item.igetString(4), "file")
 
             # test __getitem__
-            self.assertTrue(conf['TYPE_ITEM'])
+            self.assertTrue(conf["TYPE_ITEM"])
             with self.assertRaises(KeyError):
-                _ = conf['TYPE_XX']
+                _ = conf["TYPE_XX"]
 
-            self.assertIn('ConfigParser', repr(conf))
-            self.assertIn('size=1', repr(conf))
-
-
+            self.assertIn("ConfigParser", repr(conf))
+            self.assertIn("size=1", repr(conf))
 
     def test_parse(self):
         conf = ConfigParser()
@@ -107,9 +122,10 @@ class ConfigTest(ResTest):
         schema_item = conf.add("RSH_HOST", False)
         self.assertIsInstance(schema_item, SchemaItem)
         test_path = self.createTestPath("local/config/simple_config")
-        content = conf.parse(test_path, unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_IGNORE)
+        content = conf.parse(
+            test_path, unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_IGNORE
+        )
         self.assertTrue(content.isValid())
-
 
         content_item = content["RSH_HOST"]
         self.assertIsInstance(content_item, ContentItem)
@@ -127,18 +143,16 @@ class ConfigTest(ResTest):
         self.assertEqual(content_node.content(sep=","), "be-lx655082:2,be-lx633214:2")
         self.assertEqual(content_node.content(), "be-lx655082:2 be-lx633214:2")
 
-
         content_item = content["FIELD"]
         self.assertEqual(len(content_item), 5)
         with self.assertRaises(IOError):
             conf.parse("DoesNotExits")
 
-
     def test_parse_invalid(self):
         conf = ConfigParser()
         conf.add("INT", value_type=ContentTypeEnum.CONFIG_INT)
         with TestAreaContext("config/parse2"):
-            with open("config","w") as fileH:
+            with open("config", "w") as fileH:
                 fileH.write("INT xx\n")
 
             with self.assertRaises(ValueError):
@@ -148,38 +162,35 @@ class ConfigTest(ResTest):
             self.assertFalse(content.isValid())
             self.assertEqual(len(content.getErrors()), 1)
 
-
     def test_parse_deprecated(self):
         conf = ConfigParser()
         item = conf.add("INT", value_type=ContentTypeEnum.CONFIG_INT)
         msg = "ITEM INT IS DEPRECATED"
         item.setDeprecated(msg)
         with TestAreaContext("config/parse2"):
-            with open("config","w") as fileH:
+            with open("config", "w") as fileH:
                 fileH.write("INT 100\n")
 
-            content = conf.parse("config" )
+            content = conf.parse("config")
             self.assertTrue(content.isValid())
 
             warnings = content.getWarnings()
             self.assertEqual(len(warnings), 1)
             self.assertEqual(warnings[0], msg)
 
-
     def test_parse_dotdot_relative(self):
         conf = ConfigParser()
         schema_item = conf.add("EXECUTABLE", False)
         schema_item.iset_type(0, ContentTypeEnum.CONFIG_PATH)
 
-
         with TestAreaContext("config/parse_dotdot"):
             os.makedirs("cwd/jobs")
             os.makedirs("eclipse/bin")
             script_path = os.path.join(os.getcwd(), "eclipse/bin/script.sh")
-            with open(script_path,"w") as f:
+            with open(script_path, "w") as f:
                 f.write("This is a test script")
 
-            with open("cwd/jobs/JOB","w") as fileH:
+            with open("cwd/jobs/JOB", "w") as fileH:
                 fileH.write("EXECUTABLE ../../eclipse/bin/script.sh\n")
 
             os.makedirs("cwd/ert")
@@ -188,10 +199,6 @@ class ConfigTest(ResTest):
             item = content["EXECUTABLE"]
             node = item[0]
             self.assertEqual(script_path, node.getPath())
-
-
-
-
 
     def test_parser_content(self):
         conf = ConfigParser()
@@ -203,9 +210,8 @@ class ConfigTest(ResTest):
         schema_item.iset_type(5, ContentTypeEnum.CONFIG_PATH)
         schema_item = conf.add("NOT_IN_CONTENT", False)
 
-
         with TestAreaContext("config/parse2"):
-            with open("config","w") as fileH:
+            with open("config", "w") as fileH:
                 fileH.write("KEY VALUE1 VALUE2 100  True  3.14  path/file.txt\n")
 
             cwd0 = os.getcwd()
@@ -216,8 +222,7 @@ class ConfigTest(ResTest):
             self.assertTrue(content.isValid())
             self.assertTrue("KEY" in content)
             self.assertFalse("NOKEY" in content)
-            self.assertEqual( cwd0, content.get_config_path( ))
-
+            self.assertEqual(cwd0, content.get_config_path())
 
             keys = content.keys()
             self.assertEqual(len(keys), 1)
@@ -244,14 +249,12 @@ class ConfigTest(ResTest):
             item = content["KEY"]
             self.assertEqual(len(item), 1)
 
-
             line = item[0]
             with self.assertRaises(TypeError):
                 line.getPath(4)
 
             with self.assertRaises(TypeError):
                 line.getPath()
-
 
             rel_path = line.getPath(index=5, absolute=False)
             self.assertEqual(rel_path, "../path/file.txt")
@@ -262,7 +265,6 @@ class ConfigTest(ResTest):
 
             rel_path = line.getPath(index=5, absolute=False, relative_start="../")
             self.assertEqual(rel_path, "path/file.txt")
-
 
             with self.assertRaises(IndexError):
                 item[10]
@@ -292,11 +294,9 @@ class ConfigTest(ResTest):
 
             self.assertIsNone(_safe_iget(content, "KEY2", 0, 0))
 
-            self.assertEqual( _get_occurences(content, "KEY2"), 0)
-            self.assertEqual( _get_occurences(content, "KEY"), 1)
-            self.assertEqual( _get_occurences(content, "MISSING-KEY"), 0)
-
-
+            self.assertEqual(_get_occurences(content, "KEY2"), 0)
+            self.assertEqual(_get_occurences(content, "KEY"), 1)
+            self.assertEqual(_get_occurences(content, "MISSING-KEY"), 0)
 
     def test_schema(self):
         schema_item = SchemaItem("TestItem")
@@ -306,11 +306,7 @@ class ConfigTest(ResTest):
         self.assertEqual(schema_item.iget_type(0), ContentTypeEnum.CONFIG_INT)
         schema_item.set_argc_minmax(3, 6)
 
-
         del schema_item
-
-
-
 
     def test_settings(self):
         cs = ConfigSettings("SETTINGS")
@@ -330,7 +326,6 @@ class ConfigTest(ResTest):
         with self.assertRaises(KeyError):
             cs["NO_SUCH_KEY"] = 100
 
-
         parser = ConfigParser()
         cs = ConfigSettings("SETTINGS")
         cs.addSetting("A", ContentTypeEnum.CONFIG_INT, 1)
@@ -338,9 +333,8 @@ class ConfigTest(ResTest):
         cs.addSetting("C", ContentTypeEnum.CONFIG_INT, 1)
         cs.initParser(parser)
 
-
         with TestAreaContext("config/parse3"):
-            with open("config","w") as fileH:
+            with open("config", "w") as fileH:
                 fileH.write("SETTINGS A 100\n")
                 fileH.write("SETTINGS B 200\n")
                 fileH.write("SETTINGS C 300\n")
@@ -365,11 +359,11 @@ class ConfigTest(ResTest):
         cs.addDoubleSetting("A", 1.0)
         cs.addIntSetting("B", 1)
         cs.addStringSetting("C", "1")
-        cs.addBoolSetting("D",  True)
+        cs.addBoolSetting("D", True)
         cs.initParser(parser)
 
         with TestAreaContext("config/parse4"):
-            with open("config","w") as fileH:
+            with open("config", "w") as fileH:
                 fileH.write("SETTINGS A 100.1\n")
                 fileH.write("SETTINGS B 200\n")
                 fileH.write("SETTINGS C 300\n")
@@ -386,17 +380,18 @@ class ConfigTest(ResTest):
         with self.assertRaises(Exception):
             cs["A"] = "Hei"
 
-
     def test_add_unknown_keyowrds(self):
-        parser = ConfigParser( )
+        parser = ConfigParser()
         with TestAreaContext("config/parse4"):
-            with open("config","w") as fileH:
+            with open("config", "w") as fileH:
                 fileH.write("SETTINGS A 100.1\n")
                 fileH.write("SETTINGS B 200  STRING1 STRING2\n")
                 fileH.write("SETTINGS C 300\n")
                 fileH.write("SETTINGS D False\n")
 
-            content = parser.parse("config", unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_ADD)
+            content = parser.parse(
+                "config", unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_ADD
+            )
 
         self.assertIn("SETTINGS", content)
         item = content["SETTINGS"]
@@ -415,20 +410,27 @@ class ConfigTest(ResTest):
 
         self.assertEqual(len(content), 4)
 
-
     def test_valid_string_runtime_file(self):
         with TestAreaContext("assert_runtime_file"):
-            with open("some_file" , "w") as f:
+            with open("some_file", "w") as f:
                 f.write("This i.")
             self.assertTrue(ContentTypeEnum.CONFIG_RUNTIME_FILE.valid_string("no_file"))
-            self.assertTrue(ContentTypeEnum.CONFIG_RUNTIME_FILE.valid_string("some_file", True))
-            self.assertFalse(ContentTypeEnum.CONFIG_RUNTIME_FILE.valid_string("no_file", True))
+            self.assertTrue(
+                ContentTypeEnum.CONFIG_RUNTIME_FILE.valid_string("some_file", True)
+            )
+            self.assertFalse(
+                ContentTypeEnum.CONFIG_RUNTIME_FILE.valid_string("no_file", True)
+            )
 
     def test_valid_string(self):
         self.assertTrue(ContentTypeEnum.CONFIG_FLOAT.valid_string("1.25"))
         self.assertTrue(ContentTypeEnum.CONFIG_RUNTIME_INT.valid_string("1.7"))
-        self.assertFalse(ContentTypeEnum.CONFIG_RUNTIME_INT.valid_string("1.7", runtime = True))
-        self.assertTrue(ContentTypeEnum.CONFIG_FLOAT.valid_string("1.125", runtime = True))
+        self.assertFalse(
+            ContentTypeEnum.CONFIG_RUNTIME_INT.valid_string("1.7", runtime=True)
+        )
+        self.assertTrue(
+            ContentTypeEnum.CONFIG_FLOAT.valid_string("1.125", runtime=True)
+        )
         self.assertEqual(ContentTypeEnum.CONFIG_FLOAT.convert_string("1.25"), 1.25)
         self.assertEqual(ContentTypeEnum.CONFIG_INT.convert_string("100"), 100)
 
@@ -441,8 +443,7 @@ class ConfigTest(ResTest):
         with self.assertRaises(ValueError):
             ContentTypeEnum.CONFIG_BOOL.convert_string("a_random_string")
 
-        self.assertTrue( ContentTypeEnum.CONFIG_BOOL.convert_string("TRUE"))
-        self.assertTrue( ContentTypeEnum.CONFIG_BOOL.convert_string("True"))
-        self.assertFalse( ContentTypeEnum.CONFIG_BOOL.convert_string("False"))
-        self.assertFalse( ContentTypeEnum.CONFIG_BOOL.convert_string("F"))
-
+        self.assertTrue(ContentTypeEnum.CONFIG_BOOL.convert_string("TRUE"))
+        self.assertTrue(ContentTypeEnum.CONFIG_BOOL.convert_string("True"))
+        self.assertFalse(ContentTypeEnum.CONFIG_BOOL.convert_string("False"))
+        self.assertFalse(ContentTypeEnum.CONFIG_BOOL.convert_string("F"))

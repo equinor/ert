@@ -22,6 +22,6 @@ from .unrecognized_enum import UnrecognizedEnum
 from .content_type_enum import ContentTypeEnum
 from .config_error import ConfigError
 from .schema_item import SchemaItem
-from .config_content import ConfigContent , ContentItem, ContentNode
+from .config_content import ConfigContent, ContentItem, ContentNode
 from .config_parser import ConfigParser
 from .config_settings import ConfigSettings

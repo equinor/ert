@@ -6,7 +6,6 @@ from ecl.util.util import BoolVector
 
 
 class MisfitCollector(object):
-
     @staticmethod
     def createActiveList(ert, fs):
         state_map = fs.getStateMap()
@@ -35,7 +34,9 @@ class MisfitCollector(object):
         misfit_keys = MisfitCollector.getAllMisfitKeys(ert, sort_keys=False)
         misfit_sum_index = len(misfit_keys) - 1
 
-        misfit_array = numpy.empty(shape=(len(misfit_keys), len(realizations)), dtype=numpy.float64)
+        misfit_array = numpy.empty(
+            shape=(len(misfit_keys), len(realizations)), dtype=numpy.float64
+        )
         misfit_array.fill(numpy.nan)
         misfit_array[misfit_sum_index] = 0.0
 
@@ -47,7 +48,9 @@ class MisfitCollector(object):
                 misfit_array[column_index][realization_index] = misfit
                 misfit_array[misfit_sum_index][realization_index] += misfit
 
-        misfit_data = DataFrame(data=numpy.transpose(misfit_array), index=realizations, columns=misfit_keys)
+        misfit_data = DataFrame(
+            data=numpy.transpose(misfit_array), index=realizations, columns=misfit_keys
+        )
         misfit_data.index.name = "Realization"
 
         return misfit_data

@@ -4,7 +4,9 @@ import os
 import yaml
 
 from res import enkf
+
 DEFAULT_GEN_KW_EXPORT_NAME = enkf.EnkfDefaults.DEFAULT_GEN_KW_EXPORT_NAME
+
 
 def load_data(filename):
     """Will try to load data from @filename first as yaml, and if that fails,
@@ -22,14 +24,14 @@ def load_data(filename):
         except Exception as json_err:
             pass
 
-    err_msg = '%s is neither yaml (err_msg=%s) nor json (err_msg=%s)'
+    err_msg = "%s is neither yaml (err_msg=%s) nor json (err_msg=%s)"
     raise IOError(err_msg % (filename, str(yaml_err), str(json_err)))
 
 
 def _load_template(template_path):
     path, filename = os.path.split(template_path)
     return jinja2.Environment(
-        loader=jinja2.FileSystemLoader(path or './')
+        loader=jinja2.FileSystemLoader(path or "./")
     ).get_template(filename)
 
 
@@ -57,13 +59,13 @@ def _assert_input(input_files, template_file, output_file):
     """
     for input_file in input_files:
         if not os.path.isfile(input_file):
-            raise ValueError('Input file: %s, does not exist..' % input_file)
+            raise ValueError("Input file: %s, does not exist.." % input_file)
 
     if not os.path.isfile(template_file):
-        raise ValueError('Template file: %s, does not exist..' % template_file)
+        raise ValueError("Template file: %s, does not exist.." % template_file)
 
     if not isinstance(output_file, str):
-        raise TypeError('Expected output path to be a string')
+        raise TypeError("Expected output path to be a string")
 
 
 def render_template(input_files, template_file, output_file):
@@ -76,7 +78,7 @@ def render_template(input_files, template_file, output_file):
     if isinstance(input_files, str) and input_files:
         input_files = (input_files,)
 
-    all_input_files = (DEFAULT_GEN_KW_EXPORT_NAME+".json",)
+    all_input_files = (DEFAULT_GEN_KW_EXPORT_NAME + ".json",)
 
     if input_files:
         all_input_files += tuple(input_files)
@@ -85,5 +87,5 @@ def render_template(input_files, template_file, output_file):
 
     template = _load_template(template_file)
     data = _load_input(all_input_files)
-    with open(output_file, 'w') as fout:
+    with open(output_file, "w") as fout:
         fout.write(template.render(**data))

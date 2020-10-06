@@ -17,17 +17,17 @@ from cwrap import BaseCEnum
 
 
 class ErtImplType(BaseCEnum):
-    TYPE_NAME        = "ert_impl_type_enum"
-    INVALID          = None
+    TYPE_NAME = "ert_impl_type_enum"
+    INVALID = None
     IMPL_TYPE_OFFSET = None
-    STATIC           = None       # MULTZ has been removed & MULTFLT
-    FIELD            = None       # WELL has been removed
-    GEN_KW           = None       # RELPERM has been removed & HAVANA_FAULT
-    SUMMARY          = None       # TPGZONE has been removed
-    GEN_DATA         = None       # PILOT_POINT has been removed
-    SURFACE          = None
-    CONTAINER        = None
-    EXT_PARAM        = None
+    STATIC = None  # MULTZ has been removed & MULTFLT
+    FIELD = None  # WELL has been removed
+    GEN_KW = None  # RELPERM has been removed & HAVANA_FAULT
+    SUMMARY = None  # TPGZONE has been removed
+    GEN_DATA = None  # PILOT_POINT has been removed
+    SURFACE = None
+    CONTAINER = None
+    EXT_PARAM = None
 
 
 ErtImplType.addEnum("INVALID", 0)

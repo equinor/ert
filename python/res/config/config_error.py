@@ -17,12 +17,11 @@ from res import ResPrototype
 from cwrap import BaseCClass
 
 
-
 class ConfigError(BaseCClass):
     TYPE_NAME = "config_error"
-    _free  = ResPrototype("void config_error_free(config_error)")
+    _free = ResPrototype("void config_error_free(config_error)")
     _count = ResPrototype("int config_error_count(config_error)")
-    _iget  = ResPrototype("char* config_error_iget(config_error, int)")
+    _iget = ResPrototype("char* config_error_iget(config_error, int)")
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
@@ -44,4 +43,3 @@ class ConfigError(BaseCClass):
 
     def free(self):
         self._free()
-

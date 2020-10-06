@@ -22,27 +22,36 @@ from res.enkf.observations import BlockDataConfig
 class BlockObservation(BaseCClass):
     TYPE_NAME = "block_obs"
 
-    _alloc              = ResPrototype("void*  block_obs_alloc( char* , block_data_config , ecl_grid )", bind = False)
-    _free               = ResPrototype("void   block_obs_free( block_obs )")
-    _iget_i             = ResPrototype("int    block_obs_iget_i(block_obs, int)")
-    _iget_j             = ResPrototype("int    block_obs_iget_j( block_obs, int)")
-    _iget_k             = ResPrototype("int    block_obs_iget_k( block_obs , int)")
-    _get_size           = ResPrototype("int    block_obs_get_size( block_obs )")
-    _get_std            = ResPrototype("double block_obs_iget_std( block_obs, int )")
-    _get_std_scaling    = ResPrototype("double block_obs_iget_std_scaling( block_obs, int )")
-    _update_std_scaling = ResPrototype("void   block_obs_update_std_scale(block_obs , double , active_list)")
-    _get_value          = ResPrototype("double block_obs_iget_value( block_obs, int)")
-    _get_depth          = ResPrototype("double block_obs_iget_depth( block_obs, int)")
-    _add_field_point    = ResPrototype("void   block_obs_append_field_obs( block_obs, int,int,int,double,double)")
-    _add_summary_point  = ResPrototype("void   block_obs_append_summary_obs( block_obs, int, int, int, double, double)")
-    _iget_data          = ResPrototype("double block_obs_iget_data(block_obs, void*, int, node_id)")
+    _alloc = ResPrototype(
+        "void*  block_obs_alloc( char* , block_data_config , ecl_grid )", bind=False
+    )
+    _free = ResPrototype("void   block_obs_free( block_obs )")
+    _iget_i = ResPrototype("int    block_obs_iget_i(block_obs, int)")
+    _iget_j = ResPrototype("int    block_obs_iget_j( block_obs, int)")
+    _iget_k = ResPrototype("int    block_obs_iget_k( block_obs , int)")
+    _get_size = ResPrototype("int    block_obs_get_size( block_obs )")
+    _get_std = ResPrototype("double block_obs_iget_std( block_obs, int )")
+    _get_std_scaling = ResPrototype(
+        "double block_obs_iget_std_scaling( block_obs, int )"
+    )
+    _update_std_scaling = ResPrototype(
+        "void   block_obs_update_std_scale(block_obs , double , active_list)"
+    )
+    _get_value = ResPrototype("double block_obs_iget_value( block_obs, int)")
+    _get_depth = ResPrototype("double block_obs_iget_depth( block_obs, int)")
+    _add_field_point = ResPrototype(
+        "void   block_obs_append_field_obs( block_obs, int,int,int,double,double)"
+    )
+    _add_summary_point = ResPrototype(
+        "void   block_obs_append_summary_obs( block_obs, int, int, int, double, double)"
+    )
+    _iget_data = ResPrototype(
+        "double block_obs_iget_data(block_obs, void*, int, node_id)"
+    )
 
-
-
-    def __init__(self , obs_key , data_config , grid):
-        c_ptr = self._alloc( obs_key , data_config , grid )
+    def __init__(self, obs_key, data_config, grid):
+        c_ptr = self._alloc(obs_key, data_config, grid)
         super(BlockObservation, self).__init__(c_ptr)
-
 
     def getCoordinate(self, index):
         """ @rtype: tuple of (int, int, int) """
@@ -61,12 +70,11 @@ class BlockObservation(BaseCClass):
             yield cur
             cur += 1
 
-    def addPoint(self , i,j,k , value , std , sum_key = None):
+    def addPoint(self, i, j, k, value, std, sum_key=None):
         if sum_key is None:
-            self._add_field_point(i,j,k,value,std)
+            self._add_field_point(i, j, k, value, std)
         else:
-            self._add_summary_point(i,j,k,sum_key,value,std)
-
+            self._add_summary_point(i, j, k, sum_key, value, std)
 
     def getValue(self, index):
         """ @rtype: float """
@@ -76,13 +84,12 @@ class BlockObservation(BaseCClass):
         """ @rtype: float """
         return self._get_std(index)
 
-    def getStdScaling(self , index):
+    def getStdScaling(self, index):
         """ @rtype: float """
         return self._get_std_scaling(index)
 
-    def updateStdScaling(self , factor , active_list):
-        self._update_std_scaling(factor , active_list)
-
+    def updateStdScaling(self, factor, active_list):
+        self._update_std_scaling(factor, active_list)
 
     def getDepth(self, index):
         """ @rtype: float """
@@ -93,13 +100,12 @@ class BlockObservation(BaseCClass):
         @type state: c_void_p
         @type obs_index: int
         @type node_id: NodeId
-        @rtype: float """
+        @rtype: float"""
 
         return self._iget_data(state, obs_index, node_id)
-
 
     def free(self):
         self._free()
 
     def __repr__(self):
-        return 'BlockObservation(size = %d) at 0x%x' % (len(self), self._address())
+        return "BlockObservation(size = %d) at 0x%x" % (len(self), self._address())

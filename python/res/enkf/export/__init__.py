@@ -7,12 +7,13 @@ from .gen_data_observation_collector import GenDataObservationCollector
 from .misfit_collector import MisfitCollector
 from .arg_loader import ArgLoader
 
-__all__ = ["DesignMatrixReader",
-           "SummaryCollector",
-           "SummaryObservationCollector",
-           "GenKwCollector",
-           "MisfitCollector",
-           "GenDataCollector", 
-           "GenDataObservationCollector",
-           "ArgLoader"]
-
+__all__ = [
+    "DesignMatrixReader",
+    "SummaryCollector",
+    "SummaryObservationCollector",
+    "GenKwCollector",
+    "MisfitCollector",
+    "GenDataCollector",
+    "GenDataObservationCollector",
+    "ArgLoader",
+]

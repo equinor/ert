@@ -8,19 +8,32 @@ from ecl.grid import EclGrid
 from ecl.summary import EclSum
 from res.sched import History
 
-from ecl.util.util import BoolVector,IntVector
+from ecl.util.util import BoolVector, IntVector
 from res.enkf import ActiveMode, EnsembleConfig
-from res.enkf import (ObsVector, LocalObsdata, EnkfObs, TimeMap,
-                      LocalObsdataNode, ObsData, MeasData, ActiveList)
+from res.enkf import (
+    ObsVector,
+    LocalObsdata,
+    EnkfObs,
+    TimeMap,
+    LocalObsdataNode,
+    ObsData,
+    MeasData,
+    ActiveList,
+)
+
 
 @pytest.mark.equinor_test
 class EnKFObsTest(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("Equinor/config/obs_testing/config")
         self.obs_config = self.createTestPath("Equinor/config/obs_testing/observations")
-        self.obs_config2 = self.createTestPath("Equinor/config/obs_testing/observations2")
+        self.obs_config2 = self.createTestPath(
+            "Equinor/config/obs_testing/observations2"
+        )
         self.refcase = self.createTestPath("Equinor/config/obs_testing/EXAMPLE_01_BASE")
-        self.grid = self.createTestPath("Equinor/config/obs_testing/EXAMPLE_01_BASE.EGRID")
+        self.grid = self.createTestPath(
+            "Equinor/config/obs_testing/EXAMPLE_01_BASE.EGRID"
+        )
 
     @tmpdir()
     def test_scale_obs(self):
@@ -46,8 +59,10 @@ class EnKFObsTest(ResTest):
             obs_data = ObsData()
             fs = ert.getEnkfFsManager().getCurrentFileSystem()
             active_list = IntVector()
-            active_list.initRange(0,2,1)
-            obs.getObservationAndMeasureData(fs, local_obsdata, active_list, meas_data, obs_data)
+            active_list.initRange(0, 2, 1)
+            obs.getObservationAndMeasureData(
+                fs, local_obsdata, active_list, meas_data, obs_data
+            )
             self.assertEqual(2, len(obs_data))
 
             v1 = obs_data[0]
@@ -58,28 +73,32 @@ class EnKFObsTest(ResTest):
 
             meas_data = MeasData(mask)
             obs_data = ObsData(10)
-            obs.getObservationAndMeasureData(fs, local_obsdata, active_list, meas_data, obs_data)
+            obs.getObservationAndMeasureData(
+                fs, local_obsdata, active_list, meas_data, obs_data
+            )
             self.assertEqual(2, len(obs_data))
 
             v1 = obs_data[0]
             v2 = obs_data[1]
 
-            self.assertEqual(v1[1], std0*10)
-            self.assertEqual(v2[1], std0*10)
+            self.assertEqual(v1[1], std0 * 10)
+            self.assertEqual(v2[1], std0 * 10)
 
             actl = ActiveList()
             obs1.updateStdScaling(10, actl)
             obs2.updateStdScaling(20, actl)
             meas_data = MeasData(mask)
             obs_data = ObsData()
-            obs.getObservationAndMeasureData(fs, local_obsdata, active_list, meas_data, obs_data)
+            obs.getObservationAndMeasureData(
+                fs, local_obsdata, active_list, meas_data, obs_data
+            )
             self.assertEqual(2, len(obs_data))
 
             v1 = obs_data[0]
             v2 = obs_data[1]
 
-            self.assertEqual(v1[1], std0*10)
-            self.assertEqual(v2[1], std0*20)
+            self.assertEqual(v1[1], std0 * 10)
+            self.assertEqual(v2[1], std0 * 20)
 
     @tmpdir()
     def testObs(self):
@@ -91,9 +110,9 @@ class EnKFObsTest(ResTest):
             for v in obs:
                 self.assertTrue(isinstance(v, ObsVector))
 
-            self.assertEqual(obs[-1].getKey(),    'RFT_TEST')
-            self.assertEqual(obs[-1].getDataKey(),'4289383')
-            self.assertEqual(obs[-1].getObsKey(), 'RFT_TEST')
+            self.assertEqual(obs[-1].getKey(), "RFT_TEST")
+            self.assertEqual(obs[-1].getDataKey(), "4289383")
+            self.assertEqual(obs[-1].getObsKey(), "RFT_TEST")
 
             with self.assertRaises(IndexError):
                 v = obs[-40]
@@ -133,9 +152,6 @@ class EnKFObsTest(ResTest):
                 for index in range(len(obs_node)):
                     self.assertEqual(scale_factor, obs_node.getStdScaling(index))
 
-
-
-
     def test_obs_block_all_active_local(self):
         with ErtTestContext("obs_test_all_active", self.config_file) as test_context:
             ert = test_context.getErt()
@@ -147,14 +163,12 @@ class EnKFObsTest(ResTest):
                 self.assertIn(obs_vector.getObservationKey(), obs_data)
 
                 tstep_list1 = obs_vector.getStepList()
-                local_node = obs_data[ obs_vector.getObservationKey() ]
+                local_node = obs_data[obs_vector.getObservationKey()]
                 for t in tstep_list1:
                     self.assertTrue(local_node.tstepActive(t))
 
                 active_list = local_node.getActiveList()
                 self.assertEqual(active_list.getMode(), ActiveMode.ALL_ACTIVE)
-
-
 
     def test_create(self):
         ensemble_config = EnsembleConfig()
@@ -165,7 +179,6 @@ class EnKFObsTest(ResTest):
         with self.assertRaises(ValueError):
             obs.load(self.obs_config)
         self.assertEqual(len(obs), 0)
-
 
         time_map = TimeMap()
         obs = EnkfObs(ensemble_config, external_time_map=time_map)
@@ -203,13 +216,11 @@ class EnKFObsTest(ResTest):
             self.assertGreater(len(repr(rpl)), 0)
 
             ef = rpl.getExportFile()
-            self.assertTrue('.ert_runpath_list' in ef)
-            nf = 'myExportCamel'
-            rpl.setExportFile('myExportCamel')
+            self.assertTrue(".ert_runpath_list" in ef)
+            nf = "myExportCamel"
+            rpl.setExportFile("myExportCamel")
             ef = rpl.getExportFile()
             self.assertTrue(nf in ef)
-
-
 
     def test_ert_obs_reload(self):
         with ErtTestContext("obs_test_reload", self.config_file) as test_context:
@@ -220,7 +231,6 @@ class EnKFObsTest(ResTest):
             local_obs = mini_step.getLocalObsData()
             self.assertTrue("WGOR:OP_5" in local_obs)
             self.assertTrue("RPR2_1" in local_obs)
-
 
             ens_config = ert.ensembleConfig()
             wwct_op1 = ens_config["WWCT:OP_1"]
@@ -249,7 +259,6 @@ class EnKFObsTest(ResTest):
             self.assertTrue("RFT2" in local_obs)
             self.assertFalse("WGOR:OP_5" in local_obs)
             self.assertFalse("RPR2_1" in local_obs)
-
 
             ert.loadObservations("observations", clear=False)
             self.assertEqual(len(obs), 34)

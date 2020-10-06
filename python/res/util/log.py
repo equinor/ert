@@ -21,7 +21,9 @@ from res.util.enums import MessageLevelEnum
 
 
 class Log(BaseCClass):
-    _open_log = ResPrototype("void* log_open_file(char*, message_level_enum)", bind=False)
+    _open_log = ResPrototype(
+        "void* log_open_file(char*, message_level_enum)", bind=False
+    )
     _get_filename = ResPrototype("char* log_get_filename(log)")
     _set_level = ResPrototype("void log_set_level(log, message_level_enum)")
 

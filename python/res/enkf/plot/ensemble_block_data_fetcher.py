@@ -37,7 +37,7 @@ class EnsembleBlockDataFetcher(DataFetcher):
             "min_y": None,
             "max_y": None,
             "min_x": None,
-            "max_x": None
+            "max_x": None,
         }
 
         depth_vector = block_data.getDepth()
@@ -46,7 +46,6 @@ class EnsembleBlockDataFetcher(DataFetcher):
             data["y"].append(depth)
             data["min_x_values"].append(None)
             data["max_x_values"].append(None)
-
 
         min_y = min(data["y"])
         max_y = max(data["y"])
@@ -70,10 +69,16 @@ class EnsembleBlockDataFetcher(DataFetcher):
                 if data["max_x"] is None or data["max_x"] < value:
                     data["max_x"] = value
 
-                if data["min_x_values"][index] is None or data["min_x_values"][index] > value:
+                if (
+                    data["min_x_values"][index] is None
+                    or data["min_x_values"][index] > value
+                ):
                     data["min_x_values"][index] = value
 
-                if data["max_x_values"][index] is None or data["max_x_values"][index] < value:
+                if (
+                    data["max_x_values"][index] is None
+                    or data["max_x_values"][index] < value
+                ):
                     data["max_x_values"][index] = value
 
         return data
@@ -101,9 +106,10 @@ class EnsembleBlockDataFetcher(DataFetcher):
             return report_step_data
 
     def fetchSupportedKeys(self):
-        string_list = self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.SUMMARY)
+        string_list = (
+            self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.SUMMARY)
+        )
         return [key for key in string_list]
 
     def setSelectedReportStepIndex(self, index):
         self.__selected_report_step_index = index
-

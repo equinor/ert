@@ -3,31 +3,32 @@ from res import ResPrototype
 from ecl.grid import EclRegion
 from ecl.util.geometry import GeoRegion
 
+
 class LocalDataset(BaseCClass):
     TYPE_NAME = "local_dataset"
 
-    _alloc       = ResPrototype("void* local_dataset_alloc(char*)", bind = False)
-    _size        = ResPrototype("int   local_dataset_get_size(local_dataset)")
-    _has_key     = ResPrototype("bool  local_dataset_has_key(local_dataset, char*)")
-    _free        = ResPrototype("void  local_dataset_free(local_dataset)")
-    _name        = ResPrototype("char* local_dataset_get_name(local_dataset)")
-    _add_node    = ResPrototype("void  local_dataset_add_node(local_dataset, char*)")
-    _del_node    = ResPrototype("void  local_dataset_del_node(local_dataset, char*)")
-    _active_list = ResPrototype("active_list_ref local_dataset_get_node_active_list(local_dataset, char*)")
+    _alloc = ResPrototype("void* local_dataset_alloc(char*)", bind=False)
+    _size = ResPrototype("int   local_dataset_get_size(local_dataset)")
+    _has_key = ResPrototype("bool  local_dataset_has_key(local_dataset, char*)")
+    _free = ResPrototype("void  local_dataset_free(local_dataset)")
+    _name = ResPrototype("char* local_dataset_get_name(local_dataset)")
+    _add_node = ResPrototype("void  local_dataset_add_node(local_dataset, char*)")
+    _del_node = ResPrototype("void  local_dataset_del_node(local_dataset, char*)")
+    _active_list = ResPrototype(
+        "active_list_ref local_dataset_get_node_active_list(local_dataset, char*)"
+    )
 
     def __init__(self, name):
         raise NotImplementedError("Class can not be instantiated directly!")
 
-
-    def initEnsembleConfig(self , config):
+    def initEnsembleConfig(self, config):
         self.ensemble_config = config
-
 
     def __len__(self):
         """ @rtype: int """
         return self._size()
 
-    def __contains__(self , key):
+    def __contains__(self, key):
         """ @rtype: bool """
         return self._has_key(key)
 
@@ -40,6 +41,7 @@ class LocalDataset(BaseCClass):
 
     def name(self):
         return self._name()
+
     def getName(self):
         """ @rtype: str """
         return self.name()
@@ -53,7 +55,6 @@ class LocalDataset(BaseCClass):
                 raise KeyError('Tried to add existing data key "%s".' % key)
         else:
             raise KeyError('Tried to add data key "%s" not in ensemble.' % key)
-
 
     def addNodeWithIndex(self, key, index):
         assert isinstance(key, str)
@@ -90,4 +91,4 @@ class LocalDataset(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return self._create_repr('name=%s, size=%d' % (self.name(), len(self)))
+        return self._create_repr("name=%s, size=%d" % (self.name(), len(self)))

@@ -21,36 +21,47 @@ from ecl.grid import EclGridGenerator
 from res.enkf.config import FieldTypeEnum, FieldConfig
 from res.enkf.enums import EnkfFieldFileFormatEnum
 
-class FieldConfigTest(ResTest):
 
+class FieldConfigTest(ResTest):
     def test_field_guess_filetype(self):
-        with TestAreaContext('field_config') as test_context:
-            fname = abspath('test.kw.grdecl')
+        with TestAreaContext("field_config") as test_context:
+            fname = abspath("test.kw.grdecl")
             print(fname)
-            with open(fname, 'w') as f:
+            with open(fname, "w") as f:
                 f.write("-- my comment\n")
                 f.write("-- more comments\n")
                 f.write("SOWCR\n")
-                for i in range(256//8): # technicalities demand file has >= 256B
+                for i in range(256 // 8):  # technicalities demand file has >= 256B
                     f.write("0 0 0 0\n")
 
             ft = FieldConfig.guessFiletype(fname)
             grdecl_type = EnkfFieldFileFormatEnum(5)
-            self.assertEqual('ECL_GRDECL_FILE', grdecl_type.name)
+            self.assertEqual("ECL_GRDECL_FILE", grdecl_type.name)
             self.assertEqual(grdecl_type, ft)
 
     def test_field_type_enum(self):
         self.assertEqual(FieldTypeEnum(2), FieldTypeEnum.ECLIPSE_PARAMETER)
         gen = FieldTypeEnum.GENERAL
-        self.assertEqual('GENERAL', str(gen))
+        self.assertEqual("GENERAL", str(gen))
         gen = FieldTypeEnum(3)
-        self.assertEqual('GENERAL', str(gen))
+        self.assertEqual("GENERAL", str(gen))
 
     def test_export_format(self):
-        self.assertEqual(FieldConfig.exportFormat("file.grdecl"),     EnkfFieldFileFormatEnum.ECL_GRDECL_FILE)
-        self.assertEqual(FieldConfig.exportFormat("file.xyz.grdecl"), EnkfFieldFileFormatEnum.ECL_GRDECL_FILE)
-        self.assertEqual(FieldConfig.exportFormat("file.roFF"),       EnkfFieldFileFormatEnum.RMS_ROFF_FILE)
-        self.assertEqual(FieldConfig.exportFormat("file.xyz.roFF"),   EnkfFieldFileFormatEnum.RMS_ROFF_FILE)
+        self.assertEqual(
+            FieldConfig.exportFormat("file.grdecl"),
+            EnkfFieldFileFormatEnum.ECL_GRDECL_FILE,
+        )
+        self.assertEqual(
+            FieldConfig.exportFormat("file.xyz.grdecl"),
+            EnkfFieldFileFormatEnum.ECL_GRDECL_FILE,
+        )
+        self.assertEqual(
+            FieldConfig.exportFormat("file.roFF"), EnkfFieldFileFormatEnum.RMS_ROFF_FILE
+        )
+        self.assertEqual(
+            FieldConfig.exportFormat("file.xyz.roFF"),
+            EnkfFieldFileFormatEnum.RMS_ROFF_FILE,
+        )
 
         with self.assertRaises(ValueError):
             FieldConfig.exportFormat("file.xyz")
@@ -59,16 +70,16 @@ class FieldConfigTest(ResTest):
             FieldConfig.exportFormat("file.xyz")
 
     def test_basics(self):
-        grid = EclGridGenerator.create_rectangular((17,13,11),(1,1,1))
-        fc = FieldConfig('PORO',grid)
+        grid = EclGridGenerator.create_rectangular((17, 13, 11), (1, 1, 1))
+        fc = FieldConfig("PORO", grid)
         print(fc)
         print(str(fc))
         print(repr(fc))
-        pfx = 'FieldConfig(type'
+        pfx = "FieldConfig(type"
         rep = repr(fc)
-        self.assertEqual(pfx, rep[:len(pfx)])
-        fc_xyz = fc.get_nx(),fc.get_ny(),fc.get_nz()
-        ex_xyz = 17,13,11
+        self.assertEqual(pfx, rep[: len(pfx)])
+        fc_xyz = fc.get_nx(), fc.get_ny(), fc.get_nz()
+        ex_xyz = 17, 13, 11
         self.assertEqual(ex_xyz, fc_xyz)
-        self.assertEqual(0,     fc.get_truncation_mode())
+        self.assertEqual(0, fc.get_truncation_mode())
         self.assertEqual(ex_xyz, (grid.getNX(), grid.getNY(), grid.getNZ()))

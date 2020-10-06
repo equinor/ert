@@ -15,6 +15,7 @@
 #  for more details.
 from cwrap import BaseCEnum
 
+
 class EnkfRunType(BaseCEnum):
     TYPE_NAME = "enkf_run_mode_enum"
     ENKF_ASSIMILATION = None
@@ -24,9 +25,9 @@ class EnkfRunType(BaseCEnum):
     CASE_INIT_ONLY = None
 
 
-EnkfRunType.addEnum("ENKF_ASSIMILATION" , 1)
-EnkfRunType.addEnum("ENSEMBLE_EXPERIMENT" , 2)
-EnkfRunType.addEnum("SMOOTHER_RUN" , 4)
-EnkfRunType.addEnum("INIT_ONLY" , 8)
-EnkfRunType.addEnum("SMOOTHER_UPDATE" , 16)
+EnkfRunType.addEnum("ENKF_ASSIMILATION", 1)
+EnkfRunType.addEnum("ENSEMBLE_EXPERIMENT", 2)
+EnkfRunType.addEnum("SMOOTHER_RUN", 4)
+EnkfRunType.addEnum("INIT_ONLY", 8)
+EnkfRunType.addEnum("SMOOTHER_UPDATE", 16)
 EnkfRunType.addEnum("CASE_INIT_ONLY", 32)

@@ -17,26 +17,37 @@
 import sys
 
 from tests import ResTest
-from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
+from res.analysis import (
+    AnalysisModule,
+    AnalysisModuleLoadStatusEnum,
+    AnalysisModuleOptionsEnum,
+)
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.util.rng import RandomNumberGenerator
 from res.util import Matrix
 
+
 class AnalysisModuleTest(ResTest):
     def setUp(self):
-        if sys.platform.lower() == 'darwin':
+        if sys.platform.lower() == "darwin":
             self.libname = "rml_enkf.dylib"
         else:
             self.libname = "rml_enkf.so"
 
-        self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
+        self.rng = RandomNumberGenerator(
+            RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT
+        )
 
     def createAnalysisModule(self):
-        return AnalysisModule(lib_name = self.libname)
+        return AnalysisModule(lib_name=self.libname)
 
     def test_load_status_enum(self):
         source_file_path = "lib/include/ert/analysis/analysis_module.hpp"
-        self.assertEnumIsFullyDefined(AnalysisModuleLoadStatusEnum, "analysis_module_load_status_enum", source_file_path)
+        self.assertEnumIsFullyDefined(
+            AnalysisModuleLoadStatusEnum,
+            "analysis_module_load_status_enum",
+            source_file_path,
+        )
 
     def test_analysis_module(self):
         am = self.createAnalysisModule()
@@ -58,36 +69,28 @@ class AnalysisModuleTest(ResTest):
         self.assertIsInstance(am.getInt("ITER"), int)
 
     def test_set_get_var(self):
-        mod = AnalysisModule(name = "STD_ENKF" )
+        mod = AnalysisModule(name="STD_ENKF")
         with self.assertRaises(KeyError):
-            mod.setVar("NO-NOT_THIS_KEY" , 100)
-
+            mod.setVar("NO-NOT_THIS_KEY", 100)
 
         with self.assertRaises(KeyError):
             mod.getInt("NO-NOT_THIS_KEY")
 
-
-
-
-
     def test_create_internal(self):
-        with self.assertRaises( KeyError ):
-            mod = AnalysisModule(name = "STD_ENKFXXX" )
+        with self.assertRaises(KeyError):
+            mod = AnalysisModule(name="STD_ENKFXXX")
 
-        mod = AnalysisModule(name = "STD_ENKF" )
-
+        mod = AnalysisModule(name="STD_ENKF")
 
     def test_initX_enkf_linalg_lowrankCinv(self):
         """Test AnalysisModule.initX with EE=False and GE=False"""
-        mod = AnalysisModule(name = "STD_ENKF" )
+        mod = AnalysisModule(name="STD_ENKF")
         A, S, R, dObs, E, D = self._n_identity_mcs()
-        self.assertFalse(mod.getBool('USE_EE'))
-        self.assertFalse(mod.getBool('USE_GE'))
+        self.assertFalse(mod.getBool("USE_EE"))
+        self.assertFalse(mod.getBool("USE_GE"))
 
         elt_a, elt_b = 1.222, -0.111
-        vals = (elt_a, elt_b, elt_b,
-                elt_b, elt_a, elt_b,
-                elt_b, elt_b, elt_a)
+        vals = (elt_a, elt_b, elt_b, elt_b, elt_a, elt_b, elt_b, elt_b, elt_a)
         expected = self.construct_matrix(3, vals)
 
         X = mod.initX(A, S, R, dObs, E, D, self.rng)
@@ -95,50 +98,46 @@ class AnalysisModuleTest(ResTest):
 
     def test_initX_enkf_linalg_lowrank_EE(self):
         """Test AnalysisModule.initX with EE=True and GE=False"""
-        mod = AnalysisModule(name = "STD_ENKF" )
+        mod = AnalysisModule(name="STD_ENKF")
         A, S, R, dObs, E, D = self._n_identity_mcs()
-        mod.setVar('USE_EE', True)
-        self.assertTrue(mod.getBool('USE_EE'))
-        self.assertFalse(mod.getBool('USE_GE'))
+        mod.setVar("USE_EE", True)
+        self.assertTrue(mod.getBool("USE_EE"))
+        self.assertFalse(mod.getBool("USE_GE"))
 
         elt_a, elt_b = 1.33, -0.167
-        vals = (elt_a, elt_b, elt_b,
-                elt_b, elt_a, elt_b,
-                elt_b, elt_b, elt_a)
-        expected = self.construct_matrix(3,  vals)
+        vals = (elt_a, elt_b, elt_b, elt_b, elt_a, elt_b, elt_b, elt_b, elt_a)
+        expected = self.construct_matrix(3, vals)
         X = mod.initX(A, S, R, dObs, E, D, self.rng)
         self._matrix_close(X, expected)
 
     def test_initX_subspace_inversion_algorithm(self):
         """Test AnalysisModule.initX with EE=True and GE=True, the subspace inversion algorithm"""
-        mod = AnalysisModule(name = "STD_ENKF" )
+        mod = AnalysisModule(name="STD_ENKF")
         A, S, R, dObs, E, D = self._n_identity_mcs()
 
-        mod.setVar('USE_EE', True)
-        mod.setVar('USE_GE', True)
-        self.assertTrue(mod.getBool('USE_EE'))
-        self.assertTrue(mod.getBool('USE_GE'))
+        mod.setVar("USE_EE", True)
+        mod.setVar("USE_GE", True)
+        self.assertTrue(mod.getBool("USE_EE"))
+        self.assertTrue(mod.getBool("USE_GE"))
 
         elt_a, elt_b = 1.33, -0.167
-        vals = (elt_a, elt_b, elt_b,
-                elt_b, elt_a, elt_b,
-                elt_b, elt_b, elt_a)
+        vals = (elt_a, elt_b, elt_b, elt_b, elt_a, elt_b, elt_b, elt_b, elt_a)
         expected = self.construct_matrix(3, vals)
         X = mod.initX(A, S, R, dObs, E, D, self.rng)
         self._matrix_close(X, expected)
 
     def construct_matrix(self, n, vals):
         """Constructs n*n matrix with vals as entries"""
-        self.assertEqual(n*n, len(vals))
-        m = Matrix(n,n)
+        self.assertEqual(n * n, len(vals))
+        m = Matrix(n, n)
         idx = 0
         for i in range(n):
             for j in range(n):
-                m[(i,j)] = vals[idx]
+                m[(i, j)] = vals[idx]
                 idx += 1
         return m
 
-    def _n_identity_mcs(self, n=6,s=3):
+    def _n_identity_mcs(self, n=6, s=3):
         """return n copies of the identity matrix on s*s elts"""
         return tuple([Matrix.identity(s) for i in range(n)])
 
@@ -148,10 +147,14 @@ class AnalysisModuleTest(ResTest):
 
         c = m1.columns()
         r = m1.rows()
-        self.assertEqual(c, m2.columns(), 'Number of columns for m1 differ from m2')
-        self.assertEqual(r, m2.rows(), 'Number of rows for m1 differ from m2')
+        self.assertEqual(c, m2.columns(), "Number of columns for m1 differ from m2")
+        self.assertEqual(r, m2.rows(), "Number of rows for m1 differ from m2")
         for i in range(0, c):
-            for j in range(0,r):
-                pos  = (i,j)
+            for j in range(0, r):
+                pos = (i, j)
                 diff = abs(m1[pos] - m2[pos])
-                self.assertTrue(diff <= epsilon, 'Matrices differ at (i,j) = (%d,%d). %f != %f' % (i, j, m1[pos], m2[pos]))
+                self.assertTrue(
+                    diff <= epsilon,
+                    "Matrices differ at (i,j) = (%d,%d). %f != %f"
+                    % (i, j, m1[pos], m2[pos]),
+                )

@@ -18,5 +18,7 @@ from res import ResPrototype
 
 
 class EnkfDefaults:
-    enkf_defaults_get_default_gen_kw_export_name = ResPrototype("char* enkf_defaults_get_default_gen_kw_export_name()", bind = False)
+    enkf_defaults_get_default_gen_kw_export_name = ResPrototype(
+        "char* enkf_defaults_get_default_gen_kw_export_name()", bind=False
+    )
     DEFAULT_GEN_KW_EXPORT_NAME = enkf_defaults_get_default_gen_kw_export_name()

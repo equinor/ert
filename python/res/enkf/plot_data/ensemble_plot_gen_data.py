@@ -25,13 +25,21 @@ from ecl.util.util import BoolVector, DoubleVector
 class EnsemblePlotGenData(BaseCClass):
     TYPE_NAME = "ensemble_plot_gen_data"
 
-    _alloc      = ResPrototype("void* enkf_plot_gendata_alloc(enkf_config_node)", bind = False)
-    _size       = ResPrototype("int   enkf_plot_gendata_get_size(ensemble_plot_gen_data)")
-    _load       = ResPrototype("void  enkf_plot_gendata_load(ensemble_plot_gen_data, enkf_fs, int, bool_vector)")
-    _get        = ResPrototype("ensemble_plot_gen_data_vector_ref enkf_plot_gendata_iget(ensemble_plot_gen_data, int)")
-    _min_values = ResPrototype("double_vector_ref enkf_plot_gendata_get_min_values(ensemble_plot_gen_data)")
-    _max_values = ResPrototype("double_vector_ref enkf_plot_gendata_get_max_values(ensemble_plot_gen_data)")
-    _free       = ResPrototype("void  enkf_plot_gendata_free(ensemble_plot_gen_data)")
+    _alloc = ResPrototype("void* enkf_plot_gendata_alloc(enkf_config_node)", bind=False)
+    _size = ResPrototype("int   enkf_plot_gendata_get_size(ensemble_plot_gen_data)")
+    _load = ResPrototype(
+        "void  enkf_plot_gendata_load(ensemble_plot_gen_data, enkf_fs, int, bool_vector)"
+    )
+    _get = ResPrototype(
+        "ensemble_plot_gen_data_vector_ref enkf_plot_gendata_iget(ensemble_plot_gen_data, int)"
+    )
+    _min_values = ResPrototype(
+        "double_vector_ref enkf_plot_gendata_get_min_values(ensemble_plot_gen_data)"
+    )
+    _max_values = ResPrototype(
+        "double_vector_ref enkf_plot_gendata_get_max_values(ensemble_plot_gen_data)"
+    )
+    _free = ResPrototype("void  enkf_plot_gendata_free(ensemble_plot_gen_data)")
 
     def __init__(self, ensemble_config_node, file_system, report_step, input_mask=None):
         assert isinstance(ensemble_config_node, EnkfConfigNode)
@@ -41,10 +49,11 @@ class EnsemblePlotGenData(BaseCClass):
         if c_ptr:
             super(EnsemblePlotGenData, self).__init__(c_ptr)
         else:
-            raise ValueError('Unable to construct EnsemplePlotGenData from given config node!')
+            raise ValueError(
+                "Unable to construct EnsemplePlotGenData from given config node!"
+            )
 
         self.__load(file_system, report_step, input_mask)
-
 
     def __load(self, file_system, report_step, input_mask=None):
         assert isinstance(file_system, EnkfFs)
@@ -67,7 +76,6 @@ class EnsemblePlotGenData(BaseCClass):
             yield self[cur]
             cur += 1
 
-
     def getMaxValues(self):
         """ @rtype: DoubleVector """
         return self._max_values().setParent(self)
@@ -80,4 +88,4 @@ class EnsemblePlotGenData(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return 'EnsemblePlotGenData(size = %d) %s' % (len(self), self._ad_str())
+        return "EnsemblePlotGenData(size = %d) %s" % (len(self), self._ad_str())

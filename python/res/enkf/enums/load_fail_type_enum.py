@@ -15,6 +15,7 @@
 #  for more details.
 from cwrap import BaseCEnum
 
+
 class LoadFailTypeEnum(BaseCEnum):
     TYPE_NAME = "load_fail_type"
     LOAD_FAIL_SILENT = None

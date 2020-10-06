@@ -25,22 +25,23 @@ from tests import ResTest
 
 
 class HookManagerTest(ResTest):
-
     def setUp(self):
         self.work_area = TestArea("hook_manager_test_tmp")
         # in order to test HOOK_WORKFLOWS there need to be some workflows loaded
-        self.work_area.copy_directory(self.createTestPath("local/config/workflows/workflowjobs"))
-        self.work_area.copy_directory(self.createTestPath("local/config/workflows/workflows"))
+        self.work_area.copy_directory(
+            self.createTestPath("local/config/workflows/workflowjobs")
+        )
+        self.work_area.copy_directory(
+            self.createTestPath("local/config/workflows/workflows")
+        )
         self.config_data = {
             ConfigKeys.RUNPATH_FILE: "runpath",
             ConfigKeys.CONFIG_DIRECTORY: self.work_area.get_cwd(),
             ConfigKeys.CONFIG_FILE_KEY: "config",
-            ConfigKeys.HOOK_WORKFLOW_KEY: [
-                ("MAGIC_PRINT", "PRE_SIMULATION")
-            ],
+            ConfigKeys.HOOK_WORKFLOW_KEY: [("MAGIC_PRINT", "PRE_SIMULATION")],
             # these two entries makes the workflow_list load this workflow, but are not needed by hook_manager directly
-            ConfigKeys.LOAD_WORKFLOW_JOB:  "workflowjobs/MAGIC_PRINT",
-            ConfigKeys.LOAD_WORKFLOW:     "workflows/MAGIC_PRINT"
+            ConfigKeys.LOAD_WORKFLOW_JOB: "workflowjobs/MAGIC_PRINT",
+            ConfigKeys.LOAD_WORKFLOW: "workflows/MAGIC_PRINT",
         }
         self.filename = self.config_data[ConfigKeys.CONFIG_FILE_KEY]
         # these files must exist
@@ -57,10 +58,12 @@ class HookManagerTest(ResTest):
         res_config2 = ResConfig(user_config_file=self.filename)
         hook_manager1 = HookManager(
             workflow_list=self.res_config.ert_workflow_list,
-            config_dict=self.config_data)
+            config_dict=self.config_data,
+        )
         hook_manager2 = HookManager(
             workflow_list=res_config2.ert_workflow_list,
-            config_dict=self.set_key(ConfigKeys.RUNPATH_FILE, "runpath2"))
+            config_dict=self.set_key(ConfigKeys.RUNPATH_FILE, "runpath2"),
+        )
 
         self.assertNotEqual(hook_manager1, hook_manager2)
 
@@ -68,10 +71,12 @@ class HookManagerTest(ResTest):
         res_config2 = ResConfig(user_config_file=self.filename)
         hook_manager1 = HookManager(
             workflow_list=self.res_config.ert_workflow_list,
-            config_dict=self.config_data)
+            config_dict=self.config_data,
+        )
         hook_manager2 = HookManager(
             workflow_list=res_config2.ert_workflow_list,
-            config_dict=self.remove_key(ConfigKeys.HOOK_WORKFLOW_KEY))
+            config_dict=self.remove_key(ConfigKeys.HOOK_WORKFLOW_KEY),
+        )
 
         self.assertNotEqual(hook_manager1, hook_manager2)
 
@@ -80,35 +85,36 @@ class HookManagerTest(ResTest):
         old = res_config2.hook_manager
         new = HookManager(
             workflow_list=self.res_config.ert_workflow_list,
-            config_dict=self.config_data)
+            config_dict=self.config_data,
+        )
 
         self.assertEqual(old, new)
 
     def test_all_config_entries_are_set(self):
         hook_manager = HookManager(
             workflow_list=self.res_config.ert_workflow_list,
-            config_dict=self.config_data)
+            config_dict=self.config_data,
+        )
         list_file = hook_manager.getRunpathListFile()
         conf_dir = self.config_data[ConfigKeys.CONFIG_DIRECTORY]
         self.assertEqual(
-            list_file,
-            os.path.join(conf_dir, self.config_data[ConfigKeys.RUNPATH_FILE]))
+            list_file, os.path.join(conf_dir, self.config_data[ConfigKeys.RUNPATH_FILE])
+        )
 
         self.assertEqual(len(hook_manager), 1)
 
         magic_workflow = hook_manager[0]
         self.assertEqual(
             magic_workflow.getWorkflow().src_file,
-            os.path.join(conf_dir, self.config_data[ConfigKeys.LOAD_WORKFLOW]))
-        self.assertEqual(
-            magic_workflow.getRunMode(),
-            HookRuntime.PRE_SIMULATION)
+            os.path.join(conf_dir, self.config_data[ConfigKeys.LOAD_WORKFLOW]),
+        )
+        self.assertEqual(magic_workflow.getRunMode(), HookRuntime.PRE_SIMULATION)
 
     def remove_key(self, key):
         return {i: self.config_data[i] for i in self.config_data if i != key}
 
     def set_key(self, key, val):
-        copy =  self.config_data.copy()
+        copy = self.config_data.copy()
         copy[key] = val
         return copy
 
@@ -118,7 +124,10 @@ class HookManagerTest(ResTest):
             config.write("JOBNAME  Job%d\n")
             config.write("NUM_REALIZATIONS  1\n")
             for key, val in self.config_data.items():
-                if key == ConfigKeys.CONFIG_FILE_KEY or key == ConfigKeys.CONFIG_DIRECTORY:
+                if (
+                    key == ConfigKeys.CONFIG_FILE_KEY
+                    or key == ConfigKeys.CONFIG_DIRECTORY
+                ):
                     continue
                 if isinstance(val, str):
                     config.write("{} {}\n".format(key, val))
@@ -128,8 +137,8 @@ class HookManagerTest(ResTest):
                         config.write("{} {} {}\n".format(key, val1, val2))
 
     def make_empty_file(self, filename):
-        open(filename, 'a').close()
+        open(filename, "a").close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -4,12 +4,21 @@ import re
 from cwrap import BaseCClass
 from ecl.util.util import StringList, BoolVector
 from res import ResPrototype
-from res.enkf import EnkfFs, StateMap, TimeMap, RealizationStateEnum, EnkfInitModeEnum, \
-    EnKFFSType
+from res.enkf import (
+    EnkfFs,
+    StateMap,
+    TimeMap,
+    RealizationStateEnum,
+    EnkfInitModeEnum,
+    EnKFFSType,
+)
 
 
-def naturalSortKey(s, _nsre=re.compile('([0-9]+)')):
-    return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)]
+def naturalSortKey(s, _nsre=re.compile("([0-9]+)")):
+    return [
+        int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)
+    ]
+
 
 class FileSystemRotator(object):
     def __init__(self, capacity):
@@ -37,7 +46,6 @@ class FileSystemRotator(object):
             del self._fs_list[0]
             del self._fs_map[case_name]
 
-
     def atCapacity(self):
         return len(self._fs_list) == self._capacity
 
@@ -46,7 +54,7 @@ class FileSystemRotator(object):
 
     def __get_fs(self, name):
         fs = self._fs_map[name]
-        return fs.copy( )
+        return fs.copy()
 
     def __getitem__(self, case):
         """ @rtype: EnkfFs """
@@ -58,11 +66,9 @@ class FileSystemRotator(object):
         else:
             raise IndexError("Value '%s' is not a proper index or case name." % case)
 
-
     def umountAll(self):
         while len(self._fs_list) > 0:
             self.dropOldestFileSystem()
-
 
 
 # For normal use from ert all filesystems will be located in the same
@@ -73,24 +79,43 @@ class FileSystemRotator(object):
 # path could be sent as the the optional second argument to the
 # getFS() method.
 
+
 class EnkfFsManager(BaseCClass):
     TYPE_NAME = "enkf_fs_manager"
 
     _get_current_fs = ResPrototype("enkf_fs_obj enkf_main_get_fs_ref(enkf_fs_manager)")
-    _switch_fs =      ResPrototype("void enkf_main_set_fs(enkf_fs_manager, enkf_fs, char*)")
-    _fs_exists =      ResPrototype("bool enkf_main_fs_exists(enkf_fs_manager, char*)")
-    _alloc_caselist = ResPrototype("stringlist_obj enkf_main_alloc_caselist(enkf_fs_manager)")
-    _ensemble_size  = ResPrototype("int enkf_main_get_ensemble_size(enkf_fs_manager)")
+    _switch_fs = ResPrototype("void enkf_main_set_fs(enkf_fs_manager, enkf_fs, char*)")
+    _fs_exists = ResPrototype("bool enkf_main_fs_exists(enkf_fs_manager, char*)")
+    _alloc_caselist = ResPrototype(
+        "stringlist_obj enkf_main_alloc_caselist(enkf_fs_manager)"
+    )
+    _ensemble_size = ResPrototype("int enkf_main_get_ensemble_size(enkf_fs_manager)")
 
-    _is_initialized =                        ResPrototype("bool enkf_main_is_initialized(enkf_fs_manager, bool_vector)")
-    _is_case_initialized =                   ResPrototype("bool enkf_main_case_is_initialized(enkf_fs_manager, char*, bool_vector)")
-    _initialize_from_scratch =               ResPrototype("void enkf_main_initialize_from_scratch(enkf_fs_manager, stringlist, ert_run_context)")
-    _initialize_case_from_existing =         ResPrototype("void enkf_main_init_case_from_existing(enkf_fs_manager, enkf_fs, int, enkf_fs)")
-    _custom_initialize_from_existing =       ResPrototype("void enkf_main_init_current_case_from_existing_custom(enkf_fs_manager, enkf_fs, int, stringlist, bool_vector)")
-    _initialize_current_case_from_existing = ResPrototype("void enkf_main_init_current_case_from_existing(enkf_fs_manager, enkf_fs, int)")
+    _is_initialized = ResPrototype(
+        "bool enkf_main_is_initialized(enkf_fs_manager, bool_vector)"
+    )
+    _is_case_initialized = ResPrototype(
+        "bool enkf_main_case_is_initialized(enkf_fs_manager, char*, bool_vector)"
+    )
+    _initialize_from_scratch = ResPrototype(
+        "void enkf_main_initialize_from_scratch(enkf_fs_manager, stringlist, ert_run_context)"
+    )
+    _initialize_case_from_existing = ResPrototype(
+        "void enkf_main_init_case_from_existing(enkf_fs_manager, enkf_fs, int, enkf_fs)"
+    )
+    _custom_initialize_from_existing = ResPrototype(
+        "void enkf_main_init_current_case_from_existing_custom(enkf_fs_manager, enkf_fs, int, stringlist, bool_vector)"
+    )
+    _initialize_current_case_from_existing = ResPrototype(
+        "void enkf_main_init_current_case_from_existing(enkf_fs_manager, enkf_fs, int)"
+    )
 
-    _alloc_readonly_state_map = ResPrototype("state_map_obj enkf_main_alloc_readonly_state_map(enkf_fs_manager, char*)")
-    _alloc_readonly_time_map =  ResPrototype("time_map_obj enkf_main_alloc_readonly_time_map(enkf_fs_manager, char*)")
+    _alloc_readonly_state_map = ResPrototype(
+        "state_map_obj enkf_main_alloc_readonly_state_map(enkf_fs_manager, char*)"
+    )
+    _alloc_readonly_time_map = ResPrototype(
+        "time_map_obj enkf_main_alloc_readonly_time_map(enkf_fs_manager, char*)"
+    )
 
     DEFAULT_CAPACITY = 5
 
@@ -103,9 +128,10 @@ class EnkfFsManager(BaseCClass):
         real_enkf_main = enkf_main.parent()
 
         super(EnkfFsManager, self).__init__(
-            real_enkf_main.from_param(real_enkf_main).value ,
-            parent=real_enkf_main ,
-            is_reference=True)
+            real_enkf_main.from_param(real_enkf_main).value,
+            parent=real_enkf_main,
+            is_reference=True,
+        )
 
         self._fs_rotator = FileSystemRotator(capacity)
         self._mount_root = real_enkf_main.getMountPoint()
@@ -118,8 +144,6 @@ class EnkfFsManager(BaseCClass):
 
     def _createFullCaseName(self, mount_root, case_name):
         return os.path.join(mount_root, case_name)
-
-
 
     # The return value from the getFileSystem will be a weak reference to the
     # underlying enkf_fs object. That implies that the fs manager must be in
@@ -148,7 +172,7 @@ class EnkfFsManager(BaseCClass):
         return fs
 
     def isCaseRunning(self, case_name, mount_root=None):
-        """ Returns true if case is mounted and write_count > 0
+        """Returns true if case is mounted and write_count > 0
         @rtype: bool
         """
         if self.isCaseMounted(case_name, mount_root):
@@ -156,11 +180,9 @@ class EnkfFsManager(BaseCClass):
             return case_fs.is_running()
         return False
 
-
     def caseExists(self, case_name):
         """ @rtype: bool """
         return case_name in self.getCaseList()
-
 
     def caseHasData(self, case_name):
         """ @rtype: bool """
@@ -173,9 +195,8 @@ class EnkfFsManager(BaseCClass):
 
         return case_has_data
 
-
     def getCurrentFileSystem(self):
-        """ Returns the currently selected file system
+        """Returns the currently selected file system
         @rtype: EnkfFs
         """
         current_fs = self._get_current_fs()
@@ -190,15 +211,12 @@ class EnkfFsManager(BaseCClass):
     def umount(self):
         self._fs_rotator.umountAll()
 
-
     def getFileSystemCount(self):
         return len(self._fs_rotator)
 
-
     def getEnsembleSize(self):
         """ @rtype: int """
-        return self._ensemble_size( )
-
+        return self._ensemble_size()
 
     def switchFileSystem(self, file_system):
         """
@@ -206,22 +224,21 @@ class EnkfFsManager(BaseCClass):
         """
         self._switch_fs(file_system, None)
 
-
     def isCaseInitialized(self, case):
         return self._is_case_initialized(case, None)
 
     def isInitialized(self):
         """ @rtype: bool """
-        return self._is_initialized(None) # what is the bool_vector mask???
-
+        return self._is_initialized(None)  # what is the bool_vector mask???
 
     def getCaseList(self):
         """ @rtype: list[str] """
         caselist = [case for case in self._alloc_caselist()]
         return sorted(caselist, key=naturalSortKey)
 
-
-    def customInitializeCurrentFromExistingCase(self, source_case, source_report_step, member_mask, node_list):
+    def customInitializeCurrentFromExistingCase(
+        self, source_case, source_report_step, member_mask, node_list
+    ):
         """
         @type source_case: str
         @type source_report_step: int
@@ -229,7 +246,9 @@ class EnkfFsManager(BaseCClass):
         @type node_list: ecl.util.StringList
         """
         source_case_fs = self.getFileSystem(source_case)
-        self._custom_initialize_from_existing(source_case_fs, source_report_step, node_list, member_mask)
+        self._custom_initialize_from_existing(
+            source_case_fs, source_report_step, node_list, member_mask
+        )
 
     def initializeCurrentCaseFromExisting(self, source_fs, source_report_step):
         """
@@ -246,11 +265,8 @@ class EnkfFsManager(BaseCClass):
         """
         self._initialize_case_from_existing(source_fs, source_report_step, target_fs)
 
-
     def initializeFromScratch(self, parameter_list, run_context):
-        self._initialize_from_scratch(parameter_list, run_context) 
-
-
+        self._initialize_from_scratch(parameter_list, run_context)
 
     def isCaseMounted(self, case_name, mount_root=None):
         """
@@ -288,4 +304,3 @@ class EnkfFsManager(BaseCClass):
         @rtype: bool
         """
         return case_name.startswith(".")
-

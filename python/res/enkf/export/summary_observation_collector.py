@@ -1,18 +1,23 @@
 from pandas import DataFrame, MultiIndex
 import numpy
-from res.enkf import ErtImplType, EnKFMain, EnkfFs, RealizationStateEnum, EnkfObservationImplementationType
+from res.enkf import (
+    ErtImplType,
+    EnKFMain,
+    EnkfFs,
+    RealizationStateEnum,
+    EnkfObservationImplementationType,
+)
 from res.enkf.key_manager import KeyManager
 from res.enkf.plot_data import EnsemblePlotData
 from ecl.util.util import BoolVector
 
 
 class SummaryObservationCollector(object):
-
     @staticmethod
     def getAllObservationKeys(ert):
         """
-         @type ert: EnKFMain
-         @rtype: list of str
+        @type ert: EnKFMain
+        @rtype: list of str
         """
         key_manager = KeyManager(ert)
         return key_manager.summaryKeysWithObservations()
@@ -32,7 +37,9 @@ class SummaryObservationCollector(object):
 
         summary_keys = SummaryObservationCollector.getAllObservationKeys(ert)
         if keys is not None:
-            summary_keys = [key for key in keys if key in summary_keys] # ignore keys that doesn't exist
+            summary_keys = [
+                key for key in keys if key in summary_keys
+            ]  # ignore keys that doesn't exist
 
         columns = summary_keys
         std_columns = ["STD_%s" % key for key in summary_keys]
@@ -56,7 +63,6 @@ class SummaryObservationCollector(object):
 
                         df[key][obs_time] = value
                         df["STD_%s" % key][obs_time] = std
-
 
         return df
 

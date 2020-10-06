@@ -30,10 +30,14 @@ import os
 class ModelConfig(BaseCClass):
     TYPE_NAME = "model_config"
 
-    _alloc                       = ResPrototype("void*  model_config_alloc( config_content, \
+    _alloc = ResPrototype(
+        "void*  model_config_alloc( config_content, \
                                                                             char*, ext_joblist, \
-                                                                            int, ecl_sum)", bind=False)
-    _alloc_full                  = ResPrototype("void*  model_config_alloc_full( int, \
+                                                                            int, ecl_sum)",
+        bind=False,
+    )
+    _alloc_full = ResPrototype(
+        "void*  model_config_alloc_full( int, \
                                                                                 int, \
                                                                                 char*, \
                                                                                 char*, \
@@ -46,45 +50,86 @@ class ModelConfig(BaseCClass):
                                                                                 char*, \
                                                                                 history_source_enum, \
                                                                                 ext_joblist, \
-                                                                                ecl_sum)", bind=False)
-    _free                        = ResPrototype("void  model_config_free( model_config )")
-    _get_forward_model           = ResPrototype("forward_model_ref model_config_get_forward_model(model_config)")
-    _get_max_internal_submit     = ResPrototype("int   model_config_get_max_internal_submit(model_config)")
-    _set_max_internal_submit     = ResPrototype("void  model_config_set_max_internal_submit(model_config, int)")
-    _get_runpath_as_char         = ResPrototype("char* model_config_get_runpath_as_char(model_config)")
-    _select_runpath              = ResPrototype("bool  model_config_select_runpath(model_config, char*)")
-    _set_runpath                 = ResPrototype("void  model_config_set_runpath(model_config, char*)")
-    _get_enspath                 = ResPrototype("char* model_config_get_enspath(model_config)")
-    _get_history                 = ResPrototype("history_ref model_config_get_history(model_config)")
-    _get_history_source          = ResPrototype("history_source_enum model_config_get_history_source(model_config)")
-    _select_history              = ResPrototype("bool  model_config_select_history(model_config, history_source_enum, ecl_sum)")
-    _has_history                 = ResPrototype("bool  model_config_has_history(model_config)")
-    _gen_kw_export_name          = ResPrototype("char* model_config_get_gen_kw_export_name(model_config)")
-    _runpath_requires_iterations = ResPrototype("bool  model_config_runpath_requires_iter(model_config)")
-    _get_jobname_fmt             = ResPrototype("char* model_config_get_jobname_fmt(model_config)")
-    _get_runpath_fmt             = ResPrototype("path_fmt_ref model_config_get_runpath_fmt(model_config)")
-    _get_num_realizations        = ResPrototype("int model_config_get_num_realizations(model_config)")
-    _get_obs_config_file         = ResPrototype("char* model_config_get_obs_config_file(model_config)")
-    _get_data_root               = ResPrototype("char* model_config_get_data_root(model_config)")
-    _set_data_root               = ResPrototype("void model_config_get_data_root(model_config, char*)")
-    _get_time_map                = ResPrototype("void model_config_get_external_time_map(model_config)")
+                                                                                ecl_sum)",
+        bind=False,
+    )
+    _free = ResPrototype("void  model_config_free( model_config )")
+    _get_forward_model = ResPrototype(
+        "forward_model_ref model_config_get_forward_model(model_config)"
+    )
+    _get_max_internal_submit = ResPrototype(
+        "int   model_config_get_max_internal_submit(model_config)"
+    )
+    _set_max_internal_submit = ResPrototype(
+        "void  model_config_set_max_internal_submit(model_config, int)"
+    )
+    _get_runpath_as_char = ResPrototype(
+        "char* model_config_get_runpath_as_char(model_config)"
+    )
+    _select_runpath = ResPrototype(
+        "bool  model_config_select_runpath(model_config, char*)"
+    )
+    _set_runpath = ResPrototype("void  model_config_set_runpath(model_config, char*)")
+    _get_enspath = ResPrototype("char* model_config_get_enspath(model_config)")
+    _get_history = ResPrototype("history_ref model_config_get_history(model_config)")
+    _get_history_source = ResPrototype(
+        "history_source_enum model_config_get_history_source(model_config)"
+    )
+    _select_history = ResPrototype(
+        "bool  model_config_select_history(model_config, history_source_enum, ecl_sum)"
+    )
+    _has_history = ResPrototype("bool  model_config_has_history(model_config)")
+    _gen_kw_export_name = ResPrototype(
+        "char* model_config_get_gen_kw_export_name(model_config)"
+    )
+    _runpath_requires_iterations = ResPrototype(
+        "bool  model_config_runpath_requires_iter(model_config)"
+    )
+    _get_jobname_fmt = ResPrototype("char* model_config_get_jobname_fmt(model_config)")
+    _get_runpath_fmt = ResPrototype(
+        "path_fmt_ref model_config_get_runpath_fmt(model_config)"
+    )
+    _get_num_realizations = ResPrototype(
+        "int model_config_get_num_realizations(model_config)"
+    )
+    _get_obs_config_file = ResPrototype(
+        "char* model_config_get_obs_config_file(model_config)"
+    )
+    _get_data_root = ResPrototype("char* model_config_get_data_root(model_config)")
+    _set_data_root = ResPrototype(
+        "void model_config_get_data_root(model_config, char*)"
+    )
+    _get_time_map = ResPrototype(
+        "void model_config_get_external_time_map(model_config)"
+    )
 
-    def __init__(self, data_root, joblist, last_history_restart, refcase, 
-                 config_content=None, config_dict=None, is_reference=False):
+    def __init__(
+        self,
+        data_root,
+        joblist,
+        last_history_restart,
+        refcase,
+        config_content=None,
+        config_dict=None,
+        is_reference=False,
+    ):
         if config_dict is not None and config_content is not None:
             raise ValueError(
-                "Error: Unable to create ModelConfig with multiple config objects")
+                "Error: Unable to create ModelConfig with multiple config objects"
+            )
 
         hist_src_enum = ModelConfig._get_history_src_enum(config_dict, config_content)
         if hist_src_enum == HistorySourceEnum.SCHEDULE:
-            raise ValueError("{} as {} is not supported".format(
+            raise ValueError(
+                "{} as {} is not supported".format(
                     HistorySourceEnum.SCHEDULE, ConfigKeys.HISTORY_SOURCE
                 )
             )
 
         if config_dict is None:
-            c_ptr = self._alloc(config_content, data_root,
-                                joblist, last_history_restart, refcase)
+            c_ptr = self._alloc(
+                config_content, data_root, joblist, last_history_restart, refcase
+            )
         else:
             # MAX_RESAMPLE_KEY
             max_resample = config_dict.get(ConfigKeys.MAX_RESAMPLE)
@@ -132,11 +177,13 @@ class ModelConfig(BaseCClass):
             # TIME_MAP_KEY
             time_map = None
             time_map_file = config_dict.get(ConfigKeys.TIME_MAP)
-            if time_map_file is not None and not os.path.isfile(os.path.realpath(time_map_file)):
+            if time_map_file is not None and not os.path.isfile(
+                os.path.realpath(time_map_file)
+            ):
                 raise ValueError("Error: Time map is not a file")
-            elif (time_map_file is not None):
-                 time_map = TimeMap()
-                 time_map.fload(filename=os.path.realpath(time_map_file))
+            elif time_map_file is not None:
+                time_map = TimeMap()
+                time_map.fload(filename=os.path.realpath(time_map_file))
 
             # RFTPATH_KEY
             rft_path = config_dict.get(ConfigKeys.RFTPATH)
@@ -163,7 +210,7 @@ class ModelConfig(BaseCClass):
                 gen_kw_export_name,
                 history_source,
                 joblist,
-                refcase
+                refcase,
             )
 
             # Fix ownership
@@ -172,7 +219,7 @@ class ModelConfig(BaseCClass):
                 time_map.convertToCReference(None)
 
         if c_ptr is None:
-            raise ValueError('Failed to construct ModelConfig instance.')
+            raise ValueError("Failed to construct ModelConfig instance.")
 
         super(ModelConfig, self).__init__(c_ptr, is_reference=is_reference)
 
@@ -185,9 +232,9 @@ class ModelConfig(BaseCClass):
 
     def set_history_source(self, history_source, refcase):
         """
-         @type history_source: HistorySourceEnum
-         @type refcase: EclSum
-         @rtype: bool
+        @type history_source: HistorySourceEnum
+        @type refcase: EclSum
+        @rtype: bool
         """
         assert isinstance(history_source, HistorySourceEnum)
         assert isinstance(refcase, EclSum)
@@ -220,7 +267,7 @@ class ModelConfig(BaseCClass):
 
     def getGenKWExportName(self):
         """ @rtype: str """
-        return self._gen_kw_export_name( )
+        return self._gen_kw_export_name()
 
     def runpathRequiresIterations(self):
         """ @rtype: bool """
@@ -247,10 +294,10 @@ class ModelConfig(BaseCClass):
         return self._get_num_realizations()
 
     def data_root(self):
-        return self._get_data_root( )
+        return self._get_data_root()
 
     def _set_data_root(self, data_root):
-        self._set_data_root( data_root )
+        self._set_data_root(data_root)
 
     def get_time_map(self):
         return self._get_time_map()
@@ -265,7 +312,9 @@ class ModelConfig(BaseCClass):
         if self.num_realizations != other.num_realizations:
             return False
 
-        if os.path.realpath(self.obs_config_file) != os.path.realpath(other.obs_config_file):
+        if os.path.realpath(self.obs_config_file) != os.path.realpath(
+            other.obs_config_file
+        ):
             return False
 
         if os.path.realpath(self.getEnspath()) != os.path.realpath(other.getEnspath()):
@@ -277,7 +326,9 @@ class ModelConfig(BaseCClass):
         if self.getJobnameFormat() != other.getJobnameFormat():
             return False
 
-        if os.path.realpath(self.getRunpathAsString()) != os.path.realpath(other.getRunpathAsString()):
+        if os.path.realpath(self.getRunpathAsString()) != os.path.realpath(
+            other.getRunpathAsString()
+        ):
             return False
 
         if self.get_max_internal_submit() != other.get_max_internal_submit():

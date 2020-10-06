@@ -12,16 +12,18 @@ from .gen_data_file_type_enum import GenDataFileType
 from .active_mode_enum import ActiveMode
 from .hook_runtime_enum import HookRuntime
 
-__all__ = ["EnkfFieldFileFormatEnum",
-           "LoadFailTypeEnum",
-           "EnkfVarType",
-           "EnkfRunType",
-           "EnkfObservationImplementationType",
-           "ErtImplType",
-           "EnkfInitModeEnum",
-           "RealizationStateEnum",
-           "EnkfTruncationType",
-           "EnKFFSType",
-           "GenDataFileType",
-           "ActiveMode",
-           "HookRuntime"]
+__all__ = [
+    "EnkfFieldFileFormatEnum",
+    "LoadFailTypeEnum",
+    "EnkfVarType",
+    "EnkfRunType",
+    "EnkfObservationImplementationType",
+    "ErtImplType",
+    "EnkfInitModeEnum",
+    "RealizationStateEnum",
+    "EnkfTruncationType",
+    "EnKFFSType",
+    "GenDataFileType",
+    "ActiveMode",
+    "HookRuntime",
+]

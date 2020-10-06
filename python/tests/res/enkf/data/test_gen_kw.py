@@ -6,8 +6,8 @@ from tests import ResTest
 
 
 def create_gen_kw():
-    parameter_file ="MULTFLT.txt"
-    template_file ="MULTFLT.tmpl"
+    parameter_file = "MULTFLT.txt"
+    template_file = "MULTFLT.tmpl"
     with open(parameter_file, "w") as f:
         f.write("MULTFLT1  NORMAL  0   1\n")
         f.write("MULTFLT2  RAW \n")
@@ -17,20 +17,17 @@ def create_gen_kw():
         f.write("<MULTFLT1> <MULTFLT2> <MULTFLT3>\n")
         f.write("/\n")
 
+    gen_kw_config = GenKwConfig("MULTFLT", template_file, parameter_file)
+    gen_kw = GenKw(gen_kw_config)
 
-    gen_kw_config = GenKwConfig("MULTFLT", template_file , parameter_file)
-    gen_kw = GenKw( gen_kw_config )
-
-    return (gen_kw_config , gen_kw)
-
+    return (gen_kw_config, gen_kw)
 
 
 class GenKwTest(ResTest):
-
     def test_gen_kw_get_set(self):
         with TestAreaContext("enkf/data/gen_kwt"):
 
-            (gen_kw_config , gen_kw) = create_gen_kw()
+            (gen_kw_config, gen_kw) = create_gen_kw()
             self.assertIsInstance(gen_kw, GenKw)
 
             gen_kw[0] = 3.0
@@ -59,76 +56,50 @@ class GenKwTest(ResTest):
             with self.assertRaises(KeyError):
                 gen_kw["MULTFLT_2"]
 
-            self.assertTrue("MULTFLT1" in gen_kw )
+            self.assertTrue("MULTFLT1" in gen_kw)
 
             items = gen_kw.items()
-            self.assertEqual( len(items) , 3 )
-            self.assertEqual( items[0][0] , "MULTFLT1" )
-            self.assertEqual( items[1][0] , "MULTFLT2" )
-            self.assertEqual( items[2][0] , "MULTFLT3" )
+            self.assertEqual(len(items), 3)
+            self.assertEqual(items[0][0], "MULTFLT1")
+            self.assertEqual(items[1][0], "MULTFLT2")
+            self.assertEqual(items[2][0], "MULTFLT3")
 
-            self.assertEqual( items[0][1] ,  4)
-            self.assertEqual( items[1][1] ,  8)
-            self.assertEqual( items[2][1] ,  12)
-
-
+            self.assertEqual(items[0][1], 4)
+            self.assertEqual(items[1][1], 8)
+            self.assertEqual(items[2][1], 12)
 
     def test_gen_kw_get_set_vector(self):
         with TestAreaContext("enkf/data/gen_kwt"):
 
-            (gen_kw_config , gen_kw) = create_gen_kw()
+            (gen_kw_config, gen_kw) = create_gen_kw()
             with self.assertRaises(ValueError):
                 gen_kw.setValues([0])
 
             with self.assertRaises(TypeError):
-                gen_kw.setValues(["A","B","C"])
+                gen_kw.setValues(["A", "B", "C"])
 
-            gen_kw.setValues([0,1,2])
+            gen_kw.setValues([0, 1, 2])
             self.assertEqual(gen_kw[0], 0)
             self.assertEqual(gen_kw[1], 1)
             self.assertEqual(gen_kw[2], 2)
 
-            self.assertEqual(gen_kw["MULTFLT1"] , 0)
-            self.assertEqual(gen_kw["MULTFLT2"] , 1)
-            self.assertEqual(gen_kw["MULTFLT3"] , 2)
-
-
-
-
+            self.assertEqual(gen_kw["MULTFLT1"], 0)
+            self.assertEqual(gen_kw["MULTFLT2"], 1)
+            self.assertEqual(gen_kw["MULTFLT3"], 2)
 
     def test_gen_kw_ecl_write(self):
         with TestAreaContext("enkf/data/gen_kwt"):
-            (gen_kw_config , gen_kw) = create_gen_kw()
+            (gen_kw_config, gen_kw) = create_gen_kw()
 
             with self.assertRaises(IOError):
-                gen_kw.eclWrite( "tmp" , "file.txt")
+                gen_kw.eclWrite("tmp", "file.txt")
 
-            gen_kw.eclWrite( None , "file.txt")
-            self.assertTrue( os.path.isfile( "file.txt" ))
+            gen_kw.eclWrite(None, "file.txt")
+            self.assertTrue(os.path.isfile("file.txt"))
 
             os.mkdir("tmp")
-            gen_kw.eclWrite( "tmp" , "file.txt")
-            self.assertTrue( os.path.isfile( "tmp/file.txt" ))
+            gen_kw.eclWrite("tmp", "file.txt")
+            self.assertTrue(os.path.isfile("tmp/file.txt"))
 
-            gen_kw.exportParameters( "tmp/export.txt" )
-            self.assertTrue( os.path.isfile( "tmp/export.txt" ))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            gen_kw.exportParameters("tmp/export.txt")
+            self.assertTrue(os.path.isfile("tmp/export.txt"))

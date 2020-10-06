@@ -7,7 +7,7 @@ class RMSConfig(object):
     DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "rms_config.yml")
 
     def __init__(self):
-        config_file = os.getenv("RMS_SITE_CONFIG", default = self.DEFAULT_CONFIG_FILE)
+        config_file = os.getenv("RMS_SITE_CONFIG", default=self.DEFAULT_CONFIG_FILE)
         with open(config_file) as f:
             try:
                 config = yaml.safe_load(f)
@@ -15,7 +15,6 @@ class RMSConfig(object):
                 raise ValueError("Failed to parse: {} as yaml".format(config_file))
 
         self._config = config
-
 
     @property
     def executable(self):
@@ -25,9 +24,6 @@ class RMSConfig(object):
 
         return exe
 
-
     @property
     def threads(self):
         return self._config.get("threads")
-
-

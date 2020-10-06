@@ -9,13 +9,22 @@ class ObservationDataFetcher(DataFetcher):
 
     def getObservationKeys(self):
         observations = self.ert().getObservations()
-        keys = observations.getTypedKeylist(EnkfObservationImplementationType.SUMMARY_OBS)
+        keys = observations.getTypedKeylist(
+            EnkfObservationImplementationType.SUMMARY_OBS
+        )
         keys = sorted(keys)
         return keys
 
     def fetchSupportedKeys(self):
         """ @rtype: list of str """
-        return sorted([key for key in self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.SUMMARY)])
+        return sorted(
+            [
+                key
+                for key in self.ert()
+                .ensembleConfig()
+                .getKeylistFromImplType(ErtImplType.SUMMARY)
+            ]
+        )
 
     def __getObservationData(self, key, data):
         observations = self.ert().getObservations()
@@ -44,7 +53,6 @@ class ObservationDataFetcher(DataFetcher):
                 if data["max_x"] is None or data["max_x"] < x_value:
                     data["max_x"] = x_value
 
-
                 adjusted_y = self.adjustY(y_value, std)
 
                 if data["min_y"] is None or data["min_y"] > adjusted_y:
@@ -63,19 +71,20 @@ class ObservationDataFetcher(DataFetcher):
 
         return y - std
 
-
     def fetchData(self, key, case=None):
         obs_keys = self.ert().ensembleConfig().getNode(key).getObservationKeys()
         history_length = self.ert().getHistoryLength()
 
-        data = {"continuous": True,
-                "x": None,
-                "y": None,
-                "std": None,
-                "min_y": None,
-                "max_y": None,
-                "min_x": None,
-                "max_x": None}
+        data = {
+            "continuous": True,
+            "x": None,
+            "y": None,
+            "std": None,
+            "min_y": None,
+            "max_y": None,
+            "min_x": None,
+            "max_x": None,
+        }
 
         if len(obs_keys) == 0:
             return data
@@ -88,4 +97,3 @@ class ObservationDataFetcher(DataFetcher):
             self.__getObservationData(obs_key, data)
 
         return data
-

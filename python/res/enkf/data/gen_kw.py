@@ -25,24 +25,25 @@ from res.enkf.config import GenKwConfig
 
 class GenKw(BaseCClass):
     TYPE_NAME = "gen_kw"
-    _alloc             = ResPrototype("void*  gen_kw_alloc(gen_kw_config)", bind = False)
-    _free              = ResPrototype("void   gen_kw_free(gen_kw_config)")
+    _alloc = ResPrototype("void*  gen_kw_alloc(gen_kw_config)", bind=False)
+    _free = ResPrototype("void   gen_kw_free(gen_kw_config)")
     _export_parameters = ResPrototype("void   gen_kw_write_export_file(gen_kw , char*)")
-    _export_template   = ResPrototype("void   gen_kw_ecl_write_template(gen_kw , char* )")
-    _data_iget         = ResPrototype("double gen_kw_data_iget(gen_kw, int, bool)")
-    _data_iset         = ResPrototype("void   gen_kw_data_iset(gen_kw, int, double)")
-    _set_values        = ResPrototype("void   gen_kw_data_set_vector(gen_kw, double_vector)")
-    _data_get          = ResPrototype("double gen_kw_data_get(gen_kw, char*, bool)")
-    _data_set          = ResPrototype("void   gen_kw_data_set(gen_kw, char*, double)")
-    _size              = ResPrototype("int    gen_kw_data_size(gen_kw)")
-    _has_key           = ResPrototype("bool   gen_kw_data_has_key(gen_kw, char*)")
-    _ecl_write         = ResPrototype("void   gen_kw_ecl_write(gen_kw,    char* , char* , void*)")
-    _iget_key          = ResPrototype("char*  gen_kw_get_name(gen_kw, int)")
-
+    _export_template = ResPrototype("void   gen_kw_ecl_write_template(gen_kw , char* )")
+    _data_iget = ResPrototype("double gen_kw_data_iget(gen_kw, int, bool)")
+    _data_iset = ResPrototype("void   gen_kw_data_iset(gen_kw, int, double)")
+    _set_values = ResPrototype("void   gen_kw_data_set_vector(gen_kw, double_vector)")
+    _data_get = ResPrototype("double gen_kw_data_get(gen_kw, char*, bool)")
+    _data_set = ResPrototype("void   gen_kw_data_set(gen_kw, char*, double)")
+    _size = ResPrototype("int    gen_kw_data_size(gen_kw)")
+    _has_key = ResPrototype("bool   gen_kw_data_has_key(gen_kw, char*)")
+    _ecl_write = ResPrototype(
+        "void   gen_kw_ecl_write(gen_kw,    char* , char* , void*)"
+    )
+    _iget_key = ResPrototype("char*  gen_kw_get_name(gen_kw, int)")
 
     def __init__(self, gen_kw_config):
         """
-         @type gen_kw_config: GenKwConfig
+        @type gen_kw_config: GenKwConfig
         """
         c_ptr = self._alloc(gen_kw_config)
 
@@ -50,18 +51,18 @@ class GenKw(BaseCClass):
             super(GenKw, self).__init__(c_ptr)
             self.__str__ = self.__repr__
         else:
-            raise ValueError('Cannot issue a GenKw from the given keyword config: %s.' % str(gen_kw_config))
-
+            raise ValueError(
+                "Cannot issue a GenKw from the given keyword config: %s."
+                % str(gen_kw_config)
+            )
 
     def exportParameters(self, file_name):
         """ @type: str """
         self._export_parameters(file_name)
 
-
     def exportTemplate(self, file_name):
         """ @type: str """
         self._export_template(file_name)
-
 
     def __getitem__(self, key):
         """
@@ -78,8 +79,9 @@ class GenKw(BaseCClass):
                 raise IndexError("Index out of range 0 <= %d < %d" % (key, len(self)))
             return self._data_iget(key, do_transform)
         else:
-            raise TypeError("Illegal type for indexing, must be int or str, got: %s" % (key))
-
+            raise TypeError(
+                "Illegal type for indexing, must be int or str, got: %s" % (key)
+            )
 
     def __setitem__(self, key, value):
         """
@@ -95,54 +97,48 @@ class GenKw(BaseCClass):
                 raise IndexError("Index out of range 0 <= %d < %d" % (key, len(self)))
             self._data_iset(key, value)
         else:
-            raise TypeError("Illegal type for indexing, must be int or str, got: %s" % (key))
-
+            raise TypeError(
+                "Illegal type for indexing, must be int or str, got: %s" % (key)
+            )
 
     def items(self):
         do_transform = False
         v = []
         for index in range(len(self)):
-            v.append( ( self._iget_key( index ) ,
-                        self._data_iget(index, do_transform)) )
+            v.append((self._iget_key(index), self._data_iget(index, do_transform)))
         return v
 
-
-    def eclWrite(self , path , filename ):
+    def eclWrite(self, path, filename):
         if not path is None:
             if not os.path.isdir(path):
                 raise IOError("The directory:%s does not exist" % path)
 
-        self._ecl_write( path , filename , None )
+        self._ecl_write(path, filename, None)
 
-
-    def setValues(self , values):
+    def setValues(self, values):
         if len(values) == len(self):
-            if isinstance(values , DoubleVector):
-                self._set_values( d )
+            if isinstance(values, DoubleVector):
+                self._set_values(d)
             else:
                 d = DoubleVector()
-                for (index,v) in enumerate(values):
+                for (index, v) in enumerate(values):
                     if isinstance(v, numbers.Number):
                         d[index] = v
                     else:
                         raise TypeError("Values must numeric: %s is invalid" % v)
-                self._set_values( d )
+                self._set_values(d)
         else:
             raise ValueError("Size mismatch between GenKW and values")
 
     def __len__(self):
         """ @rtype: int """
-        return self._size( )
-
+        return self._size()
 
     def __contains__(self, item):
         return self._has_key(item)
-
 
     def free(self):
         self._free()
 
     def __repr__(self):
-        return 'GenKw(len = %d) at 0x%x' % (len(self), self._address())
-
-
+        return "GenKw(len = %d) at 0x%x" % (len(self), self._address())

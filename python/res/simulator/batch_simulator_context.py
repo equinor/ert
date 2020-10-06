@@ -7,17 +7,15 @@ from .simulation_context import SimulationContext
 
 Status = namedtuple("Status", "waiting pending running complete failed")
 
+
 class BatchContext(SimulationContext):
-
-
     def __init__(self, result_keys, ert, fs, mask, itr, case_data):
         """
         Handle which can be used to query status and results for batch simulation.
         """
         super(BatchContext, self).__init__(ert, fs, mask, itr, case_data)
         self.result_keys = result_keys
-        self.res_config = ert.resConfig( )
-
+        self.res_config = ert.resConfig()
 
     def join(self):
         """
@@ -26,21 +24,21 @@ class BatchContext(SimulationContext):
         while self.running():
             time.sleep(1)
 
-
     def running(self):
         return self.isRunning()
-
 
     @property
     def status(self):
         """
         Will return the state of the simulations.
         """
-        return Status(running = self.getNumRunning(),
-                      waiting = self.getNumWaiting(),
-                      pending = self.getNumPending(),
-                      complete = self.getNumSuccess(),
-                      failed = self.getNumFailed())
+        return Status(
+            running=self.getNumRunning(),
+            waiting=self.getNumWaiting(),
+            pending=self.getNumPending(),
+            complete=self.getNumSuccess(),
+            failed=self.getNumFailed(),
+        )
 
     def results(self):
         """Will return the results of the simulations.
@@ -72,14 +70,20 @@ class BatchContext(SimulationContext):
 
         """
         if self.running():
-            raise RuntimeError("Simulations are still running - need to wait before gettting results")
+            raise RuntimeError(
+                "Simulations are still running - need to wait before gettting results"
+            )
 
         res = []
-        nodes = [ EnkfNode(self.res_config.ensemble_config[key]) for key in self.result_keys ]
+        nodes = [
+            EnkfNode(self.res_config.ensemble_config[key]) for key in self.result_keys
+        ]
         for sim_id in range(len(self)):
-            node_id = NodeId( 0, sim_id)
+            node_id = NodeId(0, sim_id)
             if not self.didRealizationSucceed(sim_id):
-                logging.error('Simulation %d (node %s) failed.' % (sim_id, str(node_id)))
+                logging.error(
+                    "Simulation %d (node %s) failed." % (sim_id, str(node_id))
+                )
                 res.append(None)
                 continue
             d = {}

@@ -26,14 +26,22 @@ class ConfigParser(BaseCClass):
     TYPE_NAME = "config_parser"
 
     _alloc = ResPrototype("void* config_alloc()", bind=False)
-    _add   = ResPrototype("schema_item_ref config_add_schema_item(config_parser, char*, bool)")
-    _free  = ResPrototype("void config_free(config_parser)")
-    _parse = ResPrototype("config_content_obj config_parse(config_parser, char*, char*, char*, char*, hash, config_unrecognized_enum, bool)")
-    _size  = ResPrototype("int config_get_schema_size(config_parser)")
-    _get_schema_item = ResPrototype("schema_item_ref config_get_schema_item(config_parser, char*)")
+    _add = ResPrototype(
+        "schema_item_ref config_add_schema_item(config_parser, char*, bool)"
+    )
+    _free = ResPrototype("void config_free(config_parser)")
+    _parse = ResPrototype(
+        "config_content_obj config_parse(config_parser, char*, char*, char*, char*, hash, config_unrecognized_enum, bool)"
+    )
+    _size = ResPrototype("int config_get_schema_size(config_parser)")
+    _get_schema_item = ResPrototype(
+        "schema_item_ref config_get_schema_item(config_parser, char*)"
+    )
     _has_schema_item = ResPrototype("bool config_has_schema_item(config_parser, char*)")
-    _add_key_value   = ResPrototype("bool config_parser_add_key_values(config_parser, config_content, char*, stringlist, config_path_elm, char*, config_unrecognized_enum)")
-    _validate        = ResPrototype("void config_validate(config_parser, config_content)")
+    _add_key_value = ResPrototype(
+        "bool config_parser_add_key_values(config_parser, config_content, char*, stringlist, config_path_elm, char*, config_unrecognized_enum)"
+    )
+    _validate = ResPrototype("void config_validate(config_parser, config_content)")
 
     def __init__(self):
         c_ptr = self._alloc()
@@ -46,7 +54,7 @@ class ConfigParser(BaseCClass):
         return self._size()
 
     def __repr__(self):
-        return self._create_repr('size=%d' % len(self))
+        return self._create_repr("size=%d" % len(self))
 
     def add(self, keyword, required=False, value_type=None):
         item = self._add(keyword, required).setParent(self)
@@ -62,27 +70,31 @@ class ConfigParser(BaseCClass):
         else:
             raise KeyError("Config parser does not have item:%s" % keyword)
 
-    def parse(self,
-              config_file,
-              comment_string="--",
-              include_kw="INCLUDE",
-              define_kw="DEFINE",
-              pre_defined_kw_map=None,
-              unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_WARN,
-              validate=True):
+    def parse(
+        self,
+        config_file,
+        comment_string="--",
+        include_kw="INCLUDE",
+        define_kw="DEFINE",
+        pre_defined_kw_map=None,
+        unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_WARN,
+        validate=True,
+    ):
         """ @rtype: ConfigContent """
 
         assert isinstance(unrecognized, UnrecognizedEnum)
 
         if not os.path.exists(config_file):
             raise IOError("File: %s does not exists" % config_file)
-        config_content = self._parse(config_file,
-                                     comment_string,
-                                     include_kw,
-                                     define_kw,
-                                     pre_defined_kw_map,
-                                     unrecognized,
-                                     validate)
+        config_content = self._parse(
+            config_file,
+            comment_string,
+            include_kw,
+            define_kw,
+            pre_defined_kw_map,
+            unrecognized,
+            validate,
+        )
         config_content.setParser(self)
 
         if validate and not config_content.isValid():
@@ -99,15 +111,16 @@ class ConfigParser(BaseCClass):
     def validate(self, config_content):
         self._validate(config_content)
 
-    def add_key_value(self,
-                      config_content,
-                      key,
-                      value,
-                      path_elm=None,
-                      config_filename=None,
-                      unrecognized_action=UnrecognizedEnum.CONFIG_UNRECOGNIZED_WARN):
+    def add_key_value(
+        self,
+        config_content,
+        key,
+        value,
+        path_elm=None,
+        config_filename=None,
+        unrecognized_action=UnrecognizedEnum.CONFIG_UNRECOGNIZED_WARN,
+    ):
 
-        return self._add_key_value(config_content,
-                            key, value,
-                            path_elm, config_filename,
-                            unrecognized_action)
+        return self._add_key_value(
+            config_content, key, value, path_elm, config_filename, unrecognized_action
+        )

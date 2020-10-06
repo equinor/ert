@@ -95,4 +95,7 @@ from .enkf_main import EnKFMain
 from .forward_load_context import ForwardLoadContext
 
 from res.job_queue import ErtScript as ErtScript
-from res.job_queue import ErtPlugin as ErtPlugin, CancelPluginException as CancelPluginException
+from res.job_queue import (
+    ErtPlugin as ErtPlugin,
+    CancelPluginException as CancelPluginException,
+)

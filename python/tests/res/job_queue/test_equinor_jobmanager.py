@@ -45,6 +45,7 @@ JSON_STRING = """
 def gen_area_name(base, f):
     return base + "_" + f.func_name.split("_")[-1]
 
+
 def create_jobs_py(jobList):
     jobs_file = os.path.join(os.getcwd(), "jobs.py")
     compiled_jobs_file = jobs_file + "c"
@@ -60,9 +61,9 @@ def create_jobs_py(jobList):
 
     return jobs_file
 
+
 def create_jobs_json(jobList, umask="0000"):
-    data = {"umask"     : umask,
-            "jobList"   : jobList}
+    data = {"umask": umask, "jobList": jobList}
 
     jobs_file = os.path.join(os.getcwd(), "jobs.json")
     with open(jobs_file, "w") as f:
@@ -71,10 +72,8 @@ def create_jobs_json(jobList, umask="0000"):
 
 @pytest.mark.equinor_test
 class JobManagerEquinorTest(ResTest):
-
     def assert_ip_address(self, ip):
         try:
             socket.inet_aton(ip)
         except Exception as err:
-            self.assertTrue(False, msg='On input %s: %s.' % (ip, err))  # noqa
-
+            self.assertTrue(False, msg="On input %s: %s." % (ip, err))  # noqa

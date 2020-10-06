@@ -24,22 +24,25 @@ from res.enkf.config import ExtParamConfig
 
 class ExtParam(BaseCClass):
     TYPE_NAME = "ext_param"
-    _alloc          = ResPrototype("void*  ext_param_alloc( ext_param_config )", bind = False)
-    _free           = ResPrototype("void   ext_param_free( ext_param )")
-    _iset           = ResPrototype("void   ext_param_iset( ext_param, int, double)")
-    _iiset          = ResPrototype("void   ext_param_iiset( ext_param, int, int, double)")
-    _key_set        = ResPrototype("void   ext_param_key_set( ext_param, char*, double)")
-    _key_suffix_set = ResPrototype("void   ext_param_key_suffix_set( ext_param, char*, char*, double)")
-    _iget           = ResPrototype("double ext_param_iget( ext_param, int)")
-    _iiget          = ResPrototype("double ext_param_iiget( ext_param, int, int)")
-    _key_get        = ResPrototype("double ext_param_key_get( ext_param, char*)")
-    _key_suffix_get = ResPrototype("double ext_param_key_suffix_get( ext_param, char*, char*)")
-    _export   = ResPrototype("void   ext_param_json_export( ext_param, char*)")
+    _alloc = ResPrototype("void*  ext_param_alloc( ext_param_config )", bind=False)
+    _free = ResPrototype("void   ext_param_free( ext_param )")
+    _iset = ResPrototype("void   ext_param_iset( ext_param, int, double)")
+    _iiset = ResPrototype("void   ext_param_iiset( ext_param, int, int, double)")
+    _key_set = ResPrototype("void   ext_param_key_set( ext_param, char*, double)")
+    _key_suffix_set = ResPrototype(
+        "void   ext_param_key_suffix_set( ext_param, char*, char*, double)"
+    )
+    _iget = ResPrototype("double ext_param_iget( ext_param, int)")
+    _iiget = ResPrototype("double ext_param_iiget( ext_param, int, int)")
+    _key_get = ResPrototype("double ext_param_key_get( ext_param, char*)")
+    _key_suffix_get = ResPrototype(
+        "double ext_param_key_suffix_get( ext_param, char*, char*)"
+    )
+    _export = ResPrototype("void   ext_param_json_export( ext_param, char*)")
     _get_config = ResPrototype("void* ext_param_get_config(ext_param)")
 
-
     def __init__(self, config):
-        c_ptr = self._alloc( config )
+        c_ptr = self._alloc(config)
         super(ExtParam, self).__init__(c_ptr)
 
     def __contains__(self, key):
@@ -52,10 +55,10 @@ class ExtParam(BaseCClass):
         if isinstance(index, tuple):
             # if the index is key suffix, assume they are both strings
             key, suffix = index
-            if not isinstance(key, string_types) or \
-                not isinstance(suffix, string_types):
-                raise TypeError("Expected a pair of strings, got {}"
-                                .format(index))
+            if not isinstance(key, string_types) or not isinstance(
+                suffix, string_types
+            ):
+                raise TypeError("Expected a pair of strings, got {}".format(index))
             self._check_key_suffix(key, suffix)
             return self._key_suffix_get(key, suffix)
 
@@ -68,15 +71,14 @@ class ExtParam(BaseCClass):
         self._check_index(index)
         return self._iget(index)
 
-
     def __setitem__(self, index, value):
         if isinstance(index, tuple):
             # if the index is key suffix, assume they are both strings
             key, suffix = index
-            if not isinstance(key, string_types) or \
-                not isinstance(suffix, string_types):
-                raise TypeError("Expected a pair of strings, got {}"
-                                .format(index))
+            if not isinstance(key, string_types) or not isinstance(
+                suffix, string_types
+            ):
+                raise TypeError("Expected a pair of strings, got {}".format(index))
             self._check_key_suffix(key, suffix)
             self._key_suffix_set(key, suffix, value)
             return
@@ -90,14 +92,12 @@ class ExtParam(BaseCClass):
             self._check_index(index)
             self._iset(index, value)
 
-
     def _roll_key_index(self, index):
         """ Support indexing from the end of the list of keys """
         return index if index >= 0 else index + len(self)
 
-
     def _check_index(self, kidx, sidx=None):
-        """ Raise if any of the following is true:
+        """Raise if any of the following is true:
         - kidx is not a valid index for keys
         - the key referred to by kidx has no suffixes, but sidx is given
         - the key referred to by kidx has suffixes, but sidx is None
@@ -106,29 +106,30 @@ class ExtParam(BaseCClass):
         """
         if kidx < 0 or kidx >= len(self):
             raise IndexError(
-                "Invalid key index {}. Valid range is [0, {})"
-                .format(kidx, len(self)))
+                "Invalid key index {}. Valid range is [0, {})".format(kidx, len(self))
+            )
         key, suffixes = self.config[kidx]
         if not suffixes:
             if sidx is None:
                 return  # we are good
             raise IndexError(
-                "Key {} has no suffixes, but suffix {} requested"
-                .format(key, sidx))
+                "Key {} has no suffixes, but suffix {} requested".format(key, sidx)
+            )
         assert len(suffixes) > 0
         if sidx is None:
             raise IndexError(
-                "Key {} has suffixes, a suffix index must be specified"
-               .format(key))
+                "Key {} has suffixes, a suffix index must be specified".format(key)
+            )
         if sidx < 0 or sidx >= len(suffixes):
-            raise IndexError((
-                "Suffix index {} is out of range for key {}. Valid range is "
-                "[0, {})")
-               .format(sidx, key, len(suffixes)))
-
+            raise IndexError(
+                (
+                    "Suffix index {} is out of range for key {}. Valid range is "
+                    "[0, {})"
+                ).format(sidx, key, len(suffixes))
+            )
 
     def _check_key_suffix(self, key, suffix=None):
-        """ Raise if any of the following is true:
+        """Raise if any of the following is true:
         - key is not present in config
         - key has no suffixes but a suffix is given
         - key has suffixes but suffix is None
@@ -141,24 +142,23 @@ class ExtParam(BaseCClass):
             if suffix is None:
                 return
             raise KeyError(
-                "Key {} has no suffixes, but suffix {} requested"
-                .format(key, suffix))
+                "Key {} has no suffixes, but suffix {} requested".format(key, suffix)
+            )
         assert len(suffixes) > 0
         if suffix is None:
             raise KeyError(
-                "Key {} has suffixes, a suffix must be specified"
-               .format(key))
+                "Key {} has suffixes, a suffix must be specified".format(key)
+            )
         if suffix not in suffixes:
             raise KeyError(
-                "Key {} has suffixes {}. Can't find the requested suffix {}"
-               .format(key, suffixes, suffix))
-
-
+                "Key {} has suffixes {}. Can't find the requested suffix {}".format(
+                    key, suffixes, suffix
+                )
+            )
 
     @property
     def config(self):
         return ExtParamConfig.createCReference(self._get_config(), self)
-
 
     # This could in the future be specialized to take a numpy vector,
     # which could be vector-assigned in C.
@@ -166,13 +166,11 @@ class ExtParam(BaseCClass):
         if len(values) != len(self):
             raise ValueError("Size mismatch")
 
-        for index,value in enumerate(values):
+        for index, value in enumerate(values):
             self[index] = value
 
-
     def free(self):
-        self._free( )
-
+        self._free()
 
     def export(self, fname):
-        self._export( fname )
+        self._export(fname)

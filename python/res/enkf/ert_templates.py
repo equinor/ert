@@ -22,44 +22,62 @@ import os
 
 class ErtTemplates(BaseCClass):
     TYPE_NAME = "ert_templates"
-    _alloc        = ResPrototype("void* ert_templates_alloc( subst_list, config_content )", bind=False)
-    _alloc_default = ResPrototype("void* ert_templates_alloc_default( subst_list )", bind=False)
-    _free         = ResPrototype("void ert_templates_free( ert_templates )")
-    _alloc_list   = ResPrototype("stringlist_ref ert_templates_alloc_list(ert_templates)")
-    _get_template = ResPrototype("ert_template_ref ert_templates_get_template(ert_templates, char*)")
-    _clear        = ResPrototype("void ert_templates_clear(ert_templates)")
-    _add_template = ResPrototype("ert_template_ref ert_templates_add_template(ert_templates, char*, char*, char*, char*)")
-    _add_template_unbound = ResPrototype("ert_template_ref ert_templates_add_template(ert_templates, char*, char*, char*, char*)", bind=False)
+    _alloc = ResPrototype(
+        "void* ert_templates_alloc( subst_list, config_content )", bind=False
+    )
+    _alloc_default = ResPrototype(
+        "void* ert_templates_alloc_default( subst_list )", bind=False
+    )
+    _free = ResPrototype("void ert_templates_free( ert_templates )")
+    _alloc_list = ResPrototype("stringlist_ref ert_templates_alloc_list(ert_templates)")
+    _get_template = ResPrototype(
+        "ert_template_ref ert_templates_get_template(ert_templates, char*)"
+    )
+    _clear = ResPrototype("void ert_templates_clear(ert_templates)")
+    _add_template = ResPrototype(
+        "ert_template_ref ert_templates_add_template(ert_templates, char*, char*, char*, char*)"
+    )
+    _add_template_unbound = ResPrototype(
+        "ert_template_ref ert_templates_add_template(ert_templates, char*, char*, char*, char*)",
+        bind=False,
+    )
 
     def __init__(self, parent_subst, config_content=None, config_dict=None):
         if not ((config_content is not None) ^ (config_dict is not None)):
-            raise ValueError('ErtTemplates must be instantiated with exactly one of config_content or config_dict')
+            raise ValueError(
+                "ErtTemplates must be instantiated with exactly one of config_content or config_dict"
+            )
 
         if config_dict is not None:
             c_ptr = self._alloc_default(parent_subst)
             if c_ptr is None:
-                raise ValueError('Failed to construct ErtTemplates instance')
+                raise ValueError("Failed to construct ErtTemplates instance")
             super(ErtTemplates, self).__init__(c_ptr)
             run_template = config_dict.get(ConfigKeys.RUN_TEMPLATE)
             if isinstance(run_template, list):
                 for template_file_name, target_file, arguments in run_template:
                     path = config_dict.get(ConfigKeys.CONFIG_DIRECTORY)
                     if not isinstance(path, str):
-                        raise ValueError("ErtTemplates requires {} to be set".format(ConfigKeys.CONFIG_DIRECTORY))
-                    template_path = os.path.normpath(os.path.join(path, template_file_name))
-                    arguments_string = ", ".join(["{}={}".format(key, val) for key, val in arguments])
+                        raise ValueError(
+                            "ErtTemplates requires {} to be set".format(
+                                ConfigKeys.CONFIG_DIRECTORY
+                            )
+                        )
+                    template_path = os.path.normpath(
+                        os.path.join(path, template_file_name)
+                    )
+                    arguments_string = ", ".join(
+                        ["{}={}".format(key, val) for key, val in arguments]
+                    )
                     self._add_template(
-                        None,
-                        template_path,
-                        target_file,
-                        arguments_string)
+                        None, template_path, target_file, arguments_string
+                    )
 
         else:
             c_ptr = self._alloc(parent_subst, config_content)
             if c_ptr is None:
-                raise ValueError('Failed to construct ErtTemplates instance')
+                raise ValueError("Failed to construct ErtTemplates instance")
             super(ErtTemplates, self).__init__(c_ptr)
-
 
     def getTemplateNames(self):
         """ @rtype: StringList """
@@ -74,12 +92,16 @@ class ErtTemplates(BaseCClass):
 
     def add_template(self, key, template_file, target_file, arg_string):
         """ @rtype: ErtTemplate """
-        return self._add_template(key, template_file, target_file, arg_string).setParent(self)
+        return self._add_template(
+            key, template_file, target_file, arg_string
+        ).setParent(self)
 
     def __eq__(self, other):
         if len(self.getTemplateNames()) != len(other.getTemplateNames()):
             return False
-        if not all(name in self.getTemplateNames() for name in other.getTemplateNames()):
+        if not all(
+            name in self.getTemplateNames() for name in other.getTemplateNames()
+        ):
             return False
         for name in self.getTemplateNames():
             if self.get_template(name) != other.get_template(name):
@@ -90,7 +112,11 @@ class ErtTemplates(BaseCClass):
         return not self == other
 
     def __repr__(self):
-        return "ErtTemplates({})".format(", ".join(x + "=" + str(self.get_template(x)) for x in self.getTemplateNames()))
+        return "ErtTemplates({})".format(
+            ", ".join(
+                x + "=" + str(self.get_template(x)) for x in self.getTemplateNames()
+            )
+        )
 
     def free(self):
         self._free()

@@ -24,7 +24,3 @@ class DataFetcher(object):
 
     def supportsKey(self, key):
         return key in self.getSupportedKeys()
-
-
-
-

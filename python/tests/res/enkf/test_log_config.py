@@ -26,7 +26,6 @@ from tests import ResTest
 
 
 class LogConfigTest(ResTest):
-
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")
         self.config_file = "simple_config/minimum_config"
@@ -34,7 +33,7 @@ class LogConfigTest(ResTest):
         self.log_files = [
             (None, "simple_config/log.txt"),
             ("file_loglog", "simple_config/file_loglog"),
-            ("this/is/../my/log/file.loglog", "simple_config/this/my/log/file.loglog")
+            ("this/is/../my/log/file.loglog", "simple_config/this/my/log/file.loglog"),
         ]
 
         self.log_levels = [(None, MessageLevelEnum.LOG_WARNING)]
@@ -42,25 +41,20 @@ class LogConfigTest(ResTest):
             self.log_levels.append((message_level.name.split("_")[1], message_level))
 
     def assert_log_config_load(
-            self,
-            log_file, exp_log_file,
-            log_level, exp_log_level,
-            write_abs_path=False
-            ):
+        self, log_file, exp_log_file, log_level, exp_log_level, write_abs_path=False
+    ):
 
         with TestAreaContext("log_config_test") as work_area:
             work_area.copy_directory(self.case_directory)
 
             config_dict = {}
             # Append config file
-            with open(self.config_file, 'a') as cf:
+            with open(self.config_file, "a") as cf:
                 if log_file:
                     config_dict[ConfigKeys.LOG_FILE] = os.path.realpath(
                         os.path.join(
-                            os.path.abspath(
-                                os.path.split(
-                                    self.config_file)[0]
-                            ), log_file
+                            os.path.abspath(os.path.split(self.config_file)[0]),
+                            log_file,
                         )
                     )
 
@@ -72,10 +66,8 @@ class LogConfigTest(ResTest):
                 else:
                     config_dict[ConfigKeys.LOG_FILE] = os.path.realpath(
                         os.path.join(
-                            os.path.abspath(
-                                os.path.split(
-                                    self.config_file)[0]
-                            ), "log.txt"
+                            os.path.abspath(os.path.split(self.config_file)[0]),
+                            "log.txt",
                         )
                     )
 
@@ -85,11 +77,17 @@ class LogConfigTest(ResTest):
                         level = int(float(level))
                     cf.write("\nLOG_LEVEL %s\n" % level)
                     if type(level) is str and level.isdigit():
-                        config_dict[ConfigKeys.LOG_LEVEL] = MessageLevelEnum.to_enum(eval(level))
+                        config_dict[ConfigKeys.LOG_LEVEL] = MessageLevelEnum.to_enum(
+                            eval(level)
+                        )
                     elif type(level) is str:
-                        config_dict[ConfigKeys.LOG_LEVEL] = MessageLevelEnum.from_string("LOG_" + level)
+                        config_dict[
+                            ConfigKeys.LOG_LEVEL
+                        ] = MessageLevelEnum.from_string("LOG_" + level)
                     else:
-                        config_dict[ConfigKeys.LOG_LEVEL] = MessageLevelEnum.to_enum(level)
+                        config_dict[ConfigKeys.LOG_LEVEL] = MessageLevelEnum.to_enum(
+                            level
+                        )
                 else:
                     config_dict[ConfigKeys.LOG_LEVEL] = MessageLevelEnum.LOG_WARNING
 
@@ -102,32 +100,30 @@ class LogConfigTest(ResTest):
             self.assertTrue(os.path.isabs(log_config.log_file))
 
             self.assertEqual(
-                    os.path.normpath(log_config.log_file),
-                    os.path.normpath(os.path.abspath(exp_log_file))
-                    )
+                os.path.normpath(log_config.log_file),
+                os.path.normpath(os.path.abspath(exp_log_file)),
+            )
 
             if isinstance(log_config.log_level, int):
                 level = MessageLevelEnum.to_enum(log_config.log_level)
             else:
                 level = log_config.log_level
 
-            self.assertEqual(
-                    level,
-                    exp_log_level
-            )
+            self.assertEqual(level, exp_log_level)
 
     def test_log_config(self):
         test_cases = itertools.product(self.log_files, self.log_levels)
 
         for log_file_data, log_level_data in test_cases:
             self.assert_log_config_load(
-                log_file_data[0], log_file_data[1],
-                log_level_data[0], log_level_data[1]
+                log_file_data[0], log_file_data[1], log_level_data[0], log_level_data[1]
             )
 
             if log_file_data[0]:
                 self.assert_log_config_load(
-                    log_file_data[0], log_file_data[1],
-                    log_level_data[0], log_level_data[1],
-                    write_abs_path=True
+                    log_file_data[0],
+                    log_file_data[1],
+                    log_level_data[0],
+                    log_level_data[1],
+                    write_abs_path=True,
                 )

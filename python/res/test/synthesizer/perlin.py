@@ -8,7 +8,9 @@ class PerlinNoise(object):
         self.persistence = persistence
         self.number_of_octaves = number_of_octaves
 
-        self.octave_primes = prime_generator if prime_generator is not None else PrimeGenerator()
+        self.octave_primes = (
+            prime_generator if prime_generator is not None else PrimeGenerator()
+        )
 
     def cosineInterpolation(self, a, b, x):
         ft = x * 3.1415927
@@ -24,7 +26,11 @@ class PerlinNoise(object):
         return 1.0 - x / 1073741824.0
 
     def smoothedNoise(self, x, perturbation):
-        return self.noise(x, perturbation) / 2.0 + self.noise(x - 1, perturbation) / 4.0 + self.noise(x + 1, perturbation) / 4.0
+        return (
+            self.noise(x, perturbation) / 2.0
+            + self.noise(x - 1, perturbation) / 4.0
+            + self.noise(x + 1, perturbation) / 4.0
+        )
 
     def interpolatedNoise(self, x, octave_number):
         int_x = int(x)
@@ -44,7 +50,9 @@ class PerlinNoise(object):
             frequency = math.pow(2, octave)
             amplitude = math.pow(self.persistence, octave)
 
-            total += self.interpolatedNoise(x * frequency, octave_number=octave) * amplitude
+            total += (
+                self.interpolatedNoise(x * frequency, octave_number=octave) * amplitude
+            )
 
         return total
 

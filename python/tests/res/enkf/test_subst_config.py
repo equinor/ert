@@ -24,7 +24,6 @@ from tests import ResTest
 
 
 class SubstConfigTest(ResTest):
-
     def setUp(self):
         self.path = self.createTestPath("local/snake_oil_structure/")
         self.config_data = {
@@ -43,7 +42,9 @@ class SubstConfigTest(ResTest):
 
     def test_two_instances_of_different_config_are_not_equal(self):
         subst_config1 = SubstConfig(config_dict=self.config_data)
-        subst_config2 = SubstConfig(config_dict=self.set_key(ConfigKeys.RUNPATH_FILE, "aaaaa"))
+        subst_config2 = SubstConfig(
+            config_dict=self.set_key(ConfigKeys.RUNPATH_FILE, "aaaaa")
+        )
         self.assertNotEqual(subst_config1, subst_config2)
 
     def test_old_and_new_constructor_creates_equal_config(self):
@@ -54,12 +55,15 @@ class SubstConfigTest(ResTest):
             self.make_config_file(filename)
             res_config = ResConfig(user_config_file=filename)
             subst_config1 = res_config.subst_config
-            subst_config2 = SubstConfig(config_dict=self.set_key(ConfigKeys.CONFIG_DIRECTORY, cwd))
+            subst_config2 = SubstConfig(
+                config_dict=self.set_key(ConfigKeys.CONFIG_DIRECTORY, cwd)
+            )
 
             self.assertEqual(
                 subst_config1,
                 subst_config2,
-                str(subst_config1) + "\n\nis not equal to:\n\n" + str(subst_config2))
+                str(subst_config1) + "\n\nis not equal to:\n\n" + str(subst_config2),
+            )
 
     def test_complete_config_reads_correct_values(self):
         subst_config = SubstConfig(config_dict=self.config_data)
@@ -74,7 +78,9 @@ class SubstConfigTest(ResTest):
 
     def test_missing_runpath_gives_default_value(self):
         subst_config = SubstConfig(config_dict=self.remove_key(ConfigKeys.RUNPATH_FILE))
-        self.assertKeyValue(subst_config, "<RUNPATH_FILE>", self.path + "/.ert_runpath_list")
+        self.assertKeyValue(
+            subst_config, "<RUNPATH_FILE>", self.path + "/.ert_runpath_list"
+        )
 
     def test_empty_config_raises_error(self):
         with self.assertRaises(ValueError):
@@ -92,14 +98,17 @@ class SubstConfigTest(ResTest):
         return {i: self.config_data[i] for i in self.config_data if i != key}
 
     def set_key(self, key, val):
-        copy =  self.config_data.copy()
+        copy = self.config_data.copy()
         copy[key] = val
         return copy
 
     def assertKeyValue(self, subst_config, key, val):
         actual_val = subst_config.__getitem__(key)
-        assert actual_val == val, \
-            "subst_config does not contain key/value pair ({}, {}). Actual value was: {}".format(key, val, actual_val)
+        assert (
+            actual_val == val
+        ), "subst_config does not contain key/value pair ({}, {}). Actual value was: {}".format(
+            key, val, actual_val
+        )
 
     def make_config_file(self, filename):
         with open(filename, "w+") as config:
@@ -108,7 +117,11 @@ class SubstConfigTest(ResTest):
             config.write("NUM_REALIZATIONS  1\n")
 
             # write the rest of the relevant config items to the file
-            config.write("{} {}\n".format(ConfigKeys.RUNPATH_FILE, self.config_data[ConfigKeys.RUNPATH_FILE]))
+            config.write(
+                "{} {}\n".format(
+                    ConfigKeys.RUNPATH_FILE, self.config_data[ConfigKeys.RUNPATH_FILE]
+                )
+            )
             defines = self.config_data[ConfigKeys.DEFINE_KEY]
             for key in defines:
                 val = defines[key]
@@ -117,8 +130,12 @@ class SubstConfigTest(ResTest):
             for key in data_kws:
                 val = data_kws[key]
                 config.write("{} {} {}\n".format(ConfigKeys.DATA_KW_KEY, key, val))
-            config.write("{} {}\n".format(ConfigKeys.DATA_FILE, self.config_data[ConfigKeys.DATA_FILE]))
+            config.write(
+                "{} {}\n".format(
+                    ConfigKeys.DATA_FILE, self.config_data[ConfigKeys.DATA_FILE]
+                )
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

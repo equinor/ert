@@ -23,22 +23,39 @@ from res.enkf.observations import BlockObservation, SummaryObservation, GenObser
 class ObsVector(BaseCClass):
     TYPE_NAME = "obs_vector"
 
-    _alloc                = ResPrototype("void* obs_vector_alloc(enkf_obs_impl_type, char*, enkf_config_node, int)", bind = False)
-    _free                 = ResPrototype("void  obs_vector_free( obs_vector )")
-    _get_state_kw         = ResPrototype("char* obs_vector_get_state_kw( obs_vector )")
-    _get_key              = ResPrototype("char* obs_vector_get_key( obs_vector )")
-    _iget_node            = ResPrototype("void* obs_vector_iget_node( obs_vector, int)")
-    _get_num_active       = ResPrototype("int   obs_vector_get_num_active( obs_vector )")
-    _iget_active          = ResPrototype("bool  obs_vector_iget_active( obs_vector, int)")
-    _get_impl_type        = ResPrototype("enkf_obs_impl_type obs_vector_get_impl_type( obs_vector)")
-    _install_node         = ResPrototype("void  obs_vector_install_node(obs_vector, int, void*)")
-    _get_next_active_step = ResPrototype("int   obs_vector_get_next_active_step(obs_vector, int)")
-    _has_data             = ResPrototype("bool  obs_vector_has_data(obs_vector , bool_vector , enkf_fs)")
-    _get_config_node      = ResPrototype("enkf_config_node_ref obs_vector_get_config_node(obs_vector)")
-    _get_total_chi2       = ResPrototype("double obs_vector_total_chi2(obs_vector, enkf_fs, int)")
-    _get_obs_key          = ResPrototype("char*  obs_vector_get_obs_key(obs_vector)")
-    _get_step_list        = ResPrototype("int_vector_ref obs_vector_get_step_list(obs_vector)")
-    _create_local_node    = ResPrototype("local_obsdata_node_obj obs_vector_alloc_local_node(obs_vector)")
+    _alloc = ResPrototype(
+        "void* obs_vector_alloc(enkf_obs_impl_type, char*, enkf_config_node, int)",
+        bind=False,
+    )
+    _free = ResPrototype("void  obs_vector_free( obs_vector )")
+    _get_state_kw = ResPrototype("char* obs_vector_get_state_kw( obs_vector )")
+    _get_key = ResPrototype("char* obs_vector_get_key( obs_vector )")
+    _iget_node = ResPrototype("void* obs_vector_iget_node( obs_vector, int)")
+    _get_num_active = ResPrototype("int   obs_vector_get_num_active( obs_vector )")
+    _iget_active = ResPrototype("bool  obs_vector_iget_active( obs_vector, int)")
+    _get_impl_type = ResPrototype(
+        "enkf_obs_impl_type obs_vector_get_impl_type( obs_vector)"
+    )
+    _install_node = ResPrototype(
+        "void  obs_vector_install_node(obs_vector, int, void*)"
+    )
+    _get_next_active_step = ResPrototype(
+        "int   obs_vector_get_next_active_step(obs_vector, int)"
+    )
+    _has_data = ResPrototype(
+        "bool  obs_vector_has_data(obs_vector , bool_vector , enkf_fs)"
+    )
+    _get_config_node = ResPrototype(
+        "enkf_config_node_ref obs_vector_get_config_node(obs_vector)"
+    )
+    _get_total_chi2 = ResPrototype(
+        "double obs_vector_total_chi2(obs_vector, enkf_fs, int)"
+    )
+    _get_obs_key = ResPrototype("char*  obs_vector_get_obs_key(obs_vector)")
+    _get_step_list = ResPrototype("int_vector_ref obs_vector_get_step_list(obs_vector)")
+    _create_local_node = ResPrototype(
+        "local_obsdata_node_obj obs_vector_alloc_local_node(obs_vector)"
+    )
 
     def __init__(self, observation_type, observation_key, config_node, num_reports):
         """
@@ -54,7 +71,6 @@ class ObsVector(BaseCClass):
         c_ptr = self._alloc(observation_type, observation_key, config_node, num_reports)
         super(ObsVector, self).__init__(c_ptr)
 
-
     def getDataKey(self):
         """ @rtype: str """
         return self._get_state_kw()
@@ -68,7 +84,6 @@ class ObsVector(BaseCClass):
 
     def getObsKey(self):
         return self._get_obs_key()
-
 
     def getNode(self, index):
         """ @rtype: SummaryObservation or BlockObservation or GenObservation"""
@@ -85,15 +100,12 @@ class ObsVector(BaseCClass):
         else:
             raise AssertionError("Node type '%s' currently not supported!" % node_type)
 
-
     def __iter__(self):
         """ Iterate over active report steps; return node"""
         cur = -1
         run = True
         for step in self.getStepList():
-            yield self.getNode( step )
-
-
+            yield self.getNode(step)
 
     def getStepList(self):
         """
@@ -110,7 +122,9 @@ class ObsVector(BaseCClass):
         if len(step_list) == 1:
             return step_list[0]
         else:
-            raise ValueError("The activeStep() method can *ONLY* be called for obervations with one active step")
+            raise ValueError(
+                "The activeStep() method can *ONLY* be called for obervations with one active step"
+            )
 
     def firstActiveStep(self):
         """ @rtype: int """
@@ -118,11 +132,14 @@ class ObsVector(BaseCClass):
         if len(step_list) > 0:
             return step_list[0]
         else:
-            raise ValueError("the firstActiveStep() method cannot be called with no active steps.")
+            raise ValueError(
+                "the firstActiveStep() method cannot be called with no active steps."
+            )
 
     def getActiveCount(self):
         """ @rtype: int """
         return len(self)
+
     def __len__(self):
         return self._get_num_active()
 
@@ -147,13 +164,11 @@ class ObsVector(BaseCClass):
         """ @rtype: EnkfConfigNode """
         return self._get_config_node().setParent(self)
 
-
     def createLocalObs(self):
         """
         Will create a LocalObsDataNode instance with all timesteps set.
         """
         return self._create_local_node()
-
 
     def hasData(self, active_mask, fs):
         """ @rtype: bool """
@@ -163,11 +178,11 @@ class ObsVector(BaseCClass):
         self._free()
 
     def __repr__(self):
-        dk = 'data_key = %s'   % self.getDataKey()
-        kk = 'key = %s'        % self.getKey()
-        ok = 'obs_key = %s'    % self.getObsKey()
-        na = 'num_active = %d' % len(self)
-        return 'ObsVector(%s, %s, %s, %s) %s' % (na, kk, ok, dk, self._ad_str())
+        dk = "data_key = %s" % self.getDataKey()
+        kk = "key = %s" % self.getKey()
+        ok = "obs_key = %s" % self.getObsKey()
+        na = "num_active = %d" % len(self)
+        return "ObsVector(%s, %s, %s, %s) %s" % (na, kk, ok, dk, self._ad_str())
 
     def getTotalChi2(self, fs, realization_number):
         """ @rtype: float """

@@ -38,16 +38,20 @@ class EnsembleGenDataFetcher(DataFetcher):
 
         ensemble_config_node = self.getEnsembleConfigNode(key)
         enkf_fs = self.ert().getEnkfFsManager().getFileSystem(case)
-        ensemble_plot_gen_data = EnsemblePlotGenData(ensemble_config_node, enkf_fs, report_step)
+        ensemble_plot_gen_data = EnsemblePlotGenData(
+            ensemble_config_node, enkf_fs, report_step
+        )
 
-        data = {"x": [],
-                "y": [],
-                "min_y_values": [value for value in ensemble_plot_gen_data.getMinValues()],
-                "max_y_values": [value for value in ensemble_plot_gen_data.getMaxValues()],
-                "min_y": None,
-                "max_y": None,
-                "min_x": 0,
-                "max_x": None}
+        data = {
+            "x": [],
+            "y": [],
+            "min_y_values": [value for value in ensemble_plot_gen_data.getMinValues()],
+            "max_y_values": [value for value in ensemble_plot_gen_data.getMaxValues()],
+            "min_y": None,
+            "max_y": None,
+            "min_x": 0,
+            "max_x": None,
+        }
 
         data["x"] = [index for index in range(len(data["min_y_values"]))]
         data["max_x"] = len(data["min_y_values"]) - 1
@@ -65,7 +69,4 @@ class EnsembleGenDataFetcher(DataFetcher):
                 if data["max_y"] is None or data["max_y"] < value:
                     data["max_y"] = value
 
-
-
         return data
-

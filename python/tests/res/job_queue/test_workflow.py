@@ -6,7 +6,6 @@ from .workflow_common import WorkflowCommon
 
 
 class WorkflowTest(ResTest):
-
     def test_workflow(self):
         with TestAreaContext("python/job_queue/workflow") as work_area:
             WorkflowCommon.createExternalDumpJob()
@@ -19,7 +18,6 @@ class WorkflowTest(ResTest):
 
             self.assertTrue("DUMP" in joblist)
 
-
             workflow = Workflow("dump_workflow", joblist)
 
             self.assertEqual(len(workflow), 2)
@@ -31,7 +29,6 @@ class WorkflowTest(ResTest):
 
             job, args = workflow[1]
             self.assertEqual(job, joblist["DUMP"])
-
 
     def test_workflow_run(self):
         with TestAreaContext("python/job_queue/workflow") as work_area:
@@ -55,7 +52,6 @@ class WorkflowTest(ResTest):
 
             with open("dump2", "r") as f:
                 self.assertEqual(f.read(), "dump_text_2")
-
 
     def test_failing_workflow_run(self):
         with TestAreaContext("python/job_queue/workflow") as work_area:

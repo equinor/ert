@@ -15,13 +15,15 @@
 #  for more details.
 from cwrap import BaseCEnum
 
+
 class RealizationStateEnum(BaseCEnum):
     TYPE_NAME = "realisation_state_enum"
-    STATE_UNDEFINED      = None
-    STATE_INITIALIZED    = None
-    STATE_HAS_DATA       = None
-    STATE_LOAD_FAILURE   = None
+    STATE_UNDEFINED = None
+    STATE_INITIALIZED = None
+    STATE_HAS_DATA = None
+    STATE_LOAD_FAILURE = None
     STATE_PARENT_FAILURE = None
+
 
 RealizationStateEnum.addEnum("STATE_UNDEFINED", 1)
 RealizationStateEnum.addEnum("STATE_INITIALIZED", 2)

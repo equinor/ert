@@ -10,15 +10,18 @@ class EnsembleDataFetcher(DataFetcher):
 
     def fetchSupportedKeys(self):
         """ @rtype: list of str """
-        return [key for key in self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.SUMMARY)]
-
+        return [
+            key
+            for key in self.ert()
+            .ensembleConfig()
+            .getKeylistFromImplType(ErtImplType.SUMMARY)
+        ]
 
     def getEnsembleConfigNode(self, key):
         """ @rtype: EnsembleConfig """
         ensemble_config = self.ert().ensembleConfig()
         assert key in ensemble_config
         return ensemble_config.getNode(key)
-
 
     def fetchData(self, key, case=None):
         ensemble_config_node = self.getEnsembleConfigNode(key)
@@ -33,7 +36,7 @@ class EnsembleDataFetcher(DataFetcher):
             "min_y": None,
             "max_y": None,
             "min_x": None,
-            "max_x": None
+            "max_x": None,
         }
 
         time_map = enkf_fs.getTimeMap()
@@ -45,7 +48,6 @@ class EnsembleDataFetcher(DataFetcher):
 
         data["min_x"] = data["x"][0]
         data["max_x"] = data["x"][len(data["x"]) - 1]
-
 
         for vector in ensemble_plot_data:
             y = []
@@ -63,11 +65,16 @@ class EnsembleDataFetcher(DataFetcher):
                     if data["max_y"] is None or data["max_y"] < y_value:
                         data["max_y"] = y_value
 
-
-                    if data["min_y_values"][index] is None or data["min_y_values"][index] > y_value:
+                    if (
+                        data["min_y_values"][index] is None
+                        or data["min_y_values"][index] > y_value
+                    ):
                         data["min_y_values"][index] = y_value
 
-                    if data["max_y_values"][index] is None or data["max_y_values"][index] < y_value:
+                    if (
+                        data["max_y_values"][index] is None
+                        or data["max_y_values"][index] < y_value
+                    ):
                         data["max_y_values"][index] = y_value
 
         return data

@@ -29,11 +29,9 @@ from res.enkf.local_obsdata_node import LocalObsdataNode
 
 
 class LocalConfigTest(ResTest):
-
     def setUp(self):
         self.config = self.createTestPath("local/mini_ert/mini_config")
-        self.local_conf_path = 'python/enkf/data/local_config'
-
+        self.local_conf_path = "python/enkf/data/local_config"
 
     def test_write_summary(self):
         with ErtTestContext(self.local_conf_path, self.config) as test_context:
@@ -45,7 +43,6 @@ class LocalConfigTest(ResTest):
             local_config.writeSummaryFile(fname)
             self.assertTrue(os.path.isfile(fname))
 
-
     def test_get_grid(self):
         with ErtTestContext(self.local_conf_path, self.config) as test_context:
             main = test_context.getErt()
@@ -53,7 +50,6 @@ class LocalConfigTest(ResTest):
             grid = local_config.getGrid()
             dimens = grid.getNX(), grid.getNY(), grid.getNZ()
             self.assertEqual((10, 10, 5), dimens)
-
 
     def test_local_obs_data(self):
         with ErtTestContext(self.local_conf_path, self.config) as test_context:
@@ -98,7 +94,6 @@ class LocalConfigTest(ResTest):
             with self.assertRaises(KeyError):
                 local_obs_data_1.addNode("GEN_PERLIN_1")
 
-
     def test_attach_obs_data(self):
         with ErtTestContext(self.local_conf_path, self.config) as test_context:
             main = test_context.getErt()
@@ -122,7 +117,6 @@ class LocalConfigTest(ResTest):
             local_obs_data_new = ministep.getLocalObsData()
             self.assertEqual(len(local_obs_data_new), 2)
 
-
     def test_all_active(self):
         with ErtTestContext(self.local_conf_path, self.config) as test_context:
             main = test_context.getErt()
@@ -138,9 +132,10 @@ class LocalConfigTest(ResTest):
             obsdata = ministep.getLocalObsData()
             self.assertEqual(len(obsdata), 3)
 
-
     def test_ministep(self):
-        with ErtTestContext("python/enkf/data/local_config", self.config) as test_context:
+        with ErtTestContext(
+            "python/enkf/data/local_config", self.config
+        ) as test_context:
             main = test_context.getErt()
 
             local_config = main.getLocalConfig()
@@ -193,13 +188,13 @@ class LocalConfigTest(ResTest):
 
         with ErtTestContext("obs_data_ministep_test", config) as context:
             ert = context.getErt()
-            es_update = ESUpdate( ert )
+            es_update = ESUpdate(ert)
             fsm = ert.getEnkfFsManager()
 
             sim_fs = fsm.getFileSystem("default_0")
             target_fs = fsm.getFileSystem("target")
-            run_context = ErtRunContext.ensemble_smoother_update( sim_fs, target_fs )
-            es_update.smootherUpdate( run_context )
+            run_context = ErtRunContext.ensemble_smoother_update(sim_fs, target_fs)
+            es_update.smootherUpdate(run_context)
 
             update_step = ert.getLocalConfig().getUpdatestep()
             ministep = update_step[len(update_step) - 1]

@@ -15,16 +15,18 @@
 #  for more details.
 from cwrap import BaseCEnum
 
+
 class EnkfFieldFileFormatEnum(BaseCEnum):
     TYPE_NAME = "enkf_field_file_format_enum"
-    UNDEFINED_FORMAT         = None
-    RMS_ROFF_FILE            = None
-    ECL_KW_FILE              = None
+    UNDEFINED_FORMAT = None
+    RMS_ROFF_FILE = None
+    ECL_KW_FILE = None
     ECL_KW_FILE_ACTIVE_CELLS = None
-    ECL_KW_FILE_ALL_CELLS    = None
-    ECL_GRDECL_FILE          = None
-    ECL_FILE                 = None
-    FILE_FORMAT_NULL         = None
+    ECL_KW_FILE_ALL_CELLS = None
+    ECL_GRDECL_FILE = None
+    ECL_FILE = None
+    FILE_FORMAT_NULL = None
+
 
 EnkfFieldFileFormatEnum.addEnum("UNDEFINED_FORMAT", 0)
 EnkfFieldFileFormatEnum.addEnum("RMS_ROFF_FILE", 1)

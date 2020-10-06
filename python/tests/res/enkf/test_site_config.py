@@ -22,8 +22,8 @@ from tests import ResTest
 from tests.utils import tmpdir
 from _pytest.monkeypatch import MonkeyPatch
 
-class SiteConfigTest(ResTest):
 
+class SiteConfigTest(ResTest):
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")
         self.snake_case_directory = self.createTestPath("local/snake_oil/")
@@ -53,43 +53,36 @@ class SiteConfigTest(ResTest):
             ERT_SITE_CONFIG = SiteConfig.getLocation()
             ERT_SHARE_PATH = os.path.dirname(ERT_SITE_CONFIG)
             snake_config_dict = {
-                ConfigKeys.INSTALL_JOB:
-                    [
-                        {
-                            ConfigKeys.NAME: "SNAKE_OIL_SIMULATOR",
-                            ConfigKeys.PATH: os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_SIMULATOR"
-                        },
-                        {
-                            ConfigKeys.NAME: "SNAKE_OIL_NPV",
-                            ConfigKeys.PATH: os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_NPV"
-                        },
-                        {
-                            ConfigKeys.NAME: "SNAKE_OIL_DIFF",
-                            ConfigKeys.PATH: os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_DIFF"
-                        }
-                    ],
-                ConfigKeys.INSTALL_JOB_DIRECTORY:
-                    [
-                        ERT_SHARE_PATH + '/forward-models/res',
-                        ERT_SHARE_PATH + '/forward-models/shell',
-                        ERT_SHARE_PATH + '/forward-models/templating',
-                        ERT_SHARE_PATH + '/forward-models/old_style'
-                    ],
-
-                ConfigKeys.SETENV:
-                    [
-                        {
-                            ConfigKeys.NAME: "SILLY_VAR",
-                            ConfigKeys.VALUE: "silly-value"
-                        },
-                        {
-                            ConfigKeys.NAME: "OPTIONAL_VAR",
-                            ConfigKeys.VALUE: "optional-value"
-                        }
-                    ],
+                ConfigKeys.INSTALL_JOB: [
+                    {
+                        ConfigKeys.NAME: "SNAKE_OIL_SIMULATOR",
+                        ConfigKeys.PATH: os.getcwd()
+                        + "/snake_oil/jobs/SNAKE_OIL_SIMULATOR",
+                    },
+                    {
+                        ConfigKeys.NAME: "SNAKE_OIL_NPV",
+                        ConfigKeys.PATH: os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_NPV",
+                    },
+                    {
+                        ConfigKeys.NAME: "SNAKE_OIL_DIFF",
+                        ConfigKeys.PATH: os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_DIFF",
+                    },
+                ],
+                ConfigKeys.INSTALL_JOB_DIRECTORY: [
+                    ERT_SHARE_PATH + "/forward-models/res",
+                    ERT_SHARE_PATH + "/forward-models/shell",
+                    ERT_SHARE_PATH + "/forward-models/templating",
+                    ERT_SHARE_PATH + "/forward-models/old_style",
+                ],
+                ConfigKeys.SETENV: [
+                    {ConfigKeys.NAME: "SILLY_VAR", ConfigKeys.VALUE: "silly-value"},
+                    {
+                        ConfigKeys.NAME: "OPTIONAL_VAR",
+                        ConfigKeys.VALUE: "optional-value",
+                    },
+                ],
                 ConfigKeys.LICENSE_PATH: "some/random/path",
-
-                ConfigKeys.UMASK: 18
+                ConfigKeys.UMASK: 18,
             }
 
             site_config_user_file = SiteConfig(user_config_file=config_file)
@@ -97,7 +90,9 @@ class SiteConfigTest(ResTest):
             self.assertEqual(site_config_dict, site_config_user_file)
 
             with self.assertRaises(ValueError):
-                site_config = SiteConfig(user_config_file=config_file, config_dict=snake_config_dict)
+                site_config = SiteConfig(
+                    user_config_file=config_file, config_dict=snake_config_dict
+                )
 
     @tmpdir()
     def test_site_config_hook_workflow(self):
@@ -130,4 +125,7 @@ MIN_ARG 1
 
         res_config = ResConfig(user_config_file=test_config_filename)
         self.assertTrue(len(res_config.hook_manager) == 1)
-        self.assertEqual(res_config.hook_manager[0].getWorkflow().src_file, os.path.join(os.getcwd(), "ECHO_WORKFLOW"))
+        self.assertEqual(
+            res_config.hook_manager[0].getWorkflow().src_file,
+            os.path.join(os.getcwd(), "ECHO_WORKFLOW"),
+        )

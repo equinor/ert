@@ -18,12 +18,10 @@ class PlotBlockVector(object):
         """ @rtype: int """
         return len(self.__data)
 
-
     def __getitem__(self, index):
         """ @rtype: float """
         assert isinstance(index, int)
         return self.__data[index]
-
 
     def __iter__(self):
         """ @rtype: float """
@@ -32,8 +30,6 @@ class PlotBlockVector(object):
             yield self[cur]
             cur += 1
 
-
     def getRealizationNumber(self):
         """ @rtype: int """
         return self.__realization_number
-

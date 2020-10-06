@@ -26,14 +26,24 @@ from res.enkf.plot_data import EnsemblePlotGenKWVector
 class EnsemblePlotGenKW(BaseCClass):
     TYPE_NAME = "ensemble_plot_gen_kw"
 
-    _alloc                = ResPrototype("void* enkf_plot_gen_kw_alloc(enkf_config_node)", bind = False)
-    _size                 = ResPrototype("int   enkf_plot_gen_kw_get_size(ensemble_plot_gen_kw)")
-    _load                 = ResPrototype("void  enkf_plot_gen_kw_load(ensemble_plot_gen_kw, enkf_fs, bool, int, bool_vector)")
-    _get                  = ResPrototype("ensemble_plot_gen_kw_vector_ref enkf_plot_gen_kw_iget(ensemble_plot_gen_kw, int)")
-    _iget_key             = ResPrototype("char* enkf_plot_gen_kw_iget_key(ensemble_plot_gen_kw, int)")
-    _get_keyword_count    = ResPrototype("int   enkf_plot_gen_kw_get_keyword_count(ensemble_plot_gen_kw)")
-    _should_use_log_scale = ResPrototype("bool  enkf_plot_gen_kw_should_use_log_scale(ensemble_plot_gen_kw, int)")
-    _free                 = ResPrototype("void  enkf_plot_gen_kw_free(ensemble_plot_gen_kw)")
+    _alloc = ResPrototype("void* enkf_plot_gen_kw_alloc(enkf_config_node)", bind=False)
+    _size = ResPrototype("int   enkf_plot_gen_kw_get_size(ensemble_plot_gen_kw)")
+    _load = ResPrototype(
+        "void  enkf_plot_gen_kw_load(ensemble_plot_gen_kw, enkf_fs, bool, int, bool_vector)"
+    )
+    _get = ResPrototype(
+        "ensemble_plot_gen_kw_vector_ref enkf_plot_gen_kw_iget(ensemble_plot_gen_kw, int)"
+    )
+    _iget_key = ResPrototype(
+        "char* enkf_plot_gen_kw_iget_key(ensemble_plot_gen_kw, int)"
+    )
+    _get_keyword_count = ResPrototype(
+        "int   enkf_plot_gen_kw_get_keyword_count(ensemble_plot_gen_kw)"
+    )
+    _should_use_log_scale = ResPrototype(
+        "bool  enkf_plot_gen_kw_should_use_log_scale(ensemble_plot_gen_kw, int)"
+    )
+    _free = ResPrototype("void  enkf_plot_gen_kw_free(ensemble_plot_gen_kw)")
 
     def __init__(self, ensemble_config_node, file_system, input_mask=None):
         assert isinstance(ensemble_config_node, EnkfConfigNode)
@@ -43,7 +53,6 @@ class EnsemblePlotGenKW(BaseCClass):
         super(EnsemblePlotGenKW, self).__init__(c_pointer)
 
         self.__load(file_system, input_mask)
-
 
     def __load(self, file_system, input_mask=None):
         assert isinstance(file_system, EnkfFs)
@@ -90,4 +99,4 @@ class EnsemblePlotGenKW(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return 'EnsemblePlotGenKW(size = %d) %s' % (len(self), self._ad_str())
+        return "EnsemblePlotGenKW(size = %d) %s" % (len(self), self._ad_str())

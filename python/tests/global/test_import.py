@@ -20,7 +20,7 @@ import sys
 
 from ecl.util.test import ImportTestCase
 
-class ImportRes(ImportTestCase):
 
+class ImportRes(ImportTestCase):
     def test_import(self):
-        self.assertTrue( self.import_package( "res" ))
+        self.assertTrue(self.import_package("res"))

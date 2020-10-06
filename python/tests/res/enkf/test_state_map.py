@@ -5,7 +5,6 @@ from tests import ResTest
 
 
 class StateMapTest(ResTest):
-
     def test_state_map(self):
         state_map = StateMap()
 
@@ -32,7 +31,6 @@ class StateMapTest(ResTest):
         with self.assertRaises(IndexError):
             state_map[-1] = RealizationStateEnum.STATE_INITIALIZED
 
-
         state_map[0] = RealizationStateEnum.STATE_INITIALIZED
 
         self.assertEqual(len(state_map), 1)
@@ -49,8 +47,13 @@ class StateMapTest(ResTest):
 
         states = [state for state in state_map]
 
-        self.assertEqual(states, [RealizationStateEnum.STATE_INITIALIZED, RealizationStateEnum.STATE_HAS_DATA])
-
+        self.assertEqual(
+            states,
+            [
+                RealizationStateEnum.STATE_INITIALIZED,
+                RealizationStateEnum.STATE_HAS_DATA,
+            ],
+        )
 
         state_map[5] = RealizationStateEnum.STATE_INITIALIZED
         self.assertEqual(len(state_map), 6)
@@ -65,19 +68,52 @@ class StateMapTest(ResTest):
         with TestAreaContext("python/state-map/fwrite") as work_area:
             state_map.save("MAP")
             s2 = StateMap("MAP")
-            self.assertTrue( state_map == s2 )
-            
-
+            self.assertTrue(state_map == s2)
 
     def test_state_map_transitions(self):
-        self.assertTrue(StateMap.isLegalTransition(RealizationStateEnum.STATE_UNDEFINED, RealizationStateEnum.STATE_INITIALIZED))
-        self.assertTrue(StateMap.isLegalTransition(RealizationStateEnum.STATE_INITIALIZED, RealizationStateEnum.STATE_HAS_DATA))
-        self.assertTrue(StateMap.isLegalTransition(RealizationStateEnum.STATE_INITIALIZED, RealizationStateEnum.STATE_LOAD_FAILURE))
-        self.assertTrue(StateMap.isLegalTransition(RealizationStateEnum.STATE_INITIALIZED, RealizationStateEnum.STATE_PARENT_FAILURE))
-        self.assertTrue(StateMap.isLegalTransition(RealizationStateEnum.STATE_HAS_DATA, RealizationStateEnum.STATE_PARENT_FAILURE))
+        self.assertTrue(
+            StateMap.isLegalTransition(
+                RealizationStateEnum.STATE_UNDEFINED,
+                RealizationStateEnum.STATE_INITIALIZED,
+            )
+        )
+        self.assertTrue(
+            StateMap.isLegalTransition(
+                RealizationStateEnum.STATE_INITIALIZED,
+                RealizationStateEnum.STATE_HAS_DATA,
+            )
+        )
+        self.assertTrue(
+            StateMap.isLegalTransition(
+                RealizationStateEnum.STATE_INITIALIZED,
+                RealizationStateEnum.STATE_LOAD_FAILURE,
+            )
+        )
+        self.assertTrue(
+            StateMap.isLegalTransition(
+                RealizationStateEnum.STATE_INITIALIZED,
+                RealizationStateEnum.STATE_PARENT_FAILURE,
+            )
+        )
+        self.assertTrue(
+            StateMap.isLegalTransition(
+                RealizationStateEnum.STATE_HAS_DATA,
+                RealizationStateEnum.STATE_PARENT_FAILURE,
+            )
+        )
 
-        self.assertFalse(StateMap.isLegalTransition(RealizationStateEnum.STATE_UNDEFINED, RealizationStateEnum.STATE_LOAD_FAILURE))
-        self.assertFalse(StateMap.isLegalTransition(RealizationStateEnum.STATE_UNDEFINED, RealizationStateEnum.STATE_HAS_DATA))
+        self.assertFalse(
+            StateMap.isLegalTransition(
+                RealizationStateEnum.STATE_UNDEFINED,
+                RealizationStateEnum.STATE_LOAD_FAILURE,
+            )
+        )
+        self.assertFalse(
+            StateMap.isLegalTransition(
+                RealizationStateEnum.STATE_UNDEFINED,
+                RealizationStateEnum.STATE_HAS_DATA,
+            )
+        )
 
         with self.assertRaises(TypeError):
             StateMap.isLegalTransition("error", RealizationStateEnum.STATE_UNDEFINED)
@@ -88,27 +124,28 @@ class StateMapTest(ResTest):
         with self.assertRaises(TypeError):
             StateMap.isLegalTransition("error", "exception")
 
-
     def test_active_list(self):
         state_map = StateMap()
         state_map[0] = RealizationStateEnum.STATE_INITIALIZED
         state_map[2] = RealizationStateEnum.STATE_INITIALIZED
         state_map[2] = RealizationStateEnum.STATE_HAS_DATA
 
-        initialized = state_map.realizationList( RealizationStateEnum.STATE_INITIALIZED )
-        self.assertEqual( len(initialized) , 1 )
-        self.assertEqual( initialized[0] , 0 )
+        initialized = state_map.realizationList(RealizationStateEnum.STATE_INITIALIZED)
+        self.assertEqual(len(initialized), 1)
+        self.assertEqual(initialized[0], 0)
 
         mask = state_map.createMask(RealizationStateEnum.STATE_INITIALIZED)
         self.assertEqual([True, False, False], list(mask))
 
-        has_data = state_map.realizationList( RealizationStateEnum.STATE_HAS_DATA )
-        self.assertEqual( len(has_data) , 1 )
-        self.assertEqual( has_data[0] , 2)
+        has_data = state_map.realizationList(RealizationStateEnum.STATE_HAS_DATA)
+        self.assertEqual(len(has_data), 1)
+        self.assertEqual(has_data[0], 2)
 
         mask = state_map.createMask(RealizationStateEnum.STATE_HAS_DATA)
         self.assertEqual([False, False, True], list(mask))
 
-        state = RealizationStateEnum.STATE_HAS_DATA | RealizationStateEnum.STATE_INITIALIZED
+        state = (
+            RealizationStateEnum.STATE_HAS_DATA | RealizationStateEnum.STATE_INITIALIZED
+        )
         mask = state_map.createMask(state)
         self.assertEqual([True, False, True], list(mask))

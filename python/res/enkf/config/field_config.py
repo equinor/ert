@@ -20,36 +20,61 @@ from res.enkf.enums import EnkfFieldFileFormatEnum
 from ecl.grid import EclGrid
 from .field_type_enum import FieldTypeEnum
 
+
 class FieldConfig(BaseCClass):
     TYPE_NAME = "field_config"
 
-    _alloc                     = ResPrototype("void*  field_config_alloc_empty(char* , ecl_grid , void* , bool)", bind = False)
-    _free                      = ResPrototype("void   field_config_free( field_config )")
-    _get_type                  = ResPrototype("field_type_enum field_config_get_type(field_config)")
-    _get_truncation_mode       = ResPrototype("int    field_config_get_truncation_mode(field_config)")
-    _get_truncation_min        = ResPrototype("double field_config_get_truncation_min(field_config)")
-    _get_truncation_max        = ResPrototype("double field_config_get_truncation_max(field_config)")
-    _get_init_transform_name   = ResPrototype("char*  field_config_get_init_transform_name(field_config)")
-    _get_output_transform_name = ResPrototype("char*  field_config_get_output_transform_name(field_config)")
-    _ijk_active                = ResPrototype("bool   field_config_ijk_active(field_config, int, int, int)")
-    _get_nx                    = ResPrototype("int    field_config_get_nx(field_config)")
-    _get_ny                    = ResPrototype("int    field_config_get_ny(field_config)")
-    _get_nz                    = ResPrototype("int    field_config_get_nz(field_config)")
-    _get_grid                  = ResPrototype("ecl_grid_ref field_config_get_grid(field_config)")
-    _export_format             = ResPrototype("enkf_field_file_format_enum field_config_default_export_format(char*)", bind = False)
-    _guess_filetype            = ResPrototype("enkf_field_file_format_enum field_config_guess_file_type(char*)", bind = False)
+    _alloc = ResPrototype(
+        "void*  field_config_alloc_empty(char* , ecl_grid , void* , bool)", bind=False
+    )
+    _free = ResPrototype("void   field_config_free( field_config )")
+    _get_type = ResPrototype("field_type_enum field_config_get_type(field_config)")
+    _get_truncation_mode = ResPrototype(
+        "int    field_config_get_truncation_mode(field_config)"
+    )
+    _get_truncation_min = ResPrototype(
+        "double field_config_get_truncation_min(field_config)"
+    )
+    _get_truncation_max = ResPrototype(
+        "double field_config_get_truncation_max(field_config)"
+    )
+    _get_init_transform_name = ResPrototype(
+        "char*  field_config_get_init_transform_name(field_config)"
+    )
+    _get_output_transform_name = ResPrototype(
+        "char*  field_config_get_output_transform_name(field_config)"
+    )
+    _ijk_active = ResPrototype(
+        "bool   field_config_ijk_active(field_config, int, int, int)"
+    )
+    _get_nx = ResPrototype("int    field_config_get_nx(field_config)")
+    _get_ny = ResPrototype("int    field_config_get_ny(field_config)")
+    _get_nz = ResPrototype("int    field_config_get_nz(field_config)")
+    _get_grid = ResPrototype("ecl_grid_ref field_config_get_grid(field_config)")
+    _export_format = ResPrototype(
+        "enkf_field_file_format_enum field_config_default_export_format(char*)",
+        bind=False,
+    )
+    _guess_filetype = ResPrototype(
+        "enkf_field_file_format_enum field_config_guess_file_type(char*)", bind=False
+    )
 
-    def __init__(self , kw , grid):
-        c_ptr = self._alloc( kw , grid , None , False )
+    def __init__(self, kw, grid):
+        c_ptr = self._alloc(kw, grid, None, False)
         super(FieldConfig, self).__init__(c_ptr)
 
     @classmethod
-    def exportFormat(cls , filename):
-        export_format = cls._export_format( filename )
-        if export_format in [ EnkfFieldFileFormatEnum.ECL_GRDECL_FILE , EnkfFieldFileFormatEnum.RMS_ROFF_FILE ]:
+    def exportFormat(cls, filename):
+        export_format = cls._export_format(filename)
+        if export_format in [
+            EnkfFieldFileFormatEnum.ECL_GRDECL_FILE,
+            EnkfFieldFileFormatEnum.RMS_ROFF_FILE,
+        ]:
             return export_format
         else:
-            raise ValueError("Could not determine grdecl / roff format from:%s" % filename)
+            raise ValueError(
+                "Could not determine grdecl / roff format from:%s" % filename
+            )
 
     @classmethod
     def guessFiletype(cls, filename):
@@ -93,8 +118,8 @@ class FieldConfig(BaseCClass):
 
     def __repr__(self):
         tp = self.get_type()
-        nx,ny,nz = self.get_nx(),self.get_ny(),self.get_nz()
-        cnt = 'type = %s, nx = %d, ny = %d, nz = %d' % (tp, nx,ny,nz)
+        nx, ny, nz = self.get_nx(), self.get_ny(), self.get_nz()
+        cnt = "type = %s, nx = %d, ny = %d, nz = %d" % (tp, nx, ny, nz)
         return self._create_repr(cnt)
 
     def __ne__(self, other):

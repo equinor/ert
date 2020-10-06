@@ -20,32 +20,38 @@ from res.job_queue import JobStatusType
 
 
 class EnKFState(BaseCClass):
-    TYPE_NAME       = "enkf_state"
-    _free           = ResPrototype("void* enkf_state_free( enkf_state )")
-    _get_ens_config = ResPrototype("ens_config_ref enkf_state_get_ensemble_config( enkf_state )")
-    _initialize     = ResPrototype("void enkf_state_initialize( enkf_state , enkf_fs , stringlist , enkf_init_mode_enum)")
-    _forward_model_OK = ResPrototype("bool enkf_state_complete_forward_modelOK(res_config, run_arg)", bind=False)
-    _forward_model_EXIT = ResPrototype("bool enkf_state_complete_forward_model_EXIT_handler__(run_arg)", bind=False)
+    TYPE_NAME = "enkf_state"
+    _free = ResPrototype("void* enkf_state_free( enkf_state )")
+    _get_ens_config = ResPrototype(
+        "ens_config_ref enkf_state_get_ensemble_config( enkf_state )"
+    )
+    _initialize = ResPrototype(
+        "void enkf_state_initialize( enkf_state , enkf_fs , stringlist , enkf_init_mode_enum)"
+    )
+    _forward_model_OK = ResPrototype(
+        "bool enkf_state_complete_forward_modelOK(res_config, run_arg)", bind=False
+    )
+    _forward_model_EXIT = ResPrototype(
+        "bool enkf_state_complete_forward_model_EXIT_handler__(run_arg)", bind=False
+    )
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
-
-
     def free(self):
-        self._free( )
-
+        self._free()
 
     def ensembleConfig(self):
         """ @rtype: EnsembleConfig """
-        return self._get_ens_config( )
+        return self._get_ens_config()
 
-
-    def initialize( self , fs , param_list = None , init_mode = EnkfInitModeEnum.INIT_CONDITIONAL):
+    def initialize(
+        self, fs, param_list=None, init_mode=EnkfInitModeEnum.INIT_CONDITIONAL
+    ):
         if param_list is None:
-            ens_config = self.ensembleConfig( )
-            param_list = ens_config.getKeylistFromVarType( EnkfVarType.PARAMETER )
-        self._initialize( fs , param_list , init_mode )
+            ens_config = self.ensembleConfig()
+            param_list = ens_config.getKeylistFromVarType(EnkfVarType.PARAMETER)
+        self._initialize(fs, param_list, init_mode)
 
     @classmethod
     def forward_model_exit_callback(cls, args):

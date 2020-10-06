@@ -2,12 +2,13 @@ from res.job_queue import Workflow
 from res.util.substitution_list import SubstitutionList
 from concurrent import futures
 
+
 class WorkflowRunner(object):
     def __init__(self, workflow, ert=None, context=None):
         """
-         @type workflow: Workflow
-         @type ert: res.enkf.EnKFMain
-         @type context: SubstitutionList
+        @type workflow: Workflow
+        @type ert: res.enkf.EnKFMain
+        @type context: SubstitutionList
         """
         super(WorkflowRunner, self).__init__()
 
@@ -31,10 +32,9 @@ class WorkflowRunner(object):
 
     def run(self):
         if self.isRunning():
-            raise AssertionError('An instance of workflow is already running!')
+            raise AssertionError("An instance of workflow is already running!")
         else:
             self._workflow_job = self._workflow_executor.submit(self.__runWorkflow)
-
 
     def __runWorkflow(self):
         self.__workflow_result = self.__workflow.run(self.__ert, context=self.__context)
@@ -65,7 +65,9 @@ class WorkflowRunner(object):
 
     def wait(self):
         # This returns a tuple (done, pending), since we run only one job we don't need to use it
-        _, _ = futures.wait([self._workflow_job], timeout=None, return_when=futures.FIRST_EXCEPTION)
+        _, _ = futures.wait(
+            [self._workflow_job], timeout=None, return_when=futures.FIRST_EXCEPTION
+        )
 
     def workflowResult(self):
         """ @rtype: bool or None """

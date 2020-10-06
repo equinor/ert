@@ -18,9 +18,8 @@ import functools
 import math
 from tests import ResTest
 
+
 class TestTestCase(ResTest):
-
     def test_not_raises(self):
-        call_sin = functools.partial( math.sin , 0.5*math.pi )
-        self.assertNotRaises( call_sin )
-
+        call_sin = functools.partial(math.sin, 0.5 * math.pi)
+        self.assertNotRaises(call_sin)

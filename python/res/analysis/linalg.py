@@ -20,18 +20,19 @@ from res import ResPrototype
 
 __all__ = ["numPC"]
 
+
 class Linalg(BaseCClass):
     """
     The linalg class is a purely static class which mainly serves as a
     namespace for a collection of ensemble based linear algebra
     methods.
     """
-    _get_num_PC = ResPrototype("int enkf_linalg_num_PC( matrix , double)" , bind = False)
+
+    _get_num_PC = ResPrototype("int enkf_linalg_num_PC( matrix , double)", bind=False)
 
     @staticmethod
-    def numPC(S , truncation):
+    def numPC(S, truncation):
         if 0 < truncation <= 1:
-            return Linalg._get_num_PC( S , truncation )
+            return Linalg._get_num_PC(S, truncation)
         else:
             raise ValueError("truncation must be in the interval (0,1]")
-

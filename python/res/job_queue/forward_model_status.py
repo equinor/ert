@@ -38,16 +38,18 @@ def _deserialize_date(serial_dt):
 
 
 class ForwardModelJobStatus(object):
-
-    def __init__(self, name,
-                 start_time=None,
-                 end_time=None,
-                 status="Waiting",
-                 error=None,
-                 std_out_file="",
-                 std_err_file="",
-                 current_memory_usage=0,
-                 max_memory_usage=0):
+    def __init__(
+        self,
+        name,
+        start_time=None,
+        end_time=None,
+        status="Waiting",
+        error=None,
+        std_out_file="",
+        std_err_file="",
+        current_memory_usage=0,
+        max_memory_usage=0,
+    ):
 
         self.start_time = start_time
         self.end_time = end_time
@@ -68,35 +70,40 @@ class ForwardModelJobStatus(object):
         error = data["error"]
         current_memory_usage = data["current_memory_usage"]
         max_memory_usage = data["max_memory_usage"]
-        std_err_file = job['stderr']
-        std_out_file = job['stdout']
-        return cls(name,
-                   start_time=start_time,
-                   end_time=end_time,
-                   status=status,
-                   error=error,
-                   std_out_file=os.path.join(run_path, std_out_file),
-                   std_err_file=os.path.join(run_path, std_err_file),
-                   current_memory_usage=current_memory_usage,
-                   max_memory_usage=max_memory_usage)
+        std_err_file = job["stderr"]
+        std_out_file = job["stdout"]
+        return cls(
+            name,
+            start_time=start_time,
+            end_time=end_time,
+            status=status,
+            error=error,
+            std_out_file=os.path.join(run_path, std_out_file),
+            std_err_file=os.path.join(run_path, std_err_file),
+            current_memory_usage=current_memory_usage,
+            max_memory_usage=max_memory_usage,
+        )
 
     def __str__(self):
-        return "name:{} start_time:{}  end_time:{}  status:{}  error:{} ".format(self.name, self.start_time, self.end_time, self.status, self.error)
+        return "name:{} start_time:{}  end_time:{}  status:{}  error:{} ".format(
+            self.name, self.start_time, self.end_time, self.status, self.error
+        )
 
     def dump_data(self):
-        return {"name": self.name,
-                "status": self.status,
-                "error": self.error,
-                "start_time": _serialize_date(self.start_time),
-                "end_time": _serialize_date(self.end_time),
-                "stdout": self.std_out_file,
-                "stderr": self.std_err_file,
-                "current_memory_usage": self.current_memory_usage,
-                "max_memory_usage": self.max_memory_usage}
+        return {
+            "name": self.name,
+            "status": self.status,
+            "error": self.error,
+            "start_time": _serialize_date(self.start_time),
+            "end_time": _serialize_date(self.end_time),
+            "stdout": self.std_out_file,
+            "stderr": self.std_err_file,
+            "current_memory_usage": self.current_memory_usage,
+            "max_memory_usage": self.max_memory_usage,
+        }
 
 
 class ForwardModelStatus(object):
-
     def __init__(self, run_id, start_time, end_time=None):
         self.run_id = run_id
         self.start_time = start_time
@@ -116,11 +123,9 @@ class ForwardModelStatus(object):
 
         start_time = _deserialize_date(status_data["start_time"])
         end_time = _deserialize_date(status_data["end_time"])
-        status = cls(status_data["run_id"],
-                     start_time,
-                     end_time=end_time)
+        status = cls(status_data["run_id"], start_time, end_time=end_time)
 
-        for job, state in zip(job_data['jobList'], status_data["jobs"]):
+        for job, state in zip(job_data["jobList"], status_data["jobs"]):
             status.add_job(ForwardModelJobStatus.load(job, state, path))
 
         return status

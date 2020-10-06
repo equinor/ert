@@ -7,10 +7,24 @@ from tests.utils import tmpdir
 
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
-from res.enkf import AnalysisConfig, EclConfig, GenKwConfig, EnkfConfigNode, SiteConfig, ObsVector
+from res.enkf import (
+    AnalysisConfig,
+    EclConfig,
+    GenKwConfig,
+    EnkfConfigNode,
+    SiteConfig,
+    ObsVector,
+)
 from res.enkf import EnKFMain, ResConfig
 from res.enkf import ErtTemplate, ErtTemplates, LocalConfig, ModelConfig
-from res.enkf import GenDataConfig, FieldConfig, EnkfFs, EnkfObs, EnKFState, EnsembleConfig
+from res.enkf import (
+    GenDataConfig,
+    FieldConfig,
+    EnkfFs,
+    EnkfObs,
+    EnKFState,
+    EnsembleConfig,
+)
 from res.enkf.util import TimeMap
 
 
@@ -21,8 +35,7 @@ class EnKFLibraryTest(ResTest):
         self.case_directory = self.createTestPath("local/simple_config/")
 
     def test_failed_class_creation(self):
-        classes = [EnkfConfigNode, EnKFState,
-                   ErtTemplate, LocalConfig]
+        classes = [EnkfConfigNode, EnKFState, ErtTemplate, LocalConfig]
 
         for cls in classes:
             with self.assertRaises(NotImplementedError):
@@ -39,11 +52,10 @@ class EnKFLibraryTest(ResTest):
             self.assertIsInstance(main.analysisConfig(), AnalysisConfig)
             self.assertIsInstance(main.eclConfig(), EclConfig)
 
-            with self.assertRaises(AssertionError): # Null pointer!
+            with self.assertRaises(AssertionError):  # Null pointer!
                 self.assertIsInstance(main.eclConfig().getRefcase(), EclSum)
 
             file_system = main.getEnkfFsManager().getCurrentFileSystem()
             self.assertEqual(file_system.getCaseName(), "default")
             time_map = file_system.getTimeMap()
             self.assertIsInstance(time_map, TimeMap)
-

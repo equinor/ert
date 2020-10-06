@@ -10,7 +10,7 @@ class StatTest(ResTest):
         rng.setState("0123456789ABCDEF")
         v = DoubleVector()
         for i in range(100000):
-            v.append(rng.getDouble( ))
+            v.append(rng.getDouble())
 
         self.assertAlmostEqual(quantile(v, 0.1), 0.1, 2)
         self.assertAlmostEqual(quantile_sorted(v, 0.2), 0.2, 2)

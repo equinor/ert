@@ -32,11 +32,8 @@ import os.path
 import sys
 
 import warnings
-warnings.filterwarnings(
-    action='always',
-    category=DeprecationWarning,
-    module=r'res|ert'
-)
+
+warnings.filterwarnings(action="always", category=DeprecationWarning, module=r"res|ert")
 
 from cwrap import load as cwrapload
 from cwrap import Prototype
@@ -57,6 +54,7 @@ __version__ = "0.0.0"
 #    directory with shared object files.
 try:
     from .__res_lib_info import ResLibInfo
+
     res_lib_path = ResLibInfo.lib_path
     ert_so_version = ResLibInfo.so_version
     __version__ = ResLibInfo.__version__
@@ -70,17 +68,21 @@ except AttributeError:
 # directory.
 if res_lib_path:
     if not os.path.isabs(res_lib_path):
-        res_lib_path = os.path.abspath(os.path.join(os.path.dirname(__file__), res_lib_path))
+        res_lib_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), res_lib_path)
+        )
 
-    if not os.path.isdir( res_lib_path ):
+    if not os.path.isdir(res_lib_path):
         res_lib_path = None
 
 
 # This load() function is *the* function actually loading shared
 # libraries.
 
+
 def load(name):
     return cwrapload(name, path=res_lib_path, so_version=ert_so_version)
+
 
 class ResPrototype(Prototype):
     lib = load("libres")
@@ -88,15 +90,17 @@ class ResPrototype(Prototype):
     def __init__(self, prototype, bind=True):
         super(ResPrototype, self).__init__(ResPrototype.lib, prototype, bind=bind)
 
+
 RES_LIB = ResPrototype.lib
 
 from res.util import ResVersion
 from ecl.util.util import updateAbortSignals
 
-updateAbortSignals( )
+updateAbortSignals()
+
 
 def root():
     """
     Will print the filesystem root of the current ert package.
     """
-    return os.path.abspath( os.path.join( os.path.dirname( __file__ ) , "../"))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))

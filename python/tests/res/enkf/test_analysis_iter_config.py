@@ -21,27 +21,23 @@ from tests import ResTest
 
 
 class AnalysisIterConfigTest(ResTest):
-
     def test_set_analysis_iter_config(self):
         c = AnalysisIterConfig()
 
-        self.assertFalse( c.caseFormatSet() )
+        self.assertFalse(c.caseFormatSet())
         c.setCaseFormat("case%d")
-        self.assertTrue( c.caseFormatSet() )
+        self.assertTrue(c.caseFormatSet())
 
-        self.assertFalse( c.numIterationsSet() )
+        self.assertFalse(c.numIterationsSet())
         c.setNumIterations(1)
-        self.assertTrue( c.numIterationsSet() )
+        self.assertTrue(c.numIterationsSet())
 
     def test_analysis_iter_config_constructor(self):
         config_dict = {
-            'ITER_CASE':'ITERATED_ENSEMBLE_SMOOTHER%d',
-            'ITER_COUNT':4,
-            'ITER_RETRY_COUNT':4
+            "ITER_CASE": "ITERATED_ENSEMBLE_SMOOTHER%d",
+            "ITER_COUNT": 4,
+            "ITER_RETRY_COUNT": 4,
         }
         c_default = AnalysisIterConfig()
         c_dict = AnalysisIterConfig(config_dict=config_dict)
         self.assertEqual(c_default, c_dict)
-
-
-

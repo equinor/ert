@@ -18,15 +18,15 @@ from cwrap import BaseCEnum
 
 class JobStatusType(BaseCEnum):
     TYPE_NAME = "job_status_type_enum"
-    JOB_QUEUE_NOT_ACTIVE = None     # This value is used in external query routines - for jobs which are (currently) not active. */
-    JOB_QUEUE_WAITING = None        # A node which is waiting in the internal queue.
-    JOB_QUEUE_SUBMITTED = None      # Internal status: It has has been submitted - the next status update will (should) place it as pending or running.
-    JOB_QUEUE_PENDING = None        # A node which is pending - a status returned by the external system. I.e LSF
-    JOB_QUEUE_RUNNING = None        # The job is running
-    JOB_QUEUE_DONE = None           # The job is done - but we have not yet checked if the target file is produced */
-    JOB_QUEUE_EXIT = None           # The job has exited - check attempts to determine if we retry or go to complete_fail   */
-    JOB_QUEUE_IS_KILLED = None         # The job has been killed, following a  JOB_QUEUE_DO_KILL - can restart. */
-    JOB_QUEUE_DO_KILL = None       # The the job should be killed, either due to user request, or automated measures - the job can NOT be restarted.. */
+    JOB_QUEUE_NOT_ACTIVE = None  # This value is used in external query routines - for jobs which are (currently) not active. */
+    JOB_QUEUE_WAITING = None  # A node which is waiting in the internal queue.
+    JOB_QUEUE_SUBMITTED = None  # Internal status: It has has been submitted - the next status update will (should) place it as pending or running.
+    JOB_QUEUE_PENDING = None  # A node which is pending - a status returned by the external system. I.e LSF
+    JOB_QUEUE_RUNNING = None  # The job is running
+    JOB_QUEUE_DONE = None  # The job is done - but we have not yet checked if the target file is produced */
+    JOB_QUEUE_EXIT = None  # The job has exited - check attempts to determine if we retry or go to complete_fail   */
+    JOB_QUEUE_IS_KILLED = None  # The job has been killed, following a  JOB_QUEUE_DO_KILL - can restart. */
+    JOB_QUEUE_DO_KILL = None  # The the job should be killed, either due to user request, or automated measures - the job can NOT be restarted.. */
     JOB_QUEUE_SUCCESS = None
     JOB_QUEUE_RUNNING_DONE_CALLBACK = None
     JOB_QUEUE_RUNNING_EXIT_CALLBACK = None

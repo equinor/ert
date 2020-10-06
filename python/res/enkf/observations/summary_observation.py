@@ -21,17 +21,31 @@ from res import ResPrototype
 class SummaryObservation(BaseCClass):
     TYPE_NAME = "summary_obs"
 
-    _alloc            = ResPrototype("void*  summary_obs_alloc(char*, char*, double, double, char*, double)", bind = False)
-    _free             = ResPrototype("void   summary_obs_free(summary_obs)")
-    _get_value        = ResPrototype("double summary_obs_get_value(summary_obs)")
-    _get_std          = ResPrototype("double summary_obs_get_std(summary_obs)")
-    _get_std_scaling  = ResPrototype("double summary_obs_get_std_scaling(summary_obs)")
-    _get_summary_key  = ResPrototype("char*  summary_obs_get_summary_key(summary_obs)")
-    _update_std_scale = ResPrototype("void   summary_obs_update_std_scale(summary_obs , double , active_list)")
-    _set_std_scale    = ResPrototype("void   summary_obs_set_std_scale(summary_obs , double)")
+    _alloc = ResPrototype(
+        "void*  summary_obs_alloc(char*, char*, double, double, char*, double)",
+        bind=False,
+    )
+    _free = ResPrototype("void   summary_obs_free(summary_obs)")
+    _get_value = ResPrototype("double summary_obs_get_value(summary_obs)")
+    _get_std = ResPrototype("double summary_obs_get_std(summary_obs)")
+    _get_std_scaling = ResPrototype("double summary_obs_get_std_scaling(summary_obs)")
+    _get_summary_key = ResPrototype("char*  summary_obs_get_summary_key(summary_obs)")
+    _update_std_scale = ResPrototype(
+        "void   summary_obs_update_std_scale(summary_obs , double , active_list)"
+    )
+    _set_std_scale = ResPrototype(
+        "void   summary_obs_set_std_scale(summary_obs , double)"
+    )
 
-
-    def __init__(self, summary_key, observation_key, value, std, auto_corrf_name=None, auto_corrf_param=0.0):
+    def __init__(
+        self,
+        summary_key,
+        observation_key,
+        value,
+        std,
+        auto_corrf_name=None,
+        auto_corrf_param=0.0,
+    ):
         assert isinstance(summary_key, str)
         assert isinstance(observation_key, str)
         assert isinstance(value, float)
@@ -41,11 +55,15 @@ class SummaryObservation(BaseCClass):
             assert isinstance(auto_corrf_name, str)
 
         assert isinstance(auto_corrf_param, float)
-        c_ptr = self._alloc(summary_key, observation_key, value, std, auto_corrf_name, auto_corrf_param)
+        c_ptr = self._alloc(
+            summary_key, observation_key, value, std, auto_corrf_name, auto_corrf_param
+        )
         if c_ptr:
             super(SummaryObservation, self).__init__(c_ptr)
         else:
-            raise ValueError('Unable to construct SummaryObservation with given configuration!')
+            raise ValueError(
+                "Unable to construct SummaryObservation with given configuration!"
+            )
 
     def getValue(self):
         """ @rtype: float """
@@ -55,26 +73,22 @@ class SummaryObservation(BaseCClass):
         """ @rtype: float """
         return self._get_std()
 
-    def getStdScaling(self , index = 0):
+    def getStdScaling(self, index=0):
         """ @rtype: float """
         return self._get_std_scaling()
 
     def set_std_scaling(self, scaling_factor):
         self._set_std_scale(scaling_factor)
 
-
     def __len__(self):
         return 1
-    
-    
+
     def getSummaryKey(self):
         """ @rtype: str """
         return self._get_summary_key()
 
-
-    def updateStdScaling(self , factor , active_list):
-        self._update_std_scale(factor , active_list)
-    
+    def updateStdScaling(self, factor, active_list):
+        self._update_std_scale(factor, active_list)
 
     def free(self):
         self._free()
@@ -85,5 +99,5 @@ class SummaryObservation(BaseCClass):
         sd = self.getStandardDeviation()
         sc = self.getStdScaling()
         ad = self._address()
-        fmt = 'SummaryObservation(key = %s, value = %f, std = %f, std_scaling = %f) at 0x%x'
+        fmt = "SummaryObservation(key = %s, value = %f, std = %f, std_scaling = %f) at 0x%x"
         return fmt % (sk, va, sd, sc, ad)

@@ -19,8 +19,19 @@ from ecl.grid import EclGrid
 from ecl.util.util import StringList, IntVector
 
 from res import ResPrototype
-from res.enkf.config import FieldConfig, GenDataConfig, GenKwConfig, SummaryConfig, ExtParamConfig
-from res.enkf.enums import EnkfTruncationType, ErtImplType, LoadFailTypeEnum, EnkfVarType
+from res.enkf.config import (
+    FieldConfig,
+    GenDataConfig,
+    GenKwConfig,
+    SummaryConfig,
+    ExtParamConfig,
+)
+from res.enkf.enums import (
+    EnkfTruncationType,
+    ErtImplType,
+    LoadFailTypeEnum,
+    EnkfVarType,
+)
 from res.enkf import ConfigKeys
 import os
 
@@ -28,25 +39,58 @@ import os
 class EnkfConfigNode(BaseCClass):
     TYPE_NAME = "enkf_config_node"
 
-    _alloc = ResPrototype("enkf_config_node_obj enkf_config_node_alloc(enkf_var_type_enum, ert_impl_type_enum, bool, char*, char* , char*, char*, void*)", bind=False)
-    _alloc_gen_data_everest = ResPrototype("enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_everest(char*, char* , int_vector)", bind = False)
-    _alloc_summary_node = ResPrototype("enkf_config_node_obj enkf_config_node_alloc_summary(char*, load_fail_type)", bind = False)
-    _alloc_field_node   = ResPrototype("enkf_config_node_obj enkf_config_node_alloc_field(char*, ecl_grid, void*, bool)", bind = False)
-    _get_ref            = ResPrototype("void* enkf_config_node_get_ref(enkf_config_node)") #todo: fix return type
-    _get_impl_type      = ResPrototype("ert_impl_type_enum enkf_config_node_get_impl_type(enkf_config_node)")
-    _get_enkf_outfile   = ResPrototype("char* enkf_config_node_get_enkf_outfile(enkf_config_node)")
-    _get_min_std_file   = ResPrototype("char* enkf_config_node_get_min_std_file(enkf_config_node)")
-    _get_enkf_infile    = ResPrototype("char* enkf_config_node_get_enkf_infile(enkf_config_node)")
-    _get_init_file      = ResPrototype("char* enkf_config_node_get_FIELD_fill_file(enkf_config_node, path_fmt)")
-    _get_init_file_fmt  = ResPrototype("char* enkf_config_node_get_init_file_fmt(enkf_config_node)")
-    _get_var_type       = ResPrototype("enkf_var_type_enum enkf_config_node_get_var_type(enkf_config_node)") #todo: fix return type as enum
-    _get_key            = ResPrototype("char* enkf_config_node_get_key(enkf_config_node)")
-    _get_obs_keys       = ResPrototype("stringlist_ref enkf_config_node_get_obs_keys(enkf_config_node)")
-    _free               = ResPrototype("void enkf_config_node_free(enkf_config_node)")
-    _use_forward_init   = ResPrototype("bool enkf_config_node_use_forward_init(enkf_config_node)")
+    _alloc = ResPrototype(
+        "enkf_config_node_obj enkf_config_node_alloc(enkf_var_type_enum, ert_impl_type_enum, bool, char*, char* , char*, char*, void*)",
+        bind=False,
+    )
+    _alloc_gen_data_everest = ResPrototype(
+        "enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_everest(char*, char* , int_vector)",
+        bind=False,
+    )
+    _alloc_summary_node = ResPrototype(
+        "enkf_config_node_obj enkf_config_node_alloc_summary(char*, load_fail_type)",
+        bind=False,
+    )
+    _alloc_field_node = ResPrototype(
+        "enkf_config_node_obj enkf_config_node_alloc_field(char*, ecl_grid, void*, bool)",
+        bind=False,
+    )
+    _get_ref = ResPrototype(
+        "void* enkf_config_node_get_ref(enkf_config_node)"
+    )  # todo: fix return type
+    _get_impl_type = ResPrototype(
+        "ert_impl_type_enum enkf_config_node_get_impl_type(enkf_config_node)"
+    )
+    _get_enkf_outfile = ResPrototype(
+        "char* enkf_config_node_get_enkf_outfile(enkf_config_node)"
+    )
+    _get_min_std_file = ResPrototype(
+        "char* enkf_config_node_get_min_std_file(enkf_config_node)"
+    )
+    _get_enkf_infile = ResPrototype(
+        "char* enkf_config_node_get_enkf_infile(enkf_config_node)"
+    )
+    _get_init_file = ResPrototype(
+        "char* enkf_config_node_get_FIELD_fill_file(enkf_config_node, path_fmt)"
+    )
+    _get_init_file_fmt = ResPrototype(
+        "char* enkf_config_node_get_init_file_fmt(enkf_config_node)"
+    )
+    _get_var_type = ResPrototype(
+        "enkf_var_type_enum enkf_config_node_get_var_type(enkf_config_node)"
+    )  # todo: fix return type as enum
+    _get_key = ResPrototype("char* enkf_config_node_get_key(enkf_config_node)")
+    _get_obs_keys = ResPrototype(
+        "stringlist_ref enkf_config_node_get_obs_keys(enkf_config_node)"
+    )
+    _free = ResPrototype("void enkf_config_node_free(enkf_config_node)")
+    _use_forward_init = ResPrototype(
+        "bool enkf_config_node_use_forward_init(enkf_config_node)"
+    )
 
     # ensemble config aux
-    _alloc_gen_param_full = ResPrototype("enkf_config_node_obj enkf_config_node_alloc_GEN_PARAM_full( char*,\
+    _alloc_gen_param_full = ResPrototype(
+        "enkf_config_node_obj enkf_config_node_alloc_GEN_PARAM_full( char*,\
                                                                                                       bool, \
                                                                                                       gen_data_file_format_type, \
                                                                                                       gen_data_file_format_type, \
@@ -54,39 +98,58 @@ class EnkfConfigNode(BaseCClass):
                                                                                                       char*, \
                                                                                                       char*, \
                                                                                                       char*, \
-                                                                                                      char*)", bind=False)
+                                                                                                      char*)",
+        bind=False,
+    )
 
-    _alloc_gen_data_full = ResPrototype("enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_full( char*,\
+    _alloc_gen_data_full = ResPrototype(
+        "enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_full( char*,\
                                                                                                     char*, \
                                                                                                     gen_data_file_format_type, \
                                                                                                     int_vector, \
                                                                                                     char*, \
                                                                                                     char*, \
                                                                                                     char*, \
-                                                                                                    char*)", bind=False)
+                                                                                                    char*)",
+        bind=False,
+    )
 
-
-    _alloc_gen_kw_full = ResPrototype("enkf_config_node_obj enkf_config_node_alloc_GEN_KW_full( char*,\
+    _alloc_gen_kw_full = ResPrototype(
+        "enkf_config_node_obj enkf_config_node_alloc_GEN_KW_full( char*,\
                                                                                                 bool, \
                                                                                                 char*, \
                                                                                                 char*, \
                                                                                                 char*, \
                                                                                                 char*, \
                                                                                                 char*, \
-                                                                                                char*)", bind=False)
+                                                                                                char*)",
+        bind=False,
+    )
 
-    _alloc_surface_full = ResPrototype("enkf_config_node_obj enkf_config_node_alloc_SURFACE_full( char*,\
+    _alloc_surface_full = ResPrototype(
+        "enkf_config_node_obj enkf_config_node_alloc_SURFACE_full( char*,\
                                                                                                   bool, \
                                                                                                   char*, \
                                                                                                   char*, \
                                                                                                   char*, \
-                                                                                                  char*)", bind=False)
+                                                                                                  char*)",
+        bind=False,
+    )
 
-    _alloc_container = ResPrototype("enkf_config_node_obj enkf_config_node_new_container(char*)", bind=False)
-    _update_container = ResPrototype("void enkf_config_node_update_container(enkf_config_node, enkf_config_node)")
-    _get_container_size = ResPrototype("int enkf_config_node_container_size(enkf_config_node)")
-    _iget_container_key = ResPrototype("char* enkf_config_node_iget_container_key(enkf_config_node, int)")
-    _update_parameter_field = ResPrototype("void enkf_config_node_update_parameter_field(enkf_config_node, \
+    _alloc_container = ResPrototype(
+        "enkf_config_node_obj enkf_config_node_new_container(char*)", bind=False
+    )
+    _update_container = ResPrototype(
+        "void enkf_config_node_update_container(enkf_config_node, enkf_config_node)"
+    )
+    _get_container_size = ResPrototype(
+        "int enkf_config_node_container_size(enkf_config_node)"
+    )
+    _iget_container_key = ResPrototype(
+        "char* enkf_config_node_iget_container_key(enkf_config_node, int)"
+    )
+    _update_parameter_field = ResPrototype(
+        "void enkf_config_node_update_parameter_field(enkf_config_node, \
                                                                                          char*, \
                                                                                          char*, \
                                                                                          char*, \
@@ -94,8 +157,11 @@ class EnkfConfigNode(BaseCClass):
                                                                                          double, \
                                                                                          double, \
                                                                                          char*, \
-                                                                                         char*)", bind=True)
-    _update_general_field = ResPrototype("void enkf_config_node_update_general_field(enkf_config_node, \
+                                                                                         char*)",
+        bind=True,
+    )
+    _update_general_field = ResPrototype(
+        "void enkf_config_node_update_general_field(enkf_config_node, \
                                                                                      char*, \
                                                                                      char*, \
                                                                                      char*, \
@@ -105,7 +171,9 @@ class EnkfConfigNode(BaseCClass):
                                                                                      double, \
                                                                                      char*, \
                                                                                      char*, \
-                                                                                     char*)", bind=True)
+                                                                                     char*)",
+        bind=True,
+    )
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
@@ -116,12 +184,12 @@ class EnkfConfigNode(BaseCClass):
     def get_container_key(self, index):
         return self._iget_container_key(index)
 
-    def getImplementationType( self ):
+    def getImplementationType(self):
         """ @rtype: ErtImplType """
         return self._get_impl_type()
 
-    def getVariableType( self ):
-         return self._get_var_type()
+    def getVariableType(self):
+        return self._get_var_type()
 
     def getPointerReference(self):
         return self._get_ref()
@@ -164,7 +232,6 @@ class EnkfConfigNode(BaseCClass):
         """ @rtype:  StringList """
         return self._get_obs_keys().setParent(self)
 
-
     @classmethod
     def createSummaryConfigNode(cls, key, load_fail_type):
         """
@@ -177,7 +244,7 @@ class EnkfConfigNode(BaseCClass):
         return cls._alloc_summary_node(key, load_fail_type)
 
     @classmethod
-    def createFieldConfigNode(cls, key, grid, trans_table = None, forward_init = False):
+    def createFieldConfigNode(cls, key, grid, trans_table=None, forward_init=False):
         """
         @type grid: EclGrid
         @rtype: EnkfConfigNode
@@ -188,7 +255,8 @@ class EnkfConfigNode(BaseCClass):
     def create_ext_param(cls, key, input_keys, output_file=None):
         config = ExtParamConfig(key, input_keys)
         output_file = output_file or key + ".json"
-        node = cls._alloc(EnkfVarType.EXT_PARAMETER,
+        node = cls._alloc(
+            EnkfVarType.EXT_PARAMETER,
             ErtImplType.EXT_PARAM,
             False,
             key,
@@ -196,7 +264,7 @@ class EnkfConfigNode(BaseCClass):
             output_file,
             None,
             ExtParamConfig.from_param(config),
-            )
+        )
         config.convertToCReference(node)  # config gets freed when node dies
         return node
 
@@ -215,39 +283,64 @@ class EnkfConfigNode(BaseCClass):
 
     # GEN DATA FULL creation
     @classmethod
-    def create_gen_data_full(cls, key, result_file, input_format, report_steps,
-                             ecl_file, init_file_fmt, template_file, data_key):
+    def create_gen_data_full(
+        cls,
+        key,
+        result_file,
+        input_format,
+        report_steps,
+        ecl_file,
+        init_file_fmt,
+        template_file,
+        data_key,
+    ):
         active_steps = IntVector()
         for step in report_steps:
             active_steps.append(step)
 
-        config_node = cls._alloc_gen_data_full(key,
-                                               result_file,
-                                               input_format,
-                                               active_steps,
-                                               ecl_file,
-                                               init_file_fmt,
-                                               template_file,
-                                               data_key)
+        config_node = cls._alloc_gen_data_full(
+            key,
+            result_file,
+            input_format,
+            active_steps,
+            ecl_file,
+            init_file_fmt,
+            template_file,
+            data_key,
+        )
         if config_node is None:
-            raise ValueError("Failed to create GEN_DATA with FULL specs node for:%s" % key)
+            raise ValueError(
+                "Failed to create GEN_DATA with FULL specs node for:%s" % key
+            )
 
         return config_node
 
     # GEN PARAM FULL creation
     @classmethod
-    def create_gen_param(cls, key, forward_init, input_format, output_format,
-                         init_file_fmt, ecl_file, min_std_file, template_file, data_key):
+    def create_gen_param(
+        cls,
+        key,
+        forward_init,
+        input_format,
+        output_format,
+        init_file_fmt,
+        ecl_file,
+        min_std_file,
+        template_file,
+        data_key,
+    ):
 
-        config_node = cls._alloc_gen_param_full(key,
-                                                forward_init,
-                                                input_format,
-                                                output_format,
-                                                init_file_fmt,
-                                                ecl_file,
-                                                min_std_file,
-                                                template_file,
-                                                data_key)
+        config_node = cls._alloc_gen_param_full(
+            key,
+            forward_init,
+            input_format,
+            output_format,
+            init_file_fmt,
+            ecl_file,
+            min_std_file,
+            template_file,
+            data_key,
+        )
         if config_node is None:
             raise ValueError("Failed to create GEN_PARAM node for:%s" % key)
 
@@ -255,17 +348,28 @@ class EnkfConfigNode(BaseCClass):
 
     # GEN KW FULL creation
     @classmethod
-    def create_gen_kw(cls, key, template_file, enkf_outfile, parameter_file,
-                      forward_init, mid_std_file, init_file_fmt, gen_kw_format):
+    def create_gen_kw(
+        cls,
+        key,
+        template_file,
+        enkf_outfile,
+        parameter_file,
+        forward_init,
+        mid_std_file,
+        init_file_fmt,
+        gen_kw_format,
+    ):
 
-        config_node = cls._alloc_gen_kw_full(key,
-                                             forward_init,
-                                             gen_kw_format,
-                                             template_file,
-                                             enkf_outfile,
-                                             parameter_file,
-                                             mid_std_file,
-                                             init_file_fmt)
+        config_node = cls._alloc_gen_kw_full(
+            key,
+            forward_init,
+            gen_kw_format,
+            template_file,
+            enkf_outfile,
+            parameter_file,
+            mid_std_file,
+            init_file_fmt,
+        )
         if config_node is None:
             raise ValueError("Failed to create GEN KW node for:%s" % key)
 
@@ -273,16 +377,26 @@ class EnkfConfigNode(BaseCClass):
 
     # SURFACE FULL creation
     @classmethod
-    def create_surface(cls, key, init_file_fmt, output_file, base_surface_file, min_std_file, forward_init):
+    def create_surface(
+        cls,
+        key,
+        init_file_fmt,
+        output_file,
+        base_surface_file,
+        min_std_file,
+        forward_init,
+    ):
 
         if base_surface_file is not None:
-            base_surface_file =  os.path.realpath(base_surface_file)
-        config_node = cls._alloc_surface_full(key,
-                                              forward_init,
-                                              output_file,
-                                              base_surface_file,
-                                              min_std_file,
-                                              init_file_fmt)
+            base_surface_file = os.path.realpath(base_surface_file)
+        config_node = cls._alloc_surface_full(
+            key,
+            forward_init,
+            output_file,
+            base_surface_file,
+            min_std_file,
+            init_file_fmt,
+        )
         if config_node is None:
             raise ValueError("Failed to create SURFACE node for:%s" % key)
 
@@ -290,8 +404,23 @@ class EnkfConfigNode(BaseCClass):
 
     # FIELD FULL creation
     @classmethod
-    def create_field(cls, key, var_type_string, grid, field_trans_table, ecl_file, enkf_infile, forward_init,
-                     init_transform, output_transform, input_transform, min_std_file, min_key, max_key, init_file_fmt):
+    def create_field(
+        cls,
+        key,
+        var_type_string,
+        grid,
+        field_trans_table,
+        ecl_file,
+        enkf_infile,
+        forward_init,
+        init_transform,
+        output_transform,
+        input_transform,
+        min_std_file,
+        min_key,
+        max_key,
+        init_file_fmt,
+    ):
 
         truncation = EnkfTruncationType.TRUNCATE_NONE
         value_min = -1
@@ -308,39 +437,42 @@ class EnkfConfigNode(BaseCClass):
             raise ValueError("Failed to create FIELD node for:%s" % key)
 
         if var_type_string == ConfigKeys.PARAMETER_KEY:
-            config_node._update_parameter_field(ecl_file,
-                                                init_file_fmt,
-                                                min_std_file,
-                                                truncation,
-                                                value_min,
-                                                value_max,
-                                                init_transform,
-                                                output_transform)
+            config_node._update_parameter_field(
+                ecl_file,
+                init_file_fmt,
+                min_std_file,
+                truncation,
+                value_min,
+                value_max,
+                init_transform,
+                output_transform,
+            )
 
         elif var_type_string == ConfigKeys.GENERAL_KEY:
-            config_node._update_general_field(ecl_file,
-                                              enkf_infile,
-                                              init_file_fmt,
-                                              min_std_file,
-                                              truncation,
-                                              value_min,
-                                              value_max,
-                                              init_transform,
-                                              input_transform,
-                                              output_transform)
+            config_node._update_general_field(
+                ecl_file,
+                enkf_infile,
+                init_file_fmt,
+                min_std_file,
+                truncation,
+                value_min,
+                value_max,
+                init_transform,
+                input_transform,
+                output_transform,
+            )
 
         return config_node
 
     # CONTAINER creation
     @classmethod
     def create_container(cls, key):
-        config_node =  cls._alloc_container(key)
+        config_node = cls._alloc_container(key)
 
         if config_node is None:
             raise ValueError("Failed to create CONTAINER node for:%s" % key)
 
         return config_node
-
 
     def free(self):
         self._free()
@@ -349,7 +481,7 @@ class EnkfConfigNode(BaseCClass):
         key = self.getKey()
         vt = self.getVariableType()
         imp = self.getImplementationType()
-        content = 'key = %s, var_type = %s, implementation = %s' % (key, vt, imp)
+        content = "key = %s, var_type = %s, implementation = %s" % (key, vt, imp)
         return self._create_repr(content)
 
     def getModelConfig(self):
@@ -362,11 +494,18 @@ class EnkfConfigNode(BaseCClass):
         elif implementation_type == ErtImplType.GEN_KW:
             return self.getKeywordModelConfig()
         elif implementation_type == ErtImplType.SUMMARY:
-            return SummaryConfig.createCReference(self.getPointerReference(), parent=self)
+            return SummaryConfig.createCReference(
+                self.getPointerReference(), parent=self
+            )
         elif implementation_type == ErtImplType.EXT_PARAM:
-            return ExtParamConfig.createCReference(self.getPointerReference(), parent=self)
+            return ExtParamConfig.createCReference(
+                self.getPointerReference(), parent=self
+            )
         else:
-            print("[EnkfConfigNode::getModelConfig()] Unhandled implementation model type: %i" % implementation_type)
+            print(
+                "[EnkfConfigNode::getModelConfig()] Unhandled implementation model type: %i"
+                % implementation_type
+            )
             # raise NotImplementedError("Unknown model type: %i" % type)
 
     def getKey(self):
@@ -374,7 +513,6 @@ class EnkfConfigNode(BaseCClass):
 
     def __ne__(self, other):
         return not self == other
-
 
     def __eq__(self, other):
         """ @rtype: bool"""

@@ -4,8 +4,8 @@ import traceback
 
 import importlib.util
 
-class ErtScript(object):
 
+class ErtScript(object):
     def __init__(self, ert):
         """
         @type ert: EnKFMain
@@ -13,7 +13,9 @@ class ErtScript(object):
         super(ErtScript, self).__init__()
 
         if not hasattr(self, "run"):
-            raise UserWarning("ErtScript implementations must provide a method run(self, ert, ...)")
+            raise UserWarning(
+                "ErtScript implementations must provide a method run(self, ert, ...)"
+            )
 
         self.__verbose = False
         self.__ert = ert
@@ -88,7 +90,10 @@ class ErtScript(object):
         except AttributeError as e:
             if not hasattr(self, "run"):
                 self.__failed = True
-                return "Script '%s' has not implemented a 'run' function" % self.__class__.__name__
+                return (
+                    "Script '%s' has not implemented a 'run' function"
+                    % self.__class__.__name__
+                )
             self.outputStackTrace(e)
             return None
         except KeyboardInterrupt:
@@ -99,8 +104,9 @@ class ErtScript(object):
         finally:
             self.cleanup()
 
-
-    __module_count = 0 # Need to have unique modules in case of identical object naming in scripts
+    __module_count = (
+        0  # Need to have unique modules in case of identical object naming in scripts
+    )
 
     def outputStackTrace(self, error=None):
         stack_trace = error or "".join(traceback.format_exception(*sys.exc_info()))
@@ -129,12 +135,17 @@ class ErtScript(object):
     def __findErtScriptImplementations(module):
         """ @rtype: ErtScript """
         result = []
-        predicate = lambda member : inspect.isclass(member) and member.__module__ == module.__name__
+        predicate = (
+            lambda member: inspect.isclass(member)
+            and member.__module__ == module.__name__
+        )
         for name, member in inspect.getmembers(module, predicate):
             if ErtScript in inspect.getmro(member):
                 result.append(member)
 
         if len(result) != 1:
-            raise UserWarning("Must have (only) one implementation of ErtScript in a module!")
+            raise UserWarning(
+                "Must have (only) one implementation of ErtScript in a module!"
+            )
 
         return result[0]

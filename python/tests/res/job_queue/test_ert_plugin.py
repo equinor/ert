@@ -34,6 +34,7 @@ class CanceledPlugin(ErtPlugin):
     def getArguments(self, parent=None):
         raise CancelPluginException("Cancel test!")
 
+
 # class GUIPlugin(ErtPlugin):
 #     def getArguments(self, parent=None):
 #         value1 = QInputDialog.getInt(parent, "Enter a number!", "Enter a nice number (nothing else than 5):", value=0, min=0, max=10)
@@ -47,7 +48,6 @@ class CanceledPlugin(ErtPlugin):
 
 
 class ErtPluginTest(ResTest):
-
     def test_simple_ert_plugin(self):
 
         simple_plugin = SimplePlugin("ert")
@@ -59,7 +59,6 @@ class ErtPluginTest(ResTest):
 
         simple_plugin.initializeAndRun([str, int], arguments)
 
-
     def test_full_ert_plugin(self):
         plugin = FullPlugin("ert")
 
@@ -70,17 +69,15 @@ class ErtPluginTest(ResTest):
 
         plugin.initializeAndRun([int, str, float], arguments)
 
-
     def test_cancel_plugin(self):
         plugin = CanceledPlugin("ert")
 
         with self.assertRaises(CancelPluginException):
             plugin.getArguments()
-            
+
     # def test_gui_ert_plugin(self):
     #     app = QApplication([])
     #     plugin = GUIPlugin("ert")
     #
     #     arguments = plugin.getArguments()
     #     plugin.initializeAndRun([int, int], arguments)
-

@@ -9,6 +9,7 @@ from ecl.util.util import BoolVector
 
 from tests.utils import tmpdir
 
+
 @pytest.mark.unstable
 @pytest.mark.equinor_test
 class LoadResultsManuallyTest(ResTest):
@@ -22,11 +23,11 @@ class LoadResultsManuallyTest(ResTest):
             load_into_case = "A1"
             load_from_case = "default"
 
-            load_into =  ert.getEnkfFsManager().getFileSystem(load_into_case)
-            load_from =  ert.getEnkfFsManager().getFileSystem(load_from_case)
+            load_into = ert.getEnkfFsManager().getFileSystem(load_into_case)
+            load_from = ert.getEnkfFsManager().getFileSystem(load_from_case)
 
             ert.getEnkfFsManager().switchFileSystem(load_from)
-            realisations = BoolVector(default_value=True,initial_size=25)
+            realisations = BoolVector(default_value=True, initial_size=25)
             realisations[7] = False
             iteration = 0
 
@@ -59,8 +60,7 @@ class LoadResultsManuallyTest(ResTest):
             realisations[7] = False
             iteration = 0
 
-            run_context = ert.getRunContextENSEMPLE_EXPERIMENT(load_into,
-                                                               realisations)
+            run_context = ert.getRunContextENSEMPLE_EXPERIMENT(load_into, realisations)
 
             loaded = ert.loadFromRunContext(run_context, load_into)
 
@@ -74,4 +74,3 @@ class LoadResultsManuallyTest(ResTest):
             self.assertEqual(24, loaded)
             self.assertEqual(25, len(expected))
             self.assertEqual(25, len(realisations))
-

@@ -14,9 +14,13 @@ class GenDataCollectorTest(ResTest):
                 data = GenDataCollector.loadGenData(ert, "default_0", "RFT_XX", 199)
 
             with self.assertRaises(ValueError):
-                data = GenDataCollector.loadGenData(ert, "default_0", "SNAKE_OIL_OPR_DIFF", 198)
+                data = GenDataCollector.loadGenData(
+                    ert, "default_0", "SNAKE_OIL_OPR_DIFF", 198
+                )
 
-            data1 = GenDataCollector.loadGenData(ert, "default_0", "SNAKE_OIL_OPR_DIFF", 199)
+            data1 = GenDataCollector.loadGenData(
+                ert, "default_0", "SNAKE_OIL_OPR_DIFF", 199
+            )
 
             self.assertFloatEqual(data1[0][0], -0.008206)
             self.assertFloatEqual(data1[24][1], -0.119255)

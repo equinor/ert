@@ -1,4 +1,3 @@
-
 #  Copyright (C) 2013  Equinor ASA, Norway.
 #
 #  The file 'analysis_module_load_status_enum.py' is part of ERT - Ensemble based Reservoir Tool.
@@ -21,14 +20,11 @@ from cwrap import BaseCEnum
 
 class AnalysisModuleLoadStatusEnum(BaseCEnum):
     TYPE_NAME = "analysis_module_load_status_enum"
-    LOAD_OK        = None
+    LOAD_OK = None
     DLOPEN_FAILURE = None
     LOAD_SYMBOL_TABLE_NOT_FOUND = None
+
 
 AnalysisModuleLoadStatusEnum.addEnum("LOAD_OK", 0)
 AnalysisModuleLoadStatusEnum.addEnum("DLOPEN_FAILURE", 1)
 AnalysisModuleLoadStatusEnum.addEnum("LOAD_SYMBOL_TABLE_NOT_FOUND", 2)
-
-
-
-

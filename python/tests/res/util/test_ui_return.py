@@ -67,5 +67,9 @@ class UIReturnTest(ResTest):
         self.assertEqual(errorList, [])
 
     def test_status_enum(self):
-        source_file_path = os.path.join("lib", "include", "ert", "res_util", "ui_return.hpp")
-        self.assertEnumIsFullyDefined(UIReturnStatusEnum, "ui_return_status_enum", source_file_path)
+        source_file_path = os.path.join(
+            "lib", "include", "ert", "res_util", "ui_return.hpp"
+        )
+        self.assertEnumIsFullyDefined(
+            UIReturnStatusEnum, "ui_return_status_enum", source_file_path
+        )

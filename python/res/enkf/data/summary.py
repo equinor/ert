@@ -19,21 +19,18 @@ from res import ResPrototype
 
 class Summary(BaseCClass):
     TYPE_NAME = "summary"
-    _alloc       = ResPrototype("void*   summary_alloc(summary_config)", bind = False)
-    _free        = ResPrototype("void    summary_free(summary)")
-    _iget_value  = ResPrototype("double  summary_get(summary, int)")
-    _length      = ResPrototype("int     summary_length(summary)")
-
+    _alloc = ResPrototype("void*   summary_alloc(summary_config)", bind=False)
+    _free = ResPrototype("void    summary_free(summary)")
+    _iget_value = ResPrototype("double  summary_get(summary, int)")
+    _length = ResPrototype("int     summary_length(summary)")
 
     def __init__(self, config):
         c_ptr = self._alloc(config)
         self._config = config
         super(Summary, self).__init__(c_ptr)
 
-
     def __len__(self):
         return self._length()
-
 
     def __repr__(self):
         return "Summary(key=%s, length=%d) %s" % (self.key, len(self), self._ad_str())
@@ -45,19 +42,18 @@ class Summary(BaseCClass):
             raise ValueError("Invalid index")
 
         if index >= len(self):
-            raise IndexError("Invalid index:%d  Valid range: [0,%d>" % (index, len(self)))
+            raise IndexError(
+                "Invalid index:%d  Valid range: [0,%d>" % (index, len(self))
+            )
 
         return self._iget_value(index)
-
 
     def value(self, report_step):
         return self[report_step]
 
-
     @property
     def config(self):
         return self._config
-
 
     @property
     def key(self):

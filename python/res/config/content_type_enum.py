@@ -22,30 +22,31 @@ from res import ResPrototype
 
 class ContentTypeEnum(BaseCEnum):
     TYPE_NAME = "config_content_type_enum"
-    CONFIG_STRING        = None
-    CONFIG_INT           = None
-    CONFIG_FLOAT         = None
-    CONFIG_PATH          = None
+    CONFIG_STRING = None
+    CONFIG_INT = None
+    CONFIG_FLOAT = None
+    CONFIG_PATH = None
     CONFIG_EXISTING_PATH = None
-    CONFIG_BOOL          = None
-    CONFIG_CONFIG        = None
-    CONFIG_BYTESIZE      = None
-    CONFIG_EXECUTABLE    = None
-    CONFIG_ISODATE       = None
-    CONFIG_INVALID       = None
-    CONFIG_RUNTIME_FILE  = None
-    CONFIG_RUNTIME_INT   = None
+    CONFIG_BOOL = None
+    CONFIG_CONFIG = None
+    CONFIG_BYTESIZE = None
+    CONFIG_EXECUTABLE = None
+    CONFIG_ISODATE = None
+    CONFIG_INVALID = None
+    CONFIG_RUNTIME_FILE = None
+    CONFIG_RUNTIME_INT = None
 
-    _valid_string = ResPrototype("bool config_schema_item_valid_string(config_content_type_enum ,  char*, bool)")
-    _sscanf_bool = EclPrototype("bool util_sscanf_bool( char* , bool*)", bind = False)
+    _valid_string = ResPrototype(
+        "bool config_schema_item_valid_string(config_content_type_enum ,  char*, bool)"
+    )
+    _sscanf_bool = EclPrototype("bool util_sscanf_bool( char* , bool*)", bind=False)
 
-    def valid_string(self, string, runtime = False):
+    def valid_string(self, string, runtime=False):
         return self._valid_string(string, runtime)
 
-
-    def convert_string(self,string):
-        if not self.valid_string(string, runtime = True):
-            raise ValueError("Can not convert %s to %s" % (string,self))
+    def convert_string(self, string):
+        if not self.valid_string(string, runtime=True):
+            raise ValueError("Can not convert %s to %s" % (string, self))
 
         if self == ContentTypeEnum.CONFIG_INT:
             return int(string)
@@ -55,11 +56,10 @@ class ContentTypeEnum(BaseCEnum):
 
         if self == ContentTypeEnum.CONFIG_BOOL:
             bool_value = ctypes.c_bool()
-            ContentTypeEnum._sscanf_bool( string , ctypes.byref( bool_value ))
+            ContentTypeEnum._sscanf_bool(string, ctypes.byref(bool_value))
             return bool_value.value
 
         return string
-
 
 
 ContentTypeEnum.addEnum("CONFIG_STRING", 1)

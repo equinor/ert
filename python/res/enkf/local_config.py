@@ -32,34 +32,56 @@ class LocalConfig(BaseCClass):
     for validation.
 
     """
+
     TYPE_NAME = "local_config"
 
-    _free            = ResPrototype("void   local_config_free(local_config)")
-    _clear           = ResPrototype("void   local_config_clear(local_config)")
-    _create_ministep = ResPrototype("void   local_config_alloc_ministep(local_config, char*, analysis_module)")
-    _attach_ministep = ResPrototype("void   local_updatestep_add_ministep(local_updatestep, local_ministep)", bind=False)
-    _create_obsdata  = ResPrototype("void   local_config_alloc_obsdata(local_config, char*)")
-    _create_dataset  = ResPrototype("void   local_config_alloc_dataset(local_config, char*)")
-    _has_obsdata     = ResPrototype("bool   local_config_has_obsdata(local_config, char*)")
-    _has_dataset     = ResPrototype("bool   local_config_has_dataset(local_config, char*)")
+    _free = ResPrototype("void   local_config_free(local_config)")
+    _clear = ResPrototype("void   local_config_clear(local_config)")
+    _create_ministep = ResPrototype(
+        "void   local_config_alloc_ministep(local_config, char*, analysis_module)"
+    )
+    _attach_ministep = ResPrototype(
+        "void   local_updatestep_add_ministep(local_updatestep, local_ministep)",
+        bind=False,
+    )
+    _create_obsdata = ResPrototype(
+        "void   local_config_alloc_obsdata(local_config, char*)"
+    )
+    _create_dataset = ResPrototype(
+        "void   local_config_alloc_dataset(local_config, char*)"
+    )
+    _has_obsdata = ResPrototype("bool   local_config_has_obsdata(local_config, char*)")
+    _has_dataset = ResPrototype("bool   local_config_has_dataset(local_config, char*)")
 
-    _get_updatestep  = ResPrototype("local_updatestep_ref local_config_get_updatestep(local_config)")
-    _get_ministep    = ResPrototype("local_ministep_ref   local_config_get_ministep(local_config, char*)")
-    _get_obsdata     = ResPrototype("local_obsdata_ref    local_config_get_obsdata(local_config, char*)")
-    _copy_obsdata    = ResPrototype("local_obsdata_ref    local_config_alloc_obsdata_copy(local_config, char*, char*)")
-    _get_dataset     = ResPrototype("local_dataset_ref    local_config_get_dataset(local_config, char*)")
-    _copy_dataset    = ResPrototype("local_dataset_ref    local_config_alloc_dataset_copy(local_config, char*, char*)")
-    _smry_fprintf    = ResPrototype("void local_config_summary_fprintf(local_config, char*)")
-
+    _get_updatestep = ResPrototype(
+        "local_updatestep_ref local_config_get_updatestep(local_config)"
+    )
+    _get_ministep = ResPrototype(
+        "local_ministep_ref   local_config_get_ministep(local_config, char*)"
+    )
+    _get_obsdata = ResPrototype(
+        "local_obsdata_ref    local_config_get_obsdata(local_config, char*)"
+    )
+    _copy_obsdata = ResPrototype(
+        "local_obsdata_ref    local_config_alloc_obsdata_copy(local_config, char*, char*)"
+    )
+    _get_dataset = ResPrototype(
+        "local_dataset_ref    local_config_get_dataset(local_config, char*)"
+    )
+    _copy_dataset = ResPrototype(
+        "local_dataset_ref    local_config_alloc_dataset_copy(local_config, char*, char*)"
+    )
+    _smry_fprintf = ResPrototype(
+        "void local_config_summary_fprintf(local_config, char*)"
+    )
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
-    def initAttributes(self , ensemble_config , obs , grid):
+    def initAttributes(self, ensemble_config, obs, grid):
         self.ensemble_config = ensemble_config
         self.obs = obs
         self.grid = grid
-
 
     def __getObservations(self):
         return self.obs
@@ -77,7 +99,7 @@ class LocalConfig(BaseCClass):
     def clear(self):
         self._clear()
 
-    def createMinistep(self, mini_step_key, analysis_module = None):
+    def createMinistep(self, mini_step_key, analysis_module=None):
         """ @rtype: Ministep """
         assert isinstance(mini_step_key, str)
         if analysis_module:
@@ -93,18 +115,16 @@ class LocalConfig(BaseCClass):
 
         self._create_obsdata(obsdata_key)
         obsdata = self.getObsdata(obsdata_key)
-        obsdata.initObservations( self.__getObservations() )
+        obsdata.initObservations(self.__getObservations())
         return obsdata
-
 
     def copyObsdata(self, src_key, target_key):
         """ @rtype: Obsdata """
         assert isinstance(src_key, str)
         assert isinstance(target_key, str)
         obsdata = self._copy_obsdata(src_key, target_key)
-        obsdata.initObservations( self.__getObservations() )
+        obsdata.initObservations(self.__getObservations())
         return obsdata
-
 
     def createDataset(self, dataset_key):
         """ @rtype: Dataset """
@@ -114,23 +134,20 @@ class LocalConfig(BaseCClass):
 
         self._create_dataset(dataset_key)
         data = self.getDataset(dataset_key)
-        data.initEnsembleConfig( self.__getEnsembleConfig() )
+        data.initEnsembleConfig(self.__getEnsembleConfig())
         return data
-
 
     def copyDataset(self, src_key, target_key):
         """ @rtype: Dataset """
         assert isinstance(src_key, str)
         assert isinstance(target_key, str)
         data = self._copy_dataset(src_key, target_key)
-        data.initEnsembleConfig( self.__getEnsembleConfig() )
+        data.initEnsembleConfig(self.__getEnsembleConfig())
         return data
-
 
     def getUpdatestep(self):
         """ @rtype: UpdateStep """
         return self._get_updatestep()
-
 
     def getMinistep(self, mini_step_key):
         """ @rtype: Ministep """
@@ -147,12 +164,10 @@ class LocalConfig(BaseCClass):
         assert isinstance(dataset_key, str)
         return self._get_dataset(dataset_key)
 
-
     def attachMinistep(self, update_step, mini_step):
         assert isinstance(mini_step, LocalMinistep)
         assert isinstance(update_step, LocalUpdateStep)
         self._attach_ministep(update_step, mini_step)
-
 
     def writeSummaryFile(self, filename):
         """

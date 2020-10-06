@@ -1,4 +1,3 @@
-
 #  Copyright (C) 2011  Equinor ASA, Norway.
 #
 #  The file 'matrix.py' is part of ERT - Ensemble based Reservoir Tool.
@@ -28,52 +27,59 @@
 # choice.
 
 
-from cwrap import BaseCClass,CFILE
+from cwrap import BaseCClass, CFILE
 from res import ResPrototype
 
 
 class Matrix(BaseCClass):
-    _matrix_alloc      = ResPrototype("void*  matrix_alloc(int, int )" , bind = False)
-    _matrix_alloc_identity = ResPrototype("matrix_obj  matrix_alloc_identity( int )" , bind = False)
-    _alloc_transpose   = ResPrototype("matrix_obj  matrix_alloc_transpose(matrix)")
+    _matrix_alloc = ResPrototype("void*  matrix_alloc(int, int )", bind=False)
+    _matrix_alloc_identity = ResPrototype(
+        "matrix_obj  matrix_alloc_identity( int )", bind=False
+    )
+    _alloc_transpose = ResPrototype("matrix_obj  matrix_alloc_transpose(matrix)")
     _inplace_transpose = ResPrototype("void        matrix_inplace_transpose(matrix)")
-    _copy              = ResPrototype("matrix_obj  matrix_alloc_copy(matrix)" )
-    _sub_copy          = ResPrototype("matrix_obj  matrix_alloc_sub_copy(matrix, int , int , int , int)" )
-    _free              = ResPrototype("void   matrix_free(matrix)")
-    _iget              = ResPrototype("double matrix_iget( matrix , int , int )")
-    _iset              = ResPrototype("void   matrix_iset( matrix , int , int , double)")
-    _set_all           = ResPrototype("void   matrix_scalar_set( matrix , double)")
-    _scale_column      = ResPrototype("void matrix_scale_column(matrix , int , double)")
-    _scale_row         = ResPrototype("void matrix_scale_row(matrix , int , double)")
-    _copy_column       = ResPrototype("void matrix_copy_column(matrix , matrix , int , int)" , bind = False)
-    _rows              = ResPrototype("int matrix_get_rows(matrix)")
-    _columns           = ResPrototype("int matrix_get_columns(matrix)")
-    _equal             = ResPrototype("bool matrix_equal(matrix, matrix)")
-    _pretty_print      = ResPrototype("void matrix_pretty_print(matrix, char*, char*)")
-    _fprint            = ResPrototype("void matrix_fprintf(matrix, char*, FILE)")
-    _random_init       = ResPrototype("void matrix_random_init(matrix, rng)")
-    _dump_csv          = ResPrototype("void matrix_dump_csv(matrix, char*)")
+    _copy = ResPrototype("matrix_obj  matrix_alloc_copy(matrix)")
+    _sub_copy = ResPrototype(
+        "matrix_obj  matrix_alloc_sub_copy(matrix, int , int , int , int)"
+    )
+    _free = ResPrototype("void   matrix_free(matrix)")
+    _iget = ResPrototype("double matrix_iget( matrix , int , int )")
+    _iset = ResPrototype("void   matrix_iset( matrix , int , int , double)")
+    _set_all = ResPrototype("void   matrix_scalar_set( matrix , double)")
+    _scale_column = ResPrototype("void matrix_scale_column(matrix , int , double)")
+    _scale_row = ResPrototype("void matrix_scale_row(matrix , int , double)")
+    _copy_column = ResPrototype(
+        "void matrix_copy_column(matrix , matrix , int , int)", bind=False
+    )
+    _rows = ResPrototype("int matrix_get_rows(matrix)")
+    _columns = ResPrototype("int matrix_get_columns(matrix)")
+    _equal = ResPrototype("bool matrix_equal(matrix, matrix)")
+    _pretty_print = ResPrototype("void matrix_pretty_print(matrix, char*, char*)")
+    _fprint = ResPrototype("void matrix_fprintf(matrix, char*, FILE)")
+    _random_init = ResPrototype("void matrix_random_init(matrix, rng)")
+    _dump_csv = ResPrototype("void matrix_dump_csv(matrix, char*)")
 
     # Requires BLAS. If the library does not have the
     # matrix_alloc_matmul() function the prototype will have _func =
     # None, and NotImplementedError( ) will be raised int the
     # __call__() method if we try to use this function.
     try:
-        _alloc_matmul = ResPrototype("matrix_obj  matrix_alloc_matmul(matrix, matrix)" , bind = False)
+        _alloc_matmul = ResPrototype(
+            "matrix_obj  matrix_alloc_matmul(matrix, matrix)", bind=False
+        )
     except AttributeError:
         _alloc_matmul = None
 
     # Requires BLAS!
     @classmethod
-    def matmul(cls, m1,m2):
+    def matmul(cls, m1, m2):
         """
         Will return a new matrix which is matrix product of m1 and m2.
         """
-        if m1.columns( ) == m2.rows( ):
-            return cls._alloc_matmul( m1, m2)
+        if m1.columns() == m2.rows():
+            return cls._alloc_matmul(m1, m2)
         else:
             raise ValueError("Matrix size mismatch")
-
 
     def __init__(self, rows, columns, value=0):
         c_ptr = self._matrix_alloc(rows, columns)
@@ -81,13 +87,15 @@ class Matrix(BaseCClass):
         self.setAll(value)
 
     def copy(self):
-        return self._copy( )
+        return self._copy()
 
     @classmethod
     def identity(cls, dim):
         """Returns a dim x dim identity matrix."""
         if dim < 1:
-            raise ValueError('Identity matrix must have positive size, %d not allowed.' % dim)
+            raise ValueError(
+                "Identity matrix must have positive size, %d not allowed." % dim
+            )
         return cls._matrix_alloc_identity(dim)
 
     def subCopy(self, row_offset, column_offset, rows, columns):
@@ -103,8 +111,7 @@ class Matrix(BaseCClass):
         if column_offset + columns > self.columns():
             raise ValueError("Invalid columns")
 
-        return self._sub_copy( row_offset , column_offset , rows , columns)
-
+        return self._sub_copy(row_offset, column_offset, rows, columns)
 
     def __str__(self):
         s = ""
@@ -141,16 +148,15 @@ class Matrix(BaseCClass):
         """ @rtype: int """
         return self._rows()
 
-    def transpose(self , inplace = False):
+    def transpose(self, inplace=False):
         """
         Will transpose the matrix. By default a transposed copy is returned.
         """
         if inplace:
-            self._inplace_transpose( )
+            self._inplace_transpose()
             return self
         else:
-            return self._alloc_transpose( )
-
+            return self._alloc_transpose()
 
     def columns(self):
         """ @rtype: int """
@@ -162,7 +168,9 @@ class Matrix(BaseCClass):
 
     def scaleColumn(self, column, factor):
         if not 0 <= column < self.columns():
-            raise IndexError("Expected column: [0,%d) got:%d" % (self.columns(), column))
+            raise IndexError(
+                "Expected column: [0,%d) got:%d" % (self.columns(), column)
+            )
         self._scale_column(column, factor)
 
     def scaleRow(self, row, factor):
@@ -185,15 +193,13 @@ class Matrix(BaseCClass):
             # The underlying C function accepts column copy between matrices.
             Matrix._copy_column(self, self, target_column, src_column)
 
-
-    def dumpCSV(self , filename):
-        self._dump_csv( filename )
-
+    def dumpCSV(self, filename):
+        self._dump_csv(filename)
 
     def prettyPrint(self, name, fmt="%6.3g"):
         self._pretty_print(name, fmt)
 
-    def fprint(self , fileH , fmt = "%g "):
+    def fprint(self, fileH, fmt="%g "):
         """Will print ASCII representation of matrix.
 
         The fileH argument should point to an open Python
@@ -217,14 +223,10 @@ class Matrix(BaseCClass):
          6 7 8
 
         """
-        self._fprint( fmt , CFILE( fileH))
-
+        self._fprint(fmt, CFILE(fileH))
 
     def randomInit(self, rng):
         self._random_init(rng)
 
     def free(self):
         self._free()
-
-
-

@@ -23,25 +23,20 @@ from res.enkf import ResConfig, RNGConfig, ConfigKeys
 class RNGConfigTest(ResTest):
     def create_base_config(self):
         return {
-                 "INTERNALS" :
-                 {
-                   "CONFIG_DIRECTORY" : "simple_config",
-                 },
-
-                 "SIMULATION" :
-                 {
-                   "QUEUE_SYSTEM" :
-                   {
-                     "JOBNAME" : "Job%d",
-                   },
-
-                   "RUNPATH"            : "/tmp/simulations/run%d",
-                   "NUM_REALIZATIONS"   : 1,
-                   "JOB_SCRIPT"         : "script.sh",
-                   "ENSPATH"            : "Ensemble",
-                   "LOGGING" : { "LOG_LEVEL" : "DEBUG" }
-                 }
-               }
+            "INTERNALS": {
+                "CONFIG_DIRECTORY": "simple_config",
+            },
+            "SIMULATION": {
+                "QUEUE_SYSTEM": {
+                    "JOBNAME": "Job%d",
+                },
+                "RUNPATH": "/tmp/simulations/run%d",
+                "NUM_REALIZATIONS": 1,
+                "JOB_SCRIPT": "script.sh",
+                "ENSPATH": "Ensemble",
+                "LOGGING": {"LOG_LEVEL": "DEBUG"},
+            },
+        }
 
     def test_dict_constructor(self):
         config = self.create_base_config()

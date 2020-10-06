@@ -23,19 +23,19 @@ from res.enkf import ConfigKeys
 
 class RNGConfig(BaseCClass):
     TYPE_NAME = "rng_config"
-    _alloc        = ResPrototype("void* rng_config_alloc(config_content)", bind=False)
-    _alloc_full   = ResPrototype("void* rng_config_alloc_full(char*)", bind=False)
-    _free         = ResPrototype("void rng_config_free(rng_config)")
+    _alloc = ResPrototype("void* rng_config_alloc(config_content)", bind=False)
+    _alloc_full = ResPrototype("void* rng_config_alloc_full(char*)", bind=False)
+    _free = ResPrototype("void rng_config_free(rng_config)")
     _rng_alg_type = ResPrototype("rng_alg_type_enum rng_config_get_type(rng_config)")
-    _random_seed  = ResPrototype("char* rng_config_get_random_seed(rng_config)")
+    _random_seed = ResPrototype("char* rng_config_get_random_seed(rng_config)")
 
     def __init__(self, config_content=None, config_dict=None):
         if config_content and config_dict:
-            raise ValueError('RNGConfig can not be instantiated with both config types')
+            raise ValueError("RNGConfig can not be instantiated with both config types")
 
         if not (config_content or config_dict):
             raise ValueError(
-                'RNGConfig can not be instantiated without any config objects'
+                "RNGConfig can not be instantiated without any config objects"
             )
 
         if config_content:
@@ -47,7 +47,7 @@ class RNGConfig(BaseCClass):
             c_ptr = None
 
         if c_ptr is None:
-            raise ValueError('Failed to construct RNGConfig instance')
+            raise ValueError("Failed to construct RNGConfig instance")
 
         super(RNGConfig, self).__init__(c_ptr)
 

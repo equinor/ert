@@ -1,8 +1,8 @@
 import os
 import stat
 
-class WorkflowCommon(object):
 
+class WorkflowCommon(object):
     @staticmethod
     def createExternalDumpJob():
         with open("dump_job", "w") as f:
@@ -22,22 +22,23 @@ class WorkflowCommon(object):
             f.write("f = open('%s' % sys.argv[1], 'w')\n")
             f.write("f.write('%s' % sys.argv[2])\n")
             f.write("f.close()\n")
-            f.write("print(\"Hello World\")")
+            f.write('print("Hello World")')
 
         with open("dump_failing.py", "w") as f:
             f.write("#!/usr/bin/env python\n")
-            f.write("print(\"Hello Failing\")\n")
+            f.write('print("Hello Failing")\n')
             f.write("raise Exception")
 
         st = os.stat("dump.py")
-        os.chmod("dump.py", st.st_mode | stat.S_IEXEC) # | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+        os.chmod(
+            "dump.py", st.st_mode | stat.S_IEXEC
+        )  # | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         st = os.stat("dump_failing.py")
         os.chmod("dump_failing.py", st.st_mode | stat.S_IEXEC)
 
         with open("dump_workflow", "w") as f:
             f.write("DUMP dump1 dump_text_1\n")
             f.write("DUMP dump2 dump_<PARAM>_2\n")
-
 
     @staticmethod
     def createInternalFunctionJob():
@@ -59,7 +60,6 @@ class WorkflowCommon(object):
             f.write("ARG_TYPE 3 BOOL\n")
             f.write("ARG_TYPE 4 STRING\n")
 
-
         with open("compare_job", "w") as f:
             f.write("INTERNAL True\n")
             f.write("FUNCTION strcmp\n")
@@ -67,7 +67,6 @@ class WorkflowCommon(object):
             f.write("MAX_ARG 2\n")
             f.write("ARG_TYPE 0 STRING\n")
             f.write("ARG_TYPE 1 STRING\n")
-
 
     @staticmethod
     def createErtScriptsJob():
@@ -78,7 +77,6 @@ class WorkflowCommon(object):
             f.write("    def run(self, arg1, arg2):\n")
             f.write("        return arg1 - arg2\n")
 
-
         with open("subtract_script_job", "w") as f:
             f.write("INTERNAL True\n")
             f.write("SCRIPT subtract_script.py\n")
@@ -86,7 +84,6 @@ class WorkflowCommon(object):
             f.write("MAX_ARG 2\n")
             f.write("ARG_TYPE 0 FLOAT\n")
             f.write("ARG_TYPE 1 FLOAT\n")
-
 
     @staticmethod
     def createWaitJob():
@@ -114,15 +111,16 @@ class WorkflowCommon(object):
             f.write("\n")
             f.write("        return None\n")
 
-
         with open("external_wait_job.sh", "w") as f:
             f.write("#!/usr/bin/env bash\n")
-            f.write("echo \"text\" > wait_started_$1\n")
+            f.write('echo "text" > wait_started_$1\n')
             f.write("sleep $2\n")
-            f.write("echo \"text\" > wait_finished_$1\n")
+            f.write('echo "text" > wait_finished_$1\n')
 
         st = os.stat("external_wait_job.sh")
-        os.chmod("external_wait_job.sh", st.st_mode | stat.S_IEXEC) # | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+        os.chmod(
+            "external_wait_job.sh", st.st_mode | stat.S_IEXEC
+        )  # | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 
         with open("wait_job", "w") as f:
             f.write("INTERNAL True\n")
@@ -139,7 +137,6 @@ class WorkflowCommon(object):
             f.write("MAX_ARG 2\n")
             f.write("ARG_TYPE 0 INT\n")
             f.write("ARG_TYPE 1 INT\n")
-
 
         with open("wait_workflow", "w") as f:
             f.write("WAIT 0 1\n")

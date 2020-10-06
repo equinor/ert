@@ -2,13 +2,13 @@ from .ert_script import ErtScript
 from threading import Thread
 import time
 
+
 class CancelPluginException(Exception):
     def __init__(self, cancel_message):
         super(CancelPluginException, self).__init__(cancel_message)
 
 
 class ErtPlugin(ErtScript):
-
     def getArguments(self, parent=None):
         """ @rtype: list """
         return []
@@ -23,7 +23,9 @@ class ErtPlugin(ErtScript):
 
     def checkIfCancelled(self):
         if self.isCancelled():
-            raise CancelPluginException("Plugin '%s' cancelled by user!" % self.getName())
+            raise CancelPluginException(
+                "Plugin '%s' cancelled by user!" % self.getName()
+            )
 
     def startCancellableThread(self, runFunction, cancelFunction):
         runFunction.return_value = None

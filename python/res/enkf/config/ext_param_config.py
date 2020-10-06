@@ -21,18 +21,32 @@ from ecl.util.util import StringList
 
 class ExtParamConfig(BaseCClass):
     TYPE_NAME = "ext_param_config"
-    _alloc     = ResPrototype("void*   ext_param_config_alloc( char*, stringlist )", bind = False)
-    _size      = ResPrototype("int     ext_param_config_get_data_size( ext_param_config )")
-    _iget_key  = ResPrototype("char*   ext_param_config_iget_key( ext_param_config , int)")
-    _free      = ResPrototype("void    ext_param_config_free( ext_param_config )")
-    _has_key   = ResPrototype("bool    ext_param_config_has_key( ext_param_config , char* )")
-    _key_index = ResPrototype("int     ext_param_config_get_key_index(ext_param_config, char*)")
-    _ikey_get_suffix_count = ResPrototype("int   ext_param_config_ikey_get_suffix_count(ext_param_config, int)")
-    _ikey_iget_suffix = ResPrototype("char* ext_param_config_ikey_iget_suffix(ext_param_config, int, int)")
-    _ikey_set_suffixes = ResPrototype("void ext_param_config_ikey_set_suffixes(ext_param_config, int, stringlist)")
+    _alloc = ResPrototype(
+        "void*   ext_param_config_alloc( char*, stringlist )", bind=False
+    )
+    _size = ResPrototype("int     ext_param_config_get_data_size( ext_param_config )")
+    _iget_key = ResPrototype(
+        "char*   ext_param_config_iget_key( ext_param_config , int)"
+    )
+    _free = ResPrototype("void    ext_param_config_free( ext_param_config )")
+    _has_key = ResPrototype(
+        "bool    ext_param_config_has_key( ext_param_config , char* )"
+    )
+    _key_index = ResPrototype(
+        "int     ext_param_config_get_key_index(ext_param_config, char*)"
+    )
+    _ikey_get_suffix_count = ResPrototype(
+        "int   ext_param_config_ikey_get_suffix_count(ext_param_config, int)"
+    )
+    _ikey_iget_suffix = ResPrototype(
+        "char* ext_param_config_ikey_iget_suffix(ext_param_config, int, int)"
+    )
+    _ikey_set_suffixes = ResPrototype(
+        "void ext_param_config_ikey_set_suffixes(ext_param_config, int, stringlist)"
+    )
 
     def __init__(self, key, input_keys):
-        """ Create an ExtParamConfig for @key with the given @input_keys
+        """Create an ExtParamConfig for @key with the given @input_keys
 
         @input_keys can be either a list of keys as strings or a dict with
         keys as strings and a list of suffixes for each key.
@@ -46,11 +60,9 @@ class ExtParamConfig(BaseCClass):
             suffixmap = {}
 
         if len(keys) != len(set(keys)):
-            raise ValueError(
-                "Duplicate keys for key '{}' - keys: {}"
-                .format(key, keys))
+            raise ValueError("Duplicate keys for key '{}' - keys: {}".format(key, keys))
 
-        keys = StringList( initial = input_keys )
+        keys = StringList(initial=input_keys)
         c_ptr = self._alloc(key, keys)
         super(ExtParamConfig, self).__init__(c_ptr)
 
@@ -58,25 +70,30 @@ class ExtParamConfig(BaseCClass):
             suffixlist = StringList(initial=suffixes)
             if len(suffixes) == 0:
                 raise ValueError(
-                    "No suffixes for key '{}/{}' - suffixes: {}"
-                    .format(key, k, suffixes))
+                    "No suffixes for key '{}/{}' - suffixes: {}".format(
+                        key, k, suffixes
+                    )
+                )
             if len(suffixes) != len(set(suffixes)):
                 raise ValueError(
-                    "Duplicate suffixes for key '{}/{}' - suffixes: {}"
-                    .format(key, k, suffixes))
+                    "Duplicate suffixes for key '{}/{}' - suffixes: {}".format(
+                        key, k, suffixes
+                    )
+                )
             if any(len(s) == 0 for s in suffixes):
                 raise ValueError(
-                    "Empty suffix encountered for key '{}/{}' - suffixes: {}"
-                    .format(key, k, suffixes))
+                    "Empty suffix encountered for key '{}/{}' - suffixes: {}".format(
+                        key, k, suffixes
+                    )
+                )
             self._ikey_set_suffixes(self._key_index(k), suffixlist)
 
-
     def __len__(self):
-        return self._size( )
+        return self._size()
 
     def __contains__(self, key):
-        """ Check if the @key is present in the configuration
-        
+        """Check if the @key is present in the configuration
+
         @key can be a single string or a tuple (key, suffix)
         """
         if isinstance(key, tuple):
@@ -87,11 +104,10 @@ class ExtParamConfig(BaseCClass):
             return sfx in self._get_suffixes(kidx)
 
         # assume key is just a string
-        return self._has_key( key )
-
+        return self._has_key(key)
 
     def __getitem__(self, index):
-        """ Retrieve an item from the configuration
+        """Retrieve an item from the configuration
 
         If @index is a string, assumes its a key and retrieves the suffixes
         for that key
@@ -102,7 +118,7 @@ class ExtParamConfig(BaseCClass):
         if isinstance(index, string_types):
             index = self._key_index(index)
             if index < 0:
-                raise IndexError("Key \"{}\" not found".format(index))
+                raise IndexError('Key "{}" not found'.format(index))
             return self._get_suffixes(index)
 
         # assume index is an integer
@@ -110,8 +126,8 @@ class ExtParamConfig(BaseCClass):
             return index + len(self)
         if index >= len(self):
             raise IndexError(
-                "Invalid key index {}. Valid range is [0, {})"
-                .format(index, len(self)))
+                "Invalid key index {}. Valid range is [0, {})".format(index, len(self))
+            )
         key = self._iget_key(index)
         suffixes = self._get_suffixes(index)
         return key, suffixes
@@ -119,7 +135,6 @@ class ExtParamConfig(BaseCClass):
     def _get_suffixes(self, kidx):
         suffix_count = self._ikey_get_suffix_count(kidx)
         return [self._ikey_iget_suffix(kidx, s) for s in range(suffix_count)]
-
 
     def items(self):
         index = 0
@@ -132,4 +147,4 @@ class ExtParamConfig(BaseCClass):
             yield k
 
     def free(self):
-        self._free( )
+        self._free()

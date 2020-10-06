@@ -22,6 +22,7 @@ from tests import ResTest
 from res.enkf import QueueConfig, ConfigKeys
 from res.config import ConfigContent
 
+
 class QueueConfigTest(ResTest):
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")
@@ -36,15 +37,15 @@ class QueueConfigTest(ResTest):
             queue_config_copy = queue_config.create_local_copy()
 
             self.assertEqual(
-                    queue_config.has_job_script(),
-                    queue_config_copy.has_job_script()
-                    )
-
+                queue_config.has_job_script(), queue_config_copy.has_job_script()
+            )
 
             config_content = ConfigContent(config_file)
 
             with self.assertRaises(ValueError):
-                queue_config = QueueConfig(user_config_file=config_file, config_content=config_content)
+                queue_config = QueueConfig(
+                    user_config_file=config_file, config_content=config_content
+                )
 
     def test_queue_config_constructor(self):
         with TestAreaContext("queue_config_constructor_test") as work_area:
@@ -57,11 +58,8 @@ class QueueConfigTest(ResTest):
                 ConfigKeys.MAX_SUBMIT: 2,
                 ConfigKeys.NUM_CPU: 0,
                 ConfigKeys.QUEUE_OPTION: [
-                    {
-                        ConfigKeys.NAME: "MAX_RUNNING",
-                        ConfigKeys.VALUE: "50"
-                    }
-                ]
+                    {ConfigKeys.NAME: "MAX_RUNNING", ConfigKeys.VALUE: "50"}
+                ],
             }
 
             queue_config_file = QueueConfig(user_config_file=config_file)

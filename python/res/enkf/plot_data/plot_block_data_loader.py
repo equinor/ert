@@ -4,22 +4,21 @@ from ecl.util.util import DoubleVector, BoolVector, ThreadPool
 
 
 class PlotBlockDataLoader(object):
-
     def __init__(self, obs_vector):
         """
         @type obs_vector: ObsVector
         """
         if obs_vector is None:
-            raise ArgumentError('Cannot construct PlotBlockDataLoader without obs_vector.  Was None.')
+            raise ArgumentError(
+                "Cannot construct PlotBlockDataLoader without obs_vector.  Was None."
+            )
         super(PlotBlockDataLoader, self).__init__()
         self.__obs_vector = obs_vector
         self.__permutation_vector = None
 
-
     def getBlockObservation(self, report_step):
         """ @rtype: BlockObservation """
         return self.__obs_vector.getNode(report_step)
-
 
     def getDepthValues(self, report_step):
         """ @rtype: DoubleVector """
@@ -32,13 +31,12 @@ class PlotBlockDataLoader(object):
 
         return depth
 
-
     def load(self, fs, report_step, input_mask=None):
         """
-         @type fs: EnkfFs
-         @type report_step: int
-         @type input_mask: BoolVector
-         @rtype: PlotBlockData
+        @type fs: EnkfFs
+        @type report_step: int
+        @type input_mask: BoolVector
+        @rtype: PlotBlockData
         """
 
         state_map = fs.getStateMap()
@@ -61,13 +59,14 @@ class PlotBlockDataLoader(object):
         thread_pool = ThreadPool()
         for index in range(ensemble_size):
             if mask[index]:
-                thread_pool.addTask(self.loadVector, plot_block_data, fs, report_step, index)
+                thread_pool.addTask(
+                    self.loadVector, plot_block_data, fs, report_step, index
+                )
 
         thread_pool.nonBlockingStart()
         thread_pool.join()
 
         return plot_block_data
-
 
     def loadVector(self, plot_block_data, fs, report_step, realization_number):
         """
@@ -79,7 +78,9 @@ class PlotBlockDataLoader(object):
         """
         config_node = self.__obs_vector.getConfigNode()
 
-        is_private_container = config_node.getImplementationType() == ErtImplType.CONTAINER
+        is_private_container = (
+            config_node.getImplementationType() == ErtImplType.CONTAINER
+        )
         data_node = EnkfNode(config_node, private=is_private_container)
 
         node_id = NodeId(report_step, realization_number)
@@ -95,4 +96,3 @@ class PlotBlockDataLoader(object):
 
             plot_block_vector = PlotBlockVector(realization_number, data)
             plot_block_data.addPlotBlockVector(plot_block_vector)
-

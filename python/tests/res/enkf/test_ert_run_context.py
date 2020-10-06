@@ -21,9 +21,7 @@ from ecl.util.util import BoolVector
 from res.enkf import ErtRunContext
 
 
-
 class ErtRunContextTest(ResTest):
-
     def test_case_init(self):
-        mask = BoolVector(default_value = True, initial_size = 100)
+        mask = BoolVector(default_value=True, initial_size=100)
         context = ErtRunContext.case_init(None, mask)

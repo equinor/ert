@@ -27,13 +27,18 @@ from res.util import Matrix
 quantile = ResPrototype("double statistics_empirical_quantile(double_vector, double)")
 """@type: (ecl.util.DoubleVector, float)->float"""
 
-quantile_sorted = ResPrototype("double statistics_empirical_quantile(double_vector, double)")
+quantile_sorted = ResPrototype(
+    "double statistics_empirical_quantile(double_vector, double)"
+)
 """@type: (ecl.util.DoubleVector, float)->float"""
 
 try:
-    _polyfit = ResPrototype("llsq_result_enum matrix_stat_polyfit(matrix, matrix, matrix, matrix)")
+    _polyfit = ResPrototype(
+        "llsq_result_enum matrix_stat_polyfit(matrix, matrix, matrix, matrix)"
+    )
 except PrototypeError:
     _polyfit = None
+
 
 def polyfit(n, x, y, s=None):
     """
@@ -44,7 +49,9 @@ def polyfit(n, x, y, s=None):
     @return: tuple
     """
     if _polyfit is None:
-        raise NotImplementedError("Sorry - your ert distribution has been built without lapack support")
+        raise NotImplementedError(
+            "Sorry - your ert distribution has been built without lapack support"
+        )
 
     if isinstance(x, Matrix):
         xm = x

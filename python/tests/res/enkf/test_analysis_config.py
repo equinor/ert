@@ -23,11 +23,11 @@ from tests import ResTest
 from res.enkf import AnalysisConfig
 from res.enkf import ConfigKeys
 
-class AnalysisConfigTest(ResTest):
 
+class AnalysisConfigTest(ResTest):
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")
-        self.case_file = 'simple_config/minimum_config'
+        self.case_file = "simple_config/minimum_config"
 
     def test_invalid_user_config(self):
         with TestAreaContext("void land"):
@@ -43,19 +43,18 @@ class AnalysisConfigTest(ResTest):
             self.assertFalse(ac.haveEnoughRealisations(5, 10))
             self.assertTrue(ac.haveEnoughRealisations(10, 10))
 
-            ac.set_max_runtime( 50 )
-            self.assertEqual( 50 , ac.get_max_runtime() )
+            ac.set_max_runtime(50)
+            self.assertEqual(50, ac.get_max_runtime())
 
-            ac.set_stop_long_running( True )
-            self.assertTrue( ac.get_stop_long_running() )
-
+            ac.set_stop_long_running(True)
+            self.assertTrue(ac.get_stop_long_running())
 
     def test_analysis_modules(self):
         with TestAreaContext("analysis_config_init_test") as work_area:
             work_area.copy_directory(self.case_directory)
             ac = AnalysisConfig(self.case_file)
-            self.assertIsNotNone( ac.activeModuleName() )
-            self.assertIsNotNone( ac.getModuleList() )
+            self.assertIsNotNone(ac.activeModuleName())
+            self.assertIsNotNone(ac.getModuleList())
 
     def test_analysis_config_global_std_scaling(self):
         with TestAreaContext("analysis_config_init_test") as work_area:
@@ -79,7 +78,7 @@ class AnalysisConfigTest(ResTest):
                 ConfigKeys.RERUN_KEY: False,
                 ConfigKeys.RERUN_START_KEY: 0,
                 ConfigKeys.MERGE_OBSERVATIONS: False,
-                ConfigKeys.UPDATE_LOG_PATH: 'update_log',
+                ConfigKeys.UPDATE_LOG_PATH: "update_log",
                 ConfigKeys.STD_CUTOFF_KEY: 1e-6,
                 ConfigKeys.STOP_LONG_RUNNING: False,
                 ConfigKeys.SINGLE_NODE_UPDATE: False,
@@ -89,37 +88,35 @@ class AnalysisConfigTest(ResTest):
                 ConfigKeys.MIN_REALIZATIONS: 0,
                 ConfigKeys.ANALYSIS_LOAD: [
                     {
-                        ConfigKeys.USER_NAME: 'RML_ENKF',
-                        ConfigKeys.LIB_NAME: 'rml_enkf.so'
+                        ConfigKeys.USER_NAME: "RML_ENKF",
+                        ConfigKeys.LIB_NAME: "rml_enkf.so",
                     },
                     {
-                        ConfigKeys.USER_NAME: 'MODULE_ENKF',
-                        ConfigKeys.LIB_NAME: 'rml_enkf.so'
-                    }
+                        ConfigKeys.USER_NAME: "MODULE_ENKF",
+                        ConfigKeys.LIB_NAME: "rml_enkf.so",
+                    },
                 ],
                 ConfigKeys.ANALYSIS_COPY: [
                     {
-                        ConfigKeys.SRC_NAME:'STD_ENKF',
-                        ConfigKeys.DST_NAME:'ENKF_HIGH_TRUNCATION'
+                        ConfigKeys.SRC_NAME: "STD_ENKF",
+                        ConfigKeys.DST_NAME: "ENKF_HIGH_TRUNCATION",
                     }
                 ],
-                ConfigKeys.ANALYSIS_SET_VAR:[
+                ConfigKeys.ANALYSIS_SET_VAR: [
                     {
-                        ConfigKeys.MODULE_NAME:'STD_ENKF',
-                        ConfigKeys.VAR_NAME:'ENKF_NCOMP',
-                        ConfigKeys.VALUE:2
+                        ConfigKeys.MODULE_NAME: "STD_ENKF",
+                        ConfigKeys.VAR_NAME: "ENKF_NCOMP",
+                        ConfigKeys.VALUE: 2,
                     },
                     {
-                        ConfigKeys.MODULE_NAME: 'ENKF_HIGH_TRUNCATION',
-                        ConfigKeys.VAR_NAME: 'ENKF_TRUNCATION',
-                        ConfigKeys.VALUE: 0.99
-                    }
+                        ConfigKeys.MODULE_NAME: "ENKF_HIGH_TRUNCATION",
+                        ConfigKeys.VAR_NAME: "ENKF_TRUNCATION",
+                        ConfigKeys.VALUE: 0.99,
+                    },
                 ],
-                ConfigKeys.ANALYSIS_SELECT:'ENKF_HIGH_TRUNCATION'
+                ConfigKeys.ANALYSIS_SELECT: "ENKF_HIGH_TRUNCATION",
             }
-            _config_file = 'simple_config/analysis_config'
+            _config_file = "simple_config/analysis_config"
             analysis_config_file = AnalysisConfig(user_config_file=_config_file)
             analysis_config_dict = AnalysisConfig(config_dict=config_dict)
             self.assertEqual(analysis_config_dict, analysis_config_file)
-
-

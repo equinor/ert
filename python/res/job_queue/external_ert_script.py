@@ -5,7 +5,6 @@ from res.job_queue import ErtScript
 
 
 class ExternalErtScript(ErtScript):
-
     def __init__(self, ert, executable):
         super(ExternalErtScript, self).__init__(ert)
 
@@ -16,9 +15,7 @@ class ExternalErtScript(ErtScript):
         command = [self.__executable]
         command.extend([str(arg) for arg in args])
 
-        self.__job = Popen(command,
-                           stdout = PIPE,
-                           stderr = PIPE)
+        self.__job = Popen(command, stdout=PIPE, stderr=PIPE)
 
         # The job will complete before stdout and stderr is returned
         self._stdoutdata, self._stderrdata = self.__job.communicate()

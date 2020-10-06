@@ -1,10 +1,11 @@
 from . import ShapeFunction, ShapeCreator
 
+
 class OilSimulator(object):
     OPR_SHAPE = ShapeFunction([0.0, 0.2, 0.5, 0.7, 1.0], [0.0, 0.7, 0.2, 0.1, 0.01])
     GPR_SHAPE = ShapeFunction([0.0, 0.2, 0.5, 0.7, 1.0], [0.0, 0.5, 0.7, 0.7, 0.3])
     WPR_SHAPE = ShapeFunction([0.0, 0.2, 0.5, 0.7, 1.0], [0.0, 0.01, 0.3, 0.7, 1])
-    BPR_SHAPE= ShapeFunction([0.0, 0.2, 0.5, 0.7, 1.0], [1.0, 0.7, 0.5, 0.3, 0.1])
+    BPR_SHAPE = ShapeFunction([0.0, 0.2, 0.5, 0.7, 1.0], [1.0, 0.7, 0.5, 0.3, 0.1])
 
     O_DIVERGENCE = ShapeFunction([0.0, 0.5, 0.7, 0.9, 1.0], [0.0, 0.5, 0.3, 0.1, 0.01])
     G_DIVERGENCE = ShapeFunction([0.0, 0.5, 0.7, 0.9, 1.0], [0.0, 0.1, 0.3, 0.2, 0.1])
@@ -32,22 +33,60 @@ class OilSimulator(object):
         self._fgor = 0.0
         self._fwct = 0.0
 
-
         self._wells = {}
         self._bpr = {}
 
-    def addWell(self, name, seed, persistence=0.2, octaves=8, divergence_scale=1.0, offset=0.0):
+    def addWell(
+        self, name, seed, persistence=0.2, octaves=8, divergence_scale=1.0, offset=0.0
+    ):
         oil_div = OilSimulator.O_DIVERGENCE.scaledCopy(divergence_scale)
         gas_div = OilSimulator.G_DIVERGENCE.scaledCopy(divergence_scale)
         water_div = OilSimulator.W_DIVERGENCE.scaledCopy(divergence_scale)
-        self._oprFunc[name] = ShapeCreator.createNoiseFunction(OilSimulator.OPR_SHAPE, oil_div, seed, persistence=persistence, octaves=octaves, cutoff=0.0, offset=offset)
-        self._gprFunc[name] = ShapeCreator.createNoiseFunction(OilSimulator.GPR_SHAPE, gas_div, seed * 7, persistence=persistence * 3.5, octaves=octaves / 2, cutoff=0.0, offset=offset)
-        self._wprFunc[name] = ShapeCreator.createNoiseFunction(OilSimulator.WPR_SHAPE, water_div, seed * 11, persistence=persistence, octaves=octaves, cutoff=0.0, offset=offset)
+        self._oprFunc[name] = ShapeCreator.createNoiseFunction(
+            OilSimulator.OPR_SHAPE,
+            oil_div,
+            seed,
+            persistence=persistence,
+            octaves=octaves,
+            cutoff=0.0,
+            offset=offset,
+        )
+        self._gprFunc[name] = ShapeCreator.createNoiseFunction(
+            OilSimulator.GPR_SHAPE,
+            gas_div,
+            seed * 7,
+            persistence=persistence * 3.5,
+            octaves=octaves / 2,
+            cutoff=0.0,
+            offset=offset,
+        )
+        self._wprFunc[name] = ShapeCreator.createNoiseFunction(
+            OilSimulator.WPR_SHAPE,
+            water_div,
+            seed * 11,
+            persistence=persistence,
+            octaves=octaves,
+            cutoff=0.0,
+            offset=offset,
+        )
 
-        self._wells[name] = {"opr": 0.0, "opt": 0.0, "gpr": 0.0, "gpt": 0.0, "wpr": 0.0, "wpt": 0.0}
+        self._wells[name] = {
+            "opr": 0.0,
+            "opt": 0.0,
+            "gpr": 0.0,
+            "gpt": 0.0,
+            "wpr": 0.0,
+            "wpt": 0.0,
+        }
 
     def addBlock(self, name, seed, persistence=0.2):
-        self._bprFunc[name] = ShapeCreator.createNoiseFunction(OilSimulator.BPR_SHAPE, OilSimulator.B_DIVERGENCE, seed, persistence=persistence, cutoff=0.0)
+        self._bprFunc[name] = ShapeCreator.createNoiseFunction(
+            OilSimulator.BPR_SHAPE,
+            OilSimulator.B_DIVERGENCE,
+            seed,
+            persistence=persistence,
+            cutoff=0.0,
+        )
         self._bpr[name] = 0.0
 
     def step(self, scale=1.0):
@@ -88,7 +127,7 @@ class OilSimulator(object):
         self._fwip -= self._fwpr
 
         if self._foip < 0.0:
-            self._foip = 0.0 # This may lead to the total (FOPT) larger than OOIP
+            self._foip = 0.0  # This may lead to the total (FOPT) larger than OOIP
 
         if self._fgip < 0.0:
             self._fgip = 0.0

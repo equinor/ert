@@ -26,5 +26,6 @@ class RunStatusType(BaseCEnum):
     def from_string(cls, string):
         pass
 
+
 RunStatusType.addEnum("JOB_RUN_FAILURE", 2)
 RunStatusType.addEnum("JOB_LOAD_FAILURE", 3)

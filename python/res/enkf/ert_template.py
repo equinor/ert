@@ -20,10 +20,14 @@ from res import ResPrototype
 class ErtTemplate(BaseCClass):
     TYPE_NAME = "ert_template"
 
-    _free               = ResPrototype("void  ert_template_free( ert_template )")
-    _get_template_file  = ResPrototype("char* ert_template_get_template_file(ert_template)")
-    _get_target_file    = ResPrototype("char* ert_template_get_target_file(ert_template)")
-    _get_arg_list       = ResPrototype("subst_list_ref ert_template_get_arg_list( ert_template )")
+    _free = ResPrototype("void  ert_template_free( ert_template )")
+    _get_template_file = ResPrototype(
+        "char* ert_template_get_template_file(ert_template)"
+    )
+    _get_target_file = ResPrototype("char* ert_template_get_target_file(ert_template)")
+    _get_arg_list = ResPrototype(
+        "subst_list_ref ert_template_get_arg_list( ert_template )"
+    )
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
@@ -39,21 +43,24 @@ class ErtTemplate(BaseCClass):
     def get_args_as_string(self):
         """ @rtype: str """
         args_list = self._get_arg_list()
-        return ", ".join(["{}={}".format(key, args_list.get(key)) for key in args_list.keys()])
+        return ", ".join(
+            ["{}={}".format(key, args_list.get(key)) for key in args_list.keys()]
+        )
 
     def __eq__(self, other):
-        return self.get_template_file()  == other.get_template_file() and\
-               self.get_target_file()    == other.get_target_file() and\
-               self.get_args_as_string() == other.get_args_as_string()
+        return (
+            self.get_template_file() == other.get_template_file()
+            and self.get_target_file() == other.get_target_file()
+            and self.get_args_as_string() == other.get_args_as_string()
+        )
 
     def __ne__(self, other):
         return not self == other
 
     def __repr__(self):
         return "ErtTemplate({}, {}, {})".format(
-            self.get_template_file(),
-            self.get_target_file(),
-            self.get_args_as_string())
+            self.get_template_file(), self.get_target_file(), self.get_args_as_string()
+        )
 
     def free(self):
         self._free()

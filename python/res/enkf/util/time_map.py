@@ -24,62 +24,63 @@ from ecl.util.util import CTime
 class TimeMap(BaseCClass):
     TYPE_NAME = "time_map"
 
-    _fread_alloc_readonly       = ResPrototype("void*  time_map_fread_alloc_readonly(char*)", bind = False)
-    _alloc                      = ResPrototype("void*  time_map_alloc()", bind = False)
-    _load                       = ResPrototype("bool   time_map_fread(time_map , char*)")
-    _save                       = ResPrototype("void   time_map_fwrite(time_map , char*)")
-    _fload                      = ResPrototype("bool   time_map_fscanf(time_map , char*)")
-    _iget_sim_days              = ResPrototype("double time_map_iget_sim_days(time_map, int)")
-    _iget                       = ResPrototype("time_t time_map_iget(time_map, int)")
-    _size                       = ResPrototype("int    time_map_get_size(time_map)")
-    _try_update                 = ResPrototype("bool   time_map_try_update(time_map , int , time_t)")
-    _is_strict                  = ResPrototype("bool   time_map_is_strict( time_map )")
-    _set_strict                 = ResPrototype("void   time_map_set_strict( time_map , bool)")
-    _lookup_time                = ResPrototype("int    time_map_lookup_time( time_map , time_t)")
-    _lookup_time_with_tolerance = ResPrototype("int    time_map_lookup_time_with_tolerance( time_map , time_t , int , int)")
-    _lookup_days                = ResPrototype("int    time_map_lookup_days( time_map ,         double)")
-    _last_step                  = ResPrototype("int    time_map_get_last_step( time_map )")
-    _upgrade107                 = ResPrototype("void   time_map_summary_upgrade107( time_map , ecl_sum )")
-    _free                       = ResPrototype("void   time_map_free( time_map )")
+    _fread_alloc_readonly = ResPrototype(
+        "void*  time_map_fread_alloc_readonly(char*)", bind=False
+    )
+    _alloc = ResPrototype("void*  time_map_alloc()", bind=False)
+    _load = ResPrototype("bool   time_map_fread(time_map , char*)")
+    _save = ResPrototype("void   time_map_fwrite(time_map , char*)")
+    _fload = ResPrototype("bool   time_map_fscanf(time_map , char*)")
+    _iget_sim_days = ResPrototype("double time_map_iget_sim_days(time_map, int)")
+    _iget = ResPrototype("time_t time_map_iget(time_map, int)")
+    _size = ResPrototype("int    time_map_get_size(time_map)")
+    _try_update = ResPrototype("bool   time_map_try_update(time_map , int , time_t)")
+    _is_strict = ResPrototype("bool   time_map_is_strict( time_map )")
+    _set_strict = ResPrototype("void   time_map_set_strict( time_map , bool)")
+    _lookup_time = ResPrototype("int    time_map_lookup_time( time_map , time_t)")
+    _lookup_time_with_tolerance = ResPrototype(
+        "int    time_map_lookup_time_with_tolerance( time_map , time_t , int , int)"
+    )
+    _lookup_days = ResPrototype(
+        "int    time_map_lookup_days( time_map ,         double)"
+    )
+    _last_step = ResPrototype("int    time_map_get_last_step( time_map )")
+    _upgrade107 = ResPrototype(
+        "void   time_map_summary_upgrade107( time_map , ecl_sum )"
+    )
+    _free = ResPrototype("void   time_map_free( time_map )")
 
-    def __init__(self, filename = None):
+    def __init__(self, filename=None):
         c_ptr = self._alloc()
         super(TimeMap, self).__init__(c_ptr)
         if filename:
             self.load(filename)
 
-
     def load(self, filename):
-        if os.path.isfile( filename ):
+        if os.path.isfile(filename):
             self._load(filename)
         else:
-            raise IOError(( errno.ENOENT , "File not found: %s" % filename))
-
+            raise IOError((errno.ENOENT, "File not found: %s" % filename))
 
     def fwrite(self, filename):
         self._save(filename)
 
-
-    def fload(self , filename):
+    def fload(self, filename):
         """
         Will load a timemap as a formatted file consisting of a list of dates: DD/MM/YYYY
         """
-        if os.path.isfile( filename ):
+        if os.path.isfile(filename):
             OK = self._fload(filename)
             if not OK:
                 raise Exception("Error occured when loading timemap from:%s" % filename)
         else:
-            raise IOError(( errno.ENOENT , "File not found: %s" % filename))
-
-
+            raise IOError((errno.ENOENT, "File not found: %s" % filename))
 
     def isStrict(self):
         return self._is_strict()
 
-
-    def setStrict(self , strict):
+    def setStrict(self, strict):
         return self._set_strict(strict)
-
 
     def getSimulationDays(self, step):
         """ @rtype: double """
@@ -92,7 +93,6 @@ class TimeMap(BaseCClass):
 
         return self._iget_sim_days(step)
 
-
     def __getitem__(self, index):
         """ @rtype: CTime """
         if not isinstance(index, int):
@@ -104,12 +104,11 @@ class TimeMap(BaseCClass):
 
         return self._iget(index)
 
-    def __setitem__(self , index , time):
-        self.update( index , time )
+    def __setitem__(self, index, time):
+        self.update(index, time)
 
-
-    def update(self , index , time):
-        if self._try_update(index , CTime(time)):
+    def update(self, index, time):
+        if self._try_update(index, CTime(time)):
             return True
         else:
             if self.isStrict():
@@ -117,22 +116,20 @@ class TimeMap(BaseCClass):
             else:
                 return False
 
-
     def __iter__(self):
         cur = 0
         while cur < len(self):
             yield self[cur]
             cur += 1
 
-    def __contains__(self , time):
+    def __contains__(self, time):
         index = self._lookup_time(CTime(time))
         if index >= 0:
             return True
         else:
             return False
 
-
-    def lookupTime(self , time , tolerance_seconds_before = 0, tolerance_seconds_after = 0):
+    def lookupTime(self, time, tolerance_seconds_before=0, tolerance_seconds_after=0):
         """Will look up the report step corresponding to input @time.
 
         If the tolerance arguments tolerance_seconds_before and
@@ -159,21 +156,25 @@ class TimeMap(BaseCClass):
         if tolerance_seconds_before == 0 and tolerance_seconds_after == 0:
             index = self._lookup_time(CTime(time))
         else:
-            index = self._lookup_time_with_tolerance(CTime(time) , tolerance_seconds_before , tolerance_seconds_after)
+            index = self._lookup_time_with_tolerance(
+                CTime(time), tolerance_seconds_before, tolerance_seconds_after
+            )
 
         if index >= 0:
             return index
         else:
-            raise ValueError("The time:%s was not found in the time_map instance" % time)
+            raise ValueError(
+                "The time:%s was not found in the time_map instance" % time
+            )
 
-
-    def lookupDays(self , days):
+    def lookupDays(self, days):
         index = self._lookup_days(days)
         if index >= 0:
             return index
         else:
-            raise ValueError("The days: %s was not found in the time_map instance" % days)
-
+            raise ValueError(
+                "The days: %s was not found in the time_map instance" % days
+            )
 
     def __len__(self):
         """ @rtype: int """
@@ -185,8 +186,8 @@ class TimeMap(BaseCClass):
     def __repr__(self):
         ls = len(self)
         la = self.getLastStep()
-        st = 'strict' if self.isStrict() else 'not strict'
-        cnt = 'size = %d, last_step = %d, %s' % (ls, la, st)
+        st = "strict" if self.isStrict() else "not strict"
+        cnt = "size = %d, last_step = %d, %s" % (ls, la, st)
         return self._create_repr(cnt)
 
     def dump(self):
@@ -194,14 +195,12 @@ class TimeMap(BaseCClass):
         Will return a list of tuples (step , CTime , days).
         """
         step_list = []
-        for step,t in enumerate(self):
-            step_list.append( (step , t , self.getSimulationDays( step )) )
+        for step, t in enumerate(self):
+            step_list.append((step, t, self.getSimulationDays(step)))
         return step_list
-
 
     def getLastStep(self):
         return self._last_step()
-
 
     def upgrade107(self, refcase):
         self._upgrade107(refcase)
