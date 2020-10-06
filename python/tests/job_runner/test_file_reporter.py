@@ -236,8 +236,10 @@ class FileReporterTests(TestCase):
         for msg in [init, start_j_1, exited_j_1, start_j_2, exited_j_2]:
             self.reporter.report(msg)
 
-        expected_j1_line = "{:32}: {start_ts:%H:%M:%S} .... {end_ts:%H:%M:%S}  \n".format(  # noqa
-            j_1.name(), start_ts=start_j_1.timestamp, end_ts=exited_j_1.timestamp
+        expected_j1_line = (
+            "{:32}: {start_ts:%H:%M:%S} .... {end_ts:%H:%M:%S}  \n".format(  # noqa
+                j_1.name(), start_ts=start_j_1.timestamp, end_ts=exited_j_1.timestamp
+            )
         )
         expected_j2_line = "{:32}: {start_ts:%H:%M:%S} .... {end_ts:%H:%M:%S}   EXIT: {code}/{msg}\n".format(  # noqa
             j_2.name(),

@@ -1,5 +1,5 @@
 pytest
 decorator
 pylint
-black==19.10b0
+black
 click
