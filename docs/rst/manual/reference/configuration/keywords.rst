@@ -2159,7 +2159,7 @@ Keywords related to plotting
 
     With the keyword :code:`HOOK_WORKFLOW` you can configure workflow
     'hooks'; meaning workflows which will be run automatically at
-    certain points during ERTs execution. Currently there are four
+    certain points during ERTs execution. Currently there are five
     points in ERTs flow of execution where you can hook in a workflow,
     before the simulations start, :code:`PRE_SIMULATION`; after all
     the simulations have completed, :code:`POST_SIMULATION`; before the
