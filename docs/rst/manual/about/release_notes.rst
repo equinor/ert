@@ -1,6 +1,72 @@
 Release Notes
 =============
 
+Version 2.15
+------------
+
+Highlighted changes
+~~~~~~~~~~~~~~~~~~~
+
+Python3.6-only
+##############
+
+This version of ERT is now incompatible with Python version less than 3.6.
+
+2.15.0 ERT
+~~~~~~~~~~~~
+New features:
+  - Replace Data export button functionality with a CSV-export
+  - Add file operation jobs as workflow jobs
+
+Improvements:
+  - Document magic strings
+  - Clean up documentation with respect to outdated keywords
+
+Miscellaneous:
+  - Deprecate workflow ``STD_SCALE_CORRELATED_OBS``. Recommended to use ``AUTO_SCALE`` instead.
+  - Drop support for Python < 3.6
+  - Drop ``CUSTOM_KW`` support
+  - Drop deprecated analysis keywords
+  - Drop deprecated ecl config keywords
+  - Drop deprecated ``PLOT_SETTINGS`` keyword
+  - Drop deprecated model config keywords
+  - Drop support for deprecated keywords ``{STORE, LOAD}_SEED``
+  - Drop support for jobs with relative paths to the config
+  - Drop support for creating ``EnkfMain`` with filename
+  - Drop support for ``QC_{PATH, WORKFLOW}`` keywords
+  - Drop support for non enum log levels
+  - Remove warning for deprecated ``ERT_LIBRARY_PATH`` env variable
+  - Remove unused code
+  - New libres version ``6.0.0``
+
+Bug fixes:
+  - Handle empty observation set in Data API
+  - Alpha and std_cutoff passed wrongly to the now deprecated observation correlation scaling in libres
+
+
+6.0.0 libres
+~~~~~~~~~~~~
+See ERT release notes.
+
+0.6.0 semeio
+~~~~~~~~~~~~
+New features:
+  - Add --outputdirectory option to gendata_rft
+  - Missing namespace support added to ``design_kw``
+  - New option, ``auto_scale`` added to MisfitPreprocessor
+  - Add new forward model job, for ``overburden_timeshift`` ( ``OTS``)
+
+Other changes:
+  - Refactor scaling factor calculation
+  - Reports moved from being in the ``storage`` folder to next to the config file
+  - Fixed a bug where ``csv_export2`` was not executable
+  - Changed default linkage option from ``single`` to ``average`` for MisfitPreprocessor
+  - Decreased likelihood of ``storage`` folders generated in source tree when running tests
+  - Fixed a bug where user input observations to MisfitPreprocessor were not being used
+  - Add documentation to ``csv_export2``.
+  - Add warning for existing keys in parameters.txt for ``design2params``
+
+
 Version 2.14
 ------------
 
@@ -1048,4 +1114,3 @@ libutil:
   - bug in matrix_dgemm [1286].
   - Resurrected block_fs utilities from the past [1297].
   - Slicing for runpath_list [1356].
-
