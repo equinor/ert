@@ -23,7 +23,7 @@ Improvements:
   - Clean up documentation with respect to outdated keywords
 
 Miscellaneous:
-  - Deprecate workflow ``STD_SCALE_CORRELATED_OBS``. Recommended to use ``AUTO_SCALE`` instead.
+  - Deprecate workflow ``STD_SCALE_CORRELATED_OBS``. Recommended to use ``MISFIT_PREPROCESSOR`` instead.
   - Drop support for Python < 3.6
   - Drop ``CUSTOM_KW`` support
   - Drop deprecated analysis keywords
