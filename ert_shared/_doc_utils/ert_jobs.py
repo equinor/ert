@@ -134,7 +134,8 @@ class _ErtDocumentation(SphinxDirective):
                 continue
 
             category = docs.get(
-                _ErtDocumentation._CATEGORY_KEY, _ErtDocumentation._CATEGORY_DEFAULT,
+                _ErtDocumentation._CATEGORY_KEY,
+                _ErtDocumentation._CATEGORY_DEFAULT,
             )
 
             main_category = category.split(".")[0]

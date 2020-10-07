@@ -145,7 +145,9 @@ def _dump_response(rdb_api, blob_api, responses, ensemble_name):
         indexes_df = blob_api.add_blob(response.index.to_list())
         blob_api.flush()
         response_definition = rdb_api.add_response_definition(
-            name=key, indexes_ref=indexes_df.id, ensemble_name=ensemble_name,
+            name=key,
+            indexes_ref=indexes_df.id,
+            ensemble_name=ensemble_name,
         )
         for realization_index, values in response.iteritems():
             values_df = blob_api.add_blob(values.to_list())

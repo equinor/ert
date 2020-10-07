@@ -35,7 +35,7 @@ class StorageClient(object):
         self._BASE_URI = base_url
 
     def all_data_type_keys(self):
-        """ Returns a list of all the keys except observation keys. For each key a dict is returned with info about
+        """Returns a list of all the keys except observation keys. For each key a dict is returned with info about
             the key
 
         example
@@ -108,7 +108,7 @@ class StorageClient(object):
         return result
 
     def get_all_cases_not_running(self):
-        """ Returns a list of all cases that are not running. For each case a dict with info about the case is
+        """Returns a list of all cases that are not running. For each case a dict with info about the case is
         returned
 
         example:
@@ -131,8 +131,8 @@ class StorageClient(object):
         ]
 
     def data_for_key(self, case, key):
-        """ Returns a pandas DataFrame with the datapoints for a given key for a given case. The row index is
-            the realization number, and the column index is a multi-index with (key, index/date)"""
+        """Returns a pandas DataFrame with the datapoints for a given key for a given case. The row index is
+        the realization number, and the column index is a multi-index with (key, index/date)"""
 
         if key.startswith("LOG10_"):
             key = key[6:]
@@ -169,10 +169,10 @@ class StorageClient(object):
         return df
 
     def observations_for_obs_keys(self, case, obs_keys):
-        """ Returns a pandas DataFrame with the datapoints for a given observation key for a given case. The row index
-            is the realization number, and the column index is a multi-index with (obs_key, index/date, obs_index),
-            where index/date is used to relate the observation to the data point it relates to, and obs_index is
-            the index for the observation itself"""
+        """Returns a pandas DataFrame with the datapoints for a given observation key for a given case. The row index
+        is the realization number, and the column index is a multi-index with (obs_key, index/date, obs_index),
+        where index/date is used to relate the observation to the data point it relates to, and obs_index is
+        the index for the observation itself"""
 
         df = pd.DataFrame()
 
@@ -201,13 +201,13 @@ class StorageClient(object):
         return df
 
     def refcase_data(self, key):
-        """ Returns a pandas DataFrame with the data points for the refcase for a given data key, if any.
-            The row index is the index/date and the column index is the key."""
+        """Returns a pandas DataFrame with the data points for the refcase for a given data key, if any.
+        The row index is the index/date and the column index is the key."""
         return pd.DataFrame()
 
     def history_data(self, key, case=None):
-        """ Returns a pandas DataFrame with the data points for the history for a given data key, if any.
-            The row index is the index/date and the column index is the key."""
+        """Returns a pandas DataFrame with the data points for the history for a given data key, if any.
+        The row index is the index/date and the column index is the key."""
         return pd.DataFrame()
 
     def shutdown(self):

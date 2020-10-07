@@ -12,8 +12,7 @@ from ert_shared.storage.client import StorageClient
 
 
 class AutoClient(StorageClient):
-    """A client that will start its own server, and tears it down on request.
-    """
+    """A client that will start its own server, and tears it down on request."""
 
     def __init__(self, bind):
         StorageClient.__init__(self, "")
