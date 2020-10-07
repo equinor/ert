@@ -59,7 +59,9 @@ class Update(Entities):
     algorithm = Column(String)
     ensemble_reference_id = Column(Integer, ForeignKey("ensembles.id"))
     ensemble_reference = relationship(
-        "Ensemble", foreign_keys=[ensemble_reference_id], back_populates="children",
+        "Ensemble",
+        foreign_keys=[ensemble_reference_id],
+        back_populates="children",
     )
     ensemble_result_id = Column(Integer, ForeignKey("ensembles.id"))
     ensemble_result = relationship(
@@ -140,7 +142,9 @@ class ResponseDefinition(Entities):
 
 
 Ensemble.response_definitions = relationship(
-    "ResponseDefinition", order_by=ResponseDefinition.id, back_populates="ensemble",
+    "ResponseDefinition",
+    order_by=ResponseDefinition.id,
+    back_populates="ensemble",
 )
 
 
@@ -164,7 +168,9 @@ class Response(Entities):
 
     def __repr__(self):
         return "<Response(values_ref='{}', realization_id='{}', response_definition_id='{}')>".format(
-            self.values_ref, self.realization_id, self.response_definition_id,
+            self.values_ref,
+            self.realization_id,
+            self.response_definition_id,
         )
 
 
@@ -343,7 +349,9 @@ class Misfit(Entities):
 
     def __repr__(self):
         return "<Misfit(response_id='{}', observation_response_definition_link_id='{}', misfit='{}')>".format(
-            self.response_id, self.observation_response_definition_link_id, self.misfit,
+            self.response_id,
+            self.observation_response_definition_link_id,
+            self.misfit,
         )
 
 

@@ -1,4 +1,4 @@
-black==19.10b0
+black
 pytest<6
 pytest-qt
 schemathesis==1.3.4

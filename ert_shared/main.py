@@ -100,7 +100,9 @@ def get_ert_parser(parser=None):
         parser = ArgumentParser(description="ERT - Ensemble Reservoir Tool")
 
     parser.add_argument(
-        "--version", action="version", version="{}".format(ert_shared.__version__),
+        "--version",
+        action="version",
+        version="{}".format(ert_shared.__version__),
     )
 
     subparsers = parser.add_subparsers(
@@ -144,7 +146,8 @@ def get_ert_parser(parser=None):
 
     # ert_api
     ert_api_parser = subparsers.add_parser(
-        "api", description="Expose ERT data through an HTTP server",
+        "api",
+        description="Expose ERT data through an HTTP server",
     )
     ert_api_parser.set_defaults(func=run_server)
     ert_api_parser.add_argument(

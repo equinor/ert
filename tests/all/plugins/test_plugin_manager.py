@@ -57,10 +57,12 @@ class PluginManagerTest(unittest.TestCase):
         self.assertIn(("job1", "/dummy/path/job1"), pm.get_installable_jobs().items())
         self.assertIn(("job2", "/dummy/path/job2"), pm.get_installable_jobs().items())
         self.assertIn(
-            ("wf_job1", "/dummy/path/wf_job1"), pm._get_config_workflow_jobs().items(),
+            ("wf_job1", "/dummy/path/wf_job1"),
+            pm._get_config_workflow_jobs().items(),
         )
         self.assertIn(
-            ("wf_job2", "/dummy/path/wf_job2"), pm._get_config_workflow_jobs().items(),
+            ("wf_job2", "/dummy/path/wf_job2"),
+            pm._get_config_workflow_jobs().items(),
         )
 
         self.assertListEqual(

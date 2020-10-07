@@ -98,7 +98,9 @@ class RdbApi:
         )
         for row in (
             self._session.query(bundle)
-            .filter_by(response_definition_id=response_definition.id,)
+            .filter_by(
+                response_definition_id=response_definition.id,
+            )
             .join(Realization)
             .yield_per(1)
         ):
@@ -161,7 +163,10 @@ class RdbApi:
         return realization
 
     def add_response_definition(
-        self, name, indexes_ref, ensemble_name,
+        self,
+        name,
+        indexes_ref,
+        ensemble_name,
     ):
         msg = "Adding response definition with name '{}' on ensemble '{}'. Attaching indexes with ref '{}'"
         logger.info(msg.format(name, ensemble_name, indexes_ref))
@@ -169,14 +174,20 @@ class RdbApi:
         ensemble = self.get_ensemble(name=ensemble_name)
 
         response_definition = ResponseDefinition(
-            name=name, indexes_ref=indexes_ref, ensemble_id=ensemble.id,
+            name=name,
+            indexes_ref=indexes_ref,
+            ensemble_id=ensemble.id,
         )
         self._session.add(response_definition)
 
         return response_definition
 
     def add_response(
-        self, name, values_ref, realization_index, ensemble_name,
+        self,
+        name,
+        values_ref,
+        realization_index,
+        ensemble_name,
     ):
         msg = "Adding response with name '{}' on ensemble '{}', realization '{}'. Attaching values with ref '{}'"
         logger.info(msg.format(name, ensemble_name, realization_index, values_ref))
