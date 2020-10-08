@@ -25,7 +25,6 @@ async def mock_ws(host, port):
 
 
 def mock_queue_mutator(host, port):
-    asyncio.set_event_loop(asyncio.new_event_loop())
     mock_queue = Mock(
         job_list=[Mock(status=Mock(value=4), callback_arguments=[Mock(iens=0)])]
     )
