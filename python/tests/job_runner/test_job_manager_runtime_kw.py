@@ -31,10 +31,7 @@ class JobManagerTestRuntimeKW(TestCase):
 
         data = {"umask": "0000", "DATA_ROOT": "/path/to/data", "jobList": [job_0]}
 
-        jobs_file = os.path.join(os.getcwd(), "jobs.json")
-        with open(jobs_file, "w") as f:
-            f.write(json.dumps(data))
-        runner = JobRunner()
+        runner = JobRunner(data)
         statuses = list(runner.run([]))
         starts = [e for e in statuses if isinstance(e, Start)]
 
@@ -76,11 +73,7 @@ class JobManagerTestRuntimeKW(TestCase):
             "jobList": [job_0, job_1],
         }
 
-        jobs_file = os.path.join(os.getcwd(), "jobs.json")
-        with open(jobs_file, "w") as f:
-            f.write(json.dumps(data))
-
-        runner = JobRunner()
+        runner = JobRunner(data)
 
         statuses = list(runner.run([]))
 

@@ -7,6 +7,7 @@ cmake
 ninja
 
 # From setup.py install_requires
+cloudevents
 ecl
 futures
 jinja2

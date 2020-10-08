@@ -10,12 +10,14 @@ from subprocess import Popen
 from textwrap import dedent
 
 import psutil
+import pytest
 
 from subprocess import Popen
-from job_runner.cli import main
-from job_runner.reporting.message import Finish
+from job_runner.cli import main, _setup_reporters
+from job_runner.reporting.message import Init, Finish
+from job_runner.reporting import Event, Interactive
 from tests.utils import tmpdir, wait_until
-from unittest.mock import patch
+from unittest.mock import patch, mock_open
 
 
 class JobDispatchTest(unittest.TestCase):
@@ -109,11 +111,14 @@ else:
 
     @tmpdir(None)
     def test_job_dispatch_kills_itself_after_unsuccessful_job(self):
+        jobs_json = json.dumps({"ee_id": "_id_"})
+
         with patch("job_runner.cli.os") as mock_os, patch(
-            "job_runner.cli.JobRunner"
-        ) as mock_runner:
+            "job_runner.cli.open", new=mock_open(read_data=jobs_json)
+        ) as mock_file, patch("job_runner.cli.JobRunner") as mock_runner:
             mock_runner.return_value.run.return_value = [
-                Finish().with_error("overall bad run")
+                Init([], 0, 0),
+                Finish().with_error("overall bad run"),
             ]
             mock_os.getpgid.return_value = 17
 
@@ -238,3 +243,38 @@ else:
         assert not os.path.isfile("job_A.out")
         assert os.path.isfile("job_B.out")
         assert os.path.isfile("job_C.out")
+
+    def test_no_jobs_json_file(self):
+        with self.assertRaises(IOError):
+            main(["script.py", os.path.realpath(os.curdir)])
+
+    @tmpdir(None)
+    def test_no_json_jobs_json_file(self):
+        path = os.path.realpath(os.curdir)
+        jobs_file = os.path.join(path, "jobs.json")
+
+        with open(jobs_file, "w") as f:
+            f.write("not json")
+
+        with self.assertRaises(OSError):
+            main(["script.py", path])
+
+
+@pytest.mark.parametrize(
+    "is_interactive_run, ee_id",
+    [(False, None), (False, "1234"), (True, None), (True, "1234")],
+)
+def test_setup_reporters(is_interactive_run, ee_id):
+    reporters = _setup_reporters(is_interactive_run, ee_id)
+
+    if not is_interactive_run and not ee_id:
+        assert len(reporters) == 2
+        assert not any([isinstance(r, Event) for r in reporters])
+
+    if not is_interactive_run and ee_id:
+        assert len(reporters) == 3
+        assert any([isinstance(r, Event) for r in reporters])
+
+    if is_interactive_run and ee_id:
+        assert len(reporters) == 1
+        assert any([isinstance(r, Interactive) for r in reporters])

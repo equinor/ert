@@ -1,19 +1,12 @@
 import json
 import os
 
-from job_runner import JOBS_FILE
 from job_runner.job import Job
 from job_runner.reporting.message import Init, Finish
 
 
 class JobRunner(object):
-    def __init__(self, jobs_file=JOBS_FILE):
-        try:
-            with open(jobs_file, "r") as json_file:
-                jobs_data = json.load(json_file)
-        except ValueError as e:
-            raise IOError("Job Runner failed to load JSON-file.{}".format(str(e)))
-
+    def __init__(self, jobs_data):
         os.umask(int(jobs_data["umask"], 8))
 
         self._data_root = jobs_data.get("DATA_ROOT")
@@ -21,6 +14,9 @@ class JobRunner(object):
             os.environ["DATA_ROOT"] = self._data_root
 
         self.simulation_id = jobs_data.get("run_id")
+        self.ee_id = jobs_data.get("ee_id")
+        self.real_id = jobs_data.get("real_id")
+        self.stage_id = jobs_data.get("stage_id")
         self.ert_pid = jobs_data.get("ert_pid")
         self.global_environment = jobs_data.get("global_environment")
         self.global_update_path = jobs_data.get("global_update_path")
@@ -44,7 +40,14 @@ class JobRunner(object):
         else:
             job_queue = [j for j in self.jobs if j.name() in names_of_jobs_to_run]
 
-        init_message = Init(job_queue, self.simulation_id, self.ert_pid)
+        init_message = Init(
+            job_queue,
+            self.simulation_id,
+            self.ert_pid,
+            self.ee_id,
+            self.real_id,
+            self.stage_id,
+        )
 
         unused = set(names_of_jobs_to_run) - set([j.name() for j in job_queue])
         if unused:

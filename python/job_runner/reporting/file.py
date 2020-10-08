@@ -1,11 +1,20 @@
 import json
 import os
-import shutil
 import socket
 import time
 
 from job_runner.io import cond_unlink
-from job_runner.reporting.message import Exited, Finish, Init, Running, Start
+from job_runner.reporting.message import (
+    _JOB_STATUS_FAILURE,
+    _JOB_STATUS_RUNNING,
+    _JOB_STATUS_SUCCESS,
+    Exited,
+    Finish,
+    Init,
+    Running,
+    Start,
+)
+from job_runner.util import data as data_util
 
 
 class File(object):
@@ -36,25 +45,25 @@ class File(object):
             if msg.success():
                 self._start_status_file(msg)
                 self._add_log_line(msg.job)
-                job_status["status"] = "Running"
-                job_status["start_time"] = self._datetime_serialize(msg.timestamp)
+                job_status["status"] = _JOB_STATUS_RUNNING
+                job_status["start_time"] = data_util.datetime_serialize(msg.timestamp)
             else:
                 error_msg = msg.error_message
-                job_status["status"] = "Failure"
+                job_status["status"] = _JOB_STATUS_FAILURE
                 job_status["error"] = error_msg
-                job_status["end_time"] = self._datetime_serialize(msg.timestamp)
+                job_status["end_time"] = data_util.datetime_serialize(msg.timestamp)
 
                 self._complete_status_file(msg)
         elif isinstance(msg, Exited):
-            job_status["end_time"] = self._datetime_serialize(msg.timestamp)
+            job_status["end_time"] = data_util.datetime_serialize(msg.timestamp)
 
             if msg.success():
-                job_status["status"] = "Success"
+                job_status["status"] = _JOB_STATUS_SUCCESS
                 self._complete_status_file(msg)
             else:
                 error_msg = msg.error_message
                 job_status["error"] = error_msg
-                job_status["status"] = "Failure"
+                job_status["status"] = _JOB_STATUS_FAILURE
 
                 # A STATUS_file is not written if there is no exit_code, i.e.
                 # when the job is killed due to timeout.
@@ -65,11 +74,13 @@ class File(object):
         elif isinstance(msg, Running):
             job_status["max_memory_usage"] = msg.max_memory_usage
             job_status["current_memory_usage"] = msg.current_memory_usage
-            job_status["status"] = "Running"
+            job_status["status"] = _JOB_STATUS_RUNNING
 
         elif isinstance(msg, Finish):
             if msg.success():
-                self.status_dict["end_time"] = self._datetime_serialize(msg.timestamp)
+                self.status_dict["end_time"] = data_util.datetime_serialize(
+                    msg.timestamp
+                )
                 self._dump_ok_file(sync_disc_timeout)
             else:
                 # this has already been handled by earlier event
@@ -89,27 +100,9 @@ class File(object):
     def _init_job_status_dict(self, start_time, run_id, jobs):
         return {
             "run_id": run_id,
-            "start_time": self._datetime_serialize(start_time),
+            "start_time": data_util.datetime_serialize(start_time),
             "end_time": None,
-            "jobs": [self._create_job_dict(j) for j in jobs],
-        }
-
-    def _datetime_serialize(self, dt):
-        if dt is None:
-            return None
-        return time.mktime(dt.timetuple())
-
-    def _create_job_dict(self, job):
-        return {
-            "name": job.name(),
-            "status": "Waiting",
-            "error": None,
-            "start_time": None,
-            "end_time": None,
-            "stdout": job.std_out,
-            "stderr": job.std_err,
-            "current_memory_usage": None,
-            "max_memory_usage": None,
+            "jobs": [data_util.create_job_dict(j) for j in jobs],
         }
 
     def _start_status_file(self, msg):

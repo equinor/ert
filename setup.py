@@ -51,6 +51,7 @@ skbuild.setup(
     license="GPL-3.0",
     platforms="any",
     install_requires=[
+        "cloudevents",
         "ecl",
         "futures",
         "jinja2",
