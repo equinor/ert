@@ -19,6 +19,7 @@ class JobQueueManagerAdaptor(JobQueueManager):
 
     def __init__(self, queue, queue_evaluators=None):
         super().__init__(queue, queue_evaluators)
+        asyncio.set_event_loop(asyncio.new_event_loop())
         self._ws_url = self.ws_url
         self._changes_queue = asyncio.Queue()
         wait_for_ws(self._ws_url)
