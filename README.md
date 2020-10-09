@@ -1,4 +1,4 @@
-# libres [![Build Status](https://travis-ci.org/equinor/libres.svg?branch=master)](https://travis-ci.org/equinor/libres)
+# libres [![Libres testing](https://github.com/equinor/libres/workflows/Libres%20testing/badge.svg)](https://github.com/equinor/libres/actions?query=workflow%3A%22Libres+testing%22) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 `libres` is part of the `ERT` project: _[Ensemble based Reservoir Tool](https://github.com/Equinor/ert)_.
 
