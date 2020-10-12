@@ -5,25 +5,26 @@ from ert_shared.ide.keywords.definitions import RangeStringArgument
 from ert_shared import ERT
 from ert_shared.models.ensemble_experiment import EnsembleExperiment
 from ert_shared.models.ensemble_smoother import EnsembleSmoother
-from ert_shared.models.multiple_data_assimilation import \
-    MultipleDataAssimilation
+from ert_shared.models.iterated_ensemble_smoother import IteratedEnsembleSmoother
+from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert_shared.models.single_test_run import SingleTestRun
 
 
 def create_model(args):
     # Setup model
-    if args.mode == 'test_run':
+    if args.mode == "test_run":
         model, argument = _setup_single_test_run()
-    elif args.mode == 'ensemble_experiment':
+    elif args.mode == "ensemble_experiment":
         model, argument = _setup_ensemble_experiment(args)
-    elif args.mode == 'ensemble_smoother':
+    elif args.mode == "ensemble_smoother":
         model, argument = _setup_ensemble_smoother(args)
-    elif args.mode == 'es_mda':
+    elif args.mode == "es_mda":
         model, argument = _setup_multiple_data_assimilation(args)
+    elif args.mode == "iterative_ensemble_smoother":
+        model, argument = _setup_iterative_ensemble_smoother(args)
 
     else:
-        raise NotImplementedError(
-            "Run type not supported {}".format(args.mode))
+        raise NotImplementedError("Run type not supported {}".format(args.mode))
 
     return model, argument
 
@@ -53,7 +54,9 @@ def _setup_ensemble_smoother(args):
     simulations_argument = {
         "active_realizations": _realizations(args),
         "target_case": _target_case_name(args, format_mode=False),
-        "analysis_module": _get_analysis_module_name(active_name, modules, iterable=iterable),
+        "analysis_module": _get_analysis_module_name(
+            active_name, modules, iterable=iterable
+        ),
     }
     return model, simulations_argument
 
@@ -66,9 +69,26 @@ def _setup_multiple_data_assimilation(args):
     simulations_argument = {
         "active_realizations": _realizations(args),
         "target_case": _target_case_name(args, format_mode=True),
-        "analysis_module": _get_analysis_module_name(active_name, modules, iterable=iterable),
+        "analysis_module": _get_analysis_module_name(
+            active_name, modules, iterable=iterable
+        ),
         "weights": args.weights,
-        "start_iteration": int(args.start_iteration)
+        "start_iteration": int(args.start_iteration),
+    }
+    return model, simulations_argument
+
+
+def _setup_iterative_ensemble_smoother(args):
+    model = IteratedEnsembleSmoother()
+    iterable = True
+    active_name = ERT.ert.analysisConfig().activeModuleName()
+    modules = ERT.enkf_facade.get_analysis_module_names(iterable=iterable)
+    simulations_argument = {
+        "active_realizations": _realizations(args),
+        "target_case": _target_case_name(args, format_mode=True),
+        "analysis_module": _get_analysis_module_name(
+            active_name, modules, iterable=iterable
+        ),
     }
     return model, simulations_argument
 
@@ -99,7 +119,10 @@ def _realizations(args):
     validated = validator.validate(args.realizations)
     if validated.failed():
         raise ArgumentTypeError(
-            "Defined realizations is not within range of ensemble size: {}".format(args.realizations))
+            "Defined realizations is not within range of ensemble size: {}".format(
+                args.realizations
+            )
+        )
     mask.updateActiveMask(args.realizations)
     return mask
 
