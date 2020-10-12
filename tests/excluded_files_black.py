@@ -143,7 +143,6 @@ def get_files_excluded_from_black(root):
         "ert_shared/ide/keywords/advanced_keywords.py",
         "ert_shared/ide/completers/path_completer.py",
         "ert_shared/ide/keywords/data/keyword.py",
-        "ert_shared/cli/model_factory.py",
         "ert_shared/ide/keywords/data/token.py",
         "ert_shared/ide/keywords/data/validation_status.py",
         "ert_shared/ide/keywords/definitions/argument_definition.py",
