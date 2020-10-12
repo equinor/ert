@@ -240,8 +240,8 @@ def get_ert_parser(parser=None):
 
     # iterative_ensemble_smoother_parser
     iterative_ensemble_smoother_description = (
-        "Run simulations in cli while performing one update"
-        " on the parameters by using the iterative ensemble smoother algorithm."
+        "Run simulations in cli while performing updates"
+        " on the parameters using the iterative ensemble smoother algorithm."
     )
     iterative_ensemble_smoother_parser = subparsers.add_parser(
         ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
