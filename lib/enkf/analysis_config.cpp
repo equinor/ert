@@ -695,7 +695,7 @@ void analysis_config_add_config_items( config_parser_type * config ) {
           config,
           STD_SCALE_CORRELATED_OBS_KEY,
           "STD_SCALE_CORRELATED_OBS is deprecated. "
-          "Use the AUTO_SCALE workflow instead."
+          "Use the 'auto_scale' option in the MISFIT_PREPROCESSOR workflow instead."
   );
 
   item = config_add_key_value( config , STOP_LONG_RUNNING_KEY, false,  CONFIG_BOOL );

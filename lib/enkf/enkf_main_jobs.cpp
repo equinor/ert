@@ -416,6 +416,9 @@ C_USED void * enkf_main_export_runpath_file_JOB(void * self, const stringlist_ty
 
 // Internal workflow job
 C_USED void * enkf_main_std_scale_correlated_obs_JOB(void * self, const stringlist_type * args)  {
+  printf("The STD_SCALE_CORRELATED_OBS workflow is deprecated. "
+         "Use the 'auto_scale' option in the MISFIT_PREPROCESSOR workflow instead.\n"
+  );
 
   if (stringlist_get_size(args) > 0) {
     bool verbose = true;
