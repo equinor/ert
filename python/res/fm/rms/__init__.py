@@ -1,5 +1,5 @@
 from .rms_config import RMSConfig
-from .rms_run import RMSRun
+from .rms_run import RMSRun, RMSRunException
 
 
 def run(

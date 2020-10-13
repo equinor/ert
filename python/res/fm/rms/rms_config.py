@@ -1,6 +1,7 @@
 import os
 import os.path
 import yaml
+import shutil
 
 
 class RMSConfig(object):
@@ -22,6 +23,13 @@ class RMSConfig(object):
         if not os.access(exe, os.X_OK):
             raise OSError("The executable: {} can not run".format(exe))
 
+        return exe
+
+    @property
+    def wrapper(self):
+        exe = self._config.get("wrapper", None)
+        if exe is not None and shutil.which(exe) is None:
+            raise OSError("The executable: {} is not found".format(exe))
         return exe
 
     @property

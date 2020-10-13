@@ -21,6 +21,10 @@ def pushd(path):
     os.chdir(cwd0)
 
 
+class RMSRunException(Exception):
+    pass
+
+
 class RMSRun(object):
     _single_seed_file = "RMS_SEED"
     _multi_seed_file = "random.seeds"
@@ -120,7 +124,7 @@ class RMSRun(object):
             exit_status = self.exec_rms(exec_env)
 
         if exit_status != 0:
-            raise Exception(
+            raise RMSRunException(
                 "The RMS run failed with exit status: {}".format(exit_status)
             )
 
@@ -128,7 +132,7 @@ class RMSRun(object):
             return
 
         if not os.path.isfile(self.target_file):
-            raise Exception(
+            raise RMSRunException(
                 "The RMS run did not produce the expected  file: {}".format(
                     self.target_file
                 )
@@ -138,14 +142,15 @@ class RMSRun(object):
             return
 
         if os.path.getmtime(self.target_file) == self.target_file_mtime:
-            raise Exception(
+            raise RMSRunException(
                 "The target file:{} is unmodified - interpreted as failure".format(
                     self.target_file
                 )
             )
 
     def exec_rms(self, exec_env):
-        args = [
+        args = [self.config.wrapper] if self.config.wrapper is not None else []
+        args += [
             self.config.executable,
             "-project",
             self.project,

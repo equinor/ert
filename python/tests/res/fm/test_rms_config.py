@@ -73,6 +73,22 @@ class RMSConfigTest(ResTest):
             conf = RMSConfig()
             self.assertEqual(conf.threads, 17)
 
+            with open("file.yml", "w") as f:
+                f.write("executable: bin/rms\n")
+                f.write("wrapper: not-exisiting-exec")
+
+            conf = RMSConfig()
+
+            with self.assertRaises(OSError):
+                conf.wrapper
+
+            with open("file.yml", "w") as f:
+                f.write("executable: bin/rms\n")
+                f.write("wrapper: bash")
+
+            conf = RMSConfig()
+            self.assertEqual(conf.wrapper, "bash")
+
 
 if __name__ == "__main__":
     unittest.main()

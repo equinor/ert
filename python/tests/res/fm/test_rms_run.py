@@ -24,7 +24,7 @@ from ecl.util.test import TestAreaContext
 from tests import ResTest
 from _pytest.monkeypatch import MonkeyPatch
 
-from res.fm.rms import RMSRun
+from res.fm.rms import RMSRun, RMSRunException
 import res.fm.rms
 
 from tests.utils import tmpdir
@@ -51,7 +51,7 @@ def test_run_backup_python_path(tmpdir, monkeypatch, python_path):
     shutil.copy(os.path.join(source_root(), "python/tests/res/fm/rms"), "bin")
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
     if python_path is None:
-        monkeypatch.delenv("PYTHONPATH")
+        monkeypatch.delenv("PYTHONPATH", raising=False)
     else:
         monkeypatch.setenv("PYTHONPATH", python_path)
 
@@ -151,7 +151,7 @@ class RMSRunTest(ResTest):
                 f.write(json.dumps(action))
 
             r = RMSRun(0, "project", "workflow", run_path="run_path")
-            with self.assertRaises(Exception):
+            with self.assertRaises(RMSRunException):
                 r.run()
 
             # -----------------------------------------------------------------
@@ -163,7 +163,7 @@ class RMSRunTest(ResTest):
             r = RMSRun(
                 0, "project", "workflow", run_path="run_path", target_file="some_file"
             )
-            with self.assertRaises(Exception):
+            with self.assertRaises(RMSRunException):
                 r.run()
 
             # -----------------------------------------------------------------
@@ -205,7 +205,7 @@ class RMSRunTest(ResTest):
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
 
-            with self.assertRaises(Exception):
+            with self.assertRaises(RMSRunException):
                 res.fm.rms.run(0, "project", "workflow", run_path="run_path")
 
             # -----------------------------------------------------------------
@@ -214,7 +214,7 @@ class RMSRunTest(ResTest):
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
 
-            with self.assertRaises(Exception):
+            with self.assertRaises(RMSRunException):
                 res.fm.rms.run(
                     0,
                     "project",
@@ -397,6 +397,71 @@ class RMSRunTest(ResTest):
                 0, "project", "workflow", run_path="run_path", target_file=target_file
             )
             r.run()
+
+    def test_run_wrapper(self):
+        with TestAreaContext("test_run"):
+            wrapper_file_name = f"{os.getcwd()}/bin/rms_wrapper"
+            with open("rms_config.yml", "w") as f:
+                f.write("executable:  {}/bin/rms\n".format(os.getcwd()))
+                f.write(f"wrapper:  {wrapper_file_name}")
+
+            os.mkdir("run_path")
+            os.mkdir("bin")
+            os.mkdir("project")
+            shutil.copy(
+                os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin"
+            )
+
+            with open(wrapper_file_name, "w") as f:
+                f.write("#!/bin/bash\n")
+                f.write("exec ${@:1}")
+            st = os.stat(wrapper_file_name)
+            os.chmod(wrapper_file_name, st.st_mode | stat.S_IEXEC)
+            self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+            self.monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
+
+            action = {"exit_status": 0}
+            with open("run_path/action.json", "w") as f:
+                f.write(json.dumps(action))
+
+            res.fm.rms.run(0, "project", "workflow", run_path="run_path")
+
+            # -----------------------------------------------------------------
+
+            action = {"exit_status": 1}
+            with open("run_path/action.json", "w") as f:
+                f.write(json.dumps(action))
+
+            with self.assertRaises(RMSRunException):
+                res.fm.rms.run(0, "project", "workflow", run_path="run_path")
+
+            # -----------------------------------------------------------------
+
+            action = {"exit_status": 0}
+            with open("run_path/action.json", "w") as f:
+                f.write(json.dumps(action))
+
+            with self.assertRaises(RMSRunException):
+                res.fm.rms.run(
+                    0,
+                    "project",
+                    "workflow",
+                    run_path="run_path",
+                    target_file="some_file",
+                )
+
+            # -----------------------------------------------------------------
+
+            action = {
+                "exit_status": 0,
+                "target_file": os.path.join(os.getcwd(), "some_file"),
+            }
+
+            with open("run_path/action.json", "w") as f:
+                f.write(json.dumps(action))
+            res.fm.rms.run(
+                0, "project", "workflow", run_path="run_path", target_file="some_file"
+            )
 
 
 if __name__ == "__main__":
