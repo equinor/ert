@@ -81,4 +81,8 @@ def wait_until(func, interval=0.5, timeout=30):
             return
         except AssertionError:
             if t >= timeout:
-                raise
+                raise AssertionError(
+                    "Error in wait_until, function {%s}, timeout {%d}".format(
+                        func.__name__, timeout
+                    )
+                )
