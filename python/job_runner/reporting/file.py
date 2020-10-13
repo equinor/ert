@@ -152,10 +152,10 @@ class File(object):
         now = time.localtime()
         fileH.write("<error>\n")
         fileH.write(
-            "  <time>%02d:%02d:%02d</time>\n" % (now.tm_hour, now.tm_min, now.tm_sec)
+            "  <time>{:02d}:{:02d}:{:02d}</time>\n".format(now.tm_hour, now.tm_min, now.tm_sec)
         )
-        fileH.write("  <job>%s</job>\n" % job.name())
-        fileH.write("  <reason>%s</reason>\n" % error_msg)
+        fileH.write("  <job>{}</job>\n".format(job.name()))
+        fileH.write("  <reason>{}</reason>\n".format(error_msg))
         stderr_file = None
         if job.std_err:
             if os.path.exists(job.std_err):
@@ -164,15 +164,15 @@ class File(object):
                     if stderr:
                         stderr_file = os.path.join(os.getcwd(), job.std_err)
                     else:
-                        stderr = "<Not written by:%s>\n" % job.name()
+                        stderr = "<Not written by:{}>\n".format(job.name())
             else:
-                stderr = "<stderr: Could not find file:%s>\n" % job.std_err
+                stderr = "<stderr: Could not find file:{}>\n".format(job.std_err)
         else:
             stderr = "<stderr: Not redirected>\n"
 
-        fileH.write("  <stderr>\n%s</stderr>\n" % stderr)
+        fileH.write("  <stderr>\n{}</stderr>\n".format(stderr))
         if stderr_file:
-            fileH.write("  <stderr_file>%s</stderr_file>\n" % stderr_file)
+            fileH.write("  <stderr_file>{}</stderr_file>\n".format(stderr_file))
 
         fileH.write("</error>\n")
         fileH.close()
@@ -181,8 +181,7 @@ class File(object):
         now = time.localtime()
         with open(self.OK_file, "w") as f:
             f.write(
-                "All jobs complete %02d:%02d:%02d \n"
-                % (now.tm_hour, now.tm_min, now.tm_sec)
+                "All jobs complete {:02d}:{:02d}:{:02d} \n".format(now.tm_hour, now.tm_min, now.tm_sec)
             )
         time.sleep(sync_disc_timeout)  # Let the disks sync up
 

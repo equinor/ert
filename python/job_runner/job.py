@@ -73,7 +73,7 @@ class Job(object):
             exec_name, _ = os.path.splitext(
                 os.path.basename(self.job_data.get("executable"))
             )
-            with open("%s_exec_env.json" % exec_name, "w") as f:
+            with open("{}_exec_env.json".format(exec_name), "w") as f:
                 f.write(json.dumps(exec_env))
 
         max_running_minutes = self.job_data.get("max_running_minutes")
@@ -171,16 +171,16 @@ class Job(object):
                     file_path = os.path.join(os.getcwd(), arg_list[index])
                     if not os.path.isfile(file_path):
                         errors.append(
-                            'In job "%s": RUNTIME_FILE "%s" does not exist.'
-                            % (self.name(), arg_list[index])
+                            "In job {}: RUNTIME_FILE {} does not exist.".format(
+                                self.name(), arg_list[index])
                         )
                 if arg_type == "RUNTIME_INT":
                     try:
                         int(arg_list[index])
                     except ValueError:
                         errors.append(
-                            'In job "%s": argument with index %d is of incorrect type, should be integer.'
-                            % (self.name(), index)
+                            "In job {}: argument with index {} is of incorrect type, should be integer.".format(
+                                self.name(), index)
                         )
         return errors
 
@@ -193,7 +193,7 @@ class Job(object):
             exec_name, _ = os.path.splitext(
                 os.path.basename(self.job_data.get("executable"))
             )
-            with open("%s_exec_env.json" % exec_name, "w") as f:
+            with open("{}_exec_env.json".format(exec_name), "w") as f:
                 f.write(json.dumps(exec_env))
 
     def _check_job_files(self):

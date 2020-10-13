@@ -31,4 +31,4 @@ def assert_file_executable(fname):
         raise IOError("{} is not a file!".format(fname))
 
     if not any([os.access(fn, os.X_OK) for fn in potential_executables]):
-        raise IOError("%s is not an executable!" % fname)
+        raise IOError("{} is not an executable!".format(fname))
