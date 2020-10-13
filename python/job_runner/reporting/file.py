@@ -152,7 +152,9 @@ class File(object):
         now = time.localtime()
         fileH.write("<error>\n")
         fileH.write(
-            "  <time>{:02d}:{:02d}:{:02d}</time>\n".format(now.tm_hour, now.tm_min, now.tm_sec)
+            "  <time>{:02d}:{:02d}:{:02d}</time>\n".format(
+                now.tm_hour, now.tm_min, now.tm_sec
+            )
         )
         fileH.write("  <job>{}</job>\n".format(job.name()))
         fileH.write("  <reason>{}</reason>\n".format(error_msg))
@@ -181,7 +183,9 @@ class File(object):
         now = time.localtime()
         with open(self.OK_file, "w") as f:
             f.write(
-                "All jobs complete {:02d}:{:02d}:{:02d} \n".format(now.tm_hour, now.tm_min, now.tm_sec)
+                "All jobs complete {:02d}:{:02d}:{:02d} \n".format(
+                    now.tm_hour, now.tm_min, now.tm_sec
+                )
             )
         time.sleep(sync_disc_timeout)  # Let the disks sync up
 

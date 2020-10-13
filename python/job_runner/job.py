@@ -172,7 +172,8 @@ class Job(object):
                     if not os.path.isfile(file_path):
                         errors.append(
                             "In job {}: RUNTIME_FILE {} does not exist.".format(
-                                self.name(), arg_list[index])
+                                self.name(), arg_list[index]
+                            )
                         )
                 if arg_type == "RUNTIME_INT":
                     try:
@@ -180,7 +181,8 @@ class Job(object):
                     except ValueError:
                         errors.append(
                             "In job {}: argument with index {} is of incorrect type, should be integer.".format(
-                                self.name(), index)
+                                self.name(), index
+                            )
                         )
         return errors
 

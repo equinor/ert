@@ -62,7 +62,7 @@ class Network(object):
         }
 
         job_list = [j.name() for j in msg.jobs]
-        logged_fields.update({"jobs": job_list}) 
+        logged_fields.update({"jobs": job_list})
 
         self._post_message(msg.timestamp, extra_fields=logged_fields)
 
