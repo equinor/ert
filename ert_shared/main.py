@@ -252,7 +252,7 @@ def get_ert_parser(parser=None):
         "--target-case",
         type=valid_name_format,
         required=True,
-        help="The es_mda creates multiple cases for the different "
+        help="The iterative ensemble smoother creates multiple cases for the different "
         "iterations. The case names will follow the specified format. "
         "For example, 'Target case format: iter_%%d' will generate "
         "cases with the names iter_0, iter_1, iter_2, iter_3, ....",
