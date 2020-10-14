@@ -27,6 +27,7 @@ setup(
     install_requires=[
         "aiofiles",
         "ansicolors==1.1.8",
+        "cloudevents",
         "console-progressbar==1.1.2",
         "decorator",
         "decorator",
