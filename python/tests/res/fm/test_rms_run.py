@@ -34,46 +34,6 @@ from tests.conftest import source_root
 
 @tmpdir()
 @pytest.mark.parametrize(
-    "python_path",
-    [
-        (""),
-        ("/test/python/path/"),
-        (None),
-    ],
-)
-def test_run_backup_python_path(tmpdir, monkeypatch, python_path):
-    with open("rms_config.yml", "w") as f:
-        f.write("executable:  {}/bin/rms".format(os.getcwd()))
-
-    os.mkdir("run_path")
-    os.mkdir("bin")
-    os.mkdir("project")
-    shutil.copy(os.path.join(source_root(), "python/tests/res/fm/rms"), "bin")
-    monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
-    if python_path is None:
-        monkeypatch.delenv("PYTHONPATH", raising=False)
-    else:
-        monkeypatch.setenv("PYTHONPATH", python_path)
-
-    action = {"exit_status": 0}
-    with open("run_path/action.json", "w") as f:
-        f.write(json.dumps(action))
-
-    r = RMSRun(0, "project", "workflow", run_path="run_path")
-    r.run()
-
-    with open("run_path/env.json") as f:
-        env = json.load(f)
-
-    assert env["_PRE_RMS_BACKUP"] == "1"
-    if python_path is None:
-        assert "_PRE_RMS_PYTHONPATH" not in env
-    else:
-        assert env["_PRE_RMS_PYTHONPATH"] == python_path
-
-
-@tmpdir()
-@pytest.mark.parametrize(
     "test_input,expected_result",
     [
         (0, 422851785),

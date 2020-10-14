@@ -175,10 +175,7 @@ class RMSRun(object):
             args += ["-threads", str(self.config.threads)]
 
         if not exec_env:
-            exec_env = os.environ.copy()
-        exec_env["_PRE_RMS_BACKUP"] = "1"
-        if "PYTHONPATH" in os.environ:
-            exec_env["_PRE_RMS_PYTHONPATH"] = os.environ["PYTHONPATH"]
+            exec_env = os.environ
 
         comp_process = subprocess.run(args=args, env=exec_env)
         return comp_process.returncode
