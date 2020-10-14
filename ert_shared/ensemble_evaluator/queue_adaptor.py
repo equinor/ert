@@ -9,6 +9,7 @@ from ert_shared.ensemble_evaluator.entity import RealizationDecoder, create_real
 from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 from res.job_queue import JobQueueManager
 from res.job_queue.job_status_type_enum import JobStatusType
+from job_runner import JOBS_FILE
 
 
 class JobQueueManagerAdaptor(JobQueueManager):
@@ -17,11 +18,14 @@ class JobQueueManagerAdaptor(JobQueueManager):
     # a class member is provided to allow this URL to vary
     ws_url = None
 
+    ee_id = None
+
     def __init__(self, queue, queue_evaluators=None):
         super().__init__(queue, queue_evaluators)
         asyncio.set_event_loop(asyncio.new_event_loop())
         self._ws_url = self.ws_url
         self._changes_queue = asyncio.Queue()
+        self._ee_id = self.ee_id
         wait_for_ws(self._ws_url)
 
         self._qindex_to_iens = {
@@ -30,6 +34,8 @@ class JobQueueManagerAdaptor(JobQueueManager):
         }
         self._state = [q_node.status.value for q_node in self._queue.job_list]
 
+        self._patch_jobs_file()
+
         # JobQueueManager is at its core a while and a sleep. This is not
         # asyncio friendly, so create a separate thread from where websocket
         # events will be pushed.
@@ -37,6 +43,17 @@ class JobQueueManagerAdaptor(JobQueueManager):
             target=self._publisher, args=(asyncio.get_event_loop(),)
         )
         self._publisher_thread.start()
+
+    def _patch_jobs_file(self):
+        for q_index, q_node in enumerate(self._queue.job_list):
+            with open(f"{q_node.run_path}/{JOBS_FILE}", "r+") as jobs_file:
+                data = json.load(jobs_file)
+                data["ee_id"] = self._ee_id
+                data["real_id"] = self._qindex_to_iens[q_index]
+                data["stage_id"] = 0
+                jobs_file.seek(0)
+                jobs_file.truncate()
+                json.dump(data, jobs_file, indent=4)
 
     def _publisher(self, loop):
         loop.run_until_complete(
