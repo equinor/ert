@@ -126,7 +126,6 @@ def get_files_excluded_from_black(root):
         "ert_gui/tools/plot/customize/limits_customization_view.py",
         "ert_shared/__init__.py",
         "ert_gui/tools/workflows/workflows_tool.py",
-        "ert_shared/cli/__init__.py",
         "ert_gui/tools/plugins/plugin_runner.py",
         "ert_gui/tools/workflows/workflow_dialog.py",
         "ert_gui/tools/run_analysis/run_analysis_tool.py",
