@@ -1,10 +1,12 @@
 import asyncio
+import json
 import threading
+from unittest.mock import Mock
 
 import pytest
 import websockets
 from ert_shared.ensemble_evaluator.queue_adaptor import JobQueueManagerAdaptor
-from unittest.mock import Mock
+from job_runner import JOBS_FILE
 
 
 async def mock_ws(host, port):
@@ -24,11 +26,18 @@ async def mock_ws(host, port):
     return events
 
 
-def mock_queue_mutator(host, port):
+def mock_queue_mutator(host, port, tmpdir):
     mock_queue = Mock(
-        job_list=[Mock(status=Mock(value=4), callback_arguments=[Mock(iens=0)])]
+        job_list=[
+            Mock(
+                status=Mock(value=4),
+                callback_arguments=[Mock(iens=0)],
+                run_path=tmpdir,
+            )
+        ]
     )
     JobQueueManagerAdaptor.ws_url = f"ws://{host}:{port}"
+    JobQueueManagerAdaptor.ee_id = "ee_id_123"
     jm = JobQueueManagerAdaptor(mock_queue)
 
     mock_queue.job_list[0].status.value = 16  # running
@@ -45,20 +54,30 @@ async def test_happy_path(tmpdir, unused_tcp_port):
     host = "localhost"
     port = unused_tcp_port
 
-    mutator = threading.Thread(target=mock_queue_mutator, args=(host, port))
+    with open(tmpdir / JOBS_FILE, "w") as jobs_file:
+        json.dump({}, jobs_file)
+
+    mutator = threading.Thread(target=mock_queue_mutator, args=(host, port, tmpdir))
     mutator.start()
 
-    done, _ = await asyncio.wait(
-        (asyncio.get_event_loop().create_task(mock_ws(host, port)),),
+    mock_ws_task = asyncio.get_event_loop().create_task(mock_ws(host, port))
+    await asyncio.wait(
+        (mock_ws_task,),
         timeout=2,
         return_when=asyncio.FIRST_EXCEPTION,
     )
 
     mutator.join()
 
-    assert len(done) == 1
-    assert done.pop().result() == [
+    assert mock_ws_task.done()
+    assert mock_ws_task.result() == [
         '{"0": {"status": "JOB_QUEUE_RUNNING", "forward_models": null}}',
         '{"0": {"status": "JOB_QUEUE_SUCCESS", "forward_models": null}}',
         "null",
     ]
+    with open(tmpdir / JOBS_FILE, "r") as jobs_file:
+        assert json.load(jobs_file) == {
+            "ee_id": "ee_id_123",
+            "real_id": 0,
+            "stage_id": 0,
+        }

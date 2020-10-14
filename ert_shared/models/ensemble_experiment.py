@@ -7,6 +7,7 @@ from ert_shared.storage.extraction_api import dump_to_new_storage
 from unittest.mock import patch
 from ert_shared.ensemble_evaluator.queue_adaptor import JobQueueManagerAdaptor
 
+import uuid
 
 
 class EnsembleExperiment(BaseRunModel):
@@ -27,8 +28,9 @@ class EnsembleExperiment(BaseRunModel):
 
         self.setPhaseName( run_msg, indeterminate=False)
 
-        # XXX: this magic string will eventually come from the legacy EE itself
+        # XXX: these magic string will eventually come from EE itself
         JobQueueManagerAdaptor.ws_url = "ws://localhost:8765"
+        JobQueueManagerAdaptor.ee_id = str(uuid.uuid1()).split("-")[0]
         with patch("res.enkf.enkf_simulation_runner.JobQueueManager", new=JobQueueManagerAdaptor):
             num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(self._job_queue, run_context)
 
