@@ -119,6 +119,22 @@ class EnKFTest(ResTest):
                 main = EnKFMain(res_config="This is not a ResConfig instance")
 
     @tmpdir()
+    def test_invalid_parameter_count_2_res_config(self):
+        with TestAreaContext("enkf_test") as work_area:
+            with self.assertRaises(ValueError):
+                work_area.copy_directory(self.case_directory)
+                res_config = ResConfig(user_config_file="a", config="b")
+
+    @tmpdir()
+    def test_invalid_parameter_count_3_res_config(self):
+        with TestAreaContext("enkf_test") as work_area:
+            with self.assertRaises(ValueError):
+                work_area.copy_directory(self.case_directory)
+                res_config = ResConfig(
+                    user_config_file="a", config="b", config_dict="c"
+                )
+
+    @tmpdir()
     def test_enum(self):
         self.assertEnumIsFullyDefined(
             EnkfVarType, "enkf_var_type", "lib/include/ert/enkf/enkf_types.hpp"

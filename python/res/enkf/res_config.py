@@ -110,9 +110,8 @@ class ResConfig(BaseCClass):
     ):
 
         _assert_configs = (
-            (config is not None)
-            ^ (config_dict is not None)
-            ^ (user_config_file is not None)
+            len([x for x in (config, config_dict, user_config_file) if x is not None])
+            == 1
         )
         if _assert_configs is False:
             raise ValueError(
