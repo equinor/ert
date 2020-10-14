@@ -5,11 +5,42 @@ import threading
 import time
 
 import websockets
+from cloudevents.http import CloudEvent, to_json
 from ert_shared.ensemble_evaluator.entity import RealizationDecoder, create_realization
 from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
+from job_runner import JOBS_FILE
 from res.job_queue import JobQueueManager
 from res.job_queue.job_status_type_enum import JobStatusType
-from job_runner import JOBS_FILE
+
+_FM_STAGE_WAITING = "com.equinor.ert.forward_model_stage.waiting"
+_FM_STAGE_PENDING = "com.equinor.ert.forward_model_stage.pending"
+_FM_STAGE_RUNNING = "com.equinor.ert.forward_model_stage.running"
+_FM_STAGE_FAILURE = "com.equinor.ert.forward_model_stage.failure"
+_FM_STAGE_SUCCESS = "com.equinor.ert.forward_model_stage.success"
+_FM_STAGE_UNKNOWN = "com.equinor.ert.forward_model_stage.unknown"
+
+_queue_state_to_event_type_map = {
+    "JOB_QUEUE_NOT_ACTIVE": _FM_STAGE_UNKNOWN,
+    "JOB_QUEUE_WAITING": _FM_STAGE_WAITING,
+    "JOB_QUEUE_SUBMITTED": _FM_STAGE_PENDING,
+    "JOB_QUEUE_PENDING": _FM_STAGE_PENDING,
+    "JOB_QUEUE_RUNNING": _FM_STAGE_RUNNING,
+    "JOB_QUEUE_DONE": _FM_STAGE_RUNNING,
+    "JOB_QUEUE_EXIT": _FM_STAGE_RUNNING,
+    "JOB_QUEUE_IS_KILLED": _FM_STAGE_RUNNING,
+    "JOB_QUEUE_DO_KILL": _FM_STAGE_RUNNING,
+    "JOB_QUEUE_SUCCESS": _FM_STAGE_SUCCESS,
+    "JOB_QUEUE_RUNNING_DONE_CALLBACK": _FM_STAGE_RUNNING,
+    "JOB_QUEUE_RUNNING_EXIT_CALLBACK": _FM_STAGE_RUNNING,
+    "JOB_QUEUE_STATUS_FAILURE": _FM_STAGE_UNKNOWN,
+    "JOB_QUEUE_FAILED": _FM_STAGE_FAILURE,
+    "JOB_QUEUE_DO_KILL_NODE_FAILURE": _FM_STAGE_RUNNING,
+    "JOB_QUEUE_UNKNOWN": _FM_STAGE_UNKNOWN,
+}
+
+
+def _queue_state_event_type(state):
+    return _queue_state_to_event_type_map[state]
 
 
 class JobQueueManagerAdaptor(JobQueueManager):
@@ -61,14 +92,31 @@ class JobQueueManagerAdaptor(JobQueueManager):
         )
 
     @staticmethod
+    def _translate_change_to_cloudevent(real_id, change):
+        return CloudEvent(
+            {
+                "type": _queue_state_event_type(change._status),
+                "source": f"/ert/ee/{0}/real/{real_id}/stage/{0}",
+                "datacontenttype": "application/json",
+            },
+            {
+                "queue_event_type": change._status,
+            },
+        )
+
+    @staticmethod
     async def _publish_from_queue(queue, url):
         while True:
             async with websockets.connect(url) as websocket:
                 changes = await queue.get()
-                event = json.dumps(changes, cls=RealizationDecoder)
-                await websocket.send(event)
                 if changes is None:
+                    await websocket.send("null")
                     return
+                events = [
+                    JobQueueManagerAdaptor._translate_change_to_cloudevent(real_id, c)
+                    for real_id, c in changes.items()
+                ]
+                await websocket.send([to_json(event) for event in events])
 
     def _transition(self):
         """Transition to a new state, return both old and new state."""
@@ -130,10 +178,9 @@ class JobQueueManagerAdaptor(JobQueueManager):
         if self.queue.stopped:
             self._stop_jobs()
 
+        self._assert_complete()
         self._transition()
         self._publish_changes(self._snapshot())
-
-        self._assert_complete()
 
         self._publish_changes(None)
 
