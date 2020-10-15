@@ -102,7 +102,7 @@ class EnsembleEvaluator:
                     if USERS:
                         message = json.dumps(event.to_dict())
                         await asyncio.wait([user.send(message) for user in USERS])
-                    if i == 49: # Only for dummy data
+                    if i == 49:  # Only for dummy data
                         self.stop()
                 if USERS:
                     message = json.dumps(self._snapshot.to_dict())
