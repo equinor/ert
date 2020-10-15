@@ -340,6 +340,18 @@ def test_add_prior(db_connection):
         assert prior.id is not None
 
 
+def test_get_response_data(db_info):
+    populated_db, _ = db_info
+    rdb_connection = connections.get_rdb_connection(populated_db)
+    with RdbApi(connection=rdb_connection) as rdb_api:
+        responses = rdb_api.get_response_data(
+            name="response_one", ensemble_name="ensemble_name"
+        )
+        ids = [resp.values_ref for resp in responses]
+        assert ids is not None
+        assert ids == [18, 23]
+
+
 def test_get_response_bundle(db_info):
     populated_db, db_lookup = db_info
     rdb_connection = connections.get_rdb_connection(populated_db)
