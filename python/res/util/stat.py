@@ -23,15 +23,6 @@ from res import ResPrototype
 from res.util import LLSQResultEnum
 from res.util import Matrix
 
-
-quantile = ResPrototype("double statistics_empirical_quantile(double_vector, double)")
-"""@type: (ecl.util.DoubleVector, float)->float"""
-
-quantile_sorted = ResPrototype(
-    "double statistics_empirical_quantile(double_vector, double)"
-)
-"""@type: (ecl.util.DoubleVector, float)->float"""
-
 try:
     _polyfit = ResPrototype(
         "llsq_result_enum matrix_stat_polyfit(matrix, matrix, matrix, matrix)"
@@ -43,9 +34,9 @@ except PrototypeError:
 def polyfit(n, x, y, s=None):
     """
     @type n: int
-    @type x: Matrix or Sequence
-    @type y: Matrix or Sequence
-    @type s: Matrix or Sequence or None
+    @type x: Matrix or Sequence or DoubleVector
+    @type y: Matrix or Sequence or DoubleVector
+    @type s: Matrix or Sequence or DoubleVector or None
     @return: tuple
     """
     if _polyfit is None:
