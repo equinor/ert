@@ -256,7 +256,6 @@ class ForwardModelFormattedPrintTest(ResTest):
         self.assertEqual(
             ext_job.get_arglist(), empty_list_if_none(ext_job_config["argList"])
         )
-
         if ext_job_config["environment"] is None:
             self.assertTrue(len(ext_job.get_environment().keys()) == 0)
         else:

@@ -6,6 +6,19 @@ NUM_CPU 5
 
 DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>
 
+-- An argument name in OLD_TYPE_C is ARGUMENTB
+-- We showcase that when using DEFINE, the resulting
+-- argument value to the job is configured_argumentB
+DEFINE <TO_BE_DEFINED> <ARGUMENTB>
+-- Note that if we include the following:
+-- DEFINE <ARGUMENTB> DEFINED_ARGUMENTB_VALUE
+-- The resolved argument will be DEFINED_ARGUMENTB_VALUE
+-- even in the case where the user has specified the value
+-- in the configuration as such:
+-- OLD_TYPE_C(<ARGUMENTB>=configured_argumentB)
+
+DEFINE <ARGUMENTC> DEFINED_ARGC_VALUE
+
 RUNPATH_FILE directory/test_runpath_list.txt
 RUNPATH <STORAGE>/runpath/realisation-%d/iter-%d
 ENSPATH <STORAGE>/ensemble
@@ -14,10 +27,12 @@ INSTALL_JOB NEW_TYPE_A jobs/NEW_TYPE_A
 INSTALL_JOB NEW_TYPE_B jobs/NEW_TYPE_B
 INSTALL_JOB OLD_TYPE_A jobs/OLD_TYPE_A
 INSTALL_JOB OLD_TYPE_B jobs/OLD_TYPE_B
-
+INSTALL_JOB OLD_TYPE_C jobs/OLD_TYPE_C
 
 
 FORWARD_MODEL OLD_TYPE_B(<ARGUMENT>=yy)
 SIMULATION_JOB NEW_TYPE_A Hello True 3.14 4
 SIMULATION_JOB NEW_TYPE_B word <ECLBASE>
 FORWARD_MODEL OLD_TYPE_A
+FORWARD_MODEL OLD_TYPE_C(<ARGUMENTA>=configured_argumentA, <TO_BE_DEFINED>=configured_argumentB)
+FORWARD_MODEL OLD_TYPE_C()

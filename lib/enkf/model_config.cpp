@@ -393,6 +393,7 @@ void model_config_init(model_config_type * model_config ,
                        const ecl_sum_type * refcase) {
 
   model_config->forward_model = forward_model_alloc(  joblist );
+  const subst_list_type * define_list = config_content_get_const_define_list(config);
   model_config_set_refcase( model_config , refcase );
   model_config_set_default_data_root( model_config, data_root );
 
@@ -403,11 +404,12 @@ void model_config_init(model_config_type * model_config ,
     const config_content_node_type * node = config_content_iget_node( config , i);
     if (util_string_equal(config_content_node_get_kw(node), SIMULATION_JOB_KEY))
       forward_model_parse_job_args(model_config->forward_model,
-                                   config_content_node_get_stringlist(node));
+                                   config_content_node_get_stringlist(node),
+                                   define_list);
 
     if (util_string_equal(config_content_node_get_kw(node), FORWARD_MODEL_KEY) ) {
       const char * arg = config_content_node_get_full_string(node, "");
-      forward_model_parse_job_deprecated_args( model_config->forward_model , arg );
+      forward_model_parse_job_deprecated_args( model_config->forward_model, arg, define_list);
     }
   }
 

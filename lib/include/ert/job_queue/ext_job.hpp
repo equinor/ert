@@ -45,10 +45,12 @@ void                    ext_job_add_environment(ext_job_type *, const char * , c
 void                    ext_job_save( const ext_job_type * ext_job );
 void                    ext_job_fprintf(const ext_job_type * , FILE * stream );
 void                    ext_job_set_private_arg(ext_job_type * , const char *  , const char * );
+void                    ext_job_set_define_args(ext_job_type * ext_job, const subst_list_type * define_args);
 
 void                    ext_job_json_fprintf(const ext_job_type*, int job_index, FILE*, const subst_list_type*);
 ext_job_type          * ext_job_fscanf_alloc(const char * , const char * , bool private_job , const char *, bool search_path);
 const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job );
+const stringlist_type * ext_job_get_argvalues( const ext_job_type * ext_job );
 bool                    ext_job_is_shared( const ext_job_type * ext_job );
 bool                    ext_job_is_private( const ext_job_type * ext_job );
 

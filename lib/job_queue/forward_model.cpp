@@ -102,7 +102,7 @@ void forward_model_free( forward_model_type * forward_model) {
   Used with SIMULATION_JOB keyword
 */
 
-void forward_model_parse_job_args(forward_model_type * forward_model, const stringlist_type * list) {
+void forward_model_parse_job_args(forward_model_type * forward_model, const stringlist_type * list, const subst_list_type * define_args ) {
 
   stringlist_type * args = stringlist_alloc_deep_copy(list);
   const char * job_name = stringlist_iget(args, 0);
@@ -110,6 +110,7 @@ void forward_model_parse_job_args(forward_model_type * forward_model, const stri
   ext_job_free_deprecated_argv(current_job);
   stringlist_idel(args, 0);
   ext_job_set_args(current_job, args);
+  ext_job_set_define_args(current_job, define_args);
 }
 
 /**
@@ -126,7 +127,7 @@ void forward_model_parse_job_args(forward_model_type * forward_model, const stri
 
 */
 
-void forward_model_parse_job_deprecated_args(forward_model_type * forward_model, const char * input_string) {
+void forward_model_parse_job_deprecated_args(forward_model_type * forward_model, const char * input_string, const subst_list_type * define_args ) {
   char * p1 = (char *) input_string;
   char * job_name;
   {
@@ -144,6 +145,7 @@ void forward_model_parse_job_deprecated_args(forward_model_type * forward_model,
    {
       char  * arg_string          = (char *)util_alloc_substring_copy((p1 + 1) , 0 , arg_length - 1);
       ext_job_set_private_args_from_string( current_job , arg_string );
+      ext_job_set_define_args(current_job, define_args);
       free( arg_string );
     }
   }

@@ -89,7 +89,8 @@ class EnKFTestSimModel(ResTest):
 
                 model_config = ert.getModelConfig()
                 forward_model = model_config.getForwardModel()
-                self.assertEqual(forward_model.get_size(), 4)
+                self.assertEqual(forward_model.get_size(), 6)
+
                 self.assertEqual(forward_model.iget_job(3).get_arglist(), ["WORD_A"])
                 self.assertEqual(
                     forward_model.iget_job(0).get_arglist(), ["<ARGUMENT>"]
@@ -100,6 +101,28 @@ class EnKFTestSimModel(ResTest):
                 )
                 self.assertEqual(
                     forward_model.iget_job(2).get_arglist(), ["word", "<ECLBASE>"]
+                )
+
+                self.assertEqual(forward_model.iget_job(0).get_argvalues(), ["yy"])
+                self.assertEqual(
+                    forward_model.iget_job(1).get_argvalues(),
+                    ["Hello", "True", "3.14", "4"],
+                )
+                self.assertEqual(
+                    forward_model.iget_job(2).get_argvalues(), ["word", "<ECLBASE>"]
+                )
+                self.assertEqual(forward_model.iget_job(3).get_argvalues(), ["WORD_A"])
+                self.assertEqual(
+                    list(forward_model.iget_job(4).get_argvalues()),
+                    [
+                        "configured_argumentA",
+                        "configured_argumentB",
+                        "DEFINED_ARGC_VALUE",
+                    ],
+                )
+                self.assertEqual(
+                    list(forward_model.iget_job(5).get_argvalues()),
+                    ["DEFAULT_ARGA_VALUE", "<ARGUMENTB>", "DEFINED_ARGC_VALUE"],
                 )
 
                 runpath_fmt = model_config.getRunpathFormat()

@@ -132,6 +132,7 @@ struct ext_job_struct {
   stringlist_type * argv;                  /* Currently not in use, but will replace deprected_argv */
   subst_list_type * private_args;          /* A substitution list of input arguments which is performed before the external substitutions -
                                               these are the arguments supplied as key=value pairs in the forward model call. */
+  const subst_list_type * define_args;
   char            * private_args_string;
   char            * argv_string;
   stringlist_type * deprecated_argv;       /* This should *NOT* start with the executable */
@@ -170,6 +171,7 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   ext_job->default_mapping     = hash_alloc();
   ext_job->exec_env            = hash_alloc();
   ext_job->argv                = stringlist_alloc_new();
+  ext_job->define_args         = NULL;
   ext_job->deprecated_argv     = NULL;
   ext_job->argv_string         = NULL;
   ext_job->__valid             = true;
@@ -584,6 +586,10 @@ void ext_job_set_private_arg(ext_job_type * ext_job, const char * key , const ch
   subst_list_append_copy( ext_job->private_args  , key , value , NULL);
 }
 
+void ext_job_set_define_args(ext_job_type * ext_job, const subst_list_type * define_args) {
+  ext_job->define_args = subst_list_alloc_deep_copy(define_args);
+}
+
 void ext_job_add_environment(ext_job_type *ext_job , const char * key , const char * value) {
   hash_insert_hash_owned_ref( ext_job->environment , key , util_alloc_string_copy( value ) , free);
 }
@@ -821,13 +827,13 @@ static void __fprintf_python_arg_types(FILE * stream,
 
 void ext_job_json_fprintf(const ext_job_type * ext_job, int job_index, FILE * stream, const subst_list_type * global_args) {
   const char * null_value = "null";
-  
+
   char * file_stdout_index = NULL;
   char * file_stderr_index = NULL;
-  
+
   file_stdout_index = util_alloc_sprintf("%s.%d",ext_job->stdout_file, job_index);
   file_stderr_index = util_alloc_sprintf("%s.%d",ext_job->stderr_file, job_index);
-  
+
   fprintf(stream," {");
   {
     __fprintf_python_string(  stream, "",   "name",                ext_job->name,                ",\n", ext_job->private_args, NULL,        null_value);
@@ -1105,6 +1111,21 @@ const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job ) {
     return ext_job->deprecated_argv;
   else
     return ext_job->argv;
+}
+
+const stringlist_type * ext_job_get_argvalues( const ext_job_type * ext_job ) {
+  stringlist_type * result = stringlist_alloc_new();
+
+  const stringlist_type * argv = ext_job_get_arglist(ext_job);
+  for (int i = 0; i < stringlist_get_size(argv); i++) {
+      const char * src_string = stringlist_iget(argv, i);
+      char * filtered_string = __alloc_filtered_string(src_string, ext_job->private_args, ext_job->define_args );
+      if (hash_has_key( ext_job->default_mapping, filtered_string ))
+        filtered_string = (char *)util_realloc_string_copy(filtered_string, (const char *)hash_get(ext_job->default_mapping, filtered_string));
+
+      stringlist_append_copy(result, filtered_string);
+  }
+  return result;
 }
 
 /**

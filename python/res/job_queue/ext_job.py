@@ -70,6 +70,7 @@ class ExtJob(BaseCClass):
     _get_license_path = ResPrototype("char* ext_job_get_license_path(ext_job)")
     _get_arglist = ResPrototype("stringlist_ref ext_job_get_arglist(ext_job)")
     _set_arglist = ResPrototype("void ext_job_set_args(ext_job, stringlist)")
+    _get_argvalues = ResPrototype("stringlist_ref ext_job_get_argvalues(ext_job)")
     _clear_environment = ResPrototype("void ext_job_clear_environment(ext_job)")
     _save = ResPrototype("void ext_job_save(ext_job)")
 
@@ -201,6 +202,9 @@ class ExtJob(BaseCClass):
 
     def get_arglist(self):
         return self._get_arglist()
+
+    def get_argvalues(self):
+        return self._get_argvalues()
 
     def set_arglist(self, args):
         return self._set_arglist(args)
