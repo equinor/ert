@@ -35,11 +35,11 @@ def test_snapshot_merge():
 
     snapshot.merge_event(
         ee_entity.create_evaluator_event(
-            event_index=0, realizations={1: {"status": "running"}}, status="running"
+            event_index=1, realizations={1: {"status": "running"}}, status="running"
         )
     )
 
-    assert snapshot._event_index == 0
+    assert snapshot._event_index == 1
     assert snapshot._status == "running"
 
     assert snapshot._realizations[1]["status"] == "running"
@@ -48,7 +48,7 @@ def test_snapshot_merge():
 
     snapshot.merge_event(
         ee_entity.create_evaluator_event(
-            event_index=1,
+            event_index=2,
             realizations={
                 1: {
                     "forward_models": {
@@ -67,7 +67,7 @@ def test_snapshot_merge():
         )
     )
 
-    assert snapshot._event_index == 1
+    assert snapshot._event_index == 2
     assert snapshot._status == "running"
 
     assert snapshot._realizations[1]["status"] == "running"

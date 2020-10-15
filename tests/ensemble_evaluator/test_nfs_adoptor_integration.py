@@ -33,9 +33,9 @@ async def mock_ws(host, port):
 
 
 @pytest.mark.asyncio
-async def test_append_to_file(tmpdir):
+async def test_append_to_file(tmpdir, unused_tcp_port):
     host = "localhost"
-    port = 50001
+    port = unused_tcp_port
     log_file = Path(tmpdir) / "log"
 
     futures = (

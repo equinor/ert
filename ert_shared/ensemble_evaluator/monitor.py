@@ -28,6 +28,7 @@ class _Monitor:
                             return
                     except Exception as e:
                         import traceback
+
                         print(e, traceback.format_exc())
 
         retries = 0
@@ -37,12 +38,17 @@ class _Monitor:
                 hello_future = loop.create_task(hello(queue))
                 while True:
                     get_future = loop.create_task(queue.get())
-                    done, pending = loop.run_until_complete(asyncio.wait((hello_future, get_future), return_when=asyncio.FIRST_COMPLETED))
+                    done, pending = loop.run_until_complete(
+                        asyncio.wait(
+                            (hello_future, get_future),
+                            return_when=asyncio.FIRST_COMPLETED,
+                        )
+                    )
                     if hello_future in done:
                         if hello_future.exception():
                             raise hello_future.exception()
                         print("monitor client exited", hello_future)
-                    # event = asyncio.run_coroutine_threadsafe(queue.get(), loop).result()
+                        # event = asyncio.run_coroutine_threadsafe(queue.get(), loop).result()
                         # if the client exits (e.g. if evaluator exits early), we
                         # must manually drain the queue IF the get_future is still pending
                         if get_future in done:
@@ -59,10 +65,11 @@ class _Monitor:
                     # yield event
                 while not queue.empty():
                     yield loop.run_until_complete(queue.get())
-                
+
                 return
             except OSError as e:
                 import traceback
+
                 print(traceback.format_exc())
                 print(f"Attempt {retries}: {e}")
                 retries += 1

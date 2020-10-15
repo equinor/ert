@@ -4,7 +4,7 @@ import threading
 import pytest
 import websockets
 from ert_shared.ensemble_evaluator.queue_adaptor import JobQueueManagerAdaptor
-from mock import Mock
+from unittest.mock import Mock
 
 
 async def mock_ws(host, port):
@@ -41,9 +41,9 @@ def mock_queue_mutator(host, port):
 
 
 @pytest.mark.asyncio
-async def test_happy_path(tmpdir):
+async def test_happy_path(tmpdir, unused_tcp_port):
     host = "localhost"
-    port = 50001
+    port = unused_tcp_port
 
     mutator = threading.Thread(target=mock_queue_mutator, args=(host, port))
     mutator.start()
