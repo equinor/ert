@@ -254,6 +254,7 @@ def get_ert_parser(parser=None):
         required=True,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         help="The iterative ensemble smoother creates multiple cases for the different "
 =======
         help="The es_mda creates multiple cases for the different "
@@ -261,6 +262,9 @@ def get_ert_parser(parser=None):
 =======
         help="The iterative ensemble smoother creates multiple cases for the different "
 >>>>>>> Performed changes based on Sondres comments
+=======
+        help="The iterative ensemble smoother creates multiple cases for the different "
+>>>>>>> f3ddbdf7fe9688817763497fb18a1270766f0335
         "iterations. The case names will follow the specified format. "
         "For example, 'Target case format: iter_%%d' will generate "
         "cases with the names iter_0, iter_1, iter_2, iter_3, ....",
