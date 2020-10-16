@@ -1,3 +1,4 @@
+import argparse
 import os
 import signal
 import sys
@@ -8,21 +9,28 @@ from job_runner.runner import JobRunner
 
 
 def main(args):
+
+    parser = argparse.ArgumentParser(
+        description="Run all the jobs specified in jobs.json, or specify the names of the jobs to run."
+    )
+    parser.add_argument("run_path", nargs="?", help="Path where jobs.json is located")
+    parser.add_argument(
+        "job",
+        nargs="*",
+        help="One or more jobs to be executed from the jobs.json file. If no jobs are specified, all jobs will be executed.",
+    )
+
+    parsed_args = parser.parse_args(args[1:])
+
     # If run_path is defined, enter into that directory
-    if len(args) > 1:
-        run_path = args[1]
-
-        if not os.path.exists(run_path):
-            sys.exit("No such directory: {}".format(run_path))
-        os.chdir(run_path)
-
-    jobs_to_run = []
-    if len(args) > 2:
-        jobs_to_run = args[2:]
+    if parsed_args.run_path is not None:
+        if not os.path.exists(parsed_args.run_path):
+            sys.exit("No such directory: {}".format(parsed_args.run_path))
+        os.chdir(parsed_args.run_path)
 
     reporters = []
-    is_interactive_run = len(args) > 2
-    if is_interactive_run:
+
+    if len(parsed_args.job) > 0:
         reporters.append(reporting.Interactive())
     else:
         reporters.append(reporting.File())
@@ -30,7 +38,7 @@ def main(args):
 
     job_runner = JobRunner()
 
-    for job_status in job_runner.run(jobs_to_run):
+    for job_status in job_runner.run(parsed_args.job):
         for reporter in reporters:
             reporter.report(job_status)
 
