@@ -8,14 +8,12 @@ Keyword definition for proper names containing a string argument.
 class ProperNameFormatStringArgument(ArgumentDefinition):
 
     NOT_A_VALID_NAME_FORMAT = "The argument must be a valid string containing a %s and only characters of these types:" \
-                       "<ul>" \
-                       "<li>Letters: <code>A-Z</code> and <code>a-z</code></li>" \
-                       "<li>Numbers: <code>0-9</code></li>" \
-                       "<li>Underscore: <code>_</code></li>" \
-                       "<li>Dash: <code>&mdash;</code><li>" \
-                       "<li>Period: <code>.</code></li>" \
-                       "<li>Brackets: </code>&lt;&gt;</code></li>" \
-                       "</ul>"
+                       "Letters: A-Z and a-z, " \
+                       "numbers: 0-9, " \
+                       "underscore: _, " \
+                       "dash: -, " \
+                       "period: . and " \
+                       "brackets: > < "            
 
 
     PATTERN = re.compile(r"^[A-Za-z0-9_\-.<>]*(%s)[A-Za-z0-9_\-.<>]*$")

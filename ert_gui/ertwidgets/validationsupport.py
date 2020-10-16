@@ -1,7 +1,7 @@
 from qtpy.QtCore import Qt, QPoint, QObject, Signal
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QSizePolicy, QFrame, QLabel
-
+import html
 
 class ErrorPopup(QWidget):
     error_template = ("<html>"
@@ -32,8 +32,8 @@ class ErrorPopup(QWidget):
 
     def presentError(self, widget, error):
         assert isinstance(widget, QWidget)
-
-        self._error_widget.setText(ErrorPopup.error_template % error)
+        
+        self._error_widget.setText(ErrorPopup.error_template % html.escape(error))
         self.show()
 
         size_hint = self.sizeHint()
