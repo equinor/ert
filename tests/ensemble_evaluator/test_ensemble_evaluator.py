@@ -1,3 +1,5 @@
+from cloudevents.http import to_json
+from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.evaluator import (
     EnsembleEvaluator,
     ee_entity,
@@ -19,6 +21,13 @@ def evaluator(unused_tcp_port):
 
 
 class Client:
+    def __enter__(self):
+        self.thread.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.stop()
+
     def __init__(self, host, port, path):
         self.host = host
         self.port = port
@@ -28,7 +37,6 @@ class Client:
         self.thread = threading.Thread(
             name="test_websocket_client", target=self._run, args=(self.loop,)
         )
-        self.thread.start()
 
     def _run(self, loop):
         asyncio.set_event_loop(loop)
@@ -54,22 +62,11 @@ class Client:
         self.thread.join()
 
 
-def send_dispatch_event(client, realization, job, status):
-    event1 = ee_entity.create_unindexed_evaluator_event(
-        realizations={
-            realization: {
-                "forward_models": {
-                    job: {
-                        "status": status,
-                        "data": {"memory": 1000},
-                    },
-                },
-            },
-        },
-        status="running",
-    )
-    status = json.dumps(event1.to_dict())
-    client.send(status)
+def send_dispatch_event(client, event_type, source, event_id, data):
+    event1 = CloudEvent({
+        "type": event_type, "source": source, "id": event_id
+    }, data)
+    client.send(to_json(event1))
 
 
 def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
@@ -81,47 +78,43 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
     assert snapshot.to_dict()["status"] == "unknown"
 
     # two dispatchers connect
-    dispatch1 = Client(evaluator._host, evaluator._port, "/dispatch/1")
-    dispatch2 = Client(evaluator._host, evaluator._port, "/dispatch/2")
+    with Client(evaluator._host, evaluator._port, "/dispatch") as dispatch1, Client(evaluator._host, evaluator._port, "/dispatch") as dispatch2:
 
-    # first dispatcher informs that job 1 is running
-    send_dispatch_event(dispatch1, realization=0, job=1, status="running")
-    connect1 = next(events).to_dict()
-    assert connect1["status"] == "running"
-    assert connect1["realizations"]["0"]["forward_models"]["1"]["status"] == "running"
+        # first dispatcher informs that job 1 is running
+        send_dispatch_event(dispatch1, ee_entity._FM_JOB_RUNNING, "/ert/ee/0/real/0/stage/0/step/0/job/1", "event1", {"current_memory_usage": 1000})
+        connect1 = next(events).to_dict()
+        assert connect1["status"] == "running"
+        assert connect1["realizations"]["0"]["status"] == "running"
+        return
+        # second dispatcher informs that job 1 is running
+        send_dispatch_event(dispatch2, realization=1, job=1, status="running")
+        connect2 = next(events).to_dict()
+        assert connect2["status"] == "running"
+        assert connect2["realizations"]["1"]["forward_models"]["1"]["status"] == "running"
 
-    # second dispatcher informs that job 1 is running
-    send_dispatch_event(dispatch2, realization=1, job=1, status="running")
-    connect2 = next(events).to_dict()
-    assert connect2["status"] == "running"
-    assert connect2["realizations"]["1"]["forward_models"]["1"]["status"] == "running"
+        # second dispatcher informs that job 1 is done
+        send_dispatch_event(dispatch2, realization=1, job=1, status="done")
+        connect2 = next(events).to_dict()
+        assert connect2["status"] == "running"
+        assert connect2["realizations"]["1"]["forward_models"]["1"]["status"] == "done"
 
-    # second dispatcher informs that job 1 is done
-    send_dispatch_event(dispatch2, realization=1, job=1, status="done")
-    connect2 = next(events).to_dict()
-    assert connect2["status"] == "running"
-    assert connect2["realizations"]["1"]["forward_models"]["1"]["status"] == "done"
+        # a second monitor connects
+        monitor2 = ee_monitor.create(evaluator._host, evaluator._port)
+        events2 = monitor2.track()
+        snapshot2 = next(events2).to_dict()
+        # second monitor should get the updated snapshot
+        assert snapshot2["status"] == "running"
+        assert snapshot2["realizations"]["0"]["forward_models"]["1"]["status"] == "running"
+        assert snapshot2["realizations"]["1"]["forward_models"]["1"]["status"] == "done"
 
-    # a second monitor connects
-    monitor2 = ee_monitor.create(evaluator._host, evaluator._port)
-    events2 = monitor2.track()
-    snapshot2 = next(events2).to_dict()
-    # second monitor should get the updated snapshot
-    assert snapshot2["status"] == "running"
-    assert snapshot2["realizations"]["0"]["forward_models"]["1"]["status"] == "running"
-    assert snapshot2["realizations"]["1"]["forward_models"]["1"]["status"] == "done"
+        # one monitor requests that server exit
+        monitor.exit_server()
 
-    # one monitor requests that server exit
-    monitor.exit_server()
-
-    # both monitors should get a terminated event
-    terminated = next(events)
-    terminated2 = next(events2)
-    assert terminated.to_dict()["status"] == "terminated"
-    assert terminated2.to_dict()["status"] == "terminated"
-
-    dispatch1.stop()
-    dispatch2.stop()
+        # both monitors should get a terminated event
+        terminated = next(events)
+        terminated2 = next(events2)
+        assert terminated.to_dict()["status"] == "terminated"
+        assert terminated2.to_dict()["status"] == "terminated"
 
 
 def test_monitor_stop(evaluator):

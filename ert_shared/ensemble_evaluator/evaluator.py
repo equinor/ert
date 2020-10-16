@@ -1,11 +1,11 @@
-import time
 import threading
-import traceback
+from ert_shared.ensemble_evaluator.entity import RealizationDecoder, create_evaluator_event, create_forward_model_job, create_realization, create_unindexed_evaluator_event
 import ert_shared.ensemble_evaluator.monitor as ee_monitor
 import ert_shared.ensemble_evaluator.entity as ee_entity
 import json
 import asyncio
 import websockets
+from cloudevents.http import from_json
 
 
 class EnsembleEvaluator:
@@ -24,22 +24,20 @@ class EnsembleEvaluator:
 
         self._snapshot = ee_entity.create_evaluator_snapshot(
             [
-                ee_entity.create_forward_model_job("1", "test1"),
-                ee_entity.create_forward_model_job("2", "test2", (1,)),
-                ee_entity.create_forward_model_job("3", "test3", (1,)),
-                ee_entity.create_forward_model_job("4", "test4", (2, 3)),
+                ee_entity.create_forward_model_job(1, "test1"),
+                ee_entity.create_forward_model_job(2, "test2", (1,)),
+                ee_entity.create_forward_model_job(3, "test3", (1,)),
+                ee_entity.create_forward_model_job(4, "test4", (2, 3)),
             ],
-            ["0", "1", "3", "4", "5", "9"],
+            [0, 1, 3, 4, 5, 9],
         )
 
     def _wsocket(self):
         loop = self._loop
         asyncio.set_event_loop(loop)
-        _dispatcher_queue = asyncio.Queue()
 
         USERS = set()
         done = self._done
-        self._event_index = 1
 
         async def handle_client(websocket, path):
             try:
@@ -72,23 +70,38 @@ class EnsembleEvaluator:
             try:
                 async for msg in websocket:
                     print(f"dispatch got: {msg}")
-                    data = json.loads(msg)
-                    event = ee_entity.create_evaluator_event_from_dict(data)
-                    event._event_index = self._event_index
-                    self._event_index += 1
-                    self._snapshot.merge_event(event)
-                    out_msg = json.dumps(event.to_dict())
+                    
+                    event = from_json(msg)
+                    snapshot_mutate_event = None
+                    real_id = get_real_id(event["source"])
+                    stage_id = get_stage_id(event["source"])
+                    if event["type"] == ee_entity._FM_JOB_RUNNING:
+                        step_id = get_step_id(event["source"])
+                        job_id = get_job_id(event["source"])
+                        self._snapshot._realizations[real_id]["forward_models"][job_id]["status"] == "running"
+                        real = create_realization("running", {
+                            job_id: create_forward_model_job(job_id, "unknown_type"), 
+                        })
+                        snapshot_mutate_event = create_evaluator_event(self._snapshot._event_index + 1, {
+                            real_id: real,
+                        }, "running")
+                    self._snapshot.merge_event(snapshot_mutate_event)
+                    out_msg = json.dumps(snapshot_mutate_event.to_dict(), cls=RealizationDecoder)
                     if USERS:
                         await asyncio.wait([user.send(out_msg) for user in USERS])
             except Exception as e:
                 import traceback
-
                 print(e, traceback.format_exc())
+                if USERS:
+                    msg = ee_entity.create_evaluator_event(0, None, "terminated")
+                    message = json.dumps(msg.to_dict())
+                    if USERS:
+                        await asyncio.wait([user.send(message) for user in USERS])
             finally:
                 print("dispatch exit")
 
         async def connection_handler(websocket, path):
-            print("conection_handler start")
+            print("connection_handler start")
             elements = path.split("/")
             if elements[1] == "client":
                 await handle_client(websocket, path)
@@ -122,3 +135,23 @@ class EnsembleEvaluator:
 
     def stop(self):
         self._loop.call_soon_threadsafe(self._stop)
+
+
+def get_job_id(path):
+    return int(path.split("/")[11])
+
+
+def get_step_id(path):
+    return int(path.split("/")[9])
+
+
+def get_stage_id(path):
+    return int(path.split("/")[7])
+
+
+def get_real_id(path):
+    return int(path.split("/")[5])
+
+
+def get_ee_id(path):
+    return int(path.split("/")[3])
