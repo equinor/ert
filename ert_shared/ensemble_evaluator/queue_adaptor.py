@@ -6,7 +6,7 @@ import time
 
 import websockets
 from cloudevents.http import CloudEvent, to_json
-from ert_shared.ensemble_evaluator.entity import RealizationDecoder, create_realization
+from ert_shared.ensemble_evaluator.entity import create_realization
 from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 from job_runner import JOBS_FILE
 from res.job_queue import JobQueueManager
@@ -116,7 +116,8 @@ class JobQueueManagerAdaptor(JobQueueManager):
                     JobQueueManagerAdaptor._translate_change_to_cloudevent(real_id, c)
                     for real_id, c in changes.items()
                 ]
-                await websocket.send([to_json(event) for event in events])
+                for event in events:
+                    await websocket.send(to_json(event))
 
     def _transition(self):
         """Transition to a new state, return both old and new state."""

@@ -4,7 +4,8 @@ from pathlib import Path
 import aiofiles
 import pytest
 import websockets
-from ert_shared.ensemble_evaluator.nfs_adaptor import END_OF_TRANSMISSION, NFSAdaptor
+from ert_shared.ensemble_evaluator.nfs_adaptor import nfs_adaptor
+from ert_shared.ensemble_evaluator.entity import _FM_STEP_SUCCESS
 
 
 async def mock_writer(filename, times=2):
@@ -12,7 +13,7 @@ async def mock_writer(filename, times=2):
         for r in range(0, times):
             await f.write(f"Time {r}\n")
             await asyncio.sleep(0.2)
-        await f.write(END_OF_TRANSMISSION)
+        await f.write(_FM_STEP_SUCCESS)
 
 
 async def mock_ws(host, port):
@@ -23,7 +24,7 @@ async def mock_ws(host, port):
         while True:
             line = await websocket.recv()
             lines.append(line)
-            if line == END_OF_TRANSMISSION:
+            if line == _FM_STEP_SUCCESS:
                 done.set_result(None)
                 break
 
@@ -39,7 +40,7 @@ async def test_append_to_file(tmpdir, unused_tcp_port):
     log_file = Path(tmpdir) / "log"
 
     futures = (
-        NFSAdaptor(log_file, f"ws://{host}:{port}").run(),
+        nfs_adaptor(log_file, f"ws://{host}:{port}"),
         asyncio.get_event_loop().create_task(mock_ws(host, port)),
         mock_writer(log_file),
     )

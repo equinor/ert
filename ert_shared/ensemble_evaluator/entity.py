@@ -3,6 +3,16 @@ import copy
 import json
 
 
+_FM_JOB_START = "com.equinor.ert.forward_model_job.start"
+_FM_JOB_RUNNING = "com.equinor.ert.forward_model_job.running"
+_FM_JOB_SUCCESS = "com.equinor.ert.forward_model_job.success"
+_FM_JOB_FAILURE = "com.equinor.ert.forward_model_job.failure"
+
+_FM_STEP_START = "com.equinor.ert.forward_model_step.start"
+_FM_STEP_FAILURE = "com.equinor.ert.forward_model_step.failure"
+_FM_STEP_SUCCESS = "com.equinor.ert.forward_model_step.success"
+
+
 def _recursive_update(d, u):
     for k, v in u.items():
         if k not in d:
