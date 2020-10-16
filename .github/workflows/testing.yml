@@ -34,10 +34,10 @@ jobs:
         sudo apt-get install libopm-simulators liblapack-dev valgrind
     - name: Setup environment
       run: |
-        echo "::add-path::${{ env.INSTALL_DIR}}/bin"
-        echo "::set-env name=LD_LIBRARY_PATH::${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
-        echo "::set-env name=DYLD_LIBRARY_PATH::${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64"
-        echo "::set-env name=PYTHONPATH::${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/site-packages:${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/dist-packages"
+        echo "${{ env.INSTALL_DIR}}/bin" >> $GITHUB_PATH
+        echo "LD_LIBRARY_PATH=${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64" >> $GITHUB_ENV
+        echo "DYLD_LIBRARY_PATH=${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64" >> $GITHUB_ENV
+        echo "PYTHONPATH=${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/site-packages:${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/dist-packages" >> $GITHUB_ENV
     - name: Install dependencies
       run: |
           pip install -r requirements.txt
