@@ -9,27 +9,24 @@ import websockets
 
 
 class EnsembleEvaluator:
-    def __init__(self):
+    def __init__(self, port=8765):
 
         self._host = "localhost"
-        self._port = 8765
+        self._port = port
         self._state = {}
 
-        self._ws_thread = threading.Thread(
-            name="ert_ee_wsocket",
-            target=self._wsocket,
-        )
+        self._ws_thread = threading.Thread(name="ert_ee_wsocket", target=self._wsocket,)
         self._loop = asyncio.new_event_loop()
         self._done = self._loop.create_future()
 
         self._snapshot = ee_entity.create_evaluator_snapshot(
             [
-                ee_entity.create_forward_model_job(1, "test1"),
-                ee_entity.create_forward_model_job(2, "test2", (1,)),
-                ee_entity.create_forward_model_job(3, "test3", (1,)),
-                ee_entity.create_forward_model_job(4, "test4", (2, 3)),
+                ee_entity.create_forward_model_job("1", "test1"),
+                ee_entity.create_forward_model_job("2", "test2", (1,)),
+                ee_entity.create_forward_model_job("3", "test3", (1,)),
+                ee_entity.create_forward_model_job("4", "test4", (2, 3)),
             ],
-            [0, 1, 3, 4, 5, 9],
+            ["0", "1", "3", "4", "5", "9"],
         )
 
     def _wsocket(self):
@@ -39,80 +36,7 @@ class EnsembleEvaluator:
 
         USERS = set()
         done = self._done
-
-        async def _mock_dispatch(done, dispatcher_queue):
-            print("Mock dispatcher started")
-            order_realizations = [0, 4, 9, 1, 5, 3]
-            order_jobs = [1, 3, 2, 4]
-            events = []
-            for realization in order_realizations:
-                for job in order_jobs:
-                    events.append(
-                        ee_entity.create_unindexed_evaluator_event(
-                            realizations={
-                                realization: {
-                                    "forward_models": {
-                                        job: {
-                                            "status": "running",
-                                            "data": {"memory": 1000}
-                                            if job % 2 == 1 or realization % 2 == 0
-                                            else None,
-                                        },
-                                    },
-                                },
-                            },
-                            status="running",
-                        )
-                    )
-                    events.append(
-                        ee_entity.create_unindexed_evaluator_event(
-                            realizations={
-                                realization: {
-                                    "forward_models": {
-                                        job: {
-                                            "status": "done",
-                                        },
-                                    },
-                                },
-                            },
-                            status="running",
-                        )
-                    )
-            for event in events:
-                await dispatcher_queue.put(event)
-                await asyncio.sleep(3)
-                if done.done():
-                    return
-
-        async def worker(done, dispatcher_queue):
-            print("Worker started")
-            i = 1
-            try:
-                while not done.done():
-                    try:
-                        event = await asyncio.wait_for(
-                            dispatcher_queue.get(), timeout=1
-                        )
-                    except asyncio.TimeoutError:
-                        continue
-                    event._event_index = i
-                    i += 1
-                    self._snapshot.merge_event(event)
-
-                    if USERS:
-                        message = json.dumps(event.to_dict())
-                        await asyncio.wait([user.send(message) for user in USERS])
-                    if i == 49:  # Only for dummy data
-                        self.stop()
-                if USERS:
-                    message = json.dumps(self._snapshot.to_dict())
-                    await asyncio.wait([user.send(message) for user in USERS])
-            except Exception as e:
-                import traceback
-
-                print(e, traceback.format_exc())
-            self.stop()
-            print("worker exiting")
+        self._event_index = 1
 
         async def handle_client(websocket, path):
             try:
@@ -127,7 +51,7 @@ class EnsembleEvaluator:
                     client_event = ee_entity.create_command_from_dict(data)
                     if client_event.is_terminate():
                         print(f"Client {websocket.remote_address} asked to terminate")
-                        self.stop()
+                        self._stop()
             except Exception as e:
                 import traceback
 
@@ -137,35 +61,61 @@ class EnsembleEvaluator:
                 USERS.remove(websocket)
 
         async def handle_dispatch(websocket, path):
-            pass
+            print(path)
+            # dispatch_id = int(path.split("/")[2])  # assuming format is /dispatch/<id>
+            # event_data = ee_entity.create_evaluator_event(dispatch_id, None, "started")
+            # message = json.dumps(event_data.to_dict())
+            # await asyncio.wait([user.send(message) for user in USERS])
+            try:
+                async for msg in websocket:
+                    print(f"dispatch got: {msg}")
+                    data = json.loads(msg)
+                    event = ee_entity.create_evaluator_event_from_dict(data)
+                    event._event_index = self._event_index
+                    self._event_index += 1
+                    self._snapshot.merge_event(event)
+                    out_msg = json.dumps(event.to_dict())
+                    if USERS:
+                        await asyncio.wait([user.send(out_msg) for user in USERS])
+            except Exception as e:
+                import traceback
+
+                print(e, traceback.format_exc())
+            finally:
+                print("dispatch exit")
 
         async def connection_handler(websocket, path):
-            if path == "/client":
+            print("conection_handler start")
+            elements = path.split("/")
+            if elements[1] == "client":
                 await handle_client(websocket, path)
-            elif path == "/dispatch":
+            elif elements[1] == "dispatch":
                 await handle_dispatch(websocket, path)
 
         async def evaluator_server(done):
             async with websockets.serve(connection_handler, self._host, self._port):
                 await done
                 print("server got done signal")
+
+                msg = ee_entity.create_evaluator_event(0, None, "terminated")
+                message = json.dumps(msg.to_dict())
+                if USERS:
+                    await asyncio.wait([user.send(message) for user in USERS])
+                print("send terminated")
             print("server exiting")
 
-        worker_future = loop.create_task(worker(done, _dispatcher_queue))
         server_future = loop.create_task(evaluator_server(done))
-        mock_dispatch_future = loop.create_task(_mock_dispatch(done, _dispatcher_queue))
-        loop.run_until_complete(
-            asyncio.wait((server_future, worker_future, mock_dispatch_future))
-        )
+        loop.run_until_complete(server_future)
 
-        print("Done")
+        print("Evaluator thread Done")
 
     def run(self):
         self._ws_thread.start()
         return ee_monitor.create(self._host, self._port)
 
-    def stop(self):
-        try:
+    def _stop(self):
+        if not self._done.done():
             self._done.set_result(None)
-        except asyncio.InvalidStateError:
-            pass
+
+    def stop(self):
+        self._loop.call_soon_threadsafe(self._stop)
