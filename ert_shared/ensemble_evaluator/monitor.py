@@ -67,7 +67,10 @@ class _Monitor:
             except asyncio.CancelledError:
                 print("receive cancelled")
 
-        thread = threading.Thread(name="ert_monitor_loop", target=run,)
+        thread = threading.Thread(
+            name="ert_monitor_loop",
+            target=run,
+        )
         thread.start()
 
         running = True
