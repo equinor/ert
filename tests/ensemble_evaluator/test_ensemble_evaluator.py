@@ -1,4 +1,8 @@
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator, ee_entity, ee_monitor
+from ert_shared.ensemble_evaluator.evaluator import (
+    EnsembleEvaluator,
+    ee_entity,
+    ee_monitor,
+)
 import websockets
 import pytest
 import asyncio
@@ -21,7 +25,9 @@ class Client:
         self.path = path
         self.loop = asyncio.new_event_loop()
         self.q = asyncio.Queue(loop=self.loop)
-        self.thread = threading.Thread(name="test_websocket_client", target=self._run, args=(self.loop,))
+        self.thread = threading.Thread(
+            name="test_websocket_client", target=self._run, args=(self.loop,)
+        )
         self.thread.start()
 
     def _run(self, loop):

@@ -15,7 +15,10 @@ class EnsembleEvaluator:
         self._port = port
         self._state = {}
 
-        self._ws_thread = threading.Thread(name="ert_ee_wsocket", target=self._wsocket,)
+        self._ws_thread = threading.Thread(
+            name="ert_ee_wsocket",
+            target=self._wsocket,
+        )
         self._loop = asyncio.new_event_loop()
         self._done = self._loop.create_future()
 
