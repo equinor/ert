@@ -5,7 +5,7 @@ from datetime import timedelta
 import hypothesis
 import pytest
 import schemathesis
-from ert_shared import ERT_STORAGE
+from ert_shared.storage import ERT_STORAGE
 from ert_shared.storage.http_server import FlaskWrapper
 from tests.storage import db_apis, populated_database, initialize_databases
 

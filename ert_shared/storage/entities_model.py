@@ -12,35 +12,44 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import backref, relationship
 from sqlalchemy.orm.collections import attribute_mapped_collection
-from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy.schema import UniqueConstraint, MetaData
 from sqlalchemy.sql import func
 
-Entities = declarative_base(name="Entities")
-Blobs = declarative_base(name="Blobs")
+meta = MetaData(
+    naming_convention={
+        "ix": "ix_%(column_0_label)s",
+        "uq": "uq_%(table_name)s_%(column_0_name)s",
+        "ck": "ck_%(table_name)s_%(constraint_name)s",
+        "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+        "pk": "pk_%(table_name)s",
+    }
+)
+
+Entities = declarative_base(name="Entities", metadata=meta)
 
 
 class Project(Entities):
-    __tablename__ = "projects"
+    __tablename__ = "project"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String, nullable=False)
 
-    __table_args__ = (UniqueConstraint("name", name="_uc_project_name_"),)
+    __table_args__ = (UniqueConstraint("name", name="uq_project_name"),)
 
     def __repr__(self):
         return "<Project(name='{}')>".format(self.name)
 
 
 class Ensemble(Entities):
-    __tablename__ = "ensembles"
+    __tablename__ = "ensemble"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String)
-    project_id = Column(Integer, ForeignKey("projects.id"))
+    name = Column(String, nullable=False)
+    project_id = Column(Integer, ForeignKey("project.id"), nullable=True)
     project = relationship("Project", back_populates="ensembles")
     time_created = Column(DateTime, server_default=func.now())
     __table_args__ = (
-        UniqueConstraint("name", "time_created", name="_uc_ensemble_name_time_"),
+        UniqueConstraint("name", "time_created", name="uq_ensemble_name_time_created"),
     )
 
     def __repr__(self):
@@ -53,17 +62,17 @@ Project.ensembles = relationship(
 
 
 class Update(Entities):
-    __tablename__ = "updates"
+    __tablename__ = "update"
 
     id = Column(Integer, primary_key=True)
-    algorithm = Column(String)
-    ensemble_reference_id = Column(Integer, ForeignKey("ensembles.id"))
+    algorithm = Column(String, nullable=False)
+    ensemble_reference_id = Column(Integer, ForeignKey("ensemble.id"), nullable=False)
     ensemble_reference = relationship(
         "Ensemble",
         foreign_keys=[ensemble_reference_id],
         back_populates="children",
     )
-    ensemble_result_id = Column(Integer, ForeignKey("ensembles.id"))
+    ensemble_result_id = Column(Integer, ForeignKey("ensemble.id"), nullable=False)
     ensemble_result = relationship(
         "Ensemble",
         foreign_keys=[ensemble_result_id],
@@ -72,7 +81,7 @@ class Update(Entities):
     )
 
     __table_args__ = (
-        UniqueConstraint("ensemble_result_id", name="_uc_update_result_id_"),
+        UniqueConstraint("ensemble_result_id", name="uq_update_result_id"),
     )
 
     def __repr__(self):
@@ -98,16 +107,16 @@ Ensemble.parent = relationship(
 
 
 class Realization(Entities):
-    __tablename__ = "realizations"
+    __tablename__ = "realization"
 
     id = Column(Integer, primary_key=True)
-    index = Column(Integer)
-    ensemble_id = Column(Integer, ForeignKey("ensembles.id"))
+    index = Column(Integer, nullable=False)
+    ensemble_id = Column(Integer, ForeignKey("ensemble.id"), nullable=False)
     ensemble = relationship("Ensemble", back_populates="realizations")
 
     __table_args__ = (
         UniqueConstraint(
-            "index", "ensemble_id", name="_uc_realization_index_ensemble_id_"
+            "index", "ensemble_id", name="uq_realization_index_ensemble_id"
         ),
     )
 
@@ -121,17 +130,17 @@ Ensemble.realizations = relationship(
 
 
 class ResponseDefinition(Entities):
-    __tablename__ = "response_definitions"
+    __tablename__ = "response_definition"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String, nullable=False)
     indexes_ref = Column(Integer)  # Reference to the description of  plot axis
-    ensemble_id = Column(Integer, ForeignKey("ensembles.id"))
+    ensemble_id = Column(Integer, ForeignKey("ensemble.id"), nullable=False)
     ensemble = relationship("Ensemble", back_populates="response_definitions")
 
     __table_args__ = (
         UniqueConstraint(
-            "name", "ensemble_id", name="_uc_response_def_name_ensemble_id_"
+            "name", "ensemble_id", name="uq_response_definiton_name_ensemble_id"
         ),
     )
 
@@ -149,20 +158,22 @@ Ensemble.response_definitions = relationship(
 
 
 class Response(Entities):
-    __tablename__ = "responses"
+    __tablename__ = "response"
 
     id = Column(Integer, primary_key=True)
     values_ref = Column(Integer)
-    realization_id = Column(Integer, ForeignKey("realizations.id"))
+    realization_id = Column(Integer, ForeignKey("realization.id"), nullable=False)
     realization = relationship("Realization", back_populates="responses")
-    response_definition_id = Column(Integer, ForeignKey("response_definitions.id"))
+    response_definition_id = Column(
+        Integer, ForeignKey("response_definition.id"), nullable=False
+    )
     response_definition = relationship("ResponseDefinition", back_populates="responses")
 
     __table_args__ = (
         UniqueConstraint(
             "realization_id",
             "response_definition_id",
-            name="_uc__response_realization_reponse_def_",
+            name="uq_response_realization_id_reponse_defition_id",
         ),
     )
 
@@ -181,16 +192,38 @@ ResponseDefinition.responses = relationship(
     "Response", order_by=Response.id, back_populates="response_definition"
 )
 
+prior_ensemble_association_table = Table(
+    "prior_ensemble_association_table",
+    Entities.metadata,
+    Column("prior_id", String, ForeignKey("parameter_prior.id")),
+    Column("ensemble_id", Integer, ForeignKey("ensemble.id")),
+)
 
-class ParameterDefinition(Entities):
-    __tablename__ = "parameter_definitions"
+
+class ParameterPrior(Entities):
+    __tablename__ = "parameter_prior"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String)
-    group = Column(String)
-    ensemble_id = Column(Integer, ForeignKey("ensembles.id"))
+    group = Column("group", String)
+    key = Column("key", String, nullable=False)
+    function = Column("function", String)
+    parameter_names = Column("parameter_names", PickleType)
+    parameter_values = Column("parameter_values", PickleType)
+
+    ensemble = relationship(
+        "Ensemble", secondary=lambda: prior_ensemble_association_table, backref="priors"
+    )
+
+
+class ParameterDefinition(Entities):
+    __tablename__ = "parameter_definition"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    group = Column(String, nullable=False)
+    ensemble_id = Column(Integer, ForeignKey("ensemble.id"), nullable=False)
     ensemble = relationship("Ensemble", back_populates="parameter_definitions")
-    prior_id = Column(Integer, ForeignKey("parameter_priors.id"))
+    prior_id = Column(Integer, ForeignKey("parameter_prior.id"))
     prior = relationship("ParameterPrior")
 
     __table_args__ = (
@@ -198,7 +231,7 @@ class ParameterDefinition(Entities):
             "name",
             "group",
             "ensemble_id",
-            name="_uc_parameter_def_name_group_ensemble_id_",
+            name="uq_parameter_definition_name_group_ensemble_id",
         ),
     )
 
@@ -214,13 +247,15 @@ Ensemble.parameter_definitions = relationship(
 
 
 class Parameter(Entities):
-    __tablename__ = "parameters"
+    __tablename__ = "parameter"
 
     id = Column(Integer, primary_key=True)
     value_ref = Column(Integer)
-    realization_id = Column(Integer, ForeignKey("realizations.id"))
+    realization_id = Column(Integer, ForeignKey("realization.id"), nullable=False)
     realization = relationship("Realization", back_populates="parameters")
-    parameter_definition_id = Column(Integer, ForeignKey("parameter_definitions.id"))
+    parameter_definition_id = Column(
+        Integer, ForeignKey("parameter_definition.id"), nullable=False
+    )
     parameter_definition = relationship(
         "ParameterDefinition", back_populates="parameters"
     )
@@ -229,7 +264,7 @@ class Parameter(Entities):
         UniqueConstraint(
             "realization_id",
             "parameter_definition_id",
-            name="_uc_parameter_realization_parameter_def_",
+            name="uq_parameter_realization_id_parameter_definition_id",
         ),
     )
 
@@ -247,23 +282,36 @@ ParameterDefinition.parameters = relationship(
 )
 
 
-class Observation(Entities):
-    __tablename__ = "observations"
+class AttributeValue(Entities):
+    __tablename__ = "attribute_value"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    value = Column("value", String, nullable=False)
+
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return "AttributeValue(%s)" % repr(self.value)
+
+
+class Observation(Entities):
+    __tablename__ = "observation"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
     key_indexes_ref = Column(Integer)
     data_indexes_ref = Column(Integer)
     values_ref = Column(Integer)
     stds_ref = Column(Integer)
 
     attributes = association_proxy(
-        "observations_attributes",
+        "observation_attributes",
         "value",
-        creator=lambda a, v: ObservationsAttribute(attribute=a, value=v),
+        creator=lambda a, v: ObservationAttribute(attribute=a, value=v),
     )
 
-    __table_args__ = (UniqueConstraint("name", name="_uc_observation_name_"),)
+    __table_args__ = (UniqueConstraint("name", name="uq_observation_name"),)
 
     def __repr__(self):
         return "<Observation(name='{}', key_indexes_ref='{}', data_indexes_ref='{}', values_ref='{}', stds_ref='{}')>".format(
@@ -284,26 +332,46 @@ class Observation(Entities):
         return {k: v.value for k, v in self.attributes.items()}
 
 
+class ObservationAttribute(Entities):
+    __tablename__ = "observation_attribute"
+
+    observation_id = Column(Integer, ForeignKey("observation.id"), primary_key=True)
+    attribute = Column(String)
+    value_id = Column(Integer, ForeignKey("attribute_value.id"), primary_key=True)
+    value = relationship("AttributeValue")
+
+    observation = relationship(
+        Observation,
+        backref=backref(
+            "observation_attributes",
+            collection_class=attribute_mapped_collection("attribute"),
+            cascade="all, delete-orphan",
+        ),
+    )
+
+
 class ObservationResponseDefinitionLink(Entities):
-    __tablename__ = "observation_response_definition_links"
+    __tablename__ = "observation_response_definition_link"
 
     id = Column(Integer, primary_key=True)
-    response_definition_id = Column(Integer, ForeignKey("response_definitions.id"))
+    response_definition_id = Column(
+        Integer, ForeignKey("response_definition.id"), nullable=False
+    )
     active_ref = Column(Integer)
     response_definition = relationship(
         "ResponseDefinition", back_populates="observation_links"
     )
-    observation_id = Column(Integer, ForeignKey("observations.id"))
+    observation_id = Column(Integer, ForeignKey("observation.id"))
     observation = relationship(
         "Observation", back_populates="response_definition_links"
     )
-    update_id = Column(Integer, ForeignKey("updates.id"))
+    update_id = Column(Integer, ForeignKey("update.id"))
     __table_args__ = (
         UniqueConstraint(
             "response_definition_id",
             "observation_id",
             "update_id",
-            name="_uc_observation_resp_def_link_response_definition_update_observation_",
+            name="uq_observation_response_definition_link_response_definition_id_observation_id_update_id",
         ),
     )
 
@@ -326,13 +394,13 @@ Observation.response_definition_links = relationship(
 
 
 class Misfit(Entities):
-    __tablename__ = "misfits"
+    __tablename__ = "misfit"
 
     id = Column(Integer, primary_key=True)
-    response_id = Column(Integer, ForeignKey("responses.id"))
+    response_id = Column(Integer, ForeignKey("response.id"), nullable=False)
     response = relationship("Response", back_populates="misfits")
     observation_response_definition_link_id = Column(
-        Integer, ForeignKey("observation_response_definition_links.id")
+        Integer, ForeignKey("observation_response_definition_link.id")
     )
     observation_response_definition_link = relationship(
         "ObservationResponseDefinitionLink", back_populates="misfits"
@@ -343,7 +411,7 @@ class Misfit(Entities):
         UniqueConstraint(
             "response_id",
             "observation_response_definition_link_id",
-            name="_uc_misfit_response_observation_resp_def_link_",
+            name="uq_misfit_response_id_observation_response_definition_link_id",
         ),
     )
 
@@ -351,7 +419,7 @@ class Misfit(Entities):
         return "<Misfit(response_id='{}', observation_response_definition_link_id='{}', misfit='{}')>".format(
             self.response_id,
             self.observation_response_definition_link_id,
-            self.misfit,
+            self.value,
         )
 
 
@@ -359,67 +427,3 @@ Response.misfits = relationship("Misfit", order_by=Misfit.id, back_populates="re
 ObservationResponseDefinitionLink.misfits = relationship(
     "Misfit", order_by=Misfit.id, back_populates="observation_response_definition_link"
 )
-
-
-class ObservationsAttribute(Entities):
-    __tablename__ = "observations_attribute"
-
-    observation_id = Column(Integer, ForeignKey("observations.id"), primary_key=True)
-    attribute = Column(String)
-    value_id = Column(Integer, ForeignKey("attribute_value.id"), primary_key=True)
-    value = relationship("AttributeValue")
-
-    observation = relationship(
-        Observation,
-        backref=backref(
-            "observations_attributes",
-            collection_class=attribute_mapped_collection("attribute"),
-            cascade="all, delete-orphan",
-        ),
-    )
-
-
-class AttributeValue(Entities):
-    __tablename__ = "attribute_value"
-
-    id = Column(Integer, primary_key=True)
-    value = Column("value", String)
-
-    def __init__(self, value):
-        self.value = value
-
-    def __repr__(self):
-        return "AttributeValue(%s)" % repr(self.value)
-
-
-class ErtBlob(Blobs):
-    __tablename__ = "ert_blobs"
-
-    id = Column(Integer, primary_key=True)
-    data = Column(PickleType)
-
-    def __repr__(self):
-        return "<Value(id='{}', data='{}')>".format(self.id, self.data)
-
-
-prior_ensemble_association_table = Table(
-    "prior_ensemble_association_table",
-    Entities.metadata,
-    Column("prior_id", String, ForeignKey("parameter_priors.id")),
-    Column("ensemble_id", Integer, ForeignKey("ensembles.id")),
-)
-
-
-class ParameterPrior(Entities):
-    __tablename__ = "parameter_priors"
-
-    id = Column(Integer, primary_key=True)
-    group = Column("group", String)
-    key = Column("key", String)
-    function = Column("function", String)
-    parameter_names = Column("parameter_names", PickleType)
-    parameter_values = Column("parameter_values", PickleType)
-
-    ensemble = relationship(
-        "Ensemble", secondary=lambda: prior_ensemble_association_table, backref="priors"
-    )

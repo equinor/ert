@@ -2,10 +2,11 @@ from logging import exception
 import time
 
 from ert_data.measured import MeasuredData
-from ert_shared import ERT, ERT_STORAGE
+from ert_shared import ERT
+from ert_shared.storage import ERT_STORAGE
 from ert_shared.feature_toggling import feature_enabled
 from ert_shared.storage.blob_api import BlobApi
-from ert_shared.storage.model import ParameterPrior
+from ert_shared.storage.entities_model import ParameterPrior
 from ert_shared.storage.rdb_api import RdbApi
 
 from res.enkf.export import MisfitCollector

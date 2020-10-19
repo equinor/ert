@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 import sqlalchemy.exc
 from ert_shared.storage.blob_api import BlobApi
-from ert_shared.storage.model import Observation
+from ert_shared.storage.entities_model import Observation
 from ert_shared.storage.rdb_api import RdbApi
 from tests.storage import apis, db_apis, populated_database, initialize_databases
 
