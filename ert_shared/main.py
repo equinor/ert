@@ -24,7 +24,8 @@ from ert_shared.ide.keywords.definitions import (
 )
 from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert_shared.plugins.plugin_manager import ErtPluginContext
-from ert_shared.feature_toggling import FeatureToggling
+from ert_shared.feature_toggling import FeatureToggling, feature_enabled
+from ert_shared.storage.command import add_parser_options as ert_api_add_parser_options
 import ert_shared
 
 
@@ -151,19 +152,7 @@ def get_ert_parser(parser=None):
         description="Expose ERT data through an HTTP server",
     )
     ert_api_parser.set_defaults(func=run_server)
-    ert_api_parser.add_argument(
-        "--runpath", type=str, help="Path to where the database-files are located."
-    )
-    ert_api_parser.add_argument(
-        "--verbose", action="store_true", help="Show verbose output.", default=False
-    )
-    ert_api_parser.add_argument(
-        "--bind",
-        type=str,
-        help="Bind to a server socket. Default: 127.0.0.1:5000",
-        default="127.0.0.1:5000",
-    )
-    ert_api_parser.add_argument("--debug", action="store_true", default=False)
+    ert_api_add_parser_options(ert_api_parser)
 
     # test_run_parser
     test_run_description = "Run '{}' in cli".format(TEST_RUN_MODE)
@@ -361,8 +350,19 @@ def ert_parser(parser, argv):
     return get_ert_parser(parser).parse_args(argv)
 
 
+@feature_enabled("new-storage")
+def start_ert_server():
+    from ert_shared.storage.server_monitor import ServerMonitor
+
+    monitor = ServerMonitor.get_instance()
+    monitor.start()
+
+
 def main():
     import ert_logging  # Only use ert logger config when running ERT
+    import locale
+
+    locale.setlocale(locale.LC_NUMERIC, "C")
 
     args = ert_parser(None, sys.argv[1:])
     if args.verbose:
@@ -370,6 +370,7 @@ def main():
         logger.setLevel("DEBUG")
     FeatureToggling.update_from_args(args)
 
+    start_ert_server()
     with ErtPluginContext():
         args.func(args)
 

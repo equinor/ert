@@ -15,7 +15,7 @@ def engine():
     return engine
 
 
-@pytest.yield_fixture(scope="session")
+@pytest.fixture(scope="session")
 def tables(engine):
     Entities.metadata.create_all(engine)
     Blobs.metadata.create_all(engine)
@@ -24,7 +24,7 @@ def tables(engine):
     Blobs.metadata.drop_all(engine)
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def db_connection(engine, tables):
     """Returns an sqlalchemy session, and after the test tears down everything properly."""
     connection = engine.connect()
@@ -36,16 +36,18 @@ def db_connection(engine, tables):
     connection.close()
 
 
-@pytest.yield_fixture
-def db_info(tmpdir):
+@pytest.fixture(scope="module")
+def db_info(tmp_path_factory):
     def add_blob(data):
         ret = blob.add_blob(data)
         blob.flush()
         return ret.id
 
+    tmp_path = tmp_path_factory.mktemp("database")
+
     db_lookup = {}
     db_name = "test.db"
-    db_url = "sqlite:///{}/{}".format(tmpdir, db_name)
+    db_url = f"sqlite:///{tmp_path}/{db_name}"
 
     engine = create_engine(db_url, echo=False)
     Entities.metadata.create_all(engine)

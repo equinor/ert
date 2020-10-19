@@ -33,7 +33,7 @@ from ert_gui.tools.plot import PlotTool
 from ert_gui.tools.plugins import PluginHandler, PluginsTool
 from ert_gui.tools.run_analysis import RunAnalysisTool
 from ert_gui.tools.workflows import WorkflowsTool
-from ert_shared.storage.client_factory import create_client
+from ert_shared.storage.client import create_client
 import os
 from res.enkf import EnKFMain, ResConfig
 from res.util import ResLog
@@ -122,7 +122,7 @@ def _check_locale():
 
 def _setup_main_window(ert, args):
     config_file = args.config
-    storage_client = create_client(args)
+    storage_client = create_client()
     window = GertMainWindow(config_file, storage_client)
     window.setWidget(SimulationPanel(config_file, storage_client))
     plugin_handler = PluginHandler(ert, ert.getWorkflowList().getPluginJobs(), window)

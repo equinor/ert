@@ -6,6 +6,7 @@ import pandas as pd
 from tests.storage import db_info, db_connection, engine, tables
 from ert_shared.storage.client import StorageClient
 from ert_shared.storage.http_server import FlaskWrapper
+from ert_shared.storage.server_monitor import ServerMonitor
 
 import requests
 import threading
@@ -14,55 +15,34 @@ import time
 import os
 
 
-@pytest.fixture()
-def server_url(db_info):
-    _environ = dict(os.environ)
-    os.environ["NO_PROXY"] = "localhost"
-
+@pytest.fixture(scope="module")
+def server(db_info, request):
     populated_db, _ = db_info
-    flWrapper = FlaskWrapper(rdb_url=populated_db, blob_url=populated_db)
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(("0.0.0.0", 0))
-    port = sock.getsockname()[1]
-    sock.close()
-
-    def run_app():
-        flWrapper.app.run(host="0.0.0.0", debug=False, port=port)
-
-    threading.Thread(target=run_app).start()
-
-    url = "http://localhost:{}".format(port)
-
-    for x in range(20):
-        time.sleep(0.1)
-        try:
-            requests.get(url)
-            break
-        except requests.exceptions.RequestException:
-            continue
-
-    yield url
-
-    requests.post(url + "/shutdown")
-    os.environ.clear()
-    os.environ.update(_environ)
+    proc = ServerMonitor(rdb_url=populated_db, blob_url=populated_db, lockfile=False)
+    proc.start()
+    request.addfinalizer(lambda: proc.shutdown())
+    yield proc
 
 
-def test_all_keys(server_url):
-    api = StorageClient(base_url=server_url)
-    names = set([key["key"] for key in api.all_data_type_keys()])
+@pytest.fixture
+def storage_client(server):
+    yield StorageClient(server.fetch_url(), server.fetch_auth())
+
+
+def test_all_keys(storage_client):
+    names = set([key["key"] for key in storage_client.all_data_type_keys()])
     assert names == set(["response_one", "response_two", "G:A", "G:B", "group:key1"])
 
 
-def test_observation_values(server_url):
-    api = StorageClient(base_url=server_url)
+def test_observation_values(storage_client):
     # Data refs are collected during the call to <all_data_type_keys>
     response_key = [
-        key for key in api.all_data_type_keys() if key["key"] == "response_one"
+        key
+        for key in storage_client.all_data_type_keys()
+        if key["key"] == "response_one"
     ][0]
 
-    result = api.observations_for_obs_keys(
+    result = storage_client.observations_for_obs_keys(
         case="ensemble_name", obs_keys=response_key["observations"]
     )
 
@@ -76,10 +56,12 @@ def test_observation_values(server_url):
 
     # Response two has datetime indexes and consists of two individual observations put together
     response_key = [
-        key for key in api.all_data_type_keys() if key["key"] == "response_two"
+        key
+        for key in storage_client.all_data_type_keys()
+        if key["key"] == "response_two"
     ][0]
 
-    result = api.observations_for_obs_keys(
+    result = storage_client.observations_for_obs_keys(
         case="ensemble_name", obs_keys=response_key["observations"]
     )
 
@@ -100,9 +82,8 @@ def test_observation_values(server_url):
     pd.testing.assert_frame_equal(result, expected)
 
 
-def test_response_values(server_url):
-    api = StorageClient(base_url=server_url)
-    result = api.data_for_key(case="ensemble_name", key="response_one")
+def test_response_values(storage_client):
+    result = storage_client.data_for_key(case="ensemble_name", key="response_one")
 
     idx = [3, 5, 8, 9]
 
@@ -112,7 +93,7 @@ def test_response_values(server_url):
 
     pd.testing.assert_frame_equal(result, expected)
 
-    result = api.data_for_key(case="ensemble_name", key="response_two")
+    result = storage_client.data_for_key(case="ensemble_name", key="response_two")
 
     format = "%Y-%m-%d %H:%M:%S"
     idx = [

@@ -1,9 +1,22 @@
-import flask
 import os
+import flask
 import yaml
-import werkzeug.exceptions as werkzeug_exc
+import random
+import string
+import json
+import sys
+import socket
+import datetime
 from ert_shared.storage.storage_api import StorageApi
-from flask import Response, request
+from pathlib import Path
+from flask import Response, request, abort, jsonify
+from gunicorn.app.base import BaseApplication
+from subprocess import Popen, PIPE
+
+
+def generate_authtoken():
+    chars = string.ascii_letters + string.digits
+    return "".join([random.choice(chars) for _ in range(16)])
 
 
 def resolve_ensemble_uri(ensemble_ref):
@@ -44,11 +57,27 @@ def resolve_ref_uri(struct, ensemble_id=None):
 
 
 class FlaskWrapper:
-    def __init__(self, rdb_url=None, blob_url=None):
+    def __init__(self, rdb_url=None, blob_url=None, secure=True):
         self._rdb_url = rdb_url
         self._blob_url = blob_url
 
-        self.app = flask.Flask("ert http api")
+        app = flask.Flask("ert http api")
+        self.app = app
+
+        if secure:
+            self.authtoken = generate_authtoken()
+
+            @app.before_request
+            def check_auth():
+                print(request.environ)
+                if request.authorization is None:
+                    abort(401)
+                print(request.authorization, self.authtoken)
+                un = request.authorization["username"]
+                pw = request.authorization["password"]
+                if un != "__token__" or pw != self.authtoken:
+                    abort(401)
+
         self.app.add_url_rule("/ensembles", "ensembles", self.ensembles)
         self.app.add_url_rule(
             "/ensembles/<ensemble_id>", "ensemble", self.ensemble_by_id
@@ -106,9 +135,13 @@ class FlaskWrapper:
             methods=["GET"],
         )
 
+        @app.route("/healthcheck")
+        def healthcheck():
+            return jsonify({"date": datetime.datetime.now().isoformat()})
+
     def schema(self):
-        cur_path = os.path.dirname(os.path.abspath(__file__))
-        schema_file = os.path.join(cur_path, "oas.yml")
+        cur_path = Path(__file__).parent
+        schema_file = cur_path / "oas.yml"
         with open(schema_file) as f:
             return yaml.safe_load(f)
 
@@ -122,7 +155,7 @@ class FlaskWrapper:
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             ensemble = api.get_ensemble(ensemble_id)
             if ensemble is None:
-                raise werkzeug_exc.NotFound()
+                abort(404)
             resolve_ref_uri(ensemble, ensemble_id)
             return ensemble
 
@@ -130,7 +163,7 @@ class FlaskWrapper:
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             realization = api.get_realization(ensemble_id, realization_idx, None)
             if realization is None:
-                raise werkzeug_exc.NotFound()
+                abort(404)
             resolve_ref_uri(realization, ensemble_id)
             return realization
 
@@ -138,7 +171,7 @@ class FlaskWrapper:
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             response = api.get_response(ensemble_id, response_name, None)
             if response is None:
-                raise werkzeug_exc.NotFound()
+                abort(404)
             response["alldata_ref"] = None  # value is irrelevant
             resolve_ref_uri(response, ensemble_id)
             return response
@@ -147,14 +180,14 @@ class FlaskWrapper:
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             ids = api.get_response_data(ensemble_id, response_name)
             if ids is None:
-                raise werkzeug_exc.NotFound()
+                abort(404)
             return self._datas(ids)
 
     def parameter_by_id(self, ensemble_id, parameter_def_id):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             parameter = api.get_parameter(ensemble_id, parameter_def_id)
             if parameter is None:
-                raise werkzeug_exc.NotFound()
+                abort(404)
             parameter["alldata_ref"] = None  # value is irrelevant
             resolve_ref_uri(parameter, ensemble_id)
             return parameter
@@ -163,14 +196,14 @@ class FlaskWrapper:
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             ids = api.get_parameter_data(ensemble_id, parameter_def_id)
             if ids is None:
-                raise werkzeug_exc.NotFound()
+                abort(404)
             return self._datas(ids)
 
     def data(self, data_id):
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             data = api.get_data(data_id)
             if data is None:
-                raise werkzeug_exc.NotFound()
+                abort(404)
             if isinstance(data, list):
                 return ",".join([str(x) for x in data])
             else:
@@ -200,7 +233,7 @@ class FlaskWrapper:
             obs = api.get_observation(name)
             resolve_ref_uri(obs)
             if obs is None:
-                raise werkzeug_exc.NotFound()
+                abort(404)
             return obs
 
     def get_observation_attributes(self, name):
@@ -213,7 +246,7 @@ class FlaskWrapper:
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             attrs = api.get_observation_attributes(name)
             if attrs is None:
-                raise werkzeug_exc.NotFound()
+                abort(404)
             return attrs
 
     def set_observation_attributes(self, name):
@@ -230,11 +263,11 @@ class FlaskWrapper:
         with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
             js = request.get_json()
             if not js["attributes"]:
-                raise werkzeug_exc.BadRequest()
+                abort(400)
             for k, v in js["attributes"].items():
                 obs = api.set_observation_attribute(name, k, v)
                 if obs is None:
-                    raise werkzeug_exc.NotFound()
+                    abort(404)
             return api.get_observation(name), 201
 
     def shutdown(self):
@@ -242,9 +275,84 @@ class FlaskWrapper:
         return "Server shutting down."
 
 
-def run_server(args):
-    wrapper = FlaskWrapper(
-        rdb_url="sqlite:///entities.db", blob_url="sqlite:///blobs.db"
-    )
-    (bind_host, bind_port) = args.bind.split(":")
-    wrapper.app.run(host=bind_host, port=bind_port, debug=args.debug)
+class Application(BaseApplication):
+    def __init__(self, wrapper, lockfile):
+        self.wrapper = wrapper
+        self.lockfile = lockfile
+        super().__init__()
+
+    def load_config(self):
+        self.cfg.set("bind", ["0.0.0.0:0"])
+        self.cfg.set("when_ready", self.when_ready)
+        self.cfg.set("on_exit", self.on_exit)
+
+    def load(self):
+        return self.wrapper.app
+
+    def when_ready(self, server):
+        assert len(server.LISTENERS) == 1
+        sock = server.LISTENERS[0].sock
+        bind_host, bind_port = sock.getsockname()[:2]
+
+        print(f"Started on {bind_host}:{bind_port}")
+        print(f"Authtoken '{self.wrapper.authtoken}'")
+        print(f"To test:")
+        print(
+            f"curl -u __token__:{self.wrapper.authtoken} {bind_host}:{bind_port}/ensembles"
+        )
+
+        connection_info = json.dumps(
+            {
+                "urls": [
+                    f"http://{host}:{bind_port}"
+                    for host in (
+                        "127.0.0.1",
+                        socket.gethostname(),
+                        socket.getfqdn(),
+                    )
+                ],
+                "authtoken": self.wrapper.authtoken,
+            }
+        )
+
+        if self.lockfile:
+            self.lockfile.write_text(connection_info)
+
+        fd = os.environ.get("ERT_COMM_FD")
+        if fd is not None:
+            with os.fdopen(int(fd), "w") as fo:
+                fo.write(connection_info)
+
+    def on_exit(self, server):
+        if self.lockfile:
+            self.lockfile.unlink()
+
+
+def parse_args():
+    from argparse import ArgumentParser
+    from ert_shared.storage.command import add_parser_options
+
+    ap = ArgumentParser()
+    add_parser_options(ap)
+    return ap.parse_args()
+
+
+def run_server(args=None):
+    if args is None:
+        args = parse_args()
+    wrapper = FlaskWrapper(rdb_url=args.rdb_url, blob_url=args.blob_url)
+
+    runpath = Path(args.runpath)
+    assert runpath.is_dir()
+
+    lock = None
+    if not args.disable_lockfile:
+        lock = runpath / "storage_server.json"
+        if lock.exists():
+            raise RuntimeError("storage_server.json already exists")
+
+    Application(wrapper, lock).run()
+
+
+if __name__ == "__main__":
+    run_server()

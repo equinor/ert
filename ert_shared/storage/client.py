@@ -1,38 +1,19 @@
 import pandas as pd
 import requests
+from io import StringIO
 from datetime import datetime
+from ert_shared.feature_toggling import feature_enabled
+from ert_shared.storage.server_monitor import ServerMonitor
 
 
 def convertdate(dstring):
     return datetime.strptime(dstring, "%Y-%m-%d %H:%M:%S")
 
 
-def axis_request(data_url):
-    resp = requests.get(data_url)
-    indexes = resp.content.decode(resp.encoding).split(",")
-    try:
-        if indexes and ":" in indexes[0]:
-            return list(map(convertdate, indexes))
-        else:
-            return list(map(int, indexes))
-    except ValueError as e:
-        raise ValueError("Could not parse indexes as either int or dates", e)
-
-
-def data_request(data_url):
-    resp = requests.get(data_url)
-    data = resp.content.decode(resp.encoding)
-    return list(map(float, data.split(",")))
-
-
-def ref_request(api_url):
-    resp = requests.get(api_url)
-    return resp.json()
-
-
-class StorageClient(object):
-    def __init__(self, base_url):
+class StorageClient:
+    def __init__(self, base_url, auth):
         self._BASE_URI = base_url
+        self._auth = auth
 
     def all_data_type_keys(self):
         """Returns a list of all the keys except observation keys. For each key a dict is returned with info about
@@ -61,13 +42,13 @@ class StorageClient(object):
         in a response. This contains, among others, data url for values, std
         """
 
-        ensembles = ref_request("{base}/ensembles".format(base=self._BASE_URI))
+        ensembles = self._ref_request("{base}/ensembles".format(base=self._BASE_URI))
         if not ensembles["ensembles"]:
             return []
-        ens_schema = ref_request(ensembles["ensembles"][0]["ref_url"])
+        ens_schema = self._ref_request(ensembles["ensembles"][0]["ref_url"])
 
         def obs_for_response(ref_url):
-            response = ref_request(ref_url)
+            response = self._ref_request(ref_url)
 
             if "observations" not in response:
                 return []
@@ -121,8 +102,11 @@ class StorageClient(object):
         ]
         """
 
-        r = requests.get("{base}/ensembles".format(base=self._BASE_URI))
+        r = requests.get(
+            "{base}/ensembles".format(base=self._BASE_URI), auth=self._auth
+        )
 
+        print(r.content)
         ensembles = r.json()["ensembles"]
 
         return [
@@ -137,10 +121,10 @@ class StorageClient(object):
         if key.startswith("LOG10_"):
             key = key[6:]
 
-        ensembles = ref_request("{base}/ensembles".format(base=self._BASE_URI))
+        ensembles = self._ref_request("{base}/ensembles".format(base=self._BASE_URI))
 
         ens = [ens for ens in ensembles["ensembles"] if ens["name"] == case][0]
-        ens_schema = ref_request(ens["ref_url"])
+        ens_schema = self._ref_request(ens["ref_url"])
 
         df = pd.DataFrame()
 
@@ -149,10 +133,10 @@ class StorageClient(object):
             if resp["name"] != key:
                 continue
 
-            response = ref_request(resp["ref_url"])
+            response = self._ref_request(resp["ref_url"])
 
-            df = pd.read_csv(response["alldata_url"], header=None)
-            indexes = axis_request(response["axis"]["data_url"])
+            df = self._read_csv(response["alldata_url"], header=None)
+            indexes = self._axis_request(response["axis"]["data_url"])
             df.columns = indexes
             break
 
@@ -162,9 +146,9 @@ class StorageClient(object):
                 if param["group"] + ":" + param["key"] != key:
                     continue
 
-                parameter = ref_request(param["ref_url"])
+                parameter = self._ref_request(param["ref_url"])
 
-                df = pd.read_csv(parameter["alldata_url"], header=None)
+                df = self._read_csv(parameter["alldata_url"], header=None)
 
         return df
 
@@ -181,14 +165,16 @@ class StorageClient(object):
 
         for obs_key in obs_keys:
             key_df = pd.DataFrame()
-            std = data_request(obs_key["data"]["std"]["data_url"])
-            values = data_request(obs_key["data"]["values"]["data_url"])
+            std = self._data_request(obs_key["data"]["std"]["data_url"])
+            values = self._data_request(obs_key["data"]["values"]["data_url"])
 
             key_df = key_df.append(pd.Series(values, name="OBS"))
             key_df = key_df.append(pd.Series(std, name="STD"))
 
-            key_indexes = axis_request(obs_key["data"]["key_indexes"]["data_url"])
-            data_indexes = axis_request(obs_key["data"]["data_indexes"]["data_url"])
+            key_indexes = self._axis_request(obs_key["data"]["key_indexes"]["data_url"])
+            data_indexes = self._axis_request(
+                obs_key["data"]["data_indexes"]["data_url"]
+            )
 
             arrays = [[obs_key["name"]] * len(key_indexes), key_indexes, data_indexes]
 
@@ -213,3 +199,34 @@ class StorageClient(object):
     def shutdown(self):
         """A noop---the lifecycle of the server is managed by the user."""
         pass
+
+    def _read_csv(self, data_url, **kwargs):
+        resp = requests.get(data_url, auth=self._auth)
+        sio = StringIO(resp.text)
+        return pd.read_csv(sio, **kwargs)
+
+    def _axis_request(self, data_url):
+        resp = requests.get(data_url, auth=self._auth)
+        indexes = resp.content.decode(resp.encoding).split(",")
+        try:
+            if indexes and ":" in indexes[0]:
+                return list(map(convertdate, indexes))
+            else:
+                return list(map(int, indexes))
+        except ValueError as e:
+            raise ValueError("Could not parse indexes as either int or dates", e)
+
+    def _data_request(self, data_url):
+        resp = requests.get(data_url, auth=self._auth)
+        data = resp.content.decode(resp.encoding)
+        return list(map(float, data.split(",")))
+
+    def _ref_request(self, data_url):
+        resp = requests.get(data_url, auth=self._auth)
+        return resp.json()
+
+
+@feature_enabled("new-storage")
+def create_client():
+    server = ServerMonitor.get_instance()
+    return StorageClient(server.fetch_url(), server.fetch_auth())
