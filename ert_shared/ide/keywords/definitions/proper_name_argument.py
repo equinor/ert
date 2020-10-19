@@ -5,14 +5,12 @@ from ert_shared.ide.keywords.definitions import ArgumentDefinition
 class ProperNameArgument(ArgumentDefinition):
 
     NOT_A_VALID_NAME = "The argument must be a valid string containing only characters of these types:" \
-                       "<ul>" \
-                       "<li>Letters: <code>A-Z</code> and <code>a-z</code></li>" \
-                       "<li>Numbers: <code>0-9</code></li>" \
-                       "<li>Underscore: <code>_</code></li>" \
-                       "<li>Dash: <code>&mdash;</code><li>" \
-                       "<li>Period: <code>.</code></li>" \
-                       "<li>Brackets: </code>&lt;&gt;</code></li>" \
-                       "</ul>"
+                       "Letters: A-Z and a-z, " \
+                       "numbers: 0-9, " \
+                       "underscore: _, " \
+                       "dash: -, " \
+                       "period: . and " \
+                       "brackets: > < " 
 
 
     PATTERN = re.compile(r"^[A-Za-z0-9_\-.<>]+$")
