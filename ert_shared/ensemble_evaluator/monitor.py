@@ -1,79 +1,88 @@
-import time
 import json
 import asyncio
 import websockets
 import ert_shared.ensemble_evaluator.entity as ee_entity
+from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
+import queue
+import threading
 
 
 class _Monitor:
     def __init__(self, host, port):
         self._host = host
         self._port = port
+        self._loop = asyncio.new_event_loop()
+        self._outbound = asyncio.Queue(loop=self._loop)
+        self._receive_future = None
+
+    def exit_server(self):
+        event = ee_entity.create_command_terminate()
+        msg = json.dumps(event.to_dict())
+        self._loop.call_soon_threadsafe(self._outbound.put_nowait(msg))
+        print(f"sent message {msg}")
 
     def track(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        incoming = queue.Queue()
+        monitor = self
 
-        async def hello(queue):
-            print("starting monitor hello")
+        async def send(websocket):
+            while True:
+                msg = await monitor._outbound.get()
+                print("monitor sending:" + msg)
+                await websocket.send(msg)
+
+        async def receive():
+            print("starting monitor receive")
             uri = f"ws://{self._host}:{self._port}/client"
             async with websockets.connect(uri) as websocket:
-                async for message in websocket:
-                    try:
+                send_future = asyncio.Task(send(websocket))
+                try:
+                    async for message in websocket:
+                        print(f"monitor receive: {message}")
                         event_json = json.loads(message)
                         event = ee_entity.create_evaluator_event_from_dict(event_json)
-                        await queue.put(event)
-                        if event.is_done():
-                            print("hello exiting return")
-                            return
-                    except Exception as e:
-                        import traceback
+                        self._loop.run_in_executor(None, lambda: incoming.put(event))
+                        if event.is_terminated():
+                            print("client received terminated")
+                            break
+                except asyncio.CancelledError:
+                    pass
+                except Exception as e:
+                    import traceback
 
-                        print(e, traceback.format_exc())
+                    print(e, traceback.format_exc())
+                finally:
+                    print("cancel send")
+                    send_future.cancel()
+                    await send_future
+            print("monitor disconnected")
 
-        retries = 0
-        while retries < 3:
+        wait_for_ws(f"ws://{self._host}:{self._port}")
+
+        def run():
+            asyncio.set_event_loop(monitor._loop)
+            monitor._receive_future = monitor._loop.create_task(receive())
             try:
-                queue = asyncio.Queue()
-                hello_future = loop.create_task(hello(queue))
-                while True:
-                    get_future = loop.create_task(queue.get())
-                    done, pending = loop.run_until_complete(
-                        asyncio.wait(
-                            (hello_future, get_future),
-                            return_when=asyncio.FIRST_COMPLETED,
-                        )
-                    )
-                    if hello_future in done:
-                        if hello_future.exception():
-                            raise hello_future.exception()
-                        print("monitor client exited", hello_future)
-                        # event = asyncio.run_coroutine_threadsafe(queue.get(), loop).result()
-                        # if the client exits (e.g. if evaluator exits early), we
-                        # must manually drain the queue IF the get_future is still pending
-                        if get_future in done:
-                            yield get_future.result()
-                        break
+                monitor._loop.run_until_complete(monitor._receive_future)
+            except asyncio.CancelledError:
+                print("receive cancelled")
 
-                    event = get_future.result()
-                    yield event
-                    if event.is_done():
-                        break
-                    # if event.is_done():
-                    #     print("monitor saw done, exiting")
-                    #     return
-                    # yield event
-                while not queue.empty():
-                    yield loop.run_until_complete(queue.get())
+        thread = threading.Thread(name="ert_monitor_loop", target=run,)
+        thread.start()
 
-                return
-            except OSError as e:
-                import traceback
-
-                print(traceback.format_exc())
-                print(f"Attempt {retries}: {e}")
-                retries += 1
-                time.sleep(1)
+        running = True
+        try:
+            while running:
+                print("wait for incoming")
+                event = incoming.get()
+                print(f"got incoming: {event}")
+                if event.is_terminated():
+                    running = False
+                yield event
+        except GeneratorExit:
+            print("generator exit")
+            self._loop.call_soon_threadsafe(self._receive_future.cancel)
+            thread.join()
 
 
 def create(host, port):
