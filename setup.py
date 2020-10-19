@@ -29,6 +29,7 @@ setup(
         "console-progressbar==1.1.2",
         "decorator",
         "flask",
+        "gunicorn",
         "jinja2",
         "matplotlib < 3.2",
         "numpy",

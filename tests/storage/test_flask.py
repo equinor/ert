@@ -15,13 +15,11 @@ def test_client(db_info):
     populated_db, _ = db_info
     # Flask provides a way to test your application by exposing the Werkzeug test Client
     # and handling the context locals for you.
-    flWrapper = FlaskWrapper(rdb_url=populated_db, blob_url=populated_db)
+    flWrapper = FlaskWrapper(rdb_url=populated_db, blob_url=populated_db, secure=False)
     testing_client = flWrapper.app.test_client()
     # Establish an application context before running the tests.
-    ctx = flWrapper.app.app_context()
-    ctx.push()
-    yield testing_client
-    ctx.pop()
+    with flWrapper.app.app_context():
+        yield testing_client
 
 
 def test_api(test_client):
