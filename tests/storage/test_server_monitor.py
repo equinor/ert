@@ -131,6 +131,7 @@ def test_json_exists(tmpdir):
 
 def test_integration(request, tmpdir):
     """Actually start the server, wait for it to be online and do a health check"""
+
     with tmpdir.as_cwd():
         server = ServerMonitor()
         server.start()

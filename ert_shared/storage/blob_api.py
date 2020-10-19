@@ -1,13 +1,4 @@
-from ert_shared.storage.model import (
-    Observation,
-    Realization,
-    Ensemble,
-    ResponseDefinition,
-    Response,
-    ParameterDefinition,
-    Parameter,
-    ErtBlob,
-)
+from ert_shared.storage.blobs_model import ErtBlob
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Bundle
 from sqlalchemy.orm.session import Session

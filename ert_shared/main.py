@@ -360,7 +360,7 @@ def start_ert_server():
 
 @feature_enabled("new-storage")
 def initialize_databases():
-    from ert_shared import ERT_STORAGE
+    from ert_shared.storage import ERT_STORAGE
 
     ERT_STORAGE.initialize()
 

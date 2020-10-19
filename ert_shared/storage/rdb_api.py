@@ -1,7 +1,7 @@
 import logging
 
 logger = logging.getLogger(__name__)
-from ert_shared.storage.model import (
+from ert_shared.storage.entities_model import (
     Ensemble,
     Observation,
     Parameter,

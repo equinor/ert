@@ -12,8 +12,7 @@ from pathlib import Path
 from flask import Response, request, abort, jsonify
 from gunicorn.app.base import BaseApplication
 from subprocess import Popen, PIPE
-from ert_shared import ERT_STORAGE
-from ert_shared.storage import connection
+from ert_shared.storage import ERT_STORAGE, connection
 from ert_shared.storage.rdb_api import RdbApi
 from ert_shared.storage.blob_api import BlobApi
 from contextlib import contextmanager

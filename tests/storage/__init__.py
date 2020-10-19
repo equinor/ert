@@ -1,9 +1,10 @@
 import os
 
 import pytest
-from ert_shared import ERT_STORAGE
+from ert_shared.storage import ERT_STORAGE
 from ert_shared.storage.blob_api import BlobApi
-from ert_shared.storage.model import Blobs, Entities
+from ert_shared.storage.blobs_model import Blobs
+from ert_shared.storage.entities_model import Entities
 from ert_shared.storage.rdb_api import RdbApi
 from ert_shared.storage.storage_api import StorageApi
 from sqlalchemy import create_engine

@@ -2,7 +2,7 @@ import json
 
 import flask
 import pytest
-from ert_shared import ERT_STORAGE
+from ert_shared.storage import ERT_STORAGE
 from ert_shared.storage.blob_api import BlobApi
 from ert_shared.storage.http_server import FlaskWrapper
 from ert_shared.storage.rdb_api import RdbApi

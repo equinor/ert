@@ -7,7 +7,7 @@ from datetime import datetime
 import pandas as pd
 import pytest
 import requests
-from ert_shared import ERT_STORAGE
+from ert_shared.storage import ERT_STORAGE
 from ert_shared.storage.client import StorageClient
 from ert_shared.storage.http_server import FlaskWrapper
 from ert_shared.storage.server_monitor import ServerMonitor
