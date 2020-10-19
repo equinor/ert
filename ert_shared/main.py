@@ -10,6 +10,7 @@ from ert_shared.storage.http_server import run_server
 from ert_shared.cli import (
     ENSEMBLE_SMOOTHER_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
+    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     TEST_RUN_MODE,
     WORKFLOW_MODE,
@@ -237,6 +238,41 @@ def get_ert_parser(parser=None):
         "using the prior parameters will be stored.",
     )
 
+    # iterative_ensemble_smoother_parser
+    iterative_ensemble_smoother_description = (
+        "Run simulations in cli while performing updates"
+        " on the parameters using the iterative ensemble smoother algorithm."
+    )
+    iterative_ensemble_smoother_parser = subparsers.add_parser(
+        ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+        description=iterative_ensemble_smoother_description,
+        help=iterative_ensemble_smoother_description,
+    )
+    iterative_ensemble_smoother_parser.add_argument(
+        "--target-case",
+        type=valid_name_format,
+        required=True,
+        help="The iterative ensemble smoother creates multiple cases for the different "
+        "iterations. The case names will follow the specified format. "
+        "For example, 'Target case format: iter_%%d' will generate "
+        "cases with the names iter_0, iter_1, iter_2, iter_3, ....",
+    )
+    iterative_ensemble_smoother_parser.add_argument(
+        "--realizations",
+        type=valid_realizations,
+        help="These are the realizations that will be used to perform simulations."
+        "For example, if 'Number of realizations:50 and Active realizations is 0-9', "
+        "then only realizations 0,1,2,3,...,9 will be used to perform simulations "
+        "while realizations 10,11, 12,...,49 will be excluded",
+    )
+    iterative_ensemble_smoother_parser.add_argument(
+        "--current-case",
+        type=valid_name,
+        required=False,
+        help="Name of the case where the results for the simulation "
+        "using the prior parameters will be stored.",
+    )
+
     # es_mda_parser
     es_mda_description = "Run '{}' in cli".format(ES_MDA_MODE)
     es_mda_parser = subparsers.add_parser(
@@ -293,6 +329,7 @@ def get_ert_parser(parser=None):
         test_run_parser,
         ensemble_experiment_parser,
         ensemble_smoother_parser,
+        iterative_ensemble_smoother_parser,
         es_mda_parser,
         workflow_parser,
     ]:
