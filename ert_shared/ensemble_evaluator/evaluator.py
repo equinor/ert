@@ -1,3 +1,4 @@
+from ert_gui.plottery.plots import ensemble
 import threading
 from ert_shared.ensemble_evaluator.entity import RealizationDecoder, create_evaluator_event, create_forward_model_job, create_realization, create_unindexed_evaluator_event
 import ert_shared.ensemble_evaluator.monitor as ee_monitor
@@ -9,11 +10,11 @@ from cloudevents.http import from_json
 
 
 class EnsembleEvaluator:
-    def __init__(self, port=8765):
+    def __init__(self, ensemble, port=8765):
 
         self._host = "localhost"
         self._port = port
-        self._state = {}
+        self._ensemble = ensemble
 
         self._ws_thread = threading.Thread(
             name="ert_ee_wsocket",
@@ -22,15 +23,8 @@ class EnsembleEvaluator:
         self._loop = asyncio.new_event_loop()
         self._done = self._loop.create_future()
 
-        self._snapshot = ee_entity.create_evaluator_snapshot(
-            [
-                ee_entity.create_forward_model_job(1, "test1"),
-                ee_entity.create_forward_model_job(2, "test2", (1,)),
-                ee_entity.create_forward_model_job(3, "test3", (1,)),
-                ee_entity.create_forward_model_job(4, "test4", (2, 3)),
-            ],
-            [0, 1, 3, 4, 5, 9],
-        )
+        self._snapshot = ensemble.snapshot()
+        ensemble.evaluate(self._host, self._port, "ee_id")
 
     def _wsocket(self):
         loop = self._loop
@@ -79,12 +73,18 @@ class EnsembleEvaluator:
                         step_id = get_step_id(event["source"])
                         job_id = get_job_id(event["source"])
                         self._snapshot._realizations[real_id]["forward_models"][job_id]["status"] == "running"
-                        real = create_realization("running", {
-                            job_id: create_forward_model_job(job_id, "unknown_type"), 
-                        })
-                        snapshot_mutate_event = create_evaluator_event(self._snapshot._event_index + 1, {
-                            real_id: real,
-                        }, "running")
+                        # self._snapshot._realizations[real_id]["forward_models"][job_id]["status"] == "running"
+                        snapshot_mutate_event = {
+                            real_id: {
+                                stage_id: {
+                                    step_id: {
+                                        job_id: {
+                                            "status": "running"
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     self._snapshot.merge_event(snapshot_mutate_event)
                     out_msg = json.dumps(snapshot_mutate_event.to_dict(), cls=RealizationDecoder)
                     if USERS:

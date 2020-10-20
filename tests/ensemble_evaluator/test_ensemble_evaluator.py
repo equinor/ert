@@ -81,7 +81,8 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
     with Client(evaluator._host, evaluator._port, "/dispatch") as dispatch1, Client(evaluator._host, evaluator._port, "/dispatch") as dispatch2:
 
         # first dispatcher informs that job 1 is running
-        send_dispatch_event(dispatch1, ee_entity._FM_JOB_RUNNING, "/ert/ee/0/real/0/stage/0/step/0/job/1", "event1", {"current_memory_usage": 1000})
+        send_dispatch_event(dispatch1, ee_entity._FM_JOB_RUNNING,
+        "/ert/ee/0/real/0/stage/0/step/0/job/1", "event1", {"current_memory_usage": 1000})
         connect1 = next(events).to_dict()
         assert connect1["status"] == "running"
         assert connect1["realizations"]["0"]["status"] == "running"
