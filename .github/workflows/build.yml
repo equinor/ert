@@ -1,64 +1,83 @@
 name: Python package
 
-on: [pull_request]
+on: [push, pull_request]
 
 env:
-  INSTALL_DIR: ${{ github.workspace }}/install
   ERT_SHOW_BACKTRACE: 1
 
 jobs:
   build:
-
-    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         python-version: [3.6, 3.7, 3.8]
-        os: [ubuntu-latest]
-        include:
-        - python-version: 3.6
-          os: macos-latest
+        os: [ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install Ubuntu dependencies
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install liblapack-dev valgrind clang cmake cmake-data xvfb libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3
-    - name: Setup environment
-      run: |
-        echo "${{ env.INSTALL_DIR}}/bin" >> $GITHUB_PATH
-        echo "LD_LIBRARY_PATH=${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64" >> $GITHUB_ENV
-        echo "DYLD_LIBRARY_PATH=${{ env.INSTALL_DIR }}/lib:${{ env.INSTALL_DIR }}/lib64" >> $GITHUB_ENV
-        echo "PYTHONPATH=${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/site-packages:${{ env.INSTALL_DIR }}/lib/python${{ matrix.python-version }}/dist-packages" >> $GITHUB_ENV
+        sudo apt-get install xvfb libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3
+
     - name: Install ERT and dependencies
       run: |
-        source .libres_version
-        git clone --branch $LIBRES_VERSION --depth 1 https://github.com/equinor/libres
-        pushd libres
-        source .libecl_version
-        popd
-        git clone --branch $LIBECL_VERSION --depth 1 https://github.com/equinor/libecl
-        bash .build_install.sh libecl
-        bash .build_install.sh libres
         pip install -r dev-requirements.txt
         pip install .
-        pip list
+
     - name: Test Ubuntu
       if: matrix.os == 'ubuntu-latest'
       run: |
-        xvfb-run  -s "-screen 0 640x480x24" --auto-servernum python -m pytest -sv tests
+        xvfb-run  -s "-screen 0 640x480x24" --auto-servernum python -m pytest -sv
+
     - name: Test MacOS
       if: matrix.os == 'macos-latest'
       run: |
-        python -m pytest -sv tests
+        python -m pytest -sv
+
     - name: Test docs and CLI
       run: |
         sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
         pip uninstall -y PyQt5
         ert --help
+
+
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    # If this is a tagged release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Build wheel
+      run: |
+        pip install --upgrade pip wheel setuptools
+        pip wheel . --no-deps -w dist
+
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@v1.3.1
+      with:
+        user: statoil-travis
+        password: ${{ secrets.pypi_password }}

@@ -16,7 +16,9 @@ extra_files = package_files("ert_gui/resources/")
 logging_configuration = package_files("ert_logging/")
 
 setup(
-    name="Ensemble Reservoir Tool",
+    name="ert",
+    author="Equinor ASA",
+    author_email="fg_sib-scout@equinor.com",
     use_scm_version={"root": ".", "write_to": "ert_shared/version.py"},
     scripts=["ert_shared/bin/ert"],
     packages=find_packages(exclude=["tests*"]),
@@ -25,6 +27,7 @@ setup(
     license="Open Source",
     long_description=open("README.md").read(),
     install_requires=[
+        "equinor-libres",
         "ansicolors==1.1.8",
         "console-progressbar==1.1.2",
         "decorator",

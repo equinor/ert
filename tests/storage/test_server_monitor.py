@@ -32,7 +32,7 @@ def server(request, monkeypatch, tmp_path: Path):
     path.write_text(script)
     path.chmod(0o755)
     monkeypatch.setattr(ServerMonitor, "EXEC_ARGS", [str(path)])
-    monkeypatch.setattr(ServerMonitor, "TIMEOUT", 1)
+    monkeypatch.setattr(ServerMonitor, "TIMEOUT", 5)
 
     proc = ServerMonitor()
     proc.start()
