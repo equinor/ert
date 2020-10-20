@@ -1,6 +1,5 @@
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.entity.tool import recursive_update
-from ert_shared.ensemble_evaluator.entity.forward_model_job import _ForwardModelJob
 
 
 class _EnsembleResponseEvent:

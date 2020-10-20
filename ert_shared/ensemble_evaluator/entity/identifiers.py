@@ -26,6 +26,10 @@ EVTYPE_FM_STEP_START = "com.equinor.ert.forward_model_step.start"
 EVTYPE_FM_STEP_FAILURE = "com.equinor.ert.forward_model_step.failure"
 EVTYPE_FM_STEP_SUCCESS = "com.equinor.ert.forward_model_step.success"
 
+EVTYPE_EE_SNAPSHOT_UPDATE = "com.equinor.ert.ee.snapshot_update"
+EVTYPE_EE_TERMINATED = "com.equinor.ert.ee.terminated"
+EVTYPE_EE_TERMINATE_REQUEST = "com.equinor.ert.ee.terminate_request"
+
 FM_JOB_ATTR_NAME = "name"
 FM_JOB_ATTR_EXECUTABLE = "executable"
 FM_JOB_ATTR_TARGET_FILE = "target_file"
