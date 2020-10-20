@@ -24,7 +24,7 @@ project = u'ERT'
 copyright = u'Equinor'
 author = u'Joakim Hove'
 
-dist_version = get_distribution('ensemble-reservoir-tool').version
+dist_version = get_distribution('ert').version
 
 # The short X.Y version
 version = u'.'.join(dist_version.split('.')[:2])

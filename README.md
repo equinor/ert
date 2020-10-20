@@ -6,9 +6,22 @@ reservoir models. ERT was originally devised as tool to do model updating
 updating is the Ensemble Smoother (ES).
 
 
+``` sh
+$ pip install ert
+$ ert --help
+```
+
+or, for the latest development version:
+
+``` sh
+$ pip install git+https://github.com/equinor/ert.git@master
+$ ert --help
+```
+
+
 The `ert` program is based on three different repositories:
 
-1. [libecl](https://github.com/Equinor/libecl) which contains utilities to read and write Eclipse files.
+1. [ecl](https://github.com/Equinor/ecl) which contains utilities to read and write Eclipse files.
 
 2. [libres](https://github.com/Equinor/libres) utilities to manage reservoir data, and algorithms do actually do model updating.
 
@@ -17,42 +30,23 @@ The `ert` program is based on three different repositories:
 
 ERT is now Python 3 only. The last Python 2 compatible release is [2.14](https://github.com/equinor/ert/tree/version-2.14)
 
-##  Building ert
+## Developing
 
-#### 1. Build and install [libecl](https://github.com/Equinor/libecl) and [libres](https://github.com/Equinor/libres). 
-When configuring `libecl` and
-`libres` you should used the option `-DCMAKE_INSTALL_PREFIX` to tell ``cmake``
-where to install. The value passed to `CMAKE_INSTALL_PREFIX` will be needed when
-running pip install in point 4, below. For now let us assume that the prefix
-`/local/ert/install` was used.
+ERT is pure Python software. To start developing, install it in editable mode:
 
-
-#### 2. Update environment variables 
-To ensure that the build system correctly finds the `ecl` Python package you
-need to set the environment variables `PYTHONPATH` and `LD_LIBRARY_PATH` to
-include the `libecl` installation:
-  
 ```
-bash% export LD_LIBRARY_PATH=/local/ert/install/lib64:$LD_LIBRARY_PATH
-bash% export PYTHONPATH=/local/ert/install/lib/python2.7/site-packages:$PYTHONPATH
+$ git clone https://github.com/equinor/ert
+$ cd ert
+$ pip install -e .
 ```
 
-Observe that path components `lib64` and `lib/python*.*/site-packages` will
-depend on your Python version and which Linux distribution you are using. The
-example given here is for RedHat based distributions.
-
-
-#### 3. Pip install Ert
- 
+Additional development packages must be installed to run the test suite:
 ```
-pip install . --prefix=/local/ert/install
+$ pip install -r dev-requirements.txt
+$ pytest tests/
 ```
 
-When this process if over you will have a binary executable `ert` installed in
-`/local/ert/install/bin/ert`. 
-
-
-#### 4. Try your new `ert` installation
+## Example usage
 
 To actually get ert to work at your site you need to configure details about
 your system; at the very least this means you must configure where your
