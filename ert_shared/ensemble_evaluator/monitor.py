@@ -5,7 +5,10 @@ import ert_shared.ensemble_evaluator.entity as ee_entity
 from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 import queue
 import threading
-
+from cloudevents.http import from_json
+from cloudevents.http.event import CloudEvent
+from cloudevents.http import to_json
+import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 
 class _Monitor:
     def __init__(self, host, port):
@@ -14,12 +17,22 @@ class _Monitor:
         self._loop = asyncio.new_event_loop()
         self._outbound = asyncio.Queue(loop=self._loop)
         self._receive_future = None
+        self._event_index = 1
+
+    def event_index(self):
+        index = self._event_index
+        self._event_index += 1
+        return index
 
     def exit_server(self):
-        event = ee_entity.create_command_terminate()
-        msg = json.dumps(event.to_dict())
-        self._loop.call_soon_threadsafe(self._outbound.put_nowait(msg))
-        print(f"sent message {msg}")
+        out_cloudevent = CloudEvent({
+            "type": identifiers.EVTYPE_EE_TERMINATE_REQUEST,
+            "source": "/ert/monitor/0",
+            "id": self.event_index()
+        })
+        message = to_json(out_cloudevent)
+        self._loop.call_soon_threadsafe(self._outbound.put_nowait(message))
+        print(f"sent message {message}")
 
     def track(self):
         incoming = queue.Queue()
@@ -28,7 +41,7 @@ class _Monitor:
         async def send(websocket):
             while True:
                 msg = await monitor._outbound.get()
-                print("monitor sending:" + msg)
+                print("monitor sending:" + msg.decode())
                 await websocket.send(msg)
 
         async def receive():
@@ -39,10 +52,9 @@ class _Monitor:
                 try:
                     async for message in websocket:
                         print(f"monitor receive: {message}")
-                        event_json = json.loads(message)
-                        event = ee_entity.create_evaluator_event_from_dict(event_json)
+                        event = from_json(message)
                         self._loop.run_in_executor(None, lambda: incoming.put(event))
-                        if event.is_terminated():
+                        if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
                             print("client received terminated")
                             break
                 except asyncio.CancelledError:
@@ -79,7 +91,7 @@ class _Monitor:
                 print("wait for incoming")
                 event = incoming.get()
                 print(f"got incoming: {event}")
-                if event.is_terminated():
+                if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
                     running = False
                 yield event
         except GeneratorExit:

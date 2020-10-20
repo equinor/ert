@@ -1,13 +1,15 @@
 from ert_gui.plottery.plots import ensemble
 import threading
-from ert_shared.ensemble_evaluator.entity import RealizationDecoder, create_evaluator_event, create_forward_model_job, create_realization, create_unindexed_evaluator_event
+
+import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 import ert_shared.ensemble_evaluator.monitor as ee_monitor
-import ert_shared.ensemble_evaluator.entity as ee_entity
+from ert_shared.ensemble_evaluator.entity.ensemble_response_event import create_evaluator_event
 import json
 import asyncio
 import websockets
 from cloudevents.http import from_json
-
+from cloudevents.http.event import CloudEvent
+from cloudevents.http import to_json
 
 class EnsembleEvaluator:
     def __init__(self, ensemble, port=8765):
@@ -24,7 +26,8 @@ class EnsembleEvaluator:
         self._done = self._loop.create_future()
 
         self._snapshot = ensemble.snapshot()
-        ensemble.evaluate(self._host, self._port, "ee_id")
+        self._event_index = 1
+        ensemble.evaluate(self._host, self._port)
 
     def _wsocket(self):
         loop = self._loop
@@ -38,13 +41,18 @@ class EnsembleEvaluator:
                 print(f"Client {websocket.remote_address} connected")
                 USERS.add(websocket)
 
-                message = json.dumps(self._snapshot.to_dict())
+                data = self._snapshot.to_dict()
+                out_cloudevent = CloudEvent({
+                    "type": identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
+                    "source": "/ert/ee/0",
+                    "id": self.event_index()
+                }, data)
+                message = to_json(out_cloudevent)
                 await websocket.send(message)
 
                 async for message in websocket:
-                    data = json.loads(message)
-                    client_event = ee_entity.create_command_from_dict(data)
-                    if client_event.is_terminate():
+                    client_event = from_json(message)
+                    if client_event["type"] == identifiers.EVTYPE_EE_TERMINATE_REQUEST:
                         print(f"Client {websocket.remote_address} asked to terminate")
                         self._stop()
             except Exception as e:
@@ -69,32 +77,46 @@ class EnsembleEvaluator:
                     snapshot_mutate_event = None
                     real_id = get_real_id(event["source"])
                     stage_id = get_stage_id(event["source"])
-                    if event["type"] == ee_entity._FM_JOB_RUNNING:
+                    out_msg = None
+                    if event["type"] == identifiers.EVTYPE_FM_JOB_RUNNING or event["type"] == identifiers.EVTYPE_FM_JOB_SUCCESS:
                         step_id = get_step_id(event["source"])
                         job_id = get_job_id(event["source"])
-                        self._snapshot._realizations[real_id]["forward_models"][job_id]["status"] == "running"
-                        # self._snapshot._realizations[real_id]["forward_models"][job_id]["status"] == "running"
                         snapshot_mutate_event = {
-                            real_id: {
-                                stage_id: {
-                                    step_id: {
-                                        job_id: {
-                                            "status": "running"
+                            "reals": {
+                                real_id: {
+                                    "stages": {
+                                        stage_id: {
+                                            "steps": {
+                                                step_id: {
+                                                    "jobs": {
+                                                        job_id: {
+                                                            "status": "running" if event["type"] == identifiers.EVTYPE_FM_JOB_RUNNING else "done"
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
-                    self._snapshot.merge_event(snapshot_mutate_event)
-                    out_msg = json.dumps(snapshot_mutate_event.to_dict(), cls=RealizationDecoder)
-                    if USERS:
+                        self._snapshot.merge_event(snapshot_mutate_event)
+                        out_cloudevent = CloudEvent({
+                            "type": identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
+                            "source": "/ert/ee/0",
+                            "id": self.event_index()
+                        }, snapshot_mutate_event)
+                        out_msg = to_json(out_cloudevent) #), cls=RealizationDecoder)
+                    else:
+                        print("unexpected message received on evaluator")
+                        self._stop()
+                    if out_msg and USERS:
                         await asyncio.wait([user.send(out_msg) for user in USERS])
             except Exception as e:
                 import traceback
                 print(e, traceback.format_exc())
                 if USERS:
-                    msg = ee_entity.create_evaluator_event(0, None, "terminated")
-                    message = json.dumps(msg.to_dict())
+                    message = self.terminate_message()
                     if USERS:
                         await asyncio.wait([user.send(message) for user in USERS])
             finally:
@@ -112,9 +134,7 @@ class EnsembleEvaluator:
             async with websockets.serve(connection_handler, self._host, self._port):
                 await done
                 print("server got done signal")
-
-                msg = ee_entity.create_evaluator_event(0, None, "terminated")
-                message = json.dumps(msg.to_dict())
+                message = self.terminate_message()
                 if USERS:
                     await asyncio.wait([user.send(message) for user in USERS])
                 print("send terminated")
@@ -124,6 +144,20 @@ class EnsembleEvaluator:
         loop.run_until_complete(server_future)
 
         print("Evaluator thread Done")
+
+    def terminate_message(self):
+        out_cloudevent = CloudEvent({
+            "type": identifiers.EVTYPE_EE_TERMINATED,
+            "source": "/ert/ee/0",
+            "id": self.event_index()
+        })
+        message = to_json(out_cloudevent)
+        return message
+
+    def event_index(self):
+        index = self._event_index
+        self._event_index += 1
+        return index
 
     def run(self):
         self._ws_thread.start()
@@ -138,20 +172,20 @@ class EnsembleEvaluator:
 
 
 def get_job_id(path):
-    return int(path.split("/")[11])
+    return path.split("/")[11]
 
 
 def get_step_id(path):
-    return int(path.split("/")[9])
+    return path.split("/")[9]
 
 
 def get_stage_id(path):
-    return int(path.split("/")[7])
+    return path.split("/")[7]
 
 
 def get_real_id(path):
-    return int(path.split("/")[5])
+    return path.split("/")[5]
 
 
 def get_ee_id(path):
-    return int(path.split("/")[3])
+    return path.split("/")[3]
