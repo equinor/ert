@@ -6,6 +6,7 @@ from ert_shared.ensemble_evaluator.evaluator import (
 )
 from ert_shared.ensemble_evaluator.entity.ensemble_builder import LegacyBuilder
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
+from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
 import websockets
 import pytest
 import asyncio
@@ -15,7 +16,7 @@ import json
 
 @pytest.fixture
 def evaluator(unused_tcp_port):
-    ensemble = LegacyBuilder().add_job({}).set_ensemble_size(2).build()
+    ensemble = LegacyBuilder().add_job({}).set_ensemble([0, 1]).build()
     ee = EnsembleEvaluator(ensemble=ensemble, port=unused_tcp_port)
     yield ee
     print("fixture exit")
@@ -65,9 +66,7 @@ class Client:
 
 
 def send_dispatch_event(client, event_type, source, event_id, data):
-    event1 = CloudEvent({
-        "type": event_type, "source": source, "id": event_id
-    }, data)
+    event1 = CloudEvent({"type": event_type, "source": source, "id": event_id}, data)
     client.send(to_json(event1))
 
 
@@ -77,40 +76,54 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
 
     # first snapshot before any event occurs
     snapshot_event = next(events)
-    snapshot = snapshot_event.data
-    assert snapshot["status"] == "unknown"
+    snapshot = Snapshot(snapshot_event.data)
+    assert snapshot.get_status() == "unknown"
 
     # two dispatchers connect
-    with Client(evaluator._host, evaluator._port, "/dispatch") as dispatch1, Client(evaluator._host, evaluator._port, "/dispatch") as dispatch2:
+    with Client(evaluator._host, evaluator._port, "/dispatch") as dispatch1, Client(
+        evaluator._host, evaluator._port, "/dispatch"
+    ) as dispatch2:
 
         # first dispatcher informs that job 0 is running
-        send_dispatch_event(dispatch1, identifiers.EVTYPE_FM_JOB_RUNNING,
-            "/ert/ee/0/real/0/stage/0/step/0/job/0", "event1", {"current_memory_usage": 1000})
-        event1 = next(events)
-        connect1 = event1.data
-        assert connect1["reals"]["0"]["stages"]["0"]["steps"]["0"]["jobs"]["0"]["status"] == "running"
+        send_dispatch_event(
+            dispatch1,
+            identifiers.EVTYPE_FM_JOB_RUNNING,
+            "/ert/ee/0/real/0/stage/0/step/0/job/0",
+            "event1",
+            {"current_memory_usage": 1000},
+        )
+        snapshot = Snapshot(next(events).data)
+        assert snapshot.get_job("0", "0", "0", "0")["status"] == "running"
 
         # second dispatcher informs that job 0 is running
-        send_dispatch_event(dispatch2, identifiers.EVTYPE_FM_JOB_RUNNING,
-            "/ert/ee/0/real/1/stage/0/step/0/job/0", "event1", {"current_memory_usage": 1000})
-        connect2 = next(events).data
-        assert connect2["reals"]["1"]["stages"]["0"]["steps"]["0"]["jobs"]["0"]["status"] == "running"
+        send_dispatch_event(
+            dispatch2,
+            identifiers.EVTYPE_FM_JOB_RUNNING,
+            "/ert/ee/0/real/1/stage/0/step/0/job/0",
+            "event1",
+            {"current_memory_usage": 1000},
+        )
+        snapshot = Snapshot(next(events).data)
+        assert snapshot.get_job("1", "0", "0", "0")["status"] == "running"
 
         # second dispatcher informs that job 0 is done
-        send_dispatch_event(dispatch2, identifiers.EVTYPE_FM_JOB_SUCCESS,
-            "/ert/ee/0/real/1/stage/0/step/0/job/0", "event1", {"current_memory_usage": 1000})
-        event3 = next(events)
-        connect3 = event3.data
-        assert connect3["reals"]["1"]["stages"]["0"]["steps"]["0"]["jobs"]["0"]["status"] == "done"
+        send_dispatch_event(
+            dispatch2,
+            identifiers.EVTYPE_FM_JOB_SUCCESS,
+            "/ert/ee/0/real/1/stage/0/step/0/job/0",
+            "event1",
+            {"current_memory_usage": 1000},
+        )
+        snapshot = Snapshot(next(events).data)
+        assert snapshot.get_job("1", "0", "0", "0")["status"] == "success"
 
         # a second monitor connects
         monitor2 = ee_monitor.create(evaluator._host, evaluator._port)
         events2 = monitor2.track()
-        snapshot2 = next(events2).data
-        # second monitor should get the updated snapshot
-        assert snapshot2["status"] == "unknown"
-        assert snapshot2["reals"]["0"]["stages"]["0"]["steps"]["0"]["jobs"]["0"]["status"] == "running"
-        assert snapshot2["reals"]["1"]["stages"]["0"]["steps"]["0"]["jobs"]["0"]["status"] == "done"
+        snapshot = Snapshot(next(events2).data)
+        assert snapshot.get_status() == "unknown"
+        assert snapshot.get_job("0", "0", "0", "0")["status"] == "running"
+        assert snapshot.get_job("1", "0", "0", "0")["status"] == "success"
 
         # one monitor requests that server exit
         monitor.exit_server()
@@ -121,9 +134,16 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
         assert terminated["type"] == identifiers.EVTYPE_EE_TERMINATED
         assert terminated2["type"] == identifiers.EVTYPE_EE_TERMINATED
 
+        for e in [events, events2]:
+            for _ in e:
+                assert False, "got unexpected event from monitor"
+
+    # Make sure evaluator exits properly
+    evaluator.stop()
+
 
 def test_monitor_stop(evaluator):
     monitor = evaluator.run()
     events = monitor.track()
-    snapshot = next(events)
-    assert snapshot.data["status"] == "unknown"
+    snapshot = Snapshot(next(events).data)
+    assert snapshot.get_status() == "unknown"
