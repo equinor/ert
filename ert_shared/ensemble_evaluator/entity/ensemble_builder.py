@@ -27,6 +27,7 @@ class _LegacyJob(_Job):
         self._min_arg = None
         self._arg_types = None
         self._max_arg = None
+        self._status = "unknown"
 
     @staticmethod
     def from_dict(data):
@@ -48,6 +49,7 @@ class _LegacyJob(_Job):
         j._min_arg = data.get(ids.FM_JOB_ATTR_MIN_ARG)
         j._arg_types = data.get(ids.FM_JOB_ATTR_ARG_TYPES)
         j._max_arg = data.get(ids.FM_JOB_ATTR_MAX_ARG)
+        j._status = data.get(ids.FM_JOB_ATTR_STATUS, j._status)
         return j
 
     def to_dict(self):
@@ -69,6 +71,7 @@ class _LegacyJob(_Job):
             ids.FM_JOB_ATTR_MIN_ARG: self._min_arg,
             ids.FM_JOB_ATTR_ARG_TYPES: self._arg_types,
             ids.FM_JOB_ATTR_MAX_ARG: self._max_arg,
+            ids.FM_JOB_ATTR_STATUS: self._status,
         }
 
     def id(self):
@@ -105,7 +108,7 @@ class _Step:
         return self._id
 
     def build(self):
-        return {job.id(): job.build() for job in self._jobs}
+        return {"jobs": {str(job.id()): job.build() for job in self._jobs}}
 
 
 class _Stage:
@@ -136,15 +139,17 @@ class _Stage:
         return self
 
     def build(self):
-        return {step.id(): step.build() for step in self._steps}
+        return {"steps": {str(step.id()): step.build() for step in self._steps}}
 
 
 class Builder:
     def __init__(self):
         self._stages = None
+        self._ensemble_size = None
         self.reset()
 
     def reset(self):
+        self._ensemble_size = 0
         self._stages = []
 
     def add_stage(self, stage):
@@ -154,12 +159,25 @@ class Builder:
         self._stages.append(stage)
         return self
 
+    def set_ensemble_size(self, size):
+        self._ensemble_size = size
+        return self
+
     def build(self):
-        return _Ensemble({stage.id(): stage.build() for stage in self._stages})
+        return _Ensemble(
+            {
+                "status": "unknown",
+                "reals": {
+                    str(iens): {
+                        "stages": {str(stage.id()): stage.build() for stage in self._stages}
+                    }
+                    for iens in range(0, self._ensemble_size)
+                }
+            }
+        )
 
 
 class LegacyBuilder(Builder):
-
     def __init__(self):
         super().__init__()
         self._only_step = _Step()
