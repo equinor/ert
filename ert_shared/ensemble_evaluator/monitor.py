@@ -10,6 +10,7 @@ from cloudevents.http.event import CloudEvent
 from cloudevents.http import to_json
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 
+
 class _Monitor:
     def __init__(self, host, port):
         self._host = host
@@ -25,11 +26,13 @@ class _Monitor:
         return index
 
     def exit_server(self):
-        out_cloudevent = CloudEvent({
-            "type": identifiers.EVTYPE_EE_TERMINATE_REQUEST,
-            "source": "/ert/monitor/0",
-            "id": self.event_index()
-        })
+        out_cloudevent = CloudEvent(
+            {
+                "type": identifiers.EVTYPE_EE_TERMINATE_REQUEST,
+                "source": "/ert/monitor/0",
+                "id": self.event_index(),
+            }
+        )
         message = to_json(out_cloudevent)
         self._loop.call_soon_threadsafe(self._outbound.put_nowait(message))
         print(f"sent message {message}")

@@ -4,7 +4,7 @@ from ert_shared.ensemble_evaluator.evaluator import (
     EnsembleEvaluator,
     ee_monitor,
 )
-from ert_shared.ensemble_evaluator.entity.ensemble import _Ensemble
+from ert_shared.ensemble_evaluator.entity.ensemble_builder import LegacyBuilder
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 import websockets
 import pytest
@@ -15,41 +15,7 @@ import json
 
 @pytest.fixture
 def evaluator(unused_tcp_port):
-    ensemble = _Ensemble({
-            "status": "unknown",
-            "reals": {
-                "0": {
-                    "stages": {
-                        "0": {
-                            "steps": {
-                                "0": {
-                                    "jobs": {
-                                        "0": {
-                                            "status": "unknown"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "1": {
-                    "stages": {
-                        "0": {
-                            "steps": {
-                                "0": {
-                                    "jobs": {
-                                        "0": {
-                                            "status": "unknown"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        })
+    ensemble = LegacyBuilder().add_job({}).set_ensemble_size(2).build()
     ee = EnsembleEvaluator(ensemble=ensemble, port=unused_tcp_port)
     yield ee
     print("fixture exit")
@@ -160,4 +126,4 @@ def test_monitor_stop(evaluator):
     monitor = evaluator.run()
     events = monitor.track()
     snapshot = next(events)
-    assert snapshot.to_dict()["status"] == "unknown"
+    assert snapshot.data["status"] == "unknown"

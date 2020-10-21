@@ -1,5 +1,6 @@
 from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
 
+
 class _Ensemble:
     def __init__(self, data):
         self._data = Snapshot(data)
