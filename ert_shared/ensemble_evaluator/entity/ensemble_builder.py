@@ -1,196 +1,51 @@
-from ert_shared.ensemble_evaluator.entity import ensemble
-from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert_shared.ensemble_evaluator.entity.ensemble import _Ensemble
+from pydantic import BaseModel
+from typing import Dict
 
 
-class _Job:
-    pass
+class _Job(BaseModel):
+    status: str
+    data: Dict
+    current_memory_usage: int
 
 
-class _LegacyJob(_Job):
-    def __init__(self):
-        self._name = None
-        self._id = None
-        self._executable = None
-        self._target_file = None
-        self._error_file = None
-        self._start_file = None
-        self._stdout = None
-        self._stderr = None
-        self._stdin = None
-        self._argList = None
-        self._environment = None
-        self._exec_env = None
-        self._license_path = None
-        self._max_running_minutes = None
-        self._max_running = None
-        self._min_arg = None
-        self._arg_types = None
-        self._max_arg = None
-        self._status = "unknown"
-
-    @staticmethod
-    def from_dict(data):
-        j = _LegacyJob()
-        j._name = data.get(ids.FM_JOB_ATTR_NAME)
-        j._executable = data.get(ids.FM_JOB_ATTR_EXECUTABLE)
-        j._target_file = data.get(ids.FM_JOB_ATTR_TARGET_FILE)
-        j._error_file = data.get(ids.FM_JOB_ATTR_ERROR_FILE)
-        j._start_file = data.get(ids.FM_JOB_ATTR_START_FILE)
-        j._stdout = data.get(ids.FM_JOB_ATTR_STDOUT)
-        j._stderr = data.get(ids.FM_JOB_ATTR_STDERR)
-        j._stdin = data.get(ids.FM_JOB_ATTR_STDIN)
-        j._argList = data.get(ids.FM_JOB_ATTR_ARGLIST)
-        j._environment = data.get(ids.FM_JOB_ATTR_ENVIRONMENT)
-        j._exec_env = data.get(ids.FM_JOB_ATTR_EXEC_ENV)
-        j._license_path = data.get(ids.FM_JOB_ATTR_LICENSE_PATH)
-        j._max_running_minutes = data.get(ids.FM_JOB_ATTR_MAX_RUNNING_MINUTES)
-        j._max_running = data.get(ids.FM_JOB_ATTR_MAX_RUNNING)
-        j._min_arg = data.get(ids.FM_JOB_ATTR_MIN_ARG)
-        j._arg_types = data.get(ids.FM_JOB_ATTR_ARG_TYPES)
-        j._max_arg = data.get(ids.FM_JOB_ATTR_MAX_ARG)
-        j._status = data.get(ids.FM_JOB_ATTR_STATUS, j._status)
-        return j
-
-    def to_dict(self):
-        return {
-            ids.FM_JOB_ATTR_NAME: self._name,
-            ids.FM_JOB_ATTR_EXECUTABLE: self._executable,
-            ids.FM_JOB_ATTR_TARGET_FILE: self._target_file,
-            ids.FM_JOB_ATTR_ERROR_FILE: self._error_file,
-            ids.FM_JOB_ATTR_START_FILE: self._start_file,
-            ids.FM_JOB_ATTR_STDOUT: self._stdout,
-            ids.FM_JOB_ATTR_STDERR: self._stderr,
-            ids.FM_JOB_ATTR_STDIN: self._stdin,
-            ids.FM_JOB_ATTR_ARGLIST: self._argList,
-            ids.FM_JOB_ATTR_ENVIRONMENT: self._environment,
-            ids.FM_JOB_ATTR_EXEC_ENV: self._exec_env,
-            ids.FM_JOB_ATTR_LICENSE_PATH: self._license_path,
-            ids.FM_JOB_ATTR_MAX_RUNNING_MINUTES: self._max_running_minutes,
-            ids.FM_JOB_ATTR_MAX_RUNNING: self._max_running,
-            ids.FM_JOB_ATTR_MIN_ARG: self._min_arg,
-            ids.FM_JOB_ATTR_ARG_TYPES: self._arg_types,
-            ids.FM_JOB_ATTR_MAX_ARG: self._max_arg,
-            ids.FM_JOB_ATTR_STATUS: self._status,
-        }
-
-    def id(self):
-        return self._id
-
-    def build(self):
-        return self.to_dict()
+class _Step(BaseModel):
+    status: str
+    jobs: Dict[int, _Job]
 
 
-class _Step:
-    def __init__(self):
-        self._id = None
-        self._jobs = None
-        self.reset()
+class _Stage(BaseModel):
+    status: str
+    steps: Dict[int, _Step]
 
-    def reset(self):
-        self._jobs = []
-        self._depends = set()
 
-    def depends(self, step):
-        if not isinstance(step, _Step):
-            raise TypeError("expected to depend on Step, got {step}")
-        self._depends.add(step)
+class _Realization(BaseModel):
+    status: str
+    stages: Dict[int, _Stage]
+
+
+class _SnapshotDict(BaseModel):
+    reals: Dict[int, _Realization] = []
+
+
+class SnapshotBuilder(BaseModel):
+    stages: Dict[int, _Stage] = []
+
+    def build(self, real_ids):
+        top = _SnapshotDict()
+        for id in real_ids:
+            top.reals.add(id, _Realization( status="unknown", stages=self.stages))
+        return top.dict()
+
+    def add_stage(self, stage_id, status):
+        self.stages.add(stage_id, _Stage(status=status))
         return self
 
-    def add(self, job, job_id=None):
-        if not isinstance(job, _Job):
-            raise TypeError("expected Job got {job}")
-        job._id = job_id if job_id is not None else len(self._jobs)
-        self._jobs.append(job)
+    def add_step(self, stage_id, step_id, status):
+        stage = self.stages[stage_id]
+        stage.steps.add(step_id, _Step(status=status))
         return self
 
-    def id(self):
-        return self._id
-
-    def build(self):
-        return {"jobs": {str(job.id()): job.build() for job in self._jobs}}
-
-
-class _Stage:
-    def __init__(self):
-        self._id = None
-        self._steps = None
-        self.depends = None
-        self.reset()
-
-    def reset(self):
-        self._steps = []
-        self._depends = set()
-
-    def depends(self, stage):
-        if not isinstance(stage, _Stage):
-            raise TypeError("expected to depend on Stage, got {stage}")
-        self._depends.add(stage)
-        return self
-
-    def id(self):
-        return self._id
-
-    def add(self, step):
-        if not isinstance(step, _Step):
-            raise TypeError("expected Step got {step}")
-        step._id = len(self._steps)
-        self._steps.append(step)
-        return self
-
-    def build(self):
-        return {"steps": {str(step.id()): step.build() for step in self._steps}}
-
-
-class Builder:
-    def __init__(self):
-        self._stages = None
-        self._members = None
-        self.reset()
-
-    def reset(self):
-        self._members = []
-        self._stages = []
-
-    def add_stage(self, stage):
-        if not isinstance(stage, _Stage):
-            raise TypeError("expected Stage got {stage}")
-        stage._id = len(self._stages)
-        self._stages.append(stage)
-        return self
-
-    def set_ensemble(self, members):
-        """Set the ensemble to either one specific member, or a list of "iens".
-        """
-        if isinstance(members, list):
-            self._members = members
-        else:
-            self._members.append(members)
-        return self
-
-    def build(self):
-        return _Ensemble(
-            {
-                "status": "unknown",
-                "reals": {
-                    str(iens): {
-                        "stages": {str(stage.id()): stage.build() for stage in self._stages}
-                    }
-                    for iens in self._members
-                }
-            }
-        )
-
-
-class LegacyBuilder(Builder):
-    def __init__(self):
-        super().__init__()
-        self._only_step = _Step()
-        self._only_stage = _Stage().add(self._only_step)
-
-        self.add_stage(self._only_stage)
-
-    def add_job(self, data, job_id=None):
-        job = _LegacyJob.from_dict(data)
-        self._only_step.add(job, job_id=job_id)
-        return self
+    def add_job(self, stage_id, step_id, job_id, status, data):
+        stage = self.stages[stage_id]
+        step = stage.steps[step_id]
+        step.jobs.add(job_id, _Job(status=status, data=data))
