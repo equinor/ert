@@ -97,10 +97,10 @@ class _Step:
         self._depends.add(step)
         return self
 
-    def add(self, job):
+    def add(self, job, job_id=None):
         if not isinstance(job, _Job):
             raise TypeError("expected Job got {job}")
-        job._id = len(self._jobs)
+        job._id = job_id if job_id is not None else len(self._jobs)
         self._jobs.append(job)
         return self
 
@@ -145,11 +145,11 @@ class _Stage:
 class Builder:
     def __init__(self):
         self._stages = None
-        self._ensemble_size = None
+        self._members = None
         self.reset()
 
     def reset(self):
-        self._ensemble_size = 0
+        self._members = []
         self._stages = []
 
     def add_stage(self, stage):
@@ -159,8 +159,13 @@ class Builder:
         self._stages.append(stage)
         return self
 
-    def set_ensemble_size(self, size):
-        self._ensemble_size = size
+    def set_ensemble(self, members):
+        """Set the ensemble to either one specific member, or a list of "iens".
+        """
+        if isinstance(members, list):
+            self._members = members
+        else:
+            self._members.append(members)
         return self
 
     def build(self):
@@ -171,7 +176,7 @@ class Builder:
                     str(iens): {
                         "stages": {str(stage.id()): stage.build() for stage in self._stages}
                     }
-                    for iens in range(0, self._ensemble_size)
+                    for iens in self._members
                 }
             }
         )
@@ -185,7 +190,7 @@ class LegacyBuilder(Builder):
 
         self.add_stage(self._only_stage)
 
-    def add_job(self, data):
+    def add_job(self, data, job_id=None):
         job = _LegacyJob.from_dict(data)
-        self._only_step.add(job)
+        self._only_step.add(job, job_id=job_id)
         return self
