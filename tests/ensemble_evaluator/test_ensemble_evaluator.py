@@ -4,7 +4,8 @@ from ert_shared.ensemble_evaluator.evaluator import (
     EnsembleEvaluator,
     ee_monitor,
 )
-from ert_shared.ensemble_evaluator.entity.ensemble_builder import LegacyBuilder
+from ert_shared.ensemble_evaluator.entity.ensemble import _Ensemble
+from ert_shared.ensemble_evaluator.entity.ensemble_builder import SnapshotBuilder
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
 import websockets
@@ -16,7 +17,14 @@ import json
 
 @pytest.fixture
 def evaluator(unused_tcp_port):
-    ensemble = LegacyBuilder().add_job({}).set_ensemble([0, 1]).build()
+    snapshot = (
+        SnapshotBuilder()
+            .add_stage(stage_id=0, status="unknown")
+            .add_step(stage_id=0, step_id=0, status="unknown")
+            .add_job(stage_id=0, step_id=0, job_id=0, data={}, status="unknown")
+            .build([0, 1])
+    )
+    ensemble = _Ensemble(snapshot=snapshot)
     ee = EnsembleEvaluator(ensemble=ensemble, port=unused_tcp_port)
     yield ee
     print("fixture exit")
