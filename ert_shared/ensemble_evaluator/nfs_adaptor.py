@@ -2,7 +2,10 @@ import asyncio
 
 import aiofiles
 import websockets
-from ert_shared.ensemble_evaluator.entity import _FM_STEP_FAILURE, _FM_STEP_SUCCESS
+from ert_shared.ensemble_evaluator.entity.identifiers import (
+    EVTYPE_FM_STEP_FAILURE,
+    EVTYPE_FM_STEP_SUCCESS,
+)
 from ert_shared.ensemble_evaluator.ws_util import wait
 
 
@@ -20,4 +23,6 @@ async def nfs_adaptor(log_file, ws_url):
 
 
 def _is_end_event(line):
-    return line is not None and (_FM_STEP_FAILURE in line or _FM_STEP_SUCCESS in line)
+    return line is not None and (
+        EVTYPE_FM_STEP_FAILURE in line or EVTYPE_FM_STEP_SUCCESS in line
+    )

@@ -10,9 +10,10 @@ import websockets
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
 from ert_gui.plottery.plots import ensemble
-from ert_shared.ensemble_evaluator.entity.ensemble_builder import SnapshotBuilder
-from ert_shared.ensemble_evaluator.entity.ensemble_response_event import (
-    create_evaluator_event,
+from ert_shared.ensemble_evaluator.entity.snapshot import (
+    SnapshotBuilder,
+    PartialSnapshot,
+    Snapshot,
 )
 
 
@@ -32,78 +33,18 @@ class EnsembleEvaluator:
 
         self._users = set()
 
-        self._snapshot = ensemble.snapshot()
+        # TODO: This should not be the same
+        self._snapshot = ensemble.forward_model_description()
         self._event_index = 1
         ensemble.evaluate(self._host, self._port)
 
-    def add_job_by_source(self, source, ):
-
-    @dispatch.register_event_handler(ids.EVTYPE_FM_JOB_START)
-    async def _fm_job_failure_handler(self, event):
-        snapshot_mutate_event = (
-            SnapshotBuilder()
-            .add_stage(get_stage_id(event["source"]))
-            .add_step(get_step_id(event["source"]))
-            .add_job(
-                {ids.FM_JOB_ATTR_STATUS: "started"},
-                job_id=get_job_id(event["source"]),
-            )
-            .build(real_ids=[get_real_id(event["source"])])
-            .snapshot()
-        )
-        await self._send_snapshot_update(snapshot_mutate_event)
-
-    @dispatch.register_event_handler(ids.EVTYPE_FM_JOB_RUNNING)
-    async def _fm_job_running_handler(self, event):
-        snapshot_mutate_event = (
-            LegacyBuilder()
-            .set_ensemble(get_real_id(event["source"]))
-            .add_job(
-                {
-                    ids.FM_JOB_ATTR_STATUS: "running",
-                    ids.FM_JOB_ATTR_CURRENT_MEMORY_USAGE: event.data.get(
-                        ids.FM_JOB_ATTR_CURRENT_MEMORY_USAGE
-                    ),
-                },
-                job_id=get_job_id(event["source"]),
-            )
-            .build()
-            .snapshot()
-        )
-        await self._send_snapshot_update(snapshot_mutate_event)
-
-    @dispatch.register_event_handler(ids.EVTYPE_FM_JOB_SUCCESS)
-    async def _fm_job_success_handler(self, event):
-        snapshot_mutate_event = (
-            self._snapshot.update()
-                .real(0).job(0).set_status("failed")
-                .set_ensemble(get_real_id(event["source"]))
-                .set_job_status(
-                    {ids.FM_JOB_ATTR_STATUS: "success"},
-                    job_id=get_job_id(event["source"]),
-            )
-            .build()
-            .snapshot()
-        )
-        await self._send_snapshot_update(snapshot_mutate_event)
-
-    @dispatch.register_event_handler(ids.EVTYPE_FM_JOB_FAILURE)
-    async def _fm_job_failure_handler(self, event):
-        snapshot_mutate_event = (
-            LegacyBuilder()
-            .set_ensemble(get_real_id(event["source"]))
-            .add_job(
-                {ids.FM_JOB_ATTR_STATUS: "failed"},
-                job_id=get_job_id(event["source"]),
-            )
-            .build()
-            .snapshot()
-        )
+    @dispatch.register_event_handler(ids.EVGROUP_FM_ALL)
+    async def _fm_handler(self, event):
+        snapshot_mutate_event = PartialSnapshot.from_cloudevent(event)
         await self._send_snapshot_update(snapshot_mutate_event)
 
     async def _send_snapshot_update(self, snapshot_mutate_event):
-        print(snapshot_mutate_event.to_dict())
-        self._snapshot.merge_event(snapshot_mutate_event.to_dict())
+        self._snapshot.merge_event(snapshot_mutate_event)
         out_cloudevent = CloudEvent(
             {
                 "type": identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,

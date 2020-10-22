@@ -5,7 +5,7 @@ from ert_shared.ensemble_evaluator.evaluator import (
     ee_monitor,
 )
 from ert_shared.ensemble_evaluator.entity.ensemble import _Ensemble
-from ert_shared.ensemble_evaluator.entity.ensemble_builder import SnapshotBuilder
+from ert_shared.ensemble_evaluator.entity.snapshot import SnapshotBuilder
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
 import websockets
@@ -19,10 +19,10 @@ import json
 def evaluator(unused_tcp_port):
     snapshot = (
         SnapshotBuilder()
-            .add_stage(stage_id=0, status="unknown")
-            .add_step(stage_id=0, step_id=0, status="unknown")
-            .add_job(stage_id=0, step_id=0, job_id=0, data={}, status="unknown")
-            .build([0, 1])
+            .add_stage(stage_id="0", status="unknown")
+            .add_step(stage_id="0", step_id="0", status="unknown")
+            .add_job(stage_id="0", step_id="0", job_id="0", data={}, status="unknown")
+            .build(["0", "1"], status="unknown")
     )
     ensemble = _Ensemble(snapshot=snapshot)
     ee = EnsembleEvaluator(ensemble=ensemble, port=unused_tcp_port)

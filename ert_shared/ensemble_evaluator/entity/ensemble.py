@@ -2,14 +2,14 @@ from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
 
 
 class _Ensemble:
-    def __init__(self, data):
-        self._data = Snapshot(data)
+    def __init__(self, snapshot):
+        self._snapshot = snapshot
 
     def evaluate(self, host, port):
         pass
 
-    def snapshot(self):
-        return self._data
+    def forward_model_description(self):
+        return self._snapshot
 
     def to_dict(self):
-        return self._data
+        return self._data.to_dict()

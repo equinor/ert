@@ -3,9 +3,10 @@ from collections import defaultdict
 __LOOKUP_MAP = defaultdict(list)
 
 
-def register_event_handler(event_type):
+def register_event_handler(event_types):
     def decorator(function):
-        __LOOKUP_MAP[event_type].append(function)
+        for event_type in event_types:
+            __LOOKUP_MAP[event_type].append(function)
 
         def wrapper(*args, **kwargs):
             return function(*args, **kwargs)

@@ -6,7 +6,6 @@ import time
 
 import websockets
 from cloudevents.http import CloudEvent, to_json
-from ert_shared.ensemble_evaluator.entity import create_realization
 from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 from job_runner import JOBS_FILE
 from res.job_queue import JobQueueManager
@@ -92,15 +91,15 @@ class JobQueueManagerAdaptor(JobQueueManager):
         )
 
     @staticmethod
-    def _translate_change_to_cloudevent(real_id, change):
+    def _translate_change_to_cloudevent(real_id, status):
         return CloudEvent(
             {
-                "type": _queue_state_event_type(change._status),
+                "type": _queue_state_event_type(status),
                 "source": f"/ert/ee/{0}/real/{real_id}/stage/{0}",
                 "datacontenttype": "application/json",
             },
             {
-                "queue_event_type": change._status,
+                "queue_event_type": status,
             },
         )
 
@@ -113,8 +112,10 @@ class JobQueueManagerAdaptor(JobQueueManager):
                     await websocket.send("null")
                     return
                 events = [
-                    JobQueueManagerAdaptor._translate_change_to_cloudevent(real_id, c)
-                    for real_id, c in changes.items()
+                    JobQueueManagerAdaptor._translate_change_to_cloudevent(
+                        real_id, status
+                    )
+                    for real_id, status in changes.items()
                 ]
                 for event in events:
                     await websocket.send(to_json(event))
@@ -135,9 +136,7 @@ class JobQueueManagerAdaptor(JobQueueManager):
             for q_index, equal in enumerate(diff):
                 if not equal:
                     st = str(JobStatusType(new_state[q_index]))
-                    changes[self._qindex_to_iens[q_index]] = create_realization(
-                        st, None
-                    )
+                    changes[self._qindex_to_iens[q_index]] = st
         return changes
 
     def _changes_after_transition(self):
@@ -149,7 +148,7 @@ class JobQueueManagerAdaptor(JobQueueManager):
         snapshot = {}
         for q_index, state_val in enumerate(self._state):
             st = str(JobStatusType(state_val))
-            snapshot[self._qindex_to_iens[q_index]] = create_realization(st, None)
+            snapshot[self._qindex_to_iens[q_index]] = st
         return snapshot
 
     def _publish_changes(self, changes):

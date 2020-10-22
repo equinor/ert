@@ -30,7 +30,9 @@ def _attach(enkf_main):
     event_logs = [
         Path(path.runpath) / "event_log" for path in enkf_main.getRunpathList()
     ]
-    dispatch_thread = Thread(target=_attach_to_dispatch, args=(dispatch_url, event_logs))
+    dispatch_thread = Thread(
+        target=_attach_to_dispatch, args=(dispatch_url, event_logs)
+    )
     dispatch_thread.start()
 
     # XXX: these magic strings will eventually come from EE itself

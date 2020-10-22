@@ -5,7 +5,7 @@ import aiofiles
 import pytest
 import websockets
 from ert_shared.ensemble_evaluator.nfs_adaptor import nfs_adaptor
-from ert_shared.ensemble_evaluator.entity import _FM_STEP_SUCCESS
+from ert_shared.ensemble_evaluator.entity.identifiers import EVTYPE_FM_STEP_SUCCESS
 
 
 async def mock_writer(filename, times=2):
@@ -13,7 +13,7 @@ async def mock_writer(filename, times=2):
         for r in range(0, times):
             await f.write(f"Time {r}\n")
             await asyncio.sleep(0.2)
-        await f.write(_FM_STEP_SUCCESS)
+        await f.write(EVTYPE_FM_STEP_SUCCESS)
 
 
 async def mock_ws(host, port):
@@ -24,7 +24,7 @@ async def mock_ws(host, port):
         while True:
             line = await websocket.recv()
             lines.append(line)
-            if line == _FM_STEP_SUCCESS:
+            if line == EVTYPE_FM_STEP_SUCCESS:
                 done.set_result(None)
                 break
 
