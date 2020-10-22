@@ -121,7 +121,7 @@ class RMSRunTest(ResTest):
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
 
-            r = RMSRun(0, "project", "workflow", run_path="run_path")
+            r = RMSRun(0, "project", "workflow", run_path="run_path", allow_no_env=True)
             r.run()
 
             # -----------------------------------------------------------------
@@ -130,7 +130,7 @@ class RMSRunTest(ResTest):
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
 
-            r = RMSRun(0, "project", "workflow", run_path="run_path")
+            r = RMSRun(0, "project", "workflow", run_path="run_path", allow_no_env=True)
             with self.assertRaises(RMSRunException):
                 r.run()
 
@@ -141,7 +141,7 @@ class RMSRunTest(ResTest):
                 f.write(json.dumps(action))
 
             r = RMSRun(
-                0, "project", "workflow", run_path="run_path", target_file="some_file"
+                0, "project", "workflow", run_path="run_path", target_file="some_file", allow_no_env=True
             )
             with self.assertRaises(RMSRunException):
                 r.run()
@@ -155,9 +155,7 @@ class RMSRunTest(ResTest):
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
 
-            r = RMSRun(
-                0, "project", "workflow", run_path="run_path", target_file="some_file"
-            )
+            r = RMSRun(0, "project", "workflow", run_path="run_path", target_file="some_file", allow_no_env=True)
             r.run()
 
     def test_run(self):
@@ -177,7 +175,7 @@ class RMSRunTest(ResTest):
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
 
-            res.fm.rms.run(0, "project", "workflow", run_path="run_path")
+            res.fm.rms.run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
 
             # -----------------------------------------------------------------
 
@@ -186,7 +184,7 @@ class RMSRunTest(ResTest):
                 f.write(json.dumps(action))
 
             with self.assertRaises(RMSRunException):
-                res.fm.rms.run(0, "project", "workflow", run_path="run_path")
+                res.fm.rms.run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
 
             # -----------------------------------------------------------------
 
@@ -201,6 +199,7 @@ class RMSRunTest(ResTest):
                     "workflow",
                     run_path="run_path",
                     target_file="some_file",
+                    allow_no_env=True
                 )
 
             # -----------------------------------------------------------------
@@ -213,7 +212,7 @@ class RMSRunTest(ResTest):
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
             res.fm.rms.run(
-                0, "project", "workflow", run_path="run_path", target_file="some_file"
+                0, "project", "workflow", run_path="run_path", target_file="some_file", allow_no_env=True
             )
 
     def test_rms_load_env(self):
@@ -271,6 +270,7 @@ class RMSRunTest(ResTest):
                         "--export-path",
                         "./",
                         "workflow",
+                        "-a"
                     ]
                 )
 
@@ -338,6 +338,7 @@ class RMSRunTest(ResTest):
                         "--export-path",
                         "./",
                         "workflow",
+                        "-a"
                     ]
                 )
 
@@ -374,7 +375,7 @@ class RMSRunTest(ResTest):
                 f.write("This is a dummy target file")
 
             r = RMSRun(
-                0, "project", "workflow", run_path="run_path", target_file=target_file
+                0, "project", "workflow", run_path="run_path", target_file=target_file, allow_no_env=True
             )
             r.run()
 
@@ -404,7 +405,7 @@ class RMSRunTest(ResTest):
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
 
-            res.fm.rms.run(0, "project", "workflow", run_path="run_path")
+            res.fm.rms.run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
 
             # -----------------------------------------------------------------
 
@@ -413,7 +414,7 @@ class RMSRunTest(ResTest):
                 f.write(json.dumps(action))
 
             with self.assertRaises(RMSRunException):
-                res.fm.rms.run(0, "project", "workflow", run_path="run_path")
+                res.fm.rms.run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
 
             # -----------------------------------------------------------------
 
@@ -428,6 +429,7 @@ class RMSRunTest(ResTest):
                     "workflow",
                     run_path="run_path",
                     target_file="some_file",
+                    allow_no_env=True
                 )
 
             # -----------------------------------------------------------------
@@ -440,7 +442,7 @@ class RMSRunTest(ResTest):
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
             res.fm.rms.run(
-                0, "project", "workflow", run_path="run_path", target_file="some_file"
+                0, "project", "workflow", run_path="run_path", target_file="some_file", allow_no_env=True
             )
 
 

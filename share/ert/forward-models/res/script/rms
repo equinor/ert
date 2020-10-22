@@ -52,6 +52,11 @@ def _build_argument_parser():
         default=None,
         help='the prefix of all relative paths when rms is exporting',
     )
+    parser.add_argument(
+        '-a', '--allow-no-env',
+        action="store_true",
+        help='Allow rms to run with out environment specified in rms configuration',
+    )
     return parser
 
 
@@ -69,5 +74,6 @@ if __name__ == '__main__':
         target_file=args.target_file,
         import_path=args.import_path,
         export_path=args.export_path,
-        version=args.version
+        version=args.version,
+        allow_no_env=args.allow_no_env
         )
