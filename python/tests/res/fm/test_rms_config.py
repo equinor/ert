@@ -89,19 +89,20 @@ class RMSConfigTest(ResTest):
             conf = RMSConfig()
             self.assertEqual(conf.wrapper, "bash")
 
-
     def test_load_env(self):
         with TestAreaContext("yaml"):
             self.monkeypatch.setenv("RMS_SITE_CONFIG", "file.yml")
             with open("file.yml", "w") as f:
-                f.write("""\
+                f.write(
+                    """\
 executable: bin/rms\n
 wrapper: bash
 env:
   10.1.3:
     PATH_PREFIX: /some/path
     PYTHONPATH: /some/pythonpath
-""")
+"""
+                )
             conf = RMSConfig()
             self.assertEqual(conf.env("10.1.3")["PATH_PREFIX"], "/some/path")
             self.assertEqual(conf.env("10.1.3")["PYTHONPATH"], "/some/pythonpath")

@@ -141,7 +141,12 @@ class RMSRunTest(ResTest):
                 f.write(json.dumps(action))
 
             r = RMSRun(
-                0, "project", "workflow", run_path="run_path", target_file="some_file", allow_no_env=True
+                0,
+                "project",
+                "workflow",
+                run_path="run_path",
+                target_file="some_file",
+                allow_no_env=True,
             )
             with self.assertRaises(RMSRunException):
                 r.run()
@@ -155,7 +160,14 @@ class RMSRunTest(ResTest):
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
 
-            r = RMSRun(0, "project", "workflow", run_path="run_path", target_file="some_file", allow_no_env=True)
+            r = RMSRun(
+                0,
+                "project",
+                "workflow",
+                run_path="run_path",
+                target_file="some_file",
+                allow_no_env=True,
+            )
             r.run()
 
     def test_run(self):
@@ -175,7 +187,9 @@ class RMSRunTest(ResTest):
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
 
-            res.fm.rms.run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
+            res.fm.rms.run(
+                0, "project", "workflow", run_path="run_path", allow_no_env=True
+            )
 
             # -----------------------------------------------------------------
 
@@ -184,7 +198,9 @@ class RMSRunTest(ResTest):
                 f.write(json.dumps(action))
 
             with self.assertRaises(RMSRunException):
-                res.fm.rms.run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
+                res.fm.rms.run(
+                    0, "project", "workflow", run_path="run_path", allow_no_env=True
+                )
 
             # -----------------------------------------------------------------
 
@@ -199,7 +215,7 @@ class RMSRunTest(ResTest):
                     "workflow",
                     run_path="run_path",
                     target_file="some_file",
-                    allow_no_env=True
+                    allow_no_env=True,
                 )
 
             # -----------------------------------------------------------------
@@ -212,7 +228,12 @@ class RMSRunTest(ResTest):
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
             res.fm.rms.run(
-                0, "project", "workflow", run_path="run_path", target_file="some_file", allow_no_env=True
+                0,
+                "project",
+                "workflow",
+                run_path="run_path",
+                target_file="some_file",
+                allow_no_env=True,
             )
 
     def test_rms_load_env(self):
@@ -270,7 +291,7 @@ class RMSRunTest(ResTest):
                         "--export-path",
                         "./",
                         "workflow",
-                        "-a"
+                        "-a",
                     ]
                 )
 
@@ -338,7 +359,7 @@ class RMSRunTest(ResTest):
                         "--export-path",
                         "./",
                         "workflow",
-                        "-a"
+                        "-a",
                     ]
                 )
 
@@ -375,7 +396,12 @@ class RMSRunTest(ResTest):
                 f.write("This is a dummy target file")
 
             r = RMSRun(
-                0, "project", "workflow", run_path="run_path", target_file=target_file, allow_no_env=True
+                0,
+                "project",
+                "workflow",
+                run_path="run_path",
+                target_file=target_file,
+                allow_no_env=True,
             )
             r.run()
 
@@ -405,7 +431,9 @@ class RMSRunTest(ResTest):
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
 
-            res.fm.rms.run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
+            res.fm.rms.run(
+                0, "project", "workflow", run_path="run_path", allow_no_env=True
+            )
 
             # -----------------------------------------------------------------
 
@@ -414,7 +442,9 @@ class RMSRunTest(ResTest):
                 f.write(json.dumps(action))
 
             with self.assertRaises(RMSRunException):
-                res.fm.rms.run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
+                res.fm.rms.run(
+                    0, "project", "workflow", run_path="run_path", allow_no_env=True
+                )
 
             # -----------------------------------------------------------------
 
@@ -429,7 +459,7 @@ class RMSRunTest(ResTest):
                     "workflow",
                     run_path="run_path",
                     target_file="some_file",
-                    allow_no_env=True
+                    allow_no_env=True,
                 )
 
             # -----------------------------------------------------------------
@@ -442,22 +472,28 @@ class RMSRunTest(ResTest):
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
             res.fm.rms.run(
-                0, "project", "workflow", run_path="run_path", target_file="some_file", allow_no_env=True
+                0,
+                "project",
+                "workflow",
+                run_path="run_path",
+                target_file="some_file",
+                allow_no_env=True,
             )
-
 
     def test_run_version_env(self):
         with TestAreaContext("test_run"):
             wrapper_file_name = f"{os.getcwd()}/bin/rms_wrapper"
             with open("rms_config.yml", "w") as f:
-                f.write(f"""\
+                f.write(
+                    f"""\
 executable: {os.getcwd()}/bin/rms
 wrapper:  {wrapper_file_name}
 env:
   10.1.3:
     PATH_PREFIX: /some/path
     PYTHONPATH: /some/pythonpath
-""")
+"""
+                )
 
             os.mkdir("run_path")
             os.mkdir("bin")
@@ -470,7 +506,7 @@ env:
                 f.write(
                     TEST_ENV_WRAPPER.format(
                         expected_path_prefix="/some/path",
-                        expected_pythonpath="/some/pythonpath"
+                        expected_pythonpath="/some/pythonpath",
                     )
                 )
 
@@ -478,7 +514,6 @@ env:
             os.chmod(wrapper_file_name, st.st_mode | stat.S_IEXEC)
             self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
             self.monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
-
 
             action = {
                 "exit_status": 0,
@@ -488,22 +523,28 @@ env:
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
             res.fm.rms.run(
-                0, "project", "workflow", run_path="run_path", target_file="some_file", version="10.1.3"
+                0,
+                "project",
+                "workflow",
+                run_path="run_path",
+                target_file="some_file",
+                version="10.1.3",
             )
-
 
     def test_run_version_env_with_user_env(self):
         with TestAreaContext("test_run"):
             wrapper_file_name = f"{os.getcwd()}/bin/rms_wrapper"
             with open("rms_config.yml", "w") as f:
-                f.write(f"""\
+                f.write(
+                    f"""\
 executable: {os.getcwd()}/bin/rms
 wrapper:  {wrapper_file_name}
 env:
   10.1.3:
     PATH_PREFIX: /some/path
     PYTHONPATH: /some/pythonpath
-""")
+"""
+                )
 
             os.mkdir("run_path")
             os.mkdir("bin")
@@ -516,22 +557,23 @@ env:
                 f.write(
                     TEST_ENV_WRAPPER.format(
                         expected_path_prefix="/some/other/path:/some/path",
-                        expected_pythonpath="/some/other/pythonpath:/some/pythonpath"
+                        expected_pythonpath="/some/other/pythonpath:/some/pythonpath",
                     )
                 )
             with open("pytest_exec_env.json", "w") as f:
-                f.write("""\
+                f.write(
+                    """\
 {
     "PATH_PREFIX" : "/some/other/path",
     "PYTHONPATH" : "/some/other/pythonpath"
 }
-""")
+"""
+                )
 
             st = os.stat(wrapper_file_name)
             os.chmod(wrapper_file_name, st.st_mode | stat.S_IEXEC)
             self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
             self.monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
-
 
             action = {
                 "exit_status": 0,
@@ -541,20 +583,27 @@ env:
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
             res.fm.rms.run(
-                0, "project", "workflow", run_path="run_path", target_file="some_file", version="10.1.3"
+                0,
+                "project",
+                "workflow",
+                run_path="run_path",
+                target_file="some_file",
+                version="10.1.3",
             )
 
     def test_run_allow_no_env(self):
         with TestAreaContext("test_run"):
             wrapper_file_name = f"{os.getcwd()}/bin/rms_wrapper"
             with open("rms_config.yml", "w") as f:
-                f.write(f"""\
+                f.write(
+                    f"""\
 executable: {os.getcwd()}/bin/rms
 env:
   10.1.3:
     PATH_PREFIX: /some/path
     PYTHONPATH: /some/pythonpath
-""")
+"""
+                )
 
             os.mkdir("run_path")
             os.mkdir("bin")
@@ -576,15 +625,24 @@ env:
 
             with self.assertRaises(RMSRunException) as e:
                 res.fm.rms.run(
-                    0, "project", "workflow", run_path="run_path", target_file="some_file", version="non-existing"
+                    0,
+                    "project",
+                    "workflow",
+                    run_path="run_path",
+                    target_file="some_file",
+                    version="non-existing",
                 )
                 assert "non-existing" in str(e)
 
             res.fm.rms.run(
-                0, "project", "workflow", run_path="run_path", target_file="some_file", version="non-existing", allow_no_env=True
+                0,
+                "project",
+                "workflow",
+                run_path="run_path",
+                target_file="some_file",
+                version="non-existing",
+                allow_no_env=True,
             )
-
-
 
 
 if __name__ == "__main__":

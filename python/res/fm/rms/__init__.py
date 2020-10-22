@@ -12,7 +12,7 @@ def run(
     import_path="rmsIMPORT",
     version=None,
     readonly=True,
-    allow_no_env=False
+    allow_no_env=False,
 ):
     run_object = RMSRun(
         iens,
@@ -24,6 +24,6 @@ def run(
         import_path=import_path,
         version=version,
         readonly=readonly,
-        allow_no_env=allow_no_env
+        allow_no_env=allow_no_env,
     )
     run_object.run()

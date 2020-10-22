@@ -42,7 +42,7 @@ class RMSRun(object):
         import_path="rmsIMPORT",
         version=None,
         readonly=True,
-        allow_no_env=False
+        allow_no_env=False,
     ):
         if not os.path.isdir(project):
             raise OSError(
@@ -105,13 +105,17 @@ class RMSRun(object):
 
         config_env = self.config.env(self.version)
         if not config_env and not self.allow_no_env:
-            raise RMSRunException( f"RMS environment not specified for version: {self.version}")
+            raise RMSRunException(
+                f"RMS environment not specified for version: {self.version}"
+            )
         exec_env_file = "%s_exec_env.json" % self_exe
         user_env = {}
         if os.path.isfile(exec_env_file):
             user_env = json.load(open(exec_env_file))
         for var in set(config_env.keys()) | set(user_env.keys()):
-            exec_env[var] = ":".join(filter(None, [user_env.get(var), config_env.get(var)]))
+            exec_env[var] = ":".join(
+                filter(None, [user_env.get(var), config_env.get(var)])
+            )
             if not exec_env[var].strip():
                 exec_env.pop(var)
 
