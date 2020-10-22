@@ -1,4 +1,3 @@
-
 FM_JOB_ID = "id"
 FM_JOB_TYPE = "type"
 FM_JOB_INPUTS = "inputs"
@@ -17,14 +16,59 @@ CREATED = "created"
 REALIZATION_STATUS = "status"
 REALIZATION_FORWARD_MODELS = "forward_models"
 
+EVTYPE_FM_STAGE_WAITING = "com.equinor.ert.forward_model_stage.waiting"
+EVTYPE_FM_STAGE_PENDING = "com.equinor.ert.forward_model_stage.pending"
+EVTYPE_FM_STAGE_RUNNING = "com.equinor.ert.forward_model_stage.running"
+EVTYPE_FM_STAGE_FAILURE = "com.equinor.ert.forward_model_stage.failure"
+EVTYPE_FM_STAGE_SUCCESS = "com.equinor.ert.forward_model_stage.success"
+EVTYPE_FM_STAGE_UNKNOWN = "com.equinor.ert.forward_model_stage.unknown"
+
+EVTYPE_FM_STEP_START = "com.equinor.ert.forward_model_step.start"
+EVTYPE_FM_STEP_FAILURE = "com.equinor.ert.forward_model_step.failure"
+EVTYPE_FM_STEP_SUCCESS = "com.equinor.ert.forward_model_step.success"
+
 EVTYPE_FM_JOB_START = "com.equinor.ert.forward_model_job.start"
 EVTYPE_FM_JOB_RUNNING = "com.equinor.ert.forward_model_job.running"
 EVTYPE_FM_JOB_SUCCESS = "com.equinor.ert.forward_model_job.success"
 EVTYPE_FM_JOB_FAILURE = "com.equinor.ert.forward_model_job.failure"
 
-EVTYPE_FM_STEP_START = "com.equinor.ert.forward_model_step.start"
-EVTYPE_FM_STEP_FAILURE = "com.equinor.ert.forward_model_step.failure"
-EVTYPE_FM_STEP_SUCCESS = "com.equinor.ert.forward_model_step.success"
+EVGROUP_FM_STAGE = {
+    EVTYPE_FM_STAGE_WAITING,
+    EVTYPE_FM_STAGE_PENDING,
+    EVTYPE_FM_STAGE_RUNNING,
+    EVTYPE_FM_STAGE_FAILURE,
+    EVTYPE_FM_STAGE_SUCCESS,
+    EVTYPE_FM_STAGE_UNKNOWN,
+}
+
+EVGROUP_FM_STEP = {
+    EVTYPE_FM_STEP_START,
+    EVTYPE_FM_STEP_FAILURE,
+    EVTYPE_FM_STEP_SUCCESS,
+}
+
+EVGROUP_FM_JOB = {
+    EVTYPE_FM_JOB_START,
+    EVTYPE_FM_JOB_RUNNING,
+    EVTYPE_FM_JOB_SUCCESS,
+    EVTYPE_FM_JOB_FAILURE,
+}
+
+EVGROUP_FM_ALL = {
+    EVTYPE_FM_STAGE_WAITING,
+    EVTYPE_FM_STAGE_PENDING,
+    EVTYPE_FM_STAGE_RUNNING,
+    EVTYPE_FM_STAGE_FAILURE,
+    EVTYPE_FM_STAGE_SUCCESS,
+    EVTYPE_FM_STAGE_UNKNOWN,
+    EVTYPE_FM_STEP_START,
+    EVTYPE_FM_STEP_FAILURE,
+    EVTYPE_FM_STEP_SUCCESS,
+    EVTYPE_FM_JOB_START,
+    EVTYPE_FM_JOB_RUNNING,
+    EVTYPE_FM_JOB_SUCCESS,
+    EVTYPE_FM_JOB_FAILURE,
+}
 
 EVTYPE_EE_SNAPSHOT_UPDATE = "com.equinor.ert.ee.snapshot_update"
 EVTYPE_EE_TERMINATED = "com.equinor.ert.ee.terminated"

@@ -1,4 +1,14 @@
-import ert_shared.ensemble_evaluator.entity as ee_entity
+from ert_shared.ensemble_evaluator.entity.snapshot import (
+    SnapshotBuilder,
+    PartialSnapshot,
+    Snapshot,
+)
+from ert_shared.ensemble_evaluator.entity.tool import (
+    get_real_id,
+    get_stage_id,
+    get_step_id,
+    get_job_id,
+)
 
 
 def _dict_equal(d1, d2):
@@ -15,85 +25,91 @@ def _dict_equal(d1, d2):
     return True
 
 
-_REALIZATION_INDEXES = [0, 1, 3, 4, 5, 9]
+_REALIZATION_INDEXES = ["0", "1", "3", "4", "5", "9"]
 
 
 def _create_snapshot():
-    return ee_entity.create_evaluator_snapshot(
-        [
-            ee_entity.create_forward_model_job(1, "test1"),
-            ee_entity.create_forward_model_job(2, "test2", (1,)),
-            ee_entity.create_forward_model_job(3, "test3", (1,)),
-            ee_entity.create_forward_model_job(4, "test4", (2, 3)),
-        ],
-        _REALIZATION_INDEXES,
+    return (
+        SnapshotBuilder()
+        .add_stage(stage_id="0", status="unknown")
+        .add_step(stage_id="0", step_id="0", status="unknown")
+        .add_job(stage_id="0", step_id="0", job_id="0", data={}, status="unknown")
+        .add_job(
+            stage_id="0",
+            step_id="0",
+            job_id="1",
+            data={},
+            status="unknown",
+            depends=[("0", "0", "0")],
+        )
+        .add_job(
+            stage_id="0",
+            step_id="0",
+            job_id="2",
+            data={},
+            status="unknown",
+            depends=[("0", "0", "0")],
+        )
+        .add_job(
+            stage_id="0",
+            step_id="0",
+            job_id="3",
+            data={},
+            status="unknown",
+            depends=[("0", "0", "1"), ("0", "0", "2")],
+        )
+        .build(_REALIZATION_INDEXES, status="unknown")
     )
 
 
 def test_snapshot_merge():
     snapshot = _create_snapshot()
 
-    snapshot.merge_event(
-        ee_entity.create_evaluator_event(
-            event_index=1, realizations={1: {"status": "running"}}, status="running"
-        )
-    )
+    update_event = PartialSnapshot()
+    update_event.update_status(status="running")
+    update_event.update_real("1", status="running")
 
-    assert snapshot._event_index == 1
-    assert snapshot._status == "running"
+    snapshot.merge_event(update_event)
 
-    assert snapshot._realizations[1]["status"] == "running"
-    for index in set(_REALIZATION_INDEXES) - set((1,)):
-        assert snapshot._realizations[index]["status"] == "unknown"
+    assert snapshot.get_status() == "running"
 
-    snapshot.merge_event(
-        ee_entity.create_evaluator_event(
-            event_index=2,
-            realizations={
-                1: {
-                    "forward_models": {
-                        1: {"status": "done", "data": {"memory": 1000}},
-                        2: {"status": "running"},
-                    },
-                },
-                9: {
-                    "status": "running",
-                    "forward_models": {
-                        1: {"status": "running"},
-                    },
-                },
-            },
-            status="running",
-        )
-    )
+    assert snapshot.get_real("1")["status"] == "running"
+    for index in set(_REALIZATION_INDEXES) - set(("1",)):
+        assert snapshot.get_real(index)["status"] == "unknown"
 
-    assert snapshot._event_index == 2
-    assert snapshot._status == "running"
+    update_event = PartialSnapshot()
+    update_event.update_job(real_id="1",stage_id="0", step_id="0", job_id="0", status="success", data={"memory": 1000})
+    update_event.update_job(real_id="1",stage_id="0", step_id="0", job_id="1", status="running")
+    update_event.update_job(real_id="9",stage_id="0", step_id="0", job_id="0", status="running")
 
-    assert snapshot._realizations[1]["status"] == "running"
+    snapshot.merge_event(update_event)
+
+    assert snapshot.get_status() == "running"
+
+    assert snapshot.get_real("1")["status"] == "running"
     assert _dict_equal(
-        snapshot._realizations[1]["forward_models"][1],
-        {"status": "done", "data": {"memory": 1000}},
+        snapshot.get_job(real_id="1",stage_id="0", step_id="0", job_id="0"),
+        {"status": "success", "data": {"memory": 1000}},
     )
-    assert snapshot._realizations[1]["forward_models"][2] == {
+    assert snapshot.get_job(real_id="1",stage_id="0", step_id="0", job_id="1") == {
         "status": "running",
-        "data": None,
+        "data": {},
     }
 
-    assert snapshot._realizations[9]["status"] == "running"
-    assert snapshot._realizations[9]["forward_models"][1] == {
+    assert snapshot.get_job(real_id="9",stage_id="0", step_id="0", job_id="0")["status"] == "running"
+    assert snapshot.get_job(real_id="9",stage_id="0", step_id="0", job_id="0") == {
         "status": "running",
-        "data": None,
+        "data": {},
     }
 
-    for index in set(_REALIZATION_INDEXES) - set((1, 9)):
-        assert snapshot._realizations[index]["status"] == "unknown"
+    for index in set(_REALIZATION_INDEXES) - set(("1", "9")):
+        assert snapshot.get_real(index)["status"] == "unknown"
 
 
-def test_event_to_dict():
-    snapshot = _create_snapshot()
-    assert type(snapshot.to_dict()) == dict
-    assert _dict_equal(
-        snapshot.to_dict(),
-        ee_entity.create_evaluator_event_from_dict(snapshot.to_dict()).to_dict(),
-    )
+def test_source_get_id():
+    source = "/ert/ee/0/real/1111/stage/2opop/step/asd123ASD/job/0"
+
+    assert get_real_id(source) == "1111"
+    assert get_stage_id(source) == "2opop"
+    assert get_step_id(source) == "asd123ASD"
+    assert get_job_id(source) == "0"
