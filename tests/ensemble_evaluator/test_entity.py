@@ -78,9 +78,20 @@ def test_snapshot_merge():
         assert snapshot.get_real(index)["status"] == "unknown"
 
     update_event = PartialSnapshot()
-    update_event.update_job(real_id="1",stage_id="0", step_id="0", job_id="0", status="success", data={"memory": 1000})
-    update_event.update_job(real_id="1",stage_id="0", step_id="0", job_id="1", status="running")
-    update_event.update_job(real_id="9",stage_id="0", step_id="0", job_id="0", status="running")
+    update_event.update_job(
+        real_id="1",
+        stage_id="0",
+        step_id="0",
+        job_id="0",
+        status="success",
+        data={"memory": 1000},
+    )
+    update_event.update_job(
+        real_id="1", stage_id="0", step_id="0", job_id="1", status="running"
+    )
+    update_event.update_job(
+        real_id="9", stage_id="0", step_id="0", job_id="0", status="running"
+    )
 
     snapshot.merge_event(update_event)
 
@@ -88,16 +99,19 @@ def test_snapshot_merge():
 
     assert snapshot.get_real("1")["status"] == "running"
     assert _dict_equal(
-        snapshot.get_job(real_id="1",stage_id="0", step_id="0", job_id="0"),
+        snapshot.get_job(real_id="1", stage_id="0", step_id="0", job_id="0"),
         {"status": "success", "data": {"memory": 1000}},
     )
-    assert snapshot.get_job(real_id="1",stage_id="0", step_id="0", job_id="1") == {
+    assert snapshot.get_job(real_id="1", stage_id="0", step_id="0", job_id="1") == {
         "status": "running",
         "data": {},
     }
 
-    assert snapshot.get_job(real_id="9",stage_id="0", step_id="0", job_id="0")["status"] == "running"
-    assert snapshot.get_job(real_id="9",stage_id="0", step_id="0", job_id="0") == {
+    assert (
+        snapshot.get_job(real_id="9", stage_id="0", step_id="0", job_id="0")["status"]
+        == "running"
+    )
+    assert snapshot.get_job(real_id="9", stage_id="0", step_id="0", job_id="0") == {
         "status": "running",
         "data": {},
     }
