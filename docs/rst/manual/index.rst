@@ -49,15 +49,15 @@ with model updates and uncertainty estimation. You can read more about the theor
 
 .. toctree::
    :hidden:
-   :caption: About
-
-   about/index
-
-.. toctree::
-   :hidden:
    :caption: Experimental Features
 
    experimental/index
+
+.. toctree::
+   :hidden:
+   :caption: About
+
+   about/index
 
 .. Indices and tables
    ==================
