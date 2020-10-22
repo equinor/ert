@@ -14,9 +14,11 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
+import sys
 import stat
 import subprocess
 import unittest
+from unittest.mock import patch
 import yaml
 import shutil
 import json
@@ -560,7 +562,7 @@ env:
                         expected_pythonpath="/some/other/pythonpath:/some/pythonpath",
                     )
                 )
-            with open("pytest_exec_env.json", "w") as f:
+            with open("rms_exec_env.json", "w") as f:
                 f.write(
                     """\
 {
@@ -575,21 +577,22 @@ env:
             self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
             self.monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
 
-            action = {
-                "exit_status": 0,
-                "target_file": os.path.join(os.getcwd(), "some_file"),
-            }
+            with patch.object(sys, "argv", ["rms"]):
+                action = {
+                    "exit_status": 0,
+                    "target_file": os.path.join(os.getcwd(), "some_file"),
+                }
 
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
-            res.fm.rms.run(
-                0,
-                "project",
-                "workflow",
-                run_path="run_path",
-                target_file="some_file",
-                version="10.1.3",
-            )
+                with open("run_path/action.json", "w") as f:
+                    f.write(json.dumps(action))
+                res.fm.rms.run(
+                    0,
+                    "project",
+                    "workflow",
+                    run_path="run_path",
+                    target_file="some_file",
+                    version="10.1.3",
+                )
 
     def test_run_allow_no_env(self):
         with TestAreaContext("test_run"):
@@ -614,7 +617,6 @@ env:
 
             self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
             self.monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
-
             action = {
                 "exit_status": 0,
                 "target_file": os.path.join(os.getcwd(), "some_file"),
