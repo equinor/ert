@@ -32,6 +32,26 @@ import pytest
 from tests.conftest import source_root
 
 
+TEST_ENV_WRAPPER = """\
+#!/usr/bin/env bash
+PATH_PREFIX_EXPECTED={expected_path_prefix}
+if [[ $PATH_PREFIX != $PATH_PREFIX_EXPECTED ]]
+then
+    echo "PATH_PREFIX set incorrectly"
+    echo $PATH_PREFIX should be $PATH_PREFIX_EXPECTED
+    exit 1
+fi
+PYPATH_EXPECTED={expected_pythonpath}
+if [[ $PYTHONPATH != $PYPATH_EXPECTED ]] # first user defined, then config defined, then rest
+then
+    echo "PYTHONPATH set incorrectly"
+    echo $PYTHONPATH should be $PYPATH_EXPECTED
+    exit 1
+fi
+$@
+"""
+
+
 @tmpdir()
 @pytest.mark.parametrize(
     "test_input,expected_result",
@@ -422,6 +442,147 @@ class RMSRunTest(ResTest):
             res.fm.rms.run(
                 0, "project", "workflow", run_path="run_path", target_file="some_file"
             )
+
+
+    def test_run_version_env(self):
+        with TestAreaContext("test_run"):
+            wrapper_file_name = f"{os.getcwd()}/bin/rms_wrapper"
+            with open("rms_config.yml", "w") as f:
+                f.write(f"""\
+executable: {os.getcwd()}/bin/rms
+wrapper:  {wrapper_file_name}
+env:
+  10.1.3:
+    PATH_PREFIX: /some/path
+    PYTHONPATH: /some/pythonpath
+""")
+
+            os.mkdir("run_path")
+            os.mkdir("bin")
+            os.mkdir("project")
+            shutil.copy(
+                os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin"
+            )
+
+            with open(wrapper_file_name, "w") as f:
+                f.write(
+                    TEST_ENV_WRAPPER.format(
+                        expected_path_prefix="/some/path",
+                        expected_pythonpath="/some/pythonpath"
+                    )
+                )
+
+            st = os.stat(wrapper_file_name)
+            os.chmod(wrapper_file_name, st.st_mode | stat.S_IEXEC)
+            self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+            self.monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
+
+
+            action = {
+                "exit_status": 0,
+                "target_file": os.path.join(os.getcwd(), "some_file"),
+            }
+
+            with open("run_path/action.json", "w") as f:
+                f.write(json.dumps(action))
+            res.fm.rms.run(
+                0, "project", "workflow", run_path="run_path", target_file="some_file", version="10.1.3"
+            )
+
+
+    def test_run_version_env_with_user_env(self):
+        with TestAreaContext("test_run"):
+            wrapper_file_name = f"{os.getcwd()}/bin/rms_wrapper"
+            with open("rms_config.yml", "w") as f:
+                f.write(f"""\
+executable: {os.getcwd()}/bin/rms
+wrapper:  {wrapper_file_name}
+env:
+  10.1.3:
+    PATH_PREFIX: /some/path
+    PYTHONPATH: /some/pythonpath
+""")
+
+            os.mkdir("run_path")
+            os.mkdir("bin")
+            os.mkdir("project")
+            shutil.copy(
+                os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin"
+            )
+
+            with open(wrapper_file_name, "w") as f:
+                f.write(
+                    TEST_ENV_WRAPPER.format(
+                        expected_path_prefix="/some/other/path:/some/path",
+                        expected_pythonpath="/some/other/pythonpath:/some/pythonpath"
+                    )
+                )
+            with open("pytest_exec_env.json", "w") as f:
+                f.write("""\
+{
+    "PATH_PREFIX" : "/some/other/path",
+    "PYTHONPATH" : "/some/other/pythonpath"
+}
+""")
+
+            st = os.stat(wrapper_file_name)
+            os.chmod(wrapper_file_name, st.st_mode | stat.S_IEXEC)
+            self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+            self.monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
+
+
+            action = {
+                "exit_status": 0,
+                "target_file": os.path.join(os.getcwd(), "some_file"),
+            }
+
+            with open("run_path/action.json", "w") as f:
+                f.write(json.dumps(action))
+            res.fm.rms.run(
+                0, "project", "workflow", run_path="run_path", target_file="some_file", version="10.1.3"
+            )
+
+    def test_run_allow_no_env(self):
+        with TestAreaContext("test_run"):
+            wrapper_file_name = f"{os.getcwd()}/bin/rms_wrapper"
+            with open("rms_config.yml", "w") as f:
+                f.write(f"""\
+executable: {os.getcwd()}/bin/rms
+env:
+  10.1.3:
+    PATH_PREFIX: /some/path
+    PYTHONPATH: /some/pythonpath
+""")
+
+            os.mkdir("run_path")
+            os.mkdir("bin")
+            os.mkdir("project")
+            shutil.copy(
+                os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin"
+            )
+
+            self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+            self.monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
+
+            action = {
+                "exit_status": 0,
+                "target_file": os.path.join(os.getcwd(), "some_file"),
+            }
+
+            with open("run_path/action.json", "w") as f:
+                f.write(json.dumps(action))
+
+            with self.assertRaises(RMSRunException) as e:
+                res.fm.rms.run(
+                    0, "project", "workflow", run_path="run_path", target_file="some_file", version="non-existing"
+                )
+                assert "non-existing" in str(e)
+
+            res.fm.rms.run(
+                0, "project", "workflow", run_path="run_path", target_file="some_file", version="non-existing", allow_no_env=True
+            )
+
+
 
 
 if __name__ == "__main__":

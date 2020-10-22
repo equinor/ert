@@ -99,10 +99,17 @@ class RMSRun(object):
             os.makedirs(self.run_path)
 
         self_exe, _ = os.path.splitext(os.path.basename(sys.argv[0]))
-        exec_env_file = "%s_exec_env.json" % self_exe
         exec_env = os.environ.copy()
+
+        config_env = self.config.env(self.version)
+        exec_env_file = "%s_exec_env.json" % self_exe
+        user_env = {}
         if os.path.isfile(exec_env_file):
-            RMSRun.set_up_env(exec_env, json.load(open(exec_env_file)))
+            user_env = json.load(open(exec_env_file))
+        for var in set(config_env.keys()) | set(user_env.keys()):
+            exec_env[var] = ":".join(filter(None, [user_env.get(var), config_env.get(var)]))
+            if not exec_env[var].strip():
+                exec_env.pop(var)
 
         with pushd(self.run_path):
             fileH = open("RMS_SEED_USED", "a+")
@@ -179,17 +186,3 @@ class RMSRun(object):
 
         comp_process = subprocess.run(args=args, env=exec_env)
         return comp_process.returncode
-
-    @staticmethod
-    def set_up_env(exec_env, env_extension):
-        """
-        This method takes in two dicts of environmental variables and sets up and
-        execute environment. If the values are empty the key will be popped.
-        """
-        for key, value in env_extension.items():
-            if value is None or len(str(value).strip()) == 0:
-                if key in exec_env:
-                    exec_env.pop(key)
-                continue
-
-            exec_env[key] = value

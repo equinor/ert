@@ -35,3 +35,7 @@ class RMSConfig(object):
     @property
     def threads(self):
         return self._config.get("threads")
+
+    def env(self, version):
+        env_versions = self._config.get("env", {})
+        return env_versions.get(version, {})
