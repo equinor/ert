@@ -55,6 +55,12 @@ with model updates and uncertainty estimation. You can read more about the theor
 
 .. toctree::
    :hidden:
+   :caption: Architecture
+
+   architecture/index
+
+.. toctree::
+   :hidden:
    :caption: About
 
    about/index
