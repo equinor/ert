@@ -19,6 +19,8 @@ start_tests () {
     then
         export PYTEST_QT_API=pyqt4v2
     fi
+    export NO_PROXY=localhost,127.0.0.1
+    
     # The existence of a running xvfb process will produce
     # a lock filgit ree for the default server and kill the run
     # Allow xvfb to find a new server
