@@ -111,7 +111,8 @@ class RMSRun(object):
         exec_env_file = "%s_exec_env.json" % self_exe
         user_env = {}
         if os.path.isfile(exec_env_file):
-            user_env = json.load(open(exec_env_file))
+            with open(exec_env_file) as f:
+                user_env = json.load(f)
         for var in set(config_env.keys()) | set(user_env.keys()):
             exec_env[var] = ":".join(
                 filter(None, [user_env.get(var), config_env.get(var)])
