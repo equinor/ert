@@ -30,3 +30,9 @@ Optional arguments:
                         the prefix of all relative paths when rms is exporting
   -v, --version VERSION
                         the prefix of all relative paths when rms is exporting
+  -a, --allow-no-env
+                        Boolean flag to allow RMS to run without a site configured
+                        environment. WARNING: This is typically a sign of using an
+                        unsupported version of RMS and the configuration of the
+                        environment is now entirely on the shoulders of the user.
+                        Consider contacting your system administrators.

@@ -55,7 +55,7 @@ def _build_argument_parser():
     parser.add_argument(
         '-a', '--allow-no-env',
         action="store_true",
-        help='Allow rms to run with out environment specified in rms configuration',
+        help='Allow RMS to run without a site configured environment',
     )
     return parser
 
