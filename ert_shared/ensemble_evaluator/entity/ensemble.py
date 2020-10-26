@@ -444,6 +444,9 @@ class _Ensemble:
     def evaluate(self, host, port):
         pass
 
+    def get_reals(self):
+        return self._reals
+
     def forward_model_description(self):
         builder = SnapshotBuilder()
         real = self._reals[0]
