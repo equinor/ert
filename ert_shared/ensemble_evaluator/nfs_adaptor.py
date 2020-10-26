@@ -1,5 +1,5 @@
 import asyncio
-
+import os.path
 import aiofiles
 import websockets
 from ert_shared.ensemble_evaluator.entity.identifiers import (
@@ -9,7 +9,13 @@ from ert_shared.ensemble_evaluator.entity.identifiers import (
 from ert_shared.ensemble_evaluator.ws_util import wait
 
 
+async def _wait_for_filepath(filepath):
+    while not os.path.isfile(filepath):
+        await asyncio.sleep(0.5)
+
+
 async def nfs_adaptor(log_file, ws_url):
+    await _wait_for_filepath(log_file)
     await wait(ws_url, 25)
     async with websockets.connect(ws_url) as websocket:
         async with aiofiles.open(str(log_file), "r") as f:
@@ -19,6 +25,7 @@ async def nfs_adaptor(log_file, ws_url):
                 if not line:
                     await asyncio.sleep(1)
                     continue
+                line = line[:-1] if line[-1:] == chr(10) else line
                 await websocket.send(line)
 
 

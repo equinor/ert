@@ -67,15 +67,11 @@ def test_snapshot_merge():
 
     update_event = PartialSnapshot()
     update_event.update_status(status="running")
-    update_event.update_real("1", status="running")
 
     snapshot.merge_event(update_event)
 
     assert snapshot.get_status() == "running"
 
-    assert snapshot.get_real("1")["status"] == "running"
-    for index in set(_REALIZATION_INDEXES) - set(("1",)):
-        assert snapshot.get_real(index)["status"] == "unknown"
 
     update_event = PartialSnapshot()
     update_event.update_job(
@@ -97,7 +93,6 @@ def test_snapshot_merge():
 
     assert snapshot.get_status() == "running"
 
-    assert snapshot.get_real("1")["status"] == "running"
     assert _dict_equal(
         snapshot.get_job(real_id="1", stage_id="0", step_id="0", job_id="0"),
         {"status": "success", "data": {"memory": 1000}},
@@ -115,10 +110,6 @@ def test_snapshot_merge():
         "status": "running",
         "data": {},
     }
-
-    for index in set(_REALIZATION_INDEXES) - set(("1", "9")):
-        assert snapshot.get_real(index)["status"] == "unknown"
-
 
 def test_source_get_id():
     source = "/ert/ee/0/real/1111/stage/2opop/step/asd123ASD/job/0"

@@ -15,6 +15,17 @@ import threading
 import json
 
 
+class DummyEnsemble:
+
+    def __init__(self, snapshot):
+        self._snapshot = snapshot
+
+    def forward_model_description(self):
+        return self._snapshot
+
+    def evaluate(self, host, port):
+        pass
+
 @pytest.fixture
 def evaluator(unused_tcp_port):
     snapshot = (
@@ -24,7 +35,7 @@ def evaluator(unused_tcp_port):
         .add_job(stage_id="0", step_id="0", job_id="0", data={}, status="unknown")
         .build(["0", "1"], status="unknown")
     )
-    ensemble = _Ensemble(snapshot=snapshot)
+    ensemble = DummyEnsemble(snapshot=snapshot)
     ee = EnsembleEvaluator(ensemble=ensemble, port=unused_tcp_port)
     yield ee
     print("fixture exit")

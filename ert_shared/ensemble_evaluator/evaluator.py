@@ -9,7 +9,6 @@ import ert_shared.ensemble_evaluator.monitor as ee_monitor
 import websockets
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
-from ert_gui.plottery.plots import ensemble
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     SnapshotBuilder,
     PartialSnapshot,
@@ -36,7 +35,6 @@ class EnsembleEvaluator:
         # TODO: This should not be the same
         self._snapshot = ensemble.forward_model_description()
         self._event_index = 1
-        ensemble.evaluate(self._host, self._port)
 
     @dispatch.register_event_handler(ids.EVGROUP_FM_ALL)
     async def _fm_handler(self, event):
@@ -53,7 +51,7 @@ class EnsembleEvaluator:
             },
             snapshot_mutate_event.to_dict(),
         )
-        out_msg = to_json(out_cloudevent)
+        out_msg = to_json(out_cloudevent).decode()
         if out_msg and self._users:
             await asyncio.wait([user.send(out_msg) for user in self._users])
 
@@ -102,6 +100,8 @@ class EnsembleEvaluator:
             try:
                 async for msg in websocket:
                     print(f"dispatch got: {msg}")
+                    if msg == "null":
+                        return
                     event = from_json(msg)
                     await dispatch.handle_event(self, event)
 
@@ -157,6 +157,7 @@ class EnsembleEvaluator:
 
     def run(self):
         self._ws_thread.start()
+        self._ensemble.evaluate(self._host, self._port)
         return ee_monitor.create(self._host, self._port)
 
     def _stop(self):

@@ -24,7 +24,9 @@ class EnsembleExperiment(BaseRunModel):
 
         self.setPhaseName( run_msg, indeterminate=False)
 
-        with attach_ensemble_evaluator(self.ert()):
+        run_path_list = self.ert().getRunpathList()
+        forward_model = self.ert().resConfig().model_config.getForwardModel()
+        with attach_ensemble_evaluator(run_context, run_path_list, forward_model):
             num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(self._job_queue, run_context)
 
         num_successful_realizations += arguments.get('prev_successful_realizations', 0)

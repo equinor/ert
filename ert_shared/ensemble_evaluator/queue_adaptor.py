@@ -52,7 +52,7 @@ class JobQueueManagerAdaptor(JobQueueManager):
 
     def __init__(self, queue, queue_evaluators=None):
         super().__init__(queue, queue_evaluators)
-        asyncio.set_event_loop(asyncio.new_event_loop())
+        #asyncio.set_event_loop(asyncio.new_event_loop())
         self._ws_url = self.ws_url
         self._changes_queue = asyncio.Queue()
         self._ee_id = self.ee_id
@@ -86,6 +86,7 @@ class JobQueueManagerAdaptor(JobQueueManager):
                 json.dump(data, jobs_file, indent=4)
 
     def _publisher(self, loop):
+        asyncio.set_event_loop(loop)
         loop.run_until_complete(
             self._publish_from_queue(self._changes_queue, self._ws_url)
         )
