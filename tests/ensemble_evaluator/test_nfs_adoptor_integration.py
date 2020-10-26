@@ -2,6 +2,8 @@ import asyncio
 from pathlib import Path
 
 import aiofiles
+from cloudevents.http.event import CloudEvent
+from cloudevents.http.json_methods import to_json
 import pytest
 import websockets
 from ert_shared.ensemble_evaluator.nfs_adaptor import nfs_adaptor
@@ -11,7 +13,15 @@ from ert_shared.ensemble_evaluator.entity.identifiers import EVTYPE_FM_STEP_SUCC
 async def mock_writer(filename, times=2):
     async with aiofiles.open(filename, mode="a") as f:
         for r in range(0, times):
-            await f.write(f"Time {r}\n")
+            e = CloudEvent(
+                {
+                    "source": "/mock",
+                    "id": f"time-{r}",
+                    "type": "fake",
+                    "data": {"time": r},
+                }
+            )
+            await f.write(to_json(e).decode() + "\n")
             await asyncio.sleep(0.2)
         await f.write(EVTYPE_FM_STEP_SUCCESS)
 
@@ -38,21 +48,14 @@ async def test_append_to_file(tmpdir, unused_tcp_port):
     host = "localhost"
     port = unused_tcp_port
     log_file = Path(tmpdir) / "log"
-
-    futures = (
-        nfs_adaptor(log_file, f"ws://{host}:{port}"),
-        asyncio.get_event_loop().create_task(mock_ws(host, port)),
-        mock_writer(log_file),
+    loop = asyncio.get_event_loop()
+    adaptor_task = loop.create_task(nfs_adaptor(log_file, f"ws://{host}:{port}"))
+    mock_ws_task = loop.create_task(mock_ws(host, port))
+    mock_writer_task = loop.create_task(mock_writer(log_file))
+    await asyncio.wait(
+        (adaptor_task, mock_ws_task, mock_writer_task), timeout=2, return_when=asyncio.FIRST_EXCEPTION
     )
-    done, _ = await asyncio.wait(
-        futures, timeout=2, return_when=asyncio.FIRST_EXCEPTION
-    )
-
-    exceptions = []
-    for t in done:
-        if t.exception():
-            exceptions.append(t.exception())
-        if t == futures[1]:  # mock_ws task
-            assert t.result() == ["Time 0\n", "Time 1\n"]
-    assert exceptions == []
-    assert len(done) == 3
+    adaptor_task.result()
+    mock_writer_task.result()
+    assert "time-0" in mock_ws_task.result()[0]
+    assert "time-1" in mock_ws_task.result()[1]

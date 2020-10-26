@@ -3,7 +3,6 @@ import asyncio
 
 
 def wait_for_ws(url, max_retries=3):
-    asyncio.set_event_loop(asyncio.new_event_loop())
     asyncio.get_event_loop().run_until_complete(wait(url, max_retries))
 
 

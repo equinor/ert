@@ -35,13 +35,13 @@ class PartialSnapshot:
     def update_status(self, status):
         self._data["status"] = status
 
-    def update_real(self, real_id, status=None):
+    def update_real(self, real_id, active=None):
         if real_id not in self._data["reals"]:
             self._data["reals"][real_id] = {"stages": {}}
         real = self._data["reals"][real_id]
 
-        if status is not None:
-            real["status"] = status
+        if active is not None:
+            real["active"] = active
         return real
 
     def update_stage(self, real_id, stage_id, status=None):
@@ -174,7 +174,7 @@ class _Stage(BaseModel):
 
 
 class _Realization(BaseModel):
-    status: str
+    active: bool
     stages: Dict[str, _Stage] = {}
 
 
@@ -191,7 +191,7 @@ class SnapshotBuilder(BaseModel):
     def build(self, real_ids, status):
         top = _SnapshotDict(status=status, forward_model=self.forward_model)
         for r_id in real_ids:
-            top.reals[r_id] = _Realization(status="unknown", stages=self.stages)
+            top.reals[r_id] = _Realization(active=True, stages=self.stages)
         return Snapshot(top.dict())
 
     def add_stage(self, stage_id, status):

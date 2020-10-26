@@ -1,4 +1,5 @@
 import asyncio
+from ert_shared.ensemble_evaluator.entity.ensemble import create_ensemble_builder_from_legacy
 import uuid
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
@@ -15,20 +16,26 @@ from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 
 
 @contextmanager
-def _attach(enkf_main):
+def _attach(run_context, run_path_list, forward_model):
     ws_url = "ws://localhost:8765"
     dispatch_url = f"{ws_url}/dispatch"
-    # ee = EnsembleEvaluator()
-    # ee.run()
 
-    # print("waiting for ee ws")
+    builder = create_ensemble_builder_from_legacy(run_context, forward_model)
+    ensemble = builder.build()
+    print(builder)
 
-    # wait_for_ws(ws_url)
+    ee = EnsembleEvaluator(ensemble)
+    print(ee)
+    ee.run()
+
+    print("waiting for ee ws")
+
+    wait_for_ws(ws_url)
 
     print("ee ws started")
 
     event_logs = [
-        Path(path.runpath) / "event_log" for path in enkf_main.getRunpathList()
+        Path(path.runpath) / "event_log" for path in run_path_list
     ]
     dispatch_thread = Thread(
         target=_attach_to_dispatch, args=(dispatch_url, event_logs)
@@ -45,12 +52,12 @@ def _attach(enkf_main):
     yield
     dispatch_thread.join()
     patcher.stop()
-    # ee.stop()
+    ee.stop()
 
 
-def attach_ensemble_evaluator(enkf_main):
+def attach_ensemble_evaluator(run_context, run_path_list, forward_model):
     if FeatureToggling.is_enabled("ensemble-evaluator"):
-        return _attach(enkf_main)
+        return _attach(run_context, run_path_list, forward_model)
     return ExitStack()
 
 
