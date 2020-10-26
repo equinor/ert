@@ -16,7 +16,6 @@ import json
 
 
 class DummyEnsemble:
-
     def __init__(self, snapshot):
         self._snapshot = snapshot
 
@@ -25,6 +24,7 @@ class DummyEnsemble:
 
     def evaluate(self, host, port):
         pass
+
 
 @pytest.fixture
 def evaluator(unused_tcp_port):

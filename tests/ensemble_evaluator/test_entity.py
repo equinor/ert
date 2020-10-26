@@ -72,7 +72,6 @@ def test_snapshot_merge():
 
     assert snapshot.get_status() == "running"
 
-
     update_event = PartialSnapshot()
     update_event.update_job(
         real_id="1",
@@ -110,6 +109,7 @@ def test_snapshot_merge():
         "status": "running",
         "data": {},
     }
+
 
 def test_source_get_id():
     source = "/ert/ee/0/real/1111/stage/2opop/step/asd123ASD/job/0"

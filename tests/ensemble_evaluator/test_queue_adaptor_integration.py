@@ -52,7 +52,7 @@ def mock_queue_mutator(host, port, tmpdir):
 
 
 @pytest.mark.asyncio
-async def test_happy_path(tmpdir, unused_tcp_port):
+async def test_happy_path(tmpdir, unused_tcp_port, event_loop):
     host = "localhost"
     port = unused_tcp_port
 
