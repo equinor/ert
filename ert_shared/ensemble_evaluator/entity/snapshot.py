@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 from collections import defaultdict
 
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
@@ -154,8 +154,12 @@ class Snapshot:
 
 
 class _JobDetails(BaseModel):
-    job_id: Tuple[str, str, str]
-    depends: List[Tuple[str, str, str]]
+    job_id: str
+    name: str
+
+
+class _ForwardModel(BaseModel):
+    step_definitions: Dict[str, Dict[str, List[_JobDetails]]]
 
 
 class _Job(BaseModel):
@@ -181,12 +185,12 @@ class _Realization(BaseModel):
 class _SnapshotDict(BaseModel):
     status: str
     reals: Dict[str, _Realization] = {}
-    forward_model: List[_JobDetails]
+    forward_model: _ForwardModel
 
 
 class SnapshotBuilder(BaseModel):
     stages: Dict[str, _Stage] = {}
-    forward_model: List[_JobDetails] = []
+    forward_model: _ForwardModel = _ForwardModel(step_definitions={})
 
     def build(self, real_ids, status):
         top = _SnapshotDict(status=status, forward_model=self.forward_model)
@@ -203,12 +207,15 @@ class SnapshotBuilder(BaseModel):
         stage.steps[step_id] = _Step(status=status)
         return self
 
-    def add_job(self, stage_id, step_id, job_id, status, data, depends=None):
+    def add_job(self, stage_id, step_id, job_id, name, status, data):
         stage = self.stages[stage_id]
         step = stage.steps[step_id]
         step.jobs[job_id] = _Job(status=status, data=data)
-        if depends is not None:
-            self.forward_model.append(
-                _JobDetails(job_id=(stage_id, step_id, job_id), depends=depends)
-            )
+        if stage_id not in self.forward_model.step_definitions:
+            self.forward_model.step_definitions[stage_id] = {}
+        if step_id not in self.forward_model.step_definitions[stage_id]:
+            self.forward_model.step_definitions[stage_id][step_id] = []
+        self.forward_model.step_definitions[stage_id][step_id].append(
+            _JobDetails(job_id=job_id, name=name)
+        )
         return self

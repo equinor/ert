@@ -459,7 +459,8 @@ class _Ensemble:
                         str(stage.get_id()),
                         str(step.get_id()),
                         str(job.get_id()),
-                        "job_unknown",
+                        job.get_name(),
+                        "unknown",
                         {},
                     )
         return builder.build([str(real.get_iens()) for real in self._reals], "unknown")
