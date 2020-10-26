@@ -365,15 +365,21 @@ class _EnsembleBuilder:
     def __init__(self):
         self._reals = None
         self._size = None
+        self._metadata = None
         self.reset()
 
     def reset(self):
         self._reals = []
         self._size = 0
+        self._metadata = {}
         return self
 
     def add_realization(self, real):
         self._reals.append(real)
+        return self
+
+    def set_metadata(self, key, value):
+        self._metadata[key] = value
         return self
 
     def set_ensemble_size(self, size):
@@ -405,12 +411,12 @@ class _EnsembleBuilder:
                     create_stage_builder()
                     .add_step(step)
                     .set_id(0)
-                    .set_status("unknown")
+                    .set_status("Unknown")
                 )
                 .set_iens(iens)
                 .active(run_context.is_active(iens))
             )
-
+        builder.set_metadata("iter", run_context.get_iter())
         return builder
 
     def build(self):
@@ -423,7 +429,7 @@ class _EnsembleBuilder:
             self._reals.append(real)
 
         reals = [builder.build() for builder in self._reals]
-        return _Ensemble(reals)
+        return _Ensemble(reals, self._metadata)
 
 
 def create_ensemble_builder():
@@ -435,8 +441,9 @@ def create_ensemble_builder_from_legacy(run_context, forward_model):
 
 
 class _Ensemble:
-    def __init__(self, reals):
+    def __init__(self, reals, metadata):
         self._reals = reals
+        self._metadata = metadata
 
     def __repr__(self):
         return f"Ensemble with {len(self._reals)} members"
@@ -447,20 +454,5 @@ class _Ensemble:
     def get_reals(self):
         return self._reals
 
-    def forward_model_description(self):
-        builder = SnapshotBuilder()
-        real = self._reals[0]
-        for stage in real.get_stages():
-            builder.add_stage(str(stage.get_id()), stage.get_status())
-            for step in stage.get_steps():
-                builder.add_step(str(stage.get_id()), str(step.get_id()), "unknown")
-                for job in step.get_jobs():
-                    builder.add_job(
-                        str(stage.get_id()),
-                        str(step.get_id()),
-                        str(job.get_id()),
-                        job.get_name(),
-                        "unknown",
-                        {},
-                    )
-        return builder.build([str(real.get_iens()) for real in self._reals], "unknown")
+    def get_metadata(self):
+        return self._metadata

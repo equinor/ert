@@ -87,7 +87,7 @@ def test_snapshot_merge():
         stage_id="0",
         step_id="0",
         job_id="0",
-        status="success",
+        status="Finished",
         start_time=datetime(year=2020, month=10, day=27).isoformat(),
         end_time=datetime(year=2020, month=10, day=28).isoformat(),
         data={"memory": 1000},
@@ -97,7 +97,7 @@ def test_snapshot_merge():
         stage_id="0",
         step_id="0",
         job_id="1",
-        status="running",
+        status="Running",
         start_time=datetime(year=2020, month=10, day=27).isoformat(),
     )
     update_event.update_job(
@@ -105,7 +105,7 @@ def test_snapshot_merge():
         stage_id="0",
         step_id="0",
         job_id="0",
-        status="running",
+        status="Running",
         start_time=datetime(year=2020, month=10, day=27).isoformat(),
     )
 
@@ -116,28 +116,40 @@ def test_snapshot_merge():
     assert _dict_equal(
         snapshot.get_job(real_id="1", stage_id="0", step_id="0", job_id="0"),
         {
-            "status": "success",
+            "status": "Finished",
             "start_time": "2020-10-27T00:00:00",
             "end_time": "2020-10-28T00:00:00",
             "data": {"memory": 1000},
+            "error": None,
+            "name": "job0",
+            "stderr": None,
+            "stdout": None,
         },
     )
     assert snapshot.get_job(real_id="1", stage_id="0", step_id="0", job_id="1") == {
-        "status": "running",
+        "status": "Running",
         "start_time": "2020-10-27T00:00:00",
         "end_time": None,
         "data": {},
+        "error": None,
+        "name": "job1",
+        "stderr": None,
+        "stdout": None,
     }
 
     assert (
         snapshot.get_job(real_id="9", stage_id="0", step_id="0", job_id="0")["status"]
-        == "running"
+        == "Running"
     )
     assert snapshot.get_job(real_id="9", stage_id="0", step_id="0", job_id="0") == {
-        "status": "running",
+        "status": "Running",
         "start_time": "2020-10-27T00:00:00",
         "end_time": None,
         "data": {},
+        "error": None,
+        "name": "job0",
+        "stderr": None,
+        "stdout": None,
     }
 
 

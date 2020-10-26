@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     create_ensemble_builder_from_legacy,
 )
@@ -16,6 +17,8 @@ from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 
+logger = logging.getLogger(__name__)
+
 
 @contextmanager
 def _attach(run_context, run_path_list, forward_model):
@@ -25,17 +28,17 @@ def _attach(run_context, run_path_list, forward_model):
 
     builder = create_ensemble_builder_from_legacy(run_context, forward_model)
     ensemble = builder.build()
-    print(builder)
+    logger.debug(builder)
 
     ee = EnsembleEvaluator(ensemble)
-    print(ee)
+    logger.debug(ee)
     ee.run()
 
-    print("waiting for ee ws")
+    logger.debug("waiting for ee ws")
 
     wait_for_ws(ws_url)
 
-    print("ee ws started")
+    logger.debug("ee ws started")
 
     event_logs = [Path(path.runpath) / "event_log" for path in run_path_list]
     dispatch_thread = Thread(
