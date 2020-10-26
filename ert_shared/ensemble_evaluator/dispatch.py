@@ -1,25 +1,7 @@
 from collections import defaultdict
 
-__LOOKUP_MAP = {}
+__LOOKUP_MAP = defaultdict(list)
 
-__group_id_counter = 0
-
-def dispatch_handler(cls):
-    global __group_id_counter
-__  __LOOKUP_MAP[__group_id_counter] = defaultdict(list)
-
-    class Wrapper(object):
-
-        def __init__(self, *args, **kwargs):
-            self.wrapped = cls(*args, **kwargs)
-            self.wrapped.__group_id = __group_id_counter
-
-        def __getattr__(self, name):
-            return getattr(self.wrapped, name)
-
-    __group_id_counter += 1
-
-    return Wrapper
 
 def register_event_handler(event_types):
     def decorator(function):
@@ -34,6 +16,6 @@ def register_event_handler(event_types):
     return decorator
 
 
-async def handle_event(self, event):
+async def handle_event(instance, event):
     for f in __LOOKUP_MAP[event["type"]]:
-        await f(self, event)
+        await f(instance, event)
