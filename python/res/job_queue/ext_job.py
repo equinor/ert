@@ -201,10 +201,12 @@ class ExtJob(BaseCClass):
         return self._get_license_path()
 
     def get_arglist(self):
-        return self._get_arglist()
+        # The return type is cast from a <StringList> to a regular Python list.
+        return list(self._get_arglist())
 
     def get_argvalues(self):
-        return self._get_argvalues()
+        # The return type is cast from a <StringList> to a regular Python list.
+        return list(self._get_argvalues())
 
     def set_arglist(self, args):
         return self._set_arglist(args)
