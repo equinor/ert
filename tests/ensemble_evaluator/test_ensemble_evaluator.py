@@ -90,6 +90,7 @@ def send_dispatch_event(client, event_type, source, event_id, data):
 
 
 def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
+    asyncio.set_event_loop(asyncio.new_event_loop())
     monitor = evaluator.run()
     events = monitor.track()
 
@@ -162,6 +163,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
 
 
 def test_monitor_stop(evaluator):
+    asyncio.set_event_loop(asyncio.new_event_loop())
     monitor = evaluator.run()
     events = monitor.track()
     snapshot = Snapshot(next(events).data)

@@ -1,5 +1,7 @@
 import asyncio
-from ert_shared.ensemble_evaluator.entity.ensemble import create_ensemble_builder_from_legacy
+from ert_shared.ensemble_evaluator.entity.ensemble import (
+    create_ensemble_builder_from_legacy,
+)
 import uuid
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
@@ -34,9 +36,7 @@ def _attach(run_context, run_path_list, forward_model):
 
     print("ee ws started")
 
-    event_logs = [
-        Path(path.runpath) / "event_log" for path in run_path_list
-    ]
+    event_logs = [Path(path.runpath) / "event_log" for path in run_path_list]
     dispatch_thread = Thread(
         target=_attach_to_dispatch, args=(dispatch_url, event_logs)
     )
