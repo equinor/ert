@@ -50,6 +50,7 @@ setup(
         "semeio",
         "sqlalchemy",
         "websockets",
+        "python-dateutil",
     ],
     zip_safe=False,
     tests_require=["pytest", "mock"],

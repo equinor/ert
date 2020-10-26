@@ -1,6 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict, List, Tuple, Optional
-from collections import defaultdict
+from typing import Dict, List, Optional, Any
 
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.entity.tool import (
@@ -11,20 +10,21 @@ from ert_shared.ensemble_evaluator.entity.tool import (
     get_job_id,
 )
 
+# XXX: taken from ert_shared/tracker/base.py
 _FM_TYPE_EVENT_TO_STATUS = {
-    ids.EVTYPE_FM_STAGE_WAITING: "waiting",
-    ids.EVTYPE_FM_STAGE_PENDING: "pending",
-    ids.EVTYPE_FM_STAGE_RUNNING: "running",
-    ids.EVTYPE_FM_STAGE_FAILURE: "failure",
-    ids.EVTYPE_FM_STAGE_SUCCESS: "success",
-    ids.EVTYPE_FM_STAGE_UNKNOWN: "unknown",
-    ids.EVTYPE_FM_STEP_START: "start",
-    ids.EVTYPE_FM_STEP_FAILURE: "failure",
-    ids.EVTYPE_FM_STEP_SUCCESS: "success",
-    ids.EVTYPE_FM_JOB_START: "start",
-    ids.EVTYPE_FM_JOB_RUNNING: "running",
-    ids.EVTYPE_FM_JOB_SUCCESS: "success",
-    ids.EVTYPE_FM_JOB_FAILURE: "failure",
+    ids.EVTYPE_FM_STAGE_WAITING: "Waiting",
+    ids.EVTYPE_FM_STAGE_PENDING: "Pending",
+    ids.EVTYPE_FM_STAGE_RUNNING: "Running",
+    ids.EVTYPE_FM_STAGE_FAILURE: "Failed",
+    ids.EVTYPE_FM_STAGE_SUCCESS: "Finished",
+    ids.EVTYPE_FM_STAGE_UNKNOWN: "Unknown",
+    ids.EVTYPE_FM_STEP_START: "Pending",
+    ids.EVTYPE_FM_STEP_FAILURE: "Failed",
+    ids.EVTYPE_FM_STEP_SUCCESS: "Finished",
+    ids.EVTYPE_FM_JOB_START: "Pending",
+    ids.EVTYPE_FM_JOB_RUNNING: "Running",
+    ids.EVTYPE_FM_JOB_SUCCESS: "Finished",
+    ids.EVTYPE_FM_JOB_FAILURE: "Failed",
 }
 
 
@@ -49,7 +49,13 @@ class PartialSnapshot:
         return real
 
     def update_stage(
-        self, real_id, stage_id, status=None, start_time=None, end_time=None
+        self,
+        real_id,
+        stage_id,
+        status=None,
+        start_time=None,
+        end_time=None,
+        queue_state=None,
     ):
         real = self.update_real(real_id)
         if stage_id not in real["stages"]:
@@ -62,6 +68,8 @@ class PartialSnapshot:
             stage["start_time"] = start_time
         if end_time is not None:
             stage["end_time"] = end_time
+        if queue_state is not None:
+            stage["queue_state"] = queue_state
         return stage
 
     def update_step(
@@ -121,6 +129,7 @@ class PartialSnapshot:
         status = _FM_TYPE_EVENT_TO_STATUS[e_type]
         timestamp = event["time"]
         if e_type in ids.EVGROUP_FM_STAGE:
+            queue_state = event.data.get("queue_event_type")
             snapshot.update_stage(
                 get_real_id(e_source),
                 get_stage_id(e_source),
@@ -129,6 +138,7 @@ class PartialSnapshot:
                 end_time=timestamp
                 if e_type in {ids.EVTYPE_FM_STAGE_FAILURE, ids.EVTYPE_FM_STAGE_SUCCESS}
                 else None,
+                queue_state=queue_state,
             )
         elif e_type in ids.EVGROUP_FM_STEP:
             snapshot.update_step(
@@ -221,6 +231,10 @@ class _Job(BaseModel):
     start_time: Optional[str]
     end_time: Optional[str]
     data: Dict
+    name: str
+    error: Optional[str]
+    stdout: Optional[str]
+    stderr: Optional[str]
 
 
 class _Step(BaseModel):
@@ -235,6 +249,7 @@ class _Stage(BaseModel):
     start_time: Optional[str]
     end_time: Optional[str]
     steps: Dict[str, _Step] = {}
+    queue_state: Optional[Any]
 
 
 class _Realization(BaseModel):
@@ -248,14 +263,18 @@ class _SnapshotDict(BaseModel):
     status: str
     reals: Dict[str, _Realization] = {}
     forward_model: _ForwardModel
+    metadata: Dict[str, Any] = {}
 
 
 class SnapshotBuilder(BaseModel):
     stages: Dict[str, _Stage] = {}
     forward_model: _ForwardModel = _ForwardModel(step_definitions={})
+    metadata: Dict[str, Any] = {}
 
     def build(self, real_ids, status, start_time=None, end_time=None):
-        top = _SnapshotDict(status=status, forward_model=self.forward_model)
+        top = _SnapshotDict(
+            status=status, forward_model=self.forward_model, metadata=self.metadata
+        )
         for r_id in real_ids:
             top.reals[r_id] = _Realization(
                 active=True,
@@ -265,9 +284,14 @@ class SnapshotBuilder(BaseModel):
             )
         return Snapshot(top.dict())
 
-    def add_stage(self, stage_id, status, start_time=None, end_time=None):
+    def add_stage(
+        self, stage_id, status, start_time=None, end_time=None, queue_state=None
+    ):
         self.stages[stage_id] = _Stage(
-            status=status, start_time=start_time, end_time=end_time
+            status=status,
+            start_time=start_time,
+            end_time=end_time,
+            queue_state=queue_state,
         )
         return self
 
@@ -292,7 +316,11 @@ class SnapshotBuilder(BaseModel):
         stage = self.stages[stage_id]
         step = stage.steps[step_id]
         step.jobs[job_id] = _Job(
-            status=status, data=data, start_time=start_time, end_time=end_time
+            status=status,
+            data=data,
+            start_time=start_time,
+            end_time=end_time,
+            name=name,
         )
         if stage_id not in self.forward_model.step_definitions:
             self.forward_model.step_definitions[stage_id] = {}
@@ -301,4 +329,8 @@ class SnapshotBuilder(BaseModel):
         self.forward_model.step_definitions[stage_id][step_id].append(
             _JobDetails(job_id=job_id, name=name)
         )
+        return self
+
+    def add_metadata(self, key, value):
+        self.metadata[key] = value
         return self

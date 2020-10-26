@@ -1,9 +1,14 @@
 import websockets
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-def wait_for_ws(url, max_retries=3):
-    asyncio.get_event_loop().run_until_complete(wait(url, max_retries))
+def wait_for_ws(url, max_retries=10):
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(wait(url, max_retries))
+    loop.close()
 
 
 async def wait(url, max_retries):
@@ -12,9 +17,9 @@ async def wait(url, max_retries):
         try:
             async with websockets.connect(url):
                 pass
-
             return
         except OSError as e:
-            print(f"{__name__} failed to connect ({retries}/{max_retries}: {e}")
+            logger.info(f"{__name__} failed to connect ({retries}/{max_retries}: {e}")
+            await asyncio.sleep(0.2 + 5 * retries)
             retries += 1
-            await asyncio.sleep(0.2)
+    raise ConnectionRefusedError(f"could not connect to {url} after {retries}")

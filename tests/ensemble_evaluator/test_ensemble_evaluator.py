@@ -4,7 +4,14 @@ from ert_shared.ensemble_evaluator.evaluator import (
     EnsembleEvaluator,
     ee_monitor,
 )
-from ert_shared.ensemble_evaluator.entity.ensemble import _Ensemble
+from ert_shared.ensemble_evaluator.entity.ensemble import (
+    _Ensemble,
+    create_ensemble_builder,
+    create_realization_builder,
+    create_stage_builder,
+    create_step_builder,
+    create_script_job_builder,
+)
 from ert_shared.ensemble_evaluator.entity.snapshot import SnapshotBuilder
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
@@ -28,24 +35,42 @@ class DummyEnsemble:
 
 @pytest.fixture
 def evaluator(unused_tcp_port):
-    snapshot = (
-        SnapshotBuilder()
-        .add_stage(stage_id="0", status="unknown")
-        .add_step(stage_id="0", step_id="0", status="unknown")
-        .add_job(
-            stage_id="0",
-            step_id="0",
-            job_id="0",
-            name="job0",
-            data={},
-            status="unknown",
+    ensemble = (
+        create_ensemble_builder()
+        .add_realization(
+            real=create_realization_builder()
+            .active(True)
+            .set_iens(0)
+            .add_stage(
+                stage=create_stage_builder()
+                .add_step(
+                    step=create_step_builder()
+                    .set_id(0)
+                    .add_job(
+                        job=create_script_job_builder()
+                        .set_executable("cat")
+                        .set_args(("something",))
+                        .set_id(0)
+                        .set_name("cat")
+                    )
+                    .add_job(
+                        job=create_script_job_builder()
+                        .set_executable("cat")
+                        .set_args(("something2",))
+                        .set_id(1)
+                        .set_name("cat2")
+                    )
+                    .set_dummy_io()
+                )
+                .set_id(0)
+                .set_status("Unknown")
+            )
         )
-        .build(["0", "1"], status="unknown")
+        .set_ensemble_size(2)
+        .build()
     )
-    ensemble = DummyEnsemble(snapshot=snapshot)
     ee = EnsembleEvaluator(ensemble=ensemble, port=unused_tcp_port)
     yield ee
-    print("fixture exit")
     ee.stop()
 
 
@@ -104,7 +129,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
     # first snapshot before any event occurs
     snapshot_event = next(events)
     snapshot = Snapshot(snapshot_event.data)
-    assert snapshot.get_status() == "unknown"
+    assert snapshot.get_status() == "Unknown"
 
     # two dispatchers connect
     with Client(evaluator._host, evaluator._port, "/dispatch") as dispatch1, Client(
@@ -120,7 +145,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             {"current_memory_usage": 1000},
         )
         snapshot = Snapshot(next(events).data)
-        assert snapshot.get_job("0", "0", "0", "0")["status"] == "running"
+        assert snapshot.get_job("0", "0", "0", "0")["status"] == "Running"
 
         # second dispatcher informs that job 0 is running
         send_dispatch_event(
@@ -131,7 +156,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             {"current_memory_usage": 1000},
         )
         snapshot = Snapshot(next(events).data)
-        assert snapshot.get_job("1", "0", "0", "0")["status"] == "running"
+        assert snapshot.get_job("1", "0", "0", "0")["status"] == "Running"
 
         # second dispatcher informs that job 0 is done
         send_dispatch_event(
@@ -142,15 +167,15 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             {"current_memory_usage": 1000},
         )
         snapshot = Snapshot(next(events).data)
-        assert snapshot.get_job("1", "0", "0", "0")["status"] == "success"
+        assert snapshot.get_job("1", "0", "0", "0")["status"] == "Finished"
 
         # a second monitor connects
         monitor2 = ee_monitor.create(evaluator._host, evaluator._port)
         events2 = monitor2.track()
         snapshot = Snapshot(next(events2).data)
-        assert snapshot.get_status() == "unknown"
-        assert snapshot.get_job("0", "0", "0", "0")["status"] == "running"
-        assert snapshot.get_job("1", "0", "0", "0")["status"] == "success"
+        assert snapshot.get_status() == "Unknown"
+        assert snapshot.get_job("0", "0", "0", "0")["status"] == "Running"
+        assert snapshot.get_job("1", "0", "0", "0")["status"] == "Finished"
 
         # one monitor requests that server exit
         monitor.exit_server()
@@ -165,13 +190,10 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             for _ in e:
                 assert False, "got unexpected event from monitor"
 
-    # Make sure evaluator exits properly
-    evaluator.stop()
-
 
 def test_monitor_stop(evaluator):
     asyncio.set_event_loop(asyncio.new_event_loop())
     monitor = evaluator.run()
     events = monitor.track()
     snapshot = Snapshot(next(events).data)
-    assert snapshot.get_status() == "unknown"
+    assert snapshot.get_status() == "Unknown"
