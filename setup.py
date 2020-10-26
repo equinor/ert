@@ -37,6 +37,7 @@ setup(
         "numpy",
         "pandas",
         "pluggy",
+        "pydantic",
         "PyQt5",
         "pyyaml",
         "qtpy",
