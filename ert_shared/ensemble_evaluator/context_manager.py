@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     create_ensemble_builder_from_legacy,
 )
@@ -25,17 +26,17 @@ def _attach(run_context, run_path_list, forward_model):
 
     builder = create_ensemble_builder_from_legacy(run_context, forward_model)
     ensemble = builder.build()
-    print(builder)
+    logging.debug(builder)
 
     ee = EnsembleEvaluator(ensemble)
-    print(ee)
+    logging.debug(ee)
     ee.run()
 
-    print("waiting for ee ws")
+    logging.debug("waiting for ee ws")
 
     wait_for_ws(ws_url)
 
-    print("ee ws started")
+    logging.debug("ee ws started")
 
     event_logs = [Path(path.runpath) / "event_log" for path in run_path_list]
     dispatch_thread = Thread(

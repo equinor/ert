@@ -1,6 +1,8 @@
+from ert_shared.tracker.evaluator import EvaluatorTracker
 from ert_shared.tracker.blocking import BlockingTracker
 from ert_shared.tracker.qt import QTimerTracker
 from ert_shared.tracker.utils import scale_intervals
+from ert_shared.ensemble_evaluator.monitor import _Monitor
 
 
 def create_tracker(
@@ -32,7 +34,7 @@ def create_tracker(
             raise ValueError(
                 "event_handler must be defined if" + "qtimer_cls is defined"
             )
-        tracker = QTimerTracker(
+        return QTimerTracker(
             model,
             qtimer_cls,
             tick_interval,
@@ -40,8 +42,9 @@ def create_tracker(
             detailed_interval,
             event_handler,
         )
+    elif isinstance(model, _Monitor):
+        return EvaluatorTracker(model)
     else:
-        tracker = BlockingTracker(
+        return BlockingTracker(
             model, tick_interval, general_interval, detailed_interval
         )
-    return tracker

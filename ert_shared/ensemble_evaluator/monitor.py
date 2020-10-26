@@ -4,6 +4,7 @@ import websockets
 import ert_shared.ensemble_evaluator.entity as ee_entity
 from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 import queue
+import logging
 import threading
 from cloudevents.http import from_json
 from cloudevents.http.event import CloudEvent
@@ -35,7 +36,7 @@ class _Monitor:
         )
         message = to_json(out_cloudevent)
         self._loop.call_soon_threadsafe(self._outbound.put_nowait(message))
-        print(f"sent message {message}")
+        logging.debug(f"sent message {message}")
 
     def track(self):
         incoming = queue.Queue()
@@ -44,33 +45,33 @@ class _Monitor:
         async def send(websocket):
             while True:
                 msg = await monitor._outbound.get()
-                print("monitor sending:" + msg.decode())
+                logging.debug("monitor sending:" + msg.decode())
                 await websocket.send(msg)
 
         async def receive():
-            print("starting monitor receive")
+            logging.debug("starting monitor receive")
             uri = f"ws://{self._host}:{self._port}/client"
             async with websockets.connect(uri) as websocket:
                 send_future = asyncio.Task(send(websocket))
                 try:
                     async for message in websocket:
-                        print(f"monitor receive: {message}")
+                        logging.debug(f"monitor receive: {message}")
                         event = from_json(message)
                         self._loop.run_in_executor(None, lambda: incoming.put(event))
                         if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
-                            print("client received terminated")
+                            logging.debug("client received terminated")
                             break
                 except asyncio.CancelledError:
                     pass
                 except Exception as e:
                     import traceback
 
-                    print(e, traceback.format_exc())
+                    logging.error(e, traceback.format_exc())
                 finally:
-                    print("cancel send")
+                    logging.debug("cancel send")
                     send_future.cancel()
                     await send_future
-            print("monitor disconnected")
+            logging.debug("monitor disconnected")
 
         wait_for_ws(f"ws://{self._host}:{self._port}")
 
@@ -80,7 +81,7 @@ class _Monitor:
             try:
                 monitor._loop.run_until_complete(monitor._receive_future)
             except asyncio.CancelledError:
-                print("receive cancelled")
+                logging.debug("receive cancelled")
 
         thread = threading.Thread(
             name="ert_monitor_loop",
@@ -91,14 +92,14 @@ class _Monitor:
         running = True
         try:
             while running:
-                print("wait for incoming")
+                logging.debug("wait for incoming")
                 event = incoming.get()
-                print(f"got incoming: {event}")
+                logging.debug(f"got incoming: {event}")
                 if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
                     running = False
                 yield event
         except GeneratorExit:
-            print("generator exit")
+            logging.debug("generator exit")
             self._loop.call_soon_threadsafe(self._receive_future.cancel)
             thread.join()
 
