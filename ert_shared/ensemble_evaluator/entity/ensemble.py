@@ -455,5 +455,11 @@ class _Ensemble:
             for step in stage.get_steps():
                 builder.add_step(str(stage.get_id()), str(step.get_id()), "unknown")
                 for job in step.get_jobs():
-                    builder.add_job(str(stage.get_id()), str(step.get_id()), str(job.get_id()), "job_unknown", {})
+                    builder.add_job(
+                        str(stage.get_id()),
+                        str(step.get_id()),
+                        str(job.get_id()),
+                        "job_unknown",
+                        {},
+                    )
         return builder.build([str(real.get_iens()) for real in self._reals], "unknown")

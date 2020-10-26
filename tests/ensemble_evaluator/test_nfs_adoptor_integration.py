@@ -44,7 +44,7 @@ async def mock_ws(host, port):
 
 
 @pytest.mark.asyncio
-async def test_append_to_file(tmpdir, unused_tcp_port):
+async def test_append_to_file(tmpdir, unused_tcp_port, event_loop):
     host = "localhost"
     port = unused_tcp_port
     log_file = Path(tmpdir) / "log"
@@ -53,7 +53,9 @@ async def test_append_to_file(tmpdir, unused_tcp_port):
     mock_ws_task = loop.create_task(mock_ws(host, port))
     mock_writer_task = loop.create_task(mock_writer(log_file))
     await asyncio.wait(
-        (adaptor_task, mock_ws_task, mock_writer_task), timeout=2, return_when=asyncio.FIRST_EXCEPTION
+        (adaptor_task, mock_ws_task, mock_writer_task),
+        timeout=2,
+        return_when=asyncio.FIRST_EXCEPTION,
     )
     adaptor_task.result()
     mock_writer_task.result()
