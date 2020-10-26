@@ -26,15 +26,17 @@
 <body>
     <div class="container" id="main-container"></div>
     <script type="text/javascript">
-        const color_map = { "unknown": "#8a8a8a", "running": "#0379ff", "done": "#0c9c02" };
-        function create_graph(forward_models) {
+        const color_map = { "unknown": "#8a8a8a", "start": "#d3d3d3", "running": "#0379ff", "success": "#0c9c02", "failure": "#eb4b4b" };
+        function create_graph(forward_model) {
             var nodes_arr = [];
             var edges_arr = [];
-            for (fm of forward_models) {
-                nodes_arr.push({ id: fm.id, label: fm.type, color: color_map["unknown"] });
-                for (i of fm.inputs) {
-                    edges_arr.push({ from: i, to: fm.id, arrows: "to" });
+            prev_id = null
+            for (fm of forward_model) {
+                nodes_arr.push({ id: fm.job_id, label: fm.name, color: color_map["unknown"] });
+                if (prev_id != null){
+                    edges_arr.push({ from: prev_id, to: fm.job_id, arrows: "to" });
                 }
+                prev_id = fm.job_id
             }
             var nodes = new vis.DataSet(nodes_arr);
             var edges = new vis.DataSet(edges_arr);
@@ -47,7 +49,14 @@
 
         function update_status(realizations) {
             for (realization in realizations) {
-                for (const [fm_id, fm] of Object.entries(realizations[realization].forward_models)) {
+                try {
+                    jobs = realizations[realization].stages["0"].steps["0"].jobs;
+                }
+                catch(err){
+                    console.log("No jobs found:", err);
+                    continue;
+                }
+                for (const [fm_id, fm] of Object.entries(jobs)) {
                     datasets[realization].nodes.update({ id: fm_id, color: color_map[fm.status] });
                 }
 
@@ -63,15 +72,22 @@
             };
             ws.onmessage = function (event) {
                 var event_data = JSON.parse(event.data);
-                if (event_data.forward_models) {
+                console.log(event_data)
+
+                if (event_data.type === "com.equinor.ert.ee.terminated") {
+                    console.error("Got terminate event from evaluator. Waiting for new connection...");
+                    setTimeout(() => { wait_for_connection(); }, 1000);
+                }
+
+                if (event_data.type === "com.equinor.ert.ee.snapshot") {
                     for (network_id in networks) {
                         networks[network_id].destroy();
                     }
                     networks = {};
                     datasets = {};
-                    create_containers(event_data.realizations);
-                    for (realization in event_data.realizations) {
-                        datasets[realization] = create_graph(event_data.forward_models);
+                    create_containers(event_data.data.reals);
+                    for (realization in event_data.data.reals) {
+                        datasets[realization] = create_graph(event_data.data.forward_model.step_definitions["0"]["0"]);
                         networks[realization] = new vis.Network(document.getElementById(realization + "_realization_network"), datasets[realization], options);
                         $('.nav-tabs a').on('shown.bs.tab', function (event) {
                             for (network_id in networks) {
@@ -81,8 +97,8 @@
                     }
                 }
                 $("#home-list").append($("<li>" + event.data + "</li>"));
-                if (event_data.realizations) {
-                    update_status(event_data.realizations)
+                if (event_data.data.reals) {
+                    update_status(event_data.data.reals)
                 }
             };
         }

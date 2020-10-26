@@ -69,13 +69,13 @@ class EnsembleEvaluator:
                 data = self._snapshot.to_dict()
                 out_cloudevent = CloudEvent(
                     {
-                        "type": identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
+                        "type": identifiers.EVTYPE_EE_SNAPSHOT,
                         "source": "/ert/ee/0",
                         "id": self.event_index(),
                     },
                     data,
                 )
-                message = to_json(out_cloudevent)
+                message = to_json(out_cloudevent).decode()
                 await websocket.send(message)
 
                 async for message in websocket:
@@ -147,7 +147,7 @@ class EnsembleEvaluator:
                 "id": self.event_index(),
             }
         )
-        message = to_json(out_cloudevent)
+        message = to_json(out_cloudevent).decode()
         return message
 
     def event_index(self):

@@ -56,6 +56,7 @@ EVGROUP_FM_JOB = {
 
 EVGROUP_FM_ALL = EVGROUP_FM_STAGE | EVGROUP_FM_STEP | EVGROUP_FM_JOB
 
+EVTYPE_EE_SNAPSHOT = "com.equinor.ert.ee.snapshot"
 EVTYPE_EE_SNAPSHOT_UPDATE = "com.equinor.ert.ee.snapshot_update"
 EVTYPE_EE_TERMINATED = "com.equinor.ert.ee.terminated"
 EVTYPE_EE_TERMINATE_REQUEST = "com.equinor.ert.ee.terminate_request"
