@@ -19,6 +19,7 @@ from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 
 @contextmanager
 def _attach(run_context, run_path_list, forward_model):
+    asyncio.set_event_loop(asyncio.new_event_loop())
     ws_url = "ws://localhost:8765"
     dispatch_url = f"{ws_url}/dispatch"
 
