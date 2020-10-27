@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Optional
 from collections import defaultdict
 
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
@@ -35,16 +35,22 @@ class PartialSnapshot:
     def update_status(self, status):
         self._data["status"] = status
 
-    def update_real(self, real_id, active=None):
+    def update_real(self, real_id, active=None, start_time=None, end_time=None):
         if real_id not in self._data["reals"]:
             self._data["reals"][real_id] = {"stages": {}}
         real = self._data["reals"][real_id]
 
         if active is not None:
             real["active"] = active
+        if start_time is not None:
+            real["start_time"] = start_time
+        if end_time is not None:
+            real["end_time"] = end_time
         return real
 
-    def update_stage(self, real_id, stage_id, status=None):
+    def update_stage(
+        self, real_id, stage_id, status=None, start_time=None, end_time=None
+    ):
         real = self.update_real(real_id)
         if stage_id not in real["stages"]:
             real["stages"][stage_id] = {"steps": {}}
@@ -52,9 +58,15 @@ class PartialSnapshot:
 
         if status is not None:
             stage["status"] = status
+        if start_time is not None:
+            stage["start_time"] = start_time
+        if end_time is not None:
+            stage["end_time"] = end_time
         return stage
 
-    def update_step(self, real_id, stage_id, step_id, status=None):
+    def update_step(
+        self, real_id, stage_id, step_id, status=None, start_time=None, end_time=None
+    ):
         stage = self.update_stage(real_id, stage_id)
         if step_id not in stage["steps"]:
             stage["steps"][step_id] = {"jobs": {}}
@@ -62,9 +74,23 @@ class PartialSnapshot:
 
         if status is not None:
             step["status"] = status
+        if start_time is not None:
+            step["start_time"] = start_time
+        if end_time is not None:
+            step["end_time"] = end_time
         return step
 
-    def update_job(self, real_id, stage_id, step_id, job_id, status=None, data=None):
+    def update_job(
+        self,
+        real_id,
+        stage_id,
+        step_id,
+        job_id,
+        status=None,
+        data=None,
+        start_time=None,
+        end_time=None,
+    ):
         step = self.update_step(real_id, stage_id, step_id)
         if job_id not in step["jobs"]:
             step["jobs"][job_id] = {}
@@ -72,6 +98,10 @@ class PartialSnapshot:
 
         if status is not None:
             job["status"] = status
+        if start_time is not None:
+            job["start_time"] = start_time
+        if end_time is not None:
+            job["end_time"] = end_time
 
         if data is not None:
             if "data" not in job:
@@ -89,9 +119,16 @@ class PartialSnapshot:
         e_type = event["type"]
         e_source = event["source"]
         status = _FM_TYPE_EVENT_TO_STATUS[e_type]
+        timestamp = event["time"]
         if e_type in ids.EVGROUP_FM_STAGE:
             snapshot.update_stage(
-                get_real_id(e_source), get_stage_id(e_source), status=status
+                get_real_id(e_source),
+                get_stage_id(e_source),
+                status=status,
+                start_time=timestamp if e_type == ids.EVTYPE_FM_STAGE_RUNNING else None,
+                end_time=timestamp
+                if e_type in {ids.EVTYPE_FM_STAGE_FAILURE, ids.EVTYPE_FM_STAGE_SUCCESS}
+                else None,
             )
         elif e_type in ids.EVGROUP_FM_STEP:
             snapshot.update_step(
@@ -99,6 +136,14 @@ class PartialSnapshot:
                 get_stage_id(e_source),
                 get_step_id(e_source),
                 status=status,
+                start_time=timestamp if e_type == ids.EVTYPE_FM_STEP_START else None,
+                end_time=timestamp
+                if e_type
+                in {
+                    ids.EVTYPE_FM_STEP_SUCCESS,
+                    ids.EVTYPE_FM_STEP_FAILURE,
+                }
+                else None,
             )
         elif e_type in ids.EVGROUP_FM_JOB:
             snapshot.update_job(
@@ -107,6 +152,15 @@ class PartialSnapshot:
                 get_step_id(e_source),
                 get_job_id(e_source),
                 status=status,
+                start_time=timestamp if e_type == ids.EVTYPE_FM_JOB_START else None,
+                end_time=timestamp
+                if e_type
+                in {
+                    ids.EVTYPE_FM_JOB_SUCCESS,
+                    ids.EVTYPE_FM_JOB_FAILURE,
+                }
+                else None,
+                data=event.data if e_type == ids.EVTYPE_FM_JOB_RUNNING else None,
             )
         else:
             raise ValueError()
@@ -164,21 +218,29 @@ class _ForwardModel(BaseModel):
 
 class _Job(BaseModel):
     status: str
+    start_time: Optional[str]
+    end_time: Optional[str]
     data: Dict
 
 
 class _Step(BaseModel):
     status: str
+    start_time: Optional[str]
+    end_time: Optional[str]
     jobs: Dict[str, _Job] = {}
 
 
 class _Stage(BaseModel):
     status: str
+    start_time: Optional[str]
+    end_time: Optional[str]
     steps: Dict[str, _Step] = {}
 
 
 class _Realization(BaseModel):
     active: bool
+    start_time: Optional[str]
+    end_time: Optional[str]
     stages: Dict[str, _Stage] = {}
 
 
@@ -192,25 +254,46 @@ class SnapshotBuilder(BaseModel):
     stages: Dict[str, _Stage] = {}
     forward_model: _ForwardModel = _ForwardModel(step_definitions={})
 
-    def build(self, real_ids, status):
+    def build(self, real_ids, status, start_time=None, end_time=None):
         top = _SnapshotDict(status=status, forward_model=self.forward_model)
         for r_id in real_ids:
-            top.reals[r_id] = _Realization(active=True, stages=self.stages)
+            top.reals[r_id] = _Realization(
+                active=True,
+                stages=self.stages,
+                start_time=start_time,
+                end_time=end_time,
+            )
         return Snapshot(top.dict())
 
-    def add_stage(self, stage_id, status):
-        self.stages[stage_id] = _Stage(status=status)
+    def add_stage(self, stage_id, status, start_time=None, end_time=None):
+        self.stages[stage_id] = _Stage(
+            status=status, start_time=start_time, end_time=end_time
+        )
         return self
 
-    def add_step(self, stage_id, step_id, status):
+    def add_step(self, stage_id, step_id, status, start_time=None, end_time=None):
         stage = self.stages[stage_id]
-        stage.steps[step_id] = _Step(status=status)
+        stage.steps[step_id] = _Step(
+            status=status, start_time=start_time, end_time=end_time
+        )
         return self
 
-    def add_job(self, stage_id, step_id, job_id, name, status, data):
+    def add_job(
+        self,
+        stage_id,
+        step_id,
+        job_id,
+        name,
+        status,
+        data,
+        start_time=None,
+        end_time=None,
+    ):
         stage = self.stages[stage_id]
         step = stage.steps[step_id]
-        step.jobs[job_id] = _Job(status=status, data=data)
+        step.jobs[job_id] = _Job(
+            status=status, data=data, start_time=start_time, end_time=end_time
+        )
         if stage_id not in self.forward_model.step_definitions:
             self.forward_model.step_definitions[stage_id] = {}
         if step_id not in self.forward_model.step_definitions[stage_id]:
