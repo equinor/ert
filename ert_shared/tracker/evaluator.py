@@ -1,3 +1,6 @@
+import asyncio
+import queue
+import threading
 from ert_shared.tracker.events import GeneralEvent, EndEvent
 import time
 
@@ -6,16 +9,30 @@ from cloudevents.http.json_methods import from_json
 from ert_shared.tracker.base import BaseTracker
 import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_shared.ensemble_evaluator.entity.tool import recursive_update
+import queue
+
+from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
+
+"""
+monitor provides heart beat so that the updating of UIs can be based off of
+those events.
+
+we would like to move out tickevent from tracker, so that 
+ - the cli handles updating outside events on its own
+ - the gui updates its runtime thing on its own
+
+"""
 
 
 class EvaluatorTracker(BaseTracker):
     """The EvaluatorTracker provides tracking of the evaluator."""
-    def __init__(self, ee_monitor):
-        self._ee_monitor = ee_monitor
+    def __init__(self, ee_monitor_connection_details, model):
+        self._ee_monitor_connection_details = ee_monitor_connection_details
         self._snapshot = {}
         # no call to super.__init__ since it's assuming a model, which we don't
         # rely upon.
         self._bootstrap_states()
+        self._q = queue.Queue()
 
     def _get_ensemble_size(self):
         return len(self._snapshot["reals"])
@@ -31,18 +48,21 @@ class EvaluatorTracker(BaseTracker):
                         count += 1
         return count
 
-    def _fake_tick(self):
+    async def _fake_tick(self):
         while True:
-            time.sleep(1)
-            yield {"type": "_tick"}
+            await asyncio.sleep(1)
+            asyncio.get_event_loop().run_in_executor(None, lambda: self._q.put({"event": "_tick"}))
 
-    def track(self):
-        start = time.time()
-        phase_name = "Some phase..."
-        phase = 1
-        phase_count = 1
-        progress = 0
-        for event in self._ee_monitor.track():
+    async def _model_monitor(self):
+        while True:
+            await asyncio.sleep(5)
+            asyncio.get_event_loop().run_in_executor(None, lambda: self._q.put({"event": "_tick"}))
+
+    def _general_event(self):
+        self._update_phase_map()
+
+    def _drain_monitor(self):
+        for event in monitor.track():
             if event["type"] == ids.EVTYPE_EE_SNAPSHOT:
                 phase_name = "Got snapshot"
                 self._snapshot = event.data
@@ -89,9 +109,61 @@ class EvaluatorTracker(BaseTracker):
 
 
 
+    def track(self):
+
+        start = time.time()
+        phase_name = "Some phase..."
+        phase = 1
+        phase_count = 1
+        progress = 0
+        while True:
+            monitor = create_ee_monitor(self._ee_monitor_connection_details)
+
+
                 # for queue_state in queue_status:
                 #     if queue_state in state.state:
                 #         state.count += queue_status[queue_state]
 
                 # if state.name == "Finished":
                 #     done_count = state.count
+
+
+
+
+        # phase_name = self._model.getPhaseName()
+        # phase = self._model.currentPhase()
+        # phase_count = self._model.phaseCount()
+        # queue_status = self._model.getQueueStatus()
+
+        # done_count = 0
+        # for state in self.get_states():
+        #     state.count = 0
+        #     state.total_count = self._model.getQueueSize()
+
+        #     for queue_state in queue_status:
+        #         if queue_state in state.state:
+        #             state.count += queue_status[queue_state]
+
+        #     if state.name == "Finished":
+        #         done_count = state.count
+
+        # progress = calculate_progress(
+        #     phase,
+        #     phase_count,
+        #     self._model.isFinished(),
+        #     self._model.isQueueRunning(),
+        #     self._model.getQueueSize(),
+        #     self._phase_states[phase],
+        #     done_count,
+        # )
+
+        # tick = self._tick_event()
+        # return GeneralEvent(
+        #     phase_name,
+        #     phase,
+        #     phase_count,
+        #     progress,
+        #     self._model.isIndeterminate(),
+        #     self.get_states(),
+        #     tick.runtime,
+        # )

@@ -365,15 +365,21 @@ class _EnsembleBuilder:
     def __init__(self):
         self._reals = None
         self._size = None
+        self._metadata = None
         self.reset()
 
     def reset(self):
         self._reals = []
         self._size = 0
+        self._metadata = {}
         return self
 
     def add_realization(self, real):
         self._reals.append(real)
+        return self
+
+    def set_metadata(key, value):
+        self._metadata[key] = value
         return self
 
     def set_ensemble_size(self, size):
@@ -410,7 +416,7 @@ class _EnsembleBuilder:
                 .set_iens(iens)
                 .active(run_context.is_active(iens))
             )
-
+        builder.set_metadata("iter", run_context.get_iter())
         return builder
 
     def build(self):
@@ -423,7 +429,7 @@ class _EnsembleBuilder:
             self._reals.append(real)
 
         reals = [builder.build() for builder in self._reals]
-        return _Ensemble(reals)
+        return _Ensemble(reals, self._metadata)
 
 
 def create_ensemble_builder():
@@ -435,8 +441,9 @@ def create_ensemble_builder_from_legacy(run_context, forward_model):
 
 
 class _Ensemble:
-    def __init__(self, reals):
+    def __init__(self, reals, metadata):
         self._reals = reals
+        self._metadata = metadata
 
     def __repr__(self):
         return f"Ensemble with {len(self._reals)} members"
@@ -463,4 +470,6 @@ class _Ensemble:
                         "unknown",
                         {},
                     )
+        for key, val in self._metadata.items():
+            builder.add_metadata(key, val)
         return builder.build([str(real.get_iens()) for real in self._reals], "unknown")

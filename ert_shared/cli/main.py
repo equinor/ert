@@ -61,7 +61,7 @@ def run_cli(args):
         thread.start()
 
         if FeatureToggling.is_enabled("ensemble-evaluator"):
-            tracker = create_tracker(create_ee_monitor("localhost", "8765"))
+            tracker = create_tracker(create_ee_monitor(("localhost", "8765"), model))
         else:
             tracker = create_tracker(model, tick_interval=0, detailed_interval=0)
 

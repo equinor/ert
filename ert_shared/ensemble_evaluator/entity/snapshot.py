@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 from collections import defaultdict
 
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
@@ -186,14 +186,18 @@ class _SnapshotDict(BaseModel):
     status: str
     reals: Dict[str, _Realization] = {}
     forward_model: _ForwardModel
+    metadata: Dict[str, Any] = {}
 
 
 class SnapshotBuilder(BaseModel):
     stages: Dict[str, _Stage] = {}
     forward_model: _ForwardModel = _ForwardModel(step_definitions={})
+    metadata: Dict[str, Any] = {}
 
     def build(self, real_ids, status):
-        top = _SnapshotDict(status=status, forward_model=self.forward_model)
+        top = _SnapshotDict(
+            status=status, forward_model=self.forward_model, metadata=self.metadata
+        )
         for r_id in real_ids:
             top.reals[r_id] = _Realization(active=True, stages=self.stages)
         return Snapshot(top.dict())
@@ -218,4 +222,8 @@ class SnapshotBuilder(BaseModel):
         self.forward_model.step_definitions[stage_id][step_id].append(
             _JobDetails(job_id=job_id, name=name)
         )
+        return self
+
+    def add_metadata(self, key, value):
+        self.metadata[key] = value
         return self
