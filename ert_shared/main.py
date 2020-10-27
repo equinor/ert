@@ -358,6 +358,13 @@ def start_ert_server():
     monitor.start()
 
 
+@feature_enabled("new-storage")
+def initialize_databases():
+    from ert_shared import ERT_STORAGE
+
+    ERT_STORAGE.initialize()
+
+
 def main():
     import ert_logging  # Only use ert logger config when running ERT
     import locale
@@ -370,6 +377,7 @@ def main():
         logger.setLevel("DEBUG")
     FeatureToggling.update_from_args(args)
 
+    initialize_databases()
     start_ert_server()
     with ErtPluginContext():
         args.func(args)

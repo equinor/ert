@@ -2,20 +2,22 @@ import json
 
 import flask
 import pytest
+from ert_shared import ERT_STORAGE
 from ert_shared.storage.blob_api import BlobApi
 from ert_shared.storage.http_server import FlaskWrapper
 from ert_shared.storage.rdb_api import RdbApi
 from flask import Response, request
-
-from tests.storage import db_info
+from tests.storage import apis, db_apis, populated_database, initialize_databases
 
 
 @pytest.fixture()
-def test_client(db_info):
-    populated_db, _ = db_info
+def test_client(db_apis):
+
     # Flask provides a way to test your application by exposing the Werkzeug test Client
     # and handling the context locals for you.
-    flWrapper = FlaskWrapper(rdb_url=populated_db, blob_url=populated_db, secure=False)
+    flWrapper = FlaskWrapper(
+        rdb_url=ERT_STORAGE.rdb_url, blob_url=ERT_STORAGE.blob_url, secure=False
+    )
     testing_client = flWrapper.app.test_client()
     # Establish an application context before running the tests.
     with flWrapper.app.app_context():

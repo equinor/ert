@@ -1,22 +1,22 @@
 import sys
-
-import schemathesis
-import pytest
-import hypothesis
-from datetime import timedelta
 from base64 import b64encode
+from datetime import timedelta
 
+import hypothesis
+import pytest
+import schemathesis
+from ert_shared import ERT_STORAGE
 from ert_shared.storage.http_server import FlaskWrapper
+from tests.storage import db_apis, populated_database, initialize_databases
 
-from tests.storage import db_info
 
-
-@pytest.fixture(scope="module")
-def test_schema(db_info):
-    populated_db, _ = db_info
+@pytest.fixture
+def test_schema(db_apis):
     # Flask provides a way to test your application by exposing the Werkzeug test Client
     # and handling the context locals for you.
-    flWrapper = FlaskWrapper(rdb_url=populated_db, blob_url=populated_db, secure=False)
+    flWrapper = FlaskWrapper(
+        rdb_url=ERT_STORAGE.rdb_url, blob_url=ERT_STORAGE.blob_url, secure=False
+    )
     # Establish an application context before running the tests.
     with flWrapper.app.app_context():
         yield schemathesis.from_wsgi("/schema.json", flWrapper.app)

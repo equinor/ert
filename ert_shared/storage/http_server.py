@@ -12,6 +12,10 @@ from pathlib import Path
 from flask import Response, request, abort, jsonify
 from gunicorn.app.base import BaseApplication
 from subprocess import Popen, PIPE
+from ert_shared import ERT_STORAGE
+from ert_shared.storage.rdb_api import RdbApi
+from ert_shared.storage.blob_api import BlobApi
+from contextlib import contextmanager
 
 
 def generate_authtoken():
@@ -57,9 +61,8 @@ def resolve_ref_uri(struct, ensemble_id=None):
 
 
 class FlaskWrapper:
-    def __init__(self, rdb_url=None, blob_url=None, secure=True):
-        self._rdb_url = rdb_url
-        self._blob_url = blob_url
+    def __init__(self, rdb_url, blob_url, secure=True):
+        ERT_STORAGE.initialize(rdb_url=rdb_url, blob_url=blob_url)
 
         app = flask.Flask("ert http api")
         self.app = app
@@ -146,13 +149,13 @@ class FlaskWrapper:
             return yaml.safe_load(f)
 
     def ensembles(self):
-        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+        with self.session() as api:
             ensembles = api.get_ensembles()
             resolve_ref_uri(ensembles)
             return ensembles
 
     def ensemble_by_id(self, ensemble_id):
-        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+        with self.session() as api:
             ensemble = api.get_ensemble(ensemble_id)
             if ensemble is None:
                 abort(404)
@@ -160,7 +163,7 @@ class FlaskWrapper:
             return ensemble
 
     def realization_by_id(self, ensemble_id, realization_idx):
-        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+        with self.session() as api:
             realization = api.get_realization(ensemble_id, realization_idx, None)
             if realization is None:
                 abort(404)
@@ -168,7 +171,7 @@ class FlaskWrapper:
             return realization
 
     def response_by_name(self, ensemble_id, response_name):
-        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+        with self.session() as api:
             response = api.get_response(ensemble_id, response_name, None)
             if response is None:
                 abort(404)
@@ -177,14 +180,14 @@ class FlaskWrapper:
             return response
 
     def response_data_by_name(self, ensemble_id, response_name):
-        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+        with self.session() as api:
             ids = api.get_response_data(ensemble_id, response_name)
             if ids is None:
                 abort(404)
             return self._datas(ids)
 
     def parameter_by_id(self, ensemble_id, parameter_def_id):
-        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+        with self.session() as api:
             parameter = api.get_parameter(ensemble_id, parameter_def_id)
             if parameter is None:
                 abort(404)
@@ -193,14 +196,14 @@ class FlaskWrapper:
             return parameter
 
     def parameter_data_by_id(self, ensemble_id, parameter_def_id):
-        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+        with self.session() as api:
             ids = api.get_parameter_data(ensemble_id, parameter_def_id)
             if ids is None:
                 abort(404)
             return self._datas(ids)
 
     def data(self, data_id):
-        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+        with self.session() as api:
             data = api.get_data(data_id)
             if data is None:
                 abort(404)
@@ -211,7 +214,7 @@ class FlaskWrapper:
 
     def _datas(self, ids):
         def generator():
-            with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+            with self.session() as api:
                 first = True
                 for data in api.get_datas(ids):
                     if first:
@@ -229,7 +232,7 @@ class FlaskWrapper:
 
     def get_observation(self, name):
         """Return an observation."""
-        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+        with self.session() as api:
             obs = api.get_observation(name)
             resolve_ref_uri(obs)
             if obs is None:
@@ -243,7 +246,7 @@ class FlaskWrapper:
             "attributes": {...}
         }
         """
-        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+        with self.session() as api:
             attrs = api.get_observation_attributes(name)
             if attrs is None:
                 abort(404)
@@ -260,7 +263,7 @@ class FlaskWrapper:
             }
         }
         """
-        with StorageApi(rdb_url=self._rdb_url, blob_url=self._blob_url) as api:
+        with self.session() as api:
             js = request.get_json()
             if not js["attributes"]:
                 abort(400)
@@ -273,6 +276,25 @@ class FlaskWrapper:
     def shutdown(self):
         request.environ.get("werkzeug.server.shutdown")()
         return "Server shutting down."
+
+    @contextmanager
+    def session(self):
+        """Provide a transactional scope around a series of operations."""
+        rdb_session = ERT_STORAGE.RdbSession()
+        blob_session = ERT_STORAGE.BlobSession()
+        rdb_api = RdbApi(session=rdb_session)
+        blob_api = BlobApi(session=blob_session)
+        try:
+            yield StorageApi(rdb_api, blob_api)
+            rdb_session.commit()
+            blob_session.commit()
+        except:
+            rdb_session.rollback()
+            blob_session.rollback()
+            raise
+        finally:
+            rdb_session.close()
+            blob_session.close()
 
 
 class Application(BaseApplication):
@@ -340,6 +362,7 @@ def parse_args():
 def run_server(args=None):
     if args is None:
         args = parse_args()
+
     wrapper = FlaskWrapper(rdb_url=args.rdb_url, blob_url=args.blob_url)
 
     runpath = Path(args.runpath)

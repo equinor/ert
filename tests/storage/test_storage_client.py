@@ -1,24 +1,25 @@
-from flask import Flask, Response, request
+import os
+import socket
+import threading
+import time
 from datetime import datetime
-import pytest
-import pandas as pd
 
-from tests.storage import db_info, db_connection, engine, tables
+import pandas as pd
+import pytest
+import requests
+from ert_shared import ERT_STORAGE
 from ert_shared.storage.client import StorageClient
 from ert_shared.storage.http_server import FlaskWrapper
 from ert_shared.storage.server_monitor import ServerMonitor
-
-import requests
-import threading
-import socket
-import time
-import os
+from flask import Flask, Response, request
+from tests.storage import apis, db_apis, populated_database, initialize_databases
 
 
-@pytest.fixture(scope="module")
-def server(db_info, request):
-    populated_db, _ = db_info
-    proc = ServerMonitor(rdb_url=populated_db, blob_url=populated_db, lockfile=False)
+@pytest.fixture
+def server(db_apis, request):
+    proc = ServerMonitor(
+        rdb_url=ERT_STORAGE.rdb_url, blob_url=ERT_STORAGE.blob_url, lockfile=False
+    )
     proc.start()
     request.addfinalizer(lambda: proc.shutdown())
     yield proc
