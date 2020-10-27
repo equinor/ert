@@ -28,9 +28,13 @@ class EvaluatorTracker(BaseTracker):
             for stage in real["stages"].values():
                 for step in stage["steps"].values():
                     if state.lower() == step["status"].lower():
-                        print("comparing", state.lower(), step["status"].lower())
                         count += 1
         return count
+
+    def _fake_tick(self):
+        while True:
+            time.sleep(1)
+            yield {"type": "_tick"}
 
     def track(self):
         start = time.time()
@@ -42,12 +46,14 @@ class EvaluatorTracker(BaseTracker):
             if event["type"] == ids.EVTYPE_EE_SNAPSHOT:
                 phase_name = "Got snapshot"
                 self._snapshot = event.data
+                
+                yield GeneralEvent(phase_name, phase, phase_count, progress, False, self.get_states(), 
             elif event["type"] == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
                 phase_name = "Got update"
                 recursive_update(self._snapshot, event.data)
-            elif event["type"] == ids.EVTYPE_EE_TERMINATE_REQUEST:
-                yield EndEvent(False, None)
-                return
+            elif event["type"] == ids.EVTYPE_EE_TERMINATED:
+                phase_name = "Done"
+                progress = 1
 
             done_count = 0
             for state in self.get_states():
@@ -55,14 +61,6 @@ class EvaluatorTracker(BaseTracker):
                 state.total_count = self._get_ensemble_size()
                 if state.name == "Finished":
                     done_count = state.count
-
-                # for queue_state in queue_status:
-                #     if queue_state in state.state:
-                #         state.count += queue_status[queue_state]
-
-                # if state.name == "Finished":
-                #     done_count = state.count
-
 
             yield GeneralEvent(
                 phase_name,
@@ -73,3 +71,27 @@ class EvaluatorTracker(BaseTracker):
                 self.get_states(),
                 time.time() - start,
             )
+
+            if event["type"] == ids.EVTYPE_EE_TERMINATED:
+                yield EndEvent(False, None)
+                return
+
+
+            elif event["type"] == "_tick":
+                def _tick_event(self):
+                    if self._model.stop_time() < self._model.start_time():
+                        runtime = time.time() - self._model.start_time()
+                    else:
+                        runtime = self._model.stop_time() - self._model.start_time()
+
+                    return TickEvent(runtime)
+
+
+
+
+                # for queue_state in queue_status:
+                #     if queue_state in state.state:
+                #         state.count += queue_status[queue_state]
+
+                # if state.name == "Finished":
+                #     done_count = state.count
