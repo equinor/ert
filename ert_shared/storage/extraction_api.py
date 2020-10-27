@@ -2,9 +2,8 @@ from logging import exception
 import time
 
 from ert_data.measured import MeasuredData
-from ert_shared import ERT
+from ert_shared import ERT, ERT_STORAGE
 from ert_shared.feature_toggling import feature_enabled
-from ert_shared.storage import connections
 from ert_shared.storage.blob_api import BlobApi
 from ert_shared.storage.model import ParameterPrior
 from ert_shared.storage.rdb_api import RdbApi
@@ -58,7 +57,6 @@ def _dump_observations(rdb_api, blob_api, observations):
         )
         vals_df = blob_api.add_blob(observation.loc["OBS"].to_list())
         stds_df = blob_api.add_blob(observation.loc["STD"].to_list())
-        blob_api.flush()
 
         rdb_api.add_observation(
             name=key,
@@ -97,7 +95,7 @@ def _dump_parameters(rdb_api, blob_api, parameters, ensemble_name, priors):
         )
         for realization_index, value in parameter.iterrows():
             value_df = blob_api.add_blob(float(value))
-            blob_api.flush()
+
             rdb_api.add_parameter(
                 name=parameter_definition.name,
                 group=parameter_definition.group,
@@ -143,7 +141,6 @@ def _extract_and_dump_responses(rdb_api, blob_api, ensemble_name):
 def _dump_response(rdb_api, blob_api, responses, ensemble_name):
     for key, response in responses.items():
         indexes_df = blob_api.add_blob(response.index.to_list())
-        blob_api.flush()
         response_definition = rdb_api.add_response_definition(
             name=key,
             indexes_ref=indexes_df.id,
@@ -151,7 +148,6 @@ def _dump_response(rdb_api, blob_api, responses, ensemble_name):
         )
         for realization_index, values in response.iteritems():
             values_df = blob_api.add_blob(values.to_list())
-            blob_api.flush()
             rdb_api.add_response(
                 name=response_definition.name,
                 values_ref=values_df.id,
@@ -196,7 +192,6 @@ def _extract_and_dump_update_data(ensemble_id, ensemble_name, rdb_api, blob_api)
 
         if active_observations is not None:
             active_blob = blob_api.add_blob(active_observations[observation_key])
-            blob_api.flush()
 
         observation = rdb_api.get_observation(observation_key)
         link = rdb_api._add_observation_response_definition_link(
@@ -218,23 +213,21 @@ def _extract_and_dump_update_data(ensemble_id, ensemble_name, rdb_api, blob_api)
 
 
 @feature_enabled("new-storage")
-def dump_to_new_storage(reference=None, rdb_connection=None, blob_connection=None):
+def dump_to_new_storage(reference=None, rdb_session=None, blob_session=None):
 
     start_time = time.time()
     logger.debug("Starting extraction...")
-    if rdb_connection is None:
-        rdb_url = "sqlite:///entities.db"
-        rdb_connection = connections.get_rdb_connection(rdb_url)
 
-    rdb_api = RdbApi(connection=rdb_connection)
+    if rdb_session is None:
+        rdb_session = ERT_STORAGE.RdbSession()
 
-    if blob_connection is None:
-        blob_url = "sqlite:///blobs.db"
-        blob_connection = connections.get_blob_connection(blob_url)
+    if blob_session is None:
+        blob_session = ERT_STORAGE.BlobSession()
 
-    blob_api = BlobApi(connection=blob_connection)
+    rdb_api = RdbApi(session=rdb_session)
+    blob_api = BlobApi(session=blob_session)
 
-    with rdb_api, blob_api:
+    try:
         priors = _extract_and_dump_priors(rdb_api=rdb_api) if reference is None else []
 
         ensemble = _create_ensemble(rdb_api, reference=reference, priors=priors)
@@ -250,8 +243,9 @@ def dump_to_new_storage(reference=None, rdb_connection=None, blob_connection=Non
             rdb_api=rdb_api, blob_api=blob_api, ensemble_name=ensemble.name
         )
         _extract_and_dump_update_data(ensemble.id, ensemble.name, rdb_api, blob_api)
-        blob_api.commit()
-        rdb_api.commit()
+
+        rdb_session.commit()
+        blob_session.commit()
         ensemble_name = ensemble.name
 
         end_time = time.time()
@@ -264,8 +258,13 @@ def dump_to_new_storage(reference=None, rdb_connection=None, blob_connection=Non
             )
         )
 
-    rdb_connection.close()
-    blob_connection.close()
+    except:
+        rdb_session.rollback()
+        blob_session.rollback()
+        raise
+    finally:
+        rdb_session.close()
+        blob_session.close()
 
     return ensemble_name
 

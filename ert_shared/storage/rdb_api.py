@@ -21,26 +21,8 @@ from sqlalchemy.orm.exc import NoResultFound
 
 
 class RdbApi:
-    def __init__(self, connection):
-        self._session = Session(bind=connection)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self.close()
-
-    def commit(self):
-        self._session.commit()
-
-    def flush(self):
-        self._session.flush()
-
-    def rollback(self):
-        self._session.rollback()
-
-    def close(self):
-        self._session.close()
+    def __init__(self, session):
+        self._session = session
 
     def get_ensemble(self, name):
         return (
@@ -147,6 +129,7 @@ class RdbApi:
             update.ensemble_reference = reference_ensemble
             update.ensemble_result = ensemble
             self._session.add(update)
+        self._session.flush()
         return ensemble
 
     def add_realization(self, index, ensemble_name):
@@ -159,7 +142,7 @@ class RdbApi:
         ensemble.realizations.append(realization)
 
         self._session.add(realization)
-
+        self._session.flush()
         return realization
 
     def add_response_definition(
@@ -179,7 +162,7 @@ class RdbApi:
             ensemble_id=ensemble.id,
         )
         self._session.add(response_definition)
-
+        self._session.flush()
         return response_definition
 
     def add_response(
@@ -204,7 +187,7 @@ class RdbApi:
             response_definition_id=response_definition.id,
         )
         self._session.add(response)
-
+        self._session.flush()
         return response
 
     def add_parameter_definition(self, name, group, ensemble_name, prior=None):
@@ -222,7 +205,7 @@ class RdbApi:
             prior_id=prior.id if prior is not None else None,
         )
         self._session.add(parameter_definition)
-
+        self._session.flush()
         return parameter_definition
 
     def find_prior(
@@ -253,7 +236,7 @@ class RdbApi:
             parameter_definition_id=parameter_definition.id,
         )
         self._session.add(parameter)
-
+        self._session.flush()
         return parameter
 
     def add_observation(
@@ -272,7 +255,7 @@ class RdbApi:
             stds_ref=stds_ref,
         )
         self._session.add(observation)
-
+        self._session.flush()
         return observation
 
     def _add_observation_response_definition_link(
@@ -288,6 +271,7 @@ class RdbApi:
             update_id=update_id,
         )
         self._session.add(link)
+        self._session.flush()
         return link
 
     def _add_misfit(self, value, link_id, response_id):
@@ -300,7 +284,7 @@ class RdbApi:
             response_id=response_id,
         )
         self._session.add(misfit)
-
+        self._session.flush()
         return misfit
 
     def add_observation_attribute(self, name, attribute, value):
@@ -318,6 +302,7 @@ class RdbApi:
 
         obs.add_attribute(attribute, value)
         self._session.add(obs)
+        self._session.flush()
         return obs
 
     def get_observation_attributes(self, name):
@@ -422,6 +407,7 @@ class RdbApi:
         )
 
         self._session.add(prior)
+        self._session.flush()
         return prior
 
     def get_parameter_bundle(self, parameter_def_id, ensemble_id):
