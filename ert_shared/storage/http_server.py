@@ -13,6 +13,7 @@ from flask import Response, request, abort, jsonify
 from gunicorn.app.base import BaseApplication
 from subprocess import Popen, PIPE
 from ert_shared import ERT_STORAGE
+from ert_shared.storage import connection
 from ert_shared.storage.rdb_api import RdbApi
 from ert_shared.storage.blob_api import BlobApi
 from contextlib import contextmanager
@@ -72,10 +73,8 @@ class FlaskWrapper:
 
             @app.before_request
             def check_auth():
-                print(request.environ)
                 if request.authorization is None:
                     abort(401)
-                print(request.authorization, self.authtoken)
                 un = request.authorization["username"]
                 pw = request.authorization["password"]
                 if un != "__token__" or pw != self.authtoken:
@@ -339,6 +338,7 @@ class Application(BaseApplication):
 
         if self.lockfile:
             self.lockfile.write_text(connection_info)
+            connection.set_global_info(os.getcwd())
 
         fd = os.environ.get("ERT_COMM_FD")
         if fd is not None:
