@@ -5,6 +5,7 @@ from json import JSONDecodeError
 from textwrap import dedent
 from pathlib import Path
 from ert_shared.storage.server_monitor import ServerMonitor, TimeoutError
+from ert_shared.storage import connection
 
 
 @pytest.fixture
@@ -140,6 +141,17 @@ def test_integration(request, tmpdir):
         )
         assert "date" in resp.json()
 
-        assert (tmpdir / "storage_server.json").exists()
+        # Use global connection info
+        conn_info = connection.get_info()
+        requests.get(conn_info["baseurl"] + "/healthcheck", auth=conn_info["auth"])
+
+        # Use local connection info
+        conn_info = connection.get_info(str(tmpdir))
+        requests.get(conn_info["baseurl"] + "/healthcheck", auth=conn_info["auth"])
+
         server.shutdown()
         assert not (tmpdir / "storage_server.json").exists()
+
+        # Global connection info no longer valid
+        with pytest.raises(RuntimeError):
+            connection.get_info()
