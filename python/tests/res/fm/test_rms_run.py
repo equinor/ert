@@ -54,6 +54,10 @@ $@
 """
 
 
+def _mocked_run(**kwargs):
+    print(kwargs)
+
+
 @tmpdir()
 @pytest.mark.parametrize(
     "test_input,expected_result",
@@ -644,6 +648,67 @@ env:
                 target_file="some_file",
                 version="non-existing",
                 allow_no_env=True,
+            )
+
+    def test_rms_job_script_parser(self):
+        with TestAreaContext("test_run"):
+            # Setup RMS project
+            with open("rms_config.yml", "w") as f:
+                json.dump(
+                    {
+                        "executable": os.path.realpath("bin/rms"),
+                        "env": {"10.1.3": {"PATH": ""}},
+                    },
+                    f,
+                )
+
+            self.monkeypatch.setenv("RMS_TEST_VAR", "fdsgfdgfdsgfds")
+
+            os.mkdir("run_path")
+            os.mkdir("bin")
+            os.mkdir("project")
+            shutil.copy(
+                os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin"
+            )
+            self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+
+            action = {"exit_status": 0}
+            with open("run_path/action.json", "w") as f:
+                f.write(json.dumps(action))
+
+            rms_exec = os.path.join(
+                self.SOURCE_ROOT, "share/ert/forward-models/res/script/rms"
+            )
+            subprocess.check_call(
+                [
+                    rms_exec,
+                    "--run-path",
+                    "run_path",
+                    "0",
+                    "--version",
+                    "10.1.3",
+                    "project",
+                    "--import-path",
+                    "./",
+                    "--export-path",
+                    "./",
+                    "workflow",
+                    "",
+                ]
+            )
+
+            subprocess.check_call(
+                [
+                    rms_exec,
+                    "--run-path",
+                    "run_path",
+                    "0",
+                    "--version",
+                    "10.1.3",
+                    "project",
+                    "workflow",
+                    "-a",
+                ]
             )
 
 
