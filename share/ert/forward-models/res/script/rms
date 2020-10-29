@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 from res.fm.rms import run
-
+import sys
 
 def _build_argument_parser():
     description = 'Wrapper script to run rms.'
@@ -9,7 +9,7 @@ def _build_argument_parser():
              '   rms  iens  project  workflow \n\n'
              'Optional arguments supported: \n'
              '  target file [-t][--target-file]\n'
-             '  run path [-t][--run-path] default=rms/model\n'
+             '  run path [-r][--run-path] default=rms/model\n'
              '  import path [-i][--import-path] default=./ \n'
              '  export path [-e][--export-path] default=./ \n'
              '  version [-v][--version]\n')
@@ -64,6 +64,8 @@ def _build_argument_parser():
 # and *must* be supplied. The run_path and target_file arguments are optional.
 
 if __name__ == '__main__':
+    # old style jobs pass inn empty arguments as "" and causes argparse to fail
+    sys.argv =  [arg for arg in sys.argv if arg != "" ]
     arg_parser = _build_argument_parser()
     args = arg_parser.parse_args()
 
