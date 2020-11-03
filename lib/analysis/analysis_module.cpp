@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <string>
+#include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
 #include <dlfcn.h>
@@ -59,6 +61,9 @@ struct analysis_module_struct {
   char                           * user_name;   /* String used to identify this module for the user; not used in
                                                    the linking process. */
 };
+
+
+static std::string analysis_modules_dir;
 
 
 
@@ -138,33 +143,51 @@ static analysis_module_type * analysis_module_alloc__( const analysis_table_type
 }
 
 
-
-
-
 static analysis_module_type * analysis_module_alloc( const char * libname ,
                                                      const char * table_name ,
                                                      bool  verbose,
                                                      analysis_module_load_status_enum * load_status) {
   analysis_module_type * module = NULL;
-  void * lib_handle = dlopen( libname , RTLD_NOW );
-  if (lib_handle != NULL) {
-    analysis_table_type * analysis_table = (analysis_table_type *) dlsym( lib_handle , table_name );
-    if (analysis_table != NULL) {
-      *load_status = LOAD_OK;
-      module = analysis_module_alloc__( analysis_table , table_name , libname , lib_handle );
-    } else {
-      *load_status = LOAD_SYMBOL_TABLE_NOT_FOUND;
-      if (verbose)
-        fprintf(stderr , "Failed to load symbol table:%s Error:%s \n",table_name , dlerror());
+  void * lib_handle = nullptr;
+
+  if (libname == nullptr) {
+    // internal
+    lib_handle = dlopen(nullptr, RTLD_NOW);
+  } else {
+    // external, look for the library in <site-packages>/res/.libs
+    if (!analysis_modules_dir.empty()) {
+      auto lib_path = analysis_modules_dir + "/" + libname;
+      lib_handle = dlopen(lib_path.c_str(), RTLD_NOW);
+      if (lib_handle == nullptr && verbose)
+        fprintf(stderr, "Failed to load library:%s Error:%s\n", lib_path.c_str(), dlerror());
     }
 
-    if (module == NULL)
-      dlclose( lib_handle );
-  } else {
-    *load_status = DLOPEN_FAILURE;
-    if (verbose)
-      fprintf(stderr , "Failed to load library:%s Error:%s \n",libname , dlerror());
+    // external, look for library system-wide
+    if (lib_handle == nullptr) {
+      lib_handle = dlopen(libname, RTLD_NOW);
+    }
+
+    // error handling
+    if (lib_handle == nullptr) {
+      *load_status = DLOPEN_FAILURE;
+      if (verbose)
+        fprintf(stderr, "Failed to load library:%s Error:%s \n", libname, dlerror());
+      return NULL;
+    }
   }
+
+  analysis_table_type * analysis_table = (analysis_table_type *) dlsym( lib_handle , table_name );
+  if (analysis_table != NULL) {
+    *load_status = LOAD_OK;
+    module = analysis_module_alloc__( analysis_table , table_name , libname , lib_handle );
+  } else {
+    *load_status = LOAD_SYMBOL_TABLE_NOT_FOUND;
+    if (verbose)
+      fprintf(stderr , "Failed to load symbol table:%s Error:%s \n",table_name , dlerror());
+  }
+
+  if (module == NULL)
+    dlclose( lib_handle );
 
   if (module != NULL) {
     if (libname == NULL)
@@ -466,4 +489,10 @@ void * analysis_module_get_ptr( const analysis_module_type * module , const char
     util_exit("%s: Tried to get pointer variable:%s from module:%s - module does not support this variable \n" , __func__ , var , module->user_name);
 
   return NULL;
+}
+
+
+extern "C"
+void set_analysis_modules_dir(const char * lib) {
+  analysis_modules_dir = lib;
 }

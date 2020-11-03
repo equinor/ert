@@ -19,19 +19,15 @@ from cwrap import Prototype, clib
 from ecl.util.test import TestAreaContext
 from tests import ResTest
 
-from res import load as resload
+from res import ResPrototype
 from res.config import UnrecognizedEnum, SchemaItem
 from res.config import ContentTypeEnum, ContentItem, ContentNode
 from res.config import ConfigContent, ConfigParser, ConfigSettings
 
 
-class TestConfigPrototype(Prototype):
-    lib = resload("libres")
-
+class TestConfigPrototype(ResPrototype):
     def __init__(self, prototype, bind=False):
-        super(TestConfigPrototype, self).__init__(
-            TestConfigPrototype.lib, prototype, bind=bind
-        )
+        super(TestConfigPrototype, self).__init__(prototype, bind=bind)
 
 
 # Adding extra functions to the ConfigContent object for the ability

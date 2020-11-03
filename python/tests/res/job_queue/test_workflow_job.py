@@ -1,21 +1,16 @@
 import ecl
 import res.enkf  # noqa
 
+from res import ResPrototype
 from res.job_queue import WorkflowJob
 from tests import ResTest
 from ecl.util.test import TestAreaContext
 from .workflow_common import WorkflowCommon
 
-from cwrap import Prototype
 
-
-class _TestWorkflowJobPrototype(Prototype):
-    lib = res.load("libres")
-
+class _TestWorkflowJobPrototype(ResPrototype):
     def __init__(self, prototype, bind=True):
-        super(_TestWorkflowJobPrototype, self).__init__(
-            _TestWorkflowJobPrototype.lib, prototype, bind=bind
-        )
+        super(_TestWorkflowJobPrototype, self).__init__(prototype, bind=bind)
 
 
 class WorkflowJobTest(ResTest):

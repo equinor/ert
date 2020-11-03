@@ -17,7 +17,9 @@
 from cwrap import BaseCClass
 from ecl.util.util.rng import RandomNumberGenerator
 from res import ResPrototype
+from os import path
 
+import res
 from res.util import Matrix
 
 
@@ -163,6 +165,8 @@ class AnalysisModule(BaseCClass):
         self._free()
 
     def __repr__(self):
+        if not self:
+            return repr(None)
         nm = self.name()
         tn = self.getTableName()
         ln = self.getLibName()

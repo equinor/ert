@@ -24,3 +24,8 @@ scratch.sparsebundle
 *.DS_Store
 __res_lib_path.py
 __res_lib_info.py
+
+*.egg-info
+/_skbuild
+/python/res/_version.py
+.libs

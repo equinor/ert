@@ -1,5 +1,13 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.6.1)
 project(res C CXX)
+
+set(CMAKE_CXX_STANDARD 14)
+
+if(NOT SKBUILD)
+  message(WARNING "This CMakeLists.txt file should not be used directly.\n"
+    "Use 'pip install ${CMAKE_SOURCE_DIR}' to install this as a Python package.\n"
+    "Refer to the README for more information.")
+endif()
 
 if(NOT DEFINED CMAKE_MACOSX_RPATH)
   # There is some weirdness around this variable, the default value is different depending on
@@ -14,97 +22,48 @@ enable_testing()
 
 #-----------------------------------------------------------------
 
-set( RES_VERSION_MAJOR 0 )
-set( RES_VERSION_MINOR 0 )
-set( RES_VERSION_MICRO "not-available" )
+set(RES_VERSION "0.0.0-unset" CACHE STRING "libres version")
 
-# If the micro version is not integer, that should be interpreted as a
-# development version leading towards version MAJOR.MINOR.0
-
-execute_process(COMMAND date "+%Y-%m-%d %H:%M:%S" OUTPUT_VARIABLE RES_BUILD_TIME )
-string(STRIP ${RES_BUILD_TIME} RES_BUILD_TIME)
-
-find_package(Git)
-
-if(GIT_FOUND)
-  execute_process(
-    COMMAND ${GIT_EXECUTABLE} "--git-dir=${CMAKE_SOURCE_DIR}/.git" status
-    RESULT_VARIABLE RESULT
-    OUTPUT_QUIET
-    ERROR_QUIET
-    )
-
-  if(NOT "${RESULT}" STREQUAL 0)
-    set(GIT_FOUND OFF)
-  endif()
-endif()
-
-if(GIT_FOUND)
-   execute_process(
-     COMMAND ${GIT_EXECUTABLE} "--git-dir=${CMAKE_SOURCE_DIR}/.git" rev-parse HEAD
-     OUTPUT_VARIABLE GIT_COMMIT
-     OUTPUT_STRIP_TRAILING_WHITESPACE
-   )
-
-   execute_process(
-     COMMAND ${GIT_EXECUTABLE} "--git-dir=${CMAKE_SOURCE_DIR}/.git" rev-parse --short HEAD
-     OUTPUT_VARIABLE GIT_COMMIT_SHORT
-     OUTPUT_STRIP_TRAILING_WHITESPACE
-   )
-
-   execute_process(
-     COMMAND ${GIT_EXECUTABLE} "--git-dir=${CMAKE_SOURCE_DIR}/.git" describe --tags
-     OUTPUT_VARIABLE GIT_TAG
-     OUTPUT_STRIP_TRAILING_WHITESPACE
-   )
-
-   string( REGEX REPLACE "^([^.]+)\\.([^.]+)\\.(.+)$" "\\1" RES_VERSION_MAJOR "${GIT_TAG}")
-   string( REGEX REPLACE "^([^.]+)\\.([^.]+)\\.(.+)$" "\\2" RES_VERSION_MINOR "${GIT_TAG}")
-   string( REGEX REPLACE "^([^.]+)\\.([^.]+)\\.(.+)$" "\\3" RES_VERSION_MICRO "${GIT_TAG}")
-else()
-    set( GIT_COMMIT "unknown (git not found!)")
-    set( GIT_COMMIT_SHORT "unknown (git not found!)")
-    message( WARNING "Git not found. Build will not contain correct version info." )
-endif()
+string( REGEX REPLACE "^([^.]+)\\.([^.]+)\\.(.+)$" "\\1" RES_VERSION_MAJOR "${RES_VERSION}")
+string( REGEX REPLACE "^([^.]+)\\.([^.]+)\\.(.+)$" "\\2" RES_VERSION_MINOR "${RES_VERSION}")
+string( REGEX REPLACE "^([^.]+)\\.([^.]+)\\.(.+)$" "\\3" RES_VERSION_MICRO "${RES_VERSION}")
 
 message( STATUS "libres version: ${RES_VERSION_MAJOR}.${RES_VERSION_MINOR}.${RES_VERSION_MICRO}" )
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
 find_package(CXX11Features)
+set(CMAKE_C_STANDARD 99)
 
 #-----------------------------------------------------------------
 
 option( BUILD_TESTS         "Should the tests be built"             OFF)
-option( ENABLE_PYTHON       "Enable the python wrappers"            ON )
 option( USE_RPATH           "Should we embed path to libraries"     ON )
 option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit"     OFF)
 
-set( SHARE_DIR "share/ert")
-# If the SITE_CONFIG_FILE is not set as -DSITE_CONFIG_FILE switch when invoking
-# cmake we set it here to location of the to-be-installed site-config file. That
-# implies that when testing the binary will have embedded a path to non-existent
-# or stale version of the site configuration file. Irrespective of the value of
-# SITE_CONFIG_FILE the environment variable ERT_SITE_CONFIG will be set to point
-# to the in-source version of the site-config file for testing.
-#
-# The variable SITE_CONFIG_FILE can be set by the user, if that is set it will
-# take presedence. If the user has not explicitly set the SITE_CONFIG_FILE variable
-# we will use the default path based on the install prefix.
-set( SITE_CONFIG_FILE "" CACHE FILEPATH "Path to global ERT Configuration file")
-set( __SITE_CONFIG_FILE "${CMAKE_INSTALL_PREFIX}/${SHARE_DIR}/site-config")
-if (SITE_CONFIG_FILE)
-  set( __SITE_CONFIG_FILE ${SITE_CONFIG_FILE})
-endif()
-message(STATUS "The path ${__SITE_CONFIG_FILE} will be compiled into the libres library as the location of the site configuration file")
+if(NOT SKBUILD)
+  # We let setuptools handle installing share/ert normally.
 
-if (USE_RPATH)
+  set( SHARE_DIR "share/ert")
+  # If the SITE_CONFIG_FILE is not set as -DSITE_CONFIG_FILE switch when invoking
+  # cmake we set it here to location of the to-be-installed site-config file. That
+  # implies that when testing the binary will have embedded a path to non-existent
+  # or stale version of the site configuration file. Irrespective of the value of
+  # SITE_CONFIG_FILE the environment variable ERT_SITE_CONFIG will be set to point
+  # to the in-source version of the site-config file for testing.
+  #
+  # The variable SITE_CONFIG_FILE can be set by the user, if that is set it will
+  # take presedence. If the user has not explicitly set the SITE_CONFIG_FILE variable
+  # we will use the default path based on the install prefix.
+  set( SITE_CONFIG_FILE "${CMAKE_INSTALL_PREFIX}/${SHARE_DIR}/site-config" CACHE FILEPATH "Path to global ERT Configuration file")
+  message(STATUS "The path ${SITE_CONFIG_FILE} will be compiled into the libres library as the location of the site configuration file")
+
+  if (USE_RPATH)
     SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
     set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-endif ()
+  endif ()
+endif()
 
 #-----------------------------------------------------------------
-
-find_package( ecl REQUIRED )
 
 set(ERT_LSF_LIB_PATH     "" CACHE FILEPATH "Path to search for the LSF libraries")
 set(ERT_LSF_INCLUDE_PATH "" CACHE FILEPATH "Path to search for the LSF header files")
@@ -124,34 +83,11 @@ if (EXISTS ${EQUINOR_TESTDATA_ROOT})
     message(STATUS "Linking testdata: ${LINK} -> ${EQUINOR_TESTDATA_ROOT}")
 endif()
 
-file(COPY bin/job_dispatch.py DESTINATION ${PROJECT_BINARY_DIR}/bin )
+file(COPY python/job_runner/job_dispatch.py
+  DESTINATION ${PROJECT_BINARY_DIR}/bin
+  FILE_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ)
 set( ERT_ROOT "${PROJECT_BINARY_DIR}" )
-#-----------------------------------------------------------------
 
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
-    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
-            "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
-    # Set the possible values of build type for cmake-gui
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
-            "MinSizeRel" "RelWithDebInfo")
-endif()
-
-if (MSVC)
-    add_definitions( "/W3 /D_CRT_SECURE_NO_WARNINGS /wd4996" )
-else ()
-    set(CMAKE_C_FLAGS "-std=gnu99 -Wall -Wno-unknown-pragmas ${CMAKE_C_FLAGS}")
-endif()
-
-if (NOT BUILD_SHARED_LIBS)
-    message(WARNING "Building python - forcing shared libs.")
-    set(BUILD_SHARED_LIBS ON)
-endif ()
-
-set(INSTALL_GROUP ""
-        CACHE STRING "Group to install as - blank to install as current group")
-set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
 #-----------------------------------------------------------------
 
 find_package(Threads)
@@ -162,6 +98,16 @@ endif ()
 # feature tests
 include(CheckFunctionExists)
 check_function_exists( regexec ERT_HAVE_REGEXP )
+
+#-----------------------------------------------------------------
+
+# This is to enable our dynamic lookup hack
+if (APPLE)
+    set(CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS "${CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS} -undefined dynamic_lookup")
+    set(CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS} -undefined dynamic_lookup")
+    set(CMAKE_SHARED_MODULE_CREATE_C_FLAGS "${CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS} -undefined dynamic_lookup")
+    set(CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS} -undefined dynamic_lookup")
+endif ()
 
 #-----------------------------------------------------------------
 # install_example() is a small utility function which is used to install an
@@ -187,30 +133,23 @@ endfunction()
 
 
 add_subdirectory(lib)
-add_subdirectory(python)
 
-foreach(share_dir workflows gui forward-models)
-  install(DIRECTORY "share/ert/${share_dir}" DESTINATION ${SHARE_DIR})
-endforeach()
-install_example("share/ert/site-config" ${SHARE_DIR})
-install(PROGRAMS bin/job_dispatch.py DESTINATION bin )
+if(NOT SKBUILD)
+  foreach(share_dir workflows gui forward-models)
+    install(DIRECTORY "share/ert/${share_dir}" DESTINATION ${SHARE_DIR})
+  endforeach()
+  install_example("share/ert/site-config" ${SHARE_DIR})
+  install(PROGRAMS bin/job_dispatch.py DESTINATION bin )
 
-foreach (script ecl100 ecl300 flow rms)
-  install(PROGRAMS "share/ert/forward-models/res/script/${script}" DESTINATION "${SHARE_DIR}/forward-models/res/script")
-endforeach()
+  foreach (script ecl100 ecl300 flow rms)
+    install(PROGRAMS "share/ert/forward-models/res/script/${script}" DESTINATION "${SHARE_DIR}/forward-models/res/script")
+  endforeach()
 
-foreach (script careful_copy_file copy_directory copy_file delete_directory delete_file make_directory move_file symlink)
-  install(PROGRAMS "share/ert/shell_scripts/${script}" DESTINATION "${SHARE_DIR}/shell_scripts")
-endforeach()
+  foreach (script careful_copy_file copy_directory copy_file delete_directory delete_file make_directory move_file symlink)
+    install(PROGRAMS "share/ert/shell_scripts/${script}" DESTINATION "${SHARE_DIR}/shell_scripts")
+  endforeach()
 
-foreach (script template_render)
+  foreach (script template_render)
     install(PROGRAMS "share/ert/forward-models/templating/script/${script}" DESTINATION "${SHARE_DIR}/forward-models/templating/script")
-endforeach()
-
-install(EXPORT res-config
-        DESTINATION share/cmake/res
-        NAMESPACE res::)
-export(TARGETS res
-        NAMESPACE res::
-        FILE resConfig.cmake)
-export(PACKAGE res)
+  endforeach()
+endif()

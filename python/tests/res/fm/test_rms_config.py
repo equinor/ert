@@ -37,10 +37,7 @@ class RMSConfigTest(ResTest):
         with self.assertRaises(IOError):
             conf = RMSConfig()
 
-        self.monkeypatch.setenv(
-            "RMS_SITE_CONFIG",
-            os.path.join(self.SOURCE_ROOT, "python/res/fm/rms/rms_config.yml"),
-        )
+        self.monkeypatch.setenv("RMS_SITE_CONFIG", RMSConfig.DEFAULT_CONFIG_FILE)
         conf = RMSConfig()
 
         with self.assertRaises(OSError):

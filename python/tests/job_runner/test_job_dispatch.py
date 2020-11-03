@@ -5,6 +5,10 @@ import stat
 import sys
 import time
 import unittest
+import importlib
+from subprocess import Popen
+from textwrap import dedent
+
 import psutil
 
 from subprocess import Popen
@@ -64,36 +68,31 @@ else:
             "ert_pid": "",
         }
 
-        job_dispatch_script = os.path.realpath(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "../../../bin/job_dispatch.py",
-            )
-        )
-
         with open("jobs.json", "w") as f:
             f.write(json.dumps(self.job_list))
 
-            # Required to execute job_dispatch in separate process group by
-            # os.setsid moves the current process out of the current group
-            with open("job_dispatch_executer", "w") as f:
-                f.write(
-                    "#!/usr/bin/env python\n"
-                    "import os, sys\n"
-                    "os.setsid()\n"
-                    "os.execv(sys.argv[1], sys.argv[1:])\n"
-                    "\n"
+        # macOS doesn't provide /usr/bin/setsid, so we roll our own
+        with open("setsid", "w") as f:
+            f.write(
+                dedent(
+                    """\
+                #!/usr/bin/env python
+                import os
+                import sys
+                os.setsid()
+                os.execvp(sys.argv[1], sys.argv[1:])
+                """
                 )
-            os.chmod(
-                "job_dispatch_executer", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG
             )
+        os.chmod("setsid", 0o755)
 
-        current_dir = os.path.realpath(os.curdir)
+        job_dispatch_script = importlib.util.find_spec("job_runner.job_dispatch").origin
         job_dispatch_process = Popen(
             [
-                os.path.realpath("job_dispatch_executer"),
+                os.getcwd() + "/setsid",
+                sys.executable,
                 job_dispatch_script,
-                current_dir,
+                os.getcwd(),
             ]
         )
 
@@ -124,7 +123,6 @@ else:
 
     @tmpdir(None)
     def test_job_dispatch_run_subset_specified_as_parmeter(self):
-
         with open("dummy_executable", "w") as f:
             f.write(
                 "#!/usr/bin/env python\n"
@@ -208,32 +206,28 @@ else:
         with open("jobs.json", "w") as f:
             f.write(json.dumps(self.job_list))
 
-        current_dir = os.path.realpath(os.curdir)
-
-        # Required to execute job_dispatch in separate process group by
-        # os.setsid moves the current process out of the current group
-        with open("job_dispatch_executer", "w") as f:
+        # macOS doesn't provide /usr/bin/setsid, so we roll our own
+        with open("setsid", "w") as f:
             f.write(
-                "#!/usr/bin/env python\n"
-                "import os, sys\n"
-                "os.setsid()\n"
-                "os.execv(sys.argv[1], sys.argv[1:])\n"
-                "\n"
+                dedent(
+                    """\
+                #!/usr/bin/env python
+                import os
+                import sys
+                os.setsid()
+                os.execvp(sys.argv[1], sys.argv[1:])
+                """
+                )
             )
-        os.chmod("job_dispatch_executer", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+        os.chmod("setsid", 0o755)
 
-        job_dispatch_script = os.path.realpath(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "../../../bin/job_dispatch.py",
-            )
-        )
-
+        job_dispatch_script = importlib.util.find_spec("job_runner.job_dispatch").origin
         job_dispatch_process = Popen(
             [
-                os.path.realpath("job_dispatch_executer"),
+                os.getcwd() + "/setsid",
+                sys.executable,
                 job_dispatch_script,
-                current_dir,
+                os.getcwd(),
                 "job_B",
                 "job_C",
             ]
@@ -241,6 +235,6 @@ else:
 
         job_dispatch_process.wait()
 
-        assert not os.path.isfile("{}/job_A.out".format(current_dir))
-        assert os.path.isfile("{}/job_B.out".format(current_dir))
-        assert os.path.isfile("{}/job_C.out".format(current_dir))
+        assert not os.path.isfile("job_A.out")
+        assert os.path.isfile("job_B.out")
+        assert os.path.isfile("job_C.out")

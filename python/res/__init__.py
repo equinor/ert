@@ -15,77 +15,74 @@
 #  for more details.
 """
 Ert - Ensemble Reservoir Tool - a package for reservoir modeling.
-
-The res package itself has no code, but contains several subpackages:
-
-res.job_queue:
-
-The res package is based on wrapping the libriaries from the ERT C
-code with ctypes; an essential part of ctypes approach is to load the
-shared libraries with the ctypes.CDLL() function. The ctypes.CDLL()
-function uses the standard methods of the operating system,
-i.e. standard locations configured with ld.so.conf and the environment
-variable LD_LIBRARY_PATH.
-
 """
 import os.path
 import sys
+import platform
+import ecl
 
 import warnings
 
 warnings.filterwarnings(action="always", category=DeprecationWarning, module=r"res|ert")
 
-from cwrap import load as cwrapload
 from cwrap import Prototype
 
-try:
-    import ert_site_init
-except ImportError:
-    pass
-
-res_lib_path = None
-ert_so_version = ""
-__version__ = "0.0.0"
+from ._version import version as __version__
 
 
-# 1. Try to load the __res_lib_info module; this module has been
-#    configured by cmake during the build configuration process. The
-#    module should contain the variable lib_path pointing to the
-#    directory with shared object files.
-try:
-    from .__res_lib_info import ResLibInfo
+def _load_lib():
+    import ctypes
 
-    res_lib_path = ResLibInfo.lib_path
-    ert_so_version = ResLibInfo.so_version
-    __version__ = ResLibInfo.__version__
-except ImportError:
-    pass
-except AttributeError:
-    pass
+    # Find and dlopen libres
+    lib_path = os.path.join(os.path.dirname(__file__), ".libs")
+    if not os.path.isdir(lib_path):
+        lib_path = ""
 
+    if platform.system() == "Linux":
+        lib_path = os.path.join(lib_path, "libres.so")
+    elif platform.system() == "Darwin":
+        lib_path = os.path.join(lib_path, "libres.dylib")
+    else:
+        raise NotImplementedError("Invalid platform")
 
-# Check that the final ert_lib_path setting corresponds to an existing
-# directory.
-if res_lib_path:
-    if not os.path.isabs(res_lib_path):
-        res_lib_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), res_lib_path)
-        )
+    lib = ctypes.CDLL(lib_path, ctypes.RTLD_GLOBAL)
 
-    if not os.path.isdir(res_lib_path):
-        res_lib_path = None
+    # Configure site_config to be a ctypes.CFUNCTION with type:
+    # void set_site_config(char *);
+    site_config = lib.set_site_config
+    site_config.restype = None
+    site_config.argtypes = (ctypes.c_char_p,)
 
+    # Find share/ert
+    from pathlib import Path
 
-# This load() function is *the* function actually loading shared
-# libraries.
+    path = Path(__file__).parent
+    for p in path.parents:
+        npath = p / "share" / "ert" / "site-config"
+        if npath.is_file():
+            path = npath
+            break
+    else:
+        raise ImportError("Could not find `share/ert/site-config`")
 
+    # Set site-config to point to [PREFIX]/share/ert/site-config
+    site_config(str(path).encode("utf-8"))
 
-def load(name):
-    return cwrapload(name, path=res_lib_path, so_version=ert_so_version)
+    # Configure set_analysis_modules_dir to be a ctypes.CFUNCTION with type:
+    # void set_analysis_modules_dir(char *);
+    set_analysis_modules_dir = lib.set_analysis_modules_dir
+    set_analysis_modules_dir.restype = None
+    set_analysis_modules_dir.argtypes = (ctypes.c_char_p,)
+
+    # Set analysis modules dir to be [CURRENT DIR]/.libs
+    path = os.path.join(os.path.dirname(__file__), ".libs")
+    set_analysis_modules_dir(path.encode("utf-8"))
+
+    return lib
 
 
 class ResPrototype(Prototype):
-    lib = load("libres")
+    lib = _load_lib()
 
     def __init__(self, prototype, bind=True):
         super(ResPrototype, self).__init__(ResPrototype.lib, prototype, bind=bind)

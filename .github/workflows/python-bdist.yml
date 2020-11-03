@@ -1,6 +1,6 @@
-name: Libres testing
+name: Python Binary Distribution
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build-test-cmake:

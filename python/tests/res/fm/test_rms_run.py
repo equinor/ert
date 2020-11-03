@@ -99,10 +99,6 @@ class RMSRunTest(ResTest):
         self.monkeypatch.undo()
 
     def test_create(self):
-        self.monkeypatch.setenv(
-            "RMS_SITE_CONFIG",
-            os.path.join(self.SOURCE_ROOT, "python/res/fm/rms/rms_config.yml"),
-        )
         with self.assertRaises(OSError):
             r = RMSRun(0, "/project/does/not/exist", "workflow")
 

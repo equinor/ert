@@ -1,110 +1,95 @@
 # libres [![Libres testing](https://github.com/equinor/libres/workflows/Libres%20testing/badge.svg)](https://github.com/equinor/libres/actions?query=workflow%3A%22Libres+testing%22) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-`libres` is part of the `ERT` project: _[Ensemble based Reservoir Tool](https://github.com/Equinor/ert)_.
+*libres* is part of the `ERT` project: _[Ensemble based Reservoir Tool](https://github.com/Equinor/ert)_. It is now available in PyPI:
 
-## Building libres
-
-### 1. Build libecl
-Build and install [libecl](https://github.com/Equinor/libecl) at the version that `.libecl_version` specifies. When configuring
-`libecl` you should used the option `-DCMAKE_INSTALL_PREFIX` to tell ``cmake``
-where to install `libecl`. The value passed to `CMAKE_INSTALL_PREFIX` will be
-needed when running cmake to configure `libres` in point 4 below. For now let us
-assume that the prefix `/local/ert/install` was used.
-   
-   
-### 2. Install Python dependencies
-
-```
-pip install -r requirements.txt 
+``` sh
+$ pip install equinor-libres
 ```
 
-### 3. Update environment variables 
-To ensure that the build system correctly finds the `ecl` Python package you
-need to set the environment variables `PYTHONPATH` and `LD_LIBRARY_PATH` to
-include the `libecl` installation:
-  
-```
-bash% export LD_LIBRARY_PATH=/local/ert/install/lib64:$LD_LIBRARY_PATH
-bash% export PYTHONPATH=/local/ert/install/lib/python3.6/site-packages:$PYTHONPATH
+or, for the latest development version (requires GCC/clang and `Python.h`):
+
+``` sh
+$ pip install git+https://github.com/equinor/libres.git@master
 ```
 
-Observe that path components `lib64` and `lib/python3.6/site-packages` will
-depend on your Python version and which Linux distribution you are using. The
-example given here is for RedHat based distributions.
+## Development
 
+*libres* is meant to be installed using `setup.py`, directly or using `pip
+install ./`. The `CMakeLists.txt` exists, but is used by `setup.py` to generate
+the `libres` C library and by Github Actions to run C tests.
 
-### 4. Run `cmake` to configure `libres`
+### Building
 
-When running `cmake` you must tell `cmake` where the `libecl` code is located
-with `-DCMAKE_PREFIX_PATH`, i.e. in addition to other possible arguments you
-must at least add:
-
+Use the following commands to start developing from a clean virtualenv
 ```
--DCMAKE_PREFIX_PATH=/local/ert/install
-```
-
-in addition you probably want to pass `-DCMAKE_INSTALL_PREFIX` to configure where
-the `libres` distribuion should be installed, normally that will be the same
-location where you have already installed `libecl`. 
-
-
-### 5. Run `make` to compile `libres`
-
-After you have run cmake you should run `make` and `make install` to build and install `libres`:
-
-```
-bash% make
-bash% make install
+$ pip install -r requirements.txt
+$ python setup.py develop
 ```
 
-### 6. postinstall configuration
+Alternatively, `pip install -e .` will also setup `libres` for development, but
+it will be more difficult to recompile the C library.
 
+[scikit-build](https://scikit-build.readthedocs.io/en/latest/index.html) is used
+for compiling the C library. It creates a directory named `_skbuild` which is
+reused upon future invocations of either `python setup.py develop`, or `python
+setup.py build_ext`. The latter only rebuilds the C library. In some cases this
+directory must be removed in order for compilation to succeed.
 
-#### 6.1. The `site_config` file
+The C library files get installed into `python/res/.libs`, which is where the
+`res` module will look for them.
+
+### Testing Python code
+
+Install the required testing packages and run tests.
+```
+$ pip install -r test_requirements.txt
+$ pytest python/tests
+```
+
+You may need to do `export PYTHONPATH=$PWD/python` for `pytest` to find your
+local development installation.
+
+### Testing C code
+
+Install [*ecl*](https://github.com/Equinor/ecl) using CMake as a C library. Then:
+
+``` sh
+$ mkdir build
+$ cd build
+$ cmake .. -DBUILD_TESTS=ON
+$ cmake --build .
+$ ctest --output-on-failure
+```
+
+## Configuration
+
+### The `site_config` file
 As part of the installation process `libres` will install a file called
-`site-config` in `$prefix/share/ert/site-config`; when ert starts this file will
-be loaded before the users personal config file. For more extensive use of `ert`
-it might be benefical to customize the `site-config` file to your personal site.
-There are three possible ways to do this:
+`site-config` in `share/ert/site-config`; when ert starts this file will be
+loaded before the users personal config file. For more extensive use of `ert` it
+might be benefical to customize the `site-config` file to your personal site.
 
-1. You can just edit the installed file manually - `libres` will not install
-   it's version of the `site-config` file if one is already present.
-   
-2. The path to `site-config` file is *compiled into* the `libres` library, if
-   you pass the `cmake` option `-DSITE_CONFIG_FILE=/path/to/site/config` when
-   configuring `cmake`; that way your own personal `site-config` file is built
-   in.
-   
-3. If you set the environment variable `ERT_SITE_CONFIG` to point to an
-   alternative file that will be used when bootstrapping. This can be a handy
-   way to debug the `site-config` settings.
-   
-For a start you can probably just use the shipped default version of the
-`site-config` file.
+To customize, you need to set the environment variable `ERT_SITE_CONFIG` to
+point to an alternative file that will be used.
 
+### 6.2 Forward models
 
-#### 6.2 Forward models
+`libres` contains basic functionality for forward models to run the reservoir
+simulators Eclipse/flow and the geomodelling program RMS. Exactly how these
+programs depend on the setup on your site and you must make some modifications
+to two files installed with `libres`:
 
-The `libres` code contains basic functionality for forward models to run the
-reservoir simulators Eclipse/flow and the geomodelling program RMS. Exactly how
-these programs depend on the setup on your site and you must make some
-modifications to two files installed with `libres`:
+#### 6.2.1. Eclipse/flow configuration
 
-##### 6.2.1. Eclipse/flow configuration
-
-In the Python distribution installed by `libres` there is a file:
+In the Python distribution installed by `libres` there is a file
 `res/fm/ecl/ecl_config.yml` which is used to configure the eclipse/flow versions
-are available at the location. You should edit this file to correspond to the
-conditions at your site; alternatively you can store an alternative
-configuration file elsewhere and set the environment variable `ECL_SITE_CONFIG`
-to point to the alternative file.
+are available at the location. You can provide an alternative configuration file
+by setting the environment variable `ECL_SITE_CONFIG`.
 
-
-##### 6.2.2. RMS configuration
+#### 6.2.2. RMS configuration
 
 In the Python distribution installed by `libres` there is a file:
 `res/fm/rms/rms_config.yml` which contains some site specific RMS configuration.
-You should update this file with your local path to the `rms` wrapper script
-supplied by `Roxar`; alternatively you can store an alternative configuration
-file elseswhere and set the environment variable `RMS_SITE_CONFIG` to point to
-the alternative file.
+You should provide an alternative file with your local path to the `rms` wrapper
+script supplied by _Roxar_ by setting the environment variable `RMS_SITE_CONFIG`
+to point to the alternative file.

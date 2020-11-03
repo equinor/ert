@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'si-build' }
+    agent { label 'scout-ci7' }
     environment {
         WORKING_DIR = sh(script: 'mktemp -d', , returnStdout: true).trim()
     }
@@ -10,9 +10,10 @@ pipeline {
                 sh 'sh testjenkins.sh setup'
             }
         }
-	stage('build ecl') {
+	stage('build libres') {
             steps {
-                sh 'sh testjenkins.sh build_ecl'
+                sh 'sh testjenkins.sh build_libecl'
+                sh 'sh testjenkins.sh build_libres'
             }
         }
 	stage('build res') {

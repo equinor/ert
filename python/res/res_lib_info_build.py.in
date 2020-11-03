@@ -1,8 +1,0 @@
-
-class ResLibInfo(object):
-  lib_path = "${LIBRARY_OUTPUT_PATH}"
-  so_version = ".${RES_VERSION_MAJOR}.${RES_VERSION_MINOR}"
-  __version__ = "${RES_VERSION_MAJOR}.${RES_VERSION_MINOR}.${RES_VERSION_MICRO}"
-
-  def __init__(self):
-    pass

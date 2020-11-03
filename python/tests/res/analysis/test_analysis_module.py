@@ -25,6 +25,7 @@ from res.analysis import (
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.util.rng import RandomNumberGenerator
 from res.util import Matrix
+from os.path import basename
 
 
 class AnalysisModuleTest(ResTest):
@@ -52,7 +53,7 @@ class AnalysisModuleTest(ResTest):
     def test_analysis_module(self):
         am = self.createAnalysisModule()
 
-        self.assertEqual(am.getLibName(), self.libname)
+        self.assertEqual(basename(am.getLibName()), self.libname)
 
         self.assertFalse(am.getInternal())
 

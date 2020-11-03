@@ -20,6 +20,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <string>
+
 #include <ert/util/util.h>
 #include <ert/util/stringlist.h>
 
@@ -473,13 +475,21 @@ config_content_type * site_config_alloc_content(
 }
 
 
+static std::string _site_config;
+
+extern "C"
+void set_site_config(const char * site_config) {
+    auto path = realpath(site_config, NULL);
+    if (!path) {
+        perror("Failed to set default site config file");
+    } else {
+        _site_config = path;
+        free(path);
+    }
+}
+
 const char * site_config_get_location() {
-    const char * site_config = NULL;
-
-    #ifdef SITE_CONFIG_FILE
-        site_config = SITE_CONFIG_FILE;
-    #endif
-
+    const char * site_config = _site_config.c_str();
     const char * env_site_config  = getenv("ERT_SITE_CONFIG");
 
     if(env_site_config != NULL) {

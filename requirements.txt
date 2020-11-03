@@ -1,14 +1,17 @@
-# The python wrappers to libecl is required by libres, but there is
-# not yet any pip package for that, it is therefor just mentioned here
-# as a comment, and must be installed by building libecl from source.
-# libecl
+# From pyproject.toml
+ecl
+setuptools_scm
+wheel
+scikit-build
+cmake
+ninja
 
-cwrap
-numpy>=1.12.0
-pandas
-pyyaml
-jinja2
-requests
-psutil
+# From setup.py install_requires
+ecl
 futures
-future
+jinja2
+numpy
+pandas
+psutil
+pyyaml
+requests

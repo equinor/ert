@@ -21,7 +21,8 @@ build_and_test () {
 	rm -rf jenkinsbuild
 	mkdir jenkinsbuild
 	run setup
-	run build_ecl
+	run build_libecl
+	run build_libres
 	run build_res
 	run run_ctest
 	run run_pytest_equinor
@@ -29,53 +30,43 @@ build_and_test () {
 }
 
 setup () {
-	run source_build_tools
 	run setup_variables
-	run clone_repos
 	run create_directories
 	run create_virtualenv
+	run source_build_tools
+	run clone_repos
+	run setup_testdir
 }
 
-build_ecl () {
+build_libecl () {
 	run enable_environment
 
-	pushd $LIBECL_ROOT
-	python -m pip install -r requirements.txt
 	pushd $LIBECL_BUILD
-
-	cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL \
-		  -DINSTALL_ERT_LEGACY=ON \
-		  -DBUILD_TESTS=OFF \
-		  -DUSE_RPATH=ON \
-		  -DENABLE_PYTHON=ON
+	cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL
 	make -j 6 install
 	popd
+}
+
+build_libres () {
+	run enable_environment
+
+	pushd $LIBRES_BUILD
+	cmake .. -DEQUINOR_TESTDATA_ROOT=/project/res-testdata/ErtTestData \
+		  -DCMAKE_PREFIX_PATH=$INSTALL \
+		  -DCMAKE_INSTALL_PREFIX=$INSTALL \
+		  -DBUILD_TESTS=ON
+	make -j 6 install
 	popd
 }
 
 build_res () {
 	run enable_environment
-
-	pushd $LIBRES_ROOT
-	python -m pip install -r requirements.txt
-	python -m pip install -r test_requirements.txt
-	pushd $LIBRES_BUILD
-	echo "PYTHON:"$(which python)
-	cmake .. -DEQUINOR_TESTDATA_ROOT=/project/res-testdata/ErtTestData \
-		  -DCMAKE_PREFIX_PATH=$INSTALL \
-		  -DCMAKE_MODULE_PATH=$INSTALL/share/cmake/Modules \
-		  -DCMAKE_INSTALL_PREFIX=$INSTALL \
-		  -DBUILD_TESTS=ON \
-		  -DENABLE_PYTHON=ON
-
-	make -j 6 install
-	popd
-	popd
+	pip install $LIBRES_ROOT
+	pip install -r test_requirements.txt
 }
 
 source_build_tools() {
-	source /opt/rh/devtoolset-7/enable
-	LIBECL_VERSION="" PYTHON_VERSION="3.6.4" GCC_VERSION=7.3.0 CMAKE_VERSION=3.10.2 source /prog/sdpsoft/env.sh
+	export PATH=/opt/rh/devtoolset-8/root/bin:$PATH
 	python --version
 	gcc --version
 	cmake --version
@@ -83,66 +74,69 @@ source_build_tools() {
 	set -e
 }
 
-setup_variables () {
+setup_testdir() {
+	mkdir -p $TESTDIR/{.git,python}
+	ln -s {$LIBRES_ROOT,$TESTDIR}/lib
+	ln -s {$LIBRES_ROOT,$TESTDIR}/test-data
+	ln -s {$LIBRES_ROOT,$TESTDIR}/share
+	cp -R {$LIBRES_ROOT,$TESTDIR}/python/tests
+}
 
+setup_variables () {
 	ENV=$WORKING_DIR/venv
 	INSTALL=$WORKING_DIR/install
 
 	LIBECL_ROOT=$WORKING_DIR/libecl
-
 	LIBECL_BUILD=$LIBECL_ROOT/build
 
 	LIBRES_ROOT=$WORKING_DIR/libres
 	LIBRES_BUILD=$LIBRES_ROOT/build
 
-	KOMODO_VERSION=bleeding
+	TESTDIR=$WORKING_DIR/testdir
 }
 
 enable_environment () {
-	run source_build_tools
 	run setup_variables
-
 	source $ENV/bin/activate
+	run source_build_tools
+
 	export ERT_SHOW_BACKTRACE=Y
-	export ECL_SITE_CONFIG=/project/res/komodo/$KOMODO_VERSION/root/lib/python3.6/site-packages/res/fm/ecl/ecl_config.yml
-	export RMS_SITE_CONFIG=/project/res/komodo/$KOMODO_VERSION/root/lib/python3.6/site-packages/res/fm/rms/rms_config.yml
-	export LD_LIBRARY_PATH=$INSTALL/lib64:$LD_LIBRARY_PATH
-	export PYTHONPATH=$INSTALL/lib/python3.6/site-packages:$PYTHONPATH
-	export PYTHONFAULTHANDLER=PYTHONFAULTHANDLER
+	export RMS_SITE_CONFIG=/prog/res/komodo/bleeding-py36-rhel7/root/lib/python3.6/site-packages/ert_configurations/resources/rms_config.yml
 }
 
 create_directories () {
 	mkdir $INSTALL
-	mkdir $LIBECL_BUILD
-	mkdir $LIBRES_BUILD
 }
 
 clone_repos () {
+	echo "Cloning into $LIBECL_ROOT"
+	git clone https://github.com/equinor/libecl $LIBECL_ROOT
+	mkdir -p $LIBECL_BUILD
+
 	echo "Cloning into $LIBRES_ROOT"
 	git clone . $LIBRES_ROOT
-
-	source ./.libecl_version
-
-	echo "Cloning into $LIBECL_ROOT"
-	git clone -b $LIBECL_VERSION https://github.com/equinor/libecl $LIBECL_ROOT
+	mkdir -p $LIBRES_BUILD
+	ln -s /project/res-testdata/ErtTestData $LIBRES_ROOT/test-data/Equinor
 }
 
 create_virtualenv () {
 	mkdir $ENV
 	python3 -m venv $ENV
 	source $ENV/bin/activate
+	pip install -U pip wheel setuptools cmake
 }
 
 run_ctest () {
 	run enable_environment
 	pushd $LIBRES_BUILD
+	export ERT_SITE_CONFIG=$INSTALL/share/ert/site-config
 	ctest -j $CTEST_JARG -E Lint --output-on-failure
 	popd
 }
 
 run_pytest_normal () {
 	run enable_environment
-	pushd $LIBRES_ROOT/python
+	pushd $TESTDIR
 	python -m pytest -m "not equinor_test" --durations=10
 	popd
 }
@@ -150,7 +144,7 @@ run_pytest_normal () {
 
 run_pytest_equinor () {
 	run enable_environment
-	pushd $LIBRES_ROOT/python
+	pushd $TESTDIR
 	python -m pytest -m "equinor_test" --durations=10
 	popd
 }

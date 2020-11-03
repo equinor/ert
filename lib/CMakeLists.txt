@@ -9,7 +9,15 @@ else ()
    message(STATUS "LSF not found")
 endif ()
 
-add_library(res res_util/res_log.cpp
+if(NOT SKBUILD)
+  # Link directly to libecl if not using `pip install`
+  find_package(ecl REQUIRED)
+  set(ECL ecl)
+  set(RES res)
+endif()
+
+add_library(res SHARED
+  res_util/res_log.cpp
                 res_util/log.cpp
                 res_util/es_testdata.cpp
                 res_util/arg_pack.cpp
@@ -184,32 +192,31 @@ add_library(res res_util/res_log.cpp
 
 #-----------------------------------------------------------------
 
-add_library(rml_enkf SHARED analysis/modules/rml_enkf_config.c
-                            analysis/modules/rml_enkf.c
-                            analysis/modules/rml_enkf_common.c
-                            analysis/modules/rml_enkf_log.c
-                            )
-
-target_link_libraries(rml_enkf PRIVATE res ecl ${CMAKE_DL_LIBS})
-target_include_directories(rml_enkf PRIVATE analysis/modules)
+add_library(rml_enkf SHARED
+  analysis/modules/rml_enkf_config.c
+  analysis/modules/rml_enkf.c
+  analysis/modules/rml_enkf_common.c
+  analysis/modules/rml_enkf_log.c)
+target_link_libraries(rml_enkf PRIVATE ${RES} ${ECL} ${CMAKE_DL_LIBS})
+target_include_directories(rml_enkf PRIVATE ${ECL_INCLUDE_DIRS} include analysis/modules)
 set_target_properties(rml_enkf PROPERTIES VERSION 1.0
-                              SOVERSION 1.0
-                                  PREFIX "")
+  SOVERSION 1.0
+  PREFIX "")
 
-set( ies_source analysis/modules/ies_enkf.c
-                analysis/modules/ies_enkf_config.c
-                analysis/modules/ies_enkf_data.c)
+add_library(ies SHARED
+  analysis/modules/ies_enkf.c
+  analysis/modules/ies_enkf_config.c
+  analysis/modules/ies_enkf_data.c)
+target_link_libraries(ies PRIVATE ${RES} ${ECL} ${CMAKE_DL_LIBS})
+target_include_directories(ies PRIVATE ${ECL_INCLUDE_DIRS} include analysis/modules)
 
-add_library(ies MODULE ${ies_source})
-target_link_libraries(ies PRIVATE res ecl ${CMAKE_DL_LIBS})
-target_include_directories(ies PRIVATE analysis/modules)
-
-add_library(std_enkf_debug SHARED analysis/modules/std_enkf_debug.c)
-target_link_libraries(std_enkf_debug PRIVATE res ecl ${CMAKE_DL_LIBS})
-target_include_directories(std_enkf_debug PRIVATE modules)
+add_library(std_enkf_debug SHARED
+  analysis/modules/std_enkf_debug.c)
+target_link_libraries(std_enkf_debug PRIVATE ${RES} ${ECL} ${CMAKE_DL_LIBS})
+target_include_directories(std_enkf_debug PRIVATE ${ECL_INCLUDE_DIRS} include modules)
 set_target_properties(std_enkf_debug PROPERTIES VERSION 1.0
-                                                SOVERSION 1.0
-                                                PREFIX "")
+  SOVERSION 1.0
+  PREFIX "")
 
 #-----------------------------------------------------------------
 
@@ -218,31 +225,21 @@ set_target_properties(std_enkf_debug PROPERTIES VERSION 1.0
 target_compile_definitions(res PRIVATE -DINTERNAL_LINK)
 
 find_package(LAPACK REQUIRED)
-target_link_libraries( res PUBLIC ecl ${LAPACK_LIBRARIES} ${LAPACK_LINKER_FLAGS})
+target_link_libraries(res PUBLIC ${ECL} ${LAPACK_LIBRARIES} ${LAPACK_LINKER_FLAGS})
 target_include_directories(res
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private-include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private-include/ext/json>
-        )
-
-
-set_target_properties( res PROPERTIES VERSION ${RES_VERSION_MAJOR}.${RES_VERSION_MINOR} SOVERSION ${RES_VERSION_MAJOR} )
+        PRIVATE "${ECL_INCLUDE_DIRS}")
 
 target_compile_definitions(res PRIVATE
-            -DGIT_COMMIT=${GIT_COMMIT}
-            -DGIT_COMMIT_SHORT=${GIT_COMMIT_SHORT}
-            -DRES_VERSION_MAJOR=${RES_VERSION_MAJOR}
-            -DRES_VERSION_MINOR=${RES_VERSION_MINOR}
-            -DRES_VERSION_MICRO=${RES_VERSION_MICRO}
-            -DCOMPILE_TIME_STAMP="${RES_BUILD_TIME}"
-            -DSITE_CONFIG_FILE=\"${__SITE_CONFIG_FILE}\"
-)
-
-
-
-
-install(DIRECTORY include/ DESTINATION include)
+  -DGIT_COMMIT=${GIT_COMMIT}
+  -DGIT_COMMIT_SHORT=${GIT_COMMIT_SHORT}
+  -DRES_VERSION_MAJOR=${RES_VERSION_MAJOR}
+  -DRES_VERSION_MINOR=${RES_VERSION_MINOR}
+  -DRES_VERSION_MICRO=${RES_VERSION_MICRO}
+  -DCOMPILE_TIME_STAMP="${RES_BUILD_TIME}")
 
 install(TARGETS res
         EXPORT res-config
@@ -265,45 +262,32 @@ install(TARGETS ies
 if (NOT BUILD_TESTS)
     return ()
 endif()
+
 foreach(name ies_enkf_config ies_enkf_data)
-       add_executable(${name} analysis/modules/tests/${name}.cpp ${ies_source})
-       target_include_directories(${name} PRIVATE analysis/modules)
-       target_link_libraries(${name}  res)
-       add_test(NAME ${name} COMMAND ${name})
+  add_executable(${name} analysis/modules/tests/${name}.cpp ${ies_source})
+  target_include_directories(${name} PRIVATE analysis/modules)
+  target_link_libraries(${name} res ies)
+  add_test(NAME ${name} COMMAND ${name})
 endforeach()
+
 add_executable( ies_module analysis/modules/tests/ies_enkf_module.cpp)
-target_link_libraries(ies_module res)
+target_link_libraries(ies_module res ies)
 add_test(NAME ies_module COMMAND ies_module $<TARGET_FILE_NAME:ies> ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly)
 
 add_executable(ies_linalg analysis/modules/tests/ies_linalg.cpp ${ies_source})
 target_include_directories(ies_linalg PRIVATE analysis/modules)
-target_link_libraries(ies_linalg  res)
+target_link_libraries(ies_linalg res ies)
 add_test(NAME ies_linalg COMMAND ies_linalg ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly)
 
 add_executable(ies_std_compare analysis/modules/tests/ies_std_compare.cpp ${ies_source})
 target_include_directories(ies_std_compare PRIVATE analysis/modules)
-target_link_libraries(ies_std_compare  res)
+target_link_libraries(ies_std_compare res ies)
 add_test(NAME ies_std_compare COMMAND ies_std_compare ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly)
 
 add_executable(ies_iteration analysis/modules/tests/ies_iteration.cpp ${ies_source})
 target_include_directories(ies_iteration PRIVATE analysis/modules)
-target_link_libraries(ies_iteration  res)
+target_link_libraries(ies_iteration res ies)
 add_test(NAME ies_iteration COMMAND ies_iteration ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly_normal)
-
-
-# The ies library is only mentioned as a dependency indirectly through the
-# <TARGET_FILE:ies> generator expression, seems that is not sufficient to
-# guarantee that it is indeed built in correct order; we therefor add an
-# explicit dependency here.
-foreach( ies_test ies_enkf_config
-                  ies_enkf_data
-                  ies_module
-                  ies_linalg
-                  ies_std_compare
-                  ies_iteration )
-   add_dependencies( ${ies_test} ies )
-endforeach()
-
 
 foreach(name ert_util_logh
              ert_util_arg_pack
@@ -492,21 +476,22 @@ add_test(NAME job_loadFail3
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/internalFail
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/externalFail)
 
+set_target_properties(job_workflow_test PROPERTIES ENABLE_EXPORTS ON)
 add_test(NAME job_workflow_test
          COMMAND job_workflow_test
-                 ${EXECUTABLE_OUTPUT_PATH}
+                 ${CMAKE_CURRENT_BINARY_DIR}
                  ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/internal_job)
 
 add_test(NAME job_lsf_exclude_hosts_test
          COMMAND job_lsf_exclude_hosts_test job_program NULL LOCAL)
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/job_queue/tests/data/qsub_emulators/
-     DESTINATION ${EXECUTABLE_OUTPUT_PATH})
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_test(NAME job_torque_submit_test
-         WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}
+         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
          COMMAND job_torque_submit_test dummyparam)
-set_property(TEST job_torque_submit_test PROPERTY ENVIRONMENT “setenv PATH ${EXECUTABLE_OUTPUT_PATH}:$PATH”)
+set_property(TEST job_torque_submit_test PROPERTY ENVIRONMENT “setenv PATH ${CMAKE_CURRENT_BINARY_DIR}:$PATH”)
 
 add_test(NAME ext_joblist_test
          COMMAND ext_joblist_test
@@ -616,8 +601,6 @@ foreach (test   enkf_active_list
     target_include_directories(${test} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private-include)
 endforeach ()
 
-
-
 function( add_config_test name command )
     add_test( NAME ${name}
               COMMAND ${command} ${ARGN})
@@ -718,10 +701,6 @@ add_config_test(gen_kw_test
 add_config_test(gen_kw_logarithmic_test
                 gen_kw_logarithmic_test
                 ${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/config/gen_kw_logarithmic/config_GEN_KW_logarithmic)
-
-
-
-
 
 add_config_test(enkf_analysis_config_analysis_load enkf_analysis_config_analysis_load ${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/config/analysis_load_config)
 # It seems necessary to set the LD_LIBRARY_PATH for the loading of the

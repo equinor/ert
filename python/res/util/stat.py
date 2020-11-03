@@ -20,6 +20,7 @@ except ImportError:
 
 from cwrap import PrototypeError
 from res import ResPrototype
+from ecl import EclPrototype
 from res.util import LLSQResultEnum
 from res.util import Matrix
 
