@@ -26,6 +26,7 @@ setup(
     include_package_data=True,
     license="Open Source",
     long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     install_requires=[
         "equinor-libres",
         "ansicolors==1.1.8",
