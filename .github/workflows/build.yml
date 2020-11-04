@@ -36,14 +36,22 @@ jobs:
         pip install -r dev-requirements.txt
         pip install .
 
+    - name: Create test directory
+      run: |
+        mkdir -p testdir/.git
+        cp -r {$PWD,$PWD/testdir}/tests
+        ln -s {$PWD,$PWD/testdir}/test-data
+
     - name: Test Ubuntu
       if: matrix.os == 'ubuntu-latest'
       run: |
+        cd testdir
         xvfb-run  -s "-screen 0 640x480x24" --auto-servernum python -m pytest -sv
 
     - name: Test MacOS
       if: matrix.os == 'macos-latest'
       run: |
+        cd testdir
         python -m pytest -sv
 
     - name: Test docs and CLI
