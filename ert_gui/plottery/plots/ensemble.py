@@ -54,9 +54,9 @@ class EnsemblePlot(object):
             style.marker = '.'
 
         if is_date_supported:
-            lines = axes.plot_date(x=data.index.values, y=data, color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, linewidth=style.width, markersize=style.size)
+            lines = axes.plot_date(x=data.index.to_numpy(), y=data.to_numpy(), color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, linewidth=style.width, markersize=style.size)
         else:
-            lines = axes.plot(data.index.values, data, color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, linewidth=style.width, markersize=style.size)
+            lines = axes.plot(data.index.to_numpy(), data.to_numpy(), color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, linewidth=style.width, markersize=style.size)
 
         if len(lines) > 0:
             plot_config.addLegendItem(ensemble_label, lines[0])
