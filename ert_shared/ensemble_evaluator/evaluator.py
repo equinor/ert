@@ -86,36 +86,30 @@ class EnsembleEvaluator:
         done = self._done
 
         async def handle_client(websocket, path):
-            try:
-                logger.debug(f"Client {websocket.remote_address} connected")
-                self._users.add(websocket)
+            logger.debug(f"Client {websocket.remote_address} connected")
+            self._users.add(websocket)
 
-                data = self._snapshot.to_dict()
-                out_cloudevent = CloudEvent(
-                    {
-                        "type": identifiers.EVTYPE_EE_SNAPSHOT,
-                        "source": "/ert/ee/0",
-                        "id": self.event_index(),
-                    },
-                    data,
-                )
-                message = to_json(out_cloudevent).decode()
-                await websocket.send(message)
+            data = self._snapshot.to_dict()
+            out_cloudevent = CloudEvent(
+                {
+                    "type": identifiers.EVTYPE_EE_SNAPSHOT,
+                    "source": "/ert/ee/0",
+                    "id": self.event_index(),
+                },
+                data,
+            )
+            message = to_json(out_cloudevent).decode()
+            await websocket.send(message)
 
-                async for message in websocket:
-                    client_event = from_json(message)
-                    if client_event["type"] == identifiers.EVTYPE_EE_TERMINATE_REQUEST:
-                        logger.debug(
-                            f"Client {websocket.remote_address} asked to terminate"
-                        )
-                        self._stop()
-            except Exception as e:
-                import traceback
-
-                logger.error(e, traceback.format_exc())
-            finally:
-                logger.debug("Serverside: Client disconnected")
-                self._users.remove(websocket)
+            async for message in websocket:
+                client_event = from_json(message)
+                if client_event["type"] == identifiers.EVTYPE_EE_TERMINATE_REQUEST:
+                    logger.debug(
+                        f"Client {websocket.remote_address} asked to terminate"
+                    )
+                    self._stop()
+            logger.debug("Serverside: Client disconnected")
+            self._users.remove(websocket)
 
         async def handle_dispatch(websocket, path):
             # dispatch_id = int(path.split("/")[2])  # assuming format is /dispatch/<id>
@@ -162,7 +156,7 @@ class EnsembleEvaluator:
                 message = self.terminate_message()
                 if self._users:
                     await asyncio.wait([user.send(message) for user in self._users])
-                logger.debug("send terminated")
+                logger.debug("sent terminated")
             logger.debug("server exiting")
 
         server_future = loop.create_task(evaluator_server(done))
@@ -197,23 +191,3 @@ class EnsembleEvaluator:
 
     def stop(self):
         self._loop.call_soon_threadsafe(self._stop)
-
-
-def get_job_id(path):
-    return path.split("/")[11]
-
-
-def get_step_id(path):
-    return path.split("/")[9]
-
-
-def get_stage_id(path):
-    return path.split("/")[7]
-
-
-def get_real_id(path):
-    return path.split("/")[5]
-
-
-def get_ee_id(path):
-    return path.split("/")[3]

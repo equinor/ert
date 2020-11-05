@@ -20,6 +20,7 @@ import pytest
 import asyncio
 import threading
 import json
+import logging
 
 
 class DummyEnsemble:
@@ -95,6 +96,7 @@ class Client:
     def _run(self, loop):
         asyncio.set_event_loop(loop)
         uri = f"ws://{self.host}:{self.port}{self.path}"
+        print(f"running in {uri}")
 
         async def send_loop(q):
             async with websockets.connect(uri) as websocket:
@@ -123,6 +125,7 @@ def send_dispatch_event(client, event_type, source, event_id, data):
 
 def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
     asyncio.set_event_loop(asyncio.new_event_loop())
+    asyncio.get_event_loop()
     monitor = evaluator.run()
     events = monitor.track()
 
