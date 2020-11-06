@@ -1,3 +1,5 @@
+from asyncio.tasks import wait_for
+from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 import logging
 from queue import Empty
 import threading
@@ -70,6 +72,7 @@ class EvaluatorTracker:
                                 time.sleep(5)
                                 drainer_logger.debug("connecting to new monitor...")
                                 monitor = create_ee_monitor(host, port)
+                                wait_for_ws(monitor.get_base_uri(), max_retries=2)
                                 drainer_logger.debug("connected")
                                 break
                             except ConnectionRefusedError as e:

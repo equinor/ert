@@ -23,6 +23,9 @@ class _Monitor:
         self._receive_future = None
         self._event_index = 1
 
+    def get_base_uri(self):
+        return self._base_uri
+
     def event_index(self):
         index = self._event_index
         self._event_index += 1

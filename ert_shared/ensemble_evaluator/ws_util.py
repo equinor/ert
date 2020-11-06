@@ -22,4 +22,4 @@ async def wait(url, max_retries):
             logger.info(f"{__name__} failed to connect ({retries}/{max_retries}: {e}")
             await asyncio.sleep(0.2 + 5 * retries)
             retries += 1
-    raise ConnectionRefusedError(f"could not connect to {url} after {retries}")
+    raise ConnectionRefusedError(f"Could not connect to {url} after {retries} retries")
