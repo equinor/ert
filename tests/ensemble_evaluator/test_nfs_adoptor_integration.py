@@ -48,10 +48,9 @@ async def test_append_to_file(tmpdir, unused_tcp_port, event_loop):
     host = "localhost"
     port = unused_tcp_port
     log_file = Path(tmpdir) / "log"
-    loop = asyncio.get_event_loop()
-    adaptor_task = loop.create_task(nfs_adaptor(log_file, f"ws://{host}:{port}"))
-    mock_ws_task = loop.create_task(mock_ws(host, port))
-    mock_writer_task = loop.create_task(mock_writer(log_file))
+    adaptor_task = event_loop.create_task(nfs_adaptor(log_file, f"ws://{host}:{port}"))
+    mock_ws_task = event_loop.create_task(mock_ws(host, port))
+    mock_writer_task = event_loop.create_task(mock_writer(log_file))
     await asyncio.wait(
         (adaptor_task, mock_ws_task, mock_writer_task),
         timeout=2,
