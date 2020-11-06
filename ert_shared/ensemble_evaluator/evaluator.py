@@ -18,10 +18,10 @@ logger = logging.getLogger(__name__)
 
 
 class EnsembleEvaluator:
-    def __init__(self, ensemble, port=8765):
+    def __init__(self, ensemble, config):
 
-        self._host = "localhost"
-        self._port = port
+        self._host = config.get("host")
+        self._port = config.get("port")
         self._ensemble = ensemble
 
         self._ws_thread = threading.Thread(

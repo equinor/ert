@@ -16,6 +16,7 @@ from ert_shared.ensemble_evaluator.queue_adaptor import JobQueueManagerAdaptor
 from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
+from ert_shared.ensemble_evaluator.config import load_config
 
 logger = logging.getLogger(__name__)
 
@@ -23,31 +24,29 @@ logger = logging.getLogger(__name__)
 @contextmanager
 def _attach(run_context, run_path_list, forward_model):
     asyncio.set_event_loop(asyncio.new_event_loop())
-    ws_url = "ws://localhost:8765"
-    dispatch_url = f"{ws_url}/dispatch"
+    ee_config = load_config()
 
     builder = create_ensemble_builder_from_legacy(run_context, forward_model)
     ensemble = builder.build()
     logger.debug(builder)
 
-    ee = EnsembleEvaluator(ensemble)
+    ee = EnsembleEvaluator(ensemble, ee_config)
     logger.debug(ee)
     ee.run()
 
     logger.debug("waiting for ee ws")
 
-    wait_for_ws(ws_url)
+    wait_for_ws(ee_config.get("url"))
 
     logger.debug("ee ws started")
 
     event_logs = [Path(path.runpath) / "event_log" for path in run_path_list]
     dispatch_thread = Thread(
-        target=_attach_to_dispatch, args=(dispatch_url, event_logs)
+        target=_attach_to_dispatch, args=(ee_config.get("dispatch_url"), event_logs)
     )
     dispatch_thread.start()
 
-    # XXX: these magic strings will eventually come from EE itself
-    JobQueueManagerAdaptor.ws_url = dispatch_url
+    JobQueueManagerAdaptor.ws_url = ee_config.get("dispatch_url")
     JobQueueManagerAdaptor.ee_id = str(uuid.uuid1()).split("-")[0]
     patcher = patch(
         "res.enkf.enkf_simulation_runner.JobQueueManager", new=JobQueueManagerAdaptor

@@ -15,6 +15,7 @@ from ert_shared.ensemble_evaluator.entity.ensemble import (
 from ert_shared.ensemble_evaluator.entity.snapshot import SnapshotBuilder
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
+from ert_shared.ensemble_evaluator.config import load_config
 import websockets
 import pytest
 import asyncio
@@ -70,7 +71,7 @@ def evaluator(unused_tcp_port):
         .set_ensemble_size(2)
         .build()
     )
-    ee = EnsembleEvaluator(ensemble=ensemble, port=unused_tcp_port)
+    ee = EnsembleEvaluator(ensemble=ensemble, config=load_config())
     yield ee
     ee.stop()
 
