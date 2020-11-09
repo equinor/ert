@@ -14,9 +14,8 @@ from ert_shared.plugins import ErtPluginManager
 
 
 class GertMainWindow(QMainWindow):
-    def __init__(self, config_file, storage_client):
+    def __init__(self, config_file):
         QMainWindow.__init__(self)
-        self._storage_client = storage_client
         self.tools = {}
 
         self.resize(300, 700)
@@ -97,8 +96,6 @@ class GertMainWindow(QMainWindow):
         #Use QT settings saving mechanism
         #settings stored in ~/.config/Equinor/ErtGui.conf
         self.__saveSettings()
-        if self._storage_client is not None:
-            self._storage_client.shutdown()
         QMainWindow.closeEvent(self, event)
 
     def __fetchSettings(self):

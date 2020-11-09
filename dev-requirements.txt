@@ -6,6 +6,5 @@ sphinx
 sphinx-argparse
 sphinx_rtd_theme
 pytest-asyncio
-pytest-flask-sqlalchemy
 requests
 pytest-timeout

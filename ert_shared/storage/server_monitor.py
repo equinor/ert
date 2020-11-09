@@ -16,7 +16,7 @@ def empty(arr):
 
 
 class ServerMonitor(threading.Thread):
-    EXEC_ARGS = [sys.executable, "-m", "ert_shared.storage.http_server"]
+    EXEC_ARGS = [sys.executable, "-m", "ert_shared.storage"]
     TIMEOUT = 20  # Wait 20s for the server to start before panicking
     _instance = None
 
@@ -31,16 +31,17 @@ class ServerMonitor(threading.Thread):
         self._server_info_lock = threading.Lock()
         self._server_info_lock.acquire()
 
+        env = os.environ.copy()
         args = []
         if not lockfile:
             args.append("--disable-lockfile")
         if rdb_url:
             args.extend(("--rdb-url", rdb_url))
+            env["ERT_STORAGE_DB"] = str(rdb_url)
 
         fd_read, fd_write = os.pipe()
         self._comm_pipe = os.fdopen(fd_read)
 
-        env = os.environ.copy()
         env["ERT_COMM_FD"] = str(fd_write)
         self._proc = Popen(
             self.EXEC_ARGS + args,

@@ -3,7 +3,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import backref, relationship
 from sqlalchemy.orm.collections import attribute_mapped_collection
-from sqlalchemy.schema import UniqueConstraint, MetaData
+from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.sql import func
 
 

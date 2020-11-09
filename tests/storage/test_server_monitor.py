@@ -131,7 +131,6 @@ def test_json_exists(tmpdir):
 
 def test_integration(request, tmpdir):
     """Actually start the server, wait for it to be online and do a health check"""
-
     with tmpdir.as_cwd():
         server = ServerMonitor()
         server.start()
@@ -156,3 +155,22 @@ def test_integration(request, tmpdir):
         # Global connection info no longer valid
         with pytest.raises(RuntimeError):
             connection.get_info()
+
+
+def test_integration_auth(request, tmpdir):
+    """Start the server, wait for it to be online and then do a health check with an
+    invalid auth"""
+    with tmpdir.as_cwd():
+        server = ServerMonitor()
+        server.start()
+        request.addfinalizer(lambda: server.shutdown())
+
+        # No auth
+        resp = requests.get(f"{server.fetch_url()}/healthcheck")
+        assert resp.status_code == 401
+
+        # Invalid auth
+        resp = requests.get(
+            f"{server.fetch_url()}/healthcheck", auth=("__token__", "invalid-token")
+        )
+        assert resp.status_code == 403

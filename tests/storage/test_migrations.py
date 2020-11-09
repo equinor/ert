@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 from sqlalchemy.engine import create_engine
 
-from ert_shared.storage import ErtStorage
-from ert_shared.storage.models import Entity
+from ert_shared.storage.db import ErtStorage
+from ert_shared.storage.database_schema import Entity
 
 
 def test_initialize_from_scratch(tmpdir):
