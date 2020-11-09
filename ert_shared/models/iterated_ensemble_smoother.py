@@ -4,7 +4,7 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
 
-from ert_shared.storage.extraction_api import dump_to_new_storage
+from ert_shared.storage.extraction import dump_to_new_storage
 
 
 class IteratedEnsembleSmoother(BaseRunModel):

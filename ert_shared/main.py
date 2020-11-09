@@ -7,7 +7,7 @@ from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
 from ert_shared import clear_global_state
 from ert_shared.cli.main import run_cli
-from ert_shared.storage.http_server import run_server
+from ert_shared.storage.main import run_server
 from ert_shared.cli import (
     ENSEMBLE_SMOOTHER_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -387,7 +387,7 @@ def start_ert_server():
 
 @feature_enabled("new-storage")
 def initialize_databases():
-    from ert_shared.storage import ERT_STORAGE
+    from ert_shared.storage.db import ERT_STORAGE
 
     ERT_STORAGE.initialize()
 

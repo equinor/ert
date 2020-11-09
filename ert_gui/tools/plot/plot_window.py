@@ -25,13 +25,10 @@ STATISTICS = "Statistics"
 
 
 class PlotWindow(QMainWindow):
-    def __init__(self, config_file, storage_client, parent):
+    def __init__(self, config_file, parent):
         QMainWindow.__init__(self, parent)
 
-        if storage_client:
-            self._api = storage_client
-        else:
-            self._api = PlotApi(ERT.enkf_facade)
+        self._api = PlotApi(ERT.enkf_facade)
 
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)

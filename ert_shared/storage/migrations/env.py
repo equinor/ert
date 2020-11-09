@@ -4,7 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-from ert_shared.storage.models import Entity
+from ert_shared.storage.database_schema import Entity
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

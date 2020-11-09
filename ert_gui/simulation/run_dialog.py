@@ -19,7 +19,7 @@ from res.job_queue import JobStatusType
 class RunDialog(QDialog):
     simulation_done = Signal(bool, str)
 
-    def __init__(self, config_file, run_model, simulation_arguments, storage_client, parent=None):
+    def __init__(self, config_file, run_model, simulation_arguments, parent=None):
         QDialog.__init__(self, parent)
         self.setWindowFlags(Qt.Window)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
@@ -35,7 +35,6 @@ class RunDialog(QDialog):
             ert = run_model.ert()
 
         self._simulations_argments = simulation_arguments
-        self._storage_client = storage_client
 
         self.simulations_tracker = create_tracker(
             run_model, qtimer_cls=QTimer,
@@ -77,7 +76,7 @@ class RunDialog(QDialog):
 
         self.running_time = QLabel("")
 
-        self.plot_tool = PlotTool(config_file, self._storage_client)
+        self.plot_tool = PlotTool(config_file)
         self.plot_tool.setParent(self)
         self.plot_button = QPushButton(self.plot_tool.getName())
         self.plot_button.clicked.connect(self.plot_tool.trigger)
