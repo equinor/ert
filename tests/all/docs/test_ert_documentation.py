@@ -29,7 +29,7 @@ from ert_shared._doc_utils.ert_jobs import _ErtDocumentation
 )
 def test_divide_into_categories_all_default(test_input, expected_length):
     result = _ErtDocumentation._divide_into_categories(test_input)
-    assert len(result["other"]) == expected_length
+    assert len(result["other"]["other"]) == expected_length
 
 
 def test_divide_into_categories_lower_case_job():
@@ -38,7 +38,7 @@ def test_divide_into_categories_lower_case_job():
 
 
 @pytest.mark.parametrize(
-    "test_input, expected_category",
+    "test_input, expected_category, expected_sub_category",
     [
         (
             {
@@ -47,6 +47,7 @@ def test_divide_into_categories_lower_case_job():
                 },
             },
             "test",
+            "category",
         ),
         (
             {
@@ -55,18 +56,23 @@ def test_divide_into_categories_lower_case_job():
                 },
             },
             "some_category",
+            "category",
         ),
         (
             {
                 "JOB1": {},
             },
             "other",
+            "other",
         ),
     ],
 )
-def test_divide_into_categories_main_category(test_input, expected_category):
+def test_divide_into_categories_main_category(
+    test_input, expected_category, expected_sub_category
+):
     result = _ErtDocumentation._divide_into_categories(test_input)
     assert expected_category in result
+    assert expected_sub_category in result[expected_category]
 
 
 @pytest.mark.parametrize(
@@ -108,5 +114,5 @@ def test_divide_into_categories_main_category(test_input, expected_category):
 )
 def test_divide_into_categories_job_source(test_input, expected_source_package):
     categories = _ErtDocumentation._divide_into_categories(test_input)
-    result = [docs.job_source for docs in categories["other"]]
+    result = [docs.job_source for docs in categories["other"]["other"]]
     assert expected_source_package == result
