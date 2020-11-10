@@ -1,4 +1,5 @@
 import sys
+from collections import defaultdict
 
 import docutils.statemachine
 from docutils import nodes
@@ -123,7 +124,7 @@ class _ErtDocumentation(SphinxDirective):
     @staticmethod
     def _divide_into_categories(jobs):
 
-        categories = dict()
+        categories = defaultdict(lambda: defaultdict(list))
         for job_name, docs in jobs.items():
             # Job names in ERT traditionally used upper case letters
             # for the names of the job. However, at some point duplicate
@@ -138,11 +139,15 @@ class _ErtDocumentation(SphinxDirective):
                 _ErtDocumentation._CATEGORY_DEFAULT,
             )
 
-            main_category = category.split(".")[0]
-            if main_category not in categories:
-                categories[main_category] = list()
+            split_categories = category.split(".")
+            if len(split_categories) > 1:
+                main_category, sub_category = split_categories[0:2]
+            elif len(split_categories) == 1:
+                main_category, sub_category = split_categories[0], "other"
+            else:
+                main_category, sub_category = "other", "other"
 
-            categories[main_category].append(
+            categories[main_category][sub_category].append(
                 _ForwardModelDocumentation(
                     name=job_name,
                     category=category,
@@ -168,7 +173,7 @@ class _ErtDocumentation(SphinxDirective):
                 )
             )
 
-        return categories
+        return dict({k: dict(v) for k, v in categories.items()})
 
     def _create_forward_model_section_node(self, section_id, title):
         node = _create_section_with_title(section_id=section_id, title=title)
@@ -185,18 +190,30 @@ class _ErtDocumentation(SphinxDirective):
             category_section_node = _create_section_with_title(
                 section_id=category + "-category", title=category.capitalize()
             )
+            sub_jobs_map = job_categories[category]
+            for sub_i, sub in enumerate(sorted(sub_jobs_map.keys())):
+                sub_section_node = _create_section_with_title(
+                    section_id=category + "-" + sub + "-subcategory",
+                    title=sub.capitalize(),
+                )
 
-            for job in job_categories[category]:
-                job_section_node = job.create_node(self.state)
-                category_section_node.append(job_section_node)
+                for job in sub_jobs_map[sub]:
+                    job_section_node = job.create_node(self.state)
+                    sub_section_node.append(job_section_node)
+
+                # A section is not allowed to end with a transition,
+                # so we don't add after the last sub-category
+                if sub_i < len(sub_jobs_map) - 1:
+                    sub_section_node.append(nodes.transition())
+
+                category_section_node.append(sub_section_node)
+
+            main_node.append(category_section_node)
 
             # A section is not allowed to end with a transition,
             # so we don't add after the last category
             if category_index < len(job_categories) - 1:
                 category_section_node.append(nodes.transition())
-
-            main_node.append(category_section_node)
-
         return [main_node]
 
 
