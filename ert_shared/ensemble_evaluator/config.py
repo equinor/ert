@@ -30,7 +30,7 @@ def load_config(config_path=CONFIG_FILE):
         return {
             "host": host,
             "port": port,
-            "url": f"{host}:{port}",
-            "client_url": f"{host}:{port}/{CLIENT_URI}",
-            "dispatch_url": f"{host}:{port}/{DISPATCH_URI}",
+            "url": f"ws://{host}:{port}",
+            "client_url": f"ws://{host}:{port}/{CLIENT_URI}",
+            "dispatch_url": f"ws://{host}:{port}/{DISPATCH_URI}",
         }

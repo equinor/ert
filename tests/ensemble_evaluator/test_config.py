@@ -19,9 +19,9 @@ def test_load_config(tmpdir, host, port):
     expected_config = {
         "host": expected_host,
         "port": expected_port,
-        "url": f"{expected_host}:{expected_port}",
-        "client_url": f"{expected_host}:{expected_port}/{CLIENT_URI}",
-        "dispatch_url": f"{expected_host}:{expected_port}/{DISPATCH_URI}",
+        "url": f"ws://{expected_host}:{expected_port}",
+        "client_url": f"ws://{expected_host}:{expected_port}/{CLIENT_URI}",
+        "dispatch_url": f"ws://{expected_host}:{expected_port}/{DISPATCH_URI}",
     }
 
     if host is not None:
