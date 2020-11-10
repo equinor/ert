@@ -27,7 +27,10 @@ warnings.filterwarnings(action="always", category=DeprecationWarning, module=r"r
 
 from cwrap import Prototype
 
-from ._version import version as __version__
+try:
+    from ._version import version as __version__
+except ImportError:
+    pass
 
 
 def _load_lib():
