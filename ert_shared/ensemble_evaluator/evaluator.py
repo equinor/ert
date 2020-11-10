@@ -13,6 +13,9 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
     Snapshot,
 )
+from async_generator import asynccontextmanager
+from contextlib import contextmanager
+
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +35,7 @@ class EnsembleEvaluator:
         self._done = self._loop.create_future()
 
         self._clients = set()
+        self._dispatchers_connected = asyncio.Queue(loop=self._loop)
 
         self._snapshot = self.create_snapshot(ensemble)
         self._event_index = 1
@@ -91,32 +95,48 @@ class EnsembleEvaluator:
         )
         return to_json(out_cloudevent).decode()
 
+    @contextmanager
+    def store_client(self, websocket):
+        self._clients.add(websocket)
+        yield
+        self._clients.remove(websocket)
+
     async def handle_client(self, websocket, path):
         logger.debug(f"Client {websocket.remote_address} connected.")
-        self._clients.add(websocket)
 
-        message = self.create_snapshot_msg(
-            self._ee_id, self._snapshot, self.event_index()
-        )
-        await websocket.send(message)
+        with self.store_client(websocket):
+            message = self.create_snapshot_msg(
+                self._ee_id, self._snapshot, self.event_index()
+            )
+            await websocket.send(message)
 
-        async for message in websocket:
-            client_event = from_json(message)
-            if client_event["type"] == identifiers.EVTYPE_EE_TERMINATE_REQUEST:
-                logger.debug(f"Client {websocket.remote_address} asked to terminate.")
-                self._stop()
-        logger.debug(f"Client {websocket.remote_address} disconnected.")
-        self._clients.remove(websocket)
+            async for message in websocket:
+                client_event = from_json(message)
+                if client_event["type"] == identifiers.EVTYPE_EE_TERMINATE_REQUEST:
+                    logger.debug(
+                        f"Client {websocket.remote_address} asked to terminate."
+                    )
+                    self._stop()
+            logger.debug(f"Client {websocket.remote_address} disconnected.")
+
+    @asynccontextmanager
+    async def count_dispatcher(self):
+        await self._dispatchers_connected.put(None)
+        yield
+        await self._dispatchers_connected.get()
+        self._dispatchers_connected.task_done()
 
     async def handle_dispatch(self, websocket, path):
         logger.debug(f"Dispatch {websocket.remote_address} connected.")
-        async for msg in websocket:
-            logger.debug(f"Dispatch got: {msg}.")
-            if msg == "null":
-                return
-            event = from_json(msg)
-            await dispatch.handle_event(self, event)
-        logger.debug(f"Dispatch {websocket.remote_address} disconnected.")
+
+        async with self.count_dispatcher():
+            async for msg in websocket:
+                logger.debug(f"Dispatch got: {msg}.")
+                if msg == "null":
+                    return
+                event = from_json(msg)
+                await dispatch.handle_event(self, event)
+            logger.debug(f"Dispatch {websocket.remote_address} disconnected.")
 
     async def connection_handler(self, websocket, path):
         logger.debug(f"Connection handler started for {websocket.remote_address}.")
@@ -136,10 +156,16 @@ class EnsembleEvaluator:
         ):
             await done
             logger.debug("Got done signal.")
+            # give NFS adaptors and Queue adaptors some time to read/send last events
+            try:
+                await asyncio.wait_for(self._dispatchers_connected.join(), timeout=10)
+            except asyncio.TimeoutError:
+                pass
             message = self.terminate_message()
             if self._clients:
                 await asyncio.wait([client.send(message) for client in self._clients])
             logger.debug("Sent terminated to clients.")
+
         logger.debug("Async server exiting.")
 
     def _run_server(self, loop):
