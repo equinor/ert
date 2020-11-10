@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Dict, List, Optional, Any
-
+import logging
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.entity.tool import (
     recursive_update,
@@ -33,6 +33,9 @@ _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
     ids.EVTYPE_ENSEMBLE_CANCELLED: "Cancelled",
 }
 
+logger = logging.getLogger(__name__)
+
+
 
 class PartialSnapshot:
     def __init__(self, status=None):
@@ -41,7 +44,8 @@ class PartialSnapshot:
     def update_status(self, status):
         self._data["status"] = status
 
-    def update_real(self, real_id, active=None, start_time=None, end_time=None):
+    def update_real(self, real_id, active=None, start_time=None, end_time=None,
+                    queue_state=None):
         if real_id not in self._data["reals"]:
             self._data["reals"][real_id] = {"stages": {}}
         real = self._data["reals"][real_id]
@@ -52,6 +56,8 @@ class PartialSnapshot:
             real["start_time"] = start_time
         if end_time is not None:
             real["end_time"] = end_time
+        if queue_state is not None:
+            real["queue_state"] = queue_state
         return real
 
     def update_stage(
@@ -61,7 +67,6 @@ class PartialSnapshot:
         status=None,
         start_time=None,
         end_time=None,
-        queue_state=None,
     ):
         real = self.update_real(real_id)
         if stage_id not in real["stages"]:
@@ -74,8 +79,6 @@ class PartialSnapshot:
             stage["start_time"] = start_time
         if end_time is not None:
             stage["end_time"] = end_time
-        if queue_state is not None:
-            stage["queue_state"] = queue_state
         return stage
 
     def update_step(
@@ -104,6 +107,7 @@ class PartialSnapshot:
         data=None,
         start_time=None,
         end_time=None,
+        error=None
     ):
         step = self.update_step(real_id, stage_id, step_id)
         if job_id not in step["jobs"]:
@@ -121,6 +125,9 @@ class PartialSnapshot:
             if "data" not in job:
                 job["data"] = {}
             job["data"].update(data)
+        if error is not None:
+            job["error"] = error
+
 
         return job
 
@@ -128,30 +135,33 @@ class PartialSnapshot:
         return self._data
 
     @classmethod
-    def from_cloudevent(cls, event):
+    def from_cloudevent(cls, event, current_snapshot):
         snapshot = cls()
         e_type = event["type"]
         e_source = event["source"]
+        status = _FM_TYPE_EVENT_TO_STATUS.get(e_type)
         timestamp = event["time"]
 
         if e_type in ids.EVGROUP_FM_STAGE:
-            queue_state = event.data.get("queue_event_type")
             snapshot.update_stage(
                 get_real_id(e_source),
                 get_stage_id(e_source),
-                status=_FM_TYPE_EVENT_TO_STATUS[e_type],
+                status=status,
                 start_time=timestamp if e_type == ids.EVTYPE_FM_STAGE_RUNNING else None,
                 end_time=timestamp
                 if e_type in {ids.EVTYPE_FM_STAGE_FAILURE, ids.EVTYPE_FM_STAGE_SUCCESS}
                 else None,
-                queue_state=queue_state,
+            )
+            snapshot.update_real(
+                get_real_id(e_source),
+                queue_state=event.data.get("queue_event_type"),
             )
         elif e_type in ids.EVGROUP_FM_STEP:
             snapshot.update_step(
                 get_real_id(e_source),
                 get_stage_id(e_source),
                 get_step_id(e_source),
-                status=_FM_TYPE_EVENT_TO_STATUS[e_type],
+                status=status,
                 start_time=timestamp if e_type == ids.EVTYPE_FM_STEP_START else None,
                 end_time=timestamp
                 if e_type
@@ -161,13 +171,32 @@ class PartialSnapshot:
                 }
                 else None,
             )
+            if status == "Failed":
+                snapshot.update_real(
+                    get_real_id(e_source),
+                    queue_state="JOB_QUEUE_FAILED"
+                )
+
+            if status == "Finished":
+                real_finished = True
+                for step_id, step in current_snapshot.get_steps_for_real(get_real_id(e_source)):
+                    if step_id != get_step_id(e_source):
+                        if step["status"] != "Finished":
+                            real_finished = False
+                            break
+                if real_finished:
+                    snapshot.update_real(
+                        get_real_id(e_source),
+                        queue_state="JOB_QUEUE_DONE"
+                    )
+
         elif e_type in ids.EVGROUP_FM_JOB:
             snapshot.update_job(
                 get_real_id(e_source),
                 get_stage_id(e_source),
                 get_step_id(e_source),
                 get_job_id(e_source),
-                status=_FM_TYPE_EVENT_TO_STATUS[e_type],
+                status=status,
                 start_time=timestamp if e_type == ids.EVTYPE_FM_JOB_START else None,
                 end_time=timestamp
                 if e_type
@@ -177,7 +206,13 @@ class PartialSnapshot:
                 }
                 else None,
                 data=event.data if e_type == ids.EVTYPE_FM_JOB_RUNNING else None,
+                error=event.data["stderr"] if e_type == ids.EVTYPE_FM_JOB_FAILURE else None,
             )
+            # if status == "Failed":
+            #     logger.error(event.data["stderr"])
+            #     logger.info(event.data["stdout"])
+            # if status == "Finished":
+                # logger.info(event.data["stdout"])
         elif e_type in ids.EVGROUP_ENSEMBLE:
             snapshot.update_status(_ENSEMBLE_TYPE_EVENT_TO_STATUS[e_type])
         else:
@@ -216,6 +251,12 @@ class Snapshot:
         if step_id not in steps:
             raise ValueError(f"No step with id {step_id} in {stage_id}")
         return steps[step_id]
+
+    def get_steps_for_real(self, real_id):
+        real = self.get_real(real_id)
+        for stage in real["stages"].values():
+            for step in stage["steps"].items():
+                yield step
 
     def get_job(self, real_id, stage_id, step_id, job_id):
         step = self.get_step(real_id, stage_id, step_id)
@@ -257,7 +298,7 @@ class _Stage(BaseModel):
     start_time: Optional[str]
     end_time: Optional[str]
     steps: Dict[str, _Step] = {}
-    queue_state: Optional[Any]
+
 
 
 class _Realization(BaseModel):
@@ -265,6 +306,7 @@ class _Realization(BaseModel):
     start_time: Optional[str]
     end_time: Optional[str]
     stages: Dict[str, _Stage] = {}
+    queue_state: Optional[Any]
 
 
 class _SnapshotDict(BaseModel):

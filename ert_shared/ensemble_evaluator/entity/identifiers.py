@@ -24,6 +24,7 @@ EVTYPE_FM_STAGE_SUCCESS = "com.equinor.ert.forward_model_stage.success"
 EVTYPE_FM_STAGE_UNKNOWN = "com.equinor.ert.forward_model_stage.unknown"
 
 EVTYPE_FM_STEP_START = "com.equinor.ert.forward_model_step.start"
+EVTYPE_FM_STEP_RUNNING = "com.equinor.ert.forward_model_step.running"
 EVTYPE_FM_STEP_FAILURE = "com.equinor.ert.forward_model_step.failure"
 EVTYPE_FM_STEP_SUCCESS = "com.equinor.ert.forward_model_step.success"
 
@@ -43,6 +44,7 @@ EVGROUP_FM_STAGE = {
 
 EVGROUP_FM_STEP = {
     EVTYPE_FM_STEP_START,
+    EVTYPE_FM_STEP_RUNNING,
     EVTYPE_FM_STEP_FAILURE,
     EVTYPE_FM_STEP_SUCCESS,
 }

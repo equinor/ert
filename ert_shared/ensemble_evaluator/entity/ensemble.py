@@ -184,20 +184,21 @@ class _LegacyJob(_BaseJob):
 
 
 class _Step:
-    def __init__(self, id_, inputs, outputs, jobs):
+    def __init__(self, id_, inputs, outputs, jobs, name=None):
         if id_ is None:
             raise ValueError(f"{self} needs id")
-        if not inputs:
+        if inputs is None:
             raise ValueError(f"{self} needs input")
-        if not outputs:
+        if outputs is None:
             raise ValueError(f"{self} needs output")
-        if not jobs:
+        if jobs is None:
             raise ValueError(f"{self} needs jobs")
 
         self._id = id_
         self._inputs = inputs
-        self._ouputs = outputs
+        self._outputs = outputs
         self._jobs = jobs
+        self._name = name
 
     def get_id(self):
         return self._id
@@ -210,6 +211,9 @@ class _Step:
 
     def get_jobs(self):
         return self._jobs
+
+    def get_name(self):
+        return self._name
 
 
 class _StepBuilder:
@@ -265,6 +269,7 @@ class _Stage:
         id_,
         steps,
         status,
+        name=None,
     ):
         if id_ is None:
             raise ValueError(f"{self} needs id")
@@ -276,6 +281,7 @@ class _Stage:
         self._id = id_
         self._steps = steps
         self._status = status
+        self._name = name
 
     def get_id(self):
         return self._id
@@ -285,6 +291,9 @@ class _Stage:
 
     def get_status(self):
         return self._status
+
+    def get_name(self):
+        return self._name
 
 
 class _StageBuilder:

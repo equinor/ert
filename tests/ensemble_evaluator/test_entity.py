@@ -29,15 +29,15 @@ _REALIZATION_INDEXES = ["0", "1", "3", "4", "5", "9"]
 def _create_snapshot():
     return (
         SnapshotBuilder()
-        .add_stage(stage_id="0", status="unknown")
-        .add_step(stage_id="0", step_id="0", status="unknown")
+        .add_stage(stage_id="0", status="Unknown")
+        .add_step(stage_id="0", step_id="0", status="Unknown")
         .add_job(
             stage_id="0",
             step_id="0",
             job_id="0",
             name="job0",
             data={},
-            status="unknown",
+            status="Unknown",
         )
         .add_job(
             stage_id="0",
@@ -45,7 +45,7 @@ def _create_snapshot():
             job_id="1",
             name="job1",
             data={},
-            status="unknown",
+            status="Unknown",
         )
         .add_job(
             stage_id="0",
@@ -53,7 +53,7 @@ def _create_snapshot():
             job_id="2",
             name="job2",
             data={},
-            status="unknown",
+            status="Unknown",
         )
         .add_job(
             stage_id="0",
@@ -61,9 +61,9 @@ def _create_snapshot():
             job_id="3",
             name="job3",
             data={},
-            status="unknown",
+            status="Unknown",
         )
-        .build(_REALIZATION_INDEXES, status="unknown")
+        .build(_REALIZATION_INDEXES, status="Unknown")
     )
 
 

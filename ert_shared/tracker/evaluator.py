@@ -167,32 +167,31 @@ class EvaluatorTracker:
 
         for iens, real in snapshot["reals"].items():
             iens_int = int(iens)
-            queue_state_str = real["stages"]["0"].get("queue_state")
+            queue_state_str = real.get("queue_state")
             queue_state = (
                 None
                 if queue_state_str is None
                 else JobStatusType.from_string(queue_state_str)
             )
-            realization_progress[iens_int] = (
-                [
-                    ForwardModelJobStatus(
-                        job["name"],
-                        status=job["status"],
-                        start_time=dateutil.parser.parse(job["start_time"])
-                        if job["start_time"] is not None
-                        else None,
-                        end_time=dateutil.parser.parse(job["end_time"])
-                        if job["end_time"] is not None
-                        else None,
-                        current_memory_usage=job.get("data", {}).get(
-                            "current_memory_usage"
-                        ),
-                        max_memory_usage=job.get("data", {}).get("max_memory_usage"),
-                    )
-                    for job in real["stages"]["0"]["steps"]["0"]["jobs"].values()
-                ],
-                queue_state,
-            )
+            job_statuses = {}
+            for real_id, stage in real.get("stages", {}).items():
+                for step_id, step in stage.get("steps", {}).items():
+                    for job_id, job in step.get("jobs", {}).items():
+                        job_statuses[job_id] = ForwardModelJobStatus(
+                            job["name"],
+                            status=job["status"],
+                            start_time=dateutil.parser.parse(job["start_time"])
+                            if job["start_time"] is not None
+                            else None,
+                            end_time=dateutil.parser.parse(job["end_time"])
+                            if job["end_time"] is not None
+                            else None,
+                            current_memory_usage=job.get("data", {}).get(
+                                "current_memory_usage"
+                            ),
+                            max_memory_usage=job.get("data", {}).get("max_memory_usage"),
+                        )
+            realization_progress[iens_int] = (job_statuses, queue_state,)
         return realization_progress
 
     def _update_states(self, snapshot_updates):
@@ -202,39 +201,29 @@ class EvaluatorTracker:
                 iens_int = int(iens)
                 job_statuses = realization_progress[iens_int][0]
                 queue_state = realization_progress[iens_int][1]
-                if (
-                    real.get("stages", {})
-                    .get("0", {})
-                    .get("steps", {})
-                    .get("0", {})
-                    .get("status")
-                ):
-                    step_state = real["stages"]["0"]["steps"]["0"]["status"]
 
-                if real.get("stages", {}).get("0", {}).get("queue_state"):
-                    queue_state_str = real["stages"]["0"].get("queue_state")
+                if real.get("queue_state"):
+                    queue_state_str = real.get("queue_state")
                     queue_state = JobStatusType.from_string(queue_state_str)
 
-                if "jobs" in real.get("stages", {}).get("0", {}).get("steps", {}).get(
-                    "0", {}
-                ):
-                    for job_id, job in real["stages"]["0"]["steps"]["0"][
-                        "jobs"
-                    ].items():
-                        job_id = int(job_id)
-                        status = realization_progress[iens_int][0][job_id]
-                        if job.get("status"):
-                            status.status = job["status"]
-                        if job.get("start_time"):
-                            status.start_time = dateutil.parser.parse(job["start_time"])
-                        if job.get("end_time"):
-                            status.end_time = dateutil.parser.parse(job["end_time"])
-                        if job.get("data", {}).get("current_memory_usage"):
-                            status.current_memory_usage = job["data"][
-                                "current_memory_usage"
-                            ]
-                        if job.get("data", {}).get("max_memory_usage"):
-                            status.max_memory_usage = job["data"]["max_memory_usage"]
+                for stage_id, stage in real.get("stages", {}).items():
+                    for step_id, step in stage.get("steps", {}).items():
+                        for job_id, job in step.get("jobs", {}).items():
+                            status = realization_progress[iens_int][0][job_id]
+                            if job.get("status"):
+                                status.status = job["status"]
+                            if job.get("start_time"):
+                                status.start_time = dateutil.parser.parse(job["start_time"])
+                            if job.get("end_time"):
+                                status.end_time = dateutil.parser.parse(job["end_time"])
+                            if job.get("data", {}).get("current_memory_usage"):
+                                status.current_memory_usage = job["data"][
+                                    "current_memory_usage"
+                                ]
+                            if job.get("data", {}).get("max_memory_usage"):
+                                status.max_memory_usage = job["data"]["max_memory_usage"]
+                            if job.get("error"):
+                                status.error = job.get("error")
 
                 realization_progress[iens_int] = (
                     job_statuses,

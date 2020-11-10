@@ -27,7 +27,7 @@ class RunDialog(QDialog):
         self.setWindowModality(Qt.WindowModal)
         self.setWindowTitle("Simulations - {}".format(config_file))
 
-        assert isinstance(run_model, BaseRunModel)
+        # assert isinstance(run_model, BaseRunModel)
         self._run_model = run_model
 
         ert = None
