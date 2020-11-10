@@ -105,8 +105,8 @@ class EvaluatorTracker:
 
         count = 0
         for job_status_tuple in snapshot.values():
-            step_status = job_status_tuple[1][1]
-            if step_status.lower() == state.lower():
+            queue_state = job_status_tuple[1]
+            if queue_state in state.state:
                 count += 1
         return count
 
@@ -132,7 +132,7 @@ class EvaluatorTracker:
 
             total_size = self._get_ensemble_size()
             for state in self._states:
-                state.count = self._count_in_state(state.name)
+                state.count = self._count_in_state(state)
                 state.total_count = total_size
 
                 if state.name == "Finished":
@@ -189,7 +189,7 @@ class EvaluatorTracker:
                     )
                     for job in real["stages"]["0"]["steps"]["0"]["jobs"].values()
                 ],
-                (queue_state, real["stages"]["0"]["steps"]["0"]["status"]),
+                queue_state,
             )
         return realization_progress
 
@@ -200,9 +200,7 @@ class EvaluatorTracker:
             for iens, real in snapshot_updates["reals"].items():
                 iens_int = int(iens)
                 job_statuses = realization_progress[iens_int][0]
-                queue_state = realization_progress[iens_int][1][0]
-                step_state = realization_progress[iens_int][1][1]
-
+                queue_state = realization_progress[iens_int][1]
                 if (
                     real.get("stages", {})
                     .get("0", {})
@@ -214,10 +212,7 @@ class EvaluatorTracker:
 
                 if real.get("stages", {}).get("0", {}).get("queue_state"):
                     queue_state_str = real["stages"]["0"].get("queue_state")
-                    realization_progress[iens_int] = (
-                        job_statuses,
-                        JobStatusType.from_string(queue_state_str),
-                    )
+                    queue_state = JobStatusType.from_string(queue_state_str)
 
                 if "jobs" in real.get("stages", {}).get("0", {}).get("steps", {}).get(
                     "0", {}
@@ -242,7 +237,7 @@ class EvaluatorTracker:
 
                 realization_progress[iens_int] = (
                     job_statuses,
-                    (queue_state, step_state),
+                    queue_state,
                 )
 
     def detailed_event(self):
