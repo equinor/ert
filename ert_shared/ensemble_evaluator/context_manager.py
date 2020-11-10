@@ -5,6 +5,7 @@ import traceback
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     create_ensemble_builder_from_legacy,
 )
+import time
 import uuid
 from contextlib import ExitStack, contextmanager
 from pathlib import Path

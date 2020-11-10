@@ -138,6 +138,11 @@ class EnsembleEvaluator:
         ):
             await done
             logger.debug("Got done signal.")
+            count = 0
+            while not self._snapshot.is_finished() and count < 10:
+                # give NFS adaptors some time to read last events
+                asyncio.sleep(1)
+                count += 1
             message = self.terminate_message()
             if self._clients:
                 await asyncio.wait([client.send(message) for client in self._clients])

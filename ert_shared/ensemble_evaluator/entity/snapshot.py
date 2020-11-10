@@ -190,6 +190,13 @@ class Snapshot:
     def get_status(self):
         return self._data["status"]
 
+    def is_finished(self):
+        for real in self._data["reals"].values():
+           for stage in real["stages"].values():
+               if stage["status"] != "Finished":
+                   return False
+        return True
+
     def get_real(self, real_id):
         if real_id not in self._data["reals"]:
             raise ValueError(f"No realization with id {real_id}")
