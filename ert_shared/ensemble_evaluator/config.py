@@ -5,7 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 CLIENT_URI = "client"
 DISPATCH_URI = "dispatch"
-DEFAULT_PORT = "8765"
+DEFAULT_PORT = "8742"
 DEFAULT_HOST = "localhost"
 DEFAULT_URL = f"ws://{DEFAULT_HOST}:{DEFAULT_PORT}"
 CONFIG_FILE = "ee_config.yml"

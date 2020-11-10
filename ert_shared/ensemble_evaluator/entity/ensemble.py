@@ -1,5 +1,4 @@
 import copy
-from ert_shared.ensemble_evaluator.entity.snapshot import SnapshotBuilder
 
 
 class _IO:
@@ -169,7 +168,7 @@ class _ScriptJob(_BaseJob):
 
 
 class _Step:
-    def __init__(self, id_, inputs, outputs, jobs):
+    def __init__(self, id_, inputs, outputs, jobs, name=None):
         if id_ is None:
             raise ValueError(f"{self} needs id")
         if not inputs:
@@ -181,8 +180,9 @@ class _Step:
 
         self._id = id_
         self._inputs = inputs
-        self._ouputs = outputs
+        self._outputs = outputs
         self._jobs = jobs
+        self._name = name
 
     def get_id(self):
         return self._id
@@ -195,6 +195,9 @@ class _Step:
 
     def get_jobs(self):
         return self._jobs
+
+    def get_name(self):
+        return self._name
 
 
 class _StepBuilder:
@@ -245,7 +248,7 @@ def create_step_builder():
 
 
 class _Stage:
-    def __init__(self, id_, steps, status):
+    def __init__(self, id_, steps, status, name=None):
         if id_ is None:
             raise ValueError(f"{self} needs id")
         if not steps:
@@ -256,6 +259,7 @@ class _Stage:
         self._id = id_
         self._steps = steps
         self._status = status
+        self._name = name
 
     def get_id(self):
         return self._id
@@ -265,6 +269,9 @@ class _Stage:
 
     def get_status(self):
         return self._status
+
+    def get_name(self):
+        return self._name
 
 
 class _StageBuilder:

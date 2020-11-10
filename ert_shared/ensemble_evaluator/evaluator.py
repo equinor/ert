@@ -9,13 +9,12 @@ import websockets
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.entity.snapshot import (
-    SnapshotBuilder,
+    _Realization,_Step,_Stage,_Job, _SnapshotDict,
     PartialSnapshot,
     Snapshot,
 )
 from async_generator import asynccontextmanager
 from contextlib import contextmanager
-
 
 logger = logging.getLogger(__name__)
 
@@ -42,35 +41,44 @@ class EnsembleEvaluator:
 
     @staticmethod
     def create_snapshot(ensemble):
-        builder = SnapshotBuilder()
-        realizations = ensemble.get_reals()
-        if not realizations:
-            raise ValueError(
-                "An ensemble needs to have at least on realization to run."
-            )
-        real = realizations[0]
-        for stage in real.get_stages():
-            builder.add_stage(str(stage.get_id()), stage.get_status())
-            for step in stage.get_steps():
-                builder.add_step(str(stage.get_id()), str(step.get_id()), "Unknown")
-                for job in step.get_jobs():
-                    builder.add_job(
-                        str(stage.get_id()),
-                        str(step.get_id()),
-                        str(job.get_id()),
-                        job.get_name(),
-                        "Unknown",
-                        {},
+        reals = {}
+        for real in ensemble.get_reals():
+            reals[str(real.get_iens())] = _Realization(
+                active=True,
+                start_time=None,
+                end_time=None,
+                queue_state="JOB_QUEUE_RUNNING",)
+            for stage in real.get_stages():
+                reals[str(real.get_iens())].stages[stage.get_id()] = _Stage(
+                    status="Unknown",
+                    start_time=None,
+                    end_time=None,
+                )
+                for step in stage.get_steps():
+                    reals[str(real.get_iens())].stages[stage.get_id()].steps[step.get_id()] = _Step(
+                        status="Unknown",
+                        start_time=None,
+                        end_time=None
                     )
-        for key, val in ensemble.get_metadata().items():
-            builder.add_metadata(key, val)
-        return builder.build(
-            [str(real.get_iens()) for real in ensemble.get_reals()], "Unknown"
+                    for job in step.get_jobs():
+                        reals[str(real.get_iens())].stages[stage.get_id()].steps[step.get_id()].jobs[job.get_id()] = _Job(
+                            status="Unknown",
+                            data={},
+                            start_time=None,
+                            end_time=None,
+                            name=job.get_name(),
+                        )
+        top = _SnapshotDict(
+            reals=reals,
+            status="Unknown",
+            metadata=ensemble.get_metadata()
         )
+
+        return Snapshot(top.dict())
 
     @dispatch.register_event_handler(ids.EVGROUP_FM_ALL)
     async def _fm_handler(self, event):
-        snapshot_mutate_event = PartialSnapshot.from_cloudevent(event)
+        snapshot_mutate_event = PartialSnapshot.from_cloudevent(event, self._snapshot)
         await self._send_snapshot_update(snapshot_mutate_event)
 
     async def _send_snapshot_update(self, snapshot_mutate_event):

@@ -35,7 +35,8 @@ class PartialSnapshot:
     def update_status(self, status):
         self._data["status"] = status
 
-    def update_real(self, real_id, active=None, start_time=None, end_time=None):
+    def update_real(self, real_id, active=None, start_time=None, end_time=None,
+                    queue_state=None):
         if real_id not in self._data["reals"]:
             self._data["reals"][real_id] = {"stages": {}}
         real = self._data["reals"][real_id]
@@ -46,6 +47,8 @@ class PartialSnapshot:
             real["start_time"] = start_time
         if end_time is not None:
             real["end_time"] = end_time
+        if queue_state is not None:
+            real["queue_state"] = queue_state
         return real
 
     def update_stage(
@@ -55,7 +58,6 @@ class PartialSnapshot:
         status=None,
         start_time=None,
         end_time=None,
-        queue_state=None,
     ):
         real = self.update_real(real_id)
         if stage_id not in real["stages"]:
@@ -68,8 +70,6 @@ class PartialSnapshot:
             stage["start_time"] = start_time
         if end_time is not None:
             stage["end_time"] = end_time
-        if queue_state is not None:
-            stage["queue_state"] = queue_state
         return stage
 
     def update_step(
@@ -122,14 +122,13 @@ class PartialSnapshot:
         return self._data
 
     @classmethod
-    def from_cloudevent(cls, event):
+    def from_cloudevent(cls, event, current_snapshot):
         snapshot = cls()
         e_type = event["type"]
         e_source = event["source"]
         status = _FM_TYPE_EVENT_TO_STATUS[e_type]
         timestamp = event["time"]
         if e_type in ids.EVGROUP_FM_STAGE:
-            queue_state = event.data.get("queue_event_type")
             snapshot.update_stage(
                 get_real_id(e_source),
                 get_stage_id(e_source),
@@ -138,7 +137,6 @@ class PartialSnapshot:
                 end_time=timestamp
                 if e_type in {ids.EVTYPE_FM_STAGE_FAILURE, ids.EVTYPE_FM_STAGE_SUCCESS}
                 else None,
-                queue_state=queue_state,
             )
         elif e_type in ids.EVGROUP_FM_STEP:
             snapshot.update_step(
@@ -155,6 +153,19 @@ class PartialSnapshot:
                 }
                 else None,
             )
+            if status == "Finished":
+                real_finished = True
+                for step_id, step in current_snapshot.get_steps_for_real(get_real_id(e_source)):
+                    if step_id != get_step_id(e_source):
+                        if step["status"] != "Finished":
+                            real_finished = False
+                            break
+                if real_finished:
+                    snapshot.update_real(
+                        get_real_id(e_source),
+                        queue_state="JOB_QUEUE_DONE"
+                    )
+
         elif e_type in ids.EVGROUP_FM_JOB:
             snapshot.update_job(
                 get_real_id(e_source),
@@ -209,6 +220,12 @@ class Snapshot:
             raise ValueError(f"No step with id {step_id} in {stage_id}")
         return steps[step_id]
 
+    def get_steps_for_real(self, real_id):
+        real = self.get_real(real_id)
+        for stage in real["stages"].values():
+            for step in stage["steps"].items():
+                yield step
+
     def get_job(self, real_id, stage_id, step_id, job_id):
         step = self.get_step(real_id, stage_id, step_id)
         jobs = step["jobs"]
@@ -249,7 +266,7 @@ class _Stage(BaseModel):
     start_time: Optional[str]
     end_time: Optional[str]
     steps: Dict[str, _Step] = {}
-    queue_state: Optional[Any]
+
 
 
 class _Realization(BaseModel):
@@ -257,80 +274,11 @@ class _Realization(BaseModel):
     start_time: Optional[str]
     end_time: Optional[str]
     stages: Dict[str, _Stage] = {}
+    queue_state: Optional[Any]
 
 
 class _SnapshotDict(BaseModel):
     status: str
     reals: Dict[str, _Realization] = {}
-    forward_model: _ForwardModel
     metadata: Dict[str, Any] = {}
 
-
-class SnapshotBuilder(BaseModel):
-    stages: Dict[str, _Stage] = {}
-    forward_model: _ForwardModel = _ForwardModel(step_definitions={})
-    metadata: Dict[str, Any] = {}
-
-    def build(self, real_ids, status, start_time=None, end_time=None):
-        top = _SnapshotDict(
-            status=status, forward_model=self.forward_model, metadata=self.metadata
-        )
-        for r_id in real_ids:
-            top.reals[r_id] = _Realization(
-                active=True,
-                stages=self.stages,
-                start_time=start_time,
-                end_time=end_time,
-            )
-        return Snapshot(top.dict())
-
-    def add_stage(
-        self, stage_id, status, start_time=None, end_time=None, queue_state=None
-    ):
-        self.stages[stage_id] = _Stage(
-            status=status,
-            start_time=start_time,
-            end_time=end_time,
-            queue_state=queue_state,
-        )
-        return self
-
-    def add_step(self, stage_id, step_id, status, start_time=None, end_time=None):
-        stage = self.stages[stage_id]
-        stage.steps[step_id] = _Step(
-            status=status, start_time=start_time, end_time=end_time
-        )
-        return self
-
-    def add_job(
-        self,
-        stage_id,
-        step_id,
-        job_id,
-        name,
-        status,
-        data,
-        start_time=None,
-        end_time=None,
-    ):
-        stage = self.stages[stage_id]
-        step = stage.steps[step_id]
-        step.jobs[job_id] = _Job(
-            status=status,
-            data=data,
-            start_time=start_time,
-            end_time=end_time,
-            name=name,
-        )
-        if stage_id not in self.forward_model.step_definitions:
-            self.forward_model.step_definitions[stage_id] = {}
-        if step_id not in self.forward_model.step_definitions[stage_id]:
-            self.forward_model.step_definitions[stage_id][step_id] = []
-        self.forward_model.step_definitions[stage_id][step_id].append(
-            _JobDetails(job_id=job_id, name=name)
-        )
-        return self
-
-    def add_metadata(self, key, value):
-        self.metadata[key] = value
-        return self
