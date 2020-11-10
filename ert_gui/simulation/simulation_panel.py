@@ -1,3 +1,4 @@
+import os
 from qtpy.QtCore import Qt, QSize
 from qtpy.QtWidgets import (
     QComboBox,
@@ -14,10 +15,11 @@ from qtpy.QtWidgets import (
 from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget, resourceIcon
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
-from ert_gui.simulation import EnsembleExperimentPanel, EnsembleSmootherPanel
+from ert_gui.simulation import EnsembleExperimentPanel, EnsembleSmootherPanel, PrefectEnsembleExperimentPanel
 from ert_gui.simulation import SingleTestRunPanel
 from ert_gui.simulation import IteratedEnsembleSmootherPanel, MultipleDataAssimilationPanel, SimulationConfigPanel
 from ert_gui.simulation import RunDialog
+from ert_shared.feature_toggling import FeatureToggling
 from collections import OrderedDict
 
 
@@ -65,10 +67,13 @@ class SimulationPanel(QWidget):
 
         self._simulation_widgets = OrderedDict()
         """ :type: OrderedDict[BaseRunModel,SimulationConfigPanel]"""
-
-        self.addSimulationConfigPanel(SingleTestRunPanel())
-        self.addSimulationConfigPanel(EnsembleExperimentPanel())
-        if(ERT.ert.have_observations()):
+        if not FeatureToggling.is_enabled("prefect"):
+            self.addSimulationConfigPanel(SingleTestRunPanel())
+            self.addSimulationConfigPanel(EnsembleExperimentPanel())
+        if FeatureToggling.is_enabled("prefect"):
+            prefect_config = os.path.basename(config_file)
+            self.addSimulationConfigPanel(PrefectEnsembleExperimentPanel(prefect_config))
+        if ERT.ert.have_observations() and not FeatureToggling.is_enabled("prefect"):
             self.addSimulationConfigPanel(EnsembleSmootherPanel())
             self.addSimulationConfigPanel(MultipleDataAssimilationPanel())
             self.addSimulationConfigPanel(IteratedEnsembleSmootherPanel())

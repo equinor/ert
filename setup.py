@@ -54,6 +54,8 @@ setup(
         "python-dateutil",
         "async_generator",
         "uvicorn",
+        "prefect",
+        "dask_jobqueue",
     ],
     zip_safe=False,
     tests_require=["pytest", "mock"],

@@ -1,8 +1,6 @@
 import asyncio
-from asyncio.queues import Queue
 import websockets
 from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
-import queue
 import logging
 import threading
 from cloudevents.http import from_json
@@ -49,7 +47,7 @@ class _Monitor:
         out_cloudevent = CloudEvent(
             {
                 "type": identifiers.EVTYPE_EE_USER_CANCEL,
-                "source": "/ert/monitor/{self._id}",
+                "source": f"/ert/monitor/{self._id}",
                 "id": str(uuid.uuid1()),
             }
         )
@@ -62,7 +60,7 @@ class _Monitor:
         out_cloudevent = CloudEvent(
             {
                 "type": identifiers.EVTYPE_EE_USER_DONE,
-                "source": "/ert/monitor/{self._id}",
+                "source": f"/ert/monitor/{self._id}",
                 "id": str(uuid.uuid1()),
             }
         )
@@ -116,6 +114,7 @@ class _Monitor:
             if not done_future.done():
                 self._loop.call_soon_threadsafe(done_future.set_result, None)
         thread.join()
+        self._loop.close()
 
 
 def create(host, port):
