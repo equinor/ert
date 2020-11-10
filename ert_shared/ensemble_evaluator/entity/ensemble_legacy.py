@@ -156,6 +156,8 @@ class _LegacyEnsemble(_Ensemble):
                 "id": str(uuid.uuid1()),
             }
         )
-        asyncio.new_event_loop().run_until_complete(
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(
             self.send_cloudevent(self._config.get("dispatch_url"), out_cloudevent)
         )
+        loop.close()

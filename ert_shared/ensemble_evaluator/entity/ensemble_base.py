@@ -33,6 +33,12 @@ class _Ensemble:
     def get_metadata(self):
         return self._metadata
 
-    async def send_cloudevent(self, url, event):
-        async with websockets.connect(url) as websocket:
-            await websocket.send(to_json(event))
+    async def send_cloudevent(self, url, event, retries=10):
+        for retry in range(retries):
+            try:
+                async with websockets.connect(url) as websocket:
+                    await websocket.send(to_json(event))
+                return
+            except ConnectionRefusedError:
+                await asyncio.sleep(1)
+        raise IOError(f"Could not send event {event}  to url {url}")

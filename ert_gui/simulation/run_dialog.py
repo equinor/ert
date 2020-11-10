@@ -1,4 +1,3 @@
-import time
 from threading import Thread
 
 from qtpy.QtCore import Qt, QTimer, QSize, Signal, Slot
@@ -27,7 +26,6 @@ class RunDialog(QDialog):
         self.setWindowModality(Qt.WindowModal)
         self.setWindowTitle("Simulations - {}".format(config_file))
 
-        assert isinstance(run_model, BaseRunModel)
         self._run_model = run_model
 
         ert = None
@@ -35,7 +33,6 @@ class RunDialog(QDialog):
             ert = run_model.ert()
 
         self._simulations_argments = simulation_arguments
-
         self.simulations_tracker = create_tracker(
             run_model, qtimer_cls=QTimer,
             event_handler=self._on_tracker_event,

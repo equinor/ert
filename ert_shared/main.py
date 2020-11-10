@@ -15,6 +15,7 @@ from ert_shared.cli import (
     ES_MDA_MODE,
     TEST_RUN_MODE,
     WORKFLOW_MODE,
+    ENSEMBLE_PREFECT_EXPERIMENT_MODE,
 )
 from ert_shared.ide.keywords.definitions import (
     RangeStringArgument,
@@ -213,6 +214,38 @@ def get_ert_parser(parser=None):
         "Use iter-num to avoid recomputing the priors.",
     )
 
+    # ensemble_prefect_experiment_parser
+    description = "Run simulations in cli without performing any updates on the parameters using the prefect ensemble"
+    ensemble_prefect_experiment_parser = subparsers.add_parser(
+        ENSEMBLE_PREFECT_EXPERIMENT_MODE,
+        description=description,
+        help=description,
+    )
+    ensemble_prefect_experiment_parser.add_argument(
+        "--realizations",
+        type=valid_realizations,
+        help="These are the realizations that will be used to perform simulations. "
+        "For example, if 'Number of realizations:50 and Active realizations is 0-9', "
+        "then only realizations 0,1,2,3,...,9 will be used to perform simulations "
+        "while realizations 10,11, 12,...,49 will be excluded.",
+    )
+    ensemble_prefect_experiment_parser.add_argument(
+        "--current-case",
+        type=valid_name,
+        required=False,
+        help="Name of the case where the results for the simulation "
+        "using the prior parameters will be stored.",
+    )
+
+    ensemble_prefect_experiment_parser.add_argument(
+        "--iter-num",
+        type=valid_iter_num,
+        default=0,
+        required=False,
+        help="Specification of which iteration number is about to be made. "
+        "Use iter-num to avoid recomputing the priors.",
+    )
+
     # ensemble_smoother_parser
     ensemble_smoother_description = (
         "Run simulations in cli while performing one update"
@@ -340,6 +373,7 @@ def get_ert_parser(parser=None):
         iterative_ensemble_smoother_parser,
         es_mda_parser,
         workflow_parser,
+        ensemble_prefect_experiment_parser,
     ]:
         cli_parser.set_defaults(func=run_cli)
         cli_parser.add_argument(

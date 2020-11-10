@@ -1,15 +1,8 @@
-import threading
-import websockets
 import pytest
-import asyncio
-import logging
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from pathlib import Path
 from ert_shared.ensemble_evaluator.config import CONFIG_FILE, load_config
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert_shared.ensemble_evaluator.ws_util import wait as wait_for_ws
-from cloudevents.http.event import CloudEvent
-from cloudevents.http import to_json
 
 
 @pytest.mark.timeout(60)
@@ -37,11 +30,8 @@ def test_run_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_builder):
         assert evaluator.get_successful_realizations() == num_reals
 
 
-@pytest.mark.asyncio
 @pytest.mark.timeout(60)
-async def test_run_and_cancel_legacy_ensemble(
-    tmpdir, unused_tcp_port, make_ensemble_builder
-):
+def test_run_and_cancel_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_builder):
     num_reals = 10
     conf_file = Path(tmpdir / CONFIG_FILE)
 
@@ -54,26 +44,11 @@ async def test_run_and_cancel_legacy_ensemble(
 
         evaluator = EnsembleEvaluator(ensemble, config, ee_id="1")
 
-        thread = threading.Thread(
-            name="test_eval",
-            target=evaluator.run_and_get_successful_realizations,
-            args=(),
-        )
-        thread.start()
+        mon = evaluator.run()
+        cancel = True
+        for _ in mon.track():
+            if cancel:
+                mon.signal_cancel()
+                cancel = False
 
-        # Wait for evaluator to start
-        await wait_for_ws(config["url"], 10)
-
-        # Send termination request to the evaluator
-        async with websockets.connect(config["client_url"]) as websocket:
-            out_cloudevent = CloudEvent(
-                {
-                    "type": identifiers.EVTYPE_EE_USER_CANCEL,
-                    "source": "/ert/test/0",
-                    "id": "ID",
-                }
-            )
-            await websocket.send(to_json(out_cloudevent))
-
-        thread.join()
         assert evaluator._snapshot.get_status() == "Cancelled"

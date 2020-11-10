@@ -3,7 +3,6 @@ import asyncio
 import logging
 import os.path
 import websockets
-
 from ert_shared.ensemble_evaluator.entity.identifiers import (
     EVTYPE_FM_STEP_FAILURE,
     EVTYPE_FM_STEP_SUCCESS,

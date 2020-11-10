@@ -25,7 +25,18 @@ def _clear_and_exit(args):
 
 def run_cli(args):
     logging.basicConfig(level=logging.INFO, format='%(message)s')
-    res_config = ResConfig(args.config)
+    if FeatureToggling.is_enabled("prefect"):
+        ert_conf_path = os.path.abspath(args.config)[:-3] + "ert"
+        with open(ert_conf_path, "w") as f:
+            f.write("""QUEUE_SYSTEM LOCAL
+QUEUE_OPTION LOCAL MAX_RUNNING 50
+RUNPATH out/real_%d/iter_%d
+NUM_REALIZATIONS 100
+MIN_REALIZATIONS 1
+""")
+        res_config = ResConfig(ert_conf_path)
+    else:
+        res_config = ResConfig(args.config)
     os.chdir(res_config.config_path)
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
     notifier = ErtCliNotifier(ert, args.config)

@@ -50,7 +50,7 @@ class DetailedProgress(QFrame):
         nr_jobs = len(progress)
         grid_size = int(math.ceil(math.sqrt(nr_jobs)))
 
-        for index, job in enumerate(progress):
+        for index, job in enumerate(progress.values() if isinstance(progress, dict) else progress):
             y_off = int(index / grid_size)
             x_off = index - (y_off * grid_size)
             color = QColor(*self.state_colors[job.status])
@@ -64,7 +64,7 @@ class DetailedProgress(QFrame):
         self.update()
 
     def has_realization_failed(self, progress):
-        for job in progress:
+        for job in progress.values() if isinstance(progress, dict) else progress:
             if job.status == 'Failure':
                 return True
 
@@ -240,7 +240,7 @@ class SingleTableView(QTableView):
         self.realization = realization
         model_data = []
         headers = []
-        for job in jobs:
+        for job in jobs.values() if isinstance(jobs, dict) else jobs:
             data = job.dump_data()
             row = [str(data[key]) for key in data]
             model_data.append(row)

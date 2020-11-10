@@ -36,6 +36,7 @@ def create_tracker(
     ee_monitor_connection_details = (
         (ee_config.get("host"), ee_config.get("port"))
         if FeatureToggling.is_enabled("ensemble-evaluator")
+        or FeatureToggling.is_enabled("prefect")
         else None
     )
 

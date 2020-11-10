@@ -48,32 +48,34 @@ class MockCloudEvent(dict):
 
 def mock_ee_monitor(*args):
     reals_ids = ["0", "1"]
+    snapshot = (
+        SnapshotBuilder()
+        .add_stage(stage_id="0", status="Running")
+        .add_step(stage_id="0", step_id="0", status="Unknown")
+        .add_job(
+            stage_id="0",
+            step_id="0",
+            job_id="0",
+            name="job0",
+            data={},
+            status="Running",
+        )
+        .add_metadata("iter", 0)
+        .build(reals_ids, "Unknown")
+    )
+
+    update = PartialSnapshot(snapshot)
+    update.update_step("0", "0", "0", "Finished")
+    update.update_step("1", "0", "0", "Finished")
+
     events = [
         MockCloudEvent(
             {"type": ids.EVTYPE_EE_SNAPSHOT},
-            SnapshotBuilder()
-            .add_stage(stage_id="0", status="Running", queue_state="JOB_QUEUE_RUNNING")
-            .add_step(stage_id="0", step_id="0", status="Unknown")
-            .add_job(
-                stage_id="0",
-                step_id="0",
-                job_id="0",
-                name="job0",
-                data={},
-                status="Running",
-            )
-            .add_metadata("iter", 0)
-            .build(reals_ids, "Unknown")
-            .to_dict(),
+            snapshot.to_dict(),
         ),
         MockCloudEvent(
             {"type": ids.EVTYPE_EE_SNAPSHOT_UPDATE},
-            SnapshotBuilder()
-            .add_stage(stage_id="0", status="Finished", queue_state="JOB_QUEUE_SUCCESS")
-            .add_step(stage_id="0", step_id="0", status="Finished")
-            .add_metadata("iter", 0)
-            .build(reals_ids, "Unknown")
-            .to_dict(),
+            update.to_dict(),
         ),
         MockCloudEvent({"type": ids.EVTYPE_EE_TERMINATED}, {}),
     ]
@@ -122,5 +124,5 @@ def test_detailed_event(caplog):
         assert detailed_event.iteration == 0
         for iter_num, iter_ in detailed_event.details.items():
             for real_num, real in iter_.items():
-                job_data = real[0][0].dump_data()
+                job_data = real[0]["0"].dump_data()
                 assert "Running" == job_data["status"]
