@@ -97,16 +97,13 @@ class Client:
     def _run(self, loop):
         asyncio.set_event_loop(loop)
         uri = f"ws://{self.host}:{self.port}{self.path}"
-        print(f"running in {uri}")
 
         async def send_loop(q):
             async with websockets.connect(uri) as websocket:
                 while True:
-                    print("waiting for q")
                     msg = await q.get()
                     if msg == "stop":
                         return
-                    print(f"sending: {msg}")
                     await websocket.send(msg)
 
         loop.run_until_complete(send_loop(self.q))
@@ -180,18 +177,18 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
         assert snapshot.get_job("0", "0", "0", "0")["status"] == "Running"
         assert snapshot.get_job("1", "0", "0", "0")["status"] == "Finished"
 
-        # one monitor requests that server exit
-        monitor.exit_server()
+    # one monitor requests that server exit
+    monitor.exit_server()
 
-        # both monitors should get a terminated event
-        terminated = next(events)
-        terminated2 = next(events2)
-        assert terminated["type"] == identifiers.EVTYPE_EE_TERMINATED
-        assert terminated2["type"] == identifiers.EVTYPE_EE_TERMINATED
+    # both monitors should get a terminated event
+    terminated = next(events)
+    terminated2 = next(events2)
+    assert terminated["type"] == identifiers.EVTYPE_EE_TERMINATED
+    assert terminated2["type"] == identifiers.EVTYPE_EE_TERMINATED
 
-        for e in [events, events2]:
-            for _ in e:
-                assert False, "got unexpected event from monitor"
+    for e in [events, events2]:
+        for _ in e:
+            assert False, "got unexpected event from monitor"
 
 
 def test_monitor_stop(evaluator):

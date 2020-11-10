@@ -51,6 +51,7 @@ setup(
         "sqlalchemy",
         "websockets",
         "python-dateutil",
+        "async_generator",
     ],
     zip_safe=False,
     tests_require=["pytest", "mock"],
