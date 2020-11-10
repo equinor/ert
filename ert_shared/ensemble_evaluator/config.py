@@ -1,12 +1,35 @@
-import os
 import yaml
 import logging
+import socket
 
 logger = logging.getLogger(__name__)
+
+
+def _get_ip_address():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    return s.getsockname()[0]
+
+
+def find_open_port(lower, upper):
+    host = _get_ip_address()
+    for port in range(lower, upper):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.bind((host, port))
+            sock.close()
+            return port
+        except socket.error:
+            pass
+    msg = f"No open port for host {host} in the range {lower}-{upper}"
+    logging.exception(msg)
+    raise Exception(msg)
+
+
 CLIENT_URI = "client"
 DISPATCH_URI = "dispatch"
-DEFAULT_PORT = "8765"
-DEFAULT_HOST = "localhost"
+DEFAULT_PORT = find_open_port(lower=51820, upper=51840)
+DEFAULT_HOST = _get_ip_address()
 DEFAULT_URL = f"ws://{DEFAULT_HOST}:{DEFAULT_PORT}"
 CONFIG_FILE = "ee_config.yml"
 

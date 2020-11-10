@@ -8,13 +8,17 @@ import websockets
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.entity.snapshot import (
-    SnapshotBuilder,
+    _Realization,
+    _Step,
+    _Stage,
+    _Job,
+    _SnapshotDict,
+    _ForwardModel,
     PartialSnapshot,
     Snapshot,
 )
 from async_generator import asynccontextmanager
 from contextlib import contextmanager
-
 
 logger = logging.getLogger(__name__)
 
@@ -42,50 +46,61 @@ class EnsembleEvaluator:
 
     @staticmethod
     def create_snapshot(ensemble):
-        builder = SnapshotBuilder()
-        realizations = ensemble.get_active_reals()
-        if not realizations:
-            raise ValueError(
-                "An ensemble needs to have at least on realization to run."
+        reals = {}
+        for real in ensemble.get_active_reals():
+            reals[str(real.get_iens())] = _Realization(
+                active=True,
+                start_time=None,
+                end_time=None,
+                status="Waiting",
             )
-        real = realizations[0]
-        for stage in real.get_stages():
-            builder.add_stage(str(stage.get_id()), stage.get_status())
-            for step in stage.get_steps():
-                builder.add_step(str(stage.get_id()), str(step.get_id()), "Unknown")
-                for job in step.get_jobs():
-                    builder.add_job(
-                        str(stage.get_id()),
-                        str(step.get_id()),
-                        str(job.get_id()),
-                        job.get_name(),
-                        "Unknown",
-                        {},
-                    )
-        for key, val in ensemble.get_metadata().items():
-            builder.add_metadata(key, val)
-        return builder.build(
-            [str(real.get_iens()) for real in ensemble.get_active_reals()], "Unknown"
+            for stage in real.get_stages():
+                reals[str(real.get_iens())].stages[str(stage.get_id())] = _Stage(
+                    status="Unknown",
+                    start_time=None,
+                    end_time=None,
+                )
+                for step in stage.get_steps():
+                    reals[str(real.get_iens())].stages[str(stage.get_id())].steps[
+                        str(step.get_id())
+                    ] = _Step(status="Unknown", start_time=None, end_time=None)
+                    for job in step.get_jobs():
+                        reals[str(real.get_iens())].stages[str(stage.get_id())].steps[
+                            str(step.get_id())
+                        ].jobs[str(job.get_id())] = _Job(
+                            status="Pending",
+                            data={},
+                            start_time=None,
+                            end_time=None,
+                            name=job.get_name(),
+                        )
+        top = _SnapshotDict(
+            reals=reals,
+            status="Unknown",
+            forward_model=_ForwardModel(step_definitions={}),
+            metadata=ensemble.get_metadata(),
         )
+
+        return Snapshot(top.dict())
 
     @_dispatch.register_event_handler(identifiers.EVGROUP_FM_ALL)
     async def _fm_handler(self, event):
-        snapshot_mutate_event = PartialSnapshot.from_cloudevent(event)
+        snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(event)
         await self._send_snapshot_update(snapshot_mutate_event)
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STOPPED)
     async def _ensemble_stopped_handler(self, event):
-        snapshot_mutate_event = PartialSnapshot.from_cloudevent(event)
+        snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(event)
         await self._send_snapshot_update(snapshot_mutate_event)
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STARTED)
     async def _ensemble_started_handler(self, event):
-        snapshot_mutate_event = PartialSnapshot.from_cloudevent(event)
+        snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(event)
         await self._send_snapshot_update(snapshot_mutate_event)
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_CANCELLED)
     async def _ensemble_cancelled_handler(self, event):
-        snapshot_mutate_event = PartialSnapshot.from_cloudevent(event)
+        snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(event)
         await self._send_snapshot_update(snapshot_mutate_event)
         self._stop()
 
@@ -190,11 +205,7 @@ class EnsembleEvaluator:
         logger.debug("Async server exiting.")
 
     def _run_server(self, loop):
-        asyncio.set_event_loop(loop)
-        server_future = asyncio.get_event_loop().create_task(
-            self.evaluator_server(self._done)
-        )
-        asyncio.get_event_loop().run_until_complete(server_future)
+        loop.run_until_complete(self.evaluator_server(self._done))
         logger.debug("Server thread exiting.")
 
     def terminate_message(self):
@@ -227,13 +238,7 @@ class EnsembleEvaluator:
         self._ws_thread.join()
 
     def get_successful_realizations(self):
-        successful_reals = 0
-        for real in self._snapshot.to_dict()["reals"].values():
-            for stage in real["stages"].values():
-                if stage["status"] != "Finished":
-                    break
-                successful_reals += 1
-        return successful_reals
+        return self._snapshot.get_successful_realizations()
 
     def run_and_get_successful_realizations(self):
         mon = self.run()

@@ -92,3 +92,12 @@ EVGROUP_ENSEMBLE = {
     EVTYPE_ENSEMBLE_STOPPED,
     EVTYPE_ENSEMBLE_CANCELLED,
 }
+
+STATUS_QUEUE_STATE = {
+    "Waiting": "JOB_QUEUE_WAITING",
+    "Finished": "JOB_QUEUE_SUCCESS",
+    "Failed": "JOB_QUEUE_FAILED",
+    "Pending": "JOB_QUEUE_RUNNING",
+    "Running": "JOB_QUEUE_RUNNING",
+    "Unknown": "JOB_QUEUE_UNKNOWN",
+}
