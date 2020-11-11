@@ -18,6 +18,11 @@ def plotHistogram(figure, plot_context, case_to_data_map, _observation_data):
     config = plot_context.plotConfig()
 
     case_list = plot_context.cases()
+    if not case_list:
+        dummy_case_name = "default"
+        case_list = [dummy_case_name]
+        case_to_data_map = {dummy_case_name: pd.DataFrame()}
+
     case_count = len(case_list)
 
     plot_context.x_axis = plot_context.VALUE_AXIS
