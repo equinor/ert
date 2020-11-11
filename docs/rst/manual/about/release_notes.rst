@@ -1,6 +1,56 @@
 Release Notes
 =============
 
+Version 2.16
+------------
+
+Highlighted changes
+~~~~~~~~~~~~~~~~~~~
+
+Isolated RMS environment
+########################
+
+We recommend all users to remove ``RMS_PYTHONPATH`` from their
+ERT configuration files when using ERT 2.16 or newer. Users can experience
+problems with not having access to Python modules they earlier had access to
+within RMS. If so, contact your ERT admins to evaluate the problem.
+
+For Equinor users we have installed a `run_external` command in the RMS
+environment that allows our users to reconstruct the environment prior to
+launching RMS to allow for executing commands within the standard user
+environment from RMS.
+
+2.16.0 ERT
+~~~~~~~~~~ 
+New features:
+  - Make it possible to run the IES via the command line interface
+  - New workflow hook ``PRE_FIRST_UPDATE_HOOK``
+
+Improvements:
+  - Improvements to the documentation
+  - Use gunicorn instead of werkzeug for data server
+  - Authenticate towards data server
+  - Have job_dispatch propagate events to prepare for a new ensemble evaluator
+  - Have the RMS-job keep track of default Python environment
+
+7.0.0 libres
+~~~~~~~~~~~~
+See ERT release notes
+
+0.6.4 semeio
+~~~~~~~~~~~~
+New features:
+  - Make data export from overburden_timeshift optional
+  - Add all forward model jobs as command line tools
+  - Extract saturations from RFT files
+
+Bug fixes:
+  - Make CSV_EXPORT2 robust towards empty parameters.txt
+  - Disallow whitespaces in parameter names
+  - Update summary data when running ``MISFIT_PREPROCESSOR``
+  - Install the STEA job correctly
+  - design2param forbids invalid parameter names ``ENSEMBLE``, ``DATE`` and ``REAL``
+
 Version 2.15
 ------------
 
