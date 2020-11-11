@@ -3,6 +3,7 @@ from ert_shared.tracker.blocking import BlockingTracker
 from ert_shared.tracker.qt import QTimerTracker
 from ert_shared.tracker.utils import scale_intervals
 from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
+from ert_shared.ensemble_evaluator.config import load_config
 from ert_shared.feature_toggling import FeatureToggling
 
 
@@ -31,8 +32,9 @@ def create_tracker(
     if num_realizations is not None:
         general_interval, detailed_interval = scale_intervals(num_realizations)
 
+    ee_config = load_config()
     ee_monitor_connection_details = (
-        ("localhost", "8765")
+        (ee_config.get("host"), ee_config.get("port"))
         if FeatureToggling.is_enabled("ensemble-evaluator")
         else None
     )

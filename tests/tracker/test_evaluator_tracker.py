@@ -1,5 +1,6 @@
 import time
 import logging
+from res.job_queue import JobStatusType
 from ert_shared.models.base_run_model import BaseRunModel
 from ert_shared.tracker.evaluator import EvaluatorTracker
 from unittest.mock import MagicMock, patch
@@ -13,9 +14,26 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
 
 def generate_some_states():
     return [
-        SimulationStateStatus("Running", None, SimulationStateStatus.COLOR_RUNNING),
-        SimulationStateStatus("Waiting", None, SimulationStateStatus.COLOR_WAITING),
-        SimulationStateStatus("Finished", None, SimulationStateStatus.COLOR_FINISHED),
+        SimulationStateStatus(
+            "Unknown",
+            JobStatusType.JOB_QUEUE_UNKNOWN,
+            SimulationStateStatus.COLOR_RUNNING,
+        ),
+        SimulationStateStatus(
+            "Running",
+            JobStatusType.JOB_QUEUE_RUNNING,
+            SimulationStateStatus.COLOR_RUNNING,
+        ),
+        SimulationStateStatus(
+            "Waiting",
+            JobStatusType.JOB_QUEUE_WAITING,
+            SimulationStateStatus.COLOR_WAITING,
+        ),
+        SimulationStateStatus(
+            "Finished",
+            JobStatusType.JOB_QUEUE_SUCCESS,
+            SimulationStateStatus.COLOR_FINISHED,
+        ),
     ]
 
 
@@ -34,7 +52,7 @@ def mock_ee_monitor(*args):
         MockCloudEvent(
             {"type": ids.EVTYPE_EE_SNAPSHOT},
             SnapshotBuilder()
-            .add_stage(stage_id="0", status="Unknown")
+            .add_stage(stage_id="0", status="Running", queue_state="JOB_QUEUE_RUNNING")
             .add_step(stage_id="0", step_id="0", status="Unknown")
             .add_job(
                 stage_id="0",
@@ -51,7 +69,7 @@ def mock_ee_monitor(*args):
         MockCloudEvent(
             {"type": ids.EVTYPE_EE_SNAPSHOT_UPDATE},
             SnapshotBuilder()
-            .add_stage(stage_id="0", status="Unknown")
+            .add_stage(stage_id="0", status="Finished", queue_state="JOB_QUEUE_SUCCESS")
             .add_step(stage_id="0", step_id="0", status="Finished")
             .add_metadata("iter", 0)
             .build(reals_ids, "Unknown")
