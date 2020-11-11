@@ -39,7 +39,7 @@ def plotHistogram(figure, plot_context, case_to_data_map, _observation_data):
     categorical = False
     for case, datas in case_to_data_map.items():
         if datas.empty:
-            data[case] = pd.Series()
+            data[case] = pd.Series(dtype="float64")
             continue
 
         data[case] = datas[0]
