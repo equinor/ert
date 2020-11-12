@@ -24,6 +24,7 @@ from ert_shared.ide.keywords.definitions import (
 )
 from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert_shared.plugins.plugin_manager import ErtPluginContext
+from ert_shared.plugins import launch_visualization_plugin
 from ert_shared.feature_toggling import FeatureToggling, feature_enabled
 from ert_shared.storage.command import add_parser_options as ert_api_add_parser_options
 import ert_shared
@@ -153,6 +154,16 @@ def get_ert_parser(parser=None):
     )
     ert_api_parser.set_defaults(func=run_server)
     ert_api_add_parser_options(ert_api_parser)
+
+    ert_vis_parser = subparsers.add_parser(
+        "vis",
+        description="Launch webviz-driven visualization tool.",
+    )
+    ert_vis_parser.set_defaults(func=launch_visualization_plugin)
+    ert_vis_parser.add_argument("--name", "-n", type=str, default="Webviz-ERT")
+    ert_vis_parser.add_argument(
+        "--verbose", action="store_true", help="Show verbose output.", default=False
+    )
 
     # test_run_parser
     test_run_description = "Run '{}' in cli".format(TEST_RUN_MODE)

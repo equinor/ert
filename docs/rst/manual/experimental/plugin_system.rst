@@ -161,3 +161,38 @@ The configuration object and properties is documented in: :class:`ert_shared.plu
 .. autoclass:: ert_shared.plugins.workflow_config.WorkflowConfig
     :members:
     :undoc-members:
+
+Visualization Tools
+~~~~~~~~~~~~~~~~~~~
+Visualization tools can be added as plugins
+
+Minimal example:
+
+.. code-block:: python
+
+
+   from ert_shared.plugins.plugin_manager import hook_implementation
+
+   class VisPlugin:
+      name = "HelloWorld"
+      @staticmethod
+      def run()
+         print("Hello World")
+
+   @hook_implementation
+    def register_visualization_plugin(handler):
+        handler.add_plugin(VisPlugin)
+
+To start the visualization plugin from the command-line simply run:
+
+.. code-block:: bash
+
+   ert vis --name HelloWorld
+
+.. autofunction:: ert_shared.plugins.hook_specifications.visualization.register_visualization_plugin
+
+.. autoclass:: ert_shared.plugins.VisualizationPluginHandler
+    :members: add_plugin
+    :undoc-members:
+
+A full example can be found here: `Webviz-ERT <https://github.com/equinor/webviz-ert>`_
