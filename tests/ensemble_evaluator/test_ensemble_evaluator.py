@@ -5,12 +5,11 @@ from ert_shared.ensemble_evaluator.evaluator import (
     ee_monitor,
 )
 from ert_shared.ensemble_evaluator.entity.ensemble import (
-    _Ensemble,
     create_ensemble_builder,
     create_realization_builder,
     create_stage_builder,
     create_step_builder,
-    create_script_job_builder,
+    create_legacy_job_builder,
 )
 from ert_shared.ensemble_evaluator.entity.snapshot import SnapshotBuilder
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
@@ -20,12 +19,23 @@ import websockets
 import pytest
 import asyncio
 import threading
-import json
-import logging
+from unittest.mock import Mock
 
 
 @pytest.fixture
-def evaluator(unused_tcp_port):
+def ee_config(unused_tcp_port):
+    default_url = f"ws://localhost:{unused_tcp_port}"
+    return {
+        "host": "localhost",
+        "port": unused_tcp_port,
+        "url": default_url,
+        "client_url": f"{default_url}/client",
+        "dispatch_url": f"{default_url}/dispatch",
+    }
+
+
+@pytest.fixture
+def evaluator(ee_config):
     ensemble = (
         create_ensemble_builder()
         .add_realization(
@@ -38,18 +48,16 @@ def evaluator(unused_tcp_port):
                     step=create_step_builder()
                     .set_id(0)
                     .add_job(
-                        job=create_script_job_builder()
-                        .set_executable("cat")
-                        .set_args(("something",))
+                        job=create_legacy_job_builder()
                         .set_id(0)
                         .set_name("cat")
+                        .set_ext_job(Mock())
                     )
                     .add_job(
-                        job=create_script_job_builder()
-                        .set_executable("cat")
-                        .set_args(("something2",))
+                        job=create_legacy_job_builder()
                         .set_id(1)
                         .set_name("cat2")
+                        .set_ext_job(Mock())
                     )
                     .set_dummy_io()
                 )
@@ -60,7 +68,7 @@ def evaluator(unused_tcp_port):
         .set_ensemble_size(2)
         .build()
     )
-    ee = EnsembleEvaluator(ensemble=ensemble, config=load_config())
+    ee = EnsembleEvaluator(ensemble=ensemble, config=ee_config)
     yield ee
     ee.stop()
 
@@ -111,18 +119,19 @@ def send_dispatch_event(client, event_type, source, event_id, data):
 
 
 def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
-    asyncio.set_event_loop(asyncio.new_event_loop())
     monitor = evaluator.run()
     events = monitor.track()
+
+    host = evaluator._config.get("host")
+    port = evaluator._config.get("port")
 
     # first snapshot before any event occurs
     snapshot_event = next(events)
     snapshot = Snapshot(snapshot_event.data)
     assert snapshot.get_status() == "Unknown"
-
     # two dispatchers connect
-    with Client(evaluator._host, evaluator._port, "/dispatch") as dispatch1, Client(
-        evaluator._host, evaluator._port, "/dispatch"
+    with Client(host, port, "/dispatch") as dispatch1, Client(
+        host, port, "/dispatch"
     ) as dispatch2:
 
         # first dispatcher informs that job 0 is running
@@ -159,7 +168,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
         assert snapshot.get_job("1", "0", "0", "0")["status"] == "Finished"
 
         # a second monitor connects
-        monitor2 = ee_monitor.create(evaluator._host, evaluator._port)
+        monitor2 = ee_monitor.create(host, port)
         events2 = monitor2.track()
         snapshot = Snapshot(next(events2).data)
         assert snapshot.get_status() == "Unknown"
@@ -167,7 +176,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
         assert snapshot.get_job("1", "0", "0", "0")["status"] == "Finished"
 
     # one monitor requests that server exit
-    monitor.exit_server()
+    monitor.signal_cancel()
 
     # both monitors should get a terminated event
     terminated = next(events)

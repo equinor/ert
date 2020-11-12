@@ -8,7 +8,6 @@ from ert_shared.ensemble_evaluator.entity.identifiers import (
     EVTYPE_FM_STEP_FAILURE,
     EVTYPE_FM_STEP_SUCCESS,
 )
-from ert_shared.ensemble_evaluator.ws_util import wait
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +24,6 @@ async def _wait_for_filepath(filepath, attempts_between_report=4):
 
 
 async def nfs_adaptor(log_file, ws_url):
-    await wait(ws_url, 25)
     await _wait_for_filepath(log_file)
     async with websockets.connect(ws_url) as websocket:
         async with aiofiles.open(str(log_file), "r") as f:
@@ -37,6 +35,8 @@ async def nfs_adaptor(log_file, ws_url):
                     continue
                 line = line[:-1] if line[-1:] == chr(10) else line
                 await websocket.send(line)
+
+    logger.debug(f"saw end of {log_file}")
 
 
 def _is_end_event(line):

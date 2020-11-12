@@ -59,7 +59,8 @@ EVGROUP_FM_ALL = EVGROUP_FM_STAGE | EVGROUP_FM_STEP | EVGROUP_FM_JOB
 EVTYPE_EE_SNAPSHOT = "com.equinor.ert.ee.snapshot"
 EVTYPE_EE_SNAPSHOT_UPDATE = "com.equinor.ert.ee.snapshot_update"
 EVTYPE_EE_TERMINATED = "com.equinor.ert.ee.terminated"
-EVTYPE_EE_TERMINATE_REQUEST = "com.equinor.ert.ee.terminate_request"
+EVTYPE_EE_USER_CANCEL = "com.equinor.ert.ee.user_cancel"
+EVTYPE_EE_USER_DONE = "com.equinor.ert.ee.user_done"
 
 FM_JOB_ATTR_NAME = "name"
 FM_JOB_ATTR_EXECUTABLE = "executable"
@@ -80,3 +81,14 @@ FM_JOB_ATTR_ARG_TYPES = "arg_types"
 FM_JOB_ATTR_MAX_ARG = "max_arg"
 FM_JOB_ATTR_STATUS = "status"
 FM_JOB_ATTR_CURRENT_MEMORY_USAGE = "current_memory_usage"
+
+
+EVTYPE_ENSEMBLE_STARTED = "com.equinor.ert.ensemble.started"
+EVTYPE_ENSEMBLE_STOPPED = "com.equinor.ert.ensemble.stopped"
+EVTYPE_ENSEMBLE_CANCELLED = "com.equinor.ert.ensemble.cancelled"
+
+EVGROUP_ENSEMBLE = {
+    EVTYPE_ENSEMBLE_STARTED,
+    EVTYPE_ENSEMBLE_STOPPED,
+    EVTYPE_ENSEMBLE_CANCELLED,
+}

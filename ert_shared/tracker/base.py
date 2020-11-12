@@ -172,6 +172,12 @@ class BaseTracker:
         else:
             return self._evaluator_tracker.is_finished()
 
+    def request_termination(self):
+        if self._evaluator_tracker is None:
+            return self._model.killAllSimulations()
+        else:
+            return self._evaluator_tracker.request_termination()
+
     @staticmethod
     def __checkForUnusedEnums(states):
         for enum in JobStatusType.enums():

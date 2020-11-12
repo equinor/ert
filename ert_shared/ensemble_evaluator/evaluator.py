@@ -3,7 +3,6 @@ import threading
 import logging
 from ert_shared.ensemble_evaluator.dispatch import Dispatcher
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
-import ert_shared.ensemble_evaluator.entity.identifiers as ids
 import ert_shared.ensemble_evaluator.monitor as ee_monitor
 import websockets
 from cloudevents.http import from_json, to_json
@@ -26,8 +25,7 @@ class EnsembleEvaluator:
     def __init__(self, ensemble, config, ee_id=0):
         self._ee_id = ee_id
 
-        self._host = config.get("host")
-        self._port = config.get("port")
+        self._config = config
         self._ensemble = ensemble
 
         self._loop = asyncio.new_event_loop()
@@ -45,7 +43,7 @@ class EnsembleEvaluator:
     @staticmethod
     def create_snapshot(ensemble):
         builder = SnapshotBuilder()
-        realizations = ensemble.get_reals()
+        realizations = ensemble.get_active_reals()
         if not realizations:
             raise ValueError(
                 "An ensemble needs to have at least on realization to run."
@@ -67,13 +65,29 @@ class EnsembleEvaluator:
         for key, val in ensemble.get_metadata().items():
             builder.add_metadata(key, val)
         return builder.build(
-            [str(real.get_iens()) for real in ensemble.get_reals()], "Unknown"
+            [str(real.get_iens()) for real in ensemble.get_active_reals()], "Unknown"
         )
 
-    @_dispatch.register_event_handler(ids.EVGROUP_FM_ALL)
+    @_dispatch.register_event_handler(identifiers.EVGROUP_FM_ALL)
     async def _fm_handler(self, event):
         snapshot_mutate_event = PartialSnapshot.from_cloudevent(event)
         await self._send_snapshot_update(snapshot_mutate_event)
+
+    @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STOPPED)
+    async def _ensemble_stopped_handler(self, event):
+        snapshot_mutate_event = PartialSnapshot.from_cloudevent(event)
+        await self._send_snapshot_update(snapshot_mutate_event)
+
+    @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STARTED)
+    async def _ensemble_started_handler(self, event):
+        snapshot_mutate_event = PartialSnapshot.from_cloudevent(event)
+        await self._send_snapshot_update(snapshot_mutate_event)
+
+    @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_CANCELLED)
+    async def _ensemble_cancelled_handler(self, event):
+        snapshot_mutate_event = PartialSnapshot.from_cloudevent(event)
+        await self._send_snapshot_update(snapshot_mutate_event)
+        self._stop()
 
     async def _send_snapshot_update(self, snapshot_mutate_event):
         self._snapshot.merge_event(snapshot_mutate_event)
@@ -109,8 +123,6 @@ class EnsembleEvaluator:
         self._clients.remove(websocket)
 
     async def handle_client(self, websocket, path):
-        logger.debug(f"Client {websocket.remote_address} connected.")
-
         with self.store_client(websocket):
             message = self.create_snapshot_msg(
                 self._ee_id, self._snapshot, self.event_index()
@@ -119,12 +131,19 @@ class EnsembleEvaluator:
 
             async for message in websocket:
                 client_event = from_json(message)
-                if client_event["type"] == identifiers.EVTYPE_EE_TERMINATE_REQUEST:
-                    logger.debug(
-                        f"Client {websocket.remote_address} asked to terminate."
-                    )
+                logger.debug(f"got message from client: {client_event}")
+                if client_event["type"] == identifiers.EVTYPE_EE_USER_CANCEL:
+                    logger.debug(f"Client {websocket.remote_address} asked to cancel.")
+                    if self._ensemble.is_cancellable():
+                        # The evaluator will stop after the ensemble has
+                        # indicated it has been cancelled.
+                        self._ensemble.cancel()
+                    else:
+                        self._stop()
+
+                if client_event["type"] == identifiers.EVTYPE_EE_USER_DONE:
+                    logger.debug(f"Client {websocket.remote_address} signalled done.")
                     self._stop()
-            logger.debug(f"Client {websocket.remote_address} disconnected.")
 
     @asynccontextmanager
     async def count_dispatcher(self):
@@ -134,19 +153,14 @@ class EnsembleEvaluator:
         self._dispatchers_connected.task_done()
 
     async def handle_dispatch(self, websocket, path):
-        logger.debug(f"Dispatch {websocket.remote_address} connected.")
-
         async with self.count_dispatcher():
             async for msg in websocket:
-                logger.debug(f"Dispatch got: {msg}.")
-                if msg == "null":
-                    return
                 event = from_json(msg)
                 await self._dispatch.handle_event(self, event)
-            logger.debug(f"Dispatch {websocket.remote_address} disconnected.")
+                if event["type"] == identifiers.EVTYPE_ENSEMBLE_STOPPED:
+                    return
 
     async def connection_handler(self, websocket, path):
-        logger.debug(f"Connection handler started for {websocket.remote_address}.")
         elements = path.split("/")
         if elements[1] == "client":
             await self.handle_client(websocket, path)
@@ -156,8 +170,8 @@ class EnsembleEvaluator:
     async def evaluator_server(self, done):
         async with websockets.serve(
             self.connection_handler,
-            self._host,
-            self._port,
+            self._config.get("host"),
+            self._config.get("port"),
             max_queue=500,
             max_size=2 ** 26,
         ):
@@ -177,12 +191,10 @@ class EnsembleEvaluator:
 
     def _run_server(self, loop):
         asyncio.set_event_loop(loop)
-
         server_future = asyncio.get_event_loop().create_task(
             self.evaluator_server(self._done)
         )
         asyncio.get_event_loop().run_until_complete(server_future)
-
         logger.debug("Server thread exiting.")
 
     def terminate_message(self):
@@ -203,8 +215,8 @@ class EnsembleEvaluator:
 
     def run(self):
         self._ws_thread.start()
-        self._ensemble.evaluate(self._host, self._port)
-        return ee_monitor.create(self._host, self._port)
+        self._ensemble.evaluate(self._config, self._ee_id)
+        return ee_monitor.create(self._config.get("host"), self._config.get("port"))
 
     def _stop(self):
         if not self._done.done():
@@ -213,3 +225,18 @@ class EnsembleEvaluator:
     def stop(self):
         self._loop.call_soon_threadsafe(self._stop)
         self._ws_thread.join()
+
+    def get_successful_realizations(self):
+        successful_reals = 0
+        for real in self._snapshot.to_dict()["reals"].values():
+            for stage in real["stages"].values():
+                if stage["status"] != "Finished":
+                    break
+                successful_reals += 1
+        return successful_reals
+
+    def run_and_get_successful_realizations(self):
+        mon = self.run()
+        for _ in mon.track():
+            pass
+        return self.get_successful_realizations()

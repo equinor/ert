@@ -13,6 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from ert_shared.feature_toggling import FeatureToggling
 from res.enkf.enums import HookRuntime
 from res.enkf.enums import RealizationStateEnum
 from res.enkf import ErtRunContext, EnkfSimulationRunner
@@ -20,10 +21,11 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
 from ert_shared.storage.extraction_api import dump_to_new_storage
-from ert_shared.ensemble_evaluator.context_manager import attach_ensemble_evaluator
 
 import logging
 logger = logging.getLogger(__file__)
+
+
 class MultipleDataAssimilation(BaseRunModel):
     """
     Run Multiple Data Assimilation (MDA) Ensemble Smoother with custom weights.
@@ -106,7 +108,6 @@ class MultipleDataAssimilation(BaseRunModel):
 
 
     def _simulateAndPostProcess(self, run_context, arguments):
-        self._job_queue = self._queue_config.create_job_queue( )
         iteration = run_context.get_iter( )
 
         phase_string = "Running simulation for iteration: %d" % iteration
@@ -120,9 +121,10 @@ class MultipleDataAssimilation(BaseRunModel):
         phase_string = "Running forecast for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=False)
 
-        run_path_list = self.ert().getRunpathList()
-        forward_model = self.ert().resConfig().model_config.getForwardModel()
-        with attach_ensemble_evaluator(run_context, run_path_list, forward_model):
+        if FeatureToggling.is_enabled("ensemble-evaluator"):
+            num_successful_realizations = self.run_ensemble_evaluator(run_context)
+        else:
+            self._job_queue = self._queue_config.create_job_queue()
             num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, run_context)
 
         num_successful_realizations += arguments.get('prev_successful_realizations', 0)
