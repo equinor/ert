@@ -10,7 +10,7 @@ from tests.utils import tmpdir
 
 class FileReporterTests(TestCase):
     def setUp(self):
-        self.reporter = File()
+        self.reporter = File(sync_disc_timeout=0)
 
     @tmpdir(None)
     def test_report_with_init_message_argument(self):
@@ -177,7 +177,7 @@ class FileReporterTests(TestCase):
             msg.timestamp, 0, []
         )
 
-        self.reporter.report(msg, sync_disc_timeout=0)
+        self.reporter.report(msg)
 
         with open(self.reporter.OK_file, "r") as f:
             self.assertIn(

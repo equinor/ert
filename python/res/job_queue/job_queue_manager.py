@@ -17,13 +17,14 @@
 Module implementing a queue for managing external jobs.
 
 """
-from res.job_queue import Job, JobStatusType, ThreadStatus
+from res.job_queue import JobStatusType
 from threading import BoundedSemaphore
-import time
 
 CONCURRENT_INTERNALIZATION = 10
 
 
+# TODO: there's no need for this class, all the behavior belongs in the queue
+# class proper.
 class JobQueueManager:
     def __init__(self, queue, queue_evaluators=None):
         self._queue = queue
@@ -89,52 +90,5 @@ class JobQueueManager:
         status = "waiting=%d, running=%d, success=%d, failed=%d" % (nw, nr, ns, nf)
         return "JobQueueManager(%s, %s)" % (status, ir)
 
-    def max_running(self):
-        if self.queue.get_max_running() == 0:
-            return len(self.queue.job_list)
-        else:
-            return self.queue.get_max_running()
-
-    def _available_capacity(self):
-        return (
-            not self.queue.stopped and self.queue.count_running() < self.max_running()
-        )
-
-    def _launch_jobs(self):
-        # Start waiting jobs
-        while self._available_capacity():
-            job = self.queue.fetch_next_waiting()
-            if job is None:
-                break
-            job.run(
-                driver=self.queue.driver,
-                pool_sema=self._pool_sema,
-                max_submit=self.queue.max_submit,
-            )
-
-    def _stop_jobs(self):
-        for job in self.queue.job_list:
-            job.stop()
-        while self.queue.is_active():
-            time.sleep(1)
-
-    def _assert_complete(self):
-        for job in self.queue.job_list:
-            if job.thread_status != ThreadStatus.DONE:
-                msg = "Unexpected job status type after running job: {} with thread status: {}"
-                raise AssertionError(msg.format(job.status, job.thread_status))
-
     def execute_queue(self):
-        while self.queue.is_active() and not self.queue.stopped:
-            self._launch_jobs()
-
-            time.sleep(1)
-
-            if self._queue_evaluators is not None:
-                for func in self._queue_evaluators:
-                    func()
-
-        if self.queue.stopped:
-            self._stop_jobs()
-
-        self._assert_complete()
+        self._queue.execute_queue(self._pool_sema, self._queue_evaluators)

@@ -12,8 +12,6 @@ from functools import partial
 import time
 import threading
 
-LONG_RUNNING_FACTOR = 1.25
-
 
 class EnkfSimulationRunner(BaseCClass):
     TYPE_NAME = "enkf_simulation_runner"
@@ -94,43 +92,26 @@ class EnkfSimulationRunner(BaseCClass):
         hook_manager = ert.getHookManager()
         hook_manager.runWorkflows(runtime, ert)
 
-    def add_job(self, run_arg, res_config, job_queue, max_runtime):
-        job_name = run_arg.job_name
-        run_path = run_arg.runpath
-        job_script = res_config.queue_config.job_script
-        num_cpu = res_config.queue_config.num_cpu
-        if num_cpu == 0:
-            num_cpu = res_config.ecl_config.num_cpu
-
-        job = JobQueueNode(
-            job_script=job_script,
-            job_name=job_name,
-            run_path=run_path,
-            num_cpu=num_cpu,
-            status_file=job_queue.status_file,
-            ok_file=job_queue.ok_file,
-            exit_file=job_queue.exit_file,
-            done_callback_function=EnKFState.forward_model_ok_callback,
-            exit_callback_function=EnKFState.forward_model_exit_callback,
-            callback_arguments=[run_arg, res_config],
-            max_runtime=max_runtime,
-        )
-
-        if job is None:
-            return
-        run_arg._set_queue_index(job_queue.add_job(job))
-
     def start_queue(self, run_context, job_queue):
         max_runtime = self._enkf_main().analysisConfig().get_max_runtime()
         if max_runtime == 0:
             max_runtime = None
+
+        done_callback_function = EnKFState.forward_model_ok_callback
+        exit_callback_function = EnKFState.forward_model_exit_callback
 
         # submit jobs
         for i in range(len(run_context)):
             if not run_context.is_active(i):
                 continue
             run_arg = run_context[i]
-            self.add_job(run_arg, self._enkf_main().resConfig(), job_queue, max_runtime)
+            job_queue.add_job_from_run_arg(
+                run_arg,
+                self._enkf_main().resConfig(),
+                max_runtime,
+                done_callback_function,
+                exit_callback_function,
+            )
 
         job_queue.submit_complete()
         queue_evaluators = None
@@ -140,30 +121,10 @@ class EnkfSimulationRunner(BaseCClass):
         ):
             queue_evaluators = [
                 partial(
-                    EnkfSimulationRunner.stop_long_running_jobs,
-                    job_queue,
+                    job_queue.stop_long_running_jobs,
                     self._enkf_main().analysisConfig().minimum_required_realizations,
                 )
             ]
 
         jqm = JobQueueManager(job_queue, queue_evaluators)
         jqm.execute_queue()
-
-    @staticmethod
-    def stop_long_running_jobs(job_queue, minimum_required_realizations):
-        finished_realizations = job_queue.count_status(JobStatusType.JOB_QUEUE_DONE)
-        if finished_realizations < minimum_required_realizations:
-            return
-
-        completed_jobs = [
-            job
-            for job in job_queue.job_list
-            if job.status == JobStatusType.JOB_QUEUE_DONE
-        ]
-        average_runtime = sum([job.runtime for job in completed_jobs]) / float(
-            len(completed_jobs)
-        )
-
-        for job in job_queue.job_list:
-            if job.runtime > LONG_RUNNING_FACTOR * average_runtime:
-                job.stop()

@@ -1,17 +1,5 @@
-from res.enkf import EnkfSimulationRunner
-from res.job_queue import JobQueueNode, JobStatusType, JobQueue, JobQueueManager
-from res.job_queue import ThreadStatus, Driver, QueueDriverEnum
-from tests.utils import tmpdir
-from unittest import TestCase
-import os, stat, random
-
-
-class MockedQueue:
-    def __init__(self, job_list):
-        self.job_list = job_list
-
-    def count_status(self, status):
-        return len([x for x in self.job_list if x.status == status])
+from res.job_queue import JobStatusType, JobQueue
+from unittest import TestCase, mock
 
 
 class MockedJob:
@@ -26,6 +14,9 @@ class MockedJob:
 
     def stop(self):
         self.status = JobStatusType.JOB_QUEUE_FAILED
+
+    def convertToCReference(self, _):
+        pass
 
 
 class EnkfSimulationRunnerTest(TestCase):
@@ -52,9 +43,18 @@ class EnkfSimulationRunnerTest(TestCase):
             job_list[i]._start_time = 0
             job_list[i]._end_time = 5
 
-        queue = MockedQueue(job_list)
+        # The driver is of no consequence, so resolving it in the c layer is
+        # uninteresting and mocked out.
+        with mock.patch("res.job_queue.JobQueue._set_driver"):
+            queue = JobQueue(mock.MagicMock())
 
-        EnkfSimulationRunner.stop_long_running_jobs(queue, 5)
+            # We don't need the c layer call here, we only need it added to
+            # the queue's job_list.
+            with mock.patch("res.job_queue.JobQueue._add_job"):
+                for job in job_list:
+                    queue.add_job(job)
+
+        queue.stop_long_running_jobs(5)
 
         for i in range(5):
             assert job_list[i].status == JobStatusType.JOB_QUEUE_DONE

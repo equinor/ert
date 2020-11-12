@@ -24,11 +24,12 @@ class File(object):
     OK_file = "OK"
     STATUS_json = "status.json"
 
-    def __init__(self):
+    def __init__(self, sync_disc_timeout=10):
         self.status_dict = {}
         self.node = socket.gethostname()
+        self._sync_disc_timeout = sync_disc_timeout
 
-    def report(self, msg, sync_disc_timeout=10):
+    def report(self, msg):
         job_status = {}
         if msg.job:
             index = msg.job.index
@@ -81,7 +82,7 @@ class File(object):
                 self.status_dict["end_time"] = data_util.datetime_serialize(
                     msg.timestamp
                 )
-                self._dump_ok_file(sync_disc_timeout)
+                self._dump_ok_file()
             else:
                 # this has already been handled by earlier event
                 pass
@@ -172,7 +173,7 @@ class File(object):
         fileH.write("</error>\n")
         fileH.close()
 
-    def _dump_ok_file(self, sync_disc_timeout):
+    def _dump_ok_file(self):
         now = time.localtime()
         with open(self.OK_file, "w") as f:
             f.write(
@@ -180,7 +181,7 @@ class File(object):
                     now.tm_hour, now.tm_min, now.tm_sec
                 )
             )
-        time.sleep(sync_disc_timeout)  # Let the disks sync up
+        time.sleep(self._sync_disc_timeout)  # Let the disks sync up
 
     def _dump_status_json(self):
         with open(self.STATUS_json, "w") as fp:

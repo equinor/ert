@@ -20,6 +20,7 @@ Module implementing a queue for managing external jobs.
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import asyncio
 import sys
 import time
 import ctypes
@@ -27,7 +28,9 @@ import ctypes
 from cwrap import BaseCClass
 
 from res import ResPrototype
-from res.job_queue import Job, JobStatusType, ThreadStatus
+from res.job_queue import Job, JobStatusType, ThreadStatus, JobQueueNode
+
+LONG_RUNNING_FACTOR = 1.25
 
 
 class JobQueue(BaseCClass):
@@ -309,3 +312,118 @@ class JobQueue(BaseCClass):
 
     def count_running(self):
         return sum(job.thread_status == ThreadStatus.RUNNING for job in self.job_list)
+
+    def max_running(self):
+        if self.get_max_running() == 0:
+            return len(self.job_list)
+        else:
+            return self.get_max_running()
+
+    def available_capacity(self):
+        return not self.stopped and self.count_running() < self.max_running()
+
+    def stop_jobs(self):
+        for job in self.job_list:
+            job.stop()
+        while self.is_active():
+            time.sleep(1)
+
+    async def stop_jobs_async(self):
+        for job in self.job_list:
+            job.stop()
+        while self.is_active():
+            await asyncio.sleep(1)
+
+    def assert_complete(self):
+        for job in self.job_list:
+            if job.thread_status != ThreadStatus.DONE:
+                msg = "Unexpected job status type after running job: {} with thread status: {}"
+                raise AssertionError(msg.format(job.status, job.thread_status))
+
+    def launch_jobs(self, pool_sema):
+        # Start waiting jobs
+        while self.available_capacity():
+            job = self.fetch_next_waiting()
+            if job is None:
+                break
+            job.run(
+                driver=self.driver,
+                pool_sema=pool_sema,
+                max_submit=self.max_submit,
+            )
+
+    def execute_queue(self, pool_sema, evaluators):
+        while self.is_active() and not self.stopped:
+            self.launch_jobs(pool_sema)
+
+            time.sleep(1)
+
+            if evaluators is not None:
+                for func in evaluators:
+                    func()
+
+        if self.stopped:
+            self.stop_jobs()
+
+        self.assert_complete()
+
+    def add_job_from_run_arg(self, run_arg, res_config, max_runtime, ok_cb, exit_cb):
+        job_name = run_arg.job_name
+        run_path = run_arg.runpath
+        job_script = res_config.queue_config.job_script
+        num_cpu = res_config.queue_config.num_cpu
+        if num_cpu == 0:
+            num_cpu = res_config.ecl_config.num_cpu
+
+        job = JobQueueNode(
+            job_script=job_script,
+            job_name=job_name,
+            run_path=run_path,
+            num_cpu=num_cpu,
+            status_file=self.status_file,
+            ok_file=self.ok_file,
+            exit_file=self.exit_file,
+            done_callback_function=ok_cb,
+            exit_callback_function=exit_cb,
+            callback_arguments=[run_arg, res_config],
+            max_runtime=max_runtime,
+        )
+
+        if job is None:
+            return
+        run_arg._set_queue_index(self.add_job(job))
+
+    def add_ee_stage(self, stage):
+        job = JobQueueNode(
+            job_script=stage.get_job_script(),
+            job_name=stage.get_job_name(),
+            run_path=stage.get_run_path(),
+            num_cpu=stage.get_num_cpu(),
+            status_file=self.status_file,
+            ok_file=self.ok_file,
+            exit_file=self.exit_file,
+            done_callback_function=stage.get_done_callback(),
+            exit_callback_function=stage.get_exit_callback(),
+            callback_arguments=stage.get_callback_arguments(),
+            max_runtime=stage.get_max_runtime(),
+        )
+        if job is None:
+            raise ValueError("JobQueueNode constructor created None job")
+
+        stage.get_run_arg()._set_queue_index(self.add_job(job))
+
+    def stop_long_running_jobs(self, minimum_required_realizations):
+        finished_realizations = self.count_status(JobStatusType.JOB_QUEUE_DONE)
+        if finished_realizations < minimum_required_realizations:
+            return
+
+        completed_jobs = [
+            job for job in self.job_list if job.status == JobStatusType.JOB_QUEUE_DONE
+        ]
+        average_runtime = sum([job.runtime for job in completed_jobs]) / float(
+            len(completed_jobs)
+        )
+
+        for job in self.job_list:
+            if job.runtime > LONG_RUNNING_FACTOR * average_runtime:
+                job.stop()

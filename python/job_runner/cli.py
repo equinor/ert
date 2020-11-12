@@ -15,7 +15,7 @@ def _setup_reporters(is_interactive_run, ee_id):
     if is_interactive_run:
         reporters.append(reporting.Interactive())
     elif ee_id:
-        reporters.append(reporting.File())
+        reporters.append(reporting.File(sync_disc_timeout=0))
         reporters.append(reporting.Network())
         reporters.append(reporting.Event())
     else:

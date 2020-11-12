@@ -16,7 +16,6 @@
 from cwrap import BaseCClass
 from res import ResPrototype
 from res.enkf.enums import EnkfInitModeEnum, EnkfVarType
-from res.job_queue import JobStatusType
 
 
 class EnKFState(BaseCClass):
