@@ -12,11 +12,10 @@ def test_build_ensemble():
             .add_step(
                 ee.create_step_builder()
                 .add_job(
-                    ee.create_script_job_builder()
-                    .set_executable("cmd.exe")
-                    .set_args(("echo", "bar"))
+                    ee.create_legacy_job_builder()
                     .set_id(0)
                     .set_name("echo_command")
+                    .set_ext_job(Mock())
                 )
                 .set_id(0)
                 .set_dummy_io()
@@ -46,8 +45,19 @@ def test_build_ensemble_legacy():
     forward_model.__len__.return_value = 1
     forward_model.iget_job = lambda i: ext_job if i == 0 else None
 
+    analysis_config = MagicMock()
+    analysis_config.get_max_runtime = MagicMock(return_value=0)
+
+    queue_config = MagicMock()
+
+    res_config = MagicMock()
+
     ensemble_builder = ee.create_ensemble_builder_from_legacy(
-        run_context, forward_model
+        run_context=run_context,
+        forward_model=forward_model,
+        queue_config=queue_config,
+        analysis_config=analysis_config,
+        res_config=res_config,
     )
 
     ensemble = ensemble_builder.build()

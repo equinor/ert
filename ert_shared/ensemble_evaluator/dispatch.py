@@ -7,6 +7,9 @@ class Dispatcher:
 
     def register_event_handler(self, event_types):
         def decorator(function):
+            nonlocal event_types
+            if not isinstance(event_types, set):
+                event_types = set({event_types})
             for event_type in event_types:
                 self.__LOOKUP_MAP[event_type].append(function)
 

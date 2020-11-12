@@ -179,7 +179,7 @@ class RunDialog(QDialog):
         kill_job = QMessageBox.question(self, "Kill simulations?",msg, QMessageBox.Yes | QMessageBox.No )
 
         if kill_job == QMessageBox.Yes:
-            if self._run_model.killAllSimulations():
+            if self.simulations_tracker.request_termination():
                 self.reject()
         return kill_job
 

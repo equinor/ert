@@ -1,3 +1,4 @@
+from ert_shared.feature_toggling import FeatureToggling
 from res.enkf.enums import HookRuntime
 from res.enkf.enums import RealizationStateEnum
 from res.enkf import ErtRunContext, EnkfSimulationRunner
@@ -5,7 +6,8 @@ from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
 
 from ert_shared.storage.extraction_api import dump_to_new_storage
-from ert_shared.ensemble_evaluator.context_manager import attach_ensemble_evaluator
+
+
 class EnsembleSmoother(BaseRunModel):
 
     def __init__(self):
@@ -32,10 +34,11 @@ class EnsembleSmoother(BaseRunModel):
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
 
         self.setPhaseName("Running forecast...", indeterminate=False)
-        self._job_queue = self._queue_config.create_job_queue( )
-        run_path_list = self.ert().getRunpathList()
-        forward_model = self.ert().resConfig().model_config.getForwardModel()
-        with attach_ensemble_evaluator(prior_context, run_path_list, forward_model):
+
+        if FeatureToggling.is_enabled("ensemble-evaluator"):
+            num_successful_realizations = self.run_ensemble_evaluator(prior_context)
+        else:
+            self._job_queue = self._queue_config.create_job_queue()
             num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, prior_context)
 
         self.checkHaveSufficientRealizations(num_successful_realizations)
@@ -66,10 +69,10 @@ class EnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Running forecast...", indeterminate=False)
 
-        self._job_queue = self._queue_config.create_job_queue( )
-
-        run_path_list = self.ert().getRunpathList()
-        with attach_ensemble_evaluator(rerun_context, run_path_list, forward_model):
+        if FeatureToggling.is_enabled("ensemble-evaluator"):
+            num_successful_realizations = self.run_ensemble_evaluator(rerun_context)
+        else:
+            self._job_queue = self._queue_config.create_job_queue()
             num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, rerun_context)
 
         self.checkHaveSufficientRealizations(num_successful_realizations)

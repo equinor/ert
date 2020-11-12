@@ -1,6 +1,6 @@
 import sys
 import logging
-
+from copy import deepcopy
 
 class _Feature:
     def __init__(self, default_enabled, msg=None):
@@ -9,7 +9,7 @@ class _Feature:
 
 
 class FeatureToggling:
-    _conf = {
+    _conf_original = {
         "new-storage": _Feature(
             default_enabled=False,
             msg="The new storage solution is experimental! Thank you for testing our new features."
@@ -23,6 +23,8 @@ class FeatureToggling:
                 "and distributed way."
         ),
     }
+
+    _conf = deepcopy(_conf_original)
 
     @staticmethod
     def is_enabled(feature_name):
@@ -63,6 +65,9 @@ class FeatureToggling:
         arg_default_state = "disable" if default_state else "enable"
         return "{}-{}".format(arg_default_state, feature_name)
 
+    @staticmethod
+    def reset():
+        FeatureToggling._conf = deepcopy(FeatureToggling._conf_original)
 
 def feature_enabled(feature_name):
     def decorator(func):

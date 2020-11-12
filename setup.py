@@ -34,7 +34,7 @@ setup(
         "cloudevents",
         "console-progressbar==1.1.2",
         "decorator",
-        "equinor-libres >= 7.2.0b0",
+        "equinor-libres >= 8.0.0b0",
         "flask",
         "gunicorn",
         "jinja2",

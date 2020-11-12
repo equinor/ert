@@ -68,7 +68,7 @@ def run_cli(args):
             monitor.monitor(tracker)
         except (SystemExit, KeyboardInterrupt):
             print("\nKilling simulations...")
-            model.killAllSimulations()
+            tracker.request_termination()
 
         thread.join()
 

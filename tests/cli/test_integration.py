@@ -1,3 +1,4 @@
+from ert_shared.feature_toggling import FeatureToggling
 import sys
 import pytest
 import os
@@ -45,6 +46,7 @@ def test_target_case_equal_current_case(tmpdir, source_root):
         with pytest.raises(SystemExit):
             run_cli(parsed)
 
+
 def test_runpath_file(tmpdir, source_root):
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),
@@ -78,6 +80,35 @@ def test_runpath_file(tmpdir, source_root):
 
         assert os.path.isfile("RUNPATH_WORKFLOW_0.OK")
         assert os.path.isfile("RUNPATH_WORKFLOW_1.OK")
+
+
+def test_ensemble_evaluator(tmpdir, source_root):
+    shutil.copytree(
+        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(str(tmpdir), "poly_example"),
+    )
+
+    with tmpdir.as_cwd():
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser,
+            [
+                ENSEMBLE_SMOOTHER_MODE,
+                "--target-case",
+                "poly_runpath_file",
+                "--realizations",
+                "1,2,4,8,16,32,64",
+                "--enable-ensemble-evaluator",
+                "poly_example/poly.ert",
+            ],
+        )
+        FeatureToggling.update_from_args(parsed)
+
+        assert FeatureToggling.is_enabled("ensemble-evaluator") is True
+
+        run_cli(parsed)
+        FeatureToggling.reset()
+
 
 def test_cli_test_run(tmpdir, source_root, mock_cli_run):
     shutil.copytree(

@@ -7,6 +7,7 @@ from cloudevents.http.json_methods import to_json
 import pytest
 import websockets
 from ert_shared.ensemble_evaluator.nfs_adaptor import nfs_adaptor
+from ert_shared.ensemble_evaluator.ws_util import wait as wait_for_ws
 from ert_shared.ensemble_evaluator.entity.identifiers import EVTYPE_FM_STEP_SUCCESS
 
 
@@ -44,16 +45,18 @@ async def mock_ws(host, port):
 
 
 @pytest.mark.asyncio
-async def test_append_to_file(tmpdir, unused_tcp_port, event_loop):
+async def test_append_to_file(tmpdir, unused_tcp_port, event_loop, caplog):
     host = "localhost"
-    port = unused_tcp_port
+    url = f"ws://{host}:{unused_tcp_port}"
     log_file = Path(tmpdir) / "log"
-    adaptor_task = event_loop.create_task(nfs_adaptor(log_file, f"ws://{host}:{port}"))
-    mock_ws_task = event_loop.create_task(mock_ws(host, port))
+    mock_ws_task = event_loop.create_task(mock_ws(host, unused_tcp_port))
+    await wait_for_ws(url, 10)
+
+    adaptor_task = event_loop.create_task(nfs_adaptor(log_file, url))
     mock_writer_task = event_loop.create_task(mock_writer(log_file))
     await asyncio.wait(
         (adaptor_task, mock_ws_task, mock_writer_task),
-        timeout=2,
+        timeout=3,
         return_when=asyncio.FIRST_EXCEPTION,
     )
     adaptor_task.result()
