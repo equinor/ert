@@ -15,7 +15,7 @@ class TestSiteConfigShellJobs(ResTest):
         for job in installed_jobs:
             exe = job.get_executable()
             if "shell_scripts" in exe:
-                fm_shell_jobs[job.name().lower()] = exe
+                fm_shell_jobs[job.name().upper()] = exe
 
         list_from_content = res_config.ert_workflow_list
         wf_shell_jobs = {}
@@ -30,15 +30,15 @@ class TestSiteConfigShellJobs(ResTest):
         config_file = self.createTestPath("local/simple_config/minimum_config")
 
         shell_job_names = [
-            "delete_file",
-            "delete_directory",
-            "copy_directory",
-            "make_symlink",
-            "move_file",
-            "make_directory",
-            "careful_copy_file",
-            "symlink",
-            "copy_file",
+            "DELETE_FILE",
+            "DELETE_DIRECTORY",
+            "COPY_DIRECTORY",
+            "MAKE_SYMLINK",
+            "MOVE_FILE",
+            "MAKE_DIRECTORY",
+            "CAREFUL_COPY_FILE",
+            "SYMLINK",
+            "COPY_FILE",
         ]
 
         res_config = ResConfig(config_file)
