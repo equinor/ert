@@ -8,7 +8,6 @@ import websockets
 from cloudevents.http import CloudEvent, to_json
 from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 from job_runner import JOBS_FILE
-from res.job_queue import JobQueueManager
 from res.job_queue.job_status_type_enum import JobStatusType
 
 _FM_STAGE_WAITING = "com.equinor.ert.forward_model_stage.waiting"
@@ -43,20 +42,12 @@ def _queue_state_event_type(state):
     return _queue_state_to_event_type_map[state]
 
 
-class JobQueueManagerAdaptor(JobQueueManager):
-
-    # This adaptor is instantiated by code outside ERT's control, so for now
-    # a class member is provided to allow this URL to vary
-    ws_url = None
-
-    ee_id = None
-
-    def __init__(self, queue, queue_evaluators=None):
-        super().__init__(queue, queue_evaluators)
-        # asyncio.set_event_loop(asyncio.new_event_loop())
-        self._ws_url = self.ws_url
+class QueueAdaptor:
+    def __init__(self, queue, ws_url, ee_id):
+        self._ws_url = ws_url
         self._changes_queue = asyncio.Queue()
-        self._ee_id = self.ee_id
+        self._ee_id = ee_id
+        self._queue = queue
         wait_for_ws(self._ws_url)
 
         self._qindex_to_iens = {
@@ -67,7 +58,7 @@ class JobQueueManagerAdaptor(JobQueueManager):
 
         self._patch_jobs_file()
 
-        # JobQueueManager is at its core a while and a sleep. This is not
+        # Running the queue is at its core a while and a sleep. This is not
         # asyncio friendly, so create a separate thread from where websocket
         # events will be pushed.
         self._publisher_thread = threading.Thread(
@@ -114,7 +105,7 @@ class JobQueueManagerAdaptor(JobQueueManager):
                     await websocket.send("null")
                     return
                 events = [
-                    JobQueueManagerAdaptor._translate_change_to_cloudevent(
+                    QueueAdaptor._translate_change_to_cloudevent(
                         real_id, status
                     )
                     for real_id, status in changes.items()
@@ -124,7 +115,7 @@ class JobQueueManagerAdaptor(JobQueueManager):
 
     def _transition(self):
         """Transition to a new state, return both old and new state."""
-        new_state = [job.status.value for job in self.queue.job_list]
+        new_state = [job.status.value for job in self._queue.job_list]
         old_state = copy.copy(self._state)
         self._state = new_state
         return old_state, new_state
@@ -163,24 +154,24 @@ class JobQueueManagerAdaptor(JobQueueManager):
             self._changes_queue.put(changes), asyncio.get_event_loop()
         ).result()
 
-    def execute_queue(self):
+    def execute_queue(self, pool_sema, evaluators):
         self._publish_changes(self._snapshot())
 
-        while self.queue.is_active() and not self.queue.stopped:
-            self._launch_jobs()
+        while self._queue.is_active() and not self._queue.stopped:
+            self._queue.launch_jobs(pool_sema)
 
             time.sleep(1)
 
-            if self._queue_evaluators is not None:
-                for func in self._queue_evaluators:
+            if evaluators is not None:
+                for func in evaluators:
                     func()
 
             self._publish_changes(self._changes_after_transition())
 
-        if self.queue.stopped:
-            self._stop_jobs()
+        if self._queue.stopped:
+            self._queue.stop_jobs()
 
-        self._assert_complete()
+        self._queue.assert_complete()
         self._transition()
         self._publish_changes(self._snapshot())
 

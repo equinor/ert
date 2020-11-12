@@ -1,4 +1,6 @@
 import copy
+from ert_shared.ensemble_evaluator.entity.ensemble_base import _Ensemble
+from ert_shared.ensemble_evaluator.entity.ensemble_legacy import _LegacyEnsemble
 from ert_shared.ensemble_evaluator.entity.snapshot import SnapshotBuilder
 
 
@@ -366,12 +368,14 @@ class _EnsembleBuilder:
         self._reals = None
         self._size = None
         self._metadata = None
+        self._legacy_dependencies = None
         self.reset()
 
     def reset(self):
         self._reals = []
         self._size = 0
         self._metadata = {}
+        self._legacy_dependencies = None
         return self
 
     def add_realization(self, real):
@@ -388,9 +392,31 @@ class _EnsembleBuilder:
         self._size = size
         return self
 
+    def set_legacy_dependencies(self, *args):
+        self._legacy_dependencies = args
+        return self
+
     @staticmethod
-    def from_legacy(run_context, forward_model):
-        builder = _EnsembleBuilder()
+    def from_legacy(
+        run_context,
+        forward_model,
+        queue_config,
+        model_config,
+        run_path_list,
+        analysis_config,
+        ecl_config,
+        res_config,
+    ):
+        builder = _EnsembleBuilder().set_legacy_dependencies(
+            run_context,
+            forward_model,
+            queue_config,
+            model_config,
+            run_path_list,
+            analysis_config,
+            ecl_config,
+            res_config,
+        )
 
         for iens in range(0, len(run_context)):
             step = create_step_builder().set_id(0)
@@ -428,6 +454,8 @@ class _EnsembleBuilder:
             self._reals.append(real)
 
         reals = [builder.build() for builder in self._reals]
+        if self._legacy_dependencies:
+            return _LegacyEnsemble(reals, self._metadata, *self._legacy_dependencies)
         return _Ensemble(reals, self._metadata)
 
 
@@ -435,23 +463,23 @@ def create_ensemble_builder():
     return _EnsembleBuilder()
 
 
-def create_ensemble_builder_from_legacy(run_context, forward_model):
-    return _EnsembleBuilder.from_legacy(run_context, forward_model)
-
-
-class _Ensemble:
-    def __init__(self, reals, metadata):
-        self._reals = reals
-        self._metadata = metadata
-
-    def __repr__(self):
-        return f"Ensemble with {len(self._reals)} members"
-
-    def evaluate(self, host, port):
-        pass
-
-    def get_reals(self):
-        return self._reals
-
-    def get_metadata(self):
-        return self._metadata
+def create_ensemble_builder_from_legacy(
+    run_context,
+    forward_model,
+    queue_config,
+    model_config,
+    run_path_list,
+    analysis_config,
+    ecl_config,
+    res_config,
+):
+    return _EnsembleBuilder.from_legacy(
+        run_context,
+        forward_model,
+        queue_config,
+        model_config,
+        run_path_list,
+        analysis_config,
+        ecl_config,
+        res_config,
+    )

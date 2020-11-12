@@ -3,7 +3,6 @@ import threading
 import logging
 import ert_shared.ensemble_evaluator.dispatch as dispatch
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
-import ert_shared.ensemble_evaluator.entity.identifiers as ids
 import ert_shared.ensemble_evaluator.monitor as ee_monitor
 import websockets
 from cloudevents.http import from_json, to_json
@@ -24,8 +23,7 @@ class EnsembleEvaluator:
     def __init__(self, ensemble, config, ee_id=0):
         self._ee_id = ee_id
 
-        self._host = config.get("host")
-        self._port = config.get("port")
+        self._config = config
         self._ensemble = ensemble
 
         self._loop = asyncio.new_event_loop()
@@ -63,7 +61,7 @@ class EnsembleEvaluator:
             [str(real.get_iens()) for real in ensemble.get_reals()], "Unknown"
         )
 
-    @dispatch.register_event_handler(ids.EVGROUP_FM_ALL)
+    @dispatch.register_event_handler(identifiers.EVGROUP_FM_ALL)
     async def _fm_handler(self, event):
         snapshot_mutate_event = PartialSnapshot.from_cloudevent(event)
         await self._send_snapshot_update(snapshot_mutate_event)
@@ -149,8 +147,8 @@ class EnsembleEvaluator:
     async def evaluator_server(self, done):
         async with websockets.serve(
             self.connection_handler,
-            self._host,
-            self._port,
+            self._config.get("host"),
+            self._config.get("port"),
             max_queue=500,
             max_size=2 ** 26,
         ):
@@ -196,8 +194,9 @@ class EnsembleEvaluator:
 
     def run(self):
         self._ws_thread.start()
-        self._ensemble.evaluate(self._host, self._port)
-        return ee_monitor.create(self._host, self._port)
+        mon = ee_monitor.create(self._config.get("host"), self._config.get("port"))
+        self._ensemble.evaluate(self._config, self._ee_id, mon)
+        return mon
 
     def _stop(self):
         if not self._done.done():
@@ -206,3 +205,16 @@ class EnsembleEvaluator:
     def stop(self):
         self._loop.call_soon_threadsafe(self._stop)
         self._ws_thread.join()
+
+    def get_successful_realizations(self):
+        mon = self.run()
+        for _ in mon.track():
+            pass
+        successful_reals = 0
+        for real in self._snapshot.to_dict()["reals"].values():
+            for stage in real["stages"].values():
+                # FIXME: assumes one stage per real
+                if stage["status"] == "Finished":
+                    successful_reals += 1
+
+        return successful_reals

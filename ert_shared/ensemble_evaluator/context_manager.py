@@ -14,7 +14,7 @@ from unittest.mock import patch
 from cloudevents.http import event
 
 from ert_shared.ensemble_evaluator.nfs_adaptor import nfs_adaptor
-from ert_shared.ensemble_evaluator.queue_adaptor import JobQueueManagerAdaptor
+from ert_shared.ensemble_evaluator.queue_adaptor import QueueAdaptor
 from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
@@ -53,10 +53,10 @@ def _attach(run_context, run_path_list, forward_model):
     )
     dispatch_thread.start()
 
-    JobQueueManagerAdaptor.ws_url = ee_config.get("dispatch_url")
-    JobQueueManagerAdaptor.ee_id = ee_id
+    QueueAdaptor.ws_url = ee_config.get("dispatch_url")
+    QueueAdaptor.ee_id = ee_id
     patcher = patch(
-        "res.enkf.enkf_simulation_runner.JobQueueManager", new=JobQueueManagerAdaptor
+        "res.enkf.enkf_simulation_runner.JobQueueManager", new=QueueAdaptor
     )
     patcher.start()
     yield
