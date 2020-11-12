@@ -69,3 +69,17 @@ def job_documentation(job_name):
             "category": "test.category.for.job",
         }
     return None
+
+
+class ExamplePlugin:
+    name = "example"
+
+    @staticmethod
+    def run():
+        pass
+
+
+@hook_implementation
+@plugin_response(plugin_name="dummy")
+def register_visualization_plugin(handler):
+    handler.add_plugin(ExamplePlugin)
