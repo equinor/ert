@@ -1,10 +1,11 @@
+from ert_shared.feature_toggling import FeatureToggling
 from res.enkf.enums import HookRuntime, RealizationStateEnum
 from res.enkf import ErtRunContext, EnkfSimulationRunner
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
 
 from ert_shared.storage.extraction_api import dump_to_new_storage
-from ert_shared.ensemble_evaluator.context_manager import attach_ensemble_evaluator
+
 
 class IteratedEnsembleSmoother(BaseRunModel):
 
@@ -22,7 +23,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
 
     def _runAndPostProcess(self, run_context):
-        self._job_queue = self._queue_config.create_job_queue( )
         phase_msg = "Running iteration %d of %d simulation iterations..." % (run_context.get_iter(), self.phaseCount() - 1)
         self.setPhase(run_context.get_iter(), phase_msg, indeterminate=False)
 
@@ -31,9 +31,10 @@ class IteratedEnsembleSmoother(BaseRunModel):
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
 
         self.setPhaseName("Running forecast...", indeterminate=False)
-        run_path_list = self.ert().getRunpathList()
-        forward_model = self.ert().resConfig().model_config.getForwardModel()
-        with attach_ensemble_evaluator(run_context, run_path_list, forward_model):
+        if FeatureToggling.is_enabled("ensemble-evaluator"):
+            num_successful_realizations = self.run_ensemble_evaluator(run_context)
+        else:
+            self._job_queue = self._queue_config.create_job_queue()
             num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, run_context)
 
         self.checkHaveSufficientRealizations(num_successful_realizations)

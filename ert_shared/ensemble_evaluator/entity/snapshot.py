@@ -27,6 +27,12 @@ _FM_TYPE_EVENT_TO_STATUS = {
     ids.EVTYPE_FM_JOB_FAILURE: "Failed",
 }
 
+_ENSEMBLE_TYPE_EVENT_TO_STATUS = {
+    ids.EVTYPE_ENSEMBLE_STARTED: "Starting",
+    ids.EVTYPE_ENSEMBLE_STOPPED: "Stopped",
+    ids.EVTYPE_ENSEMBLE_CANCELLED: "Cancelled",
+}
+
 
 class PartialSnapshot:
     def __init__(self, status=None):
@@ -126,14 +132,14 @@ class PartialSnapshot:
         snapshot = cls()
         e_type = event["type"]
         e_source = event["source"]
-        status = _FM_TYPE_EVENT_TO_STATUS[e_type]
         timestamp = event["time"]
+
         if e_type in ids.EVGROUP_FM_STAGE:
             queue_state = event.data.get("queue_event_type")
             snapshot.update_stage(
                 get_real_id(e_source),
                 get_stage_id(e_source),
-                status=status,
+                status=_FM_TYPE_EVENT_TO_STATUS[e_type],
                 start_time=timestamp if e_type == ids.EVTYPE_FM_STAGE_RUNNING else None,
                 end_time=timestamp
                 if e_type in {ids.EVTYPE_FM_STAGE_FAILURE, ids.EVTYPE_FM_STAGE_SUCCESS}
@@ -145,7 +151,7 @@ class PartialSnapshot:
                 get_real_id(e_source),
                 get_stage_id(e_source),
                 get_step_id(e_source),
-                status=status,
+                status=_FM_TYPE_EVENT_TO_STATUS[e_type],
                 start_time=timestamp if e_type == ids.EVTYPE_FM_STEP_START else None,
                 end_time=timestamp
                 if e_type
@@ -161,7 +167,7 @@ class PartialSnapshot:
                 get_stage_id(e_source),
                 get_step_id(e_source),
                 get_job_id(e_source),
-                status=status,
+                status=_FM_TYPE_EVENT_TO_STATUS[e_type],
                 start_time=timestamp if e_type == ids.EVTYPE_FM_JOB_START else None,
                 end_time=timestamp
                 if e_type
@@ -172,8 +178,10 @@ class PartialSnapshot:
                 else None,
                 data=event.data if e_type == ids.EVTYPE_FM_JOB_RUNNING else None,
             )
+        elif e_type in ids.EVGROUP_ENSEMBLE:
+            snapshot.update_status(_ENSEMBLE_TYPE_EVENT_TO_STATUS[e_type])
         else:
-            raise ValueError()
+            raise ValueError("Unknown type: {}".format(e_type))
         return snapshot
 
 

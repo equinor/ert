@@ -1,26 +1,33 @@
-import time
+from ert_shared.feature_toggling import FeatureToggling
 import logging
-from res.job_queue import JobStatusType
-from res.job_queue import ForwardModelStatus
-from res.util import ResLog
+import time
+import uuid
+
 from ecl.util.util import BoolVector
 from ert_shared import ERT
+from ert_shared.ensemble_evaluator.config import load_config
+from ert_shared.ensemble_evaluator.entity.ensemble import (
+    create_ensemble_builder_from_legacy,
+)
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from res.enkf.enums.realization_state_enum import RealizationStateEnum
+from res.job_queue import ForwardModelStatus, JobStatusType
+from res.util import ResLog
 
 # A method decorated with the @job_queue decorator implements the following logic:
 #
 # 1. If self._job_queue is assigned a valid value the method is run normally.
 # 2. If self._job_queue is None - the decorator argument is returned.
 
+
 def job_queue(default):
-
     def job_queue_decorator(method):
-
-        def dispatch(self , *args, **kwargs):
+        def dispatch(self, *args, **kwargs):
 
             if self._job_queue is None:
                 return default
             else:
-                return method( self, *args , **kwargs)
+                return method(self, *args, **kwargs)
 
         return dispatch
 
@@ -30,15 +37,15 @@ def job_queue(default):
 class ErtRunError(Exception):
     pass
 
-class BaseRunModel(object):
 
+class BaseRunModel(object):
     def __init__(self, queue_config, phase_count=1):
         super(BaseRunModel, self).__init__()
         self._phase = 0
         self._phase_count = phase_count
         self._phase_name = "Starting..."
 
-        self._job_start_time  = 0
+        self._job_start_time = 0
         self._job_stop_time = 0
         self._indeterminate = False
         self._fail_message = ""
@@ -51,7 +58,7 @@ class BaseRunModel(object):
         self.support_restart = True
         self._run_context = None
         self._last_run_iteration = -1
-        self.reset( )
+        self.reset()
 
     def ert(self):
         """ @rtype: res.enkf.EnKFMain"""
@@ -64,7 +71,6 @@ class BaseRunModel(object):
     def reset(self):
         self._failed = False
 
-
     def startSimulations(self, arguments):
         try:
             self.initial_realizations_mask = arguments["active_realizations"]
@@ -72,7 +78,7 @@ class BaseRunModel(object):
             self.updateDetailedProgress()
             self.completed_realizations_mask = run_context.get_mask()
         except ErtRunError as e:
-            self.completed_realizations_mask = BoolVector(default_value = False)
+            self.completed_realizations_mask = BoolVector(default_value=False)
             self._failed = True
             self._fail_message = str(e)
             self._simulationEnded()
@@ -80,80 +86,72 @@ class BaseRunModel(object):
             self._fail_message = str(e)
             self._simulationEnded()
 
-        self._run_context = None #delete last active run_context to notify fs_manager that storage is not being written to
+        self._run_context = None  # delete last active run_context to notify fs_manager that storage is not being written to
 
     def runSimulations(self, job_queue, run_context):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
-
     def create_context(self, arguments):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
-
     @job_queue(None)
     def killAllSimulations(self):
+        if FeatureToggling.is_enabled("ensemble-evaluator"):
+            raise NotImplementedError(
+                "the ensemble evaluator does not implement killAllSimulations"
+            )
         self._job_queue.kill_all_jobs()
-
 
     @job_queue(False)
     def userExitCalled(self):
         """ @rtype: bool """
-        return self._job_queue.getUserExit( )
-
+        return self._job_queue.getUserExit()
 
     def phaseCount(self):
         """ @rtype: int """
         return self._phase_count
 
-
     def setPhaseCount(self, phase_count):
         self._phase_count = phase_count
         self.setPhase(0, "")
-
 
     def currentPhase(self):
         """ @rtype: int """
         return self._phase
 
-
     def setPhaseName(self, phase_name, indeterminate=None):
         self._phase_name = phase_name
         self.setIndeterminate(indeterminate)
-
 
     def getPhaseName(self):
         """ @rtype: str """
         return self._phase_name
 
-
     def setIndeterminate(self, indeterminate):
         if indeterminate is not None:
             self._indeterminate = indeterminate
-
 
     def isFinished(self):
         """ @rtype: bool """
         return self._phase == self._phase_count or self.hasRunFailed()
 
-
     def hasRunFailed(self):
         """ @rtype: bool """
         return self._failed
-
 
     def getFailMessage(self):
         """ @rtype: str """
         return self._fail_message
 
-
     def _simulationEnded(self):
         self._job_stop_time = int(time.time())
-
 
     def setPhase(self, phase, phase_name, indeterminate=None):
         self.setPhaseName(phase_name)
         if not 0 <= phase <= self._phase_count:
-            raise ValueError("Phase must be an integer from 0 to less than %d." % self._phase_count)
+            raise ValueError(
+                "Phase must be an integer from 0 to less than %d." % self._phase_count
+            )
 
         self.setIndeterminate(indeterminate)
 
@@ -209,7 +207,7 @@ class BaseRunModel(object):
 
     @staticmethod
     def is_forward_model_finished(progress):
-        return not (any((job.status != 'Success' for job in progress)))
+        return not (any((job.status != "Success" for job in progress)))
 
     def update_progress_for_index(self, iteration, idx, run_arg):
         if not self._run_context.is_active(idx):
@@ -227,10 +225,10 @@ class BaseRunModel(object):
         # Avoids reading from disk for jobs in these states since there's no
         # data anyway
         if status in [
-                JobStatusType.JOB_QUEUE_PENDING,
-                JobStatusType.JOB_QUEUE_SUBMITTED,
-                JobStatusType.JOB_QUEUE_WAITING
-                ]:
+            JobStatusType.JOB_QUEUE_PENDING,
+            JobStatusType.JOB_QUEUE_SUBMITTED,
+            JobStatusType.JOB_QUEUE_WAITING,
+        ]:
             return
 
         fms = self.realization_progress[iteration].get(run_arg.iens, None)
@@ -245,7 +243,6 @@ class BaseRunModel(object):
 
             jobs = fms.jobs
         self.realization_progress[iteration][run_arg.iens] = jobs, status
-
 
     @job_queue({})
     def updateDetailedProgress(self):
@@ -274,7 +271,10 @@ class BaseRunModel(object):
     def getDetailedProgress(self):
         self.updateDetailedProgress()
 
-        if self._run_context and self._run_context.get_iter() in self.realization_progress:
+        if (
+            self._run_context
+            and self._run_context.get_iter() in self.realization_progress
+        ):
             return self.realization_progress, self._run_context.get_iter()
 
         elif self._last_run_iteration in self.realization_progress:
@@ -290,14 +290,53 @@ class BaseRunModel(object):
     def checkHaveSufficientRealizations(self, num_successful_realizations):
         if num_successful_realizations == 0:
             raise ErtRunError("Simulation failed! All realizations failed!")
-        elif not self.ert().analysisConfig().haveEnoughRealisations(num_successful_realizations, self._ensemble_size):
-            raise ErtRunError("Too many simulations have failed! You can add/adjust MIN_REALIZATIONS to allow failures in your simulations.\n\n"
-                              "Check ERT log file '%s' or simulation folder for details." % ResLog.getFilename())
+        elif (
+            not self.ert()
+            .analysisConfig()
+            .haveEnoughRealisations(num_successful_realizations, self._ensemble_size)
+        ):
+            raise ErtRunError(
+                "Too many simulations have failed! You can add/adjust MIN_REALIZATIONS to allow failures in your simulations.\n\n"
+                "Check ERT log file '%s' or simulation folder for details."
+                % ResLog.getFilename()
+            )
 
     def checkMinimumActiveRealizations(self, run_context):
-        active_realizations = self.count_active_realizations( run_context )
-        if not self.ert().analysisConfig().haveEnoughRealisations(active_realizations, self._ensemble_size):
-            raise ErtRunError("Number of active realizations is less than the specified MIN_REALIZATIONS in the config file")
+        active_realizations = self.count_active_realizations(run_context)
+        if (
+            not self.ert()
+            .analysisConfig()
+            .haveEnoughRealisations(active_realizations, self._ensemble_size)
+        ):
+            raise ErtRunError(
+                "Number of active realizations is less than the specified MIN_REALIZATIONS in the config file"
+            )
 
     def count_active_realizations(self, run_context):
-        return sum(run_context.get_mask( ))
+        return sum(run_context.get_mask())
+
+    def run_ensemble_evaluator(self, run_context):
+        if run_context.get_step():
+            self.ert().eclConfig().assert_restart()
+
+        iactive = run_context.get_mask()
+
+        run_context.get_sim_fs().getStateMap().deselectMatching(
+            iactive,
+            RealizationStateEnum.STATE_LOAD_FAILURE
+            | RealizationStateEnum.STATE_PARENT_FAILURE,
+        )
+
+        ensemble = create_ensemble_builder_from_legacy(
+            run_context,
+            self.ert().resConfig().model_config.getForwardModel(),
+            self._queue_config,
+            self.ert().analysisConfig(),
+            self.ert().resConfig(),
+        ).build()
+
+        self.ert().initRun(run_context)
+
+        return EnsembleEvaluator(
+            ensemble, load_config(), ee_id=str(uuid.uuid1()).split("-")[0]
+        ).run_and_get_successful_realizations()
