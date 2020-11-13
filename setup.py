@@ -35,7 +35,7 @@ setup(
         "flask",
         "gunicorn",
         "jinja2",
-        "matplotlib < 3.2",
+        "matplotlib",
         "numpy",
         "pandas",
         "pluggy",
