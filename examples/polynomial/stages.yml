@@ -1,0 +1,13 @@
+-
+  name: evaluate_polynomial
+  environment: polynomial
+  input:
+    - 
+      record: coefficents
+      location: coefficents.json
+  output:
+    -
+      record: polynomial_output
+      location: output.json
+  script:
+    - evaluate_polynomial
