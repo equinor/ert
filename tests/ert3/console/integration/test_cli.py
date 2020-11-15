@@ -11,31 +11,13 @@ _EXAMPLES_ROOT = pathlib.Path(os.path.dirname(__file__))/".."/".."/".."/".."/"ex
 _POLY_WORKSPACE_NAME = "polynomial"
 _POLY_WORKSPACE = _EXAMPLES_ROOT/_POLY_WORKSPACE_NAME
 
-@pytest.mark.parametrize(
-    "args",
-    [
-        ["run"],
-        ["load"],
-        ["exec", "something"],
-    ]
-)
-def test_cli_no_init(tmpdir, args):
-    workspace = tmpdir/_POLY_WORKSPACE_NAME
-    shutil.copytree(_POLY_WORKSPACE, workspace)
-    workspace.chdir()
-
-    with unittest.mock.patch.object(sys, "argv", args):
-        with pytest.raises(SystemExit) as error:
-            ert3.console.main()
-        assert "Not inside an ERT workspace" in str(error.value)
-
 
 def test_cli_no_args(tmpdir):
     workspace = tmpdir/_POLY_WORKSPACE_NAME
     shutil.copytree(_POLY_WORKSPACE, workspace)
     workspace.chdir()
 
-    args = []
+    args = ["ert3"]
     with unittest.mock.patch.object(sys, "argv", args):
         ert3.console.main()
 
@@ -45,7 +27,7 @@ def test_cli_init(tmpdir):
     shutil.copytree(_POLY_WORKSPACE, workspace)
     workspace.chdir()
 
-    args = ["init"]
+    args = ["ert3", "init"]
     with unittest.mock.patch.object(sys, "argv", args):
         ert3.console.main()
 
@@ -55,7 +37,7 @@ def test_cli_init_twice(tmpdir):
     shutil.copytree(_POLY_WORKSPACE, workspace)
     workspace.chdir()
 
-    args = ["init"]
+    args = ["ert3", "init"]
     with unittest.mock.patch.object(sys, "argv", args):
         ert3.console.main()
 
@@ -70,7 +52,7 @@ def test_cli_init_subfolder(tmpdir):
     shutil.copytree(_POLY_WORKSPACE, workspace)
     workspace.chdir()
 
-    args = ["init"]
+    args = ["ert3", "init"]
     with unittest.mock.patch.object(sys, "argv", args):
         ert3.console.main()
 
@@ -78,7 +60,6 @@ def test_cli_init_subfolder(tmpdir):
     subfolder.mkdir()
     subfolder.chdir()
 
-    args = ["init"]
     with unittest.mock.patch.object(sys, "argv", args):
         with pytest.raises(SystemExit) as error:
             ert3.console.main()
