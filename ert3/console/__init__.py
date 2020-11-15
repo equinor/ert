@@ -1,3 +1,5 @@
+import ert3
+
 import argparse
 import json
 from pathlib import Path
@@ -8,7 +10,7 @@ import sys
 def _locate_ert_workspace_root(path):
     path = Path(path)
     while True:
-        if (path / ".ert").exists():
+        if (path / ert3._WORKSPACE_DATA_ROOT).exists():
             return path
         if path == Path(path.root):
             return None
@@ -42,7 +44,7 @@ def _init_workspace(path):
     if _locate_ert_workspace_root(path) is not None:
         sys.exit("Already inside an ERT workspace")
 
-    with open(path / ".ert", "w") as fout:
+    with open(path / ert3._WORKSPACE_DATA_ROOT, "w") as fout:
         fout.write("ERT workspace")
 
 
