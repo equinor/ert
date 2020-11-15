@@ -1,0 +1,7 @@
+-
+  name: polynomial
+  type: unix_script
+  scripts:
+    -
+      name: evaluate_polynomial
+      location: bin/poly_eval.py
