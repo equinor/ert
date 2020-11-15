@@ -21,6 +21,9 @@ setup(
     author_email="fg_sib-scout@equinor.com",
     use_scm_version={"root": ".", "write_to": "ert_shared/version.py"},
     scripts=["ert_shared/bin/ert"],
+    entry_points={
+        "console_scripts": "ert3=ert3.console:main",
+    },
     packages=find_packages(exclude=["tests*"]),
     package_data={"ert_gui": extra_files, "ert_logging": logging_configuration},
     include_package_data=True,
