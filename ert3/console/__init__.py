@@ -27,6 +27,12 @@ def _build_argparser():
 
     init_parser = subparsers.add_parser("init", help="Initialize an ERT3 workspace")
 
+    run_parser = subparsers.add_parser("run", help="Run experiment")
+    run_parser.add_argument("experiment_name", help="Name of the experiment")
+
+    export_parser = subparsers.add_parser("export", help="Export experiment")
+    export_parser.add_argument("experiment_name", help="Name of the experiment")
+
     return parser
 
 
@@ -39,13 +45,59 @@ def _init_workspace(path):
         fout.write("ERT workspace")
 
 
+def _assert_experiment(experiment_root):
+    if not os.path.isdir(experiment_root):
+        raise ValueError(
+            f"{experiment_name} is not an experiment "
+            "within the workspace {workspace_root}"
+        )
+
+
+def _experiment_have_run(experiment_root):
+    return os.path.exists(experiment_root/".ert_experiment")
+
+
+def _run_experiment(workspace_root, experiment_name):
+    experiment_root = pathlib.Path(workspace_root)/experiment_name
+    _assert_experiment(experiment_root)
+
+    if _experiment_have_run(experiment_root):
+        raise ValueError(f"Experiment {experiment_name} have been carried out.")
+
+    with open(experiment_root/".ert_experiment", "w") as fout:
+        fout.write("Done")
+
+
+def _export(workspace_root, experiment_name):
+    experiment_root = pathlib.Path(workspace_root)/experiment_name
+    _assert_experiment(experiment_root)
+
+    if not _experiment_have_run(experiment_root):
+        raise ValueError("Cannot export experiment that has not been carried out")
+
+    with open(experiment_root/"data.csv", "w") as f:
+        f.write("All the data!")
+
+
 def main():
     parser = _build_argparser()
     args = parser.parse_args()
 
+    # Commands that does not require an ert workspace
     if args.sub_cmd is None:
         parser.print_help()
-    elif args.sub_cmd == "init":
+        return
+    if args.sub_cmd == "init":
         _init_workspace(os.getcwd())
-    else:
+        return
+
+    # Commands that does requres an ert workspace
+    workspace = _locate_ert_workspace_root(os.getcwd())
+    if workspace is None:
         sys.exit("Not inside an ERT workspace")
+    if args.sub_cmd == "run":
+        _run_experiment(workspace, args.experiment_name)
+        return
+    if args.sub_cmd == "export":
+        _export(workspace, args.experiment_name)
+        return
