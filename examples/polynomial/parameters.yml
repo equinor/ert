@@ -1,0 +1,18 @@
+-
+  name: coefficients
+  type: stochastic
+  distribution:
+    type: gaussian
+    input:
+      mean: 0
+      std: 1
+  variables: ["a", "b", "c"]
+-
+  name: uniform_coefficients
+  type: stochastic
+  distribution:
+    type: uniform
+    input:
+      lower_bound: 0
+      upper_bound: 1
+  variables: ["a", "b", "c"]

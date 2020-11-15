@@ -1,0 +1,13 @@
+-
+  name: evaluate_polynomial
+  environment: polynomial
+  input:
+    -
+      record: coefficients
+      location: coefficients.json
+  output:
+    -
+      record: polynomial_output
+      location: output.json
+  script:
+    - ert3.evaluator.poly:polynomial
