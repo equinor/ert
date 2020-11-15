@@ -2,7 +2,7 @@
   name: evaluate_polynomial
   environment: polynomial
   input:
-    - 
+    -
       record: coefficents
       location: coefficents.json
   output:
