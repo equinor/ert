@@ -20,7 +20,7 @@ class ServerMonitor(threading.Thread):
     TIMEOUT = 20  # Wait 20s for the server to start before panicking
     _instance = None
 
-    def __init__(self, *, rdb_url=None, blob_url=None, lockfile=True):
+    def __init__(self, *, rdb_url=None, lockfile=True):
         super().__init__()
 
         self._assert_server_not_running()
@@ -34,8 +34,6 @@ class ServerMonitor(threading.Thread):
         args = []
         if not lockfile:
             args.append("--disable-lockfile")
-        if blob_url:
-            args.extend(("--blob-url", blob_url))
         if rdb_url:
             args.extend(("--rdb-url", rdb_url))
 

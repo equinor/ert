@@ -7,16 +7,14 @@ import pytest
 import schemathesis
 from ert_shared.storage import ERT_STORAGE
 from ert_shared.storage.http_server import FlaskWrapper
-from tests.storage import db_apis, populated_database, initialize_databases
+from tests.storage import db_api, populated_database, initialize_databases
 
 
 @pytest.fixture
-def test_schema(db_apis):
+def test_schema(db_api):
     # Flask provides a way to test your application by exposing the Werkzeug test Client
     # and handling the context locals for you.
-    flWrapper = FlaskWrapper(
-        rdb_url=ERT_STORAGE.rdb_url, blob_url=ERT_STORAGE.blob_url, secure=False
-    )
+    flWrapper = FlaskWrapper(secure=False, url=ERT_STORAGE.SQLALCHEMY_URL)
     # Establish an application context before running the tests.
     with flWrapper.app.app_context():
         yield schemathesis.from_wsgi("/schema.json", flWrapper.app)

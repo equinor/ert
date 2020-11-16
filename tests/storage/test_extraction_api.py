@@ -1,12 +1,11 @@
 import pandas as pd
-import pytest
 from ert_shared.storage.extraction_api import (
     _dump_observations,
     _dump_parameters,
     _dump_priors,
     _dump_response,
 )
-from tests.storage import apis, initialize_databases
+from tests.storage import api, initialize_databases
 
 observation_data = {
     ("POLY_OBS", 0, 10): {"OBS": 2.0, "STD": 0.1},
@@ -20,32 +19,23 @@ observation_data = {
 }
 
 
-def test_dump_observations(apis):
-    rdb_api, blob_api = apis
+def test_dump_observations(api):
     observations = pd.DataFrame.from_dict(observation_data)
-    _dump_observations(rdb_api=rdb_api, blob_api=blob_api, observations=observations)
+    _dump_observations(rdb_api=api, observations=observations)
 
-    poly_obs = rdb_api.get_observation("POLY_OBS")
+    poly_obs = api.get_observation("POLY_OBS")
     assert poly_obs.id is not None
-    key_indexes = blob_api.get_blob(poly_obs.key_indexes_ref)
-    assert key_indexes.data == [0, 2, 4, 6, 8]
-    data_indexes = blob_api.get_blob(poly_obs.data_indexes_ref)
-    assert data_indexes.data == [10, 12, 14, 16, 18]
-    values = blob_api.get_blob(poly_obs.values_ref)
-    assert values.data == [2.0, 7.1, 21.1, 31.8, 53.2]
-    stds = blob_api.get_blob(poly_obs.stds_ref)
-    assert stds.data == [0.1, 1.1, 4.1, 9.1, 16.1]
+    assert poly_obs.key_indices == [0, 2, 4, 6, 8]
+    assert poly_obs.data_indices == [10, 12, 14, 16, 18]
+    assert poly_obs.values == [2.0, 7.1, 21.1, 31.8, 53.2]
+    assert poly_obs.errors == [0.1, 1.1, 4.1, 9.1, 16.1]
 
-    test_obs = rdb_api.get_observation("TEST_OBS")
+    test_obs = api.get_observation("TEST_OBS")
     assert test_obs.id is not None
-    key_indexes = blob_api.get_blob(test_obs.key_indexes_ref)
-    assert key_indexes.data == [3, 6, 9]
-    data_indexes = blob_api.get_blob(test_obs.data_indexes_ref)
-    assert data_indexes.data == [3, 6, 9]
-    values = blob_api.get_blob(test_obs.values_ref)
-    assert values.data == [6, 12, 18]
-    stds = blob_api.get_blob(test_obs.stds_ref)
-    assert stds.data == [0.1, 0.2, 0.3]
+    assert test_obs.key_indices == [3, 6, 9]
+    assert test_obs.data_indices == [3, 6, 9]
+    assert test_obs.values == [6, 12, 18]
+    assert test_obs.errors == [0.1, 0.2, 0.3]
 
 
 coeff_a = pd.DataFrame.from_dict(
@@ -63,36 +53,34 @@ coeff_a = pd.DataFrame.from_dict(
 parameters = {"COEFFS:COEFF_A": coeff_a}
 
 
-def test_dump_parameters(apis):
+def test_dump_parameters(api):
     ensemble_name = "default"
-    rdb_api, blob_api = apis
 
-    ensemble = rdb_api.add_ensemble(name=ensemble_name)
+    ensemble = api.add_ensemble(name=ensemble_name)
     for i in range(5):
-        rdb_api.add_realization(i, ensemble.name)
+        api.add_realization(i, ensemble.name)
 
     _dump_parameters(
-        rdb_api=rdb_api,
-        blob_api=blob_api,
+        rdb_api=api,
         parameters=parameters,
         ensemble_name=ensemble.name,
         priors=[],
     )
 
-    parameter_0 = rdb_api.get_parameter("COEFF_A", "COEFFS", 0, ensemble_name)
-    assert blob_api.get_blob(parameter_0.value_ref).data == 0.7684484807065148
+    parameter_0 = api.get_parameter("COEFF_A", "COEFFS", 0, ensemble_name)
+    assert parameter_0.value == 0.7684484807065148
 
-    parameter_1 = rdb_api.get_parameter("COEFF_A", "COEFFS", 1, ensemble_name)
-    assert blob_api.get_blob(parameter_1.value_ref).data == 0.031542101926117616
+    parameter_1 = api.get_parameter("COEFF_A", "COEFFS", 1, ensemble_name)
+    assert parameter_1.value == 0.031542101926117616
 
-    parameter_2 = rdb_api.get_parameter("COEFF_A", "COEFFS", 2, ensemble_name)
-    assert blob_api.get_blob(parameter_2.value_ref).data == 0.9116906743615176
+    parameter_2 = api.get_parameter("COEFF_A", "COEFFS", 2, ensemble_name)
+    assert parameter_2.value == 0.9116906743615176
 
-    parameter_3 = rdb_api.get_parameter("COEFF_A", "COEFFS", 3, ensemble_name)
-    assert blob_api.get_blob(parameter_3.value_ref).data == 0.6985513230581486
+    parameter_3 = api.get_parameter("COEFF_A", "COEFFS", 3, ensemble_name)
+    assert parameter_3.value == 0.6985513230581486
 
-    parameter_4 = rdb_api.get_parameter("COEFF_A", "COEFFS", 4, ensemble_name)
-    assert blob_api.get_blob(parameter_4.value_ref).data == 0.5949261230249001
+    parameter_4 = api.get_parameter("COEFF_A", "COEFFS", 4, ensemble_name)
+    assert parameter_4.value == 0.5949261230249001
 
 
 poly_res = pd.DataFrame.from_dict(
@@ -163,26 +151,24 @@ poly_res = pd.DataFrame.from_dict(
 responses = {"POLY_RES": poly_res}
 
 
-def test_dump_responses(apis):
+def test_dump_responses(api):
     ensemble_name = "default"
-    rdb_api, blob_api = apis
-    ensemble = rdb_api.add_ensemble(name=ensemble_name)
+    ensemble = api.add_ensemble(name=ensemble_name)
 
     observations = pd.DataFrame.from_dict(observation_data)
-    _dump_observations(rdb_api=rdb_api, blob_api=blob_api, observations=observations)
+    _dump_observations(rdb_api=api, observations=observations)
 
     for i in range(5):
-        rdb_api.add_realization(i, ensemble.name)
+        api.add_realization(i, ensemble.name)
 
     _dump_response(
-        rdb_api=rdb_api,
-        blob_api=blob_api,
+        rdb_api=api,
         responses=responses,
         ensemble_name=ensemble.name,
     )
 
-    response_0 = rdb_api.get_response("POLY_RES", 0, ensemble_name)
-    response_values = blob_api.get_blob(response_0.values_ref).data
+    response_0 = api.get_response("POLY_RES", 0, ensemble_name)
+    response_values = response_0.values
     assert response_values == [
         2.5995,
         5.203511,
@@ -197,7 +183,7 @@ def test_dump_responses(apis):
     ]
 
 
-def test_dump_priors(apis):
+def test_dump_priors(api):
     priors = {
         "COEFFS": [
             {
@@ -217,5 +203,4 @@ def test_dump_priors(apis):
             },
         ]
     }
-    rdb_api, _ = apis
-    _dump_priors(priors, rdb_api)
+    _dump_priors(priors, api)

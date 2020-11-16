@@ -1,25 +1,16 @@
-import os
-import socket
-import threading
-import time
 from datetime import datetime
 
 import pandas as pd
 import pytest
-import requests
 from ert_shared.storage import ERT_STORAGE
 from ert_shared.storage.client import StorageClient
-from ert_shared.storage.http_server import FlaskWrapper
 from ert_shared.storage.server_monitor import ServerMonitor
-from flask import Flask, Response, request
-from tests.storage import apis, db_apis, populated_database, initialize_databases
+from tests.storage import api, db_api, populated_database, initialize_databases
 
 
 @pytest.fixture
-def server(db_apis, request):
-    proc = ServerMonitor(
-        rdb_url=ERT_STORAGE.rdb_url, blob_url=ERT_STORAGE.blob_url, lockfile=False
-    )
+def server(db_api, request):
+    proc = ServerMonitor(rdb_url=ERT_STORAGE.SQLALCHEMY_URL, lockfile=False)
     proc.start()
     request.addfinalizer(lambda: proc.shutdown())
     yield proc
@@ -31,8 +22,8 @@ def storage_client(server):
 
 
 def test_all_keys(storage_client):
-    names = set([key["key"] for key in storage_client.all_data_type_keys()])
-    assert names == set(["response_one", "response_two", "G:A", "G:B", "group:key1"])
+    names = {key["key"] for key in storage_client.all_data_type_keys()}
+    assert names == {"response_one", "response_two", "G:A", "G:B", "group:key1"}
 
 
 def test_observation_values(storage_client):

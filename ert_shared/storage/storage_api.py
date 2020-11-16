@@ -1,14 +1,9 @@
-from io import StringIO
-
-import pandas as pd
-from ert_shared.storage.blob_api import BlobApi
 from ert_shared.storage.rdb_api import RdbApi
 
 
-class StorageApi(object):
-    def __init__(self, rdb_api, blob_api):
-        self._rdb_api = rdb_api
-        self._blob_api = blob_api
+class StorageApi:
+    def __init__(self, session):
+        self._rdb_api = RdbApi(session)
 
     def _ensemble_minimal(self, ensemble):
         if ensemble is None:
@@ -79,11 +74,11 @@ class StorageApi(object):
         return_schema = {
             "name": realization.index,
             "responses": [
-                {"name": res["name"], "data_ref": res["response"].values_ref}
+                {"name": res["name"], "data": res["response"].values}
                 for res in responses
             ],
             "parameters": [
-                {"name": par["name"], "data_ref": par["parameter"].value_ref}
+                {"name": par["name"], "data": par["parameter"].value}
                 for par in parameters
             ],
         }
@@ -113,15 +108,13 @@ class StorageApi(object):
         responses = bundle.responses
         univariate_misfits = {}
         for resp in responses:
-            resp_values = list(self._blob_api.get_blob(resp.values_ref).data)
+            resp_values = list(resp.values)
             univariate_misfits[resp.realization.index] = {}
             for link in observation_links:
                 observation = link.observation
-                obs_values = list(self._blob_api.get_blob(observation.values_ref).data)
-                obs_stds = list(self._blob_api.get_blob(observation.stds_ref).data)
-                obs_data_indexes = list(
-                    self._blob_api.get_blob(observation.data_indexes_ref).data
-                )
+                obs_values = list(observation.values)
+                obs_stds = list(observation.errors)
+                obs_data_indexes = list(observation.data_indices)
                 misfits = []
                 for obs_index, obs_value in enumerate(obs_values):
                     misfits.append(
@@ -142,7 +135,7 @@ class StorageApi(object):
                 {
                     "name": resp.realization.index,
                     "realization_ref": resp.realization.index,
-                    "data_ref": resp.values_ref,
+                    "data": resp.values,
                     "summarized_misfits": {
                         misfit.observation_response_definition_link.observation.name: misfit.value
                         for misfit in resp.misfits
@@ -156,11 +149,11 @@ class StorageApi(object):
                 }
                 for resp in responses
             ],
-            "axis": {"data_ref": bundle.indexes_ref},
+            "axis": {"data": bundle.indices},
         }
         if len(observation_links) > 0:
             return_schema["observations"] = [
-                self._obs_to_json(link.observation, link.active_ref)
+                self._obs_to_json(link.observation, link.active)
                 for link in observation_links
             ]
 
@@ -174,18 +167,8 @@ class StorageApi(object):
             return None
         responses = bundle.responses
 
-        ids = [resp.values_ref for resp in responses]
+        ids = [resp.values for resp in responses]
         return ids
-
-    def get_data(self, id):
-        blob = self._blob_api.get_blob(id)
-        if blob is None:
-            return None
-        return blob.data
-
-    def get_datas(self, id):
-        for response in self._blob_api.get_blobs(id):
-            yield response.data
 
     def get_observation(self, name):
         obs = self._rdb_api.get_observation(name)
@@ -241,18 +224,18 @@ class StorageApi(object):
         )
         return return_schema
 
-    def _obs_to_json(self, obs, active_ref=None):
+    def _obs_to_json(self, obs, active=None):
         data = {
             "name": obs.name,
             "data": {
-                "values": {"data_ref": obs.values_ref},
-                "std": {"data_ref": obs.stds_ref},
-                "data_indexes": {"data_ref": obs.data_indexes_ref},
-                "key_indexes": {"data_ref": obs.key_indexes_ref},
+                "values": {"data": obs.values},
+                "std": {"data": obs.errors},
+                "data_indexes": {"data": obs.data_indices},
+                "key_indexes": {"data": obs.key_indices},
             },
         }
-        if active_ref is not None:
-            data["data"]["active_mask"] = {"data_ref": active_ref}
+        if active is not None:
+            data["data"]["active_mask"] = {"data": active}
 
         attrs = obs.get_attributes()
         if len(attrs) > 0:
@@ -291,7 +274,7 @@ class StorageApi(object):
         return_schema["parameter_realizations"] = [
             {
                 "name": param.realization.index,
-                "data_ref": param.value_ref,
+                "data": param.value,
                 "realization": {"realization_ref": param.realization.index},
             }
             for param in bundle.parameters
@@ -305,5 +288,5 @@ class StorageApi(object):
         if bundle is None:
             return None
 
-        ids = [param.value_ref for param in bundle.parameters]
+        ids = [param.value for param in bundle.parameters]
         return ids

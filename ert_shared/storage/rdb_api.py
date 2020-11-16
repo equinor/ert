@@ -1,7 +1,7 @@
 import logging
 
 logger = logging.getLogger(__name__)
-from ert_shared.storage.entities_model import (
+from ert_shared.storage.models import (
     Ensemble,
     Observation,
     Parameter,
@@ -14,9 +14,8 @@ from ert_shared.storage.entities_model import (
     Misfit,
     ParameterPrior,
 )
-from sqlalchemy import create_engine, desc
+from sqlalchemy import desc
 from sqlalchemy.orm import Bundle
-from sqlalchemy.orm.session import Session
 from sqlalchemy.orm.exc import NoResultFound
 
 
@@ -73,7 +72,7 @@ class RdbApi:
     def get_response_data(self, name, ensemble_name):
         """Load lightweight "bundle" objects using the ORM."""
 
-        bundle = Bundle("response", Response.id, Response.values_ref, Realization.index)
+        bundle = Bundle("response", Response.id, Response.values, Realization.index)
         ensemble = self.get_ensemble(ensemble_name)
         response_definition = self._get_response_definition(
             name=name, ensemble_id=ensemble.id
@@ -148,17 +147,17 @@ class RdbApi:
     def add_response_definition(
         self,
         name,
-        indexes_ref,
+        indices,
         ensemble_name,
     ):
-        msg = "Adding response definition with name '{}' on ensemble '{}'. Attaching indexes with ref '{}'"
-        logger.info(msg.format(name, ensemble_name, indexes_ref))
+        msg = "Adding response definition with name '{}' on ensemble '{}'. Attaching indices with ref '{}'"
+        logger.info(msg.format(name, ensemble_name, indices))
 
         ensemble = self.get_ensemble(name=ensemble_name)
 
         response_definition = ResponseDefinition(
             name=name,
-            indexes_ref=indexes_ref,
+            indices=indices,
             ensemble_id=ensemble.id,
         )
         self._session.add(response_definition)
@@ -168,12 +167,12 @@ class RdbApi:
     def add_response(
         self,
         name,
-        values_ref,
+        values,
         realization_index,
         ensemble_name,
     ):
         msg = "Adding response with name '{}' on ensemble '{}', realization '{}'. Attaching values with ref '{}'"
-        logger.info(msg.format(name, ensemble_name, realization_index, values_ref))
+        logger.info(msg.format(name, ensemble_name, realization_index, values))
 
         realization = self.get_realization(
             index=realization_index, ensemble_name=ensemble_name
@@ -182,7 +181,7 @@ class RdbApi:
             name=name, ensemble_id=realization.ensemble.id
         )
         response = Response(
-            values_ref=values_ref,
+            values=values,
             realization_id=realization.id,
             response_definition_id=response_definition.id,
         )
@@ -217,11 +216,9 @@ class RdbApi:
             .one_or_none()
         )
 
-    def add_parameter(self, name, group, value_ref, realization_index, ensemble_name):
-        msg = "Adding parameter with name '{}', group '{}', realization '{}', value_ref '{}', ensemble '{}'"
-        logger.info(
-            msg.format(name, group, realization_index, value_ref, ensemble_name)
-        )
+    def add_parameter(self, name, group, value, realization_index, ensemble_name):
+        msg = "Adding parameter with name '{}', group '{}', realization '{}', value'{}', ensemble '{}'"
+        logger.info(msg.format(name, group, realization_index, value, ensemble_name))
 
         realization = self.get_realization(
             index=realization_index, ensemble_name=ensemble_name
@@ -231,7 +228,7 @@ class RdbApi:
             name=name, group=group, ensemble_id=realization.ensemble.id
         )
         parameter = Parameter(
-            value_ref=value_ref,
+            value=value,
             realization_id=realization.id,
             parameter_definition_id=parameter_definition.id,
         )
@@ -239,27 +236,23 @@ class RdbApi:
         self._session.flush()
         return parameter
 
-    def add_observation(
-        self, name, key_indexes_ref, data_indexes_ref, values_ref, stds_ref
-    ):
-        msg = "Adding observation with name '{}', key_indexes_ref '{}', data_indexes_ref '{}', values_ref '{}', stds_ref '{}'"
-        logger.info(
-            msg.format(name, key_indexes_ref, data_indexes_ref, values_ref, stds_ref)
-        )
+    def add_observation(self, name, key_indices, data_indices, values, errors):
+        msg = "Adding observation with name '{}', key_indices '{}', data_indices '{}', values '{}', stds '{}'"
+        logger.info(msg.format(name, key_indices, data_indices, values, errors))
 
         observation = Observation(
             name=name,
-            key_indexes_ref=key_indexes_ref,
-            data_indexes_ref=data_indexes_ref,
-            values_ref=values_ref,
-            stds_ref=stds_ref,
+            key_indices=key_indices,
+            data_indices=data_indices,
+            values=values,
+            errors=errors,
         )
         self._session.add(observation)
         self._session.flush()
         return observation
 
     def _add_observation_response_definition_link(
-        self, observation_id, response_definition_id, active_ref, update_id
+        self, observation_id, response_definition_id, active, update_id
     ):
         msg = "Adding link between observation with id '{}' and response definition with id '{}'"
         logger.info(msg.format(observation_id, response_definition_id))
@@ -267,7 +260,7 @@ class RdbApi:
         link = ObservationResponseDefinitionLink(
             observation_id=observation_id,
             response_definition_id=response_definition_id,
-            active_ref=active_ref,
+            active=active,
             update_id=update_id,
         )
         self._session.add(link)
@@ -378,9 +371,9 @@ class RdbApi:
         )
 
     def get_response_bundle(self, response_name, ensemble_id):
-        # responsedefinition : observation, indexes_ref
+        # responsedefinition : observation, indices
         # realizations : index
-        # response : values_ref
+        # response : values
         try:
             return (
                 self._session.query(ResponseDefinition)

@@ -17,8 +17,7 @@ def add_parser_options(ap):
         default=False,
         help="Don't create storage_server.json",
     )
-    ap.add_argument("--blob-url", type=str, default=f"sqlite:///{os.getcwd()}/blobs.db")
     ap.add_argument(
-        "--rdb-url", type=str, default=f"sqlite:///{os.getcwd()}/entities.db"
+        "--rdb-url", type=str, default=f"sqlite:///{os.getcwd()}/ert_storage.db"
     )
     ap.add_argument("--debug", action="store_true", default=False)

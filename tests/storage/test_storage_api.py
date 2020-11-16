@@ -1,11 +1,6 @@
-import json
-
-import pytest
-from ert_shared.storage.blob_api import BlobApi
-from ert_shared.storage.rdb_api import RdbApi
 from tests.storage import (
-    apis,
-    db_apis,
+    api,
+    db_api,
     populated_database,
     initialize_databases,
     storage_api,
@@ -111,10 +106,10 @@ def test_observation(storage_api):
         "attributes": {"region": "1"},
         "name": name,
         "data": {
-            "data_indexes": {"data_ref": 2},
-            "key_indexes": {"data_ref": 1},
-            "std": {"data_ref": 4},
-            "values": {"data_ref": 3},
+            "data_indexes": {"data": [2, 3]},
+            "key_indexes": {"data": [0, 3]},
+            "std": {"data": [1, 3]},
+            "values": {"data": [10.1, 10.2]},
         },
     }
 
@@ -157,11 +152,3 @@ def test_single_observation_misfit_calculation(storage_api):
     )
 
     assert univariate_misfit["realizations"][0]["univariate_misfits"] == misfit_expected
-
-
-def test_data(storage_api):
-    api, db_lookup = storage_api
-    blob = api.get_data(db_lookup["data_blob"])
-    assert blob is not None
-    blob = api.get_data("non_existing")
-    assert blob is None

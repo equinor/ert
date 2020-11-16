@@ -1,23 +1,16 @@
 import json
 
-import flask
 import pytest
 from ert_shared.storage import ERT_STORAGE
-from ert_shared.storage.blob_api import BlobApi
 from ert_shared.storage.http_server import FlaskWrapper
-from ert_shared.storage.rdb_api import RdbApi
-from flask import Response, request
-from tests.storage import apis, db_apis, populated_database, initialize_databases
+from tests.storage import api, db_api, populated_database, initialize_databases
 
 
 @pytest.fixture()
-def test_client(db_apis):
-
+def test_client(db_api):
     # Flask provides a way to test your application by exposing the Werkzeug test Client
     # and handling the context locals for you.
-    flWrapper = FlaskWrapper(
-        rdb_url=ERT_STORAGE.rdb_url, blob_url=ERT_STORAGE.blob_url, secure=False
-    )
+    flWrapper = FlaskWrapper(secure=False, url=ERT_STORAGE.SQLALCHEMY_URL)
     testing_client = flWrapper.app.test_client()
     # Establish an application context before running the tests.
     with flWrapper.app.app_context():
@@ -36,35 +29,33 @@ def test_api(test_client):
             realization = json.loads(test_client.get(real["ref_url"]).data)
 
             for response in realization["responses"]:
-                response_data = test_client.get(response["data_url"])
+                assert response["data"] is not None
 
         for response in ensemble["responses"]:
-            response_data = test_client.get(response["ref_url"])
+            assert response["ref_url"] is not None
 
 
 def test_observation(test_client):
     resp = test_client.get("/ensembles/1")
     ens = json.loads(resp.data)
     expected = {
-        ("active_mask", "True,False"),
-        ("data_indexes", "2,3"),
-        ("key_indexes", "0,3"),
-        ("std", "1,3"),
-        ("values", "10.1,10.2"),
+        "active_mask": [True, False],
+        "data_indexes": [2, 3],
+        "key_indexes": [0, 3],
+        "std": [1, 3],
+        "values": [10.1, 10.2],
     }
-
-    actual = set()
 
     resp_url = ens["responses"][0]["ref_url"]
     resp_data = test_client.get(resp_url).data.decode()
     resp = json.loads(resp_data)
     observations = resp["observations"]
 
+    actual = {}
     for obs in observations:
         for name, data_def in obs["data"].items():
-            url = data_def["data_url"]
-            resp = test_client.get(url)
-            actual.add((name, resp.data.decode("utf-8")))
+            data = data_def["data"]
+            actual[name] = data
 
     assert actual == expected
 
@@ -76,21 +67,17 @@ def test_get_single_observation(test_client):
     assert obs["attributes"] == {"region": "1"}
     assert obs["name"] == "observation_one"
 
-    key_indexes_url = obs["data"]["key_indexes"]["data_url"]
-    key_indexes = test_client.get(key_indexes_url).data
-    assert key_indexes == b"0,3"
+    key_indexes = obs["data"]["key_indexes"]["data"]
+    assert key_indexes == [0, 3]
 
-    data_indexes_url = obs["data"]["data_indexes"]["data_url"]
-    data_indexes = test_client.get(data_indexes_url).data
-    assert data_indexes == b"2,3"
+    data_indexes = obs["data"]["data_indexes"]["data"]
+    assert data_indexes == [2, 3]
 
-    values_url = obs["data"]["values"]["data_url"]
-    values = test_client.get(values_url).data
-    assert values == b"10.1,10.2"
+    values = obs["data"]["values"]["data"]
+    assert values == [10.1, 10.2]
 
-    stds_url = obs["data"]["std"]["data_url"]
-    stds = test_client.get(stds_url).data
-    assert stds == b"1,3"
+    stds = obs["data"]["std"]["data"]
+    assert stds == [1, 3]
 
 
 def test_get_ensemble_id_404(test_client):

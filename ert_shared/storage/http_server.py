@@ -11,10 +11,7 @@ from ert_shared.storage.storage_api import StorageApi
 from pathlib import Path
 from flask import Response, request, abort, jsonify
 from gunicorn.app.base import BaseApplication
-from subprocess import Popen, PIPE
 from ert_shared.storage import ERT_STORAGE, connection
-from ert_shared.storage.rdb_api import RdbApi
-from ert_shared.storage.blob_api import BlobApi
 from contextlib import contextmanager
 
 
@@ -49,8 +46,6 @@ def resolve_ref_uri(struct, ensemble_id=None):
                 elif type_name == "parameter":
                     base = resolve_ensemble_uri(ensemble_id)
                     struct["ref_url"] = "{}/parameters/{}".format(base, val)
-                elif type_name == "data":
-                    struct["data_url"] = "{}data/{}".format(request.host_url, val)
                 elif type_name == "alldata":
                     struct["alldata_url"] = "{}/data".format(request.url)
                 else:
@@ -61,9 +56,8 @@ def resolve_ref_uri(struct, ensemble_id=None):
 
 
 class FlaskWrapper:
-    def __init__(self, rdb_url, blob_url, secure=True):
-        ERT_STORAGE.initialize(rdb_url=rdb_url, blob_url=blob_url)
-
+    def __init__(self, secure=True, url=None):
+        ERT_STORAGE.initialize(url=url)
         app = flask.Flask("ert http api")
         self.app = app
 
@@ -108,7 +102,6 @@ class FlaskWrapper:
             "parameter_data",
             self.parameter_data_by_id,
         )
-        self.app.add_url_rule("/data/<int:data_id>", "data", self.data)
 
         self.app.add_url_rule(
             "/observation/<name>",
@@ -200,29 +193,18 @@ class FlaskWrapper:
                 abort(404)
             return self._datas(ids)
 
-    def data(self, data_id):
-        with self.session() as api:
-            data = api.get_data(data_id)
-            if data is None:
-                abort(404)
-            if isinstance(data, list):
-                return ",".join([str(x) for x in data])
-            else:
-                return str(data)
-
-    def _datas(self, ids):
+    def _datas(self, datas):
         def generator():
-            with self.session() as api:
-                first = True
-                for data in api.get_datas(ids):
-                    if first:
-                        first = False
-                    else:
-                        yield "\n"
-                    if isinstance(data, list):
-                        yield ",".join([str(x) for x in data])
-                    else:
-                        yield str(data)
+            first = True
+            for data in datas:
+                if first:
+                    first = False
+                else:
+                    yield "\n"
+                if isinstance(data, list):
+                    yield ",".join([str(x) for x in data])
+                else:
+                    yield str(data)
 
         response = Response(generator(), mimetype="text/csv")
         response.headers["Content-Disposition"] = "attachment; filename=data.csv"
@@ -278,21 +260,15 @@ class FlaskWrapper:
     @contextmanager
     def session(self):
         """Provide a transactional scope around a series of operations."""
-        rdb_session = ERT_STORAGE.RdbSession()
-        blob_session = ERT_STORAGE.BlobSession()
-        rdb_api = RdbApi(session=rdb_session)
-        blob_api = BlobApi(session=blob_session)
+        session = ERT_STORAGE.Session()
         try:
-            yield StorageApi(rdb_api, blob_api)
-            rdb_session.commit()
-            blob_session.commit()
+            yield StorageApi(session)
+            session.commit()
         except:
-            rdb_session.rollback()
-            blob_session.rollback()
+            session.rollback()
             raise
         finally:
-            rdb_session.close()
-            blob_session.close()
+            session.close()
 
 
 class Application(BaseApplication):
@@ -389,7 +365,7 @@ def run_server(args=None):
     if args is None:
         args = parse_args()
 
-    wrapper = FlaskWrapper(rdb_url=args.rdb_url, blob_url=args.blob_url)
+    wrapper = FlaskWrapper(url=args.rdb_url)
 
     runpath = Path(args.runpath)
     assert runpath.is_dir()

@@ -136,7 +136,7 @@ class StorageClient:
             response = self._ref_request(resp["ref_url"])
 
             df = self._read_csv(response["alldata_url"], header=None)
-            indexes = self._axis_request(response["axis"]["data_url"])
+            indexes = self._axis_request(response["axis"]["data"])
             df.columns = indexes
             break
 
@@ -165,16 +165,14 @@ class StorageClient:
 
         for obs_key in obs_keys:
             key_df = pd.DataFrame()
-            std = self._data_request(obs_key["data"]["std"]["data_url"])
-            values = self._data_request(obs_key["data"]["values"]["data_url"])
+            std = obs_key["data"]["std"]["data"]
+            values = obs_key["data"]["values"]["data"]
 
             key_df = key_df.append(pd.Series(values, name="OBS"))
             key_df = key_df.append(pd.Series(std, name="STD"))
 
-            key_indexes = self._axis_request(obs_key["data"]["key_indexes"]["data_url"])
-            data_indexes = self._axis_request(
-                obs_key["data"]["data_indexes"]["data_url"]
-            )
+            key_indexes = self._axis_request(obs_key["data"]["key_indexes"]["data"])
+            data_indexes = self._axis_request(obs_key["data"]["data_indexes"]["data"])
 
             arrays = [[obs_key["name"]] * len(key_indexes), key_indexes, data_indexes]
 
@@ -205,14 +203,11 @@ class StorageClient:
         sio = StringIO(resp.text)
         return pd.read_csv(sio, **kwargs)
 
-    def _axis_request(self, data_url):
-        resp = requests.get(data_url, auth=self._auth)
-        indexes = resp.content.decode(resp.encoding).split(",")
+    def _axis_request(self, data):
         try:
-            if indexes and ":" in indexes[0]:
-                return list(map(convertdate, indexes))
-            else:
-                return list(map(int, indexes))
+            if data and type(data[0]) is str:
+                return list(map(convertdate, data))
+            return data
         except ValueError as e:
             raise ValueError("Could not parse indexes as either int or dates", e)
 
