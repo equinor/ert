@@ -2,8 +2,8 @@ size: 1000
 
 input:
   -
-    source: stochastic.coefficents
-    record: coefficents
+    source: stochastic.coefficients
+    record: coefficients
 
 forward_model:
   driver: local

@@ -3,8 +3,8 @@
   environment: polynomial
   input:
     -
-      record: coefficents
-      location: coefficents.json
+      record: coefficients
+      location: coefficients.json
   output:
     -
       record: polynomial_output

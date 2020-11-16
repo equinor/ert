@@ -1,5 +1,5 @@
 -
-  name: coefficents
+  name: coefficients
   type: stochastic
   distribution:
     type: gaussian
