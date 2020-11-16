@@ -1,17 +1,16 @@
 import argparse
 import json
-import os
-import pathlib
+from pathlib import Path
 import random
 import sys
 
 
 def _locate_ert_workspace_root(path):
-    path = pathlib.Path(path)
+    path = Path(path)
     while True:
         if (path / ".ert").exists():
             return path
-        if path == pathlib.Path(path.root):
+        if path == Path(path.root):
             return None
         path = path.parent
 
@@ -39,7 +38,7 @@ def _build_argparser():
 
 
 def _init_workspace(path):
-    path = pathlib.Path(path)
+    path = Path(path)
     if _locate_ert_workspace_root(path) is not None:
         sys.exit("Already inside an ERT workspace")
 
@@ -48,7 +47,7 @@ def _init_workspace(path):
 
 
 def _assert_experiment(workspace_root, experiment_name):
-    experiment_root = pathlib.Path(workspace_root) / experiment_name
+    experiment_root = Path(workspace_root) / experiment_name
     if not experiment_root.is_dir():
         raise ValueError(
             f"{experiment_name} is not an experiment "
@@ -61,7 +60,7 @@ def _experiment_have_run(experiment_root):
 
 
 def _run_experiment(workspace_root, experiment_name):
-    experiment_root = pathlib.Path(workspace_root) / experiment_name
+    experiment_root = Path(workspace_root) / experiment_name
     _assert_experiment(workspace_root, experiment_name)
 
     if _experiment_have_run(experiment_root):
@@ -72,7 +71,7 @@ def _run_experiment(workspace_root, experiment_name):
 
 
 def _export(workspace_root, experiment_name):
-    experiment_root = pathlib.Path(workspace_root) / experiment_name
+    experiment_root = Path(workspace_root) / experiment_name
     _assert_experiment(workspace_root, experiment_name)
 
     if not _experiment_have_run(experiment_root):
