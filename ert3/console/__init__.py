@@ -77,21 +77,6 @@ def _export(workspace_root, experiment_name):
     if not _experiment_have_run(experiment_root):
         raise ValueError("Cannot export experiment that has not been carried out")
 
-    data = []
-    for real_idx in range(1000):
-        a = random.gauss(0, 1)
-        b = random.gauss(0, 1)
-        c = random.gauss(0, 1)
-        data.append(
-            {
-                "input": {
-                    "coefficents": {"a": a, "b": b, "c": c},
-                },
-                "output": {
-                    "polynomial_output": [a * x ** 2 + b * x + c for x in range(10)],
-                },
-            }
-        )
     with open(experiment_root / "data.json", "w") as f:
         json.dump(data, f)
 
