@@ -9,7 +9,7 @@ import sys
 def _locate_ert_workspace_root(path):
     path = pathlib.Path(path)
     while True:
-        if os.path.exists(path / ".ert"):
+        if (path / ".ert").exists():
             return path
         if path == pathlib.Path(path.root):
             return None
@@ -49,7 +49,7 @@ def _init_workspace(path):
 
 def _assert_experiment(workspace_root, experiment_name):
     experiment_root = pathlib.Path(workspace_root) / experiment_name
-    if not os.path.isdir(experiment_root):
+    if not experiment_root.is_dir():
         raise ValueError(
             f"{experiment_name} is not an experiment "
             "within the workspace {workspace_root}"
@@ -57,7 +57,7 @@ def _assert_experiment(workspace_root, experiment_name):
 
 
 def _experiment_have_run(experiment_root):
-    return os.path.exists(experiment_root / ".ert_experiment")
+    return (experiment_root / ".ert_experiment").exists()
 
 
 def _run_experiment(workspace_root, experiment_name):
