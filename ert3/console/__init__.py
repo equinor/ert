@@ -52,7 +52,7 @@ def _assert_experiment(workspace_root, experiment_name):
     if not experiment_root.is_dir():
         raise ValueError(
             f"{experiment_name} is not an experiment "
-            "within the workspace {workspace_root}"
+            f"within the workspace {workspace_root}"
         )
 
 
