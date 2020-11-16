@@ -5,8 +5,7 @@ from ert_data.measured import MeasuredData
 from ert_shared import ERT
 from ert_shared.storage import ERT_STORAGE
 from ert_shared.feature_toggling import feature_enabled
-from ert_shared.storage.blob_api import BlobApi
-from ert_shared.storage.entities_model import ParameterPrior
+from ert_shared.storage.models import ParameterPrior
 from ert_shared.storage.rdb_api import RdbApi
 
 from res.enkf.export import MisfitCollector
@@ -28,7 +27,7 @@ def _create_ensemble(rdb_api, reference, priors):
     return ensemble
 
 
-def _extract_and_dump_observations(rdb_api, blob_api):
+def _extract_and_dump_observations(rdb_api):
     facade = ERT.enkf_facade
 
     observation_keys = [
@@ -42,33 +41,29 @@ def _extract_and_dump_observations(rdb_api, blob_api):
     measured_data.remove_inactive_observations()
     observations = measured_data.data.loc[["OBS", "STD"]]
 
-    _dump_observations(rdb_api=rdb_api, blob_api=blob_api, observations=observations)
+    _dump_observations(rdb_api=rdb_api, observations=observations)
 
 
-def _dump_observations(rdb_api, blob_api, observations):
+def _dump_observations(rdb_api, observations):
     for key in observations.columns.get_level_values(0).unique():
         observation = observations[key]
         if rdb_api.get_observation(name=key) is not None:
             continue
-        key_indexes_df = blob_api.add_blob(
-            observation.columns.get_level_values(0).to_list()
-        )
-        data_indexes_df = blob_api.add_blob(
-            observation.columns.get_level_values(1).to_list()
-        )
-        vals_df = blob_api.add_blob(observation.loc["OBS"].to_list())
-        stds_df = blob_api.add_blob(observation.loc["STD"].to_list())
+        key_indices_df = observation.columns.get_level_values(0).to_list()
+        data_indices_df = observation.columns.get_level_values(1).to_list()
+        vals_df = observation.loc["OBS"].to_list()
+        stds_df = observation.loc["STD"].to_list()
 
         rdb_api.add_observation(
             name=key,
-            key_indexes_ref=key_indexes_df.id,
-            data_indexes_ref=data_indexes_df.id,
-            values_ref=vals_df.id,
-            stds_ref=stds_df.id,
+            key_indices=key_indices_df,
+            data_indices=data_indices_df,
+            values=vals_df,
+            errors=stds_df,
         )
 
 
-def _extract_and_dump_parameters(rdb_api, blob_api, ensemble_name, priors):
+def _extract_and_dump_parameters(rdb_api, ensemble_name, priors):
     facade = ERT.enkf_facade
 
     parameter_keys = [
@@ -80,14 +75,13 @@ def _extract_and_dump_parameters(rdb_api, blob_api, ensemble_name, priors):
 
     _dump_parameters(
         rdb_api=rdb_api,
-        blob_api=blob_api,
         parameters=all_parameters,
         ensemble_name=ensemble_name,
         priors=priors,
     )
 
 
-def _dump_parameters(rdb_api, blob_api, parameters, ensemble_name, priors):
+def _dump_parameters(rdb_api, parameters, ensemble_name, priors):
     for key, parameter in parameters.items():
         group, name = key.split(":")
         prior = next((x for x in priors if x.key == name and x.group == group), None)
@@ -95,18 +89,18 @@ def _dump_parameters(rdb_api, blob_api, parameters, ensemble_name, priors):
             name=name, group=group, ensemble_name=ensemble_name, prior=prior
         )
         for realization_index, value in parameter.iterrows():
-            value_df = blob_api.add_blob(float(value))
+            value_df = float(value)
 
             rdb_api.add_parameter(
                 name=parameter_definition.name,
                 group=parameter_definition.group,
-                value_ref=value_df.id,
+                value=value_df,
                 realization_index=realization_index,
                 ensemble_name=ensemble_name,
             )
 
 
-def _extract_and_dump_responses(rdb_api, blob_api, ensemble_name):
+def _extract_and_dump_responses(rdb_api, ensemble_name):
     facade = ERT.enkf_facade
 
     gen_data_keys = [
@@ -127,31 +121,29 @@ def _extract_and_dump_responses(rdb_api, blob_api, ensemble_name):
 
     _dump_response(
         rdb_api=rdb_api,
-        blob_api=blob_api,
         responses=gen_data_data,
         ensemble_name=ensemble_name,
     )
     _dump_response(
         rdb_api=rdb_api,
-        blob_api=blob_api,
         responses=summary_data,
         ensemble_name=ensemble_name,
     )
 
 
-def _dump_response(rdb_api, blob_api, responses, ensemble_name):
+def _dump_response(rdb_api, responses, ensemble_name):
     for key, response in responses.items():
-        indexes_df = blob_api.add_blob(response.index.to_list())
+        indices_df = response.index.to_list()
         response_definition = rdb_api.add_response_definition(
             name=key,
-            indexes_ref=indexes_df.id,
+            indices=indices_df,
             ensemble_name=ensemble_name,
         )
         for realization_index, values in response.iteritems():
-            values_df = blob_api.add_blob(values.to_list())
+            values_df = values.to_list()
             rdb_api.add_response(
                 name=response_definition.name,
-                values_ref=values_df.id,
+                values=values_df,
                 realization_index=realization_index,
                 ensemble_name=ensemble_name,
             )
@@ -174,7 +166,7 @@ def _extract_active_observations(facade):
     return active_observations
 
 
-def _extract_and_dump_update_data(ensemble_id, ensemble_name, rdb_api, blob_api):
+def _extract_and_dump_update_data(ensemble_id, ensemble_name, rdb_api):
     facade = ERT.enkf_facade
 
     fs = facade.get_current_fs()
@@ -192,13 +184,13 @@ def _extract_and_dump_update_data(ensemble_id, ensemble_name, rdb_api, blob_api)
         )
 
         if active_observations is not None:
-            active_blob = blob_api.add_blob(active_observations[observation_key])
+            active_blob = active_observations[observation_key]
 
         observation = rdb_api.get_observation(observation_key)
         link = rdb_api._add_observation_response_definition_link(
             observation_id=observation.id,
             response_definition_id=response_definition.id,
-            active_ref=active_blob.id if active_observations is not None else None,
+            active=active_blob if active_observations is not None else None,
             update_id=update_id,
         )
         for realization_number in realizations:
@@ -214,39 +206,31 @@ def _extract_and_dump_update_data(ensemble_id, ensemble_name, rdb_api, blob_api)
 
 
 @feature_enabled("new-storage")
-def dump_to_new_storage(reference=None, rdb_session=None, blob_session=None):
+def dump_to_new_storage(reference=None, rdb_session=None):
 
     start_time = time.time()
     logger.debug("Starting extraction...")
 
     if rdb_session is None:
-        rdb_session = ERT_STORAGE.RdbSession()
-
-    if blob_session is None:
-        blob_session = ERT_STORAGE.BlobSession()
+        rdb_session = ERT_STORAGE.Session()
 
     rdb_api = RdbApi(session=rdb_session)
-    blob_api = BlobApi(session=blob_session)
 
     try:
         priors = _extract_and_dump_priors(rdb_api=rdb_api) if reference is None else []
 
         ensemble = _create_ensemble(rdb_api, reference=reference, priors=priors)
-        _extract_and_dump_observations(rdb_api=rdb_api, blob_api=blob_api)
+        _extract_and_dump_observations(rdb_api=rdb_api)
 
         _extract_and_dump_parameters(
             rdb_api=rdb_api,
-            blob_api=blob_api,
             ensemble_name=ensemble.name,
             priors=priors,
         )
-        _extract_and_dump_responses(
-            rdb_api=rdb_api, blob_api=blob_api, ensemble_name=ensemble.name
-        )
-        _extract_and_dump_update_data(ensemble.id, ensemble.name, rdb_api, blob_api)
+        _extract_and_dump_responses(rdb_api=rdb_api, ensemble_name=ensemble.name)
+        _extract_and_dump_update_data(ensemble.id, ensemble.name, rdb_api)
 
         rdb_session.commit()
-        blob_session.commit()
         ensemble_name = ensemble.name
 
         end_time = time.time()
@@ -261,11 +245,9 @@ def dump_to_new_storage(reference=None, rdb_session=None, blob_session=None):
 
     except:
         rdb_session.rollback()
-        blob_session.rollback()
         raise
     finally:
         rdb_session.close()
-        blob_session.close()
 
     return ensemble_name
 
