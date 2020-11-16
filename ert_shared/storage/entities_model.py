@@ -135,6 +135,7 @@ class ResponseDefinition(Entities):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     indexes_ref = Column(Integer)  # Reference to the description of  plot axis
+    indexes = Column(PickleType)
     ensemble_id = Column(Integer, ForeignKey("ensemble.id"), nullable=False)
     ensemble = relationship("Ensemble", back_populates="response_definitions")
 
@@ -145,8 +146,8 @@ class ResponseDefinition(Entities):
     )
 
     def __repr__(self):
-        return "<ResponseDefinition(name='{}', indexes_ref='{}', ensemble_id='{}')>".format(
-            self.name, self.indexes_ref, self.ensemble_id
+        return "<ResponseDefinition(name='{}', ensemble_id='{}')>".format(
+            self.name, self.ensemble_id
         )
 
 
@@ -162,6 +163,7 @@ class Response(Entities):
 
     id = Column(Integer, primary_key=True)
     values_ref = Column(Integer)
+    values = Column(PickleType)
     realization_id = Column(Integer, ForeignKey("realization.id"), nullable=False)
     realization = relationship("Realization", back_populates="responses")
     response_definition_id = Column(
@@ -178,8 +180,7 @@ class Response(Entities):
     )
 
     def __repr__(self):
-        return "<Response(values_ref='{}', realization_id='{}', response_definition_id='{}')>".format(
-            self.values_ref,
+        return "<Response(realization_id='{}', response_definition_id='{}')>".format(
             self.realization_id,
             self.response_definition_id,
         )
@@ -251,6 +252,7 @@ class Parameter(Entities):
 
     id = Column(Integer, primary_key=True)
     value_ref = Column(Integer)
+    value = Column(PickleType)
     realization_id = Column(Integer, ForeignKey("realization.id"), nullable=False)
     realization = relationship("Realization", back_populates="parameters")
     parameter_definition_id = Column(
@@ -269,8 +271,8 @@ class Parameter(Entities):
     )
 
     def __repr__(self):
-        return "<Parameter(value_ref='{}', realization_id='{}', parameter_definition_id='{}')>".format(
-            self.value_ref, self.realization_id, self.parameter_definition_id
+        return "<Parameter(realization_id='{}', parameter_definition_id='{}')>".format(
+            self.realization_id, self.parameter_definition_id
         )
 
 
@@ -301,9 +303,13 @@ class Observation(Entities):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     key_indexes_ref = Column(Integer)
+    key_indexes = Column(PickleType)
     data_indexes_ref = Column(Integer)
+    data_indexes = Column(PickleType)
     values_ref = Column(Integer)
+    values = Column(PickleType)
     stds_ref = Column(Integer)
+    stds = Column(PickleType)
 
     attributes = association_proxy(
         "observation_attributes",
@@ -314,13 +320,7 @@ class Observation(Entities):
     __table_args__ = (UniqueConstraint("name", name="uq_observation_name"),)
 
     def __repr__(self):
-        return "<Observation(name='{}', key_indexes_ref='{}', data_indexes_ref='{}', values_ref='{}', stds_ref='{}')>".format(
-            self.name,
-            self.key_indexes_ref,
-            self.data_indexes_ref,
-            self.values_ref,
-            self.stds_ref,
-        )
+        return "<Observation(name='{}')>".format(self.name)
 
     def add_attribute(self, attribute, value):
         self.attributes[attribute] = AttributeValue(value)
@@ -358,6 +358,7 @@ class ObservationResponseDefinitionLink(Entities):
         Integer, ForeignKey("response_definition.id"), nullable=False
     )
     active_ref = Column(Integer)
+    active = Column(PickleType)
     response_definition = relationship(
         "ResponseDefinition", back_populates="observation_links"
     )
