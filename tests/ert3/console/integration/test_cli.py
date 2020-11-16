@@ -203,7 +203,7 @@ def _assert_output_records(config, export_data):
 
 def _assert_poly_output(config, export_data):
     for realisation in export_data:
-        coeff = realisation["input"]["coefficents"]
+        coeff = realisation["input"]["coefficients"]
         poly_out = realisation["output"]["polynomial_output"]
 
         assert 10 == len(poly_out)
