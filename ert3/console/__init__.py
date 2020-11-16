@@ -27,7 +27,7 @@ def _build_argparser():
     parser = argparse.ArgumentParser(description=_ERT3_DESCRIPTION)
     subparsers = parser.add_subparsers(dest="sub_cmd", help="ert3 commands")
 
-    init_parser = subparsers.add_parser("init", help="Initialize an ERT3 workspace")
+    subparsers.add_parser("init", help="Initialize an ERT3 workspace")
 
     run_parser = subparsers.add_parser("run", help="Run experiment")
     run_parser.add_argument("experiment_name", help="Name of the experiment")
