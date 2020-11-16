@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import random
 import sys
+import ert3
 
 
 def _locate_ert_workspace_root(path):
@@ -58,7 +59,20 @@ def _assert_experiment(workspace_root, experiment_name):
 
 
 def _experiment_have_run(experiment_root):
-    return (experiment_root / ".ert_experiment").exists()
+    return (experiment_root / ".storage.json").exists()
+
+
+def _generate_coefficients():
+    return [
+        {
+            "coefficients": {
+                "a": random.gauss(0, 1),
+                "b": random.gauss(0, 1),
+                "c": random.gauss(0, 1),
+            }
+        }
+        for _ in range(1000)
+    ]
 
 
 def _run_experiment(workspace_root, experiment_name):
@@ -68,8 +82,12 @@ def _run_experiment(workspace_root, experiment_name):
     if _experiment_have_run(experiment_root):
         raise ValueError(f"Experiment {experiment_name} have been carried out.")
 
-    with open(experiment_root / ".ert_experiment", "w") as fout:
-        fout.write("Done")
+    coefficients = _generate_coefficients()
+    response = ert3.evaluator.evaluate(coefficients)
+
+    data = {"input": coefficients, "output": response}
+    with open(experiment_root / ".storage.json", "w") as f:
+        json.dump(data, f)
 
 
 def _export(workspace_root, experiment_name):
@@ -79,23 +97,18 @@ def _export(workspace_root, experiment_name):
     if not _experiment_have_run(experiment_root):
         raise ValueError("Cannot export experiment that has not been carried out")
 
-    data = []
-    for real_idx in range(1000):
-        a = random.gauss(0, 1)
-        b = random.gauss(0, 1)
-        c = random.gauss(0, 1)
-        data.append(
-            {
-                "input": {
-                    "coefficents": {"a": a, "b": b, "c": c},
-                },
-                "output": {
-                    "polynomial_output": [a * x ** 2 + b * x + c for x in range(10)],
-                },
-            }
-        )
+    with open(experiment_root / ".storage.json") as f:
+        data = json.load(f)
+
     with open(experiment_root / "data.json", "w") as f:
-        json.dump(data, f)
+        json.dump(_reformat_input_output(data), f)
+
+
+def _reformat_input_output(data):
+    return [
+        {"input": input_data, "output": output_data}
+        for input_data, output_data in zip(data["input"], data["output"])
+    ]
 
 
 def main():
