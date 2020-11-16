@@ -105,11 +105,11 @@ def main():
         parser.print_help()
         return
     if args.sub_cmd == "init":
-        _init_workspace(os.getcwd())
+        _init_workspace(Path.cwd())
         return
 
     # Commands that does requires an ert workspace
-    workspace = _locate_ert_workspace_root(os.getcwd())
+    workspace = _locate_ert_workspace_root(Path.cwd())
     if workspace is None:
         sys.exit("Not inside an ERT workspace")
     if args.sub_cmd == "run":
