@@ -109,7 +109,7 @@ def main():
         _init_workspace(os.getcwd())
         return
 
-    # Commands that does requres an ert workspace
+    # Commands that does requires an ert workspace
     workspace = _locate_ert_workspace_root(os.getcwd())
     if workspace is None:
         sys.exit("Not inside an ERT workspace")
