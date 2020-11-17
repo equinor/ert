@@ -2,6 +2,24 @@ import copy
 from ert_shared.ensemble_evaluator.entity.snapshot import SnapshotBuilder
 
 
+class _Ensemble:
+    def __init__(self, reals, metadata):
+        self._reals = reals
+        self._metadata = metadata
+
+    def __repr__(self):
+        return f"Ensemble with {len(self._reals)} members"
+
+    def evaluate(self, host, port):
+        pass
+
+    def get_reals(self):
+        return self._reals
+
+    def get_metadata(self):
+        return self._metadata
+
+
 class _IO:
     def __init__(self, name, type_, path):
         if not name:
@@ -125,8 +143,31 @@ class _ScriptJobBuilder(_BaseJobBuilder):
         return _ScriptJob(self._id, self._name, self._executable, self._args)
 
 
+class _FunctionJobBuilder(_BaseJobBuilder):
+    def __init__(self):
+        super().__init__()
+        self._fun = None
+        self.reset()
+
+    def reset(self):
+        super().reset()
+        self._fun = None
+        return self
+
+    def set_function(self, fun):
+        self._fun = fun
+        return self
+
+    def build(self):
+        return _FunctionJob(self._id, self._fun)
+
+
 def create_script_job_builder():
     return _ScriptJobBuilder()
+
+
+def create_function_job_builder():
+    return _FunctionJobBuilder()
 
 
 class _BaseJob:
@@ -166,6 +207,15 @@ class _ScriptJob(_BaseJob):
 
     def get_args(self):
         return self._args
+
+
+class _FunctionJob(_BaseJob):
+    def __init__(
+        self,
+        id_,
+        fun,
+    ):
+        super().__init__(id_, fun.__name__)
 
 
 class _Step:
@@ -419,7 +469,7 @@ class _EnsembleBuilder:
         builder.set_metadata("iter", run_context.get_iter())
         return builder
 
-    def build(self):
+    def build(self, ensemble_cls=_Ensemble, **ensemble_kwargs):
         # duplicate the original reals
         orig_len = len(self._reals)
         for i in range(orig_len, self._size):
@@ -428,7 +478,7 @@ class _EnsembleBuilder:
             self._reals.append(real)
 
         reals = [builder.build() for builder in self._reals]
-        return _Ensemble(reals, self._metadata)
+        return ensemble_cls(reals=reals, metadata=self._metadata, **ensemble_kwargs)
 
 
 def create_ensemble_builder():
@@ -437,21 +487,3 @@ def create_ensemble_builder():
 
 def create_ensemble_builder_from_legacy(run_context, forward_model):
     return _EnsembleBuilder.from_legacy(run_context, forward_model)
-
-
-class _Ensemble:
-    def __init__(self, reals, metadata):
-        self._reals = reals
-        self._metadata = metadata
-
-    def __repr__(self):
-        return f"Ensemble with {len(self._reals)} members"
-
-    def evaluate(self, host, port):
-        pass
-
-    def get_reals(self):
-        return self._reals
-
-    def get_metadata(self):
-        return self._metadata
