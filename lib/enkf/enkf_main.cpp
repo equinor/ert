@@ -476,9 +476,18 @@ static int __get_active_size(const ensemble_config_type * ensemble_config , enkf
 
 /*****************************************************************/
 /**
-   Helper struct used to pass information to the multithreaded
-   serialize / deserialize functions.
+   Helper structs used to pass information to the multithreaded serialize /
+   deserialize functions. Except for the node_info member the serialize_info
+   structure will be immutable. The node_info member is used only for the
+   context of serialization of *one node*.
 */
+
+typedef struct {
+  int                          row_offset;
+  const active_list_type     * active_list;
+  const char                 * key;
+} serialize_node_info_type;
+
 
 typedef struct {
   enkf_fs_type               * src_fs;
@@ -486,14 +495,13 @@ typedef struct {
   const ensemble_config_type * ensemble_config;
   int                          iens1;    /* Inclusive lower limit. */
   int                          iens2;    /* NOT inclusive upper limit. */
-  const char                 * key;
   int                          report_step;
   int                          target_step;
   run_mode_type                run_mode;
-  int                          row_offset;
-  const active_list_type     * active_list;
   matrix_type                * A;
   const int_vector_type      * iens_active_index;
+
+  serialize_node_info_type   * node_info;  /* Mutable member which will be assigned in enkf_main_serialize_node */
 } serialize_info_type;
 
 
@@ -520,16 +528,18 @@ static void * serialize_nodes_mt( void * arg ) {
   int iens;
   for (iens = info->iens1; iens < info->iens2; iens++) {
     int column = int_vector_iget( info->iens_active_index , iens);
-    if (column >= 0)
+    if (column >= 0) {
+      const auto * node_info = info->node_info;
       serialize_node( info->src_fs ,
                       info->ensemble_config,
-                      info->key ,
+                      node_info->key ,
                       iens ,
                       info->report_step ,
-                      info->row_offset ,
+                      node_info->row_offset ,
                       column,
-                      info->active_list ,
+                      node_info->active_list ,
                       info->A );
+    }
   }
   return NULL;
 }
@@ -543,17 +553,22 @@ static void enkf_main_serialize_node( const char * node_key ,
 
   /* Multithreaded serializing*/
   const int num_cpu_threads = thread_pool_get_max_running( work_pool );
+  serialize_node_info_type node_info[num_cpu_threads];
   int icpu;
 
   thread_pool_restart( work_pool );
   for (icpu = 0; icpu < num_cpu_threads; icpu++) {
-    serialize_info[icpu].key         = node_key;
-    serialize_info[icpu].active_list = active_list;
-    serialize_info[icpu].row_offset  = row_offset;
+    node_info[icpu].key            = node_key;
+    node_info[icpu].active_list    = active_list;
+    node_info[icpu].row_offset     = row_offset;
+    serialize_info[icpu].node_info = &node_info[icpu];
 
     thread_pool_add_job( work_pool , serialize_nodes_mt , &serialize_info[icpu]);
   }
   thread_pool_join( work_pool );
+
+  for (icpu = 0; icpu < num_cpu_threads; icpu++)
+    serialize_info[icpu].node_info = nullptr;
 }
 
 
@@ -632,8 +647,10 @@ static void * deserialize_nodes_mt( void * arg ) {
   int iens;
   for (iens = info->iens1; iens < info->iens2; iens++) {
     int column = int_vector_iget( info->iens_active_index , iens );
-    if (column >= 0)
-      deserialize_node( info->target_fs , info->src_fs, info->ensemble_config , info->key , iens , info->target_step , info->row_offset , column, info->active_list , info->A );
+    if (column >= 0) {
+      const auto * node_info = info->node_info;
+      deserialize_node( info->target_fs , info->src_fs, info->ensemble_config , node_info->key , iens , info->target_step , node_info->row_offset , column, node_info->active_list , info->A );
+    }
   }
   return NULL;
 }
@@ -646,7 +663,7 @@ static void enkf_main_deserialize_dataset( ensemble_config_type * ensemble_confi
                                            serialize_info_type * serialize_info ,
                                            thread_pool_type * work_pool ) {
 
-  int num_cpu_threads = thread_pool_get_max_running( work_pool );
+  const int num_cpu_threads = thread_pool_get_max_running( work_pool );
   stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
   for (int i = 0; i < stringlist_get_size( update_keys ); i++) {
     const char             * key         = stringlist_iget(update_keys , i);
@@ -656,11 +673,13 @@ static void enkf_main_deserialize_dataset( ensemble_config_type * ensemble_confi
       {
         /* Multithreaded */
         int icpu;
+        serialize_node_info_type node_info[num_cpu_threads];
         thread_pool_restart( work_pool );
         for (icpu = 0; icpu < num_cpu_threads; icpu++) {
-          serialize_info[icpu].key         = key;
-          serialize_info[icpu].active_list = active_list;
-          serialize_info[icpu].row_offset  = row_offset[i];
+          node_info[icpu].key            = key;
+          node_info[icpu].active_list    = active_list;
+          node_info[icpu].row_offset     = row_offset[i];
+          serialize_info[icpu].node_info = &node_info[icpu];
 
           thread_pool_add_job( work_pool , deserialize_nodes_mt , &serialize_info[icpu]);
         }
@@ -702,6 +721,7 @@ static serialize_info_type * serialize_info_alloc( enkf_fs_type * src_fs,
     serialize_info[icpu].A           = A;
     serialize_info[icpu].iens1       = iens_offset;
     serialize_info[icpu].iens2       = iens_offset + (ens_size - iens_offset) / (num_cpu_threads - icpu);
+    serialize_info[icpu].node_info   = nullptr;
     iens_offset = serialize_info[icpu].iens2;
   }
   serialize_info[num_cpu_threads - 1].iens2 = ens_size;
@@ -993,6 +1013,8 @@ static void enkf_main_store_PC(const analysis_config_type * analysis_config,
 }
 
 
+
+
 static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
                                        enkf_fs_type * target_fs ,
                                        const bool_vector_type * ens_mask ,
@@ -1089,8 +1111,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
           }
           else
             analysis_module_updateA( module , localA , S , R , dObs , E , D , module_info, enkf_main->shared_rng);
-        }
-        else {
+        } else {
           if (analysis_module_check_option( module , ANALYSIS_USE_A)){
             analysis_module_initX( module , X , localA , S , R , dObs , E , D, enkf_main->shared_rng);
           }
