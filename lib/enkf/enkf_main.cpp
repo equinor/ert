@@ -962,6 +962,36 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
   bool_vector_free( ens_mask);
 }
 
+static void enkf_main_store_PC(const analysis_config_type * analysis_config,
+                               int step1,
+                               int step2,
+                               int active_ens_size,
+                               const local_ministep_type * ministep,
+                               const matrix_type * dObs,
+                               const matrix_type * S) {
+  double truncation    = -1;
+  int ncomp            = active_ens_size - 1;
+  matrix_type * PC     = matrix_alloc(1,1);
+  matrix_type * PC_obs = matrix_alloc(1,1);
+  double_vector_type   * singular_values = double_vector_alloc(0,0);
+  local_obsdata_type   * obsdata = local_ministep_get_obsdata( ministep );
+  const char * obsdata_name = local_obsdata_get_name( obsdata );
+
+  enkf_main_get_PC( S , dObs , truncation , ncomp , PC , PC_obs , singular_values);
+  {
+    char * filename  = util_alloc_sprintf(analysis_config_get_PC_filename(analysis_config) , step1 , step2 , obsdata_name);
+    char * full_path = util_alloc_filename( analysis_config_get_PC_path(analysis_config) , filename , NULL );
+
+    enkf_main_fprintf_PC( full_path , PC , PC_obs);
+
+    free( full_path );
+    free( filename );
+  }
+  matrix_free( PC );
+  matrix_free( PC_obs );
+  double_vector_free( singular_values );
+}
+
 
 static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
                                        enkf_fs_type * target_fs ,
@@ -1032,30 +1062,8 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
                                                                  cpu_threads);
 
 
-    // Store PC:
-    if (analysis_config_get_store_PC(analysis_config)) {
-      double truncation    = -1;
-      int ncomp            = active_ens_size - 1;
-      matrix_type * PC     = matrix_alloc(1,1);
-      matrix_type * PC_obs = matrix_alloc(1,1);
-      double_vector_type   * singular_values = double_vector_alloc(0,0);
-      local_obsdata_type   * obsdata = local_ministep_get_obsdata( ministep );
-      const char * obsdata_name = local_obsdata_get_name( obsdata );
-
-      enkf_main_get_PC( S , dObs , truncation , ncomp , PC , PC_obs , singular_values);
-      {
-        char * filename  = util_alloc_sprintf(analysis_config_get_PC_filename(analysis_config) , step1 , step2 , obsdata_name);
-        char * full_path = util_alloc_filename( analysis_config_get_PC_path(analysis_config) , filename , NULL );
-
-        enkf_main_fprintf_PC( full_path , PC , PC_obs);
-
-        free( full_path );
-        free( filename );
-      }
-      matrix_free( PC );
-      matrix_free( PC_obs );
-      double_vector_free( singular_values );
-    }
+    if (analysis_config_get_store_PC(analysis_config))
+      enkf_main_store_PC(analysis_config, step1, step2, active_ens_size, ministep, dObs, S);
 
     if (localA == NULL)
       analysis_module_initX( module , X , NULL , S , R , dObs , E , D, enkf_main->shared_rng);
