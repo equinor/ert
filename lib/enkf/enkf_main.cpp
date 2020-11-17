@@ -580,29 +580,20 @@ static int enkf_main_serialize_dataset( const ensemble_config_type * ens_config 
 
   for (int ikw=0; ikw < num_kw; ikw++) {
     const char             * key         = stringlist_iget(update_keys , ikw);
-    enkf_config_node_type * config_node  = ensemble_config_get_node( ens_config , key );
-    if ((serialize_info[0].run_mode == SMOOTHER_RUN) && (enkf_config_node_get_var_type( config_node ) != PARAMETER)) {
-      /* We have tried to serialize a dynamic node when we are
-         smoother update mode; that does not make sense and we just
-         continue. */
-      active_size[ikw] = 0;
-      continue;
-    } else {
-      const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
-      enkf_fs_type * src_fs = serialize_info->src_fs;
-      active_size[ikw] = __get_active_size( ens_config , src_fs , key , report_step , active_list );
-      row_offset[ikw]  = current_row;
+    const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
+    enkf_fs_type * src_fs = serialize_info->src_fs;
+    active_size[ikw] = __get_active_size( ens_config , src_fs , key , report_step , active_list );
+    row_offset[ikw]  = current_row;
 
-      {
-        int matrix_rows = matrix_get_rows( A );
-        if ((active_size[ikw] + current_row) > matrix_rows)
-          matrix_resize( A , matrix_rows + 2 * active_size[ikw] , ens_size , true );
-      }
+    {
+      int matrix_rows = matrix_get_rows( A );
+      if ((active_size[ikw] + current_row) > matrix_rows)
+        matrix_resize( A , matrix_rows + 2 * active_size[ikw] , ens_size , true );
+    }
 
-      if (active_size[ikw] > 0) {
-        enkf_main_serialize_node( key , active_list , row_offset[ikw] , work_pool , serialize_info );
-        current_row += active_size[ikw];
-      }
+    if (active_size[ikw] > 0) {
+      enkf_main_serialize_node( key , active_list , row_offset[ikw] , work_pool , serialize_info );
+      current_row += active_size[ikw];
     }
   }
   matrix_shrink_header( A , current_row , ens_size );
@@ -659,31 +650,21 @@ static void enkf_main_deserialize_dataset( ensemble_config_type * ensemble_confi
   stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
   for (int i = 0; i < stringlist_get_size( update_keys ); i++) {
     const char             * key         = stringlist_iget(update_keys , i);
-    enkf_config_node_type * config_node  = ensemble_config_get_node( ensemble_config , key );
-    if ((serialize_info[0].run_mode == SMOOTHER_RUN) && (enkf_config_node_get_var_type( config_node ) != PARAMETER))
-      /*
-         We have tried to serialize a dynamic node when we are in
-         smoother update mode; that does not make sense and we just
-         continue.
-      */
-      continue;
-    else {
-      if (active_size[i] > 0) {
-        const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
+    if (active_size[i] > 0) {
+      const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
 
-        {
-          /* Multithreaded */
-          int icpu;
-          thread_pool_restart( work_pool );
-          for (icpu = 0; icpu < num_cpu_threads; icpu++) {
-            serialize_info[icpu].key         = key;
-            serialize_info[icpu].active_list = active_list;
-            serialize_info[icpu].row_offset  = row_offset[i];
+      {
+        /* Multithreaded */
+        int icpu;
+        thread_pool_restart( work_pool );
+        for (icpu = 0; icpu < num_cpu_threads; icpu++) {
+          serialize_info[icpu].key         = key;
+          serialize_info[icpu].active_list = active_list;
+          serialize_info[icpu].row_offset  = row_offset[i];
 
-            thread_pool_add_job( work_pool , deserialize_nodes_mt , &serialize_info[icpu]);
-          }
-          thread_pool_join( work_pool );
+          thread_pool_add_job( work_pool , deserialize_nodes_mt , &serialize_info[icpu]);
         }
+        thread_pool_join( work_pool );
       }
     }
   }
