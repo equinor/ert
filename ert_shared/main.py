@@ -4,6 +4,7 @@ import os
 import sys
 import re
 from argparse import ArgumentParser, ArgumentTypeError
+from contextlib import contextmanager
 from ert_shared import clear_global_state
 from ert_shared.cli.main import run_cli
 from ert_shared.storage.http_server import run_server
@@ -361,12 +362,20 @@ def ert_parser(parser, argv):
     return get_ert_parser(parser).parse_args(argv)
 
 
-@feature_enabled("new-storage")
+@contextmanager
 def start_ert_server():
-    from ert_shared.storage.server_monitor import ServerMonitor
+    monitor = None
+    if FeatureToggling.is_enabled("new-storage"):
+        from ert_shared.storage.server_monitor import ServerMonitor
 
-    monitor = ServerMonitor.get_instance()
-    monitor.start()
+        monitor = ServerMonitor.get_instance()
+        monitor.start()
+
+    try:
+        yield
+    finally:
+        if monitor is not None:
+            monitor.shutdown()
 
 
 @feature_enabled("new-storage")
@@ -389,8 +398,7 @@ def main():
     FeatureToggling.update_from_args(args)
 
     initialize_databases()
-    start_ert_server()
-    with ErtPluginContext():
+    with start_ert_server(), ErtPluginContext():
         args.func(args)
 
     clear_global_state()
