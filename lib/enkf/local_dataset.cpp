@@ -131,3 +131,7 @@ int local_dataset_get_size( const local_dataset_type * dataset ) {
   return hash_get_size( dataset->nodes );
 }
 
+
+hash_iter_type * local_dataset_alloc_iter(const local_dataset_type * dataset) {
+  return hash_iter_alloc(dataset->nodes);
+}
