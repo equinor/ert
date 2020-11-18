@@ -57,7 +57,7 @@ def get_experiment_names(workspace):
     return storage.keys()
 
 
-def add_input_data(workspace, experiment_name, input_data):
+def _add_data(workspace, experiment_name, data_type, data, required_types=()):
     storage_location = _generate_storage_location(workspace)
     _assert_storage_initialized(storage_location)
 
@@ -66,36 +66,38 @@ def add_input_data(workspace, experiment_name, input_data):
 
     if experiment_name not in storage:
         raise KeyError(
-            f"Cannot add input data to non-existing experiment: {experiment_name}"
+            f"Cannot add {data_type} data to non-existing experiment: {experiment_name}"
         )
 
-    if "input" in storage[experiment_name]:
-        raise KeyError(
-            f"Input data is already stored for experiment: {experiment_name}"
-        )
+    if data_type in storage[experiment_name]:
+        msg = f"{data_type} data is already stored for experiment"
+        raise KeyError(msg.capitalize())
 
-    storage[experiment_name]["input"] = input_data
+    for req in required_types:
+        if req not in storage[experiment_name]:
+            raise KeyError(f"Cannot add {data_type} data to experiment without {req} data")
+
+    storage[experiment_name][data_type] = data
+
     with open(storage_location, "w") as f:
         yaml.dump(storage, f)
 
 
-def get_input_data(workspace, experiment_name):
-    storage_location = _generate_storage_location(workspace)
-    _assert_storage_initialized(storage_location)
-
-    with open(storage_location) as f:
-        storage = yaml.safe_load(f)
-
-    if experiment_name not in storage:
-        raise KeyError(f"Cannot get input data, no experiment named: {experiment_name}")
-
-    if "input" not in storage[experiment_name]:
-        raise KeyError(f"No input data for experiment: {experiment_name}")
-
-    return storage[experiment_name]["input"]
+def add_input_data(workspace, experiment_name, input_data):
+    _add_data(workspace, experiment_name, "input", input_data)
 
 
 def add_output_data(workspace, experiment_name, output_data):
+    _add_data(
+        workspace,
+        experiment_name,
+        "output",
+        output_data,
+        required_types=["input"],
+    )
+
+
+def _get_data(workspace, experiment_name, data_type):
     storage_location = _generate_storage_location(workspace)
     _assert_storage_initialized(storage_location)
 
@@ -104,35 +106,18 @@ def add_output_data(workspace, experiment_name, output_data):
 
     if experiment_name not in storage:
         raise KeyError(
-            f"Cannot add output data to non-existing experiment: {experiment_name}"
+            f"Cannot get {data_type} data, no experiment named: {experiment_name}"
         )
 
-    if "output" in storage[experiment_name]:
-        raise KeyError(
-            f"Output data is already stored for experiment: {experiment_name}"
-        )
+    if data_type not in storage[experiment_name]:
+        raise KeyError(f"No {data_type} data for experiment: {experiment_name}")
 
-    if "input" not in storage[experiment_name]:
-        raise KeyError(f"Cannot add output data to experiment without input data")
+    return storage[experiment_name][data_type]
 
-    storage[experiment_name]["output"] = output_data
-    with open(storage_location, "w") as f:
-        yaml.dump(storage, f)
+
+def get_input_data(workspace, experiment_name):
+    return _get_data(workspace, experiment_name, "input")
 
 
 def get_output_data(workspace, experiment_name):
-    storage_location = _generate_storage_location(workspace)
-    _assert_storage_initialized(storage_location)
-
-    with open(storage_location) as f:
-        storage = yaml.safe_load(f)
-
-    if experiment_name not in storage:
-        raise KeyError(
-            f"Cannot get output data, no experiment named: {experiment_name}"
-        )
-
-    if "output" not in storage[experiment_name]:
-        raise KeyError(f"No output data for experiment: {experiment_name}")
-
-    return storage[experiment_name]["output"]
+    return _get_data(workspace, experiment_name, "output")
