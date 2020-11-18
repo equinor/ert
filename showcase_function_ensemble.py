@@ -42,7 +42,7 @@ def generate_coefficients():
 
 
 def evaluate(inputs, fun):
-    ensemble = create_function_ensemble(fun=fun, inputs=inputs)
+    ensemble = create_function_ensemble(fun=fun, inputs=inputs, executor="local")
 
     config = evaluator_config.load_config()
     ee = EnsembleEvaluator(ensemble=ensemble, config=config)

@@ -214,6 +214,21 @@ def _get_executor(name="local"):
             cluster_kwargs=cluster_kwargs,
             debug=True,
         )
+    elif name == "PSB":
+        cluster_kwargs = {
+            "queue": "normal",
+            "project": "ERT-TEST",
+            "local_directory": "$TMPDIR",
+            "cores": 8,
+            "processes": 4,
+            "memory": "16GB",
+            "resource_spec": "select=1:ncpus=8:mem=16GB",
+        }
+        return prefect.engine.executors.DaskExecutor(
+            cluster_class="dask_jobqueue.PBSCluster",
+            cluster_kwargs=cluster_kwargs,
+            debug=True,
+        )
     else:
         raise ValueError(f"Unknown executor name {name}")
 
