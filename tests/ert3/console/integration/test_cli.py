@@ -105,7 +105,7 @@ def test_cli_run_invalid_experiment(tmpdir):
         assert "this-is-not-an-experiment is not an experiment" in str(error.value)
 
 
-def test_cli_run_polynomial_evaluation(tmpdir):
+def test_cli_run_once_polynomial_evaluation(tmpdir):
     workspace = tmpdir / _POLY_WORKSPACE_NAME
     shutil.copytree(_POLY_WORKSPACE, workspace)
     workspace.chdir()
@@ -120,7 +120,7 @@ def test_cli_run_polynomial_evaluation(tmpdir):
 
         with pytest.raises(ValueError) as error:
             ert3.console.main()
-        assert "Experiment evaluation have already been carried out" in str(error.value)
+        assert "Experiment evaluation have been carried out" in str(error.value)
 
 
 def test_cli_run_polynomial_evaluation(tmpdir):
