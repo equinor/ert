@@ -6,6 +6,7 @@ import threading
 import cloudevents
 import prefect
 import websockets
+from dask_jobqueue.lsf import LSFJob
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     _Ensemble,
@@ -196,10 +197,21 @@ class _FunctionTask(prefect.Task):
         return self._fun(**func_input)
 
 
+async def _eq_submit_job(self, script_filename):
+    with open(script_filename) as fh:
+        lines = fh.readlines()[1:]
+    lines = [
+        line.strip() if "#BSUB" not in line else line[5:].strip() for line in lines
+    ]
+    piped_cmd = [self.submit_command + " ".join(lines)]
+    return self._call(piped_cmd, shell=True)
+
+
 def _get_executor(name="local"):
     if name == "local":
         return prefect.engine.executors.DaskExecutor()
     elif name == "lsf":
+        LSFJob._submit_job = _eq_submit_job
         cluster_kwargs = {
             "queue": "mr",
             "project": None,
