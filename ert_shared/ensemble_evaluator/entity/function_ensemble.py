@@ -1,5 +1,6 @@
 import asyncio
 import os
+import socket
 import threading
 
 import cloudevents
@@ -15,6 +16,12 @@ from ert_shared.ensemble_evaluator.entity.ensemble import (
     create_step_builder,
 )
 from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
+
+
+def get_ip_address():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    return s.getsockname()[0]
 
 
 class _EventTranslator:
@@ -237,6 +244,7 @@ class _FunctionEnsemble(_Ensemble):
         )
 
     def evaluate(self, host, port):
+        host = get_ip_address()
         self._evaluation_thread = threading.Thread(
             target=self._evaluate,
             args=(
