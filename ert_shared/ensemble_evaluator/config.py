@@ -1,11 +1,12 @@
 import os
+import random
 import yaml
 import logging
 
 logger = logging.getLogger(__name__)
 CLIENT_URI = "client"
 DISPATCH_URI = "dispatch"
-DEFAULT_PORT = "8765"
+DEFAULT_PORT = str(8765 + random.randint(0, 30))
 DEFAULT_HOST = "0.0.0.0"
 DEFAULT_URL = f"ws://{DEFAULT_HOST}:{DEFAULT_PORT}"
 CONFIG_FILE = "ee_config.yml"
