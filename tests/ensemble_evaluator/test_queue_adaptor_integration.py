@@ -1,12 +1,12 @@
 import asyncio
 import json
 import threading
-from unittest.mock import Mock
-
 import pytest
 import websockets
+
+from unittest.mock import Mock
 from cloudevents.http import from_json
-from ert_shared.ensemble_evaluator.queue_adaptor import JobQueueManagerAdaptor
+from ert_shared.ensemble_evaluator.queue_adaptor import QueueAdaptor
 from job_runner import JOBS_FILE
 
 
@@ -18,7 +18,8 @@ async def mock_ws(host, port):
         while True:
             event = await websocket.recv()
             events.append(event)
-            if event == "null":
+            cloud_event = from_json(event)
+            if cloud_event["type"] == "com.equinor.ert.forward_model_stage.success":
                 done.set_result(None)
                 break
 
@@ -38,9 +39,8 @@ def mock_queue_mutator(host, port, tmpdir):
             )
         ]
     )
-    JobQueueManagerAdaptor.ws_url = f"ws://{host}:{port}"
-    JobQueueManagerAdaptor.ee_id = "ee_id_123"
-    jm = JobQueueManagerAdaptor(mock_queue)
+
+    jm = QueueAdaptor(mock_queue, f"ws://{host}:{port}", "ee_id_123")
 
     mock_queue.job_list[0].status.value = 16  # running
     jm._publish_changes(jm._changes_after_transition())
@@ -83,7 +83,7 @@ async def test_happy_path(tmpdir, unused_tcp_port, event_loop):
     assert event_1["type"] == "com.equinor.ert.forward_model_stage.success"
     assert event_1.data == {"queue_event_type": "JOB_QUEUE_SUCCESS"}
 
-    assert mock_ws_task.result()[2] == "null"
+    # assert mock_ws_task.result()[2] == "null"
 
     with open(tmpdir / JOBS_FILE, "r") as jobs_file:
         assert json.load(jobs_file) == {

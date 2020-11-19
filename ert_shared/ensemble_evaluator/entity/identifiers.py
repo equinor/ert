@@ -80,3 +80,12 @@ FM_JOB_ATTR_ARG_TYPES = "arg_types"
 FM_JOB_ATTR_MAX_ARG = "max_arg"
 FM_JOB_ATTR_STATUS = "status"
 FM_JOB_ATTR_CURRENT_MEMORY_USAGE = "current_memory_usage"
+
+
+EVTYPE_ENSEMBLE_START = "com.equinor.ert.ensemble.start"
+EVTYPE_ENSEMBLE_STOP = "com.equinor.ert.ensemble.stop"
+
+EVGROUP_ENSEMBLE = {
+    EVTYPE_ENSEMBLE_START,
+    EVTYPE_ENSEMBLE_STOP,
+}

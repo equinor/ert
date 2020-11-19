@@ -66,6 +66,17 @@ class EnsembleEvaluator:
         snapshot_mutate_event = PartialSnapshot.from_cloudevent(event)
         await self._send_snapshot_update(snapshot_mutate_event)
 
+    @dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STOP)
+    async def _ensemble_handler(self, event):
+        snapshot_mutate_event = PartialSnapshot.from_cloudevent(event)
+        await self._send_snapshot_update(snapshot_mutate_event)
+        self._stop()
+
+    @dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_START)
+    async def _ensemble_handler(self, event):
+        snapshot_mutate_event = PartialSnapshot.from_cloudevent(event)
+        await self._send_snapshot_update(snapshot_mutate_event)
+
     async def _send_snapshot_update(self, snapshot_mutate_event):
         self._snapshot.merge_event(snapshot_mutate_event)
         out_cloudevent = CloudEvent(
@@ -130,10 +141,10 @@ class EnsembleEvaluator:
         async with self.count_dispatcher():
             async for msg in websocket:
                 logger.debug(f"Dispatch got: {msg}.")
-                if msg == "null":
-                    return
                 event = from_json(msg)
                 await dispatch.handle_event(self, event)
+                if event["type"] == identifiers.EVTYPE_ENSEMBLE_STOP:
+                    return
             logger.debug(f"Dispatch {websocket.remote_address} disconnected.")
 
     async def connection_handler(self, websocket, path):
@@ -195,7 +206,7 @@ class EnsembleEvaluator:
     def run(self):
         self._ws_thread.start()
         mon = ee_monitor.create(self._config.get("host"), self._config.get("port"))
-        self._ensemble.evaluate(self._config, self._ee_id, mon)
+        self._ensemble.evaluate(self._config, self._ee_id)
         return mon
 
     def _stop(self):

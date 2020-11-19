@@ -22,6 +22,7 @@ import asyncio
 import threading
 import json
 import logging
+from ert_shared.ensemble_evaluator.config import load_config
 
 
 class DummyEnsemble:
@@ -126,14 +127,18 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
     monitor = evaluator.run()
     events = monitor.track()
 
+    ee_config = load_config()
+    host = ee_config.get("host")
+    port = ee_config.get("port")
+
     # first snapshot before any event occurs
     snapshot_event = next(events)
     snapshot = Snapshot(snapshot_event.data)
     assert snapshot.get_status() == "Unknown"
 
     # two dispatchers connect
-    with Client(evaluator._host, evaluator._port, "/dispatch") as dispatch1, Client(
-        evaluator._host, evaluator._port, "/dispatch"
+    with Client(host, port, "/dispatch") as dispatch1, Client(
+        host, port, "/dispatch"
     ) as dispatch2:
 
         # first dispatcher informs that job 0 is running
@@ -170,7 +175,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
         assert snapshot.get_job("1", "0", "0", "0")["status"] == "Finished"
 
         # a second monitor connects
-        monitor2 = ee_monitor.create(evaluator._host, evaluator._port)
+        monitor2 = ee_monitor.create(host, port)
         events2 = monitor2.track()
         snapshot = Snapshot(next(events2).data)
         assert snapshot.get_status() == "Unknown"

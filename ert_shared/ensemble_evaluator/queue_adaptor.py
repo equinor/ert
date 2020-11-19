@@ -102,12 +102,9 @@ class QueueAdaptor:
             async with websockets.connect(url) as websocket:
                 changes = await queue.get()
                 if changes is None:
-                    await websocket.send("null")
                     return
                 events = [
-                    QueueAdaptor._translate_change_to_cloudevent(
-                        real_id, status
-                    )
+                    QueueAdaptor._translate_change_to_cloudevent(real_id, status)
                     for real_id, status in changes.items()
                 ]
                 for event in events:

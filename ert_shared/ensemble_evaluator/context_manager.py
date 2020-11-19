@@ -55,9 +55,7 @@ def _attach(run_context, run_path_list, forward_model):
 
     QueueAdaptor.ws_url = ee_config.get("dispatch_url")
     QueueAdaptor.ee_id = ee_id
-    patcher = patch(
-        "res.enkf.enkf_simulation_runner.JobQueueManager", new=QueueAdaptor
-    )
+    patcher = patch("res.enkf.enkf_simulation_runner.JobQueueManager", new=QueueAdaptor)
     patcher.start()
     yield
     dispatch_thread.join()

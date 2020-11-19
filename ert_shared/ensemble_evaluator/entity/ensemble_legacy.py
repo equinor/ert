@@ -1,8 +1,11 @@
 import asyncio
 import os
 import threading
-from functools import partial
+import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 import logging
+import uuid
+
+from functools import partial
 from pathlib import Path
 
 from ert_shared.ensemble_evaluator.entity.ensemble_base import _Ensemble
@@ -10,6 +13,11 @@ from ert_shared.ensemble_evaluator.nfs_adaptor import nfs_adaptor
 from ert_shared.ensemble_evaluator.queue_adaptor import QueueAdaptor
 from res.enkf import EnKFState
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
+
+from cloudevents.http import from_json
+from cloudevents.http.event import CloudEvent
+from cloudevents.http import to_json
+
 
 CONCURRENT_INTERNALIZATION = 10
 
@@ -60,10 +68,8 @@ class _LegacyEnsemble(_Ensemble):
         self._res_config = res_config
         self._queue_thread = None
         self._dispatch_thread = None
-        self._mon = None
 
-    def evaluate(self, config, ee_id, mon):
-        self._mon = mon
+    def evaluate(self, config, ee_id):
         self._queue_thread = threading.Thread(
             target=self._run_queue, args=(config, ee_id)
         )
@@ -77,6 +83,15 @@ class _LegacyEnsemble(_Ensemble):
             target=_attach_to_dispatch, args=(config, event_logs)
         )
         self._dispatch_thread.start()
+
+        out_cloudevent = CloudEvent(
+            {
+                "type": identifiers.EVTYPE_ENSEMBLE_START,
+                "source": f"/ert/ee/{ee_id}/ensemble",
+                "id": str(uuid.uuid1()),
+            }
+        )
+        self.send_cloudevent(out_cloudevent)
 
     def _run_queue(self, config, ee_id):
         asyncio.set_event_loop(asyncio.new_event_loop())
@@ -137,7 +152,15 @@ class _LegacyEnsemble(_Ensemble):
         logger.debug("waiting for dispatchers to complete reporting...")
         self._dispatch_thread.join()
         logger.debug("request terminate")
-        self._mon.exit_server()
+
+        out_cloudevent = CloudEvent(
+            {
+                "type": identifiers.EVTYPE_ENSEMBLE_STOP,
+                "source": f"/ert/ee/{ee_id}/ensemble",
+                "id": str(uuid.uuid1()),
+            }
+        )
+        self.send_cloudevent(out_cloudevent)
 
 
 def _attach_to_dispatch(config, event_logs):
