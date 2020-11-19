@@ -1,44 +1,30 @@
-from collections.abc import Iterable
+from ert_shared.ensemble_evaluator import config as evaluator_config
+from ert_shared.ensemble_evaluator.entity.function_ensemble import (
+    create_function_ensemble,
+)
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 
 
-def evaluate(coefficients):
-    data = []
-    if not isinstance(coefficients, Iterable):
-        raise ValueError(f"Input must be an iterable, was {coefficients}")
+def _polynomial(coefficients, x_range=tuple(range(10))):
+    return {
+        "polynomial_output": [
+            coefficients["a"] * (x ** 2) + coefficients["b"] * x + coefficients["c"]
+            for x in x_range
+        ]
+    }
 
-    for realization in coefficients:
-        try:
-            coeffs = realization["coefficients"]
-        except KeyError as err:
-            raise ValueError(
-                f"Each entry in the input must be a dict with key <coefficients>, had {realization.keys()}"
-            ) from err
-        except TypeError as err:
-            raise ValueError(
-                f"Each entry in the input must be a dict, was {realization}, with type {type(realization)}"
-            ) from err
 
-        if not isinstance(coeffs, dict):
-            raise ValueError(
-                f"Each coefficients entry in the input must be a dict, was {coeffs}, type {type(coeffs)})"
-            )
-        if set(coeffs.keys()) != set(("a", "b", "c")):
-            raise ValueError(
-                f"Each coefficients entry in the input must contain only the keys <a>, <b> and <c>, had {coeffs.keys()}"
-            )
+def evaluate(inputs, fun=None):
+    if fun == None:
+        fun = _polynomial
 
-        try:
-            data.append(
-                {
-                    "polynomial_output": [
-                        coeffs["a"] * x ** 2 + coeffs["b"] * x + coeffs["c"]
-                        for x in range(10)
-                    ],
-                }
-            )
-        except TypeError:
-            raise ValueError(
-                f"The content of the coefficients for each <a>, <b> and <c> must be a number, was {coeffs.items()}"
-            )
+    ensemble = create_function_ensemble(fun=fun, inputs=inputs, executor="local")
 
-    return data
+    config = evaluator_config.load_config()
+    ee = EnsembleEvaluator(ensemble=ensemble, config=config)
+
+    ee.run()
+    ensemble.join()
+    ee.stop()
+
+    return ensemble.results()
