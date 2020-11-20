@@ -19,9 +19,9 @@ def _generate_coefficients():
 
 def run(workspace_root, experiment_name):
     experiment_root = Path(workspace_root) / experiment_name
-    ert3._assert_experiment(workspace_root, experiment_name)
+    ert3.workspace.experiment_exists(workspace_root, experiment_name)
 
-    if ert3._experiment_have_run(workspace_root, experiment_name):
+    if ert3.workspace.experiment_have_run(workspace_root, experiment_name):
         raise ValueError(f"Experiment {experiment_name} have been carried out.")
 
     ert3.storage.init_experiment(workspace_root, experiment_name)
