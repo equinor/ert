@@ -45,7 +45,7 @@ def _init_workspace(path):
     if _locate_ert_workspace_root(path) is not None:
         sys.exit("Already inside an ERT workspace")
 
-    ert3.storage.init(path)
+    ert3.storage.Storage.init_storage(path)
 
 
 def _assert_experiment(workspace_root, experiment_name):
@@ -76,7 +76,6 @@ def _generate_coefficients():
 
 
 def _run_experiment(workspace_root, experiment_name):
-    experiment_root = Path(workspace_root) / experiment_name
     _assert_experiment(workspace_root, experiment_name)
 
     if _experiment_have_run(workspace_root, experiment_name):
@@ -85,10 +84,9 @@ def _run_experiment(workspace_root, experiment_name):
     ert3.storage.init_experiment(workspace_root, experiment_name)
 
     coefficients = _generate_coefficients()
-    ert3.storage.add_input_data(workspace_root, experiment_name, coefficients)
-
-    response = ert3.evaluator.evaluate(coefficients)
-    ert3.storage.add_output_data(workspace_root, experiment_name, response)
+    with ert3.storage.Storage(workspace_root, experiment_name) as storage:
+        storage.input_data = coefficients
+        storage.output_data = ert3.evaluator.evaluate(coefficients)
 
 
 def _export(workspace_root, experiment_name):
@@ -97,9 +95,9 @@ def _export(workspace_root, experiment_name):
 
     if not _experiment_have_run(workspace_root, experiment_name):
         raise ValueError("Cannot export experiment that has not been carried out")
-
-    input_data = ert3.storage.get_input_data(workspace_root, experiment_name)
-    output_data = ert3.storage.get_output_data(workspace_root, experiment_name)
+    with ert3.storage.Storage(workspace_root, experiment_name) as storage:
+        input_data = storage.input_data
+        output_data = storage.output_data
     with open(experiment_root / "data.json", "w") as f:
         json.dump(_reformat_input_output(input_data, output_data), f)
 
