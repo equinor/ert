@@ -270,3 +270,62 @@ def test_cli_export_polynomial_evaluation(tmpdir):
         ert3.console.main()
 
     _assert_export(workspace, "evaluation")
+
+
+def test_cli_sample(tmpdir):
+    workspace = tmpdir / _POLY_WORKSPACE_NAME
+    shutil.copytree(_POLY_WORKSPACE, workspace)
+    workspace.chdir()
+
+    args = ["ert3", "init"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    args = ["ert3", "sample", "coefficients", "coefficients0", "100"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    coeff0 = ert3.storage.get_variables(workspace, "coefficients0")
+    assert 100 == len(coeff0)
+    for real_coeff in coeff0:
+        assert sorted(("a", "b", "c")) == sorted(real_coeff.keys())
+        for val in real_coeff.values():
+            assert isinstance(val, float)
+
+
+def test_cli_sample_unknown_parameter_group(tmpdir):
+    workspace = tmpdir / _POLY_WORKSPACE_NAME
+    shutil.copytree(_POLY_WORKSPACE, workspace)
+    workspace.chdir()
+
+    args = ["ert3", "init"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    args = ["ert3", "sample", "coeffs", "coefficients0", "100"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        with pytest.raises(ValueError, match="No parameter group found named: coeffs"):
+            ert3.console.main()
+
+
+def test_cli_sample_unknown_distribution(tmpdir):
+    workspace = tmpdir / _POLY_WORKSPACE_NAME
+    shutil.copytree(_POLY_WORKSPACE, workspace)
+    workspace.chdir()
+
+    with open(workspace / "parameters.yml") as f:
+        parameters = yaml.safe_load(f)
+    parameters[0]["distribution"]["type"] = "double-hyper-exp"
+    with open(workspace / "parameters.yml", "w") as f:
+        yaml.dump(parameters, f)
+
+    args = ["ert3", "init"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    args = ["ert3", "sample", "coefficients", "coefficients0", "100"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        with pytest.raises(
+            ValueError, match="Unknown distribution type: double-hyper-exp"
+        ):
+            ert3.console.main()

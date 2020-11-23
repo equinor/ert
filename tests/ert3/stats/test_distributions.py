@@ -17,7 +17,7 @@ def test_gaussian_distribution(size, mean, std):
     prev_samples = set()
     for _ in range(10):
         sample = gauss.sample()
-        
+
         assert len(sample) == size
 
         assert tuple(sample) not in prev_samples
@@ -31,7 +31,7 @@ def test_gaussian_distribution(size, mean, std):
     ("index", "mean", "std"),
     (
         (("a", "b", "c"), 0, 1),
-        (("a"*i for i in range(1, 10)), 2, 5),
+        (("a" * i for i in range(1, 10)), 2, 5),
     ),
 )
 def test_gaussian_distribution_index(index, mean, std):

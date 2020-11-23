@@ -26,4 +26,4 @@ class Gaussian:
         if self._index is None:
             return sample
         else:
-            return {idx: val for idx, val in zip(self._index, sample)}
+            return {idx: float(val) for idx, val in zip(self._index, sample)}
