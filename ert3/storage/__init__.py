@@ -5,3 +5,5 @@ from ert3.storage._storage import add_input_data
 from ert3.storage._storage import get_input_data
 from ert3.storage._storage import add_output_data
 from ert3.storage._storage import get_output_data
+from ert3.storage._storage import add_variables
+from ert3.storage._storage import get_variables
