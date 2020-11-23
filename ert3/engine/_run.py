@@ -17,17 +17,14 @@ def _generate_coefficients():
     ]
 
 
-def run(workspace_root, experiment_name):
-    experiment_root = Path(workspace_root) / experiment_name
-    ert3.workspace.experiment_exists(workspace_root, experiment_name)
-
-    if ert3.workspace.experiment_have_run(workspace_root, experiment_name):
-        raise ValueError(f"Experiment {experiment_name} have been carried out.")
-
-    ert3.storage.init_experiment(workspace_root, experiment_name)
+def run(experiment):
+    if experiment.have_run:
+        raise ValueError(f"Experiment {experiment.name} have been carried out.")
 
     coefficients = _generate_coefficients()
-    ert3.storage.add_input_data(workspace_root, experiment_name, coefficients)
+
+    ert3.storage.init_experiment(experiment)
+    ert3.storage.add_input_data(experiment, coefficients)
 
     response = ert3.evaluator.evaluate(coefficients)
-    ert3.storage.add_output_data(workspace_root, experiment_name, response)
+    ert3.storage.add_output_data(experiment, response)

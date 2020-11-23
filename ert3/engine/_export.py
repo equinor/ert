@@ -4,16 +4,13 @@ import json
 from pathlib import Path
 
 
-def export(workspace_root, experiment_name):
-    experiment_root = Path(workspace_root) / experiment_name
-    ert3.workspace.experiment_exists(workspace_root, experiment_name)
-
-    if not ert3.workspace.experiment_have_run(workspace_root, experiment_name):
+def export(experiment):
+    if not experiment.have_run:
         raise ValueError("Cannot export experiment that has not been carried out")
 
-    input_data = ert3.storage.get_input_data(workspace_root, experiment_name)
-    output_data = ert3.storage.get_output_data(workspace_root, experiment_name)
-    with open(experiment_root / "data.json", "w") as f:
+    input_data = ert3.storage.get_input_data(experiment)
+    output_data = ert3.storage.get_output_data(experiment)
+    with open(experiment.location / "data.json", "w") as f:
         json.dump(_reformat_input_output(input_data, output_data), f)
 
 

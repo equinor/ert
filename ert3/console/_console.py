@@ -40,12 +40,12 @@ def main():
         return
 
     # Commands that does requires an ert workspace
-    workspace = ert3.workspace.locate_root(Path.cwd())
-    if workspace is None:
-        sys.exit("Not inside an ERT workspace")
+    workspace = ert3.workspace.load(Path.cwd())
     if args.sub_cmd == "run":
-        ert3.engine.run(workspace, args.experiment_name)
+        experiment = workspace.init_experiment(args.experiment_name)
+        ert3.engine.run(experiment)
         return
     if args.sub_cmd == "export":
-        ert3.engine.export(workspace, args.experiment_name)
+        experiment = workspace.load_experiment(args.experiment_name)
+        ert3.engine.export(experiment)
         return
