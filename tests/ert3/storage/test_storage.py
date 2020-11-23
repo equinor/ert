@@ -224,3 +224,29 @@ def test_get_output_data_no_output_data(tmpdir, experiment_name):
         KeyError, match=f"No output data for experiment: {experiment_name}"
     ):
         ert3.storage.get_output_data(tmpdir, experiment_name)
+
+
+def test_add_sample_not_initialised(tmpdir):
+    with pytest.raises(ValueError, match="Storage is not initialized"):
+        ert3.storage.add_variables(tmpdir, "some_sample", [1, 2, 3])
+
+
+def test_add_sample_twice(tmpdir):
+    ert3.storage.init(tmpdir)
+
+    ert3.storage.add_variables(tmpdir, "some_sample", [1, 2, 3])
+    with pytest.raises(KeyError):
+        ert3.storage.add_variables(tmpdir, "some_sample", [1, 2, 3])
+
+
+def test_add_and_get_samples(tmpdir):
+    ert3.storage.init(tmpdir)
+
+    sample1 = [1, 2, 3.0]
+    ert3.storage.add_variables(tmpdir, "sample1", sample1)
+
+    sample2 = {i*"key": 1.5 * i for i in range(1, 10)}
+    ert3.storage.add_variables(tmpdir, "sample2", sample2)
+
+    assert ert3.storage.get_variables(tmpdir, "sample1") == sample1
+    assert ert3.storage.get_variables(tmpdir, "sample2") == sample2

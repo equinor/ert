@@ -6,6 +6,7 @@ import os
 
 
 _STORAGE_FILE = "storage.yaml"
+_VARIABLES = "__variables__"
 
 
 def _generate_storage_location(workspace):
@@ -29,6 +30,8 @@ def init(workspace):
 
     with open(storage_location, "w") as f:
         yaml.dump({}, f)
+
+    init_experiment(workspace, _VARIABLES)
 
 
 def init_experiment(workspace, experiment_name):
@@ -54,7 +57,9 @@ def get_experiment_names(workspace):
     with open(storage_location) as f:
         storage = yaml.safe_load(f)
 
-    return storage.keys()
+    experiment_names = set(storage.keys())
+    experiment_names.remove(_VARIABLES)
+    return experiment_names
 
 
 def _add_data(workspace, experiment_name, data_type, data, required_types=()):
@@ -121,3 +126,11 @@ def get_input_data(workspace, experiment_name):
 
 def get_output_data(workspace, experiment_name):
     return _get_data(workspace, experiment_name, "output")
+
+
+def add_variables(workspace, var_name, data):
+    _add_data(workspace, _VARIABLES, var_name, data)
+
+
+def get_variables(workspace, var_name):
+    return _get_data(workspace, _VARIABLES, var_name)
