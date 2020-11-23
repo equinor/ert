@@ -24,6 +24,17 @@ def _build_argparser():
     export_parser = subparsers.add_parser("export", help="Export experiment")
     export_parser.add_argument("experiment_name", help="Name of the experiment")
 
+    sample_parser = subparsers.add_parser(
+        "sample", help="Sample parameter distribution"
+    )
+    sample_parser.add_argument(
+        "parameter_group", help="Name of the distribution group in parameters.yml"
+    )
+    sample_parser.add_argument("sample_name", help="Name of the sampling")
+    sample_parser.add_argument(
+        "ensemble_size", type=int, help="Size of ensemble of variables"
+    )
+
     return parser
 
 
@@ -48,4 +59,9 @@ def main():
         return
     if args.sub_cmd == "export":
         ert3.engine.export(workspace, args.experiment_name)
+        return
+    if args.sub_cmd == "sample":
+        ert3.engine.sample(
+            workspace, args.parameter_group, args.sample_name, args.ensemble_size
+        )
         return
