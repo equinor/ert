@@ -80,7 +80,9 @@ def _add_data(workspace, experiment_name, data_type, data, required_types=()):
 
     for req in required_types:
         if req not in storage[experiment_name]:
-            raise KeyError(f"Cannot add {data_type} data to experiment without {req} data")
+            raise KeyError(
+                f"Cannot add {data_type} data to experiment without {req} data"
+            )
 
     storage[experiment_name][data_type] = data
 

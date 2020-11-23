@@ -245,7 +245,7 @@ def test_add_and_get_samples(tmpdir):
     sample1 = [1, 2, 3.0]
     ert3.storage.add_variables(tmpdir, "sample1", sample1)
 
-    sample2 = {i*"key": 1.5 * i for i in range(1, 10)}
+    sample2 = {i * "key": 1.5 * i for i in range(1, 10)}
     ert3.storage.add_variables(tmpdir, "sample2", sample2)
 
     assert ert3.storage.get_variables(tmpdir, "sample1") == sample1
