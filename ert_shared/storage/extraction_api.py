@@ -15,8 +15,6 @@ logger = logging.getLogger(__file__)
 
 
 def _create_ensemble(rdb_api, reference, priors):
-    if not ((reference is None) ^ (len(priors) == 0)):
-        raise ValueError("Ensembles can have only a reference or a set of priors")
     facade = ERT.enkf_facade
     ensemble_name = facade.get_current_case_name()
     ensemble = rdb_api.add_ensemble(ensemble_name, reference=reference, priors=priors)
