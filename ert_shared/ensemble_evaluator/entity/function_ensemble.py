@@ -226,15 +226,15 @@ def _get_executor(name="local"):
             cluster_kwargs=cluster_kwargs,
             debug=True,
         )
-    elif name == "PSB":
+    elif name == "pbs":
         cluster_kwargs = {
+            "n_workers": 10,
             "queue": "normal",
             "project": "ERT-TEST",
             "local_directory": "$TMPDIR",
-            "cores": 8,
-            "processes": 4,
+            "cores": 4,
             "memory": "16GB",
-            "resource_spec": "select=1:ncpus=8:mem=16GB",
+            "resource_spec": "select=1:ncpus=4:mem=16GB",
         }
         return prefect.engine.executors.DaskExecutor(
             cluster_class="dask_jobqueue.PBSCluster",
