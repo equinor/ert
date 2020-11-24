@@ -304,6 +304,7 @@ class _FunctionEnsemble(_Ensemble):
         state = flow.run(executor=_get_executor(self._executor))
 
         results = [None] * len(inputs)
+        print(state.result)
         for real_id in inputs.keys():
             results[real_id] = state.result[outputs[real_id]].result
 
