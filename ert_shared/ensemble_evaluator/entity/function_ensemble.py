@@ -271,7 +271,8 @@ class _FunctionEnsemble(_Ensemble):
         )
 
     def evaluate(self, host, port):
-        host = get_ip_address()
+        if host != "localhost":
+            host = get_ip_address()
         self._evaluation_thread = threading.Thread(
             target=self._evaluate,
             args=(
