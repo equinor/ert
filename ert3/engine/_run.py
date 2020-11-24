@@ -1,6 +1,7 @@
 import ert3
 
 import random
+import yaml
 
 
 def _generate_coefficients():
@@ -16,6 +17,57 @@ def _generate_coefficients():
     ]
 
 
+def _persist_variables(
+    record_name, record_source, ensemble_size, experiment_name, workspace_root
+):
+    if record_source[0] == "storage":
+        var_name = ".".join(record_source[1:])
+    elif record_source[0] == "stochastic":
+        var_name = f"{experiment_name}.{record_name}"
+        ert3.engine.sample(
+            workspace_root,
+            record_source[1],
+            var_name,
+            ensemble_size,
+        )
+    else:
+        raise ValueError("Unknown record source location {}".format(record_source[0]))
+    return var_name
+
+
+def _add_record(records, record_name, record):
+    if len(record) != len(records):
+        raise AssertionError(
+            f"Lenght of record {record_name} ({len(record)}) "
+            f"does not match ensemble size ({len(records)})"
+        )
+
+    for ens_records, new_record in zip(records, record):
+        if record_name in ens_records:
+            raise KeyError(f"Duplicate record name {record_name}")
+        ens_records[record_name] = new_record
+
+
+def _load_input_records(workspace_root, experiment_name):
+    ensemble_size = 1000
+
+    with open(workspace_root / experiment_name / "ensemble.yml") as f:
+        ensemble = yaml.safe_load(f)
+
+    records = [{} for _ in range(ensemble_size)]
+    for input_record in ensemble["input"]:
+        record_name = input_record["record"]
+        record_source = input_record["source"].split(".")
+
+        var_name = _persist_variables(
+            record_name, record_source, ensemble_size, experiment_name, workspace_root
+        )
+
+        input_record = ert3.storage.get_variables(workspace_root, var_name)
+        _add_record(records, record_name, input_record)
+    return records
+
+
 def run(workspace_root, experiment_name):
     ert3.workspace.assert_experiment_exists(workspace_root, experiment_name)
     if ert3.workspace.experiment_have_run(workspace_root, experiment_name):
@@ -23,8 +75,8 @@ def run(workspace_root, experiment_name):
 
     ert3.storage.init_experiment(workspace_root, experiment_name)
 
-    coefficients = _generate_coefficients()
-    ert3.storage.add_input_data(workspace_root, experiment_name, coefficients)
+    input_records = _load_input_records(workspace_root, experiment_name)
+    ert3.storage.add_input_data(workspace_root, experiment_name, input_records)
 
-    response = ert3.evaluator.evaluate(coefficients)
+    response = ert3.evaluator.evaluate(input_records)
     ert3.storage.add_output_data(workspace_root, experiment_name, response)

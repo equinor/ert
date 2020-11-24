@@ -272,7 +272,7 @@ def test_cli_export_polynomial_evaluation(tmpdir):
     _assert_export(workspace, "evaluation")
 
 
-def test_cli_sample(tmpdir):
+def test_cli_run_presampled(tmpdir):
     workspace = tmpdir / _POLY_WORKSPACE_NAME
     shutil.copytree(_POLY_WORKSPACE, workspace)
     workspace.chdir()
@@ -281,16 +281,35 @@ def test_cli_sample(tmpdir):
     with unittest.mock.patch.object(sys, "argv", args):
         ert3.console.main()
 
-    args = ["ert3", "sample", "coefficients", "coefficients0", "100"]
+    args = ["ert3", "sample", "coefficients", "coefficients0", "1000"]
     with unittest.mock.patch.object(sys, "argv", args):
         ert3.console.main()
 
     coeff0 = ert3.storage.get_variables(workspace, "coefficients0")
-    assert 100 == len(coeff0)
+    assert 1000 == len(coeff0)
     for real_coeff in coeff0:
         assert sorted(("a", "b", "c")) == sorted(real_coeff.keys())
         for val in real_coeff.values():
             assert isinstance(val, float)
+
+    args = ["ert3", "run", "presampled_evaluation"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    args = ["ert3", "export", "presampled_evaluation"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    with open(workspace / "presampled_evaluation" / "data.json") as f:
+        export_data = json.load(f)
+
+    assert len(coeff0) == len(export_data)
+    for coeff, real in zip(coeff0, export_data):
+        assert ["coefficients"] == list(real["input"].keys())
+        export_coeff = real["input"]["coefficients"]
+        assert coeff.keys() == export_coeff.keys()
+        for key in coeff.keys():
+            assert coeff[key] == export_coeff[key]
 
 
 def test_cli_sample_unknown_parameter_group(tmpdir):
