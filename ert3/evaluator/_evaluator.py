@@ -14,13 +14,15 @@ def _polynomial(coefficients, x_range=tuple(range(10))):
     }
 
 
-def evaluate(inputs, fun=None):
+def evaluate(inputs, fun=None, executor="local"):
     if fun == None:
         fun = _polynomial
 
     ensemble = create_function_ensemble(fun=fun, inputs=inputs, executor="local")
 
     config = evaluator_config.load_config()
+    if executor != "local":
+        config["host"] = "0.0.0.0"
     ee = EnsembleEvaluator(ensemble=ensemble, config=config)
 
     ee.run()
