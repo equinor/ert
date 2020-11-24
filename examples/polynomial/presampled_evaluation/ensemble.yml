@@ -1,0 +1,11 @@
+size: 1000
+
+input:
+  -
+    source: storage.coefficients0
+    record: coefficients
+
+forward_model:
+  driver: local
+  stages:
+    - evaluate_polynomial
