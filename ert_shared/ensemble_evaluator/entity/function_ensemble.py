@@ -284,7 +284,7 @@ class _FunctionEnsemble(_Ensemble):
 
     def _evaluate(self, inputs, loop, url):
         asyncio.set_event_loop(loop)
-
+        wait_for_ws(url)
         inputs = {real_id: func_input for real_id, func_input in enumerate(inputs)}
         outputs = {}
 
