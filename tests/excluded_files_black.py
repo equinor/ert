@@ -230,14 +230,9 @@ def get_files_excluded_from_black(root):
         "tests/gui/plottery/test_plot_style.py",
         "tests/gui/tools/plot/test_plot_api.py",
         "tests/gui/test_gui_load.py",
-        "tests/tracker/test_base_tracker.py",
         "tests/gui/ide/test_ert_keywords.py",
-        "tests/tracker/test_blocking_tracker.py",
         "tests/data/test_measured_data.py",
-        "tests/tracker/test_factory.py",
         "tests/shared/test_libres_facade.py",
-        "tests/tracker/test_qtimer_tracker.py",
         "tests/utils/__init__.py",
-        "tests/tracker/test_utils.py",
     ]
     return [os.path.join(root, fname) for fname in excluded_files]
