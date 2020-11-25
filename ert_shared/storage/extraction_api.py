@@ -34,7 +34,7 @@ def _extract_and_dump_observations(rdb_api):
 
     if len(observation_keys) == 0:
         return
-    measured_data = MeasuredData(facade, observation_keys)
+    measured_data = MeasuredData(facade, observation_keys, load_data=False)
 
     measured_data.remove_inactive_observations()
     observations = measured_data.data.loc[["OBS", "STD"]]
