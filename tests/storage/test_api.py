@@ -14,7 +14,7 @@ from tests.storage import db_api, populated_database, initialize_databases
 def test_schema(db_api):
     # Flask provides a way to test your application by exposing the Werkzeug test Client
     # and handling the context locals for you.
-    flWrapper = FlaskWrapper(secure=False, url=ERT_STORAGE.SQLALCHEMY_URL)
+    flWrapper = FlaskWrapper(secure=False, url=ERT_STORAGE.sqlalchemy_url)
     # Establish an application context before running the tests.
     with flWrapper.app.app_context():
         yield schemathesis.from_wsgi("/schema.json", flWrapper.app)

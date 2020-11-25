@@ -10,7 +10,7 @@ from tests.storage import api, db_api, populated_database, initialize_databases
 
 @pytest.fixture
 def server(db_api, request):
-    proc = ServerMonitor(rdb_url=ERT_STORAGE.SQLALCHEMY_URL, lockfile=False)
+    proc = ServerMonitor(rdb_url=ERT_STORAGE.sqlalchemy_url, lockfile=False)
     proc.start()
     request.addfinalizer(lambda: proc.shutdown())
     yield proc
