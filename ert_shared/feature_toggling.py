@@ -20,7 +20,7 @@ class FeatureToggling:
             default_enabled=False,
             msg="The new ensemble evaluator is experimental! "
                 "The new evaluator will offer the user an expressive, "
-                "high-level and declarative configuration system in YAML, as "
+                "high-level configuration system in YAML, as "
                 "well as evaluating ensembles in a concurrent, cloud-ready "
                 "and distributed way."
         ),

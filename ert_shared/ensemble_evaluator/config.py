@@ -19,9 +19,9 @@ DEFAULT_EE_CONFIG = {
 }
 
 
-def load_config(config_path=CONFIG_FILE):
-    if not os.path.exists(config_path):
-        return DEFAULT_EE_CONFIG
+def load_config(config_path=None):
+    if config_path is None:
+        return DEFAULT_EE_CONFIG.copy()
 
     with open(config_path, "r") as f:
         data = yaml.safe_load(f)

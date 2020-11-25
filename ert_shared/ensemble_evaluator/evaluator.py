@@ -43,7 +43,12 @@ class EnsembleEvaluator:
     @staticmethod
     def create_snapshot(ensemble):
         builder = SnapshotBuilder()
-        real = ensemble.get_reals()[0]
+        realizations = ensemble.get_reals()
+        if not realizations:
+            raise ValueError(
+                "An ensemble needs to have at least on realization to run."
+            )
+        real = realizations[0]
         for stage in real.get_stages():
             builder.add_stage(str(stage.get_id()), stage.get_status())
             for step in stage.get_steps():
