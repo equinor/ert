@@ -1,16 +1,17 @@
+from ert_shared.tracker.evaluator import EvaluatorTracker
 import time
 
 from res.job_queue import JobStatusType
 
-from ert_shared.tracker.events import DetailedEvent, EndEvent, GeneralEvent, TickEvent
+from ert_shared.tracker.events import DetailedEvent, EndEvent, GeneralEvent
 from ert_shared.tracker.state import SimulationStateStatus
 from ert_shared.tracker.utils import calculate_progress
 
 
-class BaseTracker(object):
+class BaseTracker:
     """BaseTracker provides the basis for doing tracking."""
 
-    def __init__(self, model):
+    def __init__(self, model, ee_monitor_connection_details):
         """Initialize the tracker for a @model. A model can be any
         BaseRunModel-derived class."""
         self._model = model
@@ -25,6 +26,12 @@ class BaseTracker(object):
         # TODO: rewrite the phases API in BaseRunModel so that this can go away
         #       see https://github.com/equinor/ert/issues/556
         self._phase_states = {}
+
+        self._evaluator_tracker = None
+        if ee_monitor_connection_details:
+            self._evaluator_tracker = EvaluatorTracker(
+                model, ee_monitor_connection_details, self._custom_states
+            )
 
     def _bootstrap_states(self):
         waiting_flag = (
@@ -101,15 +108,13 @@ class BaseTracker(object):
             # This phase has job queue activity.
             self._phase_states[phase] = True
 
-    def _tick_event(self):
-        if self._model.stop_time() < self._model.start_time():
-            runtime = time.time() - self._model.start_time()
-        else:
-            runtime = self._model.stop_time() - self._model.start_time()
-
-        return TickEvent(runtime)
-
     def _general_event(self):
+        if self._evaluator_tracker is None:
+            return self._general_event_from_model()
+        else:
+            return self._evaluator_tracker.general_event()
+
+    def _general_event_from_model(self):
         self._update_phase_map()
 
         phase_name = self._model.getPhaseName()
@@ -139,7 +144,6 @@ class BaseTracker(object):
             done_count,
         )
 
-        tick = self._tick_event()
         return GeneralEvent(
             phase_name,
             phase,
@@ -147,14 +151,26 @@ class BaseTracker(object):
             progress,
             self._model.isIndeterminate(),
             self.get_states(),
-            tick.runtime,
+            self._model.get_runtime(),
         )
 
     def _detailed_event(self):
+        if self._evaluator_tracker is None:
+            return self._detailed_event_from_model()
+        else:
+            return self._evaluator_tracker.detailed_event()
+
+    def _detailed_event_from_model(self):
         return DetailedEvent(*self._model.getDetailedProgress())
 
     def _end_event(self):
         return EndEvent(self._model.hasRunFailed(), self._model.getFailMessage())
+
+    def is_finished(self):
+        if self._evaluator_tracker is None:
+            return self._model.isFinished()
+        else:
+            return self._evaluator_tracker.is_finished()
 
     @staticmethod
     def __checkForUnusedEnums(states):
