@@ -39,7 +39,7 @@ def test_get_data(obs_type, monkeypatch, facade, valid_dataframe, measured_data_
 
     factory.assert_called_once_with(obs_type)
     mocked_loader = factory()
-    mocked_loader.assert_called_once_with(facade, "test_key", "test_case")
+    mocked_loader.assert_called_once_with(facade, "test_key", "test_case", True)
 
     df = pd.DataFrame(
         data=[[2.0, 3.0], [5.0, 6.0]], index=["OBS", "STD"], columns=[1, 2]

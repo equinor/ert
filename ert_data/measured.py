@@ -4,9 +4,9 @@ from ert_data import loader
 
 
 class MeasuredData(object):
-    def __init__(self, facade, keys, index_lists=None):
+    def __init__(self, facade, keys, index_lists=None, load_data=True):
         self._facade = facade
-        self._set_data(self._get_data(keys, index_lists))
+        self._set_data(self._get_data(keys, index_lists, load_data))
 
     @property
     def data(self):
@@ -59,7 +59,7 @@ class MeasuredData(object):
     def is_empty(self):
         return self.data.empty
 
-    def _get_data(self, observation_keys, index_lists):
+    def _get_data(self, observation_keys, index_lists, load_data=True):
         """
         Adds simulated and observed data and returns a dataframe where ensamble
         members will have a data key, observed data will be named OBS and
@@ -78,7 +78,7 @@ class MeasuredData(object):
             observation_type = self._facade.get_impl_type_name_for_obs_key(key)
             data_loader = loader.data_loader_factory(observation_type)
 
-            data = data_loader(self._facade, key, case_name)
+            data = data_loader(self._facade, key, case_name, load_data)
 
             # Simulated data and observations both refer to the data
             # index at some levels, so having that information available is
