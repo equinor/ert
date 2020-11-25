@@ -4,6 +4,8 @@ from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
 
 from ert_shared.storage.extraction_api import dump_to_new_storage
+from ert_shared.ensemble_evaluator.context_manager import attach_ensemble_evaluator
+
 class IteratedEnsembleSmoother(BaseRunModel):
 
     def __init__(self):
@@ -29,7 +31,10 @@ class IteratedEnsembleSmoother(BaseRunModel):
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
 
         self.setPhaseName("Running forecast...", indeterminate=False)
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, run_context)
+        run_path_list = self.ert().getRunpathList()
+        forward_model = self.ert().resConfig().model_config.getForwardModel()
+        with attach_ensemble_evaluator(run_context, run_path_list, forward_model):
+            num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, run_context)
 
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
