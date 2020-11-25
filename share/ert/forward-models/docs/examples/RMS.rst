@@ -1,9 +1,14 @@
 Running the forward model
 #########################
 
+RMS is usually incorporated in ERT configurations using statements like
+
 .. code-block:: bash
 
-    FORWARD_MODEL RMS(<IENS> <RMS_PROJECT> <RMS_WORKFLOW>)
+    DEFINE  <RMS_PROJECT>         reek.rms11.0.1
+    DEFINE  <RMS_VERSION>         11.0.1
+    DEFINE  <RMS_WORKFLOW_NAME>   MAIN_WORKFLOW
+    FORWARD_MODEL RMS(<IENS>=<IENS>, <RMS_VERSION>=<RMS_VERSION>, <RMS_PROJECT>=<CONFIG_PATH>/../../rms/model/<RMS_NAME>)
 
 RMS script documentation
 ########################
