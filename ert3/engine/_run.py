@@ -49,10 +49,10 @@ def _add_record(records, record_name, record):
 
 
 def _load_input_records(workspace_root, experiment_name):
-    ensemble_size = 1000
-
     with open(workspace_root / experiment_name / "ensemble.yml") as f:
         ensemble = yaml.safe_load(f)
+
+    ensemble_size = ensemble["size"]
 
     records = [{} for _ in range(ensemble_size)]
     for input_record in ensemble["input"]:
