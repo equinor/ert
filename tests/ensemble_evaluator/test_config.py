@@ -35,3 +35,8 @@ def test_load_config(tmpdir, host, port):
 
         res = load_config("ee_config")
         assert res == expected_config
+
+
+def test_load_config_fail():
+    with pytest.raises(FileNotFoundError):
+        load_config(config_path="non/existing/file/path.yml")
