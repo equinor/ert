@@ -2,6 +2,7 @@ import ert3
 
 import flaky
 import json
+import numbers
 import numpy as np
 import os
 import pathlib
@@ -349,4 +350,95 @@ def test_cli_sample_unknown_distribution(tmpdir):
         with pytest.raises(
             ValueError, match="Unknown distribution type: double-hyper-exp"
         ):
+            ert3.console.main()
+
+
+def test_cli_record_load_and_run(tmpdir):
+    workspace = tmpdir / _POLY_WORKSPACE_NAME
+    shutil.copytree(_POLY_WORKSPACE, workspace)
+    workspace.chdir()
+
+    args = ["ert3", "init"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    args = [
+        "ert3",
+        "record",
+        "load",
+        "designed_coefficients",
+        str(workspace / "doe" / "coefficients_record.json"),
+    ]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    designed_coeff = ert3.storage.get_variables(workspace, "designed_coefficients")
+    assert 1000 == len(designed_coeff)
+    for real_coeff in designed_coeff:
+        assert sorted(("a", "b", "c")) == sorted(real_coeff.keys())
+        for val in real_coeff.values():
+            assert isinstance(val, numbers.Number)
+
+    args = ["ert3", "run", "doe"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    args = ["ert3", "export", "doe"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    with open(workspace / "doe" / "data.json") as f:
+        export_data = json.load(f)
+
+    assert len(designed_coeff) == len(export_data)
+    for coeff, real in zip(designed_coeff, export_data):
+        assert ["coefficients"] == list(real["input"].keys())
+        export_coeff = real["input"]["coefficients"]
+        assert coeff.keys() == export_coeff.keys()
+        for key in coeff.keys():
+            assert coeff[key] == export_coeff[key]
+
+
+def test_cli_record_load_not_existing_file(tmpdir):
+    workspace = tmpdir / _POLY_WORKSPACE_NAME
+    shutil.copytree(_POLY_WORKSPACE, workspace)
+    workspace.chdir()
+
+    args = ["ert3", "init"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    args = [
+        "ert3",
+        "record",
+        "load",
+        "designed_coefficients",
+        str(workspace / "doe" / "no_such_file.json"),
+    ]
+    with unittest.mock.patch.object(sys, "argv", args):
+        with pytest.raises(SystemExit):
+            ert3.console.main()
+
+
+def test_cli_record_load_twice(tmpdir):
+    workspace = tmpdir / _POLY_WORKSPACE_NAME
+    shutil.copytree(_POLY_WORKSPACE, workspace)
+    workspace.chdir()
+
+    args = ["ert3", "init"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    args = [
+        "ert3",
+        "record",
+        "load",
+        "designed_coefficients",
+        str(workspace / "doe" / "coefficients_record.json"),
+    ]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    with unittest.mock.patch.object(sys, "argv", args):
+        with pytest.raises(KeyError):
             ert3.console.main()

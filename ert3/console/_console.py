@@ -35,6 +35,22 @@ def _build_argparser():
         "ensemble_size", type=int, help="Size of ensemble of variables"
     )
 
+    record_parser = subparsers.add_parser(
+        "record", help="Record operations"
+    )
+    sub_record_parser = record_parser.add_subparsers(
+        dest="sub_record_cmd", help="ert3 record operations"
+    )
+    record_load_parser = sub_record_parser.add_parser(
+        "load", help="Load JSON records from file"
+    )
+    record_load_parser.add_argument("record_name", help="Name of the resulting record")
+    record_load_parser.add_argument(
+        "record_file",
+        type=argparse.FileType("r"),
+        help="Path to resource file",
+    )
+
     return parser
 
 
@@ -65,3 +81,7 @@ def main():
             workspace, args.parameter_group, args.sample_name, args.ensemble_size
         )
         return
+    if args.sub_cmd == "record" and args.sub_record_cmd == "load":
+        ert3.engine.load_record(
+            workspace, args.record_name, args.record_file
+        )
