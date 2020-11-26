@@ -12,9 +12,7 @@ class FeatureToggling:
     _conf = {
         "new-storage": _Feature(
             default_enabled=False,
-            msg="The new storage solution is experimental! "
-                "In particular it starts a http server on your computer serving the "
-                "data from ERT and should therefore not be used on confidential data.",
+            msg="The new storage solution is experimental! Thank you for testing our new features."
         ),
     }
 
