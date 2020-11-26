@@ -1,15 +1,11 @@
 from datetime import datetime
 
+import pytest
+from ert_shared.ensemble_evaluator.entity import tool
 from ert_shared.ensemble_evaluator.entity.snapshot import (
-    SnapshotBuilder,
     PartialSnapshot,
     Snapshot,
-)
-from ert_shared.ensemble_evaluator.entity.tool import (
-    get_real_id,
-    get_stage_id,
-    get_step_id,
-    get_job_id,
+    SnapshotBuilder,
 )
 
 
@@ -153,10 +149,34 @@ def test_snapshot_merge():
     }
 
 
-def test_source_get_id():
-    source = "/ert/ee/0/real/1111/stage/2opop/step/asd123ASD/job/0"
+@pytest.mark.parametrize(
+    "source_string, expected_ids",
+    [
+        (
+            "/ert/ee/0/real/1111/stage/2stage_id/step/asd123ASD/job/0",
+            {"real": "1111", "stage": "2stage_id", "step": "asd123ASD", "job": "0"},
+        ),
+        (
+            "/ert/ee/0/real/1111/stage/2stage_id/step/asd123ASD",
+            {"real": "1111", "stage": "2stage_id", "step": "asd123ASD", "job": None},
+        ),
+        (
+            "/ert/ee/0/real/1111/stage/2stage_id",
+            {"real": "1111", "stage": "2stage_id", "step": None, "job": None},
+        ),
+        (
+            "/ert/ee/0/real/1111",
+            {"real": "1111", "stage": None, "step": None, "job": None},
+        ),
+        (
+            "/ert/ee/0",
+            {"real": None, "stage": None, "step": None, "job": None},
+        ),
+    ],
+)
+def test_source_get_ids(source_string, expected_ids):
 
-    assert get_real_id(source) == "1111"
-    assert get_stage_id(source) == "2opop"
-    assert get_step_id(source) == "asd123ASD"
-    assert get_job_id(source) == "0"
+    assert tool.get_real_id(source_string) == expected_ids["real"]
+    assert tool.get_stage_id(source_string) == expected_ids["stage"]
+    assert tool.get_step_id(source_string) == expected_ids["step"]
+    assert tool.get_job_id(source_string) == expected_ids["job"]
