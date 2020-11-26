@@ -24,17 +24,6 @@ import json
 import logging
 
 
-class DummyEnsemble:
-    def __init__(self, snapshot):
-        self._snapshot = snapshot
-
-    def forward_model_description(self):
-        return self._snapshot
-
-    def evaluate(self, host, port):
-        pass
-
-
 @pytest.fixture
 def evaluator(unused_tcp_port):
     ensemble = (
