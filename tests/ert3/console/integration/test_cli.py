@@ -284,7 +284,7 @@ def test_cli_run_presampled(tmpdir):
     with unittest.mock.patch.object(sys, "argv", args):
         ert3.console.main()
 
-    args = ["ert3", "sample", "coefficients", "coefficients0", "1000"]
+    args = ["ert3", "record", "sample", "coefficients", "coefficients0", "1000"]
     with unittest.mock.patch.object(sys, "argv", args):
         ert3.console.main()
 
@@ -324,7 +324,7 @@ def test_cli_sample_unknown_parameter_group(tmpdir):
     with unittest.mock.patch.object(sys, "argv", args):
         ert3.console.main()
 
-    args = ["ert3", "sample", "coeffs", "coefficients0", "100"]
+    args = ["ert3", "record", "sample", "coeffs", "coefficients0", "100"]
     with unittest.mock.patch.object(sys, "argv", args):
         with pytest.raises(ValueError, match="No parameter group found named: coeffs"):
             ert3.console.main()
@@ -345,7 +345,7 @@ def test_cli_sample_unknown_distribution(tmpdir):
     with unittest.mock.patch.object(sys, "argv", args):
         ert3.console.main()
 
-    args = ["ert3", "sample", "coefficients", "coefficients0", "100"]
+    args = ["ert3", "record", "sample", "coefficients", "coefficients0", "100"]
     with unittest.mock.patch.object(sys, "argv", args):
         with pytest.raises(
             ValueError, match="Unknown distribution type: double-hyper-exp"

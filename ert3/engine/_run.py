@@ -24,7 +24,7 @@ def _persist_variables(
         var_name = ".".join(record_source[1:])
     elif record_source[0] == "stochastic":
         var_name = f"{experiment_name}.{record_name}"
-        ert3.engine.sample(
+        ert3.engine.sample_record(
             workspace_root,
             record_source[1],
             var_name,
