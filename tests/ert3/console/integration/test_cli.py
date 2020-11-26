@@ -252,10 +252,54 @@ def _assert_export(workspace, experiment_name):
     _assert_parameter_statistics(config, export_data)
 
 
-def test_cli_export_polynomial_evaluation(tmpdir):
+def _find(keypath, content):
+    keys = keypath.split(".")
+    elem = content
+    for key in keys:
+        try:
+            key = int(key)
+        except ValueError:
+            pass
+        elem = elem[key]
+    return elem
+
+
+def _update_content(fname, updates):
+    """
+    Takes a filename that is expected to be yaml formatted,
+    and updates as a list of tuples of keypath and value,
+    where keypath is on the format key_name1.key_name2 etc.
+
+    Note that the key_name will be resolved as an int if possible,
+    and as such it is also possible to search list-like structures
+
+    Will update each keypath with given value and dump file to disk
+    """
+    with open(fname) as f:
+        content = yaml.safe_load(f)
+    for keypath, value in updates:
+        elem = _find(keypath, content)
+        elem = value
+    with open(fname, "w") as f:
+        yaml.safe_dump(content, f)
+
+
+MEAN_KEYPATH = "0.distribution.input.mean"
+STD_KEYPATH = "0.distribution.input.std"
+
+
+@pytest.mark.parametrize(
+    "updates",
+    [((MEAN_KEYPATH, 0), (STD_KEYPATH, 1)), ((MEAN_KEYPATH, 2), (STD_KEYPATH, 2))],
+)
+def test_cli_export_polynomial_evaluation(updates, tmpdir):
     workspace = tmpdir / _POLY_WORKSPACE_NAME
     shutil.copytree(_POLY_WORKSPACE, workspace)
     workspace.chdir()
+
+    _update_content(
+        fname=workspace.dirname + "/polynomial/parameters.yml", updates=updates
+    )
 
     args = ["ert3", "init"]
     with unittest.mock.patch.object(sys, "argv", args):
