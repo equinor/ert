@@ -18,6 +18,9 @@ class _Command:
     def to_dict(self):
         return {ids.ACTION: self._action}
 
+    def __eq__(self, other):
+        return self._action == other._action
+
 
 def create_command_pause():
     return _Command(ids.PAUSE)

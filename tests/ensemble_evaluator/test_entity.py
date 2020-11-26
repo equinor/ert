@@ -1,7 +1,7 @@
 from datetime import datetime
 
 import pytest
-from ert_shared.ensemble_evaluator.entity import tool
+from ert_shared.ensemble_evaluator.entity import command, tool
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
     Snapshot,
@@ -180,3 +180,13 @@ def test_source_get_ids(source_string, expected_ids):
     assert tool.get_stage_id(source_string) == expected_ids["stage"]
     assert tool.get_step_id(source_string) == expected_ids["step"]
     assert tool.get_job_id(source_string) == expected_ids["job"]
+
+
+def test_commands_to_and_from_dict():
+    pause_command = command.create_command_pause()
+    terminate_command = command.create_command_terminate()
+
+    assert pause_command == command.create_command_from_dict(pause_command.to_dict())
+    assert terminate_command == command.create_command_from_dict(
+        terminate_command.to_dict()
+    )
