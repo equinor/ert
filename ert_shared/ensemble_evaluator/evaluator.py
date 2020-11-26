@@ -1,7 +1,7 @@
 import asyncio
 import threading
 import logging
-import ert_shared.ensemble_evaluator.dispatch as dispatch
+from ert_shared.ensemble_evaluator.dispatch import Dispatcher
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 import ert_shared.ensemble_evaluator.entity.identifiers as ids
 import ert_shared.ensemble_evaluator.monitor as ee_monitor
@@ -21,6 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 class EnsembleEvaluator:
+    dispatch = Dispatcher()
+
     def __init__(self, ensemble, config, ee_id=0):
         self._ee_id = ee_id
 
@@ -140,7 +142,7 @@ class EnsembleEvaluator:
                 if msg == "null":
                     return
                 event = from_json(msg)
-                await dispatch.handle_event(self, event)
+                await self.dispatch.handle_event(self, event)
             logger.debug(f"Dispatch {websocket.remote_address} disconnected.")
 
     async def connection_handler(self, websocket, path):
