@@ -1,5 +1,6 @@
 import ert3
 
+import flaky
 import json
 import numpy as np
 import os
@@ -252,6 +253,7 @@ def _assert_export(workspace, experiment_name):
     _assert_parameter_statistics(config, export_data)
 
 
+@flaky.flaky(max_runs=3, min_passes=2)
 def test_cli_export_polynomial_evaluation(tmpdir):
     workspace = tmpdir / _POLY_WORKSPACE_NAME
     shutil.copytree(_POLY_WORKSPACE, workspace)
