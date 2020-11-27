@@ -38,7 +38,7 @@ def test_gaussian_distribution(size, mean, std):
     ("index", "mean", "std"),
     (
         (("a", "b", "c"), 0, 1),
-        (("a" * i for i in range(1, 10)), 2, 5),
+        (tuple("a" * i for i in range(1, 10)), 2, 5),
     ),
 )
 def test_gaussian_distribution_index(index, mean, std):
