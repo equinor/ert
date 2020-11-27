@@ -1,20 +1,6 @@
 import ert3
 
-import random
 import yaml
-
-
-def _generate_coefficients():
-    return [
-        {
-            "coefficients": {
-                "a": random.gauss(0, 1),
-                "b": random.gauss(0, 1),
-                "c": random.gauss(0, 1),
-            }
-        }
-        for _ in range(1000)
-    ]
 
 
 def _persist_variables(
