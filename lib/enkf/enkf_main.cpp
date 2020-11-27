@@ -476,10 +476,19 @@ static int __get_active_size(const ensemble_config_type * ensemble_config , enkf
 
 /*****************************************************************/
 /**
-   Helper structs used to pass information to the multithreaded serialize /
-   deserialize functions. Except for the node_info member the serialize_info
-   structure will be immutable. The node_info member is used only for the
-   context of serialization of *one node*.
+   Helper structs used to pass information to the multithreaded serialize and
+   deserialize routines. A serialize_info structure is used at three levels, and
+   this also reflects on the degree of change of the various members.
+
+     One ministep: This corresponds to one full execution of the function
+         enkf_main_analysis_update().
+
+     One dataset: Each ministep can consist of several local dataset.
+
+     One node: Each local dataset will consist of several nodes.
+
+   The members explicitly marked with a mutable: comment will vary in the
+   lifetime of the serialization_info, the other members will be constant. 
 */
 
 typedef struct {
@@ -501,7 +510,9 @@ typedef struct {
   matrix_type                * A;
   const int_vector_type      * iens_active_index;
 
-  serialize_node_info_type   * node_info;  /* Mutable member which will be assigned in enkf_main_serialize_node */
+  std::vector<int>             active_size;  /* mutable: For the serialization of one dataset - many nodes */
+  std::vector<int>             row_offset;   /* mutable: For the serialization of one dataset - many nodes */
+  serialize_node_info_type   * node_info;    /* mutable: For the serialization of one node */
 } serialize_info_type;
 
 
@@ -582,37 +593,37 @@ static int enkf_main_serialize_dataset( const ensemble_config_type * ens_config 
                                         const local_dataset_type * dataset ,
                                         int report_step,
                                         hash_type * use_count ,
-                                        int * active_size ,
-                                        int * row_offset,
                                         thread_pool_type * work_pool,
                                         serialize_info_type * serialize_info) {
 
   matrix_type * A   = serialize_info->A;
-  stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
-  const int num_kw  = stringlist_get_size( update_keys );
   int ens_size      = matrix_get_columns( A );
   int current_row   = 0;
-
-  for (int ikw=0; ikw < num_kw; ikw++) {
-    const char             * key         = stringlist_iget(update_keys , ikw);
-    const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
+  int ikw = 0;
+  hash_iter_type* data_iter = local_dataset_alloc_iter(dataset);
+  serialize_info->active_size.resize( local_dataset_get_size( dataset ));
+  serialize_info->row_offset.resize( local_dataset_get_size( dataset ));
+  while (!hash_iter_is_complete(data_iter)) {
+    const char             * key = hash_iter_get_next_key(data_iter);
+    const active_list_type * active_list = local_dataset_get_node_active_list( dataset , key );
     enkf_fs_type * src_fs = serialize_info->src_fs;
-    active_size[ikw] = __get_active_size( ens_config , src_fs , key , report_step , active_list );
-    row_offset[ikw]  = current_row;
+    serialize_info->active_size[ikw] = __get_active_size( ens_config , src_fs , key , report_step , active_list );
+    serialize_info->row_offset[ikw] = current_row;
 
     {
       int matrix_rows = matrix_get_rows( A );
-      if ((active_size[ikw] + current_row) > matrix_rows)
-        matrix_resize( A , matrix_rows + 2 * active_size[ikw] , ens_size , true );
+      if ((serialize_info->active_size[ikw] + current_row) > matrix_rows)
+        matrix_resize( A , matrix_rows + 2 * serialize_info->active_size[ikw] , ens_size , true );
     }
 
-    if (active_size[ikw] > 0) {
-      enkf_main_serialize_node( key , active_list , row_offset[ikw] , work_pool , serialize_info );
-      current_row += active_size[ikw];
+    if (serialize_info->active_size[ikw] > 0) {
+      enkf_main_serialize_node( key , active_list , serialize_info->row_offset[ikw] , work_pool , serialize_info );
+      current_row += serialize_info->active_size[ikw];
     }
+    ikw++;
   }
+  hash_iter_free( data_iter );
   matrix_shrink_header( A , current_row , ens_size );
-  stringlist_free( update_keys );
   return matrix_get_rows( A );
 }
 
@@ -658,16 +669,15 @@ static void * deserialize_nodes_mt( void * arg ) {
 
 static void enkf_main_deserialize_dataset( ensemble_config_type * ensemble_config ,
                                            const local_dataset_type * dataset ,
-                                           const int * active_size ,
-                                           const int * row_offset ,
                                            serialize_info_type * serialize_info ,
                                            thread_pool_type * work_pool ) {
 
   const int num_cpu_threads = thread_pool_get_max_running( work_pool );
-  stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
-  for (int i = 0; i < stringlist_get_size( update_keys ); i++) {
-    const char             * key         = stringlist_iget(update_keys , i);
-    if (active_size[i] > 0) {
+  int ikw = 0;
+  hash_iter_type* data_iter = local_dataset_alloc_iter(dataset);
+  while (!hash_iter_is_complete(data_iter)) {
+    const char             * key = hash_iter_get_next_key(data_iter);
+    if (serialize_info->active_size[ikw] > 0) {
       const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
 
       {
@@ -678,7 +688,7 @@ static void enkf_main_deserialize_dataset( ensemble_config_type * ensemble_confi
         for (icpu = 0; icpu < num_cpu_threads; icpu++) {
           node_info[icpu].key            = key;
           node_info[icpu].active_list    = active_list;
-          node_info[icpu].row_offset     = row_offset[i];
+          node_info[icpu].row_offset     = serialize_info->row_offset[ikw];
           serialize_info[icpu].node_info = &node_info[icpu];
 
           thread_pool_add_job( work_pool , deserialize_nodes_mt , &serialize_info[icpu]);
@@ -687,12 +697,12 @@ static void enkf_main_deserialize_dataset( ensemble_config_type * ensemble_confi
       }
     }
   }
-  stringlist_free( update_keys );
+  hash_iter_free( data_iter );
 }
 
 
 static void serialize_info_free( serialize_info_type * serialize_info ) {
-  free( serialize_info );
+  delete[] serialize_info;
 }
 
 static serialize_info_type * serialize_info_alloc( enkf_fs_type * src_fs,
@@ -706,7 +716,7 @@ static serialize_info_type * serialize_info_alloc( enkf_fs_type * src_fs,
                                                    matrix_type * A ,
                                                    int num_cpu_threads ) {
 
-  serialize_info_type * serialize_info = (serialize_info_type *)util_calloc( num_cpu_threads , sizeof * serialize_info );
+  serialize_info_type * serialize_info = new serialize_info_type[num_cpu_threads];
   int ens_size = int_vector_size(iens_active_index);
   int icpu;
   int iens_offset = 0;
@@ -1095,15 +1105,13 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
       const char * dataset_name = hash_iter_get_next_key( dataset_iter );
       const local_dataset_type * dataset = local_ministep_get_dataset( ministep , dataset_name );
       if (local_dataset_get_size( dataset )) {
-        int * active_size = (int *)util_calloc( local_dataset_get_size( dataset ) , sizeof * active_size );
-        int * row_offset = (int *)util_calloc( local_dataset_get_size( dataset ) , sizeof * row_offset  );
         local_obsdata_type   * local_obsdata = local_ministep_get_obsdata( ministep );
 
         // The enkf_main_serialize_dataset() function will query the storage
         // layer and fetch data which is serialized into the A matrix which is
         // buried deep into the serialize_info structure.
-        enkf_main_serialize_dataset(enkf_main_get_ensemble_config(enkf_main), dataset , step2 ,  use_count , active_size , row_offset , tp , serialize_info);
-        module_info_type * module_info = enkf_main_module_info_alloc(ministep, obs_data, dataset, local_obsdata, active_size , row_offset);
+        enkf_main_serialize_dataset(enkf_main_get_ensemble_config(enkf_main), dataset , step2 ,  use_count , tp , serialize_info);
+        module_info_type * module_info = enkf_main_module_info_alloc(ministep, obs_data, dataset, local_obsdata, serialize_info->active_size.data() , serialize_info->row_offset.data());
 
         if (analysis_module_check_option( module , ANALYSIS_UPDATE_A)){
           if (analysis_module_check_option( module , ANALYSIS_ITERABLE)){
@@ -1122,10 +1130,8 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
         // The enkf_main_deserialize_dataset() function will dismantle the A
         // matrix from the serialize_info structure and distribute that content
         // over to enkf_node instances and eventually the storage layer.
-        enkf_main_deserialize_dataset( enkf_main_get_ensemble_config( enkf_main ) , dataset , active_size , row_offset , serialize_info , tp);
+        enkf_main_deserialize_dataset( enkf_main_get_ensemble_config( enkf_main ) , dataset , serialize_info , tp);
 
-        free( active_size );
-        free( row_offset );
         enkf_main_module_info_free( module_info );
       }
     }
