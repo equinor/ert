@@ -48,5 +48,5 @@ stages:
             args: []
 
 
-realizations: 10
-max_running: 3
+realizations: 3
+max_running: 2

@@ -20,7 +20,6 @@ async def wait(url, max_retries):
             return
         except OSError as e:
             logger.info(f"{__name__} failed to connect ({retries}/{max_retries}: {e}")
-            # await asyncio.sleep(0.2 + 5 * retries)
-            await asyncio.sleep(0.2 + retries)
+            await asyncio.sleep(0.2 + 5 * retries)
             retries += 1
     raise ConnectionRefusedError(f"Could not connect to {url} after {retries} retries")
