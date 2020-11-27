@@ -6,14 +6,13 @@ import json
 import uuid
 from functools import partial
 from cloudevents.http import to_json, CloudEvent
-
-import prefect
 from prefect import Flow, Task
 from prefect.engine.executors import DaskExecutor
+
+from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     _Ensemble, _ScriptJob, _Step, _Stage, _Realization)
-from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 
 
 class RunProcess(Task):
@@ -32,16 +31,22 @@ class RunProcess(Task):
     def get_iens(self):
         return self._iens
 
+    def get_stage_id(self):
+        return self._stage_id
+
+    def get_step_id(self):
+        return self._step_id
+
     def run(self, expected_res=None):
         if expected_res is None:
             expected_res = []
         with Client(self._url) as c:
-            event = _cloud_event(event_type=f"com.equinor.ert.forward_model_step.start",
+            event = _cloud_event(event_type=ids.EVTYPE_FM_STEP_START,
                                  fm_type="step",
                                  real_id=self._iens,
                                  step_id=self._step_id,
                                  stage_id=self._stage_id)
-            c.send(to_json(event))
+            c.send(to_json(event).decode())
             run_path = f"output/{self._iens}"
             os.makedirs(run_path, exist_ok=True)
             for res in expected_res:
@@ -56,30 +61,44 @@ class RunProcess(Task):
             exec_metadata = {"iens": self._iens,
                              "outputs": []}
             for index, job in enumerate(self._job_list):
-                print(f"Running command {self._cmd} ")
-                event = _cloud_event(event_type=f"com.equinor.ert.forward_model_job.start",
+                print(f"Running command {self._cmd}  {job['name']}")
+                event = _cloud_event(event_type=ids.EVTYPE_FM_JOB_START,
                                      fm_type="job",
                                      real_id=self._iens,
                                      step_id=self._step_id,
                                      stage_id=self._stage_id,
                                      job_id=job["id"]
                                      )
-                c.send(to_json(event))
-                subprocess.run([self._cmd, job["executable"], *job["args"]],
-                               universal_newlines=True, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE,
-                               cwd=run_path,
-                               check=True
-                               )
+                c.send(to_json(event).decode())
+                cmd_exec = subprocess.run([self._cmd, job["executable"], *job["args"]],
+                                          universal_newlines=True, stdout=subprocess.PIPE,
+                                          stderr=subprocess.PIPE,
+                                          cwd=run_path,
+                                          )
+                self.logger.info(cmd_exec.stdout)
+                if cmd_exec.returncode != 0:
+                    self.logger.error(cmd_exec.stderr)
+                    event = _cloud_event(event_type=ids.EVTYPE_FM_JOB_FAILURE,
+                                         fm_type="job",
+                                         real_id=self._iens,
+                                         step_id=self._step_id,
+                                         stage_id=self._stage_id,
+                                         job_id=job["id"],
+                                         data={"stderr": cmd_exec.stderr,
+                                               "stdout": cmd_exec.stdout}
+                                         )
+                    c.send(to_json(event).decode())
+                    raise RuntimeError(f"Script {job['name']} filed with exception {cmd_exec.stderr}")
 
-                event = _cloud_event(event_type=f"com.equinor.ert.forward_model_job.success",
+                event = _cloud_event(event_type=ids.EVTYPE_FM_JOB_SUCCESS,
                                      fm_type="job",
                                      real_id=self._iens,
                                      step_id=self._step_id,
                                      stage_id=self._stage_id,
-                                     job_id=job["id"]
+                                     job_id=job["id"],
+                                     data={"stdout": cmd_exec.stdout}
                                      )
-                c.send(to_json(event))
+                c.send(to_json(event).decode())
                 exec_metadata[job["name"]] = {}
 
             for output in self._outputs:
@@ -94,27 +113,14 @@ class RunProcess(Task):
                 exec_metadata["outputs"].append(os.path.join(output_path, output))
 
             exec_metadata["cwd"] = os.getcwd()
-            event = _cloud_event(event_type=f"com.equinor.ert.forward_model_step.success",
+            event = _cloud_event(event_type=ids.EVTYPE_FM_STEP_SUCCESS,
                                  fm_type="step",
                                  real_id=self._iens,
                                  step_id=self._step_id,
                                  stage_id=self._stage_id
                                  )
-            c.send(to_json(event))
+            c.send(to_json(event).decode())
         return exec_metadata
-
-
-def _get_event_type(state, fm_type):
-    if isinstance(state, prefect.engine.state.Pending):
-        return f"com.equinor.ert.forward_model_{fm_type}.start"
-    elif isinstance(state, prefect.engine.state.Running):
-        return f"com.equinor.ert.forward_model_{fm_type}.running"
-    elif isinstance(state, prefect.engine.state.Success):
-        return f"com.equinor.ert.forward_model_{fm_type}.success"
-    elif isinstance(state, prefect.engine.state.Failed):
-        return f"com.equinor.ert.forward_model_{fm_type}.failure"
-    else:
-        return f"com.equinor.ert.forward_model_{fm_type}.unknown"
 
 
 def _build_source(fm_type, real_id, stage_id=None,  step_id=None, job_id=None):
@@ -198,11 +204,13 @@ class PrefectEnsemble(_Ensemble):
     def _on_task_failure(task, state, url):
         with Client(url) as c:
             event = _cloud_event(
-                event_type=_get_event_type(state, "step"),
+                event_type=ids.EVTYPE_FM_STEP_FAILURE,
                 fm_type="step",
                 real_id=task.get_iens(),
+                stage_id=task.get_stage_id(),
+                step_id=task.get_step_id()
             )
-            c.send(to_json(event))
+            c.send(to_json(event).decode())
 
     def get_ordering(self, iens):
         table_of_elements = []
@@ -266,8 +274,8 @@ class PrefectEnsemble(_Ensemble):
 
                     for o in step.get("outputs", []):
                         o_t_res[o] = result["outputs"]
-        return flow.run()
-        # return flow.run(executor=DaskExecutor(address="tcp://192.168.100.6:8786"))
+        # return flow.run()
+        return flow.run(executor=DaskExecutor(address="tcp://192.168.100.6:8786"))
 
     def evaluate(self, host, port):
         # executor = DaskExecutor(
@@ -276,7 +284,6 @@ class PrefectEnsemble(_Ensemble):
         #     debug=True,
         # )
         dispatch_url = f"ws://{host}:{port}/dispatch"
-        wait_for_ws(dispatch_url)
         coef_input_files = gen_coef(self.config["parameters"], self.config["realizations"])
         real_per_batch = self.config["max_running"]
         real_range = range(self.config["realizations"])

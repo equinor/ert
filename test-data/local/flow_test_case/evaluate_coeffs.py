@@ -38,5 +38,7 @@ def write_to_file(data, file):
 if __name__ == '__main__':
     options = config_dump_entry()
     coeffs = _load_coeffs('coeffs.json')
+    print(f"Calculating {options.degree} degree polynomial component")
     output = [_evaluate(coeffs, x, options.degree) for x in range(10)]
+    print(f"Writing output to file poly_{options.degree}.out")
     write_to_file(output, f"poly_{options.degree}.out")

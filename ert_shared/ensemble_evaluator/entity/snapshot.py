@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Dict, List, Optional, Any
-
+import logging
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.entity.tool import (
     recursive_update,
@@ -26,6 +26,9 @@ _FM_TYPE_EVENT_TO_STATUS = {
     ids.EVTYPE_FM_JOB_SUCCESS: "Finished",
     ids.EVTYPE_FM_JOB_FAILURE: "Failed",
 }
+
+logger = logging.getLogger(__name__)
+
 
 
 class PartialSnapshot:
@@ -98,6 +101,7 @@ class PartialSnapshot:
         data=None,
         start_time=None,
         end_time=None,
+        error=None
     ):
         step = self.update_step(real_id, stage_id, step_id)
         if job_id not in step["jobs"]:
@@ -115,6 +119,9 @@ class PartialSnapshot:
             if "data" not in job:
                 job["data"] = {}
             job["data"].update(data)
+        if error is not None:
+            job["error"] = error
+
 
         return job
 
@@ -153,6 +160,12 @@ class PartialSnapshot:
                 }
                 else None,
             )
+            if status == "Failed":
+                snapshot.update_real(
+                    get_real_id(e_source),
+                    queue_state="JOB_QUEUE_FAILED"
+                )
+
             if status == "Finished":
                 real_finished = True
                 for step_id, step in current_snapshot.get_steps_for_real(get_real_id(e_source)):
@@ -182,7 +195,13 @@ class PartialSnapshot:
                 }
                 else None,
                 data=event.data if e_type == ids.EVTYPE_FM_JOB_RUNNING else None,
+                error=event.data["stderr"] if e_type == ids.EVTYPE_FM_JOB_FAILURE else None,
             )
+            if status == "Failed":
+                logger.error(event.data["stderr"])
+                logger.info(event.data["stdout"])
+            if status == "Finished":
+                logger.info(event.data["stdout"])
         else:
             raise ValueError()
         return snapshot

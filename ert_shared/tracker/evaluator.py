@@ -221,6 +221,8 @@ class EvaluatorTracker:
                                 ]
                             if job.get("data", {}).get("max_memory_usage"):
                                 status.max_memory_usage = job["data"]["max_memory_usage"]
+                            if job.get("error"):
+                                status.error = job.get("error")
 
                 realization_progress[iens_int] = (
                     job_statuses,
