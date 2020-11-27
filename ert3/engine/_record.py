@@ -34,6 +34,12 @@ def sample_record(workspace, parameter_group_name, record_name, ensemble_size):
             dist_config["input"]["std"],
             index=parameter_group["variables"],
         )
+    elif dist_config["type"] == "uniform":
+        distribution = ert3.stats.Uniform(
+            dist_config["input"]["lower_bound"],
+            dist_config["input"]["upper_bound"],
+            index=parameter_group["variables"],
+        )
     else:
         raise ValueError("Unknown distribution type: {}".format(dist_config["type"]))
 
