@@ -1,14 +1,20 @@
 import ert3
 
+import flaky
 import numpy as np
 import pytest
 
 
+def approx(x, eps=0.2):
+    return pytest.approx(x, abs=eps, rel=eps)
+
+
+@flaky.flaky(max_runs=3, min_passes=2)
 @pytest.mark.parametrize(
     ("size", "mean", "std"),
     (
-        (10000, 0, 1),
-        (20000, 10, 10),
+        (30000, 0, 1),
+        (30000, 10, 10),
     ),
 )
 def test_gaussian_distribution(size, mean, std):
@@ -23,10 +29,11 @@ def test_gaussian_distribution(size, mean, std):
         assert tuple(sample) not in prev_samples
         prev_samples.add(tuple(sample))
 
-        assert sample.mean() == pytest.approx(mean, abs=0.2)
-        assert sample.std() == pytest.approx(std, abs=0.2)
+        assert sample.mean() == approx(mean)
+        assert sample.std() == approx(std)
 
 
+@flaky.flaky(max_runs=3, min_passes=2)
 @pytest.mark.parametrize(
     ("index", "mean", "std"),
     (
@@ -38,7 +45,7 @@ def test_gaussian_distribution_index(index, mean, std):
     gauss = ert3.stats.Gaussian(mean, std, index=index)
 
     samples = {idx: [] for idx in index}
-    for i in range(1000):
+    for i in range(2000):
         sample = gauss.sample()
         assert sorted(sample.keys()) == sorted(index)
 
@@ -47,8 +54,8 @@ def test_gaussian_distribution_index(index, mean, std):
 
     for key in index:
         s = np.array(samples[key])
-        assert s.mean() == pytest.approx(mean, abs=0.2)
-        assert s.std() == pytest.approx(std, abs=0.2)
+        assert s.mean() == approx(mean)
+        assert s.std() == approx(std)
 
 
 def test_gaussian_distribution_invalid():
