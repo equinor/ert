@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class EnsembleEvaluator:
-    dispatch = Dispatcher()
+    _dispatch = Dispatcher()
 
     def __init__(self, ensemble, config, ee_id=0):
         self._ee_id = ee_id
@@ -70,7 +70,7 @@ class EnsembleEvaluator:
             [str(real.get_iens()) for real in ensemble.get_reals()], "Unknown"
         )
 
-    @dispatch.register_event_handler(ids.EVGROUP_FM_ALL)
+    @_dispatch.register_event_handler(ids.EVGROUP_FM_ALL)
     async def _fm_handler(self, event):
         snapshot_mutate_event = PartialSnapshot.from_cloudevent(event)
         await self._send_snapshot_update(snapshot_mutate_event)
@@ -142,7 +142,7 @@ class EnsembleEvaluator:
                 if msg == "null":
                     return
                 event = from_json(msg)
-                await self.dispatch.handle_event(self, event)
+                await self._dispatch.handle_event(self, event)
             logger.debug(f"Dispatch {websocket.remote_address} disconnected.")
 
     async def connection_handler(self, websocket, path):
