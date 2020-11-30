@@ -20,7 +20,10 @@ from ert3.evaluator import evaluate
         ),
     ],
 )
-def test_evaluator(coeffs, expected):
-    realizations = [{"coefficients": {"a": a, "b": b, "c": c}} for (a, b, c) in coeffs]
-    data = [data["polynomial_output"] for data in evaluate(realizations)]
-    assert data == expected
+def test_evaluator(coeffs, expected, tmpdir):
+    with tmpdir.as_cwd():
+        realizations = [
+            {"coefficients": {"a": a, "b": b, "c": c}} for (a, b, c) in coeffs
+        ]
+        data = [data["polynomial_output"] for data in evaluate(realizations)]
+        assert data == expected
