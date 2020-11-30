@@ -3,7 +3,7 @@ copy_test_files () {
     mkdir -p $CI_TEST_ROOT/python/res/fm/rms/
     
     local PWD=$(pwd)
-    cp -r {$PWD,$CI_TEST_ROOT}/python/tests
+    cp -r {$PWD,$CI_TEST_ROOT}/tests
     ln -s {$PWD,$CI_TEST_ROOT}/test-data
     ln -s {$PWD,$CI_TEST_ROOT}/lib
     ln -s {$PWD,$CI_TEST_ROOT}/share
@@ -13,7 +13,7 @@ copy_test_files () {
 
 start_tests () {
     echo "Running pytest"
-    cd $CI_TEST_ROOT/python
+    pushd $CI_TEST_ROOT
     export ECL_SKIP_SIGNAL=ON
     pytest                                                   \
         --ignore="tests/res/enkf/test_analysis_config.py"    \
@@ -23,6 +23,7 @@ start_tests () {
         --ignore="tests/res/enkf/test_hook_manager.py"       \
         --ignore="tests/legacy"                              \
         --ignore="tests/test_formatting.py"
+    popd
 }
 
 run_tests () {

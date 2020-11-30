@@ -14,4 +14,4 @@ jobs:
       - name: Install test requirements
         run: pip install -r test_requirements.txt
       - name: Check black
-        run: black --check python
+        run: black --check python tests

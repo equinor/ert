@@ -35,7 +35,6 @@ setup () {
 	run create_virtualenv
 	run source_build_tools
 	run clone_repos
-	run setup_testdir
 }
 
 build_libecl () {
@@ -74,14 +73,6 @@ source_build_tools() {
 	set -e
 }
 
-setup_testdir() {
-	mkdir -p $TESTDIR/{.git,python}
-	ln -s {$LIBRES_ROOT,$TESTDIR}/lib
-	ln -s {$LIBRES_ROOT,$TESTDIR}/test-data
-	ln -s {$LIBRES_ROOT,$TESTDIR}/share
-	cp -R {$LIBRES_ROOT,$TESTDIR}/python/tests
-}
-
 setup_variables () {
 	ENV=$WORKING_DIR/venv
 	INSTALL=$WORKING_DIR/install
@@ -91,8 +82,6 @@ setup_variables () {
 
 	LIBRES_ROOT=$WORKING_DIR/libres
 	LIBRES_BUILD=$LIBRES_ROOT/build
-
-	TESTDIR=$WORKING_DIR/testdir
 }
 
 enable_environment () {
@@ -136,17 +125,13 @@ run_ctest () {
 
 run_pytest_normal () {
 	run enable_environment
-	pushd $TESTDIR
 	python -m pytest -m "not equinor_test" --durations=10
-	popd
 }
 
 
 run_pytest_equinor () {
 	run enable_environment
-	pushd $TESTDIR
 	python -m pytest -m "equinor_test" --durations=10
-	popd
 }
 
 

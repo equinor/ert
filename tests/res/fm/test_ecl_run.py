@@ -387,7 +387,7 @@ class EclRunTest(ResTest):
         # fails with exit(1) - but let us at least be prepared
         # when/if it does.
         ecl_run.sim.executable = os.path.join(
-            self.SOURCE_ROOT, "python/tests/res/fm/ecl_run_fail"
+            self.SOURCE_ROOT, "tests/res/fm/ecl_run_fail"
         )
         with self.assertRaises(Exception):
             ecl_run.runEclipse()
@@ -439,7 +439,7 @@ class EclRunTest(ResTest):
         sim = ecl_config.sim("2014.2")
         ecl_run = EclRun("SPE1_ERROR", sim, check_status=False)
         ecl_run.sim.executable = os.path.join(
-            self.SOURCE_ROOT, "python/tests/res/fm/ecl_run_fail"
+            self.SOURCE_ROOT, "tests/res/fm/ecl_run_fail"
         )
         ecl_run.runEclipse()
 

@@ -90,4 +90,5 @@ skbuild.setup(
         "Topic :: Utilities",
     ],
     version=version,
+    test_suite="tests",
 )

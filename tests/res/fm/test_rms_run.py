@@ -75,7 +75,7 @@ def test_run_class_multi_seed(tmpdir, monkeypatch, test_input, expected_result):
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(os.path.join(source_root(), "python/tests/res/fm/rms"), "bin")
+    shutil.copy(os.path.join(source_root(), "tests/res/fm/rms"), "bin")
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
     action = {"exit_status": 0}
@@ -114,9 +114,7 @@ class RMSRunTest(ResTest):
             os.mkdir("run_path")
             os.mkdir("bin")
             os.mkdir("project")
-            shutil.copy(
-                os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin"
-            )
+            shutil.copy(os.path.join(self.SOURCE_ROOT, "tests/res/fm/rms"), "bin")
             self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
             action = {"exit_status": 0}
@@ -180,9 +178,7 @@ class RMSRunTest(ResTest):
             os.mkdir("run_path")
             os.mkdir("bin")
             os.mkdir("project")
-            shutil.copy(
-                os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin"
-            )
+            shutil.copy(os.path.join(self.SOURCE_ROOT, "tests/res/fm/rms"), "bin")
             self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
             action = {"exit_status": 0}
@@ -267,9 +263,7 @@ class RMSRunTest(ResTest):
                 os.mkdir("run_path")
                 os.mkdir("bin")
                 os.mkdir("project")
-                shutil.copy(
-                    os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin"
-                )
+                shutil.copy(os.path.join(self.SOURCE_ROOT, "tests/res/fm/rms"), "bin")
                 self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
                 action = {"exit_status": 0}
@@ -335,9 +329,7 @@ class RMSRunTest(ResTest):
                 os.mkdir("run_path")
                 os.mkdir("bin")
                 os.mkdir("project")
-                shutil.copy(
-                    os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin"
-                )
+                shutil.copy(os.path.join(self.SOURCE_ROOT, "tests/res/fm/rms"), "bin")
                 self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
                 action = {"exit_status": 0}
@@ -381,9 +373,7 @@ class RMSRunTest(ResTest):
             os.mkdir("run_path")
             os.mkdir("bin")
             os.mkdir("project")
-            shutil.copy(
-                os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin"
-            )
+            shutil.copy(os.path.join(self.SOURCE_ROOT, "tests/res/fm/rms"), "bin")
             self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
             target_file = os.path.join(os.getcwd(), "rms_target_file")
@@ -417,9 +407,7 @@ class RMSRunTest(ResTest):
             os.mkdir("run_path")
             os.mkdir("bin")
             os.mkdir("project")
-            shutil.copy(
-                os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin"
-            )
+            shutil.copy(os.path.join(self.SOURCE_ROOT, "tests/res/fm/rms"), "bin")
 
             with open(wrapper_file_name, "w") as f:
                 f.write("#!/bin/bash\n")
@@ -500,9 +488,7 @@ env:
             os.mkdir("run_path")
             os.mkdir("bin")
             os.mkdir("project")
-            shutil.copy(
-                os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin"
-            )
+            shutil.copy(os.path.join(self.SOURCE_ROOT, "tests/res/fm/rms"), "bin")
 
             with open(wrapper_file_name, "w") as f:
                 f.write(
@@ -551,9 +537,7 @@ env:
             os.mkdir("run_path")
             os.mkdir("bin")
             os.mkdir("project")
-            shutil.copy(
-                os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin"
-            )
+            shutil.copy(os.path.join(self.SOURCE_ROOT, "tests/res/fm/rms"), "bin")
 
             with open(wrapper_file_name, "w") as f:
                 f.write(
@@ -611,9 +595,7 @@ env:
             os.mkdir("run_path")
             os.mkdir("bin")
             os.mkdir("project")
-            shutil.copy(
-                os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin"
-            )
+            shutil.copy(os.path.join(self.SOURCE_ROOT, "tests/res/fm/rms"), "bin")
 
             self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
             self.monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
@@ -663,9 +645,7 @@ env:
             os.mkdir("run_path")
             os.mkdir("bin")
             os.mkdir("project")
-            shutil.copy(
-                os.path.join(self.SOURCE_ROOT, "python/tests/res/fm/rms"), "bin"
-            )
+            shutil.copy(os.path.join(self.SOURCE_ROOT, "tests/res/fm/rms"), "bin")
             self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
             action = {"exit_status": 0}

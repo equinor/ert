@@ -87,26 +87,13 @@ jobs:
 
     - name: Run Python tests
       run: |
-        # pytest adds every directory up-to and including python/ into sys.path,
-        # meaning that "import res" will import python/res and not the installed
-        # one. This doesn't work because the libecl.so library only exists in
-        # site-packages, so we copy directories required by the tests out into its
-        # own temporary directory.
-        mkdir test-run; cd test-run
-        mkdir -p {.git,python}
-        ln -s {..,$PWD}/bin
-        ln -s {..,$PWD}/lib
-        ln -s {..,$PWD}/test-data
-        ln -s {..,$PWD}/share
-        cp -R {..,$PWD}/python/tests
-
         # Env vars
         export ECL_SKIP_SIGNAL=1
         export ERT_SHOW_BACKTRACE=1
 
         # Run tests
-        python -m pip install -r ../test_requirements.txt
-        python -m pytest python/tests
+        pip install -r test_requirements.txt
+        pytest
 
 
   publish:
