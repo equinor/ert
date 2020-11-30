@@ -171,7 +171,7 @@ class _Step:
     def __init__(self, id_, inputs, outputs, jobs, name=None):
         if id_ is None:
             raise ValueError(f"{self} needs id")
-        if not inputs:
+        if inputs is None:
             raise ValueError(f"{self} needs input")
         if not outputs:
             raise ValueError(f"{self} needs output")

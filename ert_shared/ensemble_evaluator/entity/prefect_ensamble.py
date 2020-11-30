@@ -40,6 +40,8 @@ class RunProcess(Task):
     def run(self, expected_res=None):
         if expected_res is None:
             expected_res = []
+        else:
+            expected_res = [item for sublist in expected_res for item in sublist]
         with Client(self._url) as c:
             event = _cloud_event(event_type=ids.EVTYPE_FM_STEP_START,
                                  fm_type="step",
@@ -49,11 +51,12 @@ class RunProcess(Task):
             c.send(to_json(event).decode())
             run_path = f"output/{self._iens}"
             os.makedirs(run_path, exist_ok=True)
-            for res in expected_res:
-                self._resources += res
+
+            expected_res += self._resources
+            expected_res += [job["executable"] for job in self._job_list]
 
             # Get data files needed for the run
-            for data_file in self._resources:
+            for data_file in expected_res:
                 file_name = os.path.basename(data_file)
                 sim_job_path = os.path.join(run_path, file_name)
                 shutil.copyfile(data_file, sim_job_path)
@@ -187,11 +190,10 @@ class PrefectEnsemble(_Ensemble):
                                                args=tuple(map(str, job["args"]))))
                     step_id = uuid.uuid4()
                     steps.append(_Step(id_=str(step_id),
-                                       inputs=[os.path.abspath(input_elem) for input_elem in step["resources"]],
+                                       inputs=step.get("inputs", []),
                                        outputs=step["outputs"],
                                        jobs=jobs,
                                        name=step["name"]))
-                    step["resources"] = [os.path.abspath(input_elem) for input_elem in step["resources"]]
 
                 stages.append(_Stage(id_=str(stage_id),
                                      steps=steps,
@@ -213,56 +215,46 @@ class PrefectEnsemble(_Ensemble):
             c.send(to_json(event).decode())
 
     def get_ordering(self, iens):
+        realization = next(real for real in self.get_reals() if real.get_iens() == iens)
         table_of_elements = []
-        for stage in self.config["stages"]:
-            for step in stage["steps"]:
+        for stage in realization.get_stages():
+            for step in stage.get_steps():
+                jobs = [{
+                    "id": job.get_id(),
+                    "name": job.get_name(),
+                    "executable": os.path.abspath(job.get_executable()),
+                    "args": job.get_args(),
+                } for job in step.get_jobs()]
                 table_of_elements.append({
                     "iens": iens,
-                    "stage_name": stage["name"],
-                    "stage_id": self.get_id(iens, stage_name=stage["name"]),
-                    "step_id": self.get_id(iens, stage_name=stage["name"], step_name=step["name"]),
-                    **step})
+                    "stage_name": stage.get_name(),
+                    "stage_id": stage.get_id(),
+                    "step_id": step.get_id(),
+                    "inputs": step.get_inputs(),
+                    "outputs": step.get_outputs(),
+                    "jobs": jobs})
 
         produced = set()
         ordering = []
         while table_of_elements:
             temp_list = produced.copy()
             for element in table_of_elements:
-
                 if set(element.get("inputs", [])).issubset(temp_list):
                     ordering.append(element)
                     produced = produced.union(set(element["outputs"]))
                     table_of_elements.remove(element)
         return ordering
 
-    def get_id(self, iens, stage_name, step_name=None, job_index=None):
-        real = next(x for x in self._reals if x.get_iens() == iens)
-        stage = next(x for x in real.get_stages() if x.get_name() == stage_name)
-        if step_name is None:
-            return stage.get_id()
-        step = next(x for x in stage.get_steps() if x.get_name() == step_name)
-        if job_index is None:
-            return step.get_id()
-        job = step.get_jobs()[job_index]
-        return job.get_id()
-
     def run_flow(self, dispatch_url, coef_input_files, real_range):
-        with Flow('Test jobs') as flow:
+        with Flow(f"Realization range {real_range}") as flow:
             for iens in real_range:
                 o_t_res = {}
                 for step in self.get_ordering(iens=iens):
-                    job_list = [{
-                        "id": self.get_id(iens, step["stage_name"], step["name"], idx),
-                        "name": job["name"],
-                        "executable": job["executable"],
-                        "args": list(map(str, job["args"])),
-                    } for idx, job in enumerate(step["jobs"])]
                     inputs = [o_t_res.get(i, []) for i in step.get("inputs", [])]
-
                     stage_task = RunProcess(
-                        resources=step.get("resources", []) + [coef_input_files[iens]],
+                        resources=[coef_input_files[iens]],
                         outputs=step.get("outputs", []),
-                        job_list=job_list,
+                        job_list=step.get("jobs", []),
                         iens=iens,
                         cmd="python",
                         url=dispatch_url,

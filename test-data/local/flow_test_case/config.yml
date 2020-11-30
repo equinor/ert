@@ -5,12 +5,22 @@ parameters:
     - {name: c, type: uniform, args: [0, 5]}
 
 stages:
+  - name: sum_coeffs
+    steps:
+      - name: add_coeffs
+        parameter: []
+        inputs: [ poly_0.out, poly_1.out, poly_2.out ]
+        outputs: [ poly_sum.out ]
+        jobs:
+          - name: sum_up
+            executable: sum_coeffs.py
+            args: [ ]
+
   - name: calculate_coeffs
     steps:
       - name: zero_degree
         parameter: [coeff]
         inputs: [poly_2.out]
-        resources: [evaluate_coeffs.py]
         outputs: [poly_0.out]
         jobs:
           - name: generate_zero_degree
@@ -19,7 +29,6 @@ stages:
 
       - name: first_degree
         parameter: [coeff]
-        resources: [evaluate_coeffs.py]
         outputs: [poly_1.out]
         jobs:
           - name: generate_first_degree
@@ -28,25 +37,13 @@ stages:
 
       - name: second_degree
         parameter: [coeff]
-        resources: [evaluate_coeffs.py]
         outputs: [poly_2.out]
         jobs:
           - name: generate_second_degree
             executable: evaluate_coeffs.py
             args: [2]
 
-  - name: sum_coeffs
-    steps:
-      - name: add_coeffs
-        parametes: []
-        inputs: [poly_0.out, poly_1.out, poly_2.out]
-        resources: [sum_coeffs.py]
-        outputs: [poly_sum.out]
-        jobs:
-          - name: sum_up
-            executable: sum_coeffs.py
-            args: []
 
 
-realizations: 3
-max_running: 2
+realizations: 20
+max_running: 5
