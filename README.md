@@ -43,11 +43,8 @@ The C library files get installed into `python/res/.libs`, which is where the
 Install the required testing packages and run tests.
 ```
 $ pip install -r test_requirements.txt
-$ pytest python/tests
+$ pytest
 ```
-
-You may need to do `export PYTHONPATH=$PWD/python` for `pytest` to find your
-local development installation.
 
 ### Testing C code
 
