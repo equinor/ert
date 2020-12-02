@@ -213,28 +213,6 @@ def _assert_poly_output(config, export_data):
             assert coeff["a"] * x ** 2 + coeff["b"] * x + coeff["c"] == pytest.approx(y)
 
 
-def _assert_parameter_statistics(config, export_data):
-    for input_data in config["ensemble"]["input"]:
-        record = input_data["record"]
-        source = input_data["source"]
-
-        for p in config["parameters"]:
-            if p["type"] + "." + p["name"] == source:
-                parameter = p
-                break
-
-        assert parameter["distribution"]["type"] == "gaussian"
-        mean = parameter["distribution"]["input"]["mean"]
-        std = parameter["distribution"]["input"]["std"]
-
-        for variable in parameter["variables"]:
-            values = np.array(
-                [realisation["input"][record][variable] for realisation in export_data]
-            )
-            assert mean == pytest.approx(sum(values) / len(values), abs=0.1)
-            assert std == pytest.approx(np.std(values), abs=0.1)
-
-
 def _assert_export(workspace, experiment_name):
     with open(workspace / experiment_name / "data.json") as f:
         export_data = json.load(f)
@@ -248,56 +226,7 @@ def _assert_export(workspace, experiment_name):
     # evaluates a * x^2 + b * x + c. If not, this will fail miserably!
     _assert_poly_output(config, export_data)
 
-    # Note: This might fail (but with rather low probability) as it computes
-    # the mean and std of the sampled parameter values and compares it to the
-    # theoretical distribution.
-    _assert_parameter_statistics(config, export_data)
 
-
-def _assert_uniform_parameter_statistics(config, export_data):
-    for input_data in config["ensemble"]["input"]:
-        record = input_data["record"]
-        source = input_data["source"]
-
-        for p in config["parameters"]:
-            if p["type"] + "." + p["name"] == source:
-                parameter = p
-                break
-
-        assert parameter["distribution"]["type"] == "uniform"
-        lower_bound = parameter["distribution"]["input"]["lower_bound"]
-        upper_bound = parameter["distribution"]["input"]["upper_bound"]
-        mean = (lower_bound + upper_bound) / 2
-
-        for variable in parameter["variables"]:
-            values = np.array(
-                [realisation["input"][record][variable] for realisation in export_data]
-            )
-            assert lower_bound == pytest.approx(min(values), abs=0.1)
-            assert upper_bound == pytest.approx(max(values), abs=0.1)
-            assert mean == pytest.approx(sum(values) / len(values), abs=0.1)
-
-
-def _assert_uniform_export(workspace, experiment_name):
-    with open(workspace / experiment_name / "data.json") as f:
-        export_data = json.load(f)
-
-    config = _load_experiment_config(workspace, experiment_name)
-    _assert_ensemble_size(config, export_data)
-    _assert_input_records(config, export_data)
-    _assert_output_records(config, export_data)
-
-    # Note: This test assumes the forward model in the setup indeed
-    # evaluates a * x^2 + b * x + c. If not, this will fail miserably!
-    _assert_poly_output(config, export_data)
-
-    # Note: This might fail (but with rather low probability) as it computes
-    # the mean and std of the sampled parameter values and compares it to the
-    # theoretical distribution.
-    _assert_uniform_parameter_statistics(config, export_data)
-
-
-@flaky.flaky(max_runs=3, min_passes=2)
 def test_cli_export_polynomial_evaluation(tmpdir):
     workspace = tmpdir / _POLY_WORKSPACE_NAME
     shutil.copytree(_POLY_WORKSPACE, workspace)
@@ -318,7 +247,6 @@ def test_cli_export_polynomial_evaluation(tmpdir):
     _assert_export(workspace, "evaluation")
 
 
-@flaky.flaky(max_runs=3, min_passes=2)
 def test_cli_export_uniform_polynomial_evaluation(tmpdir):
     workspace = tmpdir / _POLY_WORKSPACE_NAME
     shutil.copytree(_POLY_WORKSPACE, workspace)
@@ -336,7 +264,7 @@ def test_cli_export_uniform_polynomial_evaluation(tmpdir):
     with unittest.mock.patch.object(sys, "argv", args):
         ert3.console.main()
 
-    _assert_uniform_export(workspace, "uniform_evaluation")
+    _assert_export(workspace, "uniform_evaluation")
 
 
 def _assert_distribution(workspace, experiment, distribution, coefficients):
