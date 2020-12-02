@@ -339,6 +339,98 @@ def test_cli_export_uniform_polynomial_evaluation(tmpdir):
     _assert_uniform_export(workspace, "uniform_evaluation")
 
 
+def _assert_distribution(workspace, experiment, distribution, coefficients):
+    indices = ("a", "b", "c")
+
+    for real_coefficient in coefficients:
+        assert sorted(indices) == sorted(real_coefficient.keys())
+        for val in real_coefficient.values():
+            assert isinstance(val, float)
+
+    samples = {idx: [] for idx in indices}
+    for sample in coefficients:
+        for key in indices:
+            samples[key].append(sample[key])
+
+    config = _load_experiment_config(workspace, experiment)
+    parameter = None
+    for p in config["parameters"]:
+        if p["distribution"]["type"] == distribution:
+            parameter = p
+            break
+
+    assert parameter is not None
+
+    input_data = parameter["distribution"]["input"]
+
+    for variable in parameter["variables"]:
+        values = samples[variable]
+
+        if distribution == "gaussian":
+            assert input_data["mean"] == pytest.approx(
+                sum(values) / len(values), abs=0.1
+            )
+            assert input_data["std"] == pytest.approx(np.std(values), abs=0.1)
+
+        elif distribution == "uniform":
+            assert input_data["lower_bound"] == pytest.approx(min(values), abs=0.1)
+            assert input_data["upper_bound"] == pytest.approx(max(values), abs=0.1)
+            mean = (input_data["lower_bound"] + input_data["upper_bound"]) / 2
+            assert mean == pytest.approx(sum(values) / len(values), abs=0.1)
+
+        else:
+            raise ValueError(f"Unknown distribution {distribution}")
+
+
+def test_cli_gaussian_distribution(tmpdir):
+    workspace = tmpdir / _POLY_WORKSPACE_NAME
+    shutil.copytree(_POLY_WORKSPACE, workspace)
+    workspace.chdir()
+
+    args = ["ert3", "init"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    args = ["ert3", "record", "sample", "coefficients", "coefficients0", "1000"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    coefficients = ert3.storage.get_variables(workspace, "coefficients0")
+    assert 1000 == len(coefficients)
+
+    _assert_distribution(
+        workspace, "presampled_evaluation_big", "gaussian", coefficients
+    )
+
+
+def test_cli_uniform_distribution(tmpdir):
+    workspace = tmpdir / _POLY_WORKSPACE_NAME
+    shutil.copytree(_POLY_WORKSPACE, workspace)
+    workspace.chdir()
+
+    args = ["ert3", "init"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    args = [
+        "ert3",
+        "record",
+        "sample",
+        "uniform_coefficients",
+        "uniform_coefficients0",
+        "1000",
+    ]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    coefficients = ert3.storage.get_variables(workspace, "uniform_coefficients0")
+    assert 1000 == len(coefficients)
+
+    _assert_distribution(
+        workspace, "presampled_uniform_evaluation_big", "uniform", coefficients
+    )
+
+
 def test_cli_run_presampled(tmpdir):
     workspace = tmpdir / _POLY_WORKSPACE_NAME
     shutil.copytree(_POLY_WORKSPACE, workspace)
