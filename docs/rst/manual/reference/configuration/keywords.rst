@@ -121,10 +121,10 @@ These keywords must be set to make ERT function properly.
 
         Necessary preparations to this file include:
 
-        1. insert ``INCLUDE`` statements to include the various uncertainty
+        1. Insert ``INCLUDE`` statements to include the various uncertainty
            parameters in use at the right place in the datafile.
 
-        2. make sure that the include files used in the datafiles can be
+        2. Make sure that the include files used in the datafiles can be
            correctly resolved from the runpath location.
 
         3. See the ``DATA_KW`` keyword which can be used to utilize more template
@@ -392,7 +392,7 @@ possible to do with ERT.
 .. _refcase:
 .. topic:: REFCASE
 
-    The REFCASE key is used to provide ERT an existing ECLIPSE simulation
+        The REFCASE key is used to provide ERT an existing ECLIPSE simulation
         from which it can read various information at startup. The intention is
         to ease the configuration needs for the user. Functionality provided with the
         refcase:
@@ -510,6 +510,7 @@ possible to do with ERT.
         *Example A:*
 
         ::
+
                 -- Giving a RUNPATH with just one %d specifer.
                 RUNPATH /mnt/my_scratch_disk/realization-%d
 
@@ -654,6 +655,7 @@ and/or history matching project.
         To add a dynamic field the entry in the configuration file looks like this:
 
         ::
+
                 FIELD   <ID>   DYNAMIC  MIN:X  MAX:Y
 
         In this case ID is not an arbitrary string; it must coincide with the keyword
@@ -811,8 +813,6 @@ and/or history matching project.
         Let us consider an example where the GEN_KW parameter type is used to estimate
         pore volume multipliers. We would then declare a GEN_KW instance in the main
         ERT configuration file:
-
-    ::
 
         Naming a `GEN_KW` parameter `PRED` will prevent the parameter from being
         added to a ministep dataset.
