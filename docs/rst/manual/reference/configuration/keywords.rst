@@ -468,6 +468,9 @@ possible to do with ERT.
 	uncertainties. The file should be in plain text and formatted according to the
 	guidelines given in :ref:`Creating an observation file for use with ERT<Configuring_observations_for_ERT>`.
 
+	If you include HISTORY_OBSERVATION in the observation file, you must
+	provide a reference Eclipse case through the REFCASE keyword.
+
 	*Example:*
 
 	::
