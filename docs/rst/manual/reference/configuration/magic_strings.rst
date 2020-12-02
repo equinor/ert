@@ -1,4 +1,3 @@
-
 Magic strings
 =============
 

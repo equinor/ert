@@ -48,7 +48,7 @@ The GEN_KW datatype is used in situations where you have a handful of related
 [#]_ parameters. The intention behind the GEN_KW implementation is that ERT will
 *sample* parameters randomly according to a distribution specified by the user,
 then ERT will use the sampled values and a template file provided by the user to
-generate a file which can be used by the simulator. 
+generate a file which can be used by the simulator.
 
 .. [#] ERT itself can not impose correlations among the parameters, if you need
        that you must implement it yourself in the forward model.
@@ -90,7 +90,7 @@ statements:
 
  BOX
 	1 10 1 30 13 13 /
-     
+
  MULTPV
   300*<MULTPV_BOX1> /
 
@@ -98,7 +98,7 @@ statements:
 
  BOX
 	1 10 1 30 14 14 /
-    
+
  MULTPV
 	300*<MULTPV_BOX2> /
 
@@ -151,7 +151,7 @@ will assign a normal prior with mean 0 and standard deviation 1 to the variable
 VAR1:
 
 ::
-   
+
    VAR1   NORMAL    0   1
 
 LOGNORMAL
@@ -167,10 +167,10 @@ LOGNORMAL. It takes two arguments, the mean and standard deviation of the
 *logarithm* of the variable:
 
 ::
-   
+
    VAR2   LOGNORMAL  0  1
 
-TRUNCATED_NORMAL 
+TRUNCATED_NORMAL
 ,,,,,,,,,,,,,,,,,
 
 This *TRUNCATED_NORMAL* distribution works as follows:
@@ -187,7 +187,7 @@ and hard limits 0 and 10:
 
    VAR3  TRUNCATED_NORMAL  1  0.25   0  10
 
-   
+
 UNIFORM
 ,,,,,,,
 
@@ -219,9 +219,9 @@ uniform distribution to a a variable, use the keyword LOGUNIF, which
 takes a minimum and a maximum value for the output variable as
 arguments. The example
 
-::  
+::
 
-   VAR5  LOGUNIF 0.00001 1 
+   VAR5  LOGUNIF 0.00001 1
 
 will give values in the range [0.00001,1] - with considerably more
 weight towards the lower limit. The log uniform distribution is useful
@@ -328,7 +328,7 @@ varieties:
 		2.67
 
 The numbers will be assigned to parameters in the order found in the MULTFLT.txt file.
-	
+
 2. Alternatively values and keywords can be interleaved as in:
 
 ::
@@ -337,7 +337,7 @@ The numbers will be assigned to parameters in the order found in the MULTFLT.txt
 		FAULT2 2.56
 
 in this case the ordering can differ in the init files and the parameter file.
-	
+
 The heritage of the ERT program is based on the EnKF algorithm, and the EnKF
 algorithm evolves around Gaussian variables - internally the GEN_KW variables
 are assumed to be samples from the N(0,1) distribution, and the distributions
@@ -365,7 +365,7 @@ PORO is in principle an arbitrary string ID, but if the fields in question
 represent e.g. the porosity use of a matching string of course makes sense. The
 string "PARAMETER" serves no purpose at the moment, but is legacy from the
 time when ERT could do full EnKF and also needed to handle dynamic fields like
-pressure and saturations. 
+pressure and saturations.
 
 The "poro.grdecl" argument represents the name of the file which ert will
 prepare for the forward model, observe the reservoir data file must have an
@@ -466,7 +466,7 @@ used to transform the user input of parameter distribution.
 loaded into ERT. ``OUTPUT_TRANSFORM:FUNC`` is a function which will be applied to
 the field when it is exported from ERT, and ``FUNC`` is the name of a transformation
 function to be applied. The avaialble functions are listed below:
-	
+
 | "POW10"			: This function will raise x to the power of 10: :math:`y = 10^x`
 | "TRUNC_POW10"	: This function will raise x to the power of 10 - and truncate lower values at 0.001.
 | "LOG"			: This function will take the NATURAL logarithm of :math:`x: y = \ln{x}`
@@ -497,7 +497,7 @@ format. The surface keyword is configured like this:
 
 ::
 
-	SURFACE TOP   OUTPUT_FILE:surf.irap   INIT_FILES:Surfaces/surf%d.irap   BASE_SURFACE:Surfaces/surf0.irap 
+	SURFACE TOP   OUTPUT_FILE:surf.irap   INIT_FILES:Surfaces/surf%d.irap   BASE_SURFACE:Surfaces/surf0.irap
 
 The first argument, TOP in the example above, is the identifier you want to use
 for this surface in ert. The ``OUTPUT_FILE`` key is the name of surface file
@@ -574,7 +574,7 @@ the main configuration file the input for a GEN_PARAM instance is as follows:
 
 ::
 
-	GEN_PARAM  ID  ECLIPSE_FILE  INPUT_FORMAT:xx  OUTPUT_FORMAT:xx  INIT_FILES:/path/to/init/files%d (TEMPLATE:/template_file KEY:magic_string)   
+	GEN_PARAM  ID  ECLIPSE_FILE  INPUT_FORMAT:xx  OUTPUT_FORMAT:xx  INIT_FILES:/path/to/init/files%d (TEMPLATE:/template_file KEY:magic_string)
 
 here ID is the usual unique string identifying this instance and ECLIPSE_FILE is
 the name of the file which is written into the run directories. The three
@@ -587,7 +587,7 @@ forward model. The valid values are:
 * ASCII - This is just text file with formatted numbers.
 * ASCII_TEMPLATE - A plain text file with formatted numbers, and an arbitrary header/footer.
 * BINARY_FLOAT - A vector of binary float numbers.
-* BINARY_DOUBLE - A vector of binary double numbers. 
+* BINARY_DOUBLE - A vector of binary double numbers.
 
 Regarding the different formats - observe the following:
 
@@ -692,7 +692,7 @@ means that the ``GEN_DATA`` keyword is extremely flexible, but also slightly
 complicated to configure. Assume a ``GEN_DATA`` keyword is used to represent the
 result of an estimated position of the oil water contact which should be
 compared with a oil water contact from 4D seismic; this could be achieved with
-the configuration:  
+the configuration:
 
 ::
 
@@ -717,13 +717,13 @@ quite challenging to get this right, and the recommendation is to just stick
 with *one* result file at report step 0 [#]_, in the future the possibility to
 load one keyword ``GEN_DATA`` for multiple report steps will probably be
 removed, but for now the ``GEN_DATA`` configuration is *quite strict* - it will
-fail if the ``RESULT_FILE`` attribute does not contain a ``%d``. 
+fail if the ``RESULT_FILE`` attribute does not contain a ``%d``.
 
 .. [#] The option is called *report step* - but the time aspect is not really
        important. You could just as well see it as an arbitrary label, the only
        important thing is that *if* you have a corresponding ``GEN_OBS``
        observation of this ``GEN_DATA`` vector you must match the report step
-       used when configuring the ``GEN_DATA`` and the ``GEN_OBS``. 
+       used when configuring the ``GEN_DATA`` and the ``GEN_OBS``.
 
 Observe that since the actual result file should be generated by the forward
 model, it is not possible for ERT to fully validate the ``GEN_DATA`` keyword
@@ -757,4 +757,4 @@ Pecularites of EnKF heritage include:
    `GEN_DATA` keywords incorrectly.
 
 
-  
+
