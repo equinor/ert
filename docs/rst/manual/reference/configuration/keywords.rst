@@ -3,7 +3,7 @@
 List of Keywords
 ====================
 
-For your convenience, the description of the keywords in the ERT configuration file 
+For your convenience, the description of the keywords in the ERT configuration file
 are divided into the following groups:
 
 * Basic required keywords not related to parametrization. I.e. keywords giving
@@ -32,67 +32,67 @@ Keyword name                                                        	Required   
 :ref:`DATA_FILE <data_file>`                                        	NO                                         				Provide an ECLIPSE data file for the problem
 :ref:`DATA_KW <data_kw>`                                            	NO                                          				Replace strings in ECLIPSE .DATA files
 :ref:`DEFINE <define>`                                              	NO                                          				Define keywords with config scope
-:ref:`DELETE_RUNPATH <delete_runpath>`                              	NO                                          				Explicitly tell ERT to delete the runpath when a job is complete 
+:ref:`DELETE_RUNPATH <delete_runpath>`                              	NO                                          				Explicitly tell ERT to delete the runpath when a job is complete
 :ref:`ECLBASE <eclbase>`	                                    	YES\*					        			Define a name for the ECLIPSE simulations. \*Either JOBNAME or ECLBASE must be specified
 :ref:`END_DATE <end_date>`                                          	NO                                          				You can tell ERT how long the simulations should be - for error check
 :ref:`ENKF_ALPHA <enkf_alpha>`                                      	NO                    			3.0                  		Parameter controlling outlier behaviour in EnKF algorithm
 :ref:`ENKF_CROSS_VALIDATION <enkf_cross_validation>`                	NO                                                                      Deprecated
 :ref:`ENKF_FORCE_NCOMP <enkf_force_ncomp>`                              NO                    			0                    		Indicate if ERT should force a specific number of principal components
 :ref:`ENKF_MERGE_OBSERVATIONS <enkf_merge_observations>`            	NO                    			FALSE                 		Should observations from many times be merged together?
-:ref:`ENKF_NCOMP <enkf_ncomp>`                                        	NO                    			              			Number of PC to use when forcing a fixed number; used in combination with kw ENKF_FORCE_NCOMP 
+:ref:`ENKF_NCOMP <enkf_ncomp>`                                        	NO                    			              			Number of PC to use when forcing a fixed number; used in combination with kw ENKF_FORCE_NCOMP
 :ref:`ENKF_RERUN <enkf_rerun>`                                      	NO                    			FALSE                 		Should the simulations be restarted from time zero after each update?
 :ref:`ENKF_TRUNCATION <enkf_truncation>`                            	NO                    			0.99        	          	Cutoff used on singular value spectrum
 :ref:`ENSPATH <enspath>`                                            	NO                    			storage     	          	Folder used for storage of simulation results
 :ref:`FIELD <field>`                                                	NO                                          				Adds grid parameters
-:ref:`FORWARD_MODEL <forward_model>`                                	NO                                          				Add the running of a job to the simulation forward model 
+:ref:`FORWARD_MODEL <forward_model>`                                	NO                                          				Add the running of a job to the simulation forward model
 :ref:`GEN_DATA <gen_data>`                                          	NO                                          				Specify a general type of data created/updated by the forward model
-:ref:`GEN_KW <gen_kw>`                                              	NO                                          				Add a scalar parameter 
+:ref:`GEN_KW <gen_kw>`                                              	NO                                          				Add a scalar parameter
 :ref:`GEN_KW_TAG_FORMAT <gen_kw_tag_format>`                        	NO                    			<%s>                  		Format used to add keys in the GEN_KW template files
 :ref:`GEN_PARAM <gen_param>`                                        	NO                                          				Add a general parameter
-:ref:`GRID <grid>`                                                  	NO                                         				Provide an ECLIPSE grid for the reservoir model 
+:ref:`GRID <grid>`                                                  	NO                                         				Provide an ECLIPSE grid for the reservoir model
 :ref:`HISTORY_SOURCE <history_source>`                              	NO                    			REFCASE_HISTORY     	  	Source used for historical values
 :ref:`HOOK_WORKFLOW <hook_workflow>` 					NO 									Install a workflow to be run automatically
 :ref:`INSTALL_JOB <install_job>`                                   	NO                                          				Install a job for use in a forward model
 :ref:`ITER_CASE <iter_Case>`                                        	NO                    			IES%d         	        	Case name format - iterated ensemble smoother
-:ref:`ITER_COUNT <iter_count>`                                      	NO                    			4             	        	Number of iterations - iterated ensemble smoother 
-:ref:`ITER_RETRY_COUNT <iter_retry_count>`                          	NO                    			4         	            	Number of retries for a iteration - iterated ensemble smoother 
+:ref:`ITER_COUNT <iter_count>`                                      	NO                    			4             	        	Number of iterations - iterated ensemble smoother
+:ref:`ITER_RETRY_COUNT <iter_retry_count>`                          	NO                    			4         	            	Number of retries for a iteration - iterated ensemble smoother
 :ref:`JOBNAME <jobname>`                                            	YES\*                                          				Name used for simulation files. \*Either JOBNAME or ECLBASE must be specified
-:ref:`JOB_SCRIPT <job_script>`                                      	NO                                          				Python script managing the forward model 
+:ref:`JOB_SCRIPT <job_script>`                                      	NO                                          				Python script managing the forward model
 :ref:`LOAD_WORKFLOW <load_workflow>` 				    	NO                             						Load a workflow into ERT
-:ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`  			    	NO 									Load a workflow job into ERT 
+:ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`  			    	NO 									Load a workflow job into ERT
 :ref:`LICENSE_PATH <license_path>`  				    	NO 									A path where ert-licenses to e.g. RMS are stored
 :ref:`LOG_FILE <log_file>` 					    	NO 					log 				Name of log file
 :ref:`LOG_LEVEL <log_level>` 					    	NO 		 			WARNING 				How much logging? CRITICAL|DEBUG|ERROR|INFO|WARNING
 :ref:`MAX_RESAMPLE <max_resample>`				    	NO 					1		 		How many times should ERT resample & retry a simulation
-:ref:`MAX_RUNTIME <max_runtime>` 					NO 					0 				Set the maximum runtime in seconds for a realization 
-:ref:`MAX_SUBMIT <max_submit>` 						NO 					2 				How many times should the queue system retry a simulation 
-:ref:`MIN_REALIZATIONS <min_realizations>` 				NO 					0 				Set the number of minimum reservoir realizations to run before long running realizations are stopped. Keyword STOP_LONG_RUNNING must be set to TRUE when MIN_REALIZATIONS are set 
+:ref:`MAX_RUNTIME <max_runtime>` 					NO 					0 				Set the maximum runtime in seconds for a realization
+:ref:`MAX_SUBMIT <max_submit>` 						NO 					2 				How many times should the queue system retry a simulation
+:ref:`MIN_REALIZATIONS <min_realizations>` 				NO 					0 				Set the number of minimum reservoir realizations to run before long running realizations are stopped. Keyword STOP_LONG_RUNNING must be set to TRUE when MIN_REALIZATIONS are set
 :ref:`NUM_CPU <num_cpu>` 							YES 									Set the number of CPUs. Intepretation varies depending on context
-:ref:`NUM_REALIZATIONS <num_realizations>` 				YES 									Set the number of reservoir realizations to use 
-:ref:`OBS_CONFIG <obs_config>` 						NO 									File specifying observations with uncertainties 
+:ref:`NUM_REALIZATIONS <num_realizations>` 				YES 									Set the number of reservoir realizations to use
+:ref:`OBS_CONFIG <obs_config>` 						NO 									File specifying observations with uncertainties
 :ref:`QUEUE_OPTION <queue_option>` 					NO 									Set options for an ERT queue system
 :ref:`QUEUE_SYSTEM <queue_system>` 					NO 									System used for running simulation jobs
 :ref:`REFCASE <refcase>` 						NO 									Reference case used for observations and plotting (See HISTORY_SOURCE and SUMMARY)
-:ref:`REFCASE_LIST <refcase_list>` 					NO 									Full path to Eclipse .DATA files containing completed runs (which you can add to plots) 
+:ref:`REFCASE_LIST <refcase_list>` 					NO 									Full path to Eclipse .DATA files containing completed runs (which you can add to plots)
 :ref:`RERUN_START  <rerun_start>` 					NO 					0 				Deprecated
-:ref:`RESULT_PATH  <result_path>` 					NO 					results/step_%d			Define where ERT should store results 				 
-:ref:`RFTPATH <rftpath>`  						NO 					rft 				Path to where the rft well observations are stored 
+:ref:`RESULT_PATH  <result_path>` 					NO 					results/step_%d			Define where ERT should store results
+:ref:`RFTPATH <rftpath>`  						NO 					rft 				Path to where the rft well observations are stored
 :ref:`RUNPATH <runpath>`  						NO 					simulations/realization%d 	Directory to run simulations
-:ref:`RUNPATH_FILE <runpath_file>`  					NO 					.ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations 
+:ref:`RUNPATH_FILE <runpath_file>`  					NO 					.ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
 :ref:`RUN_TEMPLATE <run_template>`  					NO 									Install arbitrary files in the runpath directory
-:ref:`STD_SCALE_CORRELATED_OBS <std_scale_correlated_obs>`              NO                                      FALSE                           Try to estimate the correlations in the data to inflate the observation std     
+:ref:`STD_SCALE_CORRELATED_OBS <std_scale_correlated_obs>`              NO                                      FALSE                           Try to estimate the correlations in the data to inflate the observation std
 :ref:`SCHEDULE_PREDICTION_FILE <schedule_prediction_file>`  		NO 									Schedule prediction file
-:ref:`SETENV <setenv>`  						NO 									You can modify the UNIX environment with SETENV calls 
+:ref:`SETENV <setenv>`  						NO 									You can modify the UNIX environment with SETENV calls
 :ref:`SIMULATION_JOB <simulation_job>`  				NO 					 				Experimental alternative to FORWARD_MODEL
 :ref:`SINGLE_NODE_UPDATE <single_node_update>`  			NO 					FALSE 				Splits the dataset into individual parameters
-:ref:`STOP_LONG_RUNNING <stop_long_running>`  				NO 					FALSE 				Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run 
+:ref:`STOP_LONG_RUNNING <stop_long_running>`  				NO 					FALSE 				Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run
 :ref:`SUMMARY  <summary>` 						NO 									Add summary variables for internalization
-:ref:`SURFACE <surface>`  						NO 									Surface parameter read from RMS IRAP file 
+:ref:`SURFACE <surface>`  						NO 									Surface parameter read from RMS IRAP file
 :ref:`TIME_MAP  <time_map>`       					NO 									Ability to manually enter a list of dates to establish report step <-> dates mapping
-:ref:`UMASK <umask>`  							NO 									Control the permissions on files created by ERT 
-:ref:`UPDATE_LOG_PATH  <update_log_path>` 				NO 					update_log 			Summary of the update steps are stored in this directory 
+:ref:`UMASK <umask>`  							NO 									Control the permissions on files created by ERT
+:ref:`UPDATE_LOG_PATH  <update_log_path>` 				NO 					update_log 			Summary of the update steps are stored in this directory
 :ref:`UPDATE_PATH  <update_path>` 					NO 									Modify a UNIX path variable like LD_LIBRARY_PATH
-:ref:`WORKFLOW_JOB_DIRECTORY  <workflow_job_directory>` 		NO 									Directory containing workflow jobs 
+:ref:`WORKFLOW_JOB_DIRECTORY  <workflow_job_directory>` 		NO 									Directory containing workflow jobs
 =====================================================================	======================================	============================== 	==============================================================================================================================================
 
 
@@ -106,12 +106,12 @@ These keywords must be set to make ERT function properly.
 .. _data_file:
 .. topic:: DATA_FILE
 
-	Name of the template ECLIPSE data file used to control the simulations. 
-	A modified realization specific version of this file will be prepared by ERT, 
-	named according to :ref:`ECLBASE <ECLBASE>` and copied to the runpath 
+	Name of the template ECLIPSE data file used to control the simulations.
+	A modified realization specific version of this file will be prepared by ERT,
+	named according to :ref:`ECLBASE <ECLBASE>` and copied to the runpath
 	folder.
 
- 	
+
 	*Example:*
 
 	::
@@ -135,27 +135,27 @@ These keywords must be set to make ERT function properly.
 .. _eclbase:
 .. topic:: ECLBASE
 
-	The ECLBASE keyword sets the basename for the ECLIPSE simulations which will 
-	be generated by ERT. It can (and should, for your convenience) contain a %d 
-	specifier, which will be replaced with the realization numbers when running 
-	ECLIPSE. Note that due to limitations in ECLIPSE, the ECLBASE string must be 
+	The ECLBASE keyword sets the basename for the ECLIPSE simulations which will
+	be generated by ERT. It can (and should, for your convenience) contain a %d
+	specifier, which will be replaced with the realization numbers when running
+	ECLIPSE. Note that due to limitations in ECLIPSE, the ECLBASE string must be
 	in strictly upper or lower case.
 
 	*Example:*
 
 	::
-	
+
 		-- Use eclipse/model/MY_VERY_OWN_OIL_FIELD-0 etc. as basename.
-		-- When ECLIPSE is running, the %d will be, replaced with 
+		-- When ECLIPSE is running, the %d will be, replaced with
 		-- realization number, and directories ''eclipse/model''
-		-- will be generated by ERT if they do not already exist, giving: 
-		-- 
+		-- will be generated by ERT if they do not already exist, giving:
+		--
 		-- eclipse/model/MY_VERY_OWN_OIL_FIELD-0
 		-- eclipse/model/MY_VERY_OWN_OIL_FIELD-1
 		-- eclipse/model/MY_VERY_OWN_OIL_FIELD-2
 		-- ...
 		-- and so on.
-  
+
 		ECLBASE eclipse/model/MY_VERY_OWN_OIL_FIELD-%d
 
 	**Note:** JOBNAME can be used as an alternative to ECLBASE.
@@ -173,16 +173,16 @@ These keywords must be set to make ERT function properly.
 
 	This is the name of an existing GRID/EGRID file for your ECLIPSE model. If you
 	had to create a new grid file when preparing your ECLIPSE reservoir model for
-	use with ERT, this should point to the new .EGRID file. The main use of the 
-	grid is to map out active and inactive cells when using FIELD data. If you do 
-	not use FIELD data you do not need the GRID keyword. The grid argument will 
-	only be used by the main ERT application and not passed down to the forward 
+	use with ERT, this should point to the new .EGRID file. The main use of the
+	grid is to map out active and inactive cells when using FIELD data. If you do
+	not use FIELD data you do not need the GRID keyword. The grid argument will
+	only be used by the main ERT application and not passed down to the forward
 	model in any way.
 
 	*Example:*
 
 	::
-	
+
 		-- Load the .EGRID file called MY_GRID.EGRID
   		GRID MY_GRID.EGRID
 
@@ -361,7 +361,7 @@ possible to do with ERT.
 	HISTORY_SOURCE keyword. The different possible values for the
 	HISTORY_SOURCE keyword are:
 
-	
+
 	REFCASE_HISTORY
 	        This is the default value for HISTORY_SOURCE,
 		ERT will fetch the historical values from the *xxxH*
@@ -393,45 +393,45 @@ possible to do with ERT.
 .. topic:: REFCASE
 
     The REFCASE key is used to provide ERT an existing ECLIPSE simulation
-	from which it can read various information at startup. The intention is 
-	to ease the configuration needs for the user. Functionality provided with the 
+	from which it can read various information at startup. The intention is
+	to ease the configuration needs for the user. Functionality provided with the
 	refcase:
 
 	* summary keys are read from the refcase to enable use of wildcards.
 
-	* extract observed values from the refcase using the 
-	  :ref:`HISTORY_OBSERVATION <HISTORY_OBSERVATION>` and 
-	  :ref:`HISTORY_SOURCE <HISTORY_SOURCE>` keys. 
+	* extract observed values from the refcase using the
+	  :ref:`HISTORY_OBSERVATION <HISTORY_OBSERVATION>` and
+	  :ref:`HISTORY_SOURCE <HISTORY_SOURCE>` keys.
 
 
-	The REFCASE keyword should point to an existing ECLIPSE simulation; 
+	The REFCASE keyword should point to an existing ECLIPSE simulation;
 	ert will then look up and load the corresponding summary results.
 
 	*Example:*
 
 	::
 
-		-- The REFCASE keyword points to the datafile of an existing ECLIPSE simulation. 
+		-- The REFCASE keyword points to the datafile of an existing ECLIPSE simulation.
 		REFCASE /path/to/somewhere/SIM_01_BASE.DATA
 
 
-	Please note that the refcase is a common source of frustration for ERT users. The 
-	reason is that ERT indexes summary observation values according to the report steping 
-	of the reservoir simulator. This indexing is extracted by the report steps of the 
-	refcase when staring ERT. Later on when extracting results from forecasted 
-	simulations ERT requires that the indexing is according to that of the refcase. During a 
-	project it is very easy to introduce inconsistencies between the indexing in the 
-	refcase, the forward model and the internalized summary results in storage. 
-	Unfortunately, ERT does not handle this well and leaves the user with cryptical 
+	Please note that the refcase is a common source of frustration for ERT users. The
+	reason is that ERT indexes summary observation values according to the report steping
+	of the reservoir simulator. This indexing is extracted by the report steps of the
+	refcase when staring ERT. Later on when extracting results from forecasted
+	simulations ERT requires that the indexing is according to that of the refcase. During a
+	project it is very easy to introduce inconsistencies between the indexing in the
+	refcase, the forward model and the internalized summary results in storage.
+	Unfortunately, ERT does not handle this well and leaves the user with cryptical
 	error messages.
-	
-	For the time being, it is hence necessary to keep the reporting as defined in the 
-	SCHEDULE section of the refcase and the model used in the project identical. 
 
-	The HISTORY_SOURCE keyword is optional. But if you are to perform model updating, 
-	indexing of summary observations need to be defined. This is either done by the 
+	For the time being, it is hence necessary to keep the reporting as defined in the
+	SCHEDULE section of the refcase and the model used in the project identical.
+
+	The HISTORY_SOURCE keyword is optional. But if you are to perform model updating,
+	indexing of summary observations need to be defined. This is either done by the
 	REFCASE or the :ref:`TIME_MAP <TIME_MAP>` keyord, and the former is recommended.
-   
+
 
 .. _install_job:
 .. topic:: INSTALL_JOB
@@ -531,7 +531,7 @@ possible to do with ERT.
 	the filesystem. Since the number of realisations can be quite high this will
 	easily overflow the commandline buffer; the solution which is used is therefor
 	to let ERT write a reagular file which looks like this::
-	
+
   	        0   /path/to/realisation0   CASE0   iter
   		1   /path/to/realisation1   CASE1   iter
   		...
@@ -565,7 +565,7 @@ Keywords controlling the simulations
 	for a description of this.
 
 	*Example:*
-	
+
 	::
 
 		MIN_REALIZATIONS  20
@@ -580,7 +580,7 @@ Keywords controlling the simulations
         The MIN_REALIZATIONS key is optional, but if it has not been
         set *all* the realisations must succeed.
 
-	Please note that MIN_REALIZATIONS = 0 means all simulations must succeed 
+	Please note that MIN_REALIZATIONS = 0 means all simulations must succeed
 	(this happens to be the default value). Note MIN_REALIZATIONS is rounded up
 	e.g. 2% of 20 realizations is rounded to 1.
 
@@ -621,7 +621,7 @@ Keywords controlling the simulations
 		-- Let each realizations run for 50 seconds
 		MAX_RUNTIME 50
 
-	The MAX_RUNTIME key is optional. 
+	The MAX_RUNTIME key is optional.
 
 
 Parameterization keywords
@@ -680,7 +680,7 @@ and/or history matching project.
 
 	::
 
-		FIELD  ID PARAMETER   <ECLIPSE_FILE>  INIT_FILES:/path/%d  MIN:X MAX:Y OUTPUT_TRANSFORM:FUNC INIT_TRANSFORM:FUNC  
+		FIELD  ID PARAMETER   <ECLIPSE_FILE>  INIT_FILES:/path/%d  MIN:X MAX:Y OUTPUT_TRANSFORM:FUNC INIT_TRANSFORM:FUNC
 
 	Here ID is again an arbitrary string, ECLIPSE_FILE is the name of the file ERT
 	will export this field to when running simulations. Note that there
@@ -691,7 +691,7 @@ and/or history matching project.
 
 	The input arguments MIN, MAX, INIT_TRANSFORM and OUTPUT_TRANSFORM are all
 	optional. MIN and MAX are as for dynamic fields.
-	
+
 	For Assisted history matching, the variables in ERT should be normally
 	distributed internally - the purpose of the transformations is to enable
 	working with normally distributed variables internally in ERT. Thus, the
@@ -701,7 +701,7 @@ and/or history matching project.
 	OUTPUT_TRANSFORM:FUNC is a function which will be applied to the field when it
 	is exported from ERT, and FUNC is the name of a transformation function to be
 	applied. The avaialble functions are listed below:
-	
+
 	| "POW10"			: This function will raise x to the power of 10: :math:`y = 10^x`
 	| "TRUNC_POW10"	: This function will raise x to the power of 10 - and truncate lower values at 0.001.
 	| "LOG"			: This function will take the NATURAL logarithm of :math:`x: y = \ln{x}`
@@ -758,11 +758,11 @@ and/or history matching project.
 
 	::
 
-		GEN_DATA  ID RESULT_FILE:yyy INPUT_FORMAT:xx  REPORT_STEPS:10,20  ECL_FILE:xxx  OUTPUT_FORMAT:xx  INIT_FILES:/path/files%d TEMPLATE:/template_file TEMPLATE_KEY:magic_string 
+		GEN_DATA  ID RESULT_FILE:yyy INPUT_FORMAT:xx  REPORT_STEPS:10,20  ECL_FILE:xxx  OUTPUT_FORMAT:xx  INIT_FILES:/path/files%d TEMPLATE:/template_file TEMPLATE_KEY:magic_string
 
 	The GEN_DATA keyword has many options; in many cases you can leave many of
 	them off. We therefore list the required and the optional options separately:
-	
+
 	**Required GEN_DATA options**
 
 	* RESULT_FILE - This is the name of the file generated by the forward model and read by ERT. This filename _must_ have a %d as part of the name, that %d will be replaced by report step when loading.
@@ -839,7 +839,7 @@ and/or history matching project.
 		MULTPV
 		 300*<MULTPV_BOX1> /
 		ENDBOX
-	
+
 		BOX
 		 1 10 1 30 14 14 /
 		MULTPV
@@ -860,7 +860,7 @@ and/or history matching project.
 	is replaced with a value. The rest of the line defines a prior distribution
 	for the key. See Prior distributions available in ERT for a list of available
 	prior distributions.
-	
+
 	**Example: Using GEN_KW to estimate fault transmissibility multipliers**
 
 	Previously ERT supported a datatype MULTFLT for estimating fault
@@ -890,7 +890,7 @@ and/or history matching project.
 		FAULT1   LOGUNIF   0.00001   0.1
 		FAULT2   UNIFORM   0.00      1.0
 
-                
+
 	Loading GEN_KW values from an external file
 
 	The default use of the GEN_KW keyword is to let the ERT application sample
@@ -918,7 +918,7 @@ and/or history matching project.
 
 	The numbers will be assigned to parameters in the order found in the
 	MULTFLT.txt file.
-	
+
 	2. Alternatively values and keywords can be interleaved as in:
 
 	::
@@ -927,7 +927,7 @@ and/or history matching project.
 		FAULT2 2.56
 
 	in this case the ordering can differ in the init files and the parameter file.
-	
+
 	The heritage of the ERT program is based on the EnKF algorithm, and the EnKF
 	algorithm evolves around Gaussian variables - internally the GEN_KW variables
 	are assumed to be samples from the N(0,1) distribution, and the distributions
@@ -953,7 +953,7 @@ and/or history matching project.
 
 	::
 
-		GEN_PARAM  ID  ECLIPSE_FILE  INPUT_FORMAT:xx  OUTPUT_FORMAT:xx  INIT_FILES:/path/to/init/files%d (TEMPLATE:/template_file KEY:magic_string)   
+		GEN_PARAM  ID  ECLIPSE_FILE  INPUT_FORMAT:xx  OUTPUT_FORMAT:xx  INIT_FILES:/path/to/init/files%d (TEMPLATE:/template_file KEY:magic_string)
 
 	here ID is the usual unique string identifying this instance and ECLIPSE_FILE
 	is the name of the file which is written into the run directories. The three
@@ -1032,7 +1032,7 @@ and/or history matching project.
 
 	::
 
-		SURFACE TOP   OUTPUT_FILE:surf.irap   INIT_FILES:Surfaces/surf%d.irap   BASE_SURFACE:Surfaces/surf0.irap 
+		SURFACE TOP   OUTPUT_FILE:surf.irap   INIT_FILES:Surfaces/surf%d.irap   BASE_SURFACE:Surfaces/surf0.irap
 
 	The first argument, TOP in the example above, is the identifier you want to
 	use for this surface in ERT. The OUTPUT_FILE key is the name of surface file
@@ -1117,7 +1117,7 @@ and/or history matching project.
 	are selected. Observe that if your summary key contains wildcards you must
 	supply a refcase with the REFCASE key - otherwise it will fail hard.
 
-	**Note:** Properties added using the SUMMARY keyword are only diagnostic. I.e. they have no effect on the sensitivity analysis or history match. 
+	**Note:** Properties added using the SUMMARY keyword are only diagnostic. I.e. they have no effect on the sensitivity analysis or history match.
 
 
 .. _keywords_controlling_the_es_algorithm:
@@ -1244,7 +1244,7 @@ Keywords controlling the ES algorithm
 	algorithm if and only if the covariance matrix for the observation errors is
 	proportional to the identity matrix.
 
-        
+
 .. _std_scale_correlated_obs:
 .. topic:: STD_SCALE_CORRELATED_OBS
 
@@ -1265,7 +1265,7 @@ Keywords controlling the ES algorithm
         write your own plugins.
 
 
-        
+
 .. _update_log_path:
 .. topic:: UPDATE_LOG_PATH
 
@@ -1300,17 +1300,17 @@ Keywords controlling the ES algorithm
    	STD_CUTOFF If the ensemble variation for one particular measurment is below
         this limit the observation will be deactivated. The default value for
         this cutoff is 1e-6.
-      
+
         Observe that for the updates many settings should be applied on the analysis
         module in question.
-   
+
 
 
 **References**
 
 * Evensen, G. (2007). "Data Assimilation, the Ensemble Kalman Filter", Springer.
 * Mardia, K. V., Kent, J. T. and Bibby, J. M. (1979). "Multivariate Analysis", Academic Press.
-* Saetrom, J. and Omre, H. (2010). "Ensemble Kalman filtering with shrinkage regression techniques", Computational Geosciences (online first). 
+* Saetrom, J. and Omre, H. (2010). "Ensemble Kalman filtering with shrinkage regression techniques", Computational Geosciences (online first).
 
 
 Analysis module
@@ -1446,7 +1446,7 @@ Advanced optional keywords
 --------------------------
 .. _advanced_optional_keywords:
 
-The keywords in this section, controls advanced features of ERT. Insight in 
+The keywords in this section, controls advanced features of ERT. Insight in
 the internals of ERT and/or ECLIPSE may
 be required to fully understand their effect. Moreover, many of these keywords
 are defined in the site configuration, and thus optional to set for the user,
@@ -1508,7 +1508,7 @@ but required when installing ERT at a new site.
 		01/01/2001
 		01/07/2001
 
-	
+
 
 .. _schedule_prediction_file:
 .. topic:: SCHEDULE_PREDICTION_FILE
@@ -1552,9 +1552,9 @@ Keywords related to running the forward model
 
 	::
 
-		-- Suppose that "MY_RELPERM_SCRIPT" and "MY_ROCK_PHYSICS_MODEL" 
-		-- has been defined with the INSTALL_JOB keyword. 
-		-- This FORWARD_MODEL will execute "MY_RELPERM_SCRIPT", then 
+		-- Suppose that "MY_RELPERM_SCRIPT" and "MY_ROCK_PHYSICS_MODEL"
+		-- has been defined with the INSTALL_JOB keyword.
+		-- This FORWARD_MODEL will execute "MY_RELPERM_SCRIPT", then
 		-- "ECLIPSE100" and in the end "MY_ROCK_PHYSICS_MODEL".
 		FORWARD_MODEL MY_RELPERM_SCRIPT ECLIPSE100 MY_ROCK_PHYSICS_MODEL
 
@@ -2264,7 +2264,7 @@ instance, and are not applied to the shell.
 
 	The whole thing is just a workaround because we can not use $PATH.
 
-           
+
 .. _umask:
 .. topic:: UMASK
 
