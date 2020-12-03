@@ -3,7 +3,7 @@ import ert3
 import argparse
 from pathlib import Path
 import sys
-
+import yaml
 
 _ERT3_DESCRIPTION = (
     "ert3 is an ensemble-based tool for uncertainty studies.\n"
@@ -62,7 +62,10 @@ def _build_argparser():
 
 def _run(workspace, args):
     assert args.sub_cmd == "run"
-    ert3.engine.run(workspace, args.experiment_name)
+    ert3.workspace.assert_experiment_exists(workspace, args.experiment_name)
+    ensemble = _load_ensemble_config(workspace, args.experiment_name)
+    stages_config = _load_stages_config(workspace)
+    ert3.engine.run(ensemble, stages_config, workspace, args.experiment_name)
 
 
 def _export(workspace, args):
@@ -98,6 +101,7 @@ def main():
 
     # Commands that does requires an ert workspace
     workspace = ert3.workspace.load(Path.cwd())
+
     if workspace is None:
         sys.exit("Not inside an ERT workspace")
 
@@ -109,3 +113,13 @@ def main():
         _record(workspace, args)
     else:
         raise NotImplementedError(f"No implementation to handle command {args.sub_cmd}")
+
+
+def _load_ensemble_config(workspace, experiment_name):
+    with open(workspace / experiment_name / "ensemble.yml") as f:
+        return ert3.config.load_ensemble_config(yaml.safe_load(f))
+
+
+def _load_stages_config(workspace):
+    with open(workspace / "stages.yml") as f:
+        return ert3.config.load_stages_config(yaml.safe_load(f))
