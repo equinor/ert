@@ -1,6 +1,7 @@
 import pytest
 
 from ert3.evaluator import evaluate
+from ert3.evaluator.poly import polynomial
 
 
 @pytest.mark.parametrize(
@@ -25,5 +26,7 @@ def test_evaluator(coeffs, expected, tmpdir):
         realizations = [
             {"coefficients": {"a": a, "b": b, "c": c}} for (a, b, c) in coeffs
         ]
-        data = [data["polynomial_output"] for data in evaluate(realizations)]
+        data = [
+            data["polynomial_output"] for data in evaluate(realizations, polynomial)
+        ]
         assert data == expected

@@ -1,7 +1,5 @@
 import ert3
 
-import yaml
-
 
 def _persist_variables(
     record_name, record_source, ensemble_size, experiment_name, workspace_root
@@ -34,19 +32,15 @@ def _add_record(records, record_name, record):
         ens_records[record_name] = new_record
 
 
-def _load_input_records(workspace_root, experiment_name):
-    with open(workspace_root / experiment_name / "ensemble.yml") as f:
-        ensemble = yaml.safe_load(f)
+def _load_input_records(ensemble, workspace_root, experiment_name):
 
-    ensemble_size = ensemble["size"]
-
-    records = [{} for _ in range(ensemble_size)]
-    for input_record in ensemble["input"]:
-        record_name = input_record["record"]
-        record_source = input_record["source"].split(".")
+    records = [{} for _ in range(ensemble.size)]
+    for input_record in ensemble.input:
+        record_name = input_record.record
+        record_source = input_record.source.split(".")
 
         var_name = _persist_variables(
-            record_name, record_source, ensemble_size, experiment_name, workspace_root
+            record_name, record_source, ensemble.size, experiment_name, workspace_root
         )
 
         input_record = ert3.storage.get_variables(workspace_root, var_name)
@@ -54,15 +48,25 @@ def _load_input_records(workspace_root, experiment_name):
     return records
 
 
-def run(workspace_root, experiment_name):
-    ert3.workspace.assert_experiment_exists(workspace_root, experiment_name)
+def _create_forward_model(stages_config, ensemble):
+    # For now we only allow one stage with one function
+    # So will fail quite hard if these constraints are not met
+    # TODO: Allow different stages and removing asserts.
+    assert len(ensemble.forward_model.stages) == 1
+    assert len(stages_config) == 1
+    forward_model = stages_config.step_from_key(ensemble.forward_model.stages[0]).script
+    assert len(forward_model) == 1
+    return forward_model[0]
+
+
+def run(ensemble, stages_config, workspace_root, experiment_name):
     if ert3.workspace.experiment_have_run(workspace_root, experiment_name):
         raise ValueError(f"Experiment {experiment_name} have been carried out.")
 
     ert3.storage.init_experiment(workspace_root, experiment_name)
 
-    input_records = _load_input_records(workspace_root, experiment_name)
+    input_records = _load_input_records(ensemble, workspace_root, experiment_name)
     ert3.storage.add_input_data(workspace_root, experiment_name, input_records)
-
-    response = ert3.evaluator.evaluate(input_records)
+    func = _create_forward_model(stages_config, ensemble)
+    response = ert3.evaluator.evaluate(input_records, func)
     ert3.storage.add_output_data(workspace_root, experiment_name, response)

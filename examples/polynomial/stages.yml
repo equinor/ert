@@ -10,4 +10,4 @@
       record: polynomial_output
       location: output.json
   script:
-    - evaluate_polynomial
+    - ert3.evaluator.poly:polynomial
