@@ -368,12 +368,12 @@ def test_cli_run_presampled(tmpdir):
     with unittest.mock.patch.object(sys, "argv", args):
         ert3.console.main()
 
-    args = ["ert3", "record", "sample", "coefficients", "coefficients0", "1000"]
+    args = ["ert3", "record", "sample", "coefficients", "coefficients0", "10"]
     with unittest.mock.patch.object(sys, "argv", args):
         ert3.console.main()
 
     coeff0 = ert3.storage.get_variables(workspace, "coefficients0")
-    assert 1000 == len(coeff0)
+    assert 10 == len(coeff0)
     for real_coeff in coeff0:
         assert sorted(("a", "b", "c")) == sorted(real_coeff.keys())
         for val in real_coeff.values():
@@ -414,13 +414,13 @@ def test_cli_run_uniform_presampled(tmpdir):
         "sample",
         "uniform_coefficients",
         "uniform_coefficients0",
-        "1000",
+        "10",
     ]
     with unittest.mock.patch.object(sys, "argv", args):
         ert3.console.main()
 
     uniform_coeff0 = ert3.storage.get_variables(workspace, "uniform_coefficients0")
-    assert 1000 == len(uniform_coeff0)
+    assert 10 == len(uniform_coeff0)
     for real_coeff in uniform_coeff0:
         assert sorted(("a", "b", "c")) == sorted(real_coeff.keys())
         for val in real_coeff.values():
