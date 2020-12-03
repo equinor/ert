@@ -252,16 +252,20 @@ def _assert_export(workspace, experiment_name):
     _assert_parameter_statistics(config, export_data)
 
 
-def _find(keypath, content):
+def _update_keypath(keypath, content, value):
     keys = keypath.split(".")
     elem = content
-    for key in keys:
+    for i, key in enumerate(keys):
         try:
             key = int(key)
         except ValueError:
             pass
+
+        if (i + 1) == len(keys):
+            elem[key] = value
+            return
+
         elem = elem[key]
-    return elem
 
 
 def _update_content(fname, updates):
@@ -278,8 +282,7 @@ def _update_content(fname, updates):
     with open(fname) as f:
         content = yaml.safe_load(f)
     for keypath, value in updates:
-        elem = _find(keypath, content)
-        elem = value
+        _update_keypath(keypath, content, value)
     with open(fname, "w") as f:
         yaml.safe_dump(content, f)
 
