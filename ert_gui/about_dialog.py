@@ -48,13 +48,6 @@ class AboutDialog(QDialog):
 
     def createTopLayout(self):
         top_layout = QHBoxLayout()
-
-        image_label = QLabel()
-        image = resourceImage("splash.png")
-        image_label.setPixmap(image.scaled(200, 240, Qt.KeepAspectRatio))
-
-        top_layout.addWidget(image_label)
-
         top_layout.addLayout(self.createInfoLayout(), 1)
 
         return top_layout

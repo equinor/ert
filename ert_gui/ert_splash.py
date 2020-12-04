@@ -24,14 +24,11 @@ class ErtSplash(QSplashScreen):
         y = screen_height // 2 - splash_height // 2
         self.setGeometry(x, y, splash_width, splash_height)
 
-
-        self.splash_image = resourceImage("splash.png")
-
         self.ert = "ERT"
         self.ert_title = "Ensemble based Reservoir Tool"
         self.version = version_string
         self.timestamp = "Timestamp string"
-        
+
 
     def drawContents(self, painter):
         """ @type painter: QPainter """
@@ -56,21 +53,9 @@ class ErtSplash(QSplashScreen):
         painter.setPen(pen)
         painter.drawRect(0, 0, w - 1, h - 1)
 
-        image_width = self.splash_image.width()
-        image_height = self.splash_image.height()
-        aspect = 1.0
-        if image_height:
-            aspect = float(image_width) / float(image_height)
-
-        scaled_height = h - 2 * margin
-        scaled_width = round(scaled_height * aspect)
-
-        painter.drawRect(margin, margin, scaled_width, scaled_height)
-        painter.drawPixmap(margin, margin, scaled_width, scaled_height, self.splash_image)
-
-        text_x = scaled_width + 2 * margin
+        text_x = 2 * margin
         top_offset = margin
-        text_area_width = w - scaled_width - 2 * margin
+        text_area_width = w - 2 * margin
 
         painter.setPen(text_color)
 
