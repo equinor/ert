@@ -5,8 +5,8 @@ from ert_shared.ensemble_evaluator.entity.function_ensemble import (
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 
 
-def evaluate(inputs, fun):
-    ensemble = create_function_ensemble(fun=fun, inputs=inputs, executor="local")
+def evaluate(inputs, fun, executor):
+    ensemble = create_function_ensemble(fun=fun, inputs=inputs, executor=executor)
 
     config = evaluator_config.load_config()
     ee = EnsembleEvaluator(ensemble=ensemble, config=config)
