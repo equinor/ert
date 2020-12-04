@@ -79,22 +79,22 @@ class EnsembleEvaluator:
 
     @_dispatch.register_event_handler(identifiers.EVGROUP_FM_ALL)
     async def _fm_handler(self, event):
-        snapshot_mutate_event = PartialSnapshot.from_cloudevent(event, self._snapshot)
+        snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(event)
         await self._send_snapshot_update(snapshot_mutate_event)
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STOPPED)
     async def _ensemble_stopped_handler(self, event):
-        snapshot_mutate_event = PartialSnapshot.from_cloudevent(event, self._snapshot)
+        snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(event)
         await self._send_snapshot_update(snapshot_mutate_event)
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STARTED)
     async def _ensemble_started_handler(self, event):
-        snapshot_mutate_event = PartialSnapshot.from_cloudevent(event, self._snapshot)
+        snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(event)
         await self._send_snapshot_update(snapshot_mutate_event)
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_CANCELLED)
     async def _ensemble_cancelled_handler(self, event):
-        snapshot_mutate_event = PartialSnapshot.from_cloudevent(event, self._snapshot)
+        snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(event)
         await self._send_snapshot_update(snapshot_mutate_event)
         self._stop()
 
@@ -236,13 +236,7 @@ class EnsembleEvaluator:
         self._ws_thread.join()
 
     def get_successful_realizations(self):
-        successful_reals = 0
-        for real in self._snapshot.to_dict()["reals"].values():
-            for stage in real["stages"].values():
-                if stage["status"] != "Finished":
-                    break
-                successful_reals += 1
-        return successful_reals
+        return self._snapshot.get_successful_realizations()
 
     def run_and_get_successful_realizations(self):
         mon = self.run()

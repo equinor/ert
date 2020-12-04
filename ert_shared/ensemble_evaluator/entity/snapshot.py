@@ -38,8 +38,9 @@ logger = logging.getLogger(__name__)
 
 
 class PartialSnapshot:
-    def __init__(self, status=None):
+    def __init__(self, snapshot):
         self._data = {"reals": {}}
+        self._snapshot = snapshot
 
     def update_status(self, status):
         self._data["status"] = status
@@ -72,6 +73,17 @@ class PartialSnapshot:
         if stage_id not in real["stages"]:
             real["stages"][stage_id] = {"steps": {}}
         stage = real["stages"][stage_id]
+        if status == "Finished":
+            real_finished = True
+            for snapshot_stage_id, snapshot_stage in self._snapshot.all_stages(real_id).items():
+                if snapshot_stage_id != stage_id:
+                    if snapshot_stage["status"] != "Finished":
+                        real_finished = False
+                        break
+            if real_finished:
+                self.update_real(real_id, queue_state="JOB_QUEUE_DONE")
+        if status == "Failed":
+            self.update_real(real_id, queue_state="JOB_QUEUE_FAILED")
 
         if status is not None:
             stage["status"] = status
@@ -85,6 +97,18 @@ class PartialSnapshot:
         self, real_id, stage_id, step_id, status=None, start_time=None, end_time=None
     ):
         stage = self.update_stage(real_id, stage_id)
+        if status == "Finished":
+            stage_finished = True
+            for snapshot_step_id, snapshot_step in self._snapshot.all_steps(real_id, stage_id).items():
+                if snapshot_step_id != step_id:
+                    if snapshot_step["status"] != "Finished":
+                        stage_finished = False
+                        break
+            if stage_finished:
+                self.update_stage(real_id, stage_id, "Finished")
+        elif status == "Failed":
+            self.update_stage(real_id, stage_id, "Failed")
+
         if step_id not in stage["steps"]:
             stage["steps"][step_id] = {"jobs": {}}
         step = stage["steps"][step_id]
@@ -128,22 +152,19 @@ class PartialSnapshot:
         if error is not None:
             job["error"] = error
 
-
         return job
 
     def to_dict(self):
         return self._data
 
-    @classmethod
-    def from_cloudevent(cls, event, current_snapshot):
-        snapshot = cls()
+    def from_cloudevent(self, event):
         e_type = event["type"]
         e_source = event["source"]
         status = _FM_TYPE_EVENT_TO_STATUS.get(e_type)
         timestamp = event["time"]
 
         if e_type in ids.EVGROUP_FM_STAGE:
-            snapshot.update_stage(
+            self.update_stage(
                 get_real_id(e_source),
                 get_stage_id(e_source),
                 status=status,
@@ -152,12 +173,8 @@ class PartialSnapshot:
                 if e_type in {ids.EVTYPE_FM_STAGE_FAILURE, ids.EVTYPE_FM_STAGE_SUCCESS}
                 else None,
             )
-            snapshot.update_real(
-                get_real_id(e_source),
-                queue_state=event.data.get("queue_event_type"),
-            )
         elif e_type in ids.EVGROUP_FM_STEP:
-            snapshot.update_step(
+            self.update_step(
                 get_real_id(e_source),
                 get_stage_id(e_source),
                 get_step_id(e_source),
@@ -171,27 +188,9 @@ class PartialSnapshot:
                 }
                 else None,
             )
-            if status == "Failed":
-                snapshot.update_real(
-                    get_real_id(e_source),
-                    queue_state="JOB_QUEUE_FAILED"
-                )
-
-            if status == "Finished":
-                real_finished = True
-                for step_id, step in current_snapshot.get_steps_for_real(get_real_id(e_source)):
-                    if step_id != get_step_id(e_source):
-                        if step["status"] != "Finished":
-                            real_finished = False
-                            break
-                if real_finished:
-                    snapshot.update_real(
-                        get_real_id(e_source),
-                        queue_state="JOB_QUEUE_DONE"
-                    )
 
         elif e_type in ids.EVGROUP_FM_JOB:
-            snapshot.update_job(
+            self.update_job(
                 get_real_id(e_source),
                 get_stage_id(e_source),
                 get_step_id(e_source),
@@ -206,18 +205,19 @@ class PartialSnapshot:
                 }
                 else None,
                 data=event.data if e_type == ids.EVTYPE_FM_JOB_RUNNING else None,
-                error=event.data["stderr"] if e_type == ids.EVTYPE_FM_JOB_FAILURE else None,
+                error=event.data.get("stderr") if e_type == ids.EVTYPE_FM_JOB_FAILURE else None,
             )
+            # TODO See what to do about logging
             # if status == "Failed":
             #     logger.error(event.data["stderr"])
             #     logger.info(event.data["stdout"])
             # if status == "Finished":
-                # logger.info(event.data["stdout"])
+            #     logger.info(event.data["stdout"])
         elif e_type in ids.EVGROUP_ENSEMBLE:
-            snapshot.update_status(_ENSEMBLE_TYPE_EVENT_TO_STATUS[e_type])
+            self.update_status(_ENSEMBLE_TYPE_EVENT_TO_STATUS[e_type])
         else:
             raise ValueError("Unknown type: {}".format(e_type))
-        return snapshot
+        return self
 
 
 class Snapshot:
@@ -252,18 +252,28 @@ class Snapshot:
             raise ValueError(f"No step with id {step_id} in {stage_id}")
         return steps[step_id]
 
-    def get_steps_for_real(self, real_id):
-        real = self.get_real(real_id)
-        for stage in real["stages"].values():
-            for step in stage["steps"].items():
-                yield step
-
     def get_job(self, real_id, stage_id, step_id, job_id):
         step = self.get_step(real_id, stage_id, step_id)
         jobs = step["jobs"]
         if job_id not in jobs:
             raise ValueError(f"No job with id {job_id} in {step_id}")
         return jobs[job_id]
+
+    def all_stages(self, real_id):
+        real = self.get_real(real_id)
+        return real["stages"]
+
+    def all_steps(self, real_id, stage_id):
+        stage = self.get_stage(real_id, stage_id)
+        return stage["steps"]
+
+    def all_jobs_finished(self, real_id, stage_id, step_id):
+        step = self.get_step(real_id, stage_id, step_id)
+        jobs_finished = [job["status"] == "Finished" for job in step["jobs"].values()]
+        return all(jobs_finished)
+
+    def get_successful_realizations(self):
+        return len([real for real in self.to_dict()["reals"].values() if real["queue_state"] == "JOB_QUEUE_DONE"])
 
 
 class _JobDetails(BaseModel):

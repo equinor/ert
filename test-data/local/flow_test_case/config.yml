@@ -55,8 +55,8 @@ stages:
 
 
 
-realizations: 20
-max_running: 5
+realizations: 5
+max_running: 2
 run_path: my_output
 storage:
   type: shared_disk

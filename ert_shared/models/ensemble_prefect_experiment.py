@@ -10,6 +10,7 @@ import uuid
 class EnsemblePrefectExperiment:
     def __init__(self):
         self._start_time = time.time()
+        self._stop_time = None
         self.initial_realizations_mask = []
         self.completed_realizations_mask = []
         self.support_restart = False
@@ -32,11 +33,14 @@ class EnsemblePrefectExperiment:
         ee_id = str(uuid.uuid1()).split("-")[0]
         ee = EnsembleEvaluator(ensemble, ee_config, ee_id=ee_id)
         self._queue_running = True
-        ee.run()
+        ee.run_and_get_successful_realizations()
         self._queue_running = False
+        self._stop_time = time.time()
         ee.stop()
 
     def get_runtime(self):
+        if self.isFinished():
+            return self._stop_time - self._start_time
         return time.time() - self._start_time
 
     def currentPhase(self):

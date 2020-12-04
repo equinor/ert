@@ -70,14 +70,14 @@ def _create_snapshot():
 def test_snapshot_merge():
     snapshot = _create_snapshot()
 
-    update_event = PartialSnapshot()
+    update_event = PartialSnapshot(snapshot)
     update_event.update_status(status="running")
 
     snapshot.merge_event(update_event)
 
     assert snapshot.get_status() == "running"
 
-    update_event = PartialSnapshot()
+    update_event = PartialSnapshot(snapshot)
     update_event.update_job(
         real_id="1",
         stage_id="0",

@@ -8,47 +8,41 @@ from functools import partial
 from cloudevents.http import to_json, CloudEvent
 from prefect import Flow, Task
 from prefect.engine.executors import DaskExecutor
-
+import threading
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     _Ensemble, _BaseJob, _Step, _Stage, _Realization)
 
 
-def storage_driver_factory(iens, config, run_path):
+def storage_driver_factory(config, run_path):
     if config.get("storage"):
         if config["storage"].get("type") == "shared_disk":
             storage_path = config["storage"]["storage_path"]
-            return SharedDiskStorageDriver(iens, storage_path, run_path)
+            return SharedDiskStorageDriver(storage_path, run_path)
         else:
             raise ValueError(f"Not a valid storage type. ({config['storage'].get('type')})")
     else:
         # default
         storage_path = os.path.join(os.getcwd(), "storage_folder")
-        return SharedDiskStorageDriver(iens, storage_path, run_path)
+        return SharedDiskStorageDriver(storage_path, run_path)
 
 
 class SharedDiskStorageDriver:
-    LOCAL=1
-    GLOBAL=2
-
-    def __init__(self, iens, storage_path, run_path):
-        self._iens = iens
+    def __init__(self, storage_path, run_path):
         self._storage_path = storage_path
-        self._run_path = f"{run_path}/{iens}"
+        self._run_path = f"{run_path}"
 
-    def get_storage_path(self, res_type):
-        if res_type == self.LOCAL:
-            return f"{self._storage_path}/{self._iens}"
-        if res_type == self.GLOBAL:
+    def get_storage_path(self, iens):
+        if iens is None:
             return f"{self._storage_path}/global"
+        return f"{self._storage_path}/{iens}"
 
-    def store(self, local_name, res_type):
-        storage_path = self.get_storage_path(res_type)
+    def store(self, local_name, iens=None):
+        storage_path = self.get_storage_path(iens)
         os.makedirs(storage_path, exist_ok=True)
         storage_uri = os.path.join(storage_path, local_name)
-        if not os.path.exists(storage_uri) or res_type==self.LOCAL:
-            shutil.copyfile(os.path.join(self._run_path, local_name), storage_uri)
+        shutil.copyfile(os.path.join(self._run_path, local_name), storage_uri)
         return storage_uri
 
     def retrieve(self, storage_uri):
@@ -97,7 +91,7 @@ class RunProcess(Task):
             c.send(to_json(event).decode())
             run_path = os.path.join(self._runtime_config["run_path"], str(self._iens))
 
-            storage = storage_driver_factory(self._iens, self._runtime_config, self._runtime_config["run_path"])
+            storage = storage_driver_factory(self._runtime_config, run_path)
             os.makedirs(run_path, exist_ok=True)
 
             expected_res += self._resources
@@ -135,7 +129,7 @@ class RunProcess(Task):
                                                "stdout": cmd_exec.stdout}
                                          )
                     c.send(to_json(event).decode())
-                    raise RuntimeError(f"Script {job['name']} filed with exception {cmd_exec.stderr}")
+                    raise RuntimeError(f"Script {job['name']} failed with exception {cmd_exec.stderr}")
 
                 event = _cloud_event(event_type=ids.EVTYPE_FM_JOB_SUCCESS,
                                      fm_type="job",
@@ -151,7 +145,7 @@ class RunProcess(Task):
                 if not os.path.exists(os.path.join(run_path, output)):
                     exec_metadata["error"] = f"Output file {output} was not generated!"
 
-                storage.store(output, storage.LOCAL)
+                storage.store(output, self._iens)
 
             event = _cloud_event(event_type=ids.EVTYPE_FM_STEP_SUCCESS,
                                  fm_type="step",
@@ -163,21 +157,19 @@ class RunProcess(Task):
         return exec_metadata
 
 
-def _build_source(fm_type, real_id, stage_id=None,  step_id=None, job_id=None):
+def _build_source(fm_type, real_id=None, stage_id=None,  step_id=None, job_id=None):
     source_map = {
         "stage": f"/ert/ee/0/real/{real_id}/stage/{stage_id}",
         "step": f"/ert/ee/0/real/{real_id}/stage/{stage_id}/step/{step_id}",
         "job": f"/ert/ee/0/real/{real_id}/stage/{stage_id}/step/{step_id}/job/{job_id}",
+        "ensemble": "/ert/ee/0"
     }
     return source_map.get(fm_type, f"/ert/ee/0")
 
 
-def _cloud_event(event_type, fm_type, real_id, stage_id=None, step_id=None, job_id=None, data=None):
+def _cloud_event(event_type, fm_type, real_id=None, stage_id=None, step_id=None, job_id=None, data=None):
     if data is None:
         data = {}
-    if fm_type == "stage":
-        data.update({"queue_event_type": ""})
-
     return CloudEvent(
         {
             "type": event_type,
@@ -191,18 +183,18 @@ def _cloud_event(event_type, fm_type, real_id, stage_id=None, step_id=None, job_
 def gen_coef(parameters, real, config):
     data = {}
     paths = {}
+    storage = storage_driver_factory(config, "coeff")
     for iens in range(real):
         for name, elements in parameters.items():
             for element in elements:
                 start, end = element["args"]
                 data[element["name"]] = uniform(start, end)
-        os.makedirs(f"coeff/{iens}", exist_ok=True)
+        os.makedirs(f"coeff", exist_ok=True)
         file_name = f"coeffs.json"
-        file_path = os.path.join("coeff", str(iens), file_name)
+        file_path = os.path.join("coeff", file_name)
         with open(file_path, "w") as f:
             json.dump(data, f)
-        storage = storage_driver_factory(iens, config, "coeff")
-        paths[iens] = storage.store(file_name, SharedDiskStorageDriver.LOCAL)
+        paths[iens] = storage.store(file_name, iens)
     return paths
 
 
@@ -249,6 +241,7 @@ class PrefectEnsemble(_Ensemble):
                 step_id=task.get_step_id()
             )
             c.send(to_json(event).decode())
+            # TODO Maybe send also step Failure and realization Failure messages
 
     def get_id(self, iens, stage_name, step_name=None, job_index=None):
         real = next(x for x in self._reals if x.get_iens() == iens)
@@ -322,22 +315,34 @@ class PrefectEnsemble(_Ensemble):
         #     cluster_kwargs=cluster_kwargs,
         #     debug=True,
         # )
+
+        evaluate_thread = threading.Thread(target=self._evaluate, args=(config, ee_id))
+        evaluate_thread.start()
+
+    def _evaluate(self, config, ee_id):
         dispatch_url = f"ws://{config.get('host')}:{config.get('port')}/dispatch"
         coef_input_files = gen_coef(self.config["parameters"], self.config["realizations"], self.config)
 
         real_per_batch = self.config["max_running"]
         real_range = range(self.config["realizations"])
 
-        storage = storage_driver_factory(0, self.config, ".")
+        storage = storage_driver_factory(self.config, self.config.get("config_path", "."))
         for stage in self.config["stages"]:
             for step in stage["steps"]:
                 res_list = []
                 for res in step["resources"]:
-                    res_list.append(storage.store(res, SharedDiskStorageDriver.GLOBAL))
+                    res_list.append(storage.store(res))
                 step["resources"] = res_list
 
         i = 0
         while i < self.config["realizations"]:
             self.run_flow(dispatch_url, coef_input_files, real_range[i:i+real_per_batch])
             i = i + real_per_batch
+
+        with Client(dispatch_url) as c:
+            event = _cloud_event(
+                event_type=ids.EVTYPE_ENSEMBLE_STOPPED,
+                fm_type="ensemble"
+            )
+            c.send(to_json(event).decode())
 
