@@ -27,6 +27,7 @@ def test_evaluator(coeffs, expected, tmpdir):
             {"coefficients": {"a": a, "b": b, "c": c}} for (a, b, c) in coeffs
         ]
         data = [
-            data["polynomial_output"] for data in evaluate(realizations, polynomial)
+            data["polynomial_output"]
+            for data in evaluate(realizations, polynomial, "local")
         ]
         assert data == expected

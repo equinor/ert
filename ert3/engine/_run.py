@@ -68,5 +68,7 @@ def run(ensemble, stages_config, workspace_root, experiment_name):
     input_records = _load_input_records(ensemble, workspace_root, experiment_name)
     ert3.storage.add_input_data(workspace_root, experiment_name, input_records)
     func = _create_forward_model(stages_config, ensemble)
-    response = ert3.evaluator.evaluate(input_records, func)
+    response = ert3.evaluator.evaluate(
+        input_records, func, ensemble.forward_model.driver
+    )
     ert3.storage.add_output_data(workspace_root, experiment_name, response)
