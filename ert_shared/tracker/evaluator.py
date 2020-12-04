@@ -10,6 +10,11 @@ import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
 from ert_shared.tracker.events import DetailedEvent, GeneralEvent
 from res.job_queue import ForwardModelJobStatus, JobStatusType
+from ert_shared.ensemble_evaluator.config import CONFIG_FILE, load_config
+
+
+_EVTYPE_SNAPSHOT_STOPPED = "Stopped"
+_EVTYPE_SNAPSHOT_CANCELLED = "Cancelled"
 
 
 class EvaluatorTracker:
@@ -35,7 +40,9 @@ class EvaluatorTracker:
         # marked as done. This let's the event loop halt until all messages are processed before exiting
         self._work_queue = queue.Queue()
 
-        self._drainer_thread = threading.Thread(target=self._drain_monitor)
+        self._drainer_thread = threading.Thread(
+            target=self._drain_monitor, name="DrainerThread"
+        )
         self._drainer_thread.start()
 
     def _drain_monitor(self):
@@ -51,7 +58,7 @@ class EvaluatorTracker:
                                 iter_
                             ] = self._snapshot_to_realization_progress(event.data)
                             self._work_queue.put(None)
-                            if event.data.get("status") == "Stopped":
+                            if event.data.get("status") == _EVTYPE_SNAPSHOT_STOPPED:
                                 drainer_logger.debug(
                                     "observed evaluation stopped event, signal done"
                                 )
@@ -60,7 +67,12 @@ class EvaluatorTracker:
                         with self._state_mutex:
                             self._updates.append(event.data)
                             self._work_queue.put(None)
-                            if event.data.get("status") == "Stopped":
+                            if event.data.get("status") == _EVTYPE_SNAPSHOT_CANCELLED:
+                                drainer_logger.debug(
+                                    "observed evaluation cancelled event, return"
+                                )
+                                return
+                            if event.data.get("status") == _EVTYPE_SNAPSHOT_STOPPED:
                                 drainer_logger.debug(
                                     "observed evaluation stopped event, signal done"
                                 )
@@ -266,13 +278,24 @@ class EvaluatorTracker:
             pass
 
     def request_termination(self):
+        logger = logging.getLogger("ert_shared.ensemble_evaluator.tracker")
+        config = load_config()
+
+        # There might be some situations where the
+        # evaulation is finished or the evaluation
+        # is yet to start when calling this function.
+        # In these cases the monitor is not started
+        #
+        # To avoid waiting too long we exit if we are not
+        # able to connect to the monitor after 2 tries
+        #
+        # See issue: https://github.com/equinor/ert/issues/1250
+        #
+        try:
+            wait_for_ws(config.get("url"), 2)
+        except ConnectionRefusedError as e:
+            logger.warning(f"{__name__} - exception {e}")
+            return
+
         monitor = create_ee_monitor(self._monitor_host, self._monitor_port)
         monitor.signal_cancel()
-
-        # For the cli, after C^ is performed, the cli will no longer
-        # ask for events, so the work_queue is cleared here instead.
-        # TODO: investigate how to improve this
-        # See https://github.com/equinor/ert/issues/1228
-        while self._drainer_thread.is_alive():
-            self._clear_work_queue()
-            time.sleep(1)
