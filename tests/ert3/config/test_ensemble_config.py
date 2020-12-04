@@ -1,6 +1,7 @@
 import pytest
 import pydantic
 from ert3.config import _ensemble_config
+from copy import deepcopy
 
 _config_dict = {
     "size": 1000,
@@ -21,9 +22,13 @@ def test_entry_point():
     assert config.forward_model.stages == ["evaluate_polynomial"]
 
 
-def test_config():
-    config = _ensemble_config.EnsembleConfig(**_config_dict)
+@pytest.mark.parametrize("driver", ["local", "pbs"])
+def test_config(driver):
+    config_dict = deepcopy(_config_dict)
+    config_dict["forward_model"]["driver"] = driver
+    config = _ensemble_config.EnsembleConfig(**config_dict)
     assert config.size == 1000
+    assert config.forward_model.driver == driver
 
 
 def test_forward_model_default_driver():
