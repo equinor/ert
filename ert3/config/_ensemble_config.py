@@ -14,7 +14,7 @@ class _EnsembleConfig(BaseModel):
 
 class ForwardModel(_EnsembleConfig):
     stages: List[str]
-    driver: Literal["local"] = "local"
+    driver: Literal["local", "pbs"] = "local"
 
 
 class Input(_EnsembleConfig):
