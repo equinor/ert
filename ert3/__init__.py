@@ -5,5 +5,7 @@ import ert3.engine
 import ert3.workspace
 import ert3.stats
 import ert3.config
+import ert3.algorithms
+
 
 _WORKSPACE_DATA_ROOT = ".ert"
