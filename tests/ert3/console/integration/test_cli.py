@@ -32,7 +32,7 @@ def test_cli_no_init(tmpdir, args):
     workspace.chdir()
 
     with unittest.mock.patch.object(sys, "argv", args):
-        with pytest.raises(SystemExit) as error:
+        with pytest.raises(ValueError) as error:
             ert3.console.main()
         assert "Not inside an ERT workspace" in str(error.value)
 
@@ -67,7 +67,7 @@ def test_cli_init_twice(tmpdir):
         ert3.console.main()
 
     with unittest.mock.patch.object(sys, "argv", args):
-        with pytest.raises(SystemExit) as error:
+        with pytest.raises(ValueError) as error:
             ert3.console.main()
         assert "Already inside an ERT workspace" in str(error.value)
 
@@ -86,7 +86,7 @@ def test_cli_init_subfolder(tmpdir):
     subfolder.chdir()
 
     with unittest.mock.patch.object(sys, "argv", args):
-        with pytest.raises(SystemExit) as error:
+        with pytest.raises(ValueError) as error:
             ert3.console.main()
         assert "Already inside an ERT workspace" in str(error.value)
 

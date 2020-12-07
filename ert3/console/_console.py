@@ -103,7 +103,7 @@ def main():
     workspace = ert3.workspace.load(Path.cwd())
 
     if workspace is None:
-        sys.exit("Not inside an ERT workspace")
+        raise ValueError(f"Not inside an ERT workspace.")
 
     if args.sub_cmd == "run":
         _run(workspace, args)

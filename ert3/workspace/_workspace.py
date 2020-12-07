@@ -31,7 +31,7 @@ def experiment_have_run(workspace_root, experiment_name):
 def initialize(path):
     path = Path(path)
     if load(path) is not None:
-        sys.exit("Already inside an ERT workspace")
+        raise ValueError("Already inside an ERT workspace.")
 
     ert3.storage.init(path)
 
