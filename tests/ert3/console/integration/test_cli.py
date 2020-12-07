@@ -573,3 +573,39 @@ def test_cli_record_load_twice(tmpdir):
     with unittest.mock.patch.object(sys, "argv", args):
         with pytest.raises(KeyError):
             ert3.console.main()
+
+
+def _assert_oat_export(tmpdir):
+    with open(workspace / experiment_name / "data.json") as f:
+        export_data = json.load(f)
+
+    num_input_coeffs = 3
+    assert 2*num_input_coeffs == len(export_data)
+
+    config = _load_experiment_config(workspace, experiment_name)
+    _assert_input_records(config, export_data)
+    _assert_output_records(config, export_data)
+
+    # Note: This test assumes the forward model in the setup indeed
+    # evaluates a * x^2 + b * x + c. If not, this will fail miserably!
+    _assert_poly_output(config, export_data)
+
+
+def test_cli_sensitivity(tmpdir):
+    workspace = tmpdir / _POLY_WORKSPACE_NAME
+    shutil.copytree(_POLY_WORKSPACE, workspace)
+    workspace.chdir()
+
+    args = ["ert3", "init"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    args = ["ert3", "run", "sensitivity"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    args = ["ert3", "export", "sensitivity"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    _assert_oat_export(workspace, experiment_name)
