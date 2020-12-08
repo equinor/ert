@@ -52,6 +52,7 @@ skbuild.setup(
     platforms="any",
     install_requires=[
         "cloudevents",
+        "cwrap",
         "ecl",
         "futures",
         "jinja2",
