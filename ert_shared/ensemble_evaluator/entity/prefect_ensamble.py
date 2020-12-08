@@ -4,15 +4,60 @@ import os
 import shutil
 import json
 import uuid
+import threading
 from functools import partial
+import socket
 from cloudevents.http import to_json, CloudEvent
 from prefect import Flow, Task
 from prefect.engine.executors import DaskExecutor
-import threading
+
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     _Ensemble, _BaseJob, _Step, _Stage, _Realization)
+
+
+def get_ip_address():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    return s.getsockname()[0]
+
+def _get_executor(name="local"):
+    if name == "local":
+        return None
+    # elif name == "lsf":
+    #     LSFJob._submit_job = _eq_submit_job
+    #     cluster_kwargs = {
+    #         "queue": "mr",
+    #         "project": None,
+    #         "cores": 1,
+    #         "memory": "1GB",
+    #         "use_stdin": True,
+    #         "n_workers": 2,
+    #         "silence_logs": "debug",
+    #     }
+    #     return DaskExecutor(
+    #         cluster_class="dask_jobqueue.LSFCluster",
+    #         cluster_kwargs=cluster_kwargs,
+    #         debug=True,
+    #     )
+    elif name == "pbs":
+        cluster_kwargs = {
+            "n_workers": 10,
+            "queue": "normal",
+            "project": "ERT-TEST",
+            "local_directory": "$TMPDIR",
+            "cores": 4,
+            "memory": "16GB",
+            "resource_spec": "select=1:ncpus=4:mem=16GB",
+        }
+        return DaskExecutor(
+            cluster_class="dask_jobqueue.PBSCluster",
+            cluster_kwargs=cluster_kwargs,
+            debug=True,
+        )
+    else:
+        raise ValueError(f"Unknown executor name {name}")
 
 
 def storage_driver_factory(config, run_path):
@@ -306,21 +351,17 @@ class PrefectEnsemble(_Ensemble):
 
                     for o in step.get("outputs", []):
                         o_t_res[o] = result["outputs"]
-        return flow.run()
+        return flow.run(executor=_get_executor(self.config["executor"]))
         #return flow.run(executor=DaskExecutor(address="tcp://192.168.100.6:8786"))
 
     def evaluate(self, config, ee_id):
-        # executor = DaskExecutor(
-        #     cluster_class="dask_jobqueue.LSFCluster",
-        #     cluster_kwargs=cluster_kwargs,
-        #     debug=True,
-        # )
-
+        print(f"Running with executor {self.config['executor'].upper()}")
         evaluate_thread = threading.Thread(target=self._evaluate, args=(config, ee_id))
         evaluate_thread.start()
 
     def _evaluate(self, config, ee_id):
-        dispatch_url = f"ws://{config.get('host')}:{config.get('port')}/dispatch"
+        host = get_ip_address()
+        dispatch_url = f"ws://{host}:{config.get('port')}/dispatch"
         coef_input_files = gen_coef(self.config["parameters"], self.config["realizations"], self.config)
 
         real_per_batch = self.config["max_running"]

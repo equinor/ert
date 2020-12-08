@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-import ruamel.yaml as yaml
+import yaml
 import websockets
 import threading
 import pytest
@@ -12,7 +12,7 @@ from ert_shared.ensemble_evaluator.config import CONFIG_FILE, load_config
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.ws_util import wait as wait_for_ws
 from ert_shared.ensemble_evaluator.entity.prefect_ensamble import PrefectEnsemble
-
+from tests.utils import SOURCE_DIR, tmpdir, tmp
 
 def parse_config(path):
     conf_path = os.path.abspath(path)
@@ -22,12 +22,13 @@ def parse_config(path):
 
 @pytest.mark.asyncio
 async def test_run_prefect_ensemble(tmpdir, unused_tcp_port):
-    conf_file = Path(tmpdir / CONFIG_FILE)
-    config = parse_config("../../test-data/local/flow_test_case/config.yml")
-    config.update({"config_path": Path.absolute(Path("../../test-data/local/flow_test_case"))})
-    config.update({"realizations": 2})
+    with tmp(os.path.join(SOURCE_DIR, 'test-data/local/flow_test_case'), True):
+        conf_file = Path(CONFIG_FILE)
+        config = parse_config("config.yml")
+        config.update({"config_path": Path.absolute(Path("."))})
+        config.update({"realizations": 2})
+        config.update({"executor": "local"})
 
-    with tmpdir.as_cwd():
         with open(conf_file, "w") as f:
             f.write(f'port: "{unused_tcp_port}"\n')
 
