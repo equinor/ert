@@ -52,6 +52,7 @@ setup(
         "websockets",
         "python-dateutil",
         "async_generator",
+        "prefect"
     ],
     zip_safe=False,
     tests_require=["pytest", "mock"],
