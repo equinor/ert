@@ -76,6 +76,7 @@ class _Monitor:
         ) as websocket:
             async for message in websocket:
                 event = from_json(message)
+                logger.debug(f"monitor received event {event}")
                 self._incoming.put_nowait(event)
                 if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
                     logger.debug(f"monitor-{self._id} client received terminated")

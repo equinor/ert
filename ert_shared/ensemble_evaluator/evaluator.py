@@ -80,21 +80,26 @@ class EnsembleEvaluator:
     @_dispatch.register_event_handler(identifiers.EVGROUP_FM_ALL)
     async def _fm_handler(self, event):
         snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(event)
+        logging.debug(f"Received event {str(event)}")
+        logging.debug(f"Sending partial update {snapshot_mutate_event.to_dict()}")
         await self._send_snapshot_update(snapshot_mutate_event)
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STOPPED)
     async def _ensemble_stopped_handler(self, event):
         snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(event)
+        logging.debug(f"Sending partial update {snapshot_mutate_event.to_dict()}")
         await self._send_snapshot_update(snapshot_mutate_event)
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STARTED)
     async def _ensemble_started_handler(self, event):
         snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(event)
+        logging.debug(f"Sending partial update {snapshot_mutate_event.to_dict()}")
         await self._send_snapshot_update(snapshot_mutate_event)
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_CANCELLED)
     async def _ensemble_cancelled_handler(self, event):
         snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(event)
+        logging.debug(f"Sending partial update {snapshot_mutate_event}")
         await self._send_snapshot_update(snapshot_mutate_event)
         self._stop()
 
