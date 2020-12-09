@@ -163,6 +163,13 @@ def get_ert_parser(parser=None):
     ert_vis_parser.set_defaults(func=launch_visualization_plugin)
     ert_vis_parser.add_argument("--name", "-n", type=str, default="Webviz-ERT")
     ert_vis_parser.add_argument(
+        "--project",
+        "-p",
+        type=str,
+        help="Path to folder running ert storage server",
+        default=os.getcwd(),
+    )
+    ert_vis_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output.", default=False
     )
 
