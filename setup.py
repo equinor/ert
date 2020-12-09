@@ -54,7 +54,6 @@ skbuild.setup(
         "cloudevents",
         "cwrap",
         "ecl",
-        "futures",
         "jinja2",
         "numpy",
         "pandas",
