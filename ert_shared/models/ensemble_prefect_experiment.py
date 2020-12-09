@@ -1,6 +1,6 @@
 import os
 import yaml
-from ert_shared.ensemble_evaluator.entity.prefect_ensamble import PrefectEnsemble, SharedDiskStorageDriver
+from ert_shared.ensemble_evaluator.entity.prefect_ensamble import PrefectEnsemble, get_ip_address
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 import time
 from ert_shared.ensemble_evaluator.config import load_config
@@ -30,6 +30,7 @@ class EnsemblePrefectExperiment:
         ensemble = PrefectEnsemble(config)
 
         ee_config = load_config()
+        ee_config["host"] = get_ip_address()
         ee_id = str(uuid.uuid1()).split("-")[0]
         ee = EnsembleEvaluator(ensemble, ee_config, ee_id=ee_id)
         self._queue_running = True

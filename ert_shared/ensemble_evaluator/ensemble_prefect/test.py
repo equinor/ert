@@ -2,7 +2,7 @@ from prefect import task, Flow
 from prefect.engine.executors import DaskExecutor
 from dask_jobqueue.lsf import LSFJob
 import prefect
-
+from ert_shared.ensemble_evaluator.entity.prefect_ensamble import get_ip_address
 
 async def _eq_submit_job(self, script_filename):
     with open(script_filename) as fh:
@@ -39,6 +39,9 @@ def main():
         "use_stdin": True,
         "n_workers": 2,
         "silence_logs": "debug",
+        "scheduler_options": {
+            "port": 51821
+        }
     }
     executor = DaskExecutor(
         cluster_class="dask_jobqueue.LSFCluster",

@@ -29,10 +29,10 @@ async def test_run_prefect_ensemble(tmpdir, unused_tcp_port):
         config = parse_config("config.yml")
         config.update({"config_path": Path.absolute(Path("."))})
         config.update({"realizations": 2})
-        config.update({"executor": "pbs"})
+        config.update({"executor": "lsf"})
 
         with open(conf_file, "w") as f:
-            f.write(f'port: "{unused_tcp_port}"\nhost: "{get_ip_address()}"\n')
+            f.write(f'port: "51820"\nhost: "{get_ip_address()}"\n')
 
         service_config = load_config(conf_file)
         config.update(service_config)

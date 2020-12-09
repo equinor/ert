@@ -10,11 +10,21 @@ import socket
 from cloudevents.http import to_json, CloudEvent
 from prefect import Flow, Task
 from prefect.engine.executors import DaskExecutor
-
+from dask_jobqueue.lsf import LSFJob
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     _Ensemble, _BaseJob, _Step, _Stage, _Realization)
+
+
+async def _eq_submit_job(self, script_filename):
+    with open(script_filename) as fh:
+        lines = fh.readlines()[1:]
+    lines = [
+        line.strip() if "#BSUB" not in line else line[5:].strip() for line in lines
+    ]
+    piped_cmd = [self.submit_command + " ".join(lines)]
+    return self._call(piped_cmd, shell=True)
 
 
 def get_ip_address():
@@ -22,25 +32,29 @@ def get_ip_address():
     s.connect(("8.8.8.8", 80))
     return s.getsockname()[0]
 
+
 def _get_executor(name="local"):
     if name == "local":
         return None
-    # elif name == "lsf":
-    #     LSFJob._submit_job = _eq_submit_job
-    #     cluster_kwargs = {
-    #         "queue": "mr",
-    #         "project": None,
-    #         "cores": 1,
-    #         "memory": "1GB",
-    #         "use_stdin": True,
-    #         "n_workers": 2,
-    #         "silence_logs": "debug",
-    #     }
-    #     return DaskExecutor(
-    #         cluster_class="dask_jobqueue.LSFCluster",
-    #         cluster_kwargs=cluster_kwargs,
-    #         debug=True,
-    #     )
+    elif name == "lsf":
+        LSFJob._submit_job = _eq_submit_job
+        cluster_kwargs = {
+            "queue": "mr",
+            "project": None,
+            "cores": 1,
+            "memory": "1GB",
+            "use_stdin": True,
+            "n_workers": 2,
+            "silence_logs": "debug",
+            "scheduler_options": {
+                "port": 51821
+            },
+        }
+        return DaskExecutor(
+            cluster_class="dask_jobqueue.LSFCluster",
+            cluster_kwargs=cluster_kwargs,
+            debug=True,
+        )
     elif name == "pbs":
         cluster_kwargs = {
             "n_workers": 10,
@@ -283,7 +297,8 @@ class PrefectEnsemble(_Ensemble):
                 fm_type="step",
                 real_id=task.get_iens(),
                 stage_id=task.get_stage_id(),
-                step_id=task.get_step_id()
+                step_id=task.get_step_id(),
+                data={"task_state": state.message}
             )
             c.send(to_json(event).decode())
             # TODO Maybe send also step Failure and realization Failure messages
