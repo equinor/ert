@@ -1,12 +1,19 @@
 import os
 import yaml
 import logging
+import socket
+
+def get_ip_address():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    return s.getsockname()[0]
+
 
 logger = logging.getLogger(__name__)
 CLIENT_URI = "client"
 DISPATCH_URI = "dispatch"
 DEFAULT_PORT = "51820"
-DEFAULT_HOST = "0.0.0.0"
+DEFAULT_HOST = get_ip_address()
 DEFAULT_URL = f"ws://{DEFAULT_HOST}:{DEFAULT_PORT}"
 CONFIG_FILE = "ee_config.yml"
 

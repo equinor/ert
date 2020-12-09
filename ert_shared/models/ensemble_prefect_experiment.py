@@ -30,7 +30,6 @@ class EnsemblePrefectExperiment:
         ensemble = PrefectEnsemble(config)
 
         ee_config = load_config()
-        ee_config["host"] = get_ip_address()
         ee_id = str(uuid.uuid1()).split("-")[0]
         ee = EnsembleEvaluator(ensemble, ee_config, ee_id=ee_id)
         self._queue_running = True

@@ -154,7 +154,6 @@ class RunProcess(Task):
             os.makedirs(run_path, exist_ok=True)
 
             expected_res += self._resources
-
             for r in expected_res:
                 storage.retrieve(r)
 
@@ -355,7 +354,7 @@ class PrefectEnsemble(_Ensemble):
                         outputs=step.get("outputs", []),
                         job_list=step.get("jobs", []),
                         iens=iens,
-                        cmd="python",
+                        cmd="python3",
                         url=dispatch_url,
                         step_id=step["step_id"],
                         stage_id=step["stage_id"],

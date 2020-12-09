@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 class _Monitor:
     def __init__(self, host, port):
         self._base_uri = f"ws://{host}:{port}"
+        print(f"base_uri: {self._base_uri}")
         self._client_uri = f"{self._base_uri}/client"
 
         self._loop = asyncio.new_event_loop()

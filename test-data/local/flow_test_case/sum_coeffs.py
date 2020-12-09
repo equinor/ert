@@ -1,10 +1,9 @@
 #!/usr/bin/env python
-import numpy as np
 import random
 
 def _load_coeffs(filename):
     with open(filename) as f:
-        return np.array([float(l.strip("\n")) for l in f.readlines()])
+        return [float(l.strip("\n")) for l in f.readlines()]
 
 
 def write_to_file(data, file):
@@ -23,7 +22,8 @@ if __name__ == '__main__':
     coeffs_2 = _load_coeffs('poly_2.out')
 
     print("Calculating polynomial")
-    coeffs_sum = coeffs_0 + coeffs_1 + coeffs_2
+    map(sum, zip(coeffs_0, coeffs_1, coeffs_2))
+    coeffs_sum = [a + b + c for a, b, c in zip(coeffs_0, coeffs_1, coeffs_2)]
 
     print("Writing output to file poly_sum.out")
     write_to_file(coeffs_sum, "poly_sum.out")
