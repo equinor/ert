@@ -81,7 +81,7 @@ class PartialSnapshot:
                         real_finished = False
                         break
             if real_finished:
-                self.update_real(real_id, queue_state="JOB_QUEUE_DONE")
+                self.update_real(real_id, queue_state="JOB_QUEUE_SUCCESS")
         if status == "Failed":
             self.update_real(real_id, queue_state="JOB_QUEUE_FAILED")
 
@@ -273,7 +273,7 @@ class Snapshot:
         return all(jobs_finished)
 
     def get_successful_realizations(self):
-        return len([real for real in self.to_dict()["reals"].values() if real["queue_state"] == "JOB_QUEUE_DONE"])
+        return len([real for real in self.to_dict()["reals"].values() if real["queue_state"] == "JOB_QUEUE_SUCCESS"])
 
 
 class _JobDetails(BaseModel):
