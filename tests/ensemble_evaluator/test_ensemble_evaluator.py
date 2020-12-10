@@ -68,7 +68,7 @@ def evaluator(ee_config):
         .set_ensemble_size(2)
         .build()
     )
-    ee = EnsembleEvaluator(ensemble=ensemble, config=ee_config)
+    ee = EnsembleEvaluator(ensemble=ensemble, config=ee_config, 0)
     yield ee
     ee.stop()
 

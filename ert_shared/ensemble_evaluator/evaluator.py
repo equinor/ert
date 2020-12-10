@@ -26,7 +26,8 @@ logger = logging.getLogger(__name__)
 class EnsembleEvaluator:
     _dispatch = Dispatcher()
 
-    def __init__(self, ensemble, config, ee_id=0):
+    def __init__(self, ensemble, config, iter_,ee_id=0):
+        self._iter = iter_
         self._ee_id = ee_id
 
         self._config = config
@@ -114,13 +115,15 @@ class EnsembleEvaluator:
             },
             snapshot_mutate_event.to_dict(),
         )
+        out_cloudevent.data["iter"] = self._iter
         out_msg = to_json(out_cloudevent).decode()
         if out_msg and self._clients:
             await asyncio.wait([client.send(out_msg) for client in self._clients])
 
     @staticmethod
-    def create_snapshot_msg(ee_id, snapshot, event_index):
+    def create_snapshot_msg(ee_id, iter_, snapshot, event_index):
         data = snapshot.to_dict()
+        data["iter"] = iter_
         out_cloudevent = CloudEvent(
             {
                 "type": identifiers.EVTYPE_EE_SNAPSHOT,
@@ -140,7 +143,7 @@ class EnsembleEvaluator:
     async def handle_client(self, websocket, path):
         with self.store_client(websocket):
             message = self.create_snapshot_msg(
-                self._ee_id, self._snapshot, self.event_index()
+                self._ee_id, self._iter, self._snapshot, self.event_index()
             )
             await websocket.send(message)
 

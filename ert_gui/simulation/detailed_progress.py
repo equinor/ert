@@ -1,3 +1,4 @@
+from ert_shared.status.entity.state import REAL_STATE_TO_COLOR
 import math
 import time
 
@@ -23,11 +24,10 @@ from ert_gui.tools.file import FileDialog
 class DetailedProgress(QFrame):
     clicked = Signal(int)
 
-    def __init__(self, state_colors, parent):
+    def __init__(self, parent):
         super(DetailedProgress, self).__init__(parent)
         self.setLineWidth(1)
 
-        self.state_colors = state_colors
         self._current_iteration = 0
         self._current_progress = []
         self.selected_realization = -1
@@ -53,7 +53,7 @@ class DetailedProgress(QFrame):
         for index, job in enumerate(progress.values() if isinstance(progress, dict) else progress):
             y_off = int(index / grid_size)
             x_off = index - (y_off * grid_size)
-            color = QColor(*self.state_colors[job.status])
+            color = QColor(*REAL_STATE_TO_COLOR[job.status])
             render_image.setPixel(x + x_off, y + y_off, color.rgb())
 
     def set_progress(self, progress, iteration):
@@ -108,9 +108,9 @@ class DetailedProgress(QFrame):
             if iens == self.selected_realization:
                 pen = QPen(QColor(240, 240, 240))
             elif (self.has_realization_failed(progress)):
-                pen = QPen(QColor(*self.state_colors['Failure']))
+                pen = QPen(QColor(*REAL_STATE_TO_COLOR['Failure']))
             elif (state == JobStatusType.JOB_QUEUE_RUNNING):
-                pen = QPen(QColor(*self.state_colors['Running']))
+                pen = QPen(QColor(*REAL_STATE_TO_COLOR['Running']))
             else:
                 pen = QPen(QColor(80, 80, 80))
 
@@ -124,11 +124,10 @@ class DetailedProgress(QFrame):
 
 
 class SingleProgressModel(QAbstractTableModel):
-    def __init__(self, parent_view, state_colors):
+    def __init__(self, parent_view):
         super(SingleProgressModel, self).__init__(parent_view)
         self.model_data = []
         self.model_header = []
-        self.state_colors = state_colors
 
     def update_data(self, header, data):
         self.model_data = data
@@ -176,7 +175,7 @@ class SingleProgressModel(QAbstractTableModel):
         col = self.get_column_name(index.column())
 
         if role == Qt.BackgroundColorRole:
-            color = QColor(*self.state_colors[status])
+            color = QColor(*REAL_STATE_TO_COLOR[status])
             color.setAlpha(round(color.alpha() / 2))
             if col == 'stdout' or col == 'stderr':
                 color = QColor(100,100,100,100) # make items stand out
@@ -252,16 +251,15 @@ class SingleTableView(QTableView):
 
 
 class DetailedProgressWidget(QWidget):
-    def __init__(self, parent, state_colors):
+    def __init__(self, parent):
         super(DetailedProgressWidget, self).__init__(parent)
         self.setWindowTitle("Realization Progress")
         layout = QGridLayout(self)
 
         self.iterations = QTabWidget()
-        self.state_colors = state_colors
 
         self.single_view = SingleTableView()
-        self.single_view.setModel(SingleProgressModel(self.single_view, state_colors))
+        self.single_view.setModel(SingleProgressModel(self.single_view))
         self.single_view_label = QLabel("Realization details")
 
         layout.addWidget(self.iterations, 1, 0)
@@ -287,7 +285,7 @@ class DetailedProgressWidget(QWidget):
         for i in progress:  # create all detailed views if they havent been constructed yet
             if i in self._iter_to_tab:
                 continue
-            detailed_progress_widget = DetailedProgress(self.state_colors, self)
+            detailed_progress_widget = DetailedProgress(self)
             detailed_progress_widget.clicked.connect(self.show_selection)
             detailed_progress_widget.set_progress(progress[i], i)
             detailed_progress_widget.show()
@@ -326,3 +324,6 @@ class DetailedProgressWidget(QWidget):
         self.single_view.update_data(self.progress[self.current_iteration][self.selected_realization][0],
                                      self.current_iteration,
                                      self.selected_realization)
+
+    def handle(self, event):
+        pass

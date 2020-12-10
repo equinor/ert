@@ -1,19 +1,6 @@
 import math
 
 
-def calculate_progress(
-    phase, phase_count, finished, queue_running, queue_size, phase_has_run, done_count
-):
-    if finished:
-        return 1.0
-    if not queue_running and phase_has_run:
-        # queue is not running, but it has run for this phase, so it's done
-        return (phase + 1.0) / phase_count
-    else:
-        phase_progress = float(done_count) / queue_size
-        return (phase + phase_progress) / phase_count
-
-
 def format_running_time(runtime):
     """ @rtype: str """
     days = 0
@@ -47,7 +34,7 @@ def format_running_time(runtime):
 
 def scale_intervals(reals):
     scaled_gen = _scale(reals, min_time=1, max_time=5)
-    scaled_det = _scale(reals, min_time=1, max_time=15)
+    scaled_det = _scale(reals, min_time=5, max_time=15)
     return math.trunc(scaled_gen), math.trunc(scaled_det)
 
 
