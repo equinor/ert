@@ -12,8 +12,7 @@ from ert_shared.ensemble_evaluator.config import CONFIG_FILE, load_config
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.ws_util import wait as wait_for_ws
 from ert_shared.ensemble_evaluator.entity.prefect_ensamble import PrefectEnsemble, get_ip_address
-from tests.utils import SOURCE_DIR, tmpdir, tmp
-import ert_logging
+from tests.utils import SOURCE_DIR, tmp
 
 
 def parse_config(path):
@@ -24,7 +23,6 @@ def parse_config(path):
 @pytest.mark.asyncio
 async def test_run_prefect_ensemble(tmpdir, unused_tcp_port):
     with tmp(os.path.join(SOURCE_DIR, 'test-data/local/flow_test_case'), False):
-        print(os.getcwd())
         conf_file = Path(CONFIG_FILE)
         config = parse_config("config.yml")
         config.update({"config_path": Path.absolute(Path("."))})
