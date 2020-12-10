@@ -1,6 +1,7 @@
 import asyncio
 import websockets
 
+from ert_shared.ensemble_evaluator.entity import serialization
 
 from cloudevents.http import to_json
 
@@ -35,7 +36,11 @@ class _Ensemble:
         for retry in range(retries):
             try:
                 async with websockets.connect(url) as websocket:
-                    await websocket.send(to_json(event))
+                    await websocket.send(
+                        to_json(
+                            event, data_marshaller=serialization.evaluator_marshaller
+                        )
+                    )
                 return
             except ConnectionRefusedError:
                 await asyncio.sleep(1)

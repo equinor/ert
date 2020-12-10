@@ -29,7 +29,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install xvfb libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3
+        sudo apt-get install libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3 x11-xserver-utils herbstluftwm
 
     - name: Install ERT and dependencies
       run: |
@@ -38,8 +38,14 @@ jobs:
 
     - name: Test Ubuntu
       if: matrix.os == 'ubuntu-latest'
+      env:
+        DISPLAY: ':99.0'
       run: |
-        xvfb-run  -s "-screen 0 640x480x24" --auto-servernum python -m pytest -sv
+        /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 640x480x24 -ac +extension GLX
+        sleep 3
+        herbstluftwm &
+        sleep 1
+        python -m pytest -sv
 
     - name: Test MacOS
       if: matrix.os == 'macos-latest'

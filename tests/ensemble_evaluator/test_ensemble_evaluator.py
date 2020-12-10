@@ -2,8 +2,12 @@ import websockets
 import pytest
 import asyncio
 import threading
-import json
 from unittest.mock import Mock
+from ert_shared.status.entity.state import (
+    ENSEMBLE_STATE_STARTED,
+    JOB_STATE_FINISHED,
+    JOB_STATE_RUNNING,
+)
 from cloudevents.http import to_json
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.evaluator import (
@@ -61,7 +65,12 @@ def evaluator(ee_config):
         .set_ensemble_size(2)
         .build()
     )
-    ee = EnsembleEvaluator(ensemble=ensemble, config=ee_config)
+    ee = EnsembleEvaluator(
+        ensemble,
+        ee_config,
+        0,
+        ee_id="ee-0",
+    )
     yield ee
     ee.stop()
 
@@ -122,7 +131,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
         # first snapshot before any event occurs
         snapshot_event = next(events)
         snapshot = Snapshot(snapshot_event.data)
-        assert snapshot.get_status() == "Unknown"
+        assert snapshot.get_status() == ENSEMBLE_STATE_STARTED
         # two dispatchers connect
         with Client(host, port, "/dispatch") as dispatch1, Client(
             host, port, "/dispatch"
@@ -137,7 +146,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 {"current_memory_usage": 1000},
             )
             snapshot = Snapshot(next(events).data)
-            assert snapshot.get_job("0", "0", "0", "0")["status"] == "Running"
+            assert snapshot.get_job("0", "0", "0", "0")["status"] == JOB_STATE_RUNNING
 
             # second dispatcher informs that job 0 is running
             send_dispatch_event(
@@ -148,7 +157,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 {"current_memory_usage": 1000},
             )
             snapshot = Snapshot(next(events).data)
-            assert snapshot.get_job("1", "0", "0", "0")["status"] == "Running"
+            assert snapshot.get_job("1", "0", "0", "0")["status"] == JOB_STATE_RUNNING
 
             # second dispatcher informs that job 0 is done
             send_dispatch_event(
@@ -159,15 +168,19 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 {"current_memory_usage": 1000},
             )
             snapshot = Snapshot(next(events).data)
-            assert snapshot.get_job("1", "0", "0", "0")["status"] == "Finished"
+            assert snapshot.get_job("1", "0", "0", "0")["status"] == JOB_STATE_FINISHED
 
             # a second monitor connects
             with ee_monitor.create(host, port) as monitor2:
                 events2 = monitor2.track()
                 snapshot = Snapshot(next(events2).data)
-                assert snapshot.get_status() == "Unknown"
-                assert snapshot.get_job("0", "0", "0", "0")["status"] == "Running"
-                assert snapshot.get_job("1", "0", "0", "0")["status"] == "Finished"
+                assert snapshot.get_status() == ENSEMBLE_STATE_STARTED
+                assert (
+                    snapshot.get_job("0", "0", "0", "0")["status"] == JOB_STATE_RUNNING
+                )
+                assert (
+                    snapshot.get_job("1", "0", "0", "0")["status"] == JOB_STATE_FINISHED
+                )
 
                 # one monitor requests that server exit
                 monitor.signal_cancel()
@@ -188,4 +201,4 @@ def test_monitor_stop(evaluator):
         for event in monitor.track():
             snapshot = Snapshot(event.data)
             break
-    assert snapshot.get_status() == "Unknown"
+    assert snapshot.get_status() == ENSEMBLE_STATE_STARTED

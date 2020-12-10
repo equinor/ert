@@ -67,7 +67,7 @@ class UnixStep(Task):
 
     def run_jobs(self, client, run_path):
         for index, job in enumerate(self._job_list):
-            self.logger.info(f"Running command {self._cmd}  {job['name']}")
+            self.logger.info(f"Running command {self._cmd}  {job[ids.NAME]}")
             event = CloudEvent(
                 {
                     "type": ids.EVTYPE_FM_JOB_START,
@@ -77,7 +77,7 @@ class UnixStep(Task):
             )
             client.send(to_json(event).decode())
 
-            shell_cmd = [self._cmd, job["executable"], *job["args"]]
+            shell_cmd = [self._cmd, job[ids.EXECUTABLE], *job[ids.ARGS]]
             cmd_exec = subprocess.run(
                 shell_cmd,
                 universal_newlines=True,
@@ -95,7 +95,7 @@ class UnixStep(Task):
                         "source": f"/ert/ee/{self._ee_id}/real/{self._iens}/stage/{self._stage_id}/step/{self._step_id}/job/{job['id']}",
                         "datacontenttype": "application/json",
                     },
-                    {"stderr": cmd_exec.stderr, "stdout": cmd_exec.stdout},
+                    {ids.STDERR: cmd_exec.stderr, ids.STDOUT: cmd_exec.stdout},
                 )
                 client.send(to_json(event).decode())
                 raise RuntimeError(
@@ -108,7 +108,7 @@ class UnixStep(Task):
                     "source": f"/ert/ee/{self._ee_id}/real/{self._iens}/stage/{self._stage_id}/step/{self._step_id}/job/{job['id']}",
                     "datacontenttype": "application/json",
                 },
-                {"stdout": cmd_exec.stdout},
+                {ids.STDOUT: cmd_exec.stdout},
             )
 
             client.send(to_json(event).decode())
