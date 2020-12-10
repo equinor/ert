@@ -1,3 +1,4 @@
+from res.enkf.ert_run_context import ErtRunContext
 from ert_shared.feature_toggling import FeatureToggling
 import logging
 import time
@@ -329,7 +330,7 @@ class BaseRunModel(object):
 
         ensemble = create_ensemble_builder_from_legacy(
             run_context,
-            self.ert().resConfig().model_config.getForwardModel(),
+            self.get_forward_model(),
             self._queue_config,
             self.ert().analysisConfig(),
             self.ert().resConfig(),
@@ -338,5 +339,11 @@ class BaseRunModel(object):
         self.ert().initRun(run_context)
 
         return EnsembleEvaluator(
-            ensemble, load_config(), ee_id=str(uuid.uuid1()).split("-")[0]
+            ensemble, load_config(), run_context.get_iter(), ee_id=str(uuid.uuid1()).split("-")[0],
         ).run_and_get_successful_realizations()
+
+    def get_forward_model(self):
+        return self.ert().resConfig().model_config.getForwardModel()
+
+    def get_run_context(self) -> ErtRunContext:
+        return self._run_context

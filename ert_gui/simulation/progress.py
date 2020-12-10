@@ -1,3 +1,5 @@
+from ert_shared.status.entity.state import REAL_STATE_TO_COLOR
+from ert_gui.simulation.palette import TOTAL_PROGRESS_COLOR
 from math import floor
 
 from qtpy.QtCore import QTimer
@@ -31,27 +33,29 @@ class Progress(QFrame):
         self.__states = {}
         """@type: dict of (object, State)"""
 
-        self.__shiny = False
         self.__count = 0
 
         self.__indeterminate = False
-        self.__indeterminate_color = QColor(128, 128, 128)
+        self.__indeterminate_color = TOTAL_PROGRESS_COLOR
         self.__indeterminate_state = 0.5
         self.__indeterminate_step_size = 0.05
         self.__timer = QTimer(self)
         self.__timer.setInterval(100)
         self.__timer.timeout.connect(self.update)
 
-    def addState(self, state, state_color, progress=0.0):
+        for state, color in REAL_STATE_TO_COLOR.items():
+            self._addState(state, QColor(*color))
+
+    def _addState(self, state, state_color, progress=0.0):
         state_tracker = StateTracker(state, state_color, progress)
         self.__state_order.append(state_tracker)
         self.__states[state] = state_tracker
 
 
-    def updateState(self, state, progress):
-        self.__count += 1
-        self.__states[state].setProgress(progress)
-        self.update()
+    # def updateState(self, state, progress):
+    #     self.__count += 1
+    #     self.__states[state].setProgress(progress)
+    #     self.update()
 
 
     def setIndeterminate(self, indeterminate):
@@ -64,8 +68,8 @@ class Progress(QFrame):
     def get_indeterminate(self):
         return self.__indeterminate
 
-    def setIndeterminateColor(self, color):
-        self.__indeterminate_color = color
+    # def setIndeterminateColor(self, color):
+    #     self.__indeterminate_color = color
 
     def paintEvent(self, paint_event):
         QFrame.paintEvent(self, paint_event)
@@ -113,15 +117,13 @@ class Progress(QFrame):
                 self.__indeterminate_step_size *= -1
                 self.__indeterminate_state = round(self.__indeterminate_state) + self.__indeterminate_step_size
 
+    def handle(self, event):
+        self.setIndeterminate(event.indeterminate)
+        if event.indeterminate:
+            return
 
+        if event.snapshot is None:
+            return
 
-        if self.__shiny:
-            #Shiny overlay!
-            gradient = QLinearGradient(rect.width() / 2, 0, rect.width() / 2, rect.height())
-            gradient.setColorAt(0, QColor(255, 255, 255, 0))
-            gradient.setColorAt(0.2, QColor(255, 255, 255, 200))
-            gradient.setColorAt(0.4, QColor(255, 255, 255, 0))
-            gradient.setColorAt(0.85, QColor(255, 255, 255, 0))
-            gradient.setColorAt(0.85, QColor(0, 0, 0, 0))
-            gradient.setColorAt(1, QColor(0, 0, 0, 127))
-            painter.fillRect(rect, gradient)
+        for iens, real in event.snapshot.reals.items():
+            print(iens, real)

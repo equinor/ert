@@ -1,5 +1,14 @@
+from collections import defaultdict
+from ert_shared.status.entity.state import (
+    REALIZATION_STATE_FAILED,
+    REALIZATION_STATE_FINISHED,
+    REALIZATION_STATE_PENDING,
+    REALIZATION_STATE_RUNNING,
+)
+import typing
 from pydantic import BaseModel
-from typing import Dict, List, Optional, Any
+from typing import DefaultDict, Dict, List, Optional, Any, Dict, List, Optional, Any
+
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.entity.tool import (
     recursive_update,
@@ -11,6 +20,11 @@ from ert_shared.ensemble_evaluator.entity.tool import (
 import pyrsistent
 
 import copy
+
+
+class UnsupportedOperationException(ValueError):
+    pass
+
 
 # Taken from ert_shared/tracker/base.py
 _FM_TYPE_EVENT_TO_STATUS = {
@@ -38,8 +52,11 @@ _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
 
 class PartialSnapshot:
     def __init__(self, snapshot):
+        """Create a PartialSnapshot. If no snapshot is provided, the object is
+        a immutable POD, and any attempt at mutating it will raise an
+        UnsupportedOperationException."""
         self._data = pyrsistent.m()
-        self._snapshot = copy.copy(snapshot)
+        self._snapshot = copy.copy(snapshot) if snapshot else None
 
     def update_status(self, status):
         self._apply_update({"status": status})
@@ -82,13 +99,24 @@ class PartialSnapshot:
             stage["end_time"] = end_time
 
         self._apply_update({"reals": {real_id: {"stages": {stage_id: stage}}}})
-        if self._snapshot.get_real(real_id)["status"] != "Failed":
-            if status in ["Failed", "Pending", "Running"]:
+        if self._snapshot.get_real(real_id)["status"] != REALIZATION_STATE_FAILED:
+            if status in [
+                REALIZATION_STATE_FAILED,
+                REALIZATION_STATE_PENDING,
+                REALIZATION_STATE_RUNNING,
+            ]:
                 self.update_real(real_id, status=status)
-            elif status == "Finished" and self._snapshot.all_stages_finished(real_id):
+            elif (
+                status == REALIZATION_STATE_FINISHED
+                and self._snapshot.all_stages_finished(real_id)
+            ):
                 self.update_real(real_id, status=status)
 
     def _apply_update(self, update):
+        if self._snapshot is None:
+            raise UnsupportedOperationException(
+                f"trying to mutate {self.__class__} without providing a snapshot is not supported"
+            )
         self._data = recursive_update(self._data, update, check_key=False)
         self._snapshot.merge(update)
 
@@ -107,8 +135,15 @@ class PartialSnapshot:
         self._apply_update(
             {"reals": {real_id: {"stages": {stage_id: {"steps": {step_id: step}}}}}}
         )
-        if self._snapshot.get_stage(real_id, stage_id)["status"] != "Failed":
-            if status in ["Failed", "Pending", "Running"]:
+        if (
+            self._snapshot.get_stage(real_id, stage_id)["status"]
+            != REALIZATION_STATE_FAILED
+        ):
+            if status in [
+                REALIZATION_STATE_FAILED,
+                REALIZATION_STATE_PENDING,
+                REALIZATION_STATE_RUNNING,
+            ]:
                 self.update_stage(real_id, stage_id, status)
             elif status == "Finished" and self._snapshot.all_steps_finished(
                 real_id, stage_id
@@ -212,6 +247,25 @@ class PartialSnapshot:
             )
         elif e_type in ids.EVGROUP_ENSEMBLE:
             self.update_status(_ENSEMBLE_TYPE_EVENT_TO_STATUS[e_type])
+        elif e_type == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
+            if "status" in event:
+                self.update_status(event["status"])
+            if "reals" not in event.data:
+                return self
+            for real_id, real in event.data["reals"].items():
+                self.update_real(real_id, **{k: real[k] for k in real if k != "stages"})
+                if "stages" not in real:
+                    continue
+                for stage_id, stage in real["stages"].items():
+                    self.update_stage(real_id, stage_id, **{k: stage[k] for k in stage if k != "steps"})
+                    if "steps" not in stage:
+                        continue
+                    for step_id, step in stage["steps"].items():
+                        self.update_step(real_id, stage_id, step_id, **{k: step[k] for k in step if k != "jobs"})
+                        if "jobs" not in step:
+                            continue
+                        for job_id, job in step["jobs"].items():
+                            self.update_job(real_id,  stage_id, step_id, job_id, **job)
         else:
             raise ValueError("Unknown type: {}".format(e_type))
         return self
@@ -232,6 +286,9 @@ class Snapshot:
 
     def get_status(self):
         return self._data["status"]
+
+    def get_reals(self):
+        return self._data["reals"]
 
     def get_real(self, real_id):
         if real_id not in self._data["reals"]:
@@ -276,6 +333,12 @@ class Snapshot:
             ]
         )
 
+    def aggregate_real_states(self) -> typing.Dict[str, int]:
+        states = defaultdict(int)
+        for _, real in self._data["reals"].items():
+            states[real["status"]] += 1
+        return states
+
 
 class _JobDetails(BaseModel):
     job_id: str
@@ -312,6 +375,7 @@ class _Stage(BaseModel):
 
 
 class _Realization(BaseModel):
+    status: str
     active: bool
     start_time: Optional[str]
     end_time: Optional[str]
