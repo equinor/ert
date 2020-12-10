@@ -163,10 +163,17 @@ class RunProcess(Task):
                                      job_id=job["id"]
                                      )
                 c.send(to_json(event).decode())
-                cmd_exec = subprocess.run([self._cmd, job["executable"], *job["args"]],
+                args = " ".join(job["args"])
+                shell_cmd = f"""set -e
+                source /prog/res/komodo/stable/enable 
+                python3 {job["executable"]} {args}
+                """
+                cmd_exec = subprocess.run(shell_cmd,
                                           universal_newlines=True, stdout=subprocess.PIPE,
                                           stderr=subprocess.PIPE,
                                           cwd=run_path,
+                                          shell=True,
+                                          executable="/bin/bash"
                                           )
                 self.logger.info(cmd_exec.stdout)
                 if cmd_exec.returncode != 0:
