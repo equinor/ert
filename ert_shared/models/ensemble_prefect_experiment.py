@@ -1,6 +1,6 @@
 import os
 import yaml
-from ert_shared.ensemble_evaluator.entity.prefect_ensamble import PrefectEnsemble
+from ert_shared.ensemble_evaluator.entity.prefect_ensemble import PrefectEnsemble
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 import time
 from ert_shared.ensemble_evaluator.config import load_config
