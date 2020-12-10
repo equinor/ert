@@ -336,7 +336,7 @@ class PrefectEnsemble(_Ensemble):
                     table_of_elements.remove(element)
         return ordering
 
-    def run_flow(self, dispatch_url, coef_input_files, real_range):
+    def run_flow(self, dispatch_url, coef_input_files, real_range, executor):
         with Flow(f"Realization range {real_range}") as flow:
             for iens in real_range:
                 o_t_res = {}
@@ -358,7 +358,7 @@ class PrefectEnsemble(_Ensemble):
 
                     for o in step.get("outputs", []):
                         o_t_res[o] = result["outputs"]
-        return flow.run(executor=_get_executor(self.config["executor"]))
+        return flow.run(executor=executor)
 
     def evaluate(self, config, ee_id):
         print(f"Running with executor {self.config['executor'].upper()}")
@@ -381,8 +381,9 @@ class PrefectEnsemble(_Ensemble):
                 step["resources"] = res_list
 
         i = 0
+        executor = _get_executor(self.config["executor"])
         while i < self.config["realizations"]:
-            self.run_flow(dispatch_url, coef_input_files, real_range[i:i+real_per_batch])
+            self.run_flow(dispatch_url, coef_input_files, real_range[i:i+real_per_batch], executor)
             i = i + real_per_batch
 
         with Client(dispatch_url) as c:

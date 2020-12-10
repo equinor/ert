@@ -18,7 +18,7 @@ def find_open_port(lower, upper):
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.bind((host, port))
             sock.close()
-            return str(port)
+            return port
         except socket.error:
             pass
     msg = f"No open port for host {host} in the range {lower}-{upper}"
