@@ -45,6 +45,7 @@ async def mock_ws(host, port):
 
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(60)
 async def test_append_to_file(tmpdir, unused_tcp_port, event_loop, caplog):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
