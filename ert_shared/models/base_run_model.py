@@ -1,3 +1,4 @@
+from res.enkf.ert_run_context import ErtRunContext
 from ert_shared.feature_toggling import FeatureToggling
 import logging
 import time
@@ -11,7 +12,7 @@ from ert_shared.ensemble_evaluator.entity.ensemble import (
 )
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
-from res.job_queue import ForwardModelStatus, JobStatusType
+from res.job_queue import ForwardModelStatus, JobStatusType, RunStatusType
 from res.util import ResLog
 
 # A method decorated with the @job_queue decorator implements the following logic:
@@ -70,6 +71,7 @@ class BaseRunModel(object):
 
     def reset(self):
         self._failed = False
+        self._phase = 0
 
     def startSimulations(self, arguments):
         try:
@@ -329,13 +331,35 @@ class BaseRunModel(object):
 
         ensemble = create_ensemble_builder_from_legacy(
             run_context,
-            self.ert().resConfig().model_config.getForwardModel(),
+            self.get_forward_model(),
             self._queue_config,
             self.ert().analysisConfig(),
             self.ert().resConfig(),
         ).build()
 
         self.ert().initRun(run_context)
-        return EnsembleEvaluator(
-            ensemble, ee_config, ee_id=str(uuid.uuid1()).split("-")[0]
+
+        totalOk = EnsembleEvaluator(
+            ensemble,
+            ee_config,
+            run_context.get_iter(),
+            ee_id=str(uuid.uuid1()).split("-")[0],
         ).run_and_get_successful_realizations()
+
+        for i in range(len(run_context)):
+            if run_context.is_active(i):
+                run_arg = run_context[i]
+                if (
+                    run_arg.run_status == RunStatusType.JOB_LOAD_FAILURE
+                    or run_arg.run_status == RunStatusType.JOB_RUN_FAILURE
+                ):
+                    run_context.deactivate_realization(i)
+
+        run_context.get_sim_fs().fsync()
+        return totalOk
+
+    def get_forward_model(self):
+        return self.ert().resConfig().model_config.getForwardModel()
+
+    def get_run_context(self) -> ErtRunContext:
+        return self._run_context

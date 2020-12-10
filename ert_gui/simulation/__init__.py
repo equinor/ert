@@ -1,6 +1,3 @@
-from .progress import Progress
-from .simple_progress import SimpleProgress
-from .detailed_progress import DetailedProgressWidget
 from .run_dialog import RunDialog
 from .simulation_config_panel import SimulationConfigPanel
 from .single_test_run_panel import SingleTestRunPanel
@@ -8,4 +5,3 @@ from .ensemble_experiment_panel import EnsembleExperimentPanel
 from .ensemble_smoother_panel import EnsembleSmootherPanel
 from .iterated_ensemble_smoother_panel import IteratedEnsembleSmootherPanel
 from .multiple_data_assimilation_panel import MultipleDataAssimilationPanel
-

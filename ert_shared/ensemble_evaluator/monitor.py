@@ -7,6 +7,7 @@ from cloudevents.http import from_json
 from cloudevents.http.event import CloudEvent
 from cloudevents.http import to_json
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
+from ert_shared.ensemble_evaluator.entity import serialization
 import uuid
 
 
@@ -37,7 +38,9 @@ class _Monitor:
     def _send_event(self, cloud_event):
         async def _send():
             async with websockets.connect(self._client_uri) as websocket:
-                message = to_json(cloud_event)
+                message = to_json(
+                    cloud_event, data_marshaller=serialization.evaluator_marshaller
+                )
                 await websocket.send(message)
 
         asyncio.run_coroutine_threadsafe(_send(), self._loop).result()
@@ -74,7 +77,9 @@ class _Monitor:
             self._client_uri, max_size=2 ** 26, max_queue=500
         ) as websocket:
             async for message in websocket:
-                event = from_json(message)
+                event = from_json(
+                    message, data_unmarshaller=serialization.evaluator_unmarshaller
+                )
                 self._incoming.put_nowait(event)
                 if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
                     logger.debug(f"monitor-{self._id} client received terminated")

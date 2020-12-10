@@ -1,24 +1,36 @@
 import asyncio
-import threading
 import logging
-from ert_shared.ensemble_evaluator.dispatch import Dispatcher
+import threading
+from contextlib import contextmanager
+
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 import ert_shared.ensemble_evaluator.monitor as ee_monitor
 import websockets
+from async_generator import asynccontextmanager
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
+from ert_shared.ensemble_evaluator.dispatch import Dispatcher
+from ert_shared.ensemble_evaluator.entity import serialization
 from ert_shared.ensemble_evaluator.entity.snapshot import (
-    _Realization,
-    _Step,
-    _Stage,
-    _Job,
-    _SnapshotDict,
-    _ForwardModel,
     PartialSnapshot,
     Snapshot,
+    _ForwardModel,
+    _Job,
+    _Realization,
+    _SnapshotDict,
+    _Stage,
+    _Step,
 )
-from async_generator import asynccontextmanager
-from contextlib import contextmanager
+from ert_shared.status.entity.state import (
+    ENSEMBLE_STATE_CANCELLED,
+    ENSEMBLE_STATE_FAILED,
+    ENSEMBLE_STATE_STARTED,
+    ENSEMBLE_STATE_STOPPED,
+    JOB_STATE_START,
+    REALIZATION_STATE_WAITING,
+    STAGE_STATE_UNKNOWN,
+    STEP_STATE_START,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +38,13 @@ logger = logging.getLogger(__name__)
 class EnsembleEvaluator:
     _dispatch = Dispatcher()
 
-    def __init__(self, ensemble, config, ee_id=0):
+    def __init__(self, ensemble, config, iter_, ee_id=0):
+        # Without information on the iteration, the events emitted from the
+        # evaluator are ambiguous. In the future, an experiment authority* will
+        # "own" the evaluators and can add iteration information to events they
+        # emit. In the mean time, it is added here.
+        # * https://github.com/equinor/ert/issues/1250
+        self._iter = iter_
         self._ee_id = ee_id
 
         self._config = config
@@ -52,23 +70,23 @@ class EnsembleEvaluator:
                 active=True,
                 start_time=None,
                 end_time=None,
-                status="Waiting",
+                status=REALIZATION_STATE_WAITING,
             )
             for stage in real.get_stages():
                 reals[str(real.get_iens())].stages[str(stage.get_id())] = _Stage(
-                    status="Unknown",
+                    status=STAGE_STATE_UNKNOWN,
                     start_time=None,
                     end_time=None,
                 )
                 for step in stage.get_steps():
                     reals[str(real.get_iens())].stages[str(stage.get_id())].steps[
                         str(step.get_id())
-                    ] = _Step(status="Unknown", start_time=None, end_time=None)
+                    ] = _Step(status=STEP_STATE_START, start_time=None, end_time=None)
                     for job in step.get_jobs():
                         reals[str(real.get_iens())].stages[str(stage.get_id())].steps[
                             str(step.get_id())
                         ].jobs[str(job.get_id())] = _Job(
-                            status="Pending",
+                            status=JOB_STATE_START,
                             data={},
                             start_time=None,
                             end_time=None,
@@ -76,7 +94,7 @@ class EnsembleEvaluator:
                         )
         top = _SnapshotDict(
             reals=reals,
-            status="Unknown",
+            status=ENSEMBLE_STATE_STARTED,
             forward_model=_ForwardModel(step_definitions={}),
             metadata=ensemble.get_metadata(),
         )
@@ -90,7 +108,7 @@ class EnsembleEvaluator:
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STOPPED)
     async def _ensemble_stopped_handler(self, event):
-        if self._snapshot.get_status() != "Failure":
+        if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
             snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
                 event
             )
@@ -98,7 +116,7 @@ class EnsembleEvaluator:
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STARTED)
     async def _ensemble_started_handler(self, event):
-        if self._snapshot.get_status() != "Failure":
+        if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
             snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
                 event
             )
@@ -106,7 +124,7 @@ class EnsembleEvaluator:
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_CANCELLED)
     async def _ensemble_cancelled_handler(self, event):
-        if self._snapshot.get_status() != "Failure":
+        if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
             snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
                 event
             )
@@ -115,7 +133,10 @@ class EnsembleEvaluator:
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_FAILED)
     async def _ensemble_failed_handler(self, event):
-        if self._snapshot.get_status() not in ["Stopped", "Cancelled"]:
+        if self._snapshot.get_status() not in [
+            ENSEMBLE_STATE_STOPPED,
+            ENSEMBLE_STATE_CANCELLED,
+        ]:
             snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
                 event
             )
@@ -131,13 +152,17 @@ class EnsembleEvaluator:
             },
             snapshot_mutate_event.to_dict(),
         )
-        out_msg = to_json(out_cloudevent).decode()
+        out_cloudevent.data["iter"] = self._iter
+        out_msg = to_json(
+            out_cloudevent, data_marshaller=serialization.evaluator_marshaller
+        ).decode()
         if out_msg and self._clients:
             await asyncio.wait([client.send(out_msg) for client in self._clients])
 
     @staticmethod
-    def create_snapshot_msg(ee_id, snapshot, event_index):
+    def create_snapshot_msg(ee_id, iter_, snapshot, event_index):
         data = snapshot.to_dict()
+        data["iter"] = iter_
         out_cloudevent = CloudEvent(
             {
                 "type": identifiers.EVTYPE_EE_SNAPSHOT,
@@ -146,7 +171,9 @@ class EnsembleEvaluator:
             },
             data,
         )
-        return to_json(out_cloudevent).decode()
+        return to_json(
+            out_cloudevent, data_marshaller=serialization.evaluator_marshaller
+        ).decode()
 
     @contextmanager
     def store_client(self, websocket):
@@ -157,12 +184,14 @@ class EnsembleEvaluator:
     async def handle_client(self, websocket, path):
         with self.store_client(websocket):
             message = self.create_snapshot_msg(
-                self._ee_id, self._snapshot, self.event_index()
+                self._ee_id, self._iter, self._snapshot, self.event_index()
             )
             await websocket.send(message)
 
             async for message in websocket:
-                client_event = from_json(message)
+                client_event = from_json(
+                    message, data_unmarshaller=serialization.evaluator_unmarshaller
+                )
                 logger.debug(f"got message from client: {client_event}")
                 if client_event["type"] == identifiers.EVTYPE_EE_USER_CANCEL:
                     logger.debug(f"Client {websocket.remote_address} asked to cancel.")
@@ -187,7 +216,9 @@ class EnsembleEvaluator:
     async def handle_dispatch(self, websocket, path):
         async with self.count_dispatcher():
             async for msg in websocket:
-                event = from_json(msg)
+                event = from_json(
+                    msg, data_unmarshaller=serialization.evaluator_unmarshaller
+                )
                 await self._dispatch.handle_event(self, event)
                 if event["type"] in [
                     identifiers.EVTYPE_ENSEMBLE_STOPPED,
@@ -235,7 +266,9 @@ class EnsembleEvaluator:
                 "id": self.event_index(),
             }
         )
-        message = to_json(out_cloudevent).decode()
+        message = to_json(
+            out_cloudevent, data_marshaller=serialization.evaluator_marshaller
+        ).decode()
         return message
 
     def event_index(self):

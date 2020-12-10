@@ -4,22 +4,20 @@ import os
 import sys
 import threading
 
-from ert_shared import ERT
-from ert_shared import clear_global_state
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.feature_toggling import FeatureToggling
+from ert_shared import ERT, clear_global_state
+from ert_shared.cli import (
+    ENSEMBLE_SMOOTHER_MODE,
+    ES_MDA_MODE,
+    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+    WORKFLOW_MODE,
+)
 from ert_shared.cli.model_factory import create_model
 from ert_shared.cli.monitor import Monitor
 from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared.cli.workflow import execute_workflow
-from ert_shared.cli import (
-    WORKFLOW_MODE,
-    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
-    ENSEMBLE_SMOOTHER_MODE,
-    ES_MDA_MODE,
-    ENSEMBLE_EXPERIMENT_MODE,
-)
-from ert_shared.tracker.factory import create_tracker
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.feature_toggling import FeatureToggling
+from ert_shared.status.tracker.factory import create_tracker
 from res.enkf import EnKFMain, ResConfig
 
 
