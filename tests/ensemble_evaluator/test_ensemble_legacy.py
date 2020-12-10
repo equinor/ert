@@ -12,6 +12,7 @@ from cloudevents.http.event import CloudEvent
 from cloudevents.http import to_json
 
 
+@pytest.mark.timeout(60)
 def test_run_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_builder):
     num_reals = 2
     conf_file = Path(tmpdir / CONFIG_FILE)
@@ -37,6 +38,7 @@ def test_run_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_builder):
 
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(60)
 async def test_run_and_cancel_legacy_ensemble(
     tmpdir, unused_tcp_port, make_ensemble_builder
 ):

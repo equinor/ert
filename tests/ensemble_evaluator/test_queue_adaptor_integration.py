@@ -26,6 +26,7 @@ async def mock_ws(host, port, done):
 
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(60)
 async def test_happy_path(
     tmpdir, unused_tcp_port, event_loop, make_ensemble_builder, queue_config, caplog
 ):
