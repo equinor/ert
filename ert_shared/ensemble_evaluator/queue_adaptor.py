@@ -1,14 +1,11 @@
 import asyncio
-import copy
+from ert_shared.status.queue_diff import QueueDiff
 import json
 import logging
-import threading
-import time
 
 import websockets
 from cloudevents.http import CloudEvent, to_json
 from job_runner import JOBS_FILE
-from res.job_queue.job_status_type_enum import JobStatusType
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +16,6 @@ _FM_STAGE_FAILURE = "com.equinor.ert.forward_model_stage.failure"
 _FM_STAGE_SUCCESS = "com.equinor.ert.forward_model_stage.success"
 _FM_STAGE_UNKNOWN = "com.equinor.ert.forward_model_stage.unknown"
 
-# This is duplicated in ert_shared/tracker/base.py, possibly elsewhere too
 _queue_state_to_event_type_map = {
     "JOB_QUEUE_NOT_ACTIVE": _FM_STAGE_WAITING,
     "JOB_QUEUE_WAITING": _FM_STAGE_WAITING,
@@ -49,12 +45,7 @@ class QueueAdaptor:
         self._ws_url = config.get("dispatch_url")
         self._ee_id = ee_id
         self._queue = queue
-
-        self._qindex_to_iens = {
-            q_index: q_node.callback_arguments[0].iens
-            for q_index, q_node in enumerate(self._queue.job_list)
-        }
-        self._state = [q_node.status.value for q_node in self._queue.job_list]
+        self._diff = QueueDiff(queue)
 
         self._patch_jobs_file()
 
@@ -63,7 +54,7 @@ class QueueAdaptor:
             with open(f"{q_node.run_path}/{JOBS_FILE}", "r+") as jobs_file:
                 data = json.load(jobs_file)
                 data["ee_id"] = self._ee_id
-                data["real_id"] = self._qindex_to_iens[q_index]
+                data["real_id"] = self._diff.iens_from_queue_index(q_index)
                 data["stage_id"] = 0
                 jobs_file.seek(0)
                 jobs_file.truncate()
@@ -91,40 +82,9 @@ class QueueAdaptor:
         for event in events:
             await websocket.send(to_json(event))
 
-    def _transition(self):
-        """Transition to a new state, return both old and new state."""
-        new_state = [job.status.value for job in self._queue.job_list]
-        old_state = copy.copy(self._state)
-        self._state = new_state
-        return old_state, new_state
-
-    def _diff_states(self, old_state, new_state):
-        """Return the diff between old_state and new_state."""
-        changes = {}
-
-        diff = list(map(lambda s: s[0] == s[1], zip(old_state, new_state)))
-        if len(diff) > 0:
-            for q_index, equal in enumerate(diff):
-                if not equal:
-                    st = str(JobStatusType(new_state[q_index]))
-                    changes[self._qindex_to_iens[q_index]] = st
-        return changes
-
-    def _changes_after_transition(self):
-        old_state, new_state = self._transition()
-        return self._diff_states(old_state, new_state)
-
-    def _snapshot(self):
-        """Return the whole state"""
-        snapshot = {}
-        for q_index, state_val in enumerate(self._state):
-            st = str(JobStatusType(state_val))
-            snapshot[self._qindex_to_iens[q_index]] = st
-        return snapshot
-
     async def execute_queue(self, pool_sema, evaluators):
         async with websockets.connect(self._ws_url) as websocket:
-            await self._publish_changes(self._snapshot(), websocket)
+            await self._publish_changes(self._diff.snapshot(), websocket)
 
             try:
                 while self._queue.is_active() and not self._queue.stopped:
@@ -137,7 +97,7 @@ class QueueAdaptor:
                             func()
 
                     await self._publish_changes(
-                        self._changes_after_transition(), websocket
+                        self._diff.changes_after_transition(), websocket
                     )
             except asyncio.CancelledError:
                 if self._queue.stopped:
@@ -153,5 +113,5 @@ class QueueAdaptor:
                 await self._queue.stop_jobs_async()
                 logger.debug("jobs now stopped")
             self._queue.assert_complete()
-            self._transition()
-            await self._publish_changes(self._snapshot(), websocket)
+            self._diff.transition()
+            await self._publish_changes(self._diff.snapshot(), websocket)

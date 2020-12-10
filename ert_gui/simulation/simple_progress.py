@@ -53,5 +53,3 @@ class SimpleProgress(QFrame):
             gradient.setColorAt(0.85, QColor(0, 0, 0, 0))
             gradient.setColorAt(1, QColor(0, 0, 0, 127))
             painter.fillRect(rect, gradient)
-
-
