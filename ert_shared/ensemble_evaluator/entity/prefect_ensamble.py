@@ -6,13 +6,13 @@ import json
 import uuid
 import threading
 from functools import partial
-import socket
 from cloudevents.http import to_json, CloudEvent
 from prefect import Flow, Task
 from prefect.engine.executors import DaskExecutor
 from dask_jobqueue.lsf import LSFJob
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.client import Client
+from ert_shared.ensemble_evaluator.config import find_open_port
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     _Ensemble, _BaseJob, _Step, _Stage, _Realization)
 
@@ -25,12 +25,6 @@ async def _eq_submit_job(self, script_filename):
     ]
     piped_cmd = [self.submit_command + " ".join(lines)]
     return self._call(piped_cmd, shell=True)
-
-
-def get_ip_address():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(("8.8.8.8", 80))
-    return s.getsockname()[0]
 
 
 def _get_executor(name="local"):
@@ -47,7 +41,7 @@ def _get_executor(name="local"):
             "n_workers": 2,
             "silence_logs": "debug",
             "scheduler_options": {
-                "port": 51821
+                "port": find_open_port(lower=51820, upper=51840)
             },
         }
         return DaskExecutor(
@@ -300,7 +294,6 @@ class PrefectEnsemble(_Ensemble):
                 data={"task_state": state.message}
             )
             c.send(to_json(event).decode())
-            # TODO Maybe send also step Failure and realization Failure messages
 
     def get_id(self, iens, stage_name, step_name=None, job_index=None):
         real = next(x for x in self._reals if x.get_iens() == iens)
@@ -366,7 +359,6 @@ class PrefectEnsemble(_Ensemble):
                     for o in step.get("outputs", []):
                         o_t_res[o] = result["outputs"]
         return flow.run(executor=_get_executor(self.config["executor"]))
-        #return flow.run(executor=DaskExecutor(address="tcp://192.168.100.6:8786"))
 
     def evaluate(self, config, ee_id):
         print(f"Running with executor {self.config['executor'].upper()}")
@@ -374,8 +366,7 @@ class PrefectEnsemble(_Ensemble):
         evaluate_thread.start()
 
     def _evaluate(self, config, ee_id):
-        host = get_ip_address()
-        dispatch_url = f"ws://{host}:{config.get('port')}/dispatch"
+        dispatch_url = f"ws://{config.get('host')}:{config.get('port')}/dispatch"
         coef_input_files = gen_coef(self.config["parameters"], self.config["realizations"], self.config)
 
         real_per_batch = self.config["max_running"]
