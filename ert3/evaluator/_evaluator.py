@@ -138,7 +138,7 @@ def evaluate(
     ensemble = PrefectEnsemble(ee_config)
 
     config = EvaluatorServerConfig()
-    ee = EnsembleEvaluator(ensemble=ensemble, config=config)
+    ee = EnsembleEvaluator(ensemble=ensemble, config=config, iter_=0)
     _run(ee)
 
     results = _fetch_results(ee_config, ensemble_config, stages_config)

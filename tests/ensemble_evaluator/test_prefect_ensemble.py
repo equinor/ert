@@ -42,7 +42,7 @@ def test_run_prefect_ensemble(unused_tcp_port):
         service_config = EvaluatorServerConfig(unused_tcp_port)
         ensemble = PrefectEnsemble(config)
 
-        evaluator = EnsembleEvaluator(ensemble, service_config, ee_id="1")
+        evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
 
         mon = evaluator.run()
 
@@ -75,7 +75,7 @@ def test_run_prefect_ensemble_with_path(unused_tcp_port):
         service_config = EvaluatorServerConfig(unused_tcp_port)
         ensemble = PrefectEnsemble(config)
 
-        evaluator = EnsembleEvaluator(ensemble, service_config, ee_id="1")
+        evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
 
         mon = evaluator.run()
 
@@ -104,7 +104,7 @@ def test_cancel_run_prefect_ensemble(unused_tcp_port):
         service_config = EvaluatorServerConfig(unused_tcp_port)
         ensemble = PrefectEnsemble(config)
 
-        evaluator = EnsembleEvaluator(ensemble, service_config, ee_id="2")
+        evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="2")
 
         mon = evaluator.run()
         cancel = True
@@ -368,7 +368,7 @@ def test_run_prefect_ensemble_exception(unused_tcp_port):
         service_config = EvaluatorServerConfig(unused_tcp_port)
 
         ensemble = PrefectEnsemble(config)
-        evaluator = EnsembleEvaluator(ensemble, service_config, ee_id="1")
+        evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
 
         with patch.object(ensemble, "_fetch_input_files", side_effect=RuntimeError()):
             mon = evaluator.run()

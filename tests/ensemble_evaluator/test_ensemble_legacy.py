@@ -11,7 +11,7 @@ def test_run_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_builder):
     with tmpdir.as_cwd():
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2).build()
         config = EvaluatorServerConfig(unused_tcp_port)
-        evaluator = EnsembleEvaluator(ensemble, config, ee_id="1")
+        evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
         monitor = evaluator.run()
         for e in monitor.track():
             if (
@@ -34,7 +34,7 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_b
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2).build()
         config = EvaluatorServerConfig(unused_tcp_port)
 
-        evaluator = EnsembleEvaluator(ensemble, config, ee_id="1")
+        evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
 
         mon = evaluator.run()
         cancel = True
@@ -52,7 +52,7 @@ def test_run_legacy_ensemble_exception(tmpdir, unused_tcp_port, make_ensemble_bu
     with tmpdir.as_cwd():
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2).build()
         config = EvaluatorServerConfig(unused_tcp_port)
-        evaluator = EnsembleEvaluator(ensemble, config, ee_id="1")
+        evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
 
         with patch.object(ensemble, "_run_path_list", side_effect=RuntimeError()):
             monitor = evaluator.run()

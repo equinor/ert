@@ -1,9 +1,9 @@
 import unittest
 
-from ert_shared.tracker.utils import (
-    calculate_progress,
+from ert_shared.status.utils import (
     format_running_time,
     scale_intervals,
+    _calculate_progress,
 )
 
 
@@ -32,8 +32,8 @@ class TrackerUtilsTest(unittest.TestCase):
 
     def test_scale_intervals(self):
         tests = [
-            {"reals": 1, "expected_gen": 1, "expected_det": 1},
-            {"reals": 100, "expected_gen": 1, "expected_det": 1},
+            {"reals": 1, "expected_gen": 1, "expected_det": 5},
+            {"reals": 100, "expected_gen": 1, "expected_det": 5},
             {"reals": 500, "expected_gen": 5, "expected_det": 15},
             {"reals": 900, "expected_gen": 5, "expected_det": 15},
             {"reals": 1000, "expected_gen": 5, "expected_det": 15},
@@ -63,63 +63,49 @@ class TrackerUtilsTest(unittest.TestCase):
                 "phase": 0,
                 "phase_count": 1,
                 "finished": False,
-                "queue_running": False,
-                "queue_size": 100,
-                "phase_has_run": False,
-                "done_count": 1,
+                "phase_count": 1,
+                "total_reals": 100,
+                "done_reals": 1,
+                "current_iter": 0,
             },  # noqa
             {
                 "expected": 1,
                 "phase": 1,
                 "phase_count": 1,
                 "finished": True,
-                "queue_running": False,
-                "queue_size": 100,
-                "phase_has_run": True,
-                "done_count": 100,
+                "total_reals": 100,
+                "done_reals": 100,
+                "current_iter": 0,
             },  # noqa
             {
                 "expected": 0.5,
                 "phase": 0,
                 "phase_count": 2,
                 "finished": False,
-                "queue_running": False,
-                "queue_size": 100,
-                "phase_has_run": True,
-                "done_count": 100,
+                "total_reals": 100,
+                "done_reals": 100,
+                "current_iter": 0,
             },  # noqa
             {
                 "expected": 0,
                 "phase": 0,
                 "phase_count": 2,
                 "finished": False,
-                "queue_running": False,
-                "queue_size": 100,
-                "phase_has_run": False,
-                "done_count": 0,
-            },  # noqa
-            {
-                "expected": 0.5,
-                "phase": 0,
-                "phase_count": 2,
-                "finished": False,
-                "queue_running": False,
-                "queue_size": 100,
-                "phase_has_run": True,
-                "done_count": 0,
-            },  # noqa
+                "total_reals": 100,
+                "done_reals": 0,
+                "current_iter": 0,
+            },
         ]
 
         for t in tests:
             self.assertEqual(
                 t["expected"],
-                calculate_progress(
+                _calculate_progress(
+                    t["finished"],
                     t["phase"],
                     t["phase_count"],
-                    t["finished"],
-                    t["queue_running"],
-                    t["queue_size"],
-                    t["phase_has_run"],
-                    t["done_count"],
+                    t["done_reals"],
+                    t["total_reals"],
+                    t["current_iter"],
                 ),
             )

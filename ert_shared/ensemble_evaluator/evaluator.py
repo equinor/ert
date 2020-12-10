@@ -1,4 +1,12 @@
 import asyncio
+from ert_shared.status.entity.state import (
+    ENSEMBLE_STATE_STARTED,
+    JOB_STATE_START,
+    REALIZATION_STATE_UNKNOWN,
+    REALIZATION_STATE_WAITING,
+    STAGE_STATE_UNKNOWN,
+    STEP_STATE_START,
+)
 import threading
 import logging
 from ert_shared.ensemble_evaluator.dispatch import Dispatcher
@@ -26,7 +34,13 @@ logger = logging.getLogger(__name__)
 class EnsembleEvaluator:
     _dispatch = Dispatcher()
 
-    def __init__(self, ensemble, config, ee_id=0):
+    def __init__(self, ensemble, config, iter_, ee_id=0):
+        # Without information on the iteration, the events emitted from the
+        # evaluator are ambiguous. In the future, an experiment authority* will
+        # "own" the evaluators and can add iteration information to events they
+        # emit. In the mean time, it is added here.
+        # * https://github.com/equinor/ert/issues/1250
+        self._iter = iter_
         self._ee_id = ee_id
 
         self._config = config
@@ -52,23 +66,23 @@ class EnsembleEvaluator:
                 active=True,
                 start_time=None,
                 end_time=None,
-                status="Waiting",
+                status=REALIZATION_STATE_WAITING,
             )
             for stage in real.get_stages():
                 reals[str(real.get_iens())].stages[str(stage.get_id())] = _Stage(
-                    status="Unknown",
+                    status=STAGE_STATE_UNKNOWN,
                     start_time=None,
                     end_time=None,
                 )
                 for step in stage.get_steps():
                     reals[str(real.get_iens())].stages[str(stage.get_id())].steps[
                         str(step.get_id())
-                    ] = _Step(status="Unknown", start_time=None, end_time=None)
+                    ] = _Step(status=STEP_STATE_START, start_time=None, end_time=None)
                     for job in step.get_jobs():
                         reals[str(real.get_iens())].stages[str(stage.get_id())].steps[
                             str(step.get_id())
                         ].jobs[str(job.get_id())] = _Job(
-                            status="Pending",
+                            status=JOB_STATE_START,
                             data={},
                             start_time=None,
                             end_time=None,
@@ -76,7 +90,7 @@ class EnsembleEvaluator:
                         )
         top = _SnapshotDict(
             reals=reals,
-            status="Unknown",
+            status=ENSEMBLE_STATE_STARTED,
             forward_model=_ForwardModel(step_definitions={}),
             metadata=ensemble.get_metadata(),
         )
@@ -131,13 +145,15 @@ class EnsembleEvaluator:
             },
             snapshot_mutate_event.to_dict(),
         )
+        out_cloudevent.data["iter"] = self._iter
         out_msg = to_json(out_cloudevent).decode()
         if out_msg and self._clients:
             await asyncio.wait([client.send(out_msg) for client in self._clients])
 
     @staticmethod
-    def create_snapshot_msg(ee_id, snapshot, event_index):
+    def create_snapshot_msg(ee_id, iter_, snapshot, event_index):
         data = snapshot.to_dict()
+        data["iter"] = iter_
         out_cloudevent = CloudEvent(
             {
                 "type": identifiers.EVTYPE_EE_SNAPSHOT,
@@ -157,7 +173,7 @@ class EnsembleEvaluator:
     async def handle_client(self, websocket, path):
         with self.store_client(websocket):
             message = self.create_snapshot_msg(
-                self._ee_id, self._snapshot, self.event_index()
+                self._ee_id, self._iter, self._snapshot, self.event_index()
             )
             await websocket.send(message)
 

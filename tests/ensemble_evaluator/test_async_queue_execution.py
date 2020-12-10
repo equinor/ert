@@ -1,12 +1,10 @@
 import asyncio
-
-from ert_shared.ensemble_evaluator.ws_util import wait
 import threading
+
 import pytest
 import websockets
-
 from cloudevents.http import from_json
-from ert_shared.ensemble_evaluator.queue_adaptor import QueueAdaptor
+from ert_shared.ensemble_evaluator.ws_util import wait
 
 
 async def mock_ws(host, port, done):
@@ -46,18 +44,12 @@ async def test_happy_path(
         queue.add_ee_stage(real.get_stages()[0])
     queue.submit_complete()
 
-    adaptor = QueueAdaptor(queue, url, "ee_id_123")
-
-    execute_task = asyncio.get_event_loop().create_task(
-        adaptor.execute_queue(threading.BoundedSemaphore(value=10), None)
-    )
-    await execute_task
+    await queue.execute_queue_async(url, threading.BoundedSemaphore(value=10), None)
     done.set_result(None)
 
     await mock_ws_task
 
     mock_ws_task.result()
-    execute_task.result()
 
     assert mock_ws_task.done()
 

@@ -1,4 +1,5 @@
 import copy
+from ert_shared.status.entity.state import REALIZATION_STATE_UNKNOWN
 import logging
 from ert_shared.ensemble_evaluator.entity.ensemble_base import _Ensemble
 from ert_shared.ensemble_evaluator.entity.ensemble_legacy import (
@@ -631,7 +632,7 @@ class _EnsembleBuilder:
                     create_legacy_stage_builder()
                     .add_step(step)
                     .set_id(0)
-                    .set_status("Unknown")
+                    .set_status(REALIZATION_STATE_UNKNOWN)
                     .set_max_runtime(max_runtime)
                     .set_callback_arguments([run_arg, res_config])
                     .set_done_callback(EnKFState.forward_model_ok_callback)
@@ -642,7 +643,7 @@ class _EnsembleBuilder:
                     .set_job_name(run_arg.job_name)
                     .set_run_arg(run_arg)
                 )
-        builder.set_metadata("iter", run_context.get_iter())
+        # builder.set_metadata("iter", run_context.get_iter())
         return builder
 
     def build(self):
