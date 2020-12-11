@@ -155,6 +155,12 @@ def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
         Mock(return_value=2),
     )
 
+    monkeypatch.setattr(
+        ert_gui.simulation.prefect_ensemble_experiment_panel,
+        "getRealizationCount",
+        Mock(return_value=2),
+    )
+
     gui = _start_window(patch_enkf_main, args_mock)
     qtbot.addWidget(gui)
 

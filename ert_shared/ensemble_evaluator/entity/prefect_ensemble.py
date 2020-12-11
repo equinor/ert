@@ -165,7 +165,7 @@ class RunProcess(Task):
                 c.send(to_json(event).decode())
                 args = " ".join(job["args"])
                 shell_cmd = f"""set -e
-                source /prog/res/komodo/stable/enable 
+                #source /prog/res/komodo/stable/enable 
                 python3 {job["executable"]} {args}
                 """
                 cmd_exec = subprocess.run(shell_cmd,
