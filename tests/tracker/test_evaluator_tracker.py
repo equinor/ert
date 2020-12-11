@@ -48,19 +48,21 @@ class MockCloudEvent(dict):
 
 def mock_ee_monitor(*args):
     reals_ids = ["0", "1"]
-    snapshot = (SnapshotBuilder()
-            .add_stage(stage_id="0", status="Running")
-            .add_step(stage_id="0", step_id="0", status="Unknown")
-            .add_job(
-                stage_id="0",
-                step_id="0",
-                job_id="0",
-                name="job0",
-                data={},
-                status="Running",
-            )
-            .add_metadata("iter", 0)
-            .build(reals_ids, "Unknown"))
+    snapshot = (
+        SnapshotBuilder()
+        .add_stage(stage_id="0", status="Running")
+        .add_step(stage_id="0", step_id="0", status="Unknown")
+        .add_job(
+            stage_id="0",
+            step_id="0",
+            job_id="0",
+            name="job0",
+            data={},
+            status="Running",
+        )
+        .add_metadata("iter", 0)
+        .build(reals_ids, "Unknown")
+    )
 
     update = PartialSnapshot(snapshot)
     update.update_step("0", "0", "0", "Finished")

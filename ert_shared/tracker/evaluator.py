@@ -189,9 +189,14 @@ class EvaluatorTracker:
                             current_memory_usage=job.get("data", {}).get(
                                 "current_memory_usage"
                             ),
-                            max_memory_usage=job.get("data", {}).get("max_memory_usage"),
+                            max_memory_usage=job.get("data", {}).get(
+                                "max_memory_usage"
+                            ),
                         )
-            realization_progress[iens_int] = (job_statuses, queue_state,)
+            realization_progress[iens_int] = (
+                job_statuses,
+                queue_state,
+            )
         return realization_progress
 
     def _update_states(self, snapshot_updates):
@@ -213,7 +218,9 @@ class EvaluatorTracker:
                             if job.get("status"):
                                 status.status = job["status"]
                             if job.get("start_time"):
-                                status.start_time = dateutil.parser.parse(job["start_time"])
+                                status.start_time = dateutil.parser.parse(
+                                    job["start_time"]
+                                )
                             if job.get("end_time"):
                                 status.end_time = dateutil.parser.parse(job["end_time"])
                             if job.get("data", {}).get("current_memory_usage"):
@@ -221,7 +228,9 @@ class EvaluatorTracker:
                                     "current_memory_usage"
                                 ]
                             if job.get("data", {}).get("max_memory_usage"):
-                                status.max_memory_usage = job["data"]["max_memory_usage"]
+                                status.max_memory_usage = job["data"][
+                                    "max_memory_usage"
+                                ]
                             if job.get("error"):
                                 status.error = job.get("error")
 
