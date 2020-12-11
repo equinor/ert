@@ -33,7 +33,7 @@ jobs:
 
     - name: Install ERT and dependencies
       run: |
-        pip install -U pip
+        sudo pip install --upgrade pip
         pip install -r dev-requirements.txt
         pip install .
 
