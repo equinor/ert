@@ -18,6 +18,13 @@ $ pip install git+https://github.com/equinor/libres.git@master
 install ./`. The `CMakeLists.txt` exists, but is used by `setup.py` to generate
 the `libres` C library and by Github Actions to run C tests.
 
+*libres* requires a recent version of `pip` - hence you are advised to upgrade your `pip` installation with
+
+```sh
+$ pip install --upgrade pip
+```
+If your `pip` version is too old the installation of `libres` will fail, and the error messages will be incomprehensible.
+
 ### Building
 
 Use the following commands to start developing from a clean virtualenv
