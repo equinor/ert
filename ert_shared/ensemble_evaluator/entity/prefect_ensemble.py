@@ -5,6 +5,7 @@ import shutil
 import json
 import uuid
 import threading
+import multiprocessing
 from functools import partial
 from cloudevents.http import to_json, CloudEvent
 from prefect import Flow, Task
@@ -246,7 +247,7 @@ def _build_source(fm_type, real_id=None, stage_id=None, step_id=None, job_id=Non
         "stage": f"/ert/ee/0/real/{real_id}/stage/{stage_id}",
         "step": f"/ert/ee/0/real/{real_id}/stage/{stage_id}/step/{step_id}",
         "job": f"/ert/ee/0/real/{real_id}/stage/{stage_id}/step/{step_id}/job/{job_id}",
-        "ensemble": "/ert/ee/0",
+        "ensemble": "/ert/ee/0/ensemble",
     }
     return source_map.get(fm_type, f"/ert/ee/0")
 
@@ -293,7 +294,9 @@ def gen_coef(parameters, real, config):
 class PrefectEnsemble(_Ensemble):
     def __init__(self, config):
         self.config = config
+        self._ee_config = None
         self._reals = self._get_reals()
+        self._eval_proc = None
         super().__init__(self._reals, metadata={"iter": 0})
 
     def _get_reals(self):
@@ -421,12 +424,15 @@ class PrefectEnsemble(_Ensemble):
         return flow.run(executor=executor)
 
     def evaluate(self, config, ee_id):
+        self._ee_config = config
         print(f"Running with executor {self.config['executor'].upper()}")
-        evaluate_thread = threading.Thread(target=self._evaluate, args=(config, ee_id))
-        evaluate_thread.start()
+        self._eval_proc = multiprocessing.Process(
+            target=self._evaluate, args=(config, ee_id)
+        )
+        self._eval_proc.start()
 
     def _evaluate(self, config, ee_id):
-        dispatch_url = f"ws://{config.get('host')}:{config.get('port')}/dispatch"
+        dispatch_url = config.get("dispatch_url")
         coef_input_files = gen_coef(
             self.config["parameters"], self.config["realizations"], self.config
         )
@@ -446,6 +452,11 @@ class PrefectEnsemble(_Ensemble):
 
         i = 0
         executor = _get_executor(self.config["executor"])
+        with Client(dispatch_url) as c:
+            event = _cloud_event(
+                event_type=ids.EVTYPE_ENSEMBLE_STARTED, fm_type="ensemble"
+            )
+            c.send(to_json(event).decode())
         while i < self.config["realizations"]:
             self.run_flow(
                 dispatch_url,
@@ -458,5 +469,22 @@ class PrefectEnsemble(_Ensemble):
         with Client(dispatch_url) as c:
             event = _cloud_event(
                 event_type=ids.EVTYPE_ENSEMBLE_STOPPED, fm_type="ensemble"
+            )
+            c.send(to_json(event).decode())
+
+    def is_cancellable(self):
+        return True
+
+    def cancel(self):
+        threading.Thread(target=self._cancel).start()
+
+    def _cancel(self):
+        if self._eval_proc is not None:
+            self._eval_proc.terminate()
+        self._eval_proc = None
+        dispatch_url = self._ee_config.get("dispatch_url")
+        with Client(dispatch_url) as c:
+            event = _cloud_event(
+                event_type=ids.EVTYPE_ENSEMBLE_CANCELLED, fm_type="ensemble"
             )
             c.send(to_json(event).decode())

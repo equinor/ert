@@ -55,8 +55,8 @@ stages:
 
 
 
-realizations: 100
-max_running: 30
+realizations: 20
+max_running: 5
 run_path: my_output
 executor: lsf
 storage:

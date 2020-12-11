@@ -2,7 +2,6 @@
 import sys
 import json
 import argparse
-import numpy as np
 
 
 def _load_coeffs(filename):
@@ -17,9 +16,6 @@ def _evaluate(coeffs, x, degree):
         return coeffs["b"] * x
     if degree >= 2:
         return coeffs["a"] * x ** degree
-    np_arr = np.array([1, 2, 3, 4])
-    s = np.sum(np_arr)
-    print(s)
 
 
 def config_dump_entry(args=None):
