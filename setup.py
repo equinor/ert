@@ -54,6 +54,7 @@ setup(
         "async_generator",
         "prefect",
         "dask_jobqueue",
+        "segyio==1.9.3",
     ],
     zip_safe=False,
     tests_require=["pytest", "mock"],
