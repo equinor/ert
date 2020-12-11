@@ -98,7 +98,7 @@ jobs:
         ln -s {..,$PWD}/lib
         ln -s {..,$PWD}/test-data
         ln -s {..,$PWD}/share
-        cp -R {..,$PWD}/python/tests
+        cp -R {..,$PWD}/tests
 
         # Env vars
         export ECL_SKIP_SIGNAL=1
@@ -106,7 +106,7 @@ jobs:
 
         # Run tests
         python -m pip install -r ../test_requirements.txt
-        python -m pytest python/tests
+        python -m pytest tests
 
 
   publish:
