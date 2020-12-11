@@ -52,7 +52,8 @@ setup(
         "websockets",
         "python-dateutil",
         "async_generator",
-        "prefect"
+        "prefect",
+        "dask_jobqueue",
     ],
     zip_safe=False,
     tests_require=["pytest", "mock"],
