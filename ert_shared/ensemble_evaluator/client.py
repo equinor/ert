@@ -25,6 +25,7 @@ class Client:
     def _run(self, loop):
         try:
             asyncio.set_event_loop(loop)
+
             async def send_loop(q):
                 msg = None
                 retries = 0
@@ -58,4 +59,3 @@ class Client:
         self.thread.join()
         if self.exception:
             raise Exception("Could not send message") from self.exception
-

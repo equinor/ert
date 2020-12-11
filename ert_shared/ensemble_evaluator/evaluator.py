@@ -8,7 +8,12 @@ import websockets
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.entity.snapshot import (
-    _Realization,_Step,_Stage,_Job, _SnapshotDict,_ForwardModel,
+    _Realization,
+    _Step,
+    _Stage,
+    _Job,
+    _SnapshotDict,
+    _ForwardModel,
     PartialSnapshot,
     Snapshot,
 )
@@ -47,7 +52,8 @@ class EnsembleEvaluator:
                 active=True,
                 start_time=None,
                 end_time=None,
-                queue_state="JOB_QUEUE_RUNNING",)
+                queue_state="JOB_QUEUE_RUNNING",
+            )
             for stage in real.get_stages():
                 reals[str(real.get_iens())].stages[str(stage.get_id())] = _Stage(
                     status="Unknown",
@@ -55,13 +61,13 @@ class EnsembleEvaluator:
                     end_time=None,
                 )
                 for step in stage.get_steps():
-                    reals[str(real.get_iens())].stages[str(stage.get_id())].steps[str(step.get_id())] = _Step(
-                        status="Unknown",
-                        start_time=None,
-                        end_time=None
-                    )
+                    reals[str(real.get_iens())].stages[str(stage.get_id())].steps[
+                        str(step.get_id())
+                    ] = _Step(status="Unknown", start_time=None, end_time=None)
                     for job in step.get_jobs():
-                        reals[str(real.get_iens())].stages[str(stage.get_id())].steps[str(step.get_id())].jobs[str(job.get_id())] = _Job(
+                        reals[str(real.get_iens())].stages[str(stage.get_id())].steps[
+                            str(step.get_id())
+                        ].jobs[str(job.get_id())] = _Job(
                             status="Unknown",
                             data={},
                             start_time=None,

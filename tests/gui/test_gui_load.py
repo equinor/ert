@@ -48,6 +48,11 @@ def patch_enkf_main(monkeypatch, tmpdir):
         Mock(return_value=0),
     )
     monkeypatch.setattr(
+        ert_gui.simulation.prefect_ensemble_experiment_panel,
+        "getRealizationCount",
+        Mock(return_value=0),
+    )
+    monkeypatch.setattr(
         ert_gui.ertwidgets.models.activerealizationsmodel,
         "mask_to_rangestring",
         Mock(return_value=""),

@@ -23,7 +23,7 @@ def parse_config(path):
 
 @pytest.mark.asyncio
 async def test_run_prefect_ensemble(tmpdir, unused_tcp_port):
-    with tmp(os.path.join(SOURCE_DIR, 'test-data/local/flow_test_case'), False):
+    with tmp(os.path.join(SOURCE_DIR, "test-data/local/flow_test_case"), False):
         conf_file = Path(CONFIG_FILE)
         config = parse_config("config.yml")
         config.update({"config_path": Path.absolute(Path("."))})

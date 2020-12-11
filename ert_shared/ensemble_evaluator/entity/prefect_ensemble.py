@@ -14,7 +14,12 @@ from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.config import find_open_port
 from ert_shared.ensemble_evaluator.entity.ensemble import (
-    _Ensemble, _BaseJob, _Step, _Stage, _Realization)
+    _Ensemble,
+    _BaseJob,
+    _Step,
+    _Stage,
+    _Realization,
+)
 
 
 async def _eq_submit_job(self, script_filename):
@@ -40,9 +45,7 @@ def _get_executor(name="local"):
             "use_stdin": True,
             "n_workers": 2,
             "silence_logs": "debug",
-            "scheduler_options": {
-                "port": find_open_port(lower=51820, upper=51840)
-            },
+            "scheduler_options": {"port": find_open_port(lower=51820, upper=51840)},
         }
         return DaskExecutor(
             cluster_class="dask_jobqueue.LSFCluster",
@@ -74,7 +77,9 @@ def storage_driver_factory(config, run_path):
             storage_path = config["storage"]["storage_path"]
             return SharedDiskStorageDriver(storage_path, run_path)
         else:
-            raise ValueError(f"Not a valid storage type. ({config['storage'].get('type')})")
+            raise ValueError(
+                f"Not a valid storage type. ({config['storage'].get('type')})"
+            )
     else:
         # default
         storage_path = os.path.join(os.getcwd(), "storage_folder")
@@ -108,8 +113,20 @@ class SharedDiskStorageDriver:
 
 
 class RunProcess(Task):
-    def __init__(self, resources, outputs, job_list, iens, cmd, url,
-                 step_id, stage_id, runtime_config, *args, **kwargs):
+    def __init__(
+        self,
+        resources,
+        outputs,
+        job_list,
+        iens,
+        cmd,
+        url,
+        step_id,
+        stage_id,
+        runtime_config,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self._resources = resources
         self._outputs = outputs
@@ -136,11 +153,13 @@ class RunProcess(Task):
         else:
             expected_res = [item for sublist in expected_res for item in sublist]
         with Client(self._url) as c:
-            event = _cloud_event(event_type=ids.EVTYPE_FM_STEP_START,
-                                 fm_type="step",
-                                 real_id=self._iens,
-                                 step_id=self._step_id,
-                                 stage_id=self._stage_id)
+            event = _cloud_event(
+                event_type=ids.EVTYPE_FM_STEP_START,
+                fm_type="step",
+                real_id=self._iens,
+                step_id=self._step_id,
+                stage_id=self._stage_id,
+            )
             c.send(to_json(event).decode())
             run_path = os.path.join(self._runtime_config["run_path"], str(self._iens))
 
@@ -151,53 +170,58 @@ class RunProcess(Task):
             for r in expected_res:
                 storage.retrieve(r)
 
-            exec_metadata = {"iens": self._iens,
-                             "outputs": []}
+            exec_metadata = {"iens": self._iens, "outputs": []}
             for index, job in enumerate(self._job_list):
                 print(f"Running command {self._cmd}  {job['name']}")
-                event = _cloud_event(event_type=ids.EVTYPE_FM_JOB_START,
-                                     fm_type="job",
-                                     real_id=self._iens,
-                                     step_id=self._step_id,
-                                     stage_id=self._stage_id,
-                                     job_id=job["id"]
-                                     )
+                event = _cloud_event(
+                    event_type=ids.EVTYPE_FM_JOB_START,
+                    fm_type="job",
+                    real_id=self._iens,
+                    step_id=self._step_id,
+                    stage_id=self._stage_id,
+                    job_id=job["id"],
+                )
                 c.send(to_json(event).decode())
                 args = " ".join(job["args"])
                 shell_cmd = f"""set -e
                 #source /prog/res/komodo/stable/enable 
                 python3 {job["executable"]} {args}
                 """
-                cmd_exec = subprocess.run(shell_cmd,
-                                          universal_newlines=True, stdout=subprocess.PIPE,
-                                          stderr=subprocess.PIPE,
-                                          cwd=run_path,
-                                          shell=True,
-                                          executable="/bin/bash"
-                                          )
+                cmd_exec = subprocess.run(
+                    shell_cmd,
+                    universal_newlines=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=run_path,
+                    shell=True,
+                    executable="/bin/bash",
+                )
                 self.logger.info(cmd_exec.stdout)
                 if cmd_exec.returncode != 0:
                     self.logger.error(cmd_exec.stderr)
-                    event = _cloud_event(event_type=ids.EVTYPE_FM_JOB_FAILURE,
-                                         fm_type="job",
-                                         real_id=self._iens,
-                                         step_id=self._step_id,
-                                         stage_id=self._stage_id,
-                                         job_id=job["id"],
-                                         data={"stderr": cmd_exec.stderr,
-                                               "stdout": cmd_exec.stdout}
-                                         )
+                    event = _cloud_event(
+                        event_type=ids.EVTYPE_FM_JOB_FAILURE,
+                        fm_type="job",
+                        real_id=self._iens,
+                        step_id=self._step_id,
+                        stage_id=self._stage_id,
+                        job_id=job["id"],
+                        data={"stderr": cmd_exec.stderr, "stdout": cmd_exec.stdout},
+                    )
                     c.send(to_json(event).decode())
-                    raise RuntimeError(f"Script {job['name']} failed with exception {cmd_exec.stderr}")
+                    raise RuntimeError(
+                        f"Script {job['name']} failed with exception {cmd_exec.stderr}"
+                    )
 
-                event = _cloud_event(event_type=ids.EVTYPE_FM_JOB_SUCCESS,
-                                     fm_type="job",
-                                     real_id=self._iens,
-                                     step_id=self._step_id,
-                                     stage_id=self._stage_id,
-                                     job_id=job["id"],
-                                     data={"stdout": cmd_exec.stdout}
-                                     )
+                event = _cloud_event(
+                    event_type=ids.EVTYPE_FM_JOB_SUCCESS,
+                    fm_type="job",
+                    real_id=self._iens,
+                    step_id=self._step_id,
+                    stage_id=self._stage_id,
+                    job_id=job["id"],
+                    data={"stdout": cmd_exec.stdout},
+                )
                 c.send(to_json(event).decode())
 
             for output in self._outputs:
@@ -206,27 +230,36 @@ class RunProcess(Task):
 
                 storage.store(output, self._iens)
 
-            event = _cloud_event(event_type=ids.EVTYPE_FM_STEP_SUCCESS,
-                                 fm_type="step",
-                                 real_id=self._iens,
-                                 step_id=self._step_id,
-                                 stage_id=self._stage_id
-                                 )
+            event = _cloud_event(
+                event_type=ids.EVTYPE_FM_STEP_SUCCESS,
+                fm_type="step",
+                real_id=self._iens,
+                step_id=self._step_id,
+                stage_id=self._stage_id,
+            )
             c.send(to_json(event).decode())
         return exec_metadata
 
 
-def _build_source(fm_type, real_id=None, stage_id=None,  step_id=None, job_id=None):
+def _build_source(fm_type, real_id=None, stage_id=None, step_id=None, job_id=None):
     source_map = {
         "stage": f"/ert/ee/0/real/{real_id}/stage/{stage_id}",
         "step": f"/ert/ee/0/real/{real_id}/stage/{stage_id}/step/{step_id}",
         "job": f"/ert/ee/0/real/{real_id}/stage/{stage_id}/step/{step_id}/job/{job_id}",
-        "ensemble": "/ert/ee/0"
+        "ensemble": "/ert/ee/0",
     }
     return source_map.get(fm_type, f"/ert/ee/0")
 
 
-def _cloud_event(event_type, fm_type, real_id=None, stage_id=None, step_id=None, job_id=None, data=None):
+def _cloud_event(
+    event_type,
+    fm_type,
+    real_id=None,
+    stage_id=None,
+    step_id=None,
+    job_id=None,
+    data=None,
+):
     if data is None:
         data = {}
     return CloudEvent(
@@ -235,7 +268,7 @@ def _cloud_event(event_type, fm_type, real_id=None, stage_id=None, step_id=None,
             "source": _build_source(fm_type, real_id, stage_id, step_id, job_id),
             "datacontenttype": "application/json",
         },
-        data
+        data,
     )
 
 
@@ -265,9 +298,9 @@ class PrefectEnsemble(_Ensemble):
 
     def _get_reals(self):
         reals = []
-        for iens in range(self.config['realizations']):
+        for iens in range(self.config["realizations"]):
             stages = []
-            for stage in self.config['stages']:
+            for stage in self.config["stages"]:
                 steps = []
                 stage_id = uuid.uuid4()
                 for step in stage["steps"]:
@@ -276,16 +309,24 @@ class PrefectEnsemble(_Ensemble):
                         job_id = uuid.uuid4()
                         jobs.append(_BaseJob(id_=str(job_id), name=job["name"]))
                     step_id = uuid.uuid4()
-                    steps.append(_Step(id_=str(step_id),
-                                       inputs=step.get("inputs", []),
-                                       outputs=step["outputs"],
-                                       jobs=jobs,
-                                       name=step["name"]))
+                    steps.append(
+                        _Step(
+                            id_=str(step_id),
+                            inputs=step.get("inputs", []),
+                            outputs=step["outputs"],
+                            jobs=jobs,
+                            name=step["name"],
+                        )
+                    )
 
-                stages.append(_Stage(id_=str(stage_id),
-                                     steps=steps,
-                                     status="Unknown",
-                                     name=stage["name"]))
+                stages.append(
+                    _Stage(
+                        id_=str(stage_id),
+                        steps=steps,
+                        status="Unknown",
+                        name=stage["name"],
+                    )
+                )
             reals.append(_Realization(iens=iens, stages=stages, active=True))
         return reals
 
@@ -298,7 +339,7 @@ class PrefectEnsemble(_Ensemble):
                 real_id=task.get_iens(),
                 stage_id=task.get_stage_id(),
                 step_id=task.get_step_id(),
-                data={"task_state": state.message}
+                data={"task_state": state.message},
             )
             c.send(to_json(event).decode())
 
@@ -317,20 +358,32 @@ class PrefectEnsemble(_Ensemble):
         table_of_elements = []
         for stage in self.config["stages"]:
             for step in stage["steps"]:
-                jobs = [{
-                    "id": self.get_id(iens, stage_name=stage["name"], step_name=step["name"], job_index=idx),
-                    "name": job.get("name"),
-                    "executable": job.get("executable"),
-                    "args": job.get("args", []),
-                } for idx, job in enumerate(step.get("jobs", []))]
-                table_of_elements.append({
-                    "iens": iens,
-                    "stage_name": stage["name"],
-                    "stage_id": self.get_id(iens, stage_name=stage["name"]),
-                    "step_id": self.get_id(iens, stage_name=stage["name"], step_name=step["name"]),
-                    **step,
-                    "jobs": jobs,
-                })
+                jobs = [
+                    {
+                        "id": self.get_id(
+                            iens,
+                            stage_name=stage["name"],
+                            step_name=step["name"],
+                            job_index=idx,
+                        ),
+                        "name": job.get("name"),
+                        "executable": job.get("executable"),
+                        "args": job.get("args", []),
+                    }
+                    for idx, job in enumerate(step.get("jobs", []))
+                ]
+                table_of_elements.append(
+                    {
+                        "iens": iens,
+                        "stage_name": stage["name"],
+                        "stage_id": self.get_id(iens, stage_name=stage["name"]),
+                        "step_id": self.get_id(
+                            iens, stage_name=stage["name"], step_name=step["name"]
+                        ),
+                        **step,
+                        "jobs": jobs,
+                    }
+                )
 
         produced = set()
         ordering = []
@@ -359,7 +412,7 @@ class PrefectEnsemble(_Ensemble):
                         step_id=step["step_id"],
                         stage_id=step["stage_id"],
                         on_failure=partial(self._on_task_failure, url=dispatch_url),
-                        runtime_config=self.config
+                        runtime_config=self.config,
                     )
                     result = stage_task(expected_res=inputs)
 
@@ -374,12 +427,16 @@ class PrefectEnsemble(_Ensemble):
 
     def _evaluate(self, config, ee_id):
         dispatch_url = f"ws://{config.get('host')}:{config.get('port')}/dispatch"
-        coef_input_files = gen_coef(self.config["parameters"], self.config["realizations"], self.config)
+        coef_input_files = gen_coef(
+            self.config["parameters"], self.config["realizations"], self.config
+        )
 
         real_per_batch = self.config["max_running"]
         real_range = range(self.config["realizations"])
 
-        storage = storage_driver_factory(self.config, self.config.get("config_path", "."))
+        storage = storage_driver_factory(
+            self.config, self.config.get("config_path", ".")
+        )
         for stage in self.config["stages"]:
             for step in stage["steps"]:
                 res_list = []
@@ -390,13 +447,16 @@ class PrefectEnsemble(_Ensemble):
         i = 0
         executor = _get_executor(self.config["executor"])
         while i < self.config["realizations"]:
-            self.run_flow(dispatch_url, coef_input_files, real_range[i:i+real_per_batch], executor)
+            self.run_flow(
+                dispatch_url,
+                coef_input_files,
+                real_range[i : i + real_per_batch],
+                executor,
+            )
             i = i + real_per_batch
 
         with Client(dispatch_url) as c:
             event = _cloud_event(
-                event_type=ids.EVTYPE_ENSEMBLE_STOPPED,
-                fm_type="ensemble"
+                event_type=ids.EVTYPE_ENSEMBLE_STOPPED, fm_type="ensemble"
             )
             c.send(to_json(event).decode())
-

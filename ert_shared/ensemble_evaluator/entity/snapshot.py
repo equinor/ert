@@ -36,7 +36,6 @@ _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
 logger = logging.getLogger(__name__)
 
 
-
 class PartialSnapshot:
     def __init__(self, snapshot):
         self._data = {"reals": {}}
@@ -45,8 +44,9 @@ class PartialSnapshot:
     def update_status(self, status):
         self._data["status"] = status
 
-    def update_real(self, real_id, active=None, start_time=None, end_time=None,
-                    queue_state=None):
+    def update_real(
+        self, real_id, active=None, start_time=None, end_time=None, queue_state=None
+    ):
         if real_id not in self._data["reals"]:
             self._data["reals"][real_id] = {"stages": {}}
         real = self._data["reals"][real_id]
@@ -75,7 +75,9 @@ class PartialSnapshot:
         stage = real["stages"][stage_id]
         if status == "Finished":
             real_finished = True
-            for snapshot_stage_id, snapshot_stage in self._snapshot.all_stages(real_id).items():
+            for snapshot_stage_id, snapshot_stage in self._snapshot.all_stages(
+                real_id
+            ).items():
                 if snapshot_stage_id != stage_id:
                     if snapshot_stage["status"] != "Finished":
                         real_finished = False
@@ -99,7 +101,9 @@ class PartialSnapshot:
         stage = self.update_stage(real_id, stage_id)
         if status == "Finished":
             stage_finished = True
-            for snapshot_step_id, snapshot_step in self._snapshot.all_steps(real_id, stage_id).items():
+            for snapshot_step_id, snapshot_step in self._snapshot.all_steps(
+                real_id, stage_id
+            ).items():
                 if snapshot_step_id != step_id:
                     if snapshot_step["status"] != "Finished":
                         stage_finished = False
@@ -131,7 +135,7 @@ class PartialSnapshot:
         data=None,
         start_time=None,
         end_time=None,
-        error=None
+        error=None,
     ):
         step = self.update_step(real_id, stage_id, step_id)
         if job_id not in step["jobs"]:
@@ -205,7 +209,9 @@ class PartialSnapshot:
                 }
                 else None,
                 data=event.data if e_type == ids.EVTYPE_FM_JOB_RUNNING else None,
-                error=event.data.get("stderr") if e_type == ids.EVTYPE_FM_JOB_FAILURE else None,
+                error=event.data.get("stderr")
+                if e_type == ids.EVTYPE_FM_JOB_FAILURE
+                else None,
             )
             # TODO See what to do about logging
             # if status == "Failed":
@@ -273,7 +279,13 @@ class Snapshot:
         return all(jobs_finished)
 
     def get_successful_realizations(self):
-        return len([real for real in self.to_dict()["reals"].values() if real["queue_state"] == "JOB_QUEUE_SUCCESS"])
+        return len(
+            [
+                real
+                for real in self.to_dict()["reals"].values()
+                if real["queue_state"] == "JOB_QUEUE_SUCCESS"
+            ]
+        )
 
 
 class _JobDetails(BaseModel):
@@ -308,7 +320,6 @@ class _Stage(BaseModel):
     start_time: Optional[str]
     end_time: Optional[str]
     steps: Dict[str, _Step] = {}
-
 
 
 class _Realization(BaseModel):
