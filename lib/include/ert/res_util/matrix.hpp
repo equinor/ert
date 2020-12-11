@@ -85,6 +85,7 @@ typedef struct matrix_struct matrix_type;
   matrix_type * matrix_alloc_column_compressed_copy(const matrix_type * src, const bool_vector_type * mask);
   void          matrix_column_compressed_memcpy(matrix_type * target, const matrix_type * src, const bool_vector_type * mask);
   matrix_type * matrix_realloc_copy(matrix_type * T , const matrix_type * src);
+  void          matrix_set_row(matrix_type * matrix , const double * data , int row);
 
   matrix_type * matrix_alloc_shared(const matrix_type * src , int row , int column , int rows , int columns);
   void          matrix_free(matrix_type * matrix);

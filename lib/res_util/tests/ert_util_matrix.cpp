@@ -22,6 +22,8 @@
 
 #include <cmath>
 #include <stdexcept>
+#include <vector>
+#include <numeric>
 
 #include <ert/util/bool_vector.hpp>
 #include <ert/util/test_util.hpp>
@@ -351,6 +353,28 @@ void test_delete_row() {
 }
 
 
+void test_set_row() {
+  const int num_col = 16;
+  const int num_row = 10;
+  std::vector<double> row(num_col);
+  matrix_type * m = matrix_alloc(num_row, num_col);
+
+  test_assert_throw( matrix_set_row(m, row.data(), 100), std::invalid_argument);
+
+  std::iota(row.begin(), row.end(), 0);
+  {
+    int r = 7;
+    matrix_set_row(m, row.data(), r);
+
+    for (int col = 0; col < num_col; col++)
+      test_assert_double_equal( row[col], matrix_iget(m, r, col));
+  }
+
+  matrix_free(m);
+}
+
+
+
 
 
 
@@ -368,5 +392,6 @@ int main( int argc , char ** argv) {
   test_data();
   test_delete_column();
   test_delete_row();
+  test_set_row();
   exit(0);
 }

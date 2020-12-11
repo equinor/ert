@@ -1130,6 +1130,14 @@ void matrix_shift_row(matrix_type * matrix , int row , double shift) {
 }
 
 
+void matrix_set_row(matrix_type * matrix , const double * data , int row) {
+  if (row < 0 || row >= matrix->rows)
+    throw std::invalid_argument("Invalid row index");
+
+  for (int j=0; j < matrix->columns; j++)
+    matrix->data[ GET_INDEX( matrix , row , j ) ] = data[j];
+}
+
 
 /**
    For each row in the matrix we will do the operation
