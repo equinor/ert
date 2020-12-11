@@ -69,7 +69,7 @@ created as follows:
  {
     VALUE = 100.0;
     ERROR =     5;
-    DATE  = 21/08/2005;  -- DD/MM/YYYY
+    DATE  = 21/08/2005;  -- DD/MM/YYYY or DD.MM.YYYY
     KEY   = GOPR:BRENT;
  };
 
