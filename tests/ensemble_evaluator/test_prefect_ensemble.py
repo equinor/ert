@@ -13,6 +13,7 @@ from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.ws_util import wait as wait_for_ws
 from ert_shared.ensemble_evaluator.entity.prefect_ensemble import PrefectEnsemble
 from tests.utils import SOURCE_DIR, tmp
+import ert_logging
 
 
 def parse_config(path):

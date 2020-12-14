@@ -81,7 +81,7 @@ class PartialSnapshot:
         self._apply_update({"reals": {real_id: {"stages": {stage_id: stage}}}})
 
         if status == "Finished" and self._snapshot.all_stages_finished(real_id):
-                self.update_real(real_id, queue_state="JOB_QUEUE_SUCCESS")
+            self.update_real(real_id, queue_state="JOB_QUEUE_SUCCESS")
         if status == "Failed":
             self.update_real(real_id, queue_state="JOB_QUEUE_FAILED")
 
@@ -101,9 +101,13 @@ class PartialSnapshot:
         if end_time is not None:
             step["end_time"] = end_time
 
-        self._apply_update({"reals": {real_id: {"stages": {stage_id: {"steps": {step_id: step}}}}}})
+        self._apply_update(
+            {"reals": {real_id: {"stages": {stage_id: {"steps": {step_id: step}}}}}}
+        )
 
-        if status == "Finished" and self._snapshot.all_steps_finished(real_id, stage_id):
+        if status == "Finished" and self._snapshot.all_steps_finished(
+            real_id, stage_id
+        ):
             self.update_stage(real_id, stage_id, "Finished")
         elif status == "Failed":
             self.update_stage(real_id, stage_id, "Failed")
@@ -133,7 +137,17 @@ class PartialSnapshot:
         if error is not None:
             job["error"] = error
 
-        self._apply_update({"reals": {real_id: {"stages": {stage_id: {"steps": {step_id: {"jobs": {job_id: job}}}}}}}})
+        self._apply_update(
+            {
+                "reals": {
+                    real_id: {
+                        "stages": {
+                            stage_id: {"steps": {step_id: {"jobs": {job_id: job}}}}
+                        }
+                    }
+                }
+            }
+        )
 
     def to_dict(self):
         return thaw(self._data)

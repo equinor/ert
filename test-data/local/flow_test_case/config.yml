@@ -58,7 +58,7 @@ stages:
 realizations: 20
 max_running: 5
 run_path: my_output
-executor: lsf
+executor: local
 storage:
   type: shared_disk
   storage_path: .my_storage
