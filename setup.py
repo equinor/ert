@@ -46,7 +46,8 @@ setup(
         "sqlalchemy",
         "decorator",
         "semeio",
-        "alembic"
+        "alembic",
+        "segyio==1.9.3",
     ],
     zip_safe=False,
     tests_require=["pytest", "mock"],
