@@ -102,20 +102,6 @@ def test_cli_run_invalid_experiment(tmpdir):
         assert "this-is-not-an-experiment is not an experiment" in str(error.value)
 
 
-def test_cli_run_polynomial_evaluation(tmpdir):
-    workspace = tmpdir / _POLY_WORKSPACE_NAME
-    shutil.copytree(_POLY_WORKSPACE, workspace)
-    workspace.chdir()
-
-    args = ["ert3", "init"]
-    with unittest.mock.patch.object(sys, "argv", args):
-        ert3.console.main()
-
-    args = ["ert3", "run", "evaluation"]
-    with unittest.mock.patch.object(sys, "argv", args):
-        ert3.console.main()
-
-
 def test_cli_record_load_not_existing_file(tmpdir):
     workspace = tmpdir / _POLY_WORKSPACE_NAME
     shutil.copytree(_POLY_WORKSPACE, workspace)
