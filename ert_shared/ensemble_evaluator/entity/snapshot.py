@@ -9,6 +9,7 @@ from ert_shared.ensemble_evaluator.entity.tool import (
     get_step_id,
     get_job_id,
 )
+from pyrsistent import freeze, thaw
 
 # Taken from ert_shared/tracker/base.py
 _FM_TYPE_EVENT_TO_STATUS = {
@@ -228,13 +229,13 @@ class PartialSnapshot:
 
 class Snapshot:
     def __init__(self, input_dict):
-        self._data = input_dict
+        self._data = freeze(input_dict)
 
     def merge_event(self, event):
-        recursive_update(self._data, event.to_dict())
+        self._data = recursive_update(self._data, freeze(event.to_dict()))
 
     def to_dict(self):
-        return self._data
+        return thaw(self._data)
 
     def get_status(self):
         return self._data["status"]

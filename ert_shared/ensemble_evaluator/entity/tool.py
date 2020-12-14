@@ -1,21 +1,20 @@
-import collections.abc
-import copy
 import re
+from pyrsistent import PMap
 
 
-def recursive_update(d, u):
-    for k, v in u.items():
-        if k not in d:
+def recursive_update(left, right):
+    for k, v in right.items():
+        if k not in left:
             raise ValueError(f"Illegal field {k}")
-        if isinstance(v, collections.abc.Mapping):
-            d_val = d.get(k, {})
+        if isinstance(v, PMap):
+            d_val = left.get(k)
             if not d_val:
-                d[k] = copy.deepcopy(v)
+                left = left.set(k, v)
             else:
-                d[k] = recursive_update(d_val, v)
+                left = left.set(k, recursive_update(d_val, v))
         else:
-            d[k] = v
-    return d
+            left = left.set(k, v)
+    return left
 
 
 _regexp_pattern = r"(?<=/{token}/)[^/]+"
