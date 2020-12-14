@@ -124,6 +124,7 @@ class RunProcess(Task):
         url,
         step_id,
         stage_id,
+        ee_id,
         runtime_config,
         *args,
         **kwargs,
@@ -137,6 +138,7 @@ class RunProcess(Task):
         self._url = url
         self._step_id = step_id
         self._stage_id = stage_id
+        self._ee_id = ee_id
         self._runtime_config = runtime_config
 
     def get_iens(self):
@@ -148,6 +150,9 @@ class RunProcess(Task):
     def get_step_id(self):
         return self._step_id
 
+    def get_ee_id(self):
+        return self._ee_id
+
     def run(self, expected_res=None):
         if expected_res is None:
             expected_res = []
@@ -157,6 +162,7 @@ class RunProcess(Task):
             event = _cloud_event(
                 event_type=ids.EVTYPE_FM_STEP_START,
                 fm_type="step",
+                ee_id=self._ee_id,
                 real_id=self._iens,
                 step_id=self._step_id,
                 stage_id=self._stage_id,
@@ -177,6 +183,7 @@ class RunProcess(Task):
                 event = _cloud_event(
                     event_type=ids.EVTYPE_FM_JOB_START,
                     fm_type="job",
+                    ee_id=self._ee_id,
                     real_id=self._iens,
                     step_id=self._step_id,
                     stage_id=self._stage_id,
@@ -203,6 +210,7 @@ class RunProcess(Task):
                     event = _cloud_event(
                         event_type=ids.EVTYPE_FM_JOB_FAILURE,
                         fm_type="job",
+                        ee_id=self._ee_id,
                         real_id=self._iens,
                         step_id=self._step_id,
                         stage_id=self._stage_id,
@@ -217,6 +225,7 @@ class RunProcess(Task):
                 event = _cloud_event(
                     event_type=ids.EVTYPE_FM_JOB_SUCCESS,
                     fm_type="job",
+                    ee_id=self._ee_id,
                     real_id=self._iens,
                     step_id=self._step_id,
                     stage_id=self._stage_id,
@@ -234,6 +243,7 @@ class RunProcess(Task):
             event = _cloud_event(
                 event_type=ids.EVTYPE_FM_STEP_SUCCESS,
                 fm_type="step",
+                ee_id=self._ee_id,
                 real_id=self._iens,
                 step_id=self._step_id,
                 stage_id=self._stage_id,
@@ -242,19 +252,22 @@ class RunProcess(Task):
         return exec_metadata
 
 
-def _build_source(fm_type, real_id=None, stage_id=None, step_id=None, job_id=None):
+def _build_source(
+    fm_type, ee_id, real_id=None, stage_id=None, step_id=None, job_id=None
+):
     source_map = {
-        "stage": f"/ert/ee/0/real/{real_id}/stage/{stage_id}",
-        "step": f"/ert/ee/0/real/{real_id}/stage/{stage_id}/step/{step_id}",
-        "job": f"/ert/ee/0/real/{real_id}/stage/{stage_id}/step/{step_id}/job/{job_id}",
-        "ensemble": "/ert/ee/0/ensemble",
+        "stage": f"/ert/ee/{ee_id}/real/{real_id}/stage/{stage_id}",
+        "step": f"/ert/ee/{ee_id}/real/{real_id}/stage/{stage_id}/step/{step_id}",
+        "job": f"/ert/ee/{ee_id}/real/{real_id}/stage/{stage_id}/step/{step_id}/job/{job_id}",
+        "ensemble": f"/ert/ee/{ee_id}/ensemble",
     }
-    return source_map.get(fm_type, f"/ert/ee/0")
+    return source_map.get(fm_type, f"/ert/ee/{ee_id}")
 
 
 def _cloud_event(
     event_type,
     fm_type,
+    ee_id,
     real_id=None,
     stage_id=None,
     step_id=None,
@@ -266,7 +279,7 @@ def _cloud_event(
     return CloudEvent(
         {
             "type": event_type,
-            "source": _build_source(fm_type, real_id, stage_id, step_id, job_id),
+            "source": _build_source(fm_type, ee_id, real_id, stage_id, step_id, job_id),
             "datacontenttype": "application/json",
         },
         data,
@@ -297,6 +310,7 @@ class PrefectEnsemble(_Ensemble):
         self._ee_config = None
         self._reals = self._get_reals()
         self._eval_proc = None
+        self._ee_id = None
         super().__init__(self._reals, metadata={"iter": 0})
 
     def _get_reals(self):
@@ -339,6 +353,7 @@ class PrefectEnsemble(_Ensemble):
             event = _cloud_event(
                 event_type=ids.EVTYPE_FM_STEP_FAILURE,
                 fm_type="step",
+                ee_id=task.get_ee_id(),
                 real_id=task.get_iens(),
                 stage_id=task.get_stage_id(),
                 step_id=task.get_step_id(),
@@ -399,7 +414,7 @@ class PrefectEnsemble(_Ensemble):
                     table_of_elements.remove(element)
         return ordering
 
-    def run_flow(self, dispatch_url, coef_input_files, real_range, executor):
+    def run_flow(self, ee_id, dispatch_url, coef_input_files, real_range, executor):
         with Flow(f"Realization range {real_range}") as flow:
             for iens in real_range:
                 o_t_res = {}
@@ -414,6 +429,7 @@ class PrefectEnsemble(_Ensemble):
                         url=dispatch_url,
                         step_id=step["step_id"],
                         stage_id=step["stage_id"],
+                        ee_id=ee_id,
                         on_failure=partial(self._on_task_failure, url=dispatch_url),
                         runtime_config=self.config,
                     )
@@ -425,6 +441,7 @@ class PrefectEnsemble(_Ensemble):
 
     def evaluate(self, config, ee_id):
         self._ee_config = config
+        self._ee_id = ee_id
         print(f"Running with executor {self.config['executor'].upper()}")
         self._eval_proc = multiprocessing.Process(
             target=self._evaluate, args=(config, ee_id)
@@ -454,11 +471,14 @@ class PrefectEnsemble(_Ensemble):
         executor = _get_executor(self.config["executor"])
         with Client(dispatch_url) as c:
             event = _cloud_event(
-                event_type=ids.EVTYPE_ENSEMBLE_STARTED, fm_type="ensemble"
+                event_type=ids.EVTYPE_ENSEMBLE_STARTED,
+                fm_type="ensemble",
+                ee_id=ee_id,
             )
             c.send(to_json(event).decode())
         while i < self.config["realizations"]:
             self.run_flow(
+                ee_id,
                 dispatch_url,
                 coef_input_files,
                 real_range[i : i + real_per_batch],
@@ -468,7 +488,9 @@ class PrefectEnsemble(_Ensemble):
 
         with Client(dispatch_url) as c:
             event = _cloud_event(
-                event_type=ids.EVTYPE_ENSEMBLE_STOPPED, fm_type="ensemble"
+                event_type=ids.EVTYPE_ENSEMBLE_STOPPED,
+                fm_type="ensemble",
+                ee_id=ee_id,
             )
             c.send(to_json(event).decode())
 
@@ -485,6 +507,8 @@ class PrefectEnsemble(_Ensemble):
         dispatch_url = self._ee_config.get("dispatch_url")
         with Client(dispatch_url) as c:
             event = _cloud_event(
-                event_type=ids.EVTYPE_ENSEMBLE_CANCELLED, fm_type="ensemble"
+                event_type=ids.EVTYPE_ENSEMBLE_CANCELLED,
+                fm_type="ensemble",
+                ee_id=self._ee_id,
             )
             c.send(to_json(event).decode())

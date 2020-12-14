@@ -49,7 +49,7 @@ class _Monitor:
         out_cloudevent = CloudEvent(
             {
                 "type": identifiers.EVTYPE_EE_USER_CANCEL,
-                "source": "/ert/monitor/{self._id}",
+                "source": f"/ert/monitor/{self._id}",
                 "id": str(uuid.uuid1()),
             }
         )
