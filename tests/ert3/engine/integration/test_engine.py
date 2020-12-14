@@ -58,6 +58,20 @@ def doe_ensemble(base_ensemble_dict):
 
 
 @pytest.fixture()
+def big_ensemble(base_ensemble_dict):
+    base_ensemble_dict["input"][0]["source"] = "storage.coefficients0"
+    base_ensemble_dict["size"] = 1000
+    yield ert3.config.load_ensemble_config(base_ensemble_dict)
+
+
+@pytest.fixture()
+def presampled_big_ensemble(base_ensemble_dict):
+    base_ensemble_dict["input"][0]["source"] = "storage.uniform_coefficients0"
+    base_ensemble_dict["size"] = 1000
+    yield ert3.config.load_ensemble_config(base_ensemble_dict)
+
+
+@pytest.fixture()
 def stages_config():
     config_list = [
         {
@@ -74,7 +88,8 @@ def stages_config():
 @pytest.fixture()
 def workspace(tmpdir):
     workspace = tmpdir / _POLY_WORKSPACE_NAME
-    shutil.copytree(_POLY_WORKSPACE, workspace)
+    workspace.mkdir()
+    shutil.copy(_POLY_WORKSPACE / "parameters.yml", workspace)
     workspace.chdir()
     ert3.workspace.initialize(workspace)
     yield workspace
@@ -86,40 +101,42 @@ def test_run_once_polynomial_evaluation(tmpdir, workspace, ensemble, stages_conf
         ert3.engine.run(ensemble, stages_config, workspace, "evaluation")
 
 
-@pytest.mark.usefixtures("workspace")
-def test_export_not_run(tmpdir):
+def test_export_not_run(workspace):
+    (workspace / "evaluation").mkdir()
     with pytest.raises(ValueError, match="Cannot export experiment"):
         ert3.engine.export(pathlib.Path(), "evaluation")
 
 
 def test_export_polynomial_evaluation(workspace, ensemble, stages_config):
+    (workspace / "evaluation").mkdir()
     ert3.engine.run(ensemble, stages_config, workspace, "evaluation")
     ert3.engine.export(workspace, "evaluation")
 
-    assert_export(workspace, "evaluation")
+    assert_export(workspace, "evaluation", ensemble, stages_config)
 
 
 def test_export_uniform_polynomial_evaluation(
     workspace, uniform_ensemble, stages_config
 ):
+    (workspace / "uniform_evaluation").mkdir()
     ert3.engine.run(uniform_ensemble, stages_config, workspace, "uniform_evaluation")
     ert3.engine.export(workspace, "uniform_evaluation")
 
-    assert_export(workspace, "uniform_evaluation")
+    assert_export(workspace, "uniform_evaluation", uniform_ensemble, stages_config)
 
 
-def test_gaussian_distribution(workspace, ensemble, stages_config):
+def test_gaussian_distribution(workspace, big_ensemble, stages_config):
     ert3.engine.sample_record(workspace, "coefficients", "coefficients0", 1000)
 
     coefficients = ert3.storage.get_variables(workspace, "coefficients0")
     assert 1000 == len(coefficients)
 
     assert_distribution(
-        workspace, "presampled_evaluation_big", "gaussian", coefficients
+        workspace, big_ensemble, stages_config, "gaussian", coefficients
     )
 
 
-def test_uniform_distribution(workspace, ensemble, stages_config):
+def test_uniform_distribution(workspace, presampled_big_ensemble, stages_config):
     ert3.engine.sample_record(
         workspace, "uniform_coefficients", "uniform_coefficients0", 1000
     )
@@ -128,11 +145,12 @@ def test_uniform_distribution(workspace, ensemble, stages_config):
     assert 1000 == len(coefficients)
 
     assert_distribution(
-        workspace, "presampled_uniform_evaluation_big", "uniform", coefficients
+        workspace, presampled_big_ensemble, stages_config, "uniform", coefficients
     )
 
 
 def test_run_presampled(workspace, presampled_ensemble, stages_config):
+    (workspace / "presampled_evaluation").mkdir()
     ert3.engine.sample_record(workspace, "coefficients", "coefficients0", 10)
 
     coeff0 = ert3.storage.get_variables(workspace, "coefficients0")
@@ -160,6 +178,7 @@ def test_run_presampled(workspace, presampled_ensemble, stages_config):
 
 
 def test_run_uniform_presampled(workspace, presampled_uniform_ensemble, stages_config):
+    (workspace / "presampled_uniform_evaluation").mkdir()
     ert3.engine.sample_record(
         workspace, "uniform_coefficients", "uniform_coefficients0", 10
     )
@@ -208,7 +227,12 @@ def test_sample_unknown_distribution(workspace):
 
 
 def test_record_load_and_run(workspace, doe_ensemble, stages_config):
-    record_file = (workspace / "doe" / "coefficients_record.json").open("r")
+    pathlib.Path("doe").mkdir()
+    coeffs_file = (
+        _EXAMPLES_ROOT / _POLY_WORKSPACE_NAME / "doe" / "coefficients_record.json"
+    )
+    shutil.copy(coeffs_file, "doe")
+    record_file = (pathlib.Path("doe") / "coefficients_record.json").open("r")
     ert3.engine.load_record(workspace, "designed_coefficients", record_file)
 
     designed_coeff = ert3.storage.get_variables(workspace, "designed_coefficients")
@@ -234,6 +258,11 @@ def test_record_load_and_run(workspace, doe_ensemble, stages_config):
 
 
 def test_record_load_twice(workspace, ensemble, stages_config):
+    pathlib.Path("doe").mkdir()
+    coeffs_file = (
+        _EXAMPLES_ROOT / _POLY_WORKSPACE_NAME / "doe" / "coefficients_record.json"
+    )
+    shutil.copy(coeffs_file, "doe")
     record_file = (workspace / "doe" / "coefficients_record.json").open("r")
     ert3.engine.load_record(workspace, "designed_coefficients", record_file)
     record_file = (workspace / "doe" / "coefficients_record.json").open("r")

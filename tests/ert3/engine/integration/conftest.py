@@ -4,26 +4,24 @@ import pytest
 import numpy as np
 
 
-def load_experiment_config(workspace, experiment_name):
+def load_experiment_config(workspace, ensemble_config, stages_config):
     config = {}
-    with open(workspace / experiment_name / "ensemble.yml") as f:
-        config["ensemble"] = yaml.safe_load(f)
-    with open(workspace / "stages.yml") as f:
-        config["stages"] = yaml.safe_load(f)
+    config["ensemble"] = ensemble_config
+    config["stages"] = stages_config
     with open(workspace / "parameters.yml") as f:
         config["parameters"] = yaml.safe_load(f)
     return config
 
 
 def assert_ensemble_size(config, export_data):
-    assert len(export_data) == config["ensemble"]["size"]
+    assert len(export_data) == config["ensemble"].size
 
 
 def assert_input_records(config, export_data):
     input_records = {}
-    for input_data in config["ensemble"]["input"]:
-        record = input_data["record"]
-        source = input_data["source"]
+    for input_data in config["ensemble"].input:
+        record = input_data.record
+        source = input_data.source
 
         for p in config["parameters"]:
             if p["type"] + "." + p["name"] == source:
@@ -42,12 +40,10 @@ def assert_input_records(config, export_data):
 
 def assert_output_records(config, export_data):
     output_records = []
-    for forward_stage in config["ensemble"]["forward_model"]["stages"]:
+    for forward_stage in config["ensemble"].forward_model.stages:
         for stage in config["stages"]:
-            if stage["name"] == forward_stage:
-                output_records += [
-                    output_data["record"] for output_data in stage["output"]
-                ]
+            if stage.name == forward_stage:
+                output_records += [output_data.record for output_data in stage.output]
     for realisation in export_data:
         assert sorted(output_records) == sorted(realisation["output"].keys())
 
@@ -62,11 +58,11 @@ def assert_poly_output(export_data):
             assert coeff["a"] * x ** 2 + coeff["b"] * x + coeff["c"] == pytest.approx(y)
 
 
-def assert_export(workspace, experiment_name):
+def assert_export(workspace, experiment_name, ensemble_config, stages_config):
     with open(workspace / experiment_name / "data.json") as f:
         export_data = json.load(f)
 
-    config = load_experiment_config(workspace, experiment_name)
+    config = load_experiment_config(workspace, ensemble_config, stages_config)
     assert_ensemble_size(config, export_data)
     assert_input_records(config, export_data)
     assert_output_records(config, export_data)
@@ -76,7 +72,9 @@ def assert_export(workspace, experiment_name):
     assert_poly_output(export_data)
 
 
-def assert_distribution(workspace, experiment, distribution, coefficients):
+def assert_distribution(
+    workspace, ensemble_config, stages_config, distribution, coefficients
+):
     indices = ("a", "b", "c")
 
     for real_coefficient in coefficients:
@@ -89,7 +87,7 @@ def assert_distribution(workspace, experiment, distribution, coefficients):
         for key in indices:
             samples[key].append(sample[key])
 
-    config = load_experiment_config(workspace, experiment)
+    config = load_experiment_config(workspace, ensemble_config, stages_config)
     parameter = None
     for p in config["parameters"]:
         if p["distribution"]["type"] == distribution:
