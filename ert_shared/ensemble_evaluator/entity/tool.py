@@ -1,17 +1,18 @@
 import re
-from pyrsistent import PMap
+from pyrsistent import freeze
+import collections
 
 
-def recursive_update(left, right):
+def recursive_update(left, right, check_key=True):
     for k, v in right.items():
-        if k not in left:
+        if check_key and k not in left:
             raise ValueError(f"Illegal field {k}")
-        if isinstance(v, PMap):
+        if isinstance(v, collections.abc.Mapping):
             d_val = left.get(k)
             if not d_val:
-                left = left.set(k, v)
+                left = left.set(k, freeze(v))
             else:
-                left = left.set(k, recursive_update(d_val, v))
+                left = left.set(k, recursive_update(d_val, v, check_key))
         else:
             left = left.set(k, v)
     return left
