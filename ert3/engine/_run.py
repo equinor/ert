@@ -59,16 +59,37 @@ def _create_forward_model(stages_config, ensemble):
     return forward_model[0]
 
 
-def run(ensemble, stages_config, workspace_root, experiment_name):
+def _prepare_experiment(workspace_root, experiment_name):
     if ert3.workspace.experiment_have_run(workspace_root, experiment_name):
         raise ValueError(f"Experiment {experiment_name} have been carried out.")
-
     ert3.storage.init_experiment(workspace_root, experiment_name)
 
+
+def _prepare_evaluation(ensemble, workspace_root, experiment_name):
     input_records = _load_input_records(ensemble, workspace_root, experiment_name)
     ert3.storage.add_input_data(workspace_root, experiment_name, input_records)
+
+
+def _prepare_sensitivity():
+    pass
+
+def _evaluate(ensemble, stages_config, workspace_root, experiment_name):
+    input_records = ert3.storage.get_input_data(workspace_root, experiment_name)
     func = _create_forward_model(stages_config, ensemble)
     response = ert3.evaluator.evaluate(
         input_records, func, ensemble.forward_model.driver
     )
     ert3.storage.add_output_data(workspace_root, experiment_name, response)
+
+
+def run(ensemble, stages_config, experiment_config, workspace_root, experiment_name):
+    _prepare_experiment(workspace_root, experiment_name)
+
+    if experiment_config.type == "evaluation":
+        _prepare_evaluation(ensemble, workspace_root, experiment_name)
+    elif experiment_config.type == "sensitivity":
+        _prepare_sensitivity()
+    else:
+        raise ValueError(f"Unknown experiment type {experiment_config.type}")
+
+    _evaluate(ensemble, stages_config, workspace_root, experiment_name)

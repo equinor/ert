@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from typing_extensions import Literal
 from pydantic.dataclasses import dataclass
 from pydantic import BaseModel
@@ -25,7 +25,7 @@ class Input(_EnsembleConfig):
 class EnsembleConfig(_EnsembleConfig):
     forward_model: ForwardModel
     input: List[Input]
-    size: int
+    size: Optional[int] = None
 
 
 def load_ensemble_config(config_dict):
