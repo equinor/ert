@@ -1,6 +1,64 @@
 Release Notes
 =============
 
+Version 2.18
+------------
+
+Highlighted changes
+~~~~~~~~~~~~~~~~~~~
+
+pip installable libres
+######################
+
+A milestone has been achieved. You can now install libres with pip, rendering
+the need to build from source obsolete.
+
+Fixes `#888 <https://github.com/equinor/libres/issues/888>`_ and `#905 <https://github.com/equinor/libres/issues/905>`_
+
+
+2.18.0 ERT
+~~~~~~~~~~ 
+
+Bug fixes:
+  - Fix plotting with no cases available (`#1143 <https://github.com/equinor/ert/issues/1143>`_)
+  - Convert DataFrame to ndarray before plotting (`#1112 <https://github.com/equinor/ert/issues/1112>`_)
+
+Improvements:
+  - Add pipeline for deploying to PyPI (`#687 <https://github.com/equinor/ert/issues/687>`_)
+  - Set setup.py long_description type to markdown
+  - Introduce alembic db revisions
+  - Minor fixes and corrections to the observation format docs
+  - Fix warning when plotting without any cases
+  - Remove upper version limit matplotlib (`#717 <https://github.com/equinor/ert/issues/717>`_)
+  - Add sub categories to job sections (`#1072 <https://github.com/equinor/ert/issues/1072>`_)
+  - Add visualization launcher using hook plugin (`#1118 <https://github.com/equinor/ert/issues/1118>`_)
+  - Remove config_help.py
+  - Start API server in a context manager
+  - API server SIGTERM when parent process ends
+  - Drop blob DB in favour of single entities DB
+  - Remove the check for either having prior or reference set, to enable
+  - Remove warning using storage on secret data
+  - Allow MeasuredData to allow loading only observations (`partly fixes #1208 <https://github.com/equinor/ert/issues/1208>`_)
+  - Use matplotlib's Qt5 backend rather than Qt4 (`#1255 <https://github.com/equinor/ert/issues/1255>`_)
+
+7.2.0 libres
+~~~~~~~~~~~~
+
+New features:
+  - libres is now pip installable (`#888 <https://github.com/equinor/libres/issues/888>`_, `#905 <https://github.com/equinor/libres/issues/905>`_)
+  - Refactorings to accomodate new Ensemble Evaluator
+
+Improvements:
+  - Catch version import error
+  - Rename all shell workflows to uppercase
+  - Extend the doc on RMS forward model
+  - Remove check which dates back to EnKF updates - i.e. many years (small contribution to `#1070 <https://github.com/equinor/libres/issues/1070>`_)
+
+0.6.5 semeio
+~~~~~~~~~~~~
+
+- Improve test clarity
+
 Version 2.16
 ------------
 
