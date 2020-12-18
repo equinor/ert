@@ -15,16 +15,24 @@ def run(config, argv):
     options = parser.parse_args(argv)
 
     eclrun_config = EclrunConfig(config, options.version)
-
-    if options.num_cpu > 1:
-        sim = config.mpi_sim(version=options.version)
+    if eclrun_config.can_use_eclrun():
+        run = EclRun(
+            options.ecl_case,
+            None,
+            num_cpu=options.num_cpu,
+            check_status=not options.ignore_errors,
+        )
+        run.runEclipse(eclrun_config=eclrun_config)
     else:
-        sim = config.sim(version=options.version)
+        if options.num_cpu > 1:
+            sim = config.mpi_sim(version=options.version)
+        else:
+            sim = config.sim(version=options.version)
 
-    run = EclRun(
-        options.ecl_case,
-        sim,
-        num_cpu=options.num_cpu,
-        check_status=not options.ignore_errors,
-    )
-    run.runEclipse()
+        run = EclRun(
+            options.ecl_case,
+            sim,
+            num_cpu=options.num_cpu,
+            check_status=not options.ignore_errors,
+        )
+        run.runEclipse()
