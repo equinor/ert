@@ -173,6 +173,7 @@ add_library(res SHARED
                 enkf/site_config.cpp
                 enkf/rng_manager.cpp
                 enkf/res_config.cpp
+                enkf/row_scaling.cpp
                 enkf/state_map.cpp
                 enkf/state_map.cpp
                 enkf/summary.cpp
@@ -578,6 +579,7 @@ foreach (test   enkf_active_list
                 enkf_model_config
                 enkf_obs_invalid_path
                 enkf_obs_tests
+                enkf_local_dataset
                 enkf_obs_vector
                 enkf_plot_data
                 enkf_plot_gendata
@@ -590,6 +592,7 @@ foreach (test   enkf_active_list
                 enkf_state_map
                 obs_vector_tests
                 log_config_level_parse
+                row_scaling
                 rng_manager
                 rng_config
                 trans_func

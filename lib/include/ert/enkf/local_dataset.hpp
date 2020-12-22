@@ -20,6 +20,10 @@
 #ifndef ERT_LOCAL_DATASET_H
 #define ERT_LOCAL_DATASET_H
 #include <ert/tooling.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/hash.hpp>
+
+#include <ert/enkf/active_list.hpp>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,7 +45,9 @@ int                  local_dataset_get_size( const local_dataset_type * dataset 
 void                 local_dataset_del_node( local_dataset_type * dataset , const char * node_key);
 PY_USED bool         local_dataset_has_key(const local_dataset_type * dataset, const char * key);
 hash_iter_type     * local_dataset_alloc_iter(const local_dataset_type * dataset);
-
+bool                 local_dataset_has_row_scaling(const local_dataset_type * dataset, const char * key);
+stringlist_type    * local_dataset_alloc_scaled_keys(const local_dataset_type * dataset);
+stringlist_type    * local_dataset_alloc_unscaled_keys(const local_dataset_type * dataset);
 #ifdef __cplusplus
 }
 #endif
