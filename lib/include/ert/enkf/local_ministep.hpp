@@ -19,6 +19,8 @@
 #ifndef ERT_LOCAL_MINISTEP_H
 #define ERT_LOCAL_MINISTEP_H
 
+#include <ert/enkf/local_dataset.hpp>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -29,7 +31,6 @@ extern "C" {
 #include <ert/analysis/analysis_module.hpp>
 
 #include <ert/enkf/active_list.hpp>
-#include <ert/enkf/local_dataset.hpp>
 #include <ert/enkf/local_obsdata.hpp>
 #include <ert/enkf/local_obsdata_node.hpp>
 #include <ert/enkf/obs_data.hpp>

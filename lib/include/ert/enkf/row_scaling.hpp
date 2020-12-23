@@ -19,15 +19,8 @@
 #ifndef ROW_SCALING_H
 #define ROW_SCALING_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct row_scaling_struct row_scaling_type;
 
-#ifdef __cplusplus
-}
-#endif
 #endif
 
 

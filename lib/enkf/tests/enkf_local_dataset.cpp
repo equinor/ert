@@ -16,36 +16,40 @@
    for more details.
 */
 
-#include <stdlib.h>
+#include <algorithm>
 #include <stdexcept>
+#include <stdlib.h>
+#include <string>
+#include <vector>
 #include <ert/util/test_util.hpp>
 #include <ert/enkf/local_dataset.hpp>
 
 
+bool vector_contains(const std::vector<std::string>& keys, const std::string& key) {
+  auto iter = std::find(keys.begin(), keys.end(), key);
+  return (iter != keys.end());
+}
+
+
 void test_create() {
-  local_dataset_type * ld = local_dataset_alloc("DATA");
-  local_dataset_add_node(ld, "PERMX");
-  local_dataset_add_node(ld, "PERMY");
-  local_dataset_add_node(ld, "PERMZ");
-  test_assert_false( local_dataset_has_row_scaling(ld, "PERMX"));
-  test_assert_false( local_dataset_has_row_scaling(ld, "PERMY"));
-  test_assert_false( local_dataset_has_row_scaling(ld, "PERMZ"));
+    local_dataset_type * ld = local_dataset_alloc("DATA");
+    local_dataset_add_node(ld, "PERMX");
+    local_dataset_add_node(ld, "PERMY");
+    local_dataset_add_node(ld, "PERMZ");
+    test_assert_false( local_dataset_has_row_scaling(ld, "PERMX"));
+    test_assert_false( local_dataset_has_row_scaling(ld, "PERMY"));
+    test_assert_false( local_dataset_has_row_scaling(ld, "PERMZ"));
 
-  {
-    stringlist_type * unscaled_keys = local_dataset_alloc_unscaled_keys(ld);
-    test_assert_int_equal( stringlist_get_size(unscaled_keys), 3 );
-    test_assert_true( stringlist_contains(unscaled_keys, "PERMX"));
-    test_assert_true( stringlist_contains(unscaled_keys, "PERMY"));
-    test_assert_true( stringlist_contains(unscaled_keys, "PERMZ"));
-    stringlist_free(unscaled_keys);
-  }
-  {
-    stringlist_type * scaled_keys = local_dataset_alloc_scaled_keys(ld);
-    test_assert_int_equal( stringlist_get_size(scaled_keys), 0 );
-    stringlist_free(scaled_keys);
-  }
+    const auto& unscaled_keys = local_dataset_unscaled_keys(ld);
+    test_assert_int_equal( unscaled_keys.size(), 3 );
+    test_assert_true( vector_contains(unscaled_keys, "PERMX"));
+    test_assert_true( vector_contains(unscaled_keys, "PERMY"));
+    test_assert_true( vector_contains(unscaled_keys, "PERMZ"));
 
-  local_dataset_free(ld);
+    const auto& scaled_keys = local_dataset_scaled_keys(ld);
+    test_assert_int_equal( scaled_keys.size(), 0 );
+
+    local_dataset_free(ld);
 }
 
 int main(int argc , char ** argv) {

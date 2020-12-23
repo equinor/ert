@@ -19,16 +19,20 @@
 
 #ifndef ERT_LOCAL_DATASET_H
 #define ERT_LOCAL_DATASET_H
+#include <vector>
+#include <string>
+
 #include <ert/tooling.hpp>
 #include <ert/util/stringlist.hpp>
 #include <ert/util/hash.hpp>
 
 #include <ert/enkf/active_list.hpp>
+
+typedef struct local_dataset_struct local_dataset_type;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef struct local_dataset_struct local_dataset_type;
 
 local_dataset_type * local_dataset_alloc_copy( local_dataset_type * src_dataset , const char * copy_name );
 local_dataset_type * local_dataset_alloc( const char * name );
@@ -46,10 +50,12 @@ void                 local_dataset_del_node( local_dataset_type * dataset , cons
 PY_USED bool         local_dataset_has_key(const local_dataset_type * dataset, const char * key);
 hash_iter_type     * local_dataset_alloc_iter(const local_dataset_type * dataset);
 bool                 local_dataset_has_row_scaling(const local_dataset_type * dataset, const char * key);
-stringlist_type    * local_dataset_alloc_scaled_keys(const local_dataset_type * dataset);
-stringlist_type    * local_dataset_alloc_unscaled_keys(const local_dataset_type * dataset);
+
 #ifdef __cplusplus
 }
 #endif
+
+std::vector<std::string> local_dataset_scaled_keys(const local_dataset_type * dataset);
+std::vector<std::string> local_dataset_unscaled_keys(const local_dataset_type * dataset);
 
 #endif

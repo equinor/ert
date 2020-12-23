@@ -599,15 +599,15 @@ static int enkf_main_serialize_dataset( const ensemble_config_type * ens_config 
   matrix_type * A   = serialize_info->A;
   int ens_size      = matrix_get_columns( A );
   int current_row   = 0;
-  int ikw = 0;
-  hash_iter_type* data_iter = local_dataset_alloc_iter(dataset);
-  serialize_info->active_size.resize( local_dataset_get_size( dataset ));
-  serialize_info->row_offset.resize( local_dataset_get_size( dataset ));
-  while (!hash_iter_is_complete(data_iter)) {
-    const char             * key = hash_iter_get_next_key(data_iter);
-    const active_list_type * active_list = local_dataset_get_node_active_list( dataset , key );
+
+  const auto& unscaled_keys = local_dataset_unscaled_keys(dataset);
+  serialize_info->active_size.resize( unscaled_keys.size() );
+  serialize_info->row_offset.resize( unscaled_keys.size() );
+  for (int ikw = 0; ikw < unscaled_keys.size(); ikw++) {
+    const auto& key = unscaled_keys[ikw];
+    const active_list_type * active_list = local_dataset_get_node_active_list( dataset , key.c_str() );
     enkf_fs_type * src_fs = serialize_info->src_fs;
-    serialize_info->active_size[ikw] = __get_active_size( ens_config , src_fs , key , report_step , active_list );
+    serialize_info->active_size[ikw] = __get_active_size( ens_config , src_fs , key.c_str() , report_step , active_list );
     serialize_info->row_offset[ikw] = current_row;
 
     {
@@ -617,12 +617,10 @@ static int enkf_main_serialize_dataset( const ensemble_config_type * ens_config 
     }
 
     if (serialize_info->active_size[ikw] > 0) {
-      enkf_main_serialize_node( key , active_list , serialize_info->row_offset[ikw] , work_pool , serialize_info );
+      enkf_main_serialize_node( key.c_str() , active_list , serialize_info->row_offset[ikw] , work_pool , serialize_info );
       current_row += serialize_info->active_size[ikw];
     }
-    ikw++;
   }
-  hash_iter_free( data_iter );
   matrix_shrink_header( A , current_row , ens_size );
   return matrix_get_rows( A );
 }
@@ -673,12 +671,11 @@ static void enkf_main_deserialize_dataset( ensemble_config_type * ensemble_confi
                                            thread_pool_type * work_pool ) {
 
   const int num_cpu_threads = thread_pool_get_max_running( work_pool );
-  int ikw = 0;
-  hash_iter_type* data_iter = local_dataset_alloc_iter(dataset);
-  while (!hash_iter_is_complete(data_iter)) {
-    const char             * key = hash_iter_get_next_key(data_iter);
+  const auto& unscaled_keys = local_dataset_unscaled_keys(dataset);
+  for (int ikw=0; ikw < unscaled_keys.size(); ikw++) {
+    const auto& key = unscaled_keys[ikw];
     if (serialize_info->active_size[ikw] > 0) {
-      const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
+      const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key.c_str() );
 
       {
         /* Multithreaded */
@@ -686,7 +683,7 @@ static void enkf_main_deserialize_dataset( ensemble_config_type * ensemble_confi
         serialize_node_info_type node_info[num_cpu_threads];
         thread_pool_restart( work_pool );
         for (icpu = 0; icpu < num_cpu_threads; icpu++) {
-          node_info[icpu].key            = key;
+          node_info[icpu].key            = key.c_str();
           node_info[icpu].active_list    = active_list;
           node_info[icpu].row_offset     = serialize_info->row_offset[ikw];
           serialize_info[icpu].node_info = &node_info[icpu];
@@ -697,7 +694,6 @@ static void enkf_main_deserialize_dataset( ensemble_config_type * ensemble_confi
       }
     }
   }
-  hash_iter_free( data_iter );
 }
 
 
@@ -1107,11 +1103,23 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
       if (local_dataset_get_size( dataset )) {
         local_obsdata_type   * local_obsdata = local_ministep_get_obsdata( ministep );
 
-        // The enkf_main_serialize_dataset() function will query the storage
-        // layer and fetch data which is serialized into the A matrix which is
-        // buried deep into the serialize_info structure.
         enkf_main_serialize_dataset(enkf_main_get_ensemble_config(enkf_main), dataset , step2 ,  use_count , tp , serialize_info);
         module_info_type * module_info = enkf_main_module_info_alloc(ministep, obs_data, dataset, local_obsdata, serialize_info->active_size.data() , serialize_info->row_offset.data());
+
+        /*
+          The update for one local_dataset instance consists of two main chunks:
+
+          1. The first chunk updates all the parameters which don't have row
+             scaling attached. These parameters are serialized together to the A
+             matrix and all the parameters are updated in one go.
+
+          2. The second chunk is loop over all the parameters which have row
+             scaling attached. These parameters are updated one at a time.
+         */
+
+
+        // Part 1: Parameters which do not have row scaling attached.
+        enkf_main_serialize_dataset(enkf_main_get_ensemble_config(enkf_main), dataset , step2 ,  use_count , tp , serialize_info);
 
         if (analysis_module_check_option( module , ANALYSIS_UPDATE_A)){
           if (analysis_module_check_option( module , ANALYSIS_ITERABLE)){
@@ -1127,11 +1135,63 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
           matrix_inplace_matmul_mt2( A , X , tp );
         }
 
-        // The enkf_main_deserialize_dataset() function will dismantle the A
-        // matrix from the serialize_info structure and distribute that content
-        // over to enkf_node instances and eventually the storage layer.
         enkf_main_deserialize_dataset( enkf_main_get_ensemble_config( enkf_main ) , dataset , serialize_info , tp);
 
+
+
+        // Part 2: Parameters with row scaling attached - to support distance based localization.
+        {
+          const auto& scaled_keys = local_dataset_scaled_keys(dataset);
+          if (scaled_keys.size()) {
+            throw std::logic_error("Sorry - the use of row scaling for distance based localization is not yet implemented");
+
+            if (analysis_module_check_option( module , ANALYSIS_UPDATE_A))
+              throw std::logic_error("Sorry - row scaling for distance based localization can not be combined with analysis modules which update the A matrix");
+
+            for (int ikw=0; ikw < scaled_keys.size(); ikw++) {
+              const auto& key = scaled_keys[ikw];
+              const active_list_type * active_list = local_dataset_get_node_active_list(dataset, key.c_str());
+              for (int iens = serialize_info->iens1; iens < serialize_info->iens2; iens++) {
+                int column = int_vector_iget( serialize_info->iens_active_index , iens);
+                if (column >= 0) {
+                  serialize_node(serialize_info->src_fs,
+                                 serialize_info->ensemble_config,
+                                 key.c_str(),
+                                 iens,
+                                 serialize_info->report_step,
+                                 0,
+                                 column,
+                                 active_list,
+                                 A);
+                }
+              }
+
+              if (analysis_module_check_option( module , ANALYSIS_USE_A))
+                analysis_module_initX( module , X , localA , S , R , dObs , E , D, enkf_main->shared_rng);
+
+              /*
+                row_scaling_type * row_scaling = local_dataset_get_row_scaling( local_dataset, key );
+                row_scaling_multiply(row_scaling, X, A );
+              */
+
+              for (int iens = serialize_info->iens1; iens < serialize_info->iens2; iens++) {
+                int column = int_vector_iget( serialize_info->iens_active_index , iens);
+                if (column >= 0) {
+                  deserialize_node(serialize_info->target_fs,
+                                   serialize_info->src_fs,
+                                   serialize_info->ensemble_config,
+                                   key.c_str(),
+                                   iens,
+                                   serialize_info->report_step,
+                                   0,
+                                   column,
+                                   active_list,
+                                   A);
+                }
+              }
+            }
+          }
+        }
         enkf_main_module_info_free( module_info );
       }
     }

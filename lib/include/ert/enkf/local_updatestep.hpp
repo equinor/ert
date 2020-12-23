@@ -19,11 +19,12 @@
 #ifndef ERT_LOCAL_UPDATESTEP_H
 #define ERT_LOCAL_UPDATESTEP_H
 
+#include <ert/enkf/local_ministep.hpp>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/local_obsdata.hpp>
 
 typedef struct local_updatestep_struct local_updatestep_type;

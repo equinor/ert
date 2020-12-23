@@ -140,14 +140,14 @@ bool local_dataset_has_row_scaling(const local_dataset_type * dataset, const cha
   return false;
 }
 
-stringlist_type * local_dataset_alloc_scaled_keys(const local_dataset_type * dataset) {
-  stringlist_type * keys = stringlist_alloc_new();
+std::vector<std::string> local_dataset_scaled_keys(const local_dataset_type * dataset) {
+  std::vector<std::string> keys;
   hash_iter_type *node_iter = hash_iter_alloc( dataset->nodes );
 
   while (!hash_iter_is_complete( node_iter )) {
     const char * key = hash_iter_get_next_key( node_iter );
     if (local_dataset_has_row_scaling(dataset, key))
-      stringlist_append_copy( keys, key);
+      keys.emplace_back( key );
   }
 
   hash_iter_free( node_iter );
@@ -155,14 +155,14 @@ stringlist_type * local_dataset_alloc_scaled_keys(const local_dataset_type * dat
 }
 
 
-stringlist_type * local_dataset_alloc_unscaled_keys(const local_dataset_type * dataset) {
-  stringlist_type * keys = stringlist_alloc_new();
+std::vector<std::string> local_dataset_unscaled_keys(const local_dataset_type * dataset) {
+  std::vector<std::string> keys;
   hash_iter_type *node_iter = hash_iter_alloc( dataset->nodes );
 
   while (!hash_iter_is_complete( node_iter )) {
     const char * key = hash_iter_get_next_key( node_iter );
     if (!local_dataset_has_row_scaling(dataset, key))
-      stringlist_append_copy( keys, key);
+      keys.emplace_back( key );
   }
 
   hash_iter_free( node_iter );
