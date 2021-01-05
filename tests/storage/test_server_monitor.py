@@ -125,7 +125,7 @@ def test_json_exists(tmpdir):
         with open(str(tmpdir / "storage_server.json"), "w") as f:
             f.write("this is a json file")
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(SystemExit):
             ServerMonitor()
 
 
