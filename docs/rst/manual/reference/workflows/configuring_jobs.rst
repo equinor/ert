@@ -43,6 +43,8 @@ loop through all your realization folders that will typically be an
 *external* script, and in that case the implementation language -
 i.e. Python, Perl, C++, F77 ... has no relevance.
 
+NB: note that relative paths are resolved from the location of the job
+configuration file, not the configuration file provided to ert
 
 Configure an external job
 -------------------------
@@ -58,6 +60,8 @@ executable:
     INTERNAL   FALSE                    -- This is the default - not necessary to include.
     EXECUTABLE path/to/program          -- Path to a program/script which will be invoked by the job.
 
+NB: note that relative paths are resolved from the location of the job
+configuration file, not the configuration file provided to ert
 
 Configuring the arguments
 -------------------------
