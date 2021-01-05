@@ -133,7 +133,13 @@ class ServerMonitor(threading.Thread):
 
         """
         if (Path.cwd() / "storage_server.json").exists():
-            raise RuntimeError("storage_server.json exists")
+            print(
+                "A file called storage_server.json is present from this location. "
+                "This indicates there is already a ert instance running. If you are "
+                "certain that is not the case, try to delete the file and try "
+                "again."
+            )
+            sys.exit(1)
 
     @classmethod
     def get_instance(cls):
