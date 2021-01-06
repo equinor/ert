@@ -1,13 +1,27 @@
 from typing import List, Optional, Tuple
 
 from ert_data.measured import MeasuredData
-from ert_shared import ERT
+from ert_shared.ert_adapter import ERT, LibresFacade
 from ert_shared.feature_toggling import feature_enabled
 from ert_shared.storage.server_monitor import ServerMonitor
 from res.enkf.export import MisfitCollector
 
 import ert_shared.storage.json_schema as js
 import requests
+
+
+class _EnKFMain:
+    """MisfitCollector.createActiveList, used by create_update_data, expects an
+    EnKFMain object as its first parameter. However, this function only uses the
+    getEnsembleSize function of EnKFMain. This class is a mock class that provides
+    only this one function.
+    """
+
+    def __init__(self, ert: LibresFacade):
+        self._ensemble_size = ert.get_ensemble_size()
+
+    def getEnsembleSize(self) -> int:
+        return self._ensemble_size
 
 
 def create_ensemble(ert, reference: Optional[Tuple[str, str]]) -> js.EnsembleCreate:
@@ -106,12 +120,7 @@ def create_observations(ert) -> List[js.ObservationCreate]:
     ]
 
 
-def create_update_data():
-    ert = ERT.enkf_facade
-
-    fs = ert.get_current_fs()
-    realizations = MisfitCollector.createActiveList(ERT.ert, fs)
-
+def _extract_active_observations(ert):
     update_step = ert.get_update_step()
     if len(update_step) == 0:
         return
@@ -127,6 +136,14 @@ def create_update_data():
         obs_key = block.get_obs_key()
         active_list = [block.is_active(i) for i in range(len(block))]
         active_obs[obs_key] = active_list
+    return active_obs
+
+
+def create_update_data(ert):
+    fs = ert.get_current_fs()
+    realizations = MisfitCollector.createActiveList(_EnKFMain(ert), fs)
+
+    active_obs = _extract_active_observations(ert)
 
     for obs_vector in ert.get_observations():
         obs_key = obs_vector.getObservationKey()
@@ -167,7 +184,7 @@ def dump_to_new_storage(reference: Optional[Tuple[str, str]] = None):
             data=o.json(),
             auth=server.fetch_auth(),
         )
-    for u in create_update_data():
+    for u in create_update_data(ert):
         requests.post(
             f"{server.fetch_url()}/ensembles/{ens.id}/misfit",
             data=u.json(),

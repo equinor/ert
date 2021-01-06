@@ -96,14 +96,60 @@ poly_res = pd.DataFrame.from_dict(
 responses = {"POLY_RES": poly_res}
 
 
+class MockObsBlock:
+    def __init__(self, name):
+        self._name = name
+
+    def get_obs_key(self):
+        return self._name
+
+    def is_active(self, index):
+        assert index in range(5)
+        return True
+
+    def __len__(self):
+        return 5
+
+
+class MockObsData:
+    def get_num_blocks(self):
+        return 2
+
+    def get_block(self, index):
+        return MockObsBlock(["POLY_OBS", "TEST_OBS"][index])
+
+
+class MockUpdateStep:
+    def get_obs_data(self):
+        return MockObsData()
+
+
+class MockObservation:
+    def __init__(self, name, response_name):
+        self._name = name
+        self._response_name = response_name
+
+    def getObservationKey(self):
+        return self._name
+
+    def getDataKey(self):
+        return self._response_name
+
+    def getTotalChi2(self, _fs, index):
+        return float(index)
+
+
 class MockFacade:
     ENSEMBLE_NAME = "default"
 
     def __init__(self):
-        pass
+        self.enkf_main = None
 
     def get_observations(self):
-        return range(2)
+        return [
+            MockObservation("POLY_OBS", "POLY_RES"),
+            MockObservation("TEST_OBS", "TEST_RES"),
+        ]
 
     def get_ensemble_size(self):
         return 5
@@ -113,6 +159,12 @@ class MockFacade:
 
     def get_current_case_name(self):
         return self.ENSEMBLE_NAME
+
+    def get_current_fs(self):
+        return
+
+    def get_update_step(self):
+        return [MockUpdateStep()]
 
     def gen_kw_priors(self):
         return {
@@ -174,7 +226,13 @@ def mock_ert(monkeypatch):
         def data(self):
             return pd.DataFrame.from_dict(observation_data)
 
+    def create_active_list(_enkf_main, _fs):
+        return range(5)
+
     monkeypatch.setattr(extraction, "MeasuredData", MockMeasuredData)
+    monkeypatch.setattr(
+        extraction.MisfitCollector, "createActiveList", create_active_list
+    )
     yield MockFacade()
 
 
@@ -300,7 +358,7 @@ def test_responses(app_client, mock_ert):
     ]
 
 
-def test_update(app_client, mock_ert):
+def test_ensemble_parent_child_link(app_client, mock_ert):
     ensemble_0 = extraction.create_ensemble(mock_ert, reference=None)
     ens_resp_0 = app_client.post("/ensembles", data=ensemble_0.json())
     assert ens_resp_0.status_code == 200
@@ -339,3 +397,26 @@ def test_update(app_client, mock_ert):
     assert ens_2.parent.algorithm == "dijkstra"
     assert ens_2.parent.ensemble_reference == ens_0
     assert ens_2.children == []
+
+
+def test_update(app_client, mock_ert):
+    # Setup
+    ensemble = extraction.create_ensemble(mock_ert, reference=None)
+    ens_resp = app_client.post("/ensembles", data=ensemble.json()).json()
+
+    observations = extraction.create_observations(mock_ert)
+    for obs in observations:
+        resp = app_client.post("/observations", data=obs.json())
+
+    responses = extraction.create_responses(mock_ert, "default")
+    for r in responses:
+        resp = app_client.post(f"/ensembles/{ens_resp['id']}/responses", data=r.json())
+
+    # Start test
+    updates = list(extraction.create_update_data(mock_ert))
+    assert len(updates) == 2
+
+    resp_0 = app_client.post(
+        f"/ensembles/{ens_resp['id']}/misfit", data=updates[0].json()
+    )
+    assert resp_0.status_code == 200
