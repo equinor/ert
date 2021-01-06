@@ -9,7 +9,7 @@ class MisfitBase(BaseModel):
 class MisfitCreate(MisfitBase):
     observation_key: str
     response_definition_key: str
-    active: Optional[List[float]] = None
+    active: Optional[List[bool]] = None
     realizations: Mapping[int, float]
 
 
