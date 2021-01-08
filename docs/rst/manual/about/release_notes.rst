@@ -1,6 +1,49 @@
 Release Notes
 =============
 
+Version 2.19
+------------
+
+Highlighted changes
+~~~~~~~~~~~~~~~~~~~
+
+ERT is now pip-installable
+##########################
+ERT can now be installed via PyPI by running
+
+.. code-block:: none
+
+   >>>> pip install ert
+
+2.19.0 ERT
+~~~~~~~~~~ 
+Improvements:
+  - Improve observation format documentation
+  - Fix plotting warnings
+  - Introduce sub categories to job documentation section
+  - Remove legacy logo
+  - Improve documentation of installed workflows
+  - Various improvements to the new (but for now optional) data storage 
+  - Various improvements to the new (but for now optional) internal workflow manager
+
+Miscellaneous:
+  - Remove upper limit on matplotlib version
+  - Use the Qt5 backend
+
+8.0.0 libres
+~~~~~~~~~~~~
+Improvements:
+  - pip installable libres
+  - Catch version import error
+  - Rename all shell workflows to uppercase
+  - Improve RMS forward model documentation
+
+Miscellaneous:
+  - Remove unused EnKF update checks
+  - Move tests to ease running them
+  - Remove legacy logo
+  - Update requirement list
+
 Version 2.16
 ------------
 
