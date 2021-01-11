@@ -98,7 +98,7 @@ def create_observations(ert) -> List[js.ObservationCreate]:
     keys = [ert.get_observation_key(i) for i, _ in enumerate(ert.get_observations())]
 
     if len(keys) == 0:
-        return
+        return []
 
     data = MeasuredData(ert, keys)
     data.remove_inactive_observations()
@@ -123,12 +123,12 @@ def create_observations(ert) -> List[js.ObservationCreate]:
 def _extract_active_observations(ert):
     update_step = ert.get_update_step()
     if len(update_step) == 0:
-        return
+        return {}
 
     ministep = update_step[-1]
     obs_data = ministep.get_obs_data()
     if obs_data is None:
-        return
+        return {}
 
     active_obs = {}
     for block_num in range(obs_data.get_num_blocks()):

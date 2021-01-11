@@ -144,18 +144,19 @@ class MockFacade:
 
     def __init__(self):
         self.enkf_main = None
+        self.observations = {
+            "POLY_OBS": MockObservation("POLY_OBS", "POLY_RES"),
+            "TEST_OBS": MockObservation("TEST_OBS", "TEST_RES"),
+        }
 
     def get_observations(self):
-        return [
-            MockObservation("POLY_OBS", "POLY_RES"),
-            MockObservation("TEST_OBS", "TEST_RES"),
-        ]
+        return self.observations.values()
 
     def get_ensemble_size(self):
         return 5
 
     def get_observation_key(self, i):
-        return ["POLY_OBS", "TEST_OBS"][i]
+        return list(self.observations.keys())[i]
 
     def get_current_case_name(self):
         return self.ENSEMBLE_NAME
@@ -255,6 +256,10 @@ def test_create_observations(app_client, mock_ert):
     assert test_obs.data_indices == [3, 6, 9]
     assert test_obs.values == [6, 12, 18]
     assert test_obs.errors == [0.1, 0.2, 0.3]
+
+    mock_ert.observations = {}
+    obs = extraction.create_observations(mock_ert)
+    assert obs == []
 
 
 def test_ensemble_return(app_client, mock_ert):
