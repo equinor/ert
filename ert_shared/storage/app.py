@@ -1,9 +1,11 @@
 import os
 import sys
+import json
+from typing import Any
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.exception_handlers import http_exception_handler
-from fastapi.responses import JSONResponse
+from fastapi.responses import Response
 from fastapi.security import HTTPBasic
 
 from ert_shared.storage import json_schema as js
@@ -13,7 +15,22 @@ from ert_shared.storage.endpoints import router
 from sqlalchemy.orm.exc import NoResultFound
 
 
-app = FastAPI(name="ERT Storage API", debug=True)
+class JSONResponse(Response):
+    """A replacement for Starlette's JSONResponse that permits NaNs."""
+
+    media_type = "application/json"
+
+    def render(self, content: Any) -> bytes:
+        return json.dumps(
+            content,
+            ensure_ascii=False,
+            allow_nan=True,
+            indent=None,
+            separators=(",", ":"),
+        ).encode("utf-8")
+
+
+app = FastAPI(name="ERT Storage API", debug=True, default_response_class=JSONResponse)
 security = HTTPBasic()
 
 
