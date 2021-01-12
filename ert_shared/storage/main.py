@@ -103,13 +103,13 @@ def run_server(args=None, debug=False):
     if debug:
         config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
 
-    sock = bind_open_socket("127.0.0.1")
+    sock = bind_open_socket(args.host)
     connection_info = json.dumps(
         {
             "urls": [
                 f"http://{host}:{sock.getsockname()[1]}"
                 for host in (
-                    "127.0.0.1",
+                    sock.getsockname()[0],
                     socket.gethostname(),
                     socket.getfqdn(),
                 )
