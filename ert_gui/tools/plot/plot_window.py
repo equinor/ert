@@ -184,14 +184,18 @@ class PlotWindow(QMainWindow):
         key_def = self.getSelectedKey()
         self._plot_customizer.switchPlotConfigHistory(key_def)
 
+        available_widgets = [
+            widget
+            for widget in self._plot_widgets
+            if widget._plotter.dimensionality == key_def["dimensionality"]
+        ]
+        self._central_tab.currentChanged.disconnect()
         for plot_widget in self._plot_widgets:
-            index = self._central_tab.indexOf(plot_widget)
-
-            self._central_tab.currentChanged.disconnect()
             self._central_tab.setTabEnabled(
-                index, plot_widget._plotter.dimensionality == key_def["dimensionality"]
+                self._central_tab.indexOf(plot_widget), plot_widget in available_widgets
             )
-            self._central_tab.currentChanged.connect(self.currentPlotChanged)
+        self._central_tab.currentChanged.connect(self.currentPlotChanged)
+        self._central_tab.setCurrentWidget(available_widgets[0])
 
         self.currentPlotChanged()
 
