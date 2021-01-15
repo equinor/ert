@@ -8,7 +8,11 @@ from job_runner.reporting.message import Exited, Init, Finish
 
 from unittest.mock import patch
 
+import pytest
 
+# Network reporting is disabled temporarily in python/ert_logger/__init__.py
+# according to issue #1095.
+@pytest.mark.skip(reason="Logging to the network is currently disabled")
 class NetworkReporterTests(TestCase):
     def setUp(self):
         self.reporter = Network()

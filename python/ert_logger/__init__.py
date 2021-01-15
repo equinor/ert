@@ -11,19 +11,25 @@ BASE_MESSAGE = {
 }
 
 
+# Disabled temporarily, according to issue #1095.
+#
+# The tests in tests/job_runner/test_network_reporter.py are disabled
+# accordingly.
+#
 def log_message(input_payload):
-    payload = deepcopy(BASE_MESSAGE)
-    payload.update(input_payload)
-    try:
-        data = json.dumps(payload)
-        # Disabling proxies
-        proxies = {"http": None, "https": None}
-        requests.post(
-            LOG_URL,
-            timeout=3,
-            headers={"Content-Type": "application/json"},
-            data=data,
-            proxies=proxies,
-        )
-    except:  # noqa
-        pass
+    # payload = deepcopy(BASE_MESSAGE)
+    # payload.update(input_payload)
+    # try:
+    #     data = json.dumps(payload)
+    #     # Disabling proxies
+    #     proxies = {"http": None, "https": None}
+    #     requests.post(
+    #         LOG_URL,
+    #         timeout=3,
+    #         headers={"Content-Type": "application/json"},
+    #         data=data,
+    #         proxies=proxies,
+    #     )
+    # except:  # noqa
+    #     pass
+    pass
