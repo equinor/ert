@@ -4,9 +4,6 @@ import pwd
 import socket
 import sys
 
-# shadow map builtin in py2, making our map usage py2 compatible
-# TODO: safely remove after py2 support in ERT ends
-from builtins import map
 from sys import version as sys_version
 
 import requests

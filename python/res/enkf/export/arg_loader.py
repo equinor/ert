@@ -1,4 +1,3 @@
-from __future__ import print_function
 import math
 from pandas import DataFrame, MultiIndex
 import numpy

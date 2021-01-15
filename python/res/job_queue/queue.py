@@ -18,8 +18,6 @@ Module implementing a queue for managing external jobs.
 
 """
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import asyncio
 import sys
 import time
