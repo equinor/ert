@@ -52,7 +52,7 @@ def _get_job_category(job_name):
         return "simulators.reservoir"
 
     if job_name == "RMS":
-        return "modeling.reservoir"
+        return "modelling.reservoir"
 
     if job_name == "TEMPLATE_RENDER":
         return "utility.templating"
