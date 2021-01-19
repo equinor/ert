@@ -1,13 +1,20 @@
 -
   name: evaluate_polynomial
-  environment: polynomial
+
   input:
     -
       record: coefficients
       location: coefficients.json
+
   output:
     -
       record: polynomial_output
       location: output.json
+
+  transportable_commands:
+    -
+      name: poly
+      location: poly.py
+
   script:
-    - ert3.evaluator.poly:polynomial
+    - poly --coefficients coefficients.json --output output.json

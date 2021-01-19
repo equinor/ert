@@ -48,17 +48,6 @@ def _load_input_records(ensemble, workspace_root, experiment_name):
     return records
 
 
-def _create_forward_model(stages_config, ensemble):
-    # For now we only allow one stage with one function
-    # So will fail quite hard if these constraints are not met
-    # TODO: Allow different stages and removing asserts.
-    assert len(ensemble.forward_model.stages) == 1
-    assert len(stages_config) == 1
-    forward_model = stages_config.step_from_key(ensemble.forward_model.stages[0]).script
-    assert len(forward_model) == 1
-    return forward_model[0]
-
-
 def run(ensemble, stages_config, workspace_root, experiment_name):
     if ert3.workspace.experiment_have_run(workspace_root, experiment_name):
         raise ValueError(f"Experiment {experiment_name} have been carried out.")
@@ -67,8 +56,8 @@ def run(ensemble, stages_config, workspace_root, experiment_name):
 
     input_records = _load_input_records(ensemble, workspace_root, experiment_name)
     ert3.storage.add_input_data(workspace_root, experiment_name, input_records)
-    func = _create_forward_model(stages_config, ensemble)
+
     response = ert3.evaluator.evaluate(
-        input_records, func, ensemble.forward_model.driver
+        workspace_root, experiment_name, input_records, ensemble, stages_config
     )
     ert3.storage.add_output_data(workspace_root, experiment_name, response)

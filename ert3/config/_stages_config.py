@@ -1,28 +1,7 @@
 import importlib
+import os
 from typing import List, Callable, Optional
-from pydantic import validator, FilePath, BaseModel
-
-
-def _import_from(path):
-    try:
-        module, func = path.split(":")
-    except ValueError as err:
-        raise (
-            ValueError(
-                f"Malformed script name, must be: some.module:function_name, was {path}"
-            )
-        ) from err
-    except AttributeError as err:
-        raise ValueError(f"Script must be type <str> is: {type(path)}") from err
-    try:
-        module = importlib.import_module(module)
-    except ModuleNotFoundError as err:
-        raise ValueError(f"No module named: {module}") from err
-    try:
-        func = getattr(module, func)
-    except AttributeError as err:
-        raise ValueError(f"No function named: {func}") from err
-    return func
+from pydantic import root_validator, validator, FilePath, BaseModel
 
 
 class _StagesConfig(BaseModel):
@@ -43,16 +22,32 @@ class OutputRecord(_StagesConfig):
     location: str
 
 
+class TransportableCommand(_StagesConfig):
+    name: str
+    location: FilePath
+
+    @validator("location")
+    def is_executable(cls, location):
+        if not os.access(location, os.X_OK):
+            raise ValueError(f"{location} is not executable")
+        return location
+
+
 class Step(_StagesConfig):
     name: str
-    script: List[Callable]
+    script: List[str]
     input: List[InputRecord]
     output: List[OutputRecord]
-    environment: str = None
+    transportable_commands: List[TransportableCommand]
 
-    @validator("script", pre=True)
-    def function_is_valid(cls, scripts: str) -> List[Callable]:
-        return [_import_from(method) for method in scripts]
+    @root_validator
+    def command_defined(cls, step):
+        valid_cmds = [cmd.name for cmd in step.get("transportable_commands", [])]
+        for script_line in step.get("script", []):
+            line_cmd = script_line.split()[0]
+            if line_cmd not in valid_cmds:
+                raise ValueError("{} is not a known command".format(line_cmd))
+        return step
 
 
 class StagesConfig(BaseModel):

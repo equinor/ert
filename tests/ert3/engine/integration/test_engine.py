@@ -74,12 +74,18 @@ def stages_config():
     config_list = [
         {
             "name": "evaluate_polynomial",
-            "environment": "polynomial",
             "input": [{"record": "coefficients", "location": "coefficients.json"}],
             "output": [{"record": "polynomial_output", "location": "output.json"}],
-            "script": ["ert3.evaluator.poly:polynomial"],
+            "script": ["poly --coefficients coefficients.json --output output.json"],
+            "transportable_commands": [
+                {
+                    "name": "poly",
+                    "location": "poly.py",
+                }
+            ],
         }
     ]
+    shutil.copy2(_EXAMPLES_ROOT / "polynomial" / "poly.py", "poly.py")
     yield ert3.config.load_stages_config(config_list)
 
 

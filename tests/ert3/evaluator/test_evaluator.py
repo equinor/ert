@@ -1,7 +1,15 @@
+import os
+import pathlib
 import pytest
+import shutil
+import yaml
 
-from ert3.evaluator import evaluate
-from ert3.evaluator.poly import polynomial
+import ert3
+
+
+_EXAMPLES_ROOT = (
+    pathlib.Path(os.path.dirname(__file__)) / ".." / ".." / ".." / "examples"
+)
 
 
 @pytest.mark.parametrize(
@@ -23,11 +31,26 @@ from ert3.evaluator.poly import polynomial
 )
 def test_evaluator(coeffs, expected, tmpdir):
     with tmpdir.as_cwd():
-        realizations = [
+        shutil.copytree(_EXAMPLES_ROOT / "polynomial", "polynomial")
+        workspace_root = tmpdir / "polynomial"
+        workspace_root.chdir()
+
+        input_records = [
             {"coefficients": {"a": a, "b": b, "c": c}} for (a, b, c) in coeffs
         ]
-        data = [
-            data["polynomial_output"]
-            for data in evaluate(realizations, polynomial, "local")
-        ]
+        with open(workspace_root / "evaluation" / "ensemble.yml") as f:
+            raw_ensemble_config = yaml.safe_load(f)
+            raw_ensemble_config["size"] = len(input_records)
+            ensemble_config = ert3.config.load_ensemble_config(raw_ensemble_config)
+        with open(workspace_root / "stages.yml") as f:
+            stages_config = ert3.config.load_stages_config(yaml.safe_load(f))
+
+        evaluation_result = ert3.evaluator.evaluate(
+            workspace_root,
+            "test_evaluation",
+            input_records,
+            ensemble_config,
+            stages_config,
+        )
+        data = [data["polynomial_output"] for data in evaluation_result]
         assert data == expected
