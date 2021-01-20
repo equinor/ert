@@ -46,9 +46,7 @@ class Ensemble(Entity):
         "ResponseDefinition",
         back_populates="ensemble",
     )
-    parameter_definitions = relationship(
-        "ParameterDefinition", back_populates="ensemble"
-    )
+    parameters = relationship("Parameter", back_populates="ensemble")
 
 
 class Update(Entity):
@@ -93,7 +91,6 @@ class Realization(Entity):
 
     ensemble = relationship("Ensemble", back_populates="realizations")
     responses = relationship("Response", back_populates="realization")
-    parameters = relationship("Parameter", back_populates="realization")
 
 
 class ResponseDefinition(Entity):
@@ -164,14 +161,14 @@ class ParameterPrior(Entity):
     )
 
 
-class ParameterDefinition(Entity):
-    __tablename__ = "parameter_definition"
+class Parameter(Entity):
+    __tablename__ = "parameter"
     __table_args__ = (
         UniqueConstraint(
             "name",
             "group",
             "ensemble_id",
-            name="uq_parameter_definition_name_group_ensemble_id",
+            name="uq_parameter_name_group_ensemble_id",
         ),
     )
 
@@ -181,34 +178,10 @@ class ParameterDefinition(Entity):
     ensemble_id = sa.Column(sa.Integer, sa.ForeignKey("ensemble.id"), nullable=False)
     prior_id = sa.Column(sa.Integer, sa.ForeignKey("parameter_prior.id"))
 
-    ensemble = relationship("Ensemble", back_populates="parameter_definitions")
+    values = sa.Column(sa.PickleType, nullable=False)
+
+    ensemble = relationship("Ensemble", back_populates="parameters")
     prior = relationship("ParameterPrior")
-    parameters = relationship("Parameter", back_populates="parameter_definition")
-
-
-class Parameter(Entity):
-    __tablename__ = "parameter"
-    __table_args__ = (
-        UniqueConstraint(
-            "realization_id",
-            "parameter_definition_id",
-            name="uq_parameter_realization_id_parameter_definition_id",
-        ),
-    )
-
-    id = sa.Column(sa.Integer, primary_key=True)
-    value = sa.Column(sa.PickleType)
-    realization_id = sa.Column(
-        sa.Integer, sa.ForeignKey("realization.id"), nullable=False
-    )
-    parameter_definition_id = sa.Column(
-        sa.Integer, sa.ForeignKey("parameter_definition.id"), nullable=False
-    )
-
-    realization = relationship("Realization", back_populates="parameters")
-    parameter_definition = relationship(
-        "ParameterDefinition", back_populates="parameters"
-    )
 
 
 class AttributeValue(Entity):

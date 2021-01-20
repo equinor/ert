@@ -30,21 +30,12 @@ async def read_item(*, db: Session = Db(), ensemble_id: int, index: int):
         for resp_def in response_definitions
     ]
 
-    parameter_definitions = db.query(ds.ParameterDefinition).filter_by(
-        ensemble_id=ensemble_id
-    )
     parameters = [
         {
-            "name": param_def.name,
-            "parameter": (
-                db.query(ds.Parameter)
-                .filter_by(
-                    parameter_definition_id=param_def.id, realization_id=realization.id
-                )
-                .one()
-            ),
+            "name": param.name,
+            "value": param.values[realization.index],
         }
-        for param_def in parameter_definitions
+        for param in db.query(ds.Parameter).filter_by(ensemble_id=ensemble_id)
     ]
 
     return_schema = {
@@ -53,7 +44,7 @@ async def read_item(*, db: Session = Db(), ensemble_id: int, index: int):
             {"name": res["name"], "data": res["response"].values} for res in responses
         ],
         "parameters": [
-            {"name": par["name"], "data": par["parameter"].value} for par in parameters
+            {"name": par["name"], "data": par["value"]} for par in parameters
         ],
     }
 

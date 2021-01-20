@@ -26,7 +26,7 @@ def _ensemble(db: Session, ensemble: ds.Ensemble) -> dict:
             ],
             "parameters": [
                 _parameter_minimal(par)
-                for par in db.query(ds.ParameterDefinition)
+                for par in db.query(ds.Parameter)
                 .filter_by(ensemble_id=ensemble.id)
                 .all()
             ],
@@ -56,17 +56,17 @@ def _ensemble_minimal(ensemble: ds.Ensemble) -> dict:
     }
 
 
-def _parameter_minimal(paramdef: ds.ParameterDefinition) -> dict:
+def _parameter_minimal(param: ds.Parameter) -> dict:
     return {
-        "id": paramdef.id,
-        "key": paramdef.name,
-        "group": paramdef.group,
+        "id": param.id,
+        "key": param.name,
+        "group": param.group,
         "prior": {
-            "function": paramdef.prior.function,
-            "parameter_names": paramdef.prior.parameter_names,
-            "parameter_values": paramdef.prior.parameter_values,
+            "function": param.prior.function,
+            "parameter_names": param.prior.parameter_names,
+            "parameter_values": param.prior.parameter_values,
         }
-        if paramdef.prior is not None
+        if param.prior is not None
         else {},
     }
 
@@ -145,28 +145,24 @@ async def create_ensemble(*, db: Session = Db(), ens_in: js.EnsembleCreate):
     db.add_all(realizations.values())
     db.add_all(priors.values())
 
-    paramdef = [
-        ds.ParameterDefinition(
+    for index, param in enumerate(ens_in.parameters):
+        if len(param.values) != ens_in.realizations:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Length of Ensemble.parameters[{index}].values must be {ens_in.realizations}",
+            )
+
+    db.add_all(
+        ds.Parameter(
             ensemble=ens,
             name=p.name,
             group=p.group,
             prior=priors.get((p.group, p.name), None),
+            values=p.values,
         )
         for p in ens_in.parameters
-    ]
-    db.add_all(paramdef)
-    db.flush()
-
-    params = [
-        ds.Parameter(
-            realization=realizations[index],
-            parameter_definition=pobj,
-            value=values,
-        )
-        for pobj, p in zip(paramdef, ens_in.parameters)
-        for index, values in p.realizations.items()
-    ]
-    db.add_all(params)
+    )
+    db.commit()
 
     return ens
 

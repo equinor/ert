@@ -49,7 +49,7 @@ def create_ensemble(ert, reference: Optional[Tuple[str, str]]) -> js.EnsembleCre
         js.ParameterCreate(
             group=key[: key.index(":")],
             name=key[key.index(":") + 1 :],
-            realizations={index: float(value) for index, value in parameter.iterrows()},
+            values=list(parameter.values),
         )
         for key, parameter in (
             (key, ert.gather_gen_kw_data(ensemble_name, key))

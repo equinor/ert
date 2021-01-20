@@ -75,22 +75,25 @@ def db_populated(db_factory):
     db.add(ensemble)
 
     ######## add parameteredefinitionss ########
-    parameter_def_A_G = ds.ParameterDefinition(
+    parameter_def_A_G = ds.Parameter(
         name="A",
         group="G",
         ensemble=ensemble,
         prior=prior_a,
+        values=[1, 1],
     )
-    parameter_def_B_G = ds.ParameterDefinition(
+    parameter_def_B_G = ds.Parameter(
         name="B",
         group="G",
         ensemble=ensemble,
+        values=[2, 2],
     )
-    parameter_def_key1_group = ds.ParameterDefinition(
+    parameter_def_key1_group = ds.Parameter(
         name="key1",
         group="group",
         ensemble=ensemble,
         prior=priors[0],
+        values=[2, 2],
     )
     db.add_all(
         [
@@ -210,26 +213,6 @@ def db_populated(db_factory):
                 values=[12.1, 12.2, 11.1, 11.2, 9.9, 9.3],
                 realization=realization,
             )
-        )
-
-        db.add_all(
-            [
-                ds.Parameter(
-                    parameter_definition=parameter_def_A_G,
-                    value=1,
-                    realization=realization,
-                ),
-                ds.Parameter(
-                    parameter_definition=parameter_def_B_G,
-                    value=2,
-                    realization=realization,
-                ),
-                ds.Parameter(
-                    parameter_definition=parameter_def_key1_group,
-                    value=2,
-                    realization=realization,
-                ),
-            ]
         )
 
     add_data(realization_0)

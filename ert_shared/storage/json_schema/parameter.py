@@ -1,4 +1,4 @@
-from typing import Mapping
+from typing import List
 from pydantic import BaseModel
 
 from ert_shared.storage.json_schema.prior import Prior
@@ -10,7 +10,7 @@ class ParameterBase(BaseModel):
 
 
 class ParameterCreate(ParameterBase):
-    realizations: Mapping[int, float]
+    values: List[float]
 
 
 class Parameter(ParameterBase):

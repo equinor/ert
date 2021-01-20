@@ -1,5 +1,6 @@
 import pytest
 import pandas as pd
+from typing import List
 from ert_shared.storage import extraction, database_schema as ds, json_schema as js
 
 
@@ -279,30 +280,21 @@ def test_parameters(app_client, mock_ert):
     ensemble = extraction.create_ensemble(mock_ert, None)  # No reference
     resp = app_client.post("/ensembles", data=ensemble.json()).json()
 
-    def get_parameter(group, name, realization_index):
+    def get_parameter_values(group: str, name: str) -> List[float]:
         return (
-            app_client.db.query(ds.Parameter)
-            .join(ds.Parameter.parameter_definition)
+            app_client.db.query(ds.Parameter.values)
             .filter_by(group=group, name=name, ensemble_id=resp["id"])
-            .join(ds.Parameter.realization)
-            .filter_by(index=realization_index)
             .one()
+            .values
         )
 
-    parameter_0 = get_parameter("COEFFS", "COEFF_A", 0)
-    assert parameter_0.value == 0.7684484807065148
-
-    parameter_1 = get_parameter("COEFFS", "COEFF_A", 1)
-    assert parameter_1.value == 0.031542101926117616
-
-    parameter_2 = get_parameter("COEFFS", "COEFF_A", 2)
-    assert parameter_2.value == 0.9116906743615176
-
-    parameter_3 = get_parameter("COEFFS", "COEFF_A", 3)
-    assert parameter_3.value == 0.6985513230581486
-
-    parameter_4 = get_parameter("COEFFS", "COEFF_A", 4)
-    assert parameter_4.value == 0.5949261230249001
+    assert get_parameter_values("COEFFS", "COEFF_A") == [
+        0.7684484807065148,
+        0.031542101926117616,
+        0.9116906743615176,
+        0.6985513230581486,
+        0.5949261230249001,
+    ]
 
 
 def test_priors(app_client, mock_ert):

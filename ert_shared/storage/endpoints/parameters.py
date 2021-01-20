@@ -13,9 +13,9 @@ router = APIRouter()
 @router.get("/ensembles/{ensemble_id}/parameters", response_model=List[js.Parameter])
 async def parameters(*, db: Session = Db(), ensemble_id: int):
     return (
-        db.query(ds.ParameterDefinition)
-        .join(ds.ParameterDefinition.prior, isouter=True)
-        .filter(ds.ParameterDefinition.ensemble_id == ensemble_id)
+        db.query(ds.Parameter)
+        .join(ds.Parameter.prior, isouter=True)
+        .filter(ds.Parameter.ensemble_id == ensemble_id)
         .all()
     )
 
@@ -32,11 +32,11 @@ async def create_parameter(
 @router.get("/ensembles/{ensemble_id}/parameters/{id}", response_model=js.Parameter)
 async def parameter_by_id(*, db: Session = Db(), ensemble_id: int, id: int):
     return (
-        db.query(ds.ParameterDefinition)
-        .join(ds.ParameterDefinition.prior, isouter=True)
+        db.query(ds.Parameter)
+        .join(ds.Parameter.prior, isouter=True)
         .filter(
-            ds.ParameterDefinition.id == id,
-            ds.ParameterDefinition.ensemble_id == ensemble_id,
+            ds.Parameter.id == id,
+            ds.Parameter.ensemble_id == ensemble_id,
         )
         .one()
     )
@@ -44,24 +44,13 @@ async def parameter_by_id(*, db: Session = Db(), ensemble_id: int, id: int):
 
 @router.get("/ensembles/{ensemble_id}/parameters/{id}/data")
 async def parameter_data_by_id(*, db: Session = Db(), ensemble_id: int, id: int):
-    (
-        db.query(ds.ParameterDefinition)
-        .filter(
-            ds.ParameterDefinition.ensemble_id == ensemble_id,
-            ds.ParameterDefinition.id == id,
-        )
-        .one()
-    )
-
     df = pd.DataFrame(
         [
-            [ref.realization.index, ref.value]
-            for ref in (
-                db.query(ds.Parameter)
-                .filter(ds.Parameter.parameter_definition_id == id)
-                .all()
-            )
+            db.query(ds.Parameter.values)
+            .filter_by(ensemble_id=ensemble_id, id=id)
+            .one()
+            .values
         ]
-    )
+    ).T
 
-    return Response(content=df.to_csv(index=False, header=False), media_type="text/csv")
+    return Response(content=df.to_csv(index=True, header=False), media_type="text/csv")
