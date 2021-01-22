@@ -14,6 +14,7 @@ def test_initialize_from_scratch(tmpdir):
         storage = ErtStorage()
         assert not os.path.isfile(storage._db_file_name)
         storage.initialize(script_location=script_location)
+        storage.shutdown()
         assert os.path.isfile(storage._db_file_name)
 
 
@@ -35,9 +36,11 @@ def test_db_backup_before_upgrade(tmpdir):
     with tmpdir.as_cwd():
         storage = ErtStorage()
         storage.initialize(script_location=script_location, revision="11d6bbf0a926")
+        storage.shutdown()
         initial_revision = storage._db_revision()
 
         storage.initialize(script_location=script_location)
+        storage.shutdown()
         last_revision = storage._db_revision()
 
         assert initial_revision != last_revision
@@ -53,11 +56,13 @@ def test_ert_too_old_with_backup(tmpdir):
         script_location = str(Path(__file__).parent / "migrations_stable")
         storage = ErtStorage()
         storage.initialize(script_location=script_location)
+        storage.shutdown()
         stable_revision = storage._db_revision()
 
         # Switch to testing and upgrade database
         script_location = str(Path(__file__).parent / "migrations_testing")
         storage.initialize(script_location=script_location)
+        storage.shutdown()
         testing_revision = storage._db_revision()
 
         assert stable_revision != testing_revision
@@ -79,11 +84,13 @@ def test_ert_too_old_without_backup(tmpdir):
         script_location = str(Path(__file__).parent / "migrations_testing")
         storage = ErtStorage()
         storage.initialize(script_location=script_location)
+        storage.shutdown()
         testing_revision = storage._db_revision()
 
         # Switch to bleeding and upgrade database
         script_location = str(Path(__file__).parent / "migrations_bleeding")
         storage.initialize(script_location=script_location)
+        storage.shutdown()
         bleeding_revision = storage._db_revision()
 
         assert testing_revision != bleeding_revision

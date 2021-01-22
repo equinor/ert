@@ -39,6 +39,11 @@ async def prepare_database():
     ERT_STORAGE.initialize()
 
 
+@app.on_event("shutdown")
+async def shutdown_database():
+    ERT_STORAGE.shutdown()
+
+
 @app.middleware("http")
 async def check_authorization(request: Request, call_next):
     api_token = os.getenv("ERT_AUTHTOKEN")

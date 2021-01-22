@@ -14,10 +14,9 @@ def db_factory(tmp_path_factory):
     """
 
     tmp_path = tmp_path_factory.mktemp("database")
-    url = f"sqlite:///{tmp_path}/ert_storage.db"
 
     sess = ErtStorage()
-    sess.initialize(url=url, testing=True)
+    sess.initialize(project_path=tmp_path, testing=True)
 
     def override_get_db():
         try:
