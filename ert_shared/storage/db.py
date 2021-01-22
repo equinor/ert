@@ -1,5 +1,8 @@
 import os
 import textwrap
+import asyncio
+import atexit
+import getpass
 from typing import Generator
 from fastapi import Depends
 from pathlib import Path
@@ -10,7 +13,8 @@ from sqlalchemy.engine import create_engine
 from sqlalchemy.engine.url import make_url
 
 import alembic
-from alembic import config, script, migration
+from alembic.config import Config
+from alembic import script, migration
 
 
 class ErtStorage:
@@ -25,15 +29,20 @@ class ErtStorage:
         self._cfg = None
 
     def initialize(
-        self, url=None, script_location=None, revision="head", testing=False
+        self,
+        project_path: Path = None,
+        script_location=None,
+        revision="head",
+        testing=False,
     ):
-        if url is not None:
-            self.sqlalchemy_url = url
-
-        self._url = make_url(self.sqlalchemy_url)
-        database_exists = os.path.isfile(self._url.database)
+        if project_path is None:
+            project_path = Path.cwd()
+        project_file = project_path / self._db_file_name
 
         if testing:
+            database_file = project_file
+            self._url = make_url(f"sqlite:///{project_path / self._db_file_name}")
+
             self._engine = create_engine(
                 self._url, connect_args={"check_same_thread": False}
             )
@@ -41,10 +50,20 @@ class ErtStorage:
                 bind=self._engine, autocommit=False, autoflush=False
             )
         else:
+            database_file = _tmp_db_path(project_path)
+            if project_file.is_file():
+                copy2(project_file, database_file)
+            self._url = make_url(f"sqlite:///{database_file}")
+
             self._engine = create_engine(self._url)
             self.Session = sessionmaker(bind=self._engine)
 
-        self._cfg = config.Config(self._cfg_file)
+        self.database_file = database_file
+        self.project_file = project_file
+
+        database_exists = os.path.isfile(database_file)
+
+        self._cfg = Config(self._cfg_file)
         self._cfg.set_section_option("alembic", "sqlalchemy.url", str(self._url))
 
         if script_location is not None:
@@ -63,7 +82,7 @@ class ErtStorage:
             )
             if not os.path.isdir(self._backup_dir):
                 os.mkdir(self._backup_dir)
-            move(self._url.database, f"{self._backup_dir}/{self._url.database}")
+            move(database_file, f"{self._backup_dir}/{database_file.name}")
 
         elif database_exists and self._revision_position(current_revision) > 0:
             print(
@@ -73,8 +92,8 @@ class ErtStorage:
             if not os.path.isdir(self._backup_dir):
                 os.mkdir(self._backup_dir)
             copy2(
-                self._url.database,
-                f"{self._backup_dir}/{self._db_revision()}_{self._url.database}",
+                database_file,
+                f"{self._backup_dir}/{self._db_revision()}_{database_file.name}",
             )
 
         elif database_exists and self._revision_position(current_revision) == -1:
@@ -83,6 +102,9 @@ class ErtStorage:
         with self._engine.begin() as connection:
             self._cfg.attributes["connection"] = connection
             alembic.command.upgrade(config=self._cfg, revision=revision)
+
+    def shutdown(self):
+        copy2(self.database_file, self.project_file)
 
     def _db_revision(self):
         with self._engine.begin() as conn:
@@ -136,6 +158,20 @@ class ErtStorage:
 ERT_STORAGE = ErtStorage()
 
 
+def _tmp_db_path(real_db_path: str) -> Path:
+    if "XDG_RUNTIME_DIR" in os.environ:
+        db_path = Path(os.environ["XDG_RUNTIME_DIR"]) / "ert"
+        db_path.mkdir(exist_ok=True)
+    else:
+        db_path = Path(f"/tmp/ert-{getpass.getuser()}")
+        db_path.mkdir(mode=0o700, exist_ok=True)
+
+    db_path /= str(hash(real_db_path))
+    db_path.mkdir(exist_ok=True)
+
+    return db_path / f"ert_storage.db"
+
+
 async def get_db() -> Generator[Session, None, None]:
     sess = ERT_STORAGE.Session()
     try:
@@ -148,5 +184,5 @@ async def get_db() -> Generator[Session, None, None]:
         sess.close()
 
 
-def Db():
+def Db() -> Depends:
     return Depends(get_db)
