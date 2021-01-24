@@ -93,7 +93,7 @@ def gen_coef(parameters, real, config):
         file_path = os.path.join("coeff", file_name)
         with open(file_path, "w") as f:
             json.dump(data, f)
-        paths[iens] = storage.store(file_name, iens)
+        paths[iens] = (storage.store(file_name, iens),)
     return paths
 
 
@@ -218,7 +218,7 @@ class PrefectEnsemble(_Ensemble):
                         output_to_res.get(input, []) for input in step.get("inputs", [])
                     ]
                     stage_task = UnixStep(
-                        resources=[input_files[iens]]
+                        resources=list(input_files[iens])
                         + self.store_resources(step["resources"]),
                         outputs=step.get("outputs", []),
                         job_list=step.get("jobs", []),
@@ -252,11 +252,27 @@ class PrefectEnsemble(_Ensemble):
         self._eval_proc.daemon = True
         self._eval_proc.start()
 
+    def _fetch_input_files(self):
+        num_realizations = self.config["realizations"]
+        input_files = {iens: () for iens in range(num_realizations)}
+
+        if "parameters" in self.config.keys():
+            parameter_files = gen_coef(
+                self.config["parameters"], num_realizations, self.config
+            )
+            for iens, files in parameter_files.items():
+                input_files[iens] += files
+
+        if "input_files" in self.config.keys():
+            for iens, files in self.config["input_files"].items():
+                input_files[iens] += files
+
+        return input_files
+
     def _evaluate(self, dispatch_url, ee_id):
         sys.stderr = open("prefect.log", "w")
-        input_files = gen_coef(
-            self.config["parameters"], self.config["realizations"], self.config
-        )
+
+        input_files = self._fetch_input_files()
 
         with Client(dispatch_url) as c:
             event = CloudEvent(
