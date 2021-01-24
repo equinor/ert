@@ -66,3 +66,24 @@ def test_cli_init_subfolder(tmpdir):
         with pytest.raises(SystemExit) as error:
             ert3.console.main()
         assert "Already inside an ERT workspace" in str(error.value)
+
+
+def test_cli_record_load_not_existing_file(tmpdir):
+    workspace = tmpdir / _POLY_WORKSPACE_NAME
+    shutil.copytree(_POLY_WORKSPACE, workspace)
+    workspace.chdir()
+
+    args = ["ert3", "init"]
+    with unittest.mock.patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    args = [
+        "ert3",
+        "record",
+        "load",
+        "designed_coefficients",
+        str(workspace / "doe" / "no_such_file.json"),
+    ]
+    with unittest.mock.patch.object(sys, "argv", args):
+        with pytest.raises(SystemExit):
+            ert3.console.main()
