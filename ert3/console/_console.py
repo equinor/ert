@@ -12,6 +12,11 @@ _ERT3_DESCRIPTION = (
 )
 
 
+def _build_run_argparser(subparsers):
+    run_parser = subparsers.add_parser("run", help="Run experiment")
+    run_parser.add_argument("experiment_name", help="Name of the experiment")
+
+
 def _build_record_argparser(subparsers):
     record_parser = subparsers.add_parser("record", help="Record operations")
     sub_record_parsers = record_parser.add_subparsers(
@@ -43,9 +48,18 @@ def _build_argparser():
     subparsers = parser.add_subparsers(dest="sub_cmd", help="ert3 commands")
 
     subparsers.add_parser("init", help="Initialize an ERT3 workspace")
+    _build_run_argparser(subparsers)
     _build_record_argparser(subparsers)
 
     return parser
+
+
+def _run(workspace, args):
+    assert args.sub_cmd == "run"
+    ert3.workspace.assert_experiment_exists(workspace, args.experiment_name)
+    ensemble = _load_ensemble_config(workspace, args.experiment_name)
+    stages_config = _load_stages_config(workspace)
+    ert3.engine.run(ensemble, stages_config, workspace, args.experiment_name)
 
 
 def _record(workspace, args):
@@ -80,7 +94,19 @@ def main():
     if workspace is None:
         sys.exit("Not inside an ERT workspace")
 
-    if args.sub_cmd == "record":
+    if args.sub_cmd == "run":
+        _run(workspace, args)
+    elif args.sub_cmd == "record":
         _record(workspace, args)
     else:
         raise NotImplementedError(f"No implementation to handle command {args.sub_cmd}")
+
+
+def _load_ensemble_config(workspace, experiment_name):
+    with open(workspace / experiment_name / "ensemble.yml") as f:
+        return ert3.config.load_ensemble_config(yaml.safe_load(f))
+
+
+def _load_stages_config(workspace):
+    with open(workspace / "stages.yml") as f:
+        return ert3.config.load_stages_config(yaml.safe_load(f))
