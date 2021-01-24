@@ -1,3 +1,4 @@
+import ert3.console
 import ert3.storage
 import ert3.evaluator
 import ert3.workspace
