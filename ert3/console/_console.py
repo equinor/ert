@@ -17,6 +17,11 @@ def _build_run_argparser(subparsers):
     run_parser.add_argument("experiment_name", help="Name of the experiment")
 
 
+def _build_export_argparser(subparsers):
+    export_parser = subparsers.add_parser("export", help="Export experiment")
+    export_parser.add_argument("experiment_name", help="Name of the experiment")
+
+
 def _build_record_argparser(subparsers):
     record_parser = subparsers.add_parser("record", help="Record operations")
     sub_record_parsers = record_parser.add_subparsers(
@@ -49,6 +54,7 @@ def _build_argparser():
 
     subparsers.add_parser("init", help="Initialize an ERT3 workspace")
     _build_run_argparser(subparsers)
+    _build_export_argparser(subparsers)
     _build_record_argparser(subparsers)
 
     return parser
@@ -60,6 +66,11 @@ def _run(workspace, args):
     ensemble = _load_ensemble_config(workspace, args.experiment_name)
     stages_config = _load_stages_config(workspace)
     ert3.engine.run(ensemble, stages_config, workspace, args.experiment_name)
+
+
+def _export(workspace, args):
+    assert args.sub_cmd == "export"
+    ert3.engine.export(workspace, args.experiment_name)
 
 
 def _record(workspace, args):
@@ -96,6 +107,8 @@ def main():
 
     if args.sub_cmd == "run":
         _run(workspace, args)
+    elif args.sub_cmd == "export":
+        _export(workspace, args)
     elif args.sub_cmd == "record":
         _record(workspace, args)
     else:
