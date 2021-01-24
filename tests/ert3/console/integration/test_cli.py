@@ -18,6 +18,7 @@ _POLY_WORKSPACE = _EXAMPLES_ROOT / _POLY_WORKSPACE_NAME
     "args",
     [
         ["ert3", "run", "something"],
+        ["ert3", "export", "something"],
     ],
 )
 def test_cli_no_init(tmpdir, args):

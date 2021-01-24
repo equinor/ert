@@ -13,6 +13,65 @@ def load_experiment_config(workspace, ensemble_config, stages_config):
     return config
 
 
+def assert_ensemble_size(config, export_data):
+    assert len(export_data) == config["ensemble"].size
+
+
+def assert_input_records(config, export_data):
+    input_records = {}
+    for input_data in config["ensemble"].input:
+        record = input_data.record
+        source = input_data.source
+
+        for p in config["parameters"]:
+            if p["type"] + "." + p["name"] == source:
+                parameter = p
+                break
+
+        input_records[record] = parameter["variables"]
+
+    for realisation in export_data:
+        assert sorted(input_records.keys()) == sorted(realisation["input"].keys())
+        for record_name in input_records.keys():
+            input_variables = sorted(input_records[record_name])
+            realisation_variables = sorted(realisation["input"][record_name].keys())
+            assert input_variables == realisation_variables
+
+
+def assert_output_records(config, export_data):
+    output_records = []
+    for forward_stage in config["ensemble"].forward_model.stages:
+        for stage in config["stages"]:
+            if stage.name == forward_stage:
+                output_records += [output_data.record for output_data in stage.output]
+    for realisation in export_data:
+        assert sorted(output_records) == sorted(realisation["output"].keys())
+
+
+def assert_poly_output(export_data):
+    for realisation in export_data:
+        coeff = realisation["input"]["coefficients"]
+        poly_out = realisation["output"]["polynomial_output"]
+
+        assert 10 == len(poly_out)
+        for x, y in zip(range(10), poly_out):
+            assert coeff["a"] * x ** 2 + coeff["b"] * x + coeff["c"] == pytest.approx(y)
+
+
+def assert_export(workspace, experiment_name, ensemble_config, stages_config):
+    with open(workspace / experiment_name / "data.json") as f:
+        export_data = json.load(f)
+
+    config = load_experiment_config(workspace, ensemble_config, stages_config)
+    assert_ensemble_size(config, export_data)
+    assert_input_records(config, export_data)
+    assert_output_records(config, export_data)
+
+    # Note: This test assumes the forward model in the setup indeed
+    # evaluates a * x^2 + b * x + c. If not, this will fail miserably!
+    assert_poly_output(export_data)
+
+
 def assert_distribution(
     workspace, ensemble_config, stages_config, distribution, coefficients
 ):

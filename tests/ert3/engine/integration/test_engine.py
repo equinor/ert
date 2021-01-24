@@ -9,7 +9,7 @@ import yaml
 import pytest
 
 import ert3
-from tests.ert3.engine.integration.conftest import assert_distribution
+from tests.ert3.engine.integration.conftest import assert_export, assert_distribution
 
 _EXAMPLES_ROOT = (
     pathlib.Path(os.path.dirname(__file__)) / ".." / ".." / ".." / ".." / "examples"
@@ -137,6 +137,32 @@ def test_run_once_polynomial_evaluation(
         ert3.engine.run(ensemble, stages_config, workspace, "evaluation")
 
 
+def test_export_not_run(workspace):
+    (workspace / "evaluation").mkdir()
+    with pytest.raises(ValueError, match="Cannot export experiment"):
+        ert3.engine.export(pathlib.Path(), "evaluation")
+
+
+def test_export_polynomial_evaluation(
+    workspace, ensemble, stages_config, gaussian_parameters_file
+):
+    (workspace / "evaluation").mkdir()
+    ert3.engine.run(ensemble, stages_config, workspace, "evaluation")
+    ert3.engine.export(workspace, "evaluation")
+
+    assert_export(workspace, "evaluation", ensemble, stages_config)
+
+
+def test_export_uniform_polynomial_evaluation(
+    workspace, uniform_ensemble, stages_config, uniform_parameters_file
+):
+    (workspace / "uniform_evaluation").mkdir()
+    ert3.engine.run(uniform_ensemble, stages_config, workspace, "uniform_evaluation")
+    ert3.engine.export(workspace, "uniform_evaluation")
+
+    assert_export(workspace, "uniform_evaluation", uniform_ensemble, stages_config)
+
+
 def test_gaussian_distribution(
     workspace, big_ensemble, stages_config, gaussian_parameters_file
 ):
@@ -181,6 +207,18 @@ def test_run_presampled(
     ert3.engine.run(
         presampled_ensemble, stages_config, workspace, "presampled_evaluation"
     )
+    ert3.engine.export(workspace, "presampled_evaluation")
+
+    with open(workspace / "presampled_evaluation" / "data.json") as f:
+        export_data = json.load(f)
+
+    assert len(coeff0) == len(export_data)
+    for coeff, real in zip(coeff0, export_data):
+        assert ["coefficients"] == list(real["input"].keys())
+        export_coeff = real["input"]["coefficients"]
+        assert coeff.keys() == export_coeff.keys()
+        for key in coeff.keys():
+            assert coeff[key] == export_coeff[key]
 
 
 def test_run_uniform_presampled(
@@ -204,6 +242,18 @@ def test_run_uniform_presampled(
         workspace,
         "presampled_uniform_evaluation",
     )
+    ert3.engine.export(workspace, "presampled_uniform_evaluation")
+
+    with open(workspace / "presampled_uniform_evaluation" / "data.json") as f:
+        export_data = json.load(f)
+
+    assert len(uniform_coeff0) == len(export_data)
+    for coeff, real in zip(uniform_coeff0, export_data):
+        assert ["coefficients"] == list(real["input"].keys())
+        export_coeff = real["input"]["coefficients"]
+        assert coeff.keys() == export_coeff.keys()
+        for key in coeff.keys():
+            assert coeff[key] == export_coeff[key]
 
 
 def test_sample_unknown_parameter_group(workspace, uniform_parameters_file):
@@ -237,6 +287,18 @@ def test_record_load_and_run(workspace, doe_ensemble, stages_config):
             assert isinstance(val, numbers.Number)
 
     ert3.engine.run(doe_ensemble, stages_config, workspace, "doe")
+    ert3.engine.export(workspace, "doe")
+
+    with open(workspace / "doe" / "data.json") as f:
+        export_data = json.load(f)
+
+    assert len(designed_coeff) == len(export_data)
+    for coeff, real in zip(designed_coeff, export_data):
+        assert ["coefficients"] == list(real["input"].keys())
+        export_coeff = real["input"]["coefficients"]
+        assert coeff.keys() == export_coeff.keys()
+        for key in coeff.keys():
+            assert coeff[key] == export_coeff[key]
 
 
 def test_record_load_twice(workspace, ensemble, stages_config):
