@@ -26,3 +26,8 @@ env:
   F_UFMTENDIAN: big
   ARCH: x86_64
 
+eclrun_env:
+  SLBSLS_LICENSE_FILE: something@yourcompany.com
+  ECLPATH: /path/to/ecl
+  PATH: /path/to/ecl/macros
+  LSB_JOBID: null

@@ -222,6 +222,12 @@ class EclrunConfig:
             env["PATH"] = eclrun_env["PATH"] + os.pathsep + env["PATH"]
             eclrun_env.pop("PATH")
 
+        for k, v in eclrun_env.copy().items():
+            if v is None:
+                if k in env:
+                    env.pop(k)
+                eclrun_env.pop(k)
+
         env.update(eclrun_env)
         return env
 

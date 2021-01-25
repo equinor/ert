@@ -22,6 +22,8 @@ import inspect
 import yaml
 import pytest
 import re
+import json
+from unittest import mock
 
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
@@ -54,6 +56,7 @@ class EclRunTest(ResTest):
                 "ECLPATH": "/prog/res/ecl/grid",
                 "PATH": "/prog/res/ecl/grid/macros",
                 "F_UFMTENDIAN": "big",
+                "LSB_JOB_ID": None,
             }
         }
 
@@ -62,6 +65,41 @@ class EclRunTest(ResTest):
         with open("ecl100_config.yml", "w") as f:
             f.write(yaml.dump(conf))
         self.monkeypatch.setenv("ECL100_SITE_CONFIG", "ecl100_config.yml")
+
+    @tmpdir()
+    @mock.patch.dict(os.environ, {"LSB_JOBID": "some-id"})
+    def test_env(self):
+        self.init_eclrun_config()
+        with open("eclrun", "w") as f, open("DUMMY.DATA", "w"):
+            f.write(
+                """#!/usr/bin/env python
+import os
+import json
+with open("env.json", "w") as f:
+    json.dump(dict(os.environ), f)
+"""
+            )
+        os.chmod("eclrun", os.stat("eclrun").st_mode | stat.S_IEXEC)
+        ecl_config = Ecl100Config()
+        eclrun_config = EclrunConfig(ecl_config, "2019.3")
+        ecl_run = EclRun("DUMMY", None, check_status=False)
+        with mock.patch.object(
+            ecl_run, "_get_run_command", mock.MagicMock(return_value="./eclrun")
+        ):
+            ecl_run.runEclipse(eclrun_config=eclrun_config)
+        with open("env.json") as f:
+            run_env = json.load(f)
+
+        eclrun_env = self._eclrun_conf()["eclrun_env"]
+        for k, v in eclrun_env.items():
+            if v is None:
+                assert k not in run_env
+                continue
+
+            if k == "PATH":
+                assert run_env[k].startswith(v)
+            else:
+                assert v == run_env[k]
 
     @tmpdir()
     @pytest.mark.equinor_test
