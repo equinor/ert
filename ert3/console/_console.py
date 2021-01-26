@@ -88,6 +88,13 @@ def _record(workspace, args):
 
 
 def main():
+    try:
+        _main()
+    except ert3.exceptions.ErtError as e:
+        sys.exit(e)
+
+
+def _main():
     parser = _build_argparser()
     args = parser.parse_args()
 
@@ -103,7 +110,7 @@ def main():
     workspace = ert3.workspace.load(Path.cwd())
 
     if workspace is None:
-        sys.exit("Not inside an ERT workspace")
+        raise ert3.exceptions.IllegalWorkspaceOperation("Not inside an ERT workspace.")
 
     if args.sub_cmd == "run":
         _run(workspace, args)

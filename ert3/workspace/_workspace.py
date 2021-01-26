@@ -1,7 +1,6 @@
 import ert3
 
 from pathlib import Path
-import sys
 
 
 def _locate_root(path):
@@ -17,7 +16,7 @@ def _locate_root(path):
 def assert_experiment_exists(workspace_root, experiment_name):
     experiment_root = Path(workspace_root) / experiment_name
     if not experiment_root.is_dir():
-        raise ValueError(
+        raise ert3.exceptions.IllegalWorkspaceOperation(
             f"{experiment_name} is not an experiment "
             f"within the workspace {workspace_root}"
         )
@@ -31,7 +30,9 @@ def experiment_have_run(workspace_root, experiment_name):
 def initialize(path):
     path = Path(path)
     if load(path) is not None:
-        sys.exit("Already inside an ERT workspace")
+        raise ert3.exceptions.IllegalWorkspaceOperation(
+            "Already inside an ERT workspace."
+        )
 
     ert3.storage.init(path)
 
