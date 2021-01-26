@@ -15,6 +15,10 @@ def empty(arr):
     return len(arr) == 0
 
 
+class ServerBootFail(RuntimeError):
+    pass
+
+
 class ServerMonitor(threading.Thread):
     EXEC_ARGS = [sys.executable, "-m", "ert_shared.storage"]
     TIMEOUT = 20  # Wait 20s for the server to start before panicking
@@ -78,6 +82,8 @@ class ServerMonitor(threading.Thread):
             for url in self._connection_info["urls"]:
                 print(f"  {url}")
             print(f"\nUse `{curl}` to test")
+        except json.JSONDecodeError:
+            self._connection_info = ServerBootFail()
         except Exception as e:
             self._connection_info = e
 

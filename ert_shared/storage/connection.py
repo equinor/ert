@@ -71,3 +71,27 @@ def get_project_id() -> Path:
     if json_path.exists():
         return json_path.resolve().parent
     raise RuntimeError("No ert storage server found!")
+
+
+def autostart(project_path: str = None) -> str:
+    from .server_monitor import ServerMonitor
+
+    # Try to use project specified in args (Defaults to cwd)
+    try:
+        get_info(project_path)
+        return os.path.realpath(project_path)
+    except RuntimeError:
+        pass
+
+    # Try to use globally registered ERT Storage
+    try:
+        path = get_project_id()
+        return str(path.absolute())
+    except RuntimeError:
+        pass
+
+    # Try to start ERT Storage
+    monitor = ServerMonitor.get_instance()
+    monitor.start()
+    monitor.fetch_connection_info()
+    return os.path.realpath(os.getcwd())
