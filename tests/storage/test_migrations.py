@@ -73,7 +73,7 @@ def test_ert_too_old_with_backup(tmpdir):
 
         # Switch back to stable. Database is now too new
         script_location = str(Path(__file__).parent / "migrations_stable")
-        with pytest.raises(Exception) as excinfo:
+        with pytest.raises(SystemExit) as excinfo:
             storage.initialize(script_location=script_location)
         assert storage._error_msg(stable_revision) in str(excinfo.value)
 
@@ -101,6 +101,6 @@ def test_ert_too_old_without_backup(tmpdir):
 
         # Switch back to stable. Database is now too new and no backup for stable
         script_location = str(Path(__file__).parent / "migrations_stable")
-        with pytest.raises(Exception) as excinfo:
+        with pytest.raises(SystemExit) as excinfo:
             storage.initialize(script_location=script_location)
         assert storage._error_msg("rev-for-test-purpose") in str(excinfo.value)

@@ -1,10 +1,13 @@
 import pytest
 import signal
 import requests
-from json import JSONDecodeError
 from textwrap import dedent
 from pathlib import Path
-from ert_shared.storage.server_monitor import ServerMonitor, TimeoutError
+from ert_shared.storage.server_monitor import (
+    ServerBootFail,
+    ServerMonitor,
+    TimeoutError,
+)
 from ert_shared.storage import connection
 
 
@@ -81,7 +84,7 @@ os.write(fd, b"This isn't valid json (I hope)")
 """
 )
 def test_authtoken_wrong_json(server):
-    with pytest.raises(JSONDecodeError):
+    with pytest.raises(ServerBootFail):
         server.fetch_connection_info()
 
 

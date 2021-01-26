@@ -1,4 +1,5 @@
 import os
+import sys
 import textwrap
 import asyncio
 import atexit
@@ -97,7 +98,7 @@ class ErtStorage:
             )
 
         elif database_exists and self._revision_position(current_revision) == -1:
-            raise Exception(self._error_msg(self._revisions(index=0)))
+            sys.exit(self._error_msg(self._revisions(index=0)))
 
         with self._engine.begin() as connection:
             self._cfg.attributes["connection"] = connection

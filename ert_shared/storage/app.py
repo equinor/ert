@@ -36,7 +36,18 @@ security = HTTPBasic()
 
 @app.on_event("startup")
 async def prepare_database():
-    ERT_STORAGE.initialize()
+    try:
+        ERT_STORAGE.initialize()
+    except SystemExit as exc:
+        # SystemExit is caught by Startlette, which prints a stack trace. This
+        # is not what we want. We want a clean exit. As such, we use os._exit,
+        # which doesn't clean up very well after itself, but it should be fine
+        # here.
+        if isinstance(exc.code, str):
+            print(exc.code, file=sys.stderr)
+        elif isinstance(exc.code, int):
+            os._exit(exc.code)
+        os._exit(1)
 
 
 @app.on_event("shutdown")
