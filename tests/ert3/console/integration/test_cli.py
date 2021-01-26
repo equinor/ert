@@ -97,7 +97,7 @@ def test_cli_run_invalid_experiment(tmpdir):
 
     args = ["ert3", "run", "this-is-not-an-experiment"]
     with unittest.mock.patch.object(sys, "argv", args):
-        with pytest.raises(ValueError) as error:
+        with pytest.raises(SystemExit) as error:
             ert3.console.main()
         assert "this-is-not-an-experiment is not an experiment" in str(error.value)
 
