@@ -19,8 +19,42 @@
 #ifndef ROW_SCALING_H
 #define ROW_SCALING_H
 
-typedef struct row_scaling_struct row_scaling_type;
+#include <ert/res_util/matrix.hpp>
 
+class row_scaling {
+public:
+  double operator[](int index) const;
+  void assign(int index, double value);
+  void multiply(matrix_type * A, const matrix_type * X0) const;
+  int size() const;
+private:
+  int resolution = 1000;
+  std::vector<double> data;
+};
+
+typedef row_scaling row_scaling_type;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <ert/util/type_macros.h>
+
+
+row_scaling_type * row_scaling_alloc();
+row_scaling_type * row_scaling_alloc_copy(const row_scaling_type * row_scaling);
+void               row_scaling_free(row_scaling_type * row_scaling);
+void               row_scaling_multiply(const row_scaling_type * row_scaling, matrix_type * A, const matrix_type * X0);
+int                row_scaling_get_size(const row_scaling_type * row_scaling);
+double             row_scaling_iget(const row_scaling_type * row_scaling, int index);
+void               row_scaling_iset(row_scaling_type * row_scaling, int index, double value);
+
+UTIL_IS_INSTANCE_HEADER( row_scaling );
+
+
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 

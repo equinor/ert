@@ -60,6 +60,12 @@ class LocalDatasetTest(ResTest):
             data_scale.addField("PERMX", ecl_reg)
             self.assertEqual(1, len(data_scale))
 
+            # A totally invalid key -> KeyError exception
+            with self.assertRaises(KeyError):
+                data_scale.row_scaling("NO_SUCH_KEY")
+
+            row_scaling = data_scale.row_scaling("PERMX")
+
     @tmpdir()
     def test_local_surface(self):
         with ErtTestContext(

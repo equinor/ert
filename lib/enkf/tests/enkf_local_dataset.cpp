@@ -52,7 +52,25 @@ void test_create() {
     local_dataset_free(ld);
 }
 
+
+void test_create_row_scaling() {
+  local_dataset_type * ld = local_dataset_alloc("DATA");
+  test_assert_throw(local_dataset_get_or_create_row_scaling(ld, "NO_SUCH_KEY"), std::invalid_argument);
+
+  local_dataset_add_node(ld, "PERMX");
+  row_scaling_type * rs = local_dataset_get_or_create_row_scaling(ld, "PERMX");
+  test_assert_true( local_dataset_has_row_scaling(ld, "PERMX"));
+
+  test_assert_false( local_dataset_has_row_scaling(ld, "PERMY"));
+
+  local_dataset_add_node(ld, "PERMZ");
+  test_assert_false( local_dataset_has_row_scaling(ld, "PERMZ"));
+
+  local_dataset_free(ld);
+}
+
 int main(int argc , char ** argv) {
   test_create();
+  test_create_row_scaling();
 }
 

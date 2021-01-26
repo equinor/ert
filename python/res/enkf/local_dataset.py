@@ -14,6 +14,9 @@ class LocalDataset(BaseCClass):
     _name = ResPrototype("char* local_dataset_get_name(local_dataset)")
     _add_node = ResPrototype("void  local_dataset_add_node(local_dataset, char*)")
     _del_node = ResPrototype("void  local_dataset_del_node(local_dataset, char*)")
+    _get_or_create_row_scaling = ResPrototype(
+        "row_scaling_ref local_dataset_get_or_create_row_scaling(local_dataset, char*)"
+    )
     _active_list = ResPrototype(
         "active_list_ref local_dataset_get_node_active_list(local_dataset, char*)"
     )
@@ -38,6 +41,12 @@ class LocalDataset(BaseCClass):
             self._del_node(key)
         else:
             raise KeyError('Unknown key "%s"' % key)
+
+    def row_scaling(self, key):
+        if key not in self:
+            raise KeyError(f"Unknown key: {key}")
+
+        return self._get_or_create_row_scaling(key)
 
     def name(self):
         return self._name()

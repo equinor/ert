@@ -45,6 +45,7 @@ from .summary_key_matcher import SummaryKeyMatcher
 from .enkf_fs import EnkfFs
 
 
+from .row_scaling import RowScaling
 from .active_list import ActiveList
 from .config import *
 from .data import *

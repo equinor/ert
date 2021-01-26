@@ -27,6 +27,7 @@
 #include <ert/util/hash.hpp>
 
 #include <ert/enkf/active_list.hpp>
+#include <ert/enkf/row_scaling.hpp>
 
 typedef struct local_dataset_struct local_dataset_type;
 
@@ -49,6 +50,8 @@ int                  local_dataset_get_size( const local_dataset_type * dataset 
 void                 local_dataset_del_node( local_dataset_type * dataset , const char * node_key);
 PY_USED bool         local_dataset_has_key(const local_dataset_type * dataset, const char * key);
 hash_iter_type     * local_dataset_alloc_iter(const local_dataset_type * dataset);
+row_scaling_type   * local_dataset_get_row_scaling(const local_dataset_type * dataset, const char * key);
+row_scaling_type   * local_dataset_get_or_create_row_scaling(local_dataset_type * dataset, const char * key);
 bool                 local_dataset_has_row_scaling(const local_dataset_type * dataset, const char * key);
 
 #ifdef __cplusplus
