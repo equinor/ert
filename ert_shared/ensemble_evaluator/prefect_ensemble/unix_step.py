@@ -1,5 +1,5 @@
-import os
 import subprocess
+from pathlib import Path
 from prefect import Task
 from ert_shared.ensemble_evaluator.prefect_ensemble.client import Client
 from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
@@ -36,7 +36,7 @@ class UnixStep(Task):
         self._step_id = step_id
         self._stage_id = stage_id
         self._ee_id = ee_id
-        self._run_path = run_path
+        self._run_path = Path(run_path)
         self._storage_config = storage_config
 
     def get_iens(self):
@@ -62,7 +62,7 @@ class UnixStep(Task):
             storage.retrieve(resource)
 
     def storage_driver(self, run_path):
-        os.makedirs(run_path, exist_ok=True)
+        Path(run_path).mkdir(parents=True, exist_ok=True)
         return storage_driver_factory(self._storage_config, run_path)
 
     def run_jobs(self, client, run_path):
@@ -114,7 +114,7 @@ class UnixStep(Task):
             client.send(to_json(event).decode())
 
     def run(self, expected_res=None):
-        run_path = os.path.join(self._run_path, str(self._iens))
+        run_path = self._run_path / str(self._iens)
         storage = self.storage_driver(run_path)
         self.retrieve_resources(expected_res, storage)
 
@@ -132,7 +132,7 @@ class UnixStep(Task):
             self.run_jobs(ee_client, run_path)
 
             for output in self._outputs:
-                if not os.path.exists(os.path.join(run_path, output)):
+                if not (run_path / output).exists():
                     raise FileNotFoundError(f"Output file {output} was not generated!")
 
                 outputs.append(storage.store(output, self._iens))

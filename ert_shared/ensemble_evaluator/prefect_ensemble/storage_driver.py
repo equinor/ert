@@ -1,5 +1,5 @@
-import os
 import shutil
+from pathlib import Path
 
 
 def storage_driver_factory(config, run_path):
@@ -12,25 +12,36 @@ def storage_driver_factory(config, run_path):
 
 class _SharedDiskStorageDriver:
     def __init__(self, storage_path, run_path):
-        self._storage_path = storage_path
-        self._run_path = f"{run_path}"
+        self._storage_path = Path(storage_path)
+        self._run_path = Path(run_path)
 
     def get_storage_path(self, iens):
         if iens is None:
-            return f"{self._storage_path}/global"
-        return f"{self._storage_path}/{iens}"
+            return self._storage_path / "global"
+        return self._storage_path / str(iens)
 
     def store(self, local_name, iens=None):
         storage_path = self.get_storage_path(iens)
-        os.makedirs(storage_path, exist_ok=True)
-        storage_uri = os.path.join(storage_path, local_name)
-        shutil.copyfile(os.path.join(self._run_path, local_name), storage_uri)
+        storage_path.mkdir(parents=True, exist_ok=True)
+        storage_uri = storage_path / local_name
+        shutil.copyfile(self._run_path / local_name, storage_uri)
         return storage_uri
 
     def retrieve(self, storage_uri, target=None):
-        if storage_uri.startswith(self._storage_path):
-            target = os.path.basename(storage_uri) if target is None else target
-            shutil.copyfile(storage_uri, os.path.join(self._run_path, target))
-            return target
-        else:
-            raise ValueError(f"Storage driver can't handle file: {storage_uri}")
+        storage_uri = Path(storage_uri)
+        if not (
+            storage_uri.is_file() and _is_relative_to(storage_uri, self._storage_path)
+        ):
+            raise ValueError(f"Storage does not contain file: {storage_uri}")
+        target = storage_uri.name if target is None else target
+        shutil.copyfile(storage_uri, self._run_path / target)
+        return target
+
+
+def _is_relative_to(child, parent):
+    """Emulate path.is_relative_to() from Python 3.9"""
+    try:
+        child.resolve().relative_to(parent.resolve())
+    except ValueError:
+        return False
+    return True
