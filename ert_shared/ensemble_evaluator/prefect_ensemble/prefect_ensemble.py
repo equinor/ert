@@ -6,6 +6,7 @@ import multiprocessing
 import signal
 import threading
 import asyncio
+from pathlib import Path
 from datetime import timedelta
 from functools import partial
 from cloudevents.http import to_json, CloudEvent
@@ -88,9 +89,9 @@ def gen_coef(parameters, real, config):
             for element in elements:
                 start, end = element["args"]
                 data[element["name"]] = uniform(start, end)
-        os.makedirs(f"coeff", exist_ok=True)
-        file_name = f"coeffs.json"
-        file_path = os.path.join("coeff", file_name)
+        Path("coeff").mkdir(exist_ok=True)
+        file_name = "coeffs.json"
+        file_path = Path("coeff") / file_name
         with open(file_path, "w") as f:
             json.dump(data, f)
         paths[iens] = (storage.store(file_name, iens),)

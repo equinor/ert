@@ -1,5 +1,6 @@
-import os
 from pathlib import Path
+import os
+import os.path
 import yaml
 import pytest
 import asyncio
@@ -23,17 +24,17 @@ from ert_shared.ensemble_evaluator.prefect_ensemble.client import Client
 
 
 def parse_config(path):
-    conf_path = os.path.abspath(path)
+    conf_path = Path(path).resolve()
     with open(conf_path, "r") as f:
         return yaml.safe_load(f)
 
 
 @pytest.mark.timeout(60)
-def test_run_prefect_ensemble(tmpdir, unused_tcp_port):
-    with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case"), False):
+def test_run_prefect_ensemble(unused_tcp_port):
+    with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
         conf_file = Path(CONFIG_FILE)
         config = parse_config("config.yml")
-        config.update({"config_path": Path.absolute(Path("."))})
+        config.update({"config_path": os.getcwd()})
         config.update({"realizations": 2})
         config.update({"executor": "local"})
 
@@ -60,8 +61,43 @@ def test_run_prefect_ensemble(tmpdir, unused_tcp_port):
 
 
 @pytest.mark.timeout(60)
-def test_cancel_run_prefect_ensemble(tmpdir, unused_tcp_port):
-    with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case"), False):
+def test_run_prefect_ensemble_with_path(unused_tcp_port):
+    with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case")):
+        conf_file = Path(CONFIG_FILE)
+        config = parse_config("config.yml")
+        config.update({"config_path": Path.cwd()})
+        config.update({"realizations": 2})
+        config.update({"executor": "local"})
+
+        config["config_path"] = Path(config["config_path"])
+        config["run_path"] = Path(config["run_path"])
+        config["storage"]["storage_path"] = Path(config["storage"]["storage_path"])
+
+        with open(conf_file, "w") as f:
+            f.write(f'port: "{unused_tcp_port}"\n')
+
+        service_config = load_config(conf_file)
+        config.update(service_config)
+        ensemble = PrefectEnsemble(config)
+
+        evaluator = EnsembleEvaluator(ensemble, config, ee_id="1")
+
+        mon = evaluator.run()
+
+        for event in mon.track():
+            if event.data is not None and event.data.get("status") == "Stopped":
+                mon.signal_done()
+
+        assert evaluator._snapshot.get_status() == "Stopped"
+
+        successful_realizations = evaluator._snapshot.get_successful_realizations()
+
+        assert successful_realizations == config["realizations"]
+
+
+@pytest.mark.timeout(60)
+def test_cancel_run_prefect_ensemble(unused_tcp_port):
+    with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
         conf_file = Path(CONFIG_FILE)
         config = parse_config("config.yml")
         config.update({"config_path": Path.absolute(Path("."))})
@@ -107,7 +143,7 @@ def _mock_ws(host, port, messages):
     loop.close()
 
 
-def test_prefect_client(tmpdir, unused_tcp_port):
+def test_prefect_client(unused_tcp_port):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     messages = []
@@ -146,7 +182,7 @@ def test_unix_step(unused_tcp_port):
     def _on_task_failure(task, state):
         raise Exception(state.message)
 
-    with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case"), False):
+    with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
         config = parse_config("config.yml")
         storage = storage_driver_factory(config=config.get("storage"), run_path=".")
         resource = storage.store("unix_test_script.py")
@@ -190,10 +226,10 @@ def test_unix_step(unused_tcp_port):
         assert flow_run.is_successful()
 
         assert len(task_result.result["outputs"]) == 1
-        expected_path = os.path.join(storage.get_storage_path(1), "output.out")
+        expected_path = storage.get_storage_path(1) / "output.out"
         output_path = flow_run.result[stage_task].result["outputs"][0]
         assert expected_path == output_path
-        assert os.path.exists(output_path)
+        assert output_path.exists()
 
 
 def test_unix_step_error(unused_tcp_port):
@@ -209,7 +245,7 @@ def test_unix_step_error(unused_tcp_port):
     def _on_task_failure(task, state):
         raise Exception(state.message)
 
-    with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case"), False):
+    with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case", False):
         config = parse_config("config.yml")
         storage = storage_driver_factory(config=config.get("storage"), run_path=".")
         resource = storage.store("unix_test_script.py")
@@ -268,7 +304,7 @@ def test_on_task_failure(unused_tcp_port):
 
     mock_ws_thread.start()
 
-    with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case"), False):
+    with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case", False):
         config = parse_config("config.yml")
         storage = storage_driver_factory(config=config.get("storage"), run_path=".")
         resource = storage.store("unix_test_retry_script.py")
