@@ -1,6 +1,32 @@
 Release Notes
 =============
 
+Version 2.20
+------------
+
+2.20.0 ERT
+~~~~~~~~~~ 
+
+- Create CONTRIBUTING.md
+- Update CONTRIBUTING.md
+- Refactor Storage API Server (https://github.com/equinor/ert/issues/1102, https://github.com/equinor/ert/issues/1116)
+- Graceful exit if storage_server.json exists
+- Clarify how rel paths in workflow are resolved
+- Fix extraction.py's create_update
+- Return empty list in create_observations when no obs are available
+- Add --host setting to ert api
+- Storage: Allow NaNs to be returned (https://github.com/equinor/ert/issues/1284)
+- Fix for default tabs selection (https://github.com/equinor/ert/issues/1282)
+- Correct spelling of modelling to British variant
+- Storage: Move database to /tmp while using it (https://github.com/equinor/ert/issues/1309)
+- Fist working iteration of prefect evaluator (https://github.com/equinor/ert/issues/1125)
+- Make evaluator input files configurable
+- Add ert3 (https://github.com/equinor/ert/issues/1309)
+- Copy examples when running Jenkins CI
+- Run flake8 on the ert3 module as part of CI
+- Avoid unnecessary stack trace during `ert vis` (https://github.com/equinor/ert/issues/1306)
+- Storage: Combine ParameterDefinition & Parameter 
+
 Version 2.19
 ------------
 
