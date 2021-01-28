@@ -33,6 +33,12 @@ stages:
             executable: evaluate_coeffs.py
             args: ["0"]
 
+      - name: multiply_with_2
+        type: "function"
+        resources:
+          - function.py
+        inputs: [poly_1.out]
+
       - name: first_degree
         resources:
           - evaluate_coeffs.py
