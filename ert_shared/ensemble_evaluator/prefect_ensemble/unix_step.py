@@ -65,9 +65,35 @@ class UnixStep(Task):
         Path(run_path).mkdir(parents=True, exist_ok=True)
         return storage_driver_factory(self._storage_config, run_path)
 
+    def run_job(self, client, job, run_path):
+        shell_cmd = [self._cmd, job[ids.EXECUTABLE], *job[ids.ARGS]]
+        cmd_exec = subprocess.run(
+            shell_cmd,
+            universal_newlines=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=run_path,
+        )
+        self.logger.info(cmd_exec.stdout)
+
+        if cmd_exec.returncode != 0:
+            self.logger.error(cmd_exec.stderr)
+            event = CloudEvent(
+                {
+                    "type": ids.EVTYPE_FM_JOB_FAILURE,
+                    "source": f"/ert/ee/{self._ee_id}/real/{self._iens}/stage/{self._stage_id}/step/{self._step_id}/job/{job['id']}",
+                    "datacontenttype": "application/json",
+                },
+                {ids.STDERR: cmd_exec.stderr, ids.STDOUT: cmd_exec.stdout},
+            )
+            client.send(to_json(event).decode())
+            raise OSError(
+                f"Script {job['name']} failed with exception {cmd_exec.stderr}"
+            )
+
     def run_jobs(self, client, run_path):
-        for index, job in enumerate(self._job_list):
-            self.logger.info(f"Running command {self._cmd}  {job[ids.NAME]}")
+        for job in self._job_list:
+            self.logger.info(f"Running command {self._cmd}  {job['name']}")
             event = CloudEvent(
                 {
                     "type": ids.EVTYPE_FM_JOB_START,
@@ -77,30 +103,7 @@ class UnixStep(Task):
             )
             client.send(to_json(event).decode())
 
-            shell_cmd = [self._cmd, job[ids.EXECUTABLE], *job[ids.ARGS]]
-            cmd_exec = subprocess.run(
-                shell_cmd,
-                universal_newlines=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                cwd=run_path,
-            )
-            self.logger.info(cmd_exec.stdout)
-
-            if cmd_exec.returncode != 0:
-                self.logger.error(cmd_exec.stderr)
-                event = CloudEvent(
-                    {
-                        "type": ids.EVTYPE_FM_JOB_FAILURE,
-                        "source": f"/ert/ee/{self._ee_id}/real/{self._iens}/stage/{self._stage_id}/step/{self._step_id}/job/{job['id']}",
-                        "datacontenttype": "application/json",
-                    },
-                    {ids.STDERR: cmd_exec.stderr, ids.STDOUT: cmd_exec.stdout},
-                )
-                client.send(to_json(event).decode())
-                raise RuntimeError(
-                    f"Script {job['name']} failed with exception {cmd_exec.stderr}"
-                )
+            self.run_job(client, job, run_path)
 
             event = CloudEvent(
                 {
@@ -108,7 +111,6 @@ class UnixStep(Task):
                     "source": f"/ert/ee/{self._ee_id}/real/{self._iens}/stage/{self._stage_id}/step/{self._step_id}/job/{job['id']}",
                     "datacontenttype": "application/json",
                 },
-                {ids.STDOUT: cmd_exec.stdout},
             )
 
             client.send(to_json(event).decode())

@@ -1,7 +1,26 @@
 import importlib
 import os
 from typing import List, Callable, Optional
+
+try:
+    # Will only work from Python 3.8
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
+
 from pydantic import root_validator, validator, FilePath, BaseModel
+
+
+def _import_from(path):
+    if ":" not in path:
+        raise ValueError("Function should be defined as module:function")
+    module_str, func = path.split(":")
+    module = importlib.import_module(module_str)
+    try:
+        func = getattr(module, func)
+    except AttributeError:
+        raise ImportError(name=func, path=module_str)
+    return func
 
 
 class _StagesConfig(BaseModel):
@@ -35,19 +54,37 @@ class TransportableCommand(_StagesConfig):
 
 class Step(_StagesConfig):
     name: str
-    script: List[str]
+    type: Literal["unix", "function"]
+    script: Optional[List[str]] = []
     input: List[InputRecord]
     output: List[OutputRecord]
-    transportable_commands: List[TransportableCommand]
+    transportable_commands: Optional[List[TransportableCommand]] = []
+    function: Optional[Callable]
 
     @root_validator
-    def command_defined(cls, step):
-        valid_cmds = [cmd.name for cmd in step.get("transportable_commands", [])]
-        for script_line in step.get("script", []):
-            line_cmd = script_line.split()[0]
-            if line_cmd not in valid_cmds:
+    def check_defined(cls, step):
+        cmd_names = [cmd.name for cmd in step.get("transportable_commands", [])]
+        script_lines = step.get("script", [])
+        if step.get("type") == "function":
+            if cmd_names:
+                raise ValueError("Commands defined for a function stage")
+            if script_lines:
+                raise ValueError("Scripts defined for a function stage")
+            if not step.get("function"):
+                raise ValueError("No function defined")
+        elif step.get("type") == "unix":
+            if step.get("function"):
+                raise ValueError("Function defined for unix step")
+
+        for script in script_lines:
+            line_cmd = script.split()[0]
+            if line_cmd not in cmd_names:
                 raise ValueError("{} is not a known command".format(line_cmd))
         return step
+
+    @validator("function", pre=True)
+    def function_is_valid(cls, function: str) -> Callable:
+        return _import_from(function)
 
 
 class StagesConfig(BaseModel):

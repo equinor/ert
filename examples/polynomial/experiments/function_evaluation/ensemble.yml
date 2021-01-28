@@ -1,0 +1,11 @@
+size: 10
+
+input:
+  -
+    source: stochastic.coefficients
+    record: coefficients
+
+forward_model:
+  driver: local
+  stages:
+    - function_polynomial

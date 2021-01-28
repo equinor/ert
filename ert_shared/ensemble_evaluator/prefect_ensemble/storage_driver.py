@@ -1,5 +1,6 @@
 import shutil
 from pathlib import Path
+import json
 
 
 def storage_driver_factory(config, run_path):
@@ -25,6 +26,14 @@ class _SharedDiskStorageDriver:
         storage_path.mkdir(parents=True, exist_ok=True)
         storage_uri = storage_path / local_name
         shutil.copyfile(self._run_path / local_name, storage_uri)
+        return storage_uri
+
+    def store_data(self, data, file_name, iens=None):
+        storage_path = self.get_storage_path(iens)
+        storage_path.mkdir(parents=True, exist_ok=True)
+        storage_uri = storage_path / file_name
+        with open(storage_uri, "w") as f:
+            json.dump(data, f)
         return storage_uri
 
     def retrieve(self, storage_uri, target=None):

@@ -74,3 +74,19 @@ def test_storage_driver(tmpdir):
             ValueError, match=f"Storage does not contain file: {file_uri}"
         ):
             storage.retrieve(file_uri)
+
+        # Store data global data
+        data = {"some_data": 42}
+        data_file = "data_file"
+        global_resource_uri = storage.store_data(data, data_file)
+        expected_uri = storage_path / "global" / data_file
+        assert expected_uri == global_resource_uri
+        assert global_resource_uri.is_file()
+
+        # Store data realization data
+        data = {"some_data": 42}
+        data_file = "data_file"
+        real_resource = storage.store_data(data, data_file, 1)
+        expected_uri = storage_path / "1" / data_file
+        assert expected_uri == real_resource
+        assert real_resource.is_file()

@@ -139,7 +139,9 @@ def _load_ensemble_config(workspace, experiment_name):
 
 def _load_stages_config(workspace):
     with open(workspace / "stages.yml") as f:
-        return ert3.config.load_stages_config(yaml.safe_load(f))
+        sys.path.append(str(workspace))
+        config = ert3.config.load_stages_config(yaml.safe_load(f))
+        return config
 
 
 def _load_experiment_config(workspace, experiment_name):

@@ -3,7 +3,7 @@ import pathlib
 import pydantic
 import pytest
 import shutil
-
+from typing import Callable
 import ert3
 
 
@@ -19,6 +19,7 @@ def _example_config():
     return [
         {
             "name": "evaluate_polynomial",
+            "type": "unix",
             "input": [{"record": "coefficients", "location": "coefficients.json"}],
             "output": [{"record": "polynomial_output", "location": "output.json"}],
             "transportable_commands": [{"name": "poly", "location": "poly.py"}],
@@ -39,7 +40,7 @@ def test_entry_point(tmpdir):
     "config, expected_error",
     (
         [{"not_a_key": "value"}, "1 validation error"],
-        [[{"not_a_key": "value"}], "5 validation errors"],
+        [[{"not_a_key": "value"}], "4 validation errors"],
     ),
 )
 def test_entry_point_not_valid(config, expected_error):
@@ -52,6 +53,7 @@ def test_step_valid():
         [
             {
                 "name": "some_name",
+                "type": "unix",
                 "input": [{"record": "some_record", "location": "some_location"}],
                 "output": [{"record": "some_record", "location": "some_location"}],
                 "transportable_commands": [{"name": "poly", "location": "poly.py"}],
@@ -63,6 +65,23 @@ def test_step_valid():
     assert config[0].script[0] == "poly --help"
 
 
+def test_single_function_step_valid():
+    config = ert3.config.load_stages_config(
+        [
+            {
+                "name": "minimal_function_stage",
+                "type": "function",
+                "input": [{"record": "some_record", "location": "some_location"}],
+                "output": [{"record": "some_record", "location": "some_location"}],
+                "function": "builtins:sum",
+            }
+        ]
+    )
+    assert config[0].name == "minimal_function_stage"
+    assert isinstance(config[0].function, Callable)
+    assert config[0].function.__name__ == "sum"
+
+
 def test_step_multi_cmd(tmpdir):
     tmpdir.chdir()
     shutil.copy2(_POLY_EXEC, "poly.py")
@@ -70,13 +89,14 @@ def test_step_multi_cmd(tmpdir):
 
     config = _example_config()
     config[0]["transportable_commands"].append({"name": "poly2", "location": "poly2"})
+
     config[0]["script"] = [
         "poly run1",
         "poly2 gogo",
         "poly run2",
         "poly2 abort",
     ]
-    config = ert3.config.load_stages_config(config)
+    ert3.config.load_stages_config(config)
 
 
 def test_step_non_existing_transportable_cmd(tmpdir):
@@ -128,19 +148,140 @@ def test_step_unknown_script(tmpdir):
         ert3.config.load_stages_config(config)
 
 
-def test_stages_get_script():
+def test_step_function_definition_error():
+    with pytest.raises(
+        pydantic.error_wrappers.ValidationError,
+        match=r"Function should be defined as module:function",
+    ):
+        ert3.config.load_stages_config(
+            [
+                {
+                    "name": "minimal_function_stage",
+                    "type": "function",
+                    "output": [{"record": "some_record", "location": "some_location"}],
+                    "function": "builtinssum",
+                }
+            ]
+        )
+
+
+def test_step_function_error():
+    with pytest.raises(
+        ImportError,
+    ):
+        ert3.config.load_stages_config(
+            [
+                {
+                    "name": "minimal_function_stage",
+                    "type": "function",
+                    "output": [{"record": "some_record", "location": "some_location"}],
+                    "function": "builtins:sun",
+                }
+            ]
+        )
+
+
+def test_step_unix_and_function_error():
+    with pytest.raises(
+        pydantic.error_wrappers.ValidationError,
+        match=r"Function defined for unix step",
+    ):
+        ert3.config.load_stages_config(
+            [
+                {
+                    "name": "minimal_function_stage",
+                    "type": "unix",
+                    "output": [{"record": "some_record", "location": "some_location"}],
+                    "input": [{"record": "some_record", "location": "some_location"}],
+                    "transportable_commands": [{"name": "poly", "location": "poly.py"}],
+                    "script": ["poly --help"],
+                    "function": "builtins:sum",
+                }
+            ]
+        )
+
+
+def test_step_function_module_error():
+    with pytest.raises(
+        ModuleNotFoundError,
+        match=r"No module named 'builtinx'",
+    ):
+        ert3.config.load_stages_config(
+            [
+                {
+                    "name": "minimal_function_stage",
+                    "type": "function",
+                    "output": [{"record": "some_record", "location": "some_location"}],
+                    "function": "builtinx:sum",
+                }
+            ]
+        )
+
+
+def test_step_function_and_script_error():
+    with pytest.raises(
+        pydantic.error_wrappers.ValidationError,
+        match=r"Scripts defined for a function stage",
+    ):
+        ert3.config.load_stages_config(
+            [
+                {
+                    "name": "minimal_function_stage",
+                    "type": "function",
+                    "output": [{"record": "some_record", "location": "some_location"}],
+                    "function": "builtins:sum",
+                    "script": [
+                        "poly --coefficients coefficients.json --output output.json"
+                    ],
+                }
+            ]
+        )
+
+
+def test_step_function_and_command_error():
+    with pytest.raises(
+        pydantic.error_wrappers.ValidationError,
+        match=r"Commands defined for a function stage",
+    ):
+        ert3.config.load_stages_config(
+            [
+                {
+                    "name": "minimal_function_stage",
+                    "type": "function",
+                    "output": [{"record": "some_record", "location": "some_location"}],
+                    "transportable_commands": [{"name": "poly", "location": "poly.py"}],
+                    "function": "builtins:sum",
+                }
+            ]
+        )
+
+
+def test_mutli_stages_get_script():
     config = ert3.config.load_stages_config(
         [
             {
-                "name": "some_name",
+                "name": "stage_1",
+                "type": "unix",
                 "input": [{"record": "some_record", "location": "some_file"}],
                 "output": [{"record": "some_record", "location": "some_file"}],
                 "transportable_commands": [{"name": "poly", "location": "poly.py"}],
                 "script": [
                     "poly --coefficients coefficients.json --output output.json"
                 ],
-            }
+            },
+            {
+                "name": "stage_2",
+                "type": "function",
+                "input": [{"record": "some_record", "location": "some_file"}],
+                "output": [{"record": "fun_record", "location": "fun_file"}],
+                "function": "builtins:sum",
+            },
         ]
     )
-    step = config.step_from_key("some_name")
-    assert step.script == ["poly --coefficients coefficients.json --output output.json"]
+    step1 = config.step_from_key("stage_1")
+    assert step1.script == [
+        "poly --coefficients coefficients.json --output output.json"
+    ]
+    step2 = config.step_from_key("stage_2")
+    assert isinstance(step2.function, Callable)
+    assert step2.function.__name__ == "sum"

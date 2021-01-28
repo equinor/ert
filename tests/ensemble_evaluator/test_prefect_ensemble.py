@@ -19,6 +19,7 @@ from ert_shared.ensemble_evaluator.prefect_ensemble.prefect_ensemble import (
     PrefectEnsemble,
 )
 from ert_shared.ensemble_evaluator.prefect_ensemble.unix_step import UnixStep
+from ert_shared.ensemble_evaluator.prefect_ensemble.function_step import FunctionStep
 from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
     storage_driver_factory,
 )
@@ -255,6 +256,76 @@ def test_unix_step(unused_tcp_port):
         assert output_path.exists()
 
 
+def test_function_step(unused_tcp_port):
+    host = "localhost"
+    url = f"ws://{host}:{unused_tcp_port}"
+    messages = []
+    mock_ws_thread = threading.Thread(
+        target=partial(_mock_ws, messages=messages), args=(host, unused_tcp_port)
+    )
+
+    mock_ws_thread.start()
+
+    def _on_task_failure(task, state):
+        raise Exception(state.message)
+
+    with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
+        config = parse_config("config.yml")
+        storage = storage_driver_factory(config=config.get("storage"), run_path=".")
+
+        def sum_function(values):
+            return sum(values)
+
+        jobs = [
+            {
+                "id": "0",
+                "name": "test_script",
+                "executable": sum_function,
+                "output": "output.out",
+            }
+        ]
+        test_values = {"values": [42, 24, 6]}
+        step = {
+            "jobs": jobs,
+            "step_id": "step_id_0",
+            "stage_id": "stage_id_0",
+            "iens": 1,
+            "step_input": test_values,
+        }
+
+        function_task = FunctionStep(
+            step=step,
+            url=url,
+            ee_id="ee_id_0",
+            on_failure=_on_task_failure,
+            storage_config=config.get("storage"),
+            max_retries=1,
+            retry_delay=timedelta(seconds=2),
+        )
+
+        flow = Flow("testing")
+        flow.add_task(function_task)
+        flow_run = flow.run()
+
+        # Stop the mock evaluator WS server
+        with Client(url) as c:
+            c.send("stop")
+        mock_ws_thread.join()
+
+        task_result = flow_run.result[function_task]
+        assert task_result.is_successful()
+        assert flow_run.is_successful()
+
+        assert len(task_result.result["outputs"]) == 1
+        expected_path = storage.get_storage_path(1) / "output.out"
+        output_path = flow_run.result[function_task].result["outputs"][0]
+        assert expected_path == output_path
+        assert output_path.exists()
+        with open(output_path, "r") as f:
+            result = json.load(f)
+        assert sum_function(**test_values) == result
+
+
 def test_unix_step_error(unused_tcp_port):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
@@ -291,6 +362,7 @@ def test_unix_step_error(unused_tcp_port):
             step_id="step_id_0",
             stage_id="stage_id_0",
             ee_id="ee_id_0",
+            on_failure=_on_task_failure,
             run_path=config.get("run_path"),
             storage_config=config.get("storage"),
             max_retries=1,
