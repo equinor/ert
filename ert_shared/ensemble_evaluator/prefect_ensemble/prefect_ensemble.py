@@ -21,6 +21,7 @@ from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
     storage_driver_factory,
 )
 from ert_shared.ensemble_evaluator.prefect_ensemble.unix_step import UnixStep
+from ert_shared.ensemble_evaluator.prefect_ensemble.function_step import FunctionStep
 from ert_shared.ensemble_evaluator.config import find_open_port
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     _Ensemble,
@@ -98,6 +99,11 @@ def gen_coef(parameters, real, config):
     return paths
 
 
+class StepType:
+    function = "function"
+    unix = "unix"
+
+
 class PrefectEnsemble(_Ensemble):
     def __init__(self, config):
         self.config = config
@@ -116,15 +122,21 @@ class PrefectEnsemble(_Ensemble):
                 stage_id = uuid.uuid4()
                 for step in stage["steps"]:
                     jobs = []
-                    for job in step["jobs"]:
+                    step_type = step.get("type", "unix")
+                    if step_type == StepType.unix:
+                        for job in step.get("jobs", []):
+                            job_id = uuid.uuid4()
+                            jobs.append(_BaseJob(id_=str(job_id), name=job["name"]))
+                    elif step_type == StepType.function:
                         job_id = uuid.uuid4()
-                        jobs.append(_BaseJob(id_=str(job_id), name=job["name"]))
+                        jobs.append(_BaseJob(id_=str(job_id), name=step["name"]))
+
                     step_id = uuid.uuid4()
                     steps.append(
                         _Step(
                             id_=str(step_id),
                             inputs=step.get("inputs", []),
-                            outputs=step["outputs"],
+                            outputs=step.get("outputs", []),
                             jobs=jobs,
                             name=step["name"],
                         )
@@ -186,6 +198,13 @@ class PrefectEnsemble(_Ensemble):
                     }
                     for idx, job in enumerate(step.get("jobs", []))
                 ]
+                if step.get("type", None) == StepType.function:
+                    step["function_id"] = self.get_id(
+                        iens,
+                        stage_name=stage["name"],
+                        step_name=step["name"],
+                        job_index=0,
+                    )
                 table_of_elements.append(
                     {
                         "iens": iens,
@@ -206,7 +225,7 @@ class PrefectEnsemble(_Ensemble):
             for element in table_of_elements:
                 if set(element.get("inputs", [])).issubset(temp_list):
                     ordering.append(element)
-                    produced = produced.union(set(element["outputs"]))
+                    produced = produced.union(set(element.get("outputs", [])))
                     table_of_elements.remove(element)
         return ordering
 
@@ -214,29 +233,46 @@ class PrefectEnsemble(_Ensemble):
         with Flow(f"Realization range {real_range}") as flow:
             for iens in real_range:
                 output_to_res = {}
-                for step in self.get_ordering(iens=iens):
+                ordering = self.get_ordering(iens=iens)
+                for step in ordering:
                     inputs = [
                         output_to_res.get(input, []) for input in step.get("inputs", [])
                     ]
-                    stage_task = UnixStep(
-                        resources=list(input_files[iens])
-                        + self.store_resources(step["resources"]),
-                        outputs=step.get("outputs", []),
-                        job_list=step.get("jobs", []),
-                        iens=iens,
-                        cmd="python3",
-                        url=dispatch_url,
-                        step_id=step["step_id"],
-                        stage_id=step["stage_id"],
-                        ee_id=ee_id,
-                        on_failure=partial(self._on_task_failure, url=dispatch_url),
-                        run_path=self.config.get("run_path"),
-                        storage_config=self.config.get("storage"),
-                        max_retries=self.config.get("max_retries", 2),
-                        retry_delay=timedelta(seconds=2)
-                        if self.config.get("max_retries") > 0
-                        else None,
-                    )
+                    if step.get("type", "unix") == "unix":
+                        stage_task = UnixStep(
+                            resources=list(input_files[iens])
+                            + self.store_resources(step["resources"]),
+                            outputs=step.get("outputs", []),
+                            job_list=step.get("jobs", []),
+                            iens=iens,
+                            cmd="python3",
+                            url=dispatch_url,
+                            step_id=step["step_id"],
+                            stage_id=step["stage_id"],
+                            ee_id=ee_id,
+                            on_failure=partial(self._on_task_failure, url=dispatch_url),
+                            run_path=self.config.get("run_path"),
+                            storage_config=self.config.get("storage"),
+                            max_retries=self.config.get("max_retries", 2),
+                            retry_delay=timedelta(seconds=2)
+                            if self.config.get("max_retries") > 0
+                            else None,
+                        )
+                    else:
+                        stage_task = FunctionStep(
+                            resources=self.store_resources(step["resources"]),
+                            source=step["resources"][0],
+                            outputs=step.get("outputs", []),
+                            iens=iens,
+                            url=dispatch_url,
+                            function_id=step.get("function_id", None),
+                            step_id=step["step_id"],
+                            stage_id=step["stage_id"],
+                            ee_id=ee_id,
+                            run_path=self.config.get("run_path"),
+                            storage_config=self.config.get("storage"),
+                            on_failure=partial(self._on_task_failure, url=dispatch_url),
+                        )
                     result = stage_task(expected_res=inputs)
 
                     for output in step.get("outputs", []):
