@@ -1,7 +1,7 @@
 import websockets
 from websockets import ConnectionClosedOK
-
 import asyncio
+import cloudevents
 
 
 class Client:
@@ -39,3 +39,16 @@ class Client:
 
     def send(self, msg):
         self.loop.run_until_complete(self._send(msg))
+
+    def send_event(self, ev_type, ev_source, ev_data=None):
+        if ev_data is None:
+            ev_data = {}
+        event = cloudevents.http.CloudEvent(
+            {
+                "type": ev_type,
+                "source": ev_source,
+                "datacontenttype": "application/json",
+            },
+            ev_data,
+        )
+        self.send(cloudevents.http.to_json(event).decode())

@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 import multiprocessing
 import os
@@ -25,6 +24,7 @@ from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
     storage_driver_factory,
 )
 from ert_shared.ensemble_evaluator.prefect_ensemble.unix_step import UnixStep
+from ert_shared.ensemble_evaluator.prefect_ensemble.function_step import FunctionStep
 from ert_shared.status.entity import state
 from prefect import Flow
 from prefect import context as prefect_context
@@ -161,6 +161,9 @@ class PrefectEnsemble(_Ensemble):
         table_of_elements = []
         for stage in self.config[ids.STAGES]:
             for step in stage[ids.STEPS]:
+                step_input = {}
+                for name, ens_record in self.config.get("ens_records", {}).items():
+                    step_input.update({name: ens_record.records[iens].data})
                 jobs = [
                     {
                         ids.ID: self.get_id(
@@ -169,9 +172,7 @@ class PrefectEnsemble(_Ensemble):
                             step_name=step[ids.NAME],
                             job_index=idx,
                         ),
-                        ids.NAME: job.get(ids.NAME),
-                        ids.EXECUTABLE: job.get(ids.EXECUTABLE),
-                        ids.ARGS: job.get(ids.ARGS, []),
+                        **job,
                     }
                     for idx, job in enumerate(step.get(ids.JOBS, []))
                 ]
@@ -185,6 +186,7 @@ class PrefectEnsemble(_Ensemble):
                         ),
                         **step,
                         ids.JOBS: jobs,
+                        "step_input": step_input,
                     }
                 )
 
@@ -199,33 +201,50 @@ class PrefectEnsemble(_Ensemble):
                     table_of_elements.remove(element)
         return ordering
 
+    def get_step_task(self, step, ee_id, input_files, dispatch_url):
+        if step.get(ids.TYPE, ids.UNIX) == ids.FUNCTION:
+            return FunctionStep(
+                step=step,
+                url=dispatch_url,
+                ee_id=ee_id,
+                storage_config=self.config.get(ids.STORAGE),
+                on_failure=partial(self._on_task_failure, url=dispatch_url),
+                max_retries=self.config.get(ids.MAX_RETRIES, 0),
+                retry_delay=timedelta(seconds=2)
+                if self.config.get(ids.MAX_RETRIES) > 0
+                else None,
+            )
+        return UnixStep(
+            resources=list(input_files[step["iens"]])
+            + self.store_resources(step[ids.RESOURCES]),
+            outputs=step.get(ids.OUTPUTS, []),
+            job_list=step.get(ids.JOBS, []),
+            iens=step["iens"],
+            cmd="python3",
+            url=dispatch_url,
+            step_id=step["step_id"],
+            stage_id=step["stage_id"],
+            ee_id=ee_id,
+            on_failure=partial(self._on_task_failure, url=dispatch_url),
+            run_path=self.config.get(ids.RUN_PATH),
+            storage_config=self.config.get(ids.STORAGE),
+            max_retries=self.config.get(ids.MAX_RETRIES, 0),
+            retry_delay=timedelta(seconds=2)
+            if self.config.get(ids.MAX_RETRIES) > 0
+            else None,
+        )
+
     def get_flow(self, ee_id, dispatch_url, input_files, real_range):
         with Flow(f"Realization range {real_range}") as flow:
             for iens in real_range:
                 output_to_res = {}
-                for step in self.get_ordering(iens=iens):
+                ordering = self.get_ordering(iens=iens)
+                for step in ordering:
                     inputs = [
-                        output_to_res.get(input, [])
-                        for input in step.get(ids.INPUTS, [])
+                        output_to_res.get(elem, []) for elem in step.get(ids.INPUTS, [])
                     ]
-                    stage_task = UnixStep(
-                        resources=list(input_files[iens])
-                        + self.store_resources(step[ids.RESOURCES]),
-                        outputs=step.get(ids.OUTPUTS, []),
-                        job_list=step.get(ids.JOBS, []),
-                        iens=iens,
-                        cmd="python3",
-                        url=dispatch_url,
-                        step_id=step["step_id"],
-                        stage_id=step["stage_id"],
-                        ee_id=ee_id,
-                        on_failure=partial(self._on_task_failure, url=dispatch_url),
-                        run_path=self.config.get("run_path"),
-                        storage_config=self.config.get("storage"),
-                        max_retries=self.config.get("max_retries", 2),
-                        retry_delay=timedelta(seconds=2)
-                        if self.config.get("max_retries") > 0
-                        else None,
+                    stage_task = self.get_step_task(
+                        step, ee_id, input_files, dispatch_url
                     )
                     result = stage_task(expected_res=inputs)
 
@@ -278,19 +297,19 @@ class PrefectEnsemble(_Ensemble):
                 c.send(to_json(event).decode())
 
     def run_flow(self, ee_id, dispatch_url):
-        real_per_batch = self.config["max_running"]
+        real_per_batch = self.config[ids.MAX_RUNNING]
         real_range = range(self.config[ids.REALIZATIONS])
         input_files = self.config["input_files"]
         i = 0
         while i < self.config[ids.REALIZATIONS]:
             realization_range = real_range[i : i + real_per_batch]
             flow = self.get_flow(ee_id, dispatch_url, input_files, realization_range)
-            flow.run(executor=_get_executor(self.config["executor"]))
+            flow.run(executor=_get_executor(self.config[ids.EXECUTOR]))
             i = i + real_per_batch
 
     def store_resources(self, resources):
         storage = storage_driver_factory(
-            self.config.get("storage"), self.config.get("config_path", ".")
+            self.config.get(ids.STORAGE), self.config.get("config_path", ".")
         )
         stored_resources = [storage.store(res) for res in resources]
         return stored_resources

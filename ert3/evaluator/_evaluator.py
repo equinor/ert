@@ -39,9 +39,7 @@ def _prepare_input(ee_config, stages_config, inputs, evaluation_tmp_dir):
     for record_name in inputs.record_names:
         for iens, record in enumerate(inputs.ensemble_records[record_name].records):
             filename = record2location[record_name]
-            with open(tmp_input_folder / filename, "w") as f:
-                json.dump(record.data, f)
-            input_files[iens] += (ee_storage.store(filename, iens),)
+            input_files[iens] += (ee_storage.store_data(record.data, filename, iens),)
     return input_files
 
 
@@ -54,38 +52,54 @@ def _build_ee_config(evaluation_tmp_dir, ensemble, stages_config, input_records)
         ensemble_size = input_records.ensemble_size
 
     stage_name = ensemble.forward_model.stages[0]
-    step_name = stage_name + "-only_step"
     stage = stages_config.step_from_key(stage_name)
+    commands = stage.transportable_commands
+    command_scripts = [cmd.location for cmd in commands] if commands else []
+    output_locations = [out.location for out in stage.output]
+    jobs = []
 
-    command_scripts = [cmd.location for cmd in stage.transportable_commands]
-    output_files = [out.location for out in stage.output]
+    def command_location(name):
+        return next(
+            cmd.location for cmd in stage.transportable_commands if cmd.name == name
+        )
 
-    cmd_name2script = {cmd.name: cmd.location for cmd in stage.transportable_commands}
-    jobs = [
+    if stage.function:
+        jobs.append(
+            {
+                "name": stage.function.__name__,
+                "executable": stage.function,
+                "output": output_locations[0],
+            }
+        )
+
+    for script in stage.script:
+        name, *args = script.split()
+        jobs.append(
+            {
+                "name": name,
+                "executable": command_location(name),
+                "args": tuple(args),
+            }
+        )
+
+    stages = [
         {
-            "name": cmd[0],
-            "executable": cmd_name2script[cmd[0]],
-            "args": tuple(cmd[1:]),
+            "name": stage.name,
+            "steps": [
+                {
+                    "name": stage.name + "-only_step",
+                    "resources": command_scripts,
+                    "inputs": [],
+                    "outputs": output_locations,
+                    "jobs": jobs,
+                    "type": "function" if stage.function else "unix",
+                }
+            ],
         }
-        for cmd in [elem.split() for elem in stage.script]
     ]
 
     ee_config = {
-        "stages": [
-            {
-                "name": stage_name,
-                "steps": [
-                    {
-                        "name": step_name,
-                        "resources": command_scripts,
-                        "parameter": [],
-                        "inputs": [],
-                        "outputs": output_files,
-                        "jobs": jobs,
-                    }
-                ],
-            }
-        ],
+        "stages": stages,
         "realizations": ensemble_size,
         "max_running": 10000,
         "max_retries": 0,
@@ -100,6 +114,7 @@ def _build_ee_config(evaluation_tmp_dir, ensemble, stages_config, input_records)
     ee_config["input_files"] = _prepare_input(
         ee_config, stages_config, input_records, evaluation_tmp_dir
     )
+    ee_config["ens_records"] = input_records.ensemble_records
 
     return ee_config
 

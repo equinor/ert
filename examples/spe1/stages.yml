@@ -1,6 +1,6 @@
 -
   name: simulate_SPE1
-
+  type: unix
   input:
     -
       record: field_properties

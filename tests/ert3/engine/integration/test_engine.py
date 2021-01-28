@@ -84,6 +84,7 @@ def stages_config():
     config_list = [
         {
             "name": "evaluate_polynomial",
+            "type": "unix",
             "input": [{"record": "coefficients", "location": "coefficients.json"}],
             "output": [{"record": "polynomial_output", "location": "output.json"}],
             "script": ["poly --coefficients coefficients.json --output output.json"],

@@ -18,3 +18,6 @@ ert3 export sensitivity
 
 ert3 run uniform_sensitivity
 ert3 export uniform_sensitivity
+
+ert3 run function_evaluation
+ert3 export function_evaluation
