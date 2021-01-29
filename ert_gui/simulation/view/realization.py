@@ -1,4 +1,3 @@
-import random
 from qtpy.QtCore import QRect, QSize, QModelIndex, Qt
 from qtpy.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem, QListView, QAbstractItemView, QStyle
 from qtpy.QtGui import QPainter, QColor, QFont, QColorConstants, QPen
