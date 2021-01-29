@@ -1,4 +1,4 @@
-from qtpy.QtCore import QRect, QSize, QModelIndex, Qt
+from qtpy.QtCore import QRect, QSize, QModelIndex, Qt, QRect
 from qtpy.QtWidgets import (
     QStyledItemDelegate,
     QStyleOptionViewItem,
@@ -9,7 +9,7 @@ from qtpy.QtWidgets import (
 from qtpy.QtGui import QPainter, QColor, QFont, QColorConstants, QPen
 
 from ert_shared.status.entity.state import REAL_STATE_TO_COLOR
-from ert_gui.model.snapshot import NodeRole
+from ert_gui.model.snapshot import NodeRole, Node
 
 
 class RealizationView(QListView):
@@ -38,26 +38,66 @@ class RealizationDelegate(QStyledItemDelegate):
         super(RealizationDelegate, self).__init__(parent)
         self._size = QSize(width, height)
 
+    # TODO: fix this for more than one job
+    def _getJobColor(self, node: Node) -> QColor:
+        for _, stage in node.children.items():
+            # print("1: ", stage)
+            for _, step in stage.children.items():
+                # print("node2: ", step)
+                for _, job in step.children.items():
+                    # print("node3: ", job.data)
+                    status = job.data["status"]
+                    # print("job ", s)
+                    if status == "Success":
+                        status = "Finished"
+                    return QColor(*REAL_STATE_TO_COLOR[status])
+
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         node = index.data(NodeRole)
         text = f"{node.id}"
-        status = node.data["status"]
+        real_status = node.data["status"]
 
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing, True)
         painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
 
-        fill_color = QColor(*REAL_STATE_TO_COLOR[status])
-        pen_color = QColor(QColor(11, 11, 11))
         if option.state & QStyle.State_Selected:
-            fill_color = QColorConstants.Blue
-            pen_color = QColorConstants.White
+            border_pen = QPen()
+            border_pen.setColor(QColorConstants.Black)
+            border_pen.setWidth(1)
 
-        painter.setPen(pen_color)
-        painter.setBrush(fill_color)
+            painter.setBrush(QColorConstants.Blue)
+            painter.setPen(border_pen)
+            painter.drawRect(option.rect)
 
-        painter.drawRect(option.rect)
-        painter.drawText(option.rect, Qt.AlignCenter, text)
+            text_pen = QPen()
+            text_pen.setColor(QColorConstants.White)
+            painter.setPen(text_pen)
+            painter.drawText(option.rect, Qt.AlignCenter, text)
+
+        else:
+            # border + job status
+            border_pen = QPen()
+            border_pen.setColor(QColorConstants.Black)
+            border_pen.setWidth(1)
+            painter.setBrush(self._getJobColor(node))
+            painter.setPen(border_pen)
+            painter.drawRect(option.rect)
+
+            # real status
+            margin = 10
+            r = QRect(
+                option.rect.x() + margin,
+                option.rect.y() + margin,
+                option.rect.width() - (margin * 2),
+                option.rect.height() - (margin * 2),
+            )
+            painter.fillRect(r, QColor(*REAL_STATE_TO_COLOR[real_status]))
+
+            # text
+            text_pen = QPen()
+            painter.setPen(text_pen)
+            painter.drawText(option.rect, Qt.AlignCenter, text)
 
         painter.restore()
 

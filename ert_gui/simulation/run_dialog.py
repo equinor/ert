@@ -33,7 +33,8 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QTabWidget,
-    QFrame
+    QFrame,
+    QWIDGETSIZE_MAX,
 )
 from res.job_queue import JobStatusType
 
@@ -64,6 +65,9 @@ class RunDialog(QDialog):
         self._snapshot_model = SnapshotModel(self)
         self._run_model = run_model
 
+        self._isDetailedDialog = False
+        self._minimum_width = 1000
+
         ert = None
         if isinstance(run_model, BaseRunModel):
             ert = run_model.ert()
@@ -82,7 +86,7 @@ class RunDialog(QDialog):
 
         progress_proxy_model = ProgressProxyModel(self)
         progress_proxy_model.setSourceModel(self._snapshot_model)
-        
+
         progress_view = ProgressView(self)
         progress_view.setModel(progress_proxy_model)
 
@@ -91,32 +95,6 @@ class RunDialog(QDialog):
 
         self._tab_widget = QTabWidget(self)
         self._snapshot_model.rowsInserted.connect(self.on_new_iteration)
-
-
-        #
-
-
-        # self.total_progress = SimpleProgress()
-
-        # status_layout = QHBoxLayout()
-        # status_layout.addStretch()
-        # self.__status_label = QLabel()
-        # status_layout.addWidget(self.__status_label)
-        # status_layout.addStretch()
-        # status_widget_container = QWidget()
-        # status_widget_container.setLayout(status_layout)
-
-        # self.progress = Progress()
-
-        # legend_layout = QHBoxLayout()
-        # self.legends = {}
-        # for state, color in REAL_STATE_TO_COLOR.items():
-        #     self.legends[state] = Legend("%s (%d/%d)", QColor(*color))
-        #     self.legends[state].updateLegend(state, 0, 0)
-        #     legend_layout.addWidget(self.legends[state])
-
-        # legend_widget_container = QWidget()
-        # legend_widget_container.setLayout(legend_layout)
 
         self.running_time = QLabel("")
 
@@ -157,26 +135,19 @@ class RunDialog(QDialog):
         button_widget_container = QWidget()
         button_widget_container.setLayout(button_layout)
 
-        #self.detailed_progress = DetailedProgressWidget(self)
-        #self.detailed_progress.setVisible(False)
-        #self.dummy_widget_container = (
-        #     QWidget()
-        #)  # Used to keep the other widgets from stretching
-
         layout = QVBoxLayout()
-        # new
         layout.addWidget(simple_progress_view)
         layout.addWidget(progress_view)
         layout.addWidget(legend_view)
         layout.addWidget(self._tab_widget)
-        #layout.addWidget(self._real_view)
+        # layout.addWidget(self._real_view)
         #
-        #layout.addWidget(self.total_progress)
-        #layout.addWidget(status_widget_container)
-        #layout.addWidget(self.progress)
-        #layout.addWidget(legend_widget_container)
-        #layout.addWidget(self.detailed_progress)
-        #layout.addWidget(self.dummy_widget_container)
+        # layout.addWidget(self.total_progress)
+        # layout.addWidget(status_widget_container)
+        # layout.addWidget(self.progress)
+        # layout.addWidget(legend_widget_container)
+        # layout.addWidget(self.detailed_progress)
+        # layout.addWidget(self.dummy_widget_container)
         layout.addWidget(button_widget_container)
 
         # snapshot_tree = QTreeView(self)
@@ -203,13 +174,13 @@ class RunDialog(QDialog):
         # self._job_list.setModel(job_model)
         # layout.addWidget(self._job_list)
 
-        #layout.setStretch(0, 0)
-        #layout.setStretch(1, 0)
-        #layout.setStretch(2, 0)
-        #layout.setStretch(3, 0)
-        #layout.setStretch(4, 1)
-        #layout.setStretch(5, 1)
-        #layout.setStretch(6, 0)
+        # layout.setStretch(0, 0)
+        # layout.setStretch(1, 0)
+        # layout.setStretch(2, 0)
+        # layout.setStretch(3, 0)
+        # layout.setStretch(4, 1)
+        # layout.setStretch(5, 1)
+        # layout.setStretch(6, 0)
 
         self.setLayout(layout)
 
@@ -219,20 +190,36 @@ class RunDialog(QDialog):
         self.show_details_button.clicked.connect(self.toggle_detailed_progress)
         self.simulation_done.connect(self._on_simulation_done)
 
+        self.setMinimumWidth(self._minimum_width)
+        self._setSimpleDialog()
+
+    def sizeHint(self) -> QSize:
+        if self._isDetailedDialog:
+            return QSize(self.size().width(), 800)
+        else:
+            return QSize(self.size().width(), 180)
+
+    def _setSimpleDialog(self) -> None:
+        self._isDetailedDialog = False
+        self._tab_widget.setVisible(False)
+        self.show_details_button.setText("Show Details")
+        self.setFixedHeight(200)
+
+    def _setDetailedDialog(self) -> None:
+        self._isDetailedDialog = True
+        self._tab_widget.setVisible(True)
+        self.show_details_button.setText("Hide Details")
+        self.setFixedHeight(QWIDGETSIZE_MAX)
 
     def on_new_iteration(self, parent: QModelIndex, start: int, end: int) -> None:
         if not parent.isValid():
-            print (f"on_add_iteration: {start} {end}")
+            print(f"on_add_iteration: {start} {end}")
 
-            iter=start
+            iter = start
             widget = IterationWidget(iter)
             widget.setModel(self._snapshot_model)
             self._tab_widget.addTab(widget, f"Iteration {iter}")
 
-   
-
-
-           
     # @Slot(QModelIndex)
     # def _select_iter(self, index):
     #     node = index.internalPointer()
@@ -261,9 +248,6 @@ class RunDialog(QDialog):
     #     proxy = JobListProxyModel(self, iter_, real, stage, step)
     #     proxy.setSourceModel(self._snapshot_model)
     #     self._job_list.setModel(proxy)
-
-
-
 
     def reject(self):
         return
@@ -342,18 +326,18 @@ class RunDialog(QDialog):
     def _on_ticker(self):
         runtime = self._run_model.get_runtime()
         self.running_time.setText(format_running_time(runtime))
-        #if runtime % 5 == 0:
-           # self.total_progress.update()
-           # self.progress.update()
-            # self.legends.handle(event)
-        #if runtime % 10 == 0:
-            #self.detailed_progress.update()
-        #if runtime % 5 == 0:
-            #self.total_progress.update()
-            #self.progress.update()
-            # self.legends.handle(event)
-        #if runtime % 10 == 0:
-            #self.detailed_progress.update()
+        # if runtime % 5 == 0:
+        # self.total_progress.update()
+        # self.progress.update()
+        # self.legends.handle(event)
+        # if runtime % 10 == 0:
+        # self.detailed_progress.update()
+        # if runtime % 5 == 0:
+        # self.total_progress.update()
+        # self.progress.update()
+        # self.legends.handle(event)
+        # if runtime % 10 == 0:
+        # self.detailed_progress.update()
 
     @Slot(object)
     def _on_tracker_event(self, event):
@@ -454,8 +438,9 @@ class RunDialog(QDialog):
             self.startSimulation()
 
     def toggle_detailed_progress(self):
+        if self._isDetailedDialog:
+            self._setSimpleDialog()
+        else:
+            self._setDetailedDialog()
 
-        #self.detailed_progress.setVisible(not (self.detailed_progress.isVisible()))
-        #self.dummy_widget_container.setVisible(not (self.detailed_progress.isVisible()))
-        #self.adjustSize()
-        self.show_details_button.setText("Hide Details")
+        self.adjustSize()
