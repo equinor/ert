@@ -258,15 +258,24 @@ class PartialSnapshot:
                 if "stages" not in real:
                     continue
                 for stage_id, stage in real["stages"].items():
-                    self.update_stage(real_id, stage_id, **{k: stage[k] for k in stage if k != "steps"})
+                    self.update_stage(
+                        real_id,
+                        stage_id,
+                        **{k: stage[k] for k in stage if k != "steps"},
+                    )
                     if "steps" not in stage:
                         continue
                     for step_id, step in stage["steps"].items():
-                        self.update_step(real_id, stage_id, step_id, **{k: step[k] for k in step if k != "jobs"})
+                        self.update_step(
+                            real_id,
+                            stage_id,
+                            step_id,
+                            **{k: step[k] for k in step if k != "jobs"},
+                        )
                         if "jobs" not in step:
                             continue
                         for job_id, job in step["jobs"].items():
-                            self.update_job(real_id,  stage_id, step_id, job_id, **job)
+                            self.update_job(real_id, stage_id, step_id, job_id, **job)
         else:
             raise ValueError("Unknown type: {}".format(e_type))
         return self

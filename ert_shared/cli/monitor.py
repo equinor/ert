@@ -10,7 +10,12 @@ from ert_shared.status.entity.event import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert_shared.status.entity.state import ALL_REALIZATION_STATES, COLOR_FAILED, COLOR_FINISHED, REAL_STATE_TO_COLOR
+from ert_shared.status.entity.state import (
+    ALL_REALIZATION_STATES,
+    COLOR_FAILED,
+    COLOR_FINISHED,
+    REAL_STATE_TO_COLOR,
+)
 from ert_shared.status.utils import format_running_time
 
 
@@ -55,13 +60,14 @@ class Monitor:
     def monitor(self, tracker):
         self._start_time = datetime.now()
         for event in tracker.track():
+            print(event)
             if isinstance(event, FullSnapshotEvent):
                 if event.snapshot is not None:
                     self._snapshot = Snapshot(event.snapshot.dict())
                 self._progress = event.progress
             elif isinstance(event, SnapshotUpdateEvent):
                 self._snapshot.merge_event(event.partial_snapshot)
-                self._print_progress(event)
+                # self._print_progress(event)
             if isinstance(event, EndEvent):
                 self._print_result(event.failed, event.failed_msg)
                 return

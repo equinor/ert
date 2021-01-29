@@ -7,7 +7,6 @@ from qtpy.QtCore import (
     QAbstractItemModel,
     QAbstractProxyModel,
     QModelIndex,
-    QPersistentModelIndex,
     QVariant,
 )
 
@@ -136,9 +135,7 @@ class JobListProxyModel(QAbstractProxyModel):
         proxy_bottom_right = self.mapFromSource(bottom_right)
         if not proxy_top_left.isValid() or not proxy_bottom_right.isValid():
             return
-        self.dataChanged.emit(
-            proxy_top_left, proxy_bottom_right, roles
-        )
+        self.dataChanged.emit(proxy_top_left, proxy_bottom_right, roles)
 
     def _source_rows_about_to_be_inserted(
         self, parent: QModelIndex, start: int, end: int
