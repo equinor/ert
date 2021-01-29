@@ -2,7 +2,7 @@ import logging
 import queue
 import threading
 import time
-
+from ert_shared.models.base_run_model import BaseRunModel
 import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Snapshot
 from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
@@ -25,7 +25,7 @@ class OutOfOrderSnapshotUpdateException(ValueError):
 class EvaluatorTracker:
     def __init__(
         self,
-        model,
+        model: BaseRunModel,
         host,
         port,
         general_interval,
@@ -68,12 +68,12 @@ class EvaluatorTracker:
                             return
                     elif event["type"] == ids.EVTYPE_EE_TERMINATED:
                         drainer_logger.debug("got terminator event")
-                        self._work_queue.put(event)
                         while True:
                             if self._model.isFinished():
                                 drainer_logger.debug(
                                     "observed that model was finished, waiting tasks completion..."
                                 )
+                                self._work_queue.put(event)
                                 self._work_queue.join()
                                 drainer_logger.debug("tasks complete")
                                 return
@@ -88,7 +88,6 @@ class EvaluatorTracker:
                                 break
                             except ConnectionRefusedError as e:
                                 drainer_logger.debug(f"connection refused: {e}")
-                                pass
 
             except ConnectionRefusedError:
                 if self._model.isFinished():
@@ -119,7 +118,9 @@ class EvaluatorTracker:
                     raise OutOfOrderSnapshotUpdateException(
                         f"got {ids.EVTYPE_EE_SNAPSHOT_UPDATE} without having stored snapshot for iter {iter_}"
                     )
-                partial = PartialSnapshot(self._iter_snapshot[iter_]).from_cloudevent(event)
+                partial = PartialSnapshot(self._iter_snapshot[iter_]).from_cloudevent(
+                    event
+                )
                 yield SnapshotUpdateEvent(
                     phase_name=self._model.getPhaseName(),
                     current_phase=self._model.currentPhase(),
@@ -138,7 +139,8 @@ class EvaluatorTracker:
                 except GeneratorExit:
                     # consumers may exit at this point, make sure the last
                     # task is marked as done
-                    pass
+                    self._work_queue.task_done()
+                break
             self._work_queue.task_done()
 
     def is_finished(self):
