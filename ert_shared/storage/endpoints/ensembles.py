@@ -12,12 +12,7 @@ def _ensemble(db: Session, ensemble: ds.Ensemble) -> dict:
     doc = _ensemble_minimal(ensemble)
     doc.update(
         {
-            "realizations": [
-                {"name": real.index, "index": real.index}
-                for real in db.query(ds.Realization)
-                .filter_by(ensemble_id=ensemble.id)
-                .all()
-            ],
+            "realizations": ensemble.num_realizations,
             "responses": [
                 {"name": resp.name, "id": resp.id}
                 for resp in db.query(ds.ResponseDefinition)
@@ -123,7 +118,12 @@ async def create_ensemble(*, db: Session = Db(), ens_in: js.EnsembleCreate):
             algorithm=ens_in.update.algorithm, ensemble_reference_id=prev_ens.id
         )
 
-    ens = ds.Ensemble(time_created=datetime.now(), name=ens_in.name, parent=update)
+    ens = ds.Ensemble(
+        time_created=datetime.now(),
+        name=ens_in.name,
+        parent=update,
+        num_realizations=ens_in.realizations,
+    )
     db.add(ens)
 
     priors = {
@@ -138,11 +138,6 @@ async def create_ensemble(*, db: Session = Db(), ens_in: js.EnsembleCreate):
         for p in ens_in.priors
     }
 
-    realizations = {
-        index: ds.Realization(ensemble=ens, index=index)
-        for index in range(ens_in.realizations)
-    }
-    db.add_all(realizations.values())
     db.add_all(priors.values())
 
     for index, param in enumerate(ens_in.parameters):
@@ -196,12 +191,13 @@ async def create_misfit(
     db.add(obj)
     db.flush()
 
-    realizations = (
-        (realization.id, misfit.realizations[realization.index])
-        for realization in (
-            db.query(ds.Realization)
-            .filter_by(ensemble_id=id)
-            .filter(ds.Realization.index.in_(misfit.realizations.keys()))
+    responses = (
+        (response, misfit.realizations[response.index])
+        for response in (
+            db.query(ds.Response)
+            .filter(ds.Response.index.in_(misfit.realizations.keys()))
+            .join(ds.Response.response_definition)
+            .filter(ds.ResponseDefinition.ensemble_id == id)
             .all()
         )
     )
@@ -209,8 +205,8 @@ async def create_misfit(
     db.add_all(
         ds.Misfit(
             observation_response_definition_link_id=obj.id,
-            response_id=realization_id,
+            response=response,
             value=value,
         )
-        for realization_id, value in realizations
+        for response, value in responses
     )

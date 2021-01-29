@@ -8,8 +8,8 @@ def test_api(app_client):
     for ens in ensembles["ensembles"]:
         ensemble = app_client.get(p.ensemble(ens["id"])).json()
 
-        for real in ensemble["realizations"]:
-            realization = app_client.get(p.realization(ens["id"], real["index"])).json()
+        for real in range(ensemble["realizations"]):
+            realization = app_client.get(p.realization(ens["id"], real)).json()
 
             for response in realization["responses"]:
                 assert response["data"] is not None

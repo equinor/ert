@@ -9,10 +9,6 @@ router = APIRouter()
 
 @router.get("/ensembles/{ensemble_id}/realizations/{index}")
 async def read_item(*, db: Session = Db(), ensemble_id: int, index: int):
-    realization = (
-        db.query(ds.Realization).filter_by(ensemble_id=ensemble_id, index=index).one()
-    )
-
     response_definitions = db.query(ds.ResponseDefinition).filter_by(
         ensemble_id=ensemble_id
     )
@@ -21,9 +17,7 @@ async def read_item(*, db: Session = Db(), ensemble_id: int, index: int):
             "name": resp_def.name,
             "response": (
                 db.query(ds.Response)
-                .filter_by(
-                    response_definition_id=resp_def.id, realization_id=realization.id
-                )
+                .filter_by(response_definition_id=resp_def.id, index=index)
                 .one()
             ),
         }
@@ -33,13 +27,13 @@ async def read_item(*, db: Session = Db(), ensemble_id: int, index: int):
     parameters = [
         {
             "name": param.name,
-            "value": param.values[realization.index],
+            "value": param.values[index],
         }
         for param in db.query(ds.Parameter).filter_by(ensemble_id=ensemble_id)
     ]
 
     return_schema = {
-        "name": realization.index,
+        "name": index,
         "responses": [
             {"name": res["name"], "data": res["response"].values} for res in responses
         ],

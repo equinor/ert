@@ -31,6 +31,7 @@ class Ensemble(Entity):
     project_id = sa.Column(sa.Integer, sa.ForeignKey("project.id"), nullable=True)
     project = relationship("Project", back_populates="ensembles")
     time_created = sa.Column(sa.DateTime, server_default=func.now())
+    num_realizations = sa.Column(sa.Integer, nullable=False)
 
     children = relationship(
         "Update",
@@ -41,7 +42,6 @@ class Ensemble(Entity):
         uselist=False,
         foreign_keys="[Update.ensemble_result_id]",
     )
-    realizations = relationship("Realization", back_populates="ensemble")
     response_definitions = relationship(
         "ResponseDefinition",
         back_populates="ensemble",
@@ -77,22 +77,6 @@ class Update(Entity):
     )
 
 
-class Realization(Entity):
-    __tablename__ = "realization"
-    __table_args__ = (
-        UniqueConstraint(
-            "index", "ensemble_id", name="uq_realization_index_ensemble_id"
-        ),
-    )
-
-    id = sa.Column(sa.Integer, primary_key=True)
-    index = sa.Column(sa.Integer, nullable=False)
-    ensemble_id = sa.Column(sa.Integer, sa.ForeignKey("ensemble.id"), nullable=False)
-
-    ensemble = relationship("Ensemble", back_populates="realizations")
-    responses = relationship("Response", back_populates="realization")
-
-
 class ResponseDefinition(Entity):
     __tablename__ = "response_definition"
     __table_args__ = (
@@ -118,22 +102,19 @@ class Response(Entity):
     __tablename__ = "response"
     __table_args__ = (
         UniqueConstraint(
-            "realization_id",
             "response_definition_id",
-            name="uq_response_realization_id_reponse_defition_id",
+            "index",
+            name="uq_response_definition_id_index",
         ),
     )
 
     id = sa.Column(sa.Integer, primary_key=True)
     values = sa.Column(sa.PickleType)
-    realization_id = sa.Column(
-        sa.Integer, sa.ForeignKey("realization.id"), nullable=False
-    )
+    index = sa.Column(sa.Integer, nullable=False)
     response_definition_id = sa.Column(
         sa.Integer, sa.ForeignKey("response_definition.id"), nullable=False
     )
 
-    realization = relationship("Realization", back_populates="responses")
     response_definition = relationship("ResponseDefinition", back_populates="responses")
     misfits = relationship("Misfit", back_populates="response")
 
