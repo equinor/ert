@@ -82,7 +82,9 @@ def test_runpath_file(tmpdir, source_root):
         assert os.path.isfile("RUNPATH_WORKFLOW_1.OK")
 
 
-def test_ensemble_evaluator(tmpdir, source_root):
+def test_ensemble_evaluator(tmpdir, source_root, caplog):
+    import logging
+    caplog.set_level(logging.DEBUG, logger="ert_shared.ensemble_evaluator")
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),

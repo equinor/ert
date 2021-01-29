@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class EnsembleEvaluator:
     _dispatch = Dispatcher()
 
-    def __init__(self, ensemble, config, iter_,ee_id=0):
+    def __init__(self, ensemble, config, iter_, ee_id=0):
         self._iter = iter_
         self._ee_id = ee_id
 

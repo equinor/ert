@@ -32,7 +32,7 @@ REAL_STATE_TO_COLOR = {
     REALIZATION_STATE_RUNNING: COLOR_RUNNING,
     REALIZATION_STATE_FAILED: COLOR_FAILED,
     REALIZATION_STATE_FINISHED: COLOR_FINISHED,
-    REALIZATION_STATE_UNKNOWN: COLOR_UNKNOWN
+    REALIZATION_STATE_UNKNOWN: COLOR_UNKNOWN,
 }
 
 QUEUE_WAITING_FLAG = (
@@ -70,86 +70,3 @@ def queue_status_to_real_state(queue_status):
         if queue_status in flag:
             return QUEUE_FLAG_TO_REAL_STATE[flag]
     raise ValueError(f"could not map queue status {queue_status} to state")
-
-# class SimulationStateStatus(object):
-#     def __init__(self, name, state, color):
-#         self.__name = name
-#         self.__state = state
-#         self.__color = color
-
-#         self.__count = 0
-#         self.__total_count = 1
-
-#     @property
-#     def name(self):
-#         return self.__name
-
-#     @property
-#     def state(self):
-#         return self.__state
-
-#     @property
-#     def color(self):
-#         return self.__color
-
-#     @property
-#     def count(self):
-#         return self.__count
-
-#     @count.setter
-#     def count(self, value):
-#         self.__count = value
-
-#     @property
-#     def total_count(self):
-#         return self.__total_count
-
-#     @total_count.setter
-#     def total_count(self, value):
-#         self.__total_count = value
-
-
-# def create_states():
-#     waiting_state = SimulationStateStatus(
-#         REALIZATION_STATE_WAITING,
-#         QUEUE_WAITING_FLAG,
-#         COLOR_WAITING,
-#     )
-
-#     pending_state = SimulationStateStatus(
-#         REALIZATION_STATE_PENDING,
-#         QUEUE_PENDING_FLAG,
-#         COLOR_PENDING,
-#     )
-
-#     running_state = SimulationStateStatus(
-#         REALIZATION_STATE_RUNNING,
-#         QUEUE_RUNNING_FLAG,
-#         COLOR_RUNNING,
-#     )
-
-#     failed_state = SimulationStateStatus(
-#         REALIZATION_STATE_FAILED,
-#         QUEUE_FAILED_FLAG,
-#         COLOR_FAILED,
-#     )
-
-#     done_state = SimulationStateStatus(
-#         REALIZATION_STATE_FINISHED,
-#         QUEUE_DONE_FLAG,
-#         COLOR_FINISHED,
-#     )
-
-#     unknown_state = SimulationStateStatus(
-#         REALIZATION_STATE_UNKNOWN,
-#         QUEUE_UNKNOWN_FLAG,
-#         COLOR_UNKNOWN,
-#     )
-#     return [
-#         done_state,
-#         failed_state,
-#         running_state,
-#         unknown_state,
-#         pending_state,
-#         waiting_state,
-#     ]
