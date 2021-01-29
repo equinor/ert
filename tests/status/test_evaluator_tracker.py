@@ -1,40 +1,19 @@
+from ert_shared.status.entity.event import (
+    EndEvent,
+    FullSnapshotEvent,
+    SnapshotUpdateEvent,
+)
 import time
 import logging
 from res.job_queue import JobStatusType
 from ert_shared.models.base_run_model import BaseRunModel
-from ert_shared.tracker.evaluator import EvaluatorTracker
+from ert_shared.status.tracker.evaluator import EvaluatorTracker
 from unittest.mock import MagicMock, patch
-from ert_shared.tracker.state import SimulationStateStatus
 import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
     SnapshotBuilder,
 )
-
-
-def generate_some_states():
-    return [
-        SimulationStateStatus(
-            "Unknown",
-            JobStatusType.JOB_QUEUE_UNKNOWN,
-            SimulationStateStatus.COLOR_RUNNING,
-        ),
-        SimulationStateStatus(
-            "Running",
-            JobStatusType.JOB_QUEUE_RUNNING,
-            SimulationStateStatus.COLOR_RUNNING,
-        ),
-        SimulationStateStatus(
-            "Waiting",
-            JobStatusType.JOB_QUEUE_WAITING,
-            SimulationStateStatus.COLOR_WAITING,
-        ),
-        SimulationStateStatus(
-            "Finished",
-            JobStatusType.JOB_QUEUE_SUCCESS,
-            SimulationStateStatus.COLOR_FINISHED,
-        ),
-    ]
 
 
 class MockCloudEvent(dict):
@@ -46,7 +25,13 @@ class MockCloudEvent(dict):
         return self.__dict__[key]
 
 
+def mock_wait_for_ws(*args, **kwargs):
+    print("moc_wait_for_ws")
+    raise ConnectionRefusedError("nah")
+
+
 def mock_ee_monitor(*args):
+    print("MOCK EE MONITOR")
     reals_ids = ["0", "1"]
     snapshot = (
         SnapshotBuilder()
@@ -70,14 +55,16 @@ def mock_ee_monitor(*args):
 
     events = [
         MockCloudEvent(
-            {"type": ids.EVTYPE_EE_SNAPSHOT},
-            snapshot.to_dict(),
+            {"source": "/", "time": None, "type": ids.EVTYPE_EE_SNAPSHOT},
+            {**(snapshot.to_dict()), "iter": 0},
         ),
         MockCloudEvent(
-            {"type": ids.EVTYPE_EE_SNAPSHOT_UPDATE},
-            update.to_dict(),
+            {"source": "/", "time": None, "type": ids.EVTYPE_EE_SNAPSHOT_UPDATE},
+            {**update.to_dict(), "iter": 0},
         ),
-        MockCloudEvent({"type": ids.EVTYPE_EE_TERMINATED}, {}),
+        MockCloudEvent(
+            {"source": "/", "time": None, "type": ids.EVTYPE_EE_TERMINATED}, {"iter": 0}
+        ),
     ]
 
     def _track():
@@ -90,39 +77,26 @@ def mock_ee_monitor(*args):
     return MagicMock(track=MagicMock(side_effect=_track))
 
 
-def test_general_event(caplog):
+def test_tracking(caplog):
     caplog.set_level(logging.DEBUG, logger="ert_shared.ensemble_evaluator")
-    brm = BaseRunModel(None, phase_count=0)
+    brm = BaseRunModel(None, phase_count=1)
 
-    with patch("ert_shared.tracker.evaluator.create_ee_monitor") as mock_ee:
+    with patch(
+        "ert_shared.status.tracker.evaluator.create_ee_monitor"
+    ) as mock_ee, patch("ert_shared.status.tracker.evaluator.wait_for_ws") as mock_ws:
+        mock_ws.side_effect = mock_wait_for_ws
         mock_ee.return_value = mock_ee_monitor()
-        tracker = EvaluatorTracker(brm, ("", ""), generate_some_states())
-        general_event = None
-        while not tracker.is_finished():
-            general_event = tracker.general_event()
-            time.sleep(0.2)
-        assert general_event is not None, "no general event"
-        for state in general_event.sim_states:
-            if state.name == "Finished":
-                assert state.count == 2
-            else:
-                assert state.count == 0, f"{state.name} had non-zero count"
+        tracker = EvaluatorTracker(brm, "host", "port", 1, 1)
+        tracker_gen = tracker.track()
 
+        event = next(tracker_gen)
+        assert isinstance(event, FullSnapshotEvent)
 
-def test_detailed_event(caplog):
-    caplog.set_level(logging.DEBUG, logger="ert_shared.ensemble_evaluator")
-    brm = BaseRunModel(None, phase_count=0)
+        event = next(tracker_gen)
+        assert isinstance(event, SnapshotUpdateEvent)
 
-    with patch("ert_shared.tracker.evaluator.create_ee_monitor") as mock_ee:
-        mock_ee.return_value = mock_ee_monitor()
-        tracker = EvaluatorTracker(brm, ("", ""), generate_some_states())
+        # this is setting the model to finished
+        brm._phase = 1
 
-        # allow tracker to complete
-        while not tracker.is_finished():
-            tracker.general_event()
-        detailed_event = tracker.detailed_event()
-        assert detailed_event.iteration == 0
-        for iter_num, iter_ in detailed_event.details.items():
-            for real_num, real in iter_.items():
-                job_data = real[0]["0"].dump_data()
-                assert "Running" == job_data["status"]
+        event = next(tracker_gen)
+        assert isinstance(event, EndEvent)
