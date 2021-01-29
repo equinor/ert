@@ -12,9 +12,8 @@ from ert_shared.ensemble_evaluator.entity.ensemble import (
 )
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
-from res.job_queue import ForwardModelStatus, JobStatusType
+from res.job_queue import ForwardModelStatus, JobStatusType, RunStatusType
 from res.util import ResLog
-
 # A method decorated with the @job_queue decorator implements the following logic:
 #
 # 1. If self._job_queue is assigned a valid value the method is run normally.
@@ -338,9 +337,21 @@ class BaseRunModel(object):
 
         self.ert().initRun(run_context)
 
-        return EnsembleEvaluator(
+        totalOk = EnsembleEvaluator(
             ensemble, load_config(), run_context.get_iter(), ee_id=str(uuid.uuid1()).split("-")[0],
         ).run_and_get_successful_realizations()
+
+        for i in range(len(run_context)):
+            if run_context.is_active(i):
+                run_arg = run_context[i]
+                if (
+                    run_arg.run_status == RunStatusType.JOB_LOAD_FAILURE
+                    or run_arg.run_status == RunStatusType.JOB_RUN_FAILURE
+                ):
+                    run_context.deactivate_realization(i)
+
+        run_context.get_sim_fs().fsync()
+        return totalOk
 
     def get_forward_model(self):
         return self.ert().resConfig().model_config.getForwardModel()
