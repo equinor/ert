@@ -47,41 +47,41 @@ MIN_REALIZATIONS 1
         return
 
     model, argument = create_model(args)
-    if args.disable_monitoring:
-        model.startSimulations(argument)
-        if model.hasRunFailed():
-            _clear_and_exit(model.getFailMessage())
-    else:
-        # Test run does not have a current_case
-        if "current_case" in args and args.current_case:
-            ERT.enkf_facade.select_or_create_new_case(args.current_case)
+    # Test run does not have a current_case
+    if "current_case" in args and args.current_case:
+        ERT.enkf_facade.select_or_create_new_case(args.current_case)
 
-        if (args.mode in [ENSEMBLE_SMOOTHER_MODE, ITERATIVE_ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE] and 
-            args.target_case == ERT.enkf_facade.get_current_case_name()):
-            msg = (
-                "ERROR: Target file system and source file system can not be the same. "
-                "They were both: {}.".format(args.target_case)
-            )
-            _clear_and_exit(msg)
-
-        thread = threading.Thread(
-            name="ert_cli_simulation_thread",
-            target=model.startSimulations,
-            args=(argument,)
+    if (args.mode in [ENSEMBLE_SMOOTHER_MODE, ITERATIVE_ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE] and 
+        args.target_case == ERT.enkf_facade.get_current_case_name()):
+        msg = (
+            "ERROR: Target file system and source file system can not be the same. "
+            "They were both: {}.".format(args.target_case)
         )
-        thread.start()
+        _clear_and_exit(msg)
 
-        tracker = create_tracker(model, detailed_interval=0)
+    thread = threading.Thread(
+        name="ert_cli_simulation_thread",
+        target=model.startSimulations,
+        args=(argument,)
+    )
+    thread.start()
 
-        monitor = Monitor(color_always=args.color_always)
+    tracker = create_tracker(model, detailed_interval=0)
 
-        try:
-            monitor.monitor(tracker)
-        except (SystemExit, KeyboardInterrupt):
-            print("\nKilling simulations...")
-            tracker.request_termination()
+    out = open(os.devnull, 'w') if args.disable_monitoring else sys.stdout
+    monitor = Monitor(out=out, color_always=args.color_always)
 
-        thread.join()
+    try:
+        monitor.monitor(tracker)
+    except (SystemExit, KeyboardInterrupt):
+        print("\nKilling simulations...")
+        tracker.request_termination()
 
-        if model.hasRunFailed():
-            _clear_and_exit(1)  # the monitor has already reported the error message
+    if args.disable_monitoring:
+        out.close()
+
+    thread.join()
+
+    if model.hasRunFailed():
+        _clear_and_exit(1)  # the monitor has already reported the error message
+
