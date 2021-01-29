@@ -38,6 +38,8 @@ from ert_gui.simulation.view.legend import LegendView
 from ert_gui.simulation.view.realization import RealizationWidget
 from ert_gui.model.progress_proxy import ProgressProxyModel
 
+from ert_gui.model.snapshot import NodeRole
+
 
 class RunDialog(QDialog):
     simulation_done = Signal(bool, str)
