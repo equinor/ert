@@ -58,18 +58,8 @@ async def create_responses(
     )
     db.add(obj)
     db.add_all(
-        ds.Response(values=values, realization_id=real.id, response_definition=obj)
-        for real, values in (
-            (
-                (
-                    db.query(ds.Realization)
-                    .filter_by(ensemble_id=ensemble_id, index=index)
-                    .one()
-                ),
-                values,
-            )
-            for index, values in resp.realizations.items()
-        )
+        ds.Response(values=values, index=index, response_definition=obj)
+        for index, values in resp.realizations.items()
     )
     db.commit()
 
@@ -105,7 +95,7 @@ async def read_response_by_id(*, db: Session = Db(), ensemble_id: int, id: int):
     univariate_misfits = {}
     for resp in responses:
         resp_values = list(resp.values)
-        univariate_misfits[resp.realization.index] = {}
+        univariate_misfits[resp.index] = {}
         for link in observation_links:
             observation = link.observation
             obs_values = list(observation.values)
@@ -122,7 +112,7 @@ async def read_response_by_id(*, db: Session = Db(), ensemble_id: int, id: int):
                         obs_index,
                     )
                 )
-            univariate_misfits[resp.realization.index][observation.name] = misfits
+            univariate_misfits[resp.index][observation.name] = misfits
 
     return_schema = {
         "id": id,
@@ -130,8 +120,7 @@ async def read_response_by_id(*, db: Session = Db(), ensemble_id: int, id: int):
         "ensemble_id": ensemble_id,
         "realizations": [
             {
-                "name": resp.realization.index,
-                "realization_ref": resp.realization.index,
+                "name": resp.index,
                 "data": resp.values,
                 "summarized_misfits": {
                     misfit.observation_response_definition_link.observation.name: misfit.value
@@ -139,9 +128,7 @@ async def read_response_by_id(*, db: Session = Db(), ensemble_id: int, id: int):
                 },
                 "univariate_misfits": {
                     obs_name: misfits
-                    for obs_name, misfits in univariate_misfits[
-                        resp.realization.index
-                    ].items()
+                    for obs_name, misfits in univariate_misfits[resp.index].items()
                 },
             }
             for resp in responses

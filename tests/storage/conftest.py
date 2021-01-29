@@ -71,7 +71,7 @@ def db_populated(db_factory):
     db.add(prior_a)
 
     ######## add ensemble ########
-    ensemble = ds.Ensemble(name="ensemble_name", priors=priors)
+    ensemble = ds.Ensemble(name="ensemble_name", priors=priors, num_realizations=2)
     db.add(ensemble)
 
     ######## add parameteredefinitionss ########
@@ -188,15 +188,12 @@ def db_populated(db_factory):
         ]
     )
 
-    ######## add realizations ########
-    realization_0 = ds.Realization(index=0, ensemble=ensemble)
-    realization_1 = ds.Realization(index=1, ensemble=ensemble)
-
-    def add_data(realization):
+    ######## add responses ########
+    def add_data(index):
         response_one = ds.Response(
             response_definition=response_definition_one,
             values=[11.1, 11.2, 9.9, 9.3],
-            realization=realization,
+            index=index,
         )
         db.add(response_one)
         db.add(
@@ -211,12 +208,12 @@ def db_populated(db_factory):
             ds.Response(
                 response_definition=response_definition_two,
                 values=[12.1, 12.2, 11.1, 11.2, 9.9, 9.3],
-                realization=realization,
+                index=index,
             )
         )
 
-    add_data(realization_0)
-    add_data(realization_1)
+    add_data(0)
+    add_data(1)
 
     db.commit()
     db.close()

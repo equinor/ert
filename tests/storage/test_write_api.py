@@ -334,10 +334,9 @@ def test_responses(app_client, mock_ert):
 
     response_0 = (
         app_client.db.query(ds.Response.values)
+        .filter_by(index=0)
         .join(ds.Response.response_definition)
         .filter_by(ensemble_id=ens_resp["id"], name="POLY_RES")
-        .join(ds.Response.realization)
-        .filter_by(index=0)
         .one()
     )
     response_values = response_0.values
