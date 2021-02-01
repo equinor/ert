@@ -28,7 +28,7 @@ from ert_shared.status.entity.event import (
     SnapshotUpdateEvent,
 )
 from ert_shared.status.entity.state import (
-    REALIZATION_STATE_UNKNOWN,
+    JOB_STATE_FINISHED, REALIZATION_STATE_UNKNOWN,
     queue_status_to_real_state,
 )
 from ert_shared.status.queue_diff import InconsistentIndicesError, QueueDiff
@@ -163,6 +163,9 @@ class LegacyTracker:
                 job.end_time = str(fm.end_time)
                 job.name = fm.name
                 job.status = fm.status
+                if job.status == "Success":
+                    job.status = JOB_STATE_FINISHED
+
                 job.error = fm.error
                 job.stdout = fm.std_out_file
                 job.stderr = fm.std_err_file

@@ -243,6 +243,7 @@ class SnapshotModel(QAbstractItemModel):
                         # print("node3: ", job.data)
                         status = job.data["status"]
                         # print("job ", s)
+                        # FIXME: Success shouldn't really exist
                         if status == "Success":
                             status = "Finished"
                         return QColor(*REAL_STATE_TO_COLOR[status])
