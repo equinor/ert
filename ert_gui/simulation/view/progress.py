@@ -3,7 +3,8 @@ from qtpy.QtWidgets import QTreeView, QStyledItemDelegate, QStyleOptionViewItem
 from qtpy.QtGui import QPainter, QColor, QFont
 
 from ert_shared.status.entity.state import REAL_STATE_TO_COLOR
-from ert_gui.simulation.palette import TOTAL_PROGRESS_COLOR
+#from ert_gui.simulation.palette import TOTAL_PROGRESS_COLOR
+from ert_gui.model.progress_proxy import ProgressRole
 
 
 class ProgressView(QTreeView):
@@ -26,8 +27,9 @@ class ProgressDelegate(QStyledItemDelegate):
 
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
 
-        nr_reals = index.data()["nr_reals"]
-        status = index.data()["status"]
+        data= index.data(ProgressRole)
+        nr_reals = data["nr_reals"]
+        status = data["status"]
         d = option.rect.width() / nr_reals
 
         painter.save()
