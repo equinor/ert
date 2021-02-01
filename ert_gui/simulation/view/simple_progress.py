@@ -1,6 +1,7 @@
 from qtpy.QtCore import QRect, QSize, QModelIndex, Qt
 from qtpy.QtWidgets import QTreeView, QStyledItemDelegate, QStyleOptionViewItem
 from qtpy.QtGui import QPainter, QColor, QFont
+from ert_gui.model.progress_proxy import SimpleProgressRole
 
 
 class SimpleProgressView(QTreeView):
@@ -25,7 +26,7 @@ class SimpleProgressDelegate(QStyledItemDelegate):
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         painter.save()
 
-        progress = index.data()
+        progress = index.data(SimpleProgressRole)
         w = option.rect.width() * progress
 
         painter.setRenderHint(QPainter.Antialiasing, True)

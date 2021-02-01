@@ -4,11 +4,20 @@ from ert_gui.model.dev_helpers import create_partial_snapshot, create_snapshot
 from ert_gui.model.node import Node, NodeType, snapshot_to_tree
 from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, _SnapshotDict
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant, Slot
+from qtpy.QtGui import QColor
+
+from ert_shared.status.entity.state import REAL_STATE_TO_COLOR
+
+
 
 logger = logging.getLogger(__name__)
 
 
 NodeRole = Qt.UserRole + 1
+RealJobColorHint = Qt.UserRole + 2
+RealStatusColorHint = Qt.UserRole + 3
+RealLabelHint = Qt.UserRole + 4
+
 
 
 class SnapshotModel(QAbstractItemModel):
@@ -220,8 +229,31 @@ class SnapshotModel(QAbstractItemModel):
                 return f"{node.type}:{node.id}"
             if index.column() == 1:
                 return f"{node.data['status']}"
+
         if role == NodeRole:
             return node
+
+        if node.type == NodeType.REAL and role == RealJobColorHint:
+            #TODO: make nicer + make sure it works with thare more than 1 job
+            for _, stage in node.children.items():
+                # print("1: ", stage)
+                for _, step in stage.children.items():
+                    # print("node2: ", step)
+                    for _, job in step.children.items():
+                        # print("node3: ", job.data)
+                        status = job.data["status"]
+                        # print("job ", s)
+                        if status == "Success":
+                            status = "Finished"
+                        return QColor(*REAL_STATE_TO_COLOR[status])
+
+        if node.type == NodeType.REAL and role == RealLabelHint:
+            return f"{node.id}"
+
+        if node.type == NodeType.REAL and role == RealStatusColorHint:
+            return QColor(*REAL_STATE_TO_COLOR[node.data["status"]])
+
+
         else:
             return QVariant()
 
