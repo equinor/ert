@@ -45,6 +45,12 @@ def _prepare_input(ee_config, stages_config, inputs, evaluation_tmp_dir):
 def _build_ee_config(evaluation_tmp_dir, ensemble, stages_config, input_records):
     _assert_single_stage_forward_model(stages_config, ensemble)
 
+    if ensemble.size != None:
+        ensemble_size = ensemble.size
+    else:
+        ensemble_size = len(input_records)
+    assert len(input_records) == ensemble_size
+
     stage_name = ensemble.forward_model.stages[0]
     step_name = stage_name + "-only_step"
     stage = stages_config.step_from_key(stage_name)
@@ -78,7 +84,7 @@ def _build_ee_config(evaluation_tmp_dir, ensemble, stages_config, input_records)
                 ],
             }
         ],
-        "realizations": ensemble.size,
+        "realizations": ensemble_size,
         "max_running": 10000,
         "max_retries": 0,
         "run_path": str(evaluation_tmp_dir / "my_output"),

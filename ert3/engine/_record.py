@@ -1,4 +1,5 @@
 import ert3
+from ert3.engine import _utils
 
 import json
 import yaml
@@ -16,32 +17,11 @@ def load_record(workspace, record_name, record_file):
 
 
 def sample_record(workspace, parameter_group_name, record_name, ensemble_size):
-    with open(workspace / "parameters.yml") as f:
-        parameters = yaml.safe_load(f)
+    parameters = _utils.load_parameters(workspace)
 
-    parameter_group = None
-    for ps in parameters:
-        if ps["name"] == parameter_group_name:
-            parameter_group = ps
-
-    if parameter_group is None:
+    if parameter_group_name not in parameters:
         raise ValueError(f"No parameter group found named: {parameter_group_name}")
-
-    dist_config = parameter_group["distribution"]
-    if dist_config["type"] == "gaussian":
-        distribution = ert3.stats.Gaussian(
-            dist_config["input"]["mean"],
-            dist_config["input"]["std"],
-            index=parameter_group["variables"],
-        )
-    elif dist_config["type"] == "uniform":
-        distribution = ert3.stats.Uniform(
-            dist_config["input"]["lower_bound"],
-            dist_config["input"]["upper_bound"],
-            index=parameter_group["variables"],
-        )
-    else:
-        raise ValueError("Unknown distribution type: {}".format(dist_config["type"]))
+    distribution = parameters[parameter_group_name]
 
     ert3.storage.add_variables(
         workspace,
