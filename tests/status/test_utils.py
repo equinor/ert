@@ -1,7 +1,6 @@
 import unittest
 
-from ert_shared.tracker.utils import (
-    calculate_progress,
+from ert_shared.status.utils import (
     format_running_time,
     scale_intervals,
 )
@@ -56,70 +55,70 @@ class TrackerUtilsTest(unittest.TestCase):
                 ),
             )
 
-    def test_calculate_progress(self):
-        tests = [
-            {
-                "expected": 0.01,
-                "phase": 0,
-                "phase_count": 1,
-                "finished": False,
-                "queue_running": False,
-                "queue_size": 100,
-                "phase_has_run": False,
-                "done_count": 1,
-            },  # noqa
-            {
-                "expected": 1,
-                "phase": 1,
-                "phase_count": 1,
-                "finished": True,
-                "queue_running": False,
-                "queue_size": 100,
-                "phase_has_run": True,
-                "done_count": 100,
-            },  # noqa
-            {
-                "expected": 0.5,
-                "phase": 0,
-                "phase_count": 2,
-                "finished": False,
-                "queue_running": False,
-                "queue_size": 100,
-                "phase_has_run": True,
-                "done_count": 100,
-            },  # noqa
-            {
-                "expected": 0,
-                "phase": 0,
-                "phase_count": 2,
-                "finished": False,
-                "queue_running": False,
-                "queue_size": 100,
-                "phase_has_run": False,
-                "done_count": 0,
-            },  # noqa
-            {
-                "expected": 0.5,
-                "phase": 0,
-                "phase_count": 2,
-                "finished": False,
-                "queue_running": False,
-                "queue_size": 100,
-                "phase_has_run": True,
-                "done_count": 0,
-            },  # noqa
-        ]
+    # def test_calculate_progress(self):
+    #     tests = [
+    #         {
+    #             "expected": 0.01,
+    #             "phase": 0,
+    #             "phase_count": 1,
+    #             "finished": False,
+    #             "queue_running": False,
+    #             "queue_size": 100,
+    #             "phase_has_run": False,
+    #             "done_count": 1,
+    #         },  # noqa
+    #         {
+    #             "expected": 1,
+    #             "phase": 1,
+    #             "phase_count": 1,
+    #             "finished": True,
+    #             "queue_running": False,
+    #             "queue_size": 100,
+    #             "phase_has_run": True,
+    #             "done_count": 100,
+    #         },  # noqa
+    #         {
+    #             "expected": 0.5,
+    #             "phase": 0,
+    #             "phase_count": 2,
+    #             "finished": False,
+    #             "queue_running": False,
+    #             "queue_size": 100,
+    #             "phase_has_run": True,
+    #             "done_count": 100,
+    #         },  # noqa
+    #         {
+    #             "expected": 0,
+    #             "phase": 0,
+    #             "phase_count": 2,
+    #             "finished": False,
+    #             "queue_running": False,
+    #             "queue_size": 100,
+    #             "phase_has_run": False,
+    #             "done_count": 0,
+    #         },  # noqa
+    #         {
+    #             "expected": 0.5,
+    #             "phase": 0,
+    #             "phase_count": 2,
+    #             "finished": False,
+    #             "queue_running": False,
+    #             "queue_size": 100,
+    #             "phase_has_run": True,
+    #             "done_count": 0,
+    #         },  # noqa
+    #     ]
 
-        for t in tests:
-            self.assertEqual(
-                t["expected"],
-                calculate_progress(
-                    t["phase"],
-                    t["phase_count"],
-                    t["finished"],
-                    t["queue_running"],
-                    t["queue_size"],
-                    t["phase_has_run"],
-                    t["done_count"],
-                ),
-            )
+    #     for t in tests:
+    #         self.assertEqual(
+    #             t["expected"],
+    #             calculate_progress(
+    #                 t["phase"],
+    #                 t["phase_count"],
+    #                 t["finished"],
+    #                 t["queue_running"],
+    #                 t["queue_size"],
+    #                 t["phase_has_run"],
+    #                 t["done_count"],
+    #             ),
+    #         )
