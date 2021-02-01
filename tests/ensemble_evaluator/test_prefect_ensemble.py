@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 import os
 import os.path
 import yaml
@@ -8,6 +9,7 @@ import websockets
 import threading
 from datetime import timedelta
 from functools import partial
+from unittest.mock import patch
 from prefect import Flow
 from tests.utils import SOURCE_DIR, tmp
 from ert_shared.ensemble_evaluator.config import CONFIG_FILE, load_config
@@ -50,7 +52,10 @@ def test_run_prefect_ensemble(unused_tcp_port):
         mon = evaluator.run()
 
         for event in mon.track():
-            if event.data is not None and event.data.get("status") == "Stopped":
+            if event.data is not None and event.data.get("status") in [
+                "Failed",
+                "Stopped",
+            ]:
                 mon.signal_done()
 
         assert evaluator._snapshot.get_status() == "Stopped"
@@ -85,7 +90,10 @@ def test_run_prefect_ensemble_with_path(unused_tcp_port):
         mon = evaluator.run()
 
         for event in mon.track():
-            if event.data is not None and event.data.get("status") == "Stopped":
+            if event.data is not None and event.data.get("status") in [
+                "Failed",
+                "Stopped",
+            ]:
                 mon.signal_done()
 
         assert evaluator._snapshot.get_status() == "Stopped"
@@ -358,3 +366,39 @@ def test_on_task_failure(unused_tcp_port):
         expected_step_failed_messages = 0
         assert expected_job_failed_messages == len(fail_job_messages)
         assert expected_step_failed_messages == len(fail_step_messages)
+
+
+@pytest.mark.timeout(60)
+@pytest.mark.skipif(
+    sys.platform.startswith("darwin"),
+    reason="On darwin patching is unreliable since processes may use 'spawn'.",
+)
+def test_run_prefect_ensemble_exception(unused_tcp_port):
+    with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case")):
+        conf_file = Path(CONFIG_FILE)
+        config = parse_config("config.yml")
+        config.update({"config_path": Path.absolute(Path("."))})
+        config.update({"realizations": 2})
+        config.update({"executor": "local"})
+
+        with open(conf_file, "w") as f:
+            f.write(f'port: "{unused_tcp_port}"\n')
+
+        service_config = load_config(conf_file)
+        config.update(service_config)
+
+        ensemble = PrefectEnsemble(config)
+        evaluator = EnsembleEvaluator(ensemble, config, ee_id="1")
+
+        with patch.object(ensemble, "_fetch_input_files", side_effect=RuntimeError()):
+            mon = evaluator.run()
+            for event in mon.track():
+                if event["type"] in (
+                    ids.EVTYPE_EE_SNAPSHOT_UPDATE,
+                    ids.EVTYPE_EE_SNAPSHOT,
+                ) and event.data.get("status") in [
+                    "Stopped",
+                    "Failed",
+                ]:
+                    mon.signal_done()
+            assert evaluator._snapshot.get_status() == "Failed"

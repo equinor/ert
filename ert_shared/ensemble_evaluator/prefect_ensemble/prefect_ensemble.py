@@ -6,6 +6,7 @@ import multiprocessing
 import signal
 import threading
 import asyncio
+import logging
 from pathlib import Path
 from datetime import timedelta
 from functools import partial
@@ -29,6 +30,8 @@ from ert_shared.ensemble_evaluator.entity.ensemble import (
     _Stage,
     _Realization,
 )
+
+logger = logging.getLogger(__name__)
 
 
 async def _eq_submit_job(self, script_filename):
@@ -271,30 +274,40 @@ class PrefectEnsemble(_Ensemble):
         return input_files
 
     def _evaluate(self, dispatch_url, ee_id):
-        sys.stderr = open("prefect.log", "w")
+        try:
+            input_files = self._fetch_input_files()
 
-        input_files = self._fetch_input_files()
+            with Client(dispatch_url) as c:
+                event = CloudEvent(
+                    {
+                        "type": ids.EVTYPE_ENSEMBLE_STARTED,
+                        "source": f"/ert/ee/{self._ee_id}",
+                    },
+                )
+                c.send(to_json(event).decode())
+            self.run_flow(ee_id, dispatch_url, input_files)
 
-        with Client(dispatch_url) as c:
-            event = CloudEvent(
-                {
-                    "type": ids.EVTYPE_ENSEMBLE_STARTED,
-                    "source": f"/ert/ee/{self._ee_id}",
-                    "datacontenttype": "application/json",
-                },
+            with Client(dispatch_url) as c:
+                event = CloudEvent(
+                    {
+                        "type": ids.EVTYPE_ENSEMBLE_STOPPED,
+                        "source": f"/ert/ee/{self._ee_id}",
+                    },
+                )
+                c.send(to_json(event).decode())
+        except Exception:
+            logger.exception(
+                "An exception occurred while starting the ensemble evaluation",
+                exc_info=True,
             )
-            c.send(to_json(event).decode())
-        self.run_flow(ee_id, dispatch_url, input_files)
-
-        with Client(dispatch_url) as c:
-            event = CloudEvent(
-                {
-                    "type": ids.EVTYPE_ENSEMBLE_STOPPED,
-                    "source": f"/ert/ee/{self._ee_id}",
-                    "datacontenttype": "application/json",
-                },
-            )
-            c.send(to_json(event).decode())
+            with Client(dispatch_url) as c:
+                event = CloudEvent(
+                    {
+                        "type": ids.EVTYPE_ENSEMBLE_FAILED,
+                        "source": f"/ert/ee/{self._ee_id}",
+                    },
+                )
+                c.send(to_json(event).decode())
 
     def run_flow(self, ee_id, dispatch_url, input_files):
         real_per_batch = self.config["max_running"]

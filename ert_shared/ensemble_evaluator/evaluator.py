@@ -90,19 +90,36 @@ class EnsembleEvaluator:
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STOPPED)
     async def _ensemble_stopped_handler(self, event):
-        snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(event)
-        await self._send_snapshot_update(snapshot_mutate_event)
+        if self._snapshot.get_status() != "Failure":
+            snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
+                event
+            )
+            await self._send_snapshot_update(snapshot_mutate_event)
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STARTED)
     async def _ensemble_started_handler(self, event):
-        snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(event)
-        await self._send_snapshot_update(snapshot_mutate_event)
+        if self._snapshot.get_status() != "Failure":
+            snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
+                event
+            )
+            await self._send_snapshot_update(snapshot_mutate_event)
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_CANCELLED)
     async def _ensemble_cancelled_handler(self, event):
-        snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(event)
-        await self._send_snapshot_update(snapshot_mutate_event)
-        self._stop()
+        if self._snapshot.get_status() != "Failure":
+            snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
+                event
+            )
+            await self._send_snapshot_update(snapshot_mutate_event)
+            self._stop()
+
+    @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_FAILED)
+    async def _ensemble_failed_handler(self, event):
+        if self._snapshot.get_status() not in ["Stopped", "Cancelled"]:
+            snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
+                event
+            )
+            await self._send_snapshot_update(snapshot_mutate_event)
 
     async def _send_snapshot_update(self, snapshot_mutate_event):
         self._snapshot.merge_event(snapshot_mutate_event)
@@ -172,7 +189,10 @@ class EnsembleEvaluator:
             async for msg in websocket:
                 event = from_json(msg)
                 await self._dispatch.handle_event(self, event)
-                if event["type"] == identifiers.EVTYPE_ENSEMBLE_STOPPED:
+                if event["type"] in [
+                    identifiers.EVTYPE_ENSEMBLE_STOPPED,
+                    identifiers.EVTYPE_ENSEMBLE_FAILED,
+                ]:
                     return
 
     async def connection_handler(self, websocket, path):
