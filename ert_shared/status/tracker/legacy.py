@@ -122,7 +122,7 @@ class LegacyTracker:
             real_prog = {}
 
         enumerated = 0
-        for iens, run_arg in _enumerate_from_volatile(run_context):
+        for iens, run_arg in _enumerate_run_context(run_context):
             real_id = str(iens)
             enumerated += 1
             if not _is_iens_active(iens, run_context):
@@ -147,7 +147,7 @@ class LegacyTracker:
             for index in range(0, len(forward_model)):
                 ext_job = forward_model.iget_job(index)
                 step.jobs[str(index)] = _Job(
-                    name=ext_job.name(), status="Unknown", data={}
+                    name=ext_job.name(), status=REALIZATION_STATE_UNKNOWN, data={}
                 )
 
             progress = real_prog[iter_].get(iens, None)
@@ -254,7 +254,7 @@ class LegacyTracker:
                 f"partial: detailed_progress iter ({dp_iter_}) differed from run_context ({iter_})"
             )
 
-        for iens, _ in _enumerate_from_volatile(run_context):
+        for iens, _ in _enumerate_run_context(run_context):
             real_id = str(iens)
             if not _is_iens_active(iens, run_context):
                 continue
@@ -367,7 +367,7 @@ def _is_iens_active(iens: int, run_context: ErtRunContext) -> bool:
         return False
 
 
-def _enumerate_from_volatile(run_context: ErtRunContext) -> typing.Iterable:
+def _enumerate_run_context(run_context: ErtRunContext) -> typing.Iterable:
     """Return an iterable that's either (iens, run_arg) or empty."""
     try:
         yield from enumerate(run_context)
