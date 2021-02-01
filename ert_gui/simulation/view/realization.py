@@ -8,8 +8,7 @@ from qtpy.QtWidgets import (
 )
 from qtpy.QtGui import QPainter, QColor, QFont, QColorConstants, QPen
 
-from ert_shared.status.entity.state import REAL_STATE_TO_COLOR
-from ert_gui.model.snapshot import NodeRole, Node
+from ert_gui.model.snapshot import Node, NodeRole, RealJobColorHint, RealStatusColorHint, RealLabelHint
 
 
 class RealizationView(QListView):
@@ -23,14 +22,11 @@ class RealizationView(QListView):
         self.setItemDelegate(
             RealizationDelegate(self._delegateWidth, self._delegateHeight, self)
         )
-        self.clicked.connect(self._select_real)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setFlow(QListView.LeftToRight)
         self.setWrapping(True)
         self.setResizeMode(QListView.Adjust)
 
-    def _select_real(self, e) -> None:
-        print(f"select {e}")
 
 
 class RealizationDelegate(QStyledItemDelegate):
@@ -38,24 +34,9 @@ class RealizationDelegate(QStyledItemDelegate):
         super(RealizationDelegate, self).__init__(parent)
         self._size = QSize(width, height)
 
-    # TODO: fix this for more than one job
-    def _getJobColor(self, node: Node) -> QColor:
-        for _, stage in node.children.items():
-            # print("1: ", stage)
-            for _, step in stage.children.items():
-                # print("node2: ", step)
-                for _, job in step.children.items():
-                    # print("node3: ", job.data)
-                    status = job.data["status"]
-                    # print("job ", s)
-                    if status == "Success":
-                        status = "Finished"
-                    return QColor(*REAL_STATE_TO_COLOR[status])
-
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
-        node = index.data(NodeRole)
-        text = f"{node.id}"
-        real_status = node.data["status"]
+
+        text= index.data(RealLabelHint)
 
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing, True)
@@ -80,7 +61,7 @@ class RealizationDelegate(QStyledItemDelegate):
             border_pen = QPen()
             border_pen.setColor(QColorConstants.Black)
             border_pen.setWidth(1)
-            painter.setBrush(self._getJobColor(node))
+            painter.setBrush(index.data(RealJobColorHint))
             painter.setPen(border_pen)
             painter.drawRect(option.rect)
 
@@ -92,7 +73,7 @@ class RealizationDelegate(QStyledItemDelegate):
                 option.rect.width() - (margin * 2),
                 option.rect.height() - (margin * 2),
             )
-            painter.fillRect(r, QColor(*REAL_STATE_TO_COLOR[real_status]))
+            painter.fillRect(r, index.data(RealStatusColorHint))
 
             # text
             text_pen = QPen()

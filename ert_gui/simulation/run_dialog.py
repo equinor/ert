@@ -44,9 +44,7 @@ from ert_gui.simulation.view.legend import LegendView
 from ert_gui.simulation.view.realization import RealizationView
 from ert_gui.simulation.view.iteration import IterationWidget
 
-from ert_gui.simulation.model.simple_progress_proxy import SimpleProgressProxyModel
-from ert_gui.simulation.model.progress_proxy import ProgressProxyModel
-
+from ert_gui.model.progress_proxy import ProgressProxyModel
 from ert_gui.model.snapshot import NodeRole
 
 
@@ -78,17 +76,14 @@ class RunDialog(QDialog):
         self._ticker.timeout.connect(self._on_ticker)
 
         #   new
-        simple_progress_proxy_model = SimpleProgressProxyModel(self)
-        simple_progress_proxy_model.setSourceModel(self._snapshot_model)
-
-        simple_progress_view = SimpleProgressView(self)
-        simple_progress_view.setModel(simple_progress_proxy_model)
-
         progress_proxy_model = ProgressProxyModel(self)
         progress_proxy_model.setSourceModel(self._snapshot_model)
 
         progress_view = ProgressView(self)
         progress_view.setModel(progress_proxy_model)
+
+        simple_progress_view = SimpleProgressView(self)
+        simple_progress_view.setModel(progress_proxy_model)
 
         legend_view = LegendView(self)
         legend_view.setModel(progress_proxy_model)
@@ -203,18 +198,17 @@ class RunDialog(QDialog):
         self._isDetailedDialog = False
         self._tab_widget.setVisible(False)
         self.show_details_button.setText("Show Details")
-        self.setFixedHeight(200)
+        self.setFixedHeight(170)
 
     def _setDetailedDialog(self) -> None:
         self._isDetailedDialog = True
         self._tab_widget.setVisible(True)
         self.show_details_button.setText("Hide Details")
         self.setFixedHeight(QWIDGETSIZE_MAX)
+        self.setMinimumHeight(600)
 
     def on_new_iteration(self, parent: QModelIndex, start: int, end: int) -> None:
         if not parent.isValid():
-            print(f"on_add_iteration: {start} {end}")
-
             iter = start
             widget = IterationWidget(iter)
             widget.setModel(self._snapshot_model)
