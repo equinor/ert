@@ -270,30 +270,41 @@ class PrefectEnsemble(_Ensemble):
         return input_files
 
     def _evaluate(self, dispatch_url, ee_id):
-        sys.stderr = open("prefect.log", "w")
+        try:
+            sys.stderr = open("prefect.log", "w")
 
-        input_files = self._fetch_input_files()
+            input_files = self._fetch_input_files()
 
-        with Client(dispatch_url) as c:
-            event = CloudEvent(
-                {
-                    "type": ids.EVTYPE_ENSEMBLE_STARTED,
-                    "source": f"/ert/ee/{self._ee_id}",
-                    "datacontenttype": "application/json",
-                },
-            )
-            c.send(to_json(event).decode())
-        self.run_flow(ee_id, dispatch_url, input_files)
+            with Client(dispatch_url) as c:
+                event = CloudEvent(
+                    {
+                        "type": ids.EVTYPE_ENSEMBLE_STARTED,
+                        "source": f"/ert/ee/{self._ee_id}",
+                        "datacontenttype": "application/json",
+                    },
+                )
+                c.send(to_json(event).decode())
+            self.run_flow(ee_id, dispatch_url, input_files)
 
-        with Client(dispatch_url) as c:
-            event = CloudEvent(
-                {
-                    "type": ids.EVTYPE_ENSEMBLE_STOPPED,
-                    "source": f"/ert/ee/{self._ee_id}",
-                    "datacontenttype": "application/json",
-                },
-            )
-            c.send(to_json(event).decode())
+            with Client(dispatch_url) as c:
+                event = CloudEvent(
+                    {
+                        "type": ids.EVTYPE_ENSEMBLE_STOPPED,
+                        "source": f"/ert/ee/{self._ee_id}",
+                        "datacontenttype": "application/json",
+                    },
+                )
+                c.send(to_json(event).decode())
+        except Exception:
+            with Client(dispatch_url) as c:
+                event = CloudEvent(
+                    {
+                        "type": ids.EVTYPE_ENSEMBLE_FAILED,
+                        "source": f"/ert/ee/{self._ee_id}",
+                        "datacontenttype": "application/json",
+                    },
+                )
+                c.send(to_json(event).decode())
 
     def run_flow(self, ee_id, dispatch_url, input_files):
         real_per_batch = self.config["max_running"]

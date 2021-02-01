@@ -322,3 +322,35 @@ def test_on_task_failure(unused_tcp_port):
         expected_step_failed_messages = 0
         assert expected_job_failed_messages == len(fail_job_messages)
         assert expected_step_failed_messages == len(fail_step_messages)
+
+
+@pytest.mark.timeout(60)
+def test_run_prefect_ensemble_exception(tmpdir, unused_tcp_port):
+    with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case"), False):
+        conf_file = Path(CONFIG_FILE)
+        config = parse_config("config.yml")
+        config.update({"config_path": Path.absolute(Path("."))})
+        config.update({"realizations": 2})
+        config.update({"executor": "local"})
+
+        with open(conf_file, "w") as f:
+            f.write(f'port: "{unused_tcp_port}"\n')
+
+        service_config = load_config(conf_file)
+        config.update(service_config)
+        ensemble = PrefectEnsemble(config)
+
+        evaluator = EnsembleEvaluator(ensemble, config, ee_id="1")
+
+        def _raise_exception():
+            raise RuntimeError()
+
+        ensemble._fetch_input_files = _raise_exception
+
+        mon = evaluator.run()
+
+        for event in mon.track():
+            if event.data is not None and event.data.get("status") == "Failed":
+                mon.signal_done()
+
+        assert evaluator._snapshot.get_status() == "Failed"

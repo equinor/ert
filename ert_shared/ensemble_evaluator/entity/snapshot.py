@@ -33,6 +33,7 @@ _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
     ids.EVTYPE_ENSEMBLE_STARTED: "Starting",
     ids.EVTYPE_ENSEMBLE_STOPPED: "Stopped",
     ids.EVTYPE_ENSEMBLE_CANCELLED: "Cancelled",
+    ids.EVTYPE_ENSEMBLE_FAILED: "Failed",
 }
 
 
