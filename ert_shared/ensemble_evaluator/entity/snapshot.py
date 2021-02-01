@@ -1,6 +1,6 @@
 from collections import defaultdict
 from ert_shared.status.entity.state import (
-    REALIZATION_STATE_FAILED,
+    JOB_STATE_FAILURE, JOB_STATE_FINISHED, JOB_STATE_RUNNING, JOB_STATE_START, REALIZATION_STATE_FAILED,
     REALIZATION_STATE_FINISHED,
     REALIZATION_STATE_PENDING,
     REALIZATION_STATE_RUNNING,
@@ -26,8 +26,8 @@ class UnsupportedOperationException(ValueError):
     pass
 
 
-# Taken from ert_shared/tracker/base.py
 _FM_TYPE_EVENT_TO_STATUS = {
+    # FIXME: STAGE -> REAL and use constants from ert_shared/status
     ids.EVTYPE_FM_STAGE_WAITING: "Waiting",
     ids.EVTYPE_FM_STAGE_PENDING: "Pending",
     ids.EVTYPE_FM_STAGE_RUNNING: "Running",
@@ -37,10 +37,10 @@ _FM_TYPE_EVENT_TO_STATUS = {
     ids.EVTYPE_FM_STEP_START: "Pending",
     ids.EVTYPE_FM_STEP_FAILURE: "Failed",
     ids.EVTYPE_FM_STEP_SUCCESS: "Finished",
-    ids.EVTYPE_FM_JOB_START: "Pending",
-    ids.EVTYPE_FM_JOB_RUNNING: "Running",
-    ids.EVTYPE_FM_JOB_SUCCESS: "Finished",
-    ids.EVTYPE_FM_JOB_FAILURE: "Failed",
+    ids.EVTYPE_FM_JOB_START: JOB_STATE_START,
+    ids.EVTYPE_FM_JOB_RUNNING: JOB_STATE_RUNNING,
+    ids.EVTYPE_FM_JOB_SUCCESS: JOB_STATE_FINISHED,
+    ids.EVTYPE_FM_JOB_FAILURE: JOB_STATE_FAILURE,
 }
 
 _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
