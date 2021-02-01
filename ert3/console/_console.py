@@ -65,7 +65,14 @@ def _run(workspace, args):
     ert3.workspace.assert_experiment_exists(workspace, args.experiment_name)
     ensemble = _load_ensemble_config(workspace, args.experiment_name)
     stages_config = _load_stages_config(workspace)
-    ert3.engine.run(ensemble, stages_config, workspace, args.experiment_name)
+    experiment_config = _load_experiment_config(workspace, args.experiment_name)
+    ert3.engine.run(
+        ensemble,
+        stages_config,
+        experiment_config,
+        workspace,
+        args.experiment_name,
+    )
 
 
 def _export(workspace, args):
@@ -130,3 +137,8 @@ def _load_ensemble_config(workspace, experiment_name):
 def _load_stages_config(workspace):
     with open(workspace / "stages.yml") as f:
         return ert3.config.load_stages_config(yaml.safe_load(f))
+
+
+def _load_experiment_config(workspace, experiment_name):
+    with open(workspace / experiment_name / "experiment.yml") as f:
+        return ert3.config.load_experiment_config(yaml.safe_load(f))

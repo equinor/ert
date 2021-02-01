@@ -115,3 +115,21 @@ def assert_distribution(
 
         else:
             raise ValueError(f"Unknown distribution {distribution}")
+
+
+def assert_sensitivity_oat_export(
+    workspace, experiment_name, ensemble_config, stages_config
+):
+    with open(workspace / experiment_name / "data.json") as f:
+        export_data = json.load(f)
+
+    num_input_coeffs = 3
+    assert 2 * num_input_coeffs == len(export_data)
+
+    config = load_experiment_config(workspace, ensemble_config, stages_config)
+    assert_input_records(config, export_data)
+    assert_output_records(config, export_data)
+
+    # Note: This test assumes the forward model in the setup indeed
+    # evaluates a * x^2 + b * x + c. If not, this will fail miserably!
+    assert_poly_output(export_data)

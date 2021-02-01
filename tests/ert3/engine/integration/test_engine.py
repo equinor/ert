@@ -9,7 +9,11 @@ import yaml
 import pytest
 
 import ert3
-from tests.ert3.engine.integration.conftest import assert_export, assert_distribution
+from tests.ert3.engine.integration.conftest import (
+    assert_sensitivity_oat_export,
+    assert_export,
+    assert_distribution,
+)
 
 _EXAMPLES_ROOT = (
     pathlib.Path(os.path.dirname(__file__)) / ".." / ".." / ".." / ".." / "examples"
@@ -27,6 +31,12 @@ def base_ensemble_dict():
 
 @pytest.fixture()
 def ensemble(base_ensemble_dict):
+    yield ert3.config.load_ensemble_config(base_ensemble_dict)
+
+
+@pytest.fixture()
+def sensitivity_ensemble(base_ensemble_dict):
+    base_ensemble_dict.pop("size")
     yield ert3.config.load_ensemble_config(base_ensemble_dict)
 
 
@@ -90,6 +100,18 @@ def stages_config():
 
 
 @pytest.fixture()
+def evaluation_experiment_config():
+    raw_config = {"type": "evaluation"}
+    yield ert3.config.load_experiment_config(raw_config)
+
+
+@pytest.fixture()
+def sensitivity_experiment_config():
+    raw_config = {"type": "sensitivity", "algorithm": "one-at-a-time"}
+    yield ert3.config.load_experiment_config(raw_config)
+
+
+@pytest.fixture()
 def gaussian_parameters_file():
     content = [
         {
@@ -130,11 +152,23 @@ def workspace(tmpdir):
 
 
 def test_run_once_polynomial_evaluation(
-    workspace, ensemble, stages_config, gaussian_parameters_file
+    workspace,
+    ensemble,
+    stages_config,
+    evaluation_experiment_config,
+    gaussian_parameters_file,
 ):
-    ert3.engine.run(ensemble, stages_config, workspace, "evaluation")
+    ert3.engine.run(
+        ensemble, stages_config, evaluation_experiment_config, workspace, "evaluation"
+    )
     with pytest.raises(ValueError, match="Experiment evaluation have been carried out"):
-        ert3.engine.run(ensemble, stages_config, workspace, "evaluation")
+        ert3.engine.run(
+            ensemble,
+            stages_config,
+            evaluation_experiment_config,
+            workspace,
+            "evaluation",
+        )
 
 
 def test_export_not_run(workspace):
@@ -144,20 +178,36 @@ def test_export_not_run(workspace):
 
 
 def test_export_polynomial_evaluation(
-    workspace, ensemble, stages_config, gaussian_parameters_file
+    workspace,
+    ensemble,
+    stages_config,
+    evaluation_experiment_config,
+    gaussian_parameters_file,
 ):
     (workspace / "evaluation").mkdir()
-    ert3.engine.run(ensemble, stages_config, workspace, "evaluation")
+    ert3.engine.run(
+        ensemble, stages_config, evaluation_experiment_config, workspace, "evaluation"
+    )
     ert3.engine.export(workspace, "evaluation")
 
     assert_export(workspace, "evaluation", ensemble, stages_config)
 
 
 def test_export_uniform_polynomial_evaluation(
-    workspace, uniform_ensemble, stages_config, uniform_parameters_file
+    workspace,
+    uniform_ensemble,
+    stages_config,
+    evaluation_experiment_config,
+    uniform_parameters_file,
 ):
     (workspace / "uniform_evaluation").mkdir()
-    ert3.engine.run(uniform_ensemble, stages_config, workspace, "uniform_evaluation")
+    ert3.engine.run(
+        uniform_ensemble,
+        stages_config,
+        evaluation_experiment_config,
+        workspace,
+        "uniform_evaluation",
+    )
     ert3.engine.export(workspace, "uniform_evaluation")
 
     assert_export(workspace, "uniform_evaluation", uniform_ensemble, stages_config)
@@ -192,7 +242,11 @@ def test_uniform_distribution(
 
 
 def test_run_presampled(
-    workspace, presampled_ensemble, stages_config, gaussian_parameters_file
+    workspace,
+    presampled_ensemble,
+    stages_config,
+    evaluation_experiment_config,
+    gaussian_parameters_file,
 ):
     (workspace / "presampled_evaluation").mkdir()
     ert3.engine.sample_record(workspace, "coefficients", "coefficients0", 10)
@@ -205,7 +259,11 @@ def test_run_presampled(
             assert isinstance(val, float)
 
     ert3.engine.run(
-        presampled_ensemble, stages_config, workspace, "presampled_evaluation"
+        presampled_ensemble,
+        stages_config,
+        evaluation_experiment_config,
+        workspace,
+        "presampled_evaluation",
     )
     ert3.engine.export(workspace, "presampled_evaluation")
 
@@ -222,7 +280,11 @@ def test_run_presampled(
 
 
 def test_run_uniform_presampled(
-    workspace, presampled_uniform_ensemble, stages_config, uniform_parameters_file
+    workspace,
+    presampled_uniform_ensemble,
+    stages_config,
+    evaluation_experiment_config,
+    uniform_parameters_file,
 ):
     (workspace / "presampled_uniform_evaluation").mkdir()
     ert3.engine.sample_record(
@@ -239,6 +301,7 @@ def test_run_uniform_presampled(
     ert3.engine.run(
         presampled_uniform_ensemble,
         stages_config,
+        evaluation_experiment_config,
         workspace,
         "presampled_uniform_evaluation",
     )
@@ -272,7 +335,9 @@ def test_sample_unknown_distribution(workspace, gaussian_parameters_file):
         ert3.engine.sample_record(workspace, "coefficients", "coefficients0", 100)
 
 
-def test_record_load_and_run(workspace, doe_ensemble, stages_config):
+def test_record_load_and_run(
+    workspace, doe_ensemble, stages_config, evaluation_experiment_config
+):
     pathlib.Path("doe").mkdir()
     coeffs_file = _EXAMPLES_ROOT / "polynomial" / "doe" / "coefficients_record.json"
     shutil.copy(coeffs_file, "doe")
@@ -286,7 +351,9 @@ def test_record_load_and_run(workspace, doe_ensemble, stages_config):
         for val in real_coeff.values():
             assert isinstance(val, numbers.Number)
 
-    ert3.engine.run(doe_ensemble, stages_config, workspace, "doe")
+    ert3.engine.run(
+        doe_ensemble, stages_config, evaluation_experiment_config, workspace, "doe"
+    )
     ert3.engine.export(workspace, "doe")
 
     with open(workspace / "doe" / "data.json") as f:
@@ -310,3 +377,24 @@ def test_record_load_twice(workspace, ensemble, stages_config):
     record_file = (workspace / "doe" / "coefficients_record.json").open("r")
     with pytest.raises(KeyError):
         ert3.engine.load_record(workspace, "designed_coefficients", record_file)
+
+
+def test_sensitivity_run_and_export(
+    workspace,
+    sensitivity_ensemble,
+    stages_config,
+    sensitivity_experiment_config,
+    gaussian_parameters_file,
+):
+    pathlib.Path("sensitivity").mkdir()
+    ert3.engine.run(
+        sensitivity_ensemble,
+        stages_config,
+        sensitivity_experiment_config,
+        workspace,
+        "sensitivity",
+    )
+    ert3.engine.export(workspace, "sensitivity")
+    assert_sensitivity_oat_export(
+        workspace, "sensitivity", sensitivity_ensemble, stages_config
+    )
