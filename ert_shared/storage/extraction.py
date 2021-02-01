@@ -165,30 +165,33 @@ def dump_to_new_storage(reference: Optional[Tuple[str, str]] = None):
     server = ServerMonitor.get_instance()
     ert = ERT.enkf_facade
 
+    def upload(path, data):
+        return requests.post(
+            f"{server.fetch_url()}{path}",
+            data=data.json(),
+            headers={
+                "Content-Type": "application/json",
+                "X-Token": server.fetch_token(),
+            },
+        )
+
     ens = js.Ensemble.parse_obj(
-        requests.post(
-            f"{server.fetch_url()}/ensembles",
-            data=create_ensemble(ert, reference).json(),
-            auth=server.fetch_auth(),
+        upload(
+            "/ensembles",
+            create_ensemble(ert, reference),
         ).json()
     )
     for r in create_responses(ert, ens.name):
-        requests.post(
-            f"{server.fetch_url()}/ensembles/{ens.id}/responses",
-            data=r.json(),
-            auth=server.fetch_auth(),
+        upload(
+            f"/ensembles/{ens.id}/responses",
+            r,
         )
     for o in create_observations(ert):
-        requests.post(
-            f"{server.fetch_url()}/observations",
-            data=o.json(),
-            auth=server.fetch_auth(),
-        )
+        upload("/observations", o)
     for u in create_update_data(ert):
-        requests.post(
-            f"{server.fetch_url()}/ensembles/{ens.id}/misfit",
-            data=u.json(),
-            auth=server.fetch_auth(),
+        upload(
+            f"/ensembles/{ens.id}/misfit",
+            u,
         )
 
     return ens.name

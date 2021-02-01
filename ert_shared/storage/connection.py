@@ -2,7 +2,7 @@ import os
 import json
 import requests
 import getpass
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 from pathlib import Path
 
 
@@ -38,10 +38,11 @@ def get_info(project_path: Union[str, Path] = None) -> Dict[str, str]:
     with path.open() as f:
         info = json.load(f)
 
-    auth = ("__token__", info["authtoken"])
     for baseurl in info["urls"]:
         try:
-            resp = requests.get(f"{baseurl}/healthcheck", auth=auth)
+            resp = requests.get(
+                f"{baseurl}/healthcheck", headers={"X-Token": info["token"]}
+            )
             if resp.status_code == 200:
                 break
         except requests.ConnectionError:
@@ -49,7 +50,7 @@ def get_info(project_path: Union[str, Path] = None) -> Dict[str, str]:
     else:
         raise RuntimeError(f"None of the URLs provided by {path} are valid")
 
-    return {"baseurl": baseurl, "auth": auth}
+    return {"baseurl": baseurl, "token": info["token"]}
 
 
 def set_global_info(project_path: Union[str, Path]):

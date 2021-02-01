@@ -5,7 +5,7 @@ import asyncio
 import atexit
 import getpass
 from typing import Generator
-from fastapi import Depends
+from fastapi import Depends, Security
 from pathlib import Path
 from shutil import copy2, move
 
@@ -16,6 +16,8 @@ from sqlalchemy.engine.url import make_url
 import alembic
 from alembic.config import Config
 from alembic import script, migration
+
+from ert_shared.storage.security import security_token
 
 
 class ErtStorage:
@@ -173,7 +175,7 @@ def _tmp_db_path(real_db_path: str) -> Path:
     return db_path / f"ert_storage.db"
 
 
-async def get_db() -> Generator[Session, None, None]:
+async def get_db(*, _=Depends(security_token)) -> Generator[Session, None, None]:
     sess = ERT_STORAGE.Session()
     try:
         yield sess

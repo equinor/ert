@@ -60,22 +60,22 @@ def test_shutdown_after_finish(server):
 
 @pytest.mark.script(
     """\
-os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
+os.write(fd, b'{"token": "test123", "urls": ["url"]}')
 """
 )
 def test_info(server):
-    assert server.fetch_connection_info() == {"authtoken": "test123", "urls": ["url"]}
+    assert server.fetch_connection_info() == {"token": "test123", "urls": ["url"]}
 
 
 @pytest.mark.script(
     """\
 time.sleep(0.5)
-os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
+os.write(fd, b'{"token": "test123", "urls": ["url"]}')
 """
 )
 def test_info_slow(server):
     # fetch_connection_info() should block until this value is available
-    assert server.fetch_connection_info() == {"authtoken": "test123", "urls": ["url"]}
+    assert server.fetch_connection_info() == {"token": "test123", "urls": ["url"]}
 
 
 @pytest.mark.script(
@@ -83,21 +83,21 @@ def test_info_slow(server):
 os.write(fd, b"This isn't valid json (I hope)")
 """
 )
-def test_authtoken_wrong_json(server):
+def test_wrong_json(server):
     with pytest.raises(ServerBootFail):
         server.fetch_connection_info()
 
 
 @pytest.mark.script(
     """\
-os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
+os.write(fd, b'{"token": "test123", "urls": ["url"]}')
 os.close(fd)
 time.sleep(10)
 sys.exit(1)
 """
 )
 def test_long_lived(server):
-    assert server.fetch_connection_info() == {"authtoken": "test123", "urls": ["url"]}
+    assert server.fetch_connection_info() == {"token": "test123", "urls": ["url"]}
     assert server.shutdown() == -signal.SIGTERM
 
 
@@ -118,7 +118,7 @@ def test_not_respond(server):
 sys.exit(1)
 """
 )
-def test_authtoken_fail(server):
+def test_fail(server):
     with pytest.raises(Exception):
         server.fetch_connection_info()
 
@@ -140,17 +140,24 @@ def test_integration(request, tmpdir):
         request.addfinalizer(lambda: server.shutdown())
 
         resp = requests.get(
-            f"{server.fetch_url()}/healthcheck", auth=server.fetch_auth()
+            f"{server.fetch_url()}/healthcheck",
+            headers={"X-Token": server.fetch_token()},
         )
         assert "date" in resp.json()
 
         # Use global connection info
         conn_info = connection.get_info()
-        requests.get(conn_info["baseurl"] + "/healthcheck", auth=conn_info["auth"])
+        requests.get(
+            conn_info["baseurl"] + "/healthcheck",
+            headers={"X-Token": conn_info["token"]},
+        )
 
         # Use local connection info
         conn_info = connection.get_info(str(tmpdir))
-        requests.get(conn_info["baseurl"] + "/healthcheck", auth=conn_info["auth"])
+        requests.get(
+            conn_info["baseurl"] + "/healthcheck",
+            headers={"X-Toekn": conn_info["token"]},
+        )
 
         server.shutdown()
         assert not (tmpdir / "storage_server.json").exists()
@@ -174,6 +181,6 @@ def test_integration_auth(request, tmpdir):
 
         # Invalid auth
         resp = requests.get(
-            f"{server.fetch_url()}/healthcheck", auth=("__token__", "invalid-token")
+            f"{server.fetch_url()}/healthcheck", headers={"X-Token": "invalid-token"}
         )
         assert resp.status_code == 403

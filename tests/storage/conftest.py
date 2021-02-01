@@ -17,6 +17,7 @@ def db_factory(tmp_path_factory):
 
     sess = ErtStorage()
     sess.initialize(project_path=tmp_path, testing=True)
+    sess.Session.path = tmp_path
 
     def override_get_db():
         try:

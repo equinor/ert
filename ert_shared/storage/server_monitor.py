@@ -76,7 +76,7 @@ class ServerMonitor(threading.Thread):
         try:
             self._connection_info = json.loads(comm_buf.getvalue())
 
-            curl = f"curl -u '__token__:{self._connection_info['authtoken']}' {self._connection_info['urls'][0]}/ensembles"
+            curl = f"curl -u '__token__:{self._connection_info['token']}' {self._connection_info['urls'][0]}/ensembles"
 
             print("Storage server is ready to accept requests. Listening on:")
             for url in self._connection_info["urls"]:
@@ -90,14 +90,15 @@ class ServerMonitor(threading.Thread):
         self._server_info_lock.release()
         self._proc.wait()
 
-    def fetch_auth(self) -> str:
-        """Returns a tuple of username and password, compatible with requests' `auth`
+    def fetch_token(self) -> str:
+        """
+        Returns a tuple of username and password, compatible with requests' `auth`
         kwarg.
 
         Blocks while the server is starting.
 
         """
-        return ("__token__", self.fetch_connection_info()["authtoken"])
+        return self.fetch_connection_info()["token"]
 
     def fetch_url(self) -> str:
         """Returns the url. Blocks while the server is starting"""
@@ -106,7 +107,9 @@ class ServerMonitor(threading.Thread):
 
         for url in self.fetch_connection_info()["urls"]:
             try:
-                resp = requests.get(f"{url}/healthcheck", auth=self.fetch_auth())
+                resp = requests.get(
+                    f"{url}/healthcheck", headers={"X-Token": self.fetch_token()}
+                )
                 if resp.status_code == 200:
                     self._url = url
                     return url

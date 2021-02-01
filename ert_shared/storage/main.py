@@ -32,12 +32,10 @@ class Server(uvicorn.Server):
         self.info_file.unlink()
 
 
-def generate_authtoken():
-    import random
-    import string
+def generate_token():
+    import secrets
 
-    chars = string.ascii_letters + string.digits
-    return "".join([random.choice(chars) for _ in range(16)])
+    return secrets.token_urlsafe(nbytes=64)
 
 
 def bind_socket(host: str, port: int) -> socket.socket:
@@ -89,11 +87,13 @@ def run_server(args=None, debug=False):
     if args is None:
         args = parse_args()
 
-    if "ERT_AUTHTOKEN" in os.environ:
-        authtoken = os.environ["ERT_AUTHTOKEN"]
+    if "ERT_STORAGE_TOKEN" in os.environ:
+        token = os.environ["ERT_STORAGE_TOKEN"]
+    elif not args.debug:
+        token = generate_token()
+        os.environ["ERT_STORAGE_TOKEN"] = token
     else:
-        authtoken = generate_authtoken()
-        os.environ["ERT_AUTHTOKEN"] = authtoken
+        token = None
 
     lockfile = Path.cwd() / "storage_server.json"
     if lockfile.exists():
@@ -114,7 +114,7 @@ def run_server(args=None, debug=False):
                     socket.getfqdn(),
                 )
             ],
-            "authtoken": authtoken,
+            "token": token,
         }
     )
 
