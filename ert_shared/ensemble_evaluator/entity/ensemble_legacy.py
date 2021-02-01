@@ -62,66 +62,82 @@ class _LegacyEnsemble(_Ensemble):
 
         dispatch_url = self._config.get("dispatch_url")
 
-        out_cloudevent = CloudEvent(
-            {
-                "type": identifiers.EVTYPE_ENSEMBLE_STARTED,
-                "source": f"/ert/ee/{self._ee_id}/ensemble",
-                "id": str(uuid.uuid1()),
-            }
-        )
-        asyncio.get_event_loop().run_until_complete(
-            self.send_cloudevent(dispatch_url, out_cloudevent)
-        )
-
-        event_logs = [Path(path) / "event_log" for path in self._run_path_list()]
-        futures = []
-        for event_log in event_logs:
-            if os.path.isfile(event_log):
-                os.remove(event_log)
-            futures.append(nfs_adaptor(event_log, dispatch_url))
-
-        self._job_queue = self._queue_config.create_job_queue()
-
-        for real in self.get_active_reals():
-            self._job_queue.add_ee_stage(real.get_stages()[0])
-
-        self._job_queue.submit_complete()
-
-        # TODO: this is sort of a callback being preemptively called.
-        # It should be lifted out of the queue/evaluate, into the evaluator. If
-        # something is long running, the evaluator will know and should send
-        # commands to the task in order to have it killed/retried.
-        # See https://github.com/equinor/ert/issues/1229
-        queue_evaluators = None
-        if (
-            self._analysis_config.get_stop_long_running()
-            and self._analysis_config.minimum_required_realizations > 0
-        ):
-            queue_evaluators = [
-                partial(
-                    self._job_queue.stop_long_running_jobs,
-                    self._analysis_config.minimum_required_realizations,
-                )
-            ]
-
-        queue_adaptor = QueueAdaptor(self._job_queue, self._config, self._ee_id)
-        futures.append(
-            queue_adaptor.execute_queue(
-                threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION),
-                queue_evaluators,
-            )
-        )
-
-        self._aggregate_future = asyncio.gather(*futures, return_exceptions=True)
-        self._allow_cancel.set()
         try:
-            asyncio.get_event_loop().run_until_complete(self._aggregate_future)
-        except asyncio.CancelledError:
-            logger.debug("cancelled aggregate future")
-        else:
             out_cloudevent = CloudEvent(
                 {
-                    "type": identifiers.EVTYPE_ENSEMBLE_STOPPED,
+                    "type": identifiers.EVTYPE_ENSEMBLE_STARTED,
+                    "source": f"/ert/ee/{self._ee_id}/ensemble",
+                    "id": str(uuid.uuid1()),
+                }
+            )
+            asyncio.get_event_loop().run_until_complete(
+                self.send_cloudevent(dispatch_url, out_cloudevent)
+            )
+
+            event_logs = [Path(path) / "event_log" for path in self._run_path_list()]
+            futures = []
+            for event_log in event_logs:
+                if os.path.isfile(event_log):
+                    os.remove(event_log)
+                futures.append(nfs_adaptor(event_log, dispatch_url))
+
+            self._job_queue = self._queue_config.create_job_queue()
+
+            for real in self.get_active_reals():
+                self._job_queue.add_ee_stage(real.get_stages()[0])
+
+            self._job_queue.submit_complete()
+
+            # TODO: this is sort of a callback being preemptively called.
+            # It should be lifted out of the queue/evaluate, into the evaluator. If
+            # something is long running, the evaluator will know and should send
+            # commands to the task in order to have it killed/retried.
+            # See https://github.com/equinor/ert/issues/1229
+            queue_evaluators = None
+            if (
+                self._analysis_config.get_stop_long_running()
+                and self._analysis_config.minimum_required_realizations > 0
+            ):
+                queue_evaluators = [
+                    partial(
+                        self._job_queue.stop_long_running_jobs,
+                        self._analysis_config.minimum_required_realizations,
+                    )
+                ]
+
+            queue_adaptor = QueueAdaptor(self._job_queue, self._config, self._ee_id)
+            futures.append(
+                queue_adaptor.execute_queue(
+                    threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION),
+                    queue_evaluators,
+                )
+            )
+
+            self._aggregate_future = asyncio.gather(*futures, return_exceptions=True)
+            self._allow_cancel.set()
+            try:
+                asyncio.get_event_loop().run_until_complete(self._aggregate_future)
+            except asyncio.CancelledError:
+                logger.debug("cancelled aggregate future")
+            else:
+                out_cloudevent = CloudEvent(
+                    {
+                        "type": identifiers.EVTYPE_ENSEMBLE_STOPPED,
+                        "source": f"/ert/ee/{self._ee_id}/ensemble",
+                        "id": str(uuid.uuid1()),
+                    }
+                )
+                asyncio.get_event_loop().run_until_complete(
+                    self.send_cloudevent(dispatch_url, out_cloudevent)
+                )
+        except Exception:
+            logger.exception(
+                "An exception occurred while starting the ensemble evaluation",
+                exc_info=True,
+            )
+            out_cloudevent = CloudEvent(
+                {
+                    "type": identifiers.EVTYPE_ENSEMBLE_FAILED,
                     "source": f"/ert/ee/{self._ee_id}/ensemble",
                     "id": str(uuid.uuid1()),
                 }
