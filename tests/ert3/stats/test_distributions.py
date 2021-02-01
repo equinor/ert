@@ -3,6 +3,7 @@ import ert3
 import flaky
 import numpy as np
 import pytest
+import scipy
 
 
 def approx(x, eps=0.2):
@@ -25,6 +26,7 @@ def test_gaussian_distribution(size, mean, std):
         sample = gauss.sample()
 
         assert len(sample) == size
+        assert sorted(gauss.index) == sorted(range(size))
 
         assert tuple(sample) not in prev_samples
         prev_samples.add(tuple(sample))
@@ -47,6 +49,7 @@ def test_gaussian_distribution_index(index, mean, std):
     samples = {idx: [] for idx in index}
     for i in range(2000):
         sample = gauss.sample()
+        assert sorted(gauss.index) == sorted(sample.keys())
         assert sorted(sample.keys()) == sorted(index)
 
         for key in index:
@@ -127,3 +130,54 @@ def test_uniform_distribution_invalid():
     err_msg_both = "Cannot create uniform distribution with both size and index"
     with pytest.raises(ValueError, match=err_msg_both):
         ert3.stats.Uniform(0, 1, size=10, index=list(range(10)))
+
+
+@pytest.mark.parametrize(
+    ("mean", "std", "q", "size", "index"),
+    (
+        (0, 1, 0.005, 3, None),
+        (0, 1, 0.995, 1, None),
+        (2, 5, 0.1, 5, None),
+        (1, 2, 0.7, 10, None),
+        (0, 1, 0.005, None, ("a", "b", "c")),
+        (0, 1, 0.995, None, tuple(l * "x" for l in range(1, 10))),
+        (2, 5, 0.1, None, ("x", "y")),
+        (1, 2, 0.7, None, ("single_key",)),
+    ),
+)
+def test_gaussian_ppf(mean, std, q, size, index):
+    if size is not None:
+        gauss = ert3.stats.Gaussian(mean, std, size=size)
+    else:
+        gauss = ert3.stats.Gaussian(mean, std, index=index)
+
+    expected_value = scipy.stats.norm.ppf(q, loc=mean, scale=std)
+    ppf_result = gauss.ppf(q)
+    assert len(gauss.index) == len(ppf_result)
+    for idx in gauss.index:
+        assert ppf_result[idx] == pytest.approx(expected_value)
+
+
+@pytest.mark.parametrize(
+    ("lower", "upper", "q", "size", "index"),
+    (
+        (0, 2, 0.5, 1, None),
+        (2, 5, 0.1, 5, None),
+        (1, 2, 0.7, 10, None),
+        (0, 1, 0.005, None, ("a", "b", "c")),
+        (0, 1, 0.995, None, tuple(l * "x" for l in range(1, 10))),
+        (2, 5, 0.1, None, ("x", "y")),
+        (1, 2, 0.7, None, ("single_key",)),
+    ),
+)
+def test_uniform_ppf(lower, upper, q, size, index):
+    if size is not None:
+        dist = ert3.stats.Uniform(lower, upper, size=size)
+    else:
+        dist = ert3.stats.Uniform(lower, upper, index=index)
+
+    expected_value = scipy.stats.uniform.ppf(q, loc=lower, scale=upper - lower)
+    ppf_result = dist.ppf(q)
+    assert len(dist.index) == len(ppf_result)
+    for idx in dist.index:
+        assert ppf_result[idx] == pytest.approx(expected_value)

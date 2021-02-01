@@ -1,3 +1,4 @@
+import numpy as np
 import scipy.stats
 
 
@@ -15,11 +16,12 @@ class Gaussian:
                 "Cannot create gaussian distribution with both size and index"
             )
 
+        self._index = index
         if size is not None:
             self._size = size
         else:
             self._size = len(tuple(index))
-        self._index = index
+            self._index = tuple(index)
 
     def sample(self):
         sample = scipy.stats.norm.rvs(loc=self._mean, scale=self._std, size=self._size)
@@ -27,6 +29,18 @@ class Gaussian:
             return sample
         else:
             return {idx: float(val) for idx, val in zip(self._index, sample)}
+
+    def ppf(self, x):
+        x = np.full(self._size, x)
+        result = scipy.stats.norm.ppf(x, loc=self._mean, scale=self._std)
+        if self._index is None:
+            return result
+        else:
+            return {idx: float(val) for idx, val in zip(self._index, result)}
+
+    @property
+    def index(self):
+        return self._index if self._index is not None else tuple(range(self._size))
 
 
 class Uniform:
@@ -58,3 +72,15 @@ class Uniform:
             return sample
         else:
             return {idx: float(val) for idx, val in zip(self._index, sample)}
+
+    def ppf(self, x):
+        x = np.full(self._size, x)
+        result = scipy.stats.uniform.ppf(x, loc=self._lower_bound, scale=self._scale)
+        if self._index is None:
+            return result
+        else:
+            return {idx: float(val) for idx, val in zip(self._index, result)}
+
+    @property
+    def index(self):
+        return self._index if self._index is not None else tuple(range(self._size))
