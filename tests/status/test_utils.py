@@ -31,8 +31,8 @@ class TrackerUtilsTest(unittest.TestCase):
 
     def test_scale_intervals(self):
         tests = [
-            {"reals": 1, "expected_gen": 1, "expected_det": 1},
-            {"reals": 100, "expected_gen": 1, "expected_det": 1},
+            {"reals": 1, "expected_gen": 1, "expected_det": 5},
+            {"reals": 100, "expected_gen": 1, "expected_det": 5},
             {"reals": 500, "expected_gen": 5, "expected_det": 15},
             {"reals": 900, "expected_gen": 5, "expected_det": 15},
             {"reals": 1000, "expected_gen": 5, "expected_det": 15},
