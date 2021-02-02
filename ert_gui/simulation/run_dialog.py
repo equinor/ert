@@ -6,7 +6,6 @@ from ert_gui.model.job_list import JobListProxyModel
 from ert_gui.model.node import NodeType
 from ert_gui.model.real_list import RealListModel
 from ert_gui.model.snapshot import SnapshotModel
-from ert_gui.simulation import DetailedProgressWidget, Progress, SimpleProgress
 from ert_gui.simulation.tracker_worker import TrackerWorker
 from ert_gui.tools.plot.plot_tool import PlotTool
 from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot
@@ -25,15 +24,13 @@ from qtpy.QtWidgets import (
     QDialog,
     QHBoxLayout,
     QLabel,
-    QListView,
     QMessageBox,
     QPushButton,
     QTableView,
-    QTreeView,
     QVBoxLayout,
     QWidget,
     QTabWidget,
-    QFrame,
+    QHeaderView,
     QWIDGETSIZE_MAX,
 )
 from res.job_queue import JobStatusType
@@ -42,7 +39,6 @@ from ert_gui.simulation.view.simple_progress import SimpleProgressView
 from ert_gui.simulation.view.progress import ProgressView
 from ert_gui.simulation.view.legend import LegendView
 from ert_gui.simulation.view.realization import RealizationView
-from ert_gui.simulation.view.iteration import IterationWidget
 
 from ert_gui.model.progress_proxy import ProgressProxyModel
 from ert_gui.model.snapshot import NodeRole
@@ -75,12 +71,13 @@ class RunDialog(QDialog):
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
 
-        #   new
         progress_proxy_model = ProgressProxyModel(self)
         progress_proxy_model.setSourceModel(self._snapshot_model)
 
         progress_view = ProgressView(self)
         progress_view.setModel(progress_proxy_model)
+
+        self._iteration_progress_label = QLabel(self)
 
         simple_progress_view = SimpleProgressView(self)
         simple_progress_view.setModel(progress_proxy_model)
@@ -90,6 +87,11 @@ class RunDialog(QDialog):
 
         self._tab_widget = QTabWidget(self)
         self._snapshot_model.rowsInserted.connect(self.on_new_iteration)
+
+        self._job_label = QLabel(self)
+
+        self._job_view = QTableView(self)
+        self._job_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
         self.running_time = QLabel("")
 
@@ -132,50 +134,13 @@ class RunDialog(QDialog):
 
         layout = QVBoxLayout()
         layout.addWidget(simple_progress_view)
+        layout.addWidget(self._iteration_progress_label)
         layout.addWidget(progress_view)
         layout.addWidget(legend_view)
         layout.addWidget(self._tab_widget)
-        # layout.addWidget(self._real_view)
-        #
-        # layout.addWidget(self.total_progress)
-        # layout.addWidget(status_widget_container)
-        # layout.addWidget(self.progress)
-        # layout.addWidget(legend_widget_container)
-        # layout.addWidget(self.detailed_progress)
-        # layout.addWidget(self.dummy_widget_container)
+        layout.addWidget(self._job_label)
+        layout.addWidget(self._job_view)
         layout.addWidget(button_widget_container)
-
-        # snapshot_tree = QTreeView(self)
-        # snapshot_tree.setModel(self._snapshot_model)
-        # snapshot_tree.clicked.connect(self._select_iter)
-
-        # layout.addWidget(snapshot_tree)
-
-        # real_model = RealListModel(self, 0)
-        # real_model.setSourceModel(self._snapshot_model)
-
-        # self._real_list = QListView(self)
-        # self._real_list.setViewMode(QListView.IconMode)
-        # self._real_list.setGridSize(QSize(120, 20))
-        # self._real_list.setModel(real_model)
-        # self._real_list.setVisible(False)
-        # self._real_list.clicked.connect(self._select_real)
-        # layout.addWidget(self._real_list)
-
-        # job_model = JobListProxyModel(self, 0, 0, 0, 0)
-        # job_model.setSourceModel(self._snapshot_model)
-
-        # self._job_list = QTableView(self)
-        # self._job_list.setModel(job_model)
-        # layout.addWidget(self._job_list)
-
-        # layout.setStretch(0, 0)
-        # layout.setStretch(1, 0)
-        # layout.setStretch(2, 0)
-        # layout.setStretch(3, 0)
-        # layout.setStretch(4, 1)
-        # layout.setStretch(5, 1)
-        # layout.setStretch(6, 0)
 
         self.setLayout(layout)
 
@@ -197,12 +162,16 @@ class RunDialog(QDialog):
     def _setSimpleDialog(self) -> None:
         self._isDetailedDialog = False
         self._tab_widget.setVisible(False)
+        self._job_label.setVisible(False)
+        self._job_view.setVisible(False)
         self.show_details_button.setText("Show Details")
-        self.setFixedHeight(170)
+        self.setFixedHeight(200)
 
     def _setDetailedDialog(self) -> None:
         self._isDetailedDialog = True
         self._tab_widget.setVisible(True)
+        self._job_label.setVisible(True)
+        self._job_view.setVisible(True)
         self.show_details_button.setText("Hide Details")
         self.setFixedHeight(QWIDGETSIZE_MAX)
         self.setMinimumHeight(600)
@@ -210,8 +179,28 @@ class RunDialog(QDialog):
     def on_new_iteration(self, parent: QModelIndex, start: int, end: int) -> None:
         if not parent.isValid():
             iter = start
-            widget = IterationWidget(iter)
-            widget.setModel(self._snapshot_model)
+            self._iteration_progress_label.setText(f"Progress for iteration {iter}")
+
+            # widget = IterationWidget(iter)
+            # widget.setModel(self._snapshot_model)
+            # widget.clicked.connect(self._select_real)
+
+            widget = QWidget()
+
+            real_view = RealizationView()
+            real_view.clicked.connect(self._select_real)
+
+            real_list_model = RealListModel(self, iter)
+            real_list_model.setSourceModel(self._snapshot_model)
+
+            real_view.setModel(real_list_model)
+            real_view.model().setIter(iter)
+
+            layout = QVBoxLayout()
+            layout.addWidget(real_view)
+
+            widget.setLayout(layout)
+
             self._tab_widget.addTab(widget, f"Iteration {iter}")
 
     # @Slot(QModelIndex)
@@ -226,22 +215,24 @@ class RunDialog(QDialog):
     #     #self._real_view.model().setIter(iter_)
     #     self._real_list.setVisible(True)
 
-    # @Slot(QModelIndex)
-    # def _select_real(self, index):
-    #     node = index.internalPointer()
-    #     if node is None or node.type != NodeType.REAL:
-    #         return
-    #     step = 0
-    #     stage = 0
-    #     real = node.row()
-    #     iter_ = node.parent.row()
-    #     print("select real", step, stage, real, iter_)
+    @Slot(QModelIndex)
+    def _select_real(self, index):
+        node = index.internalPointer()
+        if node is None or node.type != NodeType.REAL:
+            return
+        step = 0
+        stage = 0
+        real = node.row()
+        iter_ = node.parent.row()
+        print("select real", step, stage, real, iter_)
 
-    #     # create a proxy model
-    #     # TODO: change values on proxymodel such that it does not need creation
-    #     proxy = JobListProxyModel(self, iter_, real, stage, step)
-    #     proxy.setSourceModel(self._snapshot_model)
-    #     self._job_list.setModel(proxy)
+        # create a proxy model
+        # TODO: change values on proxymodel such that it does not need creation
+        proxy = JobListProxyModel(self, iter_, real, stage, step)
+        proxy.setSourceModel(self._snapshot_model)
+        self._job_view.setModel(proxy)
+
+        self._job_label.setText(f"Realization id {real} in iteration {iter_}")
 
     def reject(self):
         return

@@ -8,7 +8,13 @@ from qtpy.QtWidgets import (
 )
 from qtpy.QtGui import QPainter, QColor, QFont, QColorConstants, QPen
 
-from ert_gui.model.snapshot import Node, NodeRole, RealJobColorHint, RealStatusColorHint, RealLabelHint
+from ert_gui.model.snapshot import (
+    Node,
+    NodeRole,
+    RealJobColorHint,
+    RealStatusColorHint,
+    RealLabelHint,
+)
 
 
 class RealizationView(QListView):
@@ -28,7 +34,6 @@ class RealizationView(QListView):
         self.setResizeMode(QListView.Adjust)
 
 
-
 class RealizationDelegate(QStyledItemDelegate):
     def __init__(self, width, height, parent=None) -> None:
         super(RealizationDelegate, self).__init__(parent)
@@ -36,7 +41,7 @@ class RealizationDelegate(QStyledItemDelegate):
 
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
 
-        text= index.data(RealLabelHint)
+        text = index.data(RealLabelHint)
 
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing, True)
@@ -61,7 +66,8 @@ class RealizationDelegate(QStyledItemDelegate):
             border_pen = QPen()
             border_pen.setColor(QColorConstants.Black)
             border_pen.setWidth(1)
-            painter.setBrush(index.data(RealJobColorHint))
+            # painter.setBrush(index.data(RealJobColorHint))
+            painter.setBrush(index.data(RealStatusColorHint))
             painter.setPen(border_pen)
             painter.drawRect(option.rect)
 
@@ -73,7 +79,8 @@ class RealizationDelegate(QStyledItemDelegate):
                 option.rect.width() - (margin * 2),
                 option.rect.height() - (margin * 2),
             )
-            painter.fillRect(r, index.data(RealStatusColorHint))
+            # painter.fillRect(r, index.data(RealStatusColorHint))
+            painter.fillRect(r, index.data(RealJobColorHint))
 
             # text
             text_pen = QPen()
