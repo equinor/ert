@@ -269,12 +269,15 @@ class LegacyTracker:
 
             jobs = progress[0]
             for idx, fm in enumerate(jobs):
+                status = fm.status
+                if status == "Success":
+                    status = JOB_STATE_FINISHED
                 partial.update_job(
                     real_id,
                     "0",
                     "0",
                     str(idx),
-                    status=fm.status,
+                    status=status,
                     start_time=str(fm.start_time),
                     end_time=str(fm.end_time),
                     data={
