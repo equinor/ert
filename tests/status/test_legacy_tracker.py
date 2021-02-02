@@ -5,7 +5,10 @@ from ert_shared.status.entity.event import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert_shared.status.entity.state import JOB_STATE_FINISHED, REALIZATION_STATE_FINISHED
+from ert_shared.status.entity.state import (
+    JOB_STATE_FINISHED,
+    REALIZATION_STATE_FINISHED,
+)
 from ert_shared.status.tracker.factory import create_tracker
 import threading
 from ert_shared.cli.model_factory import create_model

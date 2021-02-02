@@ -28,7 +28,8 @@ from ert_shared.status.entity.event import (
     SnapshotUpdateEvent,
 )
 from ert_shared.status.entity.state import (
-    JOB_STATE_FINISHED, REALIZATION_STATE_UNKNOWN,
+    JOB_STATE_FINISHED,
+    REALIZATION_STATE_UNKNOWN,
     queue_status_to_real_state,
 )
 from ert_shared.status.queue_diff import InconsistentIndicesError, QueueDiff
