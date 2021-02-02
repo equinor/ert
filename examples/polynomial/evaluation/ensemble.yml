@@ -9,3 +9,4 @@ forward_model:
   driver: local
   stages:
     - evaluate_polynomial
+    - evaluate_function_polynomial

@@ -18,3 +18,18 @@
 
   script:
     - poly --coefficients coefficients.json --output output.json
+
+
+-
+  name: evaluate_function_polynomial
+  environment: polynomial
+  input:
+    -
+      record: coefficients
+      location: coefficients.json
+  output:
+    -
+      record: polynomial_function_output
+      location: output_function.json
+  script:
+    - ert3.evaluator.poly:polynomial

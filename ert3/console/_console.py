@@ -130,3 +130,7 @@ def _load_ensemble_config(workspace, experiment_name):
 def _load_stages_config(workspace):
     with open(workspace / "stages.yml") as f:
         return ert3.config.load_stages_config(yaml.safe_load(f))
+
+# TODO remove once testing is done
+if __name__ == '__main__':
+    main()

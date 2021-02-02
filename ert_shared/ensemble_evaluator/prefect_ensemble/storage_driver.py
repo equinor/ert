@@ -1,5 +1,6 @@
 import shutil
 from pathlib import Path
+import json
 
 
 def storage_driver_factory(config, run_path):
@@ -45,3 +46,9 @@ def _is_relative_to(child, parent):
     except ValueError:
         return False
     return True
+
+    def retrieve_data(self, storage_uri):
+        if storage_uri.startswith(self._storage_path):
+            with open(storage_uri, "r") as f:
+                return json.load(f)
+        raise ValueError(f"Storage driver can't handle file: {storage_uri}")

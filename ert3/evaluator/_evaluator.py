@@ -31,6 +31,7 @@ def _prepare_input(ee_config, stages_config, inputs, evaluation_tmp_dir):
     tmp_input_folder = evaluation_tmp_dir / "prep_input_files"
     os.makedirs(tmp_input_folder)
     ee_storage = storage_driver_factory(ee_config["storage"], tmp_input_folder)
+    #TODO fix to acount for multiple stages
     record2location = {input.record: input.location for input in stages_config[0].input}
     input_files = {iens: () for iens in range(ee_config["realizations"])}
     for iens, realization_inputs in enumerate(inputs):
@@ -43,41 +44,10 @@ def _prepare_input(ee_config, stages_config, inputs, evaluation_tmp_dir):
 
 
 def _build_ee_config(evaluation_tmp_dir, ensemble, stages_config, input_records):
-    _assert_single_stage_forward_model(stages_config, ensemble)
-
-    stage_name = ensemble.forward_model.stages[0]
-    step_name = stage_name + "-only_step"
-    stage = stages_config.step_from_key(stage_name)
-
-    command_scripts = [cmd.location for cmd in stage.transportable_commands]
-    output_files = [out.location for out in stage.output]
-
-    cmd_name2script = {cmd.name: cmd.location for cmd in stage.transportable_commands}
-    jobs = [
-        {
-            "name": cmd[0],
-            "executable": cmd_name2script[cmd[0]],
-            "args": tuple(cmd[1:]),
-        }
-        for cmd in [elem.split() for elem in stage.script]
-    ]
+    stage_names = ensemble.forward_model.stages
 
     ee_config = {
-        "stages": [
-            {
-                "name": stage_name,
-                "steps": [
-                    {
-                        "name": step_name,
-                        "resources": command_scripts,
-                        "parameter": [],
-                        "inputs": [],
-                        "outputs": output_files,
-                        "jobs": jobs,
-                    }
-                ],
-            }
-        ],
+        "stages": stages_config.get_prefect_stages(stage_names),
         "realizations": ensemble.size,
         "max_running": 10000,
         "max_retries": 0,
@@ -97,20 +67,19 @@ def _build_ee_config(evaluation_tmp_dir, ensemble, stages_config, input_records)
 
 
 def _fetch_results(ee_config, ensemble, stages_config):
-    _assert_single_stage_forward_model(stages_config, ensemble)
+    # _assert_single_stage_forward_model(stages_config, ensemble)
 
     results = []
     ee_storage = storage_driver_factory(ee_config["storage"], ee_config["run_path"])
     for iens in range(ee_config["realizations"]):
         spath = pathlib.Path(ee_storage.get_storage_path(iens))
         realization_results = {}
-
-        stage_name = ensemble.forward_model.stages[0]
-        stage = stages_config.step_from_key(stage_name)
-        for output_elem in stage.output:
-            with open(spath / output_elem.location) as f:
-                realization_results[output_elem.record] = json.load(f)
-        results.append(realization_results)
+        for stage_name in ensemble.forward_model.stages:
+            stage = stages_config.step_from_key(stage_name)
+            for output_elem in stage.output:
+                with open(spath / output_elem.location) as f:
+                    realization_results[output_elem.record] = json.load(f)
+            results.append(realization_results)
     return results
 
 
