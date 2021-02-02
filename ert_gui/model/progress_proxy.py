@@ -1,9 +1,8 @@
 from qtpy.QtCore import QRect, QSize, QModelIndex, Qt, QIdentityProxyModel, QVariant
 
-#TODO: will these interfer with the ones in snapshot
-ProgressRole = Qt.UserRole + 1 
-SimpleProgressRole = Qt.UserRole + 2 
-
+# TODO: will these interfer with the ones in snapshot
+ProgressRole = Qt.UserRole + 1
+SimpleProgressRole = Qt.UserRole + 2
 
 
 class ProgressProxyModel(QIdentityProxyModel):
@@ -18,20 +17,37 @@ class ProgressProxyModel(QIdentityProxyModel):
 
     def data(self, index: QModelIndex, role=Qt.DisplayRole) -> QVariant:
 
+        # if role == ProgressRole:
+        #     d = {}
+        #     nr_reals = 0
+        #     for k, v in self.sourceModel().root.children.items():
+        #         ## iterations
+        #         for k1, v1 in v.children.items():
+        #             ## realizations
+        #             nr_reals += 1
+        #             status = v1.data["status"]
+        #             if status in d:
+        #                 d[status] += 1
+        #             else:
+        #                 d[status] = 1
+        #     return {"status": d, "nr_reals": nr_reals}
+
         if role == ProgressRole:
             d = {}
             nr_reals = 0
-            for k, v in self.sourceModel().root.children.items():
-                ## iterations
-                for k1, v1 in v.children.items():
-                    ## realizations
-                    nr_reals += 1
-                    status = v1.data["status"]
-                    if status in d:
-                        d[status] += 1
-                    else:
-                        d[status] = 1
-            return {"status": d, "nr_reals": nr_reals}
+            _, last_item = list(self.sourceModel().root.children.items())[-1]
+            print("last ", last_item)
+            for _, v in last_item.children.items():
+                ## realizations
+                nr_reals += 1
+                status = v.data["status"]
+                if status in d:
+                    d[status] += 1
+                else:
+                    d[status] = 1
+            ff = {"status": d, "nr_reals": nr_reals}
+            print(ff)
+            return ff
 
         if role == SimpleProgressRole:
             total_iterations = 0

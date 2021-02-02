@@ -1,5 +1,5 @@
 from qtpy.QtCore import QModelIndex, Qt, Signal, Slot
-from qtpy.QtWidgets import QTableView, QFrame, QVBoxLayout
+from qtpy.QtWidgets import QTableView, QFrame, QVBoxLayout, QHeaderView
 
 
 from ert_gui.model.snapshot import NodeRole, SnapshotModel
@@ -19,11 +19,13 @@ class IterationWidget(QFrame):
         self._real_view = RealizationView(self)
         self._real_view.clicked.connect(self._select_real)
 
-        self._job_view = QTableView(self)
+        # self._job_view = QTableView(self)
+        # self._job_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
         layout = QVBoxLayout()
         layout.addWidget(self._real_view)
-        layout.addWidget(self._job_view)
+
+        # layout.addWidget(self._job_view)
 
         self.setLayout(layout)
 
@@ -35,9 +37,9 @@ class IterationWidget(QFrame):
         self._real_view.setModel(self._real_list_model)
         self._real_view.model().setIter(self._iteration)
 
-        self._job_model = JobListProxyModel(self, self._iteration, 0, 0, 0)
-        self._job_model.setSourceModel(model)
-        self._job_view.setModel(self._job_model)
+        # self._job_model = JobListProxyModel(self, self._iteration, 0, 0, 0)
+        # self._job_model.setSourceModel(model)
+        # self._job_view.setModel(self._job_model)
 
         # for select_real
         self._snapshot_model = model
