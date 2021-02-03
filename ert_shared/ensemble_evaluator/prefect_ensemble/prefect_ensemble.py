@@ -22,7 +22,6 @@ from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
     storage_driver_factory,
 )
 from ert_shared.ensemble_evaluator.prefect_ensemble.unix_step import UnixStep
-from ert_shared.ensemble_evaluator.prefect_ensemble.function_step import FunctionStep
 from ert_shared.ensemble_evaluator.config import find_open_port
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     _Ensemble,
