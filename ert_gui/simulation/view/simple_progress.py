@@ -1,7 +1,7 @@
 from qtpy.QtCore import QRect, QSize, QModelIndex, Qt
 from qtpy.QtWidgets import QTreeView, QStyledItemDelegate, QStyleOptionViewItem
 from qtpy.QtGui import QPainter, QColor, QFont
-from ert_gui.model.progress_proxy import SimpleProgressRole
+from ert_gui.model.snapshot import SimpleProgressRole
 
 
 class SimpleProgressView(QTreeView):

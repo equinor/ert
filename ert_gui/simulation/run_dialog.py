@@ -74,8 +74,8 @@ class RunDialog(QDialog):
         progress_proxy_model = ProgressProxyModel(self)
         progress_proxy_model.setSourceModel(self._snapshot_model)
 
-        progress_view = ProgressView(self)
-        progress_view.setModel(progress_proxy_model)
+        self._progress_view = ProgressView(self)
+        self._progress_view.setModel(progress_proxy_model)
 
         self._iteration_progress_label = QLabel(self)
 
@@ -129,13 +129,23 @@ class RunDialog(QDialog):
         button_layout.addWidget(self.kill_button)
         button_layout.addWidget(self.done_button)
         button_layout.addWidget(self.restart_button)
+
+        # debug
+        b1 = QPushButton("ind on")
+        b2 = QPushButton("ind off")
+        b1.clicked.connect(lambda e: self._progress_view.setIndeterminate(True))
+        b2.clicked.connect(lambda e: self._progress_view.setIndeterminate(False))
+        button_layout.addWidget(b1)
+        button_layout.addWidget(b2)
+        #
+
         button_widget_container = QWidget()
         button_widget_container.setLayout(button_layout)
 
         layout = QVBoxLayout()
         layout.addWidget(simple_progress_view)
         layout.addWidget(self._iteration_progress_label)
-        layout.addWidget(progress_view)
+        layout.addWidget(self._progress_view)
         layout.addWidget(legend_view)
         layout.addWidget(self._tab_widget)
         layout.addWidget(self._job_label)
@@ -157,7 +167,7 @@ class RunDialog(QDialog):
         if self._isDetailedDialog:
             return QSize(self.size().width(), 800)
         else:
-            return QSize(self.size().width(), 180)
+            return QSize(self.size().width(), 200)
 
     def _setSimpleDialog(self) -> None:
         self._isDetailedDialog = False
@@ -176,6 +186,7 @@ class RunDialog(QDialog):
         self.setFixedHeight(QWIDGETSIZE_MAX)
         self.setMinimumHeight(600)
 
+    @Slot(QModelIndex, int, int)
     def on_new_iteration(self, parent: QModelIndex, start: int, end: int) -> None:
         if not parent.isValid():
             iter = start
@@ -428,4 +439,4 @@ class RunDialog(QDialog):
         else:
             self._setDetailedDialog()
 
-        self.adjustSize()
+        # self.adjustSize()
