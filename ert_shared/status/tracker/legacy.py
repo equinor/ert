@@ -290,6 +290,8 @@ class LegacyTracker:
                         CURRENT_MEMORY_USAGE: fm.current_memory_usage,
                         MAX_MEMORY_USAGE: fm.max_memory_usage,
                     },
+                    stdout=fm.std_out_file,
+                    stderr=fm.std_err_file,
                 )
 
         return partial

@@ -4,8 +4,9 @@ from ecl.util.util import BoolVector
 from ert_gui.ertwidgets import resourceMovie
 from ert_gui.model.job_list import JobListProxyModel
 from ert_gui.model.node import NodeType
-from ert_gui.model.snapshot import SnapshotModel
+from ert_gui.model.snapshot import SnapshotModel, FileRole
 from ert_gui.simulation.tracker_worker import TrackerWorker
+from ert_gui.tools.file import FileDialog
 from ert_gui.tools.plot.plot_tool import PlotTool
 from ert_shared.models import BaseRunModel
 from ert_shared.status.entity.event import (
@@ -92,6 +93,8 @@ class RunDialog(QDialog):
 
         self._job_view = QTableView(self)
         self._job_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self._job_view.clicked.connect(self._job_clicked)
+        self._open_files = {}
         self._job_view.setModel(self._job_model)
 
         self.running_time = QLabel("")
@@ -190,6 +193,28 @@ class RunDialog(QDialog):
             widget.clicked.connect(self._select_real)
 
             self._tab_widget.addTab(widget, f"Iteration {iter}")
+
+    @Slot(QModelIndex)
+    def _job_clicked(self, index):
+        if not index.isValid():
+            return
+        selected_file = index.data(FileRole)
+
+        if selected_file and selected_file not in self._open_files:
+            job_name = index.siblingAtColumn(0).data()
+            viewer = FileDialog(
+                selected_file,
+                job_name,
+                index.row(),
+                index.model().get_real(),
+                index.model().get_iter(),
+                self,
+            )
+            self._open_files[selected_file] = viewer
+            viewer.finished.connect(lambda _, f=selected_file: self._open_files.pop(f))
+
+        elif selected_file in self._open_files:
+            self._open_files[selected_file].raise_()
 
     @Slot(QModelIndex)
     def _select_real(self, index):

@@ -164,6 +164,8 @@ class PartialSnapshot:
         start_time=None,
         end_time=None,
         error=None,
+        stdout=None,
+        stderr=None,
     ):
         job = {}
 
@@ -177,6 +179,10 @@ class PartialSnapshot:
             job[ids.DATA] = data
         if error is not None:
             job[ids.ERROR] = error
+        if stdout is not None:
+            job[ids.STDOUT] = stdout
+        if stderr is not None:
+            job[ids.STDERR] = stderr
 
         self._apply_update(
             {
@@ -227,6 +233,16 @@ class PartialSnapshot:
                 }
                 else None,
             )
+            if e_type == ids.EVTYPE_FM_STEP_START and event.data:
+                for job_id, job in event.data.get(ids.JOBS, {}).items():
+                    self.update_job(
+                        get_real_id(e_source),
+                        get_stage_id(e_source),
+                        get_step_id(e_source),
+                        job_id,
+                        stdout=job[ids.STDOUT],
+                        stderr=job[ids.STDERR],
+                    )
 
         elif e_type in ids.EVGROUP_FM_JOB:
             self.update_job(

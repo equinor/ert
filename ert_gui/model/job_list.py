@@ -82,19 +82,7 @@ class JobListProxyModel(QAbstractProxyModel):
         if role != Qt.DisplayRole:
             return QVariant()
         if orientation == Qt.Horizontal:
-            # corresponds to the structure in _job_data in main model
-            if section == 0:
-                return "Name"
-            elif section == 1:
-                return "Status"
-            elif section == 2:
-                return "Start time"
-            elif section == 3:
-                return "End time"
-            elif section == 4:
-                return "Current Memory Usage"
-            elif section == 5:
-                return "Max Memory Usage"
+            return COLUMNS[NodeType.STEP][section]
         return QVariant()
 
     def columnCount(self, parent=QModelIndex()) -> int:
@@ -178,3 +166,9 @@ class JobListProxyModel(QAbstractProxyModel):
                 return False
             index = index.parent()
         return True
+
+    def get_iter(self):
+        return self._iter
+
+    def get_real(self):
+        return self._real

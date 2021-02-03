@@ -22,6 +22,7 @@ RealJobColorHint = Qt.UserRole + 2
 RealStatusColorHint = Qt.UserRole + 3
 RealLabelHint = Qt.UserRole + 4
 ProgressRole = Qt.UserRole + 5
+FileRole = Qt.UserRole + 6
 
 
 COLUMNS = {
@@ -34,6 +35,8 @@ COLUMNS = {
         "Status",
         "Start time",
         "End time",
+        "STDOUT",
+        "STDERR",
         "Current Memory Usage",
         "Max Memory Usage",
     ],
@@ -106,6 +109,8 @@ class SnapshotModel(QAbstractItemModel):
                             ids.STATUS,
                             ids.START_TIME,
                             ids.END_TIME,
+                            ids.STDOUT,
+                            ids.STDERR,
                         ):
                             if attr in job:
                                 job_node.data[attr] = job[attr]
@@ -249,15 +254,32 @@ class SnapshotModel(QAbstractItemModel):
             elif index.column() == 3:
                 return node.data.get(ids.END_TIME)
             elif index.column() == 4:
+                return "OPEN" if node.data.get(ids.STDOUT) else QVariant()
+            elif index.column() == 5:
+                return "OPEN" if node.data.get(ids.STDERR) else QVariant()
+            elif index.column() == 6:
                 data = node.data.get(ids.DATA)
                 bytes = data.get(ids.CURRENT_MEMORY_USAGE) if data else None
                 if bytes:
                     return byte_with_unit(bytes)
-            elif index.column() == 5:
+            elif index.column() == 7:
                 data = node.data.get(ids.DATA)
                 bytes = data.get(ids.MAX_MEMORY_USAGE) if data else None
                 if bytes:
                     return byte_with_unit(bytes)
+        if role == FileRole:
+            if index.column() == 4:
+                return (
+                    node.data.get(ids.STDOUT)
+                    if node.data.get(ids.STDOUT)
+                    else QVariant()
+                )
+            if index.column() == 5:
+                return (
+                    node.data.get(ids.STDERR)
+                    if node.data.get(ids.STDERR)
+                    else QVariant()
+                )
 
         return QVariant()
 
