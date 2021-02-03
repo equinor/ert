@@ -1,5 +1,5 @@
 -
-  name: evaluate_polynomial
+  name: evaluate_polynomial_script
 
   input:
     -
@@ -21,15 +21,18 @@
 
 
 -
-  name: evaluate_function_polynomial
+  name: evaluate_polynomial_function
   environment: polynomial
-  input:
+
+  transportable_functions:
     -
-      record: coefficients
-      location: coefficients.json
+      name: polynomial
+      args: coefficients.json
+
   output:
     -
       record: polynomial_function_output
       location: output_function.json
+
   script:
     - ert3.evaluator.poly:polynomial

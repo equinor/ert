@@ -39,7 +39,7 @@ def test_entry_point(tmpdir):
     "config, expected_error",
     (
         [{"not_a_key": "value"}, "1 validation error"],
-        [[{"not_a_key": "value"}], "4 validation errors"],
+        [[{"not_a_key": "value"}], "3 validation errors"],
     ),
 )
 def test_entry_point_not_valid(config, expected_error):

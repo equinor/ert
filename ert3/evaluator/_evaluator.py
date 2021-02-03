@@ -21,18 +21,14 @@ def _create_evaluator_tmp_dir(workspace_root, evaluation_name):
     )
 
 
-def _assert_single_stage_forward_model(stages_config, ensemble):
-    # The current implementation only support one stage as the forward model
-    # and hence we fail if multiple are provided
-    assert len(ensemble.forward_model.stages) == 1
-
-
-def _prepare_input(ee_config, stages_config, inputs, evaluation_tmp_dir):
+def _prepare_input(ee_config, ensemble, stages_config, inputs, evaluation_tmp_dir):
     tmp_input_folder = evaluation_tmp_dir / "prep_input_files"
     os.makedirs(tmp_input_folder)
     ee_storage = storage_driver_factory(ee_config["storage"], tmp_input_folder)
-    #TODO fix to acount for multiple stages
-    record2location = {input.record: input.location for input in stages_config[0].input}
+    record2location = {}
+    for stage_name in ensemble.forward_model.stages:
+        stage = stages_config.step_from_key(stage_name)
+        record2location.update({input.record: input.location for input in stage.input})
     input_files = {iens: () for iens in range(ee_config["realizations"])}
     for iens, realization_inputs in enumerate(inputs):
         for name, value in realization_inputs.items():
@@ -60,14 +56,13 @@ def _build_ee_config(evaluation_tmp_dir, ensemble, stages_config, input_records)
     }
 
     ee_config["input_files"] = _prepare_input(
-        ee_config, stages_config, input_records, evaluation_tmp_dir
+        ee_config, ensemble, stages_config, input_records, evaluation_tmp_dir
     )
 
     return ee_config
 
 
 def _fetch_results(ee_config, ensemble, stages_config):
-    # _assert_single_stage_forward_model(stages_config, ensemble)
 
     results = []
     ee_storage = storage_driver_factory(ee_config["storage"], ee_config["run_path"])

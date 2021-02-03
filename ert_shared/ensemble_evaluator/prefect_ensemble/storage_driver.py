@@ -38,12 +38,6 @@ class _SharedDiskStorageDriver:
         shutil.copyfile(storage_uri, self._run_path / target)
         return target
 
-    def retrieve_data(self, storage_uri):
-        if storage_uri.is_file() and _is_relative_to(storage_uri, self._storage_path):
-            with open(storage_uri, "r") as f:
-                return json.load(f)
-        raise ValueError(f"Storage driver can't handle file: {storage_uri}")
-
 
 def _is_relative_to(child, parent):
     """Emulate path.is_relative_to() from Python 3.9"""

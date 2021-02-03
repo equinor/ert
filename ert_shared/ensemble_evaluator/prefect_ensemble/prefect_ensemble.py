@@ -199,13 +199,6 @@ class PrefectEnsemble(_Ensemble):
                     }
                     for idx, job in enumerate(step.get("jobs", []))
                 ]
-                if step.get("type", None) == StepType.function:
-                    step["function_id"] = self.get_id(
-                        iens,
-                        stage_name=stage["name"],
-                        step_name=step["name"],
-                        job_index=0,
-                    )
                 table_of_elements.append(
                     {
                         "iens": iens,
@@ -248,46 +241,25 @@ class PrefectEnsemble(_Ensemble):
                     inputs = [
                         output_to_res.get(input, []) for input in step.get("inputs", [])
                     ]
-                    jobs_by_type = self.tag_jobs(step)
-                    for job_type in jobs_by_type:
-                        if jobs_by_type[job_type] and job_type == "scripts":
-                            stage_task = UnixStep(
-                                resources=list(input_files[iens])
-                                + self.store_resources(step["resources"]),
-                                outputs=step.get("outputs", []),
-                                job_list=jobs_by_type[job_type],
-                                iens=iens,
-                                cmd="python3",
-                                url=dispatch_url,
-                                step_id=step["step_id"],
-                                stage_id=step["stage_id"],
-                                ee_id=ee_id,
-                                on_failure=partial(
-                                    self._on_task_failure, url=dispatch_url
-                                ),
-                                run_path=self.config.get("run_path"),
-                                storage_config=self.config.get("storage"),
-                                max_retries=self.config.get("max_retries", 0),
-                                retry_delay=timedelta(seconds=2)
-                                if self.config.get("max_retries") > 0
-                                else None,
-                            )
-                        elif jobs_by_type[job_type]:
-                            stage_task = FunctionStep(
-                                resources=list(input_files[iens]),
-                                outputs=step.get("outputs", []),
-                                function_list=jobs_by_type[job_type],
-                                iens=iens,
-                                url=dispatch_url,
-                                step_id=step["step_id"],
-                                stage_id=step["stage_id"],
-                                ee_id=ee_id,
-                                run_path=self.config.get("run_path"),
-                                storage_config=self.config.get("storage"),
-                                on_failure=partial(
-                                    self._on_task_failure, url=dispatch_url
-                                ),
-                            )
+                    stage_task = UnixStep(
+                        resources=list(input_files[iens])
+                        + self.store_resources(step["resources"]),
+                        outputs=step.get("outputs", []),
+                        job_list=step.get("jobs", []),
+                        iens=iens,
+                        cmd="python3",
+                        url=dispatch_url,
+                        step_id=step["step_id"],
+                        stage_id=step["stage_id"],
+                        ee_id=ee_id,
+                        on_failure=partial(self._on_task_failure, url=dispatch_url),
+                        run_path=self.config.get("run_path"),
+                        storage_config=self.config.get("storage"),
+                        max_retries=self.config.get("max_retries", 0),
+                        retry_delay=timedelta(seconds=2)
+                        if self.config.get("max_retries") > 0
+                        else None,
+                    )
                     result = stage_task(expected_res=inputs)
 
                     for output in step.get("outputs", []):

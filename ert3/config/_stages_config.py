@@ -54,13 +54,18 @@ class TransportableCommand(_StagesConfig):
             raise ValueError(f"{location} is not executable")
         return location
 
+class TransportableFunction(_StagesConfig):
+    name: str
+    args: str
+
 
 class Step(_StagesConfig):
     name: str
-    script: Union[List[str], List[Callable]]
-    input: List[InputRecord]
+    script: List[Union[str, Callable]]
+    input: Optional[List[InputRecord]] = []
     output: List[OutputRecord]
-    transportable_commands: Optional[List[TransportableCommand]]
+    transportable_commands: Optional[List[TransportableCommand]] = []
+    transportable_functions: Optional[List[TransportableFunction]] = []
 
     def outputs(self):
         return [out.location for out in self.output]
@@ -71,26 +76,31 @@ class Step(_StagesConfig):
     def command_location(self, name):
         return next(cmd.location for cmd in self.transportable_commands if cmd.name == name)
 
+    def function_args(self, name):
+        return next(fun.args for fun in self.transportable_functions if fun.name == name)
+
     def command_scripts(self):
         if self.transportable_commands:
             return [cmd.location for cmd in self.transportable_commands]
         return []
 
     @root_validator
-    def command_defined(cls, step):
-        commands = step.get("transportable_commands", [])
-        if commands is None:
-            return step
-        cmd_names = [cmd.name for cmd in commands]
-        for script_line in step.get("script", []):
-            line_cmd = script_line.split()[0]
-            if line_cmd not in cmd_names:
-                raise ValueError("{} is not a known command".format(line_cmd))
+    def check_defined(cls, step):
+        cmd_names = [cmd.name for cmd in step.get("transportable_commands", [])]
+        fun_names = [fun.name for fun in step.get("transportable_functions", [])]
+        for script in step.get("script", []):
+            if isinstance(script, Callable):
+                if script.__name__ not in fun_names:
+                    raise ValueError("{} is not a known function".format(line_cmd))
+            else:
+                line_cmd = script.split()[0]
+                if line_cmd not in cmd_names:
+                    raise ValueError("{} is not a known command".format(line_cmd))
         return step
 
     @validator("script", pre=True)
     def function_is_valid(cls, scripts: str) -> List[Callable]:
-        return [_import_from(method) for method in scripts]
+        return [_import_from(element) for element in scripts]
 
 class StagesConfig(BaseModel):
     __root__: List[Step]
@@ -105,10 +115,11 @@ class StagesConfig(BaseModel):
             command_scripts = stage.command_scripts()
             jobs = []
             for script in stage.script:
-                if not isinstance(script, str):
+                if isinstance(script, Callable):
                     jobs.append({
                         "name" : script.__name__,
-                        "executable": script
+                        "executable": script,
+                        "args": stage.function_args(script.__name__)
                     })
                 else:
                     name, *args = script.split()
