@@ -222,15 +222,6 @@ class PrefectEnsemble(_Ensemble):
                     table_of_elements.remove(element)
         return ordering
 
-    def tag_jobs(self, step):
-        jobs = {"scripts": [], "functions": []}
-        for job in step.get("jobs", []):
-            if isinstance(job["executable"], Callable):
-                jobs["functions"].append(job)
-            else:
-                jobs["scripts"].append(job)
-        return jobs
-
     def get_flow(self, ee_id, dispatch_url, input_files, real_range):
         with Flow(f"Realization range {real_range}") as flow:
             for iens in real_range:
