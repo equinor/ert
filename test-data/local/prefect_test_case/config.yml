@@ -12,7 +12,6 @@ stages:
       - name: add_coeffs
         resources:
           - sum_coeffs.py
-        parameter: []
         inputs: [ poly_0.out, poly_1.out, poly_2.out ]
         outputs: [ poly_sum.out ]
         jobs:
@@ -25,7 +24,6 @@ stages:
       - name: zero_degree
         resources:
           - evaluate_coeffs.py
-        parameter: [coeff]
         inputs: [poly_2.out]
         outputs: [poly_0.out]
         jobs:
@@ -36,7 +34,6 @@ stages:
       - name: first_degree
         resources:
           - evaluate_coeffs.py
-        parameter: [coeff]
         outputs: [poly_1.out]
         jobs:
           - name: generate_first_degree
@@ -46,7 +43,6 @@ stages:
       - name: second_degree
         resources:
           - evaluate_coeffs.py
-        parameter: [coeff]
         outputs: [poly_2.out]
         jobs:
           - name: generate_second_degree

@@ -135,7 +135,6 @@ class StagesConfig(BaseModel):
                     {
                         "name": stage.name + "-only_step",
                         "resources": command_scripts,
-                        "parameter": [],
                         "inputs": [],
                         "outputs": stage.outputs(),
                         "jobs": jobs,
