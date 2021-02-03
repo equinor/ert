@@ -6,6 +6,7 @@ import multiprocessing
 import signal
 import threading
 import asyncio
+from typing import Callable
 from pathlib import Path
 from datetime import timedelta
 from functools import partial
@@ -232,10 +233,10 @@ class PrefectEnsemble(_Ensemble):
     def tag_jobs(self, step):
         jobs = {"scripts": [], "functions": []}
         for job in step.get("jobs", []):
-            if isinstance(job["executable"], Path):
-                jobs["scripts"].append(job)
-            else:
+            if isinstance(job["executable"], Callable):
                 jobs["functions"].append(job)
+            else:
+                jobs["scripts"].append(job)
         return jobs
 
     def get_flow(self, ee_id, dispatch_url, input_files, real_range):
