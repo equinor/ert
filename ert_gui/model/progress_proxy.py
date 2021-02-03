@@ -1,8 +1,6 @@
 from qtpy.QtCore import QRect, QSize, QModelIndex, Qt, QIdentityProxyModel, QVariant
 
-# TODO: will these interfer with the ones in snapshot
-ProgressRole = Qt.UserRole + 1
-SimpleProgressRole = Qt.UserRole + 2
+from ert_gui.model.snapshot import SimpleProgressRole, ProgressRole
 
 
 class ProgressProxyModel(QIdentityProxyModel):

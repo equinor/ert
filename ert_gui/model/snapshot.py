@@ -16,6 +16,8 @@ NodeRole = Qt.UserRole + 1
 RealJobColorHint = Qt.UserRole + 2
 RealStatusColorHint = Qt.UserRole + 3
 RealLabelHint = Qt.UserRole + 4
+ProgressRole = Qt.UserRole + 5
+SimpleProgressRole = Qt.UserRole + 6
 
 
 class SnapshotModel(QAbstractItemModel):

@@ -1,22 +1,54 @@
-from qtpy.QtCore import QRect, QSize, QModelIndex, Qt
-from qtpy.QtWidgets import QTreeView, QStyledItemDelegate, QStyleOptionViewItem
+from qtpy.QtCore import QRect, QSize, QModelIndex, Qt, Slot
+from qtpy.QtWidgets import (
+    QTreeView,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
+    QWidget,
+    QVBoxLayout,
+    QProgressBar,
+)
 from qtpy.QtGui import QPainter, QColor, QFont
 
 from ert_shared.status.entity.state import REAL_STATE_TO_COLOR
-#from ert_gui.simulation.palette import TOTAL_PROGRESS_COLOR
-from ert_gui.model.progress_proxy import ProgressRole
+from ert_gui.model.snapshot import ProgressRole
 
 
-class ProgressView(QTreeView):
+class ProgressView(QWidget):
     def __init__(self, parent=None) -> None:
         super(ProgressView, self).__init__(parent)
 
-        self.setHeaderHidden(True)
-        self.setItemsExpandable(False)
-        self.setItemDelegate(ProgressDelegate(self))
-        self.setRootIsDecorated(False)
-        self.setMinimumHeight(30)
-        self.setMaximumHeight(30)
+        self._progress_tree_view = QTreeView(self)
+        self._progress_tree_view.setHeaderHidden(True)
+        self._progress_tree_view.setItemsExpandable(False)
+        self._progress_tree_view.setItemDelegate(ProgressDelegate(self))
+        self._progress_tree_view.setRootIsDecorated(False)
+        self._progress_tree_view.setFixedHeight(30)
+
+        self._progress_bar = QProgressBar(self)
+        self._progress_bar.setRange(0, 0)
+        self._progress_bar.setFixedHeight(30)
+        self._progress_bar.setVisible(False)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._progress_tree_view)
+        layout.addWidget(self._progress_bar)
+
+        self.setLayout(layout)
+
+        self.setFixedHeight(30)
+
+    def setModel(self, model) -> None:
+        self._progress_tree_view.setModel(model)
+
+    @Slot(bool)
+    def setIndeterminate(self, b: bool) -> None:
+        if b:
+            self._progress_bar.setVisible(True)
+            self._progress_tree_view.setVisible(False)
+        else:
+            self._progress_bar.setVisible(False)
+            self._progress_tree_view.setVisible(True)
 
 
 class ProgressDelegate(QStyledItemDelegate):
@@ -27,7 +59,7 @@ class ProgressDelegate(QStyledItemDelegate):
 
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
 
-        data= index.data(ProgressRole)
+        data = index.data(ProgressRole)
         nr_reals = data["nr_reals"]
         status = data["status"]
         d = option.rect.width() / nr_reals
