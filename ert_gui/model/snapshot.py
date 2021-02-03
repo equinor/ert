@@ -1,8 +1,10 @@
 import logging
 
-from ert_gui.model.dev_helpers import create_partial_snapshot, create_snapshot
 from ert_gui.model.node import Node, NodeType, snapshot_to_tree
-from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, _SnapshotDict
+from ert_shared.ensemble_evaluator.entity.snapshot import (
+    PartialSnapshot,
+    Snapshot,
+)
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant, Slot
 from qtpy.QtGui import QColor
 
@@ -20,67 +22,24 @@ ProgressRole = Qt.UserRole + 5
 SimpleProgressRole = Qt.UserRole + 6
 
 
+COLUMNS = {
+    NodeType.ROOT: ["Name", "Status"],
+    NodeType.ITER: ["Name", "Status", "Active"],
+    NodeType.REAL: ["Name", "Status"],
+    NodeType.STAGE: ["Name", "Status"],
+    NodeType.STEP: [
+        "Name",
+        "Status",
+        "Start time",
+        "End time",
+        "Current Memory Usage",
+        "Max Memory Usage",
+    ],
+    NodeType.JOB: [],
+}
+
+
 class SnapshotModel(QAbstractItemModel):
-    @Slot()
-    def add_job(self, real=0):
-        iter_0_idx = self.index(0, 0, QModelIndex())
-        real_0_idx = self.index(real, 0, iter_0_idx)
-        stage_0_idx = self.index(0, 0, real_0_idx)
-        step_0_idx = self.index(0, 0, stage_0_idx)
-        step_0 = step_0_idx.internalPointer()
-        next_job_id = len(step_0.children)
-        self.beginInsertRows(step_0_idx, next_job_id, next_job_id)
-        step_0.add_child(
-            Node(
-                str(next_job_id),
-                {
-                    "start_time": str(123),
-                    "end_time": str(123),
-                    "name": f"poly_job_{next_job_id}",
-                    "status": "Unknown",
-                    "error": "error",
-                    "stdout": "std_out_file",
-                    "stderr": "std_err_file",
-                    "data": {
-                        "current_memory_usage": "123",
-                        "max_memory_usage": "312",
-                    },
-                },
-                NodeType.JOB,
-            )
-        )
-        self.endInsertRows()
-
-    @Slot()
-    def add_job1(self):
-        self.add_job(real=1)
-
-    @Slot()
-    def add_snapshot(self):
-        next_iter = 0
-        snapshot = snapshot_to_tree(create_snapshot(), next_iter)
-        self._add_snapshot(snapshot, next_iter)
-
-    @Slot()
-    def mutate_snapshot(self):
-        iter_0_idx = self.index(0, 0, QModelIndex())
-        iter_0 = iter_0_idx.internalPointer()
-        next_real_id = len(iter_0.children)
-        next_real = Node(str(next_real_id), {"status": "Unknown"}, NodeType.REAL)
-        self.beginInsertRows(iter_0_idx, next_real_id, next_real_id)
-        iter_0.add_child(next_real)
-        self.endInsertRows()
-
-    @Slot()
-    def mutate_snapshot_with_partial(self):
-        iter_0_idx = self.index(0, 0, QModelIndex())
-        iter_0 = iter_0_idx.internalPointer()
-        children = list(iter_0.children.values())
-        next_real_id = children[len(children) - 1].id
-
-        partial = create_partial_snapshot(next_real_id, "Running")
-        self._add_partial_snapshot(partial, 0)
-
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.root = Node(None, {"status": "n/a"}, NodeType.ROOT)
@@ -95,7 +54,8 @@ class SnapshotModel(QAbstractItemModel):
         if "reals" not in partial_d:
             logger.debug(f"no realizations in partial for iter {iter_}")
             return
-        for real_id, real in partial_d["reals"].items():
+        for real_id in sorted(partial_d["reals"], key=int):
+            real = partial_d["reals"][real_id]
             real_node = iter_node.children[real_id]
             if real.get("status"):
                 real_node.data["status"] = real.get("status")
@@ -108,6 +68,7 @@ class SnapshotModel(QAbstractItemModel):
             if "stages" not in real:
                 continue
 
+            # TODO: sort stages, but wait till after https://github.com/equinor/ert/issues/1220 ?
             for stage_id, stage in real["stages"].items():
                 stage_node = real_node.children[stage_id]
 
@@ -122,6 +83,7 @@ class SnapshotModel(QAbstractItemModel):
                 if "steps" not in stage:
                     continue
 
+                # TODO: sort steps, but wait till after https://github.com/equinor/ert/issues/1220 ?
                 for step_id, step in stage["steps"].items():
                     step_node = stage_node.children[step_id]
                     if step.get("status"):
@@ -135,7 +97,8 @@ class SnapshotModel(QAbstractItemModel):
                     if "jobs" not in step:
                         continue
 
-                    for job_id, job in step["jobs"].items():
+                    for job_id in sorted(step["jobs"], key=int):
+                        job = step["jobs"][job_id]
                         job_node = step_node.children[job_id]
                         if job.get("status"):
                             job_node.data["status"] = job["status"]
@@ -165,7 +128,7 @@ class SnapshotModel(QAbstractItemModel):
         bottom_right = self.index(0, 1, iter_index)
         self.dataChanged.emit(top_left, bottom_right)
 
-    def _add_snapshot(self, snapshot: _SnapshotDict, iter_: int):
+    def _add_snapshot(self, snapshot: Snapshot, iter_: int):
         snapshot_tree = snapshot_to_tree(snapshot, iter_)
         if iter_ in self.root.children:
             self.modelAboutToBeReset.emit()
@@ -174,25 +137,31 @@ class SnapshotModel(QAbstractItemModel):
             self.modelReset.emit()
             return
 
-        # this should be moved to after beginInsertRows
-        self.root.add_child(snapshot_tree)
-
         parent = QModelIndex()
-        self.beginInsertRows(parent, snapshot_tree.row(), snapshot_tree.row())
+        next_iter = len(self.root.children)
+        self.beginInsertRows(parent, next_iter, next_iter)
+        self.root.add_child(snapshot_tree)
         self.root.children[iter_] = snapshot_tree
         self.rowsInserted.emit(parent, snapshot_tree.row(), snapshot_tree.row())
 
     def columnCount(self, parent=QModelIndex()):
-        return 6
+        parent_node = parent.internalPointer()
+        if parent_node is None:
+            return len(COLUMNS[NodeType.ROOT])
+        return len(COLUMNS[parent_node.type])
 
     def rowCount(self, parent=QModelIndex()):
         if not parent.isValid():
             parentItem = self.root
         else:
             parentItem = parent.internalPointer()
+
+        if parent.column() > 0:
+            return 0
+
         return len(parentItem.children)
 
-    def parent(self, index):
+    def parent(self, index: QModelIndex):
         if not index.isValid():
             return QModelIndex()
 
@@ -215,9 +184,12 @@ class SnapshotModel(QAbstractItemModel):
 
         return self.createIndex(parentItem.row(), 0, parentItem)
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self, index: QModelIndex, role=Qt.DisplayRole):
         if not index.isValid():
             return QVariant()
+
+        if role == Qt.TextAlignmentRole:
+            return Qt.AlignCenter
 
         node = index.internalPointer()
 
@@ -257,7 +229,7 @@ class SnapshotModel(QAbstractItemModel):
         else:
             return QVariant()
 
-    def _job_data(self, index, node, role):
+    def _job_data(self, index: QModelIndex, node: Node, role: int):
         if role == Qt.DisplayRole:
             if index.column() == 0:
                 return node.data.get("name")
@@ -277,7 +249,7 @@ class SnapshotModel(QAbstractItemModel):
             return node
         return QVariant()
 
-    def index(self, row: int, column: int, parent: QModelIndex) -> QModelIndex:
+    def index(self, row: int, column: int, parent=QModelIndex()) -> QModelIndex:
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
 

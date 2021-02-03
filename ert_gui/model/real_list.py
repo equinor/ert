@@ -9,7 +9,6 @@ from qtpy.QtCore import (
     QAbstractItemModel,
     QAbstractProxyModel,
     QModelIndex,
-    QPersistentModelIndex,
     QVariant,
 )
 
@@ -63,35 +62,48 @@ class RealListModel(QAbstractProxyModel):
         self._connect()
         self.endResetModel()
 
-    def columnCount(self, parent: QModelIndex) -> int:
-        return 1
-
-    def rowCount(self, parent: QModelIndex) -> int:
+    def columnCount(self, parent=QModelIndex()) -> int:
+        if parent.isValid():
+            return 0
         iter_index = self.sourceModel().index(self._iter, 0, QModelIndex())
-        if iter_index.isValid():
-            return len(iter_index.internalPointer().children)
-        return 0
+        if not iter_index.isValid():
+            return 0
+        return self.sourceModel().columnCount(iter_index)
 
-    def parent(self, index):
+    def rowCount(self, parent=QModelIndex()) -> int:
+        if parent.isValid():
+            return 0
+        iter_index = self.sourceModel().index(self._iter, 0, QModelIndex())
+        if not iter_index.isValid():
+            return 0
+        return self.sourceModel().rowCount(iter_index)
+
+    def parent(self, index: QModelIndex):
         return QModelIndex()
 
-    def index(self, row: int, column: int, parent: QModelIndex) -> QModelIndex:
+    def index(self, row: int, column: int, parent=QModelIndex()) -> QModelIndex:
         if parent.isValid():
             return QModelIndex()
-        real_index = self.mapToSource(self.createIndex(row, column, parent))
+        real_index = self.mapToSource(self.createIndex(row, 0, parent))
         ret_index = self.createIndex(row, column, real_index.data(NodeRole))
         return ret_index
+
+    def hasChildren(self, parent: QModelIndex) -> bool:
+        # Reimplemented, since in the source model, the realizations have
+        # children (i.e. valid indices.). Realizations do not have children in
+        # this model.
+        if parent.isValid():
+            return False
+        return self.sourceModel().hasChildren(self.mapToSource(parent))
 
     def mapToSource(self, proxyIndex: QModelIndex) -> QModelIndex:
         if not proxyIndex.isValid():
             return QModelIndex()
         sm = self.sourceModel()
-        iter_index = sm.index(self._iter, proxyIndex.column(), QModelIndex())
+        iter_index = sm.index(self._iter, 0, QModelIndex())
         if not iter_index.isValid() or not sm.hasChildren(iter_index):
             return QModelIndex()
         real_index = sm.index(proxyIndex.row(), proxyIndex.column(), iter_index)
-        if not real_index.isValid():
-            return QModelIndex()
         return real_index
 
     def mapFromSource(self, sourceIndex: QModelIndex) -> QModelIndex:
@@ -107,10 +119,11 @@ class RealListModel(QAbstractProxyModel):
     def _source_data_changed(
         self, top_left: QModelIndex, bottom_right: QModelIndex, roles: typing.List[int]
     ):
-        # TODO: map before emit
-        self.dataChanged.emit(
-            self.mapFromSource(top_left), self.mapFromSource(bottom_right), roles
-        )
+        proxy_top_left = self.mapFromSource(top_left)
+        proxy_bottom_right = self.mapFromSource(bottom_right)
+        if not proxy_top_left.isValid() or not proxy_bottom_right.isValid():
+            return
+        self.dataChanged.emit(proxy_top_left, proxy_bottom_right, roles)
 
     def _source_rows_about_to_be_inserted(
         self, parent: QModelIndex, start: int, end: int

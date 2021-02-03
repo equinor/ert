@@ -1,5 +1,5 @@
-from ert_gui.model.snapshot import NodeRole
-from ert_gui.model.node import NodeType
+from ert_gui.model.snapshot import COLUMNS, NodeRole
+from ert_gui.model.node import Node, NodeType
 import typing
 from qtpy.QtCore import (
     QObject,
@@ -25,6 +25,18 @@ class JobListProxyModel(QAbstractProxyModel):
         self._real = real
         self._stage = stage
         self._step = step
+
+    def _get_source_parent_index(self) -> QModelIndex:
+        start = self.index(0, 0, QModelIndex())
+        if not start.isValid():
+            return QModelIndex()
+        if start.internalPointer() is None:
+            return QModelIndex()
+        source_parent = self.mapToSource(start).parent()
+        assert source_parent.isValid()
+        assert source_parent.internalPointer()
+        assert source_parent.internalPointer().type == NodeType.STEP
+        return source_parent
 
     def _disconnect(self):
         sm = self.sourceModel()
@@ -74,24 +86,28 @@ class JobListProxyModel(QAbstractProxyModel):
                 return "Current Memory Usage"
             elif section == 5:
                 return "Max Memory Usage"
-        else:
-            return QVariant()
+        return QVariant()
 
-    def columnCount(self, parent: QModelIndex) -> int:
-        return 6
-
-    def rowCount(self, parent: QModelIndex) -> int:
-        start = self.index(0, 0, QModelIndex())
-        if not start.isValid():
+    def columnCount(self, parent=QModelIndex()) -> int:
+        if parent.isValid():
             return 0
-        if start.internalPointer() is None:
+        source_index = self._get_source_parent_index()
+        if not source_index.isValid():
             return 0
-        return len(start.internalPointer().parent.children)
+        return self.sourceModel().columnCount(source_index)
 
-    def parent(self, index):
+    def rowCount(self, parent=QModelIndex()) -> int:
+        if parent.isValid():
+            return 0
+        source_index = self._get_source_parent_index()
+        if not source_index.isValid():
+            return 0
+        return self.sourceModel().rowCount(source_index)
+
+    def parent(self, index: QModelIndex):
         return QModelIndex()
 
-    def index(self, row: int, column: int, parent: QModelIndex) -> QModelIndex:
+    def index(self, row: int, column: int, parent=QModelIndex()) -> QModelIndex:
         if parent.isValid():
             return QModelIndex()
         job_index = self.mapToSource(self.createIndex(row, column, parent))
@@ -102,16 +118,16 @@ class JobListProxyModel(QAbstractProxyModel):
         if not proxyIndex.isValid():
             return QModelIndex()
         sm = self.sourceModel()
-        iter_index = sm.index(self._iter, proxyIndex.column(), QModelIndex())
+        iter_index = sm.index(self._iter, 0, QModelIndex())
         if not iter_index.isValid() or not sm.hasChildren(iter_index):
             return QModelIndex()
-        real_index = sm.index(self._real, proxyIndex.column(), iter_index)
+        real_index = sm.index(self._real, 0, iter_index)
         if not real_index.isValid() or not sm.hasChildren(real_index):
             return QModelIndex()
-        stage_index = sm.index(self._stage, proxyIndex.column(), real_index)
+        stage_index = sm.index(self._stage, 0, real_index)
         if not stage_index.isValid() or not sm.hasChildren(stage_index):
             return QModelIndex()
-        step_index = sm.index(self._step, proxyIndex.column(), stage_index)
+        step_index = sm.index(self._step, 0, stage_index)
         if not step_index.isValid() or not sm.hasChildren(step_index):
             return QModelIndex()
         job_index = sm.index(proxyIndex.row(), proxyIndex.column(), step_index)

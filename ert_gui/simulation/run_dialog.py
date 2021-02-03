@@ -1,4 +1,5 @@
 from threading import Thread
+from PyQt5.QtWidgets import QTreeView
 
 from ecl.util.util import BoolVector
 from ert_gui.ertwidgets import Legend, resourceMovie
@@ -92,6 +93,10 @@ class RunDialog(QDialog):
 
         self._job_view = QTableView(self)
         self._job_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self._tree_view = QTreeView(self)
+        # realList = RealListModel(self, 0)
+        # realList.setSourceModel(self._snapshot_model)
+        self._tree_view.setModel(self._snapshot_model)
 
         self.running_time = QLabel("")
 
@@ -150,6 +155,7 @@ class RunDialog(QDialog):
         layout.addWidget(self._tab_widget)
         layout.addWidget(self._job_label)
         layout.addWidget(self._job_view)
+        layout.addWidget(self._tree_view)
         layout.addWidget(button_widget_container)
 
         self.setLayout(layout)
