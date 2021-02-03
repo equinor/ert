@@ -1,4 +1,4 @@
-from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, _SnapshotDict
+from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Snapshot
 from typing import Optional
 
 from pydantic import BaseModel
@@ -14,7 +14,7 @@ class _UpdateEvent(BaseModel):
 
 
 class FullSnapshotEvent(_UpdateEvent):
-    snapshot: Optional[_SnapshotDict]
+    snapshot: Optional[Snapshot]
 
     class Config:
         arbitrary_types_allowed = True

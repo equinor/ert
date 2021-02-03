@@ -339,7 +339,7 @@ class LegacyTracker:
             progress=self._progress(),
             iteration=iter_,
             # TODO: should be snapshot instead of dict
-            snapshot=snapshot_dict,
+            snapshot=snapshot,
         )
 
     def _end_event(self) -> EndEvent:

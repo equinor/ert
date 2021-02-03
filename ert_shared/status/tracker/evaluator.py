@@ -102,7 +102,8 @@ class EvaluatorTracker:
             phase_count = self._model.phaseCount()
             if event["type"] == ids.EVTYPE_EE_SNAPSHOT:
                 iter_ = event.data["iter"]
-                self._iter_snapshot[iter_] = Snapshot(event.data)
+                snapshot = Snapshot(event.data)
+                self._iter_snapshot[iter_] = snapshot
                 yield FullSnapshotEvent(
                     phase_name=self._model.getPhaseName(),
                     current_phase=self._model.currentPhase(),
@@ -110,7 +111,7 @@ class EvaluatorTracker:
                     indeterminate=self._model.isIndeterminate(),
                     progress=current_phase / phase_count,
                     iteration=iter_,
-                    snapshot=event.data,
+                    snapshot=snapshot,
                 )
             elif event["type"] == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
                 iter_ = event.data["iter"]
