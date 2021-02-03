@@ -3,7 +3,7 @@ import pathlib
 import pydantic
 import pytest
 import shutil
-
+from typing import Callable
 import ert3
 
 
@@ -55,12 +55,14 @@ def test_step_valid():
                 "input": [{"record": "some_record", "location": "some_location"}],
                 "output": [{"record": "some_record", "location": "some_location"}],
                 "transportable_commands": [{"name": "poly", "location": "poly.py"}],
-                "script": ["poly --help"],
+                "transportable_functions": [{"name": "sum", "args": "is.json"}],
+                "script": ["poly --help", "builtins:sum"],
             }
         ]
     )
     assert config[0].name == "some_name"
     assert config[0].script[0] == "poly --help"
+    assert isinstance(config[0].script[1], Callable)
 
 
 def test_step_multi_cmd(tmpdir):
@@ -128,19 +130,30 @@ def test_step_unknown_script(tmpdir):
         ert3.config.load_stages_config(config)
 
 
-def test_stages_get_script():
+def test_mutli_stages_get_script():
     config = ert3.config.load_stages_config(
         [
             {
-                "name": "some_name",
+                "name": "stage_1",
                 "input": [{"record": "some_record", "location": "some_file"}],
                 "output": [{"record": "some_record", "location": "some_file"}],
                 "transportable_commands": [{"name": "poly", "location": "poly.py"}],
                 "script": [
                     "poly --coefficients coefficients.json --output output.json"
                 ],
-            }
+            },
+            {
+                "name": "stage_2",
+                "output": [{"record": "some_record", "location": "some_file"}],
+                "transportable_functions": [{"name": "sum", "args": "args.json"}],
+                "script": ["builtins:sum"],
+            },
         ]
     )
-    step = config.step_from_key("some_name")
-    assert step.script == ["poly --coefficients coefficients.json --output output.json"]
+    step1 = config.step_from_key("stage_1")
+    assert step1.script == [
+        "poly --coefficients coefficients.json --output output.json"
+    ]
+    step2 = config.step_from_key("stage_2")
+    assert len(step2.script) == 1
+    assert isinstance(step2.script[0], Callable)
