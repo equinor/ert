@@ -74,7 +74,7 @@ def _fetch_results(ee_config, ensemble, stages_config):
             for output_elem in stage.output:
                 with open(spath / output_elem.location) as f:
                     realization_results[output_elem.record] = json.load(f)
-            results.append(realization_results)
+        results.append(realization_results)
     return results
 
 
