@@ -109,7 +109,7 @@ def test_tracking(cmd_line_arguments, num_successful, num_iters, tmpdir, source_
 
         for event in tracker.track():
             if isinstance(event, FullSnapshotEvent):
-                snapshots[event.iteration] = Snapshot(event.snapshot.dict())
+                snapshots[event.iteration] = event.snapshot
             if isinstance(event, SnapshotUpdateEvent):
                 snapshots[event.iteration].merge(event.partial_snapshot.data())
             if isinstance(event, EndEvent):
