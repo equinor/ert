@@ -1,6 +1,6 @@
 from qtpy.QtCore import QRect, QSize, QModelIndex, Qt, QIdentityProxyModel, QVariant
 
-from ert_gui.model.snapshot import  ProgressRole
+from ert_gui.model.snapshot import ProgressRole
 
 
 class ProgressProxyModel(QIdentityProxyModel):
@@ -26,4 +26,4 @@ class ProgressProxyModel(QIdentityProxyModel):
                     d[status] += 1
                 else:
                     d[status] = 1
-            return  {"status": d, "nr_reals": nr_reals}
+            return {"status": d, "nr_reals": nr_reals}

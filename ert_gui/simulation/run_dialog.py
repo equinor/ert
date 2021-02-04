@@ -75,15 +75,14 @@ class RunDialog(QDialog):
         progress_proxy_model = ProgressProxyModel(self)
         progress_proxy_model.setSourceModel(self._snapshot_model)
 
-        
-        #simple_progress_view = SimpleProgressView(self)
-        #simple_progress_view.setModel(progress_proxy_model)
+        # simple_progress_view = SimpleProgressView(self)
+        # simple_progress_view.setModel(progress_proxy_model)
 
         total_progress_label = QLabel("Total Progress", self)
 
         self._total_progress_bar = QProgressBar(self)
-        self._total_progress_bar.setRange(0,100)
-        #self._total_progress_bar.setFormat("Total progress %p%")
+        self._total_progress_bar.setRange(0, 100)
+        # self._total_progress_bar.setFormat("Total progress %p%")
         self._total_progress_bar.setTextVisible(False)
 
         self._iteration_progress_label = QLabel(self)
@@ -145,7 +144,7 @@ class RunDialog(QDialog):
         layout = QVBoxLayout()
         layout.addWidget(total_progress_label)
         layout.addWidget(self._total_progress_bar)
-        #layout.addWidget(simple_progress_view)
+        # layout.addWidget(simple_progress_view)
         layout.addWidget(self._iteration_progress_label)
         layout.addWidget(self._progress_view)
         layout.addWidget(legend_view)
@@ -169,7 +168,7 @@ class RunDialog(QDialog):
         if self._isDetailedDialog:
             return QSize(self.size().width(), 800)
         else:
-            #return QSize(self.size().width(), 200)
+            # return QSize(self.size().width(), 200)
             return QSize(self.size().width(), 230)
 
     def _setSimpleDialog(self) -> None:
@@ -178,7 +177,7 @@ class RunDialog(QDialog):
         self._job_label.setVisible(False)
         self._job_view.setVisible(False)
         self.show_details_button.setText("Show Details")
-        #self.setFixedHeight(200)
+        # self.setFixedHeight(200)
         self.setFixedHeight(230)
 
     def _setDetailedDialog(self) -> None:
@@ -189,7 +188,6 @@ class RunDialog(QDialog):
         self.show_details_button.setText("Hide Details")
         self.setFixedHeight(QWIDGETSIZE_MAX)
         self.setMinimumHeight(600)
-
 
     @Slot(QModelIndex, int, int)
     def on_new_iteration(self, parent: QModelIndex, start: int, end: int) -> None:
