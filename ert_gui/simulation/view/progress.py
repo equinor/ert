@@ -88,8 +88,7 @@ class ProgressDelegate(QStyledItemDelegate):
 
             i += state_progress
 
-        
-        #painter.drawText(option.rect, Qt.AlignCenter, "Progress for iteration 2")
+        # painter.drawText(option.rect, Qt.AlignCenter, "Progress for iteration 2")
 
         painter.restore()
 
