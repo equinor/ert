@@ -193,6 +193,9 @@ class SnapshotModel(QAbstractItemModel):
         node = index.internalPointer()
 
         if node.type == NodeType.JOB:
+            if role == Qt.BackgroundRole:
+                return QColor(*REAL_STATE_TO_COLOR[node.data.get("status")])
+
             return self._job_data(index, node, role)
 
         if role == Qt.DisplayRole:
