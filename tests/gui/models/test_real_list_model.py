@@ -24,3 +24,7 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
     source_model._add_partial_snapshot(partial, 1)
 
     qtmodeltester.check(model, force_py=True)
+
+
+def test_change_iter(full_snapshot):
+    pass
