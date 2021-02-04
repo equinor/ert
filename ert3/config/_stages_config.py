@@ -91,7 +91,7 @@ class Step(_StagesConfig):
         for script in step.get("script", []):
             if isinstance(script, Callable):
                 if script.__name__ not in fun_names:
-                    raise ValueError("{} is not a known function".format(line_cmd))
+                    raise ValueError("{} is not a known function".format(script.__name__))
             else:
                 line_cmd = script.split()[0]
                 if line_cmd not in cmd_names:

@@ -65,6 +65,22 @@ def test_step_valid():
     assert isinstance(config[0].script[1], Callable)
 
 
+def test_single_function_step_valid():
+    config = ert3.config.load_stages_config(
+        [
+            {
+                "name": "minimal_function_stage",
+                "transportable_functions": [{"name": "sum", "args": "args.json"}],
+                "output": [{"record": "some_record", "location": "some_location"}],
+                "script": ["builtins:sum"],
+            }
+        ]
+    )
+    assert config[0].name == "minimal_function_stage"
+    assert isinstance(config[0].script[0], Callable)
+    assert config[0].script[0].__name__ == "sum"
+
+
 def test_step_multi_cmd(tmpdir):
     tmpdir.chdir()
     shutil.copy2(_POLY_EXEC, "poly.py")
@@ -72,11 +88,19 @@ def test_step_multi_cmd(tmpdir):
 
     config = _example_config()
     config[0]["transportable_commands"].append({"name": "poly2", "location": "poly2"})
+    config[0]["transportable_functions"] = [
+        {"name": "sum", "args": "args.json"},
+        {"name": "polynomial", "args": "coefficients"},
+    ]
     config[0]["script"] = [
         "poly run1",
+        "builtins:sum",
         "poly2 gogo",
+        "ert3.evaluator.poly:polynomial",
         "poly run2",
+        "ert3.evaluator.poly:polynomial",
         "poly2 abort",
+        "builtins:sum",
     ]
     config = ert3.config.load_stages_config(config)
 
@@ -128,6 +152,22 @@ def test_step_unknown_script(tmpdir):
         match=r"unknown_command is not a known command",
     ):
         ert3.config.load_stages_config(config)
+
+
+def test_step_unknown_function():
+    with pytest.raises(
+        pydantic.error_wrappers.ValidationError,
+        match=r"sum is not a known function",
+    ):
+        ert3.config.load_stages_config(
+            [
+                {
+                    "name": "minimal_function_stage",
+                    "output": [{"record": "some_record", "location": "some_location"}],
+                    "script": ["builtins:sum"],
+                }
+            ]
+        )
 
 
 def test_mutli_stages_get_script():
