@@ -1,7 +1,8 @@
 from ert_shared.status.entity.state import JOB_STATE_FINISHED
 import pytest
 from ert_shared.ensemble_evaluator.entity.snapshot import (
-    PartialSnapshot, Snapshot,
+    PartialSnapshot,
+    Snapshot,
     _ForwardModel,
     _Job,
     _Realization,
