@@ -1,5 +1,4 @@
 from threading import Thread
-from PyQt5.QtWidgets import QTreeView
 
 from ecl.util.util import BoolVector
 from ert_gui.ertwidgets import Legend, resourceMovie
@@ -31,12 +30,13 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QTabWidget,
+    QTreeView,
     QHeaderView,
+    QProgressBar,
     QWIDGETSIZE_MAX,
 )
 from res.job_queue import JobStatusType
 
-from ert_gui.simulation.view.simple_progress import SimpleProgressView
 from ert_gui.simulation.view.progress import ProgressView
 from ert_gui.simulation.view.legend import LegendView
 from ert_gui.simulation.view.realization import RealizationView
@@ -75,13 +75,21 @@ class RunDialog(QDialog):
         progress_proxy_model = ProgressProxyModel(self)
         progress_proxy_model.setSourceModel(self._snapshot_model)
 
-        self._progress_view = ProgressView(self)
-        self._progress_view.setModel(progress_proxy_model)
+        
+        #simple_progress_view = SimpleProgressView(self)
+        #simple_progress_view.setModel(progress_proxy_model)
+
+        total_progress_label = QLabel("Total Progress", self)
+
+        self._total_progress_bar = QProgressBar(self)
+        self._total_progress_bar.setRange(0,100)
+        #self._total_progress_bar.setFormat("Total progress %p%")
+        self._total_progress_bar.setTextVisible(False)
 
         self._iteration_progress_label = QLabel(self)
 
-        simple_progress_view = SimpleProgressView(self)
-        simple_progress_view.setModel(progress_proxy_model)
+        self._progress_view = ProgressView(self)
+        self._progress_view.setModel(progress_proxy_model)
 
         legend_view = LegendView(self)
         legend_view.setModel(progress_proxy_model)
@@ -135,20 +143,13 @@ class RunDialog(QDialog):
         button_layout.addWidget(self.done_button)
         button_layout.addWidget(self.restart_button)
 
-        # debug
-        b1 = QPushButton("ind on")
-        b2 = QPushButton("ind off")
-        b1.clicked.connect(lambda e: self._progress_view.setIndeterminate(True))
-        b2.clicked.connect(lambda e: self._progress_view.setIndeterminate(False))
-        button_layout.addWidget(b1)
-        button_layout.addWidget(b2)
-        #
-
         button_widget_container = QWidget()
         button_widget_container.setLayout(button_layout)
 
         layout = QVBoxLayout()
-        layout.addWidget(simple_progress_view)
+        layout.addWidget(total_progress_label)
+        layout.addWidget(self._total_progress_bar)
+        #layout.addWidget(simple_progress_view)
         layout.addWidget(self._iteration_progress_label)
         layout.addWidget(self._progress_view)
         layout.addWidget(legend_view)
@@ -173,7 +174,8 @@ class RunDialog(QDialog):
         if self._isDetailedDialog:
             return QSize(self.size().width(), 800)
         else:
-            return QSize(self.size().width(), 200)
+            #return QSize(self.size().width(), 200)
+            return QSize(self.size().width(), 230)
 
     def _setSimpleDialog(self) -> None:
         self._isDetailedDialog = False
@@ -181,7 +183,8 @@ class RunDialog(QDialog):
         self._job_label.setVisible(False)
         self._job_view.setVisible(False)
         self.show_details_button.setText("Show Details")
-        self.setFixedHeight(200)
+        #self.setFixedHeight(200)
+        self.setFixedHeight(230)
 
     def _setDetailedDialog(self) -> None:
         self._isDetailedDialog = True
@@ -192,15 +195,12 @@ class RunDialog(QDialog):
         self.setFixedHeight(QWIDGETSIZE_MAX)
         self.setMinimumHeight(600)
 
+
     @Slot(QModelIndex, int, int)
     def on_new_iteration(self, parent: QModelIndex, start: int, end: int) -> None:
         if not parent.isValid():
             iter = start
             self._iteration_progress_label.setText(f"Progress for iteration {iter}")
-
-            # widget = IterationWidget(iter)
-            # widget.setModel(self._snapshot_model)
-            # widget.clicked.connect(self._select_real)
 
             widget = QWidget()
 
@@ -351,11 +351,17 @@ class RunDialog(QDialog):
         elif isinstance(event, FullSnapshotEvent):
             if event.snapshot is not None:
                 self._snapshot_model._add_snapshot(event.snapshot, event.iteration)
+            self._progress_view.setIndeterminate(event.indeterminate)
+            self._total_progress_bar.setValue(event.progress * 100)
+
         elif isinstance(event, SnapshotUpdateEvent):
             if event.partial_snapshot is not None:
                 self._snapshot_model._add_partial_snapshot(
                     event.partial_snapshot, event.iteration
                 )
+            self._progress_view.setIndeterminate(event.indeterminate)
+            self._total_progress_bar.setValue(event.progress * 100)
+
             # self.total_progress.handle(event)
             # self.progress.handle(event)
             # self.detailed_progress.handle(event)
@@ -439,6 +445,7 @@ class RunDialog(QDialog):
             ] += self.count_successful_realizations()
             self.startSimulation()
 
+    @Slot()
     def toggle_detailed_progress(self):
         if self._isDetailedDialog:
             self._setSimpleDialog()
