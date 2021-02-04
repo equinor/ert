@@ -1,9 +1,13 @@
 import copy
+import datetime
 import typing
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 import pyrsistent
+from dateutil.parser import parse
+from pydantic import BaseModel
+
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.entity.tool import (
     get_job_id,
@@ -12,9 +16,7 @@ from ert_shared.ensemble_evaluator.entity.tool import (
     get_step_id,
     recursive_update,
 )
-
 from ert_shared.status.entity import state
-from pydantic import BaseModel
 
 
 class UnsupportedOperationException(ValueError):
@@ -43,6 +45,13 @@ _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
     ids.EVTYPE_ENSEMBLE_CANCELLED: state.ENSEMBLE_STATE_CANCELLED,
     ids.EVTYPE_ENSEMBLE_FAILED: state.ENSEMBLE_STATE_FAILED,
 }
+
+
+def convert_iso8601_to_datetime(timestamp):
+    if isinstance(timestamp, datetime.datetime):
+        return timestamp
+
+    return parse(timestamp)
 
 
 class PartialSnapshot:
@@ -209,29 +218,35 @@ class PartialSnapshot:
         timestamp = event["time"]
 
         if e_type in ids.EVGROUP_FM_STAGE:
+            start_time = None
+            end_time = None
+            if e_type == ids.EVTYPE_FM_STAGE_RUNNING:
+                start_time = convert_iso8601_to_datetime(timestamp)
+            elif e_type in {ids.EVTYPE_FM_STAGE_FAILURE, ids.EVTYPE_FM_STAGE_SUCCESS}:
+                end_time = convert_iso8601_to_datetime(timestamp)
+
             self.update_stage(
                 get_real_id(e_source),
                 get_stage_id(e_source),
                 status=status,
-                start_time=timestamp if e_type == ids.EVTYPE_FM_STAGE_RUNNING else None,
-                end_time=timestamp
-                if e_type in {ids.EVTYPE_FM_STAGE_FAILURE, ids.EVTYPE_FM_STAGE_SUCCESS}
-                else None,
+                start_time=start_time,
+                end_time=end_time,
             )
         elif e_type in ids.EVGROUP_FM_STEP:
+            start_time = None
+            end_time = None
+            if e_type == ids.EVTYPE_FM_STEP_START:
+                start_time = convert_iso8601_to_datetime(timestamp)
+            elif e_type in {ids.EVTYPE_FM_STEP_SUCCESS, ids.EVTYPE_FM_STEP_FAILURE}:
+                end_time = convert_iso8601_to_datetime(timestamp)
+
             self.update_step(
                 get_real_id(e_source),
                 get_stage_id(e_source),
                 get_step_id(e_source),
                 status=status,
-                start_time=timestamp if e_type == ids.EVTYPE_FM_STEP_START else None,
-                end_time=timestamp
-                if e_type
-                in {
-                    ids.EVTYPE_FM_STEP_SUCCESS,
-                    ids.EVTYPE_FM_STEP_FAILURE,
-                }
-                else None,
+                start_time=start_time,
+                end_time=end_time,
             )
             if e_type == ids.EVTYPE_FM_STEP_START and event.data:
                 for job_id, job in event.data.get(ids.JOBS, {}).items():
@@ -245,20 +260,21 @@ class PartialSnapshot:
                     )
 
         elif e_type in ids.EVGROUP_FM_JOB:
+            start_time = None
+            end_time = None
+            if e_type == ids.EVTYPE_FM_JOB_START:
+                start_time = convert_iso8601_to_datetime(timestamp)
+            elif e_type in {ids.EVTYPE_FM_JOB_SUCCESS, ids.EVTYPE_FM_JOB_FAILURE}:
+                end_time = convert_iso8601_to_datetime(timestamp)
+
             self.update_job(
                 get_real_id(e_source),
                 get_stage_id(e_source),
                 get_step_id(e_source),
                 get_job_id(e_source),
                 status=status,
-                start_time=timestamp if e_type == ids.EVTYPE_FM_JOB_START else None,
-                end_time=timestamp
-                if e_type
-                in {
-                    ids.EVTYPE_FM_JOB_SUCCESS,
-                    ids.EVTYPE_FM_JOB_FAILURE,
-                }
-                else None,
+                start_time=start_time,
+                end_time=end_time,
                 data=event.data if e_type == ids.EVTYPE_FM_JOB_RUNNING else None,
                 error=event.data.get(ids.FM_STDERR)
                 if e_type == ids.EVTYPE_FM_JOB_FAILURE
@@ -359,8 +375,8 @@ class _ForwardModel(BaseModel):
 
 class _Job(BaseModel):
     status: str
-    start_time: Optional[str]
-    end_time: Optional[str]
+    start_time: Optional[datetime.datetime]
+    end_time: Optional[datetime.datetime]
     data: Dict
     name: str
     error: Optional[str]
@@ -370,23 +386,23 @@ class _Job(BaseModel):
 
 class _Step(BaseModel):
     status: str
-    start_time: Optional[str]
-    end_time: Optional[str]
+    start_time: Optional[datetime.datetime]
+    end_time: Optional[datetime.datetime]
     jobs: Dict[str, _Job] = {}
 
 
 class _Stage(BaseModel):
     status: str
-    start_time: Optional[str]
-    end_time: Optional[str]
+    start_time: Optional[datetime.datetime]
+    end_time: Optional[datetime.datetime]
     steps: Dict[str, _Step] = {}
 
 
 class _Realization(BaseModel):
     status: str
     active: bool
-    start_time: Optional[str]
-    end_time: Optional[str]
+    start_time: Optional[datetime.datetime]
+    end_time: Optional[datetime.datetime]
     stages: Dict[str, _Stage] = {}
     status: str
 

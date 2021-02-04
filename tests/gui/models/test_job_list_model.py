@@ -1,3 +1,4 @@
+from datetime import datetime
 import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_gui.model.job_list import JobListProxyModel
 from ert_gui.model.node import NodeType
@@ -54,8 +55,24 @@ def test_changes(full_snapshot):
     )
 
     partial = PartialSnapshot(full_snapshot)
-    partial.update_job("0", "0", "0", "0", status=JOB_STATE_FAILURE)
+    start_time = datetime(year=2020, month=10, day=27)
+    end_time = datetime(year=2020, month=10, day=28)
+    partial.update_job(
+        "0",
+        "0",
+        "0",
+        "0",
+        status=JOB_STATE_FAILURE,
+        start_time=start_time,
+        end_time=end_time,
+    )
     source_model._add_partial_snapshot(partial, 0)
+    assert model.index(0, _id_to_col(ids.START_TIME), QModelIndex()).data() == str(
+        start_time
+    )
+    assert model.index(0, _id_to_col(ids.END_TIME), QModelIndex()).data() == str(
+        end_time
+    )
     assert (
         model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data()
         == JOB_STATE_FAILURE

@@ -174,9 +174,8 @@ class LegacyTracker:
             for idx, fm in enumerate(jobs):
                 job = step.jobs[str(idx)]
 
-                # FIXME: parse these as iso date
-                job.start_time = str(fm.start_time) if fm.start_time else None
-                job.end_time = str(fm.end_time) if fm.end_time else None
+                job.start_time = fm.start_time
+                job.end_time = fm.end_time
                 job.name = fm.name
                 job.status = _map_job_state(fm.status)
                 job.error = fm.error
@@ -284,8 +283,8 @@ class LegacyTracker:
                     "0",
                     str(idx),
                     status=_map_job_state(fm.status),
-                    start_time=str(fm.start_time) if fm.start_time else None,
-                    end_time=str(fm.end_time) if fm.end_time else None,
+                    start_time=fm.start_time,
+                    end_time=fm.end_time,
                     data={
                         CURRENT_MEMORY_USAGE: fm.current_memory_usage,
                         MAX_MEMORY_USAGE: fm.max_memory_usage,

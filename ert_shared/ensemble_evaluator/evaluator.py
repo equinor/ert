@@ -10,6 +10,7 @@ from async_generator import asynccontextmanager
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.dispatch import Dispatcher
+from ert_shared.ensemble_evaluator.entity import serialization
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
     Snapshot,
@@ -152,7 +153,9 @@ class EnsembleEvaluator:
             snapshot_mutate_event.to_dict(),
         )
         out_cloudevent.data["iter"] = self._iter
-        out_msg = to_json(out_cloudevent).decode()
+        out_msg = to_json(
+            out_cloudevent, data_marshaller=serialization.evaluator_marshaller
+        ).decode()
         if out_msg and self._clients:
             await asyncio.wait([client.send(out_msg) for client in self._clients])
 
@@ -168,7 +171,9 @@ class EnsembleEvaluator:
             },
             data,
         )
-        return to_json(out_cloudevent).decode()
+        return to_json(
+            out_cloudevent, data_marshaller=serialization.evaluator_marshaller
+        ).decode()
 
     @contextmanager
     def store_client(self, websocket):
@@ -184,7 +189,9 @@ class EnsembleEvaluator:
             await websocket.send(message)
 
             async for message in websocket:
-                client_event = from_json(message)
+                client_event = from_json(
+                    message, data_unmarshaller=serialization.evaluator_unmarshaller
+                )
                 logger.debug(f"got message from client: {client_event}")
                 if client_event["type"] == identifiers.EVTYPE_EE_USER_CANCEL:
                     logger.debug(f"Client {websocket.remote_address} asked to cancel.")
@@ -209,7 +216,9 @@ class EnsembleEvaluator:
     async def handle_dispatch(self, websocket, path):
         async with self.count_dispatcher():
             async for msg in websocket:
-                event = from_json(msg)
+                event = from_json(
+                    msg, data_unmarshaller=serialization.evaluator_unmarshaller
+                )
                 await self._dispatch.handle_event(self, event)
                 if event["type"] in [
                     identifiers.EVTYPE_ENSEMBLE_STOPPED,
@@ -257,7 +266,9 @@ class EnsembleEvaluator:
                 "id": self.event_index(),
             }
         )
-        message = to_json(out_cloudevent).decode()
+        message = to_json(
+            out_cloudevent, data_marshaller=serialization.evaluator_marshaller
+        ).decode()
         return message
 
     def event_index(self):

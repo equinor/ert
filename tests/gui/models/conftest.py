@@ -20,6 +20,7 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
     _Step,
 )
 import copy
+import datetime
 
 
 def partial_snapshot(snapshot) -> PartialSnapshot:
@@ -42,8 +43,8 @@ def full_snapshot() -> Snapshot:
                         status="",
                         jobs={
                             "0": _Job(
-                                start_time=str(123),
-                                end_time=str(123),
+                                start_time=datetime.datetime.now(),
+                                end_time=datetime.datetime.now(),
                                 name="poly_eval",
                                 status=JOB_STATE_START,
                                 error="error",
@@ -55,8 +56,8 @@ def full_snapshot() -> Snapshot:
                                 },
                             ),
                             "1": _Job(
-                                start_time=str(123),
-                                end_time=str(123),
+                                start_time=datetime.datetime.now(),
+                                end_time=datetime.datetime.now(),
                                 name="poly_postval",
                                 status=JOB_STATE_START,
                                 error="error",
