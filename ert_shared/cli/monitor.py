@@ -62,7 +62,7 @@ class Monitor:
         for event in tracker.track():
             if isinstance(event, FullSnapshotEvent):
                 if event.snapshot is not None:
-                    self._snapshot = Snapshot(event.snapshot.dict())
+                    self._snapshot = event.snapshot
                 self._progress = event.progress
             elif isinstance(event, SnapshotUpdateEvent):
                 self._snapshot.merge_event(event.partial_snapshot)
