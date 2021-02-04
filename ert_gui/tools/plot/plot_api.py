@@ -79,12 +79,10 @@ class PlotApi(object):
             observation_type = self._facade.get_impl_type_name_for_obs_key(key)
             data_loader = loader.data_loader_factory(observation_type)
 
-            data = data_loader(self._facade, key, case_name, include_data=False)
-
-            # Simulated data and observations both refer to the data
-            # index at some levels, so having that information available is
-            # helpful
-            self._add_index_range(data)
+            try:
+                data = data_loader(self._facade, key, case_name, include_data=False)
+            except loader.NoObservationsException:
+                data = pd.DataFrame()
 
             data = pd.concat({key: data}, axis=1, names=["obs_key"])
 
