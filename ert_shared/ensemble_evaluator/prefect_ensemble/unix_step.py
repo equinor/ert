@@ -150,8 +150,6 @@ class UnixStep(Task):
                     "source": f"/ert/ee/{self._ee_id}/real/{self._iens}/stage/{self._stage_id}/step/{self._step_id}/job/{job['id']}",
                     "datacontenttype": "application/json",
                 },
-                # TODO capture output form function execution also return output from script execution
-                # {"stdout": cmd_exec.stdout},
             )
 
             client.send(to_json(event).decode())
