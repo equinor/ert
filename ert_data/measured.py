@@ -1,4 +1,7 @@
+from collections import defaultdict
+
 import pandas as pd
+import numpy as np
 
 from ert_data import loader
 
@@ -6,7 +9,12 @@ from ert_data import loader
 class MeasuredData(object):
     def __init__(self, facade, keys, index_lists=None, load_data=True):
         self._facade = facade
-        self._set_data(self._get_data(keys, index_lists, load_data))
+
+        if index_lists is not None and len(index_lists) != len(keys):
+            raise ValueError("index list must be same length as observations keys")
+
+        self._set_data(self._get_data(keys, load_data))
+        self._set_data(self.filter_on_column_index(keys, index_lists))
 
     @property
     def data(self):
@@ -59,38 +67,36 @@ class MeasuredData(object):
     def is_empty(self):
         return self.data.empty
 
-    def _get_data(self, observation_keys, index_lists, load_data=True):
+    def _get_data(self, observation_keys, load_data=True):
         """
         Adds simulated and observed data and returns a dataframe where ensamble
         members will have a data key, observed data will be named OBS and
         observed standard deviation will be named STD.
         """
-        measured_data = pd.DataFrame()
         case_name = self._facade.get_current_case_name()
 
-        if index_lists is None:
-            index_lists = [None] * len(observation_keys)
+        # Because several observations can be linked to the same response we create
+        # a grouping to avoid reading the same response for each of the corresponding
+        # observations, as that is quite slow.
+        key_map = defaultdict(list)
+        for key in observation_keys:
+            data_key = self._facade.get_data_key_for_obs_key(key)
+            key_map[data_key].append(key)
 
-        if len(index_lists) != len(observation_keys):
-            raise ValueError("index list must be same length as observations keys")
+        measured_data = []
 
-        for key, index_list in zip(observation_keys, index_lists):
-            observation_type = self._facade.get_impl_type_name_for_obs_key(key)
+        for obs_keys in key_map.values():
+            obs_types = [
+                self._facade.get_impl_type_name_for_obs_key(key) for key in obs_keys
+            ]
+            assert len(set(obs_types)) == 1, (
+                f"\nMore than one observation type found for obs keys: {obs_keys}"
+            )
+            observation_type = obs_types[0]
             data_loader = loader.data_loader_factory(observation_type)
+            measured_data.append(data_loader(self._facade, obs_keys, case_name, load_data))
 
-            data = data_loader(self._facade, key, case_name, load_data)
-
-            # Simulated data and observations both refer to the data
-            # index at some levels, so having that information available is
-            # helpful
-            _add_index_range(data)
-
-            data = MeasuredData._filter_on_column_index(data, index_list)
-            data = pd.concat({key: data}, axis=1)
-
-            measured_data = pd.concat([measured_data, data], axis=1)
-
-        return measured_data.astype(float)
+        return pd.concat(measured_data, axis=1)
 
     def filter_ensemble_std(self, std_cutoff):
         self._set_data(self._filter_ensemble_std(std_cutoff))
@@ -122,10 +128,19 @@ class MeasuredData(object):
 
         return self.data.drop(columns=mean_filter[mean_filter].index)
 
+    def filter_on_column_index(self, obs_keys, index_lists):
+        if index_lists is None or all(index_list is None for index_list in index_lists):
+            return self.data
+        names = self.data.columns.get_level_values(0)
+        data_index = self.data.columns.get_level_values("data_index")
+        cond = self._create_condition(names, data_index, obs_keys, index_lists)
+        return self.data.iloc[:, cond]
+
+
     @staticmethod
     def _filter_on_column_index(dataframe, index_list):
         """
-        Retuns a subset where the columns in index_list are filtered out
+        Returns a subset where the columns in index_list are filtered out
         """
         if isinstance(index_list, (list, tuple)):
             if max(index_list) > dataframe.shape[1]:
@@ -140,15 +155,12 @@ class MeasuredData(object):
         else:
             return dataframe
 
-
-def _add_index_range(data):
-    """
-    Adds a second column index with which corresponds to the data
-    index. This is because in libres simulated data and observations
-    are connected through an observation key and data index, so having
-    that information available when the data is joined is helpful.
-    """
-    arrays = [data.columns.to_list(), list(range(len(data.columns)))]
-    tuples = list(zip(*arrays))
-    index = pd.MultiIndex.from_tuples(tuples, names=["key_index", "data_index"])
-    data.columns = index
+    @staticmethod
+    def _create_condition(names, data_index, obs_keys, index_lists):
+        conditions = []
+        for obs_key, index_list in zip(obs_keys, index_lists):
+            if index_list is not None:
+                index_cond = [data_index == index for index in index_list]
+                index_cond = np.logical_or.reduce(index_cond)
+                conditions.append(np.logical_and(index_cond, (names == obs_key)))
+        return np.logical_or.reduce(conditions)
