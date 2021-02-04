@@ -58,8 +58,10 @@ class ProgressDelegate(QStyledItemDelegate):
         self.background_color = QColor(200, 210, 210)
 
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
-
         data = index.data(ProgressRole)
+        if data is None:
+            return
+
         nr_reals = data["nr_reals"]
         status = data["status"]
         d = option.rect.width() / nr_reals

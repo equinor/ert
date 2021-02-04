@@ -25,8 +25,9 @@ class LegendDelegate(QStyledItemDelegate):
         super(LegendDelegate, self).__init__(parent)
 
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
-
         data = index.data(ProgressRole)
+        if data is None:
+            return
         nr_reals = data["nr_reals"]
         status = data["status"]
 

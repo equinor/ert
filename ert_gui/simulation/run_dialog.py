@@ -72,8 +72,7 @@ class RunDialog(QDialog):
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
 
-        progress_proxy_model = ProgressProxyModel(self)
-        progress_proxy_model.setSourceModel(self._snapshot_model)
+        progress_proxy_model = ProgressProxyModel(self._snapshot_model, parent=self)
 
         # simple_progress_view = SimpleProgressView(self)
         # simple_progress_view.setModel(progress_proxy_model)
