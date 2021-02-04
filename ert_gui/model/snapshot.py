@@ -266,6 +266,11 @@ class SnapshotModel(QAbstractItemModel):
                     return byte_with_unit(bytes)
             if data_name in [ids.STDOUT, ids.STDERR]:
                 return "OPEN" if node.data.get(data_name) else QVariant()
+            if data_name in [ids.START_TIME, ids.END_TIME]:
+                _time = node.data.get(data_name)
+                if _time is not None:
+                    return str(_time)
+                return QVariant()
             return node.data.get(data_name)
         if role == FileRole:
             _, data_name = COLUMNS[NodeType.STEP][index.column()]
