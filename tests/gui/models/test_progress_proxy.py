@@ -49,5 +49,5 @@ def test_progression(full_snapshot):
 
     assert model.data(model.index(0, 0, QModelIndex()), ProgressRole) == {
         "nr_reals": 100,
-        "status": {REALIZATION_STATE_UNKNOWN: 99, JOB_STATE_FINISHED: 1},
+        "status": {REALIZATION_STATE_UNKNOWN: 99, REALIZATION_STATE_FINISHED: 1},
     }

@@ -4,6 +4,8 @@ import typing
 from qtpy.QtCore import (
     QObject,
     Qt,
+    Signal,
+    Slot,
     QAbstractItemModel,
     QAbstractProxyModel,
     QModelIndex,
@@ -26,17 +28,19 @@ class JobListProxyModel(QAbstractProxyModel):
         self._stage = stage
         self._step = step
 
-    def _get_source_parent_index(self) -> QModelIndex:
-        start = self.index(0, 0, QModelIndex())
-        if not start.isValid():
-            return QModelIndex()
-        if start.internalPointer() is None:
-            return QModelIndex()
-        source_parent = self.mapToSource(start).parent()
-        assert source_parent.isValid()
-        assert source_parent.internalPointer()
-        assert source_parent.internalPointer().type == NodeType.STEP
-        return source_parent
+    step_changed = Signal(int, int, int, int)
+
+    @Slot(int, int, int, int)
+    def set_step(self, iter_, real, stage, step):
+        self._disconnect()
+        self.modelAboutToBeReset.emit()
+        self._iter = iter_
+        self._real = real
+        self._stage = stage
+        self._step = step
+        self.modelReset.emit()
+        self._connect()
+        self.step_changed.emit(iter_, real, stage, step)
 
     def _disconnect(self):
         sm = self.sourceModel()
@@ -57,6 +61,18 @@ class JobListProxyModel(QAbstractProxyModel):
         sm.rowsInserted.connect(self._source_rows_inserted)
         sm.modelAboutToBeReset.connect(self._source_model_about_to_be_reset)
         sm.modelReset.connect(self._source_model_reset)
+
+    def _get_source_parent_index(self) -> QModelIndex:
+        start = self.index(0, 0, QModelIndex())
+        if not start.isValid():
+            return QModelIndex()
+        if start.internalPointer() is None:
+            return QModelIndex()
+        source_parent = self.mapToSource(start).parent()
+        assert source_parent.isValid()
+        assert source_parent.internalPointer()
+        assert source_parent.internalPointer().type == NodeType.STEP
+        return source_parent
 
     def setSourceModel(self, sourceModel: QAbstractItemModel) -> None:
         if not sourceModel:

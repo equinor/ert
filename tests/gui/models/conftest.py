@@ -1,4 +1,4 @@
-from ert_shared.status.entity.state import JOB_STATE_FINISHED
+from ert_shared.status.entity.state import JOB_STATE_FINISHED, JOB_STATE_START, REALIZATION_STATE_UNKNOWN
 import pytest
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
@@ -23,7 +23,7 @@ def partial_snapshot(snapshot) -> PartialSnapshot:
 @pytest.fixture()
 def full_snapshot() -> Snapshot:
     real = _Realization(
-        status="Unknown",
+        status=REALIZATION_STATE_UNKNOWN,
         active=True,
         stages={
             "0": _Stage(
@@ -36,7 +36,7 @@ def full_snapshot() -> Snapshot:
                                 start_time=str(123),
                                 end_time=str(123),
                                 name="poly_eval",
-                                status="Unknown",
+                                status=JOB_STATE_START,
                                 error="error",
                                 stdout="std_out_file",
                                 stderr="std_err_file",
@@ -49,7 +49,7 @@ def full_snapshot() -> Snapshot:
                                 start_time=str(123),
                                 end_time=str(123),
                                 name="poly_postval",
-                                status="Workin",
+                                status=JOB_STATE_START,
                                 error="error",
                                 stdout="std_out_file",
                                 stderr="std_err_file",
@@ -65,7 +65,7 @@ def full_snapshot() -> Snapshot:
         },
     )
     snapshot = _SnapshotDict(
-        status="Unknown",
+        status=REALIZATION_STATE_UNKNOWN,
         reals={},
         forward_model=_ForwardModel(step_definitions={}),
     )

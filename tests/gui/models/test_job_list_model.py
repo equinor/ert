@@ -1,6 +1,10 @@
+from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot
+from ert_shared.status.entity.state import JOB_STATE_FAILURE, JOB_STATE_START
+from ert_gui.model.node import NodeType
+from PyQt5.QtCore import QModelIndex
 from ert_gui.model.job_list import JobListProxyModel
 from tests.gui.models.conftest import partial_snapshot
-from ert_gui.model.snapshot import SnapshotModel
+from ert_gui.model.snapshot import COLUMNS, SnapshotModel
 from pytestqt.qt_compat import qt_api
 
 
@@ -23,3 +27,47 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
     source_model._add_partial_snapshot(partial, 1)
 
     qtmodeltester.check(model, force_py=True)
+
+
+def test_changes(full_snapshot):
+    source_model = SnapshotModel()
+
+    model = JobListProxyModel(None, 0, 0, 0, 0)
+    model.setSourceModel(source_model)
+
+    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
+    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa, prevent GC
+        model, reporting_mode
+    )
+
+    source_model._add_snapshot(full_snapshot, 0)
+    assert model.index(0, 1, QModelIndex()).data() == JOB_STATE_START
+
+    partial = PartialSnapshot(full_snapshot)
+    partial.update_job("0", "0", "0", "0", status=JOB_STATE_FAILURE)
+    source_model._add_partial_snapshot(partial, 0)
+    assert model.index(0, 1, QModelIndex()).data() == JOB_STATE_FAILURE
+
+
+def test_no_cross_talk(full_snapshot):
+    source_model = SnapshotModel()
+
+    model = JobListProxyModel(None, 0, 0, 0, 0)
+    model.setSourceModel(source_model)
+
+    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
+    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa, prevent GC
+        model, reporting_mode
+    )
+
+    source_model._add_snapshot(full_snapshot, 0)
+    source_model._add_snapshot(full_snapshot, 1)
+
+    # Test that changes to iter=1 does not bleed into iter=0
+    partial = PartialSnapshot(full_snapshot)
+    partial.update_job("0", "0", "0", "0", status=JOB_STATE_FAILURE)
+    source_model._add_partial_snapshot(partial, 1)
+    assert model.index(0, 1, QModelIndex()).data() == JOB_STATE_START
+
+    model.set_step(1, 0, 0, 0)
+    assert model.index(0, 1, QModelIndex()).data() == JOB_STATE_FAILURE

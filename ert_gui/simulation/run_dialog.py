@@ -97,8 +97,13 @@ class RunDialog(QDialog):
 
         self._job_label = QLabel(self)
 
+        self._job_model = JobListProxyModel(self, 0,0,0,0)
+        self._job_model.setSourceModel(self._snapshot_model)
+
         self._job_view = QTableView(self)
         self._job_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self._job_view.setModel(self._job_model)
+
 
         self.running_time = QLabel("")
 
@@ -212,18 +217,6 @@ class RunDialog(QDialog):
 
             self._tab_widget.addTab(widget, f"Iteration {iter}")
 
-    # @Slot(QModelIndex)
-    # def _select_iter(self, index):
-    #     node = index.internalPointer()
-    #     if node is None or node.type != NodeType.ITER:
-    #         return
-    #     iter_ = node.row()
-    #     print("select iter: ", iter_)
-
-    #     self._real_list.model().setIter(iter_)
-    #     #self._real_view.model().setIter(iter_)
-    #     self._real_list.setVisible(True)
-
     @Slot(QModelIndex)
     def _select_real(self, index):
         node = index.internalPointer()
@@ -235,11 +228,7 @@ class RunDialog(QDialog):
         iter_ = node.parent.row()
         print("select real", step, stage, real, iter_)
 
-        # create a proxy model
-        # TODO: change values on proxymodel such that it does not need creation
-        proxy = JobListProxyModel(self, iter_, real, stage, step)
-        proxy.setSourceModel(self._snapshot_model)
-        self._job_view.setModel(proxy)
+        self._job_model.set_step(iter_, real, stage, step)
 
         self._job_label.setText(f"Realization id {real} in iteration {iter_}")
 
