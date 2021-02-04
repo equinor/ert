@@ -58,7 +58,9 @@ class ProgressProxyModel(QAbstractItemModel):
     def _recalculate_progress(self, iter_):
         d = {}
         nr_reals = 0
-        current_iter_node = self._source_model.index(iter_, 0, QModelIndex()).internalPointer()
+        current_iter_node = self._source_model.index(
+            iter_, 0, QModelIndex()
+        ).internalPointer()
         for _, v in current_iter_node.children.items():
             ## realizations
             nr_reals += 1
