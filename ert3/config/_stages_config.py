@@ -4,17 +4,12 @@ from typing import List, Callable, Optional, Union
 from pydantic import root_validator, validator, FilePath, BaseModel
 
 def _import_from(path):
-    try:
+    if not isinstance(path, str):
+        raise ValueError(f"Script must be type <str> is: {type(path)}")
+    if ":" in path:
         module, func = path.split(":")
-    except ValueError as err:
+    else:
         return path
-        raise (
-            ValueError(
-                f"Malformed script name, must be: some.module:function_name, was {path}"
-            )
-        ) from err
-    except AttributeError as err:
-        raise ValueError(f"Script must be type <str> is: {type(path)}") from err
     try:
         module = importlib.import_module(module)
     except ModuleNotFoundError as err:
