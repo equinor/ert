@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 def _calculate_misfit(
-    obs_value, response_values, obs_stds, obs_data_indexes, obs_index
+    obs_value, response_values, obs_stds, obs_data_indexes, obs_key_indexes, obs_index
 ):
     observation_std = obs_stds[obs_index]
     response_index = obs_data_indexes[obs_index]
@@ -21,7 +21,12 @@ def _calculate_misfit(
     misfit = (difference / observation_std) ** 2
     sign = difference > 0
 
-    return {"value": misfit, "sign": sign, "obs_index": obs_index}
+    return {
+        "value": misfit,
+        "sign": sign,
+        "obs_index": obs_index,
+        "obs_location": obs_key_indexes[obs_index],
+    }
 
 
 def _obs_to_json(obs, active=None):
@@ -101,6 +106,7 @@ async def read_response_by_id(*, db: Session = Db(), ensemble_id: int, id: int):
             obs_values = list(observation.values)
             obs_stds = list(observation.errors)
             obs_data_indexes = list(observation.data_indices)
+            obs_key_indexes = list(observation.key_indices)
             misfits = []
             for obs_index, obs_value in enumerate(obs_values):
                 misfits.append(
@@ -109,6 +115,7 @@ async def read_response_by_id(*, db: Session = Db(), ensemble_id: int, id: int):
                         resp_values,
                         obs_stds,
                         obs_data_indexes,
+                        obs_key_indexes,
                         obs_index,
                     )
                 )

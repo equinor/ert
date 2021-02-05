@@ -38,6 +38,19 @@ def test_observation(app_client):
     assert actual == expected
 
 
+def test_get_single_misfits(app_client):
+    ens = app_client.get(p.ensemble(1)).json()
+    response = app_client.get(p.response(ens["id"], ens["responses"][0]["id"])).json()
+    real_0 = response["realizations"][0]
+    assert "univariate_misfits" in real_0
+    assert "observation_one" in real_0["univariate_misfits"]
+    misfits_0 = real_0["univariate_misfits"]["observation_one"][0]
+    assert "value" in misfits_0
+    assert misfits_0["obs_location"] == 0
+    assert misfits_0["obs_index"] == 0
+    assert misfits_0["sign"] == False
+
+
 def test_get_single_observation(app_client):
     obs = app_client.get(p.observation("observation_one")).json()
 
