@@ -3,7 +3,10 @@ from ert_gui.model.real_list import RealListModel
 from tests.gui.models.conftest import partial_snapshot
 from ert_gui.model.snapshot import NodeRole, SnapshotModel
 from pytestqt.qt_compat import qt_api
-from ert_shared.status.entity.state import REALIZATION_STATE_FINISHED, REALIZATION_STATE_UNKNOWN
+from ert_shared.status.entity.state import (
+    REALIZATION_STATE_FINISHED,
+    REALIZATION_STATE_UNKNOWN,
+)
 
 
 def test_using_qt_model_tester(qtmodeltester, full_snapshot):
@@ -40,7 +43,10 @@ def test_change_iter(full_snapshot):
 
     source_model._add_snapshot(full_snapshot, 0)
 
-    assert model.index(0, 0, QModelIndex()).data(NodeRole).data["status"] == REALIZATION_STATE_UNKNOWN
+    assert (
+        model.index(0, 0, QModelIndex()).data(NodeRole).data["status"]
+        == REALIZATION_STATE_UNKNOWN
+    )
 
     source_model._add_snapshot(full_snapshot, 1)
 
@@ -50,4 +56,7 @@ def test_change_iter(full_snapshot):
     partial.update_real("0", status=REALIZATION_STATE_FINISHED)
     source_model._add_partial_snapshot(partial, 1)
 
-    assert model.index(0, 0, QModelIndex()).data(NodeRole).data["status"] == REALIZATION_STATE_FINISHED
+    assert (
+        model.index(0, 0, QModelIndex()).data(NodeRole).data["status"]
+        == REALIZATION_STATE_FINISHED
+    )

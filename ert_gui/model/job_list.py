@@ -47,20 +47,12 @@ class JobListProxyModel(QAbstractProxyModel):
         if sm is None:
             return
         sm.dataChanged.disconnect(self._source_data_changed)
-        sm.rowsAboutToBeInserted.disconnect(self._source_rows_about_to_be_inserted)
-        sm.rowsInserted.disconnect(self._source_rows_inserted)
-        sm.modelAboutToBeReset.disconnect(self._source_model_about_to_be_reset)
-        sm.modelReset.disconnect(self._source_model_reset)
 
     def _connect(self):
         sm = self.sourceModel()
         if sm is None:
             return
         sm.dataChanged.connect(self._source_data_changed)
-        sm.rowsAboutToBeInserted.connect(self._source_rows_about_to_be_inserted)
-        sm.rowsInserted.connect(self._source_rows_inserted)
-        sm.modelAboutToBeReset.connect(self._source_model_about_to_be_reset)
-        sm.modelReset.connect(self._source_model_reset)
 
     def _get_source_parent_index(self) -> QModelIndex:
         start = self.index(0, 0, QModelIndex())
@@ -76,7 +68,7 @@ class JobListProxyModel(QAbstractProxyModel):
 
     def setSourceModel(self, sourceModel: QAbstractItemModel) -> None:
         if not sourceModel:
-            raise Exception("need source model")
+            raise ValueError("need source model")
         self.beginResetModel()
         self._disconnect()
         super().setSourceModel(sourceModel)
@@ -168,28 +160,6 @@ class JobListProxyModel(QAbstractProxyModel):
         if not proxy_top_left.isValid() or not proxy_bottom_right.isValid():
             return
         self.dataChanged.emit(proxy_top_left, proxy_bottom_right, roles)
-
-    def _source_rows_about_to_be_inserted(
-        self, parent: QModelIndex, start: int, end: int
-    ):
-        if not parent.isValid():
-            return
-        if not self._index_is_on_our_branch(parent):
-            return
-        self.beginInsertRows(self.mapFromSource(parent), start, end)
-
-    def _source_rows_inserted(self, parent: QModelIndex, start: int, end: int):
-        if not parent.isValid():
-            return
-        if not self._index_is_on_our_branch(parent):
-            return
-        self.endInsertRows()
-
-    def _source_model_about_to_be_reset(self):
-        self.modelAboutToBeReset.emit()
-
-    def _source_model_reset(self):
-        self.modelReset.emit()
 
     def _index_is_on_our_branch(self, index: QModelIndex) -> bool:
         # # the tree is only traversed towards the root

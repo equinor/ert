@@ -55,7 +55,7 @@ class RealListModel(QAbstractProxyModel):
 
     def setSourceModel(self, sourceModel: QAbstractItemModel) -> None:
         if not sourceModel:
-            raise Exception("need source model")
+            raise ValueError("need source model")
         self.beginResetModel()
         self._disconnect()
         super().setSourceModel(sourceModel)

@@ -348,7 +348,7 @@ class Snapshot:
 
     def aggregate_real_states(self) -> typing.Dict[str, int]:
         states = defaultdict(int)
-        for _, real in self._data["reals"].items():
+        for real in self._data["reals"].values():
             states[real["status"]] += 1
         return states
 
