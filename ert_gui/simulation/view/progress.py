@@ -1,4 +1,4 @@
-from qtpy.QtCore import QRect, QSize, QModelIndex, Qt, Slot
+from qtpy.QtCore import QSize, QModelIndex, Slot
 from qtpy.QtWidgets import (
     QTreeView,
     QStyledItemDelegate,
@@ -7,8 +7,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QProgressBar,
 )
-from qtpy.QtGui import QPainter, QColor, QFont
-
+from qtpy.QtGui import QPainter, QColor
 from ert_shared.status.entity.state import REAL_STATE_TO_COLOR
 from ert_gui.model.snapshot import ProgressRole
 

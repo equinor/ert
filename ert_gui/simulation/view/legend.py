@@ -1,10 +1,8 @@
 import math
-from qtpy.QtCore import QRect, QSize, QModelIndex, Qt
+from qtpy.QtCore import QSize, QModelIndex, Qt
 from qtpy.QtWidgets import QTreeView, QStyledItemDelegate, QStyleOptionViewItem
-from qtpy.QtGui import QPainter, QColor, QFont
-
+from qtpy.QtGui import QPainter, QColor
 from ert_shared.status.entity.state import REAL_STATE_TO_COLOR
-
 from ert_gui.model.progress_proxy import ProgressRole
 
 

@@ -6,11 +6,8 @@ from qtpy.QtWidgets import (
     QAbstractItemView,
     QStyle,
 )
-from qtpy.QtGui import QPainter, QColor, QFont, QColorConstants, QPen
-
+from qtpy.QtGui import QPainter, QColorConstants, QPen
 from ert_gui.model.snapshot import (
-    Node,
-    NodeRole,
     RealJobColorHint,
     RealStatusColorHint,
     RealLabelHint,
@@ -62,16 +59,13 @@ class RealizationDelegate(QStyledItemDelegate):
             painter.drawText(option.rect, Qt.AlignCenter, text)
 
         else:
-            # border + job status
             border_pen = QPen()
             border_pen.setColor(QColorConstants.Black)
             border_pen.setWidth(1)
-            # painter.setBrush(index.data(RealJobColorHint))
             painter.setBrush(index.data(RealStatusColorHint))
             painter.setPen(border_pen)
             painter.drawRect(option.rect)
 
-            # real status
             margin = 10
             r = QRect(
                 option.rect.x() + margin,
@@ -79,10 +73,8 @@ class RealizationDelegate(QStyledItemDelegate):
                 option.rect.width() - (margin * 2),
                 option.rect.height() - (margin * 2),
             )
-            # painter.fillRect(r, index.data(RealStatusColorHint))
             painter.fillRect(r, index.data(RealJobColorHint))
 
-            # text
             text_pen = QPen()
             painter.setPen(text_pen)
             painter.drawText(option.rect, Qt.AlignCenter, text)
