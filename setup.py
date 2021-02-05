@@ -47,6 +47,7 @@ setup(
         "pandas",
         "pluggy",
         "pydantic",
+        "pyrsistent",
         "PyQt5",
         "pyyaml",
         "qtpy",
