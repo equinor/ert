@@ -15,7 +15,7 @@ from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.prefect_ensemble.prefect_ensemble import (
     PrefectEnsemble,
 )
-from ert_shared.ensemble_evaluator.prefect_ensemble.unix_step import UnixStep
+from ert_shared.ensemble_evaluator.prefect_ensemble.unix_step import StepRunner
 from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
     storage_driver_factory,
 )
@@ -194,16 +194,19 @@ def test_unix_step(unused_tcp_port):
                 "args": ["vas"],
             }
         ]
+        step = {
+            "outputs": ["output.out"],
+            "jobs": jobs,
+            "iens": 1,
+            "step_id": "step_id_0",
+            "stage_id": "stage_id_0",
+        }
 
-        stage_task = UnixStep(
+        step_task = StepRunner(
             resources=[resource],
-            outputs=["output.out"],
-            job_list=jobs,
-            iens=1,
+            step=step,
             cmd="python3",
             url=url,
-            step_id="step_id_0",
-            stage_id="stage_id_0",
             ee_id="ee_id_0",
             on_failure=_on_task_failure,
             run_path=config.get("run_path"),
@@ -213,7 +216,7 @@ def test_unix_step(unused_tcp_port):
         )
 
         flow = Flow("testing")
-        flow.add_task(stage_task)
+        flow.add_task(step_task)
         flow_run = flow.run()
 
         # Stop the mock evaluator WS server
@@ -221,13 +224,13 @@ def test_unix_step(unused_tcp_port):
             c.send("stop")
         mock_ws_thread.join()
 
-        task_result = flow_run.result[stage_task]
+        task_result = flow_run.result[step_task]
         assert task_result.is_successful()
         assert flow_run.is_successful()
 
         assert len(task_result.result["outputs"]) == 1
         expected_path = storage.get_storage_path(1) / "output.out"
-        output_path = flow_run.result[stage_task].result["outputs"][0]
+        output_path = flow_run.result[step_task].result["outputs"][0]
         assert expected_path == output_path
         assert output_path.exists()
 
@@ -258,15 +261,19 @@ def test_unix_step_error(unused_tcp_port):
             }
         ]
 
-        stage_task = UnixStep(
+        step = {
+            "outputs": ["output.out"],
+            "jobs": jobs,
+            "iens": 1,
+            "step_id": "step_id_0",
+            "stage_id": "stage_id_0",
+        }
+
+        step_task = StepRunner(
             resources=[resource],
-            outputs=["output.out"],
-            job_list=jobs,
-            iens=1,
+            step=step,
             cmd="python3",
             url=url,
-            step_id="step_id_0",
-            stage_id="stage_id_0",
             ee_id="ee_id_0",
             run_path=config.get("run_path"),
             storage_config=config.get("storage"),
@@ -275,7 +282,7 @@ def test_unix_step_error(unused_tcp_port):
         )
 
         flow = Flow("testing")
-        flow.add_task(stage_task)
+        flow.add_task(step_task)
         flow_run = flow.run()
 
         # Stop the mock evaluator WS server
@@ -283,7 +290,7 @@ def test_unix_step_error(unused_tcp_port):
             c.send("stop")
         mock_ws_thread.join()
 
-        task_result = flow_run.result[stage_task]
+        task_result = flow_run.result[step_task]
         assert not task_result.is_successful()
         assert not flow_run.is_successful()
 
@@ -316,16 +323,19 @@ def test_on_task_failure(unused_tcp_port):
                 "args": [],
             }
         ]
+        step = {
+            "outputs": [],
+            "jobs": jobs,
+            "iens": 1,
+            "step_id": "step_id_0",
+            "stage_id": "stage_id_0",
+        }
 
-        stage_task = UnixStep(
+        step_task = StepRunner(
             resources=[resource],
-            outputs=[],
-            job_list=jobs,
-            iens=1,
+            step=step,
             cmd="python3",
             url=url,
-            step_id="step_id_0",
-            stage_id="stage_id_0",
             ee_id="ee_id_0",
             on_failure=partial(PrefectEnsemble._on_task_failure, url=url),
             run_path=config.get("run_path"),
@@ -335,7 +345,7 @@ def test_on_task_failure(unused_tcp_port):
         )
 
         flow = Flow("testing")
-        flow.add_task(stage_task)
+        flow.add_task(step_task)
         flow_run = flow.run()
 
         # Stop the mock evaluator WS server
@@ -343,7 +353,7 @@ def test_on_task_failure(unused_tcp_port):
             c.send("stop")
         mock_ws_thread.join()
 
-        task_result = flow_run.result[stage_task]
+        task_result = flow_run.result[step_task]
         assert task_result.is_successful()
         assert flow_run.is_successful()
 

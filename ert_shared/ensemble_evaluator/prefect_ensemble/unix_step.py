@@ -26,17 +26,13 @@ def working_directory(path):
         os.chdir(prev_wd)
 
 
-class UnixStep(Task):
+class StepRunner(Task):
     def __init__(
         self,
         resources,
-        outputs,
-        job_list,
-        iens,
+        step,
         cmd,
         url,
-        step_id,
-        stage_id,
         ee_id,
         run_path,
         storage_config,
@@ -45,28 +41,32 @@ class UnixStep(Task):
     ):
         super().__init__(*args, **kwargs)
         self._resources = resources
-        self._outputs = outputs
-        self._job_list = job_list
-        self._iens = iens
+        self._step = step
         self._cmd = cmd
         self._url = url
-        self._step_id = step_id
-        self._stage_id = stage_id
         self._ee_id = ee_id
         self._run_path = Path(run_path)
         self._storage_config = storage_config
 
-    def get_iens(self):
-        return self._iens
+    @property
+    def iens(self):
+        return self._step["iens"]
 
-    def get_stage_id(self):
-        return self._stage_id
+    @property
+    def stage_id(self):
+        return self._step["stage_id"]
 
-    def get_step_id(self):
-        return self._step_id
+    @property
+    def step_id(self):
+        return self._step["step_id"]
 
-    def get_ee_id(self):
+    @property
+    def ee_id(self):
         return self._ee_id
+
+    @property
+    def jobs(self):
+        return self._step.get("jobs", [])
 
     def retrieve_resources(self, expected_res, storage):
         if not expected_res:
@@ -98,7 +98,7 @@ class UnixStep(Task):
             event = CloudEvent(
                 {
                     "type": ids.EVTYPE_FM_JOB_FAILURE,
-                    "source": f"/ert/ee/{self._ee_id}/real/{self._iens}/stage/{self._stage_id}/step/{self._step_id}/job/{job['id']}",
+                    "source": f"/ert/ee/{self.ee_id}/real/{self.iens}/stage/{self.stage_id}/step/{self.step_id}/job/{job['id']}",
                     "datacontenttype": "application/json",
                 },
                 {"stderr": cmd_exec.stderr, "stdout": cmd_exec.stdout},
@@ -119,7 +119,7 @@ class UnixStep(Task):
             event = CloudEvent(
                 {
                     "type": ids.EVTYPE_FM_JOB_FAILURE,
-                    "source": f"/ert/ee/{self._ee_id}/real/{self._iens}/stage/{self._stage_id}/step/{self._step_id}/job/{fun['id']}",
+                    "source": f"/ert/ee/{self.ee_id}/real/{self.iens}/stage/{self.stage_id}/step/{self.step_id}/job/{fun['id']}",
                     "datacontenttype": "application/json",
                 },
                 {"stderr": str(e)},
@@ -128,12 +128,12 @@ class UnixStep(Task):
             raise e
 
     def run_jobs(self, client, run_path):
-        for job in self._job_list:
+        for job in self.jobs:
             self.logger.info(f"Running command {self._cmd}  {job['name']}")
             event = CloudEvent(
                 {
                     "type": ids.EVTYPE_FM_JOB_START,
-                    "source": f"/ert/ee/{self._ee_id}/real/{self._iens}/stage/{self._stage_id}/step/{self._step_id}/job/{job['id']}",
+                    "source": f"/ert/ee/{self.ee_id}/real/{self.iens}/stage/{self.stage_id}/step/{self.step_id}/job/{job['id']}",
                     "datacontenttype": "application/json",
                 },
             )
@@ -147,7 +147,7 @@ class UnixStep(Task):
             event = CloudEvent(
                 {
                     "type": ids.EVTYPE_FM_JOB_SUCCESS,
-                    "source": f"/ert/ee/{self._ee_id}/real/{self._iens}/stage/{self._stage_id}/step/{self._step_id}/job/{job['id']}",
+                    "source": f"/ert/ee/{self.ee_id}/real/{self.iens}/stage/{self.stage_id}/step/{self.step_id}/job/{job['id']}",
                     "datacontenttype": "application/json",
                 },
             )
@@ -155,7 +155,7 @@ class UnixStep(Task):
             client.send(to_json(event).decode())
 
     def run(self, expected_res=None):
-        run_path = self._run_path / str(self._iens)
+        run_path = self._run_path / str(self.iens)
         storage = self.storage_driver(run_path)
         self.retrieve_resources(expected_res, storage)
 
@@ -163,7 +163,7 @@ class UnixStep(Task):
             event = CloudEvent(
                 {
                     "type": ids.EVTYPE_FM_STEP_START,
-                    "source": f"/ert/ee/{self._ee_id}/real/{self._iens}/stage/{self._stage_id}/step/{self._step_id}",
+                    "source": f"/ert/ee/{self.ee_id}/real/{self.iens}/stage/{self.stage_id}/step/{self.step_id}",
                     "datacontenttype": "application/json",
                 },
             )
@@ -172,18 +172,18 @@ class UnixStep(Task):
             outputs = []
             self.run_jobs(ee_client, run_path)
 
-            for output in self._outputs:
+            for output in self._step.get("outputs", []):
                 if not (run_path / output).exists():
                     raise FileNotFoundError(f"Output file {output} was not generated!")
 
-                outputs.append(storage.store(output, self._iens))
+                outputs.append(storage.store(output, self.iens))
 
             event = CloudEvent(
                 {
                     "type": ids.EVTYPE_FM_STEP_SUCCESS,
-                    "source": f"/ert/ee/{self._ee_id}/real/{self._iens}/stage/{self._stage_id}/step/{self._step_id}",
+                    "source": f"/ert/ee/{self.ee_id}/real/{self.iens}/stage/{self.stage_id}/step/{self.step_id}",
                     "datacontenttype": "application/json",
                 },
             )
             ee_client.send(to_json(event).decode())
-        return {"iens": self._iens, "outputs": outputs}
+        return {"iens": self.iens, "outputs": outputs}

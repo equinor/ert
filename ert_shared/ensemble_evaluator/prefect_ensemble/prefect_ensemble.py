@@ -21,7 +21,7 @@ import sys
 from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
     storage_driver_factory,
 )
-from ert_shared.ensemble_evaluator.prefect_ensemble.unix_step import UnixStep
+from ert_shared.ensemble_evaluator.prefect_ensemble.unix_step import StepRunner
 from ert_shared.ensemble_evaluator.config import find_open_port
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     _Ensemble,
@@ -160,7 +160,7 @@ class PrefectEnsemble(_Ensemble):
                 event = CloudEvent(
                     {
                         "type": ids.EVTYPE_FM_STEP_FAILURE,
-                        "source": f"/ert/ee/{task.get_ee_id()}/real/{task.get_iens()}/stage/{task.get_stage_id()}/step/{task.get_step_id()}",
+                        "source": f"/ert/ee/{task.ee_id}/real/{task.iens}/stage/{task.stage_id}/step/{task.step_id}",
                         "datacontenttype": "application/json",
                     },
                     {"stderr": state.message},
@@ -231,16 +231,12 @@ class PrefectEnsemble(_Ensemble):
                     inputs = [
                         output_to_res.get(input, []) for input in step.get("inputs", [])
                     ]
-                    stage_task = UnixStep(
+                    step_task = StepRunner(
                         resources=list(input_files[iens])
                         + self.store_resources(step["resources"]),
-                        outputs=step.get("outputs", []),
-                        job_list=step.get("jobs", []),
-                        iens=iens,
+                        step=step,
                         cmd="python3",
                         url=dispatch_url,
-                        step_id=step["step_id"],
-                        stage_id=step["stage_id"],
                         ee_id=ee_id,
                         on_failure=partial(self._on_task_failure, url=dispatch_url),
                         run_path=self.config.get("run_path"),
@@ -250,7 +246,7 @@ class PrefectEnsemble(_Ensemble):
                         if self.config.get("max_retries") > 0
                         else None,
                     )
-                    result = stage_task(expected_res=inputs)
+                    result = step_task(expected_res=inputs)
 
                     for output in step.get("outputs", []):
                         output_to_res[output] = result["outputs"]
