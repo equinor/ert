@@ -1,14 +1,13 @@
 from threading import Thread
 
 from ecl.util.util import BoolVector
-from ert_gui.ertwidgets import Legend, resourceMovie
+from ert_gui.ertwidgets import resourceMovie
 from ert_gui.model.job_list import JobListProxyModel
 from ert_gui.model.node import NodeType
 from ert_gui.model.real_list import RealListModel
 from ert_gui.model.snapshot import SnapshotModel
 from ert_gui.simulation.tracker_worker import TrackerWorker
 from ert_gui.tools.plot.plot_tool import PlotTool
-from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot
 from ert_shared.models import BaseRunModel
 from ert_shared.status.entity.event import (
     EndEvent,
@@ -19,7 +18,6 @@ from ert_shared.status.entity.state import REAL_STATE_TO_COLOR
 from ert_shared.status.tracker.factory import create_tracker
 from ert_shared.status.utils import format_running_time
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
-from qtpy.QtGui import QColor
 from qtpy.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -30,19 +28,15 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QTabWidget,
-    QTreeView,
     QHeaderView,
     QProgressBar,
     QWIDGETSIZE_MAX,
 )
 from res.job_queue import JobStatusType
-
 from ert_gui.simulation.view.progress import ProgressView
 from ert_gui.simulation.view.legend import LegendView
 from ert_gui.simulation.view.realization import RealizationView
-
 from ert_gui.model.progress_proxy import ProgressProxyModel
-from ert_gui.model.snapshot import NodeRole
 
 
 class RunDialog(QDialog):
@@ -74,9 +68,6 @@ class RunDialog(QDialog):
 
         progress_proxy_model = ProgressProxyModel(self._snapshot_model, parent=self)
 
-        # simple_progress_view = SimpleProgressView(self)
-        # simple_progress_view.setModel(progress_proxy_model)
-
         total_progress_label = QLabel("Total Progress", self)
 
         self._total_progress_bar = QProgressBar(self)
@@ -97,13 +88,12 @@ class RunDialog(QDialog):
 
         self._job_label = QLabel(self)
 
-        self._job_model = JobListProxyModel(self, 0,0,0,0)
+        self._job_model = JobListProxyModel(self, 0, 0, 0, 0)
         self._job_model.setSourceModel(self._snapshot_model)
 
         self._job_view = QTableView(self)
         self._job_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self._job_view.setModel(self._job_model)
-
 
         self.running_time = QLabel("")
 
@@ -148,7 +138,6 @@ class RunDialog(QDialog):
         layout = QVBoxLayout()
         layout.addWidget(total_progress_label)
         layout.addWidget(self._total_progress_bar)
-        # layout.addWidget(simple_progress_view)
         layout.addWidget(self._iteration_progress_label)
         layout.addWidget(self._progress_view)
         layout.addWidget(legend_view)
@@ -172,7 +161,6 @@ class RunDialog(QDialog):
         if self._isDetailedDialog:
             return QSize(self.size().width(), 800)
         else:
-            # return QSize(self.size().width(), 200)
             return QSize(self.size().width(), 230)
 
     def _setSimpleDialog(self) -> None:
@@ -181,7 +169,6 @@ class RunDialog(QDialog):
         self._job_label.setVisible(False)
         self._job_view.setVisible(False)
         self.show_details_button.setText("Show Details")
-        # self.setFixedHeight(200)
         self.setFixedHeight(230)
 
     def _setDetailedDialog(self) -> None:
@@ -432,5 +419,3 @@ class RunDialog(QDialog):
             self._setSimpleDialog()
         else:
             self._setDetailedDialog()
-
-        # self.adjustSize()
