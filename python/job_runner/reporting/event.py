@@ -6,6 +6,7 @@ from job_runner.reporting.message import (
     Running,
     Start,
 )
+from pathlib import Path
 
 _FM_JOB_START = "com.equinor.ert.forward_model_job.start"
 _FM_JOB_RUNNING = "com.equinor.ert.forward_model_job.running"
@@ -79,6 +80,15 @@ class Event:
         self._ee_id = msg.ee_id
         self._real_id = msg.real_id
         self._stage_id = msg.stage_id
+
+        jobs = {}
+        for job in msg.jobs:
+            jobs[job.index] = job.job_data.copy()
+            if job.job_data.get("stderr"):
+                jobs[job.index]["stderr"] = str(Path(job.job_data["stderr"]).resolve())
+            if job.job_data.get("stdout"):
+                jobs[job.index]["stdout"] = str(Path(job.job_data["stdout"]).resolve())
+
         self._dump_event(
             CloudEvent(
                 {
@@ -87,7 +97,7 @@ class Event:
                     "datacontenttype": "application/json",
                 },
                 {
-                    "jobs": [job.job_data for job in msg.jobs],
+                    "jobs": jobs,
                 },
             )
         )
