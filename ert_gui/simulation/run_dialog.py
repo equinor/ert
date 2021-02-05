@@ -296,18 +296,6 @@ class RunDialog(QDialog):
     def _on_ticker(self):
         runtime = self._run_model.get_runtime()
         self.running_time.setText(format_running_time(runtime))
-        # if runtime % 5 == 0:
-        # self.total_progress.update()
-        # self.progress.update()
-        # self.legends.handle(event)
-        # if runtime % 10 == 0:
-        # self.detailed_progress.update()
-        # if runtime % 5 == 0:
-        # self.total_progress.update()
-        # self.progress.update()
-        # self.legends.handle(event)
-        # if runtime % 10 == 0:
-        # self.detailed_progress.update()
 
     @Slot(object)
     def _on_tracker_event(self, event):
@@ -329,36 +317,6 @@ class RunDialog(QDialog):
                 )
             self._progress_view.setIndeterminate(event.indeterminate)
             self._total_progress_bar.setValue(event.progress * 100)
-
-            # self.total_progress.handle(event)
-            # self.progress.handle(event)
-            # self.detailed_progress.handle(event)
-            # self.legends.handle(event)
-        # if isinstance(event, GeneralEvent):
-        #     self.total_progress.setProgress(event.progress)
-        #     self.progress.setIndeterminate(event.indeterminate)
-
-        #     if event.indeterminate:
-        #         for state in event.sim_states:
-        #             self.legends[state].updateLegend(state.name, 0, 0)
-        #     else:
-        #         for state in event.sim_states:
-        #             try:
-        #                 self.progress.updateState(
-        #                     state.state, 100.0 * state.count / state.total_count)
-        #             except ZeroDivisionError:
-        #                 # total_count not set by some slow tracker (EE)
-        #                 pass
-        #             self.legends[state].updateLegend(
-        #                 state.name, state.count, state.total_count)
-
-        # if isinstance(event, DetailedEvent):
-        #     if not self.progress.get_indeterminate():
-        #         self.detailed_progress.set_progress(event.details,
-        #                                             event.iteration)
-
-        # if isinstance(event, EndEvent):
-        #     self.simulation_done.emit(event.failed, event.failed_msg)
 
     def has_failed_realizations(self):
         completed = self._run_model.completed_realizations_mask

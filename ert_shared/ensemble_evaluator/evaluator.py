@@ -27,6 +27,11 @@ class EnsembleEvaluator:
     _dispatch = Dispatcher()
 
     def __init__(self, ensemble, config, iter_, ee_id=0):
+        # Without information on the iteration, the events emitted from the
+        # evaluator are ambiguous. In the future, an experiment authority* will
+        # "own" the evaluators and can add iteration information to events they
+        # emit. In the mean time, it is added here.
+        # * https://github.com/equinor/ert/issues/1250
         self._iter = iter_
         self._ee_id = ee_id
 

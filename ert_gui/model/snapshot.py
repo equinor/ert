@@ -41,7 +41,7 @@ COLUMNS = {
 class SnapshotModel(QAbstractItemModel):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
-        self.root = Node(None, {"status": "n/a"}, NodeType.ROOT)
+        self.root = Node(None, {}, NodeType.ROOT)
 
     def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: int):
         partial_d = partial.to_dict()
@@ -122,6 +122,8 @@ class SnapshotModel(QAbstractItemModel):
                     self.dataChanged.emit(step_index, step_index_bottom_right)
                 self.dataChanged.emit(stage_index, stage_index_bottom_right)
             self.dataChanged.emit(real_index, real_index_bottom_right)
+            # TODO: there is no check that any of the data *actually* changed
+            # https://github.com/equinor/ert/issues/1374
 
         top_left = self.index(0, 0, iter_index)
         bottom_right = self.index(0, 1, iter_index)
@@ -192,8 +194,13 @@ class SnapshotModel(QAbstractItemModel):
 
         node = index.internalPointer()
 
+        if role == NodeRole:
+            return node
+
         if node.type == NodeType.JOB:
             return self._job_data(index, node, role)
+        elif node.type == NodeType.REAL:
+            return self._real_data(index, node, role)
 
         if role == Qt.DisplayRole:
             if index.column() == 0:
@@ -201,10 +208,10 @@ class SnapshotModel(QAbstractItemModel):
             if index.column() == 1:
                 return f"{node.data['status']}"
 
-        if role == NodeRole:
-            return node
+        return QVariant()
 
-        if node.type == NodeType.REAL and role == RealJobColorHint:
+    def _real_data(self, index: QModelIndex, node: Node, role: int):
+        if role == RealJobColorHint:
             # TODO: make nicer + make sure it works with thare more than 1 job
             for _, stage in node.children.items():
                 # print("1: ", stage)
@@ -219,12 +226,10 @@ class SnapshotModel(QAbstractItemModel):
                             status = JOB_STATE_FINISHED
                         return QColor(*REAL_STATE_TO_COLOR[status])
 
-        if node.type == NodeType.REAL and role == RealLabelHint:
+        elif role == RealLabelHint:
             return f"{node.id}"
-
-        if node.type == NodeType.REAL and role == RealStatusColorHint:
+        elif role == RealStatusColorHint:
             return QColor(*REAL_STATE_TO_COLOR[node.data["status"]])
-
         else:
             return QVariant()
 
@@ -246,8 +251,6 @@ class SnapshotModel(QAbstractItemModel):
             elif index.column() == 5:
                 data = node.data.get("data")
                 return data.get("max_memory_usage") if data else QVariant()
-        if role == NodeRole:
-            return node
         return QVariant()
 
     def index(self, row: int, column: int, parent=QModelIndex()) -> QModelIndex:

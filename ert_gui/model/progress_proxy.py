@@ -19,6 +19,9 @@ class ProgressProxyModel(QAbstractItemModel):
     def _connect(self):
         self._source_model.dataChanged.connect(self._source_data_changed)
         self._source_model.rowsInserted.connect(self._source_rows_inserted)
+
+        # rowCount-1 of the top index in the underlying, will be the last/most
+        # recent iteration. If it's -1, then there are no iterations yet.
         last_iter = self._source_model.rowCount(QModelIndex()) - 1
         if last_iter >= 0:
             self._recalculate_progress(last_iter)
