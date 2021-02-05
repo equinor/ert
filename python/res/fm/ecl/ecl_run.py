@@ -257,8 +257,6 @@ class EclRun(object):
             "eclrun",
             "-v",
             eclrun_config.version,
-            "--np",
-            str(self.num_cpu),
             eclrun_config.simulator_name,
             "{}.DATA".format(self.base_name),
         ]
