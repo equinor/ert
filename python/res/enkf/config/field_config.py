@@ -51,6 +51,9 @@ class FieldConfig(BaseCClass):
     _get_ny = ResPrototype("int    field_config_get_ny(field_config)")
     _get_nz = ResPrototype("int    field_config_get_nz(field_config)")
     _get_grid = ResPrototype("ecl_grid_ref field_config_get_grid(field_config)")
+    _get_data_size = ResPrototype(
+        "int field_config_get_data_size_from_grid(field_config)"
+    )
     _export_format = ResPrototype(
         "enkf_field_file_format_enum field_config_default_export_format(char*)",
         bind=False,
@@ -106,6 +109,9 @@ class FieldConfig(BaseCClass):
 
     def get_nz(self):
         return self._get_nz()
+
+    def get_data_size(self):
+        return self._get_data_size()
 
     def get_grid(self):
         return self._get_grid()

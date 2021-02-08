@@ -26,7 +26,6 @@ class FieldConfigTest(ResTest):
     def test_field_guess_filetype(self):
         with TestAreaContext("field_config") as test_context:
             fname = abspath("test.kw.grdecl")
-            print(fname)
             with open(fname, "w") as f:
                 f.write("-- my comment\n")
                 f.write("-- more comments\n")
@@ -71,16 +70,19 @@ class FieldConfigTest(ResTest):
             FieldConfig.exportFormat("file.xyz")
 
     def test_basics(self):
-        grid = EclGridGenerator.create_rectangular((17, 13, 11), (1, 1, 1))
+        nx = 17
+        ny = 13
+        nz = 11
+        actnum = [1] * nx * ny * nz
+        actnum[0] = 0
+        grid = EclGridGenerator.create_rectangular((nx, ny, nz), (1, 1, 1), actnum)
         fc = FieldConfig("PORO", grid)
-        print(fc)
-        print(str(fc))
-        print(repr(fc))
         pfx = "FieldConfig(type"
         rep = repr(fc)
         self.assertEqual(pfx, rep[: len(pfx)])
         fc_xyz = fc.get_nx(), fc.get_ny(), fc.get_nz()
-        ex_xyz = 17, 13, 11
+        ex_xyz = nx, ny, nz
         self.assertEqual(ex_xyz, fc_xyz)
         self.assertEqual(0, fc.get_truncation_mode())
         self.assertEqual(ex_xyz, (grid.getNX(), grid.getNY(), grid.getNZ()))
+        self.assertEqual(fc.get_data_size(), grid.get_num_active())
