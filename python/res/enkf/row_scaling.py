@@ -24,8 +24,9 @@ class RowScaling(BaseCClass):
     _alloc = ResPrototype("void*  row_scaling_alloc()", bind=False)
     _free = ResPrototype("void   row_scaling_free(row_scaling)")
     _size = ResPrototype("int    row_scaling_get_size(row_scaling)")
-    _iset = ResPrototype("void   row_scaling_iset(row_scaling, int, double)")
+    _iset = ResPrototype("double row_scaling_iset(row_scaling, int, double)")
     _iget = ResPrototype("double row_scaling_iget(row_scaling, int)")
+    _clamp = ResPrototype("double row_scaling_clamp(row_scaling, double)")
 
     def __init__(self):
         c_ptr = self._alloc()
@@ -47,3 +48,6 @@ class RowScaling(BaseCClass):
         raise IndexError(
             "Index: {} outside valid range [0,{}>".format(index, len(self))
         )
+
+    def clamp(self, value):
+        return self._clamp(value)

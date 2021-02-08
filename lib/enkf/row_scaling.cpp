@@ -61,14 +61,21 @@ double row_scaling::operator[](int index) const {
   return this->data.at(index);
 }
 
-void row_scaling::assign(int index, double value) {
+
+double row_scaling::clamp(double value) const {
+    return floor(value * this->resolution) / this->resolution;
+}
+
+
+double row_scaling::assign(int index, double value) {
   if (value < 0 || value > 1)
     throw std::invalid_argument("Invalid value ");
 
   if (this->data.size() <= index)
     this->data.resize(index + 1, 1);
 
-  this->data.at(index) = floor(value * this->resolution) / this->resolution;
+  this->data.at(index) = this->clamp(value);
+  return this->data.at(index);
 }
 
 
@@ -202,8 +209,12 @@ double row_scaling_iget(const row_scaling_type * scaling, int index) {
   return scaling->operator[](index);
 }
 
-void row_scaling_iset(row_scaling_type * scaling, int index, double value) {
-  scaling->assign(index, value);
+double row_scaling_iset(row_scaling_type * scaling, int index, double value) {
+  return scaling->assign(index, value);
+}
+
+double row_scaling_clamp(const row_scaling_type * scaling, double value) {
+  return scaling->clamp(value);
 }
 
 void row_scaling_multiply(const row_scaling_type * scaling, matrix_type * A, const matrix_type * X0) {

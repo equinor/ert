@@ -24,7 +24,8 @@
 class row_scaling {
 public:
   double operator[](int index) const;
-  void assign(int index, double value);
+  double assign(int index, double value);
+  double clamp(double value) const;
   void multiply(matrix_type * A, const matrix_type * X0) const;
   int size() const;
 private:
@@ -47,7 +48,8 @@ void               row_scaling_free(row_scaling_type * row_scaling);
 void               row_scaling_multiply(const row_scaling_type * row_scaling, matrix_type * A, const matrix_type * X0);
 int                row_scaling_get_size(const row_scaling_type * row_scaling);
 double             row_scaling_iget(const row_scaling_type * row_scaling, int index);
-void               row_scaling_iset(row_scaling_type * row_scaling, int index, double value);
+double             row_scaling_iset(row_scaling_type * row_scaling, int index, double value);
+double             row_scaling_clamp(const row_scaling_type * row_scaling, double value);
 
 UTIL_IS_INSTANCE_HEADER( row_scaling );
 

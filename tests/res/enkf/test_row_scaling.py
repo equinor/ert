@@ -15,6 +15,7 @@
 #  for more details.
 
 import pytest
+import random
 from res.enkf import RowScaling
 
 
@@ -29,3 +30,8 @@ def test_access():
 
     with pytest.raises(IndexError):
         var = row_scaling[10]
+
+    for i in range(len(row_scaling)):
+        r = random.random()
+        row_scaling[i] = r
+        assert row_scaling[i] == row_scaling.clamp(r)
