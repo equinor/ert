@@ -217,7 +217,29 @@ field_file_format_type field_config_default_export_format(const char * filename)
 
 
 
+static bool field_config_is_grdecl_file(const char * filename) {
+  // First check based on extension.
+  char * extension;
+  util_alloc_file_components(filename, NULL, NULL, &extension);
+  if (extension) {
+    for (int i=0; i < strlen(extension); i++)
+      extension[i] = tolower(extension[i]);
 
+    if (util_string_equal(extension, "grdecl")) {
+      free(extension);
+      return true;
+    }
+  }
+
+  // Second check based on the content of the file; not a very strong test.
+  bool grdecl_file = false;
+  FILE * stream = util_fopen(filename, "r");
+  if (ecl_kw_grdecl_fseek_next_kw(stream))
+    grdecl_file = true;
+  fclose(stream);
+
+  return grdecl_file;
+}
 
 
 
@@ -225,21 +247,25 @@ field_file_format_type field_config_default_export_format(const char * filename)
 This function takes in a filename and tries to guess the type of the
 file. It can determine the following three types of files:
 
+  ecl_grdecl_file: This is a file containing a parameter of the form found in
+     eclipse grid declaration files, i.e. formatted, one keyword and all
+     elements (active and not). The check for this file type is based on a
+     compbination of extension (grdecl) and looking at the content. The content
+     test is not very strong.
+
   ecl_kw_file: This is a file containg ecl_kw instances in the form found
      in eclipse restart files.
 
   rms_roff_file: An rms roff file - obviously.
 
-  ecl_grdecl_file: This is a file containing a parameter of the form
-     found in eclipse grid declaration files, i.e. formatted, one
-     keyword and all elements (active and not).
-
-  The latter test is the weakest. Observe that the function will
-  happily return unkown_file if none of these types are recognized,
-  i.e. it is *essential* to check the return value.
-
+  Observe that the function will happily return unkown_file if none of these
+  types are recognized, i.e. it is *essential* to check the return value.
 */
+
 field_file_format_type field_config_guess_file_type(const char * filename ) {
+  if (field_config_is_grdecl_file(filename))
+    return ECL_GRDECL_FILE;
+
   bool fmt_file = util_fmt_bit8(filename );
   FILE * stream = util_fopen(filename , "r");
   fortio_type * fortio = fortio_alloc_FILE_wrapper(NULL , ECL_ENDIAN_FLIP , fmt_file , false , stream);
@@ -249,8 +275,6 @@ field_file_format_type field_config_guess_file_type(const char * filename ) {
     file_type = ECL_KW_FILE;
   else if (rms_file_is_roff(stream))
     file_type = RMS_ROFF_FILE;
-  else if (ecl_kw_grdecl_fseek_next_kw(stream))  /* This is the weakest test - and should be last in a cascading if / else hierarchy. */
-    file_type = ECL_GRDECL_FILE;
   else
     file_type = UNDEFINED_FORMAT;              /* MUST Check on this return value */
 
