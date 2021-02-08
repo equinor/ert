@@ -1,5 +1,6 @@
 from enum import Enum, auto
-from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot, _SnapshotDict
+from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
+from ert_shared.ensemble_evaluator.entity import identifiers as ids
 
 
 class NodeType(Enum):
@@ -35,25 +36,27 @@ class Node:
 
 
 def snapshot_to_tree(snapshot: Snapshot, iter_: int) -> Node:
-    iter_node = Node(iter_, {"status": snapshot.get_status()}, NodeType.ITER)
+    iter_node = Node(iter_, {ids.STATUS: snapshot.get_status()}, NodeType.ITER)
     for real_id in sorted(snapshot.get_reals(), key=int):
         real = snapshot.get_reals()[real_id]
         real_node = Node(
-            real_id, {"status": real.status, "active": real.active}, NodeType.REAL
+            real_id,
+            {ids.STATUS: real.status, ids.ACTIVE: real.active},
+            NodeType.REAL,
         )
         iter_node.add_child(real_node)
         # TODO: sort stages, but wait till after https://github.com/equinor/ert/issues/1220 ?
         for stage_id, stage in real.stages.items():
-            stage_node = Node(stage_id, {"status": stage.status}, NodeType.STAGE)
+            stage_node = Node(stage_id, {ids.STATUS: stage.status}, NodeType.STAGE)
             real_node.add_child(stage_node)
             # TODO: sort steps, but wait till after https://github.com/equinor/ert/issues/1220 ?
             for step_id, step in stage.steps.items():
-                step_node = Node(step_id, {"status": step.status}, NodeType.STEP)
+                step_node = Node(step_id, {ids.STATUS: step.status}, NodeType.STEP)
                 stage_node.add_child(step_node)
                 for job_id in sorted(step.jobs, key=int):
                     job = step.jobs[job_id]
                     job_dict = dict(job)
-                    job_dict["data"] = dict(job["data"])
+                    job_dict[ids.DATA] = dict(job[ids.DATA])
                     job_node = Node(job_id, job_dict, NodeType.JOB)
                     step_node.add_child(job_node)
     return iter_node

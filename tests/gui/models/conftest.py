@@ -1,4 +1,13 @@
-from ert_shared.status.entity.state import JOB_STATE_FINISHED, JOB_STATE_START, REALIZATION_STATE_UNKNOWN
+from ert_shared.ensemble_evaluator.entity.identifiers import (
+    CURRENT_MEMORY_USAGE,
+    MAX_MEMORY_USAGE,
+)
+from ert_shared.status.entity.state import (
+    ENSEMBLE_STATE_STARTED,
+    JOB_STATE_FINISHED,
+    JOB_STATE_START,
+    REALIZATION_STATE_UNKNOWN,
+)
 import pytest
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
@@ -41,8 +50,8 @@ def full_snapshot() -> Snapshot:
                                 stdout="std_out_file",
                                 stderr="std_err_file",
                                 data={
-                                    "current_memory_usage": "123",
-                                    "max_memory_usage": "312",
+                                    CURRENT_MEMORY_USAGE: "123",
+                                    MAX_MEMORY_USAGE: "312",
                                 },
                             ),
                             "1": _Job(
@@ -54,8 +63,8 @@ def full_snapshot() -> Snapshot:
                                 stdout="std_out_file",
                                 stderr="std_err_file",
                                 data={
-                                    "current_memory_usage": "123",
-                                    "max_memory_usage": "312",
+                                    CURRENT_MEMORY_USAGE: "123",
+                                    MAX_MEMORY_USAGE: "312",
                                 },
                             ),
                         },
@@ -65,7 +74,7 @@ def full_snapshot() -> Snapshot:
         },
     )
     snapshot = _SnapshotDict(
-        status=REALIZATION_STATE_UNKNOWN,
+        status=ENSEMBLE_STATE_STARTED,
         reals={},
         forward_model=_ForwardModel(step_definitions={}),
     )

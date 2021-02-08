@@ -74,5 +74,4 @@ class QueueDiff:
         return snapshot
 
     def queue(self) -> JobQueue:
-        assert self._queue is not None
         return self._queue

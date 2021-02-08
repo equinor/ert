@@ -61,9 +61,6 @@ class JobListProxyModel(QAbstractProxyModel):
         if start.internalPointer() is None:
             return QModelIndex()
         source_parent = self.mapToSource(start).parent()
-        assert source_parent.isValid()
-        assert source_parent.internalPointer()
-        assert source_parent.internalPointer().type == NodeType.STEP
         return source_parent
 
     def setSourceModel(self, sourceModel: QAbstractItemModel) -> None:

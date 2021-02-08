@@ -1,29 +1,20 @@
-from collections import defaultdict
-from ert_shared.status.entity.state import (
-    JOB_STATE_FAILURE,
-    JOB_STATE_FINISHED,
-    JOB_STATE_RUNNING,
-    JOB_STATE_START,
-    REALIZATION_STATE_FAILED,
-    REALIZATION_STATE_FINISHED,
-    REALIZATION_STATE_PENDING,
-    REALIZATION_STATE_RUNNING,
-)
+import copy
 import typing
-from pydantic import BaseModel
-from typing import DefaultDict, Dict, List, Optional, Any, Dict, List, Optional, Any
+from collections import defaultdict
+from typing import Any, Dict, List, Optional
 
+import pyrsistent
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.entity.tool import (
-    recursive_update,
+    get_job_id,
     get_real_id,
     get_stage_id,
     get_step_id,
-    get_job_id,
+    recursive_update,
 )
-import pyrsistent
 
-import copy
+from ert_shared.status.entity import state
+from pydantic import BaseModel
 
 
 class UnsupportedOperationException(ValueError):
@@ -31,26 +22,25 @@ class UnsupportedOperationException(ValueError):
 
 
 _FM_TYPE_EVENT_TO_STATUS = {
-    # FIXME: STAGE -> REAL and use constants from ert_shared/status
-    ids.EVTYPE_FM_STAGE_WAITING: "Waiting",
-    ids.EVTYPE_FM_STAGE_PENDING: "Pending",
-    ids.EVTYPE_FM_STAGE_RUNNING: "Running",
-    ids.EVTYPE_FM_STAGE_FAILURE: "Failed",
-    ids.EVTYPE_FM_STAGE_SUCCESS: "Finished",
-    ids.EVTYPE_FM_STAGE_UNKNOWN: "Unknown",
-    ids.EVTYPE_FM_STEP_START: "Pending",
-    ids.EVTYPE_FM_STEP_FAILURE: "Failed",
-    ids.EVTYPE_FM_STEP_SUCCESS: "Finished",
-    ids.EVTYPE_FM_JOB_START: JOB_STATE_START,
-    ids.EVTYPE_FM_JOB_RUNNING: JOB_STATE_RUNNING,
-    ids.EVTYPE_FM_JOB_SUCCESS: JOB_STATE_FINISHED,
-    ids.EVTYPE_FM_JOB_FAILURE: JOB_STATE_FAILURE,
+    ids.EVTYPE_FM_STAGE_WAITING: state.STAGE_STATE_WAITING,
+    ids.EVTYPE_FM_STAGE_PENDING: state.STAGE_STATE_PENDING,
+    ids.EVTYPE_FM_STAGE_RUNNING: state.STAGE_STATE_PENDING,
+    ids.EVTYPE_FM_STAGE_FAILURE: state.STAGE_STATE_FAILURE,
+    ids.EVTYPE_FM_STAGE_SUCCESS: state.STAGE_STATE_SUCCESS,
+    ids.EVTYPE_FM_STAGE_UNKNOWN: state.STAGE_STATE_UNKNOWN,
+    ids.EVTYPE_FM_STEP_START: state.STEP_STATE_START,
+    ids.EVTYPE_FM_STEP_FAILURE: state.STEP_STATE_FAILURE,
+    ids.EVTYPE_FM_STEP_SUCCESS: state.STEP_STATE_SUCCESS,
+    ids.EVTYPE_FM_JOB_START: state.JOB_STATE_START,
+    ids.EVTYPE_FM_JOB_RUNNING: state.JOB_STATE_RUNNING,
+    ids.EVTYPE_FM_JOB_SUCCESS: state.JOB_STATE_FINISHED,
+    ids.EVTYPE_FM_JOB_FAILURE: state.JOB_STATE_FAILURE,
 }
 
 _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
-    ids.EVTYPE_ENSEMBLE_STARTED: "Starting",
-    ids.EVTYPE_ENSEMBLE_STOPPED: "Stopped",
-    ids.EVTYPE_ENSEMBLE_CANCELLED: "Cancelled",
+    ids.EVTYPE_ENSEMBLE_STARTED: state.ENSEMBLE_STATE_STARTED,
+    ids.EVTYPE_ENSEMBLE_STOPPED: state.ENSEMBLE_STATE_STOPPED,
+    ids.EVTYPE_ENSEMBLE_CANCELLED: state.ENSEMBLE_STATE_CANCELLED,
 }
 
 
@@ -63,7 +53,7 @@ class PartialSnapshot:
         self._snapshot = copy.copy(snapshot) if snapshot else None
 
     def update_status(self, status):
-        self._apply_update({"status": status})
+        self._apply_update({ids.STATUS: status})
 
     def update_real(
         self,
@@ -75,15 +65,15 @@ class PartialSnapshot:
     ):
         real = {}
         if active is not None:
-            real["active"] = active
+            real[ids.ACTIVE] = active
         if start_time is not None:
-            real["start_time"] = start_time
+            real[ids.START_TIME] = start_time
         if end_time is not None:
-            real["end_time"] = end_time
+            real[ids.END_TIME] = end_time
         if status is not None:
-            real["status"] = status
+            real[ids.STATUS] = status
 
-        self._apply_update({"reals": {real_id: real}})
+        self._apply_update({ids.REALS: {real_id: real}})
 
     def update_stage(
         self,
@@ -96,22 +86,25 @@ class PartialSnapshot:
         stage = {}
 
         if status is not None:
-            stage["status"] = status
+            stage[ids.STATUS] = status
         if start_time is not None:
-            stage["start_time"] = start_time
+            stage[ids.START_TIME] = start_time
         if end_time is not None:
-            stage["end_time"] = end_time
+            stage[ids.END_TIME] = end_time
 
-        self._apply_update({"reals": {real_id: {"stages": {stage_id: stage}}}})
-        if self._snapshot.get_real(real_id)["status"] != REALIZATION_STATE_FAILED:
+        self._apply_update({ids.REALS: {real_id: {ids.STAGES: {stage_id: stage}}}})
+        if (
+            self._snapshot.get_real(real_id)[ids.STATUS]
+            != state.REALIZATION_STATE_FAILED
+        ):
             if status in [
-                REALIZATION_STATE_FAILED,
-                REALIZATION_STATE_PENDING,
-                REALIZATION_STATE_RUNNING,
+                state.REALIZATION_STATE_FAILED,
+                state.REALIZATION_STATE_PENDING,
+                state.REALIZATION_STATE_RUNNING,
             ]:
                 self.update_real(real_id, status=status)
             elif (
-                status == REALIZATION_STATE_FINISHED
+                status == state.REALIZATION_STATE_FINISHED
                 and self._snapshot.all_stages_finished(real_id)
             ):
                 self.update_real(real_id, status=status)
@@ -130,27 +123,32 @@ class PartialSnapshot:
         step = {}
 
         if status is not None:
-            step["status"] = status
+            step[ids.STATUS] = status
         if start_time is not None:
-            step["start_time"] = start_time
+            step[ids.START_TIME] = start_time
         if end_time is not None:
-            step["end_time"] = end_time
+            step[ids.END_TIME] = end_time
 
         self._apply_update(
-            {"reals": {real_id: {"stages": {stage_id: {"steps": {step_id: step}}}}}}
+            {
+                ids.REALS: {
+                    real_id: {ids.STAGES: {stage_id: {ids.STEPS: {step_id: step}}}}
+                }
+            }
         )
         if (
-            self._snapshot.get_stage(real_id, stage_id)["status"]
-            != REALIZATION_STATE_FAILED
+            self._snapshot.get_stage(real_id, stage_id)[ids.STATUS]
+            != state.REALIZATION_STATE_FAILED
         ):
             if status in [
-                REALIZATION_STATE_FAILED,
-                REALIZATION_STATE_PENDING,
-                REALIZATION_STATE_RUNNING,
+                state.REALIZATION_STATE_FAILED,
+                state.REALIZATION_STATE_PENDING,
+                state.REALIZATION_STATE_RUNNING,
             ]:
                 self.update_stage(real_id, stage_id, status)
-            elif status == "Finished" and self._snapshot.all_steps_finished(
-                real_id, stage_id
+            elif (
+                status == state.STEP_STATE_SUCCESS
+                and self._snapshot.all_steps_finished(real_id, stage_id)
             ):
                 self.update_stage(real_id, stage_id, status)
 
@@ -169,22 +167,22 @@ class PartialSnapshot:
         job = {}
 
         if status is not None:
-            job["status"] = status
+            job[ids.STATUS] = status
         if start_time is not None:
-            job["start_time"] = start_time
+            job[ids.START_TIME] = start_time
         if end_time is not None:
-            job["end_time"] = end_time
+            job[ids.END_TIME] = end_time
         if data is not None:
-            job["data"] = data
+            job[ids.DATA] = data
         if error is not None:
-            job["error"] = error
+            job[ids.ERROR] = error
 
         self._apply_update(
             {
-                "reals": {
+                ids.REALS: {
                     real_id: {
-                        "stages": {
-                            stage_id: {"steps": {step_id: {"jobs": {job_id: job}}}}
+                        ids.STAGES: {
+                            stage_id: {ids.STEPS: {step_id: {ids.JOBS: {job_id: job}}}}
                         }
                     }
                 }
@@ -245,39 +243,41 @@ class PartialSnapshot:
                 }
                 else None,
                 data=event.data if e_type == ids.EVTYPE_FM_JOB_RUNNING else None,
-                error=event.data.get("stderr")
+                error=event.data.get(ids.FM_STDERR)
                 if e_type == ids.EVTYPE_FM_JOB_FAILURE
                 else None,
             )
         elif e_type in ids.EVGROUP_ENSEMBLE:
             self.update_status(_ENSEMBLE_TYPE_EVENT_TO_STATUS[e_type])
         elif e_type == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
-            if "status" in event:
-                self.update_status(event["status"])
-            if "reals" not in event.data:
+            if ids.STATUS in event:
+                self.update_status(event[ids.STATUS])
+            if ids.REALS not in event.data:
                 return self
-            for real_id, real in event.data["reals"].items():
-                self.update_real(real_id, **{k: real[k] for k in real if k != "stages"})
-                if "stages" not in real:
+            for real_id, real in event.data[ids.REALS].items():
+                self.update_real(
+                    real_id, **{k: real[k] for k in real if k != ids.STAGES}
+                )
+                if ids.STAGES not in real:
                     continue
-                for stage_id, stage in real["stages"].items():
+                for stage_id, stage in real[ids.STAGES].items():
                     self.update_stage(
                         real_id,
                         stage_id,
-                        **{k: stage[k] for k in stage if k != "steps"},
+                        **{k: stage[k] for k in stage if k != ids.STEPS},
                     )
-                    if "steps" not in stage:
+                    if ids.STEPS not in stage:
                         continue
-                    for step_id, step in stage["steps"].items():
+                    for step_id, step in stage[ids.STEPS].items():
                         self.update_step(
                             real_id,
                             stage_id,
                             step_id,
-                            **{k: step[k] for k in step if k != "jobs"},
+                            **{k: step[k] for k in step if k != ids.JOBS},
                         )
-                        if "jobs" not in step:
+                        if ids.JOBS not in step:
                             continue
-                        for job_id, job in step["jobs"].items():
+                        for job_id, job in step[ids.JOBS].items():
                             self.update_job(real_id, stage_id, step_id, job_id, **job)
         else:
             raise ValueError("Unknown type: {}".format(e_type))
@@ -298,58 +298,64 @@ class Snapshot:
         return pyrsistent.thaw(self._data)
 
     def get_status(self):
-        return self._data["status"]
+        return self._data[ids.STATUS]
 
     def get_reals(self):
-        return self._data["reals"]
+        return self._data[ids.REALS]
 
     def get_real(self, real_id):
-        if real_id not in self._data["reals"]:
+        if real_id not in self._data[ids.REALS]:
             raise ValueError(f"No realization with id {real_id}")
-        return self._data["reals"][real_id]
+        return self._data[ids.REALS][real_id]
 
     def get_stage(self, real_id, stage_id):
         real = self.get_real(real_id)
-        stages = real["stages"]
+        stages = real[ids.STAGES]
         if stage_id not in stages:
             raise ValueError(f"No stage with id {stage_id} in {real_id}")
         return stages[stage_id]
 
     def get_step(self, real_id, stage_id, step_id):
         stage = self.get_stage(real_id, stage_id)
-        steps = stage["steps"]
+        steps = stage[ids.STEPS]
         if step_id not in steps:
             raise ValueError(f"No step with id {step_id} in {stage_id}")
         return steps[step_id]
 
     def get_job(self, real_id, stage_id, step_id, job_id):
         step = self.get_step(real_id, stage_id, step_id)
-        jobs = step["jobs"]
+        jobs = step[ids.JOBS]
         if job_id not in jobs:
             raise ValueError(f"No job with id {job_id} in {step_id}")
         return jobs[job_id]
 
     def all_stages_finished(self, real_id):
         real = self.get_real(real_id)
-        return all(stage["status"] == "Finished" for stage in real["stages"].values())
+        return all(
+            stage[ids.STATUS] == state.STAGE_STATE_SUCCESS
+            for stage in real[ids.STAGES].values()
+        )
 
     def all_steps_finished(self, real_id, stage_id):
         stage = self.get_stage(real_id, stage_id)
-        return all(step["status"] == "Finished" for step in stage["steps"].values())
+        return all(
+            step[ids.STATUS] == state.STEP_STATE_SUCCESS
+            for step in stage[ids.STEPS].values()
+        )
 
     def get_successful_realizations(self):
         return len(
             [
                 real
-                for real in self.to_dict()["reals"].values()
-                if real["status"] == "Finished"
+                for real in self.to_dict()[ids.REALS].values()
+                if real[ids.STATUS] == state.REALIZATION_STATE_FINISHED
             ]
         )
 
     def aggregate_real_states(self) -> typing.Dict[str, int]:
         states = defaultdict(int)
-        for real in self._data["reals"].values():
-            states[real["status"]] += 1
+        for real in self._data[ids.REALS].values():
+            states[real[ids.STATUS]] += 1
         return states
 
 

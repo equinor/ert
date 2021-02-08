@@ -5,7 +5,9 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
     Snapshot,
 )
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant, Slot
+from ert_shared.ensemble_evaluator.entity import identifiers as ids
+
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 from qtpy.QtGui import QColor
 
 from ert_shared.status.entity.state import JOB_STATE_FINISHED, REAL_STATE_TO_COLOR
@@ -50,69 +52,72 @@ class SnapshotModel(QAbstractItemModel):
             return
         iter_index = self.index(iter_, 0, QModelIndex())
         iter_node = self.root.children[iter_]
-        if "reals" not in partial_d:
+        if ids.REALS not in partial_d:
             logger.debug(f"no realizations in partial for iter {iter_}")
             return
-        for real_id in sorted(partial_d["reals"], key=int):
-            real = partial_d["reals"][real_id]
+        for real_id in sorted(partial_d[ids.REALS], key=int):
+            real = partial_d[ids.REALS][real_id]
             real_node = iter_node.children[real_id]
-            if real.get("status"):
-                real_node.data["status"] = real.get("status")
+            if real.get(ids.STATUS):
+                real_node.data[ids.STATUS] = real.get(ids.STATUS)
 
             real_index = self.index(real_node.row(), 0, iter_index)
             real_index_bottom_right = self.index(
                 real_node.row(), self.columnCount(iter_index) - 1, iter_index
             )
 
-            if "stages" not in real:
+            if ids.STAGES not in real:
                 continue
 
             # TODO: sort stages, but wait till after https://github.com/equinor/ert/issues/1220 ?
-            for stage_id, stage in real["stages"].items():
+            for stage_id, stage in real[ids.STAGES].items():
                 stage_node = real_node.children[stage_id]
 
-                if stage.get("status"):
-                    stage_node.data["status"] = stage.get("status")
+                if stage.get(ids.STATUS):
+                    stage_node.data[ids.STATUS] = stage.get(ids.STATUS)
 
                 stage_index = self.index(stage_node.row(), 0, real_index)
                 stage_index_bottom_right = self.index(
                     stage_node.row(), self.columnCount(real_index) - 1, real_index
                 )
 
-                if "steps" not in stage:
+                if ids.STEPS not in stage:
                     continue
 
                 # TODO: sort steps, but wait till after https://github.com/equinor/ert/issues/1220 ?
-                for step_id, step in stage["steps"].items():
+                for step_id, step in stage[ids.STEPS].items():
                     step_node = stage_node.children[step_id]
-                    if step.get("status"):
-                        step_node.data["status"] = step.get("status")
+                    if step.get(ids.STATUS):
+                        step_node.data[ids.STATUS] = step.get(ids.STATUS)
 
                     step_index = self.index(step_node.row(), 0, stage_index)
                     step_index_bottom_right = self.index(
                         step_node.row(), self.columnCount(stage_index) - 1, stage_index
                     )
 
-                    if "jobs" not in step:
+                    if ids.JOBS not in step:
                         continue
 
-                    for job_id in sorted(step["jobs"], key=int):
-                        job = step["jobs"][job_id]
+                    for job_id in sorted(step[ids.JOBS], key=int):
+                        job = step[ids.JOBS][job_id]
                         job_node = step_node.children[job_id]
-                        if job.get("status"):
-                            job_node.data["status"] = job["status"]
-                        if job.get("start_time"):
-                            job_node.data["start_time"] = job["start_time"]
-                        if job.get("end_time"):
-                            job_node.data["end_time"] = job["end_time"]
-                        if job.get("data", {}).get("current_memory_usage"):
-                            job_node.data["data"]["current_memory_usage"] = job["data"][
-                                "current_memory_usage"
-                            ]
-                        if job.get("data", {}).get("max_memory_usage"):
-                            job_node.data["data"]["max_memory_usage"] = job["data"][
-                                "max_memory_usage"
-                            ]
+                        for attr in (
+                            ids.STATUS,
+                            ids.START_TIME,
+                            ids.END_TIME,
+                        ):
+                            if attr in job:
+                                job_node.data[attr] = job[attr]
+
+                        # TODO: this is ugly
+                        if job.get(ids.DATA, {}).get(ids.CURRENT_MEMORY_USAGE):
+                            job_node.data[ids.DATA][ids.CURRENT_MEMORY_USAGE] = job[
+                                ids.DATA
+                            ][ids.CURRENT_MEMORY_USAGE]
+                        if job.get(ids.DATA, {}).get(ids.MAX_MEMORY_USAGE):
+                            job_node.data[ids.DATA][ids.MAX_MEMORY_USAGE] = job[
+                                ids.DATA
+                            ][ids.MAX_MEMORY_USAGE]
 
                         job_index = self.index(job_node.row(), 0, step_index)
                         job_index_bottom_right = self.index(
@@ -219,7 +224,7 @@ class SnapshotModel(QAbstractItemModel):
                     # print("node2: ", step)
                     for _, job in step.children.items():
                         # print("node3: ", job.data)
-                        status = job.data["status"]
+                        status = job.data[ids.STATUS]
                         # print("job ", s)
                         # FIXME: Success shouldn't really exist
                         if status == "Success":
@@ -229,28 +234,28 @@ class SnapshotModel(QAbstractItemModel):
         elif role == RealLabelHint:
             return f"{node.id}"
         elif role == RealStatusColorHint:
-            return QColor(*REAL_STATE_TO_COLOR[node.data["status"]])
+            return QColor(*REAL_STATE_TO_COLOR[node.data[ids.STATUS]])
         else:
             return QVariant()
 
     def _job_data(self, index: QModelIndex, node: Node, role: int):
         if role == Qt.BackgroundRole:
-            return QColor(*REAL_STATE_TO_COLOR[node.data.get("status")])
+            return QColor(*REAL_STATE_TO_COLOR[node.data.get(ids.STATUS)])
         if role == Qt.DisplayRole:
             if index.column() == 0:
-                return node.data.get("name")
+                return node.data.get(ids.NAME)
             elif index.column() == 1:
-                return node.data.get("status")
+                return node.data.get(ids.STATUS)
             elif index.column() == 2:
-                return node.data.get("start_time")
+                return node.data.get(ids.START_TIME)
             elif index.column() == 3:
-                return node.data.get("end_time")
+                return node.data.get(ids.END_TIME)
             elif index.column() == 4:
-                data = node.data.get("data")
-                return data.get("current_memory_usage") if data else QVariant()
+                data = node.data.get(ids.DATA)
+                return data.get(ids.CURRENT_MEMORY_USAGE) if data else QVariant()
             elif index.column() == 5:
-                data = node.data.get("data")
-                return data.get("max_memory_usage") if data else QVariant()
+                data = node.data.get(ids.DATA)
+                return data.get(ids.MAX_MEMORY_USAGE) if data else QVariant()
         return QVariant()
 
     def index(self, row: int, column: int, parent=QModelIndex()) -> QModelIndex:

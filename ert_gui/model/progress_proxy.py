@@ -88,7 +88,6 @@ class ProgressProxyModel(QAbstractItemModel):
         self.dataChanged.emit(index, index, [ProgressRole])
 
     def _source_rows_inserted(self, parent: QModelIndex, start: int, end: int):
-        assert start == end
         self._recalculate_progress(start)
         index = self.index(0, 0, QModelIndex())
         self.dataChanged.emit(index, index, [ProgressRole])

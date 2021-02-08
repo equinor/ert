@@ -1,4 +1,8 @@
-from ert_shared.status.entity.state import JOB_STATE_FINISHED, REALIZATION_STATE_FINISHED, REALIZATION_STATE_UNKNOWN
+from ert_shared.status.entity.state import (
+    JOB_STATE_FINISHED,
+    REALIZATION_STATE_FINISHED,
+    REALIZATION_STATE_UNKNOWN,
+)
 from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot
 from PyQt5.QtCore import QModelIndex
 from ert_gui.model.progress_proxy import ProgressProxyModel

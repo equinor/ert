@@ -1,20 +1,45 @@
-FM_JOB_ID = "id"
-FM_JOB_TYPE = "type"
-FM_JOB_INPUTS = "inputs"
+ID = "id"
+TYPE = "type"
+INPUTS = "inputs"
 
-TERMINATE = "terminate"
-PAUSE = "pause"
 ACTION = "action"
-TERMINATED = "terminated"
-DONE = "done"
-STATUS = "status"
-FORWARD_MODELS = "forward_models"
-REALIZATIONS = "realizations"
-EVENT_INDEX = "event_index"
+ACTIVE = "active"
+ARG_TYPES = "arg_types"
+ARGLIST = "argList"
 CREATED = "created"
-
-REALIZATION_STATUS = "status"
-REALIZATION_FORWARD_MODELS = "forward_models"
+CURRENT_MEMORY_USAGE = "current_memory_usage"
+DATA = "data"
+DONE = "done"
+END_TIME = "end_time"
+ENVIRONMENT = "environment"
+ERROR = "error"
+ERROR_FILE = "error_file"
+EVENT_INDEX = "event_index"
+EXEC_ENV = "exec_env"
+EXECUTABLE = "executable"
+FORWARD_MODELS = "forward_models"
+JOBS = "jobs"
+LICENSE_PATH = "license_path"
+MAX_ARG = "max_arg"
+MAX_MEMORY_USAGE = "max_memory_usage"
+MAX_RUNNING = "max_running"
+MAX_RUNNING_MINUTES = "max_running_minutes"
+MIN_ARG = "min_arg"
+NAME = "name"
+PAUSE = "pause"
+REALIZATIONS = "realizations"
+REALS = "reals"
+STAGES = "stages"
+START_FILE = "start_file"
+START_TIME = "start_time"
+STATUS = "status"
+STDERR = "stderr"
+STDIN = "stdin"
+STDOUT = "stdout"
+STEPS = "steps"
+TARGET_FILE = "target_file"
+TERMINATE = "terminate"
+TERMINATED = "terminated"
 
 EVTYPE_FM_STAGE_WAITING = "com.equinor.ert.forward_model_stage.waiting"
 EVTYPE_FM_STAGE_PENDING = "com.equinor.ert.forward_model_stage.pending"
@@ -62,27 +87,6 @@ EVTYPE_EE_TERMINATED = "com.equinor.ert.ee.terminated"
 EVTYPE_EE_USER_CANCEL = "com.equinor.ert.ee.user_cancel"
 EVTYPE_EE_USER_DONE = "com.equinor.ert.ee.user_done"
 
-FM_JOB_ATTR_NAME = "name"
-FM_JOB_ATTR_EXECUTABLE = "executable"
-FM_JOB_ATTR_TARGET_FILE = "target_file"
-FM_JOB_ATTR_ERROR_FILE = "error_file"
-FM_JOB_ATTR_START_FILE = "start_file"
-FM_JOB_ATTR_STDOUT = "stdout"
-FM_JOB_ATTR_STDERR = "stderr"
-FM_JOB_ATTR_STDIN = "stdin"
-FM_JOB_ATTR_ARGLIST = "argList"
-FM_JOB_ATTR_ENVIRONMENT = "environment"
-FM_JOB_ATTR_EXEC_ENV = "exec_env"
-FM_JOB_ATTR_LICENSE_PATH = "license_path"
-FM_JOB_ATTR_MAX_RUNNING_MINUTES = "max_running_minutes"
-FM_JOB_ATTR_MAX_RUNNING = "max_running"
-FM_JOB_ATTR_MIN_ARG = "min_arg"
-FM_JOB_ATTR_ARG_TYPES = "arg_types"
-FM_JOB_ATTR_MAX_ARG = "max_arg"
-FM_JOB_ATTR_STATUS = "status"
-FM_JOB_ATTR_CURRENT_MEMORY_USAGE = "current_memory_usage"
-
-
 EVTYPE_ENSEMBLE_STARTED = "com.equinor.ert.ensemble.started"
 EVTYPE_ENSEMBLE_STOPPED = "com.equinor.ert.ensemble.stopped"
 EVTYPE_ENSEMBLE_CANCELLED = "com.equinor.ert.ensemble.cancelled"
@@ -91,13 +95,4 @@ EVGROUP_ENSEMBLE = {
     EVTYPE_ENSEMBLE_STARTED,
     EVTYPE_ENSEMBLE_STOPPED,
     EVTYPE_ENSEMBLE_CANCELLED,
-}
-
-STATUS_QUEUE_STATE = {
-    "Waiting": "JOB_QUEUE_WAITING",
-    "Finished": "JOB_QUEUE_SUCCESS",
-    "Failed": "JOB_QUEUE_FAILED",
-    "Pending": "JOB_QUEUE_RUNNING",
-    "Running": "JOB_QUEUE_RUNNING",
-    "Unknown": "JOB_QUEUE_UNKNOWN",
 }
