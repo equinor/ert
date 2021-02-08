@@ -16,6 +16,7 @@ class LegendView(QTreeView):
         self.setRootIsDecorated(False)
         self.setMinimumHeight(30)
         self.setMaximumHeight(30)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
 
 class LegendDelegate(QStyledItemDelegate):
@@ -38,9 +39,8 @@ class LegendDelegate(QStyledItemDelegate):
         x_pos = 0
         for state, color_ref in REAL_STATE_TO_COLOR.items():
 
-            if state not in status:
-                state_progress = 0
-            else:
+            state_progress = 0
+            if state in status:
                 state_progress = status[state]
 
             x = x_pos
