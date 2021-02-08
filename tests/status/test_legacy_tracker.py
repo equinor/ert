@@ -116,6 +116,8 @@ def test_tracking(cmd_line_arguments, num_successful, num_iters, tmpdir, source_
                 assert not event.failed
                 break
 
+        assert tracker._progress() == 1.0
+
         assert len(snapshots) == num_iters
         for snapshot in snapshots.values():
             assert len(snapshot.get_reals()) == num_successful

@@ -1,3 +1,4 @@
+from ert_shared.status.utils import byte_with_unit
 import logging
 
 from ert_gui.model.node import Node, NodeType, snapshot_to_tree
@@ -252,10 +253,15 @@ class SnapshotModel(QAbstractItemModel):
                 return node.data.get(ids.END_TIME)
             elif index.column() == 4:
                 data = node.data.get(ids.DATA)
-                return data.get(ids.CURRENT_MEMORY_USAGE) if data else QVariant()
+                bytes = data.get(ids.CURRENT_MEMORY_USAGE) if data else None
+                if bytes:
+                    return byte_with_unit(bytes)
             elif index.column() == 5:
                 data = node.data.get(ids.DATA)
-                return data.get(ids.MAX_MEMORY_USAGE) if data else QVariant()
+                bytes = data.get(ids.MAX_MEMORY_USAGE) if data else None
+                if bytes:
+                    return byte_with_unit(bytes)
+
         return QVariant()
 
     def index(self, row: int, column: int, parent=QModelIndex()) -> QModelIndex:

@@ -1,3 +1,4 @@
+from ert_shared.status.utils import tracker_progress
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_STOPPED,
@@ -110,7 +111,7 @@ class EvaluatorTracker:
                     current_phase=self._model.currentPhase(),
                     total_phases=self._model.phaseCount(),
                     indeterminate=self._model.isIndeterminate(),
-                    progress=current_phase / phase_count,
+                    progress=self._progress(),
                     iteration=iter_,
                     snapshot=snapshot,
                 )
@@ -128,7 +129,7 @@ class EvaluatorTracker:
                     current_phase=self._model.currentPhase(),
                     total_phases=self._model.phaseCount(),
                     indeterminate=self._model.isIndeterminate(),
-                    progress=current_phase / phase_count,
+                    progress=self._progress(),
                     iteration=iter_,
                     partial_snapshot=partial,
                 )
@@ -147,6 +148,9 @@ class EvaluatorTracker:
 
     def is_finished(self):
         return not self._drainer_thread.is_alive()
+
+    def _progress(self) -> float:
+        return tracker_progress(self)
 
     def reset(self):
         pass

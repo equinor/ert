@@ -3,6 +3,7 @@ import unittest
 from ert_shared.status.utils import (
     format_running_time,
     scale_intervals,
+    _calculate_progress,
 )
 
 
@@ -55,70 +56,56 @@ class TrackerUtilsTest(unittest.TestCase):
                 ),
             )
 
-    # def test_calculate_progress(self):
-    #     tests = [
-    #         {
-    #             "expected": 0.01,
-    #             "phase": 0,
-    #             "phase_count": 1,
-    #             "finished": False,
-    #             "queue_running": False,
-    #             "queue_size": 100,
-    #             "phase_has_run": False,
-    #             "done_count": 1,
-    #         },  # noqa
-    #         {
-    #             "expected": 1,
-    #             "phase": 1,
-    #             "phase_count": 1,
-    #             "finished": True,
-    #             "queue_running": False,
-    #             "queue_size": 100,
-    #             "phase_has_run": True,
-    #             "done_count": 100,
-    #         },  # noqa
-    #         {
-    #             "expected": 0.5,
-    #             "phase": 0,
-    #             "phase_count": 2,
-    #             "finished": False,
-    #             "queue_running": False,
-    #             "queue_size": 100,
-    #             "phase_has_run": True,
-    #             "done_count": 100,
-    #         },  # noqa
-    #         {
-    #             "expected": 0,
-    #             "phase": 0,
-    #             "phase_count": 2,
-    #             "finished": False,
-    #             "queue_running": False,
-    #             "queue_size": 100,
-    #             "phase_has_run": False,
-    #             "done_count": 0,
-    #         },  # noqa
-    #         {
-    #             "expected": 0.5,
-    #             "phase": 0,
-    #             "phase_count": 2,
-    #             "finished": False,
-    #             "queue_running": False,
-    #             "queue_size": 100,
-    #             "phase_has_run": True,
-    #             "done_count": 0,
-    #         },  # noqa
-    #     ]
+    def test_calculate_progress(self):
+        tests = [
+            {
+                "expected": 0.01,
+                "phase": 0,
+                "phase_count": 1,
+                "finished": False,
+                "phase_count": 1,
+                "total_reals": 100,
+                "done_reals": 1,
+                "current_iter": 0,
+            },  # noqa
+            {
+                "expected": 1,
+                "phase": 1,
+                "phase_count": 1,
+                "finished": True,
+                "total_reals": 100,
+                "done_reals": 100,
+                "current_iter": 0,
+            },  # noqa
+            {
+                "expected": 0.5,
+                "phase": 0,
+                "phase_count": 2,
+                "finished": False,
+                "total_reals": 100,
+                "done_reals": 100,
+                "current_iter": 0,
+            },  # noqa
+            {
+                "expected": 0,
+                "phase": 0,
+                "phase_count": 2,
+                "finished": False,
+                "total_reals": 100,
+                "done_reals": 0,
+                "current_iter": 0,
+            },
+        ]
 
-    #     for t in tests:
-    #         self.assertEqual(
-    #             t["expected"],
-    #             calculate_progress(
-    #                 t["phase"],
-    #                 t["phase_count"],
-    #                 t["finished"],
-    #                 t["queue_running"],
-    #                 t["queue_size"],
-    #                 t["phase_has_run"],
-    #                 t["done_count"],
-    #             ),
-    #         )
+        for t in tests:
+            self.assertEqual(
+                t["expected"],
+                _calculate_progress(
+                    t["finished"],
+                    t["phase"],
+                    t["phase_count"],
+                    t["done_reals"],
+                    t["total_reals"],
+                    t["current_iter"],
+                ),
+            )
