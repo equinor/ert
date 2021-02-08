@@ -195,6 +195,7 @@ async def create_misfit(
         (response, misfit.realizations[response.index])
         for response in (
             db.query(ds.Response)
+            .filter_by(response_definition=response_definition)
             .filter(ds.Response.index.in_(misfit.realizations.keys()))
             .join(ds.Response.response_definition)
             .filter(ds.ResponseDefinition.ensemble_id == id)
