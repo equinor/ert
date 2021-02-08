@@ -6,8 +6,7 @@ import threading
 
 from ert_shared import ERT
 from ert_shared import clear_global_state
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.cli.model_factory import create_model
 from ert_shared.cli.monitor import Monitor
@@ -59,6 +58,11 @@ MIN_REALIZATIONS 1
         )
         _clear_and_exit(msg)
 
+    ee_config = None
+    if FeatureToggling.is_enabled("prefect") or FeatureToggling.is_enabled("ensemble-evaluator"):
+        ee_config = EvaluatorServerConfig()
+        argument.update({"ee_config": ee_config})
+
     thread = threading.Thread(
         name="ert_cli_simulation_thread",
         target=model.startSimulations,
@@ -66,7 +70,7 @@ MIN_REALIZATIONS 1
     )
     thread.start()
 
-    tracker = create_tracker(model, detailed_interval=0)
+    tracker = create_tracker(model, detailed_interval=0, ee_config=ee_config)
 
     out = open(os.devnull, 'w') if args.disable_monitoring else sys.stdout
     monitor = Monitor(out=out, color_always=args.color_always)

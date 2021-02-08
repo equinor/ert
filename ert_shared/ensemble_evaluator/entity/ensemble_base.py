@@ -1,8 +1,6 @@
 import asyncio
-import threading
 import websockets
 
-from ert_shared.ensemble_evaluator.config import load_config
 
 from cloudevents.http import to_json
 

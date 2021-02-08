@@ -45,8 +45,8 @@ def _queue_state_event_type(state):
 
 
 class QueueAdaptor:
-    def __init__(self, queue, config, ee_id):
-        self._ws_url = config.get("dispatch_url")
+    def __init__(self, queue, url, ee_id):
+        self._ws_url = url
         self._ee_id = ee_id
         self._queue = queue
 

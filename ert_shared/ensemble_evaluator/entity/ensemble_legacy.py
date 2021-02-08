@@ -53,14 +53,14 @@ class _LegacyEnsemble(_Ensemble):
     def evaluate(self, config, ee_id):
         self._config = config
         self._ee_id = ee_id
-        wait_for_ws(self._config.get("url"))
+        wait_for_ws(self._config.url)
         self._evaluate_thread = threading.Thread(target=self._evaluate)
         self._evaluate_thread.start()
 
     def _evaluate(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
 
-        dispatch_url = self._config.get("dispatch_url")
+        dispatch_url = self._config.dispatch_uri
 
         try:
             out_cloudevent = CloudEvent(
@@ -105,7 +105,7 @@ class _LegacyEnsemble(_Ensemble):
                     )
                 ]
 
-            queue_adaptor = QueueAdaptor(self._job_queue, self._config, self._ee_id)
+            queue_adaptor = QueueAdaptor(self._job_queue, dispatch_url, self._ee_id)
             futures.append(
                 queue_adaptor.execute_queue(
                     threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION),
@@ -174,6 +174,6 @@ class _LegacyEnsemble(_Ensemble):
         )
         loop = asyncio.new_event_loop()
         loop.run_until_complete(
-            self.send_cloudevent(self._config.get("dispatch_url"), out_cloudevent)
+            self.send_cloudevent(self._config.dispatch_uri, out_cloudevent)
         )
         loop.close()

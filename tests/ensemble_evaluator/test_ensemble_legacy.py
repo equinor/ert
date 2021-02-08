@@ -1,21 +1,16 @@
 from unittest.mock import patch
 import pytest
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
-from pathlib import Path
-from ert_shared.ensemble_evaluator.config import CONFIG_FILE, load_config
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 
 
 @pytest.mark.timeout(60)
 def test_run_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_builder):
     num_reals = 2
-    conf_file = Path(tmpdir / CONFIG_FILE)
     with tmpdir.as_cwd():
-        with open(conf_file, "w") as f:
-            f.write(f'port: "{unused_tcp_port}"\n')
-
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2).build()
-        config = load_config(conf_file)
+        config = EvaluatorServerConfig(unused_tcp_port)
         evaluator = EnsembleEvaluator(ensemble, config, ee_id="1")
         monitor = evaluator.run()
         for e in monitor.track():
@@ -35,14 +30,9 @@ def test_run_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_builder):
 @pytest.mark.timeout(60)
 def test_run_and_cancel_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_builder):
     num_reals = 10
-    conf_file = Path(tmpdir / CONFIG_FILE)
-
     with tmpdir.as_cwd():
-        with open(conf_file, "w") as f:
-            f.write(f'port: "{unused_tcp_port}"\n')
-
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2).build()
-        config = load_config(conf_file)
+        config = EvaluatorServerConfig(unused_tcp_port)
 
         evaluator = EnsembleEvaluator(ensemble, config, ee_id="1")
 
@@ -59,13 +49,9 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_b
 @pytest.mark.timeout(60)
 def test_run_legacy_ensemble_exception(tmpdir, unused_tcp_port, make_ensemble_builder):
     num_reals = 2
-    conf_file = Path(tmpdir / CONFIG_FILE)
     with tmpdir.as_cwd():
-        with open(conf_file, "w") as f:
-            f.write(f'port: "{unused_tcp_port}"\n')
-
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2).build()
-        config = load_config(conf_file)
+        config = EvaluatorServerConfig(unused_tcp_port)
         evaluator = EnsembleEvaluator(ensemble, config, ee_id="1")
 
         with patch.object(ensemble, "_run_path_list", side_effect=RuntimeError()):

@@ -1,42 +1,27 @@
-from ert_shared.ensemble_evaluator.config import (
-    load_config,
-    CLIENT_URI,
-    DISPATCH_URI,
-    DEFAULT_HOST,
-    DEFAULT_PORT,
-)
-import pytest
-import json
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig, _get_ip_address
 
 
-@pytest.mark.parametrize(
-    "host, port", [("test_host", "42"), (None, "42"), ("test_host", None), (None, None)]
-)
-def test_load_config(tmpdir, host, port):
-    config_dict = {}
-    expected_host = host if host else DEFAULT_HOST
-    expected_port = port if port else DEFAULT_PORT
-    expected_config = {
-        "host": expected_host,
-        "port": expected_port,
-        "url": f"ws://{expected_host}:{expected_port}",
-        "client_url": f"ws://{expected_host}:{expected_port}/{CLIENT_URI}",
-        "dispatch_url": f"ws://{expected_host}:{expected_port}/{DISPATCH_URI}",
-    }
+def test_load_config(unused_tcp_port):
+    serv_config = EvaluatorServerConfig(unused_tcp_port)
+    expected_host = _get_ip_address()
+    expected_port = unused_tcp_port
+    expected_url = f"ws://{expected_host}:{expected_port}"
+    expected_client_uri = f"{expected_url}/client"
+    expected_dispatch_uri = f"{expected_url}/dispatch"
 
-    if host is not None:
-        config_dict["host"] = host
-    if port is not None:
-        config_dict["port"] = port
+    assert serv_config.host == expected_host
+    assert serv_config.port == expected_port
+    assert serv_config.url == expected_url
+    assert serv_config.client_uri == expected_client_uri
+    assert serv_config.dispatch_uri == expected_dispatch_uri
+    sock = serv_config.get_socket()
+    assert sock is not None
+    assert not sock._closed
+    sock.close()
 
-    with tmpdir.as_cwd():
-        with open("ee_config", "w") as f:
-            json.dump(config_dict, f)
-
-        res = load_config("ee_config")
-        assert res == expected_config
-
-
-def test_load_config_fail():
-    with pytest.raises(FileNotFoundError):
-        load_config(config_path="non/existing/file/path.yml")
+    ee_config = EvaluatorServerConfig()
+    assert ee_config.port in range(51820, 51840)
+    sock = ee_config.get_socket()
+    assert sock is not None
+    assert not sock._closed
+    sock.close()

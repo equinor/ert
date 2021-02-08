@@ -46,7 +46,7 @@ async def test_happy_path(
         queue.add_ee_stage(real.get_stages()[0])
     queue.submit_complete()
 
-    adaptor = QueueAdaptor(queue, {"dispatch_url": url}, "ee_id_123")
+    adaptor = QueueAdaptor(queue, url, "ee_id_123")
 
     execute_task = asyncio.get_event_loop().create_task(
         adaptor.execute_queue(threading.BoundedSemaphore(value=10), None)

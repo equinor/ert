@@ -1,9 +1,16 @@
+import websockets
+import pytest
+import asyncio
+import threading
+import json
+from unittest.mock import Mock
 from cloudevents.http import to_json
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.evaluator import (
     EnsembleEvaluator,
     ee_monitor,
 )
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     create_ensemble_builder,
     create_realization_builder,
@@ -11,27 +18,13 @@ from ert_shared.ensemble_evaluator.entity.ensemble import (
     create_step_builder,
     create_legacy_job_builder,
 )
-from ert_shared.ensemble_evaluator.entity.snapshot import SnapshotBuilder
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
-from ert_shared.ensemble_evaluator.config import load_config
-import websockets
-import pytest
-import asyncio
-import threading
-from unittest.mock import Mock
 
 
 @pytest.fixture
 def ee_config(unused_tcp_port):
-    default_url = f"ws://localhost:{unused_tcp_port}"
-    return {
-        "host": "localhost",
-        "port": unused_tcp_port,
-        "url": default_url,
-        "client_url": f"{default_url}/client",
-        "dispatch_url": f"{default_url}/dispatch",
-    }
+    return EvaluatorServerConfig(unused_tcp_port)
 
 
 @pytest.fixture
@@ -123,8 +116,8 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
     monitor = evaluator.run()
     events = monitor.track()
 
-    host = evaluator._config.get("host")
-    port = evaluator._config.get("port")
+    host = evaluator._config.host
+    port = evaluator._config.port
 
     # first snapshot before any event occurs
     snapshot_event = next(events)

@@ -21,12 +21,17 @@ from ert_gui.simulation import IteratedEnsembleSmootherPanel, MultipleDataAssimi
 from ert_gui.simulation import RunDialog
 from ert_shared.feature_toggling import FeatureToggling
 from collections import OrderedDict
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 
 class SimulationPanel(QWidget):
     def __init__(self, config_file):
         QWidget.__init__(self)
         self._config_file = config_file
+        self._ee_config = None
+        if FeatureToggling.is_enabled("prefect") or FeatureToggling.is_enabled("ensemble-evaluator"):
+            self._ee_config = EvaluatorServerConfig()
+
         self.setObjectName("Simulation_panel")
         layout = QVBoxLayout()
 
@@ -98,7 +103,10 @@ class SimulationPanel(QWidget):
     def getSimulationArguments(self):
         """ @rtype: dict[str,object]"""
         simulation_widget = self._simulation_widgets[self.getCurrentSimulationModel()]
-        return simulation_widget.getSimulationArguments()
+        args = simulation_widget.getSimulationArguments()
+        if self._ee_config is not None:
+            args.update({"ee_config": self._ee_config})
+        return args
 
     def runSimulation(self):
         case_name = getCurrentCaseName()
