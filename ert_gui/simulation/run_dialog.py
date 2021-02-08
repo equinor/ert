@@ -35,7 +35,7 @@ from qtpy.QtWidgets import (
 from res.job_queue import JobStatusType
 from ert_gui.simulation.view.progress import ProgressView
 from ert_gui.simulation.view.legend import LegendView
-from ert_gui.simulation.view.realization import RealizationView
+from ert_gui.simulation.view.realization import RealizationWidget
 from ert_gui.model.progress_proxy import ProgressProxyModel
 
 
@@ -157,11 +157,11 @@ class RunDialog(QDialog):
         self.setMinimumWidth(self._minimum_width)
         self._setSimpleDialog()
 
-    def sizeHint(self) -> QSize:
-        if self._isDetailedDialog:
-            return QSize(self.size().width(), 800)
-        else:
-            return QSize(self.size().width(), 230)
+    #    def sizeHint(self) -> QSize:
+    #        if self._isDetailedDialog:
+    #            return QSize(self.size().width(), 800)
+    #        else:
+    #            return QSize(self.size().width(), 230)
 
     def _setSimpleDialog(self) -> None:
         self._isDetailedDialog = False
@@ -169,7 +169,7 @@ class RunDialog(QDialog):
         self._job_label.setVisible(False)
         self._job_view.setVisible(False)
         self.show_details_button.setText("Show Details")
-        self.setFixedHeight(230)
+        # self.setFixedHeight(230)
 
     def _setDetailedDialog(self) -> None:
         self._isDetailedDialog = True
@@ -177,8 +177,8 @@ class RunDialog(QDialog):
         self._job_label.setVisible(True)
         self._job_view.setVisible(True)
         self.show_details_button.setText("Hide Details")
-        self.setFixedHeight(QWIDGETSIZE_MAX)
-        self.setMinimumHeight(600)
+        # self.setFixedHeight(QWIDGETSIZE_MAX)
+        # self.setMinimumHeight(600)
 
     @Slot(QModelIndex, int, int)
     def on_new_iteration(self, parent: QModelIndex, start: int, end: int) -> None:
@@ -186,21 +186,9 @@ class RunDialog(QDialog):
             iter = start
             self._iteration_progress_label.setText(f"Progress for iteration {iter}")
 
-            widget = QWidget()
-
-            real_view = RealizationView()
-            real_view.clicked.connect(self._select_real)
-
-            real_list_model = RealListModel(self, iter)
-            real_list_model.setSourceModel(self._snapshot_model)
-
-            real_view.setModel(real_list_model)
-            real_view.model().setIter(iter)
-
-            layout = QVBoxLayout()
-            layout.addWidget(real_view)
-
-            widget.setLayout(layout)
+            widget = RealizationWidget(iter)
+            widget.setSnapshotModel(self._snapshot_model)
+            widget.clicked.connect(self._select_real)
 
             self._tab_widget.addTab(widget, f"Iteration {iter}")
 
@@ -213,11 +201,13 @@ class RunDialog(QDialog):
         stage = 0
         real = node.row()
         iter_ = node.parent.row()
-        print("select real", step, stage, real, iter_)
-
         self._job_model.set_step(iter_, real, stage, step)
-
         self._job_label.setText(f"Realization id {real} in iteration {iter_}")
+
+        # Clear the selection in the other tabs
+        for i in range(0, self._tab_widget.count()):
+            if i != self._tab_widget.currentIndex():
+                self._tab_widget.widget(i).clearSelection()
 
     def reject(self):
         return
@@ -377,3 +367,5 @@ class RunDialog(QDialog):
             self._setSimpleDialog()
         else:
             self._setDetailedDialog()
+
+        self.adjustSize()

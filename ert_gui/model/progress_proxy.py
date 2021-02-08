@@ -5,7 +5,7 @@ from qtpy.QtCore import (
     QAbstractItemModel,
     QVariant,
 )
-
+from collections import defaultdict
 from ert_gui.model.snapshot import ProgressRole
 
 
@@ -59,19 +59,16 @@ class ProgressProxyModel(QAbstractItemModel):
         return QVariant()
 
     def _recalculate_progress(self, iter_):
-        d = {}
+        d = defaultdict(lambda: 0)
         nr_reals = 0
         current_iter_node = self._source_model.index(
             iter_, 0, QModelIndex()
         ).internalPointer()
-        for _, v in current_iter_node.children.items():
+        for v in current_iter_node.children.values():
             ## realizations
-            nr_reals += 1
             status = v.data["status"]
-            if status in d:
-                d[status] += 1
-            else:
-                d[status] = 1
+            nr_reals += 1
+            d[status] += 1
         self._progress = {"status": d, "nr_reals": nr_reals}
 
     def _source_data_changed(

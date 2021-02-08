@@ -1,4 +1,4 @@
-from qtpy.QtCore import QSize, QModelIndex, Slot
+from qtpy.QtCore import QSize, QModelIndex, Slot, Qt
 from qtpy.QtWidgets import (
     QTreeView,
     QStyledItemDelegate,
@@ -22,6 +22,7 @@ class ProgressView(QWidget):
         self._progress_tree_view.setItemDelegate(ProgressDelegate(self))
         self._progress_tree_view.setRootIsDecorated(False)
         self._progress_tree_view.setFixedHeight(30)
+        self._progress_tree_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         self._progress_bar = QProgressBar(self)
         self._progress_bar.setRange(0, 0)
