@@ -1,6 +1,52 @@
+from ert_shared.status.entity import state
+from ert_shared.ensemble_evaluator.entity import identifiers as ids
 import math
 
-# TODO: add format_file_size
+
+def byte_with_unit(byte_count):
+    suffixes = ["B", "kB", "MB", "GB", "TB", "PB"]
+    power = float(10 ** 3)
+
+    i = 0
+    while byte_count >= power and i < len(suffixes) - 1:
+        byte_count = byte_count / power
+        i += 1
+
+    return "{byte_count:.2f} {suffix}".format(byte_count=byte_count, suffix=suffixes[i])
+
+
+def _calculate_progress(
+    finished: bool,
+    phase: int,
+    phase_count: int,
+    done_reals: int,
+    total_reals: int,
+    current_iter: int,
+) -> float:
+    if finished:
+        return 1.0
+    real_progress = float(done_reals) / total_reals
+    return min(1.0, (phase + real_progress) / phase_count)
+
+
+def tracker_progress(tracker) -> float:
+    if 0 not in tracker._iter_snapshot:
+        return 0
+    current_iter = len(tracker._iter_snapshot) - 1
+    done_reals = 0
+    if current_iter in tracker._iter_snapshot:
+        for real in tracker._iter_snapshot[current_iter].get_reals().values():
+            if real[ids.STATUS] == state.REALIZATION_STATE_FINISHED:
+                done_reals += 1
+    total_reals = len(tracker._iter_snapshot[0].get_reals())
+    return _calculate_progress(
+        tracker.is_finished(),
+        tracker._model.currentPhase(),
+        tracker._model.phaseCount(),
+        done_reals,
+        total_reals,
+        current_iter,
+    )
 
 
 def format_running_time(runtime):

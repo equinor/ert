@@ -7,6 +7,7 @@ the life-span of an iteration, zero or more SnapshotUpdateEvent will be
 emitted. A final EndEvent is emitted when the experiment is over.
 """
 
+from ert_shared.status.utils import tracker_progress
 from ert_shared.ensemble_evaluator.entity.identifiers import (
     CURRENT_MEMORY_USAGE,
     MAX_MEMORY_USAGE,
@@ -204,7 +205,7 @@ class LegacyTracker:
             )
 
     def _progress(self) -> float:
-        return self._model.currentPhase() / self._model.phaseCount()
+        return tracker_progress(self)
 
     def _set_iter_differ(self, iter_: int) -> None:
         """Make an attempt at creating a differ for iter_ should it be zero or
