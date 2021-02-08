@@ -26,12 +26,10 @@ class MockCloudEvent(dict):
 
 
 def mock_wait_for_ws(*args, **kwargs):
-    print("moc_wait_for_ws")
     raise ConnectionRefusedError("nah")
 
 
 def mock_ee_monitor(*args):
-    print("MOCK EE MONITOR")
     reals_ids = ["0", "1"]
     snapshot = (
         SnapshotBuilder()

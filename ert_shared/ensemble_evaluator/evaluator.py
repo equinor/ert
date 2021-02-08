@@ -1,4 +1,12 @@
 import asyncio
+from ert_shared.status.entity.state import (
+    ENSEMBLE_STATE_STARTED,
+    JOB_STATE_START,
+    REALIZATION_STATE_UNKNOWN,
+    REALIZATION_STATE_WAITING,
+    STAGE_STATE_UNKNOWN,
+    STEP_STATE_START,
+)
 import threading
 import logging
 from ert_shared.ensemble_evaluator.dispatch import Dispatcher
@@ -58,23 +66,23 @@ class EnsembleEvaluator:
                 active=True,
                 start_time=None,
                 end_time=None,
-                status="Waiting",
+                status=REALIZATION_STATE_WAITING,
             )
             for stage in real.get_stages():
                 reals[str(real.get_iens())].stages[str(stage.get_id())] = _Stage(
-                    status="Unknown",
+                    status=STAGE_STATE_UNKNOWN,
                     start_time=None,
                     end_time=None,
                 )
                 for step in stage.get_steps():
                     reals[str(real.get_iens())].stages[str(stage.get_id())].steps[
                         str(step.get_id())
-                    ] = _Step(status="Unknown", start_time=None, end_time=None)
+                    ] = _Step(status=STEP_STATE_START, start_time=None, end_time=None)
                     for job in step.get_jobs():
                         reals[str(real.get_iens())].stages[str(stage.get_id())].steps[
                             str(step.get_id())
                         ].jobs[str(job.get_id())] = _Job(
-                            status="Pending",
+                            status=JOB_STATE_START,
                             data={},
                             start_time=None,
                             end_time=None,
@@ -82,7 +90,7 @@ class EnsembleEvaluator:
                         )
         top = _SnapshotDict(
             reals=reals,
-            status="Unknown",
+            status=ENSEMBLE_STATE_STARTED,
             forward_model=_ForwardModel(step_definitions={}),
             metadata=ensemble.get_metadata(),
         )

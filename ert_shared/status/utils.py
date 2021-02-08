@@ -1,5 +1,7 @@
 import math
 
+# TODO: add format_file_size
+
 
 def format_running_time(runtime):
     """ @rtype: str """

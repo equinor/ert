@@ -1,3 +1,7 @@
+from ert_shared.status.entity.state import (
+    ENSEMBLE_STATE_CANCELLED,
+    ENSEMBLE_STATE_STOPPED,
+)
 import logging
 import queue
 import threading
@@ -13,9 +17,6 @@ from ert_shared.status.entity.event import (
     SnapshotUpdateEvent,
 )
 from ert_shared.ensemble_evaluator.config import load_config
-
-_EVTYPE_SNAPSHOT_STOPPED = "Stopped"
-_EVTYPE_SNAPSHOT_CANCELLED = "Cancelled"
 
 
 class OutOfOrderSnapshotUpdateException(ValueError):
@@ -56,12 +57,12 @@ class EvaluatorTracker:
                         ids.EVTYPE_EE_SNAPSHOT_UPDATE,
                     ):
                         self._work_queue.put(event)
-                        if event.data.get("status") == _EVTYPE_SNAPSHOT_STOPPED:
+                        if event.data.get(ids.STATUS) == ENSEMBLE_STATE_STOPPED:
                             drainer_logger.debug(
                                 "observed evaluation stopped event, signal done"
                             )
                             monitor.signal_done()
-                        if event.data.get("status") == _EVTYPE_SNAPSHOT_CANCELLED:
+                        if event.data.get(ids.STATUS) == ENSEMBLE_STATE_CANCELLED:
                             drainer_logger.debug(
                                 "observed evaluation cancelled event, exit drainer"
                             )

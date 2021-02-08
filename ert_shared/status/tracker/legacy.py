@@ -7,6 +7,10 @@ the life-span of an iteration, zero or more SnapshotUpdateEvent will be
 emitted. A final EndEvent is emitted when the experiment is over.
 """
 
+from ert_shared.ensemble_evaluator.entity.identifiers import (
+    CURRENT_MEMORY_USAGE,
+    MAX_MEMORY_USAGE,
+)
 import logging
 import time
 import typing
@@ -28,6 +32,7 @@ from ert_shared.status.entity.event import (
     SnapshotUpdateEvent,
 )
 from ert_shared.status.entity.state import (
+    ENSEMBLE_STATE_STARTED,
     JOB_STATE_FINISHED,
     REALIZATION_STATE_UNKNOWN,
     queue_status_to_real_state,
@@ -82,6 +87,7 @@ class LegacyTracker:
                     continue
                 yield full_snapshot_event
                 current_iter = iter_
+                yield from self._retroactive_update_event()
 
             self._set_iter_differ(iter_)
             if self._general_interval > 0 and (tick % self._general_interval == 0):
@@ -90,7 +96,6 @@ class LegacyTracker:
                 yield self._partial_snapshot_event(iter_, read_from_disk=True)
             tick += 1
 
-        yield from self._retroactive_update_event()
         yield self._end_event()
 
     def _create_snapshot_dict(
@@ -106,21 +111,19 @@ class LegacyTracker:
         self._set_iter_differ(iter_)
 
         snapshot = _SnapshotDict(
-            status=REALIZATION_STATE_UNKNOWN,
+            status=ENSEMBLE_STATE_STARTED,
             reals={},
             metadata={"iter": iter_},
-            # TODO: populate step defs
             forward_model=_ForwardModel(step_definitions={}),
         )
 
         forward_model = self._model.get_forward_model()
 
-        real_prog, dp_iter_ = detailed_progress
-        if dp_iter_ != iter_:
+        iter_to_progress, progress_iter = detailed_progress
+        if progress_iter != iter_:
             logger.debug(
-                f"run_context iter ({iter_}) and detailed_progress ({dp_iter_} iter differed"
+                f"run_context iter ({iter_}) and detailed_progress ({progress_iter} iter differed"
             )
-            real_prog = {}
 
         enumerated = 0
         for iens, run_arg in _enumerate_run_context(run_context):
@@ -151,7 +154,7 @@ class LegacyTracker:
                     name=ext_job.name(), status=REALIZATION_STATE_UNKNOWN, data={}
                 )
 
-            progress = real_prog[iter_].get(iens, None)
+            progress = iter_to_progress[iter_].get(iens, None)
             if not progress:
                 continue
 
@@ -171,8 +174,8 @@ class LegacyTracker:
                 job.stdout = fm.std_out_file
                 job.stderr = fm.std_err_file
                 job.data = {
-                    "current_memory_usage": fm.current_memory_usage,
-                    "max_memory_usage": fm.max_memory_usage,
+                    CURRENT_MEMORY_USAGE: fm.current_memory_usage,
+                    MAX_MEMORY_USAGE: fm.max_memory_usage,
                 }
 
         if enumerated == 0:
@@ -217,7 +220,6 @@ class LegacyTracker:
     def _set_iter_snapshot(self, iter_, snapshot: typing.Optional[Snapshot]) -> None:
         if iter_ < 0:
             return
-        assert snapshot is not None
         self._iter_snapshot[iter_] = snapshot
 
     def _create_partial_snapshot(
@@ -249,21 +251,20 @@ class LegacyTracker:
                 str(iens), status=queue_status_to_real_state(change_enum)
             )
 
-        detailed_progress, dp_iter_ = detailed_progress
-        if not detailed_progress:
+        iter_to_progress, progress_iter = detailed_progress
+        if not iter_to_progress:
             logger.debug(f"partial: no detailed progress for iter:{iter_}")
             return partial
-        if iter_ != dp_iter_:
+        if iter_ != progress_iter:
             logger.debug(
-                f"partial: detailed_progress iter ({dp_iter_}) differed from run_context ({iter_})"
+                f"partial: iter_to_progress iter ({progress_iter}) differed from run_context ({iter_})"
             )
 
         for iens, _ in _enumerate_run_context(run_context):
-            real_id = str(iens)
             if not _is_iens_active(iens, run_context):
                 continue
 
-            progress = detailed_progress[iter_].get(iens, None)
+            progress = iter_to_progress[iter_].get(iens, None)
             if not progress:
                 continue
 
@@ -273,7 +274,7 @@ class LegacyTracker:
                 if status == "Success":
                     status = JOB_STATE_FINISHED
                 partial.update_job(
-                    real_id,
+                    str(iens),  # real_id
                     "0",
                     "0",
                     str(idx),
@@ -281,8 +282,8 @@ class LegacyTracker:
                     start_time=str(fm.start_time),
                     end_time=str(fm.end_time),
                     data={
-                        "current_memory_usage": fm.current_memory_usage,
-                        "max_memory_usage": fm.max_memory_usage,
+                        CURRENT_MEMORY_USAGE: fm.current_memory_usage,
+                        MAX_MEMORY_USAGE: fm.max_memory_usage,
                     },
                 )
 
@@ -338,7 +339,6 @@ class LegacyTracker:
             indeterminate=self._model.isIndeterminate(),
             progress=self._progress(),
             iteration=iter_,
-            # TODO: should be snapshot instead of dict
             snapshot=snapshot,
         )
 
