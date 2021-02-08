@@ -758,7 +758,6 @@ static module_info_type * enkf_main_module_info_alloc( const local_ministep_type
     stringlist_free( update_keys );
   }
 
-
   { /* Init obs blocks in module_info */
     module_obs_block_vector_type  * module_obs_block_vector =  module_info_get_obs_block_vector ( module_info );
     int current_row = 0;
@@ -965,7 +964,6 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
           res_log_ferror("No active observations/parameters for MINISTEP: %s.",
                          local_ministep_get_name(ministep));
       }
-
       enkf_main_inflate(enkf_main, source_fs, target_fs, current_step, use_count);
       hash_free(use_count);
     }
@@ -1096,54 +1094,50 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
     if (localA == NULL)
       analysis_module_initX( module , X , NULL , S , R , dObs , E , D, enkf_main->shared_rng);
 
-
     while (!hash_iter_is_complete( dataset_iter )) {
       const char * dataset_name = hash_iter_get_next_key( dataset_iter );
       const local_dataset_type * dataset = local_ministep_get_dataset( ministep , dataset_name );
       if (local_dataset_get_size( dataset )) {
         local_obsdata_type   * local_obsdata = local_ministep_get_obsdata( ministep );
+        const auto& unscaled_keys = local_dataset_unscaled_keys(dataset);
+        if (unscaled_keys.size()) {
 
-        enkf_main_serialize_dataset(enkf_main_get_ensemble_config(enkf_main), dataset , step2 ,  use_count , tp , serialize_info);
-        module_info_type * module_info = enkf_main_module_info_alloc(ministep, obs_data, dataset, local_obsdata, serialize_info->active_size.data() , serialize_info->row_offset.data());
+          /*
+            The update for one local_dataset instance consists of two main chunks:
 
-        /*
-          The update for one local_dataset instance consists of two main chunks:
+            1. The first chunk updates all the parameters which don't have row
+               scaling attached. These parameters are serialized together to the A
+               matrix and all the parameters are updated in one go.
 
-          1. The first chunk updates all the parameters which don't have row
-             scaling attached. These parameters are serialized together to the A
-             matrix and all the parameters are updated in one go.
+            2. The second chunk is loop over all the parameters which have row
+               scaling attached. These parameters are updated one at a time.
+          */
 
-          2. The second chunk is loop over all the parameters which have row
-             scaling attached. These parameters are updated one at a time.
-         */
+          // Part 1: Parameters which do not have row scaling attached.
+          enkf_main_serialize_dataset(enkf_main_get_ensemble_config(enkf_main), dataset , step2 ,  use_count , tp , serialize_info);
+          module_info_type * module_info = enkf_main_module_info_alloc(ministep, obs_data, dataset, local_obsdata, serialize_info->active_size.data() , serialize_info->row_offset.data());
 
-
-        // Part 1: Parameters which do not have row scaling attached.
-        enkf_main_serialize_dataset(enkf_main_get_ensemble_config(enkf_main), dataset , step2 ,  use_count , tp , serialize_info);
-
-        if (analysis_module_check_option( module , ANALYSIS_UPDATE_A)){
-          if (analysis_module_check_option( module , ANALYSIS_ITERABLE)){
-            analysis_module_updateA( module , localA , S , R , dObs , E , D , module_info, enkf_main->shared_rng);
-          }
-          else
-            analysis_module_updateA( module , localA , S , R , dObs , E , D , module_info, enkf_main->shared_rng);
-        } else {
-          if (analysis_module_check_option( module , ANALYSIS_USE_A)){
+          if (analysis_module_check_option( module , ANALYSIS_UPDATE_A)){
+            if (analysis_module_check_option( module , ANALYSIS_ITERABLE)){
+              analysis_module_updateA( module , localA , S , R , dObs , E , D , module_info, enkf_main->shared_rng);
+            }
+            else
+              analysis_module_updateA( module , localA , S , R , dObs , E , D , module_info, enkf_main->shared_rng);
+          } else {
+            if (analysis_module_check_option( module , ANALYSIS_USE_A)){
             analysis_module_initX( module , X , localA , S , R , dObs , E , D, enkf_main->shared_rng);
+            }
+            matrix_inplace_matmul_mt2( A , X , tp );
           }
 
-          matrix_inplace_matmul_mt2( A , X , tp );
+          enkf_main_deserialize_dataset( enkf_main_get_ensemble_config( enkf_main ) , dataset , serialize_info , tp);
+          enkf_main_module_info_free( module_info );
         }
-
-        enkf_main_deserialize_dataset( enkf_main_get_ensemble_config( enkf_main ) , dataset , serialize_info , tp);
-
-
 
         // Part 2: Parameters with row scaling attached - to support distance based localization.
         {
           const auto& scaled_keys = local_dataset_scaled_keys(dataset);
           if (scaled_keys.size()) {
-            throw std::logic_error("Sorry - the use of row scaling for distance based localization is not yet implemented");
 
             if (analysis_module_check_option( module , ANALYSIS_UPDATE_A))
               throw std::logic_error("Sorry - row scaling for distance based localization can not be combined with analysis modules which update the A matrix");
@@ -1151,7 +1145,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
             for (int ikw=0; ikw < scaled_keys.size(); ikw++) {
               const auto& key = scaled_keys[ikw];
               const active_list_type * active_list = local_dataset_get_node_active_list(dataset, key.c_str());
-              for (int iens = serialize_info->iens1; iens < serialize_info->iens2; iens++) {
+              for (int iens = 0; iens < bool_vector_size(ens_mask); iens++) {
                 int column = int_vector_iget( serialize_info->iens_active_index , iens);
                 if (column >= 0) {
                   serialize_node(serialize_info->src_fs,
@@ -1165,16 +1159,15 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
                                  A);
                 }
               }
+              matrix_shrink_header( A , local_dataset_get_row_scaling(dataset, key.c_str())->size(), matrix_get_columns(A) );
 
               if (analysis_module_check_option( module , ANALYSIS_USE_A))
                 analysis_module_initX( module , X , localA , S , R , dObs , E , D, enkf_main->shared_rng);
 
-              /*
-                row_scaling_type * row_scaling = local_dataset_get_row_scaling( local_dataset, key );
-                row_scaling_multiply(row_scaling, X, A );
-              */
+              const row_scaling_type * row_scaling = local_dataset_get_row_scaling( dataset, key.c_str() );
+              row_scaling_multiply(row_scaling, A, X);
 
-              for (int iens = serialize_info->iens1; iens < serialize_info->iens2; iens++) {
+              for (int iens = 0; iens < bool_vector_size(ens_mask); iens++) {
                 int column = int_vector_iget( serialize_info->iens_active_index , iens);
                 if (column >= 0) {
                   deserialize_node(serialize_info->target_fs,
@@ -1182,7 +1175,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
                                    serialize_info->ensemble_config,
                                    key.c_str(),
                                    iens,
-                                   serialize_info->report_step,
+                                   serialize_info->target_step,
                                    0,
                                    column,
                                    active_list,
@@ -1192,14 +1185,12 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
             }
           }
         }
-        enkf_main_module_info_free( module_info );
       }
     }
     hash_iter_free( dataset_iter );
     serialize_info_free( serialize_info );
   }
   analysis_module_complete_update( module );
-
 
   /*****************************************************************/
 

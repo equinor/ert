@@ -1,0 +1,11 @@
+NUM_REALIZATIONS 10
+GRID             CASE.EGRID
+FIELD            PORO    PARAMETER    poro.grdecl INIT_FILES:fields/poro%d.grdecl
+SUMMARY          WBHP
+OBS_CONFIG       observations.txt 
+
+
+LOAD_WORKFLOW_JOB workflows/ROW_SCALING_JOB1
+LOAD_WORKFLOW     workflows/ROW_SCALING_WORKFLOW1
+
+TIME_MAP timemap.txt

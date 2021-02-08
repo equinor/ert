@@ -1,0 +1,6 @@
+SUMMARY_OBSERVATION WBHP0 {
+    VALUE = 125;
+    ERROR = 25;
+    RESTART = 1;
+    KEY = WBHP;
+};

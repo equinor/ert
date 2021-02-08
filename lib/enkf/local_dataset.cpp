@@ -112,7 +112,7 @@ void local_dataset_clear( local_dataset_type * dataset) {
   hash_clear( dataset->active_size );
 }
 
-row_scaling * local_dataset_get_row_scaling(local_dataset_type * dataset, const char * key) {
+const row_scaling * local_dataset_get_row_scaling(const local_dataset_type * dataset, const char * key) {
   auto scaling_iter = dataset->scaling.find( key );
   if (scaling_iter != dataset->scaling.end())
     return &scaling_iter->second;
@@ -134,12 +134,13 @@ row_scaling_type * local_dataset_get_or_create_row_scaling(local_dataset_type * 
 
     dataset->scaling.emplace( key, row_scaling{});
   }
-  return local_dataset_get_row_scaling( dataset, key );
+  return &dataset->scaling[key];
 }
 
 
 active_list_type * local_dataset_get_node_active_list(const local_dataset_type * dataset , const char * node_key ) {
-  return (active_list_type *) hash_get( dataset->active_size , node_key );  /* Fails hard if you do not have the key ... */
+  active_list_type * al = (active_list_type *) hash_get( dataset->active_size , node_key );  /* Fails hard if you do not have the key ... */
+  return al;
 }
 
 stringlist_type * local_dataset_alloc_keys( const local_dataset_type * dataset ) {

@@ -19,6 +19,7 @@ from cwrap import BaseCClass
 from res import ResPrototype
 from res.enkf import EnkfFs, NodeId
 from res.enkf.data import GenKw, GenData, Field, ExtParam
+from res.enkf.data.summary import Summary
 
 
 class EnkfNode(BaseCClass):
