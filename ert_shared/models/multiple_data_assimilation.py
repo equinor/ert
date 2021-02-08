@@ -125,7 +125,8 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhaseName(phase_string, indeterminate=False)
 
         if FeatureToggling.is_enabled("ensemble-evaluator"):
-            num_successful_realizations = self.run_ensemble_evaluator(run_context)
+            ee_config = arguments["ee_config"]
+            num_successful_realizations = self.run_ensemble_evaluator(run_context, ee_config)
         else:
             self._job_queue = self._queue_config.create_job_queue()
             num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, run_context)

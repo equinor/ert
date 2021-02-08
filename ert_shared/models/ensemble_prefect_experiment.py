@@ -1,11 +1,10 @@
-import os
 import yaml
 from ert_shared.ensemble_evaluator.prefect_ensemble.prefect_ensemble import (
     PrefectEnsemble,
 )
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 import time
-from ert_shared.ensemble_evaluator.config import load_config
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 import uuid
 
 
@@ -31,7 +30,7 @@ class EnsemblePrefectExperiment:
             config = yaml.safe_load(f)
         ensemble = PrefectEnsemble(config)
 
-        ee_config = load_config()
+        ee_config = arg["ee_config"]
         ee_id = str(uuid.uuid1()).split("-")[0]
         ee = EnsembleEvaluator(ensemble, ee_config, ee_id=ee_id)
         ee.run_and_get_successful_realizations()

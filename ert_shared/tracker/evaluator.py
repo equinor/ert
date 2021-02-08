@@ -1,4 +1,3 @@
-from asyncio.tasks import wait_for
 from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 import logging
 import threading
@@ -10,7 +9,6 @@ import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
 from ert_shared.tracker.events import DetailedEvent, GeneralEvent
 from res.job_queue import ForwardModelJobStatus, JobStatusType
-from ert_shared.ensemble_evaluator.config import CONFIG_FILE, load_config
 
 
 _EVTYPE_SNAPSHOT_STOPPED = "Stopped"
@@ -25,6 +23,7 @@ class EvaluatorTracker:
         host, port = ee_monitor_connection_details
         self._monitor_host = host
         self._monitor_port = port
+        self._monitor_url = f"ws://{host}:{port}"
 
         # The state mutex guards all code paths that access the _realization_progress state. It also guards the _updates
         # list since the same code paths access that
@@ -277,7 +276,6 @@ class EvaluatorTracker:
 
     def request_termination(self):
         logger = logging.getLogger("ert_shared.ensemble_evaluator.tracker")
-        config = load_config()
 
         # There might be some situations where the
         # evaulation is finished or the evaluation
@@ -290,7 +288,7 @@ class EvaluatorTracker:
         # See issue: https://github.com/equinor/ert/issues/1250
         #
         try:
-            wait_for_ws(config.get("url"), 2)
+            wait_for_ws(self._monitor_url, 2)
         except ConnectionRefusedError as e:
             logger.warning(f"{__name__} - exception {e}")
             return

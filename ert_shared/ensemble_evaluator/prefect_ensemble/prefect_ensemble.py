@@ -57,7 +57,7 @@ def _get_executor(name="local"):
             "use_stdin": True,
             "n_workers": 2,
             "silence_logs": "debug",
-            "scheduler_options": {"port": find_open_port(lower=51820, upper=51840)},
+            "scheduler_options": {"port": find_open_port()},
         }
         return DaskExecutor(
             cluster_class="dask_jobqueue.LSFCluster",
@@ -247,7 +247,7 @@ class PrefectEnsemble(_Ensemble):
         return flow
 
     def evaluate(self, config, ee_id):
-        self._ee_dispach_url = config.get("dispatch_url")
+        self._ee_dispach_url = config.dispatch_uri
         self._ee_id = ee_id
         self._eval_proc = multiprocessing.Process(
             target=self._evaluate,

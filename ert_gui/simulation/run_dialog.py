@@ -36,7 +36,9 @@ class RunDialog(QDialog):
         self.simulations_tracker = create_tracker(
             run_model, qtimer_cls=QTimer,
             event_handler=self._on_tracker_event,
-            num_realizations=self._simulations_argments["active_realizations"].count())
+            num_realizations=self._simulations_argments["active_realizations"].count(),
+            ee_config=self._simulations_argments.get("ee_config", None)
+        )
 
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)

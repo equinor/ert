@@ -2,7 +2,7 @@ import json
 import os
 import pathlib
 
-from ert_shared.ensemble_evaluator import config as evaluator_config
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.prefect_ensemble.prefect_ensemble import (
     PrefectEnsemble,
@@ -137,7 +137,7 @@ def evaluate(
     )
     ensemble = PrefectEnsemble(ee_config)
 
-    config = evaluator_config.load_config()
+    config = EvaluatorServerConfig()
     ee = EnsembleEvaluator(ensemble=ensemble, config=config)
     _run(ee)
 

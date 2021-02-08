@@ -1,10 +1,6 @@
-from ert_shared.tracker.evaluator import EvaluatorTracker
 from ert_shared.tracker.blocking import BlockingTracker
 from ert_shared.tracker.qt import QTimerTracker
 from ert_shared.tracker.utils import scale_intervals
-from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
-from ert_shared.ensemble_evaluator.config import load_config
-from ert_shared.feature_toggling import FeatureToggling
 
 
 def create_tracker(
@@ -14,6 +10,7 @@ def create_tracker(
     qtimer_cls=None,
     event_handler=None,
     num_realizations=None,
+    ee_config=None,
 ):
     """Creates a tracker tracking a @model. The provided model
     is updated in two tiers: @general_interval, @detailed_interval.
@@ -32,12 +29,8 @@ def create_tracker(
     if num_realizations is not None:
         general_interval, detailed_interval = scale_intervals(num_realizations)
 
-    ee_config = load_config()
     ee_monitor_connection_details = (
-        (ee_config.get("host"), ee_config.get("port"))
-        if FeatureToggling.is_enabled("ensemble-evaluator")
-        or FeatureToggling.is_enabled("prefect")
-        else None
+        (ee_config.host, ee_config.port) if ee_config is not None else None
     )
 
     if qtimer_cls:

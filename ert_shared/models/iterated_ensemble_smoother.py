@@ -22,7 +22,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         return self.ert().analysisConfig().getModule(module_name)
 
 
-    def _runAndPostProcess(self, run_context):
+    def _runAndPostProcess(self, run_context, arguments):
         phase_msg = "Running iteration %d of %d simulation iterations..." % (run_context.get_iter(), self.phaseCount() - 1)
         self.setPhase(run_context.get_iter(), phase_msg, indeterminate=False)
 
@@ -32,7 +32,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Running forecast...", indeterminate=False)
         if FeatureToggling.is_enabled("ensemble-evaluator"):
-            num_successful_realizations = self.run_ensemble_evaluator(run_context)
+            ee_config = arguments["ee_config"]
+            num_successful_realizations = self.run_ensemble_evaluator(run_context, ee_config)
         else:
             self._job_queue = self._queue_config.create_job_queue()
             num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, run_context)
@@ -74,7 +75,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         self.ert().analysisConfig().getAnalysisIterConfig().setCaseFormat( target_case_format )
 
-        self._runAndPostProcess( run_context )
+        self._runAndPostProcess( run_context, arguments)
 
         analysis_config = self.ert().analysisConfig()
         analysis_iter_config = analysis_config.getAnalysisIterConfig()
@@ -102,11 +103,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 )
                 post_ensemble_results(previous_ensemble_id)
                 run_context = self.create_context( arguments, current_iter, prior_context = run_context )
-                self._runAndPostProcess(run_context)
+                self._runAndPostProcess(run_context, arguments)
                 num_retries = 0
             else:
                 run_context = self.create_context( arguments, current_iter, prior_context = run_context , rerun = True)
-                self._runAndPostProcess(run_context)
+                self._runAndPostProcess(run_context, arguments)
                 num_retries += 1
 
         analysis_module_name = self.ert().analysisConfig().activeModuleName()

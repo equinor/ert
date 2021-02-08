@@ -5,7 +5,7 @@ import uuid
 
 from ecl.util.util import BoolVector
 from ert_shared import ERT
-from ert_shared.ensemble_evaluator.config import load_config
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     create_ensemble_builder_from_legacy,
 )
@@ -315,7 +315,7 @@ class BaseRunModel(object):
     def count_active_realizations(self, run_context):
         return sum(run_context.get_mask())
 
-    def run_ensemble_evaluator(self, run_context):
+    def run_ensemble_evaluator(self, run_context, ee_config):
         if run_context.get_step():
             self.ert().eclConfig().assert_restart()
 
@@ -336,7 +336,6 @@ class BaseRunModel(object):
         ).build()
 
         self.ert().initRun(run_context)
-
         return EnsembleEvaluator(
-            ensemble, load_config(), ee_id=str(uuid.uuid1()).split("-")[0]
+            ensemble, ee_config, ee_id=str(uuid.uuid1()).split("-")[0]
         ).run_and_get_successful_realizations()

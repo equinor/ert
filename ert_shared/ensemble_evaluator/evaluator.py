@@ -205,8 +205,7 @@ class EnsembleEvaluator:
     async def evaluator_server(self, done):
         async with websockets.serve(
             self.connection_handler,
-            self._config.get("host"),
-            self._config.get("port"),
+            sock=self._config.get_socket(),
             max_queue=500,
             max_size=2 ** 26,
         ):
@@ -247,7 +246,7 @@ class EnsembleEvaluator:
     def run(self):
         self._ws_thread.start()
         self._ensemble.evaluate(self._config, self._ee_id)
-        return ee_monitor.create(self._config.get("host"), self._config.get("port"))
+        return ee_monitor.create(self._config.host, self._config.port)
 
     def _stop(self):
         if not self._done.done():

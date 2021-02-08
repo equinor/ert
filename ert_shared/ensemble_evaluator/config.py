@@ -1,6 +1,7 @@
 import yaml
 import logging
 import socket
+from ert_shared.storage.main import bind_socket
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +12,7 @@ def _get_ip_address():
     return s.getsockname()[0]
 
 
-def find_open_port(lower, upper):
+def find_open_port(lower=51820, upper=51840):
     host = _get_ip_address()
     for port in range(lower, upper):
         try:
@@ -26,34 +27,17 @@ def find_open_port(lower, upper):
     raise Exception(msg)
 
 
-CLIENT_URI = "client"
-DISPATCH_URI = "dispatch"
-DEFAULT_PORT = find_open_port(lower=51820, upper=51840)
-DEFAULT_HOST = _get_ip_address()
-DEFAULT_URL = f"ws://{DEFAULT_HOST}:{DEFAULT_PORT}"
-CONFIG_FILE = "ee_config.yml"
+class EvaluatorServerConfig:
+    def __init__(self, port=None):
+        self.host = _get_ip_address()
+        self.port = find_open_port() if port is None else port
+        self.socket = bind_socket(self.host, self.port)
+        self.url = f"ws://{self.host}:{self.port}"
+        self.client_uri = f"{self.url}/client"
+        self.dispatch_uri = f"{self.url}/dispatch"
 
-DEFAULT_EE_CONFIG = {
-    "host": DEFAULT_HOST,
-    "port": DEFAULT_PORT,
-    "url": DEFAULT_URL,
-    "client_url": f"{DEFAULT_URL}/{CLIENT_URI}",
-    "dispatch_url": f"{DEFAULT_URL}/{DISPATCH_URI}",
-}
-
-
-def load_config(config_path=None):
-    if config_path is None:
-        return DEFAULT_EE_CONFIG.copy()
-
-    with open(config_path, "r") as f:
-        data = yaml.safe_load(f)
-        host = data.get("host", DEFAULT_HOST)
-        port = data.get("port", DEFAULT_PORT)
-        return {
-            "host": host,
-            "port": port,
-            "url": f"ws://{host}:{port}",
-            "client_url": f"ws://{host}:{port}/{CLIENT_URI}",
-            "dispatch_url": f"ws://{host}:{port}/{DISPATCH_URI}",
-        }
+    def get_socket(self):
+        if self.socket._closed:
+            self.socket = bind_socket(self.host, self.port)
+            return self.socket
+        return self.socket
