@@ -63,7 +63,7 @@ def evaluator(ee_config):
     )
     ee = EnsembleEvaluator(ensemble=ensemble, config=ee_config)
     yield ee
-    ee.stop()
+    ee.join()
 
 
 class Client:
@@ -92,7 +92,7 @@ class Client:
             async with websockets.connect(uri) as websocket:
                 while True:
                     msg = await q.get()
-                    if msg == "stop":
+                    if msg == b"stop":
                         return
                     await websocket.send(msg)
 
@@ -102,7 +102,7 @@ class Client:
         self.loop.call_soon_threadsafe(self.q.put_nowait, msg)
 
     def stop(self):
-        self.loop.call_soon_threadsafe(self.q.put_nowait, "stop")
+        self.loop.call_soon_threadsafe(self.q.put_nowait, b"stop")
         self.thread.join()
         self.loop.close()
 
@@ -188,3 +188,4 @@ def test_monitor_stop(evaluator):
     events = monitor.track()
     snapshot = Snapshot(next(events).data)
     assert snapshot.get_status() == "Unknown"
+    monitor.signal_done()

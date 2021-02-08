@@ -15,10 +15,10 @@ async def wait(url, max_retries):
     retries = 0
     while retries < max_retries:
         try:
-            async with websockets.connect(url):
-                pass
+            ws = await asyncio.wait_for(websockets.connect(url), timeout=3)
+            await ws.close()
             return
-        except OSError as e:
+        except (OSError, asyncio.TimeoutError) as e:
             logger.info(f"{__name__} failed to connect ({retries}/{max_retries}: {e}")
             await asyncio.sleep(0.2 + 5 * retries)
             retries += 1

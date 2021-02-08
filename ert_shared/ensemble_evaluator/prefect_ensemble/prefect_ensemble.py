@@ -7,6 +7,7 @@ import signal
 import threading
 import asyncio
 import logging
+import time
 from pathlib import Path
 from datetime import timedelta
 from functools import partial
@@ -156,7 +157,7 @@ class PrefectEnsemble(_Ensemble):
                     },
                     {"stderr": state.message},
                 )
-                c.send(to_json(event).decode())
+                c.send(to_json(event))
 
     def get_id(self, iens, stage_name, step_name=None, job_index=None):
         real = next(real for real in self._reals if real.get_iens() == iens)
@@ -284,7 +285,7 @@ class PrefectEnsemble(_Ensemble):
                         "source": f"/ert/ee/{self._ee_id}",
                     },
                 )
-                c.send(to_json(event).decode())
+                c.send(to_json(event))
             self.run_flow(ee_id, dispatch_url, input_files)
 
             with Client(dispatch_url) as c:
@@ -294,7 +295,7 @@ class PrefectEnsemble(_Ensemble):
                         "source": f"/ert/ee/{self._ee_id}",
                     },
                 )
-                c.send(to_json(event).decode())
+                c.send(to_json(event))
         except Exception:
             logger.exception(
                 "An exception occurred while starting the ensemble evaluation",
@@ -307,7 +308,7 @@ class PrefectEnsemble(_Ensemble):
                         "source": f"/ert/ee/{self._ee_id}",
                     },
                 )
-                c.send(to_json(event).decode())
+                c.send(to_json(event))
 
     def run_flow(self, ee_id, dispatch_url, input_files):
         real_per_batch = self.config["max_running"]
@@ -335,6 +336,12 @@ class PrefectEnsemble(_Ensemble):
     def _cancel(self):
         if self._eval_proc is not None:
             os.kill(self._eval_proc.pid, signal.SIGINT)
+        start = time.time()
+        while self._eval_proc.is_alive() and time.time() - start < 2:
+            time.sleep(1e-3)
+        if self._eval_proc.is_alive():
+            os.kill(self._eval_proc.pid, signal.SIGKILL)
+
         self._eval_proc = None
         event = CloudEvent(
             {

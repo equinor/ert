@@ -75,7 +75,7 @@ class UnixStep(Task):
                     "datacontenttype": "application/json",
                 },
             )
-            client.send(to_json(event).decode())
+            client.send(to_json(event))
 
             shell_cmd = [self._cmd, job["executable"], *job["args"]]
             cmd_exec = subprocess.run(
@@ -97,7 +97,7 @@ class UnixStep(Task):
                     },
                     {"stderr": cmd_exec.stderr, "stdout": cmd_exec.stdout},
                 )
-                client.send(to_json(event).decode())
+                client.send(to_json(event))
                 raise RuntimeError(
                     f"Script {job['name']} failed with exception {cmd_exec.stderr}"
                 )
@@ -111,7 +111,7 @@ class UnixStep(Task):
                 {"stdout": cmd_exec.stdout},
             )
 
-            client.send(to_json(event).decode())
+            client.send(to_json(event))
 
     def run(self, expected_res=None):
         run_path = self._run_path / str(self._iens)
@@ -126,7 +126,7 @@ class UnixStep(Task):
                     "datacontenttype": "application/json",
                 },
             )
-            ee_client.send(to_json(event).decode())
+            ee_client.send(to_json(event))
 
             outputs = []
             self.run_jobs(ee_client, run_path)
@@ -144,5 +144,5 @@ class UnixStep(Task):
                     "datacontenttype": "application/json",
                 },
             )
-            ee_client.send(to_json(event).decode())
+            ee_client.send(to_json(event))
         return {"iens": self._iens, "outputs": outputs}

@@ -33,7 +33,7 @@ async def nfs_adaptor(log_file, ws_url):
                     await asyncio.sleep(1)
                     continue
                 line = line[:-1] if line[-1:] == chr(10) else line
-                await websocket.send(line)
+                await websocket.send(bytes(line, encoding="utf-8"))
 
     logger.debug(f"saw end of {log_file}")
 

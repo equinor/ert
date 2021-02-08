@@ -52,10 +52,13 @@ def test_run_prefect_ensemble(unused_tcp_port):
                 "Stopped",
             ]:
                 mon.signal_done()
+        evaluator.join()
 
-        assert evaluator._snapshot.get_status() == "Stopped"
+        assert evaluator._ee_app._snapshot.get_status() == "Stopped"
 
-        successful_realizations = evaluator._snapshot.get_successful_realizations()
+        successful_realizations = (
+            evaluator._ee_app._snapshot.get_successful_realizations()
+        )
 
         assert successful_realizations == config["realizations"]
 
@@ -85,10 +88,12 @@ def test_run_prefect_ensemble_with_path(unused_tcp_port):
                 "Stopped",
             ]:
                 mon.signal_done()
+        evaluator.join()
+        assert evaluator._ee_app._snapshot.get_status() == "Stopped"
 
-        assert evaluator._snapshot.get_status() == "Stopped"
-
-        successful_realizations = evaluator._snapshot.get_successful_realizations()
+        successful_realizations = (
+            evaluator._ee_app._snapshot.get_successful_realizations()
+        )
 
         assert successful_realizations == config["realizations"]
 
@@ -112,8 +117,9 @@ def test_cancel_run_prefect_ensemble(unused_tcp_port):
             if cancel:
                 mon.signal_cancel()
                 cancel = False
+        evaluator.join()
 
-        assert evaluator._snapshot.get_status() == "Cancelled"
+        assert evaluator._ee_app._snapshot.get_status() == "Cancelled"
 
 
 def _mock_ws(host, port, messages):
@@ -123,6 +129,7 @@ def _mock_ws(host, port, messages):
     async def _handler(websocket, path):
         while True:
             msg = await websocket.recv()
+            msg = msg.decode("utf-8")
             messages.append(msg)
             if msg == "stop":
                 done.set_result(None)
@@ -149,10 +156,10 @@ def test_prefect_client(unused_tcp_port):
 
     with Client(url) as c1:
         for msg in messages_c1:
-            c1.send(msg)
+            c1.send(msg.encode())
 
     with Client(url, max_retries=2, timeout_multiplier=1) as c2:
-        c2.send("after_ws_stoped")
+        c2.send(b"after_ws_stoped")
 
     mock_ws_thread.join()
 
@@ -211,7 +218,7 @@ def test_unix_step(unused_tcp_port):
 
         # Stop the mock evaluator WS server
         with Client(url) as c:
-            c.send("stop")
+            c.send(b"stop")
         mock_ws_thread.join()
 
         task_result = flow_run.result[stage_task]
@@ -273,7 +280,7 @@ def test_unix_step_error(unused_tcp_port):
 
         # Stop the mock evaluator WS server
         with Client(url) as c:
-            c.send("stop")
+            c.send(b"stop")
         mock_ws_thread.join()
 
         task_result = flow_run.result[stage_task]
@@ -333,7 +340,7 @@ def test_on_task_failure(unused_tcp_port):
 
         # Stop the mock evaluator WS server
         with Client(url) as c:
-            c.send("stop")
+            c.send(b"stop")
         mock_ws_thread.join()
 
         task_result = flow_run.result[stage_task]
@@ -381,4 +388,5 @@ def test_run_prefect_ensemble_exception(unused_tcp_port):
                     "Failed",
                 ]:
                     mon.signal_done()
-            assert evaluator._snapshot.get_status() == "Failed"
+            evaluator.join()
+            assert evaluator._ee_app._snapshot.get_status() == "Failed"

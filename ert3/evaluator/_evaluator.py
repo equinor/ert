@@ -125,6 +125,7 @@ def _run(ensemble_evaluator):
     for event in monitor.track():
         if event.data is not None and event.data.get("status") in ["Stopped", "Failed"]:
             monitor.signal_done()
+    ensemble_evaluator.join()
 
 
 def evaluate(

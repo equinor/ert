@@ -34,6 +34,7 @@ async def mock_ws(host, port):
     async def _handler(websocket, path):
         while True:
             line = await websocket.recv()
+            line = line.decode("utf-8")
             lines.append(line)
             if line == EVTYPE_FM_STEP_SUCCESS:
                 done.set_result(None)

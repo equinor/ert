@@ -36,7 +36,7 @@ class EnsemblePrefectExperiment:
         ee.run_and_get_successful_realizations()
         self._stop_time = time.time()
         self._queue_running = False
-        ee.stop()
+        ee.join()
 
     def get_runtime(self):
         if self.isFinished():
