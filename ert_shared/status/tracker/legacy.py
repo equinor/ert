@@ -33,7 +33,7 @@ from ert_shared.status.entity.event import (
     SnapshotUpdateEvent,
 )
 from ert_shared.status.entity.state import (
-    ENSEMBLE_STATE_STARTED,
+    ENSEMBLE_STATE_STARTED, JOB_STATE_FAILURE,
     JOB_STATE_FINISHED,
     REALIZATION_STATE_UNKNOWN,
     queue_status_to_real_state,
@@ -45,6 +45,18 @@ from res.job_queue.job_status_type_enum import JobStatusType
 logger = logging.getLogger(__name__)
 
 _THE_EMPTY_DETAILED_PROGRESS = ({}, -1)
+
+
+_JOB_LEGACY_STATUS_MAP = {
+    "Success": JOB_STATE_FINISHED,
+    "Failure": JOB_STATE_FAILURE
+}
+
+
+def _map_job_state(legacy_state: str) -> str:
+    if legacy_state in _JOB_LEGACY_STATUS_MAP:
+        return _JOB_LEGACY_STATUS_MAP[legacy_state]
+    return legacy_state
 
 
 class LegacyTracker:
@@ -165,13 +177,10 @@ class LegacyTracker:
                 job = step.jobs[str(idx)]
 
                 # FIXME: parse these as iso date
-                job.start_time = str(fm.start_time)
-                job.end_time = str(fm.end_time)
+                job.start_time = str(fm.start_time) if fm.start_time else None
+                job.end_time = str(fm.end_time) if fm.end_time else None
                 job.name = fm.name
-                job.status = fm.status
-                if job.status == "Success":
-                    job.status = JOB_STATE_FINISHED
-
+                job.status = _map_job_state(fm.status)
                 job.error = fm.error
                 job.stdout = fm.std_out_file
                 job.stderr = fm.std_err_file
@@ -275,17 +284,14 @@ class LegacyTracker:
 
             jobs = progress[0]
             for idx, fm in enumerate(jobs):
-                status = fm.status
-                if status == "Success":
-                    status = JOB_STATE_FINISHED
                 partial.update_job(
                     str(iens),  # real_id
                     "0",
                     "0",
                     str(idx),
-                    status=status,
-                    start_time=str(fm.start_time),
-                    end_time=str(fm.end_time),
+                    status=_map_job_state(fm.status),
+                    start_time=str(fm.start_time) if fm.start_time else None,
+                    end_time=str(fm.end_time) if fm.end_time else None,
                     data={
                         CURRENT_MEMORY_USAGE: fm.current_memory_usage,
                         MAX_MEMORY_USAGE: fm.max_memory_usage,

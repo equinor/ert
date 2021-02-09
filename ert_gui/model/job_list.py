@@ -47,12 +47,16 @@ class JobListProxyModel(QAbstractProxyModel):
         if sm is None:
             return
         sm.dataChanged.disconnect(self._source_data_changed)
+        sm.modelAboutToBeReset.disconnect(self.modelAboutToBeReset)
+        sm.modelReset.disconnect(self.modelReset)
 
     def _connect(self):
         sm = self.sourceModel()
         if sm is None:
             return
         sm.dataChanged.connect(self._source_data_changed)
+        sm.modelAboutToBeReset.connect(self.modelAboutToBeReset)
+        sm.modelReset.connect(self.modelReset)
 
     def _get_source_parent_index(self) -> QModelIndex:
         start = self.index(0, 0, QModelIndex())
