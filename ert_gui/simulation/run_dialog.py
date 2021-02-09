@@ -224,6 +224,8 @@ class RunDialog(QDialog):
 
     def startSimulation(self):
         self._run_model.reset()
+        self._snapshot_model.reset()
+        self._tab_widget.clear()
 
         def run():
             self._run_model.startSimulations(self._simulations_argments)
@@ -290,7 +292,6 @@ class RunDialog(QDialog):
 
     @Slot(object)
     def _on_tracker_event(self, event):
-
         if isinstance(event, EndEvent):
             self.simulation_done.emit(event.failed, event.failed_msg)
             self._worker.stop()

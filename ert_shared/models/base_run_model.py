@@ -71,6 +71,7 @@ class BaseRunModel(object):
 
     def reset(self):
         self._failed = False
+        self._phase = 0
 
     def startSimulations(self, arguments):
         try:

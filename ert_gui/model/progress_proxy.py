@@ -19,6 +19,8 @@ class ProgressProxyModel(QAbstractItemModel):
     def _connect(self):
         self._source_model.dataChanged.connect(self._source_data_changed)
         self._source_model.rowsInserted.connect(self._source_rows_inserted)
+        self._source_model.modelAboutToBeReset.connect(self.modelAboutToBeReset)
+        self._source_model.modelReset.connect(self._source_reset)
 
         # rowCount-1 of the top index in the underlying, will be the last/most
         # recent iteration. If it's -1, then there are no iterations yet.
@@ -64,6 +66,9 @@ class ProgressProxyModel(QAbstractItemModel):
         current_iter_node = self._source_model.index(
             iter_, 0, QModelIndex()
         ).internalPointer()
+        if current_iter_node is None:
+            self._progress = None
+            return
         for v in current_iter_node.children.values():
             ## realizations
             status = v.data["status"]
@@ -88,3 +93,7 @@ class ProgressProxyModel(QAbstractItemModel):
         self._recalculate_progress(start)
         index = self.index(0, 0, QModelIndex())
         self.dataChanged.emit(index, index, [ProgressRole])
+
+    def _source_reset(self):
+        self._recalculate_progress(0)
+        self.modelReset.emit()

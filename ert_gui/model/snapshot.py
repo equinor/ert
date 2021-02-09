@@ -227,9 +227,6 @@ class SnapshotModel(QAbstractItemModel):
                         # print("node3: ", job.data)
                         status = job.data[ids.STATUS]
                         # print("job ", s)
-                        # FIXME: Success shouldn't really exist
-                        if status == "Success":
-                            status = JOB_STATE_FINISHED
                         return QColor(*REAL_STATE_TO_COLOR[status])
 
         elif role == RealLabelHint:
@@ -280,3 +277,8 @@ class SnapshotModel(QAbstractItemModel):
             return QModelIndex()
         else:
             return self.createIndex(row, column, childItem)
+
+    def reset(self):
+        self.modelAboutToBeReset.emit()
+        self.root = Node(None, {}, NodeType.ROOT)
+        self.modelReset.emit()

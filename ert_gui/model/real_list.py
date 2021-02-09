@@ -40,8 +40,8 @@ class RealListModel(QAbstractProxyModel):
         sm.dataChanged.disconnect(self._source_data_changed)
         sm.rowsAboutToBeInserted.disconnect(self._source_rows_about_to_be_inserted)
         sm.rowsInserted.disconnect(self._source_rows_inserted)
-        sm.modelAboutToBeReset.disconnect(self._source_model_about_to_be_reset)
-        sm.modelReset.disconnect(self._source_model_reset)
+        sm.modelAboutToBeReset.disconnect(self.modelAboutToBeReset)
+        sm.modelReset.disconnect(self.modelReset)
 
     def _connect(self):
         sm = self.sourceModel()
@@ -50,8 +50,8 @@ class RealListModel(QAbstractProxyModel):
         sm.dataChanged.connect(self._source_data_changed)
         sm.rowsAboutToBeInserted.connect(self._source_rows_about_to_be_inserted)
         sm.rowsInserted.connect(self._source_rows_inserted)
-        sm.modelAboutToBeReset.connect(self._source_model_about_to_be_reset)
-        sm.modelReset.connect(self._source_model_reset)
+        sm.modelAboutToBeReset.connect(self.modelAboutToBeReset)
+        sm.modelReset.connect(self.modelReset)
 
     def setSourceModel(self, sourceModel: QAbstractItemModel) -> None:
         if not sourceModel:
@@ -140,12 +140,6 @@ class RealListModel(QAbstractProxyModel):
         if not self._index_is_on_our_branch(parent):
             return
         self.endInsertRows()
-
-    def _source_model_about_to_be_reset(self):
-        self.modelAboutToBeReset.emit()
-
-    def _source_model_reset(self):
-        self.modelReset.emit()
 
     def _index_is_on_our_branch(self, index: QModelIndex) -> bool:
         # # the tree is only traversed towards the root
