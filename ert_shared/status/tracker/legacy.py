@@ -199,7 +199,11 @@ class LegacyTracker:
         """Return generator producing update events for all queues that has run
         thus far."""
         for iter_ in self._iter_differ:
-            partial = self._create_partial_snapshot(None, ({}, -1), iter_)
+            differ = self._iter_differ[iter_]
+            changes = differ.snapshot() if differ else None
+            partial = self._create_partial_snapshot(
+                None, ({}, -1), iter_, queue_snapshot=changes
+            )
 
             if partial is not None:
                 self._set_iter_snapshot(iter_, partial._snapshot)
@@ -238,27 +242,33 @@ class LegacyTracker:
         run_context: ErtRunContext,
         detailed_progress: typing.Tuple[typing.Dict, int],
         iter_: int,
+        queue_snapshot: typing.Optional[typing.Dict[int, str]] = None,
     ) -> typing.Optional[PartialSnapshot]:
         """Create a PartialSnapshot, or None if the sources of data were
         destroyed or had not been created yet. Both run_context and
         detailed_progress needs to be aligned with the stars if job status etc
-        is to be produced."""
+        is to be produced. If queue_snapshot is set, this means the the differ
+        will not be used to calculate changes."""
         differ = self._iter_differ.get(iter_, None)
         if differ is None:
             logger.debug(f"no differ for {iter_}, no partial returned")
-            return None
-        try:
-            changes = differ.changes_after_transition()
-        except InconsistentIndicesError:
-            logger.debug(
-                f"inconsistent indices in differ for {iter_}, no partial returned"
-            )
             return None
 
         snapshot = self._iter_snapshot.get(iter_, None)
         if snapshot is None:
             logger.debug(f"no snapshot for {iter_}, no partial returned")
             return None
+
+        if queue_snapshot:
+            changes = queue_snapshot
+        else:
+            try:
+                changes = differ.changes_after_transition()
+            except InconsistentIndicesError:
+                logger.debug(
+                    f"inconsistent indices in differ for {iter_}, no partial returned"
+                )
+                return None
 
         partial = PartialSnapshot(snapshot)
         for iens, change in changes.items():
