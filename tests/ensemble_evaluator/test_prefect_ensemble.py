@@ -47,7 +47,7 @@ def test_run_prefect_ensemble(unused_tcp_port):
         config.update(service_config)
         ensemble = PrefectEnsemble(config)
 
-        evaluator = EnsembleEvaluator(ensemble, config, ee_id="1")
+        evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
 
         mon = evaluator.run()
 
