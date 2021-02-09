@@ -27,8 +27,10 @@ from res.enkf.enkf_main import EnKFMain
 from res.enkf.res_config import ResConfig
 from ert_shared import ERT
 import pytest
+import flaky
 
 
+@flaky.flaky(max_runs=3, min_passes=2)
 @pytest.mark.parametrize(
     "cmd_line_arguments,num_successful,num_iters",
     [
@@ -48,7 +50,7 @@ import pytest
                 "--target-case",
                 "poly_runpath_file",
                 "--realizations",
-                "1,2,4,8,16,32,64",
+                "5,6,7,8,9,10,11",
                 "poly_example/poly.ert",
             ],
             7,
@@ -61,7 +63,7 @@ import pytest
                 "--target-case",
                 "poly_runpath_file",
                 "--realizations",
-                "1,2,4,8,16,32,64",
+                "12,13,14,15,16,17,18",
                 "poly_example/poly.ert",
             ],
             7,
@@ -111,7 +113,8 @@ def test_tracking(cmd_line_arguments, num_successful, num_iters, tmpdir, source_
             if isinstance(event, FullSnapshotEvent):
                 snapshots[event.iteration] = event.snapshot
             if isinstance(event, SnapshotUpdateEvent):
-                snapshots[event.iteration].merge(event.partial_snapshot.data())
+                if event.partial_snapshot is not None:
+                    snapshots[event.iteration].merge(event.partial_snapshot.data())
             if isinstance(event, EndEvent):
                 assert not event.failed
                 break
@@ -119,14 +122,20 @@ def test_tracking(cmd_line_arguments, num_successful, num_iters, tmpdir, source_
         assert tracker._progress() == 1.0
 
         assert len(snapshots) == num_iters
-        for snapshot in snapshots.values():
+        for iter_, snapshot in snapshots.items():
             assert len(snapshot.get_reals()) == num_successful
-            for real in snapshot.get_reals().values():
-                assert real["status"] == REALIZATION_STATE_FINISHED
+            for real_id, real in snapshot.get_reals().items():
+                assert (
+                    real["status"] == REALIZATION_STATE_FINISHED
+                ), f"iter:{iter_} real:{real_id} was not finished"
 
                 poly = real["stages"]["0"]["steps"]["0"]["jobs"]["0"]
                 poly2 = real["stages"]["0"]["steps"]["0"]["jobs"]["1"]
                 assert poly["name"] == "poly_eval"
-                assert poly["status"] == JOB_STATE_FINISHED
+                assert (
+                    poly["status"] == JOB_STATE_FINISHED
+                ), f"real {real_id}/{poly['name']} was not finished"
                 assert poly2["name"] == "poly_eval2"
-                assert poly2["status"] == JOB_STATE_FINISHED
+                assert (
+                    poly2["status"] == JOB_STATE_FINISHED
+                ), f"real {real_id}/{poly['name']} was not finished"
