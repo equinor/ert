@@ -27,10 +27,8 @@ from res.enkf.enkf_main import EnKFMain
 from res.enkf.res_config import ResConfig
 from ert_shared import ERT
 import pytest
-import flaky
 
 
-@flaky.flaky(max_runs=3, min_passes=1)
 @pytest.mark.parametrize(
     "cmd_line_arguments,num_successful,num_iters",
     [
