@@ -68,7 +68,7 @@ class RunDialog(QDialog):
 
         progress_proxy_model = ProgressProxyModel(self._snapshot_model, parent=self)
 
-        total_progress_label = QLabel("Total Progress", self)
+        total_progress_label = QLabel("Total progress", self)
 
         self._total_progress_bar = QProgressBar(self)
         self._total_progress_bar.setRange(0, 100)
@@ -273,6 +273,7 @@ class RunDialog(QDialog):
         self.done_button.setHidden(False)
         self.restart_button.setVisible(self.has_failed_realizations())
         self.restart_button.setEnabled(self._run_model.support_restart)
+        self._total_progress_bar.setValue(100)
 
         if failed:
             QMessageBox.critical(
@@ -294,11 +295,12 @@ class RunDialog(QDialog):
             self.simulation_done.emit(event.failed, event.failed_msg)
             self._worker.stop()
             self._ticker.stop()
+
         elif isinstance(event, FullSnapshotEvent):
             if event.snapshot is not None:
                 self._snapshot_model._add_snapshot(event.snapshot, event.iteration)
             self._progress_view.setIndeterminate(event.indeterminate)
-            self._total_progress_bar.setValue(event.progress * 100)
+            self._total_progress_bar.setValue(int(event.progress * 100))
 
         elif isinstance(event, SnapshotUpdateEvent):
             if event.partial_snapshot is not None:
@@ -306,7 +308,7 @@ class RunDialog(QDialog):
                     event.partial_snapshot, event.iteration
                 )
             self._progress_view.setIndeterminate(event.indeterminate)
-            self._total_progress_bar.setValue(event.progress * 100)
+            self._total_progress_bar.setValue(int(event.progress * 100))
 
     def has_failed_realizations(self):
         completed = self._run_model.completed_realizations_mask

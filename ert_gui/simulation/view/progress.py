@@ -1,3 +1,4 @@
+import math
 from qtpy.QtCore import QSize, QModelIndex, Slot, Qt
 from qtpy.QtWidgets import (
     QTreeView,
@@ -64,7 +65,7 @@ class ProgressDelegate(QStyledItemDelegate):
 
         nr_reals = data["nr_reals"]
         status = data["status"]
-        d = option.rect.width() / nr_reals
+        d = math.ceil(option.rect.width() / nr_reals)
 
         painter.save()
 
