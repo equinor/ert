@@ -4,7 +4,6 @@ from ecl.util.util import BoolVector
 from ert_gui.ertwidgets import resourceMovie
 from ert_gui.model.job_list import JobListProxyModel
 from ert_gui.model.node import NodeType
-from ert_gui.model.real_list import RealListModel
 from ert_gui.model.snapshot import SnapshotModel
 from ert_gui.simulation.tracker_worker import TrackerWorker
 from ert_gui.tools.plot.plot_tool import PlotTool
@@ -37,8 +36,6 @@ from ert_gui.simulation.view.progress import ProgressView
 from ert_gui.simulation.view.legend import LegendView
 from ert_gui.simulation.view.realization import RealizationWidget
 from ert_gui.model.progress_proxy import ProgressProxyModel
-
-from ert_gui.model.snapshot import NodeRole
 
 
 class RunDialog(QDialog):
