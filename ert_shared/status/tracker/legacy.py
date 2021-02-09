@@ -97,6 +97,7 @@ class LegacyTracker:
                 yield self._partial_snapshot_event(iter_, read_from_disk=True)
             tick += 1
 
+        yield from self._retroactive_update_event()
         yield self._end_event()
 
     def _create_snapshot_dict(
@@ -140,7 +141,7 @@ class LegacyTracker:
                 if self._model._job_queue:
                     status = self._model._job_queue.getJobStatus(queue_index)
             except ValueError:
-                logger.debug(f"iens {iens} was in a limbo state")
+                logger.debug(f"iens {iens} was in a limbo state, setting {iter_}/{real_id} status to unknown")
 
             snapshot.reals[real_id] = _Realization(
                 status=queue_status_to_real_state(status), active=True, stages={}
@@ -235,14 +236,17 @@ class LegacyTracker:
         is to be produced."""
         differ = self._iter_differ.get(iter_, None)
         if differ is None:
+            logger.debug(f"no differ for {iter_}, no partial returned")
             return None
         try:
             changes = differ.changes_after_transition()
         except InconsistentIndicesError:
+            logger.debug(f"inconsistent indices in differ for {iter_}, no partial returned")
             return None
 
         snapshot = self._iter_snapshot.get(iter_, None)
         if snapshot is None:
+            logger.debug(f"no snapshot for {iter_}, no partial returned")
             return None
 
         partial = PartialSnapshot(snapshot)
