@@ -51,12 +51,10 @@ class Progress(QFrame):
         self.__state_order.append(state_tracker)
         self.__states[state] = state_tracker
 
-
     # def updateState(self, state, progress):
     #     self.__count += 1
     #     self.__states[state].setProgress(progress)
     #     self.update()
-
 
     def setIndeterminate(self, indeterminate):
         self.__indeterminate = indeterminate
@@ -105,7 +103,9 @@ class Progress(QFrame):
             p = self.__indeterminate_state
             s = self.__indeterminate_step_size
 
-            gradient = QLinearGradient(0, rect.height() / 2, rect.width(), rect.height() / 2)
+            gradient = QLinearGradient(
+                0, rect.height() / 2, rect.width(), rect.height() / 2
+            )
             gradient.setColorAt(p - s, QColor(255, 255, 255, 0))
             gradient.setColorAt(p, QColor(255, 255, 255, 200))
             gradient.setColorAt(p + s, QColor(255, 255, 255, 0))
@@ -113,9 +113,14 @@ class Progress(QFrame):
 
             self.__indeterminate_state += s
 
-            if self.__indeterminate_state + s >= 1.0 or self.__indeterminate_state + s <= 0.0:
+            if (
+                self.__indeterminate_state + s >= 1.0
+                or self.__indeterminate_state + s <= 0.0
+            ):
                 self.__indeterminate_step_size *= -1
-                self.__indeterminate_state = round(self.__indeterminate_state) + self.__indeterminate_step_size
+                self.__indeterminate_state = (
+                    round(self.__indeterminate_state) + self.__indeterminate_step_size
+                )
 
     def handle(self, event):
         self.setIndeterminate(event.indeterminate)

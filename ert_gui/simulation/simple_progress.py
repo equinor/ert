@@ -44,8 +44,10 @@ class SimpleProgress(QFrame):
         painter.fillRect(x, y, width, height, self.color)
 
         if self.__shiny:
-            #Shiny overlay!
-            gradient = QLinearGradient(rect.width() / 2, 0, rect.width() / 2, rect.height())
+            # Shiny overlay!
+            gradient = QLinearGradient(
+                rect.width() / 2, 0, rect.width() / 2, rect.height()
+            )
             gradient.setColorAt(0, QColor(255, 255, 255, 0))
             gradient.setColorAt(0.2, QColor(255, 255, 255, 200))
             gradient.setColorAt(0.4, QColor(255, 255, 255, 0))
