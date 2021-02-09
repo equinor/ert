@@ -200,7 +200,10 @@ class LegacyTracker:
         thus far."""
         for iter_ in self._iter_differ:
             differ = self._iter_differ[iter_]
-            changes = differ.snapshot() if differ else None
+            changes = None
+            if differ is not None:
+                differ.transition()
+                changes = differ.snapshot()
             partial = self._create_partial_snapshot(
                 None, ({}, -1), iter_, queue_snapshot=changes
             )
