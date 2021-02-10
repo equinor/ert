@@ -1,0 +1,11 @@
+size: 10
+
+input:
+  -
+    source: stochastic.field_properties
+    record: field_properties
+
+forward_model:
+  driver: local
+  stages:
+    - simulate_SPE1
