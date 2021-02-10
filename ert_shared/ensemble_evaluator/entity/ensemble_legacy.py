@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import os
 import threading
@@ -6,13 +7,11 @@ import uuid
 from functools import partial
 from pathlib import Path
 
-from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.entity.ensemble_base import _Ensemble
 from ert_shared.ensemble_evaluator.nfs_adaptor import nfs_adaptor
-from ert_shared.ensemble_evaluator.queue_adaptor import QueueAdaptor
-
+from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 
 CONCURRENT_INTERNALIZATION = 10
 
@@ -104,9 +103,11 @@ class _LegacyEnsemble(_Ensemble):
                 )
             ]
 
-        queue_adaptor = QueueAdaptor(self._job_queue, self._config, self._ee_id)
+        self._job_queue.add_ensemble_evaluator_information_to_jobs_file(self._ee_id)
+
         futures.append(
-            queue_adaptor.execute_queue(
+            self._job_queue.execute_queue_async(
+                self._config.get("dispatch_url"),
                 threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION),
                 queue_evaluators,
             )

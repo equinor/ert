@@ -7,22 +7,21 @@ the life-span of an iteration, zero or more SnapshotUpdateEvent will be
 emitted. A final EndEvent is emitted when the experiment is over.
 """
 
-from ert_shared.status.utils import tracker_progress
-from ert_shared.ensemble_evaluator.entity.identifiers import (
-    CURRENT_MEMORY_USAGE,
-    MAX_MEMORY_USAGE,
-)
 import logging
 import time
 import typing
 
+from ert_shared.ensemble_evaluator.entity.identifiers import (
+    CURRENT_MEMORY_USAGE,
+    MAX_MEMORY_USAGE,
+)
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
     Snapshot,
-    _SnapshotDict,
     _ForwardModel,
     _Job,
     _Realization,
+    _SnapshotDict,
     _Stage,
     _Step,
 )
@@ -39,9 +38,10 @@ from ert_shared.status.entity.state import (
     REALIZATION_STATE_UNKNOWN,
     queue_status_to_real_state,
 )
-from ert_shared.status.queue_diff import InconsistentIndicesError, QueueDiff
+from ert_shared.status.utils import tracker_progress
 from res.enkf.ert_run_context import ErtRunContext
 from res.job_queue.job_status_type_enum import JobStatusType
+from res.job_queue.queue import JobQueue
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +67,7 @@ class LegacyTracker:
         self._model = model
 
         self._iter_snapshot = {}
-        self._iter_differ = {}
+        self._iter_queue = {}
 
         self._general_interval = general_interval
         self._detailed_interval = detailed_interval
@@ -100,7 +100,7 @@ class LegacyTracker:
                 current_iter = iter_
                 yield from self._retroactive_update_event()
 
-            self._set_iter_differ(iter_)
+            self._set_iter_queue(iter_, self._model._job_queue)
             if self._general_interval > 0 and (tick % self._general_interval == 0):
                 yield self._partial_snapshot_event(iter_)
             if self._detailed_interval > 0 and (tick % self._detailed_interval == 0):
@@ -120,7 +120,7 @@ class LegacyTracker:
         detailed_progress is expected to be a tuple of a realization_progress
         dict and iteration number. iter_ represents the current assimilation
         cycle."""
-        self._set_iter_differ(iter_)
+        self._set_iter_queue(iter_, self._model._job_queue)
 
         snapshot = _SnapshotDict(
             status=ENSEMBLE_STATE_STARTED,
@@ -137,6 +137,11 @@ class LegacyTracker:
                 f"run_context iter ({iter_}) and detailed_progress ({progress_iter} iter differed"
             )
 
+        try:
+            queue_snapshot = self._model._job_queue.snapshot()
+        except AttributeError:
+            queue_snapshot = None
+
         enumerated = 0
         for iens, run_arg in _enumerate_run_context(run_context):
             real_id = str(iens)
@@ -144,16 +149,10 @@ class LegacyTracker:
             if not _is_iens_active(iens, run_context):
                 continue
 
+            # # TODO: use differ?
             status = JobStatusType.JOB_QUEUE_UNKNOWN
-            try:
-                # will throw if not yet submitted (is in a limbo state)
-                queue_index = run_arg.getQueueIndex()
-                if self._model._job_queue:
-                    status = self._model._job_queue.getJobStatus(queue_index)
-            except ValueError:
-                logger.debug(
-                    f"iens {iens} was in a limbo state, setting {iter_}/{real_id} status to unknown"
-                )
+            if queue_snapshot is not None:
+                status = JobStatusType.from_string(queue_snapshot[iens])
 
             snapshot.reals[real_id] = _Realization(
                 status=queue_status_to_real_state(status), active=True, stages={}
@@ -198,15 +197,8 @@ class LegacyTracker:
     def _retroactive_update_event(self):
         """Return generator producing update events for all queues that has run
         thus far."""
-        for iter_ in self._iter_differ:
-            differ = self._iter_differ[iter_]
-            changes = None
-            if differ is not None:
-                differ.transition()
-                changes = differ.snapshot()
-            partial = self._create_partial_snapshot(
-                None, ({}, -1), iter_, queue_snapshot=changes
-            )
+        for iter_ in self._iter_queue:
+            partial = self._create_partial_snapshot(None, ({}, -1), iter_)
 
             if partial is not None:
                 self._set_iter_snapshot(iter_, partial._snapshot)
@@ -224,16 +216,14 @@ class LegacyTracker:
     def _progress(self) -> float:
         return tracker_progress(self)
 
-    def _set_iter_differ(self, iter_: int) -> None:
-        """Make an attempt at creating a differ for iter_ should it be zero or
-        higher."""
+    def _set_iter_queue(self, iter_: int, queue: JobQueue) -> None:
         if iter_ < 0:
             return
-        if iter_ not in self._iter_differ:
-            self._iter_differ[iter_] = None
+        if iter_ not in self._iter_queue:
+            self._iter_queue[iter_] = None
 
-        if self._iter_differ[iter_] is None and self._model._job_queue is not None:
-            self._iter_differ[iter_] = QueueDiff(self._model._job_queue)
+        if self._iter_queue[iter_] is None and queue is not None:
+            self._iter_queue[iter_] = queue
 
     def _set_iter_snapshot(self, iter_, snapshot: typing.Optional[Snapshot]) -> None:
         if iter_ < 0:
@@ -245,41 +235,31 @@ class LegacyTracker:
         run_context: ErtRunContext,
         detailed_progress: typing.Tuple[typing.Dict, int],
         iter_: int,
-        queue_snapshot: typing.Optional[typing.Dict[int, str]] = None,
     ) -> typing.Optional[PartialSnapshot]:
         """Create a PartialSnapshot, or None if the sources of data were
         destroyed or had not been created yet. Both run_context and
         detailed_progress needs to be aligned with the stars if job status etc
         is to be produced. If queue_snapshot is set, this means the the differ
         will not be used to calculate changes."""
-        differ = self._iter_differ.get(iter_, None)
-        if differ is None:
-            logger.debug(f"no differ for {iter_}, no partial returned")
+        queue = self._iter_queue.get(iter_, None)
+        if queue is None:
+            logger.debug(f"no queue for {iter_}, no partial returned")
             return None
+        queue_snapshot = queue.snapshot()
 
         snapshot = self._iter_snapshot.get(iter_, None)
         if snapshot is None:
             logger.debug(f"no snapshot for {iter_}, no partial returned")
             return None
 
-        if queue_snapshot:
-            changes = queue_snapshot
-        else:
-            try:
-                changes = differ.changes_after_transition()
-            except InconsistentIndicesError:
-                logger.debug(
-                    f"inconsistent indices in differ for {iter_}, no partial returned"
-                )
-                return None
-
         partial = PartialSnapshot(snapshot)
-        for iens, change in changes.items():
-            change_enum = JobStatusType.from_string(change)
-            partial.update_real(
-                str(iens), status=queue_status_to_real_state(change_enum)
-            )
 
+        if queue_snapshot is not None:
+            for iens, change in queue_snapshot.items():
+                change_enum = JobStatusType.from_string(change)
+                partial.update_real(
+                    str(iens), status=queue_status_to_real_state(change_enum)
+                )
         iter_to_progress, progress_iter = detailed_progress
         if not iter_to_progress:
             logger.debug(f"partial: no detailed progress for iter:{iter_}")
@@ -380,7 +360,7 @@ class LegacyTracker:
         return self._model.killAllSimulations()
 
     def reset(self):
-        self._iter_differ = {}
+        self._iter_queue = {}
         self._iter_snapshot = {}
 
 

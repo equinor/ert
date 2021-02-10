@@ -93,12 +93,12 @@ def make_ensemble_builder(queue_config):
                         .set_job_script("job_dispatch.py")
                         .set_status("Unknown")
                         .set_max_runtime(10000)
-                        .set_run_arg(Mock())
+                        .set_run_arg(Mock(iens=iens))
                         .set_done_callback(lambda _: True)
                         .set_exit_callback(lambda _: True)
                         # the first callback_argument is expected to be a run_arg
                         # from the run_arg, the queue wants to access the iens prop
-                        .set_callback_arguments((Mock(iens=iens),))
+                        .set_callback_arguments([])
                         .set_run_path(str(run_path))
                         .add_step(step)
                     )
