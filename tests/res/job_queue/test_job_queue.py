@@ -61,7 +61,7 @@ def create_queue(script, max_submit=1, max_runtime=None):
             max_runtime=max_runtime,
         )
 
-        job_queue.add_job(job)
+        job_queue.add_job(job, i)
 
     return job_queue
 
@@ -96,8 +96,14 @@ class JobQueueTest(ResTest):
 
             wait_until(lambda: self.assertFalse(job_queue.is_active()))
 
-            for job in job_queue.job_list:
+            job_queue._transition()
+
+            for q_index, job in enumerate(job_queue.job_list):
                 assert job.status == JobStatusType.JOB_QUEUE_IS_KILLED
+                iens = job_queue._qindex_to_iens[q_index]
+                assert job_queue.snapshot()[iens] == str(
+                    JobStatusType.JOB_QUEUE_IS_KILLED
+                )
 
             for job in job_queue.job_list:
                 job.wait_for()
@@ -138,12 +144,14 @@ class JobQueueTest(ResTest):
             for job in job_queue.job_list:
                 job.wait_for()
 
+            job_queue._transition()
+
             assert job_queue.fetch_next_waiting() is None
 
-            for job in job_queue.job_list:
+            for q_index, job in enumerate(job_queue.job_list):
                 assert job.status == JobStatusType.JOB_QUEUE_FAILED
-
-            assert True
+                iens = job_queue._qindex_to_iens[q_index]
+                assert job_queue.snapshot()[iens] == str(JobStatusType.JOB_QUEUE_FAILED)
 
     def test_timeout_jobs(self):
         with TestAreaContext("job_queue_test_kill") as work_area:
@@ -160,8 +168,14 @@ class JobQueueTest(ResTest):
 
             wait_until(lambda: self.assertFalse(job_queue.is_active()))
 
-            for job in job_queue.job_list:
+            job_queue._transition()
+
+            for q_index, job in enumerate(job_queue.job_list):
                 assert job.status == JobStatusType.JOB_QUEUE_IS_KILLED
+                iens = job_queue._qindex_to_iens[q_index]
+                assert job_queue.snapshot()[iens] == str(
+                    JobStatusType.JOB_QUEUE_IS_KILLED
+                )
 
             for job in job_queue.job_list:
                 job.wait_for()

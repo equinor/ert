@@ -50,17 +50,22 @@ class EnkfSimulationRunnerTest(TestCase):
 
             # We don't need the c layer call here, we only need it added to
             # the queue's job_list.
-            with mock.patch("res.job_queue.JobQueue._add_job"):
-                for job in job_list:
-                    queue.add_job(job)
+            with mock.patch("res.job_queue.JobQueue._add_job") as _add_job:
+                for idx, job in enumerate(job_list):
+                    _add_job.return_value = idx
+                    queue.add_job(job, idx)
 
         queue.stop_long_running_jobs(5)
+        queue._transition()
 
         for i in range(5):
             assert job_list[i].status == JobStatusType.JOB_QUEUE_DONE
+            assert queue.snapshot()[i] == str(JobStatusType.JOB_QUEUE_DONE)
 
         for i in range(5, 8):
             assert job_list[i].status == JobStatusType.JOB_QUEUE_FAILED
+            assert queue.snapshot()[i] == str(JobStatusType.JOB_QUEUE_FAILED)
 
         for i in range(8, 10):
             assert job_list[i].status == JobStatusType.JOB_QUEUE_RUNNING
+            assert queue.snapshot()[i] == str(JobStatusType.JOB_QUEUE_RUNNING)

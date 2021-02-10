@@ -60,6 +60,7 @@ skbuild.setup(
         "psutil",
         "pyyaml",
         "requests",
+        "websockets",
     ],
     entry_points={
         "console_scripts": ["job_dispatch.py = job_runner.job_dispatch:main"]

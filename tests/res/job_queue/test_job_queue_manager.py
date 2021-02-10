@@ -84,8 +84,8 @@ def create_queue(script, max_submit=2):
                 os.path.realpath(dummy_config["run_path"].format(i)),
             ],
         )
-        job_queue.add_job(job)
-
+        job_queue.add_job(job, i)
+    job_queue.submit_complete()
     return job_queue
 
 
