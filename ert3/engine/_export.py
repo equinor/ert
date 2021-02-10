@@ -5,7 +5,9 @@ from pathlib import Path
 
 
 def export(workspace_root, experiment_name):
-    experiment_root = Path(workspace_root) / experiment_name
+    experiment_root = (
+        Path(workspace_root) / ert3.workspace.EXPERIMENTS_BASE / experiment_name
+    )
     ert3.workspace.assert_experiment_exists(workspace_root, experiment_name)
 
     if not ert3.workspace.experiment_have_run(workspace_root, experiment_name):

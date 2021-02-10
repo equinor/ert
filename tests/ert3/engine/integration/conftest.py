@@ -3,6 +3,8 @@ import yaml
 import pytest
 import numpy as np
 
+import ert3.workspace
+
 
 def load_experiment_config(workspace, ensemble_config, stages_config):
     config = {}
@@ -59,7 +61,10 @@ def assert_poly_output(export_data):
 
 
 def assert_export(workspace, experiment_name, ensemble_config, stages_config):
-    with open(workspace / experiment_name / "data.json") as f:
+    export_file = (
+        workspace / ert3.workspace.EXPERIMENTS_BASE / experiment_name / "data.json"
+    )
+    with open(export_file) as f:
         export_data = json.load(f)
 
     config = load_experiment_config(workspace, ensemble_config, stages_config)
@@ -120,7 +125,10 @@ def assert_distribution(
 def assert_sensitivity_oat_export(
     workspace, experiment_name, ensemble_config, stages_config
 ):
-    with open(workspace / experiment_name / "data.json") as f:
+    export_file = (
+        workspace / ert3.workspace.EXPERIMENTS_BASE / experiment_name / "data.json"
+    )
+    with open(export_file) as f:
         export_data = json.load(f)
 
     num_input_coeffs = 3
