@@ -5,8 +5,7 @@ from datetime import datetime
 
 class ObservationBase(BaseModel):
     name: str
-    key_indices: Union[List[int], List[datetime]]
-    data_indices: List[int]
+    x_axis: Union[List[int], List[datetime]]
     values: List[float]
     errors: List[float]
 

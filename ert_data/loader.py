@@ -16,7 +16,6 @@ def data_loader_factory(observation_type):
     else:
         raise TypeError("Unknown observation type: {}".format(observation_type))
 
-
 def load_general_data(facade, observation_key, case_name, include_data=True):
     obs_vector = facade.get_observations()[observation_key]
     data_key = obs_vector.getDataKey()

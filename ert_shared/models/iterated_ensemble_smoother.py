@@ -4,7 +4,7 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
 
-from ert_shared.storage.extraction import dump_to_new_storage
+from ert_shared.storage.extraction import post_ensemble_data, post_ensemble_results
 
 
 class IteratedEnsembleSmoother(BaseRunModel):
@@ -82,7 +82,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         num_retries = 0
         current_iter = 0
 
-        previous_ensemble_name = None
+        previous_ensemble_id = None
         while current_iter < ERT.enkf_facade.get_number_of_iterations() and num_retries < num_retries_per_iteration:
             pre_analysis_iter_num = analysis_module.getInt("ITER")
             # We run the PRE_FIRST_UPDATE hook here because the current_iter is explicitly available, versus
@@ -94,10 +94,14 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
             analysis_success = current_iter > pre_analysis_iter_num
             if analysis_success:
+                # Push ensemble, parameters, observations to new storage
                 analysis_module_name = self.ert().analysisConfig().activeModuleName()
-                previous_ensemble_name = dump_to_new_storage(reference=None if previous_ensemble_name is None else (previous_ensemble_name, analysis_module_name))
+                previous_ensemble_id = post_ensemble_data(
+                    (previous_ensemble_id, analysis_module_name)
+                    if previous_ensemble_id is not None else None
+                )
+                post_ensemble_results(previous_ensemble_id)
                 run_context = self.create_context( arguments, current_iter, prior_context = run_context )
-                self.ert().getEnkfFsManager().switchFileSystem(run_context.get_target_fs())
                 self._runAndPostProcess(run_context)
                 num_retries = 0
             else:
@@ -106,7 +110,12 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 num_retries += 1
 
         analysis_module_name = self.ert().analysisConfig().activeModuleName()
-        previous_ensemble_name = dump_to_new_storage(reference=None if previous_ensemble_name is None else (previous_ensemble_name, analysis_module_name))
+        previous_ensemble_id = post_ensemble_data(
+                    (previous_ensemble_id, analysis_module_name)
+                    if previous_ensemble_id is not None else None
+                )
+        post_ensemble_results(previous_ensemble_id)
+
         if current_iter == (phase_count - 1):
             self.setPhase(phase_count, "Simulations completed.")
         else:
@@ -119,7 +128,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         model_config = self.ert().getModelConfig( )
         runpath_fmt = model_config.getRunpathFormat( )
         jobname_fmt = model_config.getJobnameFormat( )
-        subst_list = self.ert().getDataKW( )        
+        subst_list = self.ert().getDataKW( )
         target_case_format = arguments["target_case"]
 
         sim_fs = self.createTargetCaseFileSystem(itr, target_case_format)

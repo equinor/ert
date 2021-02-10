@@ -106,8 +106,7 @@ def db_populated(db_factory):
     ######## add observations ########
     observation_one = ds.Observation(
         name="observation_one",
-        key_indices=[0, 3],
-        data_indices=[2, 3],
+        x_axis=[0, 3],
         values=[10.1, 10.2],
         errors=[1, 3],
         attributes={"region": ds.AttributeValue("1")},
@@ -115,16 +114,14 @@ def db_populated(db_factory):
 
     observation_two_first = ds.Observation(
         name="observation_two_first",
-        key_indices=["2000-01-01T20:01:01Z"],
-        data_indices=[4],
+        x_axis=["2000-01-01T20:01:01Z"],
         values=[10.3],
         errors=[2],
     )
 
     observation_two_second = ds.Observation(
         name="observation_two_second",
-        key_indices=["2000-01-02T20:01:01Z"],
-        data_indices=[5],
+        x_axis=["2000-01-02T20:01:01Z"],
         values=[10.4],
         errors=[2.5],
     )
@@ -139,7 +136,7 @@ def db_populated(db_factory):
     ######## add response definitions ########
     response_definition_one = ds.ResponseDefinition(
         name="response_one",
-        indices=[3, 5, 8, 9],
+        indices=[0, 3, 5, 8, 9],
         ensemble=ensemble,
     )
 
@@ -192,7 +189,7 @@ def db_populated(db_factory):
     def add_data(index):
         response_one = ds.Response(
             response_definition=response_definition_one,
-            values=[11.1, 11.2, 9.9, 9.3],
+            values=[10.2, 11.1, 11.2, 9.9, 9.3],
             index=index,
         )
         db.add(response_one)

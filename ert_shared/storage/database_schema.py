@@ -181,8 +181,7 @@ class Observation(Entity):
 
     id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.String, nullable=False)
-    key_indices = sa.Column(sa.PickleType)
-    data_indices = sa.Column(sa.PickleType)
+    x_axis = sa.Column(sa.PickleType)
     values = sa.Column(sa.PickleType)
     errors = sa.Column(sa.PickleType)
 
