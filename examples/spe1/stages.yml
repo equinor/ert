@@ -1,0 +1,32 @@
+-
+  name: simulate_SPE1
+
+  input:
+    -
+      record: field_properties
+      location: field_properties.json
+
+  output:
+    -
+      record: summary
+      location: summary.json
+
+  transportable_commands:
+    -
+      name: bash
+      location: bash.py
+    -
+      name: summary2json
+      location: summary2json.py
+    -
+      name: render
+      location: render.py
+
+  script:
+    # TODO: The following cp should not be present, instead files should be
+    # transfered as opaque data
+    - bash cp ${SPE1_WORKSPACE_ROOT}/resources/SPE1CASE2.DATA.jinja2 SPE1CASE2.DATA.jinja2
+    - bash echo "{}" > parameters.json
+    - render -t SPE1CASE2.DATA.jinja2 -i field_properties.json -o SPE1CASE2.DATA
+    - bash flow SPE1CASE2
+    - summary2json --datafile SPE1CASE2.DATA --output summary.json

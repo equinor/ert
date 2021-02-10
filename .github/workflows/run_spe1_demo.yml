@@ -1,0 +1,46 @@
+name: Run SPE1 demo
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.6]
+        os: [ubuntu-18.04]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Flow Simulator
+      run: |
+        sudo apt-get update
+        sudo apt-get install software-properties-common
+        sudo apt-add-repository ppa:opm/ppa
+        sudo apt-get update
+        sudo apt-get install mpi-default-bin
+        sudo apt-get install libopm-simulators-bin
+
+    - name: Install ERT
+      run: |
+        pip install .
+
+    - name: Install spe1 dependencies
+      run: |
+        pip install ecl2df
+
+    - name: Run spe1 demo
+      run: |
+        pushd examples/spe1
+        ./run_demo
+        popd

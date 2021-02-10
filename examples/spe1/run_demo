@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -e
+
+export SPE1_WORKSPACE_ROOT=$(pwd)
+
+ert3 init
+ert3 run evaluation
+ert3 export evaluation
