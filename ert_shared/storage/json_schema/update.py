@@ -6,7 +6,7 @@ class UpdateBase(BaseModel):
 
 
 class UpdateCreate(UpdateBase):
-    ensemble_name: str
+    ensemble_id: int
 
 
 class UpdateUpdate(UpdateBase):

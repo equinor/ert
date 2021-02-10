@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi.responses import Response
 from typing import List
-
+from datetime import datetime
 from ert_shared.storage.db import Db, Session
 from ert_shared.storage import json_schema as js, database_schema as ds
 
@@ -11,22 +11,12 @@ import pandas as pd
 router = APIRouter()
 
 
-def _calculate_misfit(
-    obs_value, response_values, obs_stds, obs_data_indexes, obs_key_indexes, obs_index
-):
-    observation_std = obs_stds[obs_index]
-    response_index = obs_data_indexes[obs_index]
-    response_value = response_values[response_index]
+def _calculate_misfit(obs_value, response_value, obs_std, x_value):
     difference = response_value - obs_value
-    misfit = (difference / observation_std) ** 2
+    misfit = (difference / obs_std) ** 2
     sign = difference > 0
 
-    return {
-        "value": misfit,
-        "sign": sign,
-        "obs_index": obs_index,
-        "obs_location": obs_key_indexes[obs_index],
-    }
+    return {"value": misfit, "sign": sign, "obs_location": x_value}
 
 
 def _obs_to_json(obs, active=None):
@@ -35,8 +25,7 @@ def _obs_to_json(obs, active=None):
         "data": {
             "values": {"data": obs.values},
             "std": {"data": obs.errors},
-            "data_indexes": {"data": obs.data_indices},
-            "key_indexes": {"data": obs.key_indices},
+            "x_axis": {"data": obs.x_axis},
         },
     }
     if active is not None:
@@ -58,10 +47,25 @@ async def read_responses(*, db: Session = Db(), ensemble_id: int):
 async def create_responses(
     *, db: Session = Db(), ensemble_id: int, resp: js.ResponseCreate
 ):
-    obj = ds.ResponseDefinition(
-        name=resp.name, indices=resp.indices, ensemble_id=ensemble_id
+    exists = (
+        db.query(ds.ResponseDefinition.id)
+        .filter_by(ensemble_id=ensemble_id, name=resp.name)
+        .count()
+        > 0
     )
-    db.add(obj)
+    if not exists:
+        obj = ds.ResponseDefinition(
+            name=resp.name, indices=resp.indices, ensemble_id=ensemble_id
+        )
+        db.add(obj)
+    else:
+        obj = (
+            db.query(ds.ResponseDefinition)
+            .filter_by(ensemble_id=ensemble_id, name=resp.name)
+            .one()
+        )
+        obj.indices = resp.indices
+
     db.add_all(
         ds.Response(values=values, index=index, response_definition=obj)
         for index, values in resp.realizations.items()
@@ -101,22 +105,27 @@ async def read_response_by_id(*, db: Session = Db(), ensemble_id: int, id: int):
     for resp in responses:
         resp_values = list(resp.values)
         univariate_misfits[resp.index] = {}
+        response_xaxis = list(bundle.indices)
+
         for link in observation_links:
             observation = link.observation
             obs_values = list(observation.values)
             obs_stds = list(observation.errors)
-            obs_data_indexes = list(observation.data_indices)
-            obs_key_indexes = list(observation.key_indices)
+            obs_xaxis = list(observation.x_axis)
+
             misfits = []
             for obs_index, obs_value in enumerate(obs_values):
+                obs_std = obs_stds[obs_index]
+                obs_x = obs_xaxis[obs_index]
+                if type(obs_x) == datetime:
+                    obs_x = obs_x.isoformat()
+                resp_index = response_xaxis.index(obs_x)
                 misfits.append(
                     _calculate_misfit(
-                        obs_value,
-                        resp_values,
-                        obs_stds,
-                        obs_data_indexes,
-                        obs_key_indexes,
-                        obs_index,
+                        obs_value=obs_value,
+                        obs_std=obs_std,
+                        response_value=resp_values[resp_index],
+                        x_value=obs_x,
                     )
                 )
             univariate_misfits[resp.index][observation.name] = misfits

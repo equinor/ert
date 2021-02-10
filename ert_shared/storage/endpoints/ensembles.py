@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from ert_shared.storage.db import Session, Db
 from ert_shared.storage import json_schema as js, database_schema as ds
@@ -108,14 +108,9 @@ async def read_ensemble_by_name(
 async def create_ensemble(*, db: Session = Db(), ens_in: js.EnsembleCreate):
     update = None
     if ens_in.update is not None:
-        prev_ens = (
-            db.query(ds.Ensemble.id)
-            .filter_by(name=ens_in.update.ensemble_name)
-            .order_by(ds.Ensemble.id.desc())
-            .first()
-        )
         update = ds.Update(
-            algorithm=ens_in.update.algorithm, ensemble_reference_id=prev_ens.id
+            algorithm=ens_in.update.algorithm,
+            ensemble_reference_id=ens_in.update.ensemble_id,
         )
 
     ens = ds.Ensemble(
@@ -144,7 +139,7 @@ async def create_ensemble(*, db: Session = Db(), ens_in: js.EnsembleCreate):
         if len(param.values) != ens_in.realizations:
             raise HTTPException(
                 status_code=422,
-                detail=f"Length of Ensemble.parameters[{index}].values must be {ens_in.realizations}",
+                detail=f"Length of Ensemble.parameters[{index}].values must be {ens_in.realizations}, got {len(param.values)}",
             )
 
     db.add_all(
@@ -157,6 +152,42 @@ async def create_ensemble(*, db: Session = Db(), ens_in: js.EnsembleCreate):
         )
         for p in ens_in.parameters
     )
+
+    existing_observations = {obs.name: obs for obs in db.query(ds.Observation).all()}
+
+    # Adding only new observations. If observations exist, we link to the.
+    # existing ones. This will fail if users change the values in observation
+    # config file
+    observations = {}
+    to_be_created = []
+    for obs in ens_in.observations:
+        try:
+            observations[obs.name] = existing_observations[obs.name]
+        except KeyError:
+            new_obs = ds.Observation(
+                name=obs.name,
+                x_axis=obs.x_axis,
+                values=obs.values,
+                errors=obs.errors,
+            )
+            observations[obs.name] = new_obs
+            to_be_created.append(new_obs)
+    db.add_all(to_be_created)
+
+    response_definitions = {
+        response_name: ds.ResponseDefinition(name=response_name, ensemble=ens)
+        for response_name in ens_in.response_observation_link
+    }
+    db.add_all(response_definitions.values())
+
+    db.add_all(
+        ds.ObservationResponseDefinitionLink(
+            observation=observations[observation_name],
+            response_definition=response_definitions[response_name],
+        )
+        for response_name, observation_name in ens_in.response_observation_link.items()
+    )
+
     db.commit()
 
     return ens
@@ -181,14 +212,24 @@ async def create_misfit(
 
     ensemble = db.query(ds.Ensemble).filter_by(id=id).one()
 
-    obj = ds.ObservationResponseDefinitionLink(
-        observation_id=observation.id,
-        response_definition_id=response_definition.id,
+    obj = (
+        db.query(ds.ObservationResponseDefinitionLink)
+        .filter_by(
+            observation_id=observation.id, response_definition_id=response_definition.id
+        )
+        .one()
     )
+
     if ensemble.parent is not None:
         obj.update_id = ensemble.parent.id
 
-    db.add(obj)
+    obj = (
+        db.query(ds.ObservationResponseDefinitionLink)
+        .filter_by(
+            observation_id=observation.id, response_definition_id=response_definition.id
+        )
+        .one()
+    )
     db.flush()
 
     responses = (
@@ -204,7 +245,7 @@ async def create_misfit(
 
     db.add_all(
         ds.Misfit(
-            observation_response_definition_link_id=obj.id,
+            observation_response_definition_link=obj,
             response=response,
             value=value,
         )

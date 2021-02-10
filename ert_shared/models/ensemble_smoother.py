@@ -5,7 +5,7 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
 
-from ert_shared.storage.extraction import dump_to_new_storage
+from ert_shared.storage.extraction import post_ensemble_data, post_ensemble_results
 
 
 class EnsembleSmoother(BaseRunModel):
@@ -31,6 +31,10 @@ class EnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath(prior_context)
+
+        # Push ensemble, parameters, observations to new storage
+        ensemble_id = post_ensemble_data()
+
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
 
         self.setPhaseName("Running forecast...", indeterminate=False)
@@ -55,7 +59,9 @@ class EnsembleSmoother(BaseRunModel):
             raise ErtRunError("Analysis of simulation failed!")
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=ERT.ert )
 
-        previous_ensemble_name = dump_to_new_storage(reference=None)
+        # Push simulation results to storage
+        post_ensemble_results(ensemble_id)
+
 
         self.setPhase(1, "Running simulations...")
         self.ert().getEnkfFsManager().switchFileSystem( prior_context.get_target_fs( ) )
@@ -65,6 +71,11 @@ class EnsembleSmoother(BaseRunModel):
         rerun_context = self.create_context( arguments, prior_context = prior_context )
 
         self.ert().getEnkfSimulationRunner().createRunPath( rerun_context )
+
+        # Push ensemble, parameters, observations to new storage
+        analysis_module_name = self.ert().analysisConfig().activeModuleName()
+        ensemble_id = post_ensemble_data((ensemble_id, analysis_module_name))
+
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert )
 
         self.setPhaseName("Running forecast...", indeterminate=False)
@@ -82,8 +93,10 @@ class EnsembleSmoother(BaseRunModel):
 
         self.setPhase(2, "Simulations completed.")
 
-        analysis_module_name = self.ert().analysisConfig().activeModuleName()
-        dump_to_new_storage(reference=(previous_ensemble_name, analysis_module_name))
+
+
+        # Push simulation results to storage
+        post_ensemble_results(ensemble_id)
 
         return prior_context
 

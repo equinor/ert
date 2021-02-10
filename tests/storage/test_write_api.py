@@ -140,18 +140,37 @@ class MockObservation:
         return float(index)
 
 
+class MockEnkfObs:
+    def __init__(self, obs_dict):
+        self.obs_dict = obs_dict
+
+    def __getitem__(self, key):
+        if isinstance(key, str):
+            return self.obs_dict[key]
+        else:
+            return list(self.obs_dict.values())[key]
+
+    def getTypedKeylist(self, type):
+        return []
+
+    def keys(self):
+        return self.obs_dict.keys()
+
+
 class MockFacade:
     ENSEMBLE_NAME = "default"
 
     def __init__(self):
         self.enkf_main = None
-        self.observations = {
-            "POLY_OBS": MockObservation("POLY_OBS", "POLY_RES"),
-            "TEST_OBS": MockObservation("TEST_OBS", "TEST_RES"),
-        }
+        self.observations = MockEnkfObs(
+            {
+                "POLY_OBS": MockObservation("POLY_OBS", "POLY_RES"),
+                "TEST_OBS": MockObservation("TEST_OBS", "TEST_RES"),
+            }
+        )
 
     def get_observations(self):
-        return self.observations.values()
+        return self.observations
 
     def get_ensemble_size(self):
         return 5
@@ -218,7 +237,7 @@ class MockFacade:
 @pytest.fixture
 def mock_ert(monkeypatch):
     class MockMeasuredData:
-        def __init__(self, _facade, _keys):
+        def __init__(self, _facade, _keys, load_data):
             assert _keys == ["POLY_OBS", "TEST_OBS"]
 
         def remove_inactive_observations(self):
@@ -239,28 +258,21 @@ def mock_ert(monkeypatch):
 
 
 def test_create_observations(app_client, mock_ert):
-    observations = extraction.create_observations(mock_ert)
-
+    observations, _ = extraction.create_observations(mock_ert)
     for obs in observations:
         app_client.post("/observations", data=obs.json())
 
     poly_obs = app_client.db.query(ds.Observation).filter_by(name="POLY_OBS").one()
     assert poly_obs.id is not None
-    assert poly_obs.key_indices == [0, 2, 4, 6, 8]
-    assert poly_obs.data_indices == [10, 12, 14, 16, 18]
+    assert poly_obs.x_axis == [0, 2, 4, 6, 8]
     assert poly_obs.values == [2.0, 7.1, 21.1, 31.8, 53.2]
     assert poly_obs.errors == [0.1, 1.1, 4.1, 9.1, 16.1]
 
     test_obs = app_client.db.query(ds.Observation).filter_by(name="TEST_OBS").one()
     assert test_obs.id is not None
-    assert test_obs.key_indices == [3, 6, 9]
-    assert test_obs.data_indices == [3, 6, 9]
+    assert test_obs.x_axis == [3, 6, 9]
     assert test_obs.values == [6, 12, 18]
     assert test_obs.errors == [0.1, 0.2, 0.3]
-
-    mock_ert.observations = {}
-    obs = extraction.create_observations(mock_ert)
-    assert obs == []
 
 
 def test_ensemble_return(app_client, mock_ert):
@@ -324,7 +336,7 @@ def test_responses(app_client, mock_ert):
     ensemble = extraction.create_ensemble(mock_ert, reference=None)
     ens_resp = app_client.post("/ensembles", data=ensemble.json()).json()
 
-    observations = extraction.create_observations(mock_ert)
+    observations, _ = extraction.create_observations(mock_ert)
     for obs in observations:
         app_client.post("/observations", data=obs.json())
 
@@ -357,15 +369,16 @@ def test_responses(app_client, mock_ert):
 def test_ensemble_parent_child_link(app_client, mock_ert):
     ensemble_0 = extraction.create_ensemble(mock_ert, reference=None)
     ens_resp_0 = app_client.post("/ensembles", data=ensemble_0.json())
+    ens = js.Ensemble.parse_obj(ens_resp_0.json())
     assert ens_resp_0.status_code == 200
 
     mock_ert.ENSEMBLE_NAME = "default_1"
-    ensemble_1 = extraction.create_ensemble(mock_ert, reference=("default", "bogosort"))
+    ensemble_1 = extraction.create_ensemble(mock_ert, reference=(ens.id, "bogosort"))
     ens_resp_1 = app_client.post("/ensembles", data=ensemble_1.json())
     assert ens_resp_1.status_code == 200
 
     mock_ert.ENSEMBLE_NAME = "default_2"
-    ensemble_2 = extraction.create_ensemble(mock_ert, reference=("default", "dijkstra"))
+    ensemble_2 = extraction.create_ensemble(mock_ert, reference=(ens.id, "dijkstra"))
     ens_resp_2 = app_client.post("/ensembles", data=ensemble_2.json())
     assert ens_resp_2.status_code == 200
 
@@ -400,7 +413,7 @@ def test_update(app_client, mock_ert):
     ensemble = extraction.create_ensemble(mock_ert, reference=None)
     ens_resp = app_client.post("/ensembles", data=ensemble.json()).json()
 
-    observations = extraction.create_observations(mock_ert)
+    observations, _ = extraction.create_observations(mock_ert)
     for obs in observations:
         resp = app_client.post("/observations", data=obs.json())
 

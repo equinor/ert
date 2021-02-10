@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Mapping
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -6,6 +6,7 @@ from ert_shared.storage.json_schema.parameter import ParameterCreate
 from ert_shared.storage.json_schema.prior import PriorCreate
 from ert_shared.storage.json_schema.update import UpdateCreate
 from ert_shared.storage.json_schema.response import Response
+from ert_shared.storage.json_schema.observation import ObservationCreate
 
 
 class EnsembleBase(BaseModel):
@@ -17,6 +18,8 @@ class EnsembleCreate(EnsembleBase):
     priors: List[PriorCreate]
     realizations: int
     update: Optional[UpdateCreate] = None
+    observations: List[ObservationCreate] = None
+    response_observation_link: Mapping[str, str]
 
 
 class EnsembleUpdate(EnsembleBase):

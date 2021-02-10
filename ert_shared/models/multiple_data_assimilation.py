@@ -20,7 +20,7 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
-from ert_shared.storage.extraction import dump_to_new_storage
+from ert_shared.storage.extraction import post_ensemble_data, post_ensemble_results
 
 import logging
 logger = logging.getLogger(__file__)
@@ -62,29 +62,26 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhaseName(phase_string, indeterminate=True)
 
         run_context = None
-        previous_ensemble_name = None
+        current_ensemble_id = None
         enumerated_weights = list(enumerate(weights))
         weights_to_run = enumerated_weights[min(arguments["start_iteration"], len(weights)):]
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
             run_context = self.create_context( arguments , iteration,  initialize_mask_from_arguments=is_first_iteration)
-            self._simulateAndPostProcess(run_context, arguments)
+            _, current_ensemble_id = self._simulateAndPostProcess(
+                run_context, arguments, previous_ensemble_id=current_ensemble_id
+            )
             if is_first_iteration:
                 EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_FIRST_UPDATE, ert=ERT.ert)
             EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=ERT.ert)
             self.update(run_context , weight)
             EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=ERT.ert)
-            analysis_module_name = self.ert().analysisConfig().activeModuleName()
-            previous_ensemble_name = dump_to_new_storage(reference=None if previous_ensemble_name is None else (previous_ensemble_name, analysis_module_name))
 
         self.setPhaseName("Post processing...", indeterminate=True)
         run_context = self.create_context( arguments , len(weights),  initialize_mask_from_arguments=False, update = False)
-        self._simulateAndPostProcess(run_context, arguments)
+        self._simulateAndPostProcess(run_context, arguments, current_ensemble_id)
 
         self.setPhase(iteration_count + 2, "Simulations completed.")
-
-        analysis_module_name = self.ert().analysisConfig().activeModuleName()
-        previous_ensemble_name = dump_to_new_storage(reference=None if previous_ensemble_name is None else (previous_ensemble_name, analysis_module_name))
 
         return run_context
 
@@ -107,12 +104,18 @@ class MultipleDataAssimilation(BaseRunModel):
             raise UserWarning("Analysis of simulation failed for iteration: %d!" % next_iteration)
 
 
-    def _simulateAndPostProcess(self, run_context, arguments):
+    def _simulateAndPostProcess(self, run_context, arguments, previous_ensemble_id):
         iteration = run_context.get_iter( )
 
         phase_string = "Running simulation for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath(run_context)
+        # Push ensemble, parameters, observations to new storage
+        analysis_module_name = self.ert().analysisConfig().activeModuleName()
+        new_ensemble_id = post_ensemble_data(
+            (previous_ensemble_id, analysis_module_name)
+            if previous_ensemble_id is not None else None
+        )
 
         phase_string = "Pre processing for iteration: %d" % iteration
         self.setPhaseName(phase_string)
@@ -133,7 +136,10 @@ class MultipleDataAssimilation(BaseRunModel):
         phase_string = "Post processing for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=True)
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ert=ERT.ert)
-        return num_successful_realizations
+
+         # Push simulation results to storage
+        post_ensemble_results(new_ensemble_id)
+        return num_successful_realizations, new_ensemble_id
 
 
     @staticmethod

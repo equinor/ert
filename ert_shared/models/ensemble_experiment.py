@@ -3,7 +3,7 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 
 from ert_shared.models import BaseRunModel
 from ert_shared import ERT
-from ert_shared.storage.extraction import dump_to_new_storage
+from ert_shared.storage.extraction import post_ensemble_data, post_ensemble_results
 from ert_shared.feature_toggling import FeatureToggling
 
 
@@ -19,6 +19,9 @@ class EnsembleExperiment(BaseRunModel):
 
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath(run_context)
+
+        # Push ensemble, parameters, observations to new storage
+        ensemble_id = post_ensemble_data()
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ERT.ert)
 
         self.setPhaseName(run_msg, indeterminate=False)
@@ -40,7 +43,8 @@ class EnsembleExperiment(BaseRunModel):
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ERT.ert)
         self.setPhase(1, "Simulations completed.")  # done...
 
-        dump_to_new_storage()
+        # Push simulation results to storage
+        post_ensemble_results(ensemble_id)
 
         return run_context
 

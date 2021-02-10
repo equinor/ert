@@ -19,14 +19,12 @@ def test_observation(app_client):
     ens = app_client.get(p.ensemble(1)).json()
     expected = {
         "active_mask": [True, False],
-        "data_indexes": [2, 3],
-        "key_indexes": [0, 3],
+        "x_axis": [0, 3],
         "std": [1, 3],
         "values": [10.1, 10.2],
     }
 
     resp = app_client.get(p.response(ens["id"], ens["responses"][0]["id"])).json()
-    print(resp)
     observations = resp["observations"]
 
     actual = {}
@@ -47,8 +45,7 @@ def test_get_single_misfits(app_client):
     misfits_0 = real_0["univariate_misfits"]["observation_one"][0]
     assert "value" in misfits_0
     assert misfits_0["obs_location"] == 0
-    assert misfits_0["obs_index"] == 0
-    assert misfits_0["sign"] == False
+    assert misfits_0["sign"] == True
 
 
 def test_get_single_observation(app_client):
@@ -57,11 +54,8 @@ def test_get_single_observation(app_client):
     assert obs["attributes"] == {"region": "1"}
     assert obs["name"] == "observation_one"
 
-    key_indexes = obs["key_indices"]
-    assert key_indexes == [0, 3]
-
-    data_indexes = obs["data_indices"]
-    assert data_indexes == [2, 3]
+    x_axis = obs["x_axis"]
+    assert x_axis == [0, 3]
 
     values = obs["values"]
     assert values == [10.1, 10.2]

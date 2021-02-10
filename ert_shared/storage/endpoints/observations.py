@@ -26,8 +26,7 @@ async def create_observation(
 
     obj = ds.Observation(
         name=obs.name,
-        key_indices=obs.key_indices,
-        data_indices=obs.data_indices,
+        x_axis=obs.x_axis,
         values=obs.values,
         errors=obs.errors,
     )
