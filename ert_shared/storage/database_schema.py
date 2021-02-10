@@ -7,7 +7,13 @@ from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.sql import func
 
 
-Entity = declarative_base(name="Entity")
+class BaseEntity:
+    id = sa.Column(sa.Integer, primary_key=True)
+    time_created = sa.Column(sa.DateTime, server_default=func.now())
+    time_updated = sa.Column(sa.DateTime, onupdate=func.now())
+
+
+Entity = declarative_base(name="Entity", cls=BaseEntity)
 
 
 class Project(Entity):
@@ -26,11 +32,9 @@ class Ensemble(Entity):
         UniqueConstraint("name", "time_created", name="uq_ensemble_name_time_created"),
     )
 
-    id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.String, nullable=False)
     project_id = sa.Column(sa.Integer, sa.ForeignKey("project.id"), nullable=True)
     project = relationship("Project", back_populates="ensembles")
-    time_created = sa.Column(sa.DateTime, server_default=func.now())
     num_realizations = sa.Column(sa.Integer, nullable=False)
 
     children = relationship(
@@ -55,7 +59,6 @@ class Update(Entity):
         UniqueConstraint("ensemble_result_id", name="uq_update_result_id"),
     )
 
-    id = sa.Column(sa.Integer, primary_key=True)
     algorithm = sa.Column(sa.String, nullable=False)
     ensemble_reference_id = sa.Column(
         sa.Integer, sa.ForeignKey("ensemble.id"), nullable=False
@@ -85,7 +88,6 @@ class ResponseDefinition(Entity):
         ),
     )
 
-    id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.String, nullable=False)
     indices = sa.Column(sa.PickleType)
     ensemble_id = sa.Column(sa.Integer, sa.ForeignKey("ensemble.id"), nullable=False)
@@ -108,7 +110,6 @@ class Response(Entity):
         ),
     )
 
-    id = sa.Column(sa.Integer, primary_key=True)
     values = sa.Column(sa.PickleType)
     index = sa.Column(sa.Integer, nullable=False)
     response_definition_id = sa.Column(
@@ -130,7 +131,6 @@ prior_ensemble_association_table = sa.Table(
 class ParameterPrior(Entity):
     __tablename__ = "parameter_prior"
 
-    id = sa.Column(sa.Integer, primary_key=True)
     group = sa.Column("group", sa.String)
     key = sa.Column("key", sa.String, nullable=False)
     function = sa.Column("function", sa.String)
@@ -153,7 +153,6 @@ class Parameter(Entity):
         ),
     )
 
-    id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.String, nullable=False)
     group = sa.Column(sa.String, nullable=False)
     ensemble_id = sa.Column(sa.Integer, sa.ForeignKey("ensemble.id"), nullable=False)
@@ -168,7 +167,6 @@ class Parameter(Entity):
 class AttributeValue(Entity):
     __tablename__ = "attribute_value"
 
-    id = sa.Column(sa.Integer, primary_key=True)
     value = sa.Column("value", sa.String, nullable=False)
 
     def __init__(self, value):
@@ -179,7 +177,6 @@ class Observation(Entity):
     __tablename__ = "observation"
     __table_args__ = (UniqueConstraint("name", name="uq_observation_name"),)
 
-    id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.String, nullable=False)
     key_indices = sa.Column(sa.PickleType)
     data_indices = sa.Column(sa.PickleType)
@@ -240,7 +237,6 @@ class ObservationResponseDefinitionLink(Entity):
         ),
     )
 
-    id = sa.Column(sa.Integer, primary_key=True)
     response_definition_id = sa.Column(
         sa.Integer, sa.ForeignKey("response_definition.id"), nullable=False
     )
@@ -269,7 +265,6 @@ class Misfit(Entity):
         ),
     )
 
-    id = sa.Column(sa.Integer, primary_key=True)
     response_id = sa.Column(sa.Integer, sa.ForeignKey("response.id"), nullable=False)
     observation_response_definition_link_id = sa.Column(
         sa.Integer, sa.ForeignKey("observation_response_definition_link.id")
