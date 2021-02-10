@@ -14,7 +14,9 @@ def _locate_root(path):
 
 
 def assert_experiment_exists(workspace_root, experiment_name):
-    experiment_root = Path(workspace_root) / experiment_name
+    experiment_root = (
+        Path(workspace_root) / ert3.workspace.EXPERIMENTS_BASE / experiment_name
+    )
     if not experiment_root.is_dir():
         raise ert3.exceptions.IllegalWorkspaceOperation(
             f"{experiment_name} is not an experiment "

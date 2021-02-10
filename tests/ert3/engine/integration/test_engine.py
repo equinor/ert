@@ -172,7 +172,7 @@ def test_run_once_polynomial_evaluation(
 
 
 def test_export_not_run(workspace):
-    (workspace / "evaluation").mkdir()
+    (workspace / ert3.workspace.EXPERIMENTS_BASE / "evaluation").ensure(dir=True)
     with pytest.raises(ValueError, match="Cannot export experiment"):
         ert3.engine.export(pathlib.Path(), "evaluation")
 
@@ -184,7 +184,7 @@ def test_export_polynomial_evaluation(
     evaluation_experiment_config,
     gaussian_parameters_file,
 ):
-    (workspace / "evaluation").mkdir()
+    (workspace / ert3.workspace.EXPERIMENTS_BASE / "evaluation").ensure(dir=True)
     ert3.engine.run(
         ensemble, stages_config, evaluation_experiment_config, workspace, "evaluation"
     )
@@ -200,7 +200,8 @@ def test_export_uniform_polynomial_evaluation(
     evaluation_experiment_config,
     uniform_parameters_file,
 ):
-    (workspace / "uniform_evaluation").mkdir()
+    uni_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "uniform_evaluation"
+    uni_dir.ensure(dir=True)
     ert3.engine.run(
         uniform_ensemble,
         stages_config,
@@ -248,7 +249,10 @@ def test_run_presampled(
     evaluation_experiment_config,
     gaussian_parameters_file,
 ):
-    (workspace / "presampled_evaluation").mkdir()
+    presampled_dir = (
+        workspace / ert3.workspace.EXPERIMENTS_BASE / "presampled_evaluation"
+    )
+    presampled_dir.ensure(dir=True)
     ert3.engine.sample_record(workspace, "coefficients", "coefficients0", 10)
 
     coeff0 = ert3.storage.get_variables(workspace, "coefficients0")
@@ -267,7 +271,8 @@ def test_run_presampled(
     )
     ert3.engine.export(workspace, "presampled_evaluation")
 
-    with open(workspace / "presampled_evaluation" / "data.json") as f:
+    export_file = presampled_dir / "data.json"
+    with open(export_file) as f:
         export_data = json.load(f)
 
     assert len(coeff0) == len(export_data)
@@ -286,7 +291,10 @@ def test_run_uniform_presampled(
     evaluation_experiment_config,
     uniform_parameters_file,
 ):
-    (workspace / "presampled_uniform_evaluation").mkdir()
+    presampled_dir = (
+        workspace / ert3.workspace.EXPERIMENTS_BASE / "presampled_uniform_evaluation"
+    )
+    presampled_dir.ensure(dir=True)
     ert3.engine.sample_record(
         workspace, "uniform_coefficients", "uniform_coefficients0", 10
     )
@@ -307,7 +315,7 @@ def test_run_uniform_presampled(
     )
     ert3.engine.export(workspace, "presampled_uniform_evaluation")
 
-    with open(workspace / "presampled_uniform_evaluation" / "data.json") as f:
+    with open(presampled_dir / "data.json") as f:
         export_data = json.load(f)
 
     assert len(uniform_coeff0) == len(export_data)
@@ -338,10 +346,17 @@ def test_sample_unknown_distribution(workspace, gaussian_parameters_file):
 def test_record_load_and_run(
     workspace, doe_ensemble, stages_config, evaluation_experiment_config
 ):
-    pathlib.Path("doe").mkdir()
-    coeffs_file = _EXAMPLES_ROOT / "polynomial" / "doe" / "coefficients_record.json"
-    shutil.copy(coeffs_file, "doe")
-    record_file = (pathlib.Path("doe") / "coefficients_record.json").open("r")
+    doe_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "doe"
+    doe_dir.ensure(dir=True)
+    coeffs_file = (
+        _EXAMPLES_ROOT
+        / "polynomial"
+        / ert3.workspace.EXPERIMENTS_BASE
+        / "doe"
+        / "coefficients_record.json"
+    )
+    shutil.copy(coeffs_file, doe_dir)
+    record_file = (doe_dir / "coefficients_record.json").open("r")
     ert3.engine.load_record(workspace, "designed_coefficients", record_file)
 
     designed_coeff = ert3.storage.get_variables(workspace, "designed_coefficients")
@@ -356,7 +371,8 @@ def test_record_load_and_run(
     )
     ert3.engine.export(workspace, "doe")
 
-    with open(workspace / "doe" / "data.json") as f:
+    export_file = workspace / ert3.workspace.EXPERIMENTS_BASE / "doe" / "data.json"
+    with open(export_file) as f:
         export_data = json.load(f)
 
     assert len(designed_coeff) == len(export_data)
@@ -369,12 +385,19 @@ def test_record_load_and_run(
 
 
 def test_record_load_twice(workspace, ensemble, stages_config):
-    pathlib.Path("doe").mkdir()
-    coeffs_file = _EXAMPLES_ROOT / "polynomial" / "doe" / "coefficients_record.json"
-    shutil.copy(coeffs_file, "doe")
-    record_file = (workspace / "doe" / "coefficients_record.json").open("r")
+    doe_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "doe"
+    doe_dir.ensure(dir=True)
+    coeffs_file = (
+        _EXAMPLES_ROOT
+        / "polynomial"
+        / ert3.workspace.EXPERIMENTS_BASE
+        / "doe"
+        / "coefficients_record.json"
+    )
+    shutil.copy(coeffs_file, doe_dir)
+    record_file = (doe_dir / "coefficients_record.json").open("r")
     ert3.engine.load_record(workspace, "designed_coefficients", record_file)
-    record_file = (workspace / "doe" / "coefficients_record.json").open("r")
+    record_file = (doe_dir / "coefficients_record.json").open("r")
     with pytest.raises(KeyError):
         ert3.engine.load_record(workspace, "designed_coefficients", record_file)
 
@@ -386,7 +409,7 @@ def test_sensitivity_run_and_export(
     sensitivity_experiment_config,
     gaussian_parameters_file,
 ):
-    pathlib.Path("sensitivity").mkdir()
+    (workspace / ert3.workspace.EXPERIMENTS_BASE / "sensitivity").ensure(dir=True)
     ert3.engine.run(
         sensitivity_ensemble,
         stages_config,

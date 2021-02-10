@@ -38,7 +38,13 @@ def test_evaluator(coeffs, expected, tmpdir):
         input_records = [
             {"coefficients": {"a": a, "b": b, "c": c}} for (a, b, c) in coeffs
         ]
-        with open(workspace_root / "evaluation" / "ensemble.yml") as f:
+        ensemble_config = (
+            workspace_root
+            / ert3.workspace.EXPERIMENTS_BASE
+            / "evaluation"
+            / "ensemble.yml"
+        )
+        with open(ensemble_config) as f:
             raw_ensemble_config = yaml.safe_load(f)
             raw_ensemble_config["size"] = len(input_records)
             ensemble_config = ert3.config.load_ensemble_config(raw_ensemble_config)

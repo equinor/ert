@@ -130,7 +130,10 @@ def _main():
 
 
 def _load_ensemble_config(workspace, experiment_name):
-    with open(workspace / experiment_name / "ensemble.yml") as f:
+    ensemble_config = (
+        workspace / ert3.workspace.EXPERIMENTS_BASE / experiment_name / "ensemble.yml"
+    )
+    with open(ensemble_config) as f:
         return ert3.config.load_ensemble_config(yaml.safe_load(f))
 
 
@@ -140,5 +143,8 @@ def _load_stages_config(workspace):
 
 
 def _load_experiment_config(workspace, experiment_name):
-    with open(workspace / experiment_name / "experiment.yml") as f:
+    experiment_config = (
+        workspace / ert3.workspace.EXPERIMENTS_BASE / experiment_name / "experiment.yml"
+    )
+    with open(experiment_config) as f:
         return ert3.config.load_experiment_config(yaml.safe_load(f))
