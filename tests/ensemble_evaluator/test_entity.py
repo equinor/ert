@@ -1,26 +1,13 @@
 from datetime import datetime
+import dateutil.parser
 
 import pytest
 from ert_shared.ensemble_evaluator.entity import command, tool
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
-    Snapshot,
     SnapshotBuilder,
+    Job,
 )
-
-
-def _dict_equal(d1, d2):
-    if set(d1.keys()) != set(d2.keys()):
-        return False
-
-    for k in d1:
-        if type(d1[k]) is dict:
-            if not _dict_equal(d1[k], d2[k]):
-                return False
-        else:
-            if d1[k] != d2[k]:
-                return False
-    return True
 
 
 _REALIZATION_INDEXES = ["0", "1", "3", "4", "5", "9"]
@@ -83,70 +70,74 @@ def test_snapshot_merge():
         stage_id="0",
         step_id="0",
         job_id="0",
-        status="Finished",
-        start_time=datetime(year=2020, month=10, day=27).isoformat(),
-        end_time=datetime(year=2020, month=10, day=28).isoformat(),
-        data={"memory": 1000},
+        job=Job(
+            status="Finished",
+            start_time=datetime(year=2020, month=10, day=27),
+            end_time=datetime(year=2020, month=10, day=28),
+            data={"memory": 1000},
+        ),
     )
     update_event.update_job(
         real_id="1",
         stage_id="0",
         step_id="0",
         job_id="1",
-        status="Running",
-        start_time=datetime(year=2020, month=10, day=27).isoformat(),
+        job=Job(
+            status="Running",
+            start_time=datetime(year=2020, month=10, day=27),
+        ),
     )
     update_event.update_job(
         real_id="9",
         stage_id="0",
         step_id="0",
         job_id="0",
-        status="Running",
-        start_time=datetime(year=2020, month=10, day=27).isoformat(),
+        job=Job(
+            status="Running",
+            start_time=datetime(year=2020, month=10, day=27),
+        ),
     )
 
     snapshot.merge_event(update_event)
 
     assert snapshot.get_status() == "running"
 
-    assert _dict_equal(
-        snapshot.get_job(real_id="1", stage_id="0", step_id="0", job_id="0"),
-        {
-            "status": "Finished",
-            "start_time": "2020-10-27T00:00:00",
-            "end_time": "2020-10-28T00:00:00",
-            "data": {"memory": 1000},
-            "error": None,
-            "name": "job0",
-            "stderr": None,
-            "stdout": None,
-        },
+    assert snapshot.get_job(real_id="1", stage_id="0", step_id="0", job_id="0") == Job(
+        status="Finished",
+        start_time=datetime(year=2020, month=10, day=27),
+        end_time=datetime(year=2020, month=10, day=28),
+        data={"memory": 1000},
+        error=None,
+        name="job0",
+        stderr=None,
+        stdout=None,
     )
-    assert snapshot.get_job(real_id="1", stage_id="0", step_id="0", job_id="1") == {
-        "status": "Running",
-        "start_time": "2020-10-27T00:00:00",
-        "end_time": None,
-        "data": {},
-        "error": None,
-        "name": "job1",
-        "stderr": None,
-        "stdout": None,
-    }
+
+    assert snapshot.get_job(real_id="1", stage_id="0", step_id="0", job_id="1") == Job(
+        status="Running",
+        start_time=datetime(year=2020, month=10, day=27),
+        end_time=None,
+        data={},
+        error=None,
+        name="job1",
+        stderr=None,
+        stdout=None,
+    )
 
     assert (
-        snapshot.get_job(real_id="9", stage_id="0", step_id="0", job_id="0")["status"]
+        snapshot.get_job(real_id="9", stage_id="0", step_id="0", job_id="0").status
         == "Running"
     )
-    assert snapshot.get_job(real_id="9", stage_id="0", step_id="0", job_id="0") == {
-        "status": "Running",
-        "start_time": "2020-10-27T00:00:00",
-        "end_time": None,
-        "data": {},
-        "error": None,
-        "name": "job0",
-        "stderr": None,
-        "stdout": None,
-    }
+    assert snapshot.get_job(real_id="9", stage_id="0", step_id="0", job_id="0") == Job(
+        status="Running",
+        start_time=datetime(year=2020, month=10, day=27),
+        end_time=None,
+        data={},
+        error=None,
+        name="job0",
+        stderr=None,
+        stdout=None,
+    )
 
 
 @pytest.mark.parametrize(

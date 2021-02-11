@@ -3,7 +3,7 @@ from ert_shared.status.entity.state import (
     REALIZATION_STATE_FINISHED,
     REALIZATION_STATE_UNKNOWN,
 )
-from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot
+from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Realization
 from PyQt5.QtCore import QModelIndex
 from ert_gui.model.progress_proxy import ProgressProxyModel
 from tests.gui.models.conftest import partial_snapshot
@@ -48,7 +48,7 @@ def test_progression(full_snapshot):
     }
 
     partial = PartialSnapshot(full_snapshot)
-    partial.update_real("0", status=REALIZATION_STATE_FINISHED)
+    partial.update_real("0", Realization(status=REALIZATION_STATE_FINISHED))
     source_model._add_partial_snapshot(partial, 0)
 
     assert model.data(model.index(0, 0, QModelIndex()), ProgressRole) == {

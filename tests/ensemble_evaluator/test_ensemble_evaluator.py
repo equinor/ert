@@ -146,7 +146,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 {"current_memory_usage": 1000},
             )
             snapshot = Snapshot(next(events).data)
-            assert snapshot.get_job("0", "0", "0", "0")["status"] == JOB_STATE_RUNNING
+            assert snapshot.get_job("0", "0", "0", "0").status == JOB_STATE_RUNNING
 
             # second dispatcher informs that job 0 is running
             send_dispatch_event(
@@ -157,7 +157,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 {"current_memory_usage": 1000},
             )
             snapshot = Snapshot(next(events).data)
-            assert snapshot.get_job("1", "0", "0", "0")["status"] == JOB_STATE_RUNNING
+            assert snapshot.get_job("1", "0", "0", "0").status == JOB_STATE_RUNNING
 
             # second dispatcher informs that job 0 is done
             send_dispatch_event(
@@ -168,19 +168,15 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 {"current_memory_usage": 1000},
             )
             snapshot = Snapshot(next(events).data)
-            assert snapshot.get_job("1", "0", "0", "0")["status"] == JOB_STATE_FINISHED
+            assert snapshot.get_job("1", "0", "0", "0").status == JOB_STATE_FINISHED
 
             # a second monitor connects
             with ee_monitor.create(host, port) as monitor2:
                 events2 = monitor2.track()
                 snapshot = Snapshot(next(events2).data)
                 assert snapshot.get_status() == ENSEMBLE_STATE_STARTED
-                assert (
-                    snapshot.get_job("0", "0", "0", "0")["status"] == JOB_STATE_RUNNING
-                )
-                assert (
-                    snapshot.get_job("1", "0", "0", "0")["status"] == JOB_STATE_FINISHED
-                )
+                assert snapshot.get_job("0", "0", "0", "0").status == JOB_STATE_RUNNING
+                assert snapshot.get_job("1", "0", "0", "0").status == JOB_STATE_FINISHED
 
                 # one monitor requests that server exit
                 monitor.signal_cancel()

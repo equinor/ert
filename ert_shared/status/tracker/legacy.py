@@ -18,12 +18,12 @@ from ert_shared.ensemble_evaluator.entity.identifiers import (
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
     Snapshot,
-    _ForwardModel,
-    _Job,
-    _Realization,
-    _SnapshotDict,
-    _Stage,
-    _Step,
+    ForwardModel,
+    Job,
+    Realization,
+    SnapshotDict,
+    Stage,
+    Step,
 )
 from ert_shared.models.base_run_model import BaseRunModel
 from ert_shared.status.entity.event import (
@@ -115,18 +115,18 @@ class LegacyTracker:
         run_context: ErtRunContext,
         detailed_progress: typing.Tuple[typing.Dict, int],
         iter_: int,
-    ) -> typing.Optional[_SnapshotDict]:
+    ) -> typing.Optional[SnapshotDict]:
         """create a snapshot of a run_context and detailed_progress.
         detailed_progress is expected to be a tuple of a realization_progress
         dict and iteration number. iter_ represents the current assimilation
         cycle."""
         self._set_iter_queue(iter_, self._model._job_queue)
 
-        snapshot = _SnapshotDict(
+        snapshot = SnapshotDict(
             status=ENSEMBLE_STATE_STARTED,
             reals={},
             metadata={"iter": iter_},
-            forward_model=_ForwardModel(step_definitions={}),
+            forward_model=ForwardModel(step_definitions={}),
         )
 
         forward_model = self._model.get_forward_model()
@@ -153,16 +153,16 @@ class LegacyTracker:
             if queue_snapshot is not None and iens in queue_snapshot:
                 status = JobStatusType.from_string(queue_snapshot[iens])
 
-            snapshot.reals[real_id] = _Realization(
+            snapshot.reals[real_id] = Realization(
                 status=queue_status_to_real_state(status), active=True, stages={}
             )
 
-            step = _Step(status="", jobs={})
-            snapshot.reals[real_id].stages["0"] = _Stage(status="", steps={"0": step})
+            step = Step(status="", jobs={})
+            snapshot.reals[real_id].stages["0"] = Stage(status="", steps={"0": step})
 
             for index in range(0, len(forward_model)):
                 ext_job = forward_model.iget_job(index)
-                step.jobs[str(index)] = _Job(
+                step.jobs[str(index)] = Job(
                     name=ext_job.name(), status=REALIZATION_STATE_UNKNOWN, data={}
                 )
 
@@ -256,7 +256,8 @@ class LegacyTracker:
             for iens, change in queue_snapshot.items():
                 change_enum = JobStatusType.from_string(change)
                 partial.update_real(
-                    str(iens), status=queue_status_to_real_state(change_enum)
+                    str(iens),
+                    Realization(status=queue_status_to_real_state(change_enum)),
                 )
         iter_to_progress, progress_iter = detailed_progress
         if not iter_to_progress:
@@ -282,16 +283,18 @@ class LegacyTracker:
                     "0",
                     "0",
                     str(idx),
-                    status=_map_job_state(fm.status),
-                    start_time=fm.start_time,
-                    end_time=fm.end_time,
-                    data={
-                        CURRENT_MEMORY_USAGE: fm.current_memory_usage,
-                        MAX_MEMORY_USAGE: fm.max_memory_usage,
-                    },
-                    stdout=fm.std_out_file,
-                    stderr=fm.std_err_file,
-                    error=fm.error,
+                    Job(
+                        status=_map_job_state(fm.status),
+                        start_time=fm.start_time,
+                        end_time=fm.end_time,
+                        data={
+                            CURRENT_MEMORY_USAGE: fm.current_memory_usage,
+                            MAX_MEMORY_USAGE: fm.max_memory_usage,
+                        },
+                        stdout=fm.std_out_file,
+                        stderr=fm.std_err_file,
+                        error=fm.error,
+                    ),
                 )
 
         return partial

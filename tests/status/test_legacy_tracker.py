@@ -132,16 +132,16 @@ def test_tracking(cmd_line_arguments, num_successful, num_iters, tmpdir, source_
             assert len(snapshot.get_reals()) == num_successful
             for real_id, real in snapshot.get_reals().items():
                 assert (
-                    real["status"] == REALIZATION_STATE_FINISHED
+                    real.status == REALIZATION_STATE_FINISHED
                 ), f"iter:{iter_} real:{real_id} was not finished"
 
-                poly = real["stages"]["0"]["steps"]["0"]["jobs"]["0"]
-                poly2 = real["stages"]["0"]["steps"]["0"]["jobs"]["1"]
-                assert poly["name"] == "poly_eval"
+                poly = real.stages["0"].steps["0"].jobs["0"]
+                poly2 = real.stages["0"].steps["0"].jobs["1"]
+                assert poly.name == "poly_eval"
                 assert (
-                    poly["status"] == JOB_STATE_FINISHED
+                    poly.status == JOB_STATE_FINISHED
                 ), f"real {real_id}/{poly['name']} was not finished"
-                assert poly2["name"] == "poly_eval2"
+                assert poly2.name == "poly_eval2"
                 assert (
-                    poly2["status"] == JOB_STATE_FINISHED
+                    poly2.status == JOB_STATE_FINISHED
                 ), f"real {real_id}/{poly['name']} was not finished"
