@@ -11,6 +11,7 @@ import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
     SnapshotBuilder,
+    _Step,
 )
 
 from ert_shared.status.entity import state
@@ -43,8 +44,8 @@ def mock_ee_monitor(*args):
     )
 
     update = PartialSnapshot(snapshot)
-    update.update_step("0", "0", "0", state.STEP_STATE_SUCCESS)
-    update.update_step("1", "0", "0", state.STEP_STATE_SUCCESS)
+    update.update_step("0", "0", "0", step=_Step(status=state.STEP_STATE_SUCCESS))
+    update.update_step("1", "0", "0", step=_Step(status=state.STEP_STATE_SUCCESS))
 
     events = [
         MockCloudEvent(
