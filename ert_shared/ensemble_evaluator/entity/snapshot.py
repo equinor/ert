@@ -2,7 +2,7 @@ import copy
 import datetime
 import typing
 from collections import defaultdict
-from typing import Dict, List, Optional, Any
+from typing import Dict, Iterable, Optional, Any
 
 import pyrsistent
 from dateutil.parser import parse
@@ -63,104 +63,73 @@ class PartialSnapshot:
         self._snapshot = copy.copy(snapshot) if snapshot else None
 
     def update_status(self, status):
-        self._apply_update({ids.STATUS: status})
+        self._apply_update(_SnapshotDict(status=status))
 
     def update_real(
         self,
         real_id,
-        active=None,
-        start_time=None,
-        end_time=None,
-        status=None,
+        real,
     ):
-        real = {}
-        if active is not None:
-            real[ids.ACTIVE] = active
-        if start_time is not None:
-            real[ids.START_TIME] = start_time
-        if end_time is not None:
-            real[ids.END_TIME] = end_time
-        if status is not None:
-            real[ids.STATUS] = status
-
-        self._apply_update({ids.REALS: {real_id: real}})
+        self._apply_update(_SnapshotDict(reals={real_id: real}))
 
     def update_stage(
         self,
         real_id,
         stage_id,
-        status=None,
-        start_time=None,
-        end_time=None,
+        stage,
     ):
-        stage = {}
-
-        if status is not None:
-            stage[ids.STATUS] = status
-        if start_time is not None:
-            stage[ids.START_TIME] = start_time
-        if end_time is not None:
-            stage[ids.END_TIME] = end_time
-
-        self._apply_update({ids.REALS: {real_id: {ids.STAGES: {stage_id: stage}}}})
-        if (
-            self._snapshot.get_real(real_id)[ids.STATUS]
-            != state.REALIZATION_STATE_FAILED
-        ):
-            if status in [
+        self._apply_update(
+            _SnapshotDict(reals={real_id: _Realization(stages={stage_id: stage})})
+        )
+        if self._snapshot.get_real(real_id).status != state.REALIZATION_STATE_FAILED:
+            if stage.status in [
                 state.REALIZATION_STATE_FAILED,
                 state.REALIZATION_STATE_PENDING,
                 state.REALIZATION_STATE_RUNNING,
             ]:
-                self.update_real(real_id, status=status)
+                self.update_real(real_id, _Realization(status=stage.status))
             elif (
-                status == state.REALIZATION_STATE_FINISHED
+                stage.status == state.REALIZATION_STATE_FINISHED
                 and self._snapshot.all_stages_finished(real_id)
             ):
-                self.update_real(real_id, status=status)
+                self.update_real(real_id, _Realization(status=stage.status))
 
     def _apply_update(self, update):
         if self._snapshot is None:
             raise UnsupportedOperationException(
                 f"trying to mutate {self.__class__} without providing a snapshot is not supported"
             )
-        self._data = recursive_update(self._data, update, check_key=False)
-        self._snapshot.merge(update)
+        dictionary = update.dict(
+            exclude_unset=True, exclude_none=True, exclude_defaults=True
+        )
+        self._data = recursive_update(self._data, dictionary, check_key=False)
+        self._snapshot.merge(dictionary)
 
-    def update_step(
-        self, real_id, stage_id, step_id, status=None, start_time=None, end_time=None
-    ):
-        step = {}
-
-        if status is not None:
-            step[ids.STATUS] = status
-        if start_time is not None:
-            step[ids.START_TIME] = start_time
-        if end_time is not None:
-            step[ids.END_TIME] = end_time
-
+    def update_step(self, real_id, stage_id, step_id, step):
         self._apply_update(
-            {
-                ids.REALS: {
-                    real_id: {ids.STAGES: {stage_id: {ids.STEPS: {step_id: step}}}}
+            _SnapshotDict(
+                reals={
+                    real_id: _Realization(
+                        stages={stage_id: _Stage(steps={step_id: step})}
+                    )
                 }
-            }
+            )
         )
         if (
-            self._snapshot.get_stage(real_id, stage_id)[ids.STATUS]
+            self._snapshot.get_stage(real_id, stage_id).status
             != state.REALIZATION_STATE_FAILED
         ):
-            if status in [
+            if step.status in [
                 state.REALIZATION_STATE_FAILED,
                 state.REALIZATION_STATE_PENDING,
                 state.REALIZATION_STATE_RUNNING,
             ]:
-                self.update_stage(real_id, stage_id, status)
+                self.update_stage(real_id, stage_id, _Stage(status=step.status))
             elif (
-                status == state.STEP_STATE_SUCCESS
+                step.status == state.STEP_STATE_SUCCESS
                 and self._snapshot.all_steps_finished(real_id, stage_id)
             ):
-                self.update_stage(real_id, stage_id, status)
+                self.update_stage(real_id, stage_id, _Stage(status=step.status))
 
     def update_job(
         self,
@@ -168,41 +137,19 @@ class PartialSnapshot:
         stage_id,
         step_id,
         job_id,
-        status=None,
-        data=None,
-        start_time=None,
-        end_time=None,
-        error=None,
-        stdout=None,
-        stderr=None,
+        job,
     ):
-        job = {}
-
-        if status is not None:
-            job[ids.STATUS] = status
-        if start_time is not None:
-            job[ids.START_TIME] = start_time
-        if end_time is not None:
-            job[ids.END_TIME] = end_time
-        if data is not None:
-            job[ids.DATA] = data
-        if error is not None:
-            job[ids.ERROR] = error
-        if stdout is not None:
-            job[ids.STDOUT] = stdout
-        if stderr is not None:
-            job[ids.STDERR] = stderr
 
         self._apply_update(
-            {
-                ids.REALS: {
-                    real_id: {
-                        ids.STAGES: {
-                            stage_id: {ids.STEPS: {step_id: {ids.JOBS: {job_id: job}}}}
+            _SnapshotDict(
+                reals={
+                    real_id: _Realization(
+                        stages={
+                            stage_id: _Stage(steps={step_id: _Step(jobs={job_id: job})})
                         }
-                    }
+                    )
                 }
-            }
+            )
         )
 
     def to_dict(self):
@@ -228,9 +175,11 @@ class PartialSnapshot:
             self.update_stage(
                 get_real_id(e_source),
                 get_stage_id(e_source),
-                status=status,
-                start_time=start_time,
-                end_time=end_time,
+                stage=_Stage(
+                    status=status,
+                    start_time=start_time,
+                    end_time=end_time,
+                ),
             )
         elif e_type in ids.EVGROUP_FM_STEP:
             start_time = None
@@ -244,9 +193,11 @@ class PartialSnapshot:
                 get_real_id(e_source),
                 get_stage_id(e_source),
                 get_step_id(e_source),
-                status=status,
-                start_time=start_time,
-                end_time=end_time,
+                step=_Step(
+                    status=status,
+                    start_time=start_time,
+                    end_time=end_time,
+                ),
             )
             if e_type == ids.EVTYPE_FM_STEP_START and event.data:
                 for job_id, job in event.data.get(ids.JOBS, {}).items():
@@ -255,8 +206,10 @@ class PartialSnapshot:
                         get_stage_id(e_source),
                         get_step_id(e_source),
                         job_id,
-                        stdout=job[ids.STDOUT],
-                        stderr=job[ids.STDERR],
+                        job=_Job(
+                            stdout=job[ids.STDOUT],
+                            stderr=job[ids.STDERR],
+                        ),
                     )
 
         elif e_type in ids.EVGROUP_FM_JOB:
@@ -272,13 +225,15 @@ class PartialSnapshot:
                 get_stage_id(e_source),
                 get_step_id(e_source),
                 get_job_id(e_source),
-                status=status,
-                start_time=start_time,
-                end_time=end_time,
-                data=event.data if e_type == ids.EVTYPE_FM_JOB_RUNNING else None,
-                error=event.data.get(ids.FM_STDERR)
-                if e_type == ids.EVTYPE_FM_JOB_FAILURE
-                else None,
+                job=_Job(
+                    status=status,
+                    start_time=start_time,
+                    end_time=end_time,
+                    data=event.data if e_type == ids.EVTYPE_FM_JOB_RUNNING else None,
+                    error=event.data.get(ids.FM_STDERR)
+                    if e_type == ids.EVTYPE_FM_JOB_FAILURE
+                    else None,
+                ),
             )
         elif e_type in ids.EVGROUP_ENSEMBLE:
             self.update_status(_ENSEMBLE_TYPE_EVENT_TO_STATUS[e_type])
@@ -306,30 +261,30 @@ class Snapshot:
         return self._data[ids.STATUS]
 
     def get_reals(self):
-        return self._data[ids.REALS]
+        return _SnapshotDict(**self._data).reals
 
     def get_real(self, real_id):
         if real_id not in self._data[ids.REALS]:
             raise ValueError(f"No realization with id {real_id}")
-        return self._data[ids.REALS][real_id]
+        return _Realization(**self._data[ids.REALS][real_id])
 
     def get_stage(self, real_id, stage_id):
         real = self.get_real(real_id)
-        stages = real[ids.STAGES]
+        stages = real.stages
         if stage_id not in stages:
             raise ValueError(f"No stage with id {stage_id} in {real_id}")
         return stages[stage_id]
 
     def get_step(self, real_id, stage_id, step_id):
         stage = self.get_stage(real_id, stage_id)
-        steps = stage[ids.STEPS]
+        steps = stage.steps
         if step_id not in steps:
             raise ValueError(f"No step with id {step_id} in {stage_id}")
         return steps[step_id]
 
     def get_job(self, real_id, stage_id, step_id, job_id):
         step = self.get_step(real_id, stage_id, step_id)
-        jobs = step[ids.JOBS]
+        jobs = step.jobs
         if job_id not in jobs:
             raise ValueError(f"No job with id {job_id} in {step_id}")
         return jobs[job_id]
@@ -337,22 +292,20 @@ class Snapshot:
     def all_stages_finished(self, real_id):
         real = self.get_real(real_id)
         return all(
-            stage[ids.STATUS] == state.STAGE_STATE_SUCCESS
-            for stage in real[ids.STAGES].values()
+            stage.status == state.STAGE_STATE_SUCCESS for stage in real.stages.values()
         )
 
     def all_steps_finished(self, real_id, stage_id):
         stage = self.get_stage(real_id, stage_id)
         return all(
-            step[ids.STATUS] == state.STEP_STATE_SUCCESS
-            for step in stage[ids.STEPS].values()
+            step.status == state.STEP_STATE_SUCCESS for step in stage.steps.values()
         )
 
     def get_successful_realizations(self):
         return len(
             [
                 real
-                for real in self.to_dict()[ids.REALS].values()
+                for real in self._data[ids.REALS].values()
                 if real[ids.STATUS] == state.REALIZATION_STATE_FINISHED
             ]
         )
@@ -370,48 +323,48 @@ class _JobDetails(BaseModel):
 
 
 class _ForwardModel(BaseModel):
-    step_definitions: Dict[str, Dict[str, List[_JobDetails]]]
+    step_definitions: Dict[str, Dict[str, Iterable[_JobDetails]]]
 
 
 class _Job(BaseModel):
-    status: str
+    status: Optional[str]
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
-    data: Dict
-    name: str
+    data: Optional[Dict]
+    name: Optional[str]
     error: Optional[str]
     stdout: Optional[str]
     stderr: Optional[str]
 
 
 class _Step(BaseModel):
-    status: str
+    status: Optional[str]
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
-    jobs: Dict[str, _Job] = {}
+    jobs: Optional[Dict[str, _Job]] = {}
 
 
 class _Stage(BaseModel):
-    status: str
+    status: Optional[str]
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
-    steps: Dict[str, _Step] = {}
+    steps: Optional[Dict[str, _Step]] = {}
 
 
 class _Realization(BaseModel):
-    status: str
-    active: bool
+    status: Optional[str]
+    active: Optional[bool]
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
-    stages: Dict[str, _Stage] = {}
-    status: str
+    stages: Optional[Dict[str, _Stage]] = {}
+    status: Optional[str]
 
 
 class _SnapshotDict(BaseModel):
-    status: str
-    reals: Dict[str, _Realization] = {}
-    forward_model: _ForwardModel
-    metadata: Dict[str, Any] = {}
+    status: Optional[str]
+    reals: Optional[Dict[str, _Realization]] = {}
+    forward_model: Optional[_ForwardModel]
+    metadata: Optional[Dict[str, Any]]
 
 
 class SnapshotBuilder(BaseModel):

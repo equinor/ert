@@ -68,28 +68,22 @@ class EnsembleEvaluator:
         for real in ensemble.get_active_reals():
             reals[str(real.get_iens())] = _Realization(
                 active=True,
-                start_time=None,
-                end_time=None,
                 status=REALIZATION_STATE_WAITING,
             )
             for stage in real.get_stages():
                 reals[str(real.get_iens())].stages[str(stage.get_id())] = _Stage(
                     status=STAGE_STATE_UNKNOWN,
-                    start_time=None,
-                    end_time=None,
                 )
                 for step in stage.get_steps():
                     reals[str(real.get_iens())].stages[str(stage.get_id())].steps[
                         str(step.get_id())
-                    ] = _Step(status=STEP_STATE_START, start_time=None, end_time=None)
+                    ] = _Step(status=STEP_STATE_START)
                     for job in step.get_jobs():
                         reals[str(real.get_iens())].stages[str(stage.get_id())].steps[
                             str(step.get_id())
                         ].jobs[str(job.get_id())] = _Job(
                             status=JOB_STATE_START,
                             data={},
-                            start_time=None,
-                            end_time=None,
                             name=job.get_name(),
                         )
         top = _SnapshotDict(

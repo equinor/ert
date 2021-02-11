@@ -73,6 +73,7 @@ def test_full_snapshot(runmodel, active_realizations, full_snapshot, qtbot):
         widget.startSimulation()
 
     qtbot.waitForWindowShown(widget)
-    qtbot.waitUntil(lambda: widget._total_progress_bar.value() == 100)
+
+    qtbot.waitUntil(lambda: widget._total_progress_bar.value() == 100, timeout=2000)
     qtbot.mouseClick(widget.show_details_button, Qt.LeftButton)
     qtbot.waitUntil(lambda: widget._tab_widget.count() == 2)

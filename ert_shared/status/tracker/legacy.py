@@ -256,7 +256,8 @@ class LegacyTracker:
             for iens, change in queue_snapshot.items():
                 change_enum = JobStatusType.from_string(change)
                 partial.update_real(
-                    str(iens), status=queue_status_to_real_state(change_enum)
+                    str(iens),
+                    _Realization(status=queue_status_to_real_state(change_enum)),
                 )
         iter_to_progress, progress_iter = detailed_progress
         if not iter_to_progress:
@@ -282,16 +283,18 @@ class LegacyTracker:
                     "0",
                     "0",
                     str(idx),
-                    status=_map_job_state(fm.status),
-                    start_time=fm.start_time,
-                    end_time=fm.end_time,
-                    data={
-                        CURRENT_MEMORY_USAGE: fm.current_memory_usage,
-                        MAX_MEMORY_USAGE: fm.max_memory_usage,
-                    },
-                    stdout=fm.std_out_file,
-                    stderr=fm.std_err_file,
-                    error=fm.error,
+                    _Job(
+                        status=_map_job_state(fm.status),
+                        start_time=fm.start_time,
+                        end_time=fm.end_time,
+                        data={
+                            CURRENT_MEMORY_USAGE: fm.current_memory_usage,
+                            MAX_MEMORY_USAGE: fm.max_memory_usage,
+                        },
+                        stdout=fm.std_out_file,
+                        stderr=fm.std_err_file,
+                        error=fm.error,
+                    ),
                 )
 
         return partial

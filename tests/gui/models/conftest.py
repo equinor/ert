@@ -25,8 +25,8 @@ import datetime
 
 def partial_snapshot(snapshot) -> PartialSnapshot:
     partial = PartialSnapshot(snapshot)
-    partial.update_real("0", status=JOB_STATE_FINISHED)
-    partial.update_job("0", "0", "0", "0", status=JOB_STATE_FINISHED)
+    partial.update_real("0", _Realization(status=JOB_STATE_FINISHED))
+    partial.update_job("0", "0", "0", "0", _Job(status=JOB_STATE_FINISHED))
     return partial
 
 

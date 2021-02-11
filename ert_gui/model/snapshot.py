@@ -3,7 +3,11 @@ import logging
 import ert_shared.status.entity.state as state
 from ert_gui.model.node import Node, NodeType, snapshot_to_tree
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Snapshot
+from ert_shared.ensemble_evaluator.entity.snapshot import (
+    PartialSnapshot,
+    Snapshot,
+    _SnapshotDict,
+)
 from ert_shared.status.utils import byte_with_unit
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 from qtpy.QtGui import QColor
@@ -69,78 +73,79 @@ class SnapshotModel(QAbstractItemModel):
         self.root = Node(None, {}, NodeType.ROOT)
 
     def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: int):
-        partial_d = partial.to_dict()
+        partial_dict = partial.to_dict()
+        partial_s = _SnapshotDict(**partial_dict)
         if iter_ not in self.root.children:
             logger.debug("no full snapshot yet, bailing")
             return
         iter_index = self.index(iter_, 0, QModelIndex())
         iter_node = self.root.children[iter_]
-        if ids.REALS not in partial_d:
+        if not partial_s.reals:
             logger.debug(f"no realizations in partial for iter {iter_}")
             return
-        for real_id in sorted(partial_d[ids.REALS], key=int):
-            real = partial_d[ids.REALS][real_id]
+        for real_id in sorted(partial_s.reals, key=int):
+            real = partial_s.reals[real_id]
             real_node = iter_node.children[real_id]
-            if real.get(ids.STATUS):
-                real_node.data[ids.STATUS] = real.get(ids.STATUS)
+            if real.status:
+                real_node.data[ids.STATUS] = real.status
 
             real_index = self.index(real_node.row(), 0, iter_index)
             real_index_bottom_right = self.index(
                 real_node.row(), self.columnCount(iter_index) - 1, iter_index
             )
 
-            if ids.STAGES not in real:
+            if not real.stages:
                 continue
 
             # TODO: sort stages, but wait till after https://github.com/equinor/ert/issues/1220 ?
-            for stage_id, stage in real[ids.STAGES].items():
+            for stage_id, stage in real.stages.items():
                 stage_node = real_node.children[stage_id]
 
-                if stage.get(ids.STATUS):
-                    stage_node.data[ids.STATUS] = stage.get(ids.STATUS)
+                if stage.status:
+                    stage_node.data[ids.STATUS] = stage.status
 
                 stage_index = self.index(stage_node.row(), 0, real_index)
                 stage_index_bottom_right = self.index(
                     stage_node.row(), self.columnCount(real_index) - 1, real_index
                 )
 
-                if ids.STEPS not in stage:
+                if not stage.steps:
                     continue
 
                 # TODO: sort steps, but wait till after https://github.com/equinor/ert/issues/1220 ?
-                for step_id, step in stage[ids.STEPS].items():
+                for step_id, step in stage.steps.items():
                     step_node = stage_node.children[step_id]
-                    if step.get(ids.STATUS):
-                        step_node.data[ids.STATUS] = step.get(ids.STATUS)
+                    if step.status:
+                        step_node.data[ids.STATUS] = step.status
 
                     step_index = self.index(step_node.row(), 0, stage_index)
                     step_index_bottom_right = self.index(
                         step_node.row(), self.columnCount(stage_index) - 1, stage_index
                     )
 
-                    if ids.JOBS not in step:
+                    if not step.jobs:
                         continue
 
-                    for job_id in sorted(step[ids.JOBS], key=int):
-                        job = step[ids.JOBS][job_id]
+                    for job_id in sorted(step.jobs, key=int):
+                        job = step.jobs[job_id]
                         job_node = step_node.children[job_id]
-                        for attr in (
-                            ids.STATUS,
-                            ids.START_TIME,
-                            ids.END_TIME,
-                            ids.STDOUT,
-                            ids.STDERR,
-                            ids.ERROR,
-                        ):
-                            if attr in job:
-                                job_node.data[attr] = job[attr]
+
+                        if job.status:
+                            job_node.data[ids.STATUS] = job.status
+                        if job.start_time:
+                            job_node.data[ids.START_TIME] = job.start_time
+                        if job.end_time:
+                            job_node.data[ids.END_TIME] = job.end_time
+                        if job.stdout:
+                            job_node.data[ids.STDOUT] = job.stdout
+                        if job.stderr:
+                            job_node.data[ids.STDERR] = job.stderr
+                        if job.error:
+                            job_node.data[ids.ERROR] = job.error
 
                         for attr in (ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE):
-                            if attr not in job.get(ids.DATA, {}):
-                                continue
-                            job_node.data[ids.DATA][attr] = job.get(ids.DATA, {}).get(
-                                attr
-                            )
+                            if job.data and attr in job.data:
+                                job_node.data[ids.DATA][attr] = job.data.get(attr)
 
                         job_index = self.index(job_node.row(), 0, step_index)
                         job_index_bottom_right = self.index(
