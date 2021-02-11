@@ -32,7 +32,7 @@ def parse_config(path):
 
 
 @pytest.mark.timeout(60)
-def test_run_prefect_ensemble(unused_tcp_port):
+def test_run_prefect_ensemble1(unused_tcp_port):
     with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
         config = parse_config("config.yml")
         config.update({"config_path": os.getcwd()})
@@ -44,14 +44,9 @@ def test_run_prefect_ensemble(unused_tcp_port):
 
         evaluator = EnsembleEvaluator(ensemble, service_config, ee_id="1")
 
-        mon = evaluator.run()
-
-        for event in mon.track():
-            if event.data is not None and event.data.get("status") in [
-                "Failed",
-                "Stopped",
-            ]:
-                mon.signal_done()
+        with evaluator.run() as mon:
+            for _ in mon.track():
+                pass
 
         assert evaluator._snapshot.get_status() == "Stopped"
 
@@ -77,14 +72,9 @@ def test_run_prefect_ensemble_with_path(unused_tcp_port):
 
         evaluator = EnsembleEvaluator(ensemble, service_config, ee_id="1")
 
-        mon = evaluator.run()
-
-        for event in mon.track():
-            if event.data is not None and event.data.get("status") in [
-                "Failed",
-                "Stopped",
-            ]:
-                mon.signal_done()
+        with evaluator.run() as mon:
+            for _ in mon.track():
+                pass
 
         assert evaluator._snapshot.get_status() == "Stopped"
 
@@ -358,7 +348,7 @@ def test_on_task_failure(unused_tcp_port):
     sys.platform.startswith("darwin"),
     reason="On darwin patching is unreliable since processes may use 'spawn'.",
 )
-def test_run_prefect_ensemble_exception(unused_tcp_port):
+def test_run_with_exception_prefect_ensemble(unused_tcp_port):
     with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case")):
         config = parse_config("config.yml")
         config.update({"config_path": Path.absolute(Path("."))})
@@ -371,14 +361,7 @@ def test_run_prefect_ensemble_exception(unused_tcp_port):
         evaluator = EnsembleEvaluator(ensemble, service_config, ee_id="1")
 
         with patch.object(ensemble, "_fetch_input_files", side_effect=RuntimeError()):
-            mon = evaluator.run()
-            for event in mon.track():
-                if event["type"] in (
-                    ids.EVTYPE_EE_SNAPSHOT_UPDATE,
-                    ids.EVTYPE_EE_SNAPSHOT,
-                ) and event.data.get("status") in [
-                    "Stopped",
-                    "Failed",
-                ]:
-                    mon.signal_done()
+            with evaluator.run() as mon:
+                for _ in mon.track():
+                    pass
             assert evaluator._snapshot.get_status() == "Failed"

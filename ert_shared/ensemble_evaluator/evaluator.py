@@ -95,6 +95,7 @@ class EnsembleEvaluator:
                 event
             )
             await self._send_snapshot_update(snapshot_mutate_event)
+            self._stop()
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STARTED)
     async def _ensemble_started_handler(self, event):
@@ -120,6 +121,7 @@ class EnsembleEvaluator:
                 event
             )
             await self._send_snapshot_update(snapshot_mutate_event)
+            self._stop()
 
     async def _send_snapshot_update(self, snapshot_mutate_event):
         self._snapshot.merge_event(snapshot_mutate_event)
@@ -189,10 +191,7 @@ class EnsembleEvaluator:
             async for msg in websocket:
                 event = from_json(msg)
                 await self._dispatch.handle_event(self, event)
-                if event["type"] in [
-                    identifiers.EVTYPE_ENSEMBLE_STOPPED,
-                    identifiers.EVTYPE_ENSEMBLE_FAILED,
-                ]:
+                if event["type"] != identifiers.EVTYPE_ENSEMBLE_STARTED:
                     return
 
     async def connection_handler(self, websocket, path):

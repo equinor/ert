@@ -12,17 +12,9 @@ def test_run_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_builder):
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2).build()
         config = EvaluatorServerConfig(unused_tcp_port)
         evaluator = EnsembleEvaluator(ensemble, config, ee_id="1")
-        monitor = evaluator.run()
-        for e in monitor.track():
-            if (
-                e["type"]
-                in (
-                    identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
-                    identifiers.EVTYPE_EE_SNAPSHOT,
-                )
-                and e.data.get("status") in ["Failed", "Stopped"]
-            ):
-                monitor.signal_done()
+        with evaluator.run() as monitor:
+            for _ in monitor.track():
+                pass
         assert evaluator._snapshot.get_status() == "Stopped"
         assert evaluator.get_successful_realizations() == num_reals
 
@@ -36,18 +28,20 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_b
 
         evaluator = EnsembleEvaluator(ensemble, config, ee_id="1")
 
-        mon = evaluator.run()
-        cancel = True
-        for _ in mon.track():
-            if cancel:
-                mon.signal_cancel()
-                cancel = False
+        with evaluator.run() as mon:
+            cancel = True
+            for _ in mon.track():
+                if cancel:
+                    mon.signal_cancel()
+                    cancel = False
 
         assert evaluator._snapshot.get_status() == "Cancelled"
 
 
 @pytest.mark.timeout(60)
-def test_run_legacy_ensemble_exception(tmpdir, unused_tcp_port, make_ensemble_builder):
+def test_run_with_exception_legacy_ensemble(
+    tmpdir, unused_tcp_port, make_ensemble_builder
+):
     num_reals = 2
     with tmpdir.as_cwd():
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2).build()
@@ -55,15 +49,7 @@ def test_run_legacy_ensemble_exception(tmpdir, unused_tcp_port, make_ensemble_bu
         evaluator = EnsembleEvaluator(ensemble, config, ee_id="1")
 
         with patch.object(ensemble, "_run_path_list", side_effect=RuntimeError()):
-            monitor = evaluator.run()
-            for e in monitor.track():
-                if (
-                    e["type"]
-                    in (
-                        identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
-                        identifiers.EVTYPE_EE_SNAPSHOT,
-                    )
-                    and e.data.get("status") in ["Failed", "Stopped"]
-                ):
-                    monitor.signal_done()
+            with evaluator.run() as monitor:
+                for _ in monitor.track():
+                    pass
             assert evaluator._snapshot.get_status() == "Failed"

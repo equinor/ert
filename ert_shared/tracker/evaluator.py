@@ -46,64 +46,50 @@ class EvaluatorTracker:
 
     def _drain_monitor(self):
         drainer_logger = logging.getLogger("ert_shared.ensemble_evaluator.drainer")
-        monitor = create_ee_monitor(self._monitor_host, self._monitor_port)
-        while monitor:
-            try:
-                for event in monitor.track():
-                    if event["type"] == ids.EVTYPE_EE_SNAPSHOT:
-                        iter_ = event.data["metadata"]["iter"]
-                        with self._state_mutex:
-                            self._realization_progress[
-                                iter_
-                            ] = self._snapshot_to_realization_progress(event.data)
-                            self._work_queue.put(None)
-                            if event.data.get("status") == _EVTYPE_SNAPSHOT_STOPPED:
-                                drainer_logger.debug(
-                                    "observed evaluation stopped event, signal done"
-                                )
-                                monitor.signal_done()
-                    elif event["type"] == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
-                        with self._state_mutex:
-                            self._updates.append(event.data)
-                            self._work_queue.put(None)
-                            if event.data.get("status") == _EVTYPE_SNAPSHOT_CANCELLED:
-                                drainer_logger.debug(
-                                    "observed evaluation cancelled event, return"
-                                )
-                                return
-                            if event.data.get("status") == _EVTYPE_SNAPSHOT_STOPPED:
-                                drainer_logger.debug(
-                                    "observed evaluation stopped event, signal done"
-                                )
-                                monitor.signal_done()
-                    elif event["type"] == ids.EVTYPE_EE_TERMINATED:
-                        drainer_logger.debug("got terminator event")
-                        while True:
-                            if self._model.isFinished():
-                                drainer_logger.debug(
-                                    "observed that model was finished, waiting tasks completion..."
-                                )
-                                self._work_queue.join()
-                                drainer_logger.debug("tasks complete")
-                                return
-                            try:
-                                time.sleep(5)
-                                drainer_logger.debug("connecting to new monitor...")
-                                monitor = create_ee_monitor(
-                                    self._monitor_host, self._monitor_port
-                                )
-                                wait_for_ws(monitor.get_base_uri(), max_retries=2)
-                                drainer_logger.debug("connected")
-                                break
-                            except ConnectionRefusedError as e:
-                                drainer_logger.debug(f"connection refused: {e}")
-                                pass
+        try:
+            while not self._model.isFinished():
+                drainer_logger.debug("connecting to new monitor...")
+                with create_ee_monitor(
+                    self._monitor_host, self._monitor_port
+                ) as monitor:
+                    wait_for_ws(monitor.get_base_uri(), max_retries=2)
+                    drainer_logger.debug("connected")
 
-            except ConnectionRefusedError as e:
-                if self._model.isFinished():
-                    return
-                else:
-                    raise e
+                    for event in monitor.track():
+                        if event["type"] == ids.EVTYPE_EE_SNAPSHOT:
+                            iter_ = event.data["metadata"]["iter"]
+                            with self._state_mutex:
+                                self._realization_progress[
+                                    iter_
+                                ] = self._snapshot_to_realization_progress(event.data)
+                                self._work_queue.put(None)
+                        elif event["type"] == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
+                            with self._state_mutex:
+                                self._updates.append(event.data)
+                                self._work_queue.put(None)
+                                if (
+                                    event.data.get("status")
+                                    == _EVTYPE_SNAPSHOT_CANCELLED
+                                ):
+                                    drainer_logger.debug(
+                                        "observed evaluation cancelled event, return"
+                                    )
+                                    return
+                        elif event["type"] == ids.EVTYPE_EE_TERMINATED:
+                            drainer_logger.debug("got terminator event")
+
+                time.sleep(5)
+            else:
+                drainer_logger.debug(
+                    "observed that model was finished, waiting tasks completion..."
+                )
+                self._work_queue.join()
+                drainer_logger.debug("tasks complete")
+        except ConnectionRefusedError as e:
+            if self._model.isFinished():
+                return
+            else:
+                raise e
 
     def _get_most_recent_snapshot(self):
         iter_ = self._get_current_iter()

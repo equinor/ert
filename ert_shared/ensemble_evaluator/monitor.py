@@ -21,7 +21,25 @@ class _Monitor:
         self._loop = asyncio.new_event_loop()
         self._incoming = asyncio.Queue(loop=self._loop)
         self._receive_future = None
+        self._done_future = None
         self._id = str(uuid.uuid1()).split("-")[0]
+
+    def __enter__(self):
+        wait_for_ws(self._base_uri)
+
+        self._done_future = asyncio.Future(loop=self._loop)
+
+        self._thread = threading.Thread(
+            name=f"ert_monitor-{self._id}_loop",
+            target=self._run,
+            args=(self._done_future,),
+        )
+        self._thread.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._thread.join()
+        self._loop.close()
 
     def get_base_uri(self):
         return self._base_uri
@@ -32,14 +50,7 @@ class _Monitor:
                 message = to_json(cloud_event)
                 await websocket.send(message)
 
-        # TODO: if run was never called, the monitor's loop is not running.
-        # Improve this, or not? But this will fail if run _was_ called, and it
-        # is attempted to exit_server after the fact.
-        # See https://github.com/equinor/ert/issues/1227
-        if self._loop.is_running():
-            asyncio.run_coroutine_threadsafe(_send(), self._loop).result()
-        else:
-            self._loop.run_until_complete(_send())
+        asyncio.run_coroutine_threadsafe(_send(), self._loop).result()
 
     def signal_cancel(self):
         logger.debug(f"monitor-{self._id} asking server to cancel...")
@@ -91,15 +102,6 @@ class _Monitor:
         self._loop.run_until_complete(done_future)
 
     def track(self):
-        wait_for_ws(self._base_uri)
-
-        done_future = asyncio.Future(loop=self._loop)
-
-        thread = threading.Thread(
-            name=f"ert_monitor-{self._id}_loop", target=self._run, args=(done_future,)
-        )
-        thread.start()
-
         event = None
         try:
             while event is None or event["type"] != identifiers.EVTYPE_EE_TERMINATED:
@@ -107,14 +109,12 @@ class _Monitor:
                     self._incoming.get(), self._loop
                 ).result()
                 yield event
-            self._loop.call_soon_threadsafe(done_future.set_result, None)
         except GeneratorExit:
             logger.debug(f"monitor-{self._id} generator exit")
             self._loop.call_soon_threadsafe(self._receive_future.cancel)
-            if not done_future.done():
-                self._loop.call_soon_threadsafe(done_future.set_result, None)
-        thread.join()
-        self._loop.close()
+        finally:
+            if not self._done_future.done():
+                self._loop.call_soon_threadsafe(self._done_future.set_result, None)
 
 
 def create(host, port):
