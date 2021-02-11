@@ -451,21 +451,11 @@ bool enkf_node_store_vector(enkf_node_type *enkf_node , enkf_fs_type * fs , int 
 
 
 
-bool enkf_node_store(enkf_node_type * enkf_node , enkf_fs_type * fs , bool force_vectors , node_id_type node_id) {
-  if (enkf_node->vector_storage) {
-    if (force_vectors)
-      return enkf_node_store_vector( enkf_node , fs , node_id.iens );
-    else
-      return false;
-  } else {
-    if (node_id.report_step == 0) {
-      ert_impl_type impl_type = enkf_node_get_impl_type(enkf_node);
-      if (impl_type == SUMMARY)
-        return false;             /* For report step == 0 the summary data is just garbage. */
-    }
-
+bool enkf_node_store(enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_type node_id) {
+  if (enkf_node->vector_storage)
+    return enkf_node_store_vector( enkf_node , fs , node_id.iens );
+  else
     return enkf_node_store_buffer( enkf_node , fs , node_id.report_step , node_id.iens );
-  }
 }
 
 
@@ -607,7 +597,7 @@ void enkf_node_copy(const enkf_config_node_type * config_node ,
     }
   }
 
-  enkf_node_store(enkf_node, target_case , true , target_id );
+  enkf_node_store(enkf_node, target_case , target_id );
   enkf_node_free(enkf_node);
 }
 
@@ -648,7 +638,7 @@ void enkf_node_deserialize(enkf_node_type *enkf_node , enkf_fs_type * fs , node_
 
   FUNC_ASSERT(enkf_node->deserialize);
   enkf_node->deserialize(enkf_node->data , node_id , active_list , A , row_offset , column);
-  enkf_node_store( enkf_node , fs , true , node_id );
+  enkf_node_store( enkf_node , fs , node_id );
 }
 
 

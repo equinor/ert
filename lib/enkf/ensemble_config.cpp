@@ -902,7 +902,7 @@ int ensemble_config_forward_init(const ensemble_config_type * ens_config,
 
         if (!enkf_node_has_data( node , sim_fs , node_id)) {
           if (enkf_node_forward_init(node , run_arg_get_runpath( run_arg ) , iens ))
-            enkf_node_store( node , sim_fs , false , node_id );
+            enkf_node_store( node , sim_fs , node_id );
           else {
             char * init_file = enkf_config_node_alloc_initfile( enkf_node_get_config( node ) , run_arg_get_runpath(run_arg) , iens );
 

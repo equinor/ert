@@ -133,7 +133,7 @@ void enkf_state_initialize(enkf_state_type * enkf_state , rng_type * rng, enkf_f
 
         if ((init_mode == INIT_FORCE) || (has_data == false) || (current_state == STATE_LOAD_FAILURE)) {
           if (enkf_node_initialize(param_node, iens, rng))
-            enkf_node_store(param_node, fs, true, node_id);
+            enkf_node_store(param_node, fs, node_id);
         }
 
         enkf_node_free( param_node );
@@ -367,7 +367,7 @@ static void enkf_state_load_gen_data_node(
       node_id_type node_id = {.report_step = report_step,
                               .iens = iens };
 
-      enkf_node_store(node, sim_fs, false, node_id);
+      enkf_node_store(node, sim_fs, node_id);
       enkf_state_log_GEN_DATA_load(node, report_step, load_context);
     } else {
       forward_load_context_update_result(load_context, LOAD_FAILURE);
@@ -764,7 +764,7 @@ static void enkf_state_internal_retry(const res_config_type * res_config,
       enkf_node_type * node = enkf_node_alloc( config_node );
       if (enkf_node_initialize( node , iens , rng )) {
         node_id_type node_id = { .report_step = 0, .iens = iens };
-        enkf_node_store(node, run_arg_get_sim_fs( run_arg ), true, node_id);
+        enkf_node_store(node, run_arg_get_sim_fs( run_arg ), node_id);
       }
       enkf_node_free( node );
     }

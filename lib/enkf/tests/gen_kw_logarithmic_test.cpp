@@ -69,8 +69,8 @@ void test_write_gen_kw_export_file(enkf_main_type * enkf_main) {
     node_id_type node_id = {.report_step = 0,
                             .iens        = 0 };
 
-    enkf_node_store(enkf_node, init_fs, true, node_id);
-    enkf_node_store(enkf_node2, init_fs, true, node_id);
+    enkf_node_store(enkf_node, init_fs, node_id);
+    enkf_node_store(enkf_node2, init_fs, node_id);
   }
 
   {

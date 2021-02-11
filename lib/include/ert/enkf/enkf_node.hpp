@@ -147,7 +147,7 @@ void             enkf_node_clear(enkf_node_type *);
   bool              enkf_node_fload( enkf_node_type * enkf_node , const char * filename );
   void              enkf_node_load(enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_type node_id );
   void              enkf_node_load_vector( enkf_node_type * enkf_node , enkf_fs_type * fs , int iens);
-  bool              enkf_node_store(enkf_node_type * enkf_node , enkf_fs_type * fs , bool force_vectors , node_id_type node_id);
+  bool              enkf_node_store(enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_type node_id);
   bool              enkf_node_store_vector(enkf_node_type *enkf_node , enkf_fs_type * fs , int iens );
   bool              enkf_node_try_load(enkf_node_type *enkf_node , enkf_fs_type * fs , node_id_type node_id);
   bool              enkf_node_try_load_vector(enkf_node_type *enkf_node , enkf_fs_type * fs , int iens );

@@ -31,7 +31,7 @@ class EnkfNode(BaseCClass):
     _get_name = ResPrototype("char* enkf_node_get_key(enkf_node)")
     _value_ptr = ResPrototype("void* enkf_node_value_ptr(enkf_node)")
     _try_load = ResPrototype("bool  enkf_node_try_load(enkf_node, enkf_fs, node_id)")
-    _store = ResPrototype("bool  enkf_node_store(enkf_node, enkf_fs, bool, node_id)")
+    _store = ResPrototype("bool  enkf_node_store(enkf_node, enkf_fs, node_id)")
     _get_impl_type = ResPrototype(
         "ert_impl_type_enum enkf_node_get_impl_type(enkf_node)"
     )
@@ -153,7 +153,7 @@ class EnkfNode(BaseCClass):
         assert isinstance(fs, EnkfFs)
         assert isinstance(node_id, NodeId)
 
-        return self._store(fs, False, node_id)
+        return self._store(fs, node_id)
 
     def free(self):
         self._free()

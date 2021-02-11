@@ -399,7 +399,7 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , enkf_fs_type * src_fs ,
   for (iens = 0; iens < ens_size; iens++) {
     node_id_type node_id = {.report_step = report_step , .iens = iens };
     enkf_node_iadd( (enkf_node_type * ) vector_iget( ensemble, iens) , mean );
-    enkf_node_store( (enkf_node_type * ) vector_iget( ensemble, iens) , target_fs , true , node_id);
+    enkf_node_store( (enkf_node_type * ) vector_iget( ensemble, iens) , target_fs , node_id);
   }
 
   enkf_node_free( mean );
@@ -900,7 +900,7 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
           node_id.report_step = 0;
 
           enkf_node_load(data_node, source_fs, node_id);
-          enkf_node_store(data_node, target_fs, false, node_id);
+          enkf_node_store(data_node, target_fs, node_id);
         }
         enkf_node_free(data_node);
       }
