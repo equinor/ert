@@ -3,7 +3,7 @@ import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_gui.model.job_list import JobListProxyModel
 from ert_gui.model.node import NodeType
 from ert_gui.model.snapshot import COLUMNS, SnapshotModel
-from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot
+from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Job
 from ert_shared.status.entity.state import JOB_STATE_FAILURE, JOB_STATE_START
 from PyQt5.QtCore import QModelIndex
 from pytestqt.qt_compat import qt_api
@@ -62,9 +62,11 @@ def test_changes(full_snapshot):
         "0",
         "0",
         "0",
-        status=JOB_STATE_FAILURE,
-        start_time=start_time,
-        end_time=end_time,
+        job=Job(
+            status=JOB_STATE_FAILURE,
+            start_time=start_time,
+            end_time=end_time,
+        ),
     )
     source_model._add_partial_snapshot(partial, 0)
     assert model.index(0, _id_to_col(ids.START_TIME), QModelIndex()).data() == str(
@@ -95,7 +97,7 @@ def test_no_cross_talk(full_snapshot):
 
     # Test that changes to iter=1 does not bleed into iter=0
     partial = PartialSnapshot(full_snapshot)
-    partial.update_job("0", "0", "0", "0", status=JOB_STATE_FAILURE)
+    partial.update_job("0", "0", "0", "0", job=Job(status=JOB_STATE_FAILURE))
     source_model._add_partial_snapshot(partial, 1)
     assert (
         model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data() == JOB_STATE_START

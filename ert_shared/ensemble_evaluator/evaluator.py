@@ -14,12 +14,12 @@ from ert_shared.ensemble_evaluator.entity import serialization
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
     Snapshot,
-    _ForwardModel,
-    _Job,
-    _Realization,
-    _SnapshotDict,
-    _Stage,
-    _Step,
+    ForwardModel,
+    Job,
+    Realization,
+    SnapshotDict,
+    Stage,
+    Step,
 )
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_CANCELLED,
@@ -66,36 +66,30 @@ class EnsembleEvaluator:
     def create_snapshot(ensemble):
         reals = {}
         for real in ensemble.get_active_reals():
-            reals[str(real.get_iens())] = _Realization(
+            reals[str(real.get_iens())] = Realization(
                 active=True,
-                start_time=None,
-                end_time=None,
                 status=REALIZATION_STATE_WAITING,
             )
             for stage in real.get_stages():
-                reals[str(real.get_iens())].stages[str(stage.get_id())] = _Stage(
+                reals[str(real.get_iens())].stages[str(stage.get_id())] = Stage(
                     status=STAGE_STATE_UNKNOWN,
-                    start_time=None,
-                    end_time=None,
                 )
                 for step in stage.get_steps():
                     reals[str(real.get_iens())].stages[str(stage.get_id())].steps[
                         str(step.get_id())
-                    ] = _Step(status=STEP_STATE_START, start_time=None, end_time=None)
+                    ] = Step(status=STEP_STATE_START)
                     for job in step.get_jobs():
                         reals[str(real.get_iens())].stages[str(stage.get_id())].steps[
                             str(step.get_id())
-                        ].jobs[str(job.get_id())] = _Job(
+                        ].jobs[str(job.get_id())] = Job(
                             status=JOB_STATE_START,
                             data={},
-                            start_time=None,
-                            end_time=None,
                             name=job.get_name(),
                         )
-        top = _SnapshotDict(
+        top = SnapshotDict(
             reals=reals,
             status=ENSEMBLE_STATE_STARTED,
-            forward_model=_ForwardModel(step_definitions={}),
+            forward_model=ForwardModel(step_definitions={}),
             metadata=ensemble.get_metadata(),
         )
 
