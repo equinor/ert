@@ -16,3 +16,12 @@ class SummaryTest(ResTest):
 
         with self.assertRaises(IndexError):
             v = summary[100]
+
+        summary[0] = 75
+        self.assertEqual(summary[0], 75)
+
+        summary[10] = 100
+        self.assertEqual(summary[10], 100)
+
+        with self.assertRaises(ValueError):
+            v5 = summary[5]

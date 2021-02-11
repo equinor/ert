@@ -44,19 +44,8 @@ struct summary_struct {
 
 
 
-static double SUMMARY_GET_VALUE( const summary_type * summary,
-                                 int report_step) {
-  return double_vector_iget( summary->data_vector, report_step );
-}
 
 
-static void SUMMARY_SET_VALUE( summary_type * summary,
-                               int report_step,
-                               double value) {
-  double_vector_iset( summary->data_vector, report_step, value);
-}
-
-/*****************************************************************/
 
 
 
@@ -146,7 +135,7 @@ void summary_serialize(const summary_type * summary,
                        matrix_type * A,
                        int row_offset,
                        int column) {
-  double value = SUMMARY_GET_VALUE( summary, node_id.report_step );
+  double value = summary_get( summary, node_id.report_step );
   enkf_matrix_serialize( &value, 1, ECL_DOUBLE, active_list, A, row_offset, column);
 }
 
@@ -159,7 +148,7 @@ void summary_deserialize(summary_type * summary,
                          int column) {
   double value;
   enkf_matrix_deserialize( &value, 1, ECL_DOUBLE, active_list, A, row_offset, column);
-  SUMMARY_SET_VALUE( summary, node_id.report_step, value );
+  summary_set( summary, node_id.report_step, value );
 }
 
 int summary_length(const summary_type * summary) {
@@ -167,9 +156,19 @@ int summary_length(const summary_type * summary) {
 }
 
 double summary_get(const summary_type * summary, int report_step) {
-  return SUMMARY_GET_VALUE( summary, report_step );
+  return double_vector_iget( summary->data_vector, report_step );
 }
 
+
+void summary_set( summary_type * summary,
+                  int report_step,
+                  double value) {
+  double_vector_iset( summary->data_vector, report_step, value);
+}
+
+double summary_undefined_value() {
+  return SUMMARY_UNDEF;
+}
 
 bool summary_user_get(const summary_type * summary,
                       const char * index_key,
@@ -273,7 +272,7 @@ bool summary_forward_load(summary_type * summary,
   }
 
   if (loadOK)
-    SUMMARY_SET_VALUE( summary, report_step, load_value );
+    summary_set( summary, report_step, load_value );
 
   return loadOK;
 }
