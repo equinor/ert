@@ -193,13 +193,10 @@ class RunDialog(QDialog):
 
     @Slot(QModelIndex)
     def _select_real(self, index):
-        node = index.internalPointer()
-        if node is None or node.type != NodeType.REAL:
-            return
         step = 0
         stage = 0
-        real = node.row()
-        iter_ = node.parent.row()
+        real = index.row()
+        iter_ = index.model().get_iter()
         self._job_model.set_step(iter_, real, stage, step)
         self._job_label.setText(f"Realization id {real} in iteration {iter_}")
 

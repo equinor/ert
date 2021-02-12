@@ -22,6 +22,9 @@ class RealListModel(QAbstractProxyModel):
         super().__init__(parent=parent)
         self._iter = iter_
 
+    def get_iter(self):
+        return self._iter
+
     iter_changed = Signal(int)
 
     @Slot(int)
