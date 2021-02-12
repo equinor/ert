@@ -23,6 +23,7 @@
 #include <pthread.h>                /* must have rw locking on the config_nodes ... */
 
 #include <unordered_map>
+#include <map>
 #include <string>
 
 
@@ -81,7 +82,7 @@ struct ensemble_config_struct {
   UTIL_TYPE_ID_DECLARATION;
   pthread_mutex_t                                mutex;
   char                                         * gen_kw_format_string;   /* format string used when creating gen_kw search/replace strings. */
-  std::unordered_map<std::string,enkf_config_node_type*>   config_nodes;           /* a hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
+  std::map<std::string,enkf_config_node_type*>   config_nodes;           /* a hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
   field_trans_table_type                       * field_trans_table;      /* a table of the transformations which are available to apply on fields. */
   bool                                           have_forward_init;
   summary_key_matcher_type                     * summary_key_matcher;
