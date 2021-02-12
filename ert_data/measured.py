@@ -1,14 +1,13 @@
 from collections import defaultdict
-
+from typing import Optional, List
 import deprecation
 import pandas as pd
 import numpy as np
 
 from ert_data import loader
-
-# importlib.metadata added in python 3.8
 from ert_shared.libres_facade import LibresFacade
 
+# importlib.metadata added in python 3.8
 try:
     from importlib import metadata
 
@@ -20,7 +19,22 @@ except ImportError:
 
 
 class MeasuredData(pd.DataFrame):
-    def __init__(self, facade, keys=None, index_lists=None, load_data=True, case_name=None, **kwargs):
+    """
+    MeasuredData is an object designed to extract data from an ert run and present
+    it as a pandas DataFrame. It has the properties of a DataFrame but a set structure
+    to conform to having observations and responses. It also has a few functions to filter
+    based on the response and/or observations. If not observation keys are provided, all
+    observations are loaded.
+    """
+    def __init__(
+        self,
+        facade: LibresFacade,
+        keys: Optional[List[str]] = None,
+        index_lists: Optional[List[List[int]]] = None,
+        load_data: bool = True,
+        case_name: Optional[str] = None,
+        **kwargs,
+    ):
         """
         This is a bit ugly, but is close to the way pandas does this internally.
         The problem is that when an operation is performed on a DataFrame, a view of
