@@ -1,6 +1,17 @@
 from functools import partial
 import pandas as pd
 
+import deprecation
+
+# importlib.metadata added in python 3.8
+try:
+    from importlib import metadata
+
+    __version__ = metadata.version("ert")
+except ImportError:
+    from pkg_resources import get_distribution
+
+    __version__ = get_distribution("ert").version
 
 def data_loader_factory(observation_type):
     """
@@ -52,6 +63,12 @@ def _extract_data(
     return pd.concat(data_map, axis=1).astype(float)
 
 
+@deprecation.deprecated(
+    deprecated_in="2.19",
+    removed_in="3.0",
+    current_version=__version__,
+    details="Use the data_loader_factory",
+    )
 def load_general_data(facade, obs_keys, case_name, include_data=True):
     return _extract_data(
         facade,
@@ -64,6 +81,12 @@ def load_general_data(facade, obs_keys, case_name, include_data=True):
     )
 
 
+@deprecation.deprecated(
+    deprecated_in="2.19",
+    removed_in="3.0",
+    current_version=__version__,
+    details="Use the data_loader_factory",
+    )
 def load_summary_data(facade, obs_keys, case_name, include_data=True):
     return _extract_data(
         facade,
@@ -76,6 +99,12 @@ def load_summary_data(facade, obs_keys, case_name, include_data=True):
     )
 
 
+@deprecation.deprecated(
+    deprecated_in="2.19",
+    removed_in="3.0",
+    current_version=__version__,
+    details="Use the data_loader_factory",
+    )
 def load_block_data(facade, obs_keys, case_name, include_data=True):
     return _extract_data(
         facade,
