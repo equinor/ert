@@ -1,6 +1,5 @@
 from .base_run_model import BaseRunModel, ErtRunError
 from .ensemble_experiment import EnsembleExperiment
-from .ensemble_prefect_experiment import EnsemblePrefectExperiment
 from .single_test_run import SingleTestRun
 from .ensemble_smoother import EnsembleSmoother
 from .iterated_ensemble_smoother import IteratedEnsembleSmoother
