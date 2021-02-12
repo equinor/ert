@@ -39,6 +39,7 @@ setup(
         "cloudevents",
         "console-progressbar==1.1.2",
         "decorator",
+        "deprecation",
         "equinor-libres >= 8.0.0b0",
         "fastapi",
         "jinja2",
