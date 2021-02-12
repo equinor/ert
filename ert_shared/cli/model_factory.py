@@ -6,7 +6,6 @@ from ert_shared.ide.keywords.definitions import RangeStringArgument
 from ert_shared import ERT
 from ert_shared.models.ensemble_experiment import EnsembleExperiment
 from ert_shared.models.ensemble_smoother import EnsembleSmoother
-from ert_shared.models.ensemble_prefect_experiment import EnsemblePrefectExperiment
 from ert_shared.models.iterated_ensemble_smoother import IteratedEnsembleSmoother
 from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert_shared.models.single_test_run import SingleTestRun
@@ -24,8 +23,6 @@ def create_model(args):
         model, argument = _setup_multiple_data_assimilation(args)
     elif args.mode == "iterative_ensemble_smoother":
         model, argument = _setup_iterative_ensemble_smoother(args)
-    elif args.mode == "ensemble_prefect_experiment":
-        model, argument = _setup_prefect_ensemble_experiment(args)
 
     else:
         raise NotImplementedError("Run type not supported {}".format(args.mode))
@@ -46,14 +43,6 @@ def _setup_ensemble_experiment(args):
     simulations_argument = {
         "active_realizations": _realizations(args),
         "iter_num": int(args.iter_num),
-    }
-    return model, simulations_argument
-
-
-def _setup_prefect_ensemble_experiment(args):
-    model = EnsemblePrefectExperiment()
-    simulations_argument = {
-        "config_file": os.path.basename(args.config),
     }
     return model, simulations_argument
 

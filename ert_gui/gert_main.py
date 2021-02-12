@@ -48,18 +48,7 @@ import time
 def run_gui(args):
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
-    if FeatureToggling.is_enabled("prefect"):
-        ert_conf_path = os.path.abspath(args.config)[:-3] + "ert"
-        with open(ert_conf_path, "w") as f:
-            f.write("""QUEUE_SYSTEM LOCAL
-QUEUE_OPTION LOCAL MAX_RUNNING 50
-RUNPATH out/real_%d/iter_%d
-NUM_REALIZATIONS 100
-MIN_REALIZATIONS 1
-            """)
-        res_config = ResConfig(ert_conf_path)
-    else:
-        res_config = ResConfig(args.config)
+    res_config = ResConfig(args.config)
     os.chdir(res_config.config_path)
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
 

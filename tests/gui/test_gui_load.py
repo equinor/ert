@@ -48,11 +48,6 @@ def patch_enkf_main(monkeypatch, tmpdir):
         Mock(return_value=0),
     )
     monkeypatch.setattr(
-        ert_gui.simulation.prefect_ensemble_experiment_panel.PrefectEnsembleExperimentPanel,
-        "get_realizations",
-        Mock(return_value=0),
-    )
-    monkeypatch.setattr(
         ert_gui.ertwidgets.models.activerealizationsmodel,
         "mask_to_rangestring",
         Mock(return_value=""),
@@ -157,12 +152,6 @@ def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
     monkeypatch.setattr(
         ert_gui.simulation.ensemble_experiment_panel,
         "getRealizationCount",
-        Mock(return_value=2),
-    )
-
-    monkeypatch.setattr(
-        ert_gui.simulation.prefect_ensemble_experiment_panel.PrefectEnsembleExperimentPanel,
-        "get_realizations",
         Mock(return_value=2),
     )
 
