@@ -149,9 +149,8 @@ class LegacyTracker:
             if not _is_iens_active(iens, run_context):
                 continue
 
-            # # TODO: use differ?
             status = JobStatusType.JOB_QUEUE_UNKNOWN
-            if queue_snapshot is not None:
+            if queue_snapshot is not None and iens in queue_snapshot:
                 status = JobStatusType.from_string(queue_snapshot[iens])
 
             snapshot.reals[real_id] = _Realization(
