@@ -1,5 +1,6 @@
 from ert_data import loader as loader
 import pandas as pd
+from ert_data.measured import MeasuredData
 
 
 class PlotApi(object):
@@ -68,27 +69,17 @@ class PlotApi(object):
             return data
 
     def observations_for_obs_keys(self, case, obs_keys):
-        """ Returns a pandas DataFrame with the datapoints for a given observation key for a given case. The row index
-            is the realization number, and the column index is a multi-index with (obs_key, index/date, obs_index),
-            where index/date is used to relate the observation to the data point it relates to, and obs_index is
-            the index for the observation itself"""
-        measured_data = pd.DataFrame()
-        case_name = case
-
-        for key in obs_keys:
-            observation_type = self._facade.get_impl_type_name_for_obs_key(key)
-            data_loader = loader.data_loader_factory(observation_type)
-
-            try:
-                data = data_loader(self._facade, key, case_name, include_data=False)
-            except loader.NoObservationsException:
-                data = pd.DataFrame()
-
-            data = pd.concat({key: data}, axis=1, names=["obs_key"])
-
-            measured_data = pd.concat([measured_data, data], axis=1)
-
-        data = measured_data.astype(float)
+        """Returns a pandas DataFrame with the datapoints for a given observation key for a given case. The row index
+        is the realization number, and the column index is a multi-index with (obs_key, index/date, obs_index),
+        where index/date is used to relate the observation to the data point it relates to, and obs_index is
+        the index for the observation itself"""
+        try:
+            measured_data = MeasuredData(
+                self._facade, obs_keys, case_name=case, load_data=False
+            )
+            data = measured_data.data
+        except loader.ObservationError:
+            data = pd.DataFrame()
         expected_keys = ["OBS", "STD"]
         if not isinstance(data, pd.DataFrame):
             raise TypeError(
