@@ -39,7 +39,7 @@ setup(
         "cloudevents",
         "console-progressbar==1.1.2",
         "decorator",
-        "equinor-libres >= 8.0.0b0",
+        "equinor-libres >= 9.0",
         "fastapi",
         "jinja2",
         "matplotlib",
