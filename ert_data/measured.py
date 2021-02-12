@@ -7,13 +7,17 @@ from ert_data import loader
 
 
 class MeasuredData(object):
-    def __init__(self, facade, keys, index_lists=None, load_data=True):
+    def __init__(self, facade, keys, index_lists=None, load_data=True, case_name=None):
         self._facade = facade
 
+        if not keys:
+            raise loader.ObservationError("No observation keys provided")
+        if case_name is None:
+            case_name = self._facade.get_current_case_name()
         if index_lists is not None and len(index_lists) != len(keys):
             raise ValueError("index list must be same length as observations keys")
 
-        self._set_data(self._get_data(keys, load_data))
+        self._set_data(self._get_data(keys, load_data, case_name))
         self._set_data(self.filter_on_column_index(keys, index_lists))
 
     @property
@@ -67,20 +71,22 @@ class MeasuredData(object):
     def is_empty(self):
         return self.data.empty
 
-    def _get_data(self, observation_keys, load_data=True):
+    def _get_data(self, observation_keys, load_data, case_name):
         """
         Adds simulated and observed data and returns a dataframe where ensamble
         members will have a data key, observed data will be named OBS and
         observed standard deviation will be named STD.
         """
-        case_name = self._facade.get_current_case_name()
 
         # Because several observations can be linked to the same response we create
         # a grouping to avoid reading the same response for each of the corresponding
         # observations, as that is quite slow.
         key_map = defaultdict(list)
         for key in observation_keys:
-            data_key = self._facade.get_data_key_for_obs_key(key)
+            try:
+                data_key = self._facade.get_data_key_for_obs_key(key)
+            except KeyError:
+                raise loader.ObservationError(f"No data key for obs key: {key}")
             key_map[data_key].append(key)
 
         measured_data = []
@@ -94,7 +100,10 @@ class MeasuredData(object):
             )
             observation_type = obs_types[0]
             data_loader = loader.data_loader_factory(observation_type)
-            measured_data.append(data_loader(self._facade, obs_keys, case_name, load_data))
+            data = data_loader(self._facade, obs_keys, case_name, include_data=load_data)
+            if data.empty:
+                raise loader.ObservationError(f"No observations loaded for {obs_keys}")
+            measured_data.append(data)
 
         return pd.concat(measured_data, axis=1)
 

@@ -1,3 +1,5 @@
+import pytest
+import pathlib
 import os
 import shutil
 
@@ -11,7 +13,106 @@ from tests.utils import SOURCE_DIR, tmpdir
 from unittest import TestCase
 
 
-class PlotApiTest(TestCase):
+_KEY_DEFS = (
+        {
+            "key": "BPR:1,3,8",
+            "index_type": "VALUE",
+            "observations": [],
+            "has_refcase": True,
+            "dimensionality": 2,
+            "metadata": {"data_origin": "Summary"},
+            "log_scale": False,
+        },
+        {
+            "key": "BPR:445",
+            "index_type": "VALUE",
+            "observations": [],
+            "has_refcase": True,
+            "dimensionality": 2,
+            "metadata": {"data_origin": "Summary"},
+            "log_scale": False,
+        },
+        {
+            "key": "FOPT",
+            "index_type": "VALUE",
+            "observations": [],
+            "has_refcase": True,
+            "dimensionality": 2,
+            "metadata": {"data_origin": "Summary"},
+            "log_scale": False,
+        },
+        {
+            "key": "FOPTH",
+            "index_type": "VALUE",
+            "observations": [],
+            "has_refcase": True,
+            "dimensionality": 2,
+            "metadata": {"data_origin": "Summary"},
+            "log_scale": False,
+        },
+        {
+            "key": "WGOR:OP1",
+            "index_type": "VALUE",
+            "observations": [],
+            "has_refcase": True,
+            "dimensionality": 2,
+            "metadata": {"data_origin": "Summary"},
+            "log_scale": False,
+        },
+        {
+            "key": "WGORH:OP1",
+            "index_type": "VALUE",
+            "observations": [],
+            "has_refcase": True,
+            "dimensionality": 2,
+            "metadata": {"data_origin": "Summary"},
+            "log_scale": False,
+        },
+        {
+            "key": "WOPR:OP1",
+            "index_type": "VALUE",
+            "observations": [
+                "WOPR_OP1_108",
+                "WOPR_OP1_190",
+                "WOPR_OP1_144",
+                "WOPR_OP1_9",
+                "WOPR_OP1_72",
+                "WOPR_OP1_36",
+            ],
+            "has_refcase": True,
+            "dimensionality": 2,
+            "metadata": {"data_origin": "Summary"},
+            "log_scale": False,
+        },
+        {
+            "key": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
+            "index_type": None,
+            "observations": [],
+            "has_refcase": False,
+            "dimensionality": 1,
+            "metadata": {"data_origin": "Gen KW"},
+            "log_scale": False,
+        },
+        {
+            "key": "SNAKE_OIL_GPR_DIFF@199",
+            "index_type": "INDEX",
+            "observations": [],
+            "has_refcase": False,
+            "dimensionality": 2,
+            "metadata": {"data_origin": "Gen Data"},
+            "log_scale": False,
+        },
+        {
+            "key": "SNAKE_OIL_WPR_DIFF@199",
+            "index_type": "INDEX",
+            "observations": ["WPR_DIFF_1"],
+            "has_refcase": False,
+            "dimensionality": 2,
+            "metadata": {"data_origin": "Gen Data"},
+            "log_scale": False,
+        },
+)
+
 
     def api(self):
         config_file = 'snake_oil.ert'
@@ -58,68 +159,80 @@ class PlotApiTest(TestCase):
             else:
                 self.assertEqual(0, len(key_def["observations"]))
 
-    @tmpdir(os.path.join(SOURCE_DIR, 'test-data/local/snake_oil'))
-    def test_can_load_data_and_observations(self):
-        api = self.api()
-        key_defs = api.all_data_type_keys()
-        cases = api.get_all_cases_not_running()
-        for case in cases:
-            for key_def in key_defs:
-                obs = key_def["observations"]
-                obs_data = api.observations_for_obs_keys(case["name"], obs)
-                data = api.data_for_key(case["name"], key_def["key"])
 
-                self.assertIsInstance(data, DataFrame)
-                self.assertTrue(not data.empty)
+def test_key_def_structure(api):
+    shutil.rmtree("storage")
+    key_defs = api.all_data_type_keys()
+    fopr = next(x for x in key_defs if x["key"] == "FOPR")
 
-                self.assertIsInstance(obs_data, DataFrame)
-                if len(obs) > 0:
-                    self.assertTrue(not obs_data.empty)
+    expected = {
+        "dimensionality": 2,
+        "has_refcase": True,
+        "index_type": "VALUE",
+        "key": "FOPR",
+        "metadata": {"data_origin": "Summary"},
+        "observations": ["FOPR"],
+        "log_scale": False,
+    }
 
-    @tmpdir(os.path.join(SOURCE_DIR, 'test-data/local/snake_oil'))
-    def test_no_storage(self):
-        shutil.rmtree("storage")
-        api = self.api()
-        key_defs = api.all_data_type_keys()
-        cases = api.get_all_cases_not_running()
-        for case in cases:
-            for key_def in key_defs:
-                obs = key_def["observations"]
-                obs_data = api.observations_for_obs_keys(case["name"], obs)
-                data = api.data_for_key(case["name"], key_def["key"])
-                self.assertIsInstance(obs_data, DataFrame)
-                self.assertIsInstance(data, DataFrame)
-                self.assertTrue(data.empty)
+    assert fopr == expected
 
-    @tmpdir(os.path.join(SOURCE_DIR, 'test-data/local/snake_oil'))
-    def test_key_def_structure(self):
-        shutil.rmtree("storage")
-        api = self.api()
-        key_defs = api.all_data_type_keys()
-        fopr = next(x for x in key_defs if x["key"] == "FOPR")
 
-        expected = {
-            'dimensionality': 2,
-            'has_refcase': True,
-            'index_type': 'VALUE',
-            'key': 'FOPR',
-            'metadata': {'data_origin': 'Summary'},
-            'observations': ['FOPR'],
-            'log_scale': False,
-        }
+def test_case_structure(api):
+    cases = api.get_all_cases_not_running()
+    case = next(x for x in cases if x["name"] == "default_0")
 
-        self.assertEqual(expected, fopr)
+    expected = {"has_data": True, "hidden": False, "name": "default_0"}
 
-    @tmpdir(os.path.join(SOURCE_DIR, 'test-data/local/snake_oil'))
-    def test_case_structure(self):
-        api = self.api()
-        cases = api.get_all_cases_not_running()
-        case = next(x for x in cases if x["name"] == "default_0")
+    assert case == expected
 
-        expected = {
-            'has_data': True,
-            'hidden': False,
-            'name': 'default_0'
-        }
 
-        self.assertEqual(expected, case)
+@pytest.fixture
+def api(tmpdir):
+    with tmpdir.as_cwd():
+        test_data_root = pathlib.Path(SOURCE_DIR) / "test-data" / "local"
+        test_data_dir = os.path.join(test_data_root, "snake_oil")
+        shutil.copytree(test_data_dir, "test_data")
+        os.chdir("test_data")
+        config_file = "snake_oil.ert"
+        rc = ResConfig(user_config_file=config_file)
+        rc.convertToCReference(None)
+        ert = EnKFMain(rc)
+        facade = LibresFacade(ert)
+        api = PlotApi(facade)
+        yield api
+
+
+def get_id(val):
+    return f"case name: {val}"
+
+
+def get_key_name(val):
+    return f"key_def: {val['key']}"
+
+
+@pytest.mark.parametrize("case_name", ["default_0", "default_1"], ids=get_id)
+@pytest.mark.parametrize("key_def", _KEY_DEFS, ids=get_key_name)
+def test_no_storage(case_name, key_def, api):
+    shutil.rmtree("storage")
+    obs = key_def["observations"]
+    obs_data = api.observations_for_obs_keys(case_name, obs)
+    data = api.data_for_key(case_name, key_def["key"])
+    assert isinstance(obs_data, DataFrame)
+    assert isinstance(data, DataFrame)
+    assert data.empty
+
+
+@pytest.mark.parametrize("case_name", ["default_0", "default_1"], ids=get_id)
+@pytest.mark.parametrize("key_def", _KEY_DEFS, ids=get_key_name)
+def test_can_load_data_and_observations(case_name, key_def, api):
+        obs = key_def["observations"]
+        obs_data = api.observations_for_obs_keys(case_name, obs)
+        data = api.data_for_key(case_name, key_def["key"])
+
+        assert isinstance(data, DataFrame)
+        assert not data.empty
+
+        assert isinstance(obs_data, DataFrame)
+        if len(obs) > 0:
+            assert not obs_data.empty
