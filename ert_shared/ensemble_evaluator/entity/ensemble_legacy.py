@@ -104,6 +104,8 @@ class _LegacyEnsemble(_Ensemble):
                     )
                 ]
 
+            self._job_queue.add_ensemble_evaluator_information_to_jobs_file(self._ee_id)
+
             futures.append(
                 self._job_queue.execute_queue_async(
                     self._config.get("dispatch_url"),

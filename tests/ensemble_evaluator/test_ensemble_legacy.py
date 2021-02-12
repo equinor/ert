@@ -66,7 +66,7 @@ def test_run_legacy_ensemble_exception(tmpdir, unused_tcp_port, make_ensemble_bu
 
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2).build()
         config = load_config(conf_file)
-        evaluator = EnsembleEvaluator(ensemble, config, ee_id="1")
+        evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
 
         with patch.object(ensemble, "_run_path_list", side_effect=RuntimeError()):
             monitor = evaluator.run()
