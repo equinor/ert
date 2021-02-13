@@ -35,6 +35,7 @@ from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.key_manager import KeyManager
 from res.util import Log
 from res.util.substitution_list import SubstitutionList
+from ecl.util.util import rng
 
 
 class EnKFMain(BaseCClass):
@@ -252,6 +253,7 @@ class _RealEnKFMain(BaseCClass):
     _add_node = ResPrototype("void enkf_main_add_node(enkf_main, enkf_config_node)")
     _get_res_config = ResPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
     _init_run = ResPrototype("void enkf_main_init_run(enkf_main, ert_run_context)")
+    _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
 
     def __init__(self, config, strict=True, verbose=False):
         """ Please don't use this class directly. See EnKFMain instead """
@@ -454,3 +456,7 @@ class _RealEnKFMain(BaseCClass):
 
     def addNode(self, enkf_config_node):
         self._add_node(enkf_config_node)
+
+    def rng(self):
+        "Will return the random number generator used for updates."
+        return self._get_shared_rng()

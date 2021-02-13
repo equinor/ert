@@ -129,6 +129,7 @@ extern "C" {
 
   rng_config_type     * enkf_main_get_rng_config( const enkf_main_type * enkf_main );
   void                  enkf_main_rng_init( enkf_main_type * enkf_main);
+  rng_type            * enkf_main_get_shared_rng( enkf_main_type * enkf_main );
 
   bool enkf_main_export_field(const enkf_main_type * enkf_main,
                               const char * kw,

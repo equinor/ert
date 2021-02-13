@@ -280,6 +280,14 @@ class EnKFTest(ResTest):
             run_arg = run_context[2]
             self.assertTrue(isinstance(run_arg, RunArg))
 
+            rng1 = main.rng()
+            rng1.setState("ABCDEFGHIJ012345")
+            d1 = rng1.getDouble()
+            rng1.setState("ABCDEFGHIJ012345")
+            rng2 = main.rng()
+            d2 = rng2.getDouble()
+            self.assertEqual(d1, d2)
+
     @tmpdir()
     def test_run_context_from_external_folder(self):
         with TestAreaContext("enkf_test") as work_area:

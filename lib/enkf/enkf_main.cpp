@@ -1700,6 +1700,10 @@ rng_config_type * enkf_main_get_rng_config( const enkf_main_type * enkf_main ) {
   return res_config_get_rng_config(enkf_main->res_config);
 }
 
+rng_type * enkf_main_get_shared_rng( enkf_main_type * enkf_main ) {
+  return enkf_main->shared_rng;
+}
+
 
 void enkf_main_rng_init( enkf_main_type * enkf_main) {
   enkf_main->rng_manager = rng_config_alloc_rng_manager( enkf_main_get_rng_config(enkf_main) );
