@@ -1,14 +1,9 @@
 name: Style
 
-on:
-  push:
-    branches: [ ert3 ]
-  pull_request:
-    branches: [ ert3 ]
+on: [push, pull_request]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
