@@ -31,7 +31,7 @@ class Distribution:
 
     def _add_index(self, x):
         if self._as_array:
-            return x 
+            return x
         else:
             return {idx: float(val) for idx, val in zip(self.index, x)}
 
