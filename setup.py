@@ -54,6 +54,7 @@ setup(
         "scipy",
         "semeio",
         "sqlalchemy",
+        "typing-extensions; python_version < '3.8'",
         "websockets",
         "python-dateutil",
         "async_generator",
