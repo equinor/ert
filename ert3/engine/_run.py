@@ -69,7 +69,7 @@ def _load_ensemble_parameters(ensemble, workspace):
         assert len(record_source) == 2
         assert record_source[0] == "stochastic"
         parameter_group_name = record_source[1]
-        ensemble_parameters[parameter_group_name] = parameters[parameter_group_name]
+        ensemble_parameters[record_name] = parameters[parameter_group_name]
     return ensemble_parameters
 
 
