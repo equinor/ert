@@ -1,8 +1,13 @@
+from typing import Mapping, Sequence, Any
+import ert3
+
+
 def _build_base_records(groups, parameters):
     return {group_name: parameters[group_name].ppf(0.5) for group_name in groups}
 
 
-def one_at_the_time(parameters):
+# TODO: Narrow done return type to Sequence[ert3.data.RecordEnsemble]
+def one_at_the_time(parameters: Mapping[str, ert3.stats.Distribution]) -> Sequence[Any]:
     if len(parameters) == 0:
         raise ValueError("Cannot study the sensitivity of no variables")
 
