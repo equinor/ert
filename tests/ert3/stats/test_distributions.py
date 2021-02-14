@@ -62,11 +62,11 @@ def test_gaussian_distribution_index(index, mean, std):
 
 
 def test_gaussian_distribution_invalid():
-    err_msg_neither = "Cannot create gaussian distribution with neither size nor index"
+    err_msg_neither = "Cannot create distribution with neither size nor index"
     with pytest.raises(ValueError, match=err_msg_neither):
         ert3.stats.Gaussian(0, 1)
 
-    err_msg_both = "Cannot create gaussian distribution with both size and index"
+    err_msg_both = "Cannot create distribution with both size and index"
     with pytest.raises(ValueError, match=err_msg_both):
         ert3.stats.Gaussian(0, 1, size=10, index=list(range(10)))
 
@@ -123,11 +123,11 @@ def test_uniform_distribution_index(index, lower_bound, upper_bound):
 
 
 def test_uniform_distribution_invalid():
-    err_msg_neither = "Cannot create uniform distribution with neither size nor index"
+    err_msg_neither = "Cannot create distribution with neither size nor index"
     with pytest.raises(ValueError, match=err_msg_neither):
         ert3.stats.Uniform(0, 1)
 
-    err_msg_both = "Cannot create uniform distribution with both size and index"
+    err_msg_both = "Cannot create distribution with both size and index"
     with pytest.raises(ValueError, match=err_msg_both):
         ert3.stats.Uniform(0, 1, size=10, index=list(range(10)))
 
