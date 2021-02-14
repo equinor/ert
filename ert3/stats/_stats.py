@@ -49,12 +49,11 @@ class Gaussian(Distribution):
         self._mean = mean
         self._std = std
 
-        rvs = lambda size: scipy.stats.norm.rvs(
-            loc=self._mean, scale=self._std, size=size
-        )
-        ppf = lambda x: scipy.stats.norm.ppf(
-            x, loc=self._mean, scale=self._std
-        )
+        def rvs(size):
+            return scipy.stats.norm.rvs(loc=self._mean, scale=self._std, size=size)
+
+        def ppf(x):
+            return scipy.stats.norm.ppf(x, loc=self._mean, scale=self._std)
 
         super().__init__(
             size=size,
@@ -70,12 +69,13 @@ class Uniform(Distribution):
         self._upper_bound = upper_bound
         self._scale = upper_bound - lower_bound
 
-        rvs = lambda size: scipy.stats.uniform.rvs(
-            loc=self._lower_bound, scale=self._scale, size=self._size
-        )
-        ppf = lambda x: scipy.stats.uniform.ppf(
-            x, loc=self._lower_bound, scale=self._scale
-        )
+        def rvs(size):
+            return scipy.stats.uniform.rvs(
+                loc=self._lower_bound, scale=self._scale, size=self._size
+            )
+
+        def ppf(x):
+            return scipy.stats.uniform.ppf(x, loc=self._lower_bound, scale=self._scale)
 
         super().__init__(
             size=size,
