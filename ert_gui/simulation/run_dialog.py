@@ -320,7 +320,9 @@ class RunDialog(QDialog):
             self._progress_view.setIndeterminate(event.indeterminate)
             progress = int(event.progress * 100)
             self._total_progress_bar.setValue(progress)
-            self._total_progress_label.setText(_TOTAL_PROGRESS_TEMPLATE.format(progress))
+            self._total_progress_label.setText(
+                _TOTAL_PROGRESS_TEMPLATE.format(progress)
+            )
 
         elif isinstance(event, SnapshotUpdateEvent):
             if event.partial_snapshot is not None:
@@ -330,7 +332,9 @@ class RunDialog(QDialog):
             self._progress_view.setIndeterminate(event.indeterminate)
             progress = int(event.progress * 100)
             self._total_progress_bar.setValue(progress)
-            self._total_progress_label.setText(_TOTAL_PROGRESS_TEMPLATE.format(progress))
+            self._total_progress_label.setText(
+                _TOTAL_PROGRESS_TEMPLATE.format(progress)
+            )
 
     def has_failed_realizations(self):
         completed = self._run_model.completed_realizations_mask
