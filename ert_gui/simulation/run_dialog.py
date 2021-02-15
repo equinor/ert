@@ -30,7 +30,6 @@ from qtpy.QtWidgets import (
     QTabWidget,
     QHeaderView,
     QProgressBar,
-    QWIDGETSIZE_MAX,
 )
 from res.job_queue import JobStatusType
 from ert_gui.simulation.view.progress import ProgressView
@@ -55,7 +54,7 @@ class RunDialog(QDialog):
         self._run_model = run_model
 
         self._isDetailedDialog = False
-        self._minimum_width = 1000
+        self._minimum_width = 1200
 
         ert = None
         if isinstance(run_model, BaseRunModel):
@@ -72,13 +71,13 @@ class RunDialog(QDialog):
 
         self._total_progress_bar = QProgressBar(self)
         self._total_progress_bar.setRange(0, 100)
-        # self._total_progress_bar.setFormat("Total progress %p%")
         self._total_progress_bar.setTextVisible(False)
 
         self._iteration_progress_label = QLabel(self)
 
         self._progress_view = ProgressView(self)
         self._progress_view.setModel(progress_proxy_model)
+        self._progress_view.setIndeterminate(True)
 
         legend_view = LegendView(self)
         legend_view.setModel(progress_proxy_model)
@@ -159,19 +158,12 @@ class RunDialog(QDialog):
         self.setMinimumWidth(self._minimum_width)
         self._setSimpleDialog()
 
-    #    def sizeHint(self) -> QSize:
-    #        if self._isDetailedDialog:
-    #            return QSize(self.size().width(), 800)
-    #        else:
-    #            return QSize(self.size().width(), 230)
-
     def _setSimpleDialog(self) -> None:
         self._isDetailedDialog = False
         self._tab_widget.setVisible(False)
         self._job_label.setVisible(False)
         self._job_view.setVisible(False)
         self.show_details_button.setText("Show Details")
-        # self.setFixedHeight(230)
 
     def _setDetailedDialog(self) -> None:
         self._isDetailedDialog = True
@@ -179,8 +171,6 @@ class RunDialog(QDialog):
         self._job_label.setVisible(True)
         self._job_view.setVisible(True)
         self.show_details_button.setText("Hide Details")
-        # self.setFixedHeight(QWIDGETSIZE_MAX)
-        # self.setMinimumHeight(600)
 
     @Slot(QModelIndex, int, int)
     def on_new_iteration(self, parent: QModelIndex, start: int, end: int) -> None:
@@ -190,9 +180,9 @@ class RunDialog(QDialog):
 
             widget = RealizationWidget(iter)
             widget.setSnapshotModel(self._snapshot_model)
-            widget.clicked.connect(self._select_real)
+            widget.currentChanged.connect(self._select_real)
 
-            self._tab_widget.addTab(widget, f"Iteration {iter}")
+            self._tab_widget.addTab(widget, f"Realizations for iteration {iter}")
 
     @Slot(QModelIndex)
     def _job_clicked(self, index):
