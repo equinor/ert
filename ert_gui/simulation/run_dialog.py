@@ -39,6 +39,9 @@ from ert_gui.simulation.view.realization import RealizationWidget
 from ert_gui.model.progress_proxy import ProgressProxyModel
 
 
+_TOTAL_PROGRESS_TEMPLATE = "Total progress {}%"
+
+
 class RunDialog(QDialog):
     simulation_done = Signal(bool, str)
     simulation_termination_request = Signal()
@@ -68,11 +71,10 @@ class RunDialog(QDialog):
 
         progress_proxy_model = ProgressProxyModel(self._snapshot_model, parent=self)
 
-        total_progress_label = QLabel("Total progress", self)
+        self._total_progress_label = QLabel(_TOTAL_PROGRESS_TEMPLATE.format(0), self)
 
         self._total_progress_bar = QProgressBar(self)
         self._total_progress_bar.setRange(0, 100)
-        # self._total_progress_bar.setFormat("Total progress %p%")
         self._total_progress_bar.setTextVisible(False)
 
         self._iteration_progress_label = QLabel(self)
@@ -138,7 +140,7 @@ class RunDialog(QDialog):
         button_widget_container.setLayout(button_layout)
 
         layout = QVBoxLayout()
-        layout.addWidget(total_progress_label)
+        layout.addWidget(self._total_progress_label)
         layout.addWidget(self._total_progress_bar)
         layout.addWidget(self._iteration_progress_label)
         layout.addWidget(self._progress_view)
@@ -159,19 +161,12 @@ class RunDialog(QDialog):
         self.setMinimumWidth(self._minimum_width)
         self._setSimpleDialog()
 
-    #    def sizeHint(self) -> QSize:
-    #        if self._isDetailedDialog:
-    #            return QSize(self.size().width(), 800)
-    #        else:
-    #            return QSize(self.size().width(), 230)
-
     def _setSimpleDialog(self) -> None:
         self._isDetailedDialog = False
         self._tab_widget.setVisible(False)
         self._job_label.setVisible(False)
         self._job_view.setVisible(False)
         self.show_details_button.setText("Show Details")
-        # self.setFixedHeight(230)
 
     def _setDetailedDialog(self) -> None:
         self._isDetailedDialog = True
@@ -179,8 +174,6 @@ class RunDialog(QDialog):
         self._job_label.setVisible(True)
         self._job_view.setVisible(True)
         self.show_details_button.setText("Hide Details")
-        # self.setFixedHeight(QWIDGETSIZE_MAX)
-        # self.setMinimumHeight(600)
 
     @Slot(QModelIndex, int, int)
     def on_new_iteration(self, parent: QModelIndex, start: int, end: int) -> None:
@@ -299,6 +292,7 @@ class RunDialog(QDialog):
         self.restart_button.setVisible(self.has_failed_realizations())
         self.restart_button.setEnabled(self._run_model.support_restart)
         self._total_progress_bar.setValue(100)
+        self._total_progress_label.setText(_TOTAL_PROGRESS_TEMPLATE.format(100))
 
         if failed:
             QMessageBox.critical(
@@ -324,7 +318,9 @@ class RunDialog(QDialog):
             if event.snapshot is not None:
                 self._snapshot_model._add_snapshot(event.snapshot, event.iteration)
             self._progress_view.setIndeterminate(event.indeterminate)
-            self._total_progress_bar.setValue(int(event.progress * 100))
+            progress = int(event.progress * 100)
+            self._total_progress_bar.setValue(progress)
+            self._total_progress_label.setText(_TOTAL_PROGRESS_TEMPLATE.format(progress))
 
         elif isinstance(event, SnapshotUpdateEvent):
             if event.partial_snapshot is not None:
@@ -332,7 +328,9 @@ class RunDialog(QDialog):
                     event.partial_snapshot, event.iteration
                 )
             self._progress_view.setIndeterminate(event.indeterminate)
-            self._total_progress_bar.setValue(int(event.progress * 100))
+            progress = int(event.progress * 100)
+            self._total_progress_bar.setValue(progress)
+            self._total_progress_label.setText(_TOTAL_PROGRESS_TEMPLATE.format(progress))
 
     def has_failed_realizations(self):
         completed = self._run_model.completed_realizations_mask
