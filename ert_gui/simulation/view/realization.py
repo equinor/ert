@@ -26,7 +26,6 @@ class RealizationWidget(QWidget):
         self._delegateHeight = 50
 
         self._real_view = QListView(self)
-        self._real_view.clicked.connect(lambda e: self.clicked.emit(e))
         self._real_view.setViewMode(QListView.IconMode)
         self._real_view.setGridSize(QSize(self._delegateWidth, self._delegateHeight))
         self._real_view.setItemDelegate(
@@ -42,7 +41,8 @@ class RealizationWidget(QWidget):
 
         self.setLayout(layout)
 
-    clicked = Signal(QModelIndex)
+    # Signal when the user selects another real
+    currentChanged = Signal(QModelIndex)
 
     def setSnapshotModel(self, model) -> None:
         self._real_list_model = RealListModel(self, self._iter)
@@ -50,6 +50,11 @@ class RealizationWidget(QWidget):
 
         self._real_view.setModel(self._real_list_model)
         self._real_view.model().setIter(self._iter)
+
+        selectionModel = self._real_view.selectionModel()
+        selectionModel.currentChanged.connect(
+            lambda current, previous: self.currentChanged.emit(current)
+        )
 
     def clearSelection(self) -> None:
         self._real_view.clearSelection()

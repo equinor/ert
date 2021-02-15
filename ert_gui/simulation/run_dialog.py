@@ -55,7 +55,7 @@ class RunDialog(QDialog):
         self._run_model = run_model
 
         self._isDetailedDialog = False
-        self._minimum_width = 1000
+        self._minimum_width = 1200
 
         ert = None
         if isinstance(run_model, BaseRunModel):
@@ -78,6 +78,7 @@ class RunDialog(QDialog):
 
         self._progress_view = ProgressView(self)
         self._progress_view.setModel(progress_proxy_model)
+        self._progress_view.setIndeterminate(True)
 
         legend_view = LegendView(self)
         legend_view.setModel(progress_proxy_model)
@@ -179,9 +180,9 @@ class RunDialog(QDialog):
 
             widget = RealizationWidget(iter)
             widget.setSnapshotModel(self._snapshot_model)
-            widget.clicked.connect(self._select_real)
+            widget.currentChanged.connect(self._select_real)
 
-            self._tab_widget.addTab(widget, f"Iteration {iter}")
+            self._tab_widget.addTab(widget, f"Realizations for iteration {iter}")
 
     @Slot(QModelIndex)
     def _job_clicked(self, index):
