@@ -98,7 +98,9 @@ def test_tracking(cmd_line_arguments, num_successful, num_iters, tmpdir, source_
         model, argument = create_model(parsed)
 
         ee_config = None
-        if FeatureToggling.is_enabled("prefect") or FeatureToggling.is_enabled("ensemble-evaluator"):
+        if FeatureToggling.is_enabled("prefect") or FeatureToggling.is_enabled(
+            "ensemble-evaluator"
+        ):
             ee_config = EvaluatorServerConfig()
             argument.update({"ee_config": ee_config})
 
@@ -109,7 +111,9 @@ def test_tracking(cmd_line_arguments, num_successful, num_iters, tmpdir, source_
         )
         thread.start()
 
-        tracker = create_tracker(model, general_interval=1, detailed_interval=2, ee_config=ee_config)
+        tracker = create_tracker(
+            model, general_interval=1, detailed_interval=2, ee_config=ee_config
+        )
 
         snapshots = {}
 
