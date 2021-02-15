@@ -83,6 +83,8 @@ class JobListProxyModel(QAbstractProxyModel):
             return QVariant()
         if orientation == Qt.Horizontal:
             return COLUMNS[NodeType.STEP][section]
+        if orientation == Qt.Vertical:
+            return section
         return QVariant()
 
     def columnCount(self, parent=QModelIndex()) -> int:
