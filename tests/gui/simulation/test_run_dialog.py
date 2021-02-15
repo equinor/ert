@@ -125,6 +125,4 @@ def test_full_snapshot(runmodel, active_realizations, full_snapshot, qtbot):
     qtbot.waitForWindowShown(widget)
     assert widget._total_progress_bar.value() == 50
     qtbot.mouseClick(widget.show_details_button, Qt.LeftButton)
-    qtbot.waitSignal(widget._snapshot_model.rowsInserted)
-    qtbot.waitSignal(widget._snapshot_model.rowsInserted)
-    assert widget._tab_widget.count() == 2
+    qtbot.waitUntil(lambda: widget._tab_widget.count() == 2)
