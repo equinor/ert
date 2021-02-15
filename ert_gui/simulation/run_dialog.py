@@ -3,8 +3,7 @@ from threading import Thread
 from ecl.util.util import BoolVector
 from ert_gui.ertwidgets import resourceMovie
 from ert_gui.model.job_list import JobListProxyModel
-from ert_gui.model.node import NodeType
-from ert_gui.model.snapshot import SnapshotModel, FileRole
+from ert_gui.model.snapshot import RealIens, SnapshotModel, FileRole
 from ert_gui.simulation.tracker_worker import TrackerWorker
 from ert_gui.tools.file import FileDialog
 from ert_gui.tools.plot.plot_tool import PlotTool
@@ -14,7 +13,6 @@ from ert_shared.status.entity.event import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert_shared.status.entity.state import REAL_STATE_TO_COLOR
 from ert_shared.status.tracker.factory import create_tracker
 from ert_shared.status.utils import format_running_time
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
@@ -30,7 +28,6 @@ from qtpy.QtWidgets import (
     QTabWidget,
     QHeaderView,
     QProgressBar,
-    QWIDGETSIZE_MAX,
 )
 from res.job_queue import JobStatusType
 from ert_gui.simulation.view.progress import ProgressView
@@ -94,7 +91,6 @@ class RunDialog(QDialog):
         self._job_model.setSourceModel(self._snapshot_model)
 
         self._job_view = QTableView(self)
-        self._job_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self._job_view.clicked.connect(self._job_clicked)
         self._open_files = {}
         self._job_view.setModel(self._job_model)
@@ -216,7 +212,17 @@ class RunDialog(QDialog):
         real = index.row()
         iter_ = index.model().get_iter()
         self._job_model.set_step(iter_, real, stage, step)
-        self._job_label.setText(f"Realization id {real} in iteration {iter_}")
+        self._job_label.setText(
+            f"Realization id {index.data(RealIens)} in iteration {iter_}"
+        )
+
+        self._job_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self._job_view.horizontalHeader().setSectionResizeMode(
+            2, QHeaderView.ResizeToContents
+        )
+        self._job_view.horizontalHeader().setSectionResizeMode(
+            3, QHeaderView.ResizeToContents
+        )
 
         # Clear the selection in the other tabs
         for i in range(0, self._tab_widget.count()):

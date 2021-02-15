@@ -23,6 +23,7 @@ RealStatusColorHint = Qt.UserRole + 3
 RealLabelHint = Qt.UserRole + 4
 ProgressRole = Qt.UserRole + 5
 FileRole = Qt.UserRole + 6
+RealIens = Qt.UserRole + 7
 
 
 COLUMNS = {
@@ -235,7 +236,9 @@ class SnapshotModel(QAbstractItemModel):
                         return QColor(*REAL_STATE_TO_COLOR[status])
 
         elif role == RealLabelHint:
-            return f"{node.id}"
+            return str(node.id)
+        elif role == RealIens:
+            return int(node.id)
         elif role == RealStatusColorHint:
             return QColor(*REAL_STATE_TO_COLOR[node.data[ids.STATUS]])
         else:
