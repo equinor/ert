@@ -31,6 +31,7 @@ class _Monitor:
             async with websockets.connect(self._client_uri) as websocket:
                 message = to_json(cloud_event)
                 await websocket.send(message)
+                _ = await websocket.recv()
 
         # TODO: if run was never called, the monitor's loop is not running.
         # Improve this, or not? But this will fail if run _was_ called, and it
