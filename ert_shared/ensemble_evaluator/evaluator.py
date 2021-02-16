@@ -159,7 +159,13 @@ class EnsembleEvaluatorApp:
         pp = pprint.PrettyPrinter(indent=2)
         print()
         pp.pprint(snapshot_mutate_event.to_dict())
-        pp.pprint(self._snapshot.to_dict())
+        print(
+            [
+                (real_id, real["status"])
+                for real_id, real in self._snapshot.to_dict()["reals"].items()
+            ]
+        )
+        # pp.pprint(self._snapshot.to_dict())
         print()
         out_msg = to_json(out_cloudevent).decode()
         if out_msg:
