@@ -1,0 +1,12 @@
+[
+    {"porosity": 0.2, "x_mid_permability": 0.5},
+    {"porosity": 0.21, "x_mid_permability": 0.6},
+    {"porosity": 0.22, "x_mid_permability": 0.7},
+    {"porosity": 0.23, "x_mid_permability": 0.4},
+    {"porosity": 0.24, "x_mid_permability": 0.5},
+    {"porosity": 0.25, "x_mid_permability": 0.4},
+    {"porosity": 0.26, "x_mid_permability": 0.7},
+    {"porosity": 0.27, "x_mid_permability": 0.6},
+    {"porosity": 0.28, "x_mid_permability": 0.5},
+    {"porosity": 0.29, "x_mid_permability": 0.4}
+]
