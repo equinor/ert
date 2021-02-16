@@ -165,7 +165,7 @@ class EnsembleEvaluatorApp:
                 for real_id, real in self._snapshot.to_dict()["reals"].items()
             ]
         )
-        # pp.pprint(self._snapshot.to_dict())
+        pp.pprint(self._snapshot.to_dict())
         print()
         out_msg = to_json(out_cloudevent).decode()
         if out_msg:
