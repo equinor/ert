@@ -1,0 +1,15 @@
+size: 10
+
+input:
+  -
+    source: storage.designed_field_properties
+    record: field_properties
+  -
+    source: storage.designed_wells
+    record: wells
+
+
+forward_model:
+  driver: local
+  stages:
+    - simulate_SPE1

@@ -4,5 +4,11 @@ set -e
 export SPE1_WORKSPACE_ROOT=$(pwd)
 
 ert3 init
+
 ert3 run evaluation
 ert3 export evaluation
+
+ert3 record load designed_field_properties experiments/doe/field_properties.json
+ert3 record load designed_wells experiments/doe/wells.json
+ert3 run doe
+ert3 export doe
