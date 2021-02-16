@@ -36,6 +36,10 @@ class RealizationWidget(QWidget):
         self._real_view.setWrapping(True)
         self._real_view.setResizeMode(QListView.Adjust)
 
+        self._real_view.currentChanged = (
+            lambda current, previous: self.currentChanged.emit(current)
+        )
+
         layout = QVBoxLayout()
         layout.addWidget(self._real_view)
 
@@ -50,11 +54,6 @@ class RealizationWidget(QWidget):
 
         self._real_view.setModel(self._real_list_model)
         self._real_view.model().setIter(self._iter)
-
-        selectionModel = self._real_view.selectionModel()
-        selectionModel.currentChanged.connect(
-            lambda current, previous: self.currentChanged.emit(current)
-        )
 
     def clearSelection(self) -> None:
         self._real_view.clearSelection()
