@@ -267,35 +267,7 @@ class PartialSnapshot:
         elif e_type in ids.EVGROUP_ENSEMBLE:
             self.update_status(_ENSEMBLE_TYPE_EVENT_TO_STATUS[e_type])
         elif e_type == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
-            if ids.STATUS in event:
-                self.update_status(event[ids.STATUS])
-            if ids.REALS not in event.data:
-                return self
-            for real_id, real in event.data[ids.REALS].items():
-                self.update_real(
-                    real_id, **{k: real[k] for k in real if k != ids.STAGES}
-                )
-                if ids.STAGES not in real:
-                    continue
-                for stage_id, stage in real[ids.STAGES].items():
-                    self.update_stage(
-                        real_id,
-                        stage_id,
-                        **{k: stage[k] for k in stage if k != ids.STEPS},
-                    )
-                    if ids.STEPS not in stage:
-                        continue
-                    for step_id, step in stage[ids.STEPS].items():
-                        self.update_step(
-                            real_id,
-                            stage_id,
-                            step_id,
-                            **{k: step[k] for k in step if k != ids.JOBS},
-                        )
-                        if ids.JOBS not in step:
-                            continue
-                        for job_id, job in step[ids.JOBS].items():
-                            self.update_job(real_id, stage_id, step_id, job_id, **job)
+            self._data = recursive_update(self._data, event.data, check_key=False)
         else:
             raise ValueError("Unknown type: {}".format(e_type))
         return self
