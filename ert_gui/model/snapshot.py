@@ -25,6 +25,16 @@ ProgressRole = Qt.UserRole + 5
 FileRole = Qt.UserRole + 6
 RealIens = Qt.UserRole + 7
 
+STEP_COLUMN_NAME = "Name"
+STEP_COLUMN_ERROR = "Error"
+STEP_COLUMN_STATUS = "Status"
+STEP_COLUMN_START_TIME = "Start time"
+STEP_COLUMN_END_TIME = "End time"
+STEP_COLUMN_STDOUT = "STDOUT"
+STEP_COLUMN_STDERR = "STDERR"
+STEP_COLUMN_CURRENT_MEMORY_USAGE = "Current Memory Usage"
+STEP_COLUMN_MAX_MEMORY_USAGE = "Max Memory Usage"
+
 
 COLUMNS = {
     NodeType.ROOT: ["Name", "Status"],
@@ -32,14 +42,15 @@ COLUMNS = {
     NodeType.REAL: ["Name", "Status"],
     NodeType.STAGE: ["Name", "Status"],
     NodeType.STEP: [
-        "Name",
-        "Status",
-        "Start time",
-        "End time",
-        "STDOUT",
-        "STDERR",
-        "Current Memory Usage",
-        "Max Memory Usage",
+        (STEP_COLUMN_NAME, ids.NAME),
+        (STEP_COLUMN_ERROR, ids.ERROR),
+        (STEP_COLUMN_STATUS, ids.STATUS),
+        (STEP_COLUMN_START_TIME, ids.START_TIME),
+        (STEP_COLUMN_END_TIME, ids.END_TIME),
+        (STEP_COLUMN_STDOUT, ids.STDOUT),
+        (STEP_COLUMN_STDERR, ids.STDERR),
+        (STEP_COLUMN_CURRENT_MEMORY_USAGE, ids.CURRENT_MEMORY_USAGE),
+        (STEP_COLUMN_MAX_MEMORY_USAGE, ids.MAX_MEMORY_USAGE),
     ],
     NodeType.JOB: [],
 }
@@ -112,6 +123,7 @@ class SnapshotModel(QAbstractItemModel):
                             ids.END_TIME,
                             ids.STDOUT,
                             ids.STDERR,
+                            ids.ERROR,
                         ):
                             if attr in job:
                                 job_node.data[attr] = job[attr]
@@ -248,42 +260,21 @@ class SnapshotModel(QAbstractItemModel):
         if role == Qt.BackgroundRole:
             return QColor(*REAL_STATE_TO_COLOR[node.data.get(ids.STATUS)])
         if role == Qt.DisplayRole:
-            if index.column() == 0:
-                return node.data.get(ids.NAME)
-            elif index.column() == 1:
-                return node.data.get(ids.STATUS)
-            elif index.column() == 2:
-                return node.data.get(ids.START_TIME)
-            elif index.column() == 3:
-                return node.data.get(ids.END_TIME)
-            elif index.column() == 4:
-                return "OPEN" if node.data.get(ids.STDOUT) else QVariant()
-            elif index.column() == 5:
-                return "OPEN" if node.data.get(ids.STDERR) else QVariant()
-            elif index.column() == 6:
+            _, data_name = COLUMNS[NodeType.STEP][index.column()]
+            if data_name in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
                 data = node.data.get(ids.DATA)
-                bytes = data.get(ids.CURRENT_MEMORY_USAGE) if data else None
+                bytes = data.get(data_name) if data else None
                 if bytes:
                     return byte_with_unit(bytes)
-            elif index.column() == 7:
-                data = node.data.get(ids.DATA)
-                bytes = data.get(ids.MAX_MEMORY_USAGE) if data else None
-                if bytes:
-                    return byte_with_unit(bytes)
+            if data_name in [ids.STDOUT, ids.STDERR]:
+                return "OPEN" if node.data.get(data_name) else QVariant()
+            return node.data.get(data_name)
         if role == FileRole:
-            if index.column() == 4:
+            _, data_name = COLUMNS[NodeType.STEP][index.column()]
+            if data_name in [ids.STDOUT, ids.STDERR]:
                 return (
-                    node.data.get(ids.STDOUT)
-                    if node.data.get(ids.STDOUT)
-                    else QVariant()
+                    node.data.get(data_name) if node.data.get(data_name) else QVariant()
                 )
-            if index.column() == 5:
-                return (
-                    node.data.get(ids.STDERR)
-                    if node.data.get(ids.STDERR)
-                    else QVariant()
-                )
-
         return QVariant()
 
     def index(self, row: int, column: int, parent=QModelIndex()) -> QModelIndex:

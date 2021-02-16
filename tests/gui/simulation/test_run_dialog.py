@@ -7,6 +7,7 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
     Snapshot,
     SnapshotBuilder,
 )
+from datetime import datetime
 from ert_shared.status.entity.event import (
     EndEvent,
     FullSnapshotEvent,
@@ -17,6 +18,7 @@ from ert_shared.status.entity.state import (
     STAGE_STATE_UNKNOWN,
     STEP_STATE_START,
 )
+import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from qtpy.QtCore import Qt
 
 
@@ -50,8 +52,12 @@ def full_snapshot() -> Snapshot:
             step_id="0",
             job_id=str(i),
             name=f"job_{i}",
-            data={},
+            data={ids.MAX_MEMORY_USAGE: 1000, ids.CURRENT_MEMORY_USAGE: 500},
             status=JOB_STATE_START,
+            stdout=f"job_{i}.stdout",
+            stderr=f"job_{i}.stderr",
+            start_time=datetime(1999, 1, 1).isoformat(),
+            end_time=datetime(2019, 1, 1).isoformat(),
         )
     real_ids = [str(i) for i in range(0, 150)]
     return builder.build(real_ids, REALIZATION_STATE_UNKNOWN)

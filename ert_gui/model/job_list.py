@@ -82,7 +82,7 @@ class JobListProxyModel(QAbstractProxyModel):
         if role != Qt.DisplayRole:
             return QVariant()
         if orientation == Qt.Horizontal:
-            return COLUMNS[NodeType.STEP][section]
+            return COLUMNS[NodeType.STEP][section][0]
         if orientation == Qt.Vertical:
             return section
         return QVariant()

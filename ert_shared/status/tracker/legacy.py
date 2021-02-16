@@ -292,6 +292,7 @@ class LegacyTracker:
                     },
                     stdout=fm.std_out_file,
                     stderr=fm.std_err_file,
+                    error=fm.error,
                 )
 
         return partial

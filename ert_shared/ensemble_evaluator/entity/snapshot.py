@@ -442,6 +442,8 @@ class SnapshotBuilder(BaseModel):
         data,
         start_time=None,
         end_time=None,
+        stdout=None,
+        stderr=None,
     ):
         stage = self.stages[stage_id]
         step = stage.steps[step_id]
@@ -451,6 +453,8 @@ class SnapshotBuilder(BaseModel):
             start_time=start_time,
             end_time=end_time,
             name=name,
+            stdout=stdout,
+            stderr=stderr,
         )
         if stage_id not in self.forward_model.step_definitions:
             self.forward_model.step_definitions[stage_id] = {}
