@@ -10,10 +10,9 @@ _STORAGE_FILE = "storage.yaml"
 _DATA = "__data__"
 _PARAMETERS = "__parameters__"
 
-_VARIABLES = "__variables__"
 _ENSEMBLE_RECORDS = "__ensemble_records__"
 
-_SPECIAL_KEYS = (_VARIABLES, _ENSEMBLE_RECORDS)
+_SPECIAL_KEYS = (_ENSEMBLE_RECORDS,)
 
 
 def _generate_storage_location(workspace):
@@ -71,7 +70,7 @@ def get_experiment_names(*, workspace):
     return experiment_names
 
 
-def _add_data(workspace, experiment_name, data_type, data, required_types=()):
+def _add_data(workspace, experiment_name, data_type, data):
     storage_location = _generate_storage_location(workspace)
     _assert_storage_initialized(storage_location)
 
@@ -89,30 +88,10 @@ def _add_data(workspace, experiment_name, data_type, data, required_types=()):
         msg = f"{data_type} data is already stored for experiment"
         raise KeyError(msg.capitalize())
 
-    for req in required_types:
-        if req not in experiment_data:
-            raise KeyError(
-                f"Cannot add {data_type} data to experiment without {req} data"
-            )
-
     experiment_data[data_type] = data
 
     with open(storage_location, "w") as f:
         yaml.dump(storage, f)
-
-
-def add_input_data(workspace, experiment_name, input_data):
-    _add_data(workspace, experiment_name, "input", input_data)
-
-
-def add_output_data(workspace, experiment_name, output_data):
-    _add_data(
-        workspace,
-        experiment_name,
-        "output",
-        output_data,
-        required_types=["input"],
-    )
 
 
 def _get_data(workspace, experiment_name, data_type):
@@ -131,26 +110,6 @@ def _get_data(workspace, experiment_name, data_type):
         raise KeyError(f"No {data_type} data for experiment: {experiment_name}")
 
     return storage[experiment_name][_DATA][data_type]
-
-
-def get_input_data(workspace, experiment_name):
-    return _get_data(workspace, experiment_name, "input")
-
-
-def get_output_data(workspace, experiment_name):
-    return _get_data(workspace, experiment_name, "output")
-
-
-def add_variables(workspace, var_name, data):
-    _add_data(workspace, _VARIABLES, var_name, data)
-
-
-def get_variables(workspace, var_name):
-    return _get_data(workspace, _VARIABLES, var_name)
-
-
-def add_record(workspace, name, data):
-    _add_data(workspace, _RECORDS, name, data.json())
 
 
 def add_ensemble_record(
