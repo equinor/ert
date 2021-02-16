@@ -1,18 +1,12 @@
-from ert_shared.status.utils import byte_with_unit
 import logging
 
+import ert_shared.status.entity.state as state
 from ert_gui.model.node import Node, NodeType, snapshot_to_tree
-from ert_shared.ensemble_evaluator.entity.snapshot import (
-    PartialSnapshot,
-    Snapshot,
-)
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
-
+from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Snapshot
+from ert_shared.status.utils import byte_with_unit
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 from qtpy.QtGui import QColor
-
-from ert_shared.status.entity.state import JOB_STATE_FINISHED, REAL_STATE_TO_COLOR
-
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +48,19 @@ COLUMNS = {
     ],
     NodeType.JOB: [],
 }
+
+# The statuses of all jobs for a realization is mapped to these colors, and the
+# color with highest priority (lowest index) is picked to represent the
+# realization.
+_COLORS_ORDERED_BY_PRIORITY = [
+    state.COLOR_FAILED,
+    state.COLOR_RUNNING,
+    state.COLOR_UNKNOWN,
+    state.COLOR_WAITING,
+    state.COLOR_PENDING,
+    state.COLOR_NOT_ACTIVE,
+    state.COLOR_FINISHED,
+]
 
 
 class SnapshotModel(QAbstractItemModel):
@@ -236,29 +243,30 @@ class SnapshotModel(QAbstractItemModel):
 
     def _real_data(self, index: QModelIndex, node: Node, role: int):
         if role == RealJobColorHint:
-            # TODO: make nicer + make sure it works with thare more than 1 job
+            color_index = len(_COLORS_ORDERED_BY_PRIORITY) - 1
             for _, stage in node.children.items():
-                # print("1: ", stage)
                 for _, step in stage.children.items():
-                    # print("node2: ", step)
                     for _, job in step.children.items():
-                        # print("node3: ", job.data)
                         status = job.data[ids.STATUS]
-                        # print("job ", s)
-                        return QColor(*REAL_STATE_TO_COLOR[status])
-
+                        color_index = min(
+                            color_index,
+                            _COLORS_ORDERED_BY_PRIORITY.index(
+                                state.REAL_STATE_TO_COLOR[status]
+                            ),
+                        )
+            return QColor(*_COLORS_ORDERED_BY_PRIORITY[color_index])
         elif role == RealLabelHint:
             return str(node.id)
         elif role == RealIens:
             return int(node.id)
         elif role == RealStatusColorHint:
-            return QColor(*REAL_STATE_TO_COLOR[node.data[ids.STATUS]])
+            return QColor(*state.REAL_STATE_TO_COLOR[node.data[ids.STATUS]])
         else:
             return QVariant()
 
     def _job_data(self, index: QModelIndex, node: Node, role: int):
         if role == Qt.BackgroundRole:
-            return QColor(*REAL_STATE_TO_COLOR[node.data.get(ids.STATUS)])
+            return QColor(*state.REAL_STATE_TO_COLOR[node.data.get(ids.STATUS)])
         if role == Qt.DisplayRole:
             _, data_name = COLUMNS[NodeType.STEP][index.column()]
             if data_name in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
