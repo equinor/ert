@@ -154,6 +154,13 @@ class EnsembleEvaluatorApp:
             },
             snapshot_mutate_event.to_dict(),
         )
+        import pprint
+
+        pp = pprint.PrettyPrinter(indent=2)
+        print()
+        pp.pprint(snapshot_mutate_event.to_dict())
+        pp.pprint(self._snapshot.to_dict())
+        print()
         out_msg = to_json(out_cloudevent).decode()
         if out_msg:
             await self._client_connection_manager.broadcast(
