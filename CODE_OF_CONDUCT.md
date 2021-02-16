@@ -1,76 +1,76 @@
-# Contributor Covenant Code of Conduct
+# Code of conduct for open source projects in Equinor
+In Equinor, [how we deliver is as important as what we deliver](https://www.equinor.com/en/careers/our-culture.html).
 
-## Our Pledge
+This principle applies to all work done in Equinor maintained projects as well
+as for any Equinor contribution to other projects within the open source
+community.
 
-In the interest of fostering an open and welcoming environment, we as
-contributors and maintainers pledge to making participation in our project and
-our community a harassment-free experience for everyone, regardless of age, body
-size, disability, ethnicity, sex characteristics, gender identity and expression,
-level of experience, education, socio-economic status, nationality, personal
-appearance, race, religion, or sexual identity and orientation.
+## Open, Collaborative, Courageous, Caring
 
-## Our Standards
+As a values-based organization, our code of conduct for open source projects is
+simply a reflection of our values and how we live up to these as teams as well
+as individuals.
 
-Examples of behavior that contributes to creating a positive environment
-include:
+This set the expectations for how we collaborate in our open source projects.
+These expectations applies to all community members and participants in any
+Equinor maintained project.
 
-* Using welcoming and inclusive language
-* Being respectful of differing viewpoints and experiences
-* Gracefully accepting constructive criticism
-* Focusing on what is best for the community
-* Showing empathy towards other community members
+In addition to any definition or interpretation of the open source code of
+conduct, the company wide [Equinor code of conduct](https://www.equinor.com/content/dam/statoil/documents/ethics/equinor-code-of-conduct.pdf)
+always applies to all employees and hired contractors.
 
-Examples of unacceptable behavior by participants include:
+# Handling issues within the communities
+At any point, if anyone should raise the concern that a group or member is not
+acting in accordance with our values, the behaviour in question should cease, be
+discussed and tried to be resolved.
 
-* The use of sexualized language or imagery and unwelcome sexual attention or
- advances
-* Trolling, insulting/derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information, such as a physical or electronic
- address, without explicit permission
-* Other conduct which could reasonably be considered inappropriate in a
- professional setting
+We expect all to have a low threshold for raising issues, or in general discuss
+how we live up to our values. Equally, we also encourage all community members
+to appreciate when concerns are raised, and make its best effort in solving
+them.
 
-## Our Responsibilities 
+As well as responsibility for what is delivered the project maintainers are
+also responsible for how we deliver. This includes creating an environment for
+proper handling of issues raised within the communities.
 
-Project maintainers are responsible for clarifying the standards of acceptable
-behavior and are expected to take appropriate and fair corrective action in
-response to any instances of unacceptable behavior.
+# Call out for assistance
+For any problem not directly resolvable within the community, we encourage you
+to call out for assistance. Getting an outsiders perspective on the topic might
+be just what is needed for you to proceed.
 
-Project maintainers have the right and responsibility to remove, edit, or
-reject comments, commits, code, wiki edits, issues, and other contributions
-that are not aligned to this Code of Conduct, or to ban temporarily or
-permanently any contributor for other behaviors that they deem inappropriate,
-threatening, offensive, or harmful.
+Send an e-mail to opensource_at_equinor.com and invite for a discussion.
+The email will be handled by a team within the Equinor organization.
 
-## Scope
+# Reporting an issue
+If you or your team want to report a direct violation of the code of conduct,
+or a failed attempt in solving a conflict within the community. Contact the
+same team, opensource_at_equinor.com, with a description of the issue.
 
-This Code of Conduct applies both within project spaces and in public spaces
-when an individual is representing the project or its community. Examples of
-representing a project or community include using an official project e-mail
-address, posting via an official social media account, or acting as an appointed
-representative at an online or offline event. Representation of a project may be
-further defined and clarified by project maintainers.
+Your report will be kept confidential from the team or community in question,
+unless you chose to disclose it yourself. We have safe environment for
+reporting issues.
 
-## Enforcement
+Consequences of violations are measured after the severity of the issue, or if
+it is a matter of repeatedly failing to take actions with respect to a mandated
+decision.
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting the project team at . All
-complaints will be reviewed and investigated and will result in a response that
-is deemed necessary and appropriate to the circumstances. The project team is
-obligated to maintain confidentiality with regard to the reporter of an incident.
-Further details of specific enforcement policies may be posted separately.
+For Equinor maintained projects, only the Equinor open source team has the
+mandate for making a corrective action against individuals based on the code of
+conduct. These decisions are never made within each project alone. As a last
+resort, a potential consequence may be exclusion from participation in that
+particular community.
 
-Project maintainers who do not follow or enforce the Code of Conduct in good
-faith may face temporary or permanent repercussions as determined by other
-members of the project's leadership.
+# Ethics helpline
+In Equinor, we want you to speak up whenever you see unethical behaviour that
+conflicts with our values or threatens our reputation.
 
-## Attribution
+To underline this, we continuously encourage and remind our employees and any
+external third parties interacting with us to raise concerns or report any
+suspected or potential breaches of law or company policies.
 
-This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 1.4,
-available at https://www.contributor-covenant.org/version/1/4/code-of-conduct.html
+For any questions or issues that one suspect falls outside the scope of
+behaviour regulated, and handled within the open source code of conduct, or you
+wish to place an anonymous, confidential report we encourage to use the
+[Equinor Ethics helpline](https://secure.ethicspoint.eu/domain/media/en/gui/102166/index.html).
 
-[homepage]: https://www.contributor-covenant.org
-
-For answers to common questions about this code of conduct, see
-https://www.contributor-covenant.org/faq
+This helpline is hosted by a third party helpline provider.
