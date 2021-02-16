@@ -4,6 +4,10 @@ input:
   -
     source: stochastic.field_properties
     record: field_properties
+  -
+    source: stochastic.wells_no_delay
+    record: wells
+
 
 forward_model:
   driver: local
