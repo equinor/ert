@@ -92,7 +92,7 @@ PORO
 
 PERMX
 -- The layers have perm. 500mD, 50mD and 200mD, respectively.
-	100*500 100*50 100*200 /
+	100*500 100*{{100 * field_properties.x_mid_permability}} 100*200 /
 
 PERMY
 -- Equal to PERMX
@@ -381,6 +381,9 @@ RPTRST
 -- if DRSDT is set to 0, GOR cannot rise and free gas does not
 -- dissolve in undersaturated oil -> constant bubble point pressure
 
+TSTEP
+{{wells.delay|default(0)}} /
+
 WELSPECS
 -- Item #: 1	 2	3	4	5	 6
 	'PROD'	'G1'	10	10	8400	'OIL' /
@@ -427,10 +430,13 @@ TSTEP
 31 28 31 30 31 30 31 31 30 31 30 31
 31 28 31 30 31 30 31 31 30 31 30 31
 31 28 31 30 31 30 31 31 30 31 30 31
-31 28 31 30 31 30 31 31 30 31 30 31
 31 28 31 30 31 30 31 31 30 31 30 31 /
 
 --Advance the simulator once a year for TEN years:
 --10*365 /
+
+TSTEP
+{{365 - wells.delay|default(0)}} /
+
 
 END
