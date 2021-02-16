@@ -12,3 +12,6 @@ ert3 record load designed_field_properties experiments/doe/field_properties.json
 ert3 record load designed_wells experiments/doe/wells.json
 ert3 run doe
 ert3 export doe
+
+ert3 run sensitivity
+ert3 export sensitivity
