@@ -1,0 +1,13 @@
+input:
+  -
+    source: stochastic.field_properties
+    record: field_properties
+  -
+    source: stochastic.wells
+    record: wells
+
+
+forward_model:
+  driver: local
+  stages:
+    - simulate_SPE1
