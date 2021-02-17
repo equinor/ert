@@ -27,9 +27,13 @@
 
   script:
     # TODO: The following cp should not be present, instead files should be
-    # transfered as opaque data
+    # transfered as blob records.
     - bash cp ${SPE1_WORKSPACE_ROOT}/resources/SPE1CASE2.DATA.jinja2 SPE1CASE2.DATA.jinja2
+    # TODO: This is a hack because render currently expects there to be a
+    # "parameters.json" from ert2.
     - bash echo "{}" > parameters.json
     - render -t SPE1CASE2.DATA.jinja2 -i field_properties.json wells.json -o SPE1CASE2.DATA
+    # TODO: When executables can be ran directly, the `bash` prefix should be
+    # removed.
     - bash flow SPE1CASE2
     - summary2json --datafile SPE1CASE2.DATA --output summary.json
