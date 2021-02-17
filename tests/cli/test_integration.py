@@ -1,5 +1,4 @@
 from ert_shared.feature_toggling import FeatureToggling
-import sys
 import pytest
 import os
 import shutil
@@ -54,8 +53,7 @@ def test_runpath_file(tmpdir, source_root):
     )
 
     config_lines = [
-        "LOAD_WORKFLOW_JOB ASSERT_RUNPATH_FILE\n"
-        "LOAD_WORKFLOW TEST_RUNPATH_FILE\n",
+        "LOAD_WORKFLOW_JOB ASSERT_RUNPATH_FILE\n" "LOAD_WORKFLOW TEST_RUNPATH_FILE\n",
         "HOOK_WORKFLOW TEST_RUNPATH_FILE PRE_SIMULATION\n",
     ]
 
@@ -82,9 +80,7 @@ def test_runpath_file(tmpdir, source_root):
         assert os.path.isfile("RUNPATH_WORKFLOW_1.OK")
 
 
-def test_ensemble_evaluator(tmpdir, source_root, caplog):
-    import logging
-    caplog.set_level(logging.DEBUG, logger="ert_shared.ensemble_evaluator")
+def test_ensemble_evaluator(tmpdir, source_root):
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
@@ -110,6 +106,7 @@ def test_ensemble_evaluator(tmpdir, source_root, caplog):
 
         run_cli(parsed)
         FeatureToggling.reset()
+
 
 def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root):
     shutil.copytree(
@@ -138,6 +135,7 @@ def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root):
 
         run_cli(parsed)
         FeatureToggling.reset()
+
 
 def test_cli_test_run(tmpdir, source_root, mock_cli_run):
     shutil.copytree(

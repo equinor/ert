@@ -21,7 +21,6 @@ def _calculate_progress(
     phase_count: int,
     done_reals: int,
     total_reals: int,
-    current_iter: int,
 ) -> float:
     if finished:
         return 1.0
@@ -45,12 +44,14 @@ def tracker_progress(tracker) -> float:
         tracker._model.phaseCount(),
         done_reals,
         total_reals,
-        current_iter,
     )
 
 
-def format_running_time(runtime):
-    """ @rtype: str """
+# This is not a case of not-invented-here, seems there is no good way of doing
+# this in python's standard library.
+def format_running_time(runtime: int) -> str:
+    """Format runtime in seconds to a label ERT can use to indicate for how
+    long an experiment has been running."""
     days = 0
     hours = 0
     minutes = 0

@@ -195,7 +195,6 @@ def get_files_excluded_from_black(root):
         "test-data/local/snake_oil_field/jobs/snake_oil_simulator.py",
         "tests/cli/test_workflow.py",
         "tests/data/test_data.py",
-        "tests/cli/test_integration.py",
         "test-data/local/snake_oil/jobs/snake_oil_simulator.py",
         "tests/conftest.py",
         "tests/cli/test_monitor.py",

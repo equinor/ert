@@ -153,7 +153,7 @@ class JobListProxyModel(QAbstractProxyModel):
         self.dataChanged.emit(proxy_top_left, proxy_bottom_right, roles)
 
     def _index_is_on_our_branch(self, index: QModelIndex) -> bool:
-        # # the tree is only traversed towards the root
+        # the tree is only traversed towards the root
         if index.internalPointer().type not in (NodeType.STEP, NodeType.JOB):
             return False
         while index.isValid() and index.internalPointer() is not None:

@@ -145,7 +145,7 @@ class RealListModel(QAbstractProxyModel):
         self.endInsertRows()
 
     def _index_is_on_our_branch(self, index: QModelIndex) -> bool:
-        # # the tree is only traversed towards the root
+        # the tree is only traversed towards the root
         if index.internalPointer().type not in (NodeType.ITER, NodeType.REAL):
             return False
         while index.isValid() and index.internalPointer() is not None:

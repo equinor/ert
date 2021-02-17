@@ -165,7 +165,7 @@ class EvaluatorTracker:
         logger = logging.getLogger("ert_shared.ensemble_evaluator.tracker")
 
         # There might be some situations where the
-        # evaulation is finished or the evaluation
+        # evaluation is finished or the evaluation
         # is yet to start when calling this function.
         # In these cases the monitor is not started
         #

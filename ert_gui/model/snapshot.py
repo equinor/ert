@@ -135,15 +135,12 @@ class SnapshotModel(QAbstractItemModel):
                             if attr in job:
                                 job_node.data[attr] = job[attr]
 
-                        # TODO: this is ugly
-                        if job.get(ids.DATA, {}).get(ids.CURRENT_MEMORY_USAGE):
-                            job_node.data[ids.DATA][ids.CURRENT_MEMORY_USAGE] = job[
-                                ids.DATA
-                            ][ids.CURRENT_MEMORY_USAGE]
-                        if job.get(ids.DATA, {}).get(ids.MAX_MEMORY_USAGE):
-                            job_node.data[ids.DATA][ids.MAX_MEMORY_USAGE] = job[
-                                ids.DATA
-                            ][ids.MAX_MEMORY_USAGE]
+                        for attr in (ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE):
+                            if attr not in job.get(ids.DATA, {}):
+                                continue
+                            job_node.data[ids.DATA][attr] = job.get(ids.DATA, {}).get(
+                                attr
+                            )
 
                         job_index = self.index(job_node.row(), 0, step_index)
                         job_index_bottom_right = self.index(
@@ -198,17 +195,10 @@ class SnapshotModel(QAbstractItemModel):
             return QModelIndex()
 
         child_item = index.internalPointer()
-        # if child_item is root? might be misbehaving proxy model...
         if not hasattr(child_item, "parent"):
-            print(
-                "index pointed to parent-less item",
-                child_item,
-                index.row(),
-                index.column(),
-                index.parent(),
-                index.parent().isValid(),
+            raise ValueError(
+                f"index r{index.row()}/c{index.column()} pointed to parent-less item {child_item}"
             )
-            return QModelIndex()
         parentItem = child_item.parent
 
         if parentItem == self.root:
@@ -244,9 +234,9 @@ class SnapshotModel(QAbstractItemModel):
     def _real_data(self, index: QModelIndex, node: Node, role: int):
         if role == RealJobColorHint:
             color_index = len(_COLORS_ORDERED_BY_PRIORITY) - 1
-            for _, stage in node.children.items():
-                for _, step in stage.children.items():
-                    for _, job in step.children.items():
+            for stage in node.children.values():
+                for step in stage.children.values():
+                    for job in step.children.values():
                         status = job.data[ids.STATUS]
                         color_index = min(
                             color_index,

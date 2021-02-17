@@ -1,32 +1,32 @@
 import asyncio
+import logging
+import threading
+from contextlib import contextmanager
+
+import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
+import ert_shared.ensemble_evaluator.monitor as ee_monitor
+import websockets
+from async_generator import asynccontextmanager
+from cloudevents.http import from_json, to_json
+from cloudevents.http.event import CloudEvent
+from ert_shared.ensemble_evaluator.dispatch import Dispatcher
+from ert_shared.ensemble_evaluator.entity.snapshot import (
+    PartialSnapshot,
+    Snapshot,
+    _ForwardModel,
+    _Job,
+    _Realization,
+    _SnapshotDict,
+    _Stage,
+    _Step,
+)
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_STARTED,
     JOB_STATE_START,
-    REALIZATION_STATE_UNKNOWN,
     REALIZATION_STATE_WAITING,
     STAGE_STATE_UNKNOWN,
     STEP_STATE_START,
 )
-import threading
-import logging
-from ert_shared.ensemble_evaluator.dispatch import Dispatcher
-import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
-import ert_shared.ensemble_evaluator.monitor as ee_monitor
-import websockets
-from cloudevents.http import from_json, to_json
-from cloudevents.http.event import CloudEvent
-from ert_shared.ensemble_evaluator.entity.snapshot import (
-    _Realization,
-    _Step,
-    _Stage,
-    _Job,
-    _SnapshotDict,
-    _ForwardModel,
-    PartialSnapshot,
-    Snapshot,
-)
-from async_generator import asynccontextmanager
-from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
 

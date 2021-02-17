@@ -643,7 +643,6 @@ class _EnsembleBuilder:
                     .set_job_name(run_arg.job_name)
                     .set_run_arg(run_arg)
                 )
-        # builder.set_metadata("iter", run_context.get_iter())
         return builder
 
     def build(self):

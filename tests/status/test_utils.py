@@ -66,7 +66,6 @@ class TrackerUtilsTest(unittest.TestCase):
                 "phase_count": 1,
                 "total_reals": 100,
                 "done_reals": 1,
-                "current_iter": 0,
             },  # noqa
             {
                 "expected": 1,
@@ -75,7 +74,6 @@ class TrackerUtilsTest(unittest.TestCase):
                 "finished": True,
                 "total_reals": 100,
                 "done_reals": 100,
-                "current_iter": 0,
             },  # noqa
             {
                 "expected": 0.5,
@@ -84,7 +82,6 @@ class TrackerUtilsTest(unittest.TestCase):
                 "finished": False,
                 "total_reals": 100,
                 "done_reals": 100,
-                "current_iter": 0,
             },  # noqa
             {
                 "expected": 0,
@@ -93,7 +90,6 @@ class TrackerUtilsTest(unittest.TestCase):
                 "finished": False,
                 "total_reals": 100,
                 "done_reals": 0,
-                "current_iter": 0,
             },
         ]
 
@@ -106,6 +102,5 @@ class TrackerUtilsTest(unittest.TestCase):
                     t["phase_count"],
                     t["done_reals"],
                     t["total_reals"],
-                    t["current_iter"],
                 ),
             )

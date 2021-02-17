@@ -305,8 +305,7 @@ class RunDialog(QDialog):
             QMessageBox.critical(
                 self,
                 "Simulations failed!",
-                "The simulation failed with the following "
-                + "error:\n\n{}".format(failed_msg),
+                f"The simulation failed with the following error:\n\n{failed_msg}",
             )
 
     @Slot()

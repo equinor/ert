@@ -3,9 +3,7 @@ from ert_shared.status.entity.event import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-import time
 import logging
-from res.job_queue import JobStatusType
 from ert_shared.models.base_run_model import BaseRunModel
 from ert_shared.status.tracker.evaluator import EvaluatorTracker
 from unittest.mock import MagicMock, patch
@@ -14,6 +12,8 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
     SnapshotBuilder,
 )
+
+from ert_shared.status.entity import state
 
 
 class MockCloudEvent(dict):
@@ -33,23 +33,22 @@ def mock_ee_monitor(*args):
     reals_ids = ["0", "1"]
     snapshot = (
         SnapshotBuilder()
-        .add_stage(stage_id="0", status="Running")
-        .add_step(stage_id="0", step_id="0", status="Unknown")
+        .add_stage(stage_id="0", status=state.STAGE_STATE_RUNNING)
+        .add_step(stage_id="0", step_id="0", status=state.STEP_STATE_START)
         .add_job(
             stage_id="0",
             step_id="0",
             job_id="0",
             name="job0",
             data={},
-            status="Running",
+            status=state.JOB_STATE_RUNNING,
         )
-        .add_metadata("iter", 0)
-        .build(reals_ids, "Unknown")
+        .build(reals_ids, state.REALIZATION_STATE_UNKNOWN)
     )
 
     update = PartialSnapshot(snapshot)
-    update.update_step("0", "0", "0", "Finished")
-    update.update_step("1", "0", "0", "Finished")
+    update.update_step("0", "0", "0", state.STEP_STATE_SUCCESS)
+    update.update_step("1", "0", "0", state.STEP_STATE_SUCCESS)
 
     events = [
         MockCloudEvent(

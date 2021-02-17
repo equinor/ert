@@ -32,7 +32,7 @@ class Node:
     def row(self):
         if self.parent:
             return list(self.parent.children.keys()).index(self.id)
-        raise ValueError("row on root node?")
+        raise ValueError(f"{self} had no parent")
 
 
 def snapshot_to_tree(snapshot: Snapshot, iter_: int) -> Node:
