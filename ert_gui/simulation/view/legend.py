@@ -1,4 +1,5 @@
 import math
+from PyQt5.QtWidgets import QListView
 from qtpy.QtCore import QSize, QModelIndex, Qt
 from qtpy.QtWidgets import (
     QTreeView,
@@ -12,14 +13,10 @@ from ert_shared.status.entity.state import REAL_STATE_TO_COLOR
 from ert_gui.model.progress_proxy import ProgressRole
 
 
-class LegendView(QTreeView):
+class LegendView(QListView):
     def __init__(self, parent=None) -> None:
         super(LegendView, self).__init__(parent)
-
-        self.setHeaderHidden(True)
-        self.setItemsExpandable(False)
         self.setItemDelegate(LegendDelegate(self))
-        self.setRootIsDecorated(False)
         self.setFixedHeight(30)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setFrameShape(QFrame.NoFrame)
