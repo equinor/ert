@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
+
+
+# Note: This script runs the experiments in the workspace one after each other.
+# It is mainly kept around for CI purposes...
+
+
 set -e
 
+# TODO: This is a hack because of the lack of blob records. Hence, we currently
+# copy the datafile to the compute nodes and this environment variable makes
+# the workspace transportable.
 export SPE1_WORKSPACE_ROOT=$(pwd)
 
 ert3 init

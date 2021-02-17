@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+
+
+# TODO: This script is a hack in its entirety to get hold the template_render
+# job from libres. Over time this script should disappear...
+
+
 import pathlib
 import res
 import subprocess
