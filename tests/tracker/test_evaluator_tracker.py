@@ -87,12 +87,16 @@ def mock_ee_monitor(*args):
             except IndexError:
                 return
 
-    return MagicMock(track=MagicMock(side_effect=_track))
+    monitor = MagicMock()
+    monitor.track.side_effect = _track
+    monitor.__enter__.return_value = monitor
+
+    return monitor
 
 
 def test_general_event(caplog):
     caplog.set_level(logging.DEBUG, logger="ert_shared.ensemble_evaluator")
-    brm = BaseRunModel(None, phase_count=0)
+    brm = BaseRunModel(None, phase_count=1)
 
     with patch("ert_shared.tracker.evaluator.create_ee_monitor") as mock_ee:
         mock_ee.return_value = mock_ee_monitor()
@@ -101,6 +105,7 @@ def test_general_event(caplog):
         while not tracker.is_finished():
             general_event = tracker.general_event()
             time.sleep(0.2)
+            brm.setPhase(1, "")
         assert general_event is not None, "no general event"
         for state in general_event.sim_states:
             if state.name == "Finished":
@@ -111,7 +116,7 @@ def test_general_event(caplog):
 
 def test_detailed_event(caplog):
     caplog.set_level(logging.DEBUG, logger="ert_shared.ensemble_evaluator")
-    brm = BaseRunModel(None, phase_count=0)
+    brm = BaseRunModel(None, phase_count=1)
 
     with patch("ert_shared.tracker.evaluator.create_ee_monitor") as mock_ee:
         mock_ee.return_value = mock_ee_monitor()
@@ -120,6 +125,8 @@ def test_detailed_event(caplog):
         # allow tracker to complete
         while not tracker.is_finished():
             tracker.general_event()
+            time.sleep(0.2)
+            brm.setPhase(1, "")
         detailed_event = tracker.detailed_event()
         assert detailed_event.iteration == 0
         for iter_num, iter_ in detailed_event.details.items():

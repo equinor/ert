@@ -86,7 +86,7 @@ FM_JOB_ATTR_CURRENT_MEMORY_USAGE = "current_memory_usage"
 EVTYPE_ENSEMBLE_STARTED = "com.equinor.ert.ensemble.started"
 EVTYPE_ENSEMBLE_STOPPED = "com.equinor.ert.ensemble.stopped"
 EVTYPE_ENSEMBLE_CANCELLED = "com.equinor.ert.ensemble.cancelled"
-EVTYPE_ENSEMBLE_FAILED = "com.equinor.ert.ensemble.exception"
+EVTYPE_ENSEMBLE_FAILED = "com.equinor.ert.ensemble.failed"
 
 EVGROUP_ENSEMBLE = {
     EVTYPE_ENSEMBLE_STARTED,

@@ -260,7 +260,7 @@ class EnsembleEvaluator:
         return self._snapshot.get_successful_realizations()
 
     def run_and_get_successful_realizations(self):
-        mon = self.run()
-        for _ in mon.track():
-            pass
+        with self.run() as mon:
+            for _ in mon.track():
+                pass
         return self.get_successful_realizations()

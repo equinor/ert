@@ -18,10 +18,18 @@ class _Monitor:
         self._base_uri = f"ws://{host}:{port}"
         self._client_uri = f"{self._base_uri}/client"
 
-        self._loop = asyncio.new_event_loop()
-        self._incoming = asyncio.Queue(loop=self._loop)
+        self._loop = None
+        self._incoming = None
         self._receive_future = None
         self._id = str(uuid.uuid1()).split("-")[0]
+
+    def __enter__(self):
+        self._loop = asyncio.new_event_loop()
+        self._incoming = asyncio.Queue(loop=self._loop)
+        return self
+
+    def __exit__(self, *args):
+        self._loop.close()
 
     def get_base_uri(self):
         return self._base_uri
@@ -32,14 +40,7 @@ class _Monitor:
                 message = to_json(cloud_event)
                 await websocket.send(message)
 
-        # TODO: if run was never called, the monitor's loop is not running.
-        # Improve this, or not? But this will fail if run _was_ called, and it
-        # is attempted to exit_server after the fact.
-        # See https://github.com/equinor/ert/issues/1227
-        if self._loop.is_running():
-            asyncio.run_coroutine_threadsafe(_send(), self._loop).result()
-        else:
-            self._loop.run_until_complete(_send())
+        asyncio.run_coroutine_threadsafe(_send(), self._loop).result()
 
     def signal_cancel(self):
         logger.debug(f"monitor-{self._id} asking server to cancel...")
@@ -114,7 +115,6 @@ class _Monitor:
             if not done_future.done():
                 self._loop.call_soon_threadsafe(done_future.set_result, None)
         thread.join()
-        self._loop.close()
 
 
 def create(host, port):
