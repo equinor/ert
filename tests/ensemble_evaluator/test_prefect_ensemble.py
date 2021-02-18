@@ -7,6 +7,7 @@ import pytest
 import asyncio
 import websockets
 import threading
+import json
 from datetime import timedelta
 from functools import partial
 from unittest.mock import patch
@@ -31,13 +32,34 @@ def parse_config(path):
         return yaml.safe_load(f)
 
 
+def input_files(config, coefficients):
+    paths = {}
+    storage = storage_driver_factory(config.get("storage"), ".")
+    file_name = "coeffs.json"
+    for iens, values in enumerate(coefficients):
+        with open(file_name, "w") as f:
+            json.dump(values, f)
+        paths[iens] = (storage.store(file_name, iens),)
+    return paths
+
+
+@pytest.fixture()
+def coefficients():
+    return [{"a": a, "b": b, "c": c} for (a, b, c) in [(1, 2, 3), (4, 2, 1)]]
+
+
 @pytest.mark.timeout(60)
-def test_run_prefect_ensemble(unused_tcp_port):
+def test_run_prefect_ensemble(unused_tcp_port, coefficients):
     with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
         config = parse_config("config.yml")
-        config.update({"config_path": os.getcwd()})
-        config.update({"realizations": 2})
-        config.update({"executor": "local"})
+        config.update(
+            {
+                "config_path": os.getcwd(),
+                "realizations": 2,
+                "executor": "local",
+                "input_files": input_files(config, coefficients),
+            }
+        )
 
         service_config = EvaluatorServerConfig(unused_tcp_port)
         ensemble = PrefectEnsemble(config)
@@ -60,12 +82,17 @@ def test_run_prefect_ensemble(unused_tcp_port):
 
 
 @pytest.mark.timeout(60)
-def test_run_prefect_ensemble_with_path(unused_tcp_port):
+def test_run_prefect_ensemble_with_path(unused_tcp_port, coefficients):
     with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case")):
         config = parse_config("config.yml")
-        config.update({"config_path": Path.cwd()})
-        config.update({"realizations": 2})
-        config.update({"executor": "local"})
+        config.update(
+            {
+                "config_path": Path.cwd(),
+                "realizations": 2,
+                "executor": "local",
+                "input_files": input_files(config, coefficients),
+            }
+        )
 
         config["config_path"] = Path(config["config_path"])
         config["run_path"] = Path(config["run_path"])
@@ -92,12 +119,17 @@ def test_run_prefect_ensemble_with_path(unused_tcp_port):
 
 
 @pytest.mark.timeout(60)
-def test_cancel_run_prefect_ensemble(unused_tcp_port):
+def test_cancel_run_prefect_ensemble(unused_tcp_port, coefficients):
     with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
         config = parse_config("config.yml")
-        config.update({"config_path": Path.absolute(Path("."))})
-        config.update({"realizations": 2})
-        config.update({"executor": "local"})
+        config.update(
+            {
+                "config_path": os.getcwd(),
+                "realizations": 2,
+                "executor": "local",
+                "input_files": input_files(config, coefficients),
+            }
+        )
 
         service_config = EvaluatorServerConfig(unused_tcp_port)
         ensemble = PrefectEnsemble(config)
@@ -356,19 +388,24 @@ def test_on_task_failure(unused_tcp_port):
     sys.platform.startswith("darwin"),
     reason="On darwin patching is unreliable since processes may use 'spawn'.",
 )
-def test_run_prefect_ensemble_exception(unused_tcp_port):
+def test_run_prefect_ensemble_exception(unused_tcp_port, coefficients):
     with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case")):
         config = parse_config("config.yml")
-        config.update({"config_path": Path.absolute(Path("."))})
-        config.update({"realizations": 2})
-        config.update({"executor": "local"})
+        config.update(
+            {
+                "config_path": os.getcwd(),
+                "realizations": 2,
+                "executor": "local",
+                "input_files": input_files(config, coefficients),
+            }
+        )
 
         service_config = EvaluatorServerConfig(unused_tcp_port)
 
         ensemble = PrefectEnsemble(config)
         evaluator = EnsembleEvaluator(ensemble, service_config, ee_id="1")
 
-        with patch.object(ensemble, "_fetch_input_files", side_effect=RuntimeError()):
+        with patch.object(ensemble, "get_flow", side_effect=RuntimeError()):
             with evaluator.run() as mon:
                 for event in mon.track():
                     if event.data is not None and event.data.get("status") in [

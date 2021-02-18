@@ -83,24 +83,6 @@ def _get_executor(name="local"):
         raise ValueError(f"Unknown executor name {name}")
 
 
-def gen_coef(parameters, real, config):
-    data = {}
-    paths = {}
-    storage = storage_driver_factory(config.get("storage"), "coeff")
-    for iens in range(real):
-        for name, elements in parameters.items():
-            for element in elements:
-                start, end = element["args"]
-                data[element["name"]] = uniform(start, end)
-        Path("coeff").mkdir(exist_ok=True)
-        file_name = "coeffs.json"
-        file_path = Path("coeff") / file_name
-        with open(file_path, "w") as f:
-            json.dump(data, f)
-        paths[iens] = (storage.store(file_name, iens),)
-    return paths
-
-
 class PrefectEnsemble(_Ensemble):
     def __init__(self, config):
         self.config = config
@@ -256,27 +238,8 @@ class PrefectEnsemble(_Ensemble):
         self._eval_proc.daemon = True
         self._eval_proc.start()
 
-    def _fetch_input_files(self):
-        num_realizations = self.config["realizations"]
-        input_files = {iens: () for iens in range(num_realizations)}
-
-        if "parameters" in self.config.keys():
-            parameter_files = gen_coef(
-                self.config["parameters"], num_realizations, self.config
-            )
-            for iens, files in parameter_files.items():
-                input_files[iens] += files
-
-        if "input_files" in self.config.keys():
-            for iens, files in self.config["input_files"].items():
-                input_files[iens] += files
-
-        return input_files
-
     def _evaluate(self, dispatch_url, ee_id):
         try:
-            input_files = self._fetch_input_files()
-
             with Client(dispatch_url) as c:
                 event = CloudEvent(
                     {
@@ -285,7 +248,7 @@ class PrefectEnsemble(_Ensemble):
                     },
                 )
                 c.send(to_json(event).decode())
-            self.run_flow(ee_id, dispatch_url, input_files)
+            self.run_flow(ee_id, dispatch_url)
 
             with Client(dispatch_url) as c:
                 event = CloudEvent(
@@ -309,9 +272,10 @@ class PrefectEnsemble(_Ensemble):
                 )
                 c.send(to_json(event).decode())
 
-    def run_flow(self, ee_id, dispatch_url, input_files):
+    def run_flow(self, ee_id, dispatch_url):
         real_per_batch = self.config["max_running"]
         real_range = range(self.config["realizations"])
+        input_files = self.config["input_files"]
         i = 0
         while i < self.config["realizations"]:
             realization_range = real_range[i : i + real_per_batch]
