@@ -1,35 +1,36 @@
-from random import uniform
-import os
+import asyncio
 import json
-import uuid
+import logging
 import multiprocessing
+import os
 import signal
 import threading
-import asyncio
-import logging
-from pathlib import Path
+import uuid
 from datetime import timedelta
 from functools import partial
-from cloudevents.http import to_json, CloudEvent
-from prefect import Flow
-from prefect.engine.executors import DaskExecutor
-from prefect import context as prefect_context
+from pathlib import Path
+from random import uniform
+
+from cloudevents.http import CloudEvent, to_json
 from dask_jobqueue.lsf import LSFJob
+from ert_shared.status.entity import state
+from ert_shared.ensemble_evaluator.config import find_open_port
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
+from ert_shared.ensemble_evaluator.entity.ensemble import (
+    _BaseJob,
+    _Ensemble,
+    _Realization,
+    _Stage,
+    _Step,
+)
 from ert_shared.ensemble_evaluator.prefect_ensemble.client import Client
-import sys
 from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
     storage_driver_factory,
 )
 from ert_shared.ensemble_evaluator.prefect_ensemble.unix_step import UnixStep
-from ert_shared.ensemble_evaluator.config import find_open_port
-from ert_shared.ensemble_evaluator.entity.ensemble import (
-    _Ensemble,
-    _BaseJob,
-    _Step,
-    _Stage,
-    _Realization,
-)
+from prefect import Flow
+from prefect import context as prefect_context
+from prefect.engine.executors import DaskExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -112,24 +113,24 @@ class PrefectEnsemble(_Ensemble):
 
     def _get_reals(self):
         reals = []
-        for iens in range(self.config["realizations"]):
+        for iens in range(self.config[ids.REALIZATIONS]):
             stages = []
-            for stage in self.config["stages"]:
+            for stage in self.config[ids.STAGES]:
                 steps = []
                 stage_id = uuid.uuid4()
-                for step in stage["steps"]:
+                for step in stage[ids.STEPS]:
                     jobs = []
-                    for job in step["jobs"]:
+                    for job in step[ids.JOBS]:
                         job_id = uuid.uuid4()
-                        jobs.append(_BaseJob(id_=str(job_id), name=job["name"]))
+                        jobs.append(_BaseJob(id_=str(job_id), name=job[ids.NAME]))
                     step_id = uuid.uuid4()
                     steps.append(
                         _Step(
                             id_=str(step_id),
-                            inputs=step.get("inputs", []),
-                            outputs=step["outputs"],
+                            inputs=step.get(ids.INPUTS, []),
+                            outputs=step[ids.OUTPUTS],
                             jobs=jobs,
-                            name=step["name"],
+                            name=step[ids.NAME],
                         )
                     )
 
@@ -137,8 +138,8 @@ class PrefectEnsemble(_Ensemble):
                     _Stage(
                         id_=str(stage_id),
                         steps=steps,
-                        status="Unknown",
-                        name=stage["name"],
+                        status=state.STAGE_STATE_UNKNOWN,
+                        name=stage[ids.NAME],
                     )
                 )
             reals.append(_Realization(iens=iens, stages=stages, active=True))
@@ -173,32 +174,32 @@ class PrefectEnsemble(_Ensemble):
 
     def get_ordering(self, iens):
         table_of_elements = []
-        for stage in self.config["stages"]:
-            for step in stage["steps"]:
+        for stage in self.config[ids.STAGES]:
+            for step in stage[ids.STEPS]:
                 jobs = [
                     {
-                        "id": self.get_id(
+                        ids.ID: self.get_id(
                             iens,
-                            stage_name=stage["name"],
-                            step_name=step["name"],
+                            stage_name=stage[ids.NAME],
+                            step_name=step[ids.NAME],
                             job_index=idx,
                         ),
-                        "name": job.get("name"),
-                        "executable": job.get("executable"),
-                        "args": job.get("args", []),
+                        ids.NAME: job.get(ids.NAME),
+                        ids.EXECUTABLE: job.get(ids.EXECUTABLE),
+                        ids.ARGS: job.get(ids.ARGS, []),
                     }
-                    for idx, job in enumerate(step.get("jobs", []))
+                    for idx, job in enumerate(step.get(ids.JOBS, []))
                 ]
                 table_of_elements.append(
                     {
                         "iens": iens,
-                        "stage_name": stage["name"],
-                        "stage_id": self.get_id(iens, stage_name=stage["name"]),
+                        "stage_name": stage[ids.NAME],
+                        "stage_id": self.get_id(iens, stage_name=stage[ids.NAME]),
                         "step_id": self.get_id(
-                            iens, stage_name=stage["name"], step_name=step["name"]
+                            iens, stage_name=stage[ids.NAME], step_name=step[ids.NAME]
                         ),
                         **step,
-                        "jobs": jobs,
+                        ids.JOBS: jobs,
                     }
                 )
 
@@ -207,9 +208,9 @@ class PrefectEnsemble(_Ensemble):
         while table_of_elements:
             temp_list = produced.copy()
             for element in table_of_elements:
-                if set(element.get("inputs", [])).issubset(temp_list):
+                if set(element.get(ids.INPUTS, [])).issubset(temp_list):
                     ordering.append(element)
-                    produced = produced.union(set(element["outputs"]))
+                    produced = produced.union(set(element[ids.OUTPUTS]))
                     table_of_elements.remove(element)
         return ordering
 
@@ -219,13 +220,14 @@ class PrefectEnsemble(_Ensemble):
                 output_to_res = {}
                 for step in self.get_ordering(iens=iens):
                     inputs = [
-                        output_to_res.get(input, []) for input in step.get("inputs", [])
+                        output_to_res.get(input, [])
+                        for input in step.get(ids.INPUTS, [])
                     ]
                     stage_task = UnixStep(
                         resources=list(input_files[iens])
-                        + self.store_resources(step["resources"]),
-                        outputs=step.get("outputs", []),
-                        job_list=step.get("jobs", []),
+                        + self.store_resources(step[ids.RESOURCES]),
+                        outputs=step.get(ids.OUTPUTS, []),
+                        job_list=step.get(ids.JOBS, []),
                         iens=iens,
                         cmd="python3",
                         url=dispatch_url,
@@ -242,8 +244,8 @@ class PrefectEnsemble(_Ensemble):
                     )
                     result = stage_task(expected_res=inputs)
 
-                    for output in step.get("outputs", []):
-                        output_to_res[output] = result["outputs"]
+                    for output in step.get(ids.OUTPUTS, []):
+                        output_to_res[output] = result[ids.OUTPUTS]
         return flow
 
     def evaluate(self, config, ee_id):
@@ -257,7 +259,7 @@ class PrefectEnsemble(_Ensemble):
         self._eval_proc.start()
 
     def _fetch_input_files(self):
-        num_realizations = self.config["realizations"]
+        num_realizations = self.config[ids.REALIZATIONS]
         input_files = {iens: () for iens in range(num_realizations)}
 
         if "parameters" in self.config.keys():
@@ -311,9 +313,9 @@ class PrefectEnsemble(_Ensemble):
 
     def run_flow(self, ee_id, dispatch_url, input_files):
         real_per_batch = self.config["max_running"]
-        real_range = range(self.config["realizations"])
+        real_range = range(self.config[ids.REALIZATIONS])
         i = 0
-        while i < self.config["realizations"]:
+        while i < self.config[ids.REALIZATIONS]:
             realization_range = real_range[i : i + real_per_batch]
             flow = self.get_flow(ee_id, dispatch_url, input_files, realization_range)
             flow.run(executor=_get_executor(self.config["executor"]))

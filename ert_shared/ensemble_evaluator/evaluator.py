@@ -21,7 +21,10 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
     _Step,
 )
 from ert_shared.status.entity.state import (
+    ENSEMBLE_STATE_CANCELLED,
+    ENSEMBLE_STATE_FAILED,
     ENSEMBLE_STATE_STARTED,
+    ENSEMBLE_STATE_STOPPED,
     JOB_STATE_START,
     REALIZATION_STATE_WAITING,
     STAGE_STATE_UNKNOWN,
@@ -104,7 +107,7 @@ class EnsembleEvaluator:
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STOPPED)
     async def _ensemble_stopped_handler(self, event):
-        if self._snapshot.get_status() != "Failure":
+        if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
             snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
                 event
             )
@@ -112,7 +115,7 @@ class EnsembleEvaluator:
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STARTED)
     async def _ensemble_started_handler(self, event):
-        if self._snapshot.get_status() != "Failure":
+        if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
             snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
                 event
             )
@@ -120,7 +123,7 @@ class EnsembleEvaluator:
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_CANCELLED)
     async def _ensemble_cancelled_handler(self, event):
-        if self._snapshot.get_status() != "Failure":
+        if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
             snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
                 event
             )
@@ -129,7 +132,10 @@ class EnsembleEvaluator:
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_FAILED)
     async def _ensemble_failed_handler(self, event):
-        if self._snapshot.get_status() not in ["Stopped", "Cancelled"]:
+        if self._snapshot.get_status() not in [
+            ENSEMBLE_STATE_STOPPED,
+            ENSEMBLE_STATE_CANCELLED,
+        ]:
             snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
                 event
             )
