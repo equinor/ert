@@ -11,6 +11,9 @@ from ert_shared.ensemble_evaluator.prefect_ensemble.prefect_ensemble import (
 
 import ert3
 
+_EVTYPE_SNAPSHOT_STOPPED = "Stopped"
+_EVTYPE_SNAPSHOT_FAILED = "Failed"
+
 
 def _create_evaluator_tmp_dir(workspace_root, evaluation_name):
     return (
@@ -121,10 +124,13 @@ def _fetch_results(ee_config, ensemble, stages_config):
 
 
 def _run(ensemble_evaluator):
-    monitor = ensemble_evaluator.run()
-    for event in monitor.track():
-        if event.data is not None and event.data.get("status") in ["Stopped", "Failed"]:
-            monitor.signal_done()
+    with ensemble_evaluator.run() as monitor:
+        for event in monitor.track():
+            if event.data is not None and event.data.get("status") in [
+                _EVTYPE_SNAPSHOT_STOPPED,
+                _EVTYPE_SNAPSHOT_FAILED,
+            ]:
+                monitor.signal_done()
 
 
 def evaluate(

@@ -113,78 +113,79 @@ def send_dispatch_event(client, event_type, source, event_id, data):
 
 
 def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
-    monitor = evaluator.run()
-    events = monitor.track()
+    with evaluator.run() as monitor:
+        events = monitor.track()
 
-    host = evaluator._config.host
-    port = evaluator._config.port
+        host = evaluator._config.host
+        port = evaluator._config.port
 
-    # first snapshot before any event occurs
-    snapshot_event = next(events)
-    snapshot = Snapshot(snapshot_event.data)
-    assert snapshot.get_status() == "Unknown"
-    # two dispatchers connect
-    with Client(host, port, "/dispatch") as dispatch1, Client(
-        host, port, "/dispatch"
-    ) as dispatch2:
-
-        # first dispatcher informs that job 0 is running
-        send_dispatch_event(
-            dispatch1,
-            identifiers.EVTYPE_FM_JOB_RUNNING,
-            "/ert/ee/0/real/0/stage/0/step/0/job/0",
-            "event1",
-            {"current_memory_usage": 1000},
-        )
-        snapshot = Snapshot(next(events).data)
-        assert snapshot.get_job("0", "0", "0", "0")["status"] == "Running"
-
-        # second dispatcher informs that job 0 is running
-        send_dispatch_event(
-            dispatch2,
-            identifiers.EVTYPE_FM_JOB_RUNNING,
-            "/ert/ee/0/real/1/stage/0/step/0/job/0",
-            "event1",
-            {"current_memory_usage": 1000},
-        )
-        snapshot = Snapshot(next(events).data)
-        assert snapshot.get_job("1", "0", "0", "0")["status"] == "Running"
-
-        # second dispatcher informs that job 0 is done
-        send_dispatch_event(
-            dispatch2,
-            identifiers.EVTYPE_FM_JOB_SUCCESS,
-            "/ert/ee/0/real/1/stage/0/step/0/job/0",
-            "event1",
-            {"current_memory_usage": 1000},
-        )
-        snapshot = Snapshot(next(events).data)
-        assert snapshot.get_job("1", "0", "0", "0")["status"] == "Finished"
-
-        # a second monitor connects
-        monitor2 = ee_monitor.create(host, port)
-        events2 = monitor2.track()
-        snapshot = Snapshot(next(events2).data)
+        # first snapshot before any event occurs
+        snapshot_event = next(events)
+        snapshot = Snapshot(snapshot_event.data)
         assert snapshot.get_status() == "Unknown"
-        assert snapshot.get_job("0", "0", "0", "0")["status"] == "Running"
-        assert snapshot.get_job("1", "0", "0", "0")["status"] == "Finished"
+        # two dispatchers connect
+        with Client(host, port, "/dispatch") as dispatch1, Client(
+            host, port, "/dispatch"
+        ) as dispatch2:
 
-    # one monitor requests that server exit
-    monitor.signal_cancel()
+            # first dispatcher informs that job 0 is running
+            send_dispatch_event(
+                dispatch1,
+                identifiers.EVTYPE_FM_JOB_RUNNING,
+                "/ert/ee/0/real/0/stage/0/step/0/job/0",
+                "event1",
+                {"current_memory_usage": 1000},
+            )
+            snapshot = Snapshot(next(events).data)
+            assert snapshot.get_job("0", "0", "0", "0")["status"] == "Running"
 
-    # both monitors should get a terminated event
-    terminated = next(events)
-    terminated2 = next(events2)
-    assert terminated["type"] == identifiers.EVTYPE_EE_TERMINATED
-    assert terminated2["type"] == identifiers.EVTYPE_EE_TERMINATED
+            # second dispatcher informs that job 0 is running
+            send_dispatch_event(
+                dispatch2,
+                identifiers.EVTYPE_FM_JOB_RUNNING,
+                "/ert/ee/0/real/1/stage/0/step/0/job/0",
+                "event1",
+                {"current_memory_usage": 1000},
+            )
+            snapshot = Snapshot(next(events).data)
+            assert snapshot.get_job("1", "0", "0", "0")["status"] == "Running"
 
-    for e in [events, events2]:
-        for _ in e:
-            assert False, "got unexpected event from monitor"
+            # second dispatcher informs that job 0 is done
+            send_dispatch_event(
+                dispatch2,
+                identifiers.EVTYPE_FM_JOB_SUCCESS,
+                "/ert/ee/0/real/1/stage/0/step/0/job/0",
+                "event1",
+                {"current_memory_usage": 1000},
+            )
+            snapshot = Snapshot(next(events).data)
+            assert snapshot.get_job("1", "0", "0", "0")["status"] == "Finished"
+
+            # a second monitor connects
+            with ee_monitor.create(host, port) as monitor2:
+                events2 = monitor2.track()
+                snapshot = Snapshot(next(events2).data)
+                assert snapshot.get_status() == "Unknown"
+                assert snapshot.get_job("0", "0", "0", "0")["status"] == "Running"
+                assert snapshot.get_job("1", "0", "0", "0")["status"] == "Finished"
+
+                # one monitor requests that server exit
+                monitor.signal_cancel()
+
+                # both monitors should get a terminated event
+                terminated = next(events)
+                terminated2 = next(events2)
+                assert terminated["type"] == identifiers.EVTYPE_EE_TERMINATED
+                assert terminated2["type"] == identifiers.EVTYPE_EE_TERMINATED
+
+                for e in [events, events2]:
+                    for _ in e:
+                        assert False, "got unexpected event from monitor"
 
 
 def test_monitor_stop(evaluator):
-    monitor = evaluator.run()
-    events = monitor.track()
-    snapshot = Snapshot(next(events).data)
+    with evaluator.run() as monitor:
+        for event in monitor.track():
+            snapshot = Snapshot(event.data)
+            break
     assert snapshot.get_status() == "Unknown"

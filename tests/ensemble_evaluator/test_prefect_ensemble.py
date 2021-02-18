@@ -44,14 +44,13 @@ def test_run_prefect_ensemble(unused_tcp_port):
 
         evaluator = EnsembleEvaluator(ensemble, service_config, ee_id="1")
 
-        mon = evaluator.run()
-
-        for event in mon.track():
-            if event.data is not None and event.data.get("status") in [
-                "Failed",
-                "Stopped",
-            ]:
-                mon.signal_done()
+        with evaluator.run() as mon:
+            for event in mon.track():
+                if event.data is not None and event.data.get("status") in [
+                    "Failed",
+                    "Stopped",
+                ]:
+                    mon.signal_done()
 
         assert evaluator._snapshot.get_status() == "Stopped"
 
@@ -77,14 +76,13 @@ def test_run_prefect_ensemble_with_path(unused_tcp_port):
 
         evaluator = EnsembleEvaluator(ensemble, service_config, ee_id="1")
 
-        mon = evaluator.run()
-
-        for event in mon.track():
-            if event.data is not None and event.data.get("status") in [
-                "Failed",
-                "Stopped",
-            ]:
-                mon.signal_done()
+        with evaluator.run() as mon:
+            for event in mon.track():
+                if event.data is not None and event.data.get("status") in [
+                    "Failed",
+                    "Stopped",
+                ]:
+                    mon.signal_done()
 
         assert evaluator._snapshot.get_status() == "Stopped"
 
@@ -106,12 +104,12 @@ def test_cancel_run_prefect_ensemble(unused_tcp_port):
 
         evaluator = EnsembleEvaluator(ensemble, service_config, ee_id="2")
 
-        mon = evaluator.run()
-        cancel = True
-        for _ in mon.track():
-            if cancel:
-                mon.signal_cancel()
-                cancel = False
+        with evaluator.run() as mon:
+            cancel = True
+            for _ in mon.track():
+                if cancel:
+                    mon.signal_cancel()
+                    cancel = False
 
         assert evaluator._snapshot.get_status() == "Cancelled"
 
@@ -371,14 +369,11 @@ def test_run_prefect_ensemble_exception(unused_tcp_port):
         evaluator = EnsembleEvaluator(ensemble, service_config, ee_id="1")
 
         with patch.object(ensemble, "_fetch_input_files", side_effect=RuntimeError()):
-            mon = evaluator.run()
-            for event in mon.track():
-                if event["type"] in (
-                    ids.EVTYPE_EE_SNAPSHOT_UPDATE,
-                    ids.EVTYPE_EE_SNAPSHOT,
-                ) and event.data.get("status") in [
-                    "Stopped",
-                    "Failed",
-                ]:
-                    mon.signal_done()
+            with evaluator.run() as mon:
+                for event in mon.track():
+                    if event.data is not None and event.data.get("status") in [
+                        "Failed",
+                        "Stopped",
+                    ]:
+                        mon.signal_done()
             assert evaluator._snapshot.get_status() == "Failed"
