@@ -33,14 +33,15 @@ def test_delegate_drawing_count(small_snapshot, qtbot):
         widget.setSnapshotModel(model)
 
         widget.move(0, 0)
-        widget.resize(800, 600)
+        widget.resize(640, 480)
 
         # mock delegate for counting how many times we draw delegates
         mock_delegate = MockDelegate()
         widget._real_view.setItemDelegate(mock_delegate)
 
         widget.show()
-
+        qtbot.wait(1000)
+        print(mock_delegate._max_id)
         qtbot.waitUntil(
             lambda: mock_delegate._max_id == len(small_snapshot.get_reals()) - 1,
             timeout=5000,
