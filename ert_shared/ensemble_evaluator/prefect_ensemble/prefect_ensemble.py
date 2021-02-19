@@ -12,7 +12,7 @@ from datetime import timedelta
 from functools import partial
 from cloudevents.http import to_json, CloudEvent
 from prefect import Flow
-from prefect.engine.executors import DaskExecutor
+from prefect.executors import DaskExecutor, LocalDaskExecutor
 from prefect import context as prefect_context
 from dask_jobqueue.lsf import LSFJob
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
@@ -46,7 +46,11 @@ async def _eq_submit_job(self, script_filename):
 
 def _get_executor(name="local"):
     if name == "local":
-        return None
+        cluster_kwargs = {
+            "silence_logs": "debug",
+            "scheduler_options": {"port": find_open_port()},
+        }
+        return LocalDaskExecutor(**cluster_kwargs)
     elif name == "lsf":
         LSFJob._submit_job = _eq_submit_job
         cluster_kwargs = {
