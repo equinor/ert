@@ -31,5 +31,7 @@ def terminate_on_parent_death():
 
 
 if __name__ == "__main__":
+    import ert_logging
+
     terminate_on_parent_death()
     run_server(debug=False)
