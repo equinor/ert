@@ -20,7 +20,7 @@ class MockDelegate(QStyledItemDelegate):
         return self._size
 
 
-def test_delegate_drawing_count(full_snapshot, qtbot):
+def test_delegate_drawing_count(small_snapshot, qtbot):
     iter = 0
     widget = RealizationWidget(iter)
 
@@ -28,7 +28,7 @@ def test_delegate_drawing_count(full_snapshot, qtbot):
 
     with qtbot.waitActive(widget):
         model = SnapshotModel()
-        model._add_snapshot(full_snapshot, iter)
+        model._add_snapshot(small_snapshot, iter)
 
         widget.setSnapshotModel(model)
 
@@ -42,20 +42,20 @@ def test_delegate_drawing_count(full_snapshot, qtbot):
         widget.show()
 
         qtbot.waitUntil(
-            lambda: mock_delegate._max_id == len(full_snapshot.get_reals()) - 1,
-            timeout=5000
+            lambda: mock_delegate._max_id == len(small_snapshot.get_reals()) - 1,
+            timeout=5000,
         )
 
 
 # also add a fail version of this
-def test_selection_success(full_snapshot, qtbot):
+def test_selection_success(large_snapshot, qtbot):
     iter = 0
     widget = RealizationWidget(iter)
 
     qtbot.addWidget(widget)
 
     model = SnapshotModel()
-    model._add_snapshot(full_snapshot, iter)
+    model._add_snapshot(large_snapshot, iter)
 
     widget.setSnapshotModel(model)
 

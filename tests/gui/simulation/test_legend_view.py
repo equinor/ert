@@ -4,10 +4,10 @@ from ert_gui.model.snapshot import SnapshotModel
 from ert_gui.simulation.view.legend import LegendView
 
 
-def test_delegate_instantiated(qtbot, full_snapshot):
+def test_delegate_instantiated(qtbot, large_snapshot):
     snapshot_model = SnapshotModel()
     progress_proxy_model = ProgressProxyModel(snapshot_model)
-    snapshot_model._add_snapshot(full_snapshot, 0)
+    snapshot_model._add_snapshot(large_snapshot, 0)
 
     legend_view = LegendView()
     qtbot.addWidget(legend_view)

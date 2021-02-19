@@ -40,7 +40,7 @@ def test_success(runmodel, active_realizations, qtbot):
     assert widget.done_button.text() == "Done"
 
 
-def test_full_snapshot(runmodel, active_realizations, full_snapshot, qtbot):
+def test_large_snapshot(runmodel, active_realizations, large_snapshot, qtbot):
     widget = RunDialog(
         "poly.ert", runmodel, {"active_realizations": active_realizations}
     )
@@ -50,7 +50,7 @@ def test_full_snapshot(runmodel, active_realizations, full_snapshot, qtbot):
 
     with patch("ert_gui.simulation.run_dialog.create_tracker") as mock_tracker_factory:
         iter_0 = FullSnapshotEvent(
-            snapshot=full_snapshot,
+            snapshot=large_snapshot,
             phase_name="Foo",
             current_phase=0,
             total_phases=1,
@@ -59,7 +59,7 @@ def test_full_snapshot(runmodel, active_realizations, full_snapshot, qtbot):
             indeterminate=False,
         )
         iter_1 = FullSnapshotEvent(
-            snapshot=full_snapshot,
+            snapshot=large_snapshot,
             phase_name="Foo",
             current_phase=0,
             total_phases=1,

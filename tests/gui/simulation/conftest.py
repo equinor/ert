@@ -13,7 +13,7 @@ from ert_shared.status.entity.state import (
 
 
 @pytest.fixture()
-def full_snapshot() -> Snapshot:
+def large_snapshot() -> Snapshot:
     builder = (
         SnapshotBuilder()
         .add_stage(stage_id="0", status=STAGE_STATE_UNKNOWN)
@@ -33,6 +33,30 @@ def full_snapshot() -> Snapshot:
             end_time=datetime(2019, 1, 1).isoformat(),
         )
     real_ids = [str(i) for i in range(0, 150)]
+    return builder.build(real_ids, REALIZATION_STATE_UNKNOWN)
+
+
+@pytest.fixture()
+def small_snapshot() -> Snapshot:
+    builder = (
+        SnapshotBuilder()
+        .add_stage(stage_id="0", status=STAGE_STATE_UNKNOWN)
+        .add_step(stage_id="0", step_id="0", status=STEP_STATE_START)
+    )
+    for i in range(0, 2):
+        builder.add_job(
+            stage_id="0",
+            step_id="0",
+            job_id=str(i),
+            name=f"job_{i}",
+            data={ids.MAX_MEMORY_USAGE: 1000, ids.CURRENT_MEMORY_USAGE: 500},
+            status=JOB_STATE_START,
+            stdout=f"job_{i}.stdout",
+            stderr=f"job_{i}.stderr",
+            start_time=datetime(1999, 1, 1).isoformat(),
+            end_time=datetime(2019, 1, 1).isoformat(),
+        )
+    real_ids = [str(i) for i in range(0, 5)]
     return builder.build(real_ids, REALIZATION_STATE_UNKNOWN)
 
 
