@@ -11,8 +11,19 @@
 
   output:
     -
-      record: summary
-      location: summary.json
+      record: wopt_prod
+      location: WOPT:PROD.json
+    -
+      record: wwpt_prod
+      location: WWPT:PROD.json
+    -
+      record: wgpt_prod
+      location: WGPT:PROD.json
+    -
+      record: wwit_inj
+      location: WWIT:INJ.json
+
+
 
   transportable_commands:
     -
@@ -36,4 +47,4 @@
     # TODO: When executables can be ran directly, the `bash` prefix should be
     # removed.
     - bash flow SPE1CASE2
-    - summary2json --datafile SPE1CASE2.DATA --output summary.json
+    - summary2json --datafile SPE1CASE2.DATA --keywords WOPT:PROD WWPT:PROD WGPT:PROD WWIT:INJ
