@@ -17,10 +17,11 @@ def _build_arg_parser():
         help="Path to datafile"
     )
     arg_parser.add_argument(
-        "--output",
-        type=argparse.FileType('w'),
+        "--keywords",
+        type=str,
+        nargs="*",
         required=True,
-        help="Path to the output file"
+        help="Keywords to export"
     )
     return arg_parser
 
@@ -33,11 +34,13 @@ def _load_summary(datafile):
     return ecl2df.summary.df(eclfiles)
 
 
-def _summary2json(sdf):
+def _summary2json(sdf, keywords):
     s = {}
-    s["DATE"] = [date.isoformat() for date in sdf.index]
-    for key in sdf.columns:
-        s[key] = list(map(float, sdf[key]))
+    index = [date.isoformat() for date in sdf.index]
+    for key in keywords:
+        values = list(map(float, sdf[key]))
+        assert len(index) == len(values)
+        s[key] = {idx: val for idx, val in zip(index, values)}
     return s
 
 
@@ -46,5 +49,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     summary_data = _load_summary(args.datafile)
-    json_summary = _summary2json(summary_data)
-    json.dump(json_summary, args.output)
+    json_summary = _summary2json(summary_data, args.keywords)
+
+    for keyword, vector in json_summary.items():
+        with open(f"{keyword}.json", "w") as f:
+            json.dump(vector, f)
