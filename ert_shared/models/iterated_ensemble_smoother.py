@@ -4,7 +4,11 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
 
-from ert_shared.storage.extraction import post_ensemble_data, post_ensemble_results
+from ert_shared.storage.extraction import (
+    post_ensemble_data,
+    post_ensemble_results,
+    post_update_data,
+)
 
 
 class IteratedEnsembleSmoother(BaseRunModel):
@@ -22,7 +26,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         return self.ert().analysisConfig().getModule(module_name)
 
-    def _runAndPostProcess(self, run_context, arguments):
+    def _runAndPostProcess(self, run_context, arguments, update_id=None):
         phase_msg = "Running iteration %d of %d simulation iterations..." % (
             run_context.get_iter(),
             self.phaseCount() - 1,
@@ -32,7 +36,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath(run_context)
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
-
+        # create ensemble
+        ensemble_id = post_ensemble_data(update_id=update_id)
         self.setPhaseName("Running forecast...", indeterminate=False)
         if FeatureToggling.is_enabled("ensemble-evaluator"):
             ee_config = arguments["ee_config"]
@@ -51,6 +56,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Post processing...", indeterminate=True)
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ert=ERT.ert)
+        post_ensemble_results(ensemble_id)
+        return ensemble_id
 
     def createTargetCaseFileSystem(self, phase, target_case_format):
         target_fs = (
@@ -58,7 +65,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         )
         return target_fs
 
-    def analyzeStep(self, run_context):
+    def analyzeStep(self, run_context, ensemble_id):
         target_fs = run_context.get_target_fs()
         self.setPhaseName("Analyzing...", indeterminate=True)
         source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
@@ -68,11 +75,19 @@ class IteratedEnsembleSmoother(BaseRunModel):
         es_update = self.ert().getESUpdate()
 
         success = es_update.smootherUpdate(run_context)
+
+        # Push update data to new storage
+        analysis_module_name = self.ert().analysisConfig().activeModuleName()
+        update_id = post_update_data(
+            parent_ensemble_id=ensemble_id, algorithm=analysis_module_name
+        )
+
         if not success:
             raise ErtRunError("Analysis of simulation failed!")
 
         self.setPhaseName("Post processing update...", indeterminate=True)
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=ERT.ert)
+        return update_id
 
     def runSimulations(self, arguments):
         phase_count = ERT.enkf_facade.get_number_of_iterations() + 1
@@ -86,7 +101,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             target_case_format
         )
 
-        self._runAndPostProcess(run_context, arguments)
+        ensemble_id = self._runAndPostProcess(run_context, arguments)
 
         analysis_config = self.ert().analysisConfig()
         analysis_iter_config = analysis_config.getAnalysisIterConfig()
@@ -94,7 +109,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
         num_retries = 0
         current_iter = 0
 
-        previous_ensemble_id = None
         while (
             current_iter < ERT.enkf_facade.get_number_of_iterations()
             and num_retries < num_retries_per_iteration
@@ -106,38 +120,22 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 EnkfSimulationRunner.runWorkflows(
                     HookRuntime.PRE_FIRST_UPDATE, ert=ERT.ert
                 )
-            self.analyzeStep(run_context)
+            update_id = self.analyzeStep(run_context, ensemble_id)
             current_iter = analysis_module.getInt("ITER")
 
             analysis_success = current_iter > pre_analysis_iter_num
             if analysis_success:
-                # Push ensemble, parameters, observations to new storage
-                analysis_module_name = self.ert().analysisConfig().activeModuleName()
-                previous_ensemble_id = post_ensemble_data(
-                    (previous_ensemble_id, analysis_module_name)
-                    if previous_ensemble_id is not None
-                    else None
-                )
-                post_ensemble_results(previous_ensemble_id)
                 run_context = self.create_context(
                     arguments, current_iter, prior_context=run_context
                 )
-                self._runAndPostProcess(run_context, arguments)
+                ensemble_id = self._runAndPostProcess(run_context, arguments, update_id)
                 num_retries = 0
             else:
                 run_context = self.create_context(
                     arguments, current_iter, prior_context=run_context, rerun=True
                 )
-                self._runAndPostProcess(run_context, arguments)
+                ensemble_id = self._runAndPostProcess(run_context, arguments, update_id)
                 num_retries += 1
-
-        analysis_module_name = self.ert().analysisConfig().activeModuleName()
-        previous_ensemble_id = post_ensemble_data(
-            (previous_ensemble_id, analysis_module_name)
-            if previous_ensemble_id is not None
-            else None
-        )
-        post_ensemble_results(previous_ensemble_id)
 
         if current_iter == (phase_count - 1):
             self.setPhase(phase_count, "Simulations completed.")

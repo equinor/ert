@@ -19,17 +19,21 @@ def _calculate_misfit(obs_value, response_value, obs_std, x_value):
     return {"value": misfit, "sign": sign, "obs_location": x_value}
 
 
-def _obs_to_json(obs, active=None):
+def _obs_to_json(obs, transformation):
     data = {
         "name": obs.name,
         "data": {
             "values": {"data": obs.values},
             "std": {"data": obs.errors},
             "x_axis": {"data": obs.x_axis},
+            # Defaults to all active and scale of 1 if no transformation
+            "active": {"data": [True for _ in obs.x_axis]},
+            "scale": {"data": [1 for _ in obs.x_axis]},
         },
     }
-    if active is not None:
-        data["data"]["active_mask"] = {"data": active}
+    if transformation is not None:
+        data["data"]["active"] = ({"data": transformation.active_list},)
+        data["data"]["scale"] = ({"data": transformation.scale_list},)
 
     attrs = obs.get_attributes()
     if len(attrs) > 0:
@@ -153,8 +157,28 @@ async def read_response_by_id(*, db: Session = Db(), ensemble_id: int, id: int):
     }
 
     if len(observation_links) > 0:
+        transformations = (
+            db.query(ds.ObservationTransformation)
+            .filter(
+                ds.ObservationTransformation.observation_id.in_(
+                    link.observation.id for link in observation_links
+                )
+            )
+            .join(ds.ObservationTransformation.update)
+            .filter_by(ensemble_result_id=ensemble_id)
+            .all()
+        )
+
+        # All connected transformations should in the future be compressed to one
+        # scale vector and one active vector when serving the data back to the user
+        transformations = {
+            transformation.observation_id: transformation
+            for transformation in transformations
+        }
+
         return_schema["observations"] = [
-            _obs_to_json(link.observation, link.active) for link in observation_links
+            _obs_to_json(link.observation, transformations.get(link.observation_id))
+            for link in observation_links
         ]
 
     return return_schema

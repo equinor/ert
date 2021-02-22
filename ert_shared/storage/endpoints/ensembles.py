@@ -6,6 +6,9 @@ from ert_shared.storage import json_schema as js, database_schema as ds
 from datetime import datetime
 
 router = APIRouter()
+import logging
+
+logger = logging.getLogger()
 
 
 def _ensemble(db: Session, ensemble: ds.Ensemble) -> dict:
@@ -106,20 +109,17 @@ async def read_ensemble_by_name(
 
 @router.post("/ensembles", response_model=js.Ensemble)
 async def create_ensemble(*, db: Session = Db(), ens_in: js.EnsembleCreate):
-    update = None
-    if ens_in.update is not None:
-        update = ds.Update(
-            algorithm=ens_in.update.algorithm,
-            ensemble_reference_id=ens_in.update.ensemble_id,
-        )
 
     ens = ds.Ensemble(
         time_created=datetime.now(),
         name=ens_in.name,
-        parent=update,
         num_realizations=ens_in.realizations,
     )
     db.add(ens)
+
+    if ens_in.update_id is not None:
+        update_obj = db.query(ds.Update).get(ens_in.update_id)
+        update_obj.ensemble_result = ens
 
     priors = {
         (p.group, p.key): ds.ParameterPrior(
@@ -251,3 +251,44 @@ async def create_misfit(
         )
         for response, value in responses
     )
+
+
+@router.post("/ensembles/{id}/updates", response_model=js.Update)
+async def create_observation_transformation(
+    *,
+    db: Session = Db(),
+    id: int,
+    update: js.UpdateCreate,
+):
+    try:
+        update_obj = ds.Update(
+            algorithm=update.algorithm,
+            ensemble_reference_id=update.ensemble_reference_id,
+        )
+        db.add(update_obj)
+        db.commit()
+
+        observations = [
+            db.query(ds.Observation)
+            .filter_by(name=observation_transformation.name)
+            .one()
+            for observation_transformation in update.observation_transformations
+        ]
+
+        observation_transformations = [
+            ds.ObservationTransformation(
+                active_list=observation_transformation.active,
+                scale_list=observation_transformation.scale,
+                observation=observation,
+                update=update_obj,
+            )
+            for observation_transformation, observation in zip(
+                update.observation_transformations, observations
+            )
+        ]
+
+        db.add_all(observation_transformations)
+        return update_obj
+    except Exception as e:
+        logger.error(e)
+        raise

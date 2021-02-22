@@ -5,7 +5,11 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
 
-from ert_shared.storage.extraction import post_ensemble_data, post_ensemble_results
+from ert_shared.storage.extraction import (
+    post_ensemble_data,
+    post_ensemble_results,
+    post_update_data,
+)
 
 
 class EnsembleSmoother(BaseRunModel):
@@ -32,10 +36,10 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath(prior_context)
 
+        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
+
         # Push ensemble, parameters, observations to new storage
         ensemble_id = post_ensemble_data()
-
-        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
 
         self.setPhaseName("Running forecast...", indeterminate=False)
 
@@ -52,6 +56,9 @@ class EnsembleSmoother(BaseRunModel):
                 .runSimpleStep(self._job_queue, prior_context)
             )
 
+        # Push simulation results to storage
+        post_ensemble_results(ensemble_id)
+
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
@@ -66,8 +73,9 @@ class EnsembleSmoother(BaseRunModel):
             raise ErtRunError("Analysis of simulation failed!")
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=ERT.ert)
 
-        # Push simulation results to storage
-        post_ensemble_results(ensemble_id)
+        # Create an update object in storage
+        analysis_module_name = self.ert().analysisConfig().activeModuleName()
+        update_id = post_update_data(ensemble_id, analysis_module_name)
 
         self.setPhase(1, "Running simulations...")
         self.ert().getEnkfFsManager().switchFileSystem(prior_context.get_target_fs())
@@ -78,11 +86,9 @@ class EnsembleSmoother(BaseRunModel):
 
         self.ert().getEnkfSimulationRunner().createRunPath(rerun_context)
 
-        # Push ensemble, parameters, observations to new storage
-        analysis_module_name = self.ert().analysisConfig().activeModuleName()
-        ensemble_id = post_ensemble_data((ensemble_id, analysis_module_name))
-
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
+        # Push ensemble, parameters, observations to new storage
+        ensemble_id = post_ensemble_data(update_id)
 
         self.setPhaseName("Running forecast...", indeterminate=False)
 

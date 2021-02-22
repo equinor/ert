@@ -279,7 +279,7 @@ def test_ensemble_return(app_client, mock_ert):
     """POSTing an ensemble that is successfully created should respond with a valid
     Ensemble object
     """
-    ens_in = extraction.create_ensemble(mock_ert, reference=None)
+    ens_in = extraction.create_ensemble(mock_ert, update_id=None)
     resp = app_client.post("/ensembles", data=ens_in.json())
     ens_out = js.Ensemble.parse_obj(resp.json())
 
@@ -333,7 +333,7 @@ def test_priors(app_client, mock_ert):
 
 
 def test_responses(app_client, mock_ert):
-    ensemble = extraction.create_ensemble(mock_ert, reference=None)
+    ensemble = extraction.create_ensemble(mock_ert, update_id=None)
     ens_resp = app_client.post("/ensembles", data=ensemble.json()).json()
 
     observations, _ = extraction.create_observations(mock_ert)
@@ -366,19 +366,34 @@ def test_responses(app_client, mock_ert):
     ]
 
 
+def _create_dummy_update_id(algorithm, ensemble_id, app_client):
+    update_resp = app_client.post(
+        f"/ensembles/{ensemble_id}/updates",
+        data=js.UpdateCreate(
+            ensemble_reference_id=ensemble_id,
+            algorithm=algorithm,
+            observation_transformations=[],
+        ).json(),
+    )
+    return js.Update.parse_obj(update_resp.json()).id
+
+
 def test_ensemble_parent_child_link(app_client, mock_ert):
-    ensemble_0 = extraction.create_ensemble(mock_ert, reference=None)
+    ensemble_0 = extraction.create_ensemble(mock_ert, update_id=None)
     ens_resp_0 = app_client.post("/ensembles", data=ensemble_0.json())
     ens = js.Ensemble.parse_obj(ens_resp_0.json())
     assert ens_resp_0.status_code == 200
 
+    update_ens1_id = _create_dummy_update_id("bogosort", ens.id, app_client)
+
     mock_ert.ENSEMBLE_NAME = "default_1"
-    ensemble_1 = extraction.create_ensemble(mock_ert, reference=(ens.id, "bogosort"))
+    ensemble_1 = extraction.create_ensemble(mock_ert, update_id=update_ens1_id)
     ens_resp_1 = app_client.post("/ensembles", data=ensemble_1.json())
     assert ens_resp_1.status_code == 200
 
+    update_ens2_id = _create_dummy_update_id("dijkstra", ens.id, app_client)
     mock_ert.ENSEMBLE_NAME = "default_2"
-    ensemble_2 = extraction.create_ensemble(mock_ert, reference=(ens.id, "dijkstra"))
+    ensemble_2 = extraction.create_ensemble(mock_ert, update_id=update_ens2_id)
     ens_resp_2 = app_client.post("/ensembles", data=ensemble_2.json())
     assert ens_resp_2.status_code == 200
 
@@ -410,7 +425,7 @@ def test_ensemble_parent_child_link(app_client, mock_ert):
 
 def test_update(app_client, mock_ert):
     # Setup
-    ensemble = extraction.create_ensemble(mock_ert, reference=None)
+    ensemble = extraction.create_ensemble(mock_ert, update_id=None)
     ens_resp = app_client.post("/ensembles", data=ensemble.json()).json()
 
     observations, _ = extraction.create_observations(mock_ert)
@@ -420,12 +435,3 @@ def test_update(app_client, mock_ert):
     responses = extraction.create_responses(mock_ert, "default")
     for r in responses:
         resp = app_client.post(f"/ensembles/{ens_resp['id']}/responses", data=r.json())
-
-    # Start test
-    updates = list(extraction.create_update_data(mock_ert))
-    assert len(updates) == 2
-
-    resp_0 = app_client.post(
-        f"/ensembles/{ens_resp['id']}/misfit", data=updates[0].json()
-    )
-    assert resp_0.status_code == 200
