@@ -7,6 +7,10 @@ from .ensemble import Ensemble, EnsembleCreate
 from .response import Response, ResponseCreate
 from .parameter import Parameter, ParameterCreate
 from .observation import Observation, ObservationCreate
+from .observation_transformation import (
+    ObservationTransformation,
+    ObservationTransformationCreate,
+)
 from .misfit import Misfit, MisfitCreate
 from .update import Update, UpdateCreate
 
@@ -19,6 +23,8 @@ __all__ = [
     "MisfitCreate",
     "Observation",
     "ObservationCreate",
+    "ObservationTransformation",
+    "ObservationTransformationCreate",
     "Parameter",
     "ParameterCreate",
     "Prior",

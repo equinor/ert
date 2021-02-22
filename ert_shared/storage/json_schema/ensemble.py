@@ -4,7 +4,7 @@ from datetime import datetime
 
 from ert_shared.storage.json_schema.parameter import ParameterCreate
 from ert_shared.storage.json_schema.prior import PriorCreate
-from ert_shared.storage.json_schema.update import UpdateCreate
+from ert_shared.storage.json_schema.update import Update
 from ert_shared.storage.json_schema.response import Response
 from ert_shared.storage.json_schema.observation import ObservationCreate
 
@@ -17,7 +17,7 @@ class EnsembleCreate(EnsembleBase):
     parameters: List[ParameterCreate]
     priors: List[PriorCreate]
     realizations: int
-    update: Optional[UpdateCreate] = None
+    update_id: Optional[int] = None
     observations: List[ObservationCreate] = None
     response_observation_link: Mapping[str, str]
 

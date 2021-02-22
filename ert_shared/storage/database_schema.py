@@ -58,10 +58,10 @@ class Update(Entity):
     id = sa.Column(sa.Integer, primary_key=True)
     algorithm = sa.Column(sa.String, nullable=False)
     ensemble_reference_id = sa.Column(
-        sa.Integer, sa.ForeignKey("ensemble.id"), nullable=False
+        sa.Integer, sa.ForeignKey("ensemble.id"), nullable=True
     )
     ensemble_result_id = sa.Column(
-        sa.Integer, sa.ForeignKey("ensemble.id"), nullable=False
+        sa.Integer, sa.ForeignKey("ensemble.id"), nullable=True
     )
 
     ensemble_reference = relationship(
@@ -279,3 +279,18 @@ class Misfit(Entity):
     observation_response_definition_link = relationship(
         "ObservationResponseDefinitionLink", back_populates="misfits"
     )
+
+
+class ObservationTransformation(Entity):
+    __tablename__ = "observation_transformation"
+    id = sa.Column(sa.Integer, primary_key=True)
+    active_list = sa.Column(sa.PickleType, nullable=False)
+    scale_list = sa.Column(sa.PickleType, nullable=False)
+
+    observation_id = sa.Column(
+        sa.Integer, sa.ForeignKey("observation.id"), nullable=False
+    )
+    update_id = sa.Column(sa.Integer, sa.ForeignKey("update.id"), nullable=False)
+
+    observation = relationship("Observation")
+    update = relationship("Update")

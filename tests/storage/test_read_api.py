@@ -18,7 +18,8 @@ def test_api(app_client):
 def test_observation(app_client):
     ens = app_client.get(p.ensemble(1)).json()
     expected = {
-        "active_mask": [True, False],
+        "active": [True, True],
+        "scale": [1, 1],
         "x_axis": [0, 3],
         "std": [1, 3],
         "values": [10.1, 10.2],

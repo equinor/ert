@@ -25,26 +25,22 @@ class _EnKFMain:
         return self._ensemble_size
 
 
-def create_ensemble(ert, reference: Optional[Tuple[int, str]]) -> js.EnsembleCreate:
+def create_ensemble(ert, update_id: int = None) -> js.EnsembleCreate:
     ensemble_name = ert.get_current_case_name()
 
     priors = []
-    update = None
 
-    if reference is None:
-        priors = [
-            js.PriorCreate(
-                group=group,
-                key=prior["key"],
-                function=prior["function"],
-                parameter_names=list(prior["parameters"].keys()),
-                parameter_values=list(prior["parameters"].values()),
-            )
-            for group, priors in ert.gen_kw_priors().items()
-            for prior in priors
-        ]
-    else:
-        update = js.UpdateCreate(ensemble_id=reference[0], algorithm=reference[1])
+    priors = [
+        js.PriorCreate(
+            group=group,
+            key=prior["key"],
+            function=prior["function"],
+            parameter_names=list(prior["parameters"].keys()),
+            parameter_values=list(prior["parameters"].values()),
+        )
+        for group, priors in ert.gen_kw_priors().items()
+        for prior in priors
+    ]
 
     parameters = [
         js.ParameterCreate(
@@ -66,9 +62,9 @@ def create_ensemble(ert, reference: Optional[Tuple[int, str]]) -> js.EnsembleCre
         realizations=ert.get_ensemble_size(),
         priors=priors,
         parameters=parameters,
-        update=update,
         observations=observations,
         response_observation_link=response_observation_link,
+        update_id=update_id,
     )
 
 
@@ -99,27 +95,27 @@ def create_responses(ert, ensemble_name: str) -> List[js.ResponseCreate]:
     ]
 
 
+def _get_obs_data(key, obs):
+    return dict(
+        name=key,
+        x_axis=obs.columns.get_level_values(0).to_list(),
+        values=obs.loc["OBS"].to_list(),
+        errors=obs.loc["STD"].to_list(),
+    )
+
+
 def create_observations(ert) -> Tuple[List[js.ObservationCreate], Mapping[str, str]]:
     observation_vectors = ert.get_observations()
     keys = [ert.get_observation_key(i) for i, _ in enumerate(observation_vectors)]
     summary_obs_keys = observation_vectors.getTypedKeylist(
         EnkfObservationImplementationType.SUMMARY_OBS
     )
-
-    def _get_obs_data(key, obs):
-        return dict(
-            name=key,
-            x_axis=obs.columns.get_level_values(0).to_list(),
-            values=obs.loc["OBS"].to_list(),
-            errors=obs.loc["STD"].to_list(),
-        )
+    if keys == []:
+        return [], {}
 
     data = MeasuredData(ert, keys, load_data=False)
-
     observations = data.data.loc[["OBS", "STD"]]
-
     grouped_obs = {}
-
     response_observation_link = {}
 
     for obs_key in observations.columns.get_level_values(0).unique():
@@ -138,7 +134,14 @@ def create_observations(ert) -> Tuple[List[js.ObservationCreate], Mapping[str, s
             else:
                 obs_data["name"] = data_key
                 grouped_obs[data_key] = obs_data
-
+    for key, obs in grouped_obs.items():
+        x_axis, values, error = (
+            list(t)
+            for t in zip(*sorted(zip(obs["x_axis"], obs["values"], obs["errors"])))
+        )
+        grouped_obs[key]["x_axis"] = x_axis
+        grouped_obs[key]["values"] = values
+        grouped_obs[key]["errors"] = error
     return [
         js.ObservationCreate(**obs) for obs in grouped_obs.values()
     ], response_observation_link
@@ -163,25 +166,79 @@ def _extract_active_observations(ert):
     return active_obs
 
 
-def create_update_data(ert):
-    fs = ert.get_current_fs()
-    realizations = MisfitCollector.createActiveList(_EnKFMain(ert), fs)
-
+def _create_observation_transformation(ert):
+    observation_vectors = ert.get_observations()
+    summary_obs_keys = observation_vectors.getTypedKeylist(
+        EnkfObservationImplementationType.SUMMARY_OBS
+    )
     active_obs = _extract_active_observations(ert)
+    transformations = {}
+    keys = [ert.get_observation_key(i) for i, _ in enumerate(observation_vectors)]
+    data = MeasuredData(ert, keys, load_data=False)
+    observations = data.data.loc[["OBS", "STD"]]
 
-    for obs_vector in ert.get_observations():
-        obs_key = obs_vector.getObservationKey()
-        resp_key = obs_vector.getDataKey()
-        active_blob = active_obs[obs_key] if active_obs else None
+    for obs_key, active_mask in active_obs.items():
+        obs_data = _get_obs_data(obs_key, observations[obs_key])
+        if obs_key in summary_obs_keys:
+            obs_vec = observation_vectors[obs_key]
+            data_key = obs_vec.getDataKey()
+            if data_key in transformations:
+                transformations[data_key]["x_axis"] += obs_data["x_axis"]
+                transformations[data_key]["active"] += active_mask
+                transformations[data_key]["scale"] += [1 for _ in active_mask]
+            else:
+                transformations[data_key] = dict(
+                    name=data_key,
+                    x_axis=obs_data["x_axis"],
+                    scale=[1 for _ in active_mask],
+                    active=active_mask,
+                )
+        else:
+            # Scale is now mocked to 1 for now
+            transformations[obs_key] = dict(
+                name=obs_key,
+                x_axis=obs_data["x_axis"],
+                scale=[1 for _ in active_mask],
+                active=active_mask,
+            )
 
-        yield js.MisfitCreate(
-            observation_key=obs_key,
-            response_definition_key=resp_key,
-            active=active_blob,
-            realizations={
-                index: obs_vector.getTotalChi2(fs, index) for index in realizations
-            },
+    # Sorting by x_axis matches the transformation with the observation, mostly needed for grouped summary obs
+    for key, obs in transformations.items():
+        x_axis, active, scale = (
+            list(t)
+            for t in zip(*sorted(zip(obs["x_axis"], obs["active"], obs["scale"])))
         )
+        transformations[key]["x_axis"] = x_axis
+        transformations[key]["active"] = active
+        transformations[key]["scale"] = scale
+
+    return [
+        js.ObservationTransformationCreate(**transformation)
+        for _, transformation in transformations.items()
+    ]
+
+
+@feature_enabled("new-storage")
+def post_update_data(parent_ensemble_id: int, algorithm: str) -> int:
+    server = ServerMonitor.get_instance()
+    ert = ERT.enkf_facade
+
+    # create update thingy
+    update_create = js.UpdateCreate(
+        observation_transformations=_create_observation_transformation(ert),
+        ensemble_reference_id=parent_ensemble_id,
+        ensemble_result_id=None,
+        algorithm=algorithm,
+    )
+
+    # URL should not be to ensembles
+    response = requests.post(
+        f"{server.fetch_url()}/ensembles/{parent_ensemble_id}/updates",
+        data=update_create.json(),
+        auth=server.fetch_auth(),
+    )
+    update = js.Update.parse_obj(response.json())
+    return update.id
 
 
 @feature_enabled("new-storage")
@@ -196,21 +253,14 @@ def post_ensemble_results(ensemble_id: int):
             auth=server.fetch_auth(),
         )
 
-    for u in create_update_data(ert):
-        requests.post(
-            f"{server.fetch_url()}/ensembles/{ensemble_id}/misfit",
-            data=u.json(),
-            auth=server.fetch_auth(),
-        )
-
 
 @feature_enabled("new-storage")
-def post_ensemble_data(reference: Optional[Tuple[int, str]] = None) -> int:
+def post_ensemble_data(update_id: int = None) -> int:
     server = ServerMonitor.get_instance()
     ert = ERT.enkf_facade
     response = requests.post(
         f"{server.fetch_url()}/ensembles",
-        data=create_ensemble(ert, reference).json(),
+        data=create_ensemble(ert, update_id).json(),
         auth=server.fetch_auth(),
     )
     if not response.status_code == 200:
