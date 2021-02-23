@@ -51,11 +51,13 @@ def _extract_data(
         # we can use any of them as input to the response loader.
         data = response_loader(facade, obs_keys[0], case_name)
         data.columns = _create_multi_index(data.columns.to_list(), list(range(len(data.columns))))
+        if data.empty:
+            raise ResponseError(f"No response loaded for observation keys: {obs_keys}")
     else:
         data = None
     obs = obs_loader(facade, obs_keys, case_name)
     if obs.empty:
-        raise ObservationError(f"No observations loaded for observations keys: {obs_keys}")
+        raise ObservationError(f"No observations loaded for observation keys: {obs_keys}")
     for obs_key in obs_keys:
         data_for_key = _filter_df1_on_df2_by_index(data, obs[obs_key])
         data_map[obs_key] = pd.concat([obs[obs_key], data_for_key])
@@ -179,16 +181,19 @@ def _load_block_obs(facade, observation_keys, case_name):
 
 def _load_general_response(facade, obs_key, case_name):
     data_key = facade.get_data_key_for_obs_key(obs_key)
-    time_steps = [
-        int(key.split("@")[1])
-        for key in facade.all_data_type_keys()
-        if facade.is_gen_data_key(key) and data_key in key
-    ]
-    data = pd.DataFrame()
+    try:
+        time_steps = [
+            int(key.split("@")[1])
+            for key in facade.all_data_type_keys()
+            if facade.is_gen_data_key(key) and data_key in key
+        ]
+        data = pd.DataFrame()
 
-    for time_step in time_steps:
-        gen_data = facade.load_gen_data(case_name, data_key, time_step).T
-        data = data.append(gen_data)
+        for time_step in time_steps:
+            gen_data = facade.load_gen_data(case_name, data_key, time_step).T
+            data = data.append(gen_data)
+    except ValueError as err:
+        raise ResponseError(f"No response loaded for observation key: {obs_key}") from err
     return data
 
 
@@ -288,4 +293,8 @@ def _filter_df1_on_df2_by_index(data, obs):
 
 
 class ObservationError(Exception):
+    pass
+
+
+class ResponseError(Exception):
     pass
