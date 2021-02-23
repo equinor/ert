@@ -217,6 +217,18 @@ def test_no_storage(monkeypatch, obs_key, expected_msg):
         MeasuredData(facade, [obs_key])
 
 
+@pytest.mark.parametrize("obs_key", ["FOPR", "WPR_DIFF_1"])
+@pytest.mark.usefixtures("copy_snake_oil")
+def test_no_storage_obs_only(monkeypatch, obs_key):
+    shutil.rmtree("storage")
+    res_config = ResConfig("snake_oil.ert")
+    ert = EnKFMain(res_config)
+
+    facade = LibresFacade(ert)
+    md = MeasuredData(facade, [obs_key], load_data=False)
+    assert set(md.data.columns.get_level_values(0)) == {obs_key}
+
+
 def create_summary_observation():
     observations = ""
     values = np.random.uniform(0, 1.5, 199)
