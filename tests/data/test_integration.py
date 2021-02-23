@@ -197,22 +197,22 @@ def test_gen_obs_and_summary_index_range(monkeypatch, facade_snake_oil):
 
 
 @pytest.mark.parametrize(
-    "obs_key, expected_error",
+    "obs_key, expected_msg",
     [
-        ("FOPR", r"No observations loaded for observations keys: \['FOPR'\]"),
-        ("SNAKE_OIL_WPR_DIFF", "No data key for obs key: SNAKE_OIL_WPR_DIFF"),
+        ("FOPR", r"No response loaded for observation keys: \['FOPR'\]"),
+        ("WPR_DIFF_1", "No response loaded for observation key: WPR_DIFF_1"),
     ],
 )
 @pytest.mark.usefixtures("copy_snake_oil")
-def test_no_storage(monkeypatch, obs_key, expected_error):
+def test_no_storage(monkeypatch, obs_key, expected_msg):
     shutil.rmtree("storage")
     res_config = ResConfig("snake_oil.ert")
     ert = EnKFMain(res_config)
 
     facade = LibresFacade(ert)
     with pytest.raises(
-        loader.ObservationError,
-        match=expected_error,
+        loader.ResponseError,
+        match=expected_msg,
     ):
         MeasuredData(facade, [obs_key])
 
