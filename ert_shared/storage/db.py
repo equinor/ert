@@ -43,21 +43,21 @@ class ErtStorage:
         if testing:
             database_file = project_file
             self._url = make_url(f"sqlite:///{project_path / self._db_file_name}")
-
-            self._engine = create_engine(
-                self._url, connect_args={"check_same_thread": False}
-            )
-            self.Session = sessionmaker(
-                bind=self._engine, autocommit=False, autoflush=False
-            )
         else:
             database_file = _tmp_db_path(project_path)
             if project_file.is_file():
                 copy2(project_file, database_file)
             self._url = make_url(f"sqlite:///{database_file}")
 
-            self._engine = create_engine(self._url)
-            self.Session = sessionmaker(bind=self._engine)
+        # As per FastAPI docs
+        # https://fastapi.tiangolo.com/tutorial/sql-databases/#create-the-sqlalchemy-engine
+        self._engine = create_engine(
+            self._url, connect_args={"check_same_thread": False}
+        )
+        # https://fastapi.tiangolo.com/tutorial/sql-databases/#create-a-sessionlocal-class
+        self.Session = sessionmaker(
+            bind=self._engine, autocommit=False, autoflush=False
+        )
 
         self.database_file = database_file
         self.project_file = project_file

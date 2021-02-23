@@ -55,7 +55,7 @@ def bind_socket(host: str, port: int) -> socket.socket:
 
 
 def bind_open_socket(host: str) -> socket.socket:
-    for port in range(51820, 51840):
+    for port in range(51820, 51840 + 1):
         try:
             return bind_socket(host, port)
         except OSError:
@@ -100,29 +100,38 @@ def run_server(args=None, debug=False):
         sys.exit("'storage_server.json' already exists")
 
     config_args = {}
-    if debug:
+    if args.debug or debug:
         config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
+        os.environ["ERT_STORAGE_DEBUG"] = "1"
 
     sock = bind_open_socket(args.host)
-    connection_info = json.dumps(
-        {
-            "urls": [
-                f"http://{host}:{sock.getsockname()[1]}"
-                for host in (
-                    sock.getsockname()[0],
-                    socket.gethostname(),
-                    socket.getfqdn(),
-                )
-            ],
-            "authtoken": authtoken,
-        }
-    )
+    connection_info = {
+        "urls": [
+            f"http://{host}:{sock.getsockname()[1]}"
+            for host in (
+                sock.getsockname()[0],
+                socket.gethostname(),
+                socket.getfqdn(),
+            )
+        ],
+        "authtoken": authtoken,
+    }
 
     # Appropriated from uvicorn.main:run
     config = uvicorn.Config("ert_shared.storage.app:app", **config_args)
-    server = Server(config, connection_info, lockfile)
+    server = Server(config, json.dumps(connection_info), lockfile)
 
-    print(connection_info)
+    print("Storage server is ready to accept requests. Listening on:")
+    for url in connection_info["urls"]:
+        print(f"  {url}")
+
+    print(f"\nOpenAPI Docs: {url}/docs", file=sys.stderr)
+    if args.debug or debug:
+        print("\tRunning in NON-SECURE debug mode.\n")
+    else:
+        print(f"\tUsername: __token__")
+        print(f"\tPassword: {connection_info['authtoken']}\n")
+
     if config.should_reload:
         supervisor = ChangeReload(config, target=server.run, sockets=[sock])
         supervisor.run()
