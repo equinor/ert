@@ -5,7 +5,7 @@ from typing import Any
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.exception_handlers import http_exception_handler
-from fastapi.responses import Response
+from fastapi.responses import Response, RedirectResponse
 from fastapi.security import HTTPBasic
 
 from ert_shared.storage import json_schema as js
@@ -13,6 +13,16 @@ from ert_shared.storage.db import ERT_STORAGE
 from ert_shared.storage.endpoints import router
 
 from sqlalchemy.orm.exc import NoResultFound
+
+
+try:
+    from importlib.metadata import version as _version
+
+    ert_version = _version("ert")
+except ModuleNotFoundError:
+    from pkg_resources import get_distribution as _get_distribution
+
+    ert_version = _get_distribution("ert").version
 
 
 class JSONResponse(Response):
@@ -30,7 +40,13 @@ class JSONResponse(Response):
         ).encode("utf-8")
 
 
-app = FastAPI(name="ERT Storage API", debug=True, default_response_class=JSONResponse)
+app = FastAPI(
+    title="ERT Storage API",
+    description="Experimental new database-based storage system for ERT",
+    version=ert_version,
+    default_response_class=JSONResponse,
+    debug=os.getenv("ERT_STORAGE_DEBUG"),
+)
 security = HTTPBasic()
 
 
@@ -57,6 +73,9 @@ async def shutdown_database():
 
 @app.middleware("http")
 async def check_authorization(request: Request, call_next):
+    if os.getenv("ERT_STORAGE_DEBUG"):
+        return await call_next(request)
+
     api_token = os.getenv("ERT_AUTHTOKEN")
     if not api_token:
         return await call_next(request)
@@ -91,7 +110,7 @@ async def sqlalchemy_exception_handler(request: Request, exc: NoResultFound):
 
 @app.get("/")
 async def root():
-    return {}
+    return RedirectResponse("/docs")
 
 
 @app.get("/healthcheck", response_model=js.Healthcheck)

@@ -75,13 +75,6 @@ class ServerMonitor(threading.Thread):
 
         try:
             self._connection_info = json.loads(comm_buf.getvalue())
-
-            curl = f"curl -u '__token__:{self._connection_info['authtoken']}' {self._connection_info['urls'][0]}/ensembles"
-
-            print("Storage server is ready to accept requests. Listening on:")
-            for url in self._connection_info["urls"]:
-                print(f"  {url}")
-            print(f"\nUse `{curl}` to test")
         except json.JSONDecodeError:
             self._connection_info = ServerBootFail()
         except Exception as e:
