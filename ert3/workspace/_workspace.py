@@ -25,7 +25,7 @@ def assert_experiment_exists(workspace_root, experiment_name):
 
 
 def experiment_have_run(workspace_root, experiment_name):
-    experiments = ert3.storage.get_experiment_names(workspace_root)
+    experiments = ert3.storage.get_experiment_names(workspace=workspace_root)
     return experiment_name in experiments
 
 
@@ -36,7 +36,7 @@ def initialize(path):
             "Already inside an ERT workspace."
         )
 
-    ert3.storage.init(path)
+    ert3.storage.init(workspace=path)
 
 
 def load(path):

@@ -2,61 +2,60 @@ import ert3
 from ert3.engine import _utils
 
 
-def _persist_variables(
+def _prepare_experiment(workspace_root, experiment_name, ensemble):
+    if ert3.workspace.experiment_have_run(workspace_root, experiment_name):
+        raise ValueError(f"Experiment {experiment_name} have been carried out.")
+
+    parameter_names = [elem.record for elem in ensemble.input]
+    ert3.storage.init_experiment(
+        workspace=workspace_root,
+        experiment_name=experiment_name,
+        parameters=parameter_names,
+    )
+
+
+def _prepare_experiment_record(
     record_name, record_source, ensemble_size, experiment_name, workspace_root
 ):
     if record_source[0] == "storage":
-        var_name = ".".join(record_source[1:])
+        assert len(record_source) == 2
+        ensemble_record = ert3.storage.get_ensemble_record(
+            workspace=workspace_root, record_name=record_source[1]
+        )
+        ert3.storage.add_ensemble_record(
+            workspace=workspace_root,
+            experiment_name=experiment_name,
+            record_name=record_name,
+            ensemble_record=ensemble_record,
+        )
     elif record_source[0] == "stochastic":
-        var_name = f"{experiment_name}.{record_name}"
         ert3.engine.sample_record(
             workspace_root,
             record_source[1],
-            var_name,
+            record_name,
             ensemble_size,
+            experiment_name=experiment_name,
         )
     else:
         raise ValueError("Unknown record source location {}".format(record_source[0]))
-    return var_name
 
 
-def _add_record(records, record_name, record):
-    if len(record) != len(records):
-        raise AssertionError(
-            f"Lenght of record {record_name} ({len(record)}) "
-            f"does not match ensemble size ({len(records)})"
-        )
-
-    for ens_records, new_record in zip(records, record):
-        if record_name in ens_records:
-            raise KeyError(f"Duplicate record name {record_name}")
-        ens_records[record_name] = new_record
-
-
-def _load_input_records(ensemble, workspace_root, experiment_name):
-    records = [{} for _ in range(ensemble.size)]
+def _prepare_evaluation(ensemble, workspace_root, experiment_name):
+    parameters = {}
     for input_record in ensemble.input:
         record_name = input_record.record
         record_source = input_record.source.split(".")
 
-        var_name = _persist_variables(
+        _prepare_experiment_record(
             record_name, record_source, ensemble.size, experiment_name, workspace_root
         )
 
-        input_record = ert3.storage.get_variables(workspace_root, var_name)
-        _add_record(records, record_name, input_record)
-    return records
-
-
-def _prepare_experiment(workspace_root, experiment_name):
-    if ert3.workspace.experiment_have_run(workspace_root, experiment_name):
-        raise ValueError(f"Experiment {experiment_name} have been carried out.")
-    ert3.storage.init_experiment(workspace_root, experiment_name)
-
-
-def _prepare_evaluation(ensemble, workspace_root, experiment_name):
-    input_records = _load_input_records(ensemble, workspace_root, experiment_name)
-    ert3.storage.add_input_data(workspace_root, experiment_name, input_records)
+        ensemble_record = ert3.storage.get_ensemble_record(
+            workspace=workspace_root,
+            experiment_name=experiment_name,
+            record_name=record_name,
+        )
+        parameters[record_name] = ensemble_record
 
 
 def _load_ensemble_parameters(ensemble, workspace):
@@ -74,21 +73,61 @@ def _load_ensemble_parameters(ensemble, workspace):
 
 
 def _prepare_sensitivity(ensemble, workspace_root, experiment_name):
-    parameters = _load_ensemble_parameters(ensemble, workspace_root)
-    input_records = ert3.algorithms.one_at_the_time(parameters)
-    ert3.storage.add_input_data(workspace_root, experiment_name, input_records)
+    parameter_distributions = _load_ensemble_parameters(ensemble, workspace_root)
+    input_records = ert3.algorithms.one_at_the_time(parameter_distributions)
+
+    parameters = {param.record: [] for param in ensemble.input}
+    for realization in input_records:
+        assert parameters.keys() == realization.keys()
+        for record_name in realization:
+            parameters[record_name].append(realization[record_name])
+
+    for record_name in parameters:
+        ensemble_record = ert3.data.EnsembleRecord(records=parameters[record_name])
+        ert3.storage.add_ensemble_record(
+            workspace=workspace_root,
+            experiment_name=experiment_name,
+            record_name=record_name,
+            ensemble_record=ensemble_record,
+        )
+
+
+def _store_responses(workspace_root, experiment_name, responses):
+    for record_name in responses.record_names:
+        ert3.storage.add_ensemble_record(
+            workspace=workspace_root,
+            experiment_name=experiment_name,
+            record_name=record_name,
+            ensemble_record=responses.ensemble_records[record_name],
+        )
+
+
+def _load_experiment_parameters(workspace_root, experiment_name):
+    parameter_names = ert3.storage.get_experiment_parameters(
+        workspace=workspace_root, experiment_name=experiment_name
+    )
+
+    parameters = {}
+    for parameter_name in parameter_names:
+        parameters[parameter_name] = ert3.storage.get_ensemble_record(
+            workspace=workspace_root,
+            experiment_name=experiment_name,
+            record_name=parameter_name,
+        )
+
+    return ert3.data.MultiEnsembleRecord(ensemble_records=parameters)
 
 
 def _evaluate(ensemble, stages_config, workspace_root, experiment_name):
-    input_records = ert3.storage.get_input_data(workspace_root, experiment_name)
-    response = ert3.evaluator.evaluate(
-        workspace_root, experiment_name, input_records, ensemble, stages_config
+    parameters = _load_experiment_parameters(workspace_root, experiment_name)
+    responses = ert3.evaluator.evaluate(
+        workspace_root, experiment_name, parameters, ensemble, stages_config
     )
-    ert3.storage.add_output_data(workspace_root, experiment_name, response)
+    _store_responses(workspace_root, experiment_name, responses)
 
 
 def run(ensemble, stages_config, experiment_config, workspace_root, experiment_name):
-    _prepare_experiment(workspace_root, experiment_name)
+    _prepare_experiment(workspace_root, experiment_name, ensemble)
 
     if experiment_config.type == "evaluation":
         _prepare_evaluation(ensemble, workspace_root, experiment_name)

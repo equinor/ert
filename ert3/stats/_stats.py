@@ -1,17 +1,15 @@
 import numpy as np
 import scipy.stats
 
+from ert3.data import Record
+
 
 class Distribution:
     def __init__(self, *, size, index, rvs, ppf):
         if size is None and index is None:
-            raise ValueError(
-                "Cannot create distribution with neither size nor index"
-            )
+            raise ValueError("Cannot create distribution with neither size nor index")
         if size is not None and index is not None:
-            raise ValueError(
-                "Cannot create distribution with both size and index"
-            )
+            raise ValueError("Cannot create distribution with both size and index")
 
         if size is not None:
             self._size = size
@@ -29,19 +27,19 @@ class Distribution:
     def index(self):
         return self._index
 
-    def _add_index(self, x):
+    def _to_record(self, x):
         if self._as_array:
-            return x
+            return Record(data=tuple(x))
         else:
-            return {idx: float(val) for idx, val in zip(self.index, x)}
+            return Record(data={idx: float(val) for idx, val in zip(self.index, x)})
 
     def sample(self):
-        return self._add_index(self._raw_rvs(self._size))
+        return self._to_record(self._raw_rvs(self._size))
 
     def ppf(self, x):
         x = np.full(self._size, x)
         result = self._raw_ppf(x)
-        return self._add_index(result)
+        return self._to_record(result)
 
 
 class Gaussian(Distribution):

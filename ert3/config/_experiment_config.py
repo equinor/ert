@@ -1,4 +1,5 @@
 from typing import List, Optional
+
 try:
     # Will only work from Python 3.8
     from typing import Literal
