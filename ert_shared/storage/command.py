@@ -28,3 +28,8 @@ def add_parser_options(ap):
         action="store_true",
         default=os.environ.get("ERT_STORAGE_DEBUG", False),
     )
+    ap.add_argument(
+        "--insecure",
+        action="store_true",
+        default=False,
+    )

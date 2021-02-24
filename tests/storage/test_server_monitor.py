@@ -141,7 +141,7 @@ def test_integration(request, tmpdir):
 
         resp = requests.get(
             f"{server.fetch_url()}/healthcheck",
-            headers={"X-Token": server.fetch_token()},
+            headers={"Token": server.fetch_token()},
         )
         assert "date" in resp.json()
 
@@ -149,14 +149,14 @@ def test_integration(request, tmpdir):
         conn_info = connection.get_info()
         requests.get(
             conn_info["baseurl"] + "/healthcheck",
-            headers={"X-Token": conn_info["token"]},
+            headers={"Token": conn_info["token"]},
         )
 
         # Use local connection info
         conn_info = connection.get_info(str(tmpdir))
         requests.get(
             conn_info["baseurl"] + "/healthcheck",
-            headers={"X-Toekn": conn_info["token"]},
+            headers={"Toekn": conn_info["token"]},
         )
 
         server.shutdown()
@@ -181,6 +181,6 @@ def test_integration_auth(request, tmpdir):
 
         # Invalid auth
         resp = requests.get(
-            f"{server.fetch_url()}/healthcheck", headers={"X-Token": "invalid-token"}
+            f"{server.fetch_url()}/healthcheck", headers={"Token": "invalid-token"}
         )
         assert resp.status_code == 403

@@ -3,9 +3,9 @@ from fastapi import Security, HTTPException, status
 from fastapi.security import APIKeyCookie, APIKeyHeader, APIKeyQuery
 
 
-_security_cookie = APIKeyCookie(name="X-ERT-Storage-Token", auto_error=False)
-_security_header = APIKeyHeader(name="X-Token", auto_error=False)
-_security_query = APIKeyQuery(name="_token", auto_error=False)
+_security_cookie = APIKeyCookie(name="ERT-Storage-Token", auto_error=False)
+_security_header = APIKeyHeader(name="Token", auto_error=False)
+_security_query = APIKeyQuery(name="token", auto_error=False)
 
 
 async def security_token(

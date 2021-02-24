@@ -87,6 +87,13 @@ def run_server(args=None, debug=False):
     if args is None:
         args = parse_args()
 
+    if args.insecure:
+        print("Starting ERT Storage server WITHOUT SECURITY")
+        os.environ["ERT_STORAGE_INSECURE"] = "1"
+    elif "ERT_STORAGE_INSECURE" in os.environ:
+        # Unset just in case the user sets it deliberately
+        del os.environ["ERT_STORAGE_INSECURE"]
+
     if "ERT_STORAGE_TOKEN" in os.environ:
         token = os.environ["ERT_STORAGE_TOKEN"]
     elif not args.debug:
