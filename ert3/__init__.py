@@ -7,6 +7,7 @@ import ert3.stats
 import ert3.config
 import ert3.exceptions
 import ert3.algorithms
+import ert3.data
 
 
 _WORKSPACE_DATA_ROOT = ".ert"
