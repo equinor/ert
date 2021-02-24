@@ -35,9 +35,13 @@ def test_evaluator(coeffs, expected, tmpdir):
         workspace_root = tmpdir / "polynomial"
         workspace_root.chdir()
 
-        input_records = [
-            {"coefficients": {"a": a, "b": b, "c": c}} for (a, b, c) in coeffs
-        ]
+        input_records = {}
+        input_records["coefficients"] = ert3.data.EnsembleRecord(
+            records=[
+                ert3.data.Record(data={"a": a, "b": b, "c": c}) for (a, b, c) in coeffs
+            ]
+        )
+        input_records = ert3.data.MultiEnsembleRecord(ensemble_records=input_records)
         ensemble_config = (
             workspace_root
             / ert3.workspace.EXPERIMENTS_BASE
@@ -46,17 +50,24 @@ def test_evaluator(coeffs, expected, tmpdir):
         )
         with open(ensemble_config) as f:
             raw_ensemble_config = yaml.safe_load(f)
-            raw_ensemble_config["size"] = len(input_records)
+            raw_ensemble_config["size"] = len(coeffs)
             ensemble_config = ert3.config.load_ensemble_config(raw_ensemble_config)
         with open(workspace_root / "stages.yml") as f:
             stages_config = ert3.config.load_stages_config(yaml.safe_load(f))
 
-        evaluation_result = ert3.evaluator.evaluate(
+        evaluation_responses = ert3.evaluator.evaluate(
             workspace_root,
             "test_evaluation",
             input_records,
             ensemble_config,
             stages_config,
         )
-        data = [data["polynomial_output"] for data in evaluation_result]
-        assert data == expected
+
+        expected = ert3.data.MultiEnsembleRecord(
+            ensemble_records={
+                "polynomial_output": ert3.data.EnsembleRecord(
+                    records=[ert3.data.Record(data=poly_out) for poly_out in expected],
+                )
+            }
+        )
+        assert expected == evaluation_responses

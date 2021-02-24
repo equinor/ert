@@ -30,8 +30,8 @@ def test_single_parameter(distribution, a, b, sens_low, sens_high):
     for idx, parameter_value in enumerate([sens_low, sens_high]):
         evali = evaluations[idx]
         assert ["single"] == list(evali.keys())
-        assert 1 == len(evali["single"])
-        for val in evali["single"]:
+        assert 1 == len(evali["single"].data)
+        for val in evali["single"].data:
             assert parameter_value == pytest.approx(val)
 
 
@@ -44,8 +44,8 @@ def test_parameter_array():
     for eidx, evali in enumerate(evaluations):
         parameter_value = -CNORM_INV if eidx % 2 == 0 else CNORM_INV
         assert ["array"] == list(evali.keys())
-        assert size == len(evali["array"])
-        for vidx, val in enumerate(evali["array"]):
+        assert size == len(evali["array"].data)
+        for vidx, val in enumerate(evali["array"].data):
             expected_value = parameter_value if vidx == eidx // 2 else 0
             assert expected_value == pytest.approx(val)
 
@@ -59,10 +59,10 @@ def test_parameter_index():
     for eidx, evali in enumerate(evaluations):
         parameter_value = -CNORM_INV if eidx % 2 == 0 else CNORM_INV
         assert ["indexed_gauss"] == list(evali.keys())
-        assert sorted(index) == sorted(evali["indexed_gauss"].keys())
+        assert sorted(index) == sorted(evali["indexed_gauss"].index)
         for kidx, key in enumerate(index):
             expected_value = parameter_value if kidx == eidx // 2 else 0
-            assert expected_value == pytest.approx(evali["indexed_gauss"][key])
+            assert expected_value == pytest.approx(evali["indexed_gauss"].data[key])
 
 
 def test_multi_parameter_singletons():
@@ -83,8 +83,8 @@ def test_multi_parameter_singletons():
     for expected, result in zip(expected_evaluations, evaluations):
         assert expected.keys() == result.keys()
         for key in expected.keys():
-            assert len(expected[key]) == len(result[key])
-            for e, r in zip(expected[key], result[key]):
+            assert len(expected[key]) == len(result[key].data)
+            for e, r in zip(expected[key], result[key].data):
                 assert e == pytest.approx(r)
 
 
@@ -110,8 +110,8 @@ def test_multi_parameter_doubles():
     for expected, result in zip(expected_evaluations, evaluations):
         assert expected.keys() == result.keys()
         for key in expected.keys():
-            assert len(expected[key]) == len(result[key])
-            for e, r in zip(expected[key], result[key]):
+            assert len(expected[key]) == len(result[key].data)
+            for e, r in zip(expected[key], result[key].data):
                 assert e == pytest.approx(r)
 
 
@@ -138,8 +138,8 @@ def test_uni_and_norm():
         assert expected.keys() == result.keys()
 
         for key in expected.keys():
-            assert len(expected[key]) == len(result[key])
-            for e, r in zip(expected[key], result[key]):
+            assert len(expected[key]) == len(result[key].data)
+            for e, r in zip(expected[key], result[key].data):
                 assert e == pytest.approx(r)
 
 
@@ -159,18 +159,18 @@ def test_multi_parameter_groups():
         parameter_value = -CNORM_INV if eidx % 2 == 0 else CNORM_INV
         assert ["array", "indexed"] == sorted(evali.keys())
 
-        assert size == len(evali["array"])
-        for vidx, val in enumerate(evali["array"]):
+        assert size == len(evali["array"].data)
+        for vidx, val in enumerate(evali["array"].data):
             expected_value = (
                 parameter_value if eidx < 2 * size and vidx == eidx // 2 else 0
             )
             assert expected_value == pytest.approx(val)
 
-        assert sorted(index) == sorted(evali["indexed"].keys())
+        assert sorted(index) == sorted(evali["indexed"].index)
         for kidx, key in enumerate(index):
             expected_value = (
                 parameter_value
                 if eidx >= 2 * size and kidx == (eidx - 2 * size) // 2
                 else 0
             )
-            assert expected_value == pytest.approx(evali["indexed"][key])
+            assert expected_value == pytest.approx(evali["indexed"].data[key])

@@ -1,3 +1,6 @@
+import ert3.data
+
+
 def _build_base_records(groups, parameters):
     return {group_name: parameters[group_name].ppf(0.5) for group_name in groups}
 
@@ -22,7 +25,7 @@ def one_at_the_time(parameters):
                 records = _build_base_records(const_records, parameters)
 
                 rec_values = dist.ppf(0.5)
-                rec_values[idx] = lim_val[idx]
+                rec_values.data[idx] = lim_val.data[idx]
                 records[group_name] = rec_values
 
                 evaluations.append(records)

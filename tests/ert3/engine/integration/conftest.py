@@ -82,15 +82,15 @@ def assert_distribution(
 ):
     indices = ("a", "b", "c")
 
-    for real_coefficient in coefficients:
-        assert sorted(indices) == sorted(real_coefficient.keys())
-        for val in real_coefficient.values():
-            assert isinstance(val, float)
+    for real_coefficient in coefficients.records:
+        assert sorted(indices) == sorted(real_coefficient.index)
+        for idx in real_coefficient.index:
+            assert isinstance(real_coefficient.data[idx], float)
 
     samples = {idx: [] for idx in indices}
-    for sample in coefficients:
+    for sample in coefficients.records:
         for key in indices:
-            samples[key].append(sample[key])
+            samples[key].append(sample.data[key])
 
     config = load_experiment_config(workspace, ensemble_config, stages_config)
     parameter = None

@@ -36,11 +36,11 @@ def _prepare_input(ee_config, stages_config, inputs, evaluation_tmp_dir):
     ee_storage = storage_driver_factory(ee_config["storage"], tmp_input_folder)
     record2location = {input.record: input.location for input in stages_config[0].input}
     input_files = {iens: () for iens in range(ee_config["realizations"])}
-    for iens, realization_inputs in enumerate(inputs):
-        for name, value in realization_inputs.items():
-            filename = record2location[name]
+    for record_name in inputs.record_names:
+        for iens, record in enumerate(inputs.ensemble_records[record_name].records):
+            filename = record2location[record_name]
             with open(tmp_input_folder / filename, "w") as f:
-                json.dump(value, f)
+                json.dump(record.data, f)
             input_files[iens] += (ee_storage.store(filename, iens),)
     return input_files
 
@@ -51,8 +51,7 @@ def _build_ee_config(evaluation_tmp_dir, ensemble, stages_config, input_records)
     if ensemble.size != None:
         ensemble_size = ensemble.size
     else:
-        ensemble_size = len(input_records)
-    assert len(input_records) == ensemble_size
+        ensemble_size = input_records.ensemble_size
 
     stage_name = ensemble.forward_model.stages[0]
     step_name = stage_name + "-only_step"
@@ -133,6 +132,19 @@ def _run(ensemble_evaluator):
                 monitor.signal_done()
 
 
+def _prepare_responses(raw_responses):
+    responses = {response_name: [] for response_name in raw_responses[0]}
+    for realization in raw_responses:
+        assert responses.keys() == realization.keys()
+        for key in realization:
+            responses[key].append(ert3.data.Record(data=realization[key]))
+
+    for key in responses:
+        responses[key] = ert3.data.EnsembleRecord(records=responses[key])
+
+    return ert3.data.MultiEnsembleRecord(ensemble_records=responses)
+
+
 def evaluate(
     workspace_root, evaluation_name, input_records, ensemble_config, stages_config
 ):
@@ -148,4 +160,6 @@ def evaluate(
     _run(ee)
 
     results = _fetch_results(ee_config, ensemble_config, stages_config)
-    return results
+    responses = _prepare_responses(results)
+
+    return responses

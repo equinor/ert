@@ -7,3 +7,7 @@ from ert3.storage._storage import add_output_data
 from ert3.storage._storage import get_output_data
 from ert3.storage._storage import add_variables
 from ert3.storage._storage import get_variables
+from ert3.storage._storage import add_ensemble_record
+from ert3.storage._storage import get_ensemble_record
+from ert3.storage._storage import get_ensemble_record_names
+from ert3.storage._storage import get_experiment_parameters

@@ -219,8 +219,10 @@ def test_gaussian_distribution(
 ):
     ert3.engine.sample_record(workspace, "coefficients", "coefficients0", 1000)
 
-    coefficients = ert3.storage.get_variables(workspace, "coefficients0")
-    assert 1000 == len(coefficients)
+    coefficients = ert3.storage.get_ensemble_record(
+        workspace=workspace, record_name="coefficients0"
+    )
+    assert 1000 == coefficients.ensemble_size
 
     assert_distribution(
         workspace, big_ensemble, stages_config, "gaussian", coefficients
@@ -234,8 +236,10 @@ def test_uniform_distribution(
         workspace, "uniform_coefficients", "uniform_coefficients0", 1000
     )
 
-    coefficients = ert3.storage.get_variables(workspace, "uniform_coefficients0")
-    assert 1000 == len(coefficients)
+    coefficients = ert3.storage.get_ensemble_record(
+        workspace=workspace, record_name="uniform_coefficients0"
+    )
+    assert 1000 == coefficients.ensemble_size
 
     assert_distribution(
         workspace, presampled_big_ensemble, stages_config, "uniform", coefficients
@@ -255,12 +259,14 @@ def test_run_presampled(
     presampled_dir.ensure(dir=True)
     ert3.engine.sample_record(workspace, "coefficients", "coefficients0", 10)
 
-    coeff0 = ert3.storage.get_variables(workspace, "coefficients0")
-    assert 10 == len(coeff0)
-    for real_coeff in coeff0:
-        assert sorted(("a", "b", "c")) == sorted(real_coeff.keys())
-        for val in real_coeff.values():
-            assert isinstance(val, float)
+    coeff0 = ert3.storage.get_ensemble_record(
+        workspace=workspace, record_name="coefficients0"
+    )
+    assert 10 == coeff0.ensemble_size
+    for real_coeff in coeff0.records:
+        assert sorted(("a", "b", "c")) == sorted(real_coeff.index)
+        for idx in real_coeff.index:
+            assert isinstance(real_coeff.data[idx], float)
 
     ert3.engine.run(
         presampled_ensemble,
@@ -275,13 +281,13 @@ def test_run_presampled(
     with open(export_file) as f:
         export_data = json.load(f)
 
-    assert len(coeff0) == len(export_data)
-    for coeff, real in zip(coeff0, export_data):
+    assert coeff0.ensemble_size == len(export_data)
+    for coeff, real in zip(coeff0.records, export_data):
         assert ["coefficients"] == list(real["input"].keys())
         export_coeff = real["input"]["coefficients"]
-        assert coeff.keys() == export_coeff.keys()
-        for key in coeff.keys():
-            assert coeff[key] == export_coeff[key]
+        assert sorted(coeff.index) == sorted(export_coeff.keys())
+        for key in coeff.index:
+            assert coeff.data[key] == export_coeff[key]
 
 
 def test_run_uniform_presampled(
@@ -299,12 +305,14 @@ def test_run_uniform_presampled(
         workspace, "uniform_coefficients", "uniform_coefficients0", 10
     )
 
-    uniform_coeff0 = ert3.storage.get_variables(workspace, "uniform_coefficients0")
-    assert 10 == len(uniform_coeff0)
-    for real_coeff in uniform_coeff0:
-        assert sorted(("a", "b", "c")) == sorted(real_coeff.keys())
-        for val in real_coeff.values():
-            assert isinstance(val, float)
+    uniform_coeff0 = ert3.storage.get_ensemble_record(
+        workspace=workspace, record_name="uniform_coefficients0"
+    )
+    assert 10 == uniform_coeff0.ensemble_size
+    for real_coeff in uniform_coeff0.records:
+        assert sorted(("a", "b", "c")) == sorted(real_coeff.index)
+        for idx in real_coeff.index:
+            assert isinstance(real_coeff.data[idx], float)
 
     ert3.engine.run(
         presampled_uniform_ensemble,
@@ -318,13 +326,13 @@ def test_run_uniform_presampled(
     with open(presampled_dir / "data.json") as f:
         export_data = json.load(f)
 
-    assert len(uniform_coeff0) == len(export_data)
-    for coeff, real in zip(uniform_coeff0, export_data):
+    assert uniform_coeff0.ensemble_size == len(export_data)
+    for coeff, real in zip(uniform_coeff0.records, export_data):
         assert ["coefficients"] == list(real["input"].keys())
         export_coeff = real["input"]["coefficients"]
-        assert coeff.keys() == export_coeff.keys()
-        for key in coeff.keys():
-            assert coeff[key] == export_coeff[key]
+        assert sorted(coeff.index) == sorted(export_coeff.keys())
+        for key in coeff.index:
+            assert coeff.data[key] == export_coeff[key]
 
 
 def test_sample_unknown_parameter_group(workspace, uniform_parameters_file):
@@ -359,11 +367,13 @@ def test_record_load_and_run(
     record_file = (doe_dir / "coefficients_record.json").open("r")
     ert3.engine.load_record(workspace, "designed_coefficients", record_file)
 
-    designed_coeff = ert3.storage.get_variables(workspace, "designed_coefficients")
-    assert 1000 == len(designed_coeff)
-    for real_coeff in designed_coeff:
-        assert sorted(("a", "b", "c")) == sorted(real_coeff.keys())
-        for val in real_coeff.values():
+    designed_coeff = ert3.storage.get_ensemble_record(
+        workspace=workspace, record_name="designed_coefficients"
+    )
+    assert 1000 == designed_coeff.ensemble_size
+    for real_coeff in designed_coeff.records:
+        assert sorted(("a", "b", "c")) == sorted(real_coeff.index)
+        for val in real_coeff.data.values():
             assert isinstance(val, numbers.Number)
 
     ert3.engine.run(
@@ -375,13 +385,13 @@ def test_record_load_and_run(
     with open(export_file) as f:
         export_data = json.load(f)
 
-    assert len(designed_coeff) == len(export_data)
-    for coeff, real in zip(designed_coeff, export_data):
+    assert designed_coeff.ensemble_size == len(export_data)
+    for coeff, real in zip(designed_coeff.records, export_data):
         assert ["coefficients"] == list(real["input"].keys())
         export_coeff = real["input"]["coefficients"]
-        assert coeff.keys() == export_coeff.keys()
-        for key in coeff.keys():
-            assert coeff[key] == export_coeff[key]
+        assert sorted(coeff.index) == sorted(export_coeff.keys())
+        for key in coeff.index:
+            assert coeff.data[key] == export_coeff[key]
 
 
 def test_record_load_twice(workspace, ensemble, stages_config):

@@ -25,14 +25,14 @@ def test_gaussian_distribution(size, mean, std):
     for _ in range(10):
         sample = gauss.sample()
 
-        assert len(sample) == size
+        assert len(sample.data) == size
         assert sorted(gauss.index) == sorted(range(size))
 
-        assert tuple(sample) not in prev_samples
-        prev_samples.add(tuple(sample))
+        assert tuple(sample.data) not in prev_samples
+        prev_samples.add(tuple(sample.data))
 
-        assert sample.mean() == approx(mean)
-        assert sample.std() == approx(std)
+        assert np.array(sample.data).mean() == approx(mean)
+        assert np.array(sample.data).std() == approx(std)
 
 
 @flaky.flaky(max_runs=3, min_passes=2)
@@ -49,11 +49,11 @@ def test_gaussian_distribution_index(index, mean, std):
     samples = {idx: [] for idx in index}
     for i in range(2000):
         sample = gauss.sample()
-        assert sorted(gauss.index) == sorted(sample.keys())
-        assert sorted(sample.keys()) == sorted(index)
+        assert sorted(gauss.index) == sorted(sample.index)
+        assert sorted(sample.index) == sorted(index)
 
         for key in index:
-            samples[key].append(sample[key])
+            samples[key].append(sample.data[key])
 
     for key in index:
         s = np.array(samples[key])
@@ -86,14 +86,14 @@ def test_uniform_distribution(size, lower_bound, upper_bound):
     for _ in range(10):
         sample = uniform.sample()
 
-        assert len(sample) == size
+        assert len(sample.data) == size
 
-        assert tuple(sample) not in prev_samples
-        prev_samples.add(tuple(sample))
+        assert tuple(sample.data) not in prev_samples
+        prev_samples.add(tuple(sample.data))
 
-        assert sample.min() == approx(lower_bound)
-        assert sample.mean() == approx((lower_bound + upper_bound) / 2)
-        assert sample.max() == approx(upper_bound)
+        assert np.array(sample.data).min() == approx(lower_bound)
+        assert np.array(sample.data).mean() == approx((lower_bound + upper_bound) / 2)
+        assert np.array(sample.data).max() == approx(upper_bound)
 
 
 @flaky.flaky(max_runs=3, min_passes=2)
@@ -110,10 +110,10 @@ def test_uniform_distribution_index(index, lower_bound, upper_bound):
     samples = {idx: [] for idx in index}
     for i in range(1000):
         sample = uniform.sample()
-        assert sorted(sample.keys()) == sorted(index)
+        assert sorted(sample.index) == sorted(index)
 
         for key in index:
-            samples[key].append(sample[key])
+            samples[key].append(sample.data[key])
 
     for key in index:
         s = np.array(samples[key])
@@ -153,9 +153,10 @@ def test_gaussian_ppf(mean, std, q, size, index):
 
     expected_value = scipy.stats.norm.ppf(q, loc=mean, scale=std)
     ppf_result = gauss.ppf(q)
-    assert len(gauss.index) == len(ppf_result)
+    assert len(gauss.index) == len(ppf_result.data)
+    assert sorted(gauss.index) == sorted(ppf_result.index)
     for idx in gauss.index:
-        assert ppf_result[idx] == pytest.approx(expected_value)
+        assert ppf_result.data[idx] == pytest.approx(expected_value)
 
 
 @pytest.mark.parametrize(
@@ -178,6 +179,7 @@ def test_uniform_ppf(lower, upper, q, size, index):
 
     expected_value = scipy.stats.uniform.ppf(q, loc=lower, scale=upper - lower)
     ppf_result = dist.ppf(q)
-    assert len(dist.index) == len(ppf_result)
+    assert len(dist.index) == len(ppf_result.data)
+    assert sorted(dist.index) == sorted(ppf_result.index)
     for idx in dist.index:
-        assert ppf_result[idx] == pytest.approx(expected_value)
+        assert ppf_result.data[idx] == pytest.approx(expected_value)
