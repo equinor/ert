@@ -94,10 +94,7 @@ def test_valid_ensemble_record(raw_ensrec):
 )
 def test_inconsistent_size_ensemble_record(raw_ensrec, ensemble_size):
     with pytest.raises(pydantic.ValidationError):
-        ensrecord = ert3.data.EnsembleRecord(
-            records=raw_ensrec,
-            ensemble_size=ensemble_size,
-        )
+        ert3.data.EnsembleRecord(records=raw_ensrec, ensemble_size=ensemble_size)
 
 
 @pytest.mark.parametrize(
