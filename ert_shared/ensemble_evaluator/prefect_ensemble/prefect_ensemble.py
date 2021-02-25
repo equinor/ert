@@ -215,15 +215,11 @@ class PrefectEnsemble(_Ensemble):
                 else None,
             )
         return UnixStep(
+            step=step,
             resources=list(input_files[step["iens"]])
             + self.store_resources(step[ids.RESOURCES]),
-            outputs=step.get(ids.OUTPUTS, []),
-            job_list=step.get(ids.JOBS, []),
-            iens=step["iens"],
             cmd="python3",
             url=dispatch_url,
-            step_id=step["step_id"],
-            stage_id=step["stage_id"],
             ee_id=ee_id,
             on_failure=partial(self._on_task_failure, url=dispatch_url),
             run_path=self.config.get(ids.RUN_PATH),

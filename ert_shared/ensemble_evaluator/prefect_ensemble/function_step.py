@@ -1,5 +1,4 @@
 from prefect import Task
-from typing import Callable
 from ert_shared.ensemble_evaluator.prefect_ensemble.client import Client
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (

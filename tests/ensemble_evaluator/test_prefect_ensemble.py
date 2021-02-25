@@ -218,20 +218,23 @@ def test_unix_step(unused_tcp_port):
                 "args": ["vas"],
             }
         ]
+        step = {
+            "outputs": ["output.out"],
+            "iens": 1,
+            "step_id": "step_id_0",
+            "stage_id": "stage_id_0",
+            "jobs": jobs,
+        }
 
         stage_task = UnixStep(
+            step=step,
             resources=[resource],
-            outputs=["output.out"],
-            job_list=jobs,
-            iens=1,
             cmd="python3",
             url=url,
-            step_id="step_id_0",
-            stage_id="stage_id_0",
             ee_id="ee_id_0",
             on_failure=_on_task_failure,
-            run_path=config.get("run_path"),
-            storage_config=config.get("storage"),
+            run_path=config.get(ids.RUN_PATH),
+            storage_config=config.get(ids.STORAGE),
             max_retries=1,
             retry_delay=timedelta(seconds=2),
         )
@@ -351,20 +354,23 @@ def test_unix_step_error(unused_tcp_port):
                 "args": ["foo", "bar"],
             }
         ]
+        step = {
+            "outputs": ["output.out"],
+            "iens": 1,
+            "step_id": "step_id_0",
+            "stage_id": "stage_id_0",
+            "jobs": jobs,
+        }
 
         stage_task = UnixStep(
+            step=step,
             resources=[resource],
-            outputs=["output.out"],
-            job_list=jobs,
-            iens=1,
             cmd="python3",
             url=url,
-            step_id="step_id_0",
-            stage_id="stage_id_0",
             ee_id="ee_id_0",
             on_failure=_on_task_failure,
-            run_path=config.get("run_path"),
-            storage_config=config.get("storage"),
+            run_path=config.get(ids.RUN_PATH),
+            storage_config=config.get(ids.STORAGE),
             max_retries=1,
             retry_delay=timedelta(seconds=2),
         )
@@ -411,20 +417,23 @@ def test_on_task_failure(unused_tcp_port):
                 "args": [],
             }
         ]
+        step = {
+            "outputs": [],
+            "iens": 1,
+            "step_id": "step_id_0",
+            "stage_id": "stage_id_0",
+            "jobs": jobs,
+        }
 
         stage_task = UnixStep(
+            step=step,
             resources=[resource],
-            outputs=[],
-            job_list=jobs,
-            iens=1,
             cmd="python3",
             url=url,
-            step_id="step_id_0",
-            stage_id="stage_id_0",
             ee_id="ee_id_0",
             on_failure=partial(PrefectEnsemble._on_task_failure, url=url),
-            run_path=config.get("run_path"),
-            storage_config=config.get("storage"),
+            run_path=config.get(ids.RUN_PATH),
+            storage_config=config.get(ids.STORAGE),
             max_retries=3,
             retry_delay=timedelta(seconds=1),
         )
