@@ -3,12 +3,12 @@ import pandas as pd
 
 
 class DistributionPlot(object):
-
     def __init__(self):
         self.dimensionality = 1
 
     def plot(self, figure, plot_context, case_to_data_map, _observation_data):
         plotDistribution(figure, plot_context, case_to_data_map, _observation_data)
+
 
 def plotDistribution(figure, plot_context, case_to_data_map, _observation_data):
     """ @type plot_context: ert_gui.plottery.PlotContext """
@@ -46,7 +46,9 @@ def plotDistribution(figure, plot_context, case_to_data_map, _observation_data):
 
     config.setLegendEnabled(False)
 
-    PlotTools.finalizePlot(plot_context, figure, axes, default_x_label="Case", default_y_label="Value")
+    PlotTools.finalizePlot(
+        plot_context, figure, axes, default_x_label="Case", default_y_label="Value"
+    )
 
 
 def _plotDistribution(axes, plot_config, data, label, index, previous_data):
@@ -69,20 +71,35 @@ def _plotDistribution(axes, plot_config, data, label, index, previous_data):
 
     if data.dtype == "object":
         try:
-            data = pd.to_numeric(data, errors='coerce')
+            data = pd.to_numeric(data, errors="coerce")
         except AttributeError:
             data = data.convert_objects(convert_numeric=True)
 
     if data.dtype == "object":
         dots = []
     else:
-        dots = axes.plot([index] * len(data), data, color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, markersize=style.size)
+        dots = axes.plot(
+            [index] * len(data),
+            data,
+            color=style.color,
+            alpha=style.alpha,
+            marker=style.marker,
+            linestyle=style.line_style,
+            markersize=style.size,
+        )
 
         if plot_config.isDistributionLineEnabled() and previous_data is not None:
             line_style = plot_config.distributionLineStyle()
             x = [index - 1, index]
             y = [previous_data[0], data]
-            lines = axes.plot(x, y, color=line_style.color, alpha=line_style.alpha, linestyle=line_style.line_style, linewidth=line_style.width)
+            lines = axes.plot(
+                x,
+                y,
+                color=line_style.color,
+                alpha=line_style.alpha,
+                linestyle=line_style.line_style,
+                linewidth=line_style.width,
+            )
 
     if len(dots) > 0:
         plot_config.addLegendItem(label, dots[0])

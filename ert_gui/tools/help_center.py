@@ -72,7 +72,6 @@ class HelpCenter(object):
         """ @rtype: HelpCenter """
         return HelpCenter.__help_centers.get(name)
 
-
     @staticmethod
     def addHelpToAction(action, link, help_center_name="ERT"):
         def showHelp():

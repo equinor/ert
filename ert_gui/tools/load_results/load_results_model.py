@@ -19,7 +19,6 @@ from ert_shared import ERT
 
 
 class LoadResultsModel(object):
-
     @staticmethod
     def loadResults(selected_case, realisations, iteration):
         """
@@ -54,7 +53,6 @@ class LoadResultsModel(object):
         """ @rtype: str """
         return ERT.ert.getModelConfig().getRunpathAsString()
 
-
     @staticmethod
     def getIterationCount():
         """ @rtype: int """
@@ -73,5 +71,3 @@ class LoadResultsModel(object):
                 iteration += 1
 
         return iteration
-
-

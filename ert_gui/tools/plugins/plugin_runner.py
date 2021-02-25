@@ -5,16 +5,17 @@ from res.job_queue.ert_plugin import CancelPluginException
 from ert_gui.tools.plugins import Plugin, ProcessJobDialog
 from res.job_queue import WorkflowJob
 
+
 class PluginRunner(object):
     def __init__(self, plugin):
         """
-         @type plugin: Plugin
+        @type plugin: Plugin
         """
         super(PluginRunner, self).__init__()
 
         self.__plugin = plugin
 
-        self.__plugin_finished_callback = lambda : None
+        self.__plugin_finished_callback = lambda: None
 
         self.__result = None
 
@@ -34,7 +35,6 @@ class PluginRunner(object):
             workflow_job_thread.run = run_function
             workflow_job_thread.start()
 
-
             poll_function = partial(self.__pollRunner, plugin, dialog)
 
             poll_thread = Thread(name="ert_gui_workflow_job_poll_thread")
@@ -50,7 +50,6 @@ class PluginRunner(object):
         workflow_job = plugin.getWorkflowJob()
         self.__result = workflow_job.run(plugin.ert(), arguments)
 
-
     def __pollRunner(self, plugin, dialog):
         self.wait()
 
@@ -59,17 +58,28 @@ class PluginRunner(object):
             details = str(self.__result)
 
         if plugin.getWorkflowJob().hasFailed():
-            dialog.presentError.emit("Job Failed!", "The job '%s' has failed while running!" % plugin.getName(), details)
+            dialog.presentError.emit(
+                "Job Failed!",
+                "The job '%s' has failed while running!" % plugin.getName(),
+                details,
+            )
             dialog.disposeDialog.emit()
         elif plugin.getWorkflowJob().isCancelled():
-            dialog.presentInformation.emit("Job Cancelled!", "The job '%s' was cancelled successfully!" % plugin.getName(), details)
+            dialog.presentInformation.emit(
+                "Job Cancelled!",
+                "The job '%s' was cancelled successfully!" % plugin.getName(),
+                details,
+            )
             dialog.disposeDialog.emit()
         else:
-            dialog.presentInformation.emit("Job Completed!", "The job '%s' was completed successfully!" % plugin.getName(), details)
+            dialog.presentInformation.emit(
+                "Job Completed!",
+                "The job '%s' was completed successfully!" % plugin.getName(),
+                details,
+            )
             dialog.disposeDialog.emit()
 
         self.__plugin_finished_callback()
-
 
     def isRunning(self):
         """ @rtype: bool """

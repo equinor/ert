@@ -5,13 +5,11 @@ class PlotTools(object):
         if config.isGridEnabled():
             axes.grid()
 
-
     @staticmethod
     def showLegend(axes, plot_context):
         config = plot_context.plotConfig()
         if config.isLegendEnabled() and len(config.legendItems()) > 0:
             axes.legend(config.legendItems(), config.legendLabels(), numpoints=1)
-
 
     @staticmethod
     def _getXAxisLimits(plot_context):
@@ -23,17 +21,17 @@ class PlotTools(object):
             return limits.value_limits
         elif axis_name == plot_context.COUNT_AXIS:
             # return limits.count_limits
-            return None # Histogram takes care of itself
+            return None  # Histogram takes care of itself
         elif axis_name == plot_context.DATE_AXIS:
             return limits.date_limits
         elif axis_name == plot_context.DENSITY_AXIS:
-            return  limits.density_limits
+            return limits.density_limits
         elif axis_name == plot_context.DEPTH_AXIS:
             return limits.depth_limits
         elif axis_name == plot_context.INDEX_AXIS:
             return limits.index_limits
 
-        return None # No limits set
+        return None  # No limits set
 
     @staticmethod
     def _getYAxisLimits(plot_context):
@@ -45,22 +43,22 @@ class PlotTools(object):
             return limits.value_limits
         elif axis_name == plot_context.COUNT_AXIS:
             # return limits.count_limits
-            return None # Histogram takes care of itself
+            return None  # Histogram takes care of itself
         elif axis_name == plot_context.DATE_AXIS:
             return limits.date_limits
         elif axis_name == plot_context.DENSITY_AXIS:
-            return  limits.density_limits
+            return limits.density_limits
         elif axis_name == plot_context.DEPTH_AXIS:
             return limits.depth_limits
         elif axis_name == plot_context.INDEX_AXIS:
             return limits.index_limits
 
-        return None # No limits set
-
-
+        return None  # No limits set
 
     @staticmethod
-    def finalizePlot(plot_context, figure, axes, default_x_label="Unnamed", default_y_label="Unnamed"):
+    def finalizePlot(
+        plot_context, figure, axes, default_x_label="Unnamed", default_y_label="Unnamed"
+    ):
         """
         @type plot_context: ert_gui.plottery.PlotContext
         @type axes:
@@ -90,10 +88,9 @@ class PlotTools(object):
         if plot_context.isDateSupportActive():
             figure.autofmt_xdate()
 
-
     @staticmethod
     def __setupLabels(plot_context, default_x_label, default_y_label):
-        #ert = plot_context.ert()
+        # ert = plot_context.ert()
         key = plot_context.key()
         config = plot_context.plotConfig()
 
@@ -103,7 +100,7 @@ class PlotTools(object):
         if config.yLabel() is None:
             config.setYLabel(default_y_label)
 
-            #if ert.eclConfig().hasRefcase() and key in ert.eclConfig().getRefcase():
-                #unit = ert.eclConfig().getRefcase().unit(key)
-                #if unit != "":
-                    #config.setYLabel(unit)
+            # if ert.eclConfig().hasRefcase() and key in ert.eclConfig().getRefcase():
+            # unit = ert.eclConfig().getRefcase().unit(key)
+            # if unit != "":
+            # config.setYLabel(unit)

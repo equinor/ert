@@ -1,4 +1,11 @@
-from qtpy.QtWidgets import QWidget, QHBoxLayout, QComboBox, QDoubleSpinBox, QLabel, QHBoxLayout
+from qtpy.QtWidgets import (
+    QWidget,
+    QHBoxLayout,
+    QComboBox,
+    QDoubleSpinBox,
+    QLabel,
+    QHBoxLayout,
+)
 
 from ert_gui.plottery import PlotStyle
 
@@ -10,14 +17,27 @@ STYLE_DASHED = ("Dashed", "--")
 STYLE_DOTTED = ("Dotted", ":")
 STYLE_DASH_DOTTED = ("Dash Dotted", "-.")
 
-STYLESET_DEFAULT = 'default'
-STYLESET_AREA = 'area'
-STYLESET_TOGGLE = 'toggle_only'
+STYLESET_DEFAULT = "default"
+STYLESET_AREA = "area"
+STYLESET_TOGGLE = "toggle_only"
 
 STYLES = {
-    STYLESET_DEFAULT:  [STYLE_OFF, STYLE_SOLID, STYLE_DASHED, STYLE_DOTTED, STYLE_DASH_DOTTED],
-    STYLESET_AREA:     [STYLE_OFF, STYLE_AREA, STYLE_SOLID, STYLE_DASHED, STYLE_DOTTED, STYLE_DASH_DOTTED],
-    STYLESET_TOGGLE:   [STYLE_OFF, STYLE_SOLID]
+    STYLESET_DEFAULT: [
+        STYLE_OFF,
+        STYLE_SOLID,
+        STYLE_DASHED,
+        STYLE_DOTTED,
+        STYLE_DASH_DOTTED,
+    ],
+    STYLESET_AREA: [
+        STYLE_OFF,
+        STYLE_AREA,
+        STYLE_SOLID,
+        STYLE_DASHED,
+        STYLE_DOTTED,
+        STYLE_DASH_DOTTED,
+    ],
+    STYLESET_TOGGLE: [STYLE_OFF, STYLE_SOLID],
 }
 
 MARKER_OFF = ("Off", None)
@@ -36,7 +56,20 @@ MARKER_OCTAGON = ("Octagon", "8")
 MARKER_HEXAGON1 = ("Hexagon 1", "h")
 MARKER_HEXAGON2 = ("Hexagon 2", "H")
 
-MARKERS = [MARKER_OFF, MARKER_X, MARKER_CIRCLE, MARKER_POINT, MARKER_STAR, MARKER_DIAMOND, MARKER_PLUS, MARKER_PENTAGON, MARKER_SQUARE, MARKER_OCTAGON, MARKER_HEXAGON1, MARKER_HEXAGON2]
+MARKERS = [
+    MARKER_OFF,
+    MARKER_X,
+    MARKER_CIRCLE,
+    MARKER_POINT,
+    MARKER_STAR,
+    MARKER_DIAMOND,
+    MARKER_PLUS,
+    MARKER_PENTAGON,
+    MARKER_SQUARE,
+    MARKER_OCTAGON,
+    MARKER_HEXAGON1,
+    MARKER_HEXAGON2,
+]
 
 
 class StyleChooser(QWidget):
@@ -44,7 +77,11 @@ class StyleChooser(QWidget):
         QWidget.__init__(self)
         self._style = PlotStyle("StyleChooser Internal Style")
 
-        self._styles = STYLES['default'] if not line_style_set in STYLES else STYLES[line_style_set]
+        self._styles = (
+            STYLES["default"]
+            if not line_style_set in STYLES
+            else STYLES[line_style_set]
+        )
 
         self.setMinimumWidth(140)
         self.setMaximumHeight(25)
@@ -90,7 +127,12 @@ class StyleChooser(QWidget):
         self.thickness_spinner.valueChanged.connect(self._updateStyle)
         self.size_spinner.valueChanged.connect(self._updateStyle)
 
-        self._updateLineStyleAndMarker(self._style.line_style, self._style.marker, self._style.width, self._style.size)
+        self._updateLineStyleAndMarker(
+            self._style.line_style,
+            self._style.marker,
+            self._style.width,
+            self._style.size,
+        )
         self._layout = layout
 
     def getItemSizes(self):
@@ -98,7 +140,12 @@ class StyleChooser(QWidget):
         thickness_spinner_width = self._layout.itemAt(1).sizeHint().width()
         marker_combo_width = self._layout.itemAt(2).sizeHint().width()
         size_spinner_width = self._layout.itemAt(3).sizeHint().width()
-        return line_style_combo_width, thickness_spinner_width, marker_combo_width, size_spinner_width
+        return (
+            line_style_combo_width,
+            thickness_spinner_width,
+            marker_combo_width,
+            size_spinner_width,
+        )
 
     def _findLineStyleIndex(self, line_style):
         for index, style in enumerate(self._styles):
@@ -138,7 +185,9 @@ class StyleChooser(QWidget):
     def setStyle(self, style):
         """ @type style: PlotStyle """
         self._style.copyStyleFrom(style)
-        self._updateLineStyleAndMarker(style.line_style, style.marker, style.width, style.size)
+        self._updateLineStyleAndMarker(
+            style.line_style, style.marker, style.width, style.size
+        )
 
     def getStyle(self):
         """ @rtype: PlotStyle """
@@ -158,4 +207,3 @@ class StyleChooser(QWidget):
             layout.addWidget(label)
 
         return layout
-

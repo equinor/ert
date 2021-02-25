@@ -1,5 +1,6 @@
 from .plot_config import PlotConfig
 
+
 class PlotContext(object):
     UNKNOWN_AXIS = None
     VALUE_AXIS = "VALUE"
@@ -8,7 +9,15 @@ class PlotContext(object):
     COUNT_AXIS = "COUNT"
     DENSITY_AXIS = "DENSITY"
     DEPTH_AXIS = "DEPTH"
-    AXIS_TYPES = [UNKNOWN_AXIS, COUNT_AXIS, DATE_AXIS, DENSITY_AXIS, DEPTH_AXIS, INDEX_AXIS, VALUE_AXIS]
+    AXIS_TYPES = [
+        UNKNOWN_AXIS,
+        COUNT_AXIS,
+        DATE_AXIS,
+        DENSITY_AXIS,
+        DEPTH_AXIS,
+        INDEX_AXIS,
+        VALUE_AXIS,
+    ]
 
     def __init__(self, plot_config, cases, key):
         super(PlotContext, self).__init__()
@@ -51,7 +60,9 @@ class PlotContext(object):
     def x_axis(self, value):
         """ @type value: str """
         if not value in PlotContext.AXIS_TYPES:
-            raise UserWarning("Axis: '%s' is not one of: %s" % (value, PlotContext.AXIS_TYPES))
+            raise UserWarning(
+                "Axis: '%s' is not one of: %s" % (value, PlotContext.AXIS_TYPES)
+            )
         self._x_axis = value
 
     @property
@@ -63,7 +74,9 @@ class PlotContext(object):
     def y_axis(self, value):
         """ @type value: str """
         if not value in PlotContext.AXIS_TYPES:
-            raise UserWarning("Axis: '%s' is not one of: %s" % (value, PlotContext.AXIS_TYPES))
+            raise UserWarning(
+                "Axis: '%s' is not one of: %s" % (value, PlotContext.AXIS_TYPES)
+            )
         self._y_axis = value
 
     @property

@@ -11,7 +11,11 @@ class TargetCaseModel(ValueModel):
         ERT.ertChanged.connect(self._caseChanged)
 
     def setValue(self, target_case):
-        if target_case is None or target_case.strip() == "" or target_case == self.getDefaultValue():
+        if (
+            target_case is None
+            or target_case.strip() == ""
+            or target_case == self.getDefaultValue()
+        ):
             self._custom = False
             ValueModel.setValue(self, self.getDefaultValue())
         else:
@@ -29,7 +33,6 @@ class TargetCaseModel(ValueModel):
         else:
             case_name = getCurrentCaseName()
             return "%s_smoother_update" % case_name
-
 
     def _caseChanged(self):
         if not self._custom:

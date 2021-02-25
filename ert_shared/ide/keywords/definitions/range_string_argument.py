@@ -11,7 +11,6 @@ class RangeStringArgument(ArgumentDefinition):
     RANGE_PATTERN = re.compile(r"^[ \t]*([0-9]+)[ \t]*-[ \t]*([0-9]+)[ \t]*$")
     NUMBER_PATTERN = re.compile(r"^[ \t]*([0-9]+)[ \t]*$")
 
-
     def __init__(self, max_value=None, **kwargs):
         super(RangeStringArgument, self).__init__(**kwargs)
         self.__max_value = max_value
@@ -26,7 +25,9 @@ class RangeStringArgument(ArgumentDefinition):
 
             if match is None:
                 validation_status.setFailed()
-                validation_status.addToMessage(RangeStringArgument.NOT_A_VALID_RANGE_STRING)
+                validation_status.addToMessage(
+                    RangeStringArgument.NOT_A_VALID_RANGE_STRING
+                )
             else:
 
                 groups = token.split(",")
@@ -35,10 +36,11 @@ class RangeStringArgument(ArgumentDefinition):
                     range_match = RangeStringArgument.RANGE_PATTERN.match(group)
                     number_match = RangeStringArgument.NUMBER_PATTERN.match(group)
 
-
                     if range_match is None and number_match is None:
                         validation_status.setFailed()
-                        validation_status.addToMessage(RangeStringArgument.NOT_A_VALID_RANGE_STRING)
+                        validation_status.addToMessage(
+                            RangeStringArgument.NOT_A_VALID_RANGE_STRING
+                        )
                         break
 
                     if range_match:
@@ -47,12 +49,19 @@ class RangeStringArgument(ArgumentDefinition):
 
                         if not num_2 > num_1:
                             validation_status.setFailed()
-                            validation_status.addToMessage(RangeStringArgument.NOT_A_VALID_RANGE_STRING)
+                            validation_status.addToMessage(
+                                RangeStringArgument.NOT_A_VALID_RANGE_STRING
+                            )
                             break
 
-                        if self.__max_value is not None and (num_1 >= self.__max_value or num_2 >= self.__max_value):
+                        if self.__max_value is not None and (
+                            num_1 >= self.__max_value or num_2 >= self.__max_value
+                        ):
                             validation_status.setFailed()
-                            validation_status.addToMessage(RangeStringArgument.VALUE_NOT_IN_RANGE % (self.__max_value - 1))
+                            validation_status.addToMessage(
+                                RangeStringArgument.VALUE_NOT_IN_RANGE
+                                % (self.__max_value - 1)
+                            )
                             break
 
                     if number_match and self.__max_value is not None:
@@ -60,10 +69,11 @@ class RangeStringArgument(ArgumentDefinition):
 
                         if num >= self.__max_value:
                             validation_status.setFailed()
-                            validation_status.addToMessage(RangeStringArgument.VALUE_NOT_IN_RANGE % (self.__max_value - 1))
+                            validation_status.addToMessage(
+                                RangeStringArgument.VALUE_NOT_IN_RANGE
+                                % (self.__max_value - 1)
+                            )
                             break
-
-
 
                 validation_status.setValue(token)
 

@@ -6,7 +6,6 @@ class Argument(Token):
         super(Argument, self).__init__(from_index, to_index, line)
         self.__argument_definition = None
 
-
     def setArgumentDefinition(self, argument_definition):
         self.__argument_definition = argument_definition
 
@@ -17,11 +16,3 @@ class Argument(Token):
     def hasArgumentDefinition(self):
         """ @rtype: bool """
         return self.__argument_definition is not None
-
-
-
-
-
-
-
-

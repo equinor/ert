@@ -12,7 +12,13 @@ class PluginsTool(Tool):
         @type plugin_handler: PluginHandler
         """
         enabled = len(plugin_handler) > 0
-        super(PluginsTool, self).__init__("Plugins", "tools/plugins", resourceIcon("ide/plugin"), enabled, popup_menu=True)
+        super(PluginsTool, self).__init__(
+            "Plugins",
+            "tools/plugins",
+            resourceIcon("ide/plugin"),
+            enabled,
+            popup_menu=True,
+        )
 
         self.__plugins = {}
 
@@ -28,7 +34,5 @@ class PluginsTool(Tool):
 
         self.getAction().setMenu(menu)
 
-
     def trigger(self):
-        ERT.emitErtChange() # plugin may have added new cases.
-
+        ERT.emitErtChange()  # plugin may have added new cases.

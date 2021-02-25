@@ -9,12 +9,14 @@ from ert_gui.tools import HelpCenter
 class HelpWindow(QMainWindow):
     help_prefix = None
     default_help_string = "No help available!"
-    validation_template = ("<html>"
-                           "<table style='background-color: #ffefef;'width='100%%'>"
-                           "<tr><td style='font-weight: bold; padding-left: 5px;'>Notice:</td></tr>"
-                           "<tr><td style='padding: 5px;'>%s</td></tr>"
-                           "</table>"
-                           "</html>")
+    validation_template = (
+        "<html>"
+        "<table style='background-color: #ffefef;'width='100%%'>"
+        "<tr><td style='font-weight: bold; padding-left: 5px;'>Notice:</td></tr>"
+        "<tr><td style='padding: 5px;'>%s</td></tr>"
+        "</table>"
+        "</html>"
+    )
 
     visibilityChanged = Signal(bool)
 
@@ -55,11 +57,9 @@ class HelpWindow(QMainWindow):
         # settings = QSettings("Equinor", "Ert-Gui")
         # self.restoreGeometry(settings.value("ert-gui-help/geometry").toByteArray())
 
-
     def openHelpURL(self, q_string):
         url = QUrl(q_string)
         QDesktopServices.openUrl(url)
-
 
     def setHelpMessage(self, help_link, message):
         self.link_widget.setText(help_link)
@@ -75,7 +75,6 @@ class HelpWindow(QMainWindow):
         self.__position = self.pos()
         self.__geometry = self.geometry()
         self.visibilityChanged.emit(False)
-
 
     def keyPressEvent(self, event):
         if event.key() != Qt.Key_Escape:

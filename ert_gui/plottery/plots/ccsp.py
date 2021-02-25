@@ -5,12 +5,14 @@ import pandas as pd
 
 
 class CrossCaseStatisticsPlot(object):
-
     def __init__(self):
         self.dimensionality = 1
 
     def plot(self, figure, plot_context, case_to_data_map, _observation_data):
-        plotCrossCaseStatistics(figure,plot_context, case_to_data_map, _observation_data)
+        plotCrossCaseStatistics(
+            figure, plot_context, case_to_data_map, _observation_data
+        )
+
 
 def plotCrossCaseStatistics(figure, plot_context, case_to_data_map, _observation_data):
     """ @type plot_context: ert_gui.plottery.PlotContext """
@@ -38,7 +40,7 @@ def plotCrossCaseStatistics(figure, plot_context, case_to_data_map, _observation
         "p33": {},
         "p50": {},
         "p67": {},
-        "p90": {}
+        "p90": {},
     }
     for case_index, (case, data) in enumerate(case_to_data_map.items()):
         case_indexes.append(case_index)
@@ -74,7 +76,9 @@ def plotCrossCaseStatistics(figure, plot_context, case_to_data_map, _observation
 
     axes.set_xticklabels([""] + case_list + [""], rotation=rotation)
 
-    PlotTools.finalizePlot(plot_context, figure, axes, default_x_label="Case", default_y_label="Value")
+    PlotTools.finalizePlot(
+        plot_context, figure, axes, default_x_label="Case", default_y_label="Value"
+    )
 
 
 def _addStatisticsLegends(plot_config):
@@ -90,10 +94,20 @@ def _addStatisticsLegend(plot_config, style_name, alpha_multiplier=1.0):
     style = plot_config.getStatisticsStyle(style_name)
     if style.isVisible():
         if style.line_style == "#":
-            rectangle = Rectangle((0, 0), 1, 1, color='black', alpha=style.alpha * alpha_multiplier)  # creates rectangle patch for legend use.
+            rectangle = Rectangle(
+                (0, 0), 1, 1, color="black", alpha=style.alpha * alpha_multiplier
+            )  # creates rectangle patch for legend use.
             plot_config.addLegendItem(style.name, rectangle)
         else:
-            line = Line2D([], [], color='black', marker=style.marker, linestyle=style.line_style, linewidth=style.width, alpha=style.alpha)
+            line = Line2D(
+                [],
+                [],
+                color="black",
+                marker=style.marker,
+                linestyle=style.line_style,
+                linewidth=style.width,
+                alpha=style.alpha,
+            )
             plot_config.addLegendItem(style.name, line)
 
 
@@ -101,7 +115,7 @@ def _assertNumeric(data):
     data = data[0]
     if data.dtype == "object":
         try:
-            data = pd.to_numeric(data, errors='coerce')
+            data = pd.to_numeric(data, errors="coerce")
         except AttributeError:
             data = data.convert_objects(convert_numeric=True)
 
@@ -123,31 +137,111 @@ def _plotCrossCaseStatistics(axes, plot_config, data, index):
 
     style = plot_config.getStatisticsStyle("mean")
     if style.isVisible():
-        axes.plot([index], data["mean"][index], alpha=style.alpha, linestyle="", color=style.color, marker=style.marker, markersize=style.size)
+        axes.plot(
+            [index],
+            data["mean"][index],
+            alpha=style.alpha,
+            linestyle="",
+            color=style.color,
+            marker=style.marker,
+            markersize=style.size,
+        )
 
     style = plot_config.getStatisticsStyle("p50")
     if style.isVisible():
-        axes.plot([index], data["p50"][index], alpha=style.alpha, linestyle="", color=style.color, marker=style.marker, markersize=style.size)
+        axes.plot(
+            [index],
+            data["p50"][index],
+            alpha=style.alpha,
+            linestyle="",
+            color=style.color,
+            marker=style.marker,
+            markersize=style.size,
+        )
 
     style = plot_config.getStatisticsStyle("std")
     if style.isVisible():
-        axes.plot([index], data["mean"][index] + data["std"][index], alpha=style.alpha, linestyle="", color=style.color, marker=style.marker, markersize=style.size)
-        axes.plot([index], data["mean"][index] - data["std"][index], alpha=style.alpha, linestyle="", color=style.color, marker=style.marker, markersize=style.size)
+        axes.plot(
+            [index],
+            data["mean"][index] + data["std"][index],
+            alpha=style.alpha,
+            linestyle="",
+            color=style.color,
+            marker=style.marker,
+            markersize=style.size,
+        )
+        axes.plot(
+            [index],
+            data["mean"][index] - data["std"][index],
+            alpha=style.alpha,
+            linestyle="",
+            color=style.color,
+            marker=style.marker,
+            markersize=style.size,
+        )
 
     style = plot_config.getStatisticsStyle("min-max")
     if style.isVisible():
-        axes.plot([index], data["min"][index], alpha=style.alpha, linestyle="", color=style.color, marker=style.marker, markersize=style.size)
-        axes.plot([index], data["max"][index], alpha=style.alpha, linestyle="", color=style.color, marker=style.marker, markersize=style.size)
+        axes.plot(
+            [index],
+            data["min"][index],
+            alpha=style.alpha,
+            linestyle="",
+            color=style.color,
+            marker=style.marker,
+            markersize=style.size,
+        )
+        axes.plot(
+            [index],
+            data["max"][index],
+            alpha=style.alpha,
+            linestyle="",
+            color=style.color,
+            marker=style.marker,
+            markersize=style.size,
+        )
 
     style = plot_config.getStatisticsStyle("p10-p90")
     if style.isVisible():
-        axes.plot([index], data["p10"][index], alpha=style.alpha, linestyle="", color=style.color, marker=style.marker, markersize=style.size)
-        axes.plot([index], data["p90"][index], alpha=style.alpha, linestyle="", color=style.color, marker=style.marker, markersize=style.size)
+        axes.plot(
+            [index],
+            data["p10"][index],
+            alpha=style.alpha,
+            linestyle="",
+            color=style.color,
+            marker=style.marker,
+            markersize=style.size,
+        )
+        axes.plot(
+            [index],
+            data["p90"][index],
+            alpha=style.alpha,
+            linestyle="",
+            color=style.color,
+            marker=style.marker,
+            markersize=style.size,
+        )
 
     style = plot_config.getStatisticsStyle("p33-p67")
     if style.isVisible():
-        axes.plot([index], data["p33"][index], alpha=style.alpha, linestyle="", color=style.color, marker=style.marker, markersize=style.size)
-        axes.plot([index], data["p67"][index], alpha=style.alpha, linestyle="", color=style.color, marker=style.marker, markersize=style.size)
+        axes.plot(
+            [index],
+            data["p33"][index],
+            alpha=style.alpha,
+            linestyle="",
+            color=style.color,
+            marker=style.marker,
+            markersize=style.size,
+        )
+        axes.plot(
+            [index],
+            data["p67"][index],
+            alpha=style.alpha,
+            linestyle="",
+            color=style.color,
+            marker=style.marker,
+            markersize=style.size,
+        )
 
 
 def _plotConnectionLines(axes, plot_config, ccs):
@@ -168,12 +262,26 @@ def _plotConnectionLines(axes, plot_config, ccs):
         style = plot_config.getStatisticsStyle("mean")
         if style.isVisible():
             y = [ccs["mean"][from_index], ccs["mean"][to_index]]
-            axes.plot(x, y, alpha=line_style.alpha, linestyle=style.line_style, color=line_style.color, linewidth=style.width)
+            axes.plot(
+                x,
+                y,
+                alpha=line_style.alpha,
+                linestyle=style.line_style,
+                color=line_style.color,
+                linewidth=style.width,
+            )
 
         style = plot_config.getStatisticsStyle("p50")
         if style.isVisible():
             y = [ccs["p50"][from_index], ccs["p50"][to_index]]
-            axes.plot(x, y, alpha=line_style.alpha, linestyle=style.line_style, color=line_style.color, linewidth=style.width)
+            axes.plot(
+                x,
+                y,
+                alpha=line_style.alpha,
+                linestyle=style.line_style,
+                color=line_style.color,
+                linewidth=style.width,
+            )
 
         style = plot_config.getStatisticsStyle("std")
         if style.isVisible():
@@ -187,8 +295,22 @@ def _plotConnectionLines(axes, plot_config, ccs):
             if linestyle == "#":
                 linestyle = ""
 
-            axes.plot(x, y_1, alpha=style.alpha, linestyle=linestyle, color=line_style.color, linewidth=style.width)
-            axes.plot(x, y_2, alpha=style.alpha, linestyle=linestyle, color=line_style.color, linewidth=style.width)
+            axes.plot(
+                x,
+                y_1,
+                alpha=style.alpha,
+                linestyle=linestyle,
+                color=line_style.color,
+                linewidth=style.width,
+            )
+            axes.plot(
+                x,
+                y_2,
+                alpha=style.alpha,
+                linestyle=linestyle,
+                color=line_style.color,
+                linewidth=style.width,
+            )
 
         style = plot_config.getStatisticsStyle("min-max")
         if style.isVisible():
@@ -199,8 +321,22 @@ def _plotConnectionLines(axes, plot_config, ccs):
             if linestyle == "#":
                 linestyle = ""
 
-            axes.plot(x, y_1, alpha=style.alpha, linestyle=linestyle, color=line_style.color, linewidth=style.width)
-            axes.plot(x, y_2, alpha=style.alpha, linestyle=linestyle, color=line_style.color, linewidth=style.width)
+            axes.plot(
+                x,
+                y_1,
+                alpha=style.alpha,
+                linestyle=linestyle,
+                color=line_style.color,
+                linewidth=style.width,
+            )
+            axes.plot(
+                x,
+                y_2,
+                alpha=style.alpha,
+                linestyle=linestyle,
+                color=line_style.color,
+                linewidth=style.width,
+            )
 
         style = plot_config.getStatisticsStyle("p10-p90")
         if style.isVisible():
@@ -211,8 +347,22 @@ def _plotConnectionLines(axes, plot_config, ccs):
             if linestyle == "#":
                 linestyle = ""
 
-            axes.plot(x, y_1, alpha=style.alpha, linestyle=linestyle, color=line_style.color, linewidth=style.width)
-            axes.plot(x, y_2, alpha=style.alpha, linestyle=linestyle, color=line_style.color, linewidth=style.width)
+            axes.plot(
+                x,
+                y_1,
+                alpha=style.alpha,
+                linestyle=linestyle,
+                color=line_style.color,
+                linewidth=style.width,
+            )
+            axes.plot(
+                x,
+                y_2,
+                alpha=style.alpha,
+                linestyle=linestyle,
+                color=line_style.color,
+                linewidth=style.width,
+            )
 
         style = plot_config.getStatisticsStyle("p33-p67")
         if style.isVisible():
@@ -223,6 +373,19 @@ def _plotConnectionLines(axes, plot_config, ccs):
             if linestyle == "#":
                 linestyle = ""
 
-            axes.plot(x, y_1, alpha=style.alpha, linestyle=linestyle, color=line_style.color, linewidth=style.width)
-            axes.plot(x, y_2, alpha=style.alpha, linestyle=linestyle, color=line_style.color, linewidth=style.width)
-
+            axes.plot(
+                x,
+                y_1,
+                alpha=style.alpha,
+                linestyle=linestyle,
+                color=line_style.color,
+                linewidth=style.width,
+            )
+            axes.plot(
+                x,
+                y_2,
+                alpha=style.alpha,
+                linestyle=linestyle,
+                color=line_style.color,
+                linewidth=style.width,
+            )

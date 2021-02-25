@@ -3,7 +3,6 @@ from tests import ErtTest
 
 
 class PercentArgumentTest(ErtTest):
-
     def test_percent_range_argument(self):
         from_value = 10
         to_value = 20
@@ -23,11 +22,15 @@ class PercentArgumentTest(ErtTest):
         self.assertFalse(validation_status)
 
         range_string = "%g%% <= %g%% <= %g%%" % (from_value, value, to_value)
-        self.assertEqual(validation_status.message(), PercentArgument.NOT_IN_RANGE % range_string)
+        self.assertEqual(
+            validation_status.message(), PercentArgument.NOT_IN_RANGE % range_string
+        )
 
         value = 21
         validation_status = percent.validate("%d%%" % value)
         self.assertFalse(validation_status)
 
         range_string = "%g%% <= %g%% <= %g%%" % (from_value, value, to_value)
-        self.assertEqual(validation_status.message(), PercentArgument.NOT_IN_RANGE % range_string)
+        self.assertEqual(
+            validation_status.message(), PercentArgument.NOT_IN_RANGE % range_string
+        )

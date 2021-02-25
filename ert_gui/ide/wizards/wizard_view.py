@@ -19,7 +19,6 @@ class WizardView(QTreeView):
 
         self.header().hide()
 
-
     def addGroup(self, group_name):
         if group_name in self.__groups:
             raise ValueError("A group with name: %s already exists!" % group_name)
@@ -31,7 +30,6 @@ class WizardView(QTreeView):
 
         self.__tree_model.emitChange()
 
-
     def addItemToGroup(self, group, item):
         group_item = self.__groups[group]
 
@@ -39,5 +37,3 @@ class WizardView(QTreeView):
         group_item.addChild(child_item)
 
         self.__tree_model.emitChange()
-
-

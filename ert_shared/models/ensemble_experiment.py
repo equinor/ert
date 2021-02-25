@@ -28,7 +28,9 @@ class EnsembleExperiment(BaseRunModel):
 
         if FeatureToggling.is_enabled("ensemble-evaluator"):
             ee_config = arguments["ee_config"]
-            num_successful_realizations = self.run_ensemble_evaluator(run_context, ee_config)
+            num_successful_realizations = self.run_ensemble_evaluator(
+                run_context, ee_config
+            )
         else:
             self._job_queue = self._queue_config.create_job_queue()
             num_successful_realizations = (

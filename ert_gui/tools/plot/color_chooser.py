@@ -7,6 +7,7 @@ class ColorBox(QFrame):
     colorChanged = Signal(QColor)
 
     """A widget that shows a colored box"""
+
     def __init__(self, color, size=15):
         QFrame.__init__(self)
         self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
@@ -37,7 +38,9 @@ class ColorBox(QFrame):
         QFrame.paintEvent(self, paint_event)
 
     def mouseReleaseEvent(self, QMouseEvent):
-        color = QColorDialog.getColor(self._color, self, "Select color", QColorDialog.ShowAlphaChannel)
+        color = QColorDialog.getColor(
+            self._color, self, "Select color", QColorDialog.ShowAlphaChannel
+        )
 
         if color.isValid():
             self._color = color

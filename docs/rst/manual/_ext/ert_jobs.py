@@ -1,4 +1,7 @@
-from ert_shared._doc_utils.ert_jobs import ErtForwardModelDocumentation, ErtWorkflowDocumentation
+from ert_shared._doc_utils.ert_jobs import (
+    ErtForwardModelDocumentation,
+    ErtWorkflowDocumentation,
+)
 
 
 def setup(app):

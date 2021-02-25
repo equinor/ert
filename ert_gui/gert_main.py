@@ -75,7 +75,9 @@ def _start_window(ert, args):
     window = _setup_main_window(ert, args)
 
     minimum_splash_screen_time = 2
-    sleep_time_left = minimum_splash_screen_time - (time.time() - splash_screen_start_time)
+    sleep_time_left = minimum_splash_screen_time - (
+        time.time() - splash_screen_start_time
+    )
     if sleep_time_left > 0:
         time.sleep(sleep_time_left)
 
@@ -98,6 +100,7 @@ def _start_window(ert, args):
         )
 
     return window
+
 
 def _check_locale():
     # There seems to be a setlocale() call deep down in the initialization of
@@ -127,7 +130,9 @@ def _setup_main_window(ert, args):
     plugin_handler = PluginHandler(ert, ert.getWorkflowList().getPluginJobs(), window)
     help_tool = HelpTool("ERT", window)
 
-    window.addDock("Configuration Summary", SummaryPanel(), area=Qt.BottomDockWidgetArea)
+    window.addDock(
+        "Configuration Summary", SummaryPanel(), area=Qt.BottomDockWidgetArea
+    )
     window.addTool(IdeTool(config_file, help_tool))
     window.addTool(PlotTool(config_file))
     window.addTool(ExportTool())

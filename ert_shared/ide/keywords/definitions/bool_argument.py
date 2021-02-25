@@ -1,4 +1,3 @@
-
 import re
 from ert_shared.ide.keywords.definitions import ArgumentDefinition
 
@@ -7,12 +6,11 @@ class BoolArgument(ArgumentDefinition):
 
     NOT_BOOL = "The argument must be TRUE or FALSE."
 
-    true_pattern  = re.compile("^(1|T|[Tt][Rr][Uu][Ee])$")
-    false_pattern  = re.compile("^(0|F|[Ff][Aa][Ll][Ss][Ee])$")
+    true_pattern = re.compile("^(1|T|[Tt][Rr][Uu][Ee])$")
+    false_pattern = re.compile("^(0|F|[Ff][Aa][Ll][Ss][Ee])$")
 
     def __init__(self, **kwargs):
         super(BoolArgument, self).__init__(**kwargs)
-
 
     def validate(self, token):
         validation_status = super(BoolArgument, self).validate(token)
@@ -27,10 +25,3 @@ class BoolArgument(ArgumentDefinition):
             validation_status.setValue(true_match is not None)
 
         return validation_status
-
-
-
-
-
-
-

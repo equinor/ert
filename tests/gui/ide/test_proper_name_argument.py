@@ -3,7 +3,6 @@ from tests import ErtTest
 
 
 class ProperNameArgumentTest(ErtTest):
-
     def test_proper_name_argument(self):
 
         argument = ProperNameArgument()
@@ -15,4 +14,3 @@ class ProperNameArgumentTest(ErtTest):
 
         self.assertFalse(argument.validate("-NA ME-"))
         self.assertFalse(argument.validate("NAME*"))
-

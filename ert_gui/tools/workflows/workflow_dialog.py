@@ -14,9 +14,8 @@ class WorkflowDialog(QDialog):
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
 
-
         layout = QVBoxLayout()
-        layout.setSizeConstraint(QLayout.SetFixedSize) # not resizable!!!
+        layout.setSizeConstraint(QLayout.SetFixedSize)  # not resizable!!!
         layout.addWidget(widget)
 
         button_layout = QHBoxLayout()
@@ -30,7 +29,6 @@ class WorkflowDialog(QDialog):
 
         self.setLayout(layout)
 
-
     def disableCloseButton(self):
         self.close_button.setEnabled(False)
 
@@ -42,4 +40,3 @@ class WorkflowDialog(QDialog):
             pass
         else:
             QDialog.keyPressEvent(self, q_key_event)
-

@@ -22,7 +22,11 @@ from ert_gui.tools.load_results import LoadResultsPanel
 
 class LoadResultsTool(Tool):
     def __init__(self):
-        super(LoadResultsTool, self).__init__("Load results manually", "tools/load_manually", resourceIcon("ide/table_import"))
+        super(LoadResultsTool, self).__init__(
+            "Load results manually",
+            "tools/load_manually",
+            resourceIcon("ide/table_import"),
+        )
         self.__import_widget = None
         self.__dialog = None
         self.setEnabled(LoadResultsModel.isValidRunPath())
@@ -30,7 +34,9 @@ class LoadResultsTool(Tool):
     def trigger(self):
         if self.__import_widget is None:
             self.__import_widget = LoadResultsPanel()
-        self.__dialog = ClosableDialog("Load results manually", self.__import_widget, self.parent())
+        self.__dialog = ClosableDialog(
+            "Load results manually", self.__import_widget, self.parent()
+        )
         self.__import_widget.setCurrectCase()
         self.__dialog.addButton("Load", self.load)
         self.__dialog.exec_()

@@ -34,5 +34,3 @@ class ValidationStatus(object):
 
     def __str__(self):
         return self.__message
-
-

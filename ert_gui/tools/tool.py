@@ -4,7 +4,15 @@ from ert_gui.tools import HelpCenter
 
 
 class Tool(object):
-    def __init__(self, name, help_link="", icon=None, enabled=True, checkable=False, popup_menu=False):
+    def __init__(
+        self,
+        name,
+        help_link="",
+        icon=None,
+        enabled=True,
+        checkable=False,
+        popup_menu=False,
+    ):
         super(Tool, self).__init__()
         self.__icon = icon
         self.__name = name
@@ -43,7 +51,6 @@ class Tool(object):
 
     def getHelpLink(self):
         return self.__help_link
-
 
     def getAction(self):
         return self.__action

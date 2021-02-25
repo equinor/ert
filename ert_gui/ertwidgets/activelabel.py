@@ -19,7 +19,6 @@ class ActiveLabel(QLabel):
 
         self.updateLabel()
 
-
     def updateLabel(self):
         """Retrieves data from the model and inserts it into the edit line"""
         model_value = self._model.getValue()

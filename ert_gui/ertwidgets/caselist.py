@@ -1,5 +1,14 @@
 from qtpy.QtCore import QSize
-from qtpy.QtWidgets import QListWidget, QMessageBox, QAbstractItemView, QWidget, QVBoxLayout, QLabel, QToolButton, QHBoxLayout
+from qtpy.QtWidgets import (
+    QListWidget,
+    QMessageBox,
+    QAbstractItemView,
+    QWidget,
+    QVBoxLayout,
+    QLabel,
+    QToolButton,
+    QHBoxLayout,
+)
 
 from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget
@@ -55,8 +64,8 @@ class AddRemoveWidget(QWidget):
         """Enable or disable the remove button"""
         self.removeButton.setEnabled(state)
 
-class CaseList(QWidget):
 
+class CaseList(QWidget):
     def __init__(self):
         QWidget.__init__(self)
 
@@ -73,7 +82,9 @@ class CaseList(QWidget):
         layout.addWidget(QLabel("Available Cases:"))
         layout.addWidget(self._list)
 
-        self._addRemoveWidget = AddRemoveWidget(self.addItem, self.removeItem, horizontal=True)
+        self._addRemoveWidget = AddRemoveWidget(
+            self.addItem, self.removeItem, horizontal=True
+        )
         self._addRemoveWidget.enableRemoveButton(False)
         layout.addWidget(self._addRemoveWidget)
 
@@ -91,7 +102,6 @@ class CaseList(QWidget):
         else:
             self._list.setSelectionMode(QAbstractItemView.NoSelection)
 
-
     def addItem(self):
         dialog = ValidatedDialog("New case", "Enter name of new case:", getAllCases())
         new_case_name = dialog.showAndTell()
@@ -101,7 +111,6 @@ class CaseList(QWidget):
     def removeItem(self):
         message = "Support for removal of items has not been implemented!"
         QMessageBox.information(self, "Not implemented!", message)
-
 
     def updateList(self):
         """Retrieves data from the model and inserts it into the list"""

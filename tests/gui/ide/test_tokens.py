@@ -16,7 +16,6 @@ class TokenTest(ErtTest):
         self.assertTrue(9 in token)
         self.assertTrue(not 10 in token)
 
-
     def test_empty_token(self):
         token = Token(4, 4, "text")
 
@@ -33,7 +32,6 @@ class TokenTest(ErtTest):
         self.assertEqual(keyword.value(), num_realizations)
         self.assertEqual(keyword_def, keyword.keywordDefinition())
         self.assertTrue(keyword.hasKeywordDefinition())
-
 
     def test_argument(self):
         text = "KEYWORD arg1 arg2"
@@ -53,8 +51,3 @@ class TokenTest(ErtTest):
 
         self.assertFalse(arg2.hasArgumentDefinition())
         self.assertIsNone(arg2.argumentDefinition())
-
-
-
-
-

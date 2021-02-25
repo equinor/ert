@@ -5,7 +5,6 @@ from ert_gui.plottery.plots.refcase import plotRefcase
 
 
 class EnsemblePlot(object):
-
     def __init__(self):
         self.dimensionality = 2
 
@@ -29,7 +28,9 @@ class EnsemblePlot(object):
                     plot_context.deactivateDateSupport()
                     plot_context.x_axis = plot_context.INDEX_AXIS
 
-                self._plotLines(axes, config, data, case, plot_context.isDateSupportActive())
+                self._plotLines(
+                    axes, config, data, case, plot_context.isDateSupportActive()
+                )
                 config.nextColor()
 
         plotRefcase(plot_context, axes)
@@ -37,8 +38,13 @@ class EnsemblePlot(object):
         plotHistory(plot_context, axes)
 
         default_x_label = "Date" if plot_context.isDateSupportActive() else "Index"
-        PlotTools.finalizePlot(plot_context, figure, axes, default_x_label=default_x_label, default_y_label="Value")
-
+        PlotTools.finalizePlot(
+            plot_context,
+            figure,
+            axes,
+            default_x_label=default_x_label,
+            default_y_label="Value",
+        )
 
     def _plotLines(self, axes, plot_config, data, ensemble_label, is_date_supported):
         """
@@ -50,13 +56,31 @@ class EnsemblePlot(object):
 
         style = plot_config.defaultStyle()
 
-        if len(data) == 1 and style.marker == '':
-            style.marker = '.'
+        if len(data) == 1 and style.marker == "":
+            style.marker = "."
 
         if is_date_supported:
-            lines = axes.plot_date(x=data.index.to_numpy(), y=data.to_numpy(), color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, linewidth=style.width, markersize=style.size)
+            lines = axes.plot_date(
+                x=data.index.to_numpy(),
+                y=data.to_numpy(),
+                color=style.color,
+                alpha=style.alpha,
+                marker=style.marker,
+                linestyle=style.line_style,
+                linewidth=style.width,
+                markersize=style.size,
+            )
         else:
-            lines = axes.plot(data.index.to_numpy(), data.to_numpy(), color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, linewidth=style.width, markersize=style.size)
+            lines = axes.plot(
+                data.index.to_numpy(),
+                data.to_numpy(),
+                color=style.color,
+                alpha=style.alpha,
+                marker=style.marker,
+                linestyle=style.line_style,
+                linewidth=style.width,
+                markersize=style.size,
+            )
 
         if len(lines) > 0:
             plot_config.addLegendItem(ensemble_label, lines[0])

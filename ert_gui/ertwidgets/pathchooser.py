@@ -1,17 +1,17 @@
-#  Copyright (C) 2011  Equinor ASA, Norway. 
-#   
+#  Copyright (C) 2011  Equinor ASA, Norway.
+#
 #  The file 'pathchooser.py' is part of ERT - Ensemble based Reservoir Tool.
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
 import re
@@ -36,12 +36,12 @@ class PathChooser(QWidget):
     PATH_IS_NOT_A_DIRECTORY_MSG = "The specified path must be a directory."
     REQUIRED_FIELD_MSG = "A path is required."
 
-#    UNDEFINED = 0
-#    REQUIRED = 1
-#    FILE = 2
-#    DIRECTORY = 4
-#    MUST_EXIST = 8
-#    EXECUTABLE = 16
+    #    UNDEFINED = 0
+    #    REQUIRED = 1
+    #    FILE = 2
+    #    DIRECTORY = 4
+    #    MUST_EXIST = 8
+    #    EXECUTABLE = 16
 
     def __init__(self, model, help_link=""):
         """
@@ -68,7 +68,9 @@ class PathChooser(QWidget):
         dialog_button.clicked.connect(self.selectPath)
         layout.addWidget(dialog_button)
 
-        self.valid_color = self._path_line.palette().color(self._path_line.backgroundRole())
+        self.valid_color = self._path_line.palette().color(
+            self._path_line.backgroundRole()
+        )
 
         self._path_line.setText(os.getcwd())
         self._editing = False
@@ -82,7 +84,6 @@ class PathChooser(QWidget):
 
         self.setLayout(layout)
         self.getPathFromModel()
-
 
     def isPathValid(self, path):
         """ @rtype: tuple of (bool, str) """
@@ -104,7 +105,7 @@ class PathChooser(QWidget):
             if self._model.pathMustExist():
                 valid = False
                 message = PathChooser.PATH_DOES_NOT_EXIST_MSG
-            #todo: check if new (non-existing) file has directory or file format?
+            # todo: check if new (non-existing) file has directory or file format?
         elif path_exists:
             if self._model.pathMustBeExecutable() and is_file and not is_executable:
                 valid = False
@@ -120,7 +121,6 @@ class PathChooser(QWidget):
                 message = PathChooser.PATH_IS_NOT_A_FILE_MSG
 
         return valid, message
-
 
     def validatePath(self):
         """Called whenever the path is modified"""
@@ -141,7 +141,6 @@ class PathChooser(QWidget):
 
         self._path_line.setPalette(palette)
 
-
     def getPath(self):
         """Returns the path"""
         return os.path.expanduser(str(self._path_line.text()).strip())
@@ -156,13 +155,17 @@ class PathChooser(QWidget):
         self._editing = True
         current_directory = self.getPath()
 
-        #if not os.path.exists(currentDirectory):
+        # if not os.path.exists(currentDirectory):
         #    currentDirectory = "~"
 
         if self._model.pathMustBeAFile():
-            current_directory = QFileDialog.getOpenFileName(self, "Select a file path", current_directory)
+            current_directory = QFileDialog.getOpenFileName(
+                self, "Select a file path", current_directory
+            )
         else:
-            current_directory = QFileDialog.getExistingDirectory(self, "Select a directory", current_directory)
+            current_directory = QFileDialog.getExistingDirectory(
+                self, "Select a directory", current_directory
+            )
 
         if not current_directory == "":
             if not self._model.pathMustBeAbsolute():
@@ -176,14 +179,12 @@ class PathChooser(QWidget):
 
         self._editing = False
 
-
     def contentsChanged(self):
         """Called whenever the path is changed."""
         path_is_valid, message = self.isPathValid(self.getPath())
 
         if not self._editing and path_is_valid:
             self._model.setPath(self.getPath())
-
 
     def getPathFromModel(self):
         """Retrieves data from the model and inserts it into the edit line"""
@@ -196,13 +197,8 @@ class PathChooser(QWidget):
         self._path_line.setText("%s" % path)
         self._editing = False
 
-
     def getValidationSupport(self):
         return self._validation_support
 
     def isValid(self):
         return self._validation_support.isValid()
-
-
-
-

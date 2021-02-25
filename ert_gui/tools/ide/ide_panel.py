@@ -40,12 +40,12 @@ class IdePanel(QPlainTextEdit):
             configuration_line = user_data.configuration_line
 
             if configuration_line.keyword().hasKeywordDefinition():
-                HelpCenter.getHelpCenter("ERT").setHelpMessageLink("config/" + configuration_line.documentationLink())
-
+                HelpCenter.getHelpCenter("ERT").setHelpMessageLink(
+                    "config/" + configuration_line.documentationLink()
+                )
 
     def getText(self):
         return self.document().toPlainText()
-
 
     def eventFilter(self, qobject, qevent):
         if qobject == self and qevent.type() == QEvent.ToolTip:
@@ -60,25 +60,29 @@ class IdePanel(QPlainTextEdit):
                 #     print(configuration_line.keyword().keywordDefinition().documentation)
 
                 if pos in configuration_line.keyword():
-                    self.setToolTip(configuration_line.validationStatusForToken(configuration_line.keyword()).message())
+                    self.setToolTip(
+                        configuration_line.validationStatusForToken(
+                            configuration_line.keyword()
+                        ).message()
+                    )
                 else:
                     for argument in configuration_line.arguments():
                         if pos in argument:
-                            self.setToolTip(configuration_line.validationStatusForToken(argument).message())
+                            self.setToolTip(
+                                configuration_line.validationStatusForToken(
+                                    argument
+                                ).message()
+                            )
 
             else:
                 self.setToolTip("")
 
-
         return QPlainTextEdit.eventFilter(self, qobject, qevent)
-
 
     def activateCompleter(self):
         text_cursor = self.textCursor()
         block = self.document().findBlock(text_cursor.position())
         position_in_block = text_cursor.positionInBlock()
-
-
 
         self.selectWordUnderCursor(text_cursor)
         word = unicode(text_cursor.selectedText())
@@ -105,15 +109,23 @@ class IdePanel(QPlainTextEdit):
                 else:
                     show_completer = True
 
-
         if show_completer:
             rect = self.cursorRect(text_cursor)
-            rect.setWidth(self.completer.popup().sizeHintForColumn(0) + self.completer.popup().verticalScrollBar().sizeHint().width())
+            rect.setWidth(
+                self.completer.popup().sizeHintForColumn(0)
+                + self.completer.popup().verticalScrollBar().sizeHint().width()
+            )
             self.completer.complete(rect)
 
     def keyPressEvent(self, qkeyevent):
         if self.completer.popup().isVisible():
-            dead_keys = [Qt.Key_Enter, Qt.Key_Return, Qt.Key_Escape, Qt.Key_Tab, Qt.Key_Backtab]
+            dead_keys = [
+                Qt.Key_Enter,
+                Qt.Key_Return,
+                Qt.Key_Escape,
+                Qt.Key_Tab,
+                Qt.Key_Backtab,
+            ]
             if qkeyevent.key() in dead_keys:
                 qkeyevent.ignore()
                 return
@@ -123,7 +135,6 @@ class IdePanel(QPlainTextEdit):
                 self.deleteLine()
 
         QPlainTextEdit.keyPressEvent(self, qkeyevent)
-
 
     def insertCompletion(self, string):
         text_cursor = self.textCursor()
@@ -184,7 +195,6 @@ class IdePanel(QPlainTextEdit):
             # # text_cursor.setPosition(min(block_end_pos, end.position() - 1), QTextCursor.KeepAnchor)
             # text_cursor.setPosition(end.position() - 1, QTextCursor.KeepAnchor)
 
-
     def deleteLine(self):
         text_cursor = self.textCursor()
         text_cursor.beginEditBlock()
@@ -206,7 +216,6 @@ class IdePanel(QPlainTextEdit):
         text_cursor.insertBlock()
         text_cursor.insertText(text)
         text_cursor.endEditBlock()
-
 
     def selectFragment(self):
         text_cursor = self.textCursor()

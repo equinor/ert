@@ -2,6 +2,7 @@ import sys
 import logging
 from copy import deepcopy
 
+
 class _Feature:
     def __init__(self, default_enabled, msg=None):
         self.is_enabled = default_enabled
@@ -12,15 +13,15 @@ class FeatureToggling:
     _conf_original = {
         "new-storage": _Feature(
             default_enabled=False,
-            msg="The new storage solution is experimental! Thank you for testing our new features."
+            msg="The new storage solution is experimental! Thank you for testing our new features.",
         ),
         "ensemble-evaluator": _Feature(
             default_enabled=False,
             msg="The new ensemble evaluator is experimental! "
-                "The new evaluator will offer the user an expressive, "
-                "high-level configuration system in YAML, as "
-                "well as evaluating ensembles in a concurrent, cloud-ready "
-                "and distributed way."
+            "The new evaluator will offer the user an expressive, "
+            "high-level configuration system in YAML, as "
+            "well as evaluating ensembles in a concurrent, cloud-ready "
+            "and distributed way.",
         ),
     }
 
@@ -68,6 +69,7 @@ class FeatureToggling:
     @staticmethod
     def reset():
         FeatureToggling._conf = deepcopy(FeatureToggling._conf_original)
+
 
 def feature_enabled(feature_name):
     def decorator(func):

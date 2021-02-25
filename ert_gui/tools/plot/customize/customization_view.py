@@ -1,4 +1,11 @@
-from qtpy.QtWidgets import QWidget, QFormLayout, QSpacerItem, QCheckBox, QHBoxLayout, QSpinBox
+from qtpy.QtWidgets import (
+    QWidget,
+    QFormLayout,
+    QSpacerItem,
+    QCheckBox,
+    QHBoxLayout,
+    QSpinBox,
+)
 
 
 from ert_gui.plottery import PlotConfig
@@ -7,6 +14,7 @@ from ert_gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
 
 from ert_gui.tools.plot import style_chooser as sc
 
+
 class CustomizationView(QWidget):
     def __init__(self):
         QWidget.__init__(self)
@@ -14,7 +22,6 @@ class CustomizationView(QWidget):
         self._layout = QFormLayout()
         self.setLayout(self._layout)
         self._widgets = {}
-
 
     def addRow(self, title, widget):
         self._layout.addRow(title, widget)
@@ -54,7 +61,15 @@ class CustomizationView(QWidget):
 
         self.updateProperty(attribute_name, getter, setter)
 
-    def addSpinBox(self, attribute_name, title, tool_tip=None, min_value=1, max_value=10, single_step=1):
+    def addSpinBox(
+        self,
+        attribute_name,
+        title,
+        tool_tip=None,
+        min_value=1,
+        max_value=10,
+        single_step=1,
+    ):
         sb = QSpinBox()
         self[attribute_name] = sb
         sb.setMaximumHeight(25)
@@ -79,7 +94,9 @@ class CustomizationView(QWidget):
         self.updateProperty(attribute_name, getter, setter)
         return sb
 
-    def addStyleChooser(self, attribute_name, title, tool_tip=None, line_style_set=sc.STYLESET_DEFAULT):
+    def addStyleChooser(
+        self, attribute_name, title, tool_tip=None, line_style_set=sc.STYLESET_DEFAULT
+    ):
         style_chooser = StyleChooser(line_style_set=line_style_set)
         self[attribute_name] = style_chooser
         self.addRow(title, self[attribute_name])
@@ -127,14 +144,19 @@ class CustomizationView(QWidget):
         """
         @type plot_config: PlotConfig
         """
-        raise NotImplementedError("Class '%s' has not implemented the applyCustomization() function!" % self.__class__.__name__)
+        raise NotImplementedError(
+            "Class '%s' has not implemented the applyCustomization() function!"
+            % self.__class__.__name__
+        )
 
     def revertCustomization(self, plot_config):
         """
         @type plot_config: PlotConfig
         """
-        raise NotImplementedError("Class '%s' has not implemented the revertCustomization() function!" % self.__class__.__name__)
-
+        raise NotImplementedError(
+            "Class '%s' has not implemented the revertCustomization() function!"
+            % self.__class__.__name__
+        )
 
 
 class WidgetProperty(object):

@@ -2,14 +2,13 @@ from ert_gui.plottery import PlotConfig
 
 
 class PlotConfigFactory(object):
-
     @classmethod
     def createPlotConfigForKey(cls, key_def):
         """
         @param key_def: dict with definition of a key
         @return: PlotConfig
         """
-        plot_config = PlotConfig(plot_settings=None , title = key_def["key"])
+        plot_config = PlotConfig(plot_settings=None, title=key_def["key"])
 
         # The styling of statistics changes based on the nature of the data
         if key_def["dimensionality"] == 2:

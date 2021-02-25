@@ -35,7 +35,9 @@ def plotGaussianKDE(figure, plot_context, case_to_data_map, _observation_data):
             _plotGaussianKDE(axes, config, data, case)
             config.nextColor()
 
-    PlotTools.finalizePlot(plot_context, figure, axes, default_x_label="Value", default_y_label="Density")
+    PlotTools.finalizePlot(
+        plot_context, figure, axes, default_x_label="Value", default_y_label="Density"
+    )
 
 
 def _plotGaussianKDE(axes, plot_config, data, label):
@@ -49,11 +51,19 @@ def _plotGaussianKDE(axes, plot_config, data, label):
     style = plot_config.histogramStyle()
 
     sample_range = data.max() - data.min()
-    indexes = numpy.linspace(data.min() - 0.5 * sample_range, data.max() + 0.5 * sample_range, 1000)
+    indexes = numpy.linspace(
+        data.min() - 0.5 * sample_range, data.max() + 0.5 * sample_range, 1000
+    )
     gkde = gaussian_kde(data.values)
     evaluated_gkde = gkde.evaluate(indexes)
 
-    lines = axes.plot(indexes, evaluated_gkde, linewidth=style.width, color=style.color, alpha=style.alpha)
+    lines = axes.plot(
+        indexes,
+        evaluated_gkde,
+        linewidth=style.width,
+        color=style.color,
+        alpha=style.alpha,
+    )
 
     if len(lines) > 0:
         plot_config.addLegendItem(label, lines[0])

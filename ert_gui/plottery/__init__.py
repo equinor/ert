@@ -3,6 +3,7 @@
 # Calling this converter.register() method seems to fix the problem.
 try:
     from pandas.plotting import register_matplotlib_converters
+
     register_matplotlib_converters()
 except:
     pass

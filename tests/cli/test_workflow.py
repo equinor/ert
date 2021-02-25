@@ -10,14 +10,13 @@ from tests.utils import SOURCE_DIR, tmpdir
 
 
 class WorkflowTest(ErtTest):
-
-    @tmpdir(os.path.join(SOURCE_DIR, 'test-data/local/poly_example'))
+    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/poly_example"))
     def test_executing_workflow(self):
-        with open('test_wf', 'w') as wf_file:
-            wf_file.write('EXPORT_RUNPATH')
+        with open("test_wf", "w") as wf_file:
+            wf_file.write("EXPORT_RUNPATH")
 
-        config_file = 'poly.ert'
-        with open(config_file, 'a') as file:
+        config_file = "poly.ert"
+        with open(config_file, "a") as file:
             file.write("LOAD_WORKFLOW test_wf")
 
         rc = ResConfig(user_config_file=config_file)

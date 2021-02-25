@@ -25,6 +25,7 @@ from ert_gui.tools import Tool
 from ert_gui.tools.run_analysis import RunAnalysisPanel
 import ert_shared
 
+
 def analyse(target, source):
     """Runs analysis using target and source cases. Returns whether or not
     the analysis was successful."""
@@ -34,13 +35,18 @@ def analyse(target, source):
 
     target_fs = fs_manager.getFileSystem(target)
     source_fs = fs_manager.getFileSystem(source)
-    run_context = ErtRunContext.ensemble_smoother_update(source_fs, target_fs,)
+    run_context = ErtRunContext.ensemble_smoother_update(
+        source_fs,
+        target_fs,
+    )
     return es_update.smootherUpdate(run_context)
 
 
 class RunAnalysisTool(Tool):
     def __init__(self):
-        super(RunAnalysisTool, self).__init__("Run Analysis", "tools/run_analysis", resourceIcon("ide/table_import"))
+        super(RunAnalysisTool, self).__init__(
+            "Run Analysis", "tools/run_analysis", resourceIcon("ide/table_import")
+        )
         self._run_widget = None
         self._dialog = None
         self._selected_case_name = None

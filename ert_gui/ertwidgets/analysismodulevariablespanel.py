@@ -15,9 +15,20 @@
 #  for more details.
 from functools import partial
 
-from qtpy.QtWidgets import QDoubleSpinBox, QWidget, QFormLayout, QCheckBox, QLineEdit, QHBoxLayout, QSpinBox, QLabel
+from qtpy.QtWidgets import (
+    QDoubleSpinBox,
+    QWidget,
+    QFormLayout,
+    QCheckBox,
+    QLineEdit,
+    QHBoxLayout,
+    QSpinBox,
+    QLabel,
+)
 
-from ert_gui.ertwidgets.models.analysismodulevariablesmodel import AnalysisModuleVariablesModel
+from ert_gui.ertwidgets.models.analysismodulevariablesmodel import (
+    AnalysisModuleVariablesModel,
+)
 
 
 class AnalysisModuleVariablesPanel(QWidget):
@@ -27,7 +38,9 @@ class AnalysisModuleVariablesPanel(QWidget):
         self._analysis_module_name = analysis_module_name
 
         layout = QFormLayout()
-        variable_names = AnalysisModuleVariablesModel.getVariableNames(self._analysis_module_name)
+        variable_names = AnalysisModuleVariablesModel.getVariableNames(
+            self._analysis_module_name
+        )
 
         if len(variable_names) == 0:
             label = QLabel("No variables found to edit")
@@ -40,50 +53,84 @@ class AnalysisModuleVariablesPanel(QWidget):
 
             variable_names2 = self.sortVariables(variable_names)
             for variable_name in variable_names2:
-                variable_type = analysis_module_variables_model.getVariableType(variable_name)
-                variable_value = analysis_module_variables_model.getVariableValue(self._analysis_module_name,
-                                                                                  variable_name)
+                variable_type = analysis_module_variables_model.getVariableType(
+                    variable_name
+                )
+                variable_value = analysis_module_variables_model.getVariableValue(
+                    self._analysis_module_name, variable_name
+                )
 
-                label_name = analysis_module_variables_model.getVariableLabelName(variable_name)
+                label_name = analysis_module_variables_model.getVariableLabelName(
+                    variable_name
+                )
                 if variable_type == bool:
-                    spinner = self.createCheckBox(variable_name, variable_value, variable_type)
+                    spinner = self.createCheckBox(
+                        variable_name, variable_value, variable_type
+                    )
 
                 elif variable_type == float:
-                    spinner = self.createDoubleSpinBox(variable_name, variable_value, variable_type,
-                                                       analysis_module_variables_model)
+                    spinner = self.createDoubleSpinBox(
+                        variable_name,
+                        variable_value,
+                        variable_type,
+                        analysis_module_variables_model,
+                    )
 
                 elif variable_type == str:
-                    spinner = self.createLineEdit(variable_name, variable_value, variable_type)
+                    spinner = self.createLineEdit(
+                        variable_name, variable_value, variable_type
+                    )
 
                 elif variable_type == int:
-                    spinner = self.createSpinBox(variable_name, variable_value, variable_type,
-                                                 analysis_module_variables_model)
+                    spinner = self.createSpinBox(
+                        variable_name,
+                        variable_value,
+                        variable_type,
+                        analysis_module_variables_model,
+                    )
 
                 layout.addRow(label_name, spinner)
                 if variable_name == "LAMBDA0":
                     label = QLabel(
-                        "<span style=\"font-size:12pt; font-weight:300;font-style:italic;\"> Initial Lambda of -1.00 signifies that the value will be calculated</span>")
+                        '<span style="font-size:12pt; font-weight:300;font-style:italic;"> Initial Lambda of -1.00 signifies that the value will be calculated</span>'
+                    )
                     layout.addRow(label, None)
 
                 if variable_name == "IES_INVERSION":
-                    label = QLabel("<span style=\"font-size:10pt; font-weight:300;font-style:italic;\">   0: Exact inversion with diagonal R=I</span>")
+                    label = QLabel(
+                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   0: Exact inversion with diagonal R=I</span>'
+                    )
                     layout.addRow(label, None)
-                    label = QLabel("<span style=\"font-size:10pt; font-weight:300;font-style:italic;\">   1: Subspace inversion with exact R  </span>")
+                    label = QLabel(
+                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   1: Subspace inversion with exact R  </span>'
+                    )
                     layout.addRow(label, None)
-                    label = QLabel("<span style=\"font-size:10pt; font-weight:300;font-style:italic;\">   2: Subspace inversion using R=EE'   </span>")
+                    label = QLabel(
+                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   2: Subspace inversion using R=EE\'   </span>'
+                    )
                     layout.addRow(label, None)
-                    label = QLabel("<span style=\"font-size:10pt; font-weight:300;font-style:italic;\">   3: Subspace inversion using E       </span>")
+                    label = QLabel(
+                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   3: Subspace inversion using E       </span>'
+                    )
                     layout.addRow(label, None)
 
                 if variable_name == "IES_DEC_STEPLENGTH":
-                    label = QLabel("<span style=\"font-size:10pt; font-weight:300;font-style:italic;\">   A good start is max steplength of 0.6, min steplength of 0.3, and decline of 2.5</span>")
+                    label = QLabel(
+                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   A good start is max steplength of 0.6, min steplength of 0.3, and decline of 2.5</span>'
+                    )
                     layout.addRow(label, None)
-                    label = QLabel("<span style=\"font-size:10pt; font-weight:300;font-style:italic;\">   A steplength of 1.0 and one iteration results in ES update</span>")
+                    label = QLabel(
+                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   A steplength of 1.0 and one iteration results in ES update</span>'
+                    )
                     layout.addRow(label, None)
-                    
+
                 if variable_name == "IES_AAPROJECTION":
-                    label = QLabel("<span style=\"font-size:10pt; font-weight:300;font-style:italic;\">   Only impacts estimate when n less than N-1</span>")
-                    label = QLabel("<span style=\"font-size:10pt; font-weight:300;font-style:italic;\">   Any benefit of using the projection is unclear</span>")
+                    label = QLabel(
+                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   Only impacts estimate when n less than N-1</span>'
+                    )
+                    label = QLabel(
+                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   Any benefit of using the projection is unclear</span>'
+                    )
                     layout.addRow(label, None)
 
         self.setLayout(layout)
@@ -91,7 +138,22 @@ class AnalysisModuleVariablesPanel(QWidget):
 
     def sortVariables(self, variable_list):
         analysis_module_variables_model = AnalysisModuleVariablesModel
-        sorted_list = ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"]
+        sorted_list = [
+            "#",
+            "#",
+            "#",
+            "#",
+            "#",
+            "#",
+            "#",
+            "#",
+            "#",
+            "#",
+            "#",
+            "#",
+            "#",
+            "#",
+        ]
         result = []
         for name in variable_list:
             pos = analysis_module_variables_model.getVariablePosition(name)
@@ -104,15 +166,29 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         return result
 
-    def createSpinBox(self, variable_name, variable_value, variable_type, analysis_module_variables_model):
+    def createSpinBox(
+        self,
+        variable_name,
+        variable_value,
+        variable_type,
+        analysis_module_variables_model,
+    ):
         spinner = QSpinBox()
         spinner.setMinimumWidth(75)
-        spinner.setMaximum(analysis_module_variables_model.getVariableMaximumValue(variable_name))
-        spinner.setMinimum(analysis_module_variables_model.getVariableMinimumValue(variable_name))
-        spinner.setSingleStep(analysis_module_variables_model.getVariableStepValue(variable_name))
+        spinner.setMaximum(
+            analysis_module_variables_model.getVariableMaximumValue(variable_name)
+        )
+        spinner.setMinimum(
+            analysis_module_variables_model.getVariableMinimumValue(variable_name)
+        )
+        spinner.setSingleStep(
+            analysis_module_variables_model.getVariableStepValue(variable_name)
+        )
         if variable_value is not None:
             spinner.setValue(variable_value)
-        spinner.valueChanged.connect(partial(self.valueChanged, variable_name, variable_type, spinner))
+        spinner.valueChanged.connect(
+            partial(self.valueChanged, variable_name, variable_type, spinner)
+        )
         return spinner
 
     def createLineEdit(self, variable_name, variable_value, variable_type):
@@ -122,24 +198,42 @@ class AnalysisModuleVariablesPanel(QWidget):
             spinner.setText("")
         else:
             spinner.setText(variable_value)
-        spinner.editingFinished.connect(partial(self.valueChanged, variable_name, variable_type, spinner))
+        spinner.editingFinished.connect(
+            partial(self.valueChanged, variable_name, variable_type, spinner)
+        )
         return spinner
 
     def createCheckBox(self, variable_name, variable_value, variable_type):
         spinner = QCheckBox()
         spinner.setChecked(variable_value)
-        spinner.clicked.connect(partial(self.valueChanged, variable_name, variable_type, spinner))
+        spinner.clicked.connect(
+            partial(self.valueChanged, variable_name, variable_type, spinner)
+        )
         return spinner
 
-    def createDoubleSpinBox(self, variable_name, variable_value, variable_type, analysis_module_variables_model):
+    def createDoubleSpinBox(
+        self,
+        variable_name,
+        variable_value,
+        variable_type,
+        analysis_module_variables_model,
+    ):
         spinner = QDoubleSpinBox()
         spinner.setDecimals(6)
         spinner.setMinimumWidth(75)
-        spinner.setMaximum(analysis_module_variables_model.getVariableMaximumValue(variable_name))
-        spinner.setMinimum(analysis_module_variables_model.getVariableMinimumValue(variable_name))
-        spinner.setSingleStep(analysis_module_variables_model.getVariableStepValue(variable_name))
+        spinner.setMaximum(
+            analysis_module_variables_model.getVariableMaximumValue(variable_name)
+        )
+        spinner.setMinimum(
+            analysis_module_variables_model.getVariableMinimumValue(variable_name)
+        )
+        spinner.setSingleStep(
+            analysis_module_variables_model.getVariableStepValue(variable_name)
+        )
         spinner.setValue(variable_value)
-        spinner.valueChanged.connect(partial(self.valueChanged, variable_name, variable_type, spinner))
+        spinner.valueChanged.connect(
+            partial(self.valueChanged, variable_name, variable_type, spinner)
+        )
         return spinner
 
     def valueChanged(self, variable_name, variable_type, variable_control):
@@ -161,4 +255,6 @@ class AnalysisModuleVariablesPanel(QWidget):
             value = variable_control.value()
 
         if value is not None:
-            AnalysisModuleVariablesModel.setVariableValue(self._analysis_module_name, variable_name, value)
+            AnalysisModuleVariablesModel.setVariableValue(
+                self._analysis_module_name, variable_name, value
+            )

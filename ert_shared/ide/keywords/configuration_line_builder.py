@@ -15,7 +15,6 @@ class ConfigurationLineBuilder(object):
         self.__configuration_line_parser = ConfigurationLineParser()
         self.__configuration_line = None
 
-
     def processLine(self, line):
         self.__configuration_line_parser.parseLine(line)
         self.__configuration_line = None
@@ -35,12 +34,19 @@ class ConfigurationLineBuilder(object):
                 group = configuration_line_definition.group()
                 required = configuration_line_definition.isRequired()
 
-                keyword.setKeywordDefinition(configuration_line_definition.keywordDefinition())
+                keyword.setKeywordDefinition(
+                    configuration_line_definition.keywordDefinition()
+                )
 
-                arguments = self.__matchArguments(keyword, configuration_line_definition.argumentDefinitions(), arguments)
+                arguments = self.__matchArguments(
+                    keyword,
+                    configuration_line_definition.argumentDefinitions(),
+                    arguments,
+                )
 
-
-            self.__configuration_line = ConfigurationLine(keyword, arguments, documentation_link, group, required)
+            self.__configuration_line = ConfigurationLine(
+                keyword, arguments, documentation_link, group, required
+            )
 
     def configurationLine(self):
         """ @rtype: ConfigurationLine """
@@ -57,13 +63,12 @@ class ConfigurationLineBuilder(object):
     def commentIndex(self):
         return self.__configuration_line_parser.commentIndex()
 
-
     def __matchArguments(self, keyword, arg_defs, args):
         """
-         @type keyword: Keyword
-         @type arg_defs: list of ArgumentDefinition
-         @type args: list of Argument
-         @rtype: list of Argument
+        @type keyword: Keyword
+        @type arg_defs: list of ArgumentDefinition
+        @type args: list of Argument
+        @rtype: list of Argument
         """
         arg_def_count = len(arg_defs)
         arg_count = len(args)
@@ -77,7 +82,9 @@ class ConfigurationLineBuilder(object):
                 from_arg = args[arg_def_count - 1]
                 to_arg = args[arg_count - 1]
 
-                last_argument = Argument(from_arg.fromIndex(), to_arg.toIndex(), keyword.line())
+                last_argument = Argument(
+                    from_arg.fromIndex(), to_arg.toIndex(), keyword.line()
+                )
                 args = args[0:arg_def_count]
                 args[len(args) - 1] = last_argument
 
@@ -85,7 +92,9 @@ class ConfigurationLineBuilder(object):
                 from_arg = args[arg_def_count]
                 to_arg = args[arg_count - 1]
 
-                last_argument = Argument(from_arg.fromIndex(), to_arg.toIndex(), keyword.line())
+                last_argument = Argument(
+                    from_arg.fromIndex(), to_arg.toIndex(), keyword.line()
+                )
                 args = args[0:arg_def_count]
                 args.append(last_argument)
 
@@ -97,14 +106,8 @@ class ConfigurationLineBuilder(object):
                 empty_argument = Argument(len(line), len(line), line)
                 args.append(empty_argument)
 
-
         for index in range(len(args)):
             if index < len(arg_defs):
                 args[index].setArgumentDefinition(arg_defs[index])
 
-
         return args
-
-
-
-

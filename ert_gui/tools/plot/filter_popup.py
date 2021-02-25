@@ -1,12 +1,27 @@
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import QWidget, QFrame, QDialog, QVBoxLayout, QCheckBox, QLabel, QLayout
+from qtpy.QtWidgets import (
+    QWidget,
+    QFrame,
+    QDialog,
+    QVBoxLayout,
+    QCheckBox,
+    QLabel,
+    QLayout,
+)
 from qtpy.QtGui import QCursor
+
 
 class FilterPopup(QDialog):
     filterSettingsChanged = Signal(dict)
 
     def __init__(self, parent, key_defs):
-        QDialog.__init__(self, parent, Qt.WindowStaysOnTopHint | Qt.X11BypassWindowManagerHint | Qt.FramelessWindowHint)
+        QDialog.__init__(
+            self,
+            parent,
+            Qt.WindowStaysOnTopHint
+            | Qt.X11BypassWindowManagerHint
+            | Qt.FramelessWindowHint,
+        )
         self.setVisible(False)
 
         self.filter_items = {}
@@ -21,8 +36,7 @@ class FilterPopup(QDialog):
         self.__layout.setSizeConstraint(QLayout.SetFixedSize)
         self.__layout.addWidget(QLabel("Filter by data type:"))
 
-
-        filters = {k["metadata"]["data_origin"] for k in  key_defs}
+        filters = {k["metadata"]["data_origin"] for k in key_defs}
         for f in filters:
             self.addFilterItem(f, f)
 
@@ -30,7 +44,6 @@ class FilterPopup(QDialog):
 
         self.setLayout(layout)
         self.adjustSize()
-
 
     def addFilterItem(self, name, id, value=True):
         self.filter_items[id] = value

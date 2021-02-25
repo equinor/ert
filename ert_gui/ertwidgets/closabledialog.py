@@ -19,7 +19,6 @@ from qtpy.QtWidgets import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayo
 
 
 class ClosableDialog(QDialog):
-
     def __init__(self, title, widget, parent=None):
         QDialog.__init__(self, parent)
 
@@ -29,7 +28,7 @@ class ClosableDialog(QDialog):
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
 
         layout = QVBoxLayout()
-        layout.setSizeConstraint(QLayout.SetFixedSize) # not resizable!!!
+        layout.setSizeConstraint(QLayout.SetFixedSize)  # not resizable!!!
         layout.addWidget(widget)
 
         self.__button_layout = QHBoxLayout()
@@ -59,12 +58,10 @@ class ClosableDialog(QDialog):
     def addButton(self, caption, listner):
         button = QPushButton(caption)
         button.setObjectName(str(caption).capitalize())
-        self.__button_layout.insertWidget(1,button)
+        self.__button_layout.insertWidget(1, button)
         button.clicked.connect(listner)
 
     def toggleButton(self, caption, enabled):
-        button = self.findChild(QPushButton,str(caption).capitalize())
+        button = self.findChild(QPushButton, str(caption).capitalize())
         if button is not None:
             button.setEnabled(enabled)
-
-

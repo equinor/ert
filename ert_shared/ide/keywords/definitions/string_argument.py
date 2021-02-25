@@ -9,11 +9,9 @@ class StringArgument(ArgumentDefinition):
     PATTERN = re.compile(r"^[\S]+$")
     PATTERN_WITH_SPACE = re.compile(r"^[\S| ]+$")
 
-
     def __init__(self, allow_space=False, **kwargs):
         super(StringArgument, self).__init__(**kwargs)
         self.__allow_space = allow_space
-
 
     def validate(self, token):
         validation_status = super(StringArgument, self).validate(token)
@@ -36,12 +34,4 @@ class StringArgument(ArgumentDefinition):
                 if not validation_status.failed():
                     validation_status.setValue(token)
 
-
             return validation_status
-
-
-
-
-
-
-

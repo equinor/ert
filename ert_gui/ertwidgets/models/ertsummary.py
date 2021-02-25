@@ -2,25 +2,29 @@ from res.enkf.enums.enkf_obs_impl_type_enum import EnkfObservationImplementation
 from res.enkf.enums.enkf_var_type_enum import EnkfVarType
 from ert_shared import ERT
 
-class ErtSummary(object):
 
+class ErtSummary(object):
     def getForwardModels(self):
         """ @rtype: list of str """
-        forward_model  = ERT.ert.getModelConfig().getForwardModel()
+        forward_model = ERT.ert.getModelConfig().getForwardModel()
         return [job for job in forward_model.joblist()]
 
     def getParameters(self):
         """ @rtype: list of str """
-        parameters = ERT.ert.ensembleConfig().getKeylistFromVarType(EnkfVarType.PARAMETER)
-        return sorted([parameter for parameter in parameters], key=lambda k : k.lower())
-
+        parameters = ERT.ert.ensembleConfig().getKeylistFromVarType(
+            EnkfVarType.PARAMETER
+        )
+        return sorted([parameter for parameter in parameters], key=lambda k: k.lower())
 
     def getObservations(self):
         """ @rtype: list of str """
-        gen_obs = ERT.ert.getObservations().getTypedKeylist(EnkfObservationImplementationType.GEN_OBS)
+        gen_obs = ERT.ert.getObservations().getTypedKeylist(
+            EnkfObservationImplementationType.GEN_OBS
+        )
 
-
-        summary_obs = ERT.ert.getObservations().getTypedKeylist(EnkfObservationImplementationType.SUMMARY_OBS)
+        summary_obs = ERT.ert.getObservations().getTypedKeylist(
+            EnkfObservationImplementationType.SUMMARY_OBS
+        )
 
         keys = []
         summary_keys_count = {}
@@ -49,10 +53,4 @@ class ErtSummary(object):
         #         keys.append(key)
 
         obs_keys = [observation for observation in gen_obs] + summary_keys
-        return sorted(obs_keys, key=lambda k : k.lower())
-
-
-
-
-
-
+        return sorted(obs_keys, key=lambda k: k.lower())

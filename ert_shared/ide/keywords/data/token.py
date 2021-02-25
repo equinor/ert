@@ -1,5 +1,4 @@
 class Token(object):
-
     def __init__(self, from_index, to_index, line):
         super(Token, self).__init__()
 
@@ -9,7 +8,7 @@ class Token(object):
 
     def value(self):
         """ @rtype: str """
-        return self.__line[self.__from_index:self.__to_index]
+        return self.__line[self.__from_index : self.__to_index]
 
     def fromIndex(self):
         """ @rtype: int """
@@ -31,6 +30,3 @@ class Token(object):
         assert isinstance(item, int)
 
         return self.__from_index <= item < self.__to_index
-
-
-

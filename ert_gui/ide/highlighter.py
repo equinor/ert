@@ -12,12 +12,12 @@ class ConfigurationLineUserData(QTextBlockUserData):
         QTextBlockUserData.__init__(self)
         self.configuration_line = configuration_line
 
+
 class KeywordHighlighter(QSyntaxHighlighter):
     def __init__(self, document):
         QSyntaxHighlighter.__init__(self, document)
 
         self.clb = ConfigurationLineBuilder(ErtKeywords())
-
 
         self.comment_format = QTextCharFormat()
         self.comment_format.setForeground(QColor(0, 128, 0))
@@ -40,7 +40,6 @@ class KeywordHighlighter(QSyntaxHighlighter):
 
         self.search_string = ""
 
-
     def formatKeyword(self, keyword, validation_status):
         assert isinstance(keyword, Keyword)
         if keyword.hasKeywordDefinition():
@@ -53,7 +52,6 @@ class KeywordHighlighter(QSyntaxHighlighter):
         else:
             self.formatToken(keyword, self.error_format)
 
-
     def highlightBlock(self, complete_block):
         try:
             block = unicode(complete_block)
@@ -62,9 +60,12 @@ class KeywordHighlighter(QSyntaxHighlighter):
 
         self.clb.processLine(block)
 
-
         if self.clb.hasComment():
-            self.setFormat(self.clb.commentIndex(), len(block) - self.clb.commentIndex(), self.comment_format)
+            self.setFormat(
+                self.clb.commentIndex(),
+                len(block) - self.clb.commentIndex(),
+                self.comment_format,
+            )
 
         if not self.clb.hasConfigurationLine():
             count = len(block)
@@ -73,7 +74,6 @@ class KeywordHighlighter(QSyntaxHighlighter):
                 count = self.clb.commentIndex()
 
             self.setFormat(0, count, self.error_format)
-
 
         if self.clb.hasConfigurationLine():
             cl = self.clb.configurationLine()
@@ -93,11 +93,11 @@ class KeywordHighlighter(QSyntaxHighlighter):
                 if not cl.validationStatusForToken(argument):
                     self.formatToken(argument, self.error_format)
 
-
         if self.search_string != "":
             for match in re.finditer("(%s)" % self.search_string, complete_block):
-                self.setFormat(match.start(1), match.end(1) - match.start(1), self.search_format)
-
+                self.setFormat(
+                    match.start(1), match.end(1) - match.start(1), self.search_format
+                )
 
     def setSearchString(self, string):
         try:
@@ -108,7 +108,6 @@ class KeywordHighlighter(QSyntaxHighlighter):
             if self.search_string != string:
                 self.search_string = string
                 self.rehighlight()
-
 
     def formatToken(self, token, highlight_format):
         self.setFormat(token.fromIndex(), token.count(), highlight_format)

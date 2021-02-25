@@ -33,18 +33,37 @@ class StackedInput(QStackedWidget):
 
 
 class LimitsStack(StackedInput):
-    FLOAT_AXIS = [PlotContext.VALUE_AXIS, PlotContext.DENSITY_AXIS, PlotContext.DEPTH_AXIS]
+    FLOAT_AXIS = [
+        PlotContext.VALUE_AXIS,
+        PlotContext.DENSITY_AXIS,
+        PlotContext.DEPTH_AXIS,
+    ]
     INT_AXIS = [PlotContext.INDEX_AXIS, PlotContext.COUNT_AXIS]
     NUMBER_AXIS = FLOAT_AXIS + INT_AXIS
 
     def __init__(self):
         StackedInput.__init__(self)
-        self.addInput(PlotContext.COUNT_AXIS, self.createIntegerLineEdit(minimum=0, placeholder="Default value"))
+        self.addInput(
+            PlotContext.COUNT_AXIS,
+            self.createIntegerLineEdit(minimum=0, placeholder="Default value"),
+        )
         self.addInput(PlotContext.DATE_AXIS, CustomDateEdit())
-        self.addInput(PlotContext.DENSITY_AXIS, self.createDoubleLineEdit(minimum=0, placeholder="Default value"))
-        self.addInput(PlotContext.DEPTH_AXIS, self.createDoubleLineEdit(minimum=0, placeholder="Default value"))
-        self.addInput(PlotContext.INDEX_AXIS, self.createIntegerLineEdit(minimum=0, placeholder="Default value"))
-        self.addInput(PlotContext.VALUE_AXIS, self.createDoubleLineEdit(placeholder="Default value"))
+        self.addInput(
+            PlotContext.DENSITY_AXIS,
+            self.createDoubleLineEdit(minimum=0, placeholder="Default value"),
+        )
+        self.addInput(
+            PlotContext.DEPTH_AXIS,
+            self.createDoubleLineEdit(minimum=0, placeholder="Default value"),
+        )
+        self.addInput(
+            PlotContext.INDEX_AXIS,
+            self.createIntegerLineEdit(minimum=0, placeholder="Default value"),
+        )
+        self.addInput(
+            PlotContext.VALUE_AXIS,
+            self.createDoubleLineEdit(placeholder="Default value"),
+        )
 
     def createDoubleLineEdit(self, minimum=None, maximum=None, placeholder=""):
         line_edit = ClearableLineEdit(placeholder=placeholder)
@@ -113,7 +132,6 @@ class LimitsWidget(object):
         self._y_maximum_stack = LimitsStack()
         self._y_current_input_name = PlotContext.UNKNOWN_AXIS
 
-
     @property
     def x_minimum_stack(self):
         """ @rtype: LimitsStack """
@@ -180,7 +198,6 @@ class LimitsWidget(object):
         self._y_minimum_stack.setValue(PlotContext.VALUE_AXIS, limits.value_minimum)
         self._y_maximum_stack.setValue(PlotContext.VALUE_AXIS, limits.value_maximum)
 
-
     def _updateLimits(self):
         if self._x_current_input_name is not PlotContext.UNKNOWN_AXIS:
             minimum = self._x_minimum_stack.getValue(self._x_current_input_name)
@@ -191,7 +208,6 @@ class LimitsWidget(object):
             minimum = self._y_minimum_stack.getValue(self._y_current_input_name)
             maximum = self._y_maximum_stack.getValue(self._y_current_input_name)
             self._updateLimit(self._y_current_input_name, minimum, maximum)
-
 
     def _updateLimit(self, axis_name, minimum, maximum):
         if axis_name == PlotContext.COUNT_AXIS:
@@ -207,13 +223,11 @@ class LimitsWidget(object):
         elif axis_name == PlotContext.VALUE_AXIS:
             self._limits.value_limits = minimum, maximum
 
-
     def switchInputOnX(self, axis_type):
         self._x_current_input_name = axis_type
         self._updateWidgets()
         self._x_minimum_stack.switchToInput(axis_type)
         self._x_maximum_stack.switchToInput(axis_type)
-
 
     def switchInputOnY(self, axis_type):
         self._y_current_input_name = axis_type
@@ -222,9 +236,7 @@ class LimitsWidget(object):
         self._y_maximum_stack.switchToInput(axis_type)
 
 
-
 class LimitsCustomizationView(CustomizationView):
-
     def __init__(self):
         CustomizationView.__init__(self)
 
@@ -239,7 +251,6 @@ class LimitsCustomizationView(CustomizationView):
         self.addRow("Minimum", limits_widget.y_minimum_stack)
         self.addRow("Maximum", limits_widget.y_maximum_stack)
 
-
     def setAxisTypes(self, x_axis_type, y_axis_type):
         self._limits_widget.switchInputOnX(x_axis_type)
         self._limits_widget.switchInputOnY(y_axis_type)
@@ -247,7 +258,6 @@ class LimitsCustomizationView(CustomizationView):
     def revertCustomization(self, plot_config):
         """ @type plot_config: ert_gui.plottery.PlotConfig """
         self._limits_widget.limits = plot_config.limits
-
 
     def applyCustomization(self, plot_config):
         """ @type plot_config: ert_gui.plottery.PlotConfig """

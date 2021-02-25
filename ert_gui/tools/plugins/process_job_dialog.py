@@ -1,6 +1,17 @@
 from qtpy.QtCore import Qt, Signal, QSize
-from qtpy.QtWidgets import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout, QWidget, QLabel, QMessageBox, QSizePolicy, QSpacerItem
- 
+from qtpy.QtWidgets import (
+    QDialog,
+    QVBoxLayout,
+    QLayout,
+    QPushButton,
+    QHBoxLayout,
+    QWidget,
+    QLabel,
+    QMessageBox,
+    QSizePolicy,
+    QSpacerItem,
+)
+
 from ert_gui.ertwidgets import resourceMovie
 
 
@@ -63,7 +74,6 @@ class ProcessJobDialog(QDialog):
         self.presentError.connect(self.__presentError)
         self.closeButtonPressed.connect(self.__confirmCancel)
 
-
     def disableCloseButton(self):
         self.close_button.setEnabled(False)
 
@@ -88,12 +98,13 @@ class ProcessJobDialog(QDialog):
         if len(details) > 0:
             msg_box.setDetailedText(details)
 
-        horizontal_spacer = QSpacerItem(500, 0, QSizePolicy.MinimumExpanding, QSizePolicy.Expanding)
+        horizontal_spacer = QSpacerItem(
+            500, 0, QSizePolicy.MinimumExpanding, QSizePolicy.Expanding
+        )
         layout = msg_box.layout()
         layout.addItem(horizontal_spacer, layout.rowCount(), 0, 1, layout.columnCount())
 
         return msg_box
-
 
     def __presentInformation(self, title, message, details):
         msg_box = self.__createMsgBox(title, message, details)
@@ -107,9 +118,10 @@ class ProcessJobDialog(QDialog):
 
         msg_box.exec_()
 
-
     def __confirmCancel(self):
-        cancel_box = self.__createMsgBox("Confirm Cancel", "Are you sure you want to cancel the running job?", "")
+        cancel_box = self.__createMsgBox(
+            "Confirm Cancel", "Are you sure you want to cancel the running job?", ""
+        )
         cancel_box.setIcon(QMessageBox.Question)
         cancel_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         cancel_box.exec_()

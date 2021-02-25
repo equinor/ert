@@ -1,4 +1,11 @@
-from qtpy.QtWidgets import QFormLayout, QWidget, QDialog, QPushButton, QHBoxLayout, QToolButton
+from qtpy.QtWidgets import (
+    QFormLayout,
+    QWidget,
+    QDialog,
+    QPushButton,
+    QHBoxLayout,
+    QToolButton,
+)
 
 from ert_gui.ertwidgets import CheckList, resourceIcon
 from ert_gui.tools.plot import FilterPopup, FilterableKwListModel
@@ -6,7 +13,6 @@ from ert_shared import ERT
 
 
 class CopyStyleToDialog(QDialog):
-
     def __init__(self, parent, current_key, key_defs):
         QWidget.__init__(self, parent)
         self.setMinimumWidth(450)
@@ -45,7 +51,6 @@ class CopyStyleToDialog(QDialog):
         button_layout.addWidget(close_button)
 
         layout.addRow(button_layout)
-
 
     def getSelectedKeys(self):
         return self._list_model.getSelectedItems()

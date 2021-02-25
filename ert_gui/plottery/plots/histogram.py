@@ -6,12 +6,12 @@ import pandas as pd
 
 
 class HistogramPlot(object):
-
     def __init__(self):
         self.dimensionality = 1
 
     def plot(self, figure, plot_context, case_to_data_map, _observation_data):
         plotHistogram(figure, plot_context, case_to_data_map, _observation_data)
+
 
 def plotHistogram(figure, plot_context, case_to_data_map, _observation_data):
     """ @type plot_context: ert_gui.plottery.PlotContext """
@@ -51,7 +51,7 @@ def plotHistogram(figure, plot_context, case_to_data_map, _observation_data):
 
         if data[case].dtype == "object":
             try:
-                data[case] = pd.to_numeric(data[case], errors='ignore')
+                data[case] = pd.to_numeric(data[case], errors="ignore")
             except AttributeError:
                 data[case] = data[case].convert_objects(convert_numeric=True)
 
@@ -90,9 +90,20 @@ def plotHistogram(figure, plot_context, case_to_data_map, _observation_data):
 
         if not data[case].empty:
             if categorical:
-                _plotCategoricalHistogram(axes[case], config, data[case], case, categories)
+                _plotCategoricalHistogram(
+                    axes[case], config, data[case], case, categories
+                )
             else:
-                _plotHistogram(axes[case], config, data[case], case, bin_count, use_log_scale, minimum, maximum)
+                _plotHistogram(
+                    axes[case],
+                    config,
+                    data[case],
+                    case,
+                    bin_count,
+                    use_log_scale,
+                    minimum,
+                    maximum,
+                )
 
             config.nextColor()
             PlotTools.showGrid(axes[case], plot_context)
@@ -136,11 +147,22 @@ def _plotCategoricalHistogram(axes, plot_config, data, label, categories):
 
     axes.bar(pos, freq, alpha=style.alpha, color=style.color, width=width)
 
-    rectangle = Rectangle((0, 0), 1, 1, color=style.color) # creates rectangle patch for legend use.
+    rectangle = Rectangle(
+        (0, 0), 1, 1, color=style.color
+    )  # creates rectangle patch for legend use.
     plot_config.addLegendItem(label, rectangle)
 
 
-def _plotHistogram(axes, plot_config, data, label, bin_count, use_log_scale=False, minimum=None, maximum=None):
+def _plotHistogram(
+    axes,
+    plot_config,
+    data,
+    label,
+    bin_count,
+    use_log_scale=False,
+    minimum=None,
+    maximum=None,
+):
     """
     @type axes: matplotlib.axes.Axes
     @type plot_config: PlotConfig
@@ -169,9 +191,10 @@ def _plotHistogram(axes, plot_config, data, label, bin_count, use_log_scale=Fals
 
     axes.set_xlim(minimum, maximum)
 
-    rectangle = Rectangle((0, 0), 1, 1, color=style.color) # creates rectangle patch for legend use.'
+    rectangle = Rectangle(
+        (0, 0), 1, 1, color=style.color
+    )  # creates rectangle patch for legend use.'
     plot_config.addLegendItem(label, rectangle)
-
 
 
 def _histogramLogBins(bin_count, minimum=None, maximum=None):

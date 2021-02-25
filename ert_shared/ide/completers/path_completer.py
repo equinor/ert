@@ -7,7 +7,6 @@ class PathItem(object):
         #: :type: str
         self.value = value
 
-
     def __str__(self):
         return self.value
 
@@ -34,11 +33,9 @@ class PathItem(object):
         return self == other or self > other
 
 
-
 class PathCompleter(object):
     def __init__(self):
         super(PathCompleter, self).__init__()
-
 
     def completeOptions(self, path_prefix):
 
@@ -57,7 +54,6 @@ class PathCompleter(object):
 
         entries = os.listdir(root_path)
 
-
         result = []
         for entry in entries:
             if entry.startswith(entry_prefix):
@@ -65,7 +61,6 @@ class PathCompleter(object):
                 if os.path.isdir(full_path):
                     full_path += "/"
                 result.append(PathItem(full_path))
-
 
         result = sorted(result)
         return [str(item) for item in result]

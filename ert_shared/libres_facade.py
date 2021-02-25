@@ -1,9 +1,13 @@
 from pandas import DataFrame
 from res.analysis.analysis_module import AnalysisModule
-from res.analysis.enums.analysis_module_options_enum import \
-    AnalysisModuleOptionsEnum
-from res.enkf.export import (GenDataCollector, SummaryCollector,
-                             SummaryObservationCollector, GenDataObservationCollector, GenKwCollector)
+from res.analysis.enums.analysis_module_options_enum import AnalysisModuleOptionsEnum
+from res.enkf.export import (
+    GenDataCollector,
+    SummaryCollector,
+    SummaryObservationCollector,
+    GenDataObservationCollector,
+    GenKwCollector,
+)
 from res.enkf.plot_data import PlotBlockDataLoader
 
 
@@ -26,7 +30,9 @@ class LibresFacade(object):
         modules = []
         for module_name in module_names:
             module = self._enkf_main.analysisConfig().getModule(module_name)
-            module_is_iterable = module.checkOption(AnalysisModuleOptionsEnum.ANALYSIS_ITERABLE)
+            module_is_iterable = module.checkOption(
+                AnalysisModuleOptionsEnum.ANALYSIS_ITERABLE
+            )
 
             if iterable == module_is_iterable:
                 modules.append(module)
@@ -37,13 +43,17 @@ class LibresFacade(object):
         return self._enkf_main.getEnsembleSize()
 
     def get_current_case_name(self):
-        return str(self._enkf_main.getEnkfFsManager().getCurrentFileSystem().getCaseName())
+        return str(
+            self._enkf_main.getEnkfFsManager().getCurrentFileSystem().getCaseName()
+        )
 
     def get_queue_config(self):
         return self._enkf_main.get_queue_config()
 
     def get_number_of_iterations(self):
-        return self._enkf_main.analysisConfig().getAnalysisIterConfig().getNumIterations()
+        return (
+            self._enkf_main.analysisConfig().getAnalysisIterConfig().getNumIterations()
+        )
 
     def get_observations(self):
         return self._enkf_main.getObservations()
@@ -69,9 +79,7 @@ class LibresFacade(object):
         )
 
     def load_all_summary_data(self, case_name, keys=None):
-        return SummaryCollector.loadAllSummaryData(
-            self._enkf_main, case_name, keys
-        )
+        return SummaryCollector.loadAllSummaryData(self._enkf_main, case_name, keys)
 
     def load_observation_data(self, case_name, keys=None):
         return SummaryObservationCollector.loadObservationData(
@@ -110,13 +118,20 @@ class LibresFacade(object):
             else:
                 report_step = 0
 
-            obs_key = GenDataObservationCollector.getObservationKeyForDataKey(self._enkf_main, key, report_step)
+            obs_key = GenDataObservationCollector.getObservationKeyForDataKey(
+                self._enkf_main, key, report_step
+            )
             if obs_key is not None:
                 return [obs_key]
             else:
                 return []
         elif self._enkf_main.getKeyManager().isSummaryKey(key):
-            return [str(k) for k in self._enkf_main.ensembleConfig().getNode(key).getObservationKeys()]
+            return [
+                str(k)
+                for k in self._enkf_main.ensembleConfig()
+                .getNode(key)
+                .getObservationKeys()
+            ]
         else:
             return []
 
@@ -135,9 +150,11 @@ class LibresFacade(object):
             data = data.reset_index()
 
             if any(data.duplicated()):
-                print("** Warning: The simulation data contains duplicate "
-                      "timestamps. A possible explanation is that your "
-                      "simulation timestep is less than a second.")
+                print(
+                    "** Warning: The simulation data contains duplicate "
+                    "timestamps. A possible explanation is that your "
+                    "simulation timestep is less than a second."
+                )
                 data = data.drop_duplicates()
 
             data = data.pivot(index="Date", columns="Realization", values=key)
@@ -157,7 +174,7 @@ class LibresFacade(object):
         values = refcase.numpy_vector(key, report_only=False)
         dates = refcase.numpy_dates
 
-        data = DataFrame(zip(dates, values), columns=['Date', key])
+        data = DataFrame(zip(dates, values), columns=["Date", key])
         data.set_index("Date", inplace=True)
 
         return data.iloc[1:]
@@ -193,7 +210,7 @@ class LibresFacade(object):
         except (ValueError, KeyError):
             data = DataFrame()
 
-        return data.dropna() # removes all rows that has a NaN
+        return data.dropna()  # removes all rows that has a NaN
 
     def is_summary_key(self, key):
         """ :rtype: bool """

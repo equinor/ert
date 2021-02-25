@@ -1,5 +1,13 @@
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QFrame, QLabel, QVBoxLayout, QHBoxLayout, QScrollArea, QWidget, QGridLayout
+from qtpy.QtWidgets import (
+    QFrame,
+    QLabel,
+    QVBoxLayout,
+    QHBoxLayout,
+    QScrollArea,
+    QWidget,
+    QGridLayout,
+)
 
 from ert_gui.ertwidgets.models.ertsummary import ErtSummary
 
@@ -12,22 +20,23 @@ class SummaryTemplate(object):
         self.__finished = False
         self.startGroup(title)
 
-
     def startGroup(self, title):
         if not self.__finished:
-            style = "display: inline-block; width: 150px; vertical-align: top; float: left"
-            self.text += "<div style=\"%s\">\n" % style
+            style = (
+                "display: inline-block; width: 150px; vertical-align: top; float: left"
+            )
+            self.text += '<div style="%s">\n' % style
             self.addTitle(title)
 
     def addTitle(self, title):
         if not self.__finished:
             style = "font-size: 16px; font-weight: bold; font-variant: small-caps;"
-            self.text += "<div style=\"%s\">%s</div>" % (style, title)
+            self.text += '<div style="%s">%s</div>' % (style, title)
 
     def addRow(self, value):
         if not self.__finished:
             style = "text-indent: 5px;"
-            self.text += "<div style=\"%s\">%s</div>" % (style, value)
+            self.text += '<div style="%s">%s</div>' % (style, value)
 
     def endGroup(self):
         if not self.__finished:
@@ -51,7 +60,6 @@ class SummaryPanel(QFrame):
         self.layout = QHBoxLayout()
         widget.setLayout(self.layout)
 
-
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(widget)
@@ -62,7 +70,6 @@ class SummaryPanel(QFrame):
         self.setLayout(layout)
         self.updateSummary()
 
-
     def updateSummary(self):
         summary = ErtSummary()
 
@@ -70,7 +77,6 @@ class SummaryPanel(QFrame):
 
         for job in summary.getForwardModels():
             text.addRow(job)
-
 
         self.addColumn(text.getText())
 
@@ -86,7 +92,6 @@ class SummaryPanel(QFrame):
 
         self.addColumn(text.getText())
 
-
     def addColumn(self, text):
         layout = QVBoxLayout()
         text_widget = QLabel(text)
@@ -96,5 +101,3 @@ class SummaryPanel(QFrame):
         layout.addStretch(1)
 
         self.layout.addLayout(layout)
-
-

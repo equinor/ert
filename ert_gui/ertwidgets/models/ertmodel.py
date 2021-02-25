@@ -15,7 +15,11 @@ def getRealizationCount():
 def getAllCases():
     """ @rtype: list[str] """
     case_list = ERT.ert.getEnkfFsManager().getCaseList()
-    return [str(case) for case in case_list if not ERT.ert.getEnkfFsManager().isCaseHidden(case)]
+    return [
+        str(case)
+        for case in case_list
+        if not ERT.ert.getEnkfFsManager().isCaseHidden(case)
+    ]
 
 
 def caseExists(case_name):
@@ -44,7 +48,7 @@ def getHistoryLength():
 
 
 def get_runnable_realizations_mask(casename):
-    """ Return the list of IDs corresponding to realizations that can be run.
+    """Return the list of IDs corresponding to realizations that can be run.
 
     A realization is considered "runnable" if its status is any other than
     STATE_PARENT_FAILED. In that case, ERT does not know why that realization
@@ -56,10 +60,12 @@ def get_runnable_realizations_mask(casename):
     if not fsm.caseExists(casename):
         return []
     sm = fsm.getStateMapForCase(casename)
-    runnable_flag = RealizationStateEnum.STATE_UNDEFINED | \
-                    RealizationStateEnum.STATE_INITIALIZED | \
-                    RealizationStateEnum.STATE_LOAD_FAILURE | \
-                    RealizationStateEnum.STATE_HAS_DATA
+    runnable_flag = (
+        RealizationStateEnum.STATE_UNDEFINED
+        | RealizationStateEnum.STATE_INITIALIZED
+        | RealizationStateEnum.STATE_LOAD_FAILURE
+        | RealizationStateEnum.STATE_HAS_DATA
+    )
     return sm.createMask(runnable_flag)
 
 
@@ -106,7 +112,7 @@ def getCaseRealizationStates(case_name):
 @showWaitCursorWhileWaiting
 def initializeCurrentCaseFromScratch(parameters, members):
     selected_parameters = StringList(parameters)
-    mask = BoolVector(initial_size = getRealizationCount(), default_value = False)
+    mask = BoolVector(initial_size=getRealizationCount(), default_value=False)
     for member in members:
         member = int(member.strip())
         mask[member] = True
@@ -118,22 +124,32 @@ def initializeCurrentCaseFromScratch(parameters, members):
 
 
 @showWaitCursorWhileWaiting
-def initializeCurrentCaseFromExisting(source_case, target_case, source_report_step, parameters, members):
-    if caseExists(source_case) and caseIsInitialized(source_case) and caseExists(target_case):
+def initializeCurrentCaseFromExisting(
+    source_case, target_case, source_report_step, parameters, members
+):
+    if (
+        caseExists(source_case)
+        and caseIsInitialized(source_case)
+        and caseExists(target_case)
+    ):
         total_member_count = getRealizationCount()
 
         member_mask = BoolVector.createFromList(total_member_count, members)
         selected_parameters = StringList(parameters)
 
-        ERT.ert.getEnkfFsManager().customInitializeCurrentFromExistingCase(source_case, source_report_step, member_mask,
-                                                                           selected_parameters)
+        ERT.ert.getEnkfFsManager().customInitializeCurrentFromExistingCase(
+            source_case, source_report_step, member_mask, selected_parameters
+        )
 
         ERT.emitErtChange()
 
 
 def getParameterList():
     """ @rtype: list[str] """
-    return [str(p) for p in ERT.ert.ensembleConfig().getKeylistFromVarType(EnkfVarType.PARAMETER)]
+    return [
+        str(p)
+        for p in ERT.ert.ensembleConfig().getKeylistFromVarType(EnkfVarType.PARAMETER)
+    ]
 
 
 def getRunPath():
@@ -149,7 +165,9 @@ def getNumberOfIterations():
 def setNumberOfIterations(iteration_count):
     """ @type iteration_count: int """
     if iteration_count != getNumberOfIterations():
-        ERT.ert.analysisConfig().getAnalysisIterConfig().setNumIterations(iteration_count)
+        ERT.ert.analysisConfig().getAnalysisIterConfig().setNumIterations(
+            iteration_count
+        )
         ERT.emitErtChange()
 
 

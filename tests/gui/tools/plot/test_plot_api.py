@@ -14,103 +14,103 @@ from unittest import TestCase
 
 
 _KEY_DEFS = (
-        {
-            "key": "BPR:1,3,8",
-            "index_type": "VALUE",
-            "observations": [],
-            "has_refcase": True,
-            "dimensionality": 2,
-            "metadata": {"data_origin": "Summary"},
-            "log_scale": False,
-        },
-        {
-            "key": "BPR:445",
-            "index_type": "VALUE",
-            "observations": [],
-            "has_refcase": True,
-            "dimensionality": 2,
-            "metadata": {"data_origin": "Summary"},
-            "log_scale": False,
-        },
-        {
-            "key": "FOPT",
-            "index_type": "VALUE",
-            "observations": [],
-            "has_refcase": True,
-            "dimensionality": 2,
-            "metadata": {"data_origin": "Summary"},
-            "log_scale": False,
-        },
-        {
-            "key": "FOPTH",
-            "index_type": "VALUE",
-            "observations": [],
-            "has_refcase": True,
-            "dimensionality": 2,
-            "metadata": {"data_origin": "Summary"},
-            "log_scale": False,
-        },
-        {
-            "key": "WGOR:OP1",
-            "index_type": "VALUE",
-            "observations": [],
-            "has_refcase": True,
-            "dimensionality": 2,
-            "metadata": {"data_origin": "Summary"},
-            "log_scale": False,
-        },
-        {
-            "key": "WGORH:OP1",
-            "index_type": "VALUE",
-            "observations": [],
-            "has_refcase": True,
-            "dimensionality": 2,
-            "metadata": {"data_origin": "Summary"},
-            "log_scale": False,
-        },
-        {
-            "key": "WOPR:OP1",
-            "index_type": "VALUE",
-            "observations": [
-                "WOPR_OP1_108",
-                "WOPR_OP1_190",
-                "WOPR_OP1_144",
-                "WOPR_OP1_9",
-                "WOPR_OP1_72",
-                "WOPR_OP1_36",
-            ],
-            "has_refcase": True,
-            "dimensionality": 2,
-            "metadata": {"data_origin": "Summary"},
-            "log_scale": False,
-        },
-        {
-            "key": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
-            "index_type": None,
-            "observations": [],
-            "has_refcase": False,
-            "dimensionality": 1,
-            "metadata": {"data_origin": "Gen KW"},
-            "log_scale": False,
-        },
-        {
-            "key": "SNAKE_OIL_GPR_DIFF@199",
-            "index_type": "INDEX",
-            "observations": [],
-            "has_refcase": False,
-            "dimensionality": 2,
-            "metadata": {"data_origin": "Gen Data"},
-            "log_scale": False,
-        },
-        {
-            "key": "SNAKE_OIL_WPR_DIFF@199",
-            "index_type": "INDEX",
-            "observations": ["WPR_DIFF_1"],
-            "has_refcase": False,
-            "dimensionality": 2,
-            "metadata": {"data_origin": "Gen Data"},
-            "log_scale": False,
-        },
+    {
+        "key": "BPR:1,3,8",
+        "index_type": "VALUE",
+        "observations": [],
+        "has_refcase": True,
+        "dimensionality": 2,
+        "metadata": {"data_origin": "Summary"},
+        "log_scale": False,
+    },
+    {
+        "key": "BPR:445",
+        "index_type": "VALUE",
+        "observations": [],
+        "has_refcase": True,
+        "dimensionality": 2,
+        "metadata": {"data_origin": "Summary"},
+        "log_scale": False,
+    },
+    {
+        "key": "FOPT",
+        "index_type": "VALUE",
+        "observations": [],
+        "has_refcase": True,
+        "dimensionality": 2,
+        "metadata": {"data_origin": "Summary"},
+        "log_scale": False,
+    },
+    {
+        "key": "FOPTH",
+        "index_type": "VALUE",
+        "observations": [],
+        "has_refcase": True,
+        "dimensionality": 2,
+        "metadata": {"data_origin": "Summary"},
+        "log_scale": False,
+    },
+    {
+        "key": "WGOR:OP1",
+        "index_type": "VALUE",
+        "observations": [],
+        "has_refcase": True,
+        "dimensionality": 2,
+        "metadata": {"data_origin": "Summary"},
+        "log_scale": False,
+    },
+    {
+        "key": "WGORH:OP1",
+        "index_type": "VALUE",
+        "observations": [],
+        "has_refcase": True,
+        "dimensionality": 2,
+        "metadata": {"data_origin": "Summary"},
+        "log_scale": False,
+    },
+    {
+        "key": "WOPR:OP1",
+        "index_type": "VALUE",
+        "observations": [
+            "WOPR_OP1_108",
+            "WOPR_OP1_190",
+            "WOPR_OP1_144",
+            "WOPR_OP1_9",
+            "WOPR_OP1_72",
+            "WOPR_OP1_36",
+        ],
+        "has_refcase": True,
+        "dimensionality": 2,
+        "metadata": {"data_origin": "Summary"},
+        "log_scale": False,
+    },
+    {
+        "key": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
+        "index_type": None,
+        "observations": [],
+        "has_refcase": False,
+        "dimensionality": 1,
+        "metadata": {"data_origin": "Gen KW"},
+        "log_scale": False,
+    },
+    {
+        "key": "SNAKE_OIL_GPR_DIFF@199",
+        "index_type": "INDEX",
+        "observations": [],
+        "has_refcase": False,
+        "dimensionality": 2,
+        "metadata": {"data_origin": "Gen Data"},
+        "log_scale": False,
+    },
+    {
+        "key": "SNAKE_OIL_WPR_DIFF@199",
+        "index_type": "INDEX",
+        "observations": ["WPR_DIFF_1"],
+        "has_refcase": False,
+        "dimensionality": 2,
+        "metadata": {"data_origin": "Gen Data"},
+        "log_scale": False,
+    },
 )
 
 
@@ -286,13 +286,13 @@ def test_no_storage(case_name, key_def, api):
 @pytest.mark.parametrize("case_name", ["default_0", "default_1"], ids=get_id)
 @pytest.mark.parametrize("key_def", _KEY_DEFS, ids=get_key_name)
 def test_can_load_data_and_observations(case_name, key_def, api):
-        obs = key_def["observations"]
-        obs_data = api.observations_for_obs_keys(case_name, obs)
-        data = api.data_for_key(case_name, key_def["key"])
+    obs = key_def["observations"]
+    obs_data = api.observations_for_obs_keys(case_name, obs)
+    data = api.data_for_key(case_name, key_def["key"])
 
-        assert isinstance(data, DataFrame)
-        assert not data.empty
+    assert isinstance(data, DataFrame)
+    assert not data.empty
 
-        assert isinstance(obs_data, DataFrame)
-        if len(obs) > 0:
-            assert not obs_data.empty
+    assert isinstance(obs_data, DataFrame)
+    if len(obs) > 0:
+        assert not obs_data.empty

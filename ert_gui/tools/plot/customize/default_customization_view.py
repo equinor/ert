@@ -12,27 +12,44 @@ class DefaultCustomizationView(CustomizationView):
     history = WidgetProperty()
     observations = WidgetProperty()
 
-
     def __init__(self):
         CustomizationView.__init__(self)
-        label_msg = "Set to empty to use the default %s.\n" \
-                    "It is also possible to use LaTeX. Enclose expression with $...$ for example: \n" \
-                    "$\\alpha > \\beta$\n" \
-                    "$r^3$\n" \
-                    "$\\frac{1}{x}$\n" \
-                    "$\\sqrt{2}$"
+        label_msg = (
+            "Set to empty to use the default %s.\n"
+            "It is also possible to use LaTeX. Enclose expression with $...$ for example: \n"
+            "$\\alpha > \\beta$\n"
+            "$r^3$\n"
+            "$\\frac{1}{x}$\n"
+            "$\\sqrt{2}$"
+        )
 
-        self.addLineEdit("title", "Title", "The title of the plot. %s" % (label_msg % "title"), placeholder="Title")
+        self.addLineEdit(
+            "title",
+            "Title",
+            "The title of the plot. %s" % (label_msg % "title"),
+            placeholder="Title",
+        )
         self.addSpacing()
-        self.addLineEdit("x_label", "X Label", "The label of the X axis. %s" % (label_msg % "label"), placeholder="X Label")
-        self.addLineEdit("y_label", "Y Label", "The label of the Y axis. %s" % (label_msg % "label"), placeholder="Y Label")
+        self.addLineEdit(
+            "x_label",
+            "X Label",
+            "The label of the X axis. %s" % (label_msg % "label"),
+            placeholder="X Label",
+        )
+        self.addLineEdit(
+            "y_label",
+            "Y Label",
+            "The label of the Y axis. %s" % (label_msg % "label"),
+            placeholder="Y Label",
+        )
         self.addSpacing()
         self.addCheckBox("legend", "Legend", "Toggle Legend visibility.")
         self.addCheckBox("grid", "Grid", "Toggle Grid visibility.")
         self.addCheckBox("refcase", "Refcase", "Toggle Refcase visibility.")
         self.addCheckBox("history", "History", "Toggle History visibility.")
-        self.addCheckBox("observations", "Observations", "Toggle Observations visibility.")
-
+        self.addCheckBox(
+            "observations", "Observations", "Toggle Observations visibility."
+        )
 
     def applyCustomization(self, plot_config):
         """
@@ -48,7 +65,6 @@ class DefaultCustomizationView(CustomizationView):
         plot_config.setRefcaseEnabled(self.refcase)
         plot_config.setHistoryEnabled(self.history)
         plot_config.setObservationsEnabled(self.observations)
-
 
     def revertCustomization(self, plot_config):
         """

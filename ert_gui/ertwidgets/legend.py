@@ -7,6 +7,7 @@ from qtpy.QtWidgets import QWidget, QHBoxLayout, QLabel
 
 class LegendMarker(QWidget):
     """A widget that shows a colored box"""
+
     def __init__(self, color):
         QWidget.__init__(self)
 
@@ -28,8 +29,10 @@ class LegendMarker(QWidget):
         rect.setY(rect.y() + 1)
         painter.fillRect(rect, self.color)
 
+
 class Legend(QWidget):
     """Combines a LegendMarker with a label"""
+
     def __init__(self, legend, color):
         QWidget.__init__(self)
 

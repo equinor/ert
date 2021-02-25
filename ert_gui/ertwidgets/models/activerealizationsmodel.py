@@ -4,7 +4,7 @@ from ert_gui.ertwidgets.models.ertmodel import getRealizationCount
 
 
 def mask_to_rangestring(mask):
-    """ Convert a mask (ordered collection of booleans) into a range string
+    """Convert a mask (ordered collection of booleans) into a range string
 
     For instance, `0 1 0 1 1 1` would be converted to `1, 3-5`
     """
@@ -38,17 +38,19 @@ class ActiveRealizationsModel(ValueModel):
         self._custom = False
 
     def setValue(self, active_realizations):
-        if active_realizations is None or active_realizations.strip() == "" or active_realizations == self.getDefaultValue():
+        if (
+            active_realizations is None
+            or active_realizations.strip() == ""
+            or active_realizations == self.getDefaultValue()
+        ):
             self._custom = False
             ValueModel.setValue(self, self.getDefaultValue())
         else:
             self._custom = True
             ValueModel.setValue(self, active_realizations)
 
-
     def setValueFromMask(self, mask):
         self.setValue(mask_to_rangestring(mask))
-
 
     def getDefaultValue(self):
         size = getRealizationCount()
@@ -57,7 +59,7 @@ class ActiveRealizationsModel(ValueModel):
     def getActiveRealizationsMask(self):
         count = getRealizationCount()
 
-        mask = BoolVector(default_value=False, initial_size = count)
+        mask = BoolVector(default_value=False, initial_size=count)
         if not mask.updateActiveMask(self.getValue()):
             raise ValueError('Error while parsing range string "%s"!' % self.getValue())
 
