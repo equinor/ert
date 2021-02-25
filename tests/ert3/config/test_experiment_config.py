@@ -51,4 +51,4 @@ def test_unkown_sensitivity_algorithm():
         pydantic.error_wrappers.ValidationError,
         match=r"unexpected value; permitted: 'one-at-a-time' \(",
     ):
-        experiment_config = ert3.config.load_experiment_config(raw_config)
+        ert3.config.load_experiment_config(raw_config)
