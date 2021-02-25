@@ -21,4 +21,4 @@ jobs:
         python -m pip install flake8
     - name: Lint with flake8
       run: |
-        flake8 ert3 --max-line-length=88 --ignore=F401,E711,W503
+        flake8 ert3 tests/ert3 --max-line-length=88 --ignore=F401,E711,W503
