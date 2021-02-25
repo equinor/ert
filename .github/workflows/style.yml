@@ -23,6 +23,6 @@ jobs:
     - name: Lint with flake8
       run: |
         flake8 ert3 tests/ert3
-    - name: Run black on ert3
+    - name: Run black
       run: |
-        black ert3 tests/ert3 examples setup.py --check
+        black . --check
