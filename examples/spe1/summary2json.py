@@ -11,17 +11,10 @@ def _build_arg_parser():
         description="Exports summary data as JSON",
     )
     arg_parser.add_argument(
-        "--datafile",
-        type=pathlib.Path,
-        required=True,
-        help="Path to datafile"
+        "--datafile", type=pathlib.Path, required=True, help="Path to datafile"
     )
     arg_parser.add_argument(
-        "--keywords",
-        type=str,
-        nargs="*",
-        required=True,
-        help="Keywords to export"
+        "--keywords", type=str, nargs="*", required=True, help="Keywords to export"
     )
     return arg_parser
 
