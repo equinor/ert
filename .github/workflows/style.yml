@@ -22,7 +22,7 @@ jobs:
         python -m pip install black
     - name: Lint with flake8
       run: |
-        flake8 ert3 tests/ert3 --max-line-length=88 --ignore=F401,E711,W503
+        flake8 ert3 tests/ert3
     - name: Run black on ert3
       run: |
         black ert3 tests/ert3 examples setup.py --check
