@@ -6,18 +6,16 @@ from ert_shared import ERT
 from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared.models.ensemble_experiment import EnsembleExperiment
 from ert_shared.models.ensemble_smoother import EnsembleSmoother
-from ert_shared.models.multiple_data_assimilation import \
-    MultipleDataAssimilation
+from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert_shared.models.single_test_run import SingleTestRun
 from res.test import ErtTestContext
 from tests import ErtTest
 
 
 class ModelFactoryTest(ErtTest):
-
     def test_custom_target_case_name(self):
-        config_file = self.createTestPath('local/poly_example/poly.ert')
-        with ErtTestContext('test_custom_target_case_name', config_file) as work_area:
+        config_file = self.createTestPath("local/poly_example/poly.ert")
+        with ErtTestContext("test_custom_target_case_name", config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
             ERT.adapt(notifier)
@@ -28,8 +26,8 @@ class ModelFactoryTest(ErtTest):
             self.assertEqual(custom_name, res)
 
     def test_default_target_case_name(self):
-        config_file = self.createTestPath('local/poly_example/poly.ert')
-        with ErtTestContext('test_default_target_case_name', config_file) as work_area:
+        config_file = self.createTestPath("local/poly_example/poly.ert")
+        with ErtTestContext("test_default_target_case_name", config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
             ERT.adapt(notifier)
@@ -39,8 +37,10 @@ class ModelFactoryTest(ErtTest):
             self.assertEqual("default_smoother_update", res)
 
     def test_default_target_case_name_format_mode(self):
-        config_file = self.createTestPath('local/poly_example/poly.ert')
-        with ErtTestContext('test_default_target_case_name_format_mode', config_file) as work_area:
+        config_file = self.createTestPath("local/poly_example/poly.ert")
+        with ErtTestContext(
+            "test_default_target_case_name_format_mode", config_file
+        ) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
             ERT.adapt(notifier)
@@ -50,8 +50,8 @@ class ModelFactoryTest(ErtTest):
             self.assertEqual("default_%d", res)
 
     def test_default_realizations(self):
-        config_file = self.createTestPath('local/poly_example/poly.ert')
-        with ErtTestContext('test_default_realizations', config_file) as work_area:
+        config_file = self.createTestPath("local/poly_example/poly.ert")
+        with ErtTestContext("test_default_realizations", config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
             ERT.adapt(notifier)
@@ -64,8 +64,8 @@ class ModelFactoryTest(ErtTest):
             self.assertEqual(mask, res)
 
     def test_init_iteration_number(self):
-        config_file = self.createTestPath('local/poly_example/poly.ert')
-        with ErtTestContext('test_init_iteration_number', config_file) as work_area:
+        config_file = self.createTestPath("local/poly_example/poly.ert")
+        with ErtTestContext("test_init_iteration_number", config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
             ERT.adapt(notifier)
@@ -73,12 +73,12 @@ class ModelFactoryTest(ErtTest):
             args = Namespace(iter_num=10, realizations=None)
             model, argument = model_factory._setup_ensemble_experiment(args)
             run_context = model.create_context(argument)
-            self.assertEqual(argument['iter_num'], 10)
+            self.assertEqual(argument["iter_num"], 10)
             self.assertEqual(run_context.get_iter(), 10)
 
     def test_custom_realizations(self):
-        config_file = self.createTestPath('local/poly_example/poly.ert')
-        with ErtTestContext('test_custom_realizations', config_file) as work_area:
+        config_file = self.createTestPath("local/poly_example/poly.ert")
+        with ErtTestContext("test_custom_realizations", config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
             ERT.adapt(notifier)
@@ -91,8 +91,8 @@ class ModelFactoryTest(ErtTest):
             self.assertEqual(mask, res)
 
     def test_setup_single_test_run(self):
-        config_file = self.createTestPath('local/poly_example/poly.ert')
-        with ErtTestContext('test_single_test_run', config_file) as work_area:
+        config_file = self.createTestPath("local/poly_example/poly.ert")
+        with ErtTestContext("test_single_test_run", config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
             ERT.adapt(notifier)
@@ -104,8 +104,8 @@ class ModelFactoryTest(ErtTest):
             model.create_context(argument)
 
     def test_setup_ensemble_experiment(self):
-        config_file = self.createTestPath('local/poly_example/poly.ert')
-        with ErtTestContext('test_single_test_run', config_file) as work_area:
+        config_file = self.createTestPath("local/poly_example/poly.ert")
+        with ErtTestContext("test_single_test_run", config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
             ERT.adapt(notifier)
@@ -117,8 +117,8 @@ class ModelFactoryTest(ErtTest):
             model.create_context(argument)
 
     def test_setup_ensemble_smoother(self):
-        config_file = self.createTestPath('local/poly_example/poly.ert')
-        with ErtTestContext('test_single_test_run', config_file) as work_area:
+        config_file = self.createTestPath("local/poly_example/poly.ert")
+        with ErtTestContext("test_single_test_run", config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
             ERT.adapt(notifier)
@@ -133,8 +133,8 @@ class ModelFactoryTest(ErtTest):
             model.create_context(argument)
 
     def test_setup_multiple_data_assimilation(self):
-        config_file = self.createTestPath('local/poly_example/poly.ert')
-        with ErtTestContext('test_single_test_run', config_file) as work_area:
+        config_file = self.createTestPath("local/poly_example/poly.ert")
+        with ErtTestContext("test_single_test_run", config_file) as work_area:
             ert = work_area.getErt()
             notifier = ErtCliNotifier(ert, config_file)
             ERT.adapt(notifier)
@@ -160,26 +160,35 @@ class ModelFactoryTest(ErtTest):
         active_name = "STD_ENKF"
         modules = ["RML_ENKF"]
         name = model_factory._get_analysis_module_name(
-            active_name, modules, iterable=True)
+            active_name, modules, iterable=True
+        )
 
         self.assertEqual(name, "RML_ENKF")
 
     def test_analysis_module_name_not_iterable(self):
 
         active_name = "STD_ENKF"
-        modules = ['BOOTSTRAP_ENKF', 'CV_ENKF', 'FWD_STEP_ENKF',
-                   'NULL_ENKF', 'SQRT_ENKF', 'STD_ENKF']
+        modules = [
+            "BOOTSTRAP_ENKF",
+            "CV_ENKF",
+            "FWD_STEP_ENKF",
+            "NULL_ENKF",
+            "SQRT_ENKF",
+            "STD_ENKF",
+        ]
         name = model_factory._get_analysis_module_name(
-            active_name, modules, iterable=True)
+            active_name, modules, iterable=True
+        )
 
         self.assertEqual(name, "STD_ENKF")
 
     def test_analysis_module_name_in_module(self):
 
         active_name = "STD_ENKF"
-        modules = ['STD_ENKF']
+        modules = ["STD_ENKF"]
         name = model_factory._get_analysis_module_name(
-            active_name, modules, iterable=True)
+            active_name, modules, iterable=True
+        )
 
         self.assertEqual(name, "STD_ENKF")
 
@@ -188,7 +197,8 @@ class ModelFactoryTest(ErtTest):
         active_name = "FOO"
         modules = ["BAR"]
         name = model_factory._get_analysis_module_name(
-            active_name, modules, iterable=True)
+            active_name, modules, iterable=True
+        )
 
         self.assertEqual(name, "BAR")
 
@@ -197,6 +207,7 @@ class ModelFactoryTest(ErtTest):
         active_name = "FOO"
         modules = []
         name = model_factory._get_analysis_module_name(
-            active_name, modules, iterable=True)
+            active_name, modules, iterable=True
+        )
 
         self.assertIsNone(name)

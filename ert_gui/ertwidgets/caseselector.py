@@ -2,16 +2,30 @@ from qtpy.QtWidgets import QComboBox
 
 from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget
-from ert_gui.ertwidgets.models.ertmodel import getAllCases, selectOrCreateNewCase, getCurrentCaseName, getAllInitializedCases
+from ert_gui.ertwidgets.models.ertmodel import (
+    getAllCases,
+    selectOrCreateNewCase,
+    getCurrentCaseName,
+    getAllInitializedCases,
+)
 
 
 class CaseSelector(QComboBox):
-    def __init__(self, update_ert=True, show_only_initialized=False, ignore_current=False, help_link="init/current_case_selection"):
+    def __init__(
+        self,
+        update_ert=True,
+        show_only_initialized=False,
+        ignore_current=False,
+        help_link="init/current_case_selection",
+    ):
         QComboBox.__init__(self)
-        self._update_ert = update_ert # If true current case of ert will be change
-        self._show_only_initialized = show_only_initialized # only show initialized cases
-        self._ignore_current = ignore_current # ignore the currently selected case if it changes
-
+        self._update_ert = update_ert  # If true current case of ert will be change
+        self._show_only_initialized = (
+            show_only_initialized  # only show initialized cases
+        )
+        self._ignore_current = (
+            ignore_current  # ignore the currently selected case if it changes
+        )
 
         addHelpToWidget(self, help_link)
         self.setSizeAdjustPolicy(QComboBox.AdjustToContents)
@@ -29,7 +43,12 @@ class CaseSelector(QComboBox):
 
     def selectionChanged(self, index):
         if self._update_ert:
-            assert 0 <= index < self.count(), "Should not happen! Index out of range: 0 <= %i < %i" % (index, self.count())
+            assert (
+                0 <= index < self.count()
+            ), "Should not happen! Index out of range: 0 <= %i < %i" % (
+                index,
+                self.count(),
+            )
 
             item = self._getAllCases()[index]
             selectOrCreateNewCase(item)

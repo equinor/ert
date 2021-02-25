@@ -3,9 +3,6 @@ from tests import ErtTest
 
 
 class BoolArgumentTest(ErtTest):
-
-
-
     def test_bool_argument(self):
         bool_arg = BoolArgument()
 
@@ -42,12 +39,3 @@ class BoolArgumentTest(ErtTest):
 
         self.assertTrue(bool_arg.validate("T").value())
         self.assertFalse(bool_arg.validate("F").value())
-
-
-
-
-
-
-
-
-

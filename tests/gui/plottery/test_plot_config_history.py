@@ -3,9 +3,8 @@ from ert_gui.plottery import PlotConfig, PlotConfigHistory
 
 
 class PlotConfigHistoryTest(ErtTest):
-
     def test_plot_config_history(self):
-        test_pc = PlotConfig(title = "test_1")
+        test_pc = PlotConfig(title="test_1")
         history = PlotConfigHistory("test", test_pc)
 
         self.assertEqual(history.getPlotConfig().title(), test_pc.title())
@@ -14,7 +13,7 @@ class PlotConfigHistoryTest(ErtTest):
         self.assertFalse(history.isUndoPossible())
         self.assertFalse(history.isRedoPossible())
 
-        history.applyChanges(PlotConfig(title = "test_2"))
+        history.applyChanges(PlotConfig(title="test_2"))
         self.assertTrue(history.isUndoPossible())
         self.assertFalse(history.isRedoPossible())
         self.assertEqual(history.getPlotConfig().title(), "test_2")
@@ -38,7 +37,3 @@ class PlotConfigHistoryTest(ErtTest):
         self.assertTrue(history.isUndoPossible())
         self.assertTrue(history.isRedoPossible())
         self.assertEqual(history.getPlotConfig().title(), "test_2")
-
-
-
-

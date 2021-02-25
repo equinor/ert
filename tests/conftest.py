@@ -26,4 +26,3 @@ def env_save():
         raise EnvironmentError(
             "Your environment has changed after that test, please reset"
         )
-

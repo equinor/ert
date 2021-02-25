@@ -1,16 +1,16 @@
-from ert_shared.ide.keywords.definitions import ArgumentDefinition, KeywordDefinition, ConfigurationLineDefinition, IntegerArgument
+from ert_shared.ide.keywords.definitions import (
+    ArgumentDefinition,
+    KeywordDefinition,
+    ConfigurationLineDefinition,
+    IntegerArgument,
+)
 from tests import ErtTest
 
 
-
-
-
 class ConfigurationLineDefinitionTest(ErtTest):
-
     def test_keyword_definition(self):
         keyword = KeywordDefinition("KEYWORD")
         self.assertEqual(keyword.name(), "KEYWORD")
-
 
     def test_argument_definition(self):
         arg_def = ArgumentDefinition(optional=True, built_in=True, rest_of_line=True)
@@ -19,14 +19,15 @@ class ConfigurationLineDefinitionTest(ErtTest):
         self.assertTrue(arg_def.isOptional())
         self.assertTrue(arg_def.consumeRestOfLine())
 
-
     def test_configuration_line_definition(self):
 
-        cld = ConfigurationLineDefinition(keyword=KeywordDefinition("KEYWORD"),
-                                          arguments=[IntegerArgument(from_value=1)],
-                                          documentation_link="help/path",
-                                          required=True,
-                                          group="Group")
+        cld = ConfigurationLineDefinition(
+            keyword=KeywordDefinition("KEYWORD"),
+            arguments=[IntegerArgument(from_value=1)],
+            documentation_link="help/path",
+            required=True,
+            group="Group",
+        )
 
         self.assertTrue(cld.isRequired())
         self.assertEqual(cld.documentationLink(), "help/path")
@@ -40,6 +41,4 @@ class ConfigurationLineDefinitionTest(ErtTest):
         self.assertEqual(len(argument_definitions), 1)
         self.assertIsInstance(argument_definitions[0], IntegerArgument)
 
-
         self.assertEqual(cld.group(), "Group")
-

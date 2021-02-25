@@ -5,7 +5,6 @@ from ert_gui.plottery import PlotStyle, PlotConfig, PlotLimits
 
 
 class PlotStyleTest(ErtTest):
-
     def test_plot_style_test_defaults(self):
         style = PlotStyle("Test")
 
@@ -24,7 +23,6 @@ class PlotStyleTest(ErtTest):
         self.assertEqual(style.line_style, "")
         self.assertEqual(style.marker, "")
 
-
     def test_plot_style_builtin_checks(self):
         style = PlotStyle("Test")
 
@@ -32,7 +30,9 @@ class PlotStyleTest(ErtTest):
         self.assertIsNone(style.name)
 
         style.color = "notacolor"
-        self.assertEqual(style.color, "notacolor") # maybe make this a proper check in future ?
+        self.assertEqual(
+            style.color, "notacolor"
+        )  # maybe make this a proper check in future ?
 
         style.line_style = None
         self.assertEqual(style.line_style, "")
@@ -55,7 +55,6 @@ class PlotStyleTest(ErtTest):
         style.setEnabled(False)
         self.assertFalse(style.isEnabled())
 
-
     def test_plot_style_copy_style(self):
         style = PlotStyle("Test", "red", 0.5, ".", "o", 2.5)
         style.setEnabled(False)
@@ -76,7 +75,6 @@ class PlotStyleTest(ErtTest):
         another_copy_style = PlotStyle("Another Copy")
         another_copy_style.copyStyleFrom(style, copy_enabled_state=True)
         self.assertEqual(style.isEnabled(), another_copy_style.isEnabled())
-
 
     def test_plot_config(self):
         plot_config = PlotConfig(title="Golden Sample", x_label="x", y_label="y")
@@ -112,29 +110,60 @@ class PlotStyleTest(ErtTest):
         copy_of_plot_config = PlotConfig(title="Copy of Golden Sample")
         copy_of_plot_config.copyConfigFrom(plot_config)
 
-        self.assertEqual(plot_config.isLegendEnabled(), copy_of_plot_config.isLegendEnabled())
-        self.assertEqual(plot_config.isGridEnabled(), copy_of_plot_config.isGridEnabled())
-        self.assertEqual(plot_config.isObservationsEnabled(), copy_of_plot_config.isObservationsEnabled())
-        self.assertEqual(plot_config.isDistributionLineEnabled(), copy_of_plot_config.isDistributionLineEnabled())
+        self.assertEqual(
+            plot_config.isLegendEnabled(), copy_of_plot_config.isLegendEnabled()
+        )
+        self.assertEqual(
+            plot_config.isGridEnabled(), copy_of_plot_config.isGridEnabled()
+        )
+        self.assertEqual(
+            plot_config.isObservationsEnabled(),
+            copy_of_plot_config.isObservationsEnabled(),
+        )
+        self.assertEqual(
+            plot_config.isDistributionLineEnabled(),
+            copy_of_plot_config.isDistributionLineEnabled(),
+        )
 
         self.assertEqual(plot_config.refcaseStyle(), copy_of_plot_config.refcaseStyle())
-        self.assertEqual(plot_config.observationsStyle(), copy_of_plot_config.observationsStyle())
+        self.assertEqual(
+            plot_config.observationsStyle(), copy_of_plot_config.observationsStyle()
+        )
 
-        self.assertEqual(plot_config.histogramStyle(), copy_of_plot_config.histogramStyle())
+        self.assertEqual(
+            plot_config.histogramStyle(), copy_of_plot_config.histogramStyle()
+        )
         self.assertEqual(plot_config.defaultStyle(), copy_of_plot_config.defaultStyle())
         self.assertEqual(plot_config.currentColor(), copy_of_plot_config.currentColor())
 
-        self.assertEqual(plot_config.getStatisticsStyle("mean"), copy_of_plot_config.getStatisticsStyle("mean"))
-        self.assertEqual(plot_config.getStatisticsStyle("min-max"), copy_of_plot_config.getStatisticsStyle("min-max"))
-        self.assertEqual(plot_config.getStatisticsStyle("p50"), copy_of_plot_config.getStatisticsStyle("p50"))
-        self.assertEqual(plot_config.getStatisticsStyle("p10-p90"), copy_of_plot_config.getStatisticsStyle("p10-p90"))
-        self.assertEqual(plot_config.getStatisticsStyle("p33-p67"), copy_of_plot_config.getStatisticsStyle("p33-p67"))
-        self.assertEqual(plot_config.getStatisticsStyle("std"), copy_of_plot_config.getStatisticsStyle("std"))
+        self.assertEqual(
+            plot_config.getStatisticsStyle("mean"),
+            copy_of_plot_config.getStatisticsStyle("mean"),
+        )
+        self.assertEqual(
+            plot_config.getStatisticsStyle("min-max"),
+            copy_of_plot_config.getStatisticsStyle("min-max"),
+        )
+        self.assertEqual(
+            plot_config.getStatisticsStyle("p50"),
+            copy_of_plot_config.getStatisticsStyle("p50"),
+        )
+        self.assertEqual(
+            plot_config.getStatisticsStyle("p10-p90"),
+            copy_of_plot_config.getStatisticsStyle("p10-p90"),
+        )
+        self.assertEqual(
+            plot_config.getStatisticsStyle("p33-p67"),
+            copy_of_plot_config.getStatisticsStyle("p33-p67"),
+        )
+        self.assertEqual(
+            plot_config.getStatisticsStyle("std"),
+            copy_of_plot_config.getStatisticsStyle("std"),
+        )
 
         self.assertEqual(plot_config.title(), copy_of_plot_config.title())
 
         self.assertEqual(plot_config.limits, copy_of_plot_config.limits)
-
 
         plot_config.currentColor()  # cycle state will not be copied
         plot_config.nextColor()
@@ -143,20 +172,41 @@ class PlotStyleTest(ErtTest):
         copy_of_plot_config.copyConfigFrom(plot_config)
 
         self.assertEqual(plot_config.refcaseStyle(), copy_of_plot_config.refcaseStyle())
-        self.assertEqual(plot_config.observationsStyle(), copy_of_plot_config.observationsStyle())
+        self.assertEqual(
+            plot_config.observationsStyle(), copy_of_plot_config.observationsStyle()
+        )
 
-        self.assertNotEqual(plot_config.histogramStyle(), copy_of_plot_config.histogramStyle())
-        self.assertNotEqual(plot_config.defaultStyle(), copy_of_plot_config.defaultStyle())
-        self.assertNotEqual(plot_config.currentColor(), copy_of_plot_config.currentColor())
+        self.assertNotEqual(
+            plot_config.histogramStyle(), copy_of_plot_config.histogramStyle()
+        )
+        self.assertNotEqual(
+            plot_config.defaultStyle(), copy_of_plot_config.defaultStyle()
+        )
+        self.assertNotEqual(
+            plot_config.currentColor(), copy_of_plot_config.currentColor()
+        )
 
-        self.assertNotEqual(plot_config.getStatisticsStyle("mean"), copy_of_plot_config.getStatisticsStyle("mean"))
-        self.assertNotEqual(plot_config.getStatisticsStyle("min-max"), copy_of_plot_config.getStatisticsStyle("min-max"))
-        self.assertNotEqual(plot_config.getStatisticsStyle("p50"), copy_of_plot_config.getStatisticsStyle("p50"))
-        self.assertNotEqual(plot_config.getStatisticsStyle("p10-p90"), copy_of_plot_config.getStatisticsStyle("p10-p90"))
-        self.assertNotEqual(plot_config.getStatisticsStyle("p33-p67"), copy_of_plot_config.getStatisticsStyle("p33-p67"))
-        self.assertNotEqual(plot_config.getStatisticsStyle("std"), copy_of_plot_config.getStatisticsStyle("std"))
-
-
-
-
-
+        self.assertNotEqual(
+            plot_config.getStatisticsStyle("mean"),
+            copy_of_plot_config.getStatisticsStyle("mean"),
+        )
+        self.assertNotEqual(
+            plot_config.getStatisticsStyle("min-max"),
+            copy_of_plot_config.getStatisticsStyle("min-max"),
+        )
+        self.assertNotEqual(
+            plot_config.getStatisticsStyle("p50"),
+            copy_of_plot_config.getStatisticsStyle("p50"),
+        )
+        self.assertNotEqual(
+            plot_config.getStatisticsStyle("p10-p90"),
+            copy_of_plot_config.getStatisticsStyle("p10-p90"),
+        )
+        self.assertNotEqual(
+            plot_config.getStatisticsStyle("p33-p67"),
+            copy_of_plot_config.getStatisticsStyle("p33-p67"),
+        )
+        self.assertNotEqual(
+            plot_config.getStatisticsStyle("std"),
+            copy_of_plot_config.getStatisticsStyle("std"),
+        )

@@ -8,4 +8,3 @@ def help_links():
     :return: Dictionary with link as values and link labels as keys
     :rtype: PluginResponse with data as dict[str,str]
     """
-

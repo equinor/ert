@@ -3,6 +3,7 @@ from qtpy.QtWidgets import QHBoxLayout, QComboBox
 from ert_gui.tools.plot.customize import CustomizationView, WidgetProperty
 from ert_gui.tools.plot import style_chooser as sc
 
+
 class StatisticsCustomizationView(CustomizationView):
     mean_style = WidgetProperty()
     p50_style = WidgetProperty()
@@ -13,40 +14,66 @@ class StatisticsCustomizationView(CustomizationView):
     std_dev_factor = WidgetProperty()
     distribution_lines = WidgetProperty()
 
-
     def __init__(self):
         CustomizationView.__init__(self)
 
-        self._presets = ["Statistics Default", "Cross Case Statistics Default", "Overview", "All statistics"]
+        self._presets = [
+            "Statistics Default",
+            "Cross Case Statistics Default",
+            "Overview",
+            "All statistics",
+        ]
 
         self.addRow("Presets", self.createPresets())
         self.addSpacing(10)
         layout = QHBoxLayout()
         self.addRow("", layout)
-        self.addStyleChooser("mean_style", "Mean", "Line and marker style for the mean line.")
-        self.addStyleChooser("p50_style", "P50", "Line and marker style for the P50 line.")
-        self.addStyleChooser("std_style", "Std dev",
-                             "Line and marker style for the unbiased standard deviation lines.",
-                             line_style_set=sc.STYLESET_AREA)
-        self.addStyleChooser("min_max_style", "Min/Max",
-                             "Line and marker style for the min/max lines.",
-                             line_style_set=sc.STYLESET_AREA)
-        self.addStyleChooser("p10_p90_style", "P10-P90",
-                             "Line and marker style for the P10-P90 lines.",
-                             line_style_set=sc.STYLESET_AREA)
-        self.addStyleChooser("p33_p67_style", "P33-P67",
-                             "Line and marker style for the P33-P67 lines.",
-                             line_style_set=sc.STYLESET_AREA)
+        self.addStyleChooser(
+            "mean_style", "Mean", "Line and marker style for the mean line."
+        )
+        self.addStyleChooser(
+            "p50_style", "P50", "Line and marker style for the P50 line."
+        )
+        self.addStyleChooser(
+            "std_style",
+            "Std dev",
+            "Line and marker style for the unbiased standard deviation lines.",
+            line_style_set=sc.STYLESET_AREA,
+        )
+        self.addStyleChooser(
+            "min_max_style",
+            "Min/Max",
+            "Line and marker style for the min/max lines.",
+            line_style_set=sc.STYLESET_AREA,
+        )
+        self.addStyleChooser(
+            "p10_p90_style",
+            "P10-P90",
+            "Line and marker style for the P10-P90 lines.",
+            line_style_set=sc.STYLESET_AREA,
+        )
+        self.addStyleChooser(
+            "p33_p67_style",
+            "P33-P67",
+            "Line and marker style for the P33-P67 lines.",
+            line_style_set=sc.STYLESET_AREA,
+        )
         self.addSpacing()
 
-        std_box = self.addSpinBox("std_dev_factor", "Std dev multiplier",
-                                  "Choose which standard deviation to plot", max_value=3)
+        std_box = self.addSpinBox(
+            "std_dev_factor",
+            "Std dev multiplier",
+            "Choose which standard deviation to plot",
+            max_value=3,
+        )
 
-        self.addCheckBox("distribution_lines", "Connection Lines", "Toggle distribution connection lines visibility.")
+        self.addCheckBox(
+            "distribution_lines",
+            "Connection Lines",
+            "Toggle distribution connection lines visibility.",
+        )
 
         self["mean_style"].createLabelLayout(layout)
-
-
 
     def createPresets(self):
         preset_combo = QComboBox()
@@ -56,30 +83,29 @@ class StatisticsCustomizationView(CustomizationView):
         preset_combo.currentIndexChanged.connect(self.presetSelected)
         return preset_combo
 
-
     def presetSelected(self, index):
-        if index == 0: # Default
+        if index == 0:  # Default
             self.updateStyle("mean_style", "-", None)
             self.updateStyle("p50_style", None, None)
             self.updateStyle("std_style", None, None)
             self.updateStyle("min_max_style", None, None)
             self.updateStyle("p10_p90_style", "--", None)
             self.updateStyle("p33_p67_style", None, None)
-        elif index == 1: # CCS Default
+        elif index == 1:  # CCS Default
             self.updateStyle("mean_style", "-", "o")
             self.updateStyle("p50_style", None, None)
             self.updateStyle("std_style", "--", "D")
             self.updateStyle("min_max_style", None, None)
             self.updateStyle("p10_p90_style", None, None)
             self.updateStyle("p33_p67_style", None, None)
-        elif index == 2: # Overview
+        elif index == 2:  # Overview
             self.updateStyle("mean_style", None, None)
             self.updateStyle("p50_style", None, None)
             self.updateStyle("std_style", None, None)
             self.updateStyle("min_max_style", "#", None)
             self.updateStyle("p10_p90_style", None, None)
             self.updateStyle("p33_p67_style", None, None)
-        elif index == 3: # All statistics
+        elif index == 3:  # All statistics
             self.updateStyle("mean_style", "-", None)
             self.updateStyle("p50_style", "--", "x")
             self.updateStyle("std_style", ":", None)
@@ -87,13 +113,11 @@ class StatisticsCustomizationView(CustomizationView):
             self.updateStyle("p10_p90_style", "#", None)
             self.updateStyle("p33_p67_style", "#", None)
 
-
     def updateStyle(self, attribute_name, line_style, marker_style):
         style = getattr(self, attribute_name)
         style.line_style = line_style
         style.marker = marker_style
         setattr(self, attribute_name, style)
-
 
     def applyCustomization(self, plot_config):
         """
@@ -108,7 +132,6 @@ class StatisticsCustomizationView(CustomizationView):
 
         plot_config.setStandardDeviationFactor(self.std_dev_factor)
         plot_config.setDistributionLineEnabled(self.distribution_lines)
-
 
     def revertCustomization(self, plot_config):
         """

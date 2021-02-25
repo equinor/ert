@@ -5,8 +5,10 @@ import matplotlib
 
 import ert_shared
 
+
 def headless():
     return "DISPLAY" not in os.environ
+
 
 if headless():
     matplotlib.use("Agg")

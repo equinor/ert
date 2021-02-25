@@ -2,7 +2,6 @@ from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt
 
 
 class TreeModel(QAbstractItemModel):
-
     def __init__(self, tree_root, parent=None):
         QAbstractItemModel.__init__(self, parent)
 
@@ -22,7 +21,6 @@ class TreeModel(QAbstractItemModel):
 
         return q_model_index.internalPointer()
 
-
     def flags(self, q_model_index):
         if not q_model_index.isValid():
             return 0
@@ -34,11 +32,9 @@ class TreeModel(QAbstractItemModel):
         else:
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
-
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return self.__root.name()
-
 
     def index(self, row, column, parent=None):
         if parent is None:
@@ -55,7 +51,6 @@ class TreeModel(QAbstractItemModel):
         child_item = parent_item.child(row)
 
         return self.createIndex(row, column, child_item)
-
 
     def parent(self, q_model_index):
         if not q_model_index.isValid():
@@ -81,12 +76,8 @@ class TreeModel(QAbstractItemModel):
         else:
             return len(parent.internalPointer())
 
-
-
     def columnCount(self, parent):
         return 1
 
-
     def emitChange(self):
         self.modelReset.emit()
-

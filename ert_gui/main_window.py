@@ -7,7 +7,14 @@ import webbrowser
 import yaml
 
 from qtpy.QtCore import QSettings, Qt
-from qtpy.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDockWidget, QAction, QToolButton
+from qtpy.QtWidgets import (
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QDockWidget,
+    QAction,
+    QToolButton,
+)
 
 from ert_gui.about_dialog import AboutDialog
 from ert_shared.plugins import ErtPluginManager
@@ -19,7 +26,7 @@ class GertMainWindow(QMainWindow):
         self.tools = {}
 
         self.resize(300, 700)
-        self.setWindowTitle('ERT - {}'.format(config_file))
+        self.setWindowTitle("ERT - {}".format(config_file))
 
         self.__main_widget = None
 
@@ -44,7 +51,13 @@ class GertMainWindow(QMainWindow):
         self.__createMenu()
         self.__fetchSettings()
 
-    def addDock(self, name, widget, area=Qt.RightDockWidgetArea, allowed_areas=Qt.AllDockWidgetAreas):
+    def addDock(
+        self,
+        name,
+        widget,
+        area=Qt.RightDockWidgetArea,
+        allowed_areas=Qt.AllDockWidgetAreas,
+    ):
         dock_widget = QDockWidget(name)
         dock_widget.setObjectName("%sDock" % name)
         dock_widget.setWidget(widget)
@@ -63,7 +76,6 @@ class GertMainWindow(QMainWindow):
         if tool.isPopupMenu():
             tool_button = self.toolbar.widgetForAction(tool.getAction())
             tool_button.setPopupMode(QToolButton.InstantPopup)
-
 
     def __createMenu(self):
         file_menu = self.menuBar().addMenu("&File")
@@ -85,16 +97,14 @@ class GertMainWindow(QMainWindow):
             help_link_item.setMenuRole(QAction.ApplicationSpecificRole)
             help_link_item.triggered.connect(functools.partial(webbrowser.open, link))
 
-
     def __saveSettings(self):
         settings = QSettings("Equinor", "Ert-Gui")
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
 
-
     def closeEvent(self, event):
-        #Use QT settings saving mechanism
-        #settings stored in ~/.config/Equinor/ErtGui.conf
+        # Use QT settings saving mechanism
+        # settings stored in ~/.config/Equinor/ErtGui.conf
         self.__saveSettings()
         QMainWindow.closeEvent(self, event)
 
@@ -106,7 +116,6 @@ class GertMainWindow(QMainWindow):
         wnd = settings.value("windowState")
         if wnd:
             self.restoreState(wnd)
-
 
     def setWidget(self, widget):
         self.__main_widget = widget

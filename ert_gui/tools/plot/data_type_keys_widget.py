@@ -33,14 +33,18 @@ class DataTypeKeysWidget(QWidget):
 
         self.data_type_keys_widget = QListView()
         self.data_type_keys_widget.setModel(self.filter_model)
-        self.data_type_keys_widget.selectionModel().selectionChanged.connect(self.itemSelected)
+        self.data_type_keys_widget.selectionModel().selectionChanged.connect(
+            self.itemSelected
+        )
 
         layout.addSpacing(15)
         layout.addWidget(self.data_type_keys_widget, 2)
         layout.addStretch()
 
         # layout.addWidget(Legend("Default types", DataTypeKeysListModel.DEFAULT_DATA_TYPE))
-        layout.addWidget(Legend("Observations available", DataTypeKeysListModel.HAS_OBSERVATIONS))
+        layout.addWidget(
+            Legend("Observations available", DataTypeKeysListModel.HAS_OBSERVATIONS)
+        )
 
         self.setLayout(layout)
 
@@ -54,7 +58,6 @@ class DataTypeKeysWidget(QWidget):
         if selected_item is not None:
             self.dataTypeKeySelected.emit()
 
-
     def getSelectedItem(self):
         """ @rtype: str """
         index = self.data_type_keys_widget.currentIndex()
@@ -65,10 +68,8 @@ class DataTypeKeysWidget(QWidget):
     def selectDefault(self):
         self.data_type_keys_widget.setCurrentIndex(self.filter_model.index(0, 0))
 
-
     def setSearchString(self, filter):
         self.filter_model.setFilterFixedString(filter)
 
     def showFilterPopup(self):
         self.__filter_popup.show()
-

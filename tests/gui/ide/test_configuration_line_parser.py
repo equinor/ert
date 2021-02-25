@@ -4,8 +4,6 @@ from tests import ErtTest
 
 
 class ConfigurationLineParserTest(ErtTest):
-
-
     def test_comments(self):
         keyword_parser = ConfigurationLineParser()
 
@@ -17,7 +15,6 @@ class ConfigurationLineParserTest(ErtTest):
         self.assertFalse(keyword_parser.hasKeyword())
         self.assertIsNone(keyword_parser.keyword())
         self.assertEqual(keyword_parser.uncommentedText(), "")
-
 
         test_line = "     -- comment"
         keyword_parser.parseLine(test_line)
@@ -46,7 +43,6 @@ class ConfigurationLineParserTest(ErtTest):
         self.assertEqual(keyword_parser.keyword().value(), "NUM_REALIZATIONS")
         self.assertEqual(keyword_parser.uncommentedText(), "NUM_REALIZATIONS ")
 
-
     def test_argument_text(self):
         keyword_parser = ConfigurationLineParser()
 
@@ -59,7 +55,6 @@ class ConfigurationLineParserTest(ErtTest):
         self.assertEqual(keyword_parser.keyword().value(), "NUM_REALIZATIONS")
         self.assertEqual(keyword_parser.uncommentedText(), "NUM_REALIZATIONS 25")
         self.assertEqual(keyword_parser.argumentsText(), " 25")
-
 
         test_line = "NUM_REALIZATIONS 25--comment"
         keyword_parser.parseLine(test_line)
@@ -76,11 +71,10 @@ class ConfigurationLineParserTest(ErtTest):
 
         self.assertTrue(keyword_parser.hasKeyword())
         self.assertEqual(keyword_parser.keyword().value(), "NUM_REALIZATIONS")
-        self.assertEqual(keyword_parser.uncommentedText(), "NUM_REALIZATIONS 25 something_else")
+        self.assertEqual(
+            keyword_parser.uncommentedText(), "NUM_REALIZATIONS 25 something_else"
+        )
         self.assertEqual(keyword_parser.argumentsText(), " 25 something_else")
-
-
-
 
     def test_argument_list(self):
         keyword_parser = ConfigurationLineParser()
@@ -94,5 +88,3 @@ class ConfigurationLineParserTest(ErtTest):
         arguments = keyword_parser.arguments()
         self.assertEqual(arguments[0].value(), "arg1")
         self.assertEqual(arguments[1].value(), "arg2")
-
-

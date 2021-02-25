@@ -25,7 +25,6 @@ from ert_gui.tools.load_results import LoadResultsModel
 
 
 class LoadResultsPanel(QWidget):
-
     def __init__(self):
         QWidget.__init__(self)
 
@@ -44,7 +43,7 @@ class LoadResultsPanel(QWidget):
         run_path_text.setDisabled(True)
         run_path_text.setFixedHeight(80)
 
-        layout.addRow("Load data from current run path: ",run_path_text)
+        layout.addRow("Load data from current run path: ", run_path_text)
 
         self._case_model = AllCasesModel()
         self._case_combo = QComboBox()
@@ -54,16 +53,19 @@ class LoadResultsPanel(QWidget):
         self._case_combo.setCurrentIndex(self._case_model.indexOf(current_case))
         layout.addRow("Load into case:", self._case_combo)
 
-
         self._active_realizations_model = ActiveRealizationsModel()
-        self._active_realizations_field = StringBox(self._active_realizations_model, "load_results_manually/Realizations")
+        self._active_realizations_field = StringBox(
+            self._active_realizations_model, "load_results_manually/Realizations"
+        )
         self._active_realizations_field.setValidator(RangeStringArgument())
         layout.addRow("Realizations to load:", self._active_realizations_field)
 
         iterations_count = LoadResultsModel.getIterationCount()
 
         self._iterations_model = ValueModel(iterations_count)
-        self._iterations_field = StringBox(self._iterations_model, "load_results_manually/iterations")
+        self._iterations_field = StringBox(
+            self._iterations_model, "load_results_manually/iterations"
+        )
         self._iterations_field.setValidator(IntegerArgument())
         layout.addRow("Iteration to load:", self._iterations_field)
 
@@ -72,28 +74,30 @@ class LoadResultsPanel(QWidget):
     def readCurrentRunPath(self):
         current_case = getCurrentCaseName()
         run_path = LoadResultsModel.getCurrentRunPath()
-        run_path = run_path.replace("<ERTCASE>",current_case)
-        run_path = run_path.replace("<ERT-CASE>",current_case)
+        run_path = run_path.replace("<ERTCASE>", current_case)
+        run_path = run_path.replace("<ERT-CASE>", current_case)
         return run_path
-
 
     def load(self):
         all_cases = self._case_model.getAllItems()
-        selected_case  = all_cases[self._case_combo.currentIndex()]
+        selected_case = all_cases[self._case_combo.currentIndex()]
         realizations = self._active_realizations_model.getActiveRealizationsMask()
         iteration = self._iterations_model.getValue()
         try:
             if iteration is None:
-                iteration = ''
+                iteration = ""
             iteration = int(iteration)
         except ValueError as e:
-            print('Expected a (whole) number in iteration field, got "%s". Error message: %s.'  % (iteration, e))
+            print(
+                'Expected a (whole) number in iteration field, got "%s". Error message: %s.'
+                % (iteration, e)
+            )
             return False
         loaded = LoadResultsModel.loadResults(selected_case, realizations, iteration)
         if loaded > 0:
-            print('Successfully loaded %d realisations.' % loaded)
+            print("Successfully loaded %d realisations." % loaded)
         else:
-            print('No realisations loaded.')
+            print("No realisations loaded.")
         return loaded
 
     def setCurrectCase(self):

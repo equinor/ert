@@ -1,10 +1,18 @@
 import datetime
 
 from qtpy.QtCore import QDate
-from qtpy.QtWidgets import QWidget, QHBoxLayout, QCalendarWidget, QToolButton, QMenu, QWidgetAction
+from qtpy.QtWidgets import (
+    QWidget,
+    QHBoxLayout,
+    QCalendarWidget,
+    QToolButton,
+    QMenu,
+    QWidgetAction,
+)
 
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
+
 
 class CustomDateEdit(QWidget):
     def __init__(self):
@@ -16,7 +24,9 @@ class CustomDateEdit(QWidget):
         self._calendar_button.setFixedSize(26, 26)
         self._calendar_button.setAutoRaise(True)
         self._calendar_button.setIcon(resourceIcon("calendar.png"))
-        self._calendar_button.setStyleSheet("QToolButton::menu-indicator { image: none; }")
+        self._calendar_button.setStyleSheet(
+            "QToolButton::menu-indicator { image: none; }"
+        )
 
         tool_menu = QMenu(self._calendar_button)
         self._calendar_widget = QCalendarWidget(tool_menu)
@@ -41,7 +51,6 @@ class CustomDateEdit(QWidget):
             self._line_edit.setText(str(date.toString("yyyy-MM-dd")))
         else:
             self._line_edit.setText("")
-
 
     def date(self):
         date_string = self._line_edit.text()

@@ -6,15 +6,15 @@ class PlotConfig(object):
 
     # The plot_settings input argument is an internalisation of the (quite few) plot
     # policy settings which can be set in the configuration file.
-    
+
     def __init__(self, plot_settings=None, title="Unnamed", x_label=None, y_label=None):
         self._title = title
         self._plot_settings = plot_settings
         if self._plot_settings is None:
-            self._plot_settings = {'SHOW_REFCASE': True, 'SHOW_HISTORY': True}
+            self._plot_settings = {"SHOW_REFCASE": True, "SHOW_HISTORY": True}
 
         self._line_color_cycle_colors = ["#000000"]
-        self._line_color_cycle = itertools.cycle(self._line_color_cycle_colors) #Black
+        self._line_color_cycle = itertools.cycle(self._line_color_cycle_colors)  # Black
         # Blueish, Greenlike, Beigeoid, Pinkness, Orangy-Brown
         self.setLineColorCycle(["#386CB0", "#7FC97F", "#FDC086", "#F0027F", "#BF5B17"])
         # alternative color cycle:
@@ -29,26 +29,48 @@ class PlotConfig(object):
 
         self._limits = PlotLimits()
 
-        self._default_style = PlotStyle(name="Default", color=None, marker="", alpha=0.8)
+        self._default_style = PlotStyle(
+            name="Default", color=None, marker="", alpha=0.8
+        )
 
-        self._refcase_style = PlotStyle(name="Refcase", alpha=0.8, line_style="--", marker="", width=2.0,
-                                        enabled=self._plot_settings["SHOW_REFCASE"])
+        self._refcase_style = PlotStyle(
+            name="Refcase",
+            alpha=0.8,
+            line_style="--",
+            marker="",
+            width=2.0,
+            enabled=self._plot_settings["SHOW_REFCASE"],
+        )
 
-        self._history_style = PlotStyle(name="History", alpha=0.8, marker=".", width=2.0,
-                                        enabled=self._plot_settings["SHOW_HISTORY"])
+        self._history_style = PlotStyle(
+            name="History",
+            alpha=0.8,
+            marker=".",
+            width=2.0,
+            enabled=self._plot_settings["SHOW_HISTORY"],
+        )
 
-        self._observs_style = PlotStyle(name="Observations", line_style="-", alpha=0.8,
-                                        marker=".", width=1.0, color="#000000")
+        self._observs_style = PlotStyle(
+            name="Observations",
+            line_style="-",
+            alpha=0.8,
+            marker=".",
+            width=1.0,
+            color="#000000",
+        )
 
         self._histogram_style = PlotStyle(name="Histogram", width=2.0)
-        self._distribution_style = PlotStyle(name="Distribution", line_style="", marker="o", alpha=0.5, size=10.0)
-        self._distribution_line_style = PlotStyle(name="Distribution Lines", line_style="-", alpha=0.25, width=1.0)
+        self._distribution_style = PlotStyle(
+            name="Distribution", line_style="", marker="o", alpha=0.5, size=10.0
+        )
+        self._distribution_line_style = PlotStyle(
+            name="Distribution Lines", line_style="-", alpha=0.25, width=1.0
+        )
         self._distribution_line_style.setEnabled(False)
         self._current_color = None
 
         self._legend_enabled = True
         self._grid_enabled = True
-
 
         self._statistics_style = {
             "mean": PlotStyle("Mean", line_style=""),
@@ -56,10 +78,10 @@ class PlotConfig(object):
             "min-max": PlotStyle("Min/Max", line_style=""),
             "p10-p90": PlotStyle("P10-P90", line_style=""),
             "p33-p67": PlotStyle("P33-P67", line_style=""),
-            "std": PlotStyle("Std dev", line_style="")
+            "std": PlotStyle("Std dev", line_style=""),
         }
 
-        self._std_dev_factor = 1 # sigma 1 is default std dev
+        self._std_dev_factor = 1  # sigma 1 is default std dev
 
     def currentColor(self):
         if self._current_color is None:
@@ -249,7 +271,6 @@ class PlotConfig(object):
         self._default_style.width = style.width
         self._default_style.size = style.size
 
-
     @property
     def limits(self):
         """ @rtype: PlotLimits """
@@ -262,7 +283,6 @@ class PlotConfig(object):
         """ @type value: PlotLimits """
         self._limits.copyLimitsFrom(value)
 
-
     def copyConfigFrom(self, other):
         """
         :type other: PlotConfig
@@ -270,17 +290,35 @@ class PlotConfig(object):
         self._default_style.copyStyleFrom(other._default_style, copy_enabled_state=True)
         self._refcase_style.copyStyleFrom(other._refcase_style, copy_enabled_state=True)
         self._history_style.copyStyleFrom(other._history_style, copy_enabled_state=True)
-        self._histogram_style.copyStyleFrom(other._histogram_style, copy_enabled_state=True)
+        self._histogram_style.copyStyleFrom(
+            other._histogram_style, copy_enabled_state=True
+        )
         self._observs_style.copyStyleFrom(other._observs_style, copy_enabled_state=True)
-        self._distribution_style.copyStyleFrom(other._distribution_style, copy_enabled_state=True)
-        self._distribution_line_style.copyStyleFrom(other._distribution_line_style, copy_enabled_state=True)
+        self._distribution_style.copyStyleFrom(
+            other._distribution_style, copy_enabled_state=True
+        )
+        self._distribution_line_style.copyStyleFrom(
+            other._distribution_line_style, copy_enabled_state=True
+        )
 
-        self._statistics_style["mean"].copyStyleFrom(other._statistics_style["mean"], copy_enabled_state=True)
-        self._statistics_style["p50"].copyStyleFrom(other._statistics_style["p50"], copy_enabled_state=True)
-        self._statistics_style["min-max"].copyStyleFrom(other._statistics_style["min-max"], copy_enabled_state=True)
-        self._statistics_style["p10-p90"].copyStyleFrom(other._statistics_style["p10-p90"], copy_enabled_state=True)
-        self._statistics_style["p33-p67"].copyStyleFrom(other._statistics_style["p33-p67"], copy_enabled_state=True)
-        self._statistics_style["std"].copyStyleFrom(other._statistics_style["std"], copy_enabled_state=True)
+        self._statistics_style["mean"].copyStyleFrom(
+            other._statistics_style["mean"], copy_enabled_state=True
+        )
+        self._statistics_style["p50"].copyStyleFrom(
+            other._statistics_style["p50"], copy_enabled_state=True
+        )
+        self._statistics_style["min-max"].copyStyleFrom(
+            other._statistics_style["min-max"], copy_enabled_state=True
+        )
+        self._statistics_style["p10-p90"].copyStyleFrom(
+            other._statistics_style["p10-p90"], copy_enabled_state=True
+        )
+        self._statistics_style["p33-p67"].copyStyleFrom(
+            other._statistics_style["p33-p67"], copy_enabled_state=True
+        )
+        self._statistics_style["std"].copyStyleFrom(
+            other._statistics_style["std"], copy_enabled_state=True
+        )
 
         self._std_dev_factor = other._std_dev_factor
         self._legend_enabled = other._legend_enabled
@@ -301,6 +339,6 @@ class PlotConfig(object):
 
     @classmethod
     def createCopy(cls, other):
-        copy = PlotConfig(other._plot_settings )
+        copy = PlotConfig(other._plot_settings)
         copy.copyConfigFrom(other)
         return copy

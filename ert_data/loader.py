@@ -13,6 +13,7 @@ except ImportError:
 
     __version__ = get_distribution("ert").version
 
+
 def data_loader_factory(observation_type):
     """
     Currently, the methods returned by this factory differ. They should not.
@@ -29,13 +30,24 @@ def data_loader_factory(observation_type):
         elif observation_type == "BLOCK_OBS":
             response_loader = _load_block_response
             obs_loader = _load_block_obs
-        return partial(_extract_data, expected_obs=observation_type, response_loader=response_loader, obs_loader=obs_loader)
+        return partial(
+            _extract_data,
+            expected_obs=observation_type,
+            response_loader=response_loader,
+            obs_loader=obs_loader,
+        )
     else:
         raise TypeError("Unknown observation type: {}".format(observation_type))
 
 
 def _extract_data(
-    facade, obs_keys, case_name, response_loader, obs_loader, expected_obs, include_data=True
+    facade,
+    obs_keys,
+    case_name,
+    response_loader,
+    obs_loader,
+    expected_obs,
+    include_data=True,
 ):
     if isinstance(obs_keys, str):
         obs_keys = [obs_keys]
@@ -43,21 +55,29 @@ def _extract_data(
     obs_types = [facade.get_impl_type_name_for_obs_key(key) for key in obs_keys]
     data_keys = [facade.get_data_key_for_obs_key(key) for key in obs_keys]
     if len(set(obs_types)) != 1:
-        raise ObservationError(f"\nExpected only {expected_obs} observation type. Found: {obs_types} for {obs_keys}")
+        raise ObservationError(
+            f"\nExpected only {expected_obs} observation type. Found: {obs_types} for {obs_keys}"
+        )
     if len(set(data_keys)) != 1:
-        raise ObservationError(f"\nExpected all obs keys ({obs_keys}) to have the same data key, found: {data_keys} ")
+        raise ObservationError(
+            f"\nExpected all obs keys ({obs_keys}) to have the same data key, found: {data_keys} "
+        )
     if include_data:
         # Because all observations in this loop are pointing to the same data key,
         # we can use any of them as input to the response loader.
         data = response_loader(facade, obs_keys[0], case_name)
-        data.columns = _create_multi_index(data.columns.to_list(), list(range(len(data.columns))))
+        data.columns = _create_multi_index(
+            data.columns.to_list(), list(range(len(data.columns)))
+        )
         if data.empty:
             raise ResponseError(f"No response loaded for observation keys: {obs_keys}")
     else:
         data = None
     obs = obs_loader(facade, obs_keys, case_name)
     if obs.empty:
-        raise ObservationError(f"No observations loaded for observation keys: {obs_keys}")
+        raise ObservationError(
+            f"No observations loaded for observation keys: {obs_keys}"
+        )
     for obs_key in obs_keys:
         data_for_key = _filter_df1_on_df2_by_index(data, obs[obs_key])
         data_map[obs_key] = pd.concat([obs[obs_key], data_for_key])
@@ -70,7 +90,7 @@ def _extract_data(
     removed_in="3.0",
     current_version=__version__,
     details="Use the data_loader_factory",
-    )
+)
 def load_general_data(facade, obs_keys, case_name, include_data=True):
     return _extract_data(
         facade,
@@ -88,7 +108,7 @@ def load_general_data(facade, obs_keys, case_name, include_data=True):
     removed_in="3.0",
     current_version=__version__,
     details="Use the data_loader_factory",
-    )
+)
 def load_summary_data(facade, obs_keys, case_name, include_data=True):
     return _extract_data(
         facade,
@@ -106,7 +126,7 @@ def load_summary_data(facade, obs_keys, case_name, include_data=True):
     removed_in="3.0",
     current_version=__version__,
     details="Use the data_loader_factory",
-    )
+)
 def load_block_data(facade, obs_keys, case_name, include_data=True):
     return _extract_data(
         facade,
@@ -193,7 +213,9 @@ def _load_general_response(facade, obs_key, case_name):
             gen_data = facade.load_gen_data(case_name, data_key, time_step).T
             data = data.append(gen_data)
     except ValueError as err:
-        raise ResponseError(f"No response loaded for observation key: {obs_key}") from err
+        raise ResponseError(
+            f"No response loaded for observation key: {obs_key}"
+        ) from err
     return data
 
 

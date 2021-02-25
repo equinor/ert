@@ -5,6 +5,7 @@ import sys
 
 from ecl.summary import EclSum, EclSumTStep
 from ecl.util.test import ExtendedTestCase
+
 print(sys.path)
 print(os.environ["PYTHONPATH"])
 import res
@@ -79,7 +80,9 @@ def runSimulator(simulator, history_simulator, time_step_count):
 
     for report_step in range(time_step_count):
         for mini_step in range(mini_step_count):
-            t_step = ecl_sum.addTStep(report_step + 1, sim_days=report_step * mini_step_count + mini_step)
+            t_step = ecl_sum.addTStep(
+                report_step + 1, sim_days=report_step * mini_step_count + mini_step
+            )
 
             time_map.append(t_step.getSimTime().datetime().strftime("%d/%m/%Y"))
 
@@ -144,7 +147,7 @@ def roundedInt(value):
     return int(round(float(value)))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     seed = int(readParameters("seed.txt")["SEED"])
     parameters = readParameters("snake_oil_params.txt")
 
@@ -161,8 +164,22 @@ if __name__ == '__main__':
     op2_octaves = roundedInt(parameters["OP2_OCTAVES"])
 
     simulator = OilSimulator()
-    simulator.addWell("OP1", seed * 997, persistence=op1_persistence, octaves=op1_octaves, divergence_scale=op1_divergence_scale, offset=op1_offset)
-    simulator.addWell("OP2", seed * 13, persistence=op2_persistence, octaves=op2_octaves, divergence_scale=op2_divergence_scale, offset=op2_offset)
+    simulator.addWell(
+        "OP1",
+        seed * 997,
+        persistence=op1_persistence,
+        octaves=op1_octaves,
+        divergence_scale=op1_divergence_scale,
+        offset=op1_offset,
+    )
+    simulator.addWell(
+        "OP2",
+        seed * 13,
+        persistence=op2_persistence,
+        octaves=op2_octaves,
+        divergence_scale=op2_divergence_scale,
+        offset=op2_offset,
+    )
     simulator.addBlock("5,5,5", seed * 37, persistence=bpr_555_persistence)
     simulator.addBlock("1,3,8", seed * 31, persistence=bpr_138_persistence)
 

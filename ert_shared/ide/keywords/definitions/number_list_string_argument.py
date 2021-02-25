@@ -22,7 +22,9 @@ class NumberListStringArgument(ArgumentDefinition):
 
             if match is None:
                 validation_status.setFailed()
-                validation_status.addToMessage(NumberListStringArgument.NOT_A_VALID_NUMBER_LIST_STRING)
+                validation_status.addToMessage(
+                    NumberListStringArgument.NOT_A_VALID_NUMBER_LIST_STRING
+                )
             else:
 
                 groups = token.split(",")
@@ -35,8 +37,9 @@ class NumberListStringArgument(ArgumentDefinition):
                             num = float(group.strip())
                         except ValueError:
                             validation_status.setFailed()
-                            validation_status.addToMessage(NumberListStringArgument.VALUE_NOT_A_NUMBER % group)
-
+                            validation_status.addToMessage(
+                                NumberListStringArgument.VALUE_NOT_A_NUMBER % group
+                            )
 
                 validation_status.setValue(token)
 

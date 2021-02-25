@@ -1,15 +1,18 @@
 import sys
 
 from qtpy.QtCore import QMargins, Qt
-from qtpy.QtWidgets import  QWidget, QHBoxLayout, QComboBox, QToolButton
+from qtpy.QtWidgets import QWidget, QHBoxLayout, QComboBox, QToolButton
 
 from ert_gui.ertwidgets import addHelpToWidget, ClosableDialog, resourceIcon
-from ert_gui.ertwidgets.models.ertmodel import getCurrentAnalysisModuleName, getAnalysisModuleNames
+from ert_gui.ertwidgets.models.ertmodel import (
+    getCurrentAnalysisModuleName,
+    getAnalysisModuleNames,
+)
 from ert_gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 
 
 class AnalysisModuleSelector(QWidget):
-    def __init__(self, iterable=False, load_all = False, help_link=""):
+    def __init__(self, iterable=False, load_all=False, help_link=""):
         QWidget.__init__(self)
         self._iterable = iterable
 
@@ -23,15 +26,19 @@ class AnalysisModuleSelector(QWidget):
         if load_all:
             self._module_names += getAnalysisModuleNames(not self._iterable)
 
-        suffix = {'STD_ENKF': " - Recommended"}
+        suffix = {"STD_ENKF": " - Recommended"}
         for module_name in self._module_names:
             analysis_module_combo.addItem(module_name + suffix.get(module_name, ""))
 
         self._current_module_name = self._getCurrentAnalysisModuleName()
         if self._current_module_name is not None:
-            analysis_module_combo.setCurrentIndex(self._module_names.index(self._current_module_name))
+            analysis_module_combo.setCurrentIndex(
+                self._module_names.index(self._current_module_name)
+            )
 
-        analysis_module_combo.currentIndexChanged[int].connect(self.analysisModuleChanged)
+        analysis_module_combo.currentIndexChanged[int].connect(
+            self.analysisModuleChanged
+        )
 
         variables_popup_button = QToolButton()
         variables_popup_button.setIcon(resourceIcon("ide/small/cog_edit.png"))
@@ -68,7 +75,9 @@ class AnalysisModuleSelector(QWidget):
 
     def showVariablesPopup(self):
         if self.getSelectedAnalysisModuleName() is not None:
-            variable_dialog = AnalysisModuleVariablesPanel(self.getSelectedAnalysisModuleName())
+            variable_dialog = AnalysisModuleVariablesPanel(
+                self.getSelectedAnalysisModuleName()
+            )
             dialog = ClosableDialog("Edit variables", variable_dialog, self.parent())
 
             dialog.exec_()

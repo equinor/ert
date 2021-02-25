@@ -15,6 +15,3 @@ from .style_chooser import StyleChooser
 
 from .plot_window import PlotWindow
 from .plot_tool import PlotTool
-
-
-

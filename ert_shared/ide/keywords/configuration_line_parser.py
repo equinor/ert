@@ -5,7 +5,7 @@ from ert_shared.ide.keywords.data import Argument, Keyword
 class ConfigurationLineParser(object):
     COMMENT_PATTERN = re.compile(r".*?(--.*)")
     KEYWORD_PATTERN = re.compile(r"^\s*([A-Z_]+)(\s|--)?")
-    ARGUMENT_PATTERN = re.compile(r'\s+?(\S+)\s*?')
+    ARGUMENT_PATTERN = re.compile(r"\s+?(\S+)\s*?")
 
     def __init__(self):
         super(ConfigurationLineParser, self).__init__()
@@ -15,7 +15,6 @@ class ConfigurationLineParser(object):
         self.__text = None
         self.__arguments_index = -1
         self.__arguments = []
-
 
     def parseLine(self, line):
         self.__keyword = None
@@ -27,7 +26,7 @@ class ConfigurationLineParser(object):
         comment_match = re.match(ConfigurationLineParser.COMMENT_PATTERN, line)
         if comment_match is not None:
             self.__comment_index = comment_match.start(1)
-            line = line[0:comment_match.start(1)]
+            line = line[0 : comment_match.start(1)]
 
         keyword_match = re.match(ConfigurationLineParser.KEYWORD_PATTERN, line)
         if keyword_match is not None:
@@ -39,7 +38,6 @@ class ConfigurationLineParser(object):
 
             for match in argument_match:
                 self.__arguments.append(Argument(match.start(1), match.end(1), line))
-
 
     def hasComment(self):
         """ @rtype: bool """
@@ -64,17 +62,15 @@ class ConfigurationLineParser(object):
     def uncommentedText(self):
         """ @rtype: str """
         if self.hasComment():
-            return self.__text[0:self.commentIndex()]
+            return self.__text[0 : self.commentIndex()]
         return self.text()
 
     def argumentsText(self):
         """ @rtype: str """
         if self.hasKeyword():
-            return self.uncommentedText()[self.__arguments_index:]
+            return self.uncommentedText()[self.__arguments_index :]
         return ""
 
     def arguments(self):
         """ @rtype: list of Argument """
         return self.__arguments
-
-

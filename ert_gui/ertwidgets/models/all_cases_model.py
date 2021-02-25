@@ -4,7 +4,6 @@ from ert_gui.ertwidgets.models.ertmodel import getAllCases
 
 
 class AllCasesModel(QAbstractItemModel):
-
     def __init__(self):
         QAbstractItemModel.__init__(self)
         self.__data = []
@@ -21,7 +20,6 @@ class AllCasesModel(QAbstractItemModel):
 
     def columnCount(self, QModelIndex_parent=None, *args, **kwargs):
         return 1
-
 
     def data(self, index, role=None):
         assert isinstance(index, QModelIndex)
@@ -43,10 +41,8 @@ class AllCasesModel(QAbstractItemModel):
 
         return None
 
-
     def getAllItems(self):
         return getAllCases()
-
 
     def indexOf(self, item):
         items = self.getAllItems()
@@ -56,12 +52,3 @@ class AllCasesModel(QAbstractItemModel):
             return items.index(item)
 
         return -1
-
-
-
-
-
-
-
-
-

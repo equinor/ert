@@ -12,6 +12,7 @@ from ert_gui.gert_main import _start_window, run_gui
 
 from unittest.mock import Mock, PropertyMock
 
+
 @pytest.fixture()
 def patch_enkf_main(monkeypatch, tmpdir):
     plugins_mock = Mock()
@@ -101,13 +102,19 @@ def test_gui_load(monkeypatch, tmpdir, qtbot, patch_enkf_main):
     qtbot.addWidget(gui)
 
     sim_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_panel")
-    single_run_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Single_test_run_panel")
-    assert sim_panel.getCurrentSimulationModel() == single_run_panel.getSimulationModel()
+    single_run_panel = gui.findChild(
+        qtpy.QtWidgets.QWidget, name="Single_test_run_panel"
+    )
+    assert (
+        sim_panel.getCurrentSimulationModel() == single_run_panel.getSimulationModel()
+    )
 
     sim_mode = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_mode")
     qtbot.keyClick(sim_mode, Qt.Key_Down)
 
-    ensamble_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Ensemble_experiment_panel")
+    ensamble_panel = gui.findChild(
+        qtpy.QtWidgets.QWidget, name="Ensemble_experiment_panel"
+    )
     assert sim_panel.getCurrentSimulationModel() == ensamble_panel.getSimulationModel()
 
 
@@ -128,6 +135,7 @@ def test_gui_full(monkeypatch, tmpdir, qapp):
     qapp.exec_ = lambda: None  # exec_ starts the event loop, and will stall the test.
     monkeypatch.setattr(ert_gui.gert_main, "QApplication", Mock(return_value=qapp))
     gui = run_gui(args_mock)
+
 
 def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
     # won't run simulations so we mock it and test whether "iter_num" is in arguments
@@ -163,8 +171,10 @@ def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
 
     sim_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_panel")
 
-    ensemble_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Ensemble_experiment_panel")
-    #simulate entering number 10 as iter_num
+    ensemble_panel = gui.findChild(
+        qtpy.QtWidgets.QWidget, name="Ensemble_experiment_panel"
+    )
+    # simulate entering number 10 as iter_num
     qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Backspace)
     qtbot.keyClicks(ensemble_panel._iter_field, "10")
     qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Enter)

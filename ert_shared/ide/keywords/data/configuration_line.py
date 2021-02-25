@@ -9,11 +9,11 @@ class ConfigurationLine(object):
 
     def __init__(self, keyword, arguments, documentation_link, group, required=False):
         """
-         @type keyword: Keyword
-         @type arguments: list of Argument
-         @type documentation_link: str
-         @type group: str
-         @type required: bool
+        @type keyword: Keyword
+        @type arguments: list of Argument
+        @type documentation_link: str
+        @type group: str
+        @type required: bool
         """
         super(ConfigurationLine, self).__init__()
 
@@ -25,7 +25,6 @@ class ConfigurationLine(object):
         self.__validation_status = {}
 
         self.__validateTokens()
-
 
     def __validateTokens(self):
         keyword_validation_status = ValidationStatus()
@@ -42,7 +41,9 @@ class ConfigurationLine(object):
 
             if not argument.hasArgumentDefinition():
                 argument_validation_status.setFailed()
-                argument_validation_status.addToMessage(ConfigurationLine.ARGUMENT_NOT_EXPECTED)
+                argument_validation_status.addToMessage(
+                    ConfigurationLine.ARGUMENT_NOT_EXPECTED
+                )
 
                 argument_error = True
             else:
@@ -61,8 +62,9 @@ class ConfigurationLine(object):
             for argument in self.__arguments:
                 argument_validation_status = self.validationStatusForToken(argument)
                 if not argument_validation_status:
-                    keyword_validation_status.addToMessage(argument_validation_status.message())
-
+                    keyword_validation_status.addToMessage(
+                        argument_validation_status.message()
+                    )
 
     def keyword(self):
         """ @rtype: Keyword"""

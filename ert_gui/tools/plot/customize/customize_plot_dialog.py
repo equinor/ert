@@ -1,12 +1,27 @@
 from qtpy.QtCore import Qt, Signal, QObject
-from qtpy.QtWidgets import QDialog, QVBoxLayout, QLayout, QTabWidget, QHBoxLayout, QPushButton, QToolButton, QMenu, QWidgetAction, QListWidget
+from qtpy.QtWidgets import (
+    QDialog,
+    QVBoxLayout,
+    QLayout,
+    QTabWidget,
+    QHBoxLayout,
+    QPushButton,
+    QToolButton,
+    QMenu,
+    QWidgetAction,
+    QListWidget,
+)
 
 from ert_shared import ERT
 from ert_gui.tools.plot.widgets import CopyStyleToDialog
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.plottery import PlotConfig, PlotConfigHistory, PlotConfigFactory
-from ert_gui.tools.plot.customize import DefaultCustomizationView, StyleCustomizationView, \
-    StatisticsCustomizationView, LimitsCustomizationView
+from ert_gui.tools.plot.customize import (
+    DefaultCustomizationView,
+    StyleCustomizationView,
+    StatisticsCustomizationView,
+    LimitsCustomizationView,
+)
 
 
 class PlotCustomizer(QObject):
@@ -21,15 +36,21 @@ class PlotCustomizer(QObject):
         self.default_plot_settings = None
         self._plot_configs = {
             None: PlotConfigHistory(
-                "No_Key_Selected",
-                PlotConfig(plot_settings=None, title=None))
+                "No_Key_Selected", PlotConfig(plot_settings=None, title=None)
+            )
         }
 
-        self._customization_dialog = CustomizePlotDialog("Customize", parent, key_defs, key=self._plot_config_key)
+        self._customization_dialog = CustomizePlotDialog(
+            "Customize", parent, key_defs, key=self._plot_config_key
+        )
 
-        self._customization_dialog.addTab("general", "General", DefaultCustomizationView())
+        self._customization_dialog.addTab(
+            "general", "General", DefaultCustomizationView()
+        )
         self._customization_dialog.addTab("style", "Style", StyleCustomizationView())
-        self._customization_dialog.addTab("statistics", "Statistics", StatisticsCustomizationView())
+        self._customization_dialog.addTab(
+            "statistics", "Statistics", StatisticsCustomizationView()
+        )
 
         self._customize_limits = LimitsCustomizationView()
         self._customization_dialog.addTab("limits", "Limits", self._customize_limits)
@@ -39,9 +60,10 @@ class PlotCustomizer(QObject):
         self._customization_dialog.redoSettings.connect(self.redoCustomization)
         self._customization_dialog.resetSettings.connect(self.resetCustomization)
         self._customization_dialog.copySettings.connect(self.copyCustomization)
-        self._customization_dialog.copySettingsToOthers.connect(self.copyCustomizationTo)
+        self._customization_dialog.copySettingsToOthers.connect(
+            self.copyCustomizationTo
+        )
         self._revertCustomization(self.getPlotConfig())
-
 
     def _getPlotConfigHistory(self):
         """ @rtype: PlotConfigHistory """
@@ -62,7 +84,6 @@ class PlotCustomizer(QObject):
         history.resetChanges()
         self._revertCustomization(history.getPlotConfig())
 
-
     def applyCustomization(self):
         history = self._getPlotConfigHistory()
         plot_config = history.getPlotConfig()
@@ -74,7 +95,6 @@ class PlotCustomizer(QObject):
 
         self._emitChangedSignal()
 
-
     def _revertCustomization(self, plot_config, emit=True):
         if self._customization_dialog is not None:
             for customization_view in self._customization_dialog:
@@ -84,7 +104,9 @@ class PlotCustomizer(QObject):
 
     def _emitChangedSignal(self, emit=True):
         history = self._getPlotConfigHistory()
-        self._customization_dialog.setUndoRedoCopyState(history.isUndoPossible(), history.isRedoPossible(), self.isCopyPossible())
+        self._customization_dialog.setUndoRedoCopyState(
+            history.isUndoPossible(), history.isRedoPossible(), self.isCopyPossible()
+        )
 
         if emit:
             self.settingsChanged.emit()
@@ -99,8 +121,10 @@ class PlotCustomizer(QObject):
 
         for key in keys:
             if key not in self._plot_configs:
-                self._plot_configs[key] = PlotConfigHistory("No_Key_Selected",
-                                                            PlotConfig(self.default_plot_settings, title=None))
+                self._plot_configs[key] = PlotConfigHistory(
+                    "No_Key_Selected",
+                    PlotConfig(self.default_plot_settings, title=None),
+                )
             source_config = history.getPlotConfig()
             source_config.setTitle(key)
 
@@ -109,7 +133,6 @@ class PlotCustomizer(QObject):
             self._customization_dialog.addCopyableKey(key)
 
         self._emitChangedSignal(emit=True)
-
 
     def copyCustomization(self, key):
         key = str(key)
@@ -132,7 +155,9 @@ class PlotCustomizer(QObject):
         key = key_def["key"]
         if key != self._plot_config_key:
             if not key in self._plot_configs:
-                self._plot_configs[key] = PlotConfigHistory(key, PlotConfigFactory.createPlotConfigForKey(key_def))
+                self._plot_configs[key] = PlotConfigHistory(
+                    key, PlotConfigFactory.createPlotConfigForKey(key_def)
+                )
                 self._customization_dialog.addCopyableKey(key)
             self._customization_dialog.currentPlotKeyChanged(key)
             self._previous_key = self._plot_config_key
@@ -155,7 +180,7 @@ class CustomizePlotDialog(QDialog):
     copySettings = Signal(str)
     copySettingsToOthers = Signal(list)
 
-    def __init__(self, title, parent, key_defs, key=''):
+    def __init__(self, title, parent, key_defs, key=""):
         QDialog.__init__(self, parent)
         self.setWindowTitle(title)
 
@@ -172,7 +197,7 @@ class CustomizePlotDialog(QDialog):
 
         self._tabs = QTabWidget()
         layout.addWidget(self._tabs)
-        layout.setSizeConstraint(QLayout.SetFixedSize) # not resizable!!!
+        layout.setSizeConstraint(QLayout.SetFixedSize)  # not resizable!!!
 
         self._button_layout = QHBoxLayout()
 

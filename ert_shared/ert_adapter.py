@@ -1,6 +1,7 @@
 from ert_shared.libres_facade import LibresFacade
 
-class ErtAdapter():
+
+class ErtAdapter:
     """The adapter object is the global ERT variable used all
     over the place in the application, and is added due to legacy
     reasons and the need for us to share code across the GUI and CLI.
@@ -40,5 +41,6 @@ class ErtAdapter():
 
     def reloadERT(self, config_file):
         self._implementation.reloadERT(config_file)
+
 
 ERT = ErtAdapter()

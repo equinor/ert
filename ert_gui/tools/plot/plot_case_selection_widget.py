@@ -45,7 +45,6 @@ class CaseSelectionWidget(QWidget):
 
         self.__signal_mapper.mapped[QWidget].connect(self.removeWidget)
 
-
     def __caseName(self, widget):
         """ @rtype: str """
         return str(self.__case_selectors[widget].currentText())
@@ -62,7 +61,6 @@ class CaseSelectionWidget(QWidget):
             state = False
 
         self.__add_case_button.setEnabled(state)
-
 
     def addCaseSelector(self, disabled=False):
         widget = QWidget()
@@ -97,8 +95,6 @@ class CaseSelectionWidget(QWidget):
         self.checkCaseCount()
         self.caseSelectionChanged.emit()
 
-
-
     def removeWidget(self, widget):
         self.__case_layout.removeWidget(widget)
         del self.__case_selectors[widget]
@@ -107,4 +103,3 @@ class CaseSelectionWidget(QWidget):
         self.caseSelectionChanged.emit()
 
         self.checkCaseCount()
-

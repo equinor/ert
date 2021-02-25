@@ -1,5 +1,6 @@
 import datetime
 
+
 class limit_property(object):
     def __init__(self, attribute_name, types, minimum=None, maximum=None):
         super(limit_property, self).__init__()
@@ -16,11 +17,19 @@ class limit_property(object):
     def __set__(self, instance, value):
         if value is not None:
             if not isinstance(value, self._types):
-                raise TypeError("Value not (one) of type(s): %s: %s" % (self._types, repr(value)))
+                raise TypeError(
+                    "Value not (one) of type(s): %s: %s" % (self._types, repr(value))
+                )
             if self._minimum is not None and value < self._minimum:
-                raise ValueError("Value can not be less than %f: %f < %f" % (self._minimum, value, self._minimum))
+                raise ValueError(
+                    "Value can not be less than %f: %f < %f"
+                    % (self._minimum, value, self._minimum)
+                )
             if self._maximum is not None and value > self._maximum:
-                raise ValueError("Value can not be larger than %f: %f > %f" % (self._maximum, value, self._maximum))
+                raise ValueError(
+                    "Value can not be larger than %f: %f > %f"
+                    % (self._maximum, value, self._maximum)
+                )
 
         setattr(instance, "_%s" % self._attribute_name, value)
 
@@ -32,7 +41,9 @@ class limits_property(object):
         self._maximum_attribute_name = maximum_attribute_name
 
     def __get__(self, instance, owner):
-        return getattr(instance, "%s" % self._minimum_attribute_name), getattr(instance, "%s" % self._maximum_attribute_name)
+        return getattr(instance, "%s" % self._minimum_attribute_name), getattr(
+            instance, "%s" % self._maximum_attribute_name
+        )
 
     def __set__(self, instance, value):
         setattr(instance, "_%s" % self._minimum_attribute_name, value[0])
@@ -82,7 +93,6 @@ class PlotLimits(object):
     date_limits = limits_property("date_minimum", "date_maximum")
     """ :type: tuple[datetime.datetime|datetime.date, datetime.datetime|datetime.date] """
 
-
     def __eq__(self, other):
         """ @type other: PlotLimits """
         equality = self.value_limits == other.value_limits
@@ -93,7 +103,6 @@ class PlotLimits(object):
         equality = equality and self.density_limits == other.density_limits
 
         return equality
-
 
     def copyLimitsFrom(self, other):
         """ @type other: PlotLimits """

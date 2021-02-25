@@ -3,7 +3,6 @@ from tests import ErtTest
 
 
 class IntegerArgumentTest(ErtTest):
-
     def test_default_integer_argument(self):
         integer = IntegerArgument()
 
@@ -13,12 +12,10 @@ class IntegerArgumentTest(ErtTest):
         self.assertEqual(validation_status.value(), 45)
         self.assertEqual(validation_status.message(), "")
 
-
         validation_status = integer.validate("-45")
 
         self.assertTrue(validation_status)
         self.assertEqual(validation_status.value(), -45)
-
 
         validation_status = integer.validate("45 ")
 
@@ -30,7 +27,6 @@ class IntegerArgumentTest(ErtTest):
 
         self.assertFalse(validation_status)
         self.assertNotEqual(validation_status.message(), "")
-
 
     def test_integer_range_argument_from(self):
         from_value = 99
@@ -44,8 +40,9 @@ class IntegerArgumentTest(ErtTest):
         self.assertFalse(validation_status)
 
         range_string = "%d <= %d" % (from_value, value)
-        self.assertEqual(validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string)
-
+        self.assertEqual(
+            validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string
+        )
 
     def test_integer_range_argument_to(self):
         to_value = 99
@@ -59,8 +56,9 @@ class IntegerArgumentTest(ErtTest):
         self.assertFalse(validation_status)
 
         range_string = "%d <= %d" % (value, to_value)
-        self.assertEqual(validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string)
-
+        self.assertEqual(
+            validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string
+        )
 
     def test_integer_range_argument(self):
         from_value = 10
@@ -81,19 +79,15 @@ class IntegerArgumentTest(ErtTest):
         self.assertFalse(validation_status)
 
         range_string = "%d <= %d <= %d" % (from_value, value, to_value)
-        self.assertEqual(validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string)
+        self.assertEqual(
+            validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string
+        )
 
         value = 21
         validation_status = integer.validate("%d" % value)
         self.assertFalse(validation_status)
 
         range_string = "%d <= %d <= %d" % (from_value, value, to_value)
-        self.assertEqual(validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string)
-
-
-
-
-
-
-
-
+        self.assertEqual(
+            validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string
+        )

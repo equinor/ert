@@ -53,9 +53,13 @@ def test_get_data(
 
     factory.assert_called_once_with(obs_type)
     mocked_data_loader = factory()
-    mocked_data_loader.assert_called_once_with(facade, ["obs_key"], "test_case", include_data=True)
+    mocked_data_loader.assert_called_once_with(
+        facade, ["obs_key"], "test_case", include_data=True
+    )
     df = pd.DataFrame(
-        data=[[2.0, 3.0], [5.0, 6.0], [8.0, 9.0]], index=["OBS", "STD", 1], columns=[1, 2]
+        data=[[2.0, 3.0], [5.0, 6.0], [8.0, 9.0]],
+        index=["OBS", "STD", 1],
+        columns=[1, 2],
     )
     df.columns = _set_multiindex(df)
     expected_result = pd.concat({"obs_key": df}, axis=1)

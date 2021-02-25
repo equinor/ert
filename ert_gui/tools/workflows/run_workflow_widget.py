@@ -2,7 +2,14 @@ import time
 from threading import Thread
 
 from qtpy.QtCore import QSize, Qt, Signal
-from qtpy.QtWidgets import QWidget, QHBoxLayout, QLabel, QToolButton, QMessageBox, QComboBox
+from qtpy.QtWidgets import (
+    QWidget,
+    QHBoxLayout,
+    QLabel,
+    QToolButton,
+    QMessageBox,
+    QComboBox,
+)
 
 from ert_gui.ertwidgets import addHelpToWidget, resourceMovie, resourceIcon
 from ert_gui.ertwidgets.models.ertmodel import getWorkflowNames, createWorkflowRunner
@@ -20,7 +27,6 @@ class RunWorkflowWidget(QWidget):
 
         layout = QHBoxLayout()
         layout.addSpacing(10)
-
 
         self._workflow_combo = QComboBox()
         addHelpToWidget(self._workflow_combo, "run/workflow")
@@ -54,7 +60,6 @@ class RunWorkflowWidget(QWidget):
         self._workflow_runner = None
         """:type: WorkflowRunner"""
 
-
     def createSpinWidget(self):
         widget = QWidget()
         layout = QHBoxLayout()
@@ -71,17 +76,23 @@ class RunWorkflowWidget(QWidget):
         processing_animation.setMovie(spin_movie)
         layout.addWidget(processing_animation)
 
-        processing_label = QLabel("Processing workflow '%s'" % self.getCurrentWorkflowName())
+        processing_label = QLabel(
+            "Processing workflow '%s'" % self.getCurrentWorkflowName()
+        )
         layout.addWidget(processing_label, Qt.AlignBottom)
 
         widget.setLayout(layout)
 
         return widget
 
-
     def cancelWorkflow(self):
         if self._workflow_runner.isRunning():
-            cancel = QMessageBox.question(self, "Confirm Cancel", "Are you sure you want to cancel the running workflow?", QMessageBox.Yes | QMessageBox.No)
+            cancel = QMessageBox.question(
+                self,
+                "Confirm Cancel",
+                "Are you sure you want to cancel the running workflow?",
+                QMessageBox.Yes | QMessageBox.No,
+            )
 
             if cancel == QMessageBox.Yes:
                 self._workflow_runner.cancel()
@@ -91,9 +102,10 @@ class RunWorkflowWidget(QWidget):
         index = self._workflow_combo.currentIndex()
         return getWorkflowNames()[index]
 
-
     def startWorkflow(self):
-        self._running_workflow_dialog = WorkflowDialog("Running Workflow", self.createSpinWidget(), self)
+        self._running_workflow_dialog = WorkflowDialog(
+            "Running Workflow", self.createSpinWidget(), self
+        )
         self._running_workflow_dialog.closeButtonPressed.connect(self.cancelWorkflow)
 
         workflow_thread = Thread(name="ert_gui_workflow_thread")
@@ -119,8 +131,8 @@ class RunWorkflowWidget(QWidget):
             success = self._workflow_runner.workflowResult()
 
             if success:
-                report =  self._workflow_runner.workflowReport()
-                failed_jobs = [k for k, v in report.items() if not v['completed']]
+                report = self._workflow_runner.workflowReport()
+                failed_jobs = [k for k, v in report.items() if not v["completed"]]
                 self.workflowSucceeded.emit(failed_jobs)
             else:
                 self.workflowFailed.emit()
@@ -129,9 +141,15 @@ class RunWorkflowWidget(QWidget):
         workflow_name = self.getCurrentWorkflowName()
         jobs_msg = "successfully!"
         if failed_jobs:
-            jobs_msg = "\nThe following jobs failed: " + ", ".join([j for j in failed_jobs])
+            jobs_msg = "\nThe following jobs failed: " + ", ".join(
+                [j for j in failed_jobs]
+            )
 
-        QMessageBox.information(self, "Workflow completed!", "The workflow '{}' completed {}".format(workflow_name, jobs_msg))
+        QMessageBox.information(
+            self,
+            "Workflow completed!",
+            "The workflow '{}' completed {}".format(workflow_name, jobs_msg),
+        )
         self._running_workflow_dialog.accept()
         self._running_workflow_dialog = None
 
@@ -140,13 +158,20 @@ class RunWorkflowWidget(QWidget):
 
         error = self._workflow_runner.workflowError()
 
-        QMessageBox.critical(self, "Workflow failed!", "The workflow '%s' failed!\n\n%s" % (workflow_name, error))
+        QMessageBox.critical(
+            self,
+            "Workflow failed!",
+            "The workflow '%s' failed!\n\n%s" % (workflow_name, error),
+        )
         self._running_workflow_dialog.reject()
         self._running_workflow_dialog = None
 
     def workflowStoppedByUser(self):
         workflow_name = self.getCurrentWorkflowName()
-        QMessageBox.information(self, "Workflow killed!", "The workflow '%s' was killed successfully!" % workflow_name)
+        QMessageBox.information(
+            self,
+            "Workflow killed!",
+            "The workflow '%s' was killed successfully!" % workflow_name,
+        )
         self._running_workflow_dialog.reject()
         self._running_workflow_dialog = None
-

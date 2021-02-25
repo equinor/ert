@@ -20,16 +20,17 @@ from ert_gui.ertwidgets.caseselector import CaseSelector
 
 
 class RunAnalysisPanel(QWidget):
-
     def __init__(self):
         QWidget.__init__(self)
 
         self.setWindowTitle("Run Analysis")
         self.activateWindow()
 
-        self.analysis_module = AnalysisModuleSelector(load_all = True, help_link = "config/analysis/analysis_module")
+        self.analysis_module = AnalysisModuleSelector(
+            load_all=True, help_link="config/analysis/analysis_module"
+        )
         self.target_case_text = QLineEdit()
-        self.source_case_selector = CaseSelector(update_ert = False)
+        self.source_case_selector = CaseSelector(update_ert=False)
 
         layout = QFormLayout()
         layout.addRow("Analysis", self.analysis_module)

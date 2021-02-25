@@ -1,5 +1,6 @@
 from res.job_queue import ErtScript, ErtPlugin, WorkflowJob
 
+
 class Plugin(object):
     def __init__(self, ert, workflow_job):
         """
@@ -14,10 +15,11 @@ class Plugin(object):
         self.__name = script.getName()
         self.__description = script.getDescription()
 
-    
     def __loadPlugin(self):
         """ @rtype: ErtPlugin """
-        script_obj = ErtScript.loadScriptFromFile(self.__workflow_job.getInternalScriptPath())
+        script_obj = ErtScript.loadScriptFromFile(
+            self.__workflow_job.getInternalScriptPath()
+        )
         script = script_obj(self.__ert)
         return script
 
@@ -33,10 +35,9 @@ class Plugin(object):
         """
          Returns a list of arguments. Either from GUI or from arbitrary code.
          If the user for example cancels in the GUI a CancelPluginException is raised.
-        @rtype: list """
+        @rtype: list"""
         script = self.__loadPlugin()
         return script.getArguments(self.__parent_window)
-
 
     def setParentWindow(self, parent_window):
         self.__parent_window = parent_window

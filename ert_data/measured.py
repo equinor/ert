@@ -95,12 +95,14 @@ class MeasuredData(object):
             obs_types = [
                 self._facade.get_impl_type_name_for_obs_key(key) for key in obs_keys
             ]
-            assert len(set(obs_types)) == 1, (
-                f"\nMore than one observation type found for obs keys: {obs_keys}"
-            )
+            assert (
+                len(set(obs_types)) == 1
+            ), f"\nMore than one observation type found for obs keys: {obs_keys}"
             observation_type = obs_types[0]
             data_loader = loader.data_loader_factory(observation_type)
-            data = data_loader(self._facade, obs_keys, case_name, include_data=load_data)
+            data = data_loader(
+                self._facade, obs_keys, case_name, include_data=load_data
+            )
             if data.empty:
                 raise loader.ObservationError(f"No observations loaded for {obs_keys}")
             measured_data.append(data)
@@ -144,7 +146,6 @@ class MeasuredData(object):
         data_index = self.data.columns.get_level_values("data_index")
         cond = self._create_condition(names, data_index, obs_keys, index_lists)
         return self.data.iloc[:, cond]
-
 
     @staticmethod
     def _filter_on_column_index(dataframe, index_list):

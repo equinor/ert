@@ -12,6 +12,7 @@ def addHelpToWidget(widget, link):
         original_enter_event(event)
         try:
             from ert_gui.tools import HelpCenter
+
             HelpCenter.getHelpCenter("ERT").setHelpMessageLink(link)
         except AttributeError:
             pass
@@ -29,6 +30,7 @@ def showWaitCursorWhileWaiting(func):
             return res
         finally:
             QApplication.restoreOverrideCursor()
+
     return wrapper
 
 

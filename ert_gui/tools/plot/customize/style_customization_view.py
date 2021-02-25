@@ -6,6 +6,7 @@ from ert_gui.tools.plot.customize import CustomizationView, WidgetProperty
 
 from ert_gui.tools.plot import style_chooser as sc
 
+
 class StyleCustomizationView(CustomizationView):
     default_style = WidgetProperty()
     refcase_style = WidgetProperty()
@@ -20,11 +21,21 @@ class StyleCustomizationView(CustomizationView):
         layout = QHBoxLayout()
 
         self.addRow("", layout)
-        self.addStyleChooser("default_style", "Default", "Line and marker style for default lines.")
-        self.addStyleChooser("refcase_style", "Refcase", "Line and marker style for the refcase line.")
-        self.addStyleChooser("history_style", "History", "Line and marker style for the history line.")
-        self.addStyleChooser("observs_style", "Observation", "Line and marker style for the observation line.",
-                             line_style_set=sc.STYLESET_TOGGLE)
+        self.addStyleChooser(
+            "default_style", "Default", "Line and marker style for default lines."
+        )
+        self.addStyleChooser(
+            "refcase_style", "Refcase", "Line and marker style for the refcase line."
+        )
+        self.addStyleChooser(
+            "history_style", "History", "Line and marker style for the history line."
+        )
+        self.addStyleChooser(
+            "observs_style",
+            "Observation",
+            "Line and marker style for the observation line.",
+            line_style_set=sc.STYLESET_TOGGLE,
+        )
 
         self["default_style"].createLabelLayout(layout)
 
@@ -39,13 +50,19 @@ class StyleCustomizationView(CustomizationView):
             color_layout.addWidget(color_box)
 
         self.addRow("Color Cycle", color_layout)
-        self.updateProperty("color_cycle", StyleCustomizationView.getColorCycle, StyleCustomizationView.setColorCycle)
+        self.updateProperty(
+            "color_cycle",
+            StyleCustomizationView.getColorCycle,
+            StyleCustomizationView.setColorCycle,
+        )
 
         self._observs_color_box = self.createColorBox("observations_color")
-        self.addRow('Observations Color', self._observs_color_box)
-        self.updateProperty("observs_color",
-                            StyleCustomizationView.getObservationsColor,
-                            StyleCustomizationView.setObservationsColor)
+        self.addRow("Observations Color", self._observs_color_box)
+        self.updateProperty(
+            "observs_color",
+            StyleCustomizationView.getObservationsColor,
+            StyleCustomizationView.setObservationsColor,
+        )
 
     def getObservationsColor(self):
         return str(self._observs_color_box.color.name())
@@ -92,4 +109,3 @@ class StyleCustomizationView(CustomizationView):
         self.observs_style = plot_config.observationsStyle()
         self.observs_color = plot_config.observationsColor()
         self.color_cycle = plot_config.lineColorCycle()
-

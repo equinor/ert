@@ -6,9 +6,6 @@ from tests import ErtTest
 
 
 class ConfigurationLineBuilderTest(ErtTest):
-
-
-
     def test_num_realizations(self):
         keywords = ErtKeywords()
         clb = ConfigurationLineBuilder(keywords)
@@ -24,7 +21,10 @@ class ConfigurationLineBuilderTest(ErtTest):
         config_line = clb.configurationLine()
 
         self.assertEqual(config_line.keyword().value(), "NUM_REALIZATIONS")
-        self.assertEqual(config_line.keyword().keywordDefinition(), keywords["NUM_REALIZATIONS"].keywordDefinition())
+        self.assertEqual(
+            config_line.keyword().keywordDefinition(),
+            keywords["NUM_REALIZATIONS"].keywordDefinition(),
+        )
         self.assertEqual(config_line.arguments()[0].value(), "25")
 
     def test_num_realizations_no_argument(self):
@@ -40,14 +40,16 @@ class ConfigurationLineBuilderTest(ErtTest):
         config_line = clb.configurationLine()
 
         self.assertEqual(config_line.keyword().value(), "NUM_REALIZATIONS")
-        self.assertEqual(config_line.keyword().keywordDefinition(), keywords["NUM_REALIZATIONS"].keywordDefinition())
+        self.assertEqual(
+            config_line.keyword().keywordDefinition(),
+            keywords["NUM_REALIZATIONS"].keywordDefinition(),
+        )
 
         arguments = config_line.arguments()
         self.assertEqual(len(arguments), 1)
 
         self.assertFalse(config_line.validationStatusForToken(config_line.keyword()))
         self.assertFalse(config_line.validationStatusForToken(arguments[0]))
-
 
     def test_unknown_keyword_with_comment(self):
         keywords = ErtKeywords()
@@ -62,8 +64,16 @@ class ConfigurationLineBuilderTest(ErtTest):
         config_line = clb.configurationLine()
         keyword = config_line.keyword()
         self.assertFalse(config_line.validationStatusForToken(keyword))
-        message = ConfigurationLine.UNKNOWN_KEYWORD + '\n' + ConfigurationLine.ARGUMENT_ERROR + '\n' + ConfigurationLine.ARGUMENT_NOT_EXPECTED
-        self.assertEqual(config_line.validationStatusForToken(keyword).message(), message)
+        message = (
+            ConfigurationLine.UNKNOWN_KEYWORD
+            + "\n"
+            + ConfigurationLine.ARGUMENT_ERROR
+            + "\n"
+            + ConfigurationLine.ARGUMENT_NOT_EXPECTED
+        )
+        self.assertEqual(
+            config_line.validationStatusForToken(keyword).message(), message
+        )
 
         self.assertEqual(keyword.value(), "KEYWORD")
         arguments = config_line.arguments()
@@ -75,8 +85,10 @@ class ConfigurationLineBuilderTest(ErtTest):
         self.assertEqual(clb.commentIndex(), 16)
 
         self.assertFalse(config_line.validationStatusForToken(arguments[0]))
-        self.assertEqual(config_line.validationStatusForToken(arguments[0]).message(), ConfigurationLine.ARGUMENT_NOT_EXPECTED)
-
+        self.assertEqual(
+            config_line.validationStatusForToken(arguments[0]).message(),
+            ConfigurationLine.ARGUMENT_NOT_EXPECTED,
+        )
 
     def test_queue_option_keyword(self):
         keywords = ErtKeywords()
@@ -99,7 +111,6 @@ class ConfigurationLineBuilderTest(ErtTest):
         self.assertTrue(config_line.validationStatusForToken(arguments[0]))
         self.assertTrue(config_line.validationStatusForToken(arguments[1]))
         self.assertTrue(config_line.validationStatusForToken(arguments[2]))
-
 
     def test_queue_option_keyword_too_few_arguments(self):
         keywords = ErtKeywords()
@@ -124,7 +135,7 @@ class ConfigurationLineBuilderTest(ErtTest):
         self.assertTrue(config_line.validationStatusForToken(arguments[1]))
         self.assertFalse(config_line.validationStatusForToken(arguments[2]))
 
-        self.assertEqual(config_line.validationStatusForToken(arguments[2]).message(), ArgumentDefinition.MISSING_ARGUMENT)
-
-
-
+        self.assertEqual(
+            config_line.validationStatusForToken(arguments[2]).message(),
+            ArgumentDefinition.MISSING_ARGUMENT,
+        )

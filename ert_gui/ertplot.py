@@ -18,14 +18,16 @@ else:
     # source location relative to the location of the current file;
     # assuming we are in the source directory. Will not work if we are
     # in an arbitrary build directory.
-    ert_share_path = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../share/ert"))
+    ert_share_path = os.path.realpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../share/ert")
+    )
 
 ert_gui.ertwidgets.img_prefix = ert_share_path + "/gui/img/"
 
 
 def main(argv):
 
-    app = QApplication(argv) #Early so that QT is initialized before other imports
+    app = QApplication(argv)  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
 
     if len(argv) == 1:
@@ -34,7 +36,7 @@ def main(argv):
 
     config_file = argv[1]
     strict = True
-        
+
     if not os.path.exists(config_file):
         print("Can not run without a configuration file.")
         sys.exit(1)
@@ -72,10 +74,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv)
-
-
-
-
-
-
-

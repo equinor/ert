@@ -5,16 +5,17 @@ from tests import ErtTest
 
 
 class ConfigurationLineTest(ErtTest):
-
     def test_configuration_line_creation(self):
         line = "KEYWORD arg1"
         keyword = Keyword(0, 7, line)
         argument = Argument(8, 12, line)
-        cl = ConfigurationLine(keyword=keyword,
-                               arguments=[argument],
-                               documentation_link="help/link",
-                               group="group",
-                               required=True)
+        cl = ConfigurationLine(
+            keyword=keyword,
+            arguments=[argument],
+            documentation_link="help/link",
+            group="group",
+            required=True,
+        )
 
         self.assertEqual(cl.keyword(), keyword)
         self.assertEqual(cl.arguments()[0], argument)
@@ -25,8 +26,6 @@ class ConfigurationLineTest(ErtTest):
 
         self.assertFalse(cl.validationStatusForToken(keyword))
         self.assertFalse(cl.validationStatusForToken(argument))
-
-
 
     def test_configuration_line(self):
 
@@ -46,12 +45,13 @@ class ConfigurationLineTest(ErtTest):
         arg2 = Argument(15, 16, line)
         self.assertEqual(arg2.value(), "2")
 
-
-        cl = ConfigurationLine(keyword=keyword,
-                               arguments=[arg1, arg2],
-                               documentation_link="help",
-                               group="test_group",
-                               required=True)
+        cl = ConfigurationLine(
+            keyword=keyword,
+            arguments=[arg1, arg2],
+            documentation_link="help",
+            group="test_group",
+            required=True,
+        )
 
         self.assertTrue(cl.keyword().hasKeywordDefinition())
         self.assertEqual(cl.keyword().keywordDefinition(), keyword_def)
@@ -69,4 +69,3 @@ class ConfigurationLineTest(ErtTest):
         self.assertFalse(cl.validationStatusForToken(keyword))
         self.assertTrue(cl.validationStatusForToken(arg1))
         self.assertFalse(cl.validationStatusForToken(arg2))
-

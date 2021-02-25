@@ -53,7 +53,10 @@ class FileView(QAbstractItemView):
         """visualRect is a pure virtual member function of QAbstractItemView"""
         if index.row() < 0 or index.row() >= len(self._line_sizes):
             return QRect()
-        point = QPoint(-self.horizontalOffset(), self._line_offsets[index.row()] - self.verticalOffset())
+        point = QPoint(
+            -self.horizontalOffset(),
+            self._line_offsets[index.row()] - self.verticalOffset(),
+        )
         return QRect(point, self._line_sizes[index.row()])
 
     def visualRegionForSelection(self, _selection):
@@ -82,7 +85,10 @@ class FileView(QAbstractItemView):
             raise NotImplementedError("FileView can only be appended to")
         model = self.model()
 
-        follow = self._force_follow or self.verticalOffset() == self.verticalScrollBar().maximum()
+        follow = (
+            self._force_follow
+            or self.verticalOffset() == self.verticalScrollBar().maximum()
+        )
 
         for idx in range(first, last):
             end = self._size.height()
@@ -128,7 +134,9 @@ class FileView(QAbstractItemView):
         """Get rows that intersect with rect"""
         model = self.model()
         first = max(0, bisect_left(self._line_offsets, rect.top()) - 1)
-        last = min(len(self._line_sizes), bisect_right(self._line_offsets, rect.bottom()))
+        last = min(
+            len(self._line_sizes), bisect_right(self._line_offsets, rect.bottom())
+        )
 
         return [model.index(row, 0) for row in range(first, last)]
 

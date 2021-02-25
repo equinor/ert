@@ -20,7 +20,6 @@ class PathArgument(ArgumentDefinition):
         if not "<CWD>" in PathArgument.DEFINES:
             PathArgument.DEFINES["<CWD>"] = "."
 
-
     def validate(self, token):
         validation_status = super(PathArgument, self).validate(token)
 
@@ -45,6 +44,3 @@ class PathArgument(ArgumentDefinition):
     def addDefine(key, value):
         value = PathArgument.substituteDefines(value)
         PathArgument.DEFINES[key] = value
-
-
-

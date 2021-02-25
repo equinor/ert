@@ -1,21 +1,30 @@
-#  Copyright (C) 2011  Equinor ASA, Norway. 
-#   
+#  Copyright (C) 2011  Equinor ASA, Norway.
+#
 #  The file 'validateddialog.py' is part of ERT - Ensemble based Reservoir Tool.
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from qtpy.QtCore import Qt, QSize
 from qtpy.QtGui import QColor
-from qtpy.QtWidgets import QDialog, QFormLayout, QLabel, QWidget, QDialogButtonBox, QLineEdit, QComboBox, QLayout
+from qtpy.QtWidgets import (
+    QDialog,
+    QFormLayout,
+    QLabel,
+    QWidget,
+    QDialogButtonBox,
+    QLineEdit,
+    QComboBox,
+    QLayout,
+)
 
 
 class ValidatedDialog(QDialog):
@@ -27,7 +36,13 @@ class ValidatedDialog(QDialog):
 
     INVALID_COLOR = QColor(255, 235, 235)
 
-    def __init__(self, title="Title", description="Description", unique_names=None, choose_from_list=False):
+    def __init__(
+        self,
+        title="Title",
+        description="Description",
+        unique_names=None,
+        choose_from_list=False,
+    ):
         QDialog.__init__(self)
         self.setModal(True)
         self.setWindowTitle(title)
@@ -50,7 +65,9 @@ class ValidatedDialog(QDialog):
         self.layout.addRow(label)
         self.layout.addRow(self.createSpace(10))
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self
+        )
         self.ok_button = buttons.button(QDialogButtonBox.Ok)
         self.ok_button.setEnabled(False)
 
@@ -64,7 +81,9 @@ class ValidatedDialog(QDialog):
             self.param_name = QLineEdit(self)
             self.param_name.setFocus()
             self.param_name.textChanged.connect(self.validateName)
-            self.validColor = self.param_name.palette().color(self.param_name.backgroundRole())
+            self.validColor = self.param_name.palette().color(
+                self.param_name.backgroundRole()
+            )
 
             self.layout.addRow("Name:", self.param_name)
 

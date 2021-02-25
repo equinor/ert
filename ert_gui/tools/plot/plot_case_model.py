@@ -5,7 +5,6 @@ from ert_gui.ertwidgets.models.ertmodel import getAllCasesNotRunning
 
 
 class PlotCaseModel(QAbstractItemModel):
-
     def __init__(self, cases):
         QAbstractItemModel.__init__(self)
         self.__data = cases
@@ -22,7 +21,6 @@ class PlotCaseModel(QAbstractItemModel):
 
     def columnCount(self, QModelIndex_parent=None, *args, **kwargs):
         return 1
-
 
     def data(self, index, role=None):
         assert isinstance(index, QModelIndex)
@@ -43,7 +41,6 @@ class PlotCaseModel(QAbstractItemModel):
             return self.getAllItems()[row]
 
         return None
-
 
     def getAllItems(self):
         return self.__data

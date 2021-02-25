@@ -7,17 +7,28 @@ from .file_update_worker import FileUpdateWorker
 
 
 class FileDialog(QDialog):
-    def __init__(self, file_name, job_name, job_number, realization, iteration, parent=None):
+    def __init__(
+        self, file_name, job_name, job_number, realization, iteration, parent=None
+    ):
         super(FileDialog, self).__init__(parent)
 
-        self.setWindowTitle("{} # {} Realization: {} Iteration: {}" \
-                            .format(job_name, job_number, realization, iteration))
+        self.setWindowTitle(
+            "{} # {} Realization: {} Iteration: {}".format(
+                job_name, job_number, realization, iteration
+            )
+        )
 
         self._file_name = file_name
         try:
             self._file = open(file_name, "r")
         except OSError as error:
-            self._mb = QMessageBox(QMessageBox.Critical, "Error opening file", error.strerror, QMessageBox.Ok, self)
+            self._mb = QMessageBox(
+                QMessageBox.Critical,
+                "Error opening file",
+                error.strerror,
+                QMessageBox.Ok,
+                self,
+            )
             self._mb.finished.connect(self.accept)
             self._mb.show()
             return
@@ -42,7 +53,9 @@ class FileDialog(QDialog):
 
         dialog_buttons = QDialogButtonBox(QDialogButtonBox.Ok)
         self._follow = dialog_buttons.addButton("Follow", QDialogButtonBox.ActionRole)
-        self._copy_all = dialog_buttons.addButton("Copy All", QDialogButtonBox.ActionRole)
+        self._copy_all = dialog_buttons.addButton(
+            "Copy All", QDialogButtonBox.ActionRole
+        )
         dialog_buttons.accepted.connect(self.accept)
 
         self._follow.setCheckable(True)

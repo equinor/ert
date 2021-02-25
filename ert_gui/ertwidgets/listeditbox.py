@@ -1,20 +1,28 @@
-#  Copyright (C) 2011  Equinor ASA, Norway. 
-#   
+#  Copyright (C) 2011  Equinor ASA, Norway.
+#
 #  The file 'pathchooser.py' is part of ERT - Ensemble based Reservoir Tool.
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from qtpy.QtCore import Qt, QSize
-from qtpy.QtWidgets import QHBoxLayout, QLineEdit, QCompleter, QToolButton, QInputDialog, QMessageBox, QWidget
+from qtpy.QtWidgets import (
+    QHBoxLayout,
+    QLineEdit,
+    QCompleter,
+    QToolButton,
+    QInputDialog,
+    QMessageBox,
+    QWidget,
+)
 
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.validationsupport import ValidationSupport
@@ -37,12 +45,12 @@ class AutoCompleteLineEdit(QLineEdit):
     def __insertCompletion(self, completion):
         extra = len(completion) - len(self._completer.completionPrefix())
         extra_text = completion[-extra:]
-        extra_text += ', '
+        extra_text += ", "
         self.setText(self.text() + extra_text)
 
     def textUnderCursor(self):
         text = self.text()
-        text_under_cursor = ''
+        text_under_cursor = ""
         i = self.cursorPosition() - 1
         while i >= 0 and text[i] not in self._separators:
             text_under_cursor = text[i] + text_under_cursor
@@ -67,7 +75,9 @@ class AutoCompleteLineEdit(QLineEdit):
 
     def __updateCompleterPopupItems(self, completionPrefix):
         self._completer.setCompletionPrefix(completionPrefix)
-        self._completer.popup().setCurrentIndex(self._completer.completionModel().index(0, 0))
+        self._completer.popup().setCurrentIndex(
+            self._completer.completionModel().index(0, 0)
+        )
 
 
 class ListEditBox(QWidget):
@@ -99,7 +109,9 @@ class ListEditBox(QWidget):
         self.setLayout(layout)
 
         self._validation_support = ValidationSupport(self)
-        self._valid_color = self._list_edit_line.palette().color(self._list_edit_line.backgroundRole())
+        self._valid_color = self._list_edit_line.palette().color(
+            self._list_edit_line.backgroundRole()
+        )
 
         self._list_edit_line.setText("")
         self._editing = False
@@ -159,12 +171,16 @@ class ListEditBox(QWidget):
 
     def addChoice(self):
         if len(self._possible_items) == 0:
-            QMessageBox.information(self, "No items", "No items available for selection!")
+            QMessageBox.information(
+                self, "No items", "No items available for selection!"
+            )
         else:
-            item, ok = QInputDialog.getItem(self,
-                                            "Select a case",
-                                            "Select a case to add to the case list:",
-                                            self._possible_items)
+            item, ok = QInputDialog.getItem(
+                self,
+                "Select a case",
+                "Select a case to add to the case list:",
+                self._possible_items,
+            )
 
             if ok:
                 item = str(item).strip()

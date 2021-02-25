@@ -19,7 +19,6 @@ class Keyword(object):
 
         self.handler = None
 
-
     @property
     def length(self):
         return self.end - self.start
@@ -49,11 +48,9 @@ class Keyword(object):
 
         return self.error or parameter_error
 
-
-
     def mergeParameters(self, from_parameter):
         parameters = self.parameter_list[from_parameter:]
-        self.parameter_list = self.parameter_list[0:from_parameter - 1]
+        self.parameter_list = self.parameter_list[0 : from_parameter - 1]
 
         value = " ".join([p.value for p in parameters])
         start = parameters[0].start

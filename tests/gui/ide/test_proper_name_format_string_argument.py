@@ -3,7 +3,6 @@ from tests import ErtTest
 
 
 class ProperNameFormatStringArgumentTest(ErtTest):
-
     def test_proper_name_format_string_argument(self):
 
         argument = ProperNameFormatStringArgument()
@@ -18,4 +17,3 @@ class ProperNameFormatStringArgumentTest(ErtTest):
         self.assertFalse(argument.validate("-%sNA ME-"))
         self.assertFalse(argument.validate("NAME*%s"))
         self.assertFalse(argument.validate(""))
-

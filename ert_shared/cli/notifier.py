@@ -1,4 +1,4 @@
-class ErtCliNotifier():
+class ErtCliNotifier:
     """CLI Notifier to use in ERT Adapter"""
 
     def __init__(self, ert, config_file):

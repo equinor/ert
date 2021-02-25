@@ -14,7 +14,6 @@ class IntegerArgument(ArgumentDefinition):
         self.from_value = from_value
         self.to_value = to_value
 
-
     def validate(self, token):
         validation_status = super(IntegerArgument, self).validate(token)
 
@@ -26,31 +25,36 @@ class IntegerArgument(ArgumentDefinition):
         else:
             value = int(token)
 
-            if self.from_value is not None and self.to_value is not None and not self.from_value <= value <= self.to_value:
+            if (
+                self.from_value is not None
+                and self.to_value is not None
+                and not self.from_value <= value <= self.to_value
+            ):
                 validation_status.setFailed()
-                range_string = "%d <= %d <= %d" % (self.from_value, value, self.to_value)
-                validation_status.addToMessage(IntegerArgument.NOT_IN_RANGE % range_string)
+                range_string = "%d <= %d <= %d" % (
+                    self.from_value,
+                    value,
+                    self.to_value,
+                )
+                validation_status.addToMessage(
+                    IntegerArgument.NOT_IN_RANGE % range_string
+                )
 
             elif self.from_value is not None and self.from_value > value:
                 validation_status.setFailed()
                 range_string = "%d <= %d" % (self.from_value, value)
-                validation_status.addToMessage(IntegerArgument.NOT_IN_RANGE % range_string)
+                validation_status.addToMessage(
+                    IntegerArgument.NOT_IN_RANGE % range_string
+                )
 
             elif self.to_value is not None and self.to_value < value:
                 validation_status.setFailed()
                 range_string = "%d <= %d" % (value, self.to_value)
-                validation_status.addToMessage(IntegerArgument.NOT_IN_RANGE % range_string)
-
+                validation_status.addToMessage(
+                    IntegerArgument.NOT_IN_RANGE % range_string
+                )
 
             if not validation_status.failed():
                 validation_status.setValue(value)
 
-
         return validation_status
-
-
-
-
-
-
-

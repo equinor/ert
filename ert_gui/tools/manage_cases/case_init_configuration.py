@@ -1,13 +1,30 @@
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QToolButton, QTextEdit, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox
+from qtpy.QtWidgets import (
+    QToolButton,
+    QTextEdit,
+    QTabWidget,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QSpinBox,
+)
 
 from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget, showWaitCursorWhileWaiting
 from ert_gui.ertwidgets.caselist import CaseList
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.checklist import CheckList
-from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, initializeCurrentCaseFromScratch, getCaseRealizationStates, getParameterList, getHistoryLength, \
-    initializeCurrentCaseFromExisting, getCurrentCaseName
+from ert_gui.ertwidgets.models.ertmodel import (
+    getRealizationCount,
+    initializeCurrentCaseFromScratch,
+    getCaseRealizationStates,
+    getParameterList,
+    getHistoryLength,
+    initializeCurrentCaseFromExisting,
+    getCurrentCaseName,
+)
 from ert_gui.ertwidgets.models.selectable_list_model import SelectableListModel
 
 
@@ -15,7 +32,9 @@ def createCheckLists():
     parameter_model = SelectableListModel([])
 
     parameter_model.getList = getParameterList
-    parameter_check_list = CheckList(parameter_model, "Parameters", "init/select_parameters")
+    parameter_check_list = CheckList(
+        parameter_model, "Parameters", "init/select_parameters"
+    )
     parameter_check_list.setMaximumWidth(300)
 
     members_model = SelectableListModel([])
@@ -26,7 +45,11 @@ def createCheckLists():
     members_model.getList = getMemberList
     member_check_list = CheckList(members_model, "Members", "init/select_members")
     member_check_list.setMaximumWidth(150)
-    return createRow(parameter_check_list, member_check_list), parameter_model, members_model
+    return (
+        createRow(parameter_check_list, member_check_list),
+        parameter_model,
+        members_model,
+    )
 
 
 def createRow(*widgets):
@@ -102,7 +125,9 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         row = createRow(QLabel("Target case:"), target_case)
         layout.addLayout(row)
 
-        source_case = CaseSelector(update_ert=False, show_only_initialized=True, ignore_current=True)
+        source_case = CaseSelector(
+            update_ert=False, show_only_initialized=True, ignore_current=True
+        )
         row = createRow(QLabel("Source case:"), source_case)
         layout.addLayout(row)
 
@@ -125,11 +150,12 @@ class CaseInitializationConfigurationPanel(QTabWidget):
             report_step = history_length_spinner.value()
             parameters = parameter_model.getSelectedItems()
             members = members_model.getSelectedItems()
-            initializeCurrentCaseFromExisting(source_case_name, target_case_name,  report_step, parameters, members)
+            initializeCurrentCaseFromExisting(
+                source_case_name, target_case_name, report_step, parameters, members
+            )
 
         initialize_button.clicked.connect(initializeFromExisting)
         layout.addWidget(initialize_button, 0, Qt.AlignCenter)
-
 
         layout.addSpacing(10)
 
@@ -161,7 +187,9 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         end_of_time.clicked.connect(setToMax)
 
-        row = createRow(QLabel("Timestep:"), history_length_spinner, initial, end_of_time)
+        row = createRow(
+            QLabel("Timestep:"), history_length_spinner, initial, end_of_time
+        )
 
         return row, history_length_spinner
 
@@ -169,7 +197,9 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         case_widget = QWidget()
         layout = QVBoxLayout()
 
-        case_selector = CaseSelector(update_ert=False, help_link="init/selected_case_info")
+        case_selector = CaseSelector(
+            update_ert=False, help_link="init/selected_case_info"
+        )
         row1 = createRow(QLabel("Select case:"), case_selector)
 
         layout.addLayout(row1)
@@ -199,7 +229,10 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         html = "<table>"
         for index in range(len(states)):
-            html += "<tr><td width=30>%d.</td><td>%s</td></tr>" % (index, str(states[index]))
+            html += "<tr><td width=30>%d.</td><td>%s</td></tr>" % (
+                index,
+                str(states[index]),
+            )
 
         html += "</table>"
 

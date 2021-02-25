@@ -1,5 +1,6 @@
 from ert_shared.ide.keywords.data import ValidationStatus
 
+
 class ArgumentDefinition(object):
     MISSING_ARGUMENT = "Missing argument!"
 
@@ -18,7 +19,6 @@ class ArgumentDefinition(object):
     def consumeRestOfLine(self):
         return self.__rest_of_line
 
-
     def validate(self, token):
         vs = ValidationStatus()
 
@@ -27,4 +27,3 @@ class ArgumentDefinition(object):
             vs.addToMessage(ArgumentDefinition.MISSING_ARGUMENT)
 
         return vs
-

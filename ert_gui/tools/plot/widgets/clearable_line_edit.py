@@ -29,9 +29,10 @@ class ClearableLineEdit(QLineEdit):
 
         self.showPlaceholder()
 
-
     def toggleClearButtonVisibility(self):
-        self._clear_button.setVisible(len(self.text()) > 0 and not self._placeholder_active)
+        self._clear_button.setVisible(
+            len(self.text()) > 0 and not self._placeholder_active
+        )
 
     def sizeHint(self):
         size = QLineEdit.sizeHint(self)
@@ -44,7 +45,10 @@ class ClearableLineEdit(QLineEdit):
     def resizeEvent(self, event):
         right = self.rect().right()
         frame_width = self.style().pixelMetric(QStyle.PM_DefaultFrameWidth)
-        self._clear_button.move(right - frame_width - self._clear_button.width(), (self.height() - self._clear_button.height()) / 2)
+        self._clear_button.move(
+            right - frame_width - self._clear_button.width(),
+            (self.height() - self._clear_button.height()) / 2,
+        )
         QLineEdit.resizeEvent(self, event)
 
     def clearButtonClicked(self):

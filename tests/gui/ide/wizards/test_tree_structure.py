@@ -5,7 +5,6 @@ from tests import ErtTest
 
 
 class TreeStructureTest(ErtTest):
-
     def test_tree_item(self):
 
         root = TreeItem("Root")
@@ -51,16 +50,8 @@ class TreeStructureTest(ErtTest):
 
         self.assertEqual(tree.data(sub_name2_index), "SubTwo")
 
-
         tree_item = tree.item(tree.index(2, 0))
 
         self.assertEqual(child_item, tree_item)
 
         self.assertIsNone(tree.data(tree.index(3, 0)))
-
-
-
-
-
-
-

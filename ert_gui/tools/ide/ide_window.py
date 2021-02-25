@@ -21,7 +21,6 @@ class IdeWindow(QMainWindow):
         self.setWindowTitle("Configuration - {}".format(config_file))
         self.activateWindow()
 
-
         # wizard_panel = WizardView()
         # wizard_panel.addGroup("Parameters")
         # wizard_panel.addItemToGroup("Parameters", "Add Summary key")
@@ -33,7 +32,6 @@ class IdeWindow(QMainWindow):
         # wizard_panel.addItemToGroup("Observations", "Add Observations")
         # wizard_panel.expandAll()
         # self.addDock("Wizards", wizard_panel)
-
 
     def closeEvent(self, q_close_event):
         self.__position = self.pos()

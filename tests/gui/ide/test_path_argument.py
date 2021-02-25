@@ -3,7 +3,6 @@ from tests import ErtTest
 
 
 class PathArgumentTest(ErtTest):
-
     def test_path_argument(self):
 
         path_arg = PathArgument()

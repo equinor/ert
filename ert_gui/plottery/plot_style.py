@@ -1,5 +1,15 @@
 class PlotStyle(object):
-    def __init__(self, name, color="#000000", alpha=1.0, line_style="-", marker="", width=1.0, size=7.5, enabled = True):
+    def __init__(
+        self,
+        name,
+        color="#000000",
+        alpha=1.0,
+        line_style="-",
+        marker="",
+        width=1.0,
+        size=7.5,
+        enabled=True,
+    ):
         super(PlotStyle, self).__init__()
         self.name = name
         self.color = color
@@ -96,9 +106,18 @@ class PlotStyle(object):
             size = 0.0
         self._size = size
 
-
     def __str__(self):
-        return "%s c:%s a:%f ls:%s m:%s w:%f s:%f enabled:%s copy:%s" % (self.name, self.color, self.alpha, self.line_style, self.marker, self.width, self.size, self.isEnabled(), self._is_copy)
+        return "%s c:%s a:%f ls:%s m:%s w:%f s:%f enabled:%s copy:%s" % (
+            self.name,
+            self.color,
+            self.alpha,
+            self.line_style,
+            self.marker,
+            self.width,
+            self.size,
+            self.isEnabled(),
+            self._is_copy,
+        )
 
     def __eq__(self, other):
         equalness = self.alpha == other.alpha

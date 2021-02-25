@@ -3,7 +3,6 @@ from .plugin import Plugin
 
 
 class PluginHandler(object):
-
     def __init__(self, ert, plugin_jobs, parent_window):
         """ @type plugin_jobs: list of WorkflowJob """
         self.__ert = ert
@@ -15,7 +14,6 @@ class PluginHandler(object):
             plugin.setParentWindow(parent_window)
 
         self.__plugins = sorted(self.__plugins, key=Plugin.getName)
-
 
     def ert(self):
         """ @rtype: res.enkf.enkf_main.EnKFMain """
@@ -31,7 +29,6 @@ class PluginHandler(object):
     def __getitem__(self, index):
         """ @rtype: Plugin """
         return self.__plugins[index]
-
 
     def __len__(self):
         return len(self.__plugins)

@@ -17,7 +17,6 @@ class MockedQIcon(QIcon):
 
 
 class RunAnalysisTests(ErtTest):
-
     def __init__(self, *args, **kwargs):
         super(ErtTest, self).__init__(*args, **kwargs)
 
@@ -43,7 +42,9 @@ class RunAnalysisTests(ErtTest):
             self.tool.run()
 
         mock_analyse.assert_called_once_with("target", "source")
-        mock_messagebox.return_value.setText.assert_called_once_with("Successfully ran analysis for case 'source'.")
+        mock_messagebox.return_value.setText.assert_called_once_with(
+            "Successfully ran analysis for case 'source'."
+        )
         self.tool._dialog.accept.assert_called_once_with()
 
     @patch("ert_gui.tools.run_analysis.run_analysis_tool.analyse", return_value=False)
@@ -55,5 +56,7 @@ class RunAnalysisTests(ErtTest):
         self.tool.run()
 
         mock_analyse.assert_called_once_with("target", "source")
-        mock_messagebox.return_value.setText.assert_called_once_with("Unable to run analysis for case 'source'.")
+        mock_messagebox.return_value.setText.assert_called_once_with(
+            "Unable to run analysis for case 'source'."
+        )
         self.tool._dialog.accept.assert_not_called()

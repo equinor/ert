@@ -8,7 +8,9 @@ from ert_shared.ide.keywords.parametrization_keywords import ParametrizationKeyw
 from ert_shared.ide.keywords.plot_keywords import PlotKeywords
 from ert_shared.ide.keywords.queue_system_keywords import QueueSystemKeywords
 from ert_shared.ide.keywords.run_keywords import RunKeywords
-from ert_shared.ide.keywords.simulation_control_keywords import SimulationControlKeywords
+from ert_shared.ide.keywords.simulation_control_keywords import (
+    SimulationControlKeywords,
+)
 from ert_shared.ide.keywords.unix_environment_keywords import UnixEnvironmentKeywords
 from ert_shared.ide.keywords.workflow_keywords import WorkflowKeywords
 
@@ -33,7 +35,6 @@ class ErtKeywords(object):
         AdvancedKeywords(self)
         UnixEnvironmentKeywords(self)
 
-
         # group_names = sorted(self.groups.keys())
         #
         # for group in group_names:
@@ -41,10 +42,6 @@ class ErtKeywords(object):
         #     keywords = self.groups[group]
         #     for keyword in keywords:
         #         print("  %s" % keyword.keywordDefinition().name())
-
-
-
-
 
     def addKeyword(self, keyword):
         assert isinstance(keyword, ConfigurationLineDefinition)
@@ -68,4 +65,3 @@ class ErtKeywords(object):
     def __getitem__(self, item):
         """ @rtype: ConfigurationLineDefinition """
         return self.keywords[item]
-

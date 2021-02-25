@@ -4,7 +4,14 @@ import shutil
 import six
 
 from qtpy.QtCore import Signal
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QToolBar, QMessageBox, QSizePolicy, QFileDialog
+from qtpy.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QToolBar,
+    QMessageBox,
+    QSizePolicy,
+    QFileDialog,
+)
 
 from ert_gui.ertwidgets import SearchBox, resourceIcon
 from ert_gui.ide.highlighter import KeywordHighlighter
@@ -27,7 +34,6 @@ class ConfigurationPanel(QWidget):
 
         toolbar = QToolBar("toolbar")
 
-
         save_action = toolbar.addAction(resourceIcon("ide/disk"), "Save")
         save_action.triggered.connect(self.save)
 
@@ -42,11 +48,9 @@ class ConfigurationPanel(QWidget):
 
         toolbar.addAction(help_tool.getAction())
 
-
         stretchy_separator = QWidget()
         stretchy_separator.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         toolbar.addWidget(stretchy_separator)
-
 
         search = SearchBox()
         search.setMaximumWidth(200)
@@ -65,7 +69,7 @@ class ConfigurationPanel(QWidget):
             config_file_text = f.read()
 
         self.highlighter = KeywordHighlighter(self.ide_panel.document())
-        
+
         search.filterChanged.connect(self.highlighter.setSearchString)
 
         self.parseDefines(config_file_text)
@@ -76,14 +80,10 @@ class ConfigurationPanel(QWidget):
         self.ide_panel.setTextCursor(cursor)
         self.ide_panel.setFocus()
 
-
         self.setLayout(layout)
-
-
 
     def getName(self):
         return "Configuration"
-
 
     def save(self):
         backup_path = "%s.backup" % self.config_file
@@ -93,11 +93,12 @@ class ConfigurationPanel(QWidget):
             f.write(str(self.ide_panel.getText()))
 
         message = "To make your changes current, a reload of the configuration file is required. Would you like to reload now?"
-        result = QMessageBox.information(self, "Reload required!", message, QMessageBox.Yes | QMessageBox.No)
+        result = QMessageBox.information(
+            self, "Reload required!", message, QMessageBox.Yes | QMessageBox.No
+        )
 
         if result == QMessageBox.Yes:
             self.reload(self.config_file)
-
 
     def saveAs(self):
         config_file = QFileDialog.getSaveFileName(self, "Save Configuration File As")
@@ -109,11 +110,12 @@ class ConfigurationPanel(QWidget):
                 f.write(self.ide_panel.getText())
 
             message = "The current configuration file has been saved to a new file. Do you want to restart Ert using the new configuration file?"
-            result = QMessageBox.information(self, "Restart Ert?", message, QMessageBox.Yes | QMessageBox.No)
+            result = QMessageBox.information(
+                self, "Restart Ert?", message, QMessageBox.Yes | QMessageBox.No
+            )
 
             if result == QMessageBox.Yes:
                 self.reload(config_file)
-
 
     def reload(self, path):
         self.reloadApplication.emit(path)

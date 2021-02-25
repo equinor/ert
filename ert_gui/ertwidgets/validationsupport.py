@@ -3,13 +3,16 @@ from qtpy.QtGui import QColor
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QSizePolicy, QFrame, QLabel
 import html
 
+
 class ErrorPopup(QWidget):
-    error_template = ("<html>"
-                      "<table style='background-color: #ffdfdf;'width='100%%'>"
-                      "<tr><td style='font-weight: bold; padding-left: 5px;'>Warning:</td></tr>"
-                      "%s"
-                      "</table>"
-                      "</html>")
+    error_template = (
+        "<html>"
+        "<table style='background-color: #ffdfdf;'width='100%%'>"
+        "<tr><td style='font-weight: bold; padding-left: 5px;'>Warning:</td></tr>"
+        "%s"
+        "</table>"
+        "</html>"
+    )
 
     def __init__(self):
         QWidget.__init__(self, None, Qt.ToolTip)
@@ -40,7 +43,9 @@ class ErrorPopup(QWidget):
         rect = widget.rect()
         p = widget.mapToGlobal(QPoint(rect.left(), rect.top()))
 
-        self.setGeometry(p.x(), p.y() - size_hint.height() - 5, size_hint.width(), size_hint.height())
+        self.setGeometry(
+            p.x(), p.y() - size_hint.height() - 5, size_hint.width(), size_hint.height()
+        )
 
         self.raise_()
 
@@ -72,7 +77,9 @@ class ValidationSupport(QObject):
             self._originalEnterEvent(event)
 
             if not self.isValid():
-                self._error_popup.presentError(self._validation_target, self._validation_message)
+                self._error_popup.presentError(
+                    self._validation_target, self._validation_message
+                )
 
         validation_target.enterEvent = enterEvent
 
@@ -102,8 +109,13 @@ class ValidationSupport(QObject):
         else:
             self._validation_type = validation_type
             self._validation_message = message
-            if self._validation_target.hasFocus() or self._validation_target.underMouse():
-                self._error_popup.presentError(self._validation_target, self._validation_message)
+            if (
+                self._validation_target.hasFocus()
+                or self._validation_target.underMouse()
+            ):
+                self._error_popup.presentError(
+                    self._validation_target, self._validation_message
+                )
             self.validationChanged.emit(False)
 
     def isValid(self):

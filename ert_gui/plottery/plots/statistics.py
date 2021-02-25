@@ -9,7 +9,6 @@ from ert_gui.plottery.plots.refcase import plotRefcase
 
 
 class StatisticsPlot(object):
-
     def __init__(self):
         self.dimensionality = 2
 
@@ -31,9 +30,10 @@ class StatisticsPlot(object):
                     plot_context.deactivateDateSupport()
                     plot_context.x_axis = plot_context.INDEX_AXIS
 
-
                 style = config.getStatisticsStyle("mean")
-                rectangle = Rectangle((0, 0), 1, 1, color=style.color, alpha=0.8) # creates rectangle patch for legend use.
+                rectangle = Rectangle(
+                    (0, 0), 1, 1, color=style.color, alpha=0.8
+                )  # creates rectangle patch for legend use.
                 config.addLegendItem(case, rectangle)
 
                 statistics_data = DataFrame()
@@ -61,7 +61,14 @@ class StatisticsPlot(object):
         plotHistory(plot_context, axes)
 
         default_x_label = "Date" if plot_context.isDateSupportActive() else "Index"
-        PlotTools.finalizePlot(plot_context, figure, axes, default_x_label=default_x_label, default_y_label="Value")
+        PlotTools.finalizePlot(
+            plot_context,
+            figure,
+            axes,
+            default_x_label=default_x_label,
+            default_y_label="Value",
+        )
+
 
 def _addStatisticsLegends(plot_config):
     _addStatisticsLegend(plot_config, "mean")
@@ -71,14 +78,26 @@ def _addStatisticsLegends(plot_config):
     _addStatisticsLegend(plot_config, "std", 0.4)
     _addStatisticsLegend(plot_config, "p33-p67", 0.6)
 
+
 def _addStatisticsLegend(plot_config, style_name, alpha_multiplier=1.0):
     style = plot_config.getStatisticsStyle(style_name)
     if style.isVisible():
         if style.line_style == "#":
-            rectangle = Rectangle((0, 0), 1, 1, color='black', alpha=style.alpha * alpha_multiplier)  # creates rectangle patch for legend use.
+            rectangle = Rectangle(
+                (0, 0), 1, 1, color="black", alpha=style.alpha * alpha_multiplier
+            )  # creates rectangle patch for legend use.
             plot_config.addLegendItem(style.name, rectangle)
         else:
-            line = Line2D([], [], color='black', marker=style.marker, linestyle=style.line_style, linewidth=style.width, alpha=style.alpha, markersize=style.size)
+            line = Line2D(
+                [],
+                [],
+                color="black",
+                marker=style.marker,
+                linestyle=style.line_style,
+                linewidth=style.width,
+                alpha=style.alpha,
+                markersize=style.size,
+            )
             plot_config.addLegendItem(style.name, line)
 
 
@@ -91,33 +110,90 @@ def _plotPercentiles(axes, plot_config, data, ensemble_label):
     """
     style = plot_config.getStatisticsStyle("mean")
     if style.isVisible():
-        axes.plot(data.index.values, data["Mean"].values, alpha=style.alpha, linestyle=style.line_style, color=style.color, marker=style.marker, linewidth=style.width, markersize=style.size)
+        axes.plot(
+            data.index.values,
+            data["Mean"].values,
+            alpha=style.alpha,
+            linestyle=style.line_style,
+            color=style.color,
+            marker=style.marker,
+            linewidth=style.width,
+            markersize=style.size,
+        )
 
     style = plot_config.getStatisticsStyle("p50")
     if style.isVisible():
-        axes.plot(data.index.values, data["p50"].values, alpha=style.alpha, linestyle=style.line_style, color=style.color, marker=style.marker, linewidth=style.width, markersize=style.size)
+        axes.plot(
+            data.index.values,
+            data["p50"].values,
+            alpha=style.alpha,
+            linestyle=style.line_style,
+            color=style.color,
+            marker=style.marker,
+            linewidth=style.width,
+            markersize=style.size,
+        )
 
     style = plot_config.getStatisticsStyle("std")
-    _plotPercentile(axes, style, data.index.values, data["std+"].values, data["std-"].values, 0.5)
+    _plotPercentile(
+        axes, style, data.index.values, data["std+"].values, data["std-"].values, 0.5
+    )
 
     style = plot_config.getStatisticsStyle("min-max")
-    _plotPercentile(axes, style, data.index.values, data["Maximum"].values, data["Minimum"].values, 0.5)
+    _plotPercentile(
+        axes,
+        style,
+        data.index.values,
+        data["Maximum"].values,
+        data["Minimum"].values,
+        0.5,
+    )
 
     style = plot_config.getStatisticsStyle("p10-p90")
-    _plotPercentile(axes, style, data.index.values, data["p90"].values, data["p10"].values, 0.5)
+    _plotPercentile(
+        axes, style, data.index.values, data["p90"].values, data["p10"].values, 0.5
+    )
 
     style = plot_config.getStatisticsStyle("p33-p67")
-    _plotPercentile(axes, style, data.index.values, data["p67"].values, data["p33"].values, 0.5)
+    _plotPercentile(
+        axes, style, data.index.values, data["p67"].values, data["p33"].values, 0.5
+    )
 
 
-def _plotPercentile(axes, style, index_values, top_line_data, bottom_line_data, alpha_multiplier):
+def _plotPercentile(
+    axes, style, index_values, top_line_data, bottom_line_data, alpha_multiplier
+):
     alpha = style.alpha
     line_style = style.line_style
     color = style.color
     marker = style.marker
 
     if line_style == "#":
-        axes.fill_between(index_values, bottom_line_data, top_line_data, alpha=alpha * alpha_multiplier, color=color)
+        axes.fill_between(
+            index_values,
+            bottom_line_data,
+            top_line_data,
+            alpha=alpha * alpha_multiplier,
+            color=color,
+        )
     elif style.isVisible():
-        axes.plot(index_values, bottom_line_data, alpha=alpha, linestyle=line_style, color=color, marker=marker, linewidth=style.width, markersize=style.size)
-        axes.plot(index_values, top_line_data, alpha=alpha, linestyle=line_style, color=color, marker=marker, linewidth=style.width, markersize=style.size)
+        axes.plot(
+            index_values,
+            bottom_line_data,
+            alpha=alpha,
+            linestyle=line_style,
+            color=color,
+            marker=marker,
+            linewidth=style.width,
+            markersize=style.size,
+        )
+        axes.plot(
+            index_values,
+            top_line_data,
+            alpha=alpha,
+            linestyle=line_style,
+            color=color,
+            marker=marker,
+            linewidth=style.width,
+            markersize=style.size,
+        )
