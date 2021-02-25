@@ -1,10 +1,12 @@
 from typing import List, Optional
 
-try:
-    # Will only work from Python 3.8
+import sys
+
+if sys.version_info >= (3, 8):
     from typing import Literal
-except ImportError:
+else:
     from typing_extensions import Literal
+
 from pydantic.dataclasses import dataclass
 from pydantic import root_validator, BaseModel
 
