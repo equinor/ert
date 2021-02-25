@@ -1,4 +1,4 @@
-# ert [![Build Status](https://travis-ci.org/equinor/ert.svg?branch=master)](https://travis-ci.org/equinor/ert)
+# ert ![Build status](https://github.com/equinor/ert/actions/workflows/build.yml/badge.svg) ![Code style](https://github.com/equinor/ert/actions/workflows/style.yml/badge.svg) ![ERT2 test data setups](https://github.com/equinor/ert/actions/workflows/run_ert2_test_data_setups.yml/badge.svg) ![ERT3 polynomial demo](https://github.com/equinor/ert/actions/workflows/run_polynomial_demo.yml/badge.svg) ![ERT3 SPE1 demo](https://github.com/equinor/ert/actions/workflows/run_spe1_demo.yml/badge.svg) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 ERT - Ensemble based Reservoir Tool - is a tool to run ensemble based on
 reservoir models. ERT was originally devised as tool to do model updating
