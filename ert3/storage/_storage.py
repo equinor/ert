@@ -1,8 +1,9 @@
 import ert3
 
-import yaml
-import pathlib
 import os
+from pathlib import Path
+from typing import Any, Iterable, Optional, Union
+import yaml
 
 
 _STORAGE_FILE = "storage.yaml"
@@ -15,17 +16,17 @@ _ENSEMBLE_RECORDS = "__ensemble_records__"
 _SPECIAL_KEYS = (_ENSEMBLE_RECORDS,)
 
 
-def _generate_storage_location(workspace):
-    workspace = pathlib.Path(workspace)
+def _generate_storage_location(workspace: Union[str, Path]) -> Path:
+    workspace = Path(workspace)
     return workspace / ert3._WORKSPACE_DATA_ROOT / _STORAGE_FILE
 
 
-def _assert_storage_initialized(storage_location):
+def _assert_storage_initialized(storage_location: Path) -> None:
     if not os.path.isfile(storage_location):
         raise ValueError("Storage is not initialized")
 
 
-def init(*, workspace):
+def init(*, workspace: Union[str, Path]) -> None:
     storage_location = _generate_storage_location(workspace)
 
     if os.path.exists(storage_location):
@@ -41,7 +42,9 @@ def init(*, workspace):
         init_experiment(workspace=workspace, experiment_name=special_key, parameters=[])
 
 
-def init_experiment(*, workspace, experiment_name, parameters):
+def init_experiment(
+    *, workspace: Union[str, Path], experiment_name: str, parameters: Iterable[str]
+) -> None:
     storage_location = _generate_storage_location(workspace)
     _assert_storage_initialized(storage_location)
 
@@ -57,7 +60,7 @@ def init_experiment(*, workspace, experiment_name, parameters):
         yaml.dump(storage, f)
 
 
-def get_experiment_names(*, workspace):
+def get_experiment_names(*, workspace: Union[str, Path]) -> Iterable[str]:
     storage_location = _generate_storage_location(workspace)
     _assert_storage_initialized(storage_location)
 
@@ -70,7 +73,9 @@ def get_experiment_names(*, workspace):
     return experiment_names
 
 
-def _add_data(workspace, experiment_name, data_type, data):
+def _add_data(
+    workspace: Union[str, Path], experiment_name: str, data_type: str, data: Any
+) -> None:
     storage_location = _generate_storage_location(workspace)
     _assert_storage_initialized(storage_location)
 
@@ -94,7 +99,7 @@ def _add_data(workspace, experiment_name, data_type, data):
         yaml.dump(storage, f)
 
 
-def _get_data(workspace, experiment_name, data_type):
+def _get_data(workspace: Union[str, Path], experiment_name: str, data_type: str) -> Any:
     storage_location = _generate_storage_location(workspace)
     _assert_storage_initialized(storage_location)
 
@@ -113,14 +118,23 @@ def _get_data(workspace, experiment_name, data_type):
 
 
 def add_ensemble_record(
-    *, workspace, record_name, ensemble_record, experiment_name=None
-):
+    *,
+    workspace: Union[str, Path],
+    record_name: str,
+    ensemble_record: ert3.data.EnsembleRecord,
+    experiment_name: Optional[str] = None,
+) -> None:
     if experiment_name is None:
         experiment_name = _ENSEMBLE_RECORDS
     _add_data(workspace, experiment_name, record_name, ensemble_record.json())
 
 
-def get_ensemble_record(*, workspace, record_name, experiment_name=None):
+def get_ensemble_record(
+    *,
+    workspace: Union[str, Path],
+    record_name: str,
+    experiment_name: Optional[str] = None,
+) -> ert3.data.EnsembleRecord:
     if experiment_name is None:
         experiment_name = _ENSEMBLE_RECORDS
     return ert3.data.EnsembleRecord.parse_raw(
@@ -128,7 +142,9 @@ def get_ensemble_record(*, workspace, record_name, experiment_name=None):
     )
 
 
-def get_ensemble_record_names(*, workspace, experiment_name=None):
+def get_ensemble_record_names(
+    *, workspace: Union[str, Path], experiment_name: Optional[str] = None
+) -> Iterable[str]:
     if experiment_name is None:
         experiment_name = _ENSEMBLE_RECORDS
     storage_location = _generate_storage_location(workspace)
@@ -142,10 +158,12 @@ def get_ensemble_record_names(*, workspace, experiment_name=None):
             f"Cannot get record names of non-existing experiment: {experiment_name}"
         )
 
-    return storage[experiment_name][_DATA].keys()
+    return list(str(key) for key in storage[experiment_name][_DATA].keys())
 
 
-def get_experiment_parameters(*, workspace, experiment_name):
+def get_experiment_parameters(
+    *, workspace: Union[str, Path], experiment_name: str
+) -> Iterable[str]:
     storage_location = _generate_storage_location(workspace)
     _assert_storage_initialized(storage_location)
 
@@ -157,4 +175,4 @@ def get_experiment_parameters(*, workspace, experiment_name):
             f"Cannot get parameters from non-existing experiment: {experiment_name}"
         )
 
-    return storage[experiment_name][_PARAMETERS]
+    return list(str(pname) for pname in storage[experiment_name][_PARAMETERS])
