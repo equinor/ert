@@ -8,8 +8,10 @@ import asyncio
 import websockets
 import threading
 import json
+import copy
 from datetime import timedelta
 from functools import partial
+from itertools import permutations
 from unittest.mock import patch
 from prefect import Flow
 from tests.utils import SOURCE_DIR, tmp
@@ -49,8 +51,94 @@ def coefficients():
     return [{"a": a, "b": b, "c": c} for (a, b, c) in [(1, 2, 3), (4, 2, 1)]]
 
 
-@pytest.mark.timeout(60)
-def test_run_prefect_ensemble(unused_tcp_port, coefficients):
+def test_get_id():
+    with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
+        config = parse_config("config.yml")
+        ensemble = PrefectEnsemble(config)
+
+        all_ids = set(
+            [
+                (
+                    realization.get_iens(),
+                    stage.get_id(),
+                    step.get_id(),
+                    job.get_id(),
+                )
+                for realization in ensemble.get_reals()
+                for stage in realization.get_stages()
+                for step in stage.get_steps()
+                for job in step.get_jobs()
+            ]
+        )
+
+        ids_from_get_id = set()
+        for real_idx in range(ensemble.config[ids.REALIZATIONS]):
+            real_id = ensemble.get_reals()[real_idx].get_iens()
+            for stage in config[ids.STAGES]:
+                stage_id = ensemble.get_id(
+                    real_id,
+                    stage["name"],
+                )
+                for step in stage[ids.STEPS]:
+                    step_id = ensemble.get_id(
+                        real_id,
+                        stage["name"],
+                        step_name=step["name"],
+                    )
+                    for job_idx in range(len(step[ids.JOBS])):
+                        job_id = ensemble.get_id(
+                            real_id,
+                            stage["name"],
+                            step_name=step["name"],
+                            job_index=job_idx,
+                        )
+                        ids_from_get_id.add((real_id, stage_id, step_id, job_id))
+
+        assert ids_from_get_id == all_ids
+
+
+def test_get_ordering():
+    with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
+        config = parse_config("config.yml")
+        for permuted_stages in permutations(config["stages"]):
+            for stage_idx, stage in enumerate(permuted_stages):
+                for permuted_steps in permutations(stage["steps"]):
+                    permuted_config = copy.deepcopy(config)
+                    permuted_config["stages"] = copy.deepcopy(permuted_stages)
+                    permuted_config["stages"][stage_idx]["steps"] = permuted_steps
+
+                    ensemble = PrefectEnsemble(permuted_config)
+
+                    stages_steps = [
+                        (item["stage_name"], item["name"])
+                        for item in ensemble.get_ordering(0)
+                    ]
+
+                    assert stages_steps.index(
+                        ("calculate_coeffs", "second_degree")
+                    ) < stages_steps.index(("calculate_coeffs", "zero_degree"))
+                    assert stages_steps.index(
+                        ("calculate_coeffs", "zero_degree")
+                    ) < stages_steps.index(("sum_coeffs", "add_coeffs"))
+                    assert stages_steps.index(
+                        ("calculate_coeffs", "first_degree")
+                    ) < stages_steps.index(("sum_coeffs", "add_coeffs"))
+                    assert stages_steps.index(
+                        ("calculate_coeffs", "second_degree")
+                    ) < stages_steps.index(("sum_coeffs", "add_coeffs"))
+
+
+def test_get_ordering_exception():
+    with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
+        config = parse_config("config.yml")
+        # Introduce a circular dependency.
+        config["stages"][1]["steps"][2]["inputs"] = ["poly_0.out"]
+        ensemble = PrefectEnsemble(config)
+        with pytest.raises(ValueError, match="Could not reorder workflow"):
+            ensemble.get_ordering(0)
+
+
+def test_get_flow(coefficients):
     with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
         config = parse_config("config.yml")
         config.update(
@@ -62,89 +150,61 @@ def test_run_prefect_ensemble(unused_tcp_port, coefficients):
             }
         )
 
-        service_config = EvaluatorServerConfig(unused_tcp_port)
-        ensemble = PrefectEnsemble(config)
+        def _get_ids(ensemble, iens, stage_name, step_name):
+            stage_id = ensemble.get_id(iens, stage_name)
+            step_id = ensemble.get_id(iens, stage_name, step_name=step_name)
+            return stage_id, step_id
 
-        evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
+        for permuted_stages in permutations(config["stages"]):
+            for stage_idx, stage in enumerate(permuted_stages):
+                for permuted_steps in permutations(stage["steps"]):
+                    permuted_config = copy.deepcopy(config)
+                    permuted_config["stages"] = copy.deepcopy(permuted_stages)
+                    permuted_config["stages"][stage_idx]["steps"] = permuted_steps
 
-        with evaluator.run() as mon:
-            for event in mon.track():
-                if event.data is not None and event.data.get("status") in [
-                    "Failed",
-                    "Stopped",
-                ]:
-                    mon.signal_done()
+                    ensemble = PrefectEnsemble(permuted_config)
 
-        assert evaluator._snapshot.get_status() == "Stopped"
+                    flow = ensemble.get_flow(
+                        ensemble._ee_id,
+                        ensemble._ee_dispach_url,
+                        ensemble.config["input_files"],
+                        [0, 1],
+                    )
 
-        successful_realizations = evaluator._snapshot.get_successful_realizations()
+                    # Get the ordered tasks and retrieve their stage and step ids.
+                    task_ids = [
+                        (task.get_stage_id(), task.get_step_id())
+                        for task in flow.sorted_tasks()
+                        if task.name == "UnixStep"
+                    ]
+                    assert len(task_ids) == 8
 
-        assert successful_realizations == config[ids.REALIZATIONS]
-
-
-@pytest.mark.timeout(60)
-def test_run_prefect_ensemble_with_path(unused_tcp_port, coefficients):
-    with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case")):
-        config = parse_config("config.yml")
-        config.update(
-            {
-                "config_path": Path.cwd(),
-                ids.REALIZATIONS: 2,
-                ids.EXECUTOR: "local",
-                "input_files": input_files(config, coefficients),
-            }
-        )
-
-        config["config_path"] = Path(config["config_path"])
-        config[ids.RUN_PATH] = Path(config[ids.RUN_PATH])
-        config[ids.STORAGE]["storage_path"] = Path(config[ids.STORAGE]["storage_path"])
-
-        service_config = EvaluatorServerConfig(unused_tcp_port)
-        ensemble = PrefectEnsemble(config)
-
-        evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
-
-        with evaluator.run() as mon:
-            for event in mon.track():
-                if event.data is not None and event.data.get("status") in [
-                    "Failed",
-                    "Stopped",
-                ]:
-                    mon.signal_done()
-
-        assert evaluator._snapshot.get_status() == "Stopped"
-
-        successful_realizations = evaluator._snapshot.get_successful_realizations()
-
-        assert successful_realizations == config[ids.REALIZATIONS]
-
-
-@pytest.mark.timeout(60)
-def test_cancel_run_prefect_ensemble(unused_tcp_port, coefficients):
-    with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
-        config = parse_config("config.yml")
-        config.update(
-            {
-                "config_path": os.getcwd(),
-                ids.REALIZATIONS: 2,
-                ids.EXECUTOR: "local",
-                "input_files": input_files(config, coefficients),
-            }
-        )
-
-        service_config = EvaluatorServerConfig(unused_tcp_port)
-        ensemble = PrefectEnsemble(config)
-
-        evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="2")
-
-        with evaluator.run() as mon:
-            cancel = True
-            for _ in mon.track():
-                if cancel:
-                    mon.signal_cancel()
-                    cancel = False
-
-        assert evaluator._snapshot.get_status() == "Cancelled"
+                    # Check some task dependencies.
+                    for iens in range(2):
+                        assert task_ids.index(
+                            _get_ids(
+                                ensemble, iens, "calculate_coeffs", "second_degree"
+                            )
+                        ) < task_ids.index(
+                            _get_ids(ensemble, iens, "calculate_coeffs", "zero_degree")
+                        )
+                        assert task_ids.index(
+                            _get_ids(ensemble, iens, "calculate_coeffs", "zero_degree")
+                        ) < task_ids.index(
+                            _get_ids(ensemble, iens, "sum_coeffs", "add_coeffs")
+                        )
+                        assert task_ids.index(
+                            _get_ids(ensemble, iens, "calculate_coeffs", "first_degree")
+                        ) < task_ids.index(
+                            _get_ids(ensemble, iens, "sum_coeffs", "add_coeffs")
+                        )
+                        assert task_ids.index(
+                            _get_ids(
+                                ensemble, iens, "calculate_coeffs", "second_degree"
+                            )
+                        ) < task_ids.index(
+                            _get_ids(ensemble, iens, "sum_coeffs", "add_coeffs")
+                        )
 
 
 def _mock_ws(host, port, messages):
@@ -469,6 +529,108 @@ def dummy_get_flow(*args, **kwargs):
 
 
 @pytest.mark.timeout(60)
+def test_run_prefect_ensemble(unused_tcp_port, coefficients):
+    with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
+        config = parse_config("config.yml")
+        config.update(
+            {
+                "config_path": os.getcwd(),
+                "realizations": 2,
+                "executor": "local",
+                "input_files": input_files(config, coefficients),
+            }
+        )
+
+        service_config = EvaluatorServerConfig(unused_tcp_port)
+        ensemble = PrefectEnsemble(config)
+
+        evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
+
+        with evaluator.run() as mon:
+            for event in mon.track():
+                if event.data is not None and event.data.get("status") in [
+                    "Failed",
+                    "Stopped",
+                ]:
+                    mon.signal_done()
+
+        assert evaluator._snapshot.get_status() == "Stopped"
+
+        successful_realizations = evaluator._snapshot.get_successful_realizations()
+
+        assert successful_realizations == config["realizations"]
+
+
+@pytest.mark.timeout(60)
+def test_run_prefect_ensemble_with_path(unused_tcp_port, coefficients):
+    with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case")):
+        config = parse_config("config.yml")
+        config.update(
+            {
+                "config_path": Path.cwd(),
+                "realizations": 2,
+                "executor": "local",
+                "input_files": input_files(config, coefficients),
+            }
+        )
+
+        config["config_path"] = Path(config["config_path"])
+        config["run_path"] = Path(config["run_path"])
+        config["storage"]["storage_path"] = Path(config["storage"]["storage_path"])
+
+        service_config = EvaluatorServerConfig(unused_tcp_port)
+        ensemble = PrefectEnsemble(config)
+
+        evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
+
+        with evaluator.run() as mon:
+            for event in mon.track():
+                if event.data is not None and event.data.get("status") in [
+                    "Failed",
+                    "Stopped",
+                ]:
+                    mon.signal_done()
+
+        assert evaluator._snapshot.get_status() == "Stopped"
+
+        successful_realizations = evaluator._snapshot.get_successful_realizations()
+
+        assert successful_realizations == config["realizations"]
+
+
+@pytest.mark.timeout(60)
+def test_cancel_run_prefect_ensemble(unused_tcp_port, coefficients):
+    with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
+        config = parse_config("config.yml")
+        config.update(
+            {
+                "config_path": os.getcwd(),
+                "realizations": 2,
+                "executor": "local",
+                "input_files": input_files(config, coefficients),
+            }
+        )
+
+        service_config = EvaluatorServerConfig(unused_tcp_port)
+        ensemble = PrefectEnsemble(config)
+
+        evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="2")
+
+        with evaluator.run() as mon:
+            cancel = True
+            for _ in mon.track():
+                if cancel:
+                    mon.signal_cancel()
+                    cancel = False
+
+        assert evaluator._snapshot.get_status() == "Cancelled"
+
+
+@pytest.mark.timeout(60)
+@pytest.mark.skipif(
+    sys.platform.startswith("darwin"),
+    reason="On darwin patching is unreliable since processes may use 'spawn'.",
+)
 def test_run_prefect_ensemble_exception(unused_tcp_port, coefficients):
     with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case")):
         config = parse_config("config.yml")

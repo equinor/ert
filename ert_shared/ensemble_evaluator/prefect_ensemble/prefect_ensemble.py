@@ -193,12 +193,21 @@ class PrefectEnsemble(_Ensemble):
         produced = set()
         ordering = []
         while table_of_elements:
-            temp_list = produced.copy()
-            for element in table_of_elements:
-                if set(element.get(ids.INPUTS, [])).issubset(temp_list):
-                    ordering.append(element)
-                    produced = produced.union(set(element[ids.OUTPUTS]))
-                    table_of_elements.remove(element)
+            element = next(
+                (
+                    element
+                    for element in table_of_elements
+                    if set(element.get(ids.INPUTS, [])).issubset(produced)
+                ),
+                None,
+            )
+            if element is None:
+                raise ValueError(
+                    "Could not reorder workflow, possibly a circular dependency?"
+                )
+            ordering.append(element)
+            produced = produced.union(set(element[ids.OUTPUTS]))
+            table_of_elements.remove(element)
         return ordering
 
     def get_step_task(self, step, ee_id, input_files, dispatch_url):
