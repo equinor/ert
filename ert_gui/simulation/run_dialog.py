@@ -218,12 +218,6 @@ class RunDialog(QDialog):
         )
 
         self._job_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self._job_view.horizontalHeader().setSectionResizeMode(
-            2, QHeaderView.ResizeToContents
-        )
-        self._job_view.horizontalHeader().setSectionResizeMode(
-            3, QHeaderView.ResizeToContents
-        )
 
         # Clear the selection in the other tabs
         for i in range(0, self._tab_widget.count()):
