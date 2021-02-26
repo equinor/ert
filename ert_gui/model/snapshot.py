@@ -130,10 +130,12 @@ class SnapshotModel(QAbstractItemModel):
                             ids.END_TIME,
                             ids.STDOUT,
                             ids.STDERR,
-                            ids.ERROR,
                         ):
                             if attr in job:
                                 job_node.data[attr] = job[attr]
+
+                        # Errors may be unset as the queue restarts the job
+                        job_node.data[ids.ERROR] = job.get(ids.ERROR, "")
 
                         for attr in (ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE):
                             if attr not in job.get(ids.DATA, {}):
@@ -278,6 +280,13 @@ class SnapshotModel(QAbstractItemModel):
                 return (
                     node.data.get(data_name) if node.data.get(data_name) else QVariant()
                 )
+        if role == Qt.ToolTipRole:
+            _, data_name = COLUMNS[NodeType.STEP][index.column()]
+            if data_name in [ids.ERROR, ids.START_TIME, ids.END_TIME]:
+                data = node.data.get(data_name)
+                if data is not None:
+                    return str(data)
+
         return QVariant()
 
     def index(self, row: int, column: int, parent=QModelIndex()) -> QModelIndex:
