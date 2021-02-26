@@ -66,15 +66,14 @@ def init_data(main):
     for i in range(num_realisations):
         with open("fields/poro{}.grdecl".format(i), "w") as f:
             poro = random.gauss(poro_mean, poro_std)
-            f.write(
-                """PORO
-   200*{:<7.5}
-/
-            """.format(
-                    poro
-                )
-            )
-            bhp.append(poro * 1000 + random.gauss(0, bhp_std))
+            f.write("PORO")
+            for i in range(200):
+                if i % 10 == 0:
+                    f.write("\n")
+
+                f.write("{:<7.5} ".format(poro))
+            f.write("\n/\n")
+        bhp.append(poro * 1000 + random.gauss(0, bhp_std))
 
     mask = BoolVector(initial_size=main.getEnsembleSize(), default_value=True)
     init_context = ErtRunContext.case_init(init_fs, mask)
