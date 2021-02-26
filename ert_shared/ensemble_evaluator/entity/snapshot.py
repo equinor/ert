@@ -357,7 +357,6 @@ class _Realization(BaseModel):
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
     stages: Optional[Dict[str, _Stage]] = {}
-    status: Optional[str]
 
 
 class _SnapshotDict(BaseModel):
