@@ -30,9 +30,8 @@ class FieldConfigTest(ResTest):
                 f.write("-- my comment\n")
                 f.write("-- more comments\n")
                 f.write("SOWCR\n")
-                for i in range(128 // 8):
+                for i in range(256 // 8):  # technicalities demand file has >= 256B
                     f.write("0 0 0 0\n")
-                f.write("/\n")
 
             ft = FieldConfig.guessFiletype(fname)
             grdecl_type = EnkfFieldFileFormatEnum(5)
