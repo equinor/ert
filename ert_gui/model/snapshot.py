@@ -6,7 +6,7 @@ from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
     Snapshot,
-    _SnapshotDict,
+    SnapshotDict,
 )
 from ert_shared.status.utils import byte_with_unit
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
@@ -74,7 +74,7 @@ class SnapshotModel(QAbstractItemModel):
 
     def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: int):
         partial_dict = partial.to_dict()
-        partial_s = _SnapshotDict(**partial_dict)
+        partial_s = SnapshotDict(**partial_dict)
         if iter_ not in self.root.children:
             logger.debug("no full snapshot yet, bailing")
             return

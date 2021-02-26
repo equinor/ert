@@ -7,7 +7,7 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
     Snapshot,
     SnapshotBuilder,
-    _Job,
+    Job,
 )
 
 
@@ -71,7 +71,7 @@ def test_snapshot_merge():
         stage_id="0",
         step_id="0",
         job_id="0",
-        job=_Job(
+        job=Job(
             status="Finished",
             start_time=datetime(year=2020, month=10, day=27).isoformat(),
             end_time=datetime(year=2020, month=10, day=28).isoformat(),
@@ -83,7 +83,7 @@ def test_snapshot_merge():
         stage_id="0",
         step_id="0",
         job_id="1",
-        job=_Job(
+        job=Job(
             status="Running",
             start_time=datetime(year=2020, month=10, day=27).isoformat(),
         ),
@@ -93,7 +93,7 @@ def test_snapshot_merge():
         stage_id="0",
         step_id="0",
         job_id="0",
-        job=_Job(
+        job=Job(
             status="Running",
             start_time=datetime(year=2020, month=10, day=27).isoformat(),
         ),
@@ -103,7 +103,7 @@ def test_snapshot_merge():
 
     assert snapshot.get_status() == "running"
 
-    assert snapshot.get_job(real_id="1", stage_id="0", step_id="0", job_id="0") == _Job(
+    assert snapshot.get_job(real_id="1", stage_id="0", step_id="0", job_id="0") == Job(
         status="Finished",
         start_time=dateutil.parser.isoparse("2020-10-27T00:00:00"),
         end_time=dateutil.parser.isoparse("2020-10-28T00:00:00"),
@@ -114,7 +114,7 @@ def test_snapshot_merge():
         stdout=None,
     )
 
-    assert snapshot.get_job(real_id="1", stage_id="0", step_id="0", job_id="1") == _Job(
+    assert snapshot.get_job(real_id="1", stage_id="0", step_id="0", job_id="1") == Job(
         status="Running",
         start_time=dateutil.parser.isoparse("2020-10-27T00:00:00"),
         end_time=None,
@@ -129,7 +129,7 @@ def test_snapshot_merge():
         snapshot.get_job(real_id="9", stage_id="0", step_id="0", job_id="0").status
         == "Running"
     )
-    assert snapshot.get_job(real_id="9", stage_id="0", step_id="0", job_id="0") == _Job(
+    assert snapshot.get_job(real_id="9", stage_id="0", step_id="0", job_id="0") == Job(
         status="Running",
         start_time=dateutil.parser.isoparse("2020-10-27T00:00:00"),
         end_time=None,

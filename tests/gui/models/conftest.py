@@ -12,12 +12,12 @@ import pytest
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
     Snapshot,
-    _ForwardModel,
-    _Job,
-    _Realization,
-    _SnapshotDict,
-    _Stage,
-    _Step,
+    ForwardModel,
+    Job,
+    Realization,
+    SnapshotDict,
+    Stage,
+    Step,
 )
 import copy
 import datetime
@@ -25,24 +25,24 @@ import datetime
 
 def partial_snapshot(snapshot) -> PartialSnapshot:
     partial = PartialSnapshot(snapshot)
-    partial.update_real("0", _Realization(status=JOB_STATE_FINISHED))
-    partial.update_job("0", "0", "0", "0", _Job(status=JOB_STATE_FINISHED))
+    partial.update_real("0", Realization(status=JOB_STATE_FINISHED))
+    partial.update_job("0", "0", "0", "0", Job(status=JOB_STATE_FINISHED))
     return partial
 
 
 @pytest.fixture()
 def full_snapshot() -> Snapshot:
-    real = _Realization(
+    real = Realization(
         status=REALIZATION_STATE_UNKNOWN,
         active=True,
         stages={
-            "0": _Stage(
+            "0": Stage(
                 status="",
                 steps={
-                    "0": _Step(
+                    "0": Step(
                         status="",
                         jobs={
-                            "0": _Job(
+                            "0": Job(
                                 start_time=datetime.datetime.now(),
                                 end_time=datetime.datetime.now(),
                                 name="poly_eval",
@@ -55,7 +55,7 @@ def full_snapshot() -> Snapshot:
                                     MAX_MEMORY_USAGE: "312",
                                 },
                             ),
-                            "1": _Job(
+                            "1": Job(
                                 start_time=datetime.datetime.now(),
                                 end_time=datetime.datetime.now(),
                                 name="poly_postval",
@@ -74,10 +74,10 @@ def full_snapshot() -> Snapshot:
             )
         },
     )
-    snapshot = _SnapshotDict(
+    snapshot = SnapshotDict(
         status=ENSEMBLE_STATE_STARTED,
         reals={},
-        forward_model=_ForwardModel(step_definitions={}),
+        forward_model=ForwardModel(step_definitions={}),
     )
     for i in range(0, 100):
         snapshot.reals[str(i)] = copy.deepcopy(real)

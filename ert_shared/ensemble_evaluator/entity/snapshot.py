@@ -63,14 +63,14 @@ class PartialSnapshot:
         self._snapshot = copy.copy(snapshot) if snapshot else None
 
     def update_status(self, status):
-        self._apply_update(_SnapshotDict(status=status))
+        self._apply_update(SnapshotDict(status=status))
 
     def update_real(
         self,
         real_id,
         real,
     ):
-        self._apply_update(_SnapshotDict(reals={real_id: real}))
+        self._apply_update(SnapshotDict(reals={real_id: real}))
 
     def update_stage(
         self,
@@ -79,7 +79,7 @@ class PartialSnapshot:
         stage,
     ):
         self._apply_update(
-            _SnapshotDict(reals={real_id: _Realization(stages={stage_id: stage})})
+            SnapshotDict(reals={real_id: Realization(stages={stage_id: stage})})
         )
         if self._snapshot.get_real(real_id).status != state.REALIZATION_STATE_FAILED:
             if stage.status in [
@@ -87,12 +87,12 @@ class PartialSnapshot:
                 state.REALIZATION_STATE_PENDING,
                 state.REALIZATION_STATE_RUNNING,
             ]:
-                self.update_real(real_id, _Realization(status=stage.status))
+                self.update_real(real_id, Realization(status=stage.status))
             elif (
                 stage.status == state.REALIZATION_STATE_FINISHED
                 and self._snapshot.all_stages_finished(real_id)
             ):
-                self.update_real(real_id, _Realization(status=stage.status))
+                self.update_real(real_id, Realization(status=stage.status))
 
     def _apply_update(self, update):
         if self._snapshot is None:
@@ -107,10 +107,10 @@ class PartialSnapshot:
 
     def update_step(self, real_id, stage_id, step_id, step):
         self._apply_update(
-            _SnapshotDict(
+            SnapshotDict(
                 reals={
-                    real_id: _Realization(
-                        stages={stage_id: _Stage(steps={step_id: step})}
+                    real_id: Realization(
+                        stages={stage_id: Stage(steps={step_id: step})}
                     )
                 }
             )
@@ -124,12 +124,12 @@ class PartialSnapshot:
                 state.REALIZATION_STATE_PENDING,
                 state.REALIZATION_STATE_RUNNING,
             ]:
-                self.update_stage(real_id, stage_id, _Stage(status=step.status))
+                self.update_stage(real_id, stage_id, Stage(status=step.status))
             elif (
                 step.status == state.STEP_STATE_SUCCESS
                 and self._snapshot.all_steps_finished(real_id, stage_id)
             ):
-                self.update_stage(real_id, stage_id, _Stage(status=step.status))
+                self.update_stage(real_id, stage_id, Stage(status=step.status))
 
     def update_job(
         self,
@@ -141,11 +141,11 @@ class PartialSnapshot:
     ):
 
         self._apply_update(
-            _SnapshotDict(
+            SnapshotDict(
                 reals={
-                    real_id: _Realization(
+                    real_id: Realization(
                         stages={
-                            stage_id: _Stage(steps={step_id: _Step(jobs={job_id: job})})
+                            stage_id: Stage(steps={step_id: Step(jobs={job_id: job})})
                         }
                     )
                 }
@@ -175,7 +175,7 @@ class PartialSnapshot:
             self.update_stage(
                 get_real_id(e_source),
                 get_stage_id(e_source),
-                stage=_Stage(
+                stage=Stage(
                     status=status,
                     start_time=start_time,
                     end_time=end_time,
@@ -193,7 +193,7 @@ class PartialSnapshot:
                 get_real_id(e_source),
                 get_stage_id(e_source),
                 get_step_id(e_source),
-                step=_Step(
+                step=Step(
                     status=status,
                     start_time=start_time,
                     end_time=end_time,
@@ -206,7 +206,7 @@ class PartialSnapshot:
                         get_stage_id(e_source),
                         get_step_id(e_source),
                         job_id,
-                        job=_Job(
+                        job=Job(
                             stdout=job[ids.STDOUT],
                             stderr=job[ids.STDERR],
                         ),
@@ -225,7 +225,7 @@ class PartialSnapshot:
                 get_stage_id(e_source),
                 get_step_id(e_source),
                 get_job_id(e_source),
-                job=_Job(
+                job=Job(
                     status=status,
                     start_time=start_time,
                     end_time=end_time,
@@ -261,12 +261,12 @@ class Snapshot:
         return self._data[ids.STATUS]
 
     def get_reals(self):
-        return _SnapshotDict(**self._data).reals
+        return SnapshotDict(**self._data).reals
 
     def get_real(self, real_id):
         if real_id not in self._data[ids.REALS]:
             raise ValueError(f"No realization with id {real_id}")
-        return _Realization(**self._data[ids.REALS][real_id])
+        return Realization(**self._data[ids.REALS][real_id])
 
     def get_stage(self, real_id, stage_id):
         real = self.get_real(real_id)
@@ -317,16 +317,16 @@ class Snapshot:
         return states
 
 
-class _JobDetails(BaseModel):
+class JobDetails(BaseModel):
     job_id: str
     name: str
 
 
-class _ForwardModel(BaseModel):
-    step_definitions: Dict[str, Dict[str, Iterable[_JobDetails]]]
+class ForwardModel(BaseModel):
+    step_definitions: Dict[str, Dict[str, Iterable[JobDetails]]]
 
 
-class _Job(BaseModel):
+class Job(BaseModel):
     status: Optional[str]
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
@@ -337,46 +337,46 @@ class _Job(BaseModel):
     stderr: Optional[str]
 
 
-class _Step(BaseModel):
+class Step(BaseModel):
     status: Optional[str]
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
-    jobs: Optional[Dict[str, _Job]] = {}
+    jobs: Optional[Dict[str, Job]] = {}
 
 
-class _Stage(BaseModel):
+class Stage(BaseModel):
     status: Optional[str]
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
-    steps: Optional[Dict[str, _Step]] = {}
+    steps: Optional[Dict[str, Step]] = {}
 
 
-class _Realization(BaseModel):
+class Realization(BaseModel):
     status: Optional[str]
     active: Optional[bool]
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
-    stages: Optional[Dict[str, _Stage]] = {}
+    stages: Optional[Dict[str, Stage]] = {}
 
 
-class _SnapshotDict(BaseModel):
+class SnapshotDict(BaseModel):
     status: Optional[str]
-    reals: Optional[Dict[str, _Realization]] = {}
-    forward_model: Optional[_ForwardModel]
+    reals: Optional[Dict[str, Realization]] = {}
+    forward_model: Optional[ForwardModel]
     metadata: Optional[Dict[str, Any]]
 
 
 class SnapshotBuilder(BaseModel):
-    stages: Dict[str, _Stage] = {}
-    forward_model: _ForwardModel = _ForwardModel(step_definitions={})
+    stages: Dict[str, Stage] = {}
+    forward_model: ForwardModel = ForwardModel(step_definitions={})
     metadata: Dict[str, Any] = {}
 
     def build(self, real_ids, status, start_time=None, end_time=None):
-        top = _SnapshotDict(
+        top = SnapshotDict(
             status=status, forward_model=self.forward_model, metadata=self.metadata
         )
         for r_id in real_ids:
-            top.reals[r_id] = _Realization(
+            top.reals[r_id] = Realization(
                 active=True,
                 stages=self.stages,
                 start_time=start_time,
@@ -386,7 +386,7 @@ class SnapshotBuilder(BaseModel):
         return Snapshot(top.dict())
 
     def add_stage(self, stage_id, status, start_time=None, end_time=None):
-        self.stages[stage_id] = _Stage(
+        self.stages[stage_id] = Stage(
             status=status,
             start_time=start_time,
             end_time=end_time,
@@ -395,7 +395,7 @@ class SnapshotBuilder(BaseModel):
 
     def add_step(self, stage_id, step_id, status, start_time=None, end_time=None):
         stage = self.stages[stage_id]
-        stage.steps[step_id] = _Step(
+        stage.steps[step_id] = Step(
             status=status, start_time=start_time, end_time=end_time
         )
         return self
@@ -415,7 +415,7 @@ class SnapshotBuilder(BaseModel):
     ):
         stage = self.stages[stage_id]
         step = stage.steps[step_id]
-        step.jobs[job_id] = _Job(
+        step.jobs[job_id] = Job(
             status=status,
             data=data,
             start_time=start_time,
@@ -429,7 +429,7 @@ class SnapshotBuilder(BaseModel):
         if step_id not in self.forward_model.step_definitions[stage_id]:
             self.forward_model.step_definitions[stage_id][step_id] = []
         self.forward_model.step_definitions[stage_id][step_id].append(
-            _JobDetails(job_id=job_id, name=name)
+            JobDetails(job_id=job_id, name=name)
         )
         return self
 

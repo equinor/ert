@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot, _SnapshotDict
+from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot, SnapshotDict
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 
 
@@ -37,7 +37,7 @@ class Node:
 
 def snapshot_to_tree(snapshot: Snapshot, iter_: int) -> Node:
     iter_node = Node(iter_, {ids.STATUS: snapshot.get_status()}, NodeType.ITER)
-    snapshot_d = _SnapshotDict(**snapshot.to_dict())
+    snapshot_d = SnapshotDict(**snapshot.to_dict())
     for real_id in sorted(snapshot_d.reals, key=int):
         real = snapshot_d.reals[real_id]
         real_node = Node(

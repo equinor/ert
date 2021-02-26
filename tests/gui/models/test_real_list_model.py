@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QModelIndex
 from ert_gui.model.real_list import RealListModel
-from ert_shared.ensemble_evaluator.entity.snapshot import _Realization
+from ert_shared.ensemble_evaluator.entity.snapshot import Realization
 from tests.gui.models.conftest import partial_snapshot
 from ert_gui.model.snapshot import NodeRole, SnapshotModel
 from pytestqt.qt_compat import qt_api
@@ -54,7 +54,7 @@ def test_change_iter(full_snapshot):
     model.setIter(1)
 
     partial = partial_snapshot(full_snapshot)
-    partial.update_real("0", _Realization(status=REALIZATION_STATE_FINISHED))
+    partial.update_real("0", Realization(status=REALIZATION_STATE_FINISHED))
     source_model._add_partial_snapshot(partial, 1)
 
     assert (
