@@ -175,12 +175,8 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 events2 = monitor2.track()
                 snapshot = Snapshot(next(events2).data)
                 assert snapshot.get_status() == ENSEMBLE_STATE_STARTED
-                assert (
-                    snapshot.get_job("0", "0", "0", "0").status == JOB_STATE_RUNNING
-                )
-                assert (
-                    snapshot.get_job("1", "0", "0", "0").status == JOB_STATE_FINISHED
-                )
+                assert snapshot.get_job("0", "0", "0", "0").status == JOB_STATE_RUNNING
+                assert snapshot.get_job("1", "0", "0", "0").status == JOB_STATE_FINISHED
 
                 # one monitor requests that server exit
                 monitor.signal_cancel()
