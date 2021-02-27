@@ -35,7 +35,11 @@ class Client:
                 self.websocket = None
             except ConnectionClosedOK:
                 # Connection was closed no point in trying to send more messages
-                return
+                raise RuntimeError(
+                    "Unable to send message (Connection closed by server):", msg
+                )
+
+        raise RuntimeError("Unable to send message (Max retires exceeded):", msg)
 
     def send(self, msg):
         self.loop.run_until_complete(self._send(msg))

@@ -182,7 +182,8 @@ def test_prefect_client(unused_tcp_port):
             c1.send(msg)
 
     with Client(url, max_retries=2, timeout_multiplier=1) as c2:
-        c2.send("after_ws_stoped")
+        with pytest.raises(RuntimeError):
+            c2.send("after_ws_stoped")
 
     mock_ws_thread.join()
 
