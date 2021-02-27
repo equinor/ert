@@ -2,6 +2,7 @@ import pathlib
 import os
 import shutil
 import numbers
+import logging
 
 import json
 import yaml
@@ -157,7 +158,9 @@ def test_run_once_polynomial_evaluation(
     stages_config,
     evaluation_experiment_config,
     gaussian_parameters_file,
+    caplog,
 ):
+    caplog.set_level(logging.DEBUG)
     ert3.engine.run(
         ensemble, stages_config, evaluation_experiment_config, workspace, "evaluation"
     )
@@ -171,7 +174,11 @@ def test_run_once_polynomial_evaluation(
         )
 
 
-def test_export_not_run(workspace):
+def test_export_not_run(
+    workspace,
+    caplog,
+):
+    caplog.set_level(logging.DEBUG)
     (workspace / ert3.workspace.EXPERIMENTS_BASE / "evaluation").ensure(dir=True)
     with pytest.raises(ValueError, match="Cannot export experiment"):
         ert3.engine.export(pathlib.Path(), "evaluation")
@@ -183,7 +190,9 @@ def test_export_polynomial_evaluation(
     stages_config,
     evaluation_experiment_config,
     gaussian_parameters_file,
+    caplog,
 ):
+    caplog.set_level(logging.DEBUG)
     (workspace / ert3.workspace.EXPERIMENTS_BASE / "evaluation").ensure(dir=True)
     ert3.engine.run(
         ensemble, stages_config, evaluation_experiment_config, workspace, "evaluation"
@@ -199,7 +208,9 @@ def test_export_uniform_polynomial_evaluation(
     stages_config,
     evaluation_experiment_config,
     uniform_parameters_file,
+    caplog,
 ):
+    caplog.set_level(logging.DEBUG)
     uni_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "uniform_evaluation"
     uni_dir.ensure(dir=True)
     ert3.engine.run(
@@ -215,8 +226,13 @@ def test_export_uniform_polynomial_evaluation(
 
 
 def test_gaussian_distribution(
-    workspace, big_ensemble, stages_config, gaussian_parameters_file
+    workspace,
+    big_ensemble,
+    stages_config,
+    gaussian_parameters_file,
+    caplog,
 ):
+    caplog.set_level(logging.DEBUG)
     ert3.engine.sample_record(workspace, "coefficients", "coefficients0", 1000)
 
     coefficients = ert3.storage.get_ensemble_record(
@@ -230,8 +246,13 @@ def test_gaussian_distribution(
 
 
 def test_uniform_distribution(
-    workspace, presampled_big_ensemble, stages_config, uniform_parameters_file
+    workspace,
+    presampled_big_ensemble,
+    stages_config,
+    uniform_parameters_file,
+    caplog,
 ):
+    caplog.set_level(logging.DEBUG)
     ert3.engine.sample_record(
         workspace, "uniform_coefficients", "uniform_coefficients0", 1000
     )
@@ -252,7 +273,9 @@ def test_run_presampled(
     stages_config,
     evaluation_experiment_config,
     gaussian_parameters_file,
+    caplog,
 ):
+    caplog.set_level(logging.DEBUG)
     presampled_dir = (
         workspace / ert3.workspace.EXPERIMENTS_BASE / "presampled_evaluation"
     )
@@ -296,7 +319,9 @@ def test_run_uniform_presampled(
     stages_config,
     evaluation_experiment_config,
     uniform_parameters_file,
+    caplog,
 ):
+    caplog.set_level(logging.DEBUG)
     presampled_dir = (
         workspace / ert3.workspace.EXPERIMENTS_BASE / "presampled_uniform_evaluation"
     )
@@ -335,12 +360,22 @@ def test_run_uniform_presampled(
             assert coeff.data[key] == export_coeff[key]
 
 
-def test_sample_unknown_parameter_group(workspace, uniform_parameters_file):
+def test_sample_unknown_parameter_group(
+    workspace,
+    uniform_parameters_file,
+    caplog,
+):
+    caplog.set_level(logging.DEBUG)
     with pytest.raises(ValueError, match="No parameter group found named: coeffs"):
         ert3.engine.sample_record(workspace, "coeffs", "coefficients0", 100)
 
 
-def test_sample_unknown_distribution(workspace, gaussian_parameters_file):
+def test_sample_unknown_distribution(
+    workspace,
+    gaussian_parameters_file,
+    caplog,
+):
+    caplog.set_level(logging.DEBUG)
     with open(workspace / "parameters.yml") as f:
         parameters = yaml.safe_load(f)
     parameters[0]["distribution"]["type"] = "double-hyper-exp"
@@ -352,8 +387,13 @@ def test_sample_unknown_distribution(workspace, gaussian_parameters_file):
 
 
 def test_record_load_and_run(
-    workspace, doe_ensemble, stages_config, evaluation_experiment_config
+    workspace,
+    doe_ensemble,
+    stages_config,
+    evaluation_experiment_config,
+    caplog,
 ):
+    caplog.set_level(logging.DEBUG)
     doe_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "doe"
     doe_dir.ensure(dir=True)
     coeffs_file = (
@@ -394,7 +434,13 @@ def test_record_load_and_run(
             assert coeff.data[key] == export_coeff[key]
 
 
-def test_record_load_twice(workspace, ensemble, stages_config):
+def test_record_load_twice(
+    workspace,
+    ensemble,
+    stages_config,
+    caplog,
+):
+    caplog.set_level(logging.DEBUG)
     doe_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "doe"
     doe_dir.ensure(dir=True)
     coeffs_file = (
@@ -418,7 +464,9 @@ def test_sensitivity_run_and_export(
     stages_config,
     sensitivity_experiment_config,
     gaussian_parameters_file,
+    caplog,
 ):
+    caplog.set_level(logging.DEBUG)
     (workspace / ert3.workspace.EXPERIMENTS_BASE / "sensitivity").ensure(dir=True)
     ert3.engine.run(
         sensitivity_ensemble,

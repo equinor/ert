@@ -45,12 +45,12 @@ jobs:
         sleep 3
         herbstluftwm &
         sleep 1
-        python -m pytest -sv
+        python -m pytest -sv --log-cli-level DEBUG
 
     - name: Test MacOS
       if: matrix.os == 'macos-latest'
       run: |
-        python -m pytest -sv
+        python -m pytest -sv --log-cli-level DEBUG
 
     - name: Test docs and CLI
       run: |
