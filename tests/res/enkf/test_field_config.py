@@ -30,7 +30,11 @@ class FieldConfigTest(ResTest):
                 f.write("-- my comment\n")
                 f.write("-- more comments\n")
                 f.write("SOWCR\n")
-                for i in range(256 // 8):  # technicalities demand file has >= 256B
+                # The function guessing file types determines whether the file
+                # is binary or 7 bit ASCII based on bit 8 heuristics. For this
+                # to be "reliable" the file is required to be more than 256
+                # bytes.
+                for i in range(256 // 8):
                     f.write("0 0 0 0\n")
 
             ft = FieldConfig.guessFiletype(fname)
