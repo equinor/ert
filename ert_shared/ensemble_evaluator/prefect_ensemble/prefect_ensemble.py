@@ -255,7 +255,8 @@ class PrefectEnsemble(_Ensemble):
     def evaluate(self, config, ee_id):
         self._ee_dispach_url = config.dispatch_uri
         self._ee_id = ee_id
-        self._eval_proc = multiprocessing.Process(
+        mp_ctx = multiprocessing.get_context(method="forkserver")
+        self._eval_proc = mp_ctx.Process(
             target=self._evaluate,
             args=(self._ee_dispach_url, ee_id),
         )
