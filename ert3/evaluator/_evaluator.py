@@ -89,7 +89,7 @@ def _build_ee_config(evaluation_tmp_dir, ensemble, stages_config, input_records)
         ],
         "realizations": ensemble_size,
         "max_running": 10000,
-        "max_retries": 0,
+        "max_retries": 1,
         "run_path": evaluation_tmp_dir / "my_output",
         "executor": ensemble.forward_model.driver,
         "storage": {
