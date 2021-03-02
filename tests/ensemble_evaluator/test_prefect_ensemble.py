@@ -383,11 +383,11 @@ def test_on_task_failure(unused_tcp_port):
         assert expected_step_failed_messages == len(fail_step_messages)
 
 
+def dummy_get_flow(*args, **kwargs):
+    raise RuntimeError()
+
+
 @pytest.mark.timeout(60)
-@pytest.mark.skipif(
-    sys.platform.startswith("darwin"),
-    reason="On darwin patching is unreliable since processes may use 'spawn'.",
-)
 def test_run_prefect_ensemble_exception(unused_tcp_port, coefficients):
     with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case")):
         config = parse_config("config.yml")
@@ -405,12 +405,12 @@ def test_run_prefect_ensemble_exception(unused_tcp_port, coefficients):
         ensemble = PrefectEnsemble(config)
         evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
 
-        with patch.object(ensemble, "get_flow", side_effect=RuntimeError()):
-            with evaluator.run() as mon:
-                for event in mon.track():
-                    if event.data is not None and event.data.get("status") in [
-                        "Failed",
-                        "Stopped",
-                    ]:
-                        mon.signal_done()
-            assert evaluator._snapshot.get_status() == "Failed"
+        ensemble.get_flow = dummy_get_flow
+        with evaluator.run() as mon:
+            for event in mon.track():
+                if event.data is not None and event.data.get("status") in [
+                    "Failed",
+                    "Stopped",
+                ]:
+                    mon.signal_done()
+        assert evaluator._snapshot.get_status() == "Failed"
