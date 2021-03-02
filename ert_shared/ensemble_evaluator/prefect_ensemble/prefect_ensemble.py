@@ -50,7 +50,7 @@ def _get_executor(name="local"):
             "silence_logs": "debug",
             "scheduler_options": {"port": find_open_port()},
         }
-        return LocalDaskExecutor(**cluster_kwargs)
+        return LocalDaskExecutor(scheduler="processes", **cluster_kwargs)
     elif name == "lsf":
         LSFJob._submit_job = _eq_submit_job
         cluster_kwargs = {
