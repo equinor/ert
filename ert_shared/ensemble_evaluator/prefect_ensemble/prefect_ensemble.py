@@ -259,7 +259,7 @@ class PrefectEnsemble(_Ensemble):
             target=self._evaluate,
             args=(self._ee_dispach_url, ee_id),
         )
-        self._eval_proc.daemon = True
+        # self._eval_proc.daemon = True
         self._eval_proc.start()
 
     def _evaluate(self, dispatch_url, ee_id):
