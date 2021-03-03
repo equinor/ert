@@ -31,20 +31,20 @@ class UnixStep(Task):
         self._storage_config = storage_config
 
     def get_iens(self):
-        return self._step["iens"]
+        return self._step[ids.IENS]
 
     def get_stage_id(self):
-        return self._step["stage_id"]
+        return self._step[ids.STAGE_ID]
 
     def get_step_id(self):
-        return self._step["step_id"]
+        return self._step[ids.STEP_ID]
 
     def get_ee_id(self):
         return self._ee_id
 
     @property
     def jobs(self):
-        return self._step["jobs"]
+        return self._step[ids.JOBS]
 
     @property
     def step_source(self):
@@ -85,24 +85,24 @@ class UnixStep(Task):
             self.logger.error(cmd_exec.stderr)
             client.send_event(
                 ev_type=ids.EVTYPE_FM_JOB_FAILURE,
-                ev_source=self.job_source(job["id"]),
+                ev_source=self.job_source(job[ids.ID]),
                 ev_data={ids.STDERR: cmd_exec.stderr, ids.STDOUT: cmd_exec.stdout},
             )
             raise OSError(
-                f"Script {job['name']} failed with exception {cmd_exec.stderr}"
+                f"Script {job[ids.NAME]} failed with exception {cmd_exec.stderr}"
             )
 
     def run_jobs(self, client, run_path):
         for job in self.jobs:
-            self.logger.info(f"Running command {self._cmd}  {job['name']}")
+            self.logger.info(f"Running command {self._cmd}  {job[ids.NAME]}")
             client.send_event(
                 ev_type=ids.EVTYPE_FM_JOB_START,
-                ev_source=self.job_source(job["id"]),
+                ev_source=self.job_source(job[ids.ID]),
             )
             self.run_job(client, job, run_path)
             client.send_event(
                 ev_type=ids.EVTYPE_FM_JOB_SUCCESS,
-                ev_source=self.job_source(job["id"]),
+                ev_source=self.job_source(job[ids.ID]),
             )
 
     def run(self, expected_res=None):
@@ -119,7 +119,7 @@ class UnixStep(Task):
             outputs = []
             self.run_jobs(ee_client, run_path)
 
-            for output in self._step["outputs"]:
+            for output in self._step[ids.OUTPUTS]:
                 if not (run_path / output).exists():
                     raise FileNotFoundError(f"Output file {output} was not generated!")
 
@@ -129,4 +129,4 @@ class UnixStep(Task):
                 ev_type=ids.EVTYPE_FM_STEP_SUCCESS,
                 ev_source=self.step_source,
             )
-        return {"iens": self.get_iens(), "outputs": outputs}
+        return {ids.IENS: self.get_iens(), ids.OUTPUTS: outputs}

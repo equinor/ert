@@ -35,7 +35,7 @@ def parse_config(path):
 
 def input_files(config, coefficients):
     paths = {}
-    storage = storage_driver_factory(config.get("storage"), ".")
+    storage = storage_driver_factory(config.get(ids.STORAGE), ".")
     file_name = "coeffs.json"
     for iens, values in enumerate(coefficients):
         with open(file_name, "w") as f:
@@ -56,8 +56,8 @@ def test_run_prefect_ensemble(unused_tcp_port, coefficients):
         config.update(
             {
                 "config_path": os.getcwd(),
-                "realizations": 2,
-                "executor": "local",
+                ids.REALIZATIONS: 2,
+                ids.EXECUTOR: "local",
                 "input_files": input_files(config, coefficients),
             }
         )
@@ -79,7 +79,7 @@ def test_run_prefect_ensemble(unused_tcp_port, coefficients):
 
         successful_realizations = evaluator._snapshot.get_successful_realizations()
 
-        assert successful_realizations == config["realizations"]
+        assert successful_realizations == config[ids.REALIZATIONS]
 
 
 @pytest.mark.timeout(60)
@@ -89,15 +89,15 @@ def test_run_prefect_ensemble_with_path(unused_tcp_port, coefficients):
         config.update(
             {
                 "config_path": Path.cwd(),
-                "realizations": 2,
-                "executor": "local",
+                ids.REALIZATIONS: 2,
+                ids.EXECUTOR: "local",
                 "input_files": input_files(config, coefficients),
             }
         )
 
         config["config_path"] = Path(config["config_path"])
-        config["run_path"] = Path(config["run_path"])
-        config["storage"]["storage_path"] = Path(config["storage"]["storage_path"])
+        config[ids.RUN_PATH] = Path(config[ids.RUN_PATH])
+        config[ids.STORAGE]["storage_path"] = Path(config[ids.STORAGE]["storage_path"])
 
         service_config = EvaluatorServerConfig(unused_tcp_port)
         ensemble = PrefectEnsemble(config)
@@ -116,7 +116,7 @@ def test_run_prefect_ensemble_with_path(unused_tcp_port, coefficients):
 
         successful_realizations = evaluator._snapshot.get_successful_realizations()
 
-        assert successful_realizations == config["realizations"]
+        assert successful_realizations == config[ids.REALIZATIONS]
 
 
 @pytest.mark.timeout(60)
@@ -126,8 +126,8 @@ def test_cancel_run_prefect_ensemble(unused_tcp_port, coefficients):
         config.update(
             {
                 "config_path": os.getcwd(),
-                "realizations": 2,
-                "executor": "local",
+                ids.REALIZATIONS: 2,
+                ids.EXECUTOR: "local",
                 "input_files": input_files(config, coefficients),
             }
         )
@@ -208,22 +208,22 @@ def test_unix_step(unused_tcp_port):
 
     with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
         config = parse_config("config.yml")
-        storage = storage_driver_factory(config=config.get("storage"), run_path=".")
+        storage = storage_driver_factory(config=config.get(ids.STORAGE), run_path=".")
         resource = storage.store("unix_test_script.py")
         jobs = [
             {
-                "id": "0",
-                "name": "test_script",
-                "executable": "unix_test_script.py",
-                "args": ["vas"],
+                ids.ID: "0",
+                ids.NAME: "test_script",
+                ids.EXECUTABLE: "unix_test_script.py",
+                ids.ARGS: ["vas"],
             }
         ]
         step = {
-            "outputs": ["output.out"],
-            "iens": 1,
-            "step_id": "step_id_0",
-            "stage_id": "stage_id_0",
-            "jobs": jobs,
+            ids.OUTPUTS: ["output.out"],
+            ids.IENS: 1,
+            ids.STEP_ID: "step_id_0",
+            ids.STAGE_ID: "stage_id_0",
+            ids.JOBS: jobs,
         }
 
         stage_task = UnixStep(
@@ -274,25 +274,25 @@ def test_function_step(unused_tcp_port):
 
     with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
         config = parse_config("config.yml")
-        storage = storage_driver_factory(config=config.get("storage"), run_path=".")
+        storage = storage_driver_factory(config=config.get(ids.STORAGE), run_path=".")
 
         def sum_function(values):
             return sum(values)
 
         jobs = [
             {
-                "id": "0",
-                "name": "test_script",
-                "executable": sum_function,
+                ids.ID: "0",
+                ids.NAME: "test_script",
+                ids.EXECUTABLE: sum_function,
                 "output": "output.out",
             }
         ]
         test_values = {"values": [42, 24, 6]}
         step = {
-            "jobs": jobs,
-            "step_id": "step_id_0",
-            "stage_id": "stage_id_0",
-            "iens": 1,
+            ids.JOBS: jobs,
+            ids.STEP_ID: "step_id_0",
+            ids.STAGE_ID: "stage_id_0",
+            ids.IENS: 1,
             "step_input": test_values,
         }
 
@@ -301,7 +301,7 @@ def test_function_step(unused_tcp_port):
             url=url,
             ee_id="ee_id_0",
             on_failure=_on_task_failure,
-            storage_config=config.get("storage"),
+            storage_config=config.get(ids.STORAGE),
             max_retries=1,
             retry_delay=timedelta(seconds=2),
         )
@@ -344,22 +344,22 @@ def test_unix_step_error(unused_tcp_port):
 
     with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case", False):
         config = parse_config("config.yml")
-        storage = storage_driver_factory(config=config.get("storage"), run_path=".")
+        storage = storage_driver_factory(config=config.get(ids.STORAGE), run_path=".")
         resource = storage.store("unix_test_script.py")
         jobs = [
             {
-                "id": "0",
-                "name": "test_script",
-                "executable": "unix_test_script.py",
-                "args": ["foo", "bar"],
+                ids.ID: "0",
+                ids.NAME: "test_script",
+                ids.EXECUTABLE: "unix_test_script.py",
+                ids.ARGS: ["foo", "bar"],
             }
         ]
         step = {
-            "outputs": ["output.out"],
-            "iens": 1,
-            "step_id": "step_id_0",
-            "stage_id": "stage_id_0",
-            "jobs": jobs,
+            ids.OUTPUTS: ["output.out"],
+            ids.IENS: 1,
+            ids.STEP_ID: "step_id_0",
+            ids.STAGE_ID: "stage_id_0",
+            ids.JOBS: jobs,
         }
 
         stage_task = UnixStep(
@@ -407,22 +407,22 @@ def test_on_task_failure(unused_tcp_port):
 
     with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case", False):
         config = parse_config("config.yml")
-        storage = storage_driver_factory(config=config.get("storage"), run_path=".")
+        storage = storage_driver_factory(config=config.get(ids.STORAGE), run_path=".")
         resource = storage.store("unix_test_retry_script.py")
         jobs = [
             {
-                "id": "0",
-                "name": "test_script",
-                "executable": "unix_test_retry_script.py",
-                "args": [],
+                ids.ID: "0",
+                ids.NAME: "test_script",
+                ids.EXECUTABLE: "unix_test_retry_script.py",
+                ids.ARGS: [],
             }
         ]
         step = {
-            "outputs": [],
-            "iens": 1,
-            "step_id": "step_id_0",
-            "stage_id": "stage_id_0",
-            "jobs": jobs,
+            ids.OUTPUTS: [],
+            ids.IENS: 1,
+            ids.STEP_ID: "step_id_0",
+            ids.STAGE_ID: "stage_id_0",
+            ids.JOBS: jobs,
         }
 
         stage_task = UnixStep(
@@ -475,8 +475,8 @@ def test_run_prefect_ensemble_exception(unused_tcp_port, coefficients):
         config.update(
             {
                 "config_path": os.getcwd(),
-                "realizations": 2,
-                "executor": "local",
+                ids.REALIZATIONS: 2,
+                ids.EXECUTOR: "local",
                 "input_files": input_files(config, coefficients),
             }
         )
