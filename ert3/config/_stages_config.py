@@ -1,9 +1,9 @@
 import importlib
-import os
+import mimetypes
 import sys
-from typing import List, Callable, Optional
-from pydantic import root_validator, validator, FilePath, BaseModel, ValidationError
+from typing import Callable, List, Optional
 
+from pydantic import BaseModel, FilePath, ValidationError, root_validator, validator
 import ert3
 
 if sys.version_info >= (3, 8):
@@ -11,8 +11,11 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal
 
+_DEFAULT_RECORD_MIME_TYPE = "application/json"
+_DEFAULT_CMD_MIME_TYPE = "application/octet-stream"
 
-def _import_from(path):
+
+def _import_from(path) -> Callable:
     if ":" not in path:
         raise ValueError("Function should be defined as module:function")
     module_str, func = path.split(":")
@@ -24,33 +27,50 @@ def _import_from(path):
     return func
 
 
+def _ensure_mime(cls, field, values):
+    if field:
+        return field
+    guess = mimetypes.guess_type(str(values.get("location", "")))[0]
+    if guess:
+        return guess
+    return (
+        _DEFAULT_CMD_MIME_TYPE
+        if cls == TransportableCommand
+        else _DEFAULT_RECORD_MIME_TYPE
+    )
+
+
 class _StagesConfig(BaseModel):
-    validate_all = True
-    validate_assignment = True
-    extra = "forbid"
-    allow_mutation = False
-    arbitrary_types_allowed = True
+    class Config:
+        validate_all = True
+        validate_assignment = True
+        extra = "forbid"
+        allow_mutation = False
+        arbitrary_types_allowed = True
 
 
 class InputRecord(_StagesConfig):
     record: str
     location: str
+    mime: str = ""
+
+    _ensure_mime = validator("mime", allow_reuse=True)(_ensure_mime)
 
 
 class OutputRecord(_StagesConfig):
     record: str
     location: str
+    mime: str = ""
+
+    _ensure_mime = validator("mime", allow_reuse=True)(_ensure_mime)
 
 
 class TransportableCommand(_StagesConfig):
     name: str
     location: FilePath
+    mime: str = ""
 
-    @validator("location")
-    def is_executable(cls, location):
-        if not os.access(location, os.X_OK):
-            raise ValueError(f"{location} is not executable")
-        return location
+    _ensure_mime = validator("mime", allow_reuse=True)(_ensure_mime)
 
 
 class Step(_StagesConfig):
@@ -73,18 +93,13 @@ class Step(_StagesConfig):
                 raise ValueError("Scripts defined for a function stage")
             if not step.get("function"):
                 raise ValueError("No function defined")
-        elif step.get("type") == "unix":
-            if step.get("function"):
-                raise ValueError("Function defined for unix step")
 
-        for script in script_lines:
-            line_cmd = script.split()[0]
-            if line_cmd not in cmd_names:
-                raise ValueError("{} is not a known command".format(line_cmd))
         return step
 
     @validator("function", pre=True)
-    def function_is_valid(cls, function: str) -> Callable:
+    def function_is_valid(cls, function: str, values) -> Optional[Callable]:
+        if values.get("type") != "function":
+            return None
         return _import_from(function)
 
 

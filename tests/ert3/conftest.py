@@ -8,22 +8,29 @@ import sys
 
 import numpy as np
 import pathlib
-import ert3.workspace
+import ert3
 
 import subprocess
 import time
 import requests
 
-POLY_SCRIPT = """
-#!/usr/bin/env python
+POLY_SCRIPT = """#!/usr/bin/env python3
 import json
 import sys
-with open(sys.argv[2], "r") as f:
-    coefficients = json.load(f)
-a, b, c = coefficients["a"], coefficients["b"], coefficients["c"]
-result = tuple(a * x ** 2 + b * x + c for x in range(10))
-with open(sys.argv[4], "w") as f:
-    json.dump(result, f)
+
+
+def _poly():
+    with open(sys.argv[2], "r") as f:
+        coefficients = json.load(f)
+    a, b, c = coefficients["a"], coefficients["b"], coefficients["c"]
+    result = tuple(a * x ** 2 + b * x + c for x in range(10))
+    with open(sys.argv[4], "w") as f:
+        json.dump(result, f)
+
+
+if __name__ == "__main__":
+    _poly()
+
 """
 
 POLY_FUNCTION = """

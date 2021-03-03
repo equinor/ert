@@ -153,7 +153,11 @@ def test_export_uniform_polynomial_evaluation(
     stages_config,
     evaluation_experiment_config,
     uniform_parameters_file,
+    caplog,
 ):
+    import logging
+
+    caplog.set_level(logging.DEBUG, logger="ert_shared.ensemble_evaluator")
     uni_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "uniform_evaluation"
     uni_dir.ensure(dir=True)
     ert3.engine.run(
