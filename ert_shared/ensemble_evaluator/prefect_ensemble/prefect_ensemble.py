@@ -264,6 +264,7 @@ class PrefectEnsemble(_Ensemble):
         self._eval_proc.start()
 
     def _evaluate(self, dispatch_url, ee_id):
+        asyncio.set_event_loop(asyncio.get_event_loop())
         try:
             with Client(dispatch_url) as c:
                 event = CloudEvent(
