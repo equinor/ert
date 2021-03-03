@@ -23,20 +23,20 @@ class FunctionStep(Task):
         self._storage = storage_driver_factory(storage_config, ".")
 
     def get_iens(self):
-        return self._step["iens"]
+        return self._step[ids.IENS]
 
     def get_stage_id(self):
-        return self._step["stage_id"]
+        return self._step[ids.STAGE_ID]
 
     def get_step_id(self):
-        return self._step["step_id"]
+        return self._step[ids.STEP_ID]
 
     def get_ee_id(self):
         return self._ee_id
 
     @property
     def job(self):
-        return self._step["jobs"][0]
+        return self._step[ids.JOBS][0]
 
     @property
     def step_source(self):
@@ -57,21 +57,21 @@ class FunctionStep(Task):
             self.logger.error(str(e))
             client.send_event(
                 ev_type=ids.EVTYPE_FM_JOB_FAILURE,
-                ev_source=self.function_source(job["id"]),
+                ev_source=self.function_source(job[ids.ID]),
                 ev_data={"stderr": str(e)},
             )
             raise e
 
     def run_jobs(self, client):
-        self.logger.info(f"Running function {self.job['name']}")
+        self.logger.info(f"Running function {self.job[ids.NAME]}")
         client.send_event(
             ev_type=ids.EVTYPE_FM_JOB_START,
-            ev_source=self.function_source(self.job["id"]),
+            ev_source=self.function_source(self.job[ids.ID]),
         )
         output = self.run_job(client, self.job)
         client.send_event(
             ev_type=ids.EVTYPE_FM_JOB_SUCCESS,
-            ev_source=self.function_source(self.job["id"]),
+            ev_source=self.function_source(self.job[ids.ID]),
         )
         return output
 
@@ -89,4 +89,4 @@ class FunctionStep(Task):
                 ev_source=self.step_source,
             )
 
-        return {"iens": self.get_iens(), "outputs": [output]}
+        return {ids.IENS: self.get_iens(), ids.OUTPUTS: [output]}
