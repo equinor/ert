@@ -1,14 +1,15 @@
 #!/usr/bin/env python
+import json
 
 
 def _load_coeffs(filename):
     with open(filename) as f:
-        return [float(l.strip("\n")) for l in f.readlines()]
+        return json.load(f)
 
 
 def write_to_file(data, file):
     with open(file, "w") as f:
-        f.write("\n".join(map(str, data)))
+        json.dump(data, f)
 
 
 if __name__ == "__main__":

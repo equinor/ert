@@ -38,9 +38,9 @@ def test_valid_record(data):
     "data",
     (
         "a sequence",
-        ["one", "two", "three"],
         {"a": "b"},
         {"key": None, "a": None},
+        {"1": 1, "2": "2"},
     ),
 )
 def test_invalid_record(data):
@@ -104,7 +104,7 @@ def test_inconsistent_size_ensemble_record(raw_ensrec, ensemble_size):
             3,
             {
                 "ens1": {"records": [{"data": [1, 2, 3]} for _ in range(3)]},
-                "ens2": {"records": [{"data": {"a": "1", "b": 2}} for _ in range(3)]},
+                "ens2": {"records": [{"data": {"a": 1, "b": 2}} for _ in range(3)]},
                 "ens3": {"records": [{"data": [0]}, {"data": [2]}, {"data": [1]}]},
             },
         ),
