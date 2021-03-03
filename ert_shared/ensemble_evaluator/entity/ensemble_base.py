@@ -1,4 +1,5 @@
 import asyncio
+import typing
 import websockets
 
 from ert_shared.ensemble_evaluator.entity import serialization

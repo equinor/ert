@@ -1,7 +1,7 @@
 import threading
 import pytest
 from functools import partial
-from ert_shared.ensemble_evaluator.prefect_ensemble.client import Client
+from ert_shared.ensemble_evaluator.client import Client
 from tests.ensemble_evaluator.conftest import _mock_ws
 
 

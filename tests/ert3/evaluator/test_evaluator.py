@@ -1,7 +1,6 @@
 import pytest
 import ert3
 
-
 TEST_PARAMETRIZATION = [
     ([(0, 0, 0)], [[0] * 10]),
     (
@@ -30,9 +29,12 @@ def get_inputs(coeffs):
 
 @pytest.mark.requires_ert_storage
 @pytest.mark.parametrize("coeffs, expected", TEST_PARAMETRIZATION)
-def test_evaluator_script(workspace, stages_config, ensemble, coeffs, expected):
+def test_evaluator_script(
+    workspace, stages_config, base_ensemble_dict, coeffs, expected
+):
     input_records = get_inputs(coeffs)
-    ensemble.size = len(coeffs)
+    base_ensemble_dict.update({"size": len(coeffs)})
+    ensemble = ert3.config.load_ensemble_config(base_ensemble_dict)
 
     evaluation_responses = ert3.evaluator.evaluate(
         workspace,
@@ -55,10 +57,11 @@ def test_evaluator_script(workspace, stages_config, ensemble, coeffs, expected):
 @pytest.mark.requires_ert_storage
 @pytest.mark.parametrize("coeffs, expected", TEST_PARAMETRIZATION)
 def test_evaluator_function(
-    workspace, function_stages_config, ensemble, coeffs, expected
+    workspace, function_stages_config, base_ensemble_dict, coeffs, expected
 ):
     input_records = get_inputs(coeffs)
-    ensemble.size = len(coeffs)
+    base_ensemble_dict.update({"size": len(coeffs)})
+    ensemble = ert3.config.load_ensemble_config(base_ensemble_dict)
 
     evaluation_responses = ert3.evaluator.evaluate(
         workspace,
