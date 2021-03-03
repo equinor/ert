@@ -9,6 +9,7 @@ from cloudevents.http import to_json
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from ert_shared.ensemble_evaluator.entity import serialization
 import uuid
+import pickle
 
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,7 @@ class _Monitor:
     def __init__(self, host, port):
         self._base_uri = f"ws://{host}:{port}"
         self._client_uri = f"{self._base_uri}/client"
+        self._result_uri = f"{self._base_uri}/result"
 
         self._loop = None
         self._incoming = None
@@ -34,6 +36,15 @@ class _Monitor:
 
     def get_base_uri(self):
         return self._base_uri
+
+    def get_result(self):
+        async def _send():
+            async with websockets.connect(self._result_uri) as websocket:
+                result = await websocket.recv()
+                message = from_json(result, lambda x: pickle.loads(x))
+                return message.data
+
+        return asyncio.run_coroutine_threadsafe(_send(), self._loop).result()
 
     def _send_event(self, cloud_event):
         async def _send():

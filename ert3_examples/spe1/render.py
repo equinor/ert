@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 
 # TODO: This script is a hack in its entirety to get hold the template_render
@@ -23,6 +23,7 @@ def _locate_template_render_exec():
     )
 
 
-render_exec = _locate_template_render_exec()
-args = tuple(sys.argv[1:])
-subprocess.run(" ".join((str(render_exec),) + args), shell=True, check=True)
+if __name__ == "__main__":
+    render_exec = _locate_template_render_exec()
+    args = tuple(sys.argv[1:])
+    subprocess.run(" ".join((str(render_exec),) + args), shell=True, check=True)

@@ -27,9 +27,6 @@
 
   transportable_commands:
     -
-      name: bash
-      location: bash.py
-    -
       name: summary2json
       location: summary2json.py
     -
@@ -38,10 +35,8 @@
 
   script:
     # TODO: The following cp should not be present, instead files should be
-    # transfered as blob records.
-    - bash cp ${SPE1_WORKSPACE_ROOT}/resources/SPE1CASE2.DATA.jinja2 SPE1CASE2.DATA.jinja2
+    # transferred as blob records.
+    - cp ${SPE1_WORKSPACE_ROOT}/resources/SPE1CASE2.DATA.jinja2 SPE1CASE2.DATA.jinja2
     - render -t SPE1CASE2.DATA.jinja2 -i field_properties.json wells.json -o SPE1CASE2.DATA
-    # TODO: When executables can be ran directly, the `bash` prefix should be
-    # removed.
-    - bash flow SPE1CASE2
+    - flow SPE1CASE2
     - summary2json --datafile SPE1CASE2.DATA --keywords WOPT:PROD WWPT:PROD WGPT:PROD WWIT:INJ

@@ -45,6 +45,7 @@ def evaluator(ee_config):
                 .add_step(
                     step=create_step_builder()
                     .set_id(0)
+                    .set_name("cats")
                     .add_job(
                         job=create_legacy_job_builder()
                         .set_id(0)

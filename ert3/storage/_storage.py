@@ -1,12 +1,14 @@
+import codecs
+import io
+import json
 import os
 from pathlib import Path
-from typing import Any, Iterable, Optional, Union
-import io
-import yaml
+from typing import Any, Iterable, Optional, Union, cast
+
+import cloudpickle
 import requests
-
+import yaml
 import ert3
-
 
 _STORAGE_FILE = "storage.yaml"
 _STORAGE_URL = "http://localhost:8000"
@@ -147,7 +149,18 @@ def add_ensemble_record(
 ) -> None:
     if experiment_name is None:
         experiment_name = _ENSEMBLE_RECORDS
-    _add_data(workspace, experiment_name, record_name, ensemble_record.json())
+
+    # If a Record is serialized to JSON without associating it with a type,
+    # information is lost. For instance, serializing an int mapping
+    # {0: 1, 1: 3} to JSON, keys are made into strings in JSON. If it is not
+    # known that the Record is a int, str map, information is lost.
+    #
+    # TODO: https://github.com/equinor/ert/issues/1550 should implement better
+    # usage of ert-storage, specifically using numerical endpoints when
+    # applicable.
+    pickle_str = codecs.encode(cloudpickle.dumps(ensemble_record), "base64").decode()
+    data = json.dumps({"data": pickle_str})
+    _add_data(workspace, experiment_name, record_name, data)
 
 
 def get_ensemble_record(
@@ -158,8 +171,10 @@ def get_ensemble_record(
 ) -> ert3.data.EnsembleRecord:
     if experiment_name is None:
         experiment_name = _ENSEMBLE_RECORDS
-    return ert3.data.EnsembleRecord.parse_raw(
-        _get_data(workspace, experiment_name, record_name)
+    data = json.loads(_get_data(workspace, experiment_name, record_name))["data"]
+    return cast(
+        ert3.data.EnsembleRecord,
+        cloudpickle.loads(codecs.decode(data.encode(), "base64")),
     )
 
 
