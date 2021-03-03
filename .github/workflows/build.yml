@@ -1,6 +1,6 @@
 name: Python package
 
-on: [push, pull_request]
+on: [pull_request]
 
 env:
   ERT_SHOW_BACKTRACE: 1
