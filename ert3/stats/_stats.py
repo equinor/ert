@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.stats
 
-from ert3.data import Record
+import ert3
 
 
 class Distribution:
@@ -29,9 +29,11 @@ class Distribution:
 
     def _to_record(self, x):
         if self._as_array:
-            return Record(data=tuple(x))
+            return ert3.data.Record(data=tuple(x))
         else:
-            return Record(data={idx: float(val) for idx, val in zip(self.index, x)})
+            return ert3.data.Record(
+                data={idx: float(val) for idx, val in zip(self.index, x)}
+            )
 
     def sample(self):
         return self._to_record(self._raw_rvs(self._size))

@@ -38,7 +38,6 @@ def test_valid_record(data):
     "data",
     (
         "a sequence",
-        ["one", "two", "three"],
         {"a": "b"},
         {"key": None, "a": None},
     ),

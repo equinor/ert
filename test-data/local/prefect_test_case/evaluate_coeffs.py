@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import sys
 import json
 import argparse
 
@@ -30,7 +29,7 @@ def config_dump_entry(args=None):
 
 def write_to_file(data, file):
     with open(file, "w") as f:
-        f.write("\n".join(map(str, data)))
+        json.dump(data, f)
 
 
 if __name__ == "__main__":

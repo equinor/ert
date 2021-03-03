@@ -73,7 +73,12 @@ def make_ensemble_builder(queue_config):
                         f,
                     )
 
-                step = create_step_builder().set_id(0).set_dummy_io()
+                step = (
+                    create_step_builder()
+                    .set_id(0)
+                    .set_name("dummy step")
+                    .set_dummy_io()
+                )
 
                 for index, job in enumerate(ext_job_list):
                     step.add_job(

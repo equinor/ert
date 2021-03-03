@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import sys
 
 
 def write_file(text, file):
@@ -13,7 +14,8 @@ def read_file(file):
 
 
 if __name__ == "__main__":
-    file_name = "run.no"
+    path = sys.argv[1:][0]
+    file_name = os.path.join(path, "run.no")
     max_failure_no = 2
     if os.path.exists(file_name):
         run_no = int(read_file(file_name))
