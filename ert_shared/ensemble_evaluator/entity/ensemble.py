@@ -1,4 +1,9 @@
 import copy
+from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
+from ert_shared.ensemble_evaluator.entity.function_step import FunctionTask
+import graphlib
+from multiprocessing import Value
+import typing
 from ert_shared.status.entity.state import REALIZATION_STATE_UNKNOWN
 import logging
 from ert_shared.ensemble_evaluator.entity.ensemble_base import _Ensemble
@@ -7,17 +12,35 @@ from ert_shared.ensemble_evaluator.entity.ensemble_legacy import (
 )
 from res.enkf import EnKFState
 
+from pathlib import Path
+from collections import defaultdict
+from graphlib import TopologicalSorter
 
-logger = logging.getLogger(__name__)
+
+def _sort_steps(steps: typing.List["_Step"]):
+    graph = defaultdict(set)
+    if len(steps) == 1:
+        return (steps[0].get_name(),)
+    for step in steps:
+        for other in steps:
+            if step == other:
+                continue
+            step_outputs = set([io.get_name() for io in step.get_outputs()])
+            other_inputs = set([io.get_name() for io in other.get_inputs()])
+            if step_outputs.issubset(other_inputs):
+                graph[other.get_name()].add(step.get_name())
+    ts = TopologicalSorter(graph)
+    return tuple(ts.static_order())
 
 
 class _IO:
-    def __init__(self, name, type_, path):
+    def __init__(self, name):
         if not name:
             raise ValueError(f"{self} needs name")
         self._name = name
-        self._type = type_
-        self._path = path
+
+    def get_name(self):
+        return self._name
 
 
 class _IOBuilder:
@@ -25,42 +48,77 @@ class _IOBuilder:
 
     def __init__(self):
         self._name = None
-        self._type = None
-        self._path = None
 
     def reset(self):
         self._name = None
-        self._type = None
-        self._path = None
         return self
 
     def set_name(self, name):
         self._name = name
         return self
 
-    def set_type(self, type_):
-        self._type = type_
-        return self
-
-    def set_path(self, path):
-        self._path = path
-        return self
-
     def build(self):
         if self._concrete_cls is None:
             raise TypeError("cannot build _IO")
-        return self._concrete_cls(self._name, self._type, self._path)
+        return self._concrete_cls(self._name)
 
 
-class _IODummy(_IO):
+class _DummyIO(_IO):
     pass
 
 
-class _IODummyBuilder:
-    _concrete_cls = _IODummy
+class _DummyIOBuilder:
+    _concrete_cls = _DummyIO
 
-    def build(_):
-        return _IO("dummy i/o", "dummy", "")
+    def build(self):
+        return _IO("dummy i/o")
+
+
+class _FileIO(_IO):
+    def __init__(self, name: str, path: Path, mime: str) -> None:
+        super().__init__(name)
+        self._path = path
+        self._mime = mime
+
+    def get_path(self):
+        return self._path
+
+    def get_mime(self):
+        return self._mime
+
+    def is_executable(self):
+        return isinstance(self, _ExecIO)
+
+
+class _ExecIO(_FileIO):
+    pass
+
+
+class _FileIOBuilder(_IOBuilder):
+    def __init__(self) -> None:
+        super().__init__()
+        self._path = None
+        self._mime = None
+        self._cls = _FileIO
+
+    def set_path(self, path: Path) -> "_FileIOBuilder":
+        self._path = path
+        return self
+
+    def set_mime(self, mime: str) -> "_FileIOBuilder":
+        self._mime = mime
+        return self
+
+    def set_executable(self) -> "_FileIOBuilder":
+        self._cls = _ExecIO
+        return self
+
+    def build(self):
+        return self._cls(self._name, self._path, mime=self._mime)
+
+
+def create_file_io_builder() -> _FileIOBuilder:
+    return _FileIOBuilder()
 
 
 class _Input(_IO):
@@ -109,6 +167,43 @@ class _BaseJobBuilder:
         raise NotImplementedError("cannot build basejob")
 
 
+class _JobBuilder(_BaseJobBuilder):
+    def __init__(self):
+        super().__init__()
+        self._executable = None
+        self._args = None
+        self._step_source = None
+
+    def set_step_source(self, source):
+        self._step_source = source
+        return self
+
+    def set_executable(self, executable):
+        self._executable = executable
+        return self
+
+    def set_args(self, args):
+        self._args = args
+        return self
+
+    def build(self):
+        if callable(self._executable):
+            if self._args is not None:
+                raise ValueError(
+                    "callable executable does not take args, use inputs instead"
+                )
+            return _FunctionJob(
+                self._id, self._name, self._step_source, self._executable
+            )
+        return _UnixJob(
+            self._id, self._name, self._step_source, self._executable, self._args
+        )
+
+
+def create_job_builder():
+    return _JobBuilder()
+
+
 class _LegacyJobBuilder(_BaseJobBuilder):
     def __init__(self):
         super().__init__()
@@ -153,19 +248,58 @@ def create_legacy_job_builder():
 
 
 class _BaseJob:
-    def __init__(self, id_, name):
+    def __init__(self, id_, name, step_source):
         if id_ is None:
             raise ValueError(f"{self} need id")
         if name is None:
             raise ValueError(f"{self} need name")
         self._id = id_
         self._name = name
+        self._step_source = step_source
 
     def get_id(self):
         return self._id
 
     def get_name(self):
         return self._name
+
+    def get_source(self, ee_id):
+        return f"{self._step_source.format(ee_id=ee_id)}/job/{self._id}"
+
+
+class _UnixJob(_BaseJob):
+    def __init__(
+        self,
+        id_,
+        name,
+        step_source,
+        executable,
+        args,
+    ):
+        super().__init__(id_, name, step_source)
+        self._executable = executable
+        self._args = args
+
+    def get_executable(self):
+        return self._executable
+
+    def get_args(self):
+        return self._args
+
+
+class _FunctionJob(_BaseJob):
+    def __init__(
+        self,
+        id_,
+        name,
+        step_source,
+        command,
+    ):
+        super().__init__(id_, name, step_source)
+        self._command = command
+
+    def get_command(self):
+        return self._command
 
 
 class _LegacyJob(_BaseJob):
@@ -175,7 +309,7 @@ class _LegacyJob(_BaseJob):
         name,
         ext_job,
     ):
-        super().__init__(id_, name)
+        super().__init__(id_, name, "")  # no step_source needed for legacy (pt.)
         if ext_job is None:
             raise TypeError(f"{self} needs ext_job")
         self._ext_job = ext_job
@@ -185,7 +319,7 @@ class _LegacyJob(_BaseJob):
 
 
 class _Step:
-    def __init__(self, id_, inputs, outputs, jobs, name=None):
+    def __init__(self, id_, inputs, outputs, jobs, name, ee_url, source):
         if id_ is None:
             raise ValueError(f"{self} needs id")
         if inputs is None:
@@ -194,12 +328,13 @@ class _Step:
             raise ValueError(f"{self} needs output")
         if jobs is None:
             raise ValueError(f"{self} needs jobs")
-
         self._id = id_
         self._inputs = inputs
         self._outputs = outputs
         self._jobs = jobs
         self._name = name
+        self._ee_url = ee_url
+        self._source = source
 
     def get_id(self):
         return self._id
@@ -216,13 +351,57 @@ class _Step:
     def get_name(self):
         return self._name
 
+    def get_ee_url(self):
+        return self._ee_url
+
+    def get_source(self, ee_id):
+        return self._source.format(ee_id=ee_id)
+
+
+class _UnixStep(_Step):
+    def __init__(
+        self,
+        id_,
+        inputs,
+        outputs,
+        jobs,
+        name,
+        ee_url,
+        source,
+    ):
+        super().__init__(id_, inputs, outputs, jobs, name, ee_url, source)
+
+    def get_task(self, output_transmitters, ee_id, *args, **kwargs):
+        return UnixTask(self, output_transmitters, ee_id, *args, **kwargs)
+
+
+class _FunctionStep(_Step):
+    def __init__(
+        self,
+        id_,
+        inputs,
+        outputs,
+        jobs,
+        name,
+        ee_url,
+        source,
+    ):
+        super().__init__(id_, inputs, outputs, jobs, name, ee_url, source)
+
+    def get_task(self, output_transmitters, *args, **kwargs):
+        return FunctionTask(self, output_transmitters, *args, **kwargs)
+
 
 class _StepBuilder:
     def __init__(self):
         self._jobs = None
         self._id = None
+        self._name = None
         self._inputs = None
         self._outputs = None
+        self._type = None
+        self._source = None
+        self._ee_url = None
         self.reset()
 
     def reset(self):
@@ -234,6 +413,22 @@ class _StepBuilder:
 
     def set_id(self, id_):
         self._id = id_
+        return self
+
+    def set_name(self, name):
+        self._name = name
+        return self
+
+    def set_type(self, type_):
+        self._type = type_
+        return self
+
+    def set_source(self, source):
+        self._source = source
+        return self
+
+    def set_ee_url(self, ee_url):
+        self._ee_url = ee_url
         return self
 
     def add_job(self, job):
@@ -252,11 +447,21 @@ class _StepBuilder:
         jobs = [builder.build() for builder in self._jobs]
         inputs = [builder.build() for builder in self._inputs]
         outputs = [builder.build() for builder in self._outputs]
-        return _Step(self._id, inputs, outputs, jobs)
+        if self._type == "function":
+            return _FunctionStep(
+                self._id, inputs, outputs, jobs, self._name, self._ee_url, self._source
+            )
+        elif self._type == "unix":
+            return _UnixStep(
+                self._id, inputs, outputs, jobs, self._name, self._ee_url, self._source
+            )
+        return _Step(
+            self._id, inputs, outputs, jobs, self._name, self._ee_url, self._source
+        )
 
     def set_dummy_io(self):
-        self.add_input(_IODummyBuilder())
-        self.add_output(_IODummyBuilder())
+        self.add_input(_DummyIOBuilder())
+        self.add_output(_DummyIOBuilder())
         return self
 
 
@@ -271,6 +476,7 @@ class _Stage:
         steps,
         status,
         name=None,
+        ts_sorted_steps=None,
     ):
         if id_ is None:
             raise ValueError(f"{self} needs id")
@@ -284,11 +490,32 @@ class _Stage:
         self._status = status
         self._name = name
 
+        self._ts_sorted_indices = None
+        if ts_sorted_steps is not None:
+            self._ts_sorted_indices = list(range(0, len(ts_sorted_steps)))
+            for idx, name in enumerate(ts_sorted_steps):
+                for step_idx, step in enumerate(steps):
+                    if step.get_name() is None:
+                        raise ValueError(
+                            f"creating stage failed: tried to sort steps, but step at index {step_idx} does not have a name"
+                        )
+                    if step.get_name() == name:
+                        self._ts_sorted_indices[idx] = step_idx
+            assert len(self._ts_sorted_indices) == len(
+                steps
+            ), "disparity between amount of pre-sorted items and steps"
+
     def get_id(self):
         return self._id
 
     def get_steps(self):
         return self._steps
+
+    def get_steps_sorted_topologically(self) -> typing.List[_Step]:
+        if not self._ts_sorted_indices:
+            raise NotImplementedError("steps were not sorted")
+        for idx in self._ts_sorted_indices:
+            yield self._steps[idx]
 
     def get_status(self):
         return self._status
@@ -324,10 +551,12 @@ class _StageBuilder:
 
     def build(self):
         steps = [builder.build() for builder in self._steps]
+        ts_sorted_steps = _sort_steps(steps)
         return _Stage(
             self._id,
             steps,
             self._status,
+            ts_sorted_steps=ts_sorted_steps,
         )
 
 
@@ -543,7 +772,7 @@ class _Realization:
     def get_iens(self):
         return self._iens
 
-    def get_stages(self):
+    def get_stages(self) -> typing.List[typing.Type[_Stage]]:
         return self._stages
 
     def is_active(self):

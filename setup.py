@@ -42,6 +42,7 @@ setup(
         "deprecation",
         "equinor-libres >= 9.0.0rc1",
         "fastapi",
+        "graphlib_backport; python_version < '3.9'",
         "jinja2",
         "matplotlib",
         "numpy",

@@ -1,13 +1,13 @@
-import ert3.data
-import ert3.workspace
-import ert3.storage
-import ert3.evaluator
-import ert3.exceptions
-import ert3.stats
-import ert3.config
-import ert3.algorithms
-import ert3.engine
-import ert3.console
+from . import console
+from . import storage
+from . import evaluator
+from . import engine
+from . import workspace
+from . import stats
+from . import config
+from . import exceptions
+from . import algorithms
+from . import data
 
 
 _WORKSPACE_DATA_ROOT = ".ert"

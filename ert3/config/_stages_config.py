@@ -10,7 +10,7 @@ else:
     from typing_extensions import Literal
 
 
-def _import_from(path):
+def _import_from(path) -> Callable:
     if ":" not in path:
         raise ValueError("Function should be defined as module:function")
     module_str, func = path.split(":")
@@ -23,26 +23,30 @@ def _import_from(path):
 
 
 class _StagesConfig(BaseModel):
-    validate_all = True
-    validate_assignment = True
-    extra = "forbid"
-    allow_mutation = False
-    arbitrary_types_allowed = True
+    class Config:
+        validate_all = True
+        validate_assignment = True
+        extra = "forbid"
+        allow_mutation = False
+        arbitrary_types_allowed = True
 
 
 class InputRecord(_StagesConfig):
     record: str
     location: str
+    mime: Optional[str]
 
 
 class OutputRecord(_StagesConfig):
     record: str
     location: str
+    mime: Optional[str]
 
 
 class TransportableCommand(_StagesConfig):
     name: str
     location: FilePath
+    mime: str = "application/x-python-code"
 
     @validator("location")
     def is_executable(cls, location):
@@ -82,7 +86,9 @@ class Step(_StagesConfig):
         return step
 
     @validator("function", pre=True)
-    def function_is_valid(cls, function: str) -> Callable:
+    def function_is_valid(cls, function: str, values) -> Optional[Callable]:
+        if values.get("type") != "function":
+            return None
         return _import_from(function)
 
 

@@ -2,6 +2,12 @@ import asyncio
 import logging
 import threading
 from contextlib import contextmanager
+from uuid import uuid4
+import base64
+import pickle
+import cloudevents.exceptions
+
+import cloudpickle
 
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 import ert_shared.ensemble_evaluator.monitor as ee_monitor
@@ -61,6 +67,7 @@ class EnsembleEvaluator:
 
         self._snapshot = self.create_snapshot(ensemble)
         self._event_index = 1
+        self._result = None
 
     @staticmethod
     def create_snapshot(ensemble):
@@ -102,6 +109,7 @@ class EnsembleEvaluator:
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STOPPED)
     async def _ensemble_stopped_handler(self, event):
+        self._result = event.data
         if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
             snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
                 event
@@ -210,9 +218,12 @@ class EnsembleEvaluator:
     async def handle_dispatch(self, websocket, path):
         async with self.count_dispatcher():
             async for msg in websocket:
-                event = from_json(
-                    msg, data_unmarshaller=serialization.evaluator_unmarshaller
-                )
+                try:
+                    event = from_json(
+                        msg, data_unmarshaller=serialization.evaluator_unmarshaller
+                    )
+                except cloudevents.exceptions.DataUnmarshallerError:
+                    event = from_json(msg, data_unmarshaller=lambda x: pickle.loads(x))
                 await self._dispatch.handle_event(self, event)
                 if event["type"] in [
                     identifiers.EVTYPE_ENSEMBLE_STOPPED,
@@ -220,12 +231,33 @@ class EnsembleEvaluator:
                 ]:
                     return
 
+    async def handle_result(self, websocket, path):
+        if self._result is None:
+            event = CloudEvent(
+                {
+                    "type": identifiers.EVTYPE_EE_RESULT_NOT_READY,
+                    "source": f"/ert/ee/{self._ee_id}",
+                },
+            )
+        else:
+            event = CloudEvent(
+                {
+                    "type": identifiers.EVTYPE_EE_RESULT,
+                    "source": f"/ert/ee/{self._ee_id}",
+                    "datacontenttype": "application/octet-stream",
+                },
+                cloudpickle.dumps(self._result),
+            )
+        await websocket.send(to_json(event))
+
     async def connection_handler(self, websocket, path):
         elements = path.split("/")
         if elements[1] == "client":
             await self.handle_client(websocket, path)
         elif elements[1] == "dispatch":
             await self.handle_dispatch(websocket, path)
+        elif elements[1] == "result":
+            await self.handle_result(websocket, path)
 
     async def evaluator_server(self, done):
         async with websockets.serve(

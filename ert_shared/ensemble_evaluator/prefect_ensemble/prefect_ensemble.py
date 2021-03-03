@@ -1,3 +1,4 @@
+import itertools
 import asyncio
 import logging
 import multiprocessing
@@ -8,6 +9,7 @@ import uuid
 from datetime import timedelta
 from functools import partial
 
+import cloudpickle
 from cloudevents.http import CloudEvent, to_json
 from dask_jobqueue.lsf import LSFJob
 from ert_shared.ensemble_evaluator.config import find_open_port
@@ -18,13 +20,17 @@ from ert_shared.ensemble_evaluator.entity.ensemble import (
     _Realization,
     _Stage,
     _Step,
+    create_job_builder,
+    create_legacy_job_builder,
+    create_realization_builder,
+    create_stage_builder,
+    create_step_builder,
 )
-from ert_shared.ensemble_evaluator.prefect_ensemble.client import Client
+from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
     storage_driver_factory,
 )
-from ert_shared.ensemble_evaluator.prefect_ensemble.unix_step import UnixStep
-from ert_shared.ensemble_evaluator.prefect_ensemble.function_step import FunctionStep
+from ert_shared.ensemble_evaluator.entity.ensemble import create_file_io_builder
 from ert_shared.status.entity import state
 from prefect import Flow
 from prefect import context as prefect_context
@@ -90,45 +96,73 @@ def _get_executor(name="local"):
 class PrefectEnsemble(_Ensemble):
     def __init__(self, config):
         self.config = config
-        self._ee_dispach_url = None
+        self._ee_dispach_url = config["dispatch_uri"]
         self._reals = self._get_reals()
         self._eval_proc = None
         self._ee_id = None
+        self._iens_to_task = {}
         super().__init__(self._reals, metadata={"iter": 0})
 
     def _get_reals(self):
-        reals = []
-        for iens in range(self.config[ids.REALIZATIONS]):
-            stages = []
+        real_builders = []
+        for iens in range(0, self.config[ids.REALIZATIONS]):
+            real_builder = create_realization_builder().active(True).set_iens(iens)
             for stage in self.config[ids.STAGES]:
-                steps = []
                 stage_id = uuid.uuid4()
+                stage_builder = (
+                    create_stage_builder()
+                    .set_id(stage_id)
+                    .set_status(state.STAGE_STATE_UNKNOWN)
+                )
                 for step in stage[ids.STEPS]:
-                    jobs = []
-                    for job in step[ids.JOBS]:
-                        job_id = uuid.uuid4()
-                        jobs.append(_BaseJob(id_=str(job_id), name=job[ids.NAME]))
                     step_id = uuid.uuid4()
-                    steps.append(
-                        _Step(
-                            id_=str(step_id),
-                            inputs=step.get(ids.INPUTS, []),
-                            outputs=step[ids.OUTPUTS],
-                            jobs=jobs,
-                            name=step[ids.NAME],
-                        )
+                    step_source = (
+                        f"/ert/ee/{{ee_id}}/real/{iens}/stage/{stage_id}/step/{step_id}"
+                    )
+                    step_builder = (
+                        create_step_builder()
+                        .set_id(step_id)
+                        .set_name(step[ids.NAME])
+                        .set_source(step_source)
+                        .set_ee_url(self._ee_dispach_url)
+                        .set_type(step[ids.TYPE])
                     )
 
-                stages.append(
-                    _Stage(
-                        id_=str(stage_id),
-                        steps=steps,
-                        status=state.STAGE_STATE_UNKNOWN,
-                        name=stage[ids.NAME],
-                    )
-                )
-            reals.append(_Realization(iens=iens, stages=stages, active=True))
-        return reals
+                    for io in step.get(ids.INPUTS, []):
+                        input_builder = (
+                            create_file_io_builder()
+                            .set_name(io[ids.RECORD])
+                            .set_path(io[ids.LOCATION])
+                            .set_mime(io[ids.MIME])
+                        )
+
+                        if io.get(ids.IS_EXECUTABLE):
+                            input_builder.set_executable()
+
+                        step_builder.add_input(input_builder)
+                    for io in step.get(ids.OUTPUTS, []):
+                        step_builder.add_output(
+                            create_file_io_builder()
+                            .set_name(io[ids.RECORD])
+                            .set_path(io[ids.LOCATION])
+                            .set_mime(io[ids.MIME])
+                        )
+
+                    for job in step[ids.JOBS]:
+                        job_builder = (
+                            create_job_builder()
+                            .set_id(str(uuid.uuid4()))
+                            .set_name(job[ids.NAME])
+                            .set_executable(job[ids.EXECUTABLE])
+                            .set_args(job.get(ids.ARGS))
+                            .set_step_source(step_source)
+                        )
+                        step_builder.add_job(job_builder)
+
+                    stage_builder.add_step(step_builder)
+                real_builder.add_stage(stage_builder)
+            real_builders.append(real_builder)
+        return [builder.build() for builder in real_builders]
 
     @staticmethod
     def _on_task_failure(task, state, url):
@@ -140,7 +174,7 @@ class PrefectEnsemble(_Ensemble):
                         "source": f"/ert/ee/{task.get_ee_id()}/real/{task.get_iens()}/stage/{task.get_stage_id()}/step/{task.get_step_id()}",
                         "datacontenttype": "application/json",
                     },
-                    {"stderr": state.message},
+                    {"error_msg": state.message},
                 )
                 c.send(to_json(event).decode())
 
@@ -157,108 +191,32 @@ class PrefectEnsemble(_Ensemble):
         job = step.get_jobs()[job_index]
         return job.get_id()
 
-    def get_ordering(self, iens):
-        table_of_elements = []
-        for stage in self.config[ids.STAGES]:
-            for step in stage[ids.STEPS]:
-                step_input = {}
-                for name, ens_record in self.config.get("ens_records", {}).items():
-                    step_input.update({name: ens_record.records[iens].data})
-                jobs = [
-                    {
-                        ids.ID: self.get_id(
-                            iens,
-                            stage_name=stage[ids.NAME],
-                            step_name=step[ids.NAME],
-                            job_index=idx,
-                        ),
-                        **job,
-                    }
-                    for idx, job in enumerate(step.get(ids.JOBS, []))
-                ]
-                table_of_elements.append(
-                    {
-                        "iens": iens,
-                        "stage_name": stage[ids.NAME],
-                        "stage_id": self.get_id(iens, stage_name=stage[ids.NAME]),
-                        "step_id": self.get_id(
-                            iens, stage_name=stage[ids.NAME], step_name=step[ids.NAME]
-                        ),
-                        **step,
-                        ids.JOBS: jobs,
-                        "step_input": step_input,
-                    }
-                )
-
-        produced = set()
-        ordering = []
-        while table_of_elements:
-            element = next(
-                (
-                    element
-                    for element in table_of_elements
-                    if set(element.get(ids.INPUTS, [])).issubset(produced)
-                ),
-                None,
-            )
-            if element is None:
-                raise ValueError(
-                    "Could not reorder workflow, possibly a circular dependency?"
-                )
-            ordering.append(element)
-            produced = produced.union(set(element[ids.OUTPUTS]))
-            table_of_elements.remove(element)
-        return ordering
-
-    def get_step_task(self, step, ee_id, input_files, dispatch_url):
-        if step.get(ids.TYPE, ids.UNIX) == ids.FUNCTION:
-            return FunctionStep(
-                step=step,
-                url=dispatch_url,
-                ee_id=ee_id,
-                storage_config=self.config.get(ids.STORAGE),
-                on_failure=partial(self._on_task_failure, url=dispatch_url),
-                max_retries=self.config.get(ids.MAX_RETRIES, 0),
-                retry_delay=timedelta(seconds=2)
-                if self.config.get(ids.MAX_RETRIES) > 0
-                else None,
-            )
-        return UnixStep(
-            step=step,
-            resources=list(input_files[step["iens"]])
-            + self.store_resources(step[ids.RESOURCES]),
-            cmd="python3",
-            url=dispatch_url,
-            ee_id=ee_id,
-            on_failure=partial(self._on_task_failure, url=dispatch_url),
-            run_path=self.config.get(ids.RUN_PATH),
-            storage_config=self.config.get(ids.STORAGE),
-            max_retries=self.config.get(ids.MAX_RETRIES, 0),
-            retry_delay=timedelta(seconds=2)
-            if self.config.get(ids.MAX_RETRIES) > 0
-            else None,
-        )
-
     def get_flow(self, ee_id, dispatch_url, input_files, real_range):
         with Flow(f"Realization range {real_range}") as flow:
+            transmitter_map = {}
             for iens in real_range:
-                output_to_res = {}
-                ordering = self.get_ordering(iens=iens)
-                for step in ordering:
-                    inputs = [
-                        output_to_res.get(elem, []) for elem in step.get(ids.INPUTS, [])
-                    ]
-                    stage_task = self.get_step_task(
-                        step, ee_id, input_files, dispatch_url
-                    )
-                    result = stage_task(expected_res=inputs)
-
-                    for output in step.get(ids.OUTPUTS, []):
-                        output_to_res[output] = result[ids.OUTPUTS]
+                transmitter_map[iens] = {
+                    record: transmitter
+                    for record, transmitter in self.config["inputs"][iens].items()
+                }
+                for step in (
+                    self._reals[iens].get_stages()[0].get_steps_sorted_topologically()
+                ):
+                    inputs = {
+                        inp.get_name(): transmitter_map[iens][inp.get_name()]
+                        for inp in step.get_inputs()
+                    }
+                    outputs = self.config["outputs"][iens]
+                    stage_task = step.get_task(outputs, ee_id, name=str(iens))
+                    result = stage_task(inputs=inputs)
+                    self._iens_to_task[iens] = result
+                    for output in step.get_outputs():
+                        transmitter_map[iens][output.get_name()] = result[
+                            output.get_name()
+                        ]
         return flow
 
     def evaluate(self, config, ee_id):
-        self._ee_dispach_url = config.dispatch_uri
         self._ee_id = ee_id
         mp_ctx = multiprocessing.get_context(method="forkserver")
         self._eval_proc = mp_ctx.Process(
@@ -286,10 +244,13 @@ class PrefectEnsemble(_Ensemble):
                     {
                         "type": ids.EVTYPE_ENSEMBLE_STOPPED,
                         "source": f"/ert/ee/{self._ee_id}",
+                        "datacontenttype": "application/octet-stream",
                     },
+                    cloudpickle.dumps(self.config["outputs"]),
                 )
                 c.send(to_json(event).decode())
-        except Exception:
+        except Exception as e:
+            print(e)
             logger.exception(
                 "An exception occurred while starting the ensemble evaluation",
                 exc_info=True,
@@ -306,13 +267,19 @@ class PrefectEnsemble(_Ensemble):
     def run_flow(self, ee_id, dispatch_url):
         real_per_batch = self.config[ids.MAX_RUNNING]
         real_range = range(self.config[ids.REALIZATIONS])
-        input_files = self.config["input_files"]
+        input_files = None
         i = 0
+        state_map = {}
         while i < self.config[ids.REALIZATIONS]:
             realization_range = real_range[i : i + real_per_batch]
             flow = self.get_flow(ee_id, dispatch_url, input_files, realization_range)
-            flow.run(executor=_get_executor(self.config[ids.EXECUTOR]))
+            state = flow.run(executor=_get_executor(self.config[ids.EXECUTOR]))
+            for iens in realization_range:
+                state_map[iens] = state
             i = i + real_per_batch
+        for iens, task in self._iens_to_task.items():
+            for output_name, transmitter in state_map[iens].result[task].result.items():
+                self.config["outputs"][iens][output_name] = transmitter
 
     def store_resources(self, resources):
         storage = storage_driver_factory(

@@ -1,3 +1,4 @@
+from os import write
 import shutil
 from pathlib import Path
 import json
@@ -28,15 +29,22 @@ class _SharedDiskStorageDriver:
         shutil.copyfile(self._run_path / local_name, storage_uri)
         return storage_uri
 
-    def store_data(self, data, file_name, iens=None):
+    def store_data(self, data, file_name, iens=None, mime="text/json"):
         storage_path = self.get_storage_path(iens)
         storage_path.mkdir(parents=True, exist_ok=True)
         storage_uri = storage_path / file_name
         with open(storage_uri, "w") as f:
-            json.dump(data, f)
+            if mime == "text/json":
+                json.dump(data, f)
+            elif mime == "application/x-python-code":
+                # XXX: An opaque record is a list of bytes... yes
+                # sonso or dan or jond: do something about this
+                f.write(data[0].decode())
+            else:
+                raise ValueError(f"unsupported mime {mime}")
         return storage_uri
 
-    def retrieve(self, storage_uri, target=None):
+    def retrieve(self, storage_uri: Path, target=None):
         storage_uri = Path(storage_uri)
         if not (
             storage_uri.is_file() and _is_relative_to(storage_uri, self._storage_path)
