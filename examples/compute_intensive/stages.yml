@@ -1,0 +1,44 @@
+-
+  name: hash_stage
+  type: unix
+  input:
+    -
+      record: hash_input
+      location: hash_input.json
+
+  output:
+    -
+      record: hash_result
+      location: hash_result.json
+
+
+  transportable_commands:
+    -
+      name: hash
+      location: hash.py
+
+  script:
+    - hash --input hash_input.json --output hash_result.json
+
+
+-
+  name: io_test_stage
+  type: unix
+  input:
+    -
+      record: io_test_input
+      location: io_test_input.json
+
+  output:
+    -
+      record: io_test_result
+      location: io_test_result.json
+
+
+  transportable_commands:
+    -
+      name: read_write
+      location: read_write.py
+
+  script:
+    - read_write --input io_test_input.json --output io_test_result.json
