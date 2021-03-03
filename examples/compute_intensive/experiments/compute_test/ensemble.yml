@@ -1,0 +1,11 @@
+size: 4
+
+input:
+  -
+    source: storage.hash_input
+    record: hash_input
+
+forward_model:
+  driver: local
+  stages:
+    - hash_stage

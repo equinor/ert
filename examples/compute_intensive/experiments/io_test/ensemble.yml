@@ -1,0 +1,12 @@
+size: 2
+
+input:
+  -
+    source: storage.io_test_input
+    record: io_test_input
+
+forward_model:
+  driver: local
+  stages:
+    - io_test_stage
+

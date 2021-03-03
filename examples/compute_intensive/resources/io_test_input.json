@@ -1,0 +1,10 @@
+[
+    {
+        "num_files" : 3000,
+        "file_size" : 1048576
+    },
+    {
+        "num_files" : 3,
+        "file_size" : 1073741824
+    }
+]

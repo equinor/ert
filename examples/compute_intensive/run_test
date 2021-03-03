@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+ert3 init
+
+ert3 record load hash_input resources/hash_input.json
+ert3 run compute_test
+
+ert3 record load io_test_input resources/io_test_input.json
+ert3 run io_test
