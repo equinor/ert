@@ -32,8 +32,8 @@ def _obs_to_json(obs, transformation):
         },
     }
     if transformation is not None:
-        data["data"]["active"] = ({"data": transformation.active_list},)
-        data["data"]["scale"] = ({"data": transformation.scale_list},)
+        data["data"]["active"] = {"data": transformation.active_list}
+        data["data"]["scale"] = {"data": transformation.scale_list}
 
     attrs = obs.get_attributes()
     if len(attrs) > 0:
