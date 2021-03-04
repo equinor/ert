@@ -27,6 +27,7 @@ def _prepare_experiment_record(
             experiment_name=experiment_name,
             record_name=record_name,
             ensemble_record=ensemble_record,
+            record_class="parameter",
         )
     elif record_source[0] == "stochastic":
         ert3.engine.sample_record(
@@ -41,7 +42,6 @@ def _prepare_experiment_record(
 
 
 def _prepare_evaluation(ensemble, workspace_root, experiment_name):
-    parameters = {}
     for input_record in ensemble.input:
         record_name = input_record.record
         record_source = input_record.source.split(".")
@@ -49,13 +49,6 @@ def _prepare_evaluation(ensemble, workspace_root, experiment_name):
         _prepare_experiment_record(
             record_name, record_source, ensemble.size, experiment_name, workspace_root
         )
-
-        ensemble_record = ert3.storage.get_ensemble_record(
-            workspace=workspace_root,
-            experiment_name=experiment_name,
-            record_name=record_name,
-        )
-        parameters[record_name] = ensemble_record
 
 
 def _load_ensemble_parameters(ensemble, workspace):
@@ -75,7 +68,6 @@ def _load_ensemble_parameters(ensemble, workspace):
 def _prepare_sensitivity(ensemble, workspace_root, experiment_name):
     parameter_distributions = _load_ensemble_parameters(ensemble, workspace_root)
     input_records = ert3.algorithms.one_at_the_time(parameter_distributions)
-
     parameters = {param.record: [] for param in ensemble.input}
     for realization in input_records:
         assert parameters.keys() == realization.keys()
@@ -89,6 +81,7 @@ def _prepare_sensitivity(ensemble, workspace_root, experiment_name):
             experiment_name=experiment_name,
             record_name=record_name,
             ensemble_record=ensemble_record,
+            record_class="parameter",
         )
 
 
@@ -103,18 +96,9 @@ def _store_responses(workspace_root, experiment_name, responses):
 
 
 def _load_experiment_parameters(workspace_root, experiment_name):
-    parameter_names = ert3.storage.get_experiment_parameters(
+    parameters = ert3.storage.get_experiment_parameters(
         workspace=workspace_root, experiment_name=experiment_name
     )
-
-    parameters = {}
-    for parameter_name in parameter_names:
-        parameters[parameter_name] = ert3.storage.get_ensemble_record(
-            workspace=workspace_root,
-            experiment_name=experiment_name,
-            record_name=parameter_name,
-        )
-
     return ert3.data.MultiEnsembleRecord(ensemble_records=parameters)
 
 

@@ -42,6 +42,7 @@ def test_cli_no_args(tmpdir):
         ert3.console.main()
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_init(tmpdir):
     workspace = tmpdir / _POLY_WORKSPACE_NAME
     shutil.copytree(_POLY_WORKSPACE, workspace)
@@ -52,6 +53,7 @@ def test_cli_init(tmpdir):
         ert3.console.main()
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_init_twice(tmpdir):
     workspace = tmpdir / _POLY_WORKSPACE_NAME
     shutil.copytree(_POLY_WORKSPACE, workspace)
@@ -67,6 +69,7 @@ def test_cli_init_twice(tmpdir):
         assert "Already inside an ERT workspace" in str(error.value)
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_init_subfolder(tmpdir):
     workspace = tmpdir / _POLY_WORKSPACE_NAME
     shutil.copytree(_POLY_WORKSPACE, workspace)
@@ -86,6 +89,7 @@ def test_cli_init_subfolder(tmpdir):
         assert "Already inside an ERT workspace" in str(error.value)
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_run_invalid_experiment(tmpdir):
     workspace = tmpdir / _POLY_WORKSPACE_NAME
     shutil.copytree(_POLY_WORKSPACE, workspace)
@@ -102,6 +106,7 @@ def test_cli_run_invalid_experiment(tmpdir):
         assert "this-is-not-an-experiment is not an experiment" in str(error.value)
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_record_load_not_existing_file(tmpdir):
     workspace = tmpdir / _POLY_WORKSPACE_NAME
     shutil.copytree(_POLY_WORKSPACE, workspace)

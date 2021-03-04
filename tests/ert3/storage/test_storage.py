@@ -5,16 +5,19 @@ import ert3
 import pytest
 
 
+@pytest.mark.requires_ert_storage
 def test_init(tmpdir):
     ert3.storage.init(workspace=tmpdir)
 
 
+@pytest.mark.requires_ert_storage
 def test_double_init(tmpdir):
     ert3.storage.init(workspace=tmpdir)
     with pytest.raises(ValueError, match="Storage already initialized"):
         ert3.storage.init(workspace=tmpdir)
 
 
+@pytest.mark.requires_ert_storage
 def test_double_add_experiment(tmpdir):
     ert3.storage.init(workspace=tmpdir)
     ert3.storage.init_experiment(
@@ -26,6 +29,7 @@ def test_double_add_experiment(tmpdir):
         )
 
 
+@pytest.mark.requires_ert_storage
 def test_add_experiments(tmpdir):
     ert3.storage.init(workspace=tmpdir)
 
@@ -41,8 +45,20 @@ def test_add_experiments(tmpdir):
         ert3.storage.init_experiment(
             workspace=tmpdir,
             experiment_name=experiment_name,
-            parameters=experiment_parameters,
+            parameters=[],
         )
+        for param in experiment_parameters:
+            ert3.storage.add_ensemble_record(
+                workspace=tmpdir,
+                record_name=param,
+                ensemble_record=ert3.data.EnsembleRecord(
+                    records=[
+                        ert3.data.Record(data=[rid, 5 - rid]) for rid in range(0, 5)
+                    ]
+                ),
+                experiment_name=experiment_name,
+                record_class="parameter",
+            )
         expected_names = sorted(experiment_names[: idx + 1])
         retrieved_names = sorted(ert3.storage.get_experiment_names(workspace=tmpdir))
         assert expected_names == retrieved_names
@@ -50,7 +66,8 @@ def test_add_experiments(tmpdir):
         parameters = ert3.storage.get_experiment_parameters(
             workspace=tmpdir, experiment_name=experiment_name
         )
-        assert experiment_parameters == parameters
+
+        assert experiment_parameters == list(parameters.keys())
 
 
 def _assert_equal_data(a, b):
@@ -68,6 +85,7 @@ def _assert_equal_data(a, b):
         assert a == b
 
 
+@pytest.mark.requires_ert_storage
 @pytest.mark.parametrize(
     "raw_ensrec",
     (
@@ -90,6 +108,7 @@ def test_add_and_get_ensemble_record(tmpdir, raw_ensrec):
     assert ensrecord == retrieved_ensrecord
 
 
+@pytest.mark.requires_ert_storage
 def test_add_and_get_experiment_ensemble_record(tmpdir):
     ert3.storage.init(workspace=tmpdir)
 
@@ -127,6 +146,7 @@ def test_add_and_get_experiment_ensemble_record(tmpdir):
             assert ensemble_record == fetched_ensemble_record
 
 
+@pytest.mark.requires_ert_storage
 def test_get_record_names(tmpdir):
     ert3.storage.init(workspace=tmpdir)
 
@@ -149,7 +169,9 @@ def test_get_record_names(tmpdir):
             )
             experiment_records[str(experiment)].append(name)
 
-            recnames = ert3.storage.get_ensemble_record_names(
+            ens_record_names = ert3.storage.get_ensemble_record_names(
                 workspace=tmpdir, experiment_name=experiment
             )
-            assert sorted(experiment_records[str(experiment)]) == sorted(recnames)
+            assert sorted(experiment_records[str(experiment)]) == sorted(
+                ens_record_names["ensemble"]["producing"]
+            )

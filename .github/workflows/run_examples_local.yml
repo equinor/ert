@@ -1,0 +1,62 @@
+name: Run examples local
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+        os: [ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install ERT
+      run: |
+        pip install .
+
+    - name: Install ert-storage
+      run: |
+        pip install git+https://github.com/equinor/ert-storage.git
+        ert-storage &
+
+    - name: Run polynomial demo
+      run: |
+        pushd examples/polynomial
+        ./run_demo
+        popd
+
+    - name: Install Flow Simulator
+      if: matrix.os == 'ubuntu-latest' # Flow not available on macos
+      run: |
+        sudo apt-get update
+        sudo apt-get install software-properties-common
+        sudo apt-add-repository ppa:opm/ppa
+        sudo apt-get update
+        sudo apt-get install mpi-default-bin
+        sudo apt-get install libopm-simulators-bin
+
+    - name: Install spe1 dependencies
+      if: matrix.os == 'ubuntu-latest' # Flow not available on macos
+      run: |
+        pip install ecl2df
+
+    - name: Run spe1 demo
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        pushd examples/spe1
+        ./run_demo
+        popd
+

@@ -37,6 +37,11 @@ jobs:
         pip install -r dev-requirements.txt
         pip install .
 
+    - name: Install ert-storage
+      run: |
+        pip install git+https://github.com/equinor/ert-storage.git
+        ert-storage &
+
     - name: Test Ubuntu
       if: matrix.os == 'ubuntu-latest'
       env:
@@ -59,6 +64,62 @@ jobs:
         pip uninstall -y PyQt5
         ert --help
 
+  storage:
+    services:
+      postgres:
+        image: postgres:10.8
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+        - 5432/tcp
+        # needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+        os: [ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Ubuntu dependencies
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3 x11-xserver-utils herbstluftwm
+
+    - name: Install ERT and dependencies
+      run: |
+        pip install -r dev-requirements.txt
+        pip install .
+
+    - name: Start ert-storage
+      env:
+        ERT_STORAGE_DATABASE_URL: postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres
+      run: |
+        git clone https://github.com/equinor/ert-storage.git
+        pushd ert-storage
+        pip install .[postgres]
+        alembic upgrade head
+        ert-storage &
+        popd
+
+    - name: Test Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        python -m pytest -sv -m "requires_ert_storage"
 
   publish:
     name: Publish to PyPI

@@ -37,4 +37,5 @@ def sample_record(
         record_name=record_name,
         ensemble_record=ensrecord,
         experiment_name=experiment_name,
+        record_class="parameter",
     )

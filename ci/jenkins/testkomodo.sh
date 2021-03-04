@@ -21,11 +21,13 @@ start_tests () {
         export PYTEST_QT_API=pyqt4v2
     fi
     export NO_PROXY=localhost,127.0.0.1
-    
+
     # The existence of a running xvfb process will produce
     # a lock filgit ree for the default server and kill the run
     # Allow xvfb to find a new server
+    # Ert3 tests should be turned back when postgres is running on jenkins
+    # node.
     xvfb-run -s "-screen 0 640x480x24" --auto-servernum python -m \
     pytest -k "not test_gui_load and not test_formatting" \
-    -m "not requires_window_manager"
+    -m "not requires_window_manager and not requires_ert_storage"
 }

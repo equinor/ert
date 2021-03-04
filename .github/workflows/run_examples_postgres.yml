@@ -1,10 +1,22 @@
-name: Run SPE1 demo
+name: Run examples postgres
 
 on: [push, pull_request]
 
 jobs:
   build:
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:10.8
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+        - 5432/tcp
+        # needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
     strategy:
       fail-fast: false
       matrix:
@@ -40,8 +52,25 @@ jobs:
       run: |
         pip install ecl2df
 
+    - name: Start ert-storage
+      env:
+        ERT_STORAGE_DATABASE_URL: postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres
+      run: |
+        git clone https://github.com/equinor/ert-storage.git
+        pushd ert-storage
+        pip install .[postgres]
+        alembic upgrade head
+        ert-storage &
+        popd
+
+    - name: Run polynomial demo
+      run: |
+        pushd examples/polynomial
+        ./run_demo
+        popd
     - name: Run spe1 demo
       run: |
         pushd examples/spe1
         ./run_demo
         popd
+
