@@ -10,6 +10,9 @@ import numpy as np
 import pathlib
 import ert3.workspace
 
+import subprocess
+import time
+import requests
 
 POLY_SCRIPT = """
 #!/usr/bin/env python
@@ -33,7 +36,7 @@ def polynomial(coefficients):
 
 
 @pytest.fixture()
-def workspace(tmpdir):
+def workspace(tmpdir, ert_storage):
     workspace = tmpdir / "polynomial"
     workspace.mkdir()
     workspace.chdir()
@@ -235,3 +238,27 @@ def assert_sensitivity_oat_export(
     # Note: This test assumes the forward model in the setup indeed
     # evaluates a * x^2 + b * x + c. If not, this will fail miserably!
     assert_poly_output(export_data)
+
+
+@pytest.fixture
+def ert_storage(request, tmpdir):
+    env = os.environ.copy()
+    env["ERT_STORAGE_DATABASE_URL"] = f"sqlite:///{tmpdir}/ert.db"
+    process = subprocess.Popen(["uvicorn", "ert_storage.app:app"], env=env)
+
+    def shut_down():
+        process.terminate()
+        process.wait()
+
+    request.addfinalizer(shut_down)
+    for _ in range(20):
+        try:
+            r = requests.get("http://127.0.0.1:8000/healthcheck")
+            if r.status_code == 200:
+                break
+        except requests.exceptions.ConnectionError:
+            pass
+        time.sleep(0.5)
+    else:
+        raise requests.exceptions.ConnectionError("Ert-storage not starting")
+    yield

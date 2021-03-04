@@ -28,6 +28,7 @@ def get_inputs(coeffs):
     return ert3.data.MultiEnsembleRecord(ensemble_records=input_records)
 
 
+@pytest.mark.requires_ert_storage
 @pytest.mark.parametrize("coeffs, expected", TEST_PARAMETRIZATION)
 def test_evaluator_script(workspace, stages_config, ensemble, coeffs, expected):
     input_records = get_inputs(coeffs)
@@ -51,6 +52,7 @@ def test_evaluator_script(workspace, stages_config, ensemble, coeffs, expected):
     assert expected == evaluation_responses
 
 
+@pytest.mark.requires_ert_storage
 @pytest.mark.parametrize("coeffs, expected", TEST_PARAMETRIZATION)
 def test_evaluator_function(
     workspace, function_stages_config, ensemble, coeffs, expected

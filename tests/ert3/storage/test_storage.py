@@ -6,17 +6,20 @@ import ert3
 import pytest
 
 
-def test_init(tmpdir):
+@pytest.mark.requires_ert_storage
+def test_init(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
 
 
-def test_double_init(tmpdir):
+@pytest.mark.requires_ert_storage
+def test_double_init(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
     with pytest.raises(ValueError, match="Storage already initialized"):
         ert3.storage.init(workspace=tmpdir)
 
 
-def test_double_add_experiment(tmpdir):
+@pytest.mark.requires_ert_storage
+def test_double_add_experiment(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
     ert3.storage.init_experiment(
         workspace=tmpdir, experiment_name="my_experiment", parameters=[]
@@ -27,7 +30,8 @@ def test_double_add_experiment(tmpdir):
         )
 
 
-def test_add_experiments(tmpdir):
+@pytest.mark.requires_ert_storage
+def test_add_experiments(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
 
     experiment_names = ["a", "b", "c", "super-experiment", "explosions"]
@@ -69,6 +73,7 @@ def _assert_equal_data(a, b):
         assert a == b
 
 
+@pytest.mark.requires_ert_storage
 @pytest.mark.parametrize(
     "raw_ensrec",
     (
@@ -77,7 +82,7 @@ def _assert_equal_data(a, b):
         [{"data": {2: i + 0.5, 5: i + 1.1, 7: i + 2.2}} for i in range(2)],
     ),
 )
-def test_add_and_get_ensemble_record(tmpdir, raw_ensrec):
+def test_add_and_get_ensemble_record(tmpdir, raw_ensrec, ert_storage):
     ert3.storage.init(workspace=tmpdir)
 
     ensrecord = ert3.data.EnsembleRecord(records=raw_ensrec)
@@ -91,7 +96,8 @@ def test_add_and_get_ensemble_record(tmpdir, raw_ensrec):
     assert ensrecord == retrieved_ensrecord
 
 
-def test_add_and_get_experiment_ensemble_record(tmpdir):
+@pytest.mark.requires_ert_storage
+def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
 
     for eid in range(1, 2):
@@ -128,7 +134,8 @@ def test_add_and_get_experiment_ensemble_record(tmpdir):
             assert ensemble_record == fetched_ensemble_record
 
 
-def test_get_record_names(tmpdir):
+@pytest.mark.requires_ert_storage
+def test_get_record_names(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
 
     experiment_records = collections.defaultdict(list)
@@ -156,7 +163,8 @@ def test_get_record_names(tmpdir):
             assert sorted(experiment_records[str(experiment)]) == sorted(recnames)
 
 
-def test_delete_experiment(tmpdir):
+@pytest.mark.requires_ert_storage
+def test_delete_experiment(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
     ert3.storage.init_experiment(
         workspace=tmpdir, experiment_name="test", parameters=[]
