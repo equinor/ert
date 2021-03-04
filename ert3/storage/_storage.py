@@ -4,9 +4,14 @@ import os
 from pathlib import Path
 from typing import Any, Iterable, Optional, Union
 import yaml
+import requests
+import io
 
+from typing import List
 
 _STORAGE_FILE = "storage.yaml"
+_STORAGE_URL = "http://localhost:8000"
+
 
 _DATA = "__data__"
 _PARAMETERS = "__parameters__"
@@ -54,7 +59,15 @@ def init_experiment(
     if experiment_name in storage:
         raise KeyError(f"Cannot initialize existing experiment: {experiment_name}")
 
-    storage[experiment_name] = {_PARAMETERS: list(parameters), _DATA: {}}
+    response = requests.post(
+        url=f"{_STORAGE_URL}/ensembles", json={"parameters": list(parameters)}
+    )
+
+    storage[experiment_name] = {
+        _PARAMETERS: list(parameters),
+        _DATA: {},
+        "id": response.json()["id"],
+    }
 
     with open(storage_location, "w") as f:
         yaml.dump(storage, f)
@@ -74,7 +87,7 @@ def get_experiment_names(*, workspace: Union[str, Path]) -> Iterable[str]:
 
 
 def _add_data(
-    workspace: Union[str, Path], experiment_name: str, data_type: str, data: Any
+    workspace: Union[str, Path], experiment_name: str, record_name: str, data: Any
 ) -> None:
     storage_location = _generate_storage_location(workspace)
     _assert_storage_initialized(storage_location)
@@ -84,22 +97,25 @@ def _add_data(
 
     if experiment_name not in storage:
         raise KeyError(
-            f"Cannot add {data_type} data to non-existing experiment: {experiment_name}"
+            f"Cannot add {record_name} data to "
+            f"non-existing experiment: {experiment_name}"
         )
 
-    experiment_data = storage[experiment_name][_DATA]
+    ensemble_id = storage[experiment_name]["id"]
 
-    if data_type in experiment_data:
-        msg = f"{data_type} data is already stored for experiment"
-        raise KeyError(msg.capitalize())
+    response = requests.post(
+        url=f"{_STORAGE_URL}/ensembles/{ensemble_id}/records/{record_name}/file",
+        files={"file": (record_name, io.StringIO(data), "something")},
+    )
+    if response.status_code == 409:
+        raise KeyError("Record already exists")
 
-    experiment_data[data_type] = data
-
-    with open(storage_location, "w") as f:
-        yaml.dump(storage, f)
+    assert response.status_code == 200
 
 
-def _get_data(workspace: Union[str, Path], experiment_name: str, data_type: str) -> Any:
+def _get_data(
+    workspace: Union[str, Path], experiment_name: str, record_name: str
+) -> Any:
     storage_location = _generate_storage_location(workspace)
     _assert_storage_initialized(storage_location)
 
@@ -108,13 +124,19 @@ def _get_data(workspace: Union[str, Path], experiment_name: str, data_type: str)
 
     if experiment_name not in storage:
         raise KeyError(
-            f"Cannot get {data_type} data, no experiment named: {experiment_name}"
+            f"Cannot get {record_name} data, no experiment named: {experiment_name}"
         )
 
-    if data_type not in storage[experiment_name][_DATA]:
-        raise KeyError(f"No {data_type} data for experiment: {experiment_name}")
+    ensemble_id = storage[experiment_name]["id"]
 
-    return storage[experiment_name][_DATA][data_type]
+    response = requests.get(
+        url=f"{_STORAGE_URL}/ensembles/{ensemble_id}/records/{record_name}"
+    )
+
+    if response.status_code == 404:
+        raise KeyError(f"No {record_name} data for experiment: {experiment_name}")
+
+    return response.content
 
 
 def add_ensemble_record(
@@ -157,8 +179,9 @@ def get_ensemble_record_names(
         raise KeyError(
             f"Cannot get record names of non-existing experiment: {experiment_name}"
         )
-
-    return list(str(key) for key in storage[experiment_name][_DATA].keys())
+    ensemble_id = storage[experiment_name]["id"]
+    response = requests.get(url=f"{_STORAGE_URL}/ensembles/{ensemble_id}/records")
+    return list(response.json().keys())
 
 
 def get_experiment_parameters(
@@ -174,8 +197,10 @@ def get_experiment_parameters(
         raise KeyError(
             f"Cannot get parameters from non-existing experiment: {experiment_name}"
         )
+    ensemble_id = storage[experiment_name]["id"]
+    response = requests.get(url=f"{_STORAGE_URL}/ensembles/{ensemble_id}/parameters")
 
-    return list(str(pname) for pname in storage[experiment_name][_PARAMETERS])
+    return list(response.json())
 
 
 def delete_experiment(*, workspace: Union[str, Path], experiment_name: str) -> None:

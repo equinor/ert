@@ -1,0 +1,98 @@
+name: Run polynomial demo
+
+on: [push, pull_request]
+
+jobs:
+  local:
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+        os: [ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install ERT
+      run: |
+        pip install .
+
+    - name: Install ert-storage
+      run: |
+        # ert-storage is not in pypi yet, pip install shold go away when it is
+        pip install git+https://github.com/equinor/ert-storage.git
+        ert-storage &
+
+    - name: Run polynomial demo
+      run: |
+        pushd examples/polynomial
+        ./run_demo
+        popd
+
+  postgres:
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:10.8
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+        - 5432/tcp
+        # needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.6]
+        os: [ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install ERT
+      run: |
+        pip install .
+
+    - name: Install ert-storage
+      run: |
+        pip install git+https://github.com/equinor/ert-storage.git
+
+    - name: Start postgres ert-storage
+      env:
+        ERT_STORAGE_DATABASE_URL: postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres
+      run: |
+        # installing psycopg2 from ert-storage extras
+        pip install psycopg2
+        ert-storage alembic upgrade head
+
+    - name: Start ert-storage
+      run: |
+        ert-storage &
+
+    - name: Run polynomial demo
+      run: |
+        pushd examples/polynomial
+        ./run_demo
+        popd

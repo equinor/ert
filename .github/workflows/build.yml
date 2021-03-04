@@ -37,6 +37,11 @@ jobs:
         pip install -r dev-requirements.txt
         pip install .
 
+    - name: Install ert-storage
+      run: |
+        # ert-storage is not in pypi yet, pip install shold go away when it is
+        pip install git+https://github.com/equinor/ert-storage.git
+
     - name: Test Ubuntu
       if: matrix.os == 'ubuntu-latest'
       env:

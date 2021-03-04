@@ -28,14 +28,16 @@ def test_cli_no_args():
         ert3.console.main()
 
 
-def test_cli_init(tmpdir):
+@pytest.mark.requires_ert_storage
+def test_cli_init(tmpdir, ert_storage):
     with tmpdir.as_cwd():
         args = ["ert3", "init"]
         with patch.object(sys, "argv", args):
             ert3.console.main()
 
 
-def test_cli_init_twice(tmpdir):
+@pytest.mark.requires_ert_storage
+def test_cli_init_twice(tmpdir, ert_storage):
     with tmpdir.as_cwd():
         args = ["ert3", "init"]
         with patch.object(sys, "argv", args):
@@ -49,6 +51,7 @@ def test_cli_init_twice(tmpdir):
                 ert3.console._console._main()
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_init_subfolder(workspace):
     workspace.mkdir("sub_folder").chdir()
     args = ["ert3", "init"]
@@ -60,6 +63,7 @@ def test_cli_init_subfolder(workspace):
             ert3.console._console._main()
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_run_invalid_experiment(workspace):
     args = ["ert3", "run", "this-is-not-an-experiment"]
     with patch.object(sys, "argv", args):
@@ -70,6 +74,7 @@ def test_cli_run_invalid_experiment(workspace):
             ert3.console._console._main()
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_record_load_not_existing_file(workspace):
     args = [
         "ert3",
@@ -110,6 +115,7 @@ def _assert_done_or_pending(captured, experiments, done_indices):
             assert experiment in pending
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_status_no_runs(workspace, capsys):
     experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
     experiments_folder.mkdir("E0")
@@ -122,6 +128,7 @@ def test_cli_status_no_runs(workspace, capsys):
     _assert_done_or_pending(capsys.readouterr(), experiments, [])
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_status_some_runs(workspace, capsys):
     experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
     experiments_folder.mkdir("E0")
@@ -143,6 +150,7 @@ def test_cli_status_some_runs(workspace, capsys):
     _assert_done_or_pending(capsys.readouterr(), experiments, [1, 3])
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_status_all_run(workspace, capsys):
     experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
     experiments_folder.mkdir("E0")
@@ -161,6 +169,7 @@ def test_cli_status_all_run(workspace, capsys):
     _assert_done_or_pending(capsys.readouterr(), experiments, range(len(experiments)))
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_status_no_experiments(workspace, capsys):
     workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
 
@@ -172,6 +181,7 @@ def test_cli_status_no_experiments(workspace, capsys):
     assert captured.out.strip() == "No experiments present in this workspace"
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_status_no_experiments_root(workspace):
     args = ["ert3", "status"]
     with patch.object(sys, "argv", args):
@@ -182,6 +192,7 @@ def test_cli_status_no_experiments_root(workspace):
             ert3.console._console._main()
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_clean_no_runs(workspace):
     experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
     experiments_folder.mkdir("E0")
@@ -195,6 +206,7 @@ def test_cli_clean_no_runs(workspace):
     assert ert3.storage.get_experiment_names(workspace=workspace) == set()
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_clean_all(workspace):
     experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
     experiments = {"E0", " E1"}
@@ -227,6 +239,7 @@ def test_cli_clean_all(workspace):
         ).exists()
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_clean_one(workspace):
     experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
     experiments = {"E0", " E1"}
@@ -260,6 +273,7 @@ def test_cli_clean_one(workspace):
     ).exists()
 
 
+@pytest.mark.requires_ert_storage
 def test_cli_clean_non_existant_experiment(workspace, capsys):
     experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
     experiments = {"E0", " E1"}

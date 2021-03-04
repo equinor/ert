@@ -111,6 +111,7 @@ def designed_coeffs_record_file(workspace):
     yield doe_dir / "coefficients_record.json"
 
 
+@pytest.mark.requires_ert_storage
 def test_run_once_polynomial_evaluation(
     workspace,
     ensemble,
@@ -131,12 +132,14 @@ def test_run_once_polynomial_evaluation(
         )
 
 
+@pytest.mark.requires_ert_storage
 def test_export_not_run(workspace):
     (workspace / ert3.workspace.EXPERIMENTS_BASE / "evaluation").ensure(dir=True)
     with pytest.raises(ValueError, match="Cannot export experiment"):
         ert3.engine.export(pathlib.Path(), "evaluation")
 
 
+@pytest.mark.requires_ert_storage
 def test_export_polynomial_evaluation(
     workspace,
     ensemble,
@@ -153,6 +156,7 @@ def test_export_polynomial_evaluation(
     assert_export(workspace, "evaluation", ensemble, stages_config)
 
 
+@pytest.mark.requires_ert_storage
 def test_export_uniform_polynomial_evaluation(
     workspace,
     uniform_ensemble,
@@ -174,6 +178,7 @@ def test_export_uniform_polynomial_evaluation(
     assert_export(workspace, "uniform_evaluation", uniform_ensemble, stages_config)
 
 
+@pytest.mark.requires_ert_storage
 def test_gaussian_distribution(
     workspace, big_ensemble, stages_config, gaussian_parameters_file
 ):
@@ -189,8 +194,12 @@ def test_gaussian_distribution(
     )
 
 
+@pytest.mark.requires_ert_storage
 def test_uniform_distribution(
-    workspace, presampled_big_ensemble, stages_config, uniform_parameters_file
+    workspace,
+    presampled_big_ensemble,
+    stages_config,
+    uniform_parameters_file,
 ):
     ert3.engine.sample_record(
         workspace, "uniform_coefficients", "uniform_coefficients0", 1000
@@ -206,6 +215,7 @@ def test_uniform_distribution(
     )
 
 
+@pytest.mark.requires_ert_storage
 def test_run_presampled(
     workspace,
     presampled_ensemble,
@@ -250,6 +260,7 @@ def test_run_presampled(
             assert coeff.data[key] == export_coeff[key]
 
 
+@pytest.mark.requires_ert_storage
 def test_run_uniform_presampled(
     workspace,
     presampled_uniform_ensemble,
@@ -295,11 +306,13 @@ def test_run_uniform_presampled(
             assert coeff.data[key] == export_coeff[key]
 
 
+@pytest.mark.requires_ert_storage
 def test_sample_unknown_parameter_group(workspace, uniform_parameters_file):
     with pytest.raises(ValueError, match="No parameter group found named: coeffs"):
         ert3.engine.sample_record(workspace, "coeffs", "coefficients0", 100)
 
 
+@pytest.mark.requires_ert_storage
 def test_sample_unknown_distribution(workspace, gaussian_parameters_file):
     with open(workspace / "parameters.yml") as f:
         parameters = yaml.safe_load(f)
@@ -311,6 +324,7 @@ def test_sample_unknown_distribution(workspace, gaussian_parameters_file):
         ert3.engine.sample_record(workspace, "coefficients", "coefficients0", 100)
 
 
+@pytest.mark.requires_ert_storage
 def test_record_load_and_run(
     workspace,
     doe_ensemble,
@@ -348,6 +362,7 @@ def test_record_load_and_run(
             assert coeff.data[key] == export_coeff[key]
 
 
+@pytest.mark.requires_ert_storage
 def test_record_load_twice(
     workspace, ensemble, stages_config, designed_coeffs_record_file
 ):
@@ -358,6 +373,7 @@ def test_record_load_twice(
             ert3.engine.load_record(workspace, "designed_coefficients", record_file)
 
 
+@pytest.mark.requires_ert_storage
 def test_sensitivity_run_and_export(
     workspace,
     sensitivity_ensemble,
