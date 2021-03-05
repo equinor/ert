@@ -7,6 +7,7 @@ env:
 
 jobs:
   build:
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
