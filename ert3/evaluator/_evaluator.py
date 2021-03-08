@@ -30,11 +30,13 @@ def _assert_single_stage_forward_model(stages_config, ensemble):
     assert len(ensemble.forward_model.stages) == 1
 
 
-def _prepare_input(ee_config, stages_config, inputs, evaluation_tmp_dir):
+def _prepare_input(ee_config, stages_config, inputs, evaluation_tmp_dir, ensemble):
+    stage_name = ensemble.forward_model.stages[0]
+    stage_config = next(stage for stage in stages_config if stage.name == stage_name)
     tmp_input_folder = evaluation_tmp_dir / "prep_input_files"
     os.makedirs(tmp_input_folder)
     ee_storage = storage_driver_factory(ee_config["storage"], tmp_input_folder)
-    record2location = {input.record: input.location for input in stages_config[0].input}
+    record2location = {input.record: input.location for input in stage_config.input}
     input_files = {iens: () for iens in range(ee_config["realizations"])}
     for record_name in inputs.record_names:
         for iens, record in enumerate(inputs.ensemble_records[record_name].records):
@@ -112,7 +114,7 @@ def _build_ee_config(evaluation_tmp_dir, ensemble, stages_config, input_records)
     }
 
     ee_config["input_files"] = _prepare_input(
-        ee_config, stages_config, input_records, evaluation_tmp_dir
+        ee_config, stages_config, input_records, evaluation_tmp_dir, ensemble
     )
     ee_config["ens_records"] = input_records.ensemble_records
 
