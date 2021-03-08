@@ -221,7 +221,11 @@ class LegacyTracker:
             self._iter_queue[iter_] = None
 
         if self._iter_queue[iter_] is None and queue is not None:
-            self._iter_queue[iter_] = queue
+            # This function might be called when the iteration on the run model
+            # has been updated, but the queue has yet to be updated. Hence we check that a
+            # queue with the same hash is not found in the map before setting it.
+            if hash(queue) not in (hash(q) for q in self._iter_queue.values()):
+                self._iter_queue[iter_] = queue
 
     def _set_iter_snapshot(self, iter_, snapshot: typing.Optional[Snapshot]) -> None:
         if iter_ < 0:
