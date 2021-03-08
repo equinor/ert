@@ -1,5 +1,7 @@
 import pathlib
 import os
+import stat
+
 import shutil
 import numbers
 
@@ -13,10 +15,6 @@ from tests.ert3.engine.integration.conftest import (
     assert_sensitivity_oat_export,
     assert_export,
     assert_distribution,
-)
-
-_EXAMPLES_ROOT = (
-    pathlib.Path(os.path.dirname(__file__)) / ".." / ".." / ".." / ".." / "examples"
 )
 
 
@@ -61,7 +59,7 @@ def presampled_ensemble(base_ensemble_dict):
 @pytest.fixture()
 def doe_ensemble(base_ensemble_dict):
     base_ensemble_dict["input"][0]["source"] = "storage.designed_coefficients"
-    base_ensemble_dict["size"] = 1000
+    base_ensemble_dict["size"] = 10
     yield ert3.config.load_ensemble_config(base_ensemble_dict)
 
 
@@ -80,7 +78,22 @@ def presampled_big_ensemble(base_ensemble_dict):
 
 
 @pytest.fixture()
-def stages_config():
+def poly_script():
+    yield """
+#!/usr/bin/env python
+import json
+import sys
+with open(sys.argv[2], "r") as f:
+    coefficients = json.load(f)
+a, b, c = coefficients["a"], coefficients["b"], coefficients["c"]
+result = tuple(a * x ** 2 + b * x + c for x in range(10))
+with open(sys.argv[4], "w") as f:
+    json.dump(result, f)
+"""
+
+
+@pytest.fixture()
+def stages_config(poly_script):
     config_list = [
         {
             "name": "evaluate_polynomial",
@@ -96,7 +109,12 @@ def stages_config():
             ],
         }
     ]
-    shutil.copy2(_EXAMPLES_ROOT / "polynomial" / "poly.py", "poly.py")
+    script_file = "poly.py"
+    with open(script_file, "w") as fout:
+        fout.write(poly_script)
+    st = os.stat(script_file)
+    os.chmod(script_file, st.st_mode | stat.S_IEXEC)
+
     yield ert3.config.load_stages_config(config_list)
 
 
@@ -150,6 +168,16 @@ def workspace(tmpdir):
     workspace.chdir()
     ert3.workspace.initialize(workspace)
     yield workspace
+
+
+@pytest.fixture()
+def designed_coeffs_record(workspace):
+    doe_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "doe"
+    doe_dir.ensure(dir=True)
+    coeffs = [{"a": x, "b": x, "c": x} for x in range(10)]
+    with open(doe_dir / "coefficients_record.json", "w") as f:
+        json.dump(coeffs, f)
+    yield (doe_dir / "coefficients_record.json")
 
 
 def test_run_once_polynomial_evaluation(
@@ -353,25 +381,19 @@ def test_sample_unknown_distribution(workspace, gaussian_parameters_file):
 
 
 def test_record_load_and_run(
-    workspace, doe_ensemble, stages_config, evaluation_experiment_config
+    workspace,
+    doe_ensemble,
+    stages_config,
+    evaluation_experiment_config,
+    designed_coeffs_record,
 ):
-    doe_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "doe"
-    doe_dir.ensure(dir=True)
-    coeffs_file = (
-        _EXAMPLES_ROOT
-        / "polynomial"
-        / ert3.workspace.EXPERIMENTS_BASE
-        / "doe"
-        / "coefficients_record.json"
-    )
-    shutil.copy(coeffs_file, doe_dir)
-    with open(doe_dir / "coefficients_record.json") as rs:
-        ert3.engine.load_record(workspace, "designed_coefficients", rs)
+    record_file = designed_coeffs_record.open("r")
+    ert3.engine.load_record(workspace, "designed_coefficients", record_file)
 
     designed_coeff = ert3.storage.get_ensemble_record(
         workspace=workspace, record_name="designed_coefficients"
     )
-    assert 1000 == designed_coeff.ensemble_size
+    assert 10 == designed_coeff.ensemble_size
     for real_coeff in designed_coeff.records:
         assert sorted(("a", "b", "c")) == sorted(real_coeff.index)
         for val in real_coeff.data.values():
@@ -395,24 +417,12 @@ def test_record_load_and_run(
             assert coeff.data[key] == export_coeff[key]
 
 
-def test_record_load_twice(workspace, ensemble, stages_config):
-    doe_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "doe"
-    doe_dir.ensure(dir=True)
-    coeffs_file = (
-        _EXAMPLES_ROOT
-        / "polynomial"
-        / ert3.workspace.EXPERIMENTS_BASE
-        / "doe"
-        / "coefficients_record.json"
-    )
-    shutil.copy(coeffs_file, doe_dir)
-
-    with open(doe_dir / "coefficients_record.json") as rs:
-        ert3.engine.load_record(workspace, "designed_coefficients", rs)
-
-    with open(doe_dir / "coefficients_record.json") as rs:
-        with pytest.raises(KeyError):
-            ert3.engine.load_record(workspace, "designed_coefficients", rs)
+def test_record_load_twice(workspace, ensemble, stages_config, designed_coeffs_record):
+    record_file = designed_coeffs_record.open("r")
+    ert3.engine.load_record(workspace, "designed_coefficients", record_file)
+    record_file = designed_coeffs_record.open("r")
+    with pytest.raises(KeyError):
+        ert3.engine.load_record(workspace, "designed_coefficients", record_file)
 
 
 def test_sensitivity_run_and_export(
