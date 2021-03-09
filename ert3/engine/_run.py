@@ -1,8 +1,14 @@
 import ert3
 from ert3.engine import _utils
+import pathlib
+from typing import List, Mapping
 
 
-def _prepare_experiment(workspace_root, experiment_name, ensemble):
+def _prepare_experiment(
+    workspace_root: pathlib.Path,
+    experiment_name: str,
+    ensemble: ert3.config.EnsembleConfig,
+):
     if ert3.workspace.experiment_have_run(workspace_root, experiment_name):
         raise ValueError(f"Experiment {experiment_name} have been carried out.")
 
@@ -15,8 +21,12 @@ def _prepare_experiment(workspace_root, experiment_name, ensemble):
 
 
 def _prepare_experiment_record(
-    record_name, record_source, ensemble_size, experiment_name, workspace_root
-):
+    record_name: str,
+    record_source: List[str],
+    ensemble_size: int,
+    experiment_name: str,
+    workspace_root: pathlib.Path,
+) -> None:
     if record_source[0] == "storage":
         assert len(record_source) == 2
         ensemble_record = ert3.storage.get_ensemble_record(
@@ -40,8 +50,14 @@ def _prepare_experiment_record(
         raise ValueError("Unknown record source location {}".format(record_source[0]))
 
 
-def _prepare_evaluation(ensemble, workspace_root, experiment_name):
-    parameters = {}
+def _prepare_evaluation(
+    ensemble: ert3.config.EnsembleConfig,
+    workspace_root: pathlib.Path,
+    experiment_name: str,
+) -> None:
+    # This reassures mypy that the ensemble size is defined
+    assert ensemble.size is not None
+
     for input_record in ensemble.input:
         record_name = input_record.record
         record_source = input_record.source.split(".")
@@ -51,7 +67,10 @@ def _prepare_evaluation(ensemble, workspace_root, experiment_name):
         )
 
 
-def _load_ensemble_parameters(ensemble, workspace):
+def _load_ensemble_parameters(
+    ensemble: ert3.config.EnsembleConfig,
+    workspace: pathlib.Path,
+) -> Mapping[str, ert3.stats.Distribution]:
     parameters = _utils.load_parameters(workspace)
 
     ensemble_parameters = {}
@@ -65,11 +84,17 @@ def _load_ensemble_parameters(ensemble, workspace):
     return ensemble_parameters
 
 
-def _prepare_sensitivity(ensemble, workspace_root, experiment_name):
+def _prepare_sensitivity(
+    ensemble: ert3.config.EnsembleConfig,
+    workspace_root: pathlib.Path,
+    experiment_name: str,
+) -> None:
     parameter_distributions = _load_ensemble_parameters(ensemble, workspace_root)
     input_records = ert3.algorithms.one_at_the_time(parameter_distributions)
 
-    parameters = {param.record: [] for param in ensemble.input}
+    parameters: Mapping[str, List[ert3.data.Record]] = {
+        param.record: [] for param in ensemble.input
+    }
     for realization in input_records:
         assert parameters.keys() == realization.keys()
         for record_name in realization:
@@ -85,7 +110,11 @@ def _prepare_sensitivity(ensemble, workspace_root, experiment_name):
         )
 
 
-def _store_responses(workspace_root, experiment_name, responses):
+def _store_responses(
+    workspace_root: pathlib.Path,
+    experiment_name: str,
+    responses: ert3.data.MultiEnsembleRecord,
+) -> None:
     for record_name in responses.record_names:
         ert3.storage.add_ensemble_record(
             workspace=workspace_root,
@@ -95,7 +124,10 @@ def _store_responses(workspace_root, experiment_name, responses):
         )
 
 
-def _load_experiment_parameters(workspace_root, experiment_name):
+def _load_experiment_parameters(
+    workspace_root: pathlib.Path,
+    experiment_name: str,
+) -> ert3.data.MultiEnsembleRecord:
     parameter_names = ert3.storage.get_experiment_parameters(
         workspace=workspace_root, experiment_name=experiment_name
     )
@@ -111,7 +143,12 @@ def _load_experiment_parameters(workspace_root, experiment_name):
     return ert3.data.MultiEnsembleRecord(ensemble_records=parameters)
 
 
-def _evaluate(ensemble, stages_config, workspace_root, experiment_name):
+def _evaluate(
+    ensemble: ert3.config.EnsembleConfig,
+    stages_config: ert3.config.StagesConfig,
+    workspace_root: pathlib.Path,
+    experiment_name: str,
+) -> None:
     parameters = _load_experiment_parameters(workspace_root, experiment_name)
     responses = ert3.evaluator.evaluate(
         workspace_root, experiment_name, parameters, ensemble, stages_config
@@ -119,7 +156,13 @@ def _evaluate(ensemble, stages_config, workspace_root, experiment_name):
     _store_responses(workspace_root, experiment_name, responses)
 
 
-def run(ensemble, stages_config, experiment_config, workspace_root, experiment_name):
+def run(
+    ensemble: ert3.config.EnsembleConfig,
+    stages_config: ert3.config.StagesConfig,
+    experiment_config: ert3.config.ExperimentConfig,
+    workspace_root: pathlib.Path,
+    experiment_name: str,
+) -> None:
     _prepare_experiment(workspace_root, experiment_name, ensemble)
 
     if experiment_config.type == "evaluation":
