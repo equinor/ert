@@ -7,7 +7,7 @@ from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Job
 from ert_shared.status.entity.state import JOB_STATE_FAILURE, JOB_STATE_START
 from PyQt5.QtCore import QModelIndex
 from pytestqt.qt_compat import qt_api
-from tests.gui.models.conftest import partial_snapshot
+from tests.gui.conftest import partial_snapshot
 
 
 def _id_to_col(identifier):
