@@ -35,7 +35,7 @@ from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_STARTED,
     JOB_STATE_FAILURE,
     JOB_STATE_FINISHED,
-    REALIZATION_STATE_UNKNOWN,
+    JOB_STATE_START,
     queue_status_to_real_state,
 )
 from ert_shared.status.utils import tracker_progress
@@ -48,7 +48,11 @@ logger = logging.getLogger(__name__)
 _THE_EMPTY_DETAILED_PROGRESS = ({}, -1)
 
 
-_JOB_LEGACY_STATUS_MAP = {"Success": JOB_STATE_FINISHED, "Failure": JOB_STATE_FAILURE}
+_JOB_LEGACY_STATUS_MAP = {
+    "Waiting": JOB_STATE_START,
+    "Success": JOB_STATE_FINISHED,
+    "Failure": JOB_STATE_FAILURE,
+}
 
 
 def _map_job_state(legacy_state: str) -> str:
@@ -163,7 +167,7 @@ class LegacyTracker:
             for index in range(0, len(forward_model)):
                 ext_job = forward_model.iget_job(index)
                 step.jobs[str(index)] = _Job(
-                    name=ext_job.name(), status=REALIZATION_STATE_UNKNOWN, data={}
+                    name=ext_job.name(), status=JOB_STATE_START, data={}
                 )
 
             progress = iter_to_progress[iter_].get(iens, None)

@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QModelIndex
 from ert_gui.model.real_list import RealListModel
-from tests.gui.models.conftest import partial_snapshot
+from tests.gui.conftest import partial_snapshot
 from ert_gui.model.snapshot import NodeRole, SnapshotModel
 from pytestqt.qt_compat import qt_api
 from ert_shared.status.entity.state import (
