@@ -1,9 +1,100 @@
+import os
+import stat
+
 import json
 import yaml
 import pytest
-import numpy as np
+import sys
 
+import numpy as np
+from pathlib import Path
 import ert3.workspace
+
+
+POLY_SCRIPT = """
+#!/usr/bin/env python
+import json
+import sys
+with open(sys.argv[2], "r") as f:
+    coefficients = json.load(f)
+a, b, c = coefficients["a"], coefficients["b"], coefficients["c"]
+result = tuple(a * x ** 2 + b * x + c for x in range(10))
+with open(sys.argv[4], "w") as f:
+    json.dump(result, f)
+"""
+
+POLY_FUNCTION = """
+def polynomial(coefficients):
+    return tuple(
+        coefficients["a"] * x ** 2 + coefficients["b"] * x + coefficients["c"]
+        for x in range(10)
+    )
+"""
+
+
+@pytest.fixture()
+def workspace(tmpdir):
+    workspace = tmpdir / "polynomial"
+    workspace.mkdir()
+    workspace.chdir()
+    ert3.workspace.initialize(workspace)
+    yield workspace
+
+@pytest.fixture()
+def base_ensemble_dict():
+    yield {
+        "size": 10,
+        "input": [{"source": "stochastic.coefficients", "record": "coefficients"}],
+        "forward_model": {"driver": "local", "stages": ["evaluate_polynomial"]},
+    }
+
+
+@pytest.fixture()
+def ensemble(base_ensemble_dict):
+    yield ert3.config.load_ensemble_config(base_ensemble_dict)
+
+@pytest.fixture()
+def script_stages_config():
+    config_list = [
+        {
+            "name": "evaluate_polynomial",
+            "type": "unix",
+            "input": [{"record": "coefficients", "location": "coefficients.json"}],
+            "output": [{"record": "polynomial_output", "location": "output.json"}],
+            "script": ["poly --coefficients coefficients.json --output output.json"],
+            "transportable_commands": [
+                {
+                    "name": "poly",
+                    "location": "poly.py",
+                }
+            ],
+        }
+    ]
+    script_file = Path("poly.py")
+    script_file.write_text(POLY_SCRIPT)
+    st = os.stat(script_file)
+    os.chmod(script_file, st.st_mode | stat.S_IEXEC)
+
+    yield ert3.config.load_stages_config(config_list)
+
+@pytest.fixture()
+def function_stages_config():
+    config_list = [
+        {
+            "name": "evaluate_polynomial",
+            "type": "function",
+            "input": [{"record": "coefficients", "location": "coeffs"}],
+            "output": [{"record": "polynomial_output", "location": "output"}],
+            "function": "function_steps.functions:polynomial",
+        }
+    ]
+    func_dir = Path("function_steps")
+    func_dir.mkdir()
+    (func_dir / "__init__.py").write_text("")
+    (func_dir / "functions.py").write_text(POLY_FUNCTION)
+    sys.path.append(os.getcwd())
+
+    yield ert3.config.load_stages_config(config_list)
 
 
 def load_experiment_config(workspace, ensemble_config, stages_config):
