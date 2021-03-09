@@ -26,7 +26,7 @@ def _prepare_export(workspace_root, experiment_name, parameter_names, response_n
     return data
 
 
-def export(workspace_root, experiment_name):
+def export(workspace_root: Path, experiment_name: str) -> None:
     experiment_root = (
         Path(workspace_root) / ert3.workspace.EXPERIMENTS_BASE / experiment_name
     )

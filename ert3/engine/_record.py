@@ -1,11 +1,13 @@
 import ert3
 from ert3.engine import _utils
 
+from pathlib import Path
 import json
+from typing import Optional, TextIO
 import yaml
 
 
-def load_record(workspace, record_name, record_file):
+def load_record(workspace: Path, record_name: str, record_file: TextIO) -> None:
     raw_ensrecord = json.load(record_file)
 
     record_file.close()
@@ -21,8 +23,12 @@ def load_record(workspace, record_name, record_file):
 
 
 def sample_record(
-    workspace, parameter_group_name, record_name, ensemble_size, experiment_name=None
-):
+    workspace: Path,
+    parameter_group_name: str,
+    record_name: str,
+    ensemble_size: int,
+    experiment_name: Optional[str] = None,
+) -> None:
     parameters = _utils.load_parameters(workspace)
 
     if parameter_group_name not in parameters:
