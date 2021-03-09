@@ -1,7 +1,14 @@
-from PyQt5.QtCore import QModelIndex
-from tests.gui.models.conftest import partial_snapshot
-from ert_gui.model.snapshot import NodeRole, SnapshotModel
+from ert_gui.model.snapshot import RealJobColorHint, SnapshotModel
+from ert_shared.ensemble_evaluator.entity.snapshot import _Job, PartialSnapshot
+from ert_shared.status.entity.state import (
+    COLOR_PENDING,
+    COLOR_RUNNING,
+    JOB_STATE_RUNNING,
+)
 from pytestqt.qt_compat import qt_api
+from qtpy.QtCore import QModelIndex
+from qtpy.QtGui import QColor
+from tests.gui.conftest import partial_snapshot
 
 
 def test_using_qt_model_tester(qtmodeltester, full_snapshot):
@@ -40,7 +47,7 @@ def test_realization_job_hint(full_snapshot):
     model._add_snapshot(full_snapshot, 0)
 
     partial = PartialSnapshot(full_snapshot)
-    partial.update_job("0", "0", "0", "0", Job(status=JOB_STATE_RUNNING))
+    partial.update_job("0", "0", "0", "0", status=JOB_STATE_RUNNING)
     model._add_partial_snapshot(partial, 0)
 
     first_real = model.index(0, 0, model.index(0, 0))
