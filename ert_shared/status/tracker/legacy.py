@@ -137,9 +137,9 @@ class LegacyTracker:
                 f"run_context iter ({iter_}) and detailed_progress ({progress_iter} iter differed"
             )
 
-        try:
-            queue_snapshot = self._model._job_queue.snapshot()
-        except AttributeError:
+        if iter_ in self._iter_queue and self._iter_queue[iter_] is not None:
+            queue_snapshot = self._iter_queue[iter_].snapshot()
+        else:
             queue_snapshot = None
 
         enumerated = 0
