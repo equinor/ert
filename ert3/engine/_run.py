@@ -9,7 +9,7 @@ def _prepare_experiment(
     experiment_name: str,
     ensemble: ert3.config.EnsembleConfig,
 ):
-    if ert3.workspace.experiment_have_run(workspace_root, experiment_name):
+    if ert3.workspace.experiment_has_run(workspace_root, experiment_name):
         raise ValueError(f"Experiment {experiment_name} have been carried out.")
 
     parameter_names = [elem.record for elem in ensemble.input]

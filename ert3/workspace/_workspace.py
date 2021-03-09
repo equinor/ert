@@ -24,7 +24,20 @@ def assert_experiment_exists(workspace_root, experiment_name):
         )
 
 
-def experiment_have_run(workspace_root, experiment_name):
+def get_experiment_names(workspace_root):
+    experiment_base = Path(workspace_root) / ert3.workspace.EXPERIMENTS_BASE
+    if not experiment_base.is_dir():
+        raise ert3.exceptions.IllegalWorkspaceState(
+            f"the workspace {workspace_root} cannot access experiments"
+        )
+    return {
+        experiment.name
+        for experiment in experiment_base.iterdir()
+        if experiment.is_dir()
+    }
+
+
+def experiment_has_run(workspace_root, experiment_name):
     experiments = ert3.storage.get_experiment_names(workspace=workspace_root)
     return experiment_name in experiments
 
