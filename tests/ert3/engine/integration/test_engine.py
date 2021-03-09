@@ -1,6 +1,4 @@
 import pathlib
-import os
-import stat
 
 import shutil
 import numbers
@@ -11,25 +9,14 @@ import yaml
 import pytest
 
 import ert3
-from tests.ert3.engine.integration.conftest import (
+from tests.ert3.conftest import (
     assert_sensitivity_oat_export,
     assert_export,
     assert_distribution,
+    base_ensemble_dict,
+    ensemble,
+    script_stages_config as stages_config,
 )
-
-
-@pytest.fixture()
-def base_ensemble_dict():
-    yield {
-        "size": 10,
-        "input": [{"source": "stochastic.coefficients", "record": "coefficients"}],
-        "forward_model": {"driver": "local", "stages": ["evaluate_polynomial"]},
-    }
-
-
-@pytest.fixture()
-def ensemble(base_ensemble_dict):
-    yield ert3.config.load_ensemble_config(base_ensemble_dict)
 
 
 @pytest.fixture()
@@ -78,47 +65,6 @@ def presampled_big_ensemble(base_ensemble_dict):
 
 
 @pytest.fixture()
-def poly_script():
-    yield """
-#!/usr/bin/env python
-import json
-import sys
-with open(sys.argv[2], "r") as f:
-    coefficients = json.load(f)
-a, b, c = coefficients["a"], coefficients["b"], coefficients["c"]
-result = tuple(a * x ** 2 + b * x + c for x in range(10))
-with open(sys.argv[4], "w") as f:
-    json.dump(result, f)
-"""
-
-
-@pytest.fixture()
-def stages_config(poly_script):
-    config_list = [
-        {
-            "name": "evaluate_polynomial",
-            "type": "unix",
-            "input": [{"record": "coefficients", "location": "coefficients.json"}],
-            "output": [{"record": "polynomial_output", "location": "output.json"}],
-            "script": ["poly --coefficients coefficients.json --output output.json"],
-            "transportable_commands": [
-                {
-                    "name": "poly",
-                    "location": "poly.py",
-                }
-            ],
-        }
-    ]
-    script_file = "poly.py"
-    with open(script_file, "w") as fout:
-        fout.write(poly_script)
-    st = os.stat(script_file)
-    os.chmod(script_file, st.st_mode | stat.S_IEXEC)
-
-    yield ert3.config.load_stages_config(config_list)
-
-
-@pytest.fixture()
 def evaluation_experiment_config():
     raw_config = {"type": "evaluation"}
     yield ert3.config.load_experiment_config(raw_config)
@@ -159,15 +105,6 @@ def uniform_parameters_file():
     ]
     with open("parameters.yml", "w") as fout:
         yaml.dump(content, fout)
-
-
-@pytest.fixture()
-def workspace(tmpdir):
-    workspace = tmpdir / "polynomial"
-    workspace.mkdir()
-    workspace.chdir()
-    ert3.workspace.initialize(workspace)
-    yield workspace
 
 
 @pytest.fixture()
