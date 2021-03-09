@@ -50,13 +50,6 @@ def _prepare_evaluation(ensemble, workspace_root, experiment_name):
             record_name, record_source, ensemble.size, experiment_name, workspace_root
         )
 
-        ensemble_record = ert3.storage.get_ensemble_record(
-            workspace=workspace_root,
-            experiment_name=experiment_name,
-            record_name=record_name,
-        )
-        parameters[record_name] = ensemble_record
-
 
 def _load_ensemble_parameters(ensemble, workspace):
     parameters = _utils.load_parameters(workspace)
