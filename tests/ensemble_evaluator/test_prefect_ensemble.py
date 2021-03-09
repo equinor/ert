@@ -4,15 +4,12 @@ import os
 import os.path
 import yaml
 import pytest
-import asyncio
-import websockets
 import threading
 import json
 import copy
 from datetime import timedelta
 from functools import partial
 from itertools import permutations
-from unittest.mock import patch
 from prefect import Flow
 from tests.utils import SOURCE_DIR, tmp
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
@@ -27,6 +24,7 @@ from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
 )
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.prefect_ensemble.client import Client
+from tests.ensemble_evaluator.conftest import _mock_ws
 
 
 def parse_config(path):
@@ -205,52 +203,6 @@ def test_get_flow(coefficients):
                         ) < task_ids.index(
                             _get_ids(ensemble, iens, "sum_coeffs", "add_coeffs")
                         )
-
-
-def _mock_ws(host, port, messages):
-    loop = asyncio.new_event_loop()
-    done = loop.create_future()
-
-    async def _handler(websocket, path):
-        while True:
-            msg = await websocket.recv()
-            messages.append(msg)
-            if msg == "stop":
-                done.set_result(None)
-                break
-
-    async def _run_server():
-        async with websockets.serve(_handler, host, port):
-            await done
-
-    loop.run_until_complete(_run_server())
-    loop.close()
-
-
-def test_prefect_client(unused_tcp_port):
-    host = "localhost"
-    url = f"ws://{host}:{unused_tcp_port}"
-    messages = []
-    mock_ws_thread = threading.Thread(
-        target=partial(_mock_ws, messages=messages), args=(host, unused_tcp_port)
-    )
-
-    mock_ws_thread.start()
-    messages_c1 = ["test_1", "test_2", "test_3", "stop"]
-
-    with Client(url) as c1:
-        for msg in messages_c1:
-            c1.send(msg)
-
-    with Client(url, max_retries=2, timeout_multiplier=1) as c2:
-        c2.send("after_ws_stoped")
-
-    mock_ws_thread.join()
-
-    for msg in messages_c1:
-        assert msg in messages
-
-    assert "after_ws_stoped" not in messages
 
 
 def test_unix_step(unused_tcp_port):
