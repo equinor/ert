@@ -2,6 +2,7 @@ import websockets
 from websockets import ConnectionClosedOK
 import asyncio
 import cloudevents
+from websockets.exceptions import ConnectionClosed
 
 
 class Client:
@@ -24,18 +25,20 @@ class Client:
         return await websockets.connect(self.url)
 
     async def _send(self, msg):
-        for retry in range(self._max_retries):
+        for retry in range(self._max_retries + 1):
             try:
                 if self.websocket is None:
                     self.websocket = await self.get_websocket()
                 await self.websocket.send(msg)
                 return
-            except (ConnectionError, OSError):
-                await asyncio.sleep(0.2 + self._timeout_multiplier * retry)
-                self.websocket = None
             except ConnectionClosedOK:
                 # Connection was closed no point in trying to send more messages
-                return
+                raise
+            except (ConnectionClosed, ConnectionRefusedError, OSError):
+                if retry == self._max_retries:
+                    raise
+                await asyncio.sleep(0.2 + self._timeout_multiplier * retry)
+                self.websocket = None
 
     def send(self, msg):
         self.loop.run_until_complete(self._send(msg))
