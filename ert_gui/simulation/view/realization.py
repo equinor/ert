@@ -1,3 +1,4 @@
+import math
 from qtpy.QtCore import QRect, QSize, QModelIndex, Qt, QRect, Signal
 from qtpy.QtWidgets import (
     QStyledItemDelegate,
@@ -8,7 +9,7 @@ from qtpy.QtWidgets import (
     QWidget,
     QVBoxLayout,
 )
-from qtpy.QtGui import QPainter, QColorConstants, QPen
+from qtpy.QtGui import QPainter, QColorConstants, QPen, QColor
 from ert_gui.model.snapshot import (
     RealJobColorHint,
     RealStatusColorHint,
@@ -22,8 +23,8 @@ class RealizationWidget(QWidget):
         super(RealizationWidget, self).__init__(parent)
 
         self._iter = iter
-        self._delegateWidth = 50
-        self._delegateHeight = 50
+        self._delegateWidth = 70
+        self._delegateHeight = 70
 
         self._real_view = QListView(self)
         self._real_view.setViewMode(QListView.IconMode)
@@ -36,8 +37,8 @@ class RealizationWidget(QWidget):
         self._real_view.setWrapping(True)
         self._real_view.setResizeMode(QListView.Adjust)
 
-        self._real_view.currentChanged = (
-            lambda current, previous: self.currentChanged.emit(current)
+        self._real_view.currentChanged = lambda current, _: self.currentChanged.emit(
+            current
         )
 
         layout = QVBoxLayout()
@@ -67,6 +68,7 @@ class RealizationDelegate(QStyledItemDelegate):
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
 
         text = index.data(RealLabelHint)
+        colors = index.data(RealJobColorHint)
 
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing, True)
@@ -78,29 +80,23 @@ class RealizationDelegate(QStyledItemDelegate):
 
         if option.state & QStyle.State_Selected:
 
+            # selection outline
             select_color = QColorConstants.Blue
-
             painter.setBrush(select_color)
             painter.setPen(border_pen)
             painter.drawRect(option.rect)
 
+            # job status
             margin = 5
-            r2 = QRect(
+            rect = QRect(
                 option.rect.x() + margin,
                 option.rect.y() + margin,
                 option.rect.width() - (margin * 2),
                 option.rect.height() - (margin * 2),
             )
-            painter.fillRect(r2, index.data(RealStatusColorHint))
+            painter.fillRect(rect, index.data(RealStatusColorHint))
 
-            margin = 10
-            r = QRect(
-                option.rect.x() + margin,
-                option.rect.y() + margin,
-                option.rect.width() - (margin * 2),
-                option.rect.height() - (margin * 2),
-            )
-            painter.fillRect(r, index.data(RealJobColorHint))
+            self._paint_inner_grid(painter, option.rect, colors)
 
             text_pen = QPen()
             text_pen.setColor(select_color)
@@ -108,24 +104,42 @@ class RealizationDelegate(QStyledItemDelegate):
             painter.drawText(option.rect, Qt.AlignCenter, text)
 
         else:
+            # # job status
             painter.setBrush(index.data(RealStatusColorHint))
             painter.setPen(border_pen)
             painter.drawRect(option.rect)
 
-            margin = 10
-            r = QRect(
-                option.rect.x() + margin,
-                option.rect.y() + margin,
-                option.rect.width() - (margin * 2),
-                option.rect.height() - (margin * 2),
-            )
-            painter.fillRect(r, index.data(RealJobColorHint))
+            self._paint_inner_grid(painter, option.rect, colors)
 
             text_pen = QPen()
+            text_pen.setColor(QColorConstants.Black)
             painter.setPen(text_pen)
             painter.drawText(option.rect, Qt.AlignCenter, text)
 
         painter.restore()
+
+    def _paint_inner_grid(self, painter: QPainter, rect: QRect, colors) -> None:
+        margin = 10
+        inner_grid_w = self._size.width() - (margin * 2)
+        inner_grid_h = self._size.height() - (margin * 2)
+        inner_grid_x = rect.x() + margin
+        inner_grid_y = rect.y() + margin
+        job_nr = len(colors)
+        grid_dim = math.ceil(math.sqrt(job_nr))
+        w = math.ceil(inner_grid_w / grid_dim)
+        h = math.ceil(inner_grid_h / grid_dim)
+        k = 0
+        for y in range(grid_dim):
+            for x in range(grid_dim):
+                x_pos = inner_grid_x + (x * w)
+                y_pos = inner_grid_y + (y * h)
+                rect = QRect(x_pos, y_pos, w, h)
+                if k >= job_nr:
+                    color = QColorConstants.Gray
+                else:
+                    color = colors[k]
+                painter.fillRect(rect, color)
+                k += 1
 
     def sizeHint(self, option, index) -> QSize:
         return self._size

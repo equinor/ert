@@ -53,19 +53,6 @@ COLUMNS = {
     NodeType.JOB: [],
 }
 
-# The statuses of all jobs for a realization is mapped to these colors, and the
-# color with highest priority (lowest index) is picked to represent the
-# realization.
-_COLORS_ORDERED_BY_PRIORITY = [
-    state.COLOR_FAILED,
-    state.COLOR_RUNNING,
-    state.COLOR_UNKNOWN,
-    state.COLOR_WAITING,
-    state.COLOR_PENDING,
-    state.COLOR_NOT_ACTIVE,
-    state.COLOR_FINISHED,
-]
-
 
 class SnapshotModel(QAbstractItemModel):
     def __init__(self, parent=None) -> None:
@@ -239,18 +226,14 @@ class SnapshotModel(QAbstractItemModel):
 
     def _real_data(self, index: QModelIndex, node: Node, role: int):
         if role == RealJobColorHint:
-            color_index = len(_COLORS_ORDERED_BY_PRIORITY) - 1
+            colors = []
             for stage in node.children.values():
                 for step in stage.children.values():
-                    for job in step.children.values():
-                        status = job.data[ids.STATUS]
-                        color_index = min(
-                            color_index,
-                            _COLORS_ORDERED_BY_PRIORITY.index(
-                                state.REAL_STATE_TO_COLOR[status]
-                            ),
-                        )
-            return QColor(*_COLORS_ORDERED_BY_PRIORITY[color_index])
+                    for job_id in sorted(step.children.keys(), key=int):
+                        status = step.children[job_id].data[ids.STATUS]
+                        color = state.JOB_STATE_TO_COLOR[status]
+                        colors.append(QColor(*color))
+            return colors
         elif role == RealLabelHint:
             return str(node.id)
         elif role == RealIens:
