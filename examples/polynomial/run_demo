@@ -4,10 +4,22 @@ set -e
 ert3 init
 
 ert3 run evaluation
-ert3 export evaluation
+ert3 status
 
+ert3 clean evaluation
+ert3 status
+
+ert3 run evaluation
+ert3 run uniform_evaluation
+ert3 status
+
+ert3 clean --all
+ert3 status
+ert3 run evaluation
+ert3 export evaluation
 ert3 run uniform_evaluation
 ert3 export uniform_evaluation
+ert3 status
 
 ert3 record load designed_coefficients experiments/doe/coefficients_record.json
 ert3 run doe

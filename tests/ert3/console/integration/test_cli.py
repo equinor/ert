@@ -180,3 +180,123 @@ def test_cli_status_no_experiments_root(workspace):
             match=f"the workspace {workspace} cannot access experiments",
         ):
             ert3.console._console._main()
+
+
+def test_cli_clean_no_runs(workspace):
+    experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
+    experiments_folder.mkdir("E0")
+
+    assert ert3.storage.get_experiment_names(workspace=workspace) == set()
+
+    args = ["ert3", "status"]
+    with patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    assert ert3.storage.get_experiment_names(workspace=workspace) == set()
+
+
+def test_cli_clean_all(workspace):
+    experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
+    experiments = {"E0", " E1"}
+    for experiment in experiments:
+        experiments_folder.mkdir(experiment)
+
+    experiments = ert3.workspace.get_experiment_names(workspace)
+
+    for experiment in experiments:
+        ert3.storage.init_experiment(
+            workspace=workspace, experiment_name=experiment, parameters=[]
+        )
+        ert3.evaluator._evaluator._create_evaluator_tmp_dir(
+            workspace, experiment
+        ).mkdir(parents=True)
+        assert ert3.evaluator._evaluator._create_evaluator_tmp_dir(
+            workspace, experiment
+        ).exists()
+
+    assert ert3.storage.get_experiment_names(workspace=workspace) == experiments
+
+    args = ["ert3", "clean", "--all"]
+    with patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    assert ert3.storage.get_experiment_names(workspace=workspace) == set()
+    for experiment in experiments:
+        assert not ert3.evaluator._evaluator._create_evaluator_tmp_dir(
+            workspace, experiment
+        ).exists()
+
+
+def test_cli_clean_one(workspace):
+    experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
+    experiments = {"E0", " E1"}
+    for experiment in experiments:
+        experiments_folder.mkdir(experiment)
+        ert3.storage.init_experiment(
+            workspace=workspace, experiment_name=experiment, parameters=[]
+        )
+        ert3.evaluator._evaluator._create_evaluator_tmp_dir(
+            workspace, experiment
+        ).mkdir(parents=True)
+        assert ert3.evaluator._evaluator._create_evaluator_tmp_dir(
+            workspace, experiment
+        ).exists()
+
+    assert ert3.storage.get_experiment_names(workspace=workspace) == experiments
+
+    deleted_experiment = experiments.pop()
+
+    args = ["ert3", "clean", deleted_experiment]
+    with patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    assert ert3.storage.get_experiment_names(workspace=workspace) == experiments
+    for experiment in experiments:
+        assert ert3.evaluator._evaluator._create_evaluator_tmp_dir(
+            workspace, experiment
+        ).exists()
+    assert not ert3.evaluator._evaluator._create_evaluator_tmp_dir(
+        workspace, deleted_experiment
+    ).exists()
+
+
+def test_cli_clean_non_existant_experiment(workspace, capsys):
+    experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
+    experiments = {"E0", " E1"}
+    for experiment in experiments:
+        experiments_folder.mkdir(experiment)
+
+    for experiment in experiments:
+        ert3.storage.init_experiment(
+            workspace=workspace, experiment_name=experiment, parameters=[]
+        )
+        ert3.evaluator._evaluator._create_evaluator_tmp_dir(
+            workspace, experiment
+        ).mkdir(parents=True)
+        assert ert3.evaluator._evaluator._create_evaluator_tmp_dir(
+            workspace, experiment
+        ).exists()
+
+    assert ert3.storage.get_experiment_names(workspace=workspace) == experiments
+
+    deleted_experiment = experiments.pop()
+
+    args = ["ert3", "clean", deleted_experiment, "non_existant_experiment"]
+    with patch.object(sys, "argv", args):
+        ert3.console.main()
+
+    assert ert3.storage.get_experiment_names(workspace=workspace) == experiments
+    for experiment in experiments:
+        assert ert3.evaluator._evaluator._create_evaluator_tmp_dir(
+            workspace, experiment
+        ).exists()
+    assert not ert3.evaluator._evaluator._create_evaluator_tmp_dir(
+        workspace, deleted_experiment
+    ).exists()
+
+    captured = capsys.readouterr()
+    assert (
+        captured.out.strip() == "Following experiment(s) did not exist:\n"
+        "    non_existant_experiment\n"
+        "Perhaps you mistyped an experiment name?"
+    )
