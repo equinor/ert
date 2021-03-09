@@ -65,7 +65,8 @@ class Monitor:
                     self._snapshot = event.snapshot
                 self._progress = event.progress
             elif isinstance(event, SnapshotUpdateEvent):
-                self._snapshot.merge_event(event.partial_snapshot)
+                if event.partial_snapshot is not None:
+                    self._snapshot.merge_event(event.partial_snapshot)
                 self._print_progress(event)
             if isinstance(event, EndEvent):
                 self._print_result(event.failed, event.failed_msg)
