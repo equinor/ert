@@ -67,7 +67,7 @@ class MultipleDataAssimilation(BaseRunModel):
         weight_string = ", ".join(str(round(weight, 3)) for weight in weights)
         logger.info("Running MDA ES on (weights normalized)\t%s" % weight_string)
 
-        self.setPhaseCount(iteration_count + 2)  # pre + post + weights
+        self.setPhaseCount(iteration_count + 1)  # weights + post
         phase_string = "Running MDA ES %d iteration%s." % (
             iteration_count,
             ("s" if (iteration_count != 1) else ""),
@@ -104,7 +104,7 @@ class MultipleDataAssimilation(BaseRunModel):
         )
         self._simulateAndPostProcess(run_context, arguments, update_id=update_id)
 
-        self.setPhase(iteration_count + 2, "Simulations completed.")
+        self.setPhase(iteration_count + 1, "Simulations completed.")
 
         return run_context
 
