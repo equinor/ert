@@ -52,6 +52,17 @@ def _build_status_argparser(subparsers):
     subparsers.add_parser("status", help="Report the status of all experiments")
 
 
+def _build_clean_argparser(subparsers):
+    export_parser = subparsers.add_parser("clean", help="Clean experiments")
+    group = export_parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "experiment_names", nargs="*", default=[], help="Name of the experiment(s)"
+    )
+    group.add_argument(
+        "--all", action="store_true", default=False, help="Clean all experiments"
+    )
+
+
 def _build_argparser():
     parser = argparse.ArgumentParser(description=_ERT3_DESCRIPTION)
     subparsers = parser.add_subparsers(dest="sub_cmd", help="ert3 commands")
@@ -61,6 +72,7 @@ def _build_argparser():
     _build_export_argparser(subparsers)
     _build_record_argparser(subparsers)
     _build_status_argparser(subparsers)
+    _build_clean_argparser(subparsers)
 
     return parser
 
@@ -105,6 +117,11 @@ def _status(workspace, args):
     ert3.console.status(workspace)
 
 
+def _clean(workspace, args):
+    assert args.sub_cmd == "clean"
+    ert3.console.clean(workspace, args.experiment_names, args.all)
+
+
 def main():
     try:
         _main()
@@ -138,6 +155,8 @@ def _main():
         _record(workspace, args)
     elif args.sub_cmd == "status":
         _status(workspace, args)
+    elif args.sub_cmd == "clean":
+        _clean(workspace, args)
     else:
         raise NotImplementedError(f"No implementation to handle command {args.sub_cmd}")
 

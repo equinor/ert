@@ -1,6 +1,7 @@
 import json
 import os
 import pathlib
+import shutil
 
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
@@ -180,3 +181,9 @@ def evaluate(
     responses = _prepare_responses(results)
 
     return responses
+
+
+def cleanup(workspace_root, evaluation_name):
+    tmp_dir = _create_evaluator_tmp_dir(workspace_root, evaluation_name)
+    if tmp_dir.exists():
+        shutil.rmtree(tmp_dir)

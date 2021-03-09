@@ -1,4 +1,5 @@
 import collections
+from ert3 import workspace
 
 import ert3
 
@@ -153,3 +154,24 @@ def test_get_record_names(tmpdir):
                 workspace=tmpdir, experiment_name=experiment
             )
             assert sorted(experiment_records[str(experiment)]) == sorted(recnames)
+
+
+def test_delete_experiment(tmpdir):
+    ert3.storage.init(workspace=tmpdir)
+    ert3.storage.init_experiment(
+        workspace=tmpdir, experiment_name="test", parameters=[]
+    )
+
+    assert "test" in ert3.storage.get_experiment_names(workspace=tmpdir)
+
+    with pytest.raises(
+        ert3.exceptions.NonExistantExperiment,
+        match="Experiment does not exist: does_not_exist",
+    ):
+        ert3.storage.delete_experiment(
+            workspace=tmpdir, experiment_name="does_not_exist"
+        )
+
+    ert3.storage.delete_experiment(workspace=tmpdir, experiment_name="test")
+
+    assert "test" not in ert3.storage.get_experiment_names(workspace=tmpdir)

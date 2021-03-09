@@ -5,10 +5,15 @@ class ErtError(Exception):
 
 
 class IllegalWorkspaceOperation(ErtError):
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
         self.message = "{}".format(message)
 
 
 class IllegalWorkspaceState(ErtError):
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
+        self.message = "{}".format(message)
+
+
+class NonExistantExperiment(IllegalWorkspaceOperation):
+    def __init__(self, message: str) -> None:
         self.message = "{}".format(message)

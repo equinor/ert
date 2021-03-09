@@ -176,3 +176,20 @@ def get_experiment_parameters(
         )
 
     return list(str(pname) for pname in storage[experiment_name][_PARAMETERS])
+
+
+def delete_experiment(*, workspace: Union[str, Path], experiment_name: str) -> None:
+    storage_location = _generate_storage_location(workspace)
+    _assert_storage_initialized(storage_location)
+
+    with open(storage_location) as f:
+        storage = yaml.safe_load(f)
+
+    if experiment_name in storage:
+        del storage[experiment_name]
+        with open(storage_location, "w") as f:
+            yaml.dump(storage, f)
+    else:
+        raise ert3.exceptions.NonExistantExperiment(
+            f"Experiment does not exist: {experiment_name}"
+        )
