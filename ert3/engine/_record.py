@@ -7,10 +7,8 @@ from typing import Optional, TextIO
 import yaml
 
 
-def load_record(workspace: Path, record_name: str, record_file: TextIO) -> None:
-    raw_ensrecord = json.load(record_file)
-
-    record_file.close()
+def load_record(workspace: Path, record_name: str, record_stream: TextIO) -> None:
+    raw_ensrecord = json.load(record_stream)
 
     ensrecord = ert3.data.EnsembleRecord(
         records=[ert3.data.Record(data=raw_record) for raw_record in raw_ensrecord]
