@@ -56,7 +56,7 @@ def ensemble(base_ensemble_dict):
 
 
 @pytest.fixture()
-def script_stages_config():
+def stages_config():
     config_list = [
         {
             "name": "evaluate_polynomial",

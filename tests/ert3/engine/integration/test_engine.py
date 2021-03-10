@@ -1,21 +1,15 @@
 import pathlib
-
-import shutil
 import numbers
-
 import json
 import yaml
-
 import pytest
 
 import ert3
+
 from tests.ert3.conftest import (
     assert_sensitivity_oat_export,
     assert_export,
     assert_distribution,
-    base_ensemble_dict,
-    ensemble,
-    script_stages_config as stages_config,
 )
 
 

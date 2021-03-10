@@ -1,18 +1,5 @@
-import os
-import pathlib
 import pytest
-import shutil
-import yaml
-
 import ert3
-
-from tests.ert3.conftest import (
-    workspace,
-    base_ensemble_dict,
-    ensemble,
-    script_stages_config,
-    function_stages_config,
-)
 
 
 TEST_PARAMETRIZATION = [
@@ -42,7 +29,7 @@ def get_inputs(coeffs):
 
 
 @pytest.mark.parametrize("coeffs, expected", TEST_PARAMETRIZATION)
-def test_evaluator_script(workspace, script_stages_config, ensemble, coeffs, expected):
+def test_evaluator_script(workspace, stages_config, ensemble, coeffs, expected):
     input_records = get_inputs(coeffs)
     ensemble.size = len(coeffs)
 
@@ -51,7 +38,7 @@ def test_evaluator_script(workspace, script_stages_config, ensemble, coeffs, exp
         "test_evaluation",
         input_records,
         ensemble,
-        script_stages_config,
+        stages_config,
     )
 
     expected = ert3.data.MultiEnsembleRecord(
