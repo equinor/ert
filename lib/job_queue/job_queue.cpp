@@ -886,7 +886,7 @@ static void handle_run_jobs(job_queue_type * queue, int num_total_run, bool verb
     potentially be quite high while running the DONE callback - should therefor not use
     too many threads.
   */
-  const int NUM_WORKER_THREADS = 4;
+  const int NUM_WORKER_THREADS = 1;
   queue->work_pool = thread_pool_alloc(NUM_WORKER_THREADS, true);
   res_log_debug("Allocated thread pool in job_queue_run_jobs");
 

@@ -20,7 +20,7 @@ Module implementing a queue for managing external jobs.
 from res.job_queue import JobStatusType
 from threading import BoundedSemaphore
 
-CONCURRENT_INTERNALIZATION = 10
+CONCURRENT_INTERNALIZATION = 1
 
 
 # TODO: there's no need for this class, all the behavior belongs in the queue
