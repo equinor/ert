@@ -1,13 +1,9 @@
 import ert3
 
-import os
-import pathlib
 import pytest
-import shutil
 import sys
 from pathlib import Path
 from unittest.mock import patch
-from tests.ert3.conftest import workspace
 
 _POLY_WORKSPACE_NAME = "polynomial"
 
@@ -57,14 +53,14 @@ def test_cli_init_twice(tmpdir):
 
 def test_cli_init_subfolder(tmpdir):
     with tmpdir.as_cwd():
-        workspace = tmpdir / _POLY_WORKSPACE_NAME
-        workspace.mkdir()
-        workspace.chdir()
+        project_folder = tmpdir / _POLY_WORKSPACE_NAME
+        project_folder.mkdir()
+        project_folder.chdir()
         args = ["ert3", "init"]
         with patch.object(sys, "argv", args):
             ert3.console.main()
 
-        subfolder = workspace / "subfolder"
+        subfolder = project_folder / "subfolder"
         subfolder.mkdir()
         subfolder.chdir()
 
