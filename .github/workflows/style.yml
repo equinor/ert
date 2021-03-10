@@ -21,9 +21,14 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install flake8
         python -m pip install black
+        python -m pip install pylint
     - name: Lint with flake8
       run: |
         flake8 ert3 tests/ert3
     - name: Run black
       run: |
         black . --check
+    - name: Run pylint
+      run: |
+        pip install .  # We need the dependencies of ERT to avoid import-error
+        pylint ert3
