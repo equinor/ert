@@ -7,7 +7,7 @@ import pytest
 import sys
 
 import numpy as np
-from pathlib import Path
+import pathlib
 import ert3.workspace
 
 
@@ -72,7 +72,7 @@ def stages_config():
             ],
         }
     ]
-    script_file = Path("poly.py")
+    script_file = pathlib.Path("poly.py")
     script_file.write_text(POLY_SCRIPT)
     st = os.stat(script_file)
     os.chmod(script_file, st.st_mode | stat.S_IEXEC)
@@ -91,7 +91,7 @@ def function_stages_config():
             "function": "function_steps.functions:polynomial",
         }
     ]
-    func_dir = Path("function_steps")
+    func_dir = pathlib.Path("function_steps")
     func_dir.mkdir()
     (func_dir / "__init__.py").write_text("")
     (func_dir / "functions.py").write_text(POLY_FUNCTION)
