@@ -7,12 +7,9 @@ import shutil
 import sys
 from pathlib import Path
 from unittest.mock import patch
+from tests.ert3.conftest import workspace
 
-_EXAMPLES_ROOT = (
-    pathlib.Path(os.path.dirname(__file__)) / ".." / ".." / ".." / ".." / "examples"
-)
 _POLY_WORKSPACE_NAME = "polynomial"
-_POLY_WORKSPACE = _EXAMPLES_ROOT / _POLY_WORKSPACE_NAME
 
 
 @pytest.mark.parametrize(
@@ -22,11 +19,7 @@ _POLY_WORKSPACE = _EXAMPLES_ROOT / _POLY_WORKSPACE_NAME
         ["ert3", "export", "something"],
     ],
 )
-def test_cli_no_init(tmpdir, args):
-    workspace = tmpdir / _POLY_WORKSPACE_NAME
-    shutil.copytree(_POLY_WORKSPACE, workspace)
-    workspace.chdir()
-
+def test_cli_no_init(args):
     with patch.object(sys, "argv", args):
         with pytest.raises(
             ert3.exceptions.IllegalWorkspaceOperation,
@@ -35,55 +28,45 @@ def test_cli_no_init(tmpdir, args):
             ert3.console._console._main()
 
 
-def test_cli_no_args(tmpdir):
-    workspace = tmpdir / _POLY_WORKSPACE_NAME
-    shutil.copytree(_POLY_WORKSPACE, workspace)
-    workspace.chdir()
-
+def test_cli_no_args():
     args = ["ert3"]
     with patch.object(sys, "argv", args):
         ert3.console.main()
 
 
 def test_cli_init(tmpdir):
-    workspace = tmpdir / _POLY_WORKSPACE_NAME
-    shutil.copytree(_POLY_WORKSPACE, workspace)
-    workspace.chdir()
-
-    args = ["ert3", "init"]
-    with patch.object(sys, "argv", args):
-        ert3.console.main()
+    with tmpdir.as_cwd():
+        args = ["ert3", "init"]
+        with patch.object(sys, "argv", args):
+            ert3.console.main()
 
 
 def test_cli_init_twice(tmpdir):
-    workspace = tmpdir / _POLY_WORKSPACE_NAME
-    shutil.copytree(_POLY_WORKSPACE, workspace)
-    workspace.chdir()
+    with tmpdir.as_cwd():
+        args = ["ert3", "init"]
+        with patch.object(sys, "argv", args):
+            ert3.console.main()
 
-    args = ["ert3", "init"]
-    with patch.object(sys, "argv", args):
-        ert3.console.main()
-
-    with patch.object(sys, "argv", args):
-        with pytest.raises(
-            ert3.exceptions.IllegalWorkspaceOperation,
+        with patch.object(sys, "argv", args):
+            with pytest.raises(
+                ert3.exceptions.IllegalWorkspaceOperation,
             match="Already inside an ERT workspace",
         ):
             ert3.console._console._main()
 
 
 def test_cli_init_subfolder(tmpdir):
-    workspace = tmpdir / _POLY_WORKSPACE_NAME
-    shutil.copytree(_POLY_WORKSPACE, workspace)
-    workspace.chdir()
+    with tmpdir.as_cwd():
+        workspace = tmpdir / _POLY_WORKSPACE_NAME
+        workspace.mkdir()
+        workspace.chdir()
+        args = ["ert3", "init"]
+        with patch.object(sys, "argv", args):
+            ert3.console.main()
 
-    args = ["ert3", "init"]
-    with patch.object(sys, "argv", args):
-        ert3.console.main()
-
-    subfolder = tmpdir / _POLY_WORKSPACE_NAME / "subfolder"
-    subfolder.mkdir()
-    subfolder.chdir()
+        subfolder = workspace / "subfolder"
+        subfolder.mkdir()
+        subfolder.chdir()
 
     with patch.object(sys, "argv", args):
         with pytest.raises(
@@ -93,15 +76,7 @@ def test_cli_init_subfolder(tmpdir):
             ert3.console._console._main()
 
 
-def test_cli_run_invalid_experiment(tmpdir):
-    workspace = tmpdir / _POLY_WORKSPACE_NAME
-    shutil.copytree(_POLY_WORKSPACE, workspace)
-    workspace.chdir()
-
-    args = ["ert3", "init"]
-    with patch.object(sys, "argv", args):
-        ert3.console.main()
-
+def test_cli_run_invalid_experiment(workspace):
     args = ["ert3", "run", "this-is-not-an-experiment"]
     with patch.object(sys, "argv", args):
         with pytest.raises(
@@ -111,15 +86,7 @@ def test_cli_run_invalid_experiment(tmpdir):
             ert3.console._console._main()
 
 
-def test_cli_record_load_not_existing_file(tmpdir):
-    workspace = tmpdir / _POLY_WORKSPACE_NAME
-    shutil.copytree(_POLY_WORKSPACE, workspace)
-    workspace.chdir()
-
-    args = ["ert3", "init"]
-    with patch.object(sys, "argv", args):
-        ert3.console.main()
-
+def test_cli_record_load_not_existing_file(workspace):
     args = [
         "ert3",
         "record",

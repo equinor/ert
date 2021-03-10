@@ -40,6 +40,7 @@ def workspace(tmpdir):
     ert3.workspace.initialize(workspace)
     yield workspace
 
+
 @pytest.fixture()
 def base_ensemble_dict():
     yield {
@@ -52,6 +53,7 @@ def base_ensemble_dict():
 @pytest.fixture()
 def ensemble(base_ensemble_dict):
     yield ert3.config.load_ensemble_config(base_ensemble_dict)
+
 
 @pytest.fixture()
 def script_stages_config():
@@ -76,6 +78,7 @@ def script_stages_config():
     os.chmod(script_file, st.st_mode | stat.S_IEXEC)
 
     yield ert3.config.load_stages_config(config_list)
+
 
 @pytest.fixture()
 def function_stages_config():
