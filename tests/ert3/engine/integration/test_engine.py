@@ -365,8 +365,8 @@ def test_record_load_and_run(
         / "coefficients_record.json"
     )
     shutil.copy(coeffs_file, doe_dir)
-    record_file = (doe_dir / "coefficients_record.json").open("r")
-    ert3.engine.load_record(workspace, "designed_coefficients", record_file)
+    with open(doe_dir / "coefficients_record.json") as rs:
+        ert3.engine.load_record(workspace, "designed_coefficients", rs)
 
     designed_coeff = ert3.storage.get_ensemble_record(
         workspace=workspace, record_name="designed_coefficients"
@@ -406,11 +406,13 @@ def test_record_load_twice(workspace, ensemble, stages_config):
         / "coefficients_record.json"
     )
     shutil.copy(coeffs_file, doe_dir)
-    record_file = (doe_dir / "coefficients_record.json").open("r")
-    ert3.engine.load_record(workspace, "designed_coefficients", record_file)
-    record_file = (doe_dir / "coefficients_record.json").open("r")
-    with pytest.raises(KeyError):
-        ert3.engine.load_record(workspace, "designed_coefficients", record_file)
+
+    with open(doe_dir / "coefficients_record.json") as rs:
+        ert3.engine.load_record(workspace, "designed_coefficients", rs)
+
+    with open(doe_dir / "coefficients_record.json") as rs:
+        with pytest.raises(KeyError):
+            ert3.engine.load_record(workspace, "designed_coefficients", rs)
 
 
 def test_sensitivity_run_and_export(

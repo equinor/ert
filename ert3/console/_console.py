@@ -93,6 +93,7 @@ def _record(workspace, args):
         )
     elif args.sub_record_cmd == "load":
         ert3.engine.load_record(workspace, args.record_name, args.record_file)
+        args.record_file.close()
     else:
         raise NotImplementedError(
             f"No implementation to handle record command {args.sub_record_cmd}"
