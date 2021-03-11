@@ -7,3 +7,8 @@ class ErtError(Exception):
 class IllegalWorkspaceOperation(ErtError):
     def __init__(self, message):
         self.message = "{}".format(message)
+
+
+class IllegalWorkspaceState(ErtError):
+    def __init__(self, message):
+        self.message = "{}".format(message)

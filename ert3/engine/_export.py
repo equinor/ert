@@ -32,7 +32,7 @@ def export(workspace_root: Path, experiment_name: str) -> None:
     )
     ert3.workspace.assert_experiment_exists(workspace_root, experiment_name)
 
-    if not ert3.workspace.experiment_have_run(workspace_root, experiment_name):
+    if not ert3.workspace.experiment_has_run(workspace_root, experiment_name):
         raise ValueError("Cannot export experiment that has not been carried out")
 
     parameter_names = set(
