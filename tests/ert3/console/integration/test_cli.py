@@ -28,8 +28,11 @@ def test_cli_no_init(tmpdir, args):
     workspace.chdir()
 
     with patch.object(sys, "argv", args):
-        with pytest.raises(SystemExit, match="Not inside an ERT workspace"):
-            ert3.console.main()
+        with pytest.raises(
+            ert3.exceptions.IllegalWorkspaceOperation,
+            match="Not inside an ERT workspace",
+        ):
+            ert3.console._console._main()
 
 
 def test_cli_no_args(tmpdir):
@@ -62,8 +65,11 @@ def test_cli_init_twice(tmpdir):
         ert3.console.main()
 
     with patch.object(sys, "argv", args):
-        with pytest.raises(SystemExit, match="Already inside an ERT workspace"):
-            ert3.console.main()
+        with pytest.raises(
+            ert3.exceptions.IllegalWorkspaceOperation,
+            match="Already inside an ERT workspace",
+        ):
+            ert3.console._console._main()
 
 
 def test_cli_init_subfolder(tmpdir):
@@ -80,8 +86,11 @@ def test_cli_init_subfolder(tmpdir):
     subfolder.chdir()
 
     with patch.object(sys, "argv", args):
-        with pytest.raises(SystemExit, match="Already inside an ERT workspace"):
-            ert3.console.main()
+        with pytest.raises(
+            ert3.exceptions.IllegalWorkspaceOperation,
+            match="Already inside an ERT workspace",
+        ):
+            ert3.console._console._main()
 
 
 def test_cli_run_invalid_experiment(tmpdir):
@@ -96,9 +105,10 @@ def test_cli_run_invalid_experiment(tmpdir):
     args = ["ert3", "run", "this-is-not-an-experiment"]
     with patch.object(sys, "argv", args):
         with pytest.raises(
-            SystemExit, match="this-is-not-an-experiment is not an experiment"
+            ert3.exceptions.IllegalWorkspaceOperation,
+            match="this-is-not-an-experiment is not an experiment",
         ):
-            ert3.console.main()
+            ert3.console._console._main()
 
 
 def test_cli_record_load_not_existing_file(tmpdir):
@@ -119,7 +129,7 @@ def test_cli_record_load_not_existing_file(tmpdir):
     ]
     with patch.object(sys, "argv", args):
         with pytest.raises(SystemExit):
-            ert3.console.main()
+            ert3.console._console._main()
 
 
 def _assert_done_or_pending(captured, experiments, done_indices):
@@ -245,6 +255,7 @@ def test_cli_status_no_experiments_root(tmpdir):
     args = ["ert3", "status"]
     with patch.object(sys, "argv", args):
         with pytest.raises(
-            SystemExit, match=f"the workspace {workspace} cannot access experiments"
+            ert3.exceptions.IllegalWorkspaceState,
+            match=f"the workspace {workspace} cannot access experiments",
         ):
-            ert3.console.main()
+            ert3.console._console._main()
