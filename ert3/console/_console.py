@@ -48,6 +48,10 @@ def _build_record_argparser(subparsers):
     )
 
 
+def _build_status_argparser(subparsers):
+    subparsers.add_parser("status", help="Report the status of all experiments")
+
+
 def _build_argparser():
     parser = argparse.ArgumentParser(description=_ERT3_DESCRIPTION)
     subparsers = parser.add_subparsers(dest="sub_cmd", help="ert3 commands")
@@ -56,6 +60,7 @@ def _build_argparser():
     _build_run_argparser(subparsers)
     _build_export_argparser(subparsers)
     _build_record_argparser(subparsers)
+    _build_status_argparser(subparsers)
 
     return parser
 
@@ -94,6 +99,11 @@ def _record(workspace, args):
         )
 
 
+def _status(workspace, args):
+    assert args.sub_cmd == "status"
+    ert3.console.status(workspace)
+
+
 def main():
     try:
         _main()
@@ -125,6 +135,8 @@ def _main():
         _export(workspace, args)
     elif args.sub_cmd == "record":
         _record(workspace, args)
+    elif args.sub_cmd == "status":
+        _status(workspace, args)
     else:
         raise NotImplementedError(f"No implementation to handle command {args.sub_cmd}")
 
