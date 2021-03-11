@@ -2,10 +2,7 @@ import ert3
 
 import pytest
 import sys
-from pathlib import Path
 from unittest.mock import patch
-
-_POLY_WORKSPACE_NAME = "polynomial"
 
 
 @pytest.mark.parametrize(
@@ -15,13 +12,14 @@ _POLY_WORKSPACE_NAME = "polynomial"
         ["ert3", "export", "something"],
     ],
 )
-def test_cli_no_init(args):
-    with patch.object(sys, "argv", args):
-        with pytest.raises(
-            ert3.exceptions.IllegalWorkspaceOperation,
-            match="Not inside an ERT workspace",
-        ):
-            ert3.console._console._main()
+def test_cli_no_init(tmpdir, args):
+    with tmpdir.as_cwd():
+        with patch.object(sys, "argv", args):
+            with pytest.raises(
+                ert3.exceptions.IllegalWorkspaceOperation,
+                match="Not inside an ERT workspace",
+            ):
+                ert3.console._console._main()
 
 
 def test_cli_no_args():
@@ -46,24 +44,14 @@ def test_cli_init_twice(tmpdir):
         with patch.object(sys, "argv", args):
             with pytest.raises(
                 ert3.exceptions.IllegalWorkspaceOperation,
-            match="Already inside an ERT workspace",
-        ):
-            ert3.console._console._main()
+                match="Already inside an ERT workspace",
+            ):
+                ert3.console._console._main()
 
 
-def test_cli_init_subfolder(tmpdir):
-    with tmpdir.as_cwd():
-        project_folder = tmpdir / _POLY_WORKSPACE_NAME
-        project_folder.mkdir()
-        project_folder.chdir()
-        args = ["ert3", "init"]
-        with patch.object(sys, "argv", args):
-            ert3.console.main()
-
-        subfolder = project_folder / "subfolder"
-        subfolder.mkdir()
-        subfolder.chdir()
-
+def test_cli_init_subfolder(workspace):
+    workspace.mkdir("sub_folder").chdir()
+    args = ["ert3", "init"]
     with patch.object(sys, "argv", args):
         with pytest.raises(
             ert3.exceptions.IllegalWorkspaceOperation,
@@ -122,16 +110,10 @@ def _assert_done_or_pending(captured, experiments, done_indices):
             assert experiment in pending
 
 
-def test_cli_status_no_runs(tmpdir, capsys):
-    workspace = tmpdir / _POLY_WORKSPACE_NAME
-    shutil.copytree(_POLY_WORKSPACE, workspace)
-    workspace.chdir()
-
+def test_cli_status_no_runs(workspace, capsys):
+    experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
+    experiments_folder.mkdir("E0")
     experiments = ert3.workspace.get_experiment_names(workspace)
-
-    args = ["ert3", "init"]
-    with patch.object(sys, "argv", args):
-        ert3.console.main()
 
     args = ["ert3", "status"]
     with patch.object(sys, "argv", args):
@@ -140,16 +122,13 @@ def test_cli_status_no_runs(tmpdir, capsys):
     _assert_done_or_pending(capsys.readouterr(), experiments, [])
 
 
-def test_cli_status_some_runs(tmpdir, capsys):
-    workspace = tmpdir / _POLY_WORKSPACE_NAME
-    shutil.copytree(_POLY_WORKSPACE, workspace)
-    workspace.chdir()
-
+def test_cli_status_some_runs(workspace, capsys):
+    experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
+    experiments_folder.mkdir("E0")
+    experiments_folder.mkdir("E1")
+    experiments_folder.mkdir("E2")
+    experiments_folder.mkdir("E3")
     experiments = list(ert3.workspace.get_experiment_names(workspace))
-
-    args = ["ert3", "init"]
-    with patch.object(sys, "argv", args):
-        ert3.console.main()
 
     done_indices = [1, 3]
     for idx in done_indices:
@@ -164,16 +143,11 @@ def test_cli_status_some_runs(tmpdir, capsys):
     _assert_done_or_pending(capsys.readouterr(), experiments, [1, 3])
 
 
-def test_cli_status_all_run(tmpdir, capsys):
-    workspace = tmpdir / _POLY_WORKSPACE_NAME
-    shutil.copytree(_POLY_WORKSPACE, workspace)
-    workspace.chdir()
+def test_cli_status_all_run(workspace, capsys):
+    experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
+    experiments_folder.mkdir("E0")
 
     experiments = ert3.workspace.get_experiment_names(workspace)
-
-    args = ["ert3", "init"]
-    with patch.object(sys, "argv", args):
-        ert3.console.main()
 
     for experiment in experiments:
         ert3.storage.init_experiment(
@@ -187,14 +161,8 @@ def test_cli_status_all_run(tmpdir, capsys):
     _assert_done_or_pending(capsys.readouterr(), experiments, range(len(experiments)))
 
 
-def test_cli_status_no_experiments(tmpdir, capsys):
-    workspace = tmpdir
-    workspace.chdir()
+def test_cli_status_no_experiments(workspace, capsys):
     workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
-
-    args = ["ert3", "init"]
-    with patch.object(sys, "argv", args):
-        ert3.console.main()
 
     args = ["ert3", "status"]
     with patch.object(sys, "argv", args):
@@ -204,17 +172,7 @@ def test_cli_status_no_experiments(tmpdir, capsys):
     assert captured.out.strip() == "No experiments present in this workspace"
 
 
-def test_cli_status_no_experiments_root(tmpdir):
-    workspace = tmpdir
-    workspace.chdir()
-    workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
-
-    args = ["ert3", "init"]
-    with patch.object(sys, "argv", args):
-        ert3.console.main()
-
-    shutil.rmtree(ert3.workspace.EXPERIMENTS_BASE)
-
+def test_cli_status_no_experiments_root(workspace):
     args = ["ert3", "status"]
     with patch.object(sys, "argv", args):
         with pytest.raises(
