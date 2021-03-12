@@ -1,5 +1,5 @@
-from pydantic import BaseModel, root_validator
 from typing import Mapping, Union, List, Tuple
+from pydantic import BaseModel, root_validator
 
 
 class _DataElement(BaseModel):

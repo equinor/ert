@@ -1,6 +1,6 @@
-from pydantic import root_validator, BaseModel
 import sys
 from typing import Optional
+from pydantic import root_validator, BaseModel
 
 if sys.version_info >= (3, 8):
     from typing import Literal

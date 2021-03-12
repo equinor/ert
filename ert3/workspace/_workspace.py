@@ -1,6 +1,6 @@
-import ert3
-
 from pathlib import Path
+
+import ert3
 
 
 def _locate_root(path):
