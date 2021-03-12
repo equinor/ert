@@ -79,7 +79,6 @@ disable=duplicate-code,
         unused-argument,
         no-self-use,
         cyclic-import,
-        wrong-import-order,
         ungrouped-imports,
 
 
