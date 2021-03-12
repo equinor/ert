@@ -1,7 +1,7 @@
-import ert3
-
 import json
 from pathlib import Path
+
+import ert3
 
 
 def _prepare_export(workspace_root, experiment_name, parameter_names, response_names):

@@ -1,9 +1,9 @@
-import ert3
-from ert3.engine import _utils
-
-from pathlib import Path
 import json
 from typing import Optional, TextIO
+from pathlib import Path
+
+import ert3
+from ert3.engine import _utils
 
 
 def load_record(workspace: Path, record_name: str, record_stream: TextIO) -> None:

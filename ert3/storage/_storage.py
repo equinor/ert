@@ -1,13 +1,12 @@
-import ert3
-
 import os
 from pathlib import Path
 from typing import Any, Iterable, Optional, Union
+import io
 import yaml
 import requests
-import io
 
-from typing import List
+import ert3
+
 
 _STORAGE_FILE = "storage.yaml"
 _STORAGE_URL = "http://localhost:8000"

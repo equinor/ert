@@ -1,9 +1,10 @@
-import ert3
-
 import argparse
 from pathlib import Path
 import sys
 import yaml
+
+import ert3
+
 
 _ERT3_DESCRIPTION = (
     "ert3 is an ensemble-based tool for uncertainty studies.\n"

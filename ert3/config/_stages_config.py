@@ -1,8 +1,8 @@
 import importlib
 import os
-from pydantic import root_validator, validator, FilePath, BaseModel
 import sys
 from typing import List, Callable, Optional
+from pydantic import root_validator, validator, FilePath, BaseModel
 
 if sys.version_info >= (3, 8):
     from typing import Literal

@@ -1,5 +1,5 @@
-import ert3
 import yaml
+import ert3
 
 
 # TODO: This entire file should be replaced by a pydantic schema!
