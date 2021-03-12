@@ -1,13 +1,12 @@
+from pydantic import BaseModel
+import sys
 from typing import List, Optional
 
-import sys
 
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
-
-from pydantic import BaseModel
 
 
 class _EnsembleConfig(BaseModel):

@@ -1,15 +1,13 @@
 import importlib
 import os
-from typing import List, Callable, Optional
-
+from pydantic import root_validator, validator, FilePath, BaseModel
 import sys
+from typing import List, Callable, Optional
 
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
-
-from pydantic import root_validator, validator, FilePath, BaseModel
 
 
 def _import_from(path):

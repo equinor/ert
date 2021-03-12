@@ -1,13 +1,11 @@
-from typing import Optional
-
+from pydantic import root_validator, BaseModel
 import sys
+from typing import Optional
 
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
-
-from pydantic import root_validator, BaseModel
 
 
 class _ExperimentConfig(BaseModel):
