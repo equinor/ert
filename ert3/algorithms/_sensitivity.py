@@ -1,6 +1,3 @@
-import ert3.data
-
-
 def _build_base_records(groups, parameters):
     return {group_name: parameters[group_name].ppf(0.5) for group_name in groups}
 
