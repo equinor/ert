@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 import sys
 
@@ -7,7 +7,6 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal
 
-from pydantic.dataclasses import dataclass
 from pydantic import root_validator, BaseModel
 
 
