@@ -67,12 +67,17 @@ double row_scaling::clamp(double value) const {
 }
 
 
+void row_scaling::resize(int new_size) {
+  const double default_value = 1;
+  this->data.resize(new_size, default_value);
+}
+
 double row_scaling::assign(int index, double value) {
   if (value < 0 || value > 1)
     throw std::invalid_argument("Invalid value ");
 
   if (this->data.size() <= index)
-    this->data.resize(index + 1, 1);
+    this->resize(index + 1);
 
   this->data.at(index) = this->clamp(value);
   return this->data.at(index);
@@ -187,6 +192,14 @@ void row_scaling::multiply(matrix_type * A, const matrix_type * X0) const {
 }
 
 
+template <typename T>
+void row_scaling::assign(const T * data, int size) {
+  this->resize(size);
+  for (int index=0; index < size; index++)
+    this->assign(index, data[index]);
+}
+
+
 /*
   Below here is a C api for binding to Python.
 */
@@ -223,4 +236,12 @@ void row_scaling_multiply(const row_scaling_type * scaling, matrix_type * A, con
 
 int row_scaling_get_size(const row_scaling_type * row_scaling) {
   return row_scaling->size();
+}
+
+void row_scaling_assign_double(row_scaling_type * scaling, const double * data, int size) {
+  scaling->assign(data, size);
+}
+
+void row_scaling_assign_float(row_scaling_type * scaling, const float * data, int size) {
+  scaling->assign(data, size);
 }

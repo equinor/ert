@@ -118,8 +118,11 @@ void test_multiply() {
   {
     row_scaling_type * row_scaling = row_scaling_alloc();
     matrix_type * A = matrix_alloc_copy(A0);
+    std::vector<float> row_data(data_size);
     for (int row = 0; row < data_size; row++)
-      row_scaling_iset(row_scaling, row, 0);
+      row_data[row] = 0;
+
+    row_scaling_assign_float(row_scaling, row_data.data(), row_data.size());
     row_scaling_multiply(row_scaling, A, X0);
 
     for (int row = 0; row < data_size; row++)
@@ -136,8 +139,16 @@ void test_multiply() {
   {
     row_scaling_type * row_scaling = row_scaling_alloc();
     matrix_type * A = matrix_alloc_copy(A0);
+    std::vector<double> row_data(data_size);
+
+    row_scaling_iset(row_scaling, 2*data_size, 1.0);
+    test_assert_int_equal( row_scaling_get_size(row_scaling), 2*data_size + 1);
+
     for (int row = 0; row < data_size; row++)
-      row_scaling_iset(row_scaling, row, rng_get_double(rng));
+      row_data[row] = rng_get_double(rng);
+
+    row_scaling_assign_double(row_scaling, row_data.data(), row_data.size());
+    test_assert_int_equal( row_scaling_get_size(row_scaling), data_size);
 
     row_scaling_multiply(row_scaling, A, X0);
     for (int row = 0; row < data_size; row++) {

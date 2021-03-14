@@ -28,7 +28,11 @@ public:
   double clamp(double value) const;
   void multiply(matrix_type * A, const matrix_type * X0) const;
   int size() const;
+
+  template <typename T>
+  void assign(const T * data, int size);
 private:
+  void resize(int new_size);
   int resolution = 1000;
   std::vector<double> data;
 };
@@ -50,6 +54,8 @@ int                row_scaling_get_size(const row_scaling_type * row_scaling);
 double             row_scaling_iget(const row_scaling_type * row_scaling, int index);
 double             row_scaling_iset(row_scaling_type * row_scaling, int index, double value);
 double             row_scaling_clamp(const row_scaling_type * row_scaling, double value);
+void               row_scaling_assign_double(row_scaling_type * scaling, const double * data, int size);
+void               row_scaling_assign_float(row_scaling_type * scaling, const float * data, int size);
 
 UTIL_IS_INSTANCE_HEADER( row_scaling );
 
