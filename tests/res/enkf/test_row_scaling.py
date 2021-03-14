@@ -59,7 +59,7 @@ def test_basic():
 
     row_scaling[9] = 0.25
     assert len(row_scaling) == 10
-    assert row_scaling[0] == 1
+    assert row_scaling[0] == 0
     assert row_scaling[9] == 0.25
 
     with pytest.raises(IndexError):

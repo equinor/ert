@@ -68,7 +68,7 @@ double row_scaling::clamp(double value) const {
 
 
 void row_scaling::resize(int new_size) {
-  const double default_value = 1;
+  const double default_value = 0;
   this->data.resize(new_size, default_value);
 }
 
