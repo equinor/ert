@@ -2,7 +2,7 @@ import pathlib
 from typing import List, Mapping
 
 import ert3
-from ert3.engine import _utils
+from . import _utils
 
 
 def _prepare_experiment(
