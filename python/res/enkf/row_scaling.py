@@ -14,6 +14,8 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+import numpy as np
+import ctypes
 from cwrap import BaseCClass
 from res import ResPrototype
 
@@ -27,6 +29,12 @@ class RowScaling(BaseCClass):
     _iset = ResPrototype("double row_scaling_iset(row_scaling, int, double)")
     _iget = ResPrototype("double row_scaling_iget(row_scaling, int)")
     _clamp = ResPrototype("double row_scaling_clamp(row_scaling, double)")
+    _assign_double_vector = ResPrototype(
+        "void row_scaling_assign_double(row_scaling, double*, int)"
+    )
+    _assign_float_vector = ResPrototype(
+        "void row_scaling_assign_float(row_scaling, float*, int)"
+    )
 
     def __init__(self):
         c_ptr = self._alloc()
@@ -103,3 +111,54 @@ class RowScaling(BaseCClass):
 
         for index in range(target_size):
             self[index] = func(index)
+
+    def assign_vector(self, scaling_vector):
+        """Assign tapering value for all elements via a vector.
+
+        The assign_vector() function will resize the row_scaling vector to the
+        number of elements in the scaling_vector, and assign a value to all
+        elements.
+
+        A typical situation might be to load the scaling data as a EclKW
+        instance from a grdecl formatted file. Before the assign_vector() can
+        be called we must transform to an only active elements representation
+        and use a numpy view:
+
+            # Load scaling vector from grdecl file; typically created with
+            # geomodelling software.
+            with open("scaling.grdecl") as fh:
+                kw_global = EclKW.read_grdecl(fh, "SCALING")
+
+            # Create a ecl_kw copy with only the active elements.
+            kw_active = grid.compressed_kw_copy(kw_global)
+
+            # Create a numpy view and invoke the assign_vector() function
+            row_scaling.assign_vector(kw_active.numpy_view())
+
+        """
+        # In current implementation the scaling vector must be of type
+        # numpy.array(float32/float64); it would possible to also accept ecl_kw
+        # and call the same underlying C functions. Currently the expected
+        # approach is rather that calling scope should convert ecl_kw -> numpy.
+        #
+        # In addition it would be possible to also accept a general Python
+        # iterable and repeatedly call __setitem__() from the assign_vector
+        # implementation. This solution has been avoided has been avoided
+        # because it would not be very performant.
+        if isinstance(scaling_vector, np.ndarray):
+            if scaling_vector.dtype == np.float64:
+                func = self._assign_double_vector
+                ptr = scaling_vector.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+            elif scaling_vector.dtype == np.float32:
+                func = self._assign_float_vector
+                ptr = scaling_vector.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+            else:
+                raise TypeError(
+                    f"The scaling_vector must be float32/float64, not {type(scaling_vector.dtype)}"
+                )
+
+            func(ptr, len(scaling_vector))
+        else:
+            raise TypeError(
+                f"The assign_vector method expects a numpy vector as argument, not {type(scaling_vector)}"
+            )

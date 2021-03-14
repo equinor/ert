@@ -17,6 +17,7 @@
 import random
 import os
 import math
+import numpy as np
 
 from tests import ResTest
 
@@ -270,6 +271,78 @@ class RowScalingTest(ResTest):
             field_config = poro_config.getFieldModelConfig()
             grid = main.eclConfig().getGrid()
             row_scaling.assign(field_config.get_data_size(), ScalingTest(grid))
+
+            # Second update with row scaling
+            update_fs2 = main.getEnkfFsManager().getFileSystem("target2")
+            es_update = ESUpdate(main)
+            run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs2)
+            rng.setState(random_seed)
+            es_update.smootherUpdate(run_context)
+
+            # Fetch the three values initial, update without row scaling and
+            # update with row scaling and verify that the row scaling has been
+            # correctly applied.
+            init_node = EnkfNode(poro_config)
+            update_node1 = EnkfNode(poro_config)
+            update_node2 = EnkfNode(poro_config)
+            for iens in range(main.getEnsembleSize()):
+                node_id = NodeId(0, iens)
+
+                init_node.load(init_fs, node_id)
+                update_node1.load(update_fs1, node_id)
+                update_node2.load(update_fs2, node_id)
+
+                assert_field_update(
+                    grid,
+                    init_node.asField(),
+                    update_node1.asField(),
+                    update_node2.asField(),
+                )
+
+    # This test is identical to test_update_code2(), but the row scaling is
+    # applied with the function row_scaling.assign_vector() instead of
+    # using a callable.
+    def test_row_scaling_using_assign_vector(self):
+        random_seed = "ABCDEFGHIJK0123456"
+        with ErtTestContext("row_scaling", self.config_file) as tc:
+            main = tc.getErt()
+            init_fs = init_data(main)
+            update_fs1 = main.getEnkfFsManager().getFileSystem("target1")
+
+            # The first smoother update without row scaling
+            es_update = ESUpdate(main)
+            run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs1)
+            rng = main.rng()
+            rng.setState(random_seed)
+            es_update.smootherUpdate(run_context)
+
+            # Configure the local updates
+            local_config = main.getLocalConfig()
+            local_config.clear()
+            local_data = local_config.createDataset("LOCAL")
+            local_data.addNode("PORO")
+            obs = local_config.createObsdata("OBSSET_LOCAL")
+            obs.addNode("WBHP0")
+            ministep = local_config.createMinistep("MINISTEP_LOCAL")
+            ministep.attachDataset(local_data)
+            ministep.attachObsset(obs)
+            updatestep = local_config.getUpdatestep()
+            updatestep.attachMinistep(ministep)
+
+            # Apply the row scaling
+            row_scaling = local_data.row_scaling("PORO")
+            ens_config = main.ensembleConfig()
+            poro_config = ens_config["PORO"]
+            field_config = poro_config.getFieldModelConfig()
+            grid = main.eclConfig().getGrid()
+
+            scaling = ScalingTest(grid)
+            scaling_vector = np.ndarray(
+                [field_config.get_data_size()], dtype=np.float32
+            )
+            for i in range(field_config.get_data_size()):
+                scaling_vector[i] = scaling(i)
+            row_scaling.assign_vector(scaling_vector)
 
             # Second update with row scaling
             update_fs2 = main.getEnkfFsManager().getFileSystem("target2")
