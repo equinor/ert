@@ -22,7 +22,7 @@ _SPECIAL_KEYS = (_ENSEMBLE_RECORDS,)
 
 def _generate_storage_location(workspace: Union[str, Path]) -> Path:
     workspace = Path(workspace)
-    return workspace / ert3._WORKSPACE_DATA_ROOT / _STORAGE_FILE
+    return workspace / ert3.workspace.DATA_ROOT / _STORAGE_FILE
 
 
 def _assert_storage_initialized(storage_location: Path) -> None:

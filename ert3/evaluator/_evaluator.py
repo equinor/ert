@@ -19,7 +19,7 @@ _EVTYPE_SNAPSHOT_FAILED = "Failed"
 def _create_evaluator_tmp_dir(workspace_root, evaluation_name):
     return (
         pathlib.Path(workspace_root)
-        / ert3._WORKSPACE_DATA_ROOT
+        / ert3.workspace.DATA_ROOT
         / "tmp"
         / evaluation_name
     )
