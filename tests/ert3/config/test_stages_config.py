@@ -49,6 +49,7 @@ def test_entry_point(base_unix_stage_config):
     config = ert3.config.load_stages_config(base_unix_stage_config)
     config = config[0]
     assert config.name == "unix_stage"
+    assert config.script[0] == "poly --help"
 
 
 @pytest.mark.parametrize(
@@ -61,12 +62,6 @@ def test_entry_point(base_unix_stage_config):
 def test_entry_point_not_valid(config, expected_error):
     with pytest.raises(pydantic.error_wrappers.ValidationError, match=expected_error):
         ert3.config.load_stages_config(config)
-
-
-def test_step_valid(base_unix_stage_config):
-    config = ert3.config.load_stages_config(base_unix_stage_config)
-    assert config[0].name == "unix_stage"
-    assert config[0].script[0] == "poly --help"
 
 
 def test_single_function_step_valid(base_function_stage_config):
@@ -87,7 +82,11 @@ def test_step_multi_cmd(base_unix_stage_config):
         "poly2 abort",
     ]
     create_mock_script(path="poly2")
-    ert3.config.load_stages_config(config)
+    config = ert3.config.load_stages_config(config)
+    assert config[0].script[0] == "poly run1"
+    assert config[0].script[1] == "poly2 gogo"
+    assert config[0].script[2] == "poly run2"
+    assert config[0].script[3] == "poly2 abort"
 
 
 def test_step_non_existing_transportable_cmd(base_unix_stage_config):
@@ -141,9 +140,7 @@ def test_step_function_definition_error(base_function_stage_config):
 def test_step_function_error(base_function_stage_config):
     config = base_function_stage_config
     config[0]["function"] = "builtins:sun"
-    with pytest.raises(
-        ImportError,
-    ):
+    with pytest.raises(ImportError):
         ert3.config.load_stages_config(config)
 
 
