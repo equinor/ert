@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from ert3.exceptions import IllegalWorkspaceOperation, IllegalWorkspaceState
-import ert3.storage as ert3_storage
 
 EXPERIMENTS_BASE = "experiments"
 DATA_ROOT = ".ert"
@@ -39,21 +38,6 @@ def get_experiment_names(workspace_root):
         for experiment in experiment_base.iterdir()
         if experiment.is_dir()
     }
-
-
-def experiment_has_run(workspace_root, experiment_name):
-    experiments = ert3_storage.get_experiment_names(workspace=workspace_root)
-    return experiment_name in experiments
-
-
-def initialize(path):
-    path = Path(path)
-    if load(path) is not None:
-        raise IllegalWorkspaceOperation(
-            "Already inside an ERT workspace."
-        )
-
-    ert3_storage.init(workspace=path)
 
 
 def load(path):

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import ert3.storage as ert3_storage
 import ert3.workspace as ert3_workspace
+from ._status import experiment_has_run as ert3_experiment_has_run
 
 
 def _prepare_export(workspace_root, experiment_name, parameter_names, response_names):
@@ -33,7 +34,7 @@ def export(workspace_root: Path, experiment_name: str) -> None:
     )
     ert3_workspace.assert_experiment_exists(workspace_root, experiment_name)
 
-    if not ert3_workspace.experiment_has_run(workspace_root, experiment_name):
+    if not ert3_experiment_has_run(workspace_root, experiment_name):
         raise ValueError("Cannot export experiment that has not been carried out")
 
     parameter_names = set(

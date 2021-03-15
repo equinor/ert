@@ -7,9 +7,9 @@ import ert3.data as ert3_data
 import ert3.evaluator as ert3_evaluator
 import ert3.stats as ert3_stats
 import ert3.storage as ert3_storage
-import ert3.workspace as ert3_workspace
 
 from ._record import sample_record
+from ._status import experiment_has_run as ert3_experiment_has_run
 from . import _utils
 
 
@@ -18,7 +18,7 @@ def _prepare_experiment(
     experiment_name: str,
     ensemble: ert3_config.EnsembleConfig,
 ):
-    if ert3_workspace.experiment_has_run(workspace_root, experiment_name):
+    if ert3_experiment_has_run(workspace_root, experiment_name):
         raise ValueError(f"Experiment {experiment_name} have been carried out.")
 
     parameter_names = [elem.record for elem in ensemble.input]
