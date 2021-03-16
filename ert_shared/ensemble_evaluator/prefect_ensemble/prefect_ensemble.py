@@ -70,7 +70,7 @@ def _get_executor(name="local"):
         )
     elif name == "pbs":
         cluster_kwargs = {
-            "n_workers": 10,
+            "n_workers": 100,
             "queue": "normal",
             "project": "ERT-TEST",
             "local_directory": "$TMPDIR",

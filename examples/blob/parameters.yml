@@ -1,0 +1,9 @@
+-
+  name: coefficients
+  type: stochastic
+  distribution:
+    type: gaussian
+    input:
+      mean: 0
+      std: 1
+  variables: ["a"]
