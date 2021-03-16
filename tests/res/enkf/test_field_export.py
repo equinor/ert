@@ -44,6 +44,12 @@ class FieldExportTest(ResTest):
             grid = fc.get_grid()
             self.assertEqual(ex_xyz, (grid.getNX(), grid.getNY(), grid.getNZ()))
 
+            field_node = EnkfNode(fc)
+            self.assertEqual(grid.get_num_active(), len(field_node))
+            with self.assertRaises(IndexError):
+                field_node[grid.get_num_active()]
+            value0 = field_node[0]
+
     def test_field_export(self):
         with ErtTestContext("export_test", self.config_file) as test_context:
             ert = test_context.getErt()

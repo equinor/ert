@@ -50,6 +50,7 @@ extern "C" {
   bool         field_fload_rms(field_type * field , const char * filename, bool keep_inactive);
   void         field_export3D(const field_type * , void *, bool, ecl_data_type , void *, const char *);
   void         field_export(const field_type * , const char * , fortio_type * , field_file_format_type , bool, const char *);
+  int          field_get_size(const field_type * field);
 
   void         field_inplace_output_transform(field_type * field);
 

@@ -356,6 +356,9 @@ static field_type * __field_alloc(const field_config_type * field_config , void 
 }
 
 
+int field_get_size(const field_type * field) {
+  return field_config_get_data_size(field->config);
+}
 
 field_type * field_alloc(const field_config_type * field_config) {
   return __field_alloc(field_config , NULL , 0);
