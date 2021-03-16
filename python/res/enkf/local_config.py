@@ -38,7 +38,7 @@ class LocalConfig(BaseCClass):
     _free = ResPrototype("void   local_config_free(local_config)")
     _clear = ResPrototype("void   local_config_clear(local_config)")
     _create_ministep = ResPrototype(
-        "void   local_config_alloc_ministep(local_config, char*, analysis_module)"
+        "local_ministep_ref local_config_alloc_ministep(local_config, char*, analysis_module)"
     )
     _attach_ministep = ResPrototype(
         "void   local_updatestep_add_ministep(local_updatestep, local_ministep)",
@@ -104,8 +104,7 @@ class LocalConfig(BaseCClass):
         assert isinstance(mini_step_key, str)
         if analysis_module:
             assert isinstance(analysis_module, AnalysisModule)
-        self._create_ministep(mini_step_key, analysis_module)
-        return self.getMinistep(mini_step_key)
+        return self._create_ministep(mini_step_key, analysis_module)
 
     def createObsdata(self, obsdata_key):
         """ @rtype: Obsdata """
