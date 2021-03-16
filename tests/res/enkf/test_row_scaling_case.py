@@ -114,6 +114,19 @@ class GaussianDecay(object):
         return math.exp(exp_arg)
 
 
+class SelectLayer(object):
+    def __init__(self, layer, grid):
+        self.layer = layer
+        self.grid = grid
+
+    def __call__(self, data_index):
+        ijk = self.grid.get_ijk(active_index=data_index)
+        if ijk[2] == self.layer:
+            return 1
+        else:
+            return 0
+
+
 # This is a quite contrived row scaling callable which is mainly designed to
 # test that the correct parts of the field are updated. The behavior of the
 # ScalingTest function is as follows:
@@ -370,3 +383,78 @@ class RowScalingTest(ResTest):
                     update_node1.asField(),
                     update_node2.asField(),
                 )
+
+    # This test has a configuration where the update consists of two ministeps,
+    # where the same field is updated in both steps. Because the
+    # obs_data_allocE() function uses random state it is difficult to get
+    # identical results from one ministep updating everything and two ministeps
+    # updating different parts of the field. The final assert is therefor
+    # unfortunately only approximative.
+    def test_2ministep(self):
+        with ErtTestContext("row_scaling", self.config_file) as tc:
+            main = tc.getErt()
+            init_fs = init_data(main)
+            update_fs1 = main.getEnkfFsManager().getFileSystem("target1")
+
+            # The first smoother update without row scaling
+            es_update = ESUpdate(main)
+            run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs1)
+            rng = main.rng()
+            es_update.smootherUpdate(run_context)
+
+            # Configure the local updates
+            local_config = main.getLocalConfig()
+            local_config.clear()
+            obs = local_config.createObsdata("OBSSET_LOCAL")
+            obs.addNode("WBHP0")
+
+            ministep1 = local_config.createMinistep("MINISTEP1")
+            local_data1 = local_config.createDataset("LOCAL1")
+            local_data1.addNode("PORO")
+            row_scaling1 = local_data1.row_scaling("PORO")
+            ministep1.attachDataset(local_data1)
+            ministep1.attachObsset(obs)
+
+            ministep2 = local_config.createMinistep("MINISTEP2")
+            local_data2 = local_config.createDataset("LOCAL2")
+            local_data2.addNode("PORO")
+            row_scaling2 = local_data2.row_scaling("PORO")
+            ministep2.attachDataset(local_data2)
+            ministep2.attachObsset(obs)
+
+            updatestep = local_config.getUpdatestep()
+            updatestep.attachMinistep(ministep1)
+            updatestep.attachMinistep(ministep2)
+
+            # Apply the row scaling
+            ens_config = main.ensembleConfig()
+            poro_config = ens_config["PORO"]
+            field_config = poro_config.getFieldModelConfig()
+            grid = main.eclConfig().getGrid()
+
+            row_scaling1.assign(field_config.get_data_size(), SelectLayer(0, grid))
+            row_scaling2.assign(field_config.get_data_size(), SelectLayer(1, grid))
+
+            update_fs2 = main.getEnkfFsManager().getFileSystem("target2")
+            es_update = ESUpdate(main)
+            run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs2)
+            es_update.smootherUpdate(run_context)
+
+            init_node = EnkfNode(poro_config)
+            node1 = EnkfNode(poro_config)
+            node2 = EnkfNode(poro_config)
+            for iens in range(main.getEnsembleSize()):
+                node_id = NodeId(0, iens)
+
+                init_node.load(init_fs, node_id)
+                node1.load(update_fs1, node_id)
+                node2.load(update_fs2, node_id)
+
+                init_field = init_node.asField()
+                field1 = node1.asField()
+                field2 = node2.asField()
+                for iv, v1, v2 in zip(init_field, field1, field2):
+                    assert iv != v1
+
+                    diff = abs(v1 - v2)
+                    assert diff < 0.05
