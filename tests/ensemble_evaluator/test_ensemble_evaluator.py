@@ -177,7 +177,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 identifiers.EVTYPE_FM_JOB_FAILURE,
                 "/ert/ee/0/real/1/stage/0/step/0/job/1",
                 "event_job_1_fail",
-                {identifiers.STDERR: "error"},
+                {identifiers.ERROR_MSG: "error"},
             )
             snapshot = Snapshot(next(events).data)
             assert snapshot.get_job("1", "0", "0", "1").status == JOB_STATE_FAILURE
