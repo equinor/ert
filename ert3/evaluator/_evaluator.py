@@ -1,6 +1,8 @@
+from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
 import json
 import os
 import pathlib
+import yaml
 
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
@@ -141,12 +143,21 @@ def _fetch_results(ee_config, ensemble, stages_config):
 
 def _run(ensemble_evaluator):
     with ensemble_evaluator.run() as monitor:
+        snapshot = None
         for event in monitor.track():
+            if snapshot is None:
+                snapshot = Snapshot(input_dict=event.data)
+            elif event.data is not None:
+                snapshot.merge(event.data)
             if event.data is not None and event.data.get("status") in [
                 _EVTYPE_SNAPSHOT_STOPPED,
                 _EVTYPE_SNAPSHOT_FAILED,
             ]:
                 monitor.signal_done()
+
+        print(
+            yaml.dump(snapshot.to_dict(), allow_unicode=True, default_flow_style=False)
+        )
 
 
 def _prepare_responses(raw_responses):
