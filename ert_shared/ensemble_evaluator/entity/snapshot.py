@@ -230,7 +230,7 @@ class PartialSnapshot:
                     start_time=start_time,
                     end_time=end_time,
                     data=event.data if e_type == ids.EVTYPE_FM_JOB_RUNNING else None,
-                    error=event.data.get(ids.FM_STDERR)
+                    error=event.data.get(ids.ERROR_MSG)
                     if e_type == ids.EVTYPE_FM_JOB_FAILURE
                     else None,
                 ),

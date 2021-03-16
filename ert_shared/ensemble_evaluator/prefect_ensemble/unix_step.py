@@ -86,7 +86,7 @@ class UnixStep(Task):
             client.send_event(
                 ev_type=ids.EVTYPE_FM_JOB_FAILURE,
                 ev_source=self.job_source(job[ids.ID]),
-                ev_data={ids.STDERR: cmd_exec.stderr, ids.STDOUT: cmd_exec.stdout},
+                ev_data={ids.ERROR_MSG: cmd_exec.stderr},
             )
             raise OSError(
                 f"Script {job[ids.NAME]} failed with exception {cmd_exec.stderr}"
