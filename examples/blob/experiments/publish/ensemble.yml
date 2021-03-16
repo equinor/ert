@@ -1,0 +1,11 @@
+size: 100
+
+input:
+  -
+    source: stochastic.coefficients
+    record: coefficients
+
+forward_model:
+  driver: local
+  stages:
+    - publish_blob

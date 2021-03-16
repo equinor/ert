@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -e
+
+rm -rf .ert
+
+sed -i 's/local/pbs/g' experiments/evaluation/ensemble.yml
+
+ert3 init
+
+ert3 run evaluation
+ert3 export evaluation

@@ -1,0 +1,43 @@
+-
+  name: evaluate_blob
+  type: unix
+  input:
+    -
+      record: coefficients
+      location: coefficients.json
+
+  output:
+    -
+      record: blob_output
+      location: output.json
+
+  transportable_commands:
+    -
+      name: blob-fetch
+      location: blob-fetch.py
+
+
+  script:
+    - blob-fetch digit-blob 4f1a9d4d-ca71-417c-a90a-79639dd110f5
+
+-
+  name: publish_blob
+  type: unix
+  input:
+    -
+      record: coefficients
+      location: coefficients.json
+
+  output:
+    -
+      record: blob_output
+      location: output.json
+
+  transportable_commands:
+    -
+      name: blob-publish
+      location: blob-publish-step.py
+
+
+  script:
+    - blob-publish digit-blob 4f1a9d4d-ca71-417c-a90a-79639dd110f5

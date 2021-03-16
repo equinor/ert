@@ -1,0 +1,1402 @@
+[
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.5380449208088445
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 24.489257097244263,
+                "download_time": 23.34962558746338
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.27772697322701845
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 18.48428201675415,
+                "download_time": 17.470341682434082
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -1.512311148962281
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.546115398406982,
+                "download_time": 19.5416476726532
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.610806561757833
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.798190116882324,
+                "download_time": 19.493072032928467
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.8149731028215182
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.074450492858887,
+                "download_time": 17.61826252937317
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 1.1728755912198614
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 17.564198970794678,
+                "download_time": 16.592622756958008
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 1.120289598732387
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.730277061462402,
+                "download_time": 18.910269021987915
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.7061088272840624
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 17.608242511749268,
+                "download_time": 16.599741220474243
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -1.2228487378635895
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 18.319525718688965,
+                "download_time": 17.311857223510742
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.1766133304770386
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.002599954605103,
+                "download_time": 18.971274614334106
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.7848788839399985
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 24.030463933944702,
+                "download_time": 22.968022346496582
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.8967140866364104
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.265681743621826,
+                "download_time": 19.675840377807617
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -1.470991994233508
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.644150972366333,
+                "download_time": 20.513343572616577
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -1.0955548087160694
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 22.4452862739563,
+                "download_time": 20.761279582977295
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.11961590299127856
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 22.42722725868225,
+                "download_time": 21.37655258178711
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.3688823728861959
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 25.16653823852539,
+                "download_time": 24.07381558418274
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.036564095982207556
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.532697439193726,
+                "download_time": 18.58725595474243
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.3648190035394609
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.186366081237793,
+                "download_time": 19.186436414718628
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.9388244414309942
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.884971857070923,
+                "download_time": 19.819588899612427
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -1.0133629770135135
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.036122798919678,
+                "download_time": 19.924314260482788
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.4027243747512969
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.81600546836853,
+                "download_time": 19.124770402908325
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -1.1813028527592626
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 16.996140956878662,
+                "download_time": 16.026082754135132
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.3451785189112791
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.30550527572632,
+                "download_time": 19.243252515792847
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.7371995922016537
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.336482048034668,
+                "download_time": 20.334511756896973
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.25263283487011323
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 18.978022575378418,
+                "download_time": 17.845242977142334
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.21165398546685135
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.577300786972046,
+                "download_time": 20.235178232192993
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.3714080543967353
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.391054391860962,
+                "download_time": 19.31248688697815
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.6560119483875407
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 18.93624448776245,
+                "download_time": 17.82536220550537
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.3869460031055205
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 25.08927583694458,
+                "download_time": 19.006213188171387
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.10770538751711063
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.92591094970703,
+                "download_time": 20.14932918548584
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.6776152487266982
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 17.942983627319336,
+                "download_time": 16.903902053833008
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.17971524408085296
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 18.99061417579651,
+                "download_time": 17.846142053604126
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.8309466911863707
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.18238377571106,
+                "download_time": 19.143457651138306
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.20708504136375172
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.69620966911316,
+                "download_time": 18.260741472244263
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.972764530576578
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.443461894989014,
+                "download_time": 19.413528442382812
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.9413592407977903
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.805665969848633,
+                "download_time": 19.496158838272095
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.7548531339505955
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.996060371398926,
+                "download_time": 18.230904817581177
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 1.7997540653754718
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.34577202796936,
+                "download_time": 18.39510488510132
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.8548167599302515
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 17.620172262191772,
+                "download_time": 15.829472064971924
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -1.6678162022336642
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.352170944213867,
+                "download_time": 20.136103868484497
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.21021142949826027
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.76229691505432,
+                "download_time": 18.786240100860596
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.4213799631133853
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.215616703033447,
+                "download_time": 18.10307288169861
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.7827879151761229
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.807334899902344,
+                "download_time": 18.671395778656006
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.9876980847847836
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.87464141845703,
+                "download_time": 20.46350622177124
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 1.0224750059695877
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.098816633224487,
+                "download_time": 18.073118448257446
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.26014951839215855
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 22.769426584243774,
+                "download_time": 21.727656841278076
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.22082630202668505
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.20344853401184,
+                "download_time": 20.170527696609497
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.9602536383432756
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 24.712753534317017,
+                "download_time": 20.698481798171997
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -1.3110914772018165
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.15111517906189,
+                "download_time": 19.1530601978302
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.6983285556187678
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 22.247727632522583,
+                "download_time": 19.462299346923828
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.31156959808626083
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.707038640975952,
+                "download_time": 20.64326047897339
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.007681211507840639
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.75041961669922,
+                "download_time": 18.458810329437256
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -1.8946060966991003
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.459922075271606,
+                "download_time": 18.438891887664795
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.3808983666884379
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 17.962980270385742,
+                "download_time": 16.923640966415405
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.3635371101953601
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.43677043914795,
+                "download_time": 20.272064924240112
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.012260417717706341
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 23.700286388397217,
+                "download_time": 22.64501976966858
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.12289771184135023
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.56177568435669,
+                "download_time": 19.47923994064331
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -1.1433634473707084
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.032808542251587,
+                "download_time": 18.031001567840576
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.686779997051054
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.80129909515381,
+                "download_time": 19.10900616645813
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.4653225887574639
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.810839891433716,
+                "download_time": 18.655422925949097
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.2913948408138204
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.579776287078857,
+                "download_time": 18.523622751235962
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.3826008391105384
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 18.5941104888916,
+                "download_time": 16.736093282699585
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.30172574726059226
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.125427961349487,
+                "download_time": 19.00234627723694
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.46136173914915046
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 18.91796326637268,
+                "download_time": 17.92703080177307
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.4959903736379009
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.685613870620728,
+                "download_time": 18.484749794006348
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.007655343110785915
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 18.784415245056152,
+                "download_time": 17.18430209159851
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 2.222275985521773
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 17.659571170806885,
+                "download_time": 16.53950309753418
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.5791321474435802
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 22.3233003616333,
+                "download_time": 20.39958906173706
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.008282482727588464
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.15536141395569,
+                "download_time": 18.164196729660034
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.7664858960613584
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 18.35001516342163,
+                "download_time": 16.29347038269043
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.9272075361956941
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 18.668941497802734,
+                "download_time": 17.53856635093689
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -1.212524550164913
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.675097703933716,
+                "download_time": 19.660780668258667
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.8497322697657933
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 22.5972421169281,
+                "download_time": 20.325287103652954
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 1.2902466021560053
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.01516580581665,
+                "download_time": 20.005133152008057
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.770617115650187
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.779496431350708,
+                "download_time": 18.070327281951904
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.7301328652533384
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 17.1063289642334,
+                "download_time": 16.008305072784424
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.11751575287414141
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.11534357070923,
+                "download_time": 20.097384929656982
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.025523919287737014
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 22.058758020401,
+                "download_time": 21.047917127609253
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.3083393246505635
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.958937883377075,
+                "download_time": 19.945348739624023
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.16759458297167026
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.507638692855835,
+                "download_time": 18.563987255096436
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.05937526095749599
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.277913570404053,
+                "download_time": 18.92414140701294
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.41223874160823093
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.214616775512695,
+                "download_time": 20.223873615264893
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 1.8980037989740193
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 17.348873138427734,
+                "download_time": 16.33918571472168
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -1.9446093969899825
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 18.755401134490967,
+                "download_time": 16.703387022018433
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.7057599819596493
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.81082773208618,
+                "download_time": 19.8080894947052
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.36613544166359585
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.009323596954346,
+                "download_time": 18.548465251922607
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.9224220267064397
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.05075430870056,
+                "download_time": 19.965078115463257
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 1.1868027200714684
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 20.759011268615723,
+                "download_time": 18.679843187332153
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -0.4549640888181079
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.05796480178833,
+                "download_time": 20.046475887298584
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.9335565856737641
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.052959203720093,
+                "download_time": 17.9612557888031
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.23661225247850212
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 24.258759021759033,
+                "download_time": 21.637997150421143
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -1.0874947740491732
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 17.056484937667847,
+                "download_time": 16.076765298843384
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -1.2786762163706133
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 22.602562189102173,
+                "download_time": 20.8359694480896
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 1.56963122411019
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.233599424362183,
+                "download_time": 18.136862754821777
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.16447148442133022
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.560271501541138,
+                "download_time": 17.778483152389526
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": -1.957096980020455
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.525651931762695,
+                "download_time": 20.441545009613037
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.489954543112852
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.252921104431152,
+                "download_time": 20.27710461616516
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.7726732206125362
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.54472279548645,
+                "download_time": 19.613749027252197
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.2955657716123693
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 21.737351417541504,
+                "download_time": 20.679233074188232
+            }
+        }
+    },
+    {
+        "input": {
+            "coefficients": {
+                "a": 0.04697569787749649
+            }
+        },
+        "output": {
+            "blob_output": {
+                "sum": 1073741825.0,
+                "execution_time": 19.525689601898193,
+                "download_time": 18.55512499809265
+            }
+        }
+    }
+]

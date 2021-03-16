@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -e
+
+rm -rf .ert
+
+sed -i 's/local/pbs/g' experiments/publish/ensemble.yml
+
+ert3 init
+
+ert3 run publish
+ert3 export publish
