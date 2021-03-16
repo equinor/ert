@@ -104,7 +104,10 @@ class LocalConfig(BaseCClass):
         assert isinstance(mini_step_key, str)
         if analysis_module:
             assert isinstance(analysis_module, AnalysisModule)
-        return self._create_ministep(mini_step_key, analysis_module)
+        ministep = self._create_ministep(mini_step_key, analysis_module)
+        if ministep is None:
+            raise KeyError("Ministep:  {} already exists".format(mini_step_key))
+        return ministep
 
     def createObsdata(self, obsdata_key):
         """ @rtype: Obsdata """

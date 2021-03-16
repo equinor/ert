@@ -145,6 +145,9 @@ class LocalConfigTest(ResTest):
             ministep = local_config.createMinistep("MINISTEP", analysis_module)
             self.assertTrue(isinstance(ministep, LocalMinistep))
 
+            with self.assertRaises(KeyError):
+                _ = local_config.createMinistep("MINISTEP", None)
+
             self.assertFalse("DATA" in ministep)
             with self.assertRaises(KeyError):
                 _ = ministep["DATA"]
