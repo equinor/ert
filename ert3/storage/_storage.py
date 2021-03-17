@@ -4,9 +4,20 @@ import os
 from pathlib import Path
 from typing import Any, Iterable, Optional, Union
 import yaml
+import logging
+
+logger = logging.getLogger()
 
 
 _STORAGE_FILE = "storage.yaml"
+try:
+    _STORAGE_URL = os.environ["ERT_STORAGE_URL"]
+except KeyError:
+    logger.warning(
+        "ERT_STORAGE_URL is not set, assuming ert-storage running "
+        "on localhost: http://127.0.0.1:8000"
+    )
+    _STORAGE_URL = "http://127.0.0.1:8000"
 
 _DATA = "__data__"
 _PARAMETERS = "__parameters__"

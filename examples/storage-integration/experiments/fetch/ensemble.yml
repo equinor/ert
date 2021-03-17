@@ -1,0 +1,11 @@
+size: 10
+
+input:
+  -
+    source: storage.realizations
+    record: realizations
+
+forward_model:
+  driver: local
+  stages:
+    - fetch-postgres

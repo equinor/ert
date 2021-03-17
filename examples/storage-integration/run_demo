@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -e
+git checkout experiments stages.yml
+./prepare_run.py $1
+rm -rf .ert
+
+# sed -i 's/local/pbs/g' experiments/fetch/ensemble.yml
+# sed -i 's/local/pbs/g' experiments/publish/ensemble.yml
+# sed -i 's/local/pbs/g' experiments/publish_direct/ensemble.yml
+
+ert3 init
+ert3 record load realizations iens.json
+ert3 run publish
+ert3 run fetch
+ert3 run publish_direct
+ert3 export publish
+ert3 export fetch
+ert3 export publish_direct
+python stats.py

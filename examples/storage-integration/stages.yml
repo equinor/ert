@@ -1,0 +1,62 @@
+-
+  name: publish-postgres
+  type: unix
+  input:
+    -
+      record: realizations
+      location: realization.json
+
+  output:
+    -
+      record: something_new
+      location: output.json
+
+  transportable_commands:
+    -
+      name: publish
+      location: postgres-publish.py
+
+  script:
+    - publish ens_id
+
+-
+  name: fetch-postgres
+  type: unix
+  input:
+    -
+      record: realizations
+      location: realization.json
+
+  output:
+    -
+      record: something_else
+      location: output.json
+
+  transportable_commands:
+    -
+      name: fetch
+      location: postgres-fetch.py
+
+  script:
+    - fetch ens_id
+
+-
+  name: publish-direct
+  type: unix
+  input:
+    -
+      record: realizations
+      location: realization.json
+
+  output:
+    -
+      record: direct_times
+      location: output.json
+
+  transportable_commands:
+    -
+      name: publish-direct
+      location: direct_publish.py
+
+  script:
+    - publish-direct
