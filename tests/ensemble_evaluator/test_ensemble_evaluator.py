@@ -5,6 +5,7 @@ import threading
 from unittest.mock import Mock
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_STARTED,
+    JOB_STATE_FAILURE,
     JOB_STATE_FINISHED,
     JOB_STATE_RUNNING,
 )
@@ -169,6 +170,17 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             )
             snapshot = Snapshot(next(events).data)
             assert snapshot.get_job("1", "0", "0", "0").status == JOB_STATE_FINISHED
+
+            # second dispatcher informs that job 1 is failed
+            send_dispatch_event(
+                dispatch2,
+                identifiers.EVTYPE_FM_JOB_FAILURE,
+                "/ert/ee/0/real/1/stage/0/step/0/job/1",
+                "event_job_1_fail",
+                {identifiers.STDERR: "error"},
+            )
+            snapshot = Snapshot(next(events).data)
+            assert snapshot.get_job("1", "0", "0", "1").status == JOB_STATE_FAILURE
 
             # a second monitor connects
             with ee_monitor.create(host, port) as monitor2:
