@@ -60,7 +60,7 @@ def test_entry_point(base_unix_stage_config):
     ),
 )
 def test_entry_point_not_valid(config, expected_error):
-    with pytest.raises(pydantic.error_wrappers.ValidationError, match=expected_error):
+    with pytest.raises(ert3.exceptions.ConfigValidationError, match=expected_error):
         ert3.config.load_stages_config(config)
 
 
@@ -99,7 +99,7 @@ def test_step_non_existing_transportable_cmd(base_unix_stage_config):
     )
 
     err_msg = '"/not/a/file" does not exist'
-    with pytest.raises(pydantic.error_wrappers.ValidationError, match=err_msg):
+    with pytest.raises(ert3.exceptions.ConfigValidationError, match=err_msg):
         ert3.config.load_stages_config(config)
 
 
@@ -112,7 +112,7 @@ def test_step_non_executable_transportable_cmd(base_unix_stage_config):
     )
 
     err_msg = f"{str(non_executable)} is not executable"
-    with pytest.raises(pydantic.error_wrappers.ValidationError, match=err_msg):
+    with pytest.raises(ert3.exceptions.ConfigValidationError, match=err_msg):
         ert3.config.load_stages_config(config)
 
 
@@ -121,7 +121,7 @@ def test_step_unknown_script(base_unix_stage_config):
     config[0]["script"].append("unknown_command")
 
     with pytest.raises(
-        pydantic.error_wrappers.ValidationError,
+        ert3.exceptions.ConfigValidationError,
         match=r"unknown_command is not a known command",
     ):
         ert3.config.load_stages_config(config)
@@ -131,7 +131,7 @@ def test_step_function_definition_error(base_function_stage_config):
     config = base_function_stage_config
     config[0]["function"] = "builtinssum"
     with pytest.raises(
-        pydantic.error_wrappers.ValidationError,
+        ert3.exceptions.ConfigValidationError,
         match=r"Function should be defined as module:function",
     ):
         ert3.config.load_stages_config(config)
@@ -149,7 +149,7 @@ def test_step_unix_and_function_error(base_unix_stage_config):
     config[0].update({"function": "builtins:sum"})
 
     with pytest.raises(
-        pydantic.error_wrappers.ValidationError,
+        ert3.exceptions.ConfigValidationError,
         match=r"Function defined for unix step",
     ):
         ert3.config.load_stages_config(config)
@@ -169,7 +169,7 @@ def test_step_function_and_script_error(base_function_stage_config):
     config = base_function_stage_config
     config[0].update({"script": ["poly --help"]})
     with pytest.raises(
-        pydantic.error_wrappers.ValidationError,
+        ert3.exceptions.ConfigValidationError,
         match=r"Scripts defined for a function stage",
     ):
         ert3.config.load_stages_config(config)
@@ -181,7 +181,7 @@ def test_step_function_and_command_error(base_function_stage_config):
         {"transportable_commands": [{"name": "poly", "location": "poly.py"}]}
     )
     with pytest.raises(
-        pydantic.error_wrappers.ValidationError,
+        ert3.exceptions.ConfigValidationError,
         match=r"Commands defined for a function stage",
     ):
         ert3.config.load_stages_config(config)

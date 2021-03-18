@@ -1,7 +1,8 @@
 import sys
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
+import ert3
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -34,4 +35,7 @@ class EnsembleConfig(_EnsembleConfig):
 
 
 def load_ensemble_config(config_dict):
-    return EnsembleConfig(**config_dict)
+    try:
+        return EnsembleConfig(**config_dict)
+    except ValidationError as err:
+        raise ert3.exceptions.ConfigValidationError(str(err), source="ensemble")
