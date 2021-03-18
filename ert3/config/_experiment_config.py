@@ -1,6 +1,8 @@
 import sys
 from typing import Optional
-from pydantic import root_validator, BaseModel
+from pydantic import root_validator, BaseModel, ValidationError
+
+import ert3
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -38,4 +40,7 @@ class ExperimentConfig(_ExperimentConfig):
 
 
 def load_experiment_config(config_dict):
-    return ExperimentConfig(**config_dict)
+    try:
+        return ExperimentConfig(**config_dict)
+    except ValidationError as err:
+        raise ert3.exceptions.ConfigValidationError(str(err), source="experiment")

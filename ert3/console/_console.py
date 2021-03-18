@@ -126,6 +126,8 @@ def _clean(workspace, args):
 def main():
     try:
         _main()
+    except ert3.exceptions.ConfigValidationError as e:
+        ert3.console.report_validation_errors(e)
     except ert3.exceptions.ErtError as e:
         sys.exit(e)
 

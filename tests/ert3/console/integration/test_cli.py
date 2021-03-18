@@ -2,7 +2,12 @@ import ert3
 
 import pytest
 import sys
+import copy
 from unittest.mock import patch
+
+from pydantic import ValidationError
+
+import yaml
 
 
 @pytest.mark.parametrize(
@@ -314,3 +319,107 @@ def test_cli_clean_non_existant_experiment(workspace, capsys):
         "    non_existant_experiment\n"
         "Perhaps you mistyped an experiment name?"
     )
+
+
+def test_cli_validation_ensemble_function(base_ensemble_dict, capsys):
+    ert3.config.load_ensemble_config(base_ensemble_dict)
+
+    config = copy.deepcopy(base_ensemble_dict)
+    config["size"] = "a"
+    with pytest.raises(ert3.exceptions.ConfigValidationError) as exc_info:
+        ert3.config.load_ensemble_config(config)
+    ert3.console.report_validation_errors(exc_info.value)
+    capture = capsys.readouterr()
+    assert "Error while loading ensemble configuration data:" in capture.out
+    assert "not a valid integer" in capture.out
+
+
+def test_cli_validation_experiment_function(capsys):
+    config = {"type": "evaluation"}
+    ert3.config.load_experiment_config(config)
+
+    config["type"] = []
+    with pytest.raises(ert3.exceptions.ConfigValidationError) as exc_info:
+        ert3.config.load_experiment_config(config)
+    ert3.console.report_validation_errors(exc_info.value)
+    capture = capsys.readouterr()
+    assert "Error while loading experiment configuration data:" in capture.out
+    assert "unhashable type" in capture.out
+
+
+def test_cli_validation_stages_function(capsys):
+    config = [{"name": "name", "type": "unix", "input": [], "output": []}]
+    ert3.config.load_stages_config(config)
+
+    config = {"name": "name", "type": "unix", "input": [], "output": []}
+    with pytest.raises(ert3.exceptions.ConfigValidationError) as exc_info:
+        ert3.config.load_stages_config(config)
+    ert3.console.report_validation_errors(exc_info.value)
+    capture = capsys.readouterr()
+    assert "Error while loading stages configuration data:" in capture.out
+    assert "not a valid list" in capture.out
+
+    config = [{"name": {}, "type": "unix", "input": [], "output": []}]
+    with pytest.raises(ert3.exceptions.ConfigValidationError) as exc_info:
+        ert3.config.load_stages_config(config)
+    ert3.console.report_validation_errors(exc_info.value)
+    capture = capsys.readouterr()
+    assert "Error while loading stages configuration data:" in capture.out
+    assert "str type expected" in capture.out
+
+
+@pytest.mark.requires_ert_storage
+def test_cli_validation_ensemble_command(base_ensemble_dict, workspace, capsys):
+    ert3.config.load_ensemble_config(base_ensemble_dict)
+    experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
+    experiments_folder.mkdir("E0")
+    config = copy.deepcopy(base_ensemble_dict)
+    config["size"] = "a"
+    with open(experiments_folder / "E0" / "ensemble.yml", "w") as f:
+        yaml.dump(config, f)
+    args = ["ert3", "run", "E0"]
+    with patch.object(sys, "argv", args):
+        ert3.console.main()
+    capture = capsys.readouterr()
+    assert "Error while loading ensemble configuration data:" in capture.out
+    assert "not a valid integer" in capture.out
+
+
+@pytest.mark.requires_ert_storage
+def test_cli_validation_experiment_command(base_ensemble_dict, workspace, capsys):
+    experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
+    experiments_folder.mkdir("E0")
+    with open(experiments_folder / "E0" / "ensemble.yml", "w") as f:
+        yaml.dump(base_ensemble_dict, f)
+    config = {"type": {}}
+    with open(experiments_folder / "E0" / "experiment.yml", "w") as f:
+        yaml.dump(config, f)
+    config = [{"name": "name", "type": "unix", "input": [], "output": []}]
+    with open(workspace / "stages.yml", "w") as f:
+        yaml.dump(config, f)
+    args = ["ert3", "run", "E0"]
+    with patch.object(sys, "argv", args):
+        ert3.console.main()
+    capture = capsys.readouterr()
+    assert "Error while loading experiment configuration data:" in capture.out
+    assert "unhashable type" in capture.out
+
+
+@pytest.mark.requires_ert_storage
+def test_cli_validation_stages_command(base_ensemble_dict, workspace, capsys):
+    experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
+    experiments_folder.mkdir("E0")
+    with open(experiments_folder / "E0" / "ensemble.yml", "w") as f:
+        yaml.dump(base_ensemble_dict, f)
+    config = {"type": "evaluation"}
+    with open(experiments_folder / "E0" / "experiment.yml", "w") as f:
+        yaml.dump(config, f)
+    config = [{"name": {}, "type": "unix", "input": [], "output": []}]
+    with open(workspace / "stages.yml", "w") as f:
+        yaml.dump(config, f)
+    args = ["ert3", "run", "E0"]
+    with patch.object(sys, "argv", args):
+        ert3.console.main()
+    capture = capsys.readouterr()
+    assert "Error while loading stages configuration data:" in capture.out
+    assert "str type expected" in capture.out

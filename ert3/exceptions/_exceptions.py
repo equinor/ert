@@ -17,3 +17,9 @@ class IllegalWorkspaceState(ErtError):
 class NonExistantExperiment(IllegalWorkspaceOperation):
     def __init__(self, message: str) -> None:
         self.message = "{}".format(message)
+
+
+class ConfigValidationError(ErtError):
+    def __init__(self, message: str, source: str = None) -> None:
+        self.message = "{}".format(message)
+        self.source = source

@@ -2,7 +2,9 @@ import importlib
 import os
 import sys
 from typing import List, Callable, Optional
-from pydantic import root_validator, validator, FilePath, BaseModel
+from pydantic import root_validator, validator, FilePath, BaseModel, ValidationError
+
+import ert3
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -103,4 +105,7 @@ class StagesConfig(BaseModel):
 
 
 def load_stages_config(config_dict):
-    return StagesConfig.parse_obj(config_dict)
+    try:
+        return StagesConfig.parse_obj(config_dict)
+    except ValidationError as err:
+        raise ert3.exceptions.ConfigValidationError(str(err), source="stages")
