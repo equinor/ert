@@ -8,7 +8,7 @@ import sys
 
 import numpy as np
 import pathlib
-import ert3.workspace
+import ert3
 
 import subprocess
 import time

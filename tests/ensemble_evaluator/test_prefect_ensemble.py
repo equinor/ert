@@ -17,13 +17,13 @@ from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.prefect_ensemble.prefect_ensemble import (
     PrefectEnsemble,
 )
-from ert_shared.ensemble_evaluator.prefect_ensemble.unix_step import UnixStep
-from ert_shared.ensemble_evaluator.prefect_ensemble.function_step import FunctionStep
+from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
+from ert_shared.ensemble_evaluator.entity.function_step import FunctionTask
 from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
     storage_driver_factory,
 )
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert_shared.ensemble_evaluator.prefect_ensemble.client import Client
+from ert_shared.ensemble_evaluator.client import Client
 from tests.ensemble_evaluator.conftest import _mock_ws
 
 
@@ -238,7 +238,7 @@ def test_unix_step(unused_tcp_port):
             ids.JOBS: jobs,
         }
 
-        stage_task = UnixStep(
+        stage_task = UnixTask(
             step=step,
             resources=[resource],
             cmd="python3",

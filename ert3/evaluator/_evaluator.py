@@ -185,16 +185,11 @@ def _build_ee_config(
         "dispatch_uri": dispatch_uri,
     }
 
-<<<<<<< HEAD
-    ee_config["input_files"] = _prepare_input(
-        ee_config, stages_config, input_records, evaluation_tmp_dir, ensemble
-=======
     ee_config["inputs"] = _prepare_input(
         ee_config, stage, input_records, evaluation_tmp_dir, ensemble_size
     )
     ee_config["outputs"] = _prepare_output(
         ee_config, stage, evaluation_tmp_dir, ensemble_size
->>>>>>> Record Transmitting
     )
 
     return ee_config

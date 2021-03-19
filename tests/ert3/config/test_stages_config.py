@@ -56,7 +56,7 @@ def test_entry_point(base_unix_stage_config):
     "config, expected_error",
     (
         [{"not_a_key": "value"}, "1 validation error"],
-        [[{"not_a_key": "value"}], "4 validation errors"],
+        [[{"not_a_key": "value"}], "5 validation errors"],
     ),
 )
 def test_entry_point_not_valid(config, expected_error):
@@ -144,15 +144,11 @@ def test_step_function_error(base_function_stage_config):
         ert3.config.load_stages_config(config)
 
 
-def test_step_unix_and_function_error(base_unix_stage_config):
+def test_step_unix_and_function(base_unix_stage_config):
     config = base_unix_stage_config
     config[0].update({"function": "builtins:sum"})
-
-    with pytest.raises(
-        pydantic.error_wrappers.ValidationError,
-        match=r"Function defined for unix step",
-    ):
-        ert3.config.load_stages_config(config)
+    stage = ert3.config.load_stages_config(config)
+    assert stage[0].function is None
 
 
 def test_step_function_module_error(base_function_stage_config):
