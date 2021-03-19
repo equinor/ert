@@ -567,13 +567,14 @@ class JobQueue(BaseCClass):
                 return None
         return snapshot
 
-    def add_ensemble_evaluator_information_to_jobs_file(self, ee_id):
+    def add_ensemble_evaluator_information_to_jobs_file(self, ee_id, dispatch_url):
         for q_index, q_node in enumerate(self.job_list):
             with open(f"{q_node.run_path}/{JOBS_FILE}", "r+") as jobs_file:
                 data = json.load(jobs_file)
                 data["ee_id"] = ee_id
                 data["real_id"] = self._qindex_to_iens[q_index]
                 data["stage_id"] = 0
+                data["dispatch_url"] = dispatch_url
                 jobs_file.seek(0)
                 jobs_file.truncate()
                 json.dump(data, jobs_file, indent=4)

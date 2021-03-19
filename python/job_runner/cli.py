@@ -10,14 +10,14 @@ from job_runner.runner import JobRunner
 from job_runner import JOBS_FILE
 
 
-def _setup_reporters(is_interactive_run, ee_id):
+def _setup_reporters(is_interactive_run, ee_id, evaluator_url):
     reporters = []
     if is_interactive_run:
         reporters.append(reporting.Interactive())
     elif ee_id:
         reporters.append(reporting.File(sync_disc_timeout=0))
         reporters.append(reporting.Network())
-        reporters.append(reporting.Event())
+        reporters.append(reporting.Event(evaluator_url=evaluator_url))
     else:
         reporters.append(reporting.File())
         reporters.append(reporting.Network())
@@ -49,11 +49,12 @@ def main(args):
         with open(JOBS_FILE, "r") as json_file:
             jobs_data = json.load(json_file)
             ee_id = jobs_data.get("ee_id")
+            evaluator_url = jobs_data.get("dispatch_url")
     except ValueError as e:
         raise IOError("Job Runner cli failed to load JSON-file.{}".format(str(e)))
 
     is_interactive_run = len(parsed_args.job) > 0
-    reporters = _setup_reporters(is_interactive_run, ee_id)
+    reporters = _setup_reporters(is_interactive_run, ee_id, evaluator_url)
 
     job_runner = JobRunner(jobs_data)
 

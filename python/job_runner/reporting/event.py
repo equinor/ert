@@ -8,6 +8,8 @@ from job_runner.reporting.message import (
 )
 from pathlib import Path
 
+from job_runner.util.client import Client
+
 _FM_JOB_START = "com.equinor.ert.forward_model_job.start"
 _FM_JOB_RUNNING = "com.equinor.ert.forward_model_job.running"
 _FM_JOB_SUCCESS = "com.equinor.ert.forward_model_job.success"
@@ -23,15 +25,14 @@ class TransitionError(ValueError):
 
 
 class Event:
-    def __init__(self, event_log="event_log"):
-        self._event_log = event_log
+    def __init__(self, evaluator_url):
+        self._evaluator_url = evaluator_url
 
         self._ee_id = None
         self._real_id = None
         self._stage_id = None
 
         self._initialize_state_machine()
-        self._clear_log()
 
     def _initialize_state_machine(self):
         initialized = (Init,)
@@ -48,10 +49,6 @@ class Event:
             jobs: jobs + finished,
         }
         self._state = None
-
-    def _clear_log(self):
-        with open(self._event_log, "w") as f:
-            pass
 
     def report(self, msg):
         new_state = None
@@ -70,8 +67,8 @@ class Event:
         self._state = new_state
 
     def _dump_event(self, event):
-        with open(self._event_log, "a") as el:
-            el.write("{}\n".format(to_json(event).decode()))
+        with Client(self._evaluator_url) as client:
+            client.send(to_json(event).decode())
 
     def _step_path(self):
         return f"/ert/ee/{self._ee_id}/real/{self._real_id}/stage/{self._stage_id}/step/{0}"

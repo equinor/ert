@@ -16,7 +16,9 @@ from subprocess import Popen
 from job_runner.cli import main, _setup_reporters
 from job_runner.reporting.message import Init, Finish
 from job_runner.reporting import Event, Interactive
-from tests.utils import tmpdir, wait_until
+from pytest_asyncio.plugin import _unused_tcp_port
+
+from tests.utils import tmpdir, wait_until, _mock_ws_thread
 from unittest.mock import patch, mock_open
 
 
@@ -108,23 +110,6 @@ else:
         wait_until(lambda: self.assertEqual(len(p.children(recursive=True)), 0))
 
         os.wait()  # allow os to clean up zombie processes
-
-    @tmpdir(None)
-    def test_job_dispatch_kills_itself_after_unsuccessful_job(self):
-        jobs_json = json.dumps({"ee_id": "_id_"})
-
-        with patch("job_runner.cli.os") as mock_os, patch(
-            "job_runner.cli.open", new=mock_open(read_data=jobs_json)
-        ) as mock_file, patch("job_runner.cli.JobRunner") as mock_runner:
-            mock_runner.return_value.run.return_value = [
-                Init([], 0, 0),
-                Finish().with_error("overall bad run"),
-            ]
-            mock_os.getpgid.return_value = 17
-
-            main(["script.py", "/foo/bar/baz"])
-
-            mock_os.killpg.assert_called_with(17, signal.SIGKILL)
 
     @tmpdir(None)
     def test_job_dispatch_run_subset_specified_as_parmeter(self):
@@ -265,7 +250,7 @@ else:
     [(False, None), (False, "1234"), (True, None), (True, "1234")],
 )
 def test_setup_reporters(is_interactive_run, ee_id):
-    reporters = _setup_reporters(is_interactive_run, ee_id)
+    reporters = _setup_reporters(is_interactive_run, ee_id, "")
 
     if not is_interactive_run and not ee_id:
         assert len(reporters) == 2
@@ -278,3 +263,24 @@ def test_setup_reporters(is_interactive_run, ee_id):
     if is_interactive_run and ee_id:
         assert len(reporters) == 1
         assert any([isinstance(r, Interactive) for r in reporters])
+
+
+@tmpdir(None)
+def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
+    host = "localhost"
+    port = unused_tcp_port
+    jobs_json = json.dumps({"ee_id": "_id_", "dispatch_url": f"ws://localhost:{port}"})
+
+    with patch("job_runner.cli.os") as mock_os, patch(
+        "job_runner.cli.open", new=mock_open(read_data=jobs_json)
+    ) as mock_file, patch("job_runner.cli.JobRunner") as mock_runner:
+        mock_runner.return_value.run.return_value = [
+            Init([], 0, 0),
+            Finish().with_error("overall bad run"),
+        ]
+        mock_os.getpgid.return_value = 17
+
+        with _mock_ws_thread(host, port, []):
+            main(["script.py", "/foo/bar/baz"])
+
+        mock_os.killpg.assert_called_with(17, signal.SIGKILL)

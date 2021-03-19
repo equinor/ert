@@ -1,11 +1,17 @@
+import asyncio
 import contextlib
 import logging
 import os
 import tempfile
 import shutil
+import threading
+from functools import partial
 
 import decorator
 import time
+
+import websockets
+from job_runner.util.client import Client
 
 """
 Swiped from
@@ -86,3 +92,42 @@ def wait_until(func, interval=0.5, timeout=30):
                         func.__name__, timeout
                     )
                 )
+
+
+def _mock_ws(host, port, messages, delay_startup=0):
+    loop = asyncio.new_event_loop()
+    done = loop.create_future()
+
+    async def _handler(websocket, path):
+        while True:
+            msg = await websocket.recv()
+            messages.append(msg)
+            if msg == "stop":
+                done.set_result(None)
+                break
+
+    async def _run_server():
+        await asyncio.sleep(delay_startup)
+        async with websockets.serve(_handler, host, port):
+            await done
+
+    loop.run_until_complete(_run_server())
+    loop.close()
+
+
+@contextlib.contextmanager
+def _mock_ws_thread(host, port, messages):
+    mock_ws_thread = threading.Thread(
+        target=partial(_mock_ws, messages=messages),
+        args=(
+            host,
+            port,
+        ),
+    )
+    mock_ws_thread.start()
+    yield
+    url = f"ws://{host}:{port}"
+    with Client(url) as client:
+        client.send("stop")
+    mock_ws_thread.join()
+    messages.pop()

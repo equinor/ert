@@ -3,3 +3,4 @@ decorator
 pylint
 black
 click
+pytest-asyncio
