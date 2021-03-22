@@ -31,6 +31,13 @@ class TemplatingTest(ResTest):
         + "OTH_TEST {{third.key1.subkey1}}"
     )
 
+    mulitple_input_template_no_param = (
+        "FILENAME\n"
+        + "F1 {{not_the_standard_parameters.key1.subkey1}}\n"
+        + "OTH {{second.key1.subkey2}}\n"
+        + "OTH_TEST {{third.key1.subkey1}}"
+    )
+
     default_parameters = {
         "key1": {"subkey1": 1999.22, "subkey2": 200},
         "key2": {"subkey1": 300},
@@ -131,6 +138,38 @@ class TemplatingTest(ResTest):
             json.dump(parameters, json_file)
 
         render_template(["second.json", "third.json"], "template", "out_file")
+
+        with open("out_file", "r") as parameter_file:
+            expected_output = (
+                "FILENAME\n" + "F1 1999.22\n" + "OTH 1400\n" + "OTH_TEST 3000.22"
+            )
+
+            self.assertEqual(parameter_file.read(), expected_output)
+
+    @tmpdir()
+    def test_no_parameters_json(self):
+        with open("template", "w") as template_file:
+            template_file.write(self.mulitple_input_template_no_param)
+
+        with open("not_the_standard_parameters.json", "w") as json_file:
+            json_file.write(json.dumps(self.default_parameters))
+
+        with open("second.json", "w") as json_file:
+            parameters = {"key1": {"subkey2": 1400}}
+            json.dump(parameters, json_file)
+        with open("third.json", "w") as json_file:
+            parameters = {
+                "key1": {
+                    "subkey1": 3000.22,
+                }
+            }
+            json.dump(parameters, json_file)
+
+        render_template(
+            ["second.json", "third.json", "not_the_standard_parameters.json"],
+            "template",
+            "out_file",
+        )
 
         with open("out_file", "r") as parameter_file:
             expected_output = (

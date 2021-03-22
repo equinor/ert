@@ -78,7 +78,11 @@ def render_template(input_files, template_file, output_file):
     if isinstance(input_files, str) and input_files:
         input_files = (input_files,)
 
-    all_input_files = (DEFAULT_GEN_KW_EXPORT_NAME + ".json",)
+    all_input_files = ()
+
+    gen_kw_export_path = DEFAULT_GEN_KW_EXPORT_NAME + ".json"
+    if os.path.isfile(gen_kw_export_path):
+        all_input_files += (gen_kw_export_path,)
 
     if input_files:
         all_input_files += tuple(input_files)
