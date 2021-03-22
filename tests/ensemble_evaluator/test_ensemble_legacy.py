@@ -56,7 +56,7 @@ def test_run_legacy_ensemble_exception(tmpdir, unused_tcp_port, make_ensemble_bu
         config = EvaluatorServerConfig(unused_tcp_port)
         evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
 
-        with patch.object(ensemble, "_run_path_list", side_effect=RuntimeError()):
+        with patch.object(ensemble, "get_active_reals", side_effect=RuntimeError()):
             with evaluator.run() as monitor:
                 for e in monitor.track():
                     if e.data is not None and e.data.get(identifiers.STATUS) in [

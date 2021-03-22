@@ -1,15 +1,12 @@
 import asyncio
 import logging
-import os
 import threading
 import uuid
 from functools import partial
-from pathlib import Path
 
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.entity.ensemble_base import _Ensemble
-from ert_shared.ensemble_evaluator.nfs_adaptor import nfs_adaptor
 from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 
 CONCURRENT_INTERNALIZATION = 10
@@ -41,13 +38,6 @@ class _LegacyEnsemble(_Ensemble):
         self._config = None
         self._ee_id = None
 
-    def _run_path_list(self):
-        run_path_list = []
-        for real in self.get_active_reals():
-            for stage in real.get_stages():
-                run_path_list.append(stage.get_run_path())
-        return run_path_list
-
     def evaluate(self, config, ee_id):
         self._config = config
         self._ee_id = ee_id
@@ -71,13 +61,6 @@ class _LegacyEnsemble(_Ensemble):
             asyncio.get_event_loop().run_until_complete(
                 self.send_cloudevent(dispatch_url, out_cloudevent)
             )
-
-            event_logs = [Path(path) / "event_log" for path in self._run_path_list()]
-            futures = []
-            for event_log in event_logs:
-                if os.path.isfile(event_log):
-                    os.remove(event_log)
-                futures.append(nfs_adaptor(event_log, dispatch_url))
 
             self._job_queue = self._queue_config.create_job_queue()
 
@@ -103,15 +86,17 @@ class _LegacyEnsemble(_Ensemble):
                     )
                 ]
 
-            self._job_queue.add_ensemble_evaluator_information_to_jobs_file(self._ee_id)
+            self._job_queue.add_ensemble_evaluator_information_to_jobs_file(
+                self._ee_id, dispatch_url
+            )
 
-            futures.append(
+            futures = [
                 self._job_queue.execute_queue_async(
                     dispatch_url,
                     threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION),
                     queue_evaluators,
                 )
-            )
+            ]
 
             self._aggregate_future = asyncio.gather(*futures, return_exceptions=True)
             self._allow_cancel.set()
