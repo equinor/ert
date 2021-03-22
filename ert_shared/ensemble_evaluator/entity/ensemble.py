@@ -476,7 +476,6 @@ class _Stage:
         steps,
         status,
         name=None,
-        ts_sorted_steps=None,
     ):
         if id_ is None:
             raise ValueError(f"{self} needs id")
@@ -490,32 +489,11 @@ class _Stage:
         self._status = status
         self._name = name
 
-        self._ts_sorted_indices = None
-        if ts_sorted_steps is not None:
-            self._ts_sorted_indices = list(range(0, len(ts_sorted_steps)))
-            for idx, name in enumerate(ts_sorted_steps):
-                for step_idx, step in enumerate(steps):
-                    if step.get_name() is None:
-                        raise ValueError(
-                            f"creating stage failed: tried to sort steps, but step at index {step_idx} does not have a name"
-                        )
-                    if step.get_name() == name:
-                        self._ts_sorted_indices[idx] = step_idx
-            assert len(self._ts_sorted_indices) == len(
-                steps
-            ), "disparity between amount of pre-sorted items and steps"
-
     def get_id(self):
         return self._id
 
     def get_steps(self):
         return self._steps
-
-    def get_steps_sorted_topologically(self) -> typing.List[_Step]:
-        if not self._ts_sorted_indices:
-            raise NotImplementedError("steps were not sorted")
-        for idx in self._ts_sorted_indices:
-            yield self._steps[idx]
 
     def get_status(self):
         return self._status
@@ -551,12 +529,10 @@ class _StageBuilder:
 
     def build(self):
         steps = [builder.build() for builder in self._steps]
-        ts_sorted_steps = _sort_steps(steps)
         return _Stage(
             self._id,
             steps,
             self._status,
-            ts_sorted_steps=ts_sorted_steps,
         )
 
 
@@ -749,7 +725,14 @@ class _RealizationBuilder:
 
     def build(self):
         stages = [builder.build() for builder in self._stages]
-        return _Realization(self._iens, stages, self._active)
+        steps = []
+        for stage in stages:
+            steps.append(*stage.get_steps())
+        ts_sorted_steps = _sort_steps(steps)
+
+        return _Realization(
+            self._iens, stages, self._active, ts_sorted_steps=ts_sorted_steps
+        )
 
 
 def create_realization_builder():
@@ -757,7 +740,7 @@ def create_realization_builder():
 
 
 class _Realization:
-    def __init__(self, iens, stages, active):
+    def __init__(self, iens, stages, active, ts_sorted_steps=None):
         if iens is None:
             raise ValueError(f"{self} needs iens")
         if stages is None:
@@ -768,6 +751,29 @@ class _Realization:
         self._iens = iens
         self._stages = stages
         self._active = active
+
+        steps = self.get_all_steps()
+
+        self._ts_sorted_indices = None
+        if ts_sorted_steps is not None:
+            self._ts_sorted_indices = list(range(0, len(ts_sorted_steps)))
+            for idx, name in enumerate(ts_sorted_steps):
+                for step_idx, step in enumerate(steps):
+                    if step.get_name() is None:
+                        raise ValueError(
+                            f"creating stage failed: tried to sort steps, but step at index {step_idx} does not have a name"
+                        )
+                    if step.get_name() == name:
+                        self._ts_sorted_indices[idx] = step_idx
+            assert len(self._ts_sorted_indices) == len(
+                steps
+            ), "disparity between amount of pre-sorted items and steps"
+
+    def get_all_steps(self):
+        steps = []
+        for stage in self._stages:
+            steps.append(*stage.get_steps())
+        return steps
 
     def get_iens(self):
         return self._iens
@@ -780,6 +786,13 @@ class _Realization:
 
     def set_active(self, active):
         self._active = active
+
+    def get_steps_sorted_topologically(self) -> typing.Iterator[_Step]:
+        steps = self.get_all_steps()
+        if not self._ts_sorted_indices:
+            raise NotImplementedError("steps were not sorted")
+        for idx in self._ts_sorted_indices:
+            yield steps[idx]
 
 
 class _EnsembleBuilder:
@@ -884,6 +897,7 @@ class _EnsembleBuilder:
             self._reals.append(real)
 
         reals = [builder.build() for builder in self._reals]
+
         if self._legacy_dependencies:
             return _LegacyEnsemble(reals, self._metadata, *self._legacy_dependencies)
         return _Ensemble(reals, self._metadata)

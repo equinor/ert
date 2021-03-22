@@ -199,9 +199,7 @@ class PrefectEnsemble(_Ensemble):
                     record: transmitter
                     for record, transmitter in self.config["inputs"][iens].items()
                 }
-                for step in (
-                    self._reals[iens].get_stages()[0].get_steps_sorted_topologically()
-                ):
+                for step in self._reals[iens].get_steps_sorted_topologically():
                     inputs = {
                         inp.get_name(): transmitter_map[iens][inp.get_name()]
                         for inp in step.get_inputs()
