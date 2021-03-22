@@ -40,7 +40,7 @@ setup(
         "console-progressbar==1.1.2",
         "decorator",
         "deprecation",
-        "equinor-libres >= 9.1.0rc0",
+        "equinor-libres >= 10.0.0b0",
         "fastapi",
         "jinja2",
         "matplotlib",
