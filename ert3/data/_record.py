@@ -132,6 +132,9 @@ class RecordTransmitter:
     def set_transmitted(self):
         self._state = RecordTransmitterState.transmitted
 
+    def is_transmitted(self):
+        return self._state == RecordTransmitterState.transmitted
+
     @abstractmethod
     async def dump(
         self, location: Path, format: str = "json"
@@ -146,7 +149,10 @@ class RecordTransmitter:
     @abstractmethod
     async def transmit(
         self,
-        data_or_file: typing.Union[Path, Union[List[float], Mapping[int, float], Mapping[str, float], List[bytes]]],
+        data_or_file: typing.Union[
+            Path,
+            Union[List[float], Mapping[int, float], Mapping[str, float], List[bytes]],
+        ],
     ) -> Awaitable[bool]:
         pass
 
@@ -164,8 +170,14 @@ class PrefectStorageRecordTransmitter(RecordTransmitter):
         super().set_transmitted()
         self._uri = str(uri)
 
-    def transmit(self, data_or_file: typing.Union[Path, List[float], Mapping[int, float], Mapping[str, float], List[bytes]], mime="text/json"):
-        if self._state == RecordTransmitterState.transmitted:
+    def transmit(
+        self,
+        data_or_file: typing.Union[
+            Path, List[float], Mapping[int, float], Mapping[str, float], List[bytes]
+        ],
+        mime="text/json",
+    ):
+        if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
         if isinstance(data_or_file, Path) or isinstance(data_or_file, str):
             with open(data_or_file) as f:
@@ -203,8 +215,14 @@ class InMemoryRecordTransmitter(RecordTransmitter):
         super().set_transmitted()
         self._record = record
 
-    def transmit(self, data_or_file: typing.Union[Path, List[float], Mapping[int, float], Mapping[str, float], List[bytes]], mime="text/json"):
-        if self._state == RecordTransmitterState.transmitted:
+    def transmit(
+        self,
+        data_or_file: typing.Union[
+            Path, List[float], Mapping[int, float], Mapping[str, float], List[bytes]
+        ],
+        mime="text/json",
+    ):
+        if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
         if isinstance(data_or_file, Path) or isinstance(data_or_file, str):
             with open(data_or_file) as f:
