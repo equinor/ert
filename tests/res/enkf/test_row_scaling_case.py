@@ -18,18 +18,22 @@ import random
 import os
 import math
 import numpy as np
+import tempfile
+import shutil
 
 from tests import ResTest
+from tests.utils import tmpdir
 
 from ecl.util.util import BoolVector
+from ecl.grid import EclGridGenerator
 
 from res.test import ErtTestContext
-from res.enkf import RowScaling
+from res.enkf import RowScaling, ResConfig
 from res.enkf import EnkfNode, NodeId
 from res.enkf import ESUpdate
 from res.enkf import FieldConfig, ErtRunContext
 from res.enkf.enums import RealizationStateEnum
-
+from res.enkf import EnKFMain
 
 # This function will initialize the data in the case before the actual row
 # scaling test can be performed. The function will initialize the PORO field
@@ -51,6 +55,7 @@ from res.enkf.enums import RealizationStateEnum
 def init_data(main):
     fsm = main.getEnkfFsManager()
     init_fs = fsm.getFileSystem("init")
+    grid = main.eclConfig().getGrid()
 
     # Model: bhp = poro * 1000
     poro_mean = 0.15
@@ -68,7 +73,7 @@ def init_data(main):
         with open("fields/poro{}.grdecl".format(i), "w") as f:
             poro = random.gauss(poro_mean, poro_std)
             f.write("PORO")
-            for i in range(200):
+            for i in range(grid.get_num_active()):
                 if i % 10 == 0:
                     f.write("\n")
 
@@ -388,8 +393,7 @@ class RowScalingTest(ResTest):
     # where the same field is updated in both steps. Because the
     # obs_data_allocE() function uses random state it is difficult to get
     # identical results from one ministep updating everything and two ministeps
-    # updating different parts of the field. The final assert is therefor
-    # unfortunately only approximative.
+    # updating different parts of the field.
     def test_2ministep(self):
         with ErtTestContext("row_scaling", self.config_file) as tc:
             main = tc.getErt()
@@ -456,5 +460,56 @@ class RowScalingTest(ResTest):
                 for iv, v1, v2 in zip(init_field, field1, field2):
                     assert iv != v1
 
-                    diff = abs(v1 - v2)
-                    assert diff < 0.05
+    # In the enkf_main_update() routine the A matrix is allocated with a
+    # default size; and should grow when exposed to a larger node. At a stage
+    # there was a bug in code for combination of row_scaling and
+    # matrix_resize(). The purpose of this test is to ensure that we create a
+    # sufficiently large node to invoke the rescaling.
+    @tmpdir()
+    def test_large_case(self):
+        with open("config", "w") as fp:
+            fp.write(
+                """NUM_REALIZATIONS 10
+GRID             CASE.EGRID
+FIELD            PORO    PARAMETER    poro.grdecl INIT_FILES:fields/poro%d.grdecl
+SUMMARY          WBHP
+OBS_CONFIG       observations.txt
+TIME_MAP timemap.txt
+"""
+            )
+
+        for f in ["timemap.txt", "observations.txt"]:
+            src_file = self.createTestPath(os.path.join("local/row_scaling", f))
+            shutil.copy(src_file, "./")
+        # The grid size must be greater than 250000 (the default matrix size in
+        # enkf_main_update())
+        grid = EclGridGenerator.create_rectangular((70, 70, 70), (1, 1, 1))
+        grid.save_EGRID("CASE.EGRID")
+        res_config = ResConfig(user_config_file="config")
+        main = EnKFMain(res_config)
+        init_fs = init_data(main)
+
+        # Configure the local updates
+        local_config = main.getLocalConfig()
+        local_config.clear()
+        local_data = local_config.createDataset("LOCAL")
+        local_data.addNode("PORO")
+        obs = local_config.createObsdata("OBSSET_LOCAL")
+        obs.addNode("WBHP0")
+        ministep = local_config.createMinistep("MINISTEP_LOCAL")
+        ministep.attachDataset(local_data)
+        ministep.attachObsset(obs)
+        updatestep = local_config.getUpdatestep()
+        updatestep.attachMinistep(ministep)
+
+        # Apply the row scaling
+        row_scaling = local_data.row_scaling("PORO")
+        ens_config = main.ensembleConfig()
+        poro_config = ens_config["PORO"]
+        field_config = poro_config.getFieldModelConfig()
+        grid = main.eclConfig().getGrid()
+        row_scaling.assign(field_config.get_data_size(), ScalingTest(grid))
+        es_update = ESUpdate(main)
+        update_fs = main.getEnkfFsManager().getFileSystem("target2")
+        run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs)
+        es_update.smootherUpdate(run_context)
