@@ -189,3 +189,45 @@ class PrefectStorageRecordTransmitter(RecordTransmitter):
         if self._state != RecordTransmitterState.transmitted:
             raise RuntimeError("cannot dump untransmitted record")
         shutil.copy(self._uri, location)
+
+
+class InMemoryRecordTransmitter(RecordTransmitter):
+    TYPE: RecordTransmitterType = RecordTransmitterType.in_memory
+
+    def __init__(self, name: str):
+        super().__init__(type_=self.TYPE)
+        self._name = name
+        self._record = None
+
+    def set_transmitted(self, record: Record):
+        super().set_transmitted()
+        self._record = record
+
+    def transmit(self, data_or_file: typing.Union[Path, List[float], Mapping[int, float], Mapping[str, float], List[bytes]], mime="text/json"):
+        if self._state == RecordTransmitterState.transmitted:
+            raise RuntimeError("Record already transmitted")
+        if isinstance(data_or_file, Path) or isinstance(data_or_file, str):
+            with open(data_or_file) as f:
+                record = Record(data=json.load(f))
+        else:
+            record = Record(data=data_or_file)
+        self.set_transmitted(record=record)
+
+    def load(self, mime="text/json"):
+        return self._record
+
+    # TODO: should use Path
+    def dump(self, location: str, format: str = "text/json"):
+        if format is None:
+            format = "text/json"
+        if self._state != RecordTransmitterState.transmitted:
+            raise RuntimeError("cannot dump untransmitted record")
+        with open(location, "w") as f:
+            if format == "text/json":
+                json.dump(self._record.data, f)
+            elif format == "application/x-python-code":
+                # XXX: An opaque record is a list of bytes... yes
+                # sonso or dan or jond: do something about this
+                f.write(self._record.data[0].decode())
+            else:
+                raise ValueError(f"unsupported mime {format}")

@@ -3,6 +3,7 @@ from ert3.data._record import EnsembleRecord
 from ert3.data._record import MultiEnsembleRecord
 from ert3.data._record import RecordTransmitter
 from ert3.data._record import PrefectStorageRecordTransmitter
+from ert3.data._record import InMemoryRecordTransmitter
 
 __all__ = (
     "Record",
@@ -10,4 +11,5 @@ __all__ = (
     "MultiEnsembleRecord",
     "RecordTransmitter",
     "PrefectStorageRecordTransmitter",
+    "InMemoryRecordTransmitter",
 )
