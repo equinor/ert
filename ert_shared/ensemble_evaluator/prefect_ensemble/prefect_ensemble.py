@@ -191,7 +191,7 @@ class PrefectEnsemble(_Ensemble):
         job = step.get_jobs()[job_index]
         return job.get_id()
 
-    def get_flow(self, ee_id, dispatch_url, input_files, real_range):
+    def get_flow(self, ee_id, real_range):
         with Flow(f"Realization range {real_range}") as flow:
             transmitter_map = {}
             for iens in real_range:

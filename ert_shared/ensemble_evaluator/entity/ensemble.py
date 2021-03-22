@@ -727,7 +727,7 @@ class _RealizationBuilder:
         stages = [builder.build() for builder in self._stages]
         steps = []
         for stage in stages:
-            steps.append(*stage.get_steps())
+            steps.extend(stage.get_steps())
         ts_sorted_steps = _sort_steps(steps)
 
         return _Realization(
@@ -772,7 +772,7 @@ class _Realization:
     def get_all_steps(self):
         steps = []
         for stage in self._stages:
-            steps.append(*stage.get_steps())
+            steps.extend(stage.get_steps())
         return steps
 
     def get_iens(self):
@@ -842,7 +842,7 @@ class _EnsembleBuilder:
         )
 
         for iens in range(0, len(run_context)):
-            step = create_step_builder().set_id(0)
+            step = create_step_builder().set_id(0).set_name("legacy_step")
 
             for index in range(0, len(forward_model)):
                 ext_job = forward_model.iget_job(index)

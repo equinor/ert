@@ -15,6 +15,9 @@ class UnixTask(prefect.Task):
         self._output_transmitters = output_transmitters
         self._ee_id = ee_id
 
+    def get_step(self):
+        return self._step
+
     def run_job(self, client, job, run_path):
         shell_cmd = ["python3", job.get_executable(), *job.get_args()]
         cmd_exec = subprocess.run(

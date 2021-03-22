@@ -11,6 +11,7 @@ from datetime import timedelta
 from functools import partial
 from itertools import permutations
 from prefect import Flow
+from collections import defaultdict
 from tests.utils import SOURCE_DIR, tmp
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
@@ -24,6 +25,8 @@ from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
 )
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.client import Client
+import ert3
+
 from tests.ensemble_evaluator.conftest import _mock_ws
 
 
@@ -33,15 +36,32 @@ def parse_config(path):
         return yaml.safe_load(f)
 
 
-def input_files(config, coefficients):
-    paths = {}
-    storage = storage_driver_factory(config.get(ids.STORAGE), ".")
-    file_name = "coeffs.json"
+def coefficient_transmitters(config, coefficients):
+    ee_storage = storage_driver_factory(config.get(ids.STORAGE), ".")
+    transmitters = defaultdict(dict)
+    record_name = "coeffs"
     for iens, values in enumerate(coefficients):
-        with open(file_name, "w") as f:
-            json.dump(values, f)
-        paths[iens] = (storage.store(file_name, iens),)
-    return paths
+        transmitter = ert3.data.PrefectStorageRecordTransmitter(
+            record_name, ee_storage
+        )
+        transmitter.transmit(values)
+        transmitters[iens][record_name] = transmitter
+    return transmitters
+
+
+def output_transmitters(config):
+    tmp_input_folder = "output_files"
+    os.makedirs(tmp_input_folder)
+    ee_storage = storage_driver_factory(config.get(ids.STORAGE), "tmp_input_folder")
+    transmitters = defaultdict(dict)
+    for stage in config.get(ids.STAGES):
+        for step in stage.get(ids.STEPS):
+            for output in step.get(ids.OUTPUTS):
+                for iens in range(config.get(ids.REALIZATIONS)):
+                    transmitters[iens][
+                        output.get(ids.RECORD)
+                    ] = ert3.data.PrefectStorageRecordTransmitter(output.get(ids.RECORD), ee_storage)
+        return dict(transmitters)
 
 
 @pytest.fixture()
@@ -136,7 +156,7 @@ def test_get_ordering_exception():
             ensemble.get_ordering(0)
 
 
-def test_get_flow(coefficients):
+def test_get_flow(coefficients, unused_tcp_port):
     with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
         config = parse_config("config.yml")
         config.update(
@@ -144,65 +164,44 @@ def test_get_flow(coefficients):
                 "config_path": os.getcwd(),
                 ids.REALIZATIONS: 2,
                 ids.EXECUTOR: "local",
-                "input_files": input_files(config, coefficients),
+                "inputs": coefficient_transmitters(config, coefficients),
+                "outputs": output_transmitters(config)
             }
         )
 
-        def _get_ids(ensemble, iens, stage_name, step_name):
-            stage_id = ensemble.get_id(iens, stage_name)
-            step_id = ensemble.get_id(iens, stage_name, step_name=step_name)
-            return stage_id, step_id
-
+        server_config = EvaluatorServerConfig(unused_tcp_port)
         for permuted_stages in permutations(config["stages"]):
             for stage_idx, stage in enumerate(permuted_stages):
                 for permuted_steps in permutations(stage["steps"]):
                     permuted_config = copy.deepcopy(config)
                     permuted_config["stages"] = copy.deepcopy(permuted_stages)
                     permuted_config["stages"][stage_idx]["steps"] = permuted_steps
-
+                    permuted_config["dispatch_uri"] = server_config.dispatch_uri
                     ensemble = PrefectEnsemble(permuted_config)
 
-                    flow = ensemble.get_flow(
-                        ensemble._ee_id,
-                        ensemble._ee_dispach_url,
-                        ensemble.config["input_files"],
-                        [0, 1],
-                    )
-
-                    # Get the ordered tasks and retrieve their stage and step ids.
-                    task_ids = [
-                        (task.get_stage_id(), task.get_step_id())
-                        for task in flow.sorted_tasks()
-                        if task.name == "UnixStep"
-                    ]
-                    assert len(task_ids) == 8
-
-                    # Check some task dependencies.
                     for iens in range(2):
-                        assert task_ids.index(
-                            _get_ids(
-                                ensemble, iens, "calculate_coeffs", "second_degree"
-                            )
-                        ) < task_ids.index(
-                            _get_ids(ensemble, iens, "calculate_coeffs", "zero_degree")
+                        flow = ensemble.get_flow(
+                            ensemble._ee_id,
+                            [iens],
                         )
-                        assert task_ids.index(
-                            _get_ids(ensemble, iens, "calculate_coeffs", "zero_degree")
-                        ) < task_ids.index(
-                            _get_ids(ensemble, iens, "sum_coeffs", "add_coeffs")
-                        )
-                        assert task_ids.index(
-                            _get_ids(ensemble, iens, "calculate_coeffs", "first_degree")
-                        ) < task_ids.index(
-                            _get_ids(ensemble, iens, "sum_coeffs", "add_coeffs")
-                        )
-                        assert task_ids.index(
-                            _get_ids(
-                                ensemble, iens, "calculate_coeffs", "second_degree"
-                            )
-                        ) < task_ids.index(
-                            _get_ids(ensemble, iens, "sum_coeffs", "add_coeffs")
-                        )
+
+                        # Get the ordered tasks and retrieve their stage and step ids.
+                        flow_steps = [
+                            task.get_step()
+                            for task in flow.sorted_tasks()
+                            if isinstance(task, UnixTask)
+                        ]
+                        assert len(flow_steps) == 4
+
+                        realization_steps = list(ensemble.get_reals()[iens].get_steps_sorted_topologically())
+
+                        # Testing realization steps
+                        for step_ordering in [realization_steps, flow_steps]:
+                            mapping = {step._name: idx for idx, step in enumerate(step_ordering)}
+                            assert mapping["second_degree"] < mapping["zero_degree"]
+                            assert mapping["zero_degree"] < mapping["add_coeffs"]
+                            assert mapping["first_degree"] < mapping["add_coeffs"]
+                            assert mapping["second_degree"] < mapping["add_coeffs"]
 
 
 def test_unix_step(unused_tcp_port):
@@ -489,7 +488,7 @@ def test_run_prefect_ensemble(unused_tcp_port, coefficients):
                 "config_path": os.getcwd(),
                 "realizations": 2,
                 "executor": "local",
-                "input_files": input_files(config, coefficients),
+                "input_files": coefficient_transmitters(config, coefficients),
             }
         )
 
@@ -522,7 +521,7 @@ def test_run_prefect_ensemble_with_path(unused_tcp_port, coefficients):
                 "config_path": Path.cwd(),
                 "realizations": 2,
                 "executor": "local",
-                "input_files": input_files(config, coefficients),
+                "input_files": coefficient_transmitters(config, coefficients),
             }
         )
 
@@ -559,7 +558,7 @@ def test_cancel_run_prefect_ensemble(unused_tcp_port, coefficients):
                 "config_path": os.getcwd(),
                 "realizations": 2,
                 "executor": "local",
-                "input_files": input_files(config, coefficients),
+                "input_files": coefficient_transmitters(config, coefficients),
             }
         )
 
@@ -591,7 +590,7 @@ def test_run_prefect_ensemble_exception(unused_tcp_port, coefficients):
                 "config_path": os.getcwd(),
                 ids.REALIZATIONS: 2,
                 ids.EXECUTOR: "local",
-                "input_files": input_files(config, coefficients),
+                "input_files": coefficient_transmitters(config, coefficients),
             }
         )
 
