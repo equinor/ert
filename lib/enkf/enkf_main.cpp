@@ -517,8 +517,7 @@ typedef struct {
 
 
 static void serialize_node( enkf_fs_type * fs ,
-                            const ensemble_config_type * ensemble_config,
-                            const char * key ,
+                            const enkf_config_node_type * config_node,
                             int iens ,
                             int report_step ,
                             int row_offset ,
@@ -526,7 +525,6 @@ static void serialize_node( enkf_fs_type * fs ,
                             const active_list_type * active_list,
                             matrix_type * A) {
 
-  const enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , key );
   enkf_node_type * node = enkf_node_alloc( config_node );
   node_id_type node_id = {.report_step = report_step, .iens = iens  };
   enkf_node_serialize( node , fs , node_id , active_list , A , row_offset , column);
@@ -536,14 +534,13 @@ static void serialize_node( enkf_fs_type * fs ,
 
 static void * serialize_nodes_mt( void * arg ) {
   serialize_info_type * info = (serialize_info_type *) arg;
-  int iens;
-  for (iens = info->iens1; iens < info->iens2; iens++) {
+  const auto * node_info = info->node_info;
+  const enkf_config_node_type * config_node = ensemble_config_get_node( info->ensemble_config , node_info->key );
+  for (int iens = info->iens1; iens < info->iens2; iens++) {
     int column = int_vector_iget( info->iens_active_index , iens);
     if (column >= 0) {
-      const auto * node_info = info->node_info;
       serialize_node( info->src_fs ,
-                      info->ensemble_config,
-                      node_info->key ,
+                      config_node,
                       iens ,
                       info->report_step ,
                       node_info->row_offset ,
@@ -627,15 +624,13 @@ static int enkf_main_serialize_dataset( const ensemble_config_type * ens_config 
 
 static void deserialize_node( enkf_fs_type * target_fs,
                               enkf_fs_type * src_fs,
-                              const ensemble_config_type * ensemble_config,
-                              const char * key ,
+                              const enkf_config_node_type * config_node,
                               int iens,
                               int target_step ,
                               int row_offset ,
                               int column,
                               const active_list_type * active_list,
                               matrix_type * A) {
-  const enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , key );
 
   node_id_type node_id = {.report_step = target_step, .iens = iens  };
   enkf_node_type * node = enkf_node_alloc( config_node );
@@ -653,13 +648,12 @@ static void deserialize_node( enkf_fs_type * target_fs,
 
 static void * deserialize_nodes_mt( void * arg ) {
   serialize_info_type * info = (serialize_info_type *) arg;
-  int iens;
-  for (iens = info->iens1; iens < info->iens2; iens++) {
+  const auto * node_info = info->node_info;
+  const enkf_config_node_type * config_node = ensemble_config_get_node(info->ensemble_config, node_info->key);
+  for (int iens = info->iens1; iens < info->iens2; iens++) {
     int column = int_vector_iget( info->iens_active_index , iens );
-    if (column >= 0) {
-      const auto * node_info = info->node_info;
-      deserialize_node( info->target_fs , info->src_fs, info->ensemble_config , node_info->key , iens , info->target_step , node_info->row_offset , column, node_info->active_list , info->A );
-    }
+    if (column >= 0)
+      deserialize_node( info->target_fs , info->src_fs, config_node, iens , info->target_step , node_info->row_offset , column, node_info->active_list , info->A );
   }
   return NULL;
 }
@@ -1149,8 +1143,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
                 int column = int_vector_iget( serialize_info->iens_active_index , iens);
                 if (column >= 0) {
                   serialize_node(serialize_info->src_fs,
-                                 serialize_info->ensemble_config,
-                                 key.c_str(),
+                                 ensemble_config_get_node(serialize_info->ensemble_config, key.c_str()),
                                  iens,
                                  serialize_info->report_step,
                                  0,
@@ -1172,8 +1165,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
                 if (column >= 0) {
                   deserialize_node(serialize_info->target_fs,
                                    serialize_info->src_fs,
-                                   serialize_info->ensemble_config,
-                                   key.c_str(),
+                                   ensemble_config_get_node(serialize_info->ensemble_config, key.c_str()),
                                    iens,
                                    serialize_info->target_step,
                                    0,
