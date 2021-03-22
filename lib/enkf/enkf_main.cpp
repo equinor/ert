@@ -1139,11 +1139,17 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
             for (int ikw=0; ikw < scaled_keys.size(); ikw++) {
               const auto& key = scaled_keys[ikw];
               const active_list_type * active_list = local_dataset_get_node_active_list(dataset, key.c_str());
+              const auto matrix_rows = matrix_get_rows(A);
+              const auto* config_node = ensemble_config_get_node(serialize_info->ensemble_config, key.c_str());
+              const auto node_size = enkf_config_node_get_data_size(config_node, serialize_info->report_step);
+              if (matrix_get_rows(A) < node_size)
+                  matrix_resize( A , node_size , active_ens_size , false);
+
               for (int iens = 0; iens < bool_vector_size(ens_mask); iens++) {
                 int column = int_vector_iget( serialize_info->iens_active_index , iens);
                 if (column >= 0) {
                   serialize_node(serialize_info->src_fs,
-                                 ensemble_config_get_node(serialize_info->ensemble_config, key.c_str()),
+                                 config_node,
                                  iens,
                                  serialize_info->report_step,
                                  0,
