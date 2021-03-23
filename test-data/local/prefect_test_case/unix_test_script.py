@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import json
 
 
 def parse_args(args=None):
@@ -10,12 +11,12 @@ def parse_args(args=None):
     return arg_parser.parse_args(args)
 
 
-def write_to_file(file, text):
+def write_to_file(file, data):
     with open(file, "w") as f:
-        f.write(text)
+        json.dump(data, f)
 
 
 if __name__ == "__main__":
     options = parse_args()
-    text_msg = f"Executed unix test script with argument {options.argument}"
-    write_to_file("output.out", text_msg)
+    data = [1, 2, 3]
+    write_to_file("output.out", data)

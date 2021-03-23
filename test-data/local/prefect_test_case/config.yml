@@ -6,6 +6,10 @@ stages:
         resources:
           - sum_coeffs.py
         inputs:
+          - record: sum_up
+            location: sum_coeffs.py
+            mime: application/x-python-code
+            is_executable: True
           - record: input0
             location: poly_0.out
             mime: None
@@ -32,6 +36,10 @@ stages:
         resources:
           - evaluate_coeffs.py
         inputs:
+          - record: generate_zero_degree
+            location: evaluate_coeffs.py
+            mime: application/x-python-code
+            is_executable: True
           - record: coeffs
             location: coeffs.json
             mime: None
@@ -52,6 +60,10 @@ stages:
         resources:
           - evaluate_coeffs.py
         inputs:
+          - record: generate_first_degree
+            location: evaluate_coeffs.py
+            mime: application/x-python-code
+            is_executable: True
           - record: coeffs
             location: coeffs.json
             mime: None
@@ -69,6 +81,10 @@ stages:
         resources:
           - evaluate_coeffs.py
         inputs:
+          - record: generate_second_degree
+            location: evaluate_coeffs.py
+            mime: application/x-python-code
+            is_executable: True
           - record: coeffs
             location: coeffs.json
             mime: None

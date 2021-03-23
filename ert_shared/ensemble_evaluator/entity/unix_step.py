@@ -37,7 +37,7 @@ class UnixTask(prefect.Task):
                 ev_data={ids.ERROR_MSG: cmd_exec.stderr},
             )
             raise OSError(
-                f"Script {job.get_id()} failed with exception {cmd_exec.stderr}"
+                f"Script {job.get_name()} failed with exception {cmd_exec.stderr}"
             )
 
     def run_jobs(self, client, run_path):

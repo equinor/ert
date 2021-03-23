@@ -163,25 +163,12 @@ class PrefectEnsemble(_Ensemble):
                 event = CloudEvent(
                     {
                         "type": ids.EVTYPE_FM_STEP_FAILURE,
-                        "source": f"/ert/ee/{task.get_ee_id()}/real/{task.get_iens()}/stage/{task.get_stage_id()}/step/{task.get_step_id()}",
+                        "source": task.get_step()._source,
                         "datacontenttype": "application/json",
                     },
                     {"error_msg": state.message},
                 )
                 c.send(to_json(event).decode())
-
-    def get_id(self, iens, stage_name, step_name=None, job_index=None):
-        real = next(real for real in self._reals if real.get_iens() == iens)
-        stage = next(
-            stage for stage in real.get_stages() if stage.get_name() == stage_name
-        )
-        if step_name is None:
-            return stage.get_id()
-        step = next(step for step in stage.get_steps() if step.get_name() == step_name)
-        if job_index is None:
-            return step.get_id()
-        job = step.get_jobs()[job_index]
-        return job.get_id()
 
     def get_flow(self, ee_id, real_range):
         with Flow(f"Realization range {real_range}") as flow:
@@ -227,7 +214,7 @@ class PrefectEnsemble(_Ensemble):
                     },
                 )
                 c.send(to_json(event).decode())
-            self.run_flow(ee_id, dispatch_url)
+            self.run_flow(ee_id)
 
             with Client(dispatch_url) as c:
                 event = CloudEvent(
@@ -254,15 +241,14 @@ class PrefectEnsemble(_Ensemble):
                 )
                 c.send(to_json(event).decode())
 
-    def run_flow(self, ee_id, dispatch_url):
+    def run_flow(self, ee_id):
         real_per_batch = self.config[ids.MAX_RUNNING]
         real_range = range(self.config[ids.REALIZATIONS])
-        input_files = None
         i = 0
         state_map = {}
         while i < self.config[ids.REALIZATIONS]:
             realization_range = real_range[i : i + real_per_batch]
-            flow = self.get_flow(ee_id, dispatch_url, input_files, realization_range)
+            flow = self.get_flow(ee_id, realization_range)
             state = flow.run(executor=_get_executor(self.config[ids.EXECUTOR]))
             for iens in realization_range:
                 state_map[iens] = state
@@ -270,13 +256,6 @@ class PrefectEnsemble(_Ensemble):
         for iens, task in self._iens_to_task.items():
             for output_name, transmitter in state_map[iens].result[task].result.items():
                 self.config["outputs"][iens][output_name] = transmitter
-
-    def store_resources(self, resources):
-        storage = storage_driver_factory(
-            self.config.get(ids.STORAGE), self.config.get("config_path", ".")
-        )
-        stored_resources = [storage.store(res) for res in resources]
-        return stored_resources
 
     def is_cancellable(self):
         return True

@@ -27,9 +27,7 @@ class FunctionTask(prefect.Task):
             transmitter_map[name] = transmitter
         return transmitter_map
 
-    def run_job(
-        self, job, transmitters: Dict[str, "RecordTransmitter"], client
-    ):
+    def run_job(self, job, transmitters: Dict[str, "RecordTransmitter"], client):
         self.logger.info(f"Running function {job.get_name()}")
         client.send_event(
             ev_type=ids.EVTYPE_FM_JOB_START,
