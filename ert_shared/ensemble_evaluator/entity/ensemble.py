@@ -21,14 +21,19 @@ def _sort_steps(steps: typing.List["_Step"]):
     graph = defaultdict(set)
     if len(steps) == 1:
         return (steps[0].get_name(),)
+    edged_nodes = set()
     for step in steps:
         for other in steps:
             if step == other:
                 continue
             step_outputs = set([io.get_name() for io in step.get_outputs()])
             other_inputs = set([io.get_name() for io in other.get_inputs()])
-            if step_outputs.issubset(other_inputs):
+            if len(step_outputs) > 0 and step_outputs.issubset(other_inputs):
                 graph[other.get_name()].add(step.get_name())
+                edged_nodes.add(step.get_name())
+                edged_nodes.add(other.get_name())
+    null_nodes = set([step.get_name() for step in steps]) - edged_nodes
+    [graph[node] for node in null_nodes]
     ts = TopologicalSorter(graph)
     return tuple(ts.static_order())
 
@@ -328,6 +333,8 @@ class _Step:
             raise ValueError(f"{self} needs output")
         if jobs is None:
             raise ValueError(f"{self} needs jobs")
+        if name is None:
+            raise ValueError(f"{self} needs a name")
         self._id = id_
         self._inputs = inputs
         self._outputs = outputs
@@ -759,15 +766,12 @@ class _Realization:
             self._ts_sorted_indices = list(range(0, len(ts_sorted_steps)))
             for idx, name in enumerate(ts_sorted_steps):
                 for step_idx, step in enumerate(steps):
-                    if step.get_name() is None:
-                        raise ValueError(
-                            f"creating stage failed: tried to sort steps, but step at index {step_idx} does not have a name"
-                        )
                     if step.get_name() == name:
                         self._ts_sorted_indices[idx] = step_idx
-            assert len(self._ts_sorted_indices) == len(
-                steps
-            ), "disparity between amount of pre-sorted items and steps"
+            if len(self._ts_sorted_indices) != len(steps):
+                raise ValueError(
+                    f"disparity between amount of sorted items ({self._ts_sorted_indices}) and steps, possibly duplicate step name?"
+                )
 
     def get_all_steps(self):
         steps = []
