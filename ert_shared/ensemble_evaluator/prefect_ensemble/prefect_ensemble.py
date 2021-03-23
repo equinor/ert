@@ -1,4 +1,3 @@
-import itertools
 import asyncio
 import logging
 import multiprocessing
@@ -6,8 +5,6 @@ import os
 import signal
 import threading
 import uuid
-from datetime import timedelta
-from functools import partial
 
 import cloudpickle
 from cloudevents.http import CloudEvent, to_json
@@ -15,13 +12,8 @@ from dask_jobqueue.lsf import LSFJob
 from ert_shared.ensemble_evaluator.config import find_open_port
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.entity.ensemble import (
-    _BaseJob,
     _Ensemble,
-    _Realization,
-    _Stage,
-    _Step,
     create_job_builder,
-    create_legacy_job_builder,
     create_realization_builder,
     create_stage_builder,
     create_step_builder,

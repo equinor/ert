@@ -51,7 +51,6 @@ def _prepare_input(
     ee_storage = storage_driver_factory(ee_config["storage"], tmp_input_folder)
     transmitters = defaultdict(dict)
 
-    # XXX: this sorely needs a refactor
     for input_ in step_config.input:
         for iens, record in enumerate(inputs.ensemble_records[input_.record].records):
             transmitter = ert3.data.PrefectStorageRecordTransmitter(
