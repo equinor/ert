@@ -2,7 +2,7 @@
 copy_test_files () {
     cp -r $CI_SOURCE_ROOT/tests $CI_TEST_ROOT/tests
     cp -r $CI_SOURCE_ROOT/test-data $CI_TEST_ROOT/test-data
-    cp -r $CI_SOURCE_ROOT/examples $CI_TEST_ROOT/examples
+    cp -r $CI_SOURCE_ROOT/ert3_examples $CI_TEST_ROOT/ert3_examples
     # Trick ERT to find a fake source root
     mkdir $CI_TEST_ROOT/.git
 }
