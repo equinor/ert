@@ -5,7 +5,6 @@ import socket
 import json
 import argparse
 from pathlib import Path
-from typing import List
 from ert_shared import __file__ as ert_shared_path
 from ert_shared.storage import connection
 from ert_shared.storage.command import add_parser_options
@@ -69,7 +68,7 @@ def write_to_file(connection_info: dict, lockfile):
     connection.set_global_info(os.getcwd())
 
 
-def write_to_pipe(connection_info: dict):
+def write_to_pipe(connection_info: str):
     """Write connection information directly to the calling program (ERT) via a
     communication pipe."""
     fd = os.environ.get("ERT_COMM_FD")

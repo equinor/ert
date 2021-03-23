@@ -1,4 +1,5 @@
 import copy
+from typing import Union, Type
 from ert_shared.status.entity.state import REALIZATION_STATE_UNKNOWN
 import logging
 from ert_shared.ensemble_evaluator.entity.ensemble_base import _Ensemble
@@ -20,8 +21,20 @@ class _IO:
         self._path = path
 
 
+class _IODummy(_IO):
+    pass
+
+
+class _Input(_IO):
+    pass
+
+
+class _Output(_IO):
+    pass
+
+
 class _IOBuilder:
-    _concrete_cls = None
+    _concrete_cls: Union[Type[_IODummy], Type[_Input], Type[_Output], None] = None
 
     def __init__(self):
         self._name = None
@@ -52,19 +65,11 @@ class _IOBuilder:
         return self._concrete_cls(self._name, self._type, self._path)
 
 
-class _IODummy(_IO):
-    pass
-
-
 class _IODummyBuilder:
     _concrete_cls = _IODummy
 
     def build(_):
         return _IO("dummy i/o", "dummy", "")
-
-
-class _Input(_IO):
-    pass
 
 
 class _InputBuilder(_IOBuilder):
@@ -73,10 +78,6 @@ class _InputBuilder(_IOBuilder):
 
 def create_input_builder():
     return _InputBuilder()
-
-
-class _Output(_IO):
-    pass
 
 
 class _OutputBuilder(_IOBuilder):

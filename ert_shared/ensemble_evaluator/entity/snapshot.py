@@ -2,7 +2,7 @@ import copy
 import datetime
 import typing
 from collections import defaultdict
-from typing import Dict, Iterable, Optional, Any
+from typing import Dict, Iterable, Optional, Any, DefaultDict
 
 import pyrsistent
 from dateutil.parser import parse
@@ -311,7 +311,7 @@ class Snapshot:
         )
 
     def aggregate_real_states(self) -> typing.Dict[str, int]:
-        states = defaultdict(int)
+        states: DefaultDict[str, int] = defaultdict(int)
         for real in self._data[ids.REALS].values():
             states[real[ids.STATUS]] += 1
         return states

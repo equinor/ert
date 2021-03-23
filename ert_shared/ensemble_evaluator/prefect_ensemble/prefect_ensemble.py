@@ -30,7 +30,6 @@ from ert_shared.ensemble_evaluator.prefect_ensemble.unix_step import UnixStep
 from ert_shared.status.entity import state
 from prefect import Flow
 from prefect import context as prefect_context
-from prefect.engine.executors import DaskExecutor
 from prefect.executors import DaskExecutor, LocalDaskExecutor
 
 logger = logging.getLogger(__name__)
