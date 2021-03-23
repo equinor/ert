@@ -20,6 +20,7 @@ def test_build_ensemble():
                     .set_ext_job(Mock())
                 )
                 .set_id(0)
+                .set_name("some_step")
                 .set_dummy_io()
             )
             .set_id(0)
