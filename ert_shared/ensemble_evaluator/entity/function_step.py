@@ -1,3 +1,4 @@
+import asyncio
 from typing import Dict, Optional
 from prefect import Task
 import prefect
@@ -13,18 +14,28 @@ class FunctionTask(prefect.Task):
         self._ee_id = ee_id
 
     def _attempt_execute(self, *, func, transmitters):
-        kwargs = {
-            input_.get_name(): transmitters[input_.get_name()].load().data
-            for input_ in self._step.get_inputs()
-        }
+        async def _load(io_name, transmitter):
+            record = await transmitter.load()
+            return (io_name, record)
+
+        futures = []
+        for input_ in self._step.get_inputs():
+            futures.append(_load(input_.get_name(), transmitters[input_.get_name()]))
+        results = asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+        kwargs = {result[0]: result[1].data for result in results}
         function_output = func(**kwargs)
 
-        transmitter_map = {}
+        async def _transmit(io_name, transmitter, data):
+            await transmitter.transmit(data)
+            return (io_name, transmitter)
+
+        futures = []
         for output in self._step.get_outputs():
             name = output.get_name()
             transmitter = self._output_transmitters[name]
-            transmitter.transmit(function_output)
-            transmitter_map[name] = transmitter
+            futures.append(_transmit(name, transmitter, function_output))
+        results = asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+        transmitter_map = {result[0]: result[1] for result in results}
         return transmitter_map
 
     def run_job(self, job, transmitters: Dict[str, "RecordTransmitter"], client):

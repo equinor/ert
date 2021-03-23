@@ -1,29 +1,29 @@
-from pathlib import Path
-import sys
+import asyncio
+import copy
 import os
 import os.path
-import yaml
-import pytest
+import sys
 import threading
-import copy
+from collections import defaultdict
 from datetime import timedelta
 from functools import partial
 from itertools import permutations
-from prefect import Flow
-from prefect.run_configs import LocalRun
-from collections import defaultdict
-from tests.utils import SOURCE_DIR, tmp
+from pathlib import Path
+
+import ert3
+import ert_shared.ensemble_evaluator.entity.ensemble as ee
+import pytest
+import yaml
+from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.ensemble_evaluator.entity import identifiers as ids
+from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.prefect_ensemble import PrefectEnsemble
-import ert_shared.ensemble_evaluator.entity.ensemble as ee
-from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
-
-from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert_shared.ensemble_evaluator.client import Client
-import ert3
-
+from prefect import Flow
+from prefect.run_configs import LocalRun
 from tests.ensemble_evaluator.conftest import _mock_ws
+from tests.utils import SOURCE_DIR, tmp
 
 
 def parse_config(path):
@@ -36,7 +36,7 @@ def input_transmitter(name, data, storage_path):
     transmitter = ert3.data.SharedDiskRecordTransmitter(
         name=name, storage_path=Path(storage_path)
     )
-    transmitter.transmit(data)
+    asyncio.get_event_loop().run_until_complete(transmitter.transmit(data))
     return {name: transmitter}
 
 
@@ -69,7 +69,9 @@ def script_transmitter(name, location, storage_path):
         name=name, storage_path=Path(storage_path)
     )
     with open(location, "rb") as f:
-        transmitter.transmit([f.read()], mime="application/x-python-code")
+        asyncio.get_event_loop().run_until_complete(
+            transmitter.transmit([f.read()], mime="application/x-python-code")
+        )
 
     return {name: transmitter}
 
@@ -291,7 +293,10 @@ def test_function_step(unused_tcp_port, tmpdir):
     expected_uri = output_trans["output"]._uri
     output_uri = task_result.result["output"]._uri
     assert expected_uri == output_uri
-    transmitted_result = task_result.result["output"].load().data
+    transmitted_record = asyncio.get_event_loop().run_until_complete(
+        task_result.result["output"].load()
+    )
+    transmitted_result = transmitted_record.data
     expected_result = sum_function(**test_values)
     assert expected_result == transmitted_result
 

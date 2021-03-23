@@ -5,10 +5,16 @@ import typing
 import uuid
 from abc import abstractmethod
 from enum import Enum, auto
+from functools import partial, wraps
 from pathlib import Path
 from typing import Awaitable, List, Mapping, Tuple, Union
 
+import aiofiles
+from aiofiles.os import wrap
 from pydantic import BaseModel, root_validator
+
+
+_copy = wrap(shutil.copy)
 
 
 class _DataElement(BaseModel):
@@ -151,7 +157,7 @@ class RecordTransmitter:
             Path,
             Union[List[float], Mapping[int, float], Mapping[str, float], List[bytes]],
         ],
-    ) -> Awaitable[bool]:
+    ) -> None:
         pass
 
 
@@ -169,46 +175,47 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         super().set_transmitted()
         self._uri = str(uri)
 
-    def transmit(
+    async def transmit(
         self,
         data_or_file: typing.Union[
             Path, List[float], Mapping[int, float], Mapping[str, float], List[bytes]
         ],
         mime="text/json",
-    ):
+    ) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
         if isinstance(data_or_file, Path) or isinstance(data_or_file, str):
-            with open(data_or_file) as f:
-                record = Record(data=json.load(f))
+            async with aiofiles.open(str(data_or_file), mode="r") as f:
+                contents = await f.read()
+                record = Record(data=json.loads(contents))
         else:
             record = Record(data=data_or_file)
 
         storage_uri = self._storage_path / self._concrete_key
-        with open(storage_uri, "w") as f:
+        async with aiofiles.open(storage_uri, mode="w") as f:
             if mime == "text/json":
-                json.dump(record.data, f)
+                contents = json.dumps(record.data)
+                await f.write(contents)
             elif mime == "application/x-python-code":
                 # XXX: An opaque record is a list of bytes... yes
                 # sonso or dan or jond: do something about this
-                f.write(record.data[0].decode())
+                await f.write(record.data[0].decode())
             else:
                 raise ValueError(f"unsupported mime {mime}")
         self.set_transmitted(storage_uri)
 
-    def load(self, mime="text/json"):
-        if mime != "text/json":
-            raise NotImplementedError("can't do {mime}, sorry")
+    async def load(self) -> Record:
         if self._state != RecordTransmitterState.transmitted:
             raise RuntimeError("cannot load untransmitted record")
-        with open(str(self._uri)) as f:
-            return Record(data=json.load(f))
+        async with aiofiles.open(str(self._uri)) as f:
+            contents = await f.read()
+            return Record(data=json.loads(contents))
 
     # TODO: should use Path
-    def dump(self, location: str, format: str = "json"):
+    async def dump(self, location: str):
         if self._state != RecordTransmitterState.transmitted:
             raise RuntimeError("cannot dump untransmitted record")
-        shutil.copy(self._uri, location)
+        await _copy(self._uri, location)
 
 
 class InMemoryRecordTransmitter(RecordTransmitter):
@@ -223,7 +230,7 @@ class InMemoryRecordTransmitter(RecordTransmitter):
         super().set_transmitted()
         self._record = record
 
-    def transmit(
+    async def transmit(
         self,
         data_or_file: typing.Union[
             Path, List[float], Mapping[int, float], Mapping[str, float], List[bytes]
@@ -233,27 +240,28 @@ class InMemoryRecordTransmitter(RecordTransmitter):
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
         if isinstance(data_or_file, Path) or isinstance(data_or_file, str):
-            with open(data_or_file) as f:
-                record = Record(data=json.load(f))
+            async with aiofiles.open(data_or_file) as f:
+                contents = await f.read()
+                record = Record(data=json.loads(contents))
         else:
             record = Record(data=data_or_file)
         self.set_transmitted(record=record)
 
-    def load(self, mime="text/json"):
+    async def load(self):
         return self._record
 
     # TODO: should use Path
-    def dump(self, location: str, format: str = "text/json"):
+    async def dump(self, location: str, format: str = "text/json"):
         if format is None:
             format = "text/json"
-        if self._state != RecordTransmitterState.transmitted:
+        if not self.is_transmitted():
             raise RuntimeError("cannot dump untransmitted record")
-        with open(location, "w") as f:
+        async with aiofiles.open(location, mode="w") as f:
             if format == "text/json":
-                json.dump(self._record.data, f)
+                await f.write(json.dumps(self._record.data))
             elif format == "application/x-python-code":
                 # XXX: An opaque record is a list of bytes... yes
                 # sonso or dan or jond: do something about this
-                f.write(self._record.data[0].decode())
+                await f.write(self._record.data[0].decode())
             else:
                 raise ValueError(f"unsupported mime {format}")
