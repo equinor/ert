@@ -1,8 +1,11 @@
+import asyncio
 import os
 import pathlib
 import shutil
 import typing
 from collections import defaultdict
+
+import aiofiles
 
 import ert3
 from ert3.config._stages_config import StagesConfig
@@ -41,6 +44,7 @@ def _prepare_input(
     storage_config = ee_config["storage"]
     transmitters = defaultdict(dict)
 
+    futures = []
     for input_ in step_config.input:
         for iens, record in enumerate(inputs.ensemble_records[input_.record].records):
             if storage_config.get("type") == "shared_disk":
@@ -52,8 +56,9 @@ def _prepare_input(
                 raise ValueError(
                     f"Unsupported transmitter type: {storage_config.get('type')}"
                 )
-            transmitter.transmit(record.data)
+            futures.append(transmitter.transmit(record.data))
             transmitters[iens][input_.record] = transmitter
+    asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
     for command in step_config.transportable_commands:
         for iens in range(0, ensemble_size):
             if storage_config.get("type") == "shared_disk":
@@ -66,7 +71,9 @@ def _prepare_input(
                     f"Unsupported transmitter type: {storage_config.get('type')}"
                 )
             with open(command.location, "rb") as f:
-                transmitter.transmit([f.read()], mime=command.mime)
+                asyncio.get_event_loop().run_until_complete(
+                    transmitter.transmit([f.read()], mime=command.mime)
+                )
             transmitters[iens][command.name] = transmitter
     return dict(transmitters)
 
@@ -219,15 +226,22 @@ def _run(ensemble_evaluator):
 
 
 def _prepare_responses(raw_responses):
-    data_results = []
+    async def _load(iens, record_key, transmitter):
+        record = await transmitter.load()
+        return (iens, record_key, record)
+
+    futures = []
     for iens in sorted(raw_responses.keys(), key=int):
-        real_data = {}
         for record, transmitter in raw_responses[iens].items():
-            real_data[record] = transmitter.load()
-        data_results.append(real_data)
+            futures.append(_load(iens, record, transmitter))
+    results = asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+
+    data_results = defaultdict(dict)
+    for res in results:
+        data_results[res[0]][res[1]] = res[2]
 
     responses = {response_name: [] for response_name in data_results[0]}
-    for realization in data_results:
+    for realization in data_results.values():
         assert responses.keys() == realization.keys()
         for key in realization:
             responses[key].append(realization[key])
@@ -255,7 +269,6 @@ def evaluate(
 
     ee = EnsembleEvaluator(ensemble=ensemble, config=config, iter_=0)
     result = _run(ee)
-
     responses = _prepare_responses(result)
 
     return responses
