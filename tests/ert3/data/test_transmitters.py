@@ -64,9 +64,10 @@ simple_records = pytest.mark.parametrize(
 )
 
 
+@pytest.mark.asyncio
 @simple_records
 @factory_params
-def test_simple_record_transmit(
+async def test_simple_record_transmit(
     record_transmitter_factory_context: ContextManager[
         Callable[[str], RecordTransmitter]
     ],
@@ -75,15 +76,16 @@ def test_simple_record_transmit(
 ):
     with record_transmitter_factory_context() as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
-        transmitter.transmit(data_in)
+        await transmitter.transmit(data_in)
         assert transmitter.is_transmitted()
         with pytest.raises(RuntimeError, match="Record already transmitted"):
-            transmitter.transmit(data_or_file=[1, 2, 3])
+            await transmitter.transmit(data_or_file=[1, 2, 3])
 
 
+@pytest.mark.asyncio
 @simple_records
 @factory_params
-def test_simple_record_transmit_and_load(
+async def test_simple_record_transmit_and_load(
     record_transmitter_factory_context: ContextManager[
         Callable[[str], RecordTransmitter]
     ],
@@ -92,16 +94,17 @@ def test_simple_record_transmit_and_load(
 ):
     with record_transmitter_factory_context() as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
-        transmitter.transmit(data_in)
+        await transmitter.transmit(data_in)
 
-        record = transmitter.load()
+        record = await transmitter.load()
         assert record.data == expected_data
 
 
+@pytest.mark.asyncio
 @simple_records
 @factory_params
 @tmpdir(None)
-def test_simple_record_transmit_and_dump(
+async def test_simple_record_transmit_and_dump(
     record_transmitter_factory_context: ContextManager[
         Callable[[str], RecordTransmitter]
     ],
@@ -110,17 +113,18 @@ def test_simple_record_transmit_and_dump(
 ):
     with record_transmitter_factory_context() as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
-        transmitter.transmit(data_in)
+        await transmitter.transmit(data_in)
 
-        transmitter.dump("record.json")
+        await transmitter.dump("record.json")
         with open("record.json") as f:
             expected_data = json.loads(json.dumps(expected_data))
             assert expected_data == json.load(f)
 
 
+@pytest.mark.asyncio
 @simple_records
 @factory_params
-def test_simple_record_transmit_pickle_and_load(
+async def test_simple_record_transmit_pickle_and_load(
     record_transmitter_factory_context: ContextManager[
         Callable[[str], RecordTransmitter]
     ],
@@ -130,8 +134,8 @@ def test_simple_record_transmit_pickle_and_load(
     with record_transmitter_factory_context() as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
         transmitter = pickle.loads(cloudpickle.dumps(transmitter))
-        transmitter.transmit(data_in)
+        await transmitter.transmit(data_in)
         transmitter = pickle.loads(cloudpickle.dumps(transmitter))
-        record = transmitter.load()
+        record = await transmitter.load()
 
         assert record.data == expected_data

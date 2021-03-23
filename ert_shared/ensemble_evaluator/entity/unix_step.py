@@ -1,3 +1,4 @@
+import asyncio
 import os
 import stat
 import subprocess
@@ -54,11 +55,16 @@ class UnixTask(prefect.Task):
             )
 
     def _load_and_dump_input(self, transmitters, runpath):
+        futures = []
         for input_ in self._step.get_inputs():
             # TODO: use Path
-            transmitters[input_.get_name()].dump(
-                os.path.join(runpath, input_.get_path()), input_.get_mime()
+            futures.append(
+                transmitters[input_.get_name()].dump(
+                    os.path.join(runpath, input_.get_path())
+                )
             )
+        asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+        for input_ in self._step.get_inputs():
             if input_.is_executable():
                 path = os.path.join(runpath, input_.get_path())
                 st = os.stat(path)
@@ -76,6 +82,7 @@ class UnixTask(prefect.Task):
                 outputs = {}
                 self.run_jobs(ee_client, run_path)
 
+                futures = []
                 for output in self._step.get_outputs():
                     if not os.path.exists(os.path.join(run_path, output.get_path())):
                         raise FileNotFoundError(
@@ -85,9 +92,12 @@ class UnixTask(prefect.Task):
                     outputs[output.get_name()] = self._output_transmitters[
                         output.get_name()
                     ]
-                    outputs[output.get_name()].transmit(
-                        os.path.join(run_path, output.get_path())
+                    futures.append(
+                        outputs[output.get_name()].transmit(
+                            os.path.join(run_path, output.get_path())
+                        )
                     )
+                asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
 
                 ee_client.send_event(
                     ev_type=ids.EVTYPE_FM_STEP_SUCCESS,

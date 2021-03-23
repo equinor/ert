@@ -35,6 +35,7 @@ def _sort_steps(steps: typing.List["_Step"]):
                 graph[other.get_name()].add(step.get_name())
                 edged_nodes.add(step.get_name())
                 edged_nodes.add(other.get_name())
+
     null_nodes = set([step.get_name() for step in steps]) - edged_nodes
     [graph[node] for node in null_nodes]
     ts = TopologicalSorter(graph)
