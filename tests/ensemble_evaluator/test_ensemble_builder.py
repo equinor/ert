@@ -133,7 +133,7 @@ def test_build_ensemble_legacy():
             ],
             [],
             [],
-            marks=pytest.mark.xfail(raises=ValueError),
+            marks=pytest.mark.xfail(raises=ValueError, strict=True),
         ),
         pytest.param(
             [
@@ -142,7 +142,7 @@ def test_build_ensemble_legacy():
             ],
             [],
             [],
-            marks=pytest.mark.xfail(raises=CycleError),
+            marks=pytest.mark.xfail(raises=CycleError, strict=True),
         ),
     ],
 )

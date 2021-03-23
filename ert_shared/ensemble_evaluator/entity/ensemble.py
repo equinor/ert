@@ -17,6 +17,9 @@ from collections import defaultdict
 from graphlib import TopologicalSorter
 
 
+logger = logging.getLogger(__name__)
+
+
 def _sort_steps(steps: typing.List["_Step"]):
     graph = defaultdict(set)
     if len(steps) == 1:
