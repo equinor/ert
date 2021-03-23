@@ -37,6 +37,7 @@ setup(
         "alembic",
         "ansicolors==1.1.8",
         "cloudevents",
+        "cloudpickle",
         "console-progressbar==1.1.2",
         "decorator",
         "deprecation",
