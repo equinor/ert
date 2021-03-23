@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 import multiprocessing
 import os
@@ -8,6 +9,7 @@ import uuid
 from datetime import timedelta
 from functools import partial
 
+import prefect.utilities.logging
 from cloudevents.http import CloudEvent, to_json
 from dask_jobqueue.lsf import LSFJob
 from ert_shared.ensemble_evaluator.config import find_open_port
@@ -20,11 +22,11 @@ from ert_shared.ensemble_evaluator.entity.ensemble import (
     _Step,
 )
 from ert_shared.ensemble_evaluator.prefect_ensemble.client import Client
+from ert_shared.ensemble_evaluator.prefect_ensemble.function_step import FunctionStep
 from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
     storage_driver_factory,
 )
 from ert_shared.ensemble_evaluator.prefect_ensemble.unix_step import UnixStep
-from ert_shared.ensemble_evaluator.prefect_ensemble.function_step import FunctionStep
 from ert_shared.status.entity import state
 from prefect import Flow
 from prefect import context as prefect_context
@@ -32,6 +34,15 @@ from prefect.engine.executors import DaskExecutor
 from prefect.executors import DaskExecutor, LocalDaskExecutor
 
 logger = logging.getLogger(__name__)
+
+
+@contextlib.contextmanager
+def prefect_log_level_context(level):
+    prefect_logger = prefect.utilities.logging.get_logger()
+    prev_log_level = prefect_logger.level
+    prefect_logger.setLevel(level=level)
+    yield
+    prefect_logger.setLevel(level=prev_log_level)
 
 
 async def _eq_submit_job(self, script_filename):
@@ -311,7 +322,8 @@ class PrefectEnsemble(_Ensemble):
         while i < self.config[ids.REALIZATIONS]:
             realization_range = real_range[i : i + real_per_batch]
             flow = self.get_flow(ee_id, dispatch_url, input_files, realization_range)
-            flow.run(executor=_get_executor(self.config[ids.EXECUTOR]))
+            with prefect_log_level_context(level="WARNING"):
+                flow.run(executor=_get_executor(self.config[ids.EXECUTOR]))
             i = i + real_per_batch
 
     def store_resources(self, resources):
