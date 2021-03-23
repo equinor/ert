@@ -10,19 +10,15 @@ from datetime import timedelta
 from functools import partial
 from itertools import permutations
 from prefect import Flow
+from prefect.run_configs import LocalRun
 from collections import defaultdict
 from tests.utils import SOURCE_DIR, tmp
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert_shared.ensemble_evaluator.prefect_ensemble.prefect_ensemble import (
-    PrefectEnsemble,
-)
+from ert_shared.ensemble_evaluator.prefect_ensemble import PrefectEnsemble
 import ert_shared.ensemble_evaluator.entity.ensemble as ee
 from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
 
-from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
-    storage_driver_factory,
-)
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.client import Client
 import ert3
@@ -36,24 +32,24 @@ def parse_config(path):
         return yaml.safe_load(f)
 
 
-def input_transmitter(name, data, driver):
-    transmitter = ert3.data.PrefectStorageRecordTransmitter(name, driver)
+def input_transmitter(name, data, storage_path):
+    transmitter = ert3.data.SharedDiskRecordTransmitter(
+        name=name, storage_path=Path(storage_path)
+    )
     transmitter.transmit(data)
     return {name: transmitter}
 
 
-def coefficient_transmitters(config, coefficients):
-    ee_storage = storage_driver_factory(config, ".")
+def coefficient_transmitters(coefficients, storage_path):
     transmitters = defaultdict(dict)
     record_name = "coeffs"
     for iens, values in enumerate(coefficients):
-        transmitters[iens] = input_transmitter(record_name, values, ee_storage)
+        transmitters[iens] = input_transmitter(record_name, values, storage_path)
     return dict(transmitters)
 
 
 def script_transmitters(config):
     transmitters = defaultdict(dict)
-    ee_storage = storage_driver_factory(config.get(ids.STORAGE), ".")
     for stage in config.get(ids.STAGES):
         for step in stage.get(ids.STEPS):
             for job in step.get(ids.JOBS):
@@ -62,14 +58,16 @@ def script_transmitters(config):
                         script_transmitter(
                             name=job.get(ids.NAME),
                             location=job.get(ids.EXECUTABLE),
-                            ee_storage=ee_storage,
+                            storage_path=config.get(ids.STORAGE)["storage_path"],
                         )
                     )
     return dict(transmitters)
 
 
-def script_transmitter(name, location, ee_storage):
-    transmitter = ert3.data.PrefectStorageRecordTransmitter(name, ee_storage)
+def script_transmitter(name, location, storage_path):
+    transmitter = ert3.data.SharedDiskRecordTransmitter(
+        name=name, storage_path=Path(storage_path)
+    )
     with open(location, "rb") as f:
         transmitter.transmit([f.read()], mime="application/x-python-code")
 
@@ -79,7 +77,6 @@ def script_transmitter(name, location, ee_storage):
 def output_transmitters(config):
     tmp_input_folder = "output_files"
     os.makedirs(tmp_input_folder)
-    ee_storage = storage_driver_factory(config.get(ids.STORAGE), tmp_input_folder)
     transmitters = defaultdict(dict)
     for stage in config.get(ids.STAGES):
         for step in stage.get(ids.STEPS):
@@ -87,17 +84,18 @@ def output_transmitters(config):
                 for iens in range(config.get(ids.REALIZATIONS)):
                     transmitters[iens][
                         output.get(ids.RECORD)
-                    ] = ert3.data.PrefectStorageRecordTransmitter(
-                        output.get(ids.RECORD), ee_storage
+                    ] = ert3.data.SharedDiskRecordTransmitter(
+                        output.get(ids.RECORD),
+                        storage_path=Path(config.get(ids.STORAGE)["storage_path"]),
                     )
     return dict(transmitters)
 
 
-def step_output_transmitters(step, storage_driver):
+def step_output_transmitters(step, storage_path):
     transmitters = {}
     for output in step.get_outputs():
-        transmitters[output.get_name()] = ert3.data.PrefectStorageRecordTransmitter(
-            output.get_name(), storage_driver
+        transmitters[output.get_name()] = ert3.data.SharedDiskRecordTransmitter(
+            name=output.get_name(), storage_path=Path(storage_path)
         )
 
     return transmitters
@@ -106,13 +104,6 @@ def step_output_transmitters(step, storage_driver):
 @pytest.fixture()
 def coefficients():
     return [{"a": a, "b": b, "c": c} for (a, b, c) in [(1, 2, 3), (4, 2, 1)]]
-
-
-@pytest.fixture()
-def storage_driver(tmpdir):
-    tmpdir.chdir()
-    config = {"type": "shared_disk", "storage_path": tmpdir}
-    yield storage_driver_factory(config, ".")
 
 
 def get_step(step_name, inputs, outputs, jobs, url, type_="unix"):
@@ -158,7 +149,9 @@ def test_get_flow(coefficients, unused_tcp_port):
             }
         )
         inputs = {}
-        coeffs_trans = coefficient_transmitters(config.get(ids.STORAGE), coefficients)
+        coeffs_trans = coefficient_transmitters(
+            coefficients, config.get(ids.STORAGE)["storage_path"]
+        )
         script_trans = script_transmitters(config)
         for iens in range(2):
             inputs[iens] = {**coeffs_trans[iens], **script_trans[iens]}
@@ -208,7 +201,7 @@ def test_get_flow(coefficients, unused_tcp_port):
                             assert mapping["second_degree"] < mapping["add_coeffs"]
 
 
-def test_unix_task(unused_tcp_port, storage_driver):
+def test_unix_task(unused_tcp_port, tmpdir):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     messages = []
@@ -221,7 +214,7 @@ def test_unix_task(unused_tcp_port, storage_driver):
     script_location = (
         Path(SOURCE_DIR) / "test-data/local/prefect_test_case/unix_test_script.py"
     )
-    input_ = script_transmitter("script", script_location, storage_driver)
+    input_ = script_transmitter("script", script_location, storage_path=tmpdir)
     step = get_step(
         step_name="test_step",
         inputs=[("script", "unix_test_script.py", None)],
@@ -231,11 +224,12 @@ def test_unix_task(unused_tcp_port, storage_driver):
         type_="unix",
     )
 
-    output_trans = step_output_transmitters(step, storage_driver)
+    output_trans = step_output_transmitters(step, storage_path=tmpdir)
     with Flow("testing") as flow:
         task = step.get_task(output_transmitters=output_trans, ee_id="test_ee_id")
         result = task(inputs=input_)
-    flow_run = flow.run()
+    with tmp():
+        flow_run = flow.run()
 
     # Stop the mock evaluator WS server
     with Client(url) as c:
@@ -252,7 +246,7 @@ def test_unix_task(unused_tcp_port, storage_driver):
     assert expected_uri == output_uri
 
 
-def test_function_step(unused_tcp_port, storage_driver):
+def test_function_step(unused_tcp_port, tmpdir):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     messages = []
@@ -263,7 +257,7 @@ def test_function_step(unused_tcp_port, storage_driver):
     mock_ws_thread.start()
 
     test_values = {"values": [42, 24, 6]}
-    inputs = input_transmitter("values", test_values["values"], storage_driver)
+    inputs = input_transmitter("values", test_values["values"], storage_path=tmpdir)
 
     def sum_function(values):
         return [sum(values)]
@@ -277,11 +271,12 @@ def test_function_step(unused_tcp_port, storage_driver):
         type_="function",
     )
 
-    output_trans = step_output_transmitters(step, storage_driver)
+    output_trans = step_output_transmitters(step, storage_path=tmpdir)
     with Flow("testing") as flow:
         task = step.get_task(output_transmitters=output_trans, ee_id="test_ee_id")
         result = task(inputs=inputs)
-    flow_run = flow.run()
+    with tmp():
+        flow_run = flow.run()
 
     # Stop the mock evaluator WS server
     with Client(url) as c:
@@ -301,7 +296,7 @@ def test_function_step(unused_tcp_port, storage_driver):
     assert expected_result == transmitted_result
 
 
-def test_unix_step_error(unused_tcp_port, storage_driver):
+def test_unix_step_error(unused_tcp_port, tmpdir):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     messages = []
@@ -314,7 +309,7 @@ def test_unix_step_error(unused_tcp_port, storage_driver):
     script_location = (
         Path(SOURCE_DIR) / "test-data/local/prefect_test_case/unix_test_script.py"
     )
-    input_ = script_transmitter("test_script", script_location, storage_driver)
+    input_ = script_transmitter("test_script", script_location, storage_path=tmpdir)
     step = get_step(
         step_name="test_step",
         inputs=[("test_script", "unix_test_script.py", None)],
@@ -324,11 +319,12 @@ def test_unix_step_error(unused_tcp_port, storage_driver):
         type_="unix",
     )
 
-    output_trans = step_output_transmitters(step, storage_driver)
+    output_trans = step_output_transmitters(step, storage_path=tmpdir)
     with Flow("testing") as flow:
         task = step.get_task(output_transmitters=output_trans, ee_id="test_ee_id")
         result = task(inputs=input_)
-    flow_run = flow.run()
+    with tmp():
+        flow_run = flow.run()
 
     # Stop the mock evaluator WS server
     with Client(url) as c:
@@ -345,7 +341,7 @@ def test_unix_step_error(unused_tcp_port, storage_driver):
     )
 
 
-def test_on_task_failure(unused_tcp_port, storage_driver):
+def test_on_task_failure(unused_tcp_port, tmpdir):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     messages = []
@@ -357,27 +353,28 @@ def test_on_task_failure(unused_tcp_port, storage_driver):
     script_location = (
         Path(SOURCE_DIR) / "test-data/local/prefect_test_case/unix_test_retry_script.py"
     )
-    input_ = script_transmitter("script", script_location, storage_driver)
-    step = get_step(
-        step_name="test_step",
-        inputs=[("script", "unix_test_retry_script.py", None)],
-        outputs=[],
-        jobs=[("script", "unix_test_retry_script.py", [os.getcwd()])],
-        url=url,
-        type_="unix",
-    )
-
-    output_trans = step_output_transmitters(step, storage_driver)
-    with Flow("testing") as flow:
-        task = step.get_task(
-            output_transmitters=output_trans,
-            ee_id="test_ee_id",
-            max_retries=3,
-            retry_delay=timedelta(seconds=1),
-            on_failure=partial(PrefectEnsemble._on_task_failure, url=url),
+    input_ = script_transmitter("script", script_location, storage_path=tmpdir)
+    with tmp() as runpath:
+        step = get_step(
+            step_name="test_step",
+            inputs=[("script", "unix_test_retry_script.py", None)],
+            outputs=[],
+            jobs=[("script", "unix_test_retry_script.py", [runpath])],
+            url=url,
+            type_="unix",
         )
-        result = task(inputs=input_)
-    flow_run = flow.run()
+
+        output_trans = step_output_transmitters(step, storage_path=tmpdir)
+        with Flow("testing") as flow:
+            task = step.get_task(
+                output_transmitters=output_trans,
+                ee_id="test_ee_id",
+                max_retries=3,
+                retry_delay=timedelta(seconds=1),
+                on_failure=partial(PrefectEnsemble._on_task_failure, url=url),
+            )
+            result = task(inputs=input_)
+        flow_run = flow.run()
 
     # Stop the mock evaluator WS server
     with Client(url) as c:
@@ -414,7 +411,9 @@ def test_run_prefect_ensemble(unused_tcp_port, coefficients):
             }
         )
         inputs = {}
-        coeffs_trans = coefficient_transmitters(config.get(ids.STORAGE), coefficients)
+        coeffs_trans = coefficient_transmitters(
+            coefficients, config.get(ids.STORAGE)["storage_path"]
+        )
         script_trans = script_transmitters(config)
         for iens in range(2):
             inputs[iens] = {**coeffs_trans[iens], **script_trans[iens]}
@@ -455,7 +454,9 @@ def test_run_prefect_ensemble_with_path(unused_tcp_port, coefficients):
             }
         )
         inputs = {}
-        coeffs_trans = coefficient_transmitters(config.get(ids.STORAGE), coefficients)
+        coeffs_trans = coefficient_transmitters(
+            coefficients, config.get(ids.STORAGE)["storage_path"]
+        )
         script_trans = script_transmitters(config)
         for iens in range(2):
             inputs[iens] = {**coeffs_trans[iens], **script_trans[iens]}
@@ -501,7 +502,9 @@ def test_cancel_run_prefect_ensemble(unused_tcp_port, coefficients):
             }
         )
         inputs = {}
-        coeffs_trans = coefficient_transmitters(config.get(ids.STORAGE), coefficients)
+        coeffs_trans = coefficient_transmitters(
+            coefficients, config.get(ids.STORAGE)["storage_path"]
+        )
         script_trans = script_transmitters(config)
         for iens in range(2):
             inputs[iens] = {**coeffs_trans[iens], **script_trans[iens]}
@@ -548,7 +551,9 @@ def test_run_prefect_ensemble_exception(unused_tcp_port, coefficients):
             }
         )
         inputs = {}
-        coeffs_trans = coefficient_transmitters(config.get(ids.STORAGE), coefficients)
+        coeffs_trans = coefficient_transmitters(
+            coefficients, config.get(ids.STORAGE)["storage_path"]
+        )
         script_trans = script_transmitters(config)
         for iens in range(2):
             inputs[iens] = {**coeffs_trans[iens], **script_trans[iens]}

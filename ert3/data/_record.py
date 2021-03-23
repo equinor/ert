@@ -8,9 +8,6 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Awaitable, List, Mapping, Tuple, Union
 
-from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
-    _SharedDiskStorageDriver,
-)
 from pydantic import BaseModel, root_validator
 
 
@@ -114,7 +111,7 @@ class RecordTransmitterState(Enum):
 class RecordTransmitterType(Enum):
     in_memory = auto()
     ert_storage = auto()
-    prefect_storage = auto()
+    shared_disk = auto()
 
 
 class RecordTransmitter:
@@ -138,8 +135,9 @@ class RecordTransmitter:
     @abstractmethod
     async def dump(
         self, location: Path, format: str = "json"
-    ) -> "asyncio.Future[RecordReference]":
-        # the result of this awaitable will be set to a RecordReference that has the folder into which this record was dumped
+    ) -> None:  # Should be RecordReference ?
+        # the result of this awaitable will be set to a RecordReference
+        # that has the folder into which this record was dumped
         pass
 
     @abstractmethod
@@ -157,12 +155,13 @@ class RecordTransmitter:
         pass
 
 
-class PrefectStorageRecordTransmitter(RecordTransmitter):
-    TYPE: RecordTransmitterType = RecordTransmitterType.prefect_storage
+class SharedDiskRecordTransmitter(RecordTransmitter):
+    TYPE: RecordTransmitterType = RecordTransmitterType.shared_disk
 
-    def __init__(self, name: str, driver: _SharedDiskStorageDriver):
+    def __init__(self, name: str, storage_path: Path):
         super().__init__(type_=self.TYPE)
-        self._driver = driver
+        self._storage_path = storage_path
+        self._storage_path.mkdir(parents=True, exist_ok=True)
         self._concrete_key = f"{name}_{uuid.uuid4()}"
         self._uri: typing.Optional[str] = None
 
@@ -184,9 +183,18 @@ class PrefectStorageRecordTransmitter(RecordTransmitter):
                 record = Record(data=json.load(f))
         else:
             record = Record(data=data_or_file)
-        self.set_transmitted(
-            self._driver.store_data(record.data, self._concrete_key, mime=mime)
-        )
+
+        storage_uri = self._storage_path / self._concrete_key
+        with open(storage_uri, "w") as f:
+            if mime == "text/json":
+                json.dump(record.data, f)
+            elif mime == "application/x-python-code":
+                # XXX: An opaque record is a list of bytes... yes
+                # sonso or dan or jond: do something about this
+                f.write(record.data[0].decode())
+            else:
+                raise ValueError(f"unsupported mime {mime}")
+        self.set_transmitted(storage_uri)
 
     def load(self, mime="text/json"):
         if mime != "text/json":

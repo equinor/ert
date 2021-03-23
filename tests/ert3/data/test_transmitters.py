@@ -1,6 +1,7 @@
 import contextlib
 import json
 import os
+import pathlib
 import pickle
 import tempfile
 from typing import Callable, ContextManager
@@ -9,11 +10,8 @@ import cloudpickle
 import pytest
 from ert3.data import (
     InMemoryRecordTransmitter,
-    PrefectStorageRecordTransmitter,
+    SharedDiskRecordTransmitter,
     RecordTransmitter,
-)
-from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
-    _SharedDiskStorageDriver,
 )
 from tests.utils import tmpdir
 
@@ -21,16 +19,13 @@ from tests.utils import tmpdir
 @contextlib.contextmanager
 def prefect_factory_context():
     tmp_path = tempfile.TemporaryDirectory()
-    storage_path = os.path.join(tmp_path.name, ".shared-storage")
-    os.mkdir(storage_path)
+    tmp_storage_path = pathlib.Path(tmp_path.name) / ".shared-storage"
+    tmp_storage_path.mkdir(parents=True, exist_ok=True)
 
-    def prefect_storage_factory(name: str) -> PrefectStorageRecordTransmitter:
-        return PrefectStorageRecordTransmitter(
+    def prefect_storage_factory(name: str) -> SharedDiskRecordTransmitter:
+        return SharedDiskRecordTransmitter(
             name=name,
-            driver=_SharedDiskStorageDriver(
-                run_path=os.getcwd(),
-                storage_path=storage_path,
-            ),
+            storage_path=tmp_storage_path,
         )
 
     try:

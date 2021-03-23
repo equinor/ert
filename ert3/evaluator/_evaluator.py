@@ -1,24 +1,14 @@
-import json
 import os
 import pathlib
 import shutil
-
-from prefect.engine import result
-
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert_shared.ensemble_evaluator.prefect_ensemble.prefect_ensemble import (
-    PrefectEnsemble,
-    storage_driver_factory,
-)
-
+import typing
 from collections import defaultdict
-from graphlib import TopologicalSorter
 
 import ert3
 from ert3.config._stages_config import StagesConfig
-import typing
-
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert_shared.ensemble_evaluator.prefect_ensemble import PrefectEnsemble
 
 _EVTYPE_SNAPSHOT_STOPPED = "Stopped"
 _EVTYPE_SNAPSHOT_FAILED = "Failed"
@@ -48,21 +38,33 @@ def _prepare_input(
 ) -> typing.Dict[str, typing.Dict[str, typing.List["ert3.data.RecordTransmitter"]]]:
     tmp_input_folder = evaluation_tmp_dir / "prep_input_files"
     os.makedirs(tmp_input_folder)
-    ee_storage = storage_driver_factory(ee_config["storage"], tmp_input_folder)
+    storage_config = ee_config["storage"]
     transmitters = defaultdict(dict)
 
     for input_ in step_config.input:
         for iens, record in enumerate(inputs.ensemble_records[input_.record].records):
-            transmitter = ert3.data.PrefectStorageRecordTransmitter(
-                input_.record, ee_storage
-            )
+            if storage_config.get("type") == "shared_disk":
+                transmitter = ert3.data.SharedDiskRecordTransmitter(
+                    name=input_.record,
+                    storage_path=pathlib.Path(storage_config["storage_path"]),
+                )
+            else:
+                raise ValueError(
+                    f"Unsupported transmitter type: {storage_config.get('type')}"
+                )
             transmitter.transmit(record.data)
             transmitters[iens][input_.record] = transmitter
     for command in step_config.transportable_commands:
         for iens in range(0, ensemble_size):
-            transmitter = ert3.data.PrefectStorageRecordTransmitter(
-                command.name, ee_storage
-            )
+            if storage_config.get("type") == "shared_disk":
+                transmitter = ert3.data.SharedDiskRecordTransmitter(
+                    name=command.name,
+                    storage_path=pathlib.Path(storage_config["storage_path"]),
+                )
+            else:
+                raise ValueError(
+                    f"Unsupported transmitter type: {storage_config.get('type')}"
+                )
             with open(command.location, "rb") as f:
                 transmitter.transmit([f.read()], mime=command.mime)
             transmitters[iens][command.name] = transmitter
@@ -78,13 +80,21 @@ def _prepare_output(
     # TODO: ensemble_size should rather be a list of ensemble ids
     tmp_input_folder = evaluation_tmp_dir / "output_files"
     os.makedirs(tmp_input_folder)
-    ee_storage = storage_driver_factory(ee_config["storage"], tmp_input_folder)
+    storage_config = ee_config["storage"]
     transmitters = defaultdict(dict)
     for output in step_config.output:
         for iens in range(0, ensemble_size):
-            transmitters[iens][
-                output.record
-            ] = ert3.data.PrefectStorageRecordTransmitter(output.record, ee_storage)
+            if storage_config.get("type") == "shared_disk":
+                transmitters[iens][
+                    output.record
+                ] = ert3.data.SharedDiskRecordTransmitter(
+                    name=output.record,
+                    storage_path=pathlib.Path(storage_config["storage_path"]),
+                )
+            else:
+                raise ValueError(
+                    f"Unsupported transmitter type: {storage_config.get('type')}"
+                )
     return dict(transmitters)
 
 

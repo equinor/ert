@@ -19,9 +19,6 @@ from ert_shared.ensemble_evaluator.entity.ensemble import (
     create_step_builder,
 )
 from ert_shared.ensemble_evaluator.client import Client
-from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
-    storage_driver_factory,
-)
 from ert_shared.ensemble_evaluator.entity.ensemble import create_file_io_builder
 from ert_shared.status.entity import state
 from prefect import Flow
