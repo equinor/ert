@@ -25,12 +25,10 @@ jobs:
 
     - name: Install ERT
       run: |
-        pip install .
+        pip install .[storage]
 
-    - name: Install ert-storage
+    - name: Start ert-storage
       run: |
-        # ert-storage is not in pypi yet, pip install shold go away when it is
-        pip install git+https://github.com/equinor/ert-storage.git
         ert-storage &
 
     - name: Run polynomial demo

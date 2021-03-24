@@ -35,12 +35,7 @@ jobs:
     - name: Install ERT and dependencies
       run: |
         pip install -r dev-requirements.txt
-        pip install .
-
-    - name: Install ert-storage
-      run: |
-        # ert-storage is not in pypi yet, pip install shold go away when it is
-        pip install git+https://github.com/equinor/ert-storage.git
+        pip install .[storage]
 
     - name: Test Ubuntu
       if: matrix.os == 'ubuntu-latest'
