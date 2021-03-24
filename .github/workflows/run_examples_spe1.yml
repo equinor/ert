@@ -47,17 +47,13 @@ jobs:
 
     - name: Install ERT
       run: |
-        pip install .
+        pip install .[storage]
 
     - name: Install spe1 dependencies
       run: |
         pip install ecl2df
 
-    - name: Install ert-storage
-      run: |
-        pip install git+https://github.com/equinor/ert-storage.git
-
-    - name: Start postgres ert-storage
+    - name: Setup postgres ert-storage
       if: matrix.data-base == 'postgres'
       env:
         ERT_STORAGE_DATABASE_URL: postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres

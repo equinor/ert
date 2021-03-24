@@ -63,6 +63,11 @@ setup(
         "prefect",
         "dask_jobqueue",
     ],
+    extras_require={
+        "storage": [
+            "ert-storage==0.1.1",
+        ],
+    },
     zip_safe=False,
     tests_require=["pytest", "mock"],
     test_suite="tests",
