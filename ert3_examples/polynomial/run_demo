@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-ert3 init
-
 ert3 run evaluation
 ert3 status
 

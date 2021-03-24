@@ -68,7 +68,7 @@ jobs:
 
     - name: Run spe1 demo
       run: |
-        pushd examples/spe1
+        ert3 init --example spe1
+        pushd spe1
         ./run_demo
         popd
-

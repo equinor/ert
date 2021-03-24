@@ -1,6 +1,9 @@
 import argparse
-from pathlib import Path
+import pathlib
+import shutil
 import sys
+
+import pkg_resources as pkg
 import yaml
 
 import ert3
@@ -11,6 +14,16 @@ _ERT3_DESCRIPTION = (
     "\nWARNING: the tool is currently in an extremely early stage and we refer "
     "all users to ert for real work!"
 )
+
+
+def _build_init_argparser(subparsers):
+    init_parser = subparsers.add_parser("init", help="Initialize an ERT3 workspace")
+    init_parser.add_argument(
+        "--example",
+        help="Name of the example that would be copied "
+        "to the working directory and initialised.\n"
+        f"The available examples are: {', '.join(_get_ert3_example_names())}",
+    )
 
 
 def _build_run_argparser(subparsers):
@@ -68,7 +81,7 @@ def _build_argparser():
     parser = argparse.ArgumentParser(description=_ERT3_DESCRIPTION)
     subparsers = parser.add_subparsers(dest="sub_cmd", help="ert3 commands")
 
-    subparsers.add_parser("init", help="Initialize an ERT3 workspace")
+    _build_init_argparser(subparsers)
     _build_run_argparser(subparsers)
     _build_export_argparser(subparsers)
     _build_record_argparser(subparsers)
@@ -76,6 +89,58 @@ def _build_argparser():
     _build_clean_argparser(subparsers)
 
     return parser
+
+
+def _get_ert3_examples_path():
+    pkg_examples_path = pathlib.Path(pkg.resource_filename("ert3_examples", ""))
+    # check that examples folder exist
+    if not pkg_examples_path.exists():
+        raise ModuleNotFoundError(f"Examples folder {pkg_examples_path} was not found.")
+    return pkg_examples_path
+
+
+def _get_ert3_example_names():
+    pkg_examples_path = _get_ert3_examples_path()
+    ert_example_names = []
+    for example in pkg_examples_path.iterdir():
+        if example.is_dir() and "__" not in example.name:
+            ert_example_names.append(example.name)
+    return ert_example_names
+
+
+def _init(args):
+    assert args.sub_cmd == "init"
+
+    if args.example is None:
+        ert3.workspace.initialize(pathlib.Path.cwd())
+    else:
+        example_name = args.example
+        pkg_examples_path = _get_ert3_examples_path()
+        pkg_example_path = pkg_examples_path / example_name
+        wd_example_path = pathlib.Path.cwd() / example_name
+
+        # check that examples folder contains provided 'example_name'
+        if not pkg_example_path.exists():
+            raise ert3.exceptions.IllegalWorkspaceOperation(
+                f"Example {example_name} is not a valid ert3 example.\n"
+                f"Valid examples names are:  {', '.join(_get_ert3_example_names())}."
+            )
+
+        # check that we are not inside an ERT workspace already
+        if ert3.workspace.load(pathlib.Path.cwd()) is not None:
+            raise ert3.exceptions.IllegalWorkspaceOperation(
+                "Already inside an ERT workspace."
+            )
+
+        # check that current working directory does not contain 'example_name' folder
+        if not wd_example_path.is_dir():
+            shutil.copytree(pkg_example_path, wd_example_path)
+        else:
+            raise ert3.exceptions.IllegalWorkspaceOperation(
+                f"Your working directory already contains example {example_name}."
+            )
+
+        ert3.workspace.initialize(wd_example_path)
 
 
 def _run(workspace, args):
@@ -141,11 +206,11 @@ def _main():
         parser.print_help()
         return
     if args.sub_cmd == "init":
-        ert3.workspace.initialize(Path.cwd())
+        _init(args)
         return
 
     # Commands that does requires an ert workspace
-    workspace = ert3.workspace.load(Path.cwd())
+    workspace = ert3.workspace.load(pathlib.Path.cwd())
 
     if workspace is None:
         raise ert3.exceptions.IllegalWorkspaceOperation("Not inside an ERT workspace.")
