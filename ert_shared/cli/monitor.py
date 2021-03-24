@@ -42,7 +42,7 @@ class Monitor:
 
     def __init__(self, out=sys.stdout, color_always=False):
         self._out = out
-        self._snapshot = None
+        self._snapshots = {}
         self._start_time = None
         # If out is not (like) a tty, disable colors.
         if not out.isatty() and not color_always:
@@ -62,11 +62,11 @@ class Monitor:
         for event in tracker.track():
             if isinstance(event, FullSnapshotEvent):
                 if event.snapshot is not None:
-                    self._snapshot = event.snapshot
+                    self._snapshots[event.iteration] = event.snapshot
                 self._progress = event.progress
             elif isinstance(event, SnapshotUpdateEvent):
                 if event.partial_snapshot is not None:
-                    self._snapshot.merge_event(event.partial_snapshot)
+                    self._snapshots[event.iteration].merge_event(event.partial_snapshot)
                 self._print_progress(event)
             if isinstance(event, EndEvent):
                 self._print_result(event.failed, event.failed_msg)
@@ -74,8 +74,9 @@ class Monitor:
 
     def _get_legends(self) -> str:
         statuses = ""
-        total_count = len(self._snapshot.get_reals())
-        aggregate = self._snapshot.aggregate_real_states()
+        latest_snapshot = self._snapshots[max(self._snapshots.keys())]
+        total_count = len(latest_snapshot.get_reals())
+        aggregate = latest_snapshot.aggregate_real_states()
         for state in ALL_REALIZATION_STATES:
             count = 0
             if state in aggregate:

@@ -34,7 +34,7 @@ class MonitorTest(unittest.TestCase):
         for i in range(0, 100):
             status = REALIZATION_STATE_FINISHED if i < 10 else REALIZATION_STATE_RUNNING
             sd.reals[i] = Realization(status=status, active=True)
-        monitor._snapshot = Snapshot(sd.dict())
+        monitor._snapshots[0] = Snapshot(sd.dict())
         legends = monitor._get_legends()
 
         self.assertEqual(
@@ -73,7 +73,7 @@ class MonitorTest(unittest.TestCase):
         for i in range(0, 100):
             status = REALIZATION_STATE_FINISHED if i < 50 else REALIZATION_STATE_WAITING
             sd.reals[i] = Realization(status=status, active=True)
-        monitor._snapshot = Snapshot(sd.dict())
+        monitor._snapshots[0] = Snapshot(sd.dict())
         monitor._start_time = datetime.now()
         general_event = _UpdateEvent(
             phase_name="Test Phase",
