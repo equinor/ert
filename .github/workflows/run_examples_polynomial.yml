@@ -71,11 +71,7 @@ jobs:
 
     - name: Install ERT
       run: |
-        pip install .
-
-    - name: Install ert-storage
-      run: |
-        pip install git+https://github.com/equinor/ert-storage.git
+        pip install .[storage]
 
     - name: Start postgres ert-storage
       env:
@@ -86,6 +82,8 @@ jobs:
         ert-storage alembic upgrade head
 
     - name: Start ert-storage
+      env:
+        ERT_STORAGE_DATABASE_URL: postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres
       run: |
         ert-storage &
 
