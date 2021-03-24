@@ -1,5 +1,6 @@
 import ert3
 
+import pathlib
 import pytest
 import sys
 import copy
@@ -66,6 +67,64 @@ def test_cli_init_subfolder(workspace):
             match="Already inside an ERT workspace",
         ):
             ert3.console._console._main()
+
+
+@pytest.mark.requires_ert_storage
+def test_cli_init_invalid_example(tmpdir, ert_storage):
+    with tmpdir.as_cwd():
+        args = ["ert3", "init", "--example", "something"]
+        with patch.object(sys, "argv", args):
+            with pytest.raises(
+                SystemExit, match="Example something is not a valid ert3 example."
+            ):
+                ert3.console.main()
+
+
+@pytest.mark.requires_ert_storage
+def test_cli_init_example(tmpdir, ert_storage):
+    with tmpdir.as_cwd():
+        args = ["ert3", "init", "--example", "polynomial"]
+        with patch.object(sys, "argv", args):
+            ert3.console.main()
+        polynomial_path = pathlib.Path(tmpdir / "polynomial")
+        assert polynomial_path.exists() and polynomial_path.is_dir()
+        polynomial_files = [file.name for file in polynomial_path.iterdir()]
+        assert "stages.yml" in polynomial_files
+        assert "parameters.yml" in polynomial_files
+        assert "experiments" in polynomial_files
+
+
+@pytest.mark.requires_ert_storage
+def test_cli_init_example_twice(tmpdir, ert_storage):
+    with tmpdir.as_cwd():
+        args = ["ert3", "init", "--example", "polynomial"]
+        with patch.object(sys, "argv", args):
+            ert3.console.main()
+
+        with patch.object(sys, "argv", args):
+            with pytest.raises(
+                SystemExit,
+                match="Your working directory already contains example polynomial",
+            ):
+                ert3.console.main()
+
+
+@pytest.mark.requires_ert_storage
+def test_cli_init_example_inside_example(tmpdir, ert_storage):
+    with tmpdir.as_cwd():
+        args = ["ert3", "init", "--example", "polynomial"]
+        with patch.object(sys, "argv", args):
+            ert3.console.main()
+
+        polynomial_path = tmpdir / "polynomial"
+        polynomial_path.chdir()
+
+        with patch.object(sys, "argv", args):
+            with pytest.raises(
+                SystemExit,
+                match="Already inside an ERT workspace",
+            ):
+                ert3.console.main()
 
 
 @pytest.mark.requires_ert_storage
