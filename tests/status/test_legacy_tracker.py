@@ -31,9 +31,10 @@ import pytest
 
 
 @pytest.mark.parametrize(
-    "cmd_line_arguments,num_successful,num_iters",
+    "experiment_folder,cmd_line_arguments,num_successful,num_iters",
     [
         (
+            "poly_example",
             [
                 ENSEMBLE_EXPERIMENT_MODE,
                 "--realizations",
@@ -44,6 +45,7 @@ import pytest
             1,
         ),
         (
+            "poly_example",
             [
                 ENSEMBLE_SMOOTHER_MODE,
                 "--target-case",
@@ -56,6 +58,7 @@ import pytest
             2,
         ),
         (
+            "poly_example",
             [
                 ENSEMBLE_SMOOTHER_MODE,
                 "--enable-ensemble-evaluator",
@@ -68,18 +71,38 @@ import pytest
             7,
             2,
         ),
+        (
+            "failing_poly_example",
+            [
+                ENSEMBLE_SMOOTHER_MODE,
+                "--target-case",
+                "poly_runpath_file",
+                "--realizations",
+                "0,1",
+                "failing_poly_example/poly.ert",
+            ],
+            1,
+            2,
+        ),
     ],
 )
-def test_tracking(cmd_line_arguments, num_successful, num_iters, tmpdir, source_root):
+def test_tracking(
+    experiment_folder,
+    cmd_line_arguments,
+    num_successful,
+    num_iters,
+    tmpdir,
+    source_root,
+):
     shutil.copytree(
-        os.path.join(source_root, "test-data", "local", "poly_example"),
-        os.path.join(str(tmpdir), "poly_example"),
+        os.path.join(source_root, "test-data", "local", f"{experiment_folder}"),
+        os.path.join(str(tmpdir), f"{experiment_folder}"),
     )
 
     config_lines = ["INSTALL_JOB poly_eval2 POLY_EVAL\n" "SIMULATION_JOB poly_eval2\n"]
 
     with tmpdir.as_cwd():
-        with open("poly_example/poly.ert", "a") as fh:
+        with open(f"{experiment_folder}/poly.ert", "a") as fh:
             fh.writelines(config_lines)
 
         parser = ArgumentParser(prog="test_main")
@@ -122,15 +145,20 @@ def test_tracking(cmd_line_arguments, num_successful, num_iters, tmpdir, source_
                 if event.partial_snapshot is not None:
                     snapshots[event.iteration].merge(event.partial_snapshot.data())
             if isinstance(event, EndEvent):
-                assert not event.failed
                 break
 
         assert tracker._progress() == 1.0
 
         assert len(snapshots) == num_iters
         for iter_, snapshot in snapshots.items():
-            assert len(snapshot.get_reals()) == num_successful
-            for real_id, real in snapshot.get_reals().items():
+            successful_reals = list(
+                filter(
+                    lambda item: item[1].status == REALIZATION_STATE_FINISHED,
+                    snapshot.get_reals().items(),
+                )
+            )
+            assert len(successful_reals) == num_successful
+            for real_id, real in successful_reals:
                 assert (
                     real["status"] == REALIZATION_STATE_FINISHED
                 ), f"iter:{iter_} real:{real_id} was not finished"
