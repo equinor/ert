@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # TODO: This script is a hack in its entirety to run shell commands. The reason
 # is that the prefect evaluator and hence ert3 currently runs all commands

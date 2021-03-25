@@ -8,7 +8,7 @@ stages:
         inputs:
           - record: sum_up
             location: sum_coeffs.py
-            mime: application/x-python-code
+            mime: text/x-python
             is_executable: True
           - record: input0
             location: poly_0.out
@@ -38,7 +38,7 @@ stages:
         inputs:
           - record: generate_zero_degree
             location: evaluate_coeffs.py
-            mime: application/x-python-code
+            mime: text/x-python
             is_executable: True
           - record: coeffs
             location: coeffs.json
@@ -62,7 +62,7 @@ stages:
         inputs:
           - record: generate_first_degree
             location: evaluate_coeffs.py
-            mime: application/x-python-code
+            mime: text/x-python
             is_executable: True
           - record: coeffs
             location: coeffs.json
@@ -83,7 +83,7 @@ stages:
         inputs:
           - record: generate_second_degree
             location: evaluate_coeffs.py
-            mime: application/x-python-code
+            mime: text/x-python
             is_executable: True
           - record: coeffs
             location: coeffs.json

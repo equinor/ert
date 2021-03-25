@@ -29,7 +29,18 @@ from tests.utils import SOURCE_DIR, tmp
 def parse_config(path):
     conf_path = Path(path).resolve()
     with open(conf_path, "r") as f:
-        return yaml.safe_load(f)
+        config = yaml.safe_load(f)
+    for stage in config.get(ids.STAGES):
+        for step in stage.get(ids.STEPS):
+            for input_ in step.get(ids.INPUTS):
+                input_[ids.LOCATION] = Path(input_[ids.LOCATION])
+                for job in step.get(ids.JOBS):
+                    job[ids.EXECUTABLE] = (
+                        Path(job[ids.EXECUTABLE])
+                        if step.get(ids.TYPE) == ids.UNIX
+                        else job[ids.EXECUTABLE]
+                    )
+    return config
 
 
 def input_transmitter(name, data, storage_path):
@@ -57,7 +68,7 @@ def script_transmitters(config):
                     transmitters[iens].update(
                         script_transmitter(
                             name=job.get(ids.NAME),
-                            location=job.get(ids.EXECUTABLE),
+                            location=Path(job.get(ids.EXECUTABLE)),
                             storage_path=config.get(ids.STORAGE)["storage_path"],
                         )
                     )
@@ -70,7 +81,7 @@ def script_transmitter(name, location, storage_path):
     )
     with open(location, "rb") as f:
         asyncio.get_event_loop().run_until_complete(
-            transmitter.transmit_data([f.read()], mime="application/x-python-code")
+            transmitter.transmit_data([f.read()], mime="text/x-python")
         )
 
     return {name: transmitter}
@@ -128,7 +139,7 @@ def get_step(step_name, inputs, outputs, jobs, url, type_="unix"):
         step_builder.add_input(
             ee.create_file_io_builder()
             .set_name(name)
-            .set_path(path)
+            .set_path(Path(path))
             .set_mime(mime)
             .set_executable()
         )
@@ -219,9 +230,9 @@ def test_unix_task(unused_tcp_port, tmpdir):
     input_ = script_transmitter("script", script_location, storage_path=tmpdir)
     step = get_step(
         step_name="test_step",
-        inputs=[("script", "unix_test_script.py", None)],
-        outputs=[("output", "output.out", None)],
-        jobs=[("script", "unix_test_script.py", ["vas"])],
+        inputs=[("script", Path("unix_test_script.py"), None)],
+        outputs=[("output", Path("output.out"), None)],
+        jobs=[("script", Path("unix_test_script.py"), ["vas"])],
         url=url,
         type_="unix",
     )
@@ -267,7 +278,7 @@ def test_function_step(unused_tcp_port, tmpdir):
     step = get_step(
         step_name="test_step",
         inputs=[("values", "NA", None)],
-        outputs=[("output", "output.out", None)],
+        outputs=[("output", Path("output.out"), None)],
         jobs=[("test_function", sum_function, None)],
         url=url,
         type_="function",
@@ -317,9 +328,9 @@ def test_unix_step_error(unused_tcp_port, tmpdir):
     input_ = script_transmitter("test_script", script_location, storage_path=tmpdir)
     step = get_step(
         step_name="test_step",
-        inputs=[("test_script", "unix_test_script.py", None)],
-        outputs=[("output", "output.out", None)],
-        jobs=[("test_script", "unix_test_script.py", ["foo", "bar"])],
+        inputs=[("test_script", Path("unix_test_script.py"), None)],
+        outputs=[("output", Path("output.out"), None)],
+        jobs=[("test_script", Path("unix_test_script.py"), ["foo", "bar"])],
         url=url,
         type_="unix",
     )
@@ -362,9 +373,9 @@ def test_on_task_failure(unused_tcp_port, tmpdir):
     with tmp() as runpath:
         step = get_step(
             step_name="test_step",
-            inputs=[("script", "unix_test_retry_script.py", None)],
+            inputs=[("script", Path("unix_test_retry_script.py"), None)],
             outputs=[],
-            jobs=[("script", "unix_test_retry_script.py", [runpath])],
+            jobs=[("script", Path("unix_test_retry_script.py"), [runpath])],
             url=url,
             type_="unix",
         )
