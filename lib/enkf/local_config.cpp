@@ -138,11 +138,7 @@ static local_updatestep_type * local_config_alloc_updatestep( local_config_type 
 
 
 void local_config_clear( local_config_type * local_config ) {
-  local_config->default_updatestep  = NULL;
   hash_clear( local_config->updatestep_storage );
-  hash_clear( local_config->ministep_storage );
-  hash_clear( local_config->dataset_storage );
-  hash_clear( local_config->obsdata_storage );
   local_config->default_updatestep = local_config_alloc_updatestep(local_config, "DEFAULT");
 }
 

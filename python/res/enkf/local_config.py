@@ -124,6 +124,9 @@ class LocalConfig(BaseCClass):
         """ @rtype: Obsdata """
         assert isinstance(src_key, str)
         assert isinstance(target_key, str)
+        if not self._has_obsdata(src_key):
+            raise KeyError(f"The observation set {src_key} does not exist")
+
         obsdata = self._copy_obsdata(src_key, target_key)
         obsdata.initObservations(self.__getObservations())
         return obsdata
