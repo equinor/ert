@@ -1,5 +1,6 @@
 import asyncio
-import os
+from typing import Any, Dict
+from pathlib import Path
 import stat
 import subprocess
 import tempfile
@@ -19,14 +20,14 @@ class UnixTask(prefect.Task):
     def get_step(self):
         return self._step
 
-    def run_job(self, client, job, run_path):
+    def run_job(self, client: Client, job: Any, run_path: Path):
         shell_cmd = ["python3", job.get_executable(), *job.get_args()]
         cmd_exec = subprocess.run(
             shell_cmd,
             universal_newlines=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            cwd=run_path,
+            cwd=str(run_path),
         )
         self.logger.info(cmd_exec.stdout)
 
@@ -41,7 +42,7 @@ class UnixTask(prefect.Task):
                 f"Script {job.get_name()} failed with exception {cmd_exec.stderr}"
             )
 
-    def run_jobs(self, client, run_path):
+    def run_jobs(self, client: Client, run_path: Path):
         for job in self._step.get_jobs():
             self.logger.info(f"Running command {job.get_name()}")
             client.send_event(
@@ -54,24 +55,26 @@ class UnixTask(prefect.Task):
                 ev_source=job.get_source(self._ee_id),
             )
 
-    def _load_and_dump_input(self, transmitters, runpath):
+    def _load_and_dump_input(
+        self,
+        transmitters: Dict[int, Dict[str, Any]],
+        runpath: Path,
+    ):
         futures = []
         for input_ in self._step.get_inputs():
-            # TODO: use Path
             futures.append(
-                transmitters[input_.get_name()].dump(
-                    os.path.join(runpath, input_.get_path())
-                )
+                transmitters[input_.get_name()].dump(runpath / input_.get_path())
             )
         asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
         for input_ in self._step.get_inputs():
             if input_.is_executable():
-                path = os.path.join(runpath, input_.get_path())
-                st = os.stat(path)
-                os.chmod(path, st.st_mode | stat.S_IEXEC)
+                path = runpath / input_.get_path()
+                st = path.stat()
+                path.chmod(st.st_mode | stat.S_IEXEC)
 
     def run(self, inputs=None):
         with tempfile.TemporaryDirectory() as run_path:
+            run_path = Path(run_path)
             self._load_and_dump_input(transmitters=inputs, runpath=run_path)
             with Client(self._step.get_ee_url()) as ee_client:
                 ee_client.send_event(
@@ -84,7 +87,7 @@ class UnixTask(prefect.Task):
 
                 futures = []
                 for output in self._step.get_outputs():
-                    if not os.path.exists(os.path.join(run_path, output.get_path())):
+                    if not (run_path / output.get_path()).exists():
                         raise FileNotFoundError(
                             f"Output file {output.get_path()} was not generated!"
                         )
@@ -94,7 +97,7 @@ class UnixTask(prefect.Task):
                     ]
                     futures.append(
                         outputs[output.get_name()].transmit_file(
-                            os.path.join(run_path, output.get_path())
+                            run_path / output.get_path()
                         )
                     )
                 asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))

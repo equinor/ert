@@ -121,8 +121,6 @@ class RecordTransmitterType(Enum):
 class RecordTransmitter:
     def __init__(self, type_: RecordTransmitterType):
         self._type = type_
-
-        # TODO: implement state machine?
         self._state = RecordTransmitterState.not_transmitted
 
     def _set_transmitted(self):
@@ -132,11 +130,7 @@ class RecordTransmitter:
         return self._state == RecordTransmitterState.transmitted
 
     @abstractmethod
-    async def dump(
-        self, location: Path, mime: str = "text/json"
-    ) -> None:  # Should be RecordReference ?
-        # the result of this awaitable will be set to a RecordReference
-        # that has the folder into which this record was dumped
+    async def dump(self, location: Path, mime: str = "text/json") -> None:
         pass
 
     @abstractmethod
@@ -227,7 +221,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
 
 class InMemoryRecordTransmitter(RecordTransmitter):
     TYPE: RecordTransmitterType = RecordTransmitterType.in_memory
-    # TODO: this field should be Record, but that does not work until
+    # TODO: these fields should be Record, but that does not work until
     # https://github.com/cloudpipe/cloudpickle/issues/403 has been released.
     _data: Optional[Any] = None
     _index: Optional[Any] = None
