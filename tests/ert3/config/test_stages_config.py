@@ -73,7 +73,9 @@ def test_single_function_step_valid(base_function_stage_config):
 
 def test_step_multi_cmd(base_unix_stage_config):
     config = base_unix_stage_config
-    config[0]["transportable_commands"].append({"name": "poly2", "location": "poly2"})
+    config[0]["transportable_commands"].append(
+        {"name": "poly2", "location": "poly2", "mime": "text/x-python"}
+    )
 
     config[0]["script"] = [
         "poly run1",
@@ -99,19 +101,6 @@ def test_step_non_existing_transportable_cmd(base_unix_stage_config):
     )
 
     err_msg = '"/not/a/file" does not exist'
-    with pytest.raises(ert3.exceptions.ConfigValidationError, match=err_msg):
-        ert3.config.load_stages_config(config)
-
-
-def test_step_non_executable_transportable_cmd(base_unix_stage_config):
-    non_executable = pathlib.Path("an_ordenary_file")
-    non_executable.write_text("This is nothing but an ordinary text file")
-    config = base_unix_stage_config
-    config[0]["transportable_commands"].append(
-        {"name": "invalid_cmd", "location": non_executable}
-    )
-
-    err_msg = f"{str(non_executable)} is not executable"
     with pytest.raises(ert3.exceptions.ConfigValidationError, match=err_msg):
         ert3.config.load_stages_config(config)
 

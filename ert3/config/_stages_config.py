@@ -1,9 +1,9 @@
 import importlib
-import os
+import mimetypes
 import sys
-from typing import List, Callable, Optional
-from pydantic import root_validator, validator, FilePath, BaseModel, ValidationError
+from typing import Callable, List, Optional
 
+from pydantic import BaseModel, FilePath, ValidationError, root_validator, validator
 import ert3
 
 if sys.version_info >= (3, 8):
@@ -48,13 +48,17 @@ class OutputRecord(_StagesConfig):
 class TransportableCommand(_StagesConfig):
     name: str
     location: FilePath
-    mime: str = "application/x-python-code"
+    mime: str = ""
 
-    @validator("location")
-    def is_executable(cls, location):
-        if not os.access(location, os.X_OK):
-            raise ValueError(f"{location} is not executable")
-        return location
+    @validator("mime")
+    def ensure_mime(cls, v, values):
+        if "location" not in values:
+            return v
+        if v:
+            return v
+        if not values["location"].suffix:
+            return v
+        return mimetypes.types_map[values["location"].suffix]
 
 
 class Step(_StagesConfig):

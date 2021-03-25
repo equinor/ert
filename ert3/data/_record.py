@@ -170,17 +170,16 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
 
     async def _transmit(self, record: Record, mime: str):
         storage_uri = self._storage_path / self._concrete_key
-        async with aiofiles.open(storage_uri, mode="w") as f:
-            if mime == "text/json":
-                contents = json.dumps(record.data)
+        if mime == "text/json":
+            contents = json.dumps(record.data)
+            async with aiofiles.open(storage_uri, mode="w") as f:
                 await f.write(contents)
-            elif mime == "application/x-python-code":
-                if isinstance(record.data, list) and isinstance(record.data[0], bytes):
-                    await f.write(record.data[0].decode())
-                else:
-                    raise TypeError(f"unexpected record data type {type(record.data)}")
+        else:
+            if isinstance(record.data, list) and isinstance(record.data[0], bytes):
+                async with aiofiles.open(storage_uri, mode="wb") as f:  # type: ignore
+                    await f.write(record.data[0])  # type: ignore
             else:
-                raise ValueError(f"unsupported mime {mime}")
+                raise TypeError(f"unexpected record data type {type(record.data)}")
         self.set_transmitted(storage_uri)
 
     async def transmit_data(
@@ -212,7 +211,6 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
             contents = await f.read()
             return Record(data=json.loads(contents))
 
-    # TODO: should use Path
     async def dump(self, location: Path, mime: str = "text/json") -> None:
         if self._state != RecordTransmitterState.transmitted:
             raise RuntimeError("cannot dump untransmitted record")
@@ -264,19 +262,18 @@ class InMemoryRecordTransmitter(RecordTransmitter):
 
     async def dump(self, location: Path, mime: str = "text/json"):
         if mime is None:
-            mime = "text/json"
+            raise ValueError(f"need mime for {location}")
         if not self.is_transmitted():
             raise RuntimeError("cannot dump untransmitted record")
         if self._data is None:
-            raise ValueError("Cannot dump Record with no data")
+            raise ValueError("cannot dump Record with no data")
 
-        async with aiofiles.open(str(location), mode="w") as f:
-            if mime == "text/json":
+        if mime == "text/json":
+            async with aiofiles.open(str(location), mode="w") as f:
                 await f.write(json.dumps(self._data))
-            elif mime == "application/x-python-code":
-                if isinstance(self._data, list) and isinstance(self._data[0], bytes):
-                    await f.write(self._data[0].decode())
-                else:
-                    raise TypeError(f"unexpected record data type {type(self._data)}")
+        else:
+            if isinstance(self._data, list) and isinstance(self._data[0], bytes):
+                async with aiofiles.open(str(location), mode="wb") as f:  # type: ignore
+                    await f.write(self._data[0])  # type: ignore
             else:
-                raise ValueError(f"unsupported mime {mime}")
+                raise TypeError(f"unexpected record data type {type(self._data)}")
