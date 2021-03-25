@@ -5,8 +5,6 @@ import shutil
 import typing
 from collections import defaultdict
 
-import aiofiles
-
 import ert3
 from ert3.config._stages_config import StagesConfig
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
@@ -38,11 +36,13 @@ def _prepare_input(
     inputs: "ert3.data.MultiEnsembleRecord",
     evaluation_tmp_dir,
     ensemble_size,
-) -> typing.Dict[str, typing.Dict[str, typing.List["ert3.data.RecordTransmitter"]]]:
+) -> typing.Dict[int, typing.Dict[str, "ert3.data.RecordTransmitter"]]:
     tmp_input_folder = evaluation_tmp_dir / "prep_input_files"
     os.makedirs(tmp_input_folder)
     storage_config = ee_config["storage"]
-    transmitters = defaultdict(dict)
+    transmitters: typing.Dict[
+        int, typing.Dict[str, "ert3.data.RecordTransmitter"]
+    ] = defaultdict(dict)
 
     futures = []
     for input_ in step_config.input:
@@ -56,25 +56,26 @@ def _prepare_input(
                 raise ValueError(
                     f"Unsupported transmitter type: {storage_config.get('type')}"
                 )
-            futures.append(transmitter.transmit(record.data))
+            futures.append(transmitter.transmit_data(record.data))
             transmitters[iens][input_.record] = transmitter
     asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
-    for command in step_config.transportable_commands:
-        for iens in range(0, ensemble_size):
-            if storage_config.get("type") == "shared_disk":
-                transmitter = ert3.data.SharedDiskRecordTransmitter(
-                    name=command.name,
-                    storage_path=pathlib.Path(storage_config["storage_path"]),
-                )
-            else:
-                raise ValueError(
-                    f"Unsupported transmitter type: {storage_config.get('type')}"
-                )
-            with open(command.location, "rb") as f:
-                asyncio.get_event_loop().run_until_complete(
-                    transmitter.transmit([f.read()], mime=command.mime)
-                )
-            transmitters[iens][command.name] = transmitter
+    if step_config.transportable_commands is not None:
+        for command in step_config.transportable_commands:
+            for iens in range(0, ensemble_size):
+                if storage_config.get("type") == "shared_disk":
+                    transmitter = ert3.data.SharedDiskRecordTransmitter(
+                        name=command.name,
+                        storage_path=pathlib.Path(storage_config["storage_path"]),
+                    )
+                else:
+                    raise ValueError(
+                        f"Unsupported transmitter type: {storage_config.get('type')}"
+                    )
+                with open(command.location, "rb") as f:
+                    asyncio.get_event_loop().run_until_complete(
+                        transmitter.transmit_data([f.read()], mime=command.mime)
+                    )
+                transmitters[iens][command.name] = transmitter
     return dict(transmitters)
 
 
@@ -83,12 +84,15 @@ def _prepare_output(
     step_config: ert3.config._stages_config.Step,
     evaluation_tmp_dir: pathlib.Path,
     ensemble_size: int,
-) -> typing.Dict[str, typing.Dict[str, typing.List["ert3.data.RecordTransmitter"]]]:
+) -> typing.Dict[int, typing.Dict[str, "ert3.data.RecordTransmitter"]]:
     # TODO: ensemble_size should rather be a list of ensemble ids
     tmp_input_folder = evaluation_tmp_dir / "output_files"
     os.makedirs(tmp_input_folder)
     storage_config = ee_config["storage"]
-    transmitters = defaultdict(dict)
+    transmitters: typing.Dict[
+        int, typing.Dict[str, "ert3.data.RecordTransmitter"]
+    ] = defaultdict(dict)
+
     for output in step_config.output:
         for iens in range(0, ensemble_size):
             if storage_config.get("type") == "shared_disk":
@@ -121,7 +125,8 @@ def _build_ee_config(
 
     stage_name = ensemble.forward_model.stages[0]
     stage = stages_config.step_from_key(stage_name)
-    commands = stage.transportable_commands
+    assert stage is not None
+    commands = stage.transportable_commands if stage.transportable_commands else []
     output_locations = [out.location for out in stage.output]
     jobs = []
 
@@ -139,15 +144,16 @@ def _build_ee_config(
             }
         )
 
-    for script in stage.script:
-        name, *args = script.split()
-        jobs.append(
-            {
-                "name": name,
-                "executable": command_location(name),
-                "args": tuple(args),
-            }
-        )
+    if stage.script is not None:
+        for script in stage.script:
+            name, *args = script.split()
+            jobs.append(
+                {
+                    "name": name,
+                    "executable": command_location(name),
+                    "args": tuple(args),
+                }
+            )
 
     stages = [
         {
@@ -160,6 +166,7 @@ def _build_ee_config(
                             "record": input_.record,
                             "location": input_.location,
                             "mime": input_.mime,
+                            "is_executable": False,
                         }
                         for input_ in stage.input
                     ]

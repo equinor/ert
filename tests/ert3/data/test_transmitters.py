@@ -76,10 +76,10 @@ async def test_simple_record_transmit(
 ):
     with record_transmitter_factory_context() as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
-        await transmitter.transmit(data_in)
+        await transmitter.transmit_data(data_in)
         assert transmitter.is_transmitted()
         with pytest.raises(RuntimeError, match="Record already transmitted"):
-            await transmitter.transmit(data_or_file=[1, 2, 3])
+            await transmitter.transmit_data([1, 2, 3])
 
 
 @pytest.mark.asyncio
@@ -94,7 +94,7 @@ async def test_simple_record_transmit_and_load(
 ):
     with record_transmitter_factory_context() as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
-        await transmitter.transmit(data_in)
+        await transmitter.transmit_data(data_in)
 
         record = await transmitter.load()
         assert record.data == expected_data
@@ -113,7 +113,7 @@ async def test_simple_record_transmit_and_dump(
 ):
     with record_transmitter_factory_context() as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
-        await transmitter.transmit(data_in)
+        await transmitter.transmit_data(data_in)
 
         await transmitter.dump("record.json")
         with open("record.json") as f:
@@ -134,7 +134,7 @@ async def test_simple_record_transmit_pickle_and_load(
     with record_transmitter_factory_context() as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
         transmitter = pickle.loads(cloudpickle.dumps(transmitter))
-        await transmitter.transmit(data_in)
+        await transmitter.transmit_data(data_in)
         transmitter = pickle.loads(cloudpickle.dumps(transmitter))
         record = await transmitter.load()
 
