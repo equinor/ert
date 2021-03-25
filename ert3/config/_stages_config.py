@@ -82,10 +82,6 @@ class Step(_StagesConfig):
             if not step.get("function"):
                 raise ValueError("No function defined")
 
-        for script in script_lines:
-            line_cmd = script.split()[0]
-            if line_cmd not in cmd_names:
-                raise ValueError("{} is not a known command".format(line_cmd))
         return step
 
     @validator("function", pre=True)

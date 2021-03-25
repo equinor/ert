@@ -130,9 +130,12 @@ def _build_ee_config(
     jobs = []
 
     def command_location(name):
-        return next(
-            cmd.location for cmd in stage.transportable_commands if cmd.name == name
-        )
+        try:
+            return next(
+                cmd.location for cmd in stage.transportable_commands if cmd.name == name
+            )
+        except StopIteration:
+            return pathlib.Path(name)
 
     if stage.function:
         jobs.append(

@@ -105,17 +105,6 @@ def test_step_non_existing_transportable_cmd(base_unix_stage_config):
         ert3.config.load_stages_config(config)
 
 
-def test_step_unknown_script(base_unix_stage_config):
-    config = base_unix_stage_config
-    config[0]["script"].append("unknown_command")
-
-    with pytest.raises(
-        ert3.exceptions.ConfigValidationError,
-        match=r"unknown_command is not a known command",
-    ):
-        ert3.config.load_stages_config(config)
-
-
 def test_step_function_definition_error(base_function_stage_config):
     config = base_function_stage_config
     config[0]["function"] = "builtinssum"
