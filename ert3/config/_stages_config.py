@@ -51,13 +51,13 @@ class TransportableCommand(_StagesConfig):
     mime: str = ""
 
     @validator("mime")
-    def ensure_mime(cls, v, values):
+    def ensure_mime(cls, field, values):
         if "location" not in values:
-            return v
-        if v:
-            return v
+            return field
+        if field:
+            return field
         if not values["location"].suffix:
-            return v
+            return field
         return mimetypes.types_map[values["location"].suffix]
 
 

@@ -4,10 +4,14 @@ from pathlib import Path
 import stat
 import subprocess
 import tempfile
+import os
 
 import prefect
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
+
+
+_BIN_FOLDER = "bin"
 
 
 class UnixTask(prefect.Task):
@@ -21,14 +25,20 @@ class UnixTask(prefect.Task):
         return self._step
 
     def run_job(self, client: Client, job: Any, run_path: Path):
-        shell_cmd = ["python3", job.get_executable(), *job.get_args()]
+        shell_cmd = [job.get_executable().as_posix(), *job.get_args()]
+        env = os.environ.copy()
+        env.update(
+            {"PATH": (run_path / _BIN_FOLDER).as_posix() + ":" + os.environ["PATH"]}
+        )
         cmd_exec = subprocess.run(
             shell_cmd,
             universal_newlines=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            cwd=str(run_path),
+            cwd=run_path.as_posix(),
+            env=env,
         )
+        self.logger.info(cmd_exec.stderr)
         self.logger.info(cmd_exec.stdout)
 
         if cmd_exec.returncode != 0:
@@ -60,15 +70,18 @@ class UnixTask(prefect.Task):
         transmitters: Dict[int, Dict[str, Any]],
         runpath: Path,
     ):
+        Path(runpath / _BIN_FOLDER).mkdir(parents=True, exist_ok=True)
+
         futures = []
         for input_ in self._step.get_inputs():
+            path_base = runpath / _BIN_FOLDER if input_.is_executable() else runpath
             futures.append(
-                transmitters[input_.get_name()].dump(runpath / input_.get_path())
+                transmitters[input_.get_name()].dump(path_base / input_.get_path())
             )
         asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
         for input_ in self._step.get_inputs():
             if input_.is_executable():
-                path = runpath / input_.get_path()
+                path = runpath / _BIN_FOLDER / input_.get_path()
                 st = path.stat()
                 path.chmod(st.st_mode | stat.S_IEXEC)
 
