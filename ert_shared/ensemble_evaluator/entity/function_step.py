@@ -14,26 +14,25 @@ class FunctionTask(prefect.Task):
         self._ee_id = ee_id
 
     def _attempt_execute(self, *, func, transmitters):
-        async def _load(io_name, transmitter):
+        async def _load(io_, transmitter):
             record = await transmitter.load()
-            return (io_name, record)
+            return (io_.get_name(), record)
 
         futures = []
         for input_ in self._step.get_inputs():
-            futures.append(_load(input_.get_name(), transmitters[input_.get_name()]))
+            futures.append(_load(input_, transmitters[input_.get_name()]))
         results = asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
         kwargs = {result[0]: result[1].data for result in results}
         function_output = func(**kwargs)
 
-        async def _transmit(io_name, transmitter, data):
-            await transmitter.transmit_data(data)
-            return (io_name, transmitter)
+        async def _transmit(io_, transmitter, data):
+            await transmitter.transmit_data(data, io_.get_mime())
+            return (io_.get_name(), transmitter)
 
         futures = []
         for output in self._step.get_outputs():
-            name = output.get_name()
-            transmitter = self._output_transmitters[name]
-            futures.append(_transmit(name, transmitter, function_output))
+            transmitter = self._output_transmitters[output.get_name()]
+            futures.append(_transmit(output, transmitter, function_output))
         results = asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
         transmitter_map = {result[0]: result[1] for result in results}
         return transmitter_map

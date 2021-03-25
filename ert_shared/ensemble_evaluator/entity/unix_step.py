@@ -113,7 +113,7 @@ class UnixTask(prefect.Task):
                     ]
                     futures.append(
                         outputs[output.get_name()].transmit_file(
-                            run_path / output.get_path()
+                            run_path / output.get_path(), output.get_mime()
                         )
                     )
                 asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))

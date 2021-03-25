@@ -12,18 +12,18 @@ stages:
             is_executable: True
           - record: input0
             location: poly_0.out
-            mime: None
+            mime: application/json
           - record: input1
             location: poly_1.out
-            mime: None
+            mime: application/json
           - record: input2
             location: poly_2.out
-            mime: None
+            mime: application/json
 
         outputs:
           - record: sum_output
             location: poly_sum.out
-            mime: None
+            mime: application/json
         jobs:
           - name: sum_up
             executable: sum_coeffs.py
@@ -42,14 +42,14 @@ stages:
             is_executable: True
           - record: coeffs
             location: coeffs.json
-            mime: None
+            mime: application/json
           - record: input2
             location: poly_2.out
-            mime: None
+            mime: application/json
         outputs:
           - record: input0
             location: poly_0.out
-            mime: None
+            mime: application/json
         jobs:
           - name: generate_zero_degree
             executable: evaluate_coeffs.py
@@ -66,11 +66,11 @@ stages:
             is_executable: True
           - record: coeffs
             location: coeffs.json
-            mime: None
+            mime: application/json
         outputs:
           - record: input1
             location: poly_1.out
-            mime: None
+            mime: application/json
         jobs:
           - name: generate_first_degree
             executable: evaluate_coeffs.py
@@ -87,11 +87,11 @@ stages:
             is_executable: True
           - record: coeffs
             location: coeffs.json
-            mime: None
+            mime: application/json
         outputs:
           - record: input2
             location: poly_2.out
-            mime: None
+            mime: application/json
         jobs:
           - name: generate_second_degree
             executable: evaluate_coeffs.py

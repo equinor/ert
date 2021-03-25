@@ -47,7 +47,9 @@ def input_transmitter(name, data, storage_path):
     transmitter = ert3.data.SharedDiskRecordTransmitter(
         name=name, storage_path=Path(storage_path)
     )
-    asyncio.get_event_loop().run_until_complete(transmitter.transmit_data(data))
+    asyncio.get_event_loop().run_until_complete(
+        transmitter.transmit_data(data, "application/json")
+    )
     return {name: transmitter}
 
 
@@ -230,8 +232,8 @@ def test_unix_task(unused_tcp_port, tmpdir):
     input_ = script_transmitter("script", script_location, storage_path=tmpdir)
     step = get_step(
         step_name="test_step",
-        inputs=[("script", Path("unix_test_script.py"), None)],
-        outputs=[("output", Path("output.out"), None)],
+        inputs=[("script", Path("unix_test_script.py"), "application/x-python")],
+        outputs=[("output", Path("output.out"), "application/json")],
         jobs=[("script", Path("unix_test_script.py"), ["vas"])],
         url=url,
         type_="unix",
@@ -277,8 +279,8 @@ def test_function_step(unused_tcp_port, tmpdir):
 
     step = get_step(
         step_name="test_step",
-        inputs=[("values", "NA", None)],
-        outputs=[("output", Path("output.out"), None)],
+        inputs=[("values", "NA", "text/whatever")],
+        outputs=[("output", Path("output.out"), "application/json")],
         jobs=[("test_function", sum_function, None)],
         url=url,
         type_="function",
@@ -328,8 +330,8 @@ def test_unix_step_error(unused_tcp_port, tmpdir):
     input_ = script_transmitter("test_script", script_location, storage_path=tmpdir)
     step = get_step(
         step_name="test_step",
-        inputs=[("test_script", Path("unix_test_script.py"), None)],
-        outputs=[("output", Path("output.out"), None)],
+        inputs=[("test_script", Path("unix_test_script.py"), "application/x-python")],
+        outputs=[("output", Path("output.out"), "application/json")],
         jobs=[("test_script", Path("unix_test_script.py"), ["foo", "bar"])],
         url=url,
         type_="unix",
@@ -373,7 +375,9 @@ def test_on_task_failure(unused_tcp_port, tmpdir):
     with tmp() as runpath:
         step = get_step(
             step_name="test_step",
-            inputs=[("script", Path("unix_test_retry_script.py"), None)],
+            inputs=[
+                ("script", Path("unix_test_retry_script.py"), "application/x-python")
+            ],
             outputs=[],
             jobs=[("script", Path("unix_test_retry_script.py"), [runpath])],
             url=url,

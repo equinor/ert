@@ -130,7 +130,7 @@ class RecordTransmitter:
         return self._state == RecordTransmitterState.transmitted
 
     @abstractmethod
-    async def dump(self, location: Path, mime: str = "text/json") -> None:
+    async def dump(self, location: Path) -> None:
         pass
 
     @abstractmethod
@@ -141,7 +141,7 @@ class RecordTransmitter:
     async def transmit_data(
         self,
         data: Union[List[float], Mapping[int, float], Mapping[str, float], List[bytes]],
-        mime="text/json",
+        mime,
     ) -> None:
         pass
 
@@ -149,7 +149,7 @@ class RecordTransmitter:
     async def transmit_file(
         self,
         file: Path,
-        mime="text/json",
+        mime,
     ) -> None:
         pass
 
@@ -163,14 +163,16 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         self._storage_path.mkdir(parents=True, exist_ok=True)
         self._concrete_key = f"{name}_{uuid.uuid4()}"
         self._uri: typing.Optional[str] = None
+        self._mime = ""
 
-    def set_transmitted(self, uri: Path):
+    def set_transmitted(self, uri: Path, mime: str):
         super()._set_transmitted()
         self._uri = str(uri)
+        self._mime = mime
 
     async def _transmit(self, record: Record, mime: str):
         storage_uri = self._storage_path / self._concrete_key
-        if mime == "text/json":
+        if mime == "application/json":
             contents = json.dumps(record.data)
             async with aiofiles.open(storage_uri, mode="w") as f:
                 await f.write(contents)
@@ -180,12 +182,12 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
                     await f.write(record.data[0])  # type: ignore
             else:
                 raise TypeError(f"unexpected record data type {type(record.data)}")
-        self.set_transmitted(storage_uri)
+        self.set_transmitted(storage_uri, mime)
 
     async def transmit_data(
         self,
         data: Union[List[float], Mapping[int, float], Mapping[str, float], List[bytes]],
-        mime="text/json",
+        mime,
     ) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
@@ -195,10 +197,14 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
     async def transmit_file(
         self,
         file: Path,
-        mime="text/json",
+        mime,
     ) -> None:
         if self.is_transmitted():
             raise RuntimeError("File already transmitted")
+        if mime != "application/json":
+            raise NotImplementedError(
+                f"cannot transmit file unless json, was {self._mime}"
+            )
         async with aiofiles.open(str(file), mode="r") as f:
             contents = await f.read()
             record = Record(data=json.loads(contents))
@@ -207,11 +213,15 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
     async def load(self) -> Record:
         if self._state != RecordTransmitterState.transmitted:
             raise RuntimeError("cannot load untransmitted record")
+        if self._mime != "application/json":
+            raise NotImplementedError(
+                f"cannot load record unless json, was {self._mime}"
+            )
         async with aiofiles.open(str(self._uri)) as f:
             contents = await f.read()
             return Record(data=json.loads(contents))
 
-    async def dump(self, location: Path, mime: str = "text/json") -> None:
+    async def dump(self, location: Path) -> None:
         if self._state != RecordTransmitterState.transmitted:
             raise RuntimeError("cannot dump untransmitted record")
         await _copy(self._uri, str(location))
@@ -227,48 +237,51 @@ class InMemoryRecordTransmitter(RecordTransmitter):
     def __init__(self, name: str):
         super().__init__(type_=self.TYPE)
         self._name = name
+        self._mime = ""
 
-    def set_transmitted(self, record: Record):
+    def set_transmitted(self, record: Record, mime: str):
         super()._set_transmitted()
         self._data = record.data
         self._index = record.index
+        self._mime = mime
 
     @abstractmethod
     async def transmit_data(
         self,
         data: Union[List[float], Mapping[int, float], Mapping[str, float], List[bytes]],
-        mime="text/json",
+        mime,
     ) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
         record = Record(data=data)
-        self.set_transmitted(record=record)
+        self.set_transmitted(record, mime)
 
     @abstractmethod
     async def transmit_file(
         self,
         file: Path,
-        mime="text/json",
+        mime,
     ) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
+        if self._mime != "application/json":
+            raise NotImplementedError(
+                f"cannot transmit file unless json, was {self._mime}"
+            )
         async with aiofiles.open(str(file)) as f:
             contents = await f.read()
             record = Record(data=json.loads(contents))
-        self.set_transmitted(record=record)
+        self.set_transmitted(record, mime)
 
     async def load(self):
         return Record(data=self._data, index=self._index)
 
-    async def dump(self, location: Path, mime: str = "text/json"):
-        if mime is None:
-            raise ValueError(f"need mime for {location}")
+    async def dump(self, location: Path):
         if not self.is_transmitted():
             raise RuntimeError("cannot dump untransmitted record")
         if self._data is None:
             raise ValueError("cannot dump Record with no data")
-
-        if mime == "text/json":
+        if self._mime == "application/json":
             async with aiofiles.open(str(location), mode="w") as f:
                 await f.write(json.dumps(self._data))
         else:

@@ -123,7 +123,9 @@ class _FileIOBuilder(_IOBuilder):
         return self
 
     def build(self):
-        return self._cls(self._name, self._path, mime=self._mime)
+        if not self._mime:
+            raise ValueError(f"FileIO {self._name} needs mime")
+        return self._cls(self._name, self._path, self._mime)
 
 
 def create_file_io_builder() -> _FileIOBuilder:

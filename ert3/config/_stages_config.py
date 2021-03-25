@@ -11,6 +11,9 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal
 
+_DEFAULT_RECORD_MIME_TYPE = "application/json"
+_DEFAULT_CMD_MIME_TYPE = "application/octet-stream"
+
 
 def _import_from(path) -> Callable:
     if ":" not in path:
@@ -22,6 +25,19 @@ def _import_from(path) -> Callable:
     except AttributeError:
         raise ImportError(name=func, path=module_str)
     return func
+
+
+def _ensure_mime(cls, field, values):
+    if field:
+        return field
+    guess = mimetypes.guess_type(str(values.get("location", "")))[0]
+    if guess:
+        return guess
+    return (
+        _DEFAULT_CMD_MIME_TYPE
+        if cls == TransportableCommand
+        else _DEFAULT_RECORD_MIME_TYPE
+    )
 
 
 class _StagesConfig(BaseModel):
@@ -36,13 +52,17 @@ class _StagesConfig(BaseModel):
 class InputRecord(_StagesConfig):
     record: str
     location: str
-    mime: Optional[str]
+    mime: str = ""
+
+    _ensure_mime = validator("mime", allow_reuse=True)(_ensure_mime)
 
 
 class OutputRecord(_StagesConfig):
     record: str
     location: str
-    mime: Optional[str]
+    mime: str = ""
+
+    _ensure_mime = validator("mime", allow_reuse=True)(_ensure_mime)
 
 
 class TransportableCommand(_StagesConfig):
@@ -50,15 +70,7 @@ class TransportableCommand(_StagesConfig):
     location: FilePath
     mime: str = ""
 
-    @validator("mime")
-    def ensure_mime(cls, field, values):
-        if "location" not in values:
-            return field
-        if field:
-            return field
-        if not values["location"].suffix:
-            return field
-        return mimetypes.types_map[values["location"].suffix]
+    _ensure_mime = validator("mime", allow_reuse=True)(_ensure_mime)
 
 
 class Step(_StagesConfig):
