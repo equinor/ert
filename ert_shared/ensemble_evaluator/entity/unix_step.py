@@ -93,7 +93,7 @@ class UnixTask(prefect.Task):
                         output.get_name()
                     ]
                     futures.append(
-                        outputs[output.get_name()].transmit(
+                        outputs[output.get_name()].transmit_file(
                             os.path.join(run_path, output.get_path())
                         )
                     )
