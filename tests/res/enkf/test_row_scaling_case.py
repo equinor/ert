@@ -62,7 +62,11 @@ def init_data(main):
     poro_std = 0.10
     bhp_std = 125
 
+    #Model: wct = poro * 4
+    wct_std = 0.30
+
     bhp = []
+    wct = []
     num_realisations = main.getEnsembleSize()
 
     # The path fields/poro{}.grdecl must be consistent with the INIT_FILES: argument in the
@@ -80,6 +84,7 @@ def init_data(main):
                 f.write("{:<7.5} ".format(poro))
             f.write("\n/\n")
         bhp.append(poro * 1000 + random.gauss(0, bhp_std))
+        wct.append(poro * 4 + random.gauss(0, wct_std))
 
     mask = BoolVector(initial_size=main.getEnsembleSize(), default_value=True)
     init_context = ErtRunContext.case_init(init_fs, mask)
@@ -87,14 +92,20 @@ def init_data(main):
 
     ens_config = main.ensembleConfig()
     bhp_config = ens_config["WBHP"]
+    wct_config = ens_config["WWCT"]
     state_map = init_fs.getStateMap()
     for iens in range(main.getEnsembleSize()):
         bhp_node = EnkfNode(bhp_config)
         bhp_summary = bhp_node.as_summary()
         bhp_summary[1] = bhp[iens]
 
+        wct_node = EnkfNode(wct_config)
+        wct_summary = wct_node.as_summary()
+        wct_summary[1] = wct[iens]
+
         node_id = NodeId(1, iens)
         bhp_node.save(init_fs, node_id)
+        wct_node.save(init_fs, node_id)
         state_map[iens] = RealizationStateEnum.STATE_HAS_DATA
 
     return init_fs
@@ -226,6 +237,7 @@ class RowScalingTest(ResTest):
             local_data.addNode("PORO")
             obs = local_config.createObsdata("OBSSET_LOCAL")
             obs.addNode("WBHP0")
+            obs.addNode("WWCT0")
             ministep = local_config.createMinistep("MINISTEP_LOCAL")
             ministep.attachDataset(local_data)
             ministep.attachObsset(obs)
@@ -275,6 +287,7 @@ class RowScalingTest(ResTest):
             local_data = local_config.createDataset("LOCAL")
             local_data.addNode("PORO")
             obs = local_config.createObsdata("OBSSET_LOCAL")
+            obs.addNode("WWCT0")
             obs.addNode("WBHP0")
             ministep = local_config.createMinistep("MINISTEP_LOCAL")
             ministep.attachDataset(local_data)
@@ -340,6 +353,7 @@ class RowScalingTest(ResTest):
             local_data = local_config.createDataset("LOCAL")
             local_data.addNode("PORO")
             obs = local_config.createObsdata("OBSSET_LOCAL")
+            obs.addNode("WWCT0")
             obs.addNode("WBHP0")
             ministep = local_config.createMinistep("MINISTEP_LOCAL")
             ministep.attachDataset(local_data)

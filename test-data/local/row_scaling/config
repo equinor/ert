@@ -2,6 +2,7 @@ NUM_REALIZATIONS 10
 GRID             CASE.EGRID
 FIELD            PORO    PARAMETER    poro.grdecl INIT_FILES:fields/poro%d.grdecl
 SUMMARY          WBHP
+SUMMARY          WWCT
 OBS_CONFIG       observations.txt 
 
 
