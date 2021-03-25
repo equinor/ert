@@ -25,7 +25,10 @@ class UnixTask(prefect.Task):
         return self._step
 
     def run_job(self, client: Client, job: Any, run_path: Path):
-        shell_cmd = [job.get_executable().as_posix(), *job.get_args()]
+        shell_cmd = [
+            job.get_executable().as_posix(),
+            *[os.path.expandvars(arg) for arg in job.get_args()],
+        ]
         env = os.environ.copy()
         env.update(
             {"PATH": (run_path / _BIN_FOLDER).as_posix() + ":" + os.environ["PATH"]}
