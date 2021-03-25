@@ -85,7 +85,6 @@ def _prepare_output(
     evaluation_tmp_dir: pathlib.Path,
     ensemble_size: int,
 ) -> typing.Dict[int, typing.Dict[str, "ert3.data.RecordTransmitter"]]:
-    # TODO: ensemble_size should rather be a list of ensemble ids
     tmp_input_folder = evaluation_tmp_dir / "output_files"
     os.makedirs(tmp_input_folder)
     storage_config = ee_config["storage"]
