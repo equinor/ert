@@ -6,6 +6,8 @@ import os
 import signal
 import threading
 import uuid
+import warnings
+
 from datetime import timedelta
 from functools import partial
 
@@ -32,6 +34,7 @@ from prefect import Flow
 from prefect import context as prefect_context
 from prefect.engine.executors import DaskExecutor
 from prefect.executors import DaskExecutor, LocalDaskExecutor
+
 
 logger = logging.getLogger(__name__)
 
@@ -251,22 +254,26 @@ class PrefectEnsemble(_Ensemble):
         )
 
     def get_flow(self, ee_id, dispatch_url, input_files, real_range):
-        with Flow(f"Realization range {real_range}") as flow:
-            for iens in real_range:
-                output_to_res = {}
-                ordering = self.get_ordering(iens=iens)
-                for step in ordering:
-                    inputs = [
-                        output_to_res.get(elem, []) for elem in step.get(ids.INPUTS, [])
-                    ]
-                    stage_task = self.get_step_task(
-                        step, ee_id, input_files, dispatch_url
-                    )
-                    result = stage_task(expected_res=inputs)
-
-                    for output in step.get(ids.OUTPUTS, []):
-                        output_to_res[output] = result[ids.OUTPUTS]
-        return flow
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", message=".*Tasks were created but not added to the flow.*"
+            )
+            with Flow(f"Realization range {real_range}") as flow:
+                for iens in real_range:
+                    output_to_res = {}
+                    ordering = self.get_ordering(iens=iens)
+                    for step in ordering:
+                        inputs = [
+                            output_to_res.get(elem, [])
+                            for elem in step.get(ids.INPUTS, [])
+                        ]
+                        stage_task = self.get_step_task(
+                            step, ee_id, input_files, dispatch_url
+                        )
+                        result = stage_task(expected_res=inputs)
+                        for output in step.get(ids.OUTPUTS, []):
+                            output_to_res[output] = result[ids.OUTPUTS]
+            return flow
 
     def evaluate(self, config, ee_id):
         self._ee_dispach_url = config.dispatch_uri

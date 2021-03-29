@@ -7,6 +7,7 @@ import pytest
 import threading
 import json
 import copy
+import warnings
 from datetime import timedelta
 from functools import partial
 from itertools import permutations
@@ -609,3 +610,27 @@ def test_run_prefect_ensemble_exception(unused_tcp_port, coefficients):
                 ]:
                     mon.signal_done()
         assert evaluator._snapshot.get_status() == "Failed"
+
+
+@pytest.mark.filterwarnings("error")
+def test_supress_prefect_warning(coefficients):
+
+    with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
+        config = parse_config("config.yml")
+        config.update(
+            {
+                "config_path": os.getcwd(),
+                ids.REALIZATIONS: 2,
+                ids.EXECUTOR: "local",
+                "input_files": input_files(config, coefficients),
+            }
+        )
+
+        ensemble = PrefectEnsemble(config)
+
+        flow = ensemble.get_flow(
+            ensemble._ee_id,
+            ensemble._ee_dispach_url,
+            ensemble.config["input_files"],
+            [0, 1],
+        )
