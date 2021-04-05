@@ -1,13 +1,14 @@
 import json
-from typing import Optional, TextIO
+from typing import Optional
 from pathlib import Path
 
 import ert3
 from ert3.engine import _utils
 
 
-def load_record(workspace: Path, record_name: str, record_stream: TextIO) -> None:
-    raw_ensrecord = json.load(record_stream)
+def load_record(workspace: Path, record_name: str, record_file: Path) -> None:
+    with open(record_file, "r") as f:
+        raw_ensrecord = json.load(f)
 
     ensrecord = ert3.data.EnsembleRecord(
         records=[ert3.data.Record(data=raw_record) for raw_record in raw_ensrecord]

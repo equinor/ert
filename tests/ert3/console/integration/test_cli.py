@@ -152,6 +152,19 @@ def test_cli_record_load_not_existing_file(workspace):
             ert3.console._console._main()
 
 
+@pytest.mark.requires_ert_storage
+def test_cli_record_load(designed_coeffs_record_file):
+    args = [
+        "ert3",
+        "record",
+        "load",
+        "designed_coefficients",
+        str(designed_coeffs_record_file),
+    ]
+    with patch.object(sys, "argv", args):
+        ert3.console._console._main()
+
+
 def _assert_done_or_pending(captured, experiments, done_indices):
     lines = [
         line.strip()
