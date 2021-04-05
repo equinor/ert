@@ -37,6 +37,12 @@ def _build_export_argparser(subparsers):
 
 
 def _build_record_argparser(subparsers):
+    def valid_record_file(path):
+        path = pathlib.Path(path)
+        if path.exists():
+            return path
+        raise argparse.ArgumentTypeError(f"No such file or directory {str(path)}")
+
     record_parser = subparsers.add_parser("record", help="Record operations")
     sub_record_parsers = record_parser.add_subparsers(
         dest="sub_record_cmd", help="ert3 record operations"
@@ -47,7 +53,7 @@ def _build_record_argparser(subparsers):
     record_load_parser.add_argument("record_name", help="Name of the resulting record")
     record_load_parser.add_argument(
         "record_file",
-        type=argparse.FileType("r"),
+        type=valid_record_file,
         help="Path to resource file",
     )
     sample_parser = sub_record_parsers.add_parser(
@@ -171,7 +177,6 @@ def _record(workspace, args):
         )
     elif args.sub_record_cmd == "load":
         ert3.engine.load_record(workspace, args.record_name, args.record_file)
-        args.record_file.close()
     else:
         raise NotImplementedError(
             f"No implementation to handle record command {args.sub_record_cmd}"

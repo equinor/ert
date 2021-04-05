@@ -101,16 +101,6 @@ def uniform_parameters_file():
         yaml.dump(content, fout)
 
 
-@pytest.fixture()
-def designed_coeffs_record_file(workspace):
-    doe_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "doe"
-    doe_dir.ensure(dir=True)
-    coeffs = [{"a": x, "b": x, "c": x} for x in range(10)]
-    with open(doe_dir / "coefficients_record.json", "w") as f:
-        json.dump(coeffs, f)
-    yield doe_dir / "coefficients_record.json"
-
-
 @pytest.mark.requires_ert_storage
 def test_run_once_polynomial_evaluation(
     workspace,
@@ -333,8 +323,9 @@ def test_record_load_and_run(
     designed_coeffs_record_file,
 ):
 
-    with open(designed_coeffs_record_file) as rs:
-        ert3.engine.load_record(workspace, "designed_coefficients", rs)
+    ert3.engine.load_record(
+        workspace, "designed_coefficients", designed_coeffs_record_file
+    )
     designed_coeff = ert3.storage.get_ensemble_record(
         workspace=workspace, record_name="designed_coefficients"
     )
@@ -366,11 +357,13 @@ def test_record_load_and_run(
 def test_record_load_twice(
     workspace, ensemble, stages_config, designed_coeffs_record_file
 ):
-    with open(designed_coeffs_record_file, "r") as record_file:
-        ert3.engine.load_record(workspace, "designed_coefficients", record_file)
+    ert3.engine.load_record(
+        workspace, "designed_coefficients", designed_coeffs_record_file
+    )
     with pytest.raises(KeyError):
-        with open(designed_coeffs_record_file, "r") as record_file:
-            ert3.engine.load_record(workspace, "designed_coefficients", record_file)
+        ert3.engine.load_record(
+            workspace, "designed_coefficients", designed_coeffs_record_file
+        )
 
 
 @pytest.mark.requires_ert_storage

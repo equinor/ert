@@ -2,21 +2,30 @@
 import argparse
 import json
 import sys
+import pathlib
 
 
 def _build_arg_parser():
+    def valid_coefficients(file_path):
+        path = pathlib.Path(file_path)
+        if path.exists():
+            with open(path, "r") as f:
+                coefficients = json.load(f)
+            return coefficients
+        raise argparse.ArgumentTypeError(f"No such file or directory {str(path)}")
+
     arg_parser = argparse.ArgumentParser(
         description="Computes the result of a second degree polynomial",
     )
     arg_parser.add_argument(
         "--coefficients",
-        type=argparse.FileType("r"),
+        type=valid_coefficients,
         required=True,
         help="Path to file containing the coefficients",
     )
     arg_parser.add_argument(
         "--output",
-        type=argparse.FileType("w"),
+        type=pathlib.Path,
         required=True,
         help="Path to the output file",
     )
@@ -32,9 +41,9 @@ def _evaluate_polynomial(coefficients):
 def _main():
     parser = _build_arg_parser()
     args = parser.parse_args()
-    coefficients = json.load(args.coefficients)
-    result = _evaluate_polynomial(coefficients)
-    json.dump(result, args.output)
+    result = _evaluate_polynomial(args.coefficients)
+    with open(args.output, "w") as f:
+        json.dump(result, f)
 
 
 if __name__ == "__main__":

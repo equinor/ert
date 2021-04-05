@@ -45,6 +45,16 @@ def workspace(tmpdir, ert_storage):
 
 
 @pytest.fixture()
+def designed_coeffs_record_file(workspace):
+    doe_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "doe"
+    doe_dir.ensure(dir=True)
+    coeffs = [{"a": x, "b": x, "c": x} for x in range(10)]
+    with open(doe_dir / "coefficients_record.json", "w") as f:
+        json.dump(coeffs, f)
+    yield doe_dir / "coefficients_record.json"
+
+
+@pytest.fixture()
 def base_ensemble_dict():
     yield {
         "size": 10,
