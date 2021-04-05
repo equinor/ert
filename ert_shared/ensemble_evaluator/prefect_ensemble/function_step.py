@@ -4,6 +4,7 @@ from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.prefect_ensemble.storage_driver import (
     storage_driver_factory,
 )
+import pickle
 
 
 class FunctionStep(Task):
@@ -50,7 +51,8 @@ class FunctionStep(Task):
 
     def run_job(self, client, job):
         try:
-            result = job["executable"](**self._step["step_input"])
+            function = pickle.loads(job["executable"])
+            result = function(**self._step["step_input"])
             # Store the results
             return self._storage.store_data(result, job["output"], self.get_iens())
         except Exception as e:

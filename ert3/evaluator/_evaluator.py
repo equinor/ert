@@ -2,7 +2,7 @@ import json
 import os
 import pathlib
 import shutil
-
+import cloudpickle
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.prefect_ensemble.prefect_ensemble import (
@@ -70,7 +70,7 @@ def _build_ee_config(evaluation_tmp_dir, ensemble, stages_config, input_records)
         jobs.append(
             {
                 "name": stage.function.__name__,
-                "executable": stage.function,
+                "executable": cloudpickle.dumps(stage.function),
                 "output": output_locations[0],
             }
         )

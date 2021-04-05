@@ -16,7 +16,11 @@ def _import_from(path):
     if ":" not in path:
         raise ValueError("Function should be defined as module:function")
     module_str, func = path.split(":")
-    module = importlib.import_module(module_str)
+    spec = importlib.util.find_spec(module_str)
+    if spec is None:
+        raise ModuleNotFoundError(f"No module named '{module_str}'")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
     try:
         func = getattr(module, func)
     except AttributeError:

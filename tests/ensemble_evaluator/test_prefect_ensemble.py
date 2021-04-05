@@ -1,3 +1,4 @@
+import cloudpickle
 from pathlib import Path
 import sys
 import os
@@ -295,7 +296,7 @@ def test_function_step(unused_tcp_port):
             {
                 ids.ID: "0",
                 ids.NAME: "test_script",
-                ids.EXECUTABLE: sum_function,
+                ids.EXECUTABLE: cloudpickle.dumps(sum_function),
                 "output": "output.out",
             }
         ]
