@@ -25,7 +25,6 @@ from ert_shared.ensemble_evaluator.entity.ensemble import create_file_io_builder
 from ert_shared.status.entity import state
 from prefect import Flow
 from prefect import context as prefect_context
-from prefect.engine.executors import DaskExecutor
 from prefect.executors import DaskExecutor, LocalDaskExecutor
 
 logger = logging.getLogger(__name__)
