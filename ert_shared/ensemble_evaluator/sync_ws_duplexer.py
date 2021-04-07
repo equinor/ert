@@ -1,15 +1,12 @@
 import asyncio
-import logging
 import ssl
 import threading
-from typing import Iterator, Optional, Union
+from typing import Optional, Union
 from concurrent.futures import CancelledError
 import websockets
 from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 from websockets.client import WebSocketClientProtocol
 from websockets.datastructures import Headers
-
-logger = logging.getLogger(__name__)
 
 
 class SyncWebsocketDuplexer:

@@ -50,7 +50,9 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinxarg.ext",
     "sphinx.ext.todo",
+    "sphinxcontrib.datatemplates",
     "ert_jobs",
+    "ert_narratives",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

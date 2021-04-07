@@ -6,3 +6,4 @@
   dev-strategy
   concepts
   forward_model
+  communication_protocol

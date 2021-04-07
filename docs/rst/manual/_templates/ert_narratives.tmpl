@@ -1,0 +1,81 @@
+.. -*- mode: rst -*-
+
+{{ data['name'] }}
+------------------------------------------------------------------------------
+
+Consumer
+  {{ data['consumer']['name'] }}
+Provider
+  {{ data['provider']['name'] }}
+
+Interactions
+^^^^^^^^^^^^
+
+.. raw:: html
+
+    <ul class="timeline">
+    {% for interaction in data['interactions'] %}
+    <li>
+        <div class="
+        {%- if interaction.type == 'response' or interaction.type == 'recurringresponse' -%}
+            direction-r
+        {%- else -%}
+            direction-l
+        {%- endif -%}
+        {%- if interaction.type.startswith('recurring') %} recurring
+        {%- endif %}">
+            <div class="flag-wrapper">
+                <span class="hexa"></span>
+                <span class="flag">{% if interaction.type.startswith('recurring') %}↺ {% endif %}{{ interaction.scenario }}</span>
+                <span class="time-wrapper"><span class="time">#{{ loop.index0 }}</span></span>
+            </div>
+            <div class="desc">
+            <p class="caption-text">{% for state in interaction.provider_states %}<span class="guilabel">{{state.name}}</span> {% endfor %}</p>
+            <p>Events:</p>
+            <ul class="attr-list">
+                {% for event in interaction.events %}
+                <li>
+                    <dl>
+                        {% if event.source %}
+                        <dt>Source</dt>
+                        <dd><code class="literal">{{ event.source }}</code></dd>
+                        {% endif %}
+                        {% if event.type_ %}
+                        <dt>Type</dt>
+                        <dd><code class="literal">{{ event.type_ }}</code></dd>
+                        {% endif %}
+                        {% if event.data %}
+                        <dt>Data</dt>
+                        <dd><code class="literal">{{ event.data }}</code></dd>
+                        {% endif %}
+                    </dl>
+                </li>
+                {% endfor %}
+                {% if interaction['terminator'] %}
+                <li class="terminator">
+                    <div class="admonition note">
+                        <p class="admonition-title">Terminator</p>
+                        <p>This terminates the interaction.</p>
+                    </div>
+                    <dl>
+                        {% if interaction['terminator'].source %}
+                        <dt>Source</dt>
+                        <dd><code class="literal">{{ interaction['terminator'].source }}</code></dd>
+                        {% endif %}
+                        {% if interaction['terminator'].type_ %}
+                        <dt>Type</dt>
+                        <dd><code class="literal">{{ interaction['terminator'].type_ }}</code></dd>
+                        {% endif %}
+                        {% if interaction['terminator'].data %}
+                        <dt>Data</dt>
+                        <dd><code class="literal">{{ interaction['terminator'].data }}</code></dd>
+                        {% endif %}
+                    </dl>
+                </li>
+                {% endif %}
+            </ul>
+            </div>
+        </div>
+    </li>
+    {% endfor %}
+    </ul>
