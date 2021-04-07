@@ -1,14 +1,15 @@
-from contextlib import ExitStack
-from ert_shared.ensemble_evaluator.sync_ws_duplexer import SyncWebsocketDuplexer
 import logging
-from cloudevents.http import from_json
-from cloudevents.http.event import CloudEvent
-from cloudevents.http import to_json
-import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
-from ert_shared.ensemble_evaluator.entity import serialization
-import uuid
 import pickle
-from typing import Dict, Optional, TYPE_CHECKING
+import uuid
+from contextlib import ExitStack
+from typing import TYPE_CHECKING, Optional
+
+import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
+from cloudevents.exceptions import DataUnmarshallerError
+from cloudevents.http import from_json, to_json
+from cloudevents.http.event import CloudEvent
+from ert_shared.ensemble_evaluator.entity import serialization
+from ert_shared.ensemble_evaluator.sync_ws_duplexer import SyncWebsocketDuplexer
 
 if TYPE_CHECKING:
     from ert3.data import RecordTransmitter
@@ -38,18 +39,6 @@ class _Monitor:
 
     def get_base_uri(self):
         return self._base_uri
-
-    def get_result(self) -> Optional[Dict[int, Dict[str, "RecordTransmitter"]]]:
-        data = None
-        with ExitStack() as stack:
-            duplexer = SyncWebsocketDuplexer(
-                self._result_uri, self._base_uri, self._cert, self._token
-            )
-            stack.callback(duplexer.stop)
-            message = next(duplexer.receive())
-            event = from_json(message, pickle.loads)
-            data = event.data
-        return data
 
     def _send_event(self, cloud_event: CloudEvent) -> None:
         with ExitStack() as stack:
@@ -87,7 +76,7 @@ class _Monitor:
             }
         )
         self._send_event(out_cloudevent)
-        logger.debug(f"monitor-{self._id} informing server monitor is done...")
+        logger.debug(f"monitor-{self._id} informed server monitor is done")
 
     def track(self):
         with ExitStack() as stack:
@@ -98,9 +87,12 @@ class _Monitor:
                 )
                 stack.callback(duplexer.stop)
             for message in duplexer.receive():
-                event = from_json(
-                    message, data_unmarshaller=serialization.evaluator_unmarshaller
-                )
+                try:
+                    event = from_json(
+                        message, data_unmarshaller=serialization.evaluator_unmarshaller
+                    )
+                except DataUnmarshallerError:
+                    event = from_json(message, data_unmarshaller=pickle.loads)
                 yield event
                 if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
                     logger.debug(f"monitor-{self._id} client received terminated")

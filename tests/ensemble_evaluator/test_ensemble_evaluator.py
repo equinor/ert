@@ -1,150 +1,51 @@
-import websockets
+from unittest.mock import MagicMock
+
+import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 import pytest
-import asyncio
-import ssl
-import threading
-from unittest.mock import Mock
-from ert_shared.ensemble_evaluator.entity import snapshot
+from ert_shared.ensemble_evaluator.client import Client
+from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator, ee_monitor
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_STARTED,
     JOB_STATE_FAILURE,
     JOB_STATE_FINISHED,
     JOB_STATE_RUNNING,
 )
-from cloudevents.http import to_json
-from cloudevents.http.event import CloudEvent
-from websockets.datastructures import Headers
-
-from ert_shared.ensemble_evaluator.evaluator import (
-    EnsembleEvaluator,
-    ee_monitor,
+from tests.ensemble_evaluator.ensemble_test import TestEnsemble, send_dispatch_event
+from tests.narratives import (
+    dispatch_failing_job,
+    monitor_failing_ensemble,
+    monitor_failing_evaluation,
+    monitor_successful_ensemble,
 )
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.ensemble_evaluator.entity.ensemble import (
-    create_ensemble_builder,
-    create_realization_builder,
-    create_step_builder,
-    create_legacy_job_builder,
-)
-import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
-from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
-
-
-@pytest.fixture
-def ee_config(unused_tcp_port):
-    return EvaluatorServerConfig(unused_tcp_port)
-
-
-@pytest.fixture
-def evaluator(ee_config):
-    ensemble = (
-        create_ensemble_builder()
-        .add_realization(
-            real=create_realization_builder()
-            .active(True)
-            .set_iens(0)
-            .add_step(
-                step=create_step_builder()
-                .set_id("0")
-                .set_name("cats")
-                .add_job(
-                    job=create_legacy_job_builder()
-                    .set_id(0)
-                    .set_name("cat")
-                    .set_ext_job(Mock())
-                )
-                .add_job(
-                    job=create_legacy_job_builder()
-                    .set_id(1)
-                    .set_name("cat2")
-                    .set_ext_job(Mock())
-                )
-                .set_dummy_io()
-            )
-        )
-        .set_ensemble_size(2)
-        .build()
-    )
-    ee = EnsembleEvaluator(
-        ensemble,
-        ee_config,
-        0,
-        ee_id="ee-0",
-    )
-    yield ee
-    ee.stop()
-
-
-class Client:
-    def __enter__(self):
-        self.thread.start()
-        return self
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        self.stop()
-
-    def __init__(self, host, port, path, cert, token):
-        self.host = host
-        self.port = port
-        self.path = path
-        self.cert = cert
-        self.token = token
-        self.loop = asyncio.new_event_loop()
-        self.q = asyncio.Queue(loop=self.loop)
-        self.thread = threading.Thread(
-            name="test_websocket_client", target=self._run, args=(self.loop,)
-        )
-
-    def _run(self, loop):
-        asyncio.set_event_loop(loop)
-        uri = f"wss://{self.host}:{self.port}{self.path}"
-
-        async def send_loop(q):
-            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-            ssl_context.load_verify_locations(cadata=self.cert)
-            async with websockets.connect(
-                uri, ssl=ssl_context, extra_headers=Headers(token=self.token)
-            ) as websocket:
-                while True:
-                    msg = await q.get()
-                    if msg == "stop":
-                        return
-                    await websocket.send(msg)
-
-        loop.run_until_complete(send_loop(self.q))
-
-    def send(self, msg):
-        self.loop.call_soon_threadsafe(self.q.put_nowait, msg)
-
-    def stop(self):
-        self.loop.call_soon_threadsafe(self.q.put_nowait, "stop")
-        self.thread.join()
-        self.loop.close()
-
-
-def send_dispatch_event(client, event_type, source, event_id, data):
-    event1 = CloudEvent({"type": event_type, "source": source, "id": event_id}, data)
-    client.send(to_json(event1))
 
 
 def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
     with evaluator.run() as monitor:
         events = monitor.track()
-
         host = evaluator._config.host
         port = evaluator._config.port
         token = evaluator._config.token
         cert = evaluator._config.cert
 
+        url = evaluator._config.url
         # first snapshot before any event occurs
         snapshot_event = next(events)
         snapshot = Snapshot(snapshot_event.data)
         assert snapshot.get_status() == ENSEMBLE_STATE_STARTED
         # two dispatchers connect
         with Client(
-            host, port, "/dispatch", cert=cert, token=token
+            url + "/dispatch",
+            cert=cert,
+            token=token,
+            max_retries=1,
+            timeout_multiplier=1,
         ) as dispatch1, Client(
-            host, port, "/dispatch", cert=cert, token=token
+            url + "/dispatch",
+            cert=cert,
+            token=token,
+            max_retries=1,
+            timeout_multiplier=1,
         ) as dispatch2:
 
             # first dispatcher informs that job 0 is running
@@ -217,14 +118,13 @@ def test_ensure_multi_level_events_in_order(evaluator):
     with evaluator.run() as monitor:
         events = monitor.track()
 
-        host = evaluator._config.host
-        port = evaluator._config.port
         token = evaluator._config.token
         cert = evaluator._config.cert
+        url = evaluator._config.url
 
         snapshot_event = next(events)
         assert snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
-        with Client(host, port, "/dispatch", cert=cert, token=token) as dispatch1:
+        with Client(url + "/dispatch", cert=cert, token=token) as dispatch1:
             send_dispatch_event(
                 dispatch1,
                 identifiers.EVTYPE_ENSEMBLE_STARTED,
@@ -268,9 +168,68 @@ def test_ensure_multi_level_events_in_order(evaluator):
                 ensemble_state = event.data.get("status", ensemble_state)
 
 
-def test_monitor_stop(evaluator):
-    with evaluator.run() as monitor:
-        for event in monitor.track():
-            snapshot = Snapshot(event.data)
-            break
-    assert snapshot.get_status() == ENSEMBLE_STATE_STARTED
+@pytest.mark.consumer_driven_contract_verification
+def test_verify_monitor_failing_ensemble(make_ee_config):
+    ee_config = make_ee_config(use_token=False, generate_cert=False)
+    ensemble = TestEnsemble(iter=1, reals=2, steps=1, jobs=2)
+    ensemble.addFailJob(real=1, step=0, job=1)
+    ee = EnsembleEvaluator(
+        ensemble,
+        ee_config,
+        0,
+        ee_id="0",
+    )
+    ee.run()
+    monitor_failing_ensemble.verify(ee_config.client_uri, on_connect=ensemble.start)
+    ensemble.join()
+
+
+@pytest.mark.consumer_driven_contract_verification
+def test_verify_monitor_failing_evaluation(make_ee_config):
+    ee_config = make_ee_config(use_token=False, generate_cert=False)
+    ensemble = TestEnsemble(iter=1, reals=2, steps=1, jobs=2)
+    ensemble.with_failure()
+    ee = EnsembleEvaluator(
+        ensemble,
+        ee_config,
+        0,
+        ee_id="ee-0",
+    )
+    ee.run()
+    monitor_failing_evaluation.verify(ee_config.client_uri, on_connect=ensemble.start)
+    ensemble.join()
+
+
+@pytest.mark.consumer_driven_contract_verification
+def test_verify_monitor_successful_ensemble(make_ee_config):
+    ensemble = TestEnsemble(iter=1, reals=2, steps=2, jobs=2).with_result(
+        b"\x80\x04\x95\x0f\x00\x00\x00\x00\x00\x00\x00\x8c\x0bhello world\x94.",
+        "application/octet-stream",
+    )
+    ee_config = make_ee_config(use_token=False, generate_cert=False)
+    ee = EnsembleEvaluator(
+        ensemble,
+        ee_config,
+        0,
+        ee_id="ee-0",
+    )
+    ee.run()
+
+    monitor_successful_ensemble.verify(ee_config.client_uri, on_connect=ensemble.start)
+    ensemble.join()
+
+
+@pytest.mark.consumer_driven_contract_verification
+def test_verify_dispatch_failing_job(make_ee_config):
+    ee_config = make_ee_config(use_token=False, generate_cert=False)
+    mock_ensemble = MagicMock()
+    mock_ensemble.snapshot.to_dict.return_value = {}
+    ee = EnsembleEvaluator(
+        mock_ensemble,
+        ee_config,
+        0,
+        ee_id="0",
+    )
+    ee.run()
+    dispatch_failing_job.verify(ee_config.client_uri, on_connect=lambda: None)
+    ee.stop()

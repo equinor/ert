@@ -53,9 +53,13 @@ jobs:
       run: |
         python -m pytest -sv
 
+    - name: Produce narratives
+      run: |
+        NARRATIVE_DIR=$(pwd)/narratives python -m pytest -m consumer_driven_contract_verification
+
     - name: Test docs and CLI
       run: |
-        sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
+        NARRATIVE_DIR=$(pwd)/narratives sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
         ert --help
 
 

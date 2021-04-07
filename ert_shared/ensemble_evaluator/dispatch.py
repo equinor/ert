@@ -99,7 +99,7 @@ class Dispatcher:
             await self._evaluator_callback(
                 identifiers.EVTYPE_ENSEMBLE_STOPPED,
                 self._ensemble.update_snapshot(events),
-                events[0].data,  # TODO fix this
+                events[0].data,
             )
 
     async def _ensemble_started_handler(self, events):

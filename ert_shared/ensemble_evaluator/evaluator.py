@@ -74,20 +74,25 @@ class EnsembleEvaluator:
         if event and self._clients:
             await asyncio.wait([client.send(event) for client in self._clients])
 
-    def _create_cloud_event(self, event_type, data=None):
-        if data is None:
-            data = {}
-        data["iter"] = self._iter
+    def _create_cloud_event(
+        self,
+        event_type,
+        data={},
+        extra_attrs={},
+        data_marshaller=serialization.evaluator_marshaller,
+    ):
+        if isinstance(data, dict):
+            data["iter"] = self._iter
+        attrs = {
+            "type": event_type,
+            "source": f"/ert/ee/{self._ee_id}",
+        }
+        attrs.update(extra_attrs)
         out_cloudevent = CloudEvent(
-            {
-                "type": event_type,
-                "source": f"/ert/ee/{self._ee_id}",
-            },
+            attrs,
             data,
         )
-        return to_json(
-            out_cloudevent, data_marshaller=serialization.evaluator_marshaller
-        ).decode()
+        return to_json(out_cloudevent, data_marshaller=data_marshaller).decode()
 
     @contextmanager
     def store_client(self, websocket):
@@ -135,7 +140,7 @@ class EnsembleEvaluator:
                         msg, data_unmarshaller=serialization.evaluator_unmarshaller
                     )
                 except cloudevents.exceptions.DataUnmarshallerError:
-                    event = from_json(msg, data_unmarshaller=lambda x: pickle.loads(x))
+                    event = from_json(msg, data_unmarshaller=pickle.loads)
                 if self._get_ee_id(event["source"]) != self._ee_id:
                     logger.info(
                         f"Got event from evaluator {self._get_ee_id(event['source'])} with source {event['source']}, ignoring since I am {self._ee_id}"
@@ -148,33 +153,12 @@ class EnsembleEvaluator:
                 ]:
                     return
 
-    async def handle_result(self, websocket, path):
-        if self._result is None:
-            event = CloudEvent(
-                {
-                    "type": identifiers.EVTYPE_EE_RESULT_NOT_READY,
-                    "source": f"/ert/ee/{self._ee_id}",
-                },
-            )
-        else:
-            event = CloudEvent(
-                {
-                    "type": identifiers.EVTYPE_EE_RESULT,
-                    "source": f"/ert/ee/{self._ee_id}",
-                    "datacontenttype": "application/octet-stream",
-                },
-                cloudpickle.dumps(self._result),
-            )
-        await websocket.send(to_json(event))
-
     async def connection_handler(self, websocket, path):
         elements = path.split("/")
         if elements[1] == "client":
             await self.handle_client(websocket, path)
         elif elements[1] == "dispatch":
             await self.handle_dispatch(websocket, path)
-        elif elements[1] == "result":
-            await self.handle_result(websocket, path)
         else:
             logger.info(f"Connection attempt to unknown path: {path}.")
 
@@ -207,7 +191,18 @@ class EnsembleEvaluator:
             except asyncio.TimeoutError:
                 logger.debug("Timed out waiting for dispatchers to disconnect")
             await self._batcher.join()
-            message = self._create_cloud_event(identifiers.EVTYPE_EE_TERMINATED)
+
+            terminated_attrs = {}
+            terminated_data = None
+            if self._result:
+                terminated_attrs["datacontenttype"] = "application/octet-stream"
+                terminated_data = cloudpickle.dumps(self._result)
+            message = self._create_cloud_event(
+                identifiers.EVTYPE_EE_TERMINATED,
+                data=terminated_data,
+                extra_attrs=terminated_attrs,
+                data_marshaller=cloudpickle.dumps,
+            )
             if self._clients:
                 await asyncio.wait([client.send(message) for client in self._clients])
             logger.debug("Sent terminated to clients.")

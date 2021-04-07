@@ -637,7 +637,7 @@ def test_prefect_retries(unused_tcp_port, coefficients, tmpdir, function_config)
                     event.data
                 ):
                     error_event_reals.update(event.data["reals"].keys())
-                if event.data is not None and event.data.get("status") in [
+                if isinstance(event.data, dict) and event.data.get("status") in [
                     "Failed",
                     "Stopped",
                 ]:
@@ -746,7 +746,7 @@ def test_run_prefect_ensemble(unused_tcp_port, coefficients):
 
         with evaluator.run() as mon:
             for event in mon.track():
-                if event.data is not None and event.data.get("status") in [
+                if isinstance(event.data, dict) and event.data.get("status") in [
                     "Failed",
                     "Stopped",
                 ]:
@@ -802,11 +802,12 @@ def test_run_prefect_for_function_defined_outside_py_environment(
         evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
         with evaluator.run() as mon:
             for event in mon.track():
-                if event.data is not None and event.data.get("status") in [
+                if event["type"] == ids.EVTYPE_EE_TERMINATED:
+                    results = pickle.loads(event.data)
+                if isinstance(event.data, dict) and event.data.get("status") in [
                     "Failed",
                     "Stopped",
                 ]:
-                    results = mon.get_result()
                     mon.signal_done()
         assert evaluator._ensemble.get_status() == "Stopped"
         successful_realizations = evaluator._ensemble.get_successful_realizations()
@@ -860,7 +861,7 @@ def test_run_prefect_ensemble_with_path(unused_tcp_port, coefficients):
 
         with evaluator.run() as mon:
             for event in mon.track():
-                if event.data is not None and event.data.get("status") in [
+                if isinstance(event.data, dict) and event.data.get("status") in [
                     "Failed",
                     "Stopped",
                 ]:

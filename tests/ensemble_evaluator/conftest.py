@@ -1,21 +1,25 @@
-from ert_shared.ensemble_evaluator.entity.snapshot import SnapshotBuilder
+import asyncio
 import json
 import os
 from pathlib import Path
 from unittest.mock import Mock
-import asyncio
-import websockets
+
 import pytest
+import websockets
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     create_ensemble_builder,
     create_legacy_job_builder,
     create_realization_builder,
     create_step_builder,
 )
+from ert_shared.ensemble_evaluator.entity.snapshot import SnapshotBuilder
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from res.enkf import ConfigKeys
 from res.enkf.queue_config import QueueConfig
 from res.job_queue.driver import LOCAL_DRIVER
 from res.job_queue.ext_job import ExtJob
+from tests.ensemble_evaluator.ensemble_test import TestEnsemble
 
 
 @pytest.fixture
@@ -199,3 +203,24 @@ def _mock_ws(host, port, messages, delay_startup=0):
 
     loop.run_until_complete(_run_server())
     loop.close()
+
+
+@pytest.fixture
+def make_ee_config(unused_tcp_port):
+    def _ee_config(**kwargs):
+        return EvaluatorServerConfig(unused_tcp_port, **kwargs)
+
+    return _ee_config
+
+
+@pytest.fixture
+def evaluator(make_ee_config):
+    ensemble = TestEnsemble(0, 2, 1, 2)
+    ee = EnsembleEvaluator(
+        ensemble,
+        make_ee_config(),
+        0,
+        ee_id="ee-0",
+    )
+    yield ee
+    ee.stop()

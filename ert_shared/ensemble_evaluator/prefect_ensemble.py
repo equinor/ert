@@ -277,6 +277,8 @@ class PrefectEnsemble(_Ensemble):
                 state_map[iens] = state
             i = i + real_per_batch
         for iens, task in self._iens_to_task.items():
+            if isinstance(state_map[iens].result[task].result, Exception):
+                raise state_map[iens].result[task].result
             for output_name, transmitter in state_map[iens].result[task].result.items():
                 self.config["outputs"][iens][output_name] = transmitter
 

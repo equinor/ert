@@ -1,22 +1,21 @@
 import asyncio
 import os
 import pathlib
+import pickle
 import shutil
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, Any, Tuple, List
-
+from typing import Any, Dict, List, Tuple
 
 import cloudpickle
 from pydantic import FilePath
-
 import ert3
+from ert3.config import EnsembleConfig, StagesConfig, Step
+from ert3.data import EnsembleRecord, MultiEnsembleRecord, Record, RecordTransmitter
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.ensemble_evaluator.entity.identifiers import EVTYPE_EE_TERMINATED
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.prefect_ensemble import PrefectEnsemble
-
-from ert3.config import EnsembleConfig, StagesConfig, Step
-from ert3.data import EnsembleRecord, MultiEnsembleRecord, RecordTransmitter, Record
 
 _EVTYPE_SNAPSHOT_STOPPED = "Stopped"
 _EVTYPE_SNAPSHOT_FAILED = "Failed"
@@ -215,13 +214,14 @@ def _run(
     result = {}
     with ensemble_evaluator.run() as monitor:
         for event in monitor.track():
-            if event.data is not None and event.data.get("status") in [
+            if isinstance(event.data, dict) and event.data.get("status") in [
                 _EVTYPE_SNAPSHOT_STOPPED,
                 _EVTYPE_SNAPSHOT_FAILED,
             ]:
-                if event.data.get("status") == _EVTYPE_SNAPSHOT_STOPPED:
-                    result = monitor.get_result()
                 monitor.signal_done()
+            if event["type"] == EVTYPE_EE_TERMINATED and isinstance(event.data, bytes):
+                result = pickle.loads(event.data)
+
     return result
 
 
