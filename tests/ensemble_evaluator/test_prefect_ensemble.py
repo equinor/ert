@@ -47,9 +47,7 @@ def input_transmitter(name, data, storage_path):
     transmitter = ert3.data.SharedDiskRecordTransmitter(
         name=name, storage_path=Path(storage_path)
     )
-    asyncio.get_event_loop().run_until_complete(
-        transmitter.transmit_data(data, "application/json")
-    )
+    asyncio.get_event_loop().run_until_complete(transmitter.transmit_data(data))
     return {name: transmitter}
 
 
@@ -83,7 +81,7 @@ def script_transmitter(name, location, storage_path):
     )
     with open(location, "rb") as f:
         asyncio.get_event_loop().run_until_complete(
-            transmitter.transmit_data([f.read()], mime="text/x-python")
+            transmitter.transmit_data([f.read()])
         )
 
     return {name: transmitter}

@@ -26,7 +26,7 @@ class FunctionTask(prefect.Task):
         function_output = func(**kwargs)
 
         async def _transmit(io_, transmitter, data):
-            await transmitter.transmit_data(data, io_.get_mime())
+            await transmitter.transmit_data(data)
             return (io_.get_name(), transmitter)
 
         futures = []
