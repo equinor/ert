@@ -93,6 +93,9 @@ class Step(_StagesConfig):
                 raise ValueError("Scripts defined for a function stage")
             if not step.get("function"):
                 raise ValueError("No function defined")
+        elif step.get("type") == "unix":
+            if step.get("function"):
+                raise ValueError("Function defined for unix step")
 
         return step
 
