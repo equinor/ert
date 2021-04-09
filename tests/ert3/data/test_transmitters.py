@@ -20,7 +20,7 @@ from tests.utils import tmpdir
 def prefect_factory_context():
     tmp_path = tempfile.TemporaryDirectory()
     tmp_storage_path = pathlib.Path(tmp_path.name) / ".shared-storage"
-    tmp_storage_path.mkdir(parents=True, exist_ok=True)
+    tmp_storage_path.mkdir(parents=True)
 
     def prefect_storage_factory(name: str) -> SharedDiskRecordTransmitter:
         return SharedDiskRecordTransmitter(
