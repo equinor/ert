@@ -56,7 +56,7 @@ def _prepare_input(
                 raise ValueError(
                     f"Unsupported transmitter type: {storage_config.get('type')}"
                 )
-            futures.append(transmitter.transmit_data(record.data, input_.mime))
+            futures.append(transmitter.transmit_data(record.data))
             transmitters[iens][input_.record] = transmitter
     asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
     if step_config.transportable_commands is not None:
@@ -73,7 +73,7 @@ def _prepare_input(
                     )
                 with open(command.location, "rb") as f:
                     asyncio.get_event_loop().run_until_complete(
-                        transmitter.transmit_data([f.read()], mime=command.mime)
+                        transmitter.transmit_data([f.read()])
                     )
                 transmitters[iens][command.name] = transmitter
     return dict(transmitters)

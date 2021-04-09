@@ -1,6 +1,5 @@
 import contextlib
 import json
-import os
 import pathlib
 import pickle
 import tempfile
@@ -13,7 +12,7 @@ from ert3.data import (
     SharedDiskRecordTransmitter,
     RecordTransmitter,
 )
-from tests.utils import tmpdir
+from tests.utils import tmp
 
 
 @contextlib.contextmanager
@@ -51,15 +50,16 @@ factory_params = pytest.mark.parametrize(
 )
 
 simple_records = pytest.mark.parametrize(
-    ("data_in", "expected_data"),
+    ("data_in", "expected_data", "application_type"),
     (
-        ([1, 2, 3], [1.0, 2.0, 3.0]),
-        ((1.0, 10.0, 42, 999.0), [1.0, 10.0, 42.0, 999.0]),
-        ([], []),
-        ([12.0], [12.0]),
-        ({1, 2, 3}, [1.0, 2.0, 3.0]),
-        ({"a": 0, "b": 1, "c": 2}, {"a": 0.0, "b": 1.0, "c": 2.0}),
-        ({0: 10, 100: 0}, {0: 10.0, 100: 0.0}),
+        ([1, 2, 3], [1.0, 2.0, 3.0], "application/json"),
+        ((1.0, 10.0, 42, 999.0), [1.0, 10.0, 42.0, 999.0], "application/json"),
+        ([], [], "application/json"),
+        ([12.0], [12.0], "application/json"),
+        ({1, 2, 3}, [1.0, 2.0, 3.0], "application/json"),
+        ({"a": 0, "b": 1, "c": 2}, {"a": 0.0, "b": 1.0, "c": 2.0}, "application/json"),
+        ({0: 10, 100: 0}, {0: 10.0, 100: 0.0}, "application/json"),
+        ([b"\x00"], [b"\x00"], "application/octet-stream"),
     ),
 )
 
@@ -73,13 +73,40 @@ async def test_simple_record_transmit(
     ],
     data_in,
     expected_data,
+    application_type,
 ):
     with record_transmitter_factory_context() as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
-        await transmitter.transmit_data(data_in, "application/json")
+        await transmitter.transmit_data(data_in)
         assert transmitter.is_transmitted()
         with pytest.raises(RuntimeError, match="Record already transmitted"):
-            await transmitter.transmit_data([1, 2, 3], "application/json")
+            await transmitter.transmit_data([1, 2, 3])
+
+
+@pytest.mark.asyncio
+@simple_records
+@factory_params
+async def test_simple_record_transmit_from_file(
+    record_transmitter_factory_context: ContextManager[
+        Callable[[str], RecordTransmitter]
+    ],
+    data_in,
+    expected_data,
+    application_type,
+):
+    filename = "record.file"
+    with record_transmitter_factory_context() as record_transmitter_factory, tmp():
+        transmitter = record_transmitter_factory(name="some_name")
+        if application_type == "application/json":
+            with open(filename, "w") as f:
+                json.dump(expected_data, f)
+        else:
+            with open(filename, "wb") as f:
+                f.write(expected_data[0])
+        await transmitter.transmit_file(filename, mime=application_type)
+        assert transmitter.is_transmitted()
+        with pytest.raises(RuntimeError, match="Record already transmitted"):
+            await transmitter.transmit_file(filename, mime=application_type)
 
 
 @pytest.mark.asyncio
@@ -91,10 +118,11 @@ async def test_simple_record_transmit_and_load(
     ],
     data_in,
     expected_data,
+    application_type,
 ):
     with record_transmitter_factory_context() as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
-        await transmitter.transmit_data(data_in, "application/json")
+        await transmitter.transmit_data(data_in)
 
         record = await transmitter.load()
         assert record.data == expected_data
@@ -103,22 +131,25 @@ async def test_simple_record_transmit_and_load(
 @pytest.mark.asyncio
 @simple_records
 @factory_params
-@tmpdir(None)
 async def test_simple_record_transmit_and_dump(
     record_transmitter_factory_context: ContextManager[
         Callable[[str], RecordTransmitter]
     ],
     data_in,
     expected_data,
+    application_type,
 ):
-    with record_transmitter_factory_context() as record_transmitter_factory:
+    with record_transmitter_factory_context() as record_transmitter_factory, tmp():
         transmitter = record_transmitter_factory(name="some_name")
-        await transmitter.transmit_data(data_in, "application/json")
+        await transmitter.transmit_data(data_in)
 
         await transmitter.dump("record.json")
-        with open("record.json") as f:
-            expected_data = json.loads(json.dumps(expected_data))
-            assert expected_data == json.load(f)
+        if application_type == "application/json":
+            with open("record.json") as f:
+                assert json.dumps(expected_data) == f.read()
+        else:
+            with open("record.json", "rb") as f:
+                assert expected_data[0] == f.read()
 
 
 @pytest.mark.asyncio
@@ -130,12 +161,39 @@ async def test_simple_record_transmit_pickle_and_load(
     ],
     data_in,
     expected_data,
+    application_type,
 ):
     with record_transmitter_factory_context() as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
         transmitter = pickle.loads(cloudpickle.dumps(transmitter))
-        await transmitter.transmit_data(data_in, "application/json")
+        await transmitter.transmit_data(data_in)
         transmitter = pickle.loads(cloudpickle.dumps(transmitter))
         record = await transmitter.load()
 
         assert record.data == expected_data
+
+
+@pytest.mark.asyncio
+@factory_params
+async def test_load_untransmitted_record(
+    record_transmitter_factory_context: ContextManager[
+        Callable[[str], RecordTransmitter]
+    ],
+):
+    with record_transmitter_factory_context() as record_transmitter_factory:
+        transmitter = record_transmitter_factory(name="some_name")
+        with pytest.raises(RuntimeError, match="cannot load untransmitted record"):
+            _ = await transmitter.load()
+
+
+@pytest.mark.asyncio
+@factory_params
+async def test_dump_untransmitted_record(
+    record_transmitter_factory_context: ContextManager[
+        Callable[[str], RecordTransmitter]
+    ],
+):
+    with record_transmitter_factory_context() as record_transmitter_factory:
+        transmitter = record_transmitter_factory(name="some_name")
+        with pytest.raises(RuntimeError, match="cannot dump untransmitted record"):
+            await transmitter.dump("some.file")
