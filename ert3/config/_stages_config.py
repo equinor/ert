@@ -3,8 +3,8 @@ import mimetypes
 import sys
 from typing import Callable, List, Optional
 
-import ert3
 from pydantic import BaseModel, FilePath, ValidationError, root_validator, validator
+import ert3
 
 if sys.version_info >= (3, 8):
     from typing import Literal
