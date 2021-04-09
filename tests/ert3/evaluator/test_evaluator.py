@@ -33,7 +33,7 @@ def test_evaluator_script(
     workspace, stages_config, base_ensemble_dict, coeffs, expected
 ):
     input_records = get_inputs(coeffs)
-    base_ensemble_dict.update({"size": len(coeffs)})
+    base_ensemble_dict["size"] = len(coeffs)
     ensemble = ert3.config.load_ensemble_config(base_ensemble_dict)
 
     evaluation_responses = ert3.evaluator.evaluate(
