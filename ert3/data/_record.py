@@ -176,7 +176,7 @@ class RecordTransmitter:
     def __init__(self):
         self._state = RecordTransmitterState.not_transmitted
 
-    def _set_transmitted(self):
+    def _set_transmitted_state(self):
         self._state = RecordTransmitterState.transmitted
 
     def is_transmitted(self):
@@ -223,7 +223,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         self._record_type: typing.Optional[RecordType] = None
 
     def _set_transmitted(self, uri: Path, record_type: RecordType):
-        super()._set_transmitted()
+        super()._set_transmitted_state()
         self._uri = str(uri)
         self._record_type = record_type
 
@@ -307,7 +307,7 @@ class InMemoryRecordTransmitter(RecordTransmitter):
         self._name = name
 
     def _set_transmitted(self, record: Record):
-        super()._set_transmitted()
+        super()._set_transmitted_state()
         self._data = record.data
         self._index = record.index
 
