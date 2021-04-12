@@ -100,7 +100,7 @@ class Step(_StagesConfig):
         step_type = values.get("type")
         if step_type != "function" and function:
             raise ValueError(f"Function defined for {step_type} step")
-        elif function is None:
+        if function is None:
             return None
         return _import_from(function)
 
