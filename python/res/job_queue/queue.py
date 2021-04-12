@@ -36,30 +36,32 @@ logger = logging.getLogger(__name__)
 
 LONG_RUNNING_FACTOR = 1.25
 
-_FM_STAGE_WAITING = "com.equinor.ert.forward_model_stage.waiting"
-_FM_STAGE_PENDING = "com.equinor.ert.forward_model_stage.pending"
-_FM_STAGE_RUNNING = "com.equinor.ert.forward_model_stage.running"
-_FM_STAGE_FAILURE = "com.equinor.ert.forward_model_stage.failure"
-_FM_STAGE_SUCCESS = "com.equinor.ert.forward_model_stage.success"
-_FM_STAGE_UNKNOWN = "com.equinor.ert.forward_model_stage.unknown"
+
+_FM_STEP_FAILURE = "com.equinor.ert.forward_model_step.failure"
+_FM_STEP_PENDING = "com.equinor.ert.forward_model_step.pending"
+_FM_STEP_RUNNING = "com.equinor.ert.forward_model_step.running"
+_FM_STEP_SUCCESS = "com.equinor.ert.forward_model_step.success"
+_FM_STEP_UNKNOWN = "com.equinor.ert.forward_model_step.unknown"
+_FM_STEP_WAITING = "com.equinor.ert.forward_model_step.waiting"
+
 
 _queue_state_to_event_type_map = {
-    "JOB_QUEUE_NOT_ACTIVE": _FM_STAGE_WAITING,
-    "JOB_QUEUE_WAITING": _FM_STAGE_WAITING,
-    "JOB_QUEUE_SUBMITTED": _FM_STAGE_WAITING,
-    "JOB_QUEUE_PENDING": _FM_STAGE_PENDING,
-    "JOB_QUEUE_RUNNING": _FM_STAGE_RUNNING,
-    "JOB_QUEUE_DONE": _FM_STAGE_RUNNING,
-    "JOB_QUEUE_EXIT": _FM_STAGE_RUNNING,
-    "JOB_QUEUE_IS_KILLED": _FM_STAGE_FAILURE,
-    "JOB_QUEUE_DO_KILL": _FM_STAGE_FAILURE,
-    "JOB_QUEUE_SUCCESS": _FM_STAGE_SUCCESS,
-    "JOB_QUEUE_RUNNING_DONE_CALLBACK": _FM_STAGE_RUNNING,
-    "JOB_QUEUE_RUNNING_EXIT_CALLBACK": _FM_STAGE_RUNNING,
-    "JOB_QUEUE_STATUS_FAILURE": _FM_STAGE_UNKNOWN,
-    "JOB_QUEUE_FAILED": _FM_STAGE_FAILURE,
-    "JOB_QUEUE_DO_KILL_NODE_FAILURE": _FM_STAGE_FAILURE,
-    "JOB_QUEUE_UNKNOWN": _FM_STAGE_UNKNOWN,
+    "JOB_QUEUE_NOT_ACTIVE": _FM_STEP_WAITING,
+    "JOB_QUEUE_WAITING": _FM_STEP_WAITING,
+    "JOB_QUEUE_SUBMITTED": _FM_STEP_WAITING,
+    "JOB_QUEUE_PENDING": _FM_STEP_PENDING,
+    "JOB_QUEUE_RUNNING": _FM_STEP_RUNNING,
+    "JOB_QUEUE_DONE": _FM_STEP_RUNNING,
+    "JOB_QUEUE_EXIT": _FM_STEP_RUNNING,
+    "JOB_QUEUE_IS_KILLED": _FM_STEP_FAILURE,
+    "JOB_QUEUE_DO_KILL": _FM_STEP_FAILURE,
+    "JOB_QUEUE_SUCCESS": _FM_STEP_SUCCESS,
+    "JOB_QUEUE_RUNNING_DONE_CALLBACK": _FM_STEP_RUNNING,
+    "JOB_QUEUE_RUNNING_EXIT_CALLBACK": _FM_STEP_RUNNING,
+    "JOB_QUEUE_STATUS_FAILURE": _FM_STEP_UNKNOWN,
+    "JOB_QUEUE_FAILED": _FM_STEP_FAILURE,
+    "JOB_QUEUE_DO_KILL_NODE_FAILURE": _FM_STEP_FAILURE,
+    "JOB_QUEUE_UNKNOWN": _FM_STEP_UNKNOWN,
 }
 
 
@@ -413,7 +415,7 @@ class JobQueue(BaseCClass):
         return CloudEvent(
             {
                 "type": _queue_state_event_type(status),
-                "source": f"/ert/ee/{0}/real/{real_id}/stage/{0}",
+                "source": f"/ert/ee/{0}/real/{real_id}/step/{0}",
                 "datacontenttype": "application/json",
             },
             {
@@ -573,7 +575,7 @@ class JobQueue(BaseCClass):
                 data = json.load(jobs_file)
                 data["ee_id"] = ee_id
                 data["real_id"] = self._qindex_to_iens[q_index]
-                data["stage_id"] = 0
+                data["step_id"] = 0
                 data["dispatch_url"] = dispatch_url
                 jobs_file.seek(0)
                 jobs_file.truncate()

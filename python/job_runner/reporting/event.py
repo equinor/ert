@@ -15,10 +15,6 @@ _FM_JOB_RUNNING = "com.equinor.ert.forward_model_job.running"
 _FM_JOB_SUCCESS = "com.equinor.ert.forward_model_job.success"
 _FM_JOB_FAILURE = "com.equinor.ert.forward_model_job.failure"
 
-_FM_STEP_START = "com.equinor.ert.forward_model_step.start"
-_FM_STEP_FAILURE = "com.equinor.ert.forward_model_step.failure"
-_FM_STEP_SUCCESS = "com.equinor.ert.forward_model_step.success"
-
 
 class TransitionError(ValueError):
     pass
@@ -30,7 +26,7 @@ class Event:
 
         self._ee_id = None
         self._real_id = None
-        self._stage_id = None
+        self._step_id = None
 
         self._initialize_state_machine()
 
@@ -41,7 +37,7 @@ class Event:
         self._states = {
             initialized: self._init_handler,
             jobs: self._job_handler,
-            finished: self._end_handler,
+            finished: lambda _: _,
         }
         self._transitions = {
             None: initialized,
@@ -71,33 +67,12 @@ class Event:
             client.send(to_json(event).decode())
 
     def _step_path(self):
-        return f"/ert/ee/{self._ee_id}/real/{self._real_id}/stage/{self._stage_id}/step/{0}"
+        return f"/ert/ee/{self._ee_id}/real/{self._real_id}/step/{self._step_id}"
 
     def _init_handler(self, msg):
         self._ee_id = msg.ee_id
         self._real_id = msg.real_id
-        self._stage_id = msg.stage_id
-
-        jobs = {}
-        for job in msg.jobs:
-            jobs[job.index] = job.job_data.copy()
-            if job.job_data.get("stderr"):
-                jobs[job.index]["stderr"] = str(Path(job.job_data["stderr"]).resolve())
-            if job.job_data.get("stdout"):
-                jobs[job.index]["stdout"] = str(Path(job.job_data["stdout"]).resolve())
-
-        self._dump_event(
-            CloudEvent(
-                {
-                    "type": _FM_STEP_START,
-                    "source": self._step_path(),
-                    "datacontenttype": "application/json",
-                },
-                {
-                    "jobs": jobs,
-                },
-            )
-        )
+        self._step_id = msg.step_id
 
     def _job_handler(self, msg):
         job_path = f"{self._step_path()}/job/{msg.job.index}"
@@ -163,31 +138,6 @@ class Event:
                     {
                         "max_memory_usage": msg.max_memory_usage,
                         "current_memory_usage": msg.current_memory_usage,
-                    },
-                )
-            )
-
-    def _end_handler(self, msg):
-        step_path = self._step_path()
-        if msg.success():
-            self._dump_event(
-                CloudEvent(
-                    {
-                        "type": _FM_STEP_SUCCESS,
-                        "source": step_path,
-                    }
-                )
-            )
-        else:
-            self._dump_event(
-                CloudEvent(
-                    {
-                        "type": _FM_STEP_FAILURE,
-                        "source": step_path,
-                        "datacontenttype": "application/json",
-                    },
-                    {
-                        "error_msg": msg.error_message,
                     },
                 )
             )

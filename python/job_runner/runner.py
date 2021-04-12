@@ -16,7 +16,7 @@ class JobRunner(object):
         self.simulation_id = jobs_data.get("run_id")
         self.ee_id = jobs_data.get("ee_id")
         self.real_id = jobs_data.get("real_id")
-        self.stage_id = jobs_data.get("stage_id")
+        self.step_id = jobs_data.get("step_id")
         self.ert_pid = jobs_data.get("ert_pid")
         self.global_environment = jobs_data.get("global_environment")
         self.global_update_path = jobs_data.get("global_update_path")
@@ -46,7 +46,7 @@ class JobRunner(object):
             self.ert_pid,
             self.ee_id,
             self.real_id,
-            self.stage_id,
+            self.step_id,
         )
 
         unused = set(names_of_jobs_to_run) - set([j.name() for j in job_queue])

@@ -36,14 +36,14 @@ class Message(metaclass=_MetaMessage):
 
 
 class Init(Message):
-    def __init__(self, jobs, run_id, ert_pid, ee_id=None, real_id=None, stage_id=None):
+    def __init__(self, jobs, run_id, ert_pid, ee_id=None, real_id=None, step_id=None):
         super(Init, self).__init__()
         self.jobs = jobs
         self.run_id = run_id
         self.ert_pid = ert_pid
         self.ee_id = ee_id
         self.real_id = real_id
-        self.stage_id = stage_id
+        self.step_id = step_id
 
 
 class Finish(Message):
