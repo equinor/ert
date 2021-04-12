@@ -144,8 +144,7 @@ class RecordTransmitterType(Enum):
 
 
 class RecordTransmitter:
-    def __init__(self, type_: RecordTransmitterType):
-        self._type = type_
+    def __init__(self):
         self._state = RecordTransmitterState.not_transmitted
 
     def _set_transmitted(self):
@@ -153,6 +152,11 @@ class RecordTransmitter:
 
     def is_transmitted(self):
         return self._state == RecordTransmitterState.transmitted
+
+    @property
+    @abstractmethod
+    def transmitter_type(self):
+        pass
 
     @abstractmethod
     async def dump(self, location: Path) -> None:
@@ -179,10 +183,10 @@ class RecordTransmitter:
 
 
 class SharedDiskRecordTransmitter(RecordTransmitter):
-    TYPE: RecordTransmitterType = RecordTransmitterType.shared_disk
+    _TYPE: RecordTransmitterType = RecordTransmitterType.shared_disk
 
     def __init__(self, name: str, storage_path: Path):
-        super().__init__(type_=self.TYPE)
+        super().__init__()
         self._storage_path = storage_path
         self._storage_path.mkdir(parents=True, exist_ok=True)
         self._concrete_key = f"{name}_{uuid.uuid4()}"
@@ -193,6 +197,9 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         super()._set_transmitted()
         self._uri = str(uri)
         self._record_type = record_type
+
+    def transmitter_type(self):
+        return self._TYPE
 
     async def _transmit(self, record: Record):
         storage_uri = self._storage_path / self._concrete_key
@@ -262,13 +269,16 @@ class InMemoryRecordTransmitter(RecordTransmitter):
     _index: Optional[Any] = None
 
     def __init__(self, name: str):
-        super().__init__(type_=self.TYPE)
+        super().__init__()
         self._name = name
 
     def set_transmitted(self, record: Record):
         super()._set_transmitted()
         self._data = record.data
         self._index = record.index
+
+    def transmitter_type(self):
+        return self._TYPE
 
     @abstractmethod
     async def transmit_data(
