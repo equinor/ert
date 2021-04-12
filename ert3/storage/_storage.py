@@ -1,15 +1,14 @@
-import json
 import codecs
+import io
+import json
 import os
 from pathlib import Path
-import cloudpickle
 from typing import Any, Iterable, Optional, Union
-import io
-import yaml
+
+import cloudpickle
 import requests
-
+import yaml
 import ert3
-
 
 _STORAGE_FILE = "storage.yaml"
 _STORAGE_URL = "http://localhost:8000"
