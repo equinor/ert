@@ -2,7 +2,7 @@ import json
 import codecs
 import os
 from pathlib import Path
-import pickle
+import cloudpickle
 from typing import Any, Iterable, Optional, Union
 import io
 import yaml
@@ -157,7 +157,7 @@ def add_ensemble_record(
     # known that the Record is a int, str map, information is lost. ert-storage
     # will attempt to serialize to JSON any BaseModel derived structure.
     # XXX: move to application/x-numpy ?
-    pickle_str = codecs.encode(pickle.dumps(ensemble_record), "base64").decode()
+    pickle_str = codecs.encode(cloudpickle.dumps(ensemble_record), "base64").decode()
     data = json.dumps({"data": pickle_str})
     _add_data(workspace, experiment_name, record_name, data)
 
@@ -171,7 +171,7 @@ def get_ensemble_record(
     if experiment_name is None:
         experiment_name = _ENSEMBLE_RECORDS
     data = json.loads(_get_data(workspace, experiment_name, record_name))["data"]
-    return pickle.loads(codecs.decode(data.encode(), "base64"))
+    return cloudpickle.loads(codecs.decode(data.encode(), "base64"))
 
 
 def get_ensemble_record_names(

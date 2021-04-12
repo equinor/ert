@@ -48,7 +48,6 @@ setup(
         "matplotlib",
         "numpy",
         "pandas",
-        "pickle",
         "pluggy",
         "pydantic >= 1.8",
         "pyrsistent",
