@@ -33,15 +33,15 @@ def _assert_single_stage_forward_model(stages_config, ensemble):
 def _prepare_input(
     ee_config,
     step_config: ert3.config._stages_config.Step,
-    inputs: "ert3.data.MultiEnsembleRecord",
+    inputs: ert3.data.MultiEnsembleRecord,
     evaluation_tmp_dir,
     ensemble_size,
-) -> typing.Dict[int, typing.Dict[str, "ert3.data.RecordTransmitter"]]:
+) -> typing.Dict[int, typing.Dict[str, ert3.data.RecordTransmitter]]:
     tmp_input_folder = evaluation_tmp_dir / "prep_input_files"
     os.makedirs(tmp_input_folder)
     storage_config = ee_config["storage"]
     transmitters: typing.Dict[
-        int, typing.Dict[str, "ert3.data.RecordTransmitter"]
+        int, typing.Dict[str, ert3.data.RecordTransmitter]
     ] = defaultdict(dict)
 
     futures = []
@@ -84,12 +84,12 @@ def _prepare_output(
     step_config: ert3.config._stages_config.Step,
     evaluation_tmp_dir: pathlib.Path,
     ensemble_size: int,
-) -> typing.Dict[int, typing.Dict[str, "ert3.data.RecordTransmitter"]]:
+) -> typing.Dict[int, typing.Dict[str, ert3.data.RecordTransmitter]]:
     tmp_input_folder = evaluation_tmp_dir / "output_files"
     os.makedirs(tmp_input_folder)
     storage_config = ee_config["storage"]
     transmitters: typing.Dict[
-        int, typing.Dict[str, "ert3.data.RecordTransmitter"]
+        int, typing.Dict[str, ert3.data.RecordTransmitter]
     ] = defaultdict(dict)
 
     for output in step_config.output:
@@ -112,7 +112,7 @@ def _build_ee_config(
     evaluation_tmp_dir,
     ensemble,
     stages_config: StagesConfig,
-    input_records: "ert3.data.MultiEnsembleRecord",
+    input_records: ert3.data.MultiEnsembleRecord,
     dispatch_uri: str,
 ):
     _assert_single_stage_forward_model(stages_config, ensemble)
