@@ -52,11 +52,11 @@ def input_transmitter(name, data, storage_path):
 
 
 def coefficient_transmitters(coefficients, storage_path):
-    transmitters = defaultdict(dict)
+    transmitters = {}
     record_name = "coeffs"
     for iens, values in enumerate(coefficients):
         transmitters[iens] = input_transmitter(record_name, values, storage_path)
-    return dict(transmitters)
+    return transmitters
 
 
 def script_transmitters(config):
