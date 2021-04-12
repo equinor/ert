@@ -12,9 +12,14 @@ import aiofiles
 # Type hinting for wrap must be turned off until (1) is resolved.
 # (1) https://github.com/Tinche/aiofiles/issues/8
 from aiofiles.os import wrap  # type: ignore
-from pydantic import BaseModel, root_validator, StrictBytes
-from pydantic.types import StrictFloat, StrictInt, StrictStr
-
+from pydantic import (
+    BaseModel,
+    StrictBytes,
+    StrictFloat,
+    StrictInt,
+    StrictStr,
+    root_validator,
+)
 
 _copy = wrap(shutil.copy)
 
