@@ -3,5 +3,6 @@
   :hidden:
 
   roadmap
+  dev-strategy
   concepts
   forward_model
