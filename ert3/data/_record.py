@@ -262,7 +262,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
 
 
 class InMemoryRecordTransmitter(RecordTransmitter):
-    TYPE: RecordTransmitterType = RecordTransmitterType.in_memory
+    _TYPE: RecordTransmitterType = RecordTransmitterType.in_memory
     # TODO: these fields should be Record, but that does not work until
     # https://github.com/cloudpipe/cloudpickle/issues/403 has been released.
     _data: Optional[Any] = None
