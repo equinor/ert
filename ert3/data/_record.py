@@ -222,7 +222,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         self._uri: typing.Optional[str] = None
         self._record_type: typing.Optional[RecordType] = None
 
-    def set_transmitted(self, uri: Path, record_type: RecordType):
+    def _set_transmitted(self, uri: Path, record_type: RecordType):
         super()._set_transmitted()
         self._uri = str(uri)
         self._record_type = record_type
@@ -240,7 +240,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         else:
             async with aiofiles.open(storage_uri, mode="wb") as f:  # type: ignore
                 await f.write(record.data[0])  # type: ignore
-        self.set_transmitted(storage_uri, record_type=record.record_type)
+        self._set_transmitted(storage_uri, record_type=record.record_type)
 
     async def transmit_data(
         self,
@@ -306,7 +306,7 @@ class InMemoryRecordTransmitter(RecordTransmitter):
         super().__init__()
         self._name = name
 
-    def set_transmitted(self, record: Record):
+    def _set_transmitted(self, record: Record):
         super()._set_transmitted()
         self._data = record.data
         self._index = record.index
@@ -323,7 +323,7 @@ class InMemoryRecordTransmitter(RecordTransmitter):
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
         record = Record(data=data)
-        self.set_transmitted(record)
+        self._set_transmitted(record)
 
     @abstractmethod
     async def transmit_file(
@@ -346,7 +346,7 @@ class InMemoryRecordTransmitter(RecordTransmitter):
                 "cannot transmit file unless mime is application/json"
                 f" or application/octet-stream, was {mime}"
             )
-        self.set_transmitted(record)
+        self._set_transmitted(record)
 
     async def load(self):
         if not self.is_transmitted():
