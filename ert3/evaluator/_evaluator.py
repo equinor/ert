@@ -32,7 +32,7 @@ def _assert_single_stage_forward_model(stages_config, ensemble):
 def _prepare_input(
     ee_config,
     step_config: "ert3.config.Step",
-    inputs: "ert3.data.MultiEnsembleRecord",
+    inputs: ert3.data.MultiEnsembleRecord,
     evaluation_tmp_dir,
     ensemble_size,
 ) -> typing.Dict[int, typing.Dict[str, "ert3.data.RecordTransmitter"]]:

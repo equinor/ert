@@ -1,3 +1,4 @@
+from . import data
 from . import console
 from . import evaluator
 from . import stats
@@ -5,7 +6,6 @@ from . import workspace
 from . import config
 from . import exceptions
 from . import algorithms
-from . import data
 from . import engine
 from . import storage
 
