@@ -3,7 +3,7 @@ import io
 import json
 import os
 from pathlib import Path
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Iterable, Optional, Union, cast
 
 import cloudpickle
 import requests
@@ -172,7 +172,10 @@ def get_ensemble_record(
     if experiment_name is None:
         experiment_name = _ENSEMBLE_RECORDS
     data = json.loads(_get_data(workspace, experiment_name, record_name))["data"]
-    return cloudpickle.loads(codecs.decode(data.encode(), "base64"))
+    return cast(
+        ert3.data.EnsembleRecord,
+        cloudpickle.loads(codecs.decode(data.encode(), "base64")),
+    )
 
 
 def get_ensemble_record_names(
