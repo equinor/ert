@@ -60,6 +60,7 @@ simple_records = pytest.mark.parametrize(
         ({"a": 0, "b": 1, "c": 2}, {"a": 0.0, "b": 1.0, "c": 2.0}, "application/json"),
         ({0: 10, 100: 0}, {0: 10.0, 100: 0.0}, "application/json"),
         ([b"\x00"], [b"\x00"], "application/octet-stream"),
+        ([b"\xF0\x9F\xA6\x89"], [b"\xF0\x9F\xA6\x89"], "application/octet-stream"),
     ),
 )
 
