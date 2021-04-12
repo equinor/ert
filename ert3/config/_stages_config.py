@@ -93,15 +93,14 @@ class Step(_StagesConfig):
                 raise ValueError("Scripts defined for a function stage")
             if not step.get("function"):
                 raise ValueError("No function defined")
-        elif step.get("type") == "unix":
-            if step.get("function"):
-                raise ValueError("Function defined for unix step")
-
         return step
 
     @validator("function", pre=True)
     def function_is_valid(cls, function: str, values) -> Optional[Callable]:
-        if values.get("type") != "function":
+        step_type = values.get("type")
+        if step_type != "function" and function:
+            raise ValueError(f"Function defined for {step_type} step")
+        elif function is None:
             return None
         return _import_from(function)
 

@@ -125,8 +125,10 @@ def test_step_function_error(base_function_stage_config):
 def test_step_unix_and_function(base_unix_stage_config):
     config = base_unix_stage_config
     config[0].update({"function": "builtins:sum"})
-    stage = ert3.config.load_stages_config(config)
-    assert stage[0].function is None
+    with pytest.raises(
+        ert3.exceptions.ConfigValidationError, match=r"Function defined for unix step"
+    ):
+        ert3.config.load_stages_config(config)
 
 
 def test_step_function_module_error(base_function_stage_config):
