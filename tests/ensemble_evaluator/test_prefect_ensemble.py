@@ -34,12 +34,12 @@ def parse_config(path):
         for step in stage.get(ids.STEPS):
             for input_ in step.get(ids.INPUTS):
                 input_[ids.LOCATION] = Path(input_[ids.LOCATION])
-                for job in step.get(ids.JOBS):
-                    job[ids.EXECUTABLE] = (
-                        Path(job[ids.EXECUTABLE])
-                        if step.get(ids.TYPE) == ids.UNIX
-                        else job[ids.EXECUTABLE]
-                    )
+            for job in step.get(ids.JOBS):
+                job[ids.EXECUTABLE] = (
+                    Path(job[ids.EXECUTABLE])
+                    if step.get(ids.TYPE) == ids.UNIX
+                    else job[ids.EXECUTABLE]
+                )
     return config
 
 
