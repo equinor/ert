@@ -150,7 +150,10 @@ def test_topological_sort(steps, expected, ambiguous):
     """Checks that steps are topologically sortable.
 
     For all ambiguous steps, assert that they are at least present in the
-    sorted step.
+    sorted step. An ambiguous step is an isolated vertex in the topology graph,
+    i.e. it does not depend on the input of any other step, nor does any other
+    step depend on its output. It is ambiguous because it does not matter where
+    in the topological sorting it appears.
 
     For expected steps, assert that they are equal to the sorted steps, minus
     any ambiguous steps.
