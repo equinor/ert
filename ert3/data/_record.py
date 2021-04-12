@@ -201,6 +201,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         self._uri = str(uri)
         self._record_type = record_type
 
+    @property
     def transmitter_type(self):
         return self._TYPE
 
@@ -280,6 +281,7 @@ class InMemoryRecordTransmitter(RecordTransmitter):
         self._data = record.data
         self._index = record.index
 
+    @property
     def transmitter_type(self):
         return self._TYPE
 
