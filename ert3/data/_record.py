@@ -12,10 +12,25 @@ import aiofiles
 # Type hinting for wrap must be turned off until (1) is resolved.
 # (1) https://github.com/Tinche/aiofiles/issues/8
 from aiofiles.os import wrap  # type: ignore
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, root_validator, StrictBytes
+from pydantic.types import StrictFloat, StrictInt, StrictStr
 
 
 _copy = wrap(shutil.copy)
+
+strict_number = Union[StrictInt, StrictFloat]
+record_data = Union[
+    List[strict_number],
+    Mapping[StrictStr, strict_number],
+    Mapping[StrictInt, strict_number],
+    List[StrictBytes],
+]
+
+
+def parse_json_key_as_int(obj):
+    if isinstance(obj, dict):
+        return {int(k): v for k, v in obj.items()}
+    return obj
 
 
 class _DataElement(BaseModel):
@@ -42,8 +57,8 @@ class RecordType(str, Enum):
 
 
 class Record(_DataElement):
-    data: Union[List[float], Mapping[int, float], Mapping[str, float], List[bytes]]
-    index: Union[Tuple[int, ...], Tuple[str, ...]]
+    data: record_data
+    index: Union[Tuple[StrictInt, ...], Tuple[StrictStr, ...]]
 
     def __init__(self, *, data, index=None, **kwargs):
         if index is None:
@@ -55,24 +70,30 @@ class Record(_DataElement):
         if isinstance(self.data, list):
             if not self.data:
                 return RecordType.LIST_FLOAT
-            if isinstance(self.data[0], float):
+            if isinstance(self.data[0], (int, float)):
                 return RecordType.LIST_FLOAT
             if isinstance(self.data[0], bytes):
                 return RecordType.LIST_BYTES
         elif isinstance(self.data, Mapping):
             if not self.data:
                 return RecordType.MAPPING_STR_FLOAT
-            if isinstance(list(self.data.keys())[0], int):
+            if isinstance(list(self.data.keys())[0], (int, float)):
                 return RecordType.MAPPING_INT_FLOAT
             if isinstance(list(self.data.keys())[0], str):
                 return RecordType.MAPPING_STR_FLOAT
-        raise TypeError("Not able to deduce record type from data")
+        raise TypeError(
+            f"Not able to deduce record type from data was: {type(self.data)}"
+        )
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def ensure_consistent_index(cls, record):
-        assert "data" in record and "index" in record
+        assert (
+            "data" in record and "index" in record
+        ), "both data and index must be defined for a record"
         norm_record_index = _build_record_index(record["data"])
-        assert norm_record_index == record["index"]
+        assert (
+            norm_record_index == record["index"]
+        ), f"inconsistent index {norm_record_index} vs {record['index']}"
         return record
 
 
@@ -85,7 +106,7 @@ class EnsembleRecord(_DataElement):
             ensemble_size = len(records)
         super().__init__(records=records, ensemble_size=ensemble_size, **kwargs)
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def ensure_consistent_ensemble_size(cls, ensemble_record):
         assert "records" in ensemble_record and "ensemble_size" in ensemble_record
         assert len(ensemble_record["records"]) == ensemble_record["ensemble_size"]
@@ -116,7 +137,7 @@ class MultiEnsembleRecord(_DataElement):
             **kwargs,
         )
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def ensure_consistent_ensemble_size(cls, multi_ensemble_record):
         ensemble_size = multi_ensemble_record["ensemble_size"]
         for ensemble_record in multi_ensemble_record["ensemble_records"].values():
@@ -124,7 +145,7 @@ class MultiEnsembleRecord(_DataElement):
                 raise AssertionError("Inconsistent ensemble record size")
         return multi_ensemble_record
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def ensure_consistent_record_names(cls, multi_ensemble_record):
         assert "record_names" in multi_ensemble_record
         record_names = tuple(multi_ensemble_record["ensemble_records"].keys())
@@ -172,7 +193,7 @@ class RecordTransmitter:
     @abstractmethod
     async def transmit_data(
         self,
-        data: Union[List[float], Mapping[int, float], Mapping[str, float], List[bytes]],
+        data: record_data,
     ) -> None:
         pass
 
@@ -218,7 +239,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
 
     async def transmit_data(
         self,
-        data: Union[List[float], Mapping[int, float], Mapping[str, float], List[bytes]],
+        data: record_data,
     ) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
@@ -253,7 +274,11 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         if self._record_type != RecordType.LIST_BYTES:
             async with aiofiles.open(str(self._uri)) as f:
                 contents = await f.read()
-                return Record(data=json.loads(contents))
+                if self._record_type == RecordType.MAPPING_INT_FLOAT:
+                    data = json.loads(contents, object_hook=parse_json_key_as_int)
+                else:
+                    data = json.loads(contents)
+                return Record(data=data)
         else:
             async with aiofiles.open(str(self._uri), mode="rb") as f:  # type: ignore
                 data = await f.read()
@@ -288,7 +313,7 @@ class InMemoryRecordTransmitter(RecordTransmitter):
     @abstractmethod
     async def transmit_data(
         self,
-        data: Union[List[float], Mapping[int, float], Mapping[str, float], List[bytes]],
+        data: record_data,
     ) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")

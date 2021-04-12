@@ -52,13 +52,13 @@ factory_params = pytest.mark.parametrize(
 simple_records = pytest.mark.parametrize(
     ("data_in", "expected_data", "application_type"),
     (
-        ([1, 2, 3], [1.0, 2.0, 3.0], "application/json"),
-        ((1.0, 10.0, 42, 999.0), [1.0, 10.0, 42.0, 999.0], "application/json"),
+        ([1, 2, 3], [1, 2, 3], "application/json"),
+        ((1.0, 10.0, 42, 999.0), [1.0, 10.0, 42, 999.0], "application/json"),
         ([], [], "application/json"),
         ([12.0], [12.0], "application/json"),
-        ({1, 2, 3}, [1.0, 2.0, 3.0], "application/json"),
-        ({"a": 0, "b": 1, "c": 2}, {"a": 0.0, "b": 1.0, "c": 2.0}, "application/json"),
-        ({0: 10, 100: 0}, {0: 10.0, 100: 0.0}, "application/json"),
+        ({1, 2, 3}, [1, 2, 3], "application/json"),
+        ({"a": 0, "b": 1, "c": 2}, {"a": 0, "b": 1, "c": 2}, "application/json"),
+        ({0: 10, 100: 0}, {0: 10, 100: 0}, "application/json"),
         ([b"\x00"], [b"\x00"], "application/octet-stream"),
         ([b"\xF0\x9F\xA6\x89"], [b"\xF0\x9F\xA6\x89"], "application/octet-stream"),
     ),
