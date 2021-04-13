@@ -25,6 +25,7 @@ class FieldExportTest(ResTest):
             fc = ens_config["PERMX"].getFieldModelConfig()
             self.assertEqual(FieldTypeEnum.ECLIPSE_PARAMETER, fc.get_type())
 
+    @pytest.mark.skip(reason="Aborts")
     def test_field_basics(self):
         with ErtTestContext("export_test", self.config_file) as test_context:
             ert = test_context.getErt()

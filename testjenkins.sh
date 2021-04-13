@@ -125,13 +125,14 @@ run_ctest () {
 
 run_pytest_normal () {
 	run enable_environment
-	python -m pytest -m "not equinor_test" --durations=10
+	python -m pytest -m "not equinor_test" --durations=10 tests
 }
 
 
 run_pytest_equinor () {
+	ln -s /project/res-testdata/ErtTestData ./test-data/Equinor
 	run enable_environment
-	python -m pytest -m "equinor_test" --durations=10
+	python -m pytest -m "equinor_test" --durations=10 tests
 }
 
 

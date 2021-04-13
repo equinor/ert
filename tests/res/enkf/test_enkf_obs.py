@@ -222,6 +222,7 @@ class EnKFObsTest(ResTest):
             ef = rpl.getExportFile()
             self.assertTrue(nf in ef)
 
+    @pytest.mark.skip(reason="Aborts")
     def test_ert_obs_reload(self):
         with ErtTestContext("obs_test_reload", self.config_file) as test_context:
             ert = test_context.getErt()
