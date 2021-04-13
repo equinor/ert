@@ -161,10 +161,13 @@ class EclRun(object):
 
     """
 
-    def __init__(self, ecl_case, sim, num_cpu=1, check_status=True):
+    def __init__(
+        self, ecl_case, sim, num_cpu=1, check_status=True, summary_conversion=False
+    ):
         self.sim = sim
         self.check_status = check_status
         self.num_cpu = int(num_cpu)
+        self.summary_conversion = summary_conversion
 
         # Dechipher the ecl_case argument.
         input_arg = ecl_case
@@ -253,12 +256,15 @@ class EclRun(object):
                 fileH.write("%s\n" % host)
 
     def _get_run_command(self, eclrun_config):
+        summary_conversion = "yes" if self.summary_conversion else "no"
         return [
             "eclrun",
             "-v",
             eclrun_config.version,
             eclrun_config.simulator_name,
             "{}.DATA".format(self.base_name),
+            "--summary-conversion",
+            summary_conversion,
         ]
 
     def _get_legacy_run_command(self):

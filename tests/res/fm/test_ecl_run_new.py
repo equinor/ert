@@ -165,6 +165,32 @@ with open("env.json", "w") as f:
 
     @pytest.mark.equinor_test
     @tmpdir()
+    def test_no_hdf5_output_by_default_with_ecl100(self):
+        self.init_eclrun_config()
+        shutil.copy(
+            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1.DATA"),
+            "SPE1.DATA",
+        )
+        ecl_config = Ecl100Config()
+        # check that by default .h5 file IS NOT produced
+        run(ecl_config, ["SPE1.DATA", "--version=2019.3"])
+        self.assertFalse(os.path.exists("SPE1.h5"))
+
+    @pytest.mark.equinor_test
+    @tmpdir()
+    def test_flag_to_produce_hdf5_output_with_ecl100(self):
+        self.init_eclrun_config()
+        shutil.copy(
+            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1.DATA"),
+            "SPE1.DATA",
+        )
+        ecl_config = Ecl100Config()
+        # check that with flag .h5 file IS produced
+        run(ecl_config, ["SPE1.DATA", "--version=2019.3", "--summary-conversion"])
+        self.assertTrue(os.path.exists("SPE1.h5"))
+
+    @pytest.mark.equinor_test
+    @tmpdir()
     def test_mpi_run(self):
         self.init_eclrun_config()
         shutil.copy(

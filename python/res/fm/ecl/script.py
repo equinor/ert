@@ -11,6 +11,9 @@ def run(config, argv):
     parser.add_argument(
         "-i", "--ignore-errors", dest="ignore_errors", action="store_true"
     )
+    parser.add_argument(
+        "--summary-conversion", dest="summary_conversion", action="store_true"
+    )
 
     options = parser.parse_args(argv)
 
@@ -21,6 +24,7 @@ def run(config, argv):
             None,
             num_cpu=options.num_cpu,
             check_status=not options.ignore_errors,
+            summary_conversion=options.summary_conversion,
         )
         run.runEclipse(eclrun_config=eclrun_config)
     else:
@@ -34,5 +38,6 @@ def run(config, argv):
             sim,
             num_cpu=options.num_cpu,
             check_status=not options.ignore_errors,
+            summary_conversion=options.summary_conversion,
         )
         run.runEclipse()
