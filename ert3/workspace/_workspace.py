@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import ert3
@@ -49,6 +50,7 @@ def initialize(path):
             "Already inside an ERT workspace."
         )
 
+    os.mkdir(path / ert3._WORKSPACE_DATA_ROOT)
     ert3.storage.init(workspace=path)
 
 

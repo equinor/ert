@@ -139,8 +139,8 @@ def test_get_record_names(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
 
     experiment_records = collections.defaultdict(list)
-    for eid in [None, 1, 2, 3]:
-        experiment = eid if eid is None else "e" + str(eid)
+    for eid in [1, 2, 3]:
+        experiment = "e" + str(eid)
         ert3.storage.init_experiment(
             workspace=tmpdir, experiment_name=experiment, parameters=[]
         )
