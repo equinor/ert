@@ -23,3 +23,8 @@ class ConfigValidationError(ErtError):
     def __init__(self, message: str, source: str = None) -> None:
         self.message = "{}".format(message)
         self.source = source
+
+
+class StorageError(ErtError):
+    def __init__(self, message: str) -> None:
+        self.message = "{}".format(message)
