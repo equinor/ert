@@ -30,10 +30,8 @@ def mock_ee_monitor(*args):
     reals_ids = ["0", "1"]
     snapshot = (
         SnapshotBuilder()
-        .add_stage(stage_id="0", status=state.STAGE_STATE_RUNNING)
-        .add_step(stage_id="0", step_id="0", status=state.STEP_STATE_START)
+        .add_step(step_id="0", status=state.STEP_STATE_UNKNOWN)
         .add_job(
-            stage_id="0",
             step_id="0",
             job_id="0",
             name="job0",
@@ -44,8 +42,8 @@ def mock_ee_monitor(*args):
     )
 
     update = PartialSnapshot(snapshot)
-    update.update_step("0", "0", "0", step=Step(status=state.STEP_STATE_SUCCESS))
-    update.update_step("1", "0", "0", step=Step(status=state.STEP_STATE_SUCCESS))
+    update.update_step("0", "0", step=Step(status=state.STEP_STATE_SUCCESS))
+    update.update_step("1", "0", step=Step(status=state.STEP_STATE_SUCCESS))
 
     events = [
         MockCloudEvent(

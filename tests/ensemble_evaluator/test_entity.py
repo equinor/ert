@@ -16,10 +16,8 @@ _REALIZATION_INDEXES = ["0", "1", "3", "4", "5", "9"]
 def _create_snapshot():
     return (
         SnapshotBuilder()
-        .add_stage(stage_id="0", status="Unknown")
-        .add_step(stage_id="0", step_id="0", status="Unknown")
+        .add_step(step_id="0", status="Unknown")
         .add_job(
-            stage_id="0",
             step_id="0",
             job_id="0",
             name="job0",
@@ -27,7 +25,6 @@ def _create_snapshot():
             status="Unknown",
         )
         .add_job(
-            stage_id="0",
             step_id="0",
             job_id="1",
             name="job1",
@@ -35,7 +32,6 @@ def _create_snapshot():
             status="Unknown",
         )
         .add_job(
-            stage_id="0",
             step_id="0",
             job_id="2",
             name="job2",
@@ -43,7 +39,6 @@ def _create_snapshot():
             status="Unknown",
         )
         .add_job(
-            stage_id="0",
             step_id="0",
             job_id="3",
             name="job3",
@@ -67,7 +62,6 @@ def test_snapshot_merge():
     update_event = PartialSnapshot(snapshot)
     update_event.update_job(
         real_id="1",
-        stage_id="0",
         step_id="0",
         job_id="0",
         job=Job(
@@ -79,7 +73,6 @@ def test_snapshot_merge():
     )
     update_event.update_job(
         real_id="1",
-        stage_id="0",
         step_id="0",
         job_id="1",
         job=Job(
@@ -89,7 +82,6 @@ def test_snapshot_merge():
     )
     update_event.update_job(
         real_id="9",
-        stage_id="0",
         step_id="0",
         job_id="0",
         job=Job(
@@ -102,7 +94,7 @@ def test_snapshot_merge():
 
     assert snapshot.get_status() == "running"
 
-    assert snapshot.get_job(real_id="1", stage_id="0", step_id="0", job_id="0") == Job(
+    assert snapshot.get_job(real_id="1", step_id="0", job_id="0") == Job(
         status="Finished",
         start_time=datetime(year=2020, month=10, day=27),
         end_time=datetime(year=2020, month=10, day=28),
@@ -113,7 +105,7 @@ def test_snapshot_merge():
         stdout=None,
     )
 
-    assert snapshot.get_job(real_id="1", stage_id="0", step_id="0", job_id="1") == Job(
+    assert snapshot.get_job(real_id="1", step_id="0", job_id="1") == Job(
         status="Running",
         start_time=datetime(year=2020, month=10, day=27),
         end_time=None,
@@ -124,11 +116,8 @@ def test_snapshot_merge():
         stdout=None,
     )
 
-    assert (
-        snapshot.get_job(real_id="9", stage_id="0", step_id="0", job_id="0").status
-        == "Running"
-    )
-    assert snapshot.get_job(real_id="9", stage_id="0", step_id="0", job_id="0") == Job(
+    assert snapshot.get_job(real_id="9", step_id="0", job_id="0").status == "Running"
+    assert snapshot.get_job(real_id="9", step_id="0", job_id="0") == Job(
         status="Running",
         start_time=datetime(year=2020, month=10, day=27),
         end_time=None,
@@ -144,31 +133,30 @@ def test_snapshot_merge():
     "source_string, expected_ids",
     [
         (
-            "/ert/ee/0/real/1111/stage/2stage_id/step/asd123ASD/job/0",
-            {"real": "1111", "stage": "2stage_id", "step": "asd123ASD", "job": "0"},
+            "/ert/ee/0/real/1111/step/asd123ASD/job/0",
+            {"real": "1111", "step": "asd123ASD", "job": "0"},
         ),
         (
-            "/ert/ee/0/real/1111/stage/2stage_id/step/asd123ASD",
-            {"real": "1111", "stage": "2stage_id", "step": "asd123ASD", "job": None},
-        ),
-        (
-            "/ert/ee/0/real/1111/stage/2stage_id",
-            {"real": "1111", "stage": "2stage_id", "step": None, "job": None},
+            "/ert/ee/0/real/1111/step/asd123ASD",
+            {"real": "1111", "step": "asd123ASD", "job": None},
         ),
         (
             "/ert/ee/0/real/1111",
-            {"real": "1111", "stage": None, "step": None, "job": None},
+            {"real": "1111", "step": None, "job": None},
+        ),
+        (
+            "/ert/ee/0/real/1111",
+            {"real": "1111", "step": None, "job": None},
         ),
         (
             "/ert/ee/0",
-            {"real": None, "stage": None, "step": None, "job": None},
+            {"real": None, "step": None, "job": None},
         ),
     ],
 )
 def test_source_get_ids(source_string, expected_ids):
 
     assert tool.get_real_id(source_string) == expected_ids["real"]
-    assert tool.get_stage_id(source_string) == expected_ids["stage"]
     assert tool.get_step_id(source_string) == expected_ids["step"]
     assert tool.get_job_id(source_string) == expected_ids["job"]
 

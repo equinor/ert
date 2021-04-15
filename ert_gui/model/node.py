@@ -7,7 +7,6 @@ class NodeType(Enum):
     ROOT = auto()
     ITER = auto()
     REAL = auto()
-    STAGE = auto()
     STEP = auto()
     JOB = auto()
 
@@ -46,18 +45,13 @@ def snapshot_to_tree(snapshot: Snapshot, iter_: int) -> Node:
             NodeType.REAL,
         )
         iter_node.add_child(real_node)
-        # TODO: sort stages, but wait till after https://github.com/equinor/ert/issues/1220 ?
-        for stage_id, stage in real.stages.items():
-            stage_node = Node(stage_id, {ids.STATUS: stage.status}, NodeType.STAGE)
-            real_node.add_child(stage_node)
-            # TODO: sort steps, but wait till after https://github.com/equinor/ert/issues/1220 ?
-            for step_id, step in stage.steps.items():
-                step_node = Node(step_id, {ids.STATUS: step.status}, NodeType.STEP)
-                stage_node.add_child(step_node)
-                for job_id in sorted(step.jobs, key=int):
-                    job = step.jobs[job_id]
-                    job_dict = dict(job)
-                    job_dict[ids.DATA] = job.data
-                    job_node = Node(job_id, job_dict, NodeType.JOB)
-                    step_node.add_child(job_node)
+        for step_id, step in real.steps.items():
+            step_node = Node(step_id, {ids.STATUS: step.status}, NodeType.STEP)
+            real_node.add_child(step_node)
+            for job_id in sorted(step.jobs, key=int):
+                job = step.jobs[job_id]
+                job_dict = dict(job)
+                job_dict[ids.DATA] = job.data
+                job_node = Node(job_id, job_dict, NodeType.JOB)
+                step_node.add_child(job_node)
     return iter_node

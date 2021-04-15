@@ -64,7 +64,7 @@ class FunctionTask(prefect.Task):
     def run(self, inputs: Dict[str, "ert3.data.RecordTransmitter"]):
         with Client(self._step.get_ee_url()) as ee_client:
             ee_client.send_event(
-                ev_type=ids.EVTYPE_FM_STEP_START,
+                ev_type=ids.EVTYPE_FM_STEP_RUNNING,
                 ev_source=self._step.get_source(self._ee_id),
             )
 

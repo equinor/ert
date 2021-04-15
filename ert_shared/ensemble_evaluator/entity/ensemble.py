@@ -409,24 +409,104 @@ class _FunctionStep(_Step):
         return FunctionTask(self, output_transmitters, *args, **kwargs)
 
 
+class _LegacyStep(_Step):
+    def __init__(
+        self,
+        id_,
+        inputs,
+        outputs,
+        jobs,
+        name,
+        ee_url,
+        source,
+        max_runtime,
+        callback_arguments,
+        done_callback,
+        exit_callback,
+        num_cpu,
+        run_path,
+        job_script,
+        job_name,
+        run_arg,
+    ):
+        super().__init__(id_, inputs, outputs, jobs, name, ee_url, source)
+        if max_runtime is not None and max_runtime <= 0:
+            raise ValueError(f"{self} needs positive max_runtime")
+        if callback_arguments is None:
+            raise ValueError(f"{self} needs callback_arguments")
+        if done_callback is None:
+            raise ValueError(f"{self} needs done_callback")
+        if exit_callback is None:
+            raise ValueError(f"{self} needs exit_callback")
+        if num_cpu is None:
+            raise ValueError(f"{self} needs num_cpu")
+        if run_path is None:
+            raise ValueError(f"{self} needs run_path")
+        if job_script is None:
+            raise ValueError(f"{self} needs job_script")
+        if job_name is None:
+            raise ValueError(f"{self} needs job_name")
+        if run_arg is None:
+            raise ValueError(f"{self} needs run_arg")
+        self._max_runtime = max_runtime
+        self._callback_arguments = callback_arguments
+        self._done_callback = done_callback
+        self._exit_callback = exit_callback
+        self._num_cpu = num_cpu
+        self._run_path = run_path
+        self._job_script = job_script
+        self._job_name = job_name
+        self._run_arg = run_arg
+
+    def get_max_runtime(self):
+        return self._max_runtime
+
+    def get_callback_arguments(self):
+        return self._callback_arguments
+
+    def get_done_callback(self):
+        return self._done_callback
+
+    def get_exit_callback(self):
+        return self._exit_callback
+
+    def get_num_cpu(self):
+        return self._num_cpu
+
+    def get_run_path(self):
+        return self._run_path
+
+    def get_job_script(self):
+        return self._job_script
+
+    def get_job_name(self):
+        return self._job_name
+
+    def get_run_arg(self):
+        return self._run_arg
+
+
 class _StepBuilder:
     def __init__(self):
-        self._jobs = None
+        self._jobs = []
         self._id = None
         self._name = None
-        self._inputs = None
-        self._outputs = None
+        self._inputs = []
+        self._outputs = []
         self._type = None
         self._source = None
         self._ee_url = None
-        self.reset()
 
-    def reset(self):
-        self._jobs = []
-        self._inputs = []
-        self._outputs = []
-        self._id = None
-        return self
+        # legacy parts
+        self._max_runtime = None
+        self._callback_arguments = None
+        self._done_callback = None
+        self._exit_callback = None
+        self._num_cpu = None
+        self._run_path = None
+        self._job_script = None
+        self._job_name = None
+        self._run_arg = None
 
     def set_id(self, id_):
         self._id = id_
@@ -460,10 +540,65 @@ class _StepBuilder:
         self._inputs.append(input)
         return self
 
+    def set_max_runtime(self, max_runtime):
+        self._max_runtime = max_runtime
+        return self
+
+    def set_callback_arguments(self, callback_arguments):
+        self._callback_arguments = callback_arguments
+        return self
+
+    def set_done_callback(self, done_callback):
+        self._done_callback = done_callback
+        return self
+
+    def set_exit_callback(self, exit_callback):
+        self._exit_callback = exit_callback
+        return self
+
+    def set_num_cpu(self, num_cpu):
+        self._num_cpu = num_cpu
+        return self
+
+    def set_run_path(self, run_path):
+        self._run_path = run_path
+        return self
+
+    def set_job_script(self, job_script):
+        self._job_script = job_script
+        return self
+
+    def set_job_name(self, job_name):
+        self._job_name = job_name
+        return self
+
+    def set_run_arg(self, run_arg):
+        self._run_arg = run_arg
+        return self
+
     def build(self):
         jobs = [builder.build() for builder in self._jobs]
         inputs = [builder.build() for builder in self._inputs]
         outputs = [builder.build() for builder in self._outputs]
+        if self._run_arg:
+            return _LegacyStep(
+                self._id,
+                inputs,
+                outputs,
+                jobs,
+                "legacy_step",
+                "",  # ee_url
+                "",  # source
+                self._max_runtime,
+                self._callback_arguments,
+                self._done_callback,
+                self._exit_callback,
+                self._num_cpu,
+                self._run_path,
+                self._job_script,
+                self._job_name,
+                self._run_arg,
+            )
         if self._type == "function":
             return _FunctionStep(
                 self._id, inputs, outputs, jobs, self._name, self._ee_url, self._source
@@ -553,177 +688,19 @@ class _StageBuilder:
         )
 
 
-class _LegacyStage(_Stage):
-    def __init__(
-        self,
-        id_,
-        steps,
-        status,
-        max_runtime,
-        callback_arguments,
-        done_callback,
-        exit_callback,
-        num_cpu,
-        run_path,
-        job_script,
-        job_name,
-        run_arg,
-    ):
-        super().__init__(id_, steps, status)
-        if max_runtime is not None and max_runtime <= 0:
-            raise ValueError(f"{self} needs positive max_runtime")
-        if callback_arguments is None:
-            raise ValueError(f"{self} needs callback_arguments")
-        if done_callback is None:
-            raise ValueError(f"{self} needs done_callback")
-        if exit_callback is None:
-            raise ValueError(f"{self} needs exit_callback")
-        if num_cpu is None:
-            raise ValueError(f"{self} needs num_cpu")
-        if run_path is None:
-            raise ValueError(f"{self} needs run_path")
-        if job_script is None:
-            raise ValueError(f"{self} needs job_script")
-        if job_name is None:
-            raise ValueError(f"{self} needs job_name")
-        if run_arg is None:
-            raise ValueError(f"{self} needs run_arg")
-        self._max_runtime = max_runtime
-        self._callback_arguments = callback_arguments
-        self._done_callback = done_callback
-        self._exit_callback = exit_callback
-        self._num_cpu = num_cpu
-        self._run_path = run_path
-        self._job_script = job_script
-        self._job_name = job_name
-        self._run_arg = run_arg
-
-    def get_max_runtime(self):
-        return self._max_runtime
-
-    def get_callback_arguments(self):
-        return self._callback_arguments
-
-    def get_done_callback(self):
-        return self._done_callback
-
-    def get_exit_callback(self):
-        return self._exit_callback
-
-    def get_num_cpu(self):
-        return self._num_cpu
-
-    def get_run_path(self):
-        return self._run_path
-
-    def get_job_script(self):
-        return self._job_script
-
-    def get_job_name(self):
-        return self._job_name
-
-    def get_run_arg(self):
-        return self._run_arg
-
-
-class _LegacyStageBuilder(_StageBuilder):
-    def __init__(self):
-        super().__init__()
-        self._max_runtime = None
-        self._callback_arguments = None
-        self._done_callback = None
-        self._exit_callback = None
-        self._num_cpu = None
-        self._run_path = None
-        self._job_script = None
-        self._job_name = None
-        self._run_arg = None
-        self.reset()
-
-    def reset(self):
-        super().reset()
-        self._max_runtime = None
-        self._callback_arguments = None
-        self._done_callback = None
-        self._exit_callback = None
-        self._num_cpu = 0
-        self._run_path = None
-        self._job_script = None
-        self._job_name = None
-        self._run_arg = None
-        return self
-
-    def set_max_runtime(self, max_runtime):
-        self._max_runtime = max_runtime
-        return self
-
-    def set_callback_arguments(self, callback_arguments):
-        self._callback_arguments = callback_arguments
-        return self
-
-    def set_done_callback(self, done_callback):
-        self._done_callback = done_callback
-        return self
-
-    def set_exit_callback(self, exit_callback):
-        self._exit_callback = exit_callback
-        return self
-
-    def set_num_cpu(self, num_cpu):
-        self._num_cpu = num_cpu
-        return self
-
-    def set_run_path(self, run_path):
-        self._run_path = run_path
-        return self
-
-    def set_job_script(self, job_script):
-        self._job_script = job_script
-        return self
-
-    def set_job_name(self, job_name):
-        self._job_name = job_name
-        return self
-
-    def set_run_arg(self, run_arg):
-        self._run_arg = run_arg
-        return self
-
-    def build(self):
-        steps = [builder.build() for builder in self._steps]
-        return _LegacyStage(
-            self._id,
-            steps,
-            self._status,
-            self._max_runtime,
-            self._callback_arguments,
-            self._done_callback,
-            self._exit_callback,
-            self._num_cpu,
-            self._run_path,
-            self._job_script,
-            self._job_name,
-            self._run_arg,
-        )
-
-
 def create_stage_builder():
     return _StageBuilder()
 
 
-def create_legacy_stage_builder():
-    return _LegacyStageBuilder()
-
-
 class _RealizationBuilder:
     def __init__(self):
-        self._stages = None
+        self._steps = None
         self._active = None
         self._iens = None
         self.reset()
 
     def reset(self):
-        self._stages = []
+        self._steps = []
         self._active = None
         self._iens = None
         return self
@@ -732,8 +709,8 @@ class _RealizationBuilder:
         self._active = active
         return self
 
-    def add_stage(self, stage):
-        self._stages.append(stage)
+    def add_step(self, step):
+        self._steps.append(step)
         return self
 
     def set_iens(self, iens):
@@ -741,14 +718,11 @@ class _RealizationBuilder:
         return self
 
     def build(self):
-        stages = [builder.build() for builder in self._stages]
-        steps = []
-        for stage in stages:
-            steps.extend(stage.get_steps())
+        steps = [builder.build() for builder in self._steps]
         ts_sorted_steps = _sort_steps(steps)
 
         return _Realization(
-            self._iens, stages, self._active, ts_sorted_steps=ts_sorted_steps
+            self._iens, steps, self._active, ts_sorted_steps=ts_sorted_steps
         )
 
 
@@ -757,19 +731,17 @@ def create_realization_builder():
 
 
 class _Realization:
-    def __init__(self, iens, stages, active, ts_sorted_steps=None):
+    def __init__(self, iens, steps, active, ts_sorted_steps=None):
         if iens is None:
             raise ValueError(f"{self} needs iens")
-        if stages is None:
-            raise ValueError(f"{self} needs stages")
+        if steps is None:
+            raise ValueError(f"{self} needs steps")
         if active is None:
             raise ValueError(f"{self} needs to be set either active or not")
 
         self._iens = iens
-        self._stages = stages
+        self._steps = steps
         self._active = active
-
-        steps = self.get_all_steps()
 
         self._ts_sorted_indices = None
         if ts_sorted_steps is not None:
@@ -783,17 +755,11 @@ class _Realization:
                     f"disparity between amount of sorted items ({self._ts_sorted_indices}) and steps, possibly duplicate step name?"
                 )
 
-    def get_all_steps(self):
-        steps = []
-        for stage in self._stages:
-            steps.extend(stage.get_steps())
-        return steps
+    def get_steps(self):
+        return self._steps
 
     def get_iens(self):
         return self._iens
-
-    def get_stages(self) -> typing.List[typing.Type[_Stage]]:
-        return self._stages
 
     def is_active(self):
         return self._active
@@ -802,7 +768,7 @@ class _Realization:
         self._active = active
 
     def get_steps_sorted_topologically(self) -> typing.Iterator[_Step]:
-        steps = self.get_all_steps()
+        steps = self._steps
         if not self._ts_sorted_indices:
             raise NotImplementedError("steps were not sorted")
         for idx in self._ts_sorted_indices:
@@ -855,50 +821,47 @@ class _EnsembleBuilder:
             analysis_config,
         )
 
+        num_cpu = res_config.queue_config.num_cpu
+        if num_cpu == 0:
+            num_cpu = res_config.ecl_config.num_cpu
+
+        max_runtime = analysis_config.get_max_runtime()
+        if max_runtime == 0:
+            max_runtime = None
+
         for iens in range(0, len(run_context)):
-            step = create_step_builder().set_id(0).set_name("legacy_step")
-
-            for index in range(0, len(forward_model)):
-                ext_job = forward_model.iget_job(index)
-                step.add_job(
-                    create_legacy_job_builder()
-                    .set_id(index)
-                    .set_name(ext_job.name())
-                    .set_ext_job(ext_job)
-                ).set_dummy_io()
-
-            num_cpu = res_config.queue_config.num_cpu
-            if num_cpu == 0:
-                num_cpu = res_config.ecl_config.num_cpu
-
-            max_runtime = analysis_config.get_max_runtime()
-            if max_runtime == 0:
-                max_runtime = None
-
-            run_arg = run_context[iens]
-
-            real = (
-                create_realization_builder()
-                .set_iens(iens)
-                .active(run_context.is_active(iens))
-            )
-            builder.add_realization(real)
-            if run_context.is_active(iens):
-                real.add_stage(
-                    create_legacy_stage_builder()
-                    .add_step(step)
-                    .set_id(0)
-                    .set_status(REALIZATION_STATE_UNKNOWN)
-                    .set_max_runtime(max_runtime)
-                    .set_callback_arguments([run_arg, res_config])
-                    .set_done_callback(EnKFState.forward_model_ok_callback)
-                    .set_exit_callback(EnKFState.forward_model_exit_callback)
-                    .set_num_cpu(num_cpu)
-                    .set_run_path(run_arg.runpath)
-                    .set_job_script(res_config.queue_config.job_script)
-                    .set_job_name(run_arg.job_name)
-                    .set_run_arg(run_arg)
+            active = run_context.is_active(iens)
+            real = create_realization_builder().set_iens(iens).active(active)
+            step = create_step_builder().set_id(0).set_dummy_io()
+            if active:
+                real.active(True).add_step(step)
+                for index in range(0, len(forward_model)):
+                    ext_job = forward_model.iget_job(index)
+                    step.add_job(
+                        create_legacy_job_builder()
+                        .set_id(index)
+                        .set_name(ext_job.name())
+                        .set_ext_job(ext_job)
+                    )
+                run_arg = run_context[iens]
+                step.set_max_runtime(max_runtime).set_callback_arguments(
+                    [run_arg, res_config]
+                ).set_done_callback(
+                    EnKFState.forward_model_ok_callback
+                ).set_exit_callback(
+                    EnKFState.forward_model_exit_callback
+                ).set_num_cpu(
+                    num_cpu
+                ).set_run_path(
+                    run_arg.runpath
+                ).set_job_script(
+                    res_config.queue_config.job_script
+                ).set_job_name(
+                    run_arg.job_name
+                ).set_run_arg(
+                    run_arg
                 )
+            builder.add_realization(real)
         return builder
 
     def build(self):

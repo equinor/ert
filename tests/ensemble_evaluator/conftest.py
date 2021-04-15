@@ -8,7 +8,6 @@ import pytest
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     create_ensemble_builder,
     create_legacy_job_builder,
-    create_legacy_stage_builder,
     create_realization_builder,
     create_step_builder,
 )
@@ -76,6 +75,17 @@ def make_ensemble_builder(queue_config):
                 step = (
                     create_step_builder()
                     .set_id(0)
+                    .set_job_name("job dispatch")
+                    .set_job_script("job_dispatch.py")
+                    .set_max_runtime(10000)
+                    .set_run_arg(Mock(iens=iens))
+                    .set_done_callback(lambda _: True)
+                    .set_exit_callback(lambda _: True)
+                    # the first callback_argument is expected to be a run_arg
+                    # from the run_arg, the queue wants to access the iens prop
+                    .set_callback_arguments([])
+                    .set_run_path(str(run_path))
+                    .set_num_cpu(1)
                     .set_name("dummy step")
                     .set_dummy_io()
                 )
@@ -92,22 +102,7 @@ def make_ensemble_builder(queue_config):
                     create_realization_builder()
                     .active(True)
                     .set_iens(iens)
-                    .add_stage(
-                        create_legacy_stage_builder()
-                        .set_id(0)
-                        .set_job_name("some_stage")
-                        .set_job_script("job_dispatch.py")
-                        .set_status("Unknown")
-                        .set_max_runtime(10000)
-                        .set_run_arg(Mock(iens=iens))
-                        .set_done_callback(lambda _: True)
-                        .set_exit_callback(lambda _: True)
-                        # the first callback_argument is expected to be a run_arg
-                        # from the run_arg, the queue wants to access the iens prop
-                        .set_callback_arguments([])
-                        .set_run_path(str(run_path))
-                        .add_step(step)
-                    )
+                    .add_step(step)
                 )
 
         analysis_config = Mock()

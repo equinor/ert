@@ -18,11 +18,9 @@ from ert_shared.ensemble_evaluator.entity.identifiers import (
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
     Snapshot,
-    ForwardModel,
     Job,
     Realization,
     SnapshotDict,
-    Stage,
     Step,
 )
 from ert_shared.models.base_run_model import BaseRunModel
@@ -130,7 +128,6 @@ class LegacyTracker:
             status=ENSEMBLE_STATE_STARTED,
             reals={},
             metadata={"iter": iter_},
-            forward_model=ForwardModel(step_definitions={}),
         )
 
         forward_model = self._model.get_forward_model()
@@ -158,11 +155,11 @@ class LegacyTracker:
                 status = JobStatusType.from_string(queue_snapshot[iens])
 
             snapshot.reals[real_id] = Realization(
-                status=queue_status_to_real_state(status), active=True, stages={}
+                status=queue_status_to_real_state(status), active=True, steps={}
             )
 
             step = Step(status="", jobs={})
-            snapshot.reals[real_id].stages["0"] = Stage(status="", steps={"0": step})
+            snapshot.reals[real_id].steps["0"] = step
 
             for index in range(0, len(forward_model)):
                 ext_job = forward_model.iget_job(index)
@@ -288,7 +285,6 @@ class LegacyTracker:
             for idx, fm in enumerate(jobs):
                 partial.update_job(
                     str(iens),  # real_id
-                    "0",
                     "0",
                     str(idx),
                     Job(

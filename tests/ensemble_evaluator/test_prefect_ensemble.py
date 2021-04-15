@@ -33,16 +33,15 @@ def parse_config(path):
     conf_path = Path(path).resolve()
     with open(conf_path, "r") as f:
         config = yaml.safe_load(f)
-    for stage in config.get(ids.STAGES):
-        for step in stage.get(ids.STEPS):
-            for input_ in step.get(ids.INPUTS):
-                input_[ids.LOCATION] = Path(input_[ids.LOCATION])
-            for job in step.get(ids.JOBS):
-                job[ids.EXECUTABLE] = (
-                    Path(job[ids.EXECUTABLE])
-                    if step.get(ids.TYPE) == ids.UNIX
-                    else job[ids.EXECUTABLE]
-                )
+    for step in config.get(ids.STEPS):
+        for input_ in step.get(ids.INPUTS):
+            input_[ids.LOCATION] = Path(input_[ids.LOCATION])
+        for job in step.get(ids.JOBS):
+            job[ids.EXECUTABLE] = (
+                Path(job[ids.EXECUTABLE])
+                if step.get(ids.TYPE) == ids.UNIX
+                else job[ids.EXECUTABLE]
+            )
     return config
 
 
@@ -64,17 +63,16 @@ def coefficient_transmitters(coefficients, storage_path):
 
 def script_transmitters(config):
     transmitters = defaultdict(dict)
-    for stage in config.get(ids.STAGES):
-        for step in stage.get(ids.STEPS):
-            for job in step.get(ids.JOBS):
-                for iens in range(config.get(ids.REALIZATIONS)):
-                    transmitters[iens].update(
-                        script_transmitter(
-                            name=job.get(ids.NAME),
-                            location=Path(job.get(ids.EXECUTABLE)),
-                            storage_path=config.get(ids.STORAGE)["storage_path"],
-                        )
+    for step in config.get(ids.STEPS):
+        for job in step.get(ids.JOBS):
+            for iens in range(config.get(ids.REALIZATIONS)):
+                transmitters[iens].update(
+                    script_transmitter(
+                        name=job.get(ids.NAME),
+                        location=Path(job.get(ids.EXECUTABLE)),
+                        storage_path=config.get(ids.STORAGE)["storage_path"],
                     )
+                )
     return dict(transmitters)
 
 
@@ -94,16 +92,15 @@ def output_transmitters(config):
     tmp_input_folder = "output_files"
     os.makedirs(tmp_input_folder)
     transmitters = defaultdict(dict)
-    for stage in config.get(ids.STAGES):
-        for step in stage.get(ids.STEPS):
-            for output in step.get(ids.OUTPUTS):
-                for iens in range(config.get(ids.REALIZATIONS)):
-                    transmitters[iens][
-                        output.get(ids.RECORD)
-                    ] = ert3.data.SharedDiskRecordTransmitter(
-                        output.get(ids.RECORD),
-                        storage_path=Path(config.get(ids.STORAGE)["storage_path"]),
-                    )
+    for step in config.get(ids.STEPS):
+        for output in step.get(ids.OUTPUTS):
+            for iens in range(config.get(ids.REALIZATIONS)):
+                transmitters[iens][
+                    output.get(ids.RECORD)
+                ] = ert3.data.SharedDiskRecordTransmitter(
+                    output.get(ids.RECORD),
+                    storage_path=Path(config.get(ids.STORAGE)["storage_path"]),
+                )
     return dict(transmitters)
 
 
@@ -123,7 +120,7 @@ def coefficients():
 
 
 def get_step(step_name, inputs, outputs, jobs, url, type_="unix"):
-    step_source = "/ert/ee/test_ee_id/real/0/stage/0/step/0"
+    step_source = "/ert/ee/test_ee_id/real/0/step/0"
     step_builder = ee.create_step_builder()
     for idx, (name, executable, args) in enumerate(jobs):
         step_builder.add_job(
@@ -178,43 +175,39 @@ def test_get_flow(coefficients, unused_tcp_port):
             }
         )
         server_config = EvaluatorServerConfig(unused_tcp_port)
-        for permuted_stages in permutations(config["stages"]):
-            for stage_idx, stage in enumerate(permuted_stages):
-                for permuted_steps in permutations(stage["steps"]):
-                    permuted_config = copy.deepcopy(config)
-                    permuted_config["stages"] = copy.deepcopy(permuted_stages)
-                    permuted_config["stages"][stage_idx]["steps"] = permuted_steps
-                    permuted_config["dispatch_uri"] = server_config.dispatch_uri
-                    ensemble = PrefectEnsemble(permuted_config)
+        for permuted_steps in permutations(config["steps"]):
+            permuted_config = copy.deepcopy(config)
+            permuted_config["steps"] = permuted_steps
+            permuted_config["dispatch_uri"] = server_config.dispatch_uri
+            ensemble = PrefectEnsemble(permuted_config)
 
-                    for iens in range(2):
-                        flow = ensemble.get_flow(
-                            ensemble._ee_id,
-                            [iens],
-                        )
+            for iens in range(2):
+                flow = ensemble.get_flow(
+                    ensemble._ee_id,
+                    [iens],
+                )
 
-                        # Get the ordered tasks and retrieve their stage and step ids.
-                        flow_steps = [
-                            task.get_step()
-                            for task in flow.sorted_tasks()
-                            if isinstance(task, UnixTask)
-                        ]
-                        assert len(flow_steps) == 4
+                # Get the ordered tasks and retrieve their step ids.
+                flow_steps = [
+                    task.get_step()
+                    for task in flow.sorted_tasks()
+                    if isinstance(task, UnixTask)
+                ]
+                assert len(flow_steps) == 4
 
-                        realization_steps = list(
-                            ensemble.get_reals()[iens].get_steps_sorted_topologically()
-                        )
+                realization_steps = list(
+                    ensemble.get_reals()[iens].get_steps_sorted_topologically()
+                )
 
-                        # Testing realization steps
-                        for step_ordering in [realization_steps, flow_steps]:
-                            mapping = {
-                                step._name: idx
-                                for idx, step in enumerate(step_ordering)
-                            }
-                            assert mapping["second_degree"] < mapping["zero_degree"]
-                            assert mapping["zero_degree"] < mapping["add_coeffs"]
-                            assert mapping["first_degree"] < mapping["add_coeffs"]
-                            assert mapping["second_degree"] < mapping["add_coeffs"]
+                # Testing realization steps
+                for step_ordering in [realization_steps, flow_steps]:
+                    mapping = {
+                        step._name: idx for idx, step in enumerate(step_ordering)
+                    }
+                    assert mapping["second_degree"] < mapping["zero_degree"]
+                    assert mapping["zero_degree"] < mapping["add_coeffs"]
+                    assert mapping["first_degree"] < mapping["add_coeffs"]
+                    assert mapping["second_degree"] < mapping["add_coeffs"]
 
 
 def test_unix_task(unused_tcp_port, tmpdir):

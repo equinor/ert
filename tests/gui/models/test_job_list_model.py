@@ -61,7 +61,6 @@ def test_changes(full_snapshot):
         "0",
         "0",
         "0",
-        "0",
         job=Job(
             status=JOB_STATE_FAILURE,
             start_time=start_time,
@@ -97,7 +96,7 @@ def test_no_cross_talk(full_snapshot):
 
     # Test that changes to iter=1 does not bleed into iter=0
     partial = PartialSnapshot(full_snapshot)
-    partial.update_job("0", "0", "0", "0", job=Job(status=JOB_STATE_FAILURE))
+    partial.update_job("0", "0", "0", job=Job(status=JOB_STATE_FAILURE))
     source_model._add_partial_snapshot(partial, 1)
     assert (
         model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data() == JOB_STATE_START

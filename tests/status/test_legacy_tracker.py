@@ -163,8 +163,8 @@ def test_tracking(
                     real.status == REALIZATION_STATE_FINISHED
                 ), f"iter:{iter_} real:{real_id} was not finished"
 
-                poly = real.stages["0"].steps["0"].jobs["0"]
-                poly2 = real.stages["0"].steps["0"].jobs["1"]
+                poly = real.steps["0"].jobs["0"]
+                poly2 = real.steps["0"].jobs["1"]
                 assert poly.name == "poly_eval"
                 assert (
                     poly.status == JOB_STATE_FINISHED

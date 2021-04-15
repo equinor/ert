@@ -65,7 +65,7 @@ class _LegacyEnsemble(_Ensemble):
             self._job_queue = self._queue_config.create_job_queue()
 
             for real in self.get_active_reals():
-                self._job_queue.add_ee_stage(real.get_stages()[0])
+                self._job_queue.add_ee_stage(real.get_steps()[0])
 
             self._job_queue.submit_complete()
 

@@ -11,22 +11,17 @@ def test_build_ensemble():
     ensemble = ee.create_ensemble_builder().add_realization(
         ee.create_realization_builder()
         .set_iens(0)
-        .add_stage(
-            ee.create_stage_builder()
-            .add_step(
-                ee.create_step_builder()
-                .add_job(
-                    ee.create_legacy_job_builder()
-                    .set_id(0)
-                    .set_name("echo_command")
-                    .set_ext_job(Mock())
-                )
+        .add_step(
+            ee.create_step_builder()
+            .add_job(
+                ee.create_legacy_job_builder()
                 .set_id(0)
-                .set_name("some_step")
-                .set_dummy_io()
+                .set_name("echo_command")
+                .set_ext_job(Mock())
             )
             .set_id(0)
-            .set_status("unknown")
+            .set_name("some_step")
+            .set_dummy_io()
         )
         .active(True)
     )
@@ -173,20 +168,16 @@ def test_topological_sort(steps, expected, ambiguous):
     For expected steps, assert that they are equal to the sorted steps, minus
     any ambiguous steps.
     """
-    stage = ee.create_stage_builder().set_id(0).set_status("unknown")
+    real = ee.create_realization_builder().set_iens(0).active(True)
     for step_def in steps:
         step = ee.create_step_builder().set_id(0).set_name(step_def["name"])
         for input_ in step_def["inputs"]:
             step.add_input(ee.create_input_builder().set_name(input_))
         for output in step_def["outputs"]:
             step.add_output(ee.create_output_builder().set_name(output))
-        stage.add_step(step)
+        real.add_step(step)
 
-    ensemble = ee.create_ensemble_builder().add_realization(
-        ee.create_realization_builder().set_iens(0).add_stage(stage).active(True)
-    )
-
-    ensemble = ensemble.build()
+    ensemble = ee.create_ensemble_builder().add_realization(real).build()
     real = ensemble.get_reals()[0]
 
     if ambiguous:
