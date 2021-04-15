@@ -157,47 +157,42 @@ def _build_ee_config(
                 }
             )
 
-    stages = [
+    steps = [
         {
-            "name": stage.name,
-            "steps": [
+            "name": stage.name + "-only_step",
+            "inputs": [
                 {
-                    "name": stage.name + "-only_step",
-                    "inputs": [
-                        {
-                            "record": input_.record,
-                            "location": input_.location,
-                            "mime": input_.mime,
-                            "is_executable": False,
-                        }
-                        for input_ in stage.input
-                    ]
-                    + [
-                        {
-                            "record": cmd.name,
-                            "location": command_location(cmd.name),
-                            "mime": cmd.mime,
-                            "is_executable": True,
-                        }
-                        for cmd in commands
-                    ],
-                    "outputs": [
-                        {
-                            "record": output.record,
-                            "location": output.location,
-                            "mime": output.mime,
-                        }
-                        for output in stage.output
-                    ],
-                    "jobs": jobs,
-                    "type": "function" if stage.function else "unix",
+                    "record": input_.record,
+                    "location": input_.location,
+                    "mime": input_.mime,
+                    "is_executable": False,
                 }
+                for input_ in stage.input
+            ]
+            + [
+                {
+                    "record": cmd.name,
+                    "location": command_location(cmd.name),
+                    "mime": cmd.mime,
+                    "is_executable": True,
+                }
+                for cmd in commands
             ],
+            "outputs": [
+                {
+                    "record": output.record,
+                    "location": output.location,
+                    "mime": output.mime,
+                }
+                for output in stage.output
+            ],
+            "jobs": jobs,
+            "type": "function" if stage.function else "unix",
         }
     ]
 
     ee_config = {
-        "stages": stages,
+        "steps": steps,
         "realizations": ensemble_size,
         "max_running": 10000,
         "max_retries": 0,

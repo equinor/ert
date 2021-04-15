@@ -31,10 +31,6 @@ def get_real_id(source):
     return _match_token("real", source)
 
 
-def get_stage_id(source):
-    return _match_token("stage", source)
-
-
 def get_step_id(source):
     return _match_token("step", source)
 

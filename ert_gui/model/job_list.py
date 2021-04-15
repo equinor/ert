@@ -123,10 +123,7 @@ class JobListProxyModel(QAbstractProxyModel):
         real_index = sm.index(self._real, 0, iter_index)
         if not real_index.isValid() or not sm.hasChildren(real_index):
             return QModelIndex()
-        stage_index = sm.index(self._stage, 0, real_index)
-        if not stage_index.isValid() or not sm.hasChildren(stage_index):
-            return QModelIndex()
-        step_index = sm.index(self._step, 0, stage_index)
+        step_index = sm.index(self._step, 0, real_index)
         if not step_index.isValid() or not sm.hasChildren(step_index):
             return QModelIndex()
         job_index = sm.index(proxyIndex.row(), proxyIndex.column(), step_index)
@@ -159,8 +156,6 @@ class JobListProxyModel(QAbstractProxyModel):
         while index.isValid() and index.internalPointer() is not None:
             node = index.internalPointer()
             if node.type == NodeType.STEP and node.row() != self._step:
-                return False
-            elif node.type == NodeType.STAGE and node.row() != self._stage:
                 return False
             elif node.type == NodeType.REAL and node.row() != self._real:
                 return False

@@ -17,7 +17,6 @@ from ert_shared.ensemble_evaluator.entity.ensemble import (
     _Ensemble,
     create_job_builder,
     create_realization_builder,
-    create_stage_builder,
     create_step_builder,
 )
 from ert_shared.ensemble_evaluator.client import Client
@@ -106,60 +105,49 @@ class PrefectEnsemble(_Ensemble):
         real_builders = []
         for iens in range(0, self.config[ids.REALIZATIONS]):
             real_builder = create_realization_builder().active(True).set_iens(iens)
-            for stage in self.config[ids.STAGES]:
-                stage_id = uuid.uuid4()
-                stage_builder = (
-                    create_stage_builder()
-                    .set_id(stage_id)
-                    .set_status(state.STAGE_STATE_UNKNOWN)
+            for step in self.config[ids.STEPS]:
+                step_id = uuid.uuid4()
+                step_source = f"/ert/ee/{{ee_id}}/real/{iens}/step/{step_id}"
+                step_builder = (
+                    create_step_builder()
+                    .set_id(step_id)
+                    .set_name(step[ids.NAME])
+                    .set_source(step_source)
+                    .set_ee_url(self._ee_dispach_url)
+                    .set_type(step[ids.TYPE])
                 )
-                for step in stage[ids.STEPS]:
-                    step_id = uuid.uuid4()
-                    step_source = (
-                        f"/ert/ee/{{ee_id}}/real/{iens}/stage/{stage_id}/step/{step_id}"
-                    )
-                    step_builder = (
-                        create_step_builder()
-                        .set_id(step_id)
-                        .set_name(step[ids.NAME])
-                        .set_source(step_source)
-                        .set_ee_url(self._ee_dispach_url)
-                        .set_type(step[ids.TYPE])
+
+                for io in step.get(ids.INPUTS, []):
+                    input_builder = (
+                        create_file_io_builder()
+                        .set_name(io[ids.RECORD])
+                        .set_path(io[ids.LOCATION])
+                        .set_mime(io[ids.MIME])
                     )
 
-                    for io in step.get(ids.INPUTS, []):
-                        input_builder = (
-                            create_file_io_builder()
-                            .set_name(io[ids.RECORD])
-                            .set_path(io[ids.LOCATION])
-                            .set_mime(io[ids.MIME])
-                        )
+                    if io.get(ids.IS_EXECUTABLE):
+                        input_builder.set_executable()
 
-                        if io.get(ids.IS_EXECUTABLE):
-                            input_builder.set_executable()
+                    step_builder.add_input(input_builder)
+                for io in step.get(ids.OUTPUTS, []):
+                    step_builder.add_output(
+                        create_file_io_builder()
+                        .set_name(io[ids.RECORD])
+                        .set_path(io[ids.LOCATION])
+                        .set_mime(io[ids.MIME])
+                    )
 
-                        step_builder.add_input(input_builder)
-                    for io in step.get(ids.OUTPUTS, []):
-                        step_builder.add_output(
-                            create_file_io_builder()
-                            .set_name(io[ids.RECORD])
-                            .set_path(io[ids.LOCATION])
-                            .set_mime(io[ids.MIME])
-                        )
-
-                    for job in step[ids.JOBS]:
-                        job_builder = (
-                            create_job_builder()
-                            .set_id(str(uuid.uuid4()))
-                            .set_name(job[ids.NAME])
-                            .set_executable(job[ids.EXECUTABLE])
-                            .set_args(job.get(ids.ARGS))
-                            .set_step_source(step_source)
-                        )
-                        step_builder.add_job(job_builder)
-
-                    stage_builder.add_step(step_builder)
-                real_builder.add_stage(stage_builder)
+                for job in step[ids.JOBS]:
+                    job_builder = (
+                        create_job_builder()
+                        .set_id(str(uuid.uuid4()))
+                        .set_name(job[ids.NAME])
+                        .set_executable(job[ids.EXECUTABLE])
+                        .set_args(job.get(ids.ARGS))
+                        .set_step_source(step_source)
+                    )
+                    step_builder.add_job(job_builder)
+                real_builder.add_step(step_builder)
             real_builders.append(real_builder)
         return [builder.build() for builder in real_builders]
 
@@ -191,8 +179,8 @@ class PrefectEnsemble(_Ensemble):
                         for inp in step.get_inputs()
                     }
                     outputs = self.config["outputs"][iens]
-                    stage_task = step.get_task(outputs, ee_id, name=str(iens))
-                    result = stage_task(inputs=inputs)
+                    step_task = step.get_task(outputs, ee_id, name=str(iens))
+                    result = step_task(inputs=inputs)
                     self._iens_to_task[iens] = result
                     for output in step.get_outputs():
                         transmitter_map[iens][output.get_name()] = result[

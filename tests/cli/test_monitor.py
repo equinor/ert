@@ -8,7 +8,6 @@ from ert_shared.status.entity.state import (
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     Snapshot,
     SnapshotDict,
-    ForwardModel,
     Realization,
 )
 import unittest
@@ -30,7 +29,7 @@ class MonitorTest(unittest.TestCase):
 
     def test_legends(self):
         monitor = Monitor(out=StringIO())
-        sd = SnapshotDict(status="", forward_model=ForwardModel(step_definitions={}))
+        sd = SnapshotDict(status="")
         for i in range(0, 100):
             status = REALIZATION_STATE_FINISHED if i < 10 else REALIZATION_STATE_RUNNING
             sd.reals[i] = Realization(status=status, active=True)
@@ -69,7 +68,7 @@ class MonitorTest(unittest.TestCase):
     def test_print_progress(self):
         out = StringIO()
         monitor = Monitor(out=out)
-        sd = SnapshotDict(status="", forward_model=ForwardModel(step_definitions={}))
+        sd = SnapshotDict(status="")
         for i in range(0, 100):
             status = REALIZATION_STATE_FINISHED if i < 50 else REALIZATION_STATE_WAITING
             sd.reals[i] = Realization(status=status, active=True)

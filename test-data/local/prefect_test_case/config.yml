@@ -1,101 +1,97 @@
-stages:
-  - name: sum_coeffs
-    steps:
-      - name: add_coeffs
-        type: unix
-        resources:
-          - sum_coeffs.py
-        inputs:
-          - record: sum_up
-            location: sum_coeffs.py
-            mime: text/x-python
-            is_executable: True
-          - record: input0
-            location: poly_0.out
-            mime: application/json
-          - record: input1
-            location: poly_1.out
-            mime: application/json
-          - record: input2
-            location: poly_2.out
-            mime: application/json
+steps:
+  - name: add_coeffs
+    type: unix
+    resources:
+      - sum_coeffs.py
+    inputs:
+      - record: sum_up
+        location: sum_coeffs.py
+        mime: text/x-python
+        is_executable: True
+      - record: input0
+        location: poly_0.out
+        mime: application/json
+      - record: input1
+        location: poly_1.out
+        mime: application/json
+      - record: input2
+        location: poly_2.out
+        mime: application/json
 
-        outputs:
-          - record: sum_output
-            location: poly_sum.out
-            mime: application/json
-        jobs:
-          - name: sum_up
-            executable: sum_coeffs.py
-            args: [ ]
+    outputs:
+      - record: sum_output
+        location: poly_sum.out
+        mime: application/json
+    jobs:
+      - name: sum_up
+        executable: sum_coeffs.py
+        args: [ ]
 
-  - name: calculate_coeffs
-    steps:
-      - name: zero_degree
-        type: unix
-        resources:
-          - evaluate_coeffs.py
-        inputs:
-          - record: generate_zero_degree
-            location: evaluate_coeffs.py
-            mime: text/x-python
-            is_executable: True
-          - record: coeffs
-            location: coeffs.json
-            mime: application/json
-          - record: input2
-            location: poly_2.out
-            mime: application/json
-        outputs:
-          - record: input0
-            location: poly_0.out
-            mime: application/json
-        jobs:
-          - name: generate_zero_degree
-            executable: evaluate_coeffs.py
-            args: ["0"]
+  - name: zero_degree
+    type: unix
+    resources:
+      - evaluate_coeffs.py
+    inputs:
+      - record: generate_zero_degree
+        location: evaluate_coeffs.py
+        mime: text/x-python
+        is_executable: True
+      - record: coeffs
+        location: coeffs.json
+        mime: application/json
+      - record: input2
+        location: poly_2.out
+        mime: application/json
+    outputs:
+      - record: input0
+        location: poly_0.out
+        mime: application/json
+    jobs:
+      - name: generate_zero_degree
+        executable: evaluate_coeffs.py
+        args: ["0"]
 
-      - name: first_degree
-        type: unix
-        resources:
-          - evaluate_coeffs.py
-        inputs:
-          - record: generate_first_degree
-            location: evaluate_coeffs.py
-            mime: text/x-python
-            is_executable: True
-          - record: coeffs
-            location: coeffs.json
-            mime: application/json
-        outputs:
-          - record: input1
-            location: poly_1.out
-            mime: application/json
-        jobs:
-          - name: generate_first_degree
-            executable: evaluate_coeffs.py
-            args: ["1"]
+  - name: first_degree
+    type: unix
+    resources:
+      - evaluate_coeffs.py
+    inputs:
+      - record: generate_first_degree
+        location: evaluate_coeffs.py
+        mime: text/x-python
+        is_executable: True
+      - record: coeffs
+        location: coeffs.json
+        mime: application/json
+    outputs:
+      - record: input1
+        location: poly_1.out
+        mime: application/json
+    jobs:
+      - name: generate_first_degree
+        executable: evaluate_coeffs.py
+        args: ["1"]
 
-      - name: second_degree
-        type: unix
-        resources:
-          - evaluate_coeffs.py
-        inputs:
-          - record: generate_second_degree
-            location: evaluate_coeffs.py
-            mime: text/x-python
-            is_executable: True
-          - record: coeffs
-            location: coeffs.json
-            mime: application/json
-        outputs:
-          - record: input2
-            location: poly_2.out
-            mime: application/json
-        jobs:
-          - name: generate_second_degree
-            executable: evaluate_coeffs.py
-            args: ["2"]
+  - name: second_degree
+    type: unix
+    resources:
+      - evaluate_coeffs.py
+    inputs:
+      - record: generate_second_degree
+        location: evaluate_coeffs.py
+        mime: text/x-python
+        is_executable: True
+      - record: coeffs
+        location: coeffs.json
+        mime: application/json
+    outputs:
+      - record: input2
+        location: poly_2.out
+        mime: application/json
+    jobs:
+      - name: generate_second_degree
+        executable: evaluate_coeffs.py
+        args: ["2"]
 
 
 

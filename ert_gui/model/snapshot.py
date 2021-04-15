@@ -38,7 +38,6 @@ COLUMNS = {
     NodeType.ROOT: ["Name", "Status"],
     NodeType.ITER: ["Name", "Status", "Active"],
     NodeType.REAL: ["Name", "Status"],
-    NodeType.STAGE: ["Name", "Status"],
     NodeType.STEP: [
         (STEP_COLUMN_NAME, ids.NAME),
         (STEP_COLUMN_ERROR, ids.ERROR),
@@ -81,67 +80,50 @@ class SnapshotModel(QAbstractItemModel):
                 real_node.row(), self.columnCount(iter_index) - 1, iter_index
             )
 
-            if not real.stages:
+            if not real.steps:
                 continue
 
-            # TODO: sort stages, but wait till after https://github.com/equinor/ert/issues/1220 ?
-            for stage_id, stage in real.stages.items():
-                stage_node = real_node.children[stage_id]
+            for step_id, step in real.steps.items():
+                step_node = real_node.children[step_id]
+                if step.status:
+                    step_node.data[ids.STATUS] = step.status
 
-                if stage.status:
-                    stage_node.data[ids.STATUS] = stage.status
-
-                stage_index = self.index(stage_node.row(), 0, real_index)
-                stage_index_bottom_right = self.index(
-                    stage_node.row(), self.columnCount(real_index) - 1, real_index
+                step_index = self.index(step_node.row(), 0, real_index)
+                step_index_bottom_right = self.index(
+                    step_node.row(), self.columnCount(real_index) - 1, real_index
                 )
 
-                if not stage.steps:
+                if not step.jobs:
                     continue
 
-                # TODO: sort steps, but wait till after https://github.com/equinor/ert/issues/1220 ?
-                for step_id, step in stage.steps.items():
-                    step_node = stage_node.children[step_id]
-                    if step.status:
-                        step_node.data[ids.STATUS] = step.status
+                for job_id in sorted(step.jobs, key=int):
+                    job = step.jobs[job_id]
+                    job_node = step_node.children[job_id]
 
-                    step_index = self.index(step_node.row(), 0, stage_index)
-                    step_index_bottom_right = self.index(
-                        step_node.row(), self.columnCount(stage_index) - 1, stage_index
+                    if job.status:
+                        job_node.data[ids.STATUS] = job.status
+                    if job.start_time:
+                        job_node.data[ids.START_TIME] = job.start_time
+                    if job.end_time:
+                        job_node.data[ids.END_TIME] = job.end_time
+                    if job.stdout:
+                        job_node.data[ids.STDOUT] = job.stdout
+                    if job.stderr:
+                        job_node.data[ids.STDERR] = job.stderr
+
+                    # Errors may be unset as the queue restarts the job
+                    job_node.data[ids.ERROR] = job.error if job.error else ""
+
+                    for attr in (ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE):
+                        if job.data and attr in job.data:
+                            job_node.data[ids.DATA][attr] = job.data.get(attr)
+
+                    job_index = self.index(job_node.row(), 0, step_index)
+                    job_index_bottom_right = self.index(
+                        job_node.row(), self.columnCount() - 1, step_index
                     )
-
-                    if not step.jobs:
-                        continue
-
-                    for job_id in sorted(step.jobs, key=int):
-                        job = step.jobs[job_id]
-                        job_node = step_node.children[job_id]
-
-                        if job.status:
-                            job_node.data[ids.STATUS] = job.status
-                        if job.start_time:
-                            job_node.data[ids.START_TIME] = job.start_time
-                        if job.end_time:
-                            job_node.data[ids.END_TIME] = job.end_time
-                        if job.stdout:
-                            job_node.data[ids.STDOUT] = job.stdout
-                        if job.stderr:
-                            job_node.data[ids.STDERR] = job.stderr
-
-                        # Errors may be unset as the queue restarts the job
-                        job_node.data[ids.ERROR] = job.error if job.error else ""
-
-                        for attr in (ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE):
-                            if job.data and attr in job.data:
-                                job_node.data[ids.DATA][attr] = job.data.get(attr)
-
-                        job_index = self.index(job_node.row(), 0, step_index)
-                        job_index_bottom_right = self.index(
-                            job_node.row(), self.columnCount() - 1, step_index
-                        )
-                        self.dataChanged.emit(job_index, job_index_bottom_right)
-                    self.dataChanged.emit(step_index, step_index_bottom_right)
-                self.dataChanged.emit(stage_index, stage_index_bottom_right)
+                    self.dataChanged.emit(job_index, job_index_bottom_right)
+                self.dataChanged.emit(step_index, step_index_bottom_right)
             self.dataChanged.emit(real_index, real_index_bottom_right)
             # TODO: there is no check that any of the data *actually* changed
             # https://github.com/equinor/ert/issues/1374
@@ -227,12 +209,12 @@ class SnapshotModel(QAbstractItemModel):
     def _real_data(self, index: QModelIndex, node: Node, role: int):
         if role == RealJobColorHint:
             colors = []
-            for stage in node.children.values():
-                for step in stage.children.values():
-                    for job_id in sorted(step.children.keys(), key=int):
-                        status = step.children[job_id].data[ids.STATUS]
-                        color = state.JOB_STATE_TO_COLOR[status]
-                        colors.append(QColor(*color))
+            assert node.type == NodeType.REAL
+            for step in node.children.values():
+                for job_id in sorted(step.children.keys(), key=int):
+                    status = step.children[job_id].data[ids.STATUS]
+                    color = state.JOB_STATE_TO_COLOR[status]
+                    colors.append(QColor(*color))
             return colors
         elif role == RealLabelHint:
             return str(node.id)

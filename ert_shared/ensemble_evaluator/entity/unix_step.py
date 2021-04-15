@@ -94,7 +94,7 @@ class UnixTask(prefect.Task):
             self._load_and_dump_input(transmitters=inputs, runpath=run_path)
             with Client(self._step.get_ee_url()) as ee_client:
                 ee_client.send_event(
-                    ev_type=ids.EVTYPE_FM_STEP_START,
+                    ev_type=ids.EVTYPE_FM_STEP_RUNNING,
                     ev_source=self._step.get_source(self._ee_id),
                 )
 

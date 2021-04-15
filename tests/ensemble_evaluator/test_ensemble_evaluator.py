@@ -19,7 +19,6 @@ from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     create_ensemble_builder,
     create_realization_builder,
-    create_stage_builder,
     create_step_builder,
     create_legacy_job_builder,
 )
@@ -40,28 +39,23 @@ def evaluator(ee_config):
             real=create_realization_builder()
             .active(True)
             .set_iens(0)
-            .add_stage(
-                stage=create_stage_builder()
-                .add_step(
-                    step=create_step_builder()
-                    .set_id(0)
-                    .set_name("cats")
-                    .add_job(
-                        job=create_legacy_job_builder()
-                        .set_id(0)
-                        .set_name("cat")
-                        .set_ext_job(Mock())
-                    )
-                    .add_job(
-                        job=create_legacy_job_builder()
-                        .set_id(1)
-                        .set_name("cat2")
-                        .set_ext_job(Mock())
-                    )
-                    .set_dummy_io()
-                )
+            .add_step(
+                step=create_step_builder()
                 .set_id(0)
-                .set_status("Unknown")
+                .set_name("cats")
+                .add_job(
+                    job=create_legacy_job_builder()
+                    .set_id(0)
+                    .set_name("cat")
+                    .set_ext_job(Mock())
+                )
+                .add_job(
+                    job=create_legacy_job_builder()
+                    .set_id(1)
+                    .set_name("cat2")
+                    .set_ext_job(Mock())
+                )
+                .set_dummy_io()
             )
         )
         .set_ensemble_size(2)
@@ -143,53 +137,53 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             send_dispatch_event(
                 dispatch1,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                "/ert/ee/0/real/0/stage/0/step/0/job/0",
+                "/ert/ee/0/real/0/step/0/job/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
             snapshot = Snapshot(next(events).data)
-            assert snapshot.get_job("0", "0", "0", "0").status == JOB_STATE_RUNNING
+            assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
 
             # second dispatcher informs that job 0 is running
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                "/ert/ee/0/real/1/stage/0/step/0/job/0",
+                "/ert/ee/0/real/1/step/0/job/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
             snapshot = Snapshot(next(events).data)
-            assert snapshot.get_job("1", "0", "0", "0").status == JOB_STATE_RUNNING
+            assert snapshot.get_job("1", "0", "0").status == JOB_STATE_RUNNING
 
             # second dispatcher informs that job 0 is done
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_SUCCESS,
-                "/ert/ee/0/real/1/stage/0/step/0/job/0",
+                "/ert/ee/0/real/1/step/0/job/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
             snapshot = Snapshot(next(events).data)
-            assert snapshot.get_job("1", "0", "0", "0").status == JOB_STATE_FINISHED
+            assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
 
             # second dispatcher informs that job 1 is failed
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_FAILURE,
-                "/ert/ee/0/real/1/stage/0/step/0/job/1",
+                "/ert/ee/0/real/1/step/0/job/1",
                 "event_job_1_fail",
                 {identifiers.ERROR_MSG: "error"},
             )
             snapshot = Snapshot(next(events).data)
-            assert snapshot.get_job("1", "0", "0", "1").status == JOB_STATE_FAILURE
+            assert snapshot.get_job("1", "0", "1").status == JOB_STATE_FAILURE
 
             # a second monitor connects
             with ee_monitor.create(host, port) as monitor2:
                 events2 = monitor2.track()
                 snapshot = Snapshot(next(events2).data)
                 assert snapshot.get_status() == ENSEMBLE_STATE_STARTED
-                assert snapshot.get_job("0", "0", "0", "0").status == JOB_STATE_RUNNING
-                assert snapshot.get_job("1", "0", "0", "0").status == JOB_STATE_FINISHED
+                assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
+                assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
 
                 # one monitor requests that server exit
                 monitor.signal_cancel()

@@ -10,16 +10,16 @@ class DummyEventHandler:
 
     def __init__(self):
         self.mock_all = Mock()
-        self.mock_stage = Mock()
+        self.mock_step = Mock()
         self.mock_none = Mock()
 
     @dispatch.register_event_handler(ids.EVGROUP_FM_ALL)
     async def all(self, event):
         self.mock_all(event)
 
-    @dispatch.register_event_handler(ids.EVGROUP_FM_STAGE)
-    async def stage(self, event):
-        self.mock_stage(event)
+    @dispatch.register_event_handler(ids.EVGROUP_FM_STEP)
+    async def step(self, event):
+        self.mock_step(event)
 
 
 def _create_dummy_event(event_type):
@@ -34,7 +34,7 @@ async def test_event_dispatcher_one_handler():
     await DummyEventHandler.dispatch.handle_event(event_handler, event)
 
     event_handler.mock_all.assert_called_with(event)
-    event_handler.mock_stage.assert_not_called()
+    event_handler.mock_step.assert_not_called()
     event_handler.mock_none.assert_not_called()
 
 
@@ -42,11 +42,11 @@ async def test_event_dispatcher_one_handler():
 async def test_event_dispatcher_two_handlers():
     event_handler = DummyEventHandler()
 
-    event = _create_dummy_event(ids.EVTYPE_FM_STAGE_UNKNOWN)
+    event = _create_dummy_event(ids.EVTYPE_FM_STEP_UNKNOWN)
     await DummyEventHandler.dispatch.handle_event(event_handler, event)
 
     event_handler.mock_all.assert_called_with(event)
-    event_handler.mock_stage.assert_called_with(event)
+    event_handler.mock_step.assert_called_with(event)
     event_handler.mock_none.assert_not_called()
 
 
@@ -58,5 +58,5 @@ async def test_event_dispatcher_no_handlers():
     await DummyEventHandler.dispatch.handle_event(event_handler, event)
 
     event_handler.mock_all.assert_not_called()
-    event_handler.mock_stage.assert_not_called()
+    event_handler.mock_step.assert_not_called()
     event_handler.mock_none.assert_not_called()

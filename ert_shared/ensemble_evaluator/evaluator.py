@@ -20,11 +20,9 @@ from ert_shared.ensemble_evaluator.entity import serialization
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
     Snapshot,
-    ForwardModel,
     Job,
     Realization,
     SnapshotDict,
-    Stage,
     Step,
 )
 from ert_shared.status.entity.state import (
@@ -34,8 +32,7 @@ from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_STOPPED,
     JOB_STATE_START,
     REALIZATION_STATE_WAITING,
-    STAGE_STATE_UNKNOWN,
-    STEP_STATE_START,
+    STEP_STATE_UNKNOWN,
 )
 
 logger = logging.getLogger(__name__)
@@ -69,6 +66,24 @@ class EnsembleEvaluator:
         self._event_index = 1
         self._result = None
 
+    """
+    {
+        steps: {
+            step1: {inputs: {name: step1.data}}
+            step2: {outputs: {name: step2.out}}
+        }
+        edges: [
+            {from: step2.out, to: step1.data}
+        ]
+        stages:
+    }
+
+    {
+        steps: []
+        jobs: []
+    }
+    """
+
     @staticmethod
     def create_snapshot(ensemble):
         reals = {}
@@ -77,26 +92,21 @@ class EnsembleEvaluator:
                 active=True,
                 status=REALIZATION_STATE_WAITING,
             )
-            for stage in real.get_stages():
-                reals[str(real.get_iens())].stages[str(stage.get_id())] = Stage(
-                    status=STAGE_STATE_UNKNOWN,
+            for step in real.get_steps():
+                reals[str(real.get_iens())].steps[str(step.get_id())] = Step(
+                    status=STEP_STATE_UNKNOWN
                 )
-                for step in stage.get_steps():
-                    reals[str(real.get_iens())].stages[str(stage.get_id())].steps[
-                        str(step.get_id())
-                    ] = Step(status=STEP_STATE_START)
-                    for job in step.get_jobs():
-                        reals[str(real.get_iens())].stages[str(stage.get_id())].steps[
-                            str(step.get_id())
-                        ].jobs[str(job.get_id())] = Job(
-                            status=JOB_STATE_START,
-                            data={},
-                            name=job.get_name(),
-                        )
+                for job in step.get_jobs():
+                    reals[str(real.get_iens())].steps[str(step.get_id())].jobs[
+                        str(job.get_id())
+                    ] = Job(
+                        status=JOB_STATE_START,
+                        data={},
+                        name=job.get_name(),
+                    )
         top = SnapshotDict(
             reals=reals,
             status=ENSEMBLE_STATE_STARTED,
-            forward_model=ForwardModel(step_definitions={}),
             metadata=ensemble.get_metadata(),
         )
 
@@ -304,7 +314,7 @@ class EnsembleEvaluator:
             {
                 "type": identifiers.EVTYPE_EE_TERMINATED,
                 "source": f"/ert/ee/{self._ee_id}",
-                "id": self.event_index(),
+                "id": str(self.event_index()),
             }
         )
         message = to_json(

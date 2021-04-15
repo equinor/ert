@@ -41,7 +41,7 @@ setup(
         "console-progressbar==1.1.2",
         "decorator",
         "deprecation",
-        "equinor-libres >= 10.0.0b0",
+        "equinor-libres >= 10.0.0b1",
         "fastapi",
         "graphlib_backport; python_version < '3.9'",
         "jinja2",

@@ -9,14 +9,12 @@ from ert_shared.ensemble_evaluator.entity.identifiers import (
     MAX_MEMORY_USAGE,
 )
 from ert_shared.ensemble_evaluator.entity.snapshot import (
-    ForwardModel,
     Job,
     PartialSnapshot,
     Realization,
     Snapshot,
     SnapshotBuilder,
     SnapshotDict,
-    Stage,
     Step,
 )
 from ert_shared.status.entity.state import (
@@ -24,15 +22,14 @@ from ert_shared.status.entity.state import (
     JOB_STATE_FINISHED,
     JOB_STATE_START,
     REALIZATION_STATE_UNKNOWN,
-    STAGE_STATE_UNKNOWN,
-    STEP_STATE_START,
+    STEP_STATE_UNKNOWN,
 )
 
 
 def partial_snapshot(snapshot) -> PartialSnapshot:
     partial = PartialSnapshot(snapshot)
     partial.update_real("0", Realization(status=JOB_STATE_FINISHED))
-    partial.update_job("0", "0", "0", "0", Job(status=JOB_STATE_FINISHED))
+    partial.update_job("0", "0", "0", Job(status=JOB_STATE_FINISHED))
     return partial
 
 
@@ -41,41 +38,36 @@ def full_snapshot() -> Snapshot:
     real = Realization(
         status=REALIZATION_STATE_UNKNOWN,
         active=True,
-        stages={
-            "0": Stage(
+        steps={
+            "0": Step(
                 status="",
-                steps={
-                    "0": Step(
-                        status="",
-                        jobs={
-                            "0": Job(
-                                start_time=dt.now(),
-                                end_time=dt.now(),
-                                name="poly_eval",
-                                status=JOB_STATE_START,
-                                error="error",
-                                stdout="std_out_file",
-                                stderr="std_err_file",
-                                data={
-                                    CURRENT_MEMORY_USAGE: "123",
-                                    MAX_MEMORY_USAGE: "312",
-                                },
-                            ),
-                            "1": Job(
-                                start_time=dt.now(),
-                                end_time=dt.now(),
-                                name="poly_postval",
-                                status=JOB_STATE_START,
-                                error="error",
-                                stdout="std_out_file",
-                                stderr="std_err_file",
-                                data={
-                                    CURRENT_MEMORY_USAGE: "123",
-                                    MAX_MEMORY_USAGE: "312",
-                                },
-                            ),
+                jobs={
+                    "0": Job(
+                        start_time=dt.now(),
+                        end_time=dt.now(),
+                        name="poly_eval",
+                        status=JOB_STATE_START,
+                        error="error",
+                        stdout="std_out_file",
+                        stderr="std_err_file",
+                        data={
+                            CURRENT_MEMORY_USAGE: "123",
+                            MAX_MEMORY_USAGE: "312",
                         },
-                    )
+                    ),
+                    "1": Job(
+                        start_time=dt.now(),
+                        end_time=dt.now(),
+                        name="poly_postval",
+                        status=JOB_STATE_START,
+                        error="error",
+                        stdout="std_out_file",
+                        stderr="std_err_file",
+                        data={
+                            CURRENT_MEMORY_USAGE: "123",
+                            MAX_MEMORY_USAGE: "312",
+                        },
+                    ),
                 },
             )
         },
@@ -83,7 +75,6 @@ def full_snapshot() -> Snapshot:
     snapshot = SnapshotDict(
         status=ENSEMBLE_STATE_STARTED,
         reals={},
-        forward_model=ForwardModel(step_definitions={}),
     )
     for i in range(0, 100):
         snapshot.reals[str(i)] = copy.deepcopy(real)
@@ -93,14 +84,9 @@ def full_snapshot() -> Snapshot:
 
 @pytest.fixture()
 def large_snapshot() -> Snapshot:
-    builder = (
-        SnapshotBuilder()
-        .add_stage(stage_id="0", status=STAGE_STATE_UNKNOWN)
-        .add_step(stage_id="0", step_id="0", status=STEP_STATE_START)
-    )
+    builder = SnapshotBuilder().add_step(step_id="0", status=STEP_STATE_UNKNOWN)
     for i in range(0, 150):
         builder.add_job(
-            stage_id="0",
             step_id="0",
             job_id=str(i),
             name=f"job_{i}",
@@ -117,14 +103,9 @@ def large_snapshot() -> Snapshot:
 
 @pytest.fixture()
 def small_snapshot() -> Snapshot:
-    builder = (
-        SnapshotBuilder()
-        .add_stage(stage_id="0", status=STAGE_STATE_UNKNOWN)
-        .add_step(stage_id="0", step_id="0", status=STEP_STATE_START)
-    )
+    builder = SnapshotBuilder().add_step(step_id="0", status=STEP_STATE_UNKNOWN)
     for i in range(0, 2):
         builder.add_job(
-            stage_id="0",
             step_id="0",
             job_id=str(i),
             name=f"job_{i}",
