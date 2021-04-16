@@ -19,7 +19,7 @@ def test_build_ensemble():
                 .set_name("echo_command")
                 .set_ext_job(Mock())
             )
-            .set_id(0)
+            .set_id("0")
             .set_name("some_step")
             .set_dummy_io()
         )
@@ -170,7 +170,7 @@ def test_topological_sort(steps, expected, ambiguous):
     """
     real = ee.create_realization_builder().set_iens(0).active(True)
     for step_def in steps:
-        step = ee.create_step_builder().set_id(0).set_name(step_def["name"])
+        step = ee.create_step_builder().set_id("0").set_name(step_def["name"])
         for input_ in step_def["inputs"]:
             step.add_input(ee.create_input_builder().set_name(input_))
         for output in step_def["outputs"]:

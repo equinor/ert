@@ -74,7 +74,7 @@ def make_ensemble_builder(queue_config):
 
                 step = (
                     create_step_builder()
-                    .set_id(0)
+                    .set_id("0")
                     .set_job_name("job dispatch")
                     .set_job_script("job_dispatch.py")
                     .set_max_runtime(10000)

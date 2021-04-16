@@ -58,10 +58,6 @@ class _IOBuilder:
     def __init__(self):
         self._name = None
 
-    def reset(self):
-        self._name = None
-        return self
-
     def set_name(self, name):
         self._name = name
         return self
@@ -76,11 +72,12 @@ class _DummyIO(_IO):
     pass
 
 
-class _DummyIOBuilder:
+class _DummyIOBuilder(_IOBuilder):
     _concrete_cls = _DummyIO
 
     def build(self):
-        return _IO("dummy i/o")
+        super().set_name("dummy i/o")
+        return super().build()
 
 
 class _FileIO(_IO):
@@ -333,25 +330,14 @@ class _LegacyJob(_BaseJob):
         return self._ext_job
 
 
-class _Step:
-    def __init__(self, id_, inputs, outputs, jobs, name, ee_url, source):
-        if id_ is None:
-            raise ValueError(f"{self} needs id")
-        if inputs is None:
-            raise ValueError(f"{self} needs input")
-        if outputs is None:
-            raise ValueError(f"{self} needs output")
-        if jobs is None:
-            raise ValueError(f"{self} needs jobs")
-        if name is None:
-            raise ValueError(f"{self} needs a name")
+class _Stage:
+    def __init__(
+        self, id_: str, name: str, inputs: typing.List[_IO], outputs: typing.List[_IO]
+    ) -> None:
         self._id = id_
         self._inputs = inputs
         self._outputs = outputs
-        self._jobs = jobs
         self._name = name
-        self._ee_url = ee_url
-        self._source = source
 
     def get_id(self):
         return self._id
@@ -362,11 +348,21 @@ class _Step:
     def get_outputs(self):
         return self._outputs
 
-    def get_jobs(self):
-        return self._jobs
-
     def get_name(self):
         return self._name
+
+
+class _Step(_Stage):
+    def __init__(self, id_, inputs, outputs, jobs, name, ee_url, source):
+        super().__init__(id_, name, inputs, outputs)
+        if jobs is None:
+            raise ValueError(f"{self} needs jobs")
+        self._jobs = jobs
+        self._ee_url = ee_url
+        self._source = source
+
+    def get_jobs(self):
+        return self._jobs
 
     def get_ee_url(self):
         return self._ee_url
@@ -486,13 +482,50 @@ class _LegacyStep(_Step):
         return self._run_arg
 
 
-class _StepBuilder:
+class _StageBuilder:
     def __init__(self):
+        self._id: str = ""
+        self._name: str = ""
+        self._inputs: typing.List[_IOBuilder] = []
+        self._outputs: typing.List[_IOBuilder] = []
+        self._stages: typing.List[_StageBuilder] = []
+        self._io_map: typing.Dict[_IOBuilder, _IOBuilder] = {}
+
+    def set_id(self, id_: str):
+        self._id = id_
+        return self
+
+    def set_name(self, name: str):
+        self._name = name
+        return self
+
+    def add_output(self, output: _IOBuilder):
+        self._outputs.append(output)
+        return self
+
+    def add_input(self, input: _IOBuilder):
+        self._inputs.append(input)
+        return self
+
+    def build(self):
+        if not self._id:
+            raise ValueError(f"invalid id for stage {self._id}")
+        if not self._name:
+            raise ValueError(f"invalid name for stage {self._name}")
+        inputs = [builder.build() for builder in self._inputs]
+        outputs = [builder.build() for builder in self._outputs]
+        return _Stage(self._id, self._name, inputs, outputs)
+
+    def set_dummy_io(self):
+        self.add_input(_DummyIOBuilder())
+        self.add_output(_DummyIOBuilder())
+        return self
+
+
+class _StepBuilder(_StageBuilder):
+    def __init__(self):
+        super().__init__()
         self._jobs = []
-        self._id = None
-        self._name = None
-        self._inputs = []
-        self._outputs = []
         self._type = None
         self._source = None
         self._ee_url = None
@@ -508,14 +541,6 @@ class _StepBuilder:
         self._job_name = None
         self._run_arg = None
 
-    def set_id(self, id_):
-        self._id = id_
-        return self
-
-    def set_name(self, name):
-        self._name = name
-        return self
-
     def set_type(self, type_):
         self._type = type_
         return self
@@ -530,14 +555,6 @@ class _StepBuilder:
 
     def add_job(self, job):
         self._jobs.append(job)
-        return self
-
-    def add_output(self, output):
-        self._outputs.append(output)
-        return self
-
-    def add_input(self, input):
-        self._inputs.append(input)
         return self
 
     def set_max_runtime(self, max_runtime):
@@ -577,16 +594,15 @@ class _StepBuilder:
         return self
 
     def build(self):
+        stage = super().build()
         jobs = [builder.build() for builder in self._jobs]
-        inputs = [builder.build() for builder in self._inputs]
-        outputs = [builder.build() for builder in self._outputs]
         if self._run_arg:
             return _LegacyStep(
-                self._id,
-                inputs,
-                outputs,
+                stage.get_id(),
+                stage.get_inputs(),
+                stage.get_outputs(),
                 jobs,
-                "legacy_step",
+                self._name,
                 "",  # ee_url
                 "",  # source
                 self._max_runtime,
@@ -599,111 +615,32 @@ class _StepBuilder:
                 self._job_name,
                 self._run_arg,
             )
+        cls = _Step
         if self._type == "function":
-            return _FunctionStep(
-                self._id, inputs, outputs, jobs, self._name, self._ee_url, self._source
-            )
+            cls = _FunctionStep
         elif self._type == "unix":
-            return _UnixStep(
-                self._id, inputs, outputs, jobs, self._name, self._ee_url, self._source
-            )
-        return _Step(
-            self._id, inputs, outputs, jobs, self._name, self._ee_url, self._source
+            cls = _UnixStep
+        return cls(
+            stage.get_id(),
+            stage.get_inputs(),
+            stage.get_outputs(),
+            jobs,
+            stage.get_name(),
+            self._ee_url,
+            self._source,
         )
-
-    def set_dummy_io(self):
-        self.add_input(_DummyIOBuilder())
-        self.add_output(_DummyIOBuilder())
-        return self
 
 
 def create_step_builder():
     return _StepBuilder()
 
 
-class _Stage:
-    def __init__(
-        self,
-        id_,
-        steps,
-        status,
-        name=None,
-    ):
-        if id_ is None:
-            raise ValueError(f"{self} needs id")
-        if not steps:
-            raise ValueError(f"{self} needs steps")
-        if not status:
-            raise ValueError(f"{self} needs status")
-
-        self._id = id_
-        self._steps = steps
-        self._status = status
-        self._name = name
-
-    def get_id(self):
-        return self._id
-
-    def get_steps(self):
-        return self._steps
-
-    def get_status(self):
-        return self._status
-
-    def get_name(self):
-        return self._name
-
-
-class _StageBuilder:
-    def __init__(self):
-        self._steps = None
-        self._id = None
-        self._status = None
-        self.reset()
-
-    def reset(self):
-        self._steps = []
-        self._id = None
-        self._status = None
-        return self
-
-    def set_id(self, id_):
-        self._id = id_
-        return self
-
-    def set_status(self, status):
-        self._status = status
-        return self
-
-    def add_step(self, step):
-        self._steps.append(step)
-        return self
-
-    def build(self):
-        steps = [builder.build() for builder in self._steps]
-        return _Stage(
-            self._id,
-            steps,
-            self._status,
-        )
-
-
-def create_stage_builder():
-    return _StageBuilder()
-
-
 class _RealizationBuilder:
     def __init__(self):
-        self._steps = None
-        self._active = None
-        self._iens = None
-        self.reset()
-
-    def reset(self):
         self._steps = []
+        self._stages: typing.List[_Stage] = []
         self._active = None
         self._iens = None
-        return self
 
     def active(self, active):
         self._active = active
@@ -711,6 +648,10 @@ class _RealizationBuilder:
 
     def add_step(self, step):
         self._steps.append(step)
+        return self
+
+    def add_stage(self, stage: _Stage) -> "_RealizationBuilder":
+        self._stages.append(stage)
         return self
 
     def set_iens(self, iens):
@@ -832,7 +773,9 @@ class _EnsembleBuilder:
         for iens in range(0, len(run_context)):
             active = run_context.is_active(iens)
             real = create_realization_builder().set_iens(iens).active(active)
-            step = create_step_builder().set_id(0).set_dummy_io()
+            step = (
+                create_step_builder().set_id("0").set_dummy_io().set_name("legacy step")
+            )
             if active:
                 real.active(True).add_step(step)
                 for index in range(0, len(forward_model)):
