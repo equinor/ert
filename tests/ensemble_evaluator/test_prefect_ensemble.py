@@ -133,7 +133,7 @@ def get_step(step_name, inputs, outputs, jobs, url, type_="unix"):
         )
     step_builder.set_ee_url(url)
     step_builder.set_source(source=step_source)
-    step_builder.set_id(0)
+    step_builder.set_id("0")
     step_builder.set_name(step_name)
     for name, path, mime in inputs:
         step_builder.add_input(
