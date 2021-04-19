@@ -95,6 +95,10 @@ def run_server(args=None, debug=False):
         authtoken = generate_authtoken()
         os.environ["ERT_AUTHTOKEN"] = authtoken
 
+    # Use sqlite in cwd if nothing else is specified
+    if "ERT_STORAGE_DATABASE_URL" not in os.environ:
+        os.environ["ERT_STORAGE_DATABASE_URL"] = "sqlite:///ert.db"
+
     lockfile = Path.cwd() / "storage_server.json"
     if lockfile.exists():
         sys.exit("'storage_server.json' already exists")
@@ -118,7 +122,7 @@ def run_server(args=None, debug=False):
     }
 
     # Appropriated from uvicorn.main:run
-    config = uvicorn.Config("ert_shared.storage.app:app", **config_args)
+    config = uvicorn.Config("ert_storage.app:app", **config_args)
     server = Server(config, json.dumps(connection_info), lockfile)
 
     print("Storage server is ready to accept requests. Listening on:")
