@@ -2,6 +2,7 @@ import asyncio
 import os
 import pathlib
 import shutil
+import tempfile
 import typing
 from collections import defaultdict
 
@@ -66,6 +67,22 @@ def _get_unix_resource_transmitters(
                     transmitter.transmit_data([f.read()])
                 )
             transmitters[file.name] = transmitter
+
+    if resources.directories is not None:
+        for directory in resources.directories:
+            transmitter = transmitter_factory(directory.name)
+            with tempfile.TemporaryDirectory() as tmpdir:
+                archive_path = pathlib.Path(tmpdir) / "archive"
+                archive_created_path = shutil.make_archive(
+                    base_name=str(archive_path),
+                    format="gztar",
+                    root_dir=str(directory.src),
+                )
+                with open(archive_created_path, "rb") as f:
+                    asyncio.get_event_loop().run_until_complete(
+                        transmitter.transmit_data([f.read()])
+                    )
+            transmitters[directory.name] = transmitter
 
     return transmitters
 
@@ -162,6 +179,11 @@ def _build_ee_config(
         if stage.unix_resources and stage.unix_resources.files
         else []
     )
+    directories = (
+        stage.unix_resources.directories
+        if stage.unix_resources and stage.unix_resources.directories
+        else []
+    )
     output_locations = [out.location for out in stage.output]
     jobs = []
 
@@ -204,6 +226,7 @@ def _build_ee_config(
                     "location": input_.location,
                     "mime": input_.mime,
                     "is_executable": False,
+                    "is_directory": False,
                 }
                 for input_ in stage.input
             ]
@@ -213,6 +236,7 @@ def _build_ee_config(
                     "location": command_location(cmd.name),
                     "mime": cmd.mime,
                     "is_executable": True,
+                    "is_directory": False,
                 }
                 for cmd in commands
             ]
@@ -222,8 +246,19 @@ def _build_ee_config(
                     "location": file.destination,
                     "mime": "application/octet-stream",
                     "is_executable": False,
+                    "is_directory": False,
                 }
                 for file in files
+            ]
+            + [
+                {
+                    "record": directory.name,
+                    "location": directory.destination,
+                    "mime": "application/tar+gzip",
+                    "is_executable": False,
+                    "is_directory": True,
+                }
+                for directory in directories
             ],
             "outputs": [
                 {

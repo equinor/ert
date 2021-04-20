@@ -1,6 +1,7 @@
 import asyncio
 from typing import Any, Dict
 from pathlib import Path
+import shutil
 import stat
 import subprocess
 import tempfile
@@ -73,6 +74,15 @@ class UnixTask(prefect.Task):
                 ev_source=job.get_source(self._ee_id),
             )
 
+    @staticmethod
+    async def _extract_directory(transmitter, dest_path):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            archive_path = Path(tmpdir) / "archive"
+            await transmitter.dump(archive_path)
+            shutil.unpack_archive(
+                filename=archive_path.as_posix(), extract_dir=dest_path, format="gztar"
+            )
+
     def _load_and_dump_input(
         self,
         transmitters: Dict[int, Dict[str, Any]],
@@ -83,9 +93,17 @@ class UnixTask(prefect.Task):
         futures = []
         for input_ in self._step.get_inputs():
             path_base = runpath / _BIN_FOLDER if input_.is_executable() else runpath
-            futures.append(
-                transmitters[input_.get_name()].dump(path_base / input_.get_path())
-            )
+            if input_.is_directory():
+                futures.append(
+                    self._extract_directory(
+                        transmitter=transmitters[input_.get_name()],
+                        dest_path=path_base / input_.get_path(),
+                    )
+                )
+            else:
+                futures.append(
+                    transmitters[input_.get_name()].dump(path_base / input_.get_path())
+                )
         asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
         for input_ in self._step.get_inputs():
             if input_.is_executable():

@@ -95,8 +95,15 @@ class _FileIO(_IO):
     def is_executable(self):
         return isinstance(self, _ExecIO)
 
+    def is_directory(self):
+        return isinstance(self, _DirectoryIO)
+
 
 class _ExecIO(_FileIO):
+    pass
+
+
+class _DirectoryIO(_FileIO):
     pass
 
 
@@ -116,7 +123,19 @@ class _FileIOBuilder(_IOBuilder):
         return self
 
     def set_executable(self) -> "_FileIOBuilder":
+        if self._cls == _DirectoryIO:
+            raise TypeError(
+                f"Cannot set executable when directory is set for {self._name}"
+            )
         self._cls = _ExecIO
+        return self
+
+    def set_directory(self) -> "_FileIOBuilder":
+        if self._cls == _ExecIO:
+            raise TypeError(
+                f"Cannot set as directory when executable is set for {self._name}"
+            )
+        self._cls = _DirectoryIO
         return self
 
     def build(self):

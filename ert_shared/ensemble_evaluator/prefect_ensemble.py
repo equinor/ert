@@ -126,6 +126,8 @@ class PrefectEnsemble(_Ensemble):
 
                     if io.get(ids.IS_EXECUTABLE):
                         input_builder.set_executable()
+                    if io.get(ids.IS_DIRECTORY):
+                        input_builder.set_directory()
 
                     step_builder.add_input(input_builder)
                 for io in step.get(ids.OUTPUTS, []):
