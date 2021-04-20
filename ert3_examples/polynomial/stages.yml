@@ -11,10 +11,11 @@
       record: polynomial_output
       location: output.json
 
-  transportable_commands:
-    -
-      name: poly
-      location: poly.py
+  unix_resources:
+    transportable_commands:
+      -
+        name: poly
+        location: poly.py
 
 
   script:

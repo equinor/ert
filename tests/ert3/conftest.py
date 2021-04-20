@@ -84,12 +84,14 @@ def stages_config():
             "input": [{"record": "coefficients", "location": "coefficients.json"}],
             "output": [{"record": "polynomial_output", "location": "output.json"}],
             "script": ["poly --coefficients coefficients.json --output output.json"],
-            "transportable_commands": [
-                {
-                    "name": "poly",
-                    "location": "poly.py",
-                }
-            ],
+            "unix_resources": {
+                "transportable_commands": [
+                    {
+                        "name": "poly",
+                        "location": "poly.py",
+                    }
+                ]
+            },
         }
     ]
     script_file = pathlib.Path("poly.py")

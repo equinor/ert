@@ -24,6 +24,52 @@ def _create_evaluator_tmp_dir(workspace_root, evaluation_name):
     )
 
 
+def _assert_single_stage_forward_model(stages_config, ensemble):
+    # The current implementation only support one stage as the forward model
+    # and hence we fail if multiple are provided
+    assert len(ensemble.forward_model.stages) == 1
+
+
+class SharedDiskRecordTransmitterFactory:
+    def __init__(self, storage_path: str) -> None:
+        self._storage_path = storage_path
+
+    def __call__(self, name) -> ert3.data.RecordTransmitter:
+        return ert3.data.SharedDiskRecordTransmitter(
+            name=name,
+            storage_path=pathlib.Path(self._storage_path),
+        )
+
+
+def _get_unix_resource_transmitters(
+    step_config: ert3.config.Step,
+    transmitter_factory: typing.Callable[[str], ert3.data.RecordTransmitter],
+) -> typing.Dict[str, ert3.data.RecordTransmitter]:
+    if step_config.unix_resources is None:
+        return {}
+    resources = step_config.unix_resources
+    transmitters = {}
+    if resources.transportable_commands is not None:
+        for command in resources.transportable_commands:
+            transmitter = transmitter_factory(command.name)
+            with open(command.location, "rb") as f:
+                asyncio.get_event_loop().run_until_complete(
+                    transmitter.transmit_data([f.read()])
+                )
+            transmitters[command.name] = transmitter
+
+    if resources.files is not None:
+        for file in resources.files:
+            transmitter = transmitter_factory(file.name)
+            with open(file.src, "rb") as f:
+                asyncio.get_event_loop().run_until_complete(
+                    transmitter.transmit_data([f.read()])
+                )
+            transmitters[file.name] = transmitter
+
+    return transmitters
+
+
 def _prepare_input(
     ee_config,
     step_config: ert3.config.Step,
@@ -38,38 +84,28 @@ def _prepare_input(
         int, typing.Dict[str, ert3.data.RecordTransmitter]
     ] = defaultdict(dict)
 
+    if storage_config.get("type") == "shared_disk":
+        transmitter_factory = SharedDiskRecordTransmitterFactory(
+            storage_path=storage_config["storage_path"]
+        )
+    else:
+        raise ValueError(f"Unsupported transmitter type: {storage_config.get('type')}")
+
     futures = []
     for input_ in step_config.input:
         for iens, record in enumerate(inputs.ensemble_records[input_.record].records):
-            if storage_config.get("type") == "shared_disk":
-                transmitter = ert3.data.SharedDiskRecordTransmitter(
-                    name=input_.record,
-                    storage_path=pathlib.Path(storage_config["storage_path"]),
-                )
-            else:
-                raise ValueError(
-                    f"Unsupported transmitter type: {storage_config.get('type')}"
-                )
+            transmitter = transmitter_factory(input_.record)
             futures.append(transmitter.transmit_data(record.data))
             transmitters[iens][input_.record] = transmitter
     asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
-    if step_config.transportable_commands is not None:
-        for command in step_config.transportable_commands:
-            if storage_config.get("type") == "shared_disk":
-                transmitter = ert3.data.SharedDiskRecordTransmitter(
-                    name=command.name,
-                    storage_path=pathlib.Path(storage_config["storage_path"]),
-                )
-            else:
-                raise ValueError(
-                    f"Unsupported transmitter type: {storage_config.get('type')}"
-                )
-            with open(command.location, "rb") as f:
-                asyncio.get_event_loop().run_until_complete(
-                    transmitter.transmit_data([f.read()])
-                )
+
+    if step_config.unix_resources is not None:
+        unix_resource_transmitters = _get_unix_resource_transmitters(
+            step_config=step_config, transmitter_factory=transmitter_factory
+        )
+        for transmitter_name, transmitter in unix_resource_transmitters.items():
             for iens in range(0, ensemble_size):
-                transmitters[iens][command.name] = transmitter
+                transmitters[iens][transmitter_name] = transmitter
     return dict(transmitters)
 
 
@@ -116,14 +152,25 @@ def _build_ee_config(
 
     stage = stages_config.step_from_key(ensemble.forward_model.stage)
     assert stage is not None
-    commands = stage.transportable_commands if stage.transportable_commands else []
+    commands = (
+        stage.unix_resources.transportable_commands
+        if stage.unix_resources and stage.unix_resources.transportable_commands
+        else []
+    )
+    files = (
+        stage.unix_resources.files
+        if stage.unix_resources and stage.unix_resources.files
+        else []
+    )
     output_locations = [out.location for out in stage.output]
     jobs = []
 
     def command_location(name):
         try:
             return next(
-                cmd.location for cmd in stage.transportable_commands if cmd.name == name
+                cmd.location
+                for cmd in stage.unix_resources.transportable_commands
+                if cmd.name == name
             )
         except StopIteration:
             return pathlib.Path(name)
@@ -168,6 +215,15 @@ def _build_ee_config(
                     "is_executable": True,
                 }
                 for cmd in commands
+            ]
+            + [
+                {
+                    "record": file.name,
+                    "location": file.destination,
+                    "mime": "application/octet-stream",
+                    "is_executable": False,
+                }
+                for file in files
             ],
             "outputs": [
                 {

@@ -4,11 +4,19 @@ import mimetypes
 import sys
 from typing import Callable, List, Optional, cast
 
-from pydantic import BaseModel, FilePath, ValidationError, root_validator, validator
+from pathlib import Path
+from pydantic import (
+    BaseModel,
+    DirectoryPath,
+    FilePath,
+    ValidationError,
+    root_validator,
+    validator,
+)
 import ert3
 
 if sys.version_info >= (3, 8):
-    from typing import Literal
+    from typing import Literal  # pylint: disable=ungrouped-imports
 else:
     from typing_extensions import Literal
 
@@ -80,22 +88,43 @@ class TransportableCommand(_StagesConfig):
     _ensure_mime = validator("mime", allow_reuse=True)(_ensure_mime)
 
 
+class File(_StagesConfig):
+    name: str
+    destination: Path
+    src: FilePath
+
+
+class Directory(_StagesConfig):
+    name: str
+    destination: Path
+    src: DirectoryPath
+
+
+class UnixResources(_StagesConfig):
+    transportable_commands: Optional[List[TransportableCommand]] = []
+    files: Optional[List[File]] = []
+    directories: Optional[List[Directory]] = []
+
+    def has_any(self):
+        return self.transportable_commands or self.files or self.directories
+
+
 class Step(_StagesConfig):
     name: str
     type: Literal["unix", "function"]
     script: Optional[List[str]] = []
     input: List[InputRecord]
     output: List[OutputRecord]
-    transportable_commands: Optional[List[TransportableCommand]] = []
+    unix_resources: Optional[UnixResources]
     function: Optional[Callable]
 
     @root_validator
     def check_defined(cls, step):
-        cmd_names = [cmd.name for cmd in step.get("transportable_commands", [])]
         script_lines = step.get("script", [])
         if step.get("type") == "function":
-            if cmd_names:
-                raise ValueError("Commands defined for a function stage")
+            unix_resources = step.get("unix_resources")
+            if unix_resources is not None and unix_resources.has_any():
+                raise ValueError("Unix resources defined for a function stage")
             if script_lines:
                 raise ValueError("Scripts defined for a function stage")
             if not step.get("function"):

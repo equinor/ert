@@ -23,7 +23,9 @@ def base_unix_stage_config(tmpdir):
             "type": "unix",
             "input": [{"record": "some_record", "location": "some_location"}],
             "output": [{"record": "some_record", "location": "some_location"}],
-            "transportable_commands": [{"name": "poly", "location": "poly.py"}],
+            "unix_resources": {
+                "transportable_commands": [{"name": "poly", "location": "poly.py"}]
+            },
             "script": ["poly --help"],
         }
     ]
@@ -73,7 +75,7 @@ def test_single_function_step_valid(base_function_stage_config):
 
 def test_step_multi_cmd(base_unix_stage_config):
     config = base_unix_stage_config
-    config[0]["transportable_commands"].append(
+    config[0]["unix_resources"]["transportable_commands"].append(
         {"name": "poly2", "location": "poly2", "mime": "text/x-python"}
     )
 
@@ -96,7 +98,7 @@ def test_step_non_existing_transportable_cmd(base_unix_stage_config):
     assert not os.path.exists(invalid_location)
 
     config = base_unix_stage_config
-    config[0]["transportable_commands"].append(
+    config[0]["unix_resources"]["transportable_commands"].append(
         {"name": "invalid_cmd", "location": invalid_location}
     )
 
@@ -153,12 +155,12 @@ def test_step_function_and_script_error(base_function_stage_config):
 
 def test_step_function_and_command_error(base_function_stage_config):
     config = base_function_stage_config
-    config[0].update(
-        {"transportable_commands": [{"name": "poly", "location": "poly.py"}]}
-    )
+    config[0]["unix_resources"] = {
+        "transportable_commands": [{"name": "poly", "location": "poly.py"}]
+    }
     with pytest.raises(
         ert3.exceptions.ConfigValidationError,
-        match=r"Commands defined for a function stage",
+        match=r"Unix resources defined for a function stage",
     ):
         ert3.config.load_stages_config(config)
 
