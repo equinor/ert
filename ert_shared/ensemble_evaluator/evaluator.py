@@ -66,24 +66,6 @@ class EnsembleEvaluator:
         self._event_index = 1
         self._result = None
 
-    """
-    {
-        steps: {
-            step1: {inputs: {name: step1.data}}
-            step2: {outputs: {name: step2.out}}
-        }
-        edges: [
-            {from: step2.out, to: step1.data}
-        ]
-        stages:
-    }
-
-    {
-        steps: []
-        jobs: []
-    }
-    """
-
     @staticmethod
     def create_snapshot(ensemble):
         reals = {}
