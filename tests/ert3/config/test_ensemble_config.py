@@ -8,9 +8,7 @@ _config_dict = {
     "input": [{"source": "stochastic.coefficients", "record": "coefficients"}],
     "forward_model": {
         "driver": "local",
-        "stages": [
-            "evaluate_polynomial",
-        ],
+        "stage": "evaluate_polynomial",
     },
 }
 
@@ -19,7 +17,7 @@ def test_entry_point():
     config = _ensemble_config.load_ensemble_config(_config_dict)
     assert config.size == 1000
     assert config.forward_model.driver == "local"
-    assert config.forward_model.stages == ["evaluate_polynomial"]
+    assert config.forward_model.stage == "evaluate_polynomial"
 
 
 @pytest.mark.parametrize("driver", ["local", "pbs"])
@@ -34,9 +32,7 @@ def test_config(driver):
 def test_forward_model_default_driver():
     config = _ensemble_config.ForwardModel(
         **{
-            "stages": [
-                "some_name",
-            ]
+            "stage": "some_name",
         }
     )
     assert config.driver == "local"
@@ -45,9 +41,7 @@ def test_forward_model_default_driver():
 def test_forward_model_invalid_driver():
     config = {
         "driver": "not_installed_driver",
-        "stages": [
-            "some_name",
-        ],
+        "stage": "some_name",
     }
 
     with pytest.raises(
