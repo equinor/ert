@@ -20,7 +20,7 @@ class _EnsembleConfig(BaseModel):
 
 
 class ForwardModel(_EnsembleConfig):
-    stages: List[str]
+    stage: str
     driver: Literal["local", "pbs"] = "local"
 
 

@@ -24,12 +24,6 @@ def _create_evaluator_tmp_dir(workspace_root, evaluation_name):
     )
 
 
-def _assert_single_stage_forward_model(stages_config, ensemble):
-    # The current implementation only support one stage as the forward model
-    # and hence we fail if multiple are provided
-    assert len(ensemble.forward_model.stages) == 1
-
-
 def _prepare_input(
     ee_config,
     step_config: ert3.config.Step,
@@ -115,15 +109,12 @@ def _build_ee_config(
     input_records: ert3.data.MultiEnsembleRecord,
     dispatch_uri: str,
 ):
-    _assert_single_stage_forward_model(stages_config, ensemble)
-
     if ensemble.size != None:
         ensemble_size = ensemble.size
     else:
         ensemble_size = input_records.ensemble_size
 
-    stage_name = ensemble.forward_model.stages[0]
-    stage = stages_config.step_from_key(stage_name)
+    stage = stages_config.step_from_key(ensemble.forward_model.stage)
     assert stage is not None
     commands = stage.transportable_commands if stage.transportable_commands else []
     output_locations = [out.location for out in stage.output]
