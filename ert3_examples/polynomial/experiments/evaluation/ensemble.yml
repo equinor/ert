@@ -7,5 +7,4 @@ input:
 
 forward_model:
   driver: local
-  stages:
-    - evaluate_polynomial
+  stage: evaluate_polynomial

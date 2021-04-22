@@ -66,7 +66,7 @@ def base_ensemble_dict():
     yield {
         "size": 10,
         "input": [{"source": "stochastic.coefficients", "record": "coefficients"}],
-        "forward_model": {"driver": "local", "stages": ["evaluate_polynomial"]},
+        "forward_model": {"driver": "local", "stage": "evaluate_polynomial"},
     }
 
 
@@ -156,10 +156,9 @@ def assert_input_records(config, export_data):
 
 def assert_output_records(config, export_data):
     output_records = []
-    for forward_stage in config["ensemble"].forward_model.stages:
-        for stage in config["stages"]:
-            if stage.name == forward_stage:
-                output_records += [output_data.record for output_data in stage.output]
+    for stage in config["stages"]:
+        if stage.name == config["ensemble"].forward_model.stage:
+            output_records += [output_data.record for output_data in stage.output]
     for realisation in export_data:
         assert sorted(output_records) == sorted(realisation["output"].keys())
 

@@ -11,5 +11,4 @@ input:
 
 forward_model:
   driver: local
-  stages:
-    - simulate_SPE1
+  stage: simulate_SPE1
