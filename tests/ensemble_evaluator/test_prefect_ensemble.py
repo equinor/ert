@@ -1,5 +1,8 @@
+import pickle
 import cloudpickle
 from pathlib import Path
+import importlib
+
 import sys
 import asyncio
 import copy
@@ -117,6 +120,47 @@ def step_output_transmitters(step, storage_path):
 @pytest.fixture()
 def coefficients():
     return [{"a": a, "b": b, "c": c} for (a, b, c) in [(1, 2, 3), (4, 2, 1)]]
+
+
+@pytest.fixture()
+def function_config(tmpdir):
+    storage = {"type": "shared_disk", "storage_path": ".my_storage"}
+    inputs = [
+        {
+            "record": "coeffs",
+            "location": "coeffs",
+            "mime": "application/json",
+            "is_executable": False,
+        }
+    ]
+    outputs = [
+        {
+            "record": "function_output",
+            "location": "output",
+            "mime": "application/json",
+        }
+    ]
+    jobs = [
+        {
+            "name": "user_defined_function",
+            "executable": "place_holder",
+            "output": "output",
+        }
+    ]
+    steps = [
+        {
+            "name": "function_evaluation",
+            "type": "function",
+            "inputs": inputs,
+            "outputs": outputs,
+            "jobs": jobs,
+        }
+    ]
+    config = {}
+    config["max_running"] = 1
+    config["storage"] = storage
+    config["steps"] = steps
+    return config
 
 
 def get_step(step_name, inputs, outputs, jobs, url, type_="unix"):
@@ -308,6 +352,81 @@ def test_function_step(unused_tcp_port, tmpdir):
     assert expected_result == transmitted_result
 
 
+def test_function_step_for_function_defined_outside_py_environment(
+    unused_tcp_port, tmpdir
+):
+    # Create temporary module that defines a function `bar`
+    # 'bar' returns a call to different function 'internal_call' defined in the same python file
+    with tmpdir.as_cwd():
+        module_path = Path(tmpdir) / "foo"
+        module_path.mkdir()
+        init_file = module_path / "__init__.py"
+        init_file.touch()
+        file_path = module_path / "bar.py"
+        file_path.write_text(
+            "def bar(values):\n    return internal_call(values)\n"
+            "def internal_call(values):\n    return [sum(values)]\n"
+        )
+        spec = importlib.util.spec_from_file_location("foo", str(file_path))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        func = getattr(module, "bar")
+
+    # Check module is not in the python environment
+    with pytest.raises(ModuleNotFoundError):
+        import foo.bar
+
+    host = "localhost"
+    url = f"ws://{host}:{unused_tcp_port}"
+    messages = []
+    mock_ws_thread = threading.Thread(
+        target=partial(_mock_ws, messages=messages), args=(host, unused_tcp_port)
+    )
+
+    mock_ws_thread.start()
+
+    test_values = {"values": [42, 24, 6]}
+    inputs = input_transmitter("values", test_values["values"], storage_path=tmpdir)
+
+    step = get_step(
+        step_name="test_step",
+        inputs=[("values", "NA", "text/whatever")],
+        outputs=[("output", Path("output.out"), "application/json")],
+        jobs=[("test_function", cloudpickle.dumps(func), None)],
+        url=url,
+        type_="function",
+    )
+    expected_result = func(**test_values)
+    # Make sure the function is no longer available before we start creating the flow and task
+    del func
+
+    output_trans = step_output_transmitters(step, storage_path=tmpdir)
+    with Flow("testing") as flow:
+        task = step.get_task(output_transmitters=output_trans, ee_id="test_ee_id")
+        result = task(inputs=inputs)
+    with tmp():
+        flow_run = flow.run()
+
+    # Stop the mock evaluator WS server
+    with Client(url) as c:
+        c.send("stop")
+    mock_ws_thread.join()
+
+    task_result = flow_run.result[result]
+    assert task_result.is_successful()
+    assert flow_run.is_successful()
+
+    assert len(task_result.result) == 1
+    expected_uri = output_trans["output"]._uri
+    output_uri = task_result.result["output"]._uri
+    assert expected_uri == output_uri
+    transmitted_record = asyncio.get_event_loop().run_until_complete(
+        task_result.result["output"].load()
+    )
+    transmitted_result = transmitted_record.data
+    assert expected_result == transmitted_result
+
+
 def test_unix_step_error(unused_tcp_port, tmpdir):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
@@ -454,6 +573,77 @@ def test_run_prefect_ensemble(unused_tcp_port, coefficients):
         assert evaluator._snapshot.get_status() == "Stopped"
         successful_realizations = evaluator._snapshot.get_successful_realizations()
         assert successful_realizations == config["realizations"]
+
+
+@pytest.mark.timeout(60)
+def test_run_prefect_for_function_defined_outside_py_environment(
+    unused_tcp_port, coefficients, tmpdir, function_config
+):
+    with tmpdir.as_cwd():
+        # Create temporary module that defines a function `bar`
+        # 'bar' returns a call to different function 'internal_call' defined in the same python file
+        module_path = Path(tmpdir) / "foo"
+        module_path.mkdir()
+        init_file = module_path / "__init__.py"
+        init_file.touch()
+        file_path = module_path / "bar.py"
+        file_path.write_text(
+            "def bar(coeffs):\n    return internal_call(coeffs)\n"
+            "def internal_call(coeffs):\n    return [sum(coeffs.values())]\n"
+        )
+        spec = importlib.util.spec_from_file_location("foo", str(file_path))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        func = getattr(module, "bar")
+        pickle_func = cloudpickle.dumps(func)
+        init_file.unlink()
+        file_path.unlink()
+
+        # Check module is not in the python environment
+        with pytest.raises(ModuleNotFoundError):
+            import foo.bar
+
+        test_path = Path(SOURCE_DIR) / "test-data/local/prefect_test_case"
+        config = function_config
+        coeffs_trans = coefficient_transmitters(
+            coefficients, config.get(ids.STORAGE)["storage_path"]
+        )
+
+        config["realizations"] = len(coefficients)
+        config["executor"] = "local"
+        config["steps"][0]["jobs"][0]["executable"] = pickle_func
+        config["inputs"] = {iens: coeffs_trans[iens] for iens in range(2)}
+        config["outputs"] = output_transmitters(config)
+
+        service_config = EvaluatorServerConfig(unused_tcp_port)
+        config["dispatch_uri"] = service_config.dispatch_uri
+        ensemble = PrefectEnsemble(config)
+        evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
+        res = None
+        with evaluator.run() as mon:
+            for event in mon.track():
+                if event.data is not None and event.data.get("status") in [
+                    "Failed",
+                    "Stopped",
+                ]:
+                    results = mon.get_result()
+                    mon.signal_done()
+        assert evaluator._snapshot.get_status() == "Stopped"
+        successful_realizations = evaluator._snapshot.get_successful_realizations()
+        assert successful_realizations == config["realizations"]
+        expected_results = [
+            pickle.loads(pickle_func)(coeffs) for coeffs in coefficients
+        ]
+        transmitted_record = lambda record: asyncio.get_event_loop().run_until_complete(
+            record.load()
+        )
+        transmitter_futures = [
+            res["function_output"].load() for res in results.values()
+        ]
+        results = asyncio.get_event_loop().run_until_complete(
+            asyncio.gather(*transmitter_futures)
+        )
+        assert expected_results == [res.data for res in results]
 
 
 @pytest.mark.timeout(60)
