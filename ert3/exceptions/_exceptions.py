@@ -1,3 +1,6 @@
+from typing import Optional
+
+
 class ErtError(Exception):
     """Base class for exceptions in this module."""
 
@@ -20,7 +23,7 @@ class NonExistantExperiment(IllegalWorkspaceOperation):
 
 
 class ConfigValidationError(ErtError):
-    def __init__(self, message: str, source: str = None) -> None:
+    def __init__(self, message: str, source: Optional[str] = None) -> None:
         self.message = "{}".format(message)
         self.source = source
 

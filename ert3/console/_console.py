@@ -3,10 +3,15 @@ import pathlib
 import shutil
 import sys
 
+from typing import Any, List, Union
+from pathlib import Path
+
 import pkg_resources as pkg
 import yaml
 
 import ert3
+
+from ert3.config import EnsembleConfig, StagesConfig, ExperimentConfig
 
 
 _ERT3_DESCRIPTION = (
@@ -16,7 +21,7 @@ _ERT3_DESCRIPTION = (
 )
 
 
-def _build_init_argparser(subparsers):
+def _build_init_argparser(subparsers: Any) -> None:
     init_parser = subparsers.add_parser("init", help="Initialize an ERT3 workspace")
     init_parser.add_argument(
         "--example",
@@ -26,18 +31,18 @@ def _build_init_argparser(subparsers):
     )
 
 
-def _build_run_argparser(subparsers):
+def _build_run_argparser(subparsers: Any) -> None:
     run_parser = subparsers.add_parser("run", help="Run experiment")
     run_parser.add_argument("experiment_name", help="Name of the experiment")
 
 
-def _build_export_argparser(subparsers):
+def _build_export_argparser(subparsers: Any) -> None:
     export_parser = subparsers.add_parser("export", help="Export experiment")
     export_parser.add_argument("experiment_name", help="Name of the experiment")
 
 
-def _build_record_argparser(subparsers):
-    def valid_record_file(path):
+def _build_record_argparser(subparsers: Any) -> None:
+    def valid_record_file(path: Union[str, Path]) -> Path:
         path = pathlib.Path(path)
         if path.exists():
             return path
@@ -68,11 +73,11 @@ def _build_record_argparser(subparsers):
     )
 
 
-def _build_status_argparser(subparsers):
+def _build_status_argparser(subparsers: Any) -> None:
     subparsers.add_parser("status", help="Report the status of all experiments")
 
 
-def _build_clean_argparser(subparsers):
+def _build_clean_argparser(subparsers: Any) -> None:
     export_parser = subparsers.add_parser("clean", help="Clean experiments")
     group = export_parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
@@ -83,7 +88,7 @@ def _build_clean_argparser(subparsers):
     )
 
 
-def _build_argparser():
+def _build_argparser() -> Any:
     parser = argparse.ArgumentParser(description=_ERT3_DESCRIPTION)
     subparsers = parser.add_subparsers(dest="sub_cmd", help="ert3 commands")
 
@@ -97,7 +102,7 @@ def _build_argparser():
     return parser
 
 
-def _get_ert3_examples_path():
+def _get_ert3_examples_path() -> Path:
     pkg_examples_path = pathlib.Path(pkg.resource_filename("ert3_examples", ""))
     # check that examples folder exist
     if not pkg_examples_path.exists():
@@ -105,7 +110,7 @@ def _get_ert3_examples_path():
     return pkg_examples_path
 
 
-def _get_ert3_example_names():
+def _get_ert3_example_names() -> List[str]:
     pkg_examples_path = _get_ert3_examples_path()
     ert_example_names = []
     for example in pkg_examples_path.iterdir():
@@ -114,7 +119,7 @@ def _get_ert3_example_names():
     return ert_example_names
 
 
-def _init(args):
+def _init(args: Any) -> None:
     assert args.sub_cmd == "init"
 
     if args.example is None:
@@ -149,7 +154,7 @@ def _init(args):
         ert3.workspace.initialize(wd_example_path)
 
 
-def _run(workspace, args):
+def _run(workspace: Path, args: Any) -> None:
     assert args.sub_cmd == "run"
     ert3.workspace.assert_experiment_exists(workspace, args.experiment_name)
     ensemble = _load_ensemble_config(workspace, args.experiment_name)
@@ -164,12 +169,12 @@ def _run(workspace, args):
     )
 
 
-def _export(workspace, args):
+def _export(workspace: Path, args: Any) -> None:
     assert args.sub_cmd == "export"
     ert3.engine.export(workspace, args.experiment_name)
 
 
-def _record(workspace, args):
+def _record(workspace: Path, args: Any) -> None:
     assert args.sub_cmd == "record"
     if args.sub_record_cmd == "sample":
         ert3.engine.sample_record(
@@ -183,17 +188,17 @@ def _record(workspace, args):
         )
 
 
-def _status(workspace, args):
+def _status(workspace: Path, args: Any) -> None:
     assert args.sub_cmd == "status"
     ert3.console.status(workspace)
 
 
-def _clean(workspace, args):
+def _clean(workspace: Path, args: Any) -> None:
     assert args.sub_cmd == "clean"
     ert3.console.clean(workspace, args.experiment_names, args.all)
 
 
-def main():
+def main() -> None:
     try:
         _main()
     except ert3.exceptions.ConfigValidationError as e:
@@ -202,7 +207,7 @@ def main():
         sys.exit(e)
 
 
-def _main():
+def _main() -> None:
     parser = _build_argparser()
     args = parser.parse_args()
 
@@ -234,7 +239,7 @@ def _main():
         raise NotImplementedError(f"No implementation to handle command {args.sub_cmd}")
 
 
-def _load_ensemble_config(workspace, experiment_name):
+def _load_ensemble_config(workspace: Path, experiment_name: str) -> EnsembleConfig:
     ensemble_config = (
         workspace / ert3.workspace.EXPERIMENTS_BASE / experiment_name / "ensemble.yml"
     )
@@ -242,14 +247,14 @@ def _load_ensemble_config(workspace, experiment_name):
         return ert3.config.load_ensemble_config(yaml.safe_load(f))
 
 
-def _load_stages_config(workspace):
+def _load_stages_config(workspace: Path) -> StagesConfig:
     with open(workspace / "stages.yml") as f:
         sys.path.append(str(workspace))
         config = ert3.config.load_stages_config(yaml.safe_load(f))
         return config
 
 
-def _load_experiment_config(workspace, experiment_name):
+def _load_experiment_config(workspace: Path, experiment_name: str) -> ExperimentConfig:
     experiment_config = (
         workspace / ert3.workspace.EXPERIMENTS_BASE / experiment_name / "experiment.yml"
     )

@@ -23,13 +23,13 @@ from dns import resolver, reversename
 logger = logging.getLogger(__name__)
 
 
-def _get_ip_address():
+def _get_ip_address() -> str:
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(("8.8.8.8", 80))
     return s.getsockname()[0]
 
 
-def find_open_port(lower=51820, upper=51840):
+def find_open_port(lower: int = 51820, upper: int = 51840) -> int:
     host = _get_ip_address()
     for port in range(lower, upper):
         try:
@@ -130,7 +130,9 @@ def _generate_certificate(
 
 
 class EvaluatorServerConfig:
-    def __init__(self, port=None, use_token=True, generate_cert=True):
+    def __init__(
+        self, port: int = None, use_token: bool = True, generate_cert: bool = True
+    ) -> None:
         self.host = _get_ip_address()
         self.port = find_open_port() if port is None else port
         self.socket = bind_socket(self.host, self.port)
@@ -142,7 +144,7 @@ class EvaluatorServerConfig:
         if generate_cert:
             cert, key, pw = _generate_certificate(ip_address=self.host)
         else:
-            cert, key, pw = None, None, None
+            cert, key, pw = None, None, None  # type: ignore
         self.cert = cert
         self._key = key
         self._key_pw = pw
@@ -150,6 +152,7 @@ class EvaluatorServerConfig:
         self.token = _generate_authentication() if use_token else None
 
     def get_socket(self):
+        # Undocumented method, see issue: https://github.com/equinor/ert/issues/1600
         if self.socket._closed:
             self.socket = bind_socket(self.host, self.port)
             return self.socket
@@ -157,21 +160,21 @@ class EvaluatorServerConfig:
 
     def get_server_ssl_context(
         self, protocol: int = ssl.PROTOCOL_TLS_SERVER
-    ) -> ssl.SSLContext:
+    ) -> typing.Optional[ssl.SSLContext]:
         if self.cert is None:
             return None
         backup_default_tmp = tempfile.tempdir
         try:
             tempfile.tempdir = os.environ.get("XDG_RUNTIME_DIR", tempfile.gettempdir())
             with tempfile.TemporaryDirectory() as tmp_dir:
-                tmp_dir = pathlib.Path(tmp_dir)
-                cert_path = tmp_dir / "ee.crt"
-                with open(cert_path, "w") as f:
-                    f.write(self.cert)
+                tmp_path = pathlib.Path(tmp_dir)
+                cert_path = tmp_path / "ee.crt"
+                with open(cert_path, "w") as f1:
+                    f1.write(self.cert)
 
-                key_path = tmp_dir / "ee.key"
-                with open(key_path, "wb") as f:
-                    f.write(self._key)
+                key_path = tmp_path / "ee.key"
+                with open(key_path, "wb") as f2:
+                    f2.write(self._key)
                 context = ssl.SSLContext(protocol=protocol)
                 context.load_cert_chain(cert_path, key_path, self._key_pw)
                 return context

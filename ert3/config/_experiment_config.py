@@ -1,5 +1,5 @@
 import sys
-from typing import Optional
+from typing import Optional, Dict, Any
 from pydantic import root_validator, BaseModel, ValidationError
 
 import ert3
@@ -23,7 +23,7 @@ class ExperimentConfig(_ExperimentConfig):
     algorithm: Optional[Literal["one-at-a-time"]]
 
     @root_validator
-    def command_defined(cls, experiment):
+    def command_defined(cls, experiment: Dict[str, Any]) -> Dict[str, Any]:
         type_ = experiment.get("type")
         algorithm = experiment.get("algorithm")
 
@@ -39,7 +39,7 @@ class ExperimentConfig(_ExperimentConfig):
         return experiment
 
 
-def load_experiment_config(config_dict):
+def load_experiment_config(config_dict: Dict[str, Any]) -> ExperimentConfig:
     try:
         return ExperimentConfig(**config_dict)
     except ValidationError as err:

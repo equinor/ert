@@ -1,5 +1,5 @@
 import pathlib
-from typing import List, Mapping
+from typing import List, Dict
 
 import ert3
 from ert3.engine import _utils
@@ -9,7 +9,7 @@ def _prepare_experiment(
     workspace_root: pathlib.Path,
     experiment_name: str,
     ensemble: ert3.config.EnsembleConfig,
-):
+) -> None:
     if ert3.workspace.experiment_has_run(workspace_root, experiment_name):
         raise ValueError(f"Experiment {experiment_name} have been carried out.")
 
@@ -71,7 +71,7 @@ def _prepare_evaluation(
 def _load_ensemble_parameters(
     ensemble: ert3.config.EnsembleConfig,
     workspace: pathlib.Path,
-) -> Mapping[str, ert3.stats.Distribution]:
+) -> Dict[str, ert3.stats.Distribution]:
     parameters = _utils.load_parameters(workspace)
 
     ensemble_parameters = {}
@@ -93,7 +93,7 @@ def _prepare_sensitivity(
     parameter_distributions = _load_ensemble_parameters(ensemble, workspace_root)
     input_records = ert3.algorithms.one_at_the_time(parameter_distributions)
 
-    parameters: Mapping[str, List[ert3.data.Record]] = {
+    parameters: Dict[str, List[ert3.data.Record]] = {
         param.record: [] for param in ensemble.input
     }
     for realization in input_records:
@@ -116,6 +116,7 @@ def _store_responses(
     experiment_name: str,
     responses: ert3.data.MultiEnsembleRecord,
 ) -> None:
+    assert responses.record_names is not None
     for record_name in responses.record_names:
         ert3.storage.add_ensemble_record(
             workspace=workspace_root,

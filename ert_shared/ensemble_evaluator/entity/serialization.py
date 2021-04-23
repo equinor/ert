@@ -1,5 +1,6 @@
 import datetime
 import json
+from typing import Any
 
 from dateutil import parser
 
@@ -11,7 +12,7 @@ class EvaluatorEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def evaluator_marshaller(content: any):
+def evaluator_marshaller(content: Any):
     if content is None:
         return None
     try:
@@ -30,7 +31,7 @@ def object_hook(obj):
     return obj
 
 
-def evaluator_unmarshaller(content: any):
+def evaluator_unmarshaller(content: Any):
     """
     Due to internals of CloudEvent content is double-encoded, therefore double-decoding
     """

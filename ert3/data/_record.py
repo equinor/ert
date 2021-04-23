@@ -5,7 +5,16 @@ import uuid
 from abc import abstractmethod
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, Tuple, Union
+from typing import (
+    Any,
+    List,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Tuple,
+    Union,
+    Dict,
+)
 
 import aiofiles
 
@@ -18,6 +27,7 @@ from pydantic import (
     StrictFloat,
     StrictInt,
     StrictStr,
+    validator,
     root_validator,
 )
 
@@ -26,13 +36,13 @@ _copy = wrap(shutil.copy)
 strict_number = Union[StrictInt, StrictFloat]
 record_data = Union[
     List[strict_number],
-    Mapping[StrictStr, strict_number],
-    Mapping[StrictInt, strict_number],
+    Dict[StrictStr, strict_number],
+    Dict[StrictInt, strict_number],
     List[StrictBytes],
 ]
 
 
-def parse_json_key_as_int(obj):
+def parse_json_key_as_int(obj: Any) -> Any:
     if isinstance(obj, dict):
         return {int(k): v for k, v in obj.items()}
     return obj
@@ -47,8 +57,10 @@ class _DataElement(BaseModel):
         arbitrary_types_allowed = True
 
 
-def _build_record_index(data):
-    if isinstance(data, Mapping):
+def _build_record_index(
+    data: record_data,
+) -> Tuple[Union[StrictInt, StrictStr], ...]:
+    if isinstance(data, MutableMapping):
         return tuple(data.keys())
     else:
         return tuple(range(len(data)))
@@ -63,12 +75,17 @@ class RecordType(str, Enum):
 
 class Record(_DataElement):
     data: record_data
-    index: Union[Tuple[StrictInt, ...], Tuple[StrictStr, ...]]
+    index: Optional[Tuple[Union[StrictStr, StrictInt], ...]] = None
 
-    def __init__(self, *, data, index=None, **kwargs):
-        if index is None:
-            index = _build_record_index(data)
-        super().__init__(data=data, index=index, **kwargs)
+    @validator("index", pre=True)
+    def index_validator(
+        cls,
+        index: Optional[Tuple[Union[StrictStr, StrictInt], ...]],
+        values: Dict[str, Any],
+    ) -> Optional[Tuple[Union[StrictStr, StrictInt], ...]]:
+        if index is None and "data" in values:
+            index = _build_record_index(values["data"])
+        return index
 
     @property
     def record_type(self) -> RecordType:
@@ -91,7 +108,7 @@ class Record(_DataElement):
         )
 
     @root_validator(skip_on_failure=True)
-    def ensure_consistent_index(cls, record):
+    def ensure_consistent_index(cls, record: Dict[str, Any]) -> Dict[str, Any]:
         assert (
             "data" in record and "index" in record
         ), "both data and index must be defined for a record"
@@ -104,15 +121,20 @@ class Record(_DataElement):
 
 class EnsembleRecord(_DataElement):
     records: Tuple[Record, ...]
-    ensemble_size: int
+    ensemble_size: Optional[int] = None
 
-    def __init__(self, *, records, ensemble_size=None, **kwargs):
-        if ensemble_size == None:
-            ensemble_size = len(records)
-        super().__init__(records=records, ensemble_size=ensemble_size, **kwargs)
+    @validator("ensemble_size", pre=True, always=True)
+    def ensemble_size_validator(
+        cls, ensemble_size: Optional[int], values: Dict[str, Any]
+    ) -> Optional[int]:
+        if ensemble_size == None and "records" in values:
+            ensemble_size = len(values["records"])
+        return ensemble_size
 
     @root_validator(skip_on_failure=True)
-    def ensure_consistent_ensemble_size(cls, ensemble_record):
+    def ensure_consistent_ensemble_size(
+        cls, ensemble_record: Dict[str, Any]
+    ) -> Dict[str, Any]:
         assert "records" in ensemble_record and "ensemble_size" in ensemble_record
         assert len(ensemble_record["records"]) == ensemble_record["ensemble_size"]
         return ensemble_record
@@ -120,30 +142,40 @@ class EnsembleRecord(_DataElement):
 
 class MultiEnsembleRecord(_DataElement):
     ensemble_records: Mapping[str, EnsembleRecord]
-    ensemble_size: int
-    record_names: Tuple[str, ...]
+    record_names: Optional[Tuple[str, ...]] = None
+    ensemble_size: Optional[int] = None
 
-    def __init__(
-        self, *, ensemble_records, record_names=None, ensemble_size=None, **kwargs
-    ):
-        if record_names is None:
-            record_names = list(ensemble_records.keys())
-        if ensemble_size is None:
+    @validator("record_names", pre=True, always=True)
+    def record_names_validator(
+        cls, record_names: Optional[Tuple[str, ...]], values: Dict[str, Any]
+    ) -> Optional[Tuple[str, ...]]:
+        if record_names == None and "ensemble_records" in values:
+            ensemble_records = values["ensemble_records"]
+            record_names = tuple(ensemble_records.keys())
+        return record_names
+
+    @validator("ensemble_size", pre=True, always=True)
+    def ensemble_size_validator(
+        cls, ensemble_size: Optional[int], values: Dict[str, Any]
+    ) -> Optional[int]:
+        if (
+            ensemble_size == None
+            and "ensemble_records" in values
+            and "record_names" in values
+        ):
+            record_names = values["record_names"]
+            ensemble_records = values["ensemble_records"]
             first_record = ensemble_records[record_names[0]]
             try:
                 ensemble_size = first_record.ensemble_size
             except AttributeError:
                 ensemble_size = len(first_record["records"])
-
-        super().__init__(
-            ensemble_records=ensemble_records,
-            ensemble_size=ensemble_size,
-            record_names=record_names,
-            **kwargs,
-        )
+        return ensemble_size
 
     @root_validator(skip_on_failure=True)
-    def ensure_consistent_ensemble_size(cls, multi_ensemble_record):
+    def ensure_consistent_ensemble_size(
+        cls, multi_ensemble_record: Dict[str, Any]
+    ) -> Dict[str, Any]:
         ensemble_size = multi_ensemble_record["ensemble_size"]
         for ensemble_record in multi_ensemble_record["ensemble_records"].values():
             if ensemble_size != ensemble_record.ensemble_size:
@@ -151,13 +183,16 @@ class MultiEnsembleRecord(_DataElement):
         return multi_ensemble_record
 
     @root_validator(skip_on_failure=True)
-    def ensure_consistent_record_names(cls, multi_ensemble_record):
+    def ensure_consistent_record_names(
+        cls, multi_ensemble_record: Dict[str, Any]
+    ) -> Dict[str, Any]:
         assert "record_names" in multi_ensemble_record
         record_names = tuple(multi_ensemble_record["ensemble_records"].keys())
         assert multi_ensemble_record["record_names"] == record_names
         return multi_ensemble_record
 
-    def __len__(self):
+    def __len__(self) -> int:
+        assert self.record_names is not None
         return len(self.record_names)
 
 
@@ -173,18 +208,18 @@ class RecordTransmitterType(Enum):
 
 
 class RecordTransmitter:
-    def __init__(self):
+    def __init__(self) -> None:
         self._state = RecordTransmitterState.not_transmitted
 
-    def _set_transmitted_state(self):
+    def _set_transmitted_state(self) -> None:
         self._state = RecordTransmitterState.transmitted
 
-    def is_transmitted(self):
+    def is_transmitted(self) -> bool:
         return self._state == RecordTransmitterState.transmitted
 
     @property
     @abstractmethod
-    def transmitter_type(self):
+    def transmitter_type(self) -> RecordTransmitterType:
         pass
 
     @abstractmethod
@@ -206,7 +241,7 @@ class RecordTransmitter:
     async def transmit_file(
         self,
         file: Path,
-        mime,
+        mime: str,
     ) -> None:
         pass
 
@@ -222,16 +257,16 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         self._uri: typing.Optional[str] = None
         self._record_type: typing.Optional[RecordType] = None
 
-    def _set_transmitted(self, uri: Path, record_type: RecordType):
+    def _set_transmitted(self, uri: Path, record_type: RecordType) -> None:
         super()._set_transmitted_state()
         self._uri = str(uri)
         self._record_type = record_type
 
     @property
-    def transmitter_type(self):
+    def transmitter_type(self) -> RecordTransmitterType:
         return self._TYPE
 
-    async def _transmit(self, record: Record):
+    async def _transmit(self, record: Record) -> None:
         storage_uri = self._storage_path / self._concrete_key
         if record.record_type != RecordType.LIST_BYTES:
             contents = json.dumps(record.data)
@@ -254,7 +289,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
     async def transmit_file(
         self,
         file: Path,
-        mime,
+        mime: str,
     ) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
@@ -306,13 +341,13 @@ class InMemoryRecordTransmitter(RecordTransmitter):
         super().__init__()
         self._name = name
 
-    def _set_transmitted(self, record: Record):
+    def _set_transmitted(self, record: Record) -> None:
         super()._set_transmitted_state()
         self._data = record.data
         self._index = record.index
 
     @property
-    def transmitter_type(self):
+    def transmitter_type(self) -> RecordTransmitterType:
         return self._TYPE
 
     @abstractmethod
@@ -329,7 +364,7 @@ class InMemoryRecordTransmitter(RecordTransmitter):
     async def transmit_file(
         self,
         file: Path,
-        mime,
+        mime: str,
     ) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
@@ -348,12 +383,12 @@ class InMemoryRecordTransmitter(RecordTransmitter):
             )
         self._set_transmitted(record)
 
-    async def load(self):
+    async def load(self) -> Record:
         if not self.is_transmitted():
             raise RuntimeError("cannot load untransmitted record")
         return Record(data=self._data, index=self._index)
 
-    async def dump(self, location: Path):
+    async def dump(self, location: Path) -> None:
         if not self.is_transmitted():
             raise RuntimeError("cannot dump untransmitted record")
         if self._data is None:
@@ -364,4 +399,4 @@ class InMemoryRecordTransmitter(RecordTransmitter):
                 await f.write(json.dumps(self._data))
         else:
             async with aiofiles.open(str(location), mode="wb") as f:  # type: ignore
-                await f.write(self._data[0])  # type: ignore
+                await f.write(self._data[0])

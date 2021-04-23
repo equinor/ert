@@ -1,9 +1,12 @@
 import asyncio
 import pickle
-from typing import Dict, Optional
+from typing import Dict, Optional, TYPE_CHECKING
 import prefect
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
+
+if TYPE_CHECKING:
+    from ert3.data import RecordTransmitter
 
 
 class FunctionTask(prefect.Task):
@@ -66,7 +69,7 @@ class FunctionTask(prefect.Task):
             )
         return output
 
-    def run(self, inputs: Dict[str, "ert3.data.RecordTransmitter"]):
+    def run(self, inputs: Dict[str, "RecordTransmitter"]):  # type: ignore
         with Client(self._ee_url, self._token, self._cert) as ee_client:
             ee_client.send_event(
                 ev_type=ids.EVTYPE_FM_STEP_RUNNING,

@@ -2,7 +2,7 @@ from importlib.abc import Loader
 import importlib.util
 import mimetypes
 import sys
-from typing import Callable, List, Optional, cast
+from typing import Callable, List, Optional, cast, Dict, Any
 
 from pydantic import BaseModel, FilePath, ValidationError, root_validator, validator
 import ert3
@@ -16,7 +16,7 @@ _DEFAULT_RECORD_MIME_TYPE = "application/json"
 _DEFAULT_CMD_MIME_TYPE = "application/octet-stream"
 
 
-def _import_from(path) -> Callable:
+def _import_from(path: str) -> Callable[..., Any]:
     if ":" not in path:
         raise ValueError("Function should be defined as module:function")
     module_str, func = path.split(":")
@@ -28,13 +28,21 @@ def _import_from(path) -> Callable:
     # compliant Loader. A cast is made to make this clear to the typing system.
     cast(Loader, spec.loader).exec_module(module)
     try:
-        func = getattr(module, func)
+        return cast(Callable[..., Any], getattr(module, func))
     except AttributeError:
         raise ImportError(name=func, path=module_str)
-    return func
 
 
-def _ensure_mime(cls, field, values):
+class _StagesConfig(BaseModel):
+    class Config:
+        validate_all = True
+        validate_assignment = True
+        extra = "forbid"
+        allow_mutation = False
+        arbitrary_types_allowed = True
+
+
+def _ensure_mime(cls: _StagesConfig, field: str, values: Dict[str, Any]) -> str:
     if field:
         return field
     guess = mimetypes.guess_type(str(values.get("location", "")))[0]
@@ -47,21 +55,14 @@ def _ensure_mime(cls, field, values):
     )
 
 
-class _StagesConfig(BaseModel):
-    class Config:
-        validate_all = True
-        validate_assignment = True
-        extra = "forbid"
-        allow_mutation = False
-        arbitrary_types_allowed = True
-
-
 class InputRecord(_StagesConfig):
     record: str
     location: str
     mime: str = ""
 
-    _ensure_mime = validator("mime", allow_reuse=True)(_ensure_mime)
+    @validator("mime")
+    def _ensure_input_record_mime(cls, field: str, values: Dict[str, Any]) -> str:
+        return _ensure_mime(cls, field, values)
 
 
 class OutputRecord(_StagesConfig):
@@ -69,7 +70,9 @@ class OutputRecord(_StagesConfig):
     location: str
     mime: str = ""
 
-    _ensure_mime = validator("mime", allow_reuse=True)(_ensure_mime)
+    @validator("mime")
+    def _ensure_output_record_mime(cls, field: str, values: Dict[str, Any]) -> str:
+        return _ensure_mime(cls, field, values)
 
 
 class TransportableCommand(_StagesConfig):
@@ -77,7 +80,11 @@ class TransportableCommand(_StagesConfig):
     location: FilePath
     mime: str = ""
 
-    _ensure_mime = validator("mime", allow_reuse=True)(_ensure_mime)
+    @validator("mime")
+    def _ensure_transportable_command_mime(
+        cls, field: str, values: Dict[str, Any]
+    ) -> str:
+        return _ensure_mime(cls, field, values)
 
 
 class Step(_StagesConfig):
@@ -87,10 +94,10 @@ class Step(_StagesConfig):
     input: List[InputRecord]
     output: List[OutputRecord]
     transportable_commands: Optional[List[TransportableCommand]] = []
-    function: Optional[Callable]
+    function: Optional[Callable[..., Any]]
 
     @root_validator
-    def check_defined(cls, step):
+    def check_defined(cls, step: Dict[str, Any]) -> Dict[str, Any]:
         cmd_names = [cmd.name for cmd in step.get("transportable_commands", [])]
         script_lines = step.get("script", [])
         if step.get("type") == "function":
@@ -103,7 +110,9 @@ class Step(_StagesConfig):
         return step
 
     @validator("function", pre=True)
-    def function_is_valid(cls, function: str, values) -> Optional[Callable]:
+    def function_is_valid(
+        cls, function: str, values: Dict[str, Any]
+    ) -> Optional[Callable[..., Any]]:
         step_type = values.get("type")
         if step_type != "function" and function:
             raise ValueError(f"Function defined for {step_type} step")
@@ -118,17 +127,17 @@ class StagesConfig(BaseModel):
     def step_from_key(self, key: str) -> Optional[Step]:
         return next((step for step in self if step.name == key), None)
 
-    def __iter__(self):
+    def __iter__(self):  # type: ignore
         return iter(self.__root__)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item):  # type: ignore
         return self.__root__[item]
 
-    def __len__(self):
+    def __len__(self):  # type: ignore
         return len(self.__root__)
 
 
-def load_stages_config(config_dict):
+def load_stages_config(config_dict: Dict[str, Any]) -> StagesConfig:
     try:
         return StagesConfig.parse_obj(config_dict)
     except ValidationError as err:
