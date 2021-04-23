@@ -316,7 +316,7 @@ class EnsembleEvaluator:
         self._event_index += 1
         return index
 
-    def run(self):
+    def run(self) -> ee_monitor._Monitor:
         self._ws_thread.start()
         self._ensemble.evaluate(self._config, self._ee_id)
         return ee_monitor.create(

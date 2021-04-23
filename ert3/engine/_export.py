@@ -1,13 +1,22 @@
 import json
 from pathlib import Path
+from typing import Set, List, Dict, Any
 
 import ert3
+from ert3.data import Record
 
 
-def _prepare_export(workspace_root, experiment_name, parameter_names, response_names):
+def _prepare_export(
+    workspace_root: Path,
+    experiment_name: str,
+    parameter_names: Set[str],
+    response_names: Set[str],
+) -> List[Dict[str, Dict[str, Record]]]:
     data_mapping = [(pname, "input") for pname in parameter_names]
     data_mapping += [(rname, "output") for rname in response_names]
-    data = None
+
+    data: List[Dict[str, Dict[str, Any]]] = []
+
     for record_name, data_type in data_mapping:
         ensemble_record = ert3.storage.get_ensemble_record(
             workspace=workspace_root,
@@ -15,7 +24,7 @@ def _prepare_export(workspace_root, experiment_name, parameter_names, response_n
             record_name=record_name,
         )
 
-        if data is None:
+        if not data:
             data = [{"input": {}, "output": {}} for _ in ensemble_record.records]
 
         assert len(data) == ensemble_record.ensemble_size

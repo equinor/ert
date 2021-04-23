@@ -1,7 +1,9 @@
+from pathlib import Path
+
 import ert3
 
 
-def status(workspace_root):
+def status(workspace_root: Path) -> None:
     experiments = ert3.workspace.get_experiment_names(workspace_root)
     done = ert3.storage.get_experiment_names(workspace=workspace_root)
     pending = [experiment for experiment in experiments if experiment not in done]

@@ -1,7 +1,7 @@
 import codecs
 import json
 from pathlib import Path
-from typing import Any, Iterable, Optional, Union, cast, Mapping
+from typing import Any, Dict, Iterable, Optional, cast, Set
 import io
 
 import cloudpickle
@@ -16,7 +16,7 @@ _ENSEMBLE_RECORDS = "__ensemble_records__"
 _SPECIAL_KEYS = (_ENSEMBLE_RECORDS,)
 
 
-def _get_experiment_by_name(experiment_name: str) -> Mapping[str, Any]:
+def _get_experiment_by_name(experiment_name: str) -> Dict[str, Any]:
     response = requests.get(url=f"{_STORAGE_URL}/experiments")
     if response.status_code != 200:
         raise ert3.exceptions.StorageError(response.text)
@@ -24,7 +24,7 @@ def _get_experiment_by_name(experiment_name: str) -> Mapping[str, Any]:
     return experiments.get(experiment_name, None)
 
 
-def init(*, workspace: Union[str, Path]) -> None:
+def init(*, workspace: Path) -> None:
     response = requests.get(url=f"{_STORAGE_URL}/experiments")
     experiment_names = {exp["name"]: exp["ensembles"] for exp in response.json()}
 
@@ -39,7 +39,7 @@ def init(*, workspace: Union[str, Path]) -> None:
 
 
 def init_experiment(
-    *, workspace: Union[str, Path], experiment_name: str, parameters: Iterable[str]
+    *, workspace: Path, experiment_name: str, parameters: Iterable[str]
 ) -> None:
     if not experiment_name:
         raise ValueError("Cannot initialize experiment without a name")
@@ -59,7 +59,7 @@ def init_experiment(
         raise ert3.exceptions.StorageError(response.text)
 
 
-def get_experiment_names(*, workspace: Union[str, Path]) -> Iterable[str]:
+def get_experiment_names(*, workspace: Path) -> Set[str]:
     response = response = requests.get(url=f"{_STORAGE_URL}/experiments")
     experiment_names = {exp["name"] for exp in response.json()}
     for special_key in _SPECIAL_KEYS:
@@ -70,7 +70,7 @@ def get_experiment_names(*, workspace: Union[str, Path]) -> Iterable[str]:
 
 
 def _add_data(
-    workspace: Union[str, Path], experiment_name: str, record_name: str, data: Any
+    workspace: Path, experiment_name: str, record_name: str, data: Any
 ) -> None:
 
     experiment = _get_experiment_by_name(experiment_name)
@@ -92,9 +92,7 @@ def _add_data(
         raise ert3.exceptions.StorageError(response.text)
 
 
-def _get_data(
-    workspace: Union[str, Path], experiment_name: str, record_name: str
-) -> Any:
+def _get_data(workspace: Path, experiment_name: str, record_name: str) -> Any:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
         raise KeyError(
@@ -114,7 +112,7 @@ def _get_data(
 
 def add_ensemble_record(
     *,
-    workspace: Union[str, Path],
+    workspace: Path,
     record_name: str,
     ensemble_record: ert3.data.EnsembleRecord,
     experiment_name: Optional[str] = None,
@@ -137,7 +135,7 @@ def add_ensemble_record(
 
 def get_ensemble_record(
     *,
-    workspace: Union[str, Path],
+    workspace: Path,
     record_name: str,
     experiment_name: Optional[str] = None,
 ) -> ert3.data.EnsembleRecord:
@@ -151,7 +149,7 @@ def get_ensemble_record(
 
 
 def get_ensemble_record_names(
-    *, workspace: Union[str, Path], experiment_name: Optional[str] = None
+    *, workspace: Path, experiment_name: Optional[str] = None
 ) -> Iterable[str]:
     if experiment_name is None:
         experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
@@ -169,7 +167,7 @@ def get_ensemble_record_names(
 
 
 def get_experiment_parameters(
-    *, workspace: Union[str, Path], experiment_name: str
+    *, workspace: Path, experiment_name: str
 ) -> Iterable[str]:
 
     experiment = _get_experiment_by_name(experiment_name)
@@ -185,7 +183,7 @@ def get_experiment_parameters(
     return list(response.json())
 
 
-def delete_experiment(*, workspace: Union[str, Path], experiment_name: str) -> None:
+def delete_experiment(*, workspace: Path, experiment_name: str) -> None:
 
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:

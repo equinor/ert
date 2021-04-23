@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import Dict, Any, Union
+
 import yaml
 import ert3
 
@@ -7,9 +10,11 @@ import ert3
 # rid of it...
 
 
-def load_parameters(workspace):
+def load_parameters(workspace: Path) -> Dict[str, Any]:
     with open(workspace / "parameters.yml") as f:
         parameter_config = yaml.safe_load(f)
+
+    distribution: Union[ert3.stats.Gaussian, ert3.stats.Uniform]
 
     parameters = {}
     for parameter_group in parameter_config:

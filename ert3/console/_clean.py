@@ -1,7 +1,10 @@
+from typing import Set
+from pathlib import Path
+
 import ert3
 
 
-def clean(workspace, experiment_names, clean_all):
+def clean(workspace: Path, experiment_names: Set[str], clean_all: bool) -> None:
     if clean_all:
         non_existant = []
     else:
