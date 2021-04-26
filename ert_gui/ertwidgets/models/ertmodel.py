@@ -13,7 +13,7 @@ def getRealizationCount():
 
 
 def getAllCases():
-    """ @rtype: list[str] """
+    """@rtype: list[str]"""
     case_list = ERT.ert.getEnkfFsManager().getCaseList()
     return [
         str(case)
@@ -23,27 +23,27 @@ def getAllCases():
 
 
 def caseExists(case_name):
-    """ @rtype: bool """
+    """@rtype: bool"""
     return str(case_name) in getAllCases()
 
 
 def caseIsInitialized(case_name):
-    """ @rtype: bool """
+    """@rtype: bool"""
     return ERT.ert.getEnkfFsManager().isCaseInitialized(case_name)
 
 
 def getAllInitializedCases():
-    """ @rtype: list[str] """
+    """@rtype: list[str]"""
     return [case for case in getAllCases() if caseIsInitialized(case)]
 
 
 def getCurrentCaseName():
-    """ @rtype: str """
+    """@rtype: str"""
     return ERT.enkf_facade.get_current_case_name()
 
 
 def getHistoryLength():
-    """ @rtype: int """
+    """@rtype: int"""
     return ERT.ert.getHistoryLength()
 
 
@@ -76,7 +76,7 @@ def selectOrCreateNewCase(case_name):
 
 
 def caseHasDataAndIsNotRunning(case):
-    """ @rtype: bool """
+    """@rtype: bool"""
     case_has_data = False
     state_map = ERT.ert.getEnkfFsManager().getStateMapForCase(case)
 
@@ -89,22 +89,22 @@ def caseHasDataAndIsNotRunning(case):
 
 
 def getAllCasesWithDataAndNotRunning():
-    """ @rtype: list[str] """
+    """@rtype: list[str]"""
     return [case for case in getAllCases() if caseHasDataAndIsNotRunning(case)]
 
 
 def caseIsRunning(case):
-    """ @rtype: bool """
+    """@rtype: bool"""
     return ERT.ert.getEnkfFsManager().isCaseRunning(case)
 
 
 def getAllCasesNotRunning():
-    """ @rtype: list[str] """
+    """@rtype: list[str]"""
     return [case for case in getAllCases() if not caseIsRunning(case)]
 
 
 def getCaseRealizationStates(case_name):
-    """ @rtype: list[res.enkf.enums.RealizationStateEnum] """
+    """@rtype: list[res.enkf.enums.RealizationStateEnum]"""
     state_map = ERT.ert.getEnkfFsManager().getStateMapForCase(case_name)
     return [state for state in state_map]
 
@@ -145,7 +145,7 @@ def initializeCurrentCaseFromExisting(
 
 
 def getParameterList():
-    """ @rtype: list[str] """
+    """@rtype: list[str]"""
     return [
         str(p)
         for p in ERT.ert.ensembleConfig().getKeylistFromVarType(EnkfVarType.PARAMETER)
@@ -153,17 +153,17 @@ def getParameterList():
 
 
 def getRunPath():
-    """ @rtype: str """
+    """@rtype: str"""
     return ERT.ert.getModelConfig().getRunpathAsString()
 
 
 def getNumberOfIterations():
-    """ @rtype: int """
+    """@rtype: int"""
     return ERT.enkf_facade.get_number_of_iterations()
 
 
 def setNumberOfIterations(iteration_count):
-    """ @type iteration_count: int """
+    """@type iteration_count: int"""
     if iteration_count != getNumberOfIterations():
         ERT.ert.analysisConfig().getAnalysisIterConfig().setNumIterations(
             iteration_count
@@ -172,12 +172,12 @@ def setNumberOfIterations(iteration_count):
 
 
 def getWorkflowNames():
-    """ @rtype: list[str] """
+    """@rtype: list[str]"""
     return sorted(ERT.ert.getWorkflowList().getWorkflowNames(), key=str.lower)
 
 
 def createWorkflowRunner(workflow_name):
-    """ @rtype: WorkflowRunner """
+    """@rtype: WorkflowRunner"""
     workflow_list = ERT.ert.getWorkflowList()
 
     workflow = workflow_list[workflow_name]
@@ -186,17 +186,17 @@ def createWorkflowRunner(workflow_name):
 
 
 def getAnalysisModules(iterable=False):
-    """ @rtype: list[ert.analysis.AnalysisModule]"""
+    """@rtype: list[ert.analysis.AnalysisModule]"""
     return ERT.enkf_facade.get_analysis_modules(iterable)
 
 
 def getAnalysisModuleNames(iterable=False):
-    """ @rtype: list[str] """
+    """@rtype: list[str]"""
     return ERT.enkf_facade.get_analysis_module_names(iterable)
 
 
 def getCurrentAnalysisModuleName():
-    """ @rtype: str """
+    """@rtype: str"""
     return ERT.ert.analysisConfig().activeModuleName()
 
 

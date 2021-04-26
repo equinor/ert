@@ -69,7 +69,7 @@ class HelpCenter(object):
 
     @classmethod
     def getHelpCenter(cls, name):
-        """ @rtype: HelpCenter """
+        """@rtype: HelpCenter"""
         return HelpCenter.__help_centers.get(name)
 
     @staticmethod

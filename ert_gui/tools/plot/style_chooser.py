@@ -183,14 +183,14 @@ class StyleChooser(QWidget):
         self._style.size = size
 
     def setStyle(self, style):
-        """ @type style: PlotStyle """
+        """@type style: PlotStyle"""
         self._style.copyStyleFrom(style)
         self._updateLineStyleAndMarker(
             style.line_style, style.marker, style.width, style.size
         )
 
     def getStyle(self):
-        """ @rtype: PlotStyle """
+        """@rtype: PlotStyle"""
         style = PlotStyle("Generated Style from StyleChooser")
         style.copyStyleFrom(self._style)
         return style

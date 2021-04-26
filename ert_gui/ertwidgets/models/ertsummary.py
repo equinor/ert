@@ -5,19 +5,19 @@ from ert_shared import ERT
 
 class ErtSummary(object):
     def getForwardModels(self):
-        """ @rtype: list of str """
+        """@rtype: list of str"""
         forward_model = ERT.ert.getModelConfig().getForwardModel()
         return [job for job in forward_model.joblist()]
 
     def getParameters(self):
-        """ @rtype: list of str """
+        """@rtype: list of str"""
         parameters = ERT.ert.ensembleConfig().getKeylistFromVarType(
             EnkfVarType.PARAMETER
         )
         return sorted([parameter for parameter in parameters], key=lambda k: k.lower())
 
     def getObservations(self):
-        """ @rtype: list of str """
+        """@rtype: list of str"""
         gen_obs = ERT.ert.getObservations().getTypedKeylist(
             EnkfObservationImplementationType.GEN_OBS
         )

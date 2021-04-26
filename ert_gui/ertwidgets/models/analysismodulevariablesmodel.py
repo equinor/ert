@@ -153,7 +153,7 @@ class AnalysisModuleVariablesModel(object):
 
     @classmethod
     def getVariableNames(cls, analysis_module_name):
-        """ @rtype: list of str """
+        """@rtype: list of str"""
         analysis_module = ERT.ert.analysisConfig().getModule(analysis_module_name)
         assert isinstance(analysis_module, AnalysisModule)
         items = []
@@ -196,7 +196,7 @@ class AnalysisModuleVariablesModel(object):
 
     @classmethod
     def getVariableValue(cls, analysis_module_name, name):
-        """ @rtype: int or float or bool or str """
+        """@rtype: int or float or bool or str"""
         analysis_module = ERT.ert.analysisConfig().getModule(analysis_module_name)
         variable_type = cls.getVariableType(name)
         if variable_type == float:

@@ -62,7 +62,7 @@ class BaseRunModel(object):
         self.reset()
 
     def ert(self):
-        """ @rtype: res.enkf.EnKFMain"""
+        """@rtype: res.enkf.EnKFMain"""
         return ERT.ert
 
     @property
@@ -106,11 +106,11 @@ class BaseRunModel(object):
 
     @job_queue(False)
     def userExitCalled(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._job_queue.getUserExit()
 
     def phaseCount(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._phase_count
 
     def setPhaseCount(self, phase_count):
@@ -118,7 +118,7 @@ class BaseRunModel(object):
         self.setPhase(0, "")
 
     def currentPhase(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._phase
 
     def setPhaseName(self, phase_name, indeterminate=None):
@@ -126,7 +126,7 @@ class BaseRunModel(object):
         self.setIndeterminate(indeterminate)
 
     def getPhaseName(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._phase_name
 
     def setIndeterminate(self, indeterminate):
@@ -134,15 +134,15 @@ class BaseRunModel(object):
             self._indeterminate = indeterminate
 
     def isFinished(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._phase == self._phase_count or self.hasRunFailed()
 
     def hasRunFailed(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._failed
 
     def getFailMessage(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._fail_message
 
     def _simulationEnded(self):
@@ -179,7 +179,7 @@ class BaseRunModel(object):
 
     @job_queue(1)
     def getQueueSize(self):
-        """ @rtype: int """
+        """@rtype: int"""
         queue_size = len(self._job_queue)
 
         if queue_size == 0:
@@ -189,7 +189,7 @@ class BaseRunModel(object):
 
     @job_queue({})
     def getQueueStatus(self):
-        """ @rtype: dict of (JobStatusType, int) """
+        """@rtype: dict of (JobStatusType, int)"""
         queue_status = {}
 
         for job_number in range(len(self._job_queue)):
@@ -204,7 +204,7 @@ class BaseRunModel(object):
 
     @job_queue(False)
     def isQueueRunning(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._job_queue.isRunning()
 
     @staticmethod
@@ -286,7 +286,7 @@ class BaseRunModel(object):
             return {}, -1
 
     def isIndeterminate(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return not self.isFinished() and self._indeterminate
 
     def checkHaveSufficientRealizations(self, num_successful_realizations):

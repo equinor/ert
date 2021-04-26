@@ -129,7 +129,7 @@ def _realizations(args):
 
 
 def _target_case_name(args, format_mode=False):
-    """ @rtype: str """
+    """@rtype: str"""
     if args.target_case is not None:
         return args.target_case
 

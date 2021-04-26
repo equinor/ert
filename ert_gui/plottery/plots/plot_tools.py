@@ -13,7 +13,7 @@ class PlotTools(object):
 
     @staticmethod
     def _getXAxisLimits(plot_context):
-        """ @type plot_context: ert_gui.plottery.PlotContext """
+        """@type plot_context: ert_gui.plottery.PlotContext"""
         limits = plot_context.plotConfig().limits
         axis_name = plot_context.x_axis
 
@@ -35,7 +35,7 @@ class PlotTools(object):
 
     @staticmethod
     def _getYAxisLimits(plot_context):
-        """ @type plot_context: ert_gui.plottery.PlotContext """
+        """@type plot_context: ert_gui.plottery.PlotContext"""
         limits = plot_context.plotConfig().limits
         axis_name = plot_context.y_axis
 

@@ -9,7 +9,7 @@ class ValueModel(QObject):
         self._value = value
 
     def getValue(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._value
 
     @Slot(str)

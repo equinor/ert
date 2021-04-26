@@ -64,7 +64,7 @@ class PlotWidget(QWidget):
 
     @property
     def name(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._name
 
     def updatePlot(self, plot_context, case_to_data_map, observations):

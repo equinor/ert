@@ -49,15 +49,15 @@ class ConfigurationLineBuilder(object):
             )
 
     def configurationLine(self):
-        """ @rtype: ConfigurationLine """
+        """@rtype: ConfigurationLine"""
         return self.__configuration_line
 
     def hasConfigurationLine(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self.__configuration_line is not None
 
     def hasComment(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self.__configuration_line_parser.hasComment()
 
     def commentIndex(self):

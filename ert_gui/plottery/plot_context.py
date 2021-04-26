@@ -33,32 +33,32 @@ class PlotContext(object):
         self._y_axis = None
 
     def plotConfig(self):
-        """ :rtype: PlotConfig """
+        """:rtype: PlotConfig"""
         return self._plot_config
 
     def cases(self):
-        """ :rtype: list of str """
+        """:rtype: list of str"""
         return self._cases
 
     def key(self):
-        """ :rtype: str """
+        """:rtype: str"""
         return self._key
 
     def deactivateDateSupport(self):
         self._date_support_active = False
 
     def isDateSupportActive(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._date_support_active
 
     @property
     def x_axis(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._x_axis
 
     @x_axis.setter
     def x_axis(self, value):
-        """ @type value: str """
+        """@type value: str"""
         if not value in PlotContext.AXIS_TYPES:
             raise UserWarning(
                 "Axis: '%s' is not one of: %s" % (value, PlotContext.AXIS_TYPES)
@@ -67,12 +67,12 @@ class PlotContext(object):
 
     @property
     def y_axis(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._y_axis
 
     @y_axis.setter
     def y_axis(self, value):
-        """ @type value: str """
+        """@type value: str"""
         if not value in PlotContext.AXIS_TYPES:
             raise UserWarning(
                 "Axis: '%s' is not one of: %s" % (value, PlotContext.AXIS_TYPES)

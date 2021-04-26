@@ -49,7 +49,7 @@ class ColorBox(QFrame):
 
     @property
     def color(self):
-        """ @rtype: QColor """
+        """@rtype: QColor"""
         return self._color
 
     @color.setter

@@ -12,21 +12,21 @@ class ConfigurationLineDefinition(object):
         self.__group = group
 
     def isRequired(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self.__required
 
     def keywordDefinition(self):
-        """ @rtype: KeywordDefinition """
+        """@rtype: KeywordDefinition"""
         return self.__keyword_definition
 
     def argumentDefinitions(self):
-        """ @rtype: list of ArgumentDefinition """
+        """@rtype: list of ArgumentDefinition"""
         return self.__argument_definitions
 
     def documentationLink(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.__documentation_link
 
     def group(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.__group

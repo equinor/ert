@@ -46,7 +46,7 @@ class CaseSelectionWidget(QWidget):
         self.__signal_mapper.mapped[QWidget].connect(self.removeWidget)
 
     def __caseName(self, widget):
-        """ @rtype: str """
+        """@rtype: str"""
         return str(self.__case_selectors[widget].currentText())
 
     def getPlotCaseNames(self):

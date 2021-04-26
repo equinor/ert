@@ -30,7 +30,7 @@ class ErtSplash(QSplashScreen):
         self.timestamp = "Timestamp string"
 
     def drawContents(self, painter):
-        """ @type painter: QPainter """
+        """@type painter: QPainter"""
         w = self.width()
         h = self.height()
 

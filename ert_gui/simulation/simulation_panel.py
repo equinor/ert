@@ -107,7 +107,7 @@ class SimulationPanel(QWidget):
         )
 
     def getSimulationArguments(self):
-        """ @rtype: dict[str,object]"""
+        """@rtype: dict[str,object]"""
         simulation_widget = self._simulation_widgets[self.getCurrentSimulationModel()]
         args = simulation_widget.getSimulationArguments()
         if self._ee_config is not None:

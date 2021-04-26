@@ -54,7 +54,7 @@ def resourceImage(name):
 
 
 def resourceMovie(name):
-    """ @rtype: QMovie """
+    """@rtype: QMovie"""
     movie = QMovie(resource_filename("ert_gui", "resources/gui/img/" + name))
     movie.start()
     return movie

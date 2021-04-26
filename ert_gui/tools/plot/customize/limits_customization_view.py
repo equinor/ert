@@ -134,27 +134,27 @@ class LimitsWidget(object):
 
     @property
     def x_minimum_stack(self):
-        """ @rtype: LimitsStack """
+        """@rtype: LimitsStack"""
         return self._x_minimum_stack
 
     @property
     def x_maximum_stack(self):
-        """ @rtype: LimitsStack """
+        """@rtype: LimitsStack"""
         return self._x_maximum_stack
 
     @property
     def y_minimum_stack(self):
-        """ @rtype: LimitsStack """
+        """@rtype: LimitsStack"""
         return self._y_minimum_stack
 
     @property
     def y_maximum_stack(self):
-        """ @rtype: LimitsStack """
+        """@rtype: LimitsStack"""
         return self._y_maximum_stack
 
     @property
     def limits(self):
-        """ @rtype: PlotLimits """
+        """@rtype: PlotLimits"""
         self._updateLimits()
         limits = PlotLimits()
         limits.copyLimitsFrom(self._limits)
@@ -162,7 +162,7 @@ class LimitsWidget(object):
 
     @limits.setter
     def limits(self, value):
-        """ @type value: PlotLimits """
+        """@type value: PlotLimits"""
         self._limits.copyLimitsFrom(value)
         self._updateWidgets()
 
@@ -256,9 +256,9 @@ class LimitsCustomizationView(CustomizationView):
         self._limits_widget.switchInputOnY(y_axis_type)
 
     def revertCustomization(self, plot_config):
-        """ @type plot_config: ert_gui.plottery.PlotConfig """
+        """@type plot_config: ert_gui.plottery.PlotConfig"""
         self._limits_widget.limits = plot_config.limits
 
     def applyCustomization(self, plot_config):
-        """ @type plot_config: ert_gui.plottery.PlotConfig """
+        """@type plot_config: ert_gui.plottery.PlotConfig"""
         plot_config.limits = self._limits_widget.limits

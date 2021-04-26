@@ -9,7 +9,7 @@ class Keyword(Token):
         self.__keyword_definition = None
 
     def keywordDefinition(self):
-        """ @rtype: KeywordDefinition """
+        """@rtype: KeywordDefinition"""
         return self.__keyword_definition
 
     def setKeywordDefinition(self, keyword_definition):

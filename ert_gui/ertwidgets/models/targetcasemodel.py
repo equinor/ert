@@ -23,7 +23,7 @@ class TargetCaseModel(ValueModel):
             ValueModel.setValue(self, target_case)
 
     def getDefaultValue(self):
-        """ @rtype: str """
+        """@rtype: str"""
         if self._format_mode:
             if ERT.ert.analysisConfig().getAnalysisIterConfig().caseFormatSet():
                 return ERT.ert.analysisConfig().getAnalysisIterConfig().getCaseFormat()

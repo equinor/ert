@@ -14,7 +14,7 @@ class HistogramPlot(object):
 
 
 def plotHistogram(figure, plot_context, case_to_data_map, _observation_data):
-    """ @type plot_context: ert_gui.plottery.PlotContext """
+    """@type plot_context: ert_gui.plottery.PlotContext"""
     config = plot_context.plotConfig()
 
     case_list = plot_context.cases()

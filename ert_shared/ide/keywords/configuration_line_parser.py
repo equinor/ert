@@ -40,37 +40,37 @@ class ConfigurationLineParser(object):
                 self.__arguments.append(Argument(match.start(1), match.end(1), line))
 
     def hasComment(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self.__comment_index >= 0
 
     def commentIndex(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.__comment_index
 
     def hasKeyword(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self.__keyword is not None
 
     def keyword(self):
-        """ @rtype: Keyword """
+        """@rtype: Keyword"""
         return self.__keyword
 
     def text(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.__text
 
     def uncommentedText(self):
-        """ @rtype: str """
+        """@rtype: str"""
         if self.hasComment():
             return self.__text[0 : self.commentIndex()]
         return self.text()
 
     def argumentsText(self):
-        """ @rtype: str """
+        """@rtype: str"""
         if self.hasKeyword():
             return self.uncommentedText()[self.__arguments_index :]
         return ""
 
     def arguments(self):
-        """ @rtype: list of Argument """
+        """@rtype: list of Argument"""
         return self.__arguments

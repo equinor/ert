@@ -32,7 +32,7 @@ class LoadResultsModel(object):
 
     @staticmethod
     def isValidRunPath():
-        """ @rtype: bool """
+        """@rtype: bool"""
         run_path = ERT.ert.getModelConfig().getRunpathAsString()
         try:
             result = run_path % (0, 0)
@@ -50,12 +50,12 @@ class LoadResultsModel(object):
 
     @staticmethod
     def getCurrentRunPath():
-        """ @rtype: str """
+        """@rtype: str"""
         return ERT.ert.getModelConfig().getRunpathAsString()
 
     @staticmethod
     def getIterationCount():
-        """ @rtype: int """
+        """@rtype: int"""
         run_path = ERT.ert.getModelConfig().getRunpathAsString()
         try:
             results = run_path % (0, 0)

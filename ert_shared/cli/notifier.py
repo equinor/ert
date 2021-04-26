@@ -7,14 +7,14 @@ class ErtCliNotifier:
 
     @property
     def ert(self):
-        """ @rtype: EnKFMain """
+        """@rtype: EnKFMain"""
         if self._ert is None:
             raise ValueError("Ert is undefined.")
         return self._ert
 
     @property
     def config_file(self):
-        """ @rtype: str """
+        """@rtype: str"""
         if self._ert is None:
             raise ValueError("Ert is undefined.")
         return self._config_file
