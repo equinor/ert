@@ -20,13 +20,13 @@ class ErtNotifier(QObject):
 
     @property
     def ert(self):
-        """ @rtype: EnKFMain """
+        """@rtype: EnKFMain"""
         self._checkErt()
         return self._ert
 
     @property
     def config_file(self):
-        """ @rtype: str """
+        """@rtype: str"""
         self._checkErt()
         return self._config_file
 

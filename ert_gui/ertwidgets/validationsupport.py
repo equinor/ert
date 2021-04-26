@@ -61,7 +61,7 @@ class ValidationSupport(QObject):
     validationChanged = Signal(bool)
 
     def __init__(self, validation_target):
-        """ @type validation_target: QWidget """
+        """@type validation_target: QWidget"""
         QObject.__init__(self)
 
         self._validation_target = validation_target

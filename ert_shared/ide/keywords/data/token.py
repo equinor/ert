@@ -7,23 +7,23 @@ class Token(object):
         self.__line = line
 
     def value(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.__line[self.__from_index : self.__to_index]
 
     def fromIndex(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self.__from_index
 
     def toIndex(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self.__to_index
 
     def line(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.__line
 
     def count(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self.toIndex() - self.fromIndex()
 
     def __contains__(self, item):

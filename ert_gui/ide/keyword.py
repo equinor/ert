@@ -30,16 +30,16 @@ class Keyword(object):
         return len(self.parameter_list)
 
     def parameters(self):
-        """ @rtype: list of Parameter """
+        """@rtype: list of Parameter"""
         return self.parameter_list
 
     def __getitem__(self, item):
-        """ @rtype: Parameter """
+        """@rtype: Parameter"""
         assert isinstance(item, int)
         return self.parameter_list[item]
 
     def hasError(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         parameter_error = False
 
         for param in self.parameter_list:

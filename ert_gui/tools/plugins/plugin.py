@@ -16,7 +16,7 @@ class Plugin(object):
         self.__description = script.getDescription()
 
     def __loadPlugin(self):
-        """ @rtype: ErtPlugin """
+        """@rtype: ErtPlugin"""
         script_obj = ErtScript.loadScriptFromFile(
             self.__workflow_job.getInternalScriptPath()
         )
@@ -24,11 +24,11 @@ class Plugin(object):
         return script
 
     def getName(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.__name
 
     def getDescription(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.__description
 
     def getArguments(self):
@@ -43,13 +43,13 @@ class Plugin(object):
         self.__parent_window = parent_window
 
     def getParentWindow(self):
-        """ @rtype: QWidget """
+        """@rtype: QWidget"""
         return self.__parent_window
 
     def ert(self):
-        """ @rtype: res.enkf.enkf_main.EnKFMain """
+        """@rtype: res.enkf.enkf_main.EnKFMain"""
         return self.__ert
 
     def getWorkflowJob(self):
-        """ @rtype: WorkflowJob """
+        """@rtype: WorkflowJob"""
         return self.__workflow_job

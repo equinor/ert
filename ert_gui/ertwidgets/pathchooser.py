@@ -86,7 +86,7 @@ class PathChooser(QWidget):
         self.getPathFromModel()
 
     def isPathValid(self, path):
-        """ @rtype: tuple of (bool, str) """
+        """@rtype: tuple of (bool, str)"""
         path = path.strip()
         path_exists = os.path.exists(path)
         is_file = os.path.isfile(path)

@@ -119,7 +119,7 @@ class PlotWindow(QMainWindow):
                 plot_widget.updatePlot(plot_context, case_to_data_map, observations)
 
     def _updateCustomizer(self, plot_widget):
-        """ @type plot_widget: PlotWidget """
+        """@type plot_widget: PlotWidget"""
         key_def = self.getSelectedKey()
         if key_def is None:
             return

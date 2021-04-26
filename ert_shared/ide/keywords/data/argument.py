@@ -10,9 +10,9 @@ class Argument(Token):
         self.__argument_definition = argument_definition
 
     def argumentDefinition(self):
-        """ @rtype: ArgumentDefinition """
+        """@rtype: ArgumentDefinition"""
         return self.__argument_definition
 
     def hasArgumentDefinition(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self.__argument_definition is not None

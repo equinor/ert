@@ -66,7 +66,7 @@ class PlotCustomizer(QObject):
         self._revertCustomization(self.getPlotConfig())
 
     def _getPlotConfigHistory(self):
-        """ @rtype: PlotConfigHistory """
+        """@rtype: PlotConfigHistory"""
         return self._plot_configs[self._plot_config_key]
 
     def undoCustomization(self):
@@ -112,11 +112,11 @@ class PlotCustomizer(QObject):
             self.settingsChanged.emit()
 
     def isCopyPossible(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return len(self._plot_configs) > 2
 
     def copyCustomizationTo(self, keys):
-        """ copies the plotconfig of the current key, to a set of other keys"""
+        """copies the plotconfig of the current key, to a set of other keys"""
         history = self._getPlotConfigHistory()
 
         for key in keys:
@@ -165,7 +165,7 @@ class PlotCustomizer(QObject):
             self._revertCustomization(self.getPlotConfig(), emit=False)
 
     def getPlotConfig(self):
-        """ @rtype: PlotConfig """
+        """@rtype: PlotConfig"""
         return self._getPlotConfigHistory().getPlotConfig()
 
     def setAxisTypes(self, x_axis_type, y_axis_type):
@@ -289,7 +289,7 @@ class CustomizePlotDialog(QDialog):
         self._tab_order.append(attribute_name)
 
     def __getitem__(self, item):
-        """ @rtype: ert_gui.tools.plot.customize.customization_view.CustomizationView """
+        """@rtype: ert_gui.tools.plot.customize.customization_view.CustomizationView"""
         return self._tab_map[item]
 
     def __iter__(self):

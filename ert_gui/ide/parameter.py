@@ -15,5 +15,5 @@ class Parameter(object):
 
     @property
     def length(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self.end - self.start

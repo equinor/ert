@@ -105,7 +105,7 @@ class PlotConfig(object):
         self._legend_labels.append(label)
 
     def title(self):
-        """ :rtype: str """
+        """:rtype: str"""
         return self._title if self._title is not None else "Unnamed"
 
     def setTitle(self, title):
@@ -124,39 +124,39 @@ class PlotConfig(object):
         return self._observs_style.color
 
     def observationsStyle(self):
-        """ @rtype: PlotStyle """
+        """@rtype: PlotStyle"""
         style = PlotStyle("Observations Style")
         style.copyStyleFrom(self._observs_style)
         return style
 
     def refcaseStyle(self):
-        """ @rtype: PlotStyle """
+        """@rtype: PlotStyle"""
         style = PlotStyle("Refcase Style")
         style.copyStyleFrom(self._refcase_style)
         return style
 
     def historyStyle(self):
-        """ @rtype: PlotStyle """
+        """@rtype: PlotStyle"""
         style = PlotStyle("History Style")
         style.copyStyleFrom(self._history_style)
         return style
 
     def histogramStyle(self):
-        """ @rtype: PlotStyle """
+        """@rtype: PlotStyle"""
         style = PlotStyle("Histogram Style")
         style.copyStyleFrom(self._histogram_style)
         style.color = self.currentColor()
         return style
 
     def distributionStyle(self):
-        """ @rtype: PlotStyle """
+        """@rtype: PlotStyle"""
         style = PlotStyle("Distribution Style")
         style.copyStyleFrom(self._distribution_style)
         style.color = self.currentColor()
         return style
 
     def distributionLineStyle(self):
-        """ @rtype: ert_gui.plottery.PlotStyle """
+        """@rtype: ert_gui.plottery.PlotStyle"""
         style = PlotStyle("Distribution Line Style")
         style.copyStyleFrom(self._distribution_line_style)
         return style
@@ -241,14 +241,14 @@ class PlotConfig(object):
         return copy_style
 
     def setRefcaseStyle(self, style):
-        """ @type style: PlotStyle """
+        """@type style: PlotStyle"""
         self._refcase_style.line_style = style.line_style
         self._refcase_style.marker = style.marker
         self._refcase_style.width = style.width
         self._refcase_style.size = style.size
 
     def setHistoryStyle(self, style):
-        """ @type style: PlotStyle """
+        """@type style: PlotStyle"""
         self._history_style.line_style = style.line_style
         self._history_style.marker = style.marker
         self._history_style.width = style.width
@@ -258,14 +258,14 @@ class PlotConfig(object):
         self._observs_style.color = color
 
     def setObservationsStyle(self, style):
-        """ @type style: PlotStyle """
+        """@type style: PlotStyle"""
         self._observs_style.line_style = style.line_style
         self._observs_style.marker = style.marker
         self._observs_style.width = style.width
         self._observs_style.size = style.size
 
     def setDefaultStyle(self, style):
-        """ @type style: PlotStyle """
+        """@type style: PlotStyle"""
         self._default_style.line_style = style.line_style
         self._default_style.marker = style.marker
         self._default_style.width = style.width
@@ -273,14 +273,14 @@ class PlotConfig(object):
 
     @property
     def limits(self):
-        """ @rtype: PlotLimits """
+        """@rtype: PlotLimits"""
         limits = PlotLimits()
         limits.copyLimitsFrom(self._limits)
         return limits
 
     @limits.setter
     def limits(self, value):
-        """ @type value: PlotLimits """
+        """@type value: PlotLimits"""
         self._limits.copyLimitsFrom(value)
 
     def copyConfigFrom(self, other):

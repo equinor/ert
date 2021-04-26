@@ -136,7 +136,7 @@ class LibresFacade(object):
             return []
 
     def gather_gen_kw_data(self, case, key):
-        """ :rtype: pandas.DataFrame """
+        """:rtype: pandas.DataFrame"""
         data = GenKwCollector.loadAllGenKwData(self._enkf_main, case, [key])
         if key in data:
             return data[key].to_frame().dropna()
@@ -144,7 +144,7 @@ class LibresFacade(object):
             return DataFrame()
 
     def gather_summary_data(self, case, key):
-        """ :rtype: pandas.DataFrame """
+        """:rtype: pandas.DataFrame"""
         data = SummaryCollector.loadAllSummaryData(self._enkf_main, case, [key])
         if not data.empty:
             data = data.reset_index()
@@ -197,7 +197,7 @@ class LibresFacade(object):
         return data
 
     def gather_gen_data_data(self, case, key):
-        """ :rtype: pandas.DataFrame """
+        """:rtype: pandas.DataFrame"""
         key_parts = key.split("@")
         key = key_parts[0]
         if len(key_parts) > 1:
@@ -213,15 +213,15 @@ class LibresFacade(object):
         return data.dropna()  # removes all rows that has a NaN
 
     def is_summary_key(self, key):
-        """ :rtype: bool """
+        """:rtype: bool"""
         return key in self._enkf_main.getKeyManager().summaryKeys()
 
     def is_gen_kw_key(self, key):
-        """ :rtype: bool """
+        """:rtype: bool"""
         return key in self._enkf_main.getKeyManager().genKwKeys()
 
     def is_gen_data_key(self, key):
-        """ :rtype: bool """
+        """:rtype: bool"""
         return key in self._enkf_main.getKeyManager().genDataKeys()
 
     def gen_kw_priors(self):

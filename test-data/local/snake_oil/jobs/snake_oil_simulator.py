@@ -22,7 +22,7 @@ def readParameters(filename):
 
 
 def runSimulator(simulator, history_simulator, time_step_count):
-    """ @rtype: EclSum """
+    """@rtype: EclSum"""
     ecl_sum = EclSum.writer("SNAKE_OIL_FIELD", datetime(2010, 1, 1), 10, 10, 10)
 
     ecl_sum.addVariable("FOPT", unit="SM3")

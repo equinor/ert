@@ -52,7 +52,7 @@ class DataTypeProxyModel(QSortFilterProxyModel):
         return show
 
     def sourceModel(self):
-        """ @rtype: DataTypeKeysListModel """
+        """@rtype: DataTypeKeysListModel"""
         return QSortFilterProxyModel.sourceModel(self)
 
     def setFilterOnMetadata(self, key, value, visible):

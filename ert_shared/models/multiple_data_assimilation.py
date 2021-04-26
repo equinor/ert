@@ -182,7 +182,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
     @staticmethod
     def normalizeWeights(weights):
-        """ :rtype: list of float """
+        """:rtype: list of float"""
         if not weights:
             return []
         weights = [weight for weight in weights if abs(weight) != 0.0]

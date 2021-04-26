@@ -67,25 +67,25 @@ class ConfigurationLine(object):
                     )
 
     def keyword(self):
-        """ @rtype: Keyword"""
+        """@rtype: Keyword"""
         return self.__keyword
 
     def arguments(self):
-        """ @rtype: list of Argument """
+        """@rtype: list of Argument"""
         return self.__arguments
 
     def isRequired(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self.__required
 
     def documentationLink(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.__documentation_link
 
     def group(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.__group
 
     def validationStatusForToken(self, token):
-        """ @rtype: ValidationStatus """
+        """@rtype: ValidationStatus"""
         return self.__validation_status[token]
