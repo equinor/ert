@@ -56,7 +56,6 @@ jobs:
     - name: Test docs and CLI
       run: |
         sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
-        pip uninstall -y PyQt5
         ert --help
 
 
