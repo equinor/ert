@@ -94,8 +94,9 @@ def create_response_records(ert, ensemble_name: str, observations: List[Dict]):
             df.columns = response.index.tolist()
             realizations[index] = df
         observation_key = response_observation_links.get(key)
-        if observation_key:
-            linked_observation = [observation_ids[observation_key]]
+        linked_observation = (
+            [observation_ids[observation_key]] if observation_key else None
+        )
         records.append(
             dict(name=key, data=realizations, observations=linked_observation)
         )
@@ -296,11 +297,12 @@ def post_ensemble_results(ensemble_id: int):
                 data=data.to_csv().encode(),
                 headers={"content-type": "application/x-dataframe"},
             )
-            _post_to_server(
-                f"{server.fetch_url()}/ensembles/{ensemble_id}/records/{name}/observations",
-                params={"realization_index": index},
-                json=record["observations"],
-            )
+            if record["observations"] is not None:
+                _post_to_server(
+                    f"{server.fetch_url()}/ensembles/{ensemble_id}/records/{name}/observations",
+                    params={"realization_index": index},
+                    json=record["observations"],
+                )
 
 
 @feature_enabled("new-storage")
