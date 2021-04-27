@@ -11,7 +11,7 @@ import cloudpickle
 import prefect.utilities.logging
 from cloudevents.http import CloudEvent, to_json
 from dask_jobqueue.lsf import LSFJob
-from ert_shared.ensemble_evaluator.config import find_open_port
+from ert_shared.ensemble_evaluator.config import find_open_port, EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     _Ensemble,
@@ -94,7 +94,7 @@ def _get_executor(name="local"):
 class PrefectEnsemble(_Ensemble):
     def __init__(self, config):
         self.config = config
-        self._ee_dispach_url = config["dispatch_uri"]
+        self._ee_config = None
         self._reals = self._get_reals()
         self._eval_proc = None
         self._ee_id = None
@@ -113,7 +113,6 @@ class PrefectEnsemble(_Ensemble):
                     .set_id(step_id)
                     .set_name(step[ids.NAME])
                     .set_source(step_source)
-                    .set_ee_url(self._ee_dispach_url)
                     .set_type(step[ids.TYPE])
                 )
 
@@ -152,9 +151,9 @@ class PrefectEnsemble(_Ensemble):
         return [builder.build() for builder in real_builders]
 
     @staticmethod
-    def _on_task_failure(task, state, url):
+    def _on_task_failure(task, state, url, token, cert):
         if prefect_context.task_run_count > task.max_retries:
-            with Client(url) as c:
+            with Client(url, token, cert) as c:
                 event = CloudEvent(
                     {
                         "type": ids.EVTYPE_FM_STEP_FAILURE,
@@ -165,7 +164,7 @@ class PrefectEnsemble(_Ensemble):
                 )
                 c.send(to_json(event).decode())
 
-    def get_flow(self, ee_id, real_range):
+    def get_flow(self, ee_id, real_range, url, token, cert):
         with Flow(f"Realization range {real_range}") as flow:
             transmitter_map = {}
             for iens in real_range:
@@ -179,7 +178,14 @@ class PrefectEnsemble(_Ensemble):
                         for inp in step.get_inputs()
                     }
                     outputs = self.config["outputs"][iens]
-                    step_task = step.get_task(outputs, ee_id, name=str(iens))
+                    step_task = step.get_task(
+                        outputs,
+                        ee_id,
+                        url,
+                        cert,
+                        token,
+                        name=str(iens),
+                    )
                     result = step_task(inputs=inputs)
                     self._iens_to_task[iens] = result
                     for output in step.get_outputs():
@@ -188,20 +194,21 @@ class PrefectEnsemble(_Ensemble):
                         ]
         return flow
 
-    def evaluate(self, config, ee_id):
+    def evaluate(self, config: EvaluatorServerConfig, ee_id):
         self._ee_id = ee_id
+        self._ee_config = config
         mp_ctx = multiprocessing.get_context(method="forkserver")
         self._eval_proc = mp_ctx.Process(
             target=self._evaluate,
-            args=(self._ee_dispach_url, ee_id),
+            args=(config, ee_id),
         )
         self._eval_proc.daemon = True
         self._eval_proc.start()
 
-    def _evaluate(self, dispatch_url, ee_id):
+    def _evaluate(self, ee_config: EvaluatorServerConfig, ee_id):
         asyncio.set_event_loop(asyncio.get_event_loop())
         try:
-            with Client(dispatch_url) as c:
+            with Client(ee_config.dispatch_uri, ee_config.token, ee_config.cert) as c:
                 event = CloudEvent(
                     {
                         "type": ids.EVTYPE_ENSEMBLE_STARTED,
@@ -209,9 +216,11 @@ class PrefectEnsemble(_Ensemble):
                     },
                 )
                 c.send(to_json(event).decode())
-            self.run_flow(ee_id)
+            self.run_flow(
+                ee_id, ee_config.dispatch_uri, ee_config.token, ee_config.cert
+            )
 
-            with Client(dispatch_url) as c:
+            with Client(ee_config.dispatch_uri, ee_config.token, ee_config.cert) as c:
                 event = CloudEvent(
                     {
                         "type": ids.EVTYPE_ENSEMBLE_STOPPED,
@@ -226,7 +235,7 @@ class PrefectEnsemble(_Ensemble):
                 "An exception occurred while starting the ensemble evaluation",
                 exc_info=True,
             )
-            with Client(dispatch_url) as c:
+            with Client(ee_config.dispatch_uri, ee_config.token, ee_config.cert) as c:
                 event = CloudEvent(
                     {
                         "type": ids.EVTYPE_ENSEMBLE_FAILED,
@@ -235,14 +244,14 @@ class PrefectEnsemble(_Ensemble):
                 )
                 c.send(to_json(event).decode())
 
-    def run_flow(self, ee_id):
+    def run_flow(self, ee_id, url, token, cert):
         real_per_batch = self.config[ids.MAX_RUNNING]
         real_range = range(self.config[ids.REALIZATIONS])
         i = 0
         state_map = {}
         while i < self.config[ids.REALIZATIONS]:
             realization_range = real_range[i : i + real_per_batch]
-            flow = self.get_flow(ee_id, realization_range)
+            flow = self.get_flow(ee_id, realization_range, url, token, cert)
             with prefect_log_level_context(level="WARNING"):
                 state = flow.run(executor=_get_executor(self.config[ids.EXECUTOR]))
             for iens in realization_range:
@@ -271,5 +280,12 @@ class PrefectEnsemble(_Ensemble):
         )
 
         loop = asyncio.new_event_loop()
-        loop.run_until_complete(self.send_cloudevent(self._ee_dispach_url, event))
+        loop.run_until_complete(
+            self.send_cloudevent(
+                self._ee_config.dispatch_uri,
+                event,
+                token=self._ee_config.token,
+                cert=self._ee_config.cert,
+            )
+        )
         loop.close()

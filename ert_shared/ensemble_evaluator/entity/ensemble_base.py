@@ -1,5 +1,8 @@
 import asyncio
+from ert_shared.ensemble_evaluator.client import Client
+import ssl
 import websockets
+from websockets.http import Headers
 
 from ert_shared.ensemble_evaluator.entity import serialization
 
@@ -32,16 +35,9 @@ class _Ensemble:
     def get_metadata(self):
         return self._metadata
 
-    async def send_cloudevent(self, url, event, retries=10):
-        for retry in range(retries):
-            try:
-                async with websockets.connect(url) as websocket:
-                    await websocket.send(
-                        to_json(
-                            event, data_marshaller=serialization.evaluator_marshaller
-                        )
-                    )
-                return
-            except ConnectionRefusedError:
-                await asyncio.sleep(1)
-        raise IOError(f"Could not send event {event}  to url {url}")
+    async def send_cloudevent(self, url, event, token=None, cert=None, retries=1):
+        client = Client(url, token, cert)
+        await client._send(
+            to_json(event, data_marshaller=serialization.evaluator_marshaller)
+        )
+        await client.websocket.close()

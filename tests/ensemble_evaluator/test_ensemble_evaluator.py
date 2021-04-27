@@ -1,6 +1,7 @@
 import websockets
 import pytest
 import asyncio
+import ssl
 import threading
 from unittest.mock import Mock
 from ert_shared.status.entity.state import (
@@ -11,6 +12,8 @@ from ert_shared.status.entity.state import (
 )
 from cloudevents.http import to_json
 from cloudevents.http.event import CloudEvent
+from websockets.http import Headers
+
 from ert_shared.ensemble_evaluator.evaluator import (
     EnsembleEvaluator,
     ee_monitor,
@@ -79,10 +82,12 @@ class Client:
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.stop()
 
-    def __init__(self, host, port, path):
+    def __init__(self, host, port, path, cert, token):
         self.host = host
         self.port = port
         self.path = path
+        self.cert = cert
+        self.token = token
         self.loop = asyncio.new_event_loop()
         self.q = asyncio.Queue(loop=self.loop)
         self.thread = threading.Thread(
@@ -91,10 +96,14 @@ class Client:
 
     def _run(self, loop):
         asyncio.set_event_loop(loop)
-        uri = f"ws://{self.host}:{self.port}{self.path}"
+        uri = f"wss://{self.host}:{self.port}{self.path}"
 
         async def send_loop(q):
-            async with websockets.connect(uri) as websocket:
+            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            ssl_context.load_verify_locations(cadata=self.cert)
+            async with websockets.connect(
+                uri, ssl=ssl_context, extra_headers=Headers(token=self.token)
+            ) as websocket:
                 while True:
                     msg = await q.get()
                     if msg == "stop":
@@ -123,14 +132,18 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
 
         host = evaluator._config.host
         port = evaluator._config.port
+        token = evaluator._config.token
+        cert = evaluator._config.cert
 
         # first snapshot before any event occurs
         snapshot_event = next(events)
         snapshot = Snapshot(snapshot_event.data)
         assert snapshot.get_status() == ENSEMBLE_STATE_STARTED
         # two dispatchers connect
-        with Client(host, port, "/dispatch") as dispatch1, Client(
-            host, port, "/dispatch"
+        with Client(
+            host, port, "/dispatch", cert=cert, token=token
+        ) as dispatch1, Client(
+            host, port, "/dispatch", cert=cert, token=token
         ) as dispatch2:
 
             # first dispatcher informs that job 0 is running
@@ -178,7 +191,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             assert snapshot.get_job("1", "0", "1").status == JOB_STATE_FAILURE
 
             # a second monitor connects
-            with ee_monitor.create(host, port) as monitor2:
+            with ee_monitor.create(host, port, "wss", cert, token) as monitor2:
                 events2 = monitor2.track()
                 snapshot = Snapshot(next(events2).data)
                 assert snapshot.get_status() == ENSEMBLE_STATE_STARTED

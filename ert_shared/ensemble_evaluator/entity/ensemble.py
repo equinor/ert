@@ -353,19 +353,15 @@ class _Stage:
 
 
 class _Step(_Stage):
-    def __init__(self, id_, inputs, outputs, jobs, name, ee_url, source):
+    def __init__(self, id_, inputs, outputs, jobs, name, source):
         super().__init__(id_, name, inputs, outputs)
         if jobs is None:
             raise ValueError(f"{self} needs jobs")
         self._jobs = jobs
-        self._ee_url = ee_url
         self._source = source
 
     def get_jobs(self):
         return self._jobs
-
-    def get_ee_url(self):
-        return self._ee_url
 
     def get_source(self, ee_id):
         return self._source.format(ee_id=ee_id)
@@ -379,13 +375,16 @@ class _UnixStep(_Step):
         outputs,
         jobs,
         name,
-        ee_url,
         source,
     ):
-        super().__init__(id_, inputs, outputs, jobs, name, ee_url, source)
+        super().__init__(id_, inputs, outputs, jobs, name, source)
 
-    def get_task(self, output_transmitters, ee_id, *args, **kwargs):
-        return UnixTask(self, output_transmitters, ee_id, *args, **kwargs)
+    def get_task(
+        self, output_transmitters, ee_id, ee_url, cert, token, *args, **kwargs
+    ):
+        return UnixTask(
+            self, output_transmitters, ee_id, ee_url, cert, token, *args, **kwargs
+        )
 
 
 class _FunctionStep(_Step):
@@ -396,13 +395,16 @@ class _FunctionStep(_Step):
         outputs,
         jobs,
         name,
-        ee_url,
         source,
     ):
-        super().__init__(id_, inputs, outputs, jobs, name, ee_url, source)
+        super().__init__(id_, inputs, outputs, jobs, name, source)
 
-    def get_task(self, output_transmitters, *args, **kwargs):
-        return FunctionTask(self, output_transmitters, *args, **kwargs)
+    def get_task(
+        self, output_transmitters, ee_id, ee_url, cert, token, *args, **kwargs
+    ):
+        return FunctionTask(
+            self, output_transmitters, ee_id, ee_url, cert, token, *args, **kwargs
+        )
 
 
 class _LegacyStep(_Step):
@@ -425,7 +427,7 @@ class _LegacyStep(_Step):
         job_name,
         run_arg,
     ):
-        super().__init__(id_, inputs, outputs, jobs, name, ee_url, source)
+        super().__init__(id_, inputs, outputs, jobs, name, source)
         if max_runtime is not None and max_runtime <= 0:
             raise ValueError(f"{self} needs positive max_runtime")
         if callback_arguments is None:
@@ -528,7 +530,6 @@ class _StepBuilder(_StageBuilder):
         self._jobs = []
         self._type = None
         self._source = None
-        self._ee_url = None
 
         # legacy parts
         self._max_runtime = None
@@ -547,10 +548,6 @@ class _StepBuilder(_StageBuilder):
 
     def set_source(self, source):
         self._source = source
-        return self
-
-    def set_ee_url(self, ee_url):
-        self._ee_url = ee_url
         return self
 
     def add_job(self, job):
@@ -626,7 +623,6 @@ class _StepBuilder(_StageBuilder):
             stage.get_outputs(),
             jobs,
             stage.get_name(),
-            self._ee_url,
             self._source,
         )
 

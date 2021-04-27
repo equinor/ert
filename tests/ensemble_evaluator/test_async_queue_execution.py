@@ -36,7 +36,7 @@ async def test_happy_path(
     mock_ws_task = asyncio.get_event_loop().create_task(
         mock_ws(host, unused_tcp_port, done)
     )
-    await wait(url, 10)
+    await wait(url, max_retries=10)
 
     ensemble = make_ensemble_builder(tmpdir, 1, 1).build()
     queue = queue_config.create_job_queue()

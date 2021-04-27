@@ -2,10 +2,9 @@ import asyncio
 import logging
 import threading
 from contextlib import contextmanager
-from uuid import uuid4
-import base64
 import pickle
 import cloudevents.exceptions
+from http import HTTPStatus
 
 import cloudpickle
 
@@ -266,10 +265,18 @@ class EnsembleEvaluator:
         else:
             logger.info(f"Connection attempt to unknown path: {path}.")
 
+    async def process_request(self, path, request_headers):
+        if request_headers.get("token") != self._config.token:
+            return HTTPStatus.UNAUTHORIZED, {}, b""
+        if path == "/healthcheck":
+            return HTTPStatus.OK, {}, b""
+
     async def evaluator_server(self, done):
         async with websockets.serve(
             self.connection_handler,
             sock=self._config.get_socket(),
+            ssl=self._config.get_server_ssl_context(),
+            process_request=self.process_request,
             max_queue=500,
             max_size=2 ** 26,
         ):
@@ -312,7 +319,13 @@ class EnsembleEvaluator:
     def run(self):
         self._ws_thread.start()
         self._ensemble.evaluate(self._config, self._ee_id)
-        return ee_monitor.create(self._config.host, self._config.port)
+        return ee_monitor.create(
+            self._config.host,
+            self._config.port,
+            self._config.protocol,
+            self._config.cert,
+            self._config.token,
+        )
 
     def _stop(self):
         if not self._done.done():

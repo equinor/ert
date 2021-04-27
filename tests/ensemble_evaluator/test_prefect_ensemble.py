@@ -163,7 +163,7 @@ def function_config(tmpdir):
     return config
 
 
-def get_step(step_name, inputs, outputs, jobs, url, type_="unix"):
+def get_step(step_name, inputs, outputs, jobs, type_="unix"):
     step_source = "/ert/ee/test_ee_id/real/0/step/0"
     step_builder = ee.create_step_builder()
     for idx, (name, executable, args) in enumerate(jobs):
@@ -175,7 +175,6 @@ def get_step(step_name, inputs, outputs, jobs, url, type_="unix"):
             .set_args(args)
             .set_step_source(step_source)
         )
-    step_builder.set_ee_url(url)
     step_builder.set_source(source=step_source)
     step_builder.set_id("0")
     step_builder.set_name(step_name)
@@ -229,6 +228,9 @@ def test_get_flow(coefficients, unused_tcp_port):
                 flow = ensemble.get_flow(
                     ensemble._ee_id,
                     [iens],
+                    url=server_config.url,
+                    token=server_config.token,
+                    cert=server_config.cert,
                 )
 
                 # Get the ordered tasks and retrieve their step ids.
@@ -273,13 +275,18 @@ def test_unix_task(unused_tcp_port, tmpdir):
         inputs=[("script", Path("unix_test_script.py"), "application/x-python")],
         outputs=[("output", Path("output.out"), "application/json")],
         jobs=[("script", Path("unix_test_script.py"), ["vas"])],
-        url=url,
         type_="unix",
     )
 
     output_trans = step_output_transmitters(step, storage_path=tmpdir)
     with Flow("testing") as flow:
-        task = step.get_task(output_transmitters=output_trans, ee_id="test_ee_id")
+        task = step.get_task(
+            output_transmitters=output_trans,
+            ee_id="test_ee_id",
+            ee_url=url,
+            cert=None,
+            token=None,
+        )
         result = task(inputs=input_)
     with tmp():
         flow_run = flow.run()
@@ -320,13 +327,18 @@ def test_function_step(unused_tcp_port, tmpdir):
         inputs=[("values", "NA", "text/whatever")],
         outputs=[("output", Path("output.out"), "application/json")],
         jobs=[("test_function", cloudpickle.dumps(sum_function), None)],
-        url=url,
         type_="function",
     )
 
     output_trans = step_output_transmitters(step, storage_path=tmpdir)
     with Flow("testing") as flow:
-        task = step.get_task(output_transmitters=output_trans, ee_id="test_ee_id")
+        task = step.get_task(
+            output_transmitters=output_trans,
+            ee_id="test_ee_id",
+            ee_url=url,
+            cert=None,
+            token=None,
+        )
         result = task(inputs=inputs)
     with tmp():
         flow_run = flow.run()
@@ -393,7 +405,6 @@ def test_function_step_for_function_defined_outside_py_environment(
         inputs=[("values", "NA", "text/whatever")],
         outputs=[("output", Path("output.out"), "application/json")],
         jobs=[("test_function", cloudpickle.dumps(func), None)],
-        url=url,
         type_="function",
     )
     expected_result = func(**test_values)
@@ -402,7 +413,13 @@ def test_function_step_for_function_defined_outside_py_environment(
 
     output_trans = step_output_transmitters(step, storage_path=tmpdir)
     with Flow("testing") as flow:
-        task = step.get_task(output_transmitters=output_trans, ee_id="test_ee_id")
+        task = step.get_task(
+            output_transmitters=output_trans,
+            ee_id="test_ee_id",
+            ee_url=url,
+            cert=None,
+            token=None,
+        )
         result = task(inputs=inputs)
     with tmp():
         flow_run = flow.run()
@@ -446,13 +463,18 @@ def test_unix_step_error(unused_tcp_port, tmpdir):
         inputs=[("test_script", Path("unix_test_script.py"), "application/x-python")],
         outputs=[("output", Path("output.out"), "application/json")],
         jobs=[("test_script", Path("unix_test_script.py"), ["foo", "bar"])],
-        url=url,
         type_="unix",
     )
 
     output_trans = step_output_transmitters(step, storage_path=tmpdir)
     with Flow("testing") as flow:
-        task = step.get_task(output_transmitters=output_trans, ee_id="test_ee_id")
+        task = step.get_task(
+            output_transmitters=output_trans,
+            ee_id="test_ee_id",
+            ee_url=url,
+            cert=None,
+            token=None,
+        )
         result = task(inputs=input_)
     with tmp():
         flow_run = flow.run()
@@ -493,7 +515,6 @@ def test_on_task_failure(unused_tcp_port, tmpdir):
             ],
             outputs=[],
             jobs=[("script", Path("unix_test_retry_script.py"), [runpath])],
-            url=url,
             type_="unix",
         )
 
@@ -504,7 +525,12 @@ def test_on_task_failure(unused_tcp_port, tmpdir):
                 ee_id="test_ee_id",
                 max_retries=3,
                 retry_delay=timedelta(seconds=1),
-                on_failure=partial(PrefectEnsemble._on_task_failure, url=url),
+                on_failure=partial(
+                    PrefectEnsemble._on_task_failure, url=url, token=None, cert=None
+                ),
+                ee_url=url,
+                cert=None,
+                token=None,
             )
             result = task(inputs=input_)
         flow_run = flow.run()
