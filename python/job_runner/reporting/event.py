@@ -21,8 +21,14 @@ class TransitionError(ValueError):
 
 
 class Event:
-    def __init__(self, evaluator_url):
+    def __init__(self, evaluator_url, token=None, cert_path=None):
         self._evaluator_url = evaluator_url
+        self._token = token
+        if cert_path is not None:
+            with open(cert_path) as f:
+                self._cert = f.read()
+        else:
+            self._cert = None
 
         self._ee_id = None
         self._real_id = None
@@ -63,7 +69,7 @@ class Event:
         self._state = new_state
 
     def _dump_event(self, event):
-        with Client(self._evaluator_url) as client:
+        with Client(self._evaluator_url, self._token, self._cert) as client:
             client.send(to_json(event).decode())
 
     def _step_path(self):

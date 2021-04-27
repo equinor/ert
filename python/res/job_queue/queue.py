@@ -23,12 +23,14 @@ import copy
 import json
 import logging
 import time
+import ssl
 import typing
 
 import websockets
+from websockets.http import Headers
 from cloudevents.http import CloudEvent, to_json
 from cwrap import BaseCClass
-from job_runner import JOBS_FILE
+from job_runner import JOBS_FILE, CERT_FILE
 from res import ResPrototype
 from res.job_queue import JobQueueNode, JobStatusType, ThreadStatus
 
@@ -432,8 +434,20 @@ class JobQueue(BaseCClass):
         for event in events:
             await websocket.send(to_json(event))
 
-    async def execute_queue_async(self, ws_uri, pool_sema, evaluators):
-        async with websockets.connect(ws_uri) as websocket:
+    async def execute_queue_async(
+        self, ws_uri, pool_sema, evaluators, cert=None, token=None
+    ):
+        if cert is not None:
+            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            ssl_context.load_verify_locations(cadata=cert)
+        else:
+            ssl_context = True if ws_uri.startswith("wss") else None
+        headers = Headers()
+        if token is not None:
+            headers["token"] = token
+        async with websockets.connect(
+            ws_uri, ssl=ssl_context, extra_headers=headers
+        ) as websocket:
             await JobQueue._publish_changes(self.snapshot(), websocket)
 
             try:
@@ -569,14 +583,23 @@ class JobQueue(BaseCClass):
                 return None
         return snapshot
 
-    def add_ensemble_evaluator_information_to_jobs_file(self, ee_id, dispatch_url):
+    def add_ensemble_evaluator_information_to_jobs_file(
+        self, ee_id, dispatch_url, cert, token
+    ):
         for q_index, q_node in enumerate(self.job_list):
+            cert_path = f"{q_node.run_path}/{CERT_FILE}"
+            with open(cert_path, "w") as cert_file:
+                cert_file.write(cert)
             with open(f"{q_node.run_path}/{JOBS_FILE}", "r+") as jobs_file:
                 data = json.load(jobs_file)
+
                 data["ee_id"] = ee_id
                 data["real_id"] = self._qindex_to_iens[q_index]
                 data["step_id"] = 0
                 data["dispatch_url"] = dispatch_url
+                data["ee_token"] = token
+                data["ee_cert_path"] = cert_path
+
                 jobs_file.seek(0)
                 jobs_file.truncate()
                 json.dump(data, jobs_file, indent=4)
