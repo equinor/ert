@@ -61,7 +61,7 @@ import pytest
             "poly_example",
             [
                 ENSEMBLE_SMOOTHER_MODE,
-                "--enable-ensemble-evaluator",
+                "--disable-ensemble-evaluator",
                 "--target-case",
                 "poly_runpath_file",
                 "--realizations",
