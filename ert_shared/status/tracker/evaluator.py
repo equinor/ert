@@ -32,12 +32,17 @@ class EvaluatorTracker:
         port,
         general_interval,
         detailed_interval,
+        token=None,
+        cert=None,
     ):
         self._model = model
 
         self._monitor_host = host
         self._monitor_port = port
-        self._monitor_url = f"ws://{host}:{port}"
+        self._token = token
+        self._cert = cert
+        self._protocol = "ws" if cert is None else "wss"
+        self._monitor_url = f"{self._protocol}://{host}:{port}"
 
         self._work_queue = queue.Queue()
 
@@ -55,7 +60,11 @@ class EvaluatorTracker:
             try:
                 drainer_logger.debug("connecting to new monitor...")
                 with create_ee_monitor(
-                    self._monitor_host, self._monitor_port
+                    self._monitor_host,
+                    self._monitor_port,
+                    protocol=self._protocol,
+                    cert=self._cert,
+                    token=self._token,
                 ) as monitor:
                     drainer_logger.debug("connected")
                     for event in monitor.track():
@@ -181,12 +190,18 @@ class EvaluatorTracker:
         # See issue: https://github.com/equinor/ert/issues/1250
         #
         try:
-            wait_for_ws(self._monitor_url, 2)
+            wait_for_ws(self._monitor_url, self._token, self._cert, 2)
         except ConnectionRefusedError as e:
             logger.warning(f"{__name__} - exception {e}")
             return
 
-        with create_ee_monitor(self._monitor_host, self._monitor_port) as monitor:
+        with create_ee_monitor(
+            self._monitor_host,
+            self._monitor_port,
+            token=self._token,
+            cert=self._cert,
+            protocol=self._protocol,
+        ) as monitor:
             monitor.signal_cancel()
         while self._drainer_thread.is_alive():
             self._clear_work_queue()

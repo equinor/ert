@@ -1,5 +1,6 @@
 import asyncio
 import websockets
+from websockets.http import Headers
 from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 import logging
 import threading
@@ -10,16 +11,33 @@ import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from ert_shared.ensemble_evaluator.entity import serialization
 import uuid
 import pickle
-
+import ssl
 
 logger = logging.getLogger(__name__)
 
 
 class _Monitor:
-    def __init__(self, host, port):
-        self._base_uri = f"ws://{host}:{port}"
+    def __init__(self, host, port, protocol="wss", cert=None, token=None):
+        self._base_uri = f"{protocol}://{host}:{port}"
         self._client_uri = f"{self._base_uri}/client"
         self._result_uri = f"{self._base_uri}/result"
+        self._token = token
+        self._extra_headers = Headers()
+        if token is not None:
+            self._extra_headers["token"] = token
+
+        # Mimics the behavior of the ssl argument when connection to
+        # websockets. If none is specified it will deduce based on the url,
+        # if True it will enforce TLS, and if you want to use self signed
+        # certificates you need to pass an ssl_context with the certificate
+        # loaded.
+        self._cert = cert
+        if cert is not None:
+            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            ssl_context.load_verify_locations(cadata=cert)
+        else:
+            ssl_context = True if protocol == "wss" else None
+        self._ssl_context = ssl_context
 
         self._loop = None
         self._incoming = None
@@ -39,7 +57,11 @@ class _Monitor:
 
     def get_result(self):
         async def _send():
-            async with websockets.connect(self._result_uri) as websocket:
+            async with websockets.connect(
+                self._result_uri,
+                ssl=self._ssl_context,
+                extra_headers=self._extra_headers,
+            ) as websocket:
                 result = await websocket.recv()
                 message = from_json(result, lambda x: pickle.loads(x))
                 return message.data
@@ -48,7 +70,11 @@ class _Monitor:
 
     def _send_event(self, cloud_event):
         async def _send():
-            async with websockets.connect(self._client_uri) as websocket:
+            async with websockets.connect(
+                self._client_uri,
+                ssl=self._ssl_context,
+                extra_headers=self._extra_headers,
+            ) as websocket:
                 message = to_json(
                     cloud_event, data_marshaller=serialization.evaluator_marshaller
                 )
@@ -85,7 +111,11 @@ class _Monitor:
     async def _receive(self):
         logger.debug(f"monitor-{self._id} starting receive")
         async with websockets.connect(
-            self._client_uri, max_size=2 ** 26, max_queue=500
+            self._client_uri,
+            ssl=self._ssl_context,
+            extra_headers=self._extra_headers,
+            max_size=2 ** 26,
+            max_queue=500,
         ) as websocket:
             async for message in websocket:
                 event = from_json(
@@ -108,7 +138,7 @@ class _Monitor:
         self._loop.run_until_complete(done_future)
 
     def track(self):
-        wait_for_ws(self._base_uri)
+        wait_for_ws(self._base_uri, self._token, self._cert)
 
         done_future = asyncio.Future(loop=self._loop)
 
@@ -133,5 +163,5 @@ class _Monitor:
         thread.join()
 
 
-def create(host, port):
-    return _Monitor(host, port)
+def create(host, port, protocol, cert, token):
+    return _Monitor(host, port, protocol, cert, token)

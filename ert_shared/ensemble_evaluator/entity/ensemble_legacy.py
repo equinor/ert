@@ -41,7 +41,11 @@ class _LegacyEnsemble(_Ensemble):
     def evaluate(self, config, ee_id):
         self._config = config
         self._ee_id = ee_id
-        wait_for_ws(self._config.url)
+        wait_for_ws(
+            url=self._config.url,
+            token=self._config.token,
+            cert=self._config.cert,
+        )
         self._evaluate_thread = threading.Thread(target=self._evaluate)
         self._evaluate_thread.start()
 
@@ -49,7 +53,8 @@ class _LegacyEnsemble(_Ensemble):
         asyncio.set_event_loop(asyncio.new_event_loop())
 
         dispatch_url = self._config.dispatch_uri
-
+        cert = self._config.cert
+        token = self._config.token
         try:
             out_cloudevent = CloudEvent(
                 {
@@ -59,7 +64,9 @@ class _LegacyEnsemble(_Ensemble):
                 }
             )
             asyncio.get_event_loop().run_until_complete(
-                self.send_cloudevent(dispatch_url, out_cloudevent)
+                self.send_cloudevent(
+                    dispatch_url, out_cloudevent, token=token, cert=cert
+                )
             )
 
             self._job_queue = self._queue_config.create_job_queue()
@@ -87,7 +94,7 @@ class _LegacyEnsemble(_Ensemble):
                 ]
 
             self._job_queue.add_ensemble_evaluator_information_to_jobs_file(
-                self._ee_id, dispatch_url
+                self._ee_id, dispatch_url, cert, token
             )
 
             futures = [
@@ -95,6 +102,8 @@ class _LegacyEnsemble(_Ensemble):
                     dispatch_url,
                     threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION),
                     queue_evaluators,
+                    cert=cert,
+                    token=token,
                 )
             ]
 
@@ -113,7 +122,9 @@ class _LegacyEnsemble(_Ensemble):
                     }
                 )
                 asyncio.get_event_loop().run_until_complete(
-                    self.send_cloudevent(dispatch_url, out_cloudevent)
+                    self.send_cloudevent(
+                        dispatch_url, out_cloudevent, token=token, cert=cert
+                    )
                 )
         except Exception:
             logger.exception(
@@ -128,7 +139,9 @@ class _LegacyEnsemble(_Ensemble):
                 }
             )
             asyncio.get_event_loop().run_until_complete(
-                self.send_cloudevent(dispatch_url, out_cloudevent)
+                self.send_cloudevent(
+                    dispatch_url, out_cloudevent, token=token, cert=cert
+                )
             )
 
     def is_cancellable(self):
@@ -159,6 +172,11 @@ class _LegacyEnsemble(_Ensemble):
         )
         loop = asyncio.new_event_loop()
         loop.run_until_complete(
-            self.send_cloudevent(self._config.dispatch_uri, out_cloudevent)
+            self.send_cloudevent(
+                self._config.dispatch_uri,
+                out_cloudevent,
+                token=self._config.token,
+                cert=self._config.cert,
+            )
         )
         loop.close()

@@ -34,6 +34,8 @@ def create_tracker(
             ee_config.port,
             general_interval,
             detailed_interval,
+            token=ee_config.token,
+            cert=ee_config.cert,
         )
     return LegacyTracker(
         model,
