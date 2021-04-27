@@ -9,7 +9,7 @@ from argparse import ArgumentParser
 from ert_shared.cli.main import run_cli
 from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
 
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 
 @pytest.fixture()
@@ -96,13 +96,13 @@ def test_ensemble_evaluator(tmpdir, source_root):
                 "poly_runpath_file",
                 "--realizations",
                 "1,2,4,8,16,32,64",
-                "--enable-ensemble-evaluator",
+                "--disable-ensemble-evaluator",
                 "poly_example/poly.ert",
             ],
         )
         FeatureToggling.update_from_args(parsed)
 
-        assert FeatureToggling.is_enabled("ensemble-evaluator") is True
+        assert FeatureToggling.is_enabled("ensemble-evaluator") is False
 
         run_cli(parsed)
         FeatureToggling.reset()
@@ -120,7 +120,7 @@ def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root):
             parser,
             [
                 ENSEMBLE_SMOOTHER_MODE,
-                "--enable-ensemble-evaluator",
+                "--disable-ensemble-evaluator",
                 "--disable-monitoring",
                 "--target-case",
                 "poly_runpath_file",
@@ -131,7 +131,7 @@ def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root):
         )
         FeatureToggling.update_from_args(parsed)
 
-        assert FeatureToggling.is_enabled("ensemble-evaluator") is True
+        assert FeatureToggling.is_enabled("ensemble-evaluator") is False
 
         run_cli(parsed)
         FeatureToggling.reset()
@@ -151,4 +151,4 @@ def test_cli_test_run(tmpdir, source_root, mock_cli_run):
     monitor_mock, thread_join_mock, thread_start_mock = mock_cli_run
     monitor_mock.assert_called_once()
     thread_join_mock.assert_called_once()
-    thread_start_mock.assert_called_once()
+    thread_start_mock.assert_has_calls([[call(), call()]])
