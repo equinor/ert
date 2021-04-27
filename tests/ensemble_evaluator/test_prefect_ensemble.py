@@ -1,3 +1,4 @@
+import pathlib
 import pickle
 import cloudpickle
 from pathlib import Path
@@ -506,9 +507,7 @@ def test_on_task_failure(unused_tcp_port, tmpdir):
                     ee_id="test_ee_id",
                     max_retries=3,
                     retry_delay=timedelta(seconds=1),
-                    on_failure=partial(
-                        PrefectEnsemble._on_task_failure, url=url, token=None, cert=None
-                    ),
+                    on_failure=PrefectEnsemble._on_task_failure,
                 )
                 result = task(inputs=input_)
             flow_run = flow.run()
@@ -529,6 +528,60 @@ def test_on_task_failure(unused_tcp_port, tmpdir):
     expected_step_failed_messages = 0
     assert expected_job_failed_messages == len(fail_job_messages)
     assert expected_step_failed_messages == len(fail_step_messages)
+
+
+@pytest.mark.timeout(60)
+def test_prefect_reties(unused_tcp_port, coefficients, tmpdir, function_config):
+    def function_that_fails_once(coeffs):
+        run_path = Path("ran_once")
+        if not run_path.exists():
+            run_path.touch()
+            raise RuntimeError("This is an expected ERROR")
+        run_path.unlink()
+        return []
+
+    with tmpdir.as_cwd():
+        pickle_func = cloudpickle.dumps(function_that_fails_once)
+        config = function_config
+        coeffs_trans = coefficient_transmitters(
+            coefficients, config.get(ids.STORAGE)["storage_path"]
+        )
+
+        service_config = EvaluatorServerConfig(unused_tcp_port)
+        config["realizations"] = len(coefficients)
+        config["executor"] = "local"
+        config["max_retries"] = 2
+        config["retry_delay"] = 1
+        config["steps"][0]["jobs"][0]["executable"] = pickle_func
+        config["inputs"] = {
+            iens: coeffs_trans[iens] for iens in range(len(coefficients))
+        }
+        config["outputs"] = output_transmitters(config)
+        config["dispatch_uri"] = service_config.dispatch_uri
+
+        ensemble = PrefectEnsemble(config)
+        evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
+        error_event_reals = []
+        with evaluator.run() as mon:
+            for event in mon.track():
+                # Caputure the job error messages
+                if event.data is not None and "This is an expected ERROR" in str(
+                    event.data
+                ):
+                    error_event_reals.append(event.data["reals"])
+                if event.data is not None and event.data.get("status") in [
+                    "Failed",
+                    "Stopped",
+                ]:
+                    mon.signal_done()
+        assert evaluator._snapshot.get_status() == "Stopped"
+        successful_realizations = evaluator._snapshot.get_successful_realizations()
+        assert successful_realizations == config["realizations"]
+        # Check we get only one job error message per realization
+        assert len(error_event_reals) == config["realizations"]
+        for idx, reals in enumerate(error_event_reals):
+            assert len(reals) == 1
+            assert str(idx) in reals
 
 
 def dummy_get_flow(*args, **kwargs):
@@ -607,7 +660,6 @@ def test_run_prefect_for_function_defined_outside_py_environment(
         with pytest.raises(ModuleNotFoundError):
             import foo.bar
 
-        test_path = Path(SOURCE_DIR) / "test-data/local/prefect_test_case"
         config = function_config
         coeffs_trans = coefficient_transmitters(
             coefficients, config.get(ids.STORAGE)["storage_path"]
@@ -623,7 +675,6 @@ def test_run_prefect_for_function_defined_outside_py_environment(
         config["dispatch_uri"] = service_config.dispatch_uri
         ensemble = PrefectEnsemble(config)
         evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
-        res = None
         with evaluator.run() as mon:
             for event in mon.track():
                 if event.data is not None and event.data.get("status") in [
