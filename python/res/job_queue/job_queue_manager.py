@@ -77,7 +77,7 @@ class JobQueueManager:
     def getJobStatus(self, job_index):
         # See comment about return type in the prototype section at
         # the top of class.
-        """ @rtype: res.job_queue.job_status_type_enum.JobStatusType """
+        """@rtype: res.job_queue.job_status_type_enum.JobStatusType"""
         int_status = self.queue.job_list[job_index].status
         return JobStatusType(int_status)
 

@@ -57,7 +57,7 @@ class FileSystemRotator(object):
         return fs.copy()
 
     def __getitem__(self, case):
-        """ @rtype: EnkfFs """
+        """@rtype: EnkfFs"""
         if isinstance(case, str):
             return self.__get_fs(case)
         elif isinstance(case, int) and 0 <= case < len(self):
@@ -181,11 +181,11 @@ class EnkfFsManager(BaseCClass):
         return False
 
     def caseExists(self, case_name):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return case_name in self.getCaseList()
 
     def caseHasData(self, case_name):
-        """ @rtype: bool """
+        """@rtype: bool"""
         case_has_data = False
         state_map = self.getStateMapForCase(case_name)
 
@@ -215,7 +215,7 @@ class EnkfFsManager(BaseCClass):
         return len(self._fs_rotator)
 
     def getEnsembleSize(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._ensemble_size()
 
     def switchFileSystem(self, file_system):
@@ -228,11 +228,11 @@ class EnkfFsManager(BaseCClass):
         return self._is_case_initialized(case, None)
 
     def isInitialized(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._is_initialized(None)  # what is the bool_vector mask???
 
     def getCaseList(self):
-        """ @rtype: list[str] """
+        """@rtype: list[str]"""
         caselist = [case for case in self._alloc_caselist()]
         return sorted(caselist, key=naturalSortKey)
 

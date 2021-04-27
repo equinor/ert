@@ -72,7 +72,7 @@ class ShapedNoise(object):
 class ShapeCreator(object):
     @staticmethod
     def createShapeFunction(count=1000, persistence=0.2, octaves=8, seed=1):
-        """ @rtype: ShapeFunction """
+        """@rtype: ShapeFunction"""
         prime_generator = PrimeGenerator(seed=seed)
         perlininator = PerlinNoise(
             persistence=persistence,
@@ -97,7 +97,7 @@ class ShapeCreator(object):
         offset=0.0,
         cutoff=None,
     ):
-        """ @rtype: ShapedNoise """
+        """@rtype: ShapedNoise"""
         shapeFunction = ShapeCreator.createShapeFunction(
             count, persistence, octaves, shape_seed
         )
@@ -123,7 +123,7 @@ class ShapeCreator(object):
         offset=0.0,
         cutoff=None,
     ):
-        """ @rtype: ShapedNoise """
+        """@rtype: ShapedNoise"""
         if shapeFunction is None:
             shapeFunction = ConstantShapeFunction(0.0)
 

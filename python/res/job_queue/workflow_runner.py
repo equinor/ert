@@ -40,7 +40,7 @@ class WorkflowRunner(object):
         self.__workflow_result = self.__workflow.run(self.__ert, context=self.__context)
 
     def isRunning(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         if self.__workflow.isRunning():
             return True
 
@@ -50,7 +50,7 @@ class WorkflowRunner(object):
         return self._workflow_job is not None and not self._workflow_job.done()
 
     def isCancelled(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self.__workflow.isCancelled()
 
     def cancel(self):
@@ -70,15 +70,15 @@ class WorkflowRunner(object):
         )
 
     def workflowResult(self):
-        """ @rtype: bool or None """
+        """@rtype: bool or None"""
         return self.__workflow_result
 
     def workflowReport(self):
-        """ @rtype: {dict} """
+        """@rtype: {dict}"""
         return self.__workflow.getJobsReport()
 
     def workflowError(self):
-        """ @rtype: str """
+        """@rtype: str"""
         error = self.__workflow.getLastError()
 
         error_message = ""

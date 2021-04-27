@@ -18,7 +18,7 @@ class SummaryCollector(object):
 
     @staticmethod
     def getAllSummaryKeys(ert):
-        """ @rtype: list of str """
+        """@rtype: list of str"""
         key_manager = KeyManager(ert)
         return key_manager.summaryKeys()
 

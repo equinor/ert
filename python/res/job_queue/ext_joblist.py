@@ -36,7 +36,7 @@ class ExtJoblist(BaseCClass):
         super(ExtJoblist, self).__init__(c_ptr)
 
     def get_jobs(self):
-        """ @rtype: Hash """
+        """@rtype: Hash"""
         jobs = self._get_jobs()
         jobs.setParent(self)
         return jobs
@@ -57,7 +57,7 @@ class ExtJoblist(BaseCClass):
             return self._get_job(job).setParent(self)
 
     def getAvailableJobNames(self):
-        """ @rtype: StringList """
+        """@rtype: StringList"""
         return [str(x) for x in self._alloc_list().setParent(self)]
 
     def del_job(self, job):
@@ -67,7 +67,7 @@ class ExtJoblist(BaseCClass):
         return job in self
 
     def get_job(self, job):
-        """ @rtype: ExtJob """
+        """@rtype: ExtJob"""
         return self[job]
 
     def add_job(self, job_name, new_job):

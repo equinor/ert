@@ -131,7 +131,7 @@ class AnalysisModule(BaseCClass):
         super(AnalysisModule, self).__init__(c_ptr)
 
     def getVariableNames(self):
-        """ @rtype: list of str """
+        """@rtype: list of str"""
         items = []
         for name in AnalysisModule.VARIABLE_NAMES:
             if self.hasVar(name):
@@ -139,7 +139,7 @@ class AnalysisModule(BaseCClass):
         return items
 
     def getVariableValue(self, name):
-        """ @rtype: int or float or bool or str """
+        """@rtype: int or float or bool or str"""
         variable_type = self.getVariableType(name)
         if variable_type == float:
             return self.getDouble(name)
@@ -151,11 +151,11 @@ class AnalysisModule(BaseCClass):
             return self.getInt(name)
 
     def getVariableType(self, name):
-        """ :rtype: type """
+        """:rtype: type"""
         return AnalysisModule.VARIABLE_NAMES[name]["type"]
 
     def getVariableDescription(self, name):
-        """ :rtype: str """
+        """:rtype: str"""
         return AnalysisModule.VARIABLE_NAMES[name]["description"]
 
     def getVar(self, name):
@@ -194,7 +194,7 @@ class AnalysisModule(BaseCClass):
         return self._get_table_name()
 
     def getName(self):
-        """ :rtype: str """
+        """:rtype: str"""
         return self.name()
 
     def name(self):
@@ -204,26 +204,26 @@ class AnalysisModule(BaseCClass):
         return self._check_option(flag)
 
     def hasVar(self, var):
-        """ :rtype: bool """
+        """:rtype: bool"""
         return self._has_var(var)
 
     def getDouble(self, var):
-        """ :rtype: float """
+        """:rtype: float"""
         self.__assertVar(var)
         return self._get_double(var)
 
     def getInt(self, var):
-        """ :rtype: int """
+        """:rtype: int"""
         self.__assertVar(var)
         return self._get_int(var)
 
     def getBool(self, var):
-        """ :rtype: bool """
+        """:rtype: bool"""
         self.__assertVar(var)
         return self._get_bool(var)
 
     def getStr(self, var):
-        """ :rtype: str """
+        """:rtype: str"""
         self.__assertVar(var)
         return self._get_str(var)
 

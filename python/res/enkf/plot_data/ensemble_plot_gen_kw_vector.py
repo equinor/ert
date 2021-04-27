@@ -32,11 +32,11 @@ class EnsemblePlotGenKWVector(BaseCClass):
         raise NotImplementedError("Class can not be instantiated directly!")
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._size()
 
     def getValue(self, index):
-        """ @rtype: float """
+        """@rtype: float"""
         return self[index]
 
     def __iter__(self):
@@ -46,7 +46,7 @@ class EnsemblePlotGenKWVector(BaseCClass):
             cur += 1
 
     def __getitem__(self, index):
-        """ @rtype: float """
+        """@rtype: float"""
         return self._get_value(index)
 
     def __repr__(self):

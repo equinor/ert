@@ -17,7 +17,7 @@ class MisfitCollector(object):
 
     @staticmethod
     def getAllMisfitKeys(ert, sort_keys=True):
-        """ @rtype: list of str """
+        """@rtype: list of str"""
         key_manager = KeyManager(ert)
         return key_manager.misfitKeys(sort_keys=sort_keys)
 

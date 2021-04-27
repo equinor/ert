@@ -22,18 +22,18 @@ class KeyManager(object):
         self.__misfit_keys = None
 
     def _ert(self):
-        """ :rtype:  res.enkf.EnKFMain """
+        """:rtype:  res.enkf.EnKFMain"""
         ert = self.__ert_ref()
         if ert is None:
             raise RuntimeError("The reference EnKFMain instance has been deleted")
         return ert
 
     def ensembleConfig(self):
-        """ :rtype: res.enkf.EnsembleConfig """
+        """:rtype: res.enkf.EnsembleConfig"""
         return self._ert().ensembleConfig()
 
     def summaryKeys(self):
-        """ :rtype: list of str """
+        """:rtype: list of str"""
         if self.__summary_keys is None:
             self.__summary_keys = sorted(
                 [
@@ -48,7 +48,7 @@ class KeyManager(object):
         return self.__summary_keys
 
     def summaryKeysWithObservations(self):
-        """ :rtype: list of str """
+        """:rtype: list of str"""
         if self.__summary_keys_with_observations is None:
             self.__summary_keys_with_observations = sorted(
                 [
@@ -62,7 +62,7 @@ class KeyManager(object):
         return self.__summary_keys_with_observations
 
     def genKwKeys(self):
-        """ :rtype: list of str """
+        """:rtype: list of str"""
         if self.__gen_kw_keys is None:
             gen_kw_keys = self.ensembleConfig().getKeylistFromImplType(
                 ErtImplType.GEN_KW
@@ -86,7 +86,7 @@ class KeyManager(object):
         return self.__gen_kw_keys
 
     def genDataKeys(self):
-        """ :rtype: list of str """
+        """:rtype: list of str"""
         if self.__gen_data_keys is None:
             gen_data_keys = self.ensembleConfig().getKeylistFromImplType(
                 ErtImplType.GEN_DATA
@@ -104,7 +104,7 @@ class KeyManager(object):
         return self.__gen_data_keys
 
     def genDataKeysWithObservations(self):
-        """ :rtype: list of str """
+        """:rtype: list of str"""
         if self.__gen_data_keys_with_observations is None:
             enkf_obs = self._ert().getObservations()
             gen_data_obs_keys = []
@@ -125,7 +125,7 @@ class KeyManager(object):
         return self.__gen_data_keys_with_observations
 
     def misfitKeys(self, sort_keys=True):
-        """ @rtype: list of str """
+        """@rtype: list of str"""
         if self.__misfit_keys is None:
             keys = []
             for obs_vector in self._ert().getObservations():
@@ -141,14 +141,14 @@ class KeyManager(object):
         return self.__misfit_keys
 
     def allDataTypeKeys(self):
-        """ :rtype: list of str """
+        """:rtype: list of str"""
         if self.__all_keys is None:
             self.__all_keys = self.summaryKeys() + self.genKwKeys() + self.genDataKeys()
 
         return self.__all_keys
 
     def allDataTypeKeysWithObservations(self):
-        """ :rtype: list of str """
+        """:rtype: list of str"""
         if self.__all_keys_with_observations is None:
             self.__all_keys_with_observations = (
                 self.summaryKeysWithObservations() + self.genDataKeysWithObservations()
@@ -157,23 +157,23 @@ class KeyManager(object):
         return self.__all_keys_with_observations
 
     def isKeyWithObservations(self, key):
-        """ :rtype: bool """
+        """:rtype: bool"""
         return key in self.allDataTypeKeysWithObservations()
 
     def isSummaryKey(self, key):
-        """ :rtype: bool """
+        """:rtype: bool"""
         return key in self.summaryKeys()
 
     def isGenKwKey(self, key):
-        """ :rtype: bool """
+        """:rtype: bool"""
         return key in self.genKwKeys()
 
     def isGenDataKey(self, key):
-        """ :rtype: bool """
+        """:rtype: bool"""
         return key in self.genDataKeys()
 
     def isMisfitKey(self, key):
-        """ :rtype: bool """
+        """:rtype: bool"""
         return key in self.misfitKeys()
 
     def gen_kw_priors(self):

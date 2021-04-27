@@ -64,18 +64,18 @@ class LocalMinistep(BaseCClass):
         self._attach_dataset(dataset)
 
     def getLocalObsData(self):
-        """ @rtype: LocalObsdata """
+        """@rtype: LocalObsdata"""
         return self._get_local_obs_data()
 
     def name(self):
         return self._name()
 
     def getName(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.name()
 
     def get_obs_data(self):
-        """ @rtype: ObsData """
+        """@rtype: ObsData"""
         return self._get_obs_data()
 
     def free(self):

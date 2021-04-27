@@ -61,43 +61,43 @@ class WorkflowJob(BaseCClass):
         self.__running = False
 
     def isInternal(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._internal()
 
     def name(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._name()
 
     def minimumArgumentCount(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._min_arg()
 
     def maximumArgumentCount(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._max_arg()
 
     def functionName(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_function()
 
     def module(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_module()
 
     def executable(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_executable()
 
     def isInternalScript(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._is_internal_script()
 
     def getInternalScriptPath(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_internal_script()
 
     def isPlugin(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         if self.isInternalScript():
             script_obj = ErtScript.loadScriptFromFile(self.getInternalScriptPath())
             return script_obj is not None and issubclass(script_obj, ErtPlugin)
@@ -105,7 +105,7 @@ class WorkflowJob(BaseCClass):
         return False
 
     def argumentTypes(self):
-        """ @rtype: list of type """
+        """@rtype: list of type"""
 
         result = []
         for index in range(self.maximumArgumentCount()):
@@ -187,18 +187,18 @@ class WorkflowJob(BaseCClass):
         return self.__script.isCancelled()
 
     def hasFailed(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self.__script.hasFailed()
 
     def free(self):
         self._free()
 
     def stdoutdata(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.__script.stdoutdata
 
     def stderrdata(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.__script.stderrdata
 
     @classmethod

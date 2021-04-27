@@ -89,14 +89,14 @@ class HookManager(BaseCClass):
         return arr
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._size()
 
     def __repr__(self):
         return "HookManager({})".format(", ".join([str(x) for x in self]))
 
     def __getitem__(self, index):
-        """ @rtype: Hook workflow """
+        """@rtype: Hook workflow"""
         assert isinstance(index, int)
         if index < 0:
             index += len(self)
@@ -109,7 +109,7 @@ class HookManager(BaseCClass):
         return self._get_runpath_list_file()
 
     def checkRunpathListFile(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         runpath_list_file = self._get_runpath_list_file()
 
         if not os.path.exists(runpath_list_file):
@@ -119,7 +119,7 @@ class HookManager(BaseCClass):
             )
 
     def getRunpathList(self):
-        """ @rtype: RunpathList """
+        """@rtype: RunpathList"""
         return self._get_runpath_list()
 
     def runWorkflows(self, run_time, ert_self):

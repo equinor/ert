@@ -57,11 +57,11 @@ class GenKw(BaseCClass):
             )
 
     def exportParameters(self, file_name):
-        """ @type: str """
+        """@type: str"""
         self._export_parameters(file_name)
 
     def exportTemplate(self, file_name):
-        """ @type: str """
+        """@type: str"""
         self._export_template(file_name)
 
     def __getitem__(self, key):
@@ -131,7 +131,7 @@ class GenKw(BaseCClass):
             raise ValueError("Size mismatch between GenKW and values")
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._size()
 
     def __contains__(self, item):

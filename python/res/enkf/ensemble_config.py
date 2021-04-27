@@ -212,7 +212,7 @@ class EnsembleConfig(BaseCClass):
         return self._size()
 
     def __getitem__(self, key):
-        """ @rtype: EnkfConfigNode """
+        """@rtype: EnkfConfigNode"""
         if key in self:
             return self._get_node(key).setParent(self)
         else:
@@ -222,19 +222,19 @@ class EnsembleConfig(BaseCClass):
         return self[key]
 
     def alloc_keylist(self):
-        """ @rtype: StringList """
+        """@rtype: StringList"""
         return self._alloc_keylist()
 
     def add_summary(self, key):
-        """ @rtype: EnkfConfigNode """
+        """@rtype: EnkfConfigNode"""
         return self._add_summary(key, 2).setParent(self)
 
     def add_summary_full(self, key, refcase):
-        """ @rtype: EnkfConfigNode """
+        """@rtype: EnkfConfigNode"""
         return self._add_summary_full(key, refcase)
 
     def add_gen_kw(self, key):
-        """ @rtype: EnkfConfigNode """
+        """@rtype: EnkfConfigNode"""
         return self._add_gen_kw(key).setParent(self)
 
     def addNode(self, config_node):
@@ -243,16 +243,16 @@ class EnsembleConfig(BaseCClass):
         config_node.convertToCReference(self)
 
     def add_field(self, key, eclipse_grid):
-        """ @rtype: EnkfConfigNode """
+        """@rtype: EnkfConfigNode"""
         return self._add_field(key, eclipse_grid).setParent(self)
 
     def getKeylistFromVarType(self, var_mask):
-        """ @rtype: StringList """
+        """@rtype: StringList"""
         assert isinstance(var_mask, EnkfVarType)
         return self._alloc_keylist_from_var_type(var_mask)
 
     def getKeylistFromImplType(self, ert_impl_type):
-        """ @rtype: StringList """
+        """@rtype: StringList"""
         assert isinstance(ert_impl_type, ErtImplType)
         return self._alloc_keylist_from_impl_type(ert_impl_type)
 
@@ -260,7 +260,7 @@ class EnsembleConfig(BaseCClass):
         return self._has_key(key)
 
     def getSummaryKeyMatcher(self):
-        """ @rtype: SummaryKeyMatcher """
+        """@rtype: SummaryKeyMatcher"""
         return self._summary_key_matcher()
 
     def free(self):

@@ -70,7 +70,7 @@ class AnalysisIterConfig(BaseCClass):
                 )
 
     def getNumIterations(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._get_num_iterations()
 
     def __len__(self):
@@ -84,11 +84,11 @@ class AnalysisIterConfig(BaseCClass):
         return self._num_iterations_set()
 
     def getNumRetries(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._get_num_retries()
 
     def getCaseFormat(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_case_fmt()
 
     def setCaseFormat(self, case_fmt):

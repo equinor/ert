@@ -145,7 +145,7 @@ class Matrix(BaseCClass):
         return self._rows(), self._columns()
 
     def rows(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._rows()
 
     def transpose(self, inplace=False):
@@ -159,7 +159,7 @@ class Matrix(BaseCClass):
             return self._alloc_transpose()
 
     def columns(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._columns()
 
     def __eq__(self, other):

@@ -20,7 +20,7 @@ https://github.com/equinor/everest/blob/master/tests/utils/__init__.py
 
 
 def tmpdir(path=None, teardown=True):
-    """ Decorator based on the  `tmp` context """
+    """Decorator based on the  `tmp` context"""
 
     def real_decorator(function):
         def wrapper(function, *args, **kwargs):

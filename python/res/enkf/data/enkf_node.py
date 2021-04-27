@@ -88,39 +88,39 @@ class EnkfNode(BaseCClass):
         return self._value_ptr()
 
     def getImplType(self):
-        """ @rtype: res.enkf.enums.ert_impl_type_enum.ErtImplType """
+        """@rtype: res.enkf.enums.ert_impl_type_enum.ErtImplType"""
         return self._get_impl_type()
 
     def asGenData(self):
-        """ @rtype: GenData """
+        """@rtype: GenData"""
         impl_type = self.getImplType()
         assert impl_type == ErtImplType.GEN_DATA
 
         return GenData.createCReference(self.valuePointer(), self)
 
     def asGenKw(self):
-        """ @rtype: GenKw """
+        """@rtype: GenKw"""
         impl_type = self.getImplType()
         assert impl_type == ErtImplType.GEN_KW
 
         return GenKw.createCReference(self.valuePointer(), self)
 
     def asField(self):
-        """ @rtype: Field """
+        """@rtype: Field"""
         impl_type = self.getImplType()
         assert impl_type == ErtImplType.FIELD
 
         return Field.createCReference(self.valuePointer(), self)
 
     def as_summary(self):
-        """ @rtype: Summary """
+        """@rtype: Summary"""
         impl_type = self.getImplType()
         assert impl_type == ErtImplType.SUMMARY
 
         return Summary.createCReference(self.valuePointer(), self)
 
     def as_ext_param(self):
-        """ @rtype: ExtParam """
+        """@rtype: ExtParam"""
         impl_type = self.getImplType()
         assert impl_type == ErtImplType.EXT_PARAM
 
@@ -140,7 +140,7 @@ class EnkfNode(BaseCClass):
         return self._try_load(fs, node_id)
 
     def name(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_name()
 
     def load(self, fs, node_id):

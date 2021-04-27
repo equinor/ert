@@ -63,11 +63,11 @@ class EnsemblePlotGenData(BaseCClass):
         self._load(file_system, report_step, input_mask)
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._size()
 
     def __getitem__(self, index):
-        """ @rtype: EnsemblePlotGenDataVector """
+        """@rtype: EnsemblePlotGenDataVector"""
         return self._get(index)
 
     def __iter__(self):
@@ -77,11 +77,11 @@ class EnsemblePlotGenData(BaseCClass):
             cur += 1
 
     def getMaxValues(self):
-        """ @rtype: DoubleVector """
+        """@rtype: DoubleVector"""
         return self._max_values().setParent(self)
 
     def getMinValues(self):
-        """ @rtype: DoubleVector """
+        """@rtype: DoubleVector"""
         return self._min_values().setParent(self)
 
     def free(self):

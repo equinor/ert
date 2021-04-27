@@ -80,7 +80,7 @@ class BlockObservationDataFetcher(DataFetcher):
         return x - std
 
     def hasData(self, key):
-        """ @rtype: bool """
+        """@rtype: bool"""
         observations = self.ert().getObservations()
         if not observations.hasKey(key):
             return False

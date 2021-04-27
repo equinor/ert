@@ -90,15 +90,15 @@ class EnKFMain(BaseCClass):
         return self.parent()
 
     def getESUpdate(self):
-        """ @rtype: ESUpdate """
+        """@rtype: ESUpdate"""
         return self.__es_update
 
     def getEnkfSimulationRunner(self):
-        """ @rtype: EnkfSimulationRunner """
+        """@rtype: EnkfSimulationRunner"""
         return self.__simulation_runner
 
     def getEnkfFsManager(self):
-        """ @rtype: EnkfFsManager """
+        """@rtype: EnkfFsManager"""
         return self.__fs_manager
 
     def umount(self):
@@ -256,7 +256,7 @@ class _RealEnKFMain(BaseCClass):
     _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
 
     def __init__(self, config, strict=True, verbose=False):
-        """ Please don't use this class directly. See EnKFMain instead """
+        """Please don't use this class directly. See EnKFMain instead"""
 
         res_config = self._init_res_config(config)
         if res_config is None:
@@ -292,7 +292,7 @@ class _RealEnKFMain(BaseCClass):
         return self._get_queue_config()
 
     def getRealisation(self, iens):
-        """ @rtype: EnKFState """
+        """@rtype: EnKFState"""
         if 0 <= iens < self.getEnsembleSize():
             return self._iget_state(iens).setParent(self)
         else:
@@ -311,26 +311,26 @@ class _RealEnKFMain(BaseCClass):
         return self._create_repr(cnt)
 
     def getEnsembleSize(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._get_ensemble_size()
 
     def resizeEnsemble(self, value):
         self._resize_ensemble(value)
 
     def ensembleConfig(self):
-        """ @rtype: EnsembleConfig """
+        """@rtype: EnsembleConfig"""
         return self._get_ens_config().setParent(self)
 
     def analysisConfig(self):
-        """ @rtype: AnalysisConfig """
+        """@rtype: AnalysisConfig"""
         return self._get_analysis_config().setParent(self)
 
     def getModelConfig(self):
-        """ @rtype: ModelConfig """
+        """@rtype: ModelConfig"""
         return self._get_model_config().setParent(self)
 
     def getLocalConfig(self):
-        """ @rtype: LocalConfig """
+        """@rtype: LocalConfig"""
         config = self._get_local_config().setParent(self)
         config.initAttributes(
             self.ensembleConfig(), self.getObservations(), self.eclConfig().getGrid()
@@ -338,14 +338,14 @@ class _RealEnKFMain(BaseCClass):
         return config
 
     def siteConfig(self):
-        """ @rtype: SiteConfig """
+        """@rtype: SiteConfig"""
         return self._get_site_config().setParent(self)
 
     def resConfig(self):
         return self._get_res_config().setParent(self)
 
     def eclConfig(self):
-        """ @rtype: EclConfig """
+        """@rtype: EclConfig"""
         return self._get_ecl_config().setParent(self)
 
     def get_schedule_prediction_file(self):
@@ -353,7 +353,7 @@ class _RealEnKFMain(BaseCClass):
         return schedule_prediction_file
 
     def getDataKW(self):
-        """ @rtype: SubstitutionList """
+        """@rtype: SubstitutionList"""
         return self._get_data_kw()
 
     def clearDataKW(self):
@@ -366,7 +366,7 @@ class _RealEnKFMain(BaseCClass):
         return self._get_mount_point()
 
     def getObservations(self):
-        """ @rtype: EnkfObs """
+        """@rtype: EnkfObs"""
         return self._get_obs().setParent(self)
 
     def have_observations(self):
@@ -382,7 +382,7 @@ class _RealEnKFMain(BaseCClass):
         return self._get_site_config_file()
 
     def getUserConfigFile(self):
-        """ @rtype: str """
+        """@rtype: str"""
         config_file = self._get_user_config_file()
         return config_file
 
@@ -390,7 +390,7 @@ class _RealEnKFMain(BaseCClass):
         return self._get_history_length()
 
     def getMemberRunningState(self, ensemble_member):
-        """ @rtype: EnKFState """
+        """@rtype: EnKFState"""
         return self._iget_state(ensemble_member).setParent(self)
 
     def get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std):
@@ -400,15 +400,15 @@ class _RealEnKFMain(BaseCClass):
         return self._get_observation_count(user_key)
 
     def getKeyManager(self):
-        """ :rtype: KeyManager """
+        """:rtype: KeyManager"""
         return self.__key_manager
 
     def getWorkflowList(self):
-        """ @rtype: ErtWorkflowList """
+        """@rtype: ErtWorkflowList"""
         return self._get_workflow_list().setParent(self)
 
     def getHookManager(self):
-        """ @rtype: HookManager """
+        """@rtype: HookManager"""
         return self._get_hook_manager()
 
     def exportField(

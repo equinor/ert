@@ -15,21 +15,21 @@ class PlotBlockVector(object):
         self.__data = data
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return len(self.__data)
 
     def __getitem__(self, index):
-        """ @rtype: float """
+        """@rtype: float"""
         assert isinstance(index, int)
         return self.__data[index]
 
     def __iter__(self):
-        """ @rtype: float """
+        """@rtype: float"""
         cur = 0
         while cur < len(self):
             yield self[cur]
             cur += 1
 
     def getRealizationNumber(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self.__realization_number

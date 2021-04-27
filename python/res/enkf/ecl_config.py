@@ -147,13 +147,13 @@ class EclConfig(BaseCClass):
         self._set_data_file(datafile)
 
     def validateDataFile(self, datafile):
-        """ @rtype: UIReturn """
+        """@rtype: UIReturn"""
         return self._validate_data_file(datafile)
 
     # -----------------------------------------------------------------
 
     def get_gridfile(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_gridfile()
 
     def set_gridfile(self, gridfile):
@@ -172,7 +172,7 @@ class EclConfig(BaseCClass):
         self._load_refcase(refcase)
 
     def getRefcase(self):
-        """ @rtype: EclSum """
+        """@rtype: EclSum"""
         refcase = self._get_refcase()
         if not refcase is None:
             refcase.setParent(self)
@@ -183,7 +183,7 @@ class EclConfig(BaseCClass):
         return self._validate_refcase(refcase)
 
     def hasRefcase(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._has_refcase()
 
     # -----------------------------------------------------------------

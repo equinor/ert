@@ -63,11 +63,11 @@ object as:
         self.obs = obs
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._size()
 
     def __getitem__(self, key):
-        """ @rtype: LocalObsdataNode """
+        """@rtype: LocalObsdataNode"""
         if isinstance(key, int):
             if key < 0:
                 key += len(self)
@@ -92,7 +92,7 @@ object as:
             cur += 1
 
     def __contains__(self, item):
-        """ @rtype: bool """
+        """@rtype: bool"""
         if isinstance(item, str):
             return self._has_node(item)
         elif isinstance(item, LocalObsdataNode):
@@ -108,7 +108,7 @@ object as:
             raise KeyError('Unknown key "%s".' % key)
 
     def addNode(self, key, add_all_timesteps=True):
-        """ @rtype: LocalObsdataNode """
+        """@rtype: LocalObsdataNode"""
         assert isinstance(key, str)
         if key in self.obs:
             node = LocalObsdataNode(key, add_all_timesteps)
@@ -124,7 +124,7 @@ object as:
             )
 
     def addNodeAndRange(self, key, step_1, step_2):
-        """ @rtype: LocalObsdataNode """
+        """@rtype: LocalObsdataNode"""
         """ The time range will be removed in the future... """
         assert isinstance(key, str)
         assert isinstance(step_1, int)
@@ -143,18 +143,18 @@ object as:
         return self._name()
 
     def getName(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.name()
 
     def getActiveList(self, key):
-        """ @rtype: ActiveList """
+        """@rtype: ActiveList"""
         if key in self:
             return self._active_list(key)
         else:
             raise KeyError('Local key "%s" not recognized.' % key)
 
     def copy_active_list(self, key):
-        """ @rtype: ActiveList """
+        """@rtype: ActiveList"""
         if key in self:
             return self._copy_active_list(key)
         else:

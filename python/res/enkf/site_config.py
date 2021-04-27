@@ -156,11 +156,11 @@ class SiteConfig(BaseCClass):
         return self._get_config_file()
 
     def get_installed_jobs(self):
-        """ @rtype: ExtJoblist """
+        """@rtype: ExtJoblist"""
         return self._get_installed_jobs().setParent(self)
 
     def get_license_root_path(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_license_root_path()
 
     def set_license_root_pathmax_submit(self, path):
@@ -168,7 +168,7 @@ class SiteConfig(BaseCClass):
 
     @classmethod
     def getLocation(cls):
-        """ @rtype: str """
+        """@rtype: str"""
         return cls._get_location()
 
     def free(self):

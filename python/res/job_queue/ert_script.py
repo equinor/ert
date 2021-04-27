@@ -27,14 +27,14 @@ class ErtScript(object):
 
     @property
     def stdoutdata(self):
-        """ @rtype: str """
+        """@rtype: str"""
         if isinstance(self._stdoutdata, bytes):
             self._stdoutdata = self._stdoutdata.decode()
         return self._stdoutdata
 
     @property
     def stderrdata(self):
-        """ @rtype: str """
+        """@rtype: str"""
         if isinstance(self._stderrdata, bytes):
             self._stderrdata = self._stderrdata.decode()
         return self._stderrdata
@@ -43,15 +43,15 @@ class ErtScript(object):
         return self.__verbose
 
     def ert(self):
-        """ @rtype: res.enkf.EnKFMain """
+        """@rtype: res.enkf.EnKFMain"""
         return self.__ert
 
     def isCancelled(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self.__is_cancelled
 
     def hasFailed(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self.__failed
 
     def cancel(self):
@@ -117,7 +117,7 @@ class ErtScript(object):
 
     @staticmethod
     def loadScriptFromFile(path):
-        """ @rtype: type ErtScript """
+        """@rtype: type ErtScript"""
         try:
             module_name = "ErtScriptModule_%d" % ErtScript.__module_count
             ErtScript.__module_count += 1
@@ -133,7 +133,7 @@ class ErtScript(object):
 
     @staticmethod
     def __findErtScriptImplementations(module):
-        """ @rtype: ErtScript """
+        """@rtype: ErtScript"""
         result = []
         predicate = (
             lambda member: inspect.isclass(member)

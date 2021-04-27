@@ -28,11 +28,11 @@ class LocalDataset(BaseCClass):
         self.ensemble_config = config
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._size()
 
     def __contains__(self, key):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._has_key(key)
 
     def __delitem__(self, key):
@@ -52,7 +52,7 @@ class LocalDataset(BaseCClass):
         return self._name()
 
     def getName(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.name()
 
     def addNode(self, key):
@@ -90,7 +90,7 @@ class LocalDataset(BaseCClass):
         self.addRegion(str(key), geo_region)
 
     def getActiveList(self, key):
-        """ @rtype: ActiveList """
+        """@rtype: ActiveList"""
         if key in self:
             return self._active_list(key)
         else:

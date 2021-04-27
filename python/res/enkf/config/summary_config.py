@@ -44,7 +44,7 @@ class SummaryConfig(BaseCClass):
         return not self == other
 
     def __eq__(self, other):
-        """ @rtype: bool"""
+        """@rtype: bool"""
         if self.key != other.key:
             return False
 

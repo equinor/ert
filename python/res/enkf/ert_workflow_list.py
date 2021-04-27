@@ -116,7 +116,7 @@ class ErtWorkflowList(BaseCClass):
                 self.addWorkflow(job[ConfigKeys.PATH], job[ConfigKeys.NAME])
 
     def getWorkflowNames(self):
-        """ @rtype: StringList """
+        """@rtype: StringList"""
         return [name for name in self._alloc_namelist()]
 
     def __contains__(self, workflow_name):
@@ -124,7 +124,7 @@ class ErtWorkflowList(BaseCClass):
         return self._has_workflow(workflow_name)
 
     def __getitem__(self, item):
-        """ @rtype: Workflow """
+        """@rtype: Workflow"""
         if not item in self:
             raise KeyError(
                 "Item '%s' is not in the list of available workflows." % item
@@ -133,7 +133,7 @@ class ErtWorkflowList(BaseCClass):
         return self._get_workflow(item).setParent(self)
 
     def getContext(self):
-        """ @rtype: SubstitutionList """
+        """@rtype: SubstitutionList"""
         return self._get_context()
 
     def __str__(self):
@@ -157,15 +157,15 @@ class ErtWorkflowList(BaseCClass):
         return self._has_job(job_name)
 
     def getJob(self, job_name):
-        """ @rtype: WorkflowJob """
+        """@rtype: WorkflowJob"""
         return self._get_job(job_name)
 
     def getJobNames(self):
-        """ @rtype: StringList """
+        """@rtype: StringList"""
         return [name for name in self._get_job_names()]
 
     def getPluginJobs(self):
-        """ @rtype: list of WorkflowJob """
+        """@rtype: list of WorkflowJob"""
         plugins = []
         for job_name in self.getJobNames():
             job = self.getJob(job_name)

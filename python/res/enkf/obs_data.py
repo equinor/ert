@@ -47,7 +47,7 @@ class ObsData(BaseCClass):
         super(ObsData, self).__init__(c_pointer)
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._total_size()
 
     def __getitem__(self, index):
@@ -82,19 +82,19 @@ class ObsData(BaseCClass):
         return self._iget_block(index)
 
     def createDObs(self):
-        """ @rtype: Matrix """
+        """@rtype: Matrix"""
         return self._allocdObs()
 
     def createR(self):
-        """ @rtype: Matrix """
+        """@rtype: Matrix"""
         return self._allocR()
 
     def createD(self, E, S):
-        """ @rtype: Matrix """
+        """@rtype: Matrix"""
         return self._allocD(E, S)
 
     def createE(self, rng, active_ens_size):
-        """ @rtype: Matrix """
+        """@rtype: Matrix"""
         return self._allocE(rng, active_ens_size)
 
     def scaleMatrix(self, m):

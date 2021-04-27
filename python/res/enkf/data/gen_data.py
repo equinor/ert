@@ -22,7 +22,7 @@ class GenData(BaseCClass):
             raise ValueError("Unable to construct GenData object.")
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._size()
 
     def free(self):

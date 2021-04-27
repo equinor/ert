@@ -72,11 +72,11 @@ class ObsVector(BaseCClass):
         super(ObsVector, self).__init__(c_ptr)
 
     def getDataKey(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_state_kw()
 
     def getObservationKey(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.getKey()
 
     def getKey(self):
@@ -86,7 +86,7 @@ class ObsVector(BaseCClass):
         return self._get_obs_key()
 
     def getNode(self, index):
-        """ @rtype: SummaryObservation or BlockObservation or GenObservation"""
+        """@rtype: SummaryObservation or BlockObservation or GenObservation"""
 
         pointer = self._iget_node(index)
 
@@ -101,7 +101,7 @@ class ObsVector(BaseCClass):
             raise AssertionError("Node type '%s' currently not supported!" % node_type)
 
     def __iter__(self):
-        """ Iterate over active report steps; return node"""
+        """Iterate over active report steps; return node"""
         cur = -1
         run = True
         for step in self.getStepList():
@@ -127,7 +127,7 @@ class ObsVector(BaseCClass):
             )
 
     def firstActiveStep(self):
-        """ @rtype: int """
+        """@rtype: int"""
         step_list = self.getStepList()
         if len(step_list) > 0:
             return step_list[0]
@@ -137,22 +137,22 @@ class ObsVector(BaseCClass):
             )
 
     def getActiveCount(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return len(self)
 
     def __len__(self):
         return self._get_num_active()
 
     def isActive(self, index):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._iget_active(index)
 
     def getNextActiveStep(self, previous_step=-1):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._get_next_active_step(previous_step)
 
     def getImplementationType(self):
-        """ @rtype: EnkfObservationImplementationType """
+        """@rtype: EnkfObservationImplementationType"""
         return self._get_impl_type()
 
     def installNode(self, index, node):
@@ -161,7 +161,7 @@ class ObsVector(BaseCClass):
         self._install_node(index, node.from_param(node))
 
     def getConfigNode(self):
-        """ @rtype: EnkfConfigNode """
+        """@rtype: EnkfConfigNode"""
         return self._get_config_node().setParent(self)
 
     def createLocalObs(self):
@@ -171,7 +171,7 @@ class ObsVector(BaseCClass):
         return self._create_local_node()
 
     def hasData(self, active_mask, fs):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._has_data(active_mask, fs)
 
     def free(self):
@@ -185,5 +185,5 @@ class ObsVector(BaseCClass):
         return "ObsVector(%s, %s, %s, %s) %s" % (na, kk, ok, dk, self._ad_str())
 
     def getTotalChi2(self, fs, realization_number):
-        """ @rtype: float """
+        """@rtype: float"""
         return self._get_total_chi2(fs, realization_number)

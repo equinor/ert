@@ -18,10 +18,10 @@ class ResLog(object):
 
     @classmethod
     def log(cls, log_level, message):
-        """ Higher log_level indicates higher importance"""
+        """Higher log_level indicates higher importance"""
         cls._write_log(MessageLevelEnum.to_enum(log_level), message)
 
     @classmethod
     def getFilename(cls):
-        """ @rtype: string """
+        """@rtype: string"""
         return cls._get_filename()

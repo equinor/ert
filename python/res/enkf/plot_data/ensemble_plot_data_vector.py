@@ -21,19 +21,19 @@ class EnsemblePlotDataVector(BaseCClass):
         raise NotImplementedError("Class can not be instantiated directly!")
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._size()
 
     def getValue(self, index):
-        """ @rtype: float """
+        """@rtype: float"""
         return self._get_value(index)
 
     def getTime(self, index):
-        """ @rtype: CTime """
+        """@rtype: CTime"""
         return self._get_time(index)
 
     def isActive(self, index):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._is_active(index)
 
     def __repr__(self):

@@ -227,7 +227,7 @@ class ModelConfig(BaseCClass):
         return self._has_history()
 
     def get_history_source(self):
-        """ @rtype: HistorySourceEnum """
+        """@rtype: HistorySourceEnum"""
         return self._get_history_source()
 
     def set_history_source(self, history_source, refcase):
@@ -241,22 +241,22 @@ class ModelConfig(BaseCClass):
         return self._select_history(history_source, refcase)
 
     def get_max_internal_submit(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._get_max_internal_submit()
 
     def set_max_internal_submit(self, max_value):
         self._get_max_internal_submit(max_value)
 
     def getForwardModel(self):
-        """ @rtype: ForwardModel """
+        """@rtype: ForwardModel"""
         return self._get_forward_model().setParent(self)
 
     def getRunpathAsString(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_runpath_as_char()
 
     def selectRunpath(self, path_key):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._select_runpath(path_key)
 
     def setRunpath(self, path_format):
@@ -266,15 +266,15 @@ class ModelConfig(BaseCClass):
         self._free()
 
     def getGenKWExportName(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._gen_kw_export_name()
 
     def runpathRequiresIterations(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._runpath_requires_iterations()
 
     def getJobnameFormat(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_jobname_fmt()
 
     @property
@@ -282,11 +282,11 @@ class ModelConfig(BaseCClass):
         return self._get_obs_config_file()
 
     def getEnspath(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_enspath()
 
     def getRunpathFormat(self):
-        """ @rtype: PathFormat """
+        """@rtype: PathFormat"""
         return self._get_runpath_fmt()
 
     @property

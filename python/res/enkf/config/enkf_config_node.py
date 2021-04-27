@@ -185,7 +185,7 @@ class EnkfConfigNode(BaseCClass):
         return self._iget_container_key(index)
 
     def getImplementationType(self):
-        """ @rtype: ErtImplType """
+        """@rtype: ErtImplType"""
         return self._get_impl_type()
 
     def getVariableType(self):
@@ -207,19 +207,19 @@ class EnkfConfigNode(BaseCClass):
         return self._get_enkf_outfile()
 
     def getFieldModelConfig(self):
-        """ @rtype: FieldConfig """
+        """@rtype: FieldConfig"""
         return FieldConfig.createCReference(self._get_ref(), parent=self)
 
     def getDataModelConfig(self):
-        """ @rtype: GenDataConfig """
+        """@rtype: GenDataConfig"""
         return GenDataConfig.createCReference(self._get_ref(), parent=self)
 
     def getKeywordModelConfig(self):
-        """ @rtype: GenKWConfig """
+        """@rtype: GenKWConfig"""
         return GenKwConfig.createCReference(self._get_ref(), parent=self)
 
     def getSummaryModelConfig(self):
-        """ @rtype: SummaryConfig """
+        """@rtype: SummaryConfig"""
         return SummaryConfig.createCReference(self._get_ref(), parent=self)
 
     def get_enkf_infile(self):
@@ -229,7 +229,7 @@ class EnkfConfigNode(BaseCClass):
         return self._get_init_file_fmt()
 
     def getObservationKeys(self):
-        """ @rtype:  StringList """
+        """@rtype:  StringList"""
         return self._get_obs_keys().setParent(self)
 
     @classmethod
@@ -515,7 +515,7 @@ class EnkfConfigNode(BaseCClass):
         return not self == other
 
     def __eq__(self, other):
-        """ @rtype: bool"""
+        """@rtype: bool"""
         if self.getImplementationType() != other.getImplementationType():
             return False
 

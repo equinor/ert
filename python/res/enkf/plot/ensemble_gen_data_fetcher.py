@@ -27,7 +27,7 @@ class EnsembleGenDataFetcher(DataFetcher):
         return gen_data_list
 
     def getEnsembleConfigNode(self, key):
-        """ @rtype: EnsembleConfig """
+        """@rtype: EnsembleConfig"""
         ensemble_config = self.ert().ensembleConfig()
         assert key in ensemble_config
         return ensemble_config.getNode(key)

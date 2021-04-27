@@ -34,7 +34,7 @@ class EnkfSimulationRunner(BaseCClass):
         return self.parent()
 
     def runSimpleStep(self, job_queue, run_context):
-        """ @rtype: int """
+        """@rtype: int"""
         #### run simplestep ####
         self._enkf_main().initRun(run_context)
 
@@ -79,11 +79,11 @@ class EnkfSimulationRunner(BaseCClass):
         return totalOk
 
     def createRunPath(self, run_context):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._create_run_path(run_context)
 
     def runEnsembleExperiment(self, job_queue, run_context):
-        """ @rtype: int """
+        """@rtype: int"""
         return self.runSimpleStep(job_queue, run_context)
 
     @staticmethod

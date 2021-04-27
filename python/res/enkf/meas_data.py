@@ -88,7 +88,7 @@ class MeasData(BaseCClass):
         return "\n".join([str(block) for block in self])
 
     def createS(self):
-        """ @rtype: Matrix """
+        """@rtype: Matrix"""
         S = self._allocS()
         if S is None:
             raise ValueError(

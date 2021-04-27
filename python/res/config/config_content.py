@@ -239,11 +239,11 @@ class ConfigContent(BaseCClass):
         self._free()
 
     def getErrors(self):
-        """ @rtype: ConfigError """
+        """@rtype: ConfigError"""
         return self._get_errors()
 
     def getWarnings(self):
-        """ @rtype: ConfigError """
+        """@rtype: ConfigError"""
         return self._get_warnings()
 
     def get_config_path(self):

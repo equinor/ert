@@ -80,7 +80,7 @@ class ConfigParser(BaseCClass):
         unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_WARN,
         validate=True,
     ):
-        """ @rtype: ConfigContent """
+        """@rtype: ConfigContent"""
 
         assert isinstance(unrecognized, UnrecognizedEnum)
 

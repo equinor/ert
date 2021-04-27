@@ -9,7 +9,7 @@ class EnsembleDataFetcher(DataFetcher):
         super(EnsembleDataFetcher, self).__init__(ert)
 
     def fetchSupportedKeys(self):
-        """ @rtype: list of str """
+        """@rtype: list of str"""
         return [
             key
             for key in self.ert()
@@ -18,7 +18,7 @@ class EnsembleDataFetcher(DataFetcher):
         ]
 
     def getEnsembleConfigNode(self, key):
-        """ @rtype: EnsembleConfig """
+        """@rtype: EnsembleConfig"""
         ensemble_config = self.ert().ensembleConfig()
         assert key in ensemble_config
         return ensemble_config.getNode(key)

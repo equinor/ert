@@ -12,7 +12,7 @@ class PlotBlockData(object):
         self.__plot_block_vectors = {}
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return len(self.__plot_block_vectors)
 
     def __getitem__(self, index):
@@ -30,7 +30,7 @@ class PlotBlockData(object):
             cur += 1
 
     def getDepth(self):
-        """ @rtype: DoubleVector """
+        """@rtype: DoubleVector"""
         return self.__depth_vector
 
     def addPlotBlockVector(self, vector):

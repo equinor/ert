@@ -80,18 +80,18 @@ class ErtTemplates(BaseCClass):
             super(ErtTemplates, self).__init__(c_ptr)
 
     def getTemplateNames(self):
-        """ @rtype: StringList """
+        """@rtype: StringList"""
         return self._alloc_list().setParent(self)
 
     def clear(self):
         self._clear()
 
     def get_template(self, key):
-        """ @rtype: ErtTemplate """
+        """@rtype: ErtTemplate"""
         return self._get_template(key).setParent(self)
 
     def add_template(self, key, template_file, target_file, arg_string):
-        """ @rtype: ErtTemplate """
+        """@rtype: ErtTemplate"""
         return self._add_template(
             key, template_file, target_file, arg_string
         ).setParent(self)

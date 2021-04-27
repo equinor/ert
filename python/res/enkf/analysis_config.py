@@ -224,14 +224,14 @@ class AnalysisConfig(BaseCClass):
         self._set_log_path(path)
 
     def getEnkfAlpha(self):
-        """ :rtype: float """
+        """:rtype: float"""
         return self._get_alpha()
 
     def setEnkfAlpha(self, alpha):
         self._set_alpha(alpha)
 
     def getStdCutoff(self):
-        """ :rtype: float """
+        """:rtype: float"""
         return self._get_std_cutoff()
 
     def setStdCutoff(self, std_cutoff):
@@ -244,18 +244,18 @@ class AnalysisConfig(BaseCClass):
         return self._set_merge_observations(merge_observations)
 
     def getAnalysisIterConfig(self):
-        """ @rtype: AnalysisIterConfig """
+        """@rtype: AnalysisIterConfig"""
         return self._get_iter_config().setParent(self)
 
     def get_stop_long_running(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._get_stop_long_running()
 
     def set_stop_long_running(self, stop_long_running):
         self._set_stop_long_running(stop_long_running)
 
     def get_max_runtime(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._get_max_runtime()
 
     def set_max_runtime(self, max_runtime):
@@ -265,27 +265,27 @@ class AnalysisConfig(BaseCClass):
         self._free()
 
     def activeModuleName(self):
-        """ :rtype: str """
+        """:rtype: str"""
         return self._get_active_module_name()
 
     def getModuleList(self):
-        """ :rtype: StringList """
+        """:rtype: StringList"""
         return self._get_module_list()
 
     def getModule(self, module_name):
-        """ @rtype: AnalysisModule """
+        """@rtype: AnalysisModule"""
         return self._get_module(module_name)
 
     def hasModule(self, module_name):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._has_module(module_name)
 
     def selectModule(self, module_name):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._select_module(module_name)
 
     def getActiveModule(self):
-        """ :rtype: AnalysisModule """
+        """:rtype: AnalysisModule"""
         return self.getModule(self.activeModuleName())
 
     def setGlobalStdScaling(self, std_scaling):

@@ -47,7 +47,7 @@ class SchemaItem(BaseCClass):
         super(SchemaItem, self).__init__(c_ptr)
 
     def iget_type(self, index):
-        """ @rtype: ContentTypeEnum """
+        """@rtype: ContentTypeEnum"""
         return self._iget_type(index)
 
     def iset_type(self, index, schema_type):

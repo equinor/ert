@@ -54,14 +54,14 @@ class BlockObservation(BaseCClass):
         super(BlockObservation, self).__init__(c_ptr)
 
     def getCoordinate(self, index):
-        """ @rtype: tuple of (int, int, int) """
+        """@rtype: tuple of (int, int, int)"""
         i = self._iget_i(index)
         j = self._iget_j(index)
         k = self._iget_k(index)
         return i, j, k
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._get_size()
 
     def __iter__(self):
@@ -77,22 +77,22 @@ class BlockObservation(BaseCClass):
             self._add_summary_point(i, j, k, sum_key, value, std)
 
     def getValue(self, index):
-        """ @rtype: float """
+        """@rtype: float"""
         return self._get_value(index)
 
     def getStd(self, index):
-        """ @rtype: float """
+        """@rtype: float"""
         return self._get_std(index)
 
     def getStdScaling(self, index):
-        """ @rtype: float """
+        """@rtype: float"""
         return self._get_std_scaling(index)
 
     def updateStdScaling(self, factor, active_list):
         self._update_std_scaling(factor, active_list)
 
     def getDepth(self, index):
-        """ @rtype: float """
+        """@rtype: float"""
         return self._get_depth(index)
 
     def getData(self, state, obs_index, node_id):

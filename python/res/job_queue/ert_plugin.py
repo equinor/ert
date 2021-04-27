@@ -10,15 +10,15 @@ class CancelPluginException(Exception):
 
 class ErtPlugin(ErtScript):
     def getArguments(self, parent=None):
-        """ @rtype: list """
+        """@rtype: list"""
         return []
 
     def getName(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return str(self.__class__)
 
     def getDescription(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return "No description provided!"
 
     def checkIfCancelled(self):

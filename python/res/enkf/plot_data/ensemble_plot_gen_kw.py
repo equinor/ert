@@ -62,11 +62,11 @@ class EnsemblePlotGenKW(BaseCClass):
         self._load(file_system, True, 0, input_mask)
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._size()
 
     def __getitem__(self, index):
-        """ @rtype: EnsemblePlotGenKWVector """
+        """@rtype: EnsemblePlotGenKWVector"""
         return self._get(index)
 
     def __iter__(self):
@@ -76,15 +76,15 @@ class EnsemblePlotGenKW(BaseCClass):
             cur += 1
 
     def getKeyWordCount(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._get_keyword_count()
 
     def getKeyWordForIndex(self, index):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._iget_key(index)
 
     def getIndexForKeyword(self, keyword):
-        """ @rtype: int """
+        """@rtype: int"""
         for index in range(self.getKeyWordCount()):
             kw = self.getKeyWordForIndex(index)
             if kw == keyword:
@@ -92,7 +92,7 @@ class EnsemblePlotGenKW(BaseCClass):
         return None
 
     def shouldUseLogScale(self, index):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return bool(self._should_use_log_scale(index))
 
     def free(self):

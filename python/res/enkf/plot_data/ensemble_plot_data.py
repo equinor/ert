@@ -37,11 +37,11 @@ class EnsemblePlotData(BaseCClass):
         self._load(file_system, user_index, input_mask)
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._size()
 
     def __getitem__(self, index):
-        """ @rtype: EnsemblePlotDataVector """
+        """@rtype: EnsemblePlotDataVector"""
         return self._get(index)
 
     def __iter__(self):

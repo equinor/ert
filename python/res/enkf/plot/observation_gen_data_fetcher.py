@@ -90,7 +90,7 @@ class ObservationGenDataFetcher(DataFetcher):
         return self.ert().ensembleConfig().getNode(key).getObservationKeys()
 
     def hasData(self, key):
-        """ @rtype: bool """
+        """@rtype: bool"""
         key, report_step = key.split("@")
         observations = self.ert().getObservations()
         obs_key = self.getObsKeyForKey(key, int(report_step))

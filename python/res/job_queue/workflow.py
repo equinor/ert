@@ -121,11 +121,11 @@ class Workflow(BaseCClass):
             time.sleep(1)
 
     def getLastError(self):
-        """ @rtype: ConfigError """
+        """@rtype: ConfigError"""
         return self._get_last_error()
 
     def getJobsReport(self):
-        """ @rtype: {dict} """
+        """@rtype: {dict}"""
         return self.__status
 
     @classmethod

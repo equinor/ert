@@ -21,11 +21,11 @@ class LocalUpdateStep(BaseCClass):
         raise NotImplementedError("Class can not be instantiated directly!")
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._size()
 
     def __getitem__(self, index):
-        """ @rtype: LocalMinistep """
+        """@rtype: LocalMinistep"""
         if not isinstance(index, int):
             raise TypeError("Keys must be ints, not %s" % str(type(index)))
         if index < 0:
@@ -43,7 +43,7 @@ class LocalUpdateStep(BaseCClass):
         return self._name()
 
     def getName(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self.name()
 
     def free(self):

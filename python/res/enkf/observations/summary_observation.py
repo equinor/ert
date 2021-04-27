@@ -66,15 +66,15 @@ class SummaryObservation(BaseCClass):
             )
 
     def getValue(self):
-        """ @rtype: float """
+        """@rtype: float"""
         return self._get_value()
 
     def getStandardDeviation(self):
-        """ @rtype: float """
+        """@rtype: float"""
         return self._get_std()
 
     def getStdScaling(self, index=0):
-        """ @rtype: float """
+        """@rtype: float"""
         return self._get_std_scaling()
 
     def set_std_scaling(self, scaling_factor):
@@ -84,7 +84,7 @@ class SummaryObservation(BaseCClass):
         return 1
 
     def getSummaryKey(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_summary_key()
 
     def updateStdScaling(self, factor, active_list):

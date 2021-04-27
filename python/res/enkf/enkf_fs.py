@@ -71,19 +71,19 @@ class EnkfFs(BaseCClass):
         return fs
 
     def getTimeMap(self):
-        """ @rtype: TimeMap """
+        """@rtype: TimeMap"""
         return self._get_time_map().setParent(self)
 
     def getStateMap(self):
-        """ @rtype: StateMap """
+        """@rtype: StateMap"""
         return self._get_state_map().setParent(self)
 
     def getCaseName(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_case_name()
 
     def isReadOnly(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._is_read_only()
 
     def refCount(self):
@@ -145,7 +145,7 @@ class EnkfFs(BaseCClass):
         self._fsync()
 
     def getSummaryKeySet(self):
-        """ @rtype: SummaryKeySet """
+        """@rtype: SummaryKeySet"""
         return self._summary_key_set().setParent(self)
 
     def realizationList(self, state):

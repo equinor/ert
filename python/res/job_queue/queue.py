@@ -297,7 +297,7 @@ class JobQueue(BaseCClass):
         return self._get_active_size()
 
     def getJobStatus(self, job_number):
-        """ @rtype: JobStatusType """
+        """@rtype: JobStatusType"""
         return self._get_job_status(job_number)
 
     def is_active(self):

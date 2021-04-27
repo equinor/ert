@@ -39,7 +39,7 @@ class RunpathList(BaseCClass):
         return self._size()
 
     def __getitem__(self, index):
-        """ @rtype: RunpathNode """
+        """@rtype: RunpathNode"""
         ls = len(self)
         if isinstance(index, int):
             idx = index

@@ -51,15 +51,15 @@ class ForwardModel(BaseCClass):
         return self._get_length()
 
     def joblist(self):
-        """ @rtype: StringList """
+        """@rtype: StringList"""
         return self._alloc_joblist()
 
     def iget_job(self, index):
-        """ @rtype: ExtJob """
+        """@rtype: ExtJob"""
         return self._iget_job(index).setParent(self)
 
     def add_job(self, name):
-        """ @rtype: ExtJob """
+        """@rtype: ExtJob"""
         return self._add_job(name).setParent(self)
 
     def clear(self):

@@ -33,15 +33,15 @@ class ErtTemplate(BaseCClass):
         raise NotImplementedError("Class can not be instantiated directly!")
 
     def get_template_file(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_template_file()
 
     def get_target_file(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_target_file()
 
     def get_args_as_string(self):
-        """ @rtype: str """
+        """@rtype: str"""
         args_list = self._get_arg_list()
         return ", ".join(
             ["{}={}".format(key, args_list.get(key)) for key in args_list.keys()]

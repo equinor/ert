@@ -100,7 +100,7 @@ class LocalConfig(BaseCClass):
         self._clear()
 
     def createMinistep(self, mini_step_key, analysis_module=None):
-        """ @rtype: Ministep """
+        """@rtype: Ministep"""
         assert isinstance(mini_step_key, str)
         if analysis_module:
             assert isinstance(analysis_module, AnalysisModule)
@@ -110,7 +110,7 @@ class LocalConfig(BaseCClass):
         return ministep
 
     def createObsdata(self, obsdata_key):
-        """ @rtype: Obsdata """
+        """@rtype: Obsdata"""
         assert isinstance(obsdata_key, str)
         if self._has_obsdata(obsdata_key):
             raise ValueError("Tried to add existing observation key:%s " % obsdata_key)
@@ -121,7 +121,7 @@ class LocalConfig(BaseCClass):
         return obsdata
 
     def copyObsdata(self, src_key, target_key):
-        """ @rtype: Obsdata """
+        """@rtype: Obsdata"""
         assert isinstance(src_key, str)
         assert isinstance(target_key, str)
         if not self._has_obsdata(src_key):
@@ -132,7 +132,7 @@ class LocalConfig(BaseCClass):
         return obsdata
 
     def createDataset(self, dataset_key):
-        """ @rtype: Dataset """
+        """@rtype: Dataset"""
         assert isinstance(dataset_key, str)
         if self._has_dataset(dataset_key):
             raise ValueError("Tried to add existing data key:%s " % dataset_key)
@@ -143,7 +143,7 @@ class LocalConfig(BaseCClass):
         return data
 
     def copyDataset(self, src_key, target_key):
-        """ @rtype: Dataset """
+        """@rtype: Dataset"""
         assert isinstance(src_key, str)
         assert isinstance(target_key, str)
         data = self._copy_dataset(src_key, target_key)
@@ -151,21 +151,21 @@ class LocalConfig(BaseCClass):
         return data
 
     def getUpdatestep(self):
-        """ @rtype: UpdateStep """
+        """@rtype: UpdateStep"""
         return self._get_updatestep()
 
     def getMinistep(self, mini_step_key):
-        """ @rtype: Ministep """
+        """@rtype: Ministep"""
         assert isinstance(mini_step_key, str)
         return self._get_ministep(mini_step_key)
 
     def getObsdata(self, obsdata_key):
-        """ @rtype: Obsdata """
+        """@rtype: Obsdata"""
         assert isinstance(obsdata_key, str)
         return self._get_obsdata(obsdata_key)
 
     def getDataset(self, dataset_key):
-        """ @rtype: Dataset """
+        """@rtype: Dataset"""
         assert isinstance(dataset_key, str)
         return self._get_dataset(dataset_key)
 

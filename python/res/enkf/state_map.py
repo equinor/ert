@@ -49,7 +49,7 @@ class StateMap(BaseCClass):
             self.load(filename)
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._size()
 
     def __iter__(self):
@@ -64,7 +64,7 @@ class StateMap(BaseCClass):
         return self._equal(other)
 
     def __getitem__(self, index):
-        """ @rtype: RealizationStateEnum """
+        """@rtype: RealizationStateEnum"""
         if not isinstance(index, int):
             raise TypeError("Expected an integer")
 
@@ -94,7 +94,7 @@ class StateMap(BaseCClass):
 
     @classmethod
     def isLegalTransition(cls, realization_state1, realization_state2):
-        """ @rtype: bool """
+        """@rtype: bool"""
 
         if not isinstance(realization_state1, RealizationStateEnum) or not isinstance(
             realization_state2, RealizationStateEnum
@@ -104,7 +104,7 @@ class StateMap(BaseCClass):
         return cls._is_legal_transition(realization_state1, realization_state2)
 
     def isReadOnly(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._is_read_only()
 
     def selectMatching(self, select_target, select_mask):

@@ -93,7 +93,7 @@ class ExtParam(BaseCClass):
             self._iset(index, value)
 
     def _roll_key_index(self, index):
-        """ Support indexing from the end of the list of keys """
+        """Support indexing from the end of the list of keys"""
         return index if index >= 0 else index + len(self)
 
     def _check_index(self, kidx, sidx=None):

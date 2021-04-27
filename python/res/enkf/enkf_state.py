@@ -41,7 +41,7 @@ class EnKFState(BaseCClass):
         self._free()
 
     def ensembleConfig(self):
-        """ @rtype: EnsembleConfig """
+        """@rtype: EnsembleConfig"""
         return self._get_ens_config()
 
     def initialize(

@@ -9,15 +9,15 @@ class RefcaseDataFetcher(DataFetcher):
         self.report_times = {}
 
     def hasRefcase(self):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self.ert().eclConfig().hasRefcase()
 
     def getRefCase(self):
-        """ @rtype: EclSum """
+        """@rtype: EclSum"""
         return self.ert().eclConfig().getRefcase()
 
     def getSummaryKeys(self):
-        """ @rtype: StringList """
+        """@rtype: StringList"""
         return self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.SUMMARY)
 
     def fetchData(self, key, case=None):

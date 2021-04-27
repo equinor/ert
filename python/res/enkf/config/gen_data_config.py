@@ -113,26 +113,26 @@ class GenDataConfig(BaseCClass):
         )
 
     def hasReportStep(self, report_step):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._has_report_step(report_step)
 
     def getNumReportStep(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._get_num_report_step()
 
     def getReportStep(self, index):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._iget_report_step(index)
 
     def getReportSteps(self):
-        """ @rtype: list of int """
+        """@rtype: list of int"""
         return [self.getReportStep(index) for index in range(self.getNumReportStep())]
 
     def __ne__(self, other):
         return not self == other
 
     def __eq__(self, other):
-        """ @rtype: bool"""
+        """@rtype: bool"""
         if self.getName() != other.getName():
             return False
 

@@ -177,12 +177,12 @@ class ErtRunContext(BaseCClass):
 
     @classmethod
     def createRunpathList(cls, mask, runpath_fmt, subst_list, iter=0):
-        """ @rtype: ecl.util.stringlist.StringList """
+        """@rtype: ecl.util.stringlist.StringList"""
         return cls._alloc_runpath_list(mask, runpath_fmt, subst_list, iter)
 
     @classmethod
     def createRunpath(cls, iens, runpath_fmt, subst_list, iter=0):
-        """ @rtype: str """
+        """@rtype: str"""
         return cls._alloc_runpath(iens, runpath_fmt, subst_list, iter)
 
     def get_id(self):

@@ -55,7 +55,7 @@ class ErtTest(BaseCClass):
         self.__ert = None
 
     def getErt(self):
-        """ @rtype: EnKFMain """
+        """@rtype: EnKFMain"""
         if self.__ert is None:
             self.__ert = self._get_enkf_main()
 
@@ -67,7 +67,7 @@ class ErtTest(BaseCClass):
         self._free()
 
     def installWorkflowJob(self, job_name, job_path):
-        """ @rtype: bool """
+        """@rtype: bool"""
         if os.path.exists(job_path) and os.path.isfile(job_path):
             ert = self.getErt()
             workflow_list = ert.getWorkflowList()
@@ -77,7 +77,7 @@ class ErtTest(BaseCClass):
             raise IOError("Could not load workflowjob from:%s" % job_path)
 
     def runWorkflowJob(self, job_name, *arguments):
-        """ @rtype: bool """
+        """@rtype: bool"""
         ert = self.getErt()
         workflow_list = ert.getWorkflowList()
 
@@ -112,7 +112,7 @@ class ErtTestContext(object):
         )
 
     def __enter__(self):
-        """ @rtype: ErtTest """
+        """@rtype: ErtTest"""
         return self.__test_context
 
     def __exit__(self, exc_type, exc_val, exc_tb):

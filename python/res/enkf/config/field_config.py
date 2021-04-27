@@ -132,7 +132,7 @@ class FieldConfig(BaseCClass):
         return not self == other
 
     def __eq__(self, other):
-        """ @rtype: bool"""
+        """@rtype: bool"""
         if self.get_init_transform_name() != other.get_init_transform_name():
             return False
         if self.get_output_transform_name() != other.get_output_transform_name():

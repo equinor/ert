@@ -16,7 +16,7 @@ class ObservationDataFetcher(DataFetcher):
         return keys
 
     def fetchSupportedKeys(self):
-        """ @rtype: list of str """
+        """@rtype: list of str"""
         return sorted(
             [
                 key

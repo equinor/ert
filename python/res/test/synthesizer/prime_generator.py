@@ -3,7 +3,7 @@ import random, numbers
 
 def rwh_primes2(n):
     # http://stackoverflow.com/questions/2068372/fastest-way-to-list-all-primes-below-n-in-python/3035188#3035188
-    """ Input n>=6, Returns a list of primes, 2 <= p < n """
+    """Input n>=6, Returns a list of primes, 2 <= p < n"""
     correction = n % 6 > 1
     n = {0: n, 1: n - 1, 2: n + 4, 3: n + 3, 4: n + 2, 5: n + 1}[n % 6]
     sieve = [True] * (n // 3)

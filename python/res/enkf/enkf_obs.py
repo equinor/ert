@@ -83,7 +83,7 @@ class EnkfObs(BaseCClass):
         return self._has_key(key)
 
     def __iter__(self):
-        """ @rtype: ObsVector """
+        """@rtype: ObsVector"""
         iobs = 0
         while iobs < len(self):
             vector = self[iobs]
@@ -91,7 +91,7 @@ class EnkfObs(BaseCClass):
             iobs += 1
 
     def __getitem__(self, key_or_index):
-        """ @rtype: ObsVector """
+        """@rtype: ObsVector"""
         if isinstance(key_or_index, str):
             if self.hasKey(key_or_index):
                 return self._get_vector(key_or_index).setParent(self)
@@ -152,11 +152,11 @@ class EnkfObs(BaseCClass):
             return key_list
 
     def hasKey(self, key):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return key in self
 
     def getObservationTime(self, index):
-        """ @rtype: CTime """
+        """@rtype: CTime"""
         return self._iget_obs_time(index)
 
     def addObservationVector(self, observation_vector):

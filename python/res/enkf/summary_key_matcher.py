@@ -38,11 +38,11 @@ class SummaryKeyMatcher(BaseCClass):
         return self._match_key(key)
 
     def isRequired(self, key):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._is_required(key)
 
     def keys(self):
-        """ @rtype: StringList """
+        """@rtype: StringList"""
         return self._keys()
 
     def free(self):

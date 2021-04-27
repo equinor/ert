@@ -29,7 +29,7 @@ class WorkflowJoblist(BaseCClass):
         super(WorkflowJoblist, self).__init__(c_ptr)
 
     def addJob(self, job):
-        """ @type job: WorkflowJob """
+        """@type job: WorkflowJob"""
         job.convertToCReference(self)
         self._add_job(job)
 

@@ -99,15 +99,15 @@ class GenObservation(BaseCClass):
             raise IndexError("Invalid index.  Valid range: [0,%d)" % len(self))
 
     def getValue(self, obs_index):
-        """ @rtype: float """
+        """@rtype: float"""
         return self._get_value(obs_index)
 
     def getStandardDeviation(self, obs_index):
-        """ @rtype: float """
+        """@rtype: float"""
         return self._get_std(obs_index)
 
     def getStdScaling(self, obs_index):
-        """ @rtype: float """
+        """@rtype: float"""
         return self._get_std_scaling(obs_index)
 
     def updateStdScaling(self, factor, active_list):
@@ -128,11 +128,11 @@ class GenObservation(BaseCClass):
         return np_vector
 
     def getSize(self):
-        """ @rtype: float """
+        """@rtype: float"""
         return len(self)
 
     def getIndex(self, obs_index):
-        """ @rtype: int """
+        """@rtype: int"""
         return self.getDataIndex(obs_index)
 
     def getDataIndex(self, obs_index):

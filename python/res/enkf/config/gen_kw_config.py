@@ -88,11 +88,11 @@ class GenKwConfig(BaseCClass):
         return self._get_parameter_file()
 
     def getKeyWords(self):
-        """ @rtype: StringList """
+        """@rtype: StringList"""
         return self._alloc_name_list()
 
     def shouldUseLogScale(self, index):
-        """ @rtype: bool """
+        """@rtype: bool"""
         return self._should_use_log_scale(index)
 
     def free(self):
@@ -106,7 +106,7 @@ class GenKwConfig(BaseCClass):
         )
 
     def getKey(self):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._get_key()
 
     @property
@@ -117,7 +117,7 @@ class GenKwConfig(BaseCClass):
         return self._size()
 
     def __getitem__(self, index):
-        """ @rtype: str """
+        """@rtype: str"""
         return self._iget_name(index)
 
     def __iter__(self):
@@ -130,7 +130,7 @@ class GenKwConfig(BaseCClass):
         return not self == other
 
     def __eq__(self, other):
-        """ @rtype: bool"""
+        """@rtype: bool"""
         if self.getTemplateFile() != other.getTemplateFile():
             return False
 

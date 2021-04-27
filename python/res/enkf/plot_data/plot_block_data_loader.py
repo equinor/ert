@@ -17,11 +17,11 @@ class PlotBlockDataLoader(object):
         self.__permutation_vector = None
 
     def getBlockObservation(self, report_step):
-        """ @rtype: BlockObservation """
+        """@rtype: BlockObservation"""
         return self.__obs_vector.getNode(report_step)
 
     def getDepthValues(self, report_step):
-        """ @rtype: DoubleVector """
+        """@rtype: DoubleVector"""
         block_obs = self.getBlockObservation(report_step)
 
         depth = DoubleVector()

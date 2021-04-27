@@ -83,7 +83,7 @@ class TimeMap(BaseCClass):
         return self._set_strict(strict)
 
     def getSimulationDays(self, step):
-        """ @rtype: double """
+        """@rtype: double"""
         if not isinstance(step, int):
             raise TypeError("Expected an integer")
 
@@ -94,7 +94,7 @@ class TimeMap(BaseCClass):
         return self._iget_sim_days(step)
 
     def __getitem__(self, index):
-        """ @rtype: CTime """
+        """@rtype: CTime"""
         if not isinstance(index, int):
             raise TypeError("Expected an integer")
 
@@ -177,7 +177,7 @@ class TimeMap(BaseCClass):
             )
 
     def __len__(self):
-        """ @rtype: int """
+        """@rtype: int"""
         return self._size()
 
     def free(self):

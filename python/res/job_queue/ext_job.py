@@ -175,7 +175,7 @@ class ExtJob(BaseCClass):
 
     @property
     def arg_types(self):
-        """ @rtype: list of type """
+        """@rtype: list of type"""
 
         result = []
         for index in range(self.max_arg):
