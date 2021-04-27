@@ -37,6 +37,7 @@ class LocalConfig(BaseCClass):
 
     _free = ResPrototype("void   local_config_free(local_config)")
     _clear = ResPrototype("void   local_config_clear(local_config)")
+    _clear_active = ResPrototype("void   local_config_clear_active(local_config)")
     _create_ministep = ResPrototype(
         "local_ministep_ref local_config_alloc_ministep(local_config, char*, analysis_module)"
     )
@@ -98,6 +99,9 @@ class LocalConfig(BaseCClass):
 
     def clear(self):
         self._clear()
+
+    def clear_active(self):
+        self._clear_active()
 
     def createMinistep(self, mini_step_key, analysis_module=None):
         """@rtype: Ministep"""

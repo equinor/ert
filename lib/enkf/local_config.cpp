@@ -137,11 +137,31 @@ static local_updatestep_type * local_config_alloc_updatestep( local_config_type 
 
 
 
+/*
+  The local_config_clear() function will remove all current local configuration,
+  and then reallocate a new empty updatestep configuration.
+*/
 void local_config_clear( local_config_type * local_config ) {
-  hash_clear( local_config->updatestep_storage );
-  local_config->default_updatestep = local_config_alloc_updatestep(local_config, "DEFAULT");
+   local_config->default_updatestep  = NULL;
+   hash_clear( local_config->updatestep_storage );
+   hash_clear( local_config->ministep_storage );
+   hash_clear( local_config->dataset_storage );
+   hash_clear( local_config->obsdata_storage );
+   local_config->default_updatestep = local_config_alloc_updatestep(local_config, "DEFAULT");
 }
 
+
+/*
+  The local_config_clear_active() function will reset the current active
+  updatestep, but the named building blocks of type ministep, local_dataset and
+  obsdata will be retained and can be reused through name based lookup when we
+  create a new local configuration.
+*/
+
+void local_config_clear_active( local_config_type * local_config ) {
+    hash_clear( local_config->updatestep_storage );
+    local_config->default_updatestep = local_config_alloc_updatestep(local_config, "DEFAULT");
+}
 
 
 

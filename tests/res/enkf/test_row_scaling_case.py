@@ -554,7 +554,7 @@ TIME_MAP timemap.txt
             es_update.smootherUpdate(run_context)
 
             local_config = main.getLocalConfig()
-            local_config.clear()
+            local_config.clear_active()
             with self.assertRaises(KeyError):
                 obs_data = local_config.copyObsdata("NO_SUCH_OBS", "my_obs")
 
