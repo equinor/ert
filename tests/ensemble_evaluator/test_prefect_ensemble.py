@@ -638,9 +638,6 @@ def test_run_prefect_for_function_defined_outside_py_environment(
         expected_results = [
             pickle.loads(pickle_func)(coeffs) for coeffs in coefficients
         ]
-        transmitted_record = lambda record: asyncio.get_event_loop().run_until_complete(
-            record.load()
-        )
         transmitter_futures = [
             res["function_output"].load() for res in results.values()
         ]
