@@ -6,6 +6,8 @@ import os
 import signal
 import threading
 import uuid
+from datetime import timedelta
+from functools import partial
 
 import prefect
 import cloudpickle
@@ -28,6 +30,9 @@ from prefect import context as prefect_context
 from prefect.executors import DaskExecutor, LocalDaskExecutor
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_MAX_RETRIES = 0
+DEFAULT_RETRY_DELAY = 5  # seconds
 
 
 @contextlib.contextmanager
@@ -152,8 +157,11 @@ class PrefectEnsemble(_Ensemble):
         return [builder.build() for builder in real_builders]
 
     @staticmethod
-    def _on_task_failure(task, state, url, token, cert):
+    def _on_task_failure(task, state):
         if prefect_context.task_run_count > task.max_retries:
+            url = prefect_context.url
+            token = prefect_context.token
+            cert = prefect_context.cert
             with Client(url, token, cert) as c:
                 event = CloudEvent(
                     {
@@ -171,15 +179,29 @@ class PrefectEnsemble(_Ensemble):
             for iens in real_range:
                 transmitter_map[iens] = {
                     record: transmitter
-                    for record, transmitter in self.config["inputs"][iens].items()
+                    for record, transmitter in self.config[ids.INPUTS][iens].items()
                 }
                 for step in self._reals[iens].get_steps_sorted_topologically():
                     inputs = {
                         inp.get_name(): transmitter_map[iens][inp.get_name()]
                         for inp in step.get_inputs()
                     }
-                    outputs = self.config["outputs"][iens]
-                    step_task = step.get_task(outputs, ee_id, name=str(iens))
+                    outputs = self.config[ids.OUTPUTS][iens]
+                    max_retries = self.config.get(ids.MAX_RETRIES, DEFAULT_MAX_RETRIES)
+                    # Prefect does not allow retry_delay if max_retries is 0
+                    if max_retries == 0:
+                        retry_delay = None
+                    else:
+                        delay = self.config.get("retry_delay", DEFAULT_RETRY_DELAY)
+                        retry_delay = timedelta(seconds=delay)
+                    step_task = step.get_task(
+                        outputs,
+                        ee_id,
+                        name=str(iens),
+                        max_retries=max_retries,
+                        retry_delay=retry_delay,
+                        on_failure=self._on_task_failure,
+                    )
                     result = step_task(inputs=inputs)
                     self._iens_to_task[iens] = result
                     for output in step.get_outputs():

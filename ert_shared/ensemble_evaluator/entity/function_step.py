@@ -16,6 +16,9 @@ class FunctionTask(prefect.Task):
         self._output_transmitters = output_transmitters
         self._ee_id = ee_id
 
+    def get_step(self):
+        return self._step
+
     def _attempt_execute(self, *, func, transmitters):
         async def _load(io_, transmitter):
             record = await transmitter.load()
