@@ -1,8 +1,9 @@
+from enum import Enum
 from importlib.abc import Loader
 import importlib.util
 import mimetypes
 import sys
-from typing import Callable, List, Optional, cast
+from typing import Callable, List, Optional, cast, Union
 
 from pydantic import BaseModel, FilePath, ValidationError, root_validator, validator
 import ert3
@@ -12,8 +13,8 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal
 
-_DEFAULT_RECORD_MIME_TYPE = "application/json"
-_DEFAULT_CMD_MIME_TYPE = "application/octet-stream"
+_DEFAULT_RECORD_MIME_TYPE: str= "application/json"
+_DEFAULT_CMD_MIME_TYPE: str = "application/octet-stream"
 
 
 def _import_from(path) -> Callable:
@@ -80,42 +81,36 @@ class TransportableCommand(_StagesConfig):
     _ensure_mime = validator("mime", allow_reuse=True)(_ensure_mime)
 
 
-class Step(_StagesConfig):
+class _Step(_StagesConfig):
     name: str
-    type: Literal["unix", "function"]
-    script: Optional[List[str]] = []
     input: List[InputRecord]
     output: List[OutputRecord]
-    transportable_commands: Optional[List[TransportableCommand]] = []
-    function: Optional[Callable]
 
-    @root_validator
-    def check_defined(cls, step):
-        cmd_names = [cmd.name for cmd in step.get("transportable_commands", [])]
-        script_lines = step.get("script", [])
-        if step.get("type") == "function":
-            if cmd_names:
-                raise ValueError("Commands defined for a function stage")
-            if script_lines:
-                raise ValueError("Scripts defined for a function stage")
-            if not step.get("function"):
-                raise ValueError("No function defined")
-        return step
+    # backwards compatible
+    @root_validator(pre=True)
+    def set_step(cls, values):
+        if "type" in values:
+            del values["type"]
+        return values
+
+
+class Function(_Step):
+    function: Callable
 
     @validator("function", pre=True)
-    def function_is_valid(cls, function: str, values) -> Optional[Callable]:
-        step_type = values.get("type")
-        if step_type != "function" and function:
-            raise ValueError(f"Function defined for {step_type} step")
-        if function is None:
-            return None
-        return _import_from(function)
+    def function_is_callable(cls, value) -> Callable:
+        return _import_from(value)
+
+
+class Unix(_Step):
+    script: List[str]
+    transportable_commands: List[TransportableCommand]
 
 
 class StagesConfig(BaseModel):
-    __root__: List[Step]
+    __root__: List[Union[Function, Unix]]
 
-    def step_from_key(self, key: str) -> Optional[Step]:
+    def step_from_key(self, key: str) -> Union[Function, Unix, None]:
         return next((step for step in self if step.name == key), None)
 
     def __iter__(self):
