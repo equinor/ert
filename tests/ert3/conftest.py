@@ -267,14 +267,14 @@ def ert_storage(request, tmpdir):
         process.wait()
 
     request.addfinalizer(shut_down)
-    for _ in range(20):
+    for _ in range(30):
         try:
             r = requests.get("http://127.0.0.1:8000/healthcheck")
             if r.status_code == 200:
                 break
         except requests.exceptions.ConnectionError:
             pass
-        time.sleep(0.5)
+        time.sleep(1)
     else:
         raise requests.exceptions.ConnectionError("Ert-storage not starting")
     yield
