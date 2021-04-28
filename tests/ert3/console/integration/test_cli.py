@@ -419,25 +419,18 @@ def test_cli_validation_experiment_function(capsys):
     assert "unhashable type" in capture.out
 
 
-def test_cli_validation_stages_function(capsys):
-    config = [{"name": "name", "type": "unix", "input": [], "output": []}]
-    ert3.config.load_stages_config(config)
-
-    config = {"name": "name", "type": "unix", "input": [], "output": []}
+@pytest.mark.parametrize('config, expected', [
+    ({"name": "name", "type": "unix", "input": [], "output": []}, "not a valid list"),
+    ([{"name": "name", "type": "unix", "input": [], "output": []}], "field required"),
+    ([{"name": {}, "type": "unix", "input": [], "output": []}],"str type expected")
+])
+def test_cli_validation_stages_function(config, expected, capsys):
     with pytest.raises(ert3.exceptions.ConfigValidationError) as exc_info:
         ert3.config.load_stages_config(config)
     ert3.console.report_validation_errors(exc_info.value)
     capture = capsys.readouterr()
     assert "Error while loading stages configuration data:" in capture.out
-    assert "not a valid list" in capture.out
-
-    config = [{"name": {}, "type": "unix", "input": [], "output": []}]
-    with pytest.raises(ert3.exceptions.ConfigValidationError) as exc_info:
-        ert3.config.load_stages_config(config)
-    ert3.console.report_validation_errors(exc_info.value)
-    capture = capsys.readouterr()
-    assert "Error while loading stages configuration data:" in capture.out
-    assert "str type expected" in capture.out
+    assert expected in capture.out
 
 
 @pytest.mark.requires_ert_storage
