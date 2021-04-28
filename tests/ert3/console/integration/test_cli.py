@@ -419,11 +419,23 @@ def test_cli_validation_experiment_function(capsys):
     assert "unhashable type" in capture.out
 
 
-@pytest.mark.parametrize('config, expected', [
-    ({"name": "name", "type": "unix", "input": [], "output": []}, "not a valid list"),
-    ([{"name": "name", "type": "unix", "input": [], "output": []}], "field required"),
-    ([{"name": {}, "type": "unix", "input": [], "output": []}],"str type expected")
-])
+@pytest.mark.parametrize(
+    "config, expected",
+    [
+        (
+            {"name": "name", "type": "unix", "input": [], "output": []},
+            "not a valid list",
+        ),
+        (
+            [{"name": "name", "type": "unix", "input": [], "output": []}],
+            "field required",
+        ),
+        (
+            [{"name": {}, "type": "unix", "input": [], "output": []}],
+            "str type expected",
+        ),
+    ],
+)
 def test_cli_validation_stages_function(config, expected, capsys):
     with pytest.raises(ert3.exceptions.ConfigValidationError) as exc_info:
         ert3.config.load_stages_config(config)

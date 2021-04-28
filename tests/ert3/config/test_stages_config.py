@@ -126,8 +126,7 @@ def test_step_unix_and_function(base_unix_stage_config):
     config = base_unix_stage_config
     config[0].update({"function": "builtins:sum"})
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError, 
-        match=r"extra fields not permitted"
+        ert3.exceptions.ConfigValidationError, match=r"extra fields not permitted"
     ):
         ert3.config.load_stages_config(config)
 

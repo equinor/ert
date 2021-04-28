@@ -1,19 +1,13 @@
-from enum import Enum
 from importlib.abc import Loader
 import importlib.util
 import mimetypes
 import sys
-from typing import Callable, List, Optional, cast, Union
+from typing import Callable, List, cast, Union
 
 from pydantic import BaseModel, FilePath, ValidationError, root_validator, validator
 import ert3
 
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
-
-_DEFAULT_RECORD_MIME_TYPE: str= "application/json"
+_DEFAULT_RECORD_MIME_TYPE: str = "application/json"
 _DEFAULT_CMD_MIME_TYPE: str = "application/octet-stream"
 
 
