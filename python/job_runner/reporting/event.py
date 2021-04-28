@@ -6,8 +6,8 @@ from job_runner.reporting.message import (
     Running,
     Start,
 )
-from pathlib import Path
-
+import queue
+import threading
 from job_runner.util.client import Client
 
 _FM_JOB_START = "com.equinor.ert.forward_model_job.start"
@@ -33,8 +33,17 @@ class Event:
         self._ee_id = None
         self._real_id = None
         self._step_id = None
-
+        self._event_queue = queue.Queue()
+        self._event_publisher_thread = threading.Thread(target=self._publish_event)
         self._initialize_state_machine()
+
+    def _publish_event(self):
+        with Client(self._evaluator_url, self._token, self._cert) as client:
+            while True:
+                event = self._event_queue.get()
+                if event is None:
+                    return
+                client.send(to_json(event).decode())
 
     def _initialize_state_machine(self):
         initialized = (Init,)
@@ -43,7 +52,7 @@ class Event:
         self._states = {
             initialized: self._init_handler,
             jobs: self._job_handler,
-            finished: lambda _: _,
+            finished: self._finished_handler,
         }
         self._transitions = {
             None: initialized,
@@ -69,8 +78,7 @@ class Event:
         self._state = new_state
 
     def _dump_event(self, event):
-        with Client(self._evaluator_url, self._token, self._cert) as client:
-            client.send(to_json(event).decode())
+        self._event_queue.put(event)
 
     def _step_path(self):
         return f"/ert/ee/{self._ee_id}/real/{self._real_id}/step/{self._step_id}"
@@ -79,6 +87,7 @@ class Event:
         self._ee_id = msg.ee_id
         self._real_id = msg.real_id
         self._step_id = msg.step_id
+        self._event_publisher_thread.start()
 
     def _job_handler(self, msg):
         job_path = f"{self._step_path()}/job/{msg.job.index}"
@@ -147,3 +156,7 @@ class Event:
                     },
                 )
             )
+
+    def _finished_handler(self, msg):
+        self._event_queue.put(None)
+        self._event_publisher_thread.join()
