@@ -478,8 +478,7 @@ def test_cli_validation_experiment_command(base_ensemble_dict, workspace, capsys
     with patch.object(sys, "argv", args):
         ert3.console.main()
     capture = capsys.readouterr()
-    assert "Error while loading experiment configuration data:" in capture.out
-    assert "unhashable type" in capture.out
+    assert "Error while loading stages configuration data:" in capture.out
 
 
 @pytest.mark.requires_ert_storage
