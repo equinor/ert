@@ -20,7 +20,6 @@ def base_unix_stage_config(tmpdir):
     config = [
         {
             "name": "unix_stage",
-            "type": "unix",
             "input": [{"record": "some_record", "location": "some_location"}],
             "output": [{"record": "some_record", "location": "some_location"}],
             "transportable_commands": [{"name": "poly", "location": "poly.py"}],
@@ -36,7 +35,6 @@ def base_function_stage_config(tmpdir):
     config = [
         {
             "name": "function_stage",
-            "type": "function",
             "input": [{"record": "some_record", "location": "some_location"}],
             "output": [{"record": "some_record", "location": "some_location"}],
             "function": "builtins:sum",

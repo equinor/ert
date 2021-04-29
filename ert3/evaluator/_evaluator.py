@@ -116,7 +116,9 @@ def _build_ee_config(
 
     stage = stages_config.step_from_key(ensemble.forward_model.stage)
     assert stage is not None
-    commands = stage.transportable_commands if isinstance(stage, ert3.config.Unix) else []
+    commands = (
+        stage.transportable_commands if isinstance(stage, ert3.config.Unix) else []
+    )
     output_locations = [out.location for out in stage.output]
     jobs = []
 
@@ -137,7 +139,7 @@ def _build_ee_config(
             }
         )
 
-    if  isinstance(stage, ert3.config.Unix): 
+    if isinstance(stage, ert3.config.Unix):
         for script in stage.script:
             name, *args = script.split()
             jobs.append(

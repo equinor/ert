@@ -1,10 +1,9 @@
 from importlib.abc import Loader
 import importlib.util
 import mimetypes
-import sys
 from typing import Callable, List, cast, Union
 
-from pydantic import BaseModel, FilePath, ValidationError, root_validator, validator
+from pydantic import BaseModel, FilePath, ValidationError, validator
 import ert3
 
 _DEFAULT_RECORD_MIME_TYPE: str = "application/json"
@@ -79,13 +78,6 @@ class _Step(_StagesConfig):
     name: str
     input: List[InputRecord]
     output: List[OutputRecord]
-
-    # backwards compatible
-    @root_validator(pre=True)
-    def set_step(cls, values):
-        if "type" in values:
-            del values["type"]
-        return values
 
 
 class Function(_Step):
