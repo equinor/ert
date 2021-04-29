@@ -144,6 +144,7 @@ def create_observations(ert) -> List[Mapping[str, dict]]:
             list(t)
             for t in zip(*sorted(zip(obs["x_axis"], obs["values"], obs["errors"])))
         )
+        x_axis = [str(x) for x in x_axis]
         grouped_obs[key]["x_axis"] = x_axis
         grouped_obs[key]["values"] = values
         grouped_obs[key]["errors"] = error
