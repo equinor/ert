@@ -212,6 +212,7 @@ def _create_observation_transformation(ert, db_observations) -> List[dict]:
             list(t)
             for t in zip(*sorted(zip(obs["x_axis"], obs["active"], obs["scale"])))
         )
+        x_axis = [str(x) for x in x_axis]
         transformations[key]["x_axis"] = x_axis
         transformations[key]["active"] = active
         transformations[key]["scale"] = scale
