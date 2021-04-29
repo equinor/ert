@@ -6,7 +6,7 @@ import unittest
 
 from unittest.mock import Mock
 
-from _pytest.monkeypatch import MonkeyPatch
+from pytest import MonkeyPatch
 
 from ert_shared.plugins import ErtPluginContext
 import tests.all.plugins.dummy_plugins as dummy_plugins
