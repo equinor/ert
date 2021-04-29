@@ -32,7 +32,7 @@ from res.fm.ecl.ecl_run import make_SLURM_machine_list
 from subprocess import Popen, PIPE
 from subprocess import Popen, PIPE
 from distutils.spawn import find_executable
-from _pytest.monkeypatch import MonkeyPatch
+from pytest import MonkeyPatch
 
 
 def flow_install():

@@ -20,7 +20,7 @@ import unittest
 import yaml
 from ecl.util.test import TestAreaContext
 from tests import ResTest
-from _pytest.monkeypatch import MonkeyPatch
+from pytest import MonkeyPatch
 
 from res.fm.ecl import Ecl100Config
 from res.fm.ecl.ecl_config import Keys

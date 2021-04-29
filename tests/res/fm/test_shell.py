@@ -6,7 +6,7 @@ import contextlib
 from ecl.util.test import TestAreaContext
 from tests import ResTest
 from res.fm.shell import *
-from _pytest.monkeypatch import MonkeyPatch
+from pytest import MonkeyPatch
 
 
 @contextlib.contextmanager

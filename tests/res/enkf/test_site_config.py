@@ -20,7 +20,7 @@ import os
 from ecl.util.test import TestAreaContext
 from tests import ResTest
 from tests.utils import tmpdir
-from _pytest.monkeypatch import MonkeyPatch
+from pytest import MonkeyPatch
 
 
 class SiteConfigTest(ResTest):

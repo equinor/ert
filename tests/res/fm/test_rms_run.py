@@ -24,7 +24,7 @@ import shutil
 import json
 from ecl.util.test import TestAreaContext
 from tests import ResTest
-from _pytest.monkeypatch import MonkeyPatch
+from pytest import MonkeyPatch
 
 from res.fm.rms import RMSRun, RMSRunException
 import res.fm.rms

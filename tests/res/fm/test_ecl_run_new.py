@@ -33,7 +33,7 @@ from res.fm.ecl import run, Ecl100Config, EclrunConfig, EclRun
 from subprocess import Popen, PIPE
 from subprocess import Popen, PIPE
 from distutils.spawn import find_executable
-from _pytest.monkeypatch import MonkeyPatch
+from pytest import MonkeyPatch
 
 
 def find_version(output):

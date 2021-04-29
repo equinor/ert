@@ -1,7 +1,7 @@
 import os
 from tests import ResTest
 from res.test import ErtTestContext
-from _pytest.monkeypatch import MonkeyPatch
+from pytest import MonkeyPatch
 
 from res.enkf.export import SummaryObservationCollector
 

@@ -1,5 +1,5 @@
 import os
-from _pytest.monkeypatch import MonkeyPatch
+from pytest import MonkeyPatch
 
 from tests import ResTest
 from res.test import ErtTestContext
