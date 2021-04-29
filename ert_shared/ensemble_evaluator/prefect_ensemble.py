@@ -7,6 +7,7 @@ import signal
 import threading
 import uuid
 
+import prefect
 import cloudpickle
 import prefect.utilities.logging
 from cloudevents.http import CloudEvent, to_json
@@ -164,7 +165,7 @@ class PrefectEnsemble(_Ensemble):
                 )
                 c.send(to_json(event).decode())
 
-    def get_flow(self, ee_id, real_range, url, token, cert):
+    def get_flow(self, ee_id, real_range):
         with Flow(f"Realization range {real_range}") as flow:
             transmitter_map = {}
             for iens in real_range:
@@ -178,14 +179,7 @@ class PrefectEnsemble(_Ensemble):
                         for inp in step.get_inputs()
                     }
                     outputs = self.config["outputs"][iens]
-                    step_task = step.get_task(
-                        outputs,
-                        ee_id,
-                        url,
-                        cert,
-                        token,
-                        name=str(iens),
-                    )
+                    step_task = step.get_task(outputs, ee_id, name=str(iens))
                     result = step_task(inputs=inputs)
                     self._iens_to_task[iens] = result
                     for output in step.get_outputs():
@@ -216,9 +210,10 @@ class PrefectEnsemble(_Ensemble):
                     },
                 )
                 c.send(to_json(event).decode())
-            self.run_flow(
-                ee_id, ee_config.dispatch_uri, ee_config.token, ee_config.cert
-            )
+            with prefect.context(
+                url=ee_config.dispatch_uri, token=ee_config.token, cert=ee_config.cert
+            ):
+                self.run_flow(ee_id)
 
             with Client(ee_config.dispatch_uri, ee_config.token, ee_config.cert) as c:
                 event = CloudEvent(
@@ -244,14 +239,14 @@ class PrefectEnsemble(_Ensemble):
                 )
                 c.send(to_json(event).decode())
 
-    def run_flow(self, ee_id, url, token, cert):
+    def run_flow(self, ee_id):
         real_per_batch = self.config[ids.MAX_RUNNING]
         real_range = range(self.config[ids.REALIZATIONS])
         i = 0
         state_map = {}
         while i < self.config[ids.REALIZATIONS]:
             realization_range = real_range[i : i + real_per_batch]
-            flow = self.get_flow(ee_id, realization_range, url, token, cert)
+            flow = self.get_flow(ee_id, realization_range)
             with prefect_log_level_context(level="WARNING"):
                 state = flow.run(executor=_get_executor(self.config[ids.EXECUTOR]))
             for iens in realization_range:

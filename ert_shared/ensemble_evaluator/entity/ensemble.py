@@ -378,12 +378,8 @@ class _UnixStep(_Step):
     ):
         super().__init__(id_, inputs, outputs, jobs, name, source)
 
-    def get_task(
-        self, output_transmitters, ee_id, ee_url, cert, token, *args, **kwargs
-    ):
-        return UnixTask(
-            self, output_transmitters, ee_id, ee_url, cert, token, *args, **kwargs
-        )
+    def get_task(self, output_transmitters, ee_id, *args, **kwargs):
+        return UnixTask(self, output_transmitters, ee_id, *args, **kwargs)
 
 
 class _FunctionStep(_Step):
@@ -398,12 +394,8 @@ class _FunctionStep(_Step):
     ):
         super().__init__(id_, inputs, outputs, jobs, name, source)
 
-    def get_task(
-        self, output_transmitters, ee_id, ee_url, cert, token, *args, **kwargs
-    ):
-        return FunctionTask(
-            self, output_transmitters, ee_id, ee_url, cert, token, *args, **kwargs
-        )
+    def get_task(self, output_transmitters, ee_id, *args, **kwargs):
+        return FunctionTask(self, output_transmitters, ee_id, *args, **kwargs)
 
 
 class _LegacyStep(_Step):

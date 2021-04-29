@@ -10,16 +10,11 @@ if TYPE_CHECKING:
 
 
 class FunctionTask(prefect.Task):
-    def __init__(
-        self, step, output_transmitters, ee_id, ee_url, cert, token, *args, **kwargs
-    ) -> None:
+    def __init__(self, step, output_transmitters, ee_id, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._step = step
         self._output_transmitters = output_transmitters
         self._ee_id = ee_id
-        self._ee_url = ee_url
-        self._cert = cert
-        self._token = token
 
     def _attempt_execute(self, *, func, transmitters):
         async def _load(io_, transmitter):
@@ -70,7 +65,9 @@ class FunctionTask(prefect.Task):
         return output
 
     def run(self, inputs: Dict[str, "RecordTransmitter"]):  # type: ignore
-        with Client(self._ee_url, self._token, self._cert) as ee_client:
+        with Client(
+            prefect.context.url, prefect.context.token, prefect.context.cert
+        ) as ee_client:
             ee_client.send_event(
                 ev_type=ids.EVTYPE_FM_STEP_RUNNING,
                 ev_source=self._step.get_source(self._ee_id),
