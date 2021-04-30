@@ -126,13 +126,9 @@ def _build_ee_config(
     jobs = []
 
     def command_location(name: str) -> FilePath:
-        assert stage is not None and stage.transportable_commands is not None
-        try:
-            return next(
-                cmd.location for cmd in stage.transportable_commands if cmd.name == name
-            )
-        except StopIteration:
-            return pathlib.Path(name)
+        return next(
+            (cmd.location for cmd in commands if cmd.name == name), pathlib.Path(name)
+        )
 
     if isinstance(stage, ert3.config.Function):
         jobs.append(

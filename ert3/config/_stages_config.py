@@ -74,10 +74,10 @@ class _Step(_StagesConfig):
 
 
 class Function(_Step):
-    function: Callable
+    function: Callable  # type: ignore
 
     @validator("function", pre=True)
-    def function_is_callable(cls, value) -> Callable:
+    def function_is_callable(cls, value) -> Callable:  # type: ignore
         return _import_from(value)
 
 
