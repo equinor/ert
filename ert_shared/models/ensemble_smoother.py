@@ -39,7 +39,7 @@ class EnsembleSmoother(BaseRunModel):
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
 
         # Push ensemble, parameters, observations to new storage
-        ensemble_id = post_ensemble_data()
+        ensemble_id = post_ensemble_data(ensemble_size=self._ensemble_size)
 
         self.setPhaseName("Running forecast...", indeterminate=False)
 
@@ -88,7 +88,9 @@ class EnsembleSmoother(BaseRunModel):
 
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
         # Push ensemble, parameters, observations to new storage
-        ensemble_id = post_ensemble_data(update_id)
+        ensemble_id = post_ensemble_data(
+            ensemble_size=self._ensemble_size, update_id=update_id
+        )
 
         self.setPhaseName("Running forecast...", indeterminate=False)
 

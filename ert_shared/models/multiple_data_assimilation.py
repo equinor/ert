@@ -150,7 +150,9 @@ class MultipleDataAssimilation(BaseRunModel):
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
 
         # Push ensemble, parameters, observations to new storage
-        new_ensemble_id = post_ensemble_data(update_id)
+        new_ensemble_id = post_ensemble_data(
+            update_id=update_id, ensemble_size=self._ensemble_size
+        )
 
         phase_string = "Running forecast for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=False)

@@ -18,8 +18,11 @@ def create_experiment(ert) -> dict:
     return dict(name=str(datetime.datetime.now()), priors=_create_priors(ert))
 
 
-def create_ensemble(ert, parameter_names: List[str], update_id: str = None) -> dict:
+def create_ensemble(
+    ert, size: int, parameter_names: List[str], update_id: str = None
+) -> dict:
     return dict(
+        size=size,
         parameters=parameter_names,
         update_id=update_id,
         metadata={"name": ert.get_current_case_name()},
@@ -340,7 +343,7 @@ def post_ensemble_results(ensemble_id: str) -> None:
 
 
 @feature_enabled("new-storage")
-def post_ensemble_data(update_id: str = None) -> str:
+def post_ensemble_data(ensemble_size: int, update_id: str = None) -> str:
     server = ServerMonitor.get_instance()
     ert = ERT.enkf_facade
     if update_id is None:
@@ -364,6 +367,7 @@ def post_ensemble_data(update_id: str = None) -> str:
         f"{server.fetch_url()}/experiments/{experiment_id}/ensembles",
         json=create_ensemble(
             ert,
+            size=ensemble_size,
             parameter_names=[param["name"] for param in parameters],
             update_id=update_id,
         ),

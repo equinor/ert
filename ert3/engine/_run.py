@@ -9,6 +9,7 @@ def _prepare_experiment(
     workspace_root: pathlib.Path,
     experiment_name: str,
     ensemble: ert3.config.EnsembleConfig,
+    ensemble_size: int,
 ) -> None:
     if ert3.workspace.experiment_has_run(workspace_root, experiment_name):
         raise ValueError(f"Experiment {experiment_name} have been carried out.")
@@ -18,6 +19,7 @@ def _prepare_experiment(
         workspace=workspace_root,
         experiment_name=experiment_name,
         parameters=parameter_names,
+        ensemble_size=ensemble_size,
     )
 
 
@@ -59,6 +61,8 @@ def _prepare_evaluation(
     # This reassures mypy that the ensemble size is defined
     assert ensemble.size is not None
 
+    _prepare_experiment(workspace_root, experiment_name, ensemble, ensemble.size)
+
     for input_record in ensemble.input:
         record_name = input_record.record
         record_source = input_record.source.split(".")
@@ -92,6 +96,8 @@ def _prepare_sensitivity(
 ) -> None:
     parameter_distributions = _load_ensemble_parameters(ensemble, workspace_root)
     input_records = ert3.algorithms.one_at_the_time(parameter_distributions)
+
+    _prepare_experiment(workspace_root, experiment_name, ensemble, len(input_records))
 
     parameters: Dict[str, List[ert3.data.Record]] = {
         param.record: [] for param in ensemble.input
@@ -165,7 +171,6 @@ def run(
     workspace_root: pathlib.Path,
     experiment_name: str,
 ) -> None:
-    _prepare_experiment(workspace_root, experiment_name, ensemble)
 
     if experiment_config.type == "evaluation":
         _prepare_evaluation(ensemble, workspace_root, experiment_name)

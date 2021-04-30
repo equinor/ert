@@ -37,7 +37,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.ert().getEnkfSimulationRunner().createRunPath(run_context)
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
         # create ensemble
-        ensemble_id = post_ensemble_data(update_id=update_id)
+        ensemble_id = post_ensemble_data(
+            ensemble_size=self._ensemble_size, update_id=update_id
+        )
         self.setPhaseName("Running forecast...", indeterminate=False)
         if FeatureToggling.is_enabled("ensemble-evaluator"):
             ee_config = arguments["ee_config"]
