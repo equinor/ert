@@ -19,14 +19,32 @@ def test_double_init(tmpdir, ert_storage):
 
 
 @pytest.mark.requires_ert_storage
+def test_ensemble_size_zero(tmpdir, ert_storage):
+    ert3.storage.init(workspace=tmpdir)
+    with pytest.raises(ValueError, match="Ensemble cannot have a size <= 0"):
+        ert3.storage.init_experiment(
+            workspace=tmpdir,
+            experiment_name="my_experiment",
+            parameters=[],
+            ensemble_size=0,
+        )
+
+
+@pytest.mark.requires_ert_storage
 def test_double_add_experiment(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
     ert3.storage.init_experiment(
-        workspace=tmpdir, experiment_name="my_experiment", parameters=[]
+        workspace=tmpdir,
+        experiment_name="my_experiment",
+        parameters=[],
+        ensemble_size=42,
     )
     with pytest.raises(KeyError, match="Cannot initialize existing experiment"):
         ert3.storage.init_experiment(
-            workspace=tmpdir, experiment_name="my_experiment", parameters=[]
+            workspace=tmpdir,
+            experiment_name="my_experiment",
+            parameters=[],
+            ensemble_size=42,
         )
 
 
@@ -47,6 +65,7 @@ def test_add_experiments(tmpdir, ert_storage):
             workspace=tmpdir,
             experiment_name=experiment_name,
             parameters=experiment_parameters,
+            ensemble_size=42,
         )
         expected_names = sorted(experiment_names[: idx + 1])
         retrieved_names = sorted(ert3.storage.get_experiment_names(workspace=tmpdir))
@@ -100,16 +119,21 @@ def test_add_and_get_ensemble_record(tmpdir, raw_ensrec, ert_storage):
 def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
 
+    ensemble_size = 5
     for eid in range(1, 2):
         experiment = eid * "e"
         ert3.storage.init_experiment(
-            workspace=tmpdir, experiment_name=experiment, parameters=[]
+            workspace=tmpdir,
+            experiment_name=experiment,
+            parameters=[],
+            ensemble_size=ensemble_size,
         )
         for nid in range(1, 3):
             name = nid * "n"
             ensemble_record = ert3.data.EnsembleRecord(
                 records=[
-                    ert3.data.Record(data=[nid * eid * rid]) for rid in range(0, 5)
+                    ert3.data.Record(data=[nid * eid * rid])
+                    for rid in range(ensemble_size)
                 ]
             )
             ert3.storage.add_ensemble_record(
@@ -125,7 +149,8 @@ def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
             name = nid * "n"
             ensemble_record = ert3.data.EnsembleRecord(
                 records=[
-                    ert3.data.Record(data=[nid * eid * rid]) for rid in range(0, 5)
+                    ert3.data.Record(data=[nid * eid * rid])
+                    for rid in range(ensemble_size)
                 ]
             )
             fetched_ensemble_record = ert3.storage.get_ensemble_record(
@@ -137,17 +162,20 @@ def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
 @pytest.mark.requires_ert_storage
 def test_get_record_names(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
-
+    ensemble_size = 5
     experiment_records = collections.defaultdict(list)
     for eid in [1, 2, 3]:
         experiment = "e" + str(eid)
         ert3.storage.init_experiment(
-            workspace=tmpdir, experiment_name=experiment, parameters=[]
+            workspace=tmpdir,
+            experiment_name=experiment,
+            parameters=[],
+            ensemble_size=ensemble_size,
         )
         for nid in range(1, 3):
             name = nid * "n"
             ensemble_record = ert3.data.EnsembleRecord(
-                records=[ert3.data.Record(data=[0]) for rid in range(0, 5)]
+                records=[ert3.data.Record(data=[0]) for rid in range(ensemble_size)]
             )
             ert3.storage.add_ensemble_record(
                 workspace=tmpdir,
@@ -167,7 +195,10 @@ def test_get_record_names(tmpdir, ert_storage):
 def test_delete_experiment(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
     ert3.storage.init_experiment(
-        workspace=tmpdir, experiment_name="test", parameters=[]
+        workspace=tmpdir,
+        experiment_name="test",
+        parameters=[],
+        ensemble_size=42,
     )
 
     assert "test" in ert3.storage.get_experiment_names(workspace=tmpdir)

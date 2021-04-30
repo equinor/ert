@@ -78,7 +78,10 @@ def test_workspace_experiment_has_run(tmpdir, ert_storage):
     Path(experiments_dir / "test2").mkdir(parents=True)
 
     ert3.storage.init_experiment(
-        workspace=tmpdir, experiment_name="test1", parameters=[]
+        workspace=tmpdir,
+        experiment_name="test1",
+        parameters=[],
+        ensemble_size=42,
     )
 
     assert ert3.workspace.experiment_has_run(tmpdir, "test1")

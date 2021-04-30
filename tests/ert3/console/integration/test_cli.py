@@ -6,8 +6,6 @@ import sys
 import copy
 from unittest.mock import patch
 
-from pydantic import ValidationError
-
 import yaml
 
 
@@ -217,7 +215,10 @@ def test_cli_status_some_runs(workspace, capsys):
     done_indices = [1, 3]
     for idx in done_indices:
         ert3.storage.init_experiment(
-            workspace=workspace, experiment_name=experiments[idx], parameters=[]
+            workspace=workspace,
+            experiment_name=experiments[idx],
+            parameters=[],
+            ensemble_size=42,
         )
 
     args = ["ert3", "status"]
@@ -236,7 +237,10 @@ def test_cli_status_all_run(workspace, capsys):
 
     for experiment in experiments:
         ert3.storage.init_experiment(
-            workspace=workspace, experiment_name=experiment, parameters=[]
+            workspace=workspace,
+            experiment_name=experiment,
+            parameters=[],
+            ensemble_size=42,
         )
 
     args = ["ert3", "status"]
@@ -294,7 +298,10 @@ def test_cli_clean_all(workspace):
 
     for experiment in experiments:
         ert3.storage.init_experiment(
-            workspace=workspace, experiment_name=experiment, parameters=[]
+            workspace=workspace,
+            experiment_name=experiment,
+            parameters=[],
+            ensemble_size=42,
         )
         ert3.evaluator._evaluator._create_evaluator_tmp_dir(
             workspace, experiment
@@ -323,7 +330,10 @@ def test_cli_clean_one(workspace):
     for experiment in experiments:
         experiments_folder.mkdir(experiment)
         ert3.storage.init_experiment(
-            workspace=workspace, experiment_name=experiment, parameters=[]
+            workspace=workspace,
+            experiment_name=experiment,
+            parameters=[],
+            ensemble_size=42,
         )
         ert3.evaluator._evaluator._create_evaluator_tmp_dir(
             workspace, experiment
@@ -359,7 +369,10 @@ def test_cli_clean_non_existant_experiment(workspace, capsys):
 
     for experiment in experiments:
         ert3.storage.init_experiment(
-            workspace=workspace, experiment_name=experiment, parameters=[]
+            workspace=workspace,
+            experiment_name=experiment,
+            parameters=[],
+            ensemble_size=42,
         )
         ert3.evaluator._evaluator._create_evaluator_tmp_dir(
             workspace, experiment

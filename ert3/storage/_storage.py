@@ -31,15 +31,38 @@ def init(*, workspace: Path) -> None:
     for special_key in _SPECIAL_KEYS:
         if f"{workspace}.{special_key}" in experiment_names:
             raise ValueError("Storage already initialized")
-        init_experiment(
+        _init_experiment(
             workspace=workspace,
             experiment_name=f"{workspace}.{special_key}",
             parameters=[],
+            ensemble_size=-1,
         )
 
 
 def init_experiment(
-    *, workspace: Path, experiment_name: str, parameters: Iterable[str]
+    *,
+    workspace: Path,
+    experiment_name: str,
+    parameters: Iterable[str],
+    ensemble_size: int,
+) -> None:
+    if ensemble_size <= 0:
+        raise ValueError("Ensemble cannot have a size <= 0")
+
+    _init_experiment(
+        workspace=workspace,
+        experiment_name=experiment_name,
+        parameters=parameters,
+        ensemble_size=ensemble_size,
+    )
+
+
+def _init_experiment(
+    *,
+    workspace: Path,
+    experiment_name: str,
+    parameters: Iterable[str],
+    ensemble_size: int,
 ) -> None:
     if not experiment_name:
         raise ValueError("Cannot initialize experiment without a name")
@@ -53,7 +76,10 @@ def init_experiment(
     exp_id = exp_response.json()["id"]
     response = requests.post(
         url=f"{_STORAGE_URL}/experiments/{exp_id}/ensembles",
-        json={"parameters": list(parameters)},
+        json={
+            "parameters": list(parameters),
+            "size": ensemble_size,
+        },
     )
     if response.status_code != 200:
         raise ert3.exceptions.StorageError(response.text)

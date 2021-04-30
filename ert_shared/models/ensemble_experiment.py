@@ -21,7 +21,7 @@ class EnsembleExperiment(BaseRunModel):
         self.ert().getEnkfSimulationRunner().createRunPath(run_context)
 
         # Push ensemble, parameters, observations to new storage
-        ensemble_id = post_ensemble_data()
+        ensemble_id = post_ensemble_data(ensemble_size=self._ensemble_size)
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ERT.ert)
 
         self.setPhaseName(run_msg, indeterminate=False)
