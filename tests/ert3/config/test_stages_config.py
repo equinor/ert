@@ -20,7 +20,6 @@ def base_unix_stage_config(tmpdir):
     config = [
         {
             "name": "unix_stage",
-            "type": "unix",
             "input": [{"record": "some_record", "location": "some_location"}],
             "output": [{"record": "some_record", "location": "some_location"}],
             "transportable_commands": [{"name": "poly", "location": "poly.py"}],
@@ -36,7 +35,6 @@ def base_function_stage_config(tmpdir):
     config = [
         {
             "name": "function_stage",
-            "type": "function",
             "input": [{"record": "some_record", "location": "some_location"}],
             "output": [{"record": "some_record", "location": "some_location"}],
             "function": "builtins:sum",
@@ -56,7 +54,7 @@ def test_entry_point(base_unix_stage_config):
     "config, expected_error",
     (
         [{"not_a_key": "value"}, "1 validation error"],
-        [[{"not_a_key": "value"}], "5 validation errors"],
+        [[{"not_a_key": "value"}], "11 validation errors"],
     ),
 )
 def test_entry_point_not_valid(config, expected_error):
@@ -126,7 +124,7 @@ def test_step_unix_and_function(base_unix_stage_config):
     config = base_unix_stage_config
     config[0].update({"function": "builtins:sum"})
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError, match=r"Function defined for unix step"
+        ert3.exceptions.ConfigValidationError, match=r"extra fields not permitted"
     ):
         ert3.config.load_stages_config(config)
 
@@ -146,7 +144,7 @@ def test_step_function_and_script_error(base_function_stage_config):
     config[0].update({"script": ["poly --help"]})
     with pytest.raises(
         ert3.exceptions.ConfigValidationError,
-        match=r"Scripts defined for a function stage",
+        match=r"extra fields not permitted",
     ):
         ert3.config.load_stages_config(config)
 
@@ -158,7 +156,7 @@ def test_step_function_and_command_error(base_function_stage_config):
     )
     with pytest.raises(
         ert3.exceptions.ConfigValidationError,
-        match=r"Commands defined for a function stage",
+        match=r"extra fields not permitted",
     ):
         ert3.config.load_stages_config(config)
 

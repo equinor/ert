@@ -1,6 +1,5 @@
 -
   name: evaluate_polynomial
-  type: unix
   input:
     -
       record: coefficients
@@ -22,7 +21,6 @@
 
 -
   name: function_polynomial
-  type: function
   input:
     -
       record: coefficients

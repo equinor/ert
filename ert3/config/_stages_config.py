@@ -1,19 +1,13 @@
 from importlib.abc import Loader
 import importlib.util
 import mimetypes
-import sys
-from typing import Callable, List, Optional, cast, Dict, Any
+from typing import Callable, List, cast, Union, Dict, Any
 
-from pydantic import BaseModel, FilePath, ValidationError, root_validator, validator
+from pydantic import BaseModel, FilePath, ValidationError, validator
 import ert3
 
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
-
-_DEFAULT_RECORD_MIME_TYPE = "application/json"
-_DEFAULT_CMD_MIME_TYPE = "application/octet-stream"
+_DEFAULT_RECORD_MIME_TYPE: str = "application/json"
+_DEFAULT_CMD_MIME_TYPE: str = "application/octet-stream"
 
 
 def _import_from(path: str) -> Callable[..., Any]:
@@ -55,9 +49,7 @@ def _ensure_mime(cls: _StagesConfig, field: str, values: Dict[str, Any]) -> str:
     )
 
 
-class InputRecord(_StagesConfig):
-    record: str
-    location: str
+class _MimeBase(_StagesConfig):
     mime: str = ""
 
     @validator("mime")
@@ -65,66 +57,39 @@ class InputRecord(_StagesConfig):
         return _ensure_mime(cls, field, values)
 
 
-class OutputRecord(_StagesConfig):
+class Record(_MimeBase):
     record: str
     location: str
-    mime: str = ""
-
-    @validator("mime")
-    def _ensure_output_record_mime(cls, field: str, values: Dict[str, Any]) -> str:
-        return _ensure_mime(cls, field, values)
 
 
-class TransportableCommand(_StagesConfig):
+class TransportableCommand(_MimeBase):
     name: str
     location: FilePath
-    mime: str = ""
-
-    @validator("mime")
-    def _ensure_transportable_command_mime(
-        cls, field: str, values: Dict[str, Any]
-    ) -> str:
-        return _ensure_mime(cls, field, values)
 
 
-class Step(_StagesConfig):
+class _Step(_StagesConfig):
     name: str
-    type: Literal["unix", "function"]
-    script: Optional[List[str]] = []
-    input: List[InputRecord]
-    output: List[OutputRecord]
-    transportable_commands: Optional[List[TransportableCommand]] = []
-    function: Optional[Callable[..., Any]]
+    input: List[Record]
+    output: List[Record]
 
-    @root_validator
-    def check_defined(cls, step: Dict[str, Any]) -> Dict[str, Any]:
-        cmd_names = [cmd.name for cmd in step.get("transportable_commands", [])]
-        script_lines = step.get("script", [])
-        if step.get("type") == "function":
-            if cmd_names:
-                raise ValueError("Commands defined for a function stage")
-            if script_lines:
-                raise ValueError("Scripts defined for a function stage")
-            if not step.get("function"):
-                raise ValueError("No function defined")
-        return step
+
+class Function(_Step):
+    function: Callable  # type: ignore
 
     @validator("function", pre=True)
-    def function_is_valid(
-        cls, function: str, values: Dict[str, Any]
-    ) -> Optional[Callable[..., Any]]:
-        step_type = values.get("type")
-        if step_type != "function" and function:
-            raise ValueError(f"Function defined for {step_type} step")
-        if function is None:
-            return None
-        return _import_from(function)
+    def function_is_callable(cls, value) -> Callable:  # type: ignore
+        return _import_from(value)
+
+
+class Unix(_Step):
+    script: List[str]
+    transportable_commands: List[TransportableCommand]
 
 
 class StagesConfig(BaseModel):
-    __root__: List[Step]
+    __root__: List[Union[Function, Unix]]
 
-    def step_from_key(self, key: str) -> Optional[Step]:
+    def step_from_key(self, key: str) -> Union[Function, Unix, None]:
         return next((step for step in self if step.name == key), None)
 
     def __iter__(self):  # type: ignore

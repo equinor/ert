@@ -58,7 +58,7 @@ def _prepare_input(
             futures.append(transmitter.transmit_data(record.data))
             transmitters[iens][input_.record] = transmitter
     asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
-    if step_config.transportable_commands is not None:
+    if isinstance(step_config, ert3.config.Unix):
         for command in step_config.transportable_commands:
             if storage_config.get("type") == "shared_disk":
                 transmitter = ert3.data.SharedDiskRecordTransmitter(
@@ -119,20 +119,18 @@ def _build_ee_config(
 
     stage = stages_config.step_from_key(ensemble.forward_model.stage)
     assert stage is not None
-    commands = stage.transportable_commands if stage.transportable_commands else []
+    commands = (
+        stage.transportable_commands if isinstance(stage, ert3.config.Unix) else []
+    )
     output_locations = [out.location for out in stage.output]
     jobs = []
 
     def command_location(name: str) -> FilePath:
-        assert stage is not None and stage.transportable_commands is not None
-        try:
-            return next(
-                cmd.location for cmd in stage.transportable_commands if cmd.name == name
-            )
-        except StopIteration:
-            return pathlib.Path(name)
+        return next(
+            (cmd.location for cmd in commands if cmd.name == name), pathlib.Path(name)
+        )
 
-    if stage.function:
+    if isinstance(stage, ert3.config.Function):
         jobs.append(
             {
                 "name": stage.function.__name__,
@@ -141,7 +139,7 @@ def _build_ee_config(
             }
         )
 
-    if stage.script is not None:
+    if isinstance(stage, ert3.config.Unix):
         for script in stage.script:
             name, *args = script.split()
             jobs.append(
@@ -182,7 +180,7 @@ def _build_ee_config(
                 for output in stage.output
             ],
             "jobs": jobs,
-            "type": "function" if stage.function else "unix",
+            "type": "function" if isinstance(stage, ert3.config.Function) else "unix",
         }
     ]
 
