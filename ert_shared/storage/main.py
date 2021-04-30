@@ -76,7 +76,7 @@ def write_to_pipe(connection_info: dict):
     if fd is None:
         return
     with os.fdopen(int(fd), "w") as f:
-        f.write(connection_info)
+        f.write(str(connection_info))
 
 
 def parse_args() -> argparse.Namespace:

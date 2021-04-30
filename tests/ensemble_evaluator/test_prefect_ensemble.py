@@ -16,6 +16,7 @@ from functools import partial
 from itertools import permutations
 from pathlib import Path
 
+import prefect
 import ert3
 import ert_shared.ensemble_evaluator.entity.ensemble as ee
 import pytest
@@ -225,13 +226,12 @@ def test_get_flow(coefficients, unused_tcp_port):
             ensemble = PrefectEnsemble(permuted_config)
 
             for iens in range(2):
-                flow = ensemble.get_flow(
-                    ensemble._ee_id,
-                    [iens],
+                with prefect.context(
                     url=server_config.url,
                     token=server_config.token,
                     cert=server_config.cert,
-                )
+                ):
+                    flow = ensemble.get_flow(ensemble._ee_id, [iens])
 
                 # Get the ordered tasks and retrieve their step ids.
                 flow_steps = [
@@ -278,18 +278,13 @@ def test_unix_task(unused_tcp_port, tmpdir):
         type_="unix",
     )
 
-    output_trans = step_output_transmitters(step, storage_path=tmpdir)
-    with Flow("testing") as flow:
-        task = step.get_task(
-            output_transmitters=output_trans,
-            ee_id="test_ee_id",
-            ee_url=url,
-            cert=None,
-            token=None,
-        )
-        result = task(inputs=input_)
-    with tmp():
-        flow_run = flow.run()
+    with prefect.context(url=url, token=None, cert=None):
+        output_trans = step_output_transmitters(step, storage_path=tmpdir)
+        with Flow("testing") as flow:
+            task = step.get_task(output_transmitters=output_trans, ee_id="test_ee_id")
+            result = task(inputs=input_)
+        with tmp():
+            flow_run = flow.run()
 
     # Stop the mock evaluator WS server
     with Client(url) as c:
@@ -330,18 +325,13 @@ def test_function_step(unused_tcp_port, tmpdir):
         type_="function",
     )
 
-    output_trans = step_output_transmitters(step, storage_path=tmpdir)
-    with Flow("testing") as flow:
-        task = step.get_task(
-            output_transmitters=output_trans,
-            ee_id="test_ee_id",
-            ee_url=url,
-            cert=None,
-            token=None,
-        )
-        result = task(inputs=inputs)
-    with tmp():
-        flow_run = flow.run()
+    with prefect.context(url=url, token=None, cert=None):
+        output_trans = step_output_transmitters(step, storage_path=tmpdir)
+        with Flow("testing") as flow:
+            task = step.get_task(output_transmitters=output_trans, ee_id="test_ee_id")
+            result = task(inputs=inputs)
+        with tmp():
+            flow_run = flow.run()
 
     # Stop the mock evaluator WS server
     with Client(url) as c:
@@ -411,18 +401,13 @@ def test_function_step_for_function_defined_outside_py_environment(
     # Make sure the function is no longer available before we start creating the flow and task
     del func
 
-    output_trans = step_output_transmitters(step, storage_path=tmpdir)
-    with Flow("testing") as flow:
-        task = step.get_task(
-            output_transmitters=output_trans,
-            ee_id="test_ee_id",
-            ee_url=url,
-            cert=None,
-            token=None,
-        )
-        result = task(inputs=inputs)
-    with tmp():
-        flow_run = flow.run()
+    with prefect.context(url=url, token=None, cert=None):
+        output_trans = step_output_transmitters(step, storage_path=tmpdir)
+        with Flow("testing") as flow:
+            task = step.get_task(output_transmitters=output_trans, ee_id="test_ee_id")
+            result = task(inputs=inputs)
+        with tmp():
+            flow_run = flow.run()
 
     # Stop the mock evaluator WS server
     with Client(url) as c:
@@ -466,18 +451,13 @@ def test_unix_step_error(unused_tcp_port, tmpdir):
         type_="unix",
     )
 
-    output_trans = step_output_transmitters(step, storage_path=tmpdir)
-    with Flow("testing") as flow:
-        task = step.get_task(
-            output_transmitters=output_trans,
-            ee_id="test_ee_id",
-            ee_url=url,
-            cert=None,
-            token=None,
-        )
-        result = task(inputs=input_)
-    with tmp():
-        flow_run = flow.run()
+    with prefect.context(url=url, token=None, cert=None):
+        output_trans = step_output_transmitters(step, storage_path=tmpdir)
+        with Flow("testing") as flow:
+            task = step.get_task(output_transmitters=output_trans, ee_id="test_ee_id")
+            result = task(inputs=input_)
+        with tmp():
+            flow_run = flow.run()
 
     # Stop the mock evaluator WS server
     with Client(url) as c:
@@ -518,22 +498,20 @@ def test_on_task_failure(unused_tcp_port, tmpdir):
             type_="unix",
         )
 
-        output_trans = step_output_transmitters(step, storage_path=tmpdir)
-        with Flow("testing") as flow:
-            task = step.get_task(
-                output_transmitters=output_trans,
-                ee_id="test_ee_id",
-                max_retries=3,
-                retry_delay=timedelta(seconds=1),
-                on_failure=partial(
-                    PrefectEnsemble._on_task_failure, url=url, token=None, cert=None
-                ),
-                ee_url=url,
-                cert=None,
-                token=None,
-            )
-            result = task(inputs=input_)
-        flow_run = flow.run()
+        with prefect.context(url=url, token=None, cert=None):
+            output_trans = step_output_transmitters(step, storage_path=tmpdir)
+            with Flow("testing") as flow:
+                task = step.get_task(
+                    output_transmitters=output_trans,
+                    ee_id="test_ee_id",
+                    max_retries=3,
+                    retry_delay=timedelta(seconds=1),
+                    on_failure=partial(
+                        PrefectEnsemble._on_task_failure, url=url, token=None, cert=None
+                    ),
+                )
+                result = task(inputs=input_)
+            flow_run = flow.run()
 
     # Stop the mock evaluator WS server
     with Client(url) as c:

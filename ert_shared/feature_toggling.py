@@ -16,7 +16,7 @@ class FeatureToggling:
             msg="The new storage solution is experimental! Thank you for testing our new features.",
         ),
         "ensemble-evaluator": _Feature(
-            default_enabled=False,
+            default_enabled=True,
             msg="The new ensemble evaluator is experimental! "
             "The new evaluator will offer the user an expressive, "
             "high-level configuration system in YAML, as "

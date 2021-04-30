@@ -2,7 +2,7 @@ import os
 import json
 import requests
 import getpass
-from typing import Dict, Union
+from typing import Dict, Union, Any, Optional
 from pathlib import Path
 
 
@@ -24,7 +24,7 @@ def _json_path(project_path: Union[str, Path] = None) -> Path:
     return project_path / "storage_server.json"
 
 
-def get_info(project_path: Union[str, Path] = None) -> Dict[str, str]:
+def get_info(project_path: Union[str, Path] = None) -> Dict[str, Any]:
     """Return a dictionary containing `auth`, a tuple of (username, password) and
     `baseurl`, the URL that the server responds to. If `project_path` is None,
     look for any storage_server running on the machine.
@@ -73,15 +73,16 @@ def get_project_id() -> Path:
     raise RuntimeError("No ert storage server found!")
 
 
-def autostart(project_path: str = None) -> str:
+def autostart(project_path: Optional[str] = None) -> str:
     from .server_monitor import ServerMonitor
 
     # Try to use project specified in args (Defaults to cwd)
-    try:
-        get_info(project_path)
-        return os.path.realpath(project_path)
-    except RuntimeError:
-        pass
+    if project_path is not None:
+        try:
+            get_info(project_path)
+            return os.path.realpath(project_path)
+        except RuntimeError:
+            pass
 
     # Try to use globally registered ERT Storage
     try:

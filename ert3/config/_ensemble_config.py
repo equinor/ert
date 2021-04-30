@@ -1,5 +1,5 @@
 import sys
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, ValidationError
 
 import ert3
@@ -35,7 +35,7 @@ class EnsembleConfig(_EnsembleConfig):
     size: Optional[int] = None
 
 
-def load_ensemble_config(config_dict):
+def load_ensemble_config(config_dict: Dict[str, Any]) -> EnsembleConfig:
     try:
         return EnsembleConfig(**config_dict)
     except ValidationError as err:

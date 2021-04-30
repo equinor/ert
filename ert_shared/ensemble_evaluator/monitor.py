@@ -12,6 +12,11 @@ from ert_shared.ensemble_evaluator.entity import serialization
 import uuid
 import pickle
 import ssl
+from typing import Dict, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ert3.data import RecordTransmitter
+
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +60,7 @@ class _Monitor:
     def get_base_uri(self):
         return self._base_uri
 
-    def get_result(self):
+    def get_result(self) -> Dict[int, Dict[str, "RecordTransmitter"]]:
         async def _send():
             async with websockets.connect(
                 self._result_uri,

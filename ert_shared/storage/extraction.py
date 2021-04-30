@@ -14,13 +14,11 @@ import logging
 logger = logging.getLogger()
 
 
-def create_experiment(ert) -> Mapping[str, Any]:
-    return dict(name=str(datetime.datetime.now()))
+def create_experiment(ert) -> dict:
+    return dict(name=str(datetime.datetime.now()), priors=_create_priors(ert))
 
 
-def create_ensemble(
-    ert, parameter_names: List[str], update_id: int = None
-) -> Mapping[str, Any]:
+def create_ensemble(ert, parameter_names: List[str], update_id: str = None) -> dict:
     return dict(
         parameters=parameter_names,
         update_id=update_id,
@@ -28,11 +26,10 @@ def create_ensemble(
     )
 
 
-def create_parameters(ert) -> List[Dict]:
+def create_parameters(ert) -> List[dict]:
     parameters = [
         dict(
-            group=key[: key.index(":")],
-            name=key[key.index(":") + 1 :],
+            name=key,
             values=list(parameter.values),
         )
         for key, parameter in (
@@ -69,7 +66,7 @@ def _create_response_observation_links(ert) -> Mapping[str, str]:
     return response_observation_link
 
 
-def create_response_records(ert, ensemble_name: str, observations: List[Dict]):
+def create_response_records(ert, ensemble_name: str, observations: List[dict]):
     data = {
         key.split("@")[0]: ert.gather_gen_data_data(case=ensemble_name, key=key)
         for key in ert.all_data_type_keys()
@@ -103,7 +100,7 @@ def create_response_records(ert, ensemble_name: str, observations: List[Dict]):
     return records
 
 
-def _get_obs_data(key, obs) -> Mapping[str, Any]:
+def _get_obs_data(key, obs) -> dict:
     return dict(
         name=key,
         x_axis=obs.columns.get_level_values(0).to_list(),
@@ -112,7 +109,7 @@ def _get_obs_data(key, obs) -> Mapping[str, Any]:
     )
 
 
-def create_observations(ert) -> List[Mapping[str, Any]]:
+def create_observations(ert) -> List[Mapping[str, dict]]:
     observation_vectors = ert.get_observations()
     keys = [ert.get_observation_key(i) for i, _ in enumerate(observation_vectors)]
     summary_obs_keys = observation_vectors.getTypedKeylist(
@@ -147,13 +144,14 @@ def create_observations(ert) -> List[Mapping[str, Any]]:
             list(t)
             for t in zip(*sorted(zip(obs["x_axis"], obs["values"], obs["errors"])))
         )
+        x_axis = [str(x) for x in x_axis]
         grouped_obs[key]["x_axis"] = x_axis
         grouped_obs[key]["values"] = values
         grouped_obs[key]["errors"] = error
     return [obs for obs in grouped_obs.values()]
 
 
-def _extract_active_observations(ert) -> Mapping[str, Any]:
+def _extract_active_observations(ert) -> Mapping[str, list]:
     update_step = ert.get_update_step()
     if len(update_step) == 0:
         return {}
@@ -172,7 +170,7 @@ def _extract_active_observations(ert) -> Mapping[str, Any]:
     return active_obs
 
 
-def _create_observation_transformation(ert, db_observations) -> List[Dict]:
+def _create_observation_transformation(ert, db_observations) -> List[dict]:
     observation_vectors = ert.get_observations()
     summary_obs_keys = observation_vectors.getTypedKeylist(
         EnkfObservationImplementationType.SUMMARY_OBS
@@ -214,6 +212,7 @@ def _create_observation_transformation(ert, db_observations) -> List[Dict]:
             list(t)
             for t in zip(*sorted(zip(obs["x_axis"], obs["active"], obs["scale"])))
         )
+        x_axis = [str(x) for x in x_axis]
         transformations[key]["x_axis"] = x_axis
         transformations[key]["active"] = active
         transformations[key]["scale"] = scale
@@ -222,34 +221,42 @@ def _create_observation_transformation(ert, db_observations) -> List[Dict]:
     return [transformation for _, transformation in transformations.items()]
 
 
-@feature_enabled("new-storage")
-def post_update_data(parent_ensemble_id: int, algorithm: str) -> int:
-    server = ServerMonitor.get_instance()
-    ert = ERT.enkf_facade
-
-    observations = requests.get(
-        f"{server.fetch_url()}/ensembles/{parent_ensemble_id}/observations",
-    ).json()
-
-    # create update thingy
-    update_create = dict(
-        observation_transformations=_create_observation_transformation(
-            ert, observations
-        ),
-        ensemble_reference_id=parent_ensemble_id,
-        ensemble_result_id=None,
-        algorithm=algorithm,
-    )
-
-    response = requests.post(
-        f"{server.fetch_url()}/updates",
-        json=update_create,
-    )
-    update = response.json()
-    return update["id"]
+_PRIOR_NAME_MAP = {
+    "NORMAL": "normal",
+    "LOGNORMAL": "lognormal",
+    "TRIANGULAR": "trig",
+    "TRUNCATED_NORMAL": "ert_truncnormal",
+    "CONST": "const",
+    "UNIFORM": "uniform",
+    "LOGUNIF": "loguniform",
+    "DUNIF": "ert_duniform",
+    "RAW": "stdnormal",
+    "ERRF": "ert_erf",
+    "DERRF": "ert_derf",
+}
 
 
-def _get_from_server(url, headers=None, status_code=200):
+def _create_priors(ert) -> Mapping[str, dict]:
+    priors = {}
+    for group, gen_kw_priors in ert.gen_kw_priors().items():
+        for gen_kw_prior in gen_kw_priors:
+            prior = {
+                "function": _PRIOR_NAME_MAP[gen_kw_prior["function"]],
+            }
+            for arg_name, arg_value in gen_kw_prior["parameters"].items():
+                # triangular uses X<arg_name>, removing the x prefix
+                if arg_name.startswith("X"):
+                    arg_name = arg_name[1:]
+                # Libres calls it steps, but normal stats uses bins
+                if arg_name == "STEPS":
+                    arg_name = "bins"
+                prior[arg_name.lower()] = arg_value
+
+            priors[f"{group}:{gen_kw_prior['key']}"] = prior
+    return priors
+
+
+def _get_from_server(url, headers=None, status_code=200) -> requests.Response:
     resp = requests.get(
         url,
         headers=headers,
@@ -262,7 +269,7 @@ def _get_from_server(url, headers=None, status_code=200):
 
 def _post_to_server(
     url, data=None, params=None, json=None, headers=None, status_code=200
-):
+) -> requests.Response:
     resp = requests.post(
         url,
         headers=headers,
@@ -277,7 +284,34 @@ def _post_to_server(
 
 
 @feature_enabled("new-storage")
-def post_ensemble_results(ensemble_id: int):
+def post_update_data(parent_ensemble_id: str, algorithm: str) -> str:
+    server = ServerMonitor.get_instance()
+    ert = ERT.enkf_facade
+
+    observations = _get_from_server(
+        f"{server.fetch_url()}/ensembles/{parent_ensemble_id}/observations",
+    ).json()
+
+    # create update thingy
+    update_create = dict(
+        observation_transformations=_create_observation_transformation(
+            ert, observations
+        ),
+        ensemble_reference_id=parent_ensemble_id,
+        ensemble_result_id=None,
+        algorithm=algorithm,
+    )
+
+    response = _post_to_server(
+        f"{server.fetch_url()}/updates",
+        json=update_create,
+    )
+    update = response.json()
+    return update["id"]
+
+
+@feature_enabled("new-storage")
+def post_ensemble_results(ensemble_id: str) -> None:
     server = ServerMonitor.get_instance()
     ert = ERT.enkf_facade
 
@@ -306,7 +340,7 @@ def post_ensemble_results(ensemble_id: int):
 
 
 @feature_enabled("new-storage")
-def post_ensemble_data(update_id: int = None) -> int:
+def post_ensemble_data(update_id: str = None) -> str:
     server = ServerMonitor.get_instance()
     ert = ERT.enkf_facade
     if update_id is None:

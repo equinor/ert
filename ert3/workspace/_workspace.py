@@ -1,10 +1,11 @@
 import os
 from pathlib import Path
+from typing import Union, Optional, Set
 
 import ert3
 
 
-def _locate_root(path):
+def _locate_root(path: Union[str, Path]) -> Optional[Path]:
     path = Path(path)
     while True:
         if (path / ert3._WORKSPACE_DATA_ROOT).exists():
@@ -14,7 +15,9 @@ def _locate_root(path):
         path = path.parent
 
 
-def assert_experiment_exists(workspace_root, experiment_name):
+def assert_experiment_exists(
+    workspace_root: Union[str, Path], experiment_name: str
+) -> None:
     experiment_root = (
         Path(workspace_root) / ert3.workspace.EXPERIMENTS_BASE / experiment_name
     )
@@ -25,7 +28,7 @@ def assert_experiment_exists(workspace_root, experiment_name):
         )
 
 
-def get_experiment_names(workspace_root):
+def get_experiment_names(workspace_root: Union[str, Path]) -> Set[str]:
     experiment_base = Path(workspace_root) / ert3.workspace.EXPERIMENTS_BASE
     if not experiment_base.is_dir():
         raise ert3.exceptions.IllegalWorkspaceState(
@@ -38,12 +41,12 @@ def get_experiment_names(workspace_root):
     }
 
 
-def experiment_has_run(workspace_root, experiment_name):
+def experiment_has_run(workspace_root: Path, experiment_name: str) -> bool:
     experiments = ert3.storage.get_experiment_names(workspace=workspace_root)
     return experiment_name in experiments
 
 
-def initialize(path):
+def initialize(path: Union[str, Path]) -> None:
     path = Path(path)
     if load(path) is not None:
         raise ert3.exceptions.IllegalWorkspaceOperation(
@@ -54,5 +57,5 @@ def initialize(path):
     ert3.storage.init(workspace=path)
 
 
-def load(path):
+def load(path: Union[str, Path]) -> Optional[Path]:
     return _locate_root(path)

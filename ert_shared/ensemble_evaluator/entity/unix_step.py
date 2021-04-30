@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Dict
+from typing import Any, Dict, TYPE_CHECKING
 from pathlib import Path
 import stat
 import subprocess
@@ -10,21 +10,18 @@ import prefect
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 
+if TYPE_CHECKING:
+    from ert3.data import RecordTransmitter
 
 _BIN_FOLDER = "bin"
 
 
 class UnixTask(prefect.Task):
-    def __init__(
-        self, step, output_transmitters, ee_id, ee_url, cert, token, *args, **kwargs
-    ) -> None:
+    def __init__(self, step, output_transmitters, ee_id, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._step = step
         self._output_transmitters = output_transmitters
         self._ee_id = ee_id
-        self._ee_url = ee_url
-        self._cert = cert
-        self._token = token
 
     def get_step(self):
         return self._step
@@ -75,7 +72,7 @@ class UnixTask(prefect.Task):
 
     def _load_and_dump_input(
         self,
-        transmitters: Dict[int, Dict[str, Any]],
+        transmitters: Dict[int, "RecordTransmitter"],
         runpath: Path,
     ):
         Path(runpath / _BIN_FOLDER).mkdir(parents=True)
@@ -97,7 +94,9 @@ class UnixTask(prefect.Task):
         with tempfile.TemporaryDirectory() as run_path:
             run_path = Path(run_path)
             self._load_and_dump_input(transmitters=inputs, runpath=run_path)
-            with Client(self._ee_url, self._token, self._cert) as ee_client:
+            with Client(
+                prefect.context.url, prefect.context.token, prefect.context.cert
+            ) as ee_client:
                 ee_client.send_event(
                     ev_type=ids.EVTYPE_FM_STEP_RUNNING,
                     ev_source=self._step.get_source(self._ee_id),

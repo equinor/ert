@@ -6,9 +6,9 @@ import json
 import requests
 from asyncio import TimeoutError
 from select import select, PIPE_BUF
-from time import sleep
 from subprocess import Popen, TimeoutExpired
 from pathlib import Path
+from typing import Any, Tuple
 
 
 def empty(arr):
@@ -83,7 +83,7 @@ class ServerMonitor(threading.Thread):
         self._server_info_lock.release()
         self._proc.wait()
 
-    def fetch_auth(self) -> str:
+    def fetch_auth(self) -> Tuple[str, Any]:
         """Returns a tuple of username and password, compatible with requests' `auth`
         kwarg.
 

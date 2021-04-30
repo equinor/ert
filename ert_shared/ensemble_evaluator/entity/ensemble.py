@@ -1,7 +1,7 @@
 import copy
 import logging
 import pickle
-import typing
+from typing import Dict, List, Tuple, Optional, Iterator, Type
 from collections import defaultdict
 from graphlib import TopologicalSorter
 from pathlib import Path
@@ -10,13 +10,12 @@ from ert_shared.ensemble_evaluator.entity.ensemble_base import _Ensemble
 from ert_shared.ensemble_evaluator.entity.ensemble_legacy import _LegacyEnsemble
 from ert_shared.ensemble_evaluator.entity.function_step import FunctionTask
 from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
-from ert_shared.status.entity.state import REALIZATION_STATE_UNKNOWN
 from res.enkf import EnKFState
 
 logger = logging.getLogger(__name__)
 
 
-def _sort_steps(steps: typing.List["_Step"]) -> typing.Tuple[str, ...]:
+def _sort_steps(steps: List["_Step"]) -> Tuple[str, ...]:
     """Return a tuple comprised by step names in the order they should be
     executed."""
     graph = defaultdict(set)
@@ -53,7 +52,7 @@ class _IO:
 
 
 class _IOBuilder:
-    _concrete_cls = None
+    _concrete_cls: Optional[Type[_IO]] = None
 
     def __init__(self):
         self._name = None
@@ -103,8 +102,8 @@ class _ExecIO(_FileIO):
 class _FileIOBuilder(_IOBuilder):
     def __init__(self) -> None:
         super().__init__()
-        self._path = None
-        self._mime = None
+        self._path: Optional[Path] = None
+        self._mime: Optional[str] = None
         self._cls = _FileIO
 
     def set_path(self, path: Path) -> "_FileIOBuilder":
@@ -332,7 +331,7 @@ class _LegacyJob(_BaseJob):
 
 class _Stage:
     def __init__(
-        self, id_: str, name: str, inputs: typing.List[_IO], outputs: typing.List[_IO]
+        self, id_: str, name: str, inputs: List[_IO], outputs: List[_IO]
     ) -> None:
         self._id = id_
         self._inputs = inputs
@@ -379,12 +378,8 @@ class _UnixStep(_Step):
     ):
         super().__init__(id_, inputs, outputs, jobs, name, source)
 
-    def get_task(
-        self, output_transmitters, ee_id, ee_url, cert, token, *args, **kwargs
-    ):
-        return UnixTask(
-            self, output_transmitters, ee_id, ee_url, cert, token, *args, **kwargs
-        )
+    def get_task(self, output_transmitters, ee_id, *args, **kwargs):
+        return UnixTask(self, output_transmitters, ee_id, *args, **kwargs)
 
 
 class _FunctionStep(_Step):
@@ -399,12 +394,8 @@ class _FunctionStep(_Step):
     ):
         super().__init__(id_, inputs, outputs, jobs, name, source)
 
-    def get_task(
-        self, output_transmitters, ee_id, ee_url, cert, token, *args, **kwargs
-    ):
-        return FunctionTask(
-            self, output_transmitters, ee_id, ee_url, cert, token, *args, **kwargs
-        )
+    def get_task(self, output_transmitters, ee_id, *args, **kwargs):
+        return FunctionTask(self, output_transmitters, ee_id, *args, **kwargs)
 
 
 class _LegacyStep(_Step):
@@ -488,10 +479,10 @@ class _StageBuilder:
     def __init__(self):
         self._id: str = ""
         self._name: str = ""
-        self._inputs: typing.List[_IOBuilder] = []
-        self._outputs: typing.List[_IOBuilder] = []
-        self._stages: typing.List[_StageBuilder] = []
-        self._io_map: typing.Dict[_IOBuilder, _IOBuilder] = {}
+        self._inputs: List[_IOBuilder] = []
+        self._outputs: List[_IOBuilder] = []
+        self._stages: List[_StageBuilder] = []
+        self._io_map: Dict[_IOBuilder, _IOBuilder] = {}
 
     def set_id(self, id_: str):
         self._id = id_
@@ -634,7 +625,7 @@ def create_step_builder():
 class _RealizationBuilder:
     def __init__(self):
         self._steps = []
-        self._stages: typing.List[_Stage] = []
+        self._stages: List[_Stage] = []
         self._active = None
         self._iens = None
 
@@ -704,7 +695,7 @@ class _Realization:
     def set_active(self, active):
         self._active = active
 
-    def get_steps_sorted_topologically(self) -> typing.Iterator[_Step]:
+    def get_steps_sorted_topologically(self) -> Iterator[_Step]:
         steps = self._steps
         if not self._ts_sorted_indices:
             raise NotImplementedError("steps were not sorted")
