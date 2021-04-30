@@ -65,7 +65,7 @@ const char * job_status_get_name(job_status_type status) {
     return "JOB_QUEUE_FAILED";
     break;
   case JOB_QUEUE_DO_KILL_NODE_FAILURE:
-    return "JOB_QUEUE_DO_KILL_NODE_FAIURE";
+    return "JOB_QUEUE_DO_KILL_NODE_FAILURE";
     break;
   case JOB_QUEUE_UNKNOWN:
     return "JOB_QUEUE_UNKNOWN";
