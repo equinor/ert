@@ -62,7 +62,7 @@ setup(
         "semeio",
         "sqlalchemy",
         "typing-extensions; python_version < '3.8'",
-        "websockets",
+        "websockets < 9",
         "python-dateutil",
         "async_generator",
         "uvicorn",
