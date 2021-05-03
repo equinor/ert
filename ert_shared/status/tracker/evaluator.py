@@ -25,6 +25,8 @@ class OutOfOrderSnapshotUpdateException(ValueError):
 
 
 class EvaluatorTracker:
+    DONE = None
+
     def __init__(
         self,
         model: BaseRunModel,
@@ -85,6 +87,7 @@ class EvaluatorTracker:
                                 drainer_logger.debug(
                                     "observed evaluation cancelled event, exit drainer"
                                 )
+                                self._work_queue.put(EvaluatorTracker.DONE)
                                 return
                         elif event["type"] == ids.EVTYPE_EE_TERMINATED:
                             drainer_logger.debug("got terminator event")
@@ -107,14 +110,14 @@ class EvaluatorTracker:
             "observed that model was finished, waiting tasks completion..."
         )
         # The model has finished, we indicate this by sending a None
-        self._work_queue.put(None)
+        self._work_queue.put(EvaluatorTracker.DONE)
         self._work_queue.join()
         drainer_logger.debug("tasks complete")
 
     def track(self):
         while True:
             event = self._work_queue.get()
-            if event is None:
+            if event is EvaluatorTracker.DONE:
                 try:
                     yield EndEvent(
                         failed=self._model.hasRunFailed(),
@@ -202,7 +205,9 @@ class EvaluatorTracker:
             cert=self._cert,
             protocol=self._protocol,
         ) as monitor:
-            monitor.signal_cancel()
+            for e in monitor.track():
+                monitor.signal_cancel()
+                break
         while self._drainer_thread.is_alive():
             self._clear_work_queue()
             time.sleep(1)
