@@ -135,11 +135,12 @@ class EvaluatorServerConfig:
     ) -> None:
         self.host = _get_ip_address()
         self.port = find_open_port() if port is None else port
-        self.socket = bind_socket(self.host, self.port)
         self.protocol = "wss" if generate_cert else "ws"
         self.url = f"{self.protocol}://{self.host}:{self.port}"
         self.client_uri = f"{self.url}/client"
         self.dispatch_uri = f"{self.url}/dispatch"
+
+        self._socket = bind_socket(self.host, self.port)
 
         if generate_cert:
             cert, key, pw = _generate_certificate(ip_address=self.host)
@@ -152,11 +153,13 @@ class EvaluatorServerConfig:
         self.token = _generate_authentication() if use_token else None
 
     def get_socket(self):
-        # Undocumented method, see issue: https://github.com/equinor/ert/issues/1600
-        if self.socket._closed:
-            self.socket = bind_socket(self.host, self.port)
-            return self.socket
-        return self.socket
+        # NOTE: socket objects do not seem to provide a reliable method to check
+        # if they are not bound. There is a ._closed attribute, but that is
+        # private. Here we check if the underlying file-descriptor is valid,
+        # which should work on both Unix and Windows.
+        if self._socket.fileno() < 0:
+            self._socket = bind_socket(self.host, self.port)
+        return self._socket
 
     def get_server_ssl_context(
         self, protocol: int = ssl.PROTOCOL_TLS_SERVER
