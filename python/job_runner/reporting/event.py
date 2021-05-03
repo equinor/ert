@@ -8,6 +8,7 @@ from job_runner.reporting.message import (
 )
 import queue
 import threading
+from pathlib import Path
 from job_runner.util.client import Client
 
 _FM_JOB_START = "com.equinor.ert.forward_model_job.start"
@@ -98,8 +99,12 @@ class Event:
                     {
                         "type": _FM_JOB_START,
                         "source": job_path,
+                        "datacontenttype": "application/json",
                     },
-                    None,
+                    {
+                        "stdout": str(Path(msg.job.std_out).resolve()),
+                        "stderr": str(Path(msg.job.std_err).resolve()),
+                    },
                 )
             )
             if not msg.success():

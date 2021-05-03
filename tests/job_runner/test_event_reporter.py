@@ -32,6 +32,8 @@ def test_report_with_successful_start_message_argument(unused_tcp_port):
     event = json.loads(lines[0])
     assert event["type"] == _FM_JOB_START
     assert event["source"] == "/ert/ee/ee_id/real/0/step/0/job/0"
+    assert os.path.basename(event["data"]["stdout"]) == "stdout"
+    assert os.path.basename(event["data"]["stderr"]) == "stderr"
 
 
 def test_report_with_failed_start_message_argument(unused_tcp_port):
