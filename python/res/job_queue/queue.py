@@ -587,9 +587,10 @@ class JobQueue(BaseCClass):
         self, ee_id, dispatch_url, cert, token
     ):
         for q_index, q_node in enumerate(self.job_list):
-            cert_path = f"{q_node.run_path}/{CERT_FILE}"
-            with open(cert_path, "w") as cert_file:
-                cert_file.write(cert)
+            if cert is not None:
+                cert_path = f"{q_node.run_path}/{CERT_FILE}"
+                with open(cert_path, "w") as cert_file:
+                    cert_file.write(cert)
             with open(f"{q_node.run_path}/{JOBS_FILE}", "r+") as jobs_file:
                 data = json.load(jobs_file)
 
@@ -598,7 +599,7 @@ class JobQueue(BaseCClass):
                 data["step_id"] = 0
                 data["dispatch_url"] = dispatch_url
                 data["ee_token"] = token
-                data["ee_cert_path"] = cert_path
+                data["ee_cert_path"] = cert_path if cert is not None else None
 
                 jobs_file.seek(0)
                 jobs_file.truncate()

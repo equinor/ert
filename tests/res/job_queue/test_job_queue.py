@@ -2,7 +2,7 @@ from res.job_queue import JobStatusType, Driver, QueueDriverEnum, JobQueue, JobQ
 from tests import ResTest
 from tests.utils import wait_until
 from ecl.util.test import TestAreaContext
-import os, stat, time
+import os, stat, time, pathlib, json
 from threading import BoundedSemaphore
 
 
@@ -179,3 +179,70 @@ class JobQueueTest(ResTest):
 
             for job in job_queue.job_list:
                 job.wait_for()
+
+    def test_add_ensemble_evaluator_info(self):
+        with TestAreaContext("job_queue_add_ensemble_evaluator_info") as work_area:
+            job_queue = create_queue(simple_script)
+            ee_id = "some_id"
+            dispatch_url = "wss://some_url.com"
+            cert = "My very nice cert"
+            token = "my_super_secret_token"
+            cert_file = ".ee.pem"
+            runpaths = [
+                pathlib.Path(dummy_config["run_path"].format(i)) for i in range(10)
+            ]
+            for runpath in runpaths:
+                with open(runpath / "jobs.json", "w") as f:
+                    json.dump({}, f)
+            job_queue.add_ensemble_evaluator_information_to_jobs_file(
+                ee_id=ee_id,
+                dispatch_url=dispatch_url,
+                cert=cert,
+                token=token,
+            )
+
+            for runpath in runpaths:
+                job_file_path = runpath / "jobs.json"
+                with open(job_file_path) as f:
+                    content = json.load(f)
+                assert content["step_id"] == 0
+                assert content["dispatch_url"] == dispatch_url
+                assert content["ee_token"] == token
+
+                assert content["ee_cert_path"] == str(runpath / cert_file)
+                with open(runpath / cert_file) as f:
+                    assert f.read() == cert
+
+    def test_add_ensemble_evaluator_info_cert_none(self):
+        with TestAreaContext(
+            "job_queue_add_ensemble_evaluator_info_cert_none"
+        ) as work_area:
+            job_queue = create_queue(simple_script)
+            ee_id = "some_id"
+            dispatch_url = "wss://some_url.com"
+            cert = None
+            token = None
+            cert_file = ".ee.pem"
+            runpaths = [
+                pathlib.Path(dummy_config["run_path"].format(i)) for i in range(10)
+            ]
+            for runpath in runpaths:
+                with open(runpath / "jobs.json", "w") as f:
+                    json.dump({}, f)
+            job_queue.add_ensemble_evaluator_information_to_jobs_file(
+                ee_id=ee_id,
+                dispatch_url=dispatch_url,
+                cert=cert,
+                token=token,
+            )
+
+            for runpath in runpaths:
+                job_file_path = runpath / "jobs.json"
+                with open(job_file_path) as f:
+                    content = json.load(f)
+                assert content["step_id"] == 0
+                assert content["dispatch_url"] == dispatch_url
+                assert content["ee_token"] == token
+
+                assert content["ee_cert_path"] == None
+                assert not (runpath / cert_file).exists()
