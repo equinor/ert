@@ -138,18 +138,6 @@ class PartialSnapshot:
                     end_time=end_time,
                 ),
             )
-            if e_type == ids.EVTYPE_FM_STEP_RUNNING and event.data:
-                for job_id, job in event.data.get(ids.JOBS, {}).items():
-                    self.update_job(
-                        get_real_id(e_source),
-                        get_step_id(e_source),
-                        job_id,
-                        # XXX: can we remove this?
-                        job=Job(
-                            stdout=job[ids.STDOUT],
-                            stderr=job[ids.STDERR],
-                        ),
-                    )
 
         elif e_type in ids.EVGROUP_FM_JOB:
             start_time = None
@@ -168,6 +156,12 @@ class PartialSnapshot:
                     start_time=start_time,
                     end_time=end_time,
                     data=event.data if e_type == ids.EVTYPE_FM_JOB_RUNNING else None,
+                    stdout=event.data.get(ids.STDOUT)
+                    if e_type == ids.EVTYPE_FM_JOB_START
+                    else None,
+                    stderr=event.data.get(ids.STDERR)
+                    if e_type == ids.EVTYPE_FM_JOB_START
+                    else None,
                     error=event.data.get(ids.ERROR_MSG)
                     if e_type == ids.EVTYPE_FM_JOB_FAILURE
                     else None,
