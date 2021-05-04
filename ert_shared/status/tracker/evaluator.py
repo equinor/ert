@@ -1,9 +1,13 @@
+from cloudevents.http.event import CloudEvent
+from datetime import datetime
+from typing import List, Optional, Union
 from ert_shared.status.utils import tracker_progress
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_STOPPED,
     ENSEMBLE_STATE_FAILED,
 )
+import itertools
 import logging
 import queue
 import threading
@@ -36,6 +40,7 @@ class EvaluatorTracker:
         detailed_interval,
         token=None,
         cert=None,
+        next_ensemble_evaluator_wait_time=5,
     ):
         self._model = model
 
@@ -45,15 +50,18 @@ class EvaluatorTracker:
         self._cert = cert
         self._protocol = "ws" if cert is None else "wss"
         self._monitor_url = f"{self._protocol}://{host}:{port}"
+        self._next_ensemble_evaluator_wait_time = next_ensemble_evaluator_wait_time
 
         self._work_queue = queue.Queue()
 
         self._drainer_thread = threading.Thread(
-            target=self._drain_monitor, name="DrainerThread"
+            target=self._drain_monitor,
+            name="DrainerThread",
         )
         self._drainer_thread.start()
 
         self._iter_snapshot = {}
+        self._general_interval = general_interval
 
     def _drain_monitor(self):
         drainer_logger = logging.getLogger("ert_shared.ensemble_evaluator.drainer")
@@ -87,6 +95,7 @@ class EvaluatorTracker:
                                 drainer_logger.debug(
                                     "observed evaluation cancelled event, exit drainer"
                                 )
+                                # Allow track() to emit an EndEvent.
                                 self._work_queue.put(EvaluatorTracker.DONE)
                                 return
                         elif event["type"] == ids.EVTYPE_EE_TERMINATED:
@@ -94,14 +103,14 @@ class EvaluatorTracker:
 
                 # This sleep needs to be there. Refer to issue #1250: `Authority
                 # on information about evaluations/experiments`
-                time.sleep(5)
+                time.sleep(self._next_ensemble_evaluator_wait_time)
 
             except ConnectionRefusedError as e:
                 if not self._model.isFinished():
                     drainer_logger.debug(f"connection refused: {e}")
                     failures += 1
                     if failures == 10:
-                        drainer_logger.debug(f"giving up.")
+                        drainer_logger.debug("giving up.")
                         raise e
             else:
                 failures = 0
@@ -115,20 +124,66 @@ class EvaluatorTracker:
         drainer_logger.debug("tasks complete")
 
     def track(self):
-        while True:
-            event = self._work_queue.get()
-            if event is EvaluatorTracker.DONE:
+        done: bool = False
+        while not done:
+            events: List[CloudEvent] = []
+
+            while True:
                 try:
-                    yield EndEvent(
-                        failed=self._model.hasRunFailed(),
-                        failed_msg=self._model.getFailMessage(),
-                    )
-                except GeneratorExit:
-                    # consumers may exit at this point, make sure the last
-                    # task is marked as done
-                    self._work_queue.task_done()
-                break
-            elif event["type"] == ids.EVTYPE_EE_SNAPSHOT:
+                    event: CloudEvent = self._work_queue.get_nowait()
+                    if event is EvaluatorTracker.DONE:
+                        done = True
+                        break
+                    events.append(event)
+                except queue.Empty:
+                    break
+
+            if events:
+                yield from self._batch(events)
+            time.sleep(self._general_interval)
+
+        try:
+            yield EndEvent(
+                failed=self._model.hasRunFailed(),
+                failed_msg=self._model.getFailMessage(),
+            )
+        except GeneratorExit:
+            # consumers may exit at this point, make sure the last
+            # task is marked as done
+            pass
+        self._work_queue.task_done()
+
+    def _flush(self, batch: List[CloudEvent]) -> SnapshotUpdateEvent:
+        iter_: int = batch[0].data["iter"]
+        partial: PartialSnapshot = PartialSnapshot(self._iter_snapshot[iter_])
+        for event in batch:
+            partial.from_cloudevent(event)
+        self._iter_snapshot[iter_].merge_event(partial)
+        update_event = SnapshotUpdateEvent(
+            phase_name=self._model.getPhaseName(),
+            current_phase=self._model.currentPhase(),
+            total_phases=self._model.phaseCount(),
+            indeterminate=self._model.isIndeterminate(),
+            progress=self._progress(),
+            iteration=iter_,
+            partial_snapshot=partial,
+        )
+        for _ in range(len(batch)):
+            self._work_queue.task_done()
+        return update_event
+
+    def _batch(self, events):
+        batch: List[CloudEvent] = []
+
+        for event in events:
+            if event["type"] == ids.EVTYPE_EE_SNAPSHOT:
+
+                # A new iteration, so ensure any updates for the previous one,
+                # is emitted.
+                if batch:
+                    yield self._flush(batch)
+                batch = []
+
                 iter_ = event.data["iter"]
                 snapshot = Snapshot(event.data)
                 self._iter_snapshot[iter_] = snapshot
@@ -141,27 +196,18 @@ class EvaluatorTracker:
                     iteration=iter_,
                     snapshot=snapshot,
                 )
+                self._work_queue.task_done()
             elif event["type"] == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
                 iter_ = event.data["iter"]
                 if iter_ not in self._iter_snapshot:
                     raise OutOfOrderSnapshotUpdateException(
                         f"got {ids.EVTYPE_EE_SNAPSHOT_UPDATE} without having stored snapshot for iter {iter_}"
                     )
-                partial = PartialSnapshot(self._iter_snapshot[iter_]).from_cloudevent(
-                    event
-                )
-                self._iter_snapshot[iter_].merge_event(partial)
-                yield SnapshotUpdateEvent(
-                    phase_name=self._model.getPhaseName(),
-                    current_phase=self._model.currentPhase(),
-                    total_phases=self._model.phaseCount(),
-                    indeterminate=self._model.isIndeterminate(),
-                    progress=self._progress(),
-                    iteration=iter_,
-                    partial_snapshot=partial,
-                )
-
-            self._work_queue.task_done()
+                batch.append(event)
+            else:
+                raise ValueError("got unexpected event type", event["type"])
+        if batch:
+            yield self._flush(batch)
 
     def is_finished(self):
         return not self._drainer_thread.is_alive()
