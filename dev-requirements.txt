@@ -9,4 +9,5 @@ sphinx_rtd_theme
 pytest-asyncio
 requests
 pytest-timeout
+jsonpath_ng
 sphinxcontrib.datatemplates

@@ -47,7 +47,7 @@ setup(
         "decorator",
         "deprecation",
         "dnspython >= 2",
-        "equinor-libres == 11.0.0b0",
+        "equinor-libres >= 11.0.0b1",
         "fastapi",
         "graphlib_backport; python_version < '3.9'",
         "jinja2",

@@ -10,7 +10,7 @@ from ert_shared.ensemble_evaluator.entity.ensemble_base import _Ensemble
 from ert_shared.ensemble_evaluator.entity.ensemble_legacy import _LegacyEnsemble
 from ert_shared.ensemble_evaluator.entity.function_step import FunctionTask
 from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
-from res.enkf import EnKFState
+from res.enkf import EnKFState, RunArg
 
 logger = logging.getLogger(__name__)
 
