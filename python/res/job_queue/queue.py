@@ -506,7 +506,7 @@ class JobQueue(BaseCClass):
             return
         run_arg._set_queue_index(self.add_job(job, run_arg.iens))
 
-    def add_ee_stage(self, stage):
+    def add_ee_stage(self, stage, callback_timeout):
         job = JobQueueNode(
             job_script=stage.get_job_script(),
             job_name=stage.get_job_name(),
@@ -519,6 +519,7 @@ class JobQueue(BaseCClass):
             exit_callback_function=stage.get_exit_callback(),
             callback_arguments=stage.get_callback_arguments(),
             max_runtime=stage.get_max_runtime(),
+            callback_timeout=callback_timeout,
         )
         if job is None:
             raise ValueError("JobQueueNode constructor created None job")

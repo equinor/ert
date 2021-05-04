@@ -53,9 +53,11 @@ class JobQueueNode(BaseCClass):
         exit_callback_function,
         callback_arguments,
         max_runtime=None,
+        callback_timeout=None,
     ):
         self.done_callback_function = done_callback_function
         self.exit_callback_function = exit_callback_function
+        self.callback_timeout = callback_timeout
         self.callback_arguments = callback_arguments
         argc = 1
         argv = StringList()
@@ -159,6 +161,12 @@ class JobQueueNode(BaseCClass):
             self.update_status(driver)
             if self._should_be_killed():
                 self._kill(driver)
+                if (
+                    self._max_runtime
+                    and self.runtime >= self._max_runtime
+                    and self.callback_timeout
+                ):
+                    self.callback_timeout(self.callback_arguments)
 
         self._end_time = time.time()
 
