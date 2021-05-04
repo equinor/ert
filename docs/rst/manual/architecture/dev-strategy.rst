@@ -123,6 +123,14 @@ submodules ert.two and ert.three, or ert.engine2 and ert.engine. Either way,
 shared code should be put in the ert3 module(s) such that down the road we can
 remove ert2 entirely without touching ert3.
 
+Logging
+~~~~~~~
+Currently there are numerous ways of logging in ert and libres. Furthermore,
+the Kibana instance that used to be active on-premise was decommissioned. We
+should get a new central logger up and running on-premise and make sure that
+relevant loggig is forwarded to this central instance. This will allow us to
+monitor usage of ERT and act upon it.
+
 Implement a backend of the storage API using EnKFMain + file storage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 To utilise strangulation techniques and to make the new visualisation solution
