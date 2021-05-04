@@ -43,7 +43,7 @@ jobs:
         sudo apt-add-repository ppa:opm/ppa
         sudo apt-get update
         sudo apt-get install mpi-default-bin
-        sudo apt-get install libopm-simulators-bin
+        sudo apt-get install libopm-simulators1-bin=2020.10-rfinal-1~bionic
 
     - name: Install ERT
       run: |
