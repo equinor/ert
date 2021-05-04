@@ -12,7 +12,7 @@ from ert_shared.status.entity.state import (
 )
 from cloudevents.http import to_json
 from cloudevents.http.event import CloudEvent
-from websockets.http import Headers
+from websockets.datastructures import Headers
 
 from ert_shared.ensemble_evaluator.evaluator import (
     EnsembleEvaluator,
