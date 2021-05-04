@@ -1,10 +1,10 @@
 import websockets
-from websockets import ConnectionClosedOK
+from websockets import ConnectionClosedOK  # type: ignore
 import asyncio
 import cloudevents
 import ssl
 from websockets.exceptions import ConnectionClosed
-from websockets.http import Headers
+from websockets.http import Headers  # type: ignore
 
 
 class Client:
