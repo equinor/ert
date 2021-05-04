@@ -1,3 +1,4 @@
+from ert_shared.ensemble_evaluator.entity.snapshot import SnapshotBuilder
 import json
 import os
 from pathlib import Path
@@ -15,6 +16,43 @@ from res.enkf import ConfigKeys
 from res.enkf.queue_config import QueueConfig
 from res.job_queue.driver import LOCAL_DRIVER
 from res.job_queue.ext_job import ExtJob
+
+
+@pytest.fixture
+def snapshot():
+    return (
+        SnapshotBuilder()
+        .add_step(step_id="0", status="Unknown")
+        .add_job(
+            step_id="0",
+            job_id="0",
+            name="job0",
+            data={},
+            status="Unknown",
+        )
+        .add_job(
+            step_id="0",
+            job_id="1",
+            name="job1",
+            data={},
+            status="Unknown",
+        )
+        .add_job(
+            step_id="0",
+            job_id="2",
+            name="job2",
+            data={},
+            status="Unknown",
+        )
+        .add_job(
+            step_id="0",
+            job_id="3",
+            name="job3",
+            data={},
+            status="Unknown",
+        )
+        .build(["0", "1", "3", "4", "5", "9"], status="Unknown")
+    )
 
 
 @pytest.fixture
