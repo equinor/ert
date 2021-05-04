@@ -327,7 +327,7 @@ def post_ensemble_results(ensemble_id: str) -> None:
         for index, data in realizations.items():
             _post_to_server(
                 f"{server.fetch_url()}/ensembles/{ensemble_id}/records/{name}/matrix",
-                params={"realization_index": index},
+                params={"realization_index": index, "record_class": "response"},
                 data=data.to_csv().encode(),
                 headers={"content-type": "application/x-dataframe"},
             )
