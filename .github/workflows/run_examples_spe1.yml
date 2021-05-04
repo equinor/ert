@@ -3,7 +3,7 @@ name: Run SPE1 demo
 on: [push, pull_request]
 
 jobs:
-  build:
+  run-ert3-spe1:
     timeout-minutes: 15
     services:
       postgres:

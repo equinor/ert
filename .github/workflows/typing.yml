@@ -3,7 +3,7 @@ name: Type checking
 on: [push, pull_request]
 
 jobs:
-  build:
+  type-checking:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     strategy:
