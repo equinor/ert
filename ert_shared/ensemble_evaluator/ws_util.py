@@ -1,9 +1,5 @@
-import websockets
 import asyncio
 import logging
-import ssl
-
-from websockets.http import Headers
 
 from ert_shared.ensemble_evaluator.client import Client
 

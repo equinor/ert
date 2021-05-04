@@ -1,8 +1,4 @@
-import asyncio
 from ert_shared.ensemble_evaluator.client import Client
-import ssl
-import websockets
-from websockets.http import Headers
 
 from ert_shared.ensemble_evaluator.entity import serialization
 

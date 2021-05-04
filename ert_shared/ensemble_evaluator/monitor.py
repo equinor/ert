@@ -1,6 +1,6 @@
 import asyncio
 import websockets
-from websockets.http import Headers
+from websockets.datastructures import Headers
 from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
 import logging
 import threading
