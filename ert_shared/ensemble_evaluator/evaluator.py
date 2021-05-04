@@ -277,7 +277,7 @@ class EnsembleEvaluator:
             sock=self._config.get_socket(),
             ssl=self._config.get_server_ssl_context(),
             process_request=self.process_request,
-            max_queue=500,
+            max_queue=None,
             max_size=2 ** 26,
         ):
             await done
