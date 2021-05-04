@@ -1,57 +1,17 @@
 from datetime import datetime
-import dateutil.parser
-
+import ert_shared.status.entity.state as state
+from ert_shared.ensemble_evaluator.entity import identifiers as ids
+from cloudevents.http.event import CloudEvent
 import pytest
 from ert_shared.ensemble_evaluator.entity import command, tool
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
-    SnapshotBuilder,
     Job,
+    SnapshotBuilder,
 )
 
 
-_REALIZATION_INDEXES = ["0", "1", "3", "4", "5", "9"]
-
-
-def _create_snapshot():
-    return (
-        SnapshotBuilder()
-        .add_step(step_id="0", status="Unknown")
-        .add_job(
-            step_id="0",
-            job_id="0",
-            name="job0",
-            data={},
-            status="Unknown",
-        )
-        .add_job(
-            step_id="0",
-            job_id="1",
-            name="job1",
-            data={},
-            status="Unknown",
-        )
-        .add_job(
-            step_id="0",
-            job_id="2",
-            name="job2",
-            data={},
-            status="Unknown",
-        )
-        .add_job(
-            step_id="0",
-            job_id="3",
-            name="job3",
-            data={},
-            status="Unknown",
-        )
-        .build(_REALIZATION_INDEXES, status="Unknown")
-    )
-
-
-def test_snapshot_merge():
-    snapshot = _create_snapshot()
-
+def test_snapshot_merge(snapshot):
     update_event = PartialSnapshot(snapshot)
     update_event.update_status(status="running")
 
@@ -169,3 +129,60 @@ def test_commands_to_and_from_dict():
     assert terminate_command == command.create_command_from_dict(
         terminate_command.to_dict()
     )
+
+
+def test_update_partial_from_multiple_cloudevents(snapshot):
+    partial = PartialSnapshot(snapshot)
+    partial.from_cloudevent(
+        CloudEvent(
+            {
+                "id": "0",
+                "type": ids.EVTYPE_FM_JOB_RUNNING,
+                "source": "/real/0/step/0/job/0",
+            }
+        )
+    )
+    partial.from_cloudevent(
+        CloudEvent(
+            {
+                "id": "0",
+                "type": ids.EVTYPE_FM_JOB_FAILURE,
+                "source": "/real/0/step/0/job/0",
+            },
+            {ids.ERROR_MSG: "failed"},
+        )
+    )
+    partial.from_cloudevent(
+        CloudEvent(
+            {
+                "id": "1",
+                "type": ids.EVTYPE_FM_JOB_SUCCESS,
+                "source": "/real/0/step/0/job/1",
+            }
+        )
+    )
+    jobs = partial.to_dict()["reals"]["0"]["steps"]["0"]["jobs"]
+    jobs["0"]["status"] == state.JOB_STATE_FAILURE
+    jobs["1"]["status"] == state.JOB_STATE_FINISHED
+
+
+def test_multiple_cloud_events_trigger_non_communicated_change():
+    """In other words, though we say all steps are finished, we don't
+    explicitly send an event that changes the realization status. It should
+    happen by virtue of the steps being completed."""
+    snapshot = (
+        SnapshotBuilder()
+        .add_step(step_id="0", status="Unknown")
+        .build(["0"], status="Unknown")
+    )
+    partial = PartialSnapshot(snapshot)
+    partial.from_cloudevent(
+        CloudEvent(
+            {
+                "id": "0",
+                "type": ids.EVTYPE_FM_STEP_SUCCESS,
+                "source": "/real/0/step/0",
+            }
+        )
+    )
+    assert partial.to_dict()["reals"]["0"]["status"] == state.REALIZATION_STATE_FINISHED
