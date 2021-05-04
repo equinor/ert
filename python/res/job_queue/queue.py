@@ -27,7 +27,7 @@ import ssl
 import typing
 
 import websockets
-from websockets.http import Headers
+from websockets.datastructures import Headers
 from cloudevents.http import CloudEvent, to_json
 from cwrap import BaseCClass
 from job_runner import JOBS_FILE, CERT_FILE
