@@ -6,7 +6,7 @@ env:
   ERT_SHOW_BACKTRACE: 1
 
 jobs:
-  build:
+  run-ert2-test-data:
     timeout-minutes: 15
     strategy:
       fail-fast: false
