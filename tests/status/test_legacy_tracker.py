@@ -127,7 +127,7 @@ def test_tracking(
 
         thread = threading.Thread(
             name="ert_cli_simulation_thread",
-            target=model.startSimulations,
+            target=model.start_simulations_thread,
             args=(argument,),
         )
         thread.start()

@@ -1,7 +1,7 @@
 import asyncio
 import websockets
 from websockets.datastructures import Headers
-from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
+from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 import logging
 import threading
 from cloudevents.http import from_json
@@ -143,7 +143,11 @@ class _Monitor:
         self._loop.run_until_complete(done_future)
 
     def track(self):
-        wait_for_ws(self._base_uri, self._token, self._cert)
+        asyncio.get_event_loop().run_until_complete(
+            wait_for_evaluator(
+                base_url=self._base_uri, token=self._token, cert=self._cert
+            )
+        )
 
         done_future = asyncio.Future(loop=self._loop)
 

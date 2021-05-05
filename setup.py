@@ -36,6 +36,7 @@ setup(
         "async-exit-stack; python_version < '3.7'",
         "async-generator; python_version < '3.7'",
         "aiofiles",
+        "aiohttp",
         "alembic",
         "ansicolors==1.1.8",
         "cloudevents",
