@@ -12,11 +12,15 @@ import logging
 import queue
 import threading
 import time
+import asyncio
+
+from aiohttp import ClientError
+
 from ert_shared.models.base_run_model import BaseRunModel
 import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Snapshot
 from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
-from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
+from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 from ert_shared.status.entity.event import (
     EndEvent,
     FullSnapshotEvent,
@@ -64,6 +68,7 @@ class EvaluatorTracker:
         self._general_interval = general_interval
 
     def _drain_monitor(self):
+        asyncio.set_event_loop(asyncio.new_event_loop())
         drainer_logger = logging.getLogger("ert_shared.ensemble_evaluator.drainer")
         failures = 0
         while not self._model.isFinished():
@@ -240,8 +245,15 @@ class EvaluatorTracker:
         # See issue: https://github.com/equinor/ert/issues/1250
         #
         try:
-            wait_for_ws(self._monitor_url, self._token, self._cert, 2)
-        except ConnectionRefusedError as e:
+            asyncio.get_event_loop().run_until_complete(
+                wait_for_evaluator(
+                    base_url=self._monitor_url,
+                    token=self._token,
+                    cert=self._cert,
+                    timeout=5,
+                )
+            )
+        except ClientError as e:
             logger.warning(f"{__name__} - exception {e}")
             return
 

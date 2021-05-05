@@ -3,6 +3,7 @@ from ert_shared.feature_toggling import FeatureToggling
 import logging
 import time
 import uuid
+import asyncio
 
 from ecl.util.util import BoolVector
 from ert_shared import ERT
@@ -72,6 +73,10 @@ class BaseRunModel(object):
     def reset(self):
         self._failed = False
         self._phase = 0
+
+    def start_simulations_thread(self, arguments):
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        self.startSimulations(arguments=arguments)
 
     def startSimulations(self, arguments):
         try:

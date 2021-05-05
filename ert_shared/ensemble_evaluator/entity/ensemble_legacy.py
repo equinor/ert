@@ -7,7 +7,7 @@ from functools import partial
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.entity.ensemble_base import _Ensemble
-from ert_shared.ensemble_evaluator.ws_util import wait_for_ws
+from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 
 CONCURRENT_INTERNALIZATION = 10
 
@@ -41,10 +41,12 @@ class _LegacyEnsemble(_Ensemble):
     def evaluate(self, config, ee_id):
         self._config = config
         self._ee_id = ee_id
-        wait_for_ws(
-            url=self._config.url,
-            token=self._config.token,
-            cert=self._config.cert,
+        asyncio.get_event_loop().run_until_complete(
+            wait_for_evaluator(
+                base_url=self._config.url,
+                token=self._config.token,
+                cert=self._config.cert,
+            )
         )
         self._evaluate_thread = threading.Thread(target=self._evaluate)
         self._evaluate_thread.start()
