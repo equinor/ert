@@ -6,6 +6,7 @@ from ert_shared.status.entity.event import (
 import logging
 from ert_shared.models.base_run_model import BaseRunModel
 from ert_shared.status.tracker.evaluator import EvaluatorTracker
+from ert_shared.status.utils import tracker_progress
 from unittest.mock import MagicMock, patch
 import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_shared.ensemble_evaluator.entity.snapshot import (
@@ -26,8 +27,7 @@ class MockCloudEvent(dict):
         return self.__dict__[key]
 
 
-def mock_ee_monitor(*args):
-    reals_ids = ["0", "1"]
+def mock_ee_monitor(reals_ids):
     snapshot = (
         SnapshotBuilder()
         .add_step(step_id="0", status=state.STEP_STATE_UNKNOWN)
@@ -42,18 +42,22 @@ def mock_ee_monitor(*args):
     )
 
     update = PartialSnapshot(snapshot)
-    update.update_step("0", "0", step=Step(status=state.STEP_STATE_SUCCESS))
-    update.update_step("1", "0", step=Step(status=state.STEP_STATE_SUCCESS))
+    snapshot_update_events = []
+    for real_id in reals_ids:
+        update.update_step(real_id, "0", step=Step(status=state.STEP_STATE_SUCCESS))
+        snapshot_update_events.append(
+            MockCloudEvent(
+                {"source": "/", "time": None, "type": ids.EVTYPE_EE_SNAPSHOT_UPDATE},
+                {**update.to_dict(), "iter": 0},
+            )
+        )
 
     events = [
         MockCloudEvent(
             {"source": "/", "time": None, "type": ids.EVTYPE_EE_SNAPSHOT},
             {**(snapshot.to_dict()), "iter": 0},
         ),
-        MockCloudEvent(
-            {"source": "/", "time": None, "type": ids.EVTYPE_EE_SNAPSHOT_UPDATE},
-            {**update.to_dict(), "iter": 0},
-        ),
+        *snapshot_update_events,
         MockCloudEvent(
             {"source": "/", "time": None, "type": ids.EVTYPE_EE_TERMINATED}, {"iter": 0}
         ),
@@ -72,20 +76,46 @@ def mock_ee_monitor(*args):
 def test_tracking(caplog):
     caplog.set_level(logging.DEBUG, logger="ert_shared.ensemble_evaluator")
     brm = BaseRunModel(None, phase_count=1)
+    reals_ids = ["0", "1"]
 
     with patch("ert_shared.status.tracker.evaluator.create_ee_monitor") as mock_ee:
-        mock_ee.return_value.__enter__.return_value = mock_ee_monitor()
+        mock_ee.return_value.__enter__.return_value = mock_ee_monitor(reals_ids)
         tracker = EvaluatorTracker(brm, "host", "port", 1, 1)
         tracker_gen = tracker.track()
 
         event = next(tracker_gen)
         assert isinstance(event, FullSnapshotEvent)
-
-        event = next(tracker_gen)
-        assert isinstance(event, SnapshotUpdateEvent)
+        for _ in reals_ids:
+            assert isinstance(next(tracker_gen), SnapshotUpdateEvent)
 
         # this is setting the model to finished
         brm._phase = 1
 
         event = next(tracker_gen)
         assert isinstance(event, EndEvent)
+
+
+def test_tracking_progress(caplog):
+    caplog.set_level(logging.DEBUG, logger="ert_shared.ensemble_evaluator")
+    brm = BaseRunModel(None, phase_count=1)
+    reals_ids = ["0", "1", "2", "3"]
+
+    with patch("ert_shared.status.tracker.evaluator.create_ee_monitor") as mock_ee:
+        mock_ee.return_value.__enter__.return_value = mock_ee_monitor(reals_ids)
+        tracker = EvaluatorTracker(brm, "host", "port", 1, 1)
+        tracker_gen = tracker.track()
+
+        event = next(tracker_gen)
+        assert isinstance(event, FullSnapshotEvent)
+        assert tracker_progress(tracker) == 0.0
+
+        for idx, _ in enumerate(reals_ids):
+            assert isinstance(next(tracker_gen), SnapshotUpdateEvent)
+            assert tracker_progress(tracker) == (idx + 1) / len(reals_ids)
+
+        # this is setting the model to finished
+        brm._phase = 1
+
+        event = next(tracker_gen)
+        assert isinstance(event, EndEvent)
+        assert tracker_progress(tracker) == 1.0
