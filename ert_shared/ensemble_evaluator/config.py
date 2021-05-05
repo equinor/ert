@@ -18,7 +18,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
-from dns import resolver, reversename
+from dns import resolver, reversename, exception
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ def get_machine_name():
         if resolved_host[-1] == ".":
             resolved_host = resolved_host[:-1]
         return resolved_host
-    except resolver.NXDOMAIN:
+    except (resolver.NXDOMAIN, exception.Timeout):
         # If local address and reverse lookup not working - fallback
         # to socket fqdn which are using /etc/hosts to retrieve this name
         return socket.getfqdn()
