@@ -147,6 +147,7 @@ class EvaluatorTracker:
                 partial = PartialSnapshot(self._iter_snapshot[iter_]).from_cloudevent(
                     event
                 )
+                self._iter_snapshot[iter_].merge_event(partial)
                 yield SnapshotUpdateEvent(
                     phase_name=self._model.getPhaseName(),
                     current_phase=self._model.currentPhase(),
