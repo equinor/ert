@@ -42,6 +42,14 @@ _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
     ids.EVTYPE_ENSEMBLE_FAILED: state.ENSEMBLE_STATE_FAILED,
 }
 
+_STEP_STATE_TO_REALIZATION_STATE = {
+    state.STEP_STATE_WAITING: state.REALIZATION_STATE_WAITING,
+    state.STEP_STATE_PENDING: state.REALIZATION_STATE_PENDING,
+    state.STEP_STATE_RUNNING: state.REALIZATION_STATE_RUNNING,
+    state.STEP_STATE_UNKNOWN: state.REALIZATION_STATE_UNKNOWN,
+    state.STEP_STATE_FAILURE: state.REALIZATION_STATE_FAILED,
+}
+
 
 def convert_iso8601_to_datetime(timestamp):
     if isinstance(timestamp, datetime.datetime):
@@ -84,17 +92,28 @@ class PartialSnapshot:
             SnapshotDict(reals={real_id: Realization(steps={step_id: step})})
         )
         if self._snapshot.get_real(real_id).status != state.REALIZATION_STATE_FAILED:
-            if step.status in [
-                state.REALIZATION_STATE_FAILED,
-                state.REALIZATION_STATE_PENDING,
-                state.REALIZATION_STATE_RUNNING,
-            ]:
-                self.update_real(real_id, Realization(status=step.status))
+            if step.status in _STEP_STATE_TO_REALIZATION_STATE:
+                self.update_real(
+                    real_id,
+                    Realization(status=_STEP_STATE_TO_REALIZATION_STATE[step.status]),
+                )
             elif (
                 step.status == state.REALIZATION_STATE_FINISHED
                 and self._snapshot.all_steps_finished(real_id)
             ):
-                self.update_real(real_id, Realization(status=step.status))
+                self.update_real(
+                    real_id, Realization(status=state.REALIZATION_STATE_FINISHED)
+                )
+            elif (
+                step.status == state.STEP_STATE_SUCCESS
+                and not self._snapshot.all_steps_finished(real_id)
+            ):
+                pass
+            else:
+                raise ValueError(
+                    f"unknown step status {step.status} for real: {real_id} step: {step_id}"
+                )
+        return self
 
     def update_job(
         self,
