@@ -379,7 +379,7 @@ class BaseRunModel(object):
     def _post_ensemble_data(self, update_id: Optional[str] = None) -> str:
         self.setPhaseName("Uploading data...")
         ensemble_id = post_ensemble_data(
-            ensemble_size=self._ensemble_size, update_id=update_id
+            ensemble_size=self._ensemble_size, update_id=update_id, ert=ERT.enkf_facade
         )
         self.setPhaseName("Uploading done")
         return ensemble_id
