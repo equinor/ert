@@ -255,56 +255,14 @@ def assert_sensitivity_oat_export(
 
 
 @pytest.fixture
-def _unset_ert_storage_database_url():
-    """
-    ERT Storage's TestClient persists an environment variable, which it
-    shouldn't do. This fixture resets it.
-
-    This can be removed once https://github.com/equinor/ert-storage/issues/97 is
-    resolved and is included in a PyPI release.
-
-    """
-    key = "ERT_STORAGE_DATABASE_URL"
-
-    # Save
-    old_val = os.getenv(key)
-
-    yield
-
-    # Reset
-    if old_val is None and key in os.environ:
-        del os.environ[key]
-    else:
-        os.environ[key] = old_val
-
-
-@pytest.fixture
-def ert_storage(_unset_ert_storage_database_url, ert_storage_client, monkeypatch):
-    def without_check(func):
-        """
-        ERT Storage's Client adds a `check_status_code` kwarg to every requests
-        method of note, which raises an exception if the HTTP status code is
-        unexpected (in practice, anything different from 200 OK). This function
-        wrapper disables this feature.
-
-        This can be removed once https://github.com/equinor/ert-storage/issues/96 is
-        resolved and is included in a PyPI release.
-
-        """
-
-        def without_check_func(*args, **kwargs):
-            kwargs["check_status_code"] = None
-            return func(*args, **kwargs)
-
-        return without_check_func
-
+def ert_storage(ert_storage_client, monkeypatch):
     from ert3.storage import _storage
+
+    ert_storage_client.raise_on_client_error = False
 
     # Fix baseurl prefix
     monkeypatch.setattr(_storage, "_STORAGE_URL", "")
 
     # Fix requests library
     for func in "get", "post", "put", "delete":
-        monkeypatch.setattr(
-            _storage.requests, func, without_check(getattr(ert_storage_client, func))
-        )
+        monkeypatch.setattr(_storage.requests, func, getattr(ert_storage_client, func))
