@@ -1,4 +1,4 @@
-from typing import List, Mapping, Any, Dict, Union
+from typing import Dict, List, Mapping, Optional, Union, TYPE_CHECKING
 
 from ert_data.measured import MeasuredData
 from res.enkf.enums.enkf_obs_impl_type_enum import EnkfObservationImplementationType
@@ -10,6 +10,10 @@ import requests
 import pandas as pd
 import datetime
 import logging
+
+
+if TYPE_CHECKING:
+    from ert_shared.libres_facade import LibresFacade
 
 logger = logging.getLogger()
 
@@ -350,9 +354,12 @@ def post_ensemble_results(ensemble_id: str) -> None:
 
 
 @feature_enabled("new-storage")
-def post_ensemble_data(ensemble_size: int, update_id: str = None) -> str:
+def post_ensemble_data(
+    ert: "LibresFacade",
+    ensemble_size: int,
+    update_id: Optional[str] = None,
+) -> str:
     server = ServerMonitor.get_instance()
-    ert = ERT.enkf_facade
     if update_id is None:
         exp_response = _post_to_server(
             f"{server.fetch_url()}/experiments",
