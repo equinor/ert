@@ -150,7 +150,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             send_dispatch_event(
                 dispatch1,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                "/ert/ee/0/real/0/step/0/job/0",
+                f"/ert/ee/{evaluator._ee_id}/real/0/step/0/job/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
@@ -161,7 +161,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                "/ert/ee/0/real/1/step/0/job/0",
+                f"/ert/ee/{evaluator._ee_id}/real/1/step/0/job/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
@@ -172,7 +172,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_SUCCESS,
-                "/ert/ee/0/real/1/step/0/job/0",
+                f"/ert/ee/{evaluator._ee_id}/real/1/step/0/job/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
@@ -183,7 +183,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_FAILURE,
-                "/ert/ee/0/real/1/step/0/job/1",
+                f"/ert/ee/{evaluator._ee_id}/real/1/step/0/job/1",
                 "event_job_1_fail",
                 {identifiers.ERROR_MSG: "error"},
             )

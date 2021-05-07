@@ -3,6 +3,7 @@ import logging
 import threading
 from contextlib import contextmanager
 import pickle
+from typing import Set
 import cloudevents.exceptions
 from http import HTTPStatus
 
@@ -11,6 +12,7 @@ import cloudpickle
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 import ert_shared.ensemble_evaluator.monitor as ee_monitor
 import websockets
+from websockets.legacy.server import WebSocketServerProtocol
 from async_generator import asynccontextmanager
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
@@ -40,7 +42,7 @@ logger = logging.getLogger(__name__)
 class EnsembleEvaluator:
     _dispatch = Dispatcher()
 
-    def __init__(self, ensemble, config, iter_, ee_id=0):
+    def __init__(self, ensemble, config, iter_, ee_id: str = "0"):
         # Without information on the iteration, the events emitted from the
         # evaluator are ambiguous. In the future, an experiment authority* will
         # "own" the evaluators and can add iteration information to events they
@@ -58,8 +60,10 @@ class EnsembleEvaluator:
         )
         self._done = self._loop.create_future()
 
-        self._clients = set()
-        self._dispatchers_connected = asyncio.Queue(loop=self._loop)
+        self._clients: Set[WebSocketServerProtocol] = set()
+        self._dispatchers_connected: asyncio.Queue[None] = asyncio.Queue(
+            loop=self._loop
+        )
 
         self._snapshot = self.create_snapshot(ensemble)
         self._event_index = 1
@@ -228,6 +232,11 @@ class EnsembleEvaluator:
                     )
                 except cloudevents.exceptions.DataUnmarshallerError:
                     event = from_json(msg, data_unmarshaller=lambda x: pickle.loads(x))
+                if self._get_ee_id(event["source"]) != self._ee_id:
+                    logger.info(
+                        f"Got event from evaluator {self._get_ee_id(event['source'])} with source {event['source']}, ignoring since I am {self._ee_id}"
+                    )
+                    continue
                 await self._dispatch.handle_event(self, event)
                 if event["type"] in [
                     identifiers.EVTYPE_ENSEMBLE_STOPPED,
@@ -343,3 +352,8 @@ class EnsembleEvaluator:
             for _ in mon.track():
                 pass
         return self.get_successful_realizations()
+
+    @staticmethod
+    def _get_ee_id(source) -> str:
+        # the ee_id will be found at /ert/ee/ee_id/...
+        return source.split("/")[3]
