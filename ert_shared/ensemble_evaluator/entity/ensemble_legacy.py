@@ -102,6 +102,7 @@ class _LegacyEnsemble(_Ensemble):
             futures = [
                 self._job_queue.execute_queue_async(
                     dispatch_url,
+                    self._ee_id,
                     threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION),
                     queue_evaluators,
                     cert=cert,

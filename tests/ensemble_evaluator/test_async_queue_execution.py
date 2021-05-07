@@ -49,7 +49,9 @@ async def test_happy_path(
         queue.add_ee_stage(real.get_steps()[0])
     queue.submit_complete()
 
-    await queue.execute_queue_async(url, threading.BoundedSemaphore(value=10), None)
+    await queue.execute_queue_async(
+        url, "ee_0", threading.BoundedSemaphore(value=10), None
+    )
     done.set_result(None)
 
     await mock_ws_task
@@ -59,7 +61,7 @@ async def test_happy_path(
     assert mock_ws_task.done()
 
     event_0 = from_json(mock_ws_task.result()[0])
-    assert event_0["source"] == "/ert/ee/0/real/0/step/0"
+    assert event_0["source"] == "/ert/ee/ee_0/real/0/step/0"
     assert event_0["type"] == "com.equinor.ert.forward_model_step.waiting"
     assert event_0.data == {"queue_event_type": "JOB_QUEUE_WAITING"}
 
