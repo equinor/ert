@@ -1,3 +1,4 @@
+import asyncio
 from threading import Thread
 
 from ecl.util.util import BoolVector
@@ -243,6 +244,7 @@ class RunDialog(QDialog):
         self._tab_widget.clear()
 
         def run():
+            asyncio.set_event_loop(asyncio.new_event_loop())
             self._run_model.startSimulations(self._simulations_argments)
 
         simulation_thread = Thread(name="ert_gui_simulation_thread")
