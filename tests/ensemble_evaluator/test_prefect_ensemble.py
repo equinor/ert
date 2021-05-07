@@ -1,3 +1,5 @@
+from typing import Set
+from ert_shared.status.entity.state import JOB_STATE_FAILURE
 import pathlib
 import pickle
 import cloudpickle
@@ -561,14 +563,14 @@ def test_prefect_reties(unused_tcp_port, coefficients, tmpdir, function_config):
 
         ensemble = PrefectEnsemble(config)
         evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
-        error_event_reals = []
+        error_event_reals: Set[str] = set()
         with evaluator.run() as mon:
             for event in mon.track():
-                # Caputure the job error messages
+                # Capture the job error messages
                 if event.data is not None and "This is an expected ERROR" in str(
                     event.data
                 ):
-                    error_event_reals.append(event.data["reals"])
+                    error_event_reals.update(event.data["reals"].keys())
                 if event.data is not None and event.data.get("status") in [
                     "Failed",
                     "Stopped",
@@ -579,9 +581,8 @@ def test_prefect_reties(unused_tcp_port, coefficients, tmpdir, function_config):
         assert successful_realizations == config["realizations"]
         # Check we get only one job error message per realization
         assert len(error_event_reals) == config["realizations"]
-        for idx, reals in enumerate(error_event_reals):
-            assert len(reals) == 1
-            assert str(idx) in reals
+        assert "0" in error_event_reals
+        assert "1" in error_event_reals
 
 
 def dummy_get_flow(*args, **kwargs):
