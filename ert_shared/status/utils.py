@@ -17,15 +17,15 @@ def byte_with_unit(byte_count):
 
 def _calculate_progress(
     finished: bool,
-    phase: int,
-    phase_count: int,
+    iter_: int,
+    total_iter: int,
     done_reals: int,
     total_reals: int,
 ) -> float:
     if finished:
         return 1.0
     real_progress = float(done_reals) / total_reals
-    return min(1.0, (phase + real_progress) / phase_count)
+    return (iter_ + real_progress) / total_iter
 
 
 def tracker_progress(tracker) -> float:
@@ -40,7 +40,7 @@ def tracker_progress(tracker) -> float:
     total_reals = len(tracker._iter_snapshot[0].get_reals())
     return _calculate_progress(
         tracker.is_finished(),
-        tracker._model.currentPhase(),
+        current_iter,
         tracker._model.phaseCount(),
         done_reals,
         total_reals,
