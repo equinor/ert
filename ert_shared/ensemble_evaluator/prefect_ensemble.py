@@ -5,6 +5,7 @@ import multiprocessing
 import os
 import signal
 import threading
+from typing import Optional
 import uuid
 from datetime import timedelta
 from functools import partial
@@ -103,7 +104,7 @@ class PrefectEnsemble(_Ensemble):
         self._ee_config = None
         self._reals = self._get_reals()
         self._eval_proc = None
-        self._ee_id = None
+        self._ee_id: Optional[str] = None
         self._iens_to_task = {}
         super().__init__(self._reals, metadata={"iter": 0})
 
@@ -166,7 +167,7 @@ class PrefectEnsemble(_Ensemble):
                 event = CloudEvent(
                     {
                         "type": ids.EVTYPE_FM_STEP_FAILURE,
-                        "source": task.get_step()._source,
+                        "source": task.get_step().get_source(self._ee_id),
                         "datacontenttype": "application/json",
                     },
                     {"error_msg": state.message},
@@ -210,7 +211,7 @@ class PrefectEnsemble(_Ensemble):
                         ]
         return flow
 
-    def evaluate(self, config: EvaluatorServerConfig, ee_id):
+    def evaluate(self, config: EvaluatorServerConfig, ee_id: str):
         self._ee_id = ee_id
         self._ee_config = config
         mp_ctx = multiprocessing.get_context(method="forkserver")

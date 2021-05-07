@@ -278,7 +278,7 @@ def evaluate(
     )
     ensemble = PrefectEnsemble(ee_config)  # type: ignore
 
-    ee = EnsembleEvaluator(ensemble=ensemble, config=config, iter_=0)  # type: ignore
+    ee = EnsembleEvaluator(ensemble=ensemble, config=config, iter_=0)
     result = _run(ee)
     responses = _prepare_responses(result)
 
