@@ -154,8 +154,6 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 "event1",
                 {"current_memory_usage": 1000},
             )
-            snapshot = Snapshot(next(events).data)
-            assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
 
             # second dispatcher informs that job 0 is running
             send_dispatch_event(
@@ -165,8 +163,6 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 "event1",
                 {"current_memory_usage": 1000},
             )
-            snapshot = Snapshot(next(events).data)
-            assert snapshot.get_job("1", "0", "0").status == JOB_STATE_RUNNING
 
             # second dispatcher informs that job 0 is done
             send_dispatch_event(
@@ -176,8 +172,6 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 "event1",
                 {"current_memory_usage": 1000},
             )
-            snapshot = Snapshot(next(events).data)
-            assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
 
             # second dispatcher informs that job 1 is failed
             send_dispatch_event(
@@ -188,28 +182,34 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 {identifiers.ERROR_MSG: "error"},
             )
             snapshot = Snapshot(next(events).data)
+            assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
+            assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
             assert snapshot.get_job("1", "0", "1").status == JOB_STATE_FAILURE
 
-            # a second monitor connects
-            with ee_monitor.create(host, port, "wss", cert, token) as monitor2:
-                events2 = monitor2.track()
-                snapshot = Snapshot(next(events2).data)
-                assert snapshot.get_status() == ENSEMBLE_STATE_STARTED
-                assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
-                assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
+        # a second monitor connects
+        with ee_monitor.create(host, port, "wss", cert, token) as monitor2:
+            events2 = monitor2.track()
+            full_snapshot_event = next(events2)
+            assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
+            snapshot = Snapshot(full_snapshot_event.data)
+            assert snapshot.get_status() == ENSEMBLE_STATE_STARTED
+            assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
+            assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
 
-                # one monitor requests that server exit
-                monitor.signal_cancel()
+            # one monitor requests that server exit
+            monitor.signal_cancel()
 
-                # both monitors should get a terminated event
-                terminated = next(events)
-                terminated2 = next(events2)
-                assert terminated["type"] == identifiers.EVTYPE_EE_TERMINATED
-                assert terminated2["type"] == identifiers.EVTYPE_EE_TERMINATED
+            # both monitors should get a terminated event
+            terminated = next(events)
+            terminated2 = next(events2)
+            assert terminated["type"] == identifiers.EVTYPE_EE_TERMINATED
+            assert terminated2["type"] == identifiers.EVTYPE_EE_TERMINATED
 
-                for e in [events, events2]:
-                    for _ in e:
-                        assert False, "got unexpected event from monitor"
+            for e in [events, events2]:
+                for undexpected_event in e:
+                    assert (
+                        False
+                    ), f"got unexpected event {undexpected_event} from monitor"
 
 
 def test_monitor_stop(evaluator):
