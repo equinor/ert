@@ -120,3 +120,22 @@ class LocalDatasetTest(ResTest):
             # Error when adding existing data node
             with self.assertRaises(KeyError):
                 data_scale.addNode("PERLIN_PARAM")
+
+    @tmpdir()
+    def test_keys(self):
+        with ErtTestContext(
+            "python/enkf/data/local_config", self.config
+        ) as test_context:
+            main = test_context.getErt()
+
+            local_config = main.getLocalConfig()
+
+            # Creating dataset
+            local_data = local_config.createDataset("DATA_SCALE")
+            keys = local_data.keys()
+            self.assertEqual(len(keys), 0)
+
+            local_data.addNode("PERLIN_PARAM")
+            keys = local_data.keys()
+            self.assertEqual(len(keys), 1)
+            self.assertTrue("PERLIN_PARAM" in keys)

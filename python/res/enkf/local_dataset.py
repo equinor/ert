@@ -2,6 +2,7 @@ from cwrap import BaseCClass
 from res import ResPrototype
 from ecl.grid import EclRegion
 from ecl.util.geometry import GeoRegion
+from ecl.util.util import StringList
 
 
 class LocalDataset(BaseCClass):
@@ -10,6 +11,7 @@ class LocalDataset(BaseCClass):
     _alloc = ResPrototype("void* local_dataset_alloc(char*)", bind=False)
     _size = ResPrototype("int   local_dataset_get_size(local_dataset)")
     _has_key = ResPrototype("bool  local_dataset_has_key(local_dataset, char*)")
+    _keys = ResPrototype("stringlist_obj local_dataset_alloc_keys(local_dataset)")
     _free = ResPrototype("void  local_dataset_free(local_dataset)")
     _name = ResPrototype("char* local_dataset_get_name(local_dataset)")
     _add_node = ResPrototype("void  local_dataset_add_node(local_dataset, char*)")
@@ -50,6 +52,9 @@ class LocalDataset(BaseCClass):
 
     def name(self):
         return self._name()
+
+    def keys(self):
+        return self._keys()
 
     def getName(self):
         """@rtype: str"""
