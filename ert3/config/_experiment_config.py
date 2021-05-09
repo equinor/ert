@@ -11,11 +11,12 @@ else:
 
 
 class _ExperimentConfig(BaseModel):
-    validate_all = True
-    validate_assignment = True
-    extra = "forbid"
-    allow_mutation = False
-    arbitrary_types_allowed = True
+    class Config:
+        validate_all = True
+        validate_assignment = True
+        extra = "forbid"
+        allow_mutation = False
+        arbitrary_types_allowed = True
 
 
 class ExperimentConfig(_ExperimentConfig):

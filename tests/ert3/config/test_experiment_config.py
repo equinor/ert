@@ -51,3 +51,20 @@ def test_unkown_sensitivity_algorithm():
         match=r"unexpected value; permitted: 'one-at-a-time' \(",
     ):
         ert3.config.load_experiment_config(raw_config)
+
+
+def test_unknown_field():
+    raw_config = {"type": "evaluation", "unknown": "field"}
+    with pytest.raises(
+        ert3.exceptions.ConfigValidationError,
+        match="extra fields not permitted",
+    ):
+        ert3.config.load_experiment_config(raw_config)
+
+
+def test_immutable_field():
+    raw_config = {"type": "evaluation"}
+    experiment_config = ert3.config.load_experiment_config(raw_config)
+
+    with pytest.raises(TypeError, match="immutable and does not support"):
+        experiment_config.type = "toggle"
