@@ -17,11 +17,6 @@ class FeatureToggling:
         ),
         "ensemble-evaluator": _Feature(
             default_enabled=True,
-            msg="The new ensemble evaluator is experimental! "
-            "The new evaluator will offer the user an expressive, "
-            "high-level configuration system in YAML, as "
-            "well as evaluating ensembles in a concurrent, cloud-ready "
-            "and distributed way.",
         ),
     }
 
