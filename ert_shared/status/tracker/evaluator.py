@@ -129,66 +129,21 @@ class EvaluatorTracker:
         drainer_logger.debug("tasks complete")
 
     def track(self):
-        done: bool = False
-        while not done:
-            events: List[CloudEvent] = []
-
-            while True:
+        while True:
+            event = self._work_queue.get()
+            if event is EvaluatorTracker.DONE:
                 try:
-                    event: CloudEvent = self._work_queue.get_nowait()
-                    if event is EvaluatorTracker.DONE:
-                        done = True
-                        break
-                    events.append(event)
-                except queue.Empty:
-                    break
-
-            if events:
-                yield from self._batch(events)
-            time.sleep(self._general_interval)
-
-        try:
-            yield EndEvent(
-                failed=self._model.hasRunFailed(),
-                failed_msg=self._model.getFailMessage(),
-            )
-        except GeneratorExit:
-            # consumers may exit at this point, make sure the last
-            # task is marked as done
-            pass
-        self._work_queue.task_done()
-
-    def _flush(self, batch: List[CloudEvent]) -> SnapshotUpdateEvent:
-        iter_: int = batch[0].data["iter"]
-        partial: PartialSnapshot = PartialSnapshot(self._iter_snapshot[iter_])
-        for event in batch:
-            partial.from_cloudevent(event)
-        self._iter_snapshot[iter_].merge_event(partial)
-        update_event = SnapshotUpdateEvent(
-            phase_name=self._model.getPhaseName(),
-            current_phase=self._model.currentPhase(),
-            total_phases=self._model.phaseCount(),
-            indeterminate=self._model.isIndeterminate(),
-            progress=self._progress(),
-            iteration=iter_,
-            partial_snapshot=partial,
-        )
-        for _ in range(len(batch)):
-            self._work_queue.task_done()
-        return update_event
-
-    def _batch(self, events):
-        batch: List[CloudEvent] = []
-
-        for event in events:
-            if event["type"] == ids.EVTYPE_EE_SNAPSHOT:
-
-                # A new iteration, so ensure any updates for the previous one,
-                # is emitted.
-                if batch:
-                    yield self._flush(batch)
-                batch = []
-
+                    yield EndEvent(
+                        failed=self._model.hasRunFailed(),
+                        failed_msg=self._model.getFailMessage(),
+                    )
+                except GeneratorExit:
+                    # consumers may exit at this point, make sure the last
+                    # task is marked as done
+                    pass
+                self._work_queue.task_done()
+                break
+            elif event["type"] == ids.EVTYPE_EE_SNAPSHOT:
                 iter_ = event.data["iter"]
                 snapshot = Snapshot(event.data)
                 self._iter_snapshot[iter_] = snapshot
@@ -201,18 +156,27 @@ class EvaluatorTracker:
                     iteration=iter_,
                     snapshot=snapshot,
                 )
-                self._work_queue.task_done()
             elif event["type"] == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
                 iter_ = event.data["iter"]
                 if iter_ not in self._iter_snapshot:
                     raise OutOfOrderSnapshotUpdateException(
                         f"got {ids.EVTYPE_EE_SNAPSHOT_UPDATE} without having stored snapshot for iter {iter_}"
                     )
-                batch.append(event)
-            else:
-                raise ValueError("got unexpected event type", event["type"])
-        if batch:
-            yield self._flush(batch)
+                partial = PartialSnapshot(self._iter_snapshot[iter_]).from_cloudevent(
+                    event
+                )
+                self._iter_snapshot[iter_].merge_event(partial)
+                yield SnapshotUpdateEvent(
+                    phase_name=self._model.getPhaseName(),
+                    current_phase=self._model.currentPhase(),
+                    total_phases=self._model.phaseCount(),
+                    indeterminate=self._model.isIndeterminate(),
+                    progress=self._progress(),
+                    iteration=iter_,
+                    partial_snapshot=partial,
+                )
+
+            self._work_queue.task_done()
 
     def is_finished(self):
         return not self._drainer_thread.is_alive()

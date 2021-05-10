@@ -40,7 +40,6 @@ logger = logging.getLogger(__name__)
 
 
 class EnsembleEvaluator:
-
     def __init__(self, ensemble, config, iter_, ee_id: str = "0"):
         # Without information on the iteration, the events emitted from the
         # evaluator are ambiguous. In the future, an experiment authority* will
