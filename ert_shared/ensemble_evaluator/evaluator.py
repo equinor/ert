@@ -310,8 +310,17 @@ class EnsembleEvaluator:
         ):
             await done
             logger.debug("Got done signal.")
-            # give NFS adaptors and Queue adaptors some time to read/send last events
-            await self._dispatchers_connected.join()
+            # Wait for dispatchers to disconnect if, but limit to 10 seconds
+            # in case of cancellation
+            timeout = (
+                10 if self._snapshot.get_status() == ENSEMBLE_STATE_CANCELLED else None
+            )
+            try:
+                await asyncio.wait_for(
+                    self._dispatchers_connected.join(), timeout=timeout
+                )
+            except asyncio.TimeoutError:
+                logger.debug("Timed out waiting for dispatchers to disconnect")
             await self._batcher.join()
             message = self.terminate_message()
             if self._clients:
