@@ -9,6 +9,7 @@ from typing import Optional
 import uuid
 from datetime import timedelta
 from functools import partial
+import time
 
 import prefect
 import cloudpickle
@@ -106,6 +107,7 @@ class PrefectEnsemble(_Ensemble):
         self._eval_proc = None
         self._ee_id: Optional[str] = None
         self._iens_to_task = {}
+        self._allow_cancel = multiprocessing.Event()
         super().__init__(self._reals, metadata={"iter": 0})
 
     def _get_reals(self):
@@ -221,6 +223,7 @@ class PrefectEnsemble(_Ensemble):
         )
         self._eval_proc.daemon = True
         self._eval_proc.start()
+        self._allow_cancel.set()
 
     def _evaluate(self, ee_config: EvaluatorServerConfig, ee_id):
         asyncio.set_event_loop(asyncio.get_event_loop())
@@ -286,8 +289,21 @@ class PrefectEnsemble(_Ensemble):
         threading.Thread(target=self._cancel).start()
 
     def _cancel(self):
+        logger.debug("cancelling, waiting for wakeup...")
+        self._allow_cancel.wait()
+        logger.debug("got wakeup, killing evaluation process...")
+
         if self._eval_proc is not None:
             os.kill(self._eval_proc.pid, signal.SIGINT)
+            start = time.time()
+            while self._eval_proc.is_alive() and time.time() - start < 3:
+                pass
+            if self._eval_proc.is_alive():
+                logger.debug(
+                    "Evaluation process is not responding to SIGINT, escalating to SIGKILL"
+                )
+                os.kill(self._eval_proc.pid, signal.SIGKILL)
+
         self._eval_proc = None
         event = CloudEvent(
             {

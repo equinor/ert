@@ -154,17 +154,17 @@ class _LegacyEnsemble(_Ensemble):
         threading.Thread(target=self._cancel).start()
 
     def _cancel(self):
+        asyncio.set_event_loop(asyncio.new_event_loop())
         logger.debug("cancelling, waiting for wakeup...")
         self._allow_cancel.wait()
         logger.debug("got wakeup, killing all jobs...")
         self._job_queue.kill_all_jobs()
         logger.debug("cancelling futures...")
         if self._aggregate_future.cancelled():
-            logger.debug("future was already cancelled")
-            return
-
-        self._aggregate_future.cancel()
-        logger.debug("cancelled")
+            logger.debug("aggregate future was already cancelled")
+        else:
+            self._aggregate_future.cancel()
+            logger.debug("aggregate future cancelled")
 
         out_cloudevent = CloudEvent(
             {
@@ -173,8 +173,7 @@ class _LegacyEnsemble(_Ensemble):
                 "id": str(uuid.uuid1()),
             }
         )
-        loop = asyncio.new_event_loop()
-        loop.run_until_complete(
+        asyncio.get_event_loop().run_until_complete(
             self.send_cloudevent(
                 self._config.dispatch_uri,
                 out_cloudevent,
@@ -182,4 +181,3 @@ class _LegacyEnsemble(_Ensemble):
                 cert=self._config.cert,
             )
         )
-        loop.close()
