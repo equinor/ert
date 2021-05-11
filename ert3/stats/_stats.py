@@ -80,6 +80,14 @@ class Gaussian(Distribution):
             ppf=ppf,
         )
 
+    @property
+    def mean(self) -> float:
+        return self._mean
+
+    @property
+    def std(self) -> float:
+        return self._std
+
 
 class Uniform(Distribution):
     def __init__(
@@ -112,3 +120,11 @@ class Uniform(Distribution):
             rvs=rvs,
             ppf=ppf,
         )
+
+    @property
+    def lower_bound(self) -> float:
+        return self._lower_bound
+
+    @property
+    def upper_bound(self) -> float:
+        return self._upper_bound

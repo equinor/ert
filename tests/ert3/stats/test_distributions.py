@@ -21,6 +21,9 @@ def approx(x, eps=0.2):
 def test_gaussian_distribution(size, mean, std):
     gauss = ert3.stats.Gaussian(mean, std, size=size)
 
+    assert gauss.mean == mean
+    assert gauss.std == std
+
     prev_samples = set()
     for _ in range(10):
         sample = gauss.sample()
@@ -45,6 +48,9 @@ def test_gaussian_distribution(size, mean, std):
 )
 def test_gaussian_distribution_index(index, mean, std):
     gauss = ert3.stats.Gaussian(mean, std, index=index)
+
+    assert gauss.mean == mean
+    assert gauss.std == std
 
     samples = {idx: [] for idx in index}
     for i in range(2000):
@@ -82,6 +88,9 @@ def test_gaussian_distribution_invalid():
 def test_uniform_distribution(size, lower_bound, upper_bound):
     uniform = ert3.stats.Uniform(lower_bound, upper_bound, size=size)
 
+    assert uniform.lower_bound == lower_bound
+    assert uniform.upper_bound == upper_bound
+
     prev_samples = set()
     for _ in range(10):
         sample = uniform.sample()
@@ -106,6 +115,9 @@ def test_uniform_distribution(size, lower_bound, upper_bound):
 )
 def test_uniform_distribution_index(index, lower_bound, upper_bound):
     uniform = ert3.stats.Uniform(lower_bound, upper_bound, index=index)
+
+    assert uniform.lower_bound == lower_bound
+    assert uniform.upper_bound == upper_bound
 
     samples = {idx: [] for idx in index}
     for i in range(1000):
