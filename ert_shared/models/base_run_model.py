@@ -81,10 +81,12 @@ class BaseRunModel(object):
             self.completed_realizations_mask = run_context.get_mask()
         except ErtRunError as e:
             self.completed_realizations_mask = BoolVector(default_value=False)
+            self.updateDetailedProgress()
             self._failed = True
             self._fail_message = str(e)
             self._simulationEnded()
         except UserWarning as e:
+            self.updateDetailedProgress()
             self._fail_message = str(e)
             self._simulationEnded()
 
