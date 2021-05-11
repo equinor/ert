@@ -49,7 +49,7 @@ def bind_socket(host: str, port: int) -> socket.socket:
 
     sock = socket.socket(family=family)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind((host, port))
+    sock.bind(("", port))  # binding to 0.0.0.0
     sock.set_inheritable(True)
     return sock
 
