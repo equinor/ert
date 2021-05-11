@@ -1,9 +1,12 @@
-from typing import Optional, Tuple, Callable
+from typing import Union, Optional, Tuple, Callable
 
 import numpy as np
 import scipy.stats
+from pydantic import StrictStr, StrictInt
 
 import ert3
+
+_IndexType = Tuple[Union[StrictStr, StrictInt], ...]
 
 
 class Distribution:
@@ -11,7 +14,7 @@ class Distribution:
         self,
         *,
         size: Optional[int],
-        index: Optional[Tuple[int, ...]],
+        index: Optional[_IndexType],
         rvs: Callable[[int], np.ndarray],
         ppf: Callable[[np.ndarray], np.ndarray]
     ) -> None:
@@ -20,6 +23,8 @@ class Distribution:
         if size is not None and index is not None:
             raise ValueError("Cannot create distribution with both size and index")
 
+        self._index: _IndexType = ()
+
         if size is not None:
             self._size = size
             self._as_array = True
@@ -27,13 +32,13 @@ class Distribution:
         elif index is not None:
             self._size = len(tuple(index))
             self._as_array = False
-            self._index = tuple(index)
+            self._index = tuple(idx for idx in index)
 
         self._raw_rvs = rvs
         self._raw_ppf = ppf
 
     @property
-    def index(self) -> Tuple[int, ...]:
+    def index(self) -> _IndexType:
         return self._index
 
     def _to_record(self, x: np.ndarray) -> ert3.data.Record:
@@ -60,7 +65,7 @@ class Gaussian(Distribution):
         std: float,
         *,
         size: Optional[int] = None,
-        index: Optional[Tuple[int, ...]] = None
+        index: Optional[_IndexType] = None
     ) -> None:
         self._mean = mean
         self._std = std
@@ -96,7 +101,7 @@ class Uniform(Distribution):
         upper_bound: float,
         *,
         size: Optional[int] = None,
-        index: Optional[Tuple[int, ...]] = None
+        index: Optional[_IndexType] = None
     ) -> None:
         self._lower_bound = lower_bound
         self._upper_bound = upper_bound
