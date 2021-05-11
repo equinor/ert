@@ -477,6 +477,13 @@ def test_unix_step_error(unused_tcp_port, tmpdir):
     )
 
 
+class _MockedPrefectEnsemble:
+    def __init__(self):
+        self._ee_id = "test_ee_id"
+
+    _on_task_failure = PrefectEnsemble._on_task_failure
+
+
 def test_on_task_failure(unused_tcp_port, tmpdir):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
@@ -484,6 +491,8 @@ def test_on_task_failure(unused_tcp_port, tmpdir):
     mock_ws_thread = threading.Thread(
         target=partial(_mock_ws, messages=messages), args=(host, unused_tcp_port)
     )
+
+    mock_ensemble = _MockedPrefectEnsemble()
 
     mock_ws_thread.start()
     script_location = (
@@ -509,7 +518,7 @@ def test_on_task_failure(unused_tcp_port, tmpdir):
                     ee_id="test_ee_id",
                     max_retries=3,
                     retry_delay=timedelta(seconds=1),
-                    on_failure=PrefectEnsemble._on_task_failure,
+                    on_failure=mock_ensemble._on_task_failure,
                 )
                 result = task(inputs=input_)
             flow_run = flow.run()
@@ -532,8 +541,65 @@ def test_on_task_failure(unused_tcp_port, tmpdir):
     assert expected_step_failed_messages == len(fail_step_messages)
 
 
+def test_on_task_failure_fail_step(unused_tcp_port, tmpdir):
+    host = "localhost"
+    url = f"ws://{host}:{unused_tcp_port}"
+    messages = []
+    mock_ws_thread = threading.Thread(
+        target=partial(_mock_ws, messages=messages), args=(host, unused_tcp_port)
+    )
+
+    mock_ensemble = _MockedPrefectEnsemble()
+
+    mock_ws_thread.start()
+    script_location = (
+        Path(SOURCE_DIR) / "test-data/local/prefect_test_case/unix_test_retry_script.py"
+    )
+    input_ = script_transmitter("script", script_location, storage_path=tmpdir)
+    with tmp() as runpath:
+        step = get_step(
+            step_name="test_step",
+            inputs=[
+                ("script", Path("unix_test_retry_script.py"), "application/x-python")
+            ],
+            outputs=[],
+            jobs=[("script", Path("unix_test_retry_script.py"), [runpath])],
+            type_="unix",
+        )
+
+        with prefect.context(url=url, token=None, cert=None):
+            output_trans = step_output_transmitters(step, storage_path=tmpdir)
+            with Flow("testing") as flow:
+                task = step.get_task(
+                    output_transmitters=output_trans,
+                    ee_id="test_ee_id",
+                    max_retries=1,
+                    retry_delay=timedelta(seconds=1),
+                    on_failure=mock_ensemble._on_task_failure,
+                )
+                result = task(inputs=input_)
+            flow_run = flow.run()
+
+    # Stop the mock evaluator WS server
+    with Client(url) as c:
+        c.send("stop")
+    mock_ws_thread.join()
+
+    task_result = flow_run.result[result]
+    assert not task_result.is_successful()
+    assert not flow_run.is_successful()
+
+    fail_job_messages = [msg for msg in messages if ids.EVTYPE_FM_JOB_FAILURE in msg]
+    fail_step_messages = [msg for msg in messages if ids.EVTYPE_FM_STEP_FAILURE in msg]
+
+    expected_job_failed_messages = 2
+    expected_step_failed_messages = 1
+    assert expected_job_failed_messages == len(fail_job_messages)
+    assert expected_step_failed_messages == len(fail_step_messages)
+
+
 @pytest.mark.timeout(60)
-def test_prefect_reties(unused_tcp_port, coefficients, tmpdir, function_config):
+def test_prefect_retries(unused_tcp_port, coefficients, tmpdir, function_config):
     def function_that_fails_once(coeffs):
         run_path = Path("ran_once")
         if not run_path.exists():
@@ -583,6 +649,64 @@ def test_prefect_reties(unused_tcp_port, coefficients, tmpdir, function_config):
         assert len(error_event_reals) == config["realizations"]
         assert "0" in error_event_reals
         assert "1" in error_event_reals
+
+
+@pytest.mark.timeout(60)
+def test_prefect_no_retries(unused_tcp_port, coefficients, tmpdir, function_config):
+    def function_that_fails_once(coeffs):
+        run_path = Path("ran_once")
+        if not run_path.exists():
+            run_path.touch()
+            raise RuntimeError("This is an expected ERROR")
+        run_path.unlink()
+        return []
+
+    with tmpdir.as_cwd():
+        pickle_func = cloudpickle.dumps(function_that_fails_once)
+        config = function_config
+        coeffs_trans = coefficient_transmitters(
+            coefficients, config.get(ids.STORAGE)["storage_path"]
+        )
+
+        service_config = EvaluatorServerConfig(unused_tcp_port)
+        config["realizations"] = len(coefficients)
+        config["executor"] = "local"
+        config["max_retries"] = 0
+        config["retry_delay"] = 1
+        config["steps"][0]["jobs"][0]["executable"] = pickle_func
+        config["inputs"] = {
+            iens: coeffs_trans[iens] for iens in range(len(coefficients))
+        }
+        config["outputs"] = output_transmitters(config)
+        config["dispatch_uri"] = service_config.dispatch_uri
+
+        ensemble = PrefectEnsemble(config)
+        evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
+
+        step_failed = False
+        job_failed = False
+        with evaluator.run() as mon:
+            for event in mon.track():
+                # Capture the job error messages
+                if event.data is not None and "This is an expected ERROR" in str(
+                    event.data
+                ):
+                    for real in event.data["reals"].values():
+                        for step in real["steps"].values():
+                            for job in step["jobs"].values():
+                                if job["status"] == "Failed":
+                                    job_failed = True
+                                    if step["status"] == "Failed":
+                                        step_failed = True
+
+                if event.data is not None and event.data.get("status") in [
+                    "Failed",
+                    "Stopped",
+                ]:
+                    mon.signal_done()
+        assert evaluator._snapshot.get_status() == "Failed"
+        assert job_failed
+        assert step_failed
 
 
 def dummy_get_flow(*args, **kwargs):
