@@ -26,7 +26,6 @@ from ert_shared.ensemble_evaluator.entity.ensemble import (
 )
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity.ensemble import create_file_io_builder
-from ert_shared.status.entity import state
 from prefect import Flow
 from prefect import context as prefect_context
 from prefect.executors import DaskExecutor, LocalDaskExecutor
@@ -159,8 +158,7 @@ class PrefectEnsemble(_Ensemble):
             real_builders.append(real_builder)
         return [builder.build() for builder in real_builders]
 
-    @staticmethod
-    def _on_task_failure(task, state):
+    def _on_task_failure(self, task, state):
         if prefect_context.task_run_count > task.max_retries:
             url = prefect_context.url
             token = prefect_context.token
