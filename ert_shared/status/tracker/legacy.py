@@ -90,7 +90,7 @@ class LegacyTracker:
             # If a new iteration is seen, an attempt at creating a full
             # snapshot event is made. If it can't be created, it is retried
             # until it can.
-            # NOTE: there's not timeout for this operation.
+            # NOTE: there's no timeout for this operation.
             if current_iter != iter_:
                 full_snapshot_event = self._full_snapshot_event(iter_)
                 if full_snapshot_event is None:
@@ -196,8 +196,9 @@ class LegacyTracker:
     def _retroactive_update_event(self):
         """Return generator producing update events for all queues that has run
         thus far."""
+        detailed_progress = self._model.getDetailedProgress()
         for iter_ in self._iter_queue:
-            partial = self._create_partial_snapshot(None, ({}, -1), iter_)
+            partial = self._create_partial_snapshot(None, detailed_progress, iter_)
 
             if partial is not None:
                 self._set_iter_snapshot(iter_, partial._snapshot)
