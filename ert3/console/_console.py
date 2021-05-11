@@ -11,7 +11,7 @@ import yaml
 
 import ert3
 
-from ert3.config import EnsembleConfig, StagesConfig, ExperimentConfig
+from ert3.config import EnsembleConfig, StagesConfig, ExperimentConfig, ParametersConfig
 
 
 _ERT3_DESCRIPTION = (
@@ -160,10 +160,12 @@ def _run(workspace: Path, args: Any) -> None:
     ensemble = _load_ensemble_config(workspace, args.experiment_name)
     stages_config = _load_stages_config(workspace)
     experiment_config = _load_experiment_config(workspace, args.experiment_name)
+    parameters_config = _load_parameters_config(workspace)
     ert3.engine.run(
         ensemble,
         stages_config,
         experiment_config,
+        parameters_config,
         workspace,
         args.experiment_name,
     )
@@ -177,8 +179,13 @@ def _export(workspace: Path, args: Any) -> None:
 def _record(workspace: Path, args: Any) -> None:
     assert args.sub_cmd == "record"
     if args.sub_record_cmd == "sample":
+        parameters_config = _load_parameters_config(workspace)
         ert3.engine.sample_record(
-            workspace, args.parameter_group, args.record_name, args.ensemble_size
+            workspace,
+            parameters_config,
+            args.parameter_group,
+            args.record_name,
+            args.ensemble_size,
         )
     elif args.sub_record_cmd == "load":
         ert3.engine.load_record(workspace, args.record_name, args.record_file)
@@ -260,3 +267,8 @@ def _load_experiment_config(workspace: Path, experiment_name: str) -> Experiment
     )
     with open(experiment_config) as f:
         return ert3.config.load_experiment_config(yaml.safe_load(f))
+
+
+def _load_parameters_config(workspace: Path) -> ParametersConfig:
+    with open(workspace / "parameters.yml") as f:
+        return ert3.config.load_parameters_config(yaml.safe_load(f))

@@ -2,7 +2,6 @@ import pathlib
 from typing import List, Dict
 
 import ert3
-from ert3.engine import _utils
 
 
 def _prepare_experiment(
@@ -23,12 +22,14 @@ def _prepare_experiment(
     )
 
 
+# pylint: disable=too-many-arguments
 def _prepare_experiment_record(
     record_name: str,
     record_source: List[str],
     ensemble_size: int,
     experiment_name: str,
     workspace_root: pathlib.Path,
+    parameters_config: ert3.config.ParametersConfig,
 ) -> None:
     if record_source[0] == "storage":
         assert len(record_source) == 2
@@ -44,6 +45,7 @@ def _prepare_experiment_record(
     elif record_source[0] == "stochastic":
         ert3.engine.sample_record(
             workspace_root,
+            parameters_config,
             record_source[1],
             record_name,
             ensemble_size,
@@ -55,6 +57,7 @@ def _prepare_experiment_record(
 
 def _prepare_evaluation(
     ensemble: ert3.config.EnsembleConfig,
+    parameters_config: ert3.config.ParametersConfig,
     workspace_root: pathlib.Path,
     experiment_name: str,
 ) -> None:
@@ -68,15 +71,23 @@ def _prepare_evaluation(
         record_source = input_record.source.split(".")
 
         _prepare_experiment_record(
-            record_name, record_source, ensemble.size, experiment_name, workspace_root
+            record_name,
+            record_source,
+            ensemble.size,
+            experiment_name,
+            workspace_root,
+            parameters_config,
         )
 
 
 def _load_ensemble_parameters(
     ensemble: ert3.config.EnsembleConfig,
+    parameters_config: ert3.config.ParametersConfig,
     workspace: pathlib.Path,
 ) -> Dict[str, ert3.stats.Distribution]:
-    parameters = _utils.load_parameters(workspace)
+    all_distributions = {
+        param.name: param.as_distribution() for param in parameters_config
+    }
 
     ensemble_parameters = {}
     for input_record in ensemble.input:
@@ -85,16 +96,19 @@ def _load_ensemble_parameters(
         assert len(record_source) == 2
         assert record_source[0] == "stochastic"
         parameter_group_name = record_source[1]
-        ensemble_parameters[record_name] = parameters[parameter_group_name]
+        ensemble_parameters[record_name] = all_distributions[parameter_group_name]
     return ensemble_parameters
 
 
 def _prepare_sensitivity(
     ensemble: ert3.config.EnsembleConfig,
+    parameters_config: ert3.config.ParametersConfig,
     workspace_root: pathlib.Path,
     experiment_name: str,
 ) -> None:
-    parameter_distributions = _load_ensemble_parameters(ensemble, workspace_root)
+    parameter_distributions = _load_ensemble_parameters(
+        ensemble, parameters_config, workspace_root
+    )
     input_records = ert3.algorithms.one_at_the_time(parameter_distributions)
 
     _prepare_experiment(workspace_root, experiment_name, ensemble, len(input_records))
@@ -164,18 +178,24 @@ def _evaluate(
     _store_responses(workspace_root, experiment_name, responses)
 
 
+# pylint: disable=too-many-arguments
 def run(
     ensemble: ert3.config.EnsembleConfig,
     stages_config: ert3.config.StagesConfig,
     experiment_config: ert3.config.ExperimentConfig,
+    parameters_config: ert3.config.ParametersConfig,
     workspace_root: pathlib.Path,
     experiment_name: str,
 ) -> None:
 
     if experiment_config.type == "evaluation":
-        _prepare_evaluation(ensemble, workspace_root, experiment_name)
+        _prepare_evaluation(
+            ensemble, parameters_config, workspace_root, experiment_name
+        )
     elif experiment_config.type == "sensitivity":
-        _prepare_sensitivity(ensemble, workspace_root, experiment_name)
+        _prepare_sensitivity(
+            ensemble, parameters_config, workspace_root, experiment_name
+        )
     else:
         raise ValueError(f"Unknown experiment type {experiment_config.type}")
 

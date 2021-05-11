@@ -3,7 +3,6 @@ from typing import Optional
 from pathlib import Path
 
 import ert3
-from ert3.engine import _utils
 
 
 def load_record(workspace: Path, record_name: str, record_file: Path) -> None:
@@ -20,19 +19,26 @@ def load_record(workspace: Path, record_name: str, record_file: Path) -> None:
     )
 
 
+def _get_distribution(
+    parameter_group_name: str, parameters_config: ert3.config.ParametersConfig
+) -> ert3.stats.Distribution:
+    for parameter_group in parameters_config:
+        if parameter_group.name == parameter_group_name:
+            return parameter_group.as_distribution()
+
+    raise ValueError(f"No parameter group found named: {parameter_group_name}")
+
+
+# pylint: disable=too-many-arguments
 def sample_record(
     workspace: Path,
+    parameters_config: ert3.config.ParametersConfig,
     parameter_group_name: str,
     record_name: str,
     ensemble_size: int,
     experiment_name: Optional[str] = None,
 ) -> None:
-    parameters = _utils.load_parameters(workspace)
-
-    if parameter_group_name not in parameters:
-        raise ValueError(f"No parameter group found named: {parameter_group_name}")
-    distribution = parameters[parameter_group_name]
-
+    distribution = _get_distribution(parameter_group_name, parameters_config)
     ensrecord = ert3.data.EnsembleRecord(
         records=[distribution.sample() for _ in range(ensemble_size)]
     )
