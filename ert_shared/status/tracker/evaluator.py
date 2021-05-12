@@ -110,7 +110,7 @@ class EvaluatorTracker:
                 # on information about evaluations/experiments`
                 time.sleep(self._next_ensemble_evaluator_wait_time)
 
-            except ConnectionRefusedError as e:
+            except (ConnectionRefusedError, ClientError) as e:
                 if not self._model.isFinished():
                     drainer_logger.debug(f"connection refused: {e}")
                     failures += 1
