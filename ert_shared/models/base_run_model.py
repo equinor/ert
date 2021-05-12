@@ -80,8 +80,8 @@ class BaseRunModel(object):
             self.updateDetailedProgress()
             self.completed_realizations_mask = run_context.get_mask()
         except ErtRunError as e:
-            self.completed_realizations_mask = BoolVector(default_value=False)
             self.updateDetailedProgress()
+            self.completed_realizations_mask = BoolVector(default_value=False)
             self._failed = True
             self._fail_message = str(e)
             self._simulationEnded()
@@ -214,12 +214,10 @@ class BaseRunModel(object):
         return not (any((job.status != "Success" for job in progress)))
 
     def update_progress_for_index(self, iteration, idx, run_arg):
-        if not self._run_context.is_active(idx):
-            return
         try:
             # will throw if not yet submitted (is in a limbo state)
             queue_index = run_arg.getQueueIndex()
-        except ValueError:
+        except (ValueError, AttributeError):
             return
 
         status = None
