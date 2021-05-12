@@ -274,18 +274,17 @@ class LegacyTracker:
                 f"partial: iter_to_progress iter ({progress_iter}) differed from run_context ({iter_})"
             )
 
-        for iens, _ in _enumerate_run_context(run_context):
-            if not _is_iens_active(iens, run_context):
+        for real_id, real in snapshot.get_reals().items():
+            if not real.active:
                 continue
-
-            progress = iter_to_progress[iter_].get(iens, None)
+            progress = iter_to_progress[iter_].get(int(real_id), None)
             if not progress:
                 continue
 
             jobs = progress[0]
             for idx, fm in enumerate(jobs):
                 partial.update_job(
-                    str(iens),  # real_id
+                    real_id,
                     "0",
                     str(idx),
                     Job(
