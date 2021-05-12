@@ -65,7 +65,7 @@ class ProgressDelegate(QStyledItemDelegate):
 
         nr_reals = data["nr_reals"]
         status = data["status"]
-        d = math.ceil(option.rect.width() / nr_reals)
+        delta = option.rect.width() / nr_reals
 
         painter.save()
 
@@ -81,9 +81,9 @@ class ProgressDelegate(QStyledItemDelegate):
                 continue
 
             state_progress = status[state]
-            x = option.rect.x() + i * d
+            x = math.ceil(option.rect.x() + i * delta)
             y = option.rect.y()
-            w = state_progress * d
+            w = math.ceil(state_progress * delta)
             h = option.rect.height()
             color = QColor(*color_ref)
 
