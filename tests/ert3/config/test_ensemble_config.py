@@ -1,7 +1,6 @@
 import pytest
 import pydantic
 import ert3
-from ert3.config import _ensemble_config
 from copy import deepcopy
 
 
@@ -18,7 +17,7 @@ def base_ensemble_config():
 
 
 def test_entry_point(base_ensemble_config):
-    config = _ensemble_config.load_ensemble_config(base_ensemble_config)
+    config = ert3.config.load_ensemble_config(base_ensemble_config)
     assert config.size == 1000
     assert config.forward_model.driver == "local"
     assert config.forward_model.stage == "evaluate_polynomial"
@@ -28,31 +27,28 @@ def test_entry_point(base_ensemble_config):
 def test_config(driver, base_ensemble_config):
     config_dict = deepcopy(base_ensemble_config)
     config_dict["forward_model"]["driver"] = driver
-    config = _ensemble_config.EnsembleConfig(**config_dict)
+    config = ert3.config.load_ensemble_config(config_dict)
     assert config.size == 1000
     assert config.forward_model.driver == driver
 
 
-def test_forward_model_default_driver():
-    config = _ensemble_config.ForwardModel(
-        **{
-            "stage": "some_name",
-        }
-    )
-    assert config.driver == "local"
+def test_forward_model_default_driver(base_ensemble_config):
+    base_ensemble_config["forward_model"].pop("driver")
+    config = ert3.config.load_ensemble_config(base_ensemble_config)
+    assert config.forward_model.driver == "local"
 
 
-def test_forward_model_invalid_driver():
-    config = {
+def test_forward_model_invalid_driver(base_ensemble_config):
+    base_ensemble_config["forward_model"] = {
         "driver": "not_installed_driver",
         "stage": "some_name",
     }
 
     with pytest.raises(
-        pydantic.error_wrappers.ValidationError,
+        ert3.exceptions.ConfigValidationError,
         match="unexpected value; permitted: 'local'",
     ):
-        _ensemble_config.ForwardModel(**config)
+        ert3.config.load_ensemble_config(base_ensemble_config)
 
 
 @pytest.mark.parametrize(
@@ -61,23 +57,25 @@ def test_forward_model_invalid_driver():
         ({"source": "some.source", "record": "coeffs"}, "some.source", "coeffs"),
     ],
 )
-def test_input(input_config, expected_source, expected_record):
-    config = _ensemble_config.Input(**input_config)
-    assert config.source == expected_source
-    assert config.record == expected_record
+def test_input(input_config, expected_source, expected_record, base_ensemble_config):
+    base_ensemble_config["input"] = [input_config]
+    config = ert3.config.load_ensemble_config(base_ensemble_config)
+    assert config.input[0].source == expected_source
+    assert config.input[0].record == expected_record
 
 
 @pytest.mark.parametrize(
     "input_config, expected_error",
     [
-        ({}, "2 validation errors for Input"),
-        ({"record": "coeffs"}, "error for Input\nsource"),
-        ({"source": "some.source"}, "error for Input\nrecord"),
+        ({}, "2 validation errors for EnsembleConfig"),
+        ({"record": "coeffs"}, "source\n  field required"),
+        ({"source": "some.source"}, "record\n  field required"),
     ],
 )
-def test_invalid_input(input_config, expected_error):
-    with pytest.raises(pydantic.error_wrappers.ValidationError, match=expected_error):
-        _ensemble_config.Input(**input_config)
+def test_invalid_input(input_config, expected_error, base_ensemble_config):
+    base_ensemble_config["input"] = [input_config]
+    with pytest.raises(ert3.exceptions.ConfigValidationError, match=expected_error):
+        ert3.config.load_ensemble_config(base_ensemble_config)
 
 
 def test_immutable_base(base_ensemble_config):
