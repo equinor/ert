@@ -437,7 +437,7 @@ def test_cli_validation_experiment_function(capsys):
     [
         (
             {"name": "name", "type": "unix", "input": [], "output": []},
-            "not a valid list",
+            "not a valid tuple",
         ),
         (
             [{"name": "name", "type": "unix", "input": [], "output": []}],
