@@ -1,5 +1,5 @@
 import sys
-from typing import List, Optional, Dict, Any
+from typing import Tuple, Optional, Dict, Any
 from pydantic import BaseModel, ValidationError
 
 import ert3
@@ -31,7 +31,7 @@ class Input(_EnsembleConfig):
 
 class EnsembleConfig(_EnsembleConfig):
     forward_model: ForwardModel
-    input: List[Input]
+    input: Tuple[Input, ...]
     size: Optional[int] = None
 
 
