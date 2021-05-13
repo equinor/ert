@@ -1,7 +1,7 @@
 from importlib.abc import Loader
 import importlib.util
 import mimetypes
-from typing import Callable, List, cast, Union, Dict, Any
+from typing import Callable, Tuple, cast, Union, Dict, Any
 
 from pydantic import BaseModel, FilePath, ValidationError, validator
 import ert3
@@ -69,8 +69,8 @@ class TransportableCommand(_MimeBase):
 
 class _Step(_StagesConfig):
     name: str
-    input: List[Record]
-    output: List[Record]
+    input: Tuple[Record, ...]
+    output: Tuple[Record, ...]
 
 
 class Function(_Step):
@@ -82,12 +82,12 @@ class Function(_Step):
 
 
 class Unix(_Step):
-    script: List[str]
-    transportable_commands: List[TransportableCommand]
+    script: Tuple[str, ...]
+    transportable_commands: Tuple[TransportableCommand, ...]
 
 
 class StagesConfig(BaseModel):
-    __root__: List[Union[Function, Unix]]
+    __root__: Tuple[Union[Function, Unix], ...]
 
     def step_from_key(self, key: str) -> Union[Function, Unix, None]:
         return next((step for step in self if step.name == key), None)

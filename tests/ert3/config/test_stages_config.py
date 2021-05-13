@@ -43,6 +43,11 @@ def base_function_stage_config(tmpdir):
     yield config
 
 
+@pytest.fixture(params=["base_unix_stage_config", "base_function_stage_config"])
+def base_stage_config(request):
+    yield request.getfixturevalue(request.param)
+
+
 def test_entry_point(base_unix_stage_config):
     config = ert3.config.load_stages_config(base_unix_stage_config)
     config = config[0]
@@ -166,7 +171,100 @@ def test_multi_stages_get_script(base_unix_stage_config, base_function_stage_con
     config = ert3.config.load_stages_config(multi_stage_config)
 
     step1 = config.step_from_key("unix_stage")
-    assert step1.script == ["poly --help"]
+    assert [cmd for cmd in step1.script] == ["poly --help"]
     step2 = config.step_from_key("function_stage")
     assert isinstance(step2.function, Callable)
     assert step2.function.__name__ == "sum"
+
+
+def test_base_immutable(base_stage_config):
+    config = ert3.config.load_stages_config(base_stage_config)
+
+    with pytest.raises(TypeError, match="does not support item assignment"):
+        config[0] = config[0]
+
+
+def test_stage_immutable(base_stage_config):
+    config = ert3.config.load_stages_config(base_stage_config)
+
+    with pytest.raises(TypeError, match="does not support item assignment"):
+        config[0].name = "new-name"
+
+
+def test_stage_unknown_field(base_stage_config):
+    base_stage_config[0]["unknown"] = "field"
+    with pytest.raises(
+        ert3.exceptions.ConfigValidationError,
+        match="extra fields not permitted",
+    ):
+        ert3.config.load_stages_config(base_stage_config)
+
+
+def test_stage_input_immutable(base_stage_config):
+    config = ert3.config.load_stages_config(base_stage_config)
+
+    with pytest.raises(TypeError, match="does not support item assignment"):
+        config[0].input[0] = None
+
+    with pytest.raises(TypeError, match="does not support item assignment"):
+        config[0].input[0].record = None
+
+
+def test_stage_input_unknown_field(base_stage_config):
+    base_stage_config[0]["input"][0]["unknown"] = "field"
+
+    with pytest.raises(
+        ert3.exceptions.ConfigValidationError,
+        match="extra fields not permitted",
+    ):
+        ert3.config.load_stages_config(base_stage_config)
+
+
+def test_stage_output_immutable(base_stage_config):
+    config = ert3.config.load_stages_config(base_stage_config)
+
+    with pytest.raises(TypeError, match="does not support item assignment"):
+        config[0].output[0] = None
+
+    with pytest.raises(TypeError, match="does not support item assignment"):
+        config[0].output[0].record = None
+
+
+def test_stage_output_unknown_field(base_stage_config):
+    base_stage_config[0]["output"][0]["unknown"] = "field"
+
+    with pytest.raises(
+        ert3.exceptions.ConfigValidationError,
+        match="extra fields not permitted",
+    ):
+        ert3.config.load_stages_config(base_stage_config)
+
+
+def test_stage_transportable_command_immutable(base_unix_stage_config):
+    config = ert3.config.load_stages_config(base_unix_stage_config)
+
+    with pytest.raises(TypeError, match="does not support item assignment"):
+        config[0].transportable_commands[0] = None
+
+    with pytest.raises(TypeError, match="does not support item assignment"):
+        config[0].transportable_commands[0].name = "some-name"
+
+
+def test_stage_transportable_command_unknown_field(base_unix_stage_config):
+    base_unix_stage_config[0]["transportable_commands"][0]["unknown"] = "field"
+
+    with pytest.raises(
+        ert3.exceptions.ConfigValidationError,
+        match="extra fields not permitted",
+    ):
+        ert3.config.load_stages_config(base_unix_stage_config)
+
+
+def test_stage_script_immutable(base_unix_stage_config):
+    config = ert3.config.load_stages_config(base_unix_stage_config)
+
+    with pytest.raises(TypeError, match="does not support item assignment"):
+        config[0].script[0] = None
+
+    with pytest.raises(TypeError, match="does not support item assignment"):
+        config[0].script[0][0] = "x"
