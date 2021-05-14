@@ -20,11 +20,6 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
-from ert_shared.storage.extraction import (
-    post_ensemble_data,
-    post_ensemble_results,
-    post_update_data,
-)
 
 import logging
 
@@ -128,7 +123,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         # Push update data to new storage
         analysis_module_name = self.ert().analysisConfig().activeModuleName()
-        update_id = post_update_data(
+        update_id = self._post_update_data(
             parent_ensemble_id=ensemble_id, algorithm=analysis_module_name
         )
 
@@ -150,9 +145,7 @@ class MultipleDataAssimilation(BaseRunModel):
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
 
         # Push ensemble, parameters, observations to new storage
-        new_ensemble_id = post_ensemble_data(
-            update_id=update_id, ensemble_size=self._ensemble_size
-        )
+        new_ensemble_id = self._post_ensemble_data(update_id=update_id)
 
         phase_string = "Running forecast for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=False)
@@ -171,7 +164,7 @@ class MultipleDataAssimilation(BaseRunModel):
             )
 
         # Push simulation results to storage
-        post_ensemble_results(new_ensemble_id)
+        self._post_ensemble_results(new_ensemble_id)
 
         num_successful_realizations += arguments.get("prev_successful_realizations", 0)
         self.checkHaveSufficientRealizations(num_successful_realizations)

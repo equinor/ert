@@ -37,7 +37,7 @@ from ert_gui.simulation.view.realization import RealizationWidget
 from ert_gui.model.progress_proxy import ProgressProxyModel
 
 
-_TOTAL_PROGRESS_TEMPLATE = "Total progress {}%"
+_TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
 
 
 class RunDialog(QDialog):
@@ -69,7 +69,12 @@ class RunDialog(QDialog):
 
         progress_proxy_model = ProgressProxyModel(self._snapshot_model, parent=self)
 
-        self._total_progress_label = QLabel(_TOTAL_PROGRESS_TEMPLATE.format(0), self)
+        self._total_progress_label = QLabel(
+            _TOTAL_PROGRESS_TEMPLATE.format(
+                total_progress=0, phase_name=run_model.getPhaseName()
+            ),
+            self,
+        )
 
         self._total_progress_bar = QProgressBar(self)
         self._total_progress_bar.setRange(0, 100)
@@ -295,7 +300,11 @@ class RunDialog(QDialog):
         self.restart_button.setVisible(self.has_failed_realizations())
         self.restart_button.setEnabled(self._run_model.support_restart)
         self._total_progress_bar.setValue(100)
-        self._total_progress_label.setText(_TOTAL_PROGRESS_TEMPLATE.format(100))
+        self._total_progress_label.setText(
+            _TOTAL_PROGRESS_TEMPLATE.format(
+                total_progress=100, phase_name=self._run_model.getPhaseName()
+            )
+        )
 
         if failed:
             QMessageBox.critical(
@@ -323,7 +332,9 @@ class RunDialog(QDialog):
             progress = int(event.progress * 100)
             self._total_progress_bar.setValue(progress)
             self._total_progress_label.setText(
-                _TOTAL_PROGRESS_TEMPLATE.format(progress)
+                _TOTAL_PROGRESS_TEMPLATE.format(
+                    total_progress=progress, phase_name=event.phase_name
+                )
             )
 
         elif isinstance(event, SnapshotUpdateEvent):
@@ -335,7 +346,9 @@ class RunDialog(QDialog):
             progress = int(event.progress * 100)
             self._total_progress_bar.setValue(progress)
             self._total_progress_label.setText(
-                _TOTAL_PROGRESS_TEMPLATE.format(progress)
+                _TOTAL_PROGRESS_TEMPLATE.format(
+                    total_progress=progress, phase_name=event.phase_name
+                )
             )
 
     def has_failed_realizations(self):
