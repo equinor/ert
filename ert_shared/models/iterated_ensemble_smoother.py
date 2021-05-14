@@ -4,12 +4,6 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared import ERT
 
-from ert_shared.storage.extraction import (
-    post_ensemble_data,
-    post_ensemble_results,
-    post_update_data,
-)
-
 
 class IteratedEnsembleSmoother(BaseRunModel):
     def __init__(self):
@@ -37,9 +31,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.ert().getEnkfSimulationRunner().createRunPath(run_context)
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
         # create ensemble
-        ensemble_id = post_ensemble_data(
-            ensemble_size=self._ensemble_size, update_id=update_id
-        )
+        ensemble_id = self._post_ensemble_data(update_id=update_id)
         self.setPhaseName("Running forecast...", indeterminate=False)
         if FeatureToggling.is_enabled("ensemble-evaluator"):
             ee_config = arguments["ee_config"]
@@ -58,7 +50,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Post processing...", indeterminate=True)
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ert=ERT.ert)
-        post_ensemble_results(ensemble_id)
+        self._post_ensemble_results(ensemble_id)
         return ensemble_id
 
     def createTargetCaseFileSystem(self, phase, target_case_format):
@@ -80,7 +72,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         # Push update data to new storage
         analysis_module_name = self.ert().analysisConfig().activeModuleName()
-        update_id = post_update_data(
+        update_id = self._post_update_data(
             parent_ensemble_id=ensemble_id, algorithm=analysis_module_name
         )
 

@@ -1,5 +1,11 @@
+from typing import Optional
+from ert_shared.storage.extraction import (
+    post_ensemble_data,
+    post_ensemble_results,
+    post_update_data,
+)
 from res.enkf.ert_run_context import ErtRunContext
-from ert_shared.feature_toggling import FeatureToggling
+from ert_shared.feature_toggling import FeatureToggling, feature_enabled
 import logging
 import time
 import uuid
@@ -370,3 +376,25 @@ class BaseRunModel(object):
 
     def get_run_context(self) -> ErtRunContext:
         return self._run_context
+
+    @feature_enabled("new-storage")
+    def _post_ensemble_data(self, update_id: Optional[str] = None) -> str:
+        self.setPhaseName("Uploading data...")
+        ensemble_id = post_ensemble_data(
+            ensemble_size=self._ensemble_size, update_id=update_id
+        )
+        self.setPhaseName("Uploading done")
+        return ensemble_id
+
+    @feature_enabled("new-storage")
+    def _post_ensemble_results(self, ensemble_id: str) -> None:
+        self.setPhaseName("Uploading results...")
+        post_ensemble_results(ensemble_id)
+        self.setPhaseName("Uploading done")
+
+    @feature_enabled("new-storage")
+    def _post_update_data(self, parent_ensemble_id: str, algorithm: str) -> str:
+        self.setPhaseName("Uploading update...")
+        update_id = post_update_data(parent_ensemble_id, algorithm)
+        self.setPhaseName("Uploading done")
+        return update_id
