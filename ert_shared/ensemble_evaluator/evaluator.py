@@ -378,9 +378,19 @@ class EnsembleEvaluator:
         return self._snapshot.get_successful_realizations()
 
     def run_and_get_successful_realizations(self):
-        with self.run() as mon:
-            for _ in mon.track():
-                pass
+        try:
+            with self.run() as mon:
+                for _ in mon.track():
+                    pass
+        except ConnectionRefusedError as e:
+            logger.debug(
+                f"run_and_get_successful_realizations caught {e}, cancelling or stopping ensemble..."
+            )
+            if self._ensemble.is_cancellable():
+                self._ensemble.cancel()
+            else:
+                self._stop()
+            self._ws_thread.join()
         return self.get_successful_realizations()
 
     @staticmethod
