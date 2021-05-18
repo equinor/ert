@@ -33,7 +33,10 @@ class OutOfOrderSnapshotUpdateException(ValueError):
 
 
 class EvaluatorTracker:
-    DONE = None
+    DONE = "done"
+    CONNECTION_ERROR = "connection_error"
+
+    MAX_FAILURES = 10
 
     def __init__(
         self,
@@ -114,16 +117,17 @@ class EvaluatorTracker:
                 if not self._model.isFinished():
                     drainer_logger.debug(f"connection refused: {e}")
                     failures += 1
-                    if failures == 10:
+                    if failures == EvaluatorTracker.MAX_FAILURES:
                         drainer_logger.debug("giving up.")
-                        raise e
+                        self._work_queue.put(EvaluatorTracker.CONNECTION_ERROR)
+                        return
             else:
                 failures = 0
 
         drainer_logger.debug(
             "observed that model was finished, waiting tasks completion..."
         )
-        # The model has finished, we indicate this by sending a None
+        # The model has finished, we indicate this by sending a DONE
         self._work_queue.put(EvaluatorTracker.DONE)
         self._work_queue.join()
         drainer_logger.debug("tasks complete")
@@ -131,12 +135,18 @@ class EvaluatorTracker:
     def track(self):
         while True:
             event = self._work_queue.get()
-            if event is EvaluatorTracker.DONE:
+            if isinstance(event, str):
                 try:
-                    yield EndEvent(
-                        failed=self._model.hasRunFailed(),
-                        failed_msg=self._model.getFailMessage(),
-                    )
+                    if event == EvaluatorTracker.DONE:
+                        yield EndEvent(
+                            failed=self._model.hasRunFailed(),
+                            failed_msg=self._model.getFailMessage(),
+                        )
+                    elif event == EvaluatorTracker.CONNECTION_ERROR:
+                        yield EndEvent(
+                            failed=True,
+                            failed_msg="Connection error",
+                        )
                 except GeneratorExit:
                     # consumers may exit at this point, make sure the last
                     # task is marked as done
