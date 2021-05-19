@@ -4,6 +4,7 @@ import asyncio
 import ssl
 import threading
 from unittest.mock import Mock
+from ert_shared.ensemble_evaluator.entity import snapshot
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_STARTED,
     JOB_STATE_FAILURE,
@@ -210,6 +211,61 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                     assert (
                         False
                     ), f"got unexpected event {undexpected_event} from monitor"
+
+
+def test_ensure_multi_level_events_in_order(evaluator):
+    with evaluator.run() as monitor:
+        events = monitor.track()
+
+        host = evaluator._config.host
+        port = evaluator._config.port
+        token = evaluator._config.token
+        cert = evaluator._config.cert
+
+        snapshot_event = next(events)
+        assert snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
+        with Client(host, port, "/dispatch", cert=cert, token=token) as dispatch1:
+            send_dispatch_event(
+                dispatch1,
+                identifiers.EVTYPE_ENSEMBLE_STARTED,
+                f"/ert/ee/{evaluator._ee_id}/ensemble",
+                "event0",
+                {},
+            )
+            send_dispatch_event(
+                dispatch1,
+                identifiers.EVTYPE_FM_STEP_SUCCESS,
+                f"/ert/ee/{evaluator._ee_id}/real/0/step/0",
+                "event1",
+                {},
+            )
+            send_dispatch_event(
+                dispatch1,
+                identifiers.EVTYPE_FM_STEP_SUCCESS,
+                f"/ert/ee/{evaluator._ee_id}/real/1/step/0",
+                "event2",
+                {},
+            )
+            send_dispatch_event(
+                dispatch1,
+                identifiers.EVTYPE_ENSEMBLE_STOPPED,
+                f"/ert/ee/{evaluator._ee_id}/ensemble",
+                "event3",
+                {},
+            )
+        monitor.signal_done()
+        events = list(events)
+
+        # Without making too many assumptions about what events to expect, it
+        # should be reasonable to expect that if an event contains information
+        # about realizations, the state of the ensemble up until that point
+        # should be not final (i.e. not cancelled, stopped, failed).
+        ensemble_state = snapshot_event.data.get("status")
+        for event in events:
+            if event.data:
+                if "reals" in event.data:
+                    assert ensemble_state == ENSEMBLE_STATE_STARTED
+                ensemble_state = event.data.get("status", ensemble_state)
 
 
 def test_monitor_stop(evaluator):

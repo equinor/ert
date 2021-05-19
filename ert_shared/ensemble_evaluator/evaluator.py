@@ -74,22 +74,22 @@ class EnsembleEvaluator:
             name="ert_ee_run_server", target=self._run_server, args=(self._loop,)
         )
 
-    def _register_event_handlers(self, dispatcher):
+    def _register_event_handlers(self, dispatcher: Dispatcher):
         dispatcher.register_event_handler(identifiers.EVGROUP_FM_ALL, batching=True)(
             self._fm_handler
         )
-        dispatcher.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STOPPED)(
-            self._ensemble_stopped_handler
-        )
-        dispatcher.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STARTED)(
-            self._ensemble_started_handler
-        )
-        dispatcher.register_event_handler(identifiers.EVTYPE_ENSEMBLE_CANCELLED)(
-            self._ensemble_cancelled_handler
-        )
-        dispatcher.register_event_handler(identifiers.EVTYPE_ENSEMBLE_FAILED)(
-            self._ensemble_failed_handler
-        )
+        dispatcher.register_event_handler(
+            identifiers.EVTYPE_ENSEMBLE_STOPPED, batching=True
+        )(self._ensemble_stopped_handler)
+        dispatcher.register_event_handler(
+            identifiers.EVTYPE_ENSEMBLE_STARTED, batching=True
+        )(self._ensemble_started_handler)
+        dispatcher.register_event_handler(
+            identifiers.EVTYPE_ENSEMBLE_CANCELLED, batching=True
+        )(self._ensemble_cancelled_handler)
+        dispatcher.register_event_handler(
+            identifiers.EVTYPE_ENSEMBLE_FAILED, batching=True
+        )(self._ensemble_failed_handler)
 
     @staticmethod
     def create_snapshot(ensemble):
@@ -125,38 +125,42 @@ class EnsembleEvaluator:
             snapshot_mutate_event.from_cloudevent(event)
         await self._send_snapshot_update(snapshot_mutate_event)
 
-    async def _ensemble_stopped_handler(self, event):
-        self._result = event.data
-        if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
-            snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
-                event
-            )
-            await self._send_snapshot_update(snapshot_mutate_event)
+    async def _ensemble_stopped_handler(self, events):
+        for event in events:
+            self._result = event.data
+            if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
+                snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
+                    event
+                )
+                await self._send_snapshot_update(snapshot_mutate_event)
 
-    async def _ensemble_started_handler(self, event):
-        if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
-            snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
-                event
-            )
-            await self._send_snapshot_update(snapshot_mutate_event)
+    async def _ensemble_started_handler(self, events):
+        for event in events:
+            if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
+                snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
+                    event
+                )
+                await self._send_snapshot_update(snapshot_mutate_event)
 
-    async def _ensemble_cancelled_handler(self, event):
-        if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
-            snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
-                event
-            )
-            await self._send_snapshot_update(snapshot_mutate_event)
-            self._stop()
+    async def _ensemble_cancelled_handler(self, events):
+        for event in events:
+            if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
+                snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
+                    event
+                )
+                await self._send_snapshot_update(snapshot_mutate_event)
+                self._stop()
 
-    async def _ensemble_failed_handler(self, event):
-        if self._snapshot.get_status() not in [
-            ENSEMBLE_STATE_STOPPED,
-            ENSEMBLE_STATE_CANCELLED,
-        ]:
-            snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
-                event
-            )
-            await self._send_snapshot_update(snapshot_mutate_event)
+    async def _ensemble_failed_handler(self, events):
+        for event in events:
+            if self._snapshot.get_status() not in [
+                ENSEMBLE_STATE_STOPPED,
+                ENSEMBLE_STATE_CANCELLED,
+            ]:
+                snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
+                    event
+                )
+                await self._send_snapshot_update(snapshot_mutate_event)
 
     async def _send_snapshot_update(self, snapshot_mutate_event):
         self._snapshot.merge_event(snapshot_mutate_event)

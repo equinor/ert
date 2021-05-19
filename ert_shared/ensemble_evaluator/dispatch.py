@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, deque, OrderedDict
 
 import asyncio
 from typing import Optional
@@ -8,19 +8,24 @@ class Batcher:
     def __init__(self, timeout, loop=None):
         self._timeout = timeout
         self._running = True
-        self.__LOOKUP_MAP = defaultdict(list)
+        self._buffer = deque()
 
         # Schedule task
         self._task = asyncio.ensure_future(self._job(), loop=loop)
 
     async def _work(self):
-        for f in self.__LOOKUP_MAP:
-            events, self.__LOOKUP_MAP[f] = self.__LOOKUP_MAP[f], []
-            if events:
+        event_buffer, self._buffer = self._buffer, deque()
+        if event_buffer:
+            function_to_events_map = OrderedDict()
+            for f, event in event_buffer:
+                if f not in function_to_events_map:
+                    function_to_events_map[f] = []
+                function_to_events_map[f].append(event)
+            for f, events in function_to_events_map.items():
                 await f(events)
 
     def put(self, f, event):
-        self.__LOOKUP_MAP[f].append(event)
+        self._buffer.append((f, event))
 
     async def _job(self):
         while self._running:
