@@ -303,10 +303,10 @@ def _post_to_server(
 
 
 @feature_enabled("new-storage")
-def post_update_data(parent_ensemble_id: str, algorithm: str) -> str:
+def post_update_data(
+    ert: "LibresFacade", parent_ensemble_id: str, algorithm: str
+) -> str:
     server = ServerMonitor.get_instance()
-    ert = ERT.enkf_facade
-
     observations = _get_from_server(
         f"{server.fetch_url()}/ensembles/{parent_ensemble_id}/observations",
     ).json()
@@ -330,9 +330,8 @@ def post_update_data(parent_ensemble_id: str, algorithm: str) -> str:
 
 
 @feature_enabled("new-storage")
-def post_ensemble_results(ensemble_id: str) -> None:
+def post_ensemble_results(ert: "LibresFacade", ensemble_id: str) -> None:
     server = ServerMonitor.get_instance()
-    ert = ERT.enkf_facade
 
     observations = _get_from_server(
         f"{server.fetch_url()}/ensembles/{ensemble_id}/observations",
@@ -401,9 +400,11 @@ def post_ensemble_data(
     ensemble_id = ens_response.json()["id"]
 
     for param in parameters:
+        df = pd.DataFrame([p.tolist() for p in param["values"]])
         _post_to_server(
             f"{server.fetch_url()}/ensembles/{ensemble_id}/records/{param['name']}/matrix",
-            json=[p.tolist() for p in param["values"]],
+            data=df.to_csv(),
+            headers={"content-type": "text/csv"},
         )
 
     return ensemble_id

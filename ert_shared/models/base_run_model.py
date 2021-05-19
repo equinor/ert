@@ -1,4 +1,5 @@
 from typing import Optional
+
 from ert_shared.storage.extraction import (
     post_ensemble_data,
     post_ensemble_results,
@@ -379,7 +380,7 @@ class BaseRunModel(object):
     def _post_ensemble_data(self, update_id: Optional[str] = None) -> str:
         self.setPhaseName("Uploading data...")
         ensemble_id = post_ensemble_data(
-            ensemble_size=self._ensemble_size, update_id=update_id, ert=ERT.enkf_facade
+            ert=ERT.enkf_facade, ensemble_size=self._ensemble_size, update_id=update_id
         )
         self.setPhaseName("Uploading done")
         return ensemble_id
@@ -387,12 +388,16 @@ class BaseRunModel(object):
     @feature_enabled("new-storage")
     def _post_ensemble_results(self, ensemble_id: str) -> None:
         self.setPhaseName("Uploading results...")
-        post_ensemble_results(ensemble_id)
+        post_ensemble_results(ert=ERT.enkf_facade, ensemble_id=ensemble_id)
         self.setPhaseName("Uploading done")
 
     @feature_enabled("new-storage")
     def _post_update_data(self, parent_ensemble_id: str, algorithm: str) -> str:
         self.setPhaseName("Uploading update...")
-        update_id = post_update_data(parent_ensemble_id, algorithm)
+        update_id = post_update_data(
+            ert=ERT.enkf_facade,
+            parent_ensemble_id=parent_ensemble_id,
+            algorithms=algorithm,
+        )
         self.setPhaseName("Uploading done")
         return update_id

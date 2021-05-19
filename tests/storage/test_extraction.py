@@ -1,19 +1,22 @@
 import io
-import pytest
 import json
-from typing import List, Tuple
-from random import random, randint
+import os
 from pathlib import Path
+from random import random, randint
+from textwrap import dedent
+from typing import List, Tuple
 
+import numpy as np
 import pandas as pd
-from numpy.testing import assert_almost_equal
-
+import pytest
 from ecl.util.util import BoolVector
-from res.enkf.res_config import ResConfig
-from res.enkf.enkf_main import EnKFMain
+from numpy.testing import assert_almost_equal, assert_array_equal
 from res.enkf import ErtRunContext
-from ert_shared.storage import extraction
+from res.enkf.enkf_main import EnKFMain
+from res.enkf.res_config import ResConfig
+
 from ert_shared.libres_facade import LibresFacade
+from ert_shared.storage import extraction
 
 
 @pytest.mark.parametrize(
@@ -40,6 +43,19 @@ class ErtConfigBuilder:
     def __init__(self):
         self.ensemble_size = 1
         self._priors = {}
+        self._obs = []
+        self.job_script = None
+
+    def add_general_observation(self, observation_name, response_name, data):
+        """Add GENERAL_OBSERVATION
+
+        The `data` parameter is a pandas DataFrame. This is to be a two-column
+        frame where the first column are the values and the second column are
+        the errors. The index-column of this frame are the observation's indices
+        which link the observations to the responses.
+
+        """
+        self._obs.append((observation_name, response_name, data.copy()))
 
     def add_prior(self, name, entry):
         assert name not in self._priors
@@ -49,9 +65,10 @@ class ErtConfigBuilder:
     def build(self, path=None):
         if path is None:
             path = Path.cwd()
-        (path / "JOB").write_text("EXECUTABLE /usr/bin/true\n")
 
         self._build_ert(path)
+        self._build_job(path)
+        self._build_observations(path)
         self._build_priors(path)
 
         config = ResConfig(str(path / "test.ert"))
@@ -70,10 +87,53 @@ class ErtConfigBuilder:
         # Default
         f.write(
             "JOBNAME poly_%d\n"
+            "QUEUE_SYSTEM LOCAL\n"
+            "QUEUE_OPTION LOCAL MAX_RUNNING 50\n"
             f"NUM_REALIZATIONS {self.ensemble_size}\n"
-            "INSTALL_JOB job JOB\n"
-            "SIMULATION_JOB job\n"
         )
+
+    def _build_job(self, path):
+        f = (path / "test.ert").open("a")
+        f.write("INSTALL_JOB job JOB\n" "SIMULATION_JOB job\n")
+
+        if self.job_script is None:
+            (path / "JOB").write_text("EXECUTABLE /usr/bin/true\n")
+        else:
+            (path / "JOB").write_text(f"EXECUTABLE {path}/script\n")
+            (path / "script").write_text(self.job_script)
+
+    def _build_observations(self, path):
+        """
+        Creates a TIME_MAP and OBS_CONFIG entry in the ERT config. The TIME_MAP is
+        required for ERT to load the OBS_CONFIG.
+
+        Creates an 'obs_config.txt' file into which the generate observations are written.
+        """
+        if not self._obs:
+            return
+
+        (path / "time_map").write_text("1/10/2006\n")
+        with (path / "test.ert").open("a") as f:
+            f.write("OBS_CONFIG obs_config.txt\n")
+            f.write("TIME_MAP time_map\n")
+            f.write(
+                "GEN_DATA RES RESULT_FILE:poly_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII\n"
+            )
+
+        with (path / "obs_config.txt").open("w") as f:
+            for obs_name, resp_name, data in self._obs:
+                indices = ",".join(str(index) for index in data.index.tolist())
+
+                f.write(
+                    f"GENERAL_OBSERVATION {obs_name} {{\n"
+                    f"    DATA       = {resp_name};\n"
+                    f"    INDEX_LIST = {indices};\n"
+                    f"    RESTART    = 0;\n"
+                    f"    OBS_FILE   = {obs_name}.txt;\n"
+                    "};\n"
+                )
+                with (path / f"{obs_name}.txt").open("w") as fobs:
+                    data.to_csv(fobs, sep=" ", header=False, index=False)
 
     def _build_priors(self, path):
         if not self._priors:
@@ -84,7 +144,7 @@ class ErtConfigBuilder:
         with (path / "coeffs.json.in").open("w") as f:
             f.write("{\n")
             f.write(",\n".join(f'  "{name}": <{name}>' for name in self._priors))
-            f.write("}\n")
+            f.write("\n}\n")
         with (path / "coeffs_priors").open("w") as f:
             for name, entry in self._priors.items():
                 f.write(f"{name} {entry}\n")
@@ -204,6 +264,103 @@ def test_parameters(client):
         assert_almost_equal(parameters_df[col].values, df.values.flatten(), decimal=4)
 
 
+def test_observations(client):
+    data = pd.DataFrame([[1, 0.1], [2, 0.2], [3, 0.3], [4, 0.4]], index=[2, 4, 6, 8])
+
+    builder = ErtConfigBuilder()
+    builder.add_general_observation("OBS", "RES", data)
+    ert = builder.build()
+
+    # Post ensemble
+    extraction.post_ensemble_data(ert, builder.ensemble_size)
+
+    # Experiment should have 1 observation
+    experiment_id = client.fetch_experiment()
+    observations = client.get(f"/experiments/{experiment_id}/observations").json()
+    assert len(observations) == 1
+
+    # Validate data
+    obs = observations[0]
+    assert obs["name"] == "OBS"
+    assert obs["values"] == data[0].tolist()
+    assert obs["errors"] == data[1].tolist()
+    assert obs["x_axis"] == data.index.astype(str).tolist()
+    assert obs["transformation"] is None
+
+
+def test_post_ensemble_results(client):
+    data = pd.DataFrame([[1, 0.1], [2, 0.2], [3, 0.3], [4, 0.4]], index=[2, 4, 6, 8])
+    response_name = "RES"
+
+    # Add priors to ERT config
+    builder = ErtConfigBuilder()
+    builder.ensemble_size = 2
+    builder.add_general_observation("OBS", response_name, data)
+
+    data = [0.0, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9]
+    df = pd.DataFrame(data)
+
+    # Create job
+    script = dedent(
+        f"""\
+    #!/usr/bin/python3
+
+    if __name__ == "__main__":
+        output = {str(data)}
+        with open("poly_0.out", "w") as f:
+            f.write("\\n".join(map(str, output)))
+    """
+    )
+    builder.job_script = script
+
+    ert = builder.build()
+
+    # Create runpath and run ERT
+    run_context = _create_runpath(ert)
+    _evaluate_ensemble(ert, run_context)
+
+    # Post initial ensemble
+    ensemble_id = extraction.post_ensemble_data(ert, builder.ensemble_size)
+
+    # Post ensemble results
+    extraction.post_ensemble_results(ert, ensemble_id)
+
+    # Retrieve response data
+    data = client.get(f"/ensembles/{ensemble_id}/responses/{response_name}/data")
+    stream = io.BytesIO(data.content)
+    response_df = pd.read_csv(stream, index_col=0, float_precision="round_trip")
+    for realization in range(0, builder.ensemble_size):
+        assert_array_equal(response_df.loc[realization].values, df.values.flatten())
+
+
+def test_post_update_data(client):
+    data = pd.DataFrame(np.random.rand(4, 2), index=[2, 4, 6, 8])
+
+    builder = ErtConfigBuilder()
+    builder.add_general_observation("OBS", "RES", data)
+    ert = builder.build()
+
+    # Post two ensembles
+    parent_ensemble_id = extraction.post_ensemble_data(ert, builder.ensemble_size)
+    update_id = extraction.post_update_data(ert, parent_ensemble_id, "boruvka")
+    child_ensemble_id = extraction.post_ensemble_data(
+        ert, builder.ensemble_size, update_id
+    )
+
+    # Experiment should have two ensembles
+    experiment_id = client.fetch_experiment()
+    ensembles = client.get(f"/experiments/{experiment_id}/ensembles").json()
+    assert len(ensembles) == 2
+
+    # Parent ensemble should have a child
+    assert ensembles[0]["child_ensemble_ids"] == [child_ensemble_id]
+    assert ensembles[0]["parent_ensemble_id"] is None
+
+    # Child ensemble should have a parent
+    assert ensembles[1]["child_ensemble_ids"] == []
+    assert ensembles[1]["parent_ensemble_id"] == parent_ensemble_id
+
+
 def _make_priors() -> List[Tuple[str, str, dict]]:
     def normal():
         a, b = random(), random()
@@ -296,7 +453,7 @@ def _rand_name():
     return "".join(random.choice(string.ascii_lowercase) for _ in range(8))
 
 
-def _create_runpath(ert: LibresFacade):
+def _create_runpath(ert: LibresFacade, iteration: int = 0) -> ErtRunContext:
     """
     Instantiate an ERT runpath. This will create the parameter coefficients.
     """
@@ -314,10 +471,23 @@ def _create_runpath(ert: LibresFacade):
         runpath_fmt,
         jobname_fmt,
         subst_list,
-        0,
+        iteration,
     )
 
-    ert._enkf_main.getEnkfSimulationRunner().createRunPath(run_context)
+    enkf_main.getEnkfSimulationRunner().createRunPath(run_context)
+    return run_context
+
+
+def _evaluate_ensemble(ert: LibresFacade, run_context: ErtRunContext):
+    """
+    Launch ensemble experiment with the created config
+    """
+    queue_config = ert.get_queue_config()
+    _job_queue = queue_config.create_job_queue()
+
+    ert._enkf_main.getEnkfSimulationRunner().runEnsembleExperiment(
+        _job_queue, run_context
+    )
 
 
 def _get_parameters() -> pd.DataFrame:
