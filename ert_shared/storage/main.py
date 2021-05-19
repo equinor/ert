@@ -113,7 +113,7 @@ def run_server(args=None, debug=False):
         "urls": [
             f"http://{host}:{sock.getsockname()[1]}"
             for host in (
-                sock.getsockname()[0],
+                "127.0.0.1",
                 socket.gethostname(),
                 socket.getfqdn(),
             )
