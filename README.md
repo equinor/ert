@@ -1,11 +1,11 @@
 # ert
 
-![Build status](https://github.com/equinor/ert/actions/workflows/build.yml/badge.svg)
-![Code style](https://github.com/equinor/ert/actions/workflows/style.yml/badge.svg)
-![Type Hinting](https://github.com/equinor/ert/actions/workflows/style.yml/typing.svg)
-![ERT2 test data setups](https://github.com/equinor/ert/actions/workflows/run_ert2_test_data_setups.yml/badge.svg)
-![ERT3 polynomial demo](https://github.com/equinor/ert/actions/workflows/run_polynomial_demo.yml/badge.svg)
-![ERT3 SPE1 demo](https://github.com/equinor/ert/actions/workflows/run_spe1_demo.yml/badge.svg)
+[![Build Status](https://github.com/equinor/ert/actions/workflows/build.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/build.yml)
+[![Code Style](https://github.com/equinor/ert/actions/workflows/style.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/style.yml)
+[![Type checking](https://github.com/equinor/ert/actions/workflows/typing.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/typing.yml)
+[![Run test-data](https://github.com/equinor/ert/actions/workflows/run_ert2_test_data_setups.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/run_ert2_test_data_setups.yml)
+[![Run polynomial demo](https://github.com/equinor/ert/actions/workflows/run_examples_polynomial.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/run_examples_polynomial.yml)
+[![Run SPE1 demo](https://github.com/equinor/ert/actions/workflows/run_examples_spe1.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/run_examples_spe1.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
