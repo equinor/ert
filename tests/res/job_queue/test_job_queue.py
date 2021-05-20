@@ -39,7 +39,7 @@ sys.exit(1)
 """
 
 
-def create_queue(script, max_submit=1, max_runtime=None):
+def create_queue(script, max_submit=1, max_runtime=None, callback_timeout=None):
     driver = Driver(driver_type=QueueDriverEnum.LOCAL_DRIVER, max_running=5)
     job_queue = JobQueue(driver, max_submit=max_submit)
     with open(dummy_config["job_script"], "w") as f:
@@ -59,6 +59,7 @@ def create_queue(script, max_submit=1, max_runtime=None):
             exit_callback_function=dummy_config["exit_callback"],
             callback_arguments=[{"job_number": i}],
             max_runtime=max_runtime,
+            callback_timeout=callback_timeout,
         )
 
         job_queue.add_job(job, i)
@@ -155,7 +156,18 @@ class JobQueueTest(ResTest):
 
     def test_timeout_jobs(self):
         with TestAreaContext("job_queue_test_kill") as work_area:
-            job_queue = create_queue(never_ending_script, max_submit=1, max_runtime=5)
+            job_numbers = set()
+
+            def callback(arg):
+                nonlocal job_numbers
+                job_numbers.add(arg[0]["job_number"])
+
+            job_queue = create_queue(
+                never_ending_script,
+                max_submit=1,
+                max_runtime=5,
+                callback_timeout=callback,
+            )
 
             assert job_queue.queue_size == 10
             assert job_queue.is_active()
@@ -176,6 +188,8 @@ class JobQueueTest(ResTest):
                 assert job_queue.snapshot()[iens] == str(
                     JobStatusType.JOB_QUEUE_IS_KILLED
                 )
+
+            assert job_numbers == set(range(10))
 
             for job in job_queue.job_list:
                 job.wait_for()
