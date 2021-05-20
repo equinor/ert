@@ -1,5 +1,6 @@
 import sqlalchemy as sa
 from uuid import uuid4
+from typing import List
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from ert_storage.database import Base
@@ -34,3 +35,7 @@ class Experiment(Base, MetadataField):
         cascade="all, delete-orphan",
         back_populates="experiment",
     )
+
+    @property
+    def ensemble_ids(self) -> List[UUID]:
+        return [ens.id for ens in self.ensembles]

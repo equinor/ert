@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Body
 from sqlalchemy.orm.attributes import flag_modified
 from ert_storage.database import Session, get_db
 from ert_storage import database_schema as ds, json_schema as js
+from ert_storage.endpoints.priors import experiment_priors_to_dict
 from typing import Any, Mapping, Optional, List
 
 
@@ -14,16 +15,8 @@ def get_experiments(
     *,
     db: Session = Depends(get_db),
 ) -> List[js.ExperimentOut]:
-    return [
-        js.ExperimentOut(
-            id=exp.id,
-            name=exp.name,
-            ensembles=[ens.id for ens in exp.ensembles],
-            priors={pri.name: pri.id for pri in exp.priors},
-            metadata=exp.metadata_dict,
-        )
-        for exp in db.query(ds.Experiment).all()
-    ]
+    experiments = db.query(ds.Experiment).all()
+    return [_experiment_from_db(exp) for exp in experiments]
 
 
 @router.post("/experiments", response_model=js.ExperimentOut)
@@ -48,13 +41,7 @@ def post_experiments(
 
     db.add(experiment)
     db.commit()
-    return js.ExperimentOut(
-        id=experiment.id,
-        name=experiment.name,
-        ensembles=[ens.id for ens in experiment.ensembles],
-        priors={pri.name: pri.id for pri in experiment.priors},
-        metadata=experiment.metadata_dict,
-    )
+    return _experiment_from_db(experiment)
 
 
 @router.get(
@@ -115,3 +102,13 @@ def delete_experiment(*, db: Session = Depends(get_db), experiment_id: UUID) -> 
     experiment = db.query(ds.Experiment).filter_by(id=experiment_id).one()
     db.delete(experiment)
     db.commit()
+
+
+def _experiment_from_db(exp: ds.Experiment) -> js.ExperimentOut:
+    return js.ExperimentOut(
+        id=exp.id,
+        name=exp.name,
+        ensemble_ids=exp.ensemble_ids,
+        priors=experiment_priors_to_dict(exp),
+        metadata=exp.metadata_dict,
+    )

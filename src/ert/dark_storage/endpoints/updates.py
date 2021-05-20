@@ -43,12 +43,7 @@ def create_update(
         db.add_all(observation_transformations)
 
     db.commit()
-    return js.UpdateOut(
-        id=update_obj.id,
-        experiment_id=ensemble.experiment.id,
-        algorithm=update_obj.algorithm,
-        ensemble_reference_id=ensemble.id,
-    )
+    return _update_from_db(update_obj)
 
 
 @router.get("/updates/{update_id}", response_model=js.UpdateOut)
@@ -58,6 +53,10 @@ def get_update(
     update_id: UUID,
 ) -> js.UpdateOut:
     update_obj = db.query(ds.Update).filter_by(id=update_id).one()
+    return _update_from_db(update_obj)
+
+
+def _update_from_db(update_obj: ds.Update) -> js.UpdateOut:
     return js.UpdateOut(
         id=update_obj.id,
         experiment_id=update_obj.ensemble_reference.experiment.id,

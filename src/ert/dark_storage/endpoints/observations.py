@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Body
-from typing import List, Any, Mapping
+from typing import List, Any, Mapping, Optional
 from sqlalchemy.orm.attributes import flag_modified
 from ert_storage.database import Session, get_db
 from ert_storage import database_schema as ds, json_schema as js
@@ -34,15 +34,7 @@ def post_observation(
     db.add(obs)
     db.commit()
 
-    return js.ObservationOut(
-        id=obs.id,
-        name=obs.name,
-        x_axis=obs.x_axis,
-        errors=obs.errors,
-        values=obs.values,
-        records=[rec.id for rec in obs.records],
-        metadata=obs.metadata_dict,
-    )
+    return _observation_from_db(obs)
 
 
 @router.get(
@@ -52,18 +44,7 @@ def get_observations(
     *, db: Session = Depends(get_db), experiment_id: UUID
 ) -> List[js.ObservationOut]:
     experiment = db.query(ds.Experiment).filter_by(id=experiment_id).one()
-    return [
-        js.ObservationOut(
-            id=obs.id,
-            name=obs.name,
-            x_axis=obs.x_axis,
-            errors=obs.errors,
-            values=obs.values,
-            records=[rec.id for rec in obs.records],
-            metadata=obs.metadata_dict,
-        )
-        for obs in experiment.observations
-    ]
+    return [_observation_from_db(obs) for obs in experiment.observations]
 
 
 @router.get(
@@ -82,25 +63,7 @@ def get_observations_with_transformation(
     )
 
     return [
-        js.ObservationOut(
-            id=obs.id,
-            name=obs.name,
-            x_axis=obs.x_axis,
-            errors=obs.errors,
-            values=obs.values,
-            records=[rec.id for rec in obs.records],
-            metadata=obs.metadata_dict,
-            transformation=js.ObservationTransformationOut(
-                id=transformations[obs.name].id,
-                name=obs.name,
-                observation_id=obs.id,
-                scale=transformations[obs.name].scale_list,
-                active=transformations[obs.name].active_list,
-            )
-            if obs.name in transformations
-            else None,
-        )
-        for obs in experiment.observations
+        _observation_from_db(obs, transformations) for obs in experiment.observations
     ]
 
 
@@ -146,3 +109,27 @@ async def get_observation_metadata(
     """
     obs = db.query(ds.Observation).filter_by(id=obs_id).one()
     return obs.metadata_dict
+
+
+def _observation_from_db(
+    obs: ds.Observation, transformations: Optional[Mapping[str, Any]] = None
+) -> js.ObservationOut:
+    transformation = None
+    if transformations is not None and obs.name in transformations:
+        transformation = js.ObservationTransformationOut(
+            id=transformations[obs.name].id,
+            name=obs.name,
+            observation_id=obs.id,
+            scale=transformations[obs.name].scale_list,
+            active=transformations[obs.name].active_list,
+        )
+    return js.ObservationOut(
+        id=obs.id,
+        name=obs.name,
+        x_axis=obs.x_axis,
+        errors=obs.errors,
+        values=obs.values,
+        records=[rec.id for rec in obs.records],
+        metadata=obs.metadata_dict,
+        transformation=transformation,
+    )

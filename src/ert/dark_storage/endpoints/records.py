@@ -136,7 +136,7 @@ def new_record_matrix(
     *,
     db: Session = Depends(get_db),
     record: ds.Record = Depends(new_record),
-    prior_id: Optional[UUID] = None,
+    prior: Optional[str] = None,
 ) -> ds.Record:
     ensemble = record.record_info.ensemble
     if record.name in ensemble.parameter_names:
@@ -146,12 +146,12 @@ def new_record_matrix(
     else:
         record_class = ds.RecordClass.other
 
-    if prior_id is not None:
+    if prior is not None:
         if record_class is not ds.RecordClass.parameter:
             raise exc.UnprocessableError(
                 "Priors can only be specified for parameter records"
             )
-        record.record_info.prior = db.query(ds.Prior).filter_by(id=prior_id).one()
+        record.record_info.prior = db.query(ds.Prior).filter_by(name=prior).one()
 
     record.record_info.record_class = record_class
     record.record_info.record_type = ds.RecordType.f64_matrix
