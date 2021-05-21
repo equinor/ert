@@ -1,3 +1,5 @@
+Some change
+
 ## Polynomial curve fitting - A minimal model updating case
 A display of a truly minimal model updating case. It is done with a second
 degree polynomial as the _true reality_. The model is `ax^2 + bx + c` where
