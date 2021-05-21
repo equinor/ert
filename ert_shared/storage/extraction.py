@@ -23,11 +23,16 @@ def create_experiment(ert) -> dict:
 
 
 def create_ensemble(
-    ert, size: int, parameter_names: List[str], update_id: str = None
+    ert,
+    size: int,
+    parameter_names: List[str],
+    response_names: List[str],
+    update_id: str = None,
 ) -> dict:
     return dict(
         size=size,
-        parameters=parameter_names,
+        parameter_names=parameter_names,
+        response_names=response_names,
         update_id=update_id,
         metadata={"name": ert.get_current_case_name()},
     )
@@ -376,6 +381,11 @@ def post_ensemble_data(
         experiment_id = update["experiment_id"]
 
     parameters = create_parameters(ert)
+    response_names = [
+        key.split("@")[0] if ert.is_gen_data_key(key) else key
+        for key in ert.all_data_type_keys()
+        if ert.is_gen_data_key(key) or ert.is_summary_key(key)
+    ]
 
     ens_response = _post_to_server(
         f"{server.fetch_url()}/experiments/{experiment_id}/ensembles",
@@ -383,6 +393,7 @@ def post_ensemble_data(
             ert,
             size=ensemble_size,
             parameter_names=[param["name"] for param in parameters],
+            response_names=response_names,
             update_id=update_id,
         ),
     )

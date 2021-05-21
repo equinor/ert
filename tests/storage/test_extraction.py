@@ -139,6 +139,9 @@ def test_priors(client):
         builder.add_prior(name, conf)
     ert = builder.build()
 
+    # Start ERT
+    _create_runpath(ert)
+
     # Post initial ensemble
     extraction.post_ensemble_data(ert, -1)
 

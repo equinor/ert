@@ -77,7 +77,8 @@ def _init_experiment(
     response = requests.post(
         url=f"{_STORAGE_URL}/experiments/{exp_id}/ensembles",
         json={
-            "parameters": list(parameters),
+            "parameter_names": list(parameters),
+            "response_names": [],
             "size": ensemble_size,
         },
     )

@@ -72,7 +72,7 @@ setup(
     ],
     extras_require={
         "storage": [
-            "ert-storage==0.1.6",
+            "ert-storage==0.1.7",
         ],
     },
     zip_safe=False,
