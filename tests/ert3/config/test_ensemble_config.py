@@ -1,7 +1,6 @@
 from copy import deepcopy
 
 import pytest
-
 import ert3
 
 
