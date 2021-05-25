@@ -1,11 +1,11 @@
 -
   name: evaluate_polynomial
-  input:
+  inputs:
     -
       record: coefficients
       location: coefficients.json
 
-  output:
+  outputs:
     -
       record: polynomial_output
       location: output.json
@@ -21,12 +21,12 @@
 
 -
   name: function_polynomial
-  input:
+  inputs:
     -
       record: coefficients
       location: coeffs
 
-  output:
+  outputs:
     -
       record: polynomial_output
       location: output

@@ -1,9 +1,10 @@
 from importlib.abc import Loader
 import importlib.util
+import pathlib
 import mimetypes
 from typing import Callable, Tuple, cast, Union, Dict, Any
 
-from pydantic import BaseModel, FilePath, ValidationError, validator
+from pydantic import BaseModel, FilePath, ValidationError, validator, Field
 import ert3
 
 _DEFAULT_RECORD_MIME_TYPE: str = "application/json"
@@ -58,19 +59,21 @@ class _MimeBase(_StagesConfig):
 
 
 class Record(_MimeBase):
-    record: str
-    location: str
+    name: str = Field(None, alias="record")
+    path: pathlib.Path = Field(None, alias="location")
+    is_executable: bool = False
 
 
 class TransportableCommand(_MimeBase):
     name: str
-    location: FilePath
+    path: FilePath = Field(None, alias="location")
+    is_executable: bool = True
 
 
 class _Step(_StagesConfig):
     name: str
-    input: Tuple[Record, ...]
-    output: Tuple[Record, ...]
+    inputs: Tuple[Record, ...]
+    outputs: Tuple[Record, ...]
 
 
 class Function(_Step):

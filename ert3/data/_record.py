@@ -152,7 +152,7 @@ class MultiEnsembleRecord(_DataElement):
     def record_names_validator(
         cls, record_names: Optional[Tuple[str, ...]], values: Dict[str, Any]
     ) -> Optional[Tuple[str, ...]]:
-        if record_names == None and "ensemble_records" in values:
+        if record_names is None and "ensemble_records" in values:
             ensemble_records = values["ensemble_records"]
             record_names = tuple(ensemble_records.keys())
         return record_names
@@ -162,7 +162,7 @@ class MultiEnsembleRecord(_DataElement):
         cls, ensemble_size: Optional[int], values: Dict[str, Any]
     ) -> Optional[int]:
         if (
-            ensemble_size == None
+            ensemble_size is None
             and "ensemble_records" in values
             and "record_names" in values
         ):

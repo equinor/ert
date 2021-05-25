@@ -160,6 +160,7 @@ def _chdir_tmp_path(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
 
 
+@pytest.mark.requires_ert_storage
 def test_empty_ensemble(client):
     ert = ErtConfigBuilder().build()
     extraction.post_ensemble_data(ert, -1)
@@ -176,6 +177,7 @@ def test_empty_ensemble(client):
     assert client.get(f"/experiments/{id}/priors").json() == {}
 
 
+@pytest.mark.requires_ert_storage
 def test_empty_ensemble_with_name(client):
     name = _rand_name()
 
@@ -192,6 +194,7 @@ def test_empty_ensemble_with_name(client):
         assert client.get(f"/ensembles/{ens['id']}/metadata").json()["name"] == name
 
 
+@pytest.mark.requires_ert_storage
 def test_priors(client):
     priors = _make_priors()
 
@@ -215,6 +218,7 @@ def test_priors(client):
         assert actual_priors[f"COEFFS:{name}"] == resp
 
 
+@pytest.mark.requires_ert_storage
 def test_parameters(client):
     priors = _make_priors()
 

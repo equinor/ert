@@ -1,19 +1,30 @@
-from ert3.data._record import Record
-from ert3.data._record import EnsembleRecord
-from ert3.data._record import MultiEnsembleRecord
-from ert3.data._record import RecordTransmitter
-from ert3.data._record import SharedDiskRecordTransmitter
-from ert3.data._record import InMemoryRecordTransmitter
-from ert3.data._record import RecordType
-from ert3.data._record import RecordIndex
+from typing import Dict
+
+from ert3.data._record import (
+    Record,
+    RecordType,
+    RecordIndex,
+    EnsembleRecord,
+    MultiEnsembleRecord,
+    RecordTransmitter,
+    SharedDiskRecordTransmitter,
+    InMemoryRecordTransmitter,
+    record_data,
+)
+
+RealisationsToRecordToTransmitter = Dict[int, Dict[str, RecordTransmitter]]
 
 __all__ = (
     "Record",
+    "RecordType",
+    "RecordIndex"
     "EnsembleRecord",
     "MultiEnsembleRecord",
     "RecordTransmitter",
     "RecordType",
     "RecordIndex",
     "SharedDiskRecordTransmitter",
+    "RealisationsToRecordToTransmitter",
     "InMemoryRecordTransmitter",
+    "record_data",
 )

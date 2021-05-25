@@ -436,15 +436,15 @@ def test_cli_validation_experiment_function(capsys):
     "config, expected",
     [
         (
-            {"name": "name", "type": "unix", "input": [], "output": []},
+            {"name": "name", "type": "unix", "inputs": [], "outputs": []},
             "not a valid tuple",
         ),
         (
-            [{"name": "name", "type": "unix", "input": [], "output": []}],
+            [{"name": "name", "type": "unix", "inputs": [], "outputs": []}],
             "field required",
         ),
         (
-            [{"name": {}, "type": "unix", "input": [], "output": []}],
+            [{"name": {}, "type": "unix", "inputs": [], "outputs": []}],
             "str type expected",
         ),
     ],
@@ -484,7 +484,7 @@ def test_cli_validation_experiment_command(base_ensemble_dict, workspace, capsys
     config = {"type": {}}
     with open(experiments_folder / "E0" / "experiment.yml", "w") as f:
         yaml.dump(config, f)
-    config = [{"name": "name", "type": "unix", "input": [], "output": []}]
+    config = [{"name": "name", "type": "unix", "inputs": [], "outputs": []}]
     with open(workspace / "stages.yml", "w") as f:
         yaml.dump(config, f)
     args = ["ert3", "run", "E0"]
@@ -503,7 +503,7 @@ def test_cli_validation_stages_command(base_ensemble_dict, workspace, capsys):
     config = {"type": "evaluation"}
     with open(experiments_folder / "E0" / "experiment.yml", "w") as f:
         yaml.dump(config, f)
-    config = [{"name": {}, "type": "unix", "input": [], "output": []}]
+    config = [{"name": {}, "type": "unix", "inputs": [], "outputs": []}]
     with open(workspace / "stages.yml", "w") as f:
         yaml.dump(config, f)
     args = ["ert3", "run", "E0"]

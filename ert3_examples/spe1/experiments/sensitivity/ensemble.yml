@@ -1,4 +1,4 @@
-input:
+inputs:
   -
     source: stochastic.field_properties
     record: field_properties

@@ -1,6 +1,6 @@
 size: 10
 
-input:
+inputs:
   -
     source: storage.designed_field_properties
     record: field_properties

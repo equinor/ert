@@ -1,6 +1,6 @@
 size: 1000
 
-input:
+inputs:
   -
     source: storage.designed_coefficients
     record: coefficients

@@ -1,4 +1,3 @@
-import yaml
 import ipaddress
 import logging
 import socket
@@ -7,7 +6,6 @@ import tempfile
 
 import os
 import pathlib
-import socket
 import ssl
 import typing
 from base64 import b64encode

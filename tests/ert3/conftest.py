@@ -59,7 +59,7 @@ def designed_coeffs_record_file(workspace):
 def base_ensemble_dict():
     yield {
         "size": 10,
-        "input": [{"source": "stochastic.coefficients", "record": "coefficients"}],
+        "inputs": [{"source": "stochastic.coefficients", "record": "coefficients"}],
         "forward_model": {"driver": "local", "stage": "evaluate_polynomial"},
     }
 
@@ -74,8 +74,8 @@ def stages_config():
     config_list = [
         {
             "name": "evaluate_polynomial",
-            "input": [{"record": "coefficients", "location": "coefficients.json"}],
-            "output": [{"record": "polynomial_output", "location": "output.json"}],
+            "inputs": [{"record": "coefficients", "location": "coefficients.json"}],
+            "outputs": [{"record": "polynomial_output", "location": "output.json"}],
             "script": ["poly --coefficients coefficients.json --output output.json"],
             "transportable_commands": [
                 {
@@ -98,8 +98,8 @@ def function_stages_config():
     config_list = [
         {
             "name": "evaluate_polynomial",
-            "input": [{"record": "coefficients", "location": "coeffs"}],
-            "output": [{"record": "polynomial_output", "location": "output"}],
+            "inputs": [{"record": "coefficients", "location": "coeffs"}],
+            "outputs": [{"record": "polynomial_output", "location": "output"}],
             "function": "function_steps.functions:polynomial",
         }
     ]

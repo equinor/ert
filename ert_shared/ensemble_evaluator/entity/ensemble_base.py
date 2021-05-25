@@ -1,7 +1,6 @@
 import logging
 
 from ert_shared.ensemble_evaluator.client import Client
-
 from ert_shared.ensemble_evaluator.entity import serialization
 
 from cloudevents.http import to_json

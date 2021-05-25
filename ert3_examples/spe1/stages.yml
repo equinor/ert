@@ -1,6 +1,6 @@
 -
   name: simulate_SPE1
-  input:
+  inputs:
     -
       record: field_properties
       location: field_properties.json
@@ -8,7 +8,7 @@
       record: wells
       location: wells.json
 
-  output:
+  outputs:
     -
       record: wopt_prod
       location: WOPT:PROD.json

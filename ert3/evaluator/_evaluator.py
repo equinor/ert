@@ -1,24 +1,115 @@
 import asyncio
-import os
 import pathlib
 import pickle
 import shutil
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Coroutine, Dict, Any, Tuple, List
+
 
 import cloudpickle
-from pydantic import FilePath
+
 import ert3
-from ert3.config import EnsembleConfig, StagesConfig, Step
-from ert3.data import EnsembleRecord, MultiEnsembleRecord, Record, RecordTransmitter
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity.identifiers import EVTYPE_EE_TERMINATED
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.prefect_ensemble import PrefectEnsemble
+from ert3.config import (
+    EnsembleConfig,
+    StagesConfig,
+    TransportableCommand,
+    Unix,
+    Function,
+    Step,
+)
+from ert3.data import (
+    EnsembleRecord,
+    MultiEnsembleRecord,
+    RealisationsToRecordToTransmitter,
+    RecordTransmitter,
+    Record,
+    SharedDiskRecordTransmitter,
+    record_data,
+)
 
 _EVTYPE_SNAPSHOT_STOPPED = "Stopped"
 _EVTYPE_SNAPSHOT_FAILED = "Failed"
+_MY_STORAGE_DIRECTORY = ".my_storage"
+
+CoroutineTransmitters = List[Coroutine[Any, Any, None]]
+
+
+# scafflting function. this will be removed later
+# with ert3.evaluator._evaluator._ee_config
+def _add_storage(path: Path) -> Path:
+    if path.name != _MY_STORAGE_DIRECTORY:
+        return path / _MY_STORAGE_DIRECTORY
+    return path
+
+
+def _create_input_transmitter(
+    name: str,
+    path: Path,
+    data: record_data,
+    futures: CoroutineTransmitters,
+) -> Dict[str, RecordTransmitter]:
+    transmitter = SharedDiskRecordTransmitter(name, _add_storage(path))
+    futures.append(transmitter.transmit_data(data))
+    return {name: transmitter}
+
+
+def _create_command_transmitter(
+    command: TransportableCommand,
+    path: Path,
+) -> RecordTransmitter:
+    transmitter = SharedDiskRecordTransmitter(command.name, _add_storage(path))
+    with open(command.path, "rb") as f:
+        asyncio.get_event_loop().run_until_complete(
+            transmitter.transmit_data([f.read()])
+        )
+    return transmitter
+
+
+def prepare_input(
+    step: Step,
+    evaluation_tmp_dir: Path,
+    ensemble_size: int,
+    inputs: MultiEnsembleRecord,
+) -> RealisationsToRecordToTransmitter:
+    (evaluation_tmp_dir / "prep_input_files").mkdir(parents=True, exist_ok=True)
+    futures: CoroutineTransmitters = []
+    transmitters = {
+        iens: _create_input_transmitter(
+            input_.name, evaluation_tmp_dir, record.data, futures
+        )
+        for input_ in step.inputs
+        for iens, record in enumerate(inputs.ensemble_records[input_.name].records)
+    }
+    asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+    if isinstance(step, Unix):
+        for iens in range(ensemble_size):
+            for command in step.transportable_commands:
+                transmitters[iens][command.name] = _create_command_transmitter(
+                    command, evaluation_tmp_dir
+                )
+    return transmitters
+
+
+def prepare_output(
+    step: Step,
+    evaluation_tmp_dir: Path,
+    ensemble_size: int,
+) -> RealisationsToRecordToTransmitter:
+    (evaluation_tmp_dir / "output_files").mkdir(parents=True, exist_ok=True)
+    return {
+        iens: {
+            output.name: SharedDiskRecordTransmitter(
+                output.name, _add_storage(evaluation_tmp_dir)
+            )
+        }
+        for output in step.outputs
+        for iens in range(ensemble_size)
+    }
 
 
 def _create_evaluator_tmp_dir(workspace_root: Path, evaluation_name: str) -> Path:
@@ -30,78 +121,61 @@ def _create_evaluator_tmp_dir(workspace_root: Path, evaluation_name: str) -> Pat
     )
 
 
-def _prepare_input(
-    ee_config: Dict[str, Any],
-    step_config: Step,
-    inputs: MultiEnsembleRecord,
-    evaluation_tmp_dir: Path,
-    ensemble_size: int,
-) -> Dict[int, Dict[str, RecordTransmitter]]:
-    tmp_input_folder = evaluation_tmp_dir / "prep_input_files"
-    os.makedirs(tmp_input_folder)
-    storage_config = ee_config["storage"]
-    transmitters: Dict[int, Dict[str, ert3.data.RecordTransmitter]] = defaultdict(dict)
-
-    futures = []
-    for input_ in step_config.input:
-        for iens, record in enumerate(inputs.ensemble_records[input_.record].records):
-            if storage_config.get("type") == "shared_disk":
-                transmitter = ert3.data.SharedDiskRecordTransmitter(
-                    name=input_.record,
-                    storage_path=pathlib.Path(storage_config["storage_path"]),
-                )
-            else:
-                raise ValueError(
-                    f"Unsupported transmitter type: {storage_config.get('type')}"
-                )
-            futures.append(transmitter.transmit_data(record.data))
-            transmitters[iens][input_.record] = transmitter
-    asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
-    if isinstance(step_config, ert3.config.Unix):
-        for command in step_config.transportable_commands:
-            if storage_config.get("type") == "shared_disk":
-                transmitter = ert3.data.SharedDiskRecordTransmitter(
-                    name=command.name,
-                    storage_path=pathlib.Path(storage_config["storage_path"]),
-                )
-            else:
-                raise ValueError(
-                    f"Unsupported transmitter type: {storage_config.get('type')}"
-                )
-            with open(command.location, "rb") as f:
-                asyncio.get_event_loop().run_until_complete(
-                    transmitter.transmit_data([f.read()])
-                )
-            for iens in range(0, ensemble_size):
-                transmitters[iens][command.name] = transmitter
-    return dict(transmitters)
+TupleDictStrAny = Tuple[Dict[str, Any], ...]
 
 
-def _prepare_output(
-    ee_config: Dict[str, Any],
-    step_config: Step,
-    evaluation_tmp_dir: Path,
-    ensemble_size: int,
-) -> Dict[int, Dict[str, RecordTransmitter]]:
-    tmp_input_folder = evaluation_tmp_dir / "output_files"
-    os.makedirs(tmp_input_folder)
-    storage_config = ee_config["storage"]
-    transmitters: Dict[int, Dict[str, ert3.data.RecordTransmitter]] = defaultdict(dict)
+def _function_jobs(step: Function) -> TupleDictStrAny:
+    return (
+        {
+            "name": step.function.__name__,
+            "executable": cloudpickle.dumps(step.function),
+        },
+    )
 
-    for output in step_config.output:
-        for iens in range(0, ensemble_size):
-            if storage_config.get("type") == "shared_disk":
-                transmitters[iens][
-                    output.record
-                ] = ert3.data.SharedDiskRecordTransmitter(
-                    name=output.record,
-                    storage_path=pathlib.Path(storage_config["storage_path"]),
-                )
-            else:
-                raise ValueError(
-                    f"Unsupported transmitter type: {storage_config.get('type')}"
-                )
-    return dict(transmitters)
+
+def _unix_jobs(step: Unix) -> TupleDictStrAny:
+    def job(script: str) -> Dict[str, Any]:
+        name, *args = script.split()
+        return {
+            "name": name,
+            "executable": next(
+                (cmd.path for cmd in step.transportable_commands if cmd.name == name),
+                pathlib.Path(name),
+            ),
+            "args": tuple(args),
+        }
+
+    return tuple(map(job, step.script))
+
+
+def _name_to_record_key(
+    command: TransportableCommand,
+) -> Dict[str, Any]:
+    cmd: Dict[str, Any] = command.dict(exclude={"name"}, by_alias=True)
+    cmd["record"] = command.name
+    return cmd
+
+
+def _job_specific_fields(step: Step) -> Tuple[TupleDictStrAny, TupleDictStrAny]:
+    return (
+        (_unix_jobs(step), tuple(map(_name_to_record_key, step.transportable_commands)))
+        if isinstance(step, Unix)
+        else (_function_jobs(step), ())
+    )
+
+
+def _step(step: Step) -> TupleDictStrAny:
+    jobs, input_commands = _job_specific_fields(step)
+    return (
+        {
+            "name": step.name + "-only_step",
+            "inputs": tuple(input_.dict(by_alias=True) for input_ in step.inputs)
+            + input_commands,
+            "outputs": [output.dict(by_alias=True) for output in step.outputs],
+            "jobs": jobs,
+            "type": type(step).__name__.lower(),
+        },
+    )
 
 
 def _build_ee_config(
@@ -111,80 +185,15 @@ def _build_ee_config(
     input_records: MultiEnsembleRecord,
     dispatch_uri: str,
 ) -> Dict[str, Any]:
-    if ensemble.size != None:
-        ensemble_size = ensemble.size
-    else:
-        ensemble_size = input_records.ensemble_size
+    ensemble_size = (
+        ensemble.size if ensemble.size != None else input_records.ensemble_size
+    ) or 0  # SMELL: ensemble_size is still optional since both option can be None
 
-    stage = stages_config.step_from_key(ensemble.forward_model.stage)
-    assert stage is not None
-    commands = (
-        stage.transportable_commands if isinstance(stage, ert3.config.Unix) else []
-    )
-    output_locations = [out.location for out in stage.output]
-    jobs = []
+    step = stages_config.step_from_key(ensemble.forward_model.stage)
+    assert step is not None
 
-    def command_location(name: str) -> FilePath:
-        return next(
-            (cmd.location for cmd in commands if cmd.name == name), pathlib.Path(name)
-        )
-
-    if isinstance(stage, ert3.config.Function):
-        jobs.append(
-            {
-                "name": stage.function.__name__,
-                "executable": cloudpickle.dumps(stage.function),
-                "output": output_locations[0],
-            }
-        )
-
-    if isinstance(stage, ert3.config.Unix):
-        for script in stage.script:
-            name, *args = script.split()
-            jobs.append(
-                {
-                    "name": name,
-                    "executable": command_location(name),
-                    "args": tuple(args),
-                }
-            )
-
-    steps = [
-        {
-            "name": stage.name + "-only_step",
-            "inputs": [
-                {
-                    "record": input_.record,
-                    "location": input_.location,
-                    "mime": input_.mime,
-                    "is_executable": False,
-                }
-                for input_ in stage.input
-            ]
-            + [
-                {
-                    "record": cmd.name,
-                    "location": command_location(cmd.name),
-                    "mime": cmd.mime,
-                    "is_executable": True,
-                }
-                for cmd in commands
-            ],
-            "outputs": [
-                {
-                    "record": output.record,
-                    "location": output.location,
-                    "mime": output.mime,
-                }
-                for output in stage.output
-            ],
-            "jobs": jobs,
-            "type": "function" if isinstance(stage, ert3.config.Function) else "unix",
-        }
-    ]
-
-    ee_config: Dict[str, Any] = {
-        "steps": steps,
+    return {
+        "steps": _step(step),  # Why is steps a list of one dict object?
         "realizations": ensemble_size,
         "max_running": 10000,
         "max_retries": 0,
@@ -192,20 +201,12 @@ def _build_ee_config(
         "executor": ensemble.forward_model.driver,
         "storage": {
             "type": "shared_disk",
-            "storage_path": evaluation_tmp_dir / ".my_storage",
+            "storage_path": evaluation_tmp_dir / _MY_STORAGE_DIRECTORY,
         },
         "dispatch_uri": dispatch_uri,
+        "inputs": prepare_input(step, evaluation_tmp_dir, ensemble_size, input_records),
+        "outputs": prepare_output(step, evaluation_tmp_dir, ensemble_size),
     }
-
-    assert ensemble_size is not None
-    ee_config["inputs"] = _prepare_input(
-        ee_config, stage, input_records, evaluation_tmp_dir, ensemble_size
-    )
-    ee_config["outputs"] = _prepare_output(
-        ee_config, stage, evaluation_tmp_dir, ensemble_size
-    )
-
-    return ee_config
 
 
 def _run(
@@ -267,7 +268,6 @@ def evaluate(
     stages_config: StagesConfig,
 ) -> MultiEnsembleRecord:
     evaluation_tmp_dir = _create_evaluator_tmp_dir(workspace_root, evaluation_name)
-
     config = EvaluatorServerConfig()
     ee_config = _build_ee_config(
         evaluation_tmp_dir,
@@ -280,9 +280,7 @@ def evaluate(
 
     ee = EnsembleEvaluator(ensemble=ensemble, config=config, iter_=0)
     result = _run(ee)
-    responses = _prepare_responses(result)
-
-    return responses
+    return _prepare_responses(result)
 
 
 def cleanup(workspace_root: Path, evaluation_name: str) -> None:

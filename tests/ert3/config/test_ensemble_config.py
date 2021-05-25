@@ -1,6 +1,5 @@
 from copy import deepcopy
 
-import pydantic
 import pytest
 
 import ert3
@@ -10,7 +9,7 @@ import ert3
 def base_ensemble_config():
     yield {
         "size": 1000,
-        "input": [{"source": "stochastic.coefficients", "record": "coefficients"}],
+        "inputs": [{"source": "stochastic.coefficients", "record": "coefficients"}],
         "forward_model": {
             "driver": "local",
             "stage": "evaluate_polynomial",
@@ -60,10 +59,10 @@ def test_forward_model_invalid_driver(base_ensemble_config):
     ],
 )
 def test_input(input_config, expected_source, expected_record, base_ensemble_config):
-    base_ensemble_config["input"] = [input_config]
+    base_ensemble_config["inputs"] = [input_config]
     config = ert3.config.load_ensemble_config(base_ensemble_config)
-    assert config.input[0].source == expected_source
-    assert config.input[0].record == expected_record
+    assert config.inputs[0].source == expected_source
+    assert config.inputs[0].record == expected_record
 
 
 @pytest.mark.parametrize(
@@ -75,7 +74,7 @@ def test_input(input_config, expected_source, expected_record, base_ensemble_con
     ],
 )
 def test_invalid_input(input_config, expected_error, base_ensemble_config):
-    base_ensemble_config["input"] = [input_config]
+    base_ensemble_config["inputs"] = [input_config]
     with pytest.raises(ert3.exceptions.ConfigValidationError, match=expected_error):
         ert3.config.load_ensemble_config(base_ensemble_config)
 
@@ -97,14 +96,14 @@ def test_unknown_field_in_base(base_ensemble_config):
 def test_immutable_input(base_ensemble_config):
     config = ert3.config.load_ensemble_config(base_ensemble_config)
     with pytest.raises(TypeError, match="does not support item assignment"):
-        config.input[0].source = "different.source"
+        config.inputs[0].source = "different.source"
 
     with pytest.raises(TypeError, match="does not support item assignment"):
-        config.input[0] = None
+        config.inputs[0] = None
 
 
 def test_unknown_field_in_input(base_ensemble_config):
-    base_ensemble_config["input"][0]["unknown"] = "field"
+    base_ensemble_config["inputs"][0]["unknown"] = "field"
     with pytest.raises(
         ert3.exceptions.ConfigValidationError, match="extra fields not permitted"
     ):

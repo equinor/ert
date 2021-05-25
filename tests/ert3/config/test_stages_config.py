@@ -22,8 +22,8 @@ def base_unix_stage_config(tmpdir):
     config = [
         {
             "name": "unix_stage",
-            "input": [{"record": "some_record", "location": "some_location"}],
-            "output": [{"record": "some_record", "location": "some_location"}],
+            "inputs": [{"record": "some_record", "location": "some_location"}],
+            "outputs": [{"record": "some_record", "location": "some_location"}],
             "transportable_commands": [{"name": "poly", "location": "poly.py"}],
             "script": ["poly --help"],
         }
@@ -37,8 +37,8 @@ def base_function_stage_config(tmpdir):
     config = [
         {
             "name": "function_stage",
-            "input": [{"record": "some_record", "location": "some_location"}],
-            "output": [{"record": "some_record", "location": "some_location"}],
+            "inputs": [{"record": "some_record", "location": "some_location"}],
+            "outputs": [{"record": "some_record", "location": "some_location"}],
             "function": "builtins:sum",
         }
     ]
@@ -206,14 +206,14 @@ def test_stage_input_immutable(base_stage_config):
     config = ert3.config.load_stages_config(base_stage_config)
 
     with pytest.raises(TypeError, match="does not support item assignment"):
-        config[0].input[0] = None
+        config[0].inputs[0] = None
 
     with pytest.raises(TypeError, match="does not support item assignment"):
-        config[0].input[0].record = None
+        config[0].inputs[0].name = None
 
 
 def test_stage_input_unknown_field(base_stage_config):
-    base_stage_config[0]["input"][0]["unknown"] = "field"
+    base_stage_config[0]["inputs"][0]["unknown"] = "field"
 
     with pytest.raises(
         ert3.exceptions.ConfigValidationError,
@@ -226,14 +226,14 @@ def test_stage_output_immutable(base_stage_config):
     config = ert3.config.load_stages_config(base_stage_config)
 
     with pytest.raises(TypeError, match="does not support item assignment"):
-        config[0].output[0] = None
+        config[0].outputs[0] = None
 
     with pytest.raises(TypeError, match="does not support item assignment"):
-        config[0].output[0].record = None
+        config[0].outputs[0].name = None
 
 
 def test_stage_output_unknown_field(base_stage_config):
-    base_stage_config[0]["output"][0]["unknown"] = "field"
+    base_stage_config[0]["outputs"][0]["unknown"] = "field"
 
     with pytest.raises(
         ert3.exceptions.ConfigValidationError,

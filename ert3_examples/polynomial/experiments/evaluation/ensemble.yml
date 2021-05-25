@@ -1,6 +1,6 @@
 size: 10
 
-input:
+inputs:
   -
     source: stochastic.coefficients
     record: coefficients

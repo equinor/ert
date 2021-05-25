@@ -20,39 +20,39 @@ def sensitivity_ensemble(base_ensemble_dict):
 
 @pytest.fixture()
 def uniform_ensemble(base_ensemble_dict):
-    base_ensemble_dict["input"][0]["source"] = "stochastic.uniform_coefficients"
+    base_ensemble_dict["inputs"][0]["source"] = "stochastic.uniform_coefficients"
     yield ert3.config.load_ensemble_config(base_ensemble_dict)
 
 
 @pytest.fixture()
 def presampled_uniform_ensemble(base_ensemble_dict):
-    base_ensemble_dict["input"][0]["source"] = "storage.uniform_coefficients0"
+    base_ensemble_dict["inputs"][0]["source"] = "storage.uniform_coefficients0"
     yield ert3.config.load_ensemble_config(base_ensemble_dict)
 
 
 @pytest.fixture()
 def presampled_ensemble(base_ensemble_dict):
-    base_ensemble_dict["input"][0]["source"] = "storage.coefficients0"
+    base_ensemble_dict["inputs"][0]["source"] = "storage.coefficients0"
     yield ert3.config.load_ensemble_config(base_ensemble_dict)
 
 
 @pytest.fixture()
 def doe_ensemble(base_ensemble_dict):
-    base_ensemble_dict["input"][0]["source"] = "storage.designed_coefficients"
+    base_ensemble_dict["inputs"][0]["source"] = "storage.designed_coefficients"
     base_ensemble_dict["size"] = 10
     yield ert3.config.load_ensemble_config(base_ensemble_dict)
 
 
 @pytest.fixture()
 def big_ensemble(base_ensemble_dict):
-    base_ensemble_dict["input"][0]["source"] = "storage.coefficients0"
+    base_ensemble_dict["inputs"][0]["source"] = "storage.coefficients0"
     base_ensemble_dict["size"] = 1000
     yield ert3.config.load_ensemble_config(base_ensemble_dict)
 
 
 @pytest.fixture()
 def presampled_big_ensemble(base_ensemble_dict):
-    base_ensemble_dict["input"][0]["source"] = "storage.uniform_coefficients0"
+    base_ensemble_dict["inputs"][0]["source"] = "storage.uniform_coefficients0"
     base_ensemble_dict["size"] = 1000
     yield ert3.config.load_ensemble_config(base_ensemble_dict)
 

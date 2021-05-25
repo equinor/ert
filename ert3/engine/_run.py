@@ -13,7 +13,7 @@ def _prepare_experiment(
     if ert3.workspace.experiment_has_run(workspace_root, experiment_name):
         raise ValueError(f"Experiment {experiment_name} have been carried out.")
 
-    parameter_names = [elem.record for elem in ensemble.input]
+    parameter_names = [elem.record for elem in ensemble.inputs]
     ert3.storage.init_experiment(
         workspace=workspace_root,
         experiment_name=experiment_name,
@@ -66,7 +66,7 @@ def _prepare_evaluation(
 
     _prepare_experiment(workspace_root, experiment_name, ensemble, ensemble.size)
 
-    for input_record in ensemble.input:
+    for input_record in ensemble.inputs:
         record_name = input_record.record
         record_source = input_record.source.split(".")
 
@@ -90,7 +90,7 @@ def _load_ensemble_parameters(
     }
 
     ensemble_parameters = {}
-    for input_record in ensemble.input:
+    for input_record in ensemble.inputs:
         record_name = input_record.record
         record_source = input_record.source.split(".")
         assert len(record_source) == 2
@@ -114,7 +114,7 @@ def _prepare_sensitivity(
     _prepare_experiment(workspace_root, experiment_name, ensemble, len(input_records))
 
     parameters: Dict[str, List[ert3.data.Record]] = {
-        param.record: [] for param in ensemble.input
+        param.record: [] for param in ensemble.inputs
     }
     for realization in input_records:
         assert parameters.keys() == realization.keys()

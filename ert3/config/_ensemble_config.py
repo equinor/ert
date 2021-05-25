@@ -1,8 +1,9 @@
 import sys
 from typing import Tuple, Optional, Dict, Any
+
 from pydantic import BaseModel, ValidationError
 
-import ert3
+from ert3.exceptions import ConfigValidationError
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -31,7 +32,7 @@ class Input(_EnsembleConfig):
 
 class EnsembleConfig(_EnsembleConfig):
     forward_model: ForwardModel
-    input: Tuple[Input, ...]
+    inputs: Tuple[Input, ...]
     size: Optional[int] = None
 
 
@@ -39,4 +40,4 @@ def load_ensemble_config(config_dict: Dict[str, Any]) -> EnsembleConfig:
     try:
         return EnsembleConfig(**config_dict)
     except ValidationError as err:
-        raise ert3.exceptions.ConfigValidationError(str(err), source="ensemble")
+        raise ConfigValidationError(str(err), source="ensemble")

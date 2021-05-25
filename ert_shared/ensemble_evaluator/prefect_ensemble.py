@@ -5,19 +5,23 @@ import multiprocessing
 import os
 import signal
 import threading
-from typing import Optional
+from typing import Optional, Union
 import uuid
 from datetime import timedelta
-from functools import partial
 import time
 
 import prefect
 import cloudpickle
-import prefect.utilities.logging
 from cloudevents.http import CloudEvent, to_json
 from dask_jobqueue.lsf import LSFJob
-from ert_shared.ensemble_evaluator.config import find_open_port, EvaluatorServerConfig
+from prefect import Flow
+from prefect import context as prefect_context
+from prefect.executors import DaskExecutor, LocalDaskExecutor
+import prefect.utilities.logging
+
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
+from ert_shared.ensemble_evaluator import prefect_defaults as defaults
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     _Ensemble,
     create_job_builder,
@@ -26,9 +30,6 @@ from ert_shared.ensemble_evaluator.entity.ensemble import (
 )
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity.ensemble import create_file_io_builder
-from prefect import Flow
-from prefect import context as prefect_context
-from prefect.executors import DaskExecutor, LocalDaskExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -55,47 +56,22 @@ async def _eq_submit_job(self, script_filename):
     return self._call(piped_cmd, shell=True)
 
 
-def _get_executor(name="local"):
-    if name == "local":
-        cluster_kwargs = {
-            "silence_logs": "debug",
-            "scheduler_options": {"port": find_open_port()},
-        }
-        return LocalDaskExecutor(**cluster_kwargs)
-    elif name == "lsf":
-        LSFJob._submit_job = _eq_submit_job
-        cluster_kwargs = {
-            "queue": "mr",
-            "project": None,
-            "cores": 1,
-            "memory": "1GB",
-            "use_stdin": True,
-            "n_workers": 2,
-            "silence_logs": "debug",
-            "scheduler_options": {"port": find_open_port()},
-        }
-        return DaskExecutor(
-            cluster_class="dask_jobqueue.LSFCluster",
-            cluster_kwargs=cluster_kwargs,
-            debug=True,
-        )
-    elif name == "pbs":
-        cluster_kwargs = {
-            "n_workers": 10,
-            "queue": "normal",
-            "project": "ERT-TEST",
-            "local_directory": "$TMPDIR",
-            "cores": 4,
-            "memory": "16GB",
-            "resource_spec": "select=1:ncpus=4:mem=16GB",
-        }
-        return DaskExecutor(
-            cluster_class="dask_jobqueue.PBSCluster",
-            cluster_kwargs=cluster_kwargs,
-            debug=True,
-        )
-    else:
+def _get_executor(name: str = "local") -> Union[LocalDaskExecutor, DaskExecutor]:
+    if name not in defaults.DASK_EXECUTORS:
         raise ValueError(f"Unknown executor name {name}")
+
+    if name == defaults.LOCAL_EXECUTOR:
+        return LocalDaskExecutor(**defaults.LOCAL_DASK_EXECUTOR_KWARGS)  # type: ignore
+    is_lsf = name == defaults.LSF_EXECUTOR
+    if is_lsf:
+        LSFJob._submit_job = _eq_submit_job
+    return DaskExecutor(
+        **(
+            defaults.LSF_DASK_EXECUTOR_KWARGS
+            if is_lsf
+            else defaults.PBS_DASK_EXECUTOR_KWARGS
+        )
+    )
 
 
 class PrefectEnsemble(_Ensemble):
@@ -111,7 +87,7 @@ class PrefectEnsemble(_Ensemble):
 
     def _get_reals(self):
         real_builders = []
-        for iens in range(0, self.config[ids.REALIZATIONS]):
+        for iens in range(self.config[ids.REALIZATIONS]):
             real_builder = create_realization_builder().active(True).set_iens(iens)
             for step in self.config[ids.STEPS]:
                 step_id = uuid.uuid4()
@@ -249,7 +225,7 @@ class PrefectEnsemble(_Ensemble):
                     cloudpickle.dumps(self.config["outputs"]),
                 )
                 c.send(to_json(event).decode())
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "An exception occurred while starting the ensemble evaluation",
                 exc_info=True,
@@ -300,7 +276,7 @@ class PrefectEnsemble(_Ensemble):
                 pass
             if self._eval_proc.is_alive():
                 logger.debug(
-                    "Evaluation process is not responding to SIGINT, escalating to SIGKILL"
+                    "Evaluation process is not responding to SIGINT, escalating to SIGKILL"  # noqa: E501
                 )
                 os.kill(self._eval_proc.pid, signal.SIGKILL)
 
