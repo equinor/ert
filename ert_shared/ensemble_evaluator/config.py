@@ -2,7 +2,7 @@ import yaml
 import ipaddress
 import logging
 import socket
-from ert_shared.storage.main import bind_open_socket, bind_socket
+from ert_shared.storage.main import bind_socket
 import tempfile
 
 import os
@@ -134,16 +134,13 @@ class EvaluatorServerConfig:
         self, port: int = None, use_token: bool = True, generate_cert: bool = True
     ) -> None:
         self.host = _get_ip_address()
-        if port is None:
-            self._socket = bind_open_socket(self.host)
-            self.port = self._socket.getsockname()[1]
-        else:
-            self._socket = bind_socket(self.host, port)
-            self.port = port
+        self.port = find_open_port() if port is None else port
         self.protocol = "wss" if generate_cert else "ws"
         self.url = f"{self.protocol}://{self.host}:{self.port}"
         self.client_uri = f"{self.url}/client"
         self.dispatch_uri = f"{self.url}/dispatch"
+
+        self._socket = bind_socket(self.host, self.port)
 
         if generate_cert:
             cert, key, pw = _generate_certificate(ip_address=self.host)
@@ -161,8 +158,7 @@ class EvaluatorServerConfig:
         # private. Here we check if the underlying file-descriptor is valid,
         # which should work on both Unix and Windows.
         if self._socket.fileno() < 0:
-            self._socket = bind_open_socket(self.host)
-            self.port = self._socket.getsockname()[1]
+            self._socket = bind_socket(self.host, self.port)
         return self._socket
 
     def get_server_ssl_context(
