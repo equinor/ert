@@ -28,6 +28,10 @@ def _disable_server_monitor(monkeypatch):
         def fetch_url():
             return ""
 
+        @staticmethod
+        def fetch_auth():
+            return ("", "")
+
     monkeypatch.setattr(extraction, "ServerMonitor", MockServerMonitor)
 
 
@@ -35,6 +39,7 @@ def _disable_server_monitor(monkeypatch):
 def client(_disable_server_monitor, monkeypatch, ert_storage_client):
     import requests
 
+    monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "ON")
     # Fix requests library
     for func in "get", "post", "put", "delete":
         monkeypatch.setattr(requests, func, getattr(ert_storage_client, func))

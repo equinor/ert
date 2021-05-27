@@ -243,10 +243,13 @@ def ert_storage(ert_storage_client, monkeypatch):
     from ert3.storage import _storage
 
     ert_storage_client.raise_on_client_error = False
-
-    # Fix baseurl prefix
-    monkeypatch.setattr(_storage, "_STORAGE_URL", "")
-
+    monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "ON")
     # Fix requests library
     for func in "get", "post", "put", "delete":
         monkeypatch.setattr(_storage.requests, func, getattr(ert_storage_client, func))
+
+    monkeypatch.setattr(
+        _storage,
+        "get_info",
+        lambda: {"baseurl": "http://127.0.0.1:51820", "auth": ("", "")},
+    )
