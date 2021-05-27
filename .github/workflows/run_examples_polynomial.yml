@@ -40,7 +40,8 @@ jobs:
 
     - name: Start ert-storage
       run: |
-        ert-storage &
+        ert3 service start storage &
+        ert3 service check storage --timeout 100
 
     - name: Run polynomial demo
       run: |
@@ -97,7 +98,8 @@ jobs:
       env:
         ERT_STORAGE_DATABASE_URL: postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres
       run: |
-        ert-storage &
+        ert3 service start storage &
+        ert3 service check storage --timeout 100
 
     - name: Run polynomial demo
       run: |

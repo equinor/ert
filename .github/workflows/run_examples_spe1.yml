@@ -69,7 +69,8 @@ jobs:
 
     - name: Start ert-storage
       run: |
-        ert-storage &
+        ert3 service start storage &
+        ert3 service check storage --timeout 100
 
     - name: Run spe1 demo
       run: |

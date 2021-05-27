@@ -275,9 +275,11 @@ def _create_priors(ert) -> Mapping[str, dict]:
     return priors
 
 
-def _get_from_server(url, headers=None, status_code=200) -> requests.Response:
+def _get_from_server(url, headers={}, status_code=200) -> requests.Response:
+    server = ServerMonitor.get_instance()
+    headers["Token"] = server.fetch_auth()[1]
     resp = requests.get(
-        url,
+        f"{server.fetch_url()}/{url}",
         headers=headers,
     )
     if resp.status_code != status_code:
@@ -287,10 +289,12 @@ def _get_from_server(url, headers=None, status_code=200) -> requests.Response:
 
 
 def _post_to_server(
-    url, data=None, params=None, json=None, headers=None, status_code=200
+    url, data=None, params=None, json=None, headers={}, status_code=200
 ) -> requests.Response:
+    server = ServerMonitor.get_instance()
+    headers["Token"] = server.fetch_auth()[1]
     resp = requests.post(
-        url,
+        f"{server.fetch_url()}/{url}",
         headers=headers,
         params=params,
         data=data,
@@ -306,9 +310,9 @@ def _post_to_server(
 def post_update_data(
     ert: "LibresFacade", parent_ensemble_id: str, algorithm: str
 ) -> str:
-    server = ServerMonitor.get_instance()
+
     observations = _get_from_server(
-        f"{server.fetch_url()}/ensembles/{parent_ensemble_id}/observations",
+        f"ensembles/{parent_ensemble_id}/observations",
     ).json()
 
     # create update thingy
@@ -322,7 +326,7 @@ def post_update_data(
     )
 
     response = _post_to_server(
-        f"{server.fetch_url()}/updates",
+        "updates",
         json=update_create,
     )
     update = response.json()
@@ -331,10 +335,9 @@ def post_update_data(
 
 @feature_enabled("new-storage")
 def post_ensemble_results(ert: "LibresFacade", ensemble_id: str) -> None:
-    server = ServerMonitor.get_instance()
 
     observations = _get_from_server(
-        f"{server.fetch_url()}/ensembles/{ensemble_id}/observations",
+        f"ensembles/{ensemble_id}/observations",
     ).json()
 
     for record in create_response_records(
@@ -344,14 +347,14 @@ def post_ensemble_results(ert: "LibresFacade", ensemble_id: str) -> None:
         name = record["name"]
         for index, data in realizations.items():
             _post_to_server(
-                f"{server.fetch_url()}/ensembles/{ensemble_id}/records/{name}/matrix",
+                f"ensembles/{ensemble_id}/records/{name}/matrix",
                 params={"realization_index": index, "record_class": "response"},
                 data=data.to_csv().encode(),
                 headers={"content-type": "application/x-dataframe"},
             )
             if record["observations"] is not None:
                 _post_to_server(
-                    f"{server.fetch_url()}/ensembles/{ensemble_id}/records/{name}/observations",
+                    f"ensembles/{ensemble_id}/records/{name}/observations",
                     params={"realization_index": index},
                     json=record["observations"],
                 )
@@ -363,20 +366,20 @@ def post_ensemble_data(
     ensemble_size: int,
     update_id: Optional[str] = None,
 ) -> str:
-    server = ServerMonitor.get_instance()
+
     if update_id is None:
         exp_response = _post_to_server(
-            f"{server.fetch_url()}/experiments",
+            "experiments",
             json=create_experiment(ert),
         ).json()
         experiment_id = exp_response["id"]
         for obs in create_observations(ert):
             _post_to_server(
-                f"{server.fetch_url()}/experiments/{experiment_id}/observations",
+                f"experiments/{experiment_id}/observations",
                 json=obs,
             )
     else:
-        update = _get_from_server(f"{server.fetch_url()}/updates/{update_id}").json()
+        update = _get_from_server(f"updates/{update_id}").json()
         experiment_id = update["experiment_id"]
 
     parameters = create_parameters(ert)
@@ -387,7 +390,7 @@ def post_ensemble_data(
     ]
 
     ens_response = _post_to_server(
-        f"{server.fetch_url()}/experiments/{experiment_id}/ensembles",
+        f"experiments/{experiment_id}/ensembles",
         json=create_ensemble(
             ert,
             size=ensemble_size,
@@ -402,7 +405,7 @@ def post_ensemble_data(
     for param in parameters:
         df = pd.DataFrame([p.tolist() for p in param["values"]])
         _post_to_server(
-            f"{server.fetch_url()}/ensembles/{ensemble_id}/records/{param['name']}/matrix",
+            f"ensembles/{ensemble_id}/records/{param['name']}/matrix",
             data=df.to_csv(),
             headers={"content-type": "text/csv"},
         )

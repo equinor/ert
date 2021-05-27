@@ -1,6 +1,7 @@
 import ert3
 
 import pathlib
+from ert_shared.storage import connection
 import pytest
 import sys
 import copy
@@ -512,3 +513,40 @@ def test_cli_validation_stages_command(base_ensemble_dict, workspace, capsys):
     capture = capsys.readouterr()
     assert "Error while loading stages configuration data:" in capture.out
     assert "str type expected" in capture.out
+
+
+def test_failing_check_service(tmpdir):
+    with tmpdir.as_cwd():
+        with patch.object(
+            sys, "argv", ["ert3", "service", "check", "storage", "--timeout", "1"]
+        ):
+            with pytest.raises(SystemExit, match="ERROR: Ert storage not found!"):
+                ert3.console._console._main()
+
+
+def test_check_service(tmpdir, monkeypatch):
+    with tmpdir.as_cwd():
+        with patch.object(
+            sys, "argv", ["ert3", "service", "check", "storage", "--timeout", "1"]
+        ):
+            monkeypatch.setattr(
+                ert3.console._console,
+                "get_info",
+                lambda: {"baseurl": "http://127.0.0.1:51820", "auth": ("", "")},
+            )
+            ert3.console._console._main()
+
+
+def _assert_start_storage_command(*args):
+    assert args == ("ert", ["ert", "api"])
+
+
+def test_start_service(tmpdir, monkeypatch):
+    with tmpdir.as_cwd():
+        with patch.object(sys, "argv", ["ert3", "service", "start", "storage"]):
+            monkeypatch.setattr(
+                ert3.console._console.os,
+                "execvp",
+                _assert_start_storage_command,
+            )
+            ert3.console._console._main()

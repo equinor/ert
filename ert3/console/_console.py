@@ -2,7 +2,8 @@ import argparse
 import pathlib
 import shutil
 import sys
-
+import os
+import time
 from typing import Any, List, Union
 from pathlib import Path
 
@@ -12,7 +13,7 @@ import yaml
 import ert3
 
 from ert3.config import EnsembleConfig, StagesConfig, ExperimentConfig, ParametersConfig
-
+from ert_shared.storage.connection import get_info
 
 _ERT3_DESCRIPTION = (
     "ert3 is an ensemble-based tool for uncertainty studies.\n"
@@ -88,6 +89,30 @@ def _build_clean_argparser(subparsers: Any) -> None:
     )
 
 
+def _build_service_argparser(subparsers: Any) -> None:
+    service_parser = subparsers.add_parser("service", help="ert3 services")
+
+    sub_service_parser = service_parser.add_subparsers(
+        dest="service_cmd", help="ert3 service commands"
+    )
+
+    start_parser = sub_service_parser.add_parser("start", help="Start ert3 service")
+    check_parser = sub_service_parser.add_parser("check", help="Check ert3 service")
+    start_parser.add_argument(
+        dest="service_name",
+        choices=["storage"],
+        help="ert3 storage service",
+    )
+    check_parser.add_argument(
+        dest="service_name",
+        choices=["storage"],
+        help="ert3 storage service",
+    )
+    check_parser.add_argument(
+        "--timeout", type=int, default=30, help="Timeout for services"
+    )
+
+
 def _build_argparser() -> Any:
     parser = argparse.ArgumentParser(description=_ERT3_DESCRIPTION)
     subparsers = parser.add_subparsers(dest="sub_cmd", help="ert3 commands")
@@ -98,6 +123,7 @@ def _build_argparser() -> Any:
     _build_record_argparser(subparsers)
     _build_status_argparser(subparsers)
     _build_clean_argparser(subparsers)
+    _build_service_argparser(subparsers)
 
     return parser
 
@@ -205,6 +231,40 @@ def _clean(workspace: Path, args: Any) -> None:
     ert3.console.clean(workspace, args.experiment_names, args.all)
 
 
+def _service_check(args: Any) -> None:
+    if args.service_name == "storage":
+        for _ in range(args.timeout):
+            try:
+                info = get_info()
+                print(f"Ert storage found: {info['baseurl']}")
+                return
+            except RuntimeError:
+                print("Connecting to ert-storage...")
+                time.sleep(1)
+                continue
+        raise SystemExit("ERROR: Ert storage not found!")
+
+    raise SystemExit(f"{args.service_name} not implemented")
+
+
+def _service_start(args: Any) -> None:
+    if args.service_name == "storage":
+        os.execvp("ert", ["ert", "api"])
+    else:
+        raise SystemExit(f"{args.service_name} not implemented")
+
+
+def _service(args: Any) -> None:
+    assert args.sub_cmd == "service"
+
+    if args.service_cmd == "check":
+        _service_check(args)
+    elif args.service_cmd == "start":
+        _service_start(args)
+    else:
+        raise SystemExit(f"{args.service_cmd} not implemented")
+
+
 def main() -> None:
     try:
         _main()
@@ -224,6 +284,9 @@ def _main() -> None:
         return
     if args.sub_cmd == "init":
         _init(args)
+        return
+    elif args.sub_cmd == "service":
+        _service(args)
         return
 
     # Commands that does requires an ert workspace

@@ -2,16 +2,18 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Set
 import io
-
+import logging
 import pandas as pd
 from pydantic import BaseModel
 import requests
 import ert3
 
+from ert_shared.storage.connection import get_info
 
-_STORAGE_URL = "http://localhost:8000"
-_DATA = "__data__"
-_PARAMETERS = "__parameters__"
+logger = logging.getLogger(__name__)
+
+_STORAGE_TOKEN = None
+_STORAGE_URL = None
 _ENSEMBLE_RECORDS = "__ensemble_records__"
 _SPECIAL_KEYS = (_ENSEMBLE_RECORDS,)
 
@@ -28,8 +30,90 @@ class _NumericalMetaData(BaseModel):
     record_type: ert3.data.RecordType
 
 
+def _assert_server_info() -> None:
+    global _STORAGE_URL, _STORAGE_TOKEN  # pylint: disable=global-statement
+
+    if _STORAGE_URL is None:
+        info = get_info()
+        _STORAGE_URL = info["baseurl"]
+        _STORAGE_TOKEN = info["auth"][1]
+
+
+def _get_from_server(
+    path: str,
+    headers: Optional[Dict[Any, Any]] = None,
+    status_code: int = 200,
+    **kwargs: Any,
+) -> requests.Response:
+
+    _assert_server_info()
+    if not headers:
+        headers = {}
+    headers["Token"] = _STORAGE_TOKEN
+
+    resp = requests.get(url=f"{_STORAGE_URL}/{path}", headers=headers, **kwargs)
+    if resp.status_code != status_code:
+        logger.error("Failed to fetch from %s. Response: %s", path, resp.text)
+
+    return resp
+
+
+def _delete_on_server(
+    path: str, headers: Optional[Dict[Any, Any]] = None, status_code: int = 200
+) -> requests.Response:
+
+    _assert_server_info()
+    if not headers:
+        headers = {}
+    headers["Token"] = _STORAGE_TOKEN
+    resp = requests.delete(
+        url=f"{_STORAGE_URL}/{path}",
+        headers=headers,
+    )
+    if resp.status_code != status_code:
+        logger.error("Failed to delete %s. Response: %s", path, resp.text)
+
+    return resp
+
+
+def _post_to_server(
+    path: str,
+    headers: Optional[Dict[Any, Any]] = None,
+    status_code: int = 200,
+    **kwargs: Any,
+) -> requests.Response:
+
+    _assert_server_info()
+    if not headers:
+        headers = {}
+    headers["Token"] = _STORAGE_TOKEN
+    resp = requests.post(url=f"{_STORAGE_URL}/{path}", headers=headers, **kwargs)
+    if resp.status_code != status_code:
+        logger.error("Failed to post to %s. Response: %s", path, resp.text)
+
+    return resp
+
+
+def _put_to_server(
+    path: str,
+    headers: Optional[Dict[Any, Any]] = None,
+    status_code: int = 200,
+    **kwargs: Any,
+) -> requests.Response:
+
+    _assert_server_info()
+    if not headers:
+        headers = {}
+    headers["Token"] = _STORAGE_TOKEN
+    resp = requests.put(url=f"{_STORAGE_URL}/{path}", headers=headers, **kwargs)
+    if resp.status_code != status_code:
+        logger.error("Failed to put to %s. Response: %s", path, resp.text)
+
+    return resp
+
+
 def _get_experiment_by_name(experiment_name: str) -> Dict[str, Any]:
-    response = requests.get(url=f"{_STORAGE_URL}/experiments")
+    response = _get_from_server(path="experiments")
     if response.status_code != 200:
         raise ert3.exceptions.StorageError(response.text)
     experiments = {exp["name"]: exp for exp in response.json()}
@@ -37,7 +121,7 @@ def _get_experiment_by_name(experiment_name: str) -> Dict[str, Any]:
 
 
 def init(*, workspace: Path) -> None:
-    response = requests.get(url=f"{_STORAGE_URL}/experiments")
+    response = _get_from_server(path="experiments")
     experiment_names = {exp["name"]: exp["ensembles"] for exp in response.json()}
 
     for special_key in _SPECIAL_KEYS:
@@ -84,12 +168,10 @@ def _init_experiment(
             f"Cannot initialize existing experiment: {experiment_name}"
         )
 
-    exp_response = requests.post(
-        url=f"{_STORAGE_URL}/experiments", json={"name": experiment_name}
-    )
+    exp_response = _post_to_server(path="experiments", json={"name": experiment_name})
     exp_id = exp_response.json()["id"]
-    response = requests.post(
-        url=f"{_STORAGE_URL}/experiments/{exp_id}/ensembles",
+    response = _post_to_server(
+        path=f"experiments/{exp_id}/ensembles",
         json={
             "parameter_names": list(parameters),
             "response_names": [],
@@ -101,7 +183,7 @@ def _init_experiment(
 
 
 def get_experiment_names(*, workspace: Path) -> Set[str]:
-    response = response = requests.get(url=f"{_STORAGE_URL}/experiments")
+    response = response = _get_from_server(path="experiments")
     experiment_names = {exp["name"] for exp in response.json()}
     for special_key in _SPECIAL_KEYS:
         key = f"{workspace}.{special_key}"
@@ -138,15 +220,15 @@ def _add_numerical_data(
     )
 
     ensemble_id = experiment["ensembles"][0]  # currently just one ens per exp
-    record_url = f"{_STORAGE_URL}/ensembles/{ensemble_id}/records/{record_name}"
+    record_url = f"ensembles/{ensemble_id}/records/{record_name}"
 
     for idx, record in enumerate(ensemble_record.records):
         df = pd.DataFrame([record.data], columns=record.index, index=[idx])
-        response = requests.post(
-            url=f"{record_url}/matrix",
+        response = _post_to_server(
+            path=f"{record_url}/matrix",
             params={"realization_index": idx},
             data=df.to_csv().encode(),
-            headers={"content-type": "application/x-dataframe"},
+            headers={"content-type": "text/csv"},
         )
 
         if response.status_code == 409:
@@ -155,8 +237,8 @@ def _add_numerical_data(
         if response.status_code != 200:
             raise ert3.exceptions.StorageError(response.text)
 
-        meta_response = requests.put(
-            url=f"{record_url}/metadata",
+        meta_response = _put_to_server(
+            path=f"{record_url}/metadata",
             params={"realization_index": idx},
             json=metadata.dict(),
         )
@@ -199,8 +281,8 @@ def _response2record(
 
 
 def _get_numerical_metadata(ensemble_id: str, record_name: str) -> _NumericalMetaData:
-    response = requests.get(
-        url=f"{_STORAGE_URL}/ensembles/{ensemble_id}/records/{record_name}/metadata",
+    response = _get_from_server(
+        path=f"ensembles/{ensemble_id}/records/{record_name}/metadata",
         params={"realization_index": 0},  # This assumes there is a realization 0
     )
 
@@ -229,10 +311,10 @@ def _get_numerical_data(
 
     records = []
     for real_id in range(metadata.ensemble_size):
-        response = requests.get(
-            url=f"{_STORAGE_URL}/ensembles/{ensemble_id}/records/{record_name}",
+        response = _get_from_server(
+            path=f"ensembles/{ensemble_id}/records/{record_name}",
             params={"realization_index": real_id},
-            headers={"accept": "application/x-dataframe"},
+            headers={"accept": "text/csv"},
         )
 
         if response.status_code == 404:
@@ -290,7 +372,7 @@ def get_ensemble_record_names(
         )
 
     ensemble_id = experiment["ensembles"][0]  # currently just one ens per exp
-    response = requests.get(url=f"{_STORAGE_URL}/ensembles/{ensemble_id}/records")
+    response = _get_from_server(path=f"ensembles/{ensemble_id}/records")
     if response.status_code != 200:
         raise ert3.exceptions.StorageError(response.text)
     return list(response.json().keys())
@@ -307,7 +389,7 @@ def get_experiment_parameters(
         )
 
     ensemble_id = experiment["ensembles"][0]  # currently just one ens per exp
-    response = requests.get(url=f"{_STORAGE_URL}/ensembles/{ensemble_id}/parameters")
+    response = _get_from_server(path=f"ensembles/{ensemble_id}/parameters")
     if response.status_code != 200:
         raise ert3.exceptions.StorageError(response.text)
     return list(response.json())
@@ -320,7 +402,7 @@ def delete_experiment(*, workspace: Path, experiment_name: str) -> None:
         raise ert3.exceptions.NonExistantExperiment(
             f"Experiment does not exist: {experiment_name}"
         )
-    response = requests.delete(url=f"{_STORAGE_URL}/experiments/{experiment['id']}")
+    response = _delete_on_server(path=f"experiments/{experiment['id']}")
 
     if response.status_code != 200:
         raise ert3.exceptions.StorageError(response.text)
