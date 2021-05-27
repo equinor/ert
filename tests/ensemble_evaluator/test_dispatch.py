@@ -3,13 +3,24 @@ import pytest
 from unittest.mock import Mock
 from ert_shared.ensemble_evaluator.dispatch import Dispatcher, Batcher
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
+from collections import defaultdict
 
 
 class DummyEventHandler:
     def __init__(self, batching=False):
 
         self.batcher = Batcher(timeout=1) if batching else None
-        self.dispatcher = Dispatcher(batcher=self.batcher)
+        self.dispatcher = Dispatcher(
+            snapshot=None,
+            ee_id="ee_id",
+            iter="1",
+            clients={},
+            result_cb=lambda x: None,
+            stop_cb=lambda x: None,
+            batcher=self.batcher,
+        )
+        self.dispatcher._LOOKUP_MAP.clear()
+        # self.dispatcher.clear_handlers()
         self.mock_all = Mock()
         self.mock_step = Mock()
         self.mock_none = Mock()
@@ -32,7 +43,7 @@ class DummyEventHandler:
 
 
 def _create_dummy_event(event_type):
-    return {"type": event_type}
+    return {"type": event_type, "source": "/ert/ee/1"}
 
 
 @pytest.mark.asyncio

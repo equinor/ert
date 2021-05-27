@@ -48,12 +48,12 @@ class EnsembleEvaluator:
         # * https://github.com/equinor/ert/issues/1250
         self._iter = iter_
         self._ee_id = ee_id
-
         self._config = config
         self._ensemble = ensemble
 
-        self._loop = asyncio.new_event_loop()
+        self._snapshot = ensemble.create_snapshot()
 
+        self._loop = asyncio.new_event_loop()
         self._done = self._loop.create_future()
 
         self._clients: Set[WebSocketServerProtocol] = set()
@@ -62,132 +62,33 @@ class EnsembleEvaluator:
         )
 
         self._batcher = Batcher(timeout=2, loop=self._loop)
-        self._dispatcher = Dispatcher(batcher=self._batcher)
+        self._dispatcher = Dispatcher(
+            snapshot=self._snapshot,
+            ee_id=ee_id,
+            iter=iter_,
+            clients=self._clients,
+            result_cb=self.set_result,
+            stop_cb=self._stop,
+            batcher=self._batcher,
+        )
 
-        self._register_event_handlers(dispatcher=self._dispatcher)
-
-        self._snapshot = self.create_snapshot(ensemble)
-        self._event_index = 1
         self._result = None
 
         self._ws_thread = threading.Thread(
             name="ert_ee_run_server", target=self._run_server, args=(self._loop,)
         )
 
-    def _register_event_handlers(self, dispatcher: Dispatcher):
-        dispatcher.register_event_handler(identifiers.EVGROUP_FM_ALL, batching=True)(
-            self._fm_handler
-        )
-        dispatcher.register_event_handler(
-            identifiers.EVTYPE_ENSEMBLE_STOPPED, batching=True
-        )(self._ensemble_stopped_handler)
-        dispatcher.register_event_handler(
-            identifiers.EVTYPE_ENSEMBLE_STARTED, batching=True
-        )(self._ensemble_started_handler)
-        dispatcher.register_event_handler(
-            identifiers.EVTYPE_ENSEMBLE_CANCELLED, batching=True
-        )(self._ensemble_cancelled_handler)
-        dispatcher.register_event_handler(
-            identifiers.EVTYPE_ENSEMBLE_FAILED, batching=True
-        )(self._ensemble_failed_handler)
+    def set_result(self, result):
+        self._result = result
 
     @staticmethod
-    def create_snapshot(ensemble):
-        reals = {}
-        for real in ensemble.get_active_reals():
-            reals[str(real.get_iens())] = Realization(
-                active=True,
-                status=REALIZATION_STATE_WAITING,
-            )
-            for step in real.get_steps():
-                reals[str(real.get_iens())].steps[str(step.get_id())] = Step(
-                    status=STEP_STATE_UNKNOWN
-                )
-                for job in step.get_jobs():
-                    reals[str(real.get_iens())].steps[str(step.get_id())].jobs[
-                        str(job.get_id())
-                    ] = Job(
-                        status=JOB_STATE_START,
-                        data={},
-                        name=job.get_name(),
-                    )
-        top = SnapshotDict(
-            reals=reals,
-            status=ENSEMBLE_STATE_STARTED,
-            metadata=ensemble.get_metadata(),
-        )
-
-        return Snapshot(top.dict())
-
-    async def _fm_handler(self, events):
-        snapshot_mutate_event = PartialSnapshot(self._snapshot)
-        for event in events:
-            snapshot_mutate_event.from_cloudevent(event)
-        await self._send_snapshot_update(snapshot_mutate_event)
-
-    async def _ensemble_stopped_handler(self, events):
-        for event in events:
-            self._result = event.data
-            if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
-                snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
-                    event
-                )
-                await self._send_snapshot_update(snapshot_mutate_event)
-
-    async def _ensemble_started_handler(self, events):
-        for event in events:
-            if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
-                snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
-                    event
-                )
-                await self._send_snapshot_update(snapshot_mutate_event)
-
-    async def _ensemble_cancelled_handler(self, events):
-        for event in events:
-            if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
-                snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
-                    event
-                )
-                await self._send_snapshot_update(snapshot_mutate_event)
-                self._stop()
-
-    async def _ensemble_failed_handler(self, events):
-        for event in events:
-            if self._snapshot.get_status() not in [
-                ENSEMBLE_STATE_STOPPED,
-                ENSEMBLE_STATE_CANCELLED,
-            ]:
-                snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
-                    event
-                )
-                await self._send_snapshot_update(snapshot_mutate_event)
-
-    async def _send_snapshot_update(self, snapshot_mutate_event):
-        self._snapshot.merge_event(snapshot_mutate_event)
-        out_cloudevent = CloudEvent(
-            {
-                "type": identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
-                "source": f"/ert/ee/{self._ee_id}",
-                "id": self.event_index(),
-            },
-            snapshot_mutate_event.to_dict(),
-        )
-        out_cloudevent.data["iter"] = self._iter
-        out_msg = to_json(
-            out_cloudevent, data_marshaller=serialization.evaluator_marshaller
-        ).decode()
-        if out_msg and self._clients:
-            await asyncio.wait([client.send(out_msg) for client in self._clients])
-
-    @staticmethod
-    def create_snapshot_msg(ee_id, iter_, snapshot, event_index):
+    def create_snapshot_msg(ee_id, iter_, snapshot):
         data = snapshot.to_dict()
         data["iter"] = iter_
         out_cloudevent = CloudEvent(
             {
                 "type": identifiers.EVTYPE_EE_SNAPSHOT,
                 "source": f"/ert/ee/{ee_id}",
-                "id": event_index,
             },
             data,
         )
@@ -208,9 +109,7 @@ class EnsembleEvaluator:
 
     async def handle_client(self, websocket, path):
         with self.store_client(websocket):
-            message = self.create_snapshot_msg(
-                self._ee_id, self._iter, self._snapshot, self.event_index()
-            )
+            message = self.create_snapshot_msg(self._ee_id, self._iter, self._snapshot)
             await websocket.send(message)
 
             async for message in websocket:
@@ -342,18 +241,12 @@ class EnsembleEvaluator:
             {
                 "type": identifiers.EVTYPE_EE_TERMINATED,
                 "source": f"/ert/ee/{self._ee_id}",
-                "id": str(self.event_index()),
             }
         )
         message = to_json(
             out_cloudevent, data_marshaller=serialization.evaluator_marshaller
         ).decode()
         return message
-
-    def event_index(self):
-        index = self._event_index
-        self._event_index += 1
-        return index
 
     def run(self) -> ee_monitor._Monitor:
         self._ws_thread.start()
