@@ -5,9 +5,10 @@ from uuid import UUID
 from typing import Any, Optional, List
 import sqlalchemy as sa
 from fastapi.responses import Response
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from ert_storage.database import Session, get_db
 from ert_storage import database_schema as ds, json_schema as js
+from ert_storage import exceptions as exc
 from ert_storage.compute import calculate_misfits_from_pandas, misfits
 
 router = APIRouter(tags=["misfits"])
@@ -76,14 +77,7 @@ async def get_response_misfits(
             response_dict, observation_df, summary_misfits
         )
     except Exception as misfits_exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={
-                "error": f"Unable to compute misfits: {misfits_exc}",
-                "name": response_name,
-                "ensemble_id": str(ensemble_id),
-            },
-        )
+        raise exc.UnprocessableError(f"Unable to compute misfits: {misfits_exc}")
     return Response(
         content=result_df.to_csv().encode(),
         media_type="text/csv",

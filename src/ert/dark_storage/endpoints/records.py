@@ -10,7 +10,6 @@ from fastapi import (
     Body,
     Depends,
     File,
-    HTTPException,
     Header,
     Request,
     UploadFile,
@@ -23,6 +22,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.attributes import flag_modified
 from ert_storage.database import Session, get_db, HAS_AZURE_BLOB_STORAGE, BLOB_CONTAINER
 from ert_storage import database_schema as ds, json_schema as js
+from ert_storage import exceptions as exc
 
 from fastapi.logger import logger
 
@@ -228,15 +228,8 @@ async def post_ensemble_record_matrix(
     is_parameter = name in ensemble.parameter_names
     is_response = name in ensemble.response_names
     if prior_id is not None and not is_parameter:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={
-                "error": "Priors can only be specified for parameter records",
-                "name": name,
-                "ensemble_id": str(ensemble_id),
-                "realization_index": realization_index,
-                "prior_id": str(prior_id),
-            },
+        raise exc.UnprocessableError(
+            "Priors can only be specified for parameter records"
         )
 
     labels = None
@@ -273,29 +266,14 @@ async def post_ensemble_record_matrix(
             message = f"Ensemble-wide record '{name}' for ensemble '{ensemble_id}' needs to be a matrix"
         else:
             message = f"Forward-model record '{name}' for ensemble '{ensemble_id}', realization {realization_index} needs to be a matrix"
-
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={
-                "error": message,
-                "name": name,
-                "ensemble_id": str(ensemble_id),
-                "realization_index": realization_index,
-            },
-        )
+        raise exc.UnprocessableError(message)
 
     # Require that the dimensionality of an ensemble-wide parameter matrix is at least 2
     if realization_index is None and is_parameter:
         if content.ndim <= 1:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail={
-                    "error": "Ensemble-wide parameter record '{name}' for ensemble '{ensemble_id}'"
-                    "must have dimensionality of at least 2",
-                    "name": name,
-                    "ensemble_id": str(ensemble_id),
-                    "realization_index": realization_index,
-                },
+            raise exc.UnprocessableError(
+                f"Ensemble-wide parameter record '{name}' for ensemble '{ensemble_id}'"
+                "must have dimensionality of at least 2"
             )
 
     matrix_obj = ds.F64Matrix(content=content.tolist(), labels=labels)
@@ -405,14 +383,7 @@ async def post_record_observations(
         flag_modified(record_obj, "observations")
         db.commit()
     else:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={
-                "error": f"Observations {observation_ids} not found!",
-                "name": name,
-                "ensemble_id": str(ensemble_id),
-            },
-        )
+        raise exc.UnprocessableError(f"Observations {observation_ids} not found!")
 
 
 @router.get("/ensembles/{ensemble_id}/records/{name}/observations")
@@ -554,14 +525,14 @@ async def get_ensemble_record(
         try:
             bundle = _get_forward_model_record(db, ensemble_id, name, realization_index)
             realization_index = None
-        except HTTPException as exc:
+        except exc.NotFoundError:
             bundle = _get_ensemble_record(db, ensemble_id, name)
 
             # Only parameter records can be "up-casted" to ensemble-wide
             is_matrix = bundle.record_info.record_type == ds.RecordType.f64_matrix
             is_parameter = name in bundle.record_info.ensemble.parameter_names
             if not is_matrix or not is_parameter:
-                raise exc
+                raise
     return await _get_record_data(bundle, accept, realization_index)
 
 
@@ -646,13 +617,8 @@ def _get_ensemble_record(db: Session, ensemble_id: UUID, name: str) -> ds.Record
             .one()
         )
     except NoResultFound:
-        raise HTTPException(
-            status_code=404,
-            detail={
-                "error": f"Ensemble-wide record '{name}' for ensemble '{ensemble_id}' not found!",
-                "name": name,
-                "ensemble_id": str(ensemble_id),
-            },
+        raise exc.NotFoundError(
+            f"Ensemble-wide record '{name}' for ensemble '{ensemble_id}' not found!"
         )
 
 
@@ -672,13 +638,8 @@ def _get_forward_model_record(
             .one()
         )
     except NoResultFound:
-        raise HTTPException(
-            status_code=404,
-            detail={
-                "error": f"Forward-model record '{name}' for ensemble '{ensemble_id}', realization {realization_index} not found!",
-                "name": name,
-                "ensemble_id": str(ensemble_id),
-            },
+        raise exc.NotFoundError(
+            f"Forward-model record '{name}' for ensemble '{ensemble_id}', realization {realization_index} not found!"
         )
 
 
@@ -697,16 +658,11 @@ def _get_and_assert_ensemble(
     )
     if realization_index is not None:
         if realization_index not in range(ensemble.size) and ensemble.size != -1:
-            raise HTTPException(
-                status_code=status.HTTP_417_EXPECTATION_FAILED,
-                detail={
-                    "error": f"Ensemble '{name}' ('{ensemble_id}') does have a 'size' "
-                    f"of {ensemble.size}. The posted record is targeting "
-                    f"'realization_index' {realization_index} which is out "
-                    f"of bounds.",
-                    "name": name,
-                    "ensemble_id": str(ensemble_id),
-                },
+            raise exc.ExpectationError(
+                f"Ensemble '{name}' ('{ensemble_id}') does have a 'size' "
+                f"of {ensemble.size}. The posted record is targeting "
+                f"'realization_index' {realization_index} which is out "
+                f"of bounds."
             )
 
         q = q.filter(
@@ -715,13 +671,8 @@ def _get_and_assert_ensemble(
         )
 
     if q.count() > 0:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail={
-                "error": f"Ensemble-wide record '{name}' for ensemble '{ensemble_id}' already exists",
-                "name": name,
-                "ensemble_id": str(ensemble_id),
-            },
+        raise exc.ConflictError(
+            f"Ensemble-wide record '{name}' for ensemble '{ensemble_id}' already exists"
         )
 
     return ensemble
@@ -827,26 +778,16 @@ def _create_record(
 
         # Check that the parameters match
         if record_info.record_class != old_record_info.record_class:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail={
-                    "error": "Record class of new record does not match previous record class",
-                    "new_record_class": str(record_info.record_class),
-                    "old_record_class": str(old_record_info.record_class),
-                    "name": name,
-                    "ensemble_id": str(ensemble.id),
-                },
+            raise exc.ConflictError(
+                "Record class of new record does not match previous record class",
+                new_record_class=record_info.record_class,
+                old_record_class=old_record_info.record_class,
             )
         if record_info.record_type != old_record_info.record_type:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail={
-                    "error": "Record type of new record does not match previous record type",
-                    "new_record_type": str(record_info.record_type),
-                    "old_record_type": str(old_record_info.record_type),
-                    "name": name,
-                    "ensemble_id": str(ensemble.id),
-                },
+            raise exc.ConflictError(
+                "Record type of new record does not match previous record type",
+                new_record_type=record_info.record_type,
+                old_record_type=old_record_info.record_type,
             )
 
         record = ds.Record(record_info=old_record_info, **kwargs)

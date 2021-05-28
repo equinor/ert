@@ -1,4 +1,5 @@
 import json
+from enum import Enum
 from typing import Any
 from fastapi import FastAPI, Request, status
 from fastapi.responses import Response, RedirectResponse
@@ -6,8 +7,20 @@ from starlette.graphql import GraphQLApp
 
 from ert_storage.endpoints import router as endpoints_router
 from ert_storage.graphql import router as graphql_router
+from ert_storage.exceptions import ErtStorageError
 
 from sqlalchemy.orm.exc import NoResultFound
+
+
+class JSONEncoder(json.JSONEncoder):
+    """
+    Custom JSON encoder with support for Python 3.4 enums
+    """
+
+    def default(self, obj: Any) -> Any:
+        if isinstance(obj, Enum):
+            return obj.name
+        return super().default(obj)
 
 
 class JSONResponse(Response):
@@ -16,13 +29,16 @@ class JSONResponse(Response):
     media_type = "application/json"
 
     def render(self, content: Any) -> bytes:
-        return json.dumps(
-            content,
-            ensure_ascii=False,
-            allow_nan=True,
-            indent=None,
-            separators=(",", ":"),
-        ).encode("utf-8")
+        return (
+            JSONEncoder(
+                ensure_ascii=False,
+                allow_nan=True,
+                indent=None,
+                separators=(",", ":"),
+            )
+            .encode(content)
+            .encode("utf-8")
+        )
 
 
 app = FastAPI(
@@ -56,6 +72,23 @@ async def sqlalchemy_exception_handler(
     """
     return JSONResponse(
         {"detail": "Item not found"}, status_code=status.HTTP_404_NOT_FOUND
+    )
+
+
+@app.exception_handler(ErtStorageError)
+async def ert_storage_error_handler(
+    request: Request, exc: ErtStorageError
+) -> JSONResponse:
+    return JSONResponse(
+        {
+            "detail": {
+                **request.query_params,
+                **request.path_params,
+                **exc.args[1],
+                "error": exc.args[0],
+            }
+        },
+        status_code=exc.__status_code__,
     )
 
 
