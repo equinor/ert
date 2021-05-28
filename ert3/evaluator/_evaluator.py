@@ -29,7 +29,6 @@ from ert3.data import (
     RecordTransmitter,
     Record,
     SharedDiskRecordTransmitter,
-    record_data,
 )
 
 _EVTYPE_SNAPSHOT_STOPPED = "Stopped"
@@ -39,23 +38,10 @@ _MY_STORAGE_DIRECTORY = ".my_storage"
 CoroutineTransmitters = List[Coroutine[Any, Any, None]]
 
 
-# scafflting function. this will be removed later
-# with ert3.evaluator._evaluator._ee_config
 def _add_storage(path: Path) -> Path:
     if path.name != _MY_STORAGE_DIRECTORY:
         return path / _MY_STORAGE_DIRECTORY
     return path
-
-
-def _create_input_transmitter(
-    name: str,
-    path: Path,
-    data: record_data,
-    futures: CoroutineTransmitters,
-) -> Dict[str, RecordTransmitter]:
-    transmitter = SharedDiskRecordTransmitter(name, _add_storage(path))
-    futures.append(transmitter.transmit_data(data))
-    return {name: transmitter}
 
 
 def _create_command_transmitter(
@@ -77,14 +63,15 @@ def prepare_input(
     inputs: MultiEnsembleRecord,
 ) -> RealisationsToRecordToTransmitter:
     (evaluation_tmp_dir / "prep_input_files").mkdir(parents=True, exist_ok=True)
+    transmitters: RealisationsToRecordToTransmitter = defaultdict(dict)
     futures: CoroutineTransmitters = []
-    transmitters = {
-        iens: _create_input_transmitter(
-            input_.name, evaluation_tmp_dir, record.data, futures
-        )
-        for input_ in step.inputs
-        for iens, record in enumerate(inputs.ensemble_records[input_.name].records)
-    }
+    for input_ in step.inputs:
+        for iens, record in enumerate(inputs.ensemble_records[input_.name].records):
+            transmitter = SharedDiskRecordTransmitter(
+                input_.name, _add_storage(evaluation_tmp_dir)
+            )
+            futures.append(transmitter.transmit_data(record.data))
+            transmitters[iens][input_.name] = transmitter
     asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
     if isinstance(step, Unix):
         for iens in range(ensemble_size):
@@ -101,15 +88,13 @@ def prepare_output(
     ensemble_size: int,
 ) -> RealisationsToRecordToTransmitter:
     (evaluation_tmp_dir / "output_files").mkdir(parents=True, exist_ok=True)
-    return {
-        iens: {
-            output.name: SharedDiskRecordTransmitter(
+    transmitters: RealisationsToRecordToTransmitter = defaultdict(dict)
+    for output in step.outputs:
+        for iens in range(ensemble_size):
+            transmitters[iens][output.name] = SharedDiskRecordTransmitter(
                 output.name, _add_storage(evaluation_tmp_dir)
             )
-        }
-        for output in step.outputs
-        for iens in range(ensemble_size)
-    }
+    return transmitters
 
 
 def _create_evaluator_tmp_dir(workspace_root: Path, evaluation_name: str) -> Path:
