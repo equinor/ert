@@ -13,10 +13,7 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
     Step,
 )
 from ert_shared.status.entity.state import (
-    ENSEMBLE_STATE_CANCELLED,
-    ENSEMBLE_STATE_FAILED,
     ENSEMBLE_STATE_STARTED,
-    ENSEMBLE_STATE_STOPPED,
     JOB_STATE_START,
     REALIZATION_STATE_WAITING,
     STEP_STATE_UNKNOWN,
@@ -27,6 +24,7 @@ class _Ensemble:
     def __init__(self, reals, metadata):
         self._reals = reals
         self._metadata = metadata
+        self._snapshot = self._create_snapshot()
 
     def __repr__(self):
         return f"Ensemble with {len(self._reals)} members"
@@ -49,6 +47,20 @@ class _Ensemble:
     def get_metadata(self):
         return self._metadata
 
+    @property
+    def snapshot(self):
+        return self._snapshot
+
+    def update_snapshot(self, events):
+        snapshot_mutate_event = PartialSnapshot(self._snapshot)
+        for event in events:
+            snapshot_mutate_event.from_cloudevent(event)
+        self._snapshot.merge_event(snapshot_mutate_event)
+        return snapshot_mutate_event
+
+    def get_status(self):
+        return self._snapshot.get_status()
+
     async def send_cloudevent(self, url, event, token=None, cert=None, retries=1):
         client = Client(url, token, cert)
         await client._send(
@@ -56,7 +68,10 @@ class _Ensemble:
         )
         await client.websocket.close()
 
-    def create_snapshot(self):
+    def get_successful_realizations(self):
+        return self._snapshot.get_successful_realizations()
+
+    def _create_snapshot(self):
         reals = {}
         for real in self.get_active_reals():
             reals[str(real.get_iens())] = Realization(

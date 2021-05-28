@@ -4,9 +4,6 @@ import asyncio
 from typing import Optional
 
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
-from ert_shared.ensemble_evaluator.entity.snapshot import (
-    PartialSnapshot,
-)
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
@@ -51,10 +48,10 @@ class Batcher:
 
 
 class Dispatcher:
-    def __init__(self, snapshot, evaluator_callback, batcher=None):
+    def __init__(self, ensemble, evaluator_callback, batcher=None):
         self._LOOKUP_MAP = defaultdict(list)
         self._batcher: Optional[Batcher] = batcher
-        self._snapshot = snapshot
+        self._ensemble = ensemble
         self._evaluator_callback = evaluator_callback
         self._register_event_handlers()
 
@@ -92,57 +89,42 @@ class Dispatcher:
         )
 
     async def _fm_handler(self, events):
-        snapshot_mutate_event = PartialSnapshot(self._snapshot)
-        for event in events:
-            snapshot_mutate_event.from_cloudevent(event)
+        snapshot_update_event = self._ensemble.update_snapshot(events)
         await self._evaluator_callback(
-            identifiers.EVTYPE_EE_SNAPSHOT_UPDATE, snapshot_mutate_event
+            identifiers.EVTYPE_EE_SNAPSHOT_UPDATE, snapshot_update_event
         )
 
     async def _ensemble_stopped_handler(self, events):
-        for event in events:
-            if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
-                snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
-                    event
-                )
-                await self._evaluator_callback(
-                    identifiers.EVTYPE_ENSEMBLE_STOPPED,
-                    snapshot_mutate_event,
-                    event.data,
-                )
+        if self._ensemble.get_status() != ENSEMBLE_STATE_FAILED:
+            await self._evaluator_callback(
+                identifiers.EVTYPE_ENSEMBLE_STOPPED,
+                self._ensemble.update_snapshot(events),
+                events[0].data,  # TODO fix this
+            )
 
     async def _ensemble_started_handler(self, events):
-        for event in events:
-            if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
-                snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
-                    event
-                )
-                await self._evaluator_callback(
-                    identifiers.EVTYPE_ENSEMBLE_STARTED, snapshot_mutate_event
-                )
+        if self._ensemble.get_status() != ENSEMBLE_STATE_FAILED:
+            await self._evaluator_callback(
+                identifiers.EVTYPE_ENSEMBLE_STARTED,
+                self._ensemble.update_snapshot(events),
+            )
 
     async def _ensemble_cancelled_handler(self, events):
-        for event in events:
-            if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
-                snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
-                    event
-                )
-                await self._evaluator_callback(
-                    identifiers.EVTYPE_ENSEMBLE_CANCELLED, snapshot_mutate_event
-                )
+        if self._ensemble.get_status() != ENSEMBLE_STATE_FAILED:
+            await self._evaluator_callback(
+                identifiers.EVTYPE_ENSEMBLE_CANCELLED,
+                self._ensemble.update_snapshot(events),
+            )
 
     async def _ensemble_failed_handler(self, events):
-        for event in events:
-            if self._snapshot.get_status() not in [
-                ENSEMBLE_STATE_STOPPED,
-                ENSEMBLE_STATE_CANCELLED,
-            ]:
-                snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
-                    event
-                )
-                await self._evaluator_callback(
-                    identifiers.EVTYPE_ENSEMBLE_CANCELLED, snapshot_mutate_event
-                )
+        if self._ensemble.get_status() not in [
+            ENSEMBLE_STATE_STOPPED,
+            ENSEMBLE_STATE_CANCELLED,
+        ]:
+            await self._evaluator_callback(
+                identifiers.EVTYPE_ENSEMBLE_FAILED,
+                self._ensemble.update_snapshot(events),
+            )
 
     async def handle_event(self, event):
         for f, batching in self._LOOKUP_MAP[event["type"]]:

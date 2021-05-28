@@ -642,8 +642,8 @@ def test_prefect_retries(unused_tcp_port, coefficients, tmpdir, function_config)
                     "Stopped",
                 ]:
                     mon.signal_done()
-        assert evaluator._snapshot.get_status() == "Stopped"
-        successful_realizations = evaluator._snapshot.get_successful_realizations()
+        assert evaluator._ensemble.get_status() == "Stopped"
+        successful_realizations = evaluator._ensemble.get_successful_realizations()
         assert successful_realizations == config["realizations"]
         # Check we get only one job error message per realization
         assert len(error_event_reals) == config["realizations"]
@@ -704,7 +704,7 @@ def test_prefect_no_retries(unused_tcp_port, coefficients, tmpdir, function_conf
                     "Stopped",
                 ]:
                     mon.signal_done()
-        assert evaluator._snapshot.get_status() == "Failed"
+        assert evaluator._ensemble.get_status() == "Failed"
         assert job_failed
         assert step_failed
 
@@ -752,8 +752,8 @@ def test_run_prefect_ensemble(unused_tcp_port, coefficients):
                 ]:
                     mon.signal_done()
 
-        assert evaluator._snapshot.get_status() == "Stopped"
-        successful_realizations = evaluator._snapshot.get_successful_realizations()
+        assert evaluator._ensemble.get_status() == "Stopped"
+        successful_realizations = evaluator._ensemble.get_successful_realizations()
         assert successful_realizations == config["realizations"]
 
 
@@ -808,8 +808,8 @@ def test_run_prefect_for_function_defined_outside_py_environment(
                 ]:
                     results = mon.get_result()
                     mon.signal_done()
-        assert evaluator._snapshot.get_status() == "Stopped"
-        successful_realizations = evaluator._snapshot.get_successful_realizations()
+        assert evaluator._ensemble.get_status() == "Stopped"
+        successful_realizations = evaluator._ensemble.get_successful_realizations()
         assert successful_realizations == config["realizations"]
         expected_results = [
             pickle.loads(pickle_func)(coeffs) for coeffs in coefficients
@@ -866,8 +866,8 @@ def test_run_prefect_ensemble_with_path(unused_tcp_port, coefficients):
                 ]:
                     mon.signal_done()
 
-        assert evaluator._snapshot.get_status() == "Stopped"
-        successful_realizations = evaluator._snapshot.get_successful_realizations()
+        assert evaluator._ensemble.get_status() == "Stopped"
+        successful_realizations = evaluator._ensemble.get_successful_realizations()
         assert successful_realizations == config["realizations"]
 
 
@@ -913,7 +913,7 @@ def test_cancel_run_prefect_ensemble(unused_tcp_port, coefficients):
                     mon.signal_cancel()
                     cancel = False
 
-        assert evaluator._snapshot.get_status() == "Cancelled"
+        assert evaluator._ensemble.get_status() == "Cancelled"
 
 
 @pytest.mark.timeout(60)
@@ -962,4 +962,4 @@ def test_run_prefect_ensemble_exception(unused_tcp_port, coefficients):
                     "Stopped",
                 ]:
                     mon.signal_done()
-        assert evaluator._snapshot.get_status() == "Failed"
+        assert evaluator._ensemble.get_status() == "Failed"

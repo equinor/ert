@@ -10,7 +10,7 @@ class DummyEventHandler:
 
         self.batcher = Batcher(timeout=1) if batching else None
         self.dispatcher = Dispatcher(
-            snapshot=None,
+            ensemble=None,
             evaluator_callback=lambda x: None,
             batcher=self.batcher,
         )
