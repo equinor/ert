@@ -395,7 +395,7 @@ def test_record_load_twice(
     ert3.engine.load_record(
         workspace, "designed_coefficients", designed_coeffs_record_file
     )
-    with pytest.raises(KeyError):
+    with pytest.raises(ert3.exceptions.ElementExistsError):
         ert3.engine.load_record(
             workspace, "designed_coefficients", designed_coeffs_record_file
         )

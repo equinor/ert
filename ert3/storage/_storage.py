@@ -80,7 +80,9 @@ def _init_experiment(
         raise ValueError("Cannot initialize experiment without a name")
 
     if _get_experiment_by_name(experiment_name) is not None:
-        raise KeyError(f"Cannot initialize existing experiment: {experiment_name}")
+        raise ert3.exceptions.ElementExistsError(
+            f"Cannot initialize existing experiment: {experiment_name}"
+        )
 
     exp_response = requests.post(
         url=f"{_STORAGE_URL}/experiments", json={"name": experiment_name}
@@ -125,7 +127,7 @@ def _add_numerical_data(
 ) -> None:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise KeyError(
+        raise ert3.exceptions.NonExistantExperiment(
             f"Cannot add {record_name} data to "
             f"non-existing experiment: {experiment_name}"
         )
@@ -148,7 +150,7 @@ def _add_numerical_data(
         )
 
         if response.status_code == 409:
-            raise KeyError("Record already exists")
+            raise ert3.exceptions.ElementExistsError("Record already exists")
 
         if response.status_code != 200:
             raise ert3.exceptions.StorageError(response.text)
@@ -218,7 +220,7 @@ def _get_numerical_data(
 ) -> ert3.data.EnsembleRecord:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise KeyError(
+        raise ert3.exceptions.NonExistantExperiment(
             f"Cannot get {record_name} data, no experiment named: {experiment_name}"
         )
 
@@ -234,7 +236,9 @@ def _get_numerical_data(
         )
 
         if response.status_code == 404:
-            raise KeyError(f"No {record_name} data for experiment: {experiment_name}")
+            raise ert3.exceptions.ElementMissingError(
+                f"No {record_name} data for experiment: {experiment_name}"
+            )
 
         if response.status_code != 200:
             raise ert3.exceptions.StorageError(response.text)
@@ -281,7 +285,7 @@ def get_ensemble_record_names(
         experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise KeyError(
+        raise ert3.exceptions.NonExistantExperiment(
             f"Cannot get record names of non-existing experiment: {experiment_name}"
         )
 
@@ -298,7 +302,7 @@ def get_experiment_parameters(
 
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise KeyError(
+        raise ert3.exceptions.NonExistantExperiment(
             f"Cannot get parameters from non-existing experiment: {experiment_name}"
         )
 

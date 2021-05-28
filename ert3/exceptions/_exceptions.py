@@ -31,3 +31,13 @@ class ConfigValidationError(ErtError):
 class StorageError(ErtError):
     def __init__(self, message: str) -> None:
         self.message = "{}".format(message)
+
+
+class ElementExistsError(StorageError):
+    def __init__(self, message: str) -> None:
+        self.message = "{}".format(message)
+
+
+class ElementMissingError(StorageError):
+    def __init__(self, message: str) -> None:
+        self.message = "{}".format(message)
