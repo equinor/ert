@@ -1,0 +1,1 @@
+This file marks that ert_storage is PEP-561 and type-compliant. Used by eg. mypy to enable type checking.
