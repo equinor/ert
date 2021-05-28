@@ -12,7 +12,7 @@ from ert_storage.database import Base
 
 from .metadatafield import MetadataField
 from .observation import observation_record_association
-from .record_info import RecordType
+from .record_info import RecordType, RecordClass
 
 
 class Record(Base, MetadataField):
@@ -59,6 +59,14 @@ class Record(Base, MetadataField):
     @property
     def name(self) -> str:
         return self.record_info.name
+
+    @property
+    def record_type(self) -> RecordType:
+        return self.record_info.record_type
+
+    @property
+    def record_class(self) -> RecordClass:
+        return self.record_info.record_class
 
 
 class File(Base):

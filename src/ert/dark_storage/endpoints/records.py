@@ -38,26 +38,140 @@ class ListRecords(BaseModel):
     forward_model: Mapping[str, str]
 
 
-@router.post("/ensembles/{ensemble_id}/records/{name}/file")
-async def post_ensemble_record_file(
+def get_record_by_name(
     *,
     db: Session = Depends(get_db),
     ensemble_id: UUID,
     name: str,
     realization_index: Optional[int] = None,
+) -> ds.Record:
+    try:
+        return (
+            db.query(ds.Record)
+            .filter_by(realization_index=realization_index)
+            .join(ds.RecordInfo)
+            .filter_by(name=name)
+            .join(ds.Ensemble)
+            .filter_by(id=ensemble_id)
+            .one()
+        )
+    except NoResultFound as e:
+        pass
+
+    if realization_index is not None:
+        return (
+            db.query(ds.Record)
+            .filter_by(realization_index=None)
+            .join(ds.RecordInfo)
+            .filter_by(
+                name=name,
+                record_class=ds.RecordClass.parameter,
+                record_type=ds.RecordType.f64_matrix,
+            )
+            .join(ds.Ensemble)
+            .filter_by(id=ensemble_id)
+            .one()
+        )
+    raise exc.NotFoundError(f"Record not found")
+
+
+def new_record(
+    *,
+    db: Session = Depends(get_db),
+    ensemble_id: UUID,
+    name: str,
+    realization_index: Optional[int] = None,
+) -> ds.Record:
+    """
+    Get ensemble and verify that no record with the name `name` exists
+    """
+    ensemble = db.query(ds.Ensemble).filter_by(id=ensemble_id).one()
+
+    q = (
+        db.query(ds.Record)
+        .join(ds.RecordInfo)
+        .filter_by(ensemble_pk=ensemble.pk, name=name)
+    )
+    if realization_index is not None:
+        if realization_index not in range(ensemble.size) and ensemble.size != -1:
+            raise exc.ExpectationError(
+                f"Ensemble '{name}' ('{ensemble_id}') does have a 'size' "
+                f"of {ensemble.size}. The posted record is targeting "
+                f"'realization_index' {realization_index} which is out "
+                f"of bounds."
+            )
+
+        q = q.filter(
+            (ds.Record.realization_index == None)
+            | (ds.Record.realization_index == realization_index)
+        )
+
+    if q.count() > 0:
+        raise exc.ConflictError(
+            f"Ensemble-wide record '{name}' for ensemble '{ensemble_id}' already exists",
+        )
+
+    return ds.Record(
+        record_info=ds.RecordInfo(
+            ensemble=ensemble,
+            name=name,
+        ),
+        realization_index=realization_index,
+    )
+
+
+def new_record_file(
+    *,
+    db: Session = Depends(get_db),
+    record: ds.Record = Depends(new_record),
+) -> ds.Record:
+    record.record_info.record_class = ds.RecordClass.other
+    record.record_info.record_type = ds.RecordType.file
+    return record
+
+
+def new_record_matrix(
+    *,
+    db: Session = Depends(get_db),
+    record: ds.Record = Depends(new_record),
+    prior_id: Optional[UUID] = None,
+) -> ds.Record:
+    ensemble = record.record_info.ensemble
+    if record.name in ensemble.parameter_names:
+        record_class = ds.RecordClass.parameter
+    elif record.name in ensemble.response_names:
+        record_class = ds.RecordClass.response
+    else:
+        record_class = ds.RecordClass.other
+
+    if prior_id is not None:
+        if record_class is not ds.RecordClass.parameter:
+            raise exc.UnprocessableError(
+                "Priors can only be specified for parameter records"
+            )
+        record.record_info.prior = db.query(ds.Prior).filter_by(id=prior_id).one()
+
+    record.record_info.record_class = record_class
+    record.record_info.record_type = ds.RecordType.f64_matrix
+    return record
+
+
+@router.post("/ensembles/{ensemble_id}/records/{name}/file")
+async def post_ensemble_record_file(
+    *,
+    db: Session = Depends(get_db),
+    record: ds.Record = Depends(new_record_file),
     file: UploadFile = File(...),
 ) -> None:
     """
     Assign an arbitrary file to the given `name` record.
     """
-    ensemble = _get_and_assert_ensemble(db, ensemble_id, name, realization_index)
-
     file_obj = ds.File(
         filename=file.filename,
         mimetype=file.content_type,
     )
     if HAS_AZURE_BLOB_STORAGE:
-        key = f"{name}@{realization_index}@{uuid4()}"
+        key = f"{record.name}@{record.realization_index}@{uuid4()}"
         blob = azure_blob_container.get_blob_client(key)
         await blob.upload_blob(file.file)
 
@@ -66,15 +180,8 @@ async def post_ensemble_record_file(
     else:
         file_obj.content = await file.read()
 
-    db.add(file_obj)
-    _create_record(
-        db,
-        ensemble,
-        name,
-        ds.RecordType.file,
-        realization_index=realization_index,
-        file=file_obj,
-    )
+    record.file = file_obj
+    _create_record(db, record)
 
 
 @router.put("/ensembles/{ensemble_id}/records/{name}/blob")
@@ -122,39 +229,25 @@ async def add_block(
 
 @router.post("/ensembles/{ensemble_id}/records/{name}/blob")
 async def create_blob(
-    *,
-    db: Session = Depends(get_db),
-    ensemble_id: UUID,
-    name: str,
-    realization_index: Optional[int] = None,
+    *, db: Session = Depends(get_db), record: ds.Record = Depends(new_record_file)
 ) -> None:
     """
     Create a record which points to a blob on Azure Blob Storage.
     """
-
-    ensemble = db.query(ds.Ensemble).filter_by(id=ensemble_id).one()
     file_obj = ds.File(
         filename="test",
         mimetype="mime/type",
     )
     if HAS_AZURE_BLOB_STORAGE:
-        key = f"{name}@{realization_index}@{uuid4()}"
+        key = f"{record.name}@{record.realization_index}@{uuid4()}"
         blob = azure_blob_container.get_blob_client(key)
         file_obj.az_container = (azure_blob_container.container_name,)
         file_obj.az_blob = (key,)
     else:
         pass
 
-    db.add(file_obj)
-
-    _create_record(
-        db,
-        ensemble,
-        name,
-        ds.RecordType.file,
-        realization_index=realization_index,
-        file=file_obj,
-    )
+    record.file = file_obj
+    _create_record(db, record)
 
 
 @router.patch("/ensembles/{ensemble_id}/records/{name}/blob")
@@ -208,11 +301,8 @@ async def finalize_blob(
 async def post_ensemble_record_matrix(
     *,
     db: Session = Depends(get_db),
-    ensemble_id: UUID,
-    name: str,
-    realization_index: Optional[int] = None,
+    record: ds.Record = Depends(new_record_matrix),
     content_type: str = Header("application/json"),
-    prior_id: Optional[UUID] = None,
     request: Request,
 ) -> js.RecordOut:
     """
@@ -224,24 +314,7 @@ async def post_ensemble_record_matrix(
         )
         content_type = "text/csv"
 
-    ensemble = _get_and_assert_ensemble(db, ensemble_id, name, realization_index)
-    is_parameter = name in ensemble.parameter_names
-    is_response = name in ensemble.response_names
-    if prior_id is not None and not is_parameter:
-        raise exc.UnprocessableError(
-            "Priors can only be specified for parameter records"
-        )
-
     labels = None
-    prior = (
-        (
-            db.query(ds.Prior)
-            .filter_by(id=prior_id, experiment_pk=ensemble.experiment_pk)
-            .one()
-        )
-        if prior_id
-        else None
-    )
 
     try:
         if content_type == "application/json":
@@ -262,58 +335,41 @@ async def post_ensemble_record_matrix(
         else:
             raise ValueError()
     except ValueError:
-        if realization_index is None:
-            message = f"Ensemble-wide record '{name}' for ensemble '{ensemble_id}' needs to be a matrix"
+        if record.realization_index is None:
+            message = f"Ensemble-wide record '{record.name}' for needs to be a matrix"
         else:
-            message = f"Forward-model record '{name}' for ensemble '{ensemble_id}', realization {realization_index} needs to be a matrix"
+            message = f"Forward-model record '{record.name}' for realization {record.realization_index} needs to be a matrix"
+
         raise exc.UnprocessableError(message)
 
     # Require that the dimensionality of an ensemble-wide parameter matrix is at least 2
-    if realization_index is None and is_parameter:
+    if (
+        record.realization_index is None
+        and record.record_class is ds.RecordClass.parameter
+    ):
         if content.ndim <= 1:
             raise exc.UnprocessableError(
-                f"Ensemble-wide parameter record '{name}' for ensemble '{ensemble_id}'"
+                f"Ensemble-wide parameter record '{record.name}' for ensemble '{record.record_info.ensemble.id}'"
                 "must have dimensionality of at least 2"
             )
 
     matrix_obj = ds.F64Matrix(content=content.tolist(), labels=labels)
-    db.add(matrix_obj)
 
-    record_class = ds.RecordClass.other
-    if is_parameter:
-        record_class = ds.RecordClass.parameter
-    if is_response:
-        record_class = ds.RecordClass.response
-
-    return _create_record(
-        db,
-        ensemble,
-        name,
-        ds.RecordType.f64_matrix,
-        record_class,
-        prior,
-        f64_matrix=matrix_obj,
-        realization_index=realization_index,
-    )
+    record.f64_matrix = matrix_obj
+    return _create_record(db, record)
 
 
 @router.put("/ensembles/{ensemble_id}/records/{name}/metadata")
 async def replace_record_metadata(
     *,
     db: Session = Depends(get_db),
-    ensemble_id: UUID,
-    name: str,
-    realization_index: Optional[int] = None,
+    record: ds.Record = Depends(get_record_by_name),
     body: Any = Body(...),
 ) -> None:
     """
     Assign new metadata json
     """
-    if realization_index is None:
-        record_obj = _get_ensemble_record(db, ensemble_id, name)
-    else:
-        record_obj = _get_forward_model_record(db, ensemble_id, name, realization_index)
-    record_obj._metadata = body
+    record._metadata = body
     db.commit()
 
 
@@ -321,21 +377,14 @@ async def replace_record_metadata(
 async def patch_record_metadata(
     *,
     db: Session = Depends(get_db),
-    ensemble_id: UUID,
-    name: str,
-    realization_index: Optional[int] = None,
+    record: ds.Record = Depends(get_record_by_name),
     body: Any = Body(...),
 ) -> None:
     """
     Update metadata json
     """
-    if realization_index is None:
-        record_obj = _get_ensemble_record(db, ensemble_id, name)
-    else:
-        record_obj = _get_forward_model_record(db, ensemble_id, name, realization_index)
-
-    record_obj._metadata.update(body)
-    flag_modified(record_obj, "_metadata")
+    record._metadata.update(body)
+    flag_modified(record, "_metadata")
     db.commit()
 
 
@@ -344,43 +393,26 @@ async def patch_record_metadata(
 )
 async def get_record_metadata(
     *,
-    db: Session = Depends(get_db),
-    ensemble_id: UUID,
-    name: str,
-    realization_index: Optional[int] = None,
+    record: ds.Record = Depends(get_record_by_name),
 ) -> Mapping[str, Any]:
     """
     Get metadata json
     """
-    if realization_index is None:
-        bundle = _get_ensemble_record(db, ensemble_id, name)
-    else:
-        bundle = _get_forward_model_record(db, ensemble_id, name, realization_index)
-
-    return bundle.metadata_dict
+    return record.metadata_dict
 
 
 @router.post("/ensembles/{ensemble_id}/records/{name}/observations")
 async def post_record_observations(
     *,
     db: Session = Depends(get_db),
-    ensemble_id: UUID,
-    name: str,
-    realization_index: Optional[int] = None,
+    record: ds.Record = Depends(get_record_by_name),
     observation_ids: List[UUID] = Body(...),
 ) -> None:
-
-    if realization_index is None:
-        record_obj = _get_ensemble_record(db, ensemble_id, name)
-    else:
-        record_obj = _get_forward_model_record(db, ensemble_id, name, realization_index)
-
     observations = (
         db.query(ds.Observation).filter(ds.Observation.id.in_(observation_ids)).all()
     )
     if observations:
-        record_obj.observations = observations
-        flag_modified(record_obj, "observations")
+        record.observations = observations
         db.commit()
     else:
         raise exc.UnprocessableError(f"Observations {observation_ids} not found!")
@@ -390,15 +422,9 @@ async def post_record_observations(
 async def get_record_observations(
     *,
     db: Session = Depends(get_db),
-    ensemble_id: UUID,
-    name: str,
-    realization_index: Optional[int] = None,
+    record: ds.Record = Depends(get_record_by_name),
 ) -> List[js.ObservationOut]:
-    if realization_index is None:
-        bundle = _get_ensemble_record(db, ensemble_id, name)
-    else:
-        bundle = _get_forward_model_record(db, ensemble_id, name, realization_index)
-    if bundle.observations:
+    if record.observations:
         return [
             js.ObservationOut(
                 id=obs.id,
@@ -409,7 +435,7 @@ async def get_record_observations(
                 records=[rec.id for rec in obs.records],
                 metadata=obs.metadata_dict,
             )
-            for obs in bundle.observations
+            for obs in record.observations
         ]
     return []
 
@@ -496,10 +522,9 @@ To parse data using Python, assuming ERT Storage is running on `http://localhost
 async def get_ensemble_record(
     *,
     db: Session = Depends(get_db),
-    ensemble_id: UUID,
-    realization_index: Optional[int] = None,
-    name: str,
+    record: ds.Record = Depends(get_record_by_name),
     accept: str = Header("application/json"),
+    realization_index: Optional[int] = None,
 ) -> Any:
     """
     Get record with a given `name`. If `realization_index` is not set, look for
@@ -519,21 +544,10 @@ async def get_ensemble_record(
         )
         accept = "text/csv"
 
-    if realization_index is None:
-        bundle = _get_ensemble_record(db, ensemble_id, name)
-    else:
-        try:
-            bundle = _get_forward_model_record(db, ensemble_id, name, realization_index)
-            realization_index = None
-        except exc.NotFoundError:
-            bundle = _get_ensemble_record(db, ensemble_id, name)
-
-            # Only parameter records can be "up-casted" to ensemble-wide
-            is_matrix = bundle.record_info.record_type == ds.RecordType.f64_matrix
-            is_parameter = name in bundle.record_info.ensemble.parameter_names
-            if not is_matrix or not is_parameter:
-                raise
-    return await _get_record_data(bundle, accept, realization_index)
+    new_realization_index = (
+        realization_index if record.realization_index is None else None
+    )
+    return await _get_record_data(record, accept, new_realization_index)
 
 
 @router.get("/ensembles/{ensemble_id}/parameters", response_model=List[str])
@@ -601,81 +615,6 @@ def get_ensemble_responses(
             .all()
         )
     }
-
-
-def _get_ensemble_record(db: Session, ensemble_id: UUID, name: str) -> ds.Record:
-    try:
-        ensemble = db.query(ds.Ensemble).filter_by(id=ensemble_id).one()
-        return (
-            db.query(ds.Record)
-            .filter_by(realization_index=None)
-            .join(ds.RecordInfo)
-            .filter_by(
-                ensemble_pk=ensemble.pk,
-                name=name,
-            )
-            .one()
-        )
-    except NoResultFound:
-        raise exc.NotFoundError(
-            f"Ensemble-wide record '{name}' for ensemble '{ensemble_id}' not found!"
-        )
-
-
-def _get_forward_model_record(
-    db: Session, ensemble_id: UUID, name: str, realization_index: int
-) -> ds.Record:
-    try:
-        ensemble = db.query(ds.Ensemble).filter_by(id=ensemble_id).one()
-        return (
-            db.query(ds.Record)
-            .filter_by(realization_index=realization_index)
-            .join(ds.RecordInfo)
-            .filter_by(
-                ensemble_pk=ensemble.pk,
-                name=name,
-            )
-            .one()
-        )
-    except NoResultFound:
-        raise exc.NotFoundError(
-            f"Forward-model record '{name}' for ensemble '{ensemble_id}', realization {realization_index} not found!"
-        )
-
-
-def _get_and_assert_ensemble(
-    db: Session, ensemble_id: UUID, name: str, realization_index: Optional[int]
-) -> ds.Ensemble:
-    """
-    Get ensemble and verify that no record with the name `name` exists
-    """
-    ensemble = db.query(ds.Ensemble).filter_by(id=ensemble_id).one()
-
-    q = (
-        db.query(ds.Record)
-        .join(ds.RecordInfo)
-        .filter_by(ensemble_pk=ensemble.pk, name=name)
-    )
-    if realization_index is not None:
-        if realization_index not in range(ensemble.size) and ensemble.size != -1:
-            raise exc.ExpectationError(
-                f"Ensemble '{name}' ('{ensemble_id}') does have a 'size' "
-                f"of {ensemble.size}. The posted record is targeting "
-                f"'realization_index' {realization_index} which is out "
-                f"of bounds."
-            )
-
-        q = q.filter(
-            (ds.Record.realization_index == None)
-            | (ds.Record.realization_index == realization_index)
-        )
-
-    if q.count() > 0:
-        raise exc.ConflictError(
-            f"Ensemble-wide record '{name}' for ensemble '{ensemble_id}' already exists"
-        )
-
-    return ensemble
 
 
 async def _get_record_data(
@@ -747,22 +686,8 @@ async def _get_record_data(
 
 def _create_record(
     db: Session,
-    ensemble: ds.Ensemble,
-    name: str,
-    record_type: ds.RecordType,
-    record_class: ds.RecordClass = ds.RecordClass.other,
-    prior: Optional[ds.Prior] = None,
-    **kwargs: Any,
+    record: ds.Record,
 ) -> ds.Record:
-    record_info = ds.RecordInfo(
-        ensemble=ensemble,
-        name=name,
-        record_class=record_class,
-        record_type=record_type,
-        prior=prior,
-    )
-    record = ds.Record(record_info=record_info, **kwargs)
-
     nested = db.begin_nested()
     try:
         db.add(record)
@@ -772,8 +697,11 @@ def _create_record(
         # record_info with the same name and ensemble. Try to fetch the
         # record_info
         nested.rollback()
+        record_info = record.record_info
         old_record_info = (
-            db.query(ds.RecordInfo).filter_by(ensemble=ensemble, name=name).one()
+            db.query(ds.RecordInfo)
+            .filter_by(ensemble=record_info.ensemble, name=record_info.name)
+            .one()
         )
 
         # Check that the parameters match
@@ -790,7 +718,12 @@ def _create_record(
                 old_record_type=old_record_info.record_type,
             )
 
-        record = ds.Record(record_info=old_record_info, **kwargs)
+        record = ds.Record(
+            record_info=old_record_info,
+            f64_matrix=record.f64_matrix,
+            file=record.file,
+            realization_index=record.realization_index,
+        )
         db.add(record)
         db.commit()
 
