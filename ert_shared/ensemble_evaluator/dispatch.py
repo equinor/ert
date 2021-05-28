@@ -3,42 +3,18 @@ from collections import defaultdict, deque, OrderedDict
 import asyncio
 from typing import Optional
 
-
-import logging
-import threading
-from contextlib import contextmanager
-import pickle
-from typing import Set
-import cloudevents.exceptions
-from http import HTTPStatus
-
-import cloudpickle
-
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
-import ert_shared.ensemble_evaluator.monitor as ee_monitor
-import websockets
-from websockets.legacy.server import WebSocketServerProtocol
-from async_generator import asynccontextmanager
-from cloudevents.http import from_json, to_json
+from cloudevents.http import to_json
 from cloudevents.http.event import CloudEvent
 
 from ert_shared.ensemble_evaluator.entity import serialization
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
-    Snapshot,
-    Job,
-    Realization,
-    SnapshotDict,
-    Step,
 )
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
-    ENSEMBLE_STATE_STARTED,
     ENSEMBLE_STATE_STOPPED,
-    JOB_STATE_START,
-    REALIZATION_STATE_WAITING,
-    STEP_STATE_UNKNOWN,
 )
 
 
@@ -80,13 +56,13 @@ class Batcher:
 
 class Dispatcher:
     def __init__(
-        self, snapshot, ee_id, iter, clients, result_cb, stop_cb, batcher=None
+        self, snapshot, ee_id, iter_, clients, result_cb, stop_cb, batcher=None
     ):
         self._LOOKUP_MAP = defaultdict(list)
         self._batcher: Optional[Batcher] = batcher
         self._snapshot = snapshot
         self._ee_id = ee_id
-        self._iter = iter
+        self._iter = iter_
         self._clients = clients
 
         self._result_cb = result_cb
@@ -94,36 +70,37 @@ class Dispatcher:
 
         self._register_event_handlers()
 
-    def register_event_handler(self, event_types, batching=False):
-        def decorator(function):
-            nonlocal event_types, batching
-            if not isinstance(event_types, set):
-                event_types = set({event_types})
-            for event_type in event_types:
-                self._LOOKUP_MAP[event_type].append((function, batching))
-
-            def wrapper(*args, **kwargs):
-                return function(*args, **kwargs)
-
-            return wrapper
-
-        return decorator
+    def register_event_handler(self, event_types, function, batching=False):
+        if not isinstance(event_types, set):
+            event_types = {event_types}
+        for event_type in event_types:
+            self._LOOKUP_MAP[event_type].append((function, batching))
 
     def _register_event_handlers(self):
-        self.register_event_handler(identifiers.EVGROUP_FM_ALL, batching=True)(
-            self._fm_handler
-        )
-        self.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STOPPED, batching=True)(
-            self._ensemble_stopped_handler
-        )
-        self.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STARTED, batching=True)(
-            self._ensemble_started_handler
+        self.register_event_handler(
+            event_types=identifiers.EVGROUP_FM_ALL,
+            function=self._fm_handler,
+            batching=True,
         )
         self.register_event_handler(
-            identifiers.EVTYPE_ENSEMBLE_CANCELLED, batching=True
-        )(self._ensemble_cancelled_handler)
-        self.register_event_handler(identifiers.EVTYPE_ENSEMBLE_FAILED, batching=True)(
-            self._ensemble_failed_handler
+            event_types=identifiers.EVTYPE_ENSEMBLE_STOPPED,
+            function=self._ensemble_stopped_handler,
+            batching=True,
+        )
+        self.register_event_handler(
+            event_types=identifiers.EVTYPE_ENSEMBLE_STARTED,
+            function=self._ensemble_started_handler,
+            batching=True,
+        )
+        self.register_event_handler(
+            event_types=identifiers.EVTYPE_ENSEMBLE_CANCELLED,
+            function=self._ensemble_cancelled_handler,
+            batching=True,
+        )
+        self.register_event_handler(
+            event_types=identifiers.EVTYPE_ENSEMBLE_FAILED,
+            function=self._ensemble_failed_handler,
+            batching=True,
         )
 
     async def _fm_handler(self, events):
@@ -134,7 +111,6 @@ class Dispatcher:
 
     async def _ensemble_stopped_handler(self, events):
         for event in events:
-            # self._result = event.data
             self._result_cb(event.data)
             if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
                 snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(

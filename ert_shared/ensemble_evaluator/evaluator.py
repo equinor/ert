@@ -18,22 +18,8 @@ from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.dispatch import Dispatcher, Batcher
 from ert_shared.ensemble_evaluator.entity import serialization
-from ert_shared.ensemble_evaluator.entity.snapshot import (
-    PartialSnapshot,
-    Snapshot,
-    Job,
-    Realization,
-    SnapshotDict,
-    Step,
-)
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_CANCELLED,
-    ENSEMBLE_STATE_FAILED,
-    ENSEMBLE_STATE_STARTED,
-    ENSEMBLE_STATE_STOPPED,
-    JOB_STATE_START,
-    REALIZATION_STATE_WAITING,
-    STEP_STATE_UNKNOWN,
 )
 
 logger = logging.getLogger(__name__)
@@ -65,7 +51,7 @@ class EnsembleEvaluator:
         self._dispatcher = Dispatcher(
             snapshot=self._snapshot,
             ee_id=ee_id,
-            iter=iter_,
+            iter_=iter_,
             clients=self._clients,
             result_cb=self.set_result,
             stop_cb=self._stop,

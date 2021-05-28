@@ -3,7 +3,6 @@ import pytest
 from unittest.mock import Mock
 from ert_shared.ensemble_evaluator.dispatch import Dispatcher, Batcher
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from collections import defaultdict
 
 
 class DummyEventHandler:
@@ -13,23 +12,22 @@ class DummyEventHandler:
         self.dispatcher = Dispatcher(
             snapshot=None,
             ee_id="ee_id",
-            iter="1",
+            iter_="1",
             clients={},
             result_cb=lambda x: None,
             stop_cb=lambda x: None,
             batcher=self.batcher,
         )
         self.dispatcher._LOOKUP_MAP.clear()
-        # self.dispatcher.clear_handlers()
         self.mock_all = Mock()
         self.mock_step = Mock()
         self.mock_none = Mock()
 
-        self.dispatcher.register_event_handler(ids.EVGROUP_FM_ALL, batching=batching)(
-            self.all
+        self.dispatcher.register_event_handler(
+            ids.EVGROUP_FM_ALL, self.all, batching=batching
         )
-        self.dispatcher.register_event_handler(ids.EVGROUP_FM_STEP, batching=batching)(
-            self.step
+        self.dispatcher.register_event_handler(
+            ids.EVGROUP_FM_STEP, self.step, batching=batching
         )
 
     async def join(self):
