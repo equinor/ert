@@ -31,6 +31,18 @@ def test_ensemble_size_zero(tmpdir, ert_storage):
 
 
 @pytest.mark.requires_ert_storage
+def test_none_as_experiment_name(tmpdir, ert_storage):
+    ert3.storage.init(workspace=tmpdir)
+    with pytest.raises(ValueError, match="Cannot initialize experiment without a name"):
+        ert3.storage.init_experiment(
+            workspace=tmpdir,
+            experiment_name=None,
+            parameters=[],
+            ensemble_size=10,
+        )
+
+
+@pytest.mark.requires_ert_storage
 def test_double_add_experiment(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
     ert3.storage.init_experiment(
@@ -39,7 +51,10 @@ def test_double_add_experiment(tmpdir, ert_storage):
         parameters=[],
         ensemble_size=42,
     )
-    with pytest.raises(KeyError, match="Cannot initialize existing experiment"):
+    with pytest.raises(
+        ert3.exceptions.ElementExistsError,
+        match="Cannot initialize existing experiment",
+    ):
         ert3.storage.init_experiment(
             workspace=tmpdir,
             experiment_name="my_experiment",
@@ -75,6 +90,19 @@ def test_add_experiments(tmpdir, ert_storage):
             workspace=tmpdir, experiment_name=experiment_name
         )
         assert experiment_parameters == parameters
+
+
+@pytest.mark.requires_ert_storage
+def test_get_parameters_unknown_experiment(tmpdir, ert_storage):
+    ert3.storage.init(workspace=tmpdir)
+
+    with pytest.raises(
+        ert3.exceptions.NonExistantExperiment,
+        match="Cannot get parameters from non-existing experiment: unknown-experiment",
+    ):
+        ert3.storage.get_experiment_parameters(
+            workspace=tmpdir, experiment_name="unknown-experiment"
+        )
 
 
 def _assert_equal_data(a, b):
@@ -113,6 +141,36 @@ def test_add_and_get_ensemble_record(tmpdir, raw_ensrec, ert_storage):
     )
 
     assert ensrecord == retrieved_ensrecord
+
+
+@pytest.mark.requires_ert_storage
+def test_add_ensemble_record_twice(tmpdir, ert_storage):
+    ert3.storage.init(workspace=tmpdir)
+
+    ensrecord = ert3.data.EnsembleRecord(records=[{"data": [42]}])
+    ert3.storage.add_ensemble_record(
+        workspace=tmpdir, record_name="my_ensemble_record", ensemble_record=ensrecord
+    )
+
+    with pytest.raises(
+        ert3.exceptions.ElementExistsError,
+        match="Record already exists",
+    ):
+        ert3.storage.add_ensemble_record(
+            workspace=tmpdir,
+            record_name="my_ensemble_record",
+            ensemble_record=ensrecord,
+        )
+
+
+@pytest.mark.requires_ert_storage
+def test_get_unknown_ensemble_record(tmpdir, ert_storage):
+    ert3.storage.init(workspace=tmpdir)
+
+    with pytest.raises(ert3.exceptions.ElementMissingError):
+        ert3.storage.get_ensemble_record(
+            workspace=tmpdir, record_name="my_ensemble_record"
+        )
 
 
 @pytest.mark.requires_ert_storage
@@ -160,6 +218,35 @@ def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
 
 
 @pytest.mark.requires_ert_storage
+def test_add_ensemble_record_to_non_existing_experiment(tmpdir, ert_storage):
+    ert3.storage.init(workspace=tmpdir)
+    with pytest.raises(
+        ert3.exceptions.NonExistantExperiment,
+        match="Cannot add my_record data to non-existing experiment",
+    ):
+        ert3.storage.add_ensemble_record(
+            workspace=tmpdir,
+            record_name="my_record",
+            ensemble_record=ert3.data.EnsembleRecord(records=[{"data": [0, 1, 2]}]),
+            experiment_name="non_existing_experiment",
+        )
+
+
+@pytest.mark.requires_ert_storage
+def test_get_ensemble_record_to_non_existing_experiment(tmpdir, ert_storage):
+    ert3.storage.init(workspace=tmpdir)
+    with pytest.raises(
+        ert3.exceptions.NonExistantExperiment,
+        match="Cannot get my_record data, no experiment named: non_existing_experiment",
+    ):
+        ert3.storage.get_ensemble_record(
+            workspace=tmpdir,
+            record_name="my_record",
+            experiment_name="non_existing_experiment",
+        )
+
+
+@pytest.mark.requires_ert_storage
 def test_get_record_names(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
     ensemble_size = 5
@@ -189,6 +276,19 @@ def test_get_record_names(tmpdir, ert_storage):
                 workspace=tmpdir, experiment_name=experiment
             )
             assert sorted(experiment_records[str(experiment)]) == sorted(recnames)
+
+
+@pytest.mark.requires_ert_storage
+def test_get_record_names_unknown_experiment(tmpdir, ert_storage):
+    ert3.storage.init(workspace=tmpdir)
+
+    with pytest.raises(
+        ert3.exceptions.NonExistantExperiment,
+        match="Cannot get record names of non-existing experiment: unknown-experiment",
+    ):
+        ert3.storage.get_ensemble_record_names(
+            workspace=tmpdir, experiment_name="unknown-experiment"
+        )
 
 
 @pytest.mark.requires_ert_storage
