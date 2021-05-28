@@ -11,11 +11,7 @@ class DummyEventHandler:
         self.batcher = Batcher(timeout=1) if batching else None
         self.dispatcher = Dispatcher(
             snapshot=None,
-            ee_id="ee_id",
-            iter_="1",
-            clients={},
-            result_cb=lambda x: None,
-            stop_cb=lambda x: None,
+            evaluator_callback=lambda x: None,
             batcher=self.batcher,
         )
         self.dispatcher._LOOKUP_MAP.clear()

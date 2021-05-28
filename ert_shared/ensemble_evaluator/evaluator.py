@@ -50,11 +50,7 @@ class EnsembleEvaluator:
         self._batcher = Batcher(timeout=2, loop=self._loop)
         self._dispatcher = Dispatcher(
             snapshot=self._snapshot,
-            ee_id=ee_id,
-            iter_=iter_,
-            clients=self._clients,
-            result_cb=self.set_result,
-            stop_cb=self._stop,
+            evaluator_callback=self.dispatcher_callback,
             batcher=self._batcher,
         )
 
@@ -64,8 +60,29 @@ class EnsembleEvaluator:
             name="ert_ee_run_server", target=self._run_server, args=(self._loop,)
         )
 
-    def set_result(self, result):
-        self._result = result
+    async def dispatcher_callback(self, event_type, data, result=None):
+        if event_type == identifiers.EVTYPE_ENSEMBLE_STOPPED:
+            self._result = result
+        await self._send_snapshot_update(data)
+        if event_type == identifiers.EVTYPE_ENSEMBLE_CANCELLED:
+            self._stop()
+
+    async def _send_snapshot_update(self, snapshot_mutate_event):
+        self._snapshot.merge_event(snapshot_mutate_event)
+        out_cloudevent = CloudEvent(
+            {
+                "type": identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
+                "source": f"/ert/ee/{self._ee_id}",
+            },
+            snapshot_mutate_event.to_dict(),
+        )
+        out_cloudevent.data["iter"] = self._iter
+        out_msg = to_json(
+            out_cloudevent, data_marshaller=serialization.evaluator_marshaller
+        ).decode()
+
+        if out_msg and self._clients:
+            await asyncio.wait([client.send(out_msg) for client in self._clients])
 
     @staticmethod
     def create_snapshot_msg(ee_id, iter_, snapshot):

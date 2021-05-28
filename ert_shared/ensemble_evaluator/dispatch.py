@@ -4,10 +4,6 @@ import asyncio
 from typing import Optional
 
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
-from cloudevents.http import to_json
-from cloudevents.http.event import CloudEvent
-
-from ert_shared.ensemble_evaluator.entity import serialization
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
 )
@@ -55,19 +51,11 @@ class Batcher:
 
 
 class Dispatcher:
-    def __init__(
-        self, snapshot, ee_id, iter_, clients, result_cb, stop_cb, batcher=None
-    ):
+    def __init__(self, snapshot, evaluator_callback, batcher=None):
         self._LOOKUP_MAP = defaultdict(list)
         self._batcher: Optional[Batcher] = batcher
         self._snapshot = snapshot
-        self._ee_id = ee_id
-        self._iter = iter_
-        self._clients = clients
-
-        self._result_cb = result_cb
-        self._stop_cb = stop_cb
-
+        self._evaluator_callback = evaluator_callback
         self._register_event_handlers()
 
     def register_event_handler(self, event_types, function, batching=False):
@@ -107,16 +95,21 @@ class Dispatcher:
         snapshot_mutate_event = PartialSnapshot(self._snapshot)
         for event in events:
             snapshot_mutate_event.from_cloudevent(event)
-        await self._send_snapshot_update(snapshot_mutate_event)
+        await self._evaluator_callback(
+            identifiers.EVTYPE_EE_SNAPSHOT_UPDATE, snapshot_mutate_event
+        )
 
     async def _ensemble_stopped_handler(self, events):
         for event in events:
-            self._result_cb(event.data)
             if self._snapshot.get_status() != ENSEMBLE_STATE_FAILED:
                 snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
                     event
                 )
-                await self._send_snapshot_update(snapshot_mutate_event)
+                await self._evaluator_callback(
+                    identifiers.EVTYPE_ENSEMBLE_STOPPED,
+                    snapshot_mutate_event,
+                    event.data,
+                )
 
     async def _ensemble_started_handler(self, events):
         for event in events:
@@ -124,7 +117,9 @@ class Dispatcher:
                 snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
                     event
                 )
-                await self._send_snapshot_update(snapshot_mutate_event)
+                await self._evaluator_callback(
+                    identifiers.EVTYPE_ENSEMBLE_STARTED, snapshot_mutate_event
+                )
 
     async def _ensemble_cancelled_handler(self, events):
         for event in events:
@@ -132,8 +127,9 @@ class Dispatcher:
                 snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
                     event
                 )
-                await self._send_snapshot_update(snapshot_mutate_event)
-                self._stop_cb()
+                await self._evaluator_callback(
+                    identifiers.EVTYPE_ENSEMBLE_CANCELLED, snapshot_mutate_event
+                )
 
     async def _ensemble_failed_handler(self, events):
         for event in events:
@@ -144,24 +140,9 @@ class Dispatcher:
                 snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(
                     event
                 )
-                await self._send_snapshot_update(snapshot_mutate_event)
-
-    async def _send_snapshot_update(self, snapshot_mutate_event):
-        self._snapshot.merge_event(snapshot_mutate_event)
-        out_cloudevent = CloudEvent(
-            {
-                "type": identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
-                "source": f"/ert/ee/{self._ee_id}",
-            },
-            snapshot_mutate_event.to_dict(),
-        )
-        out_cloudevent.data["iter"] = self._iter
-        out_msg = to_json(
-            out_cloudevent, data_marshaller=serialization.evaluator_marshaller
-        ).decode()
-
-        if out_msg and self._clients:
-            await asyncio.wait([client.send(out_msg) for client in self._clients])
+                await self._evaluator_callback(
+                    identifiers.EVTYPE_ENSEMBLE_CANCELLED, snapshot_mutate_event
+                )
 
     async def handle_event(self, event):
         for f, batching in self._LOOKUP_MAP[event["type"]]:
