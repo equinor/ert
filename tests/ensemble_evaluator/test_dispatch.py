@@ -9,16 +9,21 @@ class DummyEventHandler:
     def __init__(self, batching=False):
 
         self.batcher = Batcher(timeout=1) if batching else None
-        self.dispatcher = Dispatcher(batcher=self.batcher)
+        self.dispatcher = Dispatcher(
+            ensemble=None,
+            evaluator_callback=lambda x: None,
+            batcher=self.batcher,
+        )
+        self.dispatcher._LOOKUP_MAP.clear()
         self.mock_all = Mock()
         self.mock_step = Mock()
         self.mock_none = Mock()
 
-        self.dispatcher.register_event_handler(ids.EVGROUP_FM_ALL, batching=batching)(
-            self.all
+        self.dispatcher.register_event_handler(
+            ids.EVGROUP_FM_ALL, self.all, batching=batching
         )
-        self.dispatcher.register_event_handler(ids.EVGROUP_FM_STEP, batching=batching)(
-            self.step
+        self.dispatcher.register_event_handler(
+            ids.EVGROUP_FM_STEP, self.step, batching=batching
         )
 
     async def join(self):
@@ -32,7 +37,7 @@ class DummyEventHandler:
 
 
 def _create_dummy_event(event_type):
-    return {"type": event_type}
+    return {"type": event_type, "source": "/ert/ee/1"}
 
 
 @pytest.mark.asyncio

@@ -25,8 +25,8 @@ def test_run_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_builder):
                     in [state.ENSEMBLE_STATE_FAILED, state.ENSEMBLE_STATE_STOPPED]
                 ):
                     monitor.signal_done()
-        assert evaluator._snapshot.get_status() == state.ENSEMBLE_STATE_STOPPED
-        assert evaluator.get_successful_realizations() == num_reals
+        assert evaluator._ensemble.get_status() == state.ENSEMBLE_STATE_STOPPED
+        assert evaluator._ensemble.get_successful_realizations() == num_reals
 
 
 @pytest.mark.timeout(60)
@@ -45,7 +45,7 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_b
                     mon.signal_cancel()
                     cancel = False
 
-        assert evaluator._snapshot.get_status() == state.ENSEMBLE_STATE_CANCELLED
+        assert evaluator._ensemble.get_status() == state.ENSEMBLE_STATE_CANCELLED
 
 
 @pytest.mark.timeout(60)
@@ -64,4 +64,4 @@ def test_run_legacy_ensemble_exception(tmpdir, unused_tcp_port, make_ensemble_bu
                         state.ENSEMBLE_STATE_STOPPED,
                     ]:
                         monitor.signal_done()
-            assert evaluator._snapshot.get_status() == state.ENSEMBLE_STATE_FAILED
+            assert evaluator._ensemble.get_status() == state.ENSEMBLE_STATE_FAILED
