@@ -71,7 +71,7 @@ setup(
         "alembic",
         "ansicolors==1.1.8",
         "async-exit-stack; python_version < '3.7'",
-        "async-generator; python_version < '3.7'",
+        "async-generator",
         "cloudevents",
         "cloudpickle",
         "console-progressbar==1.1.2",
