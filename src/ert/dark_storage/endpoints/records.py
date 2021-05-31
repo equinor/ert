@@ -20,14 +20,16 @@ from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.attributes import flag_modified
-from ert_storage.database import Session, get_db, HAS_AZURE_BLOB_STORAGE, BLOB_CONTAINER
+from ert_storage.database import Session, get_db
 from ert_storage import database_schema as ds, json_schema as js
 from ert_storage import exceptions as exc
+from ert_storage.endpoints._records_blob import (
+    get_blob_handler,
+    get_blob_handler_from_record,
+    BlobHandler,
+)
 
 from fastapi.logger import logger
-
-if HAS_AZURE_BLOB_STORAGE:
-    from ert_storage.database import azure_blob_container
 
 
 router = APIRouter(tags=["record"])
@@ -160,27 +162,14 @@ def new_record_matrix(
 async def post_ensemble_record_file(
     *,
     db: Session = Depends(get_db),
+    bh: BlobHandler = Depends(get_blob_handler),
     record: ds.Record = Depends(new_record_file),
     file: UploadFile = File(...),
 ) -> None:
     """
     Assign an arbitrary file to the given `name` record.
     """
-    file_obj = ds.File(
-        filename=file.filename,
-        mimetype=file.content_type,
-    )
-    if HAS_AZURE_BLOB_STORAGE:
-        key = f"{record.name}@{record.realization_index}@{uuid4()}"
-        blob = azure_blob_container.get_blob_client(key)
-        await blob.upload_blob(file.file)
-
-        file_obj.az_container = azure_blob_container.container_name
-        file_obj.az_blob = key
-    else:
-        file_obj.content = await file.read()
-
-    record.file = file_obj
+    record.file = await bh.upload_file(file)
     _create_record(db, record)
 
 
@@ -188,65 +177,28 @@ async def post_ensemble_record_file(
 async def add_block(
     *,
     db: Session = Depends(get_db),
-    ensemble_id: UUID,
-    name: str,
-    realization_index: Optional[int] = None,
+    bh: BlobHandler = Depends(get_blob_handler),
+    record: ds.Record = Depends(get_record_by_name),
     request: Request,
     block_index: int,
 ) -> None:
     """
     Stage blocks to an existing azure blob record.
     """
-
-    ensemble = db.query(ds.Ensemble).filter_by(id=ensemble_id).one()
-    block_id = str(uuid4())
-
-    file_block_obj = ds.FileBlock(
-        ensemble=ensemble,
-        block_id=block_id,
-        block_index=block_index,
-        record_name=name,
-        realization_index=realization_index,
-    )
-
-    record_obj = (
-        db.query(ds.Record)
-        .filter_by(realization_index=realization_index)
-        .join(ds.RecordInfo)
-        .filter_by(ensemble_pk=ensemble.pk, name=name)
-        .one()
-    )
-    if HAS_AZURE_BLOB_STORAGE:
-        key = record_obj.file.az_blob
-        blob = azure_blob_container.get_blob_client(key)
-        await blob.stage_block(block_id, await request.body())
-    else:
-        file_block_obj.content = await request.body()
-
-    db.add(file_block_obj)
-    db.commit()
+    db.add(await bh.stage_blob(record, request, block_index))
 
 
 @router.post("/ensembles/{ensemble_id}/records/{name}/blob")
 async def create_blob(
-    *, db: Session = Depends(get_db), record: ds.Record = Depends(new_record_file)
+    *,
+    db: Session = Depends(get_db),
+    bh: BlobHandler = Depends(get_blob_handler),
+    record: ds.Record = Depends(new_record_file),
 ) -> None:
     """
     Create a record which points to a blob on Azure Blob Storage.
     """
-    file_obj = ds.File(
-        filename="test",
-        mimetype="mime/type",
-    )
-    if HAS_AZURE_BLOB_STORAGE:
-        key = f"{record.name}@{record.realization_index}@{uuid4()}"
-        blob = azure_blob_container.get_blob_client(key)
-        file_obj.az_container = (azure_blob_container.container_name,)
-        file_obj.az_blob = (key,)
-    else:
-        pass
-
-    record.file = file_obj
+    record.file = bh.create_blob()
     _create_record(db, record)
 
 
@@ -254,45 +206,22 @@ async def create_blob(
 async def finalize_blob(
     *,
     db: Session = Depends(get_db),
-    ensemble_id: UUID,
-    name: str,
-    realization_index: Optional[int] = None,
+    bh: BlobHandler = Depends(get_blob_handler),
+    record: ds.Record = Depends(get_record_by_name),
 ) -> None:
     """
     Commit all staged blocks to a blob record
     """
-
-    ensemble = db.query(ds.Ensemble).filter_by(id=ensemble_id).one()
-
-    record_obj = (
-        db.query(ds.Record)
-        .filter_by(realization_index=realization_index)
-        .join(ds.RecordInfo)
-        .filter_by(ensemble_pk=ensemble.pk, name=name)
-        .one()
-    )
-
     submitted_blocks = list(
         db.query(ds.FileBlock)
         .filter_by(
-            record_name=name,
-            ensemble_pk=ensemble.pk,
-            realization_index=realization_index,
+            record_name=record.name,
+            ensemble_pk=record.ensemble_pk,
+            realization_index=record.realization_index,
         )
         .all()
     )
-
-    if HAS_AZURE_BLOB_STORAGE:
-        key = record_obj.file.az_blob
-        blob = azure_blob_container.get_blob_client(key)
-        block_ids = [
-            block.block_id
-            for block in sorted(submitted_blocks, key=lambda x: x.block_index)
-        ]
-        await blob.commit_block_list(block_ids)
-    else:
-        data = b"".join([block.content for block in submitted_blocks])
-        record_obj.file.content = data
+    await bh.finalize_blob(submitted_blocks, record)
 
 
 @router.post(
@@ -522,6 +451,7 @@ To parse data using Python, assuming ERT Storage is running on `http://localhost
 async def get_ensemble_record(
     *,
     db: Session = Depends(get_db),
+    bh: BlobHandler = Depends(get_blob_handler),
     record: ds.Record = Depends(get_record_by_name),
     accept: str = Header("application/json"),
     realization_index: Optional[int] = None,
@@ -547,7 +477,7 @@ async def get_ensemble_record(
     new_realization_index = (
         realization_index if record.realization_index is None else None
     )
-    return await _get_record_data(record, accept, new_realization_index)
+    return await _get_record_data(bh, record, accept, new_realization_index)
 
 
 @router.get("/ensembles/{ensemble_id}/parameters", response_model=List[str])
@@ -595,7 +525,8 @@ async def get_record_data(
         accept = "text/csv"
 
     record = db.query(ds.Record).filter_by(id=record_id).one()
-    return await _get_record_data(record, accept)
+    bh = get_blob_handler_from_record(db, record)
+    return await _get_record_data(bh, record, accept)
 
 
 @router.get(
@@ -618,7 +549,10 @@ def get_ensemble_responses(
 
 
 async def _get_record_data(
-    record: ds.Record, accept: Optional[str], realization_index: Optional[int] = None
+    bh: BlobHandler,
+    record: ds.Record,
+    accept: Optional[str],
+    realization_index: Optional[int] = None,
 ) -> Response:
     type_ = record.record_info.record_type
     if type_ == ds.RecordType.f64_matrix:
@@ -659,26 +593,7 @@ async def _get_record_data(
         else:
             return content
     if type_ == ds.RecordType.file:
-        f = record.file
-        if f.content is not None:
-            return Response(
-                content=f.content,
-                media_type=f.mimetype,
-                headers={"Content-Disposition": f'attachment; filename="{f.filename}"'},
-            )
-        elif f.az_container is not None and f.az_blob is not None:
-            blob = azure_blob_container.get_blob_client(f.az_blob)
-            download = await blob.download_blob()
-
-            async def chunk_generator() -> AsyncGenerator[bytes, None]:
-                async for chunk in download.chunks():
-                    yield chunk
-
-            return StreamingResponse(
-                chunk_generator(),
-                media_type=f.mimetype,
-                headers={"Content-Disposition": f'attachment; filename="{f.filename}"'},
-            )
+        return await bh.get_content(record)
     raise NotImplementedError(
         f"Getting record data for type {type_} and Accept header {accept} not implemented"
     )

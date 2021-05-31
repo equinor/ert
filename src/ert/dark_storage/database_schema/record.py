@@ -57,6 +57,10 @@ class Record(Base, MetadataField):
             )
 
     @property
+    def ensemble_pk(self) -> int:
+        return self.record_info.ensemble_pk
+
+    @property
     def name(self) -> str:
         return self.record_info.name
 
