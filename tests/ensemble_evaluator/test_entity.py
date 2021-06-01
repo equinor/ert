@@ -13,11 +13,11 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
 
 def test_snapshot_merge(snapshot):
     update_event = PartialSnapshot(snapshot)
-    update_event.update_status(status="running")
+    update_event.update_status(status=state.ENSEMBLE_STATE_STARTED)
 
     snapshot.merge_event(update_event)
 
-    assert snapshot.get_status() == "running"
+    assert snapshot.get_status() == state.ENSEMBLE_STATE_STARTED
 
     update_event = PartialSnapshot(snapshot)
     update_event.update_job(
@@ -52,7 +52,7 @@ def test_snapshot_merge(snapshot):
 
     snapshot.merge_event(update_event)
 
-    assert snapshot.get_status() == "running"
+    assert snapshot.get_status() == state.ENSEMBLE_STATE_STARTED
 
     assert snapshot.get_job(real_id="1", step_id="0", job_id="0") == Job(
         status="Finished",
@@ -186,3 +186,35 @@ def test_multiple_cloud_events_trigger_non_communicated_change():
         )
     )
     assert partial.to_dict()["reals"]["0"]["status"] == state.REALIZATION_STATE_FINISHED
+
+
+@pytest.mark.parametrize(
+    "transition, allowed",
+    [
+        ([state.ENSEMBLE_STATE_STARTED, state.ENSEMBLE_STATE_STOPPED], True),
+        ([state.ENSEMBLE_STATE_STARTED, state.ENSEMBLE_STATE_FAILED], True),
+        ([state.ENSEMBLE_STATE_STARTED, state.ENSEMBLE_STATE_CANCELLED], True),
+        ([state.ENSEMBLE_STATE_CANCELLED, state.ENSEMBLE_STATE_STARTED], False),
+        ([state.ENSEMBLE_STATE_CANCELLED, state.ENSEMBLE_STATE_STOPPED], False),
+        ([state.ENSEMBLE_STATE_CANCELLED, state.ENSEMBLE_STATE_FAILED], False),
+        ([state.ENSEMBLE_STATE_STOPPED, state.ENSEMBLE_STATE_FAILED], False),
+        ([state.ENSEMBLE_STATE_STOPPED, state.ENSEMBLE_STATE_CANCELLED], False),
+        ([state.ENSEMBLE_STATE_STOPPED, state.ENSEMBLE_STATE_STARTED], False),
+        ([state.ENSEMBLE_STATE_FAILED, state.ENSEMBLE_STATE_STARTED], False),
+        ([state.ENSEMBLE_STATE_FAILED, state.ENSEMBLE_STATE_STOPPED], False),
+        ([state.ENSEMBLE_STATE_FAILED, state.ENSEMBLE_STATE_CANCELLED], False),
+    ],
+)
+def test_snapshot_status_update_logging(transition, allowed, caplog, snapshot):
+    initial_state, update_state = transition
+    snapshot = SnapshotBuilder().build(["1"], status=initial_state)
+    update_event = PartialSnapshot(snapshot)
+    update_event.update_status(status=update_state)
+    snapshot.merge_event(update_event)
+    assert snapshot.get_status() == update_state
+    if allowed:
+        assert len(caplog.records) == 0
+    else:
+        assert len(caplog.records) == 1
+        log_mgs = f"Illegal snapshot state transition in progress from {initial_state} to {update_state}"
+        assert log_mgs == caplog.records[0].msg
