@@ -36,6 +36,8 @@ _EVTYPE_SNAPSHOT_FAILED = "Failed"
 _MY_STORAGE_DIRECTORY = ".my_storage"
 
 CoroutineTransmitters = List[Coroutine[Any, Any, None]]
+DictStrAny = Dict[str, Any]
+TupleDictStrAny = Tuple[DictStrAny, ...]
 
 
 def _add_storage(path: Path) -> Path:
@@ -106,10 +108,7 @@ def _create_evaluator_tmp_dir(workspace_root: Path, evaluation_name: str) -> Pat
     )
 
 
-TupleDictStrAny = Tuple[Dict[str, Any], ...]
-
-
-def _function_jobs(step: Function) -> TupleDictStrAny:
+def _function_job_factory(step: Function) -> TupleDictStrAny:
     return (
         {
             "name": step.function.__name__,
@@ -118,7 +117,7 @@ def _function_jobs(step: Function) -> TupleDictStrAny:
     )
 
 
-def _unix_jobs(step: Unix) -> TupleDictStrAny:
+def _unix_job_factory(step: Unix) -> TupleDictStrAny:
     def job(script: str) -> Dict[str, Any]:
         name, *args = script.split()
         return {
@@ -133,7 +132,7 @@ def _unix_jobs(step: Unix) -> TupleDictStrAny:
     return tuple(map(job, step.script))
 
 
-def _name_to_record_key(
+def _translate_name_key_to_record(
     command: TransportableCommand,
 ) -> Dict[str, Any]:
     cmd: Dict[str, Any] = command.dict(exclude={"name"}, by_alias=True)
@@ -141,26 +140,35 @@ def _name_to_record_key(
     return cmd
 
 
-def _job_specific_fields(step: Step) -> Tuple[TupleDictStrAny, TupleDictStrAny]:
+def _ensemble_attribute_discriminator(
+    step: Step,
+) -> Tuple[TupleDictStrAny, TupleDictStrAny]:
+    """
+    Ensemble's jobs and inputs attributes are disciminated
+    based on StagesConfig's Step Type (Unix | Function)
+    return: (jobs, inputs)
+    """
+    inputs = tuple(input_.dict(by_alias=True) for input_ in step.inputs)
     return (
-        (_unix_jobs(step), tuple(map(_name_to_record_key, step.transportable_commands)))
+        (
+            _unix_job_factory(step),
+            inputs
+            + tuple(map(_translate_name_key_to_record, step.transportable_commands)),
+        )
         if isinstance(step, Unix)
-        else (_function_jobs(step), ())
+        else (_function_job_factory(step), inputs)
     )
 
 
-def _step(step: Step) -> TupleDictStrAny:
-    jobs, input_commands = _job_specific_fields(step)
-    return (
-        {
-            "name": step.name + "-only_step",
-            "inputs": tuple(input_.dict(by_alias=True) for input_ in step.inputs)
-            + input_commands,
-            "outputs": [output.dict(by_alias=True) for output in step.outputs],
-            "jobs": jobs,
-            "type": type(step).__name__.lower(),
-        },
-    )
+def _ensemble_step_attributes(step: Step) -> DictStrAny:
+    jobs, inputs = _ensemble_attribute_discriminator(step)
+    return {
+        "name": step.name + "-only_step",
+        "inputs": inputs,
+        "outputs": [output.dict(by_alias=True) for output in step.outputs],
+        "jobs": jobs,
+        "type": type(step).__name__.lower(),
+    }
 
 
 def _build_ee_config(
@@ -178,7 +186,7 @@ def _build_ee_config(
     assert step is not None
 
     return {
-        "steps": _step(step),  # Why is steps a list of one dict object?
+        "steps": (_ensemble_step_attributes(step),),
         "realizations": ensemble_size,
         "max_running": 10000,
         "max_retries": 0,
