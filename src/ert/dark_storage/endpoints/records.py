@@ -219,6 +219,7 @@ async def finalize_blob(
             ensemble_pk=record.ensemble_pk,
             realization_index=record.realization_index,
         )
+        .order_by(ds.FileBlock.block_index)
         .all()
     )
     await bh.finalize_blob(submitted_blocks, record)
