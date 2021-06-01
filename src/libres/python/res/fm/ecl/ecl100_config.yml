@@ -1,0 +1,60 @@
+# NB: There are inter related dependencies between this file, the EclConfig
+#     class which essentially internalizes this file and the EclRun class
+#     which uses the EclConfig class.
+#
+# The information about eclipse versions installed at a particular site is
+# assembled in configuration files like this one, there are separate files for
+# ecl100, ecl300 and opm/flow. The file has only one required top level element:
+# 'versions' - which describe the versions which are installed. In
+# additon you can optionally have a top level element 'env' which is a
+# dictionary representing environment variables which should be set before the
+# simulator starts.
+#
+# In the example below the ecl100 simulator is installed in versions '2015.2'
+# and '2017.2'. Each version of the program can exist as a scalar single process
+# application and a parallell MPI application. When we have drilled all the way
+# down through versions['2105.2']['scalar'] the only required
+# attribute is 'executable' which is the full path to the executable program. In
+# addition you can add an env: setting which will be a dictionary of environment
+# variables which will be set before the simulator is invoked. The 2015.2 mpi
+# version has an example of such a settings.
+#
+# If it is an MPI simulation you must in addition to the executable attribute
+# also set an 'mpirun' attribute.
+
+versions:
+  '2015.2':  # without quotes this will be interpreted as a number
+    scalar:
+      executable: /path/ecl/2015.2/linux/x86_64/bin/eclipse100
+    mpi:
+      executable: /path/ecl/2015.2/linux/x86_64/bin/eclipse100_mpi
+      mpirun: /path/ecl/2015.2/intel/bin/mpirun
+      env:
+        MPI_ROOT: /path/to/mpi/root
+        LD_LIBRARY_PATH: /path/to/mpi/root/lib64:$LD_LIBRARY_PATH
+
+  '2017.2':
+    scalar:
+      executable: /path/ecl/2017.2/linux/x86_64/bin/eclipse100
+      env:
+    mpi:
+      executable: /path/ecl/2017.2/linux/x86_64/bin/eclipse100_mpi
+      mpirun: /path/ecl/2017.2/intel/bin/mpirun
+
+
+# You can have a shared 'env' attribute which is an environment variable map
+# which will be set before the simulator starts. If there are env settings in
+# the simulator as well they will be merged with these common settings, the
+# simulator specific take presedence.
+
+env:
+  LM_LICENSE_FILE: license@company.com
+  F_UFMTENDIAN: big
+  ARCH: x86_64
+
+
+eclrun_env:
+  SLBSLS_LICENSE_FILE: something@yourcompany.com
+  ECLPATH: /path/to/ecl
+  PATH: /path/to/ecl/macros
+  LSB_JOBID: null

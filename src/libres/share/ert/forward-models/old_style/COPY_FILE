@@ -1,0 +1,9 @@
+STDOUT      copy_file.stdout
+STDERR      copy_file.stderr
+EXECUTABLE  ../../shell_scripts/copy_file
+ARGLIST     <FROM> <TO>
+
+MIN_ARG    2
+MAX_ARG    2
+ARG_TYPE 0 STRING
+ARG_TYPE 1 STRING

@@ -1,0 +1,47 @@
+TEST 1 (Consistency between exact scheme and subspace scheme with no truncation and exact diagonal R):
+   ANALYSIS_SET_VAR IES_ENKF ENKF_TRUNCATION         1.0
+   ANALYSIS_SET_VAR IES_ENKF IES_STEPLENGTH          0.6
+   ANALYSIS_SET_VAR IES_ENKF IES_INVERSION           1
+   ANALYSIS_SELECT IES_ENKF
+should give same result as 
+   ANALYSIS_SET_VAR IES_ENKF IES_STEPLENGTH          0.6
+   ANALYSIS_SET_VAR IES_ENKF IES_INVERSION           0
+   ANALYSIS_SELECT IES_ENKF
+
+
+TEST 2 (consistency between subspace inversion schemes with lowrank R):
+   ANALYSIS_SET_VAR IES_ENKF ENKF_TRUNCATION         0.999
+   ANALYSIS_SET_VAR IES_ENKF IES_STEPLENGTH          0.6
+   ANALYSIS_SET_VAR IES_ENKF IES_INVERSION           2
+   ANALYSIS_SELECT IES_ENKF
+should give same result as 
+   ANALYSIS_SET_VAR IES_ENKF ENKF_TRUNCATION         0.999
+   ANALYSIS_SET_VAR IES_ENKF IES_STEPLENGTH          0.6
+   ANALYSIS_SET_VAR IES_ENKF IES_INVERSION           3
+   ANALYSIS_SELECT IES_ENKF
+
+
+TEST 3 (consistency between IES and STD_ENKF):
+   ANALYSIS_SET_VAR IES_ENKF ENKF_TRUNCATION         0.999
+   ANALYSIS_SET_VAR IES_ENKF IES_STEPLENGTH          1.0
+   ANALYSIS_SET_VAR IES_ENKF IES_INVERSION           1
+   ANALYSIS_SET_VAR IES_ENKF IES_AAPROJECTION        false
+   ANALYSIS_SELECT IES_ENKF
+should give same result as 
+   ANALYSIS_SET_VAR IES_ENKF ENKF_TRUNCATION         0.999
+   ANALYSIS_SELECT STD_ENKF
+
+
+TEST 4 (testing iterations in IES):
+one iteration with
+   ANALYSIS_SET_VAR IES_ENKF ENKF_TRUNCATION         0.999
+   ANALYSIS_SET_VAR IES_ENKF IES_STEPLENGTH          1.0
+   ANALYSIS_SET_VAR IES_ENKF IES_INVERSION           1
+   ANALYSIS_SELECT IES_ENKF
+should give approximately the same result as say 10-20 iterations with
+   ANALYSIS_SET_VAR IES_ENKF ENKF_TRUNCATION         0.999
+   ANALYSIS_SET_VAR IES_ENKF IES_STEPLENGTH          0.6
+   ANALYSIS_SET_VAR IES_ENKF IES_INVERSION           1
+   ANALYSIS_SELECT IES_ENKF
+for a linear problem such as poly_example but with prior distributions NORMAL.
+In this linear case the standard ES gives the same result as an itertive scheme,

@@ -1,0 +1,12 @@
+-- The SYMLINK and MAKE_SYMLINK jobs are aliases to the same
+-- underlying script.
+STDERR    make_symlink.stderr
+STDOUT    make_symlink.stdout
+
+EXECUTABLE  ../../shell_scripts/symlink
+ARGLIST     <TARGET> <LINKNAME>
+
+MIN_ARG    2
+MAX_ARG    2
+ARG_TYPE   0 STRING
+ARG_TYPE   1 STRING

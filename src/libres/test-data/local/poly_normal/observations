@@ -1,0 +1,6 @@
+GENERAL_OBSERVATION POLY_OBS {
+   DATA       = POLY_RES;
+   INDEX_LIST = 0,2,4,6,8;
+   RESTART    = 0;
+   OBS_FILE   = poly_obs_data.txt;
+};
