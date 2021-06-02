@@ -1,3 +1,5 @@
+import logging
+
 from ert_shared.ensemble_evaluator.client import Client
 
 from ert_shared.ensemble_evaluator.entity import serialization
@@ -12,12 +14,67 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
     SnapshotDict,
     Step,
 )
-from ert_shared.status.entity.state import (
-    ENSEMBLE_STATE_STARTED,
-    JOB_STATE_START,
-    REALIZATION_STATE_WAITING,
-    STEP_STATE_UNKNOWN,
-)
+import ert_shared.status.entity.state as state
+
+logger = logging.getLogger(__name__)
+
+
+class _EnsembleStateTracker:
+    def __init__(self, state=state.ENSEMBLE_STATE_UNKNOWN):
+        self._state: str = state
+        self._handles: dict = {}
+        self._msg = "Illegal state transition from {} to {}"
+
+        self.set_default_handles()
+
+    def add_handle(self, state, handle):
+        self._handles[state] = handle
+
+    def _handle_unknown(self):
+        if self._state != state.ENSEMBLE_STATE_UNKNOWN:
+            logger.warning(self._msg.format(self._state, state.ENSEMBLE_STATE_UNKNOWN))
+        self._state = state.ENSEMBLE_STATE_UNKNOWN
+
+    def _handle_started(self):
+        if self._state != state.ENSEMBLE_STATE_UNKNOWN:
+            logger.warning(self._msg.format(self._state, state.ENSEMBLE_STATE_STARTED))
+        self._state = state.ENSEMBLE_STATE_STARTED
+
+    def _handle_failed(self):
+        if self._state not in [
+            state.ENSEMBLE_STATE_UNKNOWN,
+            state.ENSEMBLE_STATE_STARTED,
+        ]:
+            logger.warning(self._msg.format(self._state, state.ENSEMBLE_STATE_FAILED))
+        self._state = state.ENSEMBLE_STATE_FAILED
+
+    def _handle_stopped(self):
+        if self._state != state.ENSEMBLE_STATE_STARTED:
+            logger.warning(self._msg.format(self._state, state.ENSEMBLE_STATE_STOPPED))
+        self._state = state.ENSEMBLE_STATE_STOPPED
+
+    def _handle_canceled(self):
+        if self._state != state.ENSEMBLE_STATE_STARTED:
+            logger.warning(
+                self._msg.format(self._state, state.ENSEMBLE_STATE_CANCELLED)
+            )
+        self._state = state.ENSEMBLE_STATE_CANCELLED
+
+    def set_default_handles(self):
+        self.add_handle(state.ENSEMBLE_STATE_UNKNOWN, self._handle_unknown)
+        self.add_handle(state.ENSEMBLE_STATE_STARTED, self._handle_started)
+        self.add_handle(state.ENSEMBLE_STATE_FAILED, self._handle_failed)
+        self.add_handle(state.ENSEMBLE_STATE_STOPPED, self._handle_stopped)
+        self.add_handle(state.ENSEMBLE_STATE_CANCELLED, self._handle_canceled)
+
+    def update_state(self, state):
+        if state not in self._handles:
+            raise KeyError(f"Handle not defined for state {state}")
+
+        # Call the state handle mapped to the new state
+        self._handles[state]()
+
+        return self._state
 
 
 class _Ensemble:
@@ -25,6 +82,8 @@ class _Ensemble:
         self._reals = reals
         self._metadata = metadata
         self._snapshot = self._create_snapshot()
+        self._status = self._snapshot.get_status()
+        self._status_tracker = _EnsembleStateTracker(self._snapshot.get_status())
 
     def __repr__(self):
         return f"Ensemble with {len(self._reals)} members"
@@ -56,10 +115,11 @@ class _Ensemble:
         for event in events:
             snapshot_mutate_event.from_cloudevent(event)
         self._snapshot.merge_event(snapshot_mutate_event)
+        self._status = self._status_tracker.update_state(self._snapshot.get_status())
         return snapshot_mutate_event
 
     def get_status(self):
-        return self._snapshot.get_status()
+        return self._status
 
     async def send_cloudevent(self, url, event, token=None, cert=None, retries=1):
         client = Client(url, token, cert)
@@ -76,23 +136,23 @@ class _Ensemble:
         for real in self.get_active_reals():
             reals[str(real.get_iens())] = Realization(
                 active=True,
-                status=REALIZATION_STATE_WAITING,
+                status=state.REALIZATION_STATE_WAITING,
             )
             for step in real.get_steps():
                 reals[str(real.get_iens())].steps[str(step.get_id())] = Step(
-                    status=STEP_STATE_UNKNOWN
+                    status=state.STEP_STATE_UNKNOWN
                 )
                 for job in step.get_jobs():
                     reals[str(real.get_iens())].steps[str(step.get_id())].jobs[
                         str(job.get_id())
                     ] = Job(
-                        status=JOB_STATE_START,
+                        status=state.JOB_STATE_START,
                         data={},
                         name=job.get_name(),
                     )
         top = SnapshotDict(
             reals=reals,
-            status=ENSEMBLE_STATE_STARTED,
+            status=state.ENSEMBLE_STATE_STARTED,
             metadata=self.get_metadata(),
         )
 
