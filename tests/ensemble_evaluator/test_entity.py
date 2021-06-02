@@ -1,6 +1,7 @@
 from datetime import datetime
 import ert_shared.status.entity.state as state
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
+from ert_shared.ensemble_evaluator.entity.ensemble_base import _EnsembleStateTracker
 from cloudevents.http.event import CloudEvent
 import pytest
 from ert_shared.ensemble_evaluator.entity import command, tool
@@ -205,16 +206,14 @@ def test_multiple_cloud_events_trigger_non_communicated_change():
         ([state.ENSEMBLE_STATE_FAILED, state.ENSEMBLE_STATE_CANCELLED], False),
     ],
 )
-def test_snapshot_status_update_logging(transition, allowed, caplog, snapshot):
+def test_ensemble_state_tracker(transition, allowed, caplog, snapshot):
     initial_state, update_state = transition
-    snapshot = SnapshotBuilder().build(["1"], status=initial_state)
-    update_event = PartialSnapshot(snapshot)
-    update_event.update_status(status=update_state)
-    snapshot.merge_event(update_event)
-    assert snapshot.get_status() == update_state
+    state_tracker = _EnsembleStateTracker(initial_state)
+    new_state = state_tracker.update_state(update_state)
+    assert new_state == update_state
     if allowed:
         assert len(caplog.records) == 0
     else:
         assert len(caplog.records) == 1
-        log_mgs = f"Illegal snapshot state transition in progress from {initial_state} to {update_state}"
+        log_mgs = f"Illegal state transition from {initial_state} to {update_state}"
         assert log_mgs == caplog.records[0].msg

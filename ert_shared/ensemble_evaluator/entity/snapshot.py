@@ -1,7 +1,6 @@
 import copy
 import datetime
 import typing
-import logging
 from collections import defaultdict
 from typing import Dict, Optional, Any
 
@@ -22,8 +21,6 @@ from ert_shared.status.entity import state
 class UnsupportedOperationException(ValueError):
     pass
 
-
-logger = logging.getLogger(__name__)
 
 _FM_TYPE_EVENT_TO_STATUS = {
     ids.EVTYPE_FM_STEP_WAITING: state.STEP_STATE_WAITING,
@@ -70,14 +67,6 @@ class PartialSnapshot:
         self._snapshot = copy.copy(snapshot) if snapshot else None
 
     def update_status(self, status):
-        current_status = self._snapshot.get_status()
-        if current_status != status:
-            if (
-                current_status,
-                status,
-            ) not in state.ALLOWED_ENSEMBLE_STATES_TRANSITIONS:
-                msg = f"Illegal snapshot state transition in progress from {current_status} to {status}"
-                logger.warning(msg)
         self._apply_update(SnapshotDict(status=status))
 
     def update_real(
