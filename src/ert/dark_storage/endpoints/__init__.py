@@ -4,7 +4,6 @@ from .records import router as records_router
 from .experiments import router as experiments_router
 from .observations import router as observations_router
 from .updates import router as updates_router
-from .priors import router as priors_router
 from .compute.misfits import router as misfits_router
 from .responses import router as response_router
 
@@ -14,6 +13,5 @@ router.include_router(ensembles_router)
 router.include_router(records_router)
 router.include_router(observations_router)
 router.include_router(updates_router)
-router.include_router(priors_router)
 router.include_router(misfits_router)
 router.include_router(response_router)

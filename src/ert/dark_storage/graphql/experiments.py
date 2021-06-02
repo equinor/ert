@@ -7,7 +7,7 @@ from ert_storage.ext.graphene_sqlalchemy import SQLAlchemyObjectType, SQLAlchemy
 from ert_storage.graphql.ensembles import Ensemble, CreateEnsemble
 from ert_storage.graphql.updates import Update
 from ert_storage import database_schema as ds, json_schema as js
-from ert_storage.endpoints.priors import experiment_priors_to_dict
+from ert_storage.endpoints.experiments import experiment_priors_to_dict
 
 
 if TYPE_CHECKING:

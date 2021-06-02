@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from ert_storage.ext.graphene_sqlalchemy import SQLAlchemyObjectType
 from ert_storage import database_schema as ds
-from ert_storage.endpoints.priors import prior_to_dict
+from ert_storage.endpoints.experiments import prior_to_dict
 
 
 if TYPE_CHECKING:
