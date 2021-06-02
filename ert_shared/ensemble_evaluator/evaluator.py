@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import threading
+import sys
 from contextlib import contextmanager
 import pickle
 from typing import Set
@@ -13,7 +14,6 @@ import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 import ert_shared.ensemble_evaluator.monitor as ee_monitor
 import websockets
 from websockets.legacy.server import WebSocketServerProtocol
-from async_generator import asynccontextmanager
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.dispatch import Dispatcher, Batcher
@@ -21,6 +21,11 @@ from ert_shared.ensemble_evaluator.entity import serialization
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_CANCELLED,
 )
+
+if sys.version_info < (3, 7):
+    from async_generator import asynccontextmanager
+else:
+    from contextlib import asynccontextmanager
 
 logger = logging.getLogger(__name__)
 
