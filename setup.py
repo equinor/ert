@@ -65,7 +65,6 @@ setup(
         "typing-extensions; python_version < '3.8'",
         "websockets >= 9.0.1",
         "python-dateutil",
-        "async_generator",
         "uvicorn",
         "prefect",
         "dask_jobqueue",
