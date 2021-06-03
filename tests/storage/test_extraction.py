@@ -363,10 +363,16 @@ def test_post_update_data(client):
 
 def _make_priors() -> List[Tuple[str, str, dict]]:
     def normal():
+        # trans_normal @ libres/enkf/trans_func.cpp
+        #
+        # Well defined for all real values of a and b
         a, b = random(), random()
         return (f"NORMAL {a} {b}", dict(function="normal", mean=a, std=b))
 
     def lognormal():
+        # trans_lognormal @ libres/enkf/trans_func.cpp
+        #
+        # Well defined for all real values of a and b
         a, b = random(), random()
         return (
             f"LOGNORMAL {a} {b}",
@@ -374,6 +380,9 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
         )
 
     def truncnormal():
+        # trans_truncated_normal @ libres/enkf/trans_func.cpp
+        #
+        # Well defined for all real values of a, b, c and d
         a, b, c, d = [random() for _ in range(4)]
         return (
             f"TRUNCATED_NORMAL {a} {b} {c} {d}",
@@ -387,11 +396,17 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
         )
 
     def uniform():
+        # trans_unif @ libres/enkf/trans_func.cpp
+        #
+        # Well defined for all real values of a and b
         a, b = random(), random()
         return (f"UNIFORM {a} {b}", {"function": "uniform", "min": a, "max": b})
 
     def loguniform():
-        a, b = random(), random()
+        # trans_logunif @ libres/enkf/trans_func.cpp
+        #
+        # Well defined for strictly positive a, b due to log()
+        a, b = random() + 1, random() + 1  # +1 to avoid zero
         return (
             f"LOGUNIF {a} {b}",
             {"function": "loguniform", "min": a, "max": b},
@@ -402,7 +417,11 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
         return (f"CONST {a}", {"function": "const", "value": a})
 
     def duniform():
-        bins = randint(1, 100)
+        # trans_dunif @ libres/enkf/trans_func.cpp
+        #
+        # Well defined for all real values of b and c, integer values >= 2 of
+        # bins (due to division by [bins - 1])
+        bins = randint(2, 100)
         b, c = random(), random()
         return (
             f"DUNIF {bins} {b} {c}",
@@ -410,15 +429,24 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
         )
 
     def erf():
-        a, b, c, d = [random() for _ in range(4)]
+        # trans_errf @ libres/enkf/trans_func.cpp
+        #
+        # Well defined for all real values of a, b, c, non-zero real values of d
+        # (width) due to division by zero.
+        a, b, c, d = [random() + 1 for _ in range(4)]  # +1 to all to avoid zero
         return (
             f"ERRF {a} {b} {c} {d}",
             {"function": "ert_erf", "min": a, "max": b, "skewness": c, "width": d},
         )
 
     def derf():
-        bins = randint(1, 100)
-        a, b, c, d = [random() for _ in range(4)]
+        # trans_derrf @ libres/enkf/trans_func.cpp
+        #
+        # Well defined for all real values of a, b, c, non-zero real values of d
+        # (width) due to division by zero, integer values >= 2 of bins due to
+        # division by (bins - 1)
+        bins = randint(2, 100)
+        a, b, c, d = [random() + 1 for _ in range(4)]  # +1 to all to avoid zero
         return (
             f"DERRF {bins} {a} {b} {c} {d}",
             {
