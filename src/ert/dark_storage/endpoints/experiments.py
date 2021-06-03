@@ -73,48 +73,48 @@ def get_experiment_ensembles(
     return db.query(ds.Ensemble).join(ds.Experiment).filter_by(id=experiment_id).all()
 
 
-@router.put("/experiments/{experiment_id}/metadata")
-async def replace_experiment_metadata(
+@router.put("/experiments/{experiment_id}/userdata")
+async def replace_experiment_userdata(
     *,
     db: Session = Depends(get_db),
     experiment_id: UUID,
     body: Any = Body(...),
 ) -> None:
     """
-    Assign new metadata json
+    Assign new userdata json
     """
     experiment = db.query(ds.Experiment).filter_by(id=experiment_id).one()
-    experiment._metadata = body
+    experiment.userdata = body
     db.commit()
 
 
-@router.patch("/experiments/{experiment_id}/metadata")
-async def patch_experiment_metadata(
+@router.patch("/experiments/{experiment_id}/userdata")
+async def patch_experiment_userdata(
     *,
     db: Session = Depends(get_db),
     experiment_id: UUID,
     body: Any = Body(...),
 ) -> None:
     """
-    Update metadata json
+    Update userdata json
     """
     experiment = db.query(ds.Experiment).filter_by(id=experiment_id).one()
-    experiment._metadata.update(body)
-    flag_modified(experiment, "_metadata")
+    experiment.userdata.update(body)
+    flag_modified(experiment, "userdata")
     db.commit()
 
 
-@router.get("/experiments/{experiment_id}/metadata", response_model=Mapping[str, Any])
-async def get_experiment_metadata(
+@router.get("/experiments/{experiment_id}/userdata", response_model=Mapping[str, Any])
+async def get_experiment_userdata(
     *,
     db: Session = Depends(get_db),
     experiment_id: UUID,
 ) -> Mapping[str, Any]:
     """
-    Get metadata json
+    Get userdata json
     """
     experiment = db.query(ds.Experiment).filter_by(id=experiment_id).one()
-    return experiment.metadata_dict
+    return experiment.userdata
 
 
 @router.delete("/experiments/{experiment_id}")
@@ -159,5 +159,5 @@ def _experiment_from_db(exp: ds.Experiment) -> js.ExperimentOut:
         name=exp.name,
         ensemble_ids=exp.ensemble_ids,
         priors=experiment_priors_to_dict(exp),
-        metadata=exp.metadata_dict,
+        userdata=exp.userdata,
     )

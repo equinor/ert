@@ -5,10 +5,10 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from ert_storage.database import Base
 from ert_storage.ext.uuid import UUID
-from .metadatafield import MetadataField
+from ._userdata_field import UserdataField
 
 
-class Experiment(Base, MetadataField):
+class Experiment(Base, UserdataField):
     __tablename__ = "experiment"
 
     pk = sa.Column(sa.Integer, primary_key=True)

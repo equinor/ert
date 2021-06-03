@@ -67,48 +67,48 @@ def get_observations_with_transformation(
     ]
 
 
-@router.put("/observations/{obs_id}/metadata")
-async def replace_observation_metadata(
+@router.put("/observations/{obs_id}/userdata")
+async def replace_observation_userdata(
     *,
     db: Session = Depends(get_db),
     obs_id: UUID,
     body: Any = Body(...),
 ) -> None:
     """
-    Assign new metadata json
+    Assign new userdata json
     """
     obs = db.query(ds.Observation).filter_by(id=obs_id).one()
-    obs._metadata = body
+    obs.userdata = body
     db.commit()
 
 
-@router.patch("/observations/{obs_id}/metadata")
-async def patch_observation_metadata(
+@router.patch("/observations/{obs_id}/userdata")
+async def patch_observation_userdata(
     *,
     db: Session = Depends(get_db),
     obs_id: UUID,
     body: Any = Body(...),
 ) -> None:
     """
-    Update metadata json
+    Update userdata json
     """
     obs = db.query(ds.Observation).filter_by(id=obs_id).one()
-    obs._metadata.update(body)
-    flag_modified(obs, "_metadata")
+    obs.userdata.update(body)
+    flag_modified(obs, "userdata")
     db.commit()
 
 
-@router.get("/observations/{obs_id}/metadata", response_model=Mapping[str, Any])
-async def get_observation_metadata(
+@router.get("/observations/{obs_id}/userdata", response_model=Mapping[str, Any])
+async def get_observation_userdata(
     *,
     db: Session = Depends(get_db),
     obs_id: UUID,
 ) -> Mapping[str, Any]:
     """
-    Get metadata json
+    Get userdata json
     """
     obs = db.query(ds.Observation).filter_by(id=obs_id).one()
-    return obs.metadata_dict
+    return obs.userdata
 
 
 def _observation_from_db(
@@ -130,6 +130,6 @@ def _observation_from_db(
         errors=obs.errors,
         values=obs.values,
         records=[rec.id for rec in obs.records],
-        metadata=obs.metadata_dict,
+        userdata=obs.userdata,
         transformation=transformation,
     )

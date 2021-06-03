@@ -20,7 +20,7 @@ def post_ensemble(
         response_names=ens_in.response_names,
         experiment=experiment,
         size=ens_in.size,
-        _metadata=ens_in.metadata,
+        userdata=ens_in.userdata,
     )
     db.add(ens)
 
@@ -37,45 +37,45 @@ def get_ensemble(*, db: Session = Depends(get_db), ensemble_id: UUID) -> ds.Ense
     return db.query(ds.Ensemble).filter_by(id=ensemble_id).one()
 
 
-@router.put("/ensembles/{ensemble_id}/metadata")
-async def replace_ensemble_metadata(
+@router.put("/ensembles/{ensemble_id}/userdata")
+async def replace_ensemble_userdata(
     *,
     db: Session = Depends(get_db),
     ensemble_id: UUID,
     body: Any = Body(...),
 ) -> None:
     """
-    Assign new metadata json
+    Assign new userdata json
     """
     ensemble = db.query(ds.Ensemble).filter_by(id=ensemble_id).one()
-    ensemble._metadata = body
+    ensemble.userdata = body
     db.commit()
 
 
-@router.patch("/ensembles/{ensemble_id}/metadata")
-async def patch_ensemble_metadata(
+@router.patch("/ensembles/{ensemble_id}/userdata")
+async def patch_ensemble_userdata(
     *,
     db: Session = Depends(get_db),
     ensemble_id: UUID,
     body: Any = Body(...),
 ) -> None:
     """
-    Update metadata json
+    Update userdata json
     """
     ensemble = db.query(ds.Ensemble).filter_by(id=ensemble_id).one()
-    ensemble._metadata.update(body)
-    flag_modified(ensemble, "_metadata")
+    ensemble.userdata.update(body)
+    flag_modified(ensemble, "userdata")
     db.commit()
 
 
-@router.get("/ensembles/{ensemble_id}/metadata", response_model=Mapping[str, Any])
-async def get_ensemble_metadata(
+@router.get("/ensembles/{ensemble_id}/userdata", response_model=Mapping[str, Any])
+async def get_ensemble_userdata(
     *,
     db: Session = Depends(get_db),
     ensemble_id: UUID,
 ) -> Mapping[str, Any]:
     """
-    Get metadata json
+    Get userdata json
     """
     ensemble = db.query(ds.Ensemble).filter_by(id=ensemble_id).one()
-    return ensemble.metadata_dict
+    return ensemble.userdata

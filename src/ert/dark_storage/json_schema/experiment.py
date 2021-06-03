@@ -16,7 +16,7 @@ class ExperimentOut(_Experiment):
     id: UUID
     ensemble_ids: List[UUID]
     priors: Mapping[str, dict]
-    metadata: Mapping[str, Any]
+    userdata: Mapping[str, Any]
 
     class Config:
         orm_mode = True

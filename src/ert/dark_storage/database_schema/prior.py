@@ -3,10 +3,10 @@ import sqlalchemy as sa
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from uuid import uuid4
-from .metadatafield import MetadataField
 from ert_storage.database import Base
 from ert_storage.ext.uuid import UUID
 from ert_storage.ext.sqlalchemy_arrays import StringArray, FloatArray
+from ._userdata_field import UserdataField
 
 
 class PriorFunction(Enum):
@@ -23,7 +23,7 @@ class PriorFunction(Enum):
     ert_derf = 11
 
 
-class Prior(Base, MetadataField):
+class Prior(Base, UserdataField):
     __tablename__ = "prior"
 
     pk = sa.Column(sa.Integer, primary_key=True)

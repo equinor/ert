@@ -10,7 +10,7 @@ class _Record(BaseModel):
 class RecordOut(_Record):
     id: UUID
     name: str
-    metadata: Mapping[str, Any] = Field(alias="metadata_dict")
+    userdata: Mapping[str, Any]
 
     class Config:
         orm_mode = True

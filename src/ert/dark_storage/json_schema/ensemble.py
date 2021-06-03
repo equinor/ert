@@ -11,7 +11,7 @@ class _Ensemble(BaseModel):
 
 class EnsembleIn(_Ensemble):
     update_id: Optional[UUID] = None
-    metadata: Optional[Any]
+    userdata: Mapping[str, Any] = {}
 
     @root_validator
     def _check_names_no_overlap(cls, values: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -29,7 +29,7 @@ class EnsembleOut(_Ensemble):
     children: List[UUID] = Field(alias="child_ensemble_ids")
     parent: Optional[UUID] = Field(alias="parent_ensemble_id")
     experiment_id: Optional[UUID] = None
-    metadata: Mapping[str, Any] = Field(alias="metadata_dict")
+    userdata: Mapping[str, Any]
 
     class Config:
         orm_mode = True

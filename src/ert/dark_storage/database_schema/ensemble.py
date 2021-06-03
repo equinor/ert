@@ -4,12 +4,12 @@ import sqlalchemy as sa
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from ert_storage.database import Base
-from .metadatafield import MetadataField
 from ert_storage.ext.uuid import UUID as UUID
 from ert_storage.ext.sqlalchemy_arrays import StringArray
+from ._userdata_field import UserdataField
 
 
-class Ensemble(Base, MetadataField):
+class Ensemble(Base, UserdataField):
     __tablename__ = "ensemble"
 
     pk = sa.Column(sa.Integer, primary_key=True)

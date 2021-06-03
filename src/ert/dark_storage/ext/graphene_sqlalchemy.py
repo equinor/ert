@@ -67,7 +67,7 @@ class SQLAlchemyMutation(SQLAlchemyObjectType):
         resolver: Callable = None,
         arguments: Dict[str, "Argument"] = None,
         _meta: Optional[ObjectTypeOptions] = None,
-        **options: Any
+        **options: Any,
     ) -> None:
         if not _meta:
             _meta = MutationOptions(cls)
@@ -117,7 +117,7 @@ class SQLAlchemyMutation(SQLAlchemyObjectType):
         description: Optional[str] = None,
         deprecation_reason: Optional[str] = None,
         required: bool = False,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> "graphene.types.field.Field":
         """Mount instance of mutation Field."""
         return Field(
@@ -128,5 +128,5 @@ class SQLAlchemyMutation(SQLAlchemyObjectType):
             description=description or cls._meta.description,
             deprecation_reason=deprecation_reason,
             required=required,
-            **kwargs
+            **kwargs,
         )

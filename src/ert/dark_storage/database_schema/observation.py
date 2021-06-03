@@ -5,7 +5,7 @@ from ert_storage.ext.uuid import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from uuid import uuid4
-from .metadatafield import MetadataField
+from ._userdata_field import UserdataField
 
 observation_record_association = sa.Table(
     "observation_record_association",
@@ -15,7 +15,7 @@ observation_record_association = sa.Table(
 )
 
 
-class Observation(Base, MetadataField):
+class Observation(Base, UserdataField):
     __tablename__ = "observation"
     __table_args__ = (
         sa.UniqueConstraint("name", "experiment_pk", name="uq_observation_name"),

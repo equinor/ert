@@ -10,12 +10,12 @@ from ert_storage.ext.sqlalchemy_arrays import FloatArray
 from ert_storage.ext.uuid import UUID
 from ert_storage.database import Base
 
-from .metadatafield import MetadataField
+from ._userdata_field import UserdataField
 from .observation import observation_record_association
 from .record_info import RecordType, RecordClass
 
 
-class Record(Base, MetadataField):
+class Record(Base, UserdataField):
     __tablename__ = "record"
 
     pk = sa.Column(sa.Integer, primary_key=True)

@@ -289,46 +289,46 @@ async def post_ensemble_record_matrix(
     return _create_record(db, record)
 
 
-@router.put("/ensembles/{ensemble_id}/records/{name}/metadata")
-async def replace_record_metadata(
+@router.put("/ensembles/{ensemble_id}/records/{name}/userdata")
+async def replace_record_userdata(
     *,
     db: Session = Depends(get_db),
     record: ds.Record = Depends(get_record_by_name),
     body: Any = Body(...),
 ) -> None:
     """
-    Assign new metadata json
+    Assign new userdata json
     """
-    record._metadata = body
+    record.userdata = body
     db.commit()
 
 
-@router.patch("/ensembles/{ensemble_id}/records/{name}/metadata")
-async def patch_record_metadata(
+@router.patch("/ensembles/{ensemble_id}/records/{name}/userdata")
+async def patch_record_userdata(
     *,
     db: Session = Depends(get_db),
     record: ds.Record = Depends(get_record_by_name),
     body: Any = Body(...),
 ) -> None:
     """
-    Update metadata json
+    Update userdata json
     """
-    record._metadata.update(body)
-    flag_modified(record, "_metadata")
+    record.userdata.update(body)
+    flag_modified(record, "userdata")
     db.commit()
 
 
 @router.get(
-    "/ensembles/{ensemble_id}/records/{name}/metadata", response_model=Mapping[str, Any]
+    "/ensembles/{ensemble_id}/records/{name}/userdata", response_model=Mapping[str, Any]
 )
-async def get_record_metadata(
+async def get_record_userdata(
     *,
     record: ds.Record = Depends(get_record_by_name),
 ) -> Mapping[str, Any]:
     """
-    Get metadata json
+    Get userdata json
     """
-    return record.metadata_dict
+    return record.userdata
 
 
 @router.post("/ensembles/{ensemble_id}/records/{name}/observations")
@@ -363,7 +363,7 @@ async def get_record_observations(
                 errors=obs.errors,
                 values=obs.values,
                 records=[rec.id for rec in obs.records],
-                metadata=obs.metadata_dict,
+                userdata=obs.userdata,
             )
             for obs in record.observations
         ]

@@ -1,4 +1,3 @@
-from .metadatafield import MetadataField
 from .record_info import RecordInfo, RecordType, RecordClass
 from .record import Record, F64Matrix, File, FileBlock
 from .ensemble import Ensemble
