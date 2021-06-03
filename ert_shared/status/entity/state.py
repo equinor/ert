@@ -63,23 +63,23 @@ JOB_STATE_TO_COLOR = {
 }
 
 QUEUE_WAITING_FLAG = (
-    JobStatusType.JOB_QUEUE_NOT_ACTIVE
+    JobStatusType.JOB_QUEUE_NOT_ACTIVE  # type: ignore[operator]
     | JobStatusType.JOB_QUEUE_WAITING
     | JobStatusType.JOB_QUEUE_SUBMITTED
 )
 QUEUE_PENDING_FLAG = JobStatusType.JOB_QUEUE_PENDING
 QUEUE_RUNNING_FLAG = (
-    JobStatusType.JOB_QUEUE_RUNNING
-    | JobStatusType.JOB_QUEUE_EXIT
+    JobStatusType.JOB_QUEUE_RUNNING  # type: ignore[operator]
+    | JobStatusType.JOB_QUEUE_EXIT  # type: ignore[operator]
     | JobStatusType.JOB_QUEUE_RUNNING_DONE_CALLBACK
     | JobStatusType.JOB_QUEUE_RUNNING_EXIT_CALLBACK
 )
 # Failed also includes simulations which have been killed by the MAX_RUNTIME system.
-QUEUE_FAILED_FLAG = JobStatusType.JOB_QUEUE_IS_KILLED | JobStatusType.JOB_QUEUE_DO_KILL
+QUEUE_FAILED_FLAG = JobStatusType.JOB_QUEUE_IS_KILLED | JobStatusType.JOB_QUEUE_DO_KILL  # type: ignore[operator]
 QUEUE_FAILED_FLAG |= (
-    JobStatusType.JOB_QUEUE_FAILED | JobStatusType.JOB_QUEUE_DO_KILL_NODE_FAILURE
-)
-QUEUE_DONE_FLAG = JobStatusType.JOB_QUEUE_DONE | JobStatusType.JOB_QUEUE_SUCCESS
+    JobStatusType.JOB_QUEUE_FAILED | JobStatusType.JOB_QUEUE_DO_KILL_NODE_FAILURE  # type: ignore[operator]
+)  # type: ignore[operator]
+QUEUE_DONE_FLAG = JobStatusType.JOB_QUEUE_DONE | JobStatusType.JOB_QUEUE_SUCCESS  # type: ignore[operator]
 QUEUE_UNKNOWN_FLAG = JobStatusType.JOB_QUEUE_UNKNOWN
 
 QUEUE_FLAG_TO_REAL_STATE = {

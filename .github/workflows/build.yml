@@ -4,9 +4,52 @@ on: [push, pull_request]
 
 env:
   ERT_SHOW_BACKTRACE: 1
+  ECL_SKIP_SIGNAL: 1
 
 jobs:
-  build-and-test:
+  build-test-cmake:
+    name: CMake
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu-latest', 'macos-latest']
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Ubuntu dependencies
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y valgrind
+
+    - name: Build libecl
+      run: |
+        git clone https://github.com/equinor/libecl
+        mkdir libecl/build
+        cmake -S libecl -B libecl/build
+        sudo cmake --build libecl/build --target install
+        sudo rm -rf libecl
+
+    - name: Build libres
+      run: |
+        mkdir cmake-build
+        cmake -S libres -B cmake-build             \
+            -DBUILD_TESTS=ON                  \
+            -DRES_VERSION=1.2.3               \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        cmake --build cmake-build
+
+    - name: Run tests
+      run: |
+        cd cmake-build
+        export PATH=$PWD/bin:$PATH
+        ctest --output-on-failure
+
+  build-wheels:
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -21,73 +64,229 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-
     - name: Install Ubuntu dependencies
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
         sudo apt-get install libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3 x11-xserver-utils herbstluftwm
 
-    - name: Install ERT and dependencies
+    - name: Build Linux Wheel
+      uses: docker://quay.io/pypa/manylinux2010_x86_64
+      with:
+        entrypoint: /github/workspace/ci/github/build_linux_wheel.sh
+        args: ${{ matrix.python-version }}
+      if: matrix.os == 'ubuntu-latest'
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Build macOS Wheel
+      run: pip wheel . --no-deps -w dist
+      if: matrix.os == 'macos-latest'
+
+    - name: Upload wheel as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
+        path: dist/*
+
+  tests-ert:
+    name: Run ert tests
+    needs: [build-wheels]
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Install Ubuntu dependencies
+      if: matrix.os == 'ubuntu-latest'
       run: |
+        sudo apt-get update
+        sudo apt-get install libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3 x11-xserver-utils herbstluftwm
+
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Get wheels
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
+
+    - name: Install wheel and test dependencies
+      run: |
+        find . -name "*.whl" -exec pip install '{}' \;
         pip install -r dev-requirements.txt
-        pip install .[storage]
+
+    - name: Make test directory
+      run: |
+        mkdir tmp_tests
+        mv tests tmp_tests/tests
+        mv test-data tmp_tests/test-data
+        mv setup.cfg tmp_tests/setup.cfg
+        mkdir tmp_tests/.git
 
     - name: Test Ubuntu
       if: matrix.os == 'ubuntu-latest'
       env:
         DISPLAY: ':99.0'
       run: |
+        pushd tmp_tests
+
         /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 640x480x24 -ac +extension GLX
         sleep 3
         herbstluftwm &
         sleep 1
-        python -m pytest -sv
+        python -c "import sys; print(sys.path)"
+        ls -al
+        pytest -sv
+        popd
 
     - name: Test MacOS
       if: matrix.os == 'macos-latest'
       run: |
-        python -m pytest -sv
+        pushd tmp_tests
+
+        pytest -sv
+        popd
+
+    - name: Test CLI
+      run: |
+        ert --help
+
+
+  docs-ert:
+    name: Test ert docs
+    needs: [build-wheels]
+    timeout-minutes: 3
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.6, 3.9]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Install Ubuntu dependencies
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3 x11-xserver-utils herbstluftwm
+
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Get wheels
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
+
+    - name: Install wheel and test dependencies
+      run: |
+        find . -name "*.whl" -exec pip install '{}' \;
+        pip install -r dev-requirements.txt
+
+    - name: Make test directory
+      run: |
+        mkdir tmp_tests
+        mv tests tmp_tests/tests
+        mv test-data tmp_tests/test-data
+        mv setup.cfg tmp_tests/setup.cfg
+        mkdir tmp_tests/.git
 
     - name: Produce narratives
       run: |
-        NARRATIVE_DIR=$(pwd)/narratives python -m pytest -m consumer_driven_contract_verification
+        export NARRATIVE_DIR=$(pwd)/narratives
+        pushd tmp_tests
+        pytest -m consumer_driven_contract_verification
+        popd
 
-    - name: Test docs and CLI
+    - name: Test docs
       run: |
         NARRATIVE_DIR=$(pwd)/narratives sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
-        ert --help
+
+  tests-libres:
+    name: Run libres tests
+    needs: [build-wheels]
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Install Ubuntu dependencies
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3 x11-xserver-utils herbstluftwm
+
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Get wheels
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
+
+    - name: Install wheel and test dependencies
+      run: |
+        ls -al
+        find . -name "*.whl" -exec pip install '{}' \;
+        pip install -r dev-requirements.txt
+
+    - name: Run Python tests
+      run: |
+        # Run tests
+        pytest libres/tests
 
 
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: [build-and-test]
+    needs: [tests-libres, tests-ert, docs-ert]
 
     # If this is a tagged release
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
 
     steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      - name: Get wheels
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
 
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
+      - name: Move to dist/
+        run: |
+          mkdir dist
+          find artifacts -name "*.whl" -exec mv '{}' dist/ \;
 
-    - name: Build wheel
-      run: |
-        pip install --upgrade pip wheel setuptools
-        pip wheel . --no-deps -w dist
-
-    - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.3.1
-      with:
-        user: statoil-travis
-        password: ${{ secrets.pypi_password }}
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.3.1
+        with:
+          user: statoil-travis
+          password: ${{ secrets.pypi_password }}

@@ -1,19 +1,24 @@
-import inspect
 import os
 
 from jinja2 import Template
-import res
 
 from ert_shared.plugins.plugin_manager import hook_implementation
 from ert_shared.plugins.plugin_response import plugin_response
+from pathlib import Path
 
 
 def _resolve_ert_share_path():
 
-    share_path = os.path.realpath(
-        os.path.join(os.path.dirname(inspect.getfile(res)), "../../../../share/ert")
-    )
-    return share_path
+    path = Path(__file__).parent
+    for p in path.parents:
+        npath = p / "share" / "ert"
+        if npath.is_dir():
+            path = npath
+            break
+    else:
+        raise ImportError("Could not find `share/ert`")
+
+    return str(path)
 
 
 def _get_jobs_from_directories(directories):

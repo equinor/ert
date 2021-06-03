@@ -30,6 +30,7 @@ __res_lib_info.py
 *.egg*
 /dist
 /ert_shared/version.py
-
 /venv
 .hypothesis
+/_skbuild
+.libs

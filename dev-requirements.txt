@@ -1,4 +1,5 @@
 black
+ert-storage==0.1.7
 flaky
 pytest>=6.2.0
 pytest-qt
@@ -11,3 +12,6 @@ requests
 pytest-timeout
 jsonpath_ng
 sphinxcontrib.datatemplates
+decorator
+pylint
+click

@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   run-ert3-spe1:
-    timeout-minutes: 15
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:10.8
