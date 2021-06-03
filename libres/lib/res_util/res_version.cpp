@@ -22,17 +22,17 @@ const char* res_version_get_build_time() {
 }
 
 int res_version_get_major_version() {
-  return RES_VERSION_MAJOR;
+  return 99;
 }
 
 
 int res_version_get_minor_version() {
-  return RES_VERSION_MINOR;
+  return 0;
 }
 
 
 const char * res_version_get_micro_version() {
-  return str(RES_VERSION_MICRO);
+  return "0";
 }
 
 

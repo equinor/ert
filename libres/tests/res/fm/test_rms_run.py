@@ -31,7 +31,6 @@ import res.fm.rms
 
 from tests.utils import tmpdir
 import pytest
-from tests.conftest import source_root
 
 
 TEST_ENV_WRAPPER = """\
@@ -67,7 +66,9 @@ def _mocked_run(**kwargs):
         (2, 132312123),
     ],
 )
-def test_run_class_multi_seed(tmpdir, monkeypatch, test_input, expected_result):
+def test_run_class_multi_seed(
+    tmpdir, monkeypatch, test_input, expected_result, source_root
+):
     with open("rms_config.yml", "w") as f:
         f.write("executable:  {}/bin/rms".format(os.getcwd()))
 
@@ -75,7 +76,7 @@ def test_run_class_multi_seed(tmpdir, monkeypatch, test_input, expected_result):
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(os.path.join(source_root(), "tests/res/fm/rms"), "bin")
+    shutil.copy(os.path.join(source_root, "tests/res/fm/rms"), "bin")
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
     action = {"exit_status": 0}
@@ -271,7 +272,7 @@ class RMSRunTest(ResTest):
                     f.write(json.dumps(action))
 
                 rms_exec = os.path.join(
-                    self.SOURCE_ROOT, "share/ert/forward-models/res/script/rms"
+                    self.SHARE_ROOT, "ert/forward-models/res/script/rms"
                 )
                 subprocess.check_call(
                     [
@@ -337,7 +338,7 @@ class RMSRunTest(ResTest):
                     f.write(json.dumps(action))
 
                 rms_exec = os.path.join(
-                    self.SOURCE_ROOT, "share/ert/forward-models/res/script/rms"
+                    self.SHARE_ROOT, "ert/forward-models/res/script/rms"
                 )
                 subprocess.check_call(
                     [
@@ -653,7 +654,7 @@ env:
                 f.write(json.dumps(action))
 
             rms_exec = os.path.join(
-                self.SOURCE_ROOT, "share/ert/forward-models/res/script/rms"
+                self.SHARE_ROOT, "ert/forward-models/res/script/rms"
             )
             subprocess.check_call(
                 [

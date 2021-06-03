@@ -1,30 +1,30 @@
+from pathlib import Path
 import types
 import os.path
 import functools
 from ecl.util.test import ExtendedTestCase
 
 
-def source_root():
-    src = "@CMAKE_CURRENT_SOURCE_DIR@/../.."
-    if os.path.isdir(src):
-        return os.path.realpath(src)
+def libres_source_root() -> Path:
+    src = Path("@CMAKE_CURRENT_SOURCE_DIR@/../..")
+    if src.is_dir():
+        return src.relative_to(Path.cwd())
 
     # If the file was not correctly configured by cmake, look for the source
     # folder, assuming the build folder is inside the source folder.
-    path_list = os.path.dirname(os.path.abspath(__file__)).split("/")
-    while len(path_list) > 0:
-        git_path = os.path.join(os.sep, "/".join(path_list), ".git")
-        if os.path.isdir(git_path):
-            return os.path.join(os.sep, *path_list)
-        path_list.pop()
+    test_path = Path(__file__)
+    while test_path != Path("/"):
+        if (test_path / ".git").is_dir():
+            return test_path / "libres"
+        test_path = test_path.parent
     raise RuntimeError("Cannot find the source folder")
 
 
 class ResTest(ExtendedTestCase):
-    SOURCE_ROOT = source_root()
-    TESTDATA_ROOT = os.path.join(SOURCE_ROOT, "test-data")
-    SHARE_ROOT = os.path.join(SOURCE_ROOT, "share")
-    EQUINOR_DATA = os.path.islink(os.path.join(TESTDATA_ROOT, "Equinor"))
+    SOURCE_ROOT = libres_source_root()
+    TESTDATA_ROOT = SOURCE_ROOT / "test-data"
+    SHARE_ROOT = SOURCE_ROOT.parent / "share"
+    EQUINOR_DATA = (TESTDATA_ROOT / "Equinor").is_symlink()
 
     def assertItemsEqual(self, data1, data2):
         if len(data1) != len(data2):

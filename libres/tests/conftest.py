@@ -1,3 +1,4 @@
+from tests import libres_source_root
 import pytest
 import unittest
 import resource
@@ -5,18 +6,13 @@ import functools
 import os
 
 
+@pytest.fixture
 def source_root():
-    path_list = os.path.dirname(os.path.abspath(__file__)).split("/")
-    while len(path_list) > 0:
-        git_path = os.path.join(os.sep, "/".join(path_list), ".git")
-        if os.path.isdir(git_path):
-            return os.path.join(os.sep, *path_list)
-        path_list.pop()
-    raise RuntimeError("Cannot find the source folder")
+    return libres_source_root()
 
 
 def has_equinor_test_data():
-    return os.path.isdir(os.path.join(source_root(), "test-data", "Equinor"))
+    return os.path.isdir(os.path.join(libres_source_root(), "test-data", "Equinor"))
 
 
 def pytest_runtest_setup(item):

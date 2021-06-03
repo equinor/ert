@@ -201,8 +201,8 @@ class TemplatingTest(ResTest):
 
             params = " --output_file out_file --template_file template --input_files other.json"
             template_render_exec = os.path.join(
-                self.SOURCE_ROOT,
-                "share/ert/forward-models/templating/script/template_render",
+                self.SHARE_ROOT,
+                "ert/forward-models/templating/script/template_render",
             )
 
             subprocess.call(

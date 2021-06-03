@@ -19,8 +19,7 @@ class TestFMValidity(ResTest):
         return os.path.isfile(file_path) and os.access(file_path, os.X_OK)
 
     def test_validate_scripts(self):
-        fm_path = "share/ert/forward-models"
-        fm_path = os.path.join(self.SOURCE_ROOT, fm_path)
+        fm_path = self.SHARE_ROOT / "ert" / "forward-models"
         for fm_dir in os.listdir(fm_path):
             fm_dir = os.path.join(fm_path, fm_dir)
             # get all sub-folder in forward-models
