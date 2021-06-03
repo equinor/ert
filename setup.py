@@ -1,7 +1,29 @@
-from setuptools import setup, find_packages
-
-
 import os
+from setuptools import find_packages, setup as basdd
+from setuptools.command.develop import develop
+from skbuild import setup
+from setuptools_scm import get_version
+
+
+_LIBRES_PREFIX = "src/libres"
+
+
+def get_ecl_include():
+    from ecl import get_include
+
+    return get_include()
+
+
+def libres_files():
+    data_files = []
+    for root, _, files in os.walk(f"{_LIBRES_PREFIX}/share/ert"):
+        data_files.append(
+            (
+                root.replace(f"{_LIBRES_PREFIX}/", ""),
+                [os.path.join(root, name) for name in files],
+            )
+        )
+    return data_files
 
 
 def package_files(directory):
@@ -12,41 +34,84 @@ def package_files(directory):
     return paths
 
 
-extra_files = package_files("ert_gui/resources/")
-logging_configuration = package_files("ert_logging/")
+extra_files = package_files("src/ert_gui/resources/")
+logging_configuration = package_files("src/ert_logging/")
+
+
+with open("README.md") as f:
+    long_description = f.read()
+
+packages = find_packages(
+    where="src",
+    exclude=["*.tests", "*.tests.*", "tests.*", "tests", "tests*", "libres"],
+)
+# ert_packages = setuptools.find_packages(exclude=["tests*"])
+# libres_packages = setuptools.find_packages(
+#     where=f"{_LIBRES_PREFIX}/python",
+#     exclude=["doc", "*.tests", "*.tests.*", "tests.*", "tests"],
+# )
+
+# Given this unusual layout where we cannot fall back on a "root package",
+# package_dir is built manually from libres_packages.
+package_dir = {package: f"src/{package.replace('.', os.sep)}" for package in packages}
+
+
+class CustomDevelopCommand(develop):
+    def run(self):
+        develop.run(self)
+        # if not self.uninstall:
+        #     print("Ø INSTALL", self.dist, self.dist.get_metadata("package_dir"))
+        # if self.uninstall:
+        #     print("Ø UNINSTALL", self.dist)
+
 
 setup(
     name="ert",
     author="Equinor ASA",
     author_email="fg_sib-scout@equinor.com",
-    use_scm_version={"root": ".", "write_to": "ert_shared/version.py"},
-    entry_points={
-        "console_scripts": [
-            "ert3=ert3.console:main",
-            "ert=ert_shared.main:main",
-        ]
-    },
-    packages=find_packages(exclude=["tests*"]),
-    package_data={"ert_gui": extra_files, "ert_logging": logging_configuration},
-    include_package_data=True,
-    license="Open Source",
-    long_description=open("README.md").read(),
+    description="Ensemble based Reservoir Tool (ERT)",
+    use_scm_version={"root": ".", "write_to": "src/ert_shared/version.py"},
+    # TODO: merge libres readme parts into ERT readme
+    long_description=long_description,
     long_description_content_type="text/markdown",
+    url="https://github.com/equinor/ert",
+    # packages=find_packages(where="src", exclude=[
+    #     "*.tests", "*.tests.*", "tests.*", "tests",
+    #     "tests*", "libres"
+    # ]),
+    packages=packages,
+    package_dir={"": "src"},
+    # package_dir=package_dir,
+    package_data={
+        "ert_gui": extra_files,
+        "ert_logging": logging_configuration,
+        "res": [
+            "fm/rms/rms_config.yml",
+            "fm/ecl/ecl300_config.yml",
+            "fm/ecl/ecl100_config.yml",
+        ],
+    },
+    include_package_data=True,
+    data_files=libres_files(),
+    license="GPL-3.0",
+    platforms="any",
     install_requires=[
-        "async-exit-stack; python_version < '3.7'",
-        "async-generator; python_version < '3.7'",
         "aiofiles",
         "aiohttp",
         "alembic",
         "ansicolors==1.1.8",
+        "async_generator",
+        "async-exit-stack; python_version < '3.7'",
         "cloudevents",
         "cloudpickle",
         "console-progressbar==1.1.2",
         "cryptography",
+        "cwrap",
+        "dask_jobqueue",
         "decorator",
         "deprecation",
         "dnspython >= 2",
-        "equinor-libres == 11.0.0b0",
+        "ecl",
         "fastapi",
         "graphlib_backport; python_version < '3.9'",
         "jinja2",
@@ -54,31 +119,45 @@ setup(
         "numpy",
         "pandas",
         "pluggy",
+        "prefect",
+        "psutil",
         "pydantic >= 1.8.1",
-        "pyrsistent",
         "PyQt5",
+        "pyrsistent",
+        "python-dateutil",
         "pyyaml",
         "qtpy",
+        "requests",
         "scipy",
         "semeio",
         "sqlalchemy",
         "typing-extensions; python_version < '3.8'",
-        "websockets >= 9.0.1",
-        "python-dateutil",
-        "async_generator",
         "uvicorn",
-        "prefect",
-        "dask_jobqueue",
+        "websockets >= 9.0.1",
     ],
     extras_require={
         "storage": [
             "ert-storage==0.1.7",
         ],
     },
-    zip_safe=False,
-    tests_require=["pytest", "mock"],
-    test_suite="tests",
     setup_requires=["pytest-runner", "setuptools_scm"],
+    entry_points={
+        "console_scripts": [
+            "ert3=ert3.console:main",
+            "ert=ert_shared.main:main",
+            "job_dispatch.py = job_runner.job_dispatch:main",
+        ]
+    },
+    cmake_args=[
+        "-DRES_VERSION=" + get_version(),
+        "-DECL_INCLUDE_DIRS=" + get_ecl_include(),
+        # we can safely pass OSX_DEPLOYMENT_TARGET as it's ignored on
+        # everything not OS X. We depend on C++11, which makes our minimum
+        # supported OS X release 10.9
+        "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9",
+        f"-DCMAKE_INSTALL_LIBDIR=src/res/.libs",
+    ],
+    cmake_source_dir=f"{_LIBRES_PREFIX}/",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Other Environment",
@@ -93,4 +172,8 @@ setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Physics",
     ],
+    test_suite="tests",
+    # cmdclass={
+    #     'develop': CustomDevelopCommand,
+    # },
 )

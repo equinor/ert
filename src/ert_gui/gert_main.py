@@ -86,11 +86,7 @@ def _start_window(ert, args):
     window.activateWindow()
     window.raise_()
 
-    ResLog.log(
-        3,
-        "Versions: ecl:%s    res:%s    ert:%s"
-        % (ecl.__version__, res.__version__, ert_gui.__version__),
-    )
+    ResLog.log(3, f"Versions: ecl:{ecl.__version__} ert:{ert_gui.__version__}")
 
     if not ert._real_enkf_main().have_observations():
         QMessageBox.warning(

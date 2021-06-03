@@ -83,9 +83,9 @@ if (EXISTS ${EQUINOR_TESTDATA_ROOT})
     message(STATUS "Linking testdata: ${LINK} -> ${EQUINOR_TESTDATA_ROOT}")
 endif()
 
-file(COPY python/job_runner/job_dispatch.py
-  DESTINATION ${PROJECT_BINARY_DIR}/bin
-  FILE_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ)
+# file(COPY python/job_runner/job_dispatch.py
+#  DESTINATION ${PROJECT_BINARY_DIR}/bin
+#  FILE_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ)
 set( ERT_ROOT "${PROJECT_BINARY_DIR}" )
 
 #-----------------------------------------------------------------
@@ -139,7 +139,7 @@ if(NOT SKBUILD)
     install(DIRECTORY "share/ert/${share_dir}" DESTINATION ${SHARE_DIR})
   endforeach()
   install_example("share/ert/site-config" ${SHARE_DIR})
-  install(PROGRAMS bin/job_dispatch.py DESTINATION bin )
+#  install(PROGRAMS bin/job_dispatch.py DESTINATION bin )
 
   foreach (script ecl100 ecl300 flow rms)
     install(PROGRAMS "share/ert/forward-models/res/script/${script}" DESTINATION "${SHARE_DIR}/forward-models/res/script")
