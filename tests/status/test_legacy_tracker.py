@@ -61,7 +61,7 @@ import pytest
             "poly_example",
             [
                 ENSEMBLE_SMOOTHER_MODE,
-                "--disable-ensemble-evaluator",
+                "--enable-ensemble-evaluator",
                 "--target-case",
                 "poly_runpath_file",
                 "--realizations",
@@ -69,19 +69,6 @@ import pytest
                 "poly_example/poly.ert",
             ],
             7,
-            2,
-        ),
-        (
-            "failing_poly_example",
-            [
-                ENSEMBLE_SMOOTHER_MODE,
-                "--target-case",
-                "poly_runpath_file",
-                "--realizations",
-                "0,1",
-                "failing_poly_example/poly.ert",
-            ],
-            1,
             2,
         ),
     ],
