@@ -111,7 +111,7 @@ def test_empty_ensemble(client):
         )
 
     # No priors exist
-    assert client.get(f"/experiments/{id}/priors").json() == {}
+    assert client.get(f"/experiments/{id}").json()["priors"] == {}
 
 
 def test_empty_ensemble_with_name(client):
@@ -147,7 +147,7 @@ def test_priors(client):
 
     # Compare results
     id = client.fetch_experiment()
-    actual_priors = client.get(f"/experiments/{id}/priors").json()
+    actual_priors = client.get(f"/experiments/{id}").json()["priors"]
     assert len(priors) == len(actual_priors)
     for name, _, resp in priors:
         assert actual_priors[f"COEFFS:{name}"] == resp
