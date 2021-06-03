@@ -136,7 +136,6 @@ class _LegacyEnsemble(_Ensemble):
                 self._ee_id, dispatch_url, cert, token
             )
 
-            self._allow_cancel.set()
             try:
 
                 async def _run_queue():
@@ -151,6 +150,7 @@ class _LegacyEnsemble(_Ensemble):
                     await timeout_queue.put(None)
                     await send_timeout_future
                 self._aggregate_future = asyncio.get_event_loop().create_task(_run_queue())
+                self._allow_cancel.set()
                 asyncio.get_event_loop().run_until_complete(self._aggregate_future)
             except asyncio.CancelledError:
                 logger.debug("cancelled aggregate future")
