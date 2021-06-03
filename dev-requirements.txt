@@ -10,3 +10,6 @@ pytest-asyncio
 requests
 pytest-timeout
 sphinxcontrib.datatemplates
+decorator
+pylint
+click

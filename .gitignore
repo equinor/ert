@@ -30,5 +30,6 @@ __res_lib_info.py
 *.egg*
 /dist
 /ert_shared/version.py
-
 /venv
+/_skbuild
+.libs
