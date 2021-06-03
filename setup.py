@@ -5,7 +5,7 @@ from skbuild import setup
 from setuptools_scm import get_version
 
 
-_LIBRES_PREFIX = "src/libres"
+_LIBRES_PREFIX = "libres"
 
 
 def get_ecl_include():
@@ -14,17 +14,11 @@ def get_ecl_include():
     return get_include()
 
 
-def libres_files():
+def get_data_files():
     data_files = []
-    for root, _, files in os.walk(f"{_LIBRES_PREFIX}/share/ert"):
-        data_files.append(
-            (
-                root.replace(f"{_LIBRES_PREFIX}/", ""),
-                [os.path.join(root, name) for name in files],
-            )
-        )
+    for root, _, files in os.walk("share/ert"):
+        data_files.append((root, [os.path.join(root, name) for name in files]))
     return data_files
-
 
 def package_files(directory):
     paths = []
@@ -34,43 +28,27 @@ def package_files(directory):
     return paths
 
 
-extra_files = package_files("src/ert_gui/resources/")
-logging_configuration = package_files("src/ert_logging/")
+extra_files = package_files("ert_gui/resources/")
+logging_configuration = package_files("ert_logging/")
 
 
 with open("README.md") as f:
     long_description = f.read()
 
 packages = find_packages(
-    where="src",
     exclude=["*.tests", "*.tests.*", "tests.*", "tests", "tests*", "libres"],
 )
-# ert_packages = setuptools.find_packages(exclude=["tests*"])
-# libres_packages = setuptools.find_packages(
-#     where=f"{_LIBRES_PREFIX}/python",
-#     exclude=["doc", "*.tests", "*.tests.*", "tests.*", "tests"],
-# )
 
 # Given this unusual layout where we cannot fall back on a "root package",
 # package_dir is built manually from libres_packages.
-package_dir = {package: f"src/{package.replace('.', os.sep)}" for package in packages}
-
-
-class CustomDevelopCommand(develop):
-    def run(self):
-        develop.run(self)
-        # if not self.uninstall:
-        #     print("Ø INSTALL", self.dist, self.dist.get_metadata("package_dir"))
-        # if self.uninstall:
-        #     print("Ø UNINSTALL", self.dist)
-
+res_files = get_data_files()
 
 setup(
     name="ert",
     author="Equinor ASA",
     author_email="fg_sib-scout@equinor.com",
     description="Ensemble based Reservoir Tool (ERT)",
-    use_scm_version={"root": ".", "write_to": "src/ert_shared/version.py"},
+    use_scm_version={"root": ".", "write_to": "ert_shared/version.py"},
     # TODO: merge libres readme parts into ERT readme
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -80,7 +58,6 @@ setup(
     #     "tests*", "libres"
     # ]),
     packages=packages,
-    package_dir={"": "src"},
     # package_dir=package_dir,
     package_data={
         "ert_gui": extra_files,
@@ -92,7 +69,7 @@ setup(
         ],
     },
     include_package_data=True,
-    data_files=libres_files(),
+    data_files=res_files,
     license="GPL-3.0",
     platforms="any",
     install_requires=[
@@ -155,7 +132,7 @@ setup(
         # everything not OS X. We depend on C++11, which makes our minimum
         # supported OS X release 10.9
         "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9",
-        f"-DCMAKE_INSTALL_LIBDIR=src/res/.libs",
+        f"-DCMAKE_INSTALL_LIBDIR=res/.libs",
     ],
     cmake_source_dir=f"{_LIBRES_PREFIX}/",
     classifiers=[
@@ -173,7 +150,4 @@ setup(
         "Topic :: Scientific/Engineering :: Physics",
     ],
     test_suite="tests",
-    # cmdclass={
-    #     'develop': CustomDevelopCommand,
-    # },
 )
