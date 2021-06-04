@@ -55,6 +55,7 @@ jobs:
     - name: Install test dependencies
       run: |
         pip install -r dev-requirements.txt
+        rm -rf res
 
     - name: Test Ubuntu
       if: matrix.os == 'ubuntu-latest'
