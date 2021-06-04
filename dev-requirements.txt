@@ -1,7 +1,7 @@
 black
 flaky
 pytest>=6.2.0
-pytest-qt
+pytest-qt<4
 schemathesis==1.3.4
 sphinx
 sphinx-argparse
