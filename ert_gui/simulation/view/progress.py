@@ -94,5 +94,4 @@ class ProgressDelegate(QStyledItemDelegate):
         painter.restore()
 
     def sizeHint(self, option, index) -> QSize:
-        # x size is ignored
-        return QSize(30, 30)
+        return index.data(role=Qt.SizeHintRole)
