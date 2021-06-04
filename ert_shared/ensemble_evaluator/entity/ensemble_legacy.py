@@ -149,7 +149,10 @@ class _LegacyEnsemble(_Ensemble):
                     )
                     await timeout_queue.put(None)
                     await send_timeout_future
-                self._aggregate_future = asyncio.get_event_loop().create_task(_run_queue())
+
+                self._aggregate_future = asyncio.get_event_loop().create_task(
+                    _run_queue()
+                )
                 self._allow_cancel.set()
                 asyncio.get_event_loop().run_until_complete(self._aggregate_future)
             except asyncio.CancelledError:
