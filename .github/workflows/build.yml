@@ -21,27 +21,50 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-
     - name: Install Ubuntu dependencies
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
         sudo apt-get install libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3 x11-xserver-utils herbstluftwm
 
-    - name: Install ERT and dependencies
+    - name: Build Linux Wheel
+      uses: docker://quay.io/pypa/manylinux2010_x86_64
+      with:
+        entrypoint: /github/workspace/ci/github/build_linux_wheel.sh
+        args: ${{ matrix.python }}
+      if: matrix.os == 'ubuntu-latest'
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Build macOS Wheel
+      run: pip wheel . --no-deps -w dist
+      if: matrix.os == 'macos-latest'
+
+    - name: Upload wheel as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.os }} Python ${{ matrix.python }} wheel
+        path: dist/*
+
+    - name: Install ert
+      run: pip install dist/*[storage]
+
+    - name: Install test dependencies
       run: |
         pip install -r dev-requirements.txt
-        pip install .[storage]
 
     - name: Test Ubuntu
       if: matrix.os == 'ubuntu-latest'
       env:
         DISPLAY: ':99.0'
       run: |
+        # Env vars§
+        export ECL_SKIP_SIGNAL=1
+        export ERT_SHOW_BACKTRACE=1
+
         /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 640x480x24 -ac +extension GLX
         sleep 3
         herbstluftwm &
@@ -51,6 +74,10 @@ jobs:
     - name: Test MacOS
       if: matrix.os == 'macos-latest'
       run: |
+        # Env vars
+        export ECL_SKIP_SIGNAL=1
+        export ERT_SHOW_BACKTRACE=1
+
         python -m pytest -sv
 
     - name: Produce narratives
