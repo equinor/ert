@@ -50,7 +50,7 @@ jobs:
         path: dist/*
 
     - name: Install ert
-      run: pip install dist/*[storage]
+      run: find dist/ -type f -exec pip install {}[storage] \;
 
     - name: Install test dependencies
       run: |
