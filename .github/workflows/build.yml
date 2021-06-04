@@ -31,7 +31,7 @@ jobs:
       uses: docker://quay.io/pypa/manylinux2010_x86_64
       with:
         entrypoint: /github/workspace/ci/github/build_linux_wheel.sh
-        args: ${{ matrix.python }}
+        args: ${{ matrix.python-version }}
       if: matrix.os == 'ubuntu-latest'
 
     - name: Set up Python ${{ matrix.python-version }}
@@ -46,7 +46,7 @@ jobs:
     - name: Upload wheel as artifact
       uses: actions/upload-artifact@v2
       with:
-        name: ${{ matrix.os }} Python ${{ matrix.python }} wheel
+        name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
         path: dist/*
 
     - name: Install ert
