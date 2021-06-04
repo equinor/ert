@@ -100,22 +100,18 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
 
     steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      - name: Get wheels
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
 
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
+      - name: Move to dist/
+        run: |
+          mkdir dist
+          find artifacts -name "*.whl" -exec mv '{}' dist/ \;
 
-    - name: Build wheel
-      run: |
-        pip install --upgrade pip wheel setuptools
-        pip wheel . --no-deps -w dist
-
-    - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.3.1
-      with:
-        user: statoil-travis
-        password: ${{ secrets.pypi_password }}
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.3.1
+        with:
+          user: statoil-travis
+          password: ${{ secrets.pypi_password }}
