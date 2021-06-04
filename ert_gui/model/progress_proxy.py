@@ -1,12 +1,9 @@
 import typing
-from qtpy.QtCore import (
-    QModelIndex,
-    Qt,
-    QAbstractItemModel,
-    QVariant,
-)
 from collections import defaultdict
+
 from ert_gui.model.snapshot import ProgressRole
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
+from qtpy.QtGui import QColor, QFont
 
 
 class ProgressProxyModel(QAbstractItemModel):
@@ -58,6 +55,22 @@ class ProgressProxyModel(QAbstractItemModel):
 
         if role == ProgressRole:
             return self._progress
+
+        if role in (Qt.StatusTipRole, Qt.WhatsThisRole, Qt.ToolTipRole):
+            return ""
+
+        if role == Qt.SizeHintRole:
+            return QSize(30, 30)
+
+        if role == Qt.FontRole:
+            return QFont()
+
+        if role in (Qt.BackgroundRole, Qt.ForegroundRole, Qt.DecorationRole):
+            return QColor()
+
+        if role == Qt.DisplayRole:
+            return ""
+
         return QVariant()
 
     def _recalculate_progress(self, iter_):

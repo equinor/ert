@@ -9,8 +9,8 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
     SnapshotDict,
 )
 from ert_shared.status.utils import byte_with_unit
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
-from qtpy.QtGui import QColor
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant, QSize
+from qtpy.QtGui import QColor, QFont
 
 logger = logging.getLogger(__name__)
 
@@ -203,6 +203,18 @@ class SnapshotModel(QAbstractItemModel):
                 return f"{node.type}:{node.id}"
             if index.column() == 1:
                 return f"{node.data['status']}"
+
+        if role in (Qt.StatusTipRole, Qt.WhatsThisRole, Qt.ToolTipRole):
+            return ""
+
+        if role == Qt.SizeHintRole:
+            return QSize()
+
+        if role == Qt.FontRole:
+            return QFont()
+
+        if role in (Qt.BackgroundRole, Qt.ForegroundRole, Qt.DecorationRole):
+            return QColor()
 
         return QVariant()
 
