@@ -31,6 +31,7 @@ def package_files(directory):
 
 extra_files = package_files("ert_gui/resources/")
 logging_configuration = package_files("ert_logging/")
+ert3_example_files = package_files("ert3_examples/")
 
 
 with open("README.md") as f:
@@ -63,6 +64,7 @@ setup(
     package_data={
         "ert_gui": extra_files,
         "ert_logging": logging_configuration,
+        "ert3_examples": ert3_example_files,
         "res": [
             "fm/rms/rms_config.yml",
             "fm/ecl/ecl300_config.yml",
