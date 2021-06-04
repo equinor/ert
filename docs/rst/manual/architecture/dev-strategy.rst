@@ -164,6 +164,14 @@ The product owner has a list of improvements to make the visualiser scale
 better visually for large cases. We should gather these into a milestone of
 issues.
 
+Configurable compute environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The compute environment used, in particular for unix steps, should be
+configurable in a natural manner. It should be possible to configure an
+extension of a komodo environment on-premise. As in, additional Python packages
+and single-file scripts should be possible to configure. This should also be
+possible to do in a setup without Komodo.
+
 Plugged-in sensitivity
 ~~~~~~~~~~~~~~~~~~~~~~
 As a first example of an open core interaction we should make the current
@@ -178,6 +186,16 @@ Implement optimization concepts in ERT
 Implement an as simple as possible optimisation algorithm, together with an
 introduction of optimization to the configuration in ert3, necessary business
 logic in the engine and the capability to store control variables in storage.
+
+Pilot ready storage backend in Azure
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Before ERT3 can run in the cloud we need to implement and set up deploy of a
+pilot ready storage solution in Azure.
+
+Pilot ready new evaluator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Before ERT3 can run in the cloud we need to prepare the new ensemble evaluator
+for pilot in Azure.
 
 Temporary storage for evaluator and analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -196,6 +214,13 @@ Support history matching in ERT3
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Using the above implemented analysis proxy we are to implement history matching
 capabilities in ert3.
+
+Introduce ensemble and analysis workflows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Implement support for ensemble and analysis workflows that can be executed both
+in ERT2 and ERT3. In ERT2 this will be introduced as new hooks, while in ERT3
+we are to implement a pipeline system (probably based on the same workflow
+manager as used for the forward model) and use it.
 
 Experiment server
 ~~~~~~~~~~~~~~~~~
