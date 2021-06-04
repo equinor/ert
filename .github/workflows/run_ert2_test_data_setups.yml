@@ -7,7 +7,7 @@ env:
 
 jobs:
   run-ert2-test-data:
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
