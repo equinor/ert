@@ -5,13 +5,18 @@ import pandas
 import sys
 
 try:
-  from PyQt4.QtGui import QCheckBox
+    from PyQt4.QtGui import QCheckBox
 except ImportError:
-  from PyQt5.QtWidgets import QCheckBox
+    from PyQt5.QtWidgets import QCheckBox
 
 
 from res.enkf import ErtPlugin, CancelPluginException
-from res.enkf.export import SummaryCollector, GenKwCollector, MisfitCollector, DesignMatrixReader
+from res.enkf.export import (
+    SummaryCollector,
+    GenKwCollector,
+    MisfitCollector,
+    DesignMatrixReader,
+)
 from ert_gui.ertwidgets.customdialog import CustomDialog
 from ert_gui.ertwidgets.listeditbox import ListEditBox
 from ert_gui.ertwidgets.models.path_model import PathModel
@@ -45,18 +50,20 @@ class CSVExportJob(ErtPlugin):
         DATA_KW DESIGN_MATRIX_PATH <some path>
     """
 
-    INFER_HELP = ("<html>"
-                 "If this is checked the iteration number will be inferred from the name i.e.:"
-                 "<ul>"
-                 "<li>case_name -> iteration: 0</li>"
-                 "<li>case_name_0 -> iteration: 0</li>"
-                 "<li>case_name_2 -> iteration: 2</li>"
-                 "<li>case_0, case_2, case_5 -> iterations: 0, 2, 5</li>"
-                 "</ul>"
-                 "Leave this unchecked to set iteration number to the order of the listed cases:"
-                 "<ul><li>case_0, case_2, case_5 -> iterations: 0, 1, 2</li></ul>"
-                 "<br/>"
-                 "</html>")
+    INFER_HELP = (
+        "<html>"
+        "If this is checked the iteration number will be inferred from the name i.e.:"
+        "<ul>"
+        "<li>case_name -> iteration: 0</li>"
+        "<li>case_name_0 -> iteration: 0</li>"
+        "<li>case_name_2 -> iteration: 2</li>"
+        "<li>case_0, case_2, case_5 -> iterations: 0, 2, 5</li>"
+        "</ul>"
+        "Leave this unchecked to set iteration number to the order of the listed cases:"
+        "<ul><li>case_0, case_2, case_5 -> iterations: 0, 1, 2</li></ul>"
+        "<br/>"
+        "</html>"
+    )
 
     def getName(self):
         return "CSV Export"
@@ -72,10 +79,16 @@ class CSVExportJob(ErtPlugin):
             return int(match.group(1))
         return 0
 
-
-    def run(self, output_file, case_list=None, design_matrix_path=None, infer_iteration=True, drop_const_cols=False):
+    def run(
+        self,
+        output_file,
+        case_list=None,
+        design_matrix_path=None,
+        infer_iteration=True,
+        drop_const_cols=False,
+    ):
         cases = []
-        
+
         if case_list is not None:
             if case_list.strip() == "*":
                 cases = self.getAllCaseList()
@@ -111,17 +124,19 @@ class CSVExportJob(ErtPlugin):
             case_data = GenKwCollector.loadAllGenKwData(self.ert(), case)
 
             if design_matrix_path is not None:
-                design_matrix_data = DesignMatrixReader.loadDesignMatrix(design_matrix_path)
+                design_matrix_data = DesignMatrixReader.loadDesignMatrix(
+                    design_matrix_path
+                )
                 if not design_matrix_data.empty:
-                    case_data = case_data.join(design_matrix_data, how='outer')
+                    case_data = case_data.join(design_matrix_data, how="outer")
 
             misfit_data = MisfitCollector.loadAllMisfitData(self.ert(), case)
             if not misfit_data.empty:
-                case_data = case_data.join(misfit_data, how='outer')
+                case_data = case_data.join(misfit_data, how="outer")
 
             summary_data = SummaryCollector.loadAllSummaryData(self.ert(), case)
             if not summary_data.empty:
-                case_data = case_data.join(summary_data, how='outer')
+                case_data = case_data.join(summary_data, how="outer")
             else:
                 case_data["Date"] = None
                 case_data.set_index(["Date"], append=True, inplace=True)
@@ -135,23 +150,30 @@ class CSVExportJob(ErtPlugin):
         data = data.reorder_levels(["Realization", "Iteration", "Date", "Case"])
         if drop_const_cols:
             data = data.loc[:, (data != data.iloc[0]).any()]
-        
+
         data.to_csv(output_file)
 
-        export_info = "Exported %d rows and %d columns to %s." % (len(data.index), len(data.columns), output_file)
+        export_info = "Exported %d rows and %d columns to %s." % (
+            len(data.index),
+            len(data.columns),
+            output_file,
+        )
         return export_info
-
 
     def getArguments(self, parent=None):
         description = "The CSV export requires some information before it starts:"
         dialog = CustomDialog("CSV Export", description, parent)
 
-        default_csv_output_path = self.getDataKWValue("CSV_OUTPUT_PATH", default="output.csv")
+        default_csv_output_path = self.getDataKWValue(
+            "CSV_OUTPUT_PATH", default="output.csv"
+        )
         output_path_model = PathModel(default_csv_output_path)
         output_path_chooser = PathChooser(output_path_model)
 
         design_matrix_default = self.getDataKWValue("DESIGN_MATRIX_PATH", default="")
-        design_matrix_path_model = PathModel(design_matrix_default, is_required=False, must_exist=True)
+        design_matrix_path_model = PathModel(
+            design_matrix_default, is_required=False, must_exist=True
+        )
         design_matrix_path_chooser = PathChooser(design_matrix_path_model)
 
         list_edit = ListEditBox(self.getAllCaseList())
@@ -159,11 +181,12 @@ class CSVExportJob(ErtPlugin):
         infer_iteration_check = QCheckBox()
         infer_iteration_check.setChecked(True)
         infer_iteration_check.setToolTip(CSVExportJob.INFER_HELP)
-        
+
         drop_const_columns_check = QCheckBox()
         drop_const_columns_check.setChecked(False)
-        drop_const_columns_check.setToolTip("If checked, exclude columns whose value is the same for every entry")
-
+        drop_const_columns_check.setToolTip(
+            "If checked, exclude columns whose value is the same for every entry"
+        )
 
         dialog.addLabeledOption("Output file path", output_path_chooser)
         dialog.addLabeledOption("Design Matrix path", design_matrix_path_chooser)
@@ -182,10 +205,15 @@ class CSVExportJob(ErtPlugin):
 
             case_list = ",".join(list_edit.getItems())
 
-            return [output_path_model.getPath(), case_list, design_matrix_path, infer_iteration_check.isChecked(), drop_const_columns_check.isChecked()]
+            return [
+                output_path_model.getPath(),
+                case_list,
+                design_matrix_path,
+                infer_iteration_check.isChecked(),
+                drop_const_columns_check.isChecked(),
+            ]
 
         raise CancelPluginException("User cancelled!")
-
 
     def getDataKWValue(self, name, default):
         data_kw = self.ert().getDataKW()
@@ -198,4 +226,3 @@ class CSVExportJob(ErtPlugin):
         all_case_list = fs_manager.getCaseList()
         all_case_list = [case for case in all_case_list if fs_manager.caseHasData(case)]
         return all_case_list
-    

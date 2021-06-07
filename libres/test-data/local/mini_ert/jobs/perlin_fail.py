@@ -17,5 +17,3 @@ if iens in numbers:
 else:
     with open("perlin_fail.status", "w") as f:
         f.write("Did nothing!")
-
-

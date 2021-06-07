@@ -6,6 +6,7 @@ import time
 
 keys = ["W1", "W2", "W3"]
 
+
 def square_file(input_file, output_file):
     with open(input_file) as fin:
         data0 = json.load(fin)
@@ -18,7 +19,6 @@ def square_file(input_file, output_file):
             out.append(str(data1 ** 2))
     with open(output_file, "w") as fout:
         fout.write("\n".join(out))
-
 
 
 if __name__ == "__main__":

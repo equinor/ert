@@ -4,4 +4,4 @@ import sys
 
 if __name__ == "__main__":
     iens = int(sys.argv[1])
-    sys.exit(iens%2)
+    sys.exit(iens % 2)

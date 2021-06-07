@@ -2,7 +2,6 @@ from res.enkf import ErtScript
 
 
 class InitCaseFromExistingJob(ErtScript):
-
     def run(self, source_case, target_case=None):
         ert = self.ert()
         source_fs = ert.getEnkfFsManager().getFileSystem(source_case)
@@ -13,4 +12,4 @@ class InitCaseFromExistingJob(ErtScript):
         else:
             target_fs = ert.getEnkfFsManager().getFileSystem(target_case)
 
-        ert.getEnkfFsManager().initializeCaseFromExisting(source_fs, 0 , target_fs)
+        ert.getEnkfFsManager().initializeCaseFromExisting(source_fs, 0, target_fs)

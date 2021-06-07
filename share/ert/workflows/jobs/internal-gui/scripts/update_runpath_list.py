@@ -5,6 +5,7 @@ This job is useful if you are running a workflow that requires the hook_manager 
 to be populated but your are not running any simulations.
 """
 
+
 class UpdateRunpathListJob(ErtScript):
     def run(self):
         ert = self.ert()

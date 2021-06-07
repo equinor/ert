@@ -20,6 +20,7 @@ def get_data_files():
         data_files.append((root, [os.path.join(root, name) for name in files]))
     return data_files
 
+
 def package_files(directory):
     paths = []
     for (path, directories, filenames) in os.walk(directory):

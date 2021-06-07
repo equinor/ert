@@ -7,8 +7,8 @@ from ecl.util.util import BoolVector
 This job exports misfit data into a chosen file or to the default gen_kw export file (parameters.txt)
 """
 
-class ExportMisfitDataJob(ErtScript):
 
+class ExportMisfitDataJob(ErtScript):
     def run(self, target_file=None):
         ert = self.ert()
         fs = ert.getEnkfFsManager().getCurrentFileSystem()
@@ -32,7 +32,7 @@ class ExportMisfitDataJob(ErtScript):
 
                 misfit_sum = 0.0
                 for obs_vector in ert.getObservations():
-                    misfit = obs_vector.getTotalChi2(fs, runpath_node.realization )
+                    misfit = obs_vector.getTotalChi2(fs, runpath_node.realization)
 
                     key = "MISFIT:%s" % obs_vector.getObservationKey()
                     parameters[key] = misfit
@@ -42,8 +42,6 @@ class ExportMisfitDataJob(ErtScript):
                 parameters["MISFIT:TOTAL"] = misfit_sum
 
                 self.dumpParametersToTargetFile(parameters, target_path)
-
-
 
     def parseTargetFile(self, target_path):
         parameters = OrderedDict()
@@ -58,16 +56,17 @@ class ExportMisfitDataJob(ErtScript):
                     if len(tokens) == 2:
                         parameters[tokens[0]] = tokens[1]
                     else:
-                        raise UserWarning("The file '%s' contains errors. Expected format for each line: KEY VALUE" % target_path)
+                        raise UserWarning(
+                            "The file '%s' contains errors. Expected format for each line: KEY VALUE"
+                            % target_path
+                        )
 
         return parameters
-
 
     def dumpParametersToTargetFile(self, parameters, target_path):
         with open(target_path, "w") as output:
             for key in parameters:
                 output.write("%s %s\n" % (key, parameters[key]))
-
 
     def createActiveList(self, fs):
         state_map = fs.getStateMap()

@@ -2,6 +2,7 @@
 import os.path
 import argparse
 import re
+
 TARGET_FILE = "realization.number"
 REGEX = "realisation-(\d+)"
 
@@ -12,9 +13,7 @@ def add_file_to_realization_runpaths(runpath_file):
 
     for line in runpath_file_lines:
         realization_path = line.split()[1]
-        with open(
-            os.path.join(realization_path, TARGET_FILE), "w"
-        ) as fh:
+        with open(os.path.join(realization_path, TARGET_FILE), "w") as fh:
             realization_nr = re.findall(r"realisation-(\d+)", realization_path)
             fh.write("{}\n".format(realization_nr[0]))
 
