@@ -41,7 +41,8 @@ ERT is now Python 3 only. The last Python 2 compatible release is [2.14](https:/
 
 ## Developing
 
-ERT is pure Python software. To start developing, install it in editable mode:
+*ERT* is Python and C software. To start developing, install it in editable
+mode:
 
 ```
 $ git clone https://github.com/equinor/ert
@@ -54,6 +55,52 @@ Additional development packages must be installed to run the test suite:
 $ pip install -r dev-requirements.txt
 $ pytest tests/
 ```
+
+ERT is meant to be installed using `setup.py`, directly or using `pip
+install ./`. The `CMakeLists.txt` in libres exists, but is used by `setup.py`
+to generate the ERT C library (the C library formerly known as *libres*) and
+by Github Actions to run C tests.
+
+ERT requires a recent version of `pip` - hence you are advised to upgrade
+your `pip` installation with
+
+```sh
+$ pip install --upgrade pip
+```
+If your `pip` version is too old the installation of ERT will fail, and the error messages will be incomprehensible.
+
+### Testing C code
+
+Install [*ecl*](https://github.com/Equinor/ecl) using CMake as a C library. Then:
+
+``` sh
+$ mkdir build
+$ cd build
+$ cmake ../libres -DBUILD_TESTS=ON
+$ cmake --build .
+$ ctest --output-on-failure
+```
+
+### Building
+
+Use the following commands to start developing from a clean virtualenv
+```
+$ pip install -r requirements.txt
+$ python setup.py develop
+```
+
+Alternatively, `pip install -e .` will also setup ERT for development, but
+it will be more difficult to recompile the C library.
+
+[scikit-build](https://scikit-build.readthedocs.io/en/latest/index.html) is used
+for compiling the C library. It creates a directory named `_skbuild` which is
+reused upon future invocations of either `python setup.py develop`, or `python
+setup.py build_ext`. The latter only rebuilds the C library. In some cases this
+directory must be removed in order for compilation to succeed.
+
+The C library files get installed into `res/.libs`, which is where the
+`res` module will look for them.
+
 
 ## Example usage
 
@@ -140,3 +187,37 @@ start `ert` by giving the full path to the installed binary:
 Then the `ert` gui should come up and you can press the `Run simulations`
 button. In addition to the gui there is a simple text interface which
 can be invoked with the `--text` option.
+
+
+## Configuration
+
+### The `site_config` file
+As part of the installation process ERT will install a file called
+`site-config` in `share/ert/site-config`; when ert starts this file will be
+loaded before the users personal config file. For more extensive use of `ert` it
+might be beneficial to customize the `site-config` file to your personal site.
+
+To customize, you need to set the environment variable `ERT_SITE_CONFIG` to
+point to an alternative file that will be used.
+
+### 6.2 Forward models
+
+ERT contains basic functionality for forward models to run the reservoir
+simulators Eclipse/flow and the geomodelling program RMS. Exactly how these
+programs depend on the setup on your site and you must make some modifications
+to two files installed with ERT:
+
+#### 6.2.1. Eclipse/flow configuration
+
+In the Python distribution installed by ERT there is a file
+`res/fm/ecl/ecl_config.yml` which is used to configure the eclipse/flow versions
+are available at the location. You can provide an alternative configuration file
+by setting the environment variable `ECL_SITE_CONFIG`.
+
+#### 6.2.2. RMS configuration
+
+In the Python distribution installed by ERT there is a file:
+`res/fm/rms/rms_config.yml` which contains some site specific RMS configuration.
+You should provide an alternative file with your local path to the `rms` wrapper
+script supplied by _Roxar_ by setting the environment variable `RMS_SITE_CONFIG`
+to point to the alternative file.
