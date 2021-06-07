@@ -46,7 +46,7 @@ async def test_happy_path(
     ensemble = make_ensemble_builder(tmpdir, 1, 1).build()
     queue = queue_config.create_job_queue()
     for real in ensemble.get_reals():
-        queue.add_ee_stage(real.get_steps()[0])
+        queue.add_ee_stage(real.get_steps()[0], None)
     queue.submit_complete()
 
     await queue.execute_queue_async(

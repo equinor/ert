@@ -8,6 +8,7 @@ import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.entity.ensemble_base import _Ensemble
 from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
+from res.enkf import RunArg
 
 CONCURRENT_INTERNALIZATION = 10
 
@@ -37,6 +38,37 @@ class _LegacyEnsemble(_Ensemble):
         self._aggregate_future = None
         self._config = None
         self._ee_id = None
+
+    def setup_timeout_callback(self, timeout_queue):
+        def on_timeout(callback_args):
+            run_args: RunArg = callback_args[0]
+            timeout_cloudevent = CloudEvent(
+                {
+                    "type": identifiers.EVTYPE_FM_STEP_TIMEOUT,
+                    "source": f"/ert/ee/{self._ee_id}/real/{run_args.iens}/step/0",
+                    "id": str(uuid.uuid1()),
+                }
+            )
+            timeout_queue.put_nowait(timeout_cloudevent)
+
+        dispatch_url = self._config.dispatch_uri
+        cert = self._config.cert
+        token = self._config.token
+
+        async def send_timeout_message():
+            while True:
+                timeout_cloudevent = await timeout_queue.get()
+                if timeout_cloudevent is None:
+                    break
+                await self.send_cloudevent(
+                    dispatch_url, timeout_cloudevent, token=token, cert=cert
+                )
+
+        send_timeout_future = asyncio.get_event_loop().create_task(
+            send_timeout_message()
+        )
+
+        return on_timeout, send_timeout_future
 
     def evaluate(self, config, ee_id):
         self._config = config
@@ -73,8 +105,13 @@ class _LegacyEnsemble(_Ensemble):
 
             self._job_queue = self._queue_config.create_job_queue()
 
+            timeout_queue = asyncio.Queue(loop=asyncio.get_event_loop())
+            on_timeout, send_timeout_future = self.setup_timeout_callback(timeout_queue)
+
             for real in self.get_active_reals():
-                self._job_queue.add_ee_stage(real.get_steps()[0])
+                self._job_queue.add_ee_stage(
+                    real.get_steps()[0], callback_timeout=on_timeout
+                )
 
             self._job_queue.submit_complete()
 
@@ -99,20 +136,24 @@ class _LegacyEnsemble(_Ensemble):
                 self._ee_id, dispatch_url, cert, token
             )
 
-            futures = [
-                self._job_queue.execute_queue_async(
-                    dispatch_url,
-                    self._ee_id,
-                    threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION),
-                    queue_evaluators,
-                    cert=cert,
-                    token=token,
-                )
-            ]
-
-            self._aggregate_future = asyncio.gather(*futures, return_exceptions=True)
-            self._allow_cancel.set()
             try:
+
+                async def _run_queue():
+                    await self._job_queue.execute_queue_async(
+                        dispatch_url,
+                        self._ee_id,
+                        threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION),
+                        queue_evaluators,
+                        cert=cert,
+                        token=token,
+                    )
+                    await timeout_queue.put(None)
+                    await send_timeout_future
+
+                self._aggregate_future = asyncio.get_event_loop().create_task(
+                    _run_queue()
+                )
+                self._allow_cancel.set()
                 asyncio.get_event_loop().run_until_complete(self._aggregate_future)
             except asyncio.CancelledError:
                 logger.debug("cancelled aggregate future")

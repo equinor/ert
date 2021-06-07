@@ -1,38 +1,67 @@
-from ert_shared.feature_toggling import FeatureToggling
+import os
+import re
+import shutil
+import threading
+from argparse import ArgumentParser
+
+import pytest
+from res.enkf.enkf_main import EnKFMain
+from res.enkf.res_config import ResConfig
+
+import ert_shared.status.entity.state as state
+from ert_shared import ERT
+from ert_shared.cli import (
+    ENSEMBLE_SMOOTHER_MODE,
+    ENSEMBLE_EXPERIMENT_MODE,
+)
+from ert_shared.cli.model_factory import create_model
+from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Snapshot
+from ert_shared.feature_toggling import FeatureToggling
+from ert_shared.main import ert_parser
 from ert_shared.status.entity.event import (
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert_shared.status.entity.state import (
-    JOB_STATE_FINISHED,
-    REALIZATION_STATE_FINISHED,
-)
 from ert_shared.status.tracker.factory import create_tracker
-import threading
-from ert_shared.cli.model_factory import create_model
-from ert_shared.cli.notifier import ErtCliNotifier
-import shutil
-import os
-from argparse import ArgumentParser
-from ert_shared.main import ert_parser
-from ert_shared.cli import (
-    ENSEMBLE_SMOOTHER_MODE,
-    ENSEMBLE_EXPERIMENT_MODE,
-    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
-    ES_MDA_MODE,
-)
-from res.enkf.enkf_main import EnKFMain
-from res.enkf.res_config import ResConfig
-from ert_shared import ERT
-import pytest
+from jsonpath_ng import parse
+
+
+def check_expression(original, path_expression, expected, msg_start):
+    assert isinstance(original, dict), f"{msg_start}data is not a dict"
+    jsonpath_expr = parse(path_expression)
+    match_found = False
+    for match in jsonpath_expr.find(original):
+        match_found = True
+        assert (
+            match.value == expected
+        ), f"{msg_start}{str(match.full_path)} value ({match.value}) is not equal to ({expected})"
+    assert match_found, f"{msg_start} Nothing matched {path_expression}"
 
 
 @pytest.mark.parametrize(
-    "experiment_folder,cmd_line_arguments,num_successful,num_iters",
+    "experiment_folder,cmd_line_arguments,num_successful,num_iters,assert_present_in_snapshot",
     [
+        (
+            "max_runtime_poly_example",
+            [
+                ENSEMBLE_EXPERIMENT_MODE,
+                "--realizations",
+                "0,1",
+                "max_runtime_poly_example/poly.ert",
+            ],
+            0,
+            1,
+            [
+                (".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FAILURE),
+                (
+                    ".*",
+                    "reals.*.steps.*.jobs.*.error",
+                    "The run is cancelled due to reaching MAX_RUNTIME",
+                ),
+            ],
+        ),
         (
             "poly_example",
             [
@@ -43,6 +72,7 @@ import pytest
             ],
             5,
             1,
+            [(".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FINISHED)],
         ),
         (
             "poly_example",
@@ -56,6 +86,7 @@ import pytest
             ],
             7,
             2,
+            [(".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FINISHED)],
         ),
         (
             "poly_example",
@@ -70,6 +101,7 @@ import pytest
             ],
             7,
             2,
+            [(".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FINISHED)],
         ),
         (
             "failing_poly_example",
@@ -83,6 +115,11 @@ import pytest
             ],
             1,
             2,
+            [
+                ("0", "reals.'0'.steps.*.jobs.'0'.status", state.JOB_STATE_FAILURE),
+                ("0", "reals.'0'.steps.*.jobs.'1'.status", state.JOB_STATE_START),
+                (".*", "reals.'1'.steps.*.jobs.*.status", state.JOB_STATE_FINISHED),
+            ],
         ),
     ],
 )
@@ -91,6 +128,7 @@ def test_tracking(
     cmd_line_arguments,
     num_successful,
     num_iters,
+    assert_present_in_snapshot,
     tmpdir,
     source_root,
 ):
@@ -145,7 +183,7 @@ def test_tracking(
                 if event.partial_snapshot is not None:
                     snapshots[event.iteration].merge(event.partial_snapshot.data())
             if isinstance(event, EndEvent):
-                break
+                pass
 
         assert tracker._progress() == 1.0
 
@@ -153,23 +191,23 @@ def test_tracking(
         for iter_, snapshot in snapshots.items():
             successful_reals = list(
                 filter(
-                    lambda item: item[1].status == REALIZATION_STATE_FINISHED,
+                    lambda item: item[1].status == state.REALIZATION_STATE_FINISHED,
                     snapshot.get_reals().items(),
                 )
             )
             assert len(successful_reals) == num_successful
-            for real_id, real in successful_reals:
-                assert (
-                    real.status == REALIZATION_STATE_FINISHED
-                ), f"iter:{iter_} real:{real_id} was not finished"
 
-                poly = real.steps["0"].jobs["0"]
-                poly2 = real.steps["0"].jobs["1"]
-                assert poly.name == "poly_eval"
-                assert (
-                    poly.status == JOB_STATE_FINISHED
-                ), f"real {real_id}/{poly['name']} was not finished"
-                assert poly2.name == "poly_eval2"
-                assert (
-                    poly2.status == JOB_STATE_FINISHED
-                ), f"real {real_id}/{poly['name']} was not finished"
+        for (
+            iter_expression,
+            snapshot_expression,
+            expected,
+        ) in assert_present_in_snapshot:
+            for i, snapshot in snapshots.items():
+                if re.match(iter_expression, str(i)):
+                    check_expression(
+                        snapshot.to_dict(),
+                        snapshot_expression,
+                        expected,
+                        f"Snapshot {i} did not match:\n",
+                    )
+        thread.join()

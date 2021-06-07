@@ -184,15 +184,9 @@ class EnsembleEvaluator:
         ):
             await done
             logger.debug("Got done signal.")
-            # Wait for dispatchers to disconnect if, but limit to 10 seconds
-            # in case of cancellation
-            timeout = (
-                10 if self._ensemble.get_status() == ENSEMBLE_STATE_CANCELLED else None
-            )
+            # Wait for dispatchers to disconnect
             try:
-                await asyncio.wait_for(
-                    self._dispatchers_connected.join(), timeout=timeout
-                )
+                await asyncio.wait_for(self._dispatchers_connected.join(), timeout=20)
             except asyncio.TimeoutError:
                 logger.debug("Timed out waiting for dispatchers to disconnect")
             await self._batcher.join()

@@ -35,7 +35,10 @@ def tracker_progress(tracker) -> float:
     done_reals = 0
     if current_iter in tracker._iter_snapshot:
         for real in tracker._iter_snapshot[current_iter].get_reals().values():
-            if real.status == state.REALIZATION_STATE_FINISHED:
+            if real.status in [
+                state.REALIZATION_STATE_FINISHED,
+                state.REALIZATION_STATE_FAILED,
+            ]:
                 done_reals += 1
     total_reals = len(tracker._iter_snapshot[0].get_reals())
     return _calculate_progress(
