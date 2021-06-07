@@ -13,6 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import math
 from functools import partial
 
 from qtpy.QtWidgets import (
@@ -175,8 +176,14 @@ class AnalysisModuleVariablesPanel(QWidget):
     ):
         spinner = QSpinBox()
         spinner.setMinimumWidth(75)
+
+        # setMaximum() expects a signed 32bit
+        max_int = int(math.pow(2, 31) - 1)
         spinner.setMaximum(
-            analysis_module_variables_model.getVariableMaximumValue(variable_name)
+            min(
+                analysis_module_variables_model.getVariableMaximumValue(variable_name),
+                max_int,
+            )
         )
         spinner.setMinimum(
             analysis_module_variables_model.getVariableMinimumValue(variable_name)
