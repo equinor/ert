@@ -115,7 +115,10 @@ class _Ensemble:
         for event in events:
             snapshot_mutate_event.from_cloudevent(event)
         self._snapshot.merge_event(snapshot_mutate_event)
-        self._status = self._status_tracker.update_state(self._snapshot.get_status())
+        if self._status != self._snapshot.get_status():
+            self._status = self._status_tracker.update_state(
+                self._snapshot.get_status()
+            )
         return snapshot_mutate_event
 
     def get_status(self):
@@ -152,7 +155,7 @@ class _Ensemble:
                     )
         top = SnapshotDict(
             reals=reals,
-            status=state.ENSEMBLE_STATE_STARTED,
+            status=state.ENSEMBLE_STATE_UNKNOWN,
             metadata=self.get_metadata(),
         )
 

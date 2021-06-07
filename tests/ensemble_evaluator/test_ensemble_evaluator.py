@@ -10,6 +10,7 @@ from ert_shared.status.entity.state import (
     JOB_STATE_FAILURE,
     JOB_STATE_FINISHED,
     JOB_STATE_RUNNING,
+    ENSEMBLE_STATE_UNKNOWN,
 )
 from tests.ensemble_evaluator.ensemble_test import TestEnsemble, send_dispatch_event
 from tests.narratives import (
@@ -32,7 +33,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
         # first snapshot before any event occurs
         snapshot_event = next(events)
         snapshot = Snapshot(snapshot_event.data)
-        assert snapshot.get_status() == ENSEMBLE_STATE_STARTED
+        assert snapshot.get_status() == ENSEMBLE_STATE_UNKNOWN
         # two dispatchers connect
         with Client(
             url + "/dispatch",
@@ -94,7 +95,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             full_snapshot_event = next(events2)
             assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
             snapshot = Snapshot(full_snapshot_event.data)
-            assert snapshot.get_status() == ENSEMBLE_STATE_STARTED
+            assert snapshot.get_status() == ENSEMBLE_STATE_UNKNOWN
             assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
             assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
 
