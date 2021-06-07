@@ -6,6 +6,48 @@ env:
   ERT_SHOW_BACKTRACE: 1
 
 jobs:
+  build-test-cmake:
+    name: CMake
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu-latest', 'macos-latest']
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Ubuntu dependencies
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y valgrind
+
+    - name: Build libecl
+      run: |
+        git clone https://github.com/equinor/libecl
+        mkdir libecl/build
+        cmake -S libecl -B libecl/build
+        sudo cmake --build libecl/build --target install
+        sudo rm -rf libecl
+
+    - name: Build libres
+      run: |
+        mkdir cmake-build
+        cmake -S libres -B cmake-build             \
+            -DBUILD_TESTS=ON                  \
+            -DRES_VERSION=1.2.3               \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        cmake --build cmake-build
+
+    - name: Run tests
+      run: |
+        cd cmake-build
+        export PATH=$PWD/bin:$PATH
+        ctest --output-on-failure
+
   build-and-test:
     timeout-minutes: 30
     strategy:
