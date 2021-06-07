@@ -11,7 +11,9 @@ import pandas as pd
 import pytest
 from ecl.util.util import BoolVector
 from numpy.testing import assert_almost_equal, assert_array_equal
-from res.enkf import ErtRunContext
+from res import ResPrototype
+from res.enkf import ActiveList, ErtRunContext, EnkfSimulationRunner
+from res.enkf.enums import HookRuntime
 from res.enkf.enkf_main import EnKFMain
 from res.enkf.res_config import ResConfig
 
@@ -218,7 +220,7 @@ def test_parameters(client):
 
     # Add priors to ERT config
     builder = ErtConfigBuilder()
-    builder.ensemble_size = 10  # randint(5, 20)
+    builder.ensemble_size = 10
     for name, conf, _ in priors:
         builder.add_prior(name, conf)
     ert = builder.build()
@@ -286,6 +288,64 @@ def test_observations(client):
     assert obs["errors"] == data[1].tolist()
     assert obs["x_axis"] == data.index.astype(str).tolist()
     assert obs["transformation"] is None
+
+
+def test_observation_transformation(client):
+    data = pd.DataFrame([[1, 0.1], [2, 0.2], [3, 0.3], [4, 0.4]], index=[0, 1, 2, 3])
+
+    builder = ErtConfigBuilder()
+    builder.ensemble_size = 5
+    builder.add_general_observation("OBS", "RES", data)
+    builder.job_script = dedent(
+        """\
+    #!/usr/bin/python3
+    import re
+    from pathlib import Path
+
+    # Obtain realization index by looking at the name of current directory
+    real = int(re.match("^realization([0-9]+)$", Path.cwd().name)[1])
+
+    outlier   = 1000 + real  # Large number, ERT disables
+    active_a  = 1 + real
+    active_b  = 2 + real
+    small_var = 3  # Small variation between responses, ERT disables
+
+    output = [outlier, active_a, active_b, small_var]
+    with open("poly_0.out", "w") as f:
+        f.write("\\n".join(str(x) for x in output))
+    """
+    )
+    ert = builder.build()
+
+    # Post first ensemble
+    parent_ensemble_id = extraction.post_ensemble_data(ert, builder.ensemble_size)
+
+    # Create runpath and run ERT
+    run_context = _create_runpath(ert)
+    _evaluate_ensemble(ert, run_context)
+    _run_update(ert, run_context)
+
+    # Post second ensemble
+    update_id = extraction.post_update_data(ert, parent_ensemble_id, "boruvka")
+    child_ensemble_id = extraction.post_ensemble_data(
+        ert, builder.ensemble_size, update_id
+    )
+
+    # Ensemble should have 1 observation with transformation
+    observations = client.get(f"/ensembles/{child_ensemble_id}/observations").json()
+    assert len(observations) == 1
+
+    # Validate data
+    obs = observations[0]
+    assert obs["name"] == "OBS"
+    assert obs["values"] == data[0].tolist()
+    assert obs["errors"] == data[1].tolist()
+
+    trans = obs["transformation"]
+    assert trans["name"] == "OBS"
+    assert trans["active"] == [False, True, True, False]
+    assert trans["scale"] == [1.0] * 4
+    assert trans["observation_id"] == obs["id"]
 
 
 def test_post_ensemble_results(client):
@@ -487,14 +547,16 @@ def _create_runpath(ert: LibresFacade, iteration: int = 0) -> ErtRunContext:
     """
     enkf_main = ert._enkf_main
     result_fs = ert.get_current_fs()
+    target_fs = ert._enkf_main.getEnkfFsManager().getFileSystem("iter")
 
     model_config = enkf_main.getModelConfig()
     runpath_fmt = model_config.getRunpathFormat()
     jobname_fmt = model_config.getJobnameFormat()
     subst_list = enkf_main.getDataKW()
 
-    run_context = ErtRunContext.ensemble_experiment(
+    run_context = ErtRunContext.ensemble_smoother(
         result_fs,
+        target_fs,
         BoolVector(default_value=True, initial_size=ert.get_ensemble_size()),
         runpath_fmt,
         jobname_fmt,
@@ -513,9 +575,12 @@ def _evaluate_ensemble(ert: LibresFacade, run_context: ErtRunContext):
     queue_config = ert.get_queue_config()
     _job_queue = queue_config.create_job_queue()
 
-    ert._enkf_main.getEnkfSimulationRunner().runEnsembleExperiment(
-        _job_queue, run_context
-    )
+    ert._enkf_main.getEnkfSimulationRunner().runSimpleStep(_job_queue, run_context)
+
+
+def _run_update(ert: LibresFacade, run_context: ErtRunContext):
+    es_update = ert._enkf_main.getESUpdate()
+    assert es_update.smootherUpdate(run_context)
 
 
 def _get_parameters() -> pd.DataFrame:
