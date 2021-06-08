@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+import argparse
+from res.fm.rms import run
+import sys
+
+def _build_argument_parser():
+    description = 'Wrapper script to run rms.'
+    usage = ('The script must be invoked with minimum three positional arguments:\n\n'
+             '   rms  iens  project  workflow \n\n'
+             'Optional arguments supported: \n'
+             '  target file [-t][--target-file]\n'
+             '  run path [-r][--run-path] default=rms/model\n'
+             '  import path [-i][--import-path] default=./ \n'
+             '  export path [-e][--export-path] default=./ \n'
+             '  version [-v][--version]\n')
+    parser = argparse.ArgumentParser(description=description, usage=usage)
+    parser.add_argument(
+        'iens',
+        type=int,
+        help='Realization number',
+    )
+    parser.add_argument(
+        'project',
+        help='The RMS project we are running',
+    )
+    parser.add_argument(
+        'workflow',
+        help='The rms workflow we intend to run',
+    )
+    parser.add_argument(
+        '-r', '--run-path',
+        default='rms/model',
+        help='The directory which will be used as cwd when running rms',
+    )
+    parser.add_argument(
+        '-t', '--target-file',
+        default=None,
+        help='name of file which should be created/updated by rms',
+    )
+    parser.add_argument(
+        '-i', '--import-path',
+        default='./',
+        help='the prefix of all relative paths when rms is importing',
+    )
+    parser.add_argument(
+        '-e', '--export-path',
+        default='./',
+        help='the prefix of all relative paths when rms is exporting',
+    )
+    parser.add_argument(
+        '-v', '--version',
+        default=None,
+        help='the prefix of all relative paths when rms is exporting',
+    )
+    parser.add_argument(
+        '-a', '--allow-no-env',
+        action="store_true",
+        help='Allow RMS to run without a site configured environment',
+    )
+    return parser
+
+
+# The first three arguments; iens, project and workflow are positional
+# and *must* be supplied. The run_path and target_file arguments are optional.
+
+if __name__ == '__main__':
+    # old style jobs pass inn empty arguments as "" and causes argparse to fail
+    sys.argv =  [arg for arg in sys.argv if arg != ""]
+    arg_parser = _build_argument_parser()
+    args = arg_parser.parse_args()
+
+    run(args.iens,
+        args.project,
+        args.workflow,
+        run_path=args.run_path,
+        target_file=args.target_file,
+        import_path=args.import_path,
+        export_path=args.export_path,
+        version=args.version,
+        allow_no_env=args.allow_no_env
+        )

@@ -1,0 +1,2 @@
+EXECUTABLE  ../templating/script/template_render
+ARGLIST -i <INPUT_FILES> -o <OUTPUT_FILE> -t <TEMPLATE_FILE>

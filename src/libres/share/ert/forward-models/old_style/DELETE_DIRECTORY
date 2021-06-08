@@ -1,0 +1,9 @@
+STDERR    delete_dir.stderr
+STDOUT    delete_dir.stdout
+
+EXECUTABLE  ../../shell_scripts/delete_directory
+ARGLIST     <DIRECTORY>
+
+MIN_ARG    1
+MAX_ARG    1
+ARG_TYPE 0 STRING
