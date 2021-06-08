@@ -1,12 +1,10 @@
 import sys
-from typing import Any, Dict, Iterator, List, Tuple, Union
+from typing import Any, Dict, Iterator, List, Union
 from pydantic import (
     BaseModel,
     ValidationError,
     root_validator,
     validator,
-    StrictInt,
-    StrictStr,
 )
 
 import ert3
@@ -15,9 +13,6 @@ if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
-
-
-_IndexType = Tuple[Union[StrictStr, StrictInt], ...]
 
 
 class _ParametersConfig(BaseModel):
@@ -121,7 +116,7 @@ class _ParameterConfig(_ParametersConfig):
 
     def as_distribution(self) -> ert3.stats.Distribution:
         dist_config = self.distribution
-        index: _IndexType = tuple(self.variables)
+        index: ert3.data.RecordIndex = tuple(self.variables)
         if dist_config.type == "gaussian":
             assert dist_config.input.mean is not None
             assert dist_config.input.std is not None
