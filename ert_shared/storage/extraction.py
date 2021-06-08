@@ -34,7 +34,7 @@ def create_ensemble(
         parameter_names=parameter_names,
         response_names=response_names,
         update_id=update_id,
-        metadata={"name": ert.get_current_case_name()},
+        userdata={"name": ert.get_current_case_name()},
     )
 
 

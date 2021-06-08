@@ -122,7 +122,7 @@ def _get_experiment_by_name(experiment_name: str) -> Dict[str, Any]:
 
 def init(*, workspace: Path) -> None:
     response = _get_from_server(path="experiments")
-    experiment_names = {exp["name"]: exp["ensembles"] for exp in response.json()}
+    experiment_names = {exp["name"]: exp["ensemble_ids"] for exp in response.json()}
 
     for special_key in _SPECIAL_KEYS:
         if f"{workspace}.{special_key}" in experiment_names:
@@ -219,7 +219,7 @@ def _add_numerical_data(
         record_type=_get_record_type(ensemble_record),
     )
 
-    ensemble_id = experiment["ensembles"][0]  # currently just one ens per exp
+    ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
     record_url = f"ensembles/{ensemble_id}/records/{record_name}"
 
     for idx, record in enumerate(ensemble_record.records):
@@ -238,7 +238,7 @@ def _add_numerical_data(
             raise ert3.exceptions.StorageError(response.text)
 
         meta_response = _put_to_server(
-            path=f"{record_url}/metadata",
+            path=f"{record_url}/userdata",
             params={"realization_index": idx},
             json=metadata.dict(),
         )
@@ -282,7 +282,7 @@ def _response2record(
 
 def _get_numerical_metadata(ensemble_id: str, record_name: str) -> _NumericalMetaData:
     response = _get_from_server(
-        path=f"ensembles/{ensemble_id}/records/{record_name}/metadata",
+        path=f"ensembles/{ensemble_id}/records/{record_name}/userdata",
         params={"realization_index": 0},  # This assumes there is a realization 0
     )
 
@@ -306,7 +306,7 @@ def _get_numerical_data(
             f"Cannot get {record_name} data, no experiment named: {experiment_name}"
         )
 
-    ensemble_id = experiment["ensembles"][0]  # currently just one ens per exp
+    ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
     metadata = _get_numerical_metadata(ensemble_id, record_name)
 
     records = []
@@ -371,7 +371,7 @@ def get_ensemble_record_names(
             f"Cannot get record names of non-existing experiment: {experiment_name}"
         )
 
-    ensemble_id = experiment["ensembles"][0]  # currently just one ens per exp
+    ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
     response = _get_from_server(path=f"ensembles/{ensemble_id}/records")
     if response.status_code != 200:
         raise ert3.exceptions.StorageError(response.text)
@@ -388,7 +388,7 @@ def get_experiment_parameters(
             f"Cannot get parameters from non-existing experiment: {experiment_name}"
         )
 
-    ensemble_id = experiment["ensembles"][0]  # currently just one ens per exp
+    ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
     response = _get_from_server(path=f"ensembles/{ensemble_id}/parameters")
     if response.status_code != 200:
         raise ert3.exceptions.StorageError(response.text)
