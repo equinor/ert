@@ -1,7 +1,11 @@
 import pathlib
-from typing import List, Dict
+from typing import List, Dict, Set, Union
 
 import ert3
+
+
+# Character used to separate record source "paths".
+_SOURCE_SEPARATOR = "."
 
 
 def _prepare_experiment(
@@ -9,19 +13,51 @@ def _prepare_experiment(
     experiment_name: str,
     ensemble: ert3.config.EnsembleConfig,
     ensemble_size: int,
+    parameters_config: ert3.config.ParametersConfig,
 ) -> None:
     if ert3.workspace.experiment_has_run(workspace_root, experiment_name):
         raise ValueError(f"Experiment {experiment_name} have been carried out.")
 
-    parameter_names = [elem.record for elem in ensemble.input]
+    parameters: Dict[str, List[str]] = {}
+    for input_record in ensemble.input:
+        record_name = input_record.record
+        record_source = input_record.source.split(_SOURCE_SEPARATOR)
+        parameters[record_name] = _get_experiment_record_indices(
+            workspace_root, record_name, record_source, parameters_config
+        )
     responses = [elem.record for elem in ensemble.output]
     ert3.storage.init_experiment(
         workspace=workspace_root,
         experiment_name=experiment_name,
-        parameters=parameter_names,
+        parameters=parameters,
         ensemble_size=ensemble_size,
         responses=responses,
     )
+
+
+def _get_experiment_record_indices(
+    workspace_root: pathlib.Path,
+    record_name: str,
+    record_source: List[str],
+    parameters_config: ert3.config.ParametersConfig,
+) -> List[str]:
+    assert len(record_source) == 2
+    source, source_record_name = record_source
+
+    if source == "storage":
+        ensemble_record = ert3.storage.get_ensemble_record(
+            workspace=workspace_root, record_name=source_record_name
+        )
+        indices: Set[Union[str, int]] = set()
+        for record in ensemble_record.records:
+            assert record.index is not None
+            indices.update(record.index)
+        return [str(x) for x in indices]
+
+    elif source == "stochastic":
+        return list(parameters_config[source_record_name].variables)
+
+    raise ValueError("Unknown record source location {}".format(source))
 
 
 # pylint: disable=too-many-arguments
@@ -66,11 +102,13 @@ def _prepare_evaluation(
     # This reassures mypy that the ensemble size is defined
     assert ensemble.size is not None
 
-    _prepare_experiment(workspace_root, experiment_name, ensemble, ensemble.size)
+    _prepare_experiment(
+        workspace_root, experiment_name, ensemble, ensemble.size, parameters_config
+    )
 
     for input_record in ensemble.input:
         record_name = input_record.record
-        record_source = input_record.source.split(".")
+        record_source = input_record.source.split(_SOURCE_SEPARATOR)
 
         _prepare_experiment_record(
             record_name,
@@ -94,7 +132,7 @@ def _load_ensemble_parameters(
     ensemble_parameters = {}
     for input_record in ensemble.input:
         record_name = input_record.record
-        record_source = input_record.source.split(".")
+        record_source = input_record.source.split(_SOURCE_SEPARATOR)
         assert len(record_source) == 2
         assert record_source[0] == "stochastic"
         parameter_group_name = record_source[1]
@@ -113,7 +151,9 @@ def _prepare_sensitivity(
     )
     input_records = ert3.algorithms.one_at_the_time(parameter_distributions)
 
-    _prepare_experiment(workspace_root, experiment_name, ensemble, len(input_records))
+    _prepare_experiment(
+        workspace_root, experiment_name, ensemble, len(input_records), parameters_config
+    )
 
     parameters: Dict[str, List[ert3.data.Record]] = {
         param.record: [] for param in ensemble.input

@@ -25,7 +25,7 @@ def test_ensemble_size_zero(tmpdir, ert_storage):
         ert3.storage.init_experiment(
             workspace=tmpdir,
             experiment_name="my_experiment",
-            parameters=[],
+            parameters={},
             ensemble_size=0,
             responses=[],
         )
@@ -38,7 +38,7 @@ def test_none_as_experiment_name(tmpdir, ert_storage):
         ert3.storage.init_experiment(
             workspace=tmpdir,
             experiment_name=None,
-            parameters=[],
+            parameters={},
             ensemble_size=10,
             responses=[],
         )
@@ -50,7 +50,7 @@ def test_double_add_experiment(tmpdir, ert_storage):
     ert3.storage.init_experiment(
         workspace=tmpdir,
         experiment_name="my_experiment",
-        parameters=[],
+        parameters={},
         ensemble_size=42,
         responses=[],
     )
@@ -61,7 +61,7 @@ def test_double_add_experiment(tmpdir, ert_storage):
         ert3.storage.init_experiment(
             workspace=tmpdir,
             experiment_name="my_experiment",
-            parameters=[],
+            parameters={},
             ensemble_size=42,
             responses=[],
         )
@@ -72,14 +72,17 @@ def test_add_experiments(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
 
     experiment_names = ["a", "b", "c", "super-experiment", "explosions"]
-    experiment_parameters = [
+    experiment_parameter_records = [
         ["x"],
         ["a", "b"],
         ["alpha", "beta"],
         ["oxygen", "heat", "fuel"],
     ]
-    experiments = zip(experiment_names, experiment_parameters)
-    for idx, (experiment_name, experiment_parameters) in enumerate(experiments):
+    experiments = zip(experiment_names, experiment_parameter_records)
+    for idx, (experiment_name, experiment_parameter_records) in enumerate(experiments):
+        experiment_parameters = {
+            key: ["some_coeff"] for key in experiment_parameter_records
+        }
         ert3.storage.init_experiment(
             workspace=tmpdir,
             experiment_name=experiment_name,
@@ -94,7 +97,7 @@ def test_add_experiments(tmpdir, ert_storage):
         parameters = ert3.storage.get_experiment_parameters(
             workspace=tmpdir, experiment_name=experiment_name
         )
-        assert experiment_parameters == parameters
+        assert experiment_parameter_records == parameters
 
 
 @pytest.mark.requires_ert_storage
@@ -139,10 +142,79 @@ def test_add_and_get_ensemble_record(tmpdir, raw_ensrec, ert_storage):
 
     ensrecord = ert3.data.EnsembleRecord(records=raw_ensrec)
     ert3.storage.add_ensemble_record(
-        workspace=tmpdir, record_name="my_ensemble_record", ensemble_record=ensrecord
+        workspace=tmpdir,
+        record_name="my_ensemble_record",
+        ensemble_record=ensrecord,
     )
+
     retrieved_ensrecord = ert3.storage.get_ensemble_record(
         workspace=tmpdir, record_name="my_ensemble_record"
+    )
+
+    assert ensrecord == retrieved_ensrecord
+
+
+@pytest.mark.requires_ert_storage
+@pytest.mark.parametrize(
+    "raw_ensrec",
+    (
+        [{"data": [i + 0.5, i + 1.1, i + 2.2]} for i in range(3)],
+        [{"data": {"a": i + 0.5, "b": i + 1.1, "c": i + 2.2}} for i in range(5)],
+        [{"data": {2: i + 0.5, 5: i + 1.1, 7: i + 2.2}} for i in range(2)],
+    ),
+)
+def test_add_and_get_ensemble_parameter_record(tmpdir, raw_ensrec, ert_storage):
+    """This tests a workaround so that webviz-ert is able to visualise parameters.
+    It expects records which are marked as parameter to contain only one value
+    per realisation, while ERT 3 uses multiple variables per record. That is, in
+    ERT 3, it is possible to specify a record named "coefficients" which
+    contains the variables "a", "b" and "c". These are rendered as column
+    labels, which ERT Storage accepts, but webviz-ert doesn't know how to use.
+
+    The workaround involves splitting up any parameter record into its variable
+    parts, so "coefficients.a", "coefficients.b", "coefficients.c". This is an
+    implementation detail that exists entirely within the `ert3.storage` module,
+    and isn't visible outside of it.
+
+    In order to test this behaviour, we use a testing-only kwarg called
+    `_flatten` in the function `ert3.storage.get_ensemble_record_names`, which
+    lets us see the record names that are hidden outside of the `ert3.storage`
+    module.
+
+    """
+    raw_data = raw_ensrec[0]["data"]
+    assert isinstance(raw_data, (list, dict))
+    if isinstance(raw_data, list):
+        indices = [str(x) for x in range(len(raw_data))]
+    else:
+        indices = [str(x) for x in raw_data]
+
+    ert3.storage.init(workspace=tmpdir)
+    ert3.storage.init_experiment(
+        workspace=tmpdir,
+        experiment_name="experiment_name",
+        parameters={"my_ensemble_record": indices},
+        ensemble_size=len(raw_ensrec),
+        responses=[],
+    )
+
+    ensrecord = ert3.data.EnsembleRecord(records=raw_ensrec)
+    ert3.storage.add_ensemble_record(
+        workspace=tmpdir,
+        experiment_name="experiment_name",
+        record_name="my_ensemble_record",
+        ensemble_record=ensrecord,
+    )
+
+    record_names = ert3.storage.get_ensemble_record_names(
+        workspace=tmpdir, experiment_name="experiment_name", _flatten=False
+    )
+    assert {f"my_ensemble_record.{x}" for x in indices} == set(record_names)
+
+    retrieved_ensrecord = ert3.storage.get_ensemble_record(
+        workspace=tmpdir,
+        experiment_name="experiment_name",
+        record_name="my_ensemble_record",
     )
 
     assert ensrecord == retrieved_ensrecord
@@ -188,7 +260,7 @@ def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
         ert3.storage.init_experiment(
             workspace=tmpdir,
             experiment_name=experiment,
-            parameters=[],
+            parameters={},
             ensemble_size=ensemble_size,
             responses=[],
         )
@@ -262,7 +334,7 @@ def test_get_record_names(tmpdir, ert_storage):
         ert3.storage.init_experiment(
             workspace=tmpdir,
             experiment_name=experiment,
-            parameters=[],
+            parameters={},
             ensemble_size=ensemble_size,
             responses=[],
         )
@@ -304,7 +376,7 @@ def test_delete_experiment(tmpdir, ert_storage):
     ert3.storage.init_experiment(
         workspace=tmpdir,
         experiment_name="test",
-        parameters=[],
+        parameters={},
         ensemble_size=42,
         responses=[],
     )
@@ -341,7 +413,7 @@ def test_get_ensemble_responses(
     ert3.storage.init_experiment(
         workspace=tmpdir,
         experiment_name=experiment,
-        parameters=[],
+        parameters={},
         ensemble_size=1,
         responses=responses,
     )
@@ -375,7 +447,7 @@ def test_ensemble_responses_and_parameters(tmpdir, ert_storage):
         ert3.storage.init_experiment(
             workspace=tmpdir,
             experiment_name=experiment,
-            parameters=["resp1"],
+            parameters={"resp1": ["some-key"]},
             ensemble_size=1,
             responses=responses,
         )

@@ -80,7 +80,7 @@ def test_workspace_experiment_has_run(tmpdir, ert_storage):
     ert3.storage.init_experiment(
         workspace=tmpdir,
         experiment_name="test1",
-        parameters=[],
+        parameters={},
         ensemble_size=42,
         responses=[],
     )
