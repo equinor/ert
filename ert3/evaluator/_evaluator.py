@@ -225,8 +225,8 @@ def _run(
     return result
 
 
-def _prepare_responses(
-    raw_responses: Dict[int, Dict[str, RecordTransmitter]]
+def _prepare_output_records(
+    raw_records: Dict[int, Dict[str, RecordTransmitter]]
 ) -> MultiEnsembleRecord:
     async def _load(
         iens: int, record_key: str, transmitter: RecordTransmitter
@@ -235,8 +235,8 @@ def _prepare_responses(
         return (iens, record_key, record)
 
     futures = []
-    for iens in sorted(raw_responses.keys(), key=int):
-        for record, transmitter in raw_responses[iens].items():
+    for iens in sorted(raw_records.keys(), key=int):
+        for record, transmitter in raw_records[iens].items():
             futures.append(_load(iens, record, transmitter))
     results = asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
 
@@ -244,17 +244,17 @@ def _prepare_responses(
     for res in results:
         data_results[res[0]][res[1]] = res[2]
 
-    responses: Dict[str, List[Record]] = {
-        response_name: [] for response_name in data_results[0]
+    output_records: Dict[str, List[Record]] = {
+        rec_name: [] for rec_name in data_results[0]
     }
     for realization in data_results.values():
-        assert responses.keys() == realization.keys()
+        assert output_records.keys() == realization.keys()
         for key in realization:
-            responses[key].append(realization[key])
+            output_records[key].append(realization[key])
 
     ensemble_records: Dict[str, EnsembleRecord] = {}
-    for key in responses:
-        ensemble_records[key] = EnsembleRecord(records=responses[key])
+    for key in output_records:
+        ensemble_records[key] = EnsembleRecord(records=output_records[key])
 
     return MultiEnsembleRecord(ensemble_records=ensemble_records)
 
@@ -280,9 +280,9 @@ def evaluate(
 
     ee = EnsembleEvaluator(ensemble=ensemble, config=config, iter_=0)
     result = _run(ee)
-    responses = _prepare_responses(result)
+    output_records = _prepare_output_records(result)
 
-    return responses
+    return output_records
 
 
 def cleanup(workspace_root: Path, evaluation_name: str) -> None:

@@ -82,6 +82,7 @@ def test_workspace_experiment_has_run(tmpdir, ert_storage):
         experiment_name="test1",
         parameters=[],
         ensemble_size=42,
+        responses=[],
     )
 
     assert ert3.workspace.experiment_has_run(tmpdir, "test1")

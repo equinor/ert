@@ -132,6 +132,7 @@ def init(*, workspace: Path) -> None:
             experiment_name=f"{workspace}.{special_key}",
             parameters=[],
             ensemble_size=-1,
+            responses=[],
         )
 
 
@@ -141,6 +142,7 @@ def init_experiment(
     experiment_name: str,
     parameters: Iterable[str],
     ensemble_size: int,
+    responses: Iterable[str],
 ) -> None:
     if ensemble_size <= 0:
         raise ValueError("Ensemble cannot have a size <= 0")
@@ -150,6 +152,7 @@ def init_experiment(
         experiment_name=experiment_name,
         parameters=parameters,
         ensemble_size=ensemble_size,
+        responses=responses,
     )
 
 
@@ -159,6 +162,7 @@ def _init_experiment(
     experiment_name: str,
     parameters: Iterable[str],
     ensemble_size: int,
+    responses: Iterable[str],
 ) -> None:
     if not experiment_name:
         raise ValueError("Cannot initialize experiment without a name")
@@ -174,8 +178,9 @@ def _init_experiment(
         path=f"experiments/{exp_id}/ensembles",
         json={
             "parameter_names": list(parameters),
-            "response_names": [],
+            "response_names": list(responses),
             "size": ensemble_size,
+            "metadata": {"name": experiment_name},
         },
     )
     if response.status_code != 200:
@@ -183,7 +188,7 @@ def _init_experiment(
 
 
 def get_experiment_names(*, workspace: Path) -> Set[str]:
-    response = response = _get_from_server(path="experiments")
+    response = _get_from_server(path="experiments")
     experiment_names = {exp["name"] for exp in response.json()}
     for special_key in _SPECIAL_KEYS:
         key = f"{workspace}.{special_key}"
@@ -381,7 +386,6 @@ def get_ensemble_record_names(
 def get_experiment_parameters(
     *, workspace: Path, experiment_name: str
 ) -> Iterable[str]:
-
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
         raise ert3.exceptions.NonExistantExperiment(
@@ -395,8 +399,21 @@ def get_experiment_parameters(
     return list(response.json())
 
 
-def delete_experiment(*, workspace: Path, experiment_name: str) -> None:
+def get_experiment_responses(*, workspace: Path, experiment_name: str) -> Iterable[str]:
+    experiment = _get_experiment_by_name(experiment_name)
+    if experiment is None:
+        raise ert3.exceptions.NonExistantExperiment(
+            f"Cannot get responses from non-existing experiment: {experiment_name}"
+        )
 
+    ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
+    response = _get_from_server(f"ensembles/{ensemble_id}/responses")
+    if response.status_code != 200:
+        raise ert3.exceptions.StorageError(response.text)
+    return list(response.json())
+
+
+def delete_experiment(*, workspace: Path, experiment_name: str) -> None:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
         raise ert3.exceptions.NonExistantExperiment(

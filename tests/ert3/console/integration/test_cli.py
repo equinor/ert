@@ -219,6 +219,7 @@ def test_cli_status_some_runs(workspace, capsys):
             experiment_name=experiments[idx],
             parameters=[],
             ensemble_size=42,
+            responses=[],
         )
 
     args = ["ert3", "status"]
@@ -241,6 +242,7 @@ def test_cli_status_all_run(workspace, capsys):
             experiment_name=experiment,
             parameters=[],
             ensemble_size=42,
+            responses=[],
         )
 
     args = ["ert3", "status"]
@@ -302,6 +304,7 @@ def test_cli_clean_all(workspace):
             experiment_name=experiment,
             parameters=[],
             ensemble_size=42,
+            responses=[],
         )
         ert3.evaluator._evaluator._create_evaluator_tmp_dir(
             workspace, experiment
@@ -334,6 +337,7 @@ def test_cli_clean_one(workspace):
             experiment_name=experiment,
             parameters=[],
             ensemble_size=42,
+            responses=[],
         )
         ert3.evaluator._evaluator._create_evaluator_tmp_dir(
             workspace, experiment
@@ -373,6 +377,7 @@ def test_cli_clean_non_existant_experiment(workspace, capsys):
             experiment_name=experiment,
             parameters=[],
             ensemble_size=42,
+            responses=[],
         )
         ert3.evaluator._evaluator._create_evaluator_tmp_dir(
             workspace, experiment

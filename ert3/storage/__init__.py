@@ -5,6 +5,7 @@ from ert3.storage._storage import add_ensemble_record
 from ert3.storage._storage import get_ensemble_record
 from ert3.storage._storage import get_ensemble_record_names
 from ert3.storage._storage import get_experiment_parameters
+from ert3.storage._storage import get_experiment_responses
 from ert3.storage._storage import delete_experiment
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "get_ensemble_record",
     "get_ensemble_record_names",
     "get_experiment_parameters",
+    "get_experiment_responses",
     "delete_experiment",
 ]

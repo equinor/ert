@@ -27,6 +27,7 @@ def test_ensemble_size_zero(tmpdir, ert_storage):
             experiment_name="my_experiment",
             parameters=[],
             ensemble_size=0,
+            responses=[],
         )
 
 
@@ -39,6 +40,7 @@ def test_none_as_experiment_name(tmpdir, ert_storage):
             experiment_name=None,
             parameters=[],
             ensemble_size=10,
+            responses=[],
         )
 
 
@@ -50,6 +52,7 @@ def test_double_add_experiment(tmpdir, ert_storage):
         experiment_name="my_experiment",
         parameters=[],
         ensemble_size=42,
+        responses=[],
     )
     with pytest.raises(
         ert3.exceptions.ElementExistsError,
@@ -60,6 +63,7 @@ def test_double_add_experiment(tmpdir, ert_storage):
             experiment_name="my_experiment",
             parameters=[],
             ensemble_size=42,
+            responses=[],
         )
 
 
@@ -81,6 +85,7 @@ def test_add_experiments(tmpdir, ert_storage):
             experiment_name=experiment_name,
             parameters=experiment_parameters,
             ensemble_size=42,
+            responses=[],
         )
         expected_names = sorted(experiment_names[: idx + 1])
         retrieved_names = sorted(ert3.storage.get_experiment_names(workspace=tmpdir))
@@ -185,6 +190,7 @@ def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
             experiment_name=experiment,
             parameters=[],
             ensemble_size=ensemble_size,
+            responses=[],
         )
         for nid in range(1, 3):
             name = nid * "n"
@@ -258,6 +264,7 @@ def test_get_record_names(tmpdir, ert_storage):
             experiment_name=experiment,
             parameters=[],
             ensemble_size=ensemble_size,
+            responses=[],
         )
         for nid in range(1, 3):
             name = nid * "n"
@@ -299,6 +306,7 @@ def test_delete_experiment(tmpdir, ert_storage):
         experiment_name="test",
         parameters=[],
         ensemble_size=42,
+        responses=[],
     )
 
     assert "test" in ert3.storage.get_experiment_names(workspace=tmpdir)
@@ -314,3 +322,60 @@ def test_delete_experiment(tmpdir, ert_storage):
     ert3.storage.delete_experiment(workspace=tmpdir, experiment_name="test")
 
     assert "test" not in ert3.storage.get_experiment_names(workspace=tmpdir)
+
+
+@pytest.mark.requires_ert_storage
+@pytest.mark.parametrize(
+    "responses, records, expected_result",
+    [
+        (["resp1", "resp2"], ["resp1", "resp2", "rec1"], ["resp1", "resp2"]),
+        ([], ["resp1", "resp2", "rec1"], []),
+        (["resp1", "resp2"], ["rec1"], []),
+    ],
+)
+def test_get_ensemble_responses(
+    responses, records, expected_result, tmpdir, ert_storage
+):
+    ert3.storage.init(workspace=tmpdir)
+    experiment = "exp"
+    ert3.storage.init_experiment(
+        workspace=tmpdir,
+        experiment_name=experiment,
+        parameters=[],
+        ensemble_size=1,
+        responses=responses,
+    )
+    for name in records:
+        ensemble_record = ert3.data.EnsembleRecord(
+            records=[ert3.data.Record(data=[1, 2, 3])]
+        )
+        ert3.storage.add_ensemble_record(
+            workspace=tmpdir,
+            record_name=name,
+            ensemble_record=ensemble_record,
+            experiment_name=experiment,
+        )
+
+    fetched_ensemble_responses = ert3.storage.get_experiment_responses(
+        workspace=tmpdir, experiment_name=experiment
+    )
+
+    assert set(fetched_ensemble_responses) == set(expected_result)
+
+
+@pytest.mark.requires_ert_storage
+def test_ensemble_responses_and_parameters(tmpdir, ert_storage):
+    ert3.storage.init(workspace=tmpdir)
+    responses = ["resp1", "resp2"]
+    experiment = "exp"
+    with pytest.raises(
+        ert3.exceptions.StorageError,
+        match="parameters and responses cannot have a name in common",
+    ):
+        ert3.storage.init_experiment(
+            workspace=tmpdir,
+            experiment_name=experiment,
+            parameters=["resp1"],
+            ensemble_size=1,
+            responses=responses,
+        )
