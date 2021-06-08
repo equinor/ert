@@ -107,7 +107,7 @@ setup(
     ],
     extras_require={
         "storage": [
-            "ert-storage==0.1.8",
+            "ert-storage==0.2.0",
         ],
     },
     setup_requires=["pytest-runner", "setuptools_scm"],

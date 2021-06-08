@@ -169,11 +169,11 @@ def test_empty_ensemble(client):
     # Name is "default"
     for ens in client.get(f"/experiments/{id}/ensembles").json():
         assert (
-            client.get(f"/ensembles/{ens['id']}/metadata").json()["name"] == "default"
+            client.get(f"/ensembles/{ens['id']}/userdata").json()["name"] == "default"
         )
 
     # No priors exist
-    assert client.get(f"/experiments/{id}/priors").json() == {}
+    assert client.get(f"/experiments/{id}").json()["priors"] == {}
 
 
 def test_empty_ensemble_with_name(client):
@@ -189,7 +189,7 @@ def test_empty_ensemble_with_name(client):
     # Compare results
     id = client.fetch_experiment()
     for ens in client.get(f"/experiments/{id}/ensembles").json():
-        assert client.get(f"/ensembles/{ens['id']}/metadata").json()["name"] == name
+        assert client.get(f"/ensembles/{ens['id']}/userdata").json()["name"] == name
 
 
 def test_priors(client):
@@ -209,7 +209,7 @@ def test_priors(client):
 
     # Compare results
     id = client.fetch_experiment()
-    actual_priors = client.get(f"/experiments/{id}/priors").json()
+    actual_priors = client.get(f"/experiments/{id}").json()["priors"]
     assert len(priors) == len(actual_priors)
     for name, _, resp in priors:
         assert actual_priors[f"COEFFS:{name}"] == resp
