@@ -1,6 +1,16 @@
 import json
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional, Set
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Set,
+    List,
+    Union,
+)
 import io
 import logging
 import pandas as pd
@@ -16,6 +26,11 @@ _STORAGE_TOKEN = None
 _STORAGE_URL = None
 _ENSEMBLE_RECORDS = "__ensemble_records__"
 _SPECIAL_KEYS = (_ENSEMBLE_RECORDS,)
+
+# Character used as separator for parameter record names. This is used as a
+# workaround for webviz-ert, which expects each parameter record to have exactly
+# one value per realisation.
+_PARAMETER_RECORD_SEPARATOR = "."
 
 
 class _NumericalMetaData(BaseModel):
@@ -130,7 +145,7 @@ def init(*, workspace: Path) -> None:
         _init_experiment(
             workspace=workspace,
             experiment_name=f"{workspace}.{special_key}",
-            parameters=[],
+            parameters={},
             ensemble_size=-1,
             responses=[],
         )
@@ -140,7 +155,7 @@ def init_experiment(
     *,
     workspace: Path,
     experiment_name: str,
-    parameters: Iterable[str],
+    parameters: Mapping[str, Iterable[str]],
     ensemble_size: int,
     responses: Iterable[str],
 ) -> None:
@@ -160,7 +175,7 @@ def _init_experiment(
     *,
     workspace: Path,
     experiment_name: str,
-    parameters: Iterable[str],
+    parameters: Mapping[str, Iterable[str]],
     ensemble_size: int,
     responses: Iterable[str],
 ) -> None:
@@ -172,15 +187,24 @@ def _init_experiment(
             f"Cannot initialize existing experiment: {experiment_name}"
         )
 
+    if len(set(parameters.keys()).intersection(responses)) > 0:
+        raise ert3.exceptions.StorageError(
+            "Experiment parameters and responses cannot have a name in common"
+        )
+
     exp_response = _post_to_server(path="experiments", json={"name": experiment_name})
     exp_id = exp_response.json()["id"]
     response = _post_to_server(
-        path=f"experiments/{exp_id}/ensembles",
+        f"experiments/{exp_id}/ensembles",
         json={
-            "parameter_names": list(parameters),
+            "parameter_names": [
+                f"{record}.{param}"
+                for record, params in parameters.items()
+                for param in params
+            ],
             "response_names": list(responses),
             "size": ensemble_size,
-            "metadata": {"name": experiment_name},
+            "userdata": {"name": experiment_name},
         },
     )
     if response.status_code != 200:
@@ -210,7 +234,8 @@ def _add_numerical_data(
     workspace: Path,
     experiment_name: str,
     record_name: str,
-    ensemble_record: ert3.data.EnsembleRecord,
+    record_data: Union[pd.DataFrame, pd.Series],
+    record_type: ert3.data.RecordType,
 ) -> None:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
@@ -220,75 +245,95 @@ def _add_numerical_data(
         )
 
     metadata = _NumericalMetaData(
-        ensemble_size=ensemble_record.ensemble_size,
-        record_type=_get_record_type(ensemble_record),
+        ensemble_size=len(record_data),
+        record_type=record_type,
     )
 
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
     record_url = f"ensembles/{ensemble_id}/records/{record_name}"
 
-    for idx, record in enumerate(ensemble_record.records):
-        df = pd.DataFrame([record.data], columns=record.index, index=[idx])
-        response = _post_to_server(
-            path=f"{record_url}/matrix",
-            params={"realization_index": idx},
-            data=df.to_csv().encode(),
-            headers={"content-type": "text/csv"},
-        )
+    response = _post_to_server(
+        f"{record_url}/matrix",
+        data=record_data.to_csv().encode(),
+        headers={"content-type": "text/csv"},
+    )
 
-        if response.status_code == 409:
-            raise ert3.exceptions.ElementExistsError("Record already exists")
+    if response.status_code == 409:
+        raise ert3.exceptions.ElementExistsError("Record already exists")
 
-        if response.status_code != 200:
-            raise ert3.exceptions.StorageError(response.text)
+    if response.status_code != 200:
+        raise ert3.exceptions.StorageError(response.text)
 
-        meta_response = _put_to_server(
-            path=f"{record_url}/userdata",
-            params={"realization_index": idx},
-            json=metadata.dict(),
-        )
+    meta_response = _put_to_server(f"{record_url}/userdata", json=metadata.dict())
 
-        if meta_response.status_code != 200:
-            raise ert3.exceptions.StorageError(meta_response.text)
+    if meta_response.status_code != 200:
+        raise ert3.exceptions.StorageError(meta_response.text)
 
 
-def _response2record(
-    response_content: bytes, record_type: ert3.data.RecordType, realization_id: int
-) -> ert3.data.Record:
+def _response2records(
+    response_content: bytes, record_type: ert3.data.RecordType
+) -> ert3.data.EnsembleRecord:
     dataframe = pd.read_csv(
         io.BytesIO(response_content), index_col=0, float_precision="round_trip"
     )
 
-    raw_index = tuple(dataframe.columns)
+    records: List[ert3.data.Record]
     if record_type == ert3.data.RecordType.LIST_FLOAT:
-        array_data = tuple(
-            float(dataframe.loc[realization_id][raw_idx]) for raw_idx in raw_index
-        )
-        return ert3.data.Record(data=array_data)
+        records = [
+            ert3.data.Record(data=row.to_list()) for _, row in dataframe.iterrows()
+        ]
     elif record_type == ert3.data.RecordType.MAPPING_INT_FLOAT:
-        int_index = tuple(int(e) for e in dataframe.columns)
-        idata = {
-            idx: float(dataframe.loc[realization_id][raw_idx])
-            for raw_idx, idx in zip(raw_index, int_index)
-        }
-        return ert3.data.Record(data=idata)
+        records = [
+            ert3.data.Record(data={int(k): v for k, v in row.to_dict().items()})
+            for _, row in dataframe.iterrows()
+        ]
     elif record_type == ert3.data.RecordType.MAPPING_STR_FLOAT:
-        str_index = tuple(str(e) for e in dataframe.columns)
-        sdata = {
-            idx: float(dataframe.loc[realization_id][raw_idx])
-            for raw_idx, idx in zip(raw_index, str_index)
-        }
-        return ert3.data.Record(data=sdata)
+        records = [
+            ert3.data.Record(data=row.to_dict()) for _, row in dataframe.iterrows()
+        ]
     else:
         raise ValueError(
             f"Unexpected record type when loading numerical record: {record_type}"
         )
+    return ert3.data.EnsembleRecord(records=records)
+
+
+def _combine_records(
+    ensemble_records: List[ert3.data.EnsembleRecord],
+) -> ert3.data.EnsembleRecord:
+    # Combine records into the first ensemble record
+    combined_records: List[ert3.data.Record] = []
+    for record_idx, _ in enumerate(ensemble_records[0].records):
+        record0 = ensemble_records[0].records[record_idx]
+
+        if isinstance(record0.data, list):
+            ldata = [
+                val
+                for data in (
+                    ensemble_record.records[record_idx].data
+                    for ensemble_record in ensemble_records
+                )
+                if isinstance(data, list)
+                for val in data
+            ]
+            combined_records.append(ert3.data.Record(data=ldata))
+        elif isinstance(record0.data, dict):
+            ddata = {
+                key: val
+                for data in (
+                    ensemble_record.records[record_idx].data
+                    for ensemble_record in ensemble_records
+                )
+                if isinstance(data, dict)
+                for key, val in data.items()
+            }
+            combined_records.append(ert3.data.Record(data=ddata))
+    return ert3.data.EnsembleRecord(records=combined_records)
 
 
 def _get_numerical_metadata(ensemble_id: str, record_name: str) -> _NumericalMetaData:
     response = _get_from_server(
-        path=f"ensembles/{ensemble_id}/records/{record_name}/userdata",
-        params={"realization_index": 0},  # This assumes there is a realization 0
+        f"ensembles/{ensemble_id}/records/{record_name}/userdata"
     )
 
     if response.status_code == 404:
@@ -314,30 +359,46 @@ def _get_numerical_data(
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
     metadata = _get_numerical_metadata(ensemble_id, record_name)
 
-    records = []
-    for real_id in range(metadata.ensemble_size):
-        response = _get_from_server(
-            path=f"ensembles/{ensemble_id}/records/{record_name}",
-            params={"realization_index": real_id},
-            headers={"accept": "text/csv"},
+    response = _get_from_server(
+        f"ensembles/{ensemble_id}/records/{record_name}",
+        headers={"accept": "text/csv"},
+    )
+
+    if response.status_code == 404:
+        raise ert3.exceptions.ElementMissingError(
+            f"No {record_name} data for experiment: {experiment_name}"
         )
 
-        if response.status_code == 404:
-            raise ert3.exceptions.ElementMissingError(
-                f"No {record_name} data for experiment: {experiment_name}"
-            )
+    if response.status_code != 200:
+        raise ert3.exceptions.StorageError(response.text)
 
-        if response.status_code != 200:
-            raise ert3.exceptions.StorageError(response.text)
+    return _response2records(
+        response.content,
+        metadata.record_type,
+    )
 
-        record = _response2record(
-            response.content,
-            metadata.record_type,
-            real_id,
+
+def _get_experiment_parameters(
+    workspace: Path, experiment_name: str
+) -> Mapping[str, Iterable[str]]:
+    experiment = _get_experiment_by_name(experiment_name)
+    if experiment is None:
+        raise ert3.exceptions.NonExistantExperiment(
+            f"Cannot get parameters from non-existing experiment: {experiment_name}"
         )
-        records.append(record)
 
-    return ert3.data.EnsembleRecord(records=records)
+    ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
+    response = _get_from_server(f"ensembles/{ensemble_id}/parameters")
+    if response.status_code != 200:
+        raise ert3.exceptions.StorageError(response.text)
+    parameters: MutableMapping[str, List[str]] = {}
+    for name in response.json():
+        key, val = name.split(".")
+        if key in parameters:
+            parameters[key].append(val)
+        else:
+            parameters[key] = [val]
+    return parameters
 
 
 def add_ensemble_record(
@@ -349,8 +410,35 @@ def add_ensemble_record(
 ) -> None:
     if experiment_name is None:
         experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
+    experiment = _get_experiment_by_name(experiment_name)
+    if experiment is None:
+        raise ert3.exceptions.NonExistantExperiment(
+            f"Cannot add {record_name} data to "
+            f"non-existing experiment: {experiment_name}"
+        )
 
-    _add_numerical_data(workspace, experiment_name, record_name, ensemble_record)
+    dataframe = pd.DataFrame([r.data for r in ensemble_record.records])
+    record_type = _get_record_type(ensemble_record)
+
+    parameters = _get_experiment_parameters(workspace, experiment_name)
+    if record_name in parameters:
+        # Split by columns
+        for column_label in dataframe:
+            _add_numerical_data(
+                workspace,
+                experiment_name,
+                f"{record_name}.{column_label}",
+                dataframe[column_label],
+                record_type,
+            )
+    else:
+        _add_numerical_data(
+            workspace,
+            experiment_name,
+            record_name,
+            dataframe,
+            record_type,
+        )
 
 
 def get_ensemble_record(
@@ -361,13 +449,31 @@ def get_ensemble_record(
 ) -> ert3.data.EnsembleRecord:
     if experiment_name is None:
         experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
+    experiment = _get_experiment_by_name(experiment_name)
+    if experiment is None:
+        raise ert3.exceptions.NonExistantExperiment(
+            f"Cannot get {record_name} data, no experiment named: {experiment_name}"
+        )
 
-    return _get_numerical_data(workspace, experiment_name, record_name)
+    param_names = _get_experiment_parameters(workspace, experiment_name)
+    if record_name in param_names:
+        ensemble_records = [
+            _get_numerical_data(
+                workspace,
+                experiment_name,
+                record_name + _PARAMETER_RECORD_SEPARATOR + param_name,
+            )
+            for param_name in param_names[record_name]
+        ]
+        return _combine_records(ensemble_records)
+    else:
+        return _get_numerical_data(workspace, experiment_name, record_name)
 
 
 def get_ensemble_record_names(
-    *, workspace: Path, experiment_name: Optional[str] = None
+    *, workspace: Path, experiment_name: Optional[str] = None, _flatten: bool = True
 ) -> Iterable[str]:
+    # _flatten is a parameter used only for testing separated parameter records
     if experiment_name is None:
         experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
     experiment = _get_experiment_by_name(experiment_name)
@@ -380,23 +486,17 @@ def get_ensemble_record_names(
     response = _get_from_server(path=f"ensembles/{ensemble_id}/records")
     if response.status_code != 200:
         raise ert3.exceptions.StorageError(response.text)
+
+    # Flatten any parameter records that were split
+    if _flatten:
+        return {x.split(_PARAMETER_RECORD_SEPARATOR)[0] for x in response.json().keys()}
     return list(response.json().keys())
 
 
 def get_experiment_parameters(
     *, workspace: Path, experiment_name: str
 ) -> Iterable[str]:
-    experiment = _get_experiment_by_name(experiment_name)
-    if experiment is None:
-        raise ert3.exceptions.NonExistantExperiment(
-            f"Cannot get parameters from non-existing experiment: {experiment_name}"
-        )
-
-    ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
-    response = _get_from_server(path=f"ensembles/{ensemble_id}/parameters")
-    if response.status_code != 200:
-        raise ert3.exceptions.StorageError(response.text)
-    return list(response.json())
+    return list(_get_experiment_parameters(workspace, experiment_name))
 
 
 def get_experiment_responses(*, workspace: Path, experiment_name: str) -> Iterable[str]:

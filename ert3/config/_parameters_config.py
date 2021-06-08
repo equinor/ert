@@ -145,8 +145,15 @@ class ParametersConfig(_ParametersConfig):
     def __iter__(self) -> Iterator[_ParameterConfig]:  # type: ignore
         return iter(self.__root__)
 
-    def __getitem__(self, item: int) -> _ParameterConfig:
-        return self.__root__[item]
+    def __getitem__(self, item: Union[int, str]) -> _ParameterConfig:
+        if isinstance(item, int):
+            return self.__root__[item]
+        elif isinstance(item, str):
+            for group in self:
+                if group.name == item:
+                    return group
+            raise ValueError(f"No parameter group found named: {item}")
+        raise TypeError(f"Item should be int or str, not {type(item)}")
 
     def __len__(self) -> int:
         return len(self.__root__)

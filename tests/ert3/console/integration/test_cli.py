@@ -217,7 +217,7 @@ def test_cli_status_some_runs(workspace, capsys):
         ert3.storage.init_experiment(
             workspace=workspace,
             experiment_name=experiments[idx],
-            parameters=[],
+            parameters={},
             ensemble_size=42,
             responses=[],
         )
@@ -240,7 +240,7 @@ def test_cli_status_all_run(workspace, capsys):
         ert3.storage.init_experiment(
             workspace=workspace,
             experiment_name=experiment,
-            parameters=[],
+            parameters={},
             ensemble_size=42,
             responses=[],
         )
@@ -302,7 +302,7 @@ def test_cli_clean_all(workspace):
         ert3.storage.init_experiment(
             workspace=workspace,
             experiment_name=experiment,
-            parameters=[],
+            parameters={},
             ensemble_size=42,
             responses=[],
         )
@@ -335,7 +335,7 @@ def test_cli_clean_one(workspace):
         ert3.storage.init_experiment(
             workspace=workspace,
             experiment_name=experiment,
-            parameters=[],
+            parameters={},
             ensemble_size=42,
             responses=[],
         )
@@ -375,7 +375,7 @@ def test_cli_clean_non_existant_experiment(workspace, capsys):
         ert3.storage.init_experiment(
             workspace=workspace,
             experiment_name=experiment,
-            parameters=[],
+            parameters={},
             ensemble_size=42,
             responses=[],
         )

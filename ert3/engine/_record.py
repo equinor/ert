@@ -19,16 +19,6 @@ def load_record(workspace: Path, record_name: str, record_file: Path) -> None:
     )
 
 
-def _get_distribution(
-    parameter_group_name: str, parameters_config: ert3.config.ParametersConfig
-) -> ert3.stats.Distribution:
-    for parameter_group in parameters_config:
-        if parameter_group.name == parameter_group_name:
-            return parameter_group.as_distribution()
-
-    raise ValueError(f"No parameter group found named: {parameter_group_name}")
-
-
 # pylint: disable=too-many-arguments
 def sample_record(
     workspace: Path,
@@ -38,7 +28,7 @@ def sample_record(
     ensemble_size: int,
     experiment_name: Optional[str] = None,
 ) -> None:
-    distribution = _get_distribution(parameter_group_name, parameters_config)
+    distribution = parameters_config[parameter_group_name].as_distribution()
     ensrecord = ert3.data.EnsembleRecord(
         records=[distribution.sample() for _ in range(ensemble_size)]
     )
