@@ -6,6 +6,8 @@ import shutil
 
 import decorator
 
+from ecl.util.test import ExtendedTestCase
+
 """
 Swiped from
 https://github.com/equinor/everest/blob/master/tests/utils/__init__.py
@@ -62,3 +64,17 @@ def tmp(path=None, teardown=True):
         except OSError as oserr:
             logging.debug("tmp:rmtree failed %s (%s)" % (fname, oserr))
             shutil.rmtree(fname, ignore_errors=True)
+
+
+class ErtTest(ExtendedTestCase):
+    SOURCE_ROOT = SOURCE_DIR
+    TESTDATA_ROOT = os.path.join(SOURCE_ROOT, "test-data")
+    SHARE_ROOT = os.path.join(SOURCE_ROOT, "share")
+
+    @classmethod
+    def createSharePath(cls, path):
+        if cls.SHARE_ROOT is None:
+            raise Exception(
+                "Trying to create directory rooted in 'SHARE_ROOT' - variable 'SHARE_ROOT' is not set."
+            )
+        return os.path.realpath(os.path.join(cls.SHARE_ROOT, path))
