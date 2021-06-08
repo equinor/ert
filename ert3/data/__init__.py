@@ -5,6 +5,7 @@ from ert3.data._record import RecordTransmitter
 from ert3.data._record import SharedDiskRecordTransmitter
 from ert3.data._record import InMemoryRecordTransmitter
 from ert3.data._record import RecordType
+from ert3.data._record import RecordIndex
 
 __all__ = (
     "Record",
@@ -12,6 +13,7 @@ __all__ = (
     "MultiEnsembleRecord",
     "RecordTransmitter",
     "RecordType",
+    "RecordIndex",
     "SharedDiskRecordTransmitter",
     "InMemoryRecordTransmitter",
 )
