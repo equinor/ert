@@ -14,11 +14,13 @@ def _prepare_experiment(
         raise ValueError(f"Experiment {experiment_name} have been carried out.")
 
     parameter_names = [elem.record for elem in ensemble.input]
+    responses = [elem.record for elem in ensemble.output]
     ert3.storage.init_experiment(
         workspace=workspace_root,
         experiment_name=experiment_name,
         parameters=parameter_names,
         ensemble_size=ensemble_size,
+        responses=responses,
     )
 
 
@@ -131,18 +133,18 @@ def _prepare_sensitivity(
         )
 
 
-def _store_responses(
+def _store_output_records(
     workspace_root: pathlib.Path,
     experiment_name: str,
-    responses: ert3.data.MultiEnsembleRecord,
+    records: ert3.data.MultiEnsembleRecord,
 ) -> None:
-    assert responses.record_names is not None
-    for record_name in responses.record_names:
+    assert records.record_names is not None
+    for record_name in records.record_names:
         ert3.storage.add_ensemble_record(
             workspace=workspace_root,
             experiment_name=experiment_name,
             record_name=record_name,
-            ensemble_record=responses.ensemble_records[record_name],
+            ensemble_record=records.ensemble_records[record_name],
         )
 
 
@@ -172,10 +174,10 @@ def _evaluate(
     experiment_name: str,
 ) -> None:
     parameters = _load_experiment_parameters(workspace_root, experiment_name)
-    responses = ert3.evaluator.evaluate(
+    output_records = ert3.evaluator.evaluate(
         workspace_root, experiment_name, parameters, ensemble, stages_config
     )
-    _store_responses(workspace_root, experiment_name, responses)
+    _store_output_records(workspace_root, experiment_name, output_records)
 
 
 # pylint: disable=too-many-arguments

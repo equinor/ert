@@ -11,6 +11,7 @@ def base_ensemble_config():
     yield {
         "size": 1000,
         "input": [{"source": "stochastic.coefficients", "record": "coefficients"}],
+        "output": [{"record": "polynomial_output"}],
         "forward_model": {
             "driver": "local",
             "stage": "evaluate_polynomial",
@@ -122,4 +123,38 @@ def test_unknown_field_in_forward_model(base_ensemble_config):
     with pytest.raises(
         ert3.exceptions.ConfigValidationError, match="extra fields not permitted"
     ):
+        ert3.config.load_ensemble_config(base_ensemble_config)
+
+
+def test_missing_ouput(base_ensemble_config):
+    remove_output = base_ensemble_config.copy()
+    remove_output.pop("output")
+    with pytest.raises(
+        ert3.exceptions.ConfigValidationError, match="output\n  field required"
+    ):
+        ert3.config.load_ensemble_config(remove_output)
+
+
+@pytest.mark.parametrize(
+    "output_config, expected_record",
+    [
+        ({"record": "coeffs"}, "coeffs"),
+    ],
+)
+def test_output(output_config, expected_record, base_ensemble_config):
+    base_ensemble_config["output"] = [output_config]
+    config = ert3.config.load_ensemble_config(base_ensemble_config)
+    assert config.output[0].record == expected_record
+
+
+@pytest.mark.parametrize(
+    "output_config, expected_error",
+    [
+        ({}, "1 validation error for EnsembleConfig"),
+        ({"something": "coeffs"}, "record\n  field required"),
+    ],
+)
+def test_invalid_output(output_config, expected_error, base_ensemble_config):
+    base_ensemble_config["output"] = [output_config]
+    with pytest.raises(ert3.exceptions.ConfigValidationError, match=expected_error):
         ert3.config.load_ensemble_config(base_ensemble_config)

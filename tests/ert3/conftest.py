@@ -60,6 +60,7 @@ def base_ensemble_dict():
     yield {
         "size": 10,
         "input": [{"source": "stochastic.coefficients", "record": "coefficients"}],
+        "output": [{"record": "polynomial_output"}],
         "forward_model": {"driver": "local", "stage": "evaluate_polynomial"},
     }
 

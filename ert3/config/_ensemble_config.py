@@ -29,9 +29,14 @@ class Input(_EnsembleConfig):
     record: str
 
 
+class Output(_EnsembleConfig):
+    record: str
+
+
 class EnsembleConfig(_EnsembleConfig):
     forward_model: ForwardModel
     input: Tuple[Input, ...]
+    output: Tuple[Output, ...]
     size: Optional[int] = None
 
 

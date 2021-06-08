@@ -37,7 +37,7 @@ def test_evaluator_script(
     base_ensemble_dict["size"] = len(coeffs)
     ensemble = ert3.config.load_ensemble_config(base_ensemble_dict)
 
-    evaluation_responses = ert3.evaluator.evaluate(
+    evaluation_records = ert3.evaluator.evaluate(
         workspace,
         "test_evaluation",
         input_records,
@@ -52,7 +52,7 @@ def test_evaluator_script(
             )
         }
     )
-    assert expected == evaluation_responses
+    assert expected == evaluation_records
 
 
 @pytest.mark.requires_ert_storage
@@ -64,7 +64,7 @@ def test_evaluator_function(
     base_ensemble_dict.update({"size": len(coeffs)})
     ensemble = ert3.config.load_ensemble_config(base_ensemble_dict)
 
-    evaluation_responses = ert3.evaluator.evaluate(
+    evaluation_records = ert3.evaluator.evaluate(
         workspace,
         "test_evaluation",
         input_records,
@@ -79,4 +79,4 @@ def test_evaluator_function(
             )
         }
     )
-    assert expected == evaluation_responses
+    assert expected == evaluation_records
