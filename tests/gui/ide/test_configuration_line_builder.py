@@ -2,7 +2,7 @@ from ert_shared.ide.keywords import ErtKeywords
 from ert_shared.ide.keywords.configuration_line_builder import ConfigurationLineBuilder
 from ert_shared.ide.keywords.definitions import ArgumentDefinition
 from ert_shared.ide.keywords.data.configuration_line import ConfigurationLine
-from tests import ErtTest
+from tests.utils import ErtTest
 
 
 class ConfigurationLineBuilderTest(ErtTest):

@@ -9,7 +9,7 @@ from ert_shared.models.ensemble_smoother import EnsembleSmoother
 from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert_shared.models.single_test_run import SingleTestRun
 from res.test import ErtTestContext
-from tests import ErtTest
+from tests.utils import ErtTest
 
 
 class ModelFactoryTest(ErtTest):

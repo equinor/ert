@@ -5,7 +5,7 @@ from ert_shared import ERT
 from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared.cli.workflow import execute_workflow
 from res.enkf import EnKFMain, ResConfig
-from tests import ErtTest
+from tests.utils import ErtTest
 from tests.utils import SOURCE_DIR, tmpdir
 
 

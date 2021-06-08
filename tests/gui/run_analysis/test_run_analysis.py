@@ -4,7 +4,7 @@ from qtpy.QtGui import QIcon
 
 from ert_gui.tools import run_analysis
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
-from tests import ErtTest
+from tests.utils import ErtTest
 
 from unittest.mock import Mock, patch
 

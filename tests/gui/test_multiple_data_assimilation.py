@@ -1,4 +1,4 @@
-from tests import ErtTest
+from tests.utils import ErtTest
 from ert_shared.models import MultipleDataAssimilation as mda
 
 

@@ -4,7 +4,7 @@ from ert_shared.ide.keywords.definitions import (
     ConfigurationLineDefinition,
     IntegerArgument,
 )
-from tests import ErtTest
+from tests.utils import ErtTest
 
 
 class ConfigurationLineDefinitionTest(ErtTest):

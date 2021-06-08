@@ -1,4 +1,4 @@
-from tests import ErtTest
+from tests.utils import ErtTest
 from ert_gui.plottery import PlotConfig, PlotConfigHistory
 
 
