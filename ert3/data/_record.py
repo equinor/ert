@@ -57,9 +57,12 @@ class _DataElement(BaseModel):
         arbitrary_types_allowed = True
 
 
+RecordIndex = Tuple[Union[StrictInt, StrictStr], ...]
+
+
 def _build_record_index(
     data: record_data,
-) -> Tuple[Union[StrictInt, StrictStr], ...]:
+) -> RecordIndex:
     if isinstance(data, MutableMapping):
         return tuple(data.keys())
     else:
@@ -75,14 +78,14 @@ class RecordType(str, Enum):
 
 class Record(_DataElement):
     data: record_data
-    index: Optional[Tuple[Union[StrictStr, StrictInt], ...]] = None
+    index: Optional[RecordIndex] = None
 
     @validator("index", pre=True)
     def index_validator(
         cls,
-        index: Optional[Tuple[Union[StrictStr, StrictInt], ...]],
+        index: Optional[RecordIndex],
         values: Dict[str, Any],
-    ) -> Optional[Tuple[Union[StrictStr, StrictInt], ...]]:
+    ) -> Optional[RecordIndex]:
         if index is None and "data" in values:
             index = _build_record_index(values["data"])
         return index
