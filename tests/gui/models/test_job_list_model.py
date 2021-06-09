@@ -10,7 +10,7 @@ from ert_gui.model.snapshot import COLUMNS, SnapshotModel
 from ert_shared.ensemble_evaluator.entity.snapshot import Job, PartialSnapshot
 from ert_shared.status.entity.state import JOB_STATE_FAILURE, JOB_STATE_START
 
-from .misc import partial_snapshot
+from .utils import partial_snapshot
 
 
 def _id_to_col(identifier):

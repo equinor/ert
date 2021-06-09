@@ -5,7 +5,7 @@ import pytest
 
 from ert_shared.ensemble_evaluator.client import Client
 
-from .misc import _mock_ws
+from .utils import _mock_ws
 
 
 def test_invalid_server():

@@ -9,7 +9,7 @@ from ert_shared.status.entity.state import (
     REALIZATION_STATE_UNKNOWN,
 )
 
-from .misc import partial_snapshot
+from .utils import partial_snapshot
 
 
 def test_using_qt_model_tester(qtmodeltester, full_snapshot):

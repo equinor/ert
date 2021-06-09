@@ -6,7 +6,7 @@ import pytest
 
 import ert3
 
-from .misc import assert_distribution, assert_export, assert_sensitivity_oat_export
+from .utils import assert_distribution, assert_export, assert_sensitivity_oat_export
 
 
 @pytest.fixture()

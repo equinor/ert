@@ -29,7 +29,7 @@ from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.prefect_ensemble import PrefectEnsemble
 
-from .misc import _mock_ws
+from .utils import _mock_ws
 
 
 def parse_config(path):

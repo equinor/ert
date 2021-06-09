@@ -10,7 +10,7 @@ from ert_shared.status.entity.state import (
     JOB_STATE_RUNNING,
 )
 
-from .misc import partial_snapshot
+from .utils import partial_snapshot
 
 
 def test_using_qt_model_tester(qtmodeltester, full_snapshot):
