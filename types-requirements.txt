@@ -1,0 +1,7 @@
+mypy
+types-aiofiles
+types-requests
+types-pkg_resources
+types-PyYAML
+types-python-dateutil
+types-six
