@@ -1,12 +1,11 @@
 from ert_shared.status.entity.state import (
-    JOB_STATE_FINISHED,
     REALIZATION_STATE_FINISHED,
     REALIZATION_STATE_UNKNOWN,
 )
 from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Realization
 from PyQt5.QtCore import QModelIndex
 from ert_gui.model.progress_proxy import ProgressProxyModel
-from tests.gui.conftest import partial_snapshot
+from .misc import partial_snapshot
 from ert_gui.model.snapshot import ProgressRole, SnapshotModel
 from pytestqt.qt_compat import qt_api
 

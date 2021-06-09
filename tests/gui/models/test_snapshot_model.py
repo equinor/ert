@@ -8,7 +8,7 @@ from ert_shared.status.entity.state import (
 from pytestqt.qt_compat import qt_api
 from qtpy.QtCore import QModelIndex
 from qtpy.QtGui import QColor
-from tests.gui.conftest import partial_snapshot
+from .misc import partial_snapshot
 
 
 def test_using_qt_model_tester(qtmodeltester, full_snapshot):
