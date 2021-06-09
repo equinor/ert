@@ -1,7 +1,7 @@
 from qtpy.QtCore import Qt
 
 from ert_gui.ide.wizards import TreeItem, TreeModel
-from tests.utils import ErtTest
+from utils import ErtTest
 
 
 class TreeStructureTest(ErtTest):

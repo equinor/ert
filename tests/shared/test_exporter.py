@@ -3,7 +3,7 @@ import pytest
 import shutil
 import sys
 from ert_shared.exporter import Exporter
-from tests.utils import SOURCE_DIR, tmpdir
+from utils import SOURCE_DIR, tmpdir
 from res.enkf import ResConfig, EnKFMain
 from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared import ERT

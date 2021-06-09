@@ -1,5 +1,5 @@
 from ert_shared.ide.keywords.definitions import IntegerArgument
-from tests.utils import ErtTest
+from utils import ErtTest
 
 
 class IntegerArgumentTest(ErtTest):

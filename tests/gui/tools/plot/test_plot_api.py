@@ -9,7 +9,7 @@ from ert_gui.tools.plot.plot_api import PlotApi
 from res.enkf import EnKFMain, ResConfig
 
 from ert_shared.libres_facade import LibresFacade
-from tests.utils import SOURCE_DIR, tmpdir
+from utils import SOURCE_DIR, tmpdir
 from unittest import TestCase
 
 

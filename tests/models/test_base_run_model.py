@@ -5,7 +5,7 @@ from ert_gui.ertnotifier import configureErtNotifier
 from ert_shared.models import BaseRunModel
 from res.job_queue import JobStatusType
 from res.test import ErtTestContext
-from tests.utils import ErtTest
+from utils import ErtTest
 
 from unittest.mock import Mock, patch
 

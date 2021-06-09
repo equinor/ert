@@ -1,4 +1,4 @@
-from tests.utils import ErtTest
+from utils import ErtTest
 from res.test import ErtTestContext
 
 # The data loaded in this test is not part of an automatic test, we

@@ -12,7 +12,7 @@ from ert3.data import (
     SharedDiskRecordTransmitter,
     RecordTransmitter,
 )
-from tests.utils import tmp
+from utils import tmp
 
 
 @contextlib.contextmanager

@@ -30,7 +30,7 @@ from ert_shared.ensemble_evaluator.prefect_ensemble import PrefectEnsemble
 
 from prefect import Flow
 from .misc import _mock_ws
-from tests.utils import SOURCE_DIR, tmp
+from utils import SOURCE_DIR, tmp
 
 
 def parse_config(path):

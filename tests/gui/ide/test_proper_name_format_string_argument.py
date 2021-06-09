@@ -1,5 +1,5 @@
 from ert_shared.ide.keywords.definitions import ProperNameFormatStringArgument
-from tests.utils import ErtTest
+from utils import ErtTest
 
 
 class ProperNameFormatStringArgumentTest(ErtTest):

@@ -17,7 +17,7 @@ from res.enkf import ConfigKeys
 from res.enkf.queue_config import QueueConfig
 from res.job_queue.driver import LOCAL_DRIVER
 from res.job_queue.ext_job import ExtJob
-from tests.ensemble_evaluator.ensemble_test import TestEnsemble
+from ensemble_evaluator.ensemble_test import TestEnsemble
 
 
 @pytest.fixture

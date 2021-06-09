@@ -11,7 +11,7 @@ from ert_shared.ide.keywords.definitions.proper_name_argument import ProperNameA
 from ert_shared.ide.keywords.definitions.proper_name_format_argument import (
     ProperNameFormatArgument,
 )
-from tests.utils import ErtTest
+from utils import ErtTest
 
 
 class ErtKeywordTest(ErtTest):

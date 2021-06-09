@@ -9,7 +9,7 @@ from unittest.mock import Mock
 from pytest import MonkeyPatch
 
 from ert_shared.plugins import ErtPluginContext
-import tests.all.plugins.dummy_plugins as dummy_plugins
+from . import dummy_plugins
 
 
 env_vars = [
@@ -24,7 +24,6 @@ env_vars = [
 class PluginContextTest(unittest.TestCase):
     def setUp(self):
         self.monkeypatch = MonkeyPatch()
-        pass
 
     def tearDown(self):
         self.monkeypatch.undo()

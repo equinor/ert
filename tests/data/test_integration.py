@@ -13,7 +13,7 @@ from res.enkf import EnKFMain, ResConfig
 
 from ert_data.measured import MeasuredData
 from ert_shared.libres_facade import LibresFacade
-from tests.utils import SOURCE_DIR
+from utils import SOURCE_DIR
 
 test_data_root = pathlib.Path(SOURCE_DIR) / "test-data" / "local"
 

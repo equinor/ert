@@ -1,6 +1,6 @@
 from ert_shared.ide.keywords.data import Keyword, Argument, Token
 from ert_shared.ide.keywords.definitions import KeywordDefinition, StringArgument
-from tests.utils import ErtTest
+from utils import ErtTest
 
 
 class TokenTest(ErtTest):

@@ -1,4 +1,4 @@
-from tests.narrative import Consumer, EventDescription, Provider
+from narrative import Consumer, EventDescription, Provider
 
 
 import websockets

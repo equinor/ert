@@ -1,5 +1,5 @@
 import pytest
-from tests.narratives import dispatch_failing_job
+from narratives import dispatch_failing_job
 
 
 @pytest.mark.consumer_driven_contract_test

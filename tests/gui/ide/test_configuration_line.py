@@ -1,7 +1,7 @@
 from ert_shared.ide.keywords.data import ConfigurationLine, Keyword, Argument
 from ert_shared.ide.keywords.definitions import StringArgument
 from ert_shared.ide.keywords.definitions.keyword_definition import KeywordDefinition
-from tests.utils import ErtTest
+from utils import ErtTest
 
 
 class ConfigurationLineTest(ErtTest):

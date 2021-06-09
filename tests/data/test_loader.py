@@ -1,5 +1,5 @@
 from ert_data import loader
-from tests.data.mocked_block_observation import MockedBlockObservation
+from data.mocked_block_observation import MockedBlockObservation
 import pandas as pd
 import pytest
 import deprecation

@@ -12,8 +12,8 @@ from ert_shared.status.entity.state import (
     JOB_STATE_RUNNING,
     ENSEMBLE_STATE_UNKNOWN,
 )
-from tests.ensemble_evaluator.ensemble_test import TestEnsemble, send_dispatch_event
-from tests.narratives import (
+from ensemble_evaluator.ensemble_test import TestEnsemble, send_dispatch_event
+from narratives import (
     dispatch_failing_job,
     monitor_failing_ensemble,
     monitor_failing_evaluation,

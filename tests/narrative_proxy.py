@@ -6,7 +6,7 @@ from http import HTTPStatus
 
 import websockets
 
-from tests.narrative import InteractionDirection, _Narrative
+from narrative import InteractionDirection, _Narrative
 
 
 class NarrativeProxy(object):

@@ -4,7 +4,7 @@ from pandas.core.base import PandasObject
 from res.enkf import EnKFMain, ResConfig
 
 from ert_shared.libres_facade import LibresFacade
-from tests.utils import SOURCE_DIR, tmpdir
+from utils import SOURCE_DIR, tmpdir
 from unittest import TestCase
 
 

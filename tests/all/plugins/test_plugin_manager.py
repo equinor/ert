@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
-import sys
 import unittest
 import logging
 from os import uname
 import tempfile
 
-import pytest
 from ert_shared.plugins import ErtPluginManager
 import ert_shared.hook_implementations
 
-import tests.all.plugins.dummy_plugins as dummy_plugins
+from . import dummy_plugins
+from unittest.mock import Mock
 
 _lib_extension = "dylib" if uname()[0] == "Darwin" else "so"
-from unittest.mock import Mock
 
 
 class PluginManagerTest(unittest.TestCase):
