@@ -149,7 +149,6 @@ jobs:
         herbstluftwm &
         sleep 1
         python -c "import sys; print(sys.path)"
-        ls -al
         pytest -sv
         popd
 
@@ -256,7 +255,6 @@ jobs:
 
     - name: Install wheel and test dependencies
       run: |
-        ls -al
         find . -name "*.whl" -exec pip install '{}' \;
         pip install -r dev-requirements.txt
 
