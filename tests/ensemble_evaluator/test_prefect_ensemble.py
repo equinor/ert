@@ -1,6 +1,4 @@
 from typing import Set
-from ert_shared.status.entity.state import JOB_STATE_FAILURE
-import pathlib
 import pickle
 import cloudpickle
 from pathlib import Path
@@ -11,28 +9,27 @@ import asyncio
 import copy
 import os
 import os.path
-import sys
 import threading
 from collections import defaultdict
 from datetime import timedelta
 from functools import partial
 from itertools import permutations
-from pathlib import Path
 
 import prefect
 import ert3
-import ert_shared.ensemble_evaluator.entity.ensemble as ee
 import pytest
 import yaml
+
+import ert_shared.ensemble_evaluator.entity.ensemble as ee
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.prefect_ensemble import PrefectEnsemble
+
 from prefect import Flow
-from prefect.run_configs import LocalRun
-from tests.ensemble_evaluator.conftest import _mock_ws
+from .misc import _mock_ws
 from tests.utils import SOURCE_DIR, tmp
 
 
