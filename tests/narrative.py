@@ -12,8 +12,9 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from cloudevents.sdk import types
-from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 from websockets.server import WebSocketServer  # type: ignore
+
+from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 
 try:
     from typing import TypedDict  # >=3.8

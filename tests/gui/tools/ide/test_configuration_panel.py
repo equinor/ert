@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import io
-from qtpy.QtWidgets import QAction, QMessageBox
-from ert_gui.tools.ide import ConfigurationPanel
 
+from qtpy.QtWidgets import QAction, QMessageBox
+
+from ert_gui.tools.ide import ConfigurationPanel
 
 UNICODE_TEXT = u"""ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ
 ᛋᚳᛖᚪᛚ᛫ᚦᛖᚪᚻ᛫ᛗᚪᚾᚾᚪ᛫ᚷᛖᚻᚹᛦᛚᚳ᛫ᛗᛁᚳᛚᚢᚾ᛫ᚻᛦᛏ᛫ᛞᚫᛚᚪᚾ

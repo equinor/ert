@@ -1,4 +1,5 @@
 from utils import ErtTest
+
 from ert_gui.plottery import PlotConfig, PlotConfigHistory
 
 

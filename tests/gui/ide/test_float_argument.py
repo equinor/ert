@@ -1,5 +1,6 @@
-from ert_shared.ide.keywords.definitions import FloatArgument
 from utils import ErtTest
+
+from ert_shared.ide.keywords.definitions import FloatArgument
 
 
 class FloatArgumentTest(ErtTest):

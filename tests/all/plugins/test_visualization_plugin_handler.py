@@ -1,6 +1,8 @@
 import pytest
+
+from ert_shared.plugins import PluginHandlerException, VisualizationPluginHandler
 from ert_shared.plugins.plugin_manager import ErtPluginManager
-from ert_shared.plugins import VisualizationPluginHandler, PluginHandlerException
+
 from . import dummy_plugins
 
 

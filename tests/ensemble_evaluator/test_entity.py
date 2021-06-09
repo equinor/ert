@@ -1,14 +1,17 @@
-from datetime import datetime
 import logging
-import ert_shared.status.entity.state as state
-from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert_shared.ensemble_evaluator.entity.ensemble_base import _EnsembleStateTracker
-from cloudevents.http.event import CloudEvent
+from datetime import datetime
+
 import pytest
-from ert_shared.ensemble_evaluator.entity import command, tool
+from cloudevents.http.event import CloudEvent
+
+import ert_shared.status.entity.state as state
+from ert_shared.ensemble_evaluator.entity import command
+from ert_shared.ensemble_evaluator.entity import identifiers as ids
+from ert_shared.ensemble_evaluator.entity import tool
+from ert_shared.ensemble_evaluator.entity.ensemble_base import _EnsembleStateTracker
 from ert_shared.ensemble_evaluator.entity.snapshot import (
-    PartialSnapshot,
     Job,
+    PartialSnapshot,
     SnapshotBuilder,
 )
 

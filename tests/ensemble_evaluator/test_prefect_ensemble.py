@@ -1,25 +1,26 @@
-from typing import Set
-import pickle
-import cloudpickle
-from pathlib import Path
-import importlib
-
-import sys
 import asyncio
 import copy
+import importlib
 import os
 import os.path
+import pickle
+import sys
 import threading
 from collections import defaultdict
 from datetime import timedelta
 from functools import partial
 from itertools import permutations
+from pathlib import Path
+from typing import Set
 
+import cloudpickle
 import prefect
-import ert3
 import pytest
 import yaml
+from prefect import Flow
+from utils import SOURCE_DIR, tmp
 
+import ert3
 import ert_shared.ensemble_evaluator.entity.ensemble as ee
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
@@ -28,9 +29,7 @@ from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.prefect_ensemble import PrefectEnsemble
 
-from prefect import Flow
 from .misc import _mock_ws
-from utils import SOURCE_DIR, tmp
 
 
 def parse_config(path):

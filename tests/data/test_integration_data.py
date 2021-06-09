@@ -1,19 +1,17 @@
-import time
-import pathlib
 import os
-import shutil
-import random
 import pathlib
-
-import pytest
+import random
+import shutil
+import time
 
 import numpy as np
-from ert_data import loader
+import pytest
 from res.enkf import EnKFMain, ResConfig
+from utils import SOURCE_DIR
 
+from ert_data import loader
 from ert_data.measured import MeasuredData
 from ert_shared.libres_facade import LibresFacade
-from utils import SOURCE_DIR
 
 test_data_root = pathlib.Path(SOURCE_DIR) / "test-data" / "local"
 

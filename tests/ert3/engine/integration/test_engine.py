@@ -1,15 +1,12 @@
-import pathlib
-import numbers
 import json
+import numbers
+import pathlib
+
 import pytest
 
 import ert3
 
-from .misc import (
-    assert_sensitivity_oat_export,
-    assert_export,
-    assert_distribution,
-)
+from .misc import assert_distribution, assert_export, assert_sensitivity_oat_export
 
 
 @pytest.fixture()

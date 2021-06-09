@@ -1,5 +1,6 @@
-from ert_shared.ide.keywords.definitions import PathArgument
 from utils import ErtTest
+
+from ert_shared.ide.keywords.definitions import PathArgument
 
 
 class PathArgumentTest(ErtTest):

@@ -1,14 +1,16 @@
-import pytest
 import signal
-import requests
-from textwrap import dedent
 from pathlib import Path
+from textwrap import dedent
+
+import pytest
+import requests
+
+from ert_shared.storage import connection
 from ert_shared.storage.server_monitor import (
     ServerBootFail,
     ServerMonitor,
     TimeoutError,
 )
-from ert_shared.storage import connection
 
 
 @pytest.fixture

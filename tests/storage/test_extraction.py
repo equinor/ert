@@ -2,7 +2,7 @@ import io
 import json
 import os
 from pathlib import Path
-from random import random, randint
+from random import randint, random
 from textwrap import dedent
 from typing import List, Tuple
 
@@ -476,7 +476,8 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
 
 
 def _rand_name():
-    import random, string
+    import random
+    import string
 
     return "".join(random.choice(string.ascii_lowercase) for _ in range(8))
 

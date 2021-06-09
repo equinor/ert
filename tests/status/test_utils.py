@@ -1,9 +1,9 @@
 import unittest
 
 from ert_shared.status.utils import (
+    _calculate_progress,
     format_running_time,
     scale_intervals,
-    _calculate_progress,
 )
 
 

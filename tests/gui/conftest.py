@@ -2,8 +2,9 @@ import copy
 from datetime import datetime as dt
 from unittest.mock import Mock
 
-import ert_shared.ensemble_evaluator.entity.identifiers as ids
 import pytest
+
+import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_shared.ensemble_evaluator.entity.identifiers import (
     CURRENT_MEMORY_USAGE,
     MAX_MEMORY_USAGE,

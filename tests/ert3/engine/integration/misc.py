@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 
 
 def load_experiment_config(ensemble_config, stages_config, parameters_config):

@@ -1,10 +1,10 @@
 import time
 from unittest.mock import patch
 
+from qtpy.QtCore import Qt
 
 from ert_gui.simulation.run_dialog import RunDialog
 from ert_shared.status.entity.event import EndEvent, FullSnapshotEvent
-from qtpy.QtCore import Qt
 
 
 class MockTracker:

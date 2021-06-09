@@ -5,7 +5,6 @@ from contextlib import contextmanager
 from http import HTTPStatus
 
 import websockets
-
 from narrative import InteractionDirection, _Narrative
 
 

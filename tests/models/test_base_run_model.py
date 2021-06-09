@@ -1,13 +1,13 @@
 import sys
 import unittest
+from unittest.mock import Mock, patch
 
-from ert_gui.ertnotifier import configureErtNotifier
-from ert_shared.models import BaseRunModel
 from res.job_queue import JobStatusType
 from res.test import ErtTestContext
 from utils import ErtTest
 
-from unittest.mock import Mock, patch
+from ert_gui.ertnotifier import configureErtNotifier
+from ert_shared.models import BaseRunModel
 
 
 class BaseRunModelTest(ErtTest):

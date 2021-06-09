@@ -1,17 +1,18 @@
-from ert_shared.ide.keywords.definitions import (
-    IntegerArgument,
-    StringArgument,
-    BoolArgument,
-    PathArgument,
-    FloatArgument,
-    PercentArgument,
-)
+from utils import ErtTest
+
 from ert_shared.ide.keywords import ErtKeywords
+from ert_shared.ide.keywords.definitions import (
+    BoolArgument,
+    FloatArgument,
+    IntegerArgument,
+    PathArgument,
+    PercentArgument,
+    StringArgument,
+)
 from ert_shared.ide.keywords.definitions.proper_name_argument import ProperNameArgument
 from ert_shared.ide.keywords.definitions.proper_name_format_argument import (
     ProperNameFormatArgument,
 )
-from utils import ErtTest
 
 
 class ErtKeywordTest(ErtTest):

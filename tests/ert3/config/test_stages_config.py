@@ -1,9 +1,11 @@
 import os
-import stat
 import pathlib
+import stat
+from typing import Callable
+
 import pydantic
 import pytest
-from typing import Callable
+
 import ert3
 
 

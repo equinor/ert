@@ -1,7 +1,10 @@
 import threading
-import pytest
 from functools import partial
+
+import pytest
+
 from ert_shared.ensemble_evaluator.client import Client
+
 from .misc import _mock_ws
 
 

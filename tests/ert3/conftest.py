@@ -1,11 +1,11 @@
-import os
-import stat
-
 import json
-import pytest
+import os
+import pathlib
+import stat
 import sys
 
-import pathlib
+import pytest
+
 import ert3
 
 POLY_SCRIPT = """#!/usr/bin/env python3

@@ -1,10 +1,11 @@
 import asyncio
 import threading
+from http import HTTPStatus
 
 import pytest
 import websockets
 from cloudevents.http import from_json
-from http import HTTPStatus
+
 from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 
 

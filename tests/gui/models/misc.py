@@ -1,4 +1,8 @@
-from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Realization, Job
+from ert_shared.ensemble_evaluator.entity.snapshot import (
+    Job,
+    PartialSnapshot,
+    Realization,
+)
 from ert_shared.status.entity.state import JOB_STATE_FINISHED
 
 

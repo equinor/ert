@@ -1,11 +1,10 @@
 import contextlib
 import logging
 import os
-import tempfile
 import shutil
+import tempfile
 
 import decorator
-
 from ecl.util.test import ExtendedTestCase
 
 """

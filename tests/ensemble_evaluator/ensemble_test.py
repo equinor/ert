@@ -1,6 +1,7 @@
 import threading
 
 from cloudevents.http import CloudEvent, to_json
+
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity import identifiers as identifiers
 from ert_shared.ensemble_evaluator.entity.ensemble import _BaseJob, _Realization, _Step

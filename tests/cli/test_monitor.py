@@ -1,21 +1,19 @@
+import unittest
 from datetime import datetime
+from io import StringIO
+
+from ert_shared.cli.monitor import Monitor
+from ert_shared.ensemble_evaluator.entity.snapshot import (
+    Realization,
+    Snapshot,
+    SnapshotDict,
+)
 from ert_shared.status.entity.event import _UpdateEvent
 from ert_shared.status.entity.state import (
     REALIZATION_STATE_FINISHED,
     REALIZATION_STATE_RUNNING,
     REALIZATION_STATE_WAITING,
 )
-from ert_shared.ensemble_evaluator.entity.snapshot import (
-    Snapshot,
-    SnapshotDict,
-    Realization,
-)
-import unittest
-
-from ert_shared.cli.monitor import Monitor
-
-
-from io import StringIO
 
 
 class MonitorTest(unittest.TestCase):

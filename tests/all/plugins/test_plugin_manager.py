@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-import unittest
 import logging
-from os import uname
 import tempfile
+import unittest
+from os import uname
+from unittest.mock import Mock
 
-from ert_shared.plugins import ErtPluginManager
 import ert_shared.hook_implementations
+from ert_shared.plugins import ErtPluginManager
 
 from . import dummy_plugins
-from unittest.mock import Mock
 
 _lib_extension = "dylib" if uname()[0] == "Darwin" else "so"
 

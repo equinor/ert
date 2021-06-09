@@ -1,5 +1,6 @@
-import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from narrative import Consumer, EventDescription, Provider
+
+import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 
 dispatch_failing_job = (
     Consumer("Dispatch")

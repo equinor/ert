@@ -1,6 +1,7 @@
 import datetime
 
 from utils import ErtTest
+
 from ert_gui.plottery import PlotLimits
 
 

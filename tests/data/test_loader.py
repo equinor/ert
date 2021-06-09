@@ -1,10 +1,11 @@
-from ert_data import loader
-from data.mocked_block_observation import MockedBlockObservation
+from unittest.mock import MagicMock, Mock
+
+import deprecation
 import pandas as pd
 import pytest
-import deprecation
+from data.mocked_block_observation import MockedBlockObservation
 
-from unittest.mock import Mock, MagicMock
+from ert_data import loader
 
 
 def create_summary_get_observations():

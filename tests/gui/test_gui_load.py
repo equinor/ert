@@ -1,16 +1,15 @@
-import sys
 import os
+import sys
+from distutils.version import StrictVersion
+from unittest.mock import Mock, PropertyMock
+
 import pytest
+import qtpy
+from qtpy.QtCore import Qt
 
 import ert_gui
-from ert_gui.tools import HelpCenter
-
-from distutils.version import StrictVersion
-from qtpy.QtCore import Qt
-import qtpy
 from ert_gui.gert_main import _start_window, run_gui
-
-from unittest.mock import Mock, PropertyMock
+from ert_gui.tools import HelpCenter
 
 
 @pytest.fixture()

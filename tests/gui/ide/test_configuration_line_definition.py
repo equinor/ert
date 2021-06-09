@@ -1,10 +1,11 @@
+from utils import ErtTest
+
 from ert_shared.ide.keywords.definitions import (
     ArgumentDefinition,
-    KeywordDefinition,
     ConfigurationLineDefinition,
     IntegerArgument,
+    KeywordDefinition,
 )
-from utils import ErtTest
 
 
 class ConfigurationLineDefinitionTest(ErtTest):

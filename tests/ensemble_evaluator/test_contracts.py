@@ -1,10 +1,7 @@
-from narrative import Consumer, EventDescription, Provider
-
-
-import websockets
-from cloudevents.http import CloudEvent, to_json, from_json
 import pytest
-
+import websockets
+from cloudevents.http import CloudEvent, from_json, to_json
+from narrative import Consumer, EventDescription, Provider
 
 pytestmark = pytest.mark.asyncio
 

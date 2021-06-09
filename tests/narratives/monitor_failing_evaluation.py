@@ -1,10 +1,10 @@
 import re
 
-import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
-from ert_shared.ensemble_evaluator.entity import serialization
-import ert_shared.status.entity.state as state
 from narrative import Consumer, EventDescription, Provider, ReMatch
 
+import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
+import ert_shared.status.entity.state as state
+from ert_shared.ensemble_evaluator.entity import serialization
 
 monitor_failing_evaluation = (
     Consumer("Monitor")

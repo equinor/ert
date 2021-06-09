@@ -1,5 +1,6 @@
-from ert_shared.ide.keywords.definitions import PercentArgument
 from utils import ErtTest
+
+from ert_shared.ide.keywords.definitions import PercentArgument
 
 
 class PercentArgumentTest(ErtTest):

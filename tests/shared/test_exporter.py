@@ -1,12 +1,14 @@
 import os
-import pytest
 import shutil
 import sys
-from ert_shared.exporter import Exporter
+
+import pytest
+from res.enkf import EnKFMain, ResConfig
 from utils import SOURCE_DIR, tmpdir
-from res.enkf import ResConfig, EnKFMain
-from ert_shared.cli.notifier import ErtCliNotifier
+
 from ert_shared import ERT
+from ert_shared.cli.notifier import ErtCliNotifier
+from ert_shared.exporter import Exporter
 from ert_shared.plugins.plugin_manager import ErtPluginContext
 
 

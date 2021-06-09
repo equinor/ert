@@ -1,7 +1,9 @@
-import pytest
-import pydantic
-import ert3
 from copy import deepcopy
+
+import pydantic
+import pytest
+
+import ert3
 
 
 @pytest.fixture()

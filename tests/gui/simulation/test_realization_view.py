@@ -1,10 +1,11 @@
 import pytest
 from qtpy import QtCore
-from qtpy.QtCore import Qt, QPoint, QModelIndex, QSize
+from qtpy.QtCore import QModelIndex, QPoint, QSize, Qt
 from qtpy.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
-from ert_gui.simulation.view.realization import RealizationWidget
-from ert_gui.model.snapshot import SnapshotModel
+
 from ert_gui.model.node import Node
+from ert_gui.model.snapshot import SnapshotModel
+from ert_gui.simulation.view.realization import RealizationWidget
 
 
 class MockDelegate(QStyledItemDelegate):
