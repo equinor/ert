@@ -5,7 +5,7 @@ import pytest
 
 import ert3
 
-from tests.ert3.conftest import (
+from .misc import (
     assert_sensitivity_oat_export,
     assert_export,
     assert_distribution,
