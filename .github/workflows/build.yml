@@ -106,6 +106,12 @@ jobs:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
         os: [ubuntu-latest, macos-latest]
+        # Excluded to keep build times down on Github actions
+        exclude:
+          - os: macos-latest
+            python-version: 3.7
+          - os: macos-latest
+            python-version: 3.9
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -235,6 +241,12 @@ jobs:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
         os: [ubuntu-latest, macos-latest]
+        # Excluded to keep build times down on Github actions
+        exclude:
+          - os: macos-latest
+            python-version: 3.7
+          - os: macos-latest
+            python-version: 3.9
     runs-on: ${{ matrix.os }}
 
     steps:
