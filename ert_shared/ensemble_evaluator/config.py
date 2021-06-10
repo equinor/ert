@@ -1,8 +1,6 @@
-import yaml
 import ipaddress
 import logging
-import socket
-from ert_shared.storage.main import bind_socket
+from ert_shared import port_handler
 import tempfile
 
 import os
@@ -21,27 +19,6 @@ from cryptography.x509.oid import NameOID
 from dns import resolver, reversename, exception
 
 logger = logging.getLogger(__name__)
-
-
-def _get_ip_address() -> str:
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(("8.8.8.8", 80))
-    return s.getsockname()[0]
-
-
-def find_open_port(lower: int = 51820, upper: int = 51840) -> int:
-    host = _get_ip_address()
-    for port in range(lower, upper):
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.bind((host, port))
-            sock.close()
-            return port
-        except socket.error:
-            pass
-    msg = f"No open port for host {host} in the range {lower}-{upper}"
-    logging.exception(msg)
-    raise Exception(msg)
 
 
 def get_machine_name():
@@ -131,16 +108,18 @@ def _generate_certificate(
 
 class EvaluatorServerConfig:
     def __init__(
-        self, port: int = None, use_token: bool = True, generate_cert: bool = True
+        self,
+        custom_port_range: range = None,
+        use_token: bool = True,
+        generate_cert: bool = True,
     ) -> None:
-        self.host = _get_ip_address()
-        self.port = find_open_port() if port is None else port
+        self.host, self.port = port_handler.find_available_port(
+            custom_range=custom_port_range
+        )
         self.protocol = "wss" if generate_cert else "ws"
         self.url = f"{self.protocol}://{self.host}:{self.port}"
         self.client_uri = f"{self.url}/client"
         self.dispatch_uri = f"{self.url}/dispatch"
-
-        self._socket = bind_socket(self.host, self.port)
 
         if generate_cert:
             cert, key, pw = _generate_certificate(ip_address=self.host)
@@ -153,13 +132,7 @@ class EvaluatorServerConfig:
         self.token = _generate_authentication() if use_token else None
 
     def get_socket(self):
-        # NOTE: socket objects do not seem to provide a reliable method to check
-        # if they are not bound. There is a ._closed attribute, but that is
-        # private. Here we check if the underlying file-descriptor is valid,
-        # which should work on both Unix and Windows.
-        if self._socket.fileno() < 0:
-            self._socket = bind_socket(self.host, self.port)
-        return self._socket
+        return port_handler.get_socket(host=self.host, port=self.port)
 
     def get_server_ssl_context(
         self, protocol: int = ssl.PROTOCOL_TLS_SERVER

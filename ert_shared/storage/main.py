@@ -5,7 +5,7 @@ import socket
 import json
 import argparse
 from pathlib import Path
-from typing import List
+from ert_shared import port_handler
 from ert_shared import __file__ as ert_shared_path
 from ert_shared.storage import connection
 from ert_shared.storage.command import add_parser_options
@@ -38,29 +38,6 @@ def generate_authtoken():
 
     chars = string.ascii_letters + string.digits
     return "".join([random.choice(chars) for _ in range(16)])
-
-
-def bind_socket(host: str, port: int) -> socket.socket:
-    family = socket.AF_INET
-
-    if host and ":" in host:
-        # It's an IPv6 address.
-        family = socket.AF_INET6
-
-    sock = socket.socket(family=family)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind((host, port))
-    sock.set_inheritable(True)
-    return sock
-
-
-def bind_open_socket(host: str) -> socket.socket:
-    for port in range(51820, 51840 + 1):
-        try:
-            return bind_socket(host, port)
-        except OSError:
-            continue
-    sys.exit("No ports available in range 51820-51840. Quitting.")
 
 
 def write_to_file(connection_info: dict, lockfile):
@@ -108,7 +85,8 @@ def run_server(args=None, debug=False):
         config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
         os.environ["ERT_STORAGE_DEBUG"] = "1"
 
-    sock = bind_open_socket(args.host)
+    host, port = port_handler.find_available_port(custom_host=args.host)
+    sock = port_handler.get_socket(host=host, port=port)
     connection_info = {
         "urls": [
             f"http://{host}:{sock.getsockname()[1]}"
