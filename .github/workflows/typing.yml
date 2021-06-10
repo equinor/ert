@@ -1,6 +1,11 @@
 name: Type checking
 
-on: [push, pull_request]
+on:
+ push:
+   branches:
+     - main
+     - 'version-**'
+ pull_request:
 
 jobs:
   type-checking:
