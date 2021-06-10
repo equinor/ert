@@ -1,6 +1,11 @@
 name: Run SPE1 demo
 
-on: [push, pull_request]
+on:
+ push:
+   branches:
+     - main
+     - 'version-**'
+ pull_request:
 
 jobs:
   run-ert3-spe1:

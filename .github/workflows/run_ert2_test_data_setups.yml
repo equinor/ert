@@ -1,6 +1,11 @@
 name: Run test-data
 
-on: [push, pull_request]
+on:
+ push:
+   branches:
+     - main
+     - 'version-**'
+ pull_request:
 
 env:
   ERT_SHOW_BACKTRACE: 1
