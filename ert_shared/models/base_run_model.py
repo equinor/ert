@@ -397,7 +397,7 @@ class BaseRunModel(object):
         update_id = post_update_data(
             ert=ERT.enkf_facade,
             parent_ensemble_id=parent_ensemble_id,
-            algorithms=algorithm,
+            algorithm=algorithm,
         )
         self.setPhaseName("Uploading done")
         return update_id
