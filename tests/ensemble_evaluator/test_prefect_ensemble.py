@@ -1,4 +1,5 @@
 from typing import Set
+
 from ert_shared.status.entity.state import JOB_STATE_FAILURE
 import pathlib
 import pickle
@@ -685,9 +686,11 @@ def test_prefect_no_retries(unused_tcp_port, coefficients, tmpdir, function_conf
 
         step_failed = False
         job_failed = False
+        event_list = []
         with evaluator.run() as mon:
             for event in mon.track():
                 # Capture the job error messages
+                event_list.append(event)
                 if event.data is not None and "This is an expected ERROR" in str(
                     event.data
                 ):
@@ -705,8 +708,8 @@ def test_prefect_no_retries(unused_tcp_port, coefficients, tmpdir, function_conf
                 ]:
                     mon.signal_done()
         assert evaluator._ensemble.get_status() == "Failed"
-        assert job_failed
-        assert step_failed
+        assert job_failed, f"Events: {event_list}"
+        assert step_failed, f"Events: {event_list}"
 
 
 def dummy_get_flow(*args, **kwargs):
