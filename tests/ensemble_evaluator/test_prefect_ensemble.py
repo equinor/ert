@@ -217,12 +217,14 @@ def test_get_flow(coefficients, unused_tcp_port):
                 "outputs": output_transmitters(config),
             }
         )
-        server_config = EvaluatorServerConfig(unused_tcp_port)
+        fixed_port = range(unused_tcp_port, unused_tcp_port)
+        custom_range = range(1024, 65535)
+        server_config = EvaluatorServerConfig(custom_port_range=fixed_port)
         for permuted_steps in permutations(config["steps"]):
             permuted_config = copy.deepcopy(config)
             permuted_config["steps"] = permuted_steps
             permuted_config["dispatch_uri"] = server_config.dispatch_uri
-            ensemble = PrefectEnsemble(permuted_config)
+            ensemble = PrefectEnsemble(permuted_config, custom_port_range=custom_range)
 
             for iens in range(2):
                 with prefect.context(
@@ -611,7 +613,9 @@ def test_prefect_retries(unused_tcp_port, coefficients, tmpdir, function_config)
             coefficients, config.get(ids.STORAGE)["storage_path"]
         )
 
-        service_config = EvaluatorServerConfig(unused_tcp_port)
+        fixed_port = range(unused_tcp_port, unused_tcp_port)
+        custom_range = range(1024, 65535)
+        service_config = EvaluatorServerConfig(custom_port_range=fixed_port)
         config["realizations"] = len(coefficients)
         config["executor"] = "local"
         config["max_retries"] = 2
@@ -623,7 +627,7 @@ def test_prefect_retries(unused_tcp_port, coefficients, tmpdir, function_config)
         config["outputs"] = output_transmitters(config)
         config["dispatch_uri"] = service_config.dispatch_uri
 
-        ensemble = PrefectEnsemble(config)
+        ensemble = PrefectEnsemble(config, custom_port_range=custom_range)
         evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
         error_event_reals: Set[str] = set()
         with evaluator.run() as mon:
@@ -664,7 +668,10 @@ def test_prefect_no_retries(unused_tcp_port, coefficients, tmpdir, function_conf
             coefficients, config.get(ids.STORAGE)["storage_path"]
         )
 
-        service_config = EvaluatorServerConfig(unused_tcp_port)
+        fixed_port = range(unused_tcp_port, unused_tcp_port)
+        custom_range = range(1024, 65535)
+
+        service_config = EvaluatorServerConfig(custom_port_range=fixed_port)
         config["realizations"] = len(coefficients)
         config["executor"] = "local"
         config["max_retries"] = 0
@@ -676,7 +683,7 @@ def test_prefect_no_retries(unused_tcp_port, coefficients, tmpdir, function_conf
         config["outputs"] = output_transmitters(config)
         config["dispatch_uri"] = service_config.dispatch_uri
 
-        ensemble = PrefectEnsemble(config)
+        ensemble = PrefectEnsemble(config, custom_port_range=custom_range)
         evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
 
         event_list = []
@@ -735,9 +742,12 @@ def test_run_prefect_ensemble(unused_tcp_port, coefficients):
             }
         )
 
-        service_config = EvaluatorServerConfig(unused_tcp_port)
+        fixed_port = range(unused_tcp_port, unused_tcp_port)
+        custom_range = range(1024, 65535)
+
+        service_config = EvaluatorServerConfig(custom_port_range=fixed_port)
         config["dispatch_uri"] = service_config.dispatch_uri
-        ensemble = PrefectEnsemble(config)
+        ensemble = PrefectEnsemble(config, custom_port_range=custom_range)
         evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
 
         with evaluator.run() as mon:
@@ -792,9 +802,13 @@ def test_run_prefect_for_function_defined_outside_py_environment(
         config["inputs"] = {iens: coeffs_trans[iens] for iens in range(2)}
         config["outputs"] = output_transmitters(config)
 
-        service_config = EvaluatorServerConfig(unused_tcp_port)
+        fixed_port = range(unused_tcp_port, unused_tcp_port)
+        custom_range = range(1024, 65535)
+
+        service_config = EvaluatorServerConfig(custom_port_range=fixed_port)
         config["dispatch_uri"] = service_config.dispatch_uri
-        ensemble = PrefectEnsemble(config)
+
+        ensemble = PrefectEnsemble(config, custom_port_range=custom_range)
         evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
         with evaluator.run() as mon:
             for event in mon.track():
@@ -845,13 +859,16 @@ def test_run_prefect_ensemble_with_path(unused_tcp_port, coefficients):
             }
         )
 
-        service_config = EvaluatorServerConfig(unused_tcp_port)
+        fixed_port = range(unused_tcp_port, unused_tcp_port)
+        custom_range = range(1024, 65535)
+
+        service_config = EvaluatorServerConfig(custom_port_range=fixed_port)
         config["config_path"] = Path(config["config_path"])
         config["run_path"] = Path(config["run_path"])
         config["storage"]["storage_path"] = Path(config["storage"]["storage_path"])
         config["dispatch_uri"] = service_config.dispatch_uri
 
-        ensemble = PrefectEnsemble(config)
+        ensemble = PrefectEnsemble(config, custom_port_range=custom_range)
 
         evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
 
@@ -893,13 +910,16 @@ def test_cancel_run_prefect_ensemble(unused_tcp_port, coefficients):
             }
         )
 
-        service_config = EvaluatorServerConfig(unused_tcp_port)
+        fixed_port = range(unused_tcp_port, unused_tcp_port)
+        custom_range = range(1024, 65535)
+
+        service_config = EvaluatorServerConfig(custom_port_range=fixed_port)
         config["config_path"] = Path(config["config_path"])
         config["run_path"] = Path(config["run_path"])
         config["storage"]["storage_path"] = Path(config["storage"]["storage_path"])
         config["dispatch_uri"] = service_config.dispatch_uri
 
-        ensemble = PrefectEnsemble(config)
+        ensemble = PrefectEnsemble(config, custom_port_range=custom_range)
 
         evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="2")
 
@@ -942,13 +962,16 @@ def test_run_prefect_ensemble_exception(unused_tcp_port, coefficients):
             }
         )
 
-        service_config = EvaluatorServerConfig(unused_tcp_port)
+        fixed_port = range(unused_tcp_port, unused_tcp_port)
+        custom_range = range(1024, 65535)
+
+        service_config = EvaluatorServerConfig(custom_port_range=fixed_port)
         config["config_path"] = Path(config["config_path"])
         config["run_path"] = Path(config["run_path"])
         config["storage"]["storage_path"] = Path(config["storage"]["storage_path"])
         config["dispatch_uri"] = service_config.dispatch_uri
 
-        ensemble = PrefectEnsemble(config)
+        ensemble = PrefectEnsemble(config, custom_port_range=custom_range)
         ensemble.get_flow = dummy_get_flow
 
         evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")

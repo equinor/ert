@@ -16,7 +16,8 @@ import cloudpickle
 import prefect.utilities.logging
 from cloudevents.http import CloudEvent, to_json
 from dask_jobqueue.lsf import LSFJob
-from ert_shared.ensemble_evaluator.config import find_open_port, EvaluatorServerConfig
+from ert_shared.port_handler import find_available_port
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.entity.ensemble import (
     _Ensemble,
@@ -55,11 +56,12 @@ async def _eq_submit_job(self, script_filename):
     return self._call(piped_cmd, shell=True)
 
 
-def _get_executor(name="local"):
+def _get_executor(custom_port_range, name="local"):
+    _, port = find_available_port(custom_range=custom_port_range)
     if name == "local":
         cluster_kwargs = {
             "silence_logs": "debug",
-            "scheduler_options": {"port": find_open_port()},
+            "scheduler_options": {"port": port},
         }
         return LocalDaskExecutor(**cluster_kwargs)
     elif name == "lsf":
@@ -72,7 +74,7 @@ def _get_executor(name="local"):
             "use_stdin": True,
             "n_workers": 2,
             "silence_logs": "debug",
-            "scheduler_options": {"port": find_open_port()},
+            "scheduler_options": {"port": port},
         }
         return DaskExecutor(
             cluster_class="dask_jobqueue.LSFCluster",
@@ -99,8 +101,9 @@ def _get_executor(name="local"):
 
 
 class PrefectEnsemble(_Ensemble):
-    def __init__(self, config):
+    def __init__(self, config, custom_port_range=None):
         self.config = config
+        self._custom_range = custom_port_range
         self._ee_config = None
         self._reals = self._get_reals()
         self._eval_proc = None
@@ -272,7 +275,11 @@ class PrefectEnsemble(_Ensemble):
             realization_range = real_range[i : i + real_per_batch]
             flow = self.get_flow(ee_id, realization_range)
             with prefect_log_level_context(level="WARNING"):
-                state = flow.run(executor=_get_executor(self.config[ids.EXECUTOR]))
+                state = flow.run(
+                    executor=_get_executor(
+                        self._custom_range, self.config[ids.EXECUTOR]
+                    )
+                )
             for iens in realization_range:
                 state_map[iens] = state
             i = i + real_per_batch
