@@ -189,7 +189,8 @@ def _dump_ext_job(ext_job, index):
 @pytest.fixture
 def make_ee_config(unused_tcp_port):
     def _ee_config(**kwargs):
-        return EvaluatorServerConfig(unused_tcp_port, **kwargs)
+        fixed_port = range(unused_tcp_port, unused_tcp_port)
+        return EvaluatorServerConfig(custom_port_range=fixed_port, **kwargs)
 
     return _ee_config
 

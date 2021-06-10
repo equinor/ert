@@ -140,7 +140,8 @@ def test_generator(unused_tcp_port, ws):
 
 
 def test_secure_echo(unused_tcp_port, ws):
-    config = EvaluatorServerConfig(unused_tcp_port)
+    custom_port_range = range(unused_tcp_port, unused_tcp_port)
+    config = EvaluatorServerConfig(custom_port_range=custom_port_range)
 
     async def handler(websocket, path):
         msg = await websocket.recv()
