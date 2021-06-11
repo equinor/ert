@@ -1,3 +1,0 @@
-EXECUTABLE copy_ext_param_script
-STDERR copy_ext_param.stderr
-STDOUT copy_ext_param.stdout
