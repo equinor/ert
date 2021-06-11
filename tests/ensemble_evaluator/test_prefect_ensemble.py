@@ -708,8 +708,8 @@ def test_prefect_no_retries(unused_tcp_port, coefficients, tmpdir, function_conf
                 ]:
                     mon.signal_done()
         assert evaluator._ensemble.get_status() == "Failed"
-        assert job_failed, f"Events: {event_list}"
-        assert step_failed, f"Events: {event_list}"
+        assert job_failed, f"Events__1: {event_list}"
+        assert step_failed, f"Events__1: {event_list}"
 
 
 def dummy_get_flow(*args, **kwargs):
