@@ -12,13 +12,13 @@ from ert_shared.status.entity.state import (
     JOB_STATE_RUNNING,
     ENSEMBLE_STATE_UNKNOWN,
 )
-from tests.ensemble_evaluator.ensemble_test import TestEnsemble, send_dispatch_event
-from tests.narratives import (
+from ert_shared.ensemble_evaluator.narratives import (
     dispatch_failing_job,
     monitor_failing_ensemble,
     monitor_failing_evaluation,
     monitor_successful_ensemble,
 )
+from tests.ensemble_evaluator.ensemble_test import TestEnsemble, send_dispatch_event
 
 
 def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):

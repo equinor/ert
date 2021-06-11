@@ -221,16 +221,9 @@ jobs:
         mv setup.cfg tmp_tests/setup.cfg
         mkdir tmp_tests/.git
 
-    - name: Produce narratives
-      run: |
-        export NARRATIVE_DIR=$(pwd)/narratives
-        pushd tmp_tests
-        pytest -m consumer_driven_contract_verification
-        popd
-
     - name: Test docs
       run: |
-        NARRATIVE_DIR=$(pwd)/narratives sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
+        sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
 
   tests-libres:
     name: Run libres tests

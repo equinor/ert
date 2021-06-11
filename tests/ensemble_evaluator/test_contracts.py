@@ -1,4 +1,8 @@
-from tests.narrative import Consumer, EventDescription, Provider
+from ert_shared.ensemble_evaluator.narratives.narrative import (
+    Consumer,
+    EventDescription,
+    Provider,
+)
 
 
 import websockets

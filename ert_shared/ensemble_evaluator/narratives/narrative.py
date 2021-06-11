@@ -29,8 +29,6 @@ _DATACONTENTTYPE = "datacontenttype"
 # See https://github.com/cloudevents/spec/blob/v1.0.1/spec.md#datacontenttype
 _DEFAULT_DATACONTETYPE = "application/json"
 
-NARRATIVE_DIR = "NARRATIVE_DIR"
-
 
 class _CloudEventSerializer:
     def __init__(self) -> None:
@@ -695,12 +693,6 @@ class _Narrative:
         _ProviderVerifier(self.interactions, provider_uri, self._ce_serializer).verify(
             on_connect
         )
-        if NARRATIVE_DIR in os.environ:
-            n_dir = Path(os.environ[NARRATIVE_DIR])
-            n_dir.mkdir(exist_ok=True)
-            file_name = f"{self.name.replace(' ', '_')}.json"
-            with open(str(n_dir / Path(file_name)), "w") as n_file:
-                n_file.write(json.dumps(self.json(), indent=4, sort_keys=True))
 
     def json(self) -> dict:
         if not self.name:
