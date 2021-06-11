@@ -22,7 +22,7 @@ def libres_source_root() -> Path:
 
 class ResTest(ExtendedTestCase):
     SOURCE_ROOT = libres_source_root()
-    TESTDATA_ROOT = SOURCE_ROOT / "test-data"
+    TESTDATA_ROOT = SOURCE_ROOT / ".." / "test-data"
     SHARE_ROOT = SOURCE_ROOT.parent / "share"
     EQUINOR_DATA = (TESTDATA_ROOT / "Equinor").is_symlink()
 

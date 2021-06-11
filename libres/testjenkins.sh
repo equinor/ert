@@ -109,7 +109,7 @@ clone_repos () {
 	echo "Cloning into $LIBRES_ROOT"
 	git clone . $LIBRES_ROOT
 	mkdir -p $LIBRES_BUILD
-	ln -s /project/res-testdata/ErtTestData $LIBRES_ROOT/test-data/Equinor
+	ln -s /project/res-testdata/ErtTestData $LIBRES_ROOT/../test-data/Equinor
 }
 
 create_virtualenv () {
@@ -138,7 +138,7 @@ run_pytest_normal () {
 
 
 run_pytest_equinor () {
-	ln -s /project/res-testdata/ErtTestData ${ERT_SOURCE_ROOT}/libres/test-data/Equinor
+	ln -s /project/res-testdata/ErtTestData ${ERT_SOURCE_ROOT}/test-data/Equinor
 	run enable_environment
 
 	# Avoid implicitly loaded cwd modules

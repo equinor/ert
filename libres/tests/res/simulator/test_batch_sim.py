@@ -566,7 +566,7 @@ class BatchSimulatorTest(ResTest):
     @tmpdir()
     def test_batch_ctx_status_failing_jobs(self):
 
-        config_dir = os.path.join(self.SOURCE_ROOT, "test-data/local/batch_sim")
+        config_dir = os.path.join(self.SOURCE_ROOT, "../test-data/local/batch_sim")
         shutil.copytree(config_dir, "batch_sim")
         os.chdir("batch_sim")
 
