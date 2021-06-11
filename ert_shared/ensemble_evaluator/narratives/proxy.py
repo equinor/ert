@@ -6,7 +6,10 @@ from http import HTTPStatus
 
 import websockets
 
-from tests.narrative import InteractionDirection, _Narrative
+from ert_shared.ensemble_evaluator.narratives.narrative import (
+    InteractionDirection,
+    _Narrative,
+)
 
 
 class NarrativeProxy(object):
