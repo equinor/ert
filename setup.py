@@ -99,7 +99,7 @@ setup(
         "qtpy",
         "requests",
         "scipy",
-        "semeio",
+        "semeio>=1.1.3rc0",
         "sqlalchemy",
         "typing-extensions; python_version < '3.8'",
         "uvicorn",
