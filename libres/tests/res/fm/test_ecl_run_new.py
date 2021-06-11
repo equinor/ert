@@ -106,7 +106,7 @@ with open("env.json", "w") as f:
     def test_run(self):
         self.init_eclrun_config()
         shutil.copy(
-            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1.DATA"),
+            os.path.join(self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1.DATA"),
             "SPE1.DATA",
         )
         ecl_config = Ecl100Config()
@@ -129,7 +129,7 @@ with open("env.json", "w") as f:
     def test_run_api(self):
         self.init_eclrun_config()
         shutil.copy(
-            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1.DATA"),
+            os.path.join(self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1.DATA"),
             "SPE1.DATA",
         )
         ecl_config = Ecl100Config()
@@ -142,7 +142,9 @@ with open("env.json", "w") as f:
     def test_failed_run(self):
         self.init_eclrun_config()
         shutil.copy(
-            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1_ERROR.DATA"),
+            os.path.join(
+                self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1_ERROR.DATA"
+            ),
             "SPE1_ERROR.DATA",
         )
         ecl_config = Ecl100Config()
@@ -157,7 +159,9 @@ with open("env.json", "w") as f:
     def test_failed_run_OK(self):
         self.init_eclrun_config()
         shutil.copy(
-            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1_ERROR.DATA"),
+            os.path.join(
+                self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1_ERROR.DATA"
+            ),
             "SPE1_ERROR.DATA",
         )
         ecl_config = Ecl100Config()
@@ -168,7 +172,7 @@ with open("env.json", "w") as f:
     def test_no_hdf5_output_by_default_with_ecl100(self):
         self.init_eclrun_config()
         shutil.copy(
-            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1.DATA"),
+            os.path.join(self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1.DATA"),
             "SPE1.DATA",
         )
         ecl_config = Ecl100Config()
@@ -181,7 +185,7 @@ with open("env.json", "w") as f:
     def test_flag_to_produce_hdf5_output_with_ecl100(self):
         self.init_eclrun_config()
         shutil.copy(
-            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1.DATA"),
+            os.path.join(self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1.DATA"),
             "SPE1.DATA",
         )
         ecl_config = Ecl100Config()
@@ -195,7 +199,7 @@ with open("env.json", "w") as f:
         self.init_eclrun_config()
         shutil.copy(
             os.path.join(
-                self.SOURCE_ROOT, "test-data/local/eclipse/SPE1_PARALLELL.DATA"
+                self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1_PARALLELL.DATA"
             ),
             "SPE1_PARALLELL.DATA",
         )
@@ -209,7 +213,7 @@ with open("env.json", "w") as f:
     def test_summary_block(self):
         self.init_eclrun_config()
         shutil.copy(
-            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1.DATA"),
+            os.path.join(self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1.DATA"),
             "SPE1.DATA",
         )
         ecl_config = Ecl100Config()
@@ -225,14 +229,14 @@ with open("env.json", "w") as f:
     @tmpdir()
     def test_check(self):
         full_case = os.path.join(
-            self.SOURCE_ROOT, "test-data/Equinor/ECLIPSE/Gurbat/ECLIPSE"
+            self.SOURCE_ROOT, "../test-data/Equinor/ECLIPSE/Gurbat/ECLIPSE"
         )
         short_case = os.path.join(
-            self.SOURCE_ROOT, "test-data/Equinor/ECLIPSE/ShortSummary/ECLIPSE"
+            self.SOURCE_ROOT, "../test-data/Equinor/ECLIPSE/ShortSummary/ECLIPSE"
         )
         failed_case = os.path.join(
             self.SOURCE_ROOT,
-            "test-data/Equinor/ECLIPSE/SummaryFail/NOR-2013A_R002_1208-0",
+            "../test-data/Equinor/ECLIPSE/SummaryFail/NOR-2013A_R002_1208-0",
         )
 
         with self.assertRaises(IOError):
