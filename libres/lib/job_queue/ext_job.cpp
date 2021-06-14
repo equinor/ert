@@ -966,7 +966,8 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_schema_item(config , "STDIN"               , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "STDOUT"              , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "STDERR"              , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
-      item = config_add_schema_item(config , EXECUTABLE_KEY        , true ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type(item, 0, CONFIG_PATH);
+      item = config_add_schema_item(config , EXECUTABLE_KEY        , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type(item, 0, CONFIG_PATH);
+      item = config_add_schema_item(config , "PORTABLE_EXE"        , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type(item, 0, CONFIG_PATH);
       item = config_add_schema_item(config , "TARGET_FILE"         , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "ERROR_FILE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "START_FILE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
@@ -989,13 +990,25 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
 
       config_schema_item_set_indexed_selection_set( item , 1 , var_types);
       stringlist_free(var_types);
+      config_parser_deprecate(config, "PORTABLE_EXE", "'PORTABLE_EXE' is deprecated. Use 'EXECUTABLE' instead.");
     }
-    config_add_alias(config , "EXECUTABLE" , "PORTABLE_EXE");
     {
       config_content_type * content = config_parse(config , config_file , "--" , NULL , NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true);
       if (config_content_is_valid( content )) {
         ext_job = ext_job_alloc(name , license_root_path , private_job);
         ext_job_set_config_file( ext_job , config_file );
+
+        const stringlist_type * warnings = config_content_get_warnings(content);
+        if (stringlist_get_size( warnings ) > 0) {
+            fprintf(
+                    stderr,
+                    " ** There were warnings when parsing the configuration file: %s",
+                    config_file
+                    );
+
+            for (int i=0; i < stringlist_get_size( warnings ); i++)
+            fprintf(stderr, " %02d : %s \n", i, stringlist_iget(warnings, i));
+        }
 
 
         if (config_content_has_item(content , "STDIN"))                 ext_job_set_stdin_file(ext_job       , config_content_iget(content  , "STDIN" , 0,0));
@@ -1020,12 +1033,23 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
           ext_job_iset_argtype_string( ext_job , iarg , arg_type );
         }
 
-        {
-          const char * executable     = config_content_get_value_as_executable(content  , EXECUTABLE_KEY);
-          const char * executable_raw = config_content_iget(content  , EXECUTABLE_KEY , 0,0);
-          ext_job_set_executable(ext_job , executable, executable_raw, search_path);
+        char exec_key[20] = EXECUTABLE_KEY;
+        bool have_executable = config_content_has_item(content , EXECUTABLE_KEY);
+        bool have_portable_exe = config_content_has_item(content , "PORTABLE_EXE");
+        if (!have_executable && !have_portable_exe) {
+            fprintf(stderr, "%s: ** '%s' must be set\n", config_file, EXECUTABLE_KEY);
+            ext_job->__valid = false;
+        } else if (!have_executable && have_portable_exe) {
+            strcpy(exec_key, "PORTABLE_EXE");
+        } else if (have_executable && have_portable_exe) {
+            fprintf(stderr, "%s: ** Ignoring 'PORTABLE_EXE' and using '%s' as both were given.\n", config_file, EXECUTABLE_KEY);
         }
 
+        if (ext_job->__valid) {
+            const char * executable     = config_content_get_value_as_executable(content, exec_key);
+            const char * executable_raw = config_content_iget(content, exec_key, 0, 0);
+            ext_job_set_executable(ext_job , executable, executable_raw, search_path);
+        }
 
         {
           if (config_content_has_item( content , "ARGLIST")) {
