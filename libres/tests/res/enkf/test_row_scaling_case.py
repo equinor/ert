@@ -21,8 +21,8 @@ import numpy as np
 import tempfile
 import shutil
 
-from tests import ResTest
-from tests.utils import tmpdir
+from utils import ResTest
+from utils import tmpdir
 
 from ecl.util.util import BoolVector
 from ecl.grid import EclGridGenerator

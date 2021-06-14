@@ -23,13 +23,13 @@ import yaml
 import shutil
 import json
 from ecl.util.test import TestAreaContext
-from tests import ResTest
+from utils import ResTest
 from pytest import MonkeyPatch
 
 from res.fm.rms import RMSRun, RMSRunException
 import res.fm.rms
 
-from tests.utils import tmpdir
+from utils import tmpdir
 import pytest
 
 

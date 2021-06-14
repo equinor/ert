@@ -1,8 +1,8 @@
 import os
 import sys
 from ecl.util.test import TestAreaContext
-from tests import ResTest
-from tests.utils import tmpdir
+from utils import ResTest
+from utils import tmpdir
 from ecl.util.util import BoolVector
 
 from res.test import ErtTestContext

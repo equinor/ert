@@ -5,7 +5,7 @@ from res.enkf.data import ExtParam
 from res.enkf.data import EnkfNode
 from res.enkf.config import ExtParamConfig, EnkfConfigNode
 from ecl.util.test import TestAreaContext
-from tests import ResTest
+from utils import ResTest
 
 
 class EnkfNodeTest(ResTest):

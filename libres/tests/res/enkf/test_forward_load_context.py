@@ -1,4 +1,4 @@
-from tests import ResTest
+from utils import ResTest
 from res.enkf import ForwardLoadContext
 
 

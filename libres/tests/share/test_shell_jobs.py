@@ -1,6 +1,6 @@
 from res.enkf import ResConfig
 
-from tests import ResTest
+from utils import ResTest
 
 
 class TestSiteConfigShellJobs(ResTest):

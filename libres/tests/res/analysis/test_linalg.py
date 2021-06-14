@@ -19,7 +19,7 @@
 from res.enkf import ObsVector
 from res.util import Matrix
 from res.analysis import Linalg
-from tests import ResTest
+from utils import ResTest
 
 
 class LinalgTest(ResTest):

@@ -18,7 +18,7 @@ import os
 
 from res.enkf import BlockObservation
 from res.enkf import ActiveList, FieldConfig
-from tests import ResTest
+from utils import ResTest
 from ecl.grid import EclGridGenerator
 
 

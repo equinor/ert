@@ -16,7 +16,7 @@
 
 from res.enkf import ActiveList
 from res.enkf import ActiveMode
-from tests import ResTest
+from utils import ResTest
 
 
 class ActiveListTest(ResTest):

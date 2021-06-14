@@ -2,8 +2,8 @@ import os
 import pytest
 
 
-from tests import ResTest
-from tests.utils import tmpdir
+from utils import ResTest
+from utils import tmpdir
 
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext

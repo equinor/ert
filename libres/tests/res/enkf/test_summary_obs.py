@@ -18,7 +18,7 @@ import os
 
 from res.enkf import SummaryObservation
 from res.enkf import ActiveList
-from tests import ResTest
+from utils import ResTest
 
 
 class SummaryObsTest(ResTest):

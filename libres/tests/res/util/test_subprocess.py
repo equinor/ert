@@ -17,7 +17,7 @@
 
 import unittest
 import os
-from tests.utils import tmpdir
+from utils import tmpdir
 from subprocess import Popen, PIPE
 
 from res.util.subprocess import await_process_tee

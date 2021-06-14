@@ -1,8 +1,8 @@
 import unittest
 import os
 from res.test import ErtTestContext
-from tests import ResTest
-from tests.utils import tmpdir
+from utils import ResTest
+from utils import tmpdir
 
 from res.enkf import RunpathList, RunpathNode, ErtRunContext
 from res.enkf.enums import EnkfInitModeEnum, EnkfRunType

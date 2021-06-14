@@ -1,7 +1,7 @@
 import pytest
 
-from tests import ResTest
-from tests.utils import tmpdir
+from utils import ResTest
+from utils import tmpdir
 from res.test import ErtTestContext
 
 from ecl.grid import EclGrid

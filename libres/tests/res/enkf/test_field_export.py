@@ -1,7 +1,7 @@
 import os
 import pytest
 
-from tests import ResTest
+from utils import ResTest
 from res.test import ErtTestContext
 
 from ecl.util.util import IntVector

@@ -1,8 +1,8 @@
 from res.job_queue import Workflow, WorkflowJoblist
 from ecl.util.test import TestAreaContext
-from tests import ResTest
+from utils import ResTest
 from res.util.substitution_list import SubstitutionList
-from .workflow_common import WorkflowCommon
+from workflow_common import WorkflowCommon
 
 
 class WorkflowTest(ResTest):

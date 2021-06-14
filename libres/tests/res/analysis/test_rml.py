@@ -17,7 +17,7 @@
 import random
 import sys
 
-from tests import ResTest
+from utils import ResTest
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.util import BoolVector, RandomNumberGenerator
 from res.util import Matrix
@@ -28,7 +28,7 @@ from res.analysis import (
 )
 from res.enkf import MeasData, ObsData
 
-from tests.utils import tmpdir
+from utils import tmpdir
 
 
 def forward_model(params, model_error=False):

@@ -18,7 +18,7 @@ from job_runner.reporting.message import Init, Finish
 from job_runner.reporting import Event, Interactive
 from pytest_asyncio.plugin import _unused_tcp_port
 
-from tests.utils import tmpdir, wait_until, _mock_ws_thread
+from utils import tmpdir, wait_until, _mock_ws_thread
 from unittest.mock import patch, mock_open
 
 

@@ -6,7 +6,7 @@ from unittest import TestCase
 from job_runner.reporting.message import Exited, Finish, Start
 from job_runner.runner import JobRunner
 
-from tests.utils import tmpdir
+from utils import tmpdir
 
 
 class JobManagerTestRuntimeKW(TestCase):

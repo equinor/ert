@@ -21,7 +21,7 @@ import os.path
 
 from res.enkf import EclConfig, ResConfig, ConfigKeys
 from ecl.util.test import TestAreaContext
-from tests import ResTest
+from utils import ResTest
 from res.util import UIReturn
 from ecl.summary import EclSum
 

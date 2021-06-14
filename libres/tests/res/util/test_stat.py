@@ -1,4 +1,4 @@
-from tests import ResTest
+from utils import ResTest
 from ecl.util.util import DoubleVector
 from res.util import polyfit
 
@@ -15,7 +15,7 @@ class StatTest(ResTest):
 
         x = 0
         dx = 0.1
-        for i in range(100):
+        for _ in range(100):
             y = A + B * x + C * x * x
             x_list.append(x)
             y_list.append(y)

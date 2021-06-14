@@ -1,6 +1,6 @@
 from res.util.enums import MessageLevelEnum
 
-from tests import ResTest
+from utils import ResTest
 
 
 class LogTest(ResTest):

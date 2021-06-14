@@ -21,7 +21,7 @@ from res.enkf import ConfigKeys
 from res.enkf import ResConfig
 from res.enkf import HookRuntime
 import unittest
-from tests import ResTest
+from utils import ResTest
 
 
 class HookManagerTest(ResTest):

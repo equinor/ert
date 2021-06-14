@@ -9,8 +9,8 @@ from ecl.util.test import TestAreaContext
 from res.simulator import BatchSimulator, BatchContext
 from res.job_queue import JobStatusType
 from res.enkf import ResConfig
-from tests import ResTest
-from tests.utils import tmpdir
+from utils import ResTest
+from utils import tmpdir
 
 
 class MockMonitor(object):

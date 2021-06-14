@@ -18,7 +18,7 @@ import stat
 import unittest
 import yaml
 from ecl.util.test import TestAreaContext
-from tests import ResTest
+from utils import ResTest
 from pytest import MonkeyPatch
 
 from res.fm.rms import RMSConfig

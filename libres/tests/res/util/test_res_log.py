@@ -1,7 +1,7 @@
 import os
 from res.util import ResLog, Log
 from ecl.util.test import TestAreaContext
-from tests import ResTest
+from utils import ResTest
 from res.util.enums import MessageLevelEnum
 
 

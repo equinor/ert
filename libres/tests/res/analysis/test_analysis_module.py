@@ -16,7 +16,7 @@
 
 import sys
 
-from tests import ResTest
+from utils import ResTest
 from res.analysis import (
     AnalysisModule,
     AnalysisModuleLoadStatusEnum,

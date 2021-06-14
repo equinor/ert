@@ -1,5 +1,5 @@
 from res.enkf import SummaryKeyMatcher
-from tests import ResTest
+from utils import ResTest
 
 
 class SummaryKeyMatcherTest(ResTest):

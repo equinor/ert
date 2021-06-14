@@ -5,7 +5,7 @@ from ecl.util.test.ecl_mock import createEclSum
 from res.enkf.data.summary import Summary
 from res.enkf.config import SummaryConfig
 from ecl.util.test import TestAreaContext
-from tests import ResTest
+from utils import ResTest
 
 
 class SummaryTest(ResTest):

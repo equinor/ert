@@ -15,7 +15,7 @@
 #  for more details.
 
 
-from tests import ResTest
+from utils import ResTest
 
 from ecl.util.util import BoolVector
 from res.enkf import ErtRunContext

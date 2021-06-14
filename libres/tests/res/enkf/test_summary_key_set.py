@@ -2,7 +2,7 @@ import os
 import pytest
 
 from ecl.util.test.test_area import TestAreaContext
-from tests import ResTest
+from utils import ResTest
 from res.test.ert_test_context import ErtTestContext
 
 from res.enkf import SummaryKeySet

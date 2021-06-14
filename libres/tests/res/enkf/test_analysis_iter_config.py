@@ -17,7 +17,7 @@
 
 import os
 from res.enkf import AnalysisIterConfig
-from tests import ResTest
+from utils import ResTest
 
 
 class AnalysisIterConfigTest(ResTest):

@@ -1,7 +1,7 @@
 import os.path
 
 from ecl.util.test import TestAreaContext
-from tests import ResTest
+from utils import ResTest
 from res.job_queue.ext_job import ExtJob
 from res.config import ContentTypeEnum
 

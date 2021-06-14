@@ -27,8 +27,8 @@ from unittest import mock
 
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
-from tests import ResTest
-from tests.utils import tmpdir
+from utils import ResTest
+from utils import tmpdir
 from res.fm.ecl import run, Ecl100Config, EclrunConfig, EclRun
 from subprocess import Popen, PIPE
 from subprocess import Popen, PIPE

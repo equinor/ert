@@ -1,5 +1,5 @@
 from res.enkf.enums import HookRuntime
-from tests import ResTest
+from utils import ResTest
 
 
 class HookWorkFlowTest(ResTest):

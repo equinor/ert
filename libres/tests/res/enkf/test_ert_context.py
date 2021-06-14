@@ -1,4 +1,4 @@
-from tests import ResTest
+from utils import ResTest
 import sys
 
 from res.test import ErtTestContext

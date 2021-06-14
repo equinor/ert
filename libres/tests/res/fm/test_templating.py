@@ -1,6 +1,6 @@
 from ecl.util.test import TestAreaContext
-from tests import ResTest
-from tests.utils import tmpdir
+from utils import ResTest
+from utils import tmpdir
 from res.fm.templating import *
 
 import jinja2

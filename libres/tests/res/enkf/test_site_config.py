@@ -18,8 +18,8 @@ from res.enkf import SiteConfig, ConfigKeys, ResConfig
 import os
 
 from ecl.util.test import TestAreaContext
-from tests import ResTest
-from tests.utils import tmpdir
+from utils import ResTest
+from utils import tmpdir
 from pytest import MonkeyPatch
 
 

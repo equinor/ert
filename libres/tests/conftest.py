@@ -1,4 +1,4 @@
-from tests import libres_source_root
+from utils import libres_source_root
 import pytest
 import unittest
 import resource

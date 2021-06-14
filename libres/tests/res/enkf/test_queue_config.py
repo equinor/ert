@@ -18,7 +18,7 @@ import os
 from ecl.util.test import TestAreaContext
 
 from res.job_queue import QueueDriverEnum
-from tests import ResTest
+from utils import ResTest
 from res.enkf import QueueConfig, ConfigKeys
 from res.config import ConfigContent
 

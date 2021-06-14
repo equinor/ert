@@ -1,6 +1,6 @@
 from res.job_queue import JobStatusType, Driver, QueueDriverEnum, JobQueue, JobQueueNode
-from tests import ResTest
-from tests.utils import wait_until
+from utils import ResTest
+from utils import wait_until
 from ecl.util.test import TestAreaContext
 import os, stat, time, pathlib, json
 from threading import BoundedSemaphore

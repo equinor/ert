@@ -17,7 +17,7 @@ import os
 
 from cwrap import Prototype, clib
 from ecl.util.test import TestAreaContext
-from tests import ResTest
+from utils import ResTest
 
 from res import ResPrototype
 from res.config import UnrecognizedEnum, SchemaItem

@@ -19,8 +19,8 @@ from copy import deepcopy
 from datetime import date
 
 from ecl.util.test import TestAreaContext
-from tests import ResTest
-from tests.utils import tmpdir
+from utils import ResTest
+from utils import tmpdir
 from ecl.util.util import CTime
 from ecl.util.enums import RngAlgTypeEnum
 from res.util.enums import MessageLevelEnum

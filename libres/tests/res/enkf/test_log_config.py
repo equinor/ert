@@ -22,7 +22,7 @@ from ecl.util.test import TestAreaContext
 
 from res.enkf import LogConfig, ResConfig, ConfigKeys
 from res.util.enums import MessageLevelEnum
-from tests import ResTest
+from utils import ResTest
 
 
 class LogConfigTest(ResTest):

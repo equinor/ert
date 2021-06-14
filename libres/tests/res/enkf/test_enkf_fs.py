@@ -2,8 +2,8 @@ import os
 import pytest
 
 from ecl.util.test import TestAreaContext
-from tests import ResTest
-from tests.utils import tmpdir
+from utils import ResTest
+from utils import tmpdir
 from res.test import ErtTestContext
 
 from res.enkf import EnkfFs

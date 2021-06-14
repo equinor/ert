@@ -1,6 +1,6 @@
 import os.path
 import random
-from tests import ResTest
+from utils import ResTest
 from ecl.util.test import TestRun, path_exists
 
 

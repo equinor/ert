@@ -17,7 +17,7 @@
 import sys, os
 import os.path
 import pytest
-from tests import ResTest
+from utils import ResTest
 
 from ecl.util.util import BoolVector
 from res.enkf import (
@@ -52,7 +52,7 @@ from res.enkf.enums import (
 from ecl.util.test import TestAreaContext
 from res.enkf.observations.summary_observation import SummaryObservation
 
-from tests.utils import tmpdir
+from utils import tmpdir
 
 
 class EnKFTest(ResTest):

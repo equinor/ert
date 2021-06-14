@@ -1,7 +1,7 @@
 from ecl.util.test import TestAreaContext
-from tests import ResTest
+from utils import ResTest
 from res.test import ErtTestContext
-from tests.utils import tmpdir
+from utils import tmpdir
 from res.enkf import ErtImplType, GenKwConfig
 
 

@@ -15,7 +15,7 @@
 #  for more details.
 import os
 from ecl.util.test import TestAreaContext
-from tests import ResTest
+from utils import ResTest
 
 from res.test import ErtTestContext
 from res.enkf import ResConfig, ConfigKeys

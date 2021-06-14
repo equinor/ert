@@ -5,7 +5,7 @@ from unittest import TestCase
 from job_runner.job import Job
 from job_runner.reporting import File
 from job_runner.reporting.message import Exited, Finish, Init, Running, Start
-from tests.utils import tmpdir
+from utils import tmpdir
 
 
 class FileReporterTests(TestCase):

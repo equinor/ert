@@ -4,7 +4,7 @@ import json
 
 from ecl.util.test import TestAreaContext
 from ecl.util.util import EclVersion, Version
-from tests import ResTest
+from utils import ResTest
 from res.util.substitution_list import SubstitutionList
 from res.job_queue.environment_varlist import EnvironmentVarlist
 from res.job_queue.forward_model import ForwardModel

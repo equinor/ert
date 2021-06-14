@@ -14,7 +14,7 @@ from job_runner.reporting.event import (
 from job_runner.reporting.message import Exited, Finish, Init, Running, Start
 import json
 
-from tests.utils import _mock_ws_thread
+from utils import _mock_ws_thread
 
 
 def test_report_with_successful_start_message_argument(unused_tcp_port):

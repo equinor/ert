@@ -1,8 +1,8 @@
 import sys
 import os
-from tests import ResTest
+from utils import ResTest
 from res.test import ErtTestContext
-from tests.utils import tmpdir
+from utils import tmpdir
 
 
 from res.enkf import EnkfFs

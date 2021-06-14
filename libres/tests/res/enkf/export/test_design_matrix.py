@@ -1,5 +1,5 @@
 from res.enkf.export import DesignMatrixReader
-from tests import ResTest
+from utils import ResTest
 from ecl.util.test.test_area import TestAreaContext
 
 

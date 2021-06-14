@@ -21,7 +21,7 @@ import os
 import pytest
 import res
 
-from tests import ResTest
+from utils import ResTest
 from res.test import ErtTestContext
 
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum

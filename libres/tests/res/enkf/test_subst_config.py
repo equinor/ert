@@ -20,7 +20,7 @@ from res.enkf import SubstConfig
 from res.enkf import ConfigKeys
 from res.enkf import ResConfig
 import unittest
-from tests import ResTest
+from utils import ResTest
 
 
 class SubstConfigTest(ResTest):

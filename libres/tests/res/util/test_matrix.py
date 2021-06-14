@@ -2,7 +2,7 @@ from ecl.util.util import RandomNumberGenerator
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.test import TestAreaContext
 from res.util import Matrix
-from tests import ResTest
+from utils import ResTest
 from cwrap import CFILE, BaseCClass, load, open as copen
 
 

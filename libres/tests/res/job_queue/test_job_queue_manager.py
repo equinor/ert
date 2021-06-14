@@ -7,8 +7,8 @@ from res.job_queue import (
     JobQueueManager,
 )
 from res.enkf import ResConfig
-from tests import ResTest
-from tests.utils import wait_until
+from utils import ResTest
+from utils import wait_until
 from ecl.util.test import TestAreaContext
 import os, stat
 

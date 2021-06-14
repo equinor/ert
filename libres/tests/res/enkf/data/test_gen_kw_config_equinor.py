@@ -1,6 +1,6 @@
 import pytest
 
-from tests import ResTest
+from utils import ResTest
 from res.test import ErtTestContext
 
 from res.enkf import ErtImplType, GenKwConfig

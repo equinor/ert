@@ -1,5 +1,5 @@
 from res.enkf import ErtPlugin, CancelPluginException
-from tests import ResTest
+from utils import ResTest
 
 
 class SimplePlugin(ErtPlugin):

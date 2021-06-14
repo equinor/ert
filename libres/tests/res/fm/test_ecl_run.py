@@ -25,8 +25,8 @@ import re
 
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
-from tests import ResTest
-from tests.utils import tmpdir
+from utils import ResTest
+from utils import tmpdir
 from res.fm.ecl import *
 from res.fm.ecl.ecl_run import make_SLURM_machine_list
 from subprocess import Popen, PIPE
