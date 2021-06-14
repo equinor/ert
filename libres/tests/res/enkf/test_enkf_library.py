@@ -1,29 +1,29 @@
 import os
+
 import pytest
-
-
-from utils import ResTest
-from utils import tmpdir
-
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
+from utils import ResTest, tmpdir
+
 from res.enkf import (
     AnalysisConfig,
     EclConfig,
-    GenKwConfig,
     EnkfConfigNode,
-    SiteConfig,
-    ObsVector,
-)
-from res.enkf import EnKFMain, ResConfig
-from res.enkf import ErtTemplate, ErtTemplates, LocalConfig, ModelConfig
-from res.enkf import (
-    GenDataConfig,
-    FieldConfig,
     EnkfFs,
+    EnKFMain,
     EnkfObs,
     EnKFState,
     EnsembleConfig,
+    ErtTemplate,
+    ErtTemplates,
+    FieldConfig,
+    GenDataConfig,
+    GenKwConfig,
+    LocalConfig,
+    ModelConfig,
+    ObsVector,
+    ResConfig,
+    SiteConfig,
 )
 from res.enkf.util import TimeMap
 

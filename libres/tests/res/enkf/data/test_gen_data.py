@@ -1,10 +1,9 @@
 import pytest
-
 from utils import ResTest
-from res.test import ErtTestContext
 
 from res.enkf.data.enkf_node import EnkfNode
 from res.enkf.node_id import NodeId
+from res.test import ErtTestContext
 
 
 @pytest.mark.equinor_test

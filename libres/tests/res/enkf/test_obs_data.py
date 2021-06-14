@@ -1,9 +1,10 @@
 import datetime
 
-from ecl.util.util import BoolVector
 from ecl.util.test import TestAreaContext
+from ecl.util.util import BoolVector
 from utils import ResTest
-from res.enkf import ObsData, ObsBlock
+
+from res.enkf import ObsBlock, ObsData
 from res.util import Matrix
 
 

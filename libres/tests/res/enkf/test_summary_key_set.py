@@ -1,13 +1,12 @@
 import os
-import pytest
 
+import pytest
 from ecl.util.test.test_area import TestAreaContext
 from utils import ResTest
-from res.test.ert_test_context import ErtTestContext
 
-from res.enkf import SummaryKeySet
+from res.enkf import EnKFMain, ResConfig, SummaryKeySet
 from res.enkf.enkf_fs import EnkfFs
-from res.enkf import EnKFMain, ResConfig
+from res.test.ert_test_context import ErtTestContext
 
 
 @pytest.mark.equinor_test

@@ -14,25 +14,24 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+import os
 import random
 import sys
-import os
 
 import pytest
-import res
-
-from utils import ResTest
-from res.test import ErtTestContext
-
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.util import BoolVector, RandomNumberGenerator
-from res.util import Matrix
+from utils import ResTest
+
+import res
 from res.analysis import (
     AnalysisModule,
     AnalysisModuleLoadStatusEnum,
     AnalysisModuleOptionsEnum,
 )
-from res.enkf import MeasData, ObsData, LocalObsdata
+from res.enkf import LocalObsdata, MeasData, ObsData
+from res.test import ErtTestContext
+from res.util import Matrix
 
 
 def update(rng, mask, module, ert, meas_data, obs_data, state_size):

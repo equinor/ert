@@ -13,14 +13,15 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import inspect
 import os
 import stat
-import inspect
 import unittest
+
 import yaml
 from ecl.util.test import TestAreaContext
-from utils import ResTest
 from pytest import MonkeyPatch
+from utils import ResTest
 
 from res.fm.ecl import Ecl100Config
 from res.fm.ecl.ecl_config import Keys

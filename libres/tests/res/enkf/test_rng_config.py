@@ -17,7 +17,7 @@
 from ecl.util.test import TestAreaContext
 from utils import ResTest
 
-from res.enkf import ResConfig, RNGConfig, ConfigKeys
+from res.enkf import ConfigKeys, ResConfig, RNGConfig
 
 
 class RNGConfigTest(ResTest):

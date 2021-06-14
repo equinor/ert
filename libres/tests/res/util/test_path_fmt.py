@@ -1,5 +1,7 @@
 import os
+
 from utils import ResTest
+
 from res.util import PathFormat
 
 

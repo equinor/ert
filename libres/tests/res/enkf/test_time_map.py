@@ -1,9 +1,10 @@
 import datetime
 
-from res.enkf.enums.realization_state_enum import RealizationStateEnum
-from res.enkf import TimeMap
 from ecl.util.test import TestAreaContext
 from utils import ResTest
+
+from res.enkf import TimeMap
+from res.enkf.enums.realization_state_enum import RealizationStateEnum
 
 
 class TimeMapTest(ResTest):

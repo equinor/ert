@@ -1,14 +1,12 @@
 import os
+
 import pytest
-
 from ecl.util.test import TestAreaContext
-from utils import ResTest
-from utils import tmpdir
-from res.test import ErtTestContext
+from utils import ResTest, tmpdir
 
-from res.enkf import EnkfFs
-from res.enkf import EnKFMain
+from res.enkf import EnkfFs, EnKFMain
 from res.enkf.enums import EnKFFSType
+from res.test import ErtTestContext
 
 
 @pytest.mark.equinor_test

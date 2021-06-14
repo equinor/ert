@@ -1,7 +1,7 @@
 from utils import ResTest
-from res.test import ErtTestContext
 
 from res.enkf.export import MisfitCollector
+from res.test import ErtTestContext
 
 
 class MisfitCollectorTest(ResTest):

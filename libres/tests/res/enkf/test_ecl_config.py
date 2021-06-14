@@ -15,15 +15,15 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import pytest
-
 import os.path
 
-from res.enkf import EclConfig, ResConfig, ConfigKeys
+import pytest
+from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
 from utils import ResTest
+
+from res.enkf import ConfigKeys, EclConfig, ResConfig
 from res.util import UIReturn
-from ecl.summary import EclSum
 
 EGRID_file = "Equinor/ECLIPSE/Gurbat/ECLIPSE.EGRID"
 SMSPEC_file = "Equinor/ECLIPSE/Gurbat/ECLIPSE.SMSPEC"

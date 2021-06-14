@@ -1,13 +1,11 @@
 import pytest
-
 from utils import ResTest
-from res.test import ErtTestContext
 
 from res import ResPrototype
-from res.enkf.data import EnkfNode
+from res.enkf import ForwardLoadContext, NodeId, RunArg
 from res.enkf.config import GenDataConfig
-from res.enkf import NodeId, RunArg
-from res.enkf import ForwardLoadContext
+from res.enkf.data import EnkfNode
+from res.test import ErtTestContext
 
 
 @pytest.mark.equinor_test

@@ -1,14 +1,14 @@
 import sys
 from datetime import datetime as dt
 from unittest import TestCase
-
-from job_runner.job import Job
-from job_runner.reporting import Network
-from job_runner.reporting.message import Exited, Init, Finish
-
 from unittest.mock import patch
 
 import pytest
+
+from job_runner.job import Job
+from job_runner.reporting import Network
+from job_runner.reporting.message import Exited, Finish, Init
+
 
 # Network reporting is disabled temporarily in python/ert_logger/__init__.py
 # according to issue #1095.

@@ -14,15 +14,15 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
+from ecl.util.util.rng import RandomNumberGenerator
 from utils import ResTest
+
 from res.analysis import (
     AnalysisModule,
     AnalysisModuleLoadStatusEnum,
     AnalysisModuleOptionsEnum,
 )
-
-from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
-from ecl.util.util.rng import RandomNumberGenerator
 
 
 class StdEnKFTest(ResTest):

@@ -1,9 +1,8 @@
 import pytest
-
 from utils import ResTest
-from res.test import ErtTestContext
 
 from res.enkf.export import ArgLoader
+from res.test import ErtTestContext
 
 
 @pytest.mark.equinor_test

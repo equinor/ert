@@ -14,45 +14,44 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import sys, os
+import os
 import os.path
-import pytest
-from utils import ResTest
+import sys
 
+import pytest
+from ecl.util.test import TestAreaContext
 from ecl.util.util import BoolVector
+from utils import ResTest, tmpdir
+
 from res.enkf import (
-    EnsembleConfig,
     AnalysisConfig,
-    ModelConfig,
-    SiteConfig,
     EclConfig,
-    EnkfObs,
-    ErtTemplates,
     EnkfFs,
+    EnkfObs,
     EnKFState,
     EnkfVarType,
+    EnsembleConfig,
+    ErtTemplates,
+    ModelConfig,
     ObsVector,
-    RunArg,
     ResConfig,
+    RunArg,
+    SiteConfig,
 )
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_main import EnKFMain
 from res.enkf.enums import (
-    EnkfObservationImplementationType,
-    LoadFailTypeEnum,
-    EnkfInitModeEnum,
-    ErtImplType,
-    RealizationStateEnum,
-    EnkfRunType,
-    EnkfFieldFileFormatEnum,
-    EnkfTruncationType,
     ActiveMode,
+    EnkfFieldFileFormatEnum,
+    EnkfInitModeEnum,
+    EnkfObservationImplementationType,
+    EnkfRunType,
+    EnkfTruncationType,
+    ErtImplType,
+    LoadFailTypeEnum,
+    RealizationStateEnum,
 )
-
-from ecl.util.test import TestAreaContext
 from res.enkf.observations.summary_observation import SummaryObservation
-
-from utils import tmpdir
 
 
 class EnKFTest(ResTest):

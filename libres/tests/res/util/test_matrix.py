@@ -1,9 +1,11 @@
-from ecl.util.util import RandomNumberGenerator
+from cwrap import CFILE, BaseCClass, load
+from cwrap import open as copen
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.test import TestAreaContext
-from res.util import Matrix
+from ecl.util.util import RandomNumberGenerator
 from utils import ResTest
-from cwrap import CFILE, BaseCClass, load, open as copen
+
+from res.util import Matrix
 
 
 class MatrixTest(ResTest):

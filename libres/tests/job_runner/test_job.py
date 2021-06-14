@@ -1,12 +1,12 @@
 import os
 import sys
 from unittest import TestCase
+from unittest.mock import PropertyMock, patch
 
 from utils import tmpdir
-from job_runner.reporting.message import Exited, Running, Start
-from job_runner.job import Job
 
-from unittest.mock import patch, PropertyMock
+from job_runner.job import Job
+from job_runner.reporting.message import Exited, Running, Start
 
 
 class JobTests(TestCase):

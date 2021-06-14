@@ -1,8 +1,10 @@
 import os.path
-from res.enkf.data import GenKw
-from res.enkf.config import GenKwConfig
+
 from ecl.util.test import TestAreaContext
 from utils import ResTest
+
+from res.enkf.config import GenKwConfig
+from res.enkf.data import GenKw
 
 
 def create_gen_kw():

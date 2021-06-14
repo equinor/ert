@@ -16,6 +16,7 @@
 #  for more details.
 
 from utils import ResTest
+
 from res.analysis import AnalysisModuleOptionsEnum
 
 

@@ -1,10 +1,10 @@
-from utils import ResTest
+import os
 import sys
 
-from res.test import ErtTestContext
 import pytest
+from utils import ResTest
 
-import os
+from res.test import ErtTestContext
 
 
 @pytest.mark.equinor_test

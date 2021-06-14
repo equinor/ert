@@ -2,17 +2,17 @@ import asyncio
 import contextlib
 import logging
 import os
-import tempfile
 import shutil
+import tempfile
 import threading
+import time
 from functools import partial
 from pathlib import Path
 
 import decorator
-import time
+import websockets
 from ecl.util.test import ExtendedTestCase
 
-import websockets
 from job_runner.util.client import Client
 
 """

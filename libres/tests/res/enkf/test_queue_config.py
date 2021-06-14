@@ -15,12 +15,13 @@
 #  for more details.
 
 import os
-from ecl.util.test import TestAreaContext
 
-from res.job_queue import QueueDriverEnum
+from ecl.util.test import TestAreaContext
 from utils import ResTest
-from res.enkf import QueueConfig, ConfigKeys
+
 from res.config import ConfigContent
+from res.enkf import ConfigKeys, QueueConfig
+from res.job_queue import QueueDriverEnum
 
 
 class QueueConfigTest(ResTest):

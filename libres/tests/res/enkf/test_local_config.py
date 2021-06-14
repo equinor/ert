@@ -16,16 +16,14 @@
 
 import os.path
 
-from utils import ResTest
-from utils import tmpdir
+from utils import ResTest, tmpdir
 
-from res.test import ErtTestContext
-from res.enkf import ESUpdate
-from res.enkf import ErtRunContext
+from res.enkf import ErtRunContext, ESUpdate
 from res.enkf.local_ministep import LocalMinistep
 from res.enkf.local_obsdata import LocalObsdata
-from res.enkf.local_updatestep import LocalUpdateStep
 from res.enkf.local_obsdata_node import LocalObsdataNode
+from res.enkf.local_updatestep import LocalUpdateStep
+from res.test import ErtTestContext
 
 
 class LocalConfigTest(ResTest):

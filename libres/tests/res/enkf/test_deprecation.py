@@ -17,6 +17,7 @@
 import warnings
 
 from utils import ResTest
+
 from res.test import ErtTestContext
 
 

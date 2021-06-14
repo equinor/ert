@@ -2,7 +2,8 @@ import os.path
 
 from ecl.util.test import TestAreaContext
 from utils import ResTest
-from res.enkf import GenObservation, GenDataConfig, ActiveList
+
+from res.enkf import ActiveList, GenDataConfig, GenObservation
 
 
 class GenObsTest(ResTest):

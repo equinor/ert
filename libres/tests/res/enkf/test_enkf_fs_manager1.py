@@ -1,11 +1,9 @@
 import os
-from res.test import ErtTestContext
-from utils import ResTest
-from utils import tmpdir
 
-from res.enkf import EnkfFs
-from res.enkf import EnKFMain
-from res.enkf import EnkfFsManager
+from utils import ResTest, tmpdir
+
+from res.enkf import EnkfFs, EnkfFsManager, EnKFMain
+from res.test import ErtTestContext
 
 
 class EnKFFSManagerTest1(ResTest):

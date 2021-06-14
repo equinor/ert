@@ -14,11 +14,12 @@
 # See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 # for more details.
 from os.path import abspath
+
+from ecl.grid import EclGridGenerator
 from ecl.util.test import TestAreaContext
 from utils import ResTest
 
-from ecl.grid import EclGridGenerator
-from res.enkf.config import FieldTypeEnum, FieldConfig
+from res.enkf.config import FieldConfig, FieldTypeEnum
 from res.enkf.enums import EnkfFieldFileFormatEnum
 
 

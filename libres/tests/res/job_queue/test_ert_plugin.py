@@ -1,5 +1,6 @@
-from res.enkf import ErtPlugin, CancelPluginException
 from utils import ResTest
+
+from res.enkf import CancelPluginException, ErtPlugin
 
 
 class SimplePlugin(ErtPlugin):

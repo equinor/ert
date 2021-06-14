@@ -20,8 +20,7 @@ import os
 from ecl.util.test import TestAreaContext
 from utils import ResTest
 
-from res.enkf import AnalysisConfig
-from res.enkf import ConfigKeys
+from res.enkf import AnalysisConfig, ConfigKeys
 
 
 class AnalysisConfigTest(ResTest):

@@ -1,18 +1,19 @@
-from res.job_queue import (
-    JobStatusType,
-    Driver,
-    QueueDriverEnum,
-    JobQueue,
-    JobQueueNode,
-    JobQueueManager,
-)
-from res.enkf import ResConfig
-from utils import ResTest
-from utils import wait_until
-from ecl.util.test import TestAreaContext
-import os, stat
-
+import os
+import stat
 from threading import BoundedSemaphore
+
+from ecl.util.test import TestAreaContext
+from utils import ResTest, wait_until
+
+from res.enkf import ResConfig
+from res.job_queue import (
+    Driver,
+    JobQueue,
+    JobQueueManager,
+    JobQueueNode,
+    JobStatusType,
+    QueueDriverEnum,
+)
 
 
 def dummy_ok_callback(args):

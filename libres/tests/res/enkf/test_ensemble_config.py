@@ -1,8 +1,7 @@
+from ecl.util.test import TestAreaContext
 from utils import ResTest
 
-from res.enkf import EnsembleConfig, ResConfig
-from res.enkf import ConfigKeys
-from ecl.util.test import TestAreaContext
+from res.enkf import ConfigKeys, EnsembleConfig, ResConfig
 from res.enkf.enums import GenDataFileType
 
 

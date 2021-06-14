@@ -1,10 +1,11 @@
-import os.path
 import json
+import os.path
 
-from res.enkf.data import ExtParam
-from res.enkf.config import ExtParamConfig
 from ecl.util.test import TestAreaContext
 from utils import ResTest
+
+from res.enkf.config import ExtParamConfig
+from res.enkf.data import ExtParam
 
 
 class ExtParamTest(ResTest):

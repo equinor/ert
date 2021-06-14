@@ -1,13 +1,13 @@
-import unittest
 import os.path
+import unittest
 
 from ecl.util.test import TestAreaContext
-from utils import ResTest
-from res.test import ErtTestContext
-
-from res.enkf import RunpathList, RunpathNode, ErtRunContext
-from res.enkf.enums import EnkfInitModeEnum, EnkfRunType
 from ecl.util.util import BoolVector
+from utils import ResTest
+
+from res.enkf import ErtRunContext, RunpathList, RunpathNode
+from res.enkf.enums import EnkfInitModeEnum, EnkfRunType
+from res.test import ErtTestContext
 from res.util.substitution_list import SubstitutionList
 
 

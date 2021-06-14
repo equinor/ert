@@ -1,9 +1,8 @@
 import pytest
-
 from utils import ResTest
-from res.test import ErtTestContext
 
 from res.enkf import ErtImplType, GenKwConfig
+from res.test import ErtTestContext
 
 
 @pytest.mark.equinor_test

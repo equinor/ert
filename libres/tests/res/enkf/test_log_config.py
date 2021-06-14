@@ -19,10 +19,10 @@ import os
 import sys
 
 from ecl.util.test import TestAreaContext
-
-from res.enkf import LogConfig, ResConfig, ConfigKeys
-from res.util.enums import MessageLevelEnum
 from utils import ResTest
+
+from res.enkf import ConfigKeys, LogConfig, ResConfig
+from res.util.enums import MessageLevelEnum
 
 
 class LogConfigTest(ResTest):

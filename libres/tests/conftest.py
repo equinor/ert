@@ -1,9 +1,10 @@
-from utils import libres_source_root
-import pytest
-import unittest
-import resource
 import functools
 import os
+import resource
+import unittest
+
+import pytest
+from utils import libres_source_root
 
 
 @pytest.fixture

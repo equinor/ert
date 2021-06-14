@@ -13,25 +13,30 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import os, os.path
+import os
+import os.path
 import stat
 from copy import deepcopy
 from datetime import date
 
-from ecl.util.test import TestAreaContext
-from utils import ResTest
-from utils import tmpdir
-from ecl.util.util import CTime
+from cwrap import Prototype, load
 from ecl.util.enums import RngAlgTypeEnum
-from res.util.enums import MessageLevelEnum
+from ecl.util.test import TestAreaContext
+from ecl.util.util import CTime
+from utils import ResTest, tmpdir
 
-from res.sched import HistorySourceEnum
-
+from res.enkf import (
+    AnalysisConfig,
+    ConfigKeys,
+    GenDataFileType,
+    QueueConfig,
+    ResConfig,
+    SiteConfig,
+)
 from res.job_queue import QueueDriverEnum
-from res.enkf import ResConfig, SiteConfig, AnalysisConfig, ConfigKeys, GenDataFileType
+from res.sched import HistorySourceEnum
 from res.test import ErtTestContext
-
-from res.enkf import QueueConfig
+from res.util.enums import MessageLevelEnum
 
 # The res_config object should set the environment variable
 # 'DATA_ROOT' to the root directory with the config
@@ -43,8 +48,6 @@ from res.enkf import QueueConfig
 # call in the res_config C code. We therefor create a wrapper to the
 # underlying libc getenv() function to be used for testing.
 
-from cwrap import Prototype
-from cwrap import load
 
 clib = load(None)
 clib_getenv = Prototype(clib, "char* getenv( char* )", bind=False)

@@ -1,4 +1,5 @@
 from utils import ResTest
+
 from res.util.substitution_list import SubstitutionList
 
 

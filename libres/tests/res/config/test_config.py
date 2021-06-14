@@ -20,9 +20,16 @@ from ecl.util.test import TestAreaContext
 from utils import ResTest
 
 from res import ResPrototype
-from res.config import UnrecognizedEnum, SchemaItem
-from res.config import ContentTypeEnum, ContentItem, ContentNode
-from res.config import ConfigContent, ConfigParser, ConfigSettings
+from res.config import (
+    ConfigContent,
+    ConfigParser,
+    ConfigSettings,
+    ContentItem,
+    ContentNode,
+    ContentTypeEnum,
+    SchemaItem,
+    UnrecognizedEnum,
+)
 
 
 class TestConfigPrototype(ResPrototype):

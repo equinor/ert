@@ -14,26 +14,29 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import random
-import os
 import math
-import numpy as np
-import tempfile
+import os
+import random
 import shutil
+import tempfile
 
-from utils import ResTest
-from utils import tmpdir
-
-from ecl.util.util import BoolVector
+import numpy as np
 from ecl.grid import EclGridGenerator
+from ecl.util.util import BoolVector
+from utils import ResTest, tmpdir
 
-from res.test import ErtTestContext
-from res.enkf import RowScaling, ResConfig
-from res.enkf import EnkfNode, NodeId
-from res.enkf import ESUpdate
-from res.enkf import FieldConfig, ErtRunContext
+from res.enkf import (
+    EnKFMain,
+    EnkfNode,
+    ErtRunContext,
+    ESUpdate,
+    FieldConfig,
+    NodeId,
+    ResConfig,
+    RowScaling,
+)
 from res.enkf.enums import RealizationStateEnum
-from res.enkf import EnKFMain
+from res.test import ErtTestContext
 
 # This function will initialize the data in the case before the actual row
 # scaling test can be performed. The function will initialize the PORO field

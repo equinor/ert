@@ -1,5 +1,6 @@
-from res.enkf import SummaryKeyMatcher
 from utils import ResTest
+
+from res.enkf import SummaryKeyMatcher
 
 
 class SummaryKeyMatcherTest(ResTest):

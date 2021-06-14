@@ -1,8 +1,9 @@
 from cwrap import clib
 from ecl.util.test import TestAreaContext
-from res.job_queue import WorkflowJob
-from workflow_common import WorkflowCommon
 from utils import ResTest
+from workflow_common import WorkflowCommon
+
+from res.job_queue import WorkflowJob
 
 
 class FunctionErtScriptTest(ResTest):

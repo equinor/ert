@@ -1,5 +1,6 @@
-from res.job_queue import JobStatusType, JobQueue
 from unittest import TestCase, mock
+
+from res.job_queue import JobQueue, JobStatusType
 
 
 class MockedJob:

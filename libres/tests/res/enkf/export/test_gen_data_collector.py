@@ -1,7 +1,7 @@
 from utils import ResTest
-from res.test import ErtTestContext
 
 from res.enkf.export import GenDataCollector
+from res.test import ErtTestContext
 
 
 class GenDataCollectorTest(ResTest):

@@ -15,10 +15,11 @@
 #  for more details.
 
 
-import unittest
 import os
+import unittest
+from subprocess import PIPE, Popen
+
 from utils import tmpdir
-from subprocess import Popen, PIPE
 
 from res.util.subprocess import await_process_tee
 

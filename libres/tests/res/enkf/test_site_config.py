@@ -14,13 +14,13 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from res.enkf import SiteConfig, ConfigKeys, ResConfig
 import os
 
 from ecl.util.test import TestAreaContext
-from utils import ResTest
-from utils import tmpdir
 from pytest import MonkeyPatch
+from utils import ResTest, tmpdir
+
+from res.enkf import ConfigKeys, ResConfig, SiteConfig
 
 
 class SiteConfigTest(ResTest):

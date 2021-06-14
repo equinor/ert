@@ -1,25 +1,23 @@
 import pytest
-
-from utils import ResTest
-from utils import tmpdir
-from res.test import ErtTestContext
-
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
-from res.sched import History
-
 from ecl.util.util import BoolVector, IntVector
-from res.enkf import ActiveMode, EnsembleConfig
+from utils import ResTest, tmpdir
+
 from res.enkf import (
-    ObsVector,
-    LocalObsdata,
-    EnkfObs,
-    TimeMap,
-    LocalObsdataNode,
-    ObsData,
-    MeasData,
     ActiveList,
+    ActiveMode,
+    EnkfObs,
+    EnsembleConfig,
+    LocalObsdata,
+    LocalObsdataNode,
+    MeasData,
+    ObsData,
+    ObsVector,
+    TimeMap,
 )
+from res.sched import History
+from res.test import ErtTestContext
 
 
 @pytest.mark.equinor_test

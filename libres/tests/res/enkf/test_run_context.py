@@ -1,12 +1,11 @@
-from ecl.util.util import BoolVector
-from res.util.substitution_list import SubstitutionList
 from ecl.util.test import TestAreaContext
-from utils import ResTest
-from utils import tmpdir
-from res.enkf import ErtRunContext
+from ecl.util.util import BoolVector
+from utils import ResTest, tmpdir
+
+from res.enkf import EnkfFs, ErtRunContext
 from res.enkf.enums import EnkfRunType
-from res.enkf import EnkfFs
 from res.util import PathFormat
+from res.util.substitution_list import SubstitutionList
 
 
 class ErtRunContextTest(ResTest):

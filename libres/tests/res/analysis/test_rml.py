@@ -17,18 +17,17 @@
 import random
 import sys
 
-from utils import ResTest
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.util import BoolVector, RandomNumberGenerator
-from res.util import Matrix
+from utils import ResTest, tmpdir
+
 from res.analysis import (
     AnalysisModule,
     AnalysisModuleLoadStatusEnum,
     AnalysisModuleOptionsEnum,
 )
 from res.enkf import MeasData, ObsData
-
-from utils import tmpdir
+from res.util import Matrix
 
 
 def forward_model(params, model_error=False):

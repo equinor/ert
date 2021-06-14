@@ -13,27 +13,26 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import os
-import stat
-import unittest
-import shutil
 import functools
 import inspect
-import yaml
-import pytest
-import re
 import json
+import os
+import re
+import shutil
+import stat
+import unittest
+from distutils.spawn import find_executable
+from subprocess import PIPE, Popen
 from unittest import mock
 
+import pytest
+import yaml
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
-from utils import ResTest
-from utils import tmpdir
-from res.fm.ecl import run, Ecl100Config, EclrunConfig, EclRun
-from subprocess import Popen, PIPE
-from subprocess import Popen, PIPE
-from distutils.spawn import find_executable
 from pytest import MonkeyPatch
+from utils import ResTest, tmpdir
+
+from res.fm.ecl import Ecl100Config, EclRun, EclrunConfig, run
 
 
 def find_version(output):

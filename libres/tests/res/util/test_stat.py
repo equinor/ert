@@ -1,5 +1,6 @@
-from utils import ResTest
 from ecl.util.util import DoubleVector
+from utils import ResTest
+
 from res.util import polyfit
 
 

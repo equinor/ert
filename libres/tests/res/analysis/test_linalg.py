@@ -16,10 +16,11 @@
 #  for more details.
 
 
+from utils import ResTest
+
+from res.analysis import Linalg
 from res.enkf import ObsVector
 from res.util import Matrix
-from res.analysis import Linalg
-from utils import ResTest
 
 
 class LinalgTest(ResTest):

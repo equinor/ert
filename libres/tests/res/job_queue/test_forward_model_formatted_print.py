@@ -1,16 +1,17 @@
-import os.path
 import datetime
 import json
+import os.path
 
 from ecl.util.test import TestAreaContext
 from ecl.util.util import EclVersion, Version
 from utils import ResTest
-from res.util.substitution_list import SubstitutionList
+
 from res.job_queue.environment_varlist import EnvironmentVarlist
-from res.job_queue.forward_model import ForwardModel
-from res.job_queue.forward_model_status import ForwardModelStatus
 from res.job_queue.ext_job import ExtJob
 from res.job_queue.ext_joblist import ExtJoblist
+from res.job_queue.forward_model import ForwardModel
+from res.job_queue.forward_model_status import ForwardModelStatus
+from res.util.substitution_list import SubstitutionList
 
 #
 # Data for testing

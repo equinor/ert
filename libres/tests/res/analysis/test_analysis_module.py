@@ -15,17 +15,18 @@
 #  for more details.
 
 import sys
+from os.path import basename
 
+from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
+from ecl.util.util.rng import RandomNumberGenerator
 from utils import ResTest
+
 from res.analysis import (
     AnalysisModule,
     AnalysisModuleLoadStatusEnum,
     AnalysisModuleOptionsEnum,
 )
-from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
-from ecl.util.util.rng import RandomNumberGenerator
 from res.util import Matrix
-from os.path import basename
 
 
 class AnalysisModuleTest(ResTest):
