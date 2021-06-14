@@ -13,6 +13,8 @@ that highlights the features of ert3 in a reservoir context.
    suffice in bash.
  - ecl2df: In addition to the ERT dependencies the job `summary2json` utilises
    ecl2df. It can be installed via `pip install ecl2df`.
+ - ert-storage: To store results, ert3 utilizes a service called ert-storage.
+   It can be installed via `pip install ert[storage]`.
 
 ### Overview of the workspace
 
@@ -56,6 +58,12 @@ The template is templated by the following parameters:
    are opened.
 
 ### The experiments
+
+#### Ert-storage
+The ert-storage service needs to be available. To launch a local instance use the
+command `ert3 service start storage` in a separate terminal. If you are unsure
+whether you have an instance available, you can verify by running
+`ert3 service check storage`.
 
 #### Layout
 Each experiment is a folder within within the `experiments` folder. The name of
@@ -101,18 +109,27 @@ realisations. An important difference is that the ensemble size is no longer
 configured by the user, but dictated by the algorithm. There are also some
 differences in the `experiment.yml`, but those are hopefully self-explaining.
 
+#### Clean already ran experiments
+An experiment can only be run once. If you wish re-run your experiment, the
+results must be deleted first. To do this, execute `ert3 clean <experiment_name>`.
+To see the status of all the experiments in the workspace, run `ert3 status`.
+
+#### Visualize experiments
+After experiments have been evaluated. The records labled as output in the
+ensemble-config can be visualized through the visualization solution, `webviz-ert`.
+To launch the visualization tool run `ert vis`.
+
 ### Some additional notes
 ERT3 is highly experimental software in the sense that we aim at moving fast.
-Natural features that is lacking is among others:
+Natural features that are lacking, are among others:
  - inspect records and experiments in the cli,
- - delete records and experiment runs,
+ - delete workspace records,
  - monitor ongoing experiments,
- - visualize experiment results,
  - fetch experiment results via an API and
  - cross configuration file validation (each file is validated in isolation, but not
    towards each other).
 
-The first two points are currently resolved by deleting the `.ert` folder in
+The second point are currently resolved by deleting the `.ert` folder in
 the workspace and starting over. Monitoring is currently via extensive output
 in the terminal. Results can fetched via the export command.
 
