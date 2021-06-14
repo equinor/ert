@@ -1,7 +1,13 @@
-import pytest
+from ert_shared.ensemble_evaluator.narratives.narrative import (
+    Consumer,
+    EventDescription,
+    Provider,
+)
+
+
 import websockets
-from cloudevents.http import CloudEvent, from_json, to_json
-from narrative import Consumer, EventDescription, Provider
+from cloudevents.http import CloudEvent, to_json, from_json
+import pytest
 
 pytestmark = pytest.mark.asyncio
 

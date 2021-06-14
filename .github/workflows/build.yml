@@ -106,6 +106,12 @@ jobs:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
         os: [ubuntu-latest, macos-latest]
+        # Excluded to keep build times down on Github actions
+        exclude:
+          - os: macos-latest
+            python-version: 3.7
+          - os: macos-latest
+            python-version: 3.9
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -215,16 +221,9 @@ jobs:
         mv setup.cfg tmp_tests/setup.cfg
         mkdir tmp_tests/.git
 
-    - name: Produce narratives
-      run: |
-        export NARRATIVE_DIR=$(pwd)/narratives
-        pushd tmp_tests
-        pytest -m consumer_driven_contract_verification
-        popd
-
     - name: Test docs
       run: |
-        NARRATIVE_DIR=$(pwd)/narratives sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
+        sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
 
   tests-libres:
     name: Run libres tests
@@ -235,6 +234,12 @@ jobs:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
         os: [ubuntu-latest, macos-latest]
+        # Excluded to keep build times down on Github actions
+        exclude:
+          - os: macos-latest
+            python-version: 3.7
+          - os: macos-latest
+            python-version: 3.9
     runs-on: ${{ matrix.os }}
 
     steps:

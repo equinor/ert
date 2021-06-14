@@ -177,11 +177,13 @@ class EclRunTest(ResTest):
     def test_flow(self):
         self.init_flow_config()
         shutil.copy(
-            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1.DATA"),
+            os.path.join(self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1.DATA"),
             "SPE1.DATA",
         )
         shutil.copy(
-            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1_ERROR.DATA"),
+            os.path.join(
+                self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1_ERROR.DATA"
+            ),
             "SPE1_ERROR.DATA",
         )
         flow_config = FlowConfig()
@@ -363,7 +365,7 @@ class EclRunTest(ResTest):
     def test_run(self):
         self.init_ecl100_config()
         shutil.copy(
-            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1.DATA"),
+            os.path.join(self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1.DATA"),
             "SPE1.DATA",
         )
         ecl_config = Ecl100Config()
@@ -396,7 +398,7 @@ class EclRunTest(ResTest):
     def test_run_api(self):
         self.init_ecl100_config()
         shutil.copy(
-            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1.DATA"),
+            os.path.join(self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1.DATA"),
             "SPE1.DATA",
         )
         ecl_config = Ecl100Config()
@@ -409,7 +411,9 @@ class EclRunTest(ResTest):
     def test_failed_run(self):
         self.init_ecl100_config()
         shutil.copy(
-            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1_ERROR.DATA"),
+            os.path.join(
+                self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1_ERROR.DATA"
+            ),
             "SPE1_ERROR.DATA",
         )
         ecl_config = Ecl100Config()
@@ -427,7 +431,9 @@ class EclRunTest(ResTest):
     def test_failed_run_OK(self):
         self.init_ecl100_config()
         shutil.copy(
-            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1_ERROR.DATA"),
+            os.path.join(
+                self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1_ERROR.DATA"
+            ),
             "SPE1_ERROR.DATA",
         )
         ecl_config = Ecl100Config()
@@ -448,7 +454,7 @@ class EclRunTest(ResTest):
         self.init_ecl100_config()
         shutil.copy(
             os.path.join(
-                self.SOURCE_ROOT, "test-data/local/eclipse/SPE1_PARALLELL.DATA"
+                self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1_PARALLELL.DATA"
             ),
             "SPE1_PARALLELL.DATA",
         )
@@ -462,7 +468,7 @@ class EclRunTest(ResTest):
     def test_summary_block(self):
         self.init_ecl100_config()
         shutil.copy(
-            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1.DATA"),
+            os.path.join(self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1.DATA"),
             "SPE1.DATA",
         )
         ecl_config = Ecl100Config()
@@ -479,14 +485,14 @@ class EclRunTest(ResTest):
     @tmpdir()
     def test_check(self):
         full_case = os.path.join(
-            self.SOURCE_ROOT, "test-data/Equinor/ECLIPSE/Gurbat/ECLIPSE"
+            self.SOURCE_ROOT, "../test-data/Equinor/ECLIPSE/Gurbat/ECLIPSE"
         )
         short_case = os.path.join(
-            self.SOURCE_ROOT, "test-data/Equinor/ECLIPSE/ShortSummary/ECLIPSE"
+            self.SOURCE_ROOT, "../test-data/Equinor/ECLIPSE/ShortSummary/ECLIPSE"
         )
         failed_case = os.path.join(
             self.SOURCE_ROOT,
-            "test-data/Equinor/ECLIPSE/SummaryFail/NOR-2013A_R002_1208-0",
+            "../test-data/Equinor/ECLIPSE/SummaryFail/NOR-2013A_R002_1208-0",
         )
 
         with self.assertRaises(IOError):
@@ -516,11 +522,11 @@ class EclRunTest(ResTest):
     def test_error_parse(self):
         self.init_ecl100_config()
         shutil.copy(
-            os.path.join(self.SOURCE_ROOT, "test-data/local/eclipse/SPE1.DATA"),
+            os.path.join(self.SOURCE_ROOT, "../test-data/local/eclipse/SPE1.DATA"),
             "SPE1.DATA",
         )
         prt_file = os.path.join(
-            self.SOURCE_ROOT, "test-data/local/eclipse/parse/ERROR.PRT"
+            self.SOURCE_ROOT, "../test-data/local/eclipse/parse/ERROR.PRT"
         )
         shutil.copy(prt_file, "SPE1.PRT")
 

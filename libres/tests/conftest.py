@@ -13,7 +13,9 @@ def source_root():
 
 
 def has_equinor_test_data():
-    return os.path.isdir(os.path.join(libres_source_root(), "test-data", "Equinor"))
+    return os.path.isdir(
+        os.path.join(libres_source_root(), "..", "test-data", "Equinor")
+    )
 
 
 def pytest_runtest_setup(item):
