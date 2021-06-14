@@ -1,12 +1,12 @@
 import os
 from argparse import Namespace
 
-from res.enkf import EnKFMain, ResConfig
 from utils import SOURCE_DIR, ErtTest, tmpdir
 
 from ert_shared import ERT
 from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared.cli.workflow import execute_workflow
+from res.enkf import EnKFMain, ResConfig
 
 
 class WorkflowTest(ErtTest):

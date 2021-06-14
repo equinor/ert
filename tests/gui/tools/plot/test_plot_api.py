@@ -5,11 +5,11 @@ from unittest import TestCase
 
 import pytest
 from pandas import DataFrame
-from res.enkf import EnKFMain, ResConfig
 from utils import SOURCE_DIR, tmpdir
 
 from ert_gui.tools.plot.plot_api import PlotApi
 from ert_shared.libres_facade import LibresFacade
+from res.enkf import EnKFMain, ResConfig
 
 _KEY_DEFS = (
     {

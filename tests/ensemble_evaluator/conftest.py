@@ -5,10 +5,6 @@ from unittest.mock import Mock
 
 import pytest
 from ensemble_evaluator.ensemble_test import TestEnsemble
-from res.enkf import ConfigKeys
-from res.enkf.queue_config import QueueConfig
-from res.job_queue.driver import LOCAL_DRIVER
-from res.job_queue.ext_job import ExtJob
 
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity.ensemble import (
@@ -19,6 +15,10 @@ from ert_shared.ensemble_evaluator.entity.ensemble import (
 )
 from ert_shared.ensemble_evaluator.entity.snapshot import SnapshotBuilder
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from res.enkf import ConfigKeys
+from res.enkf.queue_config import QueueConfig
+from res.job_queue.driver import LOCAL_DRIVER
+from res.job_queue.ext_job import ExtJob
 
 
 @pytest.fixture

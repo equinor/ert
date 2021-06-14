@@ -2,10 +2,10 @@ import os
 from unittest import TestCase
 
 from pandas.core.base import PandasObject
-from res.enkf import EnKFMain, ResConfig
 from utils import SOURCE_DIR, tmpdir
 
 from ert_shared.libres_facade import LibresFacade
+from res.enkf import EnKFMain, ResConfig
 
 
 class LibresFacadeTest(TestCase):

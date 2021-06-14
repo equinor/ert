@@ -3,13 +3,13 @@ import shutil
 import sys
 
 import pytest
-from res.enkf import EnKFMain, ResConfig
 from utils import SOURCE_DIR, tmpdir
 
 from ert_shared import ERT
 from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared.exporter import Exporter
 from ert_shared.plugins.plugin_manager import ErtPluginContext
+from res.enkf import EnKFMain, ResConfig
 
 
 @pytest.mark.skipif(sys.version_info.major < 3, reason="requires python3")

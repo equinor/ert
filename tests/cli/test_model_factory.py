@@ -1,7 +1,6 @@
 from argparse import Namespace
 
 from ecl.util.util import BoolVector
-from res.test import ErtTestContext
 from utils import ErtTest
 
 import ert_shared.cli.model_factory as model_factory
@@ -11,6 +10,7 @@ from ert_shared.models.ensemble_experiment import EnsembleExperiment
 from ert_shared.models.ensemble_smoother import EnsembleSmoother
 from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert_shared.models.single_test_run import SingleTestRun
+from res.test import ErtTestContext
 
 
 class ModelFactoryTest(ErtTest):

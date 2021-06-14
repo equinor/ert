@@ -6,8 +6,6 @@ from argparse import ArgumentParser
 
 import pytest
 from jsonpath_ng import parse
-from res.enkf.enkf_main import EnKFMain
-from res.enkf.res_config import ResConfig
 
 import ert_shared.status.entity.state as state
 from ert_shared import ERT
@@ -23,6 +21,8 @@ from ert_shared.status.entity.event import (
     SnapshotUpdateEvent,
 )
 from ert_shared.status.tracker.factory import create_tracker
+from res.enkf.enkf_main import EnKFMain
+from res.enkf.res_config import ResConfig
 
 
 def check_expression(original, path_expression, expected, msg_start):
