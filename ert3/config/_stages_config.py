@@ -59,14 +59,14 @@ class _MimeBase(_StagesConfig):
 
 
 class Record(_MimeBase):
-    name: str = Field(None, alias="record")
-    path: pathlib.Path = Field(None, alias="location")
+    record: str
+    location: pathlib.Path
     is_executable: bool = False
 
 
 class TransportableCommand(_MimeBase):
     name: str
-    path: FilePath = Field(None, alias="location")
+    location: FilePath
     is_executable: bool = True
 
 

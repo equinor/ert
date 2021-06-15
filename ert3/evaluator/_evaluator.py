@@ -46,7 +46,7 @@ def _create_command_transmitter(
 ) -> RecordTransmitter:
     assert path.name == _MY_STORAGE_DIRECTORY
     transmitter = SharedDiskRecordTransmitter(command.name, path)
-    with open(command.path, "rb") as f:
+    with open(command.location, "rb") as f:
         asyncio.get_event_loop().run_until_complete(
             transmitter.transmit_data([f.read()])
         )
@@ -64,12 +64,12 @@ def prepare_input(
     futures: CoroutineTransmitters = []
     path = evaluation_tmp_dir / _MY_STORAGE_DIRECTORY
     for input_ in step.inputs:
-        for iens, record in enumerate(inputs.ensemble_records[input_.name].records):
+        for iens, record in enumerate(inputs.ensemble_records[input_.record].records):
             transmitter = SharedDiskRecordTransmitter(
-                input_.name, path
+                input_.record, path
             )
             futures.append(transmitter.transmit_data(record.data))
-            transmitters[iens][input_.name] = transmitter
+            transmitters[iens][input_.record] = transmitter
     asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
     if isinstance(step, Unix):
         for iens in range(ensemble_size):
@@ -89,8 +89,8 @@ def prepare_output(
     transmitters: RealisationsToRecordToTransmitter = defaultdict(dict)
     for output in step.outputs:
         for iens in range(ensemble_size):
-            transmitters[iens][output.name] = SharedDiskRecordTransmitter(
-                output.name, evaluation_tmp_dir / _MY_STORAGE_DIRECTORY
+            transmitters[iens][output.record] = SharedDiskRecordTransmitter(
+                output.record, evaluation_tmp_dir / _MY_STORAGE_DIRECTORY
             )
     return transmitters
 
@@ -119,7 +119,7 @@ def _unix_job_factory(step: Unix) -> TupleDictStrAny:
         return {
             "name": name,
             "executable": next(
-                (cmd.path for cmd in step.transportable_commands if cmd.name == name),
+                (cmd.location for cmd in step.transportable_commands if cmd.name == name),
                 pathlib.Path(name),
             ),
             "args": tuple(args),
@@ -131,7 +131,7 @@ def _unix_job_factory(step: Unix) -> TupleDictStrAny:
 def _translate_name_key_to_record(
     command: TransportableCommand,
 ) -> Dict[str, Any]:
-    cmd: Dict[str, Any] = command.dict(exclude={"name"}, by_alias=True)
+    cmd: Dict[str, Any] = command.dict(exclude={"name"})
     cmd["record"] = command.name
     return cmd
 
@@ -144,7 +144,7 @@ def _ensemble_attribute_discriminator(
     based on StagesConfig's Step Type (Unix | Function)
     return: (jobs, inputs)
     """
-    inputs = tuple(input_.dict(by_alias=True) for input_ in step.inputs)
+    inputs = tuple(map(dict, step.inputs))
     return (
         (
             _unix_job_factory(step),
@@ -161,7 +161,7 @@ def _ensemble_step_attributes(step: Step) -> DictStrAny:
     return {
         "name": step.name + "-only_step",
         "inputs": inputs,
-        "outputs": [output.dict(by_alias=True) for output in step.outputs],
+        "outputs": tuple(map(dict, step.outputs)),
         "jobs": jobs,
         "type": type(step).__name__.lower(),
     }
