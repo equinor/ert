@@ -1,10 +1,9 @@
 import pytest
-
-from tests import ResTest
-from res.test import ErtTestContext
+from ecl.util.util import DoubleVector
+from utils import ResTest
 
 from res.enkf.plot_data import PlotBlockData, PlotBlockDataLoader, PlotBlockVector
-from ecl.util.util import DoubleVector
+from res.test import ErtTestContext
 
 
 @pytest.mark.equinor_test

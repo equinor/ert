@@ -7,12 +7,13 @@ from typing import Callable, ContextManager
 
 import cloudpickle
 import pytest
+from utils import tmp
+
 from ert3.data import (
     InMemoryRecordTransmitter,
-    SharedDiskRecordTransmitter,
     RecordTransmitter,
+    SharedDiskRecordTransmitter,
 )
-from tests.utils import tmp
 
 
 @contextlib.contextmanager

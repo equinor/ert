@@ -1,12 +1,12 @@
 import sys
+from unittest.mock import Mock, patch
 
 from qtpy.QtGui import QIcon
+from utils import ErtTest
 
-from ert_gui.tools import run_analysis
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
-from tests import ErtTest
+from ert_gui.tools import run_analysis
 
-from unittest.mock import Mock, patch
 
 # Mocks are all instances and can never fool type checking, like in QAction's
 # initializer. Thus we need to subclass and pass a QIcon to it---without

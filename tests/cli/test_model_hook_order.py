@@ -1,12 +1,12 @@
-from ert_shared.models import (
-    EnsembleSmoother,
-    MultipleDataAssimilation,
-    IteratedEnsembleSmoother,
-)
 import inspect
+from unittest.mock import MagicMock, call
 
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from unittest.mock import MagicMock, call
+from ert_shared.models import (
+    EnsembleSmoother,
+    IteratedEnsembleSmoother,
+    MultipleDataAssimilation,
+)
 from res.enkf.enums import HookRuntime
 
 EXPECTED_CALL_ORDER = [

@@ -14,15 +14,20 @@
 # See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 # for more details.
 from os.path import abspath
-from ecl.util.test import TestAreaContext
-from tests import ResTest
 
 from ecl.grid import EclGridGenerator
-from res.enkf.config import FieldTypeEnum, FieldConfig
+from ecl.util.test import TestAreaContext
+from utils import ResTest
+
+from res.enkf.config import FieldConfig, FieldTypeEnum
 from res.enkf.enums import EnkfFieldFileFormatEnum
 
 
 class FieldConfigTest(ResTest):
+    def test_create(self):
+        grid = EclGridGenerator.create_rectangular((10, 10, 5), (1, 1, 1))
+        field_config = FieldConfig("SWAT", grid)
+
     def test_field_guess_filetype(self):
         with TestAreaContext("field_config") as test_context:
             fname = abspath("test.kw.grdecl")

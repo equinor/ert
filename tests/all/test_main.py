@@ -1,20 +1,19 @@
 import sys
+from unittest.mock import Mock
+
 import pytest
+from packaging.version import Version
 
 import ert_shared
-from ert_shared.main import ert_parser
 from ert_shared.cli import (
-    ENSEMBLE_SMOOTHER_MODE,
-    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
+    ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
+    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
     WORKFLOW_MODE,
 )
-
-from unittest.mock import Mock
-
-from packaging.version import Version
+from ert_shared.main import ert_parser
 
 
 @pytest.fixture(autouse=True)

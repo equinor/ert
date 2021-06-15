@@ -1,7 +1,8 @@
 import datetime
 
-from tests import ErtTest
-from ert_gui.plottery import PlotStyle, PlotConfig, PlotLimits
+from utils import ErtTest
+
+from ert_gui.plottery import PlotConfig, PlotLimits, PlotStyle
 
 
 class PlotStyleTest(ErtTest):

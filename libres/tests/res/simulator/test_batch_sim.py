@@ -1,16 +1,15 @@
 import os
-import time
 import shutil
 import sys
+import time
 import unittest
 
 from ecl.util.test import TestAreaContext
+from utils import ResTest, tmpdir
 
-from res.simulator import BatchSimulator, BatchContext
-from res.job_queue import JobStatusType
 from res.enkf import ResConfig
-from tests import ResTest
-from tests.utils import tmpdir
+from res.job_queue import JobStatusType
+from res.simulator import BatchContext, BatchSimulator
 
 
 class MockMonitor(object):

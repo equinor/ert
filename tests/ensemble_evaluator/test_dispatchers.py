@@ -1,4 +1,5 @@
 import pytest
+
 from ert_shared.ensemble_evaluator.narratives import dispatch_failing_job
 
 

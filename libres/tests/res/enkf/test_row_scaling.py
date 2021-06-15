@@ -14,14 +14,14 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import pytest
+import math
 import random
 from functools import partial
-from res.enkf import RowScaling
 
-import math
+import pytest
 from ecl.grid import EclGridGenerator
-from res.enkf import FieldConfig
+
+from res.enkf import FieldConfig, RowScaling
 
 
 def row_scaling_one(data_index):

@@ -1,6 +1,7 @@
 import os
 import unittest
-from tests import ResTest
+
+from utils import ResTest
 
 
 class TestFMValidity(ResTest):

@@ -1,14 +1,13 @@
-from ecl.util.test import TestAreaContext
-from tests import ResTest
-from tests.utils import tmpdir
-from res.fm.templating import *
+import json
+import os
+import subprocess
 
 import jinja2
-
-import subprocess
-import os
-import json
 import yaml
+from ecl.util.test import TestAreaContext
+from utils import ResTest, tmpdir
+
+from res.fm.templating import *
 
 
 class TemplatingTest(ResTest):

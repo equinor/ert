@@ -1,9 +1,10 @@
-import os.path
 import json
+import os.path
+
+from ecl.util.test import TestAreaContext
+from utils import ResTest
 
 from res.enkf.config import EnkfConfigNode
-from ecl.util.test import TestAreaContext
-from tests import ResTest
 
 
 class EnkfConfigNodeTest(ResTest):

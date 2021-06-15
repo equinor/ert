@@ -1,9 +1,9 @@
 import collections
-from ert3 import workspace
-
-import ert3
 
 import pytest
+
+import ert3
+from ert3 import workspace
 
 
 @pytest.mark.requires_ert_storage

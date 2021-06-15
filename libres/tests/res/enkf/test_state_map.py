@@ -1,7 +1,8 @@
+from ecl.util.test import TestAreaContext
+from utils import ResTest
+
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from res.enkf.state_map import StateMap
-from ecl.util.test import TestAreaContext
-from tests import ResTest
 
 
 class StateMapTest(ResTest):

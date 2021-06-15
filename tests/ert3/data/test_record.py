@@ -1,6 +1,7 @@
+import typing
+
 import pydantic
 import pytest
-import typing
 
 import ert3
 

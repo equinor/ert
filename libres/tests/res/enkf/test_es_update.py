@@ -1,13 +1,8 @@
-from tests import ResTest
-from tests.utils import tmpdir
-from res.test import ErtTestContext
 from ecl.util.util import BoolVector
+from utils import ResTest, tmpdir
 
-
-from res.enkf import NodeId
-from res.enkf import ESUpdate
-from res.enkf import ErtRunContext
-from res.enkf import EnkfNode
+from res.enkf import EnkfNode, ErtRunContext, ESUpdate, NodeId
+from res.test import ErtTestContext
 
 
 class ESUpdateTest(ResTest):

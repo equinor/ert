@@ -1,15 +1,13 @@
 import os
 import sys
-from ecl.util.test import TestAreaContext
-from tests import ResTest
-from tests.utils import tmpdir
-from ecl.util.util import BoolVector
 
+from ecl.util.test import TestAreaContext
+from ecl.util.util import BoolVector
+from utils import ResTest, tmpdir
+
+from res.enkf import EnkfConfigNode, EnkfFs, EnKFMain, EnkfNode, ErtRunContext, NodeId
+from res.enkf.enums import EnKFFSType, RealizationStateEnum
 from res.test import ErtTestContext
-from res.enkf import EnkfFs, EnkfConfigNode, NodeId, EnkfNode
-from res.enkf import EnKFMain, ErtRunContext
-from res.enkf.enums import EnKFFSType
-from res.enkf.enums import RealizationStateEnum
 
 
 class SimulationBatchTest(ResTest):

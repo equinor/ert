@@ -1,24 +1,25 @@
 from unittest.mock import MagicMock
 
-import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 import pytest
+from ensemble_evaluator_utils import TestEnsemble, send_dispatch_event
+
+import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator, ee_monitor
-from ert_shared.status.entity.state import (
-    ENSEMBLE_STATE_STARTED,
-    JOB_STATE_FAILURE,
-    JOB_STATE_FINISHED,
-    JOB_STATE_RUNNING,
-    ENSEMBLE_STATE_UNKNOWN,
-)
 from ert_shared.ensemble_evaluator.narratives import (
     dispatch_failing_job,
     monitor_failing_ensemble,
     monitor_failing_evaluation,
     monitor_successful_ensemble,
 )
-from tests.ensemble_evaluator.ensemble_test import TestEnsemble, send_dispatch_event
+from ert_shared.status.entity.state import (
+    ENSEMBLE_STATE_STARTED,
+    ENSEMBLE_STATE_UNKNOWN,
+    JOB_STATE_FAILURE,
+    JOB_STATE_FINISHED,
+    JOB_STATE_RUNNING,
+)
 
 
 def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):

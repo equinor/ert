@@ -1,8 +1,10 @@
 import threading
-import pytest
 from functools import partial
+
+import pytest
+from ensemble_evaluator_utils import _mock_ws
+
 from ert_shared.ensemble_evaluator.client import Client
-from tests.ensemble_evaluator.conftest import _mock_ws
 
 
 def test_invalid_server():

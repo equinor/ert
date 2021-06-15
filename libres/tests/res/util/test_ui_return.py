@@ -1,8 +1,9 @@
 import os
 
+from utils import ResTest
+
 from res.util import UIReturn
 from res.util.enums import UIReturnStatusEnum
-from tests import ResTest
 
 
 class UIReturnTest(ResTest):

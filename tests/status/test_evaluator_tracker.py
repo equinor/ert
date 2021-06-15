@@ -1,9 +1,10 @@
 from typing import Any, List, Tuple
 from unittest.mock import MagicMock, patch
 
-import ert_shared.ensemble_evaluator.entity.identifiers as ids
 import pytest
 from cloudevents.http.event import CloudEvent
+
+import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
     SnapshotBuilder,

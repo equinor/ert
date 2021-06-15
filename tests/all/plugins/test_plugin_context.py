@@ -3,14 +3,12 @@ import os
 import sys
 import tempfile
 import unittest
-
 from unittest.mock import Mock
 
+import dummy_plugins
 from pytest import MonkeyPatch
 
 from ert_shared.plugins import ErtPluginContext
-import tests.all.plugins.dummy_plugins as dummy_plugins
-
 
 env_vars = [
     "ECL100_SITE_CONFIG",
@@ -24,7 +22,6 @@ env_vars = [
 class PluginContextTest(unittest.TestCase):
     def setUp(self):
         self.monkeypatch = MonkeyPatch()
-        pass
 
     def tearDown(self):
         self.monkeypatch.undo()
@@ -53,8 +50,8 @@ class PluginContextTest(unittest.TestCase):
 
     def test_with_plugins(self):
         self.monkeypatch.delenv("ERT_SITE_CONFIG", raising=False)
-        # We are comparing two function calls, both of which generate a tmpdir, this makes
-        # sure that the same tmpdir is called on both occasions.
+        # We are comparing two function calls, both of which generate a tmpdir,
+        # this makes sure that the same tmpdir is called on both occasions.
         self.monkeypatch.setattr(
             tempfile, "mkdtemp", Mock(return_value=tempfile.mkdtemp())
         )
@@ -82,7 +79,7 @@ class PluginContextTest(unittest.TestCase):
         for var in env_vars:
             self.monkeypatch.setenv(var, "TEST")
 
-        with ErtPluginContext(plugins=[dummy_plugins]) as c:
+        with ErtPluginContext(plugins=[dummy_plugins]):
             for var in env_vars:
                 self.assertEqual("TEST", os.environ[var])
 

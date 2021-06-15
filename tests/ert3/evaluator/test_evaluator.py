@@ -1,4 +1,5 @@
 import pytest
+
 import ert3
 
 TEST_PARAMETRIZATION = [

@@ -1,7 +1,7 @@
-from tests import ResTest
-from res.test import ErtTestContext
+from utils import ResTest
 
 from res.enkf.export import GenKwCollector
+from res.test import ErtTestContext
 
 
 class GenKwCollectorTest(ResTest):

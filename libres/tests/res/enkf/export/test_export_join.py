@@ -1,17 +1,17 @@
-import pandas
-import numpy
 import os
 
-from tests import ResTest
-from res.test import ErtTestContext
+import numpy
+import pandas
 from pytest import MonkeyPatch
+from utils import ResTest
 
 from res.enkf.export import (
     DesignMatrixReader,
-    SummaryCollector,
     GenKwCollector,
     MisfitCollector,
+    SummaryCollector,
 )
+from res.test import ErtTestContext
 
 
 def dumpDesignMatrix(path):

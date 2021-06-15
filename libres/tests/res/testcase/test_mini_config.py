@@ -1,7 +1,7 @@
+from utils import ResTest, tmpdir
+
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from res.test import ErtTestContext
-from tests import ResTest
-from tests.utils import tmpdir
 
 
 class MiniConfigTest(ResTest):

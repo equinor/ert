@@ -1,9 +1,10 @@
 import os.path
 
 from ecl.util.test import TestAreaContext
-from tests import ResTest
-from res.job_queue.ext_job import ExtJob
+from utils import ResTest
+
 from res.config import ContentTypeEnum
+from res.job_queue.ext_job import ExtJob
 
 
 def create_valid_config(config_file):

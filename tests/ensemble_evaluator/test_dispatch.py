@@ -1,7 +1,8 @@
+from unittest.mock import Mock
+
 import pytest
 
-from unittest.mock import Mock
-from ert_shared.ensemble_evaluator.dispatch import Dispatcher, Batcher
+from ert_shared.ensemble_evaluator.dispatch import Batcher, Dispatcher
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 
 

@@ -15,12 +15,12 @@
 #  for more details.
 import os
 import os.path
-from ecl.util.test import TestAreaContext
-from res.enkf import SubstConfig
-from res.enkf import ConfigKeys
-from res.enkf import ResConfig
 import unittest
-from tests import ResTest
+
+from ecl.util.test import TestAreaContext
+from utils import ResTest
+
+from res.enkf import ConfigKeys, ResConfig, SubstConfig
 
 
 class SubstConfigTest(ResTest):

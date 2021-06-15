@@ -1,7 +1,8 @@
 import os.path
 import random
-from tests import ResTest
+
 from ecl.util.test import TestRun, path_exists
+from utils import ResTest
 
 
 class RunTest(ResTest):

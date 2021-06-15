@@ -14,9 +14,11 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
+
 from ecl.util.test import TestAreaContext
-from tests import ResTest
-from res.enkf import ResConfig, ConfigKeys, ModelConfig
+from utils import ResTest
+
+from res.enkf import ConfigKeys, ModelConfig, ResConfig
 from res.sched import HistorySourceEnum
 from res.test import ErtTestContext
 

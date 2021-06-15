@@ -1,5 +1,6 @@
+from utils import ResTest
+
 from res.enkf import LocalObsdataNode
-from tests import ResTest
 
 
 class LocalObsdataNodeTest(ResTest):

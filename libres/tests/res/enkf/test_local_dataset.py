@@ -16,15 +16,13 @@
 
 import os.path
 
-from tests import ResTest
-from tests.utils import tmpdir
-from res.test import ErtTestContext
+from ecl.grid import EclRegion
+from ecl.util.geometry import GeoRegion, Surface
+from utils import ResTest, tmpdir
 
 from res.enkf.active_list import ActiveList
 from res.enkf.local_dataset import LocalDataset
-
-from ecl.grid import EclRegion
-from ecl.util.geometry import Surface, GeoRegion
+from res.test import ErtTestContext
 
 
 class LocalDatasetTest(ResTest):

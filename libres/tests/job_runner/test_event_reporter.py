@@ -1,7 +1,10 @@
 import contextlib
+import json
 import os
 import threading
 from functools import partial
+
+from utils import _mock_ws_thread
 
 from job_runner.job import Job
 from job_runner.reporting import Event
@@ -12,9 +15,6 @@ from job_runner.reporting.event import (
     _FM_JOB_SUCCESS,
 )
 from job_runner.reporting.message import Exited, Finish, Init, Running, Start
-import json
-
-from tests.utils import _mock_ws_thread
 
 
 def test_report_with_successful_start_message_argument(unused_tcp_port):

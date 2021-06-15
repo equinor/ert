@@ -2,7 +2,6 @@ import pytest
 
 import ert3
 
-
 # The inverse cumulative normal distribution function evaluated at 0.995
 CNORM_INV = 2.57582930
 

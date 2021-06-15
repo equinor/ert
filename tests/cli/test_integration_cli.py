@@ -1,15 +1,16 @@
-from ert_shared.feature_toggling import FeatureToggling
-import pytest
 import os
 import shutil
 import threading
-import ert_shared
-from ert_shared.main import ert_parser
 from argparse import ArgumentParser
-from ert_shared.cli.main import run_cli
-from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
+from unittest.mock import MagicMock, Mock, call, patch
 
-from unittest.mock import Mock, MagicMock, call, patch
+import pytest
+
+import ert_shared
+from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
+from ert_shared.cli.main import run_cli
+from ert_shared.feature_toggling import FeatureToggling
+from ert_shared.main import ert_parser
 
 
 @pytest.fixture()
@@ -52,13 +53,14 @@ def test_runpath_file(tmpdir, source_root):
         os.path.join(str(tmpdir), "poly_example"),
     )
 
-    config_lines = [
-        "LOAD_WORKFLOW_JOB ASSERT_RUNPATH_FILE\n" "LOAD_WORKFLOW TEST_RUNPATH_FILE\n",
-        "HOOK_WORKFLOW TEST_RUNPATH_FILE PRE_SIMULATION\n",
-    ]
-
     with tmpdir.as_cwd():
         with open("poly_example/poly.ert", "a") as fh:
+            config_lines = [
+                "LOAD_WORKFLOW_JOB ASSERT_RUNPATH_FILE\n"
+                "LOAD_WORKFLOW TEST_RUNPATH_FILE\n",
+                "HOOK_WORKFLOW TEST_RUNPATH_FILE PRE_SIMULATION\n",
+            ]
+
             fh.writelines(config_lines)
 
         parser = ArgumentParser(prog="test_main")

@@ -1,4 +1,4 @@
-from tests import ErtTest
+from utils import ErtTest
 
 from ert_gui.ertwidgets.models.activerealizationsmodel import mask_to_rangestring
 

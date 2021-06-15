@@ -1,9 +1,9 @@
-import ert3
-
 import flaky
 import numpy as np
 import pytest
 import scipy
+
+import ert3
 
 
 def approx(x, eps=0.2):

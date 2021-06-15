@@ -1,12 +1,11 @@
 import time
-from tests import ResTest
-from tests.utils import tmpdir
-from ecl.util.util import BoolVector
 
-from res.test import ErtTestContext
-from tests.utils import wait_until
+from ecl.util.util import BoolVector
+from utils import ResTest, tmpdir, wait_until
+
 from res.enkf.enums import RealizationStateEnum
 from res.simulator import SimulationContext
+from res.test import ErtTestContext
 
 
 class SimulationContextTest(ResTest):

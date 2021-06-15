@@ -1,13 +1,9 @@
 import pytest
-
-from tests import ResTest
-from tests.utils import tmpdir
-from res.test import ErtTestContext
+from ecl.util.util import BoolVector
+from utils import ResTest, tmpdir
 
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
-from ecl.util.util import BoolVector
-
-from tests.utils import tmpdir
+from res.test import ErtTestContext
 
 
 @pytest.mark.unstable

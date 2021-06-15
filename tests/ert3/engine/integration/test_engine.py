@@ -1,15 +1,15 @@
-import pathlib
-import numbers
 import json
+import numbers
+import pathlib
+
 import pytest
+from integration_utils import (
+    assert_distribution,
+    assert_export,
+    assert_sensitivity_oat_export,
+)
 
 import ert3
-
-from tests.ert3.conftest import (
-    assert_sensitivity_oat_export,
-    assert_export,
-    assert_distribution,
-)
 
 
 @pytest.fixture()

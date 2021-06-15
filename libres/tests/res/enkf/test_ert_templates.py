@@ -13,14 +13,14 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from ecl.util.test import TestArea
-from res.enkf import ErtTemplates
-from res.enkf import ConfigKeys
-from res.enkf import ResConfig
-import unittest
-from tests import ResTest
-import os
 import copy
+import os
+import unittest
+
+from ecl.util.test import TestArea
+from utils import ResTest
+
+from res.enkf import ConfigKeys, ErtTemplates, ResConfig
 
 
 class ErtTemplatesTest(ResTest):

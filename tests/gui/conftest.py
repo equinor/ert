@@ -2,15 +2,15 @@ import copy
 from datetime import datetime as dt
 from unittest.mock import Mock
 
-import ert_shared.ensemble_evaluator.entity.identifiers as ids
 import pytest
+
+import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_shared.ensemble_evaluator.entity.identifiers import (
     CURRENT_MEMORY_USAGE,
     MAX_MEMORY_USAGE,
 )
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     Job,
-    PartialSnapshot,
     Realization,
     Snapshot,
     SnapshotBuilder,
@@ -19,18 +19,10 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
 )
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_STARTED,
-    JOB_STATE_FINISHED,
     JOB_STATE_START,
     REALIZATION_STATE_UNKNOWN,
     STEP_STATE_UNKNOWN,
 )
-
-
-def partial_snapshot(snapshot) -> PartialSnapshot:
-    partial = PartialSnapshot(snapshot)
-    partial.update_real("0", Realization(status=JOB_STATE_FINISHED))
-    partial.update_job("0", "0", "0", Job(status=JOB_STATE_FINISHED))
-    return partial
 
 
 @pytest.fixture()

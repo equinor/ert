@@ -16,8 +16,10 @@
 #  for more details.
 
 import os
+
+from utils import ResTest
+
 from res.enkf import AnalysisIterConfig
-from tests import ResTest
 
 
 class AnalysisIterConfigTest(ResTest):

@@ -1,3 +1,4 @@
+import importlib
 import json
 import os
 import signal
@@ -5,21 +6,18 @@ import stat
 import sys
 import time
 import unittest
-import importlib
 from subprocess import Popen
 from textwrap import dedent
+from unittest.mock import mock_open, patch
 
 import psutil
 import pytest
-
-from subprocess import Popen
-from job_runner.cli import main, _setup_reporters
-from job_runner.reporting.message import Init, Finish
-from job_runner.reporting import Event, Interactive
 from pytest_asyncio.plugin import _unused_tcp_port
+from utils import _mock_ws_thread, tmpdir, wait_until
 
-from tests.utils import tmpdir, wait_until, _mock_ws_thread
-from unittest.mock import patch, mock_open
+from job_runner.cli import _setup_reporters, main
+from job_runner.reporting import Event, Interactive
+from job_runner.reporting.message import Finish, Init
 
 
 class JobDispatchTest(unittest.TestCase):

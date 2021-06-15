@@ -1,13 +1,14 @@
 import os
-import time
-from res.job_queue import WorkflowJoblist, Workflow, WorkflowRunner
-from tests import ResTest
-from tests.utils import wait_until
-from ecl.util.test import TestAreaContext
-from res.util.substitution_list import SubstitutionList
-from .workflow_common import WorkflowCommon
 import sys
+import time
 from unittest.mock import patch
+
+from ecl.util.test import TestAreaContext
+from utils import ResTest, wait_until
+from workflow_common import WorkflowCommon
+
+from res.job_queue import Workflow, WorkflowJoblist, WorkflowRunner
+from res.util.substitution_list import SubstitutionList
 
 
 class WorkflowRunnerTest(ResTest):

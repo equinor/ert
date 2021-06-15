@@ -1,10 +1,34 @@
+import asyncio
 import threading
 
+import websockets
 from cloudevents.http import CloudEvent, to_json
+
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity import identifiers as identifiers
 from ert_shared.ensemble_evaluator.entity.ensemble import _BaseJob, _Realization, _Step
 from ert_shared.ensemble_evaluator.entity.ensemble_base import _Ensemble
+
+
+def _mock_ws(host, port, messages, delay_startup=0):
+    loop = asyncio.new_event_loop()
+    done = loop.create_future()
+
+    async def _handler(websocket, path):
+        while True:
+            msg = await websocket.recv()
+            messages.append(msg)
+            if msg == "stop":
+                done.set_result(None)
+                break
+
+    async def _run_server():
+        await asyncio.sleep(delay_startup)
+        async with websockets.serve(_handler, host, port):
+            await done
+
+    loop.run_until_complete(_run_server())
+    loop.close()
 
 
 def send_dispatch_event(client, event_type, source, event_id, data, **extra_attrs):

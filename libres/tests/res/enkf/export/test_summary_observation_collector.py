@@ -1,9 +1,10 @@
 import os
-from tests import ResTest
-from res.test import ErtTestContext
+
 from pytest import MonkeyPatch
+from utils import ResTest
 
 from res.enkf.export import SummaryObservationCollector
+from res.test import ErtTestContext
 
 
 class SummaryObservationCollectorTest(ResTest):

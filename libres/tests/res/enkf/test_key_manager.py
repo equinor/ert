@@ -1,7 +1,7 @@
+from utils import ResTest
+
 from res.enkf.key_manager import KeyManager
 from res.test import ErtTestContext
-
-from tests import ResTest
 
 
 class KeyManagerTest(ResTest):

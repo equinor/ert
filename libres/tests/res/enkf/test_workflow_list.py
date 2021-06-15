@@ -15,9 +15,11 @@
 #  for more details.
 
 import os
+
 from ecl.util.test import TestAreaContext
-from tests import ResTest
-from res.enkf import ErtWorkflowList, ResConfig, SiteConfig, ConfigKeys
+from utils import ResTest
+
+from res.enkf import ConfigKeys, ErtWorkflowList, ResConfig, SiteConfig
 
 
 class ErtWorkflowListTest(ResTest):

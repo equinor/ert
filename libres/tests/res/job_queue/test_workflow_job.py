@@ -1,11 +1,11 @@
 import ecl
-import res.enkf  # noqa
+from ecl.util.test import TestAreaContext
+from utils import ResTest
+from workflow_common import WorkflowCommon
 
+import res.enkf  # noqa
 from res import ResPrototype
 from res.job_queue import WorkflowJob
-from tests import ResTest
-from ecl.util.test import TestAreaContext
-from .workflow_common import WorkflowCommon
 
 
 class _TestWorkflowJobPrototype(ResPrototype):

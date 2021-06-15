@@ -2,7 +2,7 @@ import io
 import json
 import os
 from pathlib import Path
-from random import random, randint
+from random import randint, random
 from textwrap import dedent
 from typing import List, Tuple
 
@@ -11,14 +11,14 @@ import pandas as pd
 import pytest
 from ecl.util.util import BoolVector
 from numpy.testing import assert_almost_equal, assert_array_equal
-from res import ResPrototype
-from res.enkf import ActiveList, ErtRunContext, EnkfSimulationRunner
-from res.enkf.enums import HookRuntime
-from res.enkf.enkf_main import EnKFMain
-from res.enkf.res_config import ResConfig
 
 from ert_shared.libres_facade import LibresFacade
 from ert_shared.storage import extraction
+from res import ResPrototype
+from res.enkf import ActiveList, EnkfSimulationRunner, ErtRunContext
+from res.enkf.enkf_main import EnKFMain
+from res.enkf.enums import HookRuntime
+from res.enkf.res_config import ResConfig
 
 
 @pytest.mark.parametrize(
@@ -536,7 +536,8 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
 
 
 def _rand_name():
-    import random, string
+    import random
+    import string
 
     return "".join(random.choice(string.ascii_lowercase) for _ in range(8))
 

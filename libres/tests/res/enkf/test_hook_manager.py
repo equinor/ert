@@ -15,13 +15,12 @@
 #  for more details.
 import os
 import os.path
-from ecl.util.test import TestArea
-from res.enkf import HookManager
-from res.enkf import ConfigKeys
-from res.enkf import ResConfig
-from res.enkf import HookRuntime
 import unittest
-from tests import ResTest
+
+from ecl.util.test import TestArea
+from utils import ResTest
+
+from res.enkf import ConfigKeys, HookManager, HookRuntime, ResConfig
 
 
 class HookManagerTest(ResTest):

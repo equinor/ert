@@ -1,10 +1,10 @@
+from unittest.mock import Mock
+
 import pandas as pd
 import pytest
 
 from ert_data import loader
 from ert_data.measured import MeasuredData
-
-from unittest.mock import Mock
 
 
 @pytest.fixture()

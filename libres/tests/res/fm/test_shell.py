@@ -1,12 +1,13 @@
-import unittest
+import contextlib
 import os
 import os.path
-import contextlib
+import unittest
 
 from ecl.util.test import TestAreaContext
-from tests import ResTest
-from res.fm.shell import *
 from pytest import MonkeyPatch
+from utils import ResTest
+
+from res.fm.shell import *
 
 
 @contextlib.contextmanager

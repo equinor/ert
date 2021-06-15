@@ -1,13 +1,12 @@
-import ert3
-
-import pathlib
-from ert_shared.storage import connection
-import pytest
-import sys
 import copy
+import pathlib
+import sys
 from unittest.mock import patch
 
+import pytest
 import yaml
+
+import ert3
 
 
 @pytest.mark.parametrize(

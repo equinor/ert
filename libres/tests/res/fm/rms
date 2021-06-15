@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # This is mock RMS script; not very functional ...
 import json
-import sys
 import os
+import sys
 import time
 
 config = {"exit_status": 0}

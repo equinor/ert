@@ -1,12 +1,9 @@
+import inspect
 import logging
 import os
-import sys
-import inspect
-
+from unittest.mock import Mock
 
 import pytest
-
-from unittest.mock import Mock
 
 from ert_shared.plugins import workflow_config
 

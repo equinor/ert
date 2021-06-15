@@ -15,7 +15,8 @@
 #  for more details.
 import os
 
-from tests import ResTest
+from utils import ResTest
+
 from res.test import ErtTestContext
 
 

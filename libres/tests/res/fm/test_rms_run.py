@@ -13,25 +13,23 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import json
 import os
-import sys
+import shutil
 import stat
 import subprocess
+import sys
 import unittest
 from unittest.mock import patch
-import yaml
-import shutil
-import json
-from ecl.util.test import TestAreaContext
-from tests import ResTest
-from pytest import MonkeyPatch
 
-from res.fm.rms import RMSRun, RMSRunException
-import res.fm.rms
-
-from tests.utils import tmpdir
 import pytest
+import yaml
+from ecl.util.test import TestAreaContext
+from pytest import MonkeyPatch
+from utils import ResTest, tmpdir
 
+import res.fm.rms
+from res.fm.rms import RMSRun, RMSRunException
 
 TEST_ENV_WRAPPER = """\
 #!/usr/bin/env bash

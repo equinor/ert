@@ -14,9 +14,9 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from res.enkf import ActiveList
-from res.enkf import ActiveMode
-from tests import ResTest
+from utils import ResTest
+
+from res.enkf import ActiveList, ActiveMode
 
 
 class ActiveListTest(ResTest):

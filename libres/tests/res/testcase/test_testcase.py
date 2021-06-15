@@ -16,7 +16,8 @@
 
 import functools
 import math
-from tests import ResTest
+
+from utils import ResTest
 
 
 class TestTestCase(ResTest):

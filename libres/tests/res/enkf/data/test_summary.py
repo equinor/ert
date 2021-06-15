@@ -1,11 +1,12 @@
-import os.path
 import json
+import os.path
 
-from ecl.util.test.ecl_mock import createEclSum
-from res.enkf.data.summary import Summary
-from res.enkf.config import SummaryConfig
 from ecl.util.test import TestAreaContext
-from tests import ResTest
+from ecl.util.test.ecl_mock import createEclSum
+from utils import ResTest
+
+from res.enkf.config import SummaryConfig
+from res.enkf.data.summary import Summary
 
 
 class SummaryTest(ResTest):

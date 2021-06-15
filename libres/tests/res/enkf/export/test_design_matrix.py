@@ -1,6 +1,7 @@
-from res.enkf.export import DesignMatrixReader
-from tests import ResTest
 from ecl.util.test.test_area import TestAreaContext
+from utils import ResTest
+
+from res.enkf.export import DesignMatrixReader
 
 
 def dumpDesignMatrix1(path):

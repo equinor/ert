@@ -1,11 +1,11 @@
 import os
-from pandas.core.base import PandasObject
+from unittest import TestCase
 
-from res.enkf import EnKFMain, ResConfig
+from pandas.core.base import PandasObject
+from utils import SOURCE_DIR, tmpdir
 
 from ert_shared.libres_facade import LibresFacade
-from tests.utils import SOURCE_DIR, tmpdir
-from unittest import TestCase
+from res.enkf import EnKFMain, ResConfig
 
 
 class LibresFacadeTest(TestCase):

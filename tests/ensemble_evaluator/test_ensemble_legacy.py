@@ -1,9 +1,11 @@
 from unittest.mock import patch
+
 import pytest
+
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
-from ert_shared.status.entity import state
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert_shared.status.entity import state
 
 
 @pytest.mark.timeout(60)

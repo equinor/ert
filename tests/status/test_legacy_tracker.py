@@ -5,15 +5,11 @@ import threading
 from argparse import ArgumentParser
 
 import pytest
-from res.enkf.enkf_main import EnKFMain
-from res.enkf.res_config import ResConfig
+from jsonpath_ng import parse
 
 import ert_shared.status.entity.state as state
 from ert_shared import ERT
-from ert_shared.cli import (
-    ENSEMBLE_SMOOTHER_MODE,
-    ENSEMBLE_EXPERIMENT_MODE,
-)
+from ert_shared.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
 from ert_shared.cli.model_factory import create_model
 from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
@@ -25,7 +21,8 @@ from ert_shared.status.entity.event import (
     SnapshotUpdateEvent,
 )
 from ert_shared.status.tracker.factory import create_tracker
-from jsonpath_ng import parse
+from res.enkf.enkf_main import EnKFMain
+from res.enkf.res_config import ResConfig
 
 
 def check_expression(original, path_expression, expected, msg_start):

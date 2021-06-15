@@ -13,26 +13,25 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import os
-import stat
-import unittest
-import shutil
 import functools
 import inspect
-import yaml
-import pytest
+import os
 import re
+import shutil
+import stat
+import unittest
+from distutils.spawn import find_executable
+from subprocess import PIPE, Popen
 
+import pytest
+import yaml
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
-from tests import ResTest
-from tests.utils import tmpdir
+from pytest import MonkeyPatch
+from utils import ResTest, tmpdir
+
 from res.fm.ecl import *
 from res.fm.ecl.ecl_run import make_SLURM_machine_list
-from subprocess import Popen, PIPE
-from subprocess import Popen, PIPE
-from distutils.spawn import find_executable
-from pytest import MonkeyPatch
 
 
 def flow_install():

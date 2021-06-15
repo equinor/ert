@@ -2,9 +2,10 @@ import pickle
 import re
 
 import cloudpickle
+
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
-from ert_shared.ensemble_evaluator.entity import serialization
 import ert_shared.status.entity.state as state
+from ert_shared.ensemble_evaluator.entity import serialization
 from ert_shared.ensemble_evaluator.narratives.narrative import (
     Consumer,
     EventDescription,
