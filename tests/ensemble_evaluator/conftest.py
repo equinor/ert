@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
-from ensemble_evaluator.ensemble_test import TestEnsemble
+from ensemble_evaluator_utils import TestEnsemble
 
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity.ensemble import (

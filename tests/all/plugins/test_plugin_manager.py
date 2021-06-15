@@ -5,10 +5,10 @@ import unittest
 from os import uname
 from unittest.mock import Mock
 
+import dummy_plugins
+
 import ert_shared.hook_implementations
 from ert_shared.plugins import ErtPluginManager
-
-from . import dummy_plugins
 
 _lib_extension = "dylib" if uname()[0] == "Darwin" else "so"
 

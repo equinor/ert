@@ -17,6 +17,7 @@ import cloudpickle
 import prefect
 import pytest
 import yaml
+from ensemble_evaluator_utils import _mock_ws
 from prefect import Flow
 from utils import SOURCE_DIR, tmp
 
@@ -28,8 +29,6 @@ from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.prefect_ensemble import PrefectEnsemble
-
-from .utils import _mock_ws
 
 
 def parse_config(path):

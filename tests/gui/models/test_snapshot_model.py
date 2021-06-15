@@ -1,3 +1,4 @@
+from gui_models_utils import partial_snapshot
 from pytestqt.qt_compat import qt_api
 from qtpy.QtCore import QModelIndex
 from qtpy.QtGui import QColor
@@ -9,8 +10,6 @@ from ert_shared.status.entity.state import (
     COLOR_RUNNING,
     JOB_STATE_RUNNING,
 )
-
-from .utils import partial_snapshot
 
 
 def test_using_qt_model_tester(qtmodeltester, full_snapshot):

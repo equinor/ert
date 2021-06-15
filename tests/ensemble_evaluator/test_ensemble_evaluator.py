@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+from ensemble_evaluator_utils import TestEnsemble, send_dispatch_event
 
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from ert_shared.ensemble_evaluator.client import Client
@@ -19,8 +20,6 @@ from ert_shared.status.entity.state import (
     JOB_STATE_FINISHED,
     JOB_STATE_RUNNING,
 )
-
-from .ensemble_test import TestEnsemble, send_dispatch_event
 
 
 def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):

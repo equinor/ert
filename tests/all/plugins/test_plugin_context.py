@@ -5,11 +5,10 @@ import tempfile
 import unittest
 from unittest.mock import Mock
 
+import dummy_plugins
 from pytest import MonkeyPatch
 
 from ert_shared.plugins import ErtPluginContext
-
-from . import dummy_plugins
 
 env_vars = [
     "ECL100_SITE_CONFIG",

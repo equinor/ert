@@ -3,10 +3,13 @@ import numbers
 import pathlib
 
 import pytest
+from integration_utils import (
+    assert_distribution,
+    assert_export,
+    assert_sensitivity_oat_export,
+)
 
 import ert3
-
-from .utils import assert_distribution, assert_export, assert_sensitivity_oat_export
 
 
 @pytest.fixture()
