@@ -1,15 +1,15 @@
 from typing import Union
 
-from ert3.config._ensemble_config import load_ensemble_config, EnsembleConfig
+from ert3.config._ensemble_config import EnsembleConfig, load_ensemble_config
+from ert3.config._experiment_config import ExperimentConfig, load_experiment_config
+from ert3.config._parameters_config import ParametersConfig, load_parameters_config
 from ert3.config._stages_config import (
-    load_stages_config,
-    StagesConfig,
     Function,
-    Unix,
+    StagesConfig,
     TransportableCommand,
+    Unix,
+    load_stages_config,
 )
-from ert3.config._experiment_config import load_experiment_config, ExperimentConfig
-from ert3.config._parameters_config import load_parameters_config, ParametersConfig
 
 Step = Union[Function, Unix]
 

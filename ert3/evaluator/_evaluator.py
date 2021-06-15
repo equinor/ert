@@ -4,32 +4,31 @@ import pickle
 import shutil
 from collections import defaultdict
 from pathlib import Path
-from typing import Coroutine, Dict, Any, Tuple, List
-
+from typing import Any, Coroutine, Dict, List, Tuple
 
 import cloudpickle
 
 import ert3
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.ensemble_evaluator.entity.identifiers import EVTYPE_EE_TERMINATED
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert_shared.ensemble_evaluator.prefect_ensemble import PrefectEnsemble
 from ert3.config import (
     EnsembleConfig,
+    Function,
     StagesConfig,
+    Step,
     TransportableCommand,
     Unix,
-    Function,
-    Step,
 )
 from ert3.data import (
     EnsembleRecord,
     MultiEnsembleRecord,
     RealisationsToRecordToTransmitter,
-    RecordTransmitter,
     Record,
+    RecordTransmitter,
     SharedDiskRecordTransmitter,
 )
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.ensemble_evaluator.entity.identifiers import EVTYPE_EE_TERMINATED
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert_shared.ensemble_evaluator.prefect_ensemble import PrefectEnsemble
 
 _EVTYPE_SNAPSHOT_STOPPED = "Stopped"
 _EVTYPE_SNAPSHOT_FAILED = "Failed"
@@ -65,9 +64,7 @@ def prepare_input(
     path = evaluation_tmp_dir / _MY_STORAGE_DIRECTORY
     for input_ in step.inputs:
         for iens, record in enumerate(inputs.ensemble_records[input_.record].records):
-            transmitter = SharedDiskRecordTransmitter(
-                input_.record, path
-            )
+            transmitter = SharedDiskRecordTransmitter(input_.record, path)
             futures.append(transmitter.transmit_data(record.data))
             transmitters[iens][input_.record] = transmitter
     asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
@@ -119,7 +116,11 @@ def _unix_job_factory(step: Unix) -> TupleDictStrAny:
         return {
             "name": name,
             "executable": next(
-                (cmd.location for cmd in step.transportable_commands if cmd.name == name),
+                (
+                    cmd.location
+                    for cmd in step.transportable_commands
+                    if cmd.name == name
+                ),
                 pathlib.Path(name),
             ),
             "args": tuple(args),
@@ -144,7 +145,7 @@ def _ensemble_attribute_discriminator(
     based on StagesConfig's Step Type (Unix | Function)
     return: (jobs, inputs)
     """
-    inputs = tuple(map(dict, step.inputs))
+    inputs = tuple(map(dict, step.inputs))  # type: ignore
     return (
         (
             _unix_job_factory(step),

@@ -1,4 +1,4 @@
-from ._evaluator import evaluate, cleanup
+from ._evaluator import cleanup, evaluate
 
 __all__ = [
     "evaluate",

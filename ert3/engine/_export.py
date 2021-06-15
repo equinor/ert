@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Set, List, Dict, Any
+from typing import Any, Dict, List, Set
 
 import ert3
 from ert3.data import Record

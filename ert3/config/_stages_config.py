@@ -1,10 +1,11 @@
-from importlib.abc import Loader
 import importlib.util
-import pathlib
 import mimetypes
-from typing import Callable, Tuple, cast, Union, Dict, Any
+import pathlib
+from importlib.abc import Loader
+from typing import Any, Callable, Dict, Tuple, Union, cast
 
-from pydantic import BaseModel, FilePath, ValidationError, validator, Field
+from pydantic import BaseModel, FilePath, ValidationError, validator
+
 import ert3
 
 _DEFAULT_RECORD_MIME_TYPE: str = "application/json"

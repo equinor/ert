@@ -1,5 +1,5 @@
-from typing import Set
 from pathlib import Path
+from typing import Set
 
 import ert3
 

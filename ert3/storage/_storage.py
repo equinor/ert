@@ -1,16 +1,17 @@
+import io
 import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Set
 import io
 import logging
 import pandas as pd
-from pydantic import BaseModel
 import requests
-import ert3
+from pydantic import BaseModel
 
 from ert_shared.storage.connection import get_info
 
 logger = logging.getLogger(__name__)
+import ert3
 
 _STORAGE_TOKEN = None
 _STORAGE_URL = None

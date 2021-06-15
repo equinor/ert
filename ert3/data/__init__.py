@@ -1,14 +1,14 @@
 from typing import Dict
 
 from ert3.data._record import (
-    Record,
-    RecordType,
-    RecordIndex,
     EnsembleRecord,
-    MultiEnsembleRecord,
-    RecordTransmitter,
-    SharedDiskRecordTransmitter,
     InMemoryRecordTransmitter,
+    MultiEnsembleRecord,
+    Record,
+    RecordIndex,
+    RecordTransmitter,
+    RecordType,
+    SharedDiskRecordTransmitter,
     record_data,
 )
 
@@ -17,7 +17,7 @@ RealisationsToRecordToTransmitter = Dict[int, Dict[str, RecordTransmitter]]
 __all__ = (
     "Record",
     "RecordType",
-    "RecordIndex"
+    "RecordIndex",
     "EnsembleRecord",
     "MultiEnsembleRecord",
     "RecordTransmitter",

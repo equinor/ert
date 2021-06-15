@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Union, Optional, Set
+from typing import Optional, Set, Union
 
 import ert3
 

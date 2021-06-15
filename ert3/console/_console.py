@@ -4,8 +4,8 @@ import shutil
 import sys
 import os
 import time
-from typing import Any, List, Union
 from pathlib import Path
+from typing import Any, List, Union
 
 import pkg_resources as pkg
 import yaml

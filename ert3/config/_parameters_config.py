@@ -1,11 +1,7 @@
 import sys
 from typing import Any, Dict, Iterator, List, Union
-from pydantic import (
-    BaseModel,
-    ValidationError,
-    root_validator,
-    validator,
-)
+
+from pydantic import BaseModel, ValidationError, root_validator, validator
 
 import ert3
 

@@ -1,7 +1,7 @@
-from typing import Set, MutableMapping, List, Dict
+from typing import Dict, List, MutableMapping, Set
 
-from ert3.stats import Distribution
 from ert3.data import Record
+from ert3.stats import Distribution
 
 
 def _build_base_records(
