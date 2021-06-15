@@ -169,7 +169,7 @@ def test_empty_ensemble(client):
     # Name is "default"
     for ens in client.get(f"/experiments/{id}/ensembles").json():
         assert (
-            client.get(f"/ensembles/{ens['id']}/metadata").json()["name"] == "default"
+            client.get(f"/ensembles/{ens['id']}/userdata").json()["name"] == "default"
         )
 
     # No priors exist
@@ -189,7 +189,7 @@ def test_empty_ensemble_with_name(client):
     # Compare results
     id = client.fetch_experiment()
     for ens in client.get(f"/experiments/{id}/ensembles").json():
-        assert client.get(f"/ensembles/{ens['id']}/metadata").json()["name"] == name
+        assert client.get(f"/ensembles/{ens['id']}/userdata").json()["name"] == name
 
 
 def test_priors(client):
