@@ -76,7 +76,7 @@ def queue_config():
 
 @pytest.fixture
 def make_ensemble_builder(queue_config):
-    def _make_ensemble_builder(tmpdir, num_reals, num_jobs):
+    def _make_ensemble_builder(tmpdir, num_reals, num_jobs, job_sleep=0):
         builder = create_ensemble_builder()
         with tmpdir.as_cwd():
             ext_job_list = []
@@ -89,8 +89,11 @@ def make_ensemble_builder(queue_config):
                 with open(ext_job_exec, "w") as f:
                     f.write(
                         "#!/usr/bin/env python\n"
+                        "import time\n"
+                        "\n"
                         'if __name__ == "__main__":\n'
                         f'    print("stdout from {job_index}")\n'
+                        f"    time.sleep({job_sleep})\n"
                     )
 
                 ext_job_list.append(

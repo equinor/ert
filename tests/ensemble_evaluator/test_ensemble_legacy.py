@@ -35,7 +35,7 @@ def test_run_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_builder):
 def test_run_and_cancel_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_builder):
     num_reals = 10
     with tmpdir.as_cwd():
-        ensemble = make_ensemble_builder(tmpdir, num_reals, 2).build()
+        ensemble = make_ensemble_builder(tmpdir, num_reals, 2, job_sleep=5).build()
         config = EvaluatorServerConfig(unused_tcp_port)
 
         evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")

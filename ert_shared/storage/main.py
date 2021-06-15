@@ -89,11 +89,11 @@ def run_server(args=None, debug=False):
     if args is None:
         args = parse_args()
 
-    if "ERT_AUTHTOKEN" in os.environ:
-        authtoken = os.environ["ERT_AUTHTOKEN"]
+    if "ERT_STORAGE_TOKEN" in os.environ:
+        authtoken = os.environ["ERT_STORAGE_TOKEN"]
     else:
         authtoken = generate_authtoken()
-        os.environ["ERT_AUTHTOKEN"] = authtoken
+        os.environ["ERT_STORAGE_TOKEN"] = authtoken
 
     # Use sqlite in cwd if nothing else is specified
     if "ERT_STORAGE_DATABASE_URL" not in os.environ:
