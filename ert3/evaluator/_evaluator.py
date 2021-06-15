@@ -40,17 +40,12 @@ DictStrAny = Dict[str, Any]
 TupleDictStrAny = Tuple[DictStrAny, ...]
 
 
-def _add_storage(path: Path) -> Path:
-    if path.name != _MY_STORAGE_DIRECTORY:
-        return path / _MY_STORAGE_DIRECTORY
-    return path
-
-
 def _create_command_transmitter(
     command: TransportableCommand,
     path: Path,
 ) -> RecordTransmitter:
-    transmitter = SharedDiskRecordTransmitter(command.name, _add_storage(path))
+    assert path.name == _MY_STORAGE_DIRECTORY
+    transmitter = SharedDiskRecordTransmitter(command.name, path)
     with open(command.path, "rb") as f:
         asyncio.get_event_loop().run_until_complete(
             transmitter.transmit_data([f.read()])
@@ -67,10 +62,11 @@ def prepare_input(
     (evaluation_tmp_dir / "prep_input_files").mkdir(parents=True, exist_ok=True)
     transmitters: RealisationsToRecordToTransmitter = defaultdict(dict)
     futures: CoroutineTransmitters = []
+    path = evaluation_tmp_dir / _MY_STORAGE_DIRECTORY
     for input_ in step.inputs:
         for iens, record in enumerate(inputs.ensemble_records[input_.name].records):
             transmitter = SharedDiskRecordTransmitter(
-                input_.name, _add_storage(evaluation_tmp_dir)
+                input_.name, path
             )
             futures.append(transmitter.transmit_data(record.data))
             transmitters[iens][input_.name] = transmitter
@@ -79,7 +75,7 @@ def prepare_input(
         for iens in range(ensemble_size):
             for command in step.transportable_commands:
                 transmitters[iens][command.name] = _create_command_transmitter(
-                    command, evaluation_tmp_dir
+                    command, path
                 )
     return transmitters
 
@@ -94,7 +90,7 @@ def prepare_output(
     for output in step.outputs:
         for iens in range(ensemble_size):
             transmitters[iens][output.name] = SharedDiskRecordTransmitter(
-                output.name, _add_storage(evaluation_tmp_dir)
+                output.name, evaluation_tmp_dir / _MY_STORAGE_DIRECTORY
             )
     return transmitters
 
