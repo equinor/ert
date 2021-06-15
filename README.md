@@ -65,7 +65,7 @@ ERT requires a recent version of `pip` - hence you are advised to upgrade
 your `pip` installation with
 
 ```sh
-$ pip install --upgrade pip
+$ pip install --upgrade pip 
 ```
 If your `pip` version is too old the installation of ERT will fail, and the error messages will be incomprehensible.
 
