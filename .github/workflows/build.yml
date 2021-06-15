@@ -140,36 +140,22 @@ jobs:
         find . -name "*.whl" -exec pip install '{}' \;
         pip install -r dev-requirements.txt
 
-    - name: Make test directory
-      run: |
-        mkdir tmp_tests
-        mv tests tmp_tests/tests
-        mv test-data tmp_tests/test-data
-        mv setup.cfg tmp_tests/setup.cfg
-        mkdir tmp_tests/.git
-
     - name: Test Ubuntu
       if: matrix.os == 'ubuntu-latest'
       env:
         DISPLAY: ':99.0'
       run: |
-        pushd tmp_tests
-
         /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 640x480x24 -ac +extension GLX
         sleep 3
         herbstluftwm &
         sleep 1
         python -c "import sys; print(sys.path)"
         pytest -sv
-        popd
 
     - name: Test MacOS
       if: matrix.os == 'macos-latest'
       run: |
-        pushd tmp_tests
-
         pytest -sv
-        popd
 
     - name: Test CLI
       run: |
