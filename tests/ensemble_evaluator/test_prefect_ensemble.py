@@ -26,6 +26,7 @@ import ert_shared.ensemble_evaluator.entity.ensemble as ee
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
+from ert_shared.status.entity import state as state
 from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.prefect_ensemble import PrefectEnsemble
@@ -678,30 +679,28 @@ def test_prefect_no_retries(unused_tcp_port, coefficients, tmpdir, function_conf
         ensemble = PrefectEnsemble(config)
         evaluator = EnsembleEvaluator(ensemble, service_config, 0, ee_id="1")
 
-        step_failed = False
-        job_failed = False
         event_list = []
         with evaluator.run() as mon:
             for event in mon.track():
-                # Capture the job error messages
                 event_list.append(event)
-                if event.data is not None and "This is an expected ERROR" in str(
-                    event.data
-                ):
-                    for real in event.data["reals"].values():
-                        for step in real["steps"].values():
-                            for job in step["jobs"].values():
-                                if job["status"] == "Failed":
-                                    job_failed = True
-                                    if step["status"] == "Failed":
-                                        step_failed = True
-
                 if event.data is not None and event.data.get("status") in [
-                    "Failed",
-                    "Stopped",
+                    state.ENSEMBLE_STATE_FAILED,
+                    state.ENSEMBLE_STATE_STOPPED,
                 ]:
                     mon.signal_done()
-        assert evaluator._ensemble.get_status() == "Failed"
+
+        step_failed = False
+        job_failed = False
+        for real in ensemble.snapshot.get_reals().values():
+            for step in real.steps.values():
+                for job in step.jobs.values():
+                    if job.status == state.JOB_STATE_FAILURE:
+                        job_failed = True
+                        assert job.error == "This is an expected ERROR"
+                        if step.status == state.STEP_STATE_FAILURE:
+                            step_failed = True
+
+        assert ensemble.get_status() == state.ENSEMBLE_STATE_FAILED
         assert job_failed, f"Events: {event_list}"
         assert step_failed, f"Events: {event_list}"
 
