@@ -67,24 +67,12 @@ class _TestClient:
     def get(
         self,
         url: str,
-        params: Params = None,
-        headers: MutableMapping[str, str] = None,
-        cookies: Cookies = None,
-        files: FileType = None,
-        timeout: TimeOut = None,
-        allow_redirects: bool = None,
-        stream: bool = None,
         check_status_code: Optional[int] = 200,
+        **kwargs: Any,
     ) -> requests.Response:
         resp = self.http_client.get(
             url,
-            params=params,
-            headers=headers,
-            cookies=cookies,
-            files=files,
-            timeout=timeout,
-            allow_redirects=allow_redirects,
-            stream=stream,
+            **kwargs,
         )
         self._check(check_status_code, resp)
         return resp
@@ -92,57 +80,22 @@ class _TestClient:
     def post(
         self,
         url: str,
-        params: Params = None,
-        data: DataType = None,
-        headers: MutableMapping[str, str] = None,
-        cookies: Cookies = None,
-        files: FileType = None,
-        timeout: TimeOut = None,
-        allow_redirects: bool = None,
-        stream: bool = None,
-        json: Any = None,
         check_status_code: Optional[int] = 200,
+        **kwargs: Any,
     ) -> requests.Response:
-        resp = self.http_client.post(
-            url,
-            params=params,
-            data=data,
-            headers=headers,
-            cookies=cookies,
-            files=files,
-            timeout=timeout,
-            allow_redirects=allow_redirects,
-            stream=stream,
-            json=json,
-        )
+        resp = self.http_client.post(url, **kwargs)
         self._check(check_status_code, resp)
         return resp
 
     def put(
         self,
         url: str,
-        params: Params = None,
-        data: DataType = None,
-        headers: MutableMapping[str, str] = None,
-        cookies: Cookies = None,
-        files: FileType = None,
-        timeout: TimeOut = None,
-        allow_redirects: bool = None,
-        stream: bool = None,
-        json: Any = None,
         check_status_code: Optional[int] = 200,
+        **kwargs: Any,
     ) -> requests.Response:
         resp = self.http_client.put(
             url,
-            params=params,
-            data=data,
-            headers=headers,
-            cookies=cookies,
-            files=files,
-            timeout=timeout,
-            allow_redirects=allow_redirects,
-            stream=stream,
-            json=json,
+            **kwargs,
         )
         self._check(check_status_code, resp)
         return resp
@@ -150,28 +103,12 @@ class _TestClient:
     def patch(
         self,
         url: str,
-        params: Params = None,
-        data: DataType = None,
-        headers: MutableMapping[str, str] = None,
-        cookies: Cookies = None,
-        files: FileType = None,
-        timeout: TimeOut = None,
-        allow_redirects: bool = None,
-        stream: bool = None,
-        json: Any = None,
         check_status_code: Optional[int] = 200,
+        **kwargs: Any,
     ) -> requests.Response:
         resp = self.http_client.patch(
             url,
-            params=params,
-            data=data,
-            headers=headers,
-            cookies=cookies,
-            files=files,
-            timeout=timeout,
-            allow_redirects=allow_redirects,
-            stream=stream,
-            json=json,
+            **kwargs,
         )
         self._check(check_status_code, resp)
         return resp
@@ -179,20 +116,12 @@ class _TestClient:
     def delete(
         self,
         url: str,
-        params: Params = None,
-        headers: MutableMapping[str, str] = None,
-        cookies: Cookies = None,
-        timeout: TimeOut = None,
-        allow_redirects: bool = None,
         check_status_code: Optional[int] = 200,
+        **kwargs: Any,
     ) -> requests.Response:
         resp = self.http_client.delete(
             url,
-            params=params,
-            headers=headers,
-            cookies=cookies,
-            timeout=timeout,
-            allow_redirects=allow_redirects,
+            **kwargs,
         )
         self._check(check_status_code, resp)
         return resp
