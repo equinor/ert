@@ -36,7 +36,7 @@ class ObservationIn(_Observation):
 class ObservationOut(_Observation):
     id: UUID
     transformation: Optional[ObservationTransformationOut] = None
-    metadata: Mapping[str, Any] = {}
+    userdata: Mapping[str, Any] = {}
 
     class Config:
         orm_mode = True
