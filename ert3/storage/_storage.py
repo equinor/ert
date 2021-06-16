@@ -274,14 +274,18 @@ def _add_numerical_data(
 def _response2records(
     response_content: bytes, record_type: ert.data.RecordType
 ) -> ert.data.EnsembleRecord:
-    dataframe = pd.read_csv(
+    # the local variable dataframe is not read by pylint as pandas.Dataframe,
+    # but due to chunking a pandas.TextFileReader
+    # https://stackoverflow.com/questions/41844485/why-the-object-which-i-read-a-csv-file-using-pandas-from-is-textfilereader-obj
+    dataframe: pd.DataFrame = pd.read_csv(
         io.BytesIO(response_content), index_col=0, float_precision="round_trip"
     )
 
     records: List[ert.data.Record]
     if record_type == ert.data.RecordType.LIST_FLOAT:
         records = [
-            ert.data.Record(data=row.to_list()) for _, row in dataframe.iterrows()
+            ert.data.Record(data=row.to_list())
+            for _, row in dataframe.iterrows()  # pylint: disable=no-member
         ]
     elif record_type == ert.data.RecordType.MAPPING_INT_FLOAT:
         records = [
