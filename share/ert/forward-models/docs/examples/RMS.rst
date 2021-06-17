@@ -34,7 +34,7 @@ Optional arguments:
   -e, --export-path EXPORT_PATH
                         the prefix of all relative paths when rms is exporting
   -v, --version VERSION
-                        the prefix of all relative paths when rms is exporting
+                        The version of rms to use
   -a, --allow-no-env
                         Boolean flag to allow RMS to run without a site configured
                         environment. WARNING: This is typically a sign of using an
