@@ -95,7 +95,7 @@ class _Ensemble:
         pass
 
     def is_cancellable(self):
-        return False
+        return True
 
     def get_reals(self):
         return self._reals

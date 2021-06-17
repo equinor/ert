@@ -19,6 +19,8 @@ from ert_shared.status.entity.event import (
 )
 from ert_shared.status.tracker.factory import create_tracker
 from ert_shared.status.utils import format_running_time
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluatorService
+from ert_shared.feature_toggling import FeatureToggling
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtWidgets import (
     QDialog,
@@ -274,13 +276,13 @@ class RunDialog(QDialog):
         self._snapshot_model.reset()
         self._tab_widget.clear()
 
-        evaluator_server_config = EvaluatorServerConfig()
+        evaluator = EnsembleEvaluatorService.get_evaluator_session()
 
         def run():
             asyncio.set_event_loop(asyncio.new_event_loop())
             self._run_model.startSimulations(
                 self._simulation_arguments,
-                evaluator_server_config=evaluator_server_config,
+                evaluator=evaluator,
             )
 
         simulation_thread = Thread(name="ert_gui_simulation_thread")
@@ -292,7 +294,7 @@ class RunDialog(QDialog):
 
         tracker = create_tracker(
             self._run_model,
-            ee_con_info=evaluator_server_config.get_connection_info(),
+            ee_con_info=EnsembleEvaluatorService.get_config().get_connection_info(),
         )
 
         worker = TrackerWorker(tracker)

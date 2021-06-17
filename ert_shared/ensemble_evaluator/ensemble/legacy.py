@@ -53,7 +53,7 @@ class _LegacyEnsemble(_Ensemble):
             )
             timeout_queue.put_nowait(timeout_cloudevent)
 
-        dispatch_url = self._config.dispatch_uri
+        dispatch_url = f"{self._config.dispatch_uri}/{self._ee_id}"
         cert = self._config.cert
         token = self._config.token
 
@@ -86,7 +86,7 @@ class _LegacyEnsemble(_Ensemble):
     def _evaluate(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
 
-        dispatch_url = self._config.dispatch_uri
+        dispatch_url = f"{self._config.dispatch_uri}/{self._ee_id}"
         cert = self._config.cert
         token = self._config.token
         try:
@@ -194,14 +194,17 @@ class _LegacyEnsemble(_Ensemble):
 
     def _cancel(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
-        logger.debug("cancelling, waiting for wakeup...")
+        print("cancelling, waiting for wakeup...")
         self._allow_cancel.wait()
         logger.debug("cancelling futures...")
+        print("got wakeup, killing all jobs...")
+        self._job_queue.kill_all_jobs()
+        print("cancelling futures...")
         if self._aggregate_future.cancelled():
-            logger.debug("aggregate future was already cancelled")
+            print("aggregate future was already cancelled")
         else:
             self._aggregate_future.cancel()
-            logger.debug("aggregate future cancelled")
+            print("aggregate future cancelled")
 
         out_cloudevent = CloudEvent(
             {
@@ -210,11 +213,13 @@ class _LegacyEnsemble(_Ensemble):
                 "id": str(uuid.uuid1()),
             }
         )
+        print("Sending")
         get_event_loop().run_until_complete(
             self.send_cloudevent(
-                self._config.dispatch_uri,
+                f"{self._config.dispatch_uri}/{self._ee_id}",
                 out_cloudevent,
                 token=self._config.token,
                 cert=self._config.cert,
             )
         )
+        print("Sent")

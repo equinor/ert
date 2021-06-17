@@ -14,8 +14,9 @@ from ert_shared.ensemble_evaluator.ensemble.builder import (
     create_realization_builder,
     create_step_builder,
 )
+from ert_shared.status.entity import state
 from ert_shared.ensemble_evaluator.entity.snapshot import SnapshotBuilder
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluatorService
 from res.enkf import ConfigKeys
 from res.enkf.queue_config import QueueConfig
 from res.job_queue.driver import LOCAL_DRIVER
@@ -194,19 +195,38 @@ def _dump_ext_job(ext_job, index):
 @pytest.fixture
 def make_ee_config():
     def _ee_config(**kwargs):
-        return EvaluatorServerConfig(custom_port_range=range(1024, 65535), **kwargs)
+        return EvaluatorServerConfig(
+            custom_port_range=range(1024, 65535), custom_host="127.0.0.1", **kwargs
+        )
 
     return _ee_config
 
 
 @pytest.fixture
-def evaluator(make_ee_config):
+def evaluator_experiment_session(make_ee_config):
+    ee_config = make_ee_config(use_token=False, generate_cert=False)
+    EnsembleEvaluatorService.start(config=ee_config)
+    evaluator = EnsembleEvaluatorService.get_evaluator_session()
+    experiment_id = evaluator.start_experiment("test-experiment")
+    yield evaluator, experiment_id
+    EnsembleEvaluatorService.stop()
+
+
+@pytest.fixture
+def test_evaluation(evaluator_experiment_session):
+    evaluator, experiment_id = evaluator_experiment_session
     ensemble = TestEnsemble(0, 2, 1, 2)
-    ee = EnsembleEvaluator(
-        ensemble,
-        make_ee_config(),
-        0,
-        ee_id="ee-0",
+
+    evaluation_id = evaluator.submit_ensemble(
+        ensemble=ensemble, iter_=0, experiment_id=experiment_id
     )
-    yield ee
-    ee.stop()
+    yield evaluator, evaluation_id
+
+
+def wait_until_done(monitor, event):
+    """Manually close monitor if event-data both exists and state indicates done"""
+    if isinstance(event.data, dict) and event.data.get("status") in [
+        state.ENSEMBLE_STATE_FAILED,
+        state.ENSEMBLE_STATE_STOPPED,
+    ]:
+        monitor.signal_done()

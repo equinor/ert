@@ -15,7 +15,7 @@ class EnsembleExperiment(BaseRunModel):
         self,
         arguments: Argument,
         run_msg: str,
-        evaluator_server_config: EvaluatorServerConfig,
+        evaluator,
     ) -> ErtRunContext:
 
         run_context = self.create_context(arguments)
@@ -33,7 +33,7 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhaseName(run_msg, indeterminate=False)
 
         num_successful_realizations = self.run_ensemble_evaluator(
-            run_context, evaluator_server_config
+            run_context, evaluator=evaluator
         )
 
         num_successful_realizations += arguments.get("prev_successful_realizations", 0)
@@ -49,11 +49,9 @@ class EnsembleExperiment(BaseRunModel):
 
         return run_context
 
-    def runSimulations(
-        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
-    ) -> ErtRunContext:
+    def runSimulations(self, arguments: Argument, evaluator) -> ErtRunContext:
         return self.runSimulations__(
-            arguments, "Running ensemble experiment...", evaluator_server_config
+            arguments, "Running ensemble experiment...", evaluator=evaluator
         )
 
     def create_context(self, arguments: Argument) -> ErtRunContext:

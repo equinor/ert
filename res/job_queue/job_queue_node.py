@@ -76,6 +76,7 @@ class JobQueueNode(BaseCClass):
         self._mutex = Lock()
         self._tried_killing = 0
 
+        self.job_name = job_name
         self.run_path = run_path
         self._max_runtime = max_runtime
         self._start_time = None
@@ -238,7 +239,9 @@ class JobQueueNode(BaseCClass):
         self._set_thread_status(ThreadStatus.RUNNING)
         self._start_time = None
         self._thread = Thread(
-            target=self._job_monitor, args=(driver, pool_sema, max_submit)
+            target=self._job_monitor,
+            args=(driver, pool_sema, max_submit),
+            name=f"{self.job_name} ({self.run_path})",
         )
         self._thread.start()
 

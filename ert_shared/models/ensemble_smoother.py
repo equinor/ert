@@ -1,6 +1,8 @@
 from typing import Optional
 
 from res.enkf.enums import HookRuntime, RealizationStateEnum
+from res.enkf.enums import HookRuntime
+from res.enkf.enums import RealizationStateEnum
 from res.enkf import ErtRunContext, EnkfSimulationRunner
 from res.enkf.enkf_main import EnKFMain, QueueConfig
 
@@ -20,9 +22,7 @@ class EnsembleSmoother(BaseRunModel):
         if not module_load_success:
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
-    def runSimulations(
-        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
-    ) -> ErtRunContext:
+    def runSimulations(self, arguments: Argument, evaluator) -> ErtRunContext:
         prior_context = self.create_context(arguments)
 
         self.checkMinimumActiveRealizations(prior_context)
@@ -41,7 +41,7 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhaseName("Running forecast...", indeterminate=False)
 
         num_successful_realizations = self.run_ensemble_evaluator(
-            prior_context, evaluator_server_config
+            prior_context, evaluator
         )
 
         # Push simulation results to storage
@@ -81,7 +81,7 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhaseName("Running forecast...", indeterminate=False)
 
         num_successful_realizations = self.run_ensemble_evaluator(
-            rerun_context, evaluator_server_config
+            rerun_context, evaluator
         )
 
         self.checkHaveSufficientRealizations(num_successful_realizations)

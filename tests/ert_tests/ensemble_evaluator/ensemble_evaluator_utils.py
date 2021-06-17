@@ -1,5 +1,6 @@
 import asyncio
 import threading
+import time
 
 import websockets
 from cloudevents.http import CloudEvent, to_json
@@ -53,6 +54,9 @@ class TestEnsemble(_Ensemble):
         self.result_datacontenttype = None
         self.fails = False
 
+        self.wait_for_cancel = False
+        self._is_cancelled = False
+
         the_reals = [
             _Realization(
                 real_no,
@@ -79,7 +83,8 @@ class TestEnsemble(_Ensemble):
 
     def _evaluate(self, url, ee_id):
         event_id = 0
-        with Client(url + "/dispatch") as dispatch:
+        print("Starting test ensemble")
+        with Client(f"{url}/{ee_id}") as dispatch:
             send_dispatch_event(
                 dispatch,
                 identifiers.EVTYPE_ENSEMBLE_STARTED,
@@ -87,6 +92,18 @@ class TestEnsemble(_Ensemble):
                 f"event-{event_id}",
                 None,
             )
+            if self.wait_for_cancel:
+                while not self._is_cancelled:
+                    time.sleep(0.2)
+                send_dispatch_event(
+                    dispatch,
+                    identifiers.EVTYPE_ENSEMBLE_CANCELLED,
+                    f"/ert/ee/{ee_id}",
+                    f"event-{event_id}",
+                    None,
+                )
+                return
+
             if self.fails:
                 event_id = event_id + 1
                 send_dispatch_event(
@@ -170,11 +187,13 @@ class TestEnsemble(_Ensemble):
                 data,
                 **extra_attrs,
             )
+            print("Hei:)")
 
     def join(self):
         self._eval_thread.join()
 
     def evaluate(self, config, ee_id):
+        print("Starting test ensemble pre thread", config.dispatch_uri, ee_id)
         self._eval_thread = threading.Thread(
             target=self._evaluate,
             args=(config.dispatch_uri, ee_id),
@@ -193,6 +212,13 @@ class TestEnsemble(_Ensemble):
     def with_result(self, result, datacontenttype):
         self.result = result
         self.result_datacontenttype = datacontenttype
+        return self
+
+    def cancel(self):
+        self._is_cancelled = True
+
+    def with_wait_for_cancel(self):
+        self.wait_for_cancel = True
         return self
 
     def with_failure(self):

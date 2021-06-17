@@ -1,6 +1,5 @@
 import time
-import uuid
-from typing import Optional, List, Union
+from typing import Optional, Dict, List, Union
 import asyncio
 
 from ecl.util.util import BoolVector
@@ -11,6 +10,18 @@ from res.job_queue import (
     ForwardModel,
 )
 from ert_shared.libres_facade import LibresFacade
+import asyncio
+import time
+from typing import Optional
+
+from ecl.util.util import BoolVector
+from ert_shared.ensemble_evaluator.ensemble.builder import (
+    create_ensemble_builder_from_legacy,
+)
+from ert_shared.ensemble_evaluator.evaluator import (
+    EnsembleEvaluatorService,
+    EnsembleEvaluatorSession,
+)
 from ert_shared.storage.extraction import (
     post_ensemble_data,
     post_ensemble_results,
@@ -20,9 +31,15 @@ from ert_shared.feature_toggling import feature_enabled
 from ert_shared.ensemble_evaluator.ensemble.builder import (
     create_ensemble_builder_from_legacy,
 )
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.models.types import Argument
+from res.enkf.ert_run_context import ErtRunContext
+from res.job_queue import ForwardModelStatus, JobStatusType, RunStatusType
+
+# A method decorated with the @job_queue decorator implements the following logic:
+#
+# 1. If self._job_queue is assigned a valid value the method is run normally.
+# 2. If self._job_queue is None - the decorator argument is returned.
 
 
 class ErtRunError(Exception):
@@ -56,6 +73,8 @@ class BaseRunModel:
         self._last_run_iteration: int = -1
         self._ert = ert
         self.facade = LibresFacade(ert)
+
+        self.experiment_id = None
         self.reset()
 
     def ert(self) -> EnKFMain:
@@ -73,6 +92,7 @@ class BaseRunModel:
     def reset(self) -> None:
         self._failed = False
         self._phase = 0
+        self.experiment_id = None
 
     def start_simulations_thread(
         self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
@@ -82,14 +102,12 @@ class BaseRunModel:
             arguments=arguments, evaluator_server_config=evaluator_server_config
         )
 
-    def startSimulations(
-        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
-    ) -> None:
+    def startSimulations(self, arguments: Argument, evaluator) -> None:
         try:
             self.initial_realizations_mask = arguments["active_realizations"]
-            run_context = self.runSimulations(
-                arguments, evaluator_server_config=evaluator_server_config
-            )
+            self.experiment_id = evaluator.start_experiment(self.__class__.__name__)
+            run_context = self.runSimulations(arguments, evaluator=evaluator)
+            evaluator.stop_experiment(self.experiment_id)
             self.completed_realizations_mask = run_context.get_mask()
         except ErtRunError as e:
             self.completed_realizations_mask = BoolVector(default_value=False)
@@ -105,9 +123,10 @@ class BaseRunModel:
             self._simulationEnded()
             raise
 
-    def runSimulations(
-        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
-    ) -> ErtRunContext:
+    def runSimulations(self, arguments: Argument, evaluator):
+        raise NotImplementedError("Method must be implemented by inheritors!")
+
+    def create_context(self, arguments: Argument):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
     def teardown_context(self) -> None:
@@ -216,9 +235,7 @@ class BaseRunModel:
     def count_active_realizations(self, run_context: ErtRunContext) -> int:
         return sum(run_context.get_mask())
 
-    def run_ensemble_evaluator(
-        self, run_context: ErtRunContext, ee_config: EvaluatorServerConfig
-    ) -> int:
+    def run_ensemble_evaluator(self, run_context: ErtRunContext, evaluator):
         if run_context.get_step():
             self.ert().eclConfig().assert_restart()
 
@@ -232,12 +249,12 @@ class BaseRunModel:
 
         self.ert().initRun(run_context)
 
-        totalOk = EnsembleEvaluator(
-            ensemble,
-            ee_config,
-            run_context.get_iter(),
-            ee_id=str(uuid.uuid1()).split("-")[0],
-        ).run_and_get_successful_realizations()
+        evaluation_id = evaluator.submit_ensemble(
+            ensemble, iter_=run_context.get_iter(), experiment_id=self.experiment_id
+        )
+        totalOk = evaluator.run_and_get_successful_realizations(
+            evaluation_id=evaluation_id
+        )
 
         for i in range(len(run_context)):
             if run_context.is_active(i):

@@ -1,39 +1,40 @@
 import logging
 import logging.config
 import os
-import sys
 import re
-import yaml
+import sys
 from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
 
+import yaml
+from ecl import set_abort_handler
+from ert_logging import LOGGING_CONFIG
 from ert_logging._log_util_abort import _log_util_abort
 
-from ecl import set_abort_handler
-
-from ert_logging import LOGGING_CONFIG
-from ert_shared.cli.main import run_cli, ErtCliError
+import ert_shared
 from ert_shared.cli import (
-    ENSEMBLE_SMOOTHER_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
-    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+    ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
+    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
     WORKFLOW_MODE,
 )
+from ert_shared.cli.main import ErtCliError, run_cli
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluatorService
+from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.ide.keywords.definitions import (
-    RangeStringArgument,
+    IntegerArgument,
+    NumberListStringArgument,
     ProperNameArgument,
     ProperNameFormatArgument,
-    NumberListStringArgument,
-    IntegerArgument,
+    RangeStringArgument,
 )
 from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert_shared.plugins.plugin_manager import ErtPluginContext
-from ert_shared.feature_toggling import FeatureToggling
-from ert_shared.storage.command import add_parser_options as ert_api_add_parser_options
 from ert_shared.services import Storage, WebvizErt
-import ert_shared
+from ert_shared.storage.command import add_parser_options as ert_api_add_parser_options
 
 
 def run_ert_storage(args):
@@ -204,6 +205,12 @@ def get_ert_parser(parser=None):
     gui_parser.add_argument("config", type=valid_file, help=config_help)
     gui_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output.", default=False
+    )
+    gui_parser.add_argument(
+        "--port-range",
+        type=valid_port_range,
+        required=False,
+        help="Port range [a,b] to be used by the evaluator. Format: a-b",
     )
     FeatureToggling.add_feature_toggling_args(gui_parser)
 
@@ -441,6 +448,17 @@ def start_ert_server(mode: str):
         yield
 
 
+@contextmanager
+def start_ensemble_evaluator(custom_port_range=None):
+    ee_config = EvaluatorServerConfig(custom_port_range=custom_port_range)
+    EnsembleEvaluatorService.start(config=ee_config)
+    # evaluator = EnsembleEvaluatorService.get_evaluator_session()
+    try:
+        yield
+    finally:
+        EnsembleEvaluatorService.stop()
+
+
 def main():
     with open(LOGGING_CONFIG, encoding="utf-8") as conf_file:
         logging.config.dictConfig(yaml.safe_load(conf_file))
@@ -456,7 +474,9 @@ def main():
 
     FeatureToggling.update_from_args(args)
     try:
-        with start_ert_server(args.mode), ErtPluginContext() as context:
+        with start_ert_server(args.mode), start_ensemble_evaluator(
+            custom_port_range=args.port_range
+        ), ErtPluginContext() as context:
             context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
             logger.info("Running ert with {}".format(str(args)))
             args.func(args)

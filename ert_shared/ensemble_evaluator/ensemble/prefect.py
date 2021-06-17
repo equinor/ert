@@ -219,7 +219,7 @@ class PrefectEnsemble(_Ensemble):
         get_event_loop()
         try:
             with Client(
-                self._ee_con_info.dispatch_uri,
+                f"{self._ee_con_info.dispatch_uri}/{self._ee_id}",
                 self._ee_con_info.token,
                 self._ee_con_info.cert,
             ) as c:
@@ -231,14 +231,14 @@ class PrefectEnsemble(_Ensemble):
                 )
                 c.send(to_json(event).decode())
             with prefect.context(
-                url=self._ee_con_info.dispatch_uri,
+                url=f"{self._ee_con_info.dispatch_uri}/{self._ee_id}",
                 token=self._ee_con_info.token,
                 cert=self._ee_con_info.cert,
             ):
                 self.run_flow(self._ee_id)
 
             with Client(
-                self._ee_con_info.dispatch_uri,
+                f"{self._ee_con_info.dispatch_uri}/{self._ee_id}",
                 self._ee_con_info.token,
                 self._ee_con_info.cert,
             ) as c:
@@ -257,7 +257,7 @@ class PrefectEnsemble(_Ensemble):
                 exc_info=True,
             )
             with Client(
-                self._ee_con_info.dispatch_uri,
+                f"{self._ee_con_info.dispatch_uri}/{self._ee_id}",
                 self._ee_con_info.token,
                 self._ee_con_info.cert,
             ) as c:
@@ -325,7 +325,7 @@ class PrefectEnsemble(_Ensemble):
         loop = asyncio.new_event_loop()
         loop.run_until_complete(
             self.send_cloudevent(
-                self._ee_con_info.dispatch_uri,
+                f"{self._ee_con_info.dispatch_uri}/{self._ee_id}",
                 event,
                 token=self._ee_con_info.token,
                 cert=self._ee_con_info.cert,

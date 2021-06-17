@@ -1,4 +1,11 @@
 import asyncio
+from typing import Dict
+from ert_shared.async_utils import get_event_loop
+from ert_shared.status.entity.state import (
+    ENSEMBLE_STATE_CANCELLED,
+    ENSEMBLE_STATE_STOPPED,
+    ENSEMBLE_STATE_FAILED,
+)
 import logging
 import queue
 import threading
@@ -14,7 +21,13 @@ import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_shared.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Snapshot
 from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
-from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
+from ert_shared.ensemble_evaluator.monitor import (
+    create_experiment as create_experiment_monitor,
+)
+from ert_shared.ensemble_evaluator.utils import (
+    wait_for_evaluator,
+    get_current_evaluations,
+)
 from ert_shared.status.entity.event import (
     EndEvent,
     FullSnapshotEvent,
@@ -44,12 +57,12 @@ class EvaluatorTracker:
         self,
         model: Union["BaseRunModel", "ERT3RunModel"],
         ee_con_info: EvaluatorConnectionInfo,
-        next_ensemble_evaluator_wait_time: int = 5,
     ):
         self._model = model
         self._ee_con_info = ee_con_info
-        self._next_ensemble_evaluator_wait_time = next_ensemble_evaluator_wait_time
         self._work_queue: "queue.Queue[CloudEvent]" = queue.Queue()
+        self._last_eval_id = None
+
         self._drainer_thread = threading.Thread(
             target=self._drain_monitor,
             name="DrainerThread",
@@ -57,46 +70,70 @@ class EvaluatorTracker:
         self._drainer_thread.start()
         self._iter_snapshot: Dict[int, Snapshot] = {}
 
-    def _drain_monitor(self) -> None:
+    def _track_evaluation(self, evaluation_id, logger):
+        try:
+            logger.debug("connecting to new monitor...")
+            with create_ee_monitor(
+                evaluation_id,
+                self._ee_con_info,
+            ) as monitor:
+                logger.debug("connected")
+                for event in monitor.track():
+                    if event["type"] in (
+                        ids.EVTYPE_EE_SNAPSHOT,
+                        ids.EVTYPE_EE_SNAPSHOT_UPDATE,
+                    ):
+                        self._work_queue.put(event)
+                        if event.data.get(ids.STATUS) in [
+                            ENSEMBLE_STATE_STOPPED,
+                            ENSEMBLE_STATE_FAILED,
+                        ]:
+                            logger.debug(
+                                "observed evaluation stopped event, signal done"
+                            )
+                            monitor.signal_done()
+                        if event.data.get(ids.STATUS) == ENSEMBLE_STATE_CANCELLED:
+                            logger.debug(
+                                "observed evaluation cancelled event, exit drainer"
+                            )
+                            # Allow track() to emit an EndEvent.
+                            self._work_queue.put(EvaluatorTracker.DONE)
+                            return
+                    elif event["type"] == ids.EVTYPE_EE_TERMINATED:
+                        logger.debug("got terminator event")
+
+        except (ConnectionRefusedError, ClientError) as e:
+            logger.debug(f"connection error: {e}")
+        except (ConnectionClosedError) as e:
+            # The monitor connection closed unexpectedly
+            logger.debug(f"connection closed error: {e}")
+
+    def _drain_monitor(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
         drainer_logger = logging.getLogger("ert_shared.ensemble_evaluator.drainer")
-        while not self._model.isFinished():
-            try:
-                drainer_logger.debug("connecting to new monitor...")
-                with create_ee_monitor(self._ee_con_info) as monitor:
-                    drainer_logger.debug("connected")
-                    for event in monitor.track():
-                        if event["type"] in (
-                            ids.EVTYPE_EE_SNAPSHOT,
-                            ids.EVTYPE_EE_SNAPSHOT_UPDATE,
-                        ):
-                            self._work_queue.put(event)
-                            if event.data.get(ids.STATUS) in [
-                                ENSEMBLE_STATE_STOPPED,
-                                ENSEMBLE_STATE_FAILED,
-                            ]:
-                                drainer_logger.debug(
-                                    "observed evaluation stopped event, signal done"
-                                )
-                                monitor.signal_done()
-                            if event.data.get(ids.STATUS) == ENSEMBLE_STATE_CANCELLED:
-                                drainer_logger.debug(
-                                    "observed evaluation cancelled event, exit drainer"
-                                )
-                                # Allow track() to emit an EndEvent.
-                                self._work_queue.put(EvaluatorTracker.DONE)
-                                return
-                        elif event["type"] == ids.EVTYPE_EE_TERMINATED:
-                            drainer_logger.debug("got terminator event")
-                # This sleep needs to be there. Refer to issue #1250: `Authority
-                # on information about evaluations/experiments`
-                time.sleep(self._next_ensemble_evaluator_wait_time)
-            except (ConnectionRefusedError, ClientError) as e:
-                if not self._model.isFinished():
-                    drainer_logger.debug(f"connection refused: {e}")
-            except (ConnectionClosedError) as e:
-                # The monitor connection closed unexpectedly
-                drainer_logger.debug(f"connection closed error: {e}")
+        tracked_evaluations: Dict[str, threading.Thread] = dict()
+        while self._model.experiment_id is None:
+            time.sleep(0.1)
+        with create_experiment_monitor(
+            self._model.experiment_id, self._ee_con_info
+        ) as monitor:
+            for event in monitor.track():
+                if not event.data:
+                    continue
+                not_tracked_yet = set(event.data["evaluations"]) - set(
+                    tracked_evaluations.keys()
+                )
+                for evaluation_id in not_tracked_yet:
+                    tracked_evaluations[evaluation_id] = threading.Thread(
+                        target=self._track_evaluation,
+                        args=(evaluation_id, drainer_logger),
+                        name=f"TrackEvaluationThread-{evaluation_id}",
+                    )
+                    tracked_evaluations[evaluation_id].start()
+                    self._last_eval_id = evaluation_id
+            for t in tracked_evaluations.values():
+                t.join()
+
         drainer_logger.debug(
             "observed that model was finished, waiting tasks completion..."
         )
@@ -216,7 +253,8 @@ class EvaluatorTracker:
             logger.warning(f"{__name__} - exception {e}")
             return
 
-        with create_ee_monitor(self._ee_con_info) as monitor:
+        # TODO: Fix last_eval_id somehow
+        with create_ee_monitor(self._last_eval_id, self._ee_con_info) as monitor:
             monitor.signal_cancel()
         while self._drainer_thread.is_alive():
             self._clear_work_queue()
