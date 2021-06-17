@@ -37,7 +37,7 @@ void            template_add_arg( template_type * _template , const char * key ,
 subst_list_type * template_get_args_list(template_type * _template);
 
 void            template_clear_args( template_type * _template );
-int             template_add_args_from_string( template_type * _template , const char * arg_string);
+void            template_add_args_from_string( template_type * _template , const char * arg_string);
 char          * template_get_args_as_string( template_type * _template );
 void            template_set_template_file( template_type * _template , const char * template_file);
 const char    * template_get_template_file( const template_type * _template );

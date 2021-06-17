@@ -785,62 +785,115 @@ void subst_list_fprintf(const subst_list_type * subst_list , FILE * stream) {
 }
 
 
-/** Will loose tagging .... */
-int subst_list_add_from_string( subst_list_type * subst_list , const char * arg_string, bool append) {
-  int     error_count = 0;
-  if (arg_string != NULL) {
-    char ** key_value_list;
-    int     num_arg, iarg;
-
-    util_split_string(arg_string , "," , &num_arg , &key_value_list);
-    for (iarg = 0; iarg < num_arg; iarg++) {
-      if (strchr(key_value_list[iarg] , '=') == NULL)
-        //util_abort("%s: could not find \'=\' in argument string:%s \n",__func__ , key_value_list[iarg]);
-        /*
-          Could not find '=' in the argument string, this argument will
-          be ignored, and the error_count will be increased by one.
-        */
-        error_count += 1;
-      else {
-        char * key , * value;
-        char * tmp     = key_value_list[iarg];
-        int arg_length , value_length;
-        while (isspace(*tmp))  /* Skipping initial space */
-          tmp++;
-
-        arg_length = strcspn(tmp , " =");
-        key  = util_alloc_substring_copy(tmp , 0 , arg_length);
-        tmp += arg_length;
-        while ((*tmp == ' ') || (*tmp == '='))
-          tmp++;
-
-        value_length = strcspn(tmp , " ");
-        value = util_alloc_substring_copy( tmp , 0 , value_length);
-
-        /* Setting the argument */
-        if (append)
-          subst_list_append_copy( subst_list , key , value , NULL);
-        else
-          subst_list_prepend_copy( subst_list , key , value , NULL);
-
-        free(key);
-        free(value);
-        tmp += value_length;
+typedef enum
+{
+    STATE_SCANNING_KEY,        // Scanning a key field.
+    STATE_SCANNING_VALUE,      // Scanning a value field.
+    STATE_SEARCHING_FOR_FIELD, // Scanning anywhere else to find the next field.
+    STATE_ERROR                // Arglist is broken.
+} arg_string_state;
 
 
-        /* Accept only trailing space - any other character indicates a failed parsing. */
-        while (*tmp != '\0') {
-          if (!isspace(*tmp))
-            util_abort("%s: something wrong with:%s  - spaces are not allowed in key or value part.\n",__func__ , key_value_list[iarg]);
-          tmp++;
+void subst_list_add_from_string(subst_list_type *subst_list, const char *arg_string, bool append)
+{
+    // Set to the start of a key or value found while scanning.
+    const char *key_start = NULL, *value_start = NULL;
+
+    // Key and value, when found.
+    char *key = NULL, *value = NULL;
+
+    // String delimiter, while scanning quoted strings. Set to zero when not in a string.
+    char current_string_delimiter = 0;
+
+    // We start by looking for a key.
+    arg_string_state state = STATE_SCANNING_KEY;
+
+    for (const char *c = arg_string; *c != 0; c++) {
+        switch (state) {
+
+        case STATE_SCANNING_KEY:
+            if (isspace(*c) || *c == '=') {
+                if (key_start) {
+                    // Found the end of a key.
+                    key = util_alloc_substring_copy(key_start, 0, c - key_start);
+                    state = *c == '=' ? STATE_SCANNING_VALUE : STATE_SEARCHING_FOR_FIELD;
+                    key_start = NULL;
+                } else if (*c == '=') {
+                    state = STATE_ERROR; // Starting a value without having a key.
+                }
+            } else if (strspn(c, "\"',")) {
+                state = STATE_ERROR; // Invalid character in key.
+            } else if (key_start == NULL) {
+                key_start = c; // Found the start of key.
+            }
+            break;
+
+        case STATE_SCANNING_VALUE:
+            if (current_string_delimiter) {
+                // We are currently inside a string.
+                if (*c == current_string_delimiter) {
+                    // Found the end of a string value.
+                    value = util_alloc_substring_copy(value_start, 0, c - value_start);
+                    current_string_delimiter = 0;
+                    state = STATE_SEARCHING_FOR_FIELD;
+                }
+            } else if (isspace(*c) || *c == ',') {
+                if (value_start)
+                {
+                    // Found a value that is not a string.
+                    value = util_alloc_substring_copy(value_start, 0, c - value_start);
+                    state = *c == ',' ? STATE_SCANNING_KEY : STATE_SEARCHING_FOR_FIELD;
+                    value_start = NULL;
+                } else if (*c == ',') {
+                    state = STATE_ERROR; // Trying to start a new key without a value.
+                }
+            } else if (value_start == NULL) {
+                value_start = c; // Found the start of a value.
+                if (strspn(c, "\"'")) {
+                    // Starting a quoted value.
+                    current_string_delimiter = *c;
+                }
+            }
+            break;
+
+        case STATE_SEARCHING_FOR_FIELD:
+            if (!isspace(*c)) {
+                if (key && *c == '=') {
+                    // Start scanning for the value.
+                    state = STATE_SCANNING_VALUE;
+                } else if (value && *c == ',') {
+                    // Start scanning for a key.
+                    state = STATE_SCANNING_KEY;
+                } else {
+                    state = STATE_ERROR; // Some stray character, which is an error.
+                }
+            }
+            break;
+
         }
-      }
-    }
-    util_free_stringlist(key_value_list , num_arg);
-  }
-  return error_count;
-}
 
+        if (state == STATE_ERROR) break;
+
+        if (key && value) {
+            /* Setting the argument */
+            if (append)
+                subst_list_append_copy(subst_list, key, value, NULL);
+            else
+                subst_list_prepend_copy(subst_list, key, value, NULL);
+            free(key);
+            free(value);
+            key = NULL;
+            value = NULL;
+        }
+    }
+
+    if (key) free(key);
+    if (value) free(value);
+
+    if (state == STATE_ERROR) {
+        util_abort("%s: error within the argument list: %s\n", __func__, arg_string);
+    }
+}
 
 
 /*****************************************************************/
