@@ -210,7 +210,11 @@ class PrefectEnsemble(_Ensemble):
     def _evaluate(self, ee_config: EvaluatorServerConfig, ee_id):
         asyncio.set_event_loop(asyncio.get_event_loop())
         try:
-            with Client(ee_config.dispatch_uri, ee_config.token, ee_config.cert) as c:
+            with Client(
+                f"{ee_config.dispatch_uri}/{self._ee_id}",
+                ee_config.token,
+                ee_config.cert,
+            ) as c:
                 event = CloudEvent(
                     {
                         "type": ids.EVTYPE_ENSEMBLE_STARTED,
@@ -219,11 +223,17 @@ class PrefectEnsemble(_Ensemble):
                 )
                 c.send(to_json(event).decode())
             with prefect.context(
-                url=ee_config.dispatch_uri, token=ee_config.token, cert=ee_config.cert
+                url=f"{ee_config.dispatch_uri}/{self._ee_id}",
+                token=ee_config.token,
+                cert=ee_config.cert,
             ):
                 self.run_flow(ee_id)
 
-            with Client(ee_config.dispatch_uri, ee_config.token, ee_config.cert) as c:
+            with Client(
+                f"{ee_config.dispatch_uri}/{self._ee_id}",
+                ee_config.token,
+                ee_config.cert,
+            ) as c:
                 event = CloudEvent(
                     {
                         "type": ids.EVTYPE_ENSEMBLE_STOPPED,
@@ -238,7 +248,11 @@ class PrefectEnsemble(_Ensemble):
                 "An exception occurred while starting the ensemble evaluation",
                 exc_info=True,
             )
-            with Client(ee_config.dispatch_uri, ee_config.token, ee_config.cert) as c:
+            with Client(
+                f"{ee_config.dispatch_uri}/{self._ee_id}",
+                ee_config.token,
+                ee_config.cert,
+            ) as c:
                 event = CloudEvent(
                     {
                         "type": ids.EVTYPE_ENSEMBLE_FAILED,
@@ -303,7 +317,7 @@ class PrefectEnsemble(_Ensemble):
         loop = asyncio.new_event_loop()
         loop.run_until_complete(
             self.send_cloudevent(
-                self._ee_config.dispatch_uri,
+                f"{ee_config.dispatch_uri}/{self._ee_id}",
                 event,
                 token=self._ee_config.token,
                 cert=self._ee_config.cert,

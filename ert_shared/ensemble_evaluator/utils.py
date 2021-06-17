@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import ssl
 import time
@@ -22,7 +23,7 @@ async def attempt_connection(
     token: Optional[str] = None,
     cert: Optional[str] = None,
     connection_timeout: float = 2,
-) -> None:
+) -> bytes:
     timeout = aiohttp.ClientTimeout(connect=connection_timeout)
     headers = {} if token is None else {"token": token}
     async with aiohttp.ClientSession() as session:
@@ -34,6 +35,8 @@ async def attempt_connection(
             timeout=timeout,
         ) as resp:
             resp.raise_for_status()
+            resp_content = await resp.content.read()
+            return resp_content.decode("utf-8")
 
 
 async def wait_for_evaluator(
@@ -70,3 +73,40 @@ async def wait_for_evaluator(
         cert=cert,
         connection_timeout=connection_timeout,
     )
+
+
+async def get_current_evaluations(
+    base_url: str,
+    token: Optional[str] = None,
+    cert: Optional[str] = None,
+    evaluation_endpoint: str = "/evaluations",
+    timeout: float = 60,
+    connection_timeout: float = 2,
+) -> None:
+    evaluation_url = base_url + evaluation_endpoint
+    start = time.time()
+    sleep_time = 0.2
+    sleep_time_max = 5.0
+    while time.time() - start < timeout:
+        try:
+            evaluations = await attempt_connection(
+                url=evaluation_url,
+                token=token,
+                cert=cert,
+                connection_timeout=connection_timeout,
+            )
+            return json.loads(evaluations)["evaluations"]
+        except aiohttp.ClientError:
+            sleep_time = min(sleep_time_max, sleep_time * 2)
+            remaining_time = max(0, timeout - (time.time() - start) + 0.1)
+            await asyncio.sleep(min(sleep_time, remaining_time))
+
+    # We have timed out, but we make one last attempt to ensure that
+    # we have tried to connect at both ends of the time window
+    evaluations = await attempt_connection(
+        url=evaluation_url,
+        token=token,
+        cert=cert,
+        connection_timeout=connection_timeout,
+    )
+    return json.loads(evaluations)["evaluations"]

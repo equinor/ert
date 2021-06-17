@@ -10,7 +10,7 @@ class EnsembleExperiment(BaseRunModel):
     def __init__(self):
         super(EnsembleExperiment, self).__init__(ERT.enkf_facade.get_queue_config())
 
-    def runSimulations__(self, arguments, run_msg):
+    def runSimulations__(self, arguments, run_msg, evaluator=None):
 
         run_context = self.create_context(arguments)
 
@@ -27,9 +27,8 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhaseName(run_msg, indeterminate=False)
 
         if FeatureToggling.is_enabled("ensemble-evaluator"):
-            ee_config = arguments["ee_config"]
             num_successful_realizations = self.run_ensemble_evaluator(
-                run_context, ee_config
+                run_context, evaluator=evaluator
             )
         else:
             self._job_queue = self._queue_config.create_job_queue()
@@ -52,8 +51,10 @@ class EnsembleExperiment(BaseRunModel):
 
         return run_context
 
-    def runSimulations(self, arguments):
-        return self.runSimulations__(arguments, "Running ensemble experiment...")
+    def runSimulations(self, arguments, evaluator=None):
+        return self.runSimulations__(
+            arguments, "Running ensemble experiment...", evaluator=evaluator
+        )
 
     def create_context(self, arguments):
         fs_manager = self.ert().getEnkfFsManager()

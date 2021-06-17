@@ -16,10 +16,12 @@ logger = logging.getLogger(__name__)
 
 
 class _Monitor:
-    def __init__(self, host, port, protocol="wss", cert=None, token=None):
+    def __init__(
+        self, evaluation_id, host, port, protocol="wss", cert=None, token=None
+    ):
+        self._evaluation_id = evaluation_id
         self._base_uri = f"{protocol}://{host}:{port}"
-        self._client_uri = f"{self._base_uri}/client"
-        self._result_uri = f"{self._base_uri}/result"
+        self._client_uri = f"{self._base_uri}/client/{self._evaluation_id}"
         self._cert = cert
         self._token = token
         self._ws_duplexer: Optional[SyncWebsocketDuplexer] = None
@@ -96,5 +98,5 @@ class _Monitor:
                     break
 
 
-def create(host, port, protocol, cert, token):
-    return _Monitor(host, port, protocol, cert, token)
+def create(evaluation_id, host, port, protocol, cert, token):
+    return _Monitor(evaluation_id, host, port, protocol, cert, token)
