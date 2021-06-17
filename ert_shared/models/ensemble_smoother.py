@@ -1,3 +1,4 @@
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.feature_toggling import FeatureToggling
 from res.enkf.enums import HookRuntime
 from res.enkf.enums import RealizationStateEnum
@@ -19,7 +20,7 @@ class EnsembleSmoother(BaseRunModel):
         if not module_load_success:
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
-    def runSimulations(self, arguments):
+    def runSimulations(self, arguments, evaluator=None):
         prior_context = self.create_context(arguments)
 
         self.checkMinimumActiveRealizations(prior_context)
@@ -38,9 +39,8 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhaseName("Running forecast...", indeterminate=False)
 
         if FeatureToggling.is_enabled("ensemble-evaluator"):
-            ee_config = arguments["ee_config"]
             num_successful_realizations = self.run_ensemble_evaluator(
-                prior_context, ee_config
+                prior_context, evaluator
             )
         else:
             self._job_queue = self._queue_config.create_job_queue()
@@ -87,9 +87,8 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhaseName("Running forecast...", indeterminate=False)
 
         if FeatureToggling.is_enabled("ensemble-evaluator"):
-            ee_config = arguments["ee_config"]
             num_successful_realizations = self.run_ensemble_evaluator(
-                rerun_context, ee_config
+                rerun_context, evaluator
             )
         else:
             self._job_queue = self._queue_config.create_job_queue()

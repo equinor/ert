@@ -51,7 +51,7 @@ class _LegacyEnsemble(_Ensemble):
             )
             timeout_queue.put_nowait(timeout_cloudevent)
 
-        dispatch_url = self._config.dispatch_uri
+        dispatch_url = f"{self._config.dispatch_uri}/{self._ee_id}"
         cert = self._config.cert
         token = self._config.token
 
@@ -86,7 +86,7 @@ class _LegacyEnsemble(_Ensemble):
     def _evaluate(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
 
-        dispatch_url = self._config.dispatch_uri
+        dispatch_url = f"{self._config.dispatch_uri}/{self._ee_id}"
         cert = self._config.cert
         token = self._config.token
         try:
@@ -216,7 +216,7 @@ class _LegacyEnsemble(_Ensemble):
         )
         asyncio.get_event_loop().run_until_complete(
             self.send_cloudevent(
-                self._config.dispatch_uri,
+                f"{self._config.dispatch_uri}/{self._ee_id}",
                 out_cloudevent,
                 token=self._config.token,
                 cert=self._config.cert,

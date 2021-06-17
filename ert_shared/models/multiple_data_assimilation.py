@@ -45,7 +45,7 @@ class MultipleDataAssimilation(BaseRunModel):
         if not module_load_success:
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
-    def runSimulations(self, arguments):
+    def runSimulations(self, arguments, evaluator=None):
         context = self.create_context(arguments, 0, initialize_mask_from_arguments=True)
         self.checkMinimumActiveRealizations(context)
         weights = self.parseWeights(arguments["weights"])
@@ -81,7 +81,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 arguments, iteration, initialize_mask_from_arguments=is_first_iteration
             )
             _, ensemble_id = self._simulateAndPostProcess(
-                run_context, arguments, update_id=update_id
+                run_context, arguments, update_id=update_id, evaluator=evaluator
             )
             if is_first_iteration:
                 EnkfSimulationRunner.runWorkflows(
@@ -97,7 +97,9 @@ class MultipleDataAssimilation(BaseRunModel):
         run_context = self.create_context(
             arguments, len(weights), initialize_mask_from_arguments=False, update=False
         )
-        self._simulateAndPostProcess(run_context, arguments, update_id=update_id)
+        self._simulateAndPostProcess(
+            run_context, arguments, update_id=update_id, evaluator=evaluator
+        )
 
         self.setPhase(iteration_count + 1, "Simulations completed.")
 
@@ -133,7 +135,9 @@ class MultipleDataAssimilation(BaseRunModel):
             )
         return update_id
 
-    def _simulateAndPostProcess(self, run_context, arguments, update_id: int = None):
+    def _simulateAndPostProcess(
+        self, run_context, arguments, update_id: int = None, evaluator=None
+    ):
         iteration = run_context.get_iter()
 
         phase_string = "Running simulation for iteration: %d" % iteration
@@ -151,9 +155,8 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhaseName(phase_string, indeterminate=False)
 
         if FeatureToggling.is_enabled("ensemble-evaluator"):
-            ee_config = arguments["ee_config"]
             num_successful_realizations = self.run_ensemble_evaluator(
-                run_context, ee_config
+                run_context, evaluator
             )
         else:
             self._job_queue = self._queue_config.create_job_queue()

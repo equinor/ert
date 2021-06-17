@@ -9,7 +9,6 @@ from res.enkf.ert_run_context import ErtRunContext
 from ert_shared.feature_toggling import FeatureToggling, feature_enabled
 import logging
 import time
-import uuid
 import asyncio
 
 from ecl.util.util import BoolVector
@@ -88,7 +87,16 @@ class BaseRunModel(object):
     def startSimulations(self, arguments):
         try:
             self.initial_realizations_mask = arguments["active_realizations"]
-            run_context = self.runSimulations(arguments)
+
+            if FeatureToggling.is_enabled("ensemble-evaluator"):
+                ee_config = arguments["ee_config"]
+                evaluator = EnsembleEvaluator(ee_config)
+
+            run_context = self.runSimulations(arguments, evaluator=evaluator)
+
+            if FeatureToggling.is_enabled("ensemble-evaluator"):
+                evaluator.stop()
+
             self.updateDetailedProgress()
             self.completed_realizations_mask = run_context.get_mask()
         except ErtRunError as e:
@@ -108,7 +116,7 @@ class BaseRunModel(object):
             self._simulationEnded()
             raise
 
-    def runSimulations(self, job_queue, run_context):
+    def runSimulations(self, arguments, evaluator=None):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
     def create_context(self, arguments):
@@ -354,7 +362,7 @@ class BaseRunModel(object):
     def count_active_realizations(self, run_context):
         return sum(run_context.get_mask())
 
-    def run_ensemble_evaluator(self, run_context, ee_config):
+    def run_ensemble_evaluator(self, run_context, evaluator):
         if run_context.get_step():
             self.ert().eclConfig().assert_restart()
 
@@ -376,12 +384,12 @@ class BaseRunModel(object):
 
         self.ert().initRun(run_context)
 
-        totalOk = EnsembleEvaluator(
-            ensemble,
-            ee_config,
-            run_context.get_iter(),
-            ee_id=str(uuid.uuid1()).split("-")[0],
-        ).run_and_get_successful_realizations()
+        evaluation_id = evaluator.submit_ensemble(
+            ensemble, iter_=run_context.get_iter()
+        )
+        totalOk = evaluator.run_and_get_successful_realizations(
+            evaluation_id=evaluation_id
+        )
 
         for i in range(len(run_context)):
             if run_context.is_active(i):

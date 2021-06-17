@@ -20,7 +20,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         return self.ert().analysisConfig().getModule(module_name)
 
-    def _runAndPostProcess(self, run_context, arguments, update_id=None):
+    def _runAndPostProcess(
+        self, run_context, arguments, update_id=None, evaluator=None
+    ):
         phase_msg = "Running iteration %d of %d simulation iterations..." % (
             run_context.get_iter(),
             self.phaseCount() - 1,
@@ -34,9 +36,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
         ensemble_id = self._post_ensemble_data(update_id=update_id)
         self.setPhaseName("Running forecast...", indeterminate=False)
         if FeatureToggling.is_enabled("ensemble-evaluator"):
-            ee_config = arguments["ee_config"]
             num_successful_realizations = self.run_ensemble_evaluator(
-                run_context, ee_config
+                run_context, evaluator
             )
         else:
             self._job_queue = self._queue_config.create_job_queue()
@@ -83,7 +84,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=ERT.ert)
         return update_id
 
-    def runSimulations(self, arguments):
+    def runSimulations(self, arguments, evaluator=None):
         phase_count = ERT.enkf_facade.get_number_of_iterations() + 1
         self.setPhaseCount(phase_count)
 
@@ -95,7 +96,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
             target_case_format
         )
 
-        ensemble_id = self._runAndPostProcess(run_context, arguments)
+        ensemble_id = self._runAndPostProcess(
+            run_context, arguments, evaluator=evaluator
+        )
 
         analysis_config = self.ert().analysisConfig()
         analysis_iter_config = analysis_config.getAnalysisIterConfig()
@@ -122,13 +125,17 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 run_context = self.create_context(
                     arguments, current_iter, prior_context=run_context
                 )
-                ensemble_id = self._runAndPostProcess(run_context, arguments, update_id)
+                ensemble_id = self._runAndPostProcess(
+                    run_context, arguments, update_id, evaluator=evaluator
+                )
                 num_retries = 0
             else:
                 run_context = self.create_context(
                     arguments, current_iter, prior_context=run_context, rerun=True
                 )
-                ensemble_id = self._runAndPostProcess(run_context, arguments, update_id)
+                ensemble_id = self._runAndPostProcess(
+                    run_context, arguments, update_id, evaluator=evaluator
+                )
                 num_retries += 1
 
         if current_iter == (phase_count - 1):
