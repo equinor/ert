@@ -18,15 +18,22 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class _Monitor:
-    def __init__(self, ee_con_info: "EvaluatorConnectionInfo") -> None:
+class _BaseMonitor:
+    def __init__(
+        self,
+        ee_con_info: "EvaluatorConnectionInfo",
+        endpoint,
+        end_event_type,
+    ):
         self._ee_con_info = ee_con_info
+        self._end_event_type = end_event_type
+        self._endpoint = endpoint
         self._ws_duplexer: Optional[SyncWebsocketDuplexer] = None
         self._id = str(uuid.uuid1()).split("-", maxsplit=1)[0]
 
     def __enter__(self):
         self._ws_duplexer = SyncWebsocketDuplexer(
-            self._ee_con_info.client_uri,
+            f"{self._ee_con_info.url}/{self._endpoint}",
             self._ee_con_info.url,
             self._ee_con_info.cert,
             self._ee_con_info.token,
@@ -39,18 +46,52 @@ class _Monitor:
     def get_base_uri(self):
         return self._ee_con_info.url
 
+    def get_client_uri(self):
+        return self._client_uri
+
     def _send_event(self, cloud_event: CloudEvent) -> None:
         with ExitStack() as stack:
             duplexer = self._ws_duplexer
             if not duplexer:
                 duplexer = SyncWebsocketDuplexer(
-                    self._ee_con_info.client_uri,
+                    f"{self._ee_con_info.url}/{self._endpoint}",
                     self._ee_con_info.url,
                     self._ee_con_info.cert,
                     self._ee_con_info.token,
                 )
                 stack.callback(duplexer.stop)
             duplexer.send(to_json(cloud_event, data_marshaller=evaluator_marshaller))
+
+    def track(self):
+        with ExitStack() as stack:
+            duplexer = self._ws_duplexer
+            if not duplexer:
+                duplexer = SyncWebsocketDuplexer(
+                    f"{self._ee_con_info.url}/{self._endpoint}",
+                    self._ee_con_info.url,
+                    self._ee_con_info.cert,
+                    self._ee_con_info.token,
+                )
+                stack.callback(duplexer.stop)
+            for message in duplexer.receive():
+                try:
+                    event = from_json(message, data_unmarshaller=evaluator_unmarshaller)
+                except DataUnmarshallerError:
+                    event = from_json(message, data_unmarshaller=pickle.loads)
+                yield event
+                if event["type"] == self._end_event_type:
+                    logger.debug(f"monitor-{self._id} client received terminated")
+                    break
+
+
+class _Monitor(_BaseMonitor):
+    def __init__(self, evaluation_id, ee_con_info: "EvaluatorConnectionInfo"):
+        self._evaluation_id = evaluation_id
+        super().__init__(
+            ee_con_info=ee_con_info,
+            endpoint=f"client/{self._evaluation_id}",
+            end_event_type=identifiers.EVTYPE_EE_TERMINATED,
+        )
 
     def signal_cancel(self):
         logger.debug(f"monitor-{self._id} asking server to cancel...")
@@ -78,27 +119,22 @@ class _Monitor:
         self._send_event(out_cloudevent)
         logger.debug(f"monitor-{self._id} informed server monitor is done")
 
-    def track(self):
-        with ExitStack() as stack:
-            duplexer = self._ws_duplexer
-            if not duplexer:
-                duplexer = SyncWebsocketDuplexer(
-                    self._ee_con_info.client_uri,
-                    self._ee_con_info.url,
-                    self._ee_con_info.cert,
-                    self._ee_con_info.token,
-                )
-                stack.callback(duplexer.stop)
-            for message in duplexer.receive():
-                try:
-                    event = from_json(message, data_unmarshaller=evaluator_unmarshaller)
-                except DataUnmarshallerError:
-                    event = from_json(message, data_unmarshaller=pickle.loads)
-                yield event
-                if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
-                    logger.debug(f"monitor-{self._id} client received terminated")
-                    break
+
+class _ExperimentMonitor(_BaseMonitor):
+    def __init__(self, experiment_id, ee_con_info: "EvaluatorConnectionInfo"):
+        self._experiment_id = experiment_id
+        super().__init__(
+            ee_con_info,
+            endpoint=f"experiment/{self._experiment_id}",
+            end_event_type=identifiers.EVTYPE_EE_EXPERIMENT_TERMINATED,
+        )
 
 
-def create(ee_con_info: "EvaluatorConnectionInfo") -> _Monitor:
-    return _Monitor(ee_con_info)
+def create(evaluation_id: str, ee_con_info: "EvaluatorConnectionInfo") -> _Monitor:
+    return _Monitor(evaluation_id, ee_con_info)
+
+
+def create_experiment(
+    experiment_id: str, ee_con_info: "EvaluatorConnectionInfo"
+) -> _ExperimentMonitor:
+    return _ExperimentMonitor(experiment_id, ee_con_info)

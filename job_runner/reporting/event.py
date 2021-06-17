@@ -55,7 +55,9 @@ class Event(Reporter):
 
     def _publish_event(self):
         logger.debug("Publishing event.")
-        with Client(self._evaluator_url, self._token, self._cert) as client:
+        with Client(
+            f"{self._evaluator_url}/{self._ee_id}", self._token, self._cert
+        ) as client:
             while True:
                 event = self._event_queue.get()
                 if event is None:

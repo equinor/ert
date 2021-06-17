@@ -56,6 +56,8 @@ class _LegacyEnsemble(_Ensemble):
             )
             timeout_queue.put_nowait(timeout_cloudevent)
 
+        dispatch_url = f"{self._config.dispatch_uri}/{self._ee_id}"
+
         async def send_timeout_message() -> None:
             while True:
                 timeout_cloudevent = await timeout_queue.get()
@@ -63,7 +65,7 @@ class _LegacyEnsemble(_Ensemble):
                     break
                 assert self._config  # mypy
                 await self.send_cloudevent(
-                    self._config.dispatch_uri,
+                    dispatch_url,
                     timeout_cloudevent,
                     token=self._config.token,
                     cert=self._config.cert,
@@ -96,6 +98,8 @@ class _LegacyEnsemble(_Ensemble):
         """
         # Get a fresh eventloop
         asyncio.set_event_loop(asyncio.new_event_loop())
+
+        dispatch_url = f"{self._config.dispatch_uri}/{self._ee_id}"
 
         if self._config is None:
             raise ValueError("no config")
@@ -136,7 +140,7 @@ class _LegacyEnsemble(_Ensemble):
                     }
                 )
                 await self.send_cloudevent(
-                    self._config.dispatch_uri,
+                    dispatch_url,
                     out_cloudevent,
                     token=self._config.token,
                     cert=self._config.cert,
@@ -170,14 +174,14 @@ class _LegacyEnsemble(_Ensemble):
                 # NOTE: This touches files on disk...
                 self._job_queue.add_ensemble_evaluator_information_to_jobs_file(
                     self._ee_id,
-                    self._config.dispatch_uri,
+                    dispatch_url,
                     self._config.cert,
                     self._config.token,
                 )
 
                 # Finally, run the queue-loop until it finishes or raises
                 await self._job_queue.execute_queue_async(
-                    self._config.dispatch_uri,
+                    dispatch_url,
                     self._ee_id,
                     threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION),
                     queue_evaluators,  # type: ignore
@@ -218,7 +222,7 @@ class _LegacyEnsemble(_Ensemble):
                 # Dispatch final result from evaluator - FAILED, CANCEL or STOPPED
                 assert self._config  # mypy
                 await self.send_cloudevent(
-                    self._config.dispatch_uri,
+                    dispatch_url,
                     result,
                     token=self._config.token,
                     cert=self._config.cert,

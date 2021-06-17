@@ -49,11 +49,9 @@ class MultipleDataAssimilation(BaseRunModel):
         if not module_load_success:
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
-    def runSimulations(
-        self, evaluator_server_config: EvaluatorServerConfig
-    ) -> ErtRunContext:
+    def runSimulations(self, evaluator) -> ErtRunContext:
         context = self.create_context(0, initialize_mask_from_arguments=True)
-        self._checkMinimumActiveRealizations(context)
+        self.checkMinimumActiveRealizations(context)
         weights = self.parseWeights(self._simulation_arguments["weights"])
         iteration_count = len(weights)
 
@@ -87,7 +85,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 iteration, initialize_mask_from_arguments=is_first_iteration
             )
             _, ensemble_id = self._simulateAndPostProcess(
-                run_context, evaluator_server_config, update_id=update_id
+                run_context, evaluator, update_id=update_id
             )
             if is_first_iteration:
                 EnkfSimulationRunner.runWorkflows(
@@ -104,7 +102,7 @@ class MultipleDataAssimilation(BaseRunModel):
             len(weights), initialize_mask_from_arguments=False, update=False
         )
         self._simulateAndPostProcess(
-            run_context, evaluator_server_config, update_id=update_id
+            run_context, evaluator, update_id=update_id
         )
 
         self.setPhase(iteration_count + 1, "Simulations completed.")
@@ -145,7 +143,7 @@ class MultipleDataAssimilation(BaseRunModel):
     def _simulateAndPostProcess(
         self,
         run_context: ErtRunContext,
-        evaluator_server_config: EvaluatorServerConfig,
+        evaluator,
         update_id: str = None,
     ) -> Tuple[int, str]:
         iteration = run_context.get_iter()
@@ -165,7 +163,7 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhaseName(phase_string, indeterminate=False)
 
         num_successful_realizations = self.run_ensemble_evaluator(
-            run_context, evaluator_server_config
+            run_context, evaluator
         )
 
         # Push simulation results to storage

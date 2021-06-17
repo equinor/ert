@@ -101,6 +101,15 @@ EVTYPE_EE_TERMINATED = "com.equinor.ert.ee.terminated"
 EVTYPE_EE_USER_CANCEL = "com.equinor.ert.ee.user_cancel"
 EVTYPE_EE_USER_DONE = "com.equinor.ert.ee.user_done"
 
+EVTYPE_EE_EXPERIMENT_UPDATE = "com.equinor.ert.ee.experiment.update"
+EVTYPE_EE_EXPERIMENT_TERMINATED = "com.equinor.ert.ee.experiment.terminated"
+
+EVTYPE_EXPERIMENT_SUBMITTED = "com.equinor.ert.experiment.submitted"
+EVTYPE_EXPERIMENT_RUNNING = "com.equinor.ert.experiment.running"
+EVTYPE_EXPERIMENT_SUCCESS = "com.equinor.ert.experiment.success"
+EVTYPE_EXPERIMENT_FAILURE = "com.equinor.ert.experiment.failure"
+
+
 EVTYPE_ENSEMBLE_STARTED = "com.equinor.ert.ensemble.started"
 EVTYPE_ENSEMBLE_STOPPED = "com.equinor.ert.ensemble.stopped"
 EVTYPE_ENSEMBLE_CANCELLED = "com.equinor.ert.ensemble.cancelled"

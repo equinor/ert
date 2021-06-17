@@ -96,29 +96,35 @@ def test_snapshot_merge(snapshot: Snapshot):
     "source_string, expected_ids",
     [
         (
-            "/ert/ee/0/real/1111/step/asd123ASD/job/0",
-            {"real": "1111", "step": "asd123ASD", "job": "0"},
+            "/ert/ee/1234/real/1111/step/asd123ASD/job/0",
+            {"evaluation_id": "1234", "real": "1111", "step": "asd123ASD", "job": "0"},
         ),
         (
-            "/ert/ee/0/real/1111/step/asd123ASD",
-            {"real": "1111", "step": "asd123ASD", "job": None},
+            "/ert/ee/some_eval_id/real/1111/step/asd123ASD",
+            {
+                "evaluation_id": "some_eval_id",
+                "real": "1111",
+                "step": "asd123ASD",
+                "job": None,
+            },
         ),
         (
             "/ert/ee/0/real/1111",
-            {"real": "1111", "step": None, "job": None},
+            {"evaluation_id": "0", "real": "1111", "step": None, "job": None},
         ),
         (
-            "/ert/ee/0/real/1111",
-            {"real": "1111", "step": None, "job": None},
+            "/ert/ee/a1ff5a4d8/real/1111",
+            {"evaluation_id": "a1ff5a4d8", "real": "1111", "step": None, "job": None},
         ),
         (
-            "/ert/ee/0",
-            {"real": None, "step": None, "job": None},
+            "/ert/ee/ee_id_0",
+            {"evaluation_id": "ee_id_0", "real": None, "step": None, "job": None},
         ),
     ],
 )
 def test_source_get_ids(source_string, expected_ids):
 
+    assert tool.get_evaluation_id(source_string) == expected_ids["evaluation_id"]
     assert tool.get_real_id(source_string) == expected_ids["real"]
     assert tool.get_step_id(source_string) == expected_ids["step"]
     assert tool.get_job_id(source_string) == expected_ids["job"]

@@ -44,7 +44,7 @@ class _Ensemble:
 
     @property
     def cancellable(self) -> bool:
-        return False
+        return True
 
     @property
     def active_reals(self) -> Sequence[_Realization]:

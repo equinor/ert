@@ -242,7 +242,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
         assert self._ee_id  # mypy
         try:
             with Client(
-                self._ee_con_info.dispatch_uri,
+                f"{self._ee_con_info.dispatch_uri}/{self._ee_id}",
                 self._ee_con_info.token,
                 self._ee_con_info.cert,
             ) as c:
@@ -253,15 +253,15 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
                     },
                 )
                 c.send(to_json(event).decode())
-            with prefect.context(  # type: ignore
-                url=self._ee_con_info.dispatch_uri,
+            with prefect.context(
+                url=f"{self._ee_con_info.dispatch_uri}/{self._ee_id}",
                 token=self._ee_con_info.token,
                 cert=self._ee_con_info.cert,
             ):
                 self.run_flow(self._ee_id)
 
             with Client(
-                self._ee_con_info.dispatch_uri,
+                f"{self._ee_con_info.dispatch_uri}/{self._ee_id}",
                 self._ee_con_info.token,
                 self._ee_con_info.cert,
             ) as c:
@@ -287,7 +287,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
                 return
 
             with Client(
-                self._ee_con_info.dispatch_uri,
+                f"{self._ee_con_info.dispatch_uri}/{self._ee_id}",
                 self._ee_con_info.token,
                 self._ee_con_info.cert,
             ) as c:
@@ -369,7 +369,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
         loop = asyncio.new_event_loop()
         loop.run_until_complete(
             self.send_cloudevent(
-                self._ee_con_info.dispatch_uri,
+                f"{self._ee_con_info.dispatch_uri}/{self._ee_id}",
                 event,
                 token=self._ee_con_info.token,
                 cert=self._ee_con_info.cert,

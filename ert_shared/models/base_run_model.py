@@ -16,6 +16,14 @@ from ert_shared.libres_facade import LibresFacade
 from ert_shared.feature_toggling import feature_enabled
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+import asyncio
+import time
+from typing import Optional
+
+from ert_shared.ensemble_evaluator.evaluator import (
+    EnsembleEvaluatorService,
+    EnsembleEvaluatorSession,
+)
 from ert_shared.storage.extraction import (
     post_ensemble_data,
     post_ensemble_results,
@@ -91,6 +99,8 @@ class BaseRunModel:
         self._ert = ert
         self.facade = LibresFacade(ert)
         self._simulation_arguments = simulation_arguments
+
+        self.experiment_id = None
         self.reset()
 
     def ert(self) -> EnKFMain:
@@ -111,6 +121,7 @@ class BaseRunModel:
     def reset(self) -> None:
         self._failed = False
         self._phase = 0
+        self.experiment_id = None
 
     def restart(self) -> None:
         active_realizations = self._create_mask_from_failed_realizations()
@@ -153,15 +164,15 @@ class BaseRunModel:
             evaluator_server_config=evaluator_server_config,
         )
 
-    def startSimulations(self, evaluator_server_config: EvaluatorServerConfig) -> None:
+    def startSimulations(self, evaluator) -> None:
         try:
             with captured_logs() as logs:
                 self._initial_realizations_mask = self._simulation_arguments[
                     "active_realizations"
                 ]
-                run_context = self.runSimulations(
-                    evaluator_server_config=evaluator_server_config,
-                )
+                self.experiment_id = evaluator.start_experiment(self.__class__.__name__)
+                run_context = self.runSimulations(evaluator=evaluator)
+                evaluator.stop_experiment(self.experiment_id)
                 self._completed_realizations_mask = run_context.get_mask()
         except ErtRunError as e:
             self._completed_realizations_mask = []
@@ -177,9 +188,10 @@ class BaseRunModel:
             self._simulationEnded()
             raise
 
-    def runSimulations(
-        self, evaluator_server_config: EvaluatorServerConfig
-    ) -> ErtRunContext:
+    def runSimulations(self, evaluator):
+        raise NotImplementedError("Method must be implemented by inheritors!")
+
+    def create_context(self):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
     def teardown_context(self) -> None:
@@ -290,9 +302,7 @@ class BaseRunModel:
     def _count_active_realizations(self, run_context: ErtRunContext) -> int:
         return sum(run_context.get_mask())
 
-    def run_ensemble_evaluator(
-        self, run_context: ErtRunContext, ee_config: EvaluatorServerConfig
-    ) -> int:
+    def run_ensemble_evaluator(self, run_context: ErtRunContext, evaluator):
         if run_context.get_step():
             self.ert().eclConfig().assert_restart()
 
@@ -306,12 +316,12 @@ class BaseRunModel:
 
         self.ert().initRun(run_context)
 
-        totalOk = EnsembleEvaluator(
-            ensemble,
-            ee_config,
-            run_context.get_iter(),
-            ee_id=str(uuid.uuid1()).split("-", maxsplit=1)[0],
-        ).run_and_get_successful_realizations()
+        evaluation_id = evaluator.submit_ensemble(
+            ensemble, iter_=run_context.get_iter(), experiment_id=self.experiment_id
+        )
+        totalOk = evaluator.run_and_get_successful_realizations(
+            evaluation_id=evaluation_id
+        )
 
         for iens, run_arg in enumerate(run_context):
             if run_context.is_active(iens):

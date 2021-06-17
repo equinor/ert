@@ -403,7 +403,9 @@ class _ProviderVerifier:
             raise AssertionError(errors)
 
     async def _mock_listener(self, on_connect):
+        print("mock_list", self._uri)
         async with connect(self._uri) as websocket:
+            print("on_connect", on_connect)
             on_connect()
             await _mock_verify_handler(
                 websocket.recv,

@@ -1,8 +1,9 @@
 import pytest
 from ensemble_evaluator_utils import TestEnsemble
+from typing import Tuple
 
 from ert.ensemble_evaluator import identifiers
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator, ee_monitor
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator, ee_monitor, EnsembleEvaluatorSession
 from ert_shared.ensemble_evaluator.narratives import (
     monitor_failing_ensemble,
     monitor_failing_evaluation,
@@ -13,21 +14,25 @@ from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED, ENSEMBLE_STATE_S
 
 
 @pytest.mark.consumer_driven_contract_test
-def test_monitor_successful_ensemble(make_ee_config):
+def test_monitor_successful_ensemble(
+    evaluator_experiment_session: Tuple[EnsembleEvaluatorSession, str]
+):
+    evaluator, experiment_id = evaluator_experiment_session
     ensemble = TestEnsemble(iter=1, reals=2, steps=2, jobs=2)
     ensemble.addFailJob(real=1, step=0, job=1)
-    ee_config = make_ee_config(use_token=False, generate_cert=False)
-    ee = EnsembleEvaluator(
-        ensemble,
-        ee_config,
-        0,
-        ee_id="ee-0",
-    )
 
-    ee.run()
-    with NarrativeProxy(monitor_successful_ensemble()).proxy(ee_config.url):
-        with ee_monitor.create(ee_config.get_connection_info()) as monitor:
+    evaluation_id = evaluator.submit_ensemble(
+        ensemble=ensemble, iter_=0, experiment_id=experiment_id
+    )
+    evaluator.run(evaluation_id=evaluation_id)
+    with NarrativeProxy(monitor_successful_ensemble()).proxy(
+        evaluator._config.url
+    ) as port:
+        with ee_monitor.create(
+            evaluation_id, evaluator._config.get_connection_info()
+        ) as monitor:
             for event in monitor.track():
+                print(event)
                 if event["type"] == identifiers.EVTYPE_EE_SNAPSHOT:
                     ensemble.start()
                 if (
