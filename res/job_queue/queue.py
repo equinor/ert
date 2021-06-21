@@ -451,7 +451,7 @@ class JobQueue(BaseCClass):
             await JobQueue._publish_changes(ee_id, self.snapshot(), websocket)
 
             try:
-                while self.is_active() and not self.stopped:
+                while True:
                     self.launch_jobs(pool_sema)
 
                     await asyncio.sleep(1)
@@ -463,6 +463,8 @@ class JobQueue(BaseCClass):
                     await JobQueue._publish_changes(
                         ee_id, self._changes_after_transition(), websocket
                     )
+                    if not self.is_active() or self.stopped:
+                        break
             except asyncio.CancelledError:
                 if self.stopped:
                     logger.debug(
