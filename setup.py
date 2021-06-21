@@ -82,6 +82,7 @@ setup(
         "deprecation",
         "dnspython >= 2",
         "ecl",
+        "ert-storage",
         "fastapi",
         "graphlib_backport; python_version < '3.9'",
         "jinja2",
@@ -105,11 +106,6 @@ setup(
         "uvicorn",
         "websockets >= 9.0.1",
     ],
-    extras_require={
-        "storage": [
-            "ert-storage==0.2.0",
-        ],
-    },
     setup_requires=["pytest-runner", "setuptools_scm"],
     entry_points={
         "console_scripts": [

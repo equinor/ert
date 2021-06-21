@@ -1,5 +1,4 @@
 black
-ert-storage==0.2.0
 flaky
 pytest>=6.2.0
 pytest-qt
