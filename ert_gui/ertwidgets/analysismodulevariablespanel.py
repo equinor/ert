@@ -176,7 +176,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         spinner = QSpinBox()
         spinner.setMinimumWidth(75)
         spinner.setMaximum(
-            analysis_module_variables_model.getVariableMaximumValue(variable_name),
+            analysis_module_variables_model.getVariableMaximumValue(variable_name)
         )
         spinner.setMinimum(
             analysis_module_variables_model.getVariableMinimumValue(variable_name)
