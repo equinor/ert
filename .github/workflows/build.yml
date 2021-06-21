@@ -137,7 +137,7 @@ jobs:
 
     - name: Install wheel and test dependencies
       run: |
-        find . -name "*.whl" -exec pip install '{}' \;
+        find . -name "*.whl" -exec pip install {} \;
         pip install -r dev-requirements.txt
 
     - name: Test Ubuntu
@@ -196,7 +196,7 @@ jobs:
 
     - name: Install wheel and test dependencies
       run: |
-        find . -name "*.whl" -exec pip install '{}' \;
+        find . -name "*.whl" -exec pip install {} \;
         pip install -r dev-requirements.txt
 
     - name: Make test directory
@@ -251,7 +251,7 @@ jobs:
 
     - name: Install wheel and test dependencies
       run: |
-        find . -name "*.whl" -exec pip install '{}' \;
+        find . -name "*.whl" -exec pip install {} \;
         pip install -r dev-requirements.txt
 
     - name: Run Python tests
