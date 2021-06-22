@@ -67,7 +67,7 @@ class AnalysisModuleVariablesModel(object):
         "LAMBDA0": {
             "type": float,
             "min": -1,
-            "max": 10000000000000,
+            "max": 2147483647,
             "step": 1.0,
             "labelname": "Initial Lambda",
             "pos": 0,
@@ -119,7 +119,7 @@ class AnalysisModuleVariablesModel(object):
         "ENKF_SUBSPACE_DIMENSION": {
             "type": int,
             "min": -2,
-            "max": 10000000000000,
+            "max": 2147483647,
             "step": 1,
             "labelname": "Number of singular values",
             "pos": 10,
@@ -127,7 +127,7 @@ class AnalysisModuleVariablesModel(object):
         "ENKF_NCOMP": {
             "type": int,
             "min": -2,
-            "max": 10000000000000,
+            "max": 2147483647,
             "step": 1,
             "labelname": "Number of singular values",
             "pos": 10,
