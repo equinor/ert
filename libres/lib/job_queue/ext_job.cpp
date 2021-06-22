@@ -88,7 +88,7 @@
 
 jobList = [
     {"executable"  : None,
-     "environment" : {"LM_LICENSE_PATH" : "1700@osl001lic.hda.hydro.com:1700@osl002lic.hda.hydro.com:1700@osl003lic.hda.hydro.com",
+     "environment" : {"LM_LICENSE_PATH" : "user@some.example.com:user@other.example.com",
                       "F_UFMTENDIAN"    : "big"},
      "target_file":"222",
      "argList"   : [],

@@ -46,7 +46,7 @@
  *
  *   run_host bgo179lin
  *   {
- *     hostname = bgo179lin.nho.hydro.com;
+ *     hostname = some.example.com;
  *     num_jobs = 4;
  *   };
  * };
