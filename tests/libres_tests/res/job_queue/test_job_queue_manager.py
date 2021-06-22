@@ -3,9 +3,8 @@ import stat
 from threading import BoundedSemaphore
 
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest, wait_until
+from libres_utils import ResTest
 
-from res.enkf import ResConfig
 from res.job_queue import (
     Driver,
     JobQueue,

@@ -1,6 +1,5 @@
 from copy import deepcopy
 
-import pydantic
 import pytest
 
 import ert3

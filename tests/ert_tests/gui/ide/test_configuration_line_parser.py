@@ -1,7 +1,6 @@
 from ert_utils import ErtTest
 
 from ert_shared.ide.keywords import ConfigurationLineParser
-from ert_shared.ide.keywords.data import Argument
 
 
 class ConfigurationLineParserTest(ErtTest):

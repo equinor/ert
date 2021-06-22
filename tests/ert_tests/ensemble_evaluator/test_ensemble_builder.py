@@ -2,7 +2,6 @@ from graphlib import CycleError
 from unittest.mock import MagicMock, Mock
 
 import pytest
-from attr.validators import matches_re
 
 import ert_shared.ensemble_evaluator.ensemble.builder as ee
 

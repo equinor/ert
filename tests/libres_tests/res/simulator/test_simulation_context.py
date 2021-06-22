@@ -1,5 +1,3 @@
-import time
-
 from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir, wait_until
 

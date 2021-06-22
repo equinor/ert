@@ -2,7 +2,6 @@ import json
 import os
 import pathlib
 import stat
-import time
 from threading import BoundedSemaphore
 
 from ecl.util.test import TestAreaContext

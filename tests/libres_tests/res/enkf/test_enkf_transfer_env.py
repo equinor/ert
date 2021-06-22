@@ -16,44 +16,13 @@
 
 import json
 import os
-import subprocess
-import sys
 
 import pytest
 from ecl.util.test import TestAreaContext
 from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
-from res.enkf import (
-    AnalysisConfig,
-    EclConfig,
-    EnkfFs,
-    EnkfObs,
-    EnKFState,
-    EnkfVarType,
-    EnsembleConfig,
-    ErtTemplates,
-    ModelConfig,
-    ObsVector,
-    ResConfig,
-    RunArg,
-    SiteConfig,
-)
-from res.enkf.config import EnkfConfigNode
-from res.enkf.enkf_main import EnKFMain
-from res.enkf.enums import (
-    ActiveMode,
-    EnkfFieldFileFormatEnum,
-    EnkfInitModeEnum,
-    EnkfObservationImplementationType,
-    EnkfRunType,
-    EnkfTruncationType,
-    ErtImplType,
-    LoadFailTypeEnum,
-    RealizationStateEnum,
-)
 from res.enkf.ert_run_context import ErtRunContext
-from res.enkf.observations.summary_observation import SummaryObservation
 from res.test import ErtTestContext
 
 

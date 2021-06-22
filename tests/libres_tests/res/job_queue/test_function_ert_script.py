@@ -1,4 +1,3 @@
-from cwrap import clib
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest
 from workflow_common import WorkflowCommon

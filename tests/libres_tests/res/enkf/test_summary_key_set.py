@@ -6,7 +6,6 @@ from libres_utils import ResTest
 
 from res.enkf import EnKFMain, ResConfig, SummaryKeySet
 from res.enkf.enkf_fs import EnkfFs
-from res.test.ert_test_context import ErtTestContext
 
 
 @pytest.mark.equinor_test

@@ -1,14 +1,12 @@
 import os
 
 import pytest
-from ecl.grid import EclGrid
 from ecl.util.util import IntVector
 from libres_utils import ResTest
 
 from res.enkf import NodeId
-from res.enkf.config import FieldConfig, FieldTypeEnum
+from res.enkf.config import FieldTypeEnum
 from res.enkf.data import EnkfNode
-from res.enkf.enums import EnkfFieldFileFormatEnum
 from res.test import ErtTestContext
 
 

@@ -4,7 +4,6 @@ from ecl.util.test import TestAreaContext
 from libres_utils import ResTest
 
 from res.enkf import TimeMap
-from res.enkf.enums.realization_state_enum import RealizationStateEnum
 
 
 class TimeMapTest(ResTest):

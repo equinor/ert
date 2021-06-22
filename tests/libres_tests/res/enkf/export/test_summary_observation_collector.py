@@ -1,5 +1,3 @@
-import os
-
 from libres_utils import ResTest
 from pytest import MonkeyPatch
 

@@ -1,5 +1,4 @@
 import os
-import sys
 from distutils.version import StrictVersion
 from unittest.mock import Mock, PropertyMock
 

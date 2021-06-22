@@ -4,7 +4,6 @@ import pytest
 
 import ert
 import ert3
-from ert3 import workspace
 
 
 @pytest.mark.requires_ert_storage

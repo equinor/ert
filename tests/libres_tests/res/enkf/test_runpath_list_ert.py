@@ -1,11 +1,10 @@
 import os
-import unittest
 
 from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
-from res.enkf import ErtRunContext, RunpathList, RunpathNode
-from res.enkf.enums import EnkfInitModeEnum, EnkfRunType
+from res.enkf import ErtRunContext
+from res.enkf.enums import EnkfRunType
 from res.test import ErtTestContext
 from res.util.substitution_list import SubstitutionList
 

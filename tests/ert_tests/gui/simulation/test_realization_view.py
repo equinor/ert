@@ -1,6 +1,6 @@
 import pytest
 from qtpy import QtCore
-from qtpy.QtCore import QModelIndex, QPoint, QSize, Qt
+from qtpy.QtCore import QModelIndex, QSize
 from qtpy.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
 
 from ert_gui.model.node import Node

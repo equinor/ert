@@ -14,10 +14,8 @@ from numpy.testing import assert_almost_equal, assert_array_equal
 
 from ert_shared.libres_facade import LibresFacade
 from ert_shared.storage import extraction
-from res import ResPrototype
-from res.enkf import ActiveList, EnkfSimulationRunner, ErtRunContext
+from res.enkf import ErtRunContext
 from res.enkf.enkf_main import EnKFMain
-from res.enkf.enums import HookRuntime
 from res.enkf.res_config import ResConfig
 
 

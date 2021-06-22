@@ -3,7 +3,6 @@ import json
 import os.path
 
 from ecl.util.test import TestAreaContext
-from ecl.util.util import EclVersion, Version
 from libres_utils import ResTest
 
 from res.job_queue.environment_varlist import EnvironmentVarlist

@@ -4,7 +4,6 @@ import os
 import signal
 import stat
 import sys
-import time
 import unittest
 from subprocess import Popen
 from textwrap import dedent
@@ -13,7 +12,6 @@ from unittest.mock import mock_open, patch
 import psutil
 import pytest
 from libres_utils import _mock_ws_thread, tmpdir, wait_until
-from pytest_asyncio.plugin import _unused_tcp_port
 
 from job_runner.cli import _setup_reporters, main
 from job_runner.reporting import Event, Interactive

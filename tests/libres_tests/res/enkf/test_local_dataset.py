@@ -14,8 +14,6 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import os.path
-
 from ecl.grid import EclRegion
 from ecl.util.geometry import GeoRegion, Surface
 from libres_utils import ResTest, tmpdir

@@ -3,7 +3,6 @@ import pathlib
 import stat
 from typing import Callable
 
-import pydantic
 import pytest
 
 import ert3

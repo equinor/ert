@@ -3,11 +3,10 @@ import os
 import subprocess
 
 import jinja2
-import yaml
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest, tmpdir
 
-from res.fm.templating import *
+from res.fm.templating import load_parameters, render_template
 
 
 class TemplatingTest(ResTest):

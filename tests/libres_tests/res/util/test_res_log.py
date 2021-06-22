@@ -3,8 +3,7 @@ import os
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest
 
-from res.util import Log, ResLog
-from res.util.enums import MessageLevelEnum
+from res.util import ResLog
 
 
 class ResLogTest(ResTest):

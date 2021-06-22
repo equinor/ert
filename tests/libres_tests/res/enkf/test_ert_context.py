@@ -1,6 +1,3 @@
-import os
-import sys
-
 import pytest
 from libres_utils import ResTest
 

@@ -15,7 +15,6 @@
 #  for more details.
 
 import os
-import random
 import sys
 
 import pytest
@@ -24,12 +23,8 @@ from ecl.util.util import BoolVector, RandomNumberGenerator
 from libres_utils import ResTest
 
 import res
-from res.analysis import (
-    AnalysisModule,
-    AnalysisModuleLoadStatusEnum,
-    AnalysisModuleOptionsEnum,
-)
-from res.enkf import LocalObsdata, MeasData, ObsData
+from res.analysis import AnalysisModule
+from res.enkf import MeasData, ObsData
 from res.test import ErtTestContext
 from res.util import Matrix
 

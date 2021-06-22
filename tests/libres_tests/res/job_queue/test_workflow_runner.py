@@ -1,6 +1,3 @@
-import os
-import sys
-import time
 from unittest.mock import patch
 
 from ecl.util.test import TestAreaContext

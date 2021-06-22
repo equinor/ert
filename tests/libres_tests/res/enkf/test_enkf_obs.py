@@ -10,7 +10,6 @@ from res.enkf import (
     EnkfObs,
     EnsembleConfig,
     LocalObsdata,
-    LocalObsdataNode,
     MeasData,
     ObsData,
     ObsVector,

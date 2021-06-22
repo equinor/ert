@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
@@ -9,21 +7,11 @@ from res.enkf import (
     AnalysisConfig,
     EclConfig,
     EnkfConfigNode,
-    EnkfFs,
     EnKFMain,
-    EnkfObs,
     EnKFState,
-    EnsembleConfig,
     ErtTemplate,
-    ErtTemplates,
-    FieldConfig,
-    GenDataConfig,
-    GenKwConfig,
     LocalConfig,
-    ModelConfig,
-    ObsVector,
     ResConfig,
-    SiteConfig,
 )
 from res.enkf.util import TimeMap
 

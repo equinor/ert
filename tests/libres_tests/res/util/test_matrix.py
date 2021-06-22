@@ -1,4 +1,3 @@
-from cwrap import CFILE, BaseCClass, load
 from cwrap import open as copen
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.test import TestAreaContext

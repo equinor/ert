@@ -13,22 +13,17 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import functools
 import inspect
 import json
 import os
 import re
 import shutil
 import stat
-import unittest
-from distutils.spawn import find_executable
-from subprocess import PIPE, Popen
 from unittest import mock
 
 import pytest
 import yaml
 from ecl.summary import EclSum
-from ecl.util.test import TestAreaContext
 from libres_utils import ResTest, tmpdir
 from pytest import MonkeyPatch
 

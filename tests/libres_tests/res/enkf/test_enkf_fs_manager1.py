@@ -1,8 +1,5 @@
-import os
-
 from libres_utils import ResTest, tmpdir
 
-from res.enkf import EnkfFs, EnkfFsManager, EnKFMain
 from res.test import ErtTestContext
 
 

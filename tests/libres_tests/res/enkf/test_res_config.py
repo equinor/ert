@@ -16,7 +16,6 @@
 import os
 import os.path
 import stat
-from copy import deepcopy
 from datetime import date
 
 from cwrap import Prototype, load
@@ -35,7 +34,6 @@ from res.enkf import (
 )
 from res.job_queue import QueueDriverEnum
 from res.sched import HistorySourceEnum
-from res.test import ErtTestContext
 from res.util.enums import MessageLevelEnum
 
 # The res_config object should set the environment variable

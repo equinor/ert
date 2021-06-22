@@ -14,8 +14,6 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import os
-
 from ecl.grid import EclGridGenerator
 from libres_utils import ResTest
 

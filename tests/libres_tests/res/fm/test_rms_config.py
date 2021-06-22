@@ -17,7 +17,6 @@ import os
 import stat
 import unittest
 
-import yaml
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest
 from pytest import MonkeyPatch

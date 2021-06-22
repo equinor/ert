@@ -15,7 +15,6 @@
 #  for more details.
 
 
-import os
 import unittest
 from subprocess import PIPE, Popen
 

@@ -21,11 +21,7 @@ from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.util import BoolVector, RandomNumberGenerator
 from libres_utils import ResTest, tmpdir
 
-from res.analysis import (
-    AnalysisModule,
-    AnalysisModuleLoadStatusEnum,
-    AnalysisModuleOptionsEnum,
-)
+from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum
 from res.enkf import MeasData, ObsData
 from res.util import Matrix
 

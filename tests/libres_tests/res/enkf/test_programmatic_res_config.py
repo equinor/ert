@@ -18,7 +18,7 @@ import os
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest
 
-from res.enkf import ConfigKeys, ResConfig
+from res.enkf import ResConfig
 from res.test import ErtTestContext
 
 

@@ -1,8 +1,7 @@
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest, tmpdir
 
-from res.enkf import ErtImplType, GenKwConfig
-from res.test import ErtTestContext
+from res.enkf import GenKwConfig
 
 
 class GenKwConfigTest(ResTest):

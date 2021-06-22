@@ -1,5 +1,3 @@
-import os
-
 from libres_utils import ResTest
 
 from res.util import PathFormat

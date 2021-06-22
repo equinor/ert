@@ -1,7 +1,4 @@
-import os
-
 import numpy
-import pandas
 from libres_utils import ResTest
 from pytest import MonkeyPatch
 

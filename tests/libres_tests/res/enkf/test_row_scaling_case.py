@@ -18,23 +18,13 @@ import math
 import os
 import random
 import shutil
-import tempfile
 
 import numpy as np
 from ecl.grid import EclGridGenerator
 from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
-from res.enkf import (
-    EnKFMain,
-    EnkfNode,
-    ErtRunContext,
-    ESUpdate,
-    FieldConfig,
-    NodeId,
-    ResConfig,
-    RowScaling,
-)
+from res.enkf import EnKFMain, EnkfNode, ErtRunContext, ESUpdate, NodeId, ResConfig
 from res.enkf.enums import RealizationStateEnum
 from res.test import ErtTestContext
 

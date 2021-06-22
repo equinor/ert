@@ -12,11 +12,7 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
 )
 from ert_shared.models.base_run_model import BaseRunModel
 from ert_shared.status.entity import state
-from ert_shared.status.entity.event import (
-    EndEvent,
-    FullSnapshotEvent,
-    SnapshotUpdateEvent,
-)
+from ert_shared.status.entity.event import EndEvent, SnapshotUpdateEvent
 from ert_shared.status.tracker.evaluator import EvaluatorTracker
 
 

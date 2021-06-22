@@ -16,7 +16,6 @@
 
 import itertools
 import os
-import sys
 
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest

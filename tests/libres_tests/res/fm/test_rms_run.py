@@ -23,7 +23,6 @@ import unittest
 from unittest.mock import patch
 
 import pytest
-import yaml
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest, tmpdir
 from pytest import MonkeyPatch

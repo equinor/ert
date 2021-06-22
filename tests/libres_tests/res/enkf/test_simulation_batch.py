@@ -1,12 +1,8 @@
-import os
-import sys
-
-from ecl.util.test import TestAreaContext
 from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
-from res.enkf import EnkfConfigNode, EnkfFs, EnKFMain, EnkfNode, ErtRunContext, NodeId
-from res.enkf.enums import EnKFFSType, RealizationStateEnum
+from res.enkf import EnkfConfigNode, EnkfNode, ErtRunContext, NodeId
+from res.enkf.enums import RealizationStateEnum
 from res.test import ErtTestContext
 
 

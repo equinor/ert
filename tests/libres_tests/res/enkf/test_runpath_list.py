@@ -1,14 +1,9 @@
 import os.path
-import unittest
 
 from ecl.util.test import TestAreaContext
-from ecl.util.util import BoolVector
 from libres_utils import ResTest
 
-from res.enkf import ErtRunContext, RunpathList, RunpathNode
-from res.enkf.enums import EnkfInitModeEnum, EnkfRunType
-from res.test import ErtTestContext
-from res.util.substitution_list import SubstitutionList
+from res.enkf import RunpathList, RunpathNode
 
 
 def path(idx):

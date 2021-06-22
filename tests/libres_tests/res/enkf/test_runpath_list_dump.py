@@ -1,13 +1,9 @@
-import itertools
 import os
-import unittest
 
-from ecl.util.test import TestAreaContext
 from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
-from res.enkf import EnkfFs, EnKFMain, ErtRunContext, ResConfig
-from res.enkf.enums import EnKFFSType, EnkfRunType
+from res.enkf import ErtRunContext
 from res.test import ErtTestContext
 from res.util import PathFormat
 

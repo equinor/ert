@@ -1,6 +1,3 @@
-import datetime
-
-from ecl.util.test import TestAreaContext
 from ecl.util.util import BoolVector
 from libres_utils import ResTest
 

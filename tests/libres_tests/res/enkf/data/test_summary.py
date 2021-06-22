@@ -1,8 +1,3 @@
-import json
-import os.path
-
-from ecl.util.test import TestAreaContext
-from ecl.util.test.ecl_mock import createEclSum
 from libres_utils import ResTest
 
 from res.enkf.config import SummaryConfig

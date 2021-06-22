@@ -2,7 +2,6 @@ import pytest
 from libres_utils import ResTest
 
 from res.enkf.export import ArgLoader
-from res.test import ErtTestContext
 
 
 @pytest.mark.equinor_test

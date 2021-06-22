@@ -1,8 +1,5 @@
-import contextlib
 import json
 import os
-import threading
-from functools import partial
 
 from libres_utils import _mock_ws_thread
 

@@ -1,5 +1,3 @@
-import os.path
-
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest
 

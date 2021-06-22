@@ -19,7 +19,6 @@
 from libres_utils import ResTest
 
 from res.analysis import Linalg
-from res.enkf import ObsVector
 from res.util import Matrix
 
 

@@ -1,9 +1,7 @@
-import ecl
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest
 from workflow_common import WorkflowCommon
 
-import res.enkf  # noqa
 from res import ResPrototype
 from res.job_queue import WorkflowJob
 

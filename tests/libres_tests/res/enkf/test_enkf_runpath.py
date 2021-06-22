@@ -21,35 +21,8 @@ from ecl.util.test import TestAreaContext
 from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
-from res.enkf import (
-    AnalysisConfig,
-    EclConfig,
-    EnkfFs,
-    EnkfObs,
-    EnKFState,
-    EnkfVarType,
-    EnsembleConfig,
-    ErtTemplates,
-    ModelConfig,
-    ObsVector,
-    ResConfig,
-    RunArg,
-    SiteConfig,
-)
-from res.enkf.config import EnkfConfigNode
+from res.enkf import ResConfig
 from res.enkf.enkf_main import EnKFMain
-from res.enkf.enums import (
-    ActiveMode,
-    EnkfFieldFileFormatEnum,
-    EnkfInitModeEnum,
-    EnkfObservationImplementationType,
-    EnkfRunType,
-    EnkfTruncationType,
-    ErtImplType,
-    LoadFailTypeEnum,
-    RealizationStateEnum,
-)
-from res.enkf.observations.summary_observation import SummaryObservation
 
 
 @pytest.mark.unstable
