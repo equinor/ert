@@ -12,8 +12,8 @@ class Distribution:
         *,
         size: Optional[int],
         index: Optional[ert3.data.RecordIndex],
-        rvs: Callable[[int], np.ndarray],
-        ppf: Callable[[np.ndarray], np.ndarray]
+        rvs: Callable[[int], np.ndarray],  # type: ignore
+        ppf: Callable[[np.ndarray], np.ndarray]  # type: ignore
     ) -> None:
         if size is None and index is None:
             raise ValueError("Cannot create distribution with neither size nor index")
@@ -38,7 +38,7 @@ class Distribution:
     def index(self) -> ert3.data.RecordIndex:
         return self._index
 
-    def _to_record(self, x: np.ndarray) -> ert3.data.Record:
+    def _to_record(self, x: np.ndarray) -> ert3.data.Record:  # type: ignore
         if self._as_array:
             return ert3.data.Record(data=x.tolist())
         else:
@@ -67,12 +67,12 @@ class Gaussian(Distribution):
         self._mean = mean
         self._std = std
 
-        def rvs(size: int) -> np.ndarray:
+        def rvs(size: int) -> np.ndarray:  # type: ignore
             return np.array(
                 scipy.stats.norm.rvs(loc=self._mean, scale=self._std, size=size)
             )
 
-        def ppf(x: np.ndarray) -> np.ndarray:
+        def ppf(x: np.ndarray) -> np.ndarray:  # type: ignore
             return np.array(scipy.stats.norm.ppf(x, loc=self._mean, scale=self._std))
 
         super().__init__(
@@ -104,14 +104,14 @@ class Uniform(Distribution):
         self._upper_bound = upper_bound
         self._scale = upper_bound - lower_bound
 
-        def rvs(size: int) -> np.ndarray:
+        def rvs(size: int) -> np.ndarray:  # type: ignore
             return np.array(
                 scipy.stats.uniform.rvs(
                     loc=self._lower_bound, scale=self._scale, size=self._size
                 )
             )
 
-        def ppf(x: np.ndarray) -> np.ndarray:
+        def ppf(x: np.ndarray) -> np.ndarray:  # type: ignore
             return np.array(
                 scipy.stats.uniform.ppf(x, loc=self._lower_bound, scale=self._scale)
             )
