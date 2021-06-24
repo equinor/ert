@@ -15,7 +15,7 @@ from ert3.data import EnsembleRecord, MultiEnsembleRecord, Record, RecordTransmi
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity.identifiers import EVTYPE_EE_TERMINATED
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert_shared.ensemble_evaluator.prefect_ensemble import PrefectEnsemble
+from ert_shared.ensemble_evaluator.ensemble.prefect import PrefectEnsemble
 
 _EVTYPE_SNAPSHOT_STOPPED = "Stopped"
 _EVTYPE_SNAPSHOT_FAILED = "Failed"

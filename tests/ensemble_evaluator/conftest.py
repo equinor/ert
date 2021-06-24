@@ -7,7 +7,7 @@ import pytest
 from ensemble_evaluator_utils import TestEnsemble
 
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.ensemble_evaluator.entity.ensemble import (
+from ert_shared.ensemble_evaluator.ensemble.builder import (
     create_ensemble_builder,
     create_legacy_job_builder,
     create_realization_builder,
