@@ -22,14 +22,14 @@ from prefect import Flow
 from utils import SOURCE_DIR, tmp
 
 import ert3
-import ert_shared.ensemble_evaluator.entity.ensemble as ee
+import ert_shared.ensemble_evaluator.ensemble.builder as ee
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.status.entity import state as state
 from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert_shared.ensemble_evaluator.prefect_ensemble import PrefectEnsemble
+from ert_shared.ensemble_evaluator.ensemble.prefect import PrefectEnsemble
 
 
 def parse_config(path):

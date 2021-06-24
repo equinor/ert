@@ -6,7 +6,7 @@ from functools import partial
 
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from cloudevents.http.event import CloudEvent
-from ert_shared.ensemble_evaluator.entity.ensemble_base import _Ensemble
+from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
 from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 from res.enkf import RunArg
 

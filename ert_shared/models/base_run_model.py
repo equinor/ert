@@ -15,7 +15,7 @@ import asyncio
 from ecl.util.util import BoolVector
 from ert_shared import ERT
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.ensemble_evaluator.entity.ensemble import (
+from ert_shared.ensemble_evaluator.ensemble.builder import (
     create_ensemble_builder_from_legacy,
 )
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator

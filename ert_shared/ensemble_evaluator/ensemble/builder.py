@@ -6,8 +6,8 @@ from collections import defaultdict
 from graphlib import TopologicalSorter
 from pathlib import Path
 
-from ert_shared.ensemble_evaluator.entity.ensemble_base import _Ensemble
-from ert_shared.ensemble_evaluator.entity.ensemble_legacy import _LegacyEnsemble
+from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
+from ert_shared.ensemble_evaluator.ensemble.legacy import _LegacyEnsemble
 from ert_shared.ensemble_evaluator.entity.function_step import FunctionTask
 from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
 from res.enkf import EnKFState, RunArg

@@ -18,14 +18,14 @@ from cloudevents.http import CloudEvent, to_json
 from dask_jobqueue.lsf import LSFJob
 from ert_shared.ensemble_evaluator.config import find_open_port, EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert_shared.ensemble_evaluator.entity.ensemble import (
+from ert_shared.ensemble_evaluator.ensemble.builder import (
     _Ensemble,
     create_job_builder,
     create_realization_builder,
     create_step_builder,
+    create_file_io_builder,
 )
 from ert_shared.ensemble_evaluator.client import Client
-from ert_shared.ensemble_evaluator.entity.ensemble import create_file_io_builder
 from prefect import Flow
 from prefect import context as prefect_context
 from prefect.executors import DaskExecutor, LocalDaskExecutor
