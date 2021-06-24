@@ -84,7 +84,7 @@ int                     ext_job_get_max_running_minutes( const ext_job_type * ex
 void                    ext_job_add_environment(ext_job_type *ext_job , const char * key , const char * value);
 void                    ext_job_clear_environment( ext_job_type * ext_job );
 hash_type             * ext_job_get_environment( ext_job_type * ext_job );
-int                     ext_job_set_private_args_from_string( ext_job_type * ext_job , const char * arg_string );
+void                    ext_job_set_private_args_from_string( ext_job_type * ext_job , const char * arg_string );
 const char *            ext_job_get_license_path(const ext_job_type*);
 
 const char *            ext_job_get_error_file(const ext_job_type * ext_job);

@@ -784,63 +784,141 @@ void subst_list_fprintf(const subst_list_type * subst_list , FILE * stream) {
   }
 }
 
+// This function splits a string on the given character, taking into account
+// that it may contain strings delimited by ' or ". It returns the length of the
+// first part of the splitted string. For instance, splitting on a ','
+// character, if the input is:
+//
+// foo "blah, foo" x 'y', and more "stuff"
+//
+// it will find the comma after 'y', and hence return a value of 21.
+//
+// The function returns a negative value if it contains a string, started with '
+// or ", which is not terminated. It returns the length of the string if the
+// split character is not found.
+static int find_substring(const char *arg_string, const char *split_char)
+{
+    char pattern[4] = {'"', '\'', '\0', '\0'}; // we accept both ' and " to delimite strings.
+    strcat(pattern, split_char);
+    int len = strcspn(arg_string, pattern);
 
-/** Will loose tagging .... */
-int subst_list_add_from_string( subst_list_type * subst_list , const char * arg_string, bool append) {
-  int     error_count = 0;
-  if (arg_string != NULL) {
-    char ** key_value_list;
-    int     num_arg, iarg;
+    // If string delimiter is found, we need to find the corresponding end
+    // delimiter. If we do not find it, that is an error. If we do find it, we
+    // need to continue searching for the split character or the start of
+    // another string.
+    while (strlen(arg_string) > len && (arg_string[len] == '"' || arg_string[len] == '\''))
+    {
+        const char delimiter = arg_string[len];
 
-    util_split_string(arg_string , "," , &num_arg , &key_value_list);
-    for (iarg = 0; iarg < num_arg; iarg++) {
-      if (strchr(key_value_list[iarg] , '=') == NULL)
-        //util_abort("%s: could not find \'=\' in argument string:%s \n",__func__ , key_value_list[iarg]);
-        /*
-          Could not find '=' in the argument string, this argument will
-          be ignored, and the error_count will be increased by one.
-        */
-        error_count += 1;
-      else {
-        char * key , * value;
-        char * tmp     = key_value_list[iarg];
-        int arg_length , value_length;
-        while (isspace(*tmp))  /* Skipping initial space */
-          tmp++;
+        // Add the delimiter to the length found so far.
+        len++;
 
-        arg_length = strcspn(tmp , " =");
-        key  = util_alloc_substring_copy(tmp , 0 , arg_length);
-        tmp += arg_length;
-        while ((*tmp == ' ') || (*tmp == '='))
-          tmp++;
+        // The string must be long enough to accomdate a corresponding delimiter.
+        if (strlen(arg_string) <= len)
+            return -1;
 
-        value_length = strcspn(tmp , " ");
-        value = util_alloc_substring_copy( tmp , 0 , value_length);
+        // Find the corresponding delimiter, start searching the string right
+        // after the delimiter we just found, at an offset of len.
+        const char *end = strchr(arg_string + len + 1, delimiter);
 
-        /* Setting the argument */
-        if (append)
-          subst_list_append_copy( subst_list , key , value , NULL);
-        else
-          subst_list_prepend_copy( subst_list , key , value , NULL);
+        // No corresponding end delimiter is an error.
+        if (end == NULL)
+            return -1;
 
-        free(key);
-        free(value);
-        tmp += value_length;
+        // Update the lenght of the substring found so far.
+        len = end - arg_string + 1;
 
-
-        /* Accept only trailing space - any other character indicates a failed parsing. */
-        while (*tmp != '\0') {
-          if (!isspace(*tmp))
-            util_abort("%s: something wrong with:%s  - spaces are not allowed in key or value part.\n",__func__ , key_value_list[iarg]);
-          tmp++;
-        }
-      }
+        // We found the second string delimiter, but not the character we are
+        // using for splitting. Therefore, repeat the original search starting
+        // right after the second delimiter. We keep doing this in a loop until
+        // we find the split character, or until the string is exhausted.
+        if (strlen(end + 1) > 0)
+            len += strcspn(end + 1, pattern);
     }
-    util_free_stringlist(key_value_list , num_arg);
-  }
-  return error_count;
+
+    return len;
 }
 
+// Trim spaces left and right from a string. Do not reallocate the string, just
+// move the start pointer of the string, and terminate the string appropiately.
+static char *trim_string(char *str)
+{
+    // Move the start of the string to skip space.
+    while (isspace(*str))
+        str++;
+    // Shorten the string to remove trailing space.
+    int len = strlen(str);
+    while (len > 0 && isspace(str[len - 1]))
+        len--;
+    str[len] = '\0';
+    return str;
+}
 
+void subst_list_add_from_string(subst_list_type *subst_list, const char *arg_string_orig, bool append)
+{
+    if (!arg_string_orig)
+        return;
+
+    // Copy the string, since we will modify it while working on it, and trim it.
+    char *arg_string_copy = util_alloc_string_copy(arg_string_orig);
+    char *arg_string = trim_string(arg_string_copy);
+    char *tmp = NULL;
+
+    while (strlen(arg_string))
+    {
+        // Find the next argument/value pair, by splitting on a ','.
+        int arg_len = find_substring(arg_string, ",");
+        if (arg_len < 0)
+            util_abort("%s: missing string delimiter in argument: %s\n", __func__, arg_string_orig);
+
+        // Extract the argument/value pair, and parse it.
+        tmp = util_alloc_substring_copy(arg_string, 0, arg_len);
+
+        // Split on '=' to find the argument name (key) and value.
+        int key_len = find_substring(tmp, "=");
+
+        if (key_len < 0) // There is a ' or " string that is not closed.
+            util_abort("%s: missing string delimiter in argument: %s\n", __func__, arg_string_orig);
+        if (key_len == strlen(tmp)) // There is no '=".
+            util_abort("%s: missing '=' in argument: %s\n", __func__, arg_string_orig);
+
+        // Split the string into trimmed key and value strings.
+        tmp[key_len] = '\0';
+        char *key = trim_string(tmp);
+        char *value = trim_string(tmp + key_len + 1);
+
+        // Check that the key and value strings are not empty.
+        if (strlen(key) == 0)
+            util_abort("%s: missing key in argument list: %s\n", __func__, arg_string_orig);
+        if (strlen(value) == 0)
+            util_abort("%s: missing value in argument list: %s\n", __func__, arg_string_orig);
+
+        // Check that the key does not contain string delimiters.
+        if (strchr(key, '\'') || strchr(key, '"'))
+            util_abort("%s: key cannot be a string: %s\n", __func__, arg_string_orig);
+
+        // Add to the list of parsed arguments.
+        if (append)
+            subst_list_append_copy(subst_list, key, value, NULL);
+        else
+            subst_list_prepend_copy(subst_list, key, value, NULL);
+
+        free(tmp);
+
+        // Skip to the part of the string that was not parsed yet.
+        arg_string += arg_len;
+
+        // Skip whitespace and at most one comma.
+        arg_string = trim_string(arg_string);
+        if (*arg_string == ',')
+        {
+            arg_string = trim_string(arg_string + 1);
+            if (strlen(arg_string) == 0) // trailing comma.
+                util_abort("%s: trailing comma in argument list: %s\n", __func__, arg_string_orig);
+        }
+    }
+
+    free(arg_string_copy);
+}
 
 /*****************************************************************/
