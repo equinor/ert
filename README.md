@@ -39,6 +39,11 @@ The `ert` program is based on three different repositories:
 
 ERT is now Python 3 only. The last Python 2 compatible release is [2.14](https://github.com/equinor/ert/tree/version-2.14)
 
+## Documentation
+
+Documentation for ert is located at [https://ert.readthedocs.io/en/latest/](https://ert.readthedocs.io/en/latest/).
+
+
 ## Developing
 
 *ERT* is Python and C software. To start developing, install it in editable
