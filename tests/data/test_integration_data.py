@@ -90,6 +90,34 @@ def test_summary_obs_runtime(monkeypatch, copy_snake_oil):
     assert summary_obs_time < 10 * history_obs_time
 
 
+def test_summary_obs_last_entry(monkeypatch, copy_snake_oil):
+
+    obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
+    with obs_file.open(mode="a") as fin:
+        fin.write(
+            """
+            \nSUMMARY_OBSERVATION LAST_DATE
+{
+    VALUE   = 10;
+    ERROR   = 0.1;
+    DATE    = 23/06/2015;
+    KEY     = FOPR;
+};
+            """
+        )
+
+    res_config = ResConfig("snake_oil.ert")
+    ert = EnKFMain(res_config)
+
+    facade = LibresFacade(ert)
+
+    foprh = MeasuredData(facade, ["LAST_DATE"])
+    assert foprh.data.loc[["OBS", "STD"]].values.flatten().tolist() == [10.0, 0.1]
+    assert list(foprh.data.columns.get_level_values("key_index").values) == [
+        np.datetime64("2015-06-23")
+    ]
+
+
 def test_gen_obs_runtime(monkeypatch, copy_snake_oil):
     obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
     with obs_file.open(mode="a") as fin:
