@@ -54,7 +54,7 @@ extern "C" {
   const char            * subst_list_iget_key( const subst_list_type * subst_list , int index);
   const char            * subst_list_get_doc_string( const subst_list_type * subst_list , const char * key);
   bool                    subst_list_has_key( const subst_list_type * subst_list , const char * key);
-  int                     subst_list_add_from_string( subst_list_type * subst_list , const char * arg_string, bool append);
+  void                    subst_list_add_from_string( subst_list_type * subst_list , const char * arg_string, bool append);
 
   UTIL_IS_INSTANCE_HEADER( subst_list );
 #ifdef __cplusplus
