@@ -10,32 +10,33 @@ pipeline {
                 sh 'sh libres/testjenkins.sh setup'
             }
         }
-	stage('build libres') {
+	    stage('build libres') {
             steps {
                 sh 'sh libres/testjenkins.sh build_libecl'
                 sh 'sh libres/testjenkins.sh build_libres'
             }
         }
-	stage('build res') {
+	    stage('build res') {
             steps {
                 sh 'sh libres/testjenkins.sh build_res'
             }
         }
-	stage('run tests') {
-        parallel {
-            stage('run ctest') {
-                steps {
-                    sh 'sh libres/testjenkins.sh run_ctest'
+	    stage('run tests') {
+            parallel {
+                stage('run ctest') {
+                    steps {
+                        sh 'sh libres/testjenkins.sh run_ctest'
+                    }
                 }
-            }
-            stage('run pytest_equinor') {
-                steps {
-                    sh 'sh libres/testjenkins.sh run_pytest_equinor'
+                stage('run pytest_equinor') {
+                    steps {
+                        sh 'sh libres/testjenkins.sh run_pytest_equinor'
+                    }
                 }
-            }
-            stage('run pytest_normal') {
-                steps {
-                    sh 'sh libres/testjenkins.sh run_pytest_normal'
+                stage('run pytest_normal') {
+                    steps {
+                        sh 'sh libres/testjenkins.sh run_pytest_normal'
+                    }
                 }
             }
         }
@@ -43,7 +44,7 @@ pipeline {
 
     post {
         cleanup {
-            deleteDir()
+                deleteDir()
+            }
         }
-    }
-}
+}  
