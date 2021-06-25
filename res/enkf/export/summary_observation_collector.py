@@ -34,7 +34,7 @@ class SummaryObservationCollector(object):
         history_length = ert.getHistoryLength()
         dates = [
             observations.getObservationTime(index).datetime()
-            for index in range(1, history_length)
+            for index in range(1, history_length + 1)
         ]
         summary_keys = SummaryObservationCollector.getAllObservationKeys(ert)
         if keys is not None:
@@ -48,7 +48,7 @@ class SummaryObservationCollector(object):
             observation_keys = ert.ensembleConfig().getNode(key).getObservationKeys()
             for obs_key in observation_keys:
                 observation_data = observations[obs_key]
-                for index in range(0, history_length):
+                for index in range(0, history_length + 1):
                     if observation_data.isActive(index):
                         obs_time = observations.getObservationTime(index).datetime()
                         node = observation_data.getNode(index)
