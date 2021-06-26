@@ -23,7 +23,7 @@
 #include <ert/analysis/std_enkf.hpp>
 #include <ert/analysis/analysis_module.hpp>
 
-#include <ies_enkf_config.h>
+#include "ies_enkf_config.h"
 
 
 
@@ -55,7 +55,7 @@ struct ies_enkf_config_struct {
   double    ies_min_steplength;    // Controlled by config key: DEFAULT_IES_MIN_STEPLENGTH_KEY
   double    ies_dec_steplength;    // Controlled by config key: DEFAULT_IES_DEC_STEPLENGTH_KEY
   bool      ies_subspace;          // Controlled by config key: DEFAULT_IES_SUBSPACE
-  int       ies_inversion;         // Controlled by config key: DEFAULT_IES_INVERSION
+  ies_inversion_type  ies_inversion;         // Controlled by config key: DEFAULT_IES_INVERSION
   char    * ies_logfile;           // Controlled by config key: DEFAULT_IES_LOGFILE
   bool      ies_debug;             // Controlled by config key: DEFAULT_IES_DEBUG
   bool      ies_aaprojection;      // Controlled by config key: DEFAULT_IES_AAPROJECTION
@@ -63,7 +63,7 @@ struct ies_enkf_config_struct {
 
 
 ies_enkf_config_type * ies_enkf_config_alloc() {
-  ies_enkf_config_type * config = util_malloc( sizeof * config );
+  ies_enkf_config_type * config = reinterpret_cast<ies_enkf_config_type*>(util_malloc( sizeof * config ));
   UTIL_TYPE_ID_INIT( config , IES_ENKF_CONFIG_TYPE_ID );
   config->ies_logfile = NULL;
   ies_enkf_config_set_truncation( config , DEFAULT_ENKF_TRUNCATION);

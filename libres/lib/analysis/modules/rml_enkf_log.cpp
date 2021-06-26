@@ -22,7 +22,7 @@
 
 #include <ert/util/util.hpp>
 
-#include <rml_enkf_log.h>
+#include "rml_enkf_log.h"
 
 #define DEFAULT_LOG_FILE               "rml_enkf.out"
 #define DEFAULT_CLEAR_LOG              true
@@ -35,7 +35,7 @@ struct rml_enkf_log_struct {
 
 
 rml_enkf_log_type * rml_enkf_log_alloc() {
-  rml_enkf_log_type * rml_log = util_malloc( sizeof * rml_log );
+  rml_enkf_log_type * rml_log = reinterpret_cast<rml_enkf_log_type*>(util_malloc( sizeof * rml_log ));
   rml_log->log_file = NULL;
   rml_log->log_stream = NULL;
   rml_enkf_log_set_clear_log( rml_log , DEFAULT_CLEAR_LOG );

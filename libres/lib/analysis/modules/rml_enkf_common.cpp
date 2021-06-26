@@ -19,7 +19,7 @@
 #include <ert/util/util.hpp>
 #include <ert/res_util/matrix.hpp>
 
-#include <rml_enkf_common.h>
+#include "rml_enkf_common.h"
 
 
 // Explanation

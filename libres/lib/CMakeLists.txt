@@ -188,16 +188,16 @@ add_library(res SHARED
                 enkf/log_config.cpp
                 enkf/config_keys.cpp
 
-                external/JSON/cJSON.c
+                external/JSON/cJSON.cpp
 )
 
 #-----------------------------------------------------------------
 
 add_library(rml_enkf SHARED
-  analysis/modules/rml_enkf_config.c
-  analysis/modules/rml_enkf.c
-  analysis/modules/rml_enkf_common.c
-  analysis/modules/rml_enkf_log.c)
+  analysis/modules/rml_enkf_config.cpp
+  analysis/modules/rml_enkf.cpp
+  analysis/modules/rml_enkf_common.cpp
+  analysis/modules/rml_enkf_log.cpp)
 target_link_libraries(rml_enkf PRIVATE ${RES} ${ECL} ${CMAKE_DL_LIBS})
 target_include_directories(rml_enkf PRIVATE ${ECL_INCLUDE_DIRS} include analysis/modules)
 set_target_properties(rml_enkf PROPERTIES VERSION 1.0
@@ -205,14 +205,14 @@ set_target_properties(rml_enkf PROPERTIES VERSION 1.0
   PREFIX "")
 
 add_library(ies SHARED
-  analysis/modules/ies_enkf.c
-  analysis/modules/ies_enkf_config.c
-  analysis/modules/ies_enkf_data.c)
+  analysis/modules/ies_enkf.cpp
+  analysis/modules/ies_enkf_config.cpp
+  analysis/modules/ies_enkf_data.cpp)
 target_link_libraries(ies PRIVATE ${RES} ${ECL} ${CMAKE_DL_LIBS})
 target_include_directories(ies PRIVATE ${ECL_INCLUDE_DIRS} include analysis/modules)
 
 add_library(std_enkf_debug SHARED
-  analysis/modules/std_enkf_debug.c)
+  analysis/modules/std_enkf_debug.cpp)
 target_link_libraries(std_enkf_debug PRIVATE ${RES} ${ECL} ${CMAKE_DL_LIBS})
 target_include_directories(std_enkf_debug PRIVATE ${ECL_INCLUDE_DIRS} include modules)
 set_target_properties(std_enkf_debug PROPERTIES VERSION 1.0

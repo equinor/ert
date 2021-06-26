@@ -14,6 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+import sys
 from cwrap import BaseCClass
 from ecl.util.util.rng import RandomNumberGenerator
 from res import ResPrototype
@@ -21,6 +22,19 @@ from os import path
 
 import res
 from res.util import Matrix
+
+
+_LIBNAME_TO_INTERNAL = {}
+if sys.platform == "linux":
+    _LIBNAME_TO_INTERNAL = {
+        "rml_enkf.so": "RML_ENKF",
+    }
+elif sys.platform == "darwin":
+    _LIBNAME_TO_INTERNAL = {
+        "rml_enkf.dylib": "RML_ENKF",
+    }
+
+_INTERNAL_TO_LIBNAME = {b: a for a, b in _LIBNAME_TO_INTERNAL.items()}
 
 
 class AnalysisModule(BaseCClass):
@@ -121,6 +135,10 @@ class AnalysisModule(BaseCClass):
         if name and lib_name:
             raise ValueError("Must supply exactly one of name or lib_name")
 
+        if lib_name and (lib_name == "rml_enkf.dylib" or lib_name == "rml_enkf.so"):
+            name = "RML_ENKF"
+            lib_name = None
+
         if lib_name:
             c_ptr = self._alloc_external(lib_name)
         else:
@@ -176,9 +194,13 @@ class AnalysisModule(BaseCClass):
         return fmt % (nm, tn, ln, mi, ad)
 
     def getLibName(self):
+        if self.name() in _INTERNAL_TO_LIBNAME:
+            return _INTERNAL_TO_LIBNAME[self.name()]
         return self._get_lib_name()
 
     def getInternal(self):
+        if self.name() in _INTERNAL_TO_LIBNAME:
+            return False
         return self._get_module_internal()
 
     def __assertVar(self, var_name):
@@ -191,6 +213,8 @@ class AnalysisModule(BaseCClass):
         return self._set_var(var_name, string_value)
 
     def getTableName(self):
+        if self.name() in _INTERNAL_TO_LIBNAME:
+            return "analysis_table"
         return self._get_table_name()
 
     def getName(self):

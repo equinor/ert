@@ -36,9 +36,9 @@
 #include <ert/analysis/enkf_linalg.hpp>
 #include <ert/analysis/std_enkf.hpp>
 
-#include <rml_enkf_common.h>
-#include <rml_enkf_config.h>
-#include <rml_enkf_log.h>
+#include "rml_enkf_common.h"
+#include "rml_enkf_config.h"
+#include "rml_enkf_log.h"
 
 typedef struct rml_enkf_data_struct rml_enkf_data_type;
 
@@ -190,8 +190,8 @@ static void rml_enkf_write_iter_info( rml_enkf_data_type * data , double prev_Sk
 //**********************************************
 // Memory
 //**********************************************
-void * rml_enkf_data_alloc( rng_type * rng) {
-  rml_enkf_data_type * data = util_malloc( sizeof * data);
+void * rml_enkf_data_alloc() {
+  rml_enkf_data_type * data = reinterpret_cast<rml_enkf_data_type*>(util_malloc( sizeof * data));
   UTIL_TYPE_ID_INIT( data , RML_ENKF_TYPE_ID );
 
   data->config       = rml_enkf_config_alloc();
@@ -266,7 +266,7 @@ static void rml_enkf_init1__( rml_enkf_data_type * data) {
   matrix_type * Dm    = matrix_alloc_copy( prior );
   matrix_type * Um    = matrix_alloc( state_size , nrmin  );     /* Left singular vectors.  */
   matrix_type * VmT   = matrix_alloc( nrmin , ens_size );        /* Right singular vectors. */
-  double * Wm         = util_calloc( nrmin , sizeof * Wm );
+  double * Wm         = reinterpret_cast<double*>(util_calloc( nrmin , sizeof * Wm ));
   double nsc          = 1/sqrt(ens_size - 1);
 
   matrix_subtract_row_mean(Dm);
@@ -460,9 +460,9 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data, matrix_type * A, m
   matrix_type * Skm = matrix_alloc(ens_size, ens_size);    // Mismatch
   matrix_type * Ud  = matrix_alloc( nrobs , nrmin    );    /* Left singular vectors.  */
   matrix_type * VdT = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
-  double * Wd       = util_calloc( nrmin , sizeof * Wd );
+  double * Wd       = reinterpret_cast<double*>(util_calloc( nrmin , sizeof * Wd ));
 
-  data->Csc = util_calloc(state_size , sizeof * data->Csc);
+  data->Csc = reinterpret_cast<double*>(util_calloc(state_size , sizeof * data->Csc));
   data->Sk  = enkf_linalg_data_mismatch(D,Cd,Skm);
   data->Std = matrix_diag_std(Skm,data->Sk);
 
@@ -501,11 +501,11 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data, matrix_type * A, m
 
 void rml_enkf_updateA(void * module_data,
                       matrix_type * A,
-                      matrix_type * S,
-                      matrix_type * R,
-                      matrix_type * dObs,
-                      matrix_type * E,
-                      matrix_type * D,
+                      const matrix_type * const_S,
+                      const matrix_type * const_R,
+                      const matrix_type * const_dObs,
+                      const matrix_type * const_E,
+                      const matrix_type * const_D,
                       const module_info_type * module_info,
                       rng_type * rng) {
 // A : ensemble matrix
@@ -516,7 +516,17 @@ void rml_enkf_updateA(void * module_data,
 // D = dObs + E - S : Innovations (wrt pert. obs)
 // module_info: Information on parameters/data for internal logging
 
-
+  // ERT's analysis function table has these parameter as const,
+  // however this module doesn't and even mutates these matrices.
+  // This is undefined behaviour, as the compiler might do
+  // optimisations that assumes that these values are constant.
+  // (Optimisations don't really happen with this pointer-heavy
+  // code, but it could bite us later on)
+  auto S = const_cast<matrix_type*>(const_S);
+  auto R = const_cast<matrix_type*>(const_R);
+  auto dObs = const_cast<matrix_type*>(const_dObs);
+  auto E = const_cast<matrix_type*>(const_E);
+  auto D = const_cast<matrix_type*>(const_D);
 
   double Sk_new;   // Mismatch
   double  Std_new; // Std dev(Mismatch)
@@ -544,7 +554,7 @@ void rml_enkf_updateA(void * module_data,
     int nrmin           = util_int_min( ens_size , nrobs);      // Min(p,N)
     matrix_type * Ud    = matrix_alloc( nrobs , nrmin    );     // Left singular vectors.  */
     matrix_type * VdT   = matrix_alloc( nrmin , ens_size );     // Right singular vectors. */
-    double * Wd         = util_calloc( nrmin , sizeof * Wd );   // Singular values, vector
+    double * Wd         = reinterpret_cast<double*>(util_calloc( nrmin , sizeof * Wd ));   // Singular values, vector
     matrix_type * Skm   = matrix_alloc(ens_size,ens_size);      // Mismatch
     Sk_new              = enkf_linalg_data_mismatch(D,Cd,Skm);  // Skm = D'*inv(Cd)*D; Sk_new = trace(Skm)/N
     Std_new             = matrix_diag_std(Skm,Sk_new);          // Standard deviation of mismatches.
@@ -822,17 +832,20 @@ void * rml_enkf_get_ptr( const void * arg , const char * var_name ) {
 
 analysis_table_type LINK_NAME = {
   .name            = "RML_ENKF",
-  .alloc           = rml_enkf_data_alloc,
+  .updateA         = rml_enkf_updateA,
+  .initX           = NULL,
+  .init_update     = rml_enkf_init_update ,
+  .complete_update = NULL,
+
   .freef           = rml_enkf_data_free,
+  .alloc           = rml_enkf_data_alloc,
+
   .set_int         = rml_enkf_set_int ,
   .set_double      = rml_enkf_set_double ,
   .set_bool        = rml_enkf_set_bool,
   .set_string      = rml_enkf_set_string,
   .get_options     = rml_enkf_get_options ,
-  .initX           = NULL,
-  .updateA         = rml_enkf_updateA ,
-  .init_update     = rml_enkf_init_update ,
-  .complete_update = NULL,
+
   .has_var         = rml_enkf_has_var,
   .get_int         = rml_enkf_get_int,
   .get_double      = rml_enkf_get_double,

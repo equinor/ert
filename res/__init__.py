@@ -37,18 +37,9 @@ def _load_lib():
     import ctypes
 
     # Find and dlopen libres
-    lib_path = os.path.join(os.path.dirname(__file__), ".libs")
-    if not os.path.isdir(lib_path):
-        lib_path = ""
+    from . import _lib
 
-    if platform.system() == "Linux":
-        lib_path = os.path.join(lib_path, "libres.so")
-    elif platform.system() == "Darwin":
-        lib_path = os.path.join(lib_path, "libres.dylib")
-    else:
-        raise NotImplementedError("Invalid platform")
-
-    lib = ctypes.CDLL(lib_path, ctypes.RTLD_GLOBAL)
+    lib = ctypes.CDLL(_lib.__file__, ctypes.RTLD_GLOBAL)
 
     # Configure site_config to be a ctypes.CFUNCTION with type:
     # void set_site_config(char *);
@@ -70,16 +61,6 @@ def _load_lib():
 
     # Set site-config to point to [PREFIX]/share/ert/site-config
     site_config(str(path).encode("utf-8"))
-
-    # Configure set_analysis_modules_dir to be a ctypes.CFUNCTION with type:
-    # void set_analysis_modules_dir(char *);
-    set_analysis_modules_dir = lib.set_analysis_modules_dir
-    set_analysis_modules_dir.restype = None
-    set_analysis_modules_dir.argtypes = (ctypes.c_char_p,)
-
-    # Set analysis modules dir to be [CURRENT DIR]/.libs
-    path = os.path.join(os.path.dirname(__file__), ".libs")
-    set_analysis_modules_dir(path.encode("utf-8"))
 
     return lib
 

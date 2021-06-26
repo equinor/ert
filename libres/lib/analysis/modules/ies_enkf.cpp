@@ -775,7 +775,7 @@ bool ies_enkf_set_int( void * arg , const char * var_name , int value) {
     else if (strcmp( var_name , ITER_KEY) == 0)
       ies_enkf_data_set_iteration_nr( module_data , value );
     else if (strcmp( var_name , IES_INVERSION_KEY) == 0)  // This should probably translate string value - now it goes directly on the value of the ies_inversion_type enum.
-      ies_enkf_config_set_ies_inversion( config , value );
+      ies_enkf_config_set_ies_inversion( config , static_cast<ies_inversion_type>(value) );
     else
       name_recognized = false;
 
@@ -950,18 +950,21 @@ void * ies_enkf_get_ptr( const void * arg , const char * var_name ) {
 
 analysis_table_type LINK_NAME = {
   .name            = "IES_ENKF",
-  .initX           = NULL,
   .updateA         = ies_enkf_updateA,
+  .initX           = NULL,
   .init_update     = ies_enkf_init_update,
   .complete_update = NULL,
-  .alloc           = ies_enkf_data_alloc,
+
   .freef           = ies_enkf_data_free,
-  .has_var         = ies_enkf_has_var,
+  .alloc           = ies_enkf_data_alloc,
+
   .set_int         = ies_enkf_set_int ,
   .set_double      = ies_enkf_set_double ,
   .set_bool        = ies_enkf_set_bool ,
   .set_string      = ies_enkf_set_string ,
   .get_options     = ies_enkf_get_options ,
+
+  .has_var         = ies_enkf_has_var,
   .get_int         = ies_enkf_get_int,
   .get_double      = ies_enkf_get_double,
   .get_bool        = ies_enkf_get_bool ,

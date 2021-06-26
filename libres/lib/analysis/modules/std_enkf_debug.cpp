@@ -56,10 +56,10 @@ void std_enkf_debug_data_set_prefix( std_enkf_debug_data_type * data , const cha
 }
 
 
-void * std_enkf_debug_data_alloc( rng_type * rng) {
-  std_enkf_debug_data_type * data = util_malloc( sizeof * data );
+void * std_enkf_debug_data_alloc() {
+  std_enkf_debug_data_type * data = reinterpret_cast<std_enkf_debug_data_type*>(util_malloc( sizeof * data ));
   UTIL_TYPE_ID_INIT( data , STD_ENKF_DEBUG_TYPE_ID );
-  data->std_data = std_enkf_data_alloc();
+  data->std_data = reinterpret_cast<std_enkf_data_type*>(std_enkf_data_alloc());
 
   data->update_count = 0;
   data->prefix = NULL;
@@ -92,12 +92,12 @@ void std_enkf_debug_save_matrix( const matrix_type * m , const char * path , con
 
 void std_enkf_debug_initX(void * module_data ,
                           matrix_type * X ,
-                          matrix_type * A ,
-                          matrix_type * S ,
-                          matrix_type * R ,
-                          matrix_type * dObs ,
-                          matrix_type * E ,
-                          matrix_type * D,
+                          const matrix_type * A ,
+                          const matrix_type * S ,
+                          const matrix_type * R ,
+                          const matrix_type * dObs ,
+                          const matrix_type * E ,
+                          const matrix_type * D,
                           rng_type * rng) {
 
   std_enkf_debug_data_type * data = std_enkf_debug_data_safe_cast( module_data );
@@ -223,17 +223,20 @@ void * std_enkf_debug_get_ptr( const void * arg, const char * var_name) {
 
 analysis_table_type LINK_NAME = {
     .name            = "STD_ENKF_DEBUG_DEBUG",
-    .alloc           = std_enkf_debug_data_alloc,
+    .updateA         = NULL,
+    .initX           = std_enkf_debug_initX ,
+    .init_update     = NULL,
+    .complete_update = NULL,
+
     .freef           = std_enkf_debug_data_free,
+    .alloc           = std_enkf_debug_data_alloc,
+
     .set_int         = std_enkf_debug_set_int ,
     .set_double      = std_enkf_debug_set_double ,
     .set_bool        = std_enkf_debug_set_bool,
     .set_string      = std_enkf_debug_set_string,
     .get_options     = std_enkf_debug_get_options ,
-    .initX           = std_enkf_debug_initX ,
-    .updateA         = NULL,
-    .init_update     = NULL,
-    .complete_update = NULL,
+
     .has_var         = std_enkf_debug_has_var,
     .get_int         = std_enkf_debug_get_int,
     .get_double      = std_enkf_debug_get_double,

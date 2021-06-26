@@ -23,7 +23,7 @@
 #include <ert/analysis/std_enkf.hpp>
 #include <ert/analysis/analysis_module.hpp>
 
-#include <rml_enkf_config.h>
+#include "rml_enkf_config.h"
 
 
 #define INVALID_SUBSPACE_DIMENSION     -1
@@ -64,7 +64,7 @@ struct rml_enkf_config_struct {
 
 
 rml_enkf_config_type * rml_enkf_config_alloc() {
-  rml_enkf_config_type * config = util_malloc( sizeof * config );
+  rml_enkf_config_type * config = reinterpret_cast<rml_enkf_config_type*>(util_malloc( sizeof * config ));
   UTIL_TYPE_ID_INIT( config , RML_ENKF_CONFIG_TYPE_ID );
 
   rml_enkf_config_set_truncation( config , DEFAULT_ENKF_TRUNCATION_);
