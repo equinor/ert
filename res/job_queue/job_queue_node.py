@@ -71,6 +71,7 @@ class JobQueueNode(BaseCClass):
         self._max_runtime = max_runtime
         self._start_time = None
         self._end_time = None
+        self._timed_out = False
         c_ptr = self._alloc(
             job_name,
             run_path,
@@ -94,6 +95,11 @@ class JobQueueNode(BaseCClass):
 
     def free(self):
         self._free()
+
+    @property
+    def timed_out(self):
+        with self._mutex:
+            return self._timed_out
 
     @property
     def submit_attempt(self):
@@ -161,12 +167,11 @@ class JobQueueNode(BaseCClass):
             self.update_status(driver)
             if self._should_be_killed():
                 self._kill(driver)
-                if (
-                    self._max_runtime
-                    and self.runtime >= self._max_runtime
-                    and self.callback_timeout
-                ):
-                    self.callback_timeout(self.callback_arguments)
+                if self._max_runtime and self.runtime >= self._max_runtime:
+                    if self.callback_timeout:
+                        self.callback_timeout(self.callback_arguments)
+                    with self._mutex:
+                        self._timed_out = True
 
         self._end_time = time.time()
 
