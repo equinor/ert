@@ -7,33 +7,33 @@ pipeline {
         stage('setup') {
             steps {
                 echo "Started with WORKING_DIR: ${WORKING_DIR}"
-                sh 'sh libres/testjenkins.sh setup'
+                sh 'sh ci/jenkins/test_libres_jenkins.sh setup'
             }
         }
 	stage('build libres') {
             steps {
-                sh 'sh libres/testjenkins.sh build_libecl'
-                sh 'sh libres/testjenkins.sh build_libres'
+                sh 'sh ci/jenkins/test_libres_jenkins.sh build_libecl'
+                sh 'sh ci/jenkins/test_libres_jenkins.sh build_libres'
             }
         }
 	stage('build res') {
             steps {
-                sh 'sh libres/testjenkins.sh build_res'
+                sh 'sh ci/jenkins/test_libres_jenkins.sh build_res'
             }
         }
 	stage('run ctest') {
             steps {
-                sh 'sh libres/testjenkins.sh run_ctest'
+                sh 'sh ci/jenkins/test_libres_jenkins.sh run_ctest'
             }
         }
 	stage('run pytest_equinor') {
             steps {
-                sh 'sh libres/testjenkins.sh run_pytest_equinor'
+                sh 'sh ci/jenkins/test_libres_jenkins.sh run_pytest_equinor'
             }
         }
 	stage('run pytest_normal') {
             steps {
-                sh 'sh libres/testjenkins.sh run_pytest_normal'
+                sh 'sh ci/jenkins/test_libres_jenkins.sh run_pytest_normal'
             }
         }
     }
