@@ -89,7 +89,7 @@ def check_expression(original, path_expression, expected, msg_start):
             "poly_example",
             [
                 ENSEMBLE_SMOOTHER_MODE,
-                "--enable-ensemble-evaluator",
+                # "--enable-ensemble-evaluator",
                 "--target-case",
                 "poly_runpath_file",
                 "--realizations",
