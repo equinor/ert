@@ -233,8 +233,10 @@ class BaseRunModel(object):
             return
 
         status = None
+        timed_out = False
         if self._job_queue:
             status = self._job_queue.getJobStatus(queue_index)
+            timed_out = self._job_queue.did_job_time_out(queue_index)
 
         # Avoids reading from disk for jobs in these states since there's no
         # data anyway
@@ -256,6 +258,11 @@ class BaseRunModel(object):
                 return
 
             jobs = fms.jobs
+        if timed_out:
+            for job in jobs:
+                if job.status != "Success":
+                    job.error = "The run is cancelled due to reaching MAX_RUNTIME"
+                    job.status = "Failure"
         self.realization_progress[iteration][run_arg.iens] = jobs, status
 
     @job_queue({})

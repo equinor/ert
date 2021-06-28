@@ -43,6 +43,7 @@ class InMemoryBaseRunModelTest(unittest.TestCase):
 
         brm._job_queue = Mock()
         brm._job_queue.getJobStatus.side_effect = job_status
+        brm._job_queue.did_job_time_out.return_value = False
 
         with patch("ert_shared.models.base_run_model.ForwardModelStatus") as f:
             f.load.return_value = Mock()
