@@ -1,7 +1,43 @@
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <pthread.h>
+#include <thread>
+
+#define HAVE_THREAD_POOL 1
+#include <ert/util/rng.h>
+#include <ert/util/int_vector.h>
+#include <ert/util/bool_vector.h>
+#include <ert/util/hash.h>
+#include <ert/res_util/path_fmt.hpp>
+#include <ert/res_util/arg_pack.hpp>
+#include <ert/util/type_vector_functions.h>
+
+#include <ert/res_util/thread_pool.hpp>
+#include <ert/res_util/subst_list.hpp>
+#include <ert/res_util/res_log.hpp>
+#include <ert/res_util/matrix.hpp>
+
+#include <ert/job_queue/job_queue.hpp>
+
+#include <ert/sched/history.hpp>
+
+#include <ert/analysis/analysis_module.hpp>
+#include <ert/analysis/enkf_linalg.hpp>
+
+#include <ert/enkf/enkf_types.hpp>
+#include <ert/enkf/enkf_config_node.hpp>
+#include <ert/enkf/obs_data.hpp>
+#include <ert/enkf/enkf_state.hpp>
+#include <ert/enkf/enkf_obs.hpp>
+#include <ert/enkf/enkf_main.hpp>
+#include <ert/enkf/enkf_analysis.hpp>
+#include <ert/enkf/field.hpp>
+#include <ert/enkf/callback_arg.hpp>
 
 
 
-static void enkf_main_free_ensemble( enkf_main_type * enkf_main ) {
+void enkf_main_free_ensemble( enkf_main_type * enkf_main ) {
   if (enkf_main->ensemble != NULL) {
     const int ens_size = enkf_main->ens_size;
     int i;
@@ -70,7 +106,3 @@ void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size ) 
 
   util_abort("%s: something is seriously broken - should NOT be here .. \n",__func__);
 }
-
-
-
-

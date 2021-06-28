@@ -86,36 +86,14 @@
 
 */
 
-#define ENKF_MAIN_ID              8301
-
-struct enkf_main_struct {
-  UTIL_TYPE_ID_DECLARATION;
-  enkf_fs_type           * dbase;              /* The internalized information. */
-
-  const res_config_type  * res_config;
-  local_config_type      * local_config;       /* Holding all the information about local analysis. */
-  rng_manager_type       * rng_manager;
-  rng_type               * shared_rng;
-  ranking_table_type     * ranking_table;
-
-  enkf_obs_type          * obs;
-
-  enkf_state_type       ** ensemble;         /* The ensemble ... */
-  int                      ens_size;         /* The size of the ensemble */
-  bool                     verbose;
-};
-
-
-
-
 /*****************************************************************/
 
 void enkf_main_init_internalization( enkf_main_type *  , run_mode_type  );
 void enkf_main_update_local_updates( enkf_main_type * enkf_main);
-static void enkf_main_close_fs( enkf_main_type * enkf_main );
-static void enkf_main_init_fs( enkf_main_type * enkf_main );
-static void enkf_main_user_select_initial_fs(enkf_main_type * enkf_main );
-static void enkf_main_free_ensemble( enkf_main_type * enkf_main );
+void enkf_main_close_fs( enkf_main_type * enkf_main );
+void enkf_main_init_fs( enkf_main_type * enkf_main );
+void enkf_main_user_select_initial_fs(enkf_main_type * enkf_main );
+void enkf_main_free_ensemble( enkf_main_type * enkf_main );
 static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
                                        enkf_fs_type * target_fs ,
                                        const bool_vector_type * ens_mask ,
@@ -239,7 +217,7 @@ bool enkf_main_load_obs(enkf_main_type * enkf_main,
 }
 
 
-static void enkf_main_add_internal_subst_kw( enkf_main_type * enkf_main , const char * key , const char * value, const char * help_text) {
+void enkf_main_add_internal_subst_kw( enkf_main_type * enkf_main , const char * key , const char * value, const char * help_text) {
   subst_config_add_internal_subst_kw(enkf_main_get_subst_config(enkf_main), key, value, help_text);
 }
 
@@ -2154,6 +2132,3 @@ queue_config_type * enkf_main_get_queue_config(enkf_main_type * enkf_main ) {
 rng_manager_type * enkf_main_get_rng_manager(const enkf_main_type * enkf_main ) {
   return enkf_main->rng_manager;
 }
-
-#include "enkf_main_ensemble.cpp"
-#include "enkf_main_manage_fs.cpp"

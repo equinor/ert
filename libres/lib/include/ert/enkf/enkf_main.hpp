@@ -62,6 +62,25 @@ extern "C" {
 
   /*****************************************************************/
 
+#define ENKF_MAIN_ID              8301
+
+struct enkf_main_struct {
+  UTIL_TYPE_ID_DECLARATION;
+  enkf_fs_type           * dbase;              /* The internalized information. */
+
+  const res_config_type  * res_config;
+  local_config_type      * local_config;       /* Holding all the information about local analysis. */
+  rng_manager_type       * rng_manager;
+  rng_type               * shared_rng;
+  ranking_table_type     * ranking_table;
+
+  enkf_obs_type          * obs;
+
+  enkf_state_type       ** ensemble;         /* The ensemble ... */
+  int                      ens_size;         /* The size of the ensemble */
+  bool                     verbose;
+};
+
 
   typedef struct enkf_main_struct enkf_main_type;
   const char                  * enkf_main_get_user_config_file( const enkf_main_type * enkf_main );

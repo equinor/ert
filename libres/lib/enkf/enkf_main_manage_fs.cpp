@@ -16,9 +16,49 @@
    for more details.
 */
 
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <pthread.h>
+#include <thread>
+
+#define HAVE_THREAD_POOL 1
+#include <ert/util/rng.h>
+#include <ert/util/int_vector.h>
+#include <ert/util/bool_vector.h>
+#include <ert/util/hash.h>
+#include <ert/res_util/path_fmt.hpp>
+#include <ert/res_util/arg_pack.hpp>
+#include <ert/util/type_vector_functions.h>
+
+#include <ert/res_util/thread_pool.hpp>
+#include <ert/res_util/subst_list.hpp>
+#include <ert/res_util/res_log.hpp>
+#include <ert/res_util/matrix.hpp>
+
+#include <ert/job_queue/job_queue.hpp>
+
+#include <ert/sched/history.hpp>
+
+#include <ert/analysis/analysis_module.hpp>
+#include <ert/analysis/enkf_linalg.hpp>
+
+#include <ert/enkf/enkf_types.hpp>
+#include <ert/enkf/enkf_config_node.hpp>
+#include <ert/enkf/obs_data.hpp>
+#include <ert/enkf/enkf_state.hpp>
+#include <ert/enkf/enkf_obs.hpp>
+#include <ert/enkf/enkf_main.hpp>
+#include <ert/enkf/enkf_analysis.hpp>
+#include <ert/enkf/field.hpp>
+#include <ert/enkf/callback_arg.hpp>
+
 #include <ert/enkf/summary_key_set.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <dirent.h>
+
+
+void enkf_main_add_internal_subst_kw(enkf_main_type * enkf_main , const char * key , const char * value, const char * help_text);
 
 /*
   This small function is here only to make sure that the main
@@ -26,7 +66,7 @@
   dbase member.
 */
 
-static void enkf_main_init_fs( enkf_main_type * enkf_main ) {
+void enkf_main_init_fs( enkf_main_type * enkf_main ) {
   enkf_main->dbase = NULL;
 }
 
@@ -598,7 +638,7 @@ void enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path ) 
 }
 
 
-static void enkf_main_user_select_initial_fs(enkf_main_type * enkf_main) {
+void enkf_main_user_select_initial_fs(enkf_main_type * enkf_main) {
   const char * ens_path = model_config_get_enspath(enkf_main_get_model_config(enkf_main));
   int root_version = enkf_fs_get_version104( ens_path );
   if (root_version == -1 || root_version == 105) {

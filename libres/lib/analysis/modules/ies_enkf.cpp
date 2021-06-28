@@ -36,6 +36,7 @@
 
 #include "ies_enkf_config.h"
 #include "ies_enkf_data.h"
+#include "tecplot.h"
 
 
 #ifdef __cplusplus
@@ -116,9 +117,6 @@ void ies_enkf_linalg_extract_active_A0(const ies_enkf_data_type * data,
 #define IES_LOGFILE_KEY                  "IES_LOGFILE"
 #define IES_DEBUG_KEY                    "IES_DEBUG"
 #define IES_AAPROJECTION_KEY             "IES_AAPROJECTION"
-
-
-#include "tecplot.c"
 
 //#define DEFAULT_ANALYSIS_SCALE_DATA true
 

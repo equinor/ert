@@ -76,4 +76,3 @@ void static teclog(const matrix_type * W,
    fprintf(fp," %d %12.5e %12.5e %12.5e %12.5e %12.5e %12.5e %d %d\n", itnr-1, diff1W, diff2W, costfp, costfd, costf, rcond, nrsing , nrobs ) ;
    fclose(fp);
 }
-

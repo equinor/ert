@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6.1)
+cmake_minimum_required(VERSION 3.13)
 project(res C CXX)
 
 set(CMAKE_CXX_STANDARD 14)
@@ -65,13 +65,6 @@ endif()
 
 #-----------------------------------------------------------------
 
-set(ERT_LSF_LIB_PATH     "" CACHE FILEPATH "Path to search for the LSF libraries")
-set(ERT_LSF_INCLUDE_PATH "" CACHE FILEPATH "Path to search for the LSF header files")
-find_path(LSF_HEADER_PATH lsf/lsf.h PATHS ${ERT_LSF_INCLUDE_PATH})
-find_library(LSF_LIBRARY NAMES lsf PATHS ${ERT_LSF_LIB_PATH})
-
-#-----------------------------------------------------------------
-
 set(EQUINOR_TESTDATA_ROOT "" CACHE PATH  "Root to Equinor internal testdata")
 if (EXISTS ${EQUINOR_TESTDATA_ROOT})
     set( LINK "${CMAKE_CURRENT_SOURCE_DIR}/../test-data/Equinor" )
@@ -133,3 +126,6 @@ endfunction()
 
 
 add_subdirectory(lib)
+if (BUILD_TESTS)
+  add_subdirectory(lib_tests)
+endif ()
