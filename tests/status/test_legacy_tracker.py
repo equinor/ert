@@ -40,7 +40,7 @@ def check_expression(original, path_expression, expected, msg_start):
 @pytest.mark.parametrize(
     "experiment_folder,cmd_line_arguments,num_successful,num_iters,assert_present_in_snapshot",
     [
-        (
+        pytest.param(
             "max_runtime_poly_example",
             [
                 ENSEMBLE_EXPERIMENT_MODE,
@@ -58,8 +58,9 @@ def check_expression(original, path_expression, expected, msg_start):
                     "The run is cancelled due to reaching MAX_RUNTIME",
                 ),
             ],
+            id="legacy_poly_experiment_cancelled_by_max_runtime",
         ),
-        (
+        pytest.param(
             "poly_example",
             [
                 ENSEMBLE_EXPERIMENT_MODE,
@@ -70,8 +71,9 @@ def check_expression(original, path_expression, expected, msg_start):
             5,
             1,
             [(".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FINISHED)],
+            id="legacy_poly_experiment",
         ),
-        (
+        pytest.param(
             "poly_example",
             [
                 ENSEMBLE_SMOOTHER_MODE,
@@ -84,8 +86,9 @@ def check_expression(original, path_expression, expected, msg_start):
             7,
             2,
             [(".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FINISHED)],
+            id="leagcy_poly_smoother",
         ),
-        (
+        pytest.param(
             "poly_example",
             [
                 ENSEMBLE_SMOOTHER_MODE,
@@ -99,8 +102,9 @@ def check_expression(original, path_expression, expected, msg_start):
             7,
             2,
             [(".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FINISHED)],
+            id="ee_poly_smoother",
         ),
-        (
+        pytest.param(
             "failing_poly_example",
             [
                 ENSEMBLE_SMOOTHER_MODE,
@@ -117,6 +121,7 @@ def check_expression(original, path_expression, expected, msg_start):
                 ("0", "reals.'0'.steps.*.jobs.'1'.status", state.JOB_STATE_START),
                 (".*", "reals.'1'.steps.*.jobs.*.status", state.JOB_STATE_FINISHED),
             ],
+            id="legacy_failing_poly_smoother",
         ),
     ],
 )
