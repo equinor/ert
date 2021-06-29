@@ -158,6 +158,26 @@ def check_expression(original, path_expression, expected, msg_start):
             ],
             id="legacy_failing_poly_smoother",
         ),
+        pytest.param(
+            "failing_poly_example",
+            [
+                ENSEMBLE_SMOOTHER_MODE,
+                "--enable-ensemble-evaluator",
+                "--target-case",
+                "poly_runpath_file",
+                "--realizations",
+                "0,1",
+                "failing_poly_example/poly.ert",
+            ],
+            1,
+            2,
+            [
+                ("0", "reals.'0'.steps.*.jobs.'0'.status", state.JOB_STATE_FAILURE),
+                ("0", "reals.'0'.steps.*.jobs.'1'.status", state.JOB_STATE_START),
+                (".*", "reals.'1'.steps.*.jobs.*.status", state.JOB_STATE_FINISHED),
+            ],
+            id="ee_failing_poly_smoother",
+        ),
     ],
 )
 def test_tracking(
@@ -168,6 +188,7 @@ def test_tracking(
     assert_present_in_snapshot,
     tmpdir,
     source_root,
+    unused_tcp_port,
 ):
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", f"{experiment_folder}"),
@@ -197,7 +218,7 @@ def test_tracking(
 
         ee_config = None
         if FeatureToggling.is_enabled("ensemble-evaluator"):
-            ee_config = EvaluatorServerConfig()
+            ee_config = EvaluatorServerConfig(unused_tcp_port)
             argument.update({"ee_config": ee_config})
 
         thread = threading.Thread(
