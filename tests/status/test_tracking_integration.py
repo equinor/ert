@@ -61,6 +61,27 @@ def check_expression(original, path_expression, expected, msg_start):
             id="legacy_poly_experiment_cancelled_by_max_runtime",
         ),
         pytest.param(
+            "max_runtime_poly_example",
+            [
+                ENSEMBLE_EXPERIMENT_MODE,
+                "--enable-ensemble-evaluator",
+                "--realizations",
+                "0,1",
+                "max_runtime_poly_example/poly.ert",
+            ],
+            0,
+            1,
+            [
+                (".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FAILURE),
+                (
+                    ".*",
+                    "reals.*.steps.*.jobs.*.error",
+                    "The run is cancelled due to reaching MAX_RUNTIME",
+                ),
+            ],
+            id="ee_poly_experiment_cancelled_by_max_runtime",
+        ),
+        pytest.param(
             "poly_example",
             [
                 ENSEMBLE_EXPERIMENT_MODE,
@@ -76,6 +97,20 @@ def check_expression(original, path_expression, expected, msg_start):
         pytest.param(
             "poly_example",
             [
+                ENSEMBLE_EXPERIMENT_MODE,
+                "--enable-ensemble-evaluator",
+                "--realizations",
+                "0,1,2,3,4",
+                "poly_example/poly.ert",
+            ],
+            5,
+            1,
+            [(".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FINISHED)],
+            id="ee_poly_experiment",
+        ),
+        pytest.param(
+            "poly_example",
+            [
                 ENSEMBLE_SMOOTHER_MODE,
                 "--target-case",
                 "poly_runpath_file",
@@ -86,7 +121,7 @@ def check_expression(original, path_expression, expected, msg_start):
             7,
             2,
             [(".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FINISHED)],
-            id="leagcy_poly_smoother",
+            id="legacy_poly_smoother",
         ),
         pytest.param(
             "poly_example",
@@ -122,6 +157,26 @@ def check_expression(original, path_expression, expected, msg_start):
                 (".*", "reals.'1'.steps.*.jobs.*.status", state.JOB_STATE_FINISHED),
             ],
             id="legacy_failing_poly_smoother",
+        ),
+        pytest.param(
+            "failing_poly_example",
+            [
+                ENSEMBLE_SMOOTHER_MODE,
+                "--enable-ensemble-evaluator",
+                "--target-case",
+                "poly_runpath_file",
+                "--realizations",
+                "0,1",
+                "failing_poly_example/poly.ert",
+            ],
+            1,
+            2,
+            [
+                ("0", "reals.'0'.steps.*.jobs.'0'.status", state.JOB_STATE_FAILURE),
+                ("0", "reals.'0'.steps.*.jobs.'1'.status", state.JOB_STATE_START),
+                (".*", "reals.'1'.steps.*.jobs.*.status", state.JOB_STATE_FINISHED),
+            ],
+            id="ee_failing_poly_smoother",
         ),
     ],
 )
@@ -213,3 +268,4 @@ def test_tracking(
                         f"Snapshot {i} did not match:\n",
                     )
         thread.join()
+    FeatureToggling.reset()
