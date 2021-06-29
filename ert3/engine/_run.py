@@ -56,7 +56,14 @@ def _get_experiment_record_indices(
         return [str(x) for x in indices]
 
     elif source == "stochastic":
-        return list(parameters_config[source_record_name].variables)
+        if parameters_config[source_record_name].variables is not None:
+            variables = parameters_config[source_record_name].variables
+            assert variables is not None  # To make mypy checker happy
+            return list(variables)
+        else:
+            param_size = parameters_config[source_record_name].size
+            assert param_size is not None  # To make mypy checker happy
+            return [str(x) for x in range(param_size)]
 
     raise ValueError("Unknown record source location {}".format(source))
 

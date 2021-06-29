@@ -25,6 +25,15 @@ def uniform_ensemble(base_ensemble_dict):
 
 
 @pytest.fixture()
+def x_uncertainty_ensemble(base_ensemble_dict):
+    base_ensemble_dict["forward_model"]["stage"] = "evaluate_x_uncertainty_polynomial"
+    base_ensemble_dict["input"].append(
+        {"record": "x_uncertainties", "source": "stochastic.x_normals"}
+    )
+    yield ert3.config.load_ensemble_config(base_ensemble_dict)
+
+
+@pytest.fixture()
 def presampled_uniform_ensemble(base_ensemble_dict):
     base_ensemble_dict["input"][0]["source"] = "storage.uniform_coefficients0"
     yield ert3.config.load_ensemble_config(base_ensemble_dict)
@@ -93,6 +102,25 @@ def uniform_parameters_config():
                 "input": {"lower_bound": 0, "upper_bound": 1},
             },
             "variables": ["a", "b", "c"],
+        },
+    ]
+    yield ert3.config.load_parameters_config(raw_config)
+
+
+@pytest.fixture()
+def x_uncertainty_parameters_config():
+    raw_config = [
+        {
+            "name": "coefficients",
+            "type": "stochastic",
+            "distribution": {"type": "gaussian", "input": {"mean": 0, "std": 1}},
+            "variables": ["a", "b", "c"],
+        },
+        {
+            "name": "x_normals",
+            "type": "stochastic",
+            "distribution": {"type": "gaussian", "input": {"mean": 0, "std": 1}},
+            "size": 10,
         },
     ]
     yield ert3.config.load_parameters_config(raw_config)
@@ -186,6 +214,35 @@ def test_export_uniform_polynomial_evaluation(
     export_data = _load_export_data(workspace, "uniform_evaluation")
     assert_export(
         export_data, uniform_ensemble, stages_config, uniform_parameters_config
+    )
+
+
+@pytest.mark.requires_ert_storage
+def test_export_x_uncertainties_polynomial_evaluation(
+    workspace,
+    x_uncertainty_ensemble,
+    x_uncertainty_stages_config,
+    evaluation_experiment_config,
+    x_uncertainty_parameters_config,
+):
+    uni_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "x_uncertainty"
+    uni_dir.ensure(dir=True)
+    ert3.engine.run(
+        x_uncertainty_ensemble,
+        x_uncertainty_stages_config,
+        evaluation_experiment_config,
+        x_uncertainty_parameters_config,
+        workspace,
+        "x_uncertainty",
+    )
+    ert3.engine.export(workspace, "x_uncertainty")
+
+    export_data = _load_export_data(workspace, "x_uncertainty")
+    assert_export(
+        export_data,
+        x_uncertainty_ensemble,
+        x_uncertainty_stages_config,
+        x_uncertainty_parameters_config,
     )
 
 

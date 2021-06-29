@@ -41,6 +41,40 @@ def test_valid_gauss(mean, std):
     assert param.distribution.input.std == distribution._std
 
 
+def test_valid_gauss_size():
+    raw_config = [
+        {
+            "name": "my_parameter_group",
+            "type": "stochastic",
+            "distribution": {
+                "type": "gaussian",
+                "input": {
+                    "mean": 0,
+                    "std": 1,
+                },
+            },
+            "size": 3,
+        }
+    ]
+    parameters_config = ert3.config.load_parameters_config(raw_config)
+
+    assert len(parameters_config) == 1
+    param = parameters_config[0]
+
+    assert param.name == "my_parameter_group"
+    assert param.type == "stochastic"
+    assert param.distribution.type == "gaussian"
+    assert param.distribution.input.mean == 0
+    assert param.distribution.input.std == 1
+    assert param.size == 3
+
+    distribution = param.as_distribution()
+    assert isinstance(distribution, ert3.stats.Gaussian)
+    assert param.size == distribution._size
+    assert param.distribution.input.mean == distribution._mean
+    assert param.distribution.input.std == distribution._std
+
+
 @pytest.mark.parametrize(
     "input_",
     (
@@ -100,6 +134,39 @@ def test_valid_uniform(lower_bound, upper_bound):
     distribution = param.as_distribution()
     assert isinstance(distribution, ert3.stats.Uniform)
     assert tuple(param.variables) == tuple(distribution.index)
+    assert param.distribution.input.lower_bound == distribution._lower_bound
+    assert param.distribution.input.upper_bound == distribution._upper_bound
+
+
+def test_valid_uniform_size():
+    raw_config = [
+        {
+            "name": "my_parameter_group",
+            "type": "stochastic",
+            "distribution": {
+                "type": "uniform",
+                "input": {
+                    "lower_bound": 0,
+                    "upper_bound": 100,
+                },
+            },
+            "size": 3,
+        }
+    ]
+    parameters_config = ert3.config.load_parameters_config(raw_config)
+    assert len(parameters_config) == 1
+    param = parameters_config[0]
+
+    assert param.name == "my_parameter_group"
+    assert param.type == "stochastic"
+    assert param.distribution.type == "uniform"
+    assert param.distribution.input.lower_bound == 0
+    assert param.distribution.input.upper_bound == 100
+    assert param.size == 3
+
+    distribution = param.as_distribution()
+    assert isinstance(distribution, ert3.stats.Uniform)
+    assert param.size == distribution._size
     assert param.distribution.input.lower_bound == distribution._lower_bound
     assert param.distribution.input.upper_bound == distribution._upper_bound
 
@@ -243,6 +310,59 @@ def test_no_variables():
         ert3.config.load_parameters_config(raw_config)
 
 
+@pytest.mark.parametrize(
+    ("size"),
+    (-10, 0),
+)
+def test_invalid_size(size):
+    raw_config = [
+        {
+            "name": "a_name",
+            "type": "stochastic",
+            "distribution": {
+                "type": "uniform",
+                "input": {
+                    "lower_bound": 0,
+                    "upper_bound": 1,
+                },
+            },
+            "size": size,
+        }
+    ]
+
+    err_msg = "Size cannot be <= 0"
+    with pytest.raises(ert3.exceptions.ConfigValidationError, match=err_msg):
+        ert3.config.load_parameters_config(raw_config)
+
+
+@pytest.mark.parametrize(
+    ("variables", "size", "err_msg"),
+    (
+        (["x", "y", "z"], 3, "Parameter group cannot have both variables and size"),
+        (None, None, "Parameter group cannot have neither variables nor size"),
+    ),
+)
+def test_duplicate_variables_size(variables, size, err_msg):
+    raw_config = [
+        {
+            "name": "a_name",
+            "type": "stochastic",
+            "distribution": {
+                "type": "uniform",
+                "input": {
+                    "lower_bound": 0,
+                    "upper_bound": 1,
+                },
+            },
+            "variables": variables,
+            "size": size,
+        }
+    ]
+
+    with pytest.raises(ert3.exceptions.ConfigValidationError, match=err_msg):
+        ert3.config.load_parameters_config(raw_config)
+
+
 def test_invalid_type():
     raw_config = [
         {
@@ -370,6 +490,27 @@ def test_immutable_variables():
     parameters_config = ert3.config.load_parameters_config(raw_config)
     with pytest.raises(TypeError, match="does not support item assignment"):
         parameters_config[0].variables[0] = "something new"
+
+
+def test_immutable_size():
+    raw_config = [
+        {
+            "name": "my_parameter_group",
+            "type": "stochastic",
+            "distribution": {
+                "type": "uniform",
+                "input": {
+                    "lower_bound": 0,
+                    "upper_bound": 1,
+                },
+            },
+            "size": 10,
+        }
+    ]
+
+    parameters_config = ert3.config.load_parameters_config(raw_config)
+    with pytest.raises(TypeError, match="does not support item assignment"):
+        parameters_config[0].size = 5
 
 
 def test_immutable_parameters():

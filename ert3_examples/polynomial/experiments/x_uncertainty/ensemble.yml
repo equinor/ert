@@ -1,0 +1,17 @@
+size: 10
+
+input:
+  -
+    source: stochastic.coefficients
+    record: coefficients
+  -
+    source: stochastic.x_normals
+    record: x_uncertainties
+
+output:
+  -
+    record: polynomial_output
+
+forward_model:
+  driver: local
+  stage: evaluate_x_uncertainty_polynomial

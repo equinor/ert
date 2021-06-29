@@ -32,3 +32,26 @@
       location: output
 
   function: function_steps.functions:polynomial
+
+-
+  name: evaluate_x_uncertainty_polynomial
+  input:
+    -
+      record: coefficients
+      location: coefficients.json
+    -
+      record: x_uncertainties
+      location: x_uncertainties.json
+  
+  output:
+    -
+      record: polynomial_output
+      location: output.json
+  
+  transportable_commands:
+    -
+      name: poly
+      location: poly.py
+  
+  script:
+    - poly --coefficients coefficients.json --x_uncertainties x_uncertainties.json --output output.json
