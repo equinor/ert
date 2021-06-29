@@ -35,6 +35,28 @@ def polynomial(coefficients):
     )
 """
 
+POLY_SCRIPT_X_UNCERTAINTIES = """#!/usr/bin/env python3
+import json
+import sys
+
+
+def _poly():
+    with open(sys.argv[2], "r") as f:
+        coefficients = json.load(f)
+    a, b, c = coefficients["a"], coefficients["b"], coefficients["c"]
+    with open(sys.argv[4], "r") as f:
+        x_uncertainties = json.load(f)
+    xs = map(sum, zip(range(10), x_uncertainties))
+    result = tuple(a * x ** 2 + b * x + c for x in xs)
+    with open(sys.argv[6], "w") as f:
+        json.dump(result, f)
+
+
+if __name__ == "__main__":
+    _poly()
+
+"""
+
 
 @pytest.fixture()
 def workspace(tmpdir, ert_storage):
@@ -88,6 +110,36 @@ def stages_config():
     ]
     script_file = pathlib.Path("poly.py")
     script_file.write_text(POLY_SCRIPT)
+    st = os.stat(script_file)
+    os.chmod(script_file, st.st_mode | stat.S_IEXEC)
+
+    yield ert3.config.load_stages_config(config_list)
+
+
+@pytest.fixture()
+def x_uncertainty_stages_config():
+    config_list = [
+        {
+            "name": "evaluate_x_uncertainty_polynomial",
+            "input": [
+                {"record": "coefficients", "location": "coefficients.json"},
+                {"record": "x_uncertainties", "location": "x_uncertainties.json"},
+            ],
+            "output": [{"record": "polynomial_output", "location": "output.json"}],
+            "script": [
+                "poly --coefficients coefficients.json \
+                    --x_uncertainties x_uncertainties.json --output output.json"
+            ],
+            "transportable_commands": [
+                {
+                    "name": "poly",
+                    "location": "poly.py",
+                }
+            ],
+        }
+    ]
+    script_file = pathlib.Path("poly.py")
+    script_file.write_text(POLY_SCRIPT_X_UNCERTAINTIES)
     st = os.stat(script_file)
     os.chmod(script_file, st.st_mode | stat.S_IEXEC)
 

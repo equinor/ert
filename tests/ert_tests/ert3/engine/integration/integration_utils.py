@@ -25,14 +25,22 @@ def assert_input_records(config, export_data):
                 parameter = p
                 break
 
-        input_records[record] = parameter.variables
+        assert parameter.variables or parameter.size
+        has_variables = parameter.variables is not None
+        input_records[record] = parameter.variables if has_variables else parameter.size
 
     for realisation in export_data:
         assert sorted(input_records.keys()) == sorted(realisation["input"].keys())
         for record_name in input_records.keys():
-            input_variables = sorted(input_records[record_name])
-            realisation_variables = sorted(realisation["input"][record_name].keys())
-            assert input_variables == realisation_variables
+            has_variables = not isinstance(input_records[record_name], int)
+            if has_variables:
+                input_variables = sorted(input_records[record_name])
+                realisation_variables = sorted(realisation["input"][record_name].keys())
+                assert input_variables == realisation_variables
+            else:
+                input_size = input_records[record_name]
+                realisation_size = len(realisation["input"][record_name])
+                assert input_size == realisation_size
 
 
 def assert_output_records(config, export_data):
@@ -49,8 +57,14 @@ def assert_poly_output(export_data):
         coeff = realisation["input"]["coefficients"]
         poly_out = realisation["output"]["polynomial_output"]
 
-        assert 10 == len(poly_out)
-        for x, y in zip(range(10), poly_out):
+        assert len(poly_out) == 10
+        xs = (
+            map(sum, zip(realisation["input"]["x_uncertainties"], range(10)))
+            if "x_uncertainties" in realisation["input"]
+            else range(10)
+        )
+
+        for x, y in zip(xs, poly_out):
             assert coeff["a"] * x ** 2 + coeff["b"] * x + coeff["c"] == pytest.approx(y)
 
 

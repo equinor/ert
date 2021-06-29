@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Dict, Iterator, List, Union
+from typing import Any, Dict, Iterator, List, Union, Optional
 from pydantic import (
     BaseModel,
     ValidationError,
@@ -105,19 +105,49 @@ class _VariablesConfig(_ParametersConfig):
         return len(self.__root__)
 
 
+def _ensure_valid_size(size: Optional[int]) -> Optional[int]:
+    if size is not None and size <= 0:
+        raise ValueError("Size cannot be <= 0")
+
+    return size
+
+
 class _ParameterConfig(_ParametersConfig):
     name: str
     type: Literal["stochastic"]
     distribution: Union[_GaussianDistribution, _UniformDistribution]
-    variables: _VariablesConfig
+    variables: Optional[_VariablesConfig] = None
+    size: Optional[int] = None
+
+    @root_validator
+    def _ensure_variables_or_size(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        has_variables = values.get("variables")
+        has_size = values.get("size")
+        if has_variables and has_size:
+            raise AssertionError("Parameter group cannot have both variables and size")
+        if not has_variables and not has_size:
+            raise AssertionError(
+                "Parameter group cannot have neither variables nor size"
+            )
+        return values
 
     @validator("name")
     def _ensure_valid_group_name(cls, value: Any) -> str:
         return _ensure_valid_name(value)
 
+    @validator("size")
+    def _ensure_valid_group_size(cls, value: Any) -> Optional[int]:
+        return _ensure_valid_size(value)
+
     def as_distribution(self) -> ert3.stats.Distribution:
         dist_config = self.distribution
-        index: ert.data.RecordIndex = tuple(self.variables)
+        if self.variables is not None:
+            index: Optional[ert.data.RecordIndex] = tuple(self.variables)
+            size: Optional[int] = None
+        else:
+            size = self.size
+            index = None
+
         if dist_config.type == "gaussian":
             assert dist_config.input.mean is not None
             assert dist_config.input.std is not None
@@ -126,6 +156,7 @@ class _ParameterConfig(_ParametersConfig):
                 dist_config.input.mean,
                 dist_config.input.std,
                 index=index,
+                size=size,
             )
         elif dist_config.type == "uniform":
             assert dist_config.input.lower_bound is not None
@@ -135,6 +166,7 @@ class _ParameterConfig(_ParametersConfig):
                 dist_config.input.lower_bound,
                 dist_config.input.upper_bound,
                 index=index,
+                size=size,
             )
         else:
             raise ValueError("Unknown distribution type: {}".format(dist_config.type))
