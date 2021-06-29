@@ -50,8 +50,11 @@ def test_invalid_host_name():
 
 
 def test_get_family():
-    family_inet6 = port_handler.get_family("host:port")
+    family_inet6 = port_handler.get_family("::1")
     assert family_inet6 == socket.AF_INET6
+
+    family_inet = port_handler.get_family("host:port")
+    assert family_inet == socket.AF_INET
 
     family_inet = port_handler.get_family("host")
     assert family_inet == socket.AF_INET

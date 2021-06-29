@@ -70,9 +70,11 @@ def _bind_socket(host: str, port: int, reuse_addr: bool = False) -> socket.socke
 
 
 def get_family(host: str) -> socket.AddressFamily:
-    if host and ":" in host:
+    try:
+        socket.inet_pton(socket.AF_INET6, host)
         return socket.AF_INET6
-    return socket.AF_INET
+    except socket.error:
+        return socket.AF_INET
 
 
 def _get_ip_address() -> str:
