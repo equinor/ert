@@ -218,7 +218,7 @@ def test_tracking(
 
         ee_config = None
         if FeatureToggling.is_enabled("ensemble-evaluator"):
-            ee_config = EvaluatorServerConfig(unused_tcp_port)
+            ee_config = EvaluatorServerConfig(range(unused_tcp_port, unused_tcp_port))
             argument.update({"ee_config": ee_config})
 
         thread = threading.Thread(
