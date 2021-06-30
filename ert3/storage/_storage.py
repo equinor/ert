@@ -285,11 +285,12 @@ def _response2records(
     elif record_type == ert3.data.RecordType.MAPPING_INT_FLOAT:
         records = [
             ert3.data.Record(data={int(k): v for k, v in row.to_dict().items()})
-            for _, row in dataframe.iterrows()
+            for _, row in dataframe.iterrows()  # pylint: disable=no-member
         ]
     elif record_type == ert3.data.RecordType.MAPPING_STR_FLOAT:
         records = [
-            ert3.data.Record(data=row.to_dict()) for _, row in dataframe.iterrows()
+            ert3.data.Record(data=row.to_dict())
+            for _, row in dataframe.iterrows()  # pylint: disable=no-member
         ]
     else:
         raise ValueError(

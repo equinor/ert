@@ -32,11 +32,11 @@ jobs:
         python -m pip install pylint
     - name: Lint with flake8
       run: |
-        flake8 ert3 tests/ert3
+        flake8 ert ert3 tests/ert3
     - name: Run black
       run: |
         black . --check
     - name: Run pylint
       run: |
         pip install .  # We need the dependencies of ERT to avoid import-error
-        pylint ert3
+        pylint ert ert3
