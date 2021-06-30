@@ -72,26 +72,29 @@ class SnapshotModel(QAbstractItemModel):
         for real_id in sorted(partial_s.reals, key=int):
             real = partial_s.reals[real_id]
             real_node = iter_node.children[real_id]
-            if real.status:
-                real_node.data[ids.STATUS] = real.status
-
             real_index = self.index(real_node.row(), 0, iter_index)
             real_index_bottom_right = self.index(
                 real_node.row(), self.columnCount(iter_index) - 1, iter_index
             )
+
+            if real.status and real_node.data[ids.STATUS] != real.status:
+                real_node.data[ids.STATUS] = real.status
+
+                self.dataChanged.emit(real_index, real_index_bottom_right)
 
             if not real.steps:
                 continue
 
             for step_id, step in real.steps.items():
                 step_node = real_node.children[step_id]
-                if step.status:
-                    step_node.data[ids.STATUS] = step.status
-
                 step_index = self.index(step_node.row(), 0, real_index)
                 step_index_bottom_right = self.index(
                     step_node.row(), self.columnCount(real_index) - 1, real_index
                 )
+
+                if step.status and step_node.data[ids.STATUS] != step.status:
+                    step_node.data[ids.STATUS] = step.status
+                    self.dataChanged.emit(step_index, step_index_bottom_right)
 
                 if not step.jobs:
                     continue
@@ -99,34 +102,37 @@ class SnapshotModel(QAbstractItemModel):
                 for job_id in sorted(step.jobs, key=int):
                     job = step.jobs[job_id]
                     job_node = step_node.children[job_id]
+                    job_changed = False
 
-                    if job.status:
-                        job_node.data[ids.STATUS] = job.status
-                    if job.start_time:
-                        job_node.data[ids.START_TIME] = job.start_time
-                    if job.end_time:
-                        job_node.data[ids.END_TIME] = job.end_time
-                    if job.stdout:
-                        job_node.data[ids.STDOUT] = job.stdout
-                    if job.stderr:
-                        job_node.data[ids.STDERR] = job.stderr
+                    for attr, update in (
+                        (ids.STATUS, job.status),
+                        (ids.START_TIME, job.start_time),
+                        (ids.END_TIME, job.end_time),
+                        (ids.STDOUT, job.stdout),
+                        (ids.STDERR, job.stderr),
+                    ):
+                        if update and job_node.data[attr] != update:
+                            job_node.data[attr] = update
+                            job_changed = True
 
                     # Errors may be unset as the queue restarts the job
+                    # We don't notify this change, it will eventually be picked
+                    # up by some other change.
                     job_node.data[ids.ERROR] = job.error if job.error else ""
 
                     for attr in (ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE):
-                        if job.data and attr in job.data:
+                        if (job.data and attr in job.data) and job.data[
+                            attr
+                        ] != job_node.data[ids.DATA].get(attr):
                             job_node.data[ids.DATA][attr] = job.data.get(attr)
+                            job_changed = True
 
-                    job_index = self.index(job_node.row(), 0, step_index)
-                    job_index_bottom_right = self.index(
-                        job_node.row(), self.columnCount() - 1, step_index
-                    )
-                    self.dataChanged.emit(job_index, job_index_bottom_right)
-                self.dataChanged.emit(step_index, step_index_bottom_right)
-            self.dataChanged.emit(real_index, real_index_bottom_right)
-            # TODO: there is no check that any of the data *actually* changed
-            # https://github.com/equinor/ert/issues/1374
+                    if job_changed:
+                        job_index = self.index(job_node.row(), 0, step_index)
+                        job_index_bottom_right = self.index(
+                            job_node.row(), self.columnCount() - 1, step_index
+                        )
+                        self.dataChanged.emit(job_index, job_index_bottom_right)
 
         top_left = self.index(0, 0, iter_index)
         bottom_right = self.index(0, 1, iter_index)
