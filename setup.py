@@ -81,7 +81,7 @@ setup(
         "decorator",
         "deprecation",
         "dnspython >= 2",
-        "ecl",
+        "ecl >= 2.11.0-rc0",
         "ert-storage",
         "fastapi",
         "graphlib_backport; python_version < '3.9'",

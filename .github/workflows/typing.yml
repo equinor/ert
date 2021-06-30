@@ -33,7 +33,7 @@ jobs:
         python -m pip install -r types-requirements.txt
     - name: Run mypy
       run: |
-        mypy -p ert3
+        mypy -p ert -p ert3
     - name: Run strict mypy
       run: |
-        mypy -p ert3 --config-file .mypy-strict.ini
+        mypy -p ert -p ert3 --config-file .mypy-strict.ini
