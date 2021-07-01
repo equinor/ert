@@ -135,6 +135,8 @@ class QueueConfig(BaseCClass):
 
     @property
     def driver(self):
+        if not self.queue_system:
+            raise ValueError("Missing QUEUE_SYSTEM from config")
         return self._queue_driver(self.queue_system).setParent(self)
 
     def _assert_lsf(self, key="driver"):
