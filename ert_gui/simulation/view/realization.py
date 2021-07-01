@@ -66,7 +66,7 @@ class RealizationDelegate(QStyledItemDelegate):
         self._size = QSize(width, height)
 
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
-
+        print("index", index, index.internalPointer())
         text = index.data(RealLabelHint)
         colors = index.data(RealJobColorHint)
 

@@ -13,6 +13,9 @@ def _evaluate(coeffs, x):
 
 
 if __name__ == "__main__":
+    import time, random
+
+    time.sleep(random.randint(1, 5))
     coeffs = _load_coeffs("coeffs.json")
     output = [_evaluate(coeffs, x) for x in range(10)]
     with open("poly_0.out", "w") as f:
