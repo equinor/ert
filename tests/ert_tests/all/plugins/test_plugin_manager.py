@@ -31,6 +31,7 @@ class PluginManagerTest(unittest.TestCase):
             [
                 "-- Content below originated from ert (site_config_lines)",
                 "JOB_SCRIPT job_dispatch.py",
+                "QUEUE_SYSTEM LOCAL",
                 "QUEUE_OPTION LOCAL MAX_RUNNING 1",
                 "ANALYSIS_LOAD RML_ENKF rml_enkf.{}".format(_lib_extension),
             ],
@@ -67,6 +68,7 @@ class PluginManagerTest(unittest.TestCase):
             [
                 "-- Content below originated from ert (site_config_lines)",
                 "JOB_SCRIPT job_dispatch.py",
+                "QUEUE_SYSTEM LOCAL",
                 "QUEUE_OPTION LOCAL MAX_RUNNING 1",
                 "ANALYSIS_LOAD RML_ENKF rml_enkf.{}".format(_lib_extension),
                 "-- Content below originated from dummy (site_config_lines)",
