@@ -90,6 +90,7 @@ class RunDialog(QDialog):
         legend_view.setModel(progress_proxy_model)
 
         self._tab_widget = QTabWidget(self)
+        self._tab_widget.currentChanged.connect(self._current_tab_changed)
         self._snapshot_model.rowsInserted.connect(self.on_new_iteration)
 
         self._job_label = QLabel(self)
@@ -164,6 +165,13 @@ class RunDialog(QDialog):
         self.setMinimumWidth(self._minimum_width)
         self._setSimpleDialog()
 
+    @Slot(int)
+    def _current_tab_changed(self, index: int):
+        # Clear the selection in the other tabs
+        for i in range(0, self._tab_widget.count()):
+            if i != self._tab_widget.currentIndex():
+                self._tab_widget.widget(i).clearSelection()
+
     def _setSimpleDialog(self) -> None:
         self._isDetailedDialog = False
         self._tab_widget.setVisible(False)
@@ -224,11 +232,6 @@ class RunDialog(QDialog):
         )
 
         self._job_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-
-        # Clear the selection in the other tabs
-        for i in range(0, self._tab_widget.count()):
-            if i != self._tab_widget.currentIndex():
-                self._tab_widget.widget(i).clearSelection()
 
     def reject(self):
         return

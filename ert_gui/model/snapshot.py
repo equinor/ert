@@ -126,10 +126,6 @@ class SnapshotModel(QAbstractItemModel):
                 self.dataChanged.emit(step_index, step_index_bottom_right)
             self.dataChanged.emit(real_index, real_index_bottom_right)
 
-        top_left = self.index(0, 0, iter_index)
-        bottom_right = self.index(0, 1, iter_index)
-        self.dataChanged.emit(top_left, bottom_right)
-
     def _add_snapshot(self, snapshot: Snapshot, iter_: int):
         snapshot_tree = snapshot_to_tree(snapshot, iter_)
         if iter_ in self.root.children:
