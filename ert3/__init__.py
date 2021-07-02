@@ -1,4 +1,3 @@
-from . import data
 from . import stats
 from . import config
 from . import console

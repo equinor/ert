@@ -1,5 +1,6 @@
 import pytest
 
+import ert
 import ert3
 
 TEST_PARAMETRIZATION = [
@@ -20,12 +21,10 @@ TEST_PARAMETRIZATION = [
 
 def get_inputs(coeffs):
     input_records = {}
-    input_records["coefficients"] = ert3.data.EnsembleRecord(
-        records=[
-            ert3.data.Record(data={"a": a, "b": b, "c": c}) for (a, b, c) in coeffs
-        ]
+    input_records["coefficients"] = ert.data.EnsembleRecord(
+        records=[ert.data.Record(data={"a": a, "b": b, "c": c}) for (a, b, c) in coeffs]
     )
-    return ert3.data.MultiEnsembleRecord(ensemble_records=input_records)
+    return ert.data.MultiEnsembleRecord(ensemble_records=input_records)
 
 
 @pytest.mark.requires_ert_storage
@@ -45,10 +44,10 @@ def test_evaluator_script(
         stages_config,
     )
 
-    expected = ert3.data.MultiEnsembleRecord(
+    expected = ert.data.MultiEnsembleRecord(
         ensemble_records={
-            "polynomial_output": ert3.data.EnsembleRecord(
-                records=[ert3.data.Record(data=poly_out) for poly_out in expected],
+            "polynomial_output": ert.data.EnsembleRecord(
+                records=[ert.data.Record(data=poly_out) for poly_out in expected],
             )
         }
     )
@@ -72,10 +71,10 @@ def test_evaluator_function(
         function_stages_config,
     )
 
-    expected = ert3.data.MultiEnsembleRecord(
+    expected = ert.data.MultiEnsembleRecord(
         ensemble_records={
-            "polynomial_output": ert3.data.EnsembleRecord(
-                records=[ert3.data.Record(data=poly_out) for poly_out in expected],
+            "polynomial_output": ert.data.EnsembleRecord(
+                records=[ert.data.Record(data=poly_out) for poly_out in expected],
             )
         }
     )
