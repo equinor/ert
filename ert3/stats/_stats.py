@@ -3,7 +3,7 @@ from typing import Optional, Callable
 import numpy as np
 import scipy.stats
 
-import ert3
+import ert
 
 
 class Distribution:
@@ -11,7 +11,7 @@ class Distribution:
         self,
         *,
         size: Optional[int],
-        index: Optional[ert3.data.RecordIndex],
+        index: Optional[ert.data.RecordIndex],
         rvs: Callable[[int], np.ndarray],  # type: ignore
         ppf: Callable[[np.ndarray], np.ndarray]  # type: ignore
     ) -> None:
@@ -20,7 +20,7 @@ class Distribution:
         if size is not None and index is not None:
             raise ValueError("Cannot create distribution with both size and index")
 
-        self._index: ert3.data.RecordIndex = ()
+        self._index: ert.data.RecordIndex = ()
 
         if size is not None:
             self._size = size
@@ -35,21 +35,21 @@ class Distribution:
         self._raw_ppf = ppf
 
     @property
-    def index(self) -> ert3.data.RecordIndex:
+    def index(self) -> ert.data.RecordIndex:
         return self._index
 
-    def _to_record(self, x: np.ndarray) -> ert3.data.Record:  # type: ignore
+    def _to_record(self, x: np.ndarray) -> ert.data.Record:  # type: ignore
         if self._as_array:
-            return ert3.data.Record(data=x.tolist())
+            return ert.data.Record(data=x.tolist())
         else:
-            return ert3.data.Record(
+            return ert.data.Record(
                 data={idx: float(val) for idx, val in zip(self.index, x)}
             )
 
-    def sample(self) -> ert3.data.Record:
+    def sample(self) -> ert.data.Record:
         return self._to_record(self._raw_rvs(self._size))
 
-    def ppf(self, x: float) -> ert3.data.Record:
+    def ppf(self, x: float) -> ert.data.Record:
         x_array = np.full(self._size, x)
         result = self._raw_ppf(x_array)
         return self._to_record(result)
@@ -62,7 +62,7 @@ class Gaussian(Distribution):
         std: float,
         *,
         size: Optional[int] = None,
-        index: Optional[ert3.data.RecordIndex] = None
+        index: Optional[ert.data.RecordIndex] = None
     ) -> None:
         self._mean = mean
         self._std = std
@@ -98,7 +98,7 @@ class Uniform(Distribution):
         upper_bound: float,
         *,
         size: Optional[int] = None,
-        index: Optional[ert3.data.RecordIndex] = None
+        index: Optional[ert.data.RecordIndex] = None
     ) -> None:
         self._lower_bound = lower_bound
         self._upper_bound = upper_bound

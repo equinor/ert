@@ -1,6 +1,7 @@
 import pathlib
 from typing import List, Dict, Set, Union
 
+import ert
 import ert3
 
 
@@ -155,7 +156,7 @@ def _prepare_sensitivity(
         workspace_root, experiment_name, ensemble, len(input_records), parameters_config
     )
 
-    parameters: Dict[str, List[ert3.data.Record]] = {
+    parameters: Dict[str, List[ert.data.Record]] = {
         param.record: [] for param in ensemble.input
     }
     for realization in input_records:
@@ -164,7 +165,7 @@ def _prepare_sensitivity(
             parameters[record_name].append(realization[record_name])
 
     for record_name in parameters:
-        ensemble_record = ert3.data.EnsembleRecord(records=parameters[record_name])
+        ensemble_record = ert.data.EnsembleRecord(records=parameters[record_name])
         ert3.storage.add_ensemble_record(
             workspace=workspace_root,
             experiment_name=experiment_name,
@@ -176,7 +177,7 @@ def _prepare_sensitivity(
 def _store_output_records(
     workspace_root: pathlib.Path,
     experiment_name: str,
-    records: ert3.data.MultiEnsembleRecord,
+    records: ert.data.MultiEnsembleRecord,
 ) -> None:
     assert records.record_names is not None
     for record_name in records.record_names:
@@ -191,7 +192,7 @@ def _store_output_records(
 def _load_experiment_parameters(
     workspace_root: pathlib.Path,
     experiment_name: str,
-) -> ert3.data.MultiEnsembleRecord:
+) -> ert.data.MultiEnsembleRecord:
     parameter_names = ert3.storage.get_experiment_parameters(
         workspace=workspace_root, experiment_name=experiment_name
     )
@@ -204,7 +205,7 @@ def _load_experiment_parameters(
             record_name=parameter_name,
         )
 
-    return ert3.data.MultiEnsembleRecord(ensemble_records=parameters)
+    return ert.data.MultiEnsembleRecord(ensemble_records=parameters)
 
 
 def _evaluate(

@@ -3,7 +3,7 @@ import typing
 import pydantic
 import pytest
 
-import ert3
+import ert
 
 
 @pytest.mark.parametrize(
@@ -19,7 +19,7 @@ import ert3
     ),
 )
 def test_valid_record(data):
-    record = ert3.data.Record(data=data)
+    record = ert.data.Record(data=data)
 
     if isinstance(data, set):
         data = tuple(data)
@@ -46,7 +46,7 @@ def test_valid_record(data):
 )
 def test_invalid_record(data):
     with pytest.raises(pydantic.ValidationError):
-        ert3.data.Record(data=data)
+        ert.data.Record(data=data)
 
 
 @pytest.mark.parametrize(
@@ -62,7 +62,7 @@ def test_invalid_record(data):
 )
 def test_inconsistent_index_record(data, index):
     with pytest.raises(pydantic.ValidationError):
-        ert3.data.Record(data=data, index=index)
+        ert.data.Record(data=data, index=index)
 
 
 @pytest.mark.parametrize(
@@ -74,7 +74,7 @@ def test_inconsistent_index_record(data, index):
     ),
 )
 def test_valid_ensemble_record(raw_ensrec):
-    ensrecord = ert3.data.EnsembleRecord(records=raw_ensrec)
+    ensrecord = ert.data.EnsembleRecord(records=raw_ensrec)
 
     assert len(raw_ensrec) == len(ensrecord.records) == ensrecord.ensemble_size
     for raw_record, record in zip(raw_ensrec, ensrecord.records):
@@ -95,7 +95,7 @@ def test_valid_ensemble_record(raw_ensrec):
 )
 def test_inconsistent_size_ensemble_record(raw_ensrec, ensemble_size):
     with pytest.raises(pydantic.ValidationError):
-        ert3.data.EnsembleRecord(records=raw_ensrec, ensemble_size=ensemble_size)
+        ert.data.EnsembleRecord(records=raw_ensrec, ensemble_size=ensemble_size)
 
 
 @pytest.mark.parametrize(
@@ -119,7 +119,7 @@ def test_inconsistent_size_ensemble_record(raw_ensrec, ensemble_size):
     ),
 )
 def test_valid_multi_ensemble_record(ensemble_size, raw_multiensrec):
-    multi_ensemblerecord = ert3.data.MultiEnsembleRecord(
+    multi_ensemblerecord = ert.data.MultiEnsembleRecord(
         ensemble_records=raw_multiensrec,
     )
 
@@ -163,7 +163,7 @@ def test_inconsistent_multi_ensemble_record(
     raw_multiensrec, ensemble_size, record_names
 ):
     with pytest.raises(pydantic.ValidationError):
-        ert3.data.MultiEnsembleRecord(
+        ert.data.MultiEnsembleRecord(
             ensemble_records=raw_multiensrec,
             ensemble_size=ensemble_size,
             record_names=record_names,

@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, Dict
 from pathlib import Path
 import stat
 import subprocess
@@ -10,8 +10,7 @@ import prefect
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 
-if TYPE_CHECKING:
-    from ert3.data import RecordTransmitter
+from ert.data import RecordTransmitter
 
 _BIN_FOLDER = "bin"
 
@@ -72,7 +71,7 @@ class UnixTask(prefect.Task):
 
     def _load_and_dump_input(
         self,
-        transmitters: Dict[int, "RecordTransmitter"],
+        transmitters: Dict[int, RecordTransmitter],
         runpath: Path,
     ):
         Path(runpath / _BIN_FOLDER).mkdir(parents=True)

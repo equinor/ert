@@ -2,6 +2,7 @@ import json
 from typing import Optional
 from pathlib import Path
 
+import ert
 import ert3
 
 
@@ -9,8 +10,8 @@ def load_record(workspace: Path, record_name: str, record_file: Path) -> None:
     with open(record_file, "r") as f:
         raw_ensrecord = json.load(f)
 
-    ensrecord = ert3.data.EnsembleRecord(
-        records=[ert3.data.Record(data=raw_record) for raw_record in raw_ensrecord]
+    ensrecord = ert.data.EnsembleRecord(
+        records=[ert.data.Record(data=raw_record) for raw_record in raw_ensrecord]
     )
     ert3.storage.add_ensemble_record(
         workspace=workspace,
@@ -29,7 +30,7 @@ def sample_record(
     experiment_name: Optional[str] = None,
 ) -> None:
     distribution = parameters_config[parameter_group_name].as_distribution()
-    ensrecord = ert3.data.EnsembleRecord(
+    ensrecord = ert.data.EnsembleRecord(
         records=[distribution.sample() for _ in range(ensemble_size)]
     )
     ert3.storage.add_ensemble_record(

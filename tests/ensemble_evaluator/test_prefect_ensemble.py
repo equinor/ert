@@ -21,7 +21,7 @@ from ensemble_evaluator_utils import _mock_ws
 from prefect import Flow
 from utils import SOURCE_DIR, tmp
 
-import ert3
+import ert
 import ert_shared.ensemble_evaluator.ensemble.builder as ee
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
@@ -49,7 +49,7 @@ def parse_config(path):
 
 
 def input_transmitter(name, data, storage_path):
-    transmitter = ert3.data.SharedDiskRecordTransmitter(
+    transmitter = ert.data.SharedDiskRecordTransmitter(
         name=name, storage_path=Path(storage_path)
     )
     asyncio.get_event_loop().run_until_complete(transmitter.transmit_data(data))
@@ -80,7 +80,7 @@ def script_transmitters(config):
 
 
 def script_transmitter(name, location, storage_path):
-    transmitter = ert3.data.SharedDiskRecordTransmitter(
+    transmitter = ert.data.SharedDiskRecordTransmitter(
         name=name, storage_path=Path(storage_path)
     )
     with open(location, "rb") as f:
@@ -100,7 +100,7 @@ def output_transmitters(config):
             for iens in range(config.get(ids.REALIZATIONS)):
                 transmitters[iens][
                     output.get(ids.RECORD)
-                ] = ert3.data.SharedDiskRecordTransmitter(
+                ] = ert.data.SharedDiskRecordTransmitter(
                     output.get(ids.RECORD),
                     storage_path=Path(config.get(ids.STORAGE)["storage_path"]),
                 )
@@ -110,7 +110,7 @@ def output_transmitters(config):
 def step_output_transmitters(step, storage_path):
     transmitters = {}
     for output in step.get_outputs():
-        transmitters[output.get_name()] = ert3.data.SharedDiskRecordTransmitter(
+        transmitters[output.get_name()] = ert.data.SharedDiskRecordTransmitter(
             name=output.get_name(), storage_path=Path(storage_path)
         )
 

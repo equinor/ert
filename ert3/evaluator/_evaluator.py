@@ -9,9 +9,10 @@ from typing import Any, Dict, List, Tuple
 
 import cloudpickle
 from pydantic import FilePath
+import ert
 import ert3
 from ert3.config import EnsembleConfig, StagesConfig, Step
-from ert3.data import EnsembleRecord, MultiEnsembleRecord, Record, RecordTransmitter
+from ert.data import EnsembleRecord, MultiEnsembleRecord, Record, RecordTransmitter
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity.identifiers import EVTYPE_EE_TERMINATED
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
@@ -40,13 +41,13 @@ def _prepare_input(
     tmp_input_folder = evaluation_tmp_dir / "prep_input_files"
     os.makedirs(tmp_input_folder)
     storage_config = ee_config["storage"]
-    transmitters: Dict[int, Dict[str, ert3.data.RecordTransmitter]] = defaultdict(dict)
+    transmitters: Dict[int, Dict[str, ert.data.RecordTransmitter]] = defaultdict(dict)
 
     futures = []
     for input_ in step_config.input:
         for iens, record in enumerate(inputs.ensemble_records[input_.record].records):
             if storage_config.get("type") == "shared_disk":
-                transmitter = ert3.data.SharedDiskRecordTransmitter(
+                transmitter = ert.data.SharedDiskRecordTransmitter(
                     name=input_.record,
                     storage_path=pathlib.Path(storage_config["storage_path"]),
                 )
@@ -60,7 +61,7 @@ def _prepare_input(
     if isinstance(step_config, ert3.config.Unix):
         for command in step_config.transportable_commands:
             if storage_config.get("type") == "shared_disk":
-                transmitter = ert3.data.SharedDiskRecordTransmitter(
+                transmitter = ert.data.SharedDiskRecordTransmitter(
                     name=command.name,
                     storage_path=pathlib.Path(storage_config["storage_path"]),
                 )
@@ -86,14 +87,14 @@ def _prepare_output(
     tmp_input_folder = evaluation_tmp_dir / "output_files"
     os.makedirs(tmp_input_folder)
     storage_config = ee_config["storage"]
-    transmitters: Dict[int, Dict[str, ert3.data.RecordTransmitter]] = defaultdict(dict)
+    transmitters: Dict[int, Dict[str, ert.data.RecordTransmitter]] = defaultdict(dict)
 
     for output in step_config.output:
         for iens in range(0, ensemble_size):
             if storage_config.get("type") == "shared_disk":
                 transmitters[iens][
                     output.record
-                ] = ert3.data.SharedDiskRecordTransmitter(
+                ] = ert.data.SharedDiskRecordTransmitter(
                     name=output.record,
                     storage_path=pathlib.Path(storage_config["storage_path"]),
                 )

@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Iterable, List, Dict, Any
 
 import ert3
-from ert3.data import Record
+from ert.data import Record
 
 
 def _prepare_export(

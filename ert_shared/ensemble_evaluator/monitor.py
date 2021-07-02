@@ -2,7 +2,7 @@ import logging
 import pickle
 import uuid
 from contextlib import ExitStack
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from cloudevents.exceptions import DataUnmarshallerError
@@ -10,9 +10,6 @@ from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.entity import serialization
 from ert_shared.ensemble_evaluator.sync_ws_duplexer import SyncWebsocketDuplexer
-
-if TYPE_CHECKING:
-    from ert3.data import RecordTransmitter
 
 
 logger = logging.getLogger(__name__)

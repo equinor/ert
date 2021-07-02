@@ -9,7 +9,7 @@ import cloudpickle
 import pytest
 from utils import tmp
 
-from ert3.data import (
+from ert.data import (
     InMemoryRecordTransmitter,
     RecordTransmitter,
     SharedDiskRecordTransmitter,

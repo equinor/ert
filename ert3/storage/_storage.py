@@ -16,6 +16,7 @@ import logging
 import pandas as pd
 from pydantic import BaseModel
 import requests
+import ert
 import ert3
 
 from ert_shared.storage.connection import get_info
@@ -42,7 +43,7 @@ class _NumericalMetaData(BaseModel):
         arbitrary_types_allowed = True
 
     ensemble_size: int
-    record_type: ert3.data.RecordType
+    record_type: ert.data.RecordType
 
 
 def _assert_server_info() -> None:
@@ -221,7 +222,7 @@ def get_experiment_names(*, workspace: Path) -> Set[str]:
     return experiment_names
 
 
-def _get_record_type(ensemble_record: ert3.data.EnsembleRecord) -> ert3.data.RecordType:
+def _get_record_type(ensemble_record: ert.data.EnsembleRecord) -> ert.data.RecordType:
     record_type = ensemble_record.records[0].record_type
     for record in ensemble_record.records:
         if record.record_type != record_type:
@@ -235,7 +236,7 @@ def _add_numerical_data(
     experiment_name: str,
     record_name: str,
     record_data: Union[pd.DataFrame, pd.Series],
-    record_type: ert3.data.RecordType,
+    record_type: ert.data.RecordType,
 ) -> None:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
@@ -271,39 +272,39 @@ def _add_numerical_data(
 
 
 def _response2records(
-    response_content: bytes, record_type: ert3.data.RecordType
-) -> ert3.data.EnsembleRecord:
+    response_content: bytes, record_type: ert.data.RecordType
+) -> ert.data.EnsembleRecord:
     dataframe = pd.read_csv(
         io.BytesIO(response_content), index_col=0, float_precision="round_trip"
     )
 
-    records: List[ert3.data.Record]
-    if record_type == ert3.data.RecordType.LIST_FLOAT:
+    records: List[ert.data.Record]
+    if record_type == ert.data.RecordType.LIST_FLOAT:
         records = [
-            ert3.data.Record(data=row.to_list()) for _, row in dataframe.iterrows()
+            ert.data.Record(data=row.to_list()) for _, row in dataframe.iterrows()
         ]
-    elif record_type == ert3.data.RecordType.MAPPING_INT_FLOAT:
+    elif record_type == ert.data.RecordType.MAPPING_INT_FLOAT:
         records = [
-            ert3.data.Record(data={int(k): v for k, v in row.to_dict().items()})
+            ert.data.Record(data={int(k): v for k, v in row.to_dict().items()})
             for _, row in dataframe.iterrows()  # pylint: disable=no-member
         ]
-    elif record_type == ert3.data.RecordType.MAPPING_STR_FLOAT:
+    elif record_type == ert.data.RecordType.MAPPING_STR_FLOAT:
         records = [
-            ert3.data.Record(data=row.to_dict())
+            ert.data.Record(data=row.to_dict())
             for _, row in dataframe.iterrows()  # pylint: disable=no-member
         ]
     else:
         raise ValueError(
             f"Unexpected record type when loading numerical record: {record_type}"
         )
-    return ert3.data.EnsembleRecord(records=records)
+    return ert.data.EnsembleRecord(records=records)
 
 
 def _combine_records(
-    ensemble_records: List[ert3.data.EnsembleRecord],
-) -> ert3.data.EnsembleRecord:
+    ensemble_records: List[ert.data.EnsembleRecord],
+) -> ert.data.EnsembleRecord:
     # Combine records into the first ensemble record
-    combined_records: List[ert3.data.Record] = []
+    combined_records: List[ert.data.Record] = []
     for record_idx, _ in enumerate(ensemble_records[0].records):
         record0 = ensemble_records[0].records[record_idx]
 
@@ -317,7 +318,7 @@ def _combine_records(
                 if isinstance(data, list)
                 for val in data
             ]
-            combined_records.append(ert3.data.Record(data=ldata))
+            combined_records.append(ert.data.Record(data=ldata))
         elif isinstance(record0.data, dict):
             ddata = {
                 key: val
@@ -328,8 +329,8 @@ def _combine_records(
                 if isinstance(data, dict)
                 for key, val in data.items()
             }
-            combined_records.append(ert3.data.Record(data=ddata))
-    return ert3.data.EnsembleRecord(records=combined_records)
+            combined_records.append(ert.data.Record(data=ddata))
+    return ert.data.EnsembleRecord(records=combined_records)
 
 
 def _get_numerical_metadata(ensemble_id: str, record_name: str) -> _NumericalMetaData:
@@ -350,7 +351,7 @@ def _get_numerical_metadata(ensemble_id: str, record_name: str) -> _NumericalMet
 
 def _get_numerical_data(
     workspace: Path, experiment_name: str, record_name: str
-) -> ert3.data.EnsembleRecord:
+) -> ert.data.EnsembleRecord:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
         raise ert3.exceptions.NonExistantExperiment(
@@ -406,7 +407,7 @@ def add_ensemble_record(
     *,
     workspace: Path,
     record_name: str,
-    ensemble_record: ert3.data.EnsembleRecord,
+    ensemble_record: ert.data.EnsembleRecord,
     experiment_name: Optional[str] = None,
 ) -> None:
     if experiment_name is None:
@@ -447,7 +448,7 @@ def get_ensemble_record(
     workspace: Path,
     record_name: str,
     experiment_name: Optional[str] = None,
-) -> ert3.data.EnsembleRecord:
+) -> ert.data.EnsembleRecord:
     if experiment_name is None:
         experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
     experiment = _get_experiment_by_name(experiment_name)
