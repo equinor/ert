@@ -67,7 +67,6 @@ def get_record_by_name(
             .join(ds.RecordInfo)
             .filter_by(
                 name=name,
-                record_class=ds.RecordClass.parameter,
                 record_type=ds.RecordType.f64_matrix,
             )
             .join(ds.Ensemble)
