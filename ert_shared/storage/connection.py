@@ -38,7 +38,7 @@ def get_info(project_path: Union[str, Path] = None) -> Dict[str, Any]:
     with path.open() as f:
         info = json.load(f)
 
-    auth = ("__token__", info["authtoken"])
+    auth = ("Token", info["authtoken"])
     for baseurl in info["urls"]:
         try:
             resp = requests.get(f"{baseurl}/healthcheck", auth=auth)
