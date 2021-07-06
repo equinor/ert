@@ -75,6 +75,7 @@ if LSF_HOME:
 from .job_status_type_enum import JobStatusType
 from .run_status_type_enum import RunStatusType
 from .thread_status_type_enum import ThreadStatus
+from .job_submit_status_type_enum import JobSubmitStatusType
 from .job import Job
 from .driver import Driver, QueueDriverEnum
 from .job_queue_node import JobQueueNode
