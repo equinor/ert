@@ -1,7 +1,7 @@
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 from res import ResPrototype
-from res.job_queue import JobStatusType, ThreadStatus
+from res.job_queue import JobStatusType, ThreadStatus, JobSubmitStatusType
 from threading import Thread, Lock
 
 import time
@@ -24,7 +24,9 @@ class JobQueueNode(BaseCClass):
         bind=False,
     )
     _free = ResPrototype("void job_queue_node_free(job_queue_node)")
-    _submit = ResPrototype("int job_queue_node_submit_simple(job_queue_node, driver)")
+    _submit = ResPrototype(
+        "job_submit_status_type_enum job_queue_node_submit_simple(job_queue_node, driver)"
+    )
     _kill = ResPrototype("bool job_queue_node_kill_simple(job_queue_node, driver)")
 
     _get_status = ResPrototype(
@@ -114,7 +116,7 @@ class JobQueueNode(BaseCClass):
         return self._thread_status
 
     def submit(self, driver):
-        self._submit(driver)
+        return self._submit(driver)
 
     def run_done_callback(self):
         callback_status = self.done_callback_function(self.callback_arguments)
@@ -154,7 +156,10 @@ class JobQueueNode(BaseCClass):
 
     def _job_monitor(self, driver, pool_sema, max_submit):
 
-        self.submit(driver)
+        submit_status = self.submit(driver)
+        if submit_status is not JobSubmitStatusType.SUBMIT_OK:
+            self._set_status(JobStatusType.JOB_QUEUE_DONE)
+
         self.update_status(driver)
 
         while self.is_running():
