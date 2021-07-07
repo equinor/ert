@@ -5,6 +5,7 @@ List of Keywords
 
 For your convenience, the description of the keywords in the ERT configuration file
 are divided into the following groups:
+
 * Basic required keywords not related to parametrization. I.e. keywords giving
   the data, grid, schedule and observation file, defining how to run simulations
   and how to store results. These keywords are described in :ref:`Basic required
