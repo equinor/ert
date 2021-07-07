@@ -79,7 +79,7 @@ source_build_tools() {
 
 setup_variables () {
 	ENV=$WORKING_DIR/venv
-	INSTALL=$WORKING_DIR/install
+	INSTALL=$WORKING_DIR/venv
 
 	LIBECL_ROOT=$WORKING_DIR/libecl
 	LIBECL_BUILD=$LIBECL_ROOT/build
@@ -109,7 +109,6 @@ clone_repos () {
 	echo "Cloning into $LIBRES_ROOT"
 	git clone . $LIBRES_ROOT
 	mkdir -p $LIBRES_BUILD
-	ln -s /project/res-testdata/ErtTestData $LIBRES_ROOT/../test-data/Equinor
 }
 
 create_virtualenv () {
@@ -138,7 +137,6 @@ run_pytest_normal () {
 
 
 run_pytest_equinor () {
-	ln -s /project/res-testdata/ErtTestData ${ERT_SOURCE_ROOT}/test-data/Equinor
 	run enable_environment
 
 	# Avoid implicitly loaded cwd modules
