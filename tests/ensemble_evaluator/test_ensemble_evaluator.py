@@ -1,3 +1,4 @@
+from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 from unittest.mock import MagicMock
 
 import pytest
@@ -171,7 +172,7 @@ def test_ensure_multi_level_events_in_order(evaluator):
 
 
 @pytest.mark.consumer_driven_contract_verification
-def test_verify_monitor_failing_ensemble(make_ee_config):
+def test_verify_monitor_failing_ensemble(make_ee_config, event_loop):
     ee_config = make_ee_config(use_token=False, generate_cert=False)
     ensemble = TestEnsemble(iter=1, reals=2, steps=1, jobs=2)
     ensemble.addFailJob(real=1, step=0, job=1)
@@ -182,12 +183,13 @@ def test_verify_monitor_failing_ensemble(make_ee_config):
         ee_id="0",
     )
     ee.run()
+    event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
     monitor_failing_ensemble.verify(ee_config.client_uri, on_connect=ensemble.start)
     ensemble.join()
 
 
 @pytest.mark.consumer_driven_contract_verification
-def test_verify_monitor_failing_evaluation(make_ee_config):
+def test_verify_monitor_failing_evaluation(make_ee_config, event_loop):
     ee_config = make_ee_config(use_token=False, generate_cert=False)
     ensemble = TestEnsemble(iter=1, reals=2, steps=1, jobs=2)
     ensemble.with_failure()
@@ -198,12 +200,13 @@ def test_verify_monitor_failing_evaluation(make_ee_config):
         ee_id="ee-0",
     )
     ee.run()
+    event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
     monitor_failing_evaluation.verify(ee_config.client_uri, on_connect=ensemble.start)
     ensemble.join()
 
 
 @pytest.mark.consumer_driven_contract_verification
-def test_verify_monitor_successful_ensemble(make_ee_config):
+def test_verify_monitor_successful_ensemble(make_ee_config, event_loop):
     ensemble = TestEnsemble(iter=1, reals=2, steps=2, jobs=2).with_result(
         b"\x80\x04\x95\x0f\x00\x00\x00\x00\x00\x00\x00\x8c\x0bhello world\x94.",
         "application/octet-stream",
@@ -216,13 +219,13 @@ def test_verify_monitor_successful_ensemble(make_ee_config):
         ee_id="ee-0",
     )
     ee.run()
-
+    event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
     monitor_successful_ensemble.verify(ee_config.client_uri, on_connect=ensemble.start)
     ensemble.join()
 
 
 @pytest.mark.consumer_driven_contract_verification
-def test_verify_dispatch_failing_job(make_ee_config):
+def test_verify_dispatch_failing_job(make_ee_config, event_loop):
     ee_config = make_ee_config(use_token=False, generate_cert=False)
     mock_ensemble = MagicMock()
     mock_ensemble.snapshot.to_dict.return_value = {}
@@ -233,5 +236,6 @@ def test_verify_dispatch_failing_job(make_ee_config):
         ee_id="0",
     )
     ee.run()
+    event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
     dispatch_failing_job.verify(ee_config.client_uri, on_connect=lambda: None)
     ee.stop()
