@@ -27,12 +27,19 @@ def _prepare_export(
         if not data:
             data = [{"input": {}, "output": {}} for _ in ensemble_record.records]
 
+
+    ##TODO fix
         assert len(data) == ensemble_record.ensemble_size
         for realization, record in zip(data, ensemble_record.records):
             assert record_name not in realization[data_type]
             # See the Record class for the reason of the 'type ignore'.
             realization[data_type][record_name] = record.data  # type: ignore
 
+        # Do not add the blob records to output
+        if len(data) == ensemble_record.ensemble_size:
+            for realization, record in zip(data, ensemble_record.records):
+                assert record_name not in realization[data_type]
+                realization[data_type][record_name] = record.data
     return data
 
 

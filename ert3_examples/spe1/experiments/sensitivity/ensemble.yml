@@ -5,6 +5,9 @@ input:
   -
     source: stochastic.wells
     record: wells
+  -
+    source: storage.example_data
+    record: spe1case2_data
 
 output:
     -

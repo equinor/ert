@@ -6,10 +6,24 @@ import ert
 import ert3
 
 
-def load_record(workspace: Path, record_name: str, record_file: Path) -> None:
-    with open(record_file, "r") as f:
-        raw_ensrecord = json.load(f)
+def load_record(
+    workspace: Path, record_name: str, record_file: Path, record_type: str = "normal"
+) -> None:
 
+    if record_type == "blob":
+        with open(record_file, "rb") as f:
+            raw_ensrecord = f.read()
+        ensrecord = ert.data.EnsembleRecord(
+            records=[ert.data.Record(data=[raw_ensrecord])]
+        )
+    else:
+        with open(record_file, "r") as f:
+            raw_ensrecord = json.load(f)
+        ensrecord = ert.data.EnsembleRecord(
+            records=[ert.data.Record(data=raw_record) for raw_record in raw_ensrecord]
+        )
+
+    ## TODO fix
     ensrecord = ert.data.EnsembleRecord(
         records=[
             ert.data.NumericalRecord(data=raw_record) for raw_record in raw_ensrecord

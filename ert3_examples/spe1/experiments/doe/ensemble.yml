@@ -7,6 +7,9 @@ input:
   -
     source: storage.designed_wells
     record: wells
+  -
+    source: storage.example_data
+    record: spe1case2_data
 
 output:
     -
