@@ -10,6 +10,7 @@ INSTALL_JOB_DIRECTORY forward-models/shell
 INSTALL_JOB_DIRECTORY forward-models/templating
 INSTALL_JOB_DIRECTORY forward-models/old_style
 
+QUEUE_SYSTEM LOCAL
 QUEUE_OPTION LOCAL MAX_RUNNING 1
 
 ANALYSIS_LOAD RML_ENKF rml_enkf.so
