@@ -455,7 +455,7 @@ config_content_type * site_config_alloc_content(
   config_content_type * content = config_parse(
                                         config_parser, site_config_file,
                                         "--", INCLUDE_KEY, DEFINE_KEY, NULL,
-                                        CONFIG_UNRECOGNIZED_WARN, false
+                                        CONFIG_UNRECOGNIZED_WARN, true
                                         );
 
   if(!config_content_is_valid(content)) {
