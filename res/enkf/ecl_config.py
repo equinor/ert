@@ -60,7 +60,6 @@ class EclConfig(BaseCClass):
     _has_refcase = ResPrototype("bool  ecl_config_has_refcase(ecl_config)")
     _get_depth_unit = ResPrototype("char* ecl_config_get_depth_unit(ecl_config)")
     _get_pressure_unit = ResPrototype("char* ecl_config_get_pressure_unit(ecl_config)")
-    _get_start_date = ResPrototype("time_t ecl_config_get_start_date(ecl_config)")
     _active = ResPrototype("bool ecl_config_active(ecl_config)")
     _get_last_history_restart = ResPrototype(
         "int ecl_config_get_last_history_restart(ecl_config)"
@@ -196,9 +195,6 @@ class EclConfig(BaseCClass):
 
     # -----------------------------------------------------------------
 
-    def getStartDate(self):
-        return self._get_start_date()
-
     def getEndDate(self):
         return self._get_end_date()
 
@@ -232,9 +228,6 @@ class EclConfig(BaseCClass):
             return False
 
         if self.getPressureUnit() != other.getPressureUnit():
-            return False
-
-        if self.getStartDate() != other.getStartDate():
             return False
 
         if self.getEndDate() != other.getEndDate():

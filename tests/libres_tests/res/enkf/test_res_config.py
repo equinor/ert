@@ -448,8 +448,6 @@ class ResConfigTest(ResTest):
             config_data["DATA_FILE"], ecl_config.getDataFile(), working_dir
         )
 
-        self.assertEqual(CTime(config_data["START"]), ecl_config.getStartDate())
-
         for extension in ["SMSPEC", "UNSMRY"]:
             self.assert_same_config_file(
                 config_data["REFCASE"] + "." + extension,
