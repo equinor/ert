@@ -53,7 +53,6 @@ struct ecl_config_struct
 {
   ecl_io_config_type * io_config;       /* This struct contains information of whether the eclipse files should be formatted|unified|endian_fliped */
   char * data_file;                     /* Eclipse data file. */
-  time_t start_date;                    /* The start date of the ECLIPSE simulation - parsed from the data_file. */
   time_t end_date;                      /* An optional date value which can be used to check if the ECLIPSE simulation has been 'long enough'. */
   ecl_refcase_list_type * refcase_list;
   ecl_grid_type * grid;                 /* The grid which is active for this model. */
@@ -136,7 +135,6 @@ void ecl_config_set_data_file(ecl_config_type * ecl_config, const char * data_fi
     basic_parser_free(parser);
     fclose(stream);
   }
-  ecl_config->start_date = ecl_util_get_start_date(ecl_config->data_file);
   ecl_config->num_cpu = ecl_util_get_num_cpu(ecl_config->data_file);
   ecl_config->unit_system = ecl_util_get_unit_set(ecl_config->data_file);
 }
@@ -145,11 +143,6 @@ void ecl_config_set_data_file(ecl_config_type * ecl_config, const char * data_fi
 const char * ecl_config_get_data_file(const ecl_config_type * ecl_config)
 {
   return ecl_config->data_file;
-}
-
-time_t ecl_config_get_start_date(const ecl_config_type * ecl_config)
-{
-  return ecl_config->start_date;
 }
 
 time_t ecl_config_get_end_date(const ecl_config_type * ecl_config)
@@ -248,7 +241,6 @@ static ecl_config_type * ecl_config_alloc_empty(void)
   ecl_config->data_file = NULL;
   ecl_config->grid = NULL;
   ecl_config->can_restart = false;
-  ecl_config->start_date = -1;
   ecl_config->end_date = -1;
   ecl_config->schedule_prediction_file = NULL;
   ecl_config->refcase_list = ecl_refcase_list_alloc();
