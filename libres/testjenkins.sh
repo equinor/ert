@@ -132,7 +132,7 @@ run_pytest_normal () {
 
 	# Avoid implicitly loaded cwd modules
 	pushd ${LIBRES_BUILD}
-	python -m pytest -m "not equinor_test" --durations=10 ${ERT_SOURCE_ROOT}/libres/tests
+	python -m pytest -m "not equinor_test" --durations=10 ${ERT_SOURCE_ROOT}/tests/libres_tests
 	popd
 }
 
@@ -143,7 +143,7 @@ run_pytest_equinor () {
 
 	# Avoid implicitly loaded cwd modules
 	pushd ${LIBRES_BUILD}
-	python -m pytest -m "equinor_test" --durations=10 ${ERT_SOURCE_ROOT}/libres/tests
+	python -m pytest -m "equinor_test" --durations=10 ${ERT_SOURCE_ROOT}/tests/libres_tests
 	popd
 }
 
