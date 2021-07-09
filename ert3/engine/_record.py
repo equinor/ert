@@ -7,7 +7,10 @@ import ert3
 
 
 def load_record(
-    workspace: Path, record_name: str, record_file: Path, blob_record: bool
+    workspace: Path,
+    record_name: str,
+    record_file: Path,
+    blob_record: Optional[bool] = False,
 ) -> None:
 
     if blob_record:

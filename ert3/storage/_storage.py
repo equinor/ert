@@ -272,7 +272,7 @@ def _add_numerical_data(
 
 
 def _response2records(
-    response_content: bytes, 
+    response_content: bytes,
     metadata: _NumericalMetaData,
     ensemble_size: Optional[int] = None,
 ) -> ert.data.EnsembleRecord:

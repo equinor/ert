@@ -65,7 +65,7 @@ def _build_record_argparser(subparsers: Any) -> None:
     record_load_parser.add_argument(
         "--blob-record",
         action="store_true",
-        help="Indicate that the record if of type blob"
+        help="Indicate that the record is of type blob",
     )
     sample_parser = sub_record_parsers.add_parser(
         "sample", help="Sample stochastic parameter into a record"
