@@ -7,10 +7,10 @@ import ert3
 
 
 def load_record(
-    workspace: Path, record_name: str, record_file: Path, record_type: str = "normal"
+    workspace: Path, record_name: str, record_file: Path, blob_record: bool
 ) -> None:
 
-    if record_type == "blob":
+    if blob_record:
         with open(record_file, "rb") as f:
             raw_ensrecord = f.read()
         ensrecord = ert.data.EnsembleRecord(

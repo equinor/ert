@@ -63,9 +63,9 @@ def _build_record_argparser(subparsers: Any) -> None:
         help="Path to resource file",
     )
     record_load_parser.add_argument(
-        "--record-type",
-        help="Record type blob or normal (default: normal)",
-        default="normal",
+        "--blob-record",
+        action="store_true",
+        help="Indicate that the record if of type blob"
     )
     sample_parser = sub_record_parsers.add_parser(
         "sample", help="Sample stochastic parameter into a record"
@@ -220,7 +220,7 @@ def _record(workspace: Path, args: Any) -> None:
         )
     elif args.sub_record_cmd == "load":
         ert3.engine.load_record(
-            workspace, args.record_name, args.record_file, args.record_type
+            workspace, args.record_name, args.record_file, args.blob_record
         )
     else:
         raise NotImplementedError(
