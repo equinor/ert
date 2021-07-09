@@ -57,7 +57,7 @@ class EnkfSimulationRunnerTest(TestCase):
                     queue.add_job(job, idx)
 
         queue.stop_long_running_jobs(5)
-        queue._transition()
+        queue._differ.transition(queue.job_list)
 
         for i in range(5):
             assert job_list[i].status == JobStatusType.JOB_QUEUE_DONE

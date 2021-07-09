@@ -243,13 +243,11 @@ class LegacyTracker:
         """Create a PartialSnapshot, or None if the sources of data were
         destroyed or had not been created yet. Both run_context and
         detailed_progress needs to be aligned with the stars if job status etc
-        is to be produced. If queue_snapshot is set, this means the the differ
-        will not be used to calculate changes."""
+        is to be produced."""
         queue = self._iter_queue.get(iter_, None)
         if queue is None:
             logger.debug(f"no queue for {iter_}, no partial returned")
             return None
-        queue_snapshot = queue.snapshot()
 
         snapshot = self._iter_snapshot.get(iter_, None)
         if snapshot is None:
@@ -258,13 +256,13 @@ class LegacyTracker:
 
         partial = PartialSnapshot(snapshot)
 
-        if queue_snapshot is not None:
-            for iens, change in queue_snapshot.items():
-                change_enum = JobStatusType.from_string(change)
-                partial.update_real(
-                    str(iens),
-                    Realization(status=queue_status_to_real_state(change_enum)),
-                )
+        changes = queue.changes_after_transition()
+        for iens, change in changes.items():
+            change_enum = JobStatusType.from_string(change)
+            partial.update_real(
+                str(iens),
+                Realization(status=queue_status_to_real_state(change_enum)),
+            )
         iter_to_progress, progress_iter = detailed_progress
         if not iter_to_progress:
             logger.debug(f"partial: no detailed progress for iter:{iter_}")
