@@ -53,7 +53,7 @@ def _get_experiment_record_indices(
             ensemble_size=ensemble_size,
         )
 
-        ## TODO Might not be the best way of doing this.
+        # TODO Might not be the best way of doing this.
         if ensemble_record.records[0].record_type == ert3.data.RecordType.LIST_BYTES:
             return ["blob"]
 

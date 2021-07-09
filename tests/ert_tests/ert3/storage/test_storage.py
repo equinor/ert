@@ -457,7 +457,8 @@ def test_ensemble_responses_and_parameters(tmpdir, ert_storage):
 
 @pytest.mark.requires_ert_storage
 def test_add_and_get_blob_record(tmpdir, ert_storage):
-    # this test should be added to the test_add_and_get_ensemble_parameter_record() test above
+    # this test should be added to the
+    # test_add_and_get_ensemble_parameter_record() test above
     record_name = "test_data"
     experiment_name = "exp"
     data = b"ASDFQEWRGFWEzwz3TRHSDFBVWRET12awd"

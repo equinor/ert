@@ -382,7 +382,7 @@ def _get_data(
             f"Cannot get {record_name} data, no experiment named: {experiment_name}"
         )
 
-    ## TODO: hack ?
+    # TODO: hack ?
     split = record_name.split(".")
     if len(split) == 2 and split[1] == "blob":
         record_name = split[0]
@@ -497,7 +497,7 @@ def _add_blob_data(
             f"non-existing experiment: {experiment_name}"
         )
 
-    ##TODO dis ok ?
+    # TODO dis ok ?
     if not ensemble_size:
         ensemble_size = ensemble_record.ensemble_size
 
