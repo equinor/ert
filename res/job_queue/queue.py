@@ -33,6 +33,7 @@ from cwrap import BaseCClass
 from job_runner import JOBS_FILE, CERT_FILE
 from res import ResPrototype
 from res.job_queue import JobQueueNode, JobStatusType, ThreadStatus
+from res.job_queue.queue_differ import QueueDiffer
 
 logger = logging.getLogger(__name__)
 
@@ -170,8 +171,7 @@ class JobQueue(BaseCClass):
 
         self.driver = driver
         self._set_driver(driver.from_param(driver))
-        self._qindex_to_iens = {}
-        self._state = []
+        self._differ = QueueDiffer()
 
     def kill_job(self, queue_index):
         """
@@ -351,9 +351,7 @@ class JobQueue(BaseCClass):
         job.convertToCReference(None)
         queue_index = self._add_job(job)
         self.job_list.append(job)
-        self._qindex_to_iens[queue_index] = iens
-        self._state.append(job.status.value)
-        assert len(self._state) - 1 == queue_index
+        self._differ.add_state(queue_index, iens, job.status.value)
         return queue_index
 
     def count_running(self):
@@ -407,13 +405,11 @@ class JobQueue(BaseCClass):
             if evaluators is not None:
                 for func in evaluators:
                     func()
-            self._transition()
 
         if self.stopped:
             self.stop_jobs()
 
         self.assert_complete()
-        self._transition()
 
     @staticmethod
     def _translate_change_to_cloudevent(ee_id, real_id, status):
@@ -451,7 +447,7 @@ class JobQueue(BaseCClass):
         async with websockets.connect(
             ws_uri, ssl=ssl_context, extra_headers=headers
         ) as websocket:
-            await JobQueue._publish_changes(ee_id, self.snapshot(), websocket)
+            await JobQueue._publish_changes(ee_id, self._differ.snapshot(), websocket)
 
             try:
                 while True:
@@ -464,7 +460,7 @@ class JobQueue(BaseCClass):
                             func()
 
                     await JobQueue._publish_changes(
-                        ee_id, self._changes_after_transition(), websocket
+                        ee_id, self.changes_after_transition(), websocket
                     )
                     if not self.is_active() or self.stopped:
                         break
@@ -482,8 +478,8 @@ class JobQueue(BaseCClass):
                 await self.stop_jobs_async()
                 logger.debug("jobs now stopped")
             self.assert_complete()
-            self._transition()
-            await JobQueue._publish_changes(ee_id, self.snapshot(), websocket)
+            self._differ.transition(self.job_list)
+            await JobQueue._publish_changes(ee_id, self._differ.snapshot(), websocket)
 
     def add_job_from_run_arg(self, run_arg, res_config, max_runtime, ok_cb, exit_cb):
         job_name = run_arg.job_name
@@ -548,46 +544,13 @@ class JobQueue(BaseCClass):
             if job.runtime > LONG_RUNNING_FACTOR * average_runtime:
                 job.stop()
 
-    def _transition(
-        self,
-    ) -> typing.Tuple[typing.List[JobStatusType], typing.List[JobStatusType]]:
-        """Transition to a new state, return both old and new state."""
-        new_state = [job.status.value for job in self.job_list]
-        old_state = copy.copy(self._state)
-        self._state = new_state
-        return old_state, new_state
-
-    def _diff_states(
-        self,
-        old_state: typing.List[JobStatusType],
-        new_state: typing.List[JobStatusType],
-    ) -> typing.Dict[int, str]:
-        """Return the diff between old_state and new_state."""
-        changes = {}
-
-        diff = list(map(lambda s: s[0] == s[1], zip(old_state, new_state)))
-        if len(diff) > 0:
-            for q_index, equal in enumerate(diff):
-                if not equal:
-                    st = str(JobStatusType(new_state[q_index]))
-                    changes[self._qindex_to_iens[q_index]] = st
-        return changes
-
-    def _changes_after_transition(self) -> typing.Dict[int, str]:
-        old_state, new_state = self._transition()
-        return self._diff_states(old_state, new_state)
-
     def snapshot(self) -> typing.Optional[typing.Dict[int, str]]:
         """Return the whole state, or None if there was no snapshot."""
-        snapshot = {}
-        for q_index, state_val in enumerate(self._state):
-            st = str(JobStatusType(state_val))
-            try:
-                snapshot[self._qindex_to_iens[q_index]] = st
-            except KeyError as e:
-                logger.debug(f"differ could produce no snapshot due to {e}")
-                return None
-        return snapshot
+        return self._differ.snapshot()
+
+    def changes_after_transition(self) -> typing.Dict[int, str]:
+        old_state, new_state = self._differ.transition(self.job_list)
+        return self._differ.diff_states(old_state, new_state)
 
     def add_ensemble_evaluator_information_to_jobs_file(
         self, ee_id, dispatch_url, cert, token
@@ -601,7 +564,7 @@ class JobQueue(BaseCClass):
                 data = json.load(jobs_file)
 
                 data["ee_id"] = ee_id
-                data["real_id"] = self._qindex_to_iens[q_index]
+                data["real_id"] = self._differ.qindex_to_iens(q_index)
                 data["step_id"] = 0
                 data["dispatch_url"] = dispatch_url
                 data["ee_token"] = token

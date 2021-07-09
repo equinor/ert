@@ -101,11 +101,11 @@ class JobQueueTest(ResTest):
 
             wait_until(lambda: self.assertFalse(job_queue.is_active()))
 
-            job_queue._transition()
+            job_queue._differ.transition(job_queue.job_list)
 
             for q_index, job in enumerate(job_queue.job_list):
                 assert job.status == JobStatusType.JOB_QUEUE_IS_KILLED
-                iens = job_queue._qindex_to_iens[q_index]
+                iens = job_queue._differ.qindex_to_iens(q_index)
                 assert job_queue.snapshot()[iens] == str(
                     JobStatusType.JOB_QUEUE_IS_KILLED
                 )
@@ -149,13 +149,13 @@ class JobQueueTest(ResTest):
             for job in job_queue.job_list:
                 job.wait_for()
 
-            job_queue._transition()
+            job_queue._differ.transition(job_queue.job_list)
 
             assert job_queue.fetch_next_waiting() is None
 
             for q_index, job in enumerate(job_queue.job_list):
                 assert job.status == JobStatusType.JOB_QUEUE_FAILED
-                iens = job_queue._qindex_to_iens[q_index]
+                iens = job_queue._differ.qindex_to_iens(q_index)
                 assert job_queue.snapshot()[iens] == str(JobStatusType.JOB_QUEUE_FAILED)
 
     def test_timeout_jobs(self):
@@ -184,11 +184,11 @@ class JobQueueTest(ResTest):
 
             wait_until(lambda: self.assertFalse(job_queue.is_active()))
 
-            job_queue._transition()
+            job_queue._differ.transition(job_queue.job_list)
 
             for q_index, job in enumerate(job_queue.job_list):
                 assert job.status == JobStatusType.JOB_QUEUE_IS_KILLED
-                iens = job_queue._qindex_to_iens[q_index]
+                iens = job_queue._differ.qindex_to_iens(q_index)
                 assert job_queue.snapshot()[iens] == str(
                     JobStatusType.JOB_QUEUE_IS_KILLED
                 )
