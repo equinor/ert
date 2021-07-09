@@ -99,6 +99,7 @@ class SiteConfigTest(ResTest):
         site_config_filename = "test_site_config"
         test_config_filename = "test_config"
         site_config_content = """
+QUEUE_SYSTEM LOCAL
 LOAD_WORKFLOW_JOB ECHO_WORKFLOW_JOB
 LOAD_WORKFLOW ECHO_WORKFLOW
 HOOK_WORKFLOW ECHO_WORKFLOW PRE_SIMULATION
