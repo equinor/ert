@@ -308,7 +308,7 @@ def _response2records(
             ert.data.NumericalRecord(data=row.to_dict())
             for _, row in dataframe.iterrows()  # pylint: disable=no-member
         ]
-    elif record_type == ert3.data.RecordType.LIST_BYTES:
+    elif record_type == ert.data.RecordType.LIST_BYTES:
         if not ensemble_size:
             ensemble_size = 1
         records = [
@@ -390,7 +390,7 @@ def _get_data(
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
     metadata = _get_numerical_metadata(ensemble_id, record_name)
 
-    if metadata.record_type == ert3.data.RecordType.LIST_BYTES:
+    if metadata.record_type == ert.data.RecordType.LIST_BYTES:
         headers = {"accept": "application/octet-stream"}
     else:
         headers = {"accept": "text/csv"}
@@ -458,7 +458,7 @@ def add_ensemble_record(
     dataframe = pd.DataFrame([r.data for r in ensemble_record.records])
     record_type = _get_record_type(ensemble_record)
 
-    if record_type == ert3.data.RecordType.LIST_BYTES:
+    if record_type == ert.data.RecordType.LIST_BYTES:
         _add_blob_data(
             experiment_name, record_name, ensemble_record, ensemble_size=ensemble_size
         )
@@ -487,7 +487,7 @@ def add_ensemble_record(
 def _add_blob_data(
     experiment_name: str,
     record_name: str,
-    ensemble_record: ert3.data.EnsembleRecord,
+    ensemble_record: ert.data.EnsembleRecord,
     ensemble_size: int,
 ) -> None:
     experiment = _get_experiment_by_name(experiment_name)
@@ -503,7 +503,7 @@ def _add_blob_data(
 
     metadata = _NumericalMetaData(
         ensemble_size=ensemble_size,
-        record_type=ert3.data.RecordType.LIST_BYTES,
+        record_type=ert.data.RecordType.LIST_BYTES,
     )
 
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp

@@ -472,7 +472,7 @@ def test_add_and_get_blob_record(tmpdir, ert_storage):
         responses=[],
     )
 
-    ensemble_record = ert3.data.EnsembleRecord(records=[ert3.data.Record(data=[data])])
+    ensemble_record = ert.data.EnsembleRecord(records=[ert.data.Record(data=[data])])
     ert3.storage.add_ensemble_record(
         workspace=tmpdir,
         record_name=record_name,

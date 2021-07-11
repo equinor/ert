@@ -54,7 +54,7 @@ def _get_experiment_record_indices(
         )
 
         # TODO Might not be the best way of doing this.
-        if ensemble_record.records[0].record_type == ert3.data.RecordType.LIST_BYTES:
+        if ensemble_record.records[0].record_type == ert.data.RecordType.LIST_BYTES:
             return ["blob"]
 
         indices: Set[Union[str, int]] = set()
