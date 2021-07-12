@@ -6,6 +6,7 @@ from typing import Callable
 import pytest
 
 import ert3
+import ert
 
 
 def create_mock_script(path, data=""):
@@ -64,7 +65,7 @@ def test_entry_point(base_unix_stage_config):
     ),
 )
 def test_entry_point_not_valid(config, expected_error):
-    with pytest.raises(ert3.exceptions.ConfigValidationError, match=expected_error):
+    with pytest.raises(ert.exceptions.ConfigValidationError, match=expected_error):
         ert3.config.load_stages_config(config)
 
 
@@ -105,7 +106,7 @@ def test_step_non_existing_transportable_cmd(base_unix_stage_config):
     )
 
     err_msg = '"/not/a/file" does not exist'
-    with pytest.raises(ert3.exceptions.ConfigValidationError, match=err_msg):
+    with pytest.raises(ert.exceptions.ConfigValidationError, match=err_msg):
         ert3.config.load_stages_config(config)
 
 
@@ -113,7 +114,7 @@ def test_step_function_definition_error(base_function_stage_config):
     config = base_function_stage_config
     config[0]["function"] = "builtinssum"
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError,
+        ert.exceptions.ConfigValidationError,
         match=r"Function should be defined as module:function",
     ):
         ert3.config.load_stages_config(config)
@@ -130,7 +131,7 @@ def test_step_unix_and_function(base_unix_stage_config):
     config = base_unix_stage_config
     config[0].update({"function": "builtins:sum"})
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError, match=r"extra fields not permitted"
+        ert.exceptions.ConfigValidationError, match=r"extra fields not permitted"
     ):
         ert3.config.load_stages_config(config)
 
@@ -149,7 +150,7 @@ def test_step_function_and_script_error(base_function_stage_config):
     config = base_function_stage_config
     config[0].update({"script": ["poly --help"]})
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError,
+        ert.exceptions.ConfigValidationError,
         match=r"extra fields not permitted",
     ):
         ert3.config.load_stages_config(config)
@@ -161,7 +162,7 @@ def test_step_function_and_command_error(base_function_stage_config):
         {"transportable_commands": [{"name": "poly", "location": "poly.py"}]}
     )
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError,
+        ert.exceptions.ConfigValidationError,
         match=r"extra fields not permitted",
     ):
         ert3.config.load_stages_config(config)
@@ -195,7 +196,7 @@ def test_stage_immutable(base_stage_config):
 def test_stage_unknown_field(base_stage_config):
     base_stage_config[0]["unknown"] = "field"
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError,
+        ert.exceptions.ConfigValidationError,
         match="extra fields not permitted",
     ):
         ert3.config.load_stages_config(base_stage_config)
@@ -215,7 +216,7 @@ def test_stage_input_unknown_field(base_stage_config):
     base_stage_config[0]["input"][0]["unknown"] = "field"
 
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError,
+        ert.exceptions.ConfigValidationError,
         match="extra fields not permitted",
     ):
         ert3.config.load_stages_config(base_stage_config)
@@ -235,7 +236,7 @@ def test_stage_output_unknown_field(base_stage_config):
     base_stage_config[0]["output"][0]["unknown"] = "field"
 
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError,
+        ert.exceptions.ConfigValidationError,
         match="extra fields not permitted",
     ):
         ert3.config.load_stages_config(base_stage_config)
@@ -255,7 +256,7 @@ def test_stage_transportable_command_unknown_field(base_unix_stage_config):
     base_unix_stage_config[0]["transportable_commands"][0]["unknown"] = "field"
 
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError,
+        ert.exceptions.ConfigValidationError,
         match="extra fields not permitted",
     ):
         ert3.config.load_stages_config(base_unix_stage_config)

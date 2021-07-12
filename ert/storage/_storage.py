@@ -1,6 +1,4 @@
 from collections import defaultdict
-import json
-from pathlib import Path
 from typing import (
     Any,
     Dict,
@@ -13,18 +11,21 @@ from typing import (
 )
 import io
 import logging
+import json
+from pathlib import Path
+
+from http import HTTPStatus
+import httpx
+import aiofiles
 import pandas as pd
 from pydantic import BaseModel
 import requests
 import ert
-import ert3
 
 from ert_shared.storage.connection import get_info
 
 logger = logging.getLogger(__name__)
 
-_STORAGE_TOKEN = None
-_STORAGE_URL = None
 _ENSEMBLE_RECORDS = "__ensemble_records__"
 _SPECIAL_KEYS = (_ENSEMBLE_RECORDS,)
 
@@ -46,13 +47,187 @@ class _NumericalMetaData(BaseModel):
     record_type: ert.data.RecordType
 
 
-def _assert_server_info() -> None:
-    global _STORAGE_URL, _STORAGE_TOKEN  # pylint: disable=global-statement
+class StorageInfo:
+    _url: Optional[str] = None
+    _token: Optional[str] = None
 
-    if _STORAGE_URL is None:
+    @classmethod
+    def _set_info(cls) -> None:
         info = get_info()
-        _STORAGE_URL = info["baseurl"]
-        _STORAGE_TOKEN = info["auth"][1]
+        cls._url = info["baseurl"]
+        cls._token = info["auth"][1]
+
+    @classmethod
+    def url(cls) -> str:
+        if StorageInfo._url is None:
+            cls._set_info()
+        return str(StorageInfo._url)
+
+    @classmethod
+    def token(cls) -> str:
+        if StorageInfo._token is None:
+            cls._set_info()
+        return str(StorageInfo._token)
+
+
+class StorageRecordTransmitter(ert.data.RecordTransmitter):
+    _TYPE: ert.data.RecordTransmitterType = ert.data.RecordTransmitterType.ert_storage
+
+    def __init__(self, name: str, storage_url: str, iens: Optional[int] = None):
+        super().__init__()
+        self._name: str = name
+        self._storage_url = storage_url
+        self._uri: str = ""
+        self._record_type: Optional[ert.data.RecordType] = None
+        self._real_id: Optional[int] = iens
+
+    def _set_transmitted(self, uri: str, record_type: ert.data.RecordType) -> None:
+        super()._set_transmitted_state()
+        self._uri = uri
+        self._record_type = record_type
+
+    @property
+    def transmitter_type(self) -> ert.data.RecordTransmitterType:
+        return self._TYPE
+
+    async def _transmit(self, record: ert.data.Record) -> None:
+        record_type = record.record_type
+        url_base = f"{self._storage_url}/{self._name}"
+
+        if record_type != ert.data.RecordType.BYTES:
+            url = f"{url_base}/matrix"
+        else:
+            url = f"{url_base}/file"
+        if self._real_id is not None:
+            url = f"{url}?realization_index={self._real_id}"
+            url_base = f"{url_base}?realization_index={self._real_id}"
+
+        await add_record(url, record)
+
+        self._set_transmitted(url_base, record_type=record_type)
+
+    async def transmit_data(
+        self,
+        data: ert.data.record_data,
+    ) -> None:
+        if self.is_transmitted():
+            raise RuntimeError("Record already transmitted")
+        return await self._transmit(ert.data.make_record(data))
+
+    async def transmit_file(
+        self,
+        file: Path,
+        mime: str,
+    ) -> None:
+        record: ert.data.Record
+        if self.is_transmitted():
+            raise RuntimeError("Record already transmitted")
+        if mime == "application/json":
+            async with aiofiles.open(str(file), mode="r") as f:
+                contents = await f.read()
+                record = ert.data.NumericalRecord(data=json.loads(contents))
+        elif mime == "application/octet-stream":
+            async with aiofiles.open(str(file), mode="rb") as f:  # type: ignore
+                contents = await f.read()
+                record = ert.data.BlobRecord(data=contents)
+        else:
+            raise NotImplementedError(
+                "cannot transmit file unless mime is application/json"
+                f" or application/octet-stream, was {mime}"
+            )
+        return await self._transmit(record)
+
+    async def load(self) -> ert.data.Record:
+        if not self.is_transmitted():
+            raise RuntimeError("cannot load untransmitted record")
+        return await load_record(self._uri, self._record_type)
+
+    async def dump(self, location: Path) -> None:
+        if not self.is_transmitted():
+            raise RuntimeError("cannot dump untransmitted record")
+        record: ert.data.Record = await self.load()
+        if isinstance(record, ert.data.NumericalRecord):
+            contents = json.dumps(record.data)
+            async with aiofiles.open(location, mode="w") as f:
+                await f.write(contents)
+        else:
+            async with aiofiles.open(location, mode="wb") as f:  # type: ignore
+                await f.write(record.data)  # type: ignore
+
+
+async def _get_from_server_async(
+    url: str,
+    headers: Dict[str, str],
+    **kwargs: Any,
+) -> httpx.Response:
+    async with httpx.AsyncClient() as session:
+        resp = await session.get(url=url, headers=headers, timeout=None, **kwargs)
+
+    if resp.status_code != HTTPStatus.OK:
+        logger.error("Failed to fetch from %s. Response: %s", url, resp.text)
+        raise ert.exceptions.StorageError(resp.text)
+
+    return resp
+
+
+async def _post_to_server_async(
+    url: str,
+    headers: Dict[str, str],
+    **kwargs: Any,
+) -> httpx.Response:
+    async with httpx.AsyncClient() as session:
+        resp = await session.post(url=url, headers=headers, **kwargs)
+
+    if resp.status_code != HTTPStatus.OK:
+        logger.error("Failed to post to %s. Response: %s", url, resp.text)
+        raise ert.exceptions.StorageError(resp.text)
+
+    return resp
+
+
+async def add_record(url: str, record: Any) -> None:
+    headers = {
+        "Token": StorageInfo.token(),
+    }
+
+    if record.record_type != ert.data.RecordType.BYTES:
+        headers["content-type"] = "text/csv"
+        data = pd.DataFrame([record.data]).to_csv().encode()
+        await _post_to_server_async(url=url, headers=headers, data=data)
+    else:
+        data = {"file": io.BytesIO(record.data)}
+        await _post_to_server_async(url=url, headers=headers, files=data)
+
+
+async def load_record(url: str, record_type: Any) -> ert.data.Record:
+    headers = {
+        "Token": StorageInfo.token(),
+    }
+
+    if record_type != ert.data.RecordType.BYTES:
+        headers["accept"] = "text/csv"
+    else:
+        headers["accept"] = "application/octet-stream"
+
+    resp = await _get_from_server_async(url=url, headers=headers)
+    content = resp.content
+    if record_type != ert.data.RecordType.BYTES:
+        dataframe = pd.read_csv(
+            io.BytesIO(content), index_col=0, float_precision="round_trip"
+        )
+        for _, row in dataframe.iterrows():  # pylint: disable=no-member
+            if record_type == ert.data.RecordType.LIST_FLOAT:
+                data = row.to_list()
+            elif record_type == ert.data.RecordType.MAPPING_STR_FLOAT:
+                data = row.to_dict()
+            elif record_type == ert.data.RecordType.MAPPING_INT_FLOAT:
+                data = {int(k): v for k, v in row.to_dict().items()}
+            else:
+                raise ValueError(
+                    f"Unexpected record type when loading numerical record: {record_type}"
+                )
+            return ert.data.NumericalRecord(data=data)
+    return ert.data.BlobRecord(data=content)
 
 
 def _get_from_server(
@@ -62,28 +237,39 @@ def _get_from_server(
     **kwargs: Any,
 ) -> requests.Response:
 
-    _assert_server_info()
     if not headers:
         headers = {}
-    headers["Token"] = _STORAGE_TOKEN
+    headers["Token"] = StorageInfo.token()
 
-    resp = requests.get(url=f"{_STORAGE_URL}/{path}", headers=headers, **kwargs)
+    resp = requests.get(url=f"{StorageInfo.url()}/{path}", headers=headers, **kwargs)
     if resp.status_code != status_code:
         logger.error("Failed to fetch from %s. Response: %s", path, resp.text)
 
     return resp
 
 
+def get_records_url(workspace: Path) -> str:
+    storage_url = StorageInfo.url()
+    experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
+    experiment = _get_experiment_by_name(experiment_name)
+    if experiment is None:
+        raise ert.exceptions.NonExistantExperiment(
+            f"Non-existing experiment: {experiment_name}"
+        )
+
+    ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
+    return f"{storage_url}/ensembles/{ensemble_id}/records"
+
+
 def _delete_on_server(
     path: str, headers: Optional[Dict[Any, Any]] = None, status_code: int = 200
 ) -> requests.Response:
 
-    _assert_server_info()
     if not headers:
         headers = {}
-    headers["Token"] = _STORAGE_TOKEN
+    headers["Token"] = StorageInfo.token()
     resp = requests.delete(
-        url=f"{_STORAGE_URL}/{path}",
+        url=f"{StorageInfo.url()}/{path}",
         headers=headers,
     )
     if resp.status_code != status_code:
@@ -99,11 +285,10 @@ def _post_to_server(
     **kwargs: Any,
 ) -> requests.Response:
 
-    _assert_server_info()
     if not headers:
         headers = {}
-    headers["Token"] = _STORAGE_TOKEN
-    resp = requests.post(url=f"{_STORAGE_URL}/{path}", headers=headers, **kwargs)
+    headers["Token"] = StorageInfo.token()
+    resp = requests.post(url=f"{StorageInfo.url()}/{path}", headers=headers, **kwargs)
     if resp.status_code != status_code:
         logger.error("Failed to post to %s. Response: %s", path, resp.text)
 
@@ -117,11 +302,10 @@ def _put_to_server(
     **kwargs: Any,
 ) -> requests.Response:
 
-    _assert_server_info()
     if not headers:
         headers = {}
-    headers["Token"] = _STORAGE_TOKEN
-    resp = requests.put(url=f"{_STORAGE_URL}/{path}", headers=headers, **kwargs)
+    headers["Token"] = StorageInfo.token()
+    resp = requests.put(url=f"{StorageInfo.url()}/{path}", headers=headers, **kwargs)
     if resp.status_code != status_code:
         logger.error("Failed to put to %s. Response: %s", path, resp.text)
 
@@ -131,7 +315,7 @@ def _put_to_server(
 def _get_experiment_by_name(experiment_name: str) -> Dict[str, Any]:
     response = _get_from_server(path="experiments")
     if response.status_code != 200:
-        raise ert3.exceptions.StorageError(response.text)
+        raise ert.exceptions.StorageError(response.text)
     experiments = {exp["name"]: exp for exp in response.json()}
     return experiments.get(experiment_name, None)
 
@@ -184,12 +368,12 @@ def _init_experiment(
         raise ValueError("Cannot initialize experiment without a name")
 
     if _get_experiment_by_name(experiment_name) is not None:
-        raise ert3.exceptions.ElementExistsError(
+        raise ert.exceptions.ElementExistsError(
             f"Cannot initialize existing experiment: {experiment_name}"
         )
 
     if len(set(parameters.keys()).intersection(responses)) > 0:
-        raise ert3.exceptions.StorageError(
+        raise ert.exceptions.StorageError(
             "Experiment parameters and responses cannot have a name in common"
         )
 
@@ -214,7 +398,7 @@ def _init_experiment(
         },
     )
     if response.status_code != 200:
-        raise ert3.exceptions.StorageError(response.text)
+        raise ert.exceptions.StorageError(response.text)
 
 
 def get_experiment_names(*, workspace: Path) -> Set[str]:
@@ -235,7 +419,7 @@ def _add_numerical_data(
 ) -> None:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise ert3.exceptions.NonExistantExperiment(
+        raise ert.exceptions.NonExistantExperiment(
             f"Cannot add {record_name} data to "
             f"non-existing experiment: {experiment_name}"
         )
@@ -255,15 +439,15 @@ def _add_numerical_data(
     )
 
     if response.status_code == 409:
-        raise ert3.exceptions.ElementExistsError("Record already exists")
+        raise ert.exceptions.ElementExistsError("Record already exists")
 
     if response.status_code != 200:
-        raise ert3.exceptions.StorageError(response.text)
+        raise ert.exceptions.StorageError(response.text)
 
     meta_response = _put_to_server(f"{record_url}/userdata", json=metadata.dict())
 
     if meta_response.status_code != 200:
-        raise ert3.exceptions.StorageError(meta_response.text)
+        raise ert.exceptions.StorageError(meta_response.text)
 
 
 def _response2records(
@@ -353,12 +537,12 @@ def _get_numerical_metadata(ensemble_id: str, record_name: str) -> _NumericalMet
     )
 
     if response.status_code == 404:
-        raise ert3.exceptions.ElementMissingError(
+        raise ert.exceptions.ElementMissingError(
             f"No metadata for {record_name} in ensemble: {ensemble_id}"
         )
 
     if response.status_code != 200:
-        raise ert3.exceptions.StorageError(response.text)
+        raise ert.exceptions.StorageError(response.text)
 
     return _NumericalMetaData(**json.loads(response.content))
 
@@ -369,7 +553,7 @@ def _get_data(
 ) -> ert.data.EnsembleRecord:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise ert3.exceptions.NonExistantExperiment(
+        raise ert.exceptions.NonExistantExperiment(
             f"Cannot get {record_name} data, no experiment named: {experiment_name}"
         )
 
@@ -387,12 +571,12 @@ def _get_data(
     )
 
     if response.status_code == 404:
-        raise ert3.exceptions.ElementMissingError(
+        raise ert.exceptions.ElementMissingError(
             f"No {record_name} data for experiment: {experiment_name}"
         )
 
     if response.status_code != 200:
-        raise ert3.exceptions.StorageError(response.text)
+        raise ert.exceptions.StorageError(response.text)
 
     return _response2records(
         response_content=response.content,
@@ -407,7 +591,7 @@ def _is_numeric_parameter_response(name: str) -> bool:
 def _get_experiment_parameters(experiment_name: str) -> Mapping[str, Iterable[str]]:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise ert3.exceptions.NonExistantExperiment(
+        raise ert.exceptions.NonExistantExperiment(
             f"Cannot get parameters from non-existing experiment: {experiment_name}"
         )
 
@@ -415,7 +599,7 @@ def _get_experiment_parameters(experiment_name: str) -> Mapping[str, Iterable[st
     response = _get_from_server(f"ensembles/{ensemble_id}/parameters")
 
     if response.status_code != 200:
-        raise ert3.exceptions.StorageError(response.text)
+        raise ert.exceptions.StorageError(response.text)
 
     parameters = defaultdict(list)
     for name in response.json():
@@ -439,7 +623,7 @@ def add_ensemble_record(
         experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise ert3.exceptions.NonExistantExperiment(
+        raise ert.exceptions.NonExistantExperiment(
             f"Cannot add {record_name} data to "
             f"non-existing experiment: {experiment_name}"
         )
@@ -475,7 +659,7 @@ def _add_blob_data(
 ) -> None:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise ert3.exceptions.NonExistantExperiment(
+        raise ert.exceptions.NonExistantExperiment(
             f"Cannot add {record_name} data to "
             f"non-existing experiment: {experiment_name}"
         )
@@ -504,15 +688,15 @@ def _add_blob_data(
     )
 
     if response.status_code == 409:
-        raise ert3.exceptions.ElementExistsError("Record already exists")
+        raise ert.exceptions.ElementExistsError("Record already exists")
 
     if response.status_code != 200:
-        raise ert3.exceptions.StorageError(response.text)
+        raise ert.exceptions.StorageError(response.text)
 
     meta_response = _put_to_server(f"{record_url}/userdata", json=metadata.dict())
 
     if meta_response.status_code != 200:
-        raise ert3.exceptions.StorageError(meta_response.text)
+        raise ert.exceptions.StorageError(meta_response.text)
 
 
 def get_ensemble_record(
@@ -525,7 +709,7 @@ def get_ensemble_record(
         experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise ert3.exceptions.NonExistantExperiment(
+        raise ert.exceptions.NonExistantExperiment(
             f"Cannot get {record_name} data, no experiment named: {experiment_name}"
         )
 
@@ -554,14 +738,14 @@ def get_ensemble_record_names(
         experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise ert3.exceptions.NonExistantExperiment(
+        raise ert.exceptions.NonExistantExperiment(
             f"Cannot get record names of non-existing experiment: {experiment_name}"
         )
 
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
     response = _get_from_server(path=f"ensembles/{ensemble_id}/records")
     if response.status_code != 200:
-        raise ert3.exceptions.StorageError(response.text)
+        raise ert.exceptions.StorageError(response.text)
 
     # Flatten any parameter records that were split
     if _flatten:
@@ -576,24 +760,24 @@ def get_experiment_parameters(*, experiment_name: str) -> Iterable[str]:
 def get_experiment_responses(*, experiment_name: str) -> Iterable[str]:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise ert3.exceptions.NonExistantExperiment(
+        raise ert.exceptions.NonExistantExperiment(
             f"Cannot get responses from non-existing experiment: {experiment_name}"
         )
 
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
     response = _get_from_server(f"ensembles/{ensemble_id}/responses")
     if response.status_code != 200:
-        raise ert3.exceptions.StorageError(response.text)
+        raise ert.exceptions.StorageError(response.text)
     return list(response.json())
 
 
 def delete_experiment(*, experiment_name: str) -> None:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise ert3.exceptions.NonExistantExperiment(
+        raise ert.exceptions.NonExistantExperiment(
             f"Experiment does not exist: {experiment_name}"
         )
     response = _delete_on_server(path=f"experiments/{experiment['id']}")
 
     if response.status_code != 200:
-        raise ert3.exceptions.StorageError(response.text)
+        raise ert.exceptions.StorageError(response.text)

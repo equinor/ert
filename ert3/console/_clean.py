@@ -1,6 +1,7 @@
 from typing import Set
 from pathlib import Path
 
+import ert
 import ert3
 
 
@@ -11,7 +12,7 @@ def clean(workspace: Path, experiment_names: Set[str], clean_all: bool) -> None:
         non_existant = [
             name
             for name in experiment_names
-            if name not in ert3.storage.get_experiment_names(workspace=workspace)
+            if name not in ert.storage.get_experiment_names(workspace=workspace)
         ]
 
     ert3.engine.clean(workspace, experiment_names, clean_all)

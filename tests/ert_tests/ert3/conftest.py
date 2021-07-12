@@ -217,7 +217,7 @@ def function_stages_config():
         }
     ]
     func_dir = pathlib.Path("function_steps")
-    func_dir.mkdir()
+    func_dir.mkdir(exist_ok=True)
     (func_dir / "__init__.py").write_text("")
     (func_dir / "functions.py").write_text(POLY_FUNCTION)
     sys.path.append(os.getcwd())
@@ -227,13 +227,21 @@ def function_stages_config():
 
 @pytest.fixture
 def ert_storage(ert_storage_client, monkeypatch):
-    from ert3.storage import _storage
+    from ert.storage import _storage
+    from ert_storage.app import app
+    from httpx import AsyncClient
 
     ert_storage_client.raise_on_client_error = False
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "ON")
     # Fix requests library
     for func in "get", "post", "put", "delete":
         monkeypatch.setattr(_storage.requests, func, getattr(ert_storage_client, func))
+
+    async_client = AsyncClient(app=app, base_url="http://127.0.0.1:51820")
+    for func in "get", "post", "put", "delete":
+        monkeypatch.setattr(
+            _storage.httpx.AsyncClient, func, getattr(async_client, func)
+        )
 
     monkeypatch.setattr(
         _storage,

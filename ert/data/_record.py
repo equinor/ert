@@ -5,6 +5,7 @@ import uuid
 from abc import abstractmethod, ABC
 from enum import Enum, auto
 from pathlib import Path
+
 from typing import (
     Any,
     List,
@@ -15,7 +16,6 @@ from typing import (
     Union,
     Dict,
 )
-
 import aiofiles
 
 # Type hinting for wrap must be turned off until (1) is resolved.
@@ -297,7 +297,7 @@ class RecordTransmitter:
 
 # The use of this, rather ugly, function could possibly be avoided by moving some
 # of the functionality of the transmitters into the Record classes.
-def _make_record(
+def make_record(
     data: Any, index: Optional[RecordIndex] = None
 ) -> Union[NumericalRecord, BlobRecord]:
     validation_errors = []
@@ -350,7 +350,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
     async def transmit_data(self, data: record_data) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
-        record = _make_record(data)
+        record = make_record(data)
         return await self._transmit(record)
 
     async def transmit_file(
@@ -425,7 +425,7 @@ class InMemoryRecordTransmitter(RecordTransmitter):
     async def transmit_data(self, data: record_data) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
-        record = _make_record(data)
+        record = make_record(data)
         self._set_transmitted(record)
 
     @abstractmethod
@@ -456,14 +456,14 @@ class InMemoryRecordTransmitter(RecordTransmitter):
         if not self.is_transmitted():
             raise RuntimeError("cannot load untransmitted record")
         assert self._data is not None
-        return _make_record(self._data, index=self._index)
+        return make_record(self._data, index=self._index)
 
     async def dump(self, location: Path) -> None:
         if not self.is_transmitted():
             raise RuntimeError("cannot dump untransmitted record")
         if self._data is None:
             raise ValueError("cannot dump Record with no data")
-        record = _make_record(data=self._data, index=self._index)
+        record = make_record(data=self._data, index=self._index)
         if record.record_type != RecordType.BYTES:
             async with aiofiles.open(str(location), mode="w") as f:
                 await f.write(json.dumps(self._data))

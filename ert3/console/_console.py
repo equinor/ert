@@ -11,6 +11,7 @@ import pkg_resources as pkg
 import yaml
 
 import ert3
+import ert
 
 from ert3.config import EnsembleConfig, StagesConfig, ExperimentConfig, ParametersConfig
 from ert_shared.storage.connection import get_info
@@ -163,14 +164,14 @@ def _init(args: Any) -> None:
 
         # check that examples folder contains provided 'example_name'
         if not pkg_example_path.exists():
-            raise ert3.exceptions.IllegalWorkspaceOperation(
+            raise ert.exceptions.IllegalWorkspaceOperation(
                 f"Example {example_name} is not a valid ert3 example.\n"
                 f"Valid examples names are:  {', '.join(_get_ert3_example_names())}."
             )
 
         # check that we are not inside an ERT workspace already
         if ert3.workspace.load(pathlib.Path.cwd()) is not None:
-            raise ert3.exceptions.IllegalWorkspaceOperation(
+            raise ert.exceptions.IllegalWorkspaceOperation(
                 "Already inside an ERT workspace."
             )
 
@@ -178,7 +179,7 @@ def _init(args: Any) -> None:
         if not wd_example_path.is_dir():
             shutil.copytree(pkg_example_path, wd_example_path)
         else:
-            raise ert3.exceptions.IllegalWorkspaceOperation(
+            raise ert.exceptions.IllegalWorkspaceOperation(
                 f"Your working directory already contains example {example_name}."
             )
 
@@ -275,9 +276,9 @@ def _service(args: Any) -> None:
 def main() -> None:
     try:
         _main()
-    except ert3.exceptions.ConfigValidationError as e:
+    except ert.exceptions.ConfigValidationError as e:
         ert3.console.report_validation_errors(e)
-    except ert3.exceptions.ErtError as e:
+    except ert.exceptions.ErtError as e:
         sys.exit(e)
 
 
@@ -300,7 +301,7 @@ def _main() -> None:
     workspace = ert3.workspace.load(pathlib.Path.cwd())
 
     if workspace is None:
-        raise ert3.exceptions.IllegalWorkspaceOperation("Not inside an ERT workspace.")
+        raise ert.exceptions.IllegalWorkspaceOperation("Not inside an ERT workspace.")
 
     if args.sub_cmd == "run":
         _run(workspace, args)

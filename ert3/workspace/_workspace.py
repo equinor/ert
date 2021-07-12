@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Union, Optional, Set
 
 import ert3
+import ert
 
 
 def _locate_root(path: Union[str, Path]) -> Optional[Path]:
@@ -22,7 +23,7 @@ def assert_experiment_exists(
         Path(workspace_root) / ert3.workspace.EXPERIMENTS_BASE / experiment_name
     )
     if not experiment_root.is_dir():
-        raise ert3.exceptions.IllegalWorkspaceOperation(
+        raise ert.exceptions.IllegalWorkspaceOperation(
             f"{experiment_name} is not an experiment "
             f"within the workspace {workspace_root}"
         )
@@ -31,7 +32,7 @@ def assert_experiment_exists(
 def get_experiment_names(workspace_root: Union[str, Path]) -> Set[str]:
     experiment_base = Path(workspace_root) / ert3.workspace.EXPERIMENTS_BASE
     if not experiment_base.is_dir():
-        raise ert3.exceptions.IllegalWorkspaceState(
+        raise ert.exceptions.IllegalWorkspaceState(
             f"the workspace {workspace_root} cannot access experiments"
         )
     return {
@@ -42,19 +43,19 @@ def get_experiment_names(workspace_root: Union[str, Path]) -> Set[str]:
 
 
 def experiment_has_run(workspace_root: Path, experiment_name: str) -> bool:
-    experiments = ert3.storage.get_experiment_names(workspace=workspace_root)
+    experiments = ert.storage.get_experiment_names(workspace=workspace_root)
     return experiment_name in experiments
 
 
 def initialize(path: Union[str, Path]) -> None:
     path = Path(path)
     if load(path) is not None:
-        raise ert3.exceptions.IllegalWorkspaceOperation(
+        raise ert.exceptions.IllegalWorkspaceOperation(
             "Already inside an ERT workspace."
         )
 
     os.mkdir(path / ert3._WORKSPACE_DATA_ROOT)
-    ert3.storage.init(workspace=path)
+    ert.storage.init(workspace=path)
 
 
 def load(path: Union[str, Path]) -> Optional[Path]:

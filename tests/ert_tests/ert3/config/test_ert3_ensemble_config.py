@@ -3,6 +3,7 @@ from copy import deepcopy
 import pytest
 
 import ert3
+import ert
 
 
 @pytest.fixture()
@@ -47,7 +48,7 @@ def test_forward_model_invalid_driver(base_ensemble_config):
     }
 
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError,
+        ert.exceptions.ConfigValidationError,
         match="unexpected value; permitted: 'local'",
     ):
         ert3.config.load_ensemble_config(base_ensemble_config)
@@ -76,7 +77,7 @@ def test_input(input_config, expected_source, expected_record, base_ensemble_con
 )
 def test_invalid_input(input_config, expected_error, base_ensemble_config):
     base_ensemble_config["input"] = [input_config]
-    with pytest.raises(ert3.exceptions.ConfigValidationError, match=expected_error):
+    with pytest.raises(ert.exceptions.ConfigValidationError, match=expected_error):
         ert3.config.load_ensemble_config(base_ensemble_config)
 
 
@@ -89,7 +90,7 @@ def test_immutable_base(base_ensemble_config):
 def test_unknown_field_in_base(base_ensemble_config):
     base_ensemble_config["unknown"] = "field"
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError, match="extra fields not permitted"
+        ert.exceptions.ConfigValidationError, match="extra fields not permitted"
     ):
         ert3.config.load_ensemble_config(base_ensemble_config)
 
@@ -106,7 +107,7 @@ def test_immutable_input(base_ensemble_config):
 def test_unknown_field_in_input(base_ensemble_config):
     base_ensemble_config["input"][0]["unknown"] = "field"
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError, match="extra fields not permitted"
+        ert.exceptions.ConfigValidationError, match="extra fields not permitted"
     ):
         ert3.config.load_ensemble_config(base_ensemble_config)
 
@@ -120,7 +121,7 @@ def test_immutable_forward_model(base_ensemble_config):
 def test_unknown_field_in_forward_model(base_ensemble_config):
     base_ensemble_config["forward_model"]["unknown"] = "field"
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError, match="extra fields not permitted"
+        ert.exceptions.ConfigValidationError, match="extra fields not permitted"
     ):
         ert3.config.load_ensemble_config(base_ensemble_config)
 
@@ -129,7 +130,7 @@ def test_missing_ouput(base_ensemble_config):
     remove_output = base_ensemble_config.copy()
     remove_output.pop("output")
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError, match="output\n  field required"
+        ert.exceptions.ConfigValidationError, match="output\n  field required"
     ):
         ert3.config.load_ensemble_config(remove_output)
 
@@ -155,5 +156,5 @@ def test_output(output_config, expected_record, base_ensemble_config):
 )
 def test_invalid_output(output_config, expected_error, base_ensemble_config):
     base_ensemble_config["output"] = [output_config]
-    with pytest.raises(ert3.exceptions.ConfigValidationError, match=expected_error):
+    with pytest.raises(ert.exceptions.ConfigValidationError, match=expected_error):
         ert3.config.load_ensemble_config(base_ensemble_config)

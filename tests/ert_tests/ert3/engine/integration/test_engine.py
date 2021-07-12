@@ -9,6 +9,7 @@ from integration_utils import (
     assert_sensitivity_oat_export,
 )
 
+import ert
 import ert3
 
 
@@ -267,7 +268,7 @@ def test_gaussian_distribution(
         workspace, gaussian_parameters_config, "coefficients", "coefficients0", 1000
     )
 
-    coefficients = ert3.storage.get_ensemble_record(
+    coefficients = ert.storage.get_ensemble_record(
         workspace=workspace, record_name="coefficients0"
     )
     assert 1000 == coefficients.ensemble_size
@@ -296,7 +297,7 @@ def test_uniform_distribution(
         1000,
     )
 
-    coefficients = ert3.storage.get_ensemble_record(
+    coefficients = ert.storage.get_ensemble_record(
         workspace=workspace, record_name="uniform_coefficients0"
     )
     assert 1000 == coefficients.ensemble_size
@@ -326,7 +327,7 @@ def test_run_presampled(
         workspace, gaussian_parameters_config, "coefficients", "coefficients0", 10
     )
 
-    coeff0 = ert3.storage.get_ensemble_record(
+    coeff0 = ert.storage.get_ensemble_record(
         workspace=workspace, record_name="coefficients0"
     )
     assert 10 == coeff0.ensemble_size
@@ -375,7 +376,7 @@ def test_run_uniform_presampled(
         10,
     )
 
-    uniform_coeff0 = ert3.storage.get_ensemble_record(
+    uniform_coeff0 = ert.storage.get_ensemble_record(
         workspace=workspace, record_name="uniform_coefficients0"
     )
     assert 10 == uniform_coeff0.ensemble_size
@@ -426,7 +427,7 @@ def test_record_load_and_run(
     ert3.engine.load_record(
         workspace, "designed_coefficients", designed_coeffs_record_file
     )
-    designed_coeff = ert3.storage.get_ensemble_record(
+    designed_coeff = ert.storage.get_ensemble_record(
         workspace=workspace, record_name="designed_coefficients"
     )
     assert 10 == designed_coeff.ensemble_size
@@ -462,7 +463,7 @@ def test_record_load_twice(
     ert3.engine.load_record(
         workspace, "designed_coefficients", designed_coeffs_record_file
     )
-    with pytest.raises(ert3.exceptions.ElementExistsError):
+    with pytest.raises(ert.exceptions.ElementExistsError):
         ert3.engine.load_record(
             workspace, "designed_coefficients", designed_coeffs_record_file
         )
