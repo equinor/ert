@@ -10,30 +10,34 @@ pipeline {
                 sh 'sh ci/jenkins/test_libres_jenkins.sh setup'
             }
         }
-	stage('build libres') {
+        stage('build libres') {
             steps {
                 sh 'sh ci/jenkins/test_libres_jenkins.sh build_libecl'
                 sh 'sh ci/jenkins/test_libres_jenkins.sh build_libres'
             }
         }
-	stage('build res') {
+        stage('build res') {
             steps {
                 sh 'sh ci/jenkins/test_libres_jenkins.sh build_res'
             }
         }
-	stage('run ctest') {
-            steps {
-                sh 'sh ci/jenkins/test_libres_jenkins.sh run_ctest'
-            }
-        }
-	stage('run pytest_equinor') {
-            steps {
-                sh 'sh ci/jenkins/test_libres_jenkins.sh run_pytest_equinor'
-            }
-        }
-	stage('run pytest_normal') {
-            steps {
-                sh 'sh ci/jenkins/test_libres_jenkins.sh run_pytest_normal'
+        stage('tests') {
+            parallel {
+                stage('run ctest') {
+                    steps {
+                        sh 'sh ci/jenkins/test_libres_jenkins.sh run_ctest'
+                    }
+                }
+                stage('run pytest_equinor') {
+                    steps {
+                        sh 'sh ci/jenkins/test_libres_jenkins.sh run_pytest_equinor'
+                    }
+                }  
+                stage('run pytest_normal') {
+                    steps {
+                        sh 'sh ci/jenkins/test_libres_jenkins.sh run_pytest_normal'
+                    }
+                }              
             }
         }
     }
