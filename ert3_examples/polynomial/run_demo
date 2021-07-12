@@ -29,6 +29,10 @@ ert3 export sensitivity
 ert3 run uniform_sensitivity
 ert3 export uniform_sensitivity
 
+ert3 record load coefficients experiments/partial_sensitivity/storage_coefficients.json
+ert3 run partial_sensitivity
+ert3 export partial_sensitivity
+
 ert3 run x_uncertainty
 ert3 export x_uncertainty
 

@@ -67,6 +67,16 @@ def presampled_big_ensemble(base_ensemble_dict):
 
 
 @pytest.fixture()
+def partial_sensitivity_ensemble(base_ensemble_dict):
+    base_ensemble_dict.pop("size")
+    base_ensemble_dict["input"].append(
+        {"record": "other_coefficients", "source": "storage.other_coefficients"}
+    )
+    base_ensemble_dict["output"].append({"record": "other_polynomial_output"})
+    yield ert3.config.load_ensemble_config(base_ensemble_dict)
+
+
+@pytest.fixture()
 def evaluation_experiment_config():
     raw_config = {"type": "evaluation"}
     yield ert3.config.load_experiment_config(raw_config)
@@ -481,3 +491,65 @@ def test_sensitivity_run_and_export(
     assert_sensitivity_oat_export(
         export_data, sensitivity_ensemble, stages_config, gaussian_parameters_config
     )
+
+
+@pytest.mark.requires_ert_storage
+def test_partial_sensitivity_run_and_export(
+    workspace,
+    partial_sensitivity_ensemble,
+    double_stages_config,
+    sensitivity_experiment_config,
+    oat_compatible_record_file,
+    gaussian_parameters_config,
+):
+    experiment_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "partial_sensitivity"
+    experiment_dir.ensure(dir=True)
+    ert3.engine.load_record(workspace, "other_coefficients", oat_compatible_record_file)
+    ert3.engine.run(
+        partial_sensitivity_ensemble,
+        double_stages_config,
+        sensitivity_experiment_config,
+        gaussian_parameters_config,
+        workspace,
+        "partial_sensitivity",
+    )
+    ert3.engine.export(workspace, "partial_sensitivity")
+
+    export_data = _load_export_data(workspace, "partial_sensitivity")
+    assert_sensitivity_oat_export(
+        export_data,
+        partial_sensitivity_ensemble,
+        double_stages_config,
+        gaussian_parameters_config,
+    )
+
+
+@pytest.mark.requires_ert_storage
+def test_incompatible_partial_sensitivity_run(
+    workspace,
+    partial_sensitivity_ensemble,
+    double_stages_config,
+    sensitivity_experiment_config,
+    oat_incompatible_record_file,
+    gaussian_parameters_config,
+):
+    experiment_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "partial_sensitivity"
+    experiment_dir.ensure(dir=True)
+    ert3.engine.load_record(
+        workspace, "other_coefficients", oat_incompatible_record_file
+    )
+
+    err_msg = (
+        "The size of the other_coefficients storage records "
+        "does not match the size of the sensitivity records: "
+        "is 10, must be 6"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        ert3.engine.run(
+            partial_sensitivity_ensemble,
+            double_stages_config,
+            sensitivity_experiment_config,
+            gaussian_parameters_config,
+            workspace,
+            "partial_sensitivity",
+        )
