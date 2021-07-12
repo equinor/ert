@@ -14,8 +14,8 @@ def load_record(
 ) -> None:
 
     if blob_record:
-        with open(record_file, "rb") as f:
-            raw_ensrecord = f.read()
+        with open(record_file, "rb") as fb:
+            raw_ensrecord = fb.read()
         ensrecord = ert.data.EnsembleRecord(
             records=[ert.data.Record(data=[raw_ensrecord])]
         )

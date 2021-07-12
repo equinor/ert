@@ -285,7 +285,7 @@ def _response2records(
 
     records: List[ert.data.Record]
     if record_type == ert.data.RecordType.LIST_FLOAT:
-        dataframe: pd.DataFrame = pd.read_csv(
+        dataframe = pd.read_csv(
             io.BytesIO(response_content), index_col=0, float_precision="round_trip"
         )
         records = [
@@ -293,7 +293,7 @@ def _response2records(
             for _, row in dataframe.iterrows()  # pylint: disable=no-member
         ]
     elif record_type == ert.data.RecordType.MAPPING_INT_FLOAT:
-        dataframe: pd.DataFrame = pd.read_csv(
+        dataframe = pd.read_csv(
             io.BytesIO(response_content), index_col=0, float_precision="round_trip"
         )
         records = [
@@ -301,7 +301,7 @@ def _response2records(
             for _, row in dataframe.iterrows()  # pylint: disable=no-member
         ]
     elif record_type == ert.data.RecordType.MAPPING_STR_FLOAT:
-        dataframe: pd.DataFrame = pd.read_csv(
+        dataframe = pd.read_csv(
             io.BytesIO(response_content), index_col=0, float_precision="round_trip"
         )
         records = [
@@ -488,7 +488,7 @@ def _add_blob_data(
     experiment_name: str,
     record_name: str,
     ensemble_record: ert.data.EnsembleRecord,
-    ensemble_size: int,
+    ensemble_size: Optional[int],
 ) -> None:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
@@ -497,7 +497,6 @@ def _add_blob_data(
             f"non-existing experiment: {experiment_name}"
         )
 
-    # TODO dis ok ?
     if not ensemble_size:
         ensemble_size = ensemble_record.ensemble_size
 
@@ -510,11 +509,18 @@ def _add_blob_data(
     record_url = f"ensembles/{ensemble_id}/records/{record_name}"
 
     record = ensemble_record.records[0]
-    data = record.data[0]
+    if isinstance(record.data, list) and isinstance(record.data[0], bytes):
+        data_bytes: bytes = record.data[0]
+    else:
+        raise TypeError(
+            f"Expecting: {ert.data.RecordType.LIST_BYTES} was {type(record.data)}"
+        )
 
     response = _post_to_server(
         f"{record_url}/file",
-        files={"file": (record_name, io.BytesIO(data), "application/octet-stream")},
+        files={
+            "file": (record_name, io.BytesIO(data_bytes), "application/octet-stream")
+        },
     )
 
     if response.status_code == 409:
