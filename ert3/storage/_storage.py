@@ -195,14 +195,19 @@ def _init_experiment(
 
     exp_response = _post_to_server(path="experiments", json={"name": experiment_name})
     exp_id = exp_response.json()["id"]
+
+    parameter_names = []
+    for record, params in parameters.items():
+        if not params:
+            parameter_names.append(record)
+        else:
+            for param in params:
+                parameter_names.append(f"{record}.{param}")
+
     response = _post_to_server(
         f"experiments/{exp_id}/ensembles",
         json={
-            "parameter_names": [
-                f"{record}.{param}"
-                for record, params in parameters.items()
-                for param in params
-            ],
+            "parameter_names": parameter_names,
             "response_names": list(responses),
             "size": ensemble_size,
             "userdata": {"name": experiment_name},
@@ -382,11 +387,6 @@ def _get_data(
             f"Cannot get {record_name} data, no experiment named: {experiment_name}"
         )
 
-    # TODO: hack ?
-    split = record_name.split(".")
-    if len(split) == 2 and split[1] == "blob":
-        record_name = split[0]
-
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
     metadata = _get_numerical_metadata(ensemble_id, record_name)
 
@@ -430,11 +430,14 @@ def _get_experiment_parameters(
         raise ert3.exceptions.StorageError(response.text)
     parameters: MutableMapping[str, List[str]] = {}
     for name in response.json():
-        key, val = name.split(".")
-        if key in parameters:
-            parameters[key].append(val)
+        if len(name.split(".")) == 1:
+            parameters[name] = []
         else:
-            parameters[key] = [val]
+            key, val = name.split(".")
+            if key in parameters:
+                parameters[key].append(val)
+            else:
+                parameters[key] = [val]
     return parameters
 
 
@@ -552,16 +555,24 @@ def get_ensemble_record(
 
     param_names = _get_experiment_parameters(workspace, experiment_name)
     if record_name in param_names:
-        ensemble_records = [
-            _get_data(
+        if not param_names[record_name]:
+            return _get_data(
                 workspace=workspace,
                 experiment_name=experiment_name,
-                record_name=record_name + _PARAMETER_RECORD_SEPARATOR + param_name,
+                record_name=record_name,
                 ensemble_size=ensemble_size,
             )
-            for param_name in param_names[record_name]
-        ]
-        return _combine_records(ensemble_records)
+        else:
+            ensemble_records = [
+                _get_data(
+                    workspace=workspace,
+                    experiment_name=experiment_name,
+                    record_name=record_name + _PARAMETER_RECORD_SEPARATOR + param_name,
+                    ensemble_size=ensemble_size,
+                )
+                for param_name in param_names[record_name]
+            ]
+            return _combine_records(ensemble_records)
     else:
         return _get_data(
             workspace=workspace,
