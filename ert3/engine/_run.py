@@ -27,7 +27,7 @@ def _prepare_experiment(
             workspace_root, record_source, parameters_config
         )
     responses = [elem.record for elem in ensemble.output]
-    ert3.storage.init_experiment(
+    ert.storage.init_experiment(
         experiment_name=experiment_name,
         parameters=parameters,
         ensemble_size=ensemble_size,
@@ -44,7 +44,7 @@ def _get_experiment_record_indices(
     source, source_record_name = record_source
 
     if source == "storage":
-        ensemble_record = ert3.storage.get_ensemble_record(
+        ensemble_record = ert.storage.get_ensemble_record(
             workspace=workspace_root,
             record_name=source_record_name,
         )
@@ -84,7 +84,7 @@ def _prepare_experiment_record(
 ) -> None:
     if record_source[0] == "storage":
         assert len(record_source) == 2
-        ensemble_record = ert3.storage.get_ensemble_record(
+        ensemble_record = ert.storage.get_ensemble_record(
             workspace=workspace_root,
             record_name=record_source[1],
         )
@@ -106,7 +106,7 @@ def _prepare_experiment_record(
                     f"is {ensemble_record.ensemble_size}, must be {ensemble_size}"
                 )
 
-        ert3.storage.add_ensemble_record(
+        ert.storage.add_ensemble_record(
             workspace=workspace_root,
             record_name=record_name,
             ensemble_record=ensemble_record,
@@ -217,7 +217,7 @@ def _prepare_sensitivity_records(
         ensemble_record = ert.data.EnsembleRecord(
             records=sensitivity_parameters[record_name]
         )
-        ert3.storage.add_ensemble_record(
+        ert.storage.add_ensemble_record(
             workspace=workspace_root,
             experiment_name=experiment_name,
             record_name=record_name,
@@ -270,7 +270,7 @@ def _store_output_records(
 ) -> None:
     assert records.record_names is not None
     for record_name in records.record_names:
-        ert3.storage.add_ensemble_record(
+        ert.storage.add_ensemble_record(
             workspace=workspace_root,
             experiment_name=experiment_name,
             record_name=record_name,
@@ -282,13 +282,13 @@ def _load_experiment_parameters(
     workspace_root: pathlib.Path,
     experiment_name: str,
 ) -> ert.data.MultiEnsembleRecord:
-    parameter_names = ert3.storage.get_experiment_parameters(
+    parameter_names = ert.storage.get_experiment_parameters(
         experiment_name=experiment_name
     )
 
     parameters = {}
     for parameter_name in parameter_names:
-        parameters[parameter_name] = ert3.storage.get_ensemble_record(
+        parameters[parameter_name] = ert.storage.get_ensemble_record(
             workspace=workspace_root,
             experiment_name=experiment_name,
             record_name=parameter_name,

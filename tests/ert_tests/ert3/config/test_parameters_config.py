@@ -1,6 +1,7 @@
 import pytest
 
 import ert3
+import ert
 
 
 @pytest.mark.parametrize(
@@ -98,7 +99,7 @@ def test_invalid_gauss(input_):
         }
     ]
 
-    with pytest.raises(ert3.exceptions.ConfigValidationError):
+    with pytest.raises(ert.exceptions.ConfigValidationError):
         ert3.config.load_parameters_config(raw_config)
 
 
@@ -193,7 +194,7 @@ def test_invalid_uniform(input_):
         }
     ]
 
-    with pytest.raises(ert3.exceptions.ConfigValidationError):
+    with pytest.raises(ert.exceptions.ConfigValidationError):
         ert3.config.load_parameters_config(raw_config)
 
 
@@ -223,7 +224,7 @@ def test_invalid_name(name, err_msg):
         }
     ]
 
-    with pytest.raises(ert3.exceptions.ConfigValidationError, match=err_msg):
+    with pytest.raises(ert.exceptions.ConfigValidationError, match=err_msg):
         ert3.config.load_parameters_config(raw_config)
 
 
@@ -285,7 +286,7 @@ def test_invalid_variable_names(name, err_msg):
         }
     ]
 
-    with pytest.raises(ert3.exceptions.ConfigValidationError, match=err_msg):
+    with pytest.raises(ert.exceptions.ConfigValidationError, match=err_msg):
         ert3.config.load_parameters_config(raw_config)
 
 
@@ -306,7 +307,7 @@ def test_no_variables():
     ]
 
     err_msg = "Parameter group cannot have no variables"
-    with pytest.raises(ert3.exceptions.ConfigValidationError, match=err_msg):
+    with pytest.raises(ert.exceptions.ConfigValidationError, match=err_msg):
         ert3.config.load_parameters_config(raw_config)
 
 
@@ -331,7 +332,7 @@ def test_invalid_size(size):
     ]
 
     err_msg = "Size cannot be <= 0"
-    with pytest.raises(ert3.exceptions.ConfigValidationError, match=err_msg):
+    with pytest.raises(ert.exceptions.ConfigValidationError, match=err_msg):
         ert3.config.load_parameters_config(raw_config)
 
 
@@ -359,7 +360,7 @@ def test_duplicate_variables_size(variables, size, err_msg):
         }
     ]
 
-    with pytest.raises(ert3.exceptions.ConfigValidationError, match=err_msg):
+    with pytest.raises(ert.exceptions.ConfigValidationError, match=err_msg):
         ert3.config.load_parameters_config(raw_config)
 
 
@@ -379,7 +380,7 @@ def test_invalid_type():
         }
     ]
 
-    with pytest.raises(ert3.exceptions.ConfigValidationError, match="unexpected value"):
+    with pytest.raises(ert.exceptions.ConfigValidationError, match="unexpected value"):
         ert3.config.load_parameters_config(raw_config)
 
 
@@ -399,7 +400,7 @@ def test_invalid_distribution():
         }
     ]
 
-    with pytest.raises(ert3.exceptions.ConfigValidationError):
+    with pytest.raises(ert.exceptions.ConfigValidationError):
         ert3.config.load_parameters_config(raw_config)
 
 
@@ -421,7 +422,7 @@ def test_unknown_keyword():
     ]
 
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError, match="extra fields not permitted"
+        ert.exceptions.ConfigValidationError, match="extra fields not permitted"
     ):
         ert3.config.load_parameters_config(raw_config)
 

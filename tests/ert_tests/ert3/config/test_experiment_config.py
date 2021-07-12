@@ -1,6 +1,7 @@
 import pytest
 
 import ert3
+import ert
 
 
 def test_valid_evaluation():
@@ -37,7 +38,7 @@ def test_valid_sensitivity_tail(algorithm, tail):
 def test_unknown_experiment_type():
     raw_config = {"type": "unknown_experiment_type"}
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError,
+        ert.exceptions.ConfigValidationError,
         match=r"unexpected value; permitted: 'evaluation', 'sensitivity' \(",
     ):
         ert3.config.load_experiment_config(raw_config)
@@ -46,7 +47,7 @@ def test_unknown_experiment_type():
 def test_evaluation_and_algorithm():
     raw_config = {"type": "evaluation", "algorithm": "one-at-a-time"}
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError,
+        ert.exceptions.ConfigValidationError,
         match="Did not expect algorithm for evaluation experiment",
     ):
         ert3.config.load_experiment_config(raw_config)
@@ -55,7 +56,7 @@ def test_evaluation_and_algorithm():
 def test_evaluation_and_tail():
     raw_config = {"type": "evaluation", "tail": "0.99"}
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError,
+        ert.exceptions.ConfigValidationError,
         match="Did not expect tail for evaluation experiment",
     ):
         ert3.config.load_experiment_config(raw_config)
@@ -64,7 +65,7 @@ def test_evaluation_and_tail():
 def test_sensitivity_and_no_algorithm():
     raw_config = {"type": "sensitivity"}
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError,
+        ert.exceptions.ConfigValidationError,
         match="Expected an algorithm for sensitivity experiments",
     ):
         ert3.config.load_experiment_config(raw_config)
@@ -73,7 +74,7 @@ def test_sensitivity_and_no_algorithm():
 def test_unkown_sensitivity_algorithm():
     raw_config = {"type": "sensitivity", "algorithm": "unknown_algorithm"}
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError,
+        ert.exceptions.ConfigValidationError,
         match=r"unexpected value; permitted: 'one-at-a-time' \(",
     ):
         ert3.config.load_experiment_config(raw_config)
@@ -85,14 +86,14 @@ def test_unkown_sensitivity_algorithm():
 )
 def test_invalid_tail(tail, err_msg):
     raw_config = {"type": "sensitivity", "algorithm": "one-at-a-time", "tail": tail}
-    with pytest.raises(ert3.exceptions.ConfigValidationError, match=err_msg):
+    with pytest.raises(ert.exceptions.ConfigValidationError, match=err_msg):
         ert3.config.load_experiment_config(raw_config)
 
 
 def test_unknown_field():
     raw_config = {"type": "evaluation", "unknown": "field"}
     with pytest.raises(
-        ert3.exceptions.ConfigValidationError,
+        ert.exceptions.ConfigValidationError,
         match="extra fields not permitted",
     ):
         ert3.config.load_experiment_config(raw_config)

@@ -4,7 +4,7 @@ import mimetypes
 from typing import Callable, Tuple, cast, Union, Dict, Any
 
 from pydantic import BaseModel, FilePath, ValidationError, validator
-import ert3
+import ert
 
 _DEFAULT_RECORD_MIME_TYPE: str = "application/json"
 _DEFAULT_CMD_MIME_TYPE: str = "application/octet-stream"
@@ -106,4 +106,4 @@ def load_stages_config(config_dict: Dict[str, Any]) -> StagesConfig:
     try:
         return StagesConfig.parse_obj(config_dict)
     except ValidationError as err:
-        raise ert3.exceptions.ConfigValidationError(str(err), source="stages")
+        raise ert.exceptions.ConfigValidationError(str(err), source="stages")

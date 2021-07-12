@@ -862,7 +862,6 @@ def test_run_prefect_ensemble_with_path(unused_tcp_port, coefficients, source_ro
 
         service_config = EvaluatorServerConfig(custom_port_range=fixed_port)
         config["config_path"] = Path(config["config_path"])
-        config["run_path"] = Path(config["run_path"])
         config["storage"]["storage_path"] = Path(config["storage"]["storage_path"])
         config["dispatch_uri"] = service_config.dispatch_uri
 
@@ -913,7 +912,6 @@ def test_cancel_run_prefect_ensemble(unused_tcp_port, coefficients, source_root)
 
         service_config = EvaluatorServerConfig(custom_port_range=fixed_port)
         config["config_path"] = Path(config["config_path"])
-        config["run_path"] = Path(config["run_path"])
         config["storage"]["storage_path"] = Path(config["storage"]["storage_path"])
         config["dispatch_uri"] = service_config.dispatch_uri
 
@@ -965,7 +963,6 @@ def test_run_prefect_ensemble_exception(unused_tcp_port, coefficients, source_ro
 
         service_config = EvaluatorServerConfig(custom_port_range=fixed_port)
         config["config_path"] = Path(config["config_path"])
-        config["run_path"] = Path(config["run_path"])
         config["storage"]["storage_path"] = Path(config["storage"]["storage_path"])
         config["dispatch_uri"] = service_config.dispatch_uri
 

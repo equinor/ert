@@ -98,7 +98,6 @@ steps:
 realizations: 25
 max_running: 6
 max_retries: 2
-run_path: my_output
 executor: local
 storage:
   type: shared_disk

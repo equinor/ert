@@ -2,7 +2,7 @@ import sys
 from typing import Tuple, Optional, Dict, Any
 from pydantic import BaseModel, ValidationError
 
-import ert3
+import ert
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -38,10 +38,11 @@ class EnsembleConfig(_EnsembleConfig):
     input: Tuple[Input, ...]
     output: Tuple[Output, ...]
     size: Optional[int] = None
+    storage_type: str = "shared_disk"
 
 
 def load_ensemble_config(config_dict: Dict[str, Any]) -> EnsembleConfig:
     try:
         return EnsembleConfig(**config_dict)
     except ValidationError as err:
-        raise ert3.exceptions.ConfigValidationError(str(err), source="ensemble")
+        raise ert.exceptions.ConfigValidationError(str(err), source="ensemble")

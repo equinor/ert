@@ -3,6 +3,7 @@ import json
 import pathlib
 import pickle
 import tempfile
+
 from typing import Callable, ContextManager
 
 import cloudpickle
@@ -14,10 +15,16 @@ from ert.data import (
     RecordTransmitter,
     SharedDiskRecordTransmitter,
 )
+import ert
+
+
+@pytest.fixture()
+def storage_path(workspace, ert_storage):
+    yield ert.storage.get_records_url(workspace)
 
 
 @contextlib.contextmanager
-def shared_disk_factory_context():
+def shared_disk_factory_context(**kwargs):
     tmp_path = tempfile.TemporaryDirectory()
     tmp_storage_path = pathlib.Path(tmp_path.name) / ".shared-storage"
     tmp_storage_path.mkdir(parents=True)
@@ -35,16 +42,25 @@ def shared_disk_factory_context():
 
 
 @contextlib.contextmanager
-def in_memory_factory_context():
+def in_memory_factory_context(**kwargs):
     def in_memory_factory(name: str) -> InMemoryRecordTransmitter:
         return InMemoryRecordTransmitter(name=name)
 
     yield in_memory_factory
 
 
+@contextlib.contextmanager
+def ert_storage_factory_context(storage_path):
+    def ert_storage_factory(name: str) -> ert.storage.StorageRecordTransmitter:
+        return ert.storage.StorageRecordTransmitter(name=name, storage_url=storage_path)
+
+    yield ert_storage_factory
+
+
 factory_params = pytest.mark.parametrize(
     ("record_transmitter_factory_context"),
     (
+        ert_storage_factory_context,
         in_memory_factory_context,
         shared_disk_factory_context,
     ),
@@ -54,7 +70,7 @@ simple_records = pytest.mark.parametrize(
     ("data_in", "expected_data", "application_type"),
     (
         ([1, 2, 3], [1, 2, 3], "application/json"),
-        ((1.0, 10.0, 42, 999.0), [1.0, 10.0, 42, 999.0], "application/json"),
+        ((1.0, 10.0, 42.0, 999.0), [1.0, 10.0, 42.0, 999.0], "application/json"),
         ([], [], "application/json"),
         ([12.0], [12.0], "application/json"),
         ({1, 2, 3}, [1, 2, 3], "application/json"),
@@ -76,8 +92,11 @@ async def test_simple_record_transmit(
     data_in,
     expected_data,
     application_type,
+    storage_path,
 ):
-    with record_transmitter_factory_context() as record_transmitter_factory:
+    with record_transmitter_factory_context(
+        storage_path=storage_path
+    ) as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
         await transmitter.transmit_data(data_in)
         assert transmitter.is_transmitted()
@@ -95,9 +114,12 @@ async def test_simple_record_transmit_from_file(
     data_in,
     expected_data,
     application_type,
+    storage_path,
 ):
     filename = "record.file"
-    with record_transmitter_factory_context() as record_transmitter_factory, tmp():
+    with record_transmitter_factory_context(
+        storage_path=storage_path
+    ) as record_transmitter_factory, tmp():
         transmitter = record_transmitter_factory(name="some_name")
         if application_type == "application/json":
             with open(filename, "w") as f:
@@ -121,8 +143,11 @@ async def test_simple_record_transmit_and_load(
     data_in,
     expected_data,
     application_type,
+    storage_path,
 ):
-    with record_transmitter_factory_context() as record_transmitter_factory:
+    with record_transmitter_factory_context(
+        storage_path=storage_path
+    ) as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
         await transmitter.transmit_data(data_in)
 
@@ -140,8 +165,11 @@ async def test_simple_record_transmit_and_dump(
     data_in,
     expected_data,
     application_type,
+    storage_path,
 ):
-    with record_transmitter_factory_context() as record_transmitter_factory, tmp():
+    with record_transmitter_factory_context(
+        storage_path=storage_path
+    ) as record_transmitter_factory, tmp():
         transmitter = record_transmitter_factory(name="some_name")
         await transmitter.transmit_data(data_in)
 
@@ -164,8 +192,11 @@ async def test_simple_record_transmit_pickle_and_load(
     data_in,
     expected_data,
     application_type,
+    storage_path,
 ):
-    with record_transmitter_factory_context() as record_transmitter_factory:
+    with record_transmitter_factory_context(
+        storage_path=storage_path
+    ) as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
         transmitter = pickle.loads(cloudpickle.dumps(transmitter))
         await transmitter.transmit_data(data_in)
@@ -182,7 +213,9 @@ async def test_load_untransmitted_record(
         Callable[[str], RecordTransmitter]
     ],
 ):
-    with record_transmitter_factory_context() as record_transmitter_factory:
+    with record_transmitter_factory_context(
+        storage_path=None
+    ) as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
         with pytest.raises(RuntimeError, match="cannot load untransmitted record"):
             _ = await transmitter.load()
@@ -195,7 +228,9 @@ async def test_dump_untransmitted_record(
         Callable[[str], RecordTransmitter]
     ],
 ):
-    with record_transmitter_factory_context() as record_transmitter_factory:
+    with record_transmitter_factory_context(
+        storage_path=None
+    ) as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
         with pytest.raises(RuntimeError, match="cannot dump untransmitted record"):
             await transmitter.dump("some.file")

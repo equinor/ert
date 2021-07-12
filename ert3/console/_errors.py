@@ -1,4 +1,4 @@
-from ert3.exceptions import ConfigValidationError
+from ert.exceptions import ConfigValidationError
 
 
 def report_validation_errors(error: ConfigValidationError) -> None:

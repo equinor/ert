@@ -196,4 +196,4 @@ def load_parameters_config(config: List[Dict[str, Any]]) -> ParametersConfig:
     try:
         return ParametersConfig.parse_obj(config)
     except ValidationError as err:
-        raise ert3.exceptions.ConfigValidationError(str(err), source="parameters")
+        raise ert.exceptions.ConfigValidationError(str(err), source="parameters")

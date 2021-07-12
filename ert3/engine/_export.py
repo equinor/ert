@@ -2,8 +2,8 @@ import json
 from pathlib import Path
 from typing import Iterable, List, Dict, Any
 
-import ert3
 import ert
+import ert3
 
 
 def _prepare_export(
@@ -18,7 +18,7 @@ def _prepare_export(
     data: List[Dict[str, Dict[str, Any]]] = []
 
     for record_name, data_type in data_mapping:
-        ensemble_record = ert3.storage.get_ensemble_record(
+        ensemble_record = ert.storage.get_ensemble_record(
             workspace=workspace_root,
             experiment_name=experiment_name,
             record_name=record_name,
@@ -46,10 +46,10 @@ def export(workspace_root: Path, experiment_name: str) -> None:
     if not ert3.workspace.experiment_has_run(workspace_root, experiment_name):
         raise ValueError("Cannot export experiment that has not been carried out")
 
-    parameter_names = ert3.storage.get_experiment_parameters(
+    parameter_names = ert.storage.get_experiment_parameters(
         experiment_name=experiment_name
     )
-    response_names = ert3.storage.get_experiment_responses(
+    response_names = ert.storage.get_experiment_responses(
         experiment_name=experiment_name
     )
 

@@ -29,7 +29,7 @@ def load_record(
             ]
         )
 
-    ert3.storage.add_ensemble_record(
+    ert.storage.add_ensemble_record(
         workspace=workspace,
         record_name=record_name,
         ensemble_record=ensrecord,
@@ -49,7 +49,7 @@ def sample_record(
     ensrecord = ert.data.EnsembleRecord(
         records=[distribution.sample() for _ in range(ensemble_size)]
     )
-    ert3.storage.add_ensemble_record(
+    ert.storage.add_ensemble_record(
         workspace=workspace,
         record_name=record_name,
         ensemble_record=ensrecord,

@@ -7,6 +7,7 @@ import pytest
 import yaml
 
 import ert3
+import ert
 
 
 @pytest.mark.parametrize(
@@ -20,7 +21,7 @@ def test_cli_no_init(tmpdir, args):
     with tmpdir.as_cwd():
         with patch.object(sys, "argv", args):
             with pytest.raises(
-                ert3.exceptions.IllegalWorkspaceOperation,
+                ert.exceptions.IllegalWorkspaceOperation,
                 match="Not inside an ERT workspace",
             ):
                 ert3.console._console._main()
@@ -49,7 +50,7 @@ def test_cli_init_twice(tmpdir, ert_storage):
 
         with patch.object(sys, "argv", args):
             with pytest.raises(
-                ert3.exceptions.IllegalWorkspaceOperation,
+                ert.exceptions.IllegalWorkspaceOperation,
                 match="Already inside an ERT workspace",
             ):
                 ert3.console._console._main()
@@ -61,7 +62,7 @@ def test_cli_init_subfolder(workspace):
     args = ["ert3", "init"]
     with patch.object(sys, "argv", args):
         with pytest.raises(
-            ert3.exceptions.IllegalWorkspaceOperation,
+            ert.exceptions.IllegalWorkspaceOperation,
             match="Already inside an ERT workspace",
         ):
             ert3.console._console._main()
@@ -130,7 +131,7 @@ def test_cli_run_invalid_experiment(workspace):
     args = ["ert3", "run", "this-is-not-an-experiment"]
     with patch.object(sys, "argv", args):
         with pytest.raises(
-            ert3.exceptions.IllegalWorkspaceOperation,
+            ert.exceptions.IllegalWorkspaceOperation,
             match="this-is-not-an-experiment is not an experiment",
         ):
             ert3.console._console._main()
@@ -214,7 +215,7 @@ def test_cli_status_some_runs(workspace, capsys):
 
     done_indices = [1, 3]
     for idx in done_indices:
-        ert3.storage.init_experiment(
+        ert.storage.init_experiment(
             experiment_name=experiments[idx],
             parameters={},
             ensemble_size=42,
@@ -236,7 +237,7 @@ def test_cli_status_all_run(workspace, capsys):
     experiments = ert3.workspace.get_experiment_names(workspace)
 
     for experiment in experiments:
-        ert3.storage.init_experiment(
+        ert.storage.init_experiment(
             experiment_name=experiment,
             parameters={},
             ensemble_size=42,
@@ -267,7 +268,7 @@ def test_cli_status_no_experiments_root(workspace):
     args = ["ert3", "status"]
     with patch.object(sys, "argv", args):
         with pytest.raises(
-            ert3.exceptions.IllegalWorkspaceState,
+            ert.exceptions.IllegalWorkspaceState,
             match=f"the workspace {workspace} cannot access experiments",
         ):
             ert3.console._console._main()
@@ -278,13 +279,13 @@ def test_cli_clean_no_runs(workspace):
     experiments_folder = workspace.mkdir(ert3.workspace.EXPERIMENTS_BASE)
     experiments_folder.mkdir("E0")
 
-    assert ert3.storage.get_experiment_names(workspace=workspace) == set()
+    assert ert.storage.get_experiment_names(workspace=workspace) == set()
 
     args = ["ert3", "status"]
     with patch.object(sys, "argv", args):
         ert3.console.main()
 
-    assert ert3.storage.get_experiment_names(workspace=workspace) == set()
+    assert ert.storage.get_experiment_names(workspace=workspace) == set()
 
 
 @pytest.mark.requires_ert_storage
@@ -297,7 +298,7 @@ def test_cli_clean_all(workspace):
     experiments = ert3.workspace.get_experiment_names(workspace)
 
     for experiment in experiments:
-        ert3.storage.init_experiment(
+        ert.storage.init_experiment(
             experiment_name=experiment,
             parameters={},
             ensemble_size=42,
@@ -310,13 +311,13 @@ def test_cli_clean_all(workspace):
             workspace, experiment
         ).exists()
 
-    assert ert3.storage.get_experiment_names(workspace=workspace) == experiments
+    assert ert.storage.get_experiment_names(workspace=workspace) == experiments
 
     args = ["ert3", "clean", "--all"]
     with patch.object(sys, "argv", args):
         ert3.console.main()
 
-    assert ert3.storage.get_experiment_names(workspace=workspace) == set()
+    assert ert.storage.get_experiment_names(workspace=workspace) == set()
     for experiment in experiments:
         assert not ert3.evaluator._evaluator._create_evaluator_tmp_dir(
             workspace, experiment
@@ -329,7 +330,7 @@ def test_cli_clean_one(workspace):
     experiments = {"E0", " E1"}
     for experiment in experiments:
         experiments_folder.mkdir(experiment)
-        ert3.storage.init_experiment(
+        ert.storage.init_experiment(
             experiment_name=experiment,
             parameters={},
             ensemble_size=42,
@@ -342,7 +343,7 @@ def test_cli_clean_one(workspace):
             workspace, experiment
         ).exists()
 
-    assert ert3.storage.get_experiment_names(workspace=workspace) == experiments
+    assert ert.storage.get_experiment_names(workspace=workspace) == experiments
 
     deleted_experiment = experiments.pop()
 
@@ -350,7 +351,7 @@ def test_cli_clean_one(workspace):
     with patch.object(sys, "argv", args):
         ert3.console.main()
 
-    assert ert3.storage.get_experiment_names(workspace=workspace) == experiments
+    assert ert.storage.get_experiment_names(workspace=workspace) == experiments
     for experiment in experiments:
         assert ert3.evaluator._evaluator._create_evaluator_tmp_dir(
             workspace, experiment
@@ -368,7 +369,7 @@ def test_cli_clean_non_existant_experiment(workspace, capsys):
         experiments_folder.mkdir(experiment)
 
     for experiment in experiments:
-        ert3.storage.init_experiment(
+        ert.storage.init_experiment(
             experiment_name=experiment,
             parameters={},
             ensemble_size=42,
@@ -381,7 +382,7 @@ def test_cli_clean_non_existant_experiment(workspace, capsys):
             workspace, experiment
         ).exists()
 
-    assert ert3.storage.get_experiment_names(workspace=workspace) == experiments
+    assert ert.storage.get_experiment_names(workspace=workspace) == experiments
 
     deleted_experiment = experiments.pop()
 
@@ -389,7 +390,7 @@ def test_cli_clean_non_existant_experiment(workspace, capsys):
     with patch.object(sys, "argv", args):
         ert3.console.main()
 
-    assert ert3.storage.get_experiment_names(workspace=workspace) == experiments
+    assert ert.storage.get_experiment_names(workspace=workspace) == experiments
     for experiment in experiments:
         assert ert3.evaluator._evaluator._create_evaluator_tmp_dir(
             workspace, experiment
@@ -411,7 +412,7 @@ def test_cli_validation_ensemble_function(base_ensemble_dict, capsys):
 
     config = copy.deepcopy(base_ensemble_dict)
     config["size"] = "a"
-    with pytest.raises(ert3.exceptions.ConfigValidationError) as exc_info:
+    with pytest.raises(ert.exceptions.ConfigValidationError) as exc_info:
         ert3.config.load_ensemble_config(config)
     ert3.console.report_validation_errors(exc_info.value)
     capture = capsys.readouterr()
@@ -424,7 +425,7 @@ def test_cli_validation_experiment_function(capsys):
     ert3.config.load_experiment_config(config)
 
     config["type"] = []
-    with pytest.raises(ert3.exceptions.ConfigValidationError) as exc_info:
+    with pytest.raises(ert.exceptions.ConfigValidationError) as exc_info:
         ert3.config.load_experiment_config(config)
     ert3.console.report_validation_errors(exc_info.value)
     capture = capsys.readouterr()
@@ -450,7 +451,7 @@ def test_cli_validation_experiment_function(capsys):
     ],
 )
 def test_cli_validation_stages_function(config, expected, capsys):
-    with pytest.raises(ert3.exceptions.ConfigValidationError) as exc_info:
+    with pytest.raises(ert.exceptions.ConfigValidationError) as exc_info:
         ert3.config.load_stages_config(config)
     ert3.console.report_validation_errors(exc_info.value)
     capture = capsys.readouterr()

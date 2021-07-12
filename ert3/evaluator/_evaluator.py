@@ -1,12 +1,10 @@
 import asyncio
-import os
 import pathlib
 import pickle
 import shutil
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
-
 import cloudpickle
 from pydantic import FilePath
 import ert
@@ -32,44 +30,46 @@ def _create_evaluator_tmp_dir(workspace_root: Path, evaluation_name: str) -> Pat
 
 
 def _prepare_input(
-    ee_config: Dict[str, Any],
+    storage_type: str,
     step_config: Step,
     inputs: MultiEnsembleRecord,
-    evaluation_tmp_dir: Path,
+    storage_path: str,
     ensemble_size: int,
 ) -> Dict[int, Dict[str, RecordTransmitter]]:
-    tmp_input_folder = evaluation_tmp_dir / "prep_input_files"
-    os.makedirs(tmp_input_folder)
-    storage_config = ee_config["storage"]
     transmitters: Dict[int, Dict[str, ert.data.RecordTransmitter]] = defaultdict(dict)
 
     futures = []
     for input_ in step_config.input:
         for iens, record in enumerate(inputs.ensemble_records[input_.record].records):
-            if storage_config.get("type") == "shared_disk":
+            transmitter: RecordTransmitter
+            if storage_type == "shared_disk":
                 transmitter = ert.data.SharedDiskRecordTransmitter(
                     name=input_.record,
-                    storage_path=pathlib.Path(storage_config["storage_path"]),
+                    storage_path=pathlib.Path(storage_path),
+                )
+            elif storage_type == "ert_storage":
+                transmitter = ert.storage.StorageRecordTransmitter(
+                    name=input_.record, storage_url=storage_path, iens=iens
                 )
             else:
-                raise ValueError(
-                    f"Unsupported transmitter type: {storage_config.get('type')}"
-                )
+                raise ValueError(f"Unsupported transmitter type: {storage_type}")
             # See the Record class for the reason of the 'type ignore'.
             futures.append(transmitter.transmit_data(record.data))  # type: ignore
             transmitters[iens][input_.record] = transmitter
     asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
     if isinstance(step_config, ert3.config.Unix):
         for command in step_config.transportable_commands:
-            if storage_config.get("type") == "shared_disk":
+            if storage_type == "shared_disk":
                 transmitter = ert.data.SharedDiskRecordTransmitter(
                     name=command.name,
-                    storage_path=pathlib.Path(storage_config["storage_path"]),
+                    storage_path=pathlib.Path(storage_path),
+                )
+            elif storage_type == "ert_storage":
+                transmitter = ert.storage.StorageRecordTransmitter(
+                    name=command.name, storage_url=storage_path
                 )
             else:
-                raise ValueError(
-                    f"Unsupported transmitter type: {storage_config.get('type')}"
-                )
+                raise ValueError(f"Unsupported transmitter type: {storage_type}")
             with open(command.location, "rb") as f:
                 asyncio.get_event_loop().run_until_complete(
                     transmitter.transmit_data(f.read())
@@ -80,34 +80,35 @@ def _prepare_input(
 
 
 def _prepare_output(
-    ee_config: Dict[str, Any],
+    storage_type: str,
     step_config: Step,
-    evaluation_tmp_dir: Path,
+    storage_path: str,
     ensemble_size: int,
 ) -> Dict[int, Dict[str, RecordTransmitter]]:
-    tmp_input_folder = evaluation_tmp_dir / "output_files"
-    os.makedirs(tmp_input_folder)
-    storage_config = ee_config["storage"]
     transmitters: Dict[int, Dict[str, ert.data.RecordTransmitter]] = defaultdict(dict)
 
     for output in step_config.output:
         for iens in range(0, ensemble_size):
-            if storage_config.get("type") == "shared_disk":
+            if storage_type == "shared_disk":
                 transmitters[iens][
                     output.record
                 ] = ert.data.SharedDiskRecordTransmitter(
                     name=output.record,
-                    storage_path=pathlib.Path(storage_config["storage_path"]),
+                    storage_path=pathlib.Path(storage_path),
+                )
+            elif storage_type == "ert_storage":
+                transmitters[iens][
+                    output.record
+                ] = ert.storage.StorageRecordTransmitter(
+                    name=output.record, storage_url=storage_path, iens=iens
                 )
             else:
-                raise ValueError(
-                    f"Unsupported transmitter type: {storage_config.get('type')}"
-                )
+                raise ValueError(f"Unsupported transmitter type: {storage_type}")
     return dict(transmitters)
 
 
 def _build_ee_config(
-    evaluation_tmp_dir: Path,
+    storage_path: str,
     ensemble: EnsembleConfig,
     stages_config: StagesConfig,
     input_records: MultiEnsembleRecord,
@@ -190,21 +191,16 @@ def _build_ee_config(
         "realizations": ensemble_size,
         "max_running": 10000,
         "max_retries": 0,
-        "run_path": evaluation_tmp_dir / "my_output",
         "executor": ensemble.forward_model.driver,
-        "storage": {
-            "type": "shared_disk",
-            "storage_path": evaluation_tmp_dir / ".my_storage",
-        },
         "dispatch_uri": dispatch_uri,
     }
 
     assert ensemble_size is not None
     ee_config["inputs"] = _prepare_input(
-        ee_config, stage, input_records, evaluation_tmp_dir, ensemble_size
+        ensemble.storage_type, stage, input_records, storage_path, ensemble_size
     )
     ee_config["outputs"] = _prepare_output(
-        ee_config, stage, evaluation_tmp_dir, ensemble_size
+        ensemble.storage_type, stage, storage_path, ensemble_size
     )
 
     return ee_config
@@ -263,16 +259,21 @@ def _prepare_output_records(
 
 def evaluate(
     workspace_root: Path,
-    evaluation_name: str,
+    experiment_name: str,
     input_records: MultiEnsembleRecord,
     ensemble_config: EnsembleConfig,
     stages_config: StagesConfig,
 ) -> MultiEnsembleRecord:
-    evaluation_tmp_dir = _create_evaluator_tmp_dir(workspace_root, evaluation_name)
+
+    if ensemble_config.storage_type == "ert_storage":
+        storage_path = ert.storage.get_records_url(workspace_root)
+    else:
+        evaluation_tmp_dir = _create_evaluator_tmp_dir(workspace_root, experiment_name)
+        storage_path = str(evaluation_tmp_dir / ".my_storage")
 
     config = EvaluatorServerConfig()
     ee_config = _build_ee_config(
-        evaluation_tmp_dir,
+        storage_path,
         ensemble_config,
         stages_config,
         input_records,

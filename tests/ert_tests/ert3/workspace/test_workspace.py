@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 import ert3
+import ert
 
 
 @pytest.mark.requires_ert_storage
@@ -12,7 +13,7 @@ def test_workspace_initialize(tmpdir, ert_storage):
     assert (Path(tmpdir) / ert3._WORKSPACE_DATA_ROOT).is_dir()
 
     with pytest.raises(
-        ert3.exceptions.IllegalWorkspaceOperation,
+        ert.exceptions.IllegalWorkspaceOperation,
         match="Already inside an ERT workspace.",
     ):
         ert3.workspace.initialize(tmpdir)
@@ -31,7 +32,7 @@ def test_workspace_load(tmpdir, ert_storage):
 def test_workspace_assert_experiment_exists(tmpdir, ert_storage):
     experiments_dir = Path(tmpdir) / ert3.workspace.EXPERIMENTS_BASE
     with pytest.raises(
-        ert3.exceptions.IllegalWorkspaceState,
+        ert.exceptions.IllegalWorkspaceState,
         match=f"the workspace {tmpdir} cannot access experiments",
     ):
         ert3.workspace.get_experiment_names(tmpdir)
@@ -42,7 +43,7 @@ def test_workspace_assert_experiment_exists(tmpdir, ert_storage):
     ert3.workspace.assert_experiment_exists(tmpdir, "test1")
 
     with pytest.raises(
-        ert3.exceptions.IllegalWorkspaceOperation,
+        ert.exceptions.IllegalWorkspaceOperation,
         match=f"test2 is not an experiment within the workspace {tmpdir}",
     ):
         ert3.workspace.assert_experiment_exists(tmpdir, "test2")
@@ -52,7 +53,7 @@ def test_workspace_assert_experiment_exists(tmpdir, ert_storage):
 def test_workspace_assert_get_experiment_names(tmpdir, ert_storage):
     experiments_dir = Path(tmpdir) / ert3.workspace.EXPERIMENTS_BASE
     with pytest.raises(
-        ert3.exceptions.IllegalWorkspaceState,
+        ert.exceptions.IllegalWorkspaceState,
         match=f"the workspace {tmpdir} cannot access experiments",
     ):
         ert3.workspace.get_experiment_names(tmpdir)
@@ -68,7 +69,7 @@ def test_workspace_assert_get_experiment_names(tmpdir, ert_storage):
 def test_workspace_experiment_has_run(tmpdir, ert_storage):
     experiments_dir = Path(tmpdir) / ert3.workspace.EXPERIMENTS_BASE
     with pytest.raises(
-        ert3.exceptions.IllegalWorkspaceState,
+        ert.exceptions.IllegalWorkspaceState,
         match=f"the workspace {tmpdir} cannot access experiments",
     ):
         ert3.workspace.get_experiment_names(tmpdir)
@@ -77,7 +78,7 @@ def test_workspace_experiment_has_run(tmpdir, ert_storage):
     Path(experiments_dir / "test1").mkdir(parents=True)
     Path(experiments_dir / "test2").mkdir(parents=True)
 
-    ert3.storage.init_experiment(
+    ert.storage.init_experiment(
         experiment_name="test1",
         parameters={},
         ensemble_size=42,
