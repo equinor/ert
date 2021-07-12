@@ -77,12 +77,24 @@ def _prepare_experiment_record(
     experiment_name: str,
     workspace_root: pathlib.Path,
     parameters_config: ert3.config.ParametersConfig,
+    experiment_config: ert3.config.ExperimentConfig,
 ) -> None:
     if record_source[0] == "storage":
         assert len(record_source) == 2
         ensemble_record = ert3.storage.get_ensemble_record(
             workspace=workspace_root, record_name=record_source[1]
         )
+
+        # Workaround to ensure compatible ensemble sizes
+        # for sensitivity experiment
+        if experiment_config.type == "sensitivity":
+            if ensemble_record.ensemble_size != ensemble_size:
+                raise ValueError(
+                    f"The size of the {record_name} storage records "
+                    f"does not match the size of the sensitivity records: "
+                    f"is {ensemble_record.ensemble_size}, must be {ensemble_size}"
+                )
+
         ert3.storage.add_ensemble_record(
             workspace=workspace_root,
             experiment_name=experiment_name,
@@ -104,6 +116,7 @@ def _prepare_experiment_record(
 
 def _prepare_evaluation(
     ensemble: ert3.config.EnsembleConfig,
+    experiment_config: ert3.config.ExperimentConfig,
     parameters_config: ert3.config.ParametersConfig,
     workspace_root: pathlib.Path,
     experiment_name: str,
@@ -126,60 +139,117 @@ def _prepare_evaluation(
             experiment_name,
             workspace_root,
             parameters_config,
+            experiment_config,
         )
 
 
-def _load_ensemble_parameters(
+def _load_sensitivity_parameters(
     ensemble: ert3.config.EnsembleConfig,
     parameters_config: ert3.config.ParametersConfig,
-    workspace: pathlib.Path,
 ) -> Dict[str, ert3.stats.Distribution]:
     all_distributions = {
         param.name: param.as_distribution() for param in parameters_config
     }
 
-    ensemble_parameters = {}
+    sensitivity_parameters = {}
     for input_record in ensemble.input:
         record_name = input_record.record
         record_source = input_record.source.split(_SOURCE_SEPARATOR)
-        assert len(record_source) == 2
-        assert record_source[0] == "stochastic"
-        parameter_group_name = record_source[1]
-        ensemble_parameters[record_name] = all_distributions[parameter_group_name]
-    return ensemble_parameters
+        if record_source[0] == "stochastic":
+            assert len(record_source) == 2
+            group_name = record_source[1]
+            sensitivity_parameters[record_name] = all_distributions[group_name]
+    return sensitivity_parameters
 
 
-def _prepare_sensitivity(
+def _prepare_storage_records(
     ensemble: ert3.config.EnsembleConfig,
+    ensemble_size: int,
+    experiment_config: ert3.config.ExperimentConfig,
     parameters_config: ert3.config.ParametersConfig,
     workspace_root: pathlib.Path,
     experiment_name: str,
 ) -> None:
-    parameter_distributions = _load_ensemble_parameters(
-        ensemble, parameters_config, workspace_root
-    )
-    input_records = ert3.algorithms.one_at_the_time(parameter_distributions)
+    for input_record in ensemble.input:
+        record_name = input_record.record
+        record_source = input_record.source.split(_SOURCE_SEPARATOR)
 
-    _prepare_experiment(
-        workspace_root, experiment_name, ensemble, len(input_records), parameters_config
-    )
+        if record_source[0] == "storage":
+            _prepare_experiment_record(
+                record_name,
+                record_source,
+                ensemble_size,
+                experiment_name,
+                workspace_root,
+                parameters_config,
+                experiment_config,
+            )
 
-    parameters: Dict[str, List[ert.data.Record]] = {
-        param.record: [] for param in ensemble.input
+
+def _prepare_sensitivity_records(
+    ensemble: ert3.config.EnsembleConfig,
+    sensitivity_records: List[Dict[str, ert.data.Record]],
+    workspace_root: pathlib.Path,
+    experiment_name: str,
+) -> None:
+    sensitivity_parameters: Dict[str, List[ert.data.Record]] = {
+        param.record: []
+        for param in ensemble.input
+        if param.source.split(_SOURCE_SEPARATOR)[0] == "stochastic"
     }
-    for realization in input_records:
-        assert parameters.keys() == realization.keys()
+    for realization in sensitivity_records:
+        assert sensitivity_parameters.keys() == realization.keys()
         for record_name in realization:
-            parameters[record_name].append(realization[record_name])
+            sensitivity_parameters[record_name].append(realization[record_name])
 
-    for record_name in parameters:
-        ensemble_record = ert.data.EnsembleRecord(records=parameters[record_name])
+    for record_name in sensitivity_parameters:
+        ensemble_record = ert.data.EnsembleRecord(
+            records=sensitivity_parameters[record_name]
+        )
         ert3.storage.add_ensemble_record(
             workspace=workspace_root,
             experiment_name=experiment_name,
             record_name=record_name,
             ensemble_record=ensemble_record,
         )
+
+
+def _prepare_sensitivity(
+    ensemble: ert3.config.EnsembleConfig,
+    experiment_config: ert3.config.ExperimentConfig,
+    parameters_config: ert3.config.ParametersConfig,
+    workspace_root: pathlib.Path,
+    experiment_name: str,
+) -> None:
+    sensitivity_distributions = _load_sensitivity_parameters(
+        ensemble, parameters_config
+    )
+
+    sensitivity_input_records = ert3.algorithms.one_at_the_time(
+        sensitivity_distributions
+    )
+
+    ensemble_size = len(sensitivity_input_records)
+
+    _prepare_experiment(
+        workspace_root, experiment_name, ensemble, ensemble_size, parameters_config
+    )
+
+    _prepare_storage_records(
+        ensemble,
+        ensemble_size,
+        experiment_config,
+        parameters_config,
+        workspace_root,
+        experiment_name,
+    )
+
+    _prepare_sensitivity_records(
+        ensemble,
+        sensitivity_input_records,
+        workspace_root,
+        experiment_name,
+    )
 
 
 def _store_output_records(
@@ -241,11 +311,19 @@ def run(
 
     if experiment_config.type == "evaluation":
         _prepare_evaluation(
-            ensemble, parameters_config, workspace_root, experiment_name
+            ensemble,
+            experiment_config,
+            parameters_config,
+            workspace_root,
+            experiment_name,
         )
     elif experiment_config.type == "sensitivity":
         _prepare_sensitivity(
-            ensemble, parameters_config, workspace_root, experiment_name
+            ensemble,
+            experiment_config,
+            parameters_config,
+            workspace_root,
+            experiment_name,
         )
     else:
         raise ValueError(f"Unknown experiment type {experiment_config.type}")

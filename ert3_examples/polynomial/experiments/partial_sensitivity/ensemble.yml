@@ -1,0 +1,17 @@
+input:
+  -
+    source: stochastic.coefficients
+    record: coefficients
+  -
+    source: storage.coefficients
+    record: other_coefficients
+
+output:
+  -
+    record: polynomial_output
+  -
+    record: other_polynomial_output
+
+forward_model:
+  driver: local
+  stage: evaluate_two_polynomials

@@ -78,6 +78,30 @@ def designed_coeffs_record_file(workspace):
 
 
 @pytest.fixture()
+def oat_compatible_record_file(workspace):
+    sensitivity_dir = (
+        workspace / ert3.workspace.EXPERIMENTS_BASE / "partial_sensitivity"
+    )
+    sensitivity_dir.ensure(dir=True)
+    coeffs = [{"a": x, "b": x, "c": x} for x in range(6)]
+    with open(sensitivity_dir / "coefficients_record.json", "w") as f:
+        json.dump(coeffs, f)
+    yield sensitivity_dir / "coefficients_record.json"
+
+
+@pytest.fixture()
+def oat_incompatible_record_file(workspace):
+    sensitivity_dir = (
+        workspace / ert3.workspace.EXPERIMENTS_BASE / "partial_sensitivity"
+    )
+    sensitivity_dir.ensure(dir=True)
+    coeffs = [{"a": x, "b": x, "c": x} for x in range(10)]
+    with open(sensitivity_dir / "coefficients_record.json", "w") as f:
+        json.dump(coeffs, f)
+    yield sensitivity_dir / "coefficients_record.json"
+
+
+@pytest.fixture()
 def base_ensemble_dict():
     yield {
         "size": 10,
@@ -100,6 +124,42 @@ def stages_config():
             "input": [{"record": "coefficients", "location": "coefficients.json"}],
             "output": [{"record": "polynomial_output", "location": "output.json"}],
             "script": ["poly --coefficients coefficients.json --output output.json"],
+            "transportable_commands": [
+                {
+                    "name": "poly",
+                    "location": "poly.py",
+                }
+            ],
+        }
+    ]
+    script_file = pathlib.Path("poly.py")
+    script_file.write_text(POLY_SCRIPT)
+    st = os.stat(script_file)
+    os.chmod(script_file, st.st_mode | stat.S_IEXEC)
+
+    yield ert3.config.load_stages_config(config_list)
+
+
+@pytest.fixture()
+def double_stages_config():
+    config_list = [
+        {
+            "name": "evaluate_polynomial",
+            "input": [
+                {"record": "coefficients", "location": "coefficients.json"},
+                {"record": "other_coefficients", "location": "other_coefficients.json"},
+            ],
+            "output": [
+                {"record": "polynomial_output", "location": "output.json"},
+                {"record": "other_polynomial_output", "location": "other_output.json"},
+            ],
+            "script": [
+                "poly --coefficients coefficients.json --output output.json",
+                (
+                    "poly --coefficients other_coefficients.json "
+                    "--output other_output.json"
+                ),
+            ],
             "transportable_commands": [
                 {
                     "name": "poly",
