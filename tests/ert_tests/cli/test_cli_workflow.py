@@ -1,7 +1,7 @@
 import os
 from argparse import Namespace
-
-from ert_utils import SOURCE_DIR, ErtTest, tmpdir
+from utils import SOURCE_DIR
+from ert_utils import ErtTest, tmpdir
 
 from ert_shared import ERT
 from ert_shared.cli.notifier import ErtCliNotifier
@@ -10,7 +10,7 @@ from res.enkf import EnKFMain, ResConfig
 
 
 class WorkflowTest(ErtTest):
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/poly_example"))
+    @tmpdir(str(SOURCE_DIR / "test-data" / "local" / "poly_example"))
     def test_executing_workflow(self):
         with open("test_wf", "w") as wf_file:
             wf_file.write("EXPORT_RUNPATH")

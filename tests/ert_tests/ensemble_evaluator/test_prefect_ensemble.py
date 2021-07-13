@@ -18,7 +18,7 @@ import prefect
 import pytest
 import yaml
 from ensemble_evaluator_utils import _mock_ws
-from ert_utils import SOURCE_DIR, tmp
+from ert_utils import tmp
 from prefect import Flow
 
 import ert
@@ -194,8 +194,8 @@ def get_step(step_name, inputs, outputs, jobs, type_="unix"):
     return step_builder.build()
 
 
-def test_get_flow(coefficients, unused_tcp_port):
-    with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
+def test_get_flow(coefficients, unused_tcp_port, source_root):
+    with tmp(source_root / "test-data/local/prefect_test_case"):
         config = parse_config("config.yml")
         config.update(
             {
@@ -257,7 +257,7 @@ def test_get_flow(coefficients, unused_tcp_port):
                     assert mapping["second_degree"] < mapping["add_coeffs"]
 
 
-def test_unix_task(unused_tcp_port, tmpdir):
+def test_unix_task(unused_tcp_port, tmpdir, source_root):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     messages = []
@@ -268,7 +268,7 @@ def test_unix_task(unused_tcp_port, tmpdir):
     mock_ws_thread.start()
 
     script_location = (
-        Path(SOURCE_DIR) / "test-data/local/prefect_test_case/unix_test_script.py"
+        source_root / "test-data/local/prefect_test_case/unix_test_script.py"
     )
     input_ = script_transmitter("script", script_location, storage_path=tmpdir)
     step = get_step(
@@ -430,7 +430,7 @@ def test_function_step_for_function_defined_outside_py_environment(
     assert expected_result == transmitted_result
 
 
-def test_unix_step_error(unused_tcp_port, tmpdir):
+def test_unix_step_error(unused_tcp_port, tmpdir, source_root):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     messages = []
@@ -441,7 +441,7 @@ def test_unix_step_error(unused_tcp_port, tmpdir):
     mock_ws_thread.start()
 
     script_location = (
-        Path(SOURCE_DIR) / "test-data/local/prefect_test_case/unix_test_script.py"
+        source_root / "test-data/local/prefect_test_case/unix_test_script.py"
     )
     input_ = script_transmitter("test_script", script_location, storage_path=tmpdir)
     step = get_step(
@@ -482,7 +482,7 @@ class _MockedPrefectEnsemble:
     _on_task_failure = PrefectEnsemble._on_task_failure
 
 
-def test_on_task_failure(unused_tcp_port, tmpdir):
+def test_on_task_failure(unused_tcp_port, tmpdir, source_root):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     messages = []
@@ -494,7 +494,7 @@ def test_on_task_failure(unused_tcp_port, tmpdir):
 
     mock_ws_thread.start()
     script_location = (
-        Path(SOURCE_DIR) / "test-data/local/prefect_test_case/unix_test_retry_script.py"
+        source_root / "test-data/local/prefect_test_case/unix_test_retry_script.py"
     )
     input_ = script_transmitter("script", script_location, storage_path=tmpdir)
     with tmp() as runpath:
@@ -539,7 +539,7 @@ def test_on_task_failure(unused_tcp_port, tmpdir):
     assert expected_step_failed_messages == len(fail_step_messages)
 
 
-def test_on_task_failure_fail_step(unused_tcp_port, tmpdir):
+def test_on_task_failure_fail_step(unused_tcp_port, tmpdir, source_root):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     messages = []
@@ -551,7 +551,7 @@ def test_on_task_failure_fail_step(unused_tcp_port, tmpdir):
 
     mock_ws_thread.start()
     script_location = (
-        Path(SOURCE_DIR) / "test-data/local/prefect_test_case/unix_test_retry_script.py"
+        source_root / "test-data/local/prefect_test_case/unix_test_retry_script.py"
     )
     input_ = script_transmitter("script", script_location, storage_path=tmpdir)
     with tmp() as runpath:
@@ -717,8 +717,8 @@ def dummy_get_flow(*args, **kwargs):
 
 
 @pytest.mark.timeout(60)
-def test_run_prefect_ensemble(unused_tcp_port, coefficients):
-    test_path = Path(SOURCE_DIR) / "test-data/local/prefect_test_case"
+def test_run_prefect_ensemble(unused_tcp_port, coefficients, source_root):
+    test_path = source_root / "test-data/local/prefect_test_case"
     with tmp(test_path):
         config = parse_config("config.yml")
         config.update(
@@ -835,8 +835,8 @@ def test_run_prefect_for_function_defined_outside_py_environment(
 
 
 @pytest.mark.timeout(60)
-def test_run_prefect_ensemble_with_path(unused_tcp_port, coefficients):
-    with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case")):
+def test_run_prefect_ensemble_with_path(unused_tcp_port, coefficients, source_root):
+    with tmp(source_root / "test-data/local/prefect_test_case"):
         config = parse_config("config.yml")
         config.update(
             {
@@ -886,8 +886,8 @@ def test_run_prefect_ensemble_with_path(unused_tcp_port, coefficients):
 
 
 @pytest.mark.timeout(60)
-def test_cancel_run_prefect_ensemble(unused_tcp_port, coefficients):
-    with tmp(Path(SOURCE_DIR) / "test-data/local/prefect_test_case"):
+def test_cancel_run_prefect_ensemble(unused_tcp_port, coefficients, source_root):
+    with tmp(source_root / "test-data/local/prefect_test_case"):
         config = parse_config("config.yml")
         config.update(
             {
@@ -938,8 +938,8 @@ def test_cancel_run_prefect_ensemble(unused_tcp_port, coefficients):
     sys.platform.startswith("darwin"),
     reason="On darwin patching is unreliable since processes may use 'spawn'.",
 )
-def test_run_prefect_ensemble_exception(unused_tcp_port, coefficients):
-    with tmp(os.path.join(SOURCE_DIR, "test-data/local/prefect_test_case")):
+def test_run_prefect_ensemble_exception(unused_tcp_port, coefficients, source_root):
+    with tmp(source_root / "test-data/local/prefect_test_case"):
         config = parse_config("config.yml")
         config.update(
             {

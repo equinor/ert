@@ -1,7 +1,8 @@
 import os
 from unittest import TestCase
 
-from ert_utils import SOURCE_DIR, tmpdir
+from utils import SOURCE_DIR
+from ert_utils import tmpdir
 from pandas.core.base import PandasObject
 
 from ert_shared.libres_facade import LibresFacade
@@ -18,21 +19,21 @@ class LibresFacadeTest(TestCase):
         facade = LibresFacade(ert)
         return facade
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_keyword_type_checks(self):
         facade = self.facade()
         self.assertTrue(facade.is_gen_data_key("SNAKE_OIL_GPR_DIFF@199"))
         self.assertTrue(facade.is_summary_key("BPR:1,3,8"))
         self.assertTrue(facade.is_gen_kw_key("SNAKE_OIL_PARAM:BPR_138_PERSISTENCE"))
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_keyword_type_checks_missing_key(self):
         facade = self.facade()
         self.assertFalse(facade.is_gen_data_key("nokey"))
         self.assertFalse(facade.is_summary_key("nokey"))
         self.assertFalse(facade.is_gen_kw_key("nokey"))
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_data_fetching(self):
         facade = self.facade()
         data = [
@@ -47,7 +48,7 @@ class LibresFacadeTest(TestCase):
             self.assertIsInstance(dataframe, PandasObject)
             self.assertFalse(dataframe.empty)
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_data_fetching_missing_case(self):
         facade = self.facade()
         data = [
@@ -60,7 +61,7 @@ class LibresFacadeTest(TestCase):
             self.assertIsInstance(dataframe, PandasObject)
             self.assertTrue(dataframe.empty)
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_data_fetching_missing_key(self):
         facade = self.facade()
         data = [
@@ -73,31 +74,31 @@ class LibresFacadeTest(TestCase):
             self.assertIsInstance(dataframe, PandasObject)
             self.assertTrue(dataframe.empty)
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_cases_list(self):
         facade = self.facade()
         cases = facade.cases()
         self.assertEqual(["default_0", "default_1"], cases)
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_case_is_hidden(self):
         facade = self.facade()
         self.assertFalse(facade.is_case_hidden("default_0"))
         self.assertFalse(facade.is_case_hidden("nocase"))
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_case_has_data(self):
         facade = self.facade()
         self.assertTrue(facade.case_has_data("default_0"))
         self.assertFalse(facade.case_has_data("default"))
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_case_is_running(self):
         facade = self.facade()
         self.assertFalse(facade.is_case_running("default_0"))
         self.assertFalse(facade.is_case_running("nocase"))
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_all_data_type_keys(self):
         facade = self.facade()
         keys = facade.all_data_type_keys()
@@ -167,7 +168,7 @@ class LibresFacadeTest(TestCase):
 
         self.assertEqual(expected, keys)
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_observation_keys(self):
         facade = self.facade()
 
@@ -191,35 +192,35 @@ class LibresFacadeTest(TestCase):
                 expected = expected_obs[key]
             self.assertEqual(expected, obs_keys)
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_observation_keys_missing_key(self):
         facade = self.facade()
         obs_keys = facade.observation_keys("nokey")
         self.assertEqual([], obs_keys)
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_case_has_refcase(self):
         facade = self.facade()
         self.assertTrue(facade.has_refcase("FOPR"))
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_case_has_refcase_missing_key(self):
         facade = self.facade()
         self.assertFalse(facade.has_refcase("nokey"))
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_case_refcase_data(self):
         facade = self.facade()
         data = facade.refcase_data("FOPR")
         self.assertIsInstance(data, PandasObject)
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_case_refcase_data_missing_key(self):
         facade = self.facade()
         data = facade.refcase_data("nokey")
         self.assertIsInstance(data, PandasObject)
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_case_history_data(self):
         facade = self.facade()
         data = facade.history_data("FOPR")
@@ -229,7 +230,7 @@ class LibresFacadeTest(TestCase):
         data = facade.history_data("WOPR:OP1")
         self.assertIsInstance(data, PandasObject)
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_case_history_data_missing_key(self):
         facade = self.facade()
         data = facade.history_data("nokey")

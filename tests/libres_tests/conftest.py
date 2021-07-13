@@ -30,34 +30,3 @@ def pytest_runtest_setup(item):
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "equinor_test")
-
-
-@pytest.fixture(autouse=True)
-def env_save():
-    environment_pre = [
-        (key, val) for key, val in os.environ.items() if key != "PYTEST_CURRENT_TEST"
-    ]
-    yield
-    environment_post = [
-        (key, val) for key, val in os.environ.items() if key != "PYTEST_CURRENT_TEST"
-    ]
-    if set(environment_pre) != set(environment_post):
-        raise EnvironmentError(
-            "Your environment has changed after that test, please reset"
-        )
-
-
-@pytest.fixture
-def pathlib_source_root():
-    return source_dir()
-
-
-@pytest.fixture(scope="class")
-def class_pathlib_source_root(request):
-    SOURCE_ROOT = source_dir()
-
-    request.cls.SOURCE_ROOT = SOURCE_ROOT
-    request.cls.TESTDATA_ROOT = SOURCE_ROOT / "test-data"
-    request.cls.SHARE_ROOT = SOURCE_ROOT / "share"
-    request.cls.EQUINOR_DATA = (request.cls.TESTDATA_ROOT / "Equinor").is_symlink()
-    yield

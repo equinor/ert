@@ -1,9 +1,9 @@
-import os
 import shutil
 import sys
 
 import pytest
-from ert_utils import SOURCE_DIR, tmpdir
+from utils import SOURCE_DIR
+from ert_utils import tmpdir
 
 from ert_shared import ERT
 from ert_shared.cli.notifier import ErtCliNotifier
@@ -13,7 +13,7 @@ from res.enkf import EnKFMain, ResConfig
 
 
 @pytest.mark.skipif(sys.version_info.major < 3, reason="requires python3")
-@tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+@tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
 def test_exporter_is_valid():
     with ErtPluginContext():
         config_file = "snake_oil.ert"
@@ -27,7 +27,7 @@ def test_exporter_is_valid():
 
 
 @pytest.mark.skipif(sys.version_info.major < 3, reason="requires python3")
-@tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+@tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
 def test_exporter_is_not_valid():
     config_file = "snake_oil.ert"
     rc = ResConfig(user_config_file=config_file)
@@ -40,7 +40,7 @@ def test_exporter_is_not_valid():
 
 
 @pytest.mark.skipif(sys.version_info.major < 3, reason="requires python3")
-@tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+@tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
 def test_run_export():
     with ErtPluginContext():
         config_file = "snake_oil.ert"
