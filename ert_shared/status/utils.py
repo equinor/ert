@@ -85,8 +85,8 @@ def format_running_time(runtime: int) -> str:
 
 
 def scale_intervals(reals):
-    scaled_gen = _scale(reals, min_time=1, max_time=5)
-    scaled_det = _scale(reals, min_time=5, max_time=15)
+    scaled_gen = _scale(reals, min_time=5, max_time=10)
+    scaled_det = _scale(reals, min_time=10, max_time=20)
     return math.trunc(scaled_gen), math.trunc(scaled_det)
 
 

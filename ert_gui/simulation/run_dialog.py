@@ -1,5 +1,6 @@
 import asyncio
 from threading import Thread
+from PyQt5.QtWidgets import QAbstractItemView
 
 from ecl.util.util import BoolVector
 from ert_gui.ertwidgets import resourceMovie
@@ -90,6 +91,7 @@ class RunDialog(QDialog):
         legend_view.setModel(progress_proxy_model)
 
         self._tab_widget = QTabWidget(self)
+        self._tab_widget.currentChanged.connect(self._current_tab_changed)
         self._snapshot_model.rowsInserted.connect(self.on_new_iteration)
 
         self._job_label = QLabel(self)
@@ -98,6 +100,9 @@ class RunDialog(QDialog):
         self._job_model.setSourceModel(self._snapshot_model)
 
         self._job_view = QTableView(self)
+        self._job_view.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
+        self._job_view.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self._job_view.setSelectionMode(QAbstractItemView.SingleSelection)
         self._job_view.clicked.connect(self._job_clicked)
         self._open_files = {}
         self._job_view.setModel(self._job_model)
@@ -164,6 +169,12 @@ class RunDialog(QDialog):
         self.setMinimumWidth(self._minimum_width)
         self._setSimpleDialog()
 
+    def _current_tab_changed(self, index: int):
+        # Clear the selection in the other tabs
+        for i in range(0, self._tab_widget.count()):
+            if i != index:
+                self._tab_widget.widget(i).clearSelection()
+
     def _setSimpleDialog(self) -> None:
         self._isDetailedDialog = False
         self._tab_widget.setVisible(False)
@@ -224,11 +235,6 @@ class RunDialog(QDialog):
         )
 
         self._job_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-
-        # Clear the selection in the other tabs
-        for i in range(0, self._tab_widget.count()):
-            if i != self._tab_widget.currentIndex():
-                self._tab_widget.widget(i).clearSelection()
 
     def reject(self):
         return

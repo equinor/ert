@@ -1,5 +1,5 @@
 import logging
-from typing import Union
+from typing import List, Union
 
 import ert_shared.status.entity.state as state
 import pyrsistent
@@ -130,8 +130,7 @@ class SnapshotModel(QAbstractItemModel):
             return
         iter_index = self.index(iter_, 0, QModelIndex())
         iter_node = self.root.children[iter_]
-        iter_top_left = self.index(0, 0, iter_index)
-        iter_bottom_right = self.index(0, 1, iter_index)
+        iter_index_bottom_right = self.index(iter_, iter_index.column(), QModelIndex())
 
         if not partial.data().get(ids.REALS):
             logger.debug(f"no realizations in partial for iter {iter_}")
@@ -200,7 +199,7 @@ class SnapshotModel(QAbstractItemModel):
                     )
                     self.dataChanged.emit(job_index, job_index_bottom_right)
             self.dataChanged.emit(real_index, real_index_bottom_right)
-        self.dataChanged.emit(iter_top_left, iter_bottom_right)
+        self.dataChanged.emit(iter_index, iter_index_bottom_right)
 
     def _add_snapshot(self, snapshot: Snapshot, iter_: int):
         # Parts of the metadata will be used in the underlying data model,
@@ -326,26 +325,23 @@ class SnapshotModel(QAbstractItemModel):
 
     def _real_data(self, index: QModelIndex, node: Node, role: int):
         if role == RealJobColorHint:
-            colors = []
-            assert node.type == NodeType.REAL
-            for step in node.children.values():
-                for job_id in sorted(step.children.keys(), key=int):
-                    status = step.children[job_id].data[ids.STATUS]
-                    color = state.JOB_STATE_TO_COLOR[status]
-                    colors.append(QColor(*color))
+            colors: List[QColor] = []
+            for job_id in node.parent.data[SORTED_JOB_IDS]:
+                colors.append(node.data[REAL_JOB_STATUS_AGGREGATED][job_id])
             return colors
         elif role == RealLabelHint:
-            return str(node.id)
+            return node.id
         elif role == RealIens:
-            return int(node.id)
+            return node.id
         elif role == RealStatusColorHint:
-            return QColor(*state.REAL_STATE_TO_COLOR[node.data[ids.STATUS]])
+            return node.data[REAL_STATUS_COLOR]
         else:
             return QVariant()
 
     def _job_data(self, index: QModelIndex, node: Node, role: int):
         if role == Qt.BackgroundRole:
-            return QColor(*state.REAL_STATE_TO_COLOR[node.data.get(ids.STATUS)])
+            real = node.parent.parent
+            return real.data[REAL_JOB_STATUS_AGGREGATED][node.id]
         if role == Qt.DisplayRole:
             _, data_name = COLUMNS[NodeType.STEP][index.column()]
             if data_name in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:

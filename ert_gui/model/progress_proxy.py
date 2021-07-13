@@ -1,3 +1,4 @@
+from ert_gui.model.node import NodeType
 import typing
 from collections import defaultdict
 
@@ -95,10 +96,9 @@ class ProgressProxyModel(QAbstractItemModel):
         bottom_right: QModelIndex,
         roles: typing.List[int],
     ):
-        p = top_left
-        while p.parent().isValid():
-            p = p.parent()
-        self._recalculate_progress(p.row())
+        if top_left.internalPointer().type != NodeType.ITER:
+            return
+        self._recalculate_progress(top_left.row())
         index = self.index(0, 0, QModelIndex())
         self.dataChanged.emit(index, index, [ProgressRole])
 
