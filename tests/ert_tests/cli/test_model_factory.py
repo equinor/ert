@@ -9,6 +9,7 @@ from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared.models.ensemble_experiment import EnsembleExperiment
 from ert_shared.models.ensemble_smoother import EnsembleSmoother
 from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilation
+from ert_shared.models.iterated_ensemble_smoother import IteratedEnsembleSmoother
 from ert_shared.models.single_test_run import SingleTestRun
 from res.test import ErtTestContext
 
@@ -154,6 +155,30 @@ class ModelFactoryTest(ErtTest):
             self.assertTrue("analysis_module" in argument)
             self.assertTrue("weights" in argument)
             self.assertTrue("start_iteration" in argument)
+            model.create_context(argument, 0)
+
+    def test_setup_iterative_ensemble_smoother(self):
+        config_file = self.createTestPath("local/poly_example/poly.ert")
+        with ErtTestContext(
+            "_setup_iterative_ensemble_smoother", config_file
+        ) as work_area:
+            ert = work_area.getErt()
+            notifier = ErtCliNotifier(ert, config_file)
+            ERT.adapt(notifier)
+            args = Namespace(
+                realizations="0-4,7,8",
+                target_case="test_case_%d",
+                num_iterations="10",
+            )
+
+            model, argument = model_factory._setup_iterative_ensemble_smoother(args)
+            self.assertTrue(isinstance(model, IteratedEnsembleSmoother))
+            self.assertEqual(4, len(argument.keys()))
+            self.assertTrue("active_realizations" in argument)
+            self.assertTrue("target_case" in argument)
+            self.assertTrue("analysis_module" in argument)
+            self.assertTrue("num_iterations" in argument)
+            self.assertTrue(ERT.enkf_facade.get_number_of_iterations() == 10)
             model.create_context(argument, 0)
 
     def test_analysis_module_name_iterable(self):

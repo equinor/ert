@@ -90,6 +90,7 @@ def _setup_iterative_ensemble_smoother(args):
         "analysis_module": _get_analysis_module_name(
             active_name, modules, iterable=iterable
         ),
+        "num_iterations": _num_iterations(args),
     }
     return model, simulations_argument
 
@@ -143,3 +144,11 @@ def _target_case_name(args, format_mode=False):
 
     case_name = ERT.enkf_facade.get_current_case_name()
     return "{}_%d".format(case_name)
+
+
+def _num_iterations(args):
+    if args.num_iterations is not None:
+        ERT.ert.analysisConfig().getAnalysisIterConfig().setNumIterations(
+            int(args.num_iterations)
+        )
+    return None
