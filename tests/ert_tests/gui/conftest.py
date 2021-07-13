@@ -1,4 +1,5 @@
 import copy
+import time
 from datetime import datetime as dt
 from unittest.mock import Mock
 
@@ -127,3 +128,24 @@ def active_realizations() -> Mock:
     active_reals = Mock()
     active_reals.count = Mock(return_value=10)
     return active_reals
+
+
+class MockTracker:
+    def __init__(self, events) -> None:
+        self._events = events
+
+    def track(self):
+        for event in self._events:
+            yield event
+            time.sleep(0.1)
+
+    def reset(self):
+        pass
+
+
+@pytest.fixture
+def mock_tracker():
+    def _make_mock_tracker(events):
+        return MockTracker(events)
+
+    return _make_mock_tracker
