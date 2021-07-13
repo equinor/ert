@@ -70,6 +70,11 @@ class PartialSnapshot:
     def update_status(self, status):
         self._apply_update(SnapshotDict(status=status))
 
+    def update_metadata(self, metadata: Dict[str, Any]):
+        dictionary = {ids.METADATA: metadata}
+        self._data = recursive_update(self._data, dictionary, check_key=False)
+        self._snapshot.merge_metadata(metadata)
+
     def update_real(
         self,
         real_id,
@@ -224,6 +229,11 @@ class Snapshot:
     def merge(self, update):
         self._data = recursive_update(self._data, update)
 
+    def merge_metadata(self, metadata: Dict[str, Any]):
+        self._data = recursive_update(
+            self._data, {ids.METADATA: metadata}, check_key=False
+        )
+
     def to_dict(self):
         return pyrsistent.thaw(self._data)
 
@@ -272,6 +282,9 @@ class Snapshot:
         for real in self._data[ids.REALS].values():
             states[real[ids.STATUS]] += 1
         return states
+
+    def data(self):
+        return self._data
 
 
 class Job(BaseModel):

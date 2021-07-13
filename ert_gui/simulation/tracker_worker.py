@@ -1,7 +1,12 @@
+from ert_gui.model.snapshot import SnapshotModel
 import typing
 from ert_shared.status.tracker.evaluator import EvaluatorTracker
 from ert_shared.status.tracker.legacy import LegacyTracker
-from ert_shared.status.entity.event import EndEvent
+from ert_shared.status.entity.event import (
+    EndEvent,
+    FullSnapshotEvent,
+    SnapshotUpdateEvent,
+)
 from qtpy.QtCore import QObject, Signal, Slot
 import logging
 
@@ -31,6 +36,11 @@ class TrackerWorker(QObject):
             if self._stopped:
                 logger.debug("stopped")
                 break
+
+            if isinstance(event, FullSnapshotEvent) and event.snapshot:
+                SnapshotModel.prerender(event.snapshot)
+            elif isinstance(event, SnapshotUpdateEvent) and event.partial_snapshot:
+                SnapshotModel.prerender(event.partial_snapshot)
 
             logger.debug(f"emit {event}")
             self.consumed_event.emit(event)

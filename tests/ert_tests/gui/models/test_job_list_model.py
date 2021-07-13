@@ -31,11 +31,11 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
         model, reporting_mode
     )
 
-    source_model._add_snapshot(full_snapshot, 0)
-    source_model._add_snapshot(full_snapshot, 1)
+    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
+    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 1)
 
-    source_model._add_partial_snapshot(partial, 0)
-    source_model._add_partial_snapshot(partial, 1)
+    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
+    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 1)
 
     qtmodeltester.check(model, force_py=True)
 
@@ -51,7 +51,7 @@ def test_changes(full_snapshot):
         model, reporting_mode
     )
 
-    source_model._add_snapshot(full_snapshot, 0)
+    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
     assert (
         model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data() == JOB_STATE_START
     )
@@ -69,7 +69,7 @@ def test_changes(full_snapshot):
             end_time=end_time,
         ),
     )
-    source_model._add_partial_snapshot(partial, 0)
+    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
     assert model.index(0, _id_to_col(ids.START_TIME), QModelIndex()).data() == str(
         start_time
     )
@@ -93,13 +93,13 @@ def test_no_cross_talk(full_snapshot):
         model, reporting_mode
     )
 
-    source_model._add_snapshot(full_snapshot, 0)
-    source_model._add_snapshot(full_snapshot, 1)
+    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
+    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 1)
 
     # Test that changes to iter=1 does not bleed into iter=0
     partial = PartialSnapshot(full_snapshot)
     partial.update_job("0", "0", "0", job=Job(status=JOB_STATE_FAILURE))
-    source_model._add_partial_snapshot(partial, 1)
+    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 1)
     assert (
         model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data() == JOB_STATE_START
     )

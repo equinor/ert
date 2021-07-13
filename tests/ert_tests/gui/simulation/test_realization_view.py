@@ -30,7 +30,7 @@ def test_delegate_drawing_count(small_snapshot, qtbot):
 
     with qtbot.waitActive(widget):
         model = SnapshotModel()
-        model._add_snapshot(small_snapshot, iter)
+        model._add_snapshot(SnapshotModel.prerender(small_snapshot), iter)
 
         widget.setSnapshotModel(model)
 
@@ -58,7 +58,7 @@ def test_selection_success(large_snapshot, qtbot):
     qtbot.addWidget(widget)
 
     model = SnapshotModel()
-    model._add_snapshot(large_snapshot, iter)
+    model._add_snapshot(SnapshotModel.prerender(large_snapshot), iter)
 
     widget.setSnapshotModel(model)
 
