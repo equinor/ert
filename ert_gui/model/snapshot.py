@@ -1,15 +1,13 @@
 import logging
+from typing import Union
 
 import ert_shared.status.entity.state as state
-from ert_gui.model.node import Node, NodeType, snapshot_to_tree
+import pyrsistent
+from ert_gui.model.node import Node, NodeType
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert_shared.ensemble_evaluator.entity.snapshot import (
-    PartialSnapshot,
-    Snapshot,
-    SnapshotDict,
-)
+from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Snapshot
 from ert_shared.status.utils import byte_with_unit
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant, QSize
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
 
 logger = logging.getLogger(__name__)
@@ -33,6 +31,10 @@ STEP_COLUMN_STDERR = "STDERR"
 STEP_COLUMN_CURRENT_MEMORY_USAGE = "Current Memory Usage"
 STEP_COLUMN_MAX_MEMORY_USAGE = "Max Memory Usage"
 
+SORTED_REALIZATION_IDS = "_sorted_real_ids"
+SORTED_JOB_IDS = "_sorted_job_ids"
+REAL_JOB_STATUS_AGGREGATED = "_aggr_job_status_colors"
+REAL_STATUS_COLOR = "_real_status_colors"
 
 COLUMNS = {
     NodeType.ROOT: ["Name", "Status"],
@@ -52,88 +54,192 @@ COLUMNS = {
     NodeType.JOB: [],
 }
 
+_QCOLORS = {
+    state.COLOR_WAITING: QColor(*state.COLOR_WAITING),
+    state.COLOR_PENDING: QColor(*state.COLOR_PENDING),
+    state.COLOR_RUNNING: QColor(*state.COLOR_RUNNING),
+    state.COLOR_FAILED: QColor(*state.COLOR_FAILED),
+    state.COLOR_UNKNOWN: QColor(*state.COLOR_UNKNOWN),
+    state.COLOR_FINISHED: QColor(*state.COLOR_FINISHED),
+    state.COLOR_NOT_ACTIVE: QColor(*state.COLOR_NOT_ACTIVE),
+}
+
 
 class SnapshotModel(QAbstractItemModel):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.root = Node(None, {}, NodeType.ROOT)
 
+    @staticmethod
+    def prerender(
+        snapshot: Union[Snapshot, PartialSnapshot]
+    ) -> Union[Snapshot, PartialSnapshot]:
+        """Pre-render some data that is required by this model. Ideally, this
+        is called outside the GUI thread. This is a requirement of the model,
+        so it has to be called."""
+
+        # If there are no realizations, there's nothing to prerender.
+        if not snapshot.data().get(ids.REALS):
+            return
+
+        metadata = {
+            # A mapping from real to job to that job's QColor status representation
+            REAL_JOB_STATUS_AGGREGATED: {},
+            # A mapping from real to that real's QColor status representation
+            REAL_STATUS_COLOR: {},
+        }
+        if isinstance(snapshot, Snapshot):
+            metadata[SORTED_REALIZATION_IDS] = sorted(
+                snapshot.data()[ids.REALS].keys(), key=int
+            )
+            for real_id, real in snapshot.data()[ids.REALS].items():
+                for step in real[ids.STEPS].values():
+                    metadata[SORTED_JOB_IDS] = sorted(step[ids.JOBS].keys(), key=int)
+                    break
+                break
+
+        for real_id, real in snapshot.data()[ids.REALS].items():
+            if real.get(ids.STATUS):
+                metadata[REAL_STATUS_COLOR][real_id] = _QCOLORS[
+                    state.REAL_STATE_TO_COLOR[real[ids.STATUS]]
+                ]
+            metadata[REAL_JOB_STATUS_AGGREGATED][real_id] = {}
+            if real.get(ids.STEPS):
+                for step in real[ids.STEPS].values():
+                    if not ids.JOBS in step:
+                        continue
+                    for job_id in sorted(step[ids.JOBS].keys(), key=int):
+                        status = step[ids.JOBS][job_id][ids.STATUS]
+                        color = _QCOLORS[state.JOB_STATE_TO_COLOR[status]]
+                        metadata[REAL_JOB_STATUS_AGGREGATED][real_id][job_id] = color
+
+        if isinstance(snapshot, Snapshot):
+            snapshot.merge_metadata(metadata)
+        elif isinstance(snapshot, PartialSnapshot):
+            snapshot.update_metadata(metadata)
+        return snapshot
+
     def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: int):
-        partial_dict = partial.to_dict()
-        partial_s = SnapshotDict(**partial_dict)
+        metadata = partial.data().get(ids.METADATA)
+        if not metadata:
+            logger.debug("no metadata in partial, ignoring partial")
+            return
+
         if iter_ not in self.root.children:
-            logger.debug("no full snapshot yet, bailing")
+            logger.debug("no full snapshot yet, ignoring partial")
             return
         iter_index = self.index(iter_, 0, QModelIndex())
         iter_node = self.root.children[iter_]
-        if not partial_s.reals:
+        iter_top_left = self.index(0, 0, iter_index)
+        iter_bottom_right = self.index(0, 1, iter_index)
+
+        if not partial.data().get(ids.REALS):
             logger.debug(f"no realizations in partial for iter {iter_}")
             return
-        for real_id in sorted(partial_s.reals, key=int):
-            real = partial_s.reals[real_id]
+        for real_id in iter_node.data[SORTED_REALIZATION_IDS]:
+            real = partial.data()[ids.REALS].get(real_id)
+            if not real:
+                continue
             real_node = iter_node.children[real_id]
-            if real.status:
-                real_node.data[ids.STATUS] = real.status
+            if real.get(ids.STATUS):
+                real_node.data[ids.STATUS] = real[ids.STATUS]
 
             real_index = self.index(real_node.row(), 0, iter_index)
             real_index_bottom_right = self.index(
                 real_node.row(), self.columnCount(iter_index) - 1, iter_index
             )
 
-            if not real.steps:
+            for job_id, color in (
+                metadata[REAL_JOB_STATUS_AGGREGATED].get(real_id, {}).items()
+            ):
+                real_node.data[REAL_JOB_STATUS_AGGREGATED][job_id] = color
+            if real_id in metadata[REAL_STATUS_COLOR]:
+                real_node.data[REAL_STATUS_COLOR] = metadata[REAL_STATUS_COLOR][real_id]
+
+            if not real.get(ids.STEPS):
                 continue
 
-            for step_id, step in real.steps.items():
+            for step_id, step in real[ids.STEPS].items():
                 step_node = real_node.children[step_id]
-                if step.status:
-                    step_node.data[ids.STATUS] = step.status
+                if step.get(ids.STATUS):
+                    step_node.data[ids.STATUS] = step[ids.STATUS]
 
                 step_index = self.index(step_node.row(), 0, real_index)
-                step_index_bottom_right = self.index(
-                    step_node.row(), self.columnCount(real_index) - 1, real_index
-                )
 
-                if not step.jobs:
+                if not step.get(ids.JOBS):
                     continue
 
-                for job_id in sorted(step.jobs, key=int):
-                    job = step.jobs[job_id]
+                for job_id, job in step[ids.JOBS].items():
                     job_node = step_node.children[job_id]
 
-                    if job.status:
-                        job_node.data[ids.STATUS] = job.status
-                    if job.start_time:
-                        job_node.data[ids.START_TIME] = job.start_time
-                    if job.end_time:
-                        job_node.data[ids.END_TIME] = job.end_time
-                    if job.stdout:
-                        job_node.data[ids.STDOUT] = job.stdout
-                    if job.stderr:
-                        job_node.data[ids.STDERR] = job.stderr
+                    if job.get(ids.STATUS):
+                        job_node.data[ids.STATUS] = job[ids.STATUS]
+                    if job.get(ids.START_TIME):
+                        job_node.data[ids.START_TIME] = job[ids.START_TIME]
+                    if job.get(ids.END_TIME):
+                        job_node.data[ids.END_TIME] = job[ids.END_TIME]
+                    if job.get(ids.STDOUT):
+                        job_node.data[ids.STDOUT] = job[ids.STDOUT]
+                    if job.get(ids.STDERR):
+                        job_node.data[ids.STDERR] = job[ids.STDERR]
 
                     # Errors may be unset as the queue restarts the job
-                    job_node.data[ids.ERROR] = job.error if job.error else ""
+                    job_node.data[ids.ERROR] = (
+                        job[ids.ERROR] if job.get(ids.ERROR) else ""
+                    )
 
                     for attr in (ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE):
-                        if job.data and attr in job.data:
-                            job_node.data[ids.DATA][attr] = job.data.get(attr)
+                        if job.get(ids.DATA) and attr in job.get(ids.DATA):
+                            job_node.data[ids.DATA] = job_node.data[ids.DATA].set(
+                                attr, job.get(ids.DATA).get(attr)
+                            )
 
                     job_index = self.index(job_node.row(), 0, step_index)
                     job_index_bottom_right = self.index(
                         job_node.row(), self.columnCount() - 1, step_index
                     )
                     self.dataChanged.emit(job_index, job_index_bottom_right)
-                self.dataChanged.emit(step_index, step_index_bottom_right)
             self.dataChanged.emit(real_index, real_index_bottom_right)
-            # TODO: there is no check that any of the data *actually* changed
-            # https://github.com/equinor/ert/issues/1374
-
-        top_left = self.index(0, 0, iter_index)
-        bottom_right = self.index(0, 1, iter_index)
-        self.dataChanged.emit(top_left, bottom_right)
+        self.dataChanged.emit(iter_top_left, iter_bottom_right)
 
     def _add_snapshot(self, snapshot: Snapshot, iter_: int):
-        snapshot_tree = snapshot_to_tree(snapshot, iter_)
+        # Parts of the metadata will be used in the underlying data model,
+        # which is be mutable, hence we thaw it here—once.
+        metadata = pyrsistent.thaw(snapshot.data()[ids.METADATA])
+        snapshot_tree = Node(
+            iter_,
+            {
+                ids.STATUS: snapshot.data()[ids.STATUS],
+                SORTED_REALIZATION_IDS: metadata[SORTED_REALIZATION_IDS],
+                SORTED_JOB_IDS: metadata[SORTED_JOB_IDS],
+            },
+            NodeType.ITER,
+        )
+        for real_id in snapshot_tree.data[SORTED_REALIZATION_IDS]:
+            real = snapshot.data()[ids.REALS][real_id]
+            real_node = Node(
+                real_id,
+                {
+                    ids.STATUS: real[ids.STATUS],
+                    ids.ACTIVE: real[ids.ACTIVE],
+                    REAL_JOB_STATUS_AGGREGATED: metadata[REAL_JOB_STATUS_AGGREGATED][
+                        real_id
+                    ],
+                    REAL_STATUS_COLOR: metadata[REAL_STATUS_COLOR][real_id],
+                },
+                NodeType.REAL,
+            )
+            snapshot_tree.add_child(real_node)
+            for step_id, step in real[ids.STEPS].items():
+                step_node = Node(step_id, {ids.STATUS: step[ids.STATUS]}, NodeType.STEP)
+                real_node.add_child(step_node)
+                for job_id in metadata[SORTED_JOB_IDS]:
+                    job = step[ids.JOBS][job_id]
+                    job_dict = dict(job)
+                    job_dict[ids.DATA] = job.data
+                    job_node = Node(job_id, job_dict, NodeType.JOB)
+                    step_node.add_child(job_node)
+
         if iter_ in self.root.children:
             self.modelAboutToBeReset.emit()
             self.root.children[iter_] = snapshot_tree
