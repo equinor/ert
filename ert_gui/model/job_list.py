@@ -132,17 +132,16 @@ class JobListProxyModel(QAbstractProxyModel):
     def mapFromSource(self, sourceIndex: QModelIndex) -> QModelIndex:
         if not sourceIndex.isValid():
             return QModelIndex()
+        if not self._index_is_on_our_branch(sourceIndex):
+            return QModelIndex()
         source_node = sourceIndex.internalPointer()
-        if source_node is None or source_node.type != NodeType.JOB:
-            return QModelIndex()
-
-        if not self._index_is_on_our_branch(sourceIndex.parent()):
-            return QModelIndex()
         return self.index(source_node.row(), sourceIndex.column(), QModelIndex())
 
     def _source_data_changed(
         self, top_left: QModelIndex, bottom_right: QModelIndex, roles: typing.List[int]
     ):
+        if not self._index_is_on_our_branch(top_left):
+            return
         proxy_top_left = self.mapFromSource(top_left)
         proxy_bottom_right = self.mapFromSource(bottom_right)
         if not proxy_top_left.isValid() or not proxy_bottom_right.isValid():
@@ -151,7 +150,7 @@ class JobListProxyModel(QAbstractProxyModel):
 
     def _index_is_on_our_branch(self, index: QModelIndex) -> bool:
         # the tree is only traversed towards the root
-        if index.internalPointer().type not in (NodeType.STEP, NodeType.JOB):
+        if index.internalPointer().type != NodeType.JOB:
             return False
         while index.isValid() and index.internalPointer() is not None:
             node = index.internalPointer()
