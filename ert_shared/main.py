@@ -83,6 +83,14 @@ def valid_iter_num(user_input):
     return user_input
 
 
+def valid_num_iterations(user_input):
+    validator = IntegerArgument(from_value=1)
+    validated = validator.validate(user_input)
+    if validated.failed():
+        strip_error_message_and_raise_exception(validated)
+    return user_input
+
+
 def range_limited_int(user_input):
     try:
         i = int(user_input)
@@ -279,6 +287,12 @@ def get_ert_parser(parser=None):
         required=False,
         help="Name of the case where the results for the simulation "
         "using the prior parameters will be stored.",
+    )
+    iterative_ensemble_smoother_parser.add_argument(
+        "--num-iterations",
+        type=valid_num_iterations,
+        required=False,
+        help="The number of iterations to run.",
     )
 
     # es_mda_parser
