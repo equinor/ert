@@ -136,7 +136,7 @@ def _mock_ws_thread(host, port, messages):
     messages.pop()
 
 
-@pytest.mark.usefixtures("class_pathlib_source_root")
+@pytest.mark.usefixtures("class_source_root")
 class ResTest(ExtendedTestCase):
     def assertItemsEqual(self, data1, data2):
         if len(data1) != len(data2):

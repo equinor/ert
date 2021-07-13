@@ -1,10 +1,10 @@
 import os
-import pathlib
 import shutil
 from unittest import TestCase
 
 import pytest
-from ert_utils import SOURCE_DIR, tmpdir
+from utils import SOURCE_DIR
+from ert_utils import tmpdir
 from pandas import DataFrame
 
 from ert_gui.tools.plot.plot_api import PlotApi
@@ -123,7 +123,7 @@ class PlotApiTest(TestCase):
         api = PlotApi(facade)
         return api
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_all_keys_present(self):
         api = self.api()
 
@@ -193,7 +193,7 @@ class PlotApiTest(TestCase):
         }
         self.assertSetEqual(expected, keys)
 
-    @tmpdir(os.path.join(SOURCE_DIR, "test-data/local/snake_oil"))
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_observation_key_present(self):
         api = self.api()
         key_defs = api.all_data_type_keys()
@@ -246,9 +246,9 @@ def test_case_structure(api):
 
 
 @pytest.fixture
-def api(tmpdir):
+def api(tmpdir, source_root):
     with tmpdir.as_cwd():
-        test_data_root = pathlib.Path(SOURCE_DIR) / "test-data" / "local"
+        test_data_root = source_root / "test-data" / "local"
         test_data_dir = os.path.join(test_data_root, "snake_oil")
         shutil.copytree(test_data_dir, "test_data")
         os.chdir("test_data")

@@ -13,8 +13,6 @@ Swiped from
 https://github.com/equinor/everest/blob/master/tests/utils/__init__.py
 """
 
-SOURCE_DIR = os.path.realpath(os.path.join(__file__, "../../../"))
-
 
 def tmpdir(path=None, teardown=True):
     """Decorator based on the  `tmp` context"""

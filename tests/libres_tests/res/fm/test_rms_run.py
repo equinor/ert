@@ -64,7 +64,7 @@ def _mocked_run(**kwargs):
     ],
 )
 def test_run_class_multi_seed(
-    tmpdir, monkeypatch, test_input, expected_result, pathlib_source_root
+    tmpdir, monkeypatch, test_input, expected_result, source_root
 ):
     with open("rms_config.yml", "w") as f:
         f.write("executable:  {}/bin/rms".format(os.getcwd()))
@@ -73,9 +73,7 @@ def test_run_class_multi_seed(
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(
-        os.path.join(pathlib_source_root, "tests/libres_tests/res/fm/rms"), "bin"
-    )
+    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
     action = {"exit_status": 0}
