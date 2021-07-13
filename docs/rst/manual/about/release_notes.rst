@@ -1,6 +1,33 @@
 Release Notes
 =============
 
+
+.. Release notes template
+ Version <MAJOR.MINOR>
+ ------------
+
+ Breaking changes:
+   -
+
+ Bugfixes:
+   -
+
+ New features:
+   -
+
+ Improvements:
+   -
+
+ Deprecations:
+   -
+
+ Dependencies:
+   -
+
+ Miscellaneous:
+   -
+
+
 Version 2.19
 ------------
 
