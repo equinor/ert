@@ -1,3 +1,4 @@
+from collections import defaultdict
 import json
 from pathlib import Path
 from typing import (
@@ -5,7 +6,6 @@ from typing import (
     Dict,
     Iterable,
     Mapping,
-    MutableMapping,
     Optional,
     Set,
     List,
@@ -172,6 +172,10 @@ def init_experiment(
     )
 
 
+def _is_parameter_numeric(record: str, params: Iterable[str]) -> bool:
+    return bool(params)
+
+
 def _init_experiment(
     *,
     workspace: Path,
@@ -198,11 +202,11 @@ def _init_experiment(
 
     parameter_names = []
     for record, params in parameters.items():
-        if not params:
-            parameter_names.append(record)
-        else:
+        if _is_parameter_numeric(record, params):
             for param in params:
                 parameter_names.append(f"{record}.{param}")
+        else:
+            parameter_names.append(record)
 
     response = _post_to_server(
         f"experiments/{exp_id}/ensembles",
@@ -415,6 +419,10 @@ def _get_data(
     )
 
 
+def _is_response_parameter_numeric(name: str) -> bool:
+    return len(name.split(".")) != 1
+
+
 def _get_experiment_parameters(
     workspace: Path, experiment_name: str
 ) -> Mapping[str, Iterable[str]]:
@@ -426,18 +434,18 @@ def _get_experiment_parameters(
 
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
     response = _get_from_server(f"ensembles/{ensemble_id}/parameters")
+
     if response.status_code != 200:
         raise ert3.exceptions.StorageError(response.text)
-    parameters: MutableMapping[str, List[str]] = {}
+
+    parameters = defaultdict(list)
     for name in response.json():
-        if len(name.split(".")) == 1:
-            parameters[name] = []
-        else:
+        if _is_response_parameter_numeric(name):
             key, val = name.split(".")
-            if key in parameters:
-                parameters[key].append(val)
-            else:
-                parameters[key] = [val]
+            parameters[key].append(val)
+        else:
+            parameters[name] = []
+
     return parameters
 
 
