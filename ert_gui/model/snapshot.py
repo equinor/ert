@@ -1,4 +1,5 @@
 import logging
+from contextlib import ExitStack
 from typing import List, Union
 
 import ert_shared.status.entity.state as state
@@ -128,78 +129,92 @@ class SnapshotModel(QAbstractItemModel):
         if iter_ not in self.root.children:
             logger.debug("no full snapshot yet, ignoring partial")
             return
-        iter_index = self.index(iter_, 0, QModelIndex())
-        iter_node = self.root.children[iter_]
-        iter_index_bottom_right = self.index(iter_, iter_index.column(), QModelIndex())
 
         if not partial.data().get(ids.REALS):
             logger.debug(f"no realizations in partial for iter {iter_}")
             return
-        for real_id in iter_node.data[SORTED_REALIZATION_IDS]:
-            real = partial.data()[ids.REALS].get(real_id)
-            if not real:
-                continue
-            real_node = iter_node.children[real_id]
-            if real.get(ids.STATUS):
-                real_node.data[ids.STATUS] = real[ids.STATUS]
 
-            real_index = self.index(real_node.row(), 0, iter_index)
-            real_index_bottom_right = self.index(
-                real_node.row(), self.columnCount(iter_index) - 1, iter_index
+        # Stack onto which we push change events for entities, since we branch
+        # the code based on what is in the partial. This way we're guaranteed
+        # that the change events will be emitted when the stack is unwound.
+        with ExitStack() as stack:
+            iter_node = self.root.children[iter_]
+            iter_index = self.index(iter_, 0, QModelIndex())
+            iter_index_bottom_right = self.index(
+                iter_, iter_index.column(), QModelIndex()
             )
+            stack.callback(self.dataChanged.emit, iter_index, iter_index_bottom_right)
 
-            for job_id, color in (
-                metadata[REAL_JOB_STATUS_AGGREGATED].get(real_id, {}).items()
-            ):
-                real_node.data[REAL_JOB_STATUS_AGGREGATED][job_id] = color
-            if real_id in metadata[REAL_STATUS_COLOR]:
-                real_node.data[REAL_STATUS_COLOR] = metadata[REAL_STATUS_COLOR][real_id]
+            for real_id in iter_node.data[SORTED_REALIZATION_IDS]:
+                real = partial.data()[ids.REALS].get(real_id)
+                if not real:
+                    continue
+                real_node = iter_node.children[real_id]
+                if real.get(ids.STATUS):
+                    real_node.data[ids.STATUS] = real[ids.STATUS]
 
-            if not real.get(ids.STEPS):
-                continue
+                real_index = self.index(real_node.row(), 0, iter_index)
+                real_index_bottom_right = self.index(
+                    real_node.row(), self.columnCount(iter_index) - 1, iter_index
+                )
+                stack.callback(
+                    self.dataChanged.emit, real_index, real_index_bottom_right
+                )
 
-            for step_id, step in real[ids.STEPS].items():
-                step_node = real_node.children[step_id]
-                if step.get(ids.STATUS):
-                    step_node.data[ids.STATUS] = step[ids.STATUS]
+                for job_id, color in (
+                    metadata[REAL_JOB_STATUS_AGGREGATED].get(real_id, {}).items()
+                ):
+                    real_node.data[REAL_JOB_STATUS_AGGREGATED][job_id] = color
+                if real_id in metadata[REAL_STATUS_COLOR]:
+                    real_node.data[REAL_STATUS_COLOR] = metadata[REAL_STATUS_COLOR][
+                        real_id
+                    ]
 
-                step_index = self.index(step_node.row(), 0, real_index)
-
-                if not step.get(ids.JOBS):
+                if not real.get(ids.STEPS):
                     continue
 
-                for job_id, job in step[ids.JOBS].items():
-                    job_node = step_node.children[job_id]
+                for step_id, step in real[ids.STEPS].items():
+                    step_node = real_node.children[step_id]
+                    if step.get(ids.STATUS):
+                        step_node.data[ids.STATUS] = step[ids.STATUS]
 
-                    if job.get(ids.STATUS):
-                        job_node.data[ids.STATUS] = job[ids.STATUS]
-                    if job.get(ids.START_TIME):
-                        job_node.data[ids.START_TIME] = job[ids.START_TIME]
-                    if job.get(ids.END_TIME):
-                        job_node.data[ids.END_TIME] = job[ids.END_TIME]
-                    if job.get(ids.STDOUT):
-                        job_node.data[ids.STDOUT] = job[ids.STDOUT]
-                    if job.get(ids.STDERR):
-                        job_node.data[ids.STDERR] = job[ids.STDERR]
+                    step_index = self.index(step_node.row(), 0, real_index)
 
-                    # Errors may be unset as the queue restarts the job
-                    job_node.data[ids.ERROR] = (
-                        job[ids.ERROR] if job.get(ids.ERROR) else ""
-                    )
+                    if not step.get(ids.JOBS):
+                        continue
 
-                    for attr in (ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE):
-                        if job.get(ids.DATA) and attr in job.get(ids.DATA):
-                            job_node.data[ids.DATA] = job_node.data[ids.DATA].set(
-                                attr, job.get(ids.DATA).get(attr)
-                            )
+                    for job_id, job in step[ids.JOBS].items():
+                        job_node = step_node.children[job_id]
 
-                    job_index = self.index(job_node.row(), 0, step_index)
-                    job_index_bottom_right = self.index(
-                        job_node.row(), self.columnCount() - 1, step_index
-                    )
-                    self.dataChanged.emit(job_index, job_index_bottom_right)
-            self.dataChanged.emit(real_index, real_index_bottom_right)
-        self.dataChanged.emit(iter_index, iter_index_bottom_right)
+                        job_index = self.index(job_node.row(), 0, step_index)
+                        job_index_bottom_right = self.index(
+                            job_node.row(), self.columnCount() - 1, step_index
+                        )
+                        stack.callback(
+                            self.dataChanged.emit, job_index, job_index_bottom_right
+                        )
+
+                        if job.get(ids.STATUS):
+                            job_node.data[ids.STATUS] = job[ids.STATUS]
+                        if job.get(ids.START_TIME):
+                            job_node.data[ids.START_TIME] = job[ids.START_TIME]
+                        if job.get(ids.END_TIME):
+                            job_node.data[ids.END_TIME] = job[ids.END_TIME]
+                        if job.get(ids.STDOUT):
+                            job_node.data[ids.STDOUT] = job[ids.STDOUT]
+                        if job.get(ids.STDERR):
+                            job_node.data[ids.STDERR] = job[ids.STDERR]
+
+                        # Errors may be unset as the queue restarts the job
+                        job_node.data[ids.ERROR] = (
+                            job[ids.ERROR] if job.get(ids.ERROR) else ""
+                        )
+
+                        for attr in (ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE):
+                            if job.get(ids.DATA) and attr in job.get(ids.DATA):
+                                job_node.data[ids.DATA] = job_node.data[ids.DATA].set(
+                                    attr, job.get(ids.DATA).get(attr)
+                                )
 
     def _add_snapshot(self, snapshot: Snapshot, iter_: int):
         # Parts of the metadata will be used in the underlying data model,
