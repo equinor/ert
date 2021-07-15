@@ -11,7 +11,9 @@ def load_record(workspace: Path, record_name: str, record_file: Path) -> None:
         raw_ensrecord = json.load(f)
 
     ensrecord = ert.data.EnsembleRecord(
-        records=[ert.data.Record(data=raw_record) for raw_record in raw_ensrecord]
+        records=[
+            ert.data.NumericalRecord(data=raw_record) for raw_record in raw_ensrecord
+        ]
     )
     ert3.storage.add_ensemble_record(
         workspace=workspace,

@@ -268,7 +268,7 @@ def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
             name = nid * "n"
             ensemble_record = ert.data.EnsembleRecord(
                 records=[
-                    ert.data.Record(data=[nid * eid * rid])
+                    ert.data.NumericalRecord(data=[nid * eid * rid])
                     for rid in range(ensemble_size)
                 ]
             )
@@ -285,7 +285,7 @@ def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
             name = nid * "n"
             ensemble_record = ert.data.EnsembleRecord(
                 records=[
-                    ert.data.Record(data=[nid * eid * rid])
+                    ert.data.NumericalRecord(data=[nid * eid * rid])
                     for rid in range(ensemble_size)
                 ]
             )
@@ -341,7 +341,9 @@ def test_get_record_names(tmpdir, ert_storage):
         for nid in range(1, 3):
             name = nid * "n"
             ensemble_record = ert.data.EnsembleRecord(
-                records=[ert.data.Record(data=[0]) for rid in range(ensemble_size)]
+                records=[
+                    ert.data.NumericalRecord(data=[0]) for rid in range(ensemble_size)
+                ]
             )
             ert3.storage.add_ensemble_record(
                 workspace=tmpdir,
@@ -419,7 +421,7 @@ def test_get_ensemble_responses(
     )
     for name in records:
         ensemble_record = ert.data.EnsembleRecord(
-            records=[ert.data.Record(data=[1, 2, 3])]
+            records=[ert.data.NumericalRecord(data=[1, 2, 3])]
         )
         ert3.storage.add_ensemble_record(
             workspace=tmpdir,

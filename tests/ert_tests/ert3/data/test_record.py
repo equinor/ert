@@ -18,8 +18,8 @@ import ert
         {0: 10, 100: 0},
     ),
 )
-def test_valid_record(data):
-    record = ert.data.Record(data=data)
+def test_valid_numerical_record(data):
+    record = ert.data.NumericalRecord(data=data)
 
     if isinstance(data, set):
         data = tuple(data)
@@ -37,16 +37,48 @@ def test_valid_record(data):
 
 @pytest.mark.parametrize(
     "data",
+    ([b""], [b"abcde"], [b"", b"abc"], [b"ab", b"cde"]),
+)
+def test_valid_blob_record(data):
+    record = ert.data.BlobRecord(data=data)
+
+    if isinstance(data, set):
+        data = tuple(data)
+
+    assert len(data) == len(record.data)
+
+
+@pytest.mark.parametrize(
+    "data",
     (
         "a sequence",
         {"a": "b"},
         {"key": None, "a": None},
         {"1": 1, "2": "2"},
+        [b""],
+        [b"abcde"],
     ),
 )
-def test_invalid_record(data):
+def test_invalid_numerical_record(data):
     with pytest.raises(pydantic.ValidationError):
-        ert.data.Record(data=data)
+        ert.data.NumericalRecord(data=data)
+
+
+@pytest.mark.parametrize(
+    "data",
+    (
+        "a sequence",
+        {"a": "b"},
+        {"key": None, "a": None},
+        {"1": 1, "2": "2"},
+        [1, 2, 3],
+        {1, 2, 3},
+        {"a": 0, "b": 1, "c": 2},
+    ),
+)
+def test_invalid_blob_record(data):
+    with pytest.raises(pydantic.ValidationError):
+        ert.data.BlobRecord(data=data)
 
 
 @pytest.mark.parametrize(
@@ -62,7 +94,7 @@ def test_invalid_record(data):
 )
 def test_inconsistent_index_record(data, index):
     with pytest.raises(pydantic.ValidationError):
-        ert.data.Record(data=data, index=index)
+        ert.data.NumericalRecord(data=data, index=index)
 
 
 @pytest.mark.parametrize(
@@ -71,6 +103,7 @@ def test_inconsistent_index_record(data, index):
         [{"data": [i + 0.5, i + 1.1, i + 2.2]} for i in range(3)],
         [{"data": {"a": i + 0.5, "b": i + 1.1, "c": i + 2.2}} for i in range(5)],
         [{"data": {2: i + 0.5, 5: i + 1.1, 7: i + 2.2}} for i in range(2)],
+        [{"data": [b""]}, {"data": [b"abc"]}],
     ),
 )
 def test_valid_ensemble_record(raw_ensrec):
@@ -82,6 +115,12 @@ def test_valid_ensemble_record(raw_ensrec):
         assert len(raw_record) == len(record.data)
         for raw_elem, elem in zip(raw_record, record.data):
             assert raw_elem == elem
+
+
+def test_invalid_ensemble_record():
+    raw_ensrec = [{"data": [b""]}, {"data": [1, 2]}]
+    with pytest.raises(pydantic.ValidationError):
+        ert.data.EnsembleRecord(records=raw_ensrec)
 
 
 @pytest.mark.parametrize(
@@ -102,11 +141,14 @@ def test_inconsistent_size_ensemble_record(raw_ensrec, ensemble_size):
     ("ensemble_size", "raw_multiensrec"),
     (
         (
-            3,
+            4,
             {
                 "ens1": {"records": [{"data": [1, 2, 3]} for _ in range(3)]},
                 "ens2": {"records": [{"data": {"a": 1, "b": 2}} for _ in range(3)]},
                 "ens3": {"records": [{"data": [0]}, {"data": [2]}, {"data": [1]}]},
+                "ens4": {
+                    "records": [{"data": [b""]}, {"data": [b"1"]}, {"data": [b"abc"]}]
+                },
             },
         ),
         (
@@ -138,6 +180,14 @@ def test_valid_multi_ensemble_record(ensemble_size, raw_multiensrec):
                 assert raw_elem == elem
 
 
+def test_invalid_multi_ensemble_record():
+    raw_multiensrec = {
+        "ens1": {"records": [{"data": [1, 2]}, {"data": [b"abc"]}]},
+    }
+    with pytest.raises(pydantic.ValidationError):
+        ert.data.MultiEnsembleRecord(ensemble_records=raw_multiensrec)
+
+
 @pytest.mark.parametrize(
     ("raw_multiensrec", "ensemble_size", "record_names"),
     (
@@ -155,7 +205,7 @@ def test_valid_multi_ensemble_record(ensemble_size, raw_multiensrec):
                 "ens5": {"records": [{"data": [1, 2, 3]} for _ in range(2)]},
             },
             2,
-            ("ens4", "ens10"),  # <- Wrong record nmaes
+            ("ens4", "ens10"),  # <- Wrong record names
         ),
     ),
 )

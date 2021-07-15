@@ -55,7 +55,8 @@ def _prepare_input(
                 raise ValueError(
                     f"Unsupported transmitter type: {storage_config.get('type')}"
                 )
-            futures.append(transmitter.transmit_data(record.data))
+            # See the Record class for the reason of the 'type ignore'.
+            futures.append(transmitter.transmit_data(record.data))  # type: ignore
             transmitters[iens][input_.record] = transmitter
     asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
     if isinstance(step_config, ert3.config.Unix):

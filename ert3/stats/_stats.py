@@ -40,9 +40,9 @@ class Distribution:
 
     def _to_record(self, x: np.ndarray) -> ert.data.Record:  # type: ignore
         if self._as_array:
-            return ert.data.Record(data=x.tolist())
+            return ert.data.NumericalRecord(data=x.tolist())
         else:
-            return ert.data.Record(
+            return ert.data.NumericalRecord(
                 data={idx: float(val) for idx, val in zip(self.index, x)}
             )
 
