@@ -321,7 +321,7 @@ def _response2records(
         if not ensemble_size:
             ensemble_size = 1
         records = [
-            ert.data.Record(data=[response_content]) for _ in range(ensemble_size)
+            ert.data.BlobRecord(data=[response_content]) for _ in range(ensemble_size)
         ]
     else:
         raise ValueError(

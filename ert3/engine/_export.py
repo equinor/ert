@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Iterable, List, Dict, Any
 
 import ert3
-from ert.data import Record
+import ert
 
 
 def _prepare_export(
@@ -11,7 +11,7 @@ def _prepare_export(
     experiment_name: str,
     parameter_names: Iterable[str],
     response_names: Iterable[str],
-) -> List[Dict[str, Dict[str, Record]]]:
+) -> List[Dict[str, Dict[str, ert.data.Record]]]:
     data_mapping = [(pname, "input") for pname in parameter_names]
     data_mapping += [(rname, "output") for rname in response_names]
 
@@ -27,19 +27,13 @@ def _prepare_export(
         if not data:
             data = [{"input": {}, "output": {}} for _ in ensemble_record.records]
 
-
-    ##TODO fix
-        assert len(data) == ensemble_record.ensemble_size
-        for realization, record in zip(data, ensemble_record.records):
-            assert record_name not in realization[data_type]
-            # See the Record class for the reason of the 'type ignore'.
-            realization[data_type][record_name] = record.data  # type: ignore
-
-        # Do not add the blob records to output
-        if len(data) == ensemble_record.ensemble_size:
+        if isinstance(ensemble_record.records[0], ert.data.NumericalRecord):
+            assert len(data) == ensemble_record.ensemble_size
             for realization, record in zip(data, ensemble_record.records):
                 assert record_name not in realization[data_type]
-                realization[data_type][record_name] = record.data
+                # See the Record class for the reason of the 'type ignore'.
+                realization[data_type][record_name] = record.data  # type: ignore
+
     return data
 
 

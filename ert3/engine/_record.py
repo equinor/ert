@@ -17,21 +17,18 @@ def load_record(
         with open(record_file, "rb") as fb:
             raw_ensrecord = fb.read()
         ensrecord = ert.data.EnsembleRecord(
-            records=[ert.data.Record(data=[raw_ensrecord])]
+            records=[ert.data.BlobRecord(data=[raw_ensrecord])]
         )
     else:
         with open(record_file, "r") as f:
             raw_ensrecord = json.load(f)
         ensrecord = ert.data.EnsembleRecord(
-            records=[ert.data.Record(data=raw_record) for raw_record in raw_ensrecord]
+            records=[
+                ert.data.NumericalRecord(data=raw_record)
+                for raw_record in raw_ensrecord
+            ]
         )
 
-    ## TODO fix
-    ensrecord = ert.data.EnsembleRecord(
-        records=[
-            ert.data.NumericalRecord(data=raw_record) for raw_record in raw_ensrecord
-        ]
-    )
     ert3.storage.add_ensemble_record(
         workspace=workspace,
         record_name=record_name,

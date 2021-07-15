@@ -135,6 +135,7 @@ def _assert_equal_data(a, b):
         [{"data": [i + 0.5, i + 1.1, i + 2.2]} for i in range(3)],
         [{"data": {"a": i + 0.5, "b": i + 1.1, "c": i + 2.2}} for i in range(5)],
         [{"data": {2: i + 0.5, 5: i + 1.1, 7: i + 2.2}} for i in range(2)],
+        [{"data": [b"asdfkasjdhjflkjah21WE123TTDSG34f"]}],
     ),
 )
 def test_add_and_get_ensemble_record(tmpdir, raw_ensrec, ert_storage):
@@ -214,7 +215,7 @@ def test_add_and_get_ensemble_parameter_record(tmpdir, raw_ensrec, ert_storage):
         workspace=tmpdir, experiment_name="experiment_name", _flatten=False
     )
     if not indices:
-        assert len(record_names) == 1 and "my_ensemble_record" == record_names[0]
+        assert len(record_names) == 1 and record_names[0] == "my_ensemble_record"
     else:
         assert {f"my_ensemble_record.{x}" for x in indices} == set(record_names)
 
