@@ -27,6 +27,83 @@ Release Notes
  Miscellaneous:
    -
 
+Version 2.21
+------------
+
+Bugfixes:
+  - Set correct phase count in ESMDA model
+  - Prevent double startup of storage server
+  - Seperate Update creation from ensemble creation and link observation transformation
+  - Don't assume singular snapshot in CLI. Fixes a problem where ERT would crash on iiteration 1 if a realization failed in iteration 0.
+
+New features:
+  - Add obs_location property to misfits and corresponding test (`#1373 <https://github.com/equinor/ert/issues/1373>`_)
+  - Implement oat sensitivity algorithm
+  - Add ert3 support for sensitivity studies
+  - Apply row scaling in the smoother update
+
+Improvements:
+  - Add failure event and use it in the legacy and prefect ensembles (`#1301 <https://github.com/equinor/ert/issues/1301>`_)
+  - Push ensembles separarate from responses to new storage
+  - Use numpy_vector instead of deprecated method
+  - Fix snake_oil_field ert config
+  - Remove the prefect option from ert
+  - Remove coefficient generation in Prefect Ensemble
+  - Use LocalDaskCluster to run local ensembles
+  - Add index and ppf to distributions
+  - Introduce experiment folder in workspace
+  - Add uniform polynomial experiments
+  - Add ert3 reservoir example based on SPE1 and flow
+  - Refactor of Qt Graphical User Interface (`#566 <https://github.com/equinor/ert/issues/566>`_)
+  - Add error if not response could be loaded for `MeasuredData`
+  - Introduce record data types
+  - Add retry to the ert3 evaluator
+  - Check queue hash when updating in LegacyTracker
+  - Use forkserver as strategy with multiprocessing
+  - Always use queue from map in LegacyTracker (`#1476 <https://github.com/equinor/ert/issues/1476>`_)
+  - Check if partial_snapshot is None before merging
+  - Reintroduce rendering of job statuses
+  - `JobQueue.snapshot` provide the user with a snapshot of the queue state that can be queried independently of `run_context` and `run_arg`
+  - `JobQueue.execute_queue_async` and `JobQueue.stop_jobs_async` provides asynchronous execution and stopping of queue
+  - Remove fs dependency for summary observation collector
+  - Force sequential execution of callbacks
+  - Export shared rng to Python
+
+Deprecations:
+  - Depecate loading functions
+
+Miscellaneous:
+  - Turn monitor into a context manager (`#1332 <https://github.com/equinor/ert/issues/1332>`_)
+  - Load config close to ensemble evaluator evaluation
+  - Refactor data loading
+  - Refactor plot api
+  - Black plot api
+  - Run test-data as a part of CI
+  - Change patch import in ert3 cli test
+  - Add base distribution
+  - Fix Literal imports
+  - Run polynomial demo during CI
+  - Remove trailing whitespace
+  - Break before binary operators
+  - Make lambda's into def's
+  - Run pylint during CI
+  - Create CODE_OF_CONDUCT.md (`#1414 <https://github.com/equinor/ert/issues/1414>`_)
+  - Add black badge to README
+  - Run black on everything in CI
+  - Format all files
+  - Update badges
+  - Move flake8 settings into .flake8 config
+  - Fix test that was testing a (now fixed) bug in `libres`
+  - Run flake on tests/ert3 during style testing
+  - Stop using single character variable names in tests
+  - Stop storing unused return values in tests
+  - Fix deprecated escape characters
+  - Drop support for variables, input and ouput data in storage
+  - Pass data as records in ert3
+  - Move conftest out to tests/gui
+  - Keep ensemble config nodes in an ordered data structure to avoid sampling differences over different build machines
+  - Write all elements in grdecl test data
+
 Version 2.20
 ------------
 
