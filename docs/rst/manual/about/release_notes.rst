@@ -27,6 +27,71 @@ Release Notes
  Miscellaneous:
    -
 
+Version 2.22
+------------
+
+Bugfixes:
+  - Fix wrong use of STDERR identifier
+
+New features:
+  - Add ert3 status command (`#1457 <https://github.com/equinor/ert/issues/1457>`_)
+  - Add ert3 clean sub-command
+  - Use the new storage to fetch/store results running ert3
+  - Add possibility to initialise examples from cli for ert3
+  - Add forward model function step
+  - Make TEMPLATE_RENDER support parameters.json not being present
+
+Improvements:
+  - Revert "Add retry to ert3"
+  - Look up correct stage in stages_config
+  - Remove redundant engine code
+  - Have ert3.engine stop closing passed streams (`#1498 <https://github.com/equinor/ert/issues/1498>`_)
+  - Use forkserver as strategy with multiprocessing
+  - Ensure fresh loop in prefect ensemble to fix the Bad file descriptor
+  - Make observation active mask not a list
+  - Reintroduce rendering of job statuses
+  - Set prefect log level to WARNING when running
+
+Dependencies:
+  - Add ert-storage as extras to setup.py
+
+Miscellaneous:
+  - Reorder ert3 submodule imports
+  - Use conditionals to import Literal
+  - Add __all__ to ert3.data
+  - Introduce type checking for ert3 in CI
+  - Add type hints to ert3.storage
+  - Run strict type checking for ert3.storage
+  - Add type hints to ert3.engine
+  - Add pylintrc
+  - Run pylint for ert3 as part of style CI workflow
+  - Replace usage of ert3 examples folder with generated test data in ert3
+  - Remove used of example folder in ert3 evaluator tests
+  - Remove used of example folder in ert3 cli tests
+  - Fix flake8 errors
+  - Remove used of example folder in ert3 stages config tests
+  - More removal of examples folder reference from ert3 cli tests
+  - Remove unused imports
+  - Enable pylint error: unused-import
+  - Reposition imports
+  - Enable pylint error: wrong-import-position
+  - Reorder imports
+  - Enable pylint error: wrong-import-order
+  - Enable pylint error: ungrouped-imports
+  - Improve reporting of validation errors
+  - Refactor UnixStep
+  - Replacing magic strings
+  - Remove faulty col resize and add tooltip
+  - Improve storage development workflow
+  - Add tests for the prefect ensemble
+  - Use pydantic to instantiate all dicts
+  - Move conftest out to tests/gui
+  - Improve ensemble client and add new tests
+  - Set timeout of all jobs to 15 minutes
+  - Increase build timeout to 30 minutes
+  - Drop SPE1 example templating hack
+  - Fix examples/polynomial Github Actions workflow
+
 Version 2.21
 ------------
 
