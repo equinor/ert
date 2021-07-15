@@ -161,6 +161,7 @@ def test_add_and_get_ensemble_record(tmpdir, raw_ensrec, ert_storage):
         [{"data": [i + 0.5, i + 1.1, i + 2.2]} for i in range(3)],
         [{"data": {"a": i + 0.5, "b": i + 1.1, "c": i + 2.2}} for i in range(5)],
         [{"data": {2: i + 0.5, 5: i + 1.1, 7: i + 2.2}} for i in range(2)],
+        [{"data": [b"asdfkasjdhjflkjah21WE123TTDSG34f"]}],
     ),
 )
 def test_add_and_get_ensemble_parameter_record(tmpdir, raw_ensrec, ert_storage):
@@ -185,7 +186,10 @@ def test_add_and_get_ensemble_parameter_record(tmpdir, raw_ensrec, ert_storage):
     raw_data = raw_ensrec[0]["data"]
     assert isinstance(raw_data, (list, dict))
     if isinstance(raw_data, list):
-        indices = [str(x) for x in range(len(raw_data))]
+        if isinstance(raw_data[0], bytes):
+            indices = []
+        else:
+            indices = [str(x) for x in range(len(raw_data))]
     else:
         indices = [str(x) for x in raw_data]
 
@@ -209,7 +213,10 @@ def test_add_and_get_ensemble_parameter_record(tmpdir, raw_ensrec, ert_storage):
     record_names = ert3.storage.get_ensemble_record_names(
         workspace=tmpdir, experiment_name="experiment_name", _flatten=False
     )
-    assert {f"my_ensemble_record.{x}" for x in indices} == set(record_names)
+    if not indices:
+        assert len(record_names) == 1 and "my_ensemble_record" == record_names[0]
+    else:
+        assert {f"my_ensemble_record.{x}" for x in indices} == set(record_names)
 
     retrieved_ensrecord = ert3.storage.get_ensemble_record(
         workspace=tmpdir,
@@ -453,35 +460,3 @@ def test_ensemble_responses_and_parameters(tmpdir, ert_storage):
             ensemble_size=1,
             responses=responses,
         )
-
-
-@pytest.mark.requires_ert_storage
-def test_add_and_get_blob_record(tmpdir, ert_storage):
-    # this test should be added to the
-    # test_add_and_get_ensemble_parameter_record() test above
-    record_name = "test_data"
-    experiment_name = "exp"
-    data = b"ASDFQEWRGFWEzwz3TRHSDFBVWRET12awd"
-
-    ert3.storage.init(workspace=tmpdir)
-    ert3.storage.init_experiment(
-        workspace=tmpdir,
-        experiment_name=experiment_name,
-        parameters={},
-        ensemble_size=1,
-        responses=[],
-    )
-
-    ensemble_record = ert.data.EnsembleRecord(records=[ert.data.Record(data=[data])])
-    ert3.storage.add_ensemble_record(
-        workspace=tmpdir,
-        record_name=record_name,
-        ensemble_record=ensemble_record,
-        experiment_name=experiment_name,
-    )
-
-    blob_ensemble_record = ert3.storage.get_ensemble_record(
-        workspace=tmpdir, record_name=record_name, experiment_name=experiment_name
-    )
-
-    assert blob_ensemble_record.records[0].data[0] == data
