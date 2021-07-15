@@ -51,6 +51,7 @@ def _get_experiment_record_indices(
         )
         indices: Set[Union[str, int]] = set()
         for record in ensemble_record.records:
+            assert isinstance(record, ert.data.NumericalRecord)
             assert record.index is not None
             indices.update(record.index)
         return [str(x) for x in indices]

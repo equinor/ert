@@ -22,7 +22,10 @@ TEST_PARAMETRIZATION = [
 def get_inputs(coeffs):
     input_records = {}
     input_records["coefficients"] = ert.data.EnsembleRecord(
-        records=[ert.data.Record(data={"a": a, "b": b, "c": c}) for (a, b, c) in coeffs]
+        records=[
+            ert.data.NumericalRecord(data={"a": a, "b": b, "c": c})
+            for (a, b, c) in coeffs
+        ]
     )
     return ert.data.MultiEnsembleRecord(ensemble_records=input_records)
 
@@ -47,7 +50,9 @@ def test_evaluator_script(
     expected = ert.data.MultiEnsembleRecord(
         ensemble_records={
             "polynomial_output": ert.data.EnsembleRecord(
-                records=[ert.data.Record(data=poly_out) for poly_out in expected],
+                records=[
+                    ert.data.NumericalRecord(data=poly_out) for poly_out in expected
+                ],
             )
         }
     )
@@ -74,7 +79,9 @@ def test_evaluator_function(
     expected = ert.data.MultiEnsembleRecord(
         ensemble_records={
             "polynomial_output": ert.data.EnsembleRecord(
-                records=[ert.data.Record(data=poly_out) for poly_out in expected],
+                records=[
+                    ert.data.NumericalRecord(data=poly_out) for poly_out in expected
+                ],
             )
         }
     )

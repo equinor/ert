@@ -284,17 +284,17 @@ def _response2records(
     records: List[ert.data.Record]
     if record_type == ert.data.RecordType.LIST_FLOAT:
         records = [
-            ert.data.Record(data=row.to_list())
+            ert.data.NumericalRecord(data=row.to_list())
             for _, row in dataframe.iterrows()  # pylint: disable=no-member
         ]
     elif record_type == ert.data.RecordType.MAPPING_INT_FLOAT:
         records = [
-            ert.data.Record(data={int(k): v for k, v in row.to_dict().items()})
+            ert.data.NumericalRecord(data={int(k): v for k, v in row.to_dict().items()})
             for _, row in dataframe.iterrows()  # pylint: disable=no-member
         ]
     elif record_type == ert.data.RecordType.MAPPING_STR_FLOAT:
         records = [
-            ert.data.Record(data=row.to_dict())
+            ert.data.NumericalRecord(data=row.to_dict())
             for _, row in dataframe.iterrows()  # pylint: disable=no-member
         ]
     else:
@@ -322,7 +322,7 @@ def _combine_records(
                 if isinstance(data, list)
                 for val in data
             ]
-            combined_records.append(ert.data.Record(data=ldata))
+            combined_records.append(ert.data.NumericalRecord(data=ldata))
         elif isinstance(record0.data, dict):
             ddata = {
                 key: val
@@ -333,7 +333,7 @@ def _combine_records(
                 if isinstance(data, dict)
                 for key, val in data.items()
             }
-            combined_records.append(ert.data.Record(data=ddata))
+            combined_records.append(ert.data.NumericalRecord(data=ddata))
     return ert.data.EnsembleRecord(records=combined_records)
 
 

@@ -2,7 +2,7 @@ import json
 import shutil
 import typing
 import uuid
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from enum import Enum, auto
 from pathlib import Path
 from typing import (
@@ -29,17 +29,19 @@ from pydantic import (
     StrictStr,
     validator,
     root_validator,
+    ValidationError,
 )
 
 _copy = wrap(shutil.copy)
 
 strict_number = Union[StrictInt, StrictFloat]
-record_data = Union[
+numerical_record_data = Union[
     List[strict_number],
     Dict[StrictStr, strict_number],
     Dict[StrictInt, strict_number],
-    List[StrictBytes],
 ]
+blob_record_data = List[StrictBytes]
+record_data = Union[numerical_record_data, blob_record_data]
 
 
 def parse_json_key_as_int(obj: Any) -> Any:
@@ -61,7 +63,7 @@ RecordIndex = Tuple[Union[StrictInt, StrictStr], ...]
 
 
 def _build_record_index(
-    data: record_data,
+    data: numerical_record_data,
 ) -> RecordIndex:
     if isinstance(data, MutableMapping):
         return tuple(data.keys())
@@ -76,8 +78,33 @@ class RecordType(str, Enum):
     LIST_BYTES = "LIST_BYTES"
 
 
-class Record(_DataElement):
-    data: record_data
+class Record(ABC, _DataElement):
+    # There should be an abstract property for data. However, pydantic does not
+    # support that, it will complain about shadowing the field. That can be
+    # solved using a Field alias, but then the derived classes become abstract,
+    # since they do not have a data field. Defining a non-abstract data property
+    # instead also does not work in combination with pydantic: the base property
+    # will be called when accessing record.data.
+    #
+    # The current solution is to define no data property here at all. This has
+    # the disadvantage that we are reverting to duck-typing  when we access the
+    # data field in a record of unknown type (record.data). Not a problem for
+    # Python, but it breaks mypy. Hence, in such cases, a 'type: ignore' needs
+    # to be used.
+    #
+    # @property
+    # @abstractmethod
+    # def data(self) -> record_data:
+    #     "Return the record data"
+
+    @property
+    @abstractmethod
+    def record_type(self) -> RecordType:
+        "Return the record type"
+
+
+class NumericalRecord(Record):
+    data: numerical_record_data
     index: Optional[RecordIndex] = None
 
     @validator("index", pre=True)
@@ -97,8 +124,6 @@ class Record(_DataElement):
                 return RecordType.LIST_FLOAT
             if isinstance(self.data[0], (int, float)):
                 return RecordType.LIST_FLOAT
-            if isinstance(self.data[0], bytes):
-                return RecordType.LIST_BYTES
         elif isinstance(self.data, Mapping):
             if not self.data:
                 return RecordType.MAPPING_STR_FLOAT
@@ -122,8 +147,20 @@ class Record(_DataElement):
         return record
 
 
+class BlobRecord(Record):
+    data: blob_record_data
+
+    @property
+    def record_type(self) -> RecordType:
+        if isinstance(self.data, list) and isinstance(self.data[0], bytes):
+            return RecordType.LIST_BYTES
+        raise TypeError(
+            f"Not able to deduce record type from data was: {type(self.data)}"
+        )
+
+
 class EnsembleRecord(_DataElement):
-    records: Tuple[Record, ...]
+    records: Union[Tuple[NumericalRecord, ...], Tuple[BlobRecord, ...]]
     ensemble_size: Optional[int] = None
 
     @validator("ensemble_size", pre=True, always=True)
@@ -234,10 +271,7 @@ class RecordTransmitter:
         pass
 
     @abstractmethod
-    async def transmit_data(
-        self,
-        data: record_data,
-    ) -> None:
+    async def transmit_data(self, data: record_data) -> None:
         pass
 
     @abstractmethod
@@ -247,6 +281,25 @@ class RecordTransmitter:
         mime: str,
     ) -> None:
         pass
+
+
+# The use of this, rather ugly, function could possibly be avoided by moving some
+# of the functionality of the transmitters into the Record classes.
+def _make_record(
+    data: Any, index: Optional[RecordIndex] = None
+) -> Union[NumericalRecord, BlobRecord]:
+    validation_errors = []
+    try:
+        return NumericalRecord(data=data, index=index)
+    except ValidationError as err:
+        validation_errors.append(err)
+    try:
+        return BlobRecord(data=data)
+    except ValidationError as err:
+        validation_errors.append(err)
+    # This function only fails with multiple validation errors, not sure how to
+    # raise those.
+    raise ValueError(validation_errors)
 
 
 class SharedDiskRecordTransmitter(RecordTransmitter):
@@ -271,22 +324,21 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
 
     async def _transmit(self, record: Record) -> None:
         storage_uri = self._storage_path / self._concrete_key
-        if record.record_type != RecordType.LIST_BYTES:
+        if isinstance(record, NumericalRecord):
             contents = json.dumps(record.data)
             async with aiofiles.open(storage_uri, mode="w") as f:
                 await f.write(contents)
-        else:
+        elif isinstance(record, BlobRecord):
             async with aiofiles.open(storage_uri, mode="wb") as f:  # type: ignore
                 await f.write(record.data[0])  # type: ignore
+        else:
+            raise TypeError(f"Record type not supported {type(record)}")
         self._set_transmitted(storage_uri, record_type=record.record_type)
 
-    async def transmit_data(
-        self,
-        data: record_data,
-    ) -> None:
+    async def transmit_data(self, data: record_data) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
-        record = Record(data=data)
+        record = _make_record(data)
         return await self._transmit(record)
 
     async def transmit_file(
@@ -296,14 +348,15 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
     ) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
+        record: Union[NumericalRecord, BlobRecord]
         if mime == "application/json":
             async with aiofiles.open(str(file), mode="r") as f:
                 contents = await f.read()
-                record = Record(data=json.loads(contents))
+                record = NumericalRecord(data=json.loads(contents))
         elif mime == "application/octet-stream":
             async with aiofiles.open(str(file), mode="rb") as f:  # type: ignore
                 contents = await f.read()
-                record = Record(data=[contents])
+                record = BlobRecord(data=[contents])
         else:
             raise NotImplementedError(
                 "cannot transmit file unless mime is application/json"
@@ -321,11 +374,11 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
                     data = json.loads(contents, object_hook=parse_json_key_as_int)
                 else:
                     data = json.loads(contents)
-                return Record(data=data)
+                return NumericalRecord(data=data)
         else:
             async with aiofiles.open(str(self._uri), mode="rb") as f:  # type: ignore
                 data = await f.read()
-                return Record(data=[data])
+                return BlobRecord(data=[data])
 
     async def dump(self, location: Path) -> None:
         if not self.is_transmitted():
@@ -335,10 +388,11 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
 
 class InMemoryRecordTransmitter(RecordTransmitter):
     _TYPE: RecordTransmitterType = RecordTransmitterType.in_memory
-    # TODO: these fields should be Record, but that does not work until
-    # https://github.com/cloudpipe/cloudpickle/issues/403 has been released.
-    _data: Optional[Any] = None
-    _index: Optional[Any] = None
+    # TODO: these fields should be Union[NumericalRecord, BlobRecord], but that
+    # does not work until https://github.com/cloudpipe/cloudpickle/issues/403
+    # has been released.
+    _data: Optional[record_data] = None
+    _index: Optional[RecordIndex] = None
 
     def __init__(self, name: str):
         super().__init__()
@@ -346,21 +400,20 @@ class InMemoryRecordTransmitter(RecordTransmitter):
 
     def _set_transmitted(self, record: Record) -> None:
         super()._set_transmitted_state()
-        self._data = record.data
-        self._index = record.index
+        # See the Record class for the reason of the 'type ignore'.
+        self._data = record.data  # type: ignore
+        if isinstance(record, NumericalRecord):
+            self._index = record.index
 
     @property
     def transmitter_type(self) -> RecordTransmitterType:
         return self._TYPE
 
     @abstractmethod
-    async def transmit_data(
-        self,
-        data: record_data,
-    ) -> None:
+    async def transmit_data(self, data: record_data) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
-        record = Record(data=data)
+        record = _make_record(data)
         self._set_transmitted(record)
 
     @abstractmethod
@@ -371,14 +424,15 @@ class InMemoryRecordTransmitter(RecordTransmitter):
     ) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
+        record: Record
         if mime == "application/json":
             async with aiofiles.open(str(file), mode="r") as f:
                 contents = await f.read()
-                record = Record(data=json.loads(contents))
+                record = NumericalRecord(data=json.loads(contents))
         elif mime == "application/octet-stream":
             async with aiofiles.open(str(file), mode="rb") as f:  # type: ignore
                 contents = await f.read()
-                record = Record(data=[contents])
+                record = BlobRecord(data=[contents])
         else:
             raise NotImplementedError(
                 "cannot transmit file unless mime is application/json"
@@ -389,17 +443,18 @@ class InMemoryRecordTransmitter(RecordTransmitter):
     async def load(self) -> Record:
         if not self.is_transmitted():
             raise RuntimeError("cannot load untransmitted record")
-        return Record(data=self._data, index=self._index)
+        assert self._data is not None
+        return _make_record(self._data, index=self._index)
 
     async def dump(self, location: Path) -> None:
         if not self.is_transmitted():
             raise RuntimeError("cannot dump untransmitted record")
         if self._data is None:
             raise ValueError("cannot dump Record with no data")
-        record = Record(data=self._data, index=self._index)
+        record = _make_record(data=self._data, index=self._index)
         if record.record_type != RecordType.LIST_BYTES:
             async with aiofiles.open(str(location), mode="w") as f:
                 await f.write(json.dumps(self._data))
         else:
             async with aiofiles.open(str(location), mode="wb") as f:  # type: ignore
-                await f.write(self._data[0])
+                await f.write(self._data[0])  # type: ignore
