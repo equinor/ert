@@ -27,6 +27,45 @@ Release Notes
  Miscellaneous:
    -
 
+Version 2.20
+------------
+
+Bugfixes:
+  - Fix for default tabs selection (`#1282 <https://github.com/equinor/ert/issues/1282>`_)
+
+New features:
+  - Run eclipse using eclrun when available
+  - Add row scaling API
+  - Fist working iteration of prefect evaluator (`#1125 <https://github.com/equinor/ert/issues/1125>`_)
+  - Introduce ert3 (`#1311 <https://github.com/equinor/ert/issues/1311>`_)
+
+Improvements:
+  - Disable logging in forward models and workflows
+  - Unify code paths with and without monitoring
+  - Graceful exit if storage_server.json exists
+  - Clarify how rel paths in workflow are resolved
+  - Return empty list in create_observations when no obs are available
+  - Add --host setting to ert api
+  - Storage: Allow NaNs to be returned (`#1284 <https://github.com/equinor/ert/issues/1284>`_)
+  - Storage: Move database to /tmp while using it (`#1309 <https://github.com/equinor/ert/issues/1309>`_)
+  - Make evaluator input files configurable
+  - Avoid unnecessary stack trace during `ert vis` (`#1306 <https://github.com/equinor/ert/issues/1306>`_)
+  - Storage: Combine ParameterDefinition & Parameter
+
+Dependencies:
+  - Add `pyrsistent` (`#1376 <https://github.com/equinor/ert/issues/1376>`_)
+
+Miscellaneous:
+  - Remove builtin and __future__ imports
+  - Fix wrong tests folder in Github Actions
+  - Introduce exceptions module for ert3 workspace errors
+  - Create CONTRIBUTING.md
+  - Refactor Storage API Server (`#1102 <https://github.com/equinor/ert/issues/1102>`_, `#1116 <https://github.com/equinor/ert/issues/1116>`_)
+  - Fix extraction.py's create_update
+  - Correct spelling of modelling to British variant
+  - Copy examples when running Jenkins CI
+  - Run flake8 on the ert3 module as part of CI
+
 
 Version 2.19
 ------------
