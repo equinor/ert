@@ -27,6 +27,86 @@ Release Notes
  Miscellaneous:
    -
 
+Version 2.24
+------------
+
+Bugfixes:
+  - ert3: Fix wrongly typed distribution index
+  - Fix bug in prefect ensemble error handling
+  - Fix retry connection in evaluator tracker
+  - Fix rounding error in realization progress visualisation (`#1672 <https://github.com/equinor/ert/issues/1672>`_)
+  - Re-add `stderr` and `stdout` info
+  - Re-enable retries for Tasks
+  - Add timeout when waiting for cancelled dispatchers
+  - Use isoformat for timestamps when converting to str (`#1637 <https://github.com/equinor/ert/issues/1637>`_)
+  - Pass `ee_id` to `execute_queue_async`
+  - Fix running event loop in gui sim thread
+  - Fix cancelling of ensemble hanging for ever
+  - Handle dns operation timeout (`#1625 <https://github.com/equinor/ert/issues/1625>`_)
+  - Fix JOB_QUEUE_DO_KILL_NODE_FAILURE spelling error
+  - Update detailed progress after failure (`#1658 <https://github.com/equinor/ert/issues/1658>`_)
+
+New features:
+  - Add support for Python 3.9
+  - Add callback function for catching MAX_RUNTIME failure (`#1525 <https://github.com/equinor/ert/issues/1525>`_)
+  - Add method keys() to LocalDataset
+
+Improvements:
+  - Pass ert3 records to storage as numerical data
+  - Define, test and document communication protocols in EE (`#1235 <https://github.com/equinor/ert/issues/1235>`_)
+  - Connection error handling in EvaluatorTracker (`#1679 <https://github.com/equinor/ert/issues/1679>`_)
+  - Batch all event types
+  - Order real status according to state transitions
+  - ert3: Ensure immutable stages config
+  - ert3: Ensure immutable ensemble config
+  - ert3: Ensure immutable experiment config
+  - ert3: Introduce parameters config
+  - ert3: Make distributions expose their arguments
+  - Fix usage of .closed in socket code (`#1600 <https://github.com/equinor/ert/issues/1600>`_)
+  - ERT 3: Feature/step type class
+  - Use the prefect context to pass url, token and certification info
+  - Force x_axis values to be strings before json serialization
+  - Extract priors to new storage
+  - Add certificates and tokens to websocket communication (`#1326 <https://github.com/equinor/ert/issues/1326>`_)
+  - Add batching of events in ensemble evaluator (`#1683 <https://github.com/equinor/ert/issues/1683>`_)
+  - Log evaluator cross talk (`#1647 <https://github.com/equinor/ert/pull/1647>`_)
+  - Remove ensemble evaluator feature flag warning
+  - Use `phaseCount` in progress calculation, drop phase (`#1635 <https://github.com/equinor/ert/issues/1635>`_)
+  - Timeout CI pipeline after 30 mins
+  - Refactor evaluator utils
+  - Refactor `update_step` to refer to step entities
+  - Refactor and extend testing of PartialSnapshot
+  - Remove size cap on ensemble evaluator msg queue
+  - Add 'ensemble_size' as param to 'post_ensemble_data'
+  - Add record class 'response' to extracted responses
+  - Add test to make sure total progress is updated (`#1608 <https://github.com/equinor/ert/issues/1608>`_)
+  - Keep tracker iteration snapshot up to date
+  - Use ERT Storage's TestClient
+  - Improve cancellation of ensembles
+  - Add token and certificates to websocket communication
+  - Re-add stderr and stdout info
+  - Use public MonkeyPatch
+  - Re-use Client for dispatch lifecycle
+  - Add --summary-conversion flag with default no to eclipse run
+  - Require `ee_id` in `execute_queue_async`
+  - Allow certificate to be `None`
+
+Dependencies:
+  - Upgrade to websockets 9 (`#1615 <https://github.com/equinor/ert/issues/1615>`_)
+  - Depend on `dnspython>=2` and `pydantic>=1.8.1`
+
+Miscellaneous:
+  - Cleanup exceptions in ert3.storage
+  - Introduce SyncWebsocketDuplexer (`#1538 <https://github.com/equinor/ert/issues/1538>`_)
+  - Refactor: Remove handlers from evaluator
+  - Pin pytest-qt<4
+  - Add integration tests for post_ensemble_data (`#1669 <https://github.com/equinor/ert/issues/1669>`_)
+  - ert3: Use public interface when testing ensemble config
+  - Add classifiers to setup.py
+  - Cleanup prefect ensemble test for function defined outside the python environment
+  - Add logging to development strategy
+  - Add type hinting to make mypy pass on ert3 in strict mode
+
 Version 2.23
 ------------
 
