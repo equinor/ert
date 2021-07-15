@@ -27,6 +27,67 @@ Release Notes
  Miscellaneous:
    -
 
+Version 2.25
+------------
+
+Bugfixes:
+  - Fix initial ensemble state
+  - Fix flaky legacy ensemble test by making job queue always launch jobs (`#1794 <https://github.com/equinor/ert/issues/1794>`_)
+  - Fix GUI crash (`#457 <https://github.com/equinor/ert/issues/457>`_)
+  - Fix bug where the last summary obs was not loaded (`#1813 <https://github.com/equinor/ert/issues/1813>`_)
+  - Fix bug in progress calculation (`#1830 <https://github.com/equinor/ert/issues/1830>`_)
+
+New features:
+  - Make it possible to visualise ERT3 results
+  - Check the status of ert3 services
+  - Support space and comma in forward model job arguments (`#1472 <https://github.com/equinor/ert/issues/1472>`_)
+
+Improvements:
+  - Rename: userdata and ensemble_ids endpoints
+  - Add section on how to restart ES-MDA in GUI (`#1290 <https://github.com/equinor/ert/issues/1290>`_)
+  - Generate narratives on the fly when building the docs
+  - Support building the documenation on ReadTheDocs (`#1610 <https://github.com/equinor/ert/issues/1610>`_)
+  - ert2 use servermonitor for fetching ert-storage auth
+  - Add ert-storage, clean experiment and webviz-ert to spe1-README (`#1736 <https://github.com/equinor/ert/issues/1736>`_)
+  - Fix typo in RMS documantion and CLI (`#1438 <https://github.com/equinor/ert/issues/1438>`_)
+  - Add output records to ert3 ensemble config
+  - Implement time out for legacy evaluator
+  - Fix resolve socket family (INET/INET6) (`#1676 <https://github.com/equinor/ert/issues/1676>`_)
+
+Deprecations:
+  - Deprecate PORTABLE_EXE (`#1718 <https://github.com/equinor/ert/issues/1718>`_)
+
+Dependencies:
+  - Add type stub packages to types-requirements
+  - Require semeio>=1.1.3rc0
+  - Remove ert-storage from dev-requirements.txt
+  - Add scikit-build as a dev-requirement
+  - Add setuptools_scm as a dev-requirement
+
+Miscellaneous:
+  - Move all the libres code into the ert repository
+  - ert3: Introduce common RecordIndex
+  - Add integration tests for post_update_data (`#1671 <https://github.com/equinor/ert/issues/1671>`_)
+  - Add some temporary debuging of events
+  - Make cancel test more consistent (`#1755 <https://github.com/equinor/ert/issues/1755>`_)
+  - Fix flaky prefect retry test by ignoring order of events in the test (`#1730 <https://github.com/equinor/ert/issues/1730>`_)
+  - Use example servers in comments
+  - Ignore some numpy type annotions that are difficult to handle in python
+  - Added Docs Section In README.md
+  - Split ERT 3 parameters into separate records
+  - Have mypy ignore missing numpy imports
+  - Make deploy to PyPi also depend on ctests
+  - Change workflows to not trigger on all push events (`#1739 <https://github.com/equinor/ert/issues/1739>`_)
+  - Reduce the number of macos builds on GA (`#1756 <https://github.com/equinor/ert/issues/1756>`_)
+  - Run ert2 test data setup on python 3.8 instead of 3.7
+  - Clone with tags in style and typing workflows
+  - Merge ert and libres test-data
+  - Delete libres test-data
+  - Remove init from tests (`#1734 <https://github.com/equinor/ert/issues/1734>`_)
+  - Remove use of temp test folder in GA
+  - Unite the resolving of port and sockets to use (`#1676 <https://github.com/equinor/ert/issues/1676>`_)
+  - Make verification tests wait for the ensemble evaluator to finish (`#1819 <https://github.com/equinor/ert/issues/1819>`_)
+
 Version 2.24
 ------------
 
