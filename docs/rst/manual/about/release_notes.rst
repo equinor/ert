@@ -27,6 +27,40 @@ Release Notes
  Miscellaneous:
    -
 
+Version 2.23
+------------
+
+Bugfixes:
+  - Fix 1307 by removing the signaller from the pool (`#1307 <https://github.com/equinor/ert/issues/1307>`_)
+  - Fix extraction bug when no observations
+  - Fix function ensemble run on PBS cluster by cloudpickling function (`#1505 <https://github.com/equinor/ert/issues/1505>`_)
+
+New features:
+  - Use experiment in ert-storage for ert3 (`#1554 <https://github.com/equinor/ert/issues/1554>`_)
+
+Improvements:
+  - Stop using ArgParse FileType (`#1500 <https://github.com/equinor/ert/issues/1500>`_)
+  - Remove and stop using the nfs_adaptor for status messages (`#1344 <https://github.com/equinor/ert/issues/1344>`_)
+  - Make legacy ensemble members connect through websocket
+  - Updates related to row scaling
+  - Adapt websockets events to new event model
+  - Introduce RecordTransmitter (`#1334 <https://github.com/equinor/ert/issues/1334>`_, `#1447 <https://github.com/equinor/ert/issues/1447>`_, `#1328 <https://github.com/equinor/ert/issues/1328>`_, `#1502 <https://github.com/equinor/ert/issues/1502>`_)
+  - Make ert3 ensemble config forward model point to a single stage (`#1553 <https://github.com/equinor/ert/issues/1553>`_)
+  - Move data extraction to new ert-storage rest api (`#1544 <https://github.com/equinor/ert/issues/1544>`_)
+  - Extract priors to new storage
+  - Force x_axis values to be strings before json serialization
+  - Fix x axis to str, when posting update data
+  - Update detailed progress after failure (`#1658 <https://github.com/equinor/ert/issues/1658>`_)
+  - Use snapshot instead of run_context (`#1658 <https://github.com/equinor/ert/issues/1658>`_)
+
+Miscellaneous:
+  - Refactor Realization/Stages/Steps (`#1220 <https://github.com/equinor/ert/issues/1220>`_)
+  - Drop broken ertplot script (`#547 <https://github.com/equinor/ert/issues/547>`_)
+  - Add development strategy
+  - Remove new legacy storage db (`#1544 <https://github.com/equinor/ert/issues/1544>`_)
+  - Advertise ert_shared entry point as ert (`#418 <https://github.com/equinor/ert/issues/418>`_)
+  - Add function step tests for function defined outside python environment (`#1556 <https://github.com/equinor/ert/issues/1556>`_)
+
 Version 2.22
 ------------
 
