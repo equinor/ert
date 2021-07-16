@@ -21,7 +21,7 @@ def find_available_port(
 ) -> Tuple[str, int]:
     current_host = custom_host if custom_host is not None else _get_ip_address()
     current_range = (
-        custom_range if custom_range is not None else range(51820, 55840 + 1)
+        custom_range if custom_range is not None else range(51820, 51840 + 1)
     )
 
     if current_range.start == current_range.stop:
