@@ -319,7 +319,7 @@ def _response2records(
         ]
     elif record_type == ert.data.RecordType.LIST_BYTES:
         if not ensemble_size:
-            ensemble_size = 1
+            ensemble_size = metadata.ensemble_size
         records = [
             ert.data.BlobRecord(data=[response_content]) for _ in range(ensemble_size)
         ]
