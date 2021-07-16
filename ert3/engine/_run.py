@@ -226,7 +226,7 @@ def _prepare_sensitivity(
     )
 
     sensitivity_input_records = ert3.algorithms.one_at_the_time(
-        sensitivity_distributions
+        sensitivity_distributions, tail=experiment_config.tail
     )
 
     ensemble_size = len(sensitivity_input_records)

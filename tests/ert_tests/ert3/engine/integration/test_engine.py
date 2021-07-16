@@ -84,7 +84,7 @@ def evaluation_experiment_config():
 
 @pytest.fixture()
 def sensitivity_experiment_config():
-    raw_config = {"type": "sensitivity", "algorithm": "one-at-a-time"}
+    raw_config = {"type": "sensitivity", "algorithm": "one-at-a-time", "tail": 0.99}
     yield ert3.config.load_experiment_config(raw_config)
 
 
