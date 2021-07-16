@@ -1,4 +1,4 @@
-from typing import Set, MutableMapping, List, Dict
+from typing import Set, MutableMapping, List, Dict, Optional
 
 from ert3.stats import Distribution
 from ert.data import Record
@@ -11,19 +11,22 @@ def _build_base_records(
 
 
 def one_at_the_time(
-    parameters: MutableMapping[str, Distribution]
+    parameters: MutableMapping[str, Distribution], tail: Optional[float] = 0.99
 ) -> List[Dict[str, Record]]:
     if len(parameters) == 0:
         raise ValueError("Cannot study the sensitivity of no variables")
 
     # The lower extremal value of the analysis. Each variable will after turn
-    # be explored as ppf(tail) and ppf(1-tail) as the two extremal values.
-    tail = (1 - 0.99) / 2
+    # be explored as ppf(q) and ppf(1-q) as the two extremal values.
+    if tail is not None:
+        q = (1 - tail) / 2
+    else:
+        q = (1 - 0.99) / 2
 
     evaluations = []
     for group_name, dist in parameters.items():
-        lower = dist.ppf(tail)
-        upper = dist.ppf(1 - tail)
+        lower = dist.ppf(q)
+        upper = dist.ppf(1 - q)
         const_records = set(parameters.keys())
         const_records.remove(group_name)
 

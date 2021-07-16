@@ -173,3 +173,48 @@ def test_multi_parameter_groups():
                 else 0
             )
             assert expected_value == pytest.approx(evali["indexed"].data[key])
+
+
+@pytest.mark.parametrize(
+    ("tail", "expected_evaluations"),
+    (
+        (
+            0.99,
+            [
+                {"a": [-CNORM_INV], "b": [0.5]},
+                {"a": [CNORM_INV], "b": [0.5]},
+                {"a": [0], "b": [CUNI_INV]},
+                {"a": [0], "b": [1 - CUNI_INV]},
+            ],
+        ),
+        (
+            0.75,
+            [
+                {"a": [-1.15034938], "b": [0.5]},
+                {"a": [1.15034938], "b": [0.5]},
+                {"a": [0], "b": [0.125]},
+                {"a": [0], "b": [1 - 0.125]},
+            ],
+        ),
+        (
+            0.5,
+            [
+                {"a": [-0.67448975], "b": [0.5]},
+                {"a": [0.67448975], "b": [0.5]},
+                {"a": [0], "b": [0.25]},
+                {"a": [0], "b": [1 - 0.25]},
+            ],
+        ),
+    ),
+)
+def test_tail(tail, expected_evaluations):
+    records = {
+        "a": ert3.stats.Gaussian(0, 1, size=1),
+        "b": ert3.stats.Uniform(0, 1, size=1),
+    }
+    evaluations = ert3.algorithms.one_at_the_time(records, tail)
+
+    for expected, result in zip(expected_evaluations, evaluations):
+        for key in expected.keys():
+            for e, r in zip(expected[key], result[key].data):
+                assert e == pytest.approx(r)
