@@ -84,9 +84,7 @@ def script_transmitter(name, location, storage_path):
         name=name, storage_path=Path(storage_path)
     )
     with open(location, "rb") as f:
-        asyncio.get_event_loop().run_until_complete(
-            transmitter.transmit_data([f.read()])
-        )
+        asyncio.get_event_loop().run_until_complete(transmitter.transmit_data(f.read()))
 
     return {name: transmitter}
 

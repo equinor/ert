@@ -60,8 +60,8 @@ simple_records = pytest.mark.parametrize(
         ({1, 2, 3}, [1, 2, 3], "application/json"),
         ({"a": 0, "b": 1, "c": 2}, {"a": 0, "b": 1, "c": 2}, "application/json"),
         ({0: 10, 100: 0}, {0: 10, 100: 0}, "application/json"),
-        ([b"\x00"], [b"\x00"], "application/octet-stream"),
-        ([b"\xF0\x9F\xA6\x89"], [b"\xF0\x9F\xA6\x89"], "application/octet-stream"),
+        (b"\x00", b"\x00", "application/octet-stream"),
+        (b"\xF0\x9F\xA6\x89", b"\xF0\x9F\xA6\x89", "application/octet-stream"),
     ),
 )
 
@@ -104,7 +104,7 @@ async def test_simple_record_transmit_from_file(
                 json.dump(expected_data, f)
         else:
             with open(filename, "wb") as f:
-                f.write(expected_data[0])
+                f.write(expected_data)
         await transmitter.transmit_file(filename, mime=application_type)
         assert transmitter.is_transmitted()
         with pytest.raises(RuntimeError, match="Record already transmitted"):
@@ -151,7 +151,7 @@ async def test_simple_record_transmit_and_dump(
                 assert json.dumps(expected_data) == f.read()
         else:
             with open("record.json", "rb") as f:
-                assert expected_data[0] == f.read()
+                assert expected_data == f.read()
 
 
 @pytest.mark.asyncio
