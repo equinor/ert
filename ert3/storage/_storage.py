@@ -144,7 +144,7 @@ def init(*, workspace: Path) -> None:
         if f"{workspace}.{special_key}" in experiment_names:
             raise ValueError("Storage already initialized")
         _init_experiment(
-            workspace=workspace,
+            # workspace=workspace,
             experiment_name=f"{workspace}.{special_key}",
             parameters={},
             ensemble_size=-1,
@@ -154,7 +154,6 @@ def init(*, workspace: Path) -> None:
 
 def init_experiment(
     *,
-    workspace: Path,
     experiment_name: str,
     parameters: Mapping[str, Iterable[str]],
     ensemble_size: int,
@@ -164,7 +163,6 @@ def init_experiment(
         raise ValueError("Ensemble cannot have a size <= 0")
 
     _init_experiment(
-        workspace=workspace,
         experiment_name=experiment_name,
         parameters=parameters,
         ensemble_size=ensemble_size,
@@ -172,13 +170,12 @@ def init_experiment(
     )
 
 
-def _is_numeric_parameter(record: str, params: Iterable[str]) -> bool:
+def _is_numeric_parameter(params: Iterable[str]) -> bool:
     return len(list(params)) > 0
 
 
 def _init_experiment(
     *,
-    workspace: Path,
     experiment_name: str,
     parameters: Mapping[str, Iterable[str]],
     ensemble_size: int,
@@ -202,7 +199,7 @@ def _init_experiment(
 
     parameter_names = []
     for record, params in parameters.items():
-        if _is_numeric_parameter(record, params):
+        if _is_numeric_parameter(params):
             for param in params:
                 parameter_names.append(f"{record}.{param}")
         else:
@@ -241,7 +238,6 @@ def _get_record_type(ensemble_record: ert.data.EnsembleRecord) -> ert.data.Recor
 
 
 def _add_numerical_data(
-    workspace: Path,
     experiment_name: str,
     record_name: str,
     record_data: Union[pd.DataFrame, pd.Series],
@@ -378,7 +374,6 @@ def _get_numerical_metadata(ensemble_id: str, record_name: str) -> _NumericalMet
 
 
 def _get_data(
-    workspace: Path,
     experiment_name: str,
     record_name: str,
 ) -> ert.data.EnsembleRecord:
@@ -419,9 +414,7 @@ def _is_numeric_parameter_response(name: str) -> bool:
     return "." in name
 
 
-def _get_experiment_parameters(
-    workspace: Path, experiment_name: str
-) -> Mapping[str, Iterable[str]]:
+def _get_experiment_parameters(experiment_name: str) -> Mapping[str, Iterable[str]]:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
         raise ert3.exceptions.NonExistantExperiment(
@@ -467,12 +460,11 @@ def add_ensemble_record(
     if record_type == ert.data.RecordType.LIST_BYTES:
         _add_blob_data(experiment_name, record_name, ensemble_record)
     else:
-        parameters = _get_experiment_parameters(workspace, experiment_name)
+        parameters = _get_experiment_parameters(experiment_name)
         if record_name in parameters:
             # Split by columns
             for column_label in dataframe:
                 _add_numerical_data(
-                    workspace,
                     experiment_name,
                     f"{record_name}.{column_label}",
                     dataframe[column_label],
@@ -480,7 +472,6 @@ def add_ensemble_record(
                 )
         else:
             _add_numerical_data(
-                workspace,
                 experiment_name,
                 record_name,
                 dataframe,
@@ -549,27 +540,18 @@ def get_ensemble_record(
             f"Cannot get {record_name} data, no experiment named: {experiment_name}"
         )
 
-    param_names = _get_experiment_parameters(workspace, experiment_name)
-    if record_name in param_names:
-        if not param_names[record_name]:
-            return _get_data(
-                workspace=workspace,
+    param_names = _get_experiment_parameters(experiment_name)
+    if record_name in param_names and param_names[record_name]:
+        ensemble_records = [
+            _get_data(
                 experiment_name=experiment_name,
-                record_name=record_name,
+                record_name=record_name + _PARAMETER_RECORD_SEPARATOR + param_name,
             )
-        else:
-            ensemble_records = [
-                _get_data(
-                    workspace=workspace,
-                    experiment_name=experiment_name,
-                    record_name=record_name + _PARAMETER_RECORD_SEPARATOR + param_name,
-                )
-                for param_name in param_names[record_name]
-            ]
-            return _combine_records(ensemble_records)
+            for param_name in param_names[record_name]
+        ]
+        return _combine_records(ensemble_records)
     else:
         return _get_data(
-            workspace=workspace,
             experiment_name=experiment_name,
             record_name=record_name,
         )
@@ -598,13 +580,11 @@ def get_ensemble_record_names(
     return list(response.json().keys())
 
 
-def get_experiment_parameters(
-    *, workspace: Path, experiment_name: str
-) -> Iterable[str]:
-    return list(_get_experiment_parameters(workspace, experiment_name))
+def get_experiment_parameters(*, experiment_name: str) -> Iterable[str]:
+    return list(_get_experiment_parameters(experiment_name))
 
 
-def get_experiment_responses(*, workspace: Path, experiment_name: str) -> Iterable[str]:
+def get_experiment_responses(*, experiment_name: str) -> Iterable[str]:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
         raise ert3.exceptions.NonExistantExperiment(
@@ -618,7 +598,7 @@ def get_experiment_responses(*, workspace: Path, experiment_name: str) -> Iterab
     return list(response.json())
 
 
-def delete_experiment(*, workspace: Path, experiment_name: str) -> None:
+def delete_experiment(*, experiment_name: str) -> None:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
         raise ert3.exceptions.NonExistantExperiment(

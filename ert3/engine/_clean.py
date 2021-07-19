@@ -17,5 +17,5 @@ def clean(workspace: Path, experiment_names: Set[str], clean_all: bool) -> None:
         }
 
     for name in experiment_names:
-        ert3.storage.delete_experiment(workspace=workspace, experiment_name=name)
+        ert3.storage.delete_experiment(experiment_name=name)
         ert3.evaluator.cleanup(workspace, name)

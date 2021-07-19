@@ -24,11 +24,10 @@ def _prepare_experiment(
         record_name = input_record.record
         record_source = input_record.source.split(_SOURCE_SEPARATOR)
         parameters[record_name] = _get_experiment_record_indices(
-            workspace_root, record_name, record_source, parameters_config, ensemble_size
+            workspace_root, record_source, parameters_config
         )
     responses = [elem.record for elem in ensemble.output]
     ert3.storage.init_experiment(
-        workspace=workspace_root,
         experiment_name=experiment_name,
         parameters=parameters,
         ensemble_size=ensemble_size,
@@ -38,10 +37,8 @@ def _prepare_experiment(
 
 def _get_experiment_record_indices(
     workspace_root: pathlib.Path,
-    record_name: str,
     record_source: List[str],
     parameters_config: ert3.config.ParametersConfig,
-    ensemble_size: int,
 ) -> List[str]:
     assert len(record_source) == 2
     source, source_record_name = record_source
@@ -284,10 +281,9 @@ def _store_output_records(
 def _load_experiment_parameters(
     workspace_root: pathlib.Path,
     experiment_name: str,
-    ensemble: ert3.config.EnsembleConfig,
 ) -> ert.data.MultiEnsembleRecord:
     parameter_names = ert3.storage.get_experiment_parameters(
-        workspace=workspace_root, experiment_name=experiment_name
+        experiment_name=experiment_name
     )
 
     parameters = {}
@@ -307,7 +303,7 @@ def _evaluate(
     workspace_root: pathlib.Path,
     experiment_name: str,
 ) -> None:
-    parameters = _load_experiment_parameters(workspace_root, experiment_name, ensemble)
+    parameters = _load_experiment_parameters(workspace_root, experiment_name)
     output_records = ert3.evaluator.evaluate(
         workspace_root, experiment_name, parameters, ensemble, stages_config
     )

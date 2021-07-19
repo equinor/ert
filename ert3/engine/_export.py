@@ -47,10 +47,10 @@ def export(workspace_root: Path, experiment_name: str) -> None:
         raise ValueError("Cannot export experiment that has not been carried out")
 
     parameter_names = ert3.storage.get_experiment_parameters(
-        workspace=workspace_root, experiment_name=experiment_name
+        experiment_name=experiment_name
     )
     response_names = ert3.storage.get_experiment_responses(
-        workspace=workspace_root, experiment_name=experiment_name
+        experiment_name=experiment_name
     )
 
     data = _prepare_export(
