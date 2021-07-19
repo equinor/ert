@@ -172,8 +172,8 @@ def init_experiment(
     )
 
 
-def _is_parameter_numeric(record: str, params: Iterable[str]) -> bool:
-    return bool(params)
+def _is_numeric_parameter(record: str, params: Iterable[str]) -> bool:
+    return len(list(params)) > 0
 
 
 def _init_experiment(
@@ -202,7 +202,7 @@ def _init_experiment(
 
     parameter_names = []
     for record, params in parameters.items():
-        if _is_parameter_numeric(record, params):
+        if _is_numeric_parameter(record, params):
             for param in params:
                 parameter_names.append(f"{record}.{param}")
         else:
@@ -419,8 +419,8 @@ def _get_data(
     )
 
 
-def _is_response_parameter_numeric(name: str) -> bool:
-    return len(name.split(".")) != 1
+def _is_numeric_parameter_response(name: str) -> bool:
+    return "." in name
 
 
 def _get_experiment_parameters(
@@ -440,7 +440,7 @@ def _get_experiment_parameters(
 
     parameters = defaultdict(list)
     for name in response.json():
-        if _is_response_parameter_numeric(name):
+        if _is_numeric_parameter_response(name):
             key, val = name.split(".")
             parameters[key].append(val)
         else:
