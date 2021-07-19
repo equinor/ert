@@ -72,7 +72,7 @@ def _prepare_input(
                 )
             with open(command.location, "rb") as f:
                 asyncio.get_event_loop().run_until_complete(
-                    transmitter.transmit_data([f.read()])
+                    transmitter.transmit_data(f.read())
                 )
             for iens in range(0, ensemble_size):
                 transmitters[iens][command.name] = transmitter

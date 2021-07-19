@@ -40,7 +40,7 @@ numerical_record_data = Union[
     Dict[StrictStr, strict_number],
     Dict[StrictInt, strict_number],
 ]
-blob_record_data = List[StrictBytes]
+blob_record_data = StrictBytes
 record_data = Union[numerical_record_data, blob_record_data]
 
 
@@ -75,7 +75,7 @@ class RecordType(str, Enum):
     LIST_FLOAT = "LIST_FLOAT"
     MAPPING_INT_FLOAT = "MAPPING_INT_FLOAT"
     MAPPING_STR_FLOAT = "MAPPING_STR_FLOAT"
-    LIST_BYTES = "LIST_BYTES"
+    BYTES = "BYTES"
 
 
 class Record(ABC, _DataElement):
@@ -152,8 +152,8 @@ class BlobRecord(Record):
 
     @property
     def record_type(self) -> RecordType:
-        if isinstance(self.data, list) and isinstance(self.data[0], bytes):
-            return RecordType.LIST_BYTES
+        if isinstance(self.data, bytes):
+            return RecordType.BYTES
         raise TypeError(
             f"Not able to deduce record type from data was: {type(self.data)}"
         )
@@ -330,7 +330,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
                 await f.write(contents)
         elif isinstance(record, BlobRecord):
             async with aiofiles.open(storage_uri, mode="wb") as f:  # type: ignore
-                await f.write(record.data[0])  # type: ignore
+                await f.write(record.data)  # type: ignore
         else:
             raise TypeError(f"Record type not supported {type(record)}")
         self._set_transmitted(storage_uri, record_type=record.record_type)
@@ -356,7 +356,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         elif mime == "application/octet-stream":
             async with aiofiles.open(str(file), mode="rb") as f:  # type: ignore
                 contents = await f.read()
-                record = BlobRecord(data=[contents])
+                record = BlobRecord(data=contents)
         else:
             raise NotImplementedError(
                 "cannot transmit file unless mime is application/json"
@@ -367,7 +367,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
     async def load(self) -> Record:
         if not self.is_transmitted():
             raise RuntimeError("cannot load untransmitted record")
-        if self._record_type != RecordType.LIST_BYTES:
+        if self._record_type != RecordType.BYTES:
             async with aiofiles.open(str(self._uri)) as f:
                 contents = await f.read()
                 if self._record_type == RecordType.MAPPING_INT_FLOAT:
@@ -378,7 +378,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         else:
             async with aiofiles.open(str(self._uri), mode="rb") as f:  # type: ignore
                 data = await f.read()
-                return BlobRecord(data=[data])
+                return BlobRecord(data=data)
 
     async def dump(self, location: Path) -> None:
         if not self.is_transmitted():
@@ -432,7 +432,7 @@ class InMemoryRecordTransmitter(RecordTransmitter):
         elif mime == "application/octet-stream":
             async with aiofiles.open(str(file), mode="rb") as f:  # type: ignore
                 contents = await f.read()
-                record = BlobRecord(data=[contents])
+                record = BlobRecord(data=contents)
         else:
             raise NotImplementedError(
                 "cannot transmit file unless mime is application/json"
@@ -452,9 +452,9 @@ class InMemoryRecordTransmitter(RecordTransmitter):
         if self._data is None:
             raise ValueError("cannot dump Record with no data")
         record = _make_record(data=self._data, index=self._index)
-        if record.record_type != RecordType.LIST_BYTES:
+        if record.record_type != RecordType.BYTES:
             async with aiofiles.open(str(location), mode="w") as f:
                 await f.write(json.dumps(self._data))
         else:
             async with aiofiles.open(str(location), mode="wb") as f:  # type: ignore
-                await f.write(self._data[0])  # type: ignore
+                await f.write(self._data)  # type: ignore

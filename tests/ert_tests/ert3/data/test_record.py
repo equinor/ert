@@ -37,7 +37,7 @@ def test_valid_numerical_record(data):
 
 @pytest.mark.parametrize(
     "data",
-    ([b""], [b"abcde"], [b"", b"abc"], [b"ab", b"cde"]),
+    (b"", b"abcde"),
 )
 def test_valid_blob_record(data):
     record = ert.data.BlobRecord(data=data)
@@ -55,7 +55,7 @@ def test_valid_blob_record(data):
         {"a": "b"},
         {"key": None, "a": None},
         {"1": 1, "2": "2"},
-        [b""],
+        b"abcde",
         [b"abcde"],
     ),
 )
@@ -74,6 +74,7 @@ def test_invalid_numerical_record(data):
         [1, 2, 3],
         {1, 2, 3},
         {"a": 0, "b": 1, "c": 2},
+        [b"abcde"],
     ),
 )
 def test_invalid_blob_record(data):
@@ -103,7 +104,7 @@ def test_inconsistent_index_record(data, index):
         [{"data": [i + 0.5, i + 1.1, i + 2.2]} for i in range(3)],
         [{"data": {"a": i + 0.5, "b": i + 1.1, "c": i + 2.2}} for i in range(5)],
         [{"data": {2: i + 0.5, 5: i + 1.1, 7: i + 2.2}} for i in range(2)],
-        [{"data": [b""]}, {"data": [b"abc"]}],
+        [{"data": b"a"}, {"data": b"abc"}],
     ),
 )
 def test_valid_ensemble_record(raw_ensrec):
@@ -118,7 +119,7 @@ def test_valid_ensemble_record(raw_ensrec):
 
 
 def test_invalid_ensemble_record():
-    raw_ensrec = [{"data": [b""]}, {"data": [1, 2]}]
+    raw_ensrec = [{"data": b"a"}, {"data": [1, 2]}]
     with pytest.raises(pydantic.ValidationError):
         ert.data.EnsembleRecord(records=raw_ensrec)
 
@@ -146,9 +147,7 @@ def test_inconsistent_size_ensemble_record(raw_ensrec, ensemble_size):
                 "ens1": {"records": [{"data": [1, 2, 3]} for _ in range(3)]},
                 "ens2": {"records": [{"data": {"a": 1, "b": 2}} for _ in range(3)]},
                 "ens3": {"records": [{"data": [0]}, {"data": [2]}, {"data": [1]}]},
-                "ens4": {
-                    "records": [{"data": [b""]}, {"data": [b"1"]}, {"data": [b"abc"]}]
-                },
+                "ens4": {"records": [{"data": b"a"}, {"data": b"1"}, {"data": b"abc"}]},
             },
         ),
         (
@@ -182,7 +181,7 @@ def test_valid_multi_ensemble_record(ensemble_size, raw_multiensrec):
 
 def test_invalid_multi_ensemble_record():
     raw_multiensrec = {
-        "ens1": {"records": [{"data": [1, 2]}, {"data": [b"abc"]}]},
+        "ens1": {"records": [{"data": [1, 2]}, {"data": b"abc"}]},
     }
     with pytest.raises(pydantic.ValidationError):
         ert.data.MultiEnsembleRecord(ensemble_records=raw_multiensrec)
