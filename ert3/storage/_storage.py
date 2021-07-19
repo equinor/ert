@@ -281,9 +281,7 @@ def _add_numerical_data(
 
 
 def _response2records(
-    response_content: bytes,
-    metadata: _NumericalMetaData,
-    ensemble_size: Optional[int] = None,
+    response_content: bytes, metadata: _NumericalMetaData
 ) -> ert.data.EnsembleRecord:
 
     record_type = metadata.record_type
@@ -318,10 +316,10 @@ def _response2records(
             for _, row in dataframe.iterrows()  # pylint: disable=no-member
         ]
     elif record_type == ert.data.RecordType.LIST_BYTES:
-        if not ensemble_size:
-            ensemble_size = metadata.ensemble_size
+        assert metadata
         records = [
-            ert.data.BlobRecord(data=[response_content]) for _ in range(ensemble_size)
+            ert.data.BlobRecord(data=[response_content])
+            for _ in range(metadata.ensemble_size)
         ]
     else:
         raise ValueError(
@@ -383,7 +381,6 @@ def _get_data(
     workspace: Path,
     experiment_name: str,
     record_name: str,
-    ensemble_size: Optional[int] = None,
 ) -> ert.data.EnsembleRecord:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
@@ -415,7 +412,6 @@ def _get_data(
     return _response2records(
         response_content=response.content,
         metadata=metadata,
-        ensemble_size=ensemble_size,
     )
 
 
@@ -454,7 +450,6 @@ def add_ensemble_record(
     workspace: Path,
     record_name: str,
     ensemble_record: ert.data.EnsembleRecord,
-    ensemble_size: Optional[int] = None,
     experiment_name: Optional[str] = None,
 ) -> None:
     if experiment_name is None:
@@ -470,9 +465,7 @@ def add_ensemble_record(
     record_type = _get_record_type(ensemble_record)
 
     if record_type == ert.data.RecordType.LIST_BYTES:
-        _add_blob_data(
-            experiment_name, record_name, ensemble_record, ensemble_size=ensemble_size
-        )
+        _add_blob_data(experiment_name, record_name, ensemble_record)
     else:
         parameters = _get_experiment_parameters(workspace, experiment_name)
         if record_name in parameters:
@@ -499,7 +492,6 @@ def _add_blob_data(
     experiment_name: str,
     record_name: str,
     ensemble_record: ert.data.EnsembleRecord,
-    ensemble_size: Optional[int],
 ) -> None:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
@@ -508,11 +500,8 @@ def _add_blob_data(
             f"non-existing experiment: {experiment_name}"
         )
 
-    if not ensemble_size:
-        ensemble_size = ensemble_record.ensemble_size
-
     metadata = _NumericalMetaData(
-        ensemble_size=ensemble_size,
+        ensemble_size=ensemble_record.ensemble_size,
         record_type=ert.data.RecordType.LIST_BYTES,
     )
 
@@ -551,7 +540,6 @@ def get_ensemble_record(
     workspace: Path,
     record_name: str,
     experiment_name: Optional[str] = None,
-    ensemble_size: Optional[int] = None,
 ) -> ert.data.EnsembleRecord:
     if experiment_name is None:
         experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
@@ -568,7 +556,6 @@ def get_ensemble_record(
                 workspace=workspace,
                 experiment_name=experiment_name,
                 record_name=record_name,
-                ensemble_size=ensemble_size,
             )
         else:
             ensemble_records = [
@@ -576,7 +563,6 @@ def get_ensemble_record(
                     workspace=workspace,
                     experiment_name=experiment_name,
                     record_name=record_name + _PARAMETER_RECORD_SEPARATOR + param_name,
-                    ensemble_size=ensemble_size,
                 )
                 for param_name in param_names[record_name]
             ]
@@ -586,7 +572,6 @@ def get_ensemble_record(
             workspace=workspace,
             experiment_name=experiment_name,
             record_name=record_name,
-            ensemble_size=ensemble_size,
         )
 
 

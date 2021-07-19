@@ -50,7 +50,6 @@ def _get_experiment_record_indices(
         ensemble_record = ert3.storage.get_ensemble_record(
             workspace=workspace_root,
             record_name=source_record_name,
-            ensemble_size=ensemble_size,
         )
 
         if isinstance(ensemble_record.records[0], ert.data.BlobRecord):
@@ -91,8 +90,14 @@ def _prepare_experiment_record(
         ensemble_record = ert3.storage.get_ensemble_record(
             workspace=workspace_root,
             record_name=record_source[1],
-            ensemble_size=ensemble_size,
         )
+
+        # The blob record from the workspace has size one
+        # We need to copy it (ensemble size) times into the experiment record
+        if isinstance(ensemble_record.records[0], ert.data.BlobRecord):
+            ensemble_record = ert.data.EnsembleRecord(
+                records=[ensemble_record.records[0] for _ in range(ensemble_size)]
+            )
 
         # Workaround to ensure compatible ensemble sizes
         # for sensitivity experiment
@@ -108,7 +113,6 @@ def _prepare_experiment_record(
             workspace=workspace_root,
             record_name=record_name,
             ensemble_record=ensemble_record,
-            ensemble_size=ensemble_size,
             experiment_name=experiment_name,
         )
     elif record_source[0] == "stochastic":
@@ -292,7 +296,6 @@ def _load_experiment_parameters(
             workspace=workspace_root,
             experiment_name=experiment_name,
             record_name=parameter_name,
-            ensemble_size=ensemble.size,
         )
 
     return ert.data.MultiEnsembleRecord(ensemble_records=parameters)
