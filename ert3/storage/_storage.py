@@ -227,15 +227,6 @@ def get_experiment_names(*, workspace: Path) -> Set[str]:
     return experiment_names
 
 
-def _get_record_type(ensemble_record: ert.data.EnsembleRecord) -> ert.data.RecordType:
-    record_type = ensemble_record.records[0].record_type
-    for record in ensemble_record.records:
-        if record.record_type != record_type:
-            raise ValueError("Inconsistent record type")
-
-    return record_type
-
-
 def _add_numerical_data(
     experiment_name: str,
     record_name: str,
@@ -454,9 +445,8 @@ def add_ensemble_record(
         )
 
     dataframe = pd.DataFrame([r.data for r in ensemble_record.records])
-    record_type = _get_record_type(ensemble_record)
 
-    if record_type == ert.data.RecordType.BYTES:
+    if ensemble_record.record_type == ert.data.RecordType.BYTES:
         _add_blob_data(experiment_name, record_name, ensemble_record)
     else:
         parameters = _get_experiment_parameters(experiment_name)
@@ -467,14 +457,14 @@ def add_ensemble_record(
                     experiment_name,
                     f"{record_name}.{column_label}",
                     dataframe[column_label],
-                    record_type,
+                    ensemble_record.record_type,
                 )
         else:
             _add_numerical_data(
                 experiment_name,
                 record_name,
                 dataframe,
-                record_type,
+                ensemble_record.record_type,
             )
 
 

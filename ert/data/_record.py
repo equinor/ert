@@ -163,20 +163,29 @@ class EnsembleRecord(_DataElement):
     records: Union[Tuple[NumericalRecord, ...], Tuple[BlobRecord, ...]]
     ensemble_size: Optional[int] = None
 
+    @property
+    def record_type(self) -> RecordType:
+        return self.records[0].record_type
+
     @validator("ensemble_size", pre=True, always=True)
     def ensemble_size_validator(
         cls, ensemble_size: Optional[int], values: Dict[str, Any]
     ) -> Optional[int]:
         if ensemble_size == None and "records" in values:
             ensemble_size = len(values["records"])
+        assert ensemble_size is not None and ensemble_size > 0
         return ensemble_size
 
     @root_validator(skip_on_failure=True)
-    def ensure_consistent_ensemble_size(
+    def ensure_consistent_ensemble(
         cls, ensemble_record: Dict[str, Any]
     ) -> Dict[str, Any]:
         assert "records" in ensemble_record and "ensemble_size" in ensemble_record
         assert len(ensemble_record["records"]) == ensemble_record["ensemble_size"]
+        record_type = ensemble_record["records"][0].record_type
+        for record in ensemble_record["records"][1:]:
+            if record.record_type != record_type:
+                raise ValueError("Ensemble records must have a uniform record type")
         return ensemble_record
 
 
@@ -204,12 +213,15 @@ class MultiEnsembleRecord(_DataElement):
             and "record_names" in values
         ):
             record_names = values["record_names"]
+            assert len(record_names) > 0
             ensemble_records = values["ensemble_records"]
+            assert len(ensemble_records) > 0
             first_record = ensemble_records[record_names[0]]
             try:
                 ensemble_size = first_record.ensemble_size
             except AttributeError:
                 ensemble_size = len(first_record["records"])
+        assert ensemble_size is not None and ensemble_size > 0
         return ensemble_size
 
     @root_validator(skip_on_failure=True)
