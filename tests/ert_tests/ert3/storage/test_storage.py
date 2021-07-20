@@ -128,7 +128,7 @@ def _assert_equal_data(a, b):
         [{"data": [i + 0.5, i + 1.1, i + 2.2]} for i in range(3)],
         [{"data": {"a": i + 0.5, "b": i + 1.1, "c": i + 2.2}} for i in range(5)],
         [{"data": {2: i + 0.5, 5: i + 1.1, 7: i + 2.2}} for i in range(2)],
-        [{"data": [b"asdfkasjdhjflkjah21WE123TTDSG34f"]}],
+        [{"data": b"asdfkasjdhjflkjah21WE123TTDSG34f"}],
     ),
 )
 def test_add_and_get_ensemble_record(tmpdir, raw_ensrec, ert_storage):
@@ -155,7 +155,7 @@ def test_add_and_get_ensemble_record(tmpdir, raw_ensrec, ert_storage):
         [{"data": [i + 0.5, i + 1.1, i + 2.2]} for i in range(3)],
         [{"data": {"a": i + 0.5, "b": i + 1.1, "c": i + 2.2}} for i in range(5)],
         [{"data": {2: i + 0.5, 5: i + 1.1, 7: i + 2.2}} for i in range(2)],
-        [{"data": [b"asdfkasjdhjflkjah21WE123TTDSG34f"]}],
+        [{"data": b"asdfkasjdhjflkjah21WE123TTDSG34f"}],
     ),
 )
 def test_add_and_get_ensemble_parameter_record(tmpdir, raw_ensrec, ert_storage):
@@ -178,12 +178,11 @@ def test_add_and_get_ensemble_parameter_record(tmpdir, raw_ensrec, ert_storage):
 
     """
     raw_data = raw_ensrec[0]["data"]
-    assert isinstance(raw_data, (list, dict))
-    if isinstance(raw_data, list):
-        if isinstance(raw_data[0], bytes):
-            indices = []
-        else:
-            indices = [str(x) for x in range(len(raw_data))]
+    assert isinstance(raw_data, (list, dict, bytes))
+    if isinstance(raw_data, bytes):
+        indices = []
+    elif isinstance(raw_data, list):
+        indices = [str(x) for x in range(len(raw_data))]
     else:
         indices = [str(x) for x in raw_data]
 

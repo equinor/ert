@@ -144,7 +144,6 @@ def init(*, workspace: Path) -> None:
         if f"{workspace}.{special_key}" in experiment_names:
             raise ValueError("Storage already initialized")
         _init_experiment(
-            # workspace=workspace,
             experiment_name=f"{workspace}.{special_key}",
             parameters={},
             ensemble_size=-1,
@@ -311,10 +310,10 @@ def _response2records(
             ert.data.NumericalRecord(data=row.to_dict())
             for _, row in dataframe.iterrows()  # pylint: disable=no-member
         ]
-    elif record_type == ert.data.RecordType.LIST_BYTES:
+    elif record_type == ert.data.RecordType.BYTES:
         assert metadata
         records = [
-            ert.data.BlobRecord(data=[response_content])
+            ert.data.BlobRecord(data=response_content)
             for _ in range(metadata.ensemble_size)
         ]
     else:
@@ -386,7 +385,7 @@ def _get_data(
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
     metadata = _get_numerical_metadata(ensemble_id, record_name)
 
-    if metadata.record_type == ert.data.RecordType.LIST_BYTES:
+    if metadata.record_type == ert.data.RecordType.BYTES:
         headers = {"accept": "application/octet-stream"}
     else:
         headers = {"accept": "text/csv"}
@@ -457,7 +456,7 @@ def add_ensemble_record(
     dataframe = pd.DataFrame([r.data for r in ensemble_record.records])
     record_type = _get_record_type(ensemble_record)
 
-    if record_type == ert.data.RecordType.LIST_BYTES:
+    if record_type == ert.data.RecordType.BYTES:
         _add_blob_data(experiment_name, record_name, ensemble_record)
     else:
         parameters = _get_experiment_parameters(experiment_name)
@@ -493,24 +492,24 @@ def _add_blob_data(
 
     metadata = _NumericalMetaData(
         ensemble_size=ensemble_record.ensemble_size,
-        record_type=ert.data.RecordType.LIST_BYTES,
+        record_type=ert.data.RecordType.BYTES,
     )
 
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
     record_url = f"ensembles/{ensemble_id}/records/{record_name}"
 
+    assert ensemble_record
+    assert ensemble_record.ensemble_size != 0
+    # If the EnsembleRecord has more than one record we assume
+    # all records are the same and store only one record.
+    # We store the original size in the metadata
     record = ensemble_record.records[0]
-    if isinstance(record.data, list) and isinstance(record.data[0], bytes):
-        data_bytes: bytes = record.data[0]
-    else:
-        raise TypeError(
-            f"Expecting: {ert.data.RecordType.LIST_BYTES} was {type(record.data)}"
-        )
 
+    assert isinstance(record.data, bytes)
     response = _post_to_server(
         f"{record_url}/file",
         files={
-            "file": (record_name, io.BytesIO(data_bytes), "application/octet-stream")
+            "file": (record_name, io.BytesIO(record.data), "application/octet-stream")
         },
     )
 
