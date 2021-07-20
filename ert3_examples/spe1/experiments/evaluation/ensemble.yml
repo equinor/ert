@@ -7,6 +7,9 @@ input:
   -
     source: stochastic.wells_no_delay
     record: wells
+  -
+    source: storage.spe1case2_template
+    record: spe1_template
 
 output:
     -

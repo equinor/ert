@@ -23,7 +23,6 @@ def test_ensemble_size_zero(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
     with pytest.raises(ValueError, match="Ensemble cannot have a size <= 0"):
         ert3.storage.init_experiment(
-            workspace=tmpdir,
             experiment_name="my_experiment",
             parameters={},
             ensemble_size=0,
@@ -36,7 +35,6 @@ def test_none_as_experiment_name(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
     with pytest.raises(ValueError, match="Cannot initialize experiment without a name"):
         ert3.storage.init_experiment(
-            workspace=tmpdir,
             experiment_name=None,
             parameters={},
             ensemble_size=10,
@@ -48,7 +46,6 @@ def test_none_as_experiment_name(tmpdir, ert_storage):
 def test_double_add_experiment(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
     ert3.storage.init_experiment(
-        workspace=tmpdir,
         experiment_name="my_experiment",
         parameters={},
         ensemble_size=42,
@@ -59,7 +56,6 @@ def test_double_add_experiment(tmpdir, ert_storage):
         match="Cannot initialize existing experiment",
     ):
         ert3.storage.init_experiment(
-            workspace=tmpdir,
             experiment_name="my_experiment",
             parameters={},
             ensemble_size=42,
@@ -84,7 +80,6 @@ def test_add_experiments(tmpdir, ert_storage):
             key: ["some_coeff"] for key in experiment_parameter_records
         }
         ert3.storage.init_experiment(
-            workspace=tmpdir,
             experiment_name=experiment_name,
             parameters=experiment_parameters,
             ensemble_size=42,
@@ -95,7 +90,7 @@ def test_add_experiments(tmpdir, ert_storage):
         assert expected_names == retrieved_names
 
         parameters = ert3.storage.get_experiment_parameters(
-            workspace=tmpdir, experiment_name=experiment_name
+            experiment_name=experiment_name
         )
         assert experiment_parameter_records == parameters
 
@@ -108,9 +103,7 @@ def test_get_parameters_unknown_experiment(tmpdir, ert_storage):
         ert3.exceptions.NonExistantExperiment,
         match="Cannot get parameters from non-existing experiment: unknown-experiment",
     ):
-        ert3.storage.get_experiment_parameters(
-            workspace=tmpdir, experiment_name="unknown-experiment"
-        )
+        ert3.storage.get_experiment_parameters(experiment_name="unknown-experiment")
 
 
 def _assert_equal_data(a, b):
@@ -135,6 +128,7 @@ def _assert_equal_data(a, b):
         [{"data": [i + 0.5, i + 1.1, i + 2.2]} for i in range(3)],
         [{"data": {"a": i + 0.5, "b": i + 1.1, "c": i + 2.2}} for i in range(5)],
         [{"data": {2: i + 0.5, 5: i + 1.1, 7: i + 2.2}} for i in range(2)],
+        [{"data": b"asdfkasjdhjflkjah21WE123TTDSG34f"}],
     ),
 )
 def test_add_and_get_ensemble_record(tmpdir, raw_ensrec, ert_storage):
@@ -161,6 +155,7 @@ def test_add_and_get_ensemble_record(tmpdir, raw_ensrec, ert_storage):
         [{"data": [i + 0.5, i + 1.1, i + 2.2]} for i in range(3)],
         [{"data": {"a": i + 0.5, "b": i + 1.1, "c": i + 2.2}} for i in range(5)],
         [{"data": {2: i + 0.5, 5: i + 1.1, 7: i + 2.2}} for i in range(2)],
+        [{"data": b"asdfkasjdhjflkjah21WE123TTDSG34f"}],
     ),
 )
 def test_add_and_get_ensemble_parameter_record(tmpdir, raw_ensrec, ert_storage):
@@ -183,15 +178,16 @@ def test_add_and_get_ensemble_parameter_record(tmpdir, raw_ensrec, ert_storage):
 
     """
     raw_data = raw_ensrec[0]["data"]
-    assert isinstance(raw_data, (list, dict))
-    if isinstance(raw_data, list):
+    assert isinstance(raw_data, (list, dict, bytes))
+    if isinstance(raw_data, bytes):
+        indices = []
+    elif isinstance(raw_data, list):
         indices = [str(x) for x in range(len(raw_data))]
     else:
         indices = [str(x) for x in raw_data]
 
     ert3.storage.init(workspace=tmpdir)
     ert3.storage.init_experiment(
-        workspace=tmpdir,
         experiment_name="experiment_name",
         parameters={"my_ensemble_record": indices},
         ensemble_size=len(raw_ensrec),
@@ -209,7 +205,10 @@ def test_add_and_get_ensemble_parameter_record(tmpdir, raw_ensrec, ert_storage):
     record_names = ert3.storage.get_ensemble_record_names(
         workspace=tmpdir, experiment_name="experiment_name", _flatten=False
     )
-    assert {f"my_ensemble_record.{x}" for x in indices} == set(record_names)
+    if not indices:
+        assert len(record_names) == 1 and record_names[0] == "my_ensemble_record"
+    else:
+        assert {f"my_ensemble_record.{x}" for x in indices} == set(record_names)
 
     retrieved_ensrecord = ert3.storage.get_ensemble_record(
         workspace=tmpdir,
@@ -258,7 +257,6 @@ def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
     for eid in range(1, 2):
         experiment = eid * "e"
         ert3.storage.init_experiment(
-            workspace=tmpdir,
             experiment_name=experiment,
             parameters={},
             ensemble_size=ensemble_size,
@@ -332,7 +330,6 @@ def test_get_record_names(tmpdir, ert_storage):
     for eid in [1, 2, 3]:
         experiment = "e" + str(eid)
         ert3.storage.init_experiment(
-            workspace=tmpdir,
             experiment_name=experiment,
             parameters={},
             ensemble_size=ensemble_size,
@@ -376,7 +373,6 @@ def test_get_record_names_unknown_experiment(tmpdir, ert_storage):
 def test_delete_experiment(tmpdir, ert_storage):
     ert3.storage.init(workspace=tmpdir)
     ert3.storage.init_experiment(
-        workspace=tmpdir,
         experiment_name="test",
         parameters={},
         ensemble_size=42,
@@ -389,11 +385,9 @@ def test_delete_experiment(tmpdir, ert_storage):
         ert3.exceptions.NonExistantExperiment,
         match="Experiment does not exist: does_not_exist",
     ):
-        ert3.storage.delete_experiment(
-            workspace=tmpdir, experiment_name="does_not_exist"
-        )
+        ert3.storage.delete_experiment(experiment_name="does_not_exist")
 
-    ert3.storage.delete_experiment(workspace=tmpdir, experiment_name="test")
+    ert3.storage.delete_experiment(experiment_name="test")
 
     assert "test" not in ert3.storage.get_experiment_names(workspace=tmpdir)
 
@@ -413,7 +407,6 @@ def test_get_ensemble_responses(
     ert3.storage.init(workspace=tmpdir)
     experiment = "exp"
     ert3.storage.init_experiment(
-        workspace=tmpdir,
         experiment_name=experiment,
         parameters={},
         ensemble_size=1,
@@ -431,7 +424,7 @@ def test_get_ensemble_responses(
         )
 
     fetched_ensemble_responses = ert3.storage.get_experiment_responses(
-        workspace=tmpdir, experiment_name=experiment
+        experiment_name=experiment
     )
 
     assert set(fetched_ensemble_responses) == set(expected_result)
@@ -447,7 +440,6 @@ def test_ensemble_responses_and_parameters(tmpdir, ert_storage):
         match="parameters and responses cannot have a name in common",
     ):
         ert3.storage.init_experiment(
-            workspace=tmpdir,
             experiment_name=experiment,
             parameters={"resp1": ["some-key"]},
             ensemble_size=1,
