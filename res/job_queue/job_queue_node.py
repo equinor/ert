@@ -5,6 +5,9 @@ from res.job_queue import JobStatusType, ThreadStatus, JobSubmitStatusType
 from threading import Thread, Lock
 
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class JobQueueNode(BaseCClass):
@@ -173,6 +176,7 @@ class JobQueueNode(BaseCClass):
             if self._should_be_killed():
                 self._kill(driver)
                 if self._max_runtime and self.runtime >= self._max_runtime:
+                    logger.error(f"MAX_RUNTIME reached in run path {self.run_path}")
                     if self.callback_timeout:
                         self.callback_timeout(self.callback_arguments)
                     with self._mutex:
