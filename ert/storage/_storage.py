@@ -81,7 +81,9 @@ class StorageRecordTransmitter(ert.data.RecordTransmitter):
         self._record_type: Optional[ert.data.RecordType] = None
         self._real_id: Optional[int] = iens
 
-    def _set_transmitted(self, uri: str, record_type: ert.data.RecordType) -> None:
+    def _set_transmitted(
+        self, uri: str, record_type: Optional[ert.data.RecordType]
+    ) -> None:
         super()._set_transmitted_state()
         self._uri = uri
         self._record_type = record_type
@@ -112,7 +114,8 @@ class StorageRecordTransmitter(ert.data.RecordTransmitter):
     ) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
-        return await self._transmit(ert.data.make_record(data))
+        record = ert.data.Record(data=data)
+        return await self._transmit(record.get_instance())
 
     async def transmit_file(
         self,
@@ -415,7 +418,7 @@ def _add_numerical_data(
     experiment_name: str,
     record_name: str,
     record_data: Union[pd.DataFrame, pd.Series],
-    record_type: ert.data.RecordType,
+    record_type: Optional[ert.data.RecordType],
 ) -> None:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:

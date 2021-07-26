@@ -10,7 +10,6 @@ from ert.data._record import InMemoryRecordTransmitter
 from ert.data._record import RecordType
 from ert.data._record import RecordIndex
 from ert.data._record import record_data
-from ert.data._record import make_record
 
 __all__ = (
     "Record",
@@ -25,5 +24,4 @@ __all__ = (
     "InMemoryRecordTransmitter",
     "RecordTransmitterType",
     "record_data",
-    "make_record",
 )

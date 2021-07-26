@@ -1,8 +1,7 @@
 import json
 import shutil
-import typing
 import uuid
-from abc import abstractmethod, ABC
+from abc import abstractmethod
 from enum import Enum, auto
 from pathlib import Path
 
@@ -29,7 +28,6 @@ from pydantic import (
     StrictStr,
     validator,
     root_validator,
-    ValidationError,
 )
 
 _copy = wrap(shutil.copy)
@@ -78,29 +76,37 @@ class RecordType(str, Enum):
     BYTES = "BYTES"
 
 
-class Record(ABC, _DataElement):
-    # There should be an abstract property for data. However, pydantic does not
-    # support that, it will complain about shadowing the field. That can be
-    # solved using a Field alias, but then the derived classes become abstract,
-    # since they do not have a data field. Defining a non-abstract data property
-    # instead also does not work in combination with pydantic: the base property
-    # will be called when accessing record.data.
-    #
-    # The current solution is to define no data property here at all. This has
-    # the disadvantage that we are reverting to duck-typing  when we access the
-    # data field in a record of unknown type (record.data). Not a problem for
-    # Python, but it breaks mypy. Hence, in such cases, a 'type: ignore' needs
-    # to be used.
-    #
-    # @property
-    # @abstractmethod
-    # def data(self) -> record_data:
-    #     "Return the record data"
+class Record(_DataElement):
+    data: record_data
+    record_type: Optional[RecordType] = None
 
-    @property
-    @abstractmethod
-    def record_type(self) -> RecordType:
-        "Return the record type"
+    @validator("record_type", pre=True)
+    def record_type_validator(
+        cls,
+        record_type: Optional[RecordType],
+        values: Dict[str, Any],
+    ) -> Optional[RecordType]:
+        if record_type is None and "data" in values:
+            data = values["data"]
+            if isinstance(data, list):
+                if not data or isinstance(data[0], (int, float)):
+                    return RecordType.LIST_FLOAT
+            elif isinstance(data, bytes):
+                return RecordType.BYTES
+            elif isinstance(data, Mapping):
+                if not data:
+                    return RecordType.MAPPING_STR_FLOAT
+                if isinstance(list(data.keys())[0], (int, float)):
+                    return RecordType.MAPPING_INT_FLOAT
+                if isinstance(list(data.keys())[0], str):
+                    return RecordType.MAPPING_STR_FLOAT
+        return record_type
+
+    def get_instance(self) -> "Record":
+        if self.record_type is not None:
+            if self.record_type == RecordType.BYTES:
+                return BlobRecord(data=self.data)
+        return NumericalRecord(data=self.data)
 
 
 class NumericalRecord(Record):
@@ -117,24 +123,6 @@ class NumericalRecord(Record):
             index = _build_record_index(values["data"])
         return index
 
-    @property
-    def record_type(self) -> RecordType:
-        if isinstance(self.data, list):
-            if not self.data:
-                return RecordType.LIST_FLOAT
-            if isinstance(self.data[0], (int, float)):
-                return RecordType.LIST_FLOAT
-        elif isinstance(self.data, Mapping):
-            if not self.data:
-                return RecordType.MAPPING_STR_FLOAT
-            if isinstance(list(self.data.keys())[0], (int, float)):
-                return RecordType.MAPPING_INT_FLOAT
-            if isinstance(list(self.data.keys())[0], str):
-                return RecordType.MAPPING_STR_FLOAT
-        raise TypeError(
-            f"Not able to deduce record type from data was: {type(self.data)}"
-        )
-
     @root_validator(skip_on_failure=True)
     def ensure_consistent_index(cls, record: Dict[str, Any]) -> Dict[str, Any]:
         assert (
@@ -150,21 +138,13 @@ class NumericalRecord(Record):
 class BlobRecord(Record):
     data: blob_record_data
 
-    @property
-    def record_type(self) -> RecordType:
-        if isinstance(self.data, bytes):
-            return RecordType.BYTES
-        raise TypeError(
-            f"Not able to deduce record type from data was: {type(self.data)}"
-        )
-
 
 class RecordCollection(_DataElement):
     records: Union[Tuple[NumericalRecord, ...], Tuple[BlobRecord, ...]]
     ensemble_size: Optional[int] = None
 
     @property
-    def record_type(self) -> RecordType:
+    def record_type(self) -> Optional[RecordType]:
         return self.records[0].record_type
 
     @validator("ensemble_size", pre=True, always=True)
@@ -295,25 +275,6 @@ class RecordTransmitter:
         pass
 
 
-# The use of this, rather ugly, function could possibly be avoided by moving some
-# of the functionality of the transmitters into the Record classes.
-def make_record(
-    data: Any, index: Optional[RecordIndex] = None
-) -> Union[NumericalRecord, BlobRecord]:
-    validation_errors = []
-    try:
-        return NumericalRecord(data=data, index=index)
-    except ValidationError as err:
-        validation_errors.append(err)
-    try:
-        return BlobRecord(data=data)
-    except ValidationError as err:
-        validation_errors.append(err)
-    # This function only fails with multiple validation errors, not sure how to
-    # raise those.
-    raise ValueError(validation_errors)
-
-
 class SharedDiskRecordTransmitter(RecordTransmitter):
     _TYPE: RecordTransmitterType = RecordTransmitterType.shared_disk
 
@@ -322,10 +283,10 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         self._storage_path = storage_path
         self._storage_path.mkdir(parents=True, exist_ok=True)
         self._concrete_key = f"{name}_{uuid.uuid4()}"
-        self._uri: typing.Optional[str] = None
-        self._record_type: typing.Optional[RecordType] = None
+        self._uri: Optional[str] = None
+        self._record_type: Optional[RecordType] = None
 
-    def _set_transmitted(self, uri: Path, record_type: RecordType) -> None:
+    def _set_transmitted(self, uri: Path, record_type: Optional[RecordType]) -> None:
         super()._set_transmitted_state()
         self._uri = str(uri)
         self._record_type = record_type
@@ -350,8 +311,8 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
     async def transmit_data(self, data: record_data) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
-        record = make_record(data)
-        return await self._transmit(record)
+        record = Record(data=data)
+        return await self._transmit(record.get_instance())
 
     async def transmit_file(
         self,
@@ -412,8 +373,7 @@ class InMemoryRecordTransmitter(RecordTransmitter):
 
     def _set_transmitted(self, record: Record) -> None:
         super()._set_transmitted_state()
-        # See the Record class for the reason of the 'type ignore'.
-        self._data = record.data  # type: ignore
+        self._data = record.data
         if isinstance(record, NumericalRecord):
             self._index = record.index
 
@@ -425,8 +385,8 @@ class InMemoryRecordTransmitter(RecordTransmitter):
     async def transmit_data(self, data: record_data) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
-        record = make_record(data)
-        self._set_transmitted(record)
+        record = Record(data=data)
+        self._set_transmitted(record.get_instance())
 
     @abstractmethod
     async def transmit_file(
@@ -456,14 +416,14 @@ class InMemoryRecordTransmitter(RecordTransmitter):
         if not self.is_transmitted():
             raise RuntimeError("cannot load untransmitted record")
         assert self._data is not None
-        return make_record(self._data, index=self._index)
+        return Record(data=self._data).get_instance()
 
     async def dump(self, location: Path) -> None:
         if not self.is_transmitted():
             raise RuntimeError("cannot dump untransmitted record")
         if self._data is None:
             raise ValueError("cannot dump Record with no data")
-        record = make_record(data=self._data, index=self._index)
+        record = Record(data=self._data)
         if record.record_type != RecordType.BYTES:
             async with aiofiles.open(str(location), mode="w") as f:
                 await f.write(json.dumps(self._data))
