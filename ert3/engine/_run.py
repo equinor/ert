@@ -266,7 +266,7 @@ def _prepare_sensitivity(
 def _store_output_records(
     workspace_root: pathlib.Path,
     experiment_name: str,
-    records: ert.data.MultiEnsembleRecord,
+    records: ert.data.RecordCollectionMap,
 ) -> None:
     assert records.record_names is not None
     for record_name in records.record_names:
@@ -281,7 +281,7 @@ def _store_output_records(
 def _load_experiment_parameters(
     workspace_root: pathlib.Path,
     experiment_name: str,
-) -> ert.data.MultiEnsembleRecord:
+) -> ert.data.RecordCollectionMap:
     parameter_names = ert.storage.get_experiment_parameters(
         experiment_name=experiment_name
     )
@@ -294,7 +294,7 @@ def _load_experiment_parameters(
             record_name=parameter_name,
         )
 
-    return ert.data.MultiEnsembleRecord(ensemble_records=parameters)
+    return ert.data.RecordCollectionMap(ensemble_records=parameters)
 
 
 def _evaluate(

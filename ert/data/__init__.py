@@ -2,7 +2,7 @@ from ert.data._record import Record
 from ert.data._record import NumericalRecord
 from ert.data._record import BlobRecord
 from ert.data._record import RecordCollection
-from ert.data._record import MultiEnsembleRecord
+from ert.data._record import RecordCollectionMap
 from ert.data._record import RecordTransmitter
 from ert.data._record import RecordTransmitterType
 from ert.data._record import SharedDiskRecordTransmitter
@@ -17,7 +17,7 @@ __all__ = (
     "NumericalRecord",
     "BlobRecord",
     "RecordCollection",
-    "MultiEnsembleRecord",
+    "RecordCollectionMap",
     "RecordTransmitter",
     "RecordType",
     "RecordIndex",
