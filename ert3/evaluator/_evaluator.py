@@ -10,7 +10,7 @@ from pydantic import FilePath
 import ert
 import ert3
 from ert3.config import EnsembleConfig, StagesConfig, Step
-from ert.data import EnsembleRecord, MultiEnsembleRecord, Record, RecordTransmitter
+from ert.data import RecordCollection, MultiEnsembleRecord, Record, RecordTransmitter
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity.identifiers import EVTYPE_EE_TERMINATED
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
@@ -250,9 +250,9 @@ def _prepare_output_records(
         for key in realization:
             output_records[key].append(realization[key])
 
-    ensemble_records: Dict[str, EnsembleRecord] = {}
+    ensemble_records: Dict[str, RecordCollection] = {}
     for key in output_records:
-        ensemble_records[key] = EnsembleRecord(records=output_records[key])
+        ensemble_records[key] = RecordCollection(records=output_records[key])
 
     return MultiEnsembleRecord(ensemble_records=ensemble_records)
 

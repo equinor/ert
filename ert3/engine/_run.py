@@ -92,7 +92,7 @@ def _prepare_experiment_record(
         # The blob record from the workspace has size one
         # We need to copy it (ensemble size) times into the experiment record
         if isinstance(ensemble_record.records[0], ert.data.BlobRecord):
-            ensemble_record = ert.data.EnsembleRecord(
+            ensemble_record = ert.data.RecordCollection(
                 records=[ensemble_record.records[0] for _ in range(ensemble_size)]
             )
 
@@ -214,7 +214,7 @@ def _prepare_sensitivity_records(
             sensitivity_parameters[record_name].append(realization[record_name])
 
     for record_name in sensitivity_parameters:
-        ensemble_record = ert.data.EnsembleRecord(
+        ensemble_record = ert.data.RecordCollection(
             records=sensitivity_parameters[record_name]
         )
         ert.storage.add_ensemble_record(

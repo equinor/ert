@@ -120,7 +120,7 @@ def test_inconsistent_index_record(data, index):
     ),
 )
 def test_valid_ensemble_record(raw_ensrec, record_type):
-    ensrecord = ert.data.EnsembleRecord(records=raw_ensrec)
+    ensrecord = ert.data.RecordCollection(records=raw_ensrec)
     assert ensrecord.record_type == record_type
     assert len(raw_ensrec) == len(ensrecord.records) == ensrecord.ensemble_size
     for raw_record, record in zip(raw_ensrec, ensrecord.records):
@@ -132,13 +132,13 @@ def test_valid_ensemble_record(raw_ensrec, record_type):
 
 def test_ensemble_record_not_empty():
     with pytest.raises(pydantic.ValidationError):
-        ert.data.EnsembleRecord(records=[])
+        ert.data.RecordCollection(records=[])
 
 
 def test_invalid_ensemble_record():
     raw_ensrec = [{"data": b"a"}, {"data": [1.1, 2.2]}]
     with pytest.raises(pydantic.ValidationError):
-        ert.data.EnsembleRecord(records=raw_ensrec)
+        ert.data.RecordCollection(records=raw_ensrec)
 
 
 @pytest.mark.parametrize(
@@ -150,7 +150,7 @@ def test_invalid_ensemble_record():
 )
 def test_non_uniform_ensemble_record_types(raw_ensrec):
     with pytest.raises(pydantic.ValidationError):
-        ert.data.EnsembleRecord(records=raw_ensrec)
+        ert.data.RecordCollection(records=raw_ensrec)
 
 
 @pytest.mark.parametrize(
@@ -164,7 +164,7 @@ def test_non_uniform_ensemble_record_types(raw_ensrec):
 )
 def test_inconsistent_size_ensemble_record(raw_ensrec, ensemble_size):
     with pytest.raises(pydantic.ValidationError):
-        ert.data.EnsembleRecord(records=raw_ensrec, ensemble_size=ensemble_size)
+        ert.data.RecordCollection(records=raw_ensrec, ensemble_size=ensemble_size)
 
 
 @pytest.mark.parametrize(
