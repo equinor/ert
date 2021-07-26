@@ -361,21 +361,15 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
 
 class InMemoryRecordTransmitter(RecordTransmitter):
     _TYPE: RecordTransmitterType = RecordTransmitterType.in_memory
-    # TODO: these fields should be Union[NumericalRecord, BlobRecord], but that
-    # does not work until https://github.com/cloudpipe/cloudpickle/issues/403
-    # has been released.
-    _data: Optional[record_data] = None
-    _index: Optional[RecordIndex] = None
 
     def __init__(self, name: str):
         super().__init__()
         self._name = name
+        self._record: Record
 
     def _set_transmitted(self, record: Record) -> None:
         super()._set_transmitted_state()
-        self._data = record.data
-        if isinstance(record, NumericalRecord):
-            self._index = record.index
+        self._record = record
 
     @property
     def transmitter_type(self) -> RecordTransmitterType:
@@ -385,8 +379,7 @@ class InMemoryRecordTransmitter(RecordTransmitter):
     async def transmit_data(self, data: record_data) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
-        record = Record(data=data)
-        self._set_transmitted(record.get_instance())
+        self._set_transmitted(Record(data=data))
 
     @abstractmethod
     async def transmit_file(
@@ -415,18 +408,14 @@ class InMemoryRecordTransmitter(RecordTransmitter):
     async def load(self) -> Record:
         if not self.is_transmitted():
             raise RuntimeError("cannot load untransmitted record")
-        assert self._data is not None
-        return Record(data=self._data).get_instance()
+        return self._record
 
     async def dump(self, location: Path) -> None:
         if not self.is_transmitted():
             raise RuntimeError("cannot dump untransmitted record")
-        if self._data is None:
-            raise ValueError("cannot dump Record with no data")
-        record = Record(data=self._data)
-        if record.record_type != RecordType.BYTES:
+        if self._record.record_type != RecordType.BYTES:
             async with aiofiles.open(str(location), mode="w") as f:
-                await f.write(json.dumps(self._data))
+                await f.write(json.dumps(self._record.data))
         else:
             async with aiofiles.open(str(location), mode="wb") as f:  # type: ignore
-                await f.write(self._data)  # type: ignore
+                await f.write(self._record.data)  # type: ignore
