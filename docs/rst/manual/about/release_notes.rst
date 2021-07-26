@@ -27,6 +27,53 @@ Release Notes
  Miscellaneous:
    -
 
+Version 2.26
+------------
+
+ Breaking changes:
+   - Revert "Enable ensemble evaluator by default"
+
+ Bugfixes:
+   - Fix #1830 bug in progress calculation
+
+ New features:
+   - Log when MAX_RUNTIME is reached
+   - Add support for blob records (`#1855 <https://github.com/equinor/ert/issues/1855>`_)
+   - Implement an ert-storage transmitter
+
+ Improvements:
+   - GUI optimizations
+   - Make tail configurable in oat experiments
+   - Allow non-stochastic input records to sensitivity
+   - Implement a --num-iterations option for IES in the cli
+   - Updated FIELD keyword doc and in particular the requirements for the FIELD ID and GRID keyword doc with info about ERTBOX grid usage
+   - Updated documentation of the FIELD keyword
+   - Create ert package
+
+ Dependencies:
+   - Add httpx
+
+ Miscellaneous:
+   - Add validated record_field property to EnsembleRecord
+   - Unite the resolving of port and sockets to use
+   - Change the blob data type from List[StrictBytes] to StrictBytes
+   - Use QueueDiffer in legacy tracking
+   - Use pyrsistent and pre-rendered data in GUI
+   - Introduce separate numerical and blob classes
+   - Using mocked lsf bsub and bjobs commands to verify behaviour in ERT
+   - Reduce source root implementation to one
+   - Add Python version and activity badges to README
+   - Stop parsing and exposing Eclipse START_DATE in ERT
+   - Add default QUEUE_SYSTEM LOCAL to default site-config lines
+   - Merge ert and libres python tests (`#1782 <https://github.com/equinor/ert/issues/1782>`_)
+   - Fix verification tests by waiting for EE (`#1819 <https://github.com/equinor/ert/issues/1819>`_)
+   - Change __token__ to Token for fetching connection info
+   - Move ert3.data to ert.data
+   - Run GitHub Actions on tags
+   - Add ids to test_legacy_tracker test cases
+   - Add timed_out field to job_queue node
+   - Reorganize ensemble modules into ensemble package
+
 Version 2.25
 ------------
 
