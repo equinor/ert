@@ -159,7 +159,7 @@ class BlobRecord(Record):
         )
 
 
-class EnsembleRecord(_DataElement):
+class RecordCollection(_DataElement):
     records: Union[Tuple[NumericalRecord, ...], Tuple[BlobRecord, ...]]
     ensemble_size: Optional[int] = None
 
@@ -190,7 +190,7 @@ class EnsembleRecord(_DataElement):
 
 
 class MultiEnsembleRecord(_DataElement):
-    ensemble_records: Mapping[str, EnsembleRecord]
+    ensemble_records: Mapping[str, RecordCollection]
     record_names: Optional[Tuple[str, ...]] = None
     ensemble_size: Optional[int] = None
 

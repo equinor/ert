@@ -16,13 +16,13 @@ def load_record(
     if blob_record:
         with open(record_file, "rb") as fb:
             raw_ensrecord = fb.read()
-        ensrecord = ert.data.EnsembleRecord(
+        ensrecord = ert.data.RecordCollection(
             records=[ert.data.BlobRecord(data=raw_ensrecord)]
         )
     else:
         with open(record_file, "r") as f:
             raw_ensrecord = json.load(f)
-        ensrecord = ert.data.EnsembleRecord(
+        ensrecord = ert.data.RecordCollection(
             records=[
                 ert.data.NumericalRecord(data=raw_record)
                 for raw_record in raw_ensrecord
@@ -46,7 +46,7 @@ def sample_record(
     experiment_name: Optional[str] = None,
 ) -> None:
     distribution = parameters_config[parameter_group_name].as_distribution()
-    ensrecord = ert.data.EnsembleRecord(
+    ensrecord = ert.data.RecordCollection(
         records=[distribution.sample() for _ in range(ensemble_size)]
     )
     ert.storage.add_ensemble_record(
