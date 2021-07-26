@@ -27,7 +27,7 @@ def get_inputs(coeffs):
             for (a, b, c) in coeffs
         ]
     )
-    return ert.data.MultiEnsembleRecord(ensemble_records=input_records)
+    return ert.data.RecordCollectionMap(ensemble_records=input_records)
 
 
 @pytest.mark.requires_ert_storage
@@ -47,7 +47,7 @@ def test_evaluator_script(
         stages_config,
     )
 
-    expected = ert.data.MultiEnsembleRecord(
+    expected = ert.data.RecordCollectionMap(
         ensemble_records={
             "polynomial_output": ert.data.RecordCollection(
                 records=[
@@ -76,7 +76,7 @@ def test_evaluator_function(
         function_stages_config,
     )
 
-    expected = ert.data.MultiEnsembleRecord(
+    expected = ert.data.RecordCollectionMap(
         ensemble_records={
             "polynomial_output": ert.data.RecordCollection(
                 records=[

@@ -10,7 +10,7 @@ from pydantic import FilePath
 import ert
 import ert3
 from ert3.config import EnsembleConfig, StagesConfig, Step
-from ert.data import RecordCollection, MultiEnsembleRecord, Record, RecordTransmitter
+from ert.data import RecordCollection, RecordCollectionMap, Record, RecordTransmitter
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity.identifiers import EVTYPE_EE_TERMINATED
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
@@ -32,7 +32,7 @@ def _create_evaluator_tmp_dir(workspace_root: Path, evaluation_name: str) -> Pat
 def _prepare_input(
     storage_type: str,
     step_config: Step,
-    inputs: MultiEnsembleRecord,
+    inputs: RecordCollectionMap,
     storage_path: str,
     ensemble_size: int,
 ) -> Dict[int, Dict[str, RecordTransmitter]]:
@@ -111,7 +111,7 @@ def _build_ee_config(
     storage_path: str,
     ensemble: EnsembleConfig,
     stages_config: StagesConfig,
-    input_records: MultiEnsembleRecord,
+    input_records: RecordCollectionMap,
     dispatch_uri: str,
 ) -> Dict[str, Any]:
     if ensemble.size != None:
@@ -225,7 +225,7 @@ def _run(
 
 def _prepare_output_records(
     raw_records: Dict[int, Dict[str, RecordTransmitter]]
-) -> MultiEnsembleRecord:
+) -> RecordCollectionMap:
     async def _load(
         iens: int, record_key: str, transmitter: RecordTransmitter
     ) -> Tuple[int, str, Record]:
@@ -254,16 +254,16 @@ def _prepare_output_records(
     for key in output_records:
         ensemble_records[key] = RecordCollection(records=output_records[key])
 
-    return MultiEnsembleRecord(ensemble_records=ensemble_records)
+    return RecordCollectionMap(ensemble_records=ensemble_records)
 
 
 def evaluate(
     workspace_root: Path,
     experiment_name: str,
-    input_records: MultiEnsembleRecord,
+    input_records: RecordCollectionMap,
     ensemble_config: EnsembleConfig,
     stages_config: StagesConfig,
-) -> MultiEnsembleRecord:
+) -> RecordCollectionMap:
 
     if ensemble_config.storage_type == "ert_storage":
         storage_path = ert.storage.get_records_url(workspace_root)
