@@ -16,7 +16,6 @@ from pathlib import Path
 
 from http import HTTPStatus
 import httpx
-import aiofiles
 import pandas as pd
 from pydantic import BaseModel
 import requests
@@ -71,91 +70,35 @@ class StorageInfo:
 
 
 class StorageRecordTransmitter(ert.data.RecordTransmitter):
-    _TYPE: ert.data.RecordTransmitterType = ert.data.RecordTransmitterType.ert_storage
-
     def __init__(self, name: str, storage_url: str, iens: Optional[int] = None):
-        super().__init__()
+        super().__init__(ert.data.RecordTransmitterType.ert_storage)
         self._name: str = name
-        self._storage_url = storage_url
-        self._uri: str = ""
-        self._record_type: Optional[ert.data.RecordType] = None
+        self._uri = f"{storage_url}/{name}"
         self._real_id: Optional[int] = iens
+        if self._real_id is not None:
+            self._uri = f"{self._uri}?realization_index={self._real_id}"
 
-    def _set_transmitted(
-        self, uri: str, record_type: Optional[ert.data.RecordType]
-    ) -> None:
-        super()._set_transmitted_state()
-        self._uri = uri
-        self._record_type = record_type
-
-    @property
-    def transmitter_type(self) -> ert.data.RecordTransmitterType:
-        return self._TYPE
-
-    async def _transmit(self, record: ert.data.Record) -> None:
-        record_type = record.record_type
-        url_base = f"{self._storage_url}/{self._name}"
-
-        if record_type != ert.data.RecordType.BYTES:
-            url = f"{url_base}/matrix"
-        else:
-            url = f"{url_base}/file"
+    async def _transmit_numerical_record(self, record: ert.data.NumericalRecord) -> str:
+        url = f"{self._uri}/matrix"
         if self._real_id is not None:
             url = f"{url}?realization_index={self._real_id}"
-            url_base = f"{url_base}?realization_index={self._real_id}"
-
         await add_record(url, record)
+        return self._uri
 
-        self._set_transmitted(url_base, record_type=record_type)
+    async def _transmit_blob_record(self, record: ert.data.BlobRecord) -> str:
+        url = f"{self._uri}/file"
+        if self._real_id is not None:
+            url = f"{url}?realization_index={self._real_id}"
+        await add_record(url, record)
+        return self._uri
 
-    async def transmit_data(
-        self,
-        data: ert.data.record_data,
-    ) -> None:
-        if self.is_transmitted():
-            raise RuntimeError("Record already transmitted")
-        record = ert.data.Record(data=data)
-        return await self._transmit(record.get_instance())
+    async def _load_numerical_record(self) -> ert.data.NumericalRecord:
+        record = await load_record(self._uri, self._record_type)
+        return ert.data.NumericalRecord(data=record.data)
 
-    async def transmit_file(
-        self,
-        file: Path,
-        mime: str,
-    ) -> None:
-        record: ert.data.Record
-        if self.is_transmitted():
-            raise RuntimeError("Record already transmitted")
-        if mime == "application/json":
-            async with aiofiles.open(str(file), mode="r") as f:
-                contents = await f.read()
-                record = ert.data.NumericalRecord(data=json.loads(contents))
-        elif mime == "application/octet-stream":
-            async with aiofiles.open(str(file), mode="rb") as f:  # type: ignore
-                contents = await f.read()
-                record = ert.data.BlobRecord(data=contents)
-        else:
-            raise NotImplementedError(
-                "cannot transmit file unless mime is application/json"
-                f" or application/octet-stream, was {mime}"
-            )
-        return await self._transmit(record)
-
-    async def load(self) -> ert.data.Record:
-        if not self.is_transmitted():
-            raise RuntimeError("cannot load untransmitted record")
-        return await load_record(self._uri, self._record_type)
-
-    async def dump(self, location: Path) -> None:
-        if not self.is_transmitted():
-            raise RuntimeError("cannot dump untransmitted record")
-        record: ert.data.Record = await self.load()
-        if isinstance(record, ert.data.NumericalRecord):
-            contents = json.dumps(record.data)
-            async with aiofiles.open(location, mode="w") as f:
-                await f.write(contents)
-        else:
-            async with aiofiles.open(location, mode="wb") as f:  # type: ignore
-                await f.write(record.data)  # type: ignore
+    async def _load_blob_record(self) -> ert.data.BlobRecord:
+        record = await load_record(self._uri, self._record_type)
+        return ert.data.BlobRecord(data=record.data)
 
 
 async def _get_from_server_async(

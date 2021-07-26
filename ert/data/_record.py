@@ -240,118 +240,138 @@ class RecordTransmitterType(Enum):
 
 
 class RecordTransmitter:
-    def __init__(self) -> None:
+    def __init__(self, transmitter_type: RecordTransmitterType) -> None:
         self._state = RecordTransmitterState.not_transmitted
+        self._uri: str = ""
+        self._record_type: Optional[RecordType] = None
+        self._transmitter_type: RecordTransmitterType = transmitter_type
 
-    def _set_transmitted_state(self) -> None:
+    def _set_transmitted_state(
+        self, uri: str, record_type: Optional[RecordType]
+    ) -> None:
         self._state = RecordTransmitterState.transmitted
+        self._uri = uri
+        self._record_type = record_type
 
     def is_transmitted(self) -> bool:
         return self._state == RecordTransmitterState.transmitted
 
     @property
-    @abstractmethod
     def transmitter_type(self) -> RecordTransmitterType:
+        return self._transmitter_type
+
+    @abstractmethod
+    async def _load_numerical_record(self) -> NumericalRecord:
         pass
 
     @abstractmethod
-    async def dump(self, location: Path) -> None:
+    async def _load_blob_record(self) -> BlobRecord:
         pass
-
-    @abstractmethod
-    async def load(self) -> Record:
-        pass
-
-    @abstractmethod
-    async def transmit_data(self, data: record_data) -> None:
-        pass
-
-    @abstractmethod
-    async def transmit_file(
-        self,
-        file: Path,
-        mime: str,
-    ) -> None:
-        pass
-
-
-class SharedDiskRecordTransmitter(RecordTransmitter):
-    _TYPE: RecordTransmitterType = RecordTransmitterType.shared_disk
-
-    def __init__(self, name: str, storage_path: Path):
-        super().__init__()
-        self._storage_path = storage_path
-        self._storage_path.mkdir(parents=True, exist_ok=True)
-        self._concrete_key = f"{name}_{uuid.uuid4()}"
-        self._uri: Optional[str] = None
-        self._record_type: Optional[RecordType] = None
-
-    def _set_transmitted(self, uri: Path, record_type: Optional[RecordType]) -> None:
-        super()._set_transmitted_state()
-        self._uri = str(uri)
-        self._record_type = record_type
-
-    @property
-    def transmitter_type(self) -> RecordTransmitterType:
-        return self._TYPE
-
-    async def _transmit(self, record: Record) -> None:
-        storage_uri = self._storage_path / self._concrete_key
-        if isinstance(record, NumericalRecord):
-            contents = json.dumps(record.data)
-            async with aiofiles.open(storage_uri, mode="w") as f:
-                await f.write(contents)
-        elif isinstance(record, BlobRecord):
-            async with aiofiles.open(storage_uri, mode="wb") as f:  # type: ignore
-                await f.write(record.data)  # type: ignore
-        else:
-            raise TypeError(f"Record type not supported {type(record)}")
-        self._set_transmitted(storage_uri, record_type=record.record_type)
-
-    async def transmit_data(self, data: record_data) -> None:
-        if self.is_transmitted():
-            raise RuntimeError("Record already transmitted")
-        record = Record(data=data)
-        return await self._transmit(record.get_instance())
-
-    async def transmit_file(
-        self,
-        file: Path,
-        mime: str,
-    ) -> None:
-        if self.is_transmitted():
-            raise RuntimeError("Record already transmitted")
-        record: Union[NumericalRecord, BlobRecord]
-        if mime == "application/json":
-            async with aiofiles.open(str(file), mode="r") as f:
-                contents = await f.read()
-                record = NumericalRecord(data=json.loads(contents))
-        elif mime == "application/octet-stream":
-            async with aiofiles.open(str(file), mode="rb") as f:  # type: ignore
-                contents = await f.read()
-                record = BlobRecord(data=contents)
-        else:
-            raise NotImplementedError(
-                "cannot transmit file unless mime is application/json"
-                f" or application/octet-stream, was {mime}"
-            )
-        return await self._transmit(record)
 
     async def load(self) -> Record:
         if not self.is_transmitted():
             raise RuntimeError("cannot load untransmitted record")
         if self._record_type != RecordType.BYTES:
-            async with aiofiles.open(str(self._uri)) as f:
-                contents = await f.read()
-                if self._record_type == RecordType.MAPPING_INT_FLOAT:
-                    data = json.loads(contents, object_hook=parse_json_key_as_int)
-                else:
-                    data = json.loads(contents)
-                return NumericalRecord(data=data)
+            return await self._load_numerical_record()
+        return await self._load_blob_record()
+
+    @abstractmethod
+    async def _transmit_numerical_record(self, record: NumericalRecord) -> str:
+        pass
+
+    @abstractmethod
+    async def _transmit_blob_record(self, record: BlobRecord) -> str:
+        pass
+
+    async def transmit_record(self, record: Record) -> None:
+        if self.is_transmitted():
+            raise RuntimeError("Record already transmitted")
+        if isinstance(record, NumericalRecord):
+            uri = await self._transmit_numerical_record(record)
+        elif isinstance(record, BlobRecord):
+            uri = await self._transmit_blob_record(record)
         else:
-            async with aiofiles.open(str(self._uri), mode="rb") as f:  # type: ignore
-                data = await f.read()
-                return BlobRecord(data=data)
+            raise TypeError(f"Record type not supported {type(record)}")
+        self._set_transmitted_state(uri, record_type=record.record_type)
+
+    async def transmit_data(
+        self,
+        data: record_data,
+    ) -> None:
+        if self.is_transmitted():
+            raise RuntimeError("Record already transmitted")
+        record = Record(data=data)
+        await self.transmit_record(record.get_instance())
+
+    async def transmit_file(
+        self,
+        file: Path,
+        mime: str,
+    ) -> None:
+        if self.is_transmitted():
+            raise RuntimeError("Record already transmitted")
+        if mime == "application/json":
+            async with aiofiles.open(str(file), mode="r") as f:
+                contents = await f.read()
+                num_record = NumericalRecord(data=json.loads(contents))
+            uri = await self._transmit_numerical_record(num_record)
+            self._set_transmitted_state(uri, num_record.record_type)
+        elif mime == "application/octet-stream":
+            async with aiofiles.open(str(file), mode="rb") as f:  # type: ignore
+                contents = await f.read()
+                blob_record = BlobRecord(data=contents)
+            uri = await self._transmit_blob_record(blob_record)
+            self._set_transmitted_state(uri, blob_record.record_type)
+        else:
+            raise NotImplementedError(
+                "cannot transmit file unless mime is application/json"
+                f" or application/octet-stream, was {mime}"
+            )
+
+    async def dump(self, location: Path) -> None:
+        if not self.is_transmitted():
+            raise RuntimeError("cannot dump untransmitted record")
+        record = await self.load()
+        if isinstance(record, NumericalRecord):
+            async with aiofiles.open(str(location), mode="w") as f:
+                await f.write(json.dumps(record.data))
+        else:
+            async with aiofiles.open(str(location), mode="wb") as f:  # type: ignore
+                await f.write(record.data)  # type: ignore
+
+
+class SharedDiskRecordTransmitter(RecordTransmitter):
+    def __init__(self, name: str, storage_path: Path):
+        super().__init__(RecordTransmitterType.shared_disk)
+        self._storage_path = storage_path
+        self._storage_path.mkdir(parents=True, exist_ok=True)
+        self._concrete_key = f"{name}_{uuid.uuid4()}"
+        self._storage_uri = self._storage_path / self._concrete_key
+
+    async def _transmit_numerical_record(self, record: NumericalRecord) -> str:
+        contents = json.dumps(record.data)
+        async with aiofiles.open(self._storage_uri, mode="w") as f:
+            await f.write(contents)
+        return str(self._storage_uri)
+
+    async def _transmit_blob_record(self, record: BlobRecord) -> str:
+        async with aiofiles.open(self._storage_uri, mode="wb") as f:
+            await f.write(record.data)
+        return str(self._storage_uri)
+
+    async def _load_numerical_record(self) -> NumericalRecord:
+        async with aiofiles.open(str(self._uri)) as f:
+            contents = await f.read()
+        if self._record_type == RecordType.MAPPING_INT_FLOAT:
+            data = json.loads(contents, object_hook=parse_json_key_as_int)
+        else:
+            data = json.loads(contents)
+        return NumericalRecord(data=data)
+
+    async def _load_blob_record(self) -> BlobRecord:
+        async with aiofiles.open(str(self._uri), mode="rb") as f:
+            data = await f.read()
+        return BlobRecord(data=data)
 
     async def dump(self, location: Path) -> None:
         if not self.is_transmitted():
@@ -360,62 +380,21 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
 
 
 class InMemoryRecordTransmitter(RecordTransmitter):
-    _TYPE: RecordTransmitterType = RecordTransmitterType.in_memory
-
     def __init__(self, name: str):
-        super().__init__()
+        super().__init__(RecordTransmitterType.in_memory)
         self._name = name
         self._record: Record
 
-    def _set_transmitted(self, record: Record) -> None:
-        super()._set_transmitted_state()
+    async def _transmit_numerical_record(self, record: NumericalRecord) -> str:
         self._record = record
+        return "in_memory"
 
-    @property
-    def transmitter_type(self) -> RecordTransmitterType:
-        return self._TYPE
+    async def _transmit_blob_record(self, record: BlobRecord) -> str:
+        self._record = record
+        return "in_memory"
 
-    @abstractmethod
-    async def transmit_data(self, data: record_data) -> None:
-        if self.is_transmitted():
-            raise RuntimeError("Record already transmitted")
-        self._set_transmitted(Record(data=data))
+    async def _load_numerical_record(self) -> NumericalRecord:
+        return NumericalRecord(data=self._record.data)
 
-    @abstractmethod
-    async def transmit_file(
-        self,
-        file: Path,
-        mime: str,
-    ) -> None:
-        if self.is_transmitted():
-            raise RuntimeError("Record already transmitted")
-        record: Record
-        if mime == "application/json":
-            async with aiofiles.open(str(file), mode="r") as f:
-                contents = await f.read()
-                record = NumericalRecord(data=json.loads(contents))
-        elif mime == "application/octet-stream":
-            async with aiofiles.open(str(file), mode="rb") as f:  # type: ignore
-                contents = await f.read()
-                record = BlobRecord(data=contents)
-        else:
-            raise NotImplementedError(
-                "cannot transmit file unless mime is application/json"
-                f" or application/octet-stream, was {mime}"
-            )
-        self._set_transmitted(record)
-
-    async def load(self) -> Record:
-        if not self.is_transmitted():
-            raise RuntimeError("cannot load untransmitted record")
-        return self._record
-
-    async def dump(self, location: Path) -> None:
-        if not self.is_transmitted():
-            raise RuntimeError("cannot dump untransmitted record")
-        if self._record.record_type != RecordType.BYTES:
-            async with aiofiles.open(str(location), mode="w") as f:
-                await f.write(json.dumps(self._record.data))
-        else:
-            async with aiofiles.open(str(location), mode="wb") as f:  # type: ignore
-                await f.write(self._record.data)  # type: ignore
+    async def _load_blob_record(self) -> BlobRecord:
+        return BlobRecord(data=self._record.data)
