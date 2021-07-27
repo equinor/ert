@@ -592,6 +592,8 @@ foreach (test   enkf_active_list
                 enkf_run_arg
                 enkf_state_map
                 obs_vector_tests
+                measured
+                obs_mask_deactivate
                 log_config_level_parse
                 row_scaling
                 rng_manager

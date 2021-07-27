@@ -12,6 +12,9 @@ from ert_data import loader
 from ert_data.measured import MeasuredData
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
+from ecl.summary import EclSum
+from res.enkf.export import SummaryObservationCollector
+
 
 test_data_root = SOURCE_DIR / "test-data" / "local"
 
@@ -39,7 +42,7 @@ def test_history_obs(monkeypatch, facade_snake_oil):
     fopr.remove_inactive_observations()
 
     assert all(
-        fopr.data.columns.get_level_values("data_index").values == list(range(199))
+        fopr.data.columns.get_level_values("data_index").values == list(range(200))
     )
 
 
@@ -73,16 +76,16 @@ def test_summary_obs_runtime(monkeypatch, copy_snake_oil):
     facade = LibresFacade(ert)
 
     start_time = time.time()
-    foprh = MeasuredData(facade, [f"FOPR_{restart}" for restart in range(1, 200)])
+    foprh = MeasuredData(facade, [f"FOPR_{restart}" for restart in range(1, 201)])
     summary_obs_time = time.time() - start_time
 
     start_time = time.time()
     fopr = MeasuredData(facade, ["FOPR"])
     history_obs_time = time.time() - start_time
 
-    assert all(
-        fopr.data.columns.get_level_values("data_index").values
-        == foprh.data.columns.get_level_values("data_index").values
+    assert (
+        fopr.data.columns.get_level_values("data_index").values.tolist()
+        == foprh.data.columns.get_level_values("data_index").values.tolist()
     )
 
     result = foprh.get_simulated_data().values == fopr.get_simulated_data().values
@@ -93,7 +96,7 @@ def test_summary_obs_runtime(monkeypatch, copy_snake_oil):
 def test_summary_obs_last_entry(monkeypatch, copy_snake_oil):
 
     obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
-    with obs_file.open(mode="a") as fin:
+    with obs_file.open(mode="w") as fin:
         fin.write(
             """
             \nSUMMARY_OBSERVATION LAST_DATE
@@ -255,9 +258,22 @@ def test_no_storage_obs_only(monkeypatch, obs_key):
     assert set(md.data.columns.get_level_values(0)) == {obs_key}
 
 
+@pytest.mark.usefixtures("copy_snake_oil")
+def test_summary_collector():
+    res_config = ResConfig("snake_oil.ert")
+    ert = EnKFMain(res_config)
+    summary = EclSum("refcase/SNAKE_OIL_FIELD.UNSMRY")
+    data = SummaryObservationCollector.loadObservationData(ert, "default_0")
+
+    assert (
+        data["FOPR"].values.tolist()
+        == summary.numpy_vector("FOPRH", report_only=True).tolist()
+    )
+
+
 def create_summary_observation():
     observations = ""
-    values = np.random.uniform(0, 1.5, 199)
+    values = np.random.uniform(0, 1.5, 200)
     errors = values * 0.1
     for restart, (value, error) in enumerate(zip(values, errors)):
         restart += 1
@@ -289,3 +305,13 @@ def create_general_observation():
 }};
     """
     return observations
+
+
+def test_all_measured_snapshot(snapshot, facade_snake_oil):
+    """
+    While there is no guarantee that this snapshot is 100% correct, it does represent
+    the current state of loading from storage for the snake_oil case.
+    """
+    obs_keys = facade_snake_oil.get_matching_wildcards()("*").strings
+    measured_data = MeasuredData(facade_snake_oil, obs_keys)
+    snapshot.assert_match(measured_data.data.to_csv(), "snake_oil_measured_output.csv")

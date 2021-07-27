@@ -94,12 +94,12 @@ class ExportJoinTest(ResTest):
             self.assertEqual(result["EXTRA_INT_COLUMN"][1][last_date], 225)
             self.assertEqual(result["EXTRA_STRING_COLUMN"][1][last_date], "OFF")
 
-            self.assertFloatEqual(result["MISFIT:FOPR"][0][last_date], 457.491003)
-            self.assertFloatEqual(result["MISFIT:FOPR"][24][last_date], 1630.774198)
+            self.assertFloatEqual(result["MISFIT:FOPR"][0][last_date], 457.500978)
+            self.assertFloatEqual(result["MISFIT:FOPR"][24][last_date], 1630.813862)
 
-            self.assertFloatEqual(result["MISFIT:TOTAL"][0][first_date], 468.469969)
-            self.assertFloatEqual(result["MISFIT:TOTAL"][0][last_date], 468.469969)
-            self.assertFloatEqual(result["MISFIT:TOTAL"][24][last_date], 1714.662370)
+            self.assertFloatEqual(result["MISFIT:TOTAL"][0][first_date], 468.479944)
+            self.assertFloatEqual(result["MISFIT:TOTAL"][0][last_date], 468.479944)
+            self.assertFloatEqual(result["MISFIT:TOTAL"][24][last_date], 1714.700855)
 
             with self.assertRaises(KeyError):
                 realization_13 = result.loc[60]
