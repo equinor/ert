@@ -16,3 +16,4 @@ pylint
 click
 scikit-build
 setuptools_scm
+pytest-snapshot
