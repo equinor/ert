@@ -484,7 +484,7 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector ,
 
 
     // Get time series data from history object and allocate
-    size = time_map_get_last_step( obs_time );
+    size = time_map_get_last_step( obs_time ) + 1;
     if (history_init_ts( history , sum_key , value , valid )) {
 
       // Create  the standard deviation vector

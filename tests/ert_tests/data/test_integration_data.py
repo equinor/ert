@@ -39,7 +39,7 @@ def test_history_obs(monkeypatch, facade_snake_oil):
     fopr.remove_inactive_observations()
 
     assert all(
-        fopr.data.columns.get_level_values("data_index").values == list(range(199))
+        fopr.data.columns.get_level_values("data_index").values == list(range(200))
     )
 
 
@@ -73,7 +73,7 @@ def test_summary_obs_runtime(monkeypatch, copy_snake_oil):
     facade = LibresFacade(ert)
 
     start_time = time.time()
-    foprh = MeasuredData(facade, [f"FOPR_{restart}" for restart in range(1, 200)])
+    foprh = MeasuredData(facade, [f"FOPR_{restart}" for restart in range(1, 201)])
     summary_obs_time = time.time() - start_time
 
     start_time = time.time()
