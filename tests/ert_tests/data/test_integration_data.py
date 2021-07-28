@@ -257,7 +257,7 @@ def test_no_storage_obs_only(monkeypatch, obs_key):
 
 def create_summary_observation():
     observations = ""
-    values = np.random.uniform(0, 1.5, 199)
+    values = np.random.uniform(0, 1.5, 200)
     errors = values * 0.1
     for restart, (value, error) in enumerate(zip(values, errors)):
         restart += 1

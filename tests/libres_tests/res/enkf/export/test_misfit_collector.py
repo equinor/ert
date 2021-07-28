@@ -15,11 +15,11 @@ class MisfitCollectorTest(ResTest):
             ert = context.getErt()
             data = MisfitCollector.loadAllMisfitData(ert, "default_0")
 
-            self.assertFloatEqual(data["MISFIT:FOPR"][0], 737.436374)
-            self.assertFloatEqual(data["MISFIT:FOPR"][24], 1258.644538)
+            self.assertFloatEqual(data["MISFIT:FOPR"][0], 738.735586)
+            self.assertFloatEqual(data["MISFIT:FOPR"][24], 1260.086789)
 
-            self.assertFloatEqual(data["MISFIT:TOTAL"][0], 765.709246)
-            self.assertFloatEqual(data["MISFIT:TOTAL"][24], 1357.730551)
+            self.assertFloatEqual(data["MISFIT:TOTAL"][0], 767.008457)
+            self.assertFloatEqual(data["MISFIT:TOTAL"][24], 1359.172803)
 
             realization_20 = data.loc[20]
 
