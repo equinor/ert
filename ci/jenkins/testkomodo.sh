@@ -1,4 +1,60 @@
 
+install_libecl () {
+    INSTALL=$WORKSPACE/install
+    mkdir -p $INSTALL
+    LIBECL_ROOT=$WORKSPACE/libecl
+    LIBECL_BUILD=$LIBECL_ROOT/build
+    git clone https://github.com/equinor/libecl $LIBECL_ROOT
+    mkdir -p $LIBECL_BUILD
+    pushd $LIBECL_BUILD
+    cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL
+    make -j 6 install
+    popd
+}
+
+source_build_tools() {
+    source /opt/rh/devtoolset-8/enable
+    export PATH=/opt/rh/devtoolset-8/root/bin:$PATH
+    pip install cmake
+    python --version
+    gcc --version
+    cmake --version
+}
+
+build_libres () {
+    INSTALL=$WORKSPACE/install
+    LIBRES_BUILD=$CI_SOURCE_ROOT/libres/build
+    mkdir -p $LIBRES_BUILD
+    pushd $LIBRES_BUILD
+    KOMODO_PATH=/prog/res/komodo/${CI_KOMODO_RELEASE}
+    if [ -z "$CI_PR_RUN" ]
+    then
+        # In order to use the .so files from komodo, LD_LIBRARY_PATH must be set
+        export LIBRES_LIB=$(find ${KOMODO_PATH}/root/ -name libres.so -exec dirname {} \;)
+        export LIBECL_LIB=$(find ${KOMODO_PATH}/root/ -name libecl.so -exec dirname {} \;)
+        export LD_LIBRARY_PATH=${LIBECL_LIB}:${LIBRES_LIB}
+    fi
+    cmake .. \
+          -DCMAKE_PREFIX_PATH=$INSTALL \
+          -DCMAKE_INSTALL_PREFIX=$INSTALL \
+          -DBUILD_TESTS=ON \
+          -DEQUINOR_TESTDATA_ROOT=/project/res-testdata/ErtTestData
+    make -j 6
+    popd
+    # Remove built .so files when it is not a PR build
+    if [ -z "$CI_PR_RUN" ]
+    then
+        find . -path ./test-kenv -prune -false -o -name *.so -delete
+    fi
+}
+
+run_libres_ctest() {
+    pushd $LIBRES_BUILD
+    export ERT_SITE_CONFIG=${CI_SOURCE_ROOT}/share/ert/site-config
+    ctest -j 6 -E Lint --output-on-failure
+    popd
+}
+
 copy_test_files () {
     cp -r ${CI_SOURCE_ROOT}/tests ${CI_TEST_ROOT}
 
@@ -51,6 +107,13 @@ start_tests () {
         --ignore="tests/libres_tests/res/enkf/test_site_config.py"        \
         --ignore="tests/libres_tests/res/enkf/test_workflow_list.py"      \
         --ignore="tests/libres_tests/res/enkf/test_hook_manager.py"
+
     popd
+
+    # build and run libres ctests
+    source_build_tools
+    install_libecl
+    build_libres
+    run_libres_ctest
 
 }
