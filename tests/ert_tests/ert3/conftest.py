@@ -78,6 +78,15 @@ def designed_coeffs_record_file(workspace):
 
 
 @pytest.fixture()
+def designed_blob_record_file(workspace):
+    file_path = workspace / ert3.workspace.EXPERIMENTS_BASE / "doe" / "record.bin"
+    file_path.dirpath().ensure(dir=True)
+    with open(file_path, "wb") as f:
+        f.write(b"0x410x420x43")
+    return file_path
+
+
+@pytest.fixture()
 def oat_compatible_record_file(workspace):
     sensitivity_dir = (
         workspace / ert3.workspace.EXPERIMENTS_BASE / "partial_sensitivity"

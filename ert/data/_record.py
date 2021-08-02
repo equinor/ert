@@ -1,4 +1,5 @@
 import json
+import pathlib
 import shutil
 import uuid
 from abc import abstractmethod
@@ -398,3 +399,19 @@ class InMemoryRecordTransmitter(RecordTransmitter):
 
     async def _load_blob_record(self) -> BlobRecord:
         return BlobRecord(data=self._record.data)
+
+
+def load_collection_from_file(
+    file_path: pathlib.Path, blob_record: bool = False, ens_size: int = 1
+) -> RecordCollection:
+    if blob_record:
+        with open(file_path, "rb") as fb:
+            return RecordCollection(
+                records=[BlobRecord(data=fb.read())] * ens_size,
+            )
+
+    with open(file_path, "r") as f:
+        raw_ensrecord = json.load(f)
+    return RecordCollection(
+        records=[NumericalRecord(data=raw_record) for raw_record in raw_ensrecord]
+    )

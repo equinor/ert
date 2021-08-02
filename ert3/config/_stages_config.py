@@ -36,35 +36,33 @@ class _StagesConfig(BaseModel):
         arbitrary_types_allowed = True
 
 
-def _ensure_mime(cls: _StagesConfig, field: str, values: Dict[str, Any]) -> str:
+def _ensure_mime(field: str, values: Dict[str, Any]) -> str:
     if field:
         return field
     guess = mimetypes.guess_type(str(values.get("location", "")))[0]
-    if guess:
-        return guess
-    return (
-        _DEFAULT_CMD_MIME_TYPE
-        if cls == TransportableCommand
-        else _DEFAULT_RECORD_MIME_TYPE
-    )
+    if guess != _DEFAULT_RECORD_MIME_TYPE:
+        return _DEFAULT_CMD_MIME_TYPE
+    return _DEFAULT_RECORD_MIME_TYPE
 
 
 class _MimeBase(_StagesConfig):
-    mime: str = ""
-
-    @validator("mime")
+    @validator("mime", check_fields=False)
     def _ensure_input_record_mime(cls, field: str, values: Dict[str, Any]) -> str:
-        return _ensure_mime(cls, field, values)
+        if cls == TransportableCommand:
+            return _DEFAULT_CMD_MIME_TYPE
+        return _ensure_mime(field, values)
 
 
 class Record(_MimeBase):
     record: str
     location: str
+    mime: str = ""
 
 
 class TransportableCommand(_MimeBase):
     name: str
     location: FilePath
+    mime: str = ""
 
 
 class _Step(_StagesConfig):

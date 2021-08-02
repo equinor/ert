@@ -1,3 +1,4 @@
+import json
 import typing
 
 import pydantic
@@ -251,3 +252,23 @@ def test_inconsistent_multi_ensemble_record(
             ensemble_size=ensemble_size,
             record_names=record_names,
         )
+
+
+def test_load_numeric_record_collection_from_file(designed_coeffs_record_file):
+    with open(designed_coeffs_record_file, "r") as f:
+        raw_collection = json.load(f)
+
+    collection = ert.data.load_collection_from_file(designed_coeffs_record_file)
+    assert len(collection.records) == len(raw_collection)
+    assert collection.ensemble_size == len(raw_collection)
+    assert collection.record_type != ert.data.RecordType.BYTES
+
+
+def test_load_blob_record_collection_from_file(designed_blob_record_file):
+    ens_size = 5
+    collection = ert.data.load_collection_from_file(
+        designed_blob_record_file, blob_record=True, ens_size=ens_size
+    )
+    assert len(collection.records) == ens_size
+    assert collection.ensemble_size == ens_size
+    assert collection.record_type == ert.data.RecordType.BYTES

@@ -1,9 +1,10 @@
+import json
 import pathlib
 from typing import List, Dict, Set, Union
+import mimetypes
 
 import ert
 import ert3
-
 
 # Character used to separate record source "paths".
 _SOURCE_SEPARATOR = "."
@@ -22,7 +23,7 @@ def _prepare_experiment(
     parameters: Dict[str, List[str]] = {}
     for input_record in ensemble.input:
         record_name = input_record.record
-        record_source = input_record.source.split(_SOURCE_SEPARATOR)
+        record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
         parameters[record_name] = _get_experiment_record_indices(
             workspace_root, record_source, parameters_config
         )
@@ -58,6 +59,16 @@ def _get_experiment_record_indices(
             assert record.index is not None
             indices.update(record.index)
         return [str(x) for x in indices]
+
+    elif source == "resources":
+        file_path = workspace_root / "resources" / record_source[1]
+        guess = mimetypes.guess_type(str(file_path))[0]
+        blob_record = guess != "application/json"
+        if blob_record:
+            return []
+        with open(file_path, "r") as f:
+            raw_collection = json.load(f)
+        return list(set().union(*(d.keys() for d in raw_collection)))
 
     elif source == "stochastic":
         if parameters_config[source_record_name].variables is not None:
@@ -112,6 +123,20 @@ def _prepare_experiment_record(
             ensemble_record=ensemble_record,
             experiment_name=experiment_name,
         )
+    elif record_source[0] == "resources":
+        file_path = workspace_root / "resources" / record_source[1]
+        guess = mimetypes.guess_type(str(file_path))[0]
+        blob_record = guess != "application/json"
+        record_coll = ert.data.load_collection_from_file(
+            file_path, blob_record, ensemble_size
+        )
+        ert.storage.add_ensemble_record(
+            workspace=workspace_root,
+            record_name=record_name,
+            ensemble_record=record_coll,
+            experiment_name=experiment_name,
+        )
+
     elif record_source[0] == "stochastic":
         ert3.engine.sample_record(
             workspace_root,
@@ -141,7 +166,7 @@ def _prepare_evaluation(
 
     for input_record in ensemble.input:
         record_name = input_record.record
-        record_source = input_record.source.split(_SOURCE_SEPARATOR)
+        record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
 
         _prepare_experiment_record(
             record_name,
@@ -183,9 +208,9 @@ def _prepare_storage_records(
 ) -> None:
     for input_record in ensemble.input:
         record_name = input_record.record
-        record_source = input_record.source.split(_SOURCE_SEPARATOR)
+        record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
 
-        if record_source[0] == "storage":
+        if record_source[0] != "stochastic":
             _prepare_experiment_record(
                 record_name,
                 record_source,

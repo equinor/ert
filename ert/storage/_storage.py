@@ -128,6 +128,8 @@ async def _post_to_server_async(
 
     if resp.status_code != HTTPStatus.OK:
         logger.error("Failed to post to %s. Response: %s", url, resp.text)
+        if resp.status_code == HTTPStatus.CONFLICT:
+            raise ert.exceptions.ElementExistsError(resp.text)
         raise ert.exceptions.StorageError(resp.text)
 
     return resp
@@ -194,9 +196,10 @@ def _get_from_server(
     return resp
 
 
-def get_records_url(workspace: Path) -> str:
+def get_records_url(workspace: Path, experiment_name: Optional[str] = None) -> str:
     storage_url = StorageInfo.url()
-    experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
+    if experiment_name is None:
+        experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
         raise ert.exceptions.NonExistantExperiment(
@@ -436,6 +439,11 @@ def _response2records(
 def _combine_records(
     ensemble_records: List[ert.data.RecordCollection],
 ) -> ert.data.RecordCollection:
+
+    if len(ensemble_records) == 1:
+        # Nothing to combine only one record collection here
+        return ensemble_records[0]
+
     # Combine records into the first ensemble record
     combined_records: List[ert.data.Record] = []
     for record_idx, _ in enumerate(ensemble_records[0].records):

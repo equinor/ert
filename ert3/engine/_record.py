@@ -1,4 +1,3 @@
-import json
 from typing import Optional
 from pathlib import Path
 
@@ -10,29 +9,15 @@ def load_record(
     workspace: Path,
     record_name: str,
     record_file: Path,
-    blob_record: Optional[bool] = False,
+    blob_record: bool = False,
 ) -> None:
 
-    if blob_record:
-        with open(record_file, "rb") as fb:
-            raw_ensrecord = fb.read()
-        ensrecord = ert.data.RecordCollection(
-            records=[ert.data.BlobRecord(data=raw_ensrecord)]
-        )
-    else:
-        with open(record_file, "r") as f:
-            raw_ensrecord = json.load(f)
-        ensrecord = ert.data.RecordCollection(
-            records=[
-                ert.data.NumericalRecord(data=raw_record)
-                for raw_record in raw_ensrecord
-            ]
-        )
+    record_coll = ert.data.load_collection_from_file(record_file, blob_record)
 
     ert.storage.add_ensemble_record(
         workspace=workspace,
         record_name=record_name,
-        ensemble_record=ensrecord,
+        ensemble_record=record_coll,
     )
 
 
