@@ -76,6 +76,32 @@ def test_single_function_step_valid(base_function_stage_config):
     assert config[0].function.__name__ == "sum"
 
 
+def test_check_loaded_mime_types(base_unix_stage_config):
+    raw_config = base_unix_stage_config
+    raw_config[0]["input"].append(
+        {"record": "some_json_record", "location": "some_location.json"}
+    )
+    raw_config[0]["output"].append(
+        {"record": "some_json_record", "location": "some_location.json"}
+    )
+    config = ert3.config.load_stages_config(raw_config)
+
+    assert (
+        config[0].transportable_commands[0].mime
+        == ert3.config._stages_config._DEFAULT_CMD_MIME_TYPE
+    )
+
+    assert config[0].input[0].mime == ert3.config._stages_config._DEFAULT_CMD_MIME_TYPE
+    assert (
+        config[0].input[1].mime == ert3.config._stages_config._DEFAULT_RECORD_MIME_TYPE
+    )
+
+    assert config[0].output[0].mime == ert3.config._stages_config._DEFAULT_CMD_MIME_TYPE
+    assert (
+        config[0].output[1].mime == ert3.config._stages_config._DEFAULT_RECORD_MIME_TYPE
+    )
+
+
 def test_step_multi_cmd(base_unix_stage_config):
     config = base_unix_stage_config
     config[0]["transportable_commands"].append(

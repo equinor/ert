@@ -2,13 +2,13 @@ size: 10
 
 input:
   -
-    source: storage.designed_field_properties
+    source: resources.field_properties.json
     record: field_properties
   -
-    source: storage.designed_wells
+    source: resources.wells.json
     record: wells
   -
-    source: storage.spe1case2_template
+    source: resources.SPE1CASE2.DATA.jinja2
     record: spe1_template
 
 output:
