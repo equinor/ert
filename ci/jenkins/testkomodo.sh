@@ -44,7 +44,8 @@ build_libres () {
     # Remove built .so files when it is not a PR build
     if [ -z "$CI_PR_RUN" ]
     then
-        find . -path ./test-kenv -prune -false -o -name *.so -delete
+        find $LIBRES_BUILD -name *.so -delete
+        find $INSTALL -name *.so -delete
     fi
 }
 
