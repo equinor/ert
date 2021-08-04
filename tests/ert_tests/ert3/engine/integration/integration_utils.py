@@ -122,11 +122,20 @@ def assert_distribution(
             raise ValueError(f"Unknown distribution {distribution}")
 
 
-def assert_sensitivity_oat_export(
-    export_data, ensemble_config, stages_config, parameters_config
+def assert_sensitivity_export(
+    export_data, ensemble_config, stages_config, parameters_config, algorithm
 ):
-    num_input_coeffs = 3
-    assert 2 * num_input_coeffs == len(export_data)
+    if algorithm == "one-at-a-time":
+        num_input_coeffs = 3
+        export_data_size = 2 * num_input_coeffs
+    elif algorithm == "fast":
+        num_input_coeffs = 3
+        sample_size = 10
+        export_data_size = sample_size * num_input_coeffs
+    else:
+        raise ValueError(f"Unknown algorithm {algorithm}")
+
+    assert export_data_size == len(export_data)
 
     config = load_experiment_config(ensemble_config, stages_config, parameters_config)
     assert_input_records(config, export_data)

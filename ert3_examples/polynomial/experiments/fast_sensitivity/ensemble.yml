@@ -1,0 +1,12 @@
+input:
+  -
+    source: stochastic.uniform_coefficients
+    record: coefficients
+
+output:
+  -
+    record: polynomial_output
+
+forward_model:
+  driver: local
+  stage: function_polynomial

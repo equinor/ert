@@ -99,6 +99,7 @@ setup(
         "pyyaml",
         "qtpy",
         "requests",
+        "SALib",
         "scipy",
         "semeio",
         "sqlalchemy",

@@ -6,7 +6,7 @@ import pytest
 from integration_utils import (
     assert_distribution,
     assert_export,
-    assert_sensitivity_oat_export,
+    assert_sensitivity_export,
 )
 
 import ert
@@ -84,8 +84,19 @@ def evaluation_experiment_config():
 
 
 @pytest.fixture()
-def sensitivity_experiment_config():
+def sensitivity_oat_experiment_config():
     raw_config = {"type": "sensitivity", "algorithm": "one-at-a-time", "tail": 0.99}
+    yield ert3.config.load_experiment_config(raw_config)
+
+
+@pytest.fixture()
+def sensitivity_fast_experiment_config():
+    raw_config = {
+        "type": "sensitivity",
+        "algorithm": "fast",
+        "harmonics": 1,
+        "sample_size": 10,
+    }
     yield ert3.config.load_experiment_config(raw_config)
 
 
@@ -470,18 +481,18 @@ def test_record_load_twice(
 
 
 @pytest.mark.requires_ert_storage
-def test_sensitivity_run_and_export(
+def test_sensitivity_oat_run_and_export(
     workspace,
     sensitivity_ensemble,
     stages_config,
-    sensitivity_experiment_config,
+    sensitivity_oat_experiment_config,
     gaussian_parameters_config,
 ):
     (workspace / ert3.workspace.EXPERIMENTS_BASE / "sensitivity").ensure(dir=True)
     ert3.engine.run(
         sensitivity_ensemble,
         stages_config,
-        sensitivity_experiment_config,
+        sensitivity_oat_experiment_config,
         gaussian_parameters_config,
         workspace,
         "sensitivity",
@@ -489,8 +500,41 @@ def test_sensitivity_run_and_export(
     ert3.engine.export(workspace, "sensitivity")
 
     export_data = _load_export_data(workspace, "sensitivity")
-    assert_sensitivity_oat_export(
-        export_data, sensitivity_ensemble, stages_config, gaussian_parameters_config
+    assert_sensitivity_export(
+        export_data,
+        sensitivity_ensemble,
+        stages_config,
+        gaussian_parameters_config,
+        "one-at-a-time",
+    )
+
+
+@pytest.mark.requires_ert_storage
+def test_sensitivity_fast_run_and_export(
+    workspace,
+    sensitivity_ensemble,
+    stages_config,
+    sensitivity_fast_experiment_config,
+    gaussian_parameters_config,
+):
+    (workspace / ert3.workspace.EXPERIMENTS_BASE / "sensitivity").ensure(dir=True)
+    ert3.engine.run(
+        sensitivity_ensemble,
+        stages_config,
+        sensitivity_fast_experiment_config,
+        gaussian_parameters_config,
+        workspace,
+        "sensitivity",
+    )
+    ert3.engine.export(workspace, "sensitivity")
+
+    export_data = _load_export_data(workspace, "sensitivity")
+    assert_sensitivity_export(
+        export_data,
+        sensitivity_ensemble,
+        stages_config,
+        gaussian_parameters_config,
+        "fast",
     )
 
 
@@ -499,7 +543,7 @@ def test_partial_sensitivity_run_and_export(
     workspace,
     partial_sensitivity_ensemble,
     double_stages_config,
-    sensitivity_experiment_config,
+    sensitivity_oat_experiment_config,
     oat_compatible_record_file,
     gaussian_parameters_config,
 ):
@@ -509,7 +553,7 @@ def test_partial_sensitivity_run_and_export(
     ert3.engine.run(
         partial_sensitivity_ensemble,
         double_stages_config,
-        sensitivity_experiment_config,
+        sensitivity_oat_experiment_config,
         gaussian_parameters_config,
         workspace,
         "partial_sensitivity",
@@ -517,11 +561,12 @@ def test_partial_sensitivity_run_and_export(
     ert3.engine.export(workspace, "partial_sensitivity")
 
     export_data = _load_export_data(workspace, "partial_sensitivity")
-    assert_sensitivity_oat_export(
+    assert_sensitivity_export(
         export_data,
         partial_sensitivity_ensemble,
         double_stages_config,
         gaussian_parameters_config,
+        "one-at-a-time",
     )
 
 
@@ -530,7 +575,7 @@ def test_incompatible_partial_sensitivity_run(
     workspace,
     partial_sensitivity_ensemble,
     double_stages_config,
-    sensitivity_experiment_config,
+    sensitivity_oat_experiment_config,
     oat_incompatible_record_file,
     gaussian_parameters_config,
 ):
@@ -549,7 +594,7 @@ def test_incompatible_partial_sensitivity_run(
         ert3.engine.run(
             partial_sensitivity_ensemble,
             double_stages_config,
-            sensitivity_experiment_config,
+            sensitivity_oat_experiment_config,
             gaussian_parameters_config,
             workspace,
             "partial_sensitivity",
