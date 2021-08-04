@@ -1,4 +1,5 @@
 from collections import defaultdict
+from functools import partial
 from typing import (
     Any,
     Dict,
@@ -24,6 +25,7 @@ import ert
 from ert_shared.storage.connection import get_info
 
 logger = logging.getLogger(__name__)
+read_csv = partial(pd.read_csv, index_col=0, float_precision="round_trip")
 
 _ENSEMBLE_RECORDS = "__ensemble_records__"
 _SPECIAL_KEYS = (_ENSEMBLE_RECORDS,)
@@ -158,9 +160,7 @@ async def load_record(url: str, record_type: Any) -> ert.data.Record:
     resp = await _get_from_server_async(url=url, headers=headers)
     content = resp.content
     if record_type != ert.data.RecordType.BYTES:
-        dataframe = pd.read_csv(
-            io.BytesIO(content), index_col=0, float_precision="round_trip"
-        )
+        dataframe = read_csv(io.BytesIO(content))
         for _, row in dataframe.iterrows():  # pylint: disable=no-member
             if record_type == ert.data.RecordType.LIST_FLOAT:
                 data = row.to_list()
@@ -396,52 +396,41 @@ def _add_numerical_data(
         raise ert.exceptions.StorageError(meta_response.text)
 
 
+# the local variable dataframe is not read by pylint as pandas.Dataframe,
+# but due to chunking a pandas.TextFileReader
+# https://stackoverflow.com/questions/41844485/why-the-object-which-i-read-a-csv-file-using-pandas-from-is-textfilereader-obj
 def _response2records(
     response_content: bytes, metadata: _NumericalMetaData
 ) -> ert.data.RecordCollection:
-
     record_type = metadata.record_type
-
-    # the local variable dataframe is not read by pylint as pandas.Dataframe,
-    # but due to chunking a pandas.TextFileReader
-    # https://stackoverflow.com/questions/41844485/why-the-object-which-i-read-a-csv-file-using-pandas-from-is-textfilereader-obj
-
-    records: List[ert.data.Record]
-    if record_type == ert.data.RecordType.LIST_FLOAT:
-        dataframe = pd.read_csv(
-            io.BytesIO(response_content), index_col=0, float_precision="round_trip"
-        )
-        records = [
-            ert.data.NumericalRecord(data=row.to_list())
-            for _, row in dataframe.iterrows()  # pylint: disable=no-member
-        ]
-    elif record_type == ert.data.RecordType.MAPPING_INT_FLOAT:
-        dataframe = pd.read_csv(
-            io.BytesIO(response_content), index_col=0, float_precision="round_trip"
-        )
-        records = [
-            ert.data.NumericalRecord(data={int(k): v for k, v in row.to_dict().items()})
-            for _, row in dataframe.iterrows()  # pylint: disable=no-member
-        ]
-    elif record_type == ert.data.RecordType.MAPPING_STR_FLOAT:
-        dataframe = pd.read_csv(
-            io.BytesIO(response_content), index_col=0, float_precision="round_trip"
-        )
-        records = [
-            ert.data.NumericalRecord(data=row.to_dict())
-            for _, row in dataframe.iterrows()  # pylint: disable=no-member
-        ]
-    elif record_type == ert.data.RecordType.BYTES:
-        assert metadata
-        records = [
-            ert.data.BlobRecord(data=response_content)
-            for _ in range(metadata.ensemble_size)
-        ]
-    else:
+    if record_type not in set(item.value for item in ert.data.RecordType):
         raise ValueError(
             f"Unexpected record type when loading numerical record: {record_type}"
         )
-    return ert.data.RecordCollection(records=records)
+
+    def interpret_data(row: pd.Series) -> Any:
+        if record_type == ert.data.RecordType.MAPPING_INT_FLOAT:
+            return {int(k): v for k, v in row.to_dict().items()}
+        return (
+            row.to_list()
+            if record_type == ert.data.RecordType.LIST_FLOAT
+            else row.to_dict()
+        )
+
+    if record_type == ert.data.RecordType.BYTES:
+        return ert.data.RecordCollection(
+            records=[
+                ert.data.BlobRecord(data=response_content)
+                for _ in range(metadata.ensemble_size)
+            ]
+        )
+    dataframe: pd.DataFrame = read_csv(io.BytesIO(response_content))
+    return ert.data.RecordCollection(
+        records=[
+            ert.data.NumericalRecord(data=interpret_data(row=row))
+            for _, row in dataframe.iterrows()  # pylint: disable=no-member
+        ]
+    )
 
 
 def _combine_records(
