@@ -5,6 +5,7 @@ import uuid
 from abc import abstractmethod
 from enum import Enum, auto
 from pathlib import Path
+from itertools import repeat
 
 from typing import (
     Any,
@@ -15,6 +16,7 @@ from typing import (
     Tuple,
     Union,
     Dict,
+    Iterator,
 )
 import aiofiles
 
@@ -27,6 +29,7 @@ from pydantic import (
     StrictFloat,
     StrictInt,
     StrictStr,
+    NonNegativeInt,
     validator,
     root_validator,
 )
@@ -142,36 +145,53 @@ class BlobRecord(Record):
 
 class RecordCollection(_DataElement):
     records: Union[Tuple[NumericalRecord, ...], Tuple[BlobRecord, ...]]
-    ensemble_size: Optional[int] = None
+    ensemble_size: Optional[NonNegativeInt] = None
 
     @property
     def record_type(self) -> Optional[RecordType]:
         return self.records[0].record_type
 
+    @validator("records")
+    def records_validator(
+        cls, records: Union[Tuple[NumericalRecord, ...], Tuple[BlobRecord, ...]]
+    ) -> Union[Tuple[NumericalRecord, ...], Tuple[BlobRecord, ...]]:
+        assert len(records) > 0
+        record_type = records[0].record_type
+        for record in records[1:]:
+            if record.record_type != record_type:
+                raise ValueError("Ensemble records must have an invariant record type")
+        return records
+
     @validator("ensemble_size", pre=True, always=True)
     def ensemble_size_validator(
-        cls, ensemble_size: Optional[int], values: Dict[str, Any]
-    ) -> Optional[int]:
-        if ensemble_size is None and "records" in values:
-            ensemble_size = len(values["records"])
-        assert ensemble_size is not None and ensemble_size > 0
+        cls, ensemble_size: Optional[NonNegativeInt], values: Dict[str, Any]
+    ) -> Optional[NonNegativeInt]:
+        if "records" in values:
+            if ensemble_size is None:
+                ensemble_size = len(values["records"])
+            elif len(values["records"]) > 1 and ensemble_size != len(values["records"]):
+                raise ValueError(
+                    "ensemble_size incompatible with the number of records"
+                )
         return ensemble_size
 
-    @root_validator(skip_on_failure=True)
-    def ensure_consistent_ensemble(
-        cls, ensemble_record: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        assert "records" in ensemble_record and "ensemble_size" in ensemble_record
-        assert len(ensemble_record["records"]) == ensemble_record["ensemble_size"]
-        record_type = ensemble_record["records"][0].record_type
-        for record in ensemble_record["records"][1:]:
-            if record.record_type != record_type:
-                raise ValueError("Ensemble records must have a uniform record type")
-        return ensemble_record
+    def __iter__(self) -> Iterator[Record]:  # type: ignore
+        if self.ensemble_size != len(self.records):
+            assert self.ensemble_size is not None  # making mypy happy
+            return repeat(self.records[0], self.ensemble_size)
+        return iter(self.records)
+
+    def __getitem__(self, idx: int) -> Union[NumericalRecord, BlobRecord]:
+        if self.ensemble_size != len(self.records):
+            assert self.ensemble_size is not None  # making mypy happy
+            if idx < 0 or idx >= self.ensemble_size:
+                raise IndexError("record collection index out of range")
+            return self.records[0]
+        return self.records[idx]
 
 
 class RecordCollectionMap(_DataElement):
-    ensemble_records: Mapping[str, RecordCollection]
+    record_collections: Mapping[str, RecordCollection]
     record_names: Optional[Tuple[str, ...]] = None
     ensemble_size: Optional[int] = None
 
@@ -179,9 +199,9 @@ class RecordCollectionMap(_DataElement):
     def record_names_validator(
         cls, record_names: Optional[Tuple[str, ...]], values: Dict[str, Any]
     ) -> Optional[Tuple[str, ...]]:
-        if record_names is None and "ensemble_records" in values:
-            ensemble_records = values["ensemble_records"]
-            record_names = tuple(ensemble_records.keys())
+        if record_names is None and "record_collections" in values:
+            record_collections = values["record_collections"]
+            record_names = tuple(record_collections.keys())
         return record_names
 
     @validator("ensemble_size", pre=True, always=True)
@@ -190,39 +210,39 @@ class RecordCollectionMap(_DataElement):
     ) -> Optional[int]:
         if (
             ensemble_size is None
-            and "ensemble_records" in values
+            and "record_collections" in values
             and "record_names" in values
         ):
             record_names = values["record_names"]
             assert len(record_names) > 0
-            ensemble_records = values["ensemble_records"]
-            assert len(ensemble_records) > 0
-            first_record = ensemble_records[record_names[0]]
+            record_collections = values["record_collections"]
+            assert len(record_collections) > 0
+            first_record = record_collections[record_names[0]]
             try:
                 ensemble_size = first_record.ensemble_size
             except AttributeError:
-                ensemble_size = len(first_record["records"])
+                ensemble_size = first_record["records"].ensemble_size
         assert ensemble_size is not None and ensemble_size > 0
         return ensemble_size
 
     @root_validator(skip_on_failure=True)
     def ensure_consistent_ensemble_size(
-        cls, multi_ensemble_record: Dict[str, Any]
+        cls, record_collection_map: Dict[str, Any]
     ) -> Dict[str, Any]:
-        ensemble_size = multi_ensemble_record["ensemble_size"]
-        for ensemble_record in multi_ensemble_record["ensemble_records"].values():
-            if ensemble_size != ensemble_record.ensemble_size:
+        ensemble_size = record_collection_map["ensemble_size"]
+        for collection in record_collection_map["record_collections"].values():
+            if ensemble_size != collection.ensemble_size:
                 raise AssertionError("Inconsistent ensemble record size")
-        return multi_ensemble_record
+        return record_collection_map
 
     @root_validator(skip_on_failure=True)
     def ensure_consistent_record_names(
-        cls, multi_ensemble_record: Dict[str, Any]
+        cls, record_collection_map: Dict[str, Any]
     ) -> Dict[str, Any]:
-        assert "record_names" in multi_ensemble_record
-        record_names = tuple(multi_ensemble_record["ensemble_records"].keys())
-        assert multi_ensemble_record["record_names"] == record_names
-        return multi_ensemble_record
+        assert "record_names" in record_collection_map
+        record_names = tuple(record_collection_map["record_collections"].keys())
+        assert record_collection_map["record_names"] == record_names
+        return record_collection_map
 
     def __len__(self) -> int:
         assert self.record_names is not None
@@ -407,7 +427,8 @@ def load_collection_from_file(
     if blob_record:
         with open(file_path, "rb") as fb:
             return RecordCollection(
-                records=[BlobRecord(data=fb.read())] * ens_size,
+                records=[BlobRecord(data=fb.read())],
+                ensemble_size=ens_size,
             )
 
     with open(file_path, "r") as f:

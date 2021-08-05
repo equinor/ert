@@ -84,13 +84,13 @@ def assert_distribution(
 ):
     indices = ("a", "b", "c")
 
-    for real_coefficient in coefficients.records:
+    for real_coefficient in coefficients:
         assert sorted(indices) == sorted(real_coefficient.index)
         for idx in real_coefficient.index:
             assert isinstance(real_coefficient.data[idx], float)
 
     samples = {idx: [] for idx in indices}
-    for sample in coefficients.records:
+    for sample in coefficients:
         for key in indices:
             samples[key].append(sample.data[key])
 

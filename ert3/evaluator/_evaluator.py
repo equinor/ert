@@ -40,7 +40,7 @@ def _prepare_input(
 
     futures = []
     for input_ in step_config.input:
-        for iens, record in enumerate(inputs.ensemble_records[input_.record].records):
+        for iens, record in enumerate(inputs.record_collections[input_.record]):
             transmitter: RecordTransmitter
             if storage_type == "shared_disk":
                 transmitter = ert.data.SharedDiskRecordTransmitter(
@@ -253,7 +253,7 @@ def _prepare_output_records(
     for key in output_records:
         ensemble_records[key] = RecordCollection(records=output_records[key])
 
-    return RecordCollectionMap(ensemble_records=ensemble_records)
+    return RecordCollectionMap(record_collections=ensemble_records)
 
 
 def evaluate(

@@ -364,7 +364,7 @@ def _add_numerical_data(
     experiment_name: str,
     record_name: str,
     record_data: Union[pd.DataFrame, pd.Series],
-    record_type: Optional[ert.data.RecordType],
+    ensemble_records: ert.data.RecordCollection,
 ) -> None:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
@@ -374,8 +374,8 @@ def _add_numerical_data(
         )
 
     metadata = _NumericalMetaData(
-        ensemble_size=len(record_data),
-        record_type=record_type,
+        ensemble_size=ensemble_records.ensemble_size,
+        record_type=ensemble_records.record_type,
     )
 
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
@@ -422,17 +422,16 @@ def _response2records(
 
     if record_type == ert.data.RecordType.BYTES:
         return ert.data.RecordCollection(
-            records=[
-                ert.data.BlobRecord(data=response_content)
-                for _ in range(metadata.ensemble_size)
-            ]
+            records=[ert.data.BlobRecord(data=response_content)],
+            ensemble_size=metadata.ensemble_size,
         )
     dataframe: pd.DataFrame = read_csv(io.BytesIO(response_content))
     return ert.data.RecordCollection(
         records=[
             ert.data.NumericalRecord(data=interpret_data(row=row))
             for _, row in dataframe.iterrows()  # pylint: disable=no-member
-        ]
+        ],
+        ensemble_size=metadata.ensemble_size,
     )
 
 
@@ -448,7 +447,6 @@ def _combine_records(
     combined_records: List[ert.data.Record] = []
     for record_idx, _ in enumerate(ensemble_records[0].records):
         record0 = ensemble_records[0].records[record_idx]
-
         if isinstance(record0.data, list):
             ldata = [
                 val
@@ -471,7 +469,10 @@ def _combine_records(
                 for key, val in data.items()
             }
             combined_records.append(ert.data.NumericalRecord(data=ddata))
-    return ert.data.RecordCollection(records=combined_records)
+    return ert.data.RecordCollection(
+        records=combined_records,
+        ensemble_size=ensemble_records[0].ensemble_size,
+    )
 
 
 def _get_numerical_metadata(ensemble_id: str, record_name: str) -> _NumericalMetaData:
@@ -584,14 +585,11 @@ def add_ensemble_record(
                     experiment_name,
                     f"{record_name}.{column_label}",
                     dataframe[column_label],
-                    ensemble_record.record_type,
+                    ensemble_record,
                 )
         else:
             _add_numerical_data(
-                experiment_name,
-                record_name,
-                dataframe,
-                ensemble_record.record_type,
+                experiment_name, record_name, dataframe, ensemble_record
             )
 
 
@@ -616,11 +614,10 @@ def _add_blob_data(
     record_url = f"ensembles/{ensemble_id}/records/{record_name}"
 
     assert ensemble_record
-    assert ensemble_record.ensemble_size != 0
-    # If the RecordCollection has more than one record we assume
-    # all records are the same and store only one record.
-    # We store the original size in the metadata
-    record = ensemble_record.records[0]
+    # Currently we assume that blob records are always the same ove the
+    # ensemble, so we store a single record. We store the ensemble size in the
+    # metadata.
+    record = ensemble_record[0]
 
     assert isinstance(record.data, bytes)
     response = _post_to_server(

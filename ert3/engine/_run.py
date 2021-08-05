@@ -50,11 +50,11 @@ def _get_experiment_record_indices(
             record_name=source_record_name,
         )
 
-        if isinstance(ensemble_record.records[0], ert.data.BlobRecord):
+        if isinstance(ensemble_record[0], ert.data.BlobRecord):
             return []
 
         indices: Set[Union[str, int]] = set()
-        for record in ensemble_record.records:
+        for record in ensemble_record:
             assert isinstance(record, ert.data.NumericalRecord)
             assert record.index is not None
             indices.update(record.index)
@@ -100,11 +100,11 @@ def _prepare_experiment_record(
             record_name=record_source[1],
         )
 
-        # The blob record from the workspace has size one
-        # We need to copy it (ensemble size) times into the experiment record
-        if isinstance(ensemble_record.records[0], ert.data.BlobRecord):
+        # Invariant record collections must be adjusted to the ensemble size:
+        if ensemble_record.ensemble_size == 1 and ensemble_size > 1:
             ensemble_record = ert.data.RecordCollection(
-                records=[ensemble_record.records[0] for _ in range(ensemble_size)]
+                records=[ensemble_record[0]],
+                ensemble_size=ensemble_size,
             )
 
         # Workaround to ensure compatible ensemble sizes
@@ -299,7 +299,7 @@ def _store_output_records(
             workspace=workspace_root,
             experiment_name=experiment_name,
             record_name=record_name,
-            ensemble_record=records.ensemble_records[record_name],
+            ensemble_record=records.record_collections[record_name],
         )
 
 
@@ -319,7 +319,7 @@ def _load_experiment_parameters(
             record_name=parameter_name,
         )
 
-    return ert.data.RecordCollectionMap(ensemble_records=parameters)
+    return ert.data.RecordCollectionMap(record_collections=parameters)
 
 
 def _evaluate(

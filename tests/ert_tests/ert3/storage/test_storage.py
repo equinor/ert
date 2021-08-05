@@ -149,6 +149,45 @@ def test_add_and_get_ensemble_record(tmpdir, raw_ensrec, ert_storage):
 
 @pytest.mark.requires_ert_storage
 @pytest.mark.parametrize(
+    ("raw_ensrec", "index"),
+    (
+        ([{"data": [0.5, 1.1, 2.2]}], [0, 1, 2]),
+        ([{"data": {"a": 0.5, "b": 1.1, "c": 2.2}}], ["a", "b", "c"]),
+        ([{"data": {2: 0.5, 5: 1.1, 7: 2.2}}], [2, 5, 7]),
+        ([{"data": b"asdfkasjdhjflkjah21WE123TTDSG34f"}], []),
+    ),
+)
+def test_add_and_get_invariant_ensemble_record(tmpdir, raw_ensrec, index, ert_storage):
+    ert.storage.init(workspace=tmpdir)
+
+    ert.storage.init_experiment(
+        experiment_name="my_experiment",
+        parameters={"my_ensemble_record": index},
+        ensemble_size=2,
+        responses=[],
+    )
+
+    ensrecords = ert.data.RecordCollection(records=raw_ensrec, ensemble_size=2)
+
+    ert.storage.add_ensemble_record(
+        workspace=tmpdir,
+        record_name="my_ensemble_record",
+        ensemble_record=ensrecords,
+        experiment_name="my_experiment",
+    )
+
+    retrieved_ensrecords = ert.storage.get_ensemble_record(
+        workspace=tmpdir,
+        record_name="my_ensemble_record",
+        experiment_name="my_experiment",
+    )
+    assert ensrecords == retrieved_ensrecords
+    assert retrieved_ensrecords.ensemble_size == 2
+    assert len(retrieved_ensrecords.records) == 1
+
+
+@pytest.mark.requires_ert_storage
+@pytest.mark.parametrize(
     "raw_ensrec",
     (
         [{"data": [i + 0.5, i + 1.1, i + 2.2]} for i in range(3)],

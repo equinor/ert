@@ -25,11 +25,11 @@ def _prepare_export(
         )
 
         if not data:
-            data = [{"input": {}, "output": {}} for _ in ensemble_record.records]
+            data = [{"input": {}, "output": {}} for _ in ensemble_record]
 
-        if isinstance(ensemble_record.records[0], ert.data.NumericalRecord):
+        if isinstance(ensemble_record[0], ert.data.NumericalRecord):
             assert len(data) == ensemble_record.ensemble_size
-            for realization, record in zip(data, ensemble_record.records):
+            for realization, record in zip(data, ensemble_record):
                 assert record_name not in realization[data_type]
                 realization[data_type][record_name] = record.data
 

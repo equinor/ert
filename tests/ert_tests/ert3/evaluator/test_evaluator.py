@@ -27,7 +27,7 @@ def get_inputs(coeffs):
             for (a, b, c) in coeffs
         ]
     )
-    return ert.data.RecordCollectionMap(ensemble_records=input_records)
+    return ert.data.RecordCollectionMap(record_collections=input_records)
 
 
 @pytest.mark.requires_ert_storage
@@ -48,7 +48,7 @@ def test_evaluator_script(
     )
 
     expected = ert.data.RecordCollectionMap(
-        ensemble_records={
+        record_collections={
             "polynomial_output": ert.data.RecordCollection(
                 records=[
                     ert.data.NumericalRecord(data=poly_out) for poly_out in expected
@@ -77,7 +77,7 @@ def test_evaluator_function(
     )
 
     expected = ert.data.RecordCollectionMap(
-        ensemble_records={
+        record_collections={
             "polynomial_output": ert.data.RecordCollection(
                 records=[
                     ert.data.NumericalRecord(data=poly_out) for poly_out in expected

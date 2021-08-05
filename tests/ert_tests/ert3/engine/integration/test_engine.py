@@ -331,7 +331,7 @@ def test_run_presampled(
         workspace=workspace, record_name="coefficients0"
     )
     assert 10 == coeff0.ensemble_size
-    for real_coeff in coeff0.records:
+    for real_coeff in coeff0:
         assert sorted(("a", "b", "c")) == sorted(real_coeff.index)
         for idx in real_coeff.index:
             assert isinstance(real_coeff.data[idx], float)
@@ -348,7 +348,7 @@ def test_run_presampled(
 
     export_data = _load_export_data(workspace, "presampled_evaluation")
     assert coeff0.ensemble_size == len(export_data)
-    for coeff, real in zip(coeff0.records, export_data):
+    for coeff, real in zip(coeff0, export_data):
         assert ["coefficients"] == list(real["input"].keys())
         export_coeff = real["input"]["coefficients"]
         assert sorted(coeff.index) == sorted(export_coeff.keys())
@@ -380,7 +380,7 @@ def test_run_uniform_presampled(
         workspace=workspace, record_name="uniform_coefficients0"
     )
     assert 10 == uniform_coeff0.ensemble_size
-    for real_coeff in uniform_coeff0.records:
+    for real_coeff in uniform_coeff0:
         assert sorted(("a", "b", "c")) == sorted(real_coeff.index)
         for idx in real_coeff.index:
             assert isinstance(real_coeff.data[idx], float)
@@ -397,7 +397,7 @@ def test_run_uniform_presampled(
 
     export_data = _load_export_data(workspace, "presampled_uniform_evaluation")
     assert uniform_coeff0.ensemble_size == len(export_data)
-    for coeff, real in zip(uniform_coeff0.records, export_data):
+    for coeff, real in zip(uniform_coeff0, export_data):
         assert ["coefficients"] == list(real["input"].keys())
         export_coeff = real["input"]["coefficients"]
         assert sorted(coeff.index) == sorted(export_coeff.keys())
@@ -431,7 +431,7 @@ def test_record_load_and_run(
         workspace=workspace, record_name="designed_coefficients"
     )
     assert 10 == designed_coeff.ensemble_size
-    for real_coeff in designed_coeff.records:
+    for real_coeff in designed_coeff:
         assert sorted(("a", "b", "c")) == sorted(real_coeff.index)
         for val in real_coeff.data.values():
             assert isinstance(val, numbers.Number)
@@ -448,7 +448,7 @@ def test_record_load_and_run(
 
     export_data = _load_export_data(workspace, "doe")
     assert designed_coeff.ensemble_size == len(export_data)
-    for coeff, real in zip(designed_coeff.records, export_data):
+    for coeff, real in zip(designed_coeff, export_data):
         assert ["coefficients"] == list(real["input"].keys())
         export_coeff = real["input"]["coefficients"]
         assert sorted(coeff.index) == sorted(export_coeff.keys())
