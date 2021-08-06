@@ -1,3 +1,1 @@
-from . import data
-from . import storage
-from . import exceptions
+from . import data, exceptions, storage
