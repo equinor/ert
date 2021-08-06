@@ -1,31 +1,23 @@
+import io
+import json
+import logging
 from collections import defaultdict
 from functools import partial
-from typing import (
-    Any,
-    Dict,
-    Iterable,
-    Mapping,
-    Optional,
-    Set,
-    List,
-    Union,
-)
-import io
-import logging
-import json
-from pathlib import Path
-
 from http import HTTPStatus
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Set, Union
+
 import httpx
 import pandas as pd
-from pydantic import BaseModel
 import requests
-import ert
+from pydantic import BaseModel
 
+import ert
 from ert_shared.storage.connection import get_info
 
 logger = logging.getLogger(__name__)
 read_csv = partial(pd.read_csv, index_col=0, float_precision="round_trip")
+DictStrAny = Dict[str, Any]
 
 _ENSEMBLE_RECORDS = "__ensemble_records__"
 _SPECIAL_KEYS = (_ENSEMBLE_RECORDS,)
@@ -34,6 +26,8 @@ _SPECIAL_KEYS = (_ENSEMBLE_RECORDS,)
 # workaround for webviz-ert, which expects each parameter record to have exactly
 # one value per realisation.
 _PARAMETER_RECORD_SEPARATOR = "."
+_OCTET_STREAM = "application/octet-stream"
+_CSV = "text/csv"
 
 
 class _NumericalMetaData(BaseModel):
@@ -95,10 +89,12 @@ class StorageRecordTransmitter(ert.data.RecordTransmitter):
         return self._uri
 
     async def _load_numerical_record(self) -> ert.data.NumericalRecord:
+        assert self._record_type
         record = await load_record(self._uri, self._record_type)
         return ert.data.NumericalRecord(data=record.data)
 
     async def _load_blob_record(self) -> ert.data.BlobRecord:
+        assert self._record_type
         record = await load_record(self._uri, self._record_type)
         return ert.data.BlobRecord(data=record.data)
 
@@ -135,46 +131,84 @@ async def _post_to_server_async(
     return resp
 
 
-async def add_record(url: str, record: Any) -> None:
+def _set_content_header(
+    header: str, record_type: ert.data.RecordType, headers: Optional[DictStrAny] = None
+) -> DictStrAny:
+    content_type = _OCTET_STREAM if record_type == ert.data.RecordType.BYTES else _CSV
+    if headers is None:
+        return {header: content_type}
+    headers_ = headers.copy()
+    headers_[header] = content_type
+    return headers_
+
+
+async def add_record(url: str, record: ert.data.Record) -> None:
     headers = {
         "Token": StorageInfo.token(),
     }
 
+    assert record.record_type
     if record.record_type != ert.data.RecordType.BYTES:
-        headers["content-type"] = "text/csv"
+        headers = _set_content_header(
+            header="content-type", record_type=record.record_type, headers=headers
+        )
         data = pd.DataFrame([record.data]).to_csv().encode()
         await _post_to_server_async(url=url, headers=headers, data=data)
     else:
+        assert isinstance(record.data, bytes)
         data = {"file": io.BytesIO(record.data)}
         await _post_to_server_async(url=url, headers=headers, files=data)
 
 
-async def load_record(url: str, record_type: Any) -> ert.data.Record:
+def _interpret_series(row: pd.Series, record_type: ert.data.RecordType) -> Any:
+    if record_type not in {item.value for item in ert.data.RecordType}:
+        raise ValueError(
+            f"Unexpected record type when loading numerical record: {record_type}"
+        )
+
+    if record_type == ert.data.RecordType.MAPPING_INT_FLOAT:
+        return {int(k): v for k, v in row.to_dict().items()}
+    return (
+        row.to_list()
+        if record_type == ert.data.RecordType.LIST_FLOAT
+        else row.to_dict()
+    )
+
+
+def _response_to_record_collection(
+    content: bytes, metadata: _NumericalMetaData
+) -> ert.data.RecordCollection:
+    record_type = metadata.record_type
+    records: Iterable[ert.data.Record]
+    if record_type == ert.data.RecordType.BYTES:
+        records = (
+            ert.data.BlobRecord(data=content) for _ in range(metadata.ensemble_size)
+        )
+    else:
+        records = (
+            ert.data.NumericalRecord(
+                data=_interpret_series(row=row, record_type=metadata.record_type)
+            )
+            for _, row in read_csv(io.BytesIO(content)).iterrows()
+        )
+    return ert.data.RecordCollection(records=tuple(records))
+
+
+async def load_record(url: str, record_type: ert.data.RecordType) -> ert.data.Record:
     headers = {
         "Token": StorageInfo.token(),
     }
-
+    headers = _set_content_header(
+        header="accept", headers=headers, record_type=record_type
+    )
+    response = await _get_from_server_async(url=url, headers=headers)
+    content = response.content
     if record_type != ert.data.RecordType.BYTES:
-        headers["accept"] = "text/csv"
-    else:
-        headers["accept"] = "application/octet-stream"
-
-    resp = await _get_from_server_async(url=url, headers=headers)
-    content = resp.content
-    if record_type != ert.data.RecordType.BYTES:
-        dataframe = read_csv(io.BytesIO(content))
+        dataframe: pd.DataFrame = read_csv(io.BytesIO(content))
         for _, row in dataframe.iterrows():  # pylint: disable=no-member
-            if record_type == ert.data.RecordType.LIST_FLOAT:
-                data = row.to_list()
-            elif record_type == ert.data.RecordType.MAPPING_STR_FLOAT:
-                data = row.to_dict()
-            elif record_type == ert.data.RecordType.MAPPING_INT_FLOAT:
-                data = {int(k): v for k, v in row.to_dict().items()}
-            else:
-                raise ValueError(
-                    f"Unexpected record type when loading numerical record: {record_type}"
-                )
-            return ert.data.NumericalRecord(data=data)
+            return ert.data.NumericalRecord(
+                data=_interpret_series(row=row, record_type=record_type)
+            )
     return ert.data.BlobRecord(data=content)
 
 
@@ -384,7 +418,7 @@ def _add_numerical_data(
     response = _post_to_server(
         f"{record_url}/matrix",
         data=record_data.to_csv().encode(),
-        headers={"content-type": "text/csv"},
+        headers={"content-type": _CSV},
     )
 
     if response.status_code == 409:
@@ -397,43 +431,6 @@ def _add_numerical_data(
 
     if meta_response.status_code != 200:
         raise ert.exceptions.StorageError(meta_response.text)
-
-
-# the local variable dataframe is not read by pylint as pandas.Dataframe,
-# but due to chunking a pandas.TextFileReader
-# https://stackoverflow.com/questions/41844485/why-the-object-which-i-read-a-csv-file-using-pandas-from-is-textfilereader-obj
-def _response2records(
-    response_content: bytes, metadata: _NumericalMetaData
-) -> ert.data.RecordCollection:
-    record_type = metadata.record_type
-    if record_type not in set(item.value for item in ert.data.RecordType):
-        raise ValueError(
-            f"Unexpected record type when loading numerical record: {record_type}"
-        )
-
-    def interpret_data(row: pd.Series) -> Any:
-        if record_type == ert.data.RecordType.MAPPING_INT_FLOAT:
-            return {int(k): v for k, v in row.to_dict().items()}
-        return (
-            row.to_list()
-            if record_type == ert.data.RecordType.LIST_FLOAT
-            else row.to_dict()
-        )
-
-    if record_type == ert.data.RecordType.BYTES:
-        return ert.data.RecordCollection(
-            records=[
-                ert.data.BlobRecord(data=response_content)
-                for _ in range(metadata.ensemble_size)
-            ]
-        )
-    dataframe: pd.DataFrame = read_csv(io.BytesIO(response_content))
-    return ert.data.RecordCollection(
-        records=[
-            ert.data.NumericalRecord(data=interpret_data(row=row))
-            for _, row in dataframe.iterrows()  # pylint: disable=no-member
-        ]
-    )
 
 
 def _combine_records(
@@ -503,14 +500,9 @@ def _get_data(
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
     metadata = _get_numerical_metadata(ensemble_id, record_name)
 
-    if metadata.record_type == ert.data.RecordType.BYTES:
-        headers = {"accept": "application/octet-stream"}
-    else:
-        headers = {"accept": "text/csv"}
-
     response = _get_from_server(
         path=f"ensembles/{ensemble_id}/records/{record_name}",
-        headers=headers,
+        headers=_set_content_header(header="accept", record_type=metadata.record_type),
     )
 
     if response.status_code == 404:
@@ -521,8 +513,8 @@ def _get_data(
     if response.status_code != 200:
         raise ert.exceptions.StorageError(response.text)
 
-    return _response2records(
-        response_content=response.content,
+    return _response_to_record_collection(
+        content=response.content,
         metadata=metadata,
     )
 
@@ -626,7 +618,11 @@ def _add_blob_data(
     response = _post_to_server(
         f"{record_url}/file",
         files={
-            "file": (record_name, io.BytesIO(record.data), "application/octet-stream")
+            "file": (
+                record_name,
+                io.BytesIO(record.data),
+                _OCTET_STREAM,
+            )
         },
     )
 
@@ -655,22 +651,21 @@ def get_ensemble_record(
         raise ert.exceptions.NonExistantExperiment(
             f"Cannot get {record_name} data, no experiment named: {experiment_name}"
         )
-
     param_names = _get_experiment_parameters(experiment_name)
-    if record_name in param_names and param_names[record_name]:
-        ensemble_records = [
-            _get_data(
-                experiment_name=experiment_name,
-                record_name=record_name + _PARAMETER_RECORD_SEPARATOR + param_name,
-            )
-            for param_name in param_names[record_name]
-        ]
-        return _combine_records(ensemble_records)
-    else:
+    if record_name not in param_names or not param_names[record_name]:
         return _get_data(
             experiment_name=experiment_name,
             record_name=record_name,
         )
+
+    ensemble_records = [
+        _get_data(
+            experiment_name=experiment_name,
+            record_name=record_name + _PARAMETER_RECORD_SEPARATOR + param_name,
+        )
+        for param_name in param_names[record_name]
+    ]
+    return _combine_records(ensemble_records)
 
 
 def get_ensemble_record_names(
