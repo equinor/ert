@@ -1,13 +1,51 @@
-from typing import Set, MutableMapping, List, Dict, Optional
+from typing import Set, MutableMapping, List, Dict, Optional, Any
 
-from ert3.stats import Distribution
-from ert.data import Record
+import numpy as np
+from SALib.sample import fast_sampler
+from SALib.analyze import fast
+
+from ert3.stats import Distribution, Gaussian, Uniform
+from ert.data import RecordCollectionMap, Record, NumericalRecord
 
 
 def _build_base_records(
     groups: Set[str], parameters: MutableMapping[str, Distribution]
 ) -> Dict[str, Record]:
     return {group_name: parameters[group_name].ppf(0.5) for group_name in groups}
+
+
+def _build_salib_problem(
+    parameters: MutableMapping[str, Distribution]
+) -> Dict[str, Any]:
+    # SALib problem structure is described in
+    # https://salib.readthedocs.io/en/latest/basics.html
+
+    problem = {}
+    dists = parameters.values()
+    num_vars = sum(dist.size for dist in dists)
+    names = [str(name) for idx in (list(dist.index) for dist in dists) for name in idx]
+
+    bounds = []
+    types = []
+    for dist in dists:
+        assert isinstance(dist, (Uniform, Gaussian))  # To make mypy checker happy
+        if dist.type == "uniform":
+            assert isinstance(dist, Uniform)  # To make mypy checker happy
+            bounds.extend([[dist.lower_bound, dist.upper_bound]] * dist.size)
+            types.extend(["unif"] * dist.size)
+        elif dist.type == "gaussian":
+            assert isinstance(dist, Gaussian)  # To make mypy checker happy
+            bounds.extend([[dist.mean, dist.std]] * dist.size)
+            types.extend(["norm"] * dist.size)
+        else:
+            raise ValueError(f"Unsupported distribution type {dist.type}")
+
+    problem["num_vars"] = num_vars
+    problem["names"] = names  # type: ignore
+    problem["bounds"] = bounds  # type: ignore
+    problem["dists"] = types  # type: ignore
+
+    return problem
 
 
 def one_at_the_time(
@@ -41,3 +79,90 @@ def one_at_the_time(
                 evaluations.append(records)
 
     return evaluations
+
+
+def fast_sample(
+    parameters: MutableMapping[str, Distribution],
+    harmonics: Optional[int],
+    sample_size: Optional[int],
+) -> List[Dict[str, Record]]:
+    if len(parameters) == 0:
+        raise ValueError("Cannot study the sensitivity of no variables")
+
+    if harmonics is None:
+        harmonics = 4
+    if sample_size is None:
+        sample_size = 1000
+
+    problem = _build_salib_problem(parameters)
+
+    samples = fast_sampler.sample(problem, sample_size, M=harmonics)
+
+    group_records = []
+    for dist in parameters.values():
+        records = []
+        for sample in samples:
+            data = dict(zip(dist.index, sample[: dist.size]))
+            record = NumericalRecord(data=data, index=dist.index)
+            records.append(record)
+        samples = np.delete(samples, list(range(dist.size)), axis=1)  # type: ignore
+        group_records.append(records)
+
+    evaluations = []
+    for i in zip(*group_records):
+        evaluation = dict(zip(parameters.keys(), i))
+        evaluations.append(evaluation)
+
+    return evaluations
+
+
+def fast_analyze(
+    parameters: MutableMapping[str, Distribution],
+    model_output: RecordCollectionMap,
+    harmonics: Optional[int],
+) -> Dict[int, Dict[str, Any]]:
+
+    # Returns a dictionary with S1, ST, S1_conf, ST_conf and names
+    # (described in https://salib.readthedocs.io/en/latest/api.html)
+    # for each evaluation performed with a sample, i.e. a polynomial
+    # is evaluated with a set of sample coefficients for 10 values of x
+    # ie. {0: {'S1': [0.3075(x), 0.4424(y), 4.531e-27(c)], ...,
+    # 'names': ['x', 'y', 'z']}, 1: ...}
+
+    if len(parameters) == 0:
+        raise ValueError("Cannot study the sensitivity of no variables")
+    if model_output.record_names and len(model_output.record_names) > 1:
+        raise ValueError("Cannot analyze sensitivity with multiple outputs")
+    if model_output.record_names and len(model_output.record_names) < 1:
+        raise ValueError("Cannot analyze sensitivity with no output")
+
+    if harmonics is None:
+        harmonics = 4
+
+    param_size = sum(dist.size for dist in parameters.values())
+    assert model_output.record_names is not None  # To make mypy checker happy
+    record_name = model_output.record_names[0]
+    records = model_output.ensemble_records[record_name].records
+
+    assert model_output.ensemble_size is not None  # To make mypy checker happy
+    if model_output.ensemble_size % param_size == 0:
+        sample_size = int(model_output.ensemble_size / param_size)
+    else:
+        raise ValueError(
+            "The size of the model output must be "
+            "a multiple of the number of parameters"
+        )
+
+    record_size = len(records[0].data)
+    data = np.zeros([sample_size * param_size, record_size])
+    for i, record in enumerate(records):
+        for j in range(record_size):
+            data[i][j] = record.data[j]  # type: ignore
+
+    problem = _build_salib_problem(parameters)
+
+    analysis = {}
+    for j in range(record_size):
+        analysis[j] = fast.analyze(problem, data[:, j], M=harmonics)
+
+    return analysis

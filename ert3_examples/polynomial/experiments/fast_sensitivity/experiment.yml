@@ -1,0 +1,4 @@
+type: sensitivity
+algorithm: fast
+harmonics: 4
+sample_size: 500

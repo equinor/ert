@@ -35,6 +35,10 @@ class Distribution:
         self._raw_ppf = ppf
 
     @property
+    def size(self) -> int:
+        return self._size
+
+    @property
     def index(self) -> ert.data.RecordIndex:
         return self._index
 
@@ -90,6 +94,10 @@ class Gaussian(Distribution):
     def std(self) -> float:
         return self._std
 
+    @property
+    def type(self) -> str:
+        return "gaussian"
+
 
 class Uniform(Distribution):
     def __init__(
@@ -130,3 +138,7 @@ class Uniform(Distribution):
     @property
     def upper_bound(self) -> float:
         return self._upper_bound
+
+    @property
+    def type(self) -> str:
+        return "uniform"
