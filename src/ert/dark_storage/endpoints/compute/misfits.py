@@ -18,7 +18,7 @@ router = APIRouter(tags=["misfits"])
     "/compute/misfits",
     responses={
         status.HTTP_200_OK: {
-            "content": {"application/x-dataframe": {}},
+            "content": {"text/csv": {}},
             "description": "Return misfits as csv, where columns are realizations.",
         }
     },

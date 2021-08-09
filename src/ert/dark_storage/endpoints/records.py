@@ -261,6 +261,14 @@ async def post_ensemble_record_matrix(
                 [str(v) for v in df.columns.values],
                 [str(v) for v in df.index.values],
             ]
+        elif content_type == "application/x-parquet":
+            stream = io.BytesIO(await request.body())
+            df = pd.read_parquet(stream)
+            content = df.values
+            labels = [
+                [v for v in df.columns.values],
+                [v for v in df.index.values],
+            ]
         else:
             raise ValueError()
     except ValueError:
@@ -548,6 +556,25 @@ def get_ensemble_responses(
     }
 
 
+def _get_dataframe(
+    content: Any, record: ds.Record, realization_index: Optional[int]
+) -> pd.DataFrame:
+    data = pd.DataFrame(content)
+    labels = record.f64_matrix.labels
+    if labels is not None and realization_index is None:
+        data.columns = labels[0]
+        data.index = labels[1]
+    elif labels is not None and realization_index is not None:
+        # The output is such that rows are realizations. Because
+        # `content` is a 1d list in this case, it treats each element as
+        # its own row. We transpose the data so that all of the data
+        # falls on the same row.
+        data = data.T
+        data.columns = labels[0]
+        data.index = [realization_index]
+    return data
+
+
 async def _get_record_data(
     bh: BlobHandler,
     record: ds.Record,
@@ -569,26 +596,22 @@ async def _get_record_data(
 
             return Response(
                 content=stream.getvalue(),
-                media_type="application/x-numpy",
+                media_type=accept,
             )
         if accept == "text/csv":
-            data = pd.DataFrame(content)
-            labels = record.f64_matrix.labels
-            if labels is not None and realization_index is None:
-                data.columns = labels[0]
-                data.index = labels[1]
-            elif labels is not None and realization_index is not None:
-                # The output is such that rows are realizations. Because
-                # `content` is a 1d list in this case, it treats each element as
-                # its own row. We transpose the data so that all of the data
-                # falls on the same row.
-                data = data.T
-                data.columns = labels[0]
-                data.index = [realization_index]
+            data = _get_dataframe(content, record, realization_index)
 
             return Response(
                 content=data.to_csv().encode(),
-                media_type="text/csv",
+                media_type=accept,
+            )
+        if accept == "application/x-parquet":
+            data = _get_dataframe(content, record, realization_index)
+            stream = io.BytesIO()
+            data.to_parquet(stream)
+            return Response(
+                content=stream.getvalue(),
+                media_type=accept,
             )
         else:
             return content
