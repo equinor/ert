@@ -96,6 +96,8 @@ class ProgressProxyModel(QAbstractItemModel):
         bottom_right: QModelIndex,
         roles: typing.List[int],
     ):
+        if top_left.internalPointer() is None:
+            return
         if top_left.internalPointer().type != NodeType.ITER:
             return
         self._recalculate_progress(top_left.row())
