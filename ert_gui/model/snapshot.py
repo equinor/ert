@@ -139,9 +139,9 @@ class SnapshotModel(QAbstractItemModel):
         # that the change events will be emitted when the stack is unwound.
         with ExitStack() as stack:
             iter_node = self.root.children[iter_]
-            iter_index = self.index(iter_, 0, QModelIndex())
+            iter_index = self.index(iter_node.row(), 0, QModelIndex())
             iter_index_bottom_right = self.index(
-                iter_, iter_index.column(), QModelIndex()
+                iter_node.row(), iter_index.column(), QModelIndex()
             )
             stack.callback(self.dataChanged.emit, iter_index, iter_index_bottom_right)
 
