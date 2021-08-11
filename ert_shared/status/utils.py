@@ -29,9 +29,9 @@ def _calculate_progress(
 
 
 def tracker_progress(tracker) -> float:
-    if 0 not in tracker._iter_snapshot:
+    if not tracker._iter_snapshot:
         return 0
-    current_iter = len(tracker._iter_snapshot) - 1
+    current_iter = max(list(tracker._iter_snapshot.keys()))
     done_reals = 0
     if current_iter in tracker._iter_snapshot:
         for real in tracker._iter_snapshot[current_iter].get_reals().values():

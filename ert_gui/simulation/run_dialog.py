@@ -192,14 +192,19 @@ class RunDialog(QDialog):
     @Slot(QModelIndex, int, int)
     def on_new_iteration(self, parent: QModelIndex, start: int, end: int) -> None:
         if not parent.isValid():
-            iter = start
-            self._iteration_progress_label.setText(f"Progress for iteration {iter}")
+            index = self._snapshot_model.index(start, 0, parent)
+            iter_row = start
+            self._iteration_progress_label.setText(
+                f"Progress for iteration {index.internalPointer().id}"
+            )
 
-            widget = RealizationWidget(iter)
+            widget = RealizationWidget(iter_row)
             widget.setSnapshotModel(self._snapshot_model)
             widget.currentChanged.connect(self._select_real)
 
-            self._tab_widget.addTab(widget, f"Realizations for iteration {iter}")
+            self._tab_widget.addTab(
+                widget, f"Realizations for iteration {index.internalPointer().id}"
+            )
 
     @Slot(QModelIndex)
     def _job_clicked(self, index):
