@@ -122,6 +122,8 @@ class RealListModel(QAbstractProxyModel):
     def _source_data_changed(
         self, top_left: QModelIndex, bottom_right: QModelIndex, roles: typing.List[int]
     ):
+        if top_left.internalPointer() is None:
+            return
         if top_left.internalPointer().type != NodeType.REAL:
             return
         proxy_top_left = self.mapFromSource(top_left)
@@ -147,6 +149,8 @@ class RealListModel(QAbstractProxyModel):
         self.endInsertRows()
 
     def _index_is_on_our_branch(self, index: QModelIndex) -> bool:
+        if index.internalPointer() is None:
+            return False
         # the tree is only traversed towards the root
         if index.internalPointer().type != NodeType.REAL:
             return False
