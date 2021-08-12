@@ -2,15 +2,16 @@ import asyncio
 import pathlib
 import pickle
 import shutil
+import copy
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict
 import cloudpickle
 from pydantic import FilePath
 import ert
 import ert3
 from ert3.config import EnsembleConfig, StagesConfig, Step
-from ert.data import RecordCollection, RecordCollectionMap, Record, RecordTransmitter
+from ert.data import RecordTransmitter
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity.identifiers import EVTYPE_EE_TERMINATED
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
@@ -32,31 +33,13 @@ def _create_evaluator_tmp_dir(workspace_root: Path, evaluation_name: str) -> Pat
 def _prepare_input(
     storage_type: str,
     step_config: Step,
-    inputs: RecordCollectionMap,
+    parameters: Dict[int, Dict[str, ert.data.RecordTransmitter]],
     storage_path: str,
     ensemble_size: int,
 ) -> Dict[int, Dict[str, RecordTransmitter]]:
-    transmitters: Dict[int, Dict[str, ert.data.RecordTransmitter]] = defaultdict(dict)
-
-    futures = []
-    for input_ in step_config.input:
-        for iens, record in enumerate(inputs.ensemble_records[input_.record].records):
-            transmitter: RecordTransmitter
-            if storage_type == "shared_disk":
-                transmitter = ert.data.SharedDiskRecordTransmitter(
-                    name=input_.record,
-                    storage_path=pathlib.Path(storage_path),
-                )
-            elif storage_type == "ert_storage":
-                transmitter = ert.storage.StorageRecordTransmitter(
-                    name=input_.record, storage_url=storage_path, iens=iens
-                )
-            else:
-                raise ValueError(f"Unsupported transmitter type: {storage_type}")
-            futures.append(transmitter.transmit_record(record))
-            transmitters[iens][input_.record] = transmitter
-    asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+    transmitters = copy.deepcopy(parameters)
     if isinstance(step_config, ert3.config.Unix):
+        transmitter: ert.data.RecordTransmitter
         command_futures = []
         for command in step_config.transportable_commands:
             if storage_type == "shared_disk":
@@ -75,10 +58,10 @@ def _prepare_input(
                     command.location, mime="application/octet-stream"
                 )
             )
-            for iens in range(0, ensemble_size):
+            for iens in range(ensemble_size):
                 transmitters[iens][command.name] = transmitter
         asyncio.get_event_loop().run_until_complete(asyncio.gather(*command_futures))
-    return dict(transmitters)
+    return transmitters
 
 
 def _prepare_output(
@@ -113,13 +96,14 @@ def _build_ee_config(
     storage_path: str,
     ensemble: EnsembleConfig,
     stages_config: StagesConfig,
-    input_records: RecordCollectionMap,
+    parameters: Dict[int, Dict[str, ert.data.RecordTransmitter]],
     dispatch_uri: str,
 ) -> Dict[str, Any]:
-    if ensemble.size != None:
+
+    if ensemble.size is not None:
         ensemble_size = ensemble.size
     else:
-        ensemble_size = input_records.ensemble_size
+        ensemble_size = len(parameters)
 
     stage = stages_config.step_from_key(ensemble.forward_model.stage)
     assert stage is not None
@@ -188,6 +172,11 @@ def _build_ee_config(
         }
     ]
 
+    inputs = _prepare_input(
+        ensemble.storage_type, stage, parameters, storage_path, ensemble_size
+    )
+    outputs = _prepare_output(ensemble.storage_type, stage, storage_path, ensemble_size)
+
     ee_config: Dict[str, Any] = {
         "steps": steps,
         "realizations": ensemble_size,
@@ -195,15 +184,9 @@ def _build_ee_config(
         "max_retries": 0,
         "executor": ensemble.forward_model.driver,
         "dispatch_uri": dispatch_uri,
+        "inputs": inputs,
+        "outputs": outputs,
     }
-
-    assert ensemble_size is not None
-    ee_config["inputs"] = _prepare_input(
-        ensemble.storage_type, stage, input_records, storage_path, ensemble_size
-    )
-    ee_config["outputs"] = _prepare_output(
-        ensemble.storage_type, stage, storage_path, ensemble_size
-    )
 
     return ee_config
 
@@ -225,69 +208,26 @@ def _run(
     return result
 
 
-def _prepare_output_records(
-    raw_records: Dict[int, Dict[str, RecordTransmitter]]
-) -> RecordCollectionMap:
-    async def _load(
-        iens: int, record_key: str, transmitter: RecordTransmitter
-    ) -> Tuple[int, str, Record]:
-        record = await transmitter.load()
-        return (iens, record_key, record)
-
-    futures = []
-    for iens in sorted(raw_records.keys(), key=int):
-        for record, transmitter in raw_records[iens].items():
-            futures.append(_load(iens, record, transmitter))
-    results = asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
-
-    data_results: Dict[int, Dict[str, Record]] = defaultdict(dict)
-    for res in results:
-        data_results[res[0]][res[1]] = res[2]
-
-    output_records: Dict[str, List[Record]] = {
-        rec_name: [] for rec_name in data_results[0]
-    }
-    for realization in data_results.values():
-        assert output_records.keys() == realization.keys()
-        for key in realization:
-            output_records[key].append(realization[key])
-
-    ensemble_records: Dict[str, RecordCollection] = {}
-    for key in output_records:
-        ensemble_records[key] = RecordCollection(records=output_records[key])
-
-    return RecordCollectionMap(ensemble_records=ensemble_records)
-
-
 def evaluate(
-    workspace_root: Path,
-    experiment_name: str,
-    input_records: RecordCollectionMap,
+    storage_path: str,
+    parameters: Dict[int, Dict[str, ert.data.RecordTransmitter]],
     ensemble_config: EnsembleConfig,
     stages_config: StagesConfig,
-) -> RecordCollectionMap:
-
-    if ensemble_config.storage_type == "ert_storage":
-        storage_path = ert.storage.get_records_url(workspace_root)
-    else:
-        evaluation_tmp_dir = _create_evaluator_tmp_dir(workspace_root, experiment_name)
-        storage_path = str(evaluation_tmp_dir / ".my_storage")
+) -> Dict[int, Dict[str, RecordTransmitter]]:
 
     config = EvaluatorServerConfig()
     ee_config = _build_ee_config(
         storage_path,
         ensemble_config,
         stages_config,
-        input_records,
+        parameters,
         config.dispatch_uri,
     )
     ensemble = PrefectEnsemble(ee_config)  # type: ignore
 
     ee = EnsembleEvaluator(ensemble=ensemble, config=config, iter_=0)
     result = _run(ee)
-    output_records = _prepare_output_records(result)
-
-    return output_records
+    return result
 
 
 def cleanup(workspace_root: Path, evaluation_name: str) -> None:

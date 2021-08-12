@@ -10,6 +10,7 @@ set -e
 ert3 run evaluation
 ert3 export evaluation
 
+ert3 record load designed_field_properties resources/field_properties.json
 ert3 run doe
 ert3 export doe
 

@@ -38,7 +38,7 @@ class EnsembleConfig(_EnsembleConfig):
     input: Tuple[Input, ...]
     output: Tuple[Output, ...]
     size: Optional[int] = None
-    storage_type: str = "shared_disk"
+    storage_type: str = "ert_storage"
 
 
 def load_ensemble_config(config_dict: Dict[str, Any]) -> EnsembleConfig:

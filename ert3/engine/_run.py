@@ -1,6 +1,7 @@
+import asyncio
 import json
 import pathlib
-from typing import List, Dict, Set, Union, Any
+from typing import List, Dict, Any
 
 import ert
 import ert3
@@ -9,32 +10,16 @@ import ert3
 _SOURCE_SEPARATOR = "."
 
 
-# pylint: disable=too-many-arguments
 def _prepare_experiment(
     workspace_root: pathlib.Path,
     experiment_name: str,
     ensemble: ert3.config.EnsembleConfig,
-    stages_config: ert3.config.StagesConfig,
     ensemble_size: int,
-    parameters_config: ert3.config.ParametersConfig,
 ) -> None:
     if ert3.workspace.experiment_has_run(workspace_root, experiment_name):
         raise ValueError(f"Experiment {experiment_name} have been carried out.")
 
-    step = stages_config.step_from_key(ensemble.forward_model.stage)
-    if not step:
-        raise ValueError(f"No step for key {ensemble.forward_model.stage}")
-
-    parameters: Dict[str, List[str]] = {}
-    for input_record in ensemble.input:
-        record_name = input_record.record
-        record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
-        record_mime = next(
-            input_.mime for input_ in step.input if input_.record == record_name
-        )
-        parameters[record_name] = _get_experiment_record_indices(
-            workspace_root, record_source, record_mime, parameters_config
-        )
+    parameters = [elem.record for elem in ensemble.input]
     responses = [elem.record for elem in ensemble.output]
     ert.storage.init_experiment(
         experiment_name=experiment_name,
@@ -42,55 +27,6 @@ def _prepare_experiment(
         ensemble_size=ensemble_size,
         responses=responses,
     )
-
-
-def _get_experiment_record_indices(
-    workspace_root: pathlib.Path,
-    record_source: List[str],
-    record_mime: str,
-    parameters_config: ert3.config.ParametersConfig,
-) -> List[str]:
-    assert len(record_source) == 2
-    source, source_record_name = record_source
-
-    if source == "storage":
-        ensemble_record = ert.storage.get_ensemble_record(
-            workspace=workspace_root,
-            record_name=source_record_name,
-        )
-
-        if isinstance(ensemble_record.records[0], ert.data.BlobRecord):
-            return []
-
-        indices: Set[Union[str, int]] = set()
-        for record in ensemble_record.records:
-            assert isinstance(record, ert.data.NumericalRecord)
-            assert record.index is not None
-            indices.update(record.index)
-        return [str(x) for x in indices]
-
-    elif source == "resources":
-        file_path = workspace_root / "resources" / record_source[1]
-        blob_record = record_mime == "application/octet-stream"
-        if blob_record:
-            return []
-        with open(file_path, "r", encoding="utf-8") as f:
-            raw_collection = ert.serialization.get_serializer(
-                record_mime
-            ).decode_from_file(f)
-        return list(set().union(*(d.keys() for d in raw_collection)))
-
-    elif source == "stochastic":
-        if parameters_config[source_record_name].variables is not None:
-            variables = parameters_config[source_record_name].variables
-            assert variables is not None  # To make mypy checker happy
-            return list(variables)
-        else:
-            param_size = parameters_config[source_record_name].size
-            assert param_size is not None  # To make mypy checker happy
-            return [str(x) for x in range(param_size)]
-
-    raise ValueError(f"Unknown record source location {source}")
 
 
 # pylint: disable=too-many-arguments
@@ -103,102 +39,48 @@ def _prepare_experiment_record(
     workspace_root: pathlib.Path,
     parameters_config: ert3.config.ParametersConfig,
     experiment_config: ert3.config.ExperimentConfig,
-) -> None:
+) -> Dict[int, Dict[str, ert.storage.StorageRecordTransmitter]]:
+    assert len(record_source) == 2
     if record_source[0] == "storage":
-        assert len(record_source) == 2
-        ensemble_record = ert.storage.get_ensemble_record(
-            workspace=workspace_root,
-            record_name=record_source[1],
-        )
-
-        # The blob record from the workspace has size one
-        # We need to copy it (ensemble size) times into the experiment record
-        if isinstance(ensemble_record.records[0], ert.data.BlobRecord):
-            ensemble_record = ert.data.RecordCollection(
-                records=[ensemble_record.records[0] for _ in range(ensemble_size)]
-            )
-
-        # Workaround to ensure compatible ensemble sizes
-        # for sensitivity experiment
-        if experiment_config.type == "sensitivity":
-            if ensemble_record.ensemble_size != ensemble_size:
-                raise ValueError(
-                    f"The size of the {record_name} storage records "
-                    f"does not match the size of the sensitivity records: "
-                    f"is {ensemble_record.ensemble_size}, must be {ensemble_size}"
-                )
-
-        ert.storage.add_ensemble_record(
-            workspace=workspace_root,
+        records_url = ert.storage.get_records_url(workspace_root)
+        future = ert.storage.get_record_storage_transmitters(
+            records_url=records_url,
             record_name=record_name,
-            ensemble_record=ensemble_record,
-            experiment_name=experiment_name,
+            record_source=record_source[1],
+            ensemble_size=ensemble_size,
         )
+        return asyncio.get_event_loop().run_until_complete(future)
+
     elif record_source[0] == "resources":
         file_path = workspace_root / "resources" / record_source[1]
-        record_coll = ert.data.load_collection_from_file(
-            file_path, record_mime, ensemble_size
-        )
-        ert.storage.add_ensemble_record(
-            workspace=workspace_root,
+        collection = ert.data.load_collection_from_file(file_path, record_mime)
+        future = ert.storage.transmit_record_collection(
+            record_coll=collection,
             record_name=record_name,
-            ensemble_record=record_coll,
+            workspace=workspace_root,
             experiment_name=experiment_name,
         )
+        transmitters = asyncio.get_event_loop().run_until_complete(future)
+        return transmitters
 
-    elif record_source[0] == "stochastic":
-        ert3.engine.sample_record(
-            workspace_root,
+    elif experiment_config.type != "sensitivity" and record_source[0] == "stochastic":
+        collection = ert3.engine.sample_record(
             parameters_config,
             record_source[1],
-            record_name,
             ensemble_size=ensemble_size,
+        )
+        future = ert.storage.transmit_record_collection(
+            record_coll=collection,
+            record_name=record_name,
+            workspace=workspace_root,
             experiment_name=experiment_name,
         )
+        transmitters = asyncio.get_event_loop().run_until_complete(future)
+        return transmitters
+    elif experiment_config.type == "sensitivity" and record_source[0] == "stochastic":
+        return {}
     else:
         raise ValueError(f"Unknown record source location {record_source[0]}")
-
-
-def _prepare_evaluation(
-    ensemble: ert3.config.EnsembleConfig,
-    experiment_config: ert3.config.ExperimentConfig,
-    parameters_config: ert3.config.ParametersConfig,
-    stages_config: ert3.config.StagesConfig,
-    workspace_root: pathlib.Path,
-    experiment_name: str,
-) -> None:
-    # This reassures mypy that the ensemble size is defined
-    assert ensemble.size is not None
-
-    _prepare_experiment(
-        workspace_root,
-        experiment_name,
-        ensemble,
-        stages_config,
-        ensemble.size,
-        parameters_config,
-    )
-
-    step = stages_config.step_from_key(ensemble.forward_model.stage)
-    if not step:
-        raise ValueError(f"No step for key {ensemble.forward_model.stage}")
-
-    for input_record in ensemble.input:
-        record_name = input_record.record
-        record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
-        record_mime = next(
-            input_.mime for input_ in step.input if input_.record == record_name
-        )
-        _prepare_experiment_record(
-            record_name,
-            record_source,
-            record_mime,
-            ensemble.size,
-            experiment_name,
-            workspace_root,
-            parameters_config,
-            experiment_config,
-        )
 
 
 def _load_sensitivity_parameters(
@@ -228,28 +110,34 @@ def _prepare_storage_records(
     stages_config: ert3.config.StagesConfig,
     workspace_root: pathlib.Path,
     experiment_name: str,
-) -> None:
+) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
     step = stages_config.step_from_key(ensemble.forward_model.stage)
     if not step:
         raise ValueError(f"No step for key {ensemble.forward_model.stage}")
 
+    transmitter_map: Dict[int, Dict[str, ert.data.RecordTransmitter]] = {
+        iens: {} for iens in range(ensemble_size)
+    }
     for input_record in ensemble.input:
         record_name = input_record.record
         record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
         record_mime = next(
             input_.mime for input_ in step.input if input_.record == record_name
         )
-        if record_source[0] != "stochastic":
-            _prepare_experiment_record(
-                record_name,
-                record_source,
-                record_mime,
-                ensemble_size,
-                experiment_name,
-                workspace_root,
-                parameters_config,
-                experiment_config,
-            )
+        transmitters = _prepare_experiment_record(
+            record_name,
+            record_source,
+            record_mime,
+            ensemble_size,
+            experiment_name,
+            workspace_root,
+            parameters_config,
+            experiment_config,
+        )
+
+        for iens, trans_map in transmitters.items():
+            transmitter_map[iens].update(trans_map)
+    return transmitter_map
 
 
 def _prepare_sensitivity_records(
@@ -257,7 +145,7 @@ def _prepare_sensitivity_records(
     sensitivity_records: List[Dict[str, ert.data.Record]],
     workspace_root: pathlib.Path,
     experiment_name: str,
-) -> None:
+) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
     sensitivity_parameters: Dict[str, List[ert.data.Record]] = {
         param.record: []
         for param in ensemble.input
@@ -269,26 +157,30 @@ def _prepare_sensitivity_records(
         for record_name in realization:
             sensitivity_parameters[record_name].append(realization[record_name])
 
+    transmitter_map: Dict[int, Dict[str, ert.data.RecordTransmitter]] = {
+        iens: {} for iens in range(len(sensitivity_records))
+    }
     for record_name in sensitivity_parameters:
         ensemble_record = ert.data.RecordCollection(
             records=sensitivity_parameters[record_name]
         )
-        ert.storage.add_ensemble_record(
+        future = ert.storage.transmit_record_collection(
+            record_coll=ensemble_record,
+            record_name=record_name,
             workspace=workspace_root,
             experiment_name=experiment_name,
-            record_name=record_name,
-            ensemble_record=ensemble_record,
         )
+        transmitters = asyncio.get_event_loop().run_until_complete(future)
+        for iens, trans_map in transmitters.items():
+            transmitter_map[iens].update(trans_map)
+    return transmitter_map
 
 
 def _prepare_sensitivity(
     ensemble: ert3.config.EnsembleConfig,
-    stages_config: ert3.config.StagesConfig,
     experiment_config: ert3.config.ExperimentConfig,
     parameters_config: ert3.config.ParametersConfig,
-    workspace_root: pathlib.Path,
-    experiment_name: str,
-) -> None:
+) -> List[Dict[str, ert.data.Record]]:
     sensitivity_distributions = _load_sensitivity_parameters(
         ensemble, parameters_config
     )
@@ -305,34 +197,7 @@ def _prepare_sensitivity(
         )
     else:
         raise ValueError(f"Unknown algorithm {experiment_config.algorithm}")
-
-    ensemble_size = len(sensitivity_input_records)
-
-    _prepare_experiment(
-        workspace_root,
-        experiment_name,
-        ensemble,
-        stages_config,
-        ensemble_size,
-        parameters_config,
-    )
-
-    _prepare_storage_records(
-        ensemble,
-        ensemble_size,
-        experiment_config,
-        parameters_config,
-        stages_config,
-        workspace_root,
-        experiment_name,
-    )
-
-    _prepare_sensitivity_records(
-        ensemble,
-        sensitivity_input_records,
-        workspace_root,
-        experiment_name,
-    )
+    return sensitivity_input_records
 
 
 def _store_sensitivity_analysis(
@@ -344,7 +209,6 @@ def _store_sensitivity_analysis(
     experiment_root = (
         pathlib.Path(workspace_root) / ert3.workspace.EXPERIMENTS_BASE / experiment_name
     )
-
     with open(experiment_root / output_file, "w", encoding="utf-8") as f:
         json.dump(analysis, f)
 
@@ -355,7 +219,7 @@ def _analyze_sensitivity(
     parameters_config: ert3.config.ParametersConfig,
     workspace_root: pathlib.Path,
     experiment_name: str,
-    model_output: ert.data.RecordCollectionMap,
+    model_output: Dict[int, Dict[str, ert.data.RecordTransmitter]],
 ) -> None:
     if experiment_config.algorithm == "one-at-a-time":
         # There is no post analysis step for the one-at-a-time algorithm
@@ -377,63 +241,25 @@ def _analyze_sensitivity(
         )
 
 
-def _store_output_records(
-    workspace_root: pathlib.Path,
-    experiment_name: str,
-    records: ert.data.RecordCollectionMap,
-) -> None:
-    assert records.record_names is not None
-    for record_name in records.record_names:
-        ert.storage.add_ensemble_record(
-            workspace=workspace_root,
-            experiment_name=experiment_name,
-            record_name=record_name,
-            ensemble_record=records.ensemble_records[record_name],
-        )
-
-
-def _load_experiment_parameters(
-    workspace_root: pathlib.Path,
-    experiment_name: str,
-) -> ert.data.RecordCollectionMap:
-    parameter_names = ert.storage.get_experiment_parameters(
-        experiment_name=experiment_name
-    )
-
-    parameters = {}
-    for parameter_name in parameter_names:
-        parameters[parameter_name] = ert.storage.get_ensemble_record(
-            workspace=workspace_root,
-            experiment_name=experiment_name,
-            record_name=parameter_name,
-        )
-
-    return ert.data.RecordCollectionMap(ensemble_records=parameters)
-
-
 def _evaluate(
+    parameters: Dict[int, Dict[str, ert.data.RecordTransmitter]],
     ensemble: ert3.config.EnsembleConfig,
     stages_config: ert3.config.StagesConfig,
-    experiment_config: ert3.config.ExperimentConfig,
-    parameters_config: ert3.config.ParametersConfig,
     workspace_root: pathlib.Path,
     experiment_name: str,
-) -> None:
-    parameters = _load_experiment_parameters(workspace_root, experiment_name)
-    output_records = ert3.evaluator.evaluate(
-        workspace_root, experiment_name, parameters, ensemble, stages_config
-    )
-    _store_output_records(workspace_root, experiment_name, output_records)
-
-    if experiment_config.type == "sensitivity":
-        _analyze_sensitivity(
-            ensemble,
-            experiment_config,
-            parameters_config,
-            workspace_root,
-            experiment_name,
-            output_records,
+) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
+    if ensemble.storage_type == "ert_storage":
+        storage_path = ert.storage.get_records_url(workspace_root, experiment_name)
+    else:
+        evaluation_tmp_dir = (
+            pathlib.Path(workspace_root)
+            / ert3._WORKSPACE_DATA_ROOT
+            / "tmp"
+            / experiment_name
         )
+        storage_path = str(evaluation_tmp_dir / ".my_storage")
+
+    return ert3.evaluator.evaluate(storage_path, parameters, ensemble, stages_config)
 
 
 # pylint: disable=too-many-arguments
@@ -445,33 +271,92 @@ def run(
     workspace_root: pathlib.Path,
     experiment_name: str,
 ) -> None:
+    # This reassures mypy that the ensemble size is defined
+    assert ensemble.size is not None
+    ensemble_size = ensemble.size
 
-    if experiment_config.type == "evaluation":
-        _prepare_evaluation(
-            ensemble,
-            experiment_config,
-            parameters_config,
-            stages_config,
-            workspace_root,
-            experiment_name,
-        )
-    elif experiment_config.type == "sensitivity":
-        _prepare_sensitivity(
-            ensemble,
-            stages_config,
-            experiment_config,
-            parameters_config,
-            workspace_root,
-            experiment_name,
-        )
-    else:
-        raise ValueError(f"Unknown experiment type {experiment_config.type}")
+    _prepare_experiment(workspace_root, experiment_name, ensemble, ensemble_size)
+
+    parameters = _prepare_storage_records(
+        ensemble,
+        ensemble_size,
+        experiment_config,
+        parameters_config,
+        stages_config,
+        workspace_root,
+        experiment_name,
+    )
 
     _evaluate(
+        parameters,
         ensemble,
         stages_config,
+        workspace_root,
+        experiment_name,
+    )
+
+
+# pylint: disable=too-many-arguments
+def run_sensitivity_analysis(
+    ensemble: ert3.config.EnsembleConfig,
+    stages_config: ert3.config.StagesConfig,
+    experiment_config: ert3.config.ExperimentConfig,
+    parameters_config: ert3.config.ParametersConfig,
+    workspace_root: pathlib.Path,
+    experiment_name: str,
+) -> None:
+    sensitivity_input_records = _prepare_sensitivity(
+        ensemble,
+        experiment_config,
+        parameters_config,
+    )
+    ensemble_size = len(sensitivity_input_records)
+
+    _prepare_experiment(workspace_root, experiment_name, ensemble, ensemble_size)
+
+    parameters = _prepare_sensitivity_records(
+        ensemble,
+        sensitivity_input_records,
+        workspace_root,
+        experiment_name,
+    )
+
+    storage_transmitters = _prepare_storage_records(
+        ensemble,
+        ensemble_size,
+        experiment_config,
+        parameters_config,
+        stages_config,
+        workspace_root,
+        experiment_name,
+    )
+    for iens, trans_map in storage_transmitters.items():
+        parameters[iens].update(trans_map)
+
+    output_transmitters = _evaluate(
+        parameters,
+        ensemble,
+        stages_config,
+        workspace_root,
+        experiment_name,
+    )
+    _analyze_sensitivity(
+        ensemble,
         experiment_config,
         parameters_config,
         workspace_root,
         experiment_name,
+        output_transmitters,
     )
+
+
+def get_ensemble_size(
+    ensemble: ert3.config.EnsembleConfig,
+    experiment_config: ert3.config.ExperimentConfig,
+    parameters_config: ert3.config.ParametersConfig,
+) -> int:
+    if experiment_config.type == "sensitivity":
+        return len(_prepare_sensitivity(ensemble, experiment_config, parameters_config))
+    else:
+        assert ensemble.size is not None
+        return ensemble.size

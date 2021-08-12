@@ -1,13 +1,11 @@
 import io
-import json
 import logging
-from collections import defaultdict
+import asyncio
 from functools import partial
 from http import HTTPStatus
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Set, Union
+from typing import Any, Dict, Iterable, Optional, Set
 
-import httpx
 import pandas as pd
 import requests
 from pydantic import BaseModel
@@ -71,13 +69,26 @@ class StorageRecordTransmitter(ert.data.RecordTransmitter):
         self._name: str = name
         self._uri = f"{storage_url}/{name}"
         self._real_id: Optional[int] = iens
-        if self._real_id is not None:
-            self._uri = f"{self._uri}?realization_index={self._real_id}"
+
+    @property
+    def uri(self) -> str:
+        if not self.is_transmitted():
+            raise RuntimeError(f"Record {self._name} not transmitted")
+        return self._uri
+
+    @property
+    def record_type(self) -> Optional[ert.data.RecordType]:
+        assert self.is_transmitted()
+        return self._record_type
+
+    def set_transmitted(self, uri: str, record_type: ert.data.RecordType) -> None:
+        self._set_transmitted_state(uri, record_type)
 
     async def _transmit_numerical_record(self, record: ert.data.NumericalRecord) -> str:
         url = f"{self._uri}/matrix"
         if self._real_id is not None:
             url = f"{url}?realization_index={self._real_id}"
+            self._uri = f"{self._uri}?realization_index={self._real_id}"
         await add_record(url, record)
         return self._uri
 
@@ -85,6 +96,7 @@ class StorageRecordTransmitter(ert.data.RecordTransmitter):
         url = f"{self._uri}/file"
         if self._real_id is not None:
             url = f"{url}?realization_index={self._real_id}"
+            self._uri = f"{self._uri}?realization_index={self._real_id}"
         await add_record(url, record)
         return self._uri
 
@@ -99,28 +111,119 @@ class StorageRecordTransmitter(ert.data.RecordTransmitter):
         return ert.data.BlobRecord(data=record.data)
 
 
+async def get_record_storage_transmitters(
+    records_url: str,
+    record_name: str,
+    record_source: Optional[str] = None,
+    ensemble_size: Optional[int] = None,
+) -> Dict[int, Dict[str, StorageRecordTransmitter]]:
+    if record_source is None:
+        record_source = record_name
+    uri = f"{records_url}/{record_source}"
+    metadata = await get_record_metadata(uri)
+    record_type = metadata["record_type"]
+    uris = metadata["uris"]
+    # We giving an ensemble size we expect the number of uris in the record metadata
+    # to match the size of the ensemble or be equal to 1, in the case of an
+    # uniform record and, has the same data stored only once for all the realizations
+    if ensemble_size is not None and 1 < len(uris) != ensemble_size:
+        raise ert.exceptions.ErtError(
+            f"Ensemble size {ensemble_size} does not match stored record ensemble "
+            + f"size {len(uris)}"
+        )
+
+    transmitters = []
+    for record_uri in uris:
+        transmitter = StorageRecordTransmitter(record_source, records_url)
+        # Record data has already been stored, now just setting the transmitter uri and
+        # record type
+        transmitter.set_transmitted(record_uri, record_type)
+        transmitters.append(transmitter)
+
+    if ensemble_size is not None and len(transmitters) == 1:
+        return {iens: {record_name: transmitters[0]} for iens in range(ensemble_size)}
+    return {
+        iens: {record_name: transmitter}
+        for iens, transmitter in enumerate(transmitters)
+    }
+
+
+def _get(url: str, headers: Dict[str, Any]) -> requests.Response:
+    return requests.get(url, headers=headers)
+
+
 async def _get_from_server_async(
     url: str,
     headers: Dict[str, str],
     **kwargs: Any,
-) -> httpx.Response:
-    async with httpx.AsyncClient() as session:
-        resp = await session.get(url=url, headers=headers, timeout=None, **kwargs)
+) -> requests.Response:
+
+    loop = asyncio.get_event_loop()
+
+    # Using sync code because one of the httpx dependencies (anyio) throws an
+    # AttributeError: module 'anyio._backends._asyncio' has no attribute 'current_time'
+    # Refactor and try to use aiohttp or httpx once the issue above is fixed
+    future = loop.run_in_executor(
+        None,
+        partial(_get, url, headers),
+    )
+    resp = await future
 
     if resp.status_code != HTTPStatus.OK:
         logger.error("Failed to fetch from %s. Response: %s", url, resp.text)
+        if resp.status_code == HTTPStatus.NOT_FOUND:
+            raise ert.exceptions.ElementMissingError(resp.text)
         raise ert.exceptions.StorageError(resp.text)
-
     return resp
+
+
+def _post(url: str, headers: Dict[str, Any], **kwargs: Any) -> requests.Response:
+    return requests.post(url=url, headers=headers, **kwargs)
 
 
 async def _post_to_server_async(
     url: str,
     headers: Dict[str, str],
     **kwargs: Any,
-) -> httpx.Response:
-    async with httpx.AsyncClient() as session:
-        resp = await session.post(url=url, headers=headers, **kwargs)
+) -> requests.Response:
+
+    loop = asyncio.get_event_loop()
+    # Using sync code because one of the httpx dependencies (anyio) throws an
+    # AttributeError: module 'anyio._backends._asyncio' has no attribute 'current_time'
+    # Refactor and try to use aiohttp or httpx once the issue above is fixed
+    future = loop.run_in_executor(
+        None,
+        partial(_post, url, headers, **kwargs),
+    )
+    resp = await future
+
+    if resp.status_code != HTTPStatus.OK:
+        logger.error("Failed to post to %s. Response: %s", url, resp.text)
+        if resp.status_code == HTTPStatus.CONFLICT:
+            raise ert.exceptions.ElementExistsError(resp.text)
+        raise ert.exceptions.StorageError(resp.text)
+    return resp
+
+
+def _put(url: str, headers: Dict[str, Any], **kwargs: Any) -> requests.Response:
+    return requests.put(url=url, headers=headers, **kwargs)
+
+
+async def _put_to_server_async(
+    url: str,
+    headers: Dict[str, str],
+    **kwargs: Any,
+) -> requests.Response:
+    loop = asyncio.get_event_loop()
+
+    # Using sync code because one of the httpx dependencies (anyio) throws an
+    # AttributeError: module 'anyio._backends._asyncio' has no attribute 'current_time'
+    # Refactor and try to use aiohttp or httpx once the issue above is fixed
+    future = loop.run_in_executor(
+        None,
+        partial(_put, url, headers, **kwargs),
+    )
+    resp = await future
 
     if resp.status_code != HTTPStatus.OK:
         logger.error("Failed to post to %s. Response: %s", url, resp.text)
@@ -212,6 +315,81 @@ async def load_record(url: str, record_type: ert.data.RecordType) -> ert.data.Re
     return ert.data.BlobRecord(data=content)
 
 
+async def get_record_metadata(record_url: str) -> Dict[Any, Any]:
+    headers = {
+        "Token": StorageInfo.token(),
+    }
+    # TODO once storage returns proper record metadata information add proper support
+    # for metadata
+    url = f"{record_url}/userdata?realization_index=0"
+    resp = await _get_from_server_async(url, headers)
+    ret: Dict[Any, Any] = resp.json()
+    return ret
+
+
+async def add_record_metadata(
+    record_urls: str, record_name: str, metadata: Dict[Any, Any]
+) -> None:
+    headers = {
+        "Token": StorageInfo.token(),
+    }
+    url = f"{record_urls}/{record_name}/userdata?realization_index=0"
+    await _put_to_server_async(url, headers, json=metadata)
+
+
+async def transmit_record_collection(
+    record_coll: ert.data.RecordCollection,
+    record_name: str,
+    workspace: Path,
+    experiment_name: Optional[str] = None,
+) -> Dict[int, Dict[str, StorageRecordTransmitter]]:
+    assert record_coll.ensemble_size is not None
+    record: ert.data.Record
+    metadata: Dict[Any, Any] = {
+        "record_type": record_coll.record_type,
+        "uris": [],
+    }
+
+    records_url = await get_records_url_async(workspace, experiment_name)
+    if experiment_name is not None:
+        ensemble_id = await _get_ensemble_id_async(workspace, experiment_name)
+        ensemble_size = await _get_ensemble_size(ensemble_id=ensemble_id)
+    else:
+        ensemble_size = record_coll.ensemble_size
+
+    # Handle special case when we have a uniform record collection (collection of size
+    # one)
+    if record_coll.ensemble_size not in (1, ensemble_size):
+        raise ert.exceptions.ErtError(
+            f"Experiment ensemble size {ensemble_size} does not match"
+            f" data size {record_coll.ensemble_size}"
+        )
+
+    if record_coll.ensemble_size == 1:
+        record = record_coll.records[0]
+        transmitter = ert.storage.StorageRecordTransmitter(
+            name=record_name, storage_url=records_url, iens=0
+        )
+        await transmitter.transmit_record(record)
+        metadata["uris"].append(transmitter.uri)
+        await add_record_metadata(records_url, record_name, metadata)
+        return {iens: {record_name: transmitter} for iens in range(ensemble_size)}
+
+    transmitters: Dict[int, Dict[str, StorageRecordTransmitter]] = {}
+    transmitter_list = []
+    for iens, record in enumerate(record_coll.records):
+        transmitter = StorageRecordTransmitter(record_name, records_url, iens=iens)
+        await transmitter.transmit_record(record)
+        transmitter_list.append(transmitter)
+        transmitters[iens] = {record_name: transmitter}
+
+    for transmitter in transmitter_list:
+        metadata["uris"].append(transmitter.uri)
+    await add_record_metadata(records_url, record_name, metadata)
+
+    return transmitters
+
+
 def _get_from_server(
     path: str,
     headers: Optional[Dict[Any, Any]] = None,
@@ -237,10 +415,18 @@ def get_records_url(workspace: Path, experiment_name: Optional[str] = None) -> s
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
         raise ert.exceptions.NonExistantExperiment(
-            f"Non-existing experiment: {experiment_name}"
+            f"Experiment {experiment_name} does not exist"
         )
 
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
+    return f"{storage_url}/ensembles/{ensemble_id}/records"
+
+
+async def get_records_url_async(
+    workspace: Path, experiment_name: Optional[str] = None
+) -> str:
+    storage_url = StorageInfo.url()
+    ensemble_id = await _get_ensemble_id_async(workspace, experiment_name)
     return f"{storage_url}/ensembles/{ensemble_id}/records"
 
 
@@ -303,6 +489,34 @@ def _get_experiment_by_name(experiment_name: str) -> Dict[str, Any]:
     return experiments.get(experiment_name, None)
 
 
+async def _get_ensemble_id_async(
+    workspace: Path, experiment_name: Optional[str] = None
+) -> str:
+    storage_url = StorageInfo.url()
+    url = f"{storage_url}/experiments"
+    if experiment_name is None:
+        experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
+
+    headers = {"Token": StorageInfo.token()}
+    response = await _get_from_server_async(url, headers)
+    experiments = {exp["name"]: exp for exp in response.json()}
+    experiment = experiments.get(experiment_name, None)
+    if experiment is not None:
+        return str(experiment["ensemble_ids"][0])
+    raise ert.exceptions.NonExistantExperiment(
+        f"Experiment {experiment_name} does not exist"
+    )
+
+
+async def _get_ensemble_size(ensemble_id: str) -> int:
+    storage_url = StorageInfo.url()
+    url = f"{storage_url}/ensembles/{ensemble_id}"
+    headers = {"Token": StorageInfo.token()}
+    response = await _get_from_server_async(url, headers)
+    response_json = response.json()
+    return int(response_json["size"])
+
+
 def init(*, workspace: Path) -> None:
     response = _get_from_server(path="experiments")
     experiment_names = {exp["name"]: exp["ensemble_ids"] for exp in response.json()}
@@ -321,7 +535,7 @@ def init(*, workspace: Path) -> None:
 def init_experiment(
     *,
     experiment_name: str,
-    parameters: Mapping[str, Iterable[str]],
+    parameters: Iterable[str],
     ensemble_size: int,
     responses: Iterable[str],
 ) -> None:
@@ -336,14 +550,10 @@ def init_experiment(
     )
 
 
-def _is_numeric_parameter(params: Iterable[str]) -> bool:
-    return len(list(params)) > 0
-
-
 def _init_experiment(
     *,
     experiment_name: str,
-    parameters: Mapping[str, Iterable[str]],
+    parameters: Iterable[str],
     ensemble_size: int,
     responses: Iterable[str],
 ) -> None:
@@ -355,7 +565,7 @@ def _init_experiment(
             f"Cannot initialize existing experiment: {experiment_name}"
         )
 
-    if len(set(parameters.keys()).intersection(responses)) > 0:
+    if len(set(parameters).intersection(responses)) > 0:
         raise ert.exceptions.StorageError(
             "Experiment parameters and responses cannot have a name in common"
         )
@@ -363,18 +573,10 @@ def _init_experiment(
     exp_response = _post_to_server(path="experiments", json={"name": experiment_name})
     exp_id = exp_response.json()["id"]
 
-    parameter_names = []
-    for record, params in parameters.items():
-        if _is_numeric_parameter(params):
-            for param in params:
-                parameter_names.append(f"{record}.{param}")
-        else:
-            parameter_names.append(record)
-
     response = _post_to_server(
         f"experiments/{exp_id}/ensembles",
         json={
-            "parameter_names": parameter_names,
+            "parameter_names": list(parameters),
             "response_names": list(responses),
             "size": ensemble_size,
             "userdata": {"name": experiment_name},
@@ -394,136 +596,7 @@ def get_experiment_names(*, workspace: Path) -> Set[str]:
     return experiment_names
 
 
-def _add_numerical_data(
-    experiment_name: str,
-    record_name: str,
-    record_data: Union[pd.DataFrame, pd.Series],
-    record_type: Optional[ert.data.RecordType],
-) -> None:
-    experiment = _get_experiment_by_name(experiment_name)
-    if experiment is None:
-        raise ert.exceptions.NonExistantExperiment(
-            f"Cannot add {record_name} data to "
-            f"non-existing experiment: {experiment_name}"
-        )
-
-    metadata = _NumericalMetaData(
-        ensemble_size=len(record_data),
-        record_type=record_type,
-    )
-
-    ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
-    record_url = f"ensembles/{ensemble_id}/records/{record_name}"
-
-    response = _post_to_server(
-        f"{record_url}/matrix",
-        data=record_data.to_csv().encode(),
-        headers={"content-type": _CSV},
-    )
-
-    if response.status_code == 409:
-        raise ert.exceptions.ElementExistsError("Record already exists")
-
-    if response.status_code != 200:
-        raise ert.exceptions.StorageError(response.text)
-
-    meta_response = _put_to_server(f"{record_url}/userdata", json=metadata.dict())
-
-    if meta_response.status_code != 200:
-        raise ert.exceptions.StorageError(meta_response.text)
-
-
-def _combine_records(
-    ensemble_records: List[ert.data.RecordCollection],
-) -> ert.data.RecordCollection:
-
-    if len(ensemble_records) == 1:
-        # Nothing to combine only one record collection here
-        return ensemble_records[0]
-
-    # Combine records into the first ensemble record
-    combined_records: List[ert.data.Record] = []
-    for record_idx, _ in enumerate(ensemble_records[0].records):
-        record0 = ensemble_records[0].records[record_idx]
-
-        if isinstance(record0.data, list):
-            ldata = [
-                val
-                for data in (
-                    ensemble_record.records[record_idx].data
-                    for ensemble_record in ensemble_records
-                )
-                if isinstance(data, list)
-                for val in data
-            ]
-            combined_records.append(ert.data.NumericalRecord(data=ldata))
-        elif isinstance(record0.data, dict):
-            ddata = {
-                key: val
-                for data in (
-                    ensemble_record.records[record_idx].data
-                    for ensemble_record in ensemble_records
-                )
-                if isinstance(data, dict)
-                for key, val in data.items()
-            }
-            combined_records.append(ert.data.NumericalRecord(data=ddata))
-    return ert.data.RecordCollection(records=combined_records)
-
-
-def _get_numerical_metadata(ensemble_id: str, record_name: str) -> _NumericalMetaData:
-    response = _get_from_server(
-        f"ensembles/{ensemble_id}/records/{record_name}/userdata"
-    )
-
-    if response.status_code == 404:
-        raise ert.exceptions.ElementMissingError(
-            f"No metadata for {record_name} in ensemble: {ensemble_id}"
-        )
-
-    if response.status_code != 200:
-        raise ert.exceptions.StorageError(response.text)
-
-    return _NumericalMetaData(**json.loads(response.content))
-
-
-def _get_data(
-    experiment_name: str,
-    record_name: str,
-) -> ert.data.RecordCollection:
-    experiment = _get_experiment_by_name(experiment_name)
-    if experiment is None:
-        raise ert.exceptions.NonExistantExperiment(
-            f"Cannot get {record_name} data, no experiment named: {experiment_name}"
-        )
-
-    ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
-    metadata = _get_numerical_metadata(ensemble_id, record_name)
-
-    response = _get_from_server(
-        path=f"ensembles/{ensemble_id}/records/{record_name}",
-        headers=_set_content_header(header="accept", record_type=metadata.record_type),
-    )
-
-    if response.status_code == 404:
-        raise ert.exceptions.ElementMissingError(
-            f"No {record_name} data for experiment: {experiment_name}"
-        )
-
-    if response.status_code != 200:
-        raise ert.exceptions.StorageError(response.text)
-
-    return _response_to_record_collection(
-        content=response.content,
-        metadata=metadata,
-    )
-
-
-def _is_numeric_parameter_response(name: str) -> bool:
-    return "." in name
-
-
-def _get_experiment_parameters(experiment_name: str) -> Mapping[str, Iterable[str]]:
+def _get_experiment_parameters(experiment_name: str) -> Iterable[str]:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
         raise ert.exceptions.NonExistantExperiment(
@@ -536,106 +609,7 @@ def _get_experiment_parameters(experiment_name: str) -> Mapping[str, Iterable[st
     if response.status_code != 200:
         raise ert.exceptions.StorageError(response.text)
 
-    parameters = defaultdict(list)
-    for name in response.json():
-        if _is_numeric_parameter_response(name):
-            key, val = name.split(".")
-            parameters[key].append(val)
-        else:
-            parameters[name] = []
-
-    return parameters
-
-
-def add_ensemble_record(
-    *,
-    workspace: Path,
-    record_name: str,
-    ensemble_record: ert.data.RecordCollection,
-    experiment_name: Optional[str] = None,
-) -> None:
-    if experiment_name is None:
-        experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
-    experiment = _get_experiment_by_name(experiment_name)
-    if experiment is None:
-        raise ert.exceptions.NonExistantExperiment(
-            f"Cannot add {record_name} data to "
-            f"non-existing experiment: {experiment_name}"
-        )
-
-    dataframe = pd.DataFrame([r.data for r in ensemble_record.records])
-
-    if ensemble_record.record_type == ert.data.RecordType.BYTES:
-        _add_blob_data(experiment_name, record_name, ensemble_record)
-    else:
-        parameters = _get_experiment_parameters(experiment_name)
-        if record_name in parameters:
-            # Split by columns
-            for column_label in dataframe:
-                _add_numerical_data(
-                    experiment_name,
-                    f"{record_name}.{column_label}",
-                    dataframe[column_label],
-                    ensemble_record.record_type,
-                )
-        else:
-            _add_numerical_data(
-                experiment_name,
-                record_name,
-                dataframe,
-                ensemble_record.record_type,
-            )
-
-
-def _add_blob_data(
-    experiment_name: str,
-    record_name: str,
-    ensemble_record: ert.data.RecordCollection,
-) -> None:
-    experiment = _get_experiment_by_name(experiment_name)
-    if experiment is None:
-        raise ert.exceptions.NonExistantExperiment(
-            f"Cannot add {record_name} data to "
-            f"non-existing experiment: {experiment_name}"
-        )
-
-    metadata = _NumericalMetaData(
-        ensemble_size=ensemble_record.ensemble_size,
-        record_type=ert.data.RecordType.BYTES,
-    )
-
-    ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
-    record_url = f"ensembles/{ensemble_id}/records/{record_name}"
-
-    assert ensemble_record
-    assert ensemble_record.ensemble_size != 0
-    # If the RecordCollection has more than one record we assume
-    # all records are the same and store only one record.
-    # We store the original size in the metadata
-    record = ensemble_record.records[0]
-
-    assert isinstance(record.data, bytes)
-    response = _post_to_server(
-        f"{record_url}/file",
-        files={
-            "file": (
-                record_name,
-                io.BytesIO(record.data),
-                _OCTET_STREAM,
-            )
-        },
-    )
-
-    if response.status_code == 409:
-        raise ert.exceptions.ElementExistsError("Record already exists")
-
-    if response.status_code != 200:
-        raise ert.exceptions.StorageError(response.text)
-
-    meta_response = _put_to_server(f"{record_url}/userdata", json=metadata.dict())
-
-    if meta_response.status_code != 200:
-        raise ert.exceptions.StorageError(meta_response.text)
+    return list(response.json())
 
 
 def get_ensemble_record(
@@ -643,29 +617,29 @@ def get_ensemble_record(
     workspace: Path,
     record_name: str,
     experiment_name: Optional[str] = None,
+    source: Optional[str] = None,
+    ensemble_size: Optional[int] = None,
 ) -> ert.data.RecordCollection:
-    if experiment_name is None:
-        experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
-    experiment = _get_experiment_by_name(experiment_name)
-    if experiment is None:
-        raise ert.exceptions.NonExistantExperiment(
-            f"Cannot get {record_name} data, no experiment named: {experiment_name}"
-        )
-    param_names = _get_experiment_parameters(experiment_name)
-    if record_name not in param_names or not param_names[record_name]:
-        return _get_data(
-            experiment_name=experiment_name,
-            record_name=record_name,
-        )
+    records_url = ert.storage.get_records_url(
+        workspace=workspace, experiment_name=experiment_name
+    )
 
-    ensemble_records = [
-        _get_data(
-            experiment_name=experiment_name,
-            record_name=record_name + _PARAMETER_RECORD_SEPARATOR + param_name,
+    transmitters = asyncio.get_event_loop().run_until_complete(
+        ert.storage.get_record_storage_transmitters(
+            records_url=records_url,
+            record_name=record_name,
+            record_source=source,
+            ensemble_size=ensemble_size,
         )
-        for param_name in param_names[record_name]
-    ]
-    return _combine_records(ensemble_records)
+    )
+    records = []
+    for transmitter_map in transmitters.values():
+        for transmitter in transmitter_map.values():
+            records.append(
+                asyncio.get_event_loop().run_until_complete(transmitter.load())
+            )
+
+    return ert.data.RecordCollection(records=records)
 
 
 def get_ensemble_record_names(
@@ -692,7 +666,7 @@ def get_ensemble_record_names(
 
 
 def get_experiment_parameters(*, experiment_name: str) -> Iterable[str]:
-    return list(_get_experiment_parameters(experiment_name))
+    return _get_experiment_parameters(experiment_name)
 
 
 def get_experiment_responses(*, experiment_name: str) -> Iterable[str]:
@@ -703,10 +677,11 @@ def get_experiment_responses(*, experiment_name: str) -> Iterable[str]:
         )
 
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
-    response = _get_from_server(f"ensembles/{ensemble_id}/responses")
+    response = _get_from_server(f"ensembles/{ensemble_id}")
+
     if response.status_code != 200:
         raise ert.exceptions.StorageError(response.text)
-    return list(response.json())
+    return list(response.json()["response_names"])
 
 
 def delete_experiment(*, experiment_name: str) -> None:

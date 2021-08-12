@@ -161,65 +161,6 @@ class RecordCollection(_DataElement):
         return ensemble_record
 
 
-class RecordCollectionMap(_DataElement):
-    ensemble_records: Mapping[str, RecordCollection]
-    record_names: Optional[Tuple[str, ...]] = None
-    ensemble_size: Optional[int] = None
-
-    @validator("record_names", pre=True, always=True)
-    def record_names_validator(
-        cls, record_names: Optional[Tuple[str, ...]], values: Dict[str, Any]
-    ) -> Optional[Tuple[str, ...]]:
-        if record_names is None and "ensemble_records" in values:
-            ensemble_records = values["ensemble_records"]
-            record_names = tuple(ensemble_records.keys())
-        return record_names
-
-    @validator("ensemble_size", pre=True, always=True)
-    def ensemble_size_validator(
-        cls, ensemble_size: Optional[int], values: Dict[str, Any]
-    ) -> Optional[int]:
-        if (
-            ensemble_size is None
-            and "ensemble_records" in values
-            and "record_names" in values
-        ):
-            record_names = values["record_names"]
-            assert len(record_names) > 0
-            ensemble_records = values["ensemble_records"]
-            assert len(ensemble_records) > 0
-            first_record = ensemble_records[record_names[0]]
-            try:
-                ensemble_size = first_record.ensemble_size
-            except AttributeError:
-                ensemble_size = len(first_record["records"])
-        assert ensemble_size is not None and ensemble_size > 0
-        return ensemble_size
-
-    @root_validator(skip_on_failure=True)
-    def ensure_consistent_ensemble_size(
-        cls, multi_ensemble_record: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        ensemble_size = multi_ensemble_record["ensemble_size"]
-        for ensemble_record in multi_ensemble_record["ensemble_records"].values():
-            if ensemble_size != ensemble_record.ensemble_size:
-                raise AssertionError("Inconsistent ensemble record size")
-        return multi_ensemble_record
-
-    @root_validator(skip_on_failure=True)
-    def ensure_consistent_record_names(
-        cls, multi_ensemble_record: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        assert "record_names" in multi_ensemble_record
-        record_names = tuple(multi_ensemble_record["ensemble_records"].keys())
-        assert multi_ensemble_record["record_names"] == record_names
-        return multi_ensemble_record
-
-    def __len__(self) -> int:
-        assert self.record_names is not None
-        return len(self.record_names)
-
-
 class RecordTransmitterState(Enum):
     transmitted = auto()
     not_transmitted = auto()

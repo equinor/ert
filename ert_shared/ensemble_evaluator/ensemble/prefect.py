@@ -2,14 +2,15 @@ import asyncio
 import contextlib
 import logging
 import multiprocessing
+from multiprocessing.context import BaseContext
 import os
 import signal
 import threading
 from typing import Optional
 import uuid
 from datetime import timedelta
-from functools import partial
 import time
+import importlib
 
 import prefect
 import cloudpickle
@@ -214,11 +215,25 @@ class PrefectEnsemble(_Ensemble):
                         ]
         return flow
 
+    @staticmethod
+    def _get_multiprocessing_context() -> BaseContext:
+        """See _prefect_forkserver_preload"""
+        preload_module_name = (
+            "ert_shared.ensemble_evaluator.ensemble._prefect_forkserver_preload"
+        )
+        loader = importlib.util.find_spec(preload_module_name)
+        if not loader:
+            raise ModuleNotFoundError(f"No module named {preload_module_name}")
+        ctx = multiprocessing.get_context("forkserver")
+        ctx.set_forkserver_preload([preload_module_name])
+        return ctx
+
     def evaluate(self, config: EvaluatorServerConfig, ee_id: str):
         self._ee_id = ee_id
         self._ee_config = config
-        mp_ctx = multiprocessing.get_context(method="forkserver")
-        self._eval_proc = mp_ctx.Process(
+
+        ctx = self._get_multiprocessing_context()
+        self._eval_proc = ctx.Process(
             target=self._evaluate,
             args=(config, ee_id),
         )
