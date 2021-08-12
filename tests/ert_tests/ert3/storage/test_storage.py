@@ -1,3 +1,4 @@
+import asyncio
 import collections
 
 import pytest
@@ -134,88 +135,19 @@ def test_add_and_get_ensemble_record(tmpdir, raw_ensrec, ert_storage):
     ert.storage.init(workspace=tmpdir)
 
     ensrecord = ert.data.RecordCollection(records=raw_ensrec)
-    ert.storage.add_ensemble_record(
+    future = ert.storage.transmit_record_collection(
+        record_coll=ensrecord,
+        record_name="my_ensemble_record",
+        workspace=tmpdir,
+    )
+    asyncio.get_event_loop().run_until_complete(future)
+
+    res = ert.storage.get_ensemble_record(
         workspace=tmpdir,
         record_name="my_ensemble_record",
-        ensemble_record=ensrecord,
     )
 
-    retrieved_ensrecord = ert.storage.get_ensemble_record(
-        workspace=tmpdir, record_name="my_ensemble_record"
-    )
-
-    assert ensrecord == retrieved_ensrecord
-
-
-@pytest.mark.requires_ert_storage
-@pytest.mark.parametrize(
-    "raw_ensrec",
-    (
-        [{"data": [i + 0.5, i + 1.1, i + 2.2]} for i in range(3)],
-        [{"data": {"a": i + 0.5, "b": i + 1.1, "c": i + 2.2}} for i in range(5)],
-        [{"data": {2: i + 0.5, 5: i + 1.1, 7: i + 2.2}} for i in range(2)],
-        [{"data": b"asdfkasjdhjflkjah21WE123TTDSG34f"}],
-    ),
-)
-def test_add_and_get_ensemble_parameter_record(tmpdir, raw_ensrec, ert_storage):
-    """This tests a workaround so that webviz-ert is able to visualise parameters.
-    It expects records which are marked as parameter to contain only one value
-    per realisation, while ERT 3 uses multiple variables per record. That is, in
-    ERT 3, it is possible to specify a record named "coefficients" which
-    contains the variables "a", "b" and "c". These are rendered as column
-    labels, which ERT Storage accepts, but webviz-ert doesn't know how to use.
-
-    The workaround involves splitting up any parameter record into its variable
-    parts, so "coefficients.a", "coefficients.b", "coefficients.c". This is an
-    implementation detail that exists entirely within the `ert.storage` module,
-    and isn't visible outside of it.
-
-    In order to test this behaviour, we use a testing-only kwarg called
-    `_flatten` in the function `ert.storage.get_ensemble_record_names`, which
-    lets us see the record names that are hidden outside of the `ert.storage`
-    module.
-
-    """
-    raw_data = raw_ensrec[0]["data"]
-    assert isinstance(raw_data, (list, dict, bytes))
-    if isinstance(raw_data, bytes):
-        indices = []
-    elif isinstance(raw_data, list):
-        indices = [str(x) for x in range(len(raw_data))]
-    else:
-        indices = [str(x) for x in raw_data]
-
-    ert.storage.init(workspace=tmpdir)
-    ert.storage.init_experiment(
-        experiment_name="experiment_name",
-        parameters={"my_ensemble_record": indices},
-        ensemble_size=len(raw_ensrec),
-        responses=[],
-    )
-
-    ensrecord = ert.data.RecordCollection(records=raw_ensrec)
-    ert.storage.add_ensemble_record(
-        workspace=tmpdir,
-        experiment_name="experiment_name",
-        record_name="my_ensemble_record",
-        ensemble_record=ensrecord,
-    )
-
-    record_names = ert.storage.get_ensemble_record_names(
-        workspace=tmpdir, experiment_name="experiment_name", _flatten=False
-    )
-    if not indices:
-        assert len(record_names) == 1 and record_names[0] == "my_ensemble_record"
-    else:
-        assert {f"my_ensemble_record.{x}" for x in indices} == set(record_names)
-
-    retrieved_ensrecord = ert.storage.get_ensemble_record(
-        workspace=tmpdir,
-        experiment_name="experiment_name",
-        record_name="my_ensemble_record",
-    )
-
-    assert ensrecord == retrieved_ensrecord
+    assert res == ensrecord
 
 
 @pytest.mark.requires_ert_storage
@@ -223,28 +155,32 @@ def test_add_ensemble_record_twice(tmpdir, ert_storage):
     ert.storage.init(workspace=tmpdir)
 
     ensrecord = ert.data.RecordCollection(records=[{"data": [42]}])
-    ert.storage.add_ensemble_record(
-        workspace=tmpdir, record_name="my_ensemble_record", ensemble_record=ensrecord
+    future = ert.storage.transmit_record_collection(
+        record_coll=ensrecord,
+        record_name="my_ensemble_record",
+        workspace=tmpdir,
     )
+    asyncio.get_event_loop().run_until_complete(future)
 
     with pytest.raises(
         ert.exceptions.ElementExistsError,
-        match="Record already exists",
     ):
-        ert.storage.add_ensemble_record(
-            workspace=tmpdir,
+        future = ert.storage.transmit_record_collection(
+            record_coll=ensrecord,
             record_name="my_ensemble_record",
-            ensemble_record=ensrecord,
+            workspace=tmpdir,
         )
+        asyncio.get_event_loop().run_until_complete(future)
 
 
 @pytest.mark.requires_ert_storage
-def test_get_unknown_ensemble_record(tmpdir, ert_storage):
+def test_get_unstored_ensemble_record(tmpdir, ert_storage):
     ert.storage.init(workspace=tmpdir)
 
     with pytest.raises(ert.exceptions.ElementMissingError):
         ert.storage.get_ensemble_record(
-            workspace=tmpdir, record_name="my_ensemble_record"
+            workspace=tmpdir,
+            record_name="my_ensemble_record",
         )
 
 
@@ -269,11 +205,13 @@ def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
                     for rid in range(ensemble_size)
                 ]
             )
-            ert.storage.add_ensemble_record(
-                workspace=tmpdir,
-                record_name=name,
-                ensemble_record=ensemble_record,
-                experiment_name=experiment,
+            asyncio.get_event_loop().run_until_complete(
+                ert.storage.transmit_record_collection(
+                    record_coll=ensemble_record,
+                    record_name=name,
+                    workspace=tmpdir,
+                    experiment_name=experiment,
+                )
             )
 
     for eid in range(1, 2):
@@ -297,13 +235,15 @@ def test_add_ensemble_record_to_non_existing_experiment(tmpdir, ert_storage):
     ert.storage.init(workspace=tmpdir)
     with pytest.raises(
         ert.exceptions.NonExistantExperiment,
-        match="Cannot add my_record data to non-existing experiment",
+        match="Experiment non_existing_experiment does not exist",
     ):
-        ert.storage.add_ensemble_record(
-            workspace=tmpdir,
-            record_name="my_record",
-            ensemble_record=ert.data.RecordCollection(records=[{"data": [0, 1, 2]}]),
-            experiment_name="non_existing_experiment",
+        asyncio.get_event_loop().run_until_complete(
+            ert.storage.transmit_record_collection(
+                record_coll=ert.data.RecordCollection(records=[{"data": [0, 1, 2]}]),
+                record_name="my_record",
+                workspace=tmpdir,
+                experiment_name="non_existing_experiment",
+            )
         )
 
 
@@ -312,7 +252,7 @@ def test_get_ensemble_record_to_non_existing_experiment(tmpdir, ert_storage):
     ert.storage.init(workspace=tmpdir)
     with pytest.raises(
         ert.exceptions.NonExistantExperiment,
-        match="Cannot get my_record data, no experiment named: non_existing_experiment",
+        match="Experiment non_existing_experiment does not exist",
     ):
         ert.storage.get_ensemble_record(
             workspace=tmpdir,
@@ -341,12 +281,14 @@ def test_get_record_names(tmpdir, ert_storage):
                     ert.data.NumericalRecord(data=[0]) for rid in range(ensemble_size)
                 ]
             )
-            ert.storage.add_ensemble_record(
-                workspace=tmpdir,
+            future = ert.storage.transmit_record_collection(
+                record_coll=ensemble_record,
                 record_name=name,
-                ensemble_record=ensemble_record,
+                workspace=tmpdir,
                 experiment_name=experiment,
             )
+
+            asyncio.get_event_loop().run_until_complete(future)
             experiment_records[str(experiment)].append(name)
 
             recnames = ert.storage.get_ensemble_record_names(
@@ -393,35 +335,22 @@ def test_delete_experiment(tmpdir, ert_storage):
 
 @pytest.mark.requires_ert_storage
 @pytest.mark.parametrize(
-    "responses, records, expected_result",
+    "responses, expected_result",
     [
-        (["resp1", "resp2"], ["resp1", "resp2", "rec1"], ["resp1", "resp2"]),
-        ([], ["resp1", "resp2", "rec1"], []),
-        (["resp1", "resp2"], ["rec1"], []),
+        (["resp1", "resp2"], ["resp1", "resp2"]),
+        ([], []),
+        (["resp1"], ["resp1"]),
     ],
 )
-def test_get_ensemble_responses(
-    responses, records, expected_result, tmpdir, ert_storage
-):
+def test_get_ensemble_responses(responses, expected_result, tmpdir, ert_storage):
     ert.storage.init(workspace=tmpdir)
     experiment = "exp"
     ert.storage.init_experiment(
         experiment_name=experiment,
-        parameters={},
+        parameters=[],
         ensemble_size=1,
         responses=responses,
     )
-    for name in records:
-        ensemble_record = ert.data.RecordCollection(
-            records=[ert.data.NumericalRecord(data=[1, 2, 3])]
-        )
-        ert.storage.add_ensemble_record(
-            workspace=tmpdir,
-            record_name=name,
-            ensemble_record=ensemble_record,
-            experiment_name=experiment,
-        )
-
     fetched_ensemble_responses = ert.storage.get_experiment_responses(
         experiment_name=experiment
     )

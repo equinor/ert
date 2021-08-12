@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 
 import ert
@@ -21,13 +23,16 @@ TEST_PARAMETRIZATION = [
 
 def get_inputs(coeffs):
     input_records = {}
-    input_records["coefficients"] = ert.data.RecordCollection(
-        records=[
-            ert.data.NumericalRecord(data={"a": a, "b": b, "c": c})
-            for (a, b, c) in coeffs
-        ]
-    )
-    return ert.data.RecordCollectionMap(ensemble_records=input_records)
+    futures = []
+    for iens, (a, b, c) in enumerate(coeffs):
+        record_name = "coefficients"
+        t = ert.data.InMemoryRecordTransmitter(record_name)
+        futures.append(
+            t.transmit_record(ert.data.NumericalRecord(data={"a": a, "b": b, "c": c}))
+        )
+        input_records[iens] = {record_name: t}
+    asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+    return input_records
 
 
 @pytest.mark.requires_ert_storage
@@ -35,27 +40,26 @@ def get_inputs(coeffs):
 def test_evaluator_script(
     workspace, stages_config, base_ensemble_dict, coeffs, expected
 ):
+    storage_path = workspace / ".ert" / "tmp" / "test"
     input_records = get_inputs(coeffs)
     base_ensemble_dict["size"] = len(coeffs)
+    base_ensemble_dict["storage_type"] = "shared_disk"
     ensemble = ert3.config.load_ensemble_config(base_ensemble_dict)
 
     evaluation_records = ert3.evaluator.evaluate(
-        workspace,
-        "test_evaluation",
+        storage_path,
         input_records,
         ensemble,
         stages_config,
     )
 
-    expected = ert.data.RecordCollectionMap(
-        ensemble_records={
-            "polynomial_output": ert.data.RecordCollection(
-                records=[
-                    ert.data.NumericalRecord(data=poly_out) for poly_out in expected
-                ],
-            )
-        }
-    )
+    for iens, transmitter_map in evaluation_records.items():
+        record = asyncio.get_event_loop().run_until_complete(
+            transmitter_map["polynomial_output"].load()
+        )
+        transmitter_map["polynomial_output"] = record.data
+
+    expected = {iens: {"polynomial_output": data} for iens, data in enumerate(expected)}
     assert expected == evaluation_records
 
 
@@ -64,25 +68,26 @@ def test_evaluator_script(
 def test_evaluator_function(
     workspace, function_stages_config, base_ensemble_dict, coeffs, expected
 ):
+    storage_path = workspace / ".ert" / "tmp" / "test"
+
     input_records = get_inputs(coeffs)
-    base_ensemble_dict.update({"size": len(coeffs)})
+    base_ensemble_dict["size"] = len(coeffs)
+    base_ensemble_dict["storage_type"] = "shared_disk"
+
     ensemble = ert3.config.load_ensemble_config(base_ensemble_dict)
 
     evaluation_records = ert3.evaluator.evaluate(
-        workspace,
-        "test_evaluation",
+        storage_path,
         input_records,
         ensemble,
         function_stages_config,
     )
 
-    expected = ert.data.RecordCollectionMap(
-        ensemble_records={
-            "polynomial_output": ert.data.RecordCollection(
-                records=[
-                    ert.data.NumericalRecord(data=poly_out) for poly_out in expected
-                ],
-            )
-        }
-    )
+    for iens, transmitter_map in evaluation_records.items():
+        record = asyncio.get_event_loop().run_until_complete(
+            transmitter_map["polynomial_output"].load()
+        )
+        transmitter_map["polynomial_output"] = record.data
+
+    expected = {iens: {"polynomial_output": data} for iens, data in enumerate(expected)}
     assert expected == evaluation_records
