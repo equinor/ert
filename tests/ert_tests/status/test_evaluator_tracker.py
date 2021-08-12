@@ -206,6 +206,59 @@ def make_mock_ee_monitor():
             1.0,
             id="ensemble_smoother_100",
         ),
+        pytest.param(
+            [
+                CloudEvent(
+                    {"source": "/", "type": ids.EVTYPE_EE_SNAPSHOT},
+                    data={
+                        **(build_snapshot(["0", "1"]).to_dict()),
+                        "iter": 1,
+                    },
+                ),
+                CloudEvent(
+                    {"source": "/", "type": ids.EVTYPE_EE_SNAPSHOT_UPDATE},
+                    data={
+                        **(
+                            build_partial(["0", "1"])
+                            .update_step(
+                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
+                            )
+                            .update_step(
+                                "1", "0", Step(status=state.STEP_STATE_SUCCESS)
+                            )
+                            .to_dict()
+                        ),
+                        "iter": 1,
+                    },
+                ),
+                CloudEvent(
+                    {"source": "/", "type": ids.EVTYPE_EE_SNAPSHOT},
+                    data={
+                        **(build_snapshot(["0", "1"]).to_dict()),
+                        "iter": 2,
+                    },
+                ),
+                CloudEvent(
+                    {"source": "/", "type": ids.EVTYPE_EE_SNAPSHOT_UPDATE},
+                    data={
+                        **(
+                            build_partial(["0", "1"])
+                            .update_step(
+                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
+                            )
+                            .update_step(
+                                "1", "0", Step(status=state.STEP_STATE_SUCCESS)
+                            )
+                            .to_dict()
+                        ),
+                        "iter": 2,
+                    },
+                ),
+            ],
+            [("_phase_count", 3)],
+            1.0,
+            id="ensemble_smoother_100",
+        ),
     ],
 )
 def test_tracking_progress(
