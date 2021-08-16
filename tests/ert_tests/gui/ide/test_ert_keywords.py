@@ -314,7 +314,7 @@ class ErtKeywordTest(ErtTest):
             "LSF_QUEUE", [StringArgument], "keywords/lsf_queue", "Queue System"
         )
         self.keywordTest(
-            "LSF_RESOURCES", [StringArgument], "keywords/lsf_resources", "Queue System"
+            "LSF_RESOURCE", [StringArgument], "keywords/lsf_resource", "Queue System"
         )
         self.keywordTest(
             "TORQUE_QUEUE", [StringArgument], "keywords/torque_queue", "Queue System"

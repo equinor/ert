@@ -1736,12 +1736,12 @@ Available LSF configuration options
         For example, ``bsub``, this option will be passed to the ``-q`` parameter:
         https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_command_ref/bsub.q.1.html
 
-.. _lsf_resources:
-.. topic:: LSF_RESOURCES
+.. _lsf_resource:
+.. topic:: LSF_RESOURCE
 
         ::
 
-                QUEUE_OPTION LSF LSF_RESOURCES resource_string
+                QUEUE_OPTION LSF LSF_RESOURCE resource_string
 
         From https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_admin/res_req_strings_about.html:
 
