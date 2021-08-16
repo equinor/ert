@@ -1,12 +1,9 @@
 # At least for some combinations of pandas and matplotlib the numpy.datetime64
 # dates coming from pandas are not correctly recognized/converted by matplotlib.
 # Calling this converter.register() method seems to fix the problem.
-try:
-    from pandas.plotting import register_matplotlib_converters
+from pandas.plotting import register_matplotlib_converters
 
-    register_matplotlib_converters()
-except:
-    pass
+register_matplotlib_converters()
 
 from .plot_style import PlotStyle
 from .plot_limits import PlotLimits
