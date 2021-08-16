@@ -73,7 +73,7 @@ class ErtWorkflowList(BaseCClass):
                         name=job[ConfigKeys.NAME],
                         parser=parser,
                     )
-                except:
+                except OSError:
                     print(
                         "WARNING: Unable to create job from {}".format(
                             job[ConfigKeys.PATH]
