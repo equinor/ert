@@ -26,6 +26,7 @@ class Ensemble(Base, UserdataField):
         foreign_keys="[RecordInfo.ensemble_pk]",
         cascade="all, delete-orphan",
         lazy="dynamic",
+        back_populates="ensemble",
     )
     experiment_pk = sa.Column(
         sa.Integer, sa.ForeignKey("experiment.pk"), nullable=False
