@@ -16,12 +16,12 @@ def load_data(filename):
     with open(filename) as fin:
         try:
             return yaml.safe_load(fin)
-        except Exception as yaml_err:
+        except yaml.YAMLError as yaml_err:
             pass
 
         try:
             return json.load(fin)
-        except Exception as json_err:
+        except yaml.YAMLError as json_err:
             pass
 
     err_msg = "%s is neither yaml (err_msg=%s) nor json (err_msg=%s)"
