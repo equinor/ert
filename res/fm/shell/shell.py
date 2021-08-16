@@ -48,7 +48,7 @@ class Shell(object):
             try:
                 os.makedirs(path)
                 print("Created directory: '%s'" % path)
-            except Exception as e:
+            except OSError as e:
                 # Seems in many cases the directory just suddenly appears; syncronization
                 # issues?
                 if not os.path.isdir(path):
