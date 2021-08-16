@@ -111,6 +111,8 @@ class EclConfig(object):
             version = version_arg
 
         if version is None:
+            # TODO: Do not raise Exception
+            # https://github.com/equinor/ert/issues/1955
             raise Exception(
                 "The default version has not not been set in the config file:{}".format(
                     self._config_file
@@ -162,6 +164,8 @@ class EclConfig(object):
                 else:
                     try:
                         sim = self._get_sim(version, exe_type)
+                    # This exception should be more specific after resolving
+                    # https://github.com/equinor/ert/issues/1955
                     except Exception:
                         sys.stderr.write(
                             "Failed to create simulator object for: version:{version} {exe_type}\n".format(
