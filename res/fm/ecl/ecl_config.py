@@ -82,7 +82,7 @@ class EclConfig(object):
         with open(config_file) as f:
             try:
                 config = yaml.safe_load(f)
-            except:
+            except yaml.YAMLError:
                 raise ValueError("Failed parse: {} as yaml".format(config_file))
 
         self._config = config
