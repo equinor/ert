@@ -101,7 +101,7 @@ class SiteConfig(BaseCClass):
                     )
                     new_job.convertToCReference(None)
                     ext_job_list.add_job(job[ConfigKeys.NAME], new_job)
-                except:
+                except (ValueError, OSError):
                     print(
                         "WARNING: Unable to create job from {}".format(
                             job[ConfigKeys.PATH]
@@ -124,7 +124,7 @@ class SiteConfig(BaseCClass):
                             )
                             new_job.convertToCReference(None)
                             ext_job_list.add_job(new_job.name(), new_job)
-                        except:
+                        except (ValueError, OSError):
                             print(
                                 "WARNING: Unable to create job from {}".format(
                                     full_path
