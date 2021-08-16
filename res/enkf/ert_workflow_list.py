@@ -98,7 +98,7 @@ class ErtWorkflowList(BaseCClass):
                         )
                         workflow_joblist.addJob(new_job)
                         new_job.convertToCReference(None)
-                    except:
+                    except OSError:
                         print("WARNING: Unable to create job from {}".format(full_path))
                         continue
 
