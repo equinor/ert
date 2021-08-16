@@ -1,6 +1,5 @@
-import os, pwd, json, requests
+import os, pwd
 from typing import Any
-from copy import deepcopy
 
 LOG_URL = "http://devnull.statoil.no:4444"
 USER = pwd.getpwuid(os.getuid()).pw_name
@@ -16,21 +15,5 @@ BASE_MESSAGE = {
 #
 # The tests in tests/job_runner/test_network_reporter.py are disabled
 # accordingly.
-#
 def log_message(input_payload: Any) -> None:
-    # payload = deepcopy(BASE_MESSAGE)
-    # payload.update(input_payload)
-    # try:
-    #     data = json.dumps(payload)
-    #     # Disabling proxies
-    #     proxies = {"http": None, "https": None}
-    #     requests.post(
-    #         LOG_URL,
-    #         timeout=3,
-    #         headers={"Content-Type": "application/json"},
-    #         data=data,
-    #         proxies=proxies,
-    #     )
-    # except:  # noqa
-    #     pass
     pass
