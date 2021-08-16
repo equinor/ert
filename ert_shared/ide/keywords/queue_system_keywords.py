@@ -22,7 +22,7 @@ class QueueSystemKeywords(object):
         ert_keywords.addKeyword(self.addRshHost())
         ert_keywords.addKeyword(self.addRshCommand())
         ert_keywords.addKeyword(self.addHostType())
-        ert_keywords.addKeyword(self.addLsfResources())
+        ert_keywords.addKeyword(self.addLsfResource())
 
     def addQueueOption(self):
         queue_option = ConfigurationLineDefinition(
@@ -65,14 +65,14 @@ class QueueSystemKeywords(object):
         )
         return lsf_queue
 
-    def addLsfResources(self):
-        lsf_resources = ConfigurationLineDefinition(
-            keyword=KeywordDefinition("LSF_RESOURCES"),
+    def addLsfResource(self):
+        lsf_resource = ConfigurationLineDefinition(
+            keyword=KeywordDefinition("LSF_RESOURCE"),
             arguments=[StringArgument(rest_of_line=True, allow_space=True)],
-            documentation_link="keywords/lsf_resources",
+            documentation_link="keywords/lsf_resource",
             group=self.group,
         )
-        return lsf_resources
+        return lsf_resource
 
     def addTorqueQueue(self):
         torque_queue = ConfigurationLineDefinition(

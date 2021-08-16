@@ -77,7 +77,7 @@ JOB STEINFYSIKK
   STDIN  = "<RESTART_FILE1>";
   STDOUT = "steinfysikk.stdout";
 
-  LSF_RESOURCES = "det skal gå snabbt!";
+  LSF_RESOURCE = "det skal gå snabbt!";
 
 };
 
