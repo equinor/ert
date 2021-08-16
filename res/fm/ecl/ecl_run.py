@@ -344,7 +344,7 @@ class EclRun(object):
 
             try:
                 ecl_sum = EclSum(case)
-            except:
+            except (OSError, ValueError):
                 continue
 
             this_len = len(ecl_sum)
