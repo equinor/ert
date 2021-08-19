@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+import sys
+import re
+from typing import Generator
+from pathlib import Path
+from subprocess import check_output, CalledProcessError, STDOUT
+from argparse import ArgumentParser
+
+
+CLANG_VERSIONS = ("10", "11", "12")
+DIRECTORIES = ["libres"]
+
+
+def check_version(clang_format: str) -> None:
+    version_str = check_output([clang_format, "--version"]).decode()
+    version_res = re.search(r"version (\d+).(\d+).(\d+)", version_str)
+    assert version_res
+
+    major = version_res[1]
+    if major not in CLANG_VERSIONS:
+        sys.exit(
+            f"Version of clang-format ({clang_format}) is {major}, expected it to be one of {', '.join(CLANG_VERSIONS)}"
+        )
+
+
+def source_root() -> Path:
+    node = Path(__file__).parent.resolve()
+    while not (node / ".git").is_dir():
+        if str(node) == "/":
+            sys.exit("Could not find the source root (no .git directory)")
+        node = node.parent
+    return node
+
+
+def enumerate_sources() -> Generator[Path, None, None]:
+    root = source_root()
+    for directory in DIRECTORIES:
+        for extension in "c", "h", "cpp", "hpp":
+            pattern = f"{directory}/**/*.{extension}"
+            for path in root.glob(pattern):
+                yield path
+
+
+def reformat(clang_format: str, dry_run: bool, verbose: bool) -> None:
+    total = 0
+    need_reformat = 0
+    failed_reformat = 0
+
+    root = source_root()
+    for path in enumerate_sources():
+        relpath = path.relative_to(root)
+        total += 1
+        if verbose:
+            print("checking ", path)
+
+        try:
+            check_output([clang_format, "--dry-run", "-Werror", path], stderr=STDOUT)
+            continue  # This file passed the check, continue
+        except CalledProcessError:
+            need_reformat += 1
+            if dry_run:
+                print("would reformat", relpath)
+
+        if dry_run:
+            continue
+        try:
+            check_output([clang_format, "-i", "-Werror", path], stderr=STDOUT)
+            print("reformatted", relpath)
+        except CalledProcessError:
+            failed_reformat += 1
+            print("failed to reformat", relpath)
+
+    if dry_run:
+        print(
+            f"{need_reformat} files would be reformatted, "
+            f"{total - need_reformat} files would be left unchanged."
+        )
+        if need_reformat > 0:
+            sys.exit(1)
+    else:
+        successfully_reformatted = need_reformat - failed_reformat
+        print(
+            f"{successfully_reformatted} files reformatted, "
+            f"{total - successfully_reformatted} files left unchanged, "
+            f"{failed_reformat} files failed to reformat."
+        )
+        if failed_reformat > 0:
+            sys.exit(1)
+
+
+def main() -> None:
+    ap = ArgumentParser()
+    ap.add_argument(
+        "-c",
+        "--check",
+        action="store_true",
+        default=False,
+        help="Performs a check without modifying any files",
+    )
+    ap.add_argument(
+        "--clang-format",
+        default="clang-format",
+        help="Name/path of the clang-format binary",
+    )
+    ap.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="Output verbosely",
+    )
+
+    args = ap.parse_args()
+    check_version(args.clang_format)
+    reformat(args.clang_format, args.check, args.verbose)
+
+
+if __name__ == "__main__":
+    main()
