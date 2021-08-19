@@ -20,6 +20,9 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Clang Format
+      run: ./script/clang-format --check
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
