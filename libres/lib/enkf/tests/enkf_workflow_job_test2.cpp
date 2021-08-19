@@ -21,41 +21,41 @@
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
 
-
-ert_test_context_type * create_context( const char * config_file, const char * name ) {
-  ert_test_context_type * test_context = ert_test_context_alloc__(name , config_file, true);
-  usleep( 2 * 100000 );
-  return test_context;
+ert_test_context_type *create_context(const char *config_file,
+                                      const char *name) {
+    ert_test_context_type *test_context =
+        ert_test_context_alloc__(name, config_file, true);
+    usleep(2 * 100000);
+    return test_context;
 }
 
+void test_load_results_job(ert_test_context_type *test_context,
+                           const char *job_name, const char *job_file) {
+    stringlist_type *args = stringlist_alloc_new();
+    ert_test_context_install_workflow_job(test_context, job_name, job_file);
+    stringlist_append_copy(args, "0");
+    stringlist_append_copy(args, ",");
+    stringlist_append_copy(args, "1");
+    test_assert_true(
+        ert_test_context_run_worklow_job(test_context, job_name, args));
+    stringlist_free(args);
 
-
-void test_load_results_job(ert_test_context_type * test_context , const char * job_name , const char * job_file) {
-  stringlist_type * args = stringlist_alloc_new();
-  ert_test_context_install_workflow_job( test_context , job_name , job_file );
-  stringlist_append_copy( args , "0");
-  stringlist_append_copy( args , ",");
-  stringlist_append_copy( args , "1");
-  test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
-  stringlist_free( args );
-
-  enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
-  enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
-  time_map_type * time_map = enkf_fs_get_time_map( fs );
-  test_assert_true( time_map_get_last_step( time_map ) > 0 );
+    enkf_main_type *enkf_main = ert_test_context_get_main(test_context);
+    enkf_fs_type *fs = enkf_main_get_fs(enkf_main);
+    time_map_type *time_map = enkf_fs_get_time_map(fs);
+    test_assert_true(time_map_get_last_step(time_map) > 0);
 }
 
+int main(int argc, const char **argv) {
+    enkf_main_install_SIGNALS();
 
+    const char *config_file = argv[1];
+    const char *job_file_load_results = argv[2];
 
-int main(int argc , const char ** argv) {
-  enkf_main_install_SIGNALS();
+    ert_test_context_type *test_context =
+        create_context(config_file, "enkf_workflow_job_test2");
+    test_load_results_job(test_context, "JOB", job_file_load_results);
+    ert_test_context_free(test_context);
 
-  const char * config_file                  = argv[1];
-  const char * job_file_load_results        = argv[2];
-
-  ert_test_context_type * test_context = create_context( config_file, "enkf_workflow_job_test2" );
-  test_load_results_job(test_context, "JOB" , job_file_load_results);
-  ert_test_context_free( test_context );
-
-  exit(0);
+    exit(0);
 }

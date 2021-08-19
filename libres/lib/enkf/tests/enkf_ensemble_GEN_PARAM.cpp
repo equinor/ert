@@ -26,28 +26,27 @@
 
 #include <ert/enkf/ensemble_config.hpp>
 
+int main(int argc, char **argv) {
+    const char *config_file = argv[1];
+    config_parser_type *config = config_alloc();
+    config_content_type *content;
+    ensemble_config_type *ensemble = ensemble_config_alloc(NULL, NULL, NULL);
 
-int main(int argc , char ** argv) {
-  const char * config_file = argv[1];
-  config_parser_type * config = config_alloc();
-  config_content_type * content;
-  ensemble_config_type * ensemble = ensemble_config_alloc(NULL, NULL, NULL);
+    enkf_config_node_add_GEN_PARAM_config_schema(config);
 
-  enkf_config_node_add_GEN_PARAM_config_schema( config );
+    content = config_parse(config, config_file, "--", NULL, NULL, NULL,
+                           CONFIG_UNRECOGNIZED_WARN, true);
+    {
+        config_error_type *errors = config_content_get_errors(content);
+        config_error_fprintf(errors, true, stdout);
+    }
 
-  content = config_parse( config , config_file , "--" , NULL , NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true );
-  {
-    config_error_type * errors = config_content_get_errors( content );
-    config_error_fprintf( errors , true , stdout );
-  }
+    test_assert_true(config_content_is_valid(content));
 
-  test_assert_true( config_content_is_valid( content ) );
+    ensemble_config_init_GEN_PARAM(ensemble, content);
 
-  ensemble_config_init_GEN_PARAM( ensemble, content );
-
-  config_content_free( content );
-  config_free( config );
-  ensemble_config_free( ensemble );
-  exit(0);
+    config_content_free(content);
+    config_free(config);
+    ensemble_config_free(ensemble);
+    exit(0);
 }
-

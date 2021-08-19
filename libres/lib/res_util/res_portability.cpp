@@ -22,13 +22,12 @@
 
 void res_yield() {
 #ifdef HAVE_YIELD_NP
-  pthread_yield_np();
+    pthread_yield_np();
 #else
-  #ifdef HAVE_YIELD
-  pthread_yield();
-  #else
-  util_usleep(1000);
-  #endif
+#ifdef HAVE_YIELD
+    pthread_yield();
+#else
+    util_usleep(1000);
+#endif
 #endif
 }
-

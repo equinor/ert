@@ -52,41 +52,43 @@
 extern "C" {
 #endif
 
-typedef struct enkf_state_struct    enkf_state_type;
+typedef struct enkf_state_struct enkf_state_type;
 
-  void *             enkf_state_load_from_forward_model_mt( void * arg );
-  void               enkf_state_initialize(enkf_state_type * enkf_state , rng_type * rng, enkf_fs_type * fs, const stringlist_type * param_list , init_mode_type init_mode);
+void *enkf_state_load_from_forward_model_mt(void *arg);
+void enkf_state_initialize(enkf_state_type *enkf_state, rng_type *rng,
+                           enkf_fs_type *fs, const stringlist_type *param_list,
+                           init_mode_type init_mode);
 
-  int                enkf_state_load_from_forward_model(enkf_state_type * enkf_state ,
-                                                        run_arg_type * run_arg ,
-                                                        stringlist_type * msg_list);
+int enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
+                                       run_arg_type *run_arg,
+                                       stringlist_type *msg_list);
 
-  void enkf_state_init_eclipse(const res_config_type * res_config,
-                               const run_arg_type * run_arg );
+void enkf_state_init_eclipse(const res_config_type *res_config,
+                             const run_arg_type *run_arg);
 
-  enkf_state_type  * enkf_state_alloc(int ,
-                                      rng_type        * main_rng ,
-                                      model_config_type * ,
-                                      ensemble_config_type * ,
-                                      const site_config_type * ,
-                                      const ecl_config_type * ,
-                                      ert_templates_type * templates);
+enkf_state_type *enkf_state_alloc(int, rng_type *main_rng, model_config_type *,
+                                  ensemble_config_type *,
+                                  const site_config_type *,
+                                  const ecl_config_type *,
+                                  ert_templates_type *templates);
 
-  void               enkf_state_add_node(enkf_state_type * , const char *  , const enkf_config_node_type * );
-  void               enkf_state_ecl_write(const ensemble_config_type * ens_config, const model_config_type * model_config, const run_arg_type * run_arg , enkf_fs_type * fs);
-  void               enkf_state_free(enkf_state_type * );
+void enkf_state_add_node(enkf_state_type *, const char *,
+                         const enkf_config_node_type *);
+void enkf_state_ecl_write(const ensemble_config_type *ens_config,
+                          const model_config_type *model_config,
+                          const run_arg_type *run_arg, enkf_fs_type *fs);
+void enkf_state_free(enkf_state_type *);
 
-  const ensemble_config_type * enkf_state_get_ensemble_config( const enkf_state_type * enkf_state );
+const ensemble_config_type *
+enkf_state_get_ensemble_config(const enkf_state_type *enkf_state);
 
-/******************************************************************/
-/* Forward model callbacks: */
-  bool enkf_state_complete_forward_modelOK__(void * arg );
-  bool enkf_state_complete_forward_modelRETRY__(void * arg );
-  bool enkf_state_complete_forward_modelEXIT__(void * arg );
+bool enkf_state_complete_forward_modelOK__(void *arg);
+bool enkf_state_complete_forward_modelRETRY__(void *arg);
+bool enkf_state_complete_forward_modelEXIT__(void *arg);
 
-  bool enkf_state_complete_forward_modelOK(const res_config_type * res_config,
-                                                run_arg_type * run_arg);
-  bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type * run_arg);
+bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
+                                         run_arg_type *run_arg);
+bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg);
 
 #ifdef __cplusplus
 }

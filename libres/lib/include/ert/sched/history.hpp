@@ -30,38 +30,38 @@
 #include <ert/ecl/ecl_sum.h>
 #include <ert/tooling.hpp>
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
 typedef enum {
-  SCHEDULE          = 0,
-  REFCASE_SIMULATED = 1,    /* ecl_sum_get_well_var( "WWCT" );  */
-  REFCASE_HISTORY   = 2,    /* ecl_sum_get_well_var( "WWCTH" ); */
-  HISTORY_SOURCE_INVALID = 10
+    SCHEDULE = 0,
+    REFCASE_SIMULATED = 1, /* ecl_sum_get_well_var( "WWCT" );  */
+    REFCASE_HISTORY = 2,   /* ecl_sum_get_well_var( "WWCTH" ); */
+    HISTORY_SOURCE_INVALID = 10
 } history_source_type;
-
-
 
 typedef struct history_struct history_type;
 
-  history_source_type history_get_source_type( const char * string_source );
+history_source_type history_get_source_type(const char *string_source);
 
 // Manipulators.
-  void           history_free(history_type *);
-  history_type * history_alloc_from_refcase(const ecl_sum_type * refcase , bool use_h_keywords);
-  PY_USED const char * history_get_source_string( history_source_type history_source );
-  bool           history_init_ts( const history_type * history , const char * summary_key , double_vector_type * value, bool_vector_type * valid);
+void history_free(history_type *);
+history_type *history_alloc_from_refcase(const ecl_sum_type *refcase,
+                                         bool use_h_keywords);
+PY_USED const char *
+history_get_source_string(history_source_type history_source);
+bool history_init_ts(const history_type *history, const char *summary_key,
+                     double_vector_type *value, bool_vector_type *valid);
 
 // Accessors.
-  time_t         history_get_start_time( const history_type * history );
-  int            history_get_last_restart(const history_type *);
-  time_t         history_get_time_t_from_restart_nr( const history_type * history , int restart_nr);
-  history_source_type history_get_source(const history_type * history);
+time_t history_get_start_time(const history_type *history);
+int history_get_last_restart(const history_type *);
+time_t history_get_time_t_from_restart_nr(const history_type *history,
+                                          int restart_nr);
+history_source_type history_get_source(const history_type *history);
 
-  UTIL_IS_INSTANCE_HEADER( history );
+UTIL_IS_INSTANCE_HEADER(history);
 
 #ifdef __cplusplus
 }

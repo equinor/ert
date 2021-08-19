@@ -30,10 +30,4 @@
 #include <rms_file.h>
 #include <rms_util.h>
 
-
-
-int main(void) {
-}
-
-
-
+int main(void) {}

@@ -16,7 +16,6 @@
    for more details.
 */
 
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -24,57 +23,51 @@
 
 #include <ert/enkf/cases_config.hpp>
 
-
 struct cases_config_struct {
-  int               iteration_number;
+    int iteration_number;
 };
 
-
-cases_config_type * cases_config_alloc( ) {
-  cases_config_type * config = (cases_config_type *)util_malloc( sizeof * config );
-  config->iteration_number = 0;
-  return config;
+cases_config_type *cases_config_alloc() {
+    cases_config_type *config =
+        (cases_config_type *)util_malloc(sizeof *config);
+    config->iteration_number = 0;
+    return config;
 }
 
-
-static void cases_config_set_iteration_number( cases_config_type * config , int num_iterations) {
-  config->iteration_number = num_iterations;
+static void cases_config_set_iteration_number(cases_config_type *config,
+                                              int num_iterations) {
+    config->iteration_number = num_iterations;
 }
 
-int cases_config_get_iteration_number( const cases_config_type * config ) {
-  return config->iteration_number;
+int cases_config_get_iteration_number(const cases_config_type *config) {
+    return config->iteration_number;
 }
 
-bool cases_config_set_int( cases_config_type * cases_config , const char * var_name , int value) {
-  bool name_recognized = true;
-  if (strcmp( var_name , "iteration_number") == 0)
-    cases_config_set_iteration_number(cases_config, value);
-  else
-    name_recognized = false;
+bool cases_config_set_int(cases_config_type *cases_config, const char *var_name,
+                          int value) {
+    bool name_recognized = true;
+    if (strcmp(var_name, "iteration_number") == 0)
+        cases_config_set_iteration_number(cases_config, value);
+    else
+        name_recognized = false;
 
-  return name_recognized;
+    return name_recognized;
 }
 
-
-
-void cases_config_fwrite( cases_config_type * config , const char * filename ) {
-  FILE * stream = util_mkdir_fopen(filename , "w");
-  int iteration_no = cases_config_get_iteration_number(config);
-  util_fwrite_int( iteration_no , stream );
-  fclose( stream );
+void cases_config_fwrite(cases_config_type *config, const char *filename) {
+    FILE *stream = util_mkdir_fopen(filename, "w");
+    int iteration_no = cases_config_get_iteration_number(config);
+    util_fwrite_int(iteration_no, stream);
+    fclose(stream);
 }
 
-void cases_config_fread( cases_config_type * config , const char * filename) {
-  if (util_file_exists( filename )) {
-    FILE * stream = util_fopen( filename , "r");
-    int iteration_number = util_fread_int( stream );
-    cases_config_set_iteration_number(config,iteration_number);
-    fclose( stream );
-  }
+void cases_config_fread(cases_config_type *config, const char *filename) {
+    if (util_file_exists(filename)) {
+        FILE *stream = util_fopen(filename, "r");
+        int iteration_number = util_fread_int(stream);
+        cases_config_set_iteration_number(config, iteration_number);
+        fclose(stream);
+    }
 }
 
-
-void cases_config_free( cases_config_type * config ) {
-  free( config );
-}
-
+void cases_config_free(cases_config_type *config) { free(config); }

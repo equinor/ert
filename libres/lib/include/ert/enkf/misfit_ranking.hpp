@@ -27,24 +27,29 @@
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-  typedef struct misfit_ranking_struct misfit_ranking_type;
+typedef struct misfit_ranking_struct misfit_ranking_type;
 
-  UTIL_IS_INSTANCE_HEADER( misfit_ranking );
-  UTIL_SAFE_CAST_HEADER( misfit_ranking );
+UTIL_IS_INSTANCE_HEADER(misfit_ranking);
+UTIL_SAFE_CAST_HEADER(misfit_ranking);
 
-  void                      misfit_ranking_display( const misfit_ranking_type * misfit_ranking , FILE * stream);
-  misfit_ranking_type *     misfit_ranking_alloc(const misfit_ensemble_type * ensemble , const stringlist_type * sort_keys , const int_vector_type * steps, const char * ranking_key);
-  void                      misfit_ranking_free( misfit_ranking_type * misfit_ranking );
-  void                      misfit_ranking_free__( void * arg );
-  const perm_vector_type  * misfit_ranking_get_permutation( const misfit_ranking_type * misfit_ranking );
-  void                      misfit_ranking_iset_invalid( misfit_ranking_type * misfit_ranking , int iens );
-  void                      misfit_ranking_iset( misfit_ranking_type * misfit_ranking , int iens , hash_type * obs_hash , double total_misfit);
-  void                      misfit_ranking_init_sort( misfit_ranking_type * misfit_ranking );
+void misfit_ranking_display(const misfit_ranking_type *misfit_ranking,
+                            FILE *stream);
+misfit_ranking_type *misfit_ranking_alloc(const misfit_ensemble_type *ensemble,
+                                          const stringlist_type *sort_keys,
+                                          const int_vector_type *steps,
+                                          const char *ranking_key);
+void misfit_ranking_free(misfit_ranking_type *misfit_ranking);
+void misfit_ranking_free__(void *arg);
+const perm_vector_type *
+misfit_ranking_get_permutation(const misfit_ranking_type *misfit_ranking);
+void misfit_ranking_iset_invalid(misfit_ranking_type *misfit_ranking, int iens);
+void misfit_ranking_iset(misfit_ranking_type *misfit_ranking, int iens,
+                         hash_type *obs_hash, double total_misfit);
+void misfit_ranking_init_sort(misfit_ranking_type *misfit_ranking);
 
 #ifdef __cplusplus
 }

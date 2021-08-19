@@ -24,8 +24,6 @@ extern "C" {
 
 #include <ert/tooling.hpp>
 
-
-
 /*
   This enum signals the three different states a "cell" in
   observation/data node can be in:
@@ -41,12 +39,12 @@ extern "C" {
 
 */
 
-typedef enum { ACTIVE         = 1,
-               LOCAL_INACTIVE = 2,                   /* Not active in current local update scheme. */
-               DEACTIVATED    = 3,                   /* Deactivaed due to to small overlap, or... */
-               MISSING        = 4} active_type;      /* Set as missing by the forward model. */
-
-
+typedef enum {
+    ACTIVE = 1,
+    LOCAL_INACTIVE = 2, /* Not active in current local update scheme. */
+    DEACTIVATED = 3,    /* Deactivaed due to to small overlap, or... */
+    MISSING = 4
+} active_type; /* Set as missing by the forward model. */
 
 /*
   The enkf_var_type enum defines logical groups of variables. All
@@ -58,15 +56,17 @@ typedef enum { ACTIVE         = 1,
   must be a power of 2 series.
 */
 
-typedef enum {INVALID_VAR      =  0  ,    /* */
-              PARAMETER        =  1  ,    /* A parameter which is updated with enkf: PORO , MULTFLT , ..*/
-              DYNAMIC_RESULT   =  4  ,    /* Dynamic results which are NOT needed for a restart - i.e. well rates. */
-              INDEX_STATE      = 16  ,    /* Index data - enum value is used for storage classification */
-              EXT_PARAMETER    = 32 }     /* Parameter fully managed by external scope. */
+typedef enum {
+    INVALID_VAR = 0,
+    PARAMETER =
+        1, /* A parameter which is updated with enkf: PORO , MULTFLT , ..*/
+    DYNAMIC_RESULT =
+        4, /* Dynamic results which are NOT needed for a restart - i.e. well rates. */
+    INDEX_STATE =
+        16, /* Index data - enum value is used for storage classification */
+    EXT_PARAMETER = 32
+} /* Parameter fully managed by external scope. */
 enkf_var_type;
-
-
-
 
 /*
    ert_impl_type are the actual node implementation types. Observe
@@ -81,19 +81,17 @@ enkf_var_type;
    identifiers are needed for the block_fs_driver.
 */
 
-
-
-typedef enum {INVALID          = 0   ,
-              IMPL_TYPE_OFFSET = 100 ,
-              FIELD            = 104 ,       /* WELL has been removed  */
-              GEN_KW           = 107 ,       /* RELPERM has been removed & HAVANA_FAULT */
-              SUMMARY          = 110 ,       /* TPGZONE has been removed */
-              GEN_DATA         = 113 ,       /* PILOT_POINT has been removed */
-              SURFACE          = 114 ,
-              CONTAINER        = 115 ,
-              EXT_PARAM        = 116 } ert_impl_type;
-
-
+typedef enum {
+    INVALID = 0,
+    IMPL_TYPE_OFFSET = 100,
+    FIELD = 104,    /* WELL has been removed  */
+    GEN_KW = 107,   /* RELPERM has been removed & HAVANA_FAULT */
+    SUMMARY = 110,  /* TPGZONE has been removed */
+    GEN_DATA = 113, /* PILOT_POINT has been removed */
+    SURFACE = 114,
+    CONTAINER = 115,
+    EXT_PARAM = 116
+} ert_impl_type;
 
 /*
    Should update the functions enkf_types_get_impl_name() and
@@ -101,28 +99,20 @@ typedef enum {INVALID          = 0   ,
    In addition to enkf_config_add_type().
 */
 
+typedef enum {
+    REPORT_STEP_INCOMPATIBLE = 1,
+    LOAD_FAILURE = 2
+} enkf_fw_load_result_enum;
 
-
-
-
-typedef enum { REPORT_STEP_INCOMPATIBLE  = 1,
-               LOAD_FAILURE              = 2} enkf_fw_load_result_enum;
-
-
-
-
-
-
-  /**
+/**
       These are 2^n bitmasks.
   */
 
-typedef enum { TRUNCATE_NONE   = 0,
-               TRUNCATE_MIN    = 1,
-               TRUNCATE_MAX    = 2 } truncation_type;
-
-
-
+typedef enum {
+    TRUNCATE_NONE = 0,
+    TRUNCATE_MIN = 1,
+    TRUNCATE_MAX = 2
+} truncation_type;
 
 /**
    This enum is used to differentiate between different types of
@@ -148,22 +138,21 @@ typedef enum { TRUNCATE_NONE   = 0,
 */
 
 typedef enum { //ENKF_ASSIMILATION       = 1,
-               ENSEMBLE_EXPERIMENT     = 2,
-               SMOOTHER_RUN            = 4 ,
-               INIT_ONLY               = 8 ,
-               SMOOTHER_UPDATE         = 16,
-               CASE_INIT_ONLY          = 32 } run_mode_type;
+    ENSEMBLE_EXPERIMENT = 2,
+    SMOOTHER_RUN = 4,
+    INIT_ONLY = 8,
+    SMOOTHER_UPDATE = 16,
+    CASE_INIT_ONLY = 32
+} run_mode_type;
 
-
-
-  typedef enum { JOB_NOT_STARTED  = 0,
-                 JOB_SUBMITTED    = 1,  // This implies that it has been submitted to the internal queue system; we don't know if it is actually running or not.
-                 JOB_RUN_FAILURE  = 2,
-                 JOB_LOAD_FAILURE = 3,
-                 JOB_RUN_OK       = 4  } run_status_type;
-
-
-/*****************************************************************/
+typedef enum {
+    JOB_NOT_STARTED = 0,
+    JOB_SUBMITTED =
+        1, // This implies that it has been submitted to the internal queue system; we don't know if it is actually running or not.
+    JOB_RUN_FAILURE = 2,
+    JOB_LOAD_FAILURE = 3,
+    JOB_RUN_OK = 4
+} run_status_type;
 
 /**
    This enum is used when we are setting up the dependencies between
@@ -176,41 +165,35 @@ typedef enum { //ENKF_ASSIMILATION       = 1,
 */
 
 typedef enum {
-  ALL_ACTIVE    = 1,       /* The variable/observation is fully active, i.e. all cells/all faults/all .. */
-  INACTIVE      = 2,       /* Fully inactive */
-  PARTLY_ACTIVE = 3        /* Partly active - must supply additonal type spesific information on what is active.*/
+    ALL_ACTIVE =
+        1, /* The variable/observation is fully active, i.e. all cells/all faults/all .. */
+    INACTIVE = 2, /* Fully inactive */
+    PARTLY_ACTIVE =
+        3 /* Partly active - must supply additonal type spesific information on what is active.*/
 } active_mode_type;
 
+typedef struct {
+    int report_step;
+    int iens;
+} node_id_type;
 
-  typedef struct {
-    int        report_step;
-    int        iens;
-  } node_id_type;
-
-
-
-/*****************************************************************/
-/* Possible transitions: */
-  typedef enum {
+typedef enum {
     STATE_UNDEFINED = 1,
     STATE_INITIALIZED = 2,
     STATE_HAS_DATA = 4,
     STATE_LOAD_FAILURE = 8,
     STATE_PARENT_FAILURE = 16
-  } realisation_state_enum;
+} realisation_state_enum;
 
-
-  typedef enum {
+typedef enum {
     INIT_NONE = 0,
     INIT_CONDITIONAL = 1,
     INIT_FORCE = 2
-  } init_mode_type;
-
-
+} init_mode_type;
 
 typedef struct enkf_obs_struct enkf_obs_type;
 
-const char      * enkf_types_get_impl_name(ert_impl_type );
+const char *enkf_types_get_impl_name(ert_impl_type);
 
 #ifdef __cplusplus
 }

@@ -16,7 +16,6 @@
    for more details.
 */
 
-
 #include <stdlib.h>
 
 #include <ert/util/util.hpp>
@@ -24,66 +23,68 @@
 #include <ert/config/config_root_path.hpp>
 
 struct config_root_path_struct {
-  char * input_path;
-  char * abs_path;
-  char * rel_path;
+    char *input_path;
+    char *abs_path;
+    char *rel_path;
 };
 
-
-/**
+/*
    Input must be an existing directory, which will be used as the
    root; or NULL in which case cwd will be used as root. The input
    directory can be both realtive or absolute.
 */
 
-config_root_path_type * config_root_path_alloc( const char * input_path ) {
-  if (input_path == NULL || util_is_directory( input_path )) {
-    config_root_path_type * root_path = (config_root_path_type*)util_malloc( sizeof * root_path );
-    {
-      char * cwd = (char*)util_alloc_cwd();
+config_root_path_type *config_root_path_alloc(const char *input_path) {
+    if (input_path == NULL || util_is_directory(input_path)) {
+        config_root_path_type *root_path =
+            (config_root_path_type *)util_malloc(sizeof *root_path);
+        {
+            char *cwd = (char *)util_alloc_cwd();
 
-      root_path->input_path = util_alloc_string_copy( input_path );
-      if (input_path == NULL) {
-        root_path->rel_path = NULL;
-        root_path->abs_path = util_alloc_string_copy( cwd );
-      } else {
-        if (util_is_abs_path( input_path )) {
-          root_path->abs_path = util_alloc_string_copy( input_path );
-          root_path->rel_path = util_alloc_rel_path( cwd , root_path->abs_path);
-        } else {
-          root_path->rel_path = util_alloc_string_copy( input_path );
-          {
-            char * abs_path = (char*)util_alloc_filename( cwd , input_path , NULL );
-            root_path->abs_path = util_alloc_realpath( abs_path );
-            free( abs_path );
-          }
+            root_path->input_path = util_alloc_string_copy(input_path);
+            if (input_path == NULL) {
+                root_path->rel_path = NULL;
+                root_path->abs_path = util_alloc_string_copy(cwd);
+            } else {
+                if (util_is_abs_path(input_path)) {
+                    root_path->abs_path = util_alloc_string_copy(input_path);
+                    root_path->rel_path =
+                        util_alloc_rel_path(cwd, root_path->abs_path);
+                } else {
+                    root_path->rel_path = util_alloc_string_copy(input_path);
+                    {
+                        char *abs_path =
+                            (char *)util_alloc_filename(cwd, input_path, NULL);
+                        root_path->abs_path = util_alloc_realpath(abs_path);
+                        free(abs_path);
+                    }
+                }
+            }
+            free(cwd);
         }
-      }
-      free( cwd );
-    }
-    return root_path;
-  } else
-    return NULL;
+        return root_path;
+    } else
+        return NULL;
 }
 
-
-void config_root_path_free( config_root_path_type * root_path ) {
-  free( root_path->rel_path );
-  free( root_path->abs_path );
-  free( root_path->input_path );
-  free( root_path );
+void config_root_path_free(config_root_path_type *root_path) {
+    free(root_path->rel_path);
+    free(root_path->abs_path);
+    free(root_path->input_path);
+    free(root_path);
 }
 
-const char * config_root_path_get_input_path( const config_root_path_type * root_path ) {
-  return root_path->input_path;
+const char *
+config_root_path_get_input_path(const config_root_path_type *root_path) {
+    return root_path->input_path;
 }
 
-
-const char * config_root_path_get_rel_path( const config_root_path_type * root_path ) {
-  return root_path->rel_path;
+const char *
+config_root_path_get_rel_path(const config_root_path_type *root_path) {
+    return root_path->rel_path;
 }
 
-
-const char * config_root_path_get_abs_path( const config_root_path_type * root_path ) {
-  return root_path->abs_path;
+const char *
+config_root_path_get_abs_path(const config_root_path_type *root_path) {
+    return root_path->abs_path;
 }

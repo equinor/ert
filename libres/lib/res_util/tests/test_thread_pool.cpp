@@ -21,50 +21,41 @@
 #include <ert/util/test_util.hpp>
 #include <ert/res_util/thread_pool.hpp>
 
-
 pthread_mutex_t lock;
 
-
 void create_and_destroy() {
-  int run_size = 10;
-  thread_pool_type * tp = thread_pool_alloc( run_size , true );
+    int run_size = 10;
+    thread_pool_type *tp = thread_pool_alloc(run_size, true);
 
-  thread_pool_join( tp );
-  thread_pool_free( tp );
+    thread_pool_join(tp);
+    thread_pool_free(tp);
 }
 
-
-void * inc(void * arg) {
-  int * int_arg = (int *) arg;
-  pthread_mutex_lock( &lock );
-  int_arg[0]++;
-  pthread_mutex_unlock( &lock );
-  return NULL;
+void *inc(void *arg) {
+    int *int_arg = (int *)arg;
+    pthread_mutex_lock(&lock);
+    int_arg[0]++;
+    pthread_mutex_unlock(&lock);
+    return NULL;
 }
-
 
 void run() {
-  int run_size = 10;
-  int job_size = 1000;
-  int value = 0;
-  thread_pool_type * tp = thread_pool_alloc( run_size , true );
+    int run_size = 10;
+    int job_size = 1000;
+    int value = 0;
+    thread_pool_type *tp = thread_pool_alloc(run_size, true);
 
-  pthread_mutex_init(&lock , NULL);
-  for (int i=0; i < job_size; i++)
-    thread_pool_add_job( tp , inc , &value );
+    pthread_mutex_init(&lock, NULL);
+    for (int i = 0; i < job_size; i++)
+        thread_pool_add_job(tp, inc, &value);
 
-  thread_pool_join( tp );
-  thread_pool_free( tp );
-  test_assert_int_equal( job_size , value );
-  pthread_mutex_destroy( &lock );
+    thread_pool_join(tp);
+    thread_pool_free(tp);
+    test_assert_int_equal(job_size, value);
+    pthread_mutex_destroy(&lock);
 }
 
-
-
-
-
-
-int main( int argc , char ** argv) {
-  create_and_destroy();
-  run();
+int main(int argc, char **argv) {
+    create_and_destroy();
+    run();
 }

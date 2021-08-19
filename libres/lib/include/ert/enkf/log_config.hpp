@@ -26,25 +26,24 @@
 extern "C" {
 #endif
 
-
 #define LOG_CRITICAL_NAME "CRITICAL"
 #define LOG_ERROR_NAME "ERROR"
 #define LOG_WARNING_NAME "WARNING"
 #define LOG_INFO_NAME "INFO"
 #define LOG_DEBUG_NAME "DEBUG"
 
-
 typedef struct log_config_struct log_config_type;
 
-log_config_type * log_config_alloc_load(const char *);
-log_config_type * log_config_alloc(const config_content_type *);
-PY_USED log_config_type * log_config_alloc_full(const char * log_file, message_level_type message_level);
-void              log_config_free(log_config_type *);
+log_config_type *log_config_alloc_load(const char *);
+log_config_type *log_config_alloc(const config_content_type *);
+PY_USED log_config_type *
+log_config_alloc_full(const char *log_file, message_level_type message_level);
+void log_config_free(log_config_type *);
 
-const char *             log_config_get_log_file(const log_config_type *);
+const char *log_config_get_log_file(const log_config_type *);
 const message_level_type log_config_get_log_level(const log_config_type *);
 
-message_level_type log_config_level_parser(const char * level);
+message_level_type log_config_level_parser(const char *level);
 
 #ifdef __cplusplus
 }

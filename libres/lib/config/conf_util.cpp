@@ -25,7 +25,6 @@
 
 #include <ert/config/conf_util.hpp>
 
-
 /*
   This function creates a string buffer from a file. Furthermore, if the strings in pad_keys are found in the buffer,
   they are padded with a space before and after.
@@ -38,48 +37,42 @@
 
   key = value
 */
-static
-char * __conf_util_fscanf_alloc_token_buffer(
-  const char *  file,
-  const char *  comment,
-  int           num_pad_keys,
-  const char ** pad_keys)
-{
-  char * buffer_wrk   = basic_parser_fread_alloc_file_content( file , NULL /* quote_set */  , NULL /* delete_set */ , "--" /* Comment start*/ , "\n" /* Comment end */);
-  char ** padded_keys = (char**)util_calloc(num_pad_keys , sizeof * padded_keys);
-  for(int key_nr = 0; key_nr < num_pad_keys; key_nr++)
-  {
-    assert(pad_keys[key_nr] != NULL);
+static char *__conf_util_fscanf_alloc_token_buffer(const char *file,
+                                                   const char *comment,
+                                                   int num_pad_keys,
+                                                   const char **pad_keys) {
+    char *buffer_wrk = basic_parser_fread_alloc_file_content(
+        file, NULL /* quote_set */, NULL /* delete_set */,
+        "--" /* Comment start*/, "\n" /* Comment end */);
+    char **padded_keys =
+        (char **)util_calloc(num_pad_keys, sizeof *padded_keys);
+    for (int key_nr = 0; key_nr < num_pad_keys; key_nr++) {
+        assert(pad_keys[key_nr] != NULL);
 
-    int key_len = strlen(pad_keys[key_nr]);
-    padded_keys[key_nr] = (char*)util_calloc((key_len + 3) , sizeof * padded_keys[key_nr]);
-    padded_keys[key_nr][0] = ' ';
-    for(int i=0; i<key_len; i++)
-    {
-      padded_keys[key_nr][1+i] = pad_keys[key_nr][i];
+        int key_len = strlen(pad_keys[key_nr]);
+        padded_keys[key_nr] =
+            (char *)util_calloc((key_len + 3), sizeof *padded_keys[key_nr]);
+        padded_keys[key_nr][0] = ' ';
+        for (int i = 0; i < key_len; i++) {
+            padded_keys[key_nr][1 + i] = pad_keys[key_nr][i];
+        }
+        padded_keys[key_nr][key_len + 1] = ' ';
+        padded_keys[key_nr][key_len + 2] = '\0';
     }
-    padded_keys[key_nr][key_len + 1] = ' ';
-    padded_keys[key_nr][key_len + 2] = '\0';
-  }
-  char * buffer = util_string_replacen_alloc(buffer_wrk, num_pad_keys,
-                                             pad_keys, (const char **) padded_keys);
-  free(buffer_wrk);
-  util_free_stringlist(padded_keys, num_pad_keys);
+    char *buffer = util_string_replacen_alloc(
+        buffer_wrk, num_pad_keys, pad_keys, (const char **)padded_keys);
+    free(buffer_wrk);
+    util_free_stringlist(padded_keys, num_pad_keys);
 
-  return buffer;
+    return buffer;
 }
 
-
-
-char * conf_util_fscanf_alloc_token_buffer(
-  const char * file_name)
-{
-  const char * pad_keys[] = {"{","}","=",";"};
-  char * buffer = __conf_util_fscanf_alloc_token_buffer(file_name, "--", 4, (const char **) pad_keys);
-  return buffer;
+char *conf_util_fscanf_alloc_token_buffer(const char *file_name) {
+    const char *pad_keys[] = {"{", "}", "=", ";"};
+    char *buffer = __conf_util_fscanf_alloc_token_buffer(
+        file_name, "--", 4, (const char **)pad_keys);
+    return buffer;
 }
-
-
 
 /*
   This function takes a pointer to a position in a string and returns a copy
@@ -90,73 +83,60 @@ char * conf_util_fscanf_alloc_token_buffer(
   Note: Quoted strings with no content, e.g. "   "  are NOT considered as tokens!
 
 */
-char * conf_util_alloc_next_token(
-  char ** buff_pos)
-{
-  const char * sep = " \t\r\n";
+char *conf_util_alloc_next_token(char **buff_pos) {
+    const char *sep = " \t\r\n";
 
-  int len_token = 0;
-  bool found    = false;
-  bool quoted   = false;
-  while(!found)
-  {
-    int init_whitespace = strspn(*buff_pos, sep);
-    *buff_pos += init_whitespace;
+    int len_token = 0;
+    bool found = false;
+    bool quoted = false;
+    while (!found) {
+        int init_whitespace = strspn(*buff_pos, sep);
+        *buff_pos += init_whitespace;
 
-    if(*buff_pos[0] == '"')
-    {
-      quoted = true;
-      *buff_pos += 1;
-      len_token = strcspn(*buff_pos, "\"");
-      if(len_token == strspn(*buff_pos, sep))
-      {
-        *buff_pos += len_token;
-        len_token=0;
-      }
-    }
-    else if(*buff_pos[0] == '\'')
-    {
-      quoted = true;
-      *buff_pos += 1;
-      len_token = strcspn(*buff_pos, "\'");
-      if(len_token == strspn(*buff_pos, sep))
-      {
-        *buff_pos += len_token;
-        len_token=0;
-      }
-    }
-    else if(*buff_pos[0] == '[')
-    {
-      quoted = true;
-      *buff_pos += 1;
-      len_token = strcspn(*buff_pos, "]");
-      if(len_token == strspn(*buff_pos, sep))
-      {
-        *buff_pos += len_token;
-        len_token=0;
-      }
-    }
-    else
-    {
-      quoted = false;
-      len_token = strcspn(*buff_pos, sep);
+        if (*buff_pos[0] == '"') {
+            quoted = true;
+            *buff_pos += 1;
+            len_token = strcspn(*buff_pos, "\"");
+            if (len_token == strspn(*buff_pos, sep)) {
+                *buff_pos += len_token;
+                len_token = 0;
+            }
+        } else if (*buff_pos[0] == '\'') {
+            quoted = true;
+            *buff_pos += 1;
+            len_token = strcspn(*buff_pos, "\'");
+            if (len_token == strspn(*buff_pos, sep)) {
+                *buff_pos += len_token;
+                len_token = 0;
+            }
+        } else if (*buff_pos[0] == '[') {
+            quoted = true;
+            *buff_pos += 1;
+            len_token = strcspn(*buff_pos, "]");
+            if (len_token == strspn(*buff_pos, sep)) {
+                *buff_pos += len_token;
+                len_token = 0;
+            }
+        } else {
+            quoted = false;
+            len_token = strcspn(*buff_pos, sep);
+        }
+
+        if (len_token > 0)
+            found = true;
+        else if (len_token == 0 && !quoted)
+            return NULL;
+        else if (len_token == 0 && quoted)
+            *buff_pos += 1;
     }
 
-    if(len_token > 0)
-      found = true;
-    else if(len_token == 0 && !quoted)
-      return NULL;
-    else if(len_token == 0 && quoted)
-      *buff_pos += 1;
-  }
+    char *token = (char *)util_calloc((len_token + 1), sizeof *token);
+    memmove(token, *buff_pos, len_token);
+    token[len_token] = '\0';
+    *buff_pos += len_token;
 
-  char * token = (char*)util_calloc( (len_token + 1) , sizeof * token);
-  memmove(token, *buff_pos, len_token);
-  token[len_token] = '\0';
-  *buff_pos += len_token;
+    if (quoted)
+        *buff_pos += 1;
 
-  if(quoted)
-    *buff_pos += 1;
-
-  return token;
+    return token;
 }

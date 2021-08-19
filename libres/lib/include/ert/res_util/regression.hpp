@@ -24,7 +24,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void    regression_augmented_OLS(const matrix_type * X , const matrix_type * Y , const matrix_type *E, matrix_type * beta);
+void regression_augmented_OLS(const matrix_type *X, const matrix_type *Y,
+                              const matrix_type *E, matrix_type *beta);
 
 #ifdef __cplusplus
 }

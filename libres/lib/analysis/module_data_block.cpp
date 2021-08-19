@@ -16,7 +16,6 @@
    for more details.
 */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -26,42 +25,49 @@
 #include <ert/analysis/module_data_block.hpp>
 
 #define MODULE_DATA_BLOCK_TYPE_ID 73217801
-static UTIL_SAFE_CAST_FUNCTION( module_data_block , MODULE_DATA_BLOCK_TYPE_ID);
-UTIL_IS_INSTANCE_FUNCTION( module_data_block , MODULE_DATA_BLOCK_TYPE_ID)
+static UTIL_SAFE_CAST_FUNCTION(module_data_block, MODULE_DATA_BLOCK_TYPE_ID);
+UTIL_IS_INSTANCE_FUNCTION(module_data_block, MODULE_DATA_BLOCK_TYPE_ID)
 
-module_data_block_type * module_data_block_alloc(  const char * key,  const int * index_list , const int row_start, const int n_active) {
-  module_data_block_type * module_data_block = (module_data_block_type*)util_malloc( sizeof * module_data_block );
-  UTIL_TYPE_ID_INIT( module_data_block , MODULE_DATA_BLOCK_TYPE_ID );
-  module_data_block->key = util_alloc_string_copy( key );
-  module_data_block->index_list  = index_list;
-  module_data_block->A_row_start = row_start;
-  module_data_block->n_active = n_active;
-  return module_data_block;
+module_data_block_type *module_data_block_alloc(const char *key,
+                                                const int *index_list,
+                                                const int row_start,
+                                                const int n_active) {
+    module_data_block_type *module_data_block =
+        (module_data_block_type *)util_malloc(sizeof *module_data_block);
+    UTIL_TYPE_ID_INIT(module_data_block, MODULE_DATA_BLOCK_TYPE_ID);
+    module_data_block->key = util_alloc_string_copy(key);
+    module_data_block->index_list = index_list;
+    module_data_block->A_row_start = row_start;
+    module_data_block->n_active = n_active;
+    return module_data_block;
 }
 
-
-const char * module_data_block_get_key(const module_data_block_type * module_data_block){
-  return module_data_block->key;
+const char *
+module_data_block_get_key(const module_data_block_type *module_data_block) {
+    return module_data_block->key;
 }
 
-const int module_data_block_get_row_start(const module_data_block_type * module_data_block){
-  return module_data_block->A_row_start;
+const int module_data_block_get_row_start(
+    const module_data_block_type *module_data_block) {
+    return module_data_block->A_row_start;
 }
 
-const int module_data_block_get_row_end(const module_data_block_type * module_data_block){
-  return module_data_block->A_row_start + module_data_block->n_active;
+const int
+module_data_block_get_row_end(const module_data_block_type *module_data_block) {
+    return module_data_block->A_row_start + module_data_block->n_active;
 }
 
-const int  * module_data_block_get_active_indices(const module_data_block_type * module_data_block ){
-  return module_data_block->index_list;
+const int *module_data_block_get_active_indices(
+    const module_data_block_type *module_data_block) {
+    return module_data_block->index_list;
 }
 
-void module_data_block_free( module_data_block_type * module_data_block ) {
-  free(module_data_block->key);
-  free( module_data_block );
+void module_data_block_free(module_data_block_type *module_data_block) {
+    free(module_data_block->key);
+    free(module_data_block);
 }
 
-void module_data_block_free__( void * arg ) {
-  module_data_block_type * data_block = module_data_block_safe_cast( arg );
-  module_data_block_free( data_block );
+void module_data_block_free__(void *arg) {
+    module_data_block_type *data_block = module_data_block_safe_cast(arg);
+    module_data_block_free(data_block);
 }

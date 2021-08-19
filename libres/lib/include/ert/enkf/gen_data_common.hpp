@@ -29,9 +29,9 @@ extern "C" {
 #endif
 
 typedef struct gen_data_config_struct gen_data_config_type;
-typedef struct gen_data_struct        gen_data_type;
+typedef struct gen_data_struct gen_data_type;
 
-gen_data_type * gen_data_alloc(const gen_data_config_type * );
+gen_data_type *gen_data_alloc(const gen_data_config_type *);
 
 #ifdef __cplusplus
 }

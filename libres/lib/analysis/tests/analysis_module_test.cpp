@@ -27,61 +27,41 @@
 
 #include <ert/analysis/analysis_module.hpp>
 
-
-
 void test_invalid_mask_size() {
-  analysis_module_type * module = analysis_module_alloc_internal("STD_ENKF");
-  int active_ens_size = 10;
-  int active_obs_size = 5;
-  rng_type * rng = NULL;
+    analysis_module_type *module = analysis_module_alloc_internal("STD_ENKF");
+    int active_ens_size = 10;
+    int active_obs_size = 5;
+    rng_type *rng = NULL;
 
-  matrix_type * S = matrix_alloc(active_obs_size, active_ens_size);
-  matrix_type * R = matrix_alloc(active_obs_size, active_obs_size);
-  matrix_type * dObs = matrix_alloc(active_obs_size, 2);
-  matrix_type * E = matrix_alloc(active_obs_size, active_obs_size);
-  matrix_type * D = matrix_alloc(active_obs_size, active_obs_size);
+    matrix_type *S = matrix_alloc(active_obs_size, active_ens_size);
+    matrix_type *R = matrix_alloc(active_obs_size, active_obs_size);
+    matrix_type *dObs = matrix_alloc(active_obs_size, 2);
+    matrix_type *E = matrix_alloc(active_obs_size, active_obs_size);
+    matrix_type *D = matrix_alloc(active_obs_size, active_obs_size);
 
-  bool_vector_type * ens_mask = bool_vector_alloc(active_ens_size + 1, true );
-  bool_vector_type * obs_mask = bool_vector_alloc(active_obs_size + 1, true );
+    bool_vector_type *ens_mask = bool_vector_alloc(active_ens_size + 1, true);
+    bool_vector_type *obs_mask = bool_vector_alloc(active_obs_size + 1, true);
 
-  test_assert_throw( analysis_module_init_update(module,
-                                                 ens_mask,
-                                                 obs_mask,
-                                                 S,
-                                                 R,
-                                                 dObs,
-                                                 E,
-                                                 D,
-                                                 rng),
-                     std::invalid_argument);
+    test_assert_throw(analysis_module_init_update(module, ens_mask, obs_mask, S,
+                                                  R, dObs, E, D, rng),
+                      std::invalid_argument);
 
-  bool_vector_iset(ens_mask, 0, false);
-  bool_vector_iset(obs_mask, 0, false);
+    bool_vector_iset(ens_mask, 0, false);
+    bool_vector_iset(obs_mask, 0, false);
 
-  analysis_module_init_update(module,
-                              ens_mask,
-                              obs_mask,
-                              S,
-                              R,
-                              dObs,
-                              E,
-                              D,
-                              rng);
+    analysis_module_init_update(module, ens_mask, obs_mask, S, R, dObs, E, D,
+                                rng);
 
-  bool_vector_free(ens_mask);
-  bool_vector_free(obs_mask);
+    bool_vector_free(ens_mask);
+    bool_vector_free(obs_mask);
 
-  matrix_free(S);
-  matrix_free(R);
-  matrix_free(dObs);
-  matrix_free(E);
-  matrix_free(D);
+    matrix_free(S);
+    matrix_free(R);
+    matrix_free(dObs);
+    matrix_free(E);
+    matrix_free(D);
 
-  analysis_module_free( module );
+    analysis_module_free(module);
 }
 
-
-
-int main(int argc, char **argv) {
-  test_invalid_mask_size();
-}
+int main(int argc, char **argv) { test_invalid_mask_size(); }

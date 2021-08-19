@@ -29,32 +29,33 @@ extern "C" {
 #include <ert/util/type_macros.hpp>
 
 typedef struct arg_pack_struct arg_pack_type;
-typedef void   (arg_node_free_ftype)  (void *);
-typedef void * (arg_node_copyc_ftype) (const void *);
+typedef void(arg_node_free_ftype)(void *);
+typedef void *(arg_node_copyc_ftype)(const void *);
 
-  arg_pack_type * arg_pack_alloc();
-  UTIL_SAFE_CAST_HEADER( arg_pack );
-  UTIL_SAFE_CAST_HEADER_CONST( arg_pack );
-  UTIL_IS_INSTANCE_HEADER( arg_pack );
+arg_pack_type *arg_pack_alloc();
+UTIL_SAFE_CAST_HEADER(arg_pack);
+UTIL_SAFE_CAST_HEADER_CONST(arg_pack);
+UTIL_IS_INSTANCE_HEADER(arg_pack);
 
-  void            arg_pack_free(arg_pack_type * );
-  void            arg_pack_clear(arg_pack_type *);
+void arg_pack_free(arg_pack_type *);
+void arg_pack_clear(arg_pack_type *);
 
-  void            arg_pack_append_ptr(arg_pack_type * , void *);
-  void            arg_pack_append_const_ptr(arg_pack_type * , const void *);
-  void            arg_pack_append_owned_ptr(arg_pack_type * , void * , arg_node_free_ftype *);
+void arg_pack_append_ptr(arg_pack_type *, void *);
+void arg_pack_append_const_ptr(arg_pack_type *, const void *);
+void arg_pack_append_owned_ptr(arg_pack_type *, void *, arg_node_free_ftype *);
 
-  const void    * arg_pack_iget_const_ptr( const arg_pack_type * arg_pack , int index);
-  void          * arg_pack_iget_ptr(const arg_pack_type * , int);
-  void          * arg_pack_iget_adress(const arg_pack_type * , int);
+const void *arg_pack_iget_const_ptr(const arg_pack_type *arg_pack, int index);
+void *arg_pack_iget_ptr(const arg_pack_type *, int);
+void *arg_pack_iget_adress(const arg_pack_type *, int);
 
-  int arg_pack_size( const arg_pack_type * arg_pack );
+int arg_pack_size(const arg_pack_type *arg_pack);
 
-  /*****************************************************************/
-
-#define APPEND_TYPED_HEADER(type) void arg_pack_append_ ## type (arg_pack_type * , type);
-#define IGET_TYPED_HEADER(type)   type arg_pack_iget_ ## type( const arg_pack_type * , int );
-#define ISET_TYPED_HEADER(type)   void arg_pack_iset_ ## type( arg_pack_type * , int , type value);
+#define APPEND_TYPED_HEADER(type)                                              \
+    void arg_pack_append_##type(arg_pack_type *, type);
+#define IGET_TYPED_HEADER(type)                                                \
+    type arg_pack_iget_##type(const arg_pack_type *, int);
+#define ISET_TYPED_HEADER(type)                                                \
+    void arg_pack_iset_##type(arg_pack_type *, int, type value);
 
 APPEND_TYPED_HEADER(int)
 APPEND_TYPED_HEADER(bool)
@@ -79,7 +80,6 @@ ISET_TYPED_HEADER(size_t)
 
 #undef APPEND_TYPED_HEADER
 #undef GET_TYPED_HEADER
-
 
 #ifdef __cplusplus
 }

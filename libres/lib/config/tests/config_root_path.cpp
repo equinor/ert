@@ -22,54 +22,61 @@
 
 #include <ert/config/config_parser.hpp>
 
+int main(int argc, char **argv) {
+    char *cwd = util_alloc_cwd();
 
-int main(int argc , char ** argv) {
-  char * cwd = util_alloc_cwd();
+    {
+        config_root_path_type *root_path = config_root_path_alloc(NULL);
 
-  {
-    config_root_path_type * root_path = config_root_path_alloc( NULL );
+        if (!test_check_string_equal(config_root_path_get_abs_path(root_path),
+                                     cwd))
+            test_error_exit("abs:path:%s   expeceted:%s \n",
+                            config_root_path_get_abs_path(root_path), cwd);
 
-    if (!test_check_string_equal( config_root_path_get_abs_path( root_path ) , cwd ))
-      test_error_exit("abs:path:%s   expeceted:%s \n",config_root_path_get_abs_path( root_path ) , cwd );
+        if (!test_check_string_equal(config_root_path_get_input_path(root_path),
+                                     NULL))
+            test_error_exit("input:path:%s   expeceted:%s \n",
+                            config_root_path_get_input_path(root_path), NULL);
 
-    if (!test_check_string_equal( config_root_path_get_input_path( root_path ) , NULL ))
-      test_error_exit("input:path:%s   expeceted:%s \n",config_root_path_get_input_path( root_path ) , NULL );
+        if (!test_check_string_equal(config_root_path_get_rel_path(root_path),
+                                     NULL))
+            test_error_exit("rel:path:%s   expeceted:%s \n",
+                            config_root_path_get_rel_path(root_path), NULL);
 
-    if (!test_check_string_equal( config_root_path_get_rel_path( root_path ) , NULL ))
-      test_error_exit("rel:path:%s   expeceted:%s \n",config_root_path_get_rel_path( root_path ) , NULL );
+        config_root_path_free(root_path);
+    }
 
+    {
+        config_root_path_type *root_path =
+            config_root_path_alloc("/does/not/exist");
+        if (root_path != NULL)
+            test_error_exit(
+                "Created root_path instance for not-existing input \n");
+    }
 
-    config_root_path_free( root_path );
-  }
+    {
+        const char *input_path = argv[1];
+        char *cwd = util_alloc_cwd();
+        char *rel_path = util_alloc_rel_path(cwd, input_path);
 
+        config_root_path_type *root_path1 = config_root_path_alloc(input_path);
+        config_root_path_type *root_path2 = config_root_path_alloc(rel_path);
 
-  {
-    config_root_path_type * root_path = config_root_path_alloc( "/does/not/exist" );
-    if (root_path != NULL)
-      test_error_exit("Created root_path instance for not-existing input \n");
-  }
+        if (!test_check_string_equal(config_root_path_get_rel_path(root_path1),
+                                     config_root_path_get_rel_path(root_path2)))
+            test_error_exit("Rel: %s != %s \n",
+                            config_root_path_get_rel_path(root_path1),
+                            config_root_path_get_rel_path(root_path2));
 
+        if (!test_check_string_equal(config_root_path_get_abs_path(root_path1),
+                                     config_root_path_get_abs_path(root_path2)))
+            test_error_exit("Abs: %s != %s \n",
+                            config_root_path_get_abs_path(root_path1),
+                            config_root_path_get_abs_path(root_path2));
 
+        config_root_path_free(root_path1);
+        config_root_path_free(root_path2);
+    }
 
-  {
-    const char * input_path = argv[1];
-    char * cwd      = util_alloc_cwd();
-    char * rel_path = util_alloc_rel_path( cwd , input_path );
-
-    config_root_path_type * root_path1 = config_root_path_alloc( input_path );
-    config_root_path_type * root_path2 = config_root_path_alloc( rel_path );
-
-    if (!test_check_string_equal( config_root_path_get_rel_path( root_path1 ) , config_root_path_get_rel_path( root_path2 )))
-      test_error_exit("Rel: %s != %s \n",config_root_path_get_rel_path( root_path1 ) , config_root_path_get_rel_path( root_path2));
-
-    if (!test_check_string_equal( config_root_path_get_abs_path( root_path1 ) , config_root_path_get_abs_path( root_path2 )))
-      test_error_exit("Abs: %s != %s \n",config_root_path_get_abs_path( root_path1 ) , config_root_path_get_abs_path( root_path2 ));
-
-    config_root_path_free( root_path1 );
-    config_root_path_free( root_path2 );
-  }
-
-
-  exit(0);
+    exit(0);
 }
-

@@ -26,36 +26,28 @@ extern "C" {
 
 typedef struct cv_enkf_data_struct cv_enkf_data_type;
 
-void * cv_enkf_data_alloc( );
-void   cv_enkf_data_free( void * arg );
+void *cv_enkf_data_alloc();
+void cv_enkf_data_free(void *arg);
 
-void cv_enkf_init_update( void * arg ,
-                          const bool_vector_type * ens_mask ,
-                          const bool_vector_type * obs_back , 
-                          const matrix_type * S ,
-                          const matrix_type * R ,
-                          const matrix_type * dObs ,
-                          const matrix_type * E ,
-                          const matrix_type * D,
-                          rng_type * rng);
+void cv_enkf_init_update(void *arg, const bool_vector_type *ens_mask,
+                         const bool_vector_type *obs_back, const matrix_type *S,
+                         const matrix_type *R, const matrix_type *dObs,
+                         const matrix_type *E, const matrix_type *D,
+                         rng_type *rng);
 
-void cv_enkf_initX(void * module_data ,
-                   matrix_type * X ,
-                   const matrix_type * A ,
-                   const matrix_type * S ,
-                   const matrix_type * R ,
-                   const matrix_type * dObs ,
-                   const matrix_type * E ,
-                   const matrix_type * D,
-                   rng_type * rng);
+void cv_enkf_initX(void *module_data, matrix_type *X, const matrix_type *A,
+                   const matrix_type *S, const matrix_type *R,
+                   const matrix_type *dObs, const matrix_type *E,
+                   const matrix_type *D, rng_type *rng);
 
-bool        cv_enkf_set_double( void * arg , const char * var_name , double value);
-bool        cv_enkf_set_int( void * arg , const char * var_name , int value);
-bool        cv_enkf_set_bool(  void * arg , const char * var_name , bool value );
+bool cv_enkf_set_double(void *arg, const char *var_name, double value);
+bool cv_enkf_set_int(void *arg, const char *var_name, int value);
+bool cv_enkf_set_bool(void *arg, const char *var_name, bool value);
 
-void        cv_enkf_set_truncation( cv_enkf_data_type * data , double truncation );
-void        cv_enkf_set_pen_press( cv_enkf_data_type * data , bool value );
-void        cv_enkf_set_subspace_dimension( cv_enkf_data_type * data , int subspace_dimension);
+void cv_enkf_set_truncation(cv_enkf_data_type *data, double truncation);
+void cv_enkf_set_pen_press(cv_enkf_data_type *data, bool value);
+void cv_enkf_set_subspace_dimension(cv_enkf_data_type *data,
+                                    int subspace_dimension);
 
 #ifdef __cplusplus
 }

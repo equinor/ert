@@ -16,9 +16,9 @@
    for more details.
  */
 #ifndef TORQUE_DRIVER_H
-#define	TORQUE_DRIVER_H
+#define TORQUE_DRIVER_H
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 #include <stdio.h>
@@ -26,63 +26,62 @@ extern "C" {
 #include <ert/util/type_macros.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 
-  /*
+/*
     The options supported by the Torque driver.
    */
-#define TORQUE_QSUB_CMD          "QSUB_CMD"
-#define TORQUE_QSTAT_CMD         "QSTAT_CMD"
-#define TORQUE_QDEL_CMD          "QDEL_CMD"
-#define TORQUE_QUEUE             "QUEUE"
+#define TORQUE_QSUB_CMD "QSUB_CMD"
+#define TORQUE_QSTAT_CMD "QSTAT_CMD"
+#define TORQUE_QDEL_CMD "QDEL_CMD"
+#define TORQUE_QUEUE "QUEUE"
 #define TORQUE_NUM_CPUS_PER_NODE "NUM_CPUS_PER_NODE"
-#define TORQUE_NUM_NODES         "NUM_NODES"
-#define TORQUE_KEEP_QSUB_OUTPUT  "KEEP_QSUB_OUTPUT"
-#define TORQUE_CLUSTER_LABEL     "CLUSTER_LABEL"
-#define TORQUE_JOB_PREFIX_KEY    "JOB_PREFIX"
-#define TORQUE_SUBMIT_SLEEP      "SUBMIT_SLEEP"
-#define TORQUE_DEBUG_OUTPUT      "DEBUG_OUTPUT"
+#define TORQUE_NUM_NODES "NUM_NODES"
+#define TORQUE_KEEP_QSUB_OUTPUT "KEEP_QSUB_OUTPUT"
+#define TORQUE_CLUSTER_LABEL "CLUSTER_LABEL"
+#define TORQUE_JOB_PREFIX_KEY "JOB_PREFIX"
+#define TORQUE_SUBMIT_SLEEP "SUBMIT_SLEEP"
+#define TORQUE_DEBUG_OUTPUT "DEBUG_OUTPUT"
 
-#define TORQUE_DEFAULT_QSUB_CMD      "qsub"
-#define TORQUE_DEFAULT_QSTAT_CMD     "qstat"
-#define TORQUE_DEFAULT_QDEL_CMD      "qdel"
-#define TORQUE_DEFAULT_SUBMIT_SLEEP  "0"
+#define TORQUE_DEFAULT_QSUB_CMD "qsub"
+#define TORQUE_DEFAULT_QSTAT_CMD "qstat"
+#define TORQUE_DEFAULT_QDEL_CMD "qdel"
+#define TORQUE_DEFAULT_SUBMIT_SLEEP "0"
 
+typedef struct torque_driver_struct torque_driver_type;
+typedef struct torque_job_struct torque_job_type;
 
-  typedef struct torque_driver_struct torque_driver_type;
-  typedef struct torque_job_struct torque_job_type;
+void *torque_driver_alloc();
 
+void *torque_driver_submit_job(void *__driver, const char *submit_cmd,
+                               int num_cpu, const char *run_path,
+                               const char *job_name, int argc,
+                               const char **argv);
 
-  void * torque_driver_alloc();
+void torque_driver_kill_job(void *__driver, void *__job);
+void torque_driver_free__(void *__driver);
+void torque_driver_free(torque_driver_type *driver);
+job_status_type torque_driver_get_job_status(void *__driver, void *__job);
+void torque_driver_free_job(void *__job);
+void torque_driver_set_qstat_refresh_interval(torque_driver_type *driver,
+                                              int refresh_interval);
 
+const void *torque_driver_get_option(const void *__driver,
+                                     const char *option_key);
+bool torque_driver_set_option(void *__driver, const char *option_key,
+                              const void *value);
+void torque_driver_init_option_list(stringlist_type *option_list);
 
-  void * torque_driver_submit_job(void * __driver,
-          const char * submit_cmd,
-          int num_cpu,
-          const char * run_path,
-          const char * job_name,
-          int argc,
-          const char ** argv);
+void torque_job_create_submit_script(const char *run_path,
+                                     const char *submit_cmd, int argc,
+                                     const char **job_argv);
+int torque_driver_get_submit_sleep(const torque_driver_type *driver);
+FILE *torque_driver_get_debug_stream(const torque_driver_type *driver);
+job_status_type torque_driver_parse_status(const char *qstat_file,
+                                           const char *jobnr);
 
-  void torque_driver_kill_job(void * __driver, void * __job);
-  void torque_driver_free__(void * __driver);
-  void torque_driver_free(torque_driver_type * driver);
-  job_status_type torque_driver_get_job_status(void * __driver, void * __job);
-  void torque_driver_free_job(void * __job);
-  void torque_driver_set_qstat_refresh_interval(torque_driver_type * driver, int refresh_interval);
+UTIL_SAFE_CAST_HEADER(torque_driver);
 
-  const void * torque_driver_get_option(const void * __driver, const char * option_key);
-  bool torque_driver_set_option(void * __driver, const char * option_key, const void * value);
-  void torque_driver_init_option_list(stringlist_type * option_list);
-
-  void torque_job_create_submit_script(const char * run_path, const char * submit_cmd, int argc, const char ** job_argv);
-  int torque_driver_get_submit_sleep( const torque_driver_type * driver );
-  FILE * torque_driver_get_debug_stream( const torque_driver_type * driver );
-  job_status_type torque_driver_parse_status(const char * qstat_file, const char * jobnr);
-
-  UTIL_SAFE_CAST_HEADER(torque_driver);
-
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 
-#endif	/* TORQUE_DRIVER_H */
-
+#endif /* TORQUE_DRIVER_H */

@@ -29,14 +29,16 @@ extern "C" {
 
 typedef struct enkf_plot_genvector_struct enkf_plot_genvector_type;
 
-enkf_plot_genvector_type *  enkf_plot_genvector_alloc( const enkf_config_node_type * enkf_config_node , int iens);
-void                        enkf_plot_genvector_free( enkf_plot_genvector_type * vector );
-int                         enkf_plot_genvector_get_size( const enkf_plot_genvector_type * vector );
-void                      * enkf_plot_genvector_load__( void * arg );
-double                      enkf_plot_genvector_iget( const enkf_plot_genvector_type * vector , int index);
+enkf_plot_genvector_type *
+enkf_plot_genvector_alloc(const enkf_config_node_type *enkf_config_node,
+                          int iens);
+void enkf_plot_genvector_free(enkf_plot_genvector_type *vector);
+int enkf_plot_genvector_get_size(const enkf_plot_genvector_type *vector);
+void *enkf_plot_genvector_load__(void *arg);
+double enkf_plot_genvector_iget(const enkf_plot_genvector_type *vector,
+                                int index);
 
-UTIL_IS_INSTANCE_HEADER( enkf_plot_genvector );
-
+UTIL_IS_INSTANCE_HEADER(enkf_plot_genvector);
 
 #ifdef __cplusplus
 }

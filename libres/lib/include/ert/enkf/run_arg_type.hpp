@@ -22,4 +22,3 @@
 typedef struct run_arg_struct run_arg_type;
 
 #endif
-

@@ -21,12 +21,9 @@
 
 #include <ert/util/vector.h>
 
-
 #include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/local_updatestep.hpp>
 #include <ert/enkf/local_config.hpp>
-
-/******************************************************************/
 
 /*
 
@@ -114,42 +111,43 @@ core EnKF updating:
     default ALL_ACTIVE local configuration will be used.
 */
 
-
 struct local_config_struct {
-  local_updatestep_type * default_updatestep;    /* A default report step returned if no particular report step has been installed for this time index. */
-  hash_type             * updatestep_storage;    /* These three hash tables are the 'holding area' for the local_updatestep, */
-  hash_type             * ministep_storage;      /* local_ministep instances. */
-  hash_type             * dataset_storage;
-  hash_type             * obsdata_storage;
+    local_updatestep_type *
+        default_updatestep; /* A default report step returned if no particular report step has been installed for this time index. */
+    hash_type *
+        updatestep_storage; /* These three hash tables are the 'holding area' for the local_updatestep, */
+    hash_type *ministep_storage; /* local_ministep instances. */
+    hash_type *dataset_storage;
+    hash_type *obsdata_storage;
 };
 
-
-/**
+/*
    Instances of local_updatestep and local_ministep are allocated from
    the local_config object, and then subsequently manipulated from the calling scope.
 */
 
-static local_updatestep_type * local_config_alloc_updatestep( local_config_type * local_config , const char * key ) {
-  local_updatestep_type * updatestep = local_updatestep_alloc( key );
-  hash_insert_hash_owned_ref( local_config->updatestep_storage , key , updatestep , local_updatestep_free__);
-  return updatestep;
+static local_updatestep_type *
+local_config_alloc_updatestep(local_config_type *local_config,
+                              const char *key) {
+    local_updatestep_type *updatestep = local_updatestep_alloc(key);
+    hash_insert_hash_owned_ref(local_config->updatestep_storage, key,
+                               updatestep, local_updatestep_free__);
+    return updatestep;
 }
-
-
 
 /*
   The local_config_clear() function will remove all current local configuration,
   and then reallocate a new empty updatestep configuration.
 */
-void local_config_clear( local_config_type * local_config ) {
-   local_config->default_updatestep  = NULL;
-   hash_clear( local_config->updatestep_storage );
-   hash_clear( local_config->ministep_storage );
-   hash_clear( local_config->dataset_storage );
-   hash_clear( local_config->obsdata_storage );
-   local_config->default_updatestep = local_config_alloc_updatestep(local_config, "DEFAULT");
+void local_config_clear(local_config_type *local_config) {
+    local_config->default_updatestep = NULL;
+    hash_clear(local_config->updatestep_storage);
+    hash_clear(local_config->ministep_storage);
+    hash_clear(local_config->dataset_storage);
+    hash_clear(local_config->obsdata_storage);
+    local_config->default_updatestep =
+        local_config_alloc_updatestep(local_config, "DEFAULT");
 }
-
 
 /*
   The local_config_clear_active() function will reset the current active
@@ -158,135 +156,165 @@ void local_config_clear( local_config_type * local_config ) {
   create a new local configuration.
 */
 
-void local_config_clear_active( local_config_type * local_config ) {
-    hash_clear( local_config->updatestep_storage );
-    local_config->default_updatestep = local_config_alloc_updatestep(local_config, "DEFAULT");
+void local_config_clear_active(local_config_type *local_config) {
+    hash_clear(local_config->updatestep_storage);
+    local_config->default_updatestep =
+        local_config_alloc_updatestep(local_config, "DEFAULT");
 }
 
+local_config_type *local_config_alloc() {
+    local_config_type *local_config =
+        (local_config_type *)util_malloc(sizeof *local_config);
 
+    local_config->default_updatestep = NULL;
+    local_config->updatestep_storage = hash_alloc();
+    local_config->ministep_storage = hash_alloc();
+    local_config->dataset_storage = hash_alloc();
+    local_config->obsdata_storage = hash_alloc();
 
-local_config_type * local_config_alloc( ) {
-  local_config_type * local_config = (local_config_type *)util_malloc( sizeof * local_config );
-
-  local_config->default_updatestep  = NULL;
-  local_config->updatestep_storage  = hash_alloc();
-  local_config->ministep_storage    = hash_alloc();
-  local_config->dataset_storage     = hash_alloc();
-  local_config->obsdata_storage     = hash_alloc();
-
-  local_config_clear( local_config );
-  return local_config;
+    local_config_clear(local_config);
+    return local_config;
 }
 
-
-void local_config_free(local_config_type * local_config) {
-  hash_free( local_config->updatestep_storage );
-  hash_free( local_config->ministep_storage);
-  hash_free( local_config->dataset_storage);
-  hash_free( local_config->obsdata_storage);
-  free( local_config );
+void local_config_free(local_config_type *local_config) {
+    hash_free(local_config->updatestep_storage);
+    hash_free(local_config->ministep_storage);
+    hash_free(local_config->dataset_storage);
+    hash_free(local_config->obsdata_storage);
+    free(local_config);
 }
 
-local_ministep_type * local_config_alloc_ministep( local_config_type * local_config , const char * key, analysis_module_type* analysis_module) {
-  if (hash_has_key(local_config->ministep_storage, key))
-    return nullptr;
+local_ministep_type *
+local_config_alloc_ministep(local_config_type *local_config, const char *key,
+                            analysis_module_type *analysis_module) {
+    if (hash_has_key(local_config->ministep_storage, key))
+        return nullptr;
 
-  local_ministep_type * ministep = local_ministep_alloc( key, analysis_module );
-  hash_insert_hash_owned_ref( local_config->ministep_storage , key , ministep , local_ministep_free__);
-  return ministep;
+    local_ministep_type *ministep = local_ministep_alloc(key, analysis_module);
+    hash_insert_hash_owned_ref(local_config->ministep_storage, key, ministep,
+                               local_ministep_free__);
+    return ministep;
 }
 
-local_obsdata_type * local_config_alloc_obsdata( local_config_type * local_config , const char * obsdata_name ) {
-  if (local_config_has_obsdata(local_config, obsdata_name))
-    util_abort("%s: tried to add existing obsdata node key:%s \n",__func__ , obsdata_name);
+local_obsdata_type *local_config_alloc_obsdata(local_config_type *local_config,
+                                               const char *obsdata_name) {
+    if (local_config_has_obsdata(local_config, obsdata_name))
+        util_abort("%s: tried to add existing obsdata node key:%s \n", __func__,
+                   obsdata_name);
 
-  local_obsdata_type * obsdata = local_obsdata_alloc( obsdata_name );
-  hash_insert_hash_owned_ref( local_config->obsdata_storage , obsdata_name , obsdata , local_obsdata_free__);
-  return obsdata;
+    local_obsdata_type *obsdata = local_obsdata_alloc(obsdata_name);
+    hash_insert_hash_owned_ref(local_config->obsdata_storage, obsdata_name,
+                               obsdata, local_obsdata_free__);
+    return obsdata;
 }
 
-bool local_config_has_obsdata( const local_config_type * local_config , const char * key) {
-  return hash_has_key( local_config->obsdata_storage , key );
+bool local_config_has_obsdata(const local_config_type *local_config,
+                              const char *key) {
+    return hash_has_key(local_config->obsdata_storage, key);
 }
 
+local_dataset_type *local_config_alloc_dataset(local_config_type *local_config,
+                                               const char *key) {
+    if (local_config_has_dataset(local_config, key))
+        util_abort("%s: tried to add existing dataset node key:%s \n", __func__,
+                   key);
 
-local_dataset_type * local_config_alloc_dataset( local_config_type * local_config , const char * key ) {
-  if (local_config_has_dataset(local_config, key))
-    util_abort("%s: tried to add existing dataset node key:%s \n",__func__ , key);
-
-  local_dataset_type * dataset = local_dataset_alloc( key );
-  hash_insert_hash_owned_ref( local_config->dataset_storage , key , dataset , local_dataset_free__);
-  return dataset;
+    local_dataset_type *dataset = local_dataset_alloc(key);
+    hash_insert_hash_owned_ref(local_config->dataset_storage, key, dataset,
+                               local_dataset_free__);
+    return dataset;
 }
 
-bool local_config_has_dataset( const local_config_type * local_config , const char * key) {
-  return hash_has_key( local_config->dataset_storage , key );
+bool local_config_has_dataset(const local_config_type *local_config,
+                              const char *key) {
+    return hash_has_key(local_config->dataset_storage, key);
 }
 
+local_dataset_type *
+local_config_alloc_dataset_copy(local_config_type *local_config,
+                                const char *src_key, const char *target_key) {
+    local_dataset_type *src_dataset =
+        (local_dataset_type *)hash_get(local_config->dataset_storage, src_key);
+    local_dataset_type *copy_dataset =
+        local_dataset_alloc_copy(src_dataset, target_key);
 
-local_dataset_type * local_config_alloc_dataset_copy( local_config_type * local_config , const char * src_key , const char * target_key) {
-  local_dataset_type * src_dataset = (local_dataset_type *)hash_get( local_config->dataset_storage , src_key );
-  local_dataset_type * copy_dataset = local_dataset_alloc_copy( src_dataset , target_key );
-
-  hash_insert_hash_owned_ref( local_config->dataset_storage , target_key , copy_dataset , local_dataset_free__);
-  return copy_dataset;
+    hash_insert_hash_owned_ref(local_config->dataset_storage, target_key,
+                               copy_dataset, local_dataset_free__);
+    return copy_dataset;
 }
 
+local_obsdata_type *
+local_config_alloc_obsdata_copy(local_config_type *local_config,
+                                const char *src_key, const char *target_key) {
+    local_obsdata_type *src_obsdata =
+        (local_obsdata_type *)hash_get(local_config->obsdata_storage, src_key);
+    local_obsdata_type *copy_obsdata =
+        local_obsdata_alloc_copy(src_obsdata, target_key);
 
-local_obsdata_type * local_config_alloc_obsdata_copy( local_config_type * local_config , const char * src_key , const char * target_key) {
-  local_obsdata_type * src_obsdata = (local_obsdata_type *)hash_get( local_config->obsdata_storage , src_key );
-  local_obsdata_type * copy_obsdata = local_obsdata_alloc_copy( src_obsdata , target_key );
-
-  hash_insert_hash_owned_ref( local_config->obsdata_storage , target_key , copy_obsdata , local_obsdata_free__);
-  return copy_obsdata;
+    hash_insert_hash_owned_ref(local_config->obsdata_storage, target_key,
+                               copy_obsdata, local_obsdata_free__);
+    return copy_obsdata;
 }
 
-
-local_ministep_type * local_config_get_ministep( const local_config_type * local_config , const char * key) {
-  local_ministep_type * ministep = (local_ministep_type *)hash_get( local_config->ministep_storage , key );
-  return ministep;
+local_ministep_type *
+local_config_get_ministep(const local_config_type *local_config,
+                          const char *key) {
+    local_ministep_type *ministep =
+        (local_ministep_type *)hash_get(local_config->ministep_storage, key);
+    return ministep;
 }
 
-
-local_obsdata_type * local_config_get_obsdata( const local_config_type * local_config , const char * key) {
-  local_obsdata_type * obsdata = (local_obsdata_type *)hash_get( local_config->obsdata_storage , key );
-  return obsdata;
+local_obsdata_type *
+local_config_get_obsdata(const local_config_type *local_config,
+                         const char *key) {
+    local_obsdata_type *obsdata =
+        (local_obsdata_type *)hash_get(local_config->obsdata_storage, key);
+    return obsdata;
 }
 
-local_dataset_type * local_config_get_dataset( const local_config_type * local_config , const char * key) {
-  local_dataset_type * dataset = (local_dataset_type *)hash_get( local_config->dataset_storage , key );
-  return dataset;
+local_dataset_type *
+local_config_get_dataset(const local_config_type *local_config,
+                         const char *key) {
+    local_dataset_type *dataset =
+        (local_dataset_type *)hash_get(local_config->dataset_storage, key);
+    return dataset;
 }
 
-local_updatestep_type * local_config_get_updatestep( const local_config_type * local_config) {
-  local_updatestep_type * updatestep = local_config->default_updatestep;
+local_updatestep_type *
+local_config_get_updatestep(const local_config_type *local_config) {
+    local_updatestep_type *updatestep = local_config->default_updatestep;
 
-  if (updatestep == NULL)
-   util_abort("%s: fatal error. No default updatestep configured. \n",__func__ );
+    if (updatestep == NULL)
+        util_abort("%s: fatal error. No default updatestep configured. \n",
+                   __func__);
 
-  return updatestep;
+    return updatestep;
 }
 
+void local_config_summary_fprintf(const local_config_type *local_config,
+                                  const char *config_file) {
 
-void local_config_summary_fprintf( const local_config_type * local_config , const char * config_file) {
+    FILE *stream = util_mkdir_fopen(config_file, "w");
 
-  FILE * stream = util_mkdir_fopen( config_file , "w");
+    const local_updatestep_type *updatestep = local_config_get_updatestep(
+        local_config); // There is only one update step, the default
+    {
+        hash_iter_type *hash_iter =
+            hash_iter_alloc(local_config->ministep_storage);
 
-  const local_updatestep_type * updatestep = local_config_get_updatestep( local_config ); // There is only one update step, the default
-  {
-    hash_iter_type * hash_iter = hash_iter_alloc( local_config->ministep_storage );
+        while (!hash_iter_is_complete(hash_iter)) {
+            const local_ministep_type *ministep =
+                (const local_ministep_type *)hash_iter_get_next_value(
+                    hash_iter);
 
-    while (!hash_iter_is_complete( hash_iter )) {
-      const local_ministep_type * ministep = (const local_ministep_type *) hash_iter_get_next_value( hash_iter );
+            fprintf(stream, "UPDATE_STEP:%s,",
+                    local_updatestep_get_name(updatestep));
 
-     fprintf(stream , "UPDATE_STEP:%s,", local_updatestep_get_name(updatestep));
+            local_ministep_summary_fprintf(ministep, stream);
+        }
 
-      local_ministep_summary_fprintf( ministep , stream);
-
+        hash_iter_free(hash_iter);
     }
 
-    hash_iter_free( hash_iter );
-  }
-
-  fclose( stream );
+    fclose(stream);
 }

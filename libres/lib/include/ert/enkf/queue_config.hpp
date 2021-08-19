@@ -16,7 +16,6 @@
    for more details.
  */
 
-
 #ifndef ERT_QUEUE_CONFIG_H
 #define ERT_QUEUE_CONFIG_H
 #ifdef __cplusplus
@@ -30,39 +29,42 @@ extern "C" {
 
 #include <ert/job_queue/job_queue.hpp>
 
-#define LSF_DRIVER_NAME    "LSF"
-#define LOCAL_DRIVER_NAME  "LOCAL"
-#define RSH_DRIVER_NAME    "RSH"
+#define LSF_DRIVER_NAME "LSF"
+#define LOCAL_DRIVER_NAME "LOCAL"
+#define RSH_DRIVER_NAME "RSH"
 #define TORQUE_DRIVER_NAME "TORQUE"
-#define SLURM_DRIVER_NAME  "SLURM"
-
+#define SLURM_DRIVER_NAME "SLURM"
 
 typedef struct queue_config_struct queue_config_type;
 
-    queue_config_type * queue_config_alloc_load(const char * user_config_file);
-    queue_config_type * queue_config_alloc(const config_content_type * config_content);
-    PY_USED queue_config_type * queue_config_alloc_full(char * job_script,
-                                                bool user_mode,
-                                                int max_submit,
-                                                int num_cpu,
-                                                job_driver_type driver_type);
-    queue_config_type * queue_config_alloc_local_copy( queue_config_type * queue_config);
-    void queue_config_free(queue_config_type * queue_config);
+queue_config_type *queue_config_alloc_load(const char *user_config_file);
+queue_config_type *
+queue_config_alloc(const config_content_type *config_content);
+PY_USED queue_config_type *queue_config_alloc_full(char *job_script,
+                                                   bool user_mode,
+                                                   int max_submit, int num_cpu,
+                                                   job_driver_type driver_type);
+queue_config_type *
+queue_config_alloc_local_copy(queue_config_type *queue_config);
+void queue_config_free(queue_config_type *queue_config);
 
-    int queue_config_get_max_submit(queue_config_type * queue_config);
-    bool queue_config_has_job_script( const queue_config_type * queue_config );
-    bool queue_config_set_job_script(queue_config_type * queue_config, const char * job_script);
-    const char * queue_config_get_job_script(const queue_config_type * queue_config);
+int queue_config_get_max_submit(queue_config_type *queue_config);
+bool queue_config_has_job_script(const queue_config_type *queue_config);
+bool queue_config_set_job_script(queue_config_type *queue_config,
+                                 const char *job_script);
+const char *queue_config_get_job_script(const queue_config_type *queue_config);
 
-    job_driver_type queue_config_get_driver_type(const queue_config_type * queue_config);
+job_driver_type
+queue_config_get_driver_type(const queue_config_type *queue_config);
 
-    queue_driver_type * queue_config_get_queue_driver(const queue_config_type * queue_config,
-                                                      const char * driver_name);
-    bool queue_config_has_queue_driver(const queue_config_type * queue_config,
-                                       const char * driver_name);
-    void queue_config_create_queue_drivers(queue_config_type * queue_config);
+queue_driver_type *
+queue_config_get_queue_driver(const queue_config_type *queue_config,
+                              const char *driver_name);
+bool queue_config_has_queue_driver(const queue_config_type *queue_config,
+                                   const char *driver_name);
+void queue_config_create_queue_drivers(queue_config_type *queue_config);
 
-    /**
+/**
      * Queue system is typically one of LSF, LOCAL, TORQUE, RHS, ...  Given a
      * queue system, you can obtain the _driver_ (e.g. lsf_driver).
      *
@@ -70,18 +72,20 @@ typedef struct queue_config_struct queue_config_type;
      * parameter we can send to the LSF cluster to get a certain queue,
      * e.g. "mr".
      */
-    const char * queue_config_get_queue_system(const queue_config_type * queue_config);
+const char *
+queue_config_get_queue_system(const queue_config_type *queue_config);
 
-    void queue_config_add_config_items(config_parser_type * parser, bool site_mode);
+void queue_config_add_config_items(config_parser_type *parser, bool site_mode);
 
-    job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config);
+job_queue_type *
+queue_config_alloc_job_queue(const queue_config_type *queue_config);
 
-    int queue_config_get_num_cpu(const queue_config_type * queue_config);
+int queue_config_get_num_cpu(const queue_config_type *queue_config);
 
-    PY_USED const char * queue_config_lsf_queue_name();
-    PY_USED const char * queue_config_lsf_server();
-    PY_USED const char * queue_config_lsf_resource();
-    PY_USED const char * queue_config_lsf_driver_name();
+PY_USED const char *queue_config_lsf_queue_name();
+PY_USED const char *queue_config_lsf_server();
+PY_USED const char *queue_config_lsf_resource();
+PY_USED const char *queue_config_lsf_driver_name();
 
 UTIL_SAFE_CAST_HEADER(queue_config);
 UTIL_IS_INSTANCE_HEADER(queue_config);

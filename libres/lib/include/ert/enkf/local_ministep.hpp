@@ -37,23 +37,35 @@ extern "C" {
 
 typedef struct local_ministep_struct local_ministep_type;
 
-local_ministep_type * local_ministep_alloc(const char * name, analysis_module_type* analysis_module);
-void                  local_ministep_free(local_ministep_type * ministep);
-void                  local_ministep_free__(void * arg);
-hash_iter_type      * local_ministep_alloc_dataset_iter( const local_ministep_type * ministep );
-const char          * local_ministep_get_name( const local_ministep_type * ministep );
-void                  local_ministep_summary_fprintf( const local_ministep_type * ministep , FILE * stream);
-void                  local_ministep_add_dataset( local_ministep_type * ministep , const local_dataset_type * dataset);
-void                  local_ministep_add_obsdata( local_ministep_type * ministep , local_obsdata_type * obsdata);
-void                  local_ministep_add_obsdata_node( local_ministep_type * ministep , local_obsdata_node_type * obsdatanode);
-local_obsdata_type  * local_ministep_get_obsdata(const local_ministep_type * ministep);
-local_dataset_type  * local_ministep_get_dataset( const local_ministep_type * ministep, const char * dataset_name);
-bool                  local_ministep_has_dataset( const local_ministep_type * ministep, const char * dataset_name);
-int                   local_ministep_get_num_dataset( const local_ministep_type * ministep );
-bool                  local_ministep_has_analysis_module( const local_ministep_type * ministep );
-analysis_module_type* local_ministep_get_analysis_module( const local_ministep_type * ministep );
-void                  local_ministep_add_obs_data( local_ministep_type * ministep , obs_data_type * obs_data );
-obs_data_type *       local_ministep_get_obs_data( const local_ministep_type * ministep );
+local_ministep_type *
+local_ministep_alloc(const char *name, analysis_module_type *analysis_module);
+void local_ministep_free(local_ministep_type *ministep);
+void local_ministep_free__(void *arg);
+hash_iter_type *
+local_ministep_alloc_dataset_iter(const local_ministep_type *ministep);
+const char *local_ministep_get_name(const local_ministep_type *ministep);
+void local_ministep_summary_fprintf(const local_ministep_type *ministep,
+                                    FILE *stream);
+void local_ministep_add_dataset(local_ministep_type *ministep,
+                                const local_dataset_type *dataset);
+void local_ministep_add_obsdata(local_ministep_type *ministep,
+                                local_obsdata_type *obsdata);
+void local_ministep_add_obsdata_node(local_ministep_type *ministep,
+                                     local_obsdata_node_type *obsdatanode);
+local_obsdata_type *
+local_ministep_get_obsdata(const local_ministep_type *ministep);
+local_dataset_type *
+local_ministep_get_dataset(const local_ministep_type *ministep,
+                           const char *dataset_name);
+bool local_ministep_has_dataset(const local_ministep_type *ministep,
+                                const char *dataset_name);
+int local_ministep_get_num_dataset(const local_ministep_type *ministep);
+bool local_ministep_has_analysis_module(const local_ministep_type *ministep);
+analysis_module_type *
+local_ministep_get_analysis_module(const local_ministep_type *ministep);
+void local_ministep_add_obs_data(local_ministep_type *ministep,
+                                 obs_data_type *obs_data);
+obs_data_type *local_ministep_get_obs_data(const local_ministep_type *ministep);
 
 UTIL_SAFE_CAST_HEADER(local_ministep);
 UTIL_IS_INSTANCE_HEADER(local_ministep);

@@ -27,28 +27,28 @@ extern "C" {
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/surface_config.hpp>
 
-  typedef struct surface_struct surface_type;
+typedef struct surface_struct surface_type;
 
-  UTIL_SAFE_CAST_HEADER(surface);
-  UTIL_SAFE_CAST_HEADER_CONST(surface);
-  VOID_ALLOC_HEADER(surface);
-  VOID_FREE_HEADER(surface);
-  VOID_ECL_WRITE_HEADER(surface);
-  VOID_COPY_HEADER(surface);
-  VOID_USER_GET_HEADER(surface);
-  VOID_WRITE_TO_BUFFER_HEADER(surface);
-  VOID_READ_FROM_BUFFER_HEADER(surface);
-  VOID_SERIALIZE_HEADER(surface);
-  VOID_DESERIALIZE_HEADER(surface);
-  VOID_SET_INFLATION_HEADER(surface);
-  VOID_CLEAR_HEADER(surface);
-  VOID_IADD_HEADER(surface);
-  VOID_SCALE_HEADER(surface);
-  VOID_IMUL_HEADER(surface);
-  VOID_IADDSQR_HEADER(surface);
-  VOID_ISQRT_HEADER(surface);
-  VOID_INITIALIZE_HEADER(surface);
-  VOID_FLOAD_HEADER(surface);
+UTIL_SAFE_CAST_HEADER(surface);
+UTIL_SAFE_CAST_HEADER_CONST(surface);
+VOID_ALLOC_HEADER(surface);
+VOID_FREE_HEADER(surface);
+VOID_ECL_WRITE_HEADER(surface);
+VOID_COPY_HEADER(surface);
+VOID_USER_GET_HEADER(surface);
+VOID_WRITE_TO_BUFFER_HEADER(surface);
+VOID_READ_FROM_BUFFER_HEADER(surface);
+VOID_SERIALIZE_HEADER(surface);
+VOID_DESERIALIZE_HEADER(surface);
+VOID_SET_INFLATION_HEADER(surface);
+VOID_CLEAR_HEADER(surface);
+VOID_IADD_HEADER(surface);
+VOID_SCALE_HEADER(surface);
+VOID_IMUL_HEADER(surface);
+VOID_IADDSQR_HEADER(surface);
+VOID_ISQRT_HEADER(surface);
+VOID_INITIALIZE_HEADER(surface);
+VOID_FLOAD_HEADER(surface);
 
 #ifdef __cplusplus
 }

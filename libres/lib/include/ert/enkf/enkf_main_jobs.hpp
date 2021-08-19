@@ -23,10 +23,8 @@
 extern "C" {
 #endif
 
-
-void * enkf_main_select_case_JOB( void * self , const stringlist_type * args);
-void * enkf_main_create_case_JOB( void * self , const stringlist_type * args);
-
+void *enkf_main_select_case_JOB(void *self, const stringlist_type *args);
+void *enkf_main_create_case_JOB(void *self, const stringlist_type *args);
 
 #ifdef __cplusplus
 }

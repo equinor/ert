@@ -26,81 +26,73 @@
 
 struct log_config_struct {
 
-  char * log_file;
-  message_level_type message_level;
-
+    char *log_file;
+    message_level_type message_level;
 };
-
 
 static void log_config_init(log_config_type *, const config_content_type *);
 
+static log_config_type *log_config_alloc_default() {
+    log_config_type *log_config =
+        (log_config_type *)util_malloc(sizeof *log_config);
 
-static log_config_type * log_config_alloc_default() {
-  log_config_type * log_config = (log_config_type *)util_malloc(sizeof * log_config);
+    log_config->log_file = util_alloc_string_copy(DEFAULT_LOG_FILE);
+    log_config->message_level = DEFAULT_LOG_LEVEL;
 
-  log_config->log_file = util_alloc_string_copy(DEFAULT_LOG_FILE);
-  log_config->message_level = DEFAULT_LOG_LEVEL;
-
-  return log_config;
+    return log_config;
 }
 
-log_config_type * log_config_alloc_full(const char * log_file, message_level_type message_level) {
-  log_config_type * log_config = (log_config_type *)util_malloc(sizeof * log_config);
-  log_config->log_file = util_alloc_string_copy(log_file);
-  log_config->message_level = message_level;
+log_config_type *log_config_alloc_full(const char *log_file,
+                                       message_level_type message_level) {
+    log_config_type *log_config =
+        (log_config_type *)util_malloc(sizeof *log_config);
+    log_config->log_file = util_alloc_string_copy(log_file);
+    log_config->message_level = message_level;
 
-  return log_config;
+    return log_config;
 }
 
-log_config_type * log_config_alloc_load(const char * config_file) {
-  config_parser_type * config_parser = config_alloc();
-  config_content_type * config_content = NULL;
-  if(config_file)
-    config_content = model_config_alloc_content(config_file, config_parser);
+log_config_type *log_config_alloc_load(const char *config_file) {
+    config_parser_type *config_parser = config_alloc();
+    config_content_type *config_content = NULL;
+    if (config_file)
+        config_content = model_config_alloc_content(config_file, config_parser);
 
-  log_config_type * log_config = log_config_alloc(config_content);
+    log_config_type *log_config = log_config_alloc(config_content);
 
-  config_content_free(config_content);
-  config_free(config_parser);
+    config_content_free(config_content);
+    config_free(config_parser);
 
-  return log_config;
+    return log_config;
 }
 
+log_config_type *log_config_alloc(const config_content_type *config_content) {
+    log_config_type *log_config = log_config_alloc_default();
 
-log_config_type * log_config_alloc(const config_content_type * config_content) {
-  log_config_type * log_config = log_config_alloc_default();
+    if (config_content)
+        log_config_init(log_config, config_content);
 
-  if(config_content)
-    log_config_init(log_config, config_content);
-
-  return log_config;
+    return log_config;
 }
 
-
-const char * log_config_get_log_file(const log_config_type * log_config) {
-  return log_config->log_file;
+const char *log_config_get_log_file(const log_config_type *log_config) {
+    return log_config->log_file;
 }
 
+const message_level_type
+log_config_get_log_level(const log_config_type *log_config) {
 
-const message_level_type log_config_get_log_level(
-        const log_config_type * log_config
-        ) {
-
-  return log_config->message_level;
+    return log_config->message_level;
 }
 
+static void log_config_set_log_file(log_config_type *log_config,
+                                    const char *log_file) {
 
-static void log_config_set_log_file(
-        log_config_type * log_config,
-        const char * log_file
-        ) {
-
-  free(log_config->log_file);
-  log_config->log_file = util_alloc_string_copy(log_file);
+    free(log_config->log_file);
+    log_config->log_file = util_alloc_string_copy(log_file);
 }
 
-
-/**
+/*
  * This method parses the 'LOG_LEVEL_KEY' value according to the following
  * rules:
  *
@@ -112,69 +104,69 @@ static void log_config_set_log_file(
  *
  * - Else it returns the DEFAULT_LOG_LEVEL
  */
-message_level_type log_config_level_parser(const char * level) {
+message_level_type log_config_level_parser(const char *level) {
 
-  typedef struct {
-    const char * log_keyword; // The keyword written in the config file
-    const message_level_type log_enum; // The enum for the new log-level
-  } log_tuple;
+    typedef struct {
+        const char *log_keyword; // The keyword written in the config file
+        const message_level_type log_enum; // The enum for the new log-level
+    } log_tuple;
 
-  const int nr_of_log_levels = 5;
+    const int nr_of_log_levels = 5;
     log_tuple log_levels[] = {{LOG_CRITICAL_NAME, LOG_CRITICAL},
-                              {LOG_ERROR_NAME,    LOG_ERROR},
-                              {LOG_WARNING_NAME,  LOG_WARNING},
-                              {LOG_INFO_NAME,     LOG_INFO},
-                              {LOG_DEBUG_NAME,    LOG_DEBUG}};
+                              {LOG_ERROR_NAME, LOG_ERROR},
+                              {LOG_WARNING_NAME, LOG_WARNING},
+                              {LOG_INFO_NAME, LOG_INFO},
+                              {LOG_DEBUG_NAME, LOG_DEBUG}};
 
+    for (int i = 0; i < nr_of_log_levels; i++) {
+        log_tuple curr_log_level = log_levels[i];
 
-  for (int i = 0; i < nr_of_log_levels; i++) {
-    log_tuple curr_log_level = log_levels[i];
+        if (strcmp(level, curr_log_level.log_keyword) == 0)
+            return curr_log_level.log_enum;
+    }
 
-    if (strcmp(level, curr_log_level.log_keyword)==0)
-      return curr_log_level.log_enum;
-  }
-
-  fprintf(stderr, "** The log_level: %s is not valid, using default log level\n", level);
-  return DEFAULT_LOG_LEVEL;
+    fprintf(stderr,
+            "** The log_level: %s is not valid, using default log level\n",
+            level);
+    return DEFAULT_LOG_LEVEL;
 }
 
+static void log_config_init(log_config_type *log_config,
+                            const config_content_type *content) {
 
-static void log_config_init(
-        log_config_type * log_config,
-        const config_content_type * content
-        ) {
+    if (config_content_has_item(content, LOG_FILE_KEY)) {
+        const char *log_file =
+            config_content_get_value_as_abspath(content, LOG_FILE_KEY);
+        log_config_set_log_file(log_config, log_file);
+    }
 
-  if (config_content_has_item(content, LOG_FILE_KEY)) {
-    const char * log_file = config_content_get_value_as_abspath(content, LOG_FILE_KEY);
-    log_config_set_log_file(log_config, log_file);
-  }
+    // If no log file, make default log file relative to config file
+    else if (!util_is_abs_path(log_config->log_file)) {
+        char *working_dir;
+        util_alloc_file_components(
+            config_content_get_config_file(content, true), &working_dir, NULL,
+            NULL);
 
-  // If no log file, make default log file relative to config file
-  else if(!util_is_abs_path(log_config->log_file)) {
-    char * working_dir;
-    util_alloc_file_components(
-            config_content_get_config_file(content, true),
-            &working_dir, NULL, NULL);
+        char *abs_default_log_file =
+            util_alloc_filename(working_dir, log_config->log_file, NULL);
 
-    char * abs_default_log_file = util_alloc_filename(working_dir, log_config->log_file, NULL);
+        log_config_set_log_file(log_config, abs_default_log_file);
 
-    log_config_set_log_file(log_config, abs_default_log_file);
+        free(working_dir);
+        free(abs_default_log_file);
+    }
 
-    free(working_dir);
-    free(abs_default_log_file);
-  }
-
-  if(config_content_has_item(content, LOG_LEVEL_KEY)) {
-    const char * log_level_str = config_content_get_value(content, LOG_LEVEL_KEY);
-    log_config->message_level = log_config_level_parser(log_level_str);
-  }
+    if (config_content_has_item(content, LOG_LEVEL_KEY)) {
+        const char *log_level_str =
+            config_content_get_value(content, LOG_LEVEL_KEY);
+        log_config->message_level = log_config_level_parser(log_level_str);
+    }
 }
 
+void log_config_free(log_config_type *log_config) {
+    if (!log_config)
+        return;
 
-void log_config_free(log_config_type * log_config) {
-  if(!log_config)
-    return;
-
-  free(log_config->log_file);
-  free(log_config);
+    free(log_config->log_file);
+    free(log_config);
 }

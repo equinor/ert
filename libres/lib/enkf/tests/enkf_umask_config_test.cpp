@@ -21,36 +21,43 @@
 #include <ert/enkf/ert_test_context.hpp>
 #include <ert/util/test_util.h>
 
+int main(int argc, char **argv) {
+    enkf_main_install_SIGNALS();
 
-int main(int argc , char ** argv) {
-  enkf_main_install_SIGNALS();
+    const char *config_file = argv[1];
+    ert_test_context_type *test_context =
+        ert_test_context_alloc("VerifyJobsFileTest", config_file);
+    enkf_main_type *enkf_main = ert_test_context_get_main(test_context);
 
-  const char * config_file             = argv[1];
-  ert_test_context_type * test_context = ert_test_context_alloc("VerifyJobsFileTest" , config_file);
-  enkf_main_type * enkf_main           = ert_test_context_get_main(test_context);
+    {
+        const int ens_size = enkf_main_get_ensemble_size(enkf_main);
+        bool_vector_type *iactive = bool_vector_alloc(ens_size, true);
+        const path_fmt_type *runpath_fmt =
+            model_config_get_runpath_fmt(enkf_main_get_model_config(enkf_main));
+        const subst_list_type *subst_list = NULL;
+        enkf_fs_type *fs = enkf_main_get_fs(enkf_main);
+        ert_run_context_type *run_context = ert_run_context_alloc_INIT_ONLY(
+            fs, INIT_CONDITIONAL, iactive, runpath_fmt, subst_list, 0);
 
-  {
-    const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
-    bool_vector_type * iactive = bool_vector_alloc(ens_size, true);
-    const path_fmt_type * runpath_fmt = model_config_get_runpath_fmt( enkf_main_get_model_config( enkf_main ));
-    const subst_list_type * subst_list = NULL;
-    enkf_fs_type * fs                  =  enkf_main_get_fs(enkf_main);
-    ert_run_context_type * run_context = ert_run_context_alloc_INIT_ONLY( fs , INIT_CONDITIONAL, iactive, runpath_fmt, subst_list , 0 );
+        enkf_main_create_run_path(enkf_main, run_context);
+        ert_run_context_free(run_context);
+        bool_vector_free(iactive);
+    }
 
-    enkf_main_create_run_path(enkf_main , run_context );
-    ert_run_context_free( run_context );
-    bool_vector_free(iactive);
-  }
+    const char *filename =
+        util_alloc_filename(ert_test_context_get_cwd(test_context),
+                            "simulations/run0/jobs.json", NULL);
+    const char *jobs_file_content =
+        util_fread_alloc_file_content(filename, NULL);
 
-  const char * filename = util_alloc_filename(ert_test_context_get_cwd(test_context),
-                                              "simulations/run0/jobs.json", NULL);
-  const char * jobs_file_content = util_fread_alloc_file_content(filename, NULL);
+    test_assert_true(strstr(jobs_file_content, "\"umask\" : \"0022\"") != NULL);
+    test_assert_false(strstr(jobs_file_content, "\"umask\" : \"0032\"") !=
+                      NULL);
+    test_assert_false(strstr(jobs_file_content, "\"umask\" : \"0122\"") !=
+                      NULL);
+    test_assert_false(strstr(jobs_file_content, "\"umask\" : \"1022\"") !=
+                      NULL);
 
-  test_assert_true  (strstr(jobs_file_content, "\"umask\" : \"0022\"") != NULL);
-  test_assert_false (strstr(jobs_file_content, "\"umask\" : \"0032\"") != NULL);
-  test_assert_false (strstr(jobs_file_content, "\"umask\" : \"0122\"") != NULL);
-  test_assert_false (strstr(jobs_file_content, "\"umask\" : \"1022\"") != NULL);
-
-  ert_test_context_free(test_context);
-  exit(0);
+    ert_test_context_free(test_context);
+    exit(0);
 }

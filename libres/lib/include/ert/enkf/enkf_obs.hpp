@@ -45,65 +45,71 @@
 extern "C" {
 #endif
 
-  bool enkf_obs_have_obs(const enkf_obs_type * enkf_obs);
-  bool enkf_obs_is_valid(const enkf_obs_type*);
+bool enkf_obs_have_obs(const enkf_obs_type *enkf_obs);
+bool enkf_obs_is_valid(const enkf_obs_type *);
 
-  enkf_obs_type * enkf_obs_alloc( const history_type * history ,
-                                  time_map_type * external_time_map ,
-                                  const ecl_grid_type * grid ,
-                                  const ecl_sum_type * refcase,
-                                  ensemble_config_type * ensemble_config );
+enkf_obs_type *enkf_obs_alloc(const history_type *history,
+                              time_map_type *external_time_map,
+                              const ecl_grid_type *grid,
+                              const ecl_sum_type *refcase,
+                              ensemble_config_type *ensemble_config);
 
-  void            enkf_obs_free(  enkf_obs_type * enkf_obs);
+void enkf_obs_free(enkf_obs_type *enkf_obs);
 
-  obs_vector_type * enkf_obs_iget_vector(const enkf_obs_type * obs, int index);
-  obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * , const char * );
-  void enkf_obs_add_obs_vector(enkf_obs_type * enkf_obs,
-                               const obs_vector_type * vector);
+obs_vector_type *enkf_obs_iget_vector(const enkf_obs_type *obs, int index);
+obs_vector_type *enkf_obs_get_vector(const enkf_obs_type *, const char *);
+void enkf_obs_add_obs_vector(enkf_obs_type *enkf_obs,
+                             const obs_vector_type *vector);
 
-  void enkf_obs_load(enkf_obs_type*, const char*, double);
-  void enkf_obs_clear( enkf_obs_type * enkf_obs );
-  obs_impl_type enkf_obs_get_type(const enkf_obs_type * enkf_obs , const char * key);
+void enkf_obs_load(enkf_obs_type *, const char *, double);
+void enkf_obs_clear(enkf_obs_type *enkf_obs);
+obs_impl_type enkf_obs_get_type(const enkf_obs_type *enkf_obs, const char *key);
 
-  void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,
-                                          enkf_fs_type             * fs,
-                                          const local_obsdata_node_type * obs_node ,
-                                          const int_vector_type    * ens_active_list ,
-                                          meas_data_type           * meas_data,
-                                          obs_data_type            * obs_data);
+void enkf_obs_get_obs_and_measure_node(const enkf_obs_type *enkf_obs,
+                                       enkf_fs_type *fs,
+                                       const local_obsdata_node_type *obs_node,
+                                       const int_vector_type *ens_active_list,
+                                       meas_data_type *meas_data,
+                                       obs_data_type *obs_data);
 
+void enkf_obs_get_obs_and_measure_data(const enkf_obs_type *enkf_obs,
+                                       enkf_fs_type *fs,
+                                       const local_obsdata_type *local_obsdata,
+                                       const int_vector_type *ens_active_list,
+                                       meas_data_type *meas_data,
+                                       obs_data_type *obs_data);
 
-  void enkf_obs_get_obs_and_measure_data(const enkf_obs_type      * enkf_obs,
-                                         enkf_fs_type             * fs,
-                                         const local_obsdata_type * local_obsdata ,
-                                         const int_vector_type    * ens_active_list ,
-                                         meas_data_type           * meas_data,
-                                         obs_data_type            * obs_data);
+stringlist_type *enkf_obs_alloc_typed_keylist(enkf_obs_type *enkf_obs,
+                                              obs_impl_type);
+hash_type *enkf_obs_alloc_data_map(enkf_obs_type *enkf_obs);
 
+bool enkf_obs_has_key(const enkf_obs_type *, const char *);
+int enkf_obs_get_size(const enkf_obs_type *obs);
 
-  stringlist_type * enkf_obs_alloc_typed_keylist( enkf_obs_type * enkf_obs , obs_impl_type );
-  hash_type * enkf_obs_alloc_data_map(enkf_obs_type * enkf_obs);
+hash_iter_type *enkf_obs_alloc_iter(const enkf_obs_type *enkf_obs);
 
-  bool              enkf_obs_has_key(const enkf_obs_type * , const char * );
-  int               enkf_obs_get_size( const enkf_obs_type * obs );
-
-  hash_iter_type  * enkf_obs_alloc_iter( const enkf_obs_type * enkf_obs );
-
-  stringlist_type * enkf_obs_alloc_matching_keylist(const enkf_obs_type * enkf_obs , const char * input_string);
-  time_t            enkf_obs_iget_obs_time(const enkf_obs_type * enkf_obs , int report_step);
-  void              enkf_obs_scale_std(enkf_obs_type * enkf_obs, double scale_factor);
-  void enkf_obs_local_scale_std( const enkf_obs_type * enkf_obs , const local_obsdata_type * local_obsdata, double scale_factor);
-  void              enkf_obs_add_local_nodes_with_data(const enkf_obs_type * enkf_obs , local_obsdata_type * local_obs , enkf_fs_type *fs , const bool_vector_type * ens_mask);
-  double            enkf_obs_scale_correlated_std(const enkf_obs_type * enkf_obs ,
-                                                  enkf_fs_type * fs ,
-                                                  const int_vector_type * ens_active_list ,
-                                                  const local_obsdata_type * local_obsdata,
-                                                  double alpha,
-                                                  double std_cutoff,
-                                                  bool verbose);
-  local_obsdata_type * enkf_obs_alloc_all_active_local_obs( const enkf_obs_type * enkf_obs , const char * key);
-  conf_class_type * enkf_obs_get_obs_conf_class();
-  UTIL_IS_INSTANCE_HEADER( enkf_obs );
+stringlist_type *enkf_obs_alloc_matching_keylist(const enkf_obs_type *enkf_obs,
+                                                 const char *input_string);
+time_t enkf_obs_iget_obs_time(const enkf_obs_type *enkf_obs, int report_step);
+void enkf_obs_scale_std(enkf_obs_type *enkf_obs, double scale_factor);
+void enkf_obs_local_scale_std(const enkf_obs_type *enkf_obs,
+                              const local_obsdata_type *local_obsdata,
+                              double scale_factor);
+void enkf_obs_add_local_nodes_with_data(const enkf_obs_type *enkf_obs,
+                                        local_obsdata_type *local_obs,
+                                        enkf_fs_type *fs,
+                                        const bool_vector_type *ens_mask);
+double enkf_obs_scale_correlated_std(const enkf_obs_type *enkf_obs,
+                                     enkf_fs_type *fs,
+                                     const int_vector_type *ens_active_list,
+                                     const local_obsdata_type *local_obsdata,
+                                     double alpha, double std_cutoff,
+                                     bool verbose);
+local_obsdata_type *
+enkf_obs_alloc_all_active_local_obs(const enkf_obs_type *enkf_obs,
+                                    const char *key);
+conf_class_type *enkf_obs_get_obs_conf_class();
+UTIL_IS_INSTANCE_HEADER(enkf_obs);
 
 #ifdef __cplusplus
 }

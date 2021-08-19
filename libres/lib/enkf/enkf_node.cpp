@@ -34,7 +34,7 @@
 #include <ert/enkf/ext_param.hpp>
 #include <ert/enkf/container.hpp>
 
-/**
+/*
    A small illustration (says more than thousand words ...) of how the
    enkf_node, enkf_config_node, field[1] and field_config[1] objects
    are linked.
@@ -95,7 +95,7 @@
 
 /*-----------------------------------------------------------------*/
 
-/**
+/*
    A note on memory
    ================
 
@@ -143,8 +143,7 @@
 
 */
 
-
-/**
+/*
    Keeeping track of node state.
    =============================
 
@@ -180,134 +179,125 @@
    whole exercise.
 */
 
-
-
 #define ENKF_NODE_TYPE_ID 71043086
 
 struct enkf_node_struct {
-  UTIL_TYPE_ID_DECLARATION;
-  alloc_ftype                    * alloc;
-  ecl_write_ftype                * ecl_write;
-  forward_load_ftype             * forward_load;
-  forward_load_vector_ftype      * forward_load_vector;
-  free_data_ftype                * free_data;
-  user_get_ftype                 * user_get;
-  user_get_vector_ftype          * user_get_vector;
-  set_inflation_ftype            * set_inflation;
-  fload_ftype                    * fload;
-  has_data_ftype                 * has_data;
+    UTIL_TYPE_ID_DECLARATION;
+    alloc_ftype *alloc;
+    ecl_write_ftype *ecl_write;
+    forward_load_ftype *forward_load;
+    forward_load_vector_ftype *forward_load_vector;
+    free_data_ftype *free_data;
+    user_get_ftype *user_get;
+    user_get_vector_ftype *user_get_vector;
+    set_inflation_ftype *set_inflation;
+    fload_ftype *fload;
+    has_data_ftype *has_data;
 
-  serialize_ftype                * serialize;
-  deserialize_ftype              * deserialize;
-  read_from_buffer_ftype         * read_from_buffer;
-  write_to_buffer_ftype          * write_to_buffer;
-  initialize_ftype               * initialize;
-  node_free_ftype                * freef;
-  clear_ftype                    * clear;
-  node_copy_ftype                * copy;
-  scale_ftype                    * scale;
-  iadd_ftype                     * iadd;
-  imul_ftype                     * imul;
-  isqrt_ftype                    * isqrt;
-  iaddsqr_ftype                  * iaddsqr;
+    serialize_ftype *serialize;
+    deserialize_ftype *deserialize;
+    read_from_buffer_ftype *read_from_buffer;
+    write_to_buffer_ftype *write_to_buffer;
+    initialize_ftype *initialize;
+    node_free_ftype *freef;
+    clear_ftype *clear;
+    node_copy_ftype *copy;
+    scale_ftype *scale;
+    iadd_ftype *iadd;
+    imul_ftype *imul;
+    isqrt_ftype *isqrt;
+    iaddsqr_ftype *iaddsqr;
 
-  /******************************************************************/
-  bool                          vector_storage;
-  char                         *node_key;          /* The (hash)key this node is identified with. */
-  void                         *data;              /* A pointer to the underlying enkf_object, i.e. gen_kw_type instance, or a field_type instance or ... */
-  const enkf_config_node_type  *config;            /* A pointer to a enkf_config_node instance (which again cointans a pointer to the config object of data). */
-  /*****************************************************************/
+    bool vector_storage;
 
-  vector_type                 *container_nodes;
+    /* The (hash)key this node is identified with. */
+    char *node_key;
+    /* A pointer to the underlying enkf_object, i.e. gen_kw_type instance, or a field_type instance or ... */
+    void *data;
+    /* A pointer to a enkf_config_node instance (which again cointans a pointer to the config object of data). */
+    const enkf_config_node_type *config;
+
+    vector_type *container_nodes;
 };
 
+UTIL_IS_INSTANCE_FUNCTION(enkf_node, ENKF_NODE_TYPE_ID)
 
-UTIL_IS_INSTANCE_FUNCTION( enkf_node, ENKF_NODE_TYPE_ID )
-
-const enkf_config_node_type * enkf_node_get_config(const enkf_node_type * node) {
-  return node->config;
+const enkf_config_node_type *enkf_node_get_config(const enkf_node_type *node) {
+    return node->config;
 }
 
-
-bool enkf_node_vector_storage( const enkf_node_type * node ) {
-  return node->vector_storage;
+bool enkf_node_vector_storage(const enkf_node_type *node) {
+    return node->vector_storage;
 }
-
-
-/*****************************************************************/
 
 /*
   All the function pointers REALLY should be in the config object ...
 */
 
+#define FUNC_ASSERT(func)                                                      \
+    if (func == NULL)                                                          \
+        util_abort("%s: function handler: %s not registered for node:%s - "    \
+                   "aborting\n",                                               \
+                   __func__, #func, enkf_node->node_key);
 
-#define FUNC_ASSERT(func) if (func == NULL) util_abort("%s: function handler: %s not registered for node:%s - aborting\n",__func__ , #func , enkf_node->node_key);
-
-
-
-
-void enkf_node_alloc_domain_object(enkf_node_type * enkf_node) {
-  FUNC_ASSERT(enkf_node->alloc);
-  {
-    if (enkf_node->data != NULL)
-      enkf_node->freef( enkf_node->data );
-    enkf_node->data = enkf_node->alloc( enkf_config_node_get_ref(enkf_node->config) ); // CXX_CAST_ERROR
-  }
+void enkf_node_alloc_domain_object(enkf_node_type *enkf_node) {
+    FUNC_ASSERT(enkf_node->alloc);
+    {
+        if (enkf_node->data != NULL)
+            enkf_node->freef(enkf_node->data);
+        enkf_node->data = enkf_node->alloc(
+            enkf_config_node_get_ref(enkf_node->config)); // CXX_CAST_ERROR
+    }
 }
 
-
-
-
-enkf_node_type * enkf_node_copyc(const enkf_node_type * enkf_node) {
-  FUNC_ASSERT(enkf_node->copy);
-  {
-    const enkf_node_type * src = enkf_node;
-    enkf_node_type * target;
-    target = enkf_node_alloc(src->config);
-    src->copy( src->data , target->data );  /* Calling the low level copy function */
-    return target;
-  }
+enkf_node_type *enkf_node_copyc(const enkf_node_type *enkf_node) {
+    FUNC_ASSERT(enkf_node->copy);
+    {
+        const enkf_node_type *src = enkf_node;
+        enkf_node_type *target;
+        target = enkf_node_alloc(src->config);
+        src->copy(src->data,
+                  target->data); /* Calling the low level copy function */
+        return target;
+    }
 }
 
-ert_impl_type enkf_node_get_impl_type(const enkf_node_type * enkf_node) {
-  return enkf_config_node_get_impl_type(enkf_node->config);
+ert_impl_type enkf_node_get_impl_type(const enkf_node_type *enkf_node) {
+    return enkf_config_node_get_impl_type(enkf_node->config);
 }
 
-bool enkf_node_use_forward_init( const enkf_node_type * enkf_node ) {
-  return enkf_config_node_use_forward_init( enkf_node->config );
+bool enkf_node_use_forward_init(const enkf_node_type *enkf_node) {
+    return enkf_config_node_use_forward_init(enkf_node->config);
 }
 
-
-
-void * enkf_node_value_ptr(const enkf_node_type * enkf_node) {
-  return enkf_node->data;
+void *enkf_node_value_ptr(const enkf_node_type *enkf_node) {
+    return enkf_node->data;
 }
 
-
-
-/**
+/*
    This function calls the node spesific ecl_write function. IF the
    ecl_file of the (node == NULL) *ONLY* the path is sent to the node
    spesific file.
 */
 
-void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , value_export_type * export_value , int report_step) {
-  if (enkf_node->ecl_write != NULL) {
-    char * node_eclfile = enkf_config_node_alloc_outfile(enkf_node->config , report_step); /* Will return NULL if the node does not have any outfile format. */
-    /*
+void enkf_node_ecl_write(const enkf_node_type *enkf_node, const char *path,
+                         value_export_type *export_value, int report_step) {
+    if (enkf_node->ecl_write != NULL) {
+        char *node_eclfile = enkf_config_node_alloc_outfile(
+            enkf_node->config,
+            report_step); /* Will return NULL if the node does not have any outfile format. */
+        /*
       If the node does not have a outfile (i.e. ecl_file), the
       ecl_write function will be called with file argument NULL. It
       is then the responsability of the low-level implementation to
       do "the right thing".
     */
-    enkf_node->ecl_write(enkf_node->data , path , node_eclfile , export_value);
-    free( node_eclfile );
-  }
+        enkf_node->ecl_write(enkf_node->data, path, node_eclfile, export_value);
+        free(node_eclfile);
+    }
 }
 
-
-
-/**
+/*
    This function takes a string - key - as input an calls a node
    specific function to look up one scalar based on that key. The key
    is always a string, but the the type of content will vary for the
@@ -319,50 +309,54 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , va
    to 0.
 */
 
-
-bool enkf_node_user_get(enkf_node_type * enkf_node , enkf_fs_type * fs , const char * key , node_id_type node_id , double * value) {
-  return enkf_node_user_get_no_id( enkf_node , fs , key , node_id.report_step , node_id.iens , value );
+bool enkf_node_user_get(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                        const char *key, node_id_type node_id, double *value) {
+    return enkf_node_user_get_no_id(enkf_node, fs, key, node_id.report_step,
+                                    node_id.iens, value);
 }
 
-bool enkf_node_user_get_no_id(enkf_node_type * enkf_node , enkf_fs_type * fs , const char * key , int report_step, int iens, double * value) {
-  node_id_type node_id = {.report_step = report_step , .iens = iens};
-  bool loadOK;
-  FUNC_ASSERT( enkf_node->user_get );
-  {
-    loadOK = enkf_node_try_load( enkf_node , fs , node_id);
+bool enkf_node_user_get_no_id(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                              const char *key, int report_step, int iens,
+                              double *value) {
+    node_id_type node_id = {.report_step = report_step, .iens = iens};
+    bool loadOK;
+    FUNC_ASSERT(enkf_node->user_get);
+    {
+        loadOK = enkf_node_try_load(enkf_node, fs, node_id);
 
-    if (loadOK)
-      return enkf_node->user_get(enkf_node->data , key , report_step,  value);
-    else {
-      *value = 0;
-      return false;
+        if (loadOK)
+            return enkf_node->user_get(enkf_node->data, key, report_step,
+                                       value);
+        else {
+            *value = 0;
+            return false;
+        }
     }
-  }
 }
 
-bool enkf_node_user_get_vector( enkf_node_type * enkf_node , enkf_fs_type * fs , const char * key , int iens , double_vector_type * values) {
-  if (enkf_node->vector_storage) {
-    if (enkf_node_try_load_vector( enkf_node , fs , iens )) {
-      enkf_node->user_get_vector( enkf_node->data , key , values);
-      return true;
-    } else
-      return false;
-  } else {
-    util_abort("%s: internal error - function should only be called by nodes with vector storage.\n",__func__);
-    return false;
-  }
+bool enkf_node_user_get_vector(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                               const char *key, int iens,
+                               double_vector_type *values) {
+    if (enkf_node->vector_storage) {
+        if (enkf_node_try_load_vector(enkf_node, fs, iens)) {
+            enkf_node->user_get_vector(enkf_node->data, key, values);
+            return true;
+        } else
+            return false;
+    } else {
+        util_abort("%s: internal error - function should only be called by "
+                   "nodes with vector storage.\n",
+                   __func__);
+        return false;
+    }
 }
 
-
-
-bool enkf_node_fload( enkf_node_type * enkf_node , const char * filename ) {
-  FUNC_ASSERT( enkf_node->fload );
-  return enkf_node->fload( enkf_node->data , filename );
+bool enkf_node_fload(enkf_node_type *enkf_node, const char *filename) {
+    FUNC_ASSERT(enkf_node->fload);
+    return enkf_node->fload(enkf_node->data, filename);
 }
 
-
-
-/**
+/*
    This function loads (internalizes) ECLIPSE results, the ecl_file
    instance with restart data, and the ecl_sum instance with summary
    data must already be loaded by the calling function.
@@ -375,92 +369,98 @@ bool enkf_node_fload( enkf_node_type * enkf_node , const char * filename ) {
    returns.
 */
 
+bool enkf_node_forward_load(enkf_node_type *enkf_node,
+                            const forward_load_context_type *load_context) {
+    bool loadOK;
+    FUNC_ASSERT(enkf_node->forward_load);
+    {
+        if (enkf_node_get_impl_type(enkf_node) == SUMMARY)
+            /* Fast path for loading summary data. */
+            loadOK =
+                enkf_node->forward_load(enkf_node->data, NULL, load_context);
+        else {
+            char *input_file = enkf_config_node_alloc_infile(
+                enkf_node->config,
+                forward_load_context_get_load_step(load_context));
 
-bool enkf_node_forward_load(enkf_node_type *enkf_node , const forward_load_context_type * load_context) {
-  bool loadOK;
-  FUNC_ASSERT(enkf_node->forward_load);
-  {
-    if (enkf_node_get_impl_type(enkf_node) == SUMMARY)
-      /* Fast path for loading summary data. */
-      loadOK = enkf_node->forward_load(enkf_node->data , NULL  , load_context);
-    else {
-      char * input_file = enkf_config_node_alloc_infile(enkf_node->config , forward_load_context_get_load_step( load_context ));
+            if (input_file != NULL) {
+                char *file = util_alloc_filename(
+                    forward_load_context_get_run_path(load_context), input_file,
+                    NULL);
+                loadOK = enkf_node->forward_load(enkf_node->data, file,
+                                                 load_context);
+                free(file);
+            } else
+                loadOK = enkf_node->forward_load(enkf_node->data, NULL,
+                                                 load_context);
 
-      if (input_file != NULL) {
-        char * file = util_alloc_filename( forward_load_context_get_run_path( load_context ) , input_file , NULL);
-        loadOK = enkf_node->forward_load(enkf_node->data , file  , load_context);
-        free(file);
-      } else
-        loadOK = enkf_node->forward_load(enkf_node->data , NULL , load_context);
-
-      free( input_file );
+            free(input_file);
+        }
     }
-  }
-  return loadOK;
+    return loadOK;
 }
 
-
-bool enkf_node_forward_init(enkf_node_type * enkf_node , const char * run_path , int iens) {
-  char * init_file = enkf_config_node_alloc_initfile( enkf_node->config , run_path , iens );
-  bool init = enkf_node->initialize(enkf_node->data , iens , init_file, NULL);
-  free( init_file );
-  return init;
+bool enkf_node_forward_init(enkf_node_type *enkf_node, const char *run_path,
+                            int iens) {
+    char *init_file =
+        enkf_config_node_alloc_initfile(enkf_node->config, run_path, iens);
+    bool init = enkf_node->initialize(enkf_node->data, iens, init_file, NULL);
+    free(init_file);
+    return init;
 }
 
+bool enkf_node_forward_load_vector(
+    enkf_node_type *enkf_node, const forward_load_context_type *load_context,
+    const int_vector_type *time_index) {
+    bool loadOK;
+    FUNC_ASSERT(enkf_node->forward_load_vector);
+    loadOK = enkf_node->forward_load_vector(enkf_node->data, NULL, load_context,
+                                            time_index);
 
-
-bool enkf_node_forward_load_vector(enkf_node_type *enkf_node , const forward_load_context_type * load_context , const int_vector_type * time_index) {
-  bool loadOK;
-  FUNC_ASSERT(enkf_node->forward_load_vector);
-  loadOK = enkf_node->forward_load_vector(enkf_node->data , NULL , load_context , time_index);
-
-  return loadOK;
+    return loadOK;
 }
 
+static bool enkf_node_store_buffer(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                                   int report_step, int iens) {
+    FUNC_ASSERT(enkf_node->write_to_buffer);
+    {
+        bool data_written;
+        buffer_type *buffer = buffer_alloc(100);
+        const enkf_config_node_type *config_node =
+            enkf_node_get_config(enkf_node);
+        buffer_fwrite_time_t(buffer, time(NULL));
+        data_written =
+            enkf_node->write_to_buffer(enkf_node->data, buffer, report_step);
+        if (data_written) {
+            const char *node_key = enkf_config_node_get_key(config_node);
+            enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
 
-
-
-
-
-static bool enkf_node_store_buffer( enkf_node_type * enkf_node , enkf_fs_type * fs , int report_step , int iens) {
-  FUNC_ASSERT(enkf_node->write_to_buffer);
-  {
-    bool data_written;
-    buffer_type * buffer = buffer_alloc( 100 );
-    const enkf_config_node_type * config_node = enkf_node_get_config( enkf_node );
-    buffer_fwrite_time_t( buffer , time(NULL));
-    data_written = enkf_node->write_to_buffer(enkf_node->data , buffer , report_step );
-    if (data_written) {
-      const char * node_key = enkf_config_node_get_key( config_node );
-      enkf_var_type var_type = enkf_config_node_get_var_type( config_node );
-
-      if (enkf_node->vector_storage)
-        enkf_fs_fwrite_vector( fs , buffer , node_key , var_type , iens );
-      else
-        enkf_fs_fwrite_node( fs , buffer , node_key , var_type , report_step , iens );
-
+            if (enkf_node->vector_storage)
+                enkf_fs_fwrite_vector(fs, buffer, node_key, var_type, iens);
+            else
+                enkf_fs_fwrite_node(fs, buffer, node_key, var_type, report_step,
+                                    iens);
+        }
+        buffer_free(buffer);
+        return data_written;
     }
-    buffer_free( buffer );
-    return data_written;
-  }
 }
 
-bool enkf_node_store_vector(enkf_node_type *enkf_node , enkf_fs_type * fs , int iens ) {
-  return enkf_node_store_buffer( enkf_node , fs , -1 , iens );
+bool enkf_node_store_vector(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                            int iens) {
+    return enkf_node_store_buffer(enkf_node, fs, -1, iens);
 }
 
-
-
-bool enkf_node_store(enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_type node_id) {
-  if (enkf_node->vector_storage)
-    return enkf_node_store_vector( enkf_node , fs , node_id.iens );
-  else
-    return enkf_node_store_buffer( enkf_node , fs , node_id.report_step , node_id.iens );
+bool enkf_node_store(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                     node_id_type node_id) {
+    if (enkf_node->vector_storage)
+        return enkf_node_store_vector(enkf_node, fs, node_id.iens);
+    else
+        return enkf_node_store_buffer(enkf_node, fs, node_id.report_step,
+                                      node_id.iens);
 }
 
-
-
-/**
+/*
    This function will load a node from the filesystem if it is
    available; if not it will just return false.
 
@@ -470,514 +470,510 @@ bool enkf_node_store(enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_ty
    'both' it is no way to determine which version was actually loaded.
 */
 
-bool enkf_node_try_load(enkf_node_type *enkf_node , enkf_fs_type * fs , node_id_type node_id) {
-  if (enkf_node_has_data( enkf_node , fs , node_id)) {
-    enkf_node_load( enkf_node , fs , node_id);
-    return true;
-  } else
-    return false;
+bool enkf_node_try_load(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                        node_id_type node_id) {
+    if (enkf_node_has_data(enkf_node, fs, node_id)) {
+        enkf_node_load(enkf_node, fs, node_id);
+        return true;
+    } else
+        return false;
 }
 
+static void enkf_node_buffer_load(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                                  int report_step, int iens) {
+    FUNC_ASSERT(enkf_node->read_from_buffer);
+    {
+        buffer_type *buffer = buffer_alloc(100);
+        const enkf_config_node_type *config_node =
+            enkf_node_get_config(enkf_node);
+        const char *node_key = enkf_config_node_get_key(config_node);
+        enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
 
-static void enkf_node_buffer_load( enkf_node_type * enkf_node , enkf_fs_type * fs , int report_step , int iens) {
-  FUNC_ASSERT(enkf_node->read_from_buffer);
-  {
-    buffer_type * buffer                      = buffer_alloc( 100 );
-    const enkf_config_node_type * config_node = enkf_node_get_config( enkf_node );
-    const char * node_key                     = enkf_config_node_get_key( config_node );
-    enkf_var_type var_type                    = enkf_config_node_get_var_type( config_node );
+        if (enkf_node->vector_storage)
+            enkf_fs_fread_vector(fs, buffer, node_key, var_type, iens);
+        else
+            enkf_fs_fread_node(fs, buffer, node_key, var_type, report_step,
+                               iens);
 
-    if (enkf_node->vector_storage)
-      enkf_fs_fread_vector( fs , buffer , node_key , var_type , iens );
-    else
-      enkf_fs_fread_node( fs , buffer , node_key , var_type , report_step , iens );
+        buffer_fskip_time_t(buffer);
 
-    buffer_fskip_time_t( buffer );
-
-    enkf_node->read_from_buffer(enkf_node->data , buffer , fs , report_step );
-    buffer_free( buffer );
-  }
+        enkf_node->read_from_buffer(enkf_node->data, buffer, fs, report_step);
+        buffer_free(buffer);
+    }
 }
 
-
-
-
-void enkf_node_load_vector( enkf_node_type * enkf_node , enkf_fs_type * fs , int iens ) {
-  enkf_node_buffer_load( enkf_node , fs , -1 , iens );
+void enkf_node_load_vector(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                           int iens) {
+    enkf_node_buffer_load(enkf_node, fs, -1, iens);
 }
 
-
-
-static void enkf_node_load_container( enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_type node_id ) {
-  for (int inode=0; inode < vector_get_size( enkf_node->container_nodes ); inode++) {
-    enkf_node_type * child_node = (enkf_node_type *)vector_iget( enkf_node->container_nodes , inode );
-    enkf_node_load( child_node , fs , node_id );
-  }
+static void enkf_node_load_container(enkf_node_type *enkf_node,
+                                     enkf_fs_type *fs, node_id_type node_id) {
+    for (int inode = 0; inode < vector_get_size(enkf_node->container_nodes);
+         inode++) {
+        enkf_node_type *child_node =
+            (enkf_node_type *)vector_iget(enkf_node->container_nodes, inode);
+        enkf_node_load(child_node, fs, node_id);
+    }
 }
 
-
-void enkf_node_load(enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_type node_id) {
-  if (enkf_node_get_impl_type(enkf_node) == CONTAINER)
-    enkf_node_load_container( enkf_node , fs , node_id );
-  else {
-    if (enkf_node->vector_storage)
-      enkf_node_load_vector( enkf_node , fs , node_id.iens );
-    else
-      /* Normal load path */
-      enkf_node_buffer_load( enkf_node , fs , node_id.report_step, node_id.iens );
-  }
+void enkf_node_load(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                    node_id_type node_id) {
+    if (enkf_node_get_impl_type(enkf_node) == CONTAINER)
+        enkf_node_load_container(enkf_node, fs, node_id);
+    else {
+        if (enkf_node->vector_storage)
+            enkf_node_load_vector(enkf_node, fs, node_id.iens);
+        else
+            /* Normal load path */
+            enkf_node_buffer_load(enkf_node, fs, node_id.report_step,
+                                  node_id.iens);
+    }
 }
 
-
-bool enkf_node_try_load_vector(enkf_node_type *enkf_node , enkf_fs_type * fs , int iens ) {
-  if (enkf_config_node_has_vector( enkf_node->config , fs , iens)) {
-    enkf_node_load_vector( enkf_node , fs , iens );
-    return true;
-  } else
-    return false;
+bool enkf_node_try_load_vector(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                               int iens) {
+    if (enkf_config_node_has_vector(enkf_node->config, fs, iens)) {
+        enkf_node_load_vector(enkf_node, fs, iens);
+        return true;
+    } else
+        return false;
 }
-
-
-
-
 
 /*
   In the case of nodes with vector storage this function
   will load the entire vector.
 */
 
-enkf_node_type * enkf_node_load_alloc( const enkf_config_node_type * config_node , enkf_fs_type * fs , node_id_type node_id) {
-  if (enkf_config_node_vector_storage( config_node )) {
-    if (enkf_config_node_has_vector( config_node , fs , node_id.iens)) {
-      enkf_node_type * node = enkf_node_alloc( config_node );
-      enkf_node_load( node , fs , node_id );
-      return node;
+enkf_node_type *enkf_node_load_alloc(const enkf_config_node_type *config_node,
+                                     enkf_fs_type *fs, node_id_type node_id) {
+    if (enkf_config_node_vector_storage(config_node)) {
+        if (enkf_config_node_has_vector(config_node, fs, node_id.iens)) {
+            enkf_node_type *node = enkf_node_alloc(config_node);
+            enkf_node_load(node, fs, node_id);
+            return node;
+        } else {
+            util_abort("%s: could not load vector:%s from iens:%d\n", __func__,
+                       enkf_config_node_get_key(config_node), node_id.iens);
+            return NULL;
+        }
     } else {
-      util_abort("%s: could not load vector:%s from iens:%d\n",__func__ , enkf_config_node_get_key( config_node ),
-                 node_id.iens );
-      return NULL;
+        if (enkf_config_node_has_node(config_node, fs, node_id)) {
+            enkf_node_type *node = enkf_node_alloc(config_node);
+            enkf_node_load(node, fs, node_id);
+            return node;
+        } else {
+            util_abort("%s: Could not load node: key:%s  iens:%d  report:%d \n",
+                       __func__, enkf_config_node_get_key(config_node),
+                       node_id.iens, node_id.report_step);
+            return NULL;
+        }
     }
-  } else {
-    if (enkf_config_node_has_node( config_node , fs , node_id)) {
-      enkf_node_type * node = enkf_node_alloc( config_node );
-      enkf_node_load( node , fs , node_id );
-      return node;
-    } else {
-      util_abort("%s: Could not load node: key:%s  iens:%d  report:%d \n",
-                 __func__ ,
-                 enkf_config_node_get_key( config_node ) ,
-                 node_id.iens , node_id.report_step );
-      return NULL;
-    }
-  }
 }
 
+void enkf_node_copy(const enkf_config_node_type *config_node,
+                    enkf_fs_type *src_case, enkf_fs_type *target_case,
+                    node_id_type src_id, node_id_type target_id) {
 
+    enkf_node_type *enkf_node =
+        enkf_node_load_alloc(config_node, src_case, src_id);
 
-void enkf_node_copy(const enkf_config_node_type * config_node ,
-                    enkf_fs_type * src_case,
-                    enkf_fs_type * target_case,
-                    node_id_type src_id ,
-                    node_id_type target_id) {
-
-  enkf_node_type * enkf_node = enkf_node_load_alloc(config_node, src_case , src_id);
-
-
-  /* Hack to ensure that size is set for the gen_data instances.
+    /* Hack to ensure that size is set for the gen_data instances.
      This sneeks low level stuff into a high level scope. BAD. */
-  {
-    ert_impl_type impl_type = enkf_node_get_impl_type( enkf_node );
-    if (impl_type == GEN_DATA) {
-      /* Read the size at report_step_from */
-      gen_data_type * gen_data = (gen_data_type * ) enkf_node_value_ptr( enkf_node );
-      int size                 = gen_data_get_size( gen_data );
-
-      /* Enforce the size at report_step_to */
-      gen_data_assert_size( gen_data , size , target_id.report_step);
-    }
-  }
-
-  enkf_node_store(enkf_node, target_case , target_id );
-  enkf_node_free(enkf_node);
-}
-
-bool enkf_node_has_data( enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_type node_id) {
-  if (enkf_node->vector_storage) {
-    FUNC_ASSERT(enkf_node->has_data);
     {
-      int report_step  = node_id.report_step;
-      int iens         = node_id.iens;
+        ert_impl_type impl_type = enkf_node_get_impl_type(enkf_node);
+        if (impl_type == GEN_DATA) {
+            /* Read the size at report_step_from */
+            gen_data_type *gen_data =
+                (gen_data_type *)enkf_node_value_ptr(enkf_node);
+            int size = gen_data_get_size(gen_data);
 
-      // Try to load the vector.
-      if (enkf_config_node_has_vector( enkf_node->config , fs , iens )) {
-        enkf_node_load_vector( enkf_node , fs , iens);
-
-        // The vector is loaded. Check if we have the report_step/state asked for:
-        return enkf_node->has_data( enkf_node->data , report_step );
-      } else
-        return false;
+            /* Enforce the size at report_step_to */
+            gen_data_assert_size(gen_data, size, target_id.report_step);
+        }
     }
-  } else
-    return enkf_config_node_has_node( enkf_node->config , fs , node_id );
+
+    enkf_node_store(enkf_node, target_case, target_id);
+    enkf_node_free(enkf_node);
 }
 
+bool enkf_node_has_data(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                        node_id_type node_id) {
+    if (enkf_node->vector_storage) {
+        FUNC_ASSERT(enkf_node->has_data);
+        {
+            int report_step = node_id.report_step;
+            int iens = node_id.iens;
 
-void enkf_node_serialize(enkf_node_type *enkf_node , enkf_fs_type * fs, node_id_type node_id ,
-                         const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+            // Try to load the vector.
+            if (enkf_config_node_has_vector(enkf_node->config, fs, iens)) {
+                enkf_node_load_vector(enkf_node, fs, iens);
 
-  FUNC_ASSERT(enkf_node->serialize);
-  enkf_node_load( enkf_node , fs , node_id);
-  enkf_node->serialize(enkf_node->data , node_id , active_list , A , row_offset , column);
-
+                // The vector is loaded. Check if we have the report_step/state asked for:
+                return enkf_node->has_data(enkf_node->data, report_step);
+            } else
+                return false;
+        }
+    } else
+        return enkf_config_node_has_node(enkf_node->config, fs, node_id);
 }
 
+void enkf_node_serialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                         node_id_type node_id,
+                         const active_list_type *active_list, matrix_type *A,
+                         int row_offset, int column) {
 
-
-void enkf_node_deserialize(enkf_node_type *enkf_node , enkf_fs_type * fs , node_id_type node_id,
-                           const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
-
-  FUNC_ASSERT(enkf_node->deserialize);
-  enkf_node->deserialize(enkf_node->data , node_id , active_list , A , row_offset , column);
-  enkf_node_store( enkf_node , fs , node_id );
+    FUNC_ASSERT(enkf_node->serialize);
+    enkf_node_load(enkf_node, fs, node_id);
+    enkf_node->serialize(enkf_node->data, node_id, active_list, A, row_offset,
+                         column);
 }
 
+void enkf_node_deserialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                           node_id_type node_id,
+                           const active_list_type *active_list,
+                           const matrix_type *A, int row_offset, int column) {
 
-
-void enkf_node_set_inflation( enkf_node_type * inflation , const enkf_node_type * std , const enkf_node_type * min_std) {
-  {
-    enkf_node_type * enkf_node = inflation;
-    FUNC_ASSERT(enkf_node->set_inflation);
-  }
-  inflation->set_inflation( inflation->data , std->data , min_std->data );
+    FUNC_ASSERT(enkf_node->deserialize);
+    enkf_node->deserialize(enkf_node->data, node_id, active_list, A, row_offset,
+                           column);
+    enkf_node_store(enkf_node, fs, node_id);
 }
 
+void enkf_node_set_inflation(enkf_node_type *inflation,
+                             const enkf_node_type *std,
+                             const enkf_node_type *min_std) {
+    {
+        enkf_node_type *enkf_node = inflation;
+        FUNC_ASSERT(enkf_node->set_inflation);
+    }
+    inflation->set_inflation(inflation->data, std->data, min_std->data);
+}
 
 void enkf_node_sqrt(enkf_node_type *enkf_node) {
-  FUNC_ASSERT(enkf_node->isqrt);
-  enkf_node->isqrt(enkf_node->data);
+    FUNC_ASSERT(enkf_node->isqrt);
+    enkf_node->isqrt(enkf_node->data);
 }
 
-
-void enkf_node_scale(enkf_node_type *enkf_node , double scale_factor) {
-  FUNC_ASSERT(enkf_node->scale);
-  enkf_node->scale(enkf_node->data , scale_factor);
+void enkf_node_scale(enkf_node_type *enkf_node, double scale_factor) {
+    FUNC_ASSERT(enkf_node->scale);
+    enkf_node->scale(enkf_node->data, scale_factor);
 }
 
-
-void enkf_node_iadd(enkf_node_type *enkf_node , const enkf_node_type * delta_node) {
-  FUNC_ASSERT(enkf_node->iadd);
-  enkf_node->iadd(enkf_node->data , delta_node->data);
+void enkf_node_iadd(enkf_node_type *enkf_node,
+                    const enkf_node_type *delta_node) {
+    FUNC_ASSERT(enkf_node->iadd);
+    enkf_node->iadd(enkf_node->data, delta_node->data);
 }
 
-
-void enkf_node_iaddsqr(enkf_node_type *enkf_node , const enkf_node_type * delta_node) {
-  FUNC_ASSERT(enkf_node->iaddsqr);
-  enkf_node->iaddsqr(enkf_node->data , delta_node->data);
+void enkf_node_iaddsqr(enkf_node_type *enkf_node,
+                       const enkf_node_type *delta_node) {
+    FUNC_ASSERT(enkf_node->iaddsqr);
+    enkf_node->iaddsqr(enkf_node->data, delta_node->data);
 }
 
-
-void enkf_node_imul(enkf_node_type *enkf_node , const enkf_node_type * delta_node) {
-  FUNC_ASSERT(enkf_node->imul);
-  enkf_node->imul(enkf_node->data , delta_node->data);
+void enkf_node_imul(enkf_node_type *enkf_node,
+                    const enkf_node_type *delta_node) {
+    FUNC_ASSERT(enkf_node->imul);
+    enkf_node->imul(enkf_node->data, delta_node->data);
 }
 
-
-
-/**
+/*
    The return value is whether any initialization has actually taken
    place. If the function returns false it is for instance not
    necessary to internalize anything.
 */
 
-bool enkf_node_initialize(enkf_node_type *enkf_node, int iens , rng_type * rng) {
-  if (enkf_node_use_forward_init( enkf_node ))
-    return false; // This node will be initialized by loading results from the forward model.
-  else {
-    if (enkf_node->initialize != NULL) {
-      char * init_file = enkf_config_node_alloc_initfile( enkf_node->config , NULL , iens );
-      bool   init = enkf_node->initialize(enkf_node->data , iens , init_file, rng);
-      free( init_file );
-      return init;
-    } else
-      return false;  /* No init performed */
-  }
+bool enkf_node_initialize(enkf_node_type *enkf_node, int iens, rng_type *rng) {
+    if (enkf_node_use_forward_init(enkf_node))
+        return false; // This node will be initialized by loading results from the forward model.
+    else {
+        if (enkf_node->initialize != NULL) {
+            char *init_file =
+                enkf_config_node_alloc_initfile(enkf_node->config, NULL, iens);
+            bool init =
+                enkf_node->initialize(enkf_node->data, iens, init_file, rng);
+            free(init_file);
+            return init;
+        } else
+            return false; /* No init performed */
+    }
 }
-
-
-
 
 void enkf_node_clear(enkf_node_type *enkf_node) {
-  FUNC_ASSERT(enkf_node->clear);
-  enkf_node->clear(enkf_node->data);
+    FUNC_ASSERT(enkf_node->clear);
+    enkf_node->clear(enkf_node->data);
 }
-
 
 void enkf_node_free(enkf_node_type *enkf_node) {
-  if (enkf_node->freef != NULL)
-    enkf_node->freef(enkf_node->data);
-  free(enkf_node->node_key);
-  vector_free(enkf_node->container_nodes);
-  free(enkf_node);
+    if (enkf_node->freef != NULL)
+        enkf_node->freef(enkf_node->data);
+    free(enkf_node->node_key);
+    vector_free(enkf_node->container_nodes);
+    free(enkf_node);
 }
-
 
 void enkf_node_free__(void *void_node) {
-  enkf_node_free((enkf_node_type *) void_node);
+    enkf_node_free((enkf_node_type *)void_node);
 }
 
-const char * enkf_node_get_key(const enkf_node_type * enkf_node) {
-  return enkf_node->node_key;
+const char *enkf_node_get_key(const enkf_node_type *enkf_node) {
+    return enkf_node->node_key;
 }
-
 
 #undef FUNC_ASSERT
 
-
-
-/*****************************************************************/
-
-
-
 /* Manual inheritance - .... */
-static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *config ) {
-  const char *node_key     = enkf_config_node_get_key(config);
-  ert_impl_type impl_type  = enkf_config_node_get_impl_type(config);
-  enkf_node_type * node = (enkf_node_type *)util_malloc(sizeof * node );
-  node->vector_storage     = enkf_config_node_vector_storage( config );
-  node->config             = config;
-  node->node_key           = util_alloc_string_copy(node_key);
-  node->data               = NULL;
-  node->container_nodes    = vector_alloc_new( );
+static enkf_node_type *
+enkf_node_alloc_empty(const enkf_config_node_type *config) {
+    const char *node_key = enkf_config_node_get_key(config);
+    ert_impl_type impl_type = enkf_config_node_get_impl_type(config);
+    enkf_node_type *node = (enkf_node_type *)util_malloc(sizeof *node);
+    node->vector_storage = enkf_config_node_vector_storage(config);
+    node->config = config;
+    node->node_key = util_alloc_string_copy(node_key);
+    node->data = NULL;
+    node->container_nodes = vector_alloc_new();
 
-  /*
+    /*
     Start by initializing all function pointers to NULL.
   */
-  node->alloc                = NULL;
-  node->ecl_write            = NULL;
-  node->forward_load         = NULL;
-  node->forward_load_vector  = NULL;
-  node->copy                 = NULL;
-  node->initialize           = NULL;
-  node->freef                = NULL;
-  node->free_data            = NULL;
-  node->user_get             = NULL;
-  node->user_get_vector      = NULL;
-  node->fload                = NULL;
-  node->read_from_buffer     = NULL;
-  node->write_to_buffer      = NULL;
-  node->serialize            = NULL;
-  node->deserialize          = NULL;
-  node->clear                = NULL;
-  node->set_inflation        = NULL;
-  node->has_data             = NULL;
+    node->alloc = NULL;
+    node->ecl_write = NULL;
+    node->forward_load = NULL;
+    node->forward_load_vector = NULL;
+    node->copy = NULL;
+    node->initialize = NULL;
+    node->freef = NULL;
+    node->free_data = NULL;
+    node->user_get = NULL;
+    node->user_get_vector = NULL;
+    node->fload = NULL;
+    node->read_from_buffer = NULL;
+    node->write_to_buffer = NULL;
+    node->serialize = NULL;
+    node->deserialize = NULL;
+    node->clear = NULL;
+    node->set_inflation = NULL;
+    node->has_data = NULL;
 
-  /* Math operations: */
-  node->iadd                 = NULL;
-  node->scale                = NULL;
-  node->isqrt                = NULL;
-  node->iaddsqr              = NULL;
-  node->imul                 = NULL;
+    /* Math operations: */
+    node->iadd = NULL;
+    node->scale = NULL;
+    node->isqrt = NULL;
+    node->iaddsqr = NULL;
+    node->imul = NULL;
 
-  switch (impl_type) {
-  case(CONTAINER):
-    node->alloc              = container_alloc__;
-    node->freef              = container_free__;
-    break;
-  case(GEN_KW):
-    node->alloc              = gen_kw_alloc__;
-    node->ecl_write          = gen_kw_ecl_write__;
-    node->copy               = gen_kw_copy__;
-    node->initialize         = gen_kw_initialize__;
-    node->freef              = gen_kw_free__;
-    node->user_get           = gen_kw_user_get__;
-    node->write_to_buffer    = gen_kw_write_to_buffer__;
-    node->read_from_buffer   = gen_kw_read_from_buffer__;
-    node->serialize          = gen_kw_serialize__;
-    node->deserialize        = gen_kw_deserialize__;
-    node->clear              = gen_kw_clear__;
-    node->iadd               = gen_kw_iadd__;
-    node->scale              = gen_kw_scale__;
-    node->iaddsqr            = gen_kw_iaddsqr__;
-    node->imul               = gen_kw_imul__;
-    node->isqrt              = gen_kw_isqrt__;
-    node->set_inflation      = gen_kw_set_inflation__;
-    node->fload              = gen_kw_fload__;
-    break;
-  case(SUMMARY):
-    node->forward_load         = summary_forward_load__;
-    node->forward_load_vector  = summary_forward_load_vector__;
-    node->alloc                = summary_alloc__;
-    node->copy                 = summary_copy__;
-    node->freef                = summary_free__;
-    node->user_get             = summary_user_get__;
-    node->user_get_vector      = summary_user_get_vector__;
-    node->read_from_buffer     = summary_read_from_buffer__;
-    node->write_to_buffer      = summary_write_to_buffer__;
-    node->serialize            = summary_serialize__;
-    node->deserialize          = summary_deserialize__;
-    node->clear                = summary_clear__;
-    node->has_data             = summary_has_data__;
-    /*
+    switch (impl_type) {
+    case (CONTAINER):
+        node->alloc = container_alloc__;
+        node->freef = container_free__;
+        break;
+    case (GEN_KW):
+        node->alloc = gen_kw_alloc__;
+        node->ecl_write = gen_kw_ecl_write__;
+        node->copy = gen_kw_copy__;
+        node->initialize = gen_kw_initialize__;
+        node->freef = gen_kw_free__;
+        node->user_get = gen_kw_user_get__;
+        node->write_to_buffer = gen_kw_write_to_buffer__;
+        node->read_from_buffer = gen_kw_read_from_buffer__;
+        node->serialize = gen_kw_serialize__;
+        node->deserialize = gen_kw_deserialize__;
+        node->clear = gen_kw_clear__;
+        node->iadd = gen_kw_iadd__;
+        node->scale = gen_kw_scale__;
+        node->iaddsqr = gen_kw_iaddsqr__;
+        node->imul = gen_kw_imul__;
+        node->isqrt = gen_kw_isqrt__;
+        node->set_inflation = gen_kw_set_inflation__;
+        node->fload = gen_kw_fload__;
+        break;
+    case (SUMMARY):
+        node->forward_load = summary_forward_load__;
+        node->forward_load_vector = summary_forward_load_vector__;
+        node->alloc = summary_alloc__;
+        node->copy = summary_copy__;
+        node->freef = summary_free__;
+        node->user_get = summary_user_get__;
+        node->user_get_vector = summary_user_get_vector__;
+        node->read_from_buffer = summary_read_from_buffer__;
+        node->write_to_buffer = summary_write_to_buffer__;
+        node->serialize = summary_serialize__;
+        node->deserialize = summary_deserialize__;
+        node->clear = summary_clear__;
+        node->has_data = summary_has_data__;
+        /*
       node->iadd               = summary_iadd__;
       node->scale              = summary_scale__;
       node->iaddsqr            = summary_iaddsqr__;
       node->imul               = summary_imul__;
       node->isqrt              = summary_isqrt__;
     */
-    break;
-  case(SURFACE):
-    node->initialize         = surface_initialize__;
-    node->ecl_write          = surface_ecl_write__;
-    node->alloc              = surface_alloc__;
-    node->copy               = surface_copy__;
-    node->freef              = surface_free__;
-    node->user_get           = surface_user_get__;
-    node->read_from_buffer   = surface_read_from_buffer__;
-    node->write_to_buffer    = surface_write_to_buffer__;
-    node->serialize          = surface_serialize__;
-    node->deserialize        = surface_deserialize__;
-    node->clear              = surface_clear__;
-    node->iadd               = surface_iadd__;
-    node->scale              = surface_scale__;
-    node->iaddsqr            = surface_iaddsqr__;
-    node->imul               = surface_imul__;
-    node->isqrt              = surface_isqrt__;
-    node->fload              = surface_fload__;
-    break;
-  case(FIELD):
-    node->alloc              = field_alloc__;
-    node->ecl_write          = field_ecl_write__;
-    node->copy               = field_copy__;
-    node->initialize         = field_initialize__;
-    node->freef              = field_free__;
-    node->user_get           = field_user_get__;
-    node->read_from_buffer   = field_read_from_buffer__;
-    node->write_to_buffer    = field_write_to_buffer__;
-    node->serialize          = field_serialize__;
-    node->deserialize        = field_deserialize__;
+        break;
+    case (SURFACE):
+        node->initialize = surface_initialize__;
+        node->ecl_write = surface_ecl_write__;
+        node->alloc = surface_alloc__;
+        node->copy = surface_copy__;
+        node->freef = surface_free__;
+        node->user_get = surface_user_get__;
+        node->read_from_buffer = surface_read_from_buffer__;
+        node->write_to_buffer = surface_write_to_buffer__;
+        node->serialize = surface_serialize__;
+        node->deserialize = surface_deserialize__;
+        node->clear = surface_clear__;
+        node->iadd = surface_iadd__;
+        node->scale = surface_scale__;
+        node->iaddsqr = surface_iaddsqr__;
+        node->imul = surface_imul__;
+        node->isqrt = surface_isqrt__;
+        node->fload = surface_fload__;
+        break;
+    case (FIELD):
+        node->alloc = field_alloc__;
+        node->ecl_write = field_ecl_write__;
+        node->copy = field_copy__;
+        node->initialize = field_initialize__;
+        node->freef = field_free__;
+        node->user_get = field_user_get__;
+        node->read_from_buffer = field_read_from_buffer__;
+        node->write_to_buffer = field_write_to_buffer__;
+        node->serialize = field_serialize__;
+        node->deserialize = field_deserialize__;
 
-    node->clear              = field_clear__;
-    node->set_inflation      = field_set_inflation__;
-    node->iadd               = field_iadd__;
-    node->scale              = field_scale__;
-    node->iaddsqr            = field_iaddsqr__;
-    node->imul               = field_imul__;
-    node->isqrt              = field_isqrt__;
-    node->fload              = field_fload__;
-    break;
-  case(GEN_DATA):
-    node->alloc              = gen_data_alloc__;
-    node->initialize         = gen_data_initialize__;
-    node->copy               = gen_data_copy__;
-    node->freef              = gen_data_free__;
-    node->ecl_write          = gen_data_ecl_write__;
-    node->forward_load       = gen_data_forward_load__;
-    node->user_get           = gen_data_user_get__;
-    node->read_from_buffer   = gen_data_read_from_buffer__;
-    node->write_to_buffer    = gen_data_write_to_buffer__;
-    node->serialize          = gen_data_serialize__;
-    node->deserialize        = gen_data_deserialize__;
-    node->set_inflation      = gen_data_set_inflation__;
+        node->clear = field_clear__;
+        node->set_inflation = field_set_inflation__;
+        node->iadd = field_iadd__;
+        node->scale = field_scale__;
+        node->iaddsqr = field_iaddsqr__;
+        node->imul = field_imul__;
+        node->isqrt = field_isqrt__;
+        node->fload = field_fload__;
+        break;
+    case (GEN_DATA):
+        node->alloc = gen_data_alloc__;
+        node->initialize = gen_data_initialize__;
+        node->copy = gen_data_copy__;
+        node->freef = gen_data_free__;
+        node->ecl_write = gen_data_ecl_write__;
+        node->forward_load = gen_data_forward_load__;
+        node->user_get = gen_data_user_get__;
+        node->read_from_buffer = gen_data_read_from_buffer__;
+        node->write_to_buffer = gen_data_write_to_buffer__;
+        node->serialize = gen_data_serialize__;
+        node->deserialize = gen_data_deserialize__;
+        node->set_inflation = gen_data_set_inflation__;
 
-    node->clear              = gen_data_clear__;
-    node->iadd               = gen_data_iadd__;
-    node->scale              = gen_data_scale__;
-    node->iaddsqr            = gen_data_iaddsqr__;
-    node->imul               = gen_data_imul__;
-    node->isqrt              = gen_data_isqrt__;
-    break;
-  case(EXT_PARAM):
-    node->alloc              = ext_param_alloc__;
-    node->freef              = ext_param_free__;
-    node->ecl_write          = ext_param_ecl_write__;
-    node->write_to_buffer    = ext_param_write_to_buffer__;
-    node->read_from_buffer   = ext_param_read_from_buffer__;
-    break;
-  default:
-    util_abort("%s: implementation type: %d unknown - all hell is loose - aborting \n",__func__ , impl_type);
-  }
-  return node;
+        node->clear = gen_data_clear__;
+        node->iadd = gen_data_iadd__;
+        node->scale = gen_data_scale__;
+        node->iaddsqr = gen_data_iaddsqr__;
+        node->imul = gen_data_imul__;
+        node->isqrt = gen_data_isqrt__;
+        break;
+    case (EXT_PARAM):
+        node->alloc = ext_param_alloc__;
+        node->freef = ext_param_free__;
+        node->ecl_write = ext_param_ecl_write__;
+        node->write_to_buffer = ext_param_write_to_buffer__;
+        node->read_from_buffer = ext_param_read_from_buffer__;
+        break;
+    default:
+        util_abort("%s: implementation type: %d unknown - all hell is loose - "
+                   "aborting \n",
+                   __func__, impl_type);
+    }
+    return node;
 }
 
-
-
-#define CASE_SET(type , func) case(type): has_func = (func != NULL); break;
-bool enkf_node_has_func(const enkf_node_type * node , node_function_type function_type) {
-  bool has_func = false;
-  switch (function_type) {
-    CASE_SET(alloc_func                     , node->alloc);
-    CASE_SET(ecl_write_func                 , node->ecl_write);
-    CASE_SET(forward_load_func              , node->forward_load);
-    CASE_SET(copy_func                      , node->copy);
-    CASE_SET(initialize_func                , node->initialize);
-    CASE_SET(free_func                      , node->freef);
-  default:
-    fprintf(stderr,"%s: node_function_identifier: %d not recognized - aborting \n",__func__ , function_type);
-  }
-  return has_func;
+#define CASE_SET(type, func)                                                   \
+    case (type):                                                               \
+        has_func = (func != NULL);                                             \
+        break;
+bool enkf_node_has_func(const enkf_node_type *node,
+                        node_function_type function_type) {
+    bool has_func = false;
+    switch (function_type) {
+        CASE_SET(alloc_func, node->alloc);
+        CASE_SET(ecl_write_func, node->ecl_write);
+        CASE_SET(forward_load_func, node->forward_load);
+        CASE_SET(copy_func, node->copy);
+        CASE_SET(initialize_func, node->initialize);
+        CASE_SET(free_func, node->freef);
+    default:
+        fprintf(stderr,
+                "%s: node_function_identifier: %d not recognized - aborting \n",
+                __func__, function_type);
+    }
+    return has_func;
 }
 #undef CASE_SET
 
-
-
-
-enkf_node_type * enkf_node_alloc(const enkf_config_node_type * config) {
-  enkf_node_type * node    = enkf_node_alloc_empty(config);
-  UTIL_TYPE_ID_INIT( node , ENKF_NODE_TYPE_ID );
-  enkf_node_alloc_domain_object(node);
-  return node;
+enkf_node_type *enkf_node_alloc(const enkf_config_node_type *config) {
+    enkf_node_type *node = enkf_node_alloc_empty(config);
+    UTIL_TYPE_ID_INIT(node, ENKF_NODE_TYPE_ID);
+    enkf_node_alloc_domain_object(node);
+    return node;
 }
 
-
-
-
-
-static void enkf_node_container_add_node( enkf_node_type * node , const enkf_node_type * child_node , bool shared) {
-  if (shared)
-    vector_append_ref( node->container_nodes , child_node );
-  else
-    vector_append_owned_ref( node->container_nodes , child_node, enkf_node_free__ );
+static void enkf_node_container_add_node(enkf_node_type *node,
+                                         const enkf_node_type *child_node,
+                                         bool shared) {
+    if (shared)
+        vector_append_ref(node->container_nodes, child_node);
+    else
+        vector_append_owned_ref(node->container_nodes, child_node,
+                                enkf_node_free__);
 }
 
-static enkf_node_type * enkf_node_alloc_container(const enkf_config_node_type * config, hash_type * node_hash , bool shared) {
-  enkf_node_type * container_node = enkf_node_alloc( config );
-  {
-    for (int i=0; i < enkf_config_node_container_size( config ); i++) {
-      const enkf_config_node_type * child_config = enkf_config_node_container_iget( config , i );
-      enkf_node_type * child_node;
+static enkf_node_type *
+enkf_node_alloc_container(const enkf_config_node_type *config,
+                          hash_type *node_hash, bool shared) {
+    enkf_node_type *container_node = enkf_node_alloc(config);
+    {
+        for (int i = 0; i < enkf_config_node_container_size(config); i++) {
+            const enkf_config_node_type *child_config =
+                enkf_config_node_container_iget(config, i);
+            enkf_node_type *child_node;
 
-      if (shared)
-         child_node = (enkf_node_type * ) hash_get( node_hash , enkf_config_node_get_key( child_config ));
-      else
-        child_node = enkf_node_alloc( child_config );
+            if (shared)
+                child_node = (enkf_node_type *)hash_get(
+                    node_hash, enkf_config_node_get_key(child_config));
+            else
+                child_node = enkf_node_alloc(child_config);
 
-      enkf_node_container_add_node( container_node , child_node , shared);
-      container_add_node( (container_type * ) enkf_node_value_ptr( container_node ) , enkf_node_value_ptr( child_node ));
+            enkf_node_container_add_node(container_node, child_node, shared);
+            container_add_node(
+                (container_type *)enkf_node_value_ptr(container_node),
+                enkf_node_value_ptr(child_node));
+        }
     }
-  }
-  return container_node;
+    return container_node;
 }
 
-enkf_node_type * enkf_node_alloc_shared_container(const enkf_config_node_type * config, hash_type * node_hash) {
-  return enkf_node_alloc_container( config , node_hash , true );
+enkf_node_type *
+enkf_node_alloc_shared_container(const enkf_config_node_type *config,
+                                 hash_type *node_hash) {
+    return enkf_node_alloc_container(config, node_hash, true);
 }
 
-
-enkf_node_type * enkf_node_alloc_private_container(const enkf_config_node_type * config) {
-  return enkf_node_alloc_container( config , NULL , false );
+enkf_node_type *
+enkf_node_alloc_private_container(const enkf_config_node_type *config) {
+    return enkf_node_alloc_container(config, NULL, false);
 }
 
-enkf_node_type * enkf_node_deep_alloc(const enkf_config_node_type * config) {
-  if (enkf_config_node_get_impl_type( config ) == CONTAINER) {
-    enkf_node_type * container = enkf_node_alloc_container( config , NULL , false );
-    container_assert_size( (const container_type * ) enkf_node_value_ptr( container ));
-    return container;
-  } else
-    return enkf_node_alloc( config );
+enkf_node_type *enkf_node_deep_alloc(const enkf_config_node_type *config) {
+    if (enkf_config_node_get_impl_type(config) == CONTAINER) {
+        enkf_node_type *container =
+            enkf_node_alloc_container(config, NULL, false);
+        container_assert_size(
+            (const container_type *)enkf_node_value_ptr(container));
+        return container;
+    } else
+        return enkf_node_alloc(config);
 }
 
-
-
-bool enkf_node_internalize(const enkf_node_type * node, int report_step) {
-  return enkf_config_node_internalize( node->config , report_step );
+bool enkf_node_internalize(const enkf_node_type *node, int report_step) {
+    return enkf_config_node_internalize(node->config, report_step);
 }

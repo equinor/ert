@@ -28,41 +28,42 @@
 extern "C" {
 #endif
 
-
 //Same as pythons default log levels, but with different numeric values.
 typedef enum {
-  // A serious error, indicating that the program itself may be unable to
-  // continue running.
-  LOG_CRITICAL = 50,
+    // A serious error, indicating that the program itself may be unable to
+    // continue running.
+    LOG_CRITICAL = 50,
 
-  // Due to a more serious problem, the software has not been able to perform
-  // some function.
-  LOG_ERROR    = 40,
+    // Due to a more serious problem, the software has not been able to perform
+    // some function.
+    LOG_ERROR = 40,
 
-  // An indication that something unexpected happened, or indicative of some
-  // problem in the near future (e.g. "disk space low"). The software is still
-  // working as expected.
-  LOG_WARNING  = 30,
+    // An indication that something unexpected happened, or indicative of some
+    // problem in the near future (e.g. "disk space low"). The software is still
+    // working as expected.
+    LOG_WARNING = 30,
 
-  // Confirmation that things are working as expected.
-  LOG_INFO     = 20,
+    // Confirmation that things are working as expected.
+    LOG_INFO = 20,
 
-  // Detailed information, typically of interest only when diagnosing problems.
-  LOG_DEBUG    = 10
+    // Detailed information, typically of interest only when diagnosing problems.
+    LOG_DEBUG = 10
 } message_level_type;
 
-
 typedef struct log_struct log_type;
-  log_type   * log_open_file(const char *filename, message_level_type log_level);
-  log_type   * log_open_stream(FILE * stream, message_level_type log_level);
+log_type *log_open_file(const char *filename, message_level_type log_level);
+log_type *log_open_stream(FILE *stream, message_level_type log_level);
 
-  void         log_add_message_stream(FILE * stream, bool add_timestamp, message_level_type message_level, const char * message);
-  void         log_add_message(log_type *logh, message_level_type message_level,  const char* message);
-  PY_USED void log_set_level( log_type * logh , message_level_type new_level);
-  void         log_close( log_type * logh );
-  void         log_sync(log_type * logh);
-  const char * log_get_filename( const log_type * logh );
-  int          log_get_msg_count(const log_type * logh);
+void log_add_message_stream(FILE *stream, bool add_timestamp,
+                            message_level_type message_level,
+                            const char *message);
+void log_add_message(log_type *logh, message_level_type message_level,
+                     const char *message);
+PY_USED void log_set_level(log_type *logh, message_level_type new_level);
+void log_close(log_type *logh);
+void log_sync(log_type *logh);
+const char *log_get_filename(const log_type *logh);
+int log_get_msg_count(const log_type *logh);
 
 #ifdef __cplusplus
 }

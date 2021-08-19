@@ -1,7 +1,3 @@
 #include <stdlib.h>
 
-
-int main(int argc, char ** argv) {
-  getenv("PATH");
-}
-
+int main(int argc, char **argv) { getenv("PATH"); }

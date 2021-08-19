@@ -23,7 +23,6 @@
 extern "C" {
 #endif
 
-
 /*
   The various driver implementations - this goes on disk all over the
   place, and the numbers should be considered SET IN STONE. When a new
@@ -42,15 +41,10 @@ extern "C" {
 //  BLOCK_FS_DRIVER_ID         = 3001,
 //  BLOCK_FS_DRIVER_INDEX_ID   = 3002 } fs_driver_impl;
 
-
 typedef enum {
-  INVALID_DRIVER_ID          = 0,
-  BLOCK_FS_DRIVER_ID         = 3001} fs_driver_impl;
-
-
-
-
-
+    INVALID_DRIVER_ID = 0,
+    BLOCK_FS_DRIVER_ID = 3001
+} fs_driver_impl;
 
 /*
   The categories of drivers. To reduce the risk of programming
@@ -61,18 +55,16 @@ typedef enum {
 */
 
 typedef enum {
-  DRIVER_PARAMETER        = 1,
-  DRIVER_STATIC           = 2,  // Driver static is no longer in use since December 2015 - but it must be retained here for old mount files on disk.
-  DRIVER_INDEX            = 4,  // DRIVER_DYNAMIC = 3; removed at svn ~ 3720.
-  DRIVER_DYNAMIC_FORECAST = 5,
-  DRIVER_DYNAMIC_ANALYZED = 6   // Driver DYNAMIC_ANALYZED is no longer in use since April 2016 - but it must be retained here for old mount files on disk.
+    DRIVER_PARAMETER = 1,
+    DRIVER_STATIC =
+        2, // Driver static is no longer in use since December 2015 - but it must be retained here for old mount files on disk.
+    DRIVER_INDEX = 4, // DRIVER_DYNAMIC = 3; removed at svn ~ 3720.
+    DRIVER_DYNAMIC_FORECAST = 5,
+    DRIVER_DYNAMIC_ANALYZED =
+        6 // Driver DYNAMIC_ANALYZED is no longer in use since April 2016 - but it must be retained here for old mount files on disk.
 } fs_driver_enum;
 
-
-
-
-
-bool              fs_types_valid( fs_driver_enum driver_type);
+bool fs_types_valid(fs_driver_enum driver_type);
 
 #ifdef __cplusplus
 }

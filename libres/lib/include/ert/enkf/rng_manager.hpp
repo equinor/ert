@@ -39,22 +39,21 @@ extern "C" {
  */
 #define RNG_STATE_DIGITS 10
 
-
 typedef struct rng_manager_struct rng_manager_type;
 
-rng_manager_type * rng_manager_alloc(const char * random_seed);
-rng_manager_type * rng_manager_alloc_load( const char * seed_file );
-rng_manager_type * rng_manager_alloc_default( );
-rng_manager_type * rng_manager_alloc_random( );
+rng_manager_type *rng_manager_alloc(const char *random_seed);
+rng_manager_type *rng_manager_alloc_load(const char *seed_file);
+rng_manager_type *rng_manager_alloc_default();
+rng_manager_type *rng_manager_alloc_random();
 
-rng_type         * rng_manager_alloc_rng(rng_manager_type * rng_manager);
-rng_type         * rng_manager_iget(rng_manager_type * rng_manager, int index);
-void               rng_manager_free( rng_manager_type * rng_manager );
-void               rng_manager_save_state(const rng_manager_type * rng_manager, const char * seed_file);
-void               rng_manager_log_state(const rng_manager_type * rng_manager);
+rng_type *rng_manager_alloc_rng(rng_manager_type *rng_manager);
+rng_type *rng_manager_iget(rng_manager_type *rng_manager, int index);
+void rng_manager_free(rng_manager_type *rng_manager);
+void rng_manager_save_state(const rng_manager_type *rng_manager,
+                            const char *seed_file);
+void rng_manager_log_state(const rng_manager_type *rng_manager);
 
-
-UTIL_IS_INSTANCE_HEADER( rng_manager );
+UTIL_IS_INSTANCE_HEADER(rng_manager);
 
 #ifdef __cplusplus
 }

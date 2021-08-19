@@ -19,7 +19,6 @@
 #ifndef ERT_FIELD_CONFIG_H
 #define ERT_FIELD_CONFIG_H
 
-
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -51,12 +50,11 @@ extern "C" {
 */
 
 typedef enum {
-  ECLIPSE_RESTART   = 1,
-  ECLIPSE_PARAMETER = 2,
-  GENERAL           = 3,
-  UNKNOWN_FIELD_TYPE= 4
+    ECLIPSE_RESTART = 1,
+    ECLIPSE_PARAMETER = 2,
+    GENERAL = 3,
+    UNKNOWN_FIELD_TYPE = 4
 } field_type_enum;
-
 
 /**
     The field_file_format_type denotes different ways to store a
@@ -85,89 +83,104 @@ typedef enum {
 
 */
 
-
-
-
-typedef enum { UNDEFINED_FORMAT         = 0,
-               RMS_ROFF_FILE            = 1,
-               ECL_KW_FILE              = 2,       /* ecl_kw format either packed (i.e. active cells) *or* all cells - used when reading from file. */
-               ECL_KW_FILE_ACTIVE_CELLS = 3,       /* ecl_kw format, only active cells - used writing to file. */
-               ECL_KW_FILE_ALL_CELLS    = 4,       /* ecl_kw_format, all cells - used when writing to file. */
-               ECL_GRDECL_FILE          = 5,
-               ECL_FILE                 = 6,       /* Assumes packed on export. */
-               FILE_FORMAT_NULL         = 7} field_file_format_type;  /* Used when the guess functions are given NULL to check -should never be read. */
-
+typedef enum {
+    UNDEFINED_FORMAT = 0,
+    RMS_ROFF_FILE = 1,
+    ECL_KW_FILE =
+        2, /* ecl_kw format either packed (i.e. active cells) *or* all cells - used when reading from file. */
+    ECL_KW_FILE_ACTIVE_CELLS =
+        3, /* ecl_kw format, only active cells - used writing to file. */
+    ECL_KW_FILE_ALL_CELLS =
+        4, /* ecl_kw_format, all cells - used when writing to file. */
+    ECL_GRDECL_FILE = 5,
+    ECL_FILE = 6, /* Assumes packed on export. */
+    FILE_FORMAT_NULL = 7
+} field_file_format_type; /* Used when the guess functions are given NULL to check -should never be read. */
 
 /* active_cells currently not really implemented */
 
+void field_config_update_parameter_field(field_config_type *config,
+                                         int truncation, double min_value,
+                                         double max_value,
+                                         field_file_format_type export_format,
+                                         const char *init_transform,
+                                         const char *output_transform);
 
-void field_config_update_parameter_field( field_config_type * config , int truncation, double min_value , double max_value,
-                                          field_file_format_type export_format ,
-                                          const char * init_transform , const char * output_transform );
+void field_config_update_general_field(
+    field_config_type *config, int truncation, double min_value,
+    double max_value,
+    field_file_format_type
+        export_format, /* This can be guessed with the field_config_default_export_format( ecl_file ) function. */
+    const char *init_transform, const char *input_transform,
+    const char *output_transform);
 
+field_config_type *field_config_alloc_empty(const char *ecl_kw_name,
+                                            ecl_grid_type *ecl_grid,
+                                            field_trans_table_type *trans_table,
+                                            bool global_size);
 
-void field_config_update_general_field( field_config_type * config , int truncation, double min_value , double max_value,
-                                        field_file_format_type export_format , /* This can be guessed with the field_config_default_export_format( ecl_file ) function. */
-                                        const char * init_transform ,
-                                        const char * input_transform ,
-                                        const char * output_transform );
+C_USED const char *field_config_default_extension(field_file_format_type, bool);
+field_file_format_type field_config_guess_file_type(const char *);
+ecl_data_type field_config_get_ecl_data_type(const field_config_type *);
+void field_config_get_dims(const field_config_type *, int *, int *, int *);
+PY_USED int field_config_get_nx(const field_config_type *config);
+PY_USED int field_config_get_ny(const field_config_type *config);
+PY_USED int field_config_get_nz(const field_config_type *config);
+void field_config_free(field_config_type *);
+int field_config_get_volume(const field_config_type *);
+int field_config_get_data_size_from_grid(const field_config_type *config);
+void field_config_set_ecl_data_type(field_config_type *, ecl_data_type);
+int field_config_get_byte_size(const field_config_type *);
+int field_config_get_sizeof_ctype(const field_config_type *);
+int field_config_active_index(const field_config_type *, int, int, int);
+int field_config_global_index(const field_config_type *, int, int, int);
+bool field_config_ijk_valid(const field_config_type *, int, int, int);
+bool field_config_ijk_active(const field_config_type *config, int i, int j,
+                             int k);
+bool field_config_active_cell(const field_config_type *, int, int, int);
+field_file_format_type
+field_config_get_export_format(const field_config_type *);
+void field_config_set_key(field_config_type *, const char *);
+void field_config_enkf_OFF(field_config_type *);
+bool field_config_enkf_mode(const field_config_type *config);
+const char *field_config_get_key(const field_config_type *);
+bool field_config_keep_inactive_cells(const field_config_type *);
+field_func_type *field_config_get_init_transform(const field_config_type *);
+field_func_type *field_config_get_output_transform(const field_config_type *);
+bool field_config_is_valid(const field_config_type *field_config);
+void field_config_assert_binary(const field_config_type *,
+                                const field_config_type *, const char *);
+void field_config_assert_unary(const field_config_type *, const char *);
 
+const char *
+field_config_get_init_transform_name(const field_config_type *field_config);
+const char *
+field_config_get_output_transform_name(const field_config_type *field_config);
 
-field_config_type * field_config_alloc_empty( const char * ecl_kw_name , ecl_grid_type * ecl_grid , field_trans_table_type * trans_table, bool global_size );
+void field_config_set_truncation(field_config_type *, int, double, double);
+int field_config_get_truncation_mode(const field_config_type *config);
+double field_config_get_truncation_min(const field_config_type *config);
+double field_config_get_truncation_max(const field_config_type *config);
+ecl_grid_type *field_config_get_grid(const field_config_type *);
+const char *field_config_get_grid_name(const field_config_type *);
 
+int field_config_parse_user_key(const field_config_type *config,
+                                const char *index_key, int *i, int *j, int *k);
+bool field_config_parse_user_key__(const char *index_key, int *i, int *j,
+                                   int *k);
 
-C_USED const char     * field_config_default_extension(field_file_format_type , bool );
-field_file_format_type  field_config_guess_file_type(const char * );
-ecl_data_type           field_config_get_ecl_data_type(const field_config_type *);
-void                    field_config_get_dims(const field_config_type * , int * , int * , int *);
-PY_USED int             field_config_get_nx(const field_config_type * config );
-PY_USED int             field_config_get_ny(const field_config_type * config );
-PY_USED int             field_config_get_nz(const field_config_type * config );
-void                    field_config_free(field_config_type *);
-int                     field_config_get_volume(const field_config_type * );
-int                     field_config_get_data_size_from_grid(const field_config_type * config);
-void                    field_config_set_ecl_data_type(field_config_type *  , ecl_data_type );
-int                     field_config_get_byte_size(const field_config_type * );
-int                     field_config_get_sizeof_ctype(const field_config_type * );
-int                     field_config_active_index(const field_config_type * , int , int , int );
-int                     field_config_global_index(const field_config_type * , int , int , int );
-bool                    field_config_ijk_valid(const field_config_type *  , int  , int  , int );
-bool                    field_config_ijk_active(const field_config_type * config , int i , int j , int k);
-bool                    field_config_active_cell(const field_config_type *  , int , int , int);
-field_file_format_type  field_config_get_export_format(const field_config_type * );
-void                    field_config_set_key(field_config_type * , const char *);
-void                    field_config_enkf_OFF(field_config_type * );
-bool                    field_config_enkf_mode(const field_config_type * config);
-const char            * field_config_get_key(const field_config_type * );
-bool                    field_config_keep_inactive_cells(const field_config_type *);
-field_func_type       * field_config_get_init_transform(const field_config_type * );
-field_func_type       * field_config_get_output_transform(const field_config_type * );
-bool                    field_config_is_valid( const field_config_type * field_config );
-void                    field_config_assert_binary( const field_config_type *  , const field_config_type *  , const char * );
-void                    field_config_assert_unary( const field_config_type *  , const char * );
+field_file_format_type field_config_default_export_format(const char *filename);
+const char *
+field_config_get_output_transform_name(const field_config_type *field_config);
+const char *
+field_config_get_init_transform_name(const field_config_type *field_config);
 
-const char            * field_config_get_init_transform_name( const field_config_type * field_config );
-const char            * field_config_get_output_transform_name( const field_config_type * field_config );
+void field_config_fprintf_config(const field_config_type *config,
+                                 enkf_var_type var_type, const char *outfile,
+                                 const char *infile, const char *min_std_file,
+                                 FILE *stream);
 
-void                    field_config_set_truncation(field_config_type * , int , double , double );
-int                     field_config_get_truncation_mode(const field_config_type * config );
-double                  field_config_get_truncation_min( const field_config_type * config );
-double                  field_config_get_truncation_max( const field_config_type * config );
-ecl_grid_type         * field_config_get_grid(const field_config_type * );
-const char            * field_config_get_grid_name( const field_config_type * );
-
-int                     field_config_parse_user_key(const field_config_type * config, const char * index_key , int *i , int *j , int *k);
-bool                    field_config_parse_user_key__( const char * index_key , int *i , int *j , int *k);
-
-field_file_format_type    field_config_default_export_format(const char * filename);
-const char              * field_config_get_output_transform_name( const field_config_type * field_config ) ;
-const char              * field_config_get_init_transform_name( const field_config_type * field_config ) ;
-
-void field_config_fprintf_config( const field_config_type * config , enkf_var_type var_type , const char * outfile , const char * infile ,
-                                  const char * min_std_file , FILE * stream);
-
-field_type_enum field_config_get_type( const field_config_type * config);
-
+field_type_enum field_config_get_type(const field_config_type *config);
 
 /*Generated headers */
 UTIL_IS_INSTANCE_HEADER(field_config);

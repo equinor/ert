@@ -24,53 +24,52 @@
 #include <ert/util/test_util.hpp>
 #include <ert/enkf/local_dataset.hpp>
 
-
-bool vector_contains(const std::vector<std::string>& keys, const std::string& key) {
-  auto iter = std::find(keys.begin(), keys.end(), key);
-  return (iter != keys.end());
+bool vector_contains(const std::vector<std::string> &keys,
+                     const std::string &key) {
+    auto iter = std::find(keys.begin(), keys.end(), key);
+    return (iter != keys.end());
 }
 
-
 void test_create() {
-    local_dataset_type * ld = local_dataset_alloc("DATA");
+    local_dataset_type *ld = local_dataset_alloc("DATA");
     local_dataset_add_node(ld, "PERMX");
     local_dataset_add_node(ld, "PERMY");
     local_dataset_add_node(ld, "PERMZ");
-    test_assert_false( local_dataset_has_row_scaling(ld, "PERMX"));
-    test_assert_false( local_dataset_has_row_scaling(ld, "PERMY"));
-    test_assert_false( local_dataset_has_row_scaling(ld, "PERMZ"));
+    test_assert_false(local_dataset_has_row_scaling(ld, "PERMX"));
+    test_assert_false(local_dataset_has_row_scaling(ld, "PERMY"));
+    test_assert_false(local_dataset_has_row_scaling(ld, "PERMZ"));
 
-    const auto& unscaled_keys = local_dataset_unscaled_keys(ld);
-    test_assert_int_equal( unscaled_keys.size(), 3 );
-    test_assert_true( vector_contains(unscaled_keys, "PERMX"));
-    test_assert_true( vector_contains(unscaled_keys, "PERMY"));
-    test_assert_true( vector_contains(unscaled_keys, "PERMZ"));
+    const auto &unscaled_keys = local_dataset_unscaled_keys(ld);
+    test_assert_int_equal(unscaled_keys.size(), 3);
+    test_assert_true(vector_contains(unscaled_keys, "PERMX"));
+    test_assert_true(vector_contains(unscaled_keys, "PERMY"));
+    test_assert_true(vector_contains(unscaled_keys, "PERMZ"));
 
-    const auto& scaled_keys = local_dataset_scaled_keys(ld);
-    test_assert_int_equal( scaled_keys.size(), 0 );
+    const auto &scaled_keys = local_dataset_scaled_keys(ld);
+    test_assert_int_equal(scaled_keys.size(), 0);
 
     local_dataset_free(ld);
 }
 
-
 void test_create_row_scaling() {
-  local_dataset_type * ld = local_dataset_alloc("DATA");
-  test_assert_throw(local_dataset_get_or_create_row_scaling(ld, "NO_SUCH_KEY"), std::invalid_argument);
+    local_dataset_type *ld = local_dataset_alloc("DATA");
+    test_assert_throw(
+        local_dataset_get_or_create_row_scaling(ld, "NO_SUCH_KEY"),
+        std::invalid_argument);
 
-  local_dataset_add_node(ld, "PERMX");
-  row_scaling_type * rs = local_dataset_get_or_create_row_scaling(ld, "PERMX");
-  test_assert_true( local_dataset_has_row_scaling(ld, "PERMX"));
+    local_dataset_add_node(ld, "PERMX");
+    row_scaling_type *rs = local_dataset_get_or_create_row_scaling(ld, "PERMX");
+    test_assert_true(local_dataset_has_row_scaling(ld, "PERMX"));
 
-  test_assert_false( local_dataset_has_row_scaling(ld, "PERMY"));
+    test_assert_false(local_dataset_has_row_scaling(ld, "PERMY"));
 
-  local_dataset_add_node(ld, "PERMZ");
-  test_assert_false( local_dataset_has_row_scaling(ld, "PERMZ"));
+    local_dataset_add_node(ld, "PERMZ");
+    test_assert_false(local_dataset_has_row_scaling(ld, "PERMZ"));
 
-  local_dataset_free(ld);
+    local_dataset_free(ld);
 }
 
-int main(int argc , char ** argv) {
-  test_create();
-  test_create_row_scaling();
+int main(int argc, char **argv) {
+    test_create();
+    test_create_row_scaling();
 }
-

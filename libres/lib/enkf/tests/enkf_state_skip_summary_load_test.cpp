@@ -22,48 +22,47 @@
 
 #include <ert/enkf/enkf_main.hpp>
 
-bool check_ecl_sum_loaded(const enkf_main_type * enkf_main)
-{
-  enkf_fs_type    * fs       = enkf_main_get_fs( enkf_main );
-  stringlist_type * msg_list = stringlist_alloc_new();
-  enkf_state_type * state1   = enkf_main_iget_state( enkf_main , 0 );
-  char * job_name            = model_config_alloc_jobname( enkf_main_get_model_config( enkf_main ), 0);
-  const subst_list_type * subst_list = subst_config_get_subst_list(enkf_main_get_subst_config(enkf_main));
-  run_arg_type * run_arg1    = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs, 0 , 0 , "simulations/run0", job_name, subst_list);
-  enkf_state_type * state2   = enkf_main_iget_state( enkf_main , 1 );
-  run_arg_type * run_arg2    = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs, 0 , 0 , "simulations/run1", job_name, subst_list);
+bool check_ecl_sum_loaded(const enkf_main_type *enkf_main) {
+    enkf_fs_type *fs = enkf_main_get_fs(enkf_main);
+    stringlist_type *msg_list = stringlist_alloc_new();
+    enkf_state_type *state1 = enkf_main_iget_state(enkf_main, 0);
+    char *job_name =
+        model_config_alloc_jobname(enkf_main_get_model_config(enkf_main), 0);
+    const subst_list_type *subst_list =
+        subst_config_get_subst_list(enkf_main_get_subst_config(enkf_main));
+    run_arg_type *run_arg1 = run_arg_alloc_ENSEMBLE_EXPERIMENT(
+        "run_id", fs, 0, 0, "simulations/run0", job_name, subst_list);
+    enkf_state_type *state2 = enkf_main_iget_state(enkf_main, 1);
+    run_arg_type *run_arg2 = run_arg_alloc_ENSEMBLE_EXPERIMENT(
+        "run_id", fs, 0, 0, "simulations/run1", job_name, subst_list);
 
+    state_map_type *state_map = enkf_fs_get_state_map(fs);
+    state_map_iset(state_map, 0, STATE_INITIALIZED);
 
-  state_map_type * state_map = enkf_fs_get_state_map(fs);
-  state_map_iset(state_map, 0, STATE_INITIALIZED);
+    int error = enkf_state_load_from_forward_model(state1, run_arg1, msg_list);
 
-  int error = enkf_state_load_from_forward_model( state1 , run_arg1 ,  msg_list );
+    state_map_iset(state_map, 1, STATE_INITIALIZED);
+    error = enkf_state_load_from_forward_model(state2, run_arg2, msg_list);
 
-
-  state_map_iset(state_map, 1, STATE_INITIALIZED);
-  error = enkf_state_load_from_forward_model( state2 , run_arg2 , msg_list );
-
-  free( job_name );
-  stringlist_free( msg_list );
-  return (0 == error);
+    free(job_name);
+    stringlist_free(msg_list);
+    return (0 == error);
 }
 
+int main(int argc, char **argv) {
+    enkf_main_install_SIGNALS();
+    const char *root_path = argv[1];
+    const char *config_file = argv[2];
 
+    ecl::util::TestArea ta("summary_load");
+    ta.copy_directory_content(root_path);
 
-int main(int argc , char ** argv) {
-  enkf_main_install_SIGNALS();
-  const char * root_path      = argv[1];
-  const char * config_file    = argv[2];
+    bool strict = true;
+    res_config_type *res_config = res_config_alloc_load(config_file);
+    enkf_main_type *enkf_main = enkf_main_alloc(res_config, strict, true);
 
-  ecl::util::TestArea ta("summary_load");
-  ta.copy_directory_content( root_path );
+    test_assert_true(check_ecl_sum_loaded(enkf_main));
 
-  bool strict = true;
-  res_config_type * res_config = res_config_alloc_load(config_file);
-  enkf_main_type * enkf_main = enkf_main_alloc(res_config, strict, true);
-
-  test_assert_true( check_ecl_sum_loaded(enkf_main) );
-
-  enkf_main_free( enkf_main );
-  res_config_free(res_config);
+    enkf_main_free(enkf_main);
+    res_config_free(res_config);
 }

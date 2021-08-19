@@ -16,7 +16,6 @@
    for more details.
 */
 
-
 #ifndef ERT_ENKF_ANALYSIS_H
 #define ERT_ENKF_ANALYSIS_H
 
@@ -31,24 +30,19 @@ extern "C" {
 
 #include <ert/enkf/obs_data.hpp>
 
+void enkf_analysis_fprintf_obs_summary(const obs_data_type *obs_data,
+                                       const meas_data_type *meas_data,
+                                       const int_vector_type *step_list,
+                                       const char *ministep_name, FILE *stream);
 
+void enkf_analysis_deactivate_outliers(obs_data_type *obs_data,
+                                       meas_data_type *meas_data,
+                                       double std_cutoff, double alpha,
+                                       bool verbose);
 
-void          enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data ,
-                                                const meas_data_type * meas_data  ,
-                                                const int_vector_type * step_list ,
-                                                const char * ministep_name ,
-                                                FILE * stream );
-
-void          enkf_analysis_deactivate_outliers(obs_data_type * obs_data ,
-                                                meas_data_type * meas_data ,
-                                                double std_cutoff ,
-                                                double alpha,
-                                                bool verbose);
-
-PY_USED void enkf_analysis_deactivate_std_zero(obs_data_type * obs_data ,
-                                                        meas_data_type * meas_data,
-                                                        bool verbose);
-
+PY_USED void enkf_analysis_deactivate_std_zero(obs_data_type *obs_data,
+                                               meas_data_type *meas_data,
+                                               bool verbose);
 
 #ifdef __cplusplus
 }

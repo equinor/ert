@@ -16,7 +16,6 @@
    for more details.
 */
 
-
 #ifndef ERT_MATRIX_STAT_H
 #define ERT_MATRIX_STAT_H
 
@@ -27,14 +26,18 @@ extern "C" {
 #endif //__cplusplus
 
 typedef enum {
-  LLSQ_SUCCESS = 0,
-  LLSQ_INVALID_DIM = 1,
-  LLSQ_UNDETERMINED = 2
+    LLSQ_SUCCESS = 0,
+    LLSQ_INVALID_DIM = 1,
+    LLSQ_UNDETERMINED = 2
 } llsq_result_enum;
 
-
-llsq_result_enum matrix_stat_llsq_estimate( matrix_type * beta , const matrix_type * X , const matrix_type * Y , const matrix_type * S);
-llsq_result_enum matrix_stat_polyfit( matrix_type * beta , const matrix_type * X0 , const matrix_type * Y0 , const matrix_type * S);
+llsq_result_enum matrix_stat_llsq_estimate(matrix_type *beta,
+                                           const matrix_type *X,
+                                           const matrix_type *Y,
+                                           const matrix_type *S);
+llsq_result_enum matrix_stat_polyfit(matrix_type *beta, const matrix_type *X0,
+                                     const matrix_type *Y0,
+                                     const matrix_type *S);
 
 #ifdef __cplusplus
 }

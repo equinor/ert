@@ -30,11 +30,9 @@ extern "C" {
 #include <ert/tooling.hpp>
 
 typedef struct gen_kw_config_struct gen_kw_config_type;
-typedef struct gen_kw_struct        gen_kw_type;
+typedef struct gen_kw_struct gen_kw_type;
 
-PY_USED gen_kw_type * gen_kw_alloc(const gen_kw_config_type * );
-
-
+PY_USED gen_kw_type *gen_kw_alloc(const gen_kw_config_type *);
 
 #ifdef __cplusplus
 }

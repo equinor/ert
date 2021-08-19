@@ -27,49 +27,39 @@
    file. They are not stored to disk, and only used in an attempt
    yo verify run-time casts.
 */
-#define FS_DRIVER_ID           10
+#define FS_DRIVER_ID 10
 
+void fs_driver_init(fs_driver_type *driver) {
+    driver->type_id = FS_DRIVER_ID;
 
-/*****************************************************************/
-/* This fs driver implemenatition is common to both dynamic and
-   parameter info. */
+    driver->load_node = NULL;
+    driver->save_node = NULL;
+    driver->has_node = NULL;
+    driver->unlink_node = NULL;
 
-void fs_driver_init(fs_driver_type * driver) {
-  driver->type_id = FS_DRIVER_ID;
+    driver->load_vector = NULL;
+    driver->save_vector = NULL;
+    driver->has_vector = NULL;
+    driver->unlink_vector = NULL;
 
-  driver->load_node   = NULL;
-  driver->save_node   = NULL;
-  driver->has_node    = NULL;
-  driver->unlink_node = NULL;
-
-  driver->load_vector   = NULL;
-  driver->save_vector   = NULL;
-  driver->has_vector    = NULL;
-  driver->unlink_vector = NULL;
-
-  driver->free_driver   = NULL;
-  driver->fsync_driver  = NULL;
+    driver->free_driver = NULL;
+    driver->fsync_driver = NULL;
 }
 
-fs_driver_type * fs_driver_safe_cast(void * __driver) {
-  fs_driver_type * driver = (fs_driver_type *) __driver;
-  if (driver->type_id != FS_DRIVER_ID)
-    util_abort("%s: runtime cast failed. \n",__func__);
-  return driver;
+fs_driver_type *fs_driver_safe_cast(void *__driver) {
+    fs_driver_type *driver = (fs_driver_type *)__driver;
+    if (driver->type_id != FS_DRIVER_ID)
+        util_abort("%s: runtime cast failed. \n", __func__);
+    return driver;
 }
 
-/*****************************************************************/
-
-
-void fs_driver_init_fstab( FILE * stream, fs_driver_impl driver_id) {
-  util_fwrite_long( FS_MAGIC_ID , stream );
-  util_fwrite_int ( CURRENT_FS_VERSION , stream );
-  util_fwrite_int ( driver_id , stream );
+void fs_driver_init_fstab(FILE *stream, fs_driver_impl driver_id) {
+    util_fwrite_long(FS_MAGIC_ID, stream);
+    util_fwrite_int(CURRENT_FS_VERSION, stream);
+    util_fwrite_int(driver_id, stream);
 }
 
-
-
-/**
+/*
    Will open fstab stream and return it. The semantics with respect to
    existing/not existnig fstab file depends on the value of the
    @create parameter:
@@ -84,74 +74,82 @@ void fs_driver_init_fstab( FILE * stream, fs_driver_impl driver_id) {
 
 */
 
-char * fs_driver_alloc_fstab_file( const char * path ) {
-  return util_alloc_filename( path , "ert_fstab" , NULL);
+char *fs_driver_alloc_fstab_file(const char *path) {
+    return util_alloc_filename(path, "ert_fstab", NULL);
 }
 
-
-FILE * fs_driver_open_fstab( const char * path , bool create) {
-  FILE * stream = NULL;
-  char * fstab_file = fs_driver_alloc_fstab_file( path );
-  if (create)
-    util_make_path( path );
-
-  if (util_file_exists( fstab_file ) != create) {
+FILE *fs_driver_open_fstab(const char *path, bool create) {
+    FILE *stream = NULL;
+    char *fstab_file = fs_driver_alloc_fstab_file(path);
     if (create)
-      stream = util_fopen( fstab_file , "w");
-    else
-      stream = util_fopen( fstab_file , "r");
-  }
-  free( fstab_file );
-  return stream;
-}
+        util_make_path(path);
 
-
-void fs_driver_assert_magic( FILE * stream ) {
-  long fs_magic = util_fread_long( stream );
-  if (fs_magic != FS_MAGIC_ID)
-    util_abort("%s: Fstab magic marker incorrect \n",__func__);
-}
-
-
-
-void fs_driver_assert_version( FILE * stream , const char * mount_point) {
-  int file_version = util_fread_int( stream );
-
-  if (file_version < MIN_SUPPORTED_FS_VERSION )
-    util_exit("%s: The file system you are trying to access is created with a very old version of ert - sorry.\n",__func__);
-
-  if (file_version > CURRENT_FS_VERSION)
-    util_exit("%s: The file system you are trying to access has been created with a newer version of ert - sorry.\n",__func__);
-
-  if (file_version < CURRENT_FS_VERSION) {
-    if ((file_version == 105) && (CURRENT_FS_VERSION == 106))
-      fprintf(stderr,"%s: The file system you are accessing has been written with an older version of ert - STATIC information ignored. \n",__func__);
-    else {
-      fprintf(stderr,"-----------------------------------------------------------------------------------------------------\n");
-      fprintf(stderr,"  %s: The file system you are trying to access has been created with an old version of ert - sorry.\n",__func__);
-      fprintf(stderr,"  ert_fs_version: %d \n",CURRENT_FS_VERSION );
-      fprintf(stderr,"  %s version: %d \n",mount_point , file_version);
-
-      if ((file_version == 106) && (CURRENT_FS_VERSION == 107))
-        fprintf(stderr,"  The utility: ert_upgrade_fs107 can be used to upgrade storage version from 106 to 107\n\n");
-
-      util_exit("  EXIT\n");
-      fprintf(stderr,"-----------------------------------------------------------------------------------------------------\n");
+    if (util_file_exists(fstab_file) != create) {
+        if (create)
+            stream = util_fopen(fstab_file, "w");
+        else
+            stream = util_fopen(fstab_file, "r");
     }
-  }
-
+    free(fstab_file);
+    return stream;
 }
 
-
-int fs_driver_fread_version( FILE * stream ) {
-  long fs_magic = util_fread_long( stream );
-  if (fs_magic != FS_MAGIC_ID)
-    return -1;
-  else {
-    int file_version = util_fread_int( stream );
-    return file_version;
-  }
+void fs_driver_assert_magic(FILE *stream) {
+    long fs_magic = util_fread_long(stream);
+    if (fs_magic != FS_MAGIC_ID)
+        util_abort("%s: Fstab magic marker incorrect \n", __func__);
 }
 
+void fs_driver_assert_version(FILE *stream, const char *mount_point) {
+    int file_version = util_fread_int(stream);
 
-/*****************************************************************/
+    if (file_version < MIN_SUPPORTED_FS_VERSION)
+        util_exit("%s: The file system you are trying to access is created "
+                  "with a very old version of ert - sorry.\n",
+                  __func__);
+
+    if (file_version > CURRENT_FS_VERSION)
+        util_exit("%s: The file system you are trying to access has been "
+                  "created with a newer version of ert - sorry.\n",
+                  __func__);
+
+    if (file_version < CURRENT_FS_VERSION) {
+        if ((file_version == 105) && (CURRENT_FS_VERSION == 106))
+            fprintf(
+                stderr,
+                "%s: The file system you are accessing has been written with "
+                "an older version of ert - STATIC information ignored. \n",
+                __func__);
+        else {
+            fprintf(stderr,
+                    "----------------------------------------------------------"
+                    "-------------------------------------------\n");
+            fprintf(stderr,
+                    "  %s: The file system you are trying to access has been "
+                    "created with an old version of ert - sorry.\n",
+                    __func__);
+            fprintf(stderr, "  ert_fs_version: %d \n", CURRENT_FS_VERSION);
+            fprintf(stderr, "  %s version: %d \n", mount_point, file_version);
+
+            if ((file_version == 106) && (CURRENT_FS_VERSION == 107))
+                fprintf(stderr,
+                        "  The utility: ert_upgrade_fs107 can be used to "
+                        "upgrade storage version from 106 to 107\n\n");
+
+            util_exit("  EXIT\n");
+            fprintf(stderr,
+                    "----------------------------------------------------------"
+                    "-------------------------------------------\n");
+        }
+    }
+}
+
+int fs_driver_fread_version(FILE *stream) {
+    long fs_magic = util_fread_long(stream);
+    if (fs_magic != FS_MAGIC_ID)
+        return -1;
+    else {
+        int file_version = util_fread_int(stream);
+        return file_version;
+    }
+}

@@ -21,23 +21,20 @@
 
 #include <ert/enkf/site_config.hpp>
 
-
 #define INCLUDE_KEY "INCLUDE"
-#define DEFINE_KEY  "DEFINE"
+#define DEFINE_KEY "DEFINE"
 
-
-void test_init(const char * config_file) {
-  site_config_type * site_config = site_config_alloc_load_user_config(NULL);
-  site_config_free( site_config );
+void test_init(const char *config_file) {
+    site_config_type *site_config = site_config_alloc_load_user_config(NULL);
+    site_config_free(site_config);
 }
 
-int main(int argc , char ** argv) {
-  const char * site_config_file = argv[1];
+int main(int argc, char **argv) {
+    const char *site_config_file = argv[1];
 
-  util_install_signals();
+    util_install_signals();
 
-  test_init( site_config_file );
+    test_init(site_config_file);
 
-  exit(0);
+    exit(0);
 }
-

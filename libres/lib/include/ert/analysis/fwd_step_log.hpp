@@ -25,21 +25,20 @@ extern "C" {
 
 #include <stdbool.h>
 
-  typedef struct fwd_step_log_struct fwd_step_log_type;
+typedef struct fwd_step_log_struct fwd_step_log_type;
 
-  fwd_step_log_type * fwd_step_log_alloc();
-  void fwd_step_log_free(fwd_step_log_type * fwd_step_log);
-  bool fwd_step_log_get_clear_log( const fwd_step_log_type * data );
-  void fwd_step_log_set_clear_log( fwd_step_log_type * data , bool clear_log);
-  void fwd_step_log_set_log_file( fwd_step_log_type * data , const char * log_file );
-  const char * fwd_step_log_get_log_file( const fwd_step_log_type * data);
-  void fwd_step_log_open( fwd_step_log_type * fwd_step_log );
-  void fwd_step_log_close( fwd_step_log_type * fwd_step_log );
-  void fwd_step_log_line( fwd_step_log_type * fwd_step_log , const char * fmt , ...);
-  bool fwd_step_log_is_open( const fwd_step_log_type * fwd_step_log );
+fwd_step_log_type *fwd_step_log_alloc();
+void fwd_step_log_free(fwd_step_log_type *fwd_step_log);
+bool fwd_step_log_get_clear_log(const fwd_step_log_type *data);
+void fwd_step_log_set_clear_log(fwd_step_log_type *data, bool clear_log);
+void fwd_step_log_set_log_file(fwd_step_log_type *data, const char *log_file);
+const char *fwd_step_log_get_log_file(const fwd_step_log_type *data);
+void fwd_step_log_open(fwd_step_log_type *fwd_step_log);
+void fwd_step_log_close(fwd_step_log_type *fwd_step_log);
+void fwd_step_log_line(fwd_step_log_type *fwd_step_log, const char *fmt, ...);
+bool fwd_step_log_is_open(const fwd_step_log_type *fwd_step_log);
 
 #ifdef __cplusplus
 }
 #endif
 #endif
-

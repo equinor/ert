@@ -38,47 +38,49 @@
 extern "C" {
 #endif
 
-
 typedef struct res_config_struct res_config_type;
 
-  void res_config_init_config_parser(config_parser_type * config_parser);
-  res_config_type * res_config_alloc_load(const char *);
-  res_config_type * res_config_alloc(const config_content_type *);
+void res_config_init_config_parser(config_parser_type *config_parser);
+res_config_type *res_config_alloc_load(const char *);
+res_config_type *res_config_alloc(const config_content_type *);
 
-  PY_USED res_config_type * res_config_alloc_full(char * config_dir,
-                                        char * user_config_file,
-                                        subst_config_type * subst_config,
-                                        site_config_type * site_config,
-                                        rng_config_type * rng_config,
-                                        analysis_config_type * analysis_config,
-                                        ert_workflow_list_type * workflow_list,
-                                        hook_manager_type * hook_manager,
-                                        ert_templates_type * templates,
-                                        ecl_config_type * ecl_config,
-                                        ensemble_config_type * ensemble_config,
-                                        model_config_type * model_config,
-                                        log_config_type * log_config,
-                                        queue_config_type * queue_config);
-  void              res_config_free(res_config_type *);
-  void              res_config_add_config_items(config_parser_type * config_parser);
+PY_USED res_config_type *res_config_alloc_full(
+    char *config_dir, char *user_config_file, subst_config_type *subst_config,
+    site_config_type *site_config, rng_config_type *rng_config,
+    analysis_config_type *analysis_config,
+    ert_workflow_list_type *workflow_list, hook_manager_type *hook_manager,
+    ert_templates_type *templates, ecl_config_type *ecl_config,
+    ensemble_config_type *ensemble_config, model_config_type *model_config,
+    log_config_type *log_config, queue_config_type *queue_config);
+void res_config_free(res_config_type *);
+void res_config_add_config_items(config_parser_type *config_parser);
 
-config_content_type * res_config_alloc_user_content(const char * user_config_file,
-                                                    config_parser_type * config_parser);
-const site_config_type       * res_config_get_site_config(const res_config_type *);
-rng_config_type              * res_config_get_rng_config(const res_config_type *);
-const analysis_config_type   * res_config_get_analysis_config(const res_config_type *);
-ert_workflow_list_type       * res_config_get_workflow_list(const res_config_type *);
-subst_config_type            * res_config_get_subst_config(const res_config_type * res_config);
-const hook_manager_type      * res_config_get_hook_manager(const res_config_type * res_config);
-ert_templates_type           * res_config_get_templates(const res_config_type * res_config);
-const ecl_config_type        * res_config_get_ecl_config(const res_config_type * res_config);
-ensemble_config_type         * res_config_get_ensemble_config(const res_config_type * res_config);
-model_config_type            * res_config_get_model_config(const res_config_type * res_config);
-const log_config_type        * res_config_get_log_config(const res_config_type * res_config);
-queue_config_type            * res_config_get_queue_config(const res_config_type * res_config);
+config_content_type *
+res_config_alloc_user_content(const char *user_config_file,
+                              config_parser_type *config_parser);
+const site_config_type *res_config_get_site_config(const res_config_type *);
+rng_config_type *res_config_get_rng_config(const res_config_type *);
+const analysis_config_type *
+res_config_get_analysis_config(const res_config_type *);
+ert_workflow_list_type *res_config_get_workflow_list(const res_config_type *);
+subst_config_type *
+res_config_get_subst_config(const res_config_type *res_config);
+const hook_manager_type *
+res_config_get_hook_manager(const res_config_type *res_config);
+ert_templates_type *res_config_get_templates(const res_config_type *res_config);
+const ecl_config_type *
+res_config_get_ecl_config(const res_config_type *res_config);
+ensemble_config_type *
+res_config_get_ensemble_config(const res_config_type *res_config);
+model_config_type *
+res_config_get_model_config(const res_config_type *res_config);
+const log_config_type *
+res_config_get_log_config(const res_config_type *res_config);
+queue_config_type *
+res_config_get_queue_config(const res_config_type *res_config);
 
-PY_USED const char * res_config_get_config_directory(const res_config_type *);
-const char * res_config_get_user_config_file(const res_config_type *);
+PY_USED const char *res_config_get_config_directory(const res_config_type *);
+const char *res_config_get_user_config_file(const res_config_type *);
 
 #ifdef __cplusplus
 }
