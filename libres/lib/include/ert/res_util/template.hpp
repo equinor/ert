@@ -22,28 +22,33 @@
 extern "C" {
 #endif
 
-
 #include <stdbool.h>
 
 #include <ert/res_util/subst_list.hpp>
 
 typedef struct template_struct template_type;
 
+template_type *template_alloc(const char *template_file,
+                              bool internalize_template,
+                              subst_list_type *parent_subst);
+void template_free(template_type *_template);
+void template_instantiate(const template_type *_template,
+                          const char *__target_file,
+                          const subst_list_type *arg_list,
+                          bool override_symlink);
+void template_add_arg(template_type *_template, const char *key,
+                      const char *value);
+subst_list_type *template_get_args_list(template_type *_template);
 
-template_type * template_alloc( const char * template_file , bool internalize_template, subst_list_type * parent_subst);
-void            template_free( template_type * _template );
-void            template_instantiate( const template_type * _template , const char * __target_file , const subst_list_type * arg_list , bool override_symlink);
-void            template_add_arg( template_type * _template , const char * key , const char * value );
-subst_list_type * template_get_args_list(template_type * _template);
-
-void            template_clear_args( template_type * _template );
-void            template_add_args_from_string( template_type * _template , const char * arg_string);
-char          * template_get_args_as_string( template_type * _template );
-void            template_set_template_file( template_type * _template , const char * template_file);
-const char    * template_get_template_file( const template_type * _template );
+void template_clear_args(template_type *_template);
+void template_add_args_from_string(template_type *_template,
+                                   const char *arg_string);
+char *template_get_args_as_string(template_type *_template);
+void template_set_template_file(template_type *_template,
+                                const char *template_file);
+const char *template_get_template_file(const template_type *_template);
 
 //void template_eval_loops( const template_type * template_ , buffer_type * buffer );
-
 
 #endif
 #ifdef __cplusplus

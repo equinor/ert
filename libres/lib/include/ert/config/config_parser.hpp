@@ -38,46 +38,42 @@ extern "C" {
 #include <ert/config/config_content_node.hpp>
 #include <ert/config/config_content.hpp>
 
+typedef struct config_parser_struct config_parser_type;
 
-typedef struct config_parser_struct              config_parser_type;
+void config_free(config_parser_type *);
+config_parser_type *config_alloc();
+config_content_type *
+config_parse(config_parser_type *config, const char *filename,
+             const char *comment_string, const char *include_kw,
+             const char *define_kw, const hash_type *pre_defined_kw_map,
+             config_schema_unrecognized_enum unrecognized_behaviour,
+             bool validate);
+bool config_has_schema_item(const config_parser_type *config, const char *kw);
 
+config_schema_item_type *config_get_schema_item(const config_parser_type *,
+                                                const char *);
+void config_add_alias(config_parser_type *, const char *, const char *);
+void config_install_message(config_parser_type *, const char *, const char *);
 
-  void              config_free(config_parser_type *);
-  config_parser_type * config_alloc( );
-  config_content_type * config_parse(config_parser_type * config,
-                                     const char * filename,
-                                     const char * comment_string,
-                                     const char * include_kw,
-                                     const char * define_kw,
-                                     const hash_type * pre_defined_kw_map,
-                                     config_schema_unrecognized_enum unrecognized_behaviour,
-                                     bool validate);
-  bool              config_has_schema_item(const config_parser_type * config , const char * kw);
+config_schema_item_type *config_add_schema_item(config_parser_type *config,
+                                                const char *kw, bool required);
 
-/*****************************************************************/
+config_schema_item_type *config_add_key_value(config_parser_type *config,
+                                              const char *key, bool required,
+                                              config_item_types item_type);
 
-  config_schema_item_type * config_get_schema_item(const config_parser_type *, const char *);
-  void               config_add_alias(config_parser_type * , const char * , const char * );
-  void               config_install_message(config_parser_type * , const char * , const char * );
+int config_get_schema_size(const config_parser_type *config);
+void config_parser_deprecate(config_parser_type *config, const char *kw,
+                             const char *msg);
 
-  config_schema_item_type * config_add_schema_item(config_parser_type * config,
-                                     const char * kw,
-                                     bool required);
+void config_validate(config_parser_type *config, config_content_type *content);
 
-  config_schema_item_type * config_add_key_value( config_parser_type * config , const char * key , bool required , config_item_types item_type);
-
-  int                     config_get_schema_size( const config_parser_type * config );
-  void                    config_parser_deprecate(config_parser_type * config , const char * kw, const char * msg);
-
-  void config_validate(config_parser_type * config, config_content_type * content);
-
-  bool config_parser_add_key_values(config_parser_type * config,
-                                    config_content_type * content,
-                                    const char * kw,
-                                    stringlist_type * values,
-                                    const config_path_elm_type * current_path_elm,
-                                    const char * config_filename,
-                                    config_schema_unrecognized_enum unrecognized);
+bool config_parser_add_key_values(config_parser_type *config,
+                                  config_content_type *content, const char *kw,
+                                  stringlist_type *values,
+                                  const config_path_elm_type *current_path_elm,
+                                  const char *config_filename,
+                                  config_schema_unrecognized_enum unrecognized);
 
 #ifdef __cplusplus
 }

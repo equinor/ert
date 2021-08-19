@@ -27,9 +27,10 @@
   The driver type DRIVER_DYNAMIC_ANALYZED was removed ~april 2016.
 */
 
-bool fs_types_valid( fs_driver_enum driver_type) {
-  if ((driver_type == DRIVER_STATIC) || (driver_type == DRIVER_DYNAMIC_ANALYZED))
-    return false;
-  else
-    return true;
+bool fs_types_valid(fs_driver_enum driver_type) {
+    if ((driver_type == DRIVER_STATIC) ||
+        (driver_type == DRIVER_DYNAMIC_ANALYZED))
+        return false;
+    else
+        return true;
 }

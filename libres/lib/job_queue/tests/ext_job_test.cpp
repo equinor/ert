@@ -26,79 +26,78 @@
 #include <ert/res_util/subst_list.hpp>
 #include <ert/job_queue/ext_job.hpp>
 
-
 void test_angular() {
-  subst_list_type * subst_list = subst_list_alloc(NULL);
-  {
-    FILE * stream = util_fopen("ANGULAR", "w");
-    fprintf(stream,"EXECUTABLE script\n");
-    fprintf(stream, "EXECUTABLE script\n");
-    fprintf(stream, "ENV VAR0 <VALUE0>\n");
-    fprintf(stream, "EXEC_ENV NOT_SET\n");
-    fprintf(stream, "EXEC_ENV VAR1 <NOT_SET>\n");
-    fprintf(stream, "EXEC_ENV VAR2 VALUE\n");
-    fclose(stream);
-  }
-  {
-    ext_job_type * ext_job = ext_job_fscanf_alloc("ANGULAR", NULL, false, "ANGULAR", false);
+    subst_list_type *subst_list = subst_list_alloc(NULL);
     {
-      FILE * stream = util_fopen("angular.json", "w");
-      ext_job_json_fprintf(ext_job, 0, stream, subst_list);
-      fclose(stream);
+        FILE *stream = util_fopen("ANGULAR", "w");
+        fprintf(stream, "EXECUTABLE script\n");
+        fprintf(stream, "EXECUTABLE script\n");
+        fprintf(stream, "ENV VAR0 <VALUE0>\n");
+        fprintf(stream, "EXEC_ENV NOT_SET\n");
+        fprintf(stream, "EXEC_ENV VAR1 <NOT_SET>\n");
+        fprintf(stream, "EXEC_ENV VAR2 VALUE\n");
+        fclose(stream);
     }
-    cJSON *json;
     {
-      int buffer_size;
-      char * buffer = util_fread_alloc_file_content("angular.json", &buffer_size);
-      json = cJSON_Parse(buffer);
-      {
-        cJSON * env = cJSON_GetObjectItem(json, "environment");
-        test_assert_true( env->type == cJSON_NULL );
-      }
-
-      {
-        cJSON * exec_env = cJSON_GetObjectItem(json, "exec_env");
-        test_assert_true( exec_env->type == cJSON_Object );
-        test_assert_NULL( cJSON_GetObjectItem( exec_env, "VAR1"));
-        test_assert_not_NULL( cJSON_GetObjectItem( exec_env, "VAR2"));
+        ext_job_type *ext_job =
+            ext_job_fscanf_alloc("ANGULAR", NULL, false, "ANGULAR", false);
         {
-          cJSON * value = cJSON_GetObjectItem(exec_env, "VAR2");
-          test_assert_string_equal("VALUE", value->valuestring);
+            FILE *stream = util_fopen("angular.json", "w");
+            ext_job_json_fprintf(ext_job, 0, stream, subst_list);
+            fclose(stream);
         }
+        cJSON *json;
         {
-          cJSON * not_set = cJSON_GetObjectItem(exec_env, "NOT_SET");
-          test_assert_true( not_set->type == cJSON_NULL);
-        }
-      }
+            int buffer_size;
+            char *buffer =
+                util_fread_alloc_file_content("angular.json", &buffer_size);
+            json = cJSON_Parse(buffer);
+            {
+                cJSON *env = cJSON_GetObjectItem(json, "environment");
+                test_assert_true(env->type == cJSON_NULL);
+            }
 
-      {
-        cJSON * exec_env = cJSON_GetObjectItem(json, "exec_env");
-        test_assert_true( exec_env->type == cJSON_Object );
-        test_assert_NULL( cJSON_GetObjectItem( exec_env, "VAR1"));
-        test_assert_not_NULL( cJSON_GetObjectItem( exec_env, "VAR2"));
-        {
-          cJSON * value = cJSON_GetObjectItem(exec_env, "VAR2");
-          test_assert_string_equal("VALUE", value->valuestring);
-        }
-      }
+            {
+                cJSON *exec_env = cJSON_GetObjectItem(json, "exec_env");
+                test_assert_true(exec_env->type == cJSON_Object);
+                test_assert_NULL(cJSON_GetObjectItem(exec_env, "VAR1"));
+                test_assert_not_NULL(cJSON_GetObjectItem(exec_env, "VAR2"));
+                {
+                    cJSON *value = cJSON_GetObjectItem(exec_env, "VAR2");
+                    test_assert_string_equal("VALUE", value->valuestring);
+                }
+                {
+                    cJSON *not_set = cJSON_GetObjectItem(exec_env, "NOT_SET");
+                    test_assert_true(not_set->type == cJSON_NULL);
+                }
+            }
 
-      free(buffer);
+            {
+                cJSON *exec_env = cJSON_GetObjectItem(json, "exec_env");
+                test_assert_true(exec_env->type == cJSON_Object);
+                test_assert_NULL(cJSON_GetObjectItem(exec_env, "VAR1"));
+                test_assert_not_NULL(cJSON_GetObjectItem(exec_env, "VAR2"));
+                {
+                    cJSON *value = cJSON_GetObjectItem(exec_env, "VAR2");
+                    test_assert_string_equal("VALUE", value->valuestring);
+                }
+            }
+
+            free(buffer);
+        }
+        cJSON_Delete(json);
+        ext_job_free(ext_job);
     }
-    cJSON_Delete(json);
-    ext_job_free(ext_job);
-  }
-  subst_list_free(subst_list);
+    subst_list_free(subst_list);
 }
 
-
-
-int main( int argc , char ** argv) {
-  ecl::util::TestArea ta("joblist");
-  {
-    FILE * stream = util_fopen("script", "w");
-    fprintf(stream, "Dummy script");
-    fclose(stream);
-    chmod("script", 0777);
-  }
-  test_angular();
+int main(int argc, char **argv) {
+    ecl::util::TestArea ta("joblist");
+    {
+        FILE *stream = util_fopen("script", "w");
+        fprintf(stream, "Dummy script");
+        fclose(stream);
+        chmod("script", 0777);
+    }
+    test_angular();
 }

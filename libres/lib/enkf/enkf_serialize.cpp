@@ -20,7 +20,7 @@
 
 #include <ert/enkf/enkf_serialize.hpp>
 
-/**
+/*
    This file handles serialization and deserialization of the
    enkf_nodes. This is at the very core of the EnKF update
    algorithm. The final update step is written:
@@ -168,98 +168,102 @@ vector (marked with X2 above)). Now - that was clear ehhh?
 
 *****************************************************************/
 
-
-
 /*
    It will be very costly to make it thread-safe if we manipulate the
    shape of the A matrix from here.
 */
 
+void enkf_matrix_serialize(const void *__node_data, int node_size,
+                           ecl_data_type node_type,
+                           const active_list_type *__active_list,
+                           matrix_type *A, int row_offset, int column) {
+    int active_size;
+    const int *active_list = active_list_get_active(__active_list);
+    active_size = active_list_get_active_size(__active_list, node_size);
 
-void enkf_matrix_serialize(const void * __node_data               ,
-                           int node_size                          ,
-                           ecl_data_type node_type                ,
-                           const active_list_type * __active_list ,
-                           matrix_type * A                        ,
-                           int row_offset,
-                           int column) {
-  int active_size;
-  const int   * active_list    = active_list_get_active( __active_list );
-  active_size = active_list_get_active_size( __active_list , node_size);
-
-  if (ecl_type_is_double(node_type)) {
-    const double * node_data = (const double *) __node_data;
-    if (active_size == node_size) /** All elements active */
-      matrix_set_many_on_column( A , row_offset , node_size , node_data , column);
-    else {
-      int row_index;
-      int node_index;
-      for (row_index = 0; row_index < active_size; row_index++) {
-        node_index = active_list[ row_index ];
-        matrix_iset( A , row_index + row_offset , column , node_data[node_index] );
-      }
-    }
-  } else if (ecl_type_is_float(node_type)) {
-    const float * node_data = (const float *) __node_data;
-    int row_index;
-    if (active_size == node_size) {/** All elements active */
-      for (row_index = 0; row_index < node_size; row_index++)
-        matrix_iset( A , row_index + row_offset , column , node_data[ row_index ]);  /* Must have float -> double conversion; can not use memcpy() based approach */
-    } else {
-      int row_index;
-      int node_index;
-      for (row_index = 0; row_index < active_size; row_index++) {
-        node_index = active_list[ row_index ];
-        matrix_iset( A , row_index + row_offset , column , node_data[node_index] );
-      }
-    }
-  } else
-      util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_type_alloc_name( node_type ));
+    if (ecl_type_is_double(node_type)) {
+        const double *node_data = (const double *)__node_data;
+        if (active_size == node_size) /* All elements active */
+            matrix_set_many_on_column(A, row_offset, node_size, node_data,
+                                      column);
+        else {
+            int row_index;
+            int node_index;
+            for (row_index = 0; row_index < active_size; row_index++) {
+                node_index = active_list[row_index];
+                matrix_iset(A, row_index + row_offset, column,
+                            node_data[node_index]);
+            }
+        }
+    } else if (ecl_type_is_float(node_type)) {
+        const float *node_data = (const float *)__node_data;
+        int row_index;
+        if (active_size == node_size) { /* All elements active */
+            for (row_index = 0; row_index < node_size; row_index++)
+                matrix_iset(
+                    A, row_index + row_offset, column,
+                    node_data
+                        [row_index]); /* Must have float -> double conversion; can not use memcpy() based approach */
+        } else {
+            int row_index;
+            int node_index;
+            for (row_index = 0; row_index < active_size; row_index++) {
+                node_index = active_list[row_index];
+                matrix_iset(A, row_index + row_offset, column,
+                            node_data[node_index]);
+            }
+        }
+    } else
+        util_abort(
+            "%s: internal error: trying to serialize unserializable type:%s \n",
+            __func__, ecl_type_alloc_name(node_type));
 }
 
+void enkf_matrix_deserialize(void *__node_data, int node_size,
+                             ecl_data_type node_type,
+                             const active_list_type *__active_list,
+                             const matrix_type *A, int row_offset, int column) {
+    int active_size;
+    const int *active_list = active_list_get_active(__active_list);
+    active_size = active_list_get_active_size(__active_list, node_size);
 
-void enkf_matrix_deserialize(void * __node_data                 ,
-                             int node_size                      ,
-                             ecl_data_type node_type            ,
-                             const active_list_type * __active_list ,
-                             const matrix_type * A,
-                             int row_offset,
-                             int column) {
-  int active_size;
-  const int   * active_list    = active_list_get_active( __active_list );
-  active_size = active_list_get_active_size( __active_list , node_size );
+    if (ecl_type_is_double(node_type)) {
+        double *node_data = (double *)__node_data;
 
-  if (ecl_type_is_double(node_type)) {
-    double * node_data = (double *) __node_data;
+        if (active_size == node_size) { /* All elements active */
+            int row_index;
+            for (row_index = 0; row_index < active_size; row_index++)
+                node_data[row_index] =
+                    matrix_iget(A, row_index + row_offset, column);
+        } else {
+            int row_index;
+            int node_index;
+            for (row_index = 0; row_index < active_size; row_index++) {
+                node_index = active_list[row_index];
+                node_data[node_index] =
+                    matrix_iget(A, row_index + row_offset, column);
+            }
+        }
 
-    if (active_size == node_size) { /** All elements active */
-      int row_index;
-      for (row_index = 0; row_index < active_size; row_index++)
-        node_data[row_index] = matrix_iget( A , row_index + row_offset , column);
-    } else {
-      int row_index;
-      int node_index;
-      for (row_index = 0; row_index < active_size; row_index++) {
-        node_index = active_list[ row_index ];
-        node_data[node_index] = matrix_iget( A , row_index + row_offset , column);
-      }
-    }
+    } else if (ecl_type_is_float(node_type)) {
+        float *node_data = (float *)__node_data;
 
-  } else if (ecl_type_is_float(node_type)) {
-    float * node_data = (float *) __node_data;
-
-    if (active_size == node_size) { /** All elements active */
-      int row_index;
-      for (row_index = 0; row_index < active_size; row_index++)
-        node_data[row_index] = matrix_iget( A , row_index + row_offset , column);
-    } else {
-      int row_index;
-      int node_index;
-      for (row_index = 0; row_index < active_size; row_index++) {
-        node_index = active_list[ row_index ];
-        node_data[node_index] = matrix_iget( A , row_index + row_offset , column);
-      }
-    }
-  } else
-    util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_type_alloc_name( node_type ));
+        if (active_size == node_size) { /* All elements active */
+            int row_index;
+            for (row_index = 0; row_index < active_size; row_index++)
+                node_data[row_index] =
+                    matrix_iget(A, row_index + row_offset, column);
+        } else {
+            int row_index;
+            int node_index;
+            for (row_index = 0; row_index < active_size; row_index++) {
+                node_index = active_list[row_index];
+                node_data[node_index] =
+                    matrix_iget(A, row_index + row_offset, column);
+            }
+        }
+    } else
+        util_abort(
+            "%s: internal error: trying to serialize unserializable type:%s \n",
+            __func__, ecl_type_alloc_name(node_type));
 }

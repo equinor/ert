@@ -30,26 +30,24 @@
 #include <string>
 #include <sstream>
 
-#define VALUE_EXPORT_TYPE_ID     5741761
-
+#define VALUE_EXPORT_TYPE_ID 5741761
 
 struct value_export_struct {
-  UTIL_TYPE_ID_DECLARATION;
-  std::string directory;
-  std::string base_name;
-  std::map<std::string,std::map<std::string, double>> values;
-
+    UTIL_TYPE_ID_DECLARATION;
+    std::string directory;
+    std::string base_name;
+    std::map<std::string, std::map<std::string, double>> values;
 };
 
-
-static void backup_if_existing(const char * filename) {
-    if(not util_file_exists(filename))
+static void backup_if_existing(const char *filename) {
+    if (not util_file_exists(filename))
         return;
 
-    auto time_to_string = [](const std::tm* tmb, const char* fmt) -> std::string {
+    auto time_to_string = [](const std::tm *tmb,
+                             const char *fmt) -> std::string {
         char buffer[256]; // typically enough for time and date
         auto const count = strftime(buffer, sizeof(buffer), fmt, tmb);
-        if(count < 0)
+        if (count < 0)
             return "";
         return std::string(buffer, count);
     };
@@ -59,82 +57,71 @@ static void backup_if_existing(const char * filename) {
             std::chrono::system_clock::now());
         auto constexpr format = "%Y-%m-%d_%H-%M-%SZ";
         std::stringstream fname_stream;
-        fname_stream
-            << filename
-            << "_backup_"
-            << time_to_string(gmtime(&tt), format);
-        for(int i = 0;
-            util_file_exists(fname_stream.str().c_str()) && i < 100;
-            ++i
-        ) {
+        fname_stream << filename << "_backup_"
+                     << time_to_string(gmtime(&tt), format);
+        for (int i = 0; util_file_exists(fname_stream.str().c_str()) && i < 100;
+             ++i) {
             fname_stream.clear();
-            fname_stream
-                << filename
-                << "_backup_"
-                << time_to_string(gmtime(&tt), format)
-                << "_"
-                << i;
+            fname_stream << filename << "_backup_"
+                         << time_to_string(gmtime(&tt), format) << "_" << i;
         }
         return fname_stream.str();
     }();
     util_move_file(filename, backup_filename.c_str());
 }
 
+value_export_type *value_export_alloc(std::string directory,
+                                      std::string base_name) {
 
-value_export_type * value_export_alloc(std::string directory, std::string base_name) {
-
-  value_export_type * value = new value_export_type;
-  UTIL_TYPE_ID_INIT( value , VALUE_EXPORT_TYPE_ID );
-  value->directory = directory;
-  value->base_name = base_name;
-  return value;
-
+    value_export_type *value = new value_export_type;
+    UTIL_TYPE_ID_INIT(value, VALUE_EXPORT_TYPE_ID);
+    value->directory = directory;
+    value->base_name = base_name;
+    return value;
 }
 
+void value_export_free(value_export_type *value) { delete value; }
 
-void value_export_free(value_export_type * value) {
-  delete value;
-}
-
-int value_export_size( const value_export_type * value) {
-  int size = 0;
-  for(const auto& key_map_pair:value->values)
-  {
-      size += key_map_pair.second.size();
-  }
-
-  return size;
-}
-
-
-void value_export_txt__(const value_export_type * value, const char * filename) {
-
-  if (!value->values.empty()) {
-    FILE * stream = util_fopen( filename , "w");
-    for (const auto & key_map_pair: value->values) {
-      for (const auto &sub_key_value_pair : key_map_pair.second) {
-        fprintf(stream, "%s:%s %g\n",  key_map_pair.first.c_str(), sub_key_value_pair.first.c_str(), sub_key_value_pair.second);
-      }
+int value_export_size(const value_export_type *value) {
+    int size = 0;
+    for (const auto &key_map_pair : value->values) {
+        size += key_map_pair.second.size();
     }
-    fclose( stream );
-  }
+
+    return size;
 }
 
-void value_export_txt(const value_export_type * value) {
-  std::string filename = value->directory +"/" + value->base_name + ".txt";
-  backup_if_existing(filename.c_str());
-  value_export_txt__( value, filename.c_str() );
+void value_export_txt__(const value_export_type *value, const char *filename) {
 
+    if (!value->values.empty()) {
+        FILE *stream = util_fopen(filename, "w");
+        for (const auto &key_map_pair : value->values) {
+            for (const auto &sub_key_value_pair : key_map_pair.second) {
+                fprintf(stream, "%s:%s %g\n", key_map_pair.first.c_str(),
+                        sub_key_value_pair.first.c_str(),
+                        sub_key_value_pair.second);
+            }
+        }
+        fclose(stream);
+    }
 }
 
-static void generate_hirarchical_keys(const value_export_type * value, FILE * stream)
-{
-    for (auto iterMaps = value->values.begin(); iterMaps!= value->values.end(); ++iterMaps   ) {
+void value_export_txt(const value_export_type *value) {
+    std::string filename = value->directory + "/" + value->base_name + ".txt";
+    backup_if_existing(filename.c_str());
+    value_export_txt__(value, filename.c_str());
+}
+
+static void generate_hirarchical_keys(const value_export_type *value,
+                                      FILE *stream) {
+    for (auto iterMaps = value->values.begin(); iterMaps != value->values.end();
+         ++iterMaps) {
         std::string key = (*iterMaps).first;
-        std::map<std::string,double> subMap = (*iterMaps).second;
+        std::map<std::string, double> subMap = (*iterMaps).second;
         fprintf(stream, "\"%s\" : {\n", key.c_str());
 
-        for (auto iterValues = subMap.begin(); iterValues != subMap.end(); ++iterValues) {
+        for (auto iterValues = subMap.begin(); iterValues != subMap.end();
+             ++iterValues) {
 
             std::string subkey = (*iterValues).first;
 
@@ -144,25 +131,24 @@ static void generate_hirarchical_keys(const value_export_type * value, FILE * st
             else
                 fprintf(stream, "\"%s\" : %g", subkey.c_str(), double_value);
 
-
             if (std::next(iterValues) != subMap.end())
                 fprintf(stream, ",");
             fprintf(stream, "\n");
         }
 
         fprintf(stream, "},\n");
-
     }
-
 }
 
-static void generate_comosite_keys(const value_export_type * value, FILE * stream)
-{
-    for (auto iterMaps = value->values.begin(); iterMaps!= value->values.end(); ++iterMaps   ) {
+static void generate_comosite_keys(const value_export_type *value,
+                                   FILE *stream) {
+    for (auto iterMaps = value->values.begin(); iterMaps != value->values.end();
+         ++iterMaps) {
         std::string key = (*iterMaps).first;
-        std::map<std::string,double> subMap = (*iterMaps).second;
+        std::map<std::string, double> subMap = (*iterMaps).second;
 
-        for (auto iterValues = subMap.begin(); iterValues != subMap.end(); ++iterValues) {
+        for (auto iterValues = subMap.begin(); iterValues != subMap.end();
+             ++iterValues) {
 
             std::string subkey = (*iterValues).first;
 
@@ -170,7 +156,8 @@ static void generate_comosite_keys(const value_export_type * value, FILE * strea
             if (std::isnan(double_value))
                 fprintf(stream, "\"%s\" : NaN", key.c_str());
             else
-                fprintf(stream, "\"%s:%s\" : %g", key.c_str(), subkey.c_str(), double_value);
+                fprintf(stream, "\"%s:%s\" : %g", key.c_str(), subkey.c_str(),
+                        double_value);
 
             if (std::next(iterValues) != subMap.end()) {
                 fprintf(stream, ",");
@@ -178,46 +165,40 @@ static void generate_comosite_keys(const value_export_type * value, FILE * strea
             }
         }
 
-
         if (std::next(iterMaps) != value->values.end())
             fprintf(stream, ",");
 
         fprintf(stream, "\n");
+    }
+}
 
+void value_export_json(const value_export_type *value) {
+    std::string filename = value->directory + "/" + value->base_name + ".json";
+    backup_if_existing(filename.c_str());
+
+    if (!value->values.empty()) {
+        FILE *stream = util_fopen(filename.c_str(), "w");
+        fprintf(stream, "{\n");
+        generate_hirarchical_keys(value, stream);
+        generate_comosite_keys(value, stream);
+        fprintf(stream, "}\n");
+        fclose(stream);
+    }
+}
+
+void value_export(const value_export_type *value) {
+    value_export_txt(value);
+    value_export_json(value);
+}
+
+void value_export_append(value_export_type *value, const std::string key,
+                         const std::string subkey, double double_value) {
+
+    if (value->values.find(key) == value->values.end()) {
+        value->values[key] = std::map<std::string, double>();
     }
 
+    value->values[key][subkey] = double_value;
 }
 
-void value_export_json(const value_export_type * value) {
-  std::string filename = value->directory +"/" + value->base_name + ".json";
-  backup_if_existing(filename.c_str());
-
-  if (!value->values.empty()) {
-    FILE * stream = util_fopen( filename.c_str() , "w");
-    fprintf(stream, "{\n");
-    generate_hirarchical_keys(value, stream);
-    generate_comosite_keys(value, stream);
-    fprintf(stream, "}\n");
-    fclose( stream );
-  }
-
-}
-
-void value_export(const value_export_type * value) {
-  value_export_txt( value );
-  value_export_json( value );
-}
-
-
-void value_export_append(value_export_type * value, const std::string key, const std::string subkey, double double_value){
-
-  if(value->values.find(key) == value->values.end()){
-    value->values[key] = std::map<std::string, double>();
-  }
-
-  value->values[key][subkey] = double_value;
-}
-
-/*****************************************************************/
-
-UTIL_IS_INSTANCE_FUNCTION( value_export , VALUE_EXPORT_TYPE_ID )
+UTIL_IS_INSTANCE_FUNCTION(value_export, VALUE_EXPORT_TYPE_ID)

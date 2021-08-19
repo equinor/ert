@@ -16,7 +16,6 @@
    for more details.
 */
 
-
 #ifndef ERT_ENKF_PLOT_TVECTOR_H
 #define ERT_ENKF_PLOT_TVECTOR_H
 
@@ -33,26 +32,29 @@
 extern "C" {
 #endif
 
-  typedef struct enkf_plot_tvector_struct enkf_plot_tvector_type;
+typedef struct enkf_plot_tvector_struct enkf_plot_tvector_type;
 
-  UTIL_SAFE_CAST_HEADER( enkf_plot_tvector );
-  UTIL_IS_INSTANCE_HEADER( enkf_plot_tvector );
+UTIL_SAFE_CAST_HEADER(enkf_plot_tvector);
+UTIL_IS_INSTANCE_HEADER(enkf_plot_tvector);
 
+void enkf_plot_tvector_reset(enkf_plot_tvector_type *plot_tvector);
+enkf_plot_tvector_type *
+enkf_plot_tvector_alloc(const enkf_config_node_type *config_node, int iens);
+void enkf_plot_tvector_load(enkf_plot_tvector_type *plot_tvector,
+                            enkf_fs_type *fs, const char *user_key);
+void *enkf_plot_tvector_load__(void *arg);
+void enkf_plot_tvector_free(enkf_plot_tvector_type *plot_tvector);
+void enkf_plot_tvector_iset(enkf_plot_tvector_type *plot_tvector, int index,
+                            time_t time, double value);
 
-
-  void                     enkf_plot_tvector_reset( enkf_plot_tvector_type * plot_tvector );
-  enkf_plot_tvector_type * enkf_plot_tvector_alloc( const enkf_config_node_type * config_node , int iens);
-  void                     enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector , enkf_fs_type * fs , const char * user_key );
-  void *                   enkf_plot_tvector_load__( void * arg );
-  void                     enkf_plot_tvector_free( enkf_plot_tvector_type * plot_tvector );
-  void                     enkf_plot_tvector_iset( enkf_plot_tvector_type * plot_tvector , int index , time_t time , double value);
-
-  int                     enkf_plot_tvector_size( const enkf_plot_tvector_type * plot_tvector );
-  double                  enkf_plot_tvector_iget_value( const enkf_plot_tvector_type * plot_tvector , int index);
-  time_t                  enkf_plot_tvector_iget_time( const enkf_plot_tvector_type * plot_tvector , int index);
-  bool                    enkf_plot_tvector_iget_active( const enkf_plot_tvector_type * plot_tvector , int index);
-  bool                    enkf_plot_tvector_all_active( const enkf_plot_tvector_type * plot_tvector );
-
+int enkf_plot_tvector_size(const enkf_plot_tvector_type *plot_tvector);
+double enkf_plot_tvector_iget_value(const enkf_plot_tvector_type *plot_tvector,
+                                    int index);
+time_t enkf_plot_tvector_iget_time(const enkf_plot_tvector_type *plot_tvector,
+                                   int index);
+bool enkf_plot_tvector_iget_active(const enkf_plot_tvector_type *plot_tvector,
+                                   int index);
+bool enkf_plot_tvector_all_active(const enkf_plot_tvector_type *plot_tvector);
 
 #ifdef __cplusplus
 }

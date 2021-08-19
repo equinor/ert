@@ -16,32 +16,27 @@
    for more details.
 */
 
-
 #include <stdlib.h>
 
 #include <ert/util/test_util.h>
 
 #include <ert/enkf/analysis_config.hpp>
 
-
-void test_load_external_module( analysis_config_type * ac , const char * user_name , const char * lib_name) {
-  test_assert_true( analysis_config_load_external_module(ac , lib_name , user_name ));
+void test_load_external_module(analysis_config_type *ac, const char *user_name,
+                               const char *lib_name) {
+    test_assert_true(
+        analysis_config_load_external_module(ac, lib_name, user_name));
 }
 
+int main(int argc, char **argv) {
+    analysis_config_type *analysis_config = analysis_config_alloc_default();
 
+    for (int i = 1; i < argc; i += 2) {
+        const char *user_name = argv[i];
+        const char *lib_name = argv[i + 1];
+        test_load_external_module(analysis_config, user_name, lib_name);
+    }
 
-int main(int argc , char ** argv) {
-  analysis_config_type * analysis_config = analysis_config_alloc_default();
-
-  for (int i = 1; i < argc; i+= 2) {
-    const char * user_name = argv[i];
-    const char * lib_name = argv[i + 1];
-    test_load_external_module( analysis_config , user_name , lib_name );
-  }
-
-  analysis_config_free(analysis_config);
-  exit(0);
+    analysis_config_free(analysis_config);
+    exit(0);
 }
-
-
-

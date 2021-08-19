@@ -18,14 +18,11 @@
 
 #include <ert/enkf/enkf_defaults.hpp>
 
-const char * enkf_defaults_get_default_gen_kw_export_name()
-{
-  return DEFAULT_GEN_KW_EXPORT_NAME;
+const char *enkf_defaults_get_default_gen_kw_export_name() {
+    return DEFAULT_GEN_KW_EXPORT_NAME;
 }
 
-
-/**
+/*
    Currently no code here - but the way DEFAULT_STATIC_KW is implemented
    is dang ugly. Should be compiled.
 */
-

@@ -28,24 +28,24 @@
 extern "C" {
 #endif
 
-
-bool res_log_init_log(message_level_type log_level,const char * log_file_name, bool verbose);
+bool res_log_init_log(message_level_type log_level, const char *log_file_name,
+                      bool verbose);
 void res_log_close();
-const char * res_log_get_filename();
+const char *res_log_get_filename();
 
-void res_log_add_message(message_level_type message_level, const char* message);
+void res_log_add_message(message_level_type message_level, const char *message);
 
-void res_log_debug(const char* msg);
-void res_log_info(const char* msg);
-void res_log_warning(const char* msg);
-void res_log_error(const char* msg);
-void res_log_critical(const char* msg);
+void res_log_debug(const char *msg);
+void res_log_info(const char *msg);
+void res_log_warning(const char *msg);
+void res_log_error(const char *msg);
+void res_log_critical(const char *msg);
 
-void res_log_fdebug(const char * fmt, ...);
-void res_log_finfo(const char * fmt, ...);
-void res_log_fwarning(const char * fmt, ...);
-void res_log_ferror(const char * fmt, ...);
-void res_log_fcritical(const char * fmt, ...);
+void res_log_fdebug(const char *fmt, ...);
+void res_log_finfo(const char *fmt, ...);
+void res_log_fwarning(const char *fmt, ...);
+void res_log_ferror(const char *fmt, ...);
+void res_log_fcritical(const char *fmt, ...);
 
 #ifdef __cplusplus
 }

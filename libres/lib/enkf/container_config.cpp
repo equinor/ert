@@ -25,45 +25,41 @@
 #define CONTAINER_CONFIG_TYPE_ID 51330852
 
 struct container_config_struct {
-  UTIL_TYPE_ID_DECLARATION;
-  vector_type * nodes;
+    UTIL_TYPE_ID_DECLARATION;
+    vector_type *nodes;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(container_config , CONTAINER_CONFIG_TYPE_ID);
+UTIL_IS_INSTANCE_FUNCTION(container_config, CONTAINER_CONFIG_TYPE_ID);
 
-container_config_type * container_config_alloc( const char * key ) {
-  container_config_type * container = (container_config_type *)util_malloc( sizeof * container );
-  UTIL_TYPE_ID_INIT( container , CONTAINER_CONFIG_TYPE_ID );
-  container->nodes = vector_alloc_new();
-  return container;
+container_config_type *container_config_alloc(const char *key) {
+    container_config_type *container =
+        (container_config_type *)util_malloc(sizeof *container);
+    UTIL_TYPE_ID_INIT(container, CONTAINER_CONFIG_TYPE_ID);
+    container->nodes = vector_alloc_new();
+    return container;
 }
 
-
-
-void container_config_free( container_config_type * container_config ) {
-  vector_free( container_config->nodes );
-  free( container_config );
+void container_config_free(container_config_type *container_config) {
+    vector_free(container_config->nodes);
+    free(container_config);
 }
 
-
-void container_config_add_node( container_config_type * container_config , const enkf_config_node_type * config_node) {
-  vector_append_ref( container_config->nodes , config_node );
+void container_config_add_node(container_config_type *container_config,
+                               const enkf_config_node_type *config_node) {
+    vector_append_ref(container_config->nodes, config_node);
 }
 
-int container_config_get_size( const container_config_type * container_config ) {
-  return vector_get_size( container_config->nodes );
+int container_config_get_size(const container_config_type *container_config) {
+    return vector_get_size(container_config->nodes);
 }
 
-
-int container_config_get_data_size( const container_config_type * container_config ) {
-  util_exit("%s: not implemented \n",__func__);
-  return 0;
+int container_config_get_data_size(
+    const container_config_type *container_config) {
+    util_exit("%s: not implemented \n", __func__);
+    return 0;
 }
 
-
-/*****************************************************************/
-
-UTIL_SAFE_CAST_FUNCTION(container_config , CONTAINER_CONFIG_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION_CONST(container_config , CONTAINER_CONFIG_TYPE_ID)
+UTIL_SAFE_CAST_FUNCTION(container_config, CONTAINER_CONFIG_TYPE_ID)
+UTIL_SAFE_CAST_FUNCTION_CONST(container_config, CONTAINER_CONFIG_TYPE_ID)
 VOID_GET_DATA_SIZE(container)
 VOID_CONFIG_FREE(container)

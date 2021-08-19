@@ -21,19 +21,17 @@
 
 #include <ert/enkf/cases_config.hpp>
 
-
 void test_create_get_set_and_get() {
-  cases_config_type * cases_config = cases_config_alloc( );
-  test_assert_int_equal( 0, cases_config_get_iteration_number( cases_config ) );
-  cases_config_set_int( cases_config , "iteration_number" , 12);
-  test_assert_int_equal( 12, cases_config_get_iteration_number( cases_config ) );
-  cases_config_fwrite( cases_config , "TEST_CASES_CONFIG" );
-  cases_config_fread( cases_config , "TEST_CASES_CONFIG" );
-  cases_config_free( cases_config );
+    cases_config_type *cases_config = cases_config_alloc();
+    test_assert_int_equal(0, cases_config_get_iteration_number(cases_config));
+    cases_config_set_int(cases_config, "iteration_number", 12);
+    test_assert_int_equal(12, cases_config_get_iteration_number(cases_config));
+    cases_config_fwrite(cases_config, "TEST_CASES_CONFIG");
+    cases_config_fread(cases_config, "TEST_CASES_CONFIG");
+    cases_config_free(cases_config);
 }
 
-int main(int argc , char ** argv) {
-  test_create_get_set_and_get();
-  exit(0);
+int main(int argc, char **argv) {
+    test_create_get_set_and_get();
+    exit(0);
 }
-

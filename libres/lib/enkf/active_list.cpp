@@ -23,8 +23,7 @@
 
 #include <ert/enkf/enkf_macros.hpp>
 
-
-/**
+/*
    This file implements a small structure used to denote which
    elements of a node/observation which is active. At the lowest level
    the active elements in a node is just a list of integers. This
@@ -57,166 +56,147 @@ a fault object. Then the code will be like:
    0,4,5 are updated.
 */
 
-
 #define ACTIVE_LIST_TYPE_ID 66109
 
 struct active_list_struct {
-  UTIL_TYPE_ID_DECLARATION;
-  active_mode_type  mode;           /* ALL_ACTIVE | INACTIVE | PARTLY_ACTIVE */
-  int_vector_type  *index_list;     /* A list of active indices - if data_size == active_size this can be NULL. */
+    UTIL_TYPE_ID_DECLARATION;
+    active_mode_type mode; /* ALL_ACTIVE | INACTIVE | PARTLY_ACTIVE */
+    int_vector_type *
+        index_list; /* A list of active indices - if data_size == active_size this can be NULL. */
 };
 
-/*****************************************************************/
+static UTIL_SAFE_CAST_FUNCTION(active_list, ACTIVE_LIST_TYPE_ID)
+    UTIL_IS_INSTANCE_FUNCTION(active_list, ACTIVE_LIST_TYPE_ID)
 
-
-static UTIL_SAFE_CAST_FUNCTION(active_list , ACTIVE_LIST_TYPE_ID)
-UTIL_IS_INSTANCE_FUNCTION( active_list , ACTIVE_LIST_TYPE_ID)
-
-
-
-
-/**
+    /*
    The newly created active_list default to setting all indices actiove.
 */
-active_list_type * active_list_alloc( ) {
-  active_list_type * active_list = (active_list_type *)util_malloc(sizeof * active_list);
-  UTIL_TYPE_ID_INIT( active_list , ACTIVE_LIST_TYPE_ID );
-  active_list->index_list  = int_vector_alloc(0 , -1);
-  active_list->mode        = ALL_ACTIVE;
-  return active_list;
+    active_list_type *active_list_alloc() {
+    active_list_type *active_list =
+        (active_list_type *)util_malloc(sizeof *active_list);
+    UTIL_TYPE_ID_INIT(active_list, ACTIVE_LIST_TYPE_ID);
+    active_list->index_list = int_vector_alloc(0, -1);
+    active_list->mode = ALL_ACTIVE;
+    return active_list;
 }
 
-
-active_list_type * active_list_alloc_copy( const active_list_type * src) {
-  active_list_type * new_list = active_list_alloc(  );
-  new_list->mode  = src->mode;
-  int_vector_free( new_list->index_list ) ;
-  new_list->index_list = int_vector_alloc_copy( src->index_list ); // CXX_CAST_ERROR
-  return new_list;
+active_list_type *active_list_alloc_copy(const active_list_type *src) {
+    active_list_type *new_list = active_list_alloc();
+    new_list->mode = src->mode;
+    int_vector_free(new_list->index_list);
+    new_list->index_list =
+        int_vector_alloc_copy(src->index_list); // CXX_CAST_ERROR
+    return new_list;
 }
 
-
-void active_list_copy( active_list_type * target , const active_list_type * src) {
-  target->mode = src->mode;
-  int_vector_memcpy( target->index_list , src->index_list);
+void active_list_copy(active_list_type *target, const active_list_type *src) {
+    target->mode = src->mode;
+    int_vector_memcpy(target->index_list, src->index_list);
 }
 
-
-void active_list_free( active_list_type * active_list ) {
-  int_vector_free(active_list->index_list);
-  free(active_list);
+void active_list_free(active_list_type *active_list) {
+    int_vector_free(active_list->index_list);
+    free(active_list);
 }
 
-
-
-void active_list_free__( void * arg ) {
-  active_list_type * active_list = active_list_safe_cast ( arg );
-  active_list_free(active_list);
+void active_list_free__(void *arg) {
+    active_list_type *active_list = active_list_safe_cast(arg);
+    active_list_free(active_list);
 }
 
-
-
-/**
+/*
    Appends a new index to the current list of active indices, and
    setting the mode to PARTLY_ACTIVE.
 */
-void active_list_add_index(active_list_type * active_list, int new_index) {
-  if (int_vector_contains(active_list->index_list , new_index ))
-    return;
-  active_list->mode = PARTLY_ACTIVE;
-  int_vector_append( active_list->index_list , new_index );
+void active_list_add_index(active_list_type *active_list, int new_index) {
+    if (int_vector_contains(active_list->index_list, new_index))
+        return;
+    active_list->mode = PARTLY_ACTIVE;
+    int_vector_append(active_list->index_list, new_index);
 }
 
-
-
-
-
-
-
-
-/**
+/*
    When mode == PARTLY_ACTIVE the active_list instance knows the size
    of the active set; if the mode is INACTIVE 0 will be returned and
    if the mode is ALL_ACTIVE the input parameter @total_size will be
    passed back to calling scope.
 */
 
-
-int active_list_get_active_size(const active_list_type * active_list, int total_size) {
-  int active_size;
-  switch( active_list->mode ) {
-  case PARTLY_ACTIVE:
-    active_size = int_vector_size( active_list->index_list );
-    break;
-  case INACTIVE:
-    active_size = 0;
-    break;
-  case ALL_ACTIVE:
-    active_size = total_size;
-    break;
-  default:
-    util_abort("%s: Internal inconsistency in active_list \n",__func__);
-    active_size = -1;
-  }
-  return active_size;
+int active_list_get_active_size(const active_list_type *active_list,
+                                int total_size) {
+    int active_size;
+    switch (active_list->mode) {
+    case PARTLY_ACTIVE:
+        active_size = int_vector_size(active_list->index_list);
+        break;
+    case INACTIVE:
+        active_size = 0;
+        break;
+    case ALL_ACTIVE:
+        active_size = total_size;
+        break;
+    default:
+        util_abort("%s: Internal inconsistency in active_list \n", __func__);
+        active_size = -1;
+    }
+    return active_size;
 }
 
-
-active_mode_type active_list_get_mode(const active_list_type * active_list) {
-  return active_list->mode;
+active_mode_type active_list_get_mode(const active_list_type *active_list) {
+    return active_list->mode;
 }
 
-
-
-/**
+/*
    This will return a (const int *) pointer to the active indices. IFF
    (mode == INACTIVE || mode == ALL_ACTIVE) it will instead just
    return NULL. In that case it is the responsability of the calling
    scope to not dereference the NULL pointer.
 */
 
-const int * active_list_get_active(const active_list_type * active_list) {
-  if (active_list->mode == PARTLY_ACTIVE)
-    return int_vector_get_const_ptr( active_list->index_list );
-  else
-    return NULL;
+const int *active_list_get_active(const active_list_type *active_list) {
+    if (active_list->mode == PARTLY_ACTIVE)
+        return int_vector_get_const_ptr(active_list->index_list);
+    else
+        return NULL;
 }
 
-
-bool active_list_iget( const active_list_type * active_list , int index ) {
-  if (active_list->mode == ALL_ACTIVE)
-    return true;
-  else if (active_list->mode == INACTIVE)
-    return false;
-  else
-    return int_vector_iget( active_list->index_list , index );
-}
-
-void active_list_summary_fprintf( const active_list_type * active_list , const char *dataset_key, const char *key , FILE * stream) {
-  int number_of_active = int_vector_size( active_list->index_list );
-  if (active_list->mode == ALL_ACTIVE){
-    fprintf(stream , "NUMBER OF ACTIVE:%d,STATUS:%s,", number_of_active, "ALL_ACTIVE");
-  }
-  else if (active_list->mode == PARTLY_ACTIVE){
-    fprintf(stream , "NUMBER OF ACTIVE:%d,STATUS:%s,", number_of_active, "PARTLY_ACTIVE");
-  }
-  else
-    fprintf(stream , "NUMBER OF ACTIVE:%d,STATUS:%s,", number_of_active, "INACTIVE");
-}
-
-
-
-bool active_list_equal( const active_list_type * active_list1 , const active_list_type * active_list2) {
-  if (active_list1 == active_list2)
-    return true;
-  else {
-    if (active_list1->mode != active_list2->mode)
-      return false;
-    else {
-      if (active_list1->mode == PARTLY_ACTIVE)
-        return int_vector_equal( active_list1->index_list , active_list2->index_list);
-      else
+bool active_list_iget(const active_list_type *active_list, int index) {
+    if (active_list->mode == ALL_ACTIVE)
         return true;
+    else if (active_list->mode == INACTIVE)
+        return false;
+    else
+        return int_vector_iget(active_list->index_list, index);
+}
+
+void active_list_summary_fprintf(const active_list_type *active_list,
+                                 const char *dataset_key, const char *key,
+                                 FILE *stream) {
+    int number_of_active = int_vector_size(active_list->index_list);
+    if (active_list->mode == ALL_ACTIVE) {
+        fprintf(stream, "NUMBER OF ACTIVE:%d,STATUS:%s,", number_of_active,
+                "ALL_ACTIVE");
+    } else if (active_list->mode == PARTLY_ACTIVE) {
+        fprintf(stream, "NUMBER OF ACTIVE:%d,STATUS:%s,", number_of_active,
+                "PARTLY_ACTIVE");
+    } else
+        fprintf(stream, "NUMBER OF ACTIVE:%d,STATUS:%s,", number_of_active,
+                "INACTIVE");
+}
+
+bool active_list_equal(const active_list_type *active_list1,
+                       const active_list_type *active_list2) {
+    if (active_list1 == active_list2)
+        return true;
+    else {
+        if (active_list1->mode != active_list2->mode)
+            return false;
+        else {
+            if (active_list1->mode == PARTLY_ACTIVE)
+                return int_vector_equal(active_list1->index_list,
+                                        active_list2->index_list);
+            else
+                return true;
+        }
     }
-  }
 }

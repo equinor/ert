@@ -19,5 +19,4 @@
 #ifndef ERT_ACTIVE_CONFIG_H
 #define ERT_ACTIVE_CONFIG_H
 
-
 #endif

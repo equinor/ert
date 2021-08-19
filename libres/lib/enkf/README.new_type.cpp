@@ -16,7 +16,7 @@
    for more details.
 */
 
-/**
+/*
 The two files README.new_type.c and README.new_type_config.c (along
 with the corresponding header files) are meant to serve as a
 documentation and reference on how to add new object types to the enkf
@@ -230,8 +230,6 @@ case(NEW_TYPE):
 
 */
 
-
-
 /*
 OK - here comes the implementation:
 */
@@ -250,13 +248,11 @@ OK - here comes the implementation:
 */
 #include <util.h>
 
-
 /*
   Lots of (ugly) C-macros to generate anonymous versions of the various
   functions listed above.
 */
 #include <enkf_macros.h>
-
 
 /*
   This file contains several enum typedefs, the most important one in
@@ -265,13 +261,10 @@ OK - here comes the implementation:
 */
 #include <enkf_types.h>
 
-
 /*
   The header file for the actual new_type object.
 */
 #include <new_type.h>
-
-
 
 /*
   These two #define statements, along with the macros found in
@@ -280,22 +273,21 @@ OK - here comes the implementation:
   the current directory; it is *not* installed in an include/
   directory.
 */
-#define  TARGET_TYPE NEW_TYPE   /* The variable type in this file - according to the ert_impl_type classification */
-#define  DEBUG                  /* We want debugging */
+#define TARGET_TYPE                                                            \
+    NEW_TYPE /* The variable type in this file - according to the ert_impl_type classification */
+#define DEBUG /* We want debugging */
 #include "enkf_debug.h"
-
-
 
 /*
    Here comes the new_type_struct defintion:
 */
 
 struct new_type_struct {
-  DEBUG_DECLARE
-  const new_type_config_type *config;
+    DEBUG_DECLARE
+    const new_type_config_type *config;
 
-  1: scalar_type    *scalar;
-  2: double         *data;
+    1 : scalar_type *scalar;
+    2 : double *data;
 };
 
 /*
@@ -331,13 +323,8 @@ struct new_type_struct {
      to hold the actual data.
 */
 
-
 /*
 scalar_type
 ===========
 This type is implemented in scalar.c / scalar_config.c.
 */
-
-
-
-

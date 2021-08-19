@@ -28,8 +28,8 @@
 extern "C" {
 #endif
 
-#define FS_MAGIC_ID              123998L
-#define CURRENT_FS_VERSION       107
+#define FS_MAGIC_ID 123998L
+#define CURRENT_FS_VERSION 107
 #define MIN_SUPPORTED_FS_VERSION 105
 
 /**
@@ -155,27 +155,28 @@ extern "C" {
    commandline to perform an inplace upgrade.
 */
 
+typedef struct fs_driver_struct fs_driver_type;
 
+typedef void(save_kwlist_ftype)(
+    void *, int, int,
+    buffer_type
+        *buffer); /* Functions used to load/store restart_kw_list instances. */
+typedef void(load_kwlist_ftype)(void *, int, int, buffer_type *buffer);
 
+typedef void(load_node_ftype)(void *driver, const char *, int, int,
+                              buffer_type *);
+typedef void(save_node_ftype)(void *driver, const char *, int, int,
+                              buffer_type *);
+typedef void(unlink_node_ftype)(void *driver, const char *, int, int);
+typedef bool(has_node_ftype)(void *driver, const char *, int, int);
 
-  typedef struct fs_driver_struct         fs_driver_type;
+typedef void(load_vector_ftype)(void *driver, const char *, int, buffer_type *);
+typedef void(save_vector_ftype)(void *driver, const char *, int, buffer_type *);
+typedef void(unlink_vector_ftype)(void *driver, const char *, int);
+typedef bool(has_vector_ftype)(void *driver, const char *, int);
 
-  typedef void (save_kwlist_ftype)  (void * , int , int , buffer_type * buffer);  /* Functions used to load/store restart_kw_list instances. */
-  typedef void (load_kwlist_ftype)  (void * , int , int , buffer_type * buffer);
-
-  typedef void (load_node_ftype)    (void * driver, const char * , int , int , buffer_type * );
-  typedef void (save_node_ftype)    (void * driver, const char * , int , int , buffer_type * );
-  typedef void (unlink_node_ftype)  (void * driver, const char * , int , int );
-  typedef bool (has_node_ftype)     (void * driver, const char * , int , int );
-
-  typedef void (load_vector_ftype)    (void * driver, const char * , int , buffer_type * );
-  typedef void (save_vector_ftype)    (void * driver, const char * , int , buffer_type * );
-  typedef void (unlink_vector_ftype)  (void * driver, const char * , int );
-  typedef bool (has_vector_ftype)     (void * driver, const char * , int );
-
-  typedef void (fsync_driver_ftype) (void * driver);
-  typedef void (free_driver_ftype)  (void * driver);
-
+typedef void(fsync_driver_ftype)(void *driver);
+typedef void(free_driver_ftype)(void *driver);
 
 /**
    The fs_driver_type contains a number of function pointers
@@ -196,42 +197,32 @@ extern "C" {
 
 */
 
-
-
-#define FS_DRIVER_FIELDS                   \
-load_node_ftype           * load_node;     \
-save_node_ftype           * save_node;     \
-has_node_ftype            * has_node;      \
-unlink_node_ftype         * unlink_node;   \
-load_vector_ftype         * load_vector;   \
-save_vector_ftype         * save_vector;   \
-has_vector_ftype          * has_vector;    \
-unlink_vector_ftype       * unlink_vector; \
-free_driver_ftype         * free_driver;   \
-fsync_driver_ftype        * fsync_driver;  \
-int                         type_id
-
-
-
+#define FS_DRIVER_FIELDS                                                       \
+    load_node_ftype *load_node;                                                \
+    save_node_ftype *save_node;                                                \
+    has_node_ftype *has_node;                                                  \
+    unlink_node_ftype *unlink_node;                                            \
+    load_vector_ftype *load_vector;                                            \
+    save_vector_ftype *save_vector;                                            \
+    has_vector_ftype *has_vector;                                              \
+    unlink_vector_ftype *unlink_vector;                                        \
+    free_driver_ftype *free_driver;                                            \
+    fsync_driver_ftype *fsync_driver;                                          \
+    int type_id
 
 struct fs_driver_struct {
-  FS_DRIVER_FIELDS;
+    FS_DRIVER_FIELDS;
 };
 
+void fs_driver_init(fs_driver_type *);
+fs_driver_type *fs_driver_safe_cast(void *);
 
-
-  /*****************************************************************/
-
-  void                       fs_driver_init(fs_driver_type * );
-  fs_driver_type           * fs_driver_safe_cast(void * );
-
-  void                       fs_driver_init_fstab( FILE * stream, fs_driver_impl driver_id );
-  char                     * fs_driver_alloc_fstab_file( const char * path );
-  FILE                     * fs_driver_open_fstab( const char * path , bool create);
-  void                       fs_driver_assert_magic( FILE * stream );
-  void                       fs_driver_assert_version( FILE * stream , const char * mount_point);
-  int                        fs_driver_fread_version( FILE * stream );
-
+void fs_driver_init_fstab(FILE *stream, fs_driver_impl driver_id);
+char *fs_driver_alloc_fstab_file(const char *path);
+FILE *fs_driver_open_fstab(const char *path, bool create);
+void fs_driver_assert_magic(FILE *stream);
+void fs_driver_assert_version(FILE *stream, const char *mount_point);
+int fs_driver_fread_version(FILE *stream);
 
 #ifdef __cplusplus
 }

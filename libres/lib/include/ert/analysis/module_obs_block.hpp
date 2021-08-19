@@ -25,28 +25,34 @@
 extern "C" {
 #endif
 
-  struct module_obs_block_struct {
-   UTIL_TYPE_ID_DECLARATION;
-   char                    * key;
-   const int               * index_list;
-   int                       D_row_start;
-   int                       n_active;
-  };
+struct module_obs_block_struct {
+    UTIL_TYPE_ID_DECLARATION;
+    char *key;
+    const int *index_list;
+    int D_row_start;
+    int n_active;
+};
 
-  typedef struct module_obs_block_struct module_obs_block_type;
+typedef struct module_obs_block_struct module_obs_block_type;
 
-  module_obs_block_type  * module_obs_block_alloc( const char * key, const int * index_list, const int row_start, const int n_active);
-  const char *             module_obs_block_get_key(const module_obs_block_type * module_obs_block);
-  const int                module_obs_block_get_row_start(const module_obs_block_type * module_obs_block);
-  const int                module_obs_block_get_row_end(const module_obs_block_type * module_obs_block);
-  const int  *             module_obs_block_get_active_indices(const module_obs_block_type * module_obs_block );
-  void                     module_obs_block_free(module_obs_block_type * module_obs_block);
-  void                     module_obs_block_free__( void * arg );
+module_obs_block_type *module_obs_block_alloc(const char *key,
+                                              const int *index_list,
+                                              const int row_start,
+                                              const int n_active);
+const char *
+module_obs_block_get_key(const module_obs_block_type *module_obs_block);
+const int
+module_obs_block_get_row_start(const module_obs_block_type *module_obs_block);
+const int
+module_obs_block_get_row_end(const module_obs_block_type *module_obs_block);
+const int *module_obs_block_get_active_indices(
+    const module_obs_block_type *module_obs_block);
+void module_obs_block_free(module_obs_block_type *module_obs_block);
+void module_obs_block_free__(void *arg);
 
-  UTIL_IS_INSTANCE_HEADER( module_obs_block );
+UTIL_IS_INSTANCE_HEADER(module_obs_block);
 
 #ifdef __cplusplus
 }
 #endif
 #endif
-

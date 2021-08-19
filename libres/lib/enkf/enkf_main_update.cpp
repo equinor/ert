@@ -25,7 +25,7 @@
 #include <enkf_analysis.h>
 #include <analysis_config.h>
 
-/**
+/*
    This file implements functions related to updating the state. The
    really low level functions related to the analysis is implemented
    in enkf_analysis.h.
@@ -35,5 +35,3 @@
 */
 
 #include "enkf_main_struct.h"
-
-

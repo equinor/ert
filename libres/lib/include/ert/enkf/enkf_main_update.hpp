@@ -21,8 +21,6 @@
 
 #include <enkf_main.h>
 
-void    enkf_main_update(enkf_main_type * enkf_main , int step1 , int step2);
-
-
+void enkf_main_update(enkf_main_type *enkf_main, int step1, int step2);
 
 #endif

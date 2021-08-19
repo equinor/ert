@@ -12,31 +12,28 @@
 #define ERT_ENKF_DEFAULT
 #include <stdbool.h>
 
-#define DEFAULT_LOG_FILE     "log.txt"
+#define DEFAULT_LOG_FILE "log.txt"
 
-#define DEFAULT_RUNPATH_KEY  "DEFAULT_RUNPATH"
-
+#define DEFAULT_RUNPATH_KEY "DEFAULT_RUNPATH"
 
 /**
    The format string used when creating "search-strings" which should
    be replaced in the gen_kw template files - MUST contain one %s
    placeholder which will be replaced with the parameter name.
 */
-#define DEFAULT_GEN_KW_TAG_FORMAT    "<%s>"
-
+#define DEFAULT_GEN_KW_TAG_FORMAT "<%s>"
 
 /**
   Default file name for export file for GEN_KW parameters
 */
-#ifdef   __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
-#define DEFAULT_GEN_KW_EXPORT_NAME   "parameters"
+#define DEFAULT_GEN_KW_EXPORT_NAME "parameters"
 
+const char *enkf_defaults_get_default_gen_kw_export_name();
 
-const char * enkf_defaults_get_default_gen_kw_export_name();
-
-#ifdef   __cplusplus
+#ifdef __cplusplus
 }
 #endif
 /**
@@ -60,7 +57,6 @@ const char * enkf_defaults_get_default_gen_kw_export_name();
 
 //#define DEFAULT_DATA_KW_TAG_FORMAT    "<%s>"
 
-
 /**
    This is the format used for tagging the internal variables like
    IENS, and ECLBASE. These values are written into the various job
@@ -69,18 +65,15 @@ const char * enkf_defaults_get_default_gen_kw_export_name();
    be changed by recompiling.
 
 */
-#define INTERNAL_DATA_KW_TAG_FORMAT   "<%s>"
-
+#define INTERNAL_DATA_KW_TAG_FORMAT "<%s>"
 
 /**
     The default number of block_fs instances allocated.
 */
 
 /* Eclipse IO  related stuff */
-#define DEFAULT_FORMATTED   false
-#define DEFAULT_UNIFIED     false
-
-
+#define DEFAULT_FORMATTED false
+#define DEFAULT_UNIFIED false
 
 /*
    Where the history is coming from - default value for config item:
@@ -88,64 +81,61 @@ const char * enkf_defaults_get_default_gen_kw_export_name();
    model_config_set_history_source() does currently not handle a
    default value different from SCHEDULE.
 */
-#define DEFAULT_HISTORY_SOURCE  REFCASE_HISTORY
+#define DEFAULT_HISTORY_SOURCE REFCASE_HISTORY
 
-
-#define DEFAULT_MAX_SUBMIT           2        /* The number of times to resubmit - default value for config item: MAX_SUBMIT */
-#define DEFAULT_MAX_INTERNAL_SUBMIT  1        /** Attached to keyword : MAX_RETRY */
-
-
-
+#define DEFAULT_MAX_SUBMIT                                                     \
+    2 /* The number of times to resubmit - default value for config item: MAX_SUBMIT */
+#define DEFAULT_MAX_INTERNAL_SUBMIT 1 /** Attached to keyword : MAX_RETRY */
 
 /*
    Defaults for the EnKF analysis. The analysis_config object is
    instantiated with these values.
 */
-#define DEFAULT_NCOMP                      1
-#define DEFAULT_ENKF_TRUNCATION            0.99
-#define DEFAULT_ENKF_ALPHA                 3.0
-#define DEFAULT_ENKF_STD_CUTOFF            1e-6
-#define DEFAULT_MERGE_OBSERVATIONS         false
-#define DEFAULT_RERUN                      false
-#define DEFAULT_RERUN_START                0
-#define DEFAULT_UPDATE_LOG_PATH            "update_log"
-#define DEFAULT_SINGLE_NODE_UPDATE         false
-#define DEFAULT_ANALYSIS_MODULE            "STD_ENKF"
-#define DEFAULT_ANALYSIS_NUM_ITERATIONS    4
-#define DEFAULT_ANALYSIS_ITER_CASE         "ITERATED_ENSEMBLE_SMOOTHER%d"
-#define DEFAULT_ANALYSIS_ITER_RUNPATH      "Simulations/Real%d"
-#define DEFAULT_ANALYSIS_MIN_REALISATIONS  0   // 0: No lower limit
+#define DEFAULT_NCOMP 1
+#define DEFAULT_ENKF_TRUNCATION 0.99
+#define DEFAULT_ENKF_ALPHA 3.0
+#define DEFAULT_ENKF_STD_CUTOFF 1e-6
+#define DEFAULT_MERGE_OBSERVATIONS false
+#define DEFAULT_RERUN false
+#define DEFAULT_RERUN_START 0
+#define DEFAULT_UPDATE_LOG_PATH "update_log"
+#define DEFAULT_SINGLE_NODE_UPDATE false
+#define DEFAULT_ANALYSIS_MODULE "STD_ENKF"
+#define DEFAULT_ANALYSIS_NUM_ITERATIONS 4
+#define DEFAULT_ANALYSIS_ITER_CASE "ITERATED_ENSEMBLE_SMOOTHER%d"
+#define DEFAULT_ANALYSIS_ITER_RUNPATH "Simulations/Real%d"
+#define DEFAULT_ANALYSIS_MIN_REALISATIONS 0 // 0: No lower limit
 #define DEFAULT_ANALYSIS_STOP_LONG_RUNNING false
-#define DEFAULT_MAX_RUNTIME                0
-#define DEFAULT_ITER_RETRY_COUNT           4
-
+#define DEFAULT_MAX_RUNTIME 0
+#define DEFAULT_ITER_RETRY_COUNT 4
 
 /* Default directories. */
-#define DEFAULT_RUNPATH          "simulations/realization%d"
-#define DEFAULT_ENSPATH          "storage"
-#define DEFAULT_RFTPATH          "rft"
-#define DEFAULT_REPORT_TIMEOUT   120
+#define DEFAULT_RUNPATH "simulations/realization%d"
+#define DEFAULT_ENSPATH "storage"
+#define DEFAULT_RFTPATH "rft"
+#define DEFAULT_REPORT_TIMEOUT 120
 
-#define DEFAULT_STORE_PC           true
-#define DEFAULT_PC_FILENAME        "PC_%04d-%04d-%s"
-#define DEFAULT_PC_PATH            "PC"
+#define DEFAULT_STORE_PC true
+#define DEFAULT_PC_FILENAME "PC_%04d-%04d-%s"
+#define DEFAULT_PC_PATH "PC"
 
 #define SUMMARY_KEY_JOIN_STRING ":"
-#define USER_KEY_JOIN_STRING    ":"
+#define USER_KEY_JOIN_STRING ":"
 
 #define DEFAULT_WORKFLOW_VERBOSE false
 
 /*
   Some #define symbols used when saving configuration files.
 */
-#define CONFIG_OPTION_FORMAT        " %s:%s"
-#define CONFIG_FLOAT_OPTION_FORMAT  " %s:%g"
-#define CONFIG_KEY_FORMAT           "%-24s"
-#define CONFIG_VALUE_FORMAT         " %-32s"
-#define CONFIG_FLOAT_FORMAT         " %32.4f"  /* One size - fits all :-) */
-#define CONFIG_SHORT_VALUE_FORMAT   " %-12s"
-#define CONFIG_ENDVALUE_FORMAT      " %-32s\n"
-#define CONFIG_COMMENTLINE_FORMAT   "----------------------------------------------------------------------\n"
+#define CONFIG_OPTION_FORMAT " %s:%s"
+#define CONFIG_FLOAT_OPTION_FORMAT " %s:%g"
+#define CONFIG_KEY_FORMAT "%-24s"
+#define CONFIG_VALUE_FORMAT " %-32s"
+#define CONFIG_FLOAT_FORMAT " %32.4f" /* One size - fits all :-) */
+#define CONFIG_SHORT_VALUE_FORMAT " %-12s"
+#define CONFIG_ENDVALUE_FORMAT " %-32s\n"
+#define CONFIG_COMMENTLINE_FORMAT                                              \
+    "----------------------------------------------------------------------\n"
 
 /*
    The string added at the beginning and end of string which should be
@@ -153,26 +143,22 @@ const char * enkf_defaults_get_default_gen_kw_export_name();
 */
 
 #define DEFAULT_START_TAG "<"
-#define DEFAULT_END_TAG   ">"
-
-/*****************************************************************/
-/* file system spesific defaults. */
+#define DEFAULT_END_TAG ">"
 
 /**
   Name of the default case.
 */
 
-#define CASE_LOG          "case-log"
-#define CURRENT_CASE      "current"
-#define DEFAULT_CASE      "default"
+#define CASE_LOG "case-log"
+#define CURRENT_CASE "current"
+#define DEFAULT_CASE "default"
 #define CURRENT_CASE_FILE "current_case"
 
-#define DEFAULT_CASE_PATH                        "%s/files"              // mountpoint
-#define DEFAULT_CASE_MEMBER_PATH                 "%s/mem%03d/files"      // mountpoint/member
-#define DEFAULT_CASE_TSTEP_PATH                  "%s/%04d/files"         // mountpoint/tstep
-#define DEFAULT_CASE_TSTEP_MEMBER_PATH           "%s/%04d/mem%03d/files" // mountpoint/tstep/member
+#define DEFAULT_CASE_PATH "%s/files"                // mountpoint
+#define DEFAULT_CASE_MEMBER_PATH "%s/mem%03d/files" // mountpoint/member
+#define DEFAULT_CASE_TSTEP_PATH "%s/%04d/files"     // mountpoint/tstep
+#define DEFAULT_CASE_TSTEP_MEMBER_PATH                                         \
+    "%s/%04d/mem%03d/files" // mountpoint/tstep/member
 // mountpoint = ENSPATH/case
-
-
 
 #endif

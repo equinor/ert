@@ -39,71 +39,79 @@
 extern "C" {
 #endif
 
-  const      char * enkf_fs_get_mount_point( const enkf_fs_type * fs );
-  const      char * enkf_fs_get_case_name( const enkf_fs_type * fs );
-  bool              enkf_fs_is_read_only(const enkf_fs_type * fs);
-  void              enkf_fs_fsync( enkf_fs_type * fs );
+const char *enkf_fs_get_mount_point(const enkf_fs_type *fs);
+const char *enkf_fs_get_case_name(const enkf_fs_type *fs);
+bool enkf_fs_is_read_only(const enkf_fs_type *fs);
+void enkf_fs_fsync(enkf_fs_type *fs);
 
-  enkf_fs_type    * enkf_fs_get_ref( enkf_fs_type * fs );
-  int               enkf_fs_decref( enkf_fs_type * fs );
-  int               enkf_fs_incref( enkf_fs_type * fs );
-  int               enkf_fs_get_refcount( const enkf_fs_type * fs );
-  enkf_fs_type    * enkf_fs_mount( const char * path );
-  PY_USED bool      enkf_fs_update_disk_version(const char * mount_point , int src_version , int target_version);
-  int               enkf_fs_disk_version(const char * mount_point );
-  int               enkf_fs_get_version104( const char * path );
-  void              enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , buffer_type * buffer , const char * node_key, enkf_var_type var_type,
-                                        int report_step , int iens);
+enkf_fs_type *enkf_fs_get_ref(enkf_fs_type *fs);
+int enkf_fs_decref(enkf_fs_type *fs);
+int enkf_fs_incref(enkf_fs_type *fs);
+int enkf_fs_get_refcount(const enkf_fs_type *fs);
+enkf_fs_type *enkf_fs_mount(const char *path);
+PY_USED bool enkf_fs_update_disk_version(const char *mount_point,
+                                         int src_version, int target_version);
+int enkf_fs_disk_version(const char *mount_point);
+int enkf_fs_get_version104(const char *path);
+void enkf_fs_fwrite_node(enkf_fs_type *enkf_fs, buffer_type *buffer,
+                         const char *node_key, enkf_var_type var_type,
+                         int report_step, int iens);
 
-  void              enkf_fs_fwrite_vector(enkf_fs_type * enkf_fs ,
-                                          buffer_type * buffer ,
-                                          const char * node_key,
-                                          enkf_var_type var_type,
-                                          int iens);
+void enkf_fs_fwrite_vector(enkf_fs_type *enkf_fs, buffer_type *buffer,
+                           const char *node_key, enkf_var_type var_type,
+                           int iens);
 
-  bool              enkf_fs_exists( const char * mount_point );
+bool enkf_fs_exists(const char *mount_point);
 
-  void              enkf_fs_fread_node(enkf_fs_type * enkf_fs , buffer_type * buffer ,
-                                       const char * node_key , enkf_var_type var_type ,
-                                       int report_step , int iens);
+void enkf_fs_fread_node(enkf_fs_type *enkf_fs, buffer_type *buffer,
+                        const char *node_key, enkf_var_type var_type,
+                        int report_step, int iens);
 
-  void              enkf_fs_fread_vector(enkf_fs_type * enkf_fs , buffer_type * buffer ,
-                                         const char * node_key ,
-                                         enkf_var_type var_type ,
-                                         int iens);
+void enkf_fs_fread_vector(enkf_fs_type *enkf_fs, buffer_type *buffer,
+                          const char *node_key, enkf_var_type var_type,
+                          int iens);
 
+bool enkf_fs_has_vector(enkf_fs_type *enkf_fs, const char *node_key,
+                        enkf_var_type var_type, int iens);
+bool enkf_fs_has_node(enkf_fs_type *enkf_fs, const char *node_key,
+                      enkf_var_type var_type, int report_step, int iens);
 
-  bool              enkf_fs_has_vector(enkf_fs_type * enkf_fs , const char * node_key , enkf_var_type var_type , int iens);
-  bool              enkf_fs_has_node(enkf_fs_type * enkf_fs , const char * node_key , enkf_var_type var_type , int report_step , int iens);
+enkf_fs_type *enkf_fs_create_fs(const char *mount_point,
+                                fs_driver_impl driver_id, void *arg,
+                                bool mount);
 
-  enkf_fs_type *    enkf_fs_create_fs( const char * mount_point , fs_driver_impl driver_id , void * arg, bool mount);
+char *enkf_fs_alloc_case_filename(const enkf_fs_type *fs,
+                                  const char *input_name);
+char *enkf_fs_alloc_case_tstep_filename(const enkf_fs_type *fs, int tstep,
+                                        const char *input_name);
+char *enkf_fs_alloc_case_tstep_member_filename(const enkf_fs_type *fs,
+                                               int tstep, int iens,
+                                               const char *input_name);
 
-  char             * enkf_fs_alloc_case_filename( const enkf_fs_type * fs , const char * input_name);
-  char             * enkf_fs_alloc_case_tstep_filename( const enkf_fs_type * fs , int tstep , const char * input_name);
-  char             * enkf_fs_alloc_case_tstep_member_filename( const enkf_fs_type * fs , int tstep , int iens , const char * input_name);
+FILE *enkf_fs_open_case_file(const enkf_fs_type *fs, const char *input_name,
+                             const char *mode);
+FILE *enkf_fs_open_case_tstep_file(const enkf_fs_type *fs,
+                                   const char *input_name, int tstep,
+                                   const char *mode);
 
-  FILE             * enkf_fs_open_case_file( const enkf_fs_type * fs , const char * input_name , const char * mode);
-  FILE             * enkf_fs_open_case_tstep_file( const enkf_fs_type * fs , const char * input_name , int tstep , const char * mode);
+FILE *enkf_fs_open_excase_file(const enkf_fs_type *fs, const char *input_name);
+FILE *enkf_fs_open_excase_tstep_file(const enkf_fs_type *fs,
+                                     const char *input_name, int tstep);
 
-  FILE             * enkf_fs_open_excase_file( const enkf_fs_type * fs , const char * input_name);
-  FILE             * enkf_fs_open_excase_tstep_file( const enkf_fs_type * fs , const char * input_name , int tstep );
+time_map_type *enkf_fs_alloc_readonly_time_map(const char *mount_point);
+state_map_type *enkf_fs_alloc_readonly_state_map(const char *mount_point);
+state_map_type *enkf_fs_get_state_map(const enkf_fs_type *fs);
+time_map_type *enkf_fs_get_time_map(const enkf_fs_type *fs);
+cases_config_type *enkf_fs_get_cases_config(const enkf_fs_type *fs);
+misfit_ensemble_type *enkf_fs_get_misfit_ensemble(const enkf_fs_type *fs);
+summary_key_set_type *enkf_fs_get_summary_key_set(const enkf_fs_type *fs);
 
-  time_map_type             * enkf_fs_alloc_readonly_time_map( const char * mount_point );
-  state_map_type            * enkf_fs_alloc_readonly_state_map( const char * mount_point );
-  state_map_type            * enkf_fs_get_state_map( const enkf_fs_type * fs );
-  time_map_type             * enkf_fs_get_time_map( const enkf_fs_type * fs );
-  cases_config_type         * enkf_fs_get_cases_config( const enkf_fs_type * fs);
-  misfit_ensemble_type      * enkf_fs_get_misfit_ensemble( const enkf_fs_type * fs );
-  summary_key_set_type      * enkf_fs_get_summary_key_set( const enkf_fs_type * fs );
+void enkf_fs_increase_run_count(enkf_fs_type *fs);
+void enkf_fs_decrease_run_count(enkf_fs_type *fs);
+PY_USED bool enkf_fs_is_running(const enkf_fs_type *fs);
 
-  void             enkf_fs_increase_run_count(enkf_fs_type * fs);
-  void             enkf_fs_decrease_run_count(enkf_fs_type * fs);
-  PY_USED bool     enkf_fs_is_running(const enkf_fs_type * fs);
-
-
-  UTIL_SAFE_CAST_HEADER( enkf_fs );
-  UTIL_IS_INSTANCE_HEADER( enkf_fs );
-
+UTIL_SAFE_CAST_HEADER(enkf_fs);
+UTIL_IS_INSTANCE_HEADER(enkf_fs);
 
 #ifdef __cplusplus
 }

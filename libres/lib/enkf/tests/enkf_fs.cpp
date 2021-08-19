@@ -25,80 +25,77 @@
 #include <pthread.h>
 #include <sys/mman.h>
 
-
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 
-
-typedef struct
-{
+typedef struct {
     pthread_mutex_t mutex1;
     pthread_mutex_t mutex2;
 } shared_data;
 
-static shared_data* data = NULL;
+static shared_data *data = NULL;
 
 void test_mount() {
-  ecl::util::TestArea ta("mount");
+    ecl::util::TestArea ta("mount");
 
-  test_assert_false( enkf_fs_exists( "mnt" ));
-  test_assert_NULL( enkf_fs_create_fs("mnt" , BLOCK_FS_DRIVER_ID , NULL , false));
-  test_assert_true( enkf_fs_exists( "mnt" ));
-  {
-    enkf_fs_type * fs = enkf_fs_mount( "mnt"  );
-    test_assert_true( util_file_exists("mnt/mnt.lock"));
-    test_assert_true( enkf_fs_is_instance( fs ));
-    enkf_fs_decref( fs );
-    test_assert_false( util_file_exists("mnt/mnt.lock"));
-  }
-  {
-    enkf_fs_type * fs = enkf_fs_create_fs( "mnt2" , BLOCK_FS_DRIVER_ID , NULL , true);
-    test_assert_true( enkf_fs_is_instance( fs ));
-    enkf_fs_decref( fs );
-  }
+    test_assert_false(enkf_fs_exists("mnt"));
+    test_assert_NULL(enkf_fs_create_fs("mnt", BLOCK_FS_DRIVER_ID, NULL, false));
+    test_assert_true(enkf_fs_exists("mnt"));
+    {
+        enkf_fs_type *fs = enkf_fs_mount("mnt");
+        test_assert_true(util_file_exists("mnt/mnt.lock"));
+        test_assert_true(enkf_fs_is_instance(fs));
+        enkf_fs_decref(fs);
+        test_assert_false(util_file_exists("mnt/mnt.lock"));
+    }
+    {
+        enkf_fs_type *fs =
+            enkf_fs_create_fs("mnt2", BLOCK_FS_DRIVER_ID, NULL, true);
+        test_assert_true(enkf_fs_is_instance(fs));
+        enkf_fs_decref(fs);
+    }
 }
 
 void test_refcount() {
-  ecl::util::TestArea ta("ref_count");
-  enkf_fs_create_fs("mnt" , BLOCK_FS_DRIVER_ID , NULL , false);
-  {
-    enkf_fs_type * fs = enkf_fs_mount( "mnt" );
-    test_assert_int_equal( 1 , enkf_fs_get_refcount( fs ));
-    enkf_fs_decref( fs );
-  }
+    ecl::util::TestArea ta("ref_count");
+    enkf_fs_create_fs("mnt", BLOCK_FS_DRIVER_ID, NULL, false);
+    {
+        enkf_fs_type *fs = enkf_fs_mount("mnt");
+        test_assert_int_equal(1, enkf_fs_get_refcount(fs));
+        enkf_fs_decref(fs);
+    }
 }
 
 void createFS() {
 
- pthread_mutex_lock(&data->mutex1);
- pid_t pid = fork();
+    pthread_mutex_lock(&data->mutex1);
+    pid_t pid = fork();
 
-  if (pid == 0) {
-    enkf_fs_type * fs_false = enkf_fs_mount( "mnt" );
-    test_assert_false(enkf_fs_is_read_only(fs_false));
-    test_assert_true( util_file_exists("mnt/mnt.lock"));
-    pthread_mutex_unlock(&data->mutex1);
-    pthread_mutex_lock(&data->mutex2);
-    enkf_fs_decref( fs_false );
-    pthread_mutex_unlock(&data->mutex2);
-    exit(0);
-  }
+    if (pid == 0) {
+        enkf_fs_type *fs_false = enkf_fs_mount("mnt");
+        test_assert_false(enkf_fs_is_read_only(fs_false));
+        test_assert_true(util_file_exists("mnt/mnt.lock"));
+        pthread_mutex_unlock(&data->mutex1);
+        pthread_mutex_lock(&data->mutex2);
+        enkf_fs_decref(fs_false);
+        pthread_mutex_unlock(&data->mutex2);
+        exit(0);
+    }
 }
 
-void test_fwrite_readonly( void * arg ) {
-  enkf_fs_type * fs = enkf_fs_safe_cast( arg );
-  /*
+void test_fwrite_readonly(void *arg) {
+    enkf_fs_type *fs = enkf_fs_safe_cast(arg);
+    /*
      The arguments here are completely bogus; the important thing is
      that this fwrite call should be intercepted by a util_abort()
      call (which is again intercepted by the testing function) before
      the argument are actually accessed.
   */
-  enkf_fs_fwrite_node( fs , NULL , "KEY" , PARAMETER , 100 , 1 );
+    enkf_fs_fwrite_node(fs, NULL, "KEY", PARAMETER, 100, 1);
 }
 
-void initialise_shared()
-{
+void initialise_shared() {
     // place our shared data in shared memory
     int prot = PROT_READ | PROT_WRITE;
 #ifdef __linux
@@ -107,7 +104,7 @@ void initialise_shared()
     int flags = MAP_SHARED | MAP_ANON;
 #endif
 
-    data = (shared_data *) mmap(NULL, sizeof(shared_data), prot, flags, -1, 0);
+    data = (shared_data *)mmap(NULL, sizeof(shared_data), prot, flags, -1, 0);
     assert(data);
 
     // initialise mutex so it works properly in shared memory
@@ -122,30 +119,31 @@ void initialise_shared()
   This test needs to fork off a seperate process to test the cross-process file locking.
 */
 void test_read_only2() {
-  initialise_shared();
-  {
-    ecl::util::TestArea ta("ro2");
-    enkf_fs_create_fs("mnt" , BLOCK_FS_DRIVER_ID , NULL , false);
-    pthread_mutex_lock(&data->mutex2);
-    createFS();
-    pthread_mutex_lock(&data->mutex1);
+    initialise_shared();
     {
-      enkf_fs_type * fs_false = enkf_fs_mount( "mnt" );
-      test_assert_true(enkf_fs_is_read_only(fs_false));
-      test_assert_util_abort( "enkf_fs_fwrite_node" , test_fwrite_readonly , fs_false );
-      enkf_fs_decref( fs_false );
+        ecl::util::TestArea ta("ro2");
+        enkf_fs_create_fs("mnt", BLOCK_FS_DRIVER_ID, NULL, false);
+        pthread_mutex_lock(&data->mutex2);
+        createFS();
+        pthread_mutex_lock(&data->mutex1);
+        {
+            enkf_fs_type *fs_false = enkf_fs_mount("mnt");
+            test_assert_true(enkf_fs_is_read_only(fs_false));
+            test_assert_util_abort("enkf_fs_fwrite_node", test_fwrite_readonly,
+                                   fs_false);
+            enkf_fs_decref(fs_false);
+        }
+        pthread_mutex_unlock(&data->mutex2);
+        pthread_mutex_unlock(&data->mutex1);
+        pthread_mutex_lock(&data->mutex2);
     }
     pthread_mutex_unlock(&data->mutex2);
-    pthread_mutex_unlock(&data->mutex1);
-    pthread_mutex_lock(&data->mutex2);
-  }
-  pthread_mutex_unlock(&data->mutex2);
-  munmap(data, sizeof(data));
+    munmap(data, sizeof(data));
 }
 
-int main(int argc, char ** argv) {
-  test_mount();
-  test_refcount();
-  test_read_only2();
-  exit(0);
+int main(int argc, char **argv) {
+    test_mount();
+    test_refcount();
+    test_read_only2();
+    exit(0);
 }

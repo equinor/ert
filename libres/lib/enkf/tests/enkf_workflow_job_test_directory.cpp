@@ -20,24 +20,21 @@
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
 
+int main(int argc, const char **argv) {
+    enkf_main_install_SIGNALS();
+    {
+        const char *path = argv[1];
+        ert_workflow_list_type *workflows = ert_workflow_list_alloc_empty(NULL);
+        ert_workflow_list_add_jobs_in_directory(workflows, path);
 
+        test_assert_true(ert_workflow_list_has_job(workflows, "CONF1"));
+        test_assert_true(ert_workflow_list_has_job(workflows, "CONF2@1"));
+        test_assert_false(ert_workflow_list_has_job(workflows, "CONF2"));
+        test_assert_true(ert_workflow_list_has_job(workflows, "CONF3@1.2.3"));
+        test_assert_true(ert_workflow_list_has_job(workflows, "CONF4@1.2.0"));
+        test_assert_false(ert_workflow_list_has_job(workflows, "CONF5"));
 
-
-int main(int argc , const char ** argv) {
-  enkf_main_install_SIGNALS();
-  {
-    const char * path = argv[1];
-    ert_workflow_list_type * workflows = ert_workflow_list_alloc_empty(NULL);
-    ert_workflow_list_add_jobs_in_directory( workflows , path );
-
-    test_assert_true( ert_workflow_list_has_job( workflows , "CONF1"));
-    test_assert_true( ert_workflow_list_has_job( workflows , "CONF2@1"));
-    test_assert_false( ert_workflow_list_has_job( workflows , "CONF2"));
-    test_assert_true( ert_workflow_list_has_job( workflows , "CONF3@1.2.3"));
-    test_assert_true( ert_workflow_list_has_job( workflows , "CONF4@1.2.0"));
-    test_assert_false( ert_workflow_list_has_job( workflows , "CONF5"));
-
-    ert_workflow_list_free( workflows );
-  }
-  exit(0);
+        ert_workflow_list_free(workflows);
+    }
+    exit(0);
 }

@@ -31,26 +31,15 @@ extern "C" {
 
 #include <ert/enkf/active_list.hpp>
 
+void enkf_matrix_serialize(const void *__node_data, int node_size,
+                           ecl_data_type node_type,
+                           const active_list_type *__active_list,
+                           matrix_type *A, int row_offset, int column);
 
-
-
-void enkf_matrix_serialize(const void * __node_data               ,
-                           int node_size                          ,
-                           ecl_data_type node_type                ,
-                           const active_list_type * __active_list ,
-                           matrix_type * A,
-                           int row_offset,
-                           int column);
-
-
-void enkf_matrix_deserialize(void * __node_data                 ,
-                             int node_size                      ,
-                             ecl_data_type node_type            ,
-                             const active_list_type * __active_list ,
-                             const matrix_type * A,
-                             int row_offset,
-                             int column);
-
+void enkf_matrix_deserialize(void *__node_data, int node_size,
+                             ecl_data_type node_type,
+                             const active_list_type *__active_list,
+                             const matrix_type *A, int row_offset, int column);
 
 #ifdef __cplusplus
 }

@@ -32,39 +32,46 @@ extern "C" {
 #include <ert/tooling.hpp>
 #include <ert/res_util/matrix.hpp>
 
-typedef struct meas_data_struct   meas_data_type;
-typedef struct meas_block_struct  meas_block_type;
+typedef struct meas_data_struct meas_data_type;
+typedef struct meas_block_struct meas_block_type;
 
-UTIL_IS_INSTANCE_HEADER( meas_data );
-UTIL_SAFE_CAST_HEADER( meas_block );
-meas_block_type  * meas_block_alloc( const char * obs_key , const bool_vector_type * ens_mask , int obs_size);
-int                meas_block_get_total_ens_size( const meas_block_type * meas_block );
-PY_USED int        meas_block_get_active_ens_size( const meas_block_type * meas_block );
-bool               meas_block_iens_active( const meas_block_type * meas_block , int iens);
-void               meas_block_iset( meas_block_type * meas_block , int iens , int iobs , double value);
-double             meas_block_iget( const meas_block_type * meas_block , int iens , int iobs);
-double             meas_block_iget_ens_mean( meas_block_type * meas_block , int iobs );
-double             meas_block_iget_ens_std( meas_block_type * meas_block , int iobs);
-void               meas_block_deactivate( meas_block_type * meas_block , int iobs );
-bool               meas_block_iget_active( const meas_block_type * meas_block , int iobs);
-void               meas_block_free( meas_block_type * meas_block );
+UTIL_IS_INSTANCE_HEADER(meas_data);
+UTIL_SAFE_CAST_HEADER(meas_block);
+meas_block_type *meas_block_alloc(const char *obs_key,
+                                  const bool_vector_type *ens_mask,
+                                  int obs_size);
+int meas_block_get_total_ens_size(const meas_block_type *meas_block);
+PY_USED int meas_block_get_active_ens_size(const meas_block_type *meas_block);
+bool meas_block_iens_active(const meas_block_type *meas_block, int iens);
+void meas_block_iset(meas_block_type *meas_block, int iens, int iobs,
+                     double value);
+double meas_block_iget(const meas_block_type *meas_block, int iens, int iobs);
+double meas_block_iget_ens_mean(meas_block_type *meas_block, int iobs);
+double meas_block_iget_ens_std(meas_block_type *meas_block, int iobs);
+void meas_block_deactivate(meas_block_type *meas_block, int iobs);
+bool meas_block_iget_active(const meas_block_type *meas_block, int iobs);
+void meas_block_free(meas_block_type *meas_block);
 
-bool               meas_data_has_block( const meas_data_type * matrix , const char * lookup_key);
+bool meas_data_has_block(const meas_data_type *matrix, const char *lookup_key);
 
-meas_block_type  * meas_data_get_block( const meas_data_type * matrix , const char * lookup_key);
-void               meas_data_reset(meas_data_type * );
-meas_data_type *   meas_data_alloc( const bool_vector_type * ens_mask);
-void               meas_data_free(meas_data_type * );
-matrix_type      * meas_data_allocS(const meas_data_type * matrix);
-int                meas_data_get_active_obs_size( const meas_data_type * matrix );
-int                meas_data_get_total_ens_size( const meas_data_type * matrix );
-int                meas_data_get_active_ens_size( const meas_data_type * meas_data );
-meas_block_type  * meas_data_add_block( meas_data_type * matrix , const char * obs_key , int report_step , int obs_size);
-int                meas_data_get_num_blocks( const meas_data_type * meas_block );
-meas_block_type  * meas_data_iget_block( const meas_data_type * matrix , int block_mnr);
-const meas_block_type  * meas_data_iget_block_const( const meas_data_type * matrix , int block_nr );
-int                meas_block_get_total_obs_size( const meas_block_type * meas_block );
-
+meas_block_type *meas_data_get_block(const meas_data_type *matrix,
+                                     const char *lookup_key);
+void meas_data_reset(meas_data_type *);
+meas_data_type *meas_data_alloc(const bool_vector_type *ens_mask);
+void meas_data_free(meas_data_type *);
+matrix_type *meas_data_allocS(const meas_data_type *matrix);
+int meas_data_get_active_obs_size(const meas_data_type *matrix);
+int meas_data_get_total_ens_size(const meas_data_type *matrix);
+int meas_data_get_active_ens_size(const meas_data_type *meas_data);
+meas_block_type *meas_data_add_block(meas_data_type *matrix,
+                                     const char *obs_key, int report_step,
+                                     int obs_size);
+int meas_data_get_num_blocks(const meas_data_type *meas_block);
+meas_block_type *meas_data_iget_block(const meas_data_type *matrix,
+                                      int block_mnr);
+const meas_block_type *meas_data_iget_block_const(const meas_data_type *matrix,
+                                                  int block_nr);
+int meas_block_get_total_obs_size(const meas_block_type *meas_block);
 
 #ifdef __cplusplus
 }

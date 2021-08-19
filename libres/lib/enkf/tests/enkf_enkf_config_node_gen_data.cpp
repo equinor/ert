@@ -17,20 +17,17 @@
    for more details.
 */
 
-
 #include <ert/util/test_util.h>
 
 #include <ert/enkf/enkf_config_node.hpp>
 
-
 void test_create() {
-  enkf_config_node_type * node = enkf_config_node_alloc_GEN_PARAM("key" , false, ASCII , ASCII , "init%d" , "out.txt");
-  enkf_config_node_free( node );
+    enkf_config_node_type *node = enkf_config_node_alloc_GEN_PARAM(
+        "key", false, ASCII, ASCII, "init%d", "out.txt");
+    enkf_config_node_free(node);
 }
 
-
-
-int main( int argc , char **argv ) {
-  test_create();
-  exit(0);
+int main(int argc, char **argv) {
+    test_create();
+    exit(0);
 }

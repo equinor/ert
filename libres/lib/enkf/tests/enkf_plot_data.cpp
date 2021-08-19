@@ -22,17 +22,11 @@
 #include <ert/enkf/enkf_plot_tvector.hpp>
 #include <ert/enkf/enkf_plot_data.hpp>
 
-
-
 void test_create() {
-  enkf_plot_data_type * plot_data = enkf_plot_data_alloc( NULL );
-  test_assert_true( enkf_plot_data_is_instance( plot_data ));
-  test_assert_int_equal( 0 , enkf_plot_data_get_size( plot_data ));
-  enkf_plot_data_free( plot_data );
+    enkf_plot_data_type *plot_data = enkf_plot_data_alloc(NULL);
+    test_assert_true(enkf_plot_data_is_instance(plot_data));
+    test_assert_int_equal(0, enkf_plot_data_get_size(plot_data));
+    enkf_plot_data_free(plot_data);
 }
 
-
-
-int main(int argc , char ** argv) {
-  test_create();
-}
+int main(int argc, char **argv) { test_create(); }

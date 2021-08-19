@@ -25,7 +25,6 @@
 #include <ert/job_queue/slurm_driver.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 
-
 /*
   This test tests the interaction between slurm and libres by using mock scripts
   for slurm functionality. The scripts are very simple, and just return suitable
@@ -60,36 +59,34 @@
 
 */
 
+void make_sleep_job(const char *fname, int sleep_time) {
+    FILE *stream = util_fopen(fname, "w");
+    fprintf(stream, "sleep %d \n", sleep_time);
+    fclose(stream);
 
-void make_sleep_job(const char * fname, int sleep_time) {
-  FILE * stream = util_fopen(fname, "w");
-  fprintf(stream, "sleep %d \n", sleep_time);
-  fclose(stream);
-
-  mode_t fmode = S_IRWXU;
-  chmod( fname, fmode);
+    mode_t fmode = S_IRWXU;
+    chmod(fname, fmode);
 }
 
-void make_script(const char* fname, const std::string& content) {
-  FILE * stream = util_fopen(fname, "w");
-  fprintf(stream, "%s" , content.c_str());
-  fclose(stream);
+void make_script(const char *fname, const std::string &content) {
+    FILE *stream = util_fopen(fname, "w");
+    fprintf(stream, "%s", content.c_str());
+    fclose(stream);
 
-  mode_t fmode = S_IRWXU;
-  chmod( fname, fmode);
+    mode_t fmode = S_IRWXU;
+    chmod(fname, fmode);
 }
 
-
-void install_script(queue_driver_type * driver, const char * option, const std::string& content) {
-  char * fname = util_alloc_abs_path( option );
-  make_script(fname, content);
-  queue_driver_set_option(driver, option, fname);
-  free( fname );
+void install_script(queue_driver_type *driver, const char *option,
+                    const std::string &content) {
+    char *fname = util_alloc_abs_path(option);
+    make_script(fname, content);
+    queue_driver_set_option(driver, option, fname);
+    free(fname);
 }
 
-
-void make_slurm_commands(queue_driver_type * driver) {
-  std::string sbatch = R"(#!/bin/bash
+void make_slurm_commands(queue_driver_type *driver) {
+    std::string sbatch = R"(#!/bin/bash
 
 if [ $2 = "--job-name=0" ]; then
    exit 1
@@ -112,14 +109,12 @@ if [ $2 = "--job-name=4" ]; then
 fi
 )";
 
-
-  std::string scancel = R"(#!/bin/bash
+    std::string scancel = R"(#!/bin/bash
 
 exit 0
 )";
 
-
-  std::string scontrol = R"(#!/bin/bash
+    std::string scontrol = R"(#!/bin/bash
 if [ $3 = "1" ]; then
 cat <<EOF
    UserId=user(777) GroupId=group(888) MCS_label=N/A
@@ -186,87 +181,78 @@ fi
 
 )";
 
-
-  std::string squeue = R"(#!/bin/bash
+    std::string squeue = R"(#!/bin/bash
 echo "2 PENDING"
 echo "3 RUNNING"
 )";
 
-  install_script( driver, SLURM_SBATCH_OPTION, sbatch );
-  install_script( driver, SLURM_SCANCEL_OPTION, scancel );
-  install_script( driver, SLURM_SCONTROL_OPTION, scontrol);
-  install_script( driver, SLURM_SQUEUE_OPTION, squeue);
+    install_script(driver, SLURM_SBATCH_OPTION, sbatch);
+    install_script(driver, SLURM_SCANCEL_OPTION, scancel);
+    install_script(driver, SLURM_SCONTROL_OPTION, scontrol);
+    install_script(driver, SLURM_SQUEUE_OPTION, squeue);
 }
 
-
-
-void * submit_job(queue_driver_type * driver, const ecl::util::TestArea& ta, const std::string& job_name, const char* cmd) {
-  std::string run_path = ta.test_cwd() + "/" + job_name;
-  util_make_path(run_path.c_str());
-  return queue_driver_submit_job(driver, cmd, 1, run_path.c_str(), job_name.c_str(), 0, nullptr);
+void *submit_job(queue_driver_type *driver, const ecl::util::TestArea &ta,
+                 const std::string &job_name, const char *cmd) {
+    std::string run_path = ta.test_cwd() + "/" + job_name;
+    util_make_path(run_path.c_str());
+    return queue_driver_submit_job(driver, cmd, 1, run_path.c_str(),
+                                   job_name.c_str(), 0, nullptr);
 }
-
-
 
 void run() {
-  ecl::util::TestArea ta("slurm_submit", true);
-  queue_driver_type * driver = queue_driver_alloc_slurm();
-  char * cmd = util_alloc_abs_path("cmd.sh");
-  std::vector<void *> jobs;
+    ecl::util::TestArea ta("slurm_submit", true);
+    queue_driver_type *driver = queue_driver_alloc_slurm();
+    char *cmd = util_alloc_abs_path("cmd.sh");
+    std::vector<void *> jobs;
 
+    make_sleep_job(cmd, 10);
+    make_slurm_commands(driver);
 
-  make_sleep_job(cmd, 10);
-  make_slurm_commands(driver);
+    test_assert_NULL(submit_job(driver, ta, "0", cmd));
 
-  test_assert_NULL( submit_job(driver, ta, "0", cmd));
+    {
+        auto job = submit_job(driver, ta, "1", cmd);
+        test_assert_not_NULL(job);
+        jobs.push_back(job);
+    }
 
-  {
-    auto job = submit_job(driver, ta, "1", cmd);
-    test_assert_not_NULL(job);
-    jobs.push_back(job);
-  }
+    {
+        auto job = submit_job(driver, ta, "2", cmd);
+        test_assert_not_NULL(job);
+        jobs.push_back(job);
+    }
 
-  {
-    auto job = submit_job(driver, ta, "2", cmd);
-    test_assert_not_NULL(job);
-    jobs.push_back(job);
-  }
+    {
+        auto job = submit_job(driver, ta, "3", cmd);
+        test_assert_not_NULL(job);
+        jobs.push_back(job);
+    }
 
-  {
-    auto job = submit_job(driver, ta, "3", cmd);
-    test_assert_not_NULL(job);
-    jobs.push_back(job);
-  }
+    {
+        auto job = submit_job(driver, ta, "4", cmd);
+        test_assert_not_NULL(job);
+        jobs.push_back(job);
+    }
 
-  {
-    auto job = submit_job(driver, ta, "4", cmd);
-    test_assert_not_NULL(job);
-    jobs.push_back(job);
-  }
+    queue_driver_kill_job(driver, jobs[0]);
+    auto job1_status = queue_driver_get_status(driver, jobs[0]);
+    test_assert_int_equal(job1_status, JOB_QUEUE_IS_KILLED);
 
-  queue_driver_kill_job(driver, jobs[0]);
-  auto job1_status = queue_driver_get_status(driver, jobs[0]);
-  test_assert_int_equal(job1_status, JOB_QUEUE_IS_KILLED);
+    auto job2_status = queue_driver_get_status(driver, jobs[1]);
+    test_assert_int_equal(job2_status, JOB_QUEUE_PENDING);
 
-  auto job2_status = queue_driver_get_status(driver, jobs[1]);
-  test_assert_int_equal(job2_status, JOB_QUEUE_PENDING);
+    auto job3_status = queue_driver_get_status(driver, jobs[2]);
+    test_assert_int_equal(job3_status, JOB_QUEUE_RUNNING);
 
-  auto job3_status = queue_driver_get_status(driver, jobs[2]);
-  test_assert_int_equal(job3_status, JOB_QUEUE_RUNNING);
+    auto job4_status = queue_driver_get_status(driver, jobs[3]);
+    test_assert_int_equal(job4_status, JOB_QUEUE_DONE);
 
-  auto job4_status = queue_driver_get_status(driver, jobs[3]);
-  test_assert_int_equal(job4_status, JOB_QUEUE_DONE);
+    for (auto job : jobs)
+        queue_driver_free_job(driver, job);
 
-  for (auto job : jobs)
-    queue_driver_free_job(driver, job);
-
-  free(cmd);
-  queue_driver_free(driver);
+    free(cmd);
+    queue_driver_free(driver);
 }
 
-
-
-
-int main( int argc , char ** argv) {
-  run();
-}
+int main(int argc, char **argv) { run(); }

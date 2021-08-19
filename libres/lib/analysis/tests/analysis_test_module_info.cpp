@@ -20,31 +20,35 @@
 
 #include <ert/analysis/module_info.hpp>
 
+int main(int argc, char **argv) {
 
-int main(int argc , char ** argv) {
+    const char *ministep_name = "SOME MINISTEP";
+    module_info_type *module_info = module_info_alloc(ministep_name);
+    test_assert_true(module_info_is_instance(module_info));
 
-  const char* ministep_name = "SOME MINISTEP";
-  module_info_type * module_info = module_info_alloc( ministep_name );
-  test_assert_true( module_info_is_instance( module_info ));
+    module_data_block_vector_type *module_data_block_vector =
+        module_info_get_data_block_vector(module_info);
+    test_assert_true(
+        module_data_block_vector_is_instance(module_data_block_vector));
 
-  module_data_block_vector_type * module_data_block_vector =  module_info_get_data_block_vector(module_info);
-  test_assert_true( module_data_block_vector_is_instance( module_data_block_vector ));
+    module_obs_block_vector_type *module_obs_block_vector =
+        module_info_get_obs_block_vector(module_info);
+    test_assert_true(
+        module_obs_block_vector_is_instance(module_obs_block_vector));
 
-  module_obs_block_vector_type * module_obs_block_vector =  module_info_get_obs_block_vector(module_info);
-  test_assert_true( module_obs_block_vector_is_instance( module_obs_block_vector ));
+    int index_list[1] = {1};
+    module_data_block_type *module_data_block =
+        module_data_block_alloc("PARAMETER", &index_list[0], 0, 1);
+    test_assert_true(module_data_block_is_instance(module_data_block));
+    module_data_block_vector_add_data_block(module_data_block_vector,
+                                            module_data_block);
 
-  int index_list[1] = { 1 };
-  module_data_block_type * module_data_block = module_data_block_alloc( "PARAMETER", &index_list[0],  0, 1 );
-  test_assert_true( module_data_block_is_instance( module_data_block ));
-  module_data_block_vector_add_data_block(module_data_block_vector, module_data_block);
+    module_obs_block_type *module_obs_block =
+        module_obs_block_alloc("OBS", &index_list[0], 0, 1);
+    test_assert_true(module_obs_block_is_instance(module_obs_block));
+    module_obs_block_vector_add_obs_block(module_obs_block_vector,
+                                          module_obs_block);
 
-
-  module_obs_block_type * module_obs_block = module_obs_block_alloc( "OBS", &index_list[0],  0, 1 );
-  test_assert_true( module_obs_block_is_instance( module_obs_block ));
-  module_obs_block_vector_add_obs_block(module_obs_block_vector, module_obs_block);
-
-  module_info_free( module_info );
-  exit(0);
+    module_info_free(module_info);
+    exit(0);
 }
-
-

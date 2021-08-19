@@ -23,18 +23,18 @@
 
 class row_scaling {
 public:
-  double operator[](int index) const;
-  double assign(int index, double value);
-  double clamp(double value) const;
-  void multiply(matrix_type * A, const matrix_type * X0) const;
-  int size() const;
+    double operator[](int index) const;
+    double assign(int index, double value);
+    double clamp(double value) const;
+    void multiply(matrix_type *A, const matrix_type *X0) const;
+    int size() const;
 
-  template <typename T>
-  void assign(const T * data, int size);
+    template <typename T> void assign(const T *data, int size);
+
 private:
-  void resize(int new_size);
-  int resolution = 1000;
-  std::vector<double> data;
+    void resize(int new_size);
+    int resolution = 1000;
+    std::vector<double> data;
 };
 
 typedef row_scaling row_scaling_type;
@@ -45,24 +45,23 @@ extern "C" {
 
 #include <ert/util/type_macros.h>
 
+row_scaling_type *row_scaling_alloc();
+row_scaling_type *row_scaling_alloc_copy(const row_scaling_type *row_scaling);
+void row_scaling_free(row_scaling_type *row_scaling);
+void row_scaling_multiply(const row_scaling_type *row_scaling, matrix_type *A,
+                          const matrix_type *X0);
+int row_scaling_get_size(const row_scaling_type *row_scaling);
+double row_scaling_iget(const row_scaling_type *row_scaling, int index);
+double row_scaling_iset(row_scaling_type *row_scaling, int index, double value);
+double row_scaling_clamp(const row_scaling_type *row_scaling, double value);
+void row_scaling_assign_double(row_scaling_type *scaling, const double *data,
+                               int size);
+void row_scaling_assign_float(row_scaling_type *scaling, const float *data,
+                              int size);
 
-row_scaling_type * row_scaling_alloc();
-row_scaling_type * row_scaling_alloc_copy(const row_scaling_type * row_scaling);
-void               row_scaling_free(row_scaling_type * row_scaling);
-void               row_scaling_multiply(const row_scaling_type * row_scaling, matrix_type * A, const matrix_type * X0);
-int                row_scaling_get_size(const row_scaling_type * row_scaling);
-double             row_scaling_iget(const row_scaling_type * row_scaling, int index);
-double             row_scaling_iset(row_scaling_type * row_scaling, int index, double value);
-double             row_scaling_clamp(const row_scaling_type * row_scaling, double value);
-void               row_scaling_assign_double(row_scaling_type * scaling, const double * data, int size);
-void               row_scaling_assign_float(row_scaling_type * scaling, const float * data, int size);
-
-UTIL_IS_INSTANCE_HEADER( row_scaling );
-
+UTIL_IS_INSTANCE_HEADER(row_scaling);
 
 #ifdef __cplusplus
 }
 #endif
 #endif
-
-

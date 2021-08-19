@@ -5,5 +5,3 @@
 */
 
 #include <ert/res_util/arg_pack.hpp>
-
-

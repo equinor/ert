@@ -26,28 +26,34 @@
 extern "C" {
 #endif
 
-  struct module_data_block_struct {
-   UTIL_TYPE_ID_DECLARATION;
-   char                    * key;
-   const int               * index_list;
-   int                       A_row_start;
-   int                       n_active;
-  };
+struct module_data_block_struct {
+    UTIL_TYPE_ID_DECLARATION;
+    char *key;
+    const int *index_list;
+    int A_row_start;
+    int n_active;
+};
 
-  typedef struct module_data_block_struct module_data_block_type;
+typedef struct module_data_block_struct module_data_block_type;
 
-  module_data_block_type * module_data_block_alloc( const char * key,  const int * index_list , const int row_start, const int n_active);
-  const char *             module_data_block_get_key(const module_data_block_type * module_data_block);
-  const int                module_data_block_get_row_start(const module_data_block_type * module_data_block);
-  const int                module_data_block_get_row_end(const module_data_block_type * module_data_block);
-  const int  *             module_data_block_get_active_indices(const module_data_block_type * module_data_block );
-  void                     module_data_block_free(module_data_block_type * module_data_block);
-  void                     module_data_block_free__( void * arg );
+module_data_block_type *module_data_block_alloc(const char *key,
+                                                const int *index_list,
+                                                const int row_start,
+                                                const int n_active);
+const char *
+module_data_block_get_key(const module_data_block_type *module_data_block);
+const int module_data_block_get_row_start(
+    const module_data_block_type *module_data_block);
+const int
+module_data_block_get_row_end(const module_data_block_type *module_data_block);
+const int *module_data_block_get_active_indices(
+    const module_data_block_type *module_data_block);
+void module_data_block_free(module_data_block_type *module_data_block);
+void module_data_block_free__(void *arg);
 
-  UTIL_IS_INSTANCE_HEADER( module_data_block );
+UTIL_IS_INSTANCE_HEADER(module_data_block);
 
 #ifdef __cplusplus
 }
 #endif
 #endif
-

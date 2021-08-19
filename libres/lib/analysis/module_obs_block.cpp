@@ -16,7 +16,6 @@
    for more details.
 */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -26,42 +25,49 @@
 #include <ert/analysis/module_obs_block.hpp>
 
 #define MODULE_OBS_BLOCK_TYPE_ID 73217901
-static UTIL_SAFE_CAST_FUNCTION( module_obs_block , MODULE_OBS_BLOCK_TYPE_ID);
-UTIL_IS_INSTANCE_FUNCTION( module_obs_block , MODULE_OBS_BLOCK_TYPE_ID)
+static UTIL_SAFE_CAST_FUNCTION(module_obs_block, MODULE_OBS_BLOCK_TYPE_ID);
+UTIL_IS_INSTANCE_FUNCTION(module_obs_block, MODULE_OBS_BLOCK_TYPE_ID)
 
-module_obs_block_type * module_obs_block_alloc(  const char * key, const int * index_list, const int row_start, const int n_active) {
-  module_obs_block_type * module_obs_block = (module_obs_block_type*)util_malloc( sizeof * module_obs_block );
-  UTIL_TYPE_ID_INIT( module_obs_block , MODULE_OBS_BLOCK_TYPE_ID );
-  module_obs_block->key = util_alloc_string_copy( key );
-  module_obs_block->index_list  = index_list;
-  module_obs_block->D_row_start = row_start;
-  module_obs_block->n_active = n_active;
-  return module_obs_block;
+module_obs_block_type *module_obs_block_alloc(const char *key,
+                                              const int *index_list,
+                                              const int row_start,
+                                              const int n_active) {
+    module_obs_block_type *module_obs_block =
+        (module_obs_block_type *)util_malloc(sizeof *module_obs_block);
+    UTIL_TYPE_ID_INIT(module_obs_block, MODULE_OBS_BLOCK_TYPE_ID);
+    module_obs_block->key = util_alloc_string_copy(key);
+    module_obs_block->index_list = index_list;
+    module_obs_block->D_row_start = row_start;
+    module_obs_block->n_active = n_active;
+    return module_obs_block;
 }
 
-
-const char * module_obs_block_get_key(const module_obs_block_type * module_obs_block){
-  return module_obs_block->key;
+const char *
+module_obs_block_get_key(const module_obs_block_type *module_obs_block) {
+    return module_obs_block->key;
 }
 
-const int module_obs_block_get_row_start(const module_obs_block_type * module_obs_block){
-  return module_obs_block->D_row_start;
+const int
+module_obs_block_get_row_start(const module_obs_block_type *module_obs_block) {
+    return module_obs_block->D_row_start;
 }
 
-const int module_obs_block_get_row_end(const module_obs_block_type * module_obs_block){
-  return module_obs_block->D_row_start + module_obs_block->n_active;
+const int
+module_obs_block_get_row_end(const module_obs_block_type *module_obs_block) {
+    return module_obs_block->D_row_start + module_obs_block->n_active;
 }
 
-const int  * module_obs_block_get_active_indices(const module_obs_block_type * module_obs_block ){
-  return module_obs_block->index_list;
+const int *module_obs_block_get_active_indices(
+    const module_obs_block_type *module_obs_block) {
+    return module_obs_block->index_list;
 }
 
-void module_obs_block_free( module_obs_block_type * module_obs_block ) {
-  free(module_obs_block->key);
-  free( module_obs_block );
+void module_obs_block_free(module_obs_block_type *module_obs_block) {
+    free(module_obs_block->key);
+    free(module_obs_block);
 }
 
-void module_obs_block_free__( void * arg ) {
-  module_obs_block_type * obs_block = module_obs_block_safe_cast( arg );
-  module_obs_block_free( obs_block );
+void module_obs_block_free__(void *arg) {
+    module_obs_block_type *obs_block = module_obs_block_safe_cast(arg);
+    module_obs_block_free(obs_block);
 }

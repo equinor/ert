@@ -35,30 +35,42 @@ typedef struct local_dataset_struct local_dataset_type;
 extern "C" {
 #endif
 
-local_dataset_type * local_dataset_alloc_copy( local_dataset_type * src_dataset , const char * copy_name );
-local_dataset_type * local_dataset_alloc( const char * name );
-void                 local_dataset_free( local_dataset_type * dataset );
-void                 local_dataset_free__( void * arg );
-void                 local_dataset_add_node(local_dataset_type * dataset, const char *node_key);
-void                 local_dataset_del_node( local_dataset_type * dataset , const char * node_key);
-PY_USED void         local_dataset_clear( local_dataset_type * dataset);
-const char *         local_dataset_get_name( const local_dataset_type * dataset);
-void                 local_dataset_summary_fprintf( const local_dataset_type * dataset , FILE * stream);
-active_list_type   * local_dataset_get_node_active_list(const local_dataset_type * dataset , const char * node_key );
-stringlist_type    * local_dataset_alloc_keys( const local_dataset_type * dataset );
-int                  local_dataset_get_size( const local_dataset_type * dataset );
-void                 local_dataset_del_node( local_dataset_type * dataset , const char * node_key);
-PY_USED bool         local_dataset_has_key(const local_dataset_type * dataset, const char * key);
-hash_iter_type     * local_dataset_alloc_iter(const local_dataset_type * dataset);
-const row_scaling_type * local_dataset_get_row_scaling(const local_dataset_type * dataset, const char * key);
-row_scaling_type   * local_dataset_get_or_create_row_scaling(local_dataset_type * dataset, const char * key);
-bool                 local_dataset_has_row_scaling(const local_dataset_type * dataset, const char * key);
+local_dataset_type *local_dataset_alloc_copy(local_dataset_type *src_dataset,
+                                             const char *copy_name);
+local_dataset_type *local_dataset_alloc(const char *name);
+void local_dataset_free(local_dataset_type *dataset);
+void local_dataset_free__(void *arg);
+void local_dataset_add_node(local_dataset_type *dataset, const char *node_key);
+void local_dataset_del_node(local_dataset_type *dataset, const char *node_key);
+PY_USED void local_dataset_clear(local_dataset_type *dataset);
+const char *local_dataset_get_name(const local_dataset_type *dataset);
+void local_dataset_summary_fprintf(const local_dataset_type *dataset,
+                                   FILE *stream);
+active_list_type *
+local_dataset_get_node_active_list(const local_dataset_type *dataset,
+                                   const char *node_key);
+stringlist_type *local_dataset_alloc_keys(const local_dataset_type *dataset);
+int local_dataset_get_size(const local_dataset_type *dataset);
+void local_dataset_del_node(local_dataset_type *dataset, const char *node_key);
+PY_USED bool local_dataset_has_key(const local_dataset_type *dataset,
+                                   const char *key);
+hash_iter_type *local_dataset_alloc_iter(const local_dataset_type *dataset);
+const row_scaling_type *
+local_dataset_get_row_scaling(const local_dataset_type *dataset,
+                              const char *key);
+row_scaling_type *
+local_dataset_get_or_create_row_scaling(local_dataset_type *dataset,
+                                        const char *key);
+bool local_dataset_has_row_scaling(const local_dataset_type *dataset,
+                                   const char *key);
 
 #ifdef __cplusplus
 }
 #endif
 
-std::vector<std::string> local_dataset_scaled_keys(const local_dataset_type * dataset);
-std::vector<std::string> local_dataset_unscaled_keys(const local_dataset_type * dataset);
+std::vector<std::string>
+local_dataset_scaled_keys(const local_dataset_type *dataset);
+std::vector<std::string>
+local_dataset_unscaled_keys(const local_dataset_type *dataset);
 
 #endif

@@ -1,5 +1,3 @@
 #include <math.h>
 
-int main( int argc , char ** argv) {
-  isfinite(0.0);
-}
+int main(int argc, char **argv) { isfinite(0.0); }

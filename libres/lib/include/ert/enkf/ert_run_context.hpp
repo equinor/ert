@@ -35,73 +35,79 @@ extern "C" {
 
 typedef struct ert_run_context_struct ert_run_context_type;
 
-  stringlist_type      * ert_run_context_alloc_runpath_list(const bool_vector_type * iactive ,
-                                                            const path_fmt_type * runpath_fmt ,
-                                                            const subst_list_type * subst_list ,
-                                                            int iter);
+stringlist_type *
+ert_run_context_alloc_runpath_list(const bool_vector_type *iactive,
+                                   const path_fmt_type *runpath_fmt,
+                                   const subst_list_type *subst_list, int iter);
 
-  char                 * ert_run_context_alloc_runpath( int iens , const path_fmt_type * runpath_fmt , const subst_list_type * subst_list , int iter);
+char *ert_run_context_alloc_runpath(int iens, const path_fmt_type *runpath_fmt,
+                                    const subst_list_type *subst_list,
+                                    int iter);
 
-  ert_run_context_type * ert_run_context_alloc(run_mode_type run_mode,
-                                               init_mode_type init_mode,
-                                               enkf_fs_type * sim_fs ,
-                                               enkf_fs_type * target_update_fs ,
-                                               bool_vector_type * iactive ,
-                                               path_fmt_type * runpath_fmt ,
-                                               const char * jobname_fmt,
-                                               subst_list_type * subst_list ,
-                                               int iter);
+ert_run_context_type *
+ert_run_context_alloc(run_mode_type run_mode, init_mode_type init_mode,
+                      enkf_fs_type *sim_fs, enkf_fs_type *target_update_fs,
+                      bool_vector_type *iactive, path_fmt_type *runpath_fmt,
+                      const char *jobname_fmt, subst_list_type *subst_list,
+                      int iter);
 
-  ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * sim_fs ,
-                                                                   bool_vector_type * iactive ,
-                                                                   const path_fmt_type * runpath_fmt ,
-                                                                   const char * jobname_fmt,
-                                                                   const subst_list_type * subst_list ,
-                                                                   int iter);
+ert_run_context_type *ert_run_context_alloc_ENSEMBLE_EXPERIMENT(
+    enkf_fs_type *sim_fs, bool_vector_type *iactive,
+    const path_fmt_type *runpath_fmt, const char *jobname_fmt,
+    const subst_list_type *subst_list, int iter);
 
-  ert_run_context_type * ert_run_context_alloc_INIT_ONLY(enkf_fs_type * sim_fs,
-                                                         init_mode_type init_mode,
-                                                         bool_vector_type * iactive ,
-                                                         const path_fmt_type * runpath_fmt ,
-                                                         const subst_list_type * subst_list ,
-                                                         int iter);
+ert_run_context_type *
+ert_run_context_alloc_INIT_ONLY(enkf_fs_type *sim_fs, init_mode_type init_mode,
+                                bool_vector_type *iactive,
+                                const path_fmt_type *runpath_fmt,
+                                const subst_list_type *subst_list, int iter);
 
-  ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * sim_fs , enkf_fs_type * target_update_fs ,
-                                                            bool_vector_type * iactive ,
-                                                            const path_fmt_type * runpath_fmt ,
-                                                            const char * jobname_fmt,
-                                                            const subst_list_type * subst_list ,
-                                                            int iter);
+ert_run_context_type *ert_run_context_alloc_SMOOTHER_RUN(
+    enkf_fs_type *sim_fs, enkf_fs_type *target_update_fs,
+    bool_vector_type *iactive, const path_fmt_type *runpath_fmt,
+    const char *jobname_fmt, const subst_list_type *subst_list, int iter);
 
-  ert_run_context_type * ert_run_context_alloc_SMOOTHER_UPDATE(enkf_fs_type * sim_fs , enkf_fs_type * target_update_fs );
+ert_run_context_type *
+ert_run_context_alloc_SMOOTHER_UPDATE(enkf_fs_type *sim_fs,
+                                      enkf_fs_type *target_update_fs);
 
-  ert_run_context_type * ert_run_context_alloc_CASE_INIT(enkf_fs_type * sim_fs,
-                                                         const bool_vector_type * iactive);
+ert_run_context_type *
+ert_run_context_alloc_CASE_INIT(enkf_fs_type *sim_fs,
+                                const bool_vector_type *iactive);
 
-  void                     ert_run_context_set_sim_fs(ert_run_context_type * context, enkf_fs_type * sim_fs);
-  void                     ert_run_context_set_update_target_fs(ert_run_context_type * context, enkf_fs_type * update_target_fs);
+void ert_run_context_set_sim_fs(ert_run_context_type *context,
+                                enkf_fs_type *sim_fs);
+void ert_run_context_set_update_target_fs(ert_run_context_type *context,
+                                          enkf_fs_type *update_target_fs);
 
-  void                     ert_run_context_free( ert_run_context_type * );
-  int                      ert_run_context_get_size( const ert_run_context_type * context );
-  run_mode_type            ert_run_context_get_mode( const ert_run_context_type * context );
-  bool_vector_type       * ert_run_context_alloc_iactive(const ert_run_context_type * context);
-  bool_vector_type const * ert_run_context_get_iactive(const ert_run_context_type * context);
-  int                      ert_run_context_get_iter( const ert_run_context_type * context );
-  int                      ert_run_context_get_active_size(const ert_run_context_type * context);
-  int                      ert_run_context_get_step1( const ert_run_context_type * context );
-  run_arg_type           * ert_run_context_iget_arg( const ert_run_context_type * context , int index);
-  run_arg_type           * ert_run_context_iens_get_arg( const ert_run_context_type * context , int iens);
-  void                     ert_run_context_deactivate_realization( ert_run_context_type * context , int iens);
-  const char             * ert_run_context_get_id( const ert_run_context_type * context );
-  init_mode_type           ert_run_context_get_init_mode( const ert_run_context_type * context );
-  char                   * ert_run_context_alloc_run_id( );
+void ert_run_context_free(ert_run_context_type *);
+int ert_run_context_get_size(const ert_run_context_type *context);
+run_mode_type ert_run_context_get_mode(const ert_run_context_type *context);
+bool_vector_type *
+ert_run_context_alloc_iactive(const ert_run_context_type *context);
+bool_vector_type const *
+ert_run_context_get_iactive(const ert_run_context_type *context);
+int ert_run_context_get_iter(const ert_run_context_type *context);
+int ert_run_context_get_active_size(const ert_run_context_type *context);
+int ert_run_context_get_step1(const ert_run_context_type *context);
+run_arg_type *ert_run_context_iget_arg(const ert_run_context_type *context,
+                                       int index);
+run_arg_type *ert_run_context_iens_get_arg(const ert_run_context_type *context,
+                                           int iens);
+void ert_run_context_deactivate_realization(ert_run_context_type *context,
+                                            int iens);
+const char *ert_run_context_get_id(const ert_run_context_type *context);
+init_mode_type
+ert_run_context_get_init_mode(const ert_run_context_type *context);
+char *ert_run_context_alloc_run_id();
 
-  enkf_fs_type * ert_run_context_get_sim_fs(const ert_run_context_type * run_context);
-  enkf_fs_type * ert_run_context_get_update_target_fs(const ert_run_context_type * run_context);
-  bool ert_run_context_iactive( const ert_run_context_type * context , int iens);
+enkf_fs_type *
+ert_run_context_get_sim_fs(const ert_run_context_type *run_context);
+enkf_fs_type *
+ert_run_context_get_update_target_fs(const ert_run_context_type *run_context);
+bool ert_run_context_iactive(const ert_run_context_type *context, int iens);
 
-  UTIL_IS_INSTANCE_HEADER( ert_run_context );
-
+UTIL_IS_INSTANCE_HEADER(ert_run_context);
 
 #ifdef __cplusplus
 }

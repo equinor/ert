@@ -23,14 +23,14 @@
 #include <ert/tooling.hpp>
 
 #ifdef __cplusplus
-extern"C" {
+extern "C" {
 #endif
 
 PY_USED int res_version_get_major_version();
 PY_USED int res_version_get_minor_version();
-PY_USED const char * res_version_get_micro_version();
-PY_USED const char * res_version_get_git_commit();
-PY_USED const char * res_version_get_build_time();
+PY_USED const char *res_version_get_micro_version();
+PY_USED const char *res_version_get_git_commit();
+PY_USED const char *res_version_get_build_time();
 PY_USED bool res_version_is_devel_version();
 
 #ifdef __cplusplus

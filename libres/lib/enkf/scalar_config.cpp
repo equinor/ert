@@ -28,60 +28,50 @@
 #define SCALAR_CONFIG_TYPE_ID 877065
 
 struct scalar_config_struct {
-  UTIL_TYPE_ID_DECLARATION;
-  int                data_size;
-  active_list_type * active_list;
+    UTIL_TYPE_ID_DECLARATION;
+    int data_size;
+    active_list_type *active_list;
 
-  trans_func_type ** transform;
+    trans_func_type **transform;
 };
 
+scalar_config_type *scalar_config_alloc_empty(int size) {
+    scalar_config_type *scalar_config =
+        (scalar_config_type *)util_malloc(sizeof *scalar_config);
+    UTIL_TYPE_ID_INIT(scalar_config, SCALAR_CONFIG_TYPE_ID);
+    scalar_config->data_size = size;
+    scalar_config->active_list = active_list_alloc();
 
-
-
-scalar_config_type * scalar_config_alloc_empty(int size) {
-  scalar_config_type * scalar_config = (scalar_config_type *)util_malloc(sizeof *scalar_config);
-  UTIL_TYPE_ID_INIT( scalar_config , SCALAR_CONFIG_TYPE_ID );
-  scalar_config->data_size             = size;
-  scalar_config->active_list           = active_list_alloc(  );
-
-  scalar_config->transform             = util_calloc(scalar_config->data_size ,  sizeof * scalar_config->transform  ); // CXX_CAST_ERROR
-  return scalar_config;
+    scalar_config->transform =
+        util_calloc(scalar_config->data_size,
+                    sizeof *scalar_config->transform); // CXX_CAST_ERROR
+    return scalar_config;
 }
 
-
-
-void scalar_config_transform(const scalar_config_type * config , const double * input_data , double *output_data) {
-  int index;
-  for (index = 0; index < config->data_size; index++)
-    output_data[index] = trans_func_eval( config->transform[index] , input_data[index] );
+void scalar_config_transform(const scalar_config_type *config,
+                             const double *input_data, double *output_data) {
+    int index;
+    for (index = 0; index < config->data_size; index++)
+        output_data[index] =
+            trans_func_eval(config->transform[index], input_data[index]);
 }
 
-
-
-
-
-
-void scalar_config_fscanf_line(scalar_config_type * config , int line_nr , FILE * stream) {
-  config->transform[line_nr] = trans_func_fscanf_alloc( stream );
+void scalar_config_fscanf_line(scalar_config_type *config, int line_nr,
+                               FILE *stream) {
+    config->transform[line_nr] = trans_func_fscanf_alloc(stream);
 }
 
+void scalar_config_free(scalar_config_type *scalar_config) {
+    int i;
+    active_list_free(scalar_config->active_list);
+    for (i = 0; i < scalar_config->data_size; i++)
+        trans_func_free(scalar_config->transform[i]);
 
-
-void scalar_config_free(scalar_config_type * scalar_config) {
-  int i;
-  active_list_free(scalar_config->active_list);
-  for (i=0; i < scalar_config->data_size; i++)
-    trans_func_free( scalar_config->transform[i] );
-
-  free( scalar_config->transform );
-  free(scalar_config);
+    free(scalar_config->transform);
+    free(scalar_config);
 }
 
-
-
-/*****************************************************************/
-
-SAFE_CAST(scalar_config , SCALAR_CONFIG_TYPE_ID)
+SAFE_CAST(scalar_config, SCALAR_CONFIG_TYPE_ID)
 GET_DATA_SIZE(scalar);
 GET_ACTIVE_LIST(scalar);
 VOID_FREE(scalar_config);

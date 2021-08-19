@@ -29,26 +29,21 @@
 extern "C" {
 #endif
 
-void ies_enkf_init_update(void * arg ,
-                          const bool_vector_type * ens_mask ,
-                          const bool_vector_type * obs_mask ,
-                          const matrix_type * S ,
-                          const matrix_type * R ,
-                          const matrix_type * dObs ,
-                          const matrix_type * E ,
-                          const matrix_type * D,
-                          rng_type * rng);
+void ies_enkf_init_update(void *arg, const bool_vector_type *ens_mask,
+                          const bool_vector_type *obs_mask,
+                          const matrix_type *S, const matrix_type *R,
+                          const matrix_type *dObs, const matrix_type *E,
+                          const matrix_type *D, rng_type *rng);
 
-
-void ies_enkf_updateA( void * module_data,
-                       matrix_type * A ,      // Updated ensemble A retured to ERT.
-                       matrix_type * Yin ,    // Ensemble of predicted measurements
-                       matrix_type * Rin ,    // Measurement error covariance matrix (not used)
-                       matrix_type * dObs ,   // Actual observations (not used)
-                       matrix_type * Ein ,    // Ensemble of observation perturbations
-                       matrix_type * Din ,    // (d+E-Y) Ensemble of perturbed observations - Y
-                       const module_info_type * module_info,
-                       rng_type * rng);
+void ies_enkf_updateA(
+    void *module_data,
+    matrix_type *A,    // Updated ensemble A retured to ERT.
+    matrix_type *Yin,  // Ensemble of predicted measurements
+    matrix_type *Rin,  // Measurement error covariance matrix (not used)
+    matrix_type *dObs, // Actual observations (not used)
+    matrix_type *Ein,  // Ensemble of observation perturbations
+    matrix_type *Din,  // (d+E-Y) Ensemble of perturbed observations - Y
+    const module_info_type *module_info, rng_type *rng);
 
 #ifdef __cplusplus
 }

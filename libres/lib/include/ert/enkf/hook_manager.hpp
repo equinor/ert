@@ -29,31 +29,35 @@ extern "C" {
 #include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/runpath_list.hpp>
 
-  typedef struct hook_manager_struct hook_manager_type;
+typedef struct hook_manager_struct hook_manager_type;
 
-  hook_manager_type   * hook_manager_alloc_default(ert_workflow_list_type * workflow_list);
-  hook_manager_type   * hook_manager_alloc(ert_workflow_list_type *, const config_content_type *);
+hook_manager_type *
+hook_manager_alloc_default(ert_workflow_list_type *workflow_list);
+hook_manager_type *hook_manager_alloc(ert_workflow_list_type *,
+                                      const config_content_type *);
 
-  PY_USED hook_manager_type * hook_manager_alloc_full(
-          ert_workflow_list_type * workflow_list,
-          const char * runpath_list_file,
-          const char ** hook_workflow_names,
-          const char ** hook_workflow_run_modes,
-          int hook_workflow_count
-          );
+PY_USED hook_manager_type *hook_manager_alloc_full(
+    ert_workflow_list_type *workflow_list, const char *runpath_list_file,
+    const char **hook_workflow_names, const char **hook_workflow_run_modes,
+    int hook_workflow_count);
 
-  void                  hook_manager_free(hook_manager_type * hook_manager);
+void hook_manager_free(hook_manager_type *hook_manager);
 
-  void                  hook_manager_init(hook_manager_type * hook_manager, const config_content_type * config);
-  void                  hook_manager_add_config_items( config_parser_type * config );
+void hook_manager_init(hook_manager_type *hook_manager,
+                       const config_content_type *config);
+void hook_manager_add_config_items(config_parser_type *config);
 
-  runpath_list_type   * hook_manager_get_runpath_list(const hook_manager_type * hook_manager);
-  const char          * hook_manager_get_runpath_list_file(const hook_manager_type * hook_manager);
-  void                  hook_manager_run_workflows( const hook_manager_type * hook_manager , hook_run_mode_enum run_mode , void * self);
+runpath_list_type *
+hook_manager_get_runpath_list(const hook_manager_type *hook_manager);
+const char *
+hook_manager_get_runpath_list_file(const hook_manager_type *hook_manager);
+void hook_manager_run_workflows(const hook_manager_type *hook_manager,
+                                hook_run_mode_enum run_mode, void *self);
 
-  PY_USED const hook_workflow_type * hook_manager_iget_hook_workflow(const hook_manager_type * hook_manager, int index);
-  int                          hook_manager_get_size(const hook_manager_type * hook_manager);
-
+PY_USED const hook_workflow_type *
+hook_manager_iget_hook_workflow(const hook_manager_type *hook_manager,
+                                int index);
+int hook_manager_get_size(const hook_manager_type *hook_manager);
 
 #ifdef __cplusplus
 }

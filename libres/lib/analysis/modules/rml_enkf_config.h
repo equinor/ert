@@ -23,40 +23,44 @@
 extern "C" {
 #endif
 
-
 typedef struct rml_enkf_config_struct rml_enkf_config_type;
 
+rml_enkf_config_type *rml_enkf_config_alloc();
+void rml_enkf_config_free(rml_enkf_config_type *config);
 
-  rml_enkf_config_type * rml_enkf_config_alloc();
-  void                        rml_enkf_config_free(rml_enkf_config_type * config);
+int rml_enkf_config_get_subspace_dimension(rml_enkf_config_type *config);
+void rml_enkf_config_set_subspace_dimension(rml_enkf_config_type *config,
+                                            int subspace_dimension);
 
-  int    rml_enkf_config_get_subspace_dimension( rml_enkf_config_type * config );
-  void   rml_enkf_config_set_subspace_dimension( rml_enkf_config_type * config , int subspace_dimension);
+double rml_enkf_config_get_truncation(rml_enkf_config_type *config);
+void rml_enkf_config_set_truncation(rml_enkf_config_type *config,
+                                    double truncation);
 
-  double rml_enkf_config_get_truncation( rml_enkf_config_type * config );
-  void   rml_enkf_config_set_truncation( rml_enkf_config_type * config , double truncation);
+bool rml_enkf_config_get_use_prior(const rml_enkf_config_type *config);
+void rml_enkf_config_set_use_prior(rml_enkf_config_type *config,
+                                   bool use_prior);
 
-  bool   rml_enkf_config_get_use_prior( const rml_enkf_config_type * config );
-  void   rml_enkf_config_set_use_prior( rml_enkf_config_type * config , bool use_prior);
+void rml_enkf_config_set_option_flags(rml_enkf_config_type *config, long flags);
+long rml_enkf_config_get_option_flags(const rml_enkf_config_type *config);
 
-  void rml_enkf_config_set_option_flags( rml_enkf_config_type * config , long flags);
-  long rml_enkf_config_get_option_flags( const rml_enkf_config_type * config );
+double rml_enkf_config_get_lambda0(rml_enkf_config_type *config);
+void rml_enkf_config_set_lambda0(rml_enkf_config_type *config, double lambda0);
 
-  double rml_enkf_config_get_lambda0( rml_enkf_config_type * config );
-  void   rml_enkf_config_set_lambda0( rml_enkf_config_type * config , double lambda0);
+double rml_enkf_config_get_lambda_min(rml_enkf_config_type *config);
+void rml_enkf_config_set_lambda_min(rml_enkf_config_type *config,
+                                    double lambda_min);
 
-  double rml_enkf_config_get_lambda_min( rml_enkf_config_type * config );
-  void   rml_enkf_config_set_lambda_min( rml_enkf_config_type * config , double lambda_min);
+double rml_enkf_config_get_lambda_increase_factor(rml_enkf_config_type *config);
+void rml_enkf_config_set_lambda_increase_factor(rml_enkf_config_type *config,
+                                                double lambda_increase_factor);
 
-  double rml_enkf_config_get_lambda_increase_factor( rml_enkf_config_type * config );
-  void   rml_enkf_config_set_lambda_increase_factor( rml_enkf_config_type * config , double lambda_increase_factor);
+double rml_enkf_config_get_lambda_decrease_factor(rml_enkf_config_type *config);
+void rml_enkf_config_set_lambda_decrease_factor(rml_enkf_config_type *config,
+                                                double lambda_decrease_factor);
 
-  double rml_enkf_config_get_lambda_decrease_factor( rml_enkf_config_type * config );
-  void   rml_enkf_config_set_lambda_decrease_factor( rml_enkf_config_type * config , double lambda_decrease_factor);
-
-  bool   rml_enkf_config_get_lambda_recalculate( const rml_enkf_config_type * config );
-  void   rml_enkf_config_set_lambda_recalculate( rml_enkf_config_type * config , bool lambda_recalculate);
-
+bool rml_enkf_config_get_lambda_recalculate(const rml_enkf_config_type *config);
+void rml_enkf_config_set_lambda_recalculate(rml_enkf_config_type *config,
+                                            bool lambda_recalculate);
 
 #ifdef __cplusplus
 }

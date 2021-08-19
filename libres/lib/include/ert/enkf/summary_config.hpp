@@ -19,7 +19,6 @@
 #ifndef ERT_SUMMARY_CONFIG_H
 #define ERT_SUMMARY_CONFIG_H
 
-
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -40,30 +39,35 @@ extern "C" {
   numerically largest value.
 */
 
+typedef enum {
+    LOAD_FAIL_SILENT =
+        0, // We just try to load - and if it is not there we do not care at all.
+    LOAD_FAIL_WARN =
+        2, // If the key can not be found we will print a warning on stdout - but the run will still be flagged as successfull.
+    LOAD_FAIL_EXIT = 4
+} // The data is deemed important - and we let the run fail if this data can not be found.
+load_fail_type;
 
-typedef enum { LOAD_FAIL_SILENT  = 0,     // We just try to load - and if it is not there we do not care at all.
-               LOAD_FAIL_WARN    = 2,     // If the key can not be found we will print a warning on stdout - but the run will still be flagged as successfull.
-               LOAD_FAIL_EXIT    = 4  }   // The data is deemed important - and we let the run fail if this data can not be found.
-  load_fail_type;
+typedef struct summary_config_struct summary_config_type;
+typedef struct summary_struct summary_type;
 
+void summary_config_update_load_fail_mode(summary_config_type *config,
+                                          load_fail_type load_fail);
+void summary_config_set_load_fail_mode(summary_config_type *config,
+                                       load_fail_type load_fail);
+load_fail_type
+summary_config_get_load_fail_mode(const summary_config_type *config);
+const char *summary_config_get_var(const summary_config_type *);
+summary_config_type *summary_config_alloc(const char *,
+                                          load_fail_type load_fail);
+void summary_config_free(summary_config_type *);
 
-
-  typedef struct summary_config_struct summary_config_type;
-  typedef struct summary_struct        summary_type;
-
-  void                   summary_config_update_load_fail_mode( summary_config_type * config , load_fail_type load_fail);
-  void                   summary_config_set_load_fail_mode( summary_config_type * config , load_fail_type load_fail);
-  load_fail_type         summary_config_get_load_fail_mode( const summary_config_type * config);
-  const           char * summary_config_get_var(const summary_config_type * );
-  summary_config_type  * summary_config_alloc(const char * ,  load_fail_type load_fail);
-  void                   summary_config_free(summary_config_type * );
-
-  UTIL_IS_INSTANCE_HEADER(summary_config);
-  UTIL_SAFE_CAST_HEADER(summary_config);
-  UTIL_SAFE_CAST_HEADER_CONST(summary_config);
-  GET_DATA_SIZE_HEADER(summary);
-  VOID_GET_DATA_SIZE_HEADER(summary);
-  VOID_CONFIG_FREE_HEADER(summary);
+UTIL_IS_INSTANCE_HEADER(summary_config);
+UTIL_SAFE_CAST_HEADER(summary_config);
+UTIL_SAFE_CAST_HEADER_CONST(summary_config);
+GET_DATA_SIZE_HEADER(summary);
+VOID_GET_DATA_SIZE_HEADER(summary);
+VOID_CONFIG_FREE_HEADER(summary);
 
 #ifdef __cplusplus
 }

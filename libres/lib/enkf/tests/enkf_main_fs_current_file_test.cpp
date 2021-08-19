@@ -16,7 +16,6 @@
    for more details.
 */
 
-
 #include <stdlib.h>
 
 #include <ert/util/test_util.h>
@@ -24,75 +23,74 @@
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_main.hpp>
 
-void test_current_file_not_present_symlink_present(const char * model_config) {
+void test_current_file_not_present_symlink_present(const char *model_config) {
     test_assert_true(util_file_exists("Storage/enkf"));
-    util_make_slink("enkf", "Storage/current" );
-    res_config_type * res_config = res_config_alloc_load(model_config);
-    enkf_main_type * enkf_main = enkf_main_alloc(res_config, false, false);
-    test_assert_true( enkf_main_case_is_current( enkf_main , "enkf"));
+    util_make_slink("enkf", "Storage/current");
+    res_config_type *res_config = res_config_alloc_load(model_config);
+    enkf_main_type *enkf_main = enkf_main_alloc(res_config, false, false);
+    test_assert_true(enkf_main_case_is_current(enkf_main, "enkf"));
     test_assert_false(util_file_exists("Storage/current"));
     test_assert_true(util_file_exists("Storage/current_case"));
-    char * current_case = enkf_main_read_alloc_current_case_name(enkf_main);
+    char *current_case = enkf_main_read_alloc_current_case_name(enkf_main);
     test_assert_string_equal(current_case, "enkf");
     free(current_case);
     enkf_main_free(enkf_main);
     res_config_free(res_config);
 }
 
-void test_current_file_present(const char * model_config) {
+void test_current_file_present(const char *model_config) {
     test_assert_true(util_file_exists("Storage/current_case"));
-    res_config_type * res_config = res_config_alloc_load(model_config);
-    enkf_main_type * enkf_main = enkf_main_alloc(res_config, false, false);
-    test_assert_true( enkf_main_case_is_current( enkf_main , "enkf"));
+    res_config_type *res_config = res_config_alloc_load(model_config);
+    enkf_main_type *enkf_main = enkf_main_alloc(res_config, false, false);
+    test_assert_true(enkf_main_case_is_current(enkf_main, "enkf"));
     test_assert_false(util_file_exists("Storage/current"));
-    char * current_case = enkf_main_read_alloc_current_case_name(enkf_main);
+    char *current_case = enkf_main_read_alloc_current_case_name(enkf_main);
     test_assert_string_equal(current_case, "enkf");
     free(current_case);
     enkf_main_free(enkf_main);
     res_config_free(res_config);
 }
 
-
-void test_change_case(const char * model_config) {
-    res_config_type * res_config = res_config_alloc_load(model_config);
-    enkf_main_type * enkf_main = enkf_main_alloc(res_config, false, false);
-    enkf_main_select_fs( enkf_main , "default");
-    test_assert_true( enkf_main_case_is_current( enkf_main , "default"));
-    test_assert_false( enkf_main_case_is_current(enkf_main , "enkf"));
+void test_change_case(const char *model_config) {
+    res_config_type *res_config = res_config_alloc_load(model_config);
+    enkf_main_type *enkf_main = enkf_main_alloc(res_config, false, false);
+    enkf_main_select_fs(enkf_main, "default");
+    test_assert_true(enkf_main_case_is_current(enkf_main, "default"));
+    test_assert_false(enkf_main_case_is_current(enkf_main, "enkf"));
     {
-      char * current_case = enkf_main_read_alloc_current_case_name(enkf_main);
-      test_assert_string_equal(current_case, "default");
-      free(current_case);
+        char *current_case = enkf_main_read_alloc_current_case_name(enkf_main);
+        test_assert_string_equal(current_case, "default");
+        free(current_case);
     }
 
-    enkf_main_select_fs( enkf_main , "enkf");
-    test_assert_true( enkf_main_case_is_current( enkf_main , "enkf"));
-    test_assert_false( enkf_main_case_is_current(enkf_main , "default"));
+    enkf_main_select_fs(enkf_main, "enkf");
+    test_assert_true(enkf_main_case_is_current(enkf_main, "enkf"));
+    test_assert_false(enkf_main_case_is_current(enkf_main, "default"));
     {
-      char * current_case = enkf_main_read_alloc_current_case_name(enkf_main);
-      test_assert_string_equal(current_case, "enkf");
-      free(current_case);
+        char *current_case = enkf_main_read_alloc_current_case_name(enkf_main);
+        test_assert_string_equal(current_case, "enkf");
+        free(current_case);
     }
 
-    enkf_fs_type * enkf_fs = enkf_main_mount_alt_fs( enkf_main , "default" , false  );
-    enkf_main_select_fs( enkf_main , "default");
-    test_assert_true( enkf_main_case_is_current( enkf_main , "default"));
-    enkf_fs_decref( enkf_fs );
+    enkf_fs_type *enkf_fs = enkf_main_mount_alt_fs(enkf_main, "default", false);
+    enkf_main_select_fs(enkf_main, "default");
+    test_assert_true(enkf_main_case_is_current(enkf_main, "default"));
+    enkf_fs_decref(enkf_fs);
     enkf_main_free(enkf_main);
     res_config_free(res_config);
 }
 
-int main(int argc, char ** argv) {
-  const char * config_file = argv[1];
-  ecl::util::TestArea ta("current_file");
-  char * model_config;
-  util_alloc_file_components( config_file , NULL , &model_config , NULL);
-  ta.copy_parent_content(config_file);
+int main(int argc, char **argv) {
+    const char *config_file = argv[1];
+    ecl::util::TestArea ta("current_file");
+    char *model_config;
+    util_alloc_file_components(config_file, NULL, &model_config, NULL);
+    ta.copy_parent_content(config_file);
 
-  test_current_file_not_present_symlink_present(model_config);
-  test_current_file_present(model_config);
-  test_change_case(model_config);
+    test_current_file_not_present_symlink_present(model_config);
+    test_current_file_present(model_config);
+    test_change_case(model_config);
 
-  free(model_config);
-  exit(0);
+    free(model_config);
+    exit(0);
 }

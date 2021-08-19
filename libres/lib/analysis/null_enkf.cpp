@@ -23,34 +23,15 @@
 #include <ert/analysis/analysis_module.hpp>
 #include <ert/analysis/analysis_table.hpp>
 
+void null_enkf_initX(void *module_data, matrix_type *X, const matrix_type *A,
+                     const matrix_type *S, const matrix_type *R,
+                     const matrix_type *dObs, const matrix_type *E,
+                     const matrix_type *D, rng_type *rng) {
 
-void null_enkf_initX(void * module_data ,
-                     matrix_type * X ,
-                     const matrix_type * A ,
-                     const matrix_type * S ,
-                     const matrix_type * R ,
-                     const matrix_type * dObs ,
-                     const matrix_type * E ,
-                     const matrix_type * D,
-                     rng_type * rng) {
-
-  matrix_diag_set_scalar( X , 1.0 );
-
+    matrix_diag_set_scalar(X, 1.0);
 }
 
-
-long null_enkf_get_options( void * arg , long flag ) {
-  return 0L;
-}
-
-
-
-/**
-   gcc -fpic -c <object_file> -I??  <src_file>
-   gcc -shared -o <lib_file> <object_files>
-*/
-
-
+long null_enkf_get_options(void *arg, long flag) { return 0L; }
 
 #ifdef INTERNAL_LINK
 #define LINK_NAME NULL_ENKF
@@ -58,27 +39,25 @@ long null_enkf_get_options( void * arg , long flag ) {
 #define LINK_NAME EXTERNAL_MODULE_SYMBOL
 #endif
 
-
-
 analysis_table_type LINK_NAME = {
-    .name            = "NULL_ENKF",
-    .updateA         = NULL,
-    .initX           = null_enkf_initX ,
-    .init_update     = NULL,
+    .name = "NULL_ENKF",
+    .updateA = NULL,
+    .initX = null_enkf_initX,
+    .init_update = NULL,
     .complete_update = NULL,
 
-    .freef           = NULL ,
-    .alloc           = NULL ,
+    .freef = NULL,
+    .alloc = NULL,
 
-    .set_int         = NULL ,
-    .set_double      = NULL ,
-    .set_bool        = NULL ,
-    .set_string      = NULL ,
-    .get_options     = null_enkf_get_options,
+    .set_int = NULL,
+    .set_double = NULL,
+    .set_bool = NULL,
+    .set_string = NULL,
+    .get_options = null_enkf_get_options,
 
-    .has_var         = NULL,
-    .get_int         = NULL,
-    .get_double      = NULL,
-    .get_bool        = NULL,
-    .get_ptr         = NULL,
+    .has_var = NULL,
+    .get_int = NULL,
+    .get_double = NULL,
+    .get_bool = NULL,
+    .get_ptr = NULL,
 };

@@ -24,18 +24,17 @@ extern "C" {
 #endif
 #include <ert/util/type_macros.h>
 
+typedef struct container_struct container_type;
 
-  typedef struct container_struct container_type;
+void container_add_node(container_type *container, void *child_node);
+const void *container_iget_node(const container_type *container, int index);
+int container_get_size(const container_type *container);
+void container_assert_size(const container_type *container);
 
-  void         container_add_node(container_type * container , void * child_node );
-  const void * container_iget_node(const container_type * container , int index);
-  int          container_get_size( const container_type * container );
-  void         container_assert_size( const container_type * container );
-
-  VOID_ALLOC_HEADER(container);
-  VOID_FREE_HEADER(container);
-  UTIL_IS_INSTANCE_HEADER(container);
-  UTIL_SAFE_CAST_HEADER_CONST(container);
+VOID_ALLOC_HEADER(container);
+VOID_FREE_HEADER(container);
+UTIL_IS_INSTANCE_HEADER(container);
+UTIL_SAFE_CAST_HEADER_CONST(container);
 
 #ifdef __cplusplus
 }

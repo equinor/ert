@@ -1,10 +1,5 @@
 #include <signal.h>
 
-void sigbus_handler(int signal) {
-  
-}
+void sigbus_handler(int signal) {}
 
-
-int main(int argc, char ** argv) {
-  signal(SIGBUS , sigbus_handler);
-}
+int main(int argc, char **argv) { signal(SIGBUS, sigbus_handler); }
