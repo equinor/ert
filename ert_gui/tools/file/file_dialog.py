@@ -1,12 +1,13 @@
-from qtpy.QtCore import QThread, Slot, Qt
+from qtpy.QtCore import QThread, Slot, Qt, QEvent
 from qtpy.QtWidgets import (
     QDialog,
     QMessageBox,
     QDialogButtonBox,
     QVBoxLayout,
     QPlainTextEdit,
+    QApplication,
 )
-from qtpy.QtGui import QTextOption, QTextCursor, QFont, QFontDatabase
+from qtpy.QtGui import QTextOption, QTextCursor, QClipboard, QFontDatabase
 
 from .file_update_worker import FileUpdateWorker
 
@@ -40,20 +41,14 @@ class FileDialog(QDialog):
         self._view = QPlainTextEdit()
         self._view.setReadOnly(True)
         self._view.setWordWrapMode(QTextOption.NoWrap)
+        # for moving the actual slider
+        self._view.verticalScrollBar().sliderMoved.connect(self._update_cursor)
+        # for mouse wheel and keyboard arrows
+        self._view.verticalScrollBar().valueChanged.connect(self._update_cursor)
 
-        # There isn't a standard way of getting the system default monospace
-        # font in Qt4 (it was introduced in Qt5.2). If QFontDatabase.FixedFont
-        # exists, then we can assume that this functionality exists and ask for
-        # the correct font directly. Otherwise we ask for a font that doesn't
-        # exist and specify our requirements. Qt then finds an existing font
-        # that best matches our parameters.
-        if hasattr(QFontDatabase, "systemFont") and hasattr(QFontDatabase, "FixedFont"):
-            font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
-        else:
-            font = QFont("")
-            font.setFixedPitch(True)
-            font.setStyleHint(QFont.Monospace)
-        self._view.setFont(font)
+        self._view.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+
+        self._follow_mode = False
 
         self._init_layout()
         self._init_thread()
@@ -66,16 +61,23 @@ class FileDialog(QDialog):
         self._thread.wait()
 
     def _init_layout(self):
-        self.setMinimumWidth(400)
-        self.setMinimumHeight(200)
+        self.setMinimumWidth(600)
+        self.setMinimumHeight(400)
 
         dialog_buttons = QDialogButtonBox(QDialogButtonBox.Ok)
         dialog_buttons.accepted.connect(self.accept)
 
-        self._follow = dialog_buttons.addButton("Follow", QDialogButtonBox.ActionRole)
-        self._follow.setCheckable(True)
-        self._follow.toggled.connect(self._enable_follow_mode)
-        self._enable_follow_mode(False)
+        self._copy_all_button = dialog_buttons.addButton(
+            "Copy All", QDialogButtonBox.ActionRole
+        )
+        self._copy_all_button.clicked.connect(self._copy_all)
+
+        self._follow_button = dialog_buttons.addButton(
+            "Follow", QDialogButtonBox.ActionRole
+        )
+        self._follow_button.setCheckable(True)
+        self._follow_button.toggled.connect(self._enable_follow_mode)
+        self._enable_follow_mode(self._follow_mode)
 
         layout = QVBoxLayout(self)
         layout.addWidget(self._view)
@@ -95,18 +97,36 @@ class FileDialog(QDialog):
 
         self._thread.start()
 
-    def _enable_follow_mode(self, b: bool) -> None:
-        if b:
-            self._view.moveCursor(QTextCursor.End)
-            self._view.setCenterOnScroll(False)
-            self._view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        else:
-            self._view.setCenterOnScroll(True)
-            self._view.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+    def _copy_all(self) -> None:
+        text = self._view.toPlainText()
+        QApplication.clipboard().setText(text, QClipboard.Clipboard)
+        pass
 
-    def _append_text(self, s: str) -> None:
-        # Save current selection before inserting text at the end
-        cursor = self._view.textCursor()
-        self._view.moveCursor(QTextCursor.End)
-        self._view.insertPlainText(s)
-        self._view.setTextCursor(cursor)
+    def _update_cursor(self, value: int) -> None:
+        if not self._view.textCursor().hasSelection():
+            block = self._view.document().findBlockByLineNumber(value)
+            cursor = QTextCursor(block)
+            self._view.setTextCursor(cursor)
+
+    def _enable_follow_mode(self, enable: bool) -> None:
+        if enable:
+            self._view.moveCursor(QTextCursor.End)
+            self._view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            self._view.verticalScrollBar().setDisabled(True)
+            self._view.setTextInteractionFlags(Qt.NoTextInteraction)
+            self._follow_mode = True
+        else:
+            self._view.verticalScrollBar().setDisabled(False)
+            self._view.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+            self._view.setTextInteractionFlags(
+                Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard
+            )
+            self._follow_mode = False
+
+    def _append_text(self, text: str) -> None:
+        # Remove trailing newline as appendPlainText adds this
+        if text[-1:] == "\n":
+            text = text[:-1]
+        if self._follow_mode:
+            self._view.moveCursor(QTextCursor.End)
+        self._view.appendPlainText(text)
