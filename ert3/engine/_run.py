@@ -66,7 +66,7 @@ def _get_experiment_record_indices(
         blob_record = guess != "application/json"
         if blob_record:
             return []
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             raw_collection = json.load(f)
         return list(set().union(*(d.keys() for d in raw_collection)))
 
@@ -308,7 +308,7 @@ def _store_sensitivity_analysis(
         pathlib.Path(workspace_root) / ert3.workspace.EXPERIMENTS_BASE / experiment_name
     )
 
-    with open(experiment_root / output_file, "w") as f:
+    with open(experiment_root / output_file, "w", encoding="utf-8") as f:
         json.dump(analysis, f)
 
 
