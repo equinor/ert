@@ -55,5 +55,5 @@ def export(workspace_root: Path, experiment_name: str) -> None:
     data = _prepare_export(
         workspace_root, experiment_name, parameter_names, response_names
     )
-    with open(experiment_root / "data.json", "w") as f:
+    with open(experiment_root / "data.json", "w", encoding="utf-8") as f:
         json.dump(data, f)

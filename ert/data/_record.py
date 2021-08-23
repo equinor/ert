@@ -401,7 +401,7 @@ def load_collection_from_file(
                 records=[BlobRecord(data=fb.read())] * ens_size,
             )
 
-    with open(file_path, "r") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         raw_ensrecord = json.load(f)
     return RecordCollection(
         records=[NumericalRecord(data=raw_record) for raw_record in raw_ensrecord]
