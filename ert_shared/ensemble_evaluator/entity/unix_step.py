@@ -80,7 +80,9 @@ class UnixTask(prefect.Task):
         for input_ in self._step.get_inputs():
             path_base = runpath / _BIN_FOLDER if input_.is_executable() else runpath
             futures.append(
-                transmitters[input_.get_name()].dump(path_base / input_.get_path())
+                transmitters[input_.get_name()].dump(
+                    path_base / input_.get_path(), input_.get_mime()
+                )
             )
         asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
         for input_ in self._step.get_inputs():

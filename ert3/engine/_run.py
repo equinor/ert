@@ -1,7 +1,6 @@
 import json
 import pathlib
 from typing import List, Dict, Set, Union, Any
-import mimetypes
 
 import ert
 import ert3
@@ -10,22 +9,31 @@ import ert3
 _SOURCE_SEPARATOR = "."
 
 
+# pylint: disable=too-many-arguments
 def _prepare_experiment(
     workspace_root: pathlib.Path,
     experiment_name: str,
     ensemble: ert3.config.EnsembleConfig,
+    stages_config: ert3.config.StagesConfig,
     ensemble_size: int,
     parameters_config: ert3.config.ParametersConfig,
 ) -> None:
     if ert3.workspace.experiment_has_run(workspace_root, experiment_name):
         raise ValueError(f"Experiment {experiment_name} have been carried out.")
 
+    step = stages_config.step_from_key(ensemble.forward_model.stage)
+    if not step:
+        raise ValueError(f"No step for key {ensemble.forward_model.stage}")
+
     parameters: Dict[str, List[str]] = {}
     for input_record in ensemble.input:
         record_name = input_record.record
         record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
+        record_mime = next(
+            input_.mime for input_ in step.input if input_.record == record_name
+        )
         parameters[record_name] = _get_experiment_record_indices(
-            workspace_root, record_source, parameters_config
+            workspace_root, record_source, record_mime, parameters_config
         )
     responses = [elem.record for elem in ensemble.output]
     ert.storage.init_experiment(
@@ -39,6 +47,7 @@ def _prepare_experiment(
 def _get_experiment_record_indices(
     workspace_root: pathlib.Path,
     record_source: List[str],
+    record_mime: str,
     parameters_config: ert3.config.ParametersConfig,
 ) -> List[str]:
     assert len(record_source) == 2
@@ -62,12 +71,13 @@ def _get_experiment_record_indices(
 
     elif source == "resources":
         file_path = workspace_root / "resources" / record_source[1]
-        guess = mimetypes.guess_type(str(file_path))[0]
-        blob_record = guess != "application/json"
+        blob_record = record_mime == "application/octet-stream"
         if blob_record:
             return []
         with open(file_path, "r", encoding="utf-8") as f:
-            raw_collection = json.load(f)
+            raw_collection = ert.serialization.get_serializer(
+                record_mime
+            ).decode_from_file(f)
         return list(set().union(*(d.keys() for d in raw_collection)))
 
     elif source == "stochastic":
@@ -87,6 +97,7 @@ def _get_experiment_record_indices(
 def _prepare_experiment_record(
     record_name: str,
     record_source: List[str],
+    record_mime: str,
     ensemble_size: int,
     experiment_name: str,
     workspace_root: pathlib.Path,
@@ -125,10 +136,8 @@ def _prepare_experiment_record(
         )
     elif record_source[0] == "resources":
         file_path = workspace_root / "resources" / record_source[1]
-        guess = mimetypes.guess_type(str(file_path))[0]
-        blob_record = guess != "application/json"
         record_coll = ert.data.load_collection_from_file(
-            file_path, blob_record, ensemble_size
+            file_path, record_mime, ensemble_size
         )
         ert.storage.add_ensemble_record(
             workspace=workspace_root,
@@ -154,6 +163,7 @@ def _prepare_evaluation(
     ensemble: ert3.config.EnsembleConfig,
     experiment_config: ert3.config.ExperimentConfig,
     parameters_config: ert3.config.ParametersConfig,
+    stages_config: ert3.config.StagesConfig,
     workspace_root: pathlib.Path,
     experiment_name: str,
 ) -> None:
@@ -161,16 +171,28 @@ def _prepare_evaluation(
     assert ensemble.size is not None
 
     _prepare_experiment(
-        workspace_root, experiment_name, ensemble, ensemble.size, parameters_config
+        workspace_root,
+        experiment_name,
+        ensemble,
+        stages_config,
+        ensemble.size,
+        parameters_config,
     )
+
+    step = stages_config.step_from_key(ensemble.forward_model.stage)
+    if not step:
+        raise ValueError(f"No step for key {ensemble.forward_model.stage}")
 
     for input_record in ensemble.input:
         record_name = input_record.record
         record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
-
+        record_mime = next(
+            input_.mime for input_ in step.input if input_.record == record_name
+        )
         _prepare_experiment_record(
             record_name,
             record_source,
+            record_mime,
             ensemble.size,
             experiment_name,
             workspace_root,
@@ -203,17 +225,25 @@ def _prepare_storage_records(
     ensemble_size: int,
     experiment_config: ert3.config.ExperimentConfig,
     parameters_config: ert3.config.ParametersConfig,
+    stages_config: ert3.config.StagesConfig,
     workspace_root: pathlib.Path,
     experiment_name: str,
 ) -> None:
+    step = stages_config.step_from_key(ensemble.forward_model.stage)
+    if not step:
+        raise ValueError(f"No step for key {ensemble.forward_model.stage}")
+
     for input_record in ensemble.input:
         record_name = input_record.record
         record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
-
+        record_mime = next(
+            input_.mime for input_ in step.input if input_.record == record_name
+        )
         if record_source[0] != "stochastic":
             _prepare_experiment_record(
                 record_name,
                 record_source,
+                record_mime,
                 ensemble_size,
                 experiment_name,
                 workspace_root,
@@ -253,6 +283,7 @@ def _prepare_sensitivity_records(
 
 def _prepare_sensitivity(
     ensemble: ert3.config.EnsembleConfig,
+    stages_config: ert3.config.StagesConfig,
     experiment_config: ert3.config.ExperimentConfig,
     parameters_config: ert3.config.ParametersConfig,
     workspace_root: pathlib.Path,
@@ -278,7 +309,12 @@ def _prepare_sensitivity(
     ensemble_size = len(sensitivity_input_records)
 
     _prepare_experiment(
-        workspace_root, experiment_name, ensemble, ensemble_size, parameters_config
+        workspace_root,
+        experiment_name,
+        ensemble,
+        stages_config,
+        ensemble_size,
+        parameters_config,
     )
 
     _prepare_storage_records(
@@ -286,6 +322,7 @@ def _prepare_sensitivity(
         ensemble_size,
         experiment_config,
         parameters_config,
+        stages_config,
         workspace_root,
         experiment_name,
     )
@@ -414,12 +451,14 @@ def run(
             ensemble,
             experiment_config,
             parameters_config,
+            stages_config,
             workspace_root,
             experiment_name,
         )
     elif experiment_config.type == "sensitivity":
         _prepare_sensitivity(
             ensemble,
+            stages_config,
             experiment_config,
             parameters_config,
             workspace_root,

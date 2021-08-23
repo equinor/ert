@@ -1,19 +1,24 @@
 import argparse
+import mimetypes
+import os
 import pathlib
 import shutil
 import sys
-import os
 import time
-from typing import Any, List, Union
 from pathlib import Path
+from typing import Any, List, Union
 
 import pkg_resources as pkg
 import yaml
-
-import ert3
 import ert
-
-from ert3.config import EnsembleConfig, StagesConfig, ExperimentConfig, ParametersConfig
+import ert3
+from ert3.config import (
+    DEFAULT_RECORD_MIME_TYPE,
+    EnsembleConfig,
+    ExperimentConfig,
+    ParametersConfig,
+    StagesConfig,
+)
 from ert_shared.storage.connection import get_info
 
 _ERT3_DESCRIPTION = (
@@ -55,7 +60,7 @@ def _build_record_argparser(subparsers: Any) -> None:
         dest="sub_record_cmd", help="ert3 record operations"
     )
     record_load_parser = sub_record_parsers.add_parser(
-        "load", help="Load JSON records from file"
+        "load", help="Load records from file"
     )
     record_load_parser.add_argument("record_name", help="Name of the resulting record")
     record_load_parser.add_argument(
@@ -67,6 +72,16 @@ def _build_record_argparser(subparsers: Any) -> None:
         "--blob-record",
         action="store_true",
         help="Indicate that the record is a blob",
+    )
+    record_load_parser.add_argument(
+        "--mime-type",
+        default="guess",
+        help="MIME type of file. If type is 'guess', a guess is made. If a "
+        + f"guess is unsuccessful, it defaults to {DEFAULT_RECORD_MIME_TYPE}. "
+        + "A provided value is ignored if --blob-record is passed, as it is "
+        + "then assumed that the type is 'application/octet-stream'. "
+        + "Default: guess.",
+        choices=tuple(("guess",) + ert.serialization.registered_types()),
     )
     sample_parser = sub_record_parsers.add_parser(
         "sample", help="Sample stochastic parameter into a record"
@@ -220,8 +235,34 @@ def _record(workspace: Path, args: Any) -> None:
             args.ensemble_size,
         )
     elif args.sub_record_cmd == "load":
+        if args.mime_type == "guess" and not args.blob_record:
+            guess = mimetypes.guess_type(str(args.record_file))[0]
+            if guess:
+                if ert.serialization.has_serializer(guess):
+                    record_mime = guess
+                else:
+                    print(
+                        f"Unsupported type '{guess}', defaulting to "
+                        + f"'{DEFAULT_RECORD_MIME_TYPE}'."
+                    )
+                    record_mime = DEFAULT_RECORD_MIME_TYPE
+            else:
+                print(
+                    f"Unable to guess what type '{args.record_file}' is, "
+                    + f"defaulting to '{DEFAULT_RECORD_MIME_TYPE}'."
+                )
+                record_mime = DEFAULT_RECORD_MIME_TYPE
+        else:
+            record_mime = args.mime_type
+
+        if args.blob_record:
+            record_mime = "application/octet-stream"
+
         ert3.engine.load_record(
-            workspace, args.record_name, args.record_file, args.blob_record
+            workspace,
+            args.record_name,
+            args.record_file,
+            record_mime,
         )
     else:
         raise NotImplementedError(

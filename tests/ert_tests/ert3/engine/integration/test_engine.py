@@ -436,7 +436,10 @@ def test_record_load_and_run(
 ):
 
     ert3.engine.load_record(
-        workspace, "designed_coefficients", designed_coeffs_record_file
+        workspace,
+        "designed_coefficients",
+        designed_coeffs_record_file,
+        "application/json",
     )
     designed_coeff = ert.storage.get_ensemble_record(
         workspace=workspace, record_name="designed_coefficients"
@@ -472,11 +475,17 @@ def test_record_load_twice(
     workspace, ensemble, stages_config, designed_coeffs_record_file
 ):
     ert3.engine.load_record(
-        workspace, "designed_coefficients", designed_coeffs_record_file
+        workspace,
+        "designed_coefficients",
+        designed_coeffs_record_file,
+        "application/json",
     )
     with pytest.raises(ert.exceptions.ElementExistsError):
         ert3.engine.load_record(
-            workspace, "designed_coefficients", designed_coeffs_record_file
+            workspace,
+            "designed_coefficients",
+            designed_coeffs_record_file,
+            "application/json",
         )
 
 
@@ -549,7 +558,9 @@ def test_partial_sensitivity_run_and_export(
 ):
     experiment_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "partial_sensitivity"
     experiment_dir.ensure(dir=True)
-    ert3.engine.load_record(workspace, "other_coefficients", oat_compatible_record_file)
+    ert3.engine.load_record(
+        workspace, "other_coefficients", oat_compatible_record_file, "application/json"
+    )
     ert3.engine.run(
         partial_sensitivity_ensemble,
         double_stages_config,
@@ -582,7 +593,10 @@ def test_incompatible_partial_sensitivity_run(
     experiment_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "partial_sensitivity"
     experiment_dir.ensure(dir=True)
     ert3.engine.load_record(
-        workspace, "other_coefficients", oat_incompatible_record_file
+        workspace,
+        "other_coefficients",
+        oat_incompatible_record_file,
+        "application/json",
     )
 
     err_msg = (
