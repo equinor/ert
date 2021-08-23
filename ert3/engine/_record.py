@@ -9,10 +9,10 @@ def load_record(
     workspace: Path,
     record_name: str,
     record_file: Path,
-    blob_record: bool = False,
+    record_mime: str,
 ) -> None:
 
-    record_coll = ert.data.load_collection_from_file(record_file, blob_record)
+    record_coll = ert.data.load_collection_from_file(record_file, record_mime)
 
     ert.storage.add_ensemble_record(
         workspace=workspace,

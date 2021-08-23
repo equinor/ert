@@ -164,6 +164,58 @@ def test_cli_record_load(designed_coeffs_record_file):
         ert3.console._console._main()
 
 
+@pytest.mark.requires_ert_storage
+def test_cli_record_load_supported_mime(designed_coeffs_record_file):
+    args = [
+        "ert3",
+        "record",
+        "load",
+        "--mime-type",
+        "application/json",
+        "designed_coefficients",
+        str(designed_coeffs_record_file),
+    ]
+    with patch.object(sys, "argv", args):
+        ert3.console._console._main()
+
+
+def test_cli_record_load_unsupported_mime(capsys):
+    args = [
+        "ert3",
+        "record",
+        "load",
+        "--mime-type",
+        "text/bar.baz",
+        "designed_coefficients",
+        "foo.bar.baz",
+    ]
+    with patch.object(sys, "argv", args):
+        with pytest.raises(
+            SystemExit,
+        ):
+            ert3.console._console._main()
+
+            captured = capsys.readouterr()
+            assert captured.out.strip().contains(
+                "error: argument --mime-type: invalid choice: 'text/bar.baz'"
+            )
+
+
+def test_cli_record_load_default_mime(designed_blob_record_file):
+    # Remove the .bin extension, forcing the load command to choose a default
+    path = pathlib.Path(str(designed_blob_record_file))
+    path.rename(path.stem)
+    args = [
+        "ert3",
+        "record",
+        "load",
+        "designed_coefficients",
+        str(path.stem),
+    ]
+    with patch.object(sys, "argv", args):
+        ert3.console._console._main()
+
+
 def _assert_done_or_pending(captured, experiments, done_indices):
     lines = [
         line.strip()

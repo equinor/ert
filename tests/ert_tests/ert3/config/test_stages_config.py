@@ -88,18 +88,18 @@ def test_check_loaded_mime_types(base_unix_stage_config):
 
     assert (
         config[0].transportable_commands[0].mime
-        == ert3.config._stages_config._DEFAULT_CMD_MIME_TYPE
+        == ert3.config._stages_config.DEFAULT_CMD_MIME_TYPE
     )
 
-    assert config[0].input[0].mime == ert3.config._stages_config._DEFAULT_CMD_MIME_TYPE
     assert (
-        config[0].input[1].mime == ert3.config._stages_config._DEFAULT_RECORD_MIME_TYPE
+        config[0].input[0].mime == ert3.config._stages_config.DEFAULT_RECORD_MIME_TYPE
     )
+    assert config[0].input[1].mime == "application/json"
 
-    assert config[0].output[0].mime == ert3.config._stages_config._DEFAULT_CMD_MIME_TYPE
     assert (
-        config[0].output[1].mime == ert3.config._stages_config._DEFAULT_RECORD_MIME_TYPE
+        config[0].output[0].mime == ert3.config._stages_config.DEFAULT_RECORD_MIME_TYPE
     )
+    assert config[0].output[1].mime == "application/json"
 
 
 def test_step_multi_cmd(base_unix_stage_config):

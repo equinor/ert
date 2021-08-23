@@ -21,6 +21,7 @@ from pydantic import (
     root_validator,
     validator,
 )
+from ert.serialization import get_serializer
 
 _copy = wrap(shutil.copy)
 
@@ -302,34 +303,30 @@ class RecordTransmitter:
     ) -> None:
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
-        if mime == "application/json":
-            async with aiofiles.open(str(file), mode="r") as f:
-                contents = await f.read()
-                num_record = NumericalRecord(data=json.loads(contents))
-            uri = await self._transmit_numerical_record(num_record)
-            self._set_transmitted_state(uri, num_record.record_type)
-        elif mime == "application/octet-stream":
-            async with aiofiles.open(str(file), mode="rb") as f:  # type: ignore
-                contents = await f.read()
-                blob_record = BlobRecord(data=contents)
+        if mime == "application/octet-stream":
+            async with aiofiles.open(str(file), mode="rb") as fb:
+                contents_b: bytes = await fb.read()
+                blob_record = BlobRecord(data=contents_b)
             uri = await self._transmit_blob_record(blob_record)
             self._set_transmitted_state(uri, blob_record.record_type)
         else:
-            raise NotImplementedError(
-                "cannot transmit file unless mime is application/json"
-                f" or application/octet-stream, was {mime}"
-            )
+            serializer = get_serializer(mime)
+            async with aiofiles.open(str(file), mode="rt", encoding="utf-8") as ft:
+                contents_t: str = await ft.read()
+                num_record = NumericalRecord(data=serializer.decode(contents_t))
+            uri = await self._transmit_numerical_record(num_record)
+            self._set_transmitted_state(uri, num_record.record_type)
 
-    async def dump(self, location: Path) -> None:
+    async def dump(self, location: Path, mime: str) -> None:
         if not self.is_transmitted():
             raise RuntimeError("cannot dump untransmitted record")
         record = await self.load()
         if isinstance(record, NumericalRecord):
-            async with aiofiles.open(str(location), mode="w") as f:
-                await f.write(json.dumps(record.data))
+            async with aiofiles.open(str(location), mode="wt", encoding="utf-8") as ft:
+                await ft.write(get_serializer(mime).encode(record.data))
         else:
-            async with aiofiles.open(str(location), mode="wb") as f:  # type: ignore
-                await f.write(record.data)  # type: ignore
+            async with aiofiles.open(str(location), mode="wb") as fb:
+                await fb.write(record.data)  # type: ignore
 
 
 class SharedDiskRecordTransmitter(RecordTransmitter):
@@ -342,7 +339,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
 
     async def _transmit_numerical_record(self, record: NumericalRecord) -> str:
         contents = json.dumps(record.data)
-        async with aiofiles.open(self._storage_uri, mode="w") as f:
+        async with aiofiles.open(self._storage_uri, mode="wt") as f:
             await f.write(contents)
         return str(self._storage_uri)
 
@@ -352,7 +349,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         return str(self._storage_uri)
 
     async def _load_numerical_record(self) -> NumericalRecord:
-        async with aiofiles.open(str(self._uri)) as f:
+        async with aiofiles.open(str(self._uri), mode="rt", encoding="utf-8") as f:
             contents = await f.read()
         if self._record_type == RecordType.MAPPING_INT_FLOAT:
             data = json.loads(contents, object_hook=parse_json_key_as_int)
@@ -365,7 +362,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
             data = await f.read()
         return BlobRecord(data=data)
 
-    async def dump(self, location: Path) -> None:
+    async def dump(self, location: Path, mime: str) -> None:
         if not self.is_transmitted():
             raise RuntimeError("cannot dump untransmitted record")
         await _copy(self._uri, str(location))
@@ -393,16 +390,16 @@ class InMemoryRecordTransmitter(RecordTransmitter):
 
 
 def load_collection_from_file(
-    file_path: pathlib.Path, blob_record: bool = False, ens_size: int = 1
+    file_path: pathlib.Path, mime: str, ens_size: int = 1
 ) -> RecordCollection:
-    if blob_record:
+    if mime == "application/octet-stream":
         with open(file_path, "rb") as fb:
             return RecordCollection(
                 records=[BlobRecord(data=fb.read())] * ens_size,
             )
 
-    with open(file_path, "r", encoding="utf-8") as f:
-        raw_ensrecord = json.load(f)
+    with open(file_path, "rt", encoding="utf-8") as f:
+        raw_ensrecord = get_serializer(mime).decode_from_file(f)
     return RecordCollection(
         records=[NumericalRecord(data=raw_record) for raw_record in raw_ensrecord]
     )

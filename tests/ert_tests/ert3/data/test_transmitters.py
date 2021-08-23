@@ -67,18 +67,50 @@ factory_params = pytest.mark.parametrize(
 )
 
 simple_records = pytest.mark.parametrize(
-    ("data_in", "expected_data", "application_type"),
+    ("data_in", "expected_data"),
     (
-        ([1, 2, 3], [1, 2, 3], "application/json"),
-        ((1.0, 10.0, 42.0, 999.0), [1.0, 10.0, 42.0, 999.0], "application/json"),
-        ([], [], "application/json"),
-        ([12.0], [12.0], "application/json"),
-        ({1, 2, 3}, [1, 2, 3], "application/json"),
-        ({"a": 0, "b": 1, "c": 2}, {"a": 0, "b": 1, "c": 2}, "application/json"),
-        ({0: 10, 100: 0}, {0: 10, 100: 0}, "application/json"),
-        (b"\x00", b"\x00", "application/octet-stream"),
-        (b"\xF0\x9F\xA6\x89", b"\xF0\x9F\xA6\x89", "application/octet-stream"),
+        (
+            [1, 2, 3],
+            [1, 2, 3],
+        ),
+        (
+            (1.0, 10.0, 42.0, 999.0),
+            [1.0, 10.0, 42.0, 999.0],
+        ),
+        (
+            [],
+            [],
+        ),
+        (
+            [12.0],
+            [12.0],
+        ),
+        (
+            {1, 2, 3},
+            [1, 2, 3],
+        ),
+        (
+            {"a": 0, "b": 1, "c": 2},
+            {"a": 0, "b": 1, "c": 2},
+        ),
+        (
+            {0: 10, 100: 0},
+            {0: 10, 100: 0},
+        ),
+        (
+            b"\x00",
+            b"\x00",
+        ),
+        (
+            b"\xF0\x9F\xA6\x89",
+            b"\xF0\x9F\xA6\x89",
+        ),
     ),
+)
+
+mime_types = pytest.mark.parametrize(
+    ("mime_type"),
+    tuple(("application/octet-stream",) + ert.serialization.registered_types()),
 )
 
 
@@ -91,7 +123,6 @@ async def test_simple_record_transmit(
     ],
     data_in,
     expected_data,
-    application_type,
     storage_path,
 ):
     with record_transmitter_factory_context(
@@ -107,30 +138,37 @@ async def test_simple_record_transmit(
 @pytest.mark.asyncio
 @simple_records
 @factory_params
+@mime_types
 async def test_simple_record_transmit_from_file(
     record_transmitter_factory_context: ContextManager[
         Callable[[str], RecordTransmitter]
     ],
     data_in,
     expected_data,
-    application_type,
+    mime_type,
     storage_path,
 ):
+    if isinstance(data_in, bytes) and mime_type != "application/octet-stream":
+        pytest.skip(f"unsupported serialization of opaque record to {mime_type}")
+    if not isinstance(data_in, bytes) and mime_type == "application/octet-stream":
+        pytest.skip(f"unsupported serialization of num record to {mime_type}")
     filename = "record.file"
     with record_transmitter_factory_context(
         storage_path=storage_path
     ) as record_transmitter_factory, tmp():
         transmitter = record_transmitter_factory(name="some_name")
-        if application_type == "application/json":
-            with open(filename, "w") as f:
-                json.dump(expected_data, f)
+        if mime_type == "application/octet-stream":
+            with open(filename, "wb") as fb:
+                fb.write(expected_data)
         else:
-            with open(filename, "wb") as f:
-                f.write(expected_data)
-        await transmitter.transmit_file(filename, mime=application_type)
+            with open(filename, "wt", encoding="utf-8") as ft:
+                ert.serialization.get_serializer(mime_type).encode_to_file(
+                    expected_data, ft
+                )
+        await transmitter.transmit_file(filename, mime=mime_type)
         assert transmitter.is_transmitted()
         with pytest.raises(RuntimeError, match="Record already transmitted"):
-            await transmitter.transmit_file(filename, mime=application_type)
+            await transmitter.transmit_file(filename, mime=mime_type)
 
 
 @pytest.mark.asyncio
@@ -142,7 +180,6 @@ async def test_simple_record_transmit_and_load(
     ],
     data_in,
     expected_data,
-    application_type,
     storage_path,
 ):
     with record_transmitter_factory_context(
@@ -158,28 +195,36 @@ async def test_simple_record_transmit_and_load(
 @pytest.mark.asyncio
 @simple_records
 @factory_params
+@mime_types
 async def test_simple_record_transmit_and_dump(
     record_transmitter_factory_context: ContextManager[
         Callable[[str], RecordTransmitter]
     ],
     data_in,
     expected_data,
-    application_type,
+    mime_type,
     storage_path,
 ):
+    if isinstance(data_in, bytes) and mime_type != "application/octet-stream":
+        pytest.skip(f"unsupported serialization of opaque record to {mime_type}")
+    if not isinstance(data_in, bytes) and mime_type == "application/octet-stream":
+        pytest.skip(f"unsupported serialization of num record to {mime_type}")
     with record_transmitter_factory_context(
         storage_path=storage_path
     ) as record_transmitter_factory, tmp():
         transmitter = record_transmitter_factory(name="some_name")
         await transmitter.transmit_data(data_in)
 
-        await transmitter.dump("record.json")
-        if application_type == "application/json":
-            with open("record.json") as f:
-                assert json.dumps(expected_data) == f.read()
-        else:
-            with open("record.json", "rb") as f:
+        await transmitter.dump("record", mime_type)
+        if mime_type == "application/octet-stream":
+            with open("record", "rb") as f:
                 assert expected_data == f.read()
+        else:
+            with open("record", "rt", encoding="utf-8") as f:
+                assert (
+                    ert.serialization.get_serializer(mime_type).encode(expected_data)
+                    == f.read()
+                )
 
 
 @pytest.mark.asyncio
@@ -191,7 +236,6 @@ async def test_simple_record_transmit_pickle_and_load(
     ],
     data_in,
     expected_data,
-    application_type,
     storage_path,
 ):
     with record_transmitter_factory_context(
@@ -233,4 +277,4 @@ async def test_dump_untransmitted_record(
     ) as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
         with pytest.raises(RuntimeError, match="cannot dump untransmitted record"):
-            await transmitter.dump("some.file")
+            await transmitter.dump("some.file", "text/whatever")

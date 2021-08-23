@@ -1,7 +1,13 @@
 from typing import Union
 
 from ert3.config._ensemble_config import load_ensemble_config, EnsembleConfig
-from ert3.config._stages_config import load_stages_config, StagesConfig, Function, Unix
+from ert3.config._stages_config import (
+    load_stages_config,
+    StagesConfig,
+    Function,
+    Unix,
+    DEFAULT_RECORD_MIME_TYPE,
+)
 from ert3.config._experiment_config import load_experiment_config, ExperimentConfig
 from ert3.config._parameters_config import load_parameters_config, ParametersConfig
 
@@ -19,4 +25,5 @@ __all__ = [
     "ExperimentConfig",
     "load_parameters_config",
     "ParametersConfig",
+    "DEFAULT_RECORD_MIME_TYPE",
 ]
