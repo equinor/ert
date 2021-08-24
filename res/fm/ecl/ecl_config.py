@@ -111,9 +111,7 @@ class EclConfig(object):
             version = version_arg
 
         if version is None:
-            # TODO: Do not raise Exception
-            # https://github.com/equinor/ert/issues/1955
-            raise Exception(
+            raise ValueError(
                 "The default version has not not been set in the config file:{}".format(
                     self._config_file
                 )
