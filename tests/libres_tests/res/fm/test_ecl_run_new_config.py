@@ -60,6 +60,14 @@ class EclRunTest(ResTest):
             f.write(yaml.dump(conf))
         self.monkeypatch.setenv("ECL100_SITE_CONFIG", "ecl100_config.yml")
 
+    def test_get_version_raise(self):
+        ecl_config = Ecl100Config()
+        class_file = inspect.getfile(Ecl100Config)
+        class_dir = os.path.dirname(os.path.abspath(class_file))
+        msg = os.path.join(class_dir, "ecl100_config.yml")
+        with pytest.raises(ValueError, match=msg):
+            ecl_config._get_version(None)
+
     @tmpdir()
     @mock.patch.dict(os.environ, {"LSB_JOBID": "some-id"})
     def test_env(self):
