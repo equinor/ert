@@ -27,6 +27,40 @@ Release Notes
  Miscellaneous:
    -
 
+Version 2.27
+------------
+
+Breaking changes:
+  - Notice that the bugfix related to HISTORY_OBSERVATION is expected to cause
+    changes in the numerical results for users of that feature.
+
+Bugfixes:
+  - Include last report step in HISTORY_OBSERVATION (`#1820 <https://github.com/equinor/ert/issues/1820>`_)
+
+New features:
+  - ert3: Add fast sensitivity algorithm (`#1941 <https://github.com/equinor/ert/issues/1941>`_)
+  - ert3: Support blob output records (`#1920 <https://github.com/equinor/ert/pull/1920>`_)
+
+Improvements:
+  - Fix misspelling of keyword LSF_RESOURCE in documentation (`#1242 <https://github.com/equinor/ert/issues/1242>`_)
+  - Improved on-premise integration testing (`#1936 <https://github.com/equinor/ert/pull/1936>`_, `#1938 <https://github.com/equinor/ert/pull/1938>`_)
+
+Dependencies:
+  - Loosen semeio requirement (`#1935 <https://github.com/equinor/ert/pull/1935>`_)
+
+Miscellaneous:
+  - Add encoding to open statements (`#1960 <https://github.com/equinor/ert/pull/1960>`_)
+  - Avoid handling bare exceptions (`#1891 <https://github.com/equinor/ert/issues/1891>`_)
+  - Remove commented code in logger (`#1956 <https://github.com/equinor/ert/pull/1956>`_)
+  - Refactor record implementation (
+    `#1875 <https://github.com/equinor/ert/issues/1875>`_,
+    `#1925 <https://github.com/equinor/ert/pull/1925>`_,
+    `#1929 <https://github.com/equinor/ert/pull/1929>`_,
+    `#1931 <https://github.com/equinor/ert/pull/1931>`_,
+    `#1933 <https://github.com/equinor/ert/pull/1933>`_
+    )
+  - Refactor storage abstraction (`#1942 <https://github.com/equinor/ert/pull/1942>`_, `#1945 <https://github.com/equinor/ert/pull/1945>`_)
+
 Version 2.26
 ------------
 
