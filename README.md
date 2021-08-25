@@ -18,6 +18,15 @@ reservoir models. ERT was originally devised as tool to do model updating
 (history matching) with the EnKF method, now the primary method for model
 updating is the Ensemble Smoother (ES).
 
+## Prerequisites
+
+The following is needed to run ert properly
+- libblas
+- lapack
+
+MacOS already ships with BLAS and LAPACK implementations in its [vecLib](https://developer.apple.com/documentation/accelerate/veclib) framework.
+
+## Installation
 
 ``` sh
 $ pip install ert
