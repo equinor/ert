@@ -1,6 +1,5 @@
 import os
-import sys
-from typing import Any, Callable, Type
+from typing import Any
 from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -12,11 +11,14 @@ ENV_RDBMS = "ERT_STORAGE_DATABASE_URL"
 ENV_BLOB = "ERT_STORAGE_AZURE_CONNECTION_STRING"
 ENV_BLOB_CONTAINER = "ERT_STORAGE_AZURE_BLOB_CONTAINER"
 
-if ENV_RDBMS not in os.environ:
-    sys.exit(f"Environment variable '{ENV_RDBMS}' not set")
+
+def get_env_rdbms() -> str:
+    if ENV_RDBMS not in os.environ:
+        raise EnvironmentError(f"Environment variable '{ENV_RDBMS}' not set")
+    return os.environ[ENV_RDBMS]
 
 
-URI_RDBMS = os.environ[ENV_RDBMS]
+URI_RDBMS = get_env_rdbms()
 IS_SQLITE = URI_RDBMS.startswith("sqlite")
 IS_POSTGRES = URI_RDBMS.startswith("postgres")
 HAS_AZURE_BLOB_STORAGE = ENV_BLOB in os.environ
