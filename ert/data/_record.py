@@ -1,4 +1,3 @@
-import json
 import pathlib
 import shutil
 import uuid
@@ -330,6 +329,8 @@ class RecordTransmitter:
 
 
 class SharedDiskRecordTransmitter(RecordTransmitter):
+    _INTERNAL_MIME_TYPE = "application/json"
+
     def __init__(self, name: str, storage_path: Path):
         super().__init__(RecordTransmitterType.shared_disk)
         self._storage_path = storage_path
@@ -338,8 +339,10 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         self._storage_uri = self._storage_path / self._concrete_key
 
     async def _transmit_numerical_record(self, record: NumericalRecord) -> str:
-        contents = json.dumps(record.data)
-        async with aiofiles.open(self._storage_uri, mode="wt") as f:
+        contents = get_serializer(
+            SharedDiskRecordTransmitter._INTERNAL_MIME_TYPE
+        ).encode(record.data)
+        async with aiofiles.open(self._storage_uri, mode="wt", encoding="utf-8") as f:
             await f.write(contents)
         return str(self._storage_uri)
 
@@ -351,10 +354,11 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
     async def _load_numerical_record(self) -> NumericalRecord:
         async with aiofiles.open(str(self._uri), mode="rt", encoding="utf-8") as f:
             contents = await f.read()
+        serializer = get_serializer(SharedDiskRecordTransmitter._INTERNAL_MIME_TYPE)
         if self._record_type == RecordType.MAPPING_INT_FLOAT:
-            data = json.loads(contents, object_hook=parse_json_key_as_int)
+            data = serializer.decode(contents, object_hook=parse_json_key_as_int)
         else:
-            data = json.loads(contents)
+            data = serializer.decode(contents)
         return NumericalRecord(data=data)
 
     async def _load_blob_record(self) -> BlobRecord:
@@ -365,7 +369,16 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
     async def dump(self, location: Path, mime: str) -> None:
         if not self.is_transmitted():
             raise RuntimeError("cannot dump untransmitted record")
-        await _copy(self._uri, str(location))
+        if (
+            self._record_type == RecordType.BYTES
+            or mime == SharedDiskRecordTransmitter._INTERNAL_MIME_TYPE
+        ):
+            await _copy(self._uri, str(location))
+        else:
+            record = await self._load_numerical_record()
+            contents = get_serializer(mime).encode(record.data)
+            async with aiofiles.open(location, mode="wt", encoding="utf-8") as f:
+                await f.write(contents)
 
 
 class InMemoryRecordTransmitter(RecordTransmitter):
