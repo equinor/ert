@@ -329,7 +329,7 @@ class RecordTransmitter:
 
 
 class SharedDiskRecordTransmitter(RecordTransmitter):
-    _INTERNAL_MIME_TYPE = "application/json"
+    _INTERNAL_MIME_TYPE = "application/x-yaml"
 
     def __init__(self, name: str, storage_path: Path):
         super().__init__(RecordTransmitterType.shared_disk)
@@ -355,10 +355,7 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         async with aiofiles.open(str(self._uri), mode="rt", encoding="utf-8") as f:
             contents = await f.read()
         serializer = get_serializer(SharedDiskRecordTransmitter._INTERNAL_MIME_TYPE)
-        if self._record_type == RecordType.MAPPING_INT_FLOAT:
-            data = serializer.decode(contents, object_hook=parse_json_key_as_int)
-        else:
-            data = serializer.decode(contents)
+        data = serializer.decode(contents)
         return NumericalRecord(data=data)
 
     async def _load_blob_record(self) -> BlobRecord:
