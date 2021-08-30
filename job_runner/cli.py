@@ -3,6 +3,7 @@ import os
 import signal
 import sys
 import json
+import typing
 
 import job_runner.reporting as reporting
 from job_runner.reporting.message import Finish
@@ -13,7 +14,7 @@ from job_runner import JOBS_FILE
 def _setup_reporters(
     is_interactive_run, ee_id, evaluator_url, ee_token=None, ee_cert_path=None
 ):
-    reporters = []
+    reporters: typing.List[reporting.Report] = []
     if is_interactive_run:
         reporters.append(reporting.Interactive())
     elif ee_id:

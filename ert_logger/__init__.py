@@ -1,4 +1,5 @@
-import os, pwd
+import os
+import pwd
 from typing import Any
 
 LOG_URL = "http://devnull.statoil.no:4444"
