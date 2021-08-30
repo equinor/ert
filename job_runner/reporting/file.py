@@ -14,11 +14,11 @@ from job_runner.reporting.message import (
     Running,
     Start,
 )
-from job_runner.reporting.misc import Report
+from job_runner.reporting.base import Reporter
 from job_runner.util import data as data_util
 
 
-class File(Report):
+class File(Reporter):
     LOG_file = "JOB_LOG"
     ERROR_file = "ERROR"
     STATUS_file = "STATUS"

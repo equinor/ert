@@ -249,16 +249,16 @@ def test_setup_reporters(is_interactive_run, ee_id):
     reporters = _setup_reporters(is_interactive_run, ee_id, "")
 
     if not is_interactive_run and not ee_id:
-        assert len(reporters) == 2
-        assert not any([isinstance(r, Event) for r in reporters])
+        assert len(reporters) == 1
+        assert not any(isinstance(r, Event) for r in reporters)
 
     if not is_interactive_run and ee_id:
-        assert len(reporters) == 3
-        assert any([isinstance(r, Event) for r in reporters])
+        assert len(reporters) == 2
+        assert any(isinstance(r, Event) for r in reporters)
 
     if is_interactive_run and ee_id:
         assert len(reporters) == 1
-        assert any([isinstance(r, Interactive) for r in reporters])
+        assert any(isinstance(r, Interactive) for r in reporters)
 
 
 @tmpdir(None)
