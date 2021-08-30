@@ -17,3 +17,5 @@ click
 scikit-build
 setuptools_scm
 pytest-snapshot
+isort
+pre-commit
