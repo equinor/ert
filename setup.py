@@ -84,6 +84,7 @@ setup(
         "ecl >= 2.11.0-rc0",
         "ert-storage",
         "fastapi",
+        "graphene",
         "graphlib_backport; python_version < '3.9'",
         "jinja2",
         "matplotlib",
