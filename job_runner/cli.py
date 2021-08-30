@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import signal
 import sys
@@ -6,9 +7,9 @@ import json
 import typing
 
 import job_runner.reporting as reporting
+from job_runner import JOBS_FILE
 from job_runner.reporting.message import Finish
 from job_runner.runner import JobRunner
-from job_runner import JOBS_FILE
 
 
 def _setup_reporters(
@@ -19,7 +20,6 @@ def _setup_reporters(
         reporters.append(reporting.Interactive())
     elif ee_id:
         reporters.append(reporting.File(sync_disc_timeout=0))
-        reporters.append(reporting.Network())
         reporters.append(
             reporting.Event(
                 evaluator_url=evaluator_url, token=ee_token, cert_path=ee_cert_path
@@ -27,7 +27,6 @@ def _setup_reporters(
         )
     else:
         reporters.append(reporting.File())
-        reporters.append(reporting.Network())
     return reporters
 
 

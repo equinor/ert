@@ -1,8 +1,8 @@
 from job_runner.reporting.message import Finish, Start
-from job_runner.reporting.misc import Report
+from job_runner.reporting.base import Reporter
 
 
-class Interactive(Report):
+class Interactive(Reporter):
     def report(self, msg):
         if isinstance(msg, Start):
             print("Running job: {} ... ".format(msg.job.name()))

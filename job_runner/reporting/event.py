@@ -5,7 +5,7 @@ from pathlib import Path
 from cloudevents.http import CloudEvent, to_json
 
 from job_runner.reporting.message import Exited, Finish, Init, Running, Start
-from job_runner.reporting.misc import Report
+from job_runner.reporting.base import Reporter
 from job_runner.util.client import Client
 
 _FM_JOB_START = "com.equinor.ert.forward_model_job.start"
@@ -18,7 +18,7 @@ class TransitionError(ValueError):
     pass
 
 
-class Event(Report):
+class Event(Reporter):
     def __init__(self, evaluator_url, token=None, cert_path=None):
         self._evaluator_url = evaluator_url
         self._token = token
