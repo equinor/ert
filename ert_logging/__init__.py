@@ -1,11 +1,11 @@
 import logging
 import logging.config
-import yaml
-import os
+import pathlib
 
-LOGGING_CONFIG = os.path.realpath(
-    os.path.join(os.path.dirname(__file__), "logger.conf")
-)
+import yaml
+
+LOGGING_CONFIG = pathlib.Path(__file__).parent.resolve() / "logger.conf"
+
 with open(LOGGING_CONFIG) as conf_file:
     logging.config.dictConfig(yaml.safe_load(conf_file))
 
