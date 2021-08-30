@@ -14,10 +14,11 @@ from job_runner.reporting.message import (
     Running,
     Start,
 )
+from job_runner.reporting.misc import Report
 from job_runner.util import data as data_util
 
 
-class File(object):
+class File(Report):
     LOG_file = "JOB_LOG"
     ERROR_file = "ERROR"
     STATUS_file = "STATUS"
@@ -83,10 +84,6 @@ class File(object):
                     msg.timestamp
                 )
                 self._dump_ok_file()
-            else:
-                # this has already been handled by earlier event
-                pass
-
         self._dump_status_json()
 
     def _delete_old_status_files(self):
@@ -116,11 +113,7 @@ class File(object):
         else:
             # There was no status code in the case of STARTUP_ERROR, so use
             # an arbitrary code less than -9.
-            if isinstance(msg, Start):
-                exit_code = -10
-            else:
-                exit_code = msg.exit_code
-
+            exit_code = -10 if isinstance(msg, Start) else msg.exit_code
             status = " EXIT: {}/{}".format(exit_code, msg.error_message)
         with open(self.STATUS_file, "a") as f:
             f.write("{:%H:%M:%S}  {}\n".format(msg.timestamp, status))
@@ -142,36 +135,35 @@ class File(object):
     # This file will be read by the job_queue_node_fscanf_EXIT() function
     # in job_queue.c. Be very careful with changes in output format.
     def _dump_error_file(self, job, error_msg):
-        fileH = open(self.ERROR_file, "a")
-        now = time.localtime()
-        fileH.write("<error>\n")
-        fileH.write(
-            "  <time>{:02d}:{:02d}:{:02d}</time>\n".format(
-                now.tm_hour, now.tm_min, now.tm_sec
+        with open(self.ERROR_file, "a") as fileH:
+            now = time.localtime()
+            fileH.write("<error>\n")
+            fileH.write(
+                "  <time>{:02d}:{:02d}:{:02d}</time>\n".format(
+                    now.tm_hour, now.tm_min, now.tm_sec
+                )
             )
-        )
-        fileH.write("  <job>{}</job>\n".format(job.name()))
-        fileH.write("  <reason>{}</reason>\n".format(error_msg))
-        stderr_file = None
-        if job.std_err:
-            if os.path.exists(job.std_err):
-                with open(job.std_err, "r") as errH:
-                    stderr = errH.read()
-                    if stderr:
-                        stderr_file = os.path.join(os.getcwd(), job.std_err)
-                    else:
-                        stderr = "<Not written by:{}>\n".format(job.name())
+            fileH.write("  <job>{}</job>\n".format(job.name()))
+            fileH.write("  <reason>{}</reason>\n".format(error_msg))
+            stderr_file = None
+            if job.std_err:
+                if os.path.exists(job.std_err):
+                    with open(job.std_err, "r") as errH:
+                        stderr = errH.read()
+                        if stderr:
+                            stderr_file = os.path.join(os.getcwd(), job.std_err)
+                        else:
+                            stderr = "<Not written by:{}>\n".format(job.name())
+                else:
+                    stderr = "<stderr: Could not find file:{}>\n".format(job.std_err)
             else:
-                stderr = "<stderr: Could not find file:{}>\n".format(job.std_err)
-        else:
-            stderr = "<stderr: Not redirected>\n"
+                stderr = "<stderr: Not redirected>\n"
 
-        fileH.write("  <stderr>\n{}</stderr>\n".format(stderr))
-        if stderr_file:
-            fileH.write("  <stderr_file>{}</stderr_file>\n".format(stderr_file))
+            fileH.write("  <stderr>\n{}</stderr>\n".format(stderr))
+            if stderr_file:
+                fileH.write("  <stderr_file>{}</stderr_file>\n".format(stderr_file))
 
-        fileH.write("</error>\n")
-        fileH.close()
+            fileH.write("</error>\n")
 
     def _dump_ok_file(self):
         now = time.localtime()
