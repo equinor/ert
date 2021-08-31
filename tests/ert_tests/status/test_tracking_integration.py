@@ -44,6 +44,7 @@ def check_expression(original, path_expression, expected, msg_start):
             "max_runtime_poly_example",
             [
                 ENSEMBLE_EXPERIMENT_MODE,
+                "--disable-ensemble-evaluator",
                 "--realizations",
                 "0,1",
                 "max_runtime_poly_example/poly.ert",
@@ -64,7 +65,6 @@ def check_expression(original, path_expression, expected, msg_start):
             "max_runtime_poly_example",
             [
                 ENSEMBLE_EXPERIMENT_MODE,
-                "--enable-ensemble-evaluator",
                 "--realizations",
                 "0,1",
                 "max_runtime_poly_example/poly.ert",
@@ -85,6 +85,7 @@ def check_expression(original, path_expression, expected, msg_start):
             "poly_example",
             [
                 ENSEMBLE_EXPERIMENT_MODE,
+                "--disable-ensemble-evaluator",
                 "--realizations",
                 "0,1",
                 "poly_example/poly.ert",
@@ -98,7 +99,6 @@ def check_expression(original, path_expression, expected, msg_start):
             "poly_example",
             [
                 ENSEMBLE_EXPERIMENT_MODE,
-                "--enable-ensemble-evaluator",
                 "--realizations",
                 "0,1",
                 "poly_example/poly.ert",
@@ -112,6 +112,7 @@ def check_expression(original, path_expression, expected, msg_start):
             "poly_example",
             [
                 ENSEMBLE_SMOOTHER_MODE,
+                "--disable-ensemble-evaluator",
                 "--target-case",
                 "poly_runpath_file",
                 "--realizations",
@@ -127,7 +128,6 @@ def check_expression(original, path_expression, expected, msg_start):
             "poly_example",
             [
                 ENSEMBLE_SMOOTHER_MODE,
-                "--disable-ensemble-evaluator",
                 "--target-case",
                 "poly_runpath_file",
                 "--realizations",
@@ -143,6 +143,7 @@ def check_expression(original, path_expression, expected, msg_start):
             "failing_poly_example",
             [
                 ENSEMBLE_SMOOTHER_MODE,
+                "--disable-ensemble-evaluator",
                 "--target-case",
                 "poly_runpath_file",
                 "--realizations",
@@ -162,7 +163,6 @@ def check_expression(original, path_expression, expected, msg_start):
             "failing_poly_example",
             [
                 ENSEMBLE_SMOOTHER_MODE,
-                "--enable-ensemble-evaluator",
                 "--target-case",
                 "poly_runpath_file",
                 "--realizations",
