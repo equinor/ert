@@ -126,3 +126,13 @@ def test_workflows_merge_duplicate(caplog):
         "Duplicate key: some_job in workflow hook implementations, config path 1: /a/path, config path 2: /a/path"
         in caplog.text
     )
+
+
+def test_add_logging_handle(tmpdir):
+    with tmpdir.as_cwd():
+        pm = ErtPluginManager(plugins=[dummy_plugins])
+        pm.add_logging_handles(logging)
+        logging.critical("I should write this to spam.log")
+        with open("spam.log") as fin:
+            result = fin.read()
+        assert "I should write this to spam.log" in result

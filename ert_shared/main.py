@@ -411,7 +411,8 @@ def main():
         logger.setLevel("DEBUG")
     FeatureToggling.update_from_args(args)
 
-    with start_ert_server(), ErtPluginContext():
+    with start_ert_server(), ErtPluginContext() as context:
+        context.plugin_manager.add_logging_handles(logging)
         args.func(args)
 
     clear_global_state()
