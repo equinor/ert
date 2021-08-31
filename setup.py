@@ -89,6 +89,7 @@ setup(
         "jinja2",
         "matplotlib",
         "numpy",
+        "packaging",
         "pandas",
         "pluggy",
         "prefect",

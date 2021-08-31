@@ -1,22 +1,23 @@
-import os.path
-import os
-import sys
-import re
-import time
 import datetime
+import os
+import os.path
+import re
 import socket
-from collections import namedtuple
 import subprocess
+import sys
+import time
+from collections import namedtuple
 from contextlib import contextmanager
+
+from packaging import version
+from res.util.subprocess import await_process_tee
+
+from .ecl_config import EclConfig
 
 try:
     from ecl.summary import EclSum
 except ImportError:
     from ert.ecl import EclSum
-
-from .ecl_config import EclConfig
-from res.util.subprocess import await_process_tee
-
 
 EclipseResult = namedtuple("EclipseResult", "errors bugs")
 body_sub_pattern = r"(\s^\s@.+$)*"
@@ -282,9 +283,22 @@ class EclRun(object):
                 self.base_name,
             ]
 
+    def _get_log_name(self, eclrun_config=None):
+        # Eclipse version >= 2019.3 should log to a .OUT file
+        # and not the legacy .LOG file.
+        eclipse_version = (
+            self.sim.version if eclrun_config is None else eclrun_config.version
+        )
+
+        return (
+            "{}.OUT".format(self.base_name)
+            if version.parse(eclipse_version) >= version.parse("2019.3")
+            else "{}.LOG".format(self.base_name)
+        )
+
     def execEclipse(self, eclrun_config=None):
         use_eclrun = eclrun_config is not None
-        log_name = "{}.LOG".format(self.base_name)
+        log_name = self._get_log_name(eclrun_config=eclrun_config)
 
         with pushd(self.run_path), open(log_name, "wb") as log_file:
             if not os.path.exists(self.data_file):
