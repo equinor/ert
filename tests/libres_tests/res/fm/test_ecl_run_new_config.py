@@ -106,10 +106,33 @@ with open("env.json", "w") as f:
         ecl_config = Ecl100Config()
 
         ecl_run = EclRun("SPE1.DATA", None)
-        ecl_run.runEclipse(eclrun_config=EclrunConfig(ecl_config, "2019.3"))
+        ecl_run.runEclipse(eclrun_config=EclrunConfig(ecl_config, "2019.1"))
 
         ok_path = os.path.join(ecl_run.runPath(), "{}.OK".format(ecl_run.baseName()))
         log_path = os.path.join(ecl_run.runPath(), "{}.LOG".format(ecl_run.baseName()))
+
+        self.assertTrue(os.path.isfile(ok_path))
+        self.assertTrue(os.path.isfile(log_path))
+        self.assertTrue(os.path.getsize(log_path) > 0)
+
+        errors = ecl_run.parseErrors()
+        self.assertEqual(0, len(errors))
+
+    @tmpdir()
+    @pytest.mark.equinor_test
+    def test_run_new_log_file(self):
+        self.init_eclrun_config()
+        shutil.copy(
+            os.path.join(self.TESTDATA_ROOT, "local/eclipse/SPE1.DATA"),
+            "SPE1.DATA",
+        )
+        ecl_config = Ecl100Config()
+
+        ecl_run = EclRun("SPE1.DATA", None)
+        ecl_run.runEclipse(eclrun_config=EclrunConfig(ecl_config, "2019.3"))
+
+        ok_path = os.path.join(ecl_run.runPath(), "{}.OK".format(ecl_run.baseName()))
+        log_path = os.path.join(ecl_run.runPath(), "{}.OUT".format(ecl_run.baseName()))
 
         self.assertTrue(os.path.isfile(ok_path))
         self.assertTrue(os.path.isfile(log_path))
@@ -193,8 +216,8 @@ with open("env.json", "w") as f:
         )
         ecl_config = Ecl100Config()
         run(ecl_config, ["SPE1_PARALLELL.DATA", "--version=2019.3", "--num-cpu=2"])
-        self.assertTrue(os.path.isfile("SPE1_PARALLELL.LOG"))
-        self.assertTrue(os.path.getsize("SPE1_PARALLELL.LOG") > 0)
+        self.assertTrue(os.path.isfile("SPE1_PARALLELL.OUT"))
+        self.assertTrue(os.path.getsize("SPE1_PARALLELL.OUT") > 0)
 
     @pytest.mark.equinor_test
     @tmpdir()

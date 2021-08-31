@@ -77,7 +77,22 @@ class EclRunTest(ResTest):
                             "PATH": "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044/bin64:$PATH",
                         },
                     },
-                }
+                },
+                "2019.3": {
+                    "scalar": {
+                        "executable": "/prog/res/ecl/grid/2019.3/bin/linux_x86_64/eclipse.exe"
+                    },
+                    "mpi": {
+                        "executable": "/prog/res/ecl/grid/2019.3/bin/linux_x86_64/eclipse_ilmpi.exe",
+                        "mpirun": "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044/bin64/mpirun",
+                        "env": {
+                            "I_MPI_ROOT": "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044",
+                            "P4_RSHCOMMAND": "ssh",
+                            "LD_LIBRARY_PATH": "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044/lib64:$LD_LIBRARY_PATH",
+                            "PATH": "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044/bin64:$PATH",
+                        },
+                    },
+                },
             },
         }
         with open("ecl100_config.yml", "w") as f:
@@ -370,6 +385,39 @@ class EclRunTest(ResTest):
 
         ok_path = os.path.join(ecl_run.runPath(), "{}.OK".format(ecl_run.baseName()))
         log_path = os.path.join(ecl_run.runPath(), "{}.LOG".format(ecl_run.baseName()))
+
+        self.assertTrue(os.path.isfile(ok_path))
+        self.assertTrue(os.path.isfile(log_path))
+        self.assertTrue(os.path.getsize(log_path) > 0)
+
+        errors = ecl_run.parseErrors()
+        self.assertEqual(0, len(errors))
+
+        # Monkey patching the ecl_run to use an executable which
+        # will fail with exit(1); don't think Eclipse actually
+        # fails with exit(1) - but let us at least be prepared
+        # when/if it does.
+        ecl_run.sim.executable = os.path.join(
+            self.SOURCE_ROOT, "tests/libres_tests/res/fm/ecl_run_fail"
+        )
+        with self.assertRaises(Exception):
+            ecl_run.runEclipse()
+
+    @tmpdir()
+    @pytest.mark.equinor_test
+    def test_run_new_log_file(self):
+        self.init_ecl100_config()
+        shutil.copy(
+            os.path.join(self.TESTDATA_ROOT, "local/eclipse/SPE1.DATA"),
+            "SPE1.DATA",
+        )
+        ecl_config = Ecl100Config()
+        sim = ecl_config.sim("2019.3")
+        ecl_run = EclRun("SPE1.DATA", sim)
+        ecl_run.runEclipse()
+
+        ok_path = os.path.join(ecl_run.runPath(), "{}.OK".format(ecl_run.baseName()))
+        log_path = os.path.join(ecl_run.runPath(), "{}.OUT".format(ecl_run.baseName()))
 
         self.assertTrue(os.path.isfile(ok_path))
         self.assertTrue(os.path.isfile(log_path))
