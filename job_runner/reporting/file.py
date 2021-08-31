@@ -17,6 +17,8 @@ from job_runner.reporting.message import (
 from job_runner.reporting.base import Reporter
 from job_runner.util import data as data_util
 
+TIME_FORMAT = "%H:%M:%S"
+
 
 class File(Reporter):
     LOG_file = "JOB_LOG"
@@ -105,73 +107,58 @@ class File(Reporter):
 
     def _start_status_file(self, msg):
         with open(self.STATUS_file, "a") as f:
-            f.write("{:32}: {:%H:%M:%S} .... ".format(msg.job.name(), msg.timestamp))
+            f.write(f"{msg.job.name():32}: {msg.timestamp.strftime(TIME_FORMAT)} .... ")
 
     def _complete_status_file(self, msg):
-        if msg.success():
-            status = ""
-        else:
+        status: str = ""
+        if not msg.success():
             # There was no status code in the case of STARTUP_ERROR, so use
             # an arbitrary code less than -9.
             exit_code = -10 if isinstance(msg, Start) else msg.exit_code
-            status = " EXIT: {}/{}".format(exit_code, msg.error_message)
+            status = f" EXIT: {exit_code}/{msg.error_message}"
         with open(self.STATUS_file, "a") as f:
-            f.write("{:%H:%M:%S}  {}\n".format(msg.timestamp, status))
+            f.write(f"{msg.timestamp.strftime(TIME_FORMAT)}  {status}\n")
 
     def _add_log_line(self, job):
-        now = time.localtime()
         with open(self.LOG_file, "a") as f:
             args = " ".join(job.job_data["argList"])
-            f.write(
-                "{:02d}:{:02d}:{:02d}  Calling: {} {}\n".format(
-                    now.tm_hour,
-                    now.tm_min,
-                    now.tm_sec,
-                    job.job_data["executable"],
-                    args,
-                )
-            )
+            time_str = time.strftime(TIME_FORMAT, time.localtime())
+            f.write(f"{time_str}  Calling: {job.job_data['executable']} {args}\n")
 
     # This file will be read by the job_queue_node_fscanf_EXIT() function
     # in job_queue.c. Be very careful with changes in output format.
     def _dump_error_file(self, job, error_msg):
-        with open(self.ERROR_file, "a") as fileH:
-            now = time.localtime()
-            fileH.write("<error>\n")
-            fileH.write(
-                "  <time>{:02d}:{:02d}:{:02d}</time>\n".format(
-                    now.tm_hour, now.tm_min, now.tm_sec
-                )
+        with open(self.ERROR_file, "a") as file:
+            file.write("<error>\n")
+            file.write(
+                f"  <time>{time.strftime(TIME_FORMAT, time.localtime())}</time>\n"
             )
-            fileH.write("  <job>{}</job>\n".format(job.name()))
-            fileH.write("  <reason>{}</reason>\n".format(error_msg))
+            file.write(f"  <job>{job.name()}</job>\n")
+            file.write(f"  <reason>{error_msg}</reason>\n")
             stderr_file = None
             if job.std_err:
                 if os.path.exists(job.std_err):
-                    with open(job.std_err, "r") as errH:
-                        stderr = errH.read()
+                    with open(job.std_err, "r") as error_file_handler:
+                        stderr = error_file_handler.read()
                         if stderr:
                             stderr_file = os.path.join(os.getcwd(), job.std_err)
                         else:
-                            stderr = "<Not written by:{}>\n".format(job.name())
+                            stderr = f"<Not written by:{job.name()}>\n"
                 else:
-                    stderr = "<stderr: Could not find file:{}>\n".format(job.std_err)
+                    stderr = f"<stderr: Could not find file:{job.std_err}>\n"
             else:
                 stderr = "<stderr: Not redirected>\n"
 
-            fileH.write("  <stderr>\n{}</stderr>\n".format(stderr))
+            file.write(f"  <stderr>\n{stderr}</stderr>\n")
             if stderr_file:
-                fileH.write("  <stderr_file>{}</stderr_file>\n".format(stderr_file))
+                file.write(f"  <stderr_file>{stderr_file}</stderr_file>\n")
 
-            fileH.write("</error>\n")
+            file.write("</error>\n")
 
     def _dump_ok_file(self):
-        now = time.localtime()
         with open(self.OK_file, "w") as f:
             f.write(
-                "All jobs complete {:02d}:{:02d}:{:02d} \n".format(
-                    now.tm_hour, now.tm_min, now.tm_sec
-                )
+                f"All jobs complete {time.strftime(TIME_FORMAT, time.localtime())} \n"
             )
         time.sleep(self._sync_disc_timeout)  # Let the disks sync up
 
