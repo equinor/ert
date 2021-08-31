@@ -83,3 +83,15 @@ class ExamplePlugin:
 @plugin_response(plugin_name="dummy")
 def register_visualization_plugin(handler):
     handler.add_plugin(ExamplePlugin)
+
+
+@hook_implementation
+def add_log_handle(logging):
+    logger = logging.getLogger()
+    fh = logging.FileHandler("spam.log")
+    fh.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)

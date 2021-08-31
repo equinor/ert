@@ -196,3 +196,23 @@ To start the visualization plugin from the command-line simply run:
     :undoc-members:
 
 A full example can be found here: `Webviz-ERT <https://github.com/equinor/webviz-ert>`_
+
+
+Logging Configuration
+~~~~~~~~~~~~~~~~~~~~~
+The logging can be configured by plugins to add custom log handlers
+
+Minimal example to log to a new file:
+
+.. code-block:: python
+
+
+   from ert_shared.plugins.plugin_manager import hook_implementation
+
+    @hook_implementation
+    def add_log_handle(logging):
+        logger = logging.getLogger()  # add to root logger
+        fh = logging.FileHandler('spam.log')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
