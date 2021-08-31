@@ -7,9 +7,6 @@ from ert_shared.models import (
     IteratedEnsembleSmoother,
     MultipleDataAssimilation,
 )
-import inspect
-
-from unittest.mock import MagicMock, call
 from res.enkf.enums import HookRuntime
 
 EXPECTED_CALL_ORDER = [
@@ -54,6 +51,7 @@ def test_hook_call_order_es_mda(monkeypatch):
         "start_iteration": 0,
         "weights": [1],
         "analysis_module": "some_module",
+        "ee_config": EvaluatorServerConfig(),
     }
     mock_sim_runner = MagicMock()
     mock_parent = MagicMock()
@@ -71,9 +69,7 @@ def test_hook_call_order_es_mda(monkeypatch):
     test_class.setAnalysisModule = MagicMock()
     test_class.ert = MagicMock()
 
-    sim_runner_mock = MagicMock()
-    sim_runner_mock.runSimpleStep.return_value = 1
-    test_class.ert.return_value.getEnkfSimulationRunner = sim_runner_mock
+    test_class.run_ensemble_evaluator = MagicMock(return_value=1)
 
     test_class.runSimulations(minimum_args)
 
@@ -112,9 +108,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     analysis_config.getAnalysisIterConfig.return_value.getNumRetries.return_value = 1
     test_class.ert.return_value.analysisConfig.return_value = analysis_config
 
-    simple_step_mock = MagicMock()
-    simple_step_mock.runSimpleStep.return_value = 1
-    test_class.ert.return_value.getEnkfSimulationRunner.return_value = simple_step_mock
+    test_class.run_ensemble_evaluator = MagicMock(return_value=1)
 
     test_class.setAnalysisModule = MagicMock()
     test_class.setAnalysisModule.return_value.getInt.return_value = 1
