@@ -6,6 +6,7 @@ from ert_storage.exceptions import ErtStorageError
 
 from ert_shared.version import version as _version
 from ert_shared.dark_storage.endpoints import router as endpoints_router
+from ert_shared.dark_storage.graphql import router as graphql_router
 
 
 app = FastAPI(
@@ -72,3 +73,4 @@ async def healthcheck() -> str:
 
 
 app.include_router(endpoints_router)
+app.include_router(graphql_router)
