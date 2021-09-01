@@ -1,12 +1,10 @@
-import time
-import sys
-from res.config import ConfigError
-from cwrap import BaseCClass
-from res import ResPrototype
-from res.job_queue import WorkflowJoblist, WorkflowJob
-from res.util.substitution_list import SubstitutionList
 import os
-from ert_logger import log_message
+import sys
+import time
+
+from cwrap import BaseCClass  # pylint: disable=import-error
+
+from res import ResPrototype
 
 
 class Workflow(BaseCClass):
@@ -27,7 +25,7 @@ class Workflow(BaseCClass):
         @type job_list: WorkflowJoblist
         """
         c_ptr = self._alloc(src_file, job_list)
-        super(Workflow, self).__init__(c_ptr)
+        super(Workflow, self).__init__(c_ptr)  # pylint: disable=super-with-arguments
 
         self.__running = False
         self.__cancelled = False
@@ -54,15 +52,6 @@ class Workflow(BaseCClass):
     def src_file(self):
         return self._get_src_file()
 
-    @staticmethod
-    def _log_workflow_job_usage(job_name):
-        payload = {
-            "subsystem": "ert_workflow",
-            "ert_job": job_name,
-            "cwd": os.getcwd(),
-        }
-        log_message(payload)
-
     def run(self, ert, verbose=False, context=None):
         """
         @type ert: res.enkf.enkf_main.EnKFMain
@@ -87,8 +76,6 @@ class Workflow(BaseCClass):
         for job, args in self:
             self.__current_job = job
             if not self.__cancelled:
-                self._log_workflow_job_usage(job.name())
-
                 return_value = job.run(ert, args, verbose)
                 self.__status[job.name()] = {
                     "stdout": job.stdoutdata(),
