@@ -11,7 +11,7 @@ import requests
 from pydantic import BaseModel
 
 import ert
-from ert_shared.storage.connection import get_info
+from ert_shared.services import Storage
 
 logger = logging.getLogger(__name__)
 read_csv = partial(pd.read_csv, index_col=0, float_precision="round_trip")
@@ -38,29 +38,6 @@ class _NumericalMetaData(BaseModel):
 
     ensemble_size: int
     record_type: ert.data.RecordType
-
-
-class StorageInfo:
-    _url: Optional[str] = None
-    _token: Optional[str] = None
-
-    @classmethod
-    def _set_info(cls) -> None:
-        info = get_info()
-        cls._url = info["baseurl"]
-        cls._token = info["auth"][1]
-
-    @classmethod
-    def url(cls) -> str:
-        if StorageInfo._url is None:
-            cls._set_info()
-        return str(StorageInfo._url)
-
-    @classmethod
-    def token(cls) -> str:
-        if StorageInfo._token is None:
-            cls._set_info()
-        return str(StorageInfo._token)
 
 
 class StorageRecordTransmitter(ert.data.RecordTransmitter):
@@ -172,7 +149,8 @@ async def get_record_storage_transmitters(
 
 
 def _get(url: str, headers: Dict[str, Any]) -> requests.Response:
-    return requests.get(url, headers=headers)
+    with Storage.session() as session:
+        return session.get(url, headers=headers)
 
 
 async def _get_from_server_async(
@@ -201,14 +179,17 @@ async def _get_from_server_async(
 
 
 def _post(url: str, headers: Dict[str, Any], **kwargs: Any) -> requests.Response:
-    return requests.post(url=url, headers=headers, **kwargs)
+    with Storage.session() as session:
+        return session.post(url=url, headers=headers, **kwargs)
 
 
 async def _post_to_server_async(
     url: str,
-    headers: Dict[str, str],
+    headers: Optional[Dict[str, str]] = None,
     **kwargs: Any,
 ) -> requests.Response:
+    if headers is None:
+        headers = {}
 
     loop = asyncio.get_event_loop()
     # Using sync code because one of the httpx dependencies (anyio) throws an
@@ -229,7 +210,8 @@ async def _post_to_server_async(
 
 
 def _put(url: str, headers: Dict[str, Any], **kwargs: Any) -> requests.Response:
-    return requests.put(url=url, headers=headers, **kwargs)
+    with Storage.session() as session:
+        return session.put(url=url, headers=headers, **kwargs)
 
 
 async def _put_to_server_async(
@@ -269,21 +251,17 @@ def _set_content_header(
 
 
 async def add_record(url: str, record: ert.data.Record) -> None:
-    headers = {
-        "Token": StorageInfo.token(),
-    }
-
     assert record.record_type
     if record.record_type != ert.data.RecordType.BYTES:
         headers = _set_content_header(
-            header="content-type", record_type=record.record_type, headers=headers
+            header="content-type", record_type=record.record_type
         )
         data = pd.DataFrame([record.data]).to_csv().encode()
         await _post_to_server_async(url=url, headers=headers, data=data)
     else:
         assert isinstance(record.data, bytes)
         data = {"file": io.BytesIO(record.data)}
-        await _post_to_server_async(url=url, headers=headers, files=data)
+        await _post_to_server_async(url=url, files=data)
 
 
 def _interpret_series(row: pd.Series, record_type: ert.data.RecordType) -> Any:
@@ -302,12 +280,7 @@ def _interpret_series(row: pd.Series, record_type: ert.data.RecordType) -> Any:
 
 
 async def load_record(url: str, record_type: ert.data.RecordType) -> ert.data.Record:
-    headers = {
-        "Token": StorageInfo.token(),
-    }
-    headers = _set_content_header(
-        header="accept", headers=headers, record_type=record_type
-    )
+    headers = _set_content_header(header="accept", record_type=record_type)
     response = await _get_from_server_async(url=url, headers=headers)
     content = response.content
     if record_type != ert.data.RecordType.BYTES:
@@ -320,13 +293,10 @@ async def load_record(url: str, record_type: ert.data.RecordType) -> ert.data.Re
 
 
 async def get_record_metadata(record_url: str) -> Dict[Any, Any]:
-    headers = {
-        "Token": StorageInfo.token(),
-    }
     # TODO once storage returns proper record metadata information add proper support
     # for metadata
     url = f"{record_url}/userdata?realization_index=0"
-    resp = await _get_from_server_async(url, headers)
+    resp = await _get_from_server_async(url, {})
     ret: Dict[Any, Any] = resp.json()
     return ret
 
@@ -334,11 +304,8 @@ async def get_record_metadata(record_url: str) -> Dict[Any, Any]:
 async def add_record_metadata(
     record_urls: str, record_name: str, metadata: Dict[Any, Any]
 ) -> None:
-    headers = {
-        "Token": StorageInfo.token(),
-    }
     url = f"{record_urls}/{record_name}/userdata?realization_index=0"
-    await _put_to_server_async(url, headers, json=metadata)
+    await _put_to_server_async(url, {}, json=metadata)
 
 
 async def transmit_record_collection(
@@ -400,12 +367,11 @@ def _get_from_server(
     status_code: int = 200,
     **kwargs: Any,
 ) -> requests.Response:
-
     if not headers:
         headers = {}
-    headers["Token"] = StorageInfo.token()
 
-    resp = requests.get(url=f"{StorageInfo.url()}/{path}", headers=headers, **kwargs)
+    with Storage.session() as session:
+        resp = session.get(path, headers=headers, **kwargs)
     if resp.status_code != status_code:
         logger.error("Failed to fetch from %s. Response: %s", path, resp.text)
 
@@ -413,7 +379,6 @@ def _get_from_server(
 
 
 def get_records_url(workspace: Path, experiment_name: Optional[str] = None) -> str:
-    storage_url = StorageInfo.url()
     if experiment_name is None:
         experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
     experiment = _get_experiment_by_name(experiment_name)
@@ -423,28 +388,26 @@ def get_records_url(workspace: Path, experiment_name: Optional[str] = None) -> s
         )
 
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
-    return f"{storage_url}/ensembles/{ensemble_id}/records"
+    return f"/ensembles/{ensemble_id}/records"
 
 
 async def get_records_url_async(
     workspace: Path, experiment_name: Optional[str] = None
 ) -> str:
-    storage_url = StorageInfo.url()
     ensemble_id = await _get_ensemble_id_async(workspace, experiment_name)
-    return f"{storage_url}/ensembles/{ensemble_id}/records"
+    return f"/ensembles/{ensemble_id}/records"
 
 
 def _delete_on_server(
     path: str, headers: Optional[Dict[Any, Any]] = None, status_code: int = 200
 ) -> requests.Response:
-
     if not headers:
         headers = {}
-    headers["Token"] = StorageInfo.token()
-    resp = requests.delete(
-        url=f"{StorageInfo.url()}/{path}",
-        headers=headers,
-    )
+    with Storage.session() as session:
+        resp = session.delete(
+            path,
+            headers=headers,
+        )
     if resp.status_code != status_code:
         logger.error("Failed to delete %s. Response: %s", path, resp.text)
 
@@ -457,11 +420,10 @@ def _post_to_server(
     status_code: int = 200,
     **kwargs: Any,
 ) -> requests.Response:
-
     if not headers:
         headers = {}
-    headers["Token"] = StorageInfo.token()
-    resp = requests.post(url=f"{StorageInfo.url()}/{path}", headers=headers, **kwargs)
+    with Storage.session() as session:
+        resp = session.post(path, headers=headers, **kwargs)
     if resp.status_code != status_code:
         logger.error("Failed to post to %s. Response: %s", path, resp.text)
 
@@ -474,14 +436,12 @@ def _put_to_server(
     status_code: int = 200,
     **kwargs: Any,
 ) -> requests.Response:
-
     if not headers:
         headers = {}
-    headers["Token"] = StorageInfo.token()
-    resp = requests.put(url=f"{StorageInfo.url()}/{path}", headers=headers, **kwargs)
+    with Storage.session() as session:
+        resp = session.put(path, headers=headers, **kwargs)
     if resp.status_code != status_code:
         logger.error("Failed to put to %s. Response: %s", path, resp.text)
-
     return resp
 
 
@@ -496,13 +456,11 @@ def _get_experiment_by_name(experiment_name: str) -> Dict[str, Any]:
 async def _get_ensemble_id_async(
     workspace: Path, experiment_name: Optional[str] = None
 ) -> str:
-    storage_url = StorageInfo.url()
-    url = f"{storage_url}/experiments"
+    url = "/experiments"
     if experiment_name is None:
         experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
 
-    headers = {"Token": StorageInfo.token()}
-    response = await _get_from_server_async(url, headers)
+    response = await _get_from_server_async(url, {})
     experiments = {exp["name"]: exp for exp in response.json()}
     experiment = experiments.get(experiment_name, None)
     if experiment is not None:
@@ -513,10 +471,8 @@ async def _get_ensemble_id_async(
 
 
 async def _get_ensemble_size(ensemble_id: str) -> int:
-    storage_url = StorageInfo.url()
-    url = f"{storage_url}/ensembles/{ensemble_id}"
-    headers = {"Token": StorageInfo.token()}
-    response = await _get_from_server_async(url, headers)
+    url = f"/ensembles/{ensemble_id}"
+    response = await _get_from_server_async(url, {})
     response_json = response.json()
     return int(response_json["size"])
 

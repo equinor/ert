@@ -5,7 +5,6 @@ import os
 import pathlib
 import shutil
 import sys
-import time
 from pathlib import Path
 from typing import Any, List, Union
 
@@ -20,7 +19,7 @@ from ert3.config import (
     ParametersConfig,
     StagesConfig,
 )
-from ert_shared.storage.connection import get_info
+from ert_shared.services import Storage
 
 _ERT3_DESCRIPTION = (
     "ert3 is an ensemble-based tool for uncertainty studies.\n"
@@ -310,23 +309,18 @@ def _clean(workspace: Path, args: Any) -> None:
 
 def _service_check(args: Any) -> None:
     if args.service_name == "storage":
-        for _ in range(args.timeout):
-            try:
-                info = get_info()
-                print(f"Ert storage found: {info['baseurl']}")
-                return
-            except RuntimeError:
-                print("Connecting to ert-storage...")
-                time.sleep(1)
-                continue
-        raise SystemExit("ERROR: Ert storage not found!")
+        try:
+            Storage.connect(timeout=args.timeout)
+            return  # No exception ocurred, success!
+        except TimeoutError:
+            sys.exit("ERROR: Ert storage not found!")
 
     raise SystemExit(f"{args.service_name} not implemented")
 
 
 def _service_start(args: Any) -> None:
     if args.service_name == "storage":
-        os.execvp("ert", ["ert", "api"])
+        os.execvp("ert", ["ert", "api", "--enable-new-storage"])
     else:
         raise SystemExit(f"{args.service_name} not implemented")
 

@@ -4,7 +4,7 @@ from ert_data.measured import MeasuredData
 from res.enkf.enums.enkf_obs_impl_type_enum import EnkfObservationImplementationType
 from ert_shared.ert_adapter import ERT, LibresFacade
 from ert_shared.feature_toggling import feature_enabled
-from ert_shared.storage.server_monitor import ServerMonitor
+from ert_shared.services import Storage
 
 import requests
 import pandas as pd
@@ -276,25 +276,22 @@ def _create_priors(ert) -> Mapping[str, dict]:
 
 
 def _get_from_server(url, headers={}, status_code=200) -> requests.Response:
-    server = ServerMonitor.get_instance()
-    headers["Token"] = server.fetch_auth()[1]
-    resp = requests.get(
-        f"{server.fetch_url()}/{url}",
+    session = Storage.session()
+    resp = session.get(
+        url,
         headers=headers,
     )
     if resp.status_code != status_code:
         logger.error(f"Failed to fetch from {url}. Response: {resp.text}")
-
     return resp
 
 
 def _post_to_server(
     url, data=None, params=None, json=None, headers={}, status_code=200
 ) -> requests.Response:
-    server = ServerMonitor.get_instance()
-    headers["Token"] = server.fetch_auth()[1]
-    resp = requests.post(
-        f"{server.fetch_url()}/{url}",
+    session = Storage.session()
+    resp = session.post(
+        url,
         headers=headers,
         params=params,
         data=data,
