@@ -20,6 +20,12 @@ app = FastAPI(
 )
 
 
+@app.on_event("startup")
+async def initialize_libres_facade() -> None:
+    from ert_shared.dark_storage.enkf import init_facade
+    init_facade()
+
+
 @app.exception_handler(ErtStorageError)
 async def ert_storage_error_handler(
     request: Request, exc: ErtStorageError

@@ -12,6 +12,7 @@ router = APIRouter(tags=["experiment"])
 
 @router.get("/experiments", response_model=List[js.ExperimentOut])
 def get_experiments(*, res: LibresFacade = Depends(get_res)) -> List[js.ExperimentOut]:
+    print(res.get_current_case_name())
     raise NotImplementedError
 
 
