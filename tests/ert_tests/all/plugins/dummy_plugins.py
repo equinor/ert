@@ -80,12 +80,6 @@ class ExamplePlugin:
 
 
 @hook_implementation
-@plugin_response(plugin_name="dummy")
-def register_visualization_plugin(handler):
-    handler.add_plugin(ExamplePlugin)
-
-
-@hook_implementation
 def add_log_handle_to_root():
     import logging
 

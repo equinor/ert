@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <thread>
+#include <stdexcept>
 
 #define HAVE_THREAD_POOL 1
 #include <ert/util/rng.h>

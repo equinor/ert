@@ -9,7 +9,7 @@ from ert_shared.dark_storage import enkf
 
 @pytest.fixture
 def poly_example_tmp_dir(tmpdir, source_root, monkeypatch):
-    monkeypatch.setenv("ERT_DARK_STORAGE_CONFIG", "poly.ert")
+    monkeypatch.setenv("ERT_STORAGE_RES_CONFIG", "poly.ert")
     poly_dir = py.path.local(os.path.join(str(tmpdir), "poly_example"))
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),

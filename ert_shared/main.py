@@ -1,4 +1,5 @@
 import logging
+import logging.config
 import os
 import sys
 import re
@@ -9,7 +10,6 @@ from contextlib import contextmanager
 from ert_logging import LOGGING_CONFIG
 from ert_shared import clear_global_state
 from ert_shared.cli.main import run_cli, ErtCliError
-from ert_shared.storage.main import run_server
 from ert_shared.cli import (
     ENSEMBLE_SMOOTHER_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -27,10 +27,22 @@ from ert_shared.ide.keywords.definitions import (
 )
 from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert_shared.plugins.plugin_manager import ErtPluginContext
-from ert_shared.plugins import launch_visualization_plugin
-from ert_shared.feature_toggling import FeatureToggling, feature_enabled
+from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.storage.command import add_parser_options as ert_api_add_parser_options
+from ert_shared.services import Storage, WebvizErt
 import ert_shared
+
+
+def run_ert_storage(args):
+    with Storage.start_server(res_config=args.config) as server:
+        server.wait()
+
+
+def run_webviz_ert(args):
+    with Storage.connect_or_start_server(res_config=args.config) as storage:
+        storage.wait_until_ready()
+        with WebvizErt.start_server() as webviz_ert:
+            webviz_ert.wait()
 
 
 def strip_error_message_and_raise_exception(validated):
@@ -190,25 +202,16 @@ def get_ert_parser(parser=None):
         "api",
         description="Expose ERT data through an HTTP server",
     )
-    ert_api_parser.set_defaults(func=run_server)
+    ert_api_parser.set_defaults(func=run_ert_storage)
     ert_api_add_parser_options(ert_api_parser)
 
     ert_vis_parser = subparsers.add_parser(
         "vis",
         description="Launch webviz-driven visualization tool.",
     )
-    ert_vis_parser.set_defaults(func=launch_visualization_plugin)
+    ert_vis_parser.set_defaults(func=run_webviz_ert)
     ert_vis_parser.add_argument("--name", "-n", type=str, default="Webviz-ERT")
-    ert_vis_parser.add_argument(
-        "--project",
-        "-p",
-        type=str,
-        help="Path to folder running ert storage server",
-        default=os.getcwd(),
-    )
-    ert_vis_parser.add_argument(
-        "--verbose", action="store_true", help="Show verbose output.", default=False
-    )
+    ert_api_add_parser_options(ert_vis_parser)  # ert vis shares args with ert api
 
     # test_run_parser
     test_run_description = "Run '{}' in cli".format(TEST_RUN_MODE)
@@ -419,19 +422,13 @@ def ert_parser(parser, argv):
 
 
 @contextmanager
-def start_ert_server():
-    monitor = None
-    if FeatureToggling.is_enabled("new-storage"):
-        from ert_shared.storage.server_monitor import ServerMonitor
-
-        monitor = ServerMonitor.get_instance()
-        monitor.start()
-
-    try:
+def start_ert_server(mode: str):
+    if mode in ("api", "vis") or not FeatureToggling.is_enabled("new-storage"):
         yield
-    finally:
-        if monitor is not None:
-            monitor.shutdown()
+        return
+
+    with Storage.start_server():
+        yield
 
 
 def main():
@@ -447,7 +444,7 @@ def main():
         logger.setLevel("DEBUG")
     FeatureToggling.update_from_args(args)
     try:
-        with start_ert_server(), ErtPluginContext() as context:
+        with start_ert_server(args.mode), ErtPluginContext() as context:
             context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
             logger.info("Running ert with {}".format(str(args)))
             args.func(args)

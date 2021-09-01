@@ -5,9 +5,6 @@ import stat
 import sys
 
 import ert.storage
-from ert_shared.storage.server_monitor import (
-    ServerMonitor,
-)
 
 import requests
 import pytest
@@ -67,20 +64,15 @@ if __name__ == "__main__":
 
 @pytest.fixture()
 def workspace_integration(tmpdir):
+    from ert_shared.services import Storage
+
     workspace = tmpdir / "polynomial"
     workspace.mkdir()
     workspace.chdir()
-    server = ServerMonitor()
-    server.start()
 
-    resp = requests.get(f"{server.fetch_url()}/healthcheck", auth=server.fetch_auth())
-    assert "ALL OK!" in resp.json()
-
-    ert3.workspace.initialize(workspace)
-    yield workspace
-    server.shutdown()
-    ert.storage.StorageInfo._url = None
-    ert.storage.StorageInfo._token = None
+    with Storage.start_server():
+        ert3.workspace.initialize(workspace)
+        yield workspace
 
 
 @pytest.fixture()
@@ -90,8 +82,6 @@ def workspace(tmpdir, ert_storage):
     workspace.chdir()
     ert3.workspace.initialize(workspace)
     yield workspace
-    ert.storage.StorageInfo._url = None
-    ert.storage.StorageInfo._token = None
 
 
 def _create_coeffs_record_file(workspace):
@@ -272,19 +262,26 @@ def function_stages_config():
 
 @pytest.fixture
 def ert_storage(ert_storage_client, monkeypatch):
+    from contextlib import contextmanager
     from ert.storage import _storage
+    from httpx import AsyncClient
+
+    @contextmanager
+    def _client():
+        yield ert_storage_client
+
+    class MockStorageService:
+        @staticmethod
+        def session():
+            return _client()
+
+        @staticmethod
+        def async_session():
+            return AsyncClient(base_url="http://127.0.0.1")
 
     ert_storage_client.raise_on_client_error = False
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "ON")
-    # Fix requests library
-    for func in "get", "post", "put", "delete":
-        monkeypatch.setattr(_storage.requests, func, getattr(ert_storage_client, func))
-
-    monkeypatch.setattr(
-        _storage,
-        "get_info",
-        lambda: {"baseurl": "http://127.0.0.1:51820", "auth": ("", "")},
-    )
+    monkeypatch.setattr(_storage, "Storage", MockStorageService)
 
 
 @pytest.fixture

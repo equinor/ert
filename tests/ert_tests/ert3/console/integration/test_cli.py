@@ -8,6 +8,7 @@ import yaml
 
 import ert3
 import ert
+from ert_shared.services import Storage
 
 
 @pytest.mark.parametrize(
@@ -579,18 +580,14 @@ def test_failing_check_service(tmpdir):
 def test_check_service(tmpdir, monkeypatch):
     with tmpdir.as_cwd():
         with patch.object(
-            sys, "argv", ["ert3", "service", "check", "storage", "--timeout", "1"]
+            sys, "argv", ["ert3", "service", "check", "storage", "--timeout", "10"]
         ):
-            monkeypatch.setattr(
-                ert3.console._console,
-                "get_info",
-                lambda: {"baseurl": "http://127.0.0.1:51820", "auth": ("", "")},
-            )
-            ert3.console._console._main()
+            with Storage.start_server():
+                ert3.console._console._main()
 
 
 def _assert_start_storage_command(*args):
-    assert args == ("ert", ["ert", "api"])
+    assert args == ("ert", ["ert", "api", "--enable-new-storage"])
 
 
 def test_start_service(tmpdir, monkeypatch):

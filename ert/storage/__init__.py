@@ -1,5 +1,4 @@
 from ert.storage._storage import (
-    StorageInfo,
     StorageRecordTransmitter,
     add_record,
     delete_experiment,
@@ -32,7 +31,6 @@ __all__ = [
     "get_records_url_async",
     "add_record",
     "load_record",
-    "StorageInfo",
     "StorageRecordTransmitter",
     "get_record_metadata",
     "add_record_metadata",

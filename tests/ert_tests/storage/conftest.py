@@ -13,36 +13,16 @@ def _enable_new_storage(monkeypatch):
 
 
 @pytest.fixture
-def _disable_server_monitor(monkeypatch):
-    """
-    The ServerMonitor singleton starts ert-storage as a subprocess. Mock it to not block.
-    """
+def client(monkeypatch, ert_storage_client):
     from ert_shared.storage import extraction
 
-    class MockServerMonitor:
-        @classmethod
-        def get_instance(cls):
-            return cls()
-
+    class MockStorage:
         @staticmethod
-        def fetch_url():
-            return ""
+        def session():
+            return ert_storage_client
 
-        @staticmethod
-        def fetch_auth():
-            return ("", "")
-
-    monkeypatch.setattr(extraction, "ServerMonitor", MockServerMonitor)
-
-
-@pytest.fixture
-def client(_disable_server_monitor, monkeypatch, ert_storage_client):
-    import requests
-
+    monkeypatch.setattr(extraction, "Storage", MockStorage)
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "ON")
-    # Fix requests library
-    for func in "get", "post", "put", "delete":
-        monkeypatch.setattr(requests, func, getattr(ert_storage_client, func))
 
     # Store a list of experiment IDs that exist in the database, in case the
     # database isn't clean prior to running tests.

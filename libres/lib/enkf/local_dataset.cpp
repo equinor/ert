@@ -19,6 +19,7 @@
 #include <stdlib.h>
 
 #include <unordered_map>
+#include <stdexcept>
 
 #include <ert/util/util.h>
 #include <ert/util/hash.h>

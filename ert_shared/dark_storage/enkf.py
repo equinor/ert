@@ -20,25 +20,9 @@ def init_facade() -> None:
     global _ert
     global _config
 
-    if "ERT_DARK_STORAGE_CONFIG" in os.environ:
-        configfile = os.environ["ERT_DARK_STORAGE_CONFIG"]
-    else:
-        configs = []
-        for file in os.listdir(os.getcwd()):
-            if file.endswith(".ert"):
-                configs.append(file)
-        if len(configs) == 1:
-            configfile = file
-        elif len(configs) > 1:
-            raise ValueError(
-                "Found several configs in current directory. Please use environment variable ERT_DARK_STORAGE_CONFIG to specify one config"
-            )
-        else:
-            raise ValueError(
-                "Found no configs in current directory. Please use environment variable ERT_DARK_STORAGE_CONFIG to specify a config"
-            )
+    configfile = os.environ["ERT_STORAGE_RES_CONFIG"]
 
-    _config = ResConfig(str(configfile))
+    _config = ResConfig(configfile)
     os.chdir(_config.config_path)
     _ert = EnKFMain(_config, strict=True)
     _libres_facade = LibresFacade(_ert)
