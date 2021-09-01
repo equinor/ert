@@ -17,7 +17,7 @@ def post_ensemble(
 
 @router.get("/ensembles/{ensemble_id}", response_model=js.EnsembleOut)
 def get_ensemble(
-    *, res: LibresFacade = Depends(get_res), ensemble_id: UUID
+    *, res: LibresFacade = Depends(get_res), ensemble_id: int, zohar: str
 ) -> js.EnsembleOut:
     raise NotImplementedError
 
