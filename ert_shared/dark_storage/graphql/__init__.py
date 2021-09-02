@@ -4,6 +4,7 @@ from fastapi import APIRouter
 import graphene as gr
 from graphql.execution.base import ResolveInfo
 
+from ert_shared.dark_storage.enkf import get_res, get_name
 from ert_shared.dark_storage.graphql.ensembles import Ensemble, CreateEnsemble
 from ert_shared.dark_storage.graphql.experiments import Experiment, CreateExperiment
 
@@ -15,15 +16,15 @@ class Query(gr.ObjectType):
 
     @staticmethod
     def resolve_experiments(root: Any, info: ResolveInfo) -> None:
-        raise NotImplementedError
+        return ["default"]
 
     @staticmethod
     def resolve_experiment(root: Any, info: ResolveInfo, id: str) -> None:
-        raise NotImplementedError
+        return "default"
 
     @staticmethod
     def resolve_ensemble(root: Any, info: ResolveInfo, id: str) -> None:
-        raise NotImplementedError
+        return get_name("ensemble", id)
 
 
 class Mutations(gr.ObjectType):

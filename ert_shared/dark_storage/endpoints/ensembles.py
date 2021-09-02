@@ -3,7 +3,7 @@ from typing import Any, Mapping
 
 from fastapi import APIRouter, Body, Depends
 from ert_storage import json_schema as js
-from ert_shared.dark_storage.enkf import LibresFacade, get_res
+from ert_shared.dark_storage.enkf import LibresFacade, get_res, get_id, get_name
 
 router = APIRouter(tags=["ensemble"])
 
@@ -19,7 +19,17 @@ def post_ensemble(
 def get_ensemble(
     *, res: LibresFacade = Depends(get_res), ensemble_id: UUID
 ) -> js.EnsembleOut:
-    raise NotImplementedError
+    return js.EnsembleOut(
+        id=ensemble_id,
+        children=[],
+        parent=None,
+        experiment_id=get_id("experiment", "default"),
+        userdata={"name": get_name("ensemble", ensemble_id)},
+        size=42,
+        parameter_names=[],
+        response_names=[],
+        child_ensemble_ids=[],
+    )
 
 
 @router.put("/ensembles/{ensemble_id}/userdata")
