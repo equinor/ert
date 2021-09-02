@@ -1,25 +1,39 @@
-from uuid import UUID
+import os
+from uuid import UUID, uuid4
 from typing import Any, Mapping, List
 
 from fastapi import APIRouter, Body, Depends
 from ert_storage import json_schema as js
 
-from ert_shared.dark_storage.enkf import LibresFacade, get_res
-
+from ert_shared.dark_storage.enkf import LibresFacade, get_res, get_id
 
 router = APIRouter(tags=["experiment"])
 
 
 @router.get("/experiments", response_model=List[js.ExperimentOut])
 def get_experiments(*, res: LibresFacade = Depends(get_res)) -> List[js.ExperimentOut]:
-    raise NotImplementedError
+    return [
+        js.ExperimentOut(
+            name="default",
+            id=get_id("experiment", "default"),
+            ensemble_ids=[get_id("ensemble", case) for case in res.cases()],
+            priors={},
+            userdata={},
+        )
+    ]
 
 
 @router.get("/experiments/{experiment_id}", response_model=js.ExperimentOut)
 def get_experiment_by_id(
     *, res: LibresFacade = Depends(get_res), experiment_id: UUID
 ) -> js.ExperimentOut:
-    raise NotImplementedError
+    return js.ExperimentOut(
+        name="default",
+        id=get_id("experiment", "default"),
+        ensemble_ids=[get_id("ensemble", case) for case in res.cases()],
+        priors={},
+        userdata={},
+    )
 
 
 @router.post("/experiments", response_model=js.ExperimentOut)
@@ -37,7 +51,20 @@ def post_experiments(
 def get_experiment_ensembles(
     *, res: LibresFacade = Depends(get_res), experiment_id: UUID
 ) -> List[js.EnsembleOut]:
-    raise NotImplementedError
+    return [
+        js.EnsembleOut(
+            id=get_id("ensemble", case),
+            children=[],
+            parent=None,
+            experiment_id=get_id("experiment", "default"),
+            userdata={"name": case},
+            size=42,
+            parameter_names=[],
+            response_names=[],
+            child_ensemble_ids=[],
+        )
+        for case in res.cases()
+    ]
 
 
 @router.put("/experiments/{experiment_id}/userdata")

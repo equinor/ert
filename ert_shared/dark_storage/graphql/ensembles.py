@@ -3,6 +3,7 @@ from typing import Any, List, Optional, TYPE_CHECKING
 from uuid import UUID
 import graphene as gr
 
+from ert_shared.dark_storage.enkf import get_res, get_id
 
 if TYPE_CHECKING:
     from graphql.execution.base import ResolveInfo
@@ -30,15 +31,15 @@ class _EnsembleMixin:
 
     @staticmethod
     def resolve_id(root: Any, info: "ResolveInfo") -> UUID:
-        raise NotImplementedError
+        return get_id("ensemble", root)
 
     @staticmethod
     def resolve_size(root: Any, info: "ResolveInfo") -> int:
-        raise NotImplementedError
+        return 42
 
     @staticmethod
     def resolve_time_created(root: Any, info: "ResolveInfo") -> datetime:
-        raise NotImplementedError
+        return datetime.now()
 
     @staticmethod
     def resolve_time_updated(root: Any, info: "ResolveInfo") -> datetime:
@@ -58,15 +59,19 @@ class _EnsembleMixin:
 
     @staticmethod
     def resolve_userdata(root: Any, info: "ResolveInfo") -> Any:
-        raise NotImplementedError
+        return {"name": root}
 
     @staticmethod
     def resolve_children(root: Any, info: "ResolveInfo") -> List["Update"]:
-        raise NotImplementedError
+        return []
 
     @staticmethod
     def resolve_parent(root: Any, info: "ResolveInfo") -> "Update":
-        raise NotImplementedError
+        return None
+
+    @staticmethod
+    def resolve_experiment(root: Any, info: "ResolveInfo") -> "Experiment":
+        return "default"
 
 
 class Ensemble(gr.ObjectType, _EnsembleMixin):
@@ -84,11 +89,11 @@ class Ensemble(gr.ObjectType, _EnsembleMixin):
 
     @staticmethod
     def resolve_child_ensembles(root: Any, info: "ResolveInfo") -> "Ensemble":
-        raise NotImplementedError
+        return []
 
     @staticmethod
     def resolve_parent_ensemble(root: Any, info: "ResolveInfo") -> "Ensemble":
-        raise NotImplementedError
+        return None
 
     @staticmethod
     def resolve_responses(root: Any, info: "ResolveInfo") -> "Response":

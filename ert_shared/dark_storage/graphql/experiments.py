@@ -1,9 +1,11 @@
+import uuid
 from datetime import datetime
 from uuid import UUID
 from typing import Any, List, TYPE_CHECKING
 
 import graphene as gr
 
+from ert_shared.dark_storage.enkf import get_res, ids, get_id
 from ert_shared.dark_storage.graphql.ensembles import Ensemble, CreateEnsemble
 
 
@@ -20,7 +22,7 @@ class _ExperimentMixin:
 
     @staticmethod
     def resolve_id(root: Any, info: "ResolveInfo") -> UUID:
-        raise NotImplementedError
+        return get_id("experiment", "default")
 
     @staticmethod
     def resolve_time_created(root: Any, info: "ResolveInfo") -> datetime:
@@ -32,7 +34,7 @@ class _ExperimentMixin:
 
     @staticmethod
     def resolve_name(root: Any, info: "ResolveInfo") -> str:
-        raise NotImplementedError
+        return root
 
     @staticmethod
     def resolve_userdata(root: Any, info: "ResolveInfo") -> Any:
@@ -44,12 +46,13 @@ class Experiment(gr.ObjectType, _ExperimentMixin):
     priors = gr.JSONString()
 
     @staticmethod
-    def resolve_ensembles(root: Any, info: "ResolveInfo") -> List[Any]:
-        raise NotImplementedError
+    def resolve_ensembles(root: None, info: "ResolveInfo") -> List[Any]:
+        res = get_res()
+        return res.cases()
 
     @staticmethod
     def resolve_priors(root: Any, info: "ResolveInfo") -> Any:
-        raise NotImplementedError
+        return None
 
 
 class CreateExperiment(gr.Mutation, _ExperimentMixin):

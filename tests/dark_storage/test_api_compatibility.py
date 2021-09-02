@@ -2,26 +2,6 @@ from typing import List
 import pytest
 
 
-@pytest.fixture
-def env(monkeypatch):
-    monkeypatch.setenv("ERT_STORAGE_DATABASE_URL", "sqlite://")
-    monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
-
-
-@pytest.fixture
-def ert_storage_app(env):
-    from ert_storage.app import app
-
-    return app
-
-
-@pytest.fixture
-def dark_storage_app(env):
-    from ert_shared.dark_storage.app import app
-
-    return app
-
-
 def test_openapi(ert_storage_app, dark_storage_app):
     """
     Test that the openapi.json of Dark Storage is identical to ERT Storage
