@@ -24,7 +24,7 @@ class ServerMonitor(threading.Thread):
     TIMEOUT = 20  # Wait 20s for the server to start before panicking
     _instance = None
 
-    def __init__(self, *, rdb_url=None, lockfile=True):
+    def __init__(self, *, rdb_url=None, lockfile=True, dark=False):
         super().__init__()
 
         self._assert_server_not_running()
@@ -37,6 +37,8 @@ class ServerMonitor(threading.Thread):
 
         env = os.environ.copy()
         args = []
+        if dark:
+            args.append("--disable-new-storage")
         if not lockfile:
             args.append("--disable-lockfile")
         if rdb_url:
@@ -141,7 +143,7 @@ class ServerMonitor(threading.Thread):
             sys.exit(1)
 
     @classmethod
-    def get_instance(cls):
+    def get_instance(cls, dark=False):
         if cls._instance is None:
-            cls._instance = cls()
+            cls._instance = cls(dark=dark)
         return cls._instance

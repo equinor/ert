@@ -5,12 +5,15 @@ from .visualization_plugin_handler import (
     VisualizationPluginHandler,
     PluginHandlerException,
 )
+from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.storage.connection import autostart
 
 
 def launch_visualization_plugin(args):
     try:
-        os.environ["ERT_PROJECT_IDENTIFIER"] = autostart(args.project)
+        dark = not FeatureToggling.is_enabled("new-storage")
+        os.environ["ERT_PROJECT_IDENTIFIER"] = autostart(args.project, dark=dark)
+        pass
     except RuntimeError:
         sys.exit("Failed to connect to ERT Storage server")
 

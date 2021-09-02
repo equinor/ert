@@ -100,7 +100,10 @@ def run_server(args=None, debug=False):
     }
 
     # Appropriated from uvicorn.main:run
-    config = uvicorn.Config("ert_storage.app:app", **config_args)
+    config_str = "ert_storage.app:app"
+    if args.disable_new_storage:
+        config_str = "ert_shared.dark_storage.app:app"
+    config = uvicorn.Config(config_str, **config_args)
     server = Server(config, json.dumps(connection_info), lockfile)
 
     print("Storage server is ready to accept requests. Listening on:")

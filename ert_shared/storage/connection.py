@@ -73,7 +73,7 @@ def get_project_id() -> Path:
     raise RuntimeError("No ert storage server found!")
 
 
-def autostart(project_path: Optional[str] = None) -> str:
+def autostart(project_path: Optional[str] = None, dark: bool = False) -> str:
     from .server_monitor import ServerMonitor
 
     # Try to use project specified in args (Defaults to cwd)
@@ -92,7 +92,7 @@ def autostart(project_path: Optional[str] = None) -> str:
         pass
 
     # Try to start ERT Storage
-    monitor = ServerMonitor.get_instance()
+    monitor = ServerMonitor.get_instance(dark=dark)
     monitor.start()
     monitor.fetch_connection_info()
     return os.path.realpath(os.getcwd())

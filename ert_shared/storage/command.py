@@ -16,6 +16,12 @@ def add_parser_options(ap):
         action="store_true",
         default=False,
         help="Don't create storage_server.json",
+    )    
+    ap.add_argument(
+        "--disable-new-storage",
+        action="store_true",
+        default=False,
+        help="Do no use dark-storage backend",
     )
     ap.add_argument(
         "--rdb-url", type=str, default=f"sqlite:///{os.getcwd()}/ert_storage.db"

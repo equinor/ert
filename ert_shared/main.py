@@ -169,6 +169,7 @@ def get_ert_parser(parser=None):
         description="Launch webviz-driven visualization tool.",
     )
     ert_vis_parser.set_defaults(func=launch_visualization_plugin)
+    FeatureToggling.add_feature_toggling_args(ert_vis_parser)
     ert_vis_parser.add_argument("--name", "-n", type=str, default="Webviz-ERT")
     ert_vis_parser.add_argument(
         "--project",

@@ -1,4 +1,4 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 from typing import Any, Mapping
 
 from fastapi import APIRouter, Body, Depends
