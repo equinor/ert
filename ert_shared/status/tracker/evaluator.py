@@ -131,6 +131,7 @@ class EvaluatorTracker:
         self._work_queue.put(EvaluatorTracker.DONE)
         self._work_queue.join()
         drainer_logger.debug("tasks complete")
+        self._model.teardown_context()
 
     def track(self):
         while True:

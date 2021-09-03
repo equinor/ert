@@ -112,6 +112,8 @@ class LegacyTracker:
         yield from self._retroactive_update_event()
         yield self._end_event()
 
+        self._model.teardown_context()
+
     def _create_snapshot_dict(
         self,
         run_context: ErtRunContext,
