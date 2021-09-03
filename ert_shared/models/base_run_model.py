@@ -102,13 +102,16 @@ class BaseRunModel(object):
             self._fail_message = str(e)
             self._simulationEnded()
 
-        self._run_context = None  # delete last active run_context to notify fs_manager that storage is not being written to
-
     def runSimulations(self, job_queue, run_context):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
     def create_context(self, arguments):
         raise NotImplementedError("Method must be implemented by inheritors!")
+
+    def teardown_context(self):
+        # Used particularly to delete last active run_context to notify
+        # fs_manager that storage is not being written to.
+        self._run_context = None
 
     @job_queue(None)
     def killAllSimulations(self):
@@ -239,25 +242,34 @@ class BaseRunModel(object):
             timed_out = self._job_queue.did_job_time_out(queue_index)
 
         # Avoids reading from disk for jobs in these states since there's no
-        # data anyway
-        if status in [
-            JobStatusType.JOB_QUEUE_PENDING,
-            JobStatusType.JOB_QUEUE_SUBMITTED,
-            JobStatusType.JOB_QUEUE_WAITING,
-        ]:
+        # data anyway. If timed out, never exit here as that would prevent
+        # propagation of the failure status.
+        if (
+            status
+            in [
+                JobStatusType.JOB_QUEUE_PENDING,
+                JobStatusType.JOB_QUEUE_SUBMITTED,
+                JobStatusType.JOB_QUEUE_WAITING,
+            ]
+            and not timed_out
+        ):
             return
 
         fms = self.realization_progress[iteration].get(run_arg.iens, None)
+        jobs = fms[0] if fms else None
 
         # Don't load from file if you are finished
-        if fms and BaseRunModel.is_forward_model_finished(fms[0]):
-            jobs = self.realization_progress[iteration][run_arg.iens][0]
-        else:
-            fms = ForwardModelStatus.load(run_arg.runpath, num_retry=1)
-            if not fms:
+        if not fms or not BaseRunModel.is_forward_model_finished(fms[0]):
+            loaded = ForwardModelStatus.load(run_arg.runpath, num_retry=1)
+            if not loaded and not timed_out:
+                # If this idx timed out, returning here would prevent
+                # non-successful jobs in being marked as failed (timed out). So
+                # return only in the case where it did not time out.
                 return
 
-            jobs = fms.jobs
+            if loaded:
+                jobs = loaded.jobs
+
         if timed_out:
             for job in jobs:
                 if job.status != "Success":
