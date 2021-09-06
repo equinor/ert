@@ -603,7 +603,7 @@ TEMPLATE:/template/file and KEY:MaGiCKEY. The template file is an arbitrary
 existing text file, and KEY is a magic string found in this file. When ERT is
 running the magic string is replaced with parameter data when the ECLIPSE_FILE
 is written to the directory where the simulation is run from. Consider for
-example the follwing configuration:
+example the following configuration:
 
 ::
 

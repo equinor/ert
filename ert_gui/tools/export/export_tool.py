@@ -57,7 +57,7 @@ class ExportTool(Tool):
             QMessageBox.warning(
                 None,
                 "Failure",
-                """Export failed with the follwing message:\n{}""".format(
+                """Export failed with the following message:\n{}""".format(
                     str(usrwarning)
                 ),
                 QMessageBox.Ok,
