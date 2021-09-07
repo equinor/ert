@@ -1,7 +1,12 @@
 from datetime import datetime
+from ert_shared.libres_facade import LibresFacade
 from typing import Any, List, Optional, TYPE_CHECKING
 from uuid import UUID
+from fastapi.param_functions import Depends
 import graphene as gr
+from graphene.types.scalars import ID
+from ert_shared.dark_storage.common import ensemble_parameters
+
 
 from ert_shared.dark_storage.enkf import get_id, get_size
 
@@ -51,7 +56,7 @@ class _EnsembleMixin:
 
     @staticmethod
     def resolve_parameter_names(root: Any, info: "ResolveInfo") -> List[str]:
-        raise NotImplementedError
+        return [parameter["name"] for parameter in ensemble_parameters(root)]
 
     @staticmethod
     def resolve_response_names(root: Any, info: "ResolveInfo") -> List[str]:
@@ -104,8 +109,8 @@ class Ensemble(gr.ObjectType, _EnsembleMixin):
         raise NotImplementedError
 
     @staticmethod
-    def resolve_parameters(root: Any, info: "ResolveInfo") -> "Parameter":
-        raise NotImplementedError
+    def resolve_parameters(root: Any, info: "ResolveInfo") -> List[dict]:
+        return ensemble_parameters(root)
 
 
 class CreateEnsemble(gr.Mutation, _EnsembleMixin):

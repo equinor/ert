@@ -1,4 +1,5 @@
 from requests import Response
+import uuid
 
 
 def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
@@ -40,3 +41,14 @@ def test_get_experiment_ensemble(poly_example_tmp_dir, dark_storage_client):
     assert len(ensembles_json) == 1
     assert ensembles_json[0]["experiment_id"] == experiment_json[0]["id"]
     assert ensembles_json[0]["userdata"]["name"] == "default"
+
+
+def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
+    ensemble_id = uuid.uuid4()
+    resp: Response = dark_storage_client.get(f"/ensembles/{ensemble_id}/parameters")
+    parameters_json = resp.json()
+
+    assert len(parameters_json) == 3
+    assert parameters_json[0]["name"] == "COEFFS:COEFF_A"
+    assert parameters_json[1]["name"] == "COEFFS:COEFF_B"
+    assert parameters_json[2]["name"] == "COEFFS:COEFF_C"
