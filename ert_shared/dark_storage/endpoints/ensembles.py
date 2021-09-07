@@ -1,5 +1,5 @@
 from uuid import UUID
-from typing import Any, Mapping
+from typing import Any, Mapping, List
 
 from fastapi import APIRouter, Body, Depends
 from ert_storage import json_schema as js
@@ -10,6 +10,8 @@ from ert_shared.dark_storage.enkf import (
     get_name,
     get_size,
 )
+from ert_shared.dark_storage.common import ensemble_parameters
+
 
 router = APIRouter(tags=["ensemble"])
 
@@ -65,3 +67,11 @@ async def get_ensemble_userdata(
     ensemble_id: UUID,
 ) -> Mapping[str, Any]:
     raise NotImplementedError
+
+
+@router.get("/ensembles/{ensemble_id}/parameters", response_model=List[dict])
+async def get_ensemble_parameters(
+    *, res: LibresFacade = Depends(get_res), ensemble_id: UUID
+) -> List[str]:
+    ensemble_name = get_name(type="ensemble", uuid=ensemble_id)
+    return ensemble_parameters(ensemble_name)

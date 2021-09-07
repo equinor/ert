@@ -6,7 +6,6 @@ from ert_storage.security import security
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
 
-
 __all__ = ["LibresFacade", "get_res"]
 
 
@@ -54,6 +53,12 @@ def get_id(type, name):
 
 
 def get_name(type, uuid):
+    if type not in ids:
+        ids[type] = {}
+    if uuid not in ids[type]:
+        res = get_res()
+        name = res.get_current_case_name()
+        ids[type][name] = uuid
     for name, id in ids[type].items():
         if str(id) == str(uuid):
             return name

@@ -1,5 +1,5 @@
 import json
-import os
+import uuid
 from argparse import ArgumentParser
 
 from requests import Response
@@ -60,3 +60,17 @@ def test_my_get_enesembles(poly_example_tmp_dir, dark_storage_client):
     )
     assert "name" in userdata
     assert userdata["name"] == "poly_runpath_file"
+
+
+def test_query_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
+    ensemble_id = uuid.uuid4()
+    resp: Response = dark_storage_client.post(
+        "/gql",
+        json={"query": f'{{ensemble(id: "{ensemble_id}") {{parameters {{name}} }} }}'},
+    )
+
+    answer_json = resp.json()
+    assert "ensemble" in answer_json["data"]
+    assert len(answer_json["data"]["ensemble"]) == 1
+    assert "parameters" in answer_json["data"]["ensemble"]
+    assert len(answer_json["data"]["ensemble"]["parameters"]) == 3

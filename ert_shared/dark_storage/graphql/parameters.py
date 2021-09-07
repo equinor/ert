@@ -27,7 +27,7 @@ class Parameter(gr.ObjectType):
 
     @staticmethod
     def resolve_name(root: Any, info: "ResolveInfo") -> str:
-        raise NotImplementedError
+        return root["name"]
 
     @staticmethod
     def resolve_prior(root: Any, info: "ResolveInfo") -> Any:
