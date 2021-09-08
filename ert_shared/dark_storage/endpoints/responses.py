@@ -3,7 +3,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 
-from ert_shared.dark_storage.enkf import LibresFacade, get_res
+from ert_shared.dark_storage.common import data_for_key
+from ert_shared.dark_storage.enkf import LibresFacade, get_res, get_name
 
 router = APIRouter(tags=["response"])
 
@@ -12,4 +13,9 @@ router = APIRouter(tags=["response"])
 async def get_ensemble_response_dataframe(
     *, res: LibresFacade = Depends(get_res), ensemble_id: UUID, response_name: str
 ) -> Response:
-    raise NotImplementedError
+    ensemble_name = get_name("ensemble", ensemble_id)
+    dataframe = data_for_key(ensemble_name, response_name)
+    return Response(
+        content=dataframe.to_csv().encode(),
+        media_type="text/csv",
+    )

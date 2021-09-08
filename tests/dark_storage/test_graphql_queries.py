@@ -62,6 +62,34 @@ def test_my_get_enesembles(poly_example_tmp_dir, dark_storage_client):
     assert userdata["name"] == "poly_runpath_file"
 
 
+def test_get_response_names(poly_example_tmp_dir, dark_storage_client):
+    resp: Response = dark_storage_client.post(
+        "/gql", json={"query": "{experiments{ensembles{responseNames}}}"}
+    )
+    answer_json = resp.json()
+    print(answer_json)
+    response_names = answer_json["data"]["experiments"][0]["ensembles"][0][
+        "responseNames"
+    ]
+    assert len(response_names) == 1
+    assert "POLY_RES" in response_names
+
+
+def test_get_responses(poly_example_tmp_dir, dark_storage_client):
+    resp: Response = dark_storage_client.post(
+        "/gql",
+        json={
+            "query": "{experiments{ensembles{responses{"
+            "id, name, realizationIndex, timeCreated, timeUpdated, userdata}}}}"
+        },
+    )
+    answer_json = resp.json()
+    print(answer_json)
+    responses = answer_json["data"]["experiments"][0]["ensembles"][0]["responses"]
+    assert len(responses) == 1
+    assert responses[0]["name"] == "POLY_RES"
+
+
 def test_query_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
     ensemble_id = uuid.uuid4()
     resp: Response = dark_storage_client.post(

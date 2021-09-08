@@ -10,7 +10,7 @@ from ert_shared.dark_storage.enkf import (
     get_name,
     get_size,
 )
-from ert_shared.dark_storage.common import ensemble_parameters
+from ert_shared.dark_storage.common import ensemble_parameters, get_response_names
 
 
 router = APIRouter(tags=["ensemble"])
@@ -35,7 +35,7 @@ def get_ensemble(
         userdata={"name": get_name("ensemble", ensemble_id)},
         size=get_size(),
         parameter_names=[],
-        response_names=[],
+        response_names=get_response_names(),
         child_ensemble_ids=[],
     )
 
