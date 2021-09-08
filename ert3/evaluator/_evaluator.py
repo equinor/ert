@@ -53,10 +53,11 @@ def _prepare_input(
                 )
             else:
                 raise ValueError(f"Unsupported transmitter type: {storage_type}")
-            futures.append(transmitter.transmit_data(record.data))
+            futures.append(transmitter.transmit_record(record))
             transmitters[iens][input_.record] = transmitter
     asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
     if isinstance(step_config, ert3.config.Unix):
+        command_futures = []
         for command in step_config.transportable_commands:
             if storage_type == "shared_disk":
                 transmitter = ert.data.SharedDiskRecordTransmitter(
@@ -69,12 +70,14 @@ def _prepare_input(
                 )
             else:
                 raise ValueError(f"Unsupported transmitter type: {storage_type}")
-            with open(command.location, "rb") as f:
-                asyncio.get_event_loop().run_until_complete(
-                    transmitter.transmit_data(f.read())
+            command_futures.append(
+                transmitter.transmit_file(
+                    command.location, mime="application/octet-stream"
                 )
+            )
             for iens in range(0, ensemble_size):
                 transmitters[iens][command.name] = transmitter
+        asyncio.get_event_loop().run_until_complete(asyncio.gather(*command_futures))
     return dict(transmitters)
 
 
