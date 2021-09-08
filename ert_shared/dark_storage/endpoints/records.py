@@ -2,10 +2,12 @@ from uuid import UUID
 from typing import Any, Mapping, Optional, List
 
 from fastapi import APIRouter, Body, Depends, File, Header, Request, UploadFile, status
+
+from ert_shared.dark_storage.common import get_response_names, data_for_key
 from ert_storage import json_schema as js
 
-from ert_shared.dark_storage.enkf import LibresFacade, get_res
-
+from ert_shared.dark_storage.enkf import LibresFacade, get_res, get_id, get_name
+from fastapi.responses import Response
 
 router = APIRouter(tags=["record"])
 
@@ -153,7 +155,14 @@ async def get_ensemble_record(
     accept: str = Header("application/json"),
     realization_index: Optional[int] = None,
 ) -> Any:
-    raise NotImplementedError
+    ensemble_name = get_name("ensemble", ensemble_id)
+    dataframe = data_for_key(ensemble_name, name)
+    if realization_index:
+        dataframe=dataframe[realization_index]
+    return Response(
+        content=dataframe.to_csv().encode(),
+        media_type="text/csv",
+    )
 
 
 @router.get("/ensembles/{ensemble_id}/parameters", response_model=List[str])
@@ -195,4 +204,11 @@ async def get_record_data(
 def get_ensemble_responses(
     *, res: LibresFacade = Depends(get_res), ensemble_id: UUID
 ) -> Mapping[str, js.RecordOut]:
-    return {}
+    return {
+        resp: js.RecordOut(
+            id = get_id(f"response", f"{ensemble_id}/{resp}"),
+            name = resp,
+            userdata = {}
+        )
+        for resp in get_response_names()
+    }
