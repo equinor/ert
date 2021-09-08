@@ -5,7 +5,7 @@ import prefect
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 
-from ert.data import RecordTransmitter
+from ert.data import RecordTransmitter, NumericalRecord, BlobRecord, Record
 
 
 class FunctionTask(prefect.Task):
@@ -30,8 +30,13 @@ class FunctionTask(prefect.Task):
         kwargs = {result[0]: result[1].data for result in results}
         function_output = func(**kwargs)
 
-        async def _transmit(io_, transmitter, data):
-            await transmitter.transmit_data(data)
+        async def _transmit(io_, transmitter: RecordTransmitter, data):
+            record: Record = (
+                BlobRecord(data=data)
+                if isinstance(data, bytes)
+                else NumericalRecord(data=data)
+            )
+            await transmitter.transmit_record(record)
             return (io_.get_name(), transmitter)
 
         futures = []

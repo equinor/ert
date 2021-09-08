@@ -286,15 +286,6 @@ class RecordTransmitter:
             raise TypeError(f"Record type not supported {type(record)}")
         self._set_transmitted_state(uri, record_type=record.record_type)
 
-    async def transmit_data(
-        self,
-        data: record_data,
-    ) -> None:
-        if self.is_transmitted():
-            raise RuntimeError("Record already transmitted")
-        record = Record(data=data)
-        await self.transmit_record(record.get_instance())
-
     async def transmit_file(
         self,
         file: Path,
