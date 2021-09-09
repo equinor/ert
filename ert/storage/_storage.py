@@ -565,7 +565,10 @@ def add_ensemble_record(
 
     dataframe = pd.DataFrame([r.data for r in ensemble_record.records])
 
-    if ensemble_record.record_type == ert.data.RecordType.BYTES:
+    if ensemble_record.record_type in [
+        ert.data.RecordType.BYTES,
+        ert.data.RecordType.TAR,
+    ]:
         _add_blob_data(experiment_name, record_name, ensemble_record)
     else:
         parameters = _get_experiment_parameters(experiment_name)
@@ -601,7 +604,7 @@ def _add_blob_data(
 
     metadata = _NumericalMetaData(
         ensemble_size=ensemble_record.ensemble_size,
-        record_type=ert.data.RecordType.BYTES,
+        record_type=ensemble_record.record_type,
     )
 
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp

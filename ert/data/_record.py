@@ -66,6 +66,7 @@ class RecordType(str, Enum):
     MAPPING_INT_FLOAT = "MAPPING_INT_FLOAT"
     MAPPING_STR_FLOAT = "MAPPING_STR_FLOAT"
     BYTES = "BYTES"
+    TAR = "TAR"
 
 
 class Record(_DataElement):
