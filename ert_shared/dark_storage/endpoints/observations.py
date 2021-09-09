@@ -1,10 +1,11 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 from typing import Any, List, Mapping
 
 from fastapi import APIRouter, Body, Depends
 from ert_storage import json_schema as js
 
 from ert_shared.dark_storage.enkf import LibresFacade, get_res
+from ert_shared.storage.extraction import create_observations
 
 
 router = APIRouter(tags=["ensemble"])
@@ -28,7 +29,17 @@ def post_observation(
 def get_observations(
     *, res: LibresFacade = Depends(get_res), experiment_id: UUID
 ) -> List[js.ObservationOut]:
-    raise NotImplementedError
+    return [
+        js.ObservationOut(
+            id=uuid4(),
+            userData=[],
+            errors=obs["errors"],
+            values=obs["values"],
+            x_axis=obs["x_axis"],
+            name=obs["name"],
+        )
+        for obs in create_observations(res)
+    ]
 
 
 @router.get(
