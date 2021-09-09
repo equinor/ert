@@ -1,12 +1,15 @@
 import pathlib
 import shutil
 import uuid
+import tarfile
 from abc import abstractmethod
 from enum import Enum, auto
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Tuple, Union
 
 import aiofiles
+import tempfile
+import os
 
 # Type hinting for wrap must be turned off until (1) is resolved.
 # (1) https://github.com/Tinche/aiofiles/issues/8
@@ -407,6 +410,17 @@ def load_collection_from_file(
         with open(file_path, "rb") as fb:
             return RecordCollection(
                 records=[BlobRecord(data=fb.read())] * ens_size,
+            )
+    elif mime == "application/x-tar":
+        tar_name = tempfile.NamedTemporaryFile().name
+        with tarfile.open(tar_name, "w") as tar:
+            for root, _, files in os.walk(file_path, topdown=False):
+                for file in files:
+                    tar.add(os.path.join(root, file))
+        with open(tar_name, "rb") as fb:
+            return RecordCollection(
+                records=[BlobRecord(data=fb.read(), record_type=RecordType.TAR)]
+                * ens_size,
             )
 
     with open(file_path, "rt", encoding="utf-8") as f:
